@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.31.8.2 2008/01/09 01:51:03 matt Exp $ */
+/*	linux_machdep.c,v 1.31.8.2 2008/01/09 01:51:03 matt Exp */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.8.2 2008/01/09 01:51:03 matt Exp $");
+__KERNEL_RCSID(0, "linux_machdep.c,v 1.31.8.2 2008/01/09 01:51:03 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,9 +407,6 @@ linux_sys_sysmips(struct lwp *l, const struct linux_sys_sysmips_args *uap, regis
 		int name[2];
 		size_t len;
 
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-			return error;
 		if ((error = copyinstr((char *)SCARG(uap, arg1), nodename,
 		    LINUX___NEW_UTS_LEN, &len)) != 0)
 			return error;

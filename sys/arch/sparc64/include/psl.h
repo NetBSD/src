@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.36.24.1 2008/01/09 01:49:05 matt Exp $ */
+/*	psl.h,v 1.36.24.1 2008/01/09 01:49:05 matt Exp */
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,8 +179,8 @@
 #define TSTATE_CCR		0xff00000000LL
 #define TSTATE_CCR_SHIFT	32
 
-#define PSRCC_TO_TSTATE(x)	(((int64_t)(x)&PSR_ICC)<<(TSTATE_CCR_SHIFT-19))
-#define TSTATECCR_TO_PSR(x)	(((x)&TSTATE_CCR)>>(TSTATE_CCR_SHIFT-19))
+#define PSRCC_TO_TSTATE(x)	(((int64_t)(x)&PSR_ICC)<<(TSTATE_CCR_SHIFT-20))
+#define TSTATECCR_TO_PSR(x)	(((x)&TSTATE_CCR)>>(TSTATE_CCR_SHIFT-20))
 
 /*
  * These are here to simplify life.
@@ -202,8 +202,8 @@
 
 #define TSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
 
-#define TSTATE_KERN	((TSTATE_KERN)<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_USER	((TSTATE_USER)<<TSTATE_PSTATE_SHIFT)
+#define TSTATE_KERN	((PSTATE_KERN)<<TSTATE_PSTATE_SHIFT)
+#define TSTATE_USER	((PSTATE_USER)<<TSTATE_PSTATE_SHIFT)
 /*
  * SPARC V9 VER version register.
  *

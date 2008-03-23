@@ -62,17 +62,14 @@ struct com_dino_regs {
 	u_int8_t	dither;
 };
 
-int	com_dino_match(struct device *, struct cfdata *, void *);
-void	com_dino_attach(struct device *, struct device *, void *);
+int	com_dino_match(device_t, cfdata_t, void *);
+void	com_dino_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_dino, sizeof(struct com_dino_softc), com_dino_match, 
+CFATTACH_DECL_NEW(com_dino, sizeof(struct com_dino_softc), com_dino_match, 
     com_dino_attach, NULL, NULL);
 
 int
-com_dino_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+com_dino_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -85,17 +82,16 @@ com_dino_match(parent, match, aux)
 }
 
 void
-com_dino_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_dino_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_softc *sc = (void *)self;
-	struct com_dino_softc *sc_dino = (void *)self;
+	struct com_dino_softc *sc_dino = device_private(self);
+	struct com_softc *sc = &sc_dino->sc_com;
 	struct confargs *ca = aux;
 	struct com_dino_regs *regs = (struct com_dino_regs *)ca->ca_hpa;
 	bus_addr_t iobase;
 	bus_space_handle_t ioh;
 
+	sc->sc_dev = self;
 	iobase = (bus_addr_t)ca->ca_hpa + IOMOD_DEVOFFSET;
 
 #ifdef work_in_progress
@@ -115,7 +111,7 @@ com_dino_attach(parent, self, aux)
 #endif
 
 	if (bus_space_map(ca->ca_iot, iobase, COM_NPORTS, 0, &ioh)) {
-		printf(": cannot map io space\n");
+		aprint_error(": cannot map io space\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, ca->ca_iot, ioh, iobase);

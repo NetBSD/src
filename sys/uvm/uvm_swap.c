@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.129.6.2 2008/01/09 01:58:45 matt Exp $	*/
+/*	uvm_swap.c,v 1.129.6.2 2008/01/09 01:58:45 matt Exp	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.129.6.2 2008/01/09 01:58:45 matt Exp $");
+__KERNEL_RCSID(0, "uvm_swap.c,v 1.129.6.2 2008/01/09 01:58:45 matt Exp");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -256,6 +256,11 @@ uvm_swap_init(void)
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
+	if (vn_lock(swapdev_vp, LK_EXCLUSIVE | LK_RETRY))
+		panic("uvm_swap_init: can't lock swap device");
+	if (VOP_OPEN(swapdev_vp, FREAD | FWRITE, NOCRED))
+		panic("uvm_swap_init: can't open swap device");
+	VOP_UNLOCK(swapdev_vp, 0);
 
 	/*
 	 * create swap block resource map to map /dev/drum.   the range
@@ -1190,7 +1195,7 @@ swwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 const struct bdevsw swap_bdevsw = {
-	noopen, noclose, swstrategy, noioctl, nodump, nosize, D_OTHER,
+	nullopen, nullclose, swstrategy, noioctl, nodump, nosize, D_OTHER,
 };
 
 const struct cdevsw swap_cdevsw = {
@@ -1695,6 +1700,17 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	async = (flags & B_ASYNC) != 0;
 
 	/*
+	 * allocate a buf for the i/o.
+	 */
+
+	KASSERT(curlwp != uvm.pagedaemon_lwp || (write && async));
+	bp = getiobuf(swapdev_vp, curlwp != uvm.pagedaemon_lwp);
+	if (bp == NULL) {
+		uvm_aio_aiodone_pages(pps, npages, true, ENOMEM);
+		return ENOMEM;
+	}
+
+	/*
 	 * convert starting drum slot to block number
 	 */
 
@@ -1708,12 +1724,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_READ :
 		UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_WRITE;
 	kva = uvm_pagermapin(pps, npages, mapinflags);
-
-	/*
-	 * now allocate a buf for the i/o.
-	 */
-
-	bp = getiobuf(swapdev_vp, true);
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through

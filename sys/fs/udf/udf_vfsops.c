@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.29.4.2 2008/01/09 01:55:54 matt Exp $ */
+/* udf_vfsops.c,v 1.29.4.2 2008/01/09 01:55:54 matt Exp */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.29.4.2 2008/01/09 01:55:54 matt Exp $");
+__KERNEL_RCSID(0, "udf_vfsops.c,v 1.29.4.2 2008/01/09 01:55:54 matt Exp");
 #endif /* not lint */
 
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.29.4.2 2008/01/09 01:55:54 matt Exp
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -129,6 +130,8 @@ struct vfsops udf_vfsops = {
 	udf_snapshot,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	udf_vnodeopv_descs,
 	0, /* int vfs_refcount   */
 	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
@@ -320,21 +323,6 @@ udf_mount(struct mount *mp, const char *path,
 			vrele(devvp);
 			return error;
 		}
-	}
-
-	/*
-	 * Disallow multiple mounts of the same device.  Disallow mounting of
-	 * a device that is currently in use (except for root, which might
-	 * share swap device for miniroot).
-	 */
-	error = vfs_mountedon(devvp);
-	if (error) {
-		vrele(devvp);
-		return error;
-	}
-	if ((vcount(devvp) > 1) && (devvp != rootvp)) {
-		vrele(devvp);
-		return EBUSY;
 	}
 
 	/*

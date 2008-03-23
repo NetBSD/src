@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.158.20.1 2008/01/09 01:49:37 matt Exp $	 */
+/* machdep.c,v 1.158.20.1 2008/01/09 01:49:37 matt Exp	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158.20.1 2008/01/09 01:49:37 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.158.20.1 2008/01/09 01:49:37 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -171,7 +171,7 @@ int iospace_inited = 0;
 #endif
 
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t		minaddr, maxaddr;
 	extern paddr_t avail_end;
@@ -226,12 +226,12 @@ cpu_startup()
 	iomap_ex_malloc_safe = 1;
 }
 
-u_int32_t dumpmag = 0x8fca0101;
+uint32_t dumpmag = 0x8fca0101;
 int	dumpsize = 0;
 long	dumplo = 0;
 
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int		nblks;
@@ -267,8 +267,8 @@ sysctl_machdep_booted_device(SYSCTLFN_ARGS)
 
 	if (booted_device == NULL)
 		return (EOPNOTSUPP);
-	node.sysctl_data = booted_device->dv_xname;
-	node.sysctl_size = strlen(booted_device->dv_xname) + 1;
+	node.sysctl_data = __UNCONST(device_xname(booted_device));
+	node.sysctl_size = strlen(device_xname(booted_device)) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
@@ -302,13 +302,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 }
 
 void
-setstatclockrate(hzrate)
-	int hzrate;
+setstatclockrate(int hzrate)
 {
 }
 
 void
-consinit()
+consinit(void)
 {
 	extern vaddr_t iospace;
 
@@ -343,9 +342,7 @@ int	waittime = -1;
 static	volatile int showto; /* Must be volatile to survive MM on -> MM off */
 
 void
-cpu_reboot(howto, b)
-	register int howto;
-	char *b;
+cpu_reboot(int howto, char *b)
 {
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
@@ -418,7 +415,7 @@ cpu_reboot(howto, b)
 }
 
 void
-dumpsys()
+dumpsys(void)
 {
 	const struct bdevsw *bdev;
 
@@ -466,9 +463,7 @@ dumpsys()
 }
 
 int
-process_read_regs(l, regs)
-	struct lwp    *l;
-	struct reg     *regs;
+process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
 
@@ -482,9 +477,7 @@ process_read_regs(l, regs)
 }
 
 int
-process_write_regs(l, regs)
-	struct lwp    *l;
-	const struct reg     *regs;
+process_write_regs(struct lwp *l, const struct reg *regs)
 {
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
 
@@ -499,9 +492,7 @@ process_write_regs(l, regs)
 }
 
 int
-process_set_pc(l, addr)
-	struct	lwp *l;
-	void *addr;
+process_set_pc(struct lwp *l, void *addr)
 {
 	struct	trapframe *tf;
 	void	*ptr;
@@ -518,8 +509,7 @@ process_set_pc(l, addr)
 }
 
 int
-process_sstep(l, sstep)
-	struct lwp    *l;
+process_sstep(struct lwp *l, int sstep)
 {
 	void	       *ptr;
 	struct trapframe *tf;
@@ -553,9 +543,7 @@ process_sstep(l, sstep)
  * be use by console device drivers (before the map system is inited).
  */
 vaddr_t
-vax_map_physmem(phys, size)
-	paddr_t phys;
-	int size;
+vax_map_physmem(paddr_t phys, size_t size)
 {
 	vaddr_t addr;
 	int error;
@@ -592,12 +580,10 @@ vax_map_physmem(phys, size)
  * Unmaps the previous mapped (addr, size) pair.
  */
 void
-vax_unmap_physmem(addr, size)
-	vaddr_t addr;
-	int size;
+vax_unmap_physmem(vaddr_t addr, size_t size)
 {
 #ifdef PHYSMEMDEBUG
-	printf("vax_unmap_physmem: unmapping %d pages at addr %lx\n", 
+	printf("vax_unmap_physmem: unmapping %zu pages at addr %lx\n", 
 	    size, addr);
 #endif
 	addr &= ~VAX_PGOFSET;
@@ -607,8 +593,22 @@ vax_unmap_physmem(addr, size)
 	else if (extent_free(iomap_ex, addr, size * VAX_NBPG,
 			     EX_NOWAIT |
 			     (iomap_ex_malloc_safe ? EX_MALLOCOK : 0)))
-		printf("vax_unmap_physmem: addr 0x%lx size %dvpg: "
+		printf("vax_unmap_physmem: addr 0x%lx size %zu vpg: "
 		    "can't free region\n", addr, size);
+}
+
+#define	SOFTINT_IPLS	((IPL_SOFTCLOCK << (SOFTINT_CLOCK * 5))		\
+			 | (IPL_SOFTBIO << (SOFTINT_BIO * 5))		\
+			 | (IPL_SOFTNET << (SOFTINT_NET * 5))		\
+			 | (IPL_SOFTSERIAL << (SOFTINT_SERIAL * 5)))
+
+void
+softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
+{
+	const int ipl = (SOFTINT_IPLS >> (5 * level)) & 0x1F;
+	l->l_cpu->ci_softlwps[level] = l;
+
+	*machdep = ipl;
 }
 
 #include <dev/bi/bivar.h>
@@ -630,13 +630,13 @@ void	krnlock(void);
 void	krnunlock(void);
 
 void
-krnlock()
+krnlock(void)
 {
 	KERNEL_LOCK(1, NULL);
 }
 
 void
-krnunlock()
+krnunlock(void)
 {
 	KERNEL_UNLOCK_ONE(NULL);
 }
@@ -706,7 +706,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
  * Generic routines for machines with "console program mailbox".
  */
 void
-generic_halt()
+generic_halt(void)
 {
 	if (cpmbx == NULL)  /* Too late to complain here, but avoid panic */
 		__asm("halt");

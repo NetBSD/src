@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.87.8.1 2007/11/06 23:29:09 matt Exp $	*/
+/*	if_vr.c,v 1.87.8.1 2007/11/06 23:29:09 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.87.8.1 2007/11/06 23:29:09 matt Exp $");
+__KERNEL_RCSID(0, "if_vr.c,v 1.87.8.1 2007/11/06 23:29:09 matt Exp");
 
 #include "rnd.h"
 
@@ -324,16 +324,14 @@ static void	vr_rxdrain(struct vr_softc *);
 static void	vr_watchdog(struct ifnet *);
 static void	vr_tick(void *);
 
-static int	vr_ifmedia_upd(struct ifnet *);
-static void	vr_ifmedia_sts(struct ifnet *, struct ifmediareq *);
-
-static int	vr_mii_readreg(struct device *, int, int);
-static void	vr_mii_writereg(struct device *, int, int, int);
-static void	vr_mii_statchg(struct device *);
+static int	vr_mii_readreg(device_t, int, int);
+static void	vr_mii_writereg(device_t, int, int, int);
+static void	vr_mii_statchg(device_t);
 
 static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
-static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
+static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, device_t,
+    pcireg_t);
 
 int	vr_copy_small = 0;
 
@@ -364,8 +362,8 @@ int	vr_copy_small = 0;
 /*
  * MII bit-bang glue.
  */
-static uint32_t vr_mii_bitbang_read(struct device *);
-static void	vr_mii_bitbang_write(struct device *, uint32_t);
+static uint32_t vr_mii_bitbang_read(device_t);
+static void	vr_mii_bitbang_write(device_t, uint32_t);
 
 static const struct mii_bitbang_ops vr_mii_bitbang_ops = {
 	vr_mii_bitbang_read,
@@ -380,17 +378,17 @@ static const struct mii_bitbang_ops vr_mii_bitbang_ops = {
 };
 
 static uint32_t
-vr_mii_bitbang_read(struct device *self)
+vr_mii_bitbang_read(device_t self)
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = device_private(self);
 
 	return (CSR_READ_1(sc, VR_MIICMD));
 }
 
 static void
-vr_mii_bitbang_write(struct device *self, uint32_t val)
+vr_mii_bitbang_write(device_t self, uint32_t val)
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = device_private(self);
 
 	CSR_WRITE_1(sc, VR_MIICMD, (val & 0xff) | VR_MIICMD_DIRECTPGM);
 }
@@ -399,9 +397,9 @@ vr_mii_bitbang_write(struct device *self, uint32_t val)
  * Read an PHY register through the MII.
  */
 static int
-vr_mii_readreg(struct device *self, int phy, int reg)
+vr_mii_readreg(device_t self, int phy, int reg)
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = device_private(self);
 
 	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
 	return (mii_bitbang_readreg(self, &vr_mii_bitbang_ops, phy, reg));
@@ -411,18 +409,18 @@ vr_mii_readreg(struct device *self, int phy, int reg)
  * Write to a PHY register through the MII.
  */
 static void
-vr_mii_writereg(struct device *self, int phy, int reg, int val)
+vr_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = device_private(self);
 
 	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
 	mii_bitbang_writereg(self, &vr_mii_bitbang_ops, phy, reg, val);
 }
 
 static void
-vr_mii_statchg(struct device *self)
+vr_mii_statchg(device_t self)
 {
-	struct vr_softc *sc = (struct vr_softc *)self;
+	struct vr_softc *sc = device_private(self);
 
 	/*
 	 * In order to fiddle with the 'full-duplex' bit in the netconfig
@@ -1261,7 +1259,8 @@ vr_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, VR_TXADDR, VR_CDTXADDR(sc, VR_NEXTTX(sc->vr_txlast)));
 
 	/* Set current media. */
-	mii_mediachg(&sc->vr_mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/* Enable receiver and transmitter. */
 	CSR_WRITE_2(sc, VR_COMMAND, VR_CMD_TX_NOPOLL|VR_CMD_START|
@@ -1287,59 +1286,23 @@ vr_init(struct ifnet *ifp)
 	return (error);
 }
 
-/*
- * Set media options.
- */
-static int
-vr_ifmedia_upd(struct ifnet *ifp)
-{
-	struct vr_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->vr_mii);
-	return (0);
-}
-
-/*
- * Report current media status.
- */
-static void
-vr_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct vr_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->vr_mii);
-	ifmr->ifm_status = sc->vr_mii.mii_media_status;
-	ifmr->ifm_active = sc->vr_mii.mii_media_active;
-}
-
 static int
 vr_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vr_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch (command) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->vr_mii.mii_media, command);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				vr_setmulti(sc);
-			error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, command, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			vr_setmulti(sc);
+		error = 0;
 	}
 
 	splx(s);
@@ -1430,18 +1393,18 @@ vr_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		vr_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		vr_rxdrain(sc);
 }
 
-static int	vr_probe(struct device *, struct cfdata *, void *);
-static void	vr_attach(struct device *, struct device *, void *);
+static int	vr_probe(device_t, struct cfdata *, void *);
+static void	vr_attach(device_t, device_t, void *);
 static void	vr_shutdown(void *);
 
 CFATTACH_DECL(vr, sizeof (struct vr_softc),
@@ -1461,8 +1424,7 @@ vr_lookup(struct pci_attach_args *pa)
 }
 
 static int
-vr_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+vr_probe(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -1489,9 +1451,9 @@ vr_shutdown(void *arg)
  * setup and ethernet/BPF attach.
  */
 static void
-vr_attach(struct device *parent, struct device *self, void *aux)
+vr_attach(device_t parent, device_t self, void *aux)
 {
-	struct vr_softc *sc = (struct vr_softc *) self;
+	struct vr_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	bus_dma_segment_t seg;
 	struct vr_type *vrt;
@@ -1524,7 +1486,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	sc->vr_save_irq = PCI_CONF_READ(PCI_INTERRUPT_REG);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    vr_restore_state)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->vr_dev.dv_xname,
 		    error);
@@ -1738,8 +1700,10 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	sc->vr_mii.mii_readreg = vr_mii_readreg;
 	sc->vr_mii.mii_writereg = vr_mii_writereg;
 	sc->vr_mii.mii_statchg = vr_mii_statchg;
-	ifmedia_init(&sc->vr_mii.mii_media, IFM_IMASK, vr_ifmedia_upd,
-		vr_ifmedia_sts);
+
+	sc->vr_ec.ec_mii = &sc->vr_mii;
+	ifmedia_init(&sc->vr_mii.mii_media, IFM_IMASK, ether_mediachange,
+		ether_mediastatus);
 	mii_attach(&sc->vr_dev, &sc->vr_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_FORCEANEG);
 	if (LIST_FIRST(&sc->vr_mii.mii_phys) == NULL) {
@@ -1789,9 +1753,10 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, void *ssc, pcireg_t state)
+vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, device_t self,
+    pcireg_t state)
 {
-	struct vr_softc *sc = ssc;
+	struct vr_softc *sc = device_private(self);
 	int error;
 
 	if (state == PCI_PMCSR_STATE_D0)

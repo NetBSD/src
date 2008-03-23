@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.20.14.2 2008/01/09 01:48:35 matt Exp $
+#	files.sandpoint,v 1.20.14.2 2008/01/09 01:48:35 matt Exp
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -55,9 +55,6 @@ device	ociic: i2cbus, i2cexec
 attach ociic at eumb with iic_eumb
 file	arch/sandpoint/sandpoint/iic_eumb.c	iic_eumb
 
-# generic fb driver
-include "dev/wsfb/files.wsfb"
-
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
@@ -90,9 +87,6 @@ file	arch/powerpc/isa/isadma_machdep.c	isa
 
 # PC clock
 file	arch/sandpoint/isa/isaclock.c		isa
-
-include	"dev/wscons/files.wscons"
-include	"dev/wsfont/files.wsfont"
 
 include "dev/pckbport/files.pckbport"
 

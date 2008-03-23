@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.204.2.2 2008/01/09 01:58:30 matt Exp $	*/
+/*	lfs_segment.c,v 1.204.2.2 2008/01/09 01:58:30 matt Exp	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.204.2.2 2008/01/09 01:58:30 matt Exp $");
+__KERNEL_RCSID(0, "lfs_segment.c,v 1.204.2.2 2008/01/09 01:58:30 matt Exp");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1392,13 +1392,13 @@ loop:
 # endif /* LFS_USE_B_INVAL */
 		if (!(bp->b_oflags & BO_DELWRI))
 			panic("lfs_gather: bp not BO_DELWRI");
-		if (!(bp->b_cflags & BC_LOCKED)) {
+		if (!(bp->b_flags & B_LOCKED)) {
 			DLOG((DLOG_SEG, "lfs_gather: lbn %" PRId64
-			      " blk %" PRId64 " not BC_LOCKED\n",
+			      " blk %" PRId64 " not B_LOCKED\n",
 			      bp->b_lblkno,
 			      dbtofsb(fs, bp->b_blkno)));
 			VOP_PRINT(bp->b_vp);
-			panic("lfs_gather: bp not BC_LOCKED");
+			panic("lfs_gather: bp not B_LOCKED");
 		}
 #endif
 		if (lfs_gatherblock(sp, bp, &bufcache_lock)) {
@@ -2520,7 +2520,7 @@ lfs_cluster_aiodone(struct buf *bp)
 
 		mutex_enter(&bufcache_lock);
 		if (tbp->b_iodone == NULL) {
-			KASSERT(tbp->b_cflags & BC_LOCKED);
+			KASSERT(tbp->b_flags & B_LOCKED);
 			bremfree(tbp);
 			if (vp) {
 				mutex_enter(&vp->v_interlock);
@@ -2530,8 +2530,8 @@ lfs_cluster_aiodone(struct buf *bp)
 			tbp->b_flags |= B_ASYNC; /* for biodone */
 		}
 
-		if (((tbp->b_cflags | tbp->b_oflags) &
-		    (BC_LOCKED | BO_DELWRI)) == BC_LOCKED)
+		if (((tbp->b_flags | tbp->b_oflags) &
+		    (B_LOCKED | BO_DELWRI)) == B_LOCKED)
 			LFS_UNLOCK_BUF(tbp);
 
 		if (tbp->b_oflags & BO_DONE) {
@@ -2776,7 +2776,8 @@ lfs_vunref(struct vnode *vp)
 	}
 
 	/* does not call inactive */
-	vrele(vp);	/* XXXAD fix later */
+	mutex_enter(&vp->v_interlock);
+	vrelel(vp, VRELEL_NOINACTIVE);
 }
 
 /*
@@ -2794,7 +2795,8 @@ lfs_vunref_head(struct vnode *vp)
 	ASSERT_SEGLOCK(VTOI(vp)->i_lfs);
 
 	/* does not call inactive, inserts non-held vnode at head of freelist */
-	vrele(vp);	/* XXXAD fix later */
+	mutex_enter(&vp->v_interlock);
+	vrelel(vp, VRELEL_NOINACTIVE | VRELEL_ONHEAD);
 }
 
 

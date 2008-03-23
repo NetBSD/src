@@ -43,7 +43,6 @@
 __KERNEL_RCSID(0, "hpc_machdep.c,v 1.82 2006/10/07 13:53:24 peter Exp");
 
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_pmap_debug.h"
 #include "fs_nfs.h"
 #include "ksyms.h"
@@ -113,11 +112,7 @@ u_int cpu_reset_address = 0;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 struct bootinfo *bootinfo, bootinfo_storage;
@@ -694,13 +689,6 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
-
-#ifdef IPKDB
-	/* Initialize ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif /* IPKDB */
 
 #ifdef BOOT_DUMP
 	dumppages((char *)kernel_l1pt.pv_va, 16);

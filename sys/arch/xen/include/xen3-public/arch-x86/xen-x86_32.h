@@ -1,4 +1,4 @@
-/* $NetBSD: xen-x86_32.h,v 1.2.12.2 2007/11/06 23:24:20 matt Exp $ */
+/* xen-x86_32.h,v 1.2.12.2 2007/11/06 23:24:20 matt Exp */
 /******************************************************************************
  * xen-x86_32.h
  * 
@@ -69,7 +69,7 @@
  * Virtual addresses beyond this are not modifiable by guest OSes. The 
  * machine->physical mapping table starts at this address, read-only.
  */
-#ifdef CONFIG_X86_PAE
+#ifdef PAE
 #define __HYPERVISOR_VIRT_START 0xF5800000
 #define __MACH2PHYS_VIRT_START  0xF5800000
 #define __MACH2PHYS_VIRT_END    0xF6800000

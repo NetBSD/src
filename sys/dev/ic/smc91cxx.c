@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.61.2.2 2007/11/06 23:27:11 matt Exp $	*/
+/*	smc91cxx.c,v 1.61.2.2 2007/11/06 23:27:11 matt Exp	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.61.2.2 2007/11/06 23:27:11 matt Exp $");
+__KERNEL_RCSID(0, "smc91cxx.c,v 1.61.2.2 2007/11/06 23:27:11 matt Exp");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -432,6 +432,7 @@ smc91cxx_set_media(sc, media)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
+	int rc;
 
 	/*
 	 * If the interface is not currently powered on, just return.
@@ -444,8 +445,9 @@ smc91cxx_set_media(sc, media)
 	if (IFM_TYPE(media) != IFM_ETHER)
 		return (EINVAL);
 
-	if (sc->sc_flags & SMC_FLAGS_HAS_MII)
-		return (mii_mediachg(&sc->sc_mii));
+	if ((sc->sc_flags & SMC_FLAGS_HAS_MII) == 0 ||
+	    (rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		rc = 0;
 
 	switch (IFM_SUBTYPE(media)) {
 	case IFM_10_T:
@@ -464,7 +466,7 @@ smc91cxx_set_media(sc, media)
 		return (EINVAL);
 	}
 
-	return (0);
+	return rc;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.2.16.2 2008/01/09 01:50:17 matt Exp $	*/
+/*	xenfunc.c,v 1.2.16.2 2008/01/09 01:50:17 matt Exp	*/
 
 /*
  *
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.2.16.3 2008/03/23 02:04:30 matt Exp $");
+
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
@@ -51,7 +54,6 @@
 #endif
 
 void xen_set_ldt(vaddr_t, uint32_t);
-void xen_update_descriptor(union descriptor *, union descriptor *);
 
 void 
 invlpg(vaddr_t addr)

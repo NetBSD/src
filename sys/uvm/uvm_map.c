@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.240.2.2 2008/01/09 01:58:41 matt Exp $	*/
+/*	uvm_map.c,v 1.240.2.2 2008/01/09 01:58:41 matt Exp	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.240.2.2 2008/01/09 01:58:41 matt Exp $");
+__KERNEL_RCSID(0, "uvm_map.c,v 1.240.2.2 2008/01/09 01:58:41 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3409,7 +3409,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		vm_map_unbusy(map);
 
 #ifdef DIAGNOSTIC
-		if (timestamp_save != map->timestamp)
+		if (timestamp_save + 1 != map->timestamp)
 			panic("uvm_map_pageable: stale map");
 #endif
 
@@ -3637,7 +3637,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 		vm_map_unbusy(map);
 
 #ifdef DIAGNOSTIC
-		if (timestamp_save != map->timestamp)
+		if (timestamp_save + 1 != map->timestamp)
 			panic("uvm_map_pageable_all: stale map");
 #endif
 
@@ -3802,7 +3802,6 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 					continue;
 				}
 				KASSERT(pg->uanon == anon);
-				pmap_clear_reference(pg);
 				uvm_pagedeactivate(pg);
 				mutex_exit(&uvm_pageqlock);
 				mutex_exit(&anon->an_lock);
@@ -4611,6 +4610,7 @@ uvm_kmapent_free(struct vm_map_entry *entry)
 	if (!pmap_extract(pmap, va, &pa))
 		panic("%s: no mapping", __func__);
 	pmap_kremove(va, PAGE_SIZE);
+	pmap_update(vm_map_pmap(map));
 	vm_map_unlock(map);
 	pg = PHYS_TO_VM_PAGE(pa);
 	uvm_pagefree(pg);

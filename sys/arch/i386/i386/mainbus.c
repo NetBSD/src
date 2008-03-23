@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.71.20.1 2008/01/09 01:46:38 matt Exp $	*/
+/*	mainbus.c,v 1.71.20.1 2008/01/09 01:46:38 matt Exp	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.71.20.1 2008/01/09 01:46:38 matt Exp $");
+__KERNEL_RCSID(0, "mainbus.c,v 1.71.20.1 2008/01/09 01:46:38 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ void	mainbus_childdetached(device_t, device_t);
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL2(mainbus, sizeof(struct device),
+CFATTACH_DECL2_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL, NULL, mainbus_childdetached);
 
 int	mainbus_print(void *, const char *);

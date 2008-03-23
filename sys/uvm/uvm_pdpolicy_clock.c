@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.8.18.1 2008/01/09 01:58:44 matt Exp $	*/
+/*	uvm_pdpolicy_clock.c,v 1.8.18.1 2008/01/09 01:58:44 matt Exp	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.8.18.1 2008/01/09 01:58:44 matt Exp $");
+__KERNEL_RCSID(0, "uvm_pdpolicy_clock.c,v 1.8.18.1 2008/01/09 01:58:44 matt Exp");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -275,7 +275,6 @@ uvmpdpol_balancequeue(int swap_shortage)
 
 		if (inactive_shortage > 0) {
 			/* no need to check wire_count as pg is "active" */
-			pmap_clear_reference(p);
 			uvmpdpol_pagedeactivate(p);
 			uvmexp.pddeact++;
 			inactive_shortage--;
@@ -296,6 +295,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 	}
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
+		pmap_clear_reference(pg);
 		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		pdpol_state.s_inactive++;
@@ -434,10 +434,10 @@ uvmpdpol_sysctlsetup(void)
 	    "for anonymous application data"));
 	uvm_pctparam_createsysctlnode(&s->s_filemin, "filemin",
 	    SYSCTL_DESCR("Percentage of physical memory reserved "
-	    "for cached executable data"));
+	    "for cached file data"));
 	uvm_pctparam_createsysctlnode(&s->s_execmin, "execmin",
 	    SYSCTL_DESCR("Percentage of physical memory reserved "
-	    "for cached file data"));
+	    "for cached executable data"));
 
 	uvm_pctparam_createsysctlnode(&s->s_anonmax, "anonmax",
 	    SYSCTL_DESCR("Percentage of physical memory which will "

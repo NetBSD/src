@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.76.8.1 2007/11/06 23:35:01 matt Exp $	*/
+/*	types.h,v 1.76.8.1 2007/11/06 23:35:01 matt Exp	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -107,8 +107,6 @@ typedef unsigned char	unchar;		/* Sys V compatibility */
 typedef	unsigned short	ushort;		/* Sys V compatibility */
 typedef	unsigned int	uint;		/* Sys V compatibility */
 typedef unsigned long	ulong;		/* Sys V compatibility */
-
-typedef	u_long		cpuid_t;
 #endif
 
 typedef	uint64_t	u_quad_t;	/* quads */
@@ -164,6 +162,7 @@ typedef	__gid_t		gid_t;		/* group id */
 #define	gid_t		__gid_t
 #endif
 
+typedef	int		idtype_t;	/* type of the id */
 typedef	uint32_t	id_t;		/* group id, process id or user id */
 typedef	uint64_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
@@ -194,9 +193,11 @@ typedef	__uid_t		uid_t;		/* user id */
 #define	uid_t		__uid_t
 #endif
 
-typedef	int32_t		dtime_t;	/* on-disk time_t */
-
 typedef int		mqd_t;
+
+typedef	unsigned long	cpuid_t;
+
+typedef	int		psetid_t;
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 /*

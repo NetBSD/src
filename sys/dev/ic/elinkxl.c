@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.98.2.1 2007/11/06 23:26:35 matt Exp $	*/
+/*	elinkxl.c,v 1.98.2.1 2007/11/06 23:26:35 matt Exp	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.98.2.1 2007/11/06 23:26:35 matt Exp $");
+__KERNEL_RCSID(0, "elinkxl.c,v 1.98.2.1 2007/11/06 23:26:35 matt Exp");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1509,15 +1509,19 @@ ex_ioctl(ifp, cmd, data)
 		}
 		/* FALLTHROUGH */
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				ex_set_mc(sc);
-			error = 0;
+			ex_set_mc(sc);
 		}
 		break;
 	}

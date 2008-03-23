@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.210.2.2 2008/01/09 01:54:42 matt Exp $	*/
+/*	uhci.c,v 1.210.2.2 2008/01/09 01:54:42 matt Exp	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.210.2.2 2008/01/09 01:54:42 matt Exp $");
+__KERNEL_RCSID(0, "uhci.c,v 1.210.2.2 2008/01/09 01:54:42 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.210.2.2 2008/01/09 01:54:42 matt Exp $");
 
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
+#include <dev/usb/usbroothub_subr.h>
 
 /* Use bandwidth reclamation for control transfers. Some devices choke on it. */
 /*#define UHCI_CTL_LOOP */
@@ -196,7 +197,6 @@ Static void		uhci_add_bulk(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_remove_ls_ctrl(uhci_softc_t *,uhci_soft_qh_t *);
 Static void		uhci_remove_hs_ctrl(uhci_softc_t *,uhci_soft_qh_t *);
 Static void		uhci_remove_bulk(uhci_softc_t *,uhci_soft_qh_t *);
-Static int		uhci_str(usb_string_descriptor_t *, int, const char *);
 Static void		uhci_add_loop(uhci_softc_t *sc);
 Static void		uhci_rem_loop(uhci_softc_t *sc);
 
@@ -554,9 +554,9 @@ uhci_init(uhci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-uhci_activate(device_ptr_t self, enum devact act)
+uhci_activate(device_t self, enum devact act)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)self;
+	struct uhci_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -570,6 +570,15 @@ uhci_activate(device_ptr_t self, enum devact act)
 		break;
 	}
 	return (rv);
+}
+
+void
+uhci_childdet(device_t self, device_t child)
+{
+	struct uhci_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
 }
 
 int
@@ -705,7 +714,7 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
  * are almost suspended anyway.
  */
 bool
-uhci_resume(device_t dv)
+uhci_resume(device_t dv PMF_FN_ARGS)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
@@ -715,6 +724,9 @@ uhci_resume(device_t dv)
 
 	cmd = UREAD2(sc, UHCI_CMD);
 	sc->sc_bus.use_polling++;
+	UWRITE2(sc, UHCI_INTR, 0);
+	uhci_globalreset(sc);
+	uhci_reset(sc);
 	if (cmd & UHCI_CMD_RS)
 		uhci_run(sc, 0);
 
@@ -726,9 +738,9 @@ uhci_resume(device_t dv)
 	UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force resume */
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 	UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
-	UHCICMD(sc, UHCI_CMD_MAXP);
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE |
 	    UHCI_INTR_RIE | UHCI_INTR_IOCE | UHCI_INTR_SPIE);
+	UHCICMD(sc, UHCI_CMD_MAXP);
 	uhci_run(sc, 1); /* and start traffic again */
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 	sc->sc_bus.use_polling--;
@@ -746,7 +758,7 @@ uhci_resume(device_t dv)
 }
 
 bool
-uhci_suspend(device_t dv)
+uhci_suspend(device_t dv PMF_FN_ARGS)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
@@ -3019,23 +3031,6 @@ const usb_hub_descriptor_t uhci_hubd_piix = {
 	{ 0 },
 };
 
-int
-uhci_str(usb_string_descriptor_t *p, int l, const char *s)
-{
-	int i;
-
-	if (l == 0)
-		return (0);
-	p->bLength = 2 * strlen(s) + 2;
-	if (l == 1)
-		return (1);
-	p->bDescriptorType = UDESC_STRING;
-	l -= 2;
-	for (i = 0; s[i] && l > 1; i++, l -= 2)
-		USETW2(p->bString[i], 0, s[i]);
-	return (2*i+2);
-}
-
 /*
  * The USB hub protocol requires that SET_FEATURE(PORT_RESET) also
  * enables the port, and also states that SET_FEATURE(PORT_ENABLE)
@@ -3230,24 +3225,21 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &uhci_endpd, l);
 			break;
 		case UDESC_STRING:
-			*(u_int8_t *)buf = 0;
-			totlen = 1;
+#define sd ((usb_string_descriptor_t *)buf)
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				if (len > 0)
-					*(u_int8_t *)buf = 4;
-				if (len >=  4) {
-		USETW(((usb_string_descriptor_t *)buf)->bString[0], 0x0409);
-					totlen = 4;
-				}
+				totlen = usb_makelangtbl(sd, len);
 				break;
 			case 1: /* Vendor */
-				totlen = uhci_str(buf, len, sc->sc_vendor);
+				totlen = usb_makestrdesc(sd, len,
+							 sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				totlen = uhci_str(buf, len, "UHCI root hub");
+				totlen = usb_makestrdesc(sd, len,
+							 "UHCI root hub");
 				break;
 			}
+#undef sd
 			break;
 		default:
 			err = USBD_IOERROR;

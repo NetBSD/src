@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_softint.c,v 1.4.2.3 2008/01/09 01:56:09 matt Exp $	*/
+/*	kern_softint.c,v 1.4.2.3 2008/01/09 01:56:09 matt Exp	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -93,9 +93,8 @@
  *	The kernel does not allow software interrupts to use facilities
  *	or perform actions that may block for a significant amount of
  *	time.  This means that it's not valid for a software interrupt
- *	to: sleep on condition variables, use the lockmgr() facility,
- *	or wait for resources to become available (for example,
- *	memory).
+ *	to sleep on condition variables	or wait for resources to become
+ *	available (for example,	memory).
  *
  * Per-CPU operation
  *
@@ -184,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.4.2.3 2008/01/09 01:56:09 matt Exp $");
+__KERNEL_RCSID(0, "kern_softint.c,v 1.4.2.3 2008/01/09 01:56:09 matt Exp");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -255,16 +254,16 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 
 	error = kthread_create(pri, KTHREAD_MPSAFE | KTHREAD_INTR |
 	    KTHREAD_IDLE, ci, softint_thread, si, &si->si_lwp,
-	    "soft%s/%d", desc, (int)ci->ci_cpuid);
+	    "soft%s/%u", desc, ci->ci_index);
 	if (error != 0)
 		panic("softint_init_isr: error %d", error);
 
-	snprintf(si->si_name, sizeof(si->si_name), "%s/%d", desc,
-	    (int)ci->ci_cpuid);
+	snprintf(si->si_name, sizeof(si->si_name), "%s/%u", desc,
+	    ci->ci_index);
 	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_INTR, NULL,
 	   "softint", si->si_name);
-	snprintf(si->si_name_block, sizeof(si->si_name_block), "%s block/%d",
-	    desc, (int)ci->ci_cpuid);
+	snprintf(si->si_name_block, sizeof(si->si_name_block), "%s block/%u",
+	    desc, ci->ci_index);
 	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_INTR, NULL,
 	   "softint", si->si_name_block);
 
@@ -520,6 +519,9 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 	 */
 	uvmexp.softs++;
 
+	KASSERT(si->si_cpu == curcpu());
+	KASSERT(si->si_lwp->l_wchan == NULL);
+	KASSERT(si->si_active);
 	si->si_evcnt.ev_count++;
 	si->si_active = 0;
 }
@@ -766,10 +768,10 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * for it.
 	 */
 	if (timing)
-		bintime(&l->l_stime);
+		binuptime(&l->l_stime);
 	softint_execute(si, l, s);
 	if (timing) {
-		bintime(&now);
+		binuptime(&now);
 		updatertime(l, &now);
 		l->l_flag &= ~LW_TIMEINTR;
 	}

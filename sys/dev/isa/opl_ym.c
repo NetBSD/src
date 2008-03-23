@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ym.c,v 1.13.24.1 2007/11/06 23:27:55 matt Exp $	*/
+/*	opl_ym.c,v 1.13.24.1 2007/11/06 23:27:55 matt Exp	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.13.24.1 2007/11/06 23:27:55 matt Exp $");
+__KERNEL_RCSID(0, "opl_ym.c,v 1.13.24.1 2007/11/06 23:27:55 matt Exp");
 
 #include "mpu_ym.h"
 
@@ -64,20 +64,20 @@ __KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.13.24.1 2007/11/06 23:27:55 matt Exp $"
 #include <dev/ic/opl3sa3reg.h>
 #include <dev/isa/ymvar.h>
 
-int	opl_ym_match(struct device *, struct cfdata *, void *);
-void	opl_ym_attach(struct device *, struct device *, void *);
+int	opl_ym_match(device_t, cfdata_t, void *);
+void	opl_ym_attach(device_t, device_t, void *);
 #ifndef AUDIO_NO_POWER_CTL
 int	opl_ym_power_ctl(void *, int);
 #endif
 
-CFATTACH_DECL(opl_ym, sizeof(struct opl_softc),
+CFATTACH_DECL_NEW(opl_ym, sizeof(struct opl_softc),
     opl_ym_match, opl_ym_attach, NULL, NULL);
 
 int
-opl_ym_match(struct device *parent, struct cfdata *match, void *aux)
+opl_ym_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
-	struct ym_softc *ssc = (struct ym_softc *)parent;
+	struct ym_softc *ssc = device_private(parent);
 
 	if (aa->type != AUDIODEV_TYPE_OPL || ssc->sc_opl_ioh == 0)
 		return (0);
@@ -85,11 +85,12 @@ opl_ym_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-opl_ym_attach(struct device *parent, struct device *self, void *aux)
+opl_ym_attach(device_t parent, device_t self, void *aux)
 {
-	struct ym_softc *ssc = (struct ym_softc *)parent;
-	struct opl_softc *sc = (struct opl_softc *)self;
+	struct ym_softc *ssc = device_private(parent);
+	struct opl_softc *sc = device_private(self);
 
+	sc->mididev.dev = self;
 	sc->ioh = ssc->sc_opl_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;
@@ -105,9 +106,7 @@ opl_ym_attach(struct device *parent, struct device *self, void *aux)
 
 #ifndef AUDIO_NO_POWER_CTL
 int
-opl_ym_power_ctl(arg, onoff)
-	void *arg;
-	int onoff;
+opl_ym_power_ctl(void *arg, int onoff)
 {
 	struct ym_softc *ssc = arg;
 

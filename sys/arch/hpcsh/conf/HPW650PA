@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.24.10.1 2007/11/06 23:16:58 matt Exp $
+#	HPW650PA,v 1.24.10.1 2007/11/06 23:16:58 matt Exp
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -37,7 +37,6 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables
-options 	EXEC_ELF32	# 32-bit ELF executables
 
 # File systems
 file-system 	FFS		# UFS

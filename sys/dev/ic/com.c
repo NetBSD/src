@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp $	*/
+/*	com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp $");
+__KERNEL_RCSID(0, "com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -228,14 +228,6 @@ static int comconsrate;
 static tcflag_t comconscflag;
 static struct cnm_state com_cnm_state;
 
-#ifndef __HAVE_TIMECOUNTER
-static int ppscap =
-	PPS_TSFMT_TSPEC |
-	PPS_CAPTUREASSERT |
-	PPS_CAPTURECLEAR |
-	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
-#endif /* !__HAVE_TIMECOUNTER */
-
 #ifdef KGDB
 #include <sys/kgdb.h>
 
@@ -262,7 +254,7 @@ const bus_size_t com_std_map[16] = COM_REG_16550;
 #define	COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define	COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 device_is_active(&(sc)->sc_dev))
+			 device_is_active((sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
@@ -310,16 +302,18 @@ comstatus(struct com_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
-	printf("%s: %s %cclocal  %cdcd %cts_carr_on %cdtr %ctx_stopped\n",
-	    sc->sc_dev.dv_xname, str,
+	aprint_normal_dev(sc->sc_dev,
+	    "%s %cclocal  %cdcd %cts_carr_on %cdtr %ctx_stopped\n",
+	    str,
 	    ISSET(tp->t_cflag, CLOCAL) ? '+' : '-',
 	    ISSET(sc->sc_msr, MSR_DCD) ? '+' : '-',
 	    ISSET(tp->t_state, TS_CARR_ON) ? '+' : '-',
 	    ISSET(sc->sc_mcr, MCR_DTR) ? '+' : '-',
 	    sc->sc_tx_stopped ? '+' : '-');
 
-	printf("%s: %s %ccrtscts %ccts %cts_ttstop  %crts rx_flags=0x%x\n",
-	    sc->sc_dev.dv_xname, str,
+	aprint_normal_dev(sc->sc_dev,
+	    "%s %ccrtscts %ccts %cts_ttstop  %crts rx_flags=0x%x\n",
+	    str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? '+' : '-',
 	    ISSET(sc->sc_msr, MSR_CTS) ? '+' : '-',
 	    ISSET(tp->t_state, TS_TTSTOP) ? '+' : '-',
@@ -489,7 +483,7 @@ fifodelay:
 	aprint_normal(": %s\n", fifo_msg);
 	if (ISSET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;
-		aprint_normal("%s: txfifo disabled\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "txfifo disabled\n");
 	}
 
 fifodone:
@@ -504,8 +498,8 @@ fifodone:
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = com_rbuf_size;
 	if (sc->sc_rbuf == NULL) {
-		aprint_error("%s: unable to allocate ring buffer\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate ring buffer\n");
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (com_rbuf_size << 1);
@@ -522,9 +516,9 @@ fifodone:
 		maj = cdevsw_lookup_major(&com_cdevsw);
 
 		tp->t_dev = cn_tab->cn_dev = makedev(maj,
-						     device_unit(&sc->sc_dev));
+						     device_unit(sc->sc_dev));
 
-		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "console\n");
 	}
 
 #ifdef KGDB
@@ -541,14 +535,14 @@ fifodone:
 
 			SET(sc->sc_hwflags, COM_HW_KGDB);
 		}
-		aprint_normal("%s: kgdb\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "kgdb\n");
 	}
 #endif
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, comsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
 
@@ -613,10 +607,13 @@ com_config(struct com_softc *sc)
 }
 
 int
-com_detach(struct device *self, int flags)
+com_detach(device_t self, int flags)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	int maj, mn;
+
+        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		return EBUSY;
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
@@ -651,14 +648,18 @@ com_detach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+	callout_destroy(&sc->sc_diag_callout);
+
+	/* Destroy the lock. */
+	mutex_destroy(&sc->sc_lock);
 
 	return (0);
 }
 
 int
-com_activate(struct device *self, enum devact act)
+com_activate(device_t self, enum devact act)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -704,12 +705,6 @@ com_shutdown(struct com_softc *sc)
 
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
-
-#ifndef __HAVE_TIMECOUNTER
-	/* Turn off PPS capture on last close. */
-	sc->sc_ppsmask = 0;
-	sc->ppsparam.mode = 0;
-#endif /* !__HAVE_TIMECOUNTER */
 
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
@@ -757,12 +752,12 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s;
 	int error;
 
-	sc = device_lookup(&com_cd, COMUNIT(dev));
+	sc = device_lookup_private(&com_cd, COMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -792,8 +787,8 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
 				splx(s);
-				printf("%s: device enable failed\n",
-				       sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				    "device enable failed\n");
 				return (EIO);
 			}
 			mutex_spin_enter(&sc->sc_lock);
@@ -813,14 +808,9 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_msr = CSR_READ_1(&sc->sc_regs, COM_REG_MSR);
 
 		/* Clear PPS capture state on first open. */
-#ifdef __HAVE_TIMECOUNTER
 		memset(&sc->sc_pps_state, 0, sizeof(sc->sc_pps_state));
 		sc->sc_pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
 		pps_init(&sc->sc_pps_state);
-#else /* !__HAVE_TIMECOUNTER */
-		sc->sc_ppsmask = 0;
-		sc->ppsparam.mode = 0;
-#endif /* !__HAVE_TIMECOUNTER */
 
 		mutex_spin_exit(&sc->sc_lock);
 
@@ -904,7 +894,8 @@ bad:
 int
 comclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -932,7 +923,8 @@ comclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 comread(dev_t dev, struct uio *uio, int flag)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -944,7 +936,8 @@ comread(dev_t dev, struct uio *uio, int flag)
 int
 comwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -956,7 +949,8 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 int
 compoll(dev_t dev, int events, struct lwp *l)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -968,7 +962,8 @@ compoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 comtty(dev_t dev)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -977,12 +972,17 @@ comtty(dev_t dev)
 int
 comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
 	int error;
 
+	sc = device_lookup_private(&com_cd, COMUNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
+
+	tp = sc->sc_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -1043,7 +1043,6 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		*(int *)data = com_to_tiocm(sc);
 		break;
 
-#ifdef __HAVE_TIMECOUNTER
 	case PPS_IOC_CREATE:
 	case PPS_IOC_DESTROY:
 	case PPS_IOC_GETPARAMS:
@@ -1055,103 +1054,8 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 		error = pps_ioctl(cmd, data, &sc->sc_pps_state);
 		break;
-#else /* !__HAVE_TIMECOUNTER */
-	case PPS_IOC_CREATE:
-		break;
-
-	case PPS_IOC_DESTROY:
-		break;
-
-	case PPS_IOC_GETPARAMS: {
-		pps_params_t *pp;
-		pp = (pps_params_t *)data;
-		*pp = sc->ppsparam;
-		break;
-	}
-
-	case PPS_IOC_SETPARAMS: {
-	  	pps_params_t *pp;
-		int mode;
-		pp = (pps_params_t *)data;
-		if (pp->mode & ~ppscap) {
-			error = EINVAL;
-			break;
-		}
-		sc->ppsparam = *pp;
-	 	/*
-		 * Compute msr masks from user-specified timestamp state.
-		 */
-		mode = sc->ppsparam.mode;
-		switch (mode & PPS_CAPTUREBOTH) {
-		case 0:
-			sc->sc_ppsmask = 0;
-			break;
-
-		case PPS_CAPTUREASSERT:
-			sc->sc_ppsmask = MSR_DCD;
-			sc->sc_ppsassert = MSR_DCD;
-			sc->sc_ppsclear = -1;
-			break;
-
-		case PPS_CAPTURECLEAR:
-			sc->sc_ppsmask = MSR_DCD;
-			sc->sc_ppsassert = -1;
-			sc->sc_ppsclear = 0;
-			break;
-
-		case PPS_CAPTUREBOTH:
-			sc->sc_ppsmask = MSR_DCD;
-			sc->sc_ppsassert = MSR_DCD;
-			sc->sc_ppsclear = 0;
-			break;
-
-		default:
-			error = EINVAL;
-			break;
-		}
-		break;
-	}
-
-	case PPS_IOC_GETCAP:
-		*(int*)data = ppscap;
-		break;
-
-	case PPS_IOC_FETCH: {
-		pps_info_t *pi;
-		pi = (pps_info_t *)data;
-		*pi = sc->ppsinfo;
-		break;
-	}
-
-#ifdef PPS_SYNC
-	case PPS_IOC_KCBIND: {
-		int edge = (*(int *)data) & PPS_CAPTUREBOTH;
-
-		if (edge == 0) {
-			/*
-			 * remove binding for this source; ignore
-			 * the request if this is not the current
-			 * hardpps source
-			 */
-			if (pps_kc_hardpps_source == sc) {
-				pps_kc_hardpps_source = NULL;
-				pps_kc_hardpps_mode = 0;
-			}
-		} else {
-			/*
-			 * bind hardpps to this source, replacing any
-			 * previously specified source or edges
-			 */
-			pps_kc_hardpps_source = sc;
-			pps_kc_hardpps_mode = edge;
-		}
-		break;
-	}
-#endif /* PPS_SYNC */
-#endif /* !__HAVE_TIMECOUNTER */
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
-#ifdef __HAVE_TIMECOUNTER
 #ifndef PPS_TRAILING_EDGE
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->sc_pps_state.ppsinfo.assert_timestamp);
@@ -1159,25 +1063,6 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->sc_pps_state.ppsinfo.clear_timestamp);
 #endif
-#else /* !__HAVE_TIMECOUNTER */
-		/*
-		 * Some GPS clocks models use the falling rather than
-		 * rising edge as the on-the-second signal.
-		 * The old API has no way to specify PPS polarity.
-		 */
-		sc->sc_ppsmask = MSR_DCD;
-#ifndef PPS_TRAILING_EDGE
-		sc->sc_ppsassert = MSR_DCD;
-		sc->sc_ppsclear = -1;
-		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
-		    &sc->ppsinfo.assert_timestamp);
-#else
-		sc->sc_ppsassert = -1;
-		sc->sc_ppsclear = 0;
-		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
-		    &sc->ppsinfo.clear_timestamp);
-#endif
-#endif /* !__HAVE_TIMECOUNTER */
 		break;
 
 	default:
@@ -1343,7 +1228,8 @@ cflag2lcr(tcflag_t cflag)
 int
 comparam(struct tty *tp, struct termios *t)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 	int ospeed;
 	u_char lcr;
 
@@ -1551,8 +1437,7 @@ com_iflush(struct com_softc *sc)
 		    CSR_READ_1(regsp, COM_REG_RXDATA);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: com_iflush timeout %02x\n", sc->sc_dev.dv_xname,
-		       reg);
+		aprint_error_dev(sc->sc_dev, "com_iflush timeout %02x\n", reg);
 #endif
 }
 
@@ -1635,7 +1520,8 @@ com_loadchannelregs(struct com_softc *sc)
 int
 comhwiflow(struct tty *tp, int block)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
@@ -1690,7 +1576,8 @@ com_hwiflow(struct com_softc *sc)
 void
 comstart(struct tty *tp)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 	struct com_regs *regsp = &sc->sc_regs;
 	int s;
 
@@ -1752,7 +1639,8 @@ out:
 void
 comstop(struct tty *tp, int flag)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 
 	mutex_spin_enter(&sc->sc_lock);
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -1780,7 +1668,7 @@ comdiag(void *arg)
 	mutex_spin_exit(&sc->sc_lock);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
@@ -2067,7 +1955,6 @@ again:	do {
 		msr = CSR_READ_1(regsp, COM_REG_MSR);
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
-#ifdef __HAVE_TIMECOUNTER
 		if ((sc->sc_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) &&
 		    (delta & MSR_DCD)) {
 			pps_capture(&sc->sc_pps_state);
@@ -2076,55 +1963,6 @@ again:	do {
 			    PPS_CAPTUREASSERT :
 			    PPS_CAPTURECLEAR);
 		}
-#else /* !__HAVE_TIMECOUNTER */
-		/*
-		 * Pulse-per-second (PSS) signals on edge of DCD?
-		 * Process these even if line discipline is ignoring DCD.
-		 */
-		if (delta & sc->sc_ppsmask) {
-			struct timeval tv;
-		    	if ((msr & sc->sc_ppsmask) == sc->sc_ppsassert) {
-				/* XXX nanotime() */
-				microtime(&tv);
-				TIMEVAL_TO_TIMESPEC(&tv,
-				    &sc->ppsinfo.assert_timestamp);
-				if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
-					timespecadd(&sc->ppsinfo.assert_timestamp,
-					    &sc->ppsparam.assert_offset,
-						    &sc->ppsinfo.assert_timestamp);
-				}
-
-#ifdef PPS_SYNC
-				if (pps_kc_hardpps_source == sc &&
-				    pps_kc_hardpps_mode & PPS_CAPTUREASSERT) {
-					hardpps(&tv, tv.tv_usec);
-				}
-#endif
-				sc->ppsinfo.assert_sequence++;
-				sc->ppsinfo.current_mode = sc->ppsparam.mode;
-
-			} else if ((msr & sc->sc_ppsmask) == sc->sc_ppsclear) {
-				/* XXX nanotime() */
-				microtime(&tv);
-				TIMEVAL_TO_TIMESPEC(&tv,
-				    &sc->ppsinfo.clear_timestamp);
-				if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
-					timespecadd(&sc->ppsinfo.clear_timestamp,
-					    &sc->ppsparam.clear_offset,
-					    &sc->ppsinfo.clear_timestamp);
-				}
-
-#ifdef PPS_SYNC
-				if (pps_kc_hardpps_source == sc &&
-				    pps_kc_hardpps_mode & PPS_CAPTURECLEAR) {
-					hardpps(&tv, tv.tv_usec);
-				}
-#endif
-				sc->ppsinfo.clear_sequence++;
-				sc->ppsinfo.current_mode = sc->ppsparam.mode;
-			}
-		}
-#endif /* !__HAVE_TIMECOUNTER */
 
 		/*
 		 * Process normal status changes
@@ -2532,19 +2370,32 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
  * have firmware which doesn't interact properly with a com device in
  * FIFO mode.
  */
-void
-com_cleanup(void *arg)
+bool
+com_cleanup(device_t self, int how)
 {
-	struct com_softc *sc = arg;
+	struct com_softc *sc = device_private(self);
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_FIFO, 0);
+
+	return true;
 }
 
 bool
-com_resume(device_t dev)
+com_suspend(device_t self PMF_FN_ARGS)
 {
-	struct com_softc *sc = device_private(dev);
+	struct com_softc *sc = device_private(self);
+
+	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, 0);
+	(void)CSR_READ_1(&sc->sc_regs, COM_REG_IIR);
+
+	return true;
+}
+
+bool
+com_resume(device_t self PMF_FN_ARGS)
+{
+	struct com_softc *sc = device_private(self);
 
 	mutex_spin_enter(&sc->sc_lock);
 	com_loadchannelregs(sc);

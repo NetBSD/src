@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.844.2.2 2008/01/09 01:46:27 matt Exp $
+# GENERIC,v 1.844.2.2 2008/01/09 01:46:27 matt Exp
 #
 # GENERIC machine description file
 #
@@ -22,15 +22,14 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.844.2.2 $"
+#ident 		"GENERIC-1.844.2.2"
 
-maxusers	32		# estimated number of users
+maxusers	64		# estimated number of users
 
 makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
 
 # CPU-related options.
-#options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # insert delay no-ops in interrupts; recommended on very old machines
@@ -451,7 +450,10 @@ gpio* 	at elansc?
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
 #ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
-					# watchdog and SpeedStep support
+					# watchdog, SpeedStep and HPET
+#hpet* 	at ichlpcib?
+gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
+gpio* 	at gcscpcib?			# timecounter, watchdog and GPIO
 #piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 #gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 #viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
@@ -473,6 +475,7 @@ eisa0	at pceb?
 
 # ISA bus support
 #isa0 	at amdpcib?
+isa0 	at gcscpcib?
 #isa0	at ichlpcib?
 #isa0	at piixpcib?
 #isa0	at gscpcib?
@@ -1104,6 +1107,10 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*	at uhmodem? portno ?
+
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
@@ -1409,7 +1416,7 @@ geodecntr* at geodegcb? 		# AMD Geode SC1100 high res. counter
 weasel* at pci?
 
 # Pull in optional local configuration
-include	"arch/i386/conf/GENERIC.local"
+cinclude "arch/i386/conf/GENERIC.local"
 
 
 # Pseudo-Devices

@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.38.8.2 2008/01/09 01:57:32 matt Exp $	*/
+/*	frag6.c,v 1.38.8.2 2008/01/09 01:57:32 matt Exp	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.38.8.2 2008/01/09 01:57:32 matt Exp $");
+__KERNEL_RCSID(0, "frag6.c,v 1.38.8.2 2008/01/09 01:57:32 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ static inline int ip6q_lock_try(void);
 static inline void ip6q_unlock(void);
 
 static inline int
-ip6q_lock_try()
+ip6q_lock_try(void)
 {
 	int s;
 
@@ -90,7 +90,7 @@ ip6q_lock_try()
 }
 
 static inline void
-ip6q_unlock()
+ip6q_unlock(void)
 {
 	int s;
 
@@ -129,7 +129,7 @@ do {									\
  * Initialise reassembly queue and fragment identifier.
  */
 void
-frag6_init()
+frag6_init(void)
 {
 
 	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
@@ -194,8 +194,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	dstifp = NULL;
 	/* find the destination interface of the packet. */
 	sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
-	rtcache_lookup(&ro, &u.dst);
-	if ((rt = rtcache_getrt(&ro)) != NULL && rt->rt_ifa != NULL)
+	if ((rt = rtcache_lookup(&ro, &u.dst)) != NULL && rt->rt_ifa != NULL)
 		dstifp = ((struct in6_ifaddr *)rt->rt_ifa)->ia_ifp;
 
 	/* jumbo payload can't contain a fragment header */
@@ -675,7 +674,7 @@ frag6_remque(struct ip6q *p6)
  * queue, discard it.
  */
 void
-frag6_slowtimo()
+frag6_slowtimo(void)
 {
 	struct ip6q *q6;
 	int s = splsoftnet();
@@ -722,7 +721,7 @@ frag6_slowtimo()
  * Drain off all datagram fragments.
  */
 void
-frag6_drain()
+frag6_drain(void)
 {
 
 	if (ip6q_lock_try() == 0)

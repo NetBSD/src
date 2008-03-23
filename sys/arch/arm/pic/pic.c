@@ -121,21 +121,24 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 {
 	struct intrsource ** const isbase = &pic->pic_sources[irq_base];
 	struct intrsource *is;
+	uint32_t *ipending = &pic->pic_pending_irqs[irq_base >> 5];
 	uint32_t ipl_mask = 0;
+
+	if (pending == 0)
+		return ipl_mask;
 
 	KASSERT((irq_base & 31) == 0);
 	
 	(*pic->pic_ops->pic_block_irqs)(pic, irq_base, pending);
 
+	*ipending |= pending;
         while (pending != 0) {
 		int n = ffs(pending);
 		if (n-- == 0)
 			break;
 		is = isbase[n];
 		KASSERT(is != NULL);
-
-		pic->pic_pending_irqs[is->is_irq >> 5] |=
-		     __BIT(is->is_irq & 0x1f);
+		KASSERT(irq_base <= is->is_irq && is->is_irq < irq_base + 32);
 		pending &= ~__BIT(n);
 		ipl_mask |= __BIT(is->is_ipl);
 	}
@@ -199,6 +202,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 	uint32_t pending_irqs;
 	uint32_t blocked_irqs;
 	int irq;
+	bool progress = false;
 	
 	KASSERT(pic->pic_pending_ipls & ipl_mask);
 
@@ -210,6 +214,8 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 	for (;;) {
 		pending_irqs = pic_find_pending_irqs_by_ipl(pic, irq_base,
 		    *ipending, ipl);
+		KASSERT((pending_irqs & *ipending) == pending_irqs);
+		KASSERT((pending_irqs & ~(*ipending)) == 0);
 		if (pending_irqs == 0) {
 #if PIC_MAXSOURCES > 32
 			irq_count += 32;
@@ -227,6 +233,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 			break;
 #endif
 		}
+		progress = true;
 		blocked_irqs = pending_irqs;
 		do {
 			irq = ffs(pending_irqs) - 1;
@@ -239,6 +246,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 				pic_dispatch(is, frame);
 				cpsid(I32_bit);
 			} else {
+				KASSERT(0);
 				blocked_irqs &= ~__BIT(irq);
 			}
 			pending_irqs = pic_find_pending_irqs_by_ipl(pic,
@@ -250,6 +258,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 		}
 	}
 
+	KASSERT(progress);
 	/*
 	 * Since interrupts are disabled, we don't have to be too careful
 	 * about these.

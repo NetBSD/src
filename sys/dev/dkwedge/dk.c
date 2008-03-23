@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.28.6.2 2008/01/09 01:52:31 matt Exp $	*/
+/*	dk.c,v 1.28.6.2 2008/01/09 01:52:31 matt Exp	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.28.6.2 2008/01/09 01:52:31 matt Exp $");
+__KERNEL_RCSID(0, "dk.c,v 1.28.6.2 2008/01/09 01:52:31 matt Exp");
 
 #include "opt_dkwedge.h"
 
@@ -169,7 +169,7 @@ dkwedge_detach(struct device *self, int flags)
 }
 
 CFDRIVER_DECL(dk, DV_DISK, NULL);
-CFATTACH_DECL(dk, sizeof(struct device),
+CFATTACH_DECL_NEW(dk, 0,
 	      dkwedge_match, dkwedge_attach, dkwedge_detach, NULL);
 
 /*
@@ -931,7 +931,9 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 				goto popen_fail;
 			}
 			/* VOP_OPEN() doesn't do this for us. */
+			mutex_enter(&vp->v_interlock);
 			vp->v_writecount++;
+			mutex_exit(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);
 			sc->sc_parent->dk_rawvp = vp;
 		}

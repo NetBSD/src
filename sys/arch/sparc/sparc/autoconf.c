@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.223.10.2 2008/01/09 01:48:56 matt Exp $ */
+/*	autoconf.c,v 1.223.10.2 2008/01/09 01:48:56 matt Exp */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.223.10.2 2008/01/09 01:48:56 matt Exp $");
+__KERNEL_RCSID(0, "autoconf.c,v 1.223.10.2 2008/01/09 01:48:56 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1464,32 +1464,6 @@ romgetcursoraddr(int **rowp, int **colp)
 	return (*rowp == NULL || *colp == NULL);
 }
 #endif /* RASTERCONSOLE */
-
-/*
- * find a device matching "name" and unit number
- */
-struct device *
-getdevunit(const char *name, int unit)
-{
-	struct device *dev = TAILQ_FIRST(&alldevs);
-	char num[10], fullname[16];
-	int lunit;
-
-	/* compute length of name and decimal expansion of unit number */
-	sprintf(num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strcpy(fullname, name);
-	strcat(fullname, num);
-
-	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
-			return NULL;
-	}
-	return dev;
-}
 
 /*
  * Device registration used to determine the boot device.

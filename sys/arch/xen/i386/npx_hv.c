@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_hv.c,v 1.3 2005/12/11 12:19:48 christos Exp $	*/
+/*	npx_hv.c,v 1.3 2005/12/11 12:19:48 christos Exp	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_hv.c,v 1.3 2005/12/11 12:19:48 christos Exp $");
+__KERNEL_RCSID(0, "npx_hv.c,v 1.3 2005/12/11 12:19:48 christos Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,19 +41,20 @@ __KERNEL_RCSID(0, "$NetBSD: npx_hv.c,v 1.3 2005/12/11 12:19:48 christos Exp $");
 
 #include <machine/bus.h>
 #include <machine/stdarg.h>
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
+
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
 
 #include <i386/isa/npxvar.h>
 
-int npx_hv_probe(struct device *, struct cfdata *, void *);
-void npx_hv_attach(struct device *, struct device *, void *);
+int npx_hv_probe(device_t, cfdata_t, void *);
+void npx_hv_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(npx_hv, sizeof(struct npx_softc),
+CFATTACH_DECL_NEW(npx_hv, sizeof(struct npx_softc),
     npx_hv_probe, npx_hv_attach, NULL, NULL);
 
 int
-npx_hv_probe(struct device *parent, struct cfdata *match, void *aux)
+npx_hv_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct xen_npx_attach_args *xa = (struct xen_npx_attach_args *)aux;
 
@@ -63,10 +64,11 @@ npx_hv_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-npx_hv_attach(struct device *parent, struct device *self, void *aux)
+npx_hv_attach(device_t parent, device_t self, void *aux)
 {
-	struct npx_softc *sc = (void *)self;
+	struct npx_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_type = NPX_EXCEPTION;
 
 	printf(": using exception 16\n");

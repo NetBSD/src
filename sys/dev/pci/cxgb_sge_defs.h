@@ -25,7 +25,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-$FreeBSD: src/sys/dev/cxgb/common/cxgb_sge_defs.h,v 1.2 2007/05/28 22:57:26 kmacy Exp $
+$FreeBSD: src/sys/dev/cxgb/common/cxgb_sge_defs.h,v 1.3 2007/09/09 01:28:03 kmacy Exp $
 
 ***************************************************************************/
 /*
@@ -135,6 +135,10 @@ $FreeBSD: src/sys/dev/cxgb/common/cxgb_sge_defs.h,v 1.2 2007/05/28 22:57:26 kmac
 #define S_CQ_GEN    29
 #define V_CQ_GEN(x) ((x) << S_CQ_GEN)
 #define F_CQ_GEN    V_CQ_GEN(1U)
+
+#define S_CQ_ERR    30
+#define V_CQ_ERR(x) ((x) << S_CQ_ERR)
+#define F_CQ_ERR    V_CQ_ERR(1U)
 
 #define S_CQ_OVERFLOW_MODE    31
 #define V_CQ_OVERFLOW_MODE(x) ((x) << S_CQ_OVERFLOW_MODE)

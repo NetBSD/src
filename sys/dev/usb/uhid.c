@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.76.16.1 2008/01/09 01:54:42 matt Exp $	*/
+/*	uhid.c,v 1.76.16.1 2008/01/09 01:54:42 matt Exp	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.76.16.1 2008/01/09 01:54:42 matt Exp $");
+__KERNEL_RCSID(0, "uhid.c,v 1.76.16.1 2008/01/09 01:54:42 matt Exp");
 
 #include "opt_compat_netbsd.h"
 
@@ -150,6 +150,7 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 	int size, repid;
 	void *desc;
 
+	selinit(&sc->sc_rsel);
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
@@ -162,6 +163,9 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": input=%d, output=%d, feature=%d\n",
 	       sc->sc_isize, sc->sc_osize, sc->sc_fsize);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -222,6 +226,7 @@ uhid_detach(struct device *self, int flags)
 			   sc->sc_hdev.sc_parent->sc_udev,
 			   USBDEV(sc->sc_hdev.sc_dev));
 #endif
+	seldestroy(&sc->sc_rsel);
 
 	return (0);
 }
@@ -249,7 +254,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 		DPRINTFN(5, ("uhid_intr: waking %p\n", &sc->sc_q));
 		wakeup(&sc->sc_q);
 	}
-	selnotify(&sc->sc_rsel, 0);
+	selnotify(&sc->sc_rsel, 0, 0);
 	if (sc->sc_async != NULL) {
 		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
 		mutex_enter(&proclist_mutex);

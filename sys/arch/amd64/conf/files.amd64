@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.42.2.2 2008/01/09 01:44:51 matt Exp $
+#	files.amd64,v 1.42.2.2 2008/01/09 01:44:51 matt Exp
 #
 # new style config file for amd64 architecture
 #
@@ -30,8 +30,10 @@ defflag			USER_LDT
 defflag			VM86
 defflag eisa.h EISA
 
+file	arch/amd64/amd64/amd64func.S
 file	arch/amd64/amd64/autoconf.c
 file	arch/amd64/amd64/busfunc.S
+file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
@@ -41,15 +43,8 @@ file	arch/amd64/amd64/kobj_machdep.c		modular
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
-#
-# XXXfvdl write the optimized versions for these.
-#
-file	netinet/in_cksum.c			inet
-file	netinet/in4_cksum.c			inet
-
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
-file	arch/amd64/amd64/math_emulate.c	math_emulate
 file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
@@ -97,8 +92,6 @@ device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus, ipmibus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
 
-include "dev/wsfb/files.wsfb"
-
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
@@ -127,9 +120,6 @@ file	arch/x86/x86/tsc.c
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
 define	pckbcport { [irq = -1], [port = -1] }
-
-include	"dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
 
 include	"dev/pckbport/files.pckbport"
 

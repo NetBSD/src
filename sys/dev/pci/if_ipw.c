@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.32.16.2 2008/01/09 01:53:45 matt Exp $	*/
+/*	if_ipw.c,v 1.32.16.2 2008/01/09 01:53:45 matt Exp	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.32.16.2 2008/01/09 01:53:45 matt Exp $");
+__KERNEL_RCSID(0, "if_ipw.c,v 1.32.16.2 2008/01/09 01:53:45 matt Exp");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -93,8 +93,6 @@ static void	ipw_release(struct ipw_softc *);
 static int	ipw_match(struct device *, struct cfdata *, void *);
 static void	ipw_attach(struct device *, struct device *, void *);
 static int	ipw_detach(struct device *, int);
-
-static bool	ipw_resume(device_t);
 
 static int	ipw_media_change(struct ifnet *);
 static void	ipw_media_status(struct ifnet *, struct ifmediareq *);
@@ -200,8 +198,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	data = pci_conf_read(sc->sc_pct, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	data |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(sc->sc_pct, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
-
-	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 
 	/* map the register window */
 	error = pci_mapreg_map(pa, IPW_PCI_BAR0, PCI_MAPREG_TYPE_MEM |
@@ -334,7 +330,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->dwelltime = 100;
 
-	if (!pmf_device_register(self, NULL, ipw_resume))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -740,16 +736,6 @@ ipw_release(struct ipw_softc *sc)
 		}
 	}
 
-}
-
-static bool
-ipw_resume(device_t dv)
-{
-	struct ipw_softc *sc = device_private(dv);
-
-	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
-
-	return true;
 }
 
 static int

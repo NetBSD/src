@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.4 2005/12/11 12:16:47 christos Exp $	*/
+/*	pci_machdep.h,v 1.4 2005/12/11 12:16:47 christos Exp	*/
 
 /*
  * Modified for arm32 by Mark Brinicombe
@@ -31,6 +31,8 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _ARM_PCI_MACHDEP_H_
+#define _ARM_PCI_MACHDEP_H_
 /*
  * Machine-specific definitions for PCI autoconfiguration.
  */
@@ -97,3 +99,5 @@ struct arm32_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+
+#endif	/* _ARM_PCI_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.101.8.2 2008/01/09 01:52:05 matt Exp $
+#	Makefile.kern.inc,v 1.101.8.2 2008/01/09 01:52:05 matt Exp
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -59,6 +59,7 @@ INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
+COPTS+=		-std=gnu99
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
@@ -109,6 +110,11 @@ CFLAGS.kern_synch.c+=	-fno-reorder-blocks
 COPTS.${j}+=-g
 . endfor
 .endfor
+
+# Always compile subr_debug_info.c with debug informations.
+# This allows gdb to use type informations.
+#
+COPTS.debugsyms.c+=	-g
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
@@ -253,10 +259,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 .endif
 
 .if !target(config_time.h)
-EXTRA_CLEAN+= config_time.h
-config_time.h: Makefile
-	${_MKTARGET_CREATE}
-	cp config_time.src config_time.h
+BUILDSYMLINKS+=	config_time.src config_time.h
 .endif
 
 .if defined(MEMORY_DISK_IMAGE)
@@ -322,19 +325,19 @@ SRCS=${SSRCS} ${CSRCS}
 DEPS=	${SRCS:T:O:u:R:S/$/.d/g}
 
 .for _s in ${SSRCS}
-${_s:T:R}.d: ${_s} assym.h config_time.h
+${_s:T:R}.d: ${_s} assym.h
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
 	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
 .endfor
 .for _s in ${CSRCS}
-${_s:T:R}.d: ${_s} config_time.h
+${_s:T:R}.d: ${_s}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
 	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
 .endfor
 
-assym.d: assym.h config_time.h
+assym.d: assym.h
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
@@ -342,7 +345,9 @@ assym.d: assym.h config_time.h
 	sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 
-.depend: ${DEPS} assym.d
+DEPS+=	assym.d
+
+.depend: ${DEPS}
 	${_MKTARGET_CREATE}
 	echo "${.ALLSRC}" | ${MKDEP} -D
 .endif
@@ -372,6 +377,13 @@ ${_cfile:T:R}.ln: ${_cfile}
 lint: ${LOBJS}
 	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${LOBJS}
 .endif
+
+# Attempt to do a syntax-only compile of the entire kernel as one entity.
+# Alas, bugs in the GCC C frontend prevent this from completely effective
+# but information can be gleaned from the output.
+syntax-only: ${CFILES} ${MD_CFILES}
+	${CC} -fsyntax-only -combine ${CFLAGS} ${CPPFLAGS} \
+		${CFILES} ${MD_CFILES}
 
 # List of kernel images that will be installed into the root file system.
 # Some platforms may need to install more than one (e.g. a netbsd.aout file
@@ -467,6 +479,8 @@ AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
+
+.include <bsd.files.mk>
 
 ##
 ## the end

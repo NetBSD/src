@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.3.48.1 2008/01/09 01:54:38 matt Exp $	*/
+/*	if_axereg.h,v 1.3.48.1 2008/01/09 01:54:38 matt Exp	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -195,7 +195,6 @@ struct axe_softc {
 
 	kmutex_t		axe_mii_lock;
 
-	int			axe_link;
 	unsigned char		axe_ipgs[3];
 	unsigned char 		axe_phyaddrs[2];
 	struct timeval		axe_rx_notice;

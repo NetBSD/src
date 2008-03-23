@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.25.8.1 2008/01/09 01:54:43 matt Exp $	*/
+/*	uirda.c,v 1.25.8.1 2008/01/09 01:54:43 matt Exp	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.25.8.1 2008/01/09 01:54:43 matt Exp $");
+__KERNEL_RCSID(0, "uirda.c,v 1.25.8.1 2008/01/09 01:54:43 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,14 @@ Static const struct usb_devno uirda_devs[] = {
 };
 #define uirda_lookup(v, p) (usb_lookup(uirda_devs, v, p))
 
-USB_DECLARE_DRIVER(uirda);
+int uirda_match(device_t, struct cfdata *, void *);
+void uirda_attach(device_t, device_t, void *);
+void uirda_childdet(device_t, device_t);
+int uirda_detach(device_t, int);
+int uirda_activate(device_t, enum devact);
+extern struct cfdriver uirda_cd;
+CFATTACH_DECL2(uirda, sizeof(struct uirda_softc), uirda_match,
+    uirda_attach, uirda_detach, uirda_activate, NULL, uirda_childdet);
 
 USB_MATCH(uirda)
 {
@@ -273,6 +280,8 @@ USB_ATTACH(uirda)
 
 	mutex_init(&sc->sc_wr_buf_lk, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_rd_buf_lk, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&sc->sc_rd_sel);
+	selinit(&sc->sc_wr_sel);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = sc->sc_irm ? sc->sc_irm : &uirda_methods;
@@ -312,24 +321,33 @@ USB_DETACH(uirda)
 	}
 	splx(s);
 
-	if (sc->sc_child != NULL) {
+	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
-		sc->sc_child = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
 	mutex_destroy(&sc->sc_wr_buf_lk);
 	mutex_destroy(&sc->sc_rd_buf_lk);
+	seldestroy(&sc->sc_rd_sel);
+	seldestroy(&sc->sc_wr_sel);
 
 	return (rv);
 }
 
-int
-uirda_activate(device_ptr_t self, enum devact act)
+void
+uirda_childdet(device_t self, device_t child)
 {
-	struct uirda_softc *sc = (struct uirda_softc *)self;
+	struct uirda_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
+}
+
+int
+uirda_activate(device_t self, enum devact act)
+{
+	struct uirda_softc *sc = device_private(self);
 	int error = 0;
 
 	switch (act) {
@@ -855,7 +873,7 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		    sc->sc_rd_err));
 	sc->sc_rd_count = size;
 	wakeup(&sc->sc_rd_count); /* XXX should use flag */
-	selnotify(&sc->sc_rd_sel, 0);
+	selnotify(&sc->sc_rd_sel, 0, 0);
 }
 
 usbd_status

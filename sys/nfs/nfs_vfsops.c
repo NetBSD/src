@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.184.2.2 2008/01/09 01:57:55 matt Exp $	*/
+/*	nfs_vfsops.c,v 1.184.2.2 2008/01/09 01:57:55 matt Exp	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.184.2.2 2008/01/09 01:57:55 matt Exp $");
+__KERNEL_RCSID(0, "nfs_vfsops.c,v 1.184.2.2 2008/01/09 01:57:55 matt Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,8 @@ struct vfsops nfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	nfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -307,9 +309,7 @@ nfs_fsinfo(nmp, vp, cred, l)
 int
 nfs_mountroot()
 {
-#ifdef __HAVE_TIMECOUNTER
 	struct timespec ts;
-#endif
 	struct nfs_diskless *nd;
 	struct vattr attr;
 	struct mount *mp;
@@ -330,21 +330,16 @@ nfs_mountroot()
 	 * current time < nfs_attrtimeo(nmp, np) so keep this in for now.
 	 */
 	if (time_second < NFS_MAXATTRTIMO) {
-#ifdef __HAVE_TIMECOUNTER
 		ts.tv_sec = NFS_MAXATTRTIMO;
 		ts.tv_nsec = 0;
 		tc_setclock(&ts);
-#else /* !__HAVE_TIMECOUNTER */
-		time.tv_sec = NFS_MAXATTRTIMO;
-#endif /* !__HAVE_TIMECOUNTER */
 	}
 
 	/*
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
 	 * Side effect:  Finds and configures a network interface.
 	 */
-	nd = kmem_alloc(sizeof(*nd), KM_SLEEP);
-	memset(nd, 0, sizeof(*nd));
+	nd = kmem_zalloc(sizeof(*nd), KM_SLEEP);
 	error = nfs_boot_init(nd, l);
 	if (error) {
 		kmem_free(nd, sizeof(*nd));
@@ -367,7 +362,7 @@ nfs_mountroot()
 	mutex_exit(&mountlist_lock);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 
 	/* Get root attributes (for the time). */
 	error = VOP_GETATTR(vp, &attr, l->l_cred);
@@ -424,11 +419,10 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
 			 ndmntp->ndm_args.hostname, vpp, l);
 	if (error) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
+		vfs_destroy(mp);
 		printf("nfs_mountroot: mount %s failed: %d\n",
 		       mntname, error);
-		free(mp, M_MOUNT);
 	} else
 		*mpp = mp;
 
@@ -732,15 +726,16 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	if ((argp->flags & NFSMNT_NFSV3) == 0)
 #endif
 	{
-		/*
-		 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
-		 * will fill this in.
-		 */
-		nmp->nm_maxfilesize = 0xffffffffLL;
 		if (argp->fhsize != NFSX_V2FH) {
 			return EINVAL;
 		}
 	}
+
+	/*
+	 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
+	 * will overwrite this.
+	 */
+	nmp->nm_maxfilesize = 0xffffffffLL;
 
 	nmp->nm_timeo = NFS_TIMEO;
 	nmp->nm_retry = NFS_RETRANS;

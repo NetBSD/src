@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.62.20.2 2008/01/09 01:58:29 matt Exp $	*/
+/*	lfs_balloc.c,v 1.62.20.2 2008/01/09 01:58:29 matt Exp	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.62.20.2 2008/01/09 01:58:29 matt Exp $");
+__KERNEL_RCSID(0, "lfs_balloc.c,v 1.62.20.2 2008/01/09 01:58:29 matt Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -459,7 +459,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		allocbuf(*bpp, nsize, 1);
 
 		/* Adjust locked-list accounting */
-		if (((*bpp)->b_cflags & BC_LOCKED) != 0 &&
+		if (((*bpp)->b_flags & B_LOCKED) != 0 &&
 		    (*bpp)->b_iodone == NULL) {
 			mutex_enter(&lfs_lock);
 			locked_queue_bytes += (*bpp)->b_bufsize - obufsize;

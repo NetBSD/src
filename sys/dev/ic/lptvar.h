@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.53.46.1 2007/11/06 23:26:50 matt Exp $	*/
+/*	lptvar.h,v 1.53.46.1 2007/11/06 23:26:50 matt Exp	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -59,7 +59,7 @@
 #include <sys/callout.h>
 
 struct lpt_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 	callout_t sc_wakeup_ch;
 	size_t sc_count;
@@ -92,6 +92,7 @@ void lptwakeup(void *arg);
 int lptpushbytes(struct lpt_softc *);
 
 void lpt_attach_subr(struct lpt_softc *);
+int lpt_detach_subr(device_t, int);
 int lptintr(void *);
 
 #endif /* _LPT_VAR_H_ */

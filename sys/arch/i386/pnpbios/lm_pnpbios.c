@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.12 2006/11/24 22:04:23 wiz Exp $ */
+/*	lm_pnpbios.c,v 1.12 2006/11/24 22:04:23 wiz Exp */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.12 2006/11/24 22:04:23 wiz Exp $");
+__KERNEL_RCSID(0, "lm_pnpbios.c,v 1.12 2006/11/24 22:04:23 wiz Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,14 +59,15 @@ __KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.12 2006/11/24 22:04:23 wiz Exp $");
 #include <dev/ic/nslm7xvar.h>
 
 
-int lm_pnpbios_match(struct device *, struct cfdata *, void *);
-void lm_pnpbios_attach(struct device *, struct device *, void *);
-int lm_pnpbios_hints_index(const char *);
+int 	lm_pnpbios_match(device_t, cfdata_t, void *);
+void 	lm_pnpbios_attach(device_t, device_t, void *);
+
+int 	lm_pnpbios_hints_index(const char *);
 uint8_t lm_pnpbios_readreg(struct lm_softc *, int);
-void lm_pnpbios_writereg(struct lm_softc *, int, int);
+void 	lm_pnpbios_writereg(struct lm_softc *, int, int);
 
 
-CFATTACH_DECL(lm_pnpbios, sizeof(struct lm_softc),
+CFATTACH_DECL_NEW(lm_pnpbios, sizeof(struct lm_softc),
     lm_pnpbios_match, lm_pnpbios_attach, NULL, NULL);
 
 /*
@@ -87,8 +88,7 @@ struct lm_pnpbios_hint lm_pnpbios_hints[] = {
 
 
 int
-lm_pnpbios_hints_index(idstr)
-	const char *idstr;
+lm_pnpbios_hints_index(const char *idstr)
 {
 	int idx = 0;
 
@@ -102,10 +102,7 @@ lm_pnpbios_hints_index(idstr)
 }
 
 int
-lm_pnpbios_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lm_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 	struct lm_pnpbios_hint *wph;
@@ -116,13 +113,13 @@ lm_pnpbios_match(parent, match, aux)
 	int wphi;
 
 	if ((wphi = lm_pnpbios_hints_index(aa->idstr)) == -1)
-		return (0);
+		return 0;
 
 	wph = &lm_pnpbios_hints[wphi];
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, wph->io_region_idx_lm7x,
 			   &iot, &ioh)) {
-		return (0);
+		return 0;
 	}
 
 	rv = lm_probe(iot, ioh);
@@ -130,15 +127,13 @@ lm_pnpbios_match(parent, match, aux)
 	pnpbios_io_unmap(aa->pbt, aa->resc, wph->io_region_idx_lm7x,
 			 iot, ioh);
 
-	return (rv);
+	return rv;
 }
 
 void
-lm_pnpbios_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lm_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
-	struct lm_softc *sc = (void *)self;
+	struct lm_softc *sc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
 	struct lm_pnpbios_hint *wph;
 
@@ -146,14 +141,13 @@ lm_pnpbios_attach(parent, self, aux)
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, wph->io_region_idx_lm7x,
 			   &sc->lm_iot, &sc->lm_ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);
-
-	printf("%s", self->dv_xname);
 
 	/* Bus-independent attach */
 	sc->lm_writereg = lm_pnpbios_writereg;
@@ -163,9 +157,7 @@ lm_pnpbios_attach(parent, self, aux)
 }
 
 uint8_t
-lm_pnpbios_readreg(sc, reg)
-	struct lm_softc *sc;
-	int reg;
+lm_pnpbios_readreg(struct lm_softc *sc, int reg)
 {
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
 	return (bus_space_read_1(sc->lm_iot, sc->lm_ioh, LMC_DATA));
@@ -173,10 +165,7 @@ lm_pnpbios_readreg(sc, reg)
 
 
 void
-lm_pnpbios_writereg(sc, reg, val)
-	struct lm_softc *sc;
-	int reg;
-	int val;
+lm_pnpbios_writereg(struct lm_softc *sc, int reg, int val)
 {
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
 	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);

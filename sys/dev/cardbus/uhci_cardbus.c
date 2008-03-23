@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.5.26.1 2007/11/06 23:25:55 matt Exp $	*/
+/*	uhci_cardbus.c,v 1.5.26.1 2007/11/06 23:25:55 matt Exp	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.5.26.1 2007/11/06 23:25:55 matt Exp $");
+__KERNEL_RCSID(0, "uhci_cardbus.c,v 1.5.26.1 2007/11/06 23:25:55 matt Exp");
 
 #include "ehci_cardbus.h"
 
@@ -74,9 +74,9 @@ struct uhci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-static int	uhci_cardbus_match(struct device *, struct cfdata *, void *);
-static void	uhci_cardbus_attach(struct device *, struct device *, void *);
-static int	uhci_cardbus_detach(device_ptr_t, int);
+static int	uhci_cardbus_match(device_t, struct cfdata *, void *);
+static void	uhci_cardbus_attach(device_t, device_t, void *);
+static int	uhci_cardbus_detach(device_t, int);
 
 CFATTACH_DECL(uhci_cardbus, sizeof(struct uhci_cardbus_softc),
     uhci_cardbus_match, uhci_cardbus_attach, uhci_cardbus_detach, uhci_activate);
@@ -87,8 +87,7 @@ CFATTACH_DECL(uhci_cardbus, sizeof(struct uhci_cardbus_softc),
 #define cardbus_devinfo		pci_devinfo
 
 static int
-uhci_cardbus_match(struct device *parent,
-    struct cfdata *match, void *aux)
+uhci_cardbus_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
@@ -101,7 +100,7 @@ uhci_cardbus_match(struct device *parent,
 }
 
 static void
-uhci_cardbus_attach(struct device *parent, struct device *self,
+uhci_cardbus_attach(device_t parent, device_t self,
     void *aux)
 {
 	struct uhci_cardbus_softc *sc = device_private(self);
@@ -200,12 +199,11 @@ XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
 #endif
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 static int
-uhci_cardbus_detach(device_ptr_t self, int flags)
+uhci_cardbus_detach(device_t self, int flags)
 {
 	struct uhci_cardbus_softc *sc = device_private(self);
 	struct cardbus_devfunc *ct = sc->sc_ct;

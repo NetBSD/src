@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.11.20.1 2008/01/09 01:56:38 matt Exp $	*/
+/*	dosfs.c,v 1.11.20.1 2008/01/09 01:56:38 matt Exp	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -149,6 +149,23 @@ static int fatend(u_int, u_int);
 static int ioread(DOS_FS *, u_int, void *, u_int);
 static int iobuf(DOS_FS *, u_int);
 static int ioget(struct open_file *, u_int, void *, u_int);
+
+#define strcasecmp(s1, s2) dos_strcasecmp(s1, s2)
+static int
+strcasecmp(const char *s1, const char *s2)
+{
+	char c1, c2;
+	#define TO_UPPER(c) ((c) >= 'a' && (c) <= 'z' ? (c) - ('a' - 'A') : (c))
+	for (;;) {
+		c1 = *s1++;
+		c2 = *s2++;
+		if (TO_UPPER(c1) != TO_UPPER(c2))
+			return 1;
+		if (c1 == 0)
+			return 0;
+	}
+	#undef TO_UPPER
+}
 
 /*
  * Mount DOS filesystem

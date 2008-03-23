@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.295.6.2 2008/01/09 01:53:41 matt Exp $
+#	files.pci,v 1.295.6.2 2008/01/09 01:53:41 matt Exp
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -795,12 +795,14 @@ file	dev/pci/cxgb_mc5.c		cxgbc | cxgb
 file	dev/pci/cxgb_vsc8211.c		cxgbc | cxgb
 file	dev/pci/cxgb_ael1002.c		cxgbc | cxgb
 file	dev/pci/cxgb_mv88e1xxx.c	cxgbc | cxgb
+file	dev/pci/cxgb_vsc7323.c		cxgbc | cxgb
 file	dev/pci/cxgb_xgmac.c		cxgbc | cxgb
 file	dev/pci/cxgb_t3_hw.c		cxgbc | cxgb
 file	dev/pci/cxgb_sge.c		cxgbc | cxgb
 file	dev/pci/cxgb_lro.c		cxgbc | cxgb
-file	dev/pci/cxgb_offload.c		cxgbc | cxgb
+# file	dev/pci/cxgb_offload.c		cxgbc | cxgb
 file	dev/pci/cxgb_l2t.c		cxgbc | cxgb
+file	dev/pci/cxgb_osdep.c		cxgbc | cxgb
 
 # Chips & Technologies 65550 framebuffer console driver
 device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
@@ -855,6 +857,11 @@ file	dev/pci/if_iwi.c		iwi
 device	wpi: ifnet, arp, wlan, firmload
 attach	wpi at pci
 file	dev/pci/if_wpi.c		wpi
+
+# Intel PRO/Wireless 4965AGN Mini-PCI Adapter
+device	iwn: ifnet, arp, wlan, firmload
+attach	iwn at pci
+file	dev/pci/if_iwn.c		iwn
 
 # Workbit NinjaSCSI-32 controllers
 # device declaration in sys/conf/files

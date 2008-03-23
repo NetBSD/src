@@ -1,4 +1,4 @@
-/* $NetBSD: isp_ioctl.h,v 1.10 2007/05/24 21:30:42 mjacob Exp $ */
+/* isp_ioctl.h,v 1.10 2007/05/24 21:30:42 mjacob Exp */
 /*
  * Copyright (c) 2001-2007 by Matthew Jacob
  * All rights reserved.
@@ -54,6 +54,8 @@
  * This ioctl performs a reset and then will set the adapter to the
  * role that was passed in (the old role will be returned). It almost
  * goes w/o saying: use with caution.
+ *
+ * Channel selector stored in bits 8..32 as input to driver.
  */
 #define ISP_SETROLE     _IOWR(ISP_IOC, 4, int)
 
@@ -64,6 +66,7 @@
 
 /*
  * Get the current adapter role
+ * Channel selector passed in first argument.
  */
 #define ISP_GETROLE     _IOR(ISP_IOC, 5, int)
 
@@ -108,7 +111,8 @@ typedef struct {
  */
 struct isp_fc_device {
 	uint32_t	loopid;		/* 0..255 */
-	uint32_t		: 6,
+	uint32_t
+			chan 	: 6,
 			role 	: 2,
 			portid	: 24;	/* 24 bit Port ID */
 	uint64_t	node_wwn;
@@ -129,18 +133,16 @@ struct isp_fc_device {
 struct isp_hba_device {
 	uint32_t
 					: 8,
-					: 4,
 		fc_speed		: 4,	/* Gbps */
-					: 2,
-		fc_class2		: 1,
-		fc_ip_supported		: 1,
-		fc_scsi_supported	: 1,
+					: 1,
 		fc_topology		: 3,
-		fc_loopid		: 8;
+		fc_channel		: 8,
+		fc_loopid		: 16;
 	uint8_t		fc_fw_major;
 	uint8_t		fc_fw_minor;
 	uint8_t		fc_fw_micro;
-	uint8_t		reserved;
+	uint8_t		fc_nchannels;	/* number of supported channels */
+	uint16_t	fc_nports;	/* number of supported ports */
 	uint64_t	nvram_node_wwn;
 	uint64_t	nvram_port_wwn;
 	uint64_t	active_node_wwn;
@@ -153,37 +155,16 @@ struct isp_hba_device {
 #define	ISP_TOPO_NPORT		3	/* N-port */
 #define	ISP_TOPO_FPORT		4	/* F-port */
 
-#define	ISP_FC_GETHINFO	_IOR(ISP_IOC, 12, struct isp_hba_device)
-/*
- * Set some internal parameters. This doesn't take effect until
- * the chip is reset.
- *
- * Each parameter is generalized to be a name string with an integer value.
- *
- * Known parameters are:
- *
- *	Name				Value Range
- *	
- *	"framelength"			512,1024,2048
- *	"exec_throttle"			16..255
- *	"fullduplex"			0,1
- *	"loopid"			0..125
- */
-
-struct isp_fc_param {
-	char		param_name[16];	/* null terminated */
-	uint32_t	parameter;
-};
-
-#define	ISP_GET_FC_PARAM	_IOWR(ISP_IOC, 98, struct isp_fc_param)
-#define	ISP_SET_FC_PARAM	_IOWR(ISP_IOC, 99, struct isp_fc_param)
+/* don't use 12 any more */
+#define	ISP_FC_GETHINFO	_IOWR(ISP_IOC, 13, struct isp_hba_device)
 
 /*
  * Various Reset Goodies
  */
 struct isp_fc_tsk_mgmt {
-	uint32_t	loopid;		/* 0..255 */
-	uint32_t	lun;
+	uint32_t	loopid;		/* 0..255/2048 */
+	uint16_t	lun;
+	uint16_t	chan;
 	enum {
 		IPT_CLEAR_ACA,
 		IPT_TARGET_RESET,
@@ -192,4 +173,18 @@ struct isp_fc_tsk_mgmt {
 		IPT_ABORT_TASK_SET
 	} action;
 };
-#define	ISP_TSK_MGMT		_IOWR(ISP_IOC, 97, struct isp_fc_tsk_mgmt)
+/* don't use 97 any more */
+#define	ISP_TSK_MGMT		_IOWR(ISP_IOC, 98, struct isp_fc_tsk_mgmt)
+
+/*
+ * Just gimme a list of WWPNs that are logged into us.
+ */
+typedef struct {
+	uint16_t count;
+	uint16_t channel;
+	struct wwnpair {
+		uint64_t wwnn;
+		uint64_t wwpn;
+	} wwns[1];
+} isp_dlist_t;
+#define	ISP_FC_GETDLIST 	_IO(ISP_IOC, 14)

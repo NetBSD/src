@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.191.6.2 2008/01/09 01:57:53 matt Exp $	*/
+/*	nfs_subs.c,v 1.191.6.2 2008/01/09 01:57:53 matt Exp	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.191.6.2 2008/01/09 01:57:53 matt Exp $");
+__KERNEL_RCSID(0, "nfs_subs.c,v 1.191.6.2 2008/01/09 01:57:53 matt Exp");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1623,7 +1623,6 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	u_short vmode;
 	struct timespec mtime;
 	struct timespec ctime;
-	struct vnode *nvp;
 	int32_t rdev;
 	struct nfsnode *np;
 	extern int (**spec_nfsv2nodeop_p) __P((void *));
@@ -1674,31 +1673,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			mutex_init(&np->n_commitlock, MUTEX_DEFAULT, IPL_NONE);
 		} else if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;
-			nvp = checkalias(vp, (dev_t)rdev, vp->v_mount);
-			if (nvp) {
-				/*
-				 * Discard unneeded vnode, but save its nfsnode.
-				 * Since the nfsnode does not have a lock, its
-				 * vnode lock has to be carried over.
-				 */
-				/*
-				 * XXX is the old node sure to be locked here?
-				 */
-				KASSERT(lockstatus(&vp->v_lock) ==
-				    LK_EXCLUSIVE);
-				nvp->v_data = vp->v_data;
-				vp->v_data = NULL;
-				VOP_UNLOCK(vp, 0);
-				vp->v_op = spec_vnodeop_p;
-				vgone(vp);
-				lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
-				    &nvp->v_interlock);
-				/*
-				 * Reinitialize aliased node.
-				 */
-				np->n_vnode = nvp;
-				*vpp = vp = nvp;
-			}
+			spec_node_init(vp, (dev_t)rdev);
 		}
 		np->n_mtime = mtime;
 	}
@@ -1757,6 +1732,9 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		vap->va_flags = 0;
 		vap->va_gen = fxdr_unsigned(u_int32_t,fp->fa2_ctime.nfsv2_usec);
 		vap->va_filerev = 0;
+	}
+	if (vap->va_size > VFSTONFS(vp->v_mount)->nm_maxfilesize) {
+		return EFBIG;
 	}
 	if (vap->va_size != np->n_size) {
 		if ((np->n_flag & NMODIFIED) && vap->va_size < np->n_size) {
@@ -1883,21 +1861,15 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 		long now = time_second;
 		const struct timespec *omtime = &np->n_vattr->va_mtime;
 		const struct timespec *octime = &np->n_vattr->va_ctime;
-#if defined(DEBUG)
 		const char *reason = NULL; /* XXX: gcc */
-#endif
 
 		if (timespeccmp(omtime, mtime, <=)) {
-#if defined(DEBUG)
 			reason = "mtime";
-#endif
 			error = EINVAL;
 		}
 
 		if (vp->v_type == VDIR && timespeccmp(octime, ctime, <=)) {
-#if defined(DEBUG)
 			reason = "ctime";
-#endif
 			error = EINVAL;
 		}
 
@@ -1919,7 +1891,6 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 			 */
 
 			mutex_enter(&nmp->nm_lock);
-#if defined(DEBUG)
 			if (!NFS_WCCKLUDGE(nmp, now)) {
 				printf("%s: inaccurate wcc data (%s) detected,"
 				    " disabling wcc"
@@ -1936,7 +1907,6 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 				    (unsigned int)mtime->tv_sec,
 				    (unsigned int)mtime->tv_nsec);
 			}
-#endif
 			nmp->nm_iflag |= NFSMNT_WCCKLUDGE;
 			nmp->nm_wcckludgetime = now;
 			mutex_exit(&nmp->nm_lock);
@@ -1945,10 +1915,8 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 		} else if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
 			mutex_enter(&nmp->nm_lock);
 			if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
-#if defined(DEBUG)
 				printf("%s: re-enabling wcc\n",
 				    vp->v_mount->mnt_stat.f_mntfromname);
-#endif
 				nmp->nm_iflag &= ~NFSMNT_WCCKLUDGE;
 			}
 			mutex_exit(&nmp->nm_lock);
@@ -2544,8 +2512,17 @@ nfsrv_fhtovp(nfsrvfh_t *nsfh, int lockflag, struct vnode **vpp,
 	} else if (kerbflag) {
 		vput(*vpp);
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-	} else if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) == 0 || (exflags & MNT_EXPORTANON)) {
+	} else if (kauth_cred_geteuid(cred) == 0 || /* NFS maproot, see below */
+	    (exflags & MNT_EXPORTANON)) {
+		/*
+		 * This is used by the NFS maproot option. While we can change
+		 * the secmodel on our own host, we can't change it on the
+		 * clients. As means of least surprise, we're doing the
+		 * traditional thing here.
+		 * Should look into adding a "mapprivileged" or similar where
+		 * the users can be explicitly specified...
+		 * [elad, yamt 2008-03-05]
+		 */
 		kauth_cred_clone(credanon, cred);
 	}
 	if (exflags & MNT_EXRDONLY)

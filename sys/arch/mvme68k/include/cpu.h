@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39.2.1 2007/11/06 23:19:22 matt Exp $	*/
+/*	cpu.h,v 1.39.2.1 2007/11/06 23:19:22 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -175,11 +175,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_MAXID		2	/* number of valid machdep ids */
 
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
-
 #ifdef _KERNEL
 /*
  * Associate MVME models with CPU types.
@@ -226,13 +221,13 @@ extern	u_int intiobase_phys, intiotop_phys;
 extern	u_long ether_data_buff_size;
 extern	u_char mvme_ea[6];
 
-void	doboot __P((int)) 
+void	doboot(int) 
 	__attribute__((__noreturn__));
-int	nmihand __P((void *));
-void	mvme68k_abort __P((const char *));
-void	*iomap __P((u_long, size_t));
-void	iounmap __P((void *, size_t));
-void	loadustp __P((paddr_t));
+int	nmihand(void *);
+void	mvme68k_abort(const char *);
+void	*iomap(u_long, size_t);
+void	iounmap(void *, size_t);
+void	loadustp(paddr_t);
 
 /* physical memory addresses where mvme147's onboard devices live */
 #define	INTIOBASE147	(0xfffe0000u)

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_com.c,v 1.1 2007/01/06 00:29:52 christos Exp $	*/
+/*	omap_com.c,v 1.1 2007/01/06 00:29:52 christos Exp	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_com.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_com.c,v 1.1 2007/01/06 00:29:52 christos Exp $");
+__KERNEL_RCSID(0, "omap_com.c,v 1.1 2007/01/06 00:29:52 christos Exp");
 
 #include "opt_com.h"
 
@@ -59,14 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: omap_com.c,v 1.1 2007/01/06 00:29:52 christos Exp $"
 
 #include "locators.h"
 
-static int	omapuart_match(struct device *, struct cfdata *, void *);
-static void	omapuart_attach(struct device *, struct device *, void *);
+static int	omapuart_match(device_t, cfdata_t , void *);
+static void	omapuart_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(omapuart, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(omapuart, sizeof(struct com_softc),
     omapuart_match, omapuart_attach, NULL, NULL);
 
 static int
-omapuart_match(struct device *parent, struct cfdata *cf, void *aux)
+omapuart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct tipb_attach_args *tipb = aux;
 	bus_space_handle_t bh;
@@ -103,14 +103,15 @@ omapuart_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-omapuart_attach(struct device *parent, struct device *self, void *aux)
+omapuart_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	struct tipb_attach_args *tipb = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_addr_t iobase;
 
+	sc->sc_dev = self;
 	iot = tipb->tipb_iot;
 	iobase = tipb->tipb_addr;
 	sc->sc_frequency = OMAP_COM_FREQ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.16.2.2 2007/11/08 10:59:54 matt Exp $ */
+/*	if_dge.c,v 1.16.2.2 2007/11/08 10:59:54 matt Exp */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.16.2.2 2007/11/08 10:59:54 matt Exp $");
+__KERNEL_RCSID(0, "if_dge.c,v 1.16.2.2 2007/11/08 10:59:54 matt Exp");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1422,14 +1422,14 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > DGE_MAX_MTU) {
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > DGE_MAX_MTU)
 			error = EINVAL;
-		} else {
+		else if ((error = ifioctl_common(ifp, cmd, data)) != ENETRESET)
+			break;
+		else if (ifp->if_flags & IFF_UP)
+			error = (*ifp->if_init)(ifp);
+		else
 			error = 0;
-			ifp->if_mtu = ifr->ifr_mtu;
-			if (ifp->if_flags & IFF_UP)
-				error = (*ifp->if_init)(ifp);
-		}
 		break;
 
         case SIOCSIFFLAGS:
@@ -1454,15 +1454,21 @@ dge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
                 /* FALLTHROUGH */
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd == SIOCSIFCAP)
+			error = (*ifp->if_init)(ifp);
+		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				dge_set_filter(sc);
-			error = 0;
+			dge_set_filter(sc);
 		}
 		break;
 	}
@@ -2086,12 +2092,12 @@ dge_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		dge_rxdrain(sc);
-
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		dge_rxdrain(sc);
 }
 
 /*

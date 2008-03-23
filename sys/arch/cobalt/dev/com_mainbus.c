@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.14 2006/07/13 22:56:00 gdamore Exp $	*/
+/*	com_mainbus.c,v 1.14 2006/07/13 22:56:00 gdamore Exp	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.14 2006/07/13 22:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "com_mainbus.c,v 1.14 2006/07/13 22:56:00 gdamore Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,14 +54,14 @@ struct com_mainbus_softc {
 #define COM_MAINBUS_FREQ	(COM_FREQ * 10)
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 
-static int	com_mainbus_probe(struct device *, struct cfdata *, void *);
-static void	com_mainbus_attach(struct device *, struct device *, void *);
+static int	com_mainbus_probe(device_t, cfdata_t , void *);
+static void	com_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_mainbus, sizeof(struct com_mainbus_softc),
+CFATTACH_DECL_NEW(com_mainbus, sizeof(struct com_mainbus_softc),
     com_mainbus_probe, com_mainbus_attach, NULL, NULL);
 
 int
-com_mainbus_probe(struct device *parent, struct cfdata *match, void *aux)
+com_mainbus_probe(device_t parent, cfdata_t match, void *aux)
 {
 
 	switch (cobalt_id) {
@@ -75,16 +75,17 @@ com_mainbus_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-com_mainbus_attach(struct device *parent, struct device *self, void *aux)
+com_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_mainbus_softc *msc = (void *)self;
+	struct com_mainbus_softc *msc = device_private(self);
 	struct com_softc *sc = &msc->sc_com;
 	struct mainbus_attach_args *maa = aux;
 	bus_space_handle_t	ioh;
 
+	sc->sc_dev = self;
 	if (!com_is_console(maa->ma_iot, maa->ma_addr, &ioh) &&
 	    bus_space_map(maa->ma_iot, maa->ma_addr, COM_NPORTS, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, maa->ma_iot, ioh, maa->ma_addr);

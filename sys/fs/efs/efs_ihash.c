@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_ihash.c,v 1.1.10.1 2008/01/09 01:55:41 matt Exp $	*/
+/*	efs_ihash.c,v 1.1.10.1 2008/01/09 01:55:41 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_ihash.c,v 1.1.10.1 2008/01/09 01:55:41 matt Exp $");
+__KERNEL_RCSID(0, "efs_ihash.c,v 1.1.10.1 2008/01/09 01:55:41 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ efs_ihashins(struct efs_inode *eip)
 	KASSERT(mutex_owned(&efs_hashlock));
 
 	/* lock the inode, then put it on the appropriate hash list */
-	lockmgr(&eip->ei_vp->v_lock, LK_EXCLUSIVE, NULL);
+	vlockmgr(&eip->ei_vp->v_lock, LK_EXCLUSIVE);
 
 	mutex_enter(&efs_ihash_lock);
 	ipp = &ihashtbl[INOHASH(eip->ei_dev, eip->ei_number)];

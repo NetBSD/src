@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.183.2.2 2008/01/09 01:54:39 matt Exp $	*/
+/*	ohci.c,v 1.183.2.2 2008/01/09 01:54:39 matt Exp	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.183.2.2 2008/01/09 01:54:39 matt Exp $");
+__KERNEL_RCSID(0, "ohci.c,v 1.183.2.2 2008/01/09 01:54:39 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.183.2.2 2008/01/09 01:54:39 matt Exp $");
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
+#include <dev/usb/usbroothub_subr.h>
 
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
@@ -136,7 +137,6 @@ Static usbd_status	ohci_alloc_std_chain(struct ohci_pipe *,
 			    ohci_softc_t *, int, int, usbd_xfer_handle,
 			    ohci_soft_td_t *, ohci_soft_td_t **);
 
-Static void		ohci_shutdown(void *v);
 Static usbd_status	ohci_open(usbd_pipe_handle);
 Static void		ohci_poll(struct usbd_bus *);
 Static void		ohci_softintr(void *);
@@ -202,8 +202,6 @@ Static void		ohci_device_isoc_done(usbd_xfer_handle);
 
 Static usbd_status	ohci_device_setintr(ohci_softc_t *sc,
 			    struct ohci_pipe *pipe, int ival);
-
-Static int		ohci_str(usb_string_descriptor_t *, int, const char *);
 
 Static void		ohci_timeout(void *);
 Static void		ohci_timeout_task(void *);
@@ -363,9 +361,9 @@ Static const struct usbd_pipe_methods ohci_device_isoc_methods = {
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-ohci_activate(device_ptr_t self, enum devact act)
+ohci_activate(device_t self, enum devact act)
 {
-	struct ohci_softc *sc = (struct ohci_softc *)self;
+	struct ohci_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -381,6 +379,15 @@ ohci_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
+void
+ohci_childdet(device_t self, device_t child)
+{
+	struct ohci_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
+}
+
 int
 ohci_detach(struct ohci_softc *sc, int flags)
 {
@@ -393,10 +400,6 @@ ohci_detach(struct ohci_softc *sc, int flags)
 		return (rv);
 
 	usb_uncallout(sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	shutdownhook_disestablish(sc->sc_shutdownhook);
-#endif
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
@@ -902,7 +905,6 @@ ohci_init(ohci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_control = sc->sc_intre = 0;
-	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 #endif
 
 	usb_callout_init(sc->sc_tmo_rhsc);
@@ -1004,17 +1006,18 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 /*
  * Shut down the controller when the system is going down.
  */
-void
-ohci_shutdown(void *v)
+bool
+ohci_shutdown(device_t self, int flags)
 {
-	ohci_softc_t *sc = v;
+	ohci_softc_t *sc = device_private(self);
 
 	DPRINTF(("ohci_shutdown: stopping the HC\n"));
 	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+	return true;
 }
 
 bool
-ohci_resume(device_t dv)
+ohci_resume(device_t dv PMF_FN_ARGS)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
@@ -1048,7 +1051,7 @@ ohci_resume(device_t dv)
 }
 
 bool
-ohci_suspend(device_t dv)
+ohci_suspend(device_t dv PMF_FN_ARGS)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
@@ -2342,23 +2345,6 @@ Static const usb_hub_descriptor_t ohci_hubd = {
 	.bDescriptorType = UDESC_HUB,
 };
 
-Static int
-ohci_str(usb_string_descriptor_t *p, int l, const char *s)
-{
-	int i;
-
-	if (l == 0)
-		return (0);
-	p->bLength = 2 * strlen(s) + 2;
-	if (l == 1)
-		return (1);
-	p->bDescriptorType = UDESC_STRING;
-	l -= 2;
-	for (i = 0; s[i] && l > 1; i++, l -= 2)
-		USETW2(p->bString[i], 0, s[i]);
-	return (2*i+2);
-}
-
 /*
  * Simulate a hardware hub by handling all the necessary requests.
  */
@@ -2458,24 +2444,21 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &ohci_endpd, l);
 			break;
 		case UDESC_STRING:
-			*(u_int8_t *)buf = 0;
-			totlen = 1;
+#define sd ((usb_string_descriptor_t *)buf)
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				if (len > 0)
-					*(u_int8_t *)buf = 4;
-				if (len >=  4) {
-		USETW(((usb_string_descriptor_t *)buf)->bString[0], 0x0409);
-					totlen = 4;
-				}
+				totlen = usb_makelangtbl(sd, len);
 				break;
 			case 1: /* Vendor */
-				totlen = ohci_str(buf, len, sc->sc_vendor);
+				totlen = usb_makestrdesc(sd, len,
+							 sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				totlen = ohci_str(buf, len, "OHCI root hub");
+				totlen = usb_makestrdesc(sd, len,
+							 "OHCI root hub");
 				break;
 			}
+#undef sd
 			break;
 		default:
 			err = USBD_IOERROR;

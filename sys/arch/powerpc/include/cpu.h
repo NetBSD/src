@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58.10.2 2008/01/09 01:47:48 matt Exp $	*/
+/*	cpu.h,v 1.58.10.2 2008/01/09 01:47:48 matt Exp	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -343,7 +343,7 @@ void cpu_spinup_trampoline(void);
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
 #define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 
-#if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#if !defined(PPC_IBM4XX)
 void oea_init(void (*)(void));
 void oea_startup(const char *);
 void oea_dumpsys(void);
@@ -357,15 +357,20 @@ extern int cpu_altivec;
 
 #endif /* _KERNEL */
 
+/* XXX The below breaks unified pmap on ppc32 */
+
 #if defined(_KERNEL) || defined(_STANDALONE)
 #if !defined(CACHELINESIZE)
 #ifdef PPC_IBM403
-#define	CACHELINESIZE	16
+#define	CACHELINESIZE		16
+#define MAXCACHELINESIZE	16
 #else
 #if defined (PPC_OEA64_BRIDGE)
-#define	CACHELINESIZE	128
+#define	CACHELINESIZE		128
+#define MAXCACHELINESIZE	128
 #else
-#define	CACHELINESIZE	32
+#define	CACHELINESIZE		32
+#define MAXCACHELINESIZE	32
 #endif /* PPC_OEA64_BRIDGE */
 #endif
 #endif
@@ -387,17 +392,5 @@ void __syncicache(void *, size_t);
 #define	CPU_BOOTED_DEVICE	9	/* string: device we booted from */
 #define	CPU_BOOTED_KERNEL	10	/* string: kernel we booted */
 #define	CPU_MAXID		11	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "cachelinesize", CTLTYPE_INT }, \
-	{ "timebase", CTLTYPE_INT }, \
-	{ "cputempature", CTLTYPE_INT }, \
-	{ "printfataltraps", CTLTYPE_INT }, \
-	{ "cacheinfo", CTLTYPE_STRUCT }, \
-	{ "altivec", CTLTYPE_INT }, \
-	{ "model", CTLTYPE_STRING }, \
-	{ "powersave", CTLTYPE_INT }, \
-}
 
 #endif	/* _POWERPC_CPU_H_ */

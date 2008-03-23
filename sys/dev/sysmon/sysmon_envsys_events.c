@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.19.6.2 2008/01/09 01:54:33 matt Exp $ */
+/* sysmon_envsys_events.c,v 1.19.6.2 2008/01/09 01:54:33 matt Exp */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.19.6.2 2008/01/09 01:54:33 matt Exp $");
+__KERNEL_RCSID(0, "sysmon_envsys_events.c,v 1.19.6.2 2008/01/09 01:54:33 matt Exp");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -382,8 +382,9 @@ out:
 /*
  * sme_events_destroy:
  *
- * 	+ Destroys the events framework for this device: the workqueue and the
- * 	  callout are stopped/destroyed because the queue is empty.
+ * 	+ Destroys the events framework for this device: the callout
+ * 	  is stopped and its workqueue is destroyed because the queue
+ * 	  is empty.
  */
 void
 sme_events_destroy(struct sysmon_envsys *sme)
@@ -394,7 +395,6 @@ sme_events_destroy(struct sysmon_envsys *sme)
 	sme->sme_flags &= ~SME_CALLOUT_INITIALIZED;
 	DPRINTF(("%s: events framework destroyed for '%s'\n",
 	    __func__, sme->sme_name));
-	callout_destroy(&sme->sme_callout);
 	workqueue_destroy(sme->sme_wq);
 }
 
@@ -589,6 +589,12 @@ do {									\
 			see->see_evsent = see->see_edata->value_cur;
 			sysmon_penvsys_event(&see->see_pes, see->see_type);
 		}
+
+		/* 
+		 * There's no need to continue if it's a drive sensor.
+		 */
+		if (see->see_edata->units == ENVSYS_DRIVE)
+			break;
 
 		/*
 		 * Check if the system is running in low power and send the

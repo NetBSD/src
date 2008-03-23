@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.23.8.2 2008/01/09 01:53:45 matt Exp $ */
+/*	if_gem_pci.c,v 1.23.8.2 2008/01/09 01:53:45 matt Exp */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.23.8.2 2008/01/09 01:53:45 matt Exp $");
+__KERNEL_RCSID(0, "if_gem_pci.c,v 1.23.8.2 2008/01/09 01:53:45 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,8 +194,8 @@ gem_attach_pci(parent, self, aux)
 	aprint_naive(": Ethernet controller\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	sc->sc_chiprev = PCI_REVISION(pa->pa_class);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_chiprev);
 
 	/*
 	 * Some Sun GEMs/ERIs do have their intpin register bogusly set to 0,
@@ -219,7 +219,8 @@ gem_attach_pci(parent, self, aux)
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
 		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
 		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3 ||
-		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC)
+		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC ||
+		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_INTREPID2_GMAC)
 			sc->sc_variant = GEM_APPLE_GMAC;
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_K2_GMAC)
 			sc->sc_variant = GEM_APPLE_K2_GMAC;

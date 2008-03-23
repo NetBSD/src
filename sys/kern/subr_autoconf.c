@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.119.6.2 2008/01/09 01:56:14 matt Exp $ */
+/* subr_autoconf.c,v 1.119.6.2 2008/01/09 01:56:14 matt Exp */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.6.2 2008/01/09 01:56:14 matt Exp $");
+__KERNEL_RCSID(0, "subr_autoconf.c,v 1.119.6.2 2008/01/09 01:56:14 matt Exp");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.119.6.2 2008/01/09 01:56:14 matt
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
 #include <sys/callout.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <sys/disk.h>
 
@@ -124,6 +126,14 @@ extern struct splash_progress *splash_progress_state;
 /*
  * Autoconfiguration subroutines.
  */
+
+typedef struct pmf_private {
+	int		pp_nwait;
+	int		pp_nlock;
+	lwp_t		*pp_holder;
+	kmutex_t	pp_mtx;
+	kcondvar_t	pp_cv;
+} pmf_private_t;
 
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
@@ -170,6 +180,12 @@ static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
 static void config_devunlink(device_t);
 
+static void pmflock_debug(device_t, const char *, int);
+static void pmflock_debug_with_flags(device_t, const char *, int PMF_FN_PROTO);
+
+static device_t deviter_next1(deviter_t *);
+static void deviter_reinit(deviter_t *);
+
 struct deferred_config {
 	TAILQ_ENTRY(deferred_config) dc_queue;
 	device_t dc_dev;
@@ -197,6 +213,11 @@ static int config_finalize_done;
 
 /* list of all devices */
 struct devicelist alldevs = TAILQ_HEAD_INITIALIZER(alldevs);
+kcondvar_t alldevs_cv;
+kmutex_t alldevs_mtx;
+static int alldevs_nread = 0;
+static int alldevs_nwrite = 0;
+static lwp_t *alldevs_writer = NULL;
 
 volatile int config_pending;		/* semaphore for mountroot */
 
@@ -206,6 +227,8 @@ volatile int config_pending;		/* semaphore for mountroot */
 static int config_initialized;		/* config_init() has been called. */
 
 static int config_do_twiddle;
+
+MALLOC_DEFINE(M_PMFPRIV, "pmfpriv", "device pmf private storage");
 
 struct vnode *
 opendisk(struct device *dv)
@@ -327,6 +350,9 @@ config_init(void)
 	if (config_initialized)
 		return;
 
+	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&alldevs_cv, "alldevs");
+
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
 		if (config_cfdriver_attach(cfdriver_list_initial[i]) != 0)
@@ -399,8 +425,9 @@ configure(void)
 
 	cold = 0;	/* clocks are running, we're warm now! */
 
-#if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
+	mp_online = true;
+#if defined(MULTIPROCESSOR)
 	cpu_boot_secondary_processors();
 #endif
 
@@ -708,12 +735,14 @@ rescan_with_cfdata(const struct cfdata *cf)
 {
 	device_t d;
 	const struct cfdata *cf1;
+	deviter_t di;
+  
 
 	/*
 	 * "alldevs" is likely longer than an LKM's cfdata, so make it
 	 * the outer loop.
 	 */
-	TAILQ_FOREACH(d, &alldevs, dv_list) {
+	for (d = deviter_first(&di, 0); d != NULL; d = deviter_next(&di)) {
 
 		if (!(d->dv_cfattach->ca_rescan))
 			continue;
@@ -727,6 +756,7 @@ rescan_with_cfdata(const struct cfdata *cf)
 				cf1->cf_pspec->cfp_iattr, cf1->cf_loc);
 		}
 	}
+	deviter_release(&di);
 }
 
 /*
@@ -772,20 +802,21 @@ int
 config_cfdata_detach(cfdata_t cf)
 {
 	device_t d;
-	int error;
+	int error = 0;
 	struct cftable *ct;
+	deviter_t di;
 
-again:
-	TAILQ_FOREACH(d, &alldevs, dv_list) {
-		if (dev_in_cfdata(d, cf)) {
-			error = config_detach(d, 0);
-			if (error) {
-				aprint_error("%s: unable to detach instance\n",
-					d->dv_xname);
-				return (error);
-			}
-			goto again;
-		}
+	for (d = deviter_first(&di, DEVITER_F_RW); d != NULL;
+	     d = deviter_next(&di)) {
+		if (!dev_in_cfdata(d, cf))
+			continue;
+		if ((error = config_detach(d, 0)) != 0)
+			break;
+	}
+	deviter_release(&di);
+	if (error) {
+		aprint_error_dev(d, "unable to detach instance\n");
+		return error;
 	}
 
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
@@ -1048,7 +1079,16 @@ config_devlink(device_t dev)
 		panic("config_attach: duplicate %s", dev->dv_xname);
 	cd->cd_devs[dev->dv_unit] = dev;
 
+	/* It is safe to add a device to the tail of the list while
+	 * readers are in the list, but not while a writer is in
+	 * the list.  Wait for any writer to complete.
+	 */
+	mutex_enter(&alldevs_mtx);
+	while (alldevs_nwrite != 0 && alldevs_writer != curlwp)
+		cv_wait(&alldevs_cv, &alldevs_mtx);
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
+	cv_signal(&alldevs_cv);
+	mutex_exit(&alldevs_mtx);
 }
 
 static void
@@ -1099,7 +1139,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 
 	if ((ca->ca_flags & DVF_PRIV_ALLOC) == 0 &&
 	    ca->ca_devsize < sizeof(struct device))
-		panic("config_devalloc");
+		panic("config_devalloc: %s", cf->cf_atname);
 
 #ifndef __BROKEN_CONFIG_UNIT_USAGE
 	if (cf->cf_fstate == FSTATE_STAR) {
@@ -1127,10 +1167,16 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		panic("config_devalloc: device name too long");
 
 	/* get memory for all device vars */
-	dev_private = malloc(ca->ca_devsize, M_DEVBUF,
-			     M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
-	if (dev_private == NULL)
-		panic("config_devalloc: memory allocation for device softc failed");
+	KASSERT((ca->ca_flags & DVF_PRIV_ALLOC) || ca->ca_devsize >= sizeof(struct device));
+	if (ca->ca_devsize > 0) {
+		dev_private = malloc(ca->ca_devsize, M_DEVBUF,
+				     M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
+		if (dev_private == NULL)
+			panic("config_devalloc: memory allocation for device softc failed");
+	} else {
+		KASSERT(ca->ca_flags & DVF_PRIV_ALLOC);
+		dev_private = NULL;
+	}
 
 	if ((ca->ca_flags & DVF_PRIV_ALLOC) != 0) {
 		dev = malloc(sizeof(struct device), M_DEVBUF, 
@@ -1185,7 +1231,7 @@ config_devdealloc(device_t dev)
 	if (dev->dv_locators)
 		free(dev->dv_locators, M_DEVBUF);
 
-	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0)
+	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0 && dev->dv_private != NULL)
 		free(dev->dv_private, M_DEVBUF);
 
 	free(dev, M_DEVBUF);
@@ -1357,6 +1403,17 @@ config_detach(device_t dev, int flags)
 	ca = dev->dv_cfattach;
 	KASSERT(ca != NULL);
 
+	KASSERT(curlwp != NULL);
+	mutex_enter(&alldevs_mtx);
+	if (alldevs_nwrite > 0 && alldevs_writer == NULL)
+		;
+	else while (alldevs_nread != 0 ||
+	       (alldevs_nwrite != 0 && alldevs_writer != curlwp))
+		cv_wait(&alldevs_cv, &alldevs_mtx);
+	if (alldevs_nwrite++ == 0)
+		alldevs_writer = curlwp;
+	mutex_exit(&alldevs_mtx);
+
 	/*
 	 * Ensure the device is deactivated.  If the device doesn't
 	 * have an activation entry point, we allow DVF_ACTIVE to
@@ -1379,7 +1436,7 @@ config_detach(device_t dev, int flags)
 	}
 	if (rv != 0) {
 		if ((flags & DETACH_FORCE) == 0)
-			return (rv);
+			goto out;
 		else
 			panic("config_detach: forced detach of %s failed (%d)",
 			    dev->dv_xname, rv);
@@ -1439,33 +1496,35 @@ config_detach(device_t dev, int flags)
 	config_devunlink(dev);
 
 	if (dev->dv_cfdata != NULL && (flags & DETACH_QUIET) == 0)
-		aprint_normal("%s detached\n", dev->dv_xname);
+		aprint_normal_dev(dev, "detached\n");
 
 	config_devdealloc(dev);
 
-	return (0);
-}
-
-struct config_detach_arg {
-	int a_flags;
-	int a_error;
-};
-
-static bool
-config_detach_helper(device_t child, void *arg)
-{
-	struct config_detach_arg *a = arg;
-
-	return (a->a_error = config_detach(child, a->a_flags)) == 0;
+out:
+	mutex_enter(&alldevs_mtx);
+	if (--alldevs_nwrite == 0)
+		alldevs_writer = NULL;
+	cv_signal(&alldevs_cv);
+	mutex_exit(&alldevs_mtx);
+	return rv;
 }
 
 int
 config_detach_children(device_t parent, int flags)
 {
-	struct config_detach_arg a = {.a_flags = flags, .a_error = 0};
+	device_t dv;
+	deviter_t di;
+	int error = 0;
 
-	device_foreach_child(parent, config_detach_helper, &a);
-	return a.a_error;
+	for (dv = deviter_first(&di, DEVITER_F_RW); dv != NULL;
+	     dv = deviter_next(&di)) {
+		if (device_parent(dv) != parent)
+			continue;
+		if ((error = config_detach(dv, flags)) != 0)
+			break;
+	}
+	deviter_release(&di);
+	return error;
 }
 
 int
@@ -1684,6 +1743,25 @@ device_lookup(cfdriver_t cd, int unit)
 }
 
 /*
+ * device_lookup:
+ *
+ *	Look up a device instance for a given driver.
+ */
+void *
+device_lookup_private(cfdriver_t cd, int unit)
+{
+	device_t dv;
+
+	if (unit < 0 || unit >= cd->cd_ndevs)
+		return NULL;
+	
+	if ((dv = cd->cd_devs[unit]) == NULL)
+		return NULL;
+
+	return dv->dv_private;
+}
+
+/*
  * Accessor functions for the device_t type.
  */
 devclass_t
@@ -1736,21 +1814,6 @@ device_parent(device_t dev)
 }
 
 bool
-device_foreach_child(device_t parent, bool (*func)(device_t, void *), void *arg)
-{
-	device_t curdev, nextdev;
-
-	for (curdev = TAILQ_FIRST(&alldevs); curdev != NULL; curdev = nextdev) {
-		nextdev = TAILQ_NEXT(curdev, dv_list);
-		if (device_parent(curdev) != parent)
-			continue;
-		if (!(*func)(curdev, arg))
-			return false;
-	}
-	return true;
-}
-
-bool
 device_is_active(device_t dev)
 {
 	int active_flags;
@@ -1791,7 +1854,14 @@ void *
 device_private(device_t dev)
 {
 
-	return (dev->dv_private);
+	/*
+	 * The reason why device_private(NULL) is allowed is to simplify the
+	 * work of a lot of userspace request handlers (i.e., c/bdev
+	 * handlers) which grab cfdriver_t->cd_units[n].
+	 * It avoids having them test for it to be NULL and only then calling
+	 * device_private.
+	 */
+	return dev == NULL ? NULL : dev->dv_private;
 }
 
 prop_dictionary_t
@@ -1815,6 +1885,42 @@ device_is_a(device_t dev, const char *dname)
 }
 
 /*
+ * device_find_by_xname:
+ *
+ *	Returns the device of the given name or NULL if it doesn't exist.
+ */
+device_t
+device_find_by_xname(const char *name)
+{
+	device_t dv;
+	deviter_t di;
+
+	for (dv = deviter_first(&di, 0); dv != NULL; dv = deviter_next(&di)) {
+		if (strcmp(device_xname(dv), name) == 0)
+			break;
+	}
+	deviter_release(&di);
+
+	return dv;
+}
+
+/*
+ * device_find_by_driver_unit:
+ *
+ *	Returns the device of the given driver name and unit or
+ *	NULL if it doesn't exist.
+ */
+device_t
+device_find_by_driver_unit(const char *name, int unit)
+{
+	struct cfdriver *cd;
+
+	if ((cd = config_cfdriver_lookup(name)) == NULL)
+		return NULL;
+	return device_lookup(cd, unit);
+}
+
+/*
  * Power management related functions.
  */
 
@@ -1825,14 +1931,14 @@ device_pmf_is_registered(device_t dev)
 }
 
 bool
-device_pmf_driver_suspend(device_t dev)
+device_pmf_driver_suspend(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return true;
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return false;
 	if (*dev->dv_driver_suspend != NULL &&
-	    !(*dev->dv_driver_suspend)(dev))
+	    !(*dev->dv_driver_suspend)(dev PMF_FN_CALL))
 		return false;
 
 	dev->dv_flags |= DVF_DRIVER_SUSPENDED;
@@ -1840,35 +1946,90 @@ device_pmf_driver_suspend(device_t dev)
 }
 
 bool
-device_pmf_driver_resume(device_t dev)
+device_pmf_driver_resume(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return true;
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return false;
+	if ((flags & PMF_F_SELF) != 0 && !device_is_self_suspended(dev))
+		return false;
 	if (*dev->dv_driver_resume != NULL &&
-	    !(*dev->dv_driver_resume)(dev))
+	    !(*dev->dv_driver_resume)(dev PMF_FN_CALL))
 		return false;
 
 	dev->dv_flags &= ~DVF_DRIVER_SUSPENDED;
 	return true;
 }
 
-void
-device_pmf_driver_register(device_t dev,
-    bool (*suspend)(device_t), bool (*resume)(device_t))
+bool
+device_pmf_driver_shutdown(device_t dev, int how)
 {
+
+	if (*dev->dv_driver_shutdown != NULL &&
+	    !(*dev->dv_driver_shutdown)(dev, how))
+		return false;
+	return true;
+}
+
+bool
+device_pmf_driver_register(device_t dev,
+    bool (*suspend)(device_t PMF_FN_PROTO),
+    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*shutdown)(device_t, int))
+{
+	pmf_private_t *pp;
+
+	if ((pp = malloc(sizeof(*pp), M_PMFPRIV, M_NOWAIT|M_ZERO)) == NULL)
+		return false;
+	mutex_init(&pp->pp_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&pp->pp_cv, "pmfsusp");
+	dev->dv_pmf_private = pp;
+
 	dev->dv_driver_suspend = suspend;
 	dev->dv_driver_resume = resume;
+	dev->dv_driver_shutdown = shutdown;
 	dev->dv_flags |= DVF_POWER_HANDLERS;
+	return true;
+}
+
+static const char *
+curlwp_name(void)
+{
+	if (curlwp->l_name != NULL)
+		return curlwp->l_name;
+	else
+		return curlwp->l_proc->p_comm;
 }
 
 void
 device_pmf_driver_deregister(device_t dev)
 {
+	pmf_private_t *pp = dev->dv_pmf_private;
+
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;
+
+	dev->dv_pmf_private = NULL;
+
+	mutex_enter(&pp->pp_mtx);
 	dev->dv_flags &= ~DVF_POWER_HANDLERS;
+	while (pp->pp_nlock > 0 || pp->pp_nwait > 0) {
+		/* Wake a thread that waits for the lock.  That
+		 * thread will fail to acquire the lock, and then
+		 * it will wake the next thread that waits for the
+		 * lock, or else it will wake us.
+		 */
+		cv_signal(&pp->pp_cv);
+		pmflock_debug(dev, __func__, __LINE__);
+		cv_wait(&pp->pp_cv, &pp->pp_mtx);
+		pmflock_debug(dev, __func__, __LINE__);
+	}
+	mutex_exit(&pp->pp_mtx);
+
+	cv_destroy(&pp->pp_cv);
+	mutex_destroy(&pp->pp_mtx);
+	free(pp, M_PMFPRIV);
 }
 
 bool
@@ -1888,6 +2049,116 @@ device_pmf_driver_set_child_register(device_t dev,
 	dev->dv_driver_child_register = child_register;
 }
 
+void
+device_pmf_self_resume(device_t dev PMF_FN_ARGS)
+{
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	if ((dev->dv_flags & DVF_SELF_SUSPENDED) != 0)
+		dev->dv_flags &= ~DVF_SELF_SUSPENDED;
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+}
+
+bool
+device_is_self_suspended(device_t dev)
+{
+	return (dev->dv_flags & DVF_SELF_SUSPENDED) != 0;
+}
+
+void
+device_pmf_self_suspend(device_t dev PMF_FN_ARGS)
+{
+	bool self = (flags & PMF_F_SELF) != 0;
+
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+
+	if (!self)
+		dev->dv_flags &= ~DVF_SELF_SUSPENDED;
+	else if (device_is_active(dev))
+		dev->dv_flags |= DVF_SELF_SUSPENDED;
+
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+}
+
+static void
+pmflock_debug(device_t dev, const char *func, int line)
+{
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	aprint_debug_dev(dev, "%s.%d, %s pp_nlock %d pp_nwait %d dv_flags %x\n",
+	    func, line, curlwp_name(), pp->pp_nlock, pp->pp_nwait,
+	    dev->dv_flags);
+}
+
+static void
+pmflock_debug_with_flags(device_t dev, const char *func, int line PMF_FN_ARGS)
+{
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	aprint_debug_dev(dev, "%s.%d, %s pp_nlock %d pp_nwait %d dv_flags %x "
+	    "flags " PMF_FLAGS_FMT "\n", func, line, curlwp_name(),
+	    pp->pp_nlock, pp->pp_nwait, dev->dv_flags PMF_FN_CALL);
+}
+
+static bool
+device_pmf_lock1(device_t dev PMF_FN_ARGS)
+{
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	while (pp->pp_nlock > 0 && pp->pp_holder != curlwp &&
+	       device_pmf_is_registered(dev)) {
+		pp->pp_nwait++;
+		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		cv_wait(&pp->pp_cv, &pp->pp_mtx);
+		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		pp->pp_nwait--;
+	}
+	if (!device_pmf_is_registered(dev)) {
+		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		/* We could not acquire the lock, but some other thread may
+		 * wait for it, also.  Wake that thread.
+		 */
+		cv_signal(&pp->pp_cv);
+		return false;
+	}
+	pp->pp_nlock++;
+	pp->pp_holder = curlwp;
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	return true;
+}
+
+bool
+device_pmf_lock(device_t dev PMF_FN_ARGS)
+{
+	bool rc;
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	mutex_enter(&pp->pp_mtx);
+	rc = device_pmf_lock1(dev PMF_FN_CALL);
+	mutex_exit(&pp->pp_mtx);
+
+	return rc;
+}
+
+void
+device_pmf_unlock(device_t dev PMF_FN_ARGS)
+{
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	KASSERT(pp->pp_nlock > 0);
+	mutex_enter(&pp->pp_mtx);
+	if (--pp->pp_nlock == 0)
+		pp->pp_holder = NULL;
+	cv_signal(&pp->pp_cv);
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	mutex_exit(&pp->pp_mtx);
+}
+
+void *
+device_pmf_private(device_t dev)
+{
+	return dev->dv_pmf_private;
+}
+
 void *
 device_pmf_bus_private(device_t dev)
 {
@@ -1895,7 +2166,7 @@ device_pmf_bus_private(device_t dev)
 }
 
 bool
-device_pmf_bus_suspend(device_t dev)
+device_pmf_bus_suspend(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return true;
@@ -1903,7 +2174,7 @@ device_pmf_bus_suspend(device_t dev)
 	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return false;
 	if (*dev->dv_bus_suspend != NULL &&
-	    !(*dev->dv_bus_suspend)(dev))
+	    !(*dev->dv_bus_suspend)(dev PMF_FN_CALL))
 		return false;
 
 	dev->dv_flags |= DVF_BUS_SUSPENDED;
@@ -1911,26 +2182,40 @@ device_pmf_bus_suspend(device_t dev)
 }
 
 bool
-device_pmf_bus_resume(device_t dev)
+device_pmf_bus_resume(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
 		return true;
+	if ((flags & PMF_F_SELF) != 0 && !device_is_self_suspended(dev))
+		return false;
 	if (*dev->dv_bus_resume != NULL &&
-	    !(*dev->dv_bus_resume)(dev))
+	    !(*dev->dv_bus_resume)(dev PMF_FN_CALL))
 		return false;
 
 	dev->dv_flags &= ~DVF_BUS_SUSPENDED;
 	return true;
 }
 
+bool
+device_pmf_bus_shutdown(device_t dev, int how)
+{
+
+	if (*dev->dv_bus_shutdown != NULL &&
+	    !(*dev->dv_bus_shutdown)(dev, how))
+		return false;
+	return true;
+}
+
 void
 device_pmf_bus_register(device_t dev, void *priv,
-    bool (*suspend)(device_t), bool (*resume)(device_t),
-    void (*deregister)(device_t))
+    bool (*suspend)(device_t PMF_FN_PROTO),
+    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*shutdown)(device_t, int), void (*deregister)(device_t))
 {
 	dev->dv_bus_private = priv;
 	dev->dv_bus_resume = resume;
 	dev->dv_bus_suspend = suspend;
+	dev->dv_bus_shutdown = shutdown;
 	dev->dv_bus_deregister = deregister;
 }
 
@@ -1953,12 +2238,12 @@ device_pmf_class_private(device_t dev)
 }
 
 bool
-device_pmf_class_suspend(device_t dev)
+device_pmf_class_suspend(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) != 0)
 		return true;
 	if (*dev->dv_class_suspend != NULL &&
-	    !(*dev->dv_class_suspend)(dev))
+	    !(*dev->dv_class_suspend)(dev PMF_FN_CALL))
 		return false;
 
 	dev->dv_flags |= DVF_CLASS_SUSPENDED;
@@ -1966,7 +2251,7 @@ device_pmf_class_suspend(device_t dev)
 }
 
 bool
-device_pmf_class_resume(device_t dev)
+device_pmf_class_resume(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return true;
@@ -1974,7 +2259,7 @@ device_pmf_class_resume(device_t dev)
 	    (dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return false;
 	if (*dev->dv_class_resume != NULL &&
-	    !(*dev->dv_class_resume)(dev))
+	    !(*dev->dv_class_resume)(dev PMF_FN_CALL))
 		return false;
 
 	dev->dv_flags &= ~DVF_CLASS_SUSPENDED;
@@ -1983,7 +2268,8 @@ device_pmf_class_resume(device_t dev)
 
 void
 device_pmf_class_register(device_t dev, void *priv,
-    bool (*suspend)(device_t), bool (*resume)(device_t),
+    bool (*suspend)(device_t PMF_FN_PROTO),
+    bool (*resume)(device_t PMF_FN_PROTO),
     void (*deregister)(device_t))
 {
 	dev->dv_class_private = priv;
@@ -2087,4 +2373,194 @@ device_active_deregister(device_t dev, void (*handler)(device_t, devactive_t))
 	splx(s);
 
 	free(old_handlers, M_DEVBUF);
+}
+
+/*
+ * Device Iteration
+ *
+ * deviter_t: a device iterator.  Holds state for a "walk" visiting
+ *     each device_t's in the device tree.
+ *
+ * deviter_init(di, flags): initialize the device iterator `di'
+ *     to "walk" the device tree.  deviter_next(di) will return
+ *     the first device_t in the device tree, or NULL if there are
+ *     no devices.
+ *
+ *     `flags' is one or more of DEVITER_F_RW, indicating that the
+ *     caller intends to modify the device tree by calling
+ *     config_detach(9) on devices in the order that the iterator
+ *     returns them; DEVITER_F_ROOT_FIRST, asking for the devices
+ *     nearest the "root" of the device tree to be returned, first;
+ *     DEVITER_F_LEAVES_FIRST, asking for the devices furthest from
+ *     the root of the device tree, first; and DEVITER_F_SHUTDOWN,
+ *     indicating both that deviter_init() should not respect any
+ *     locks on the device tree, and that deviter_next(di) may run
+ *     in more than one LWP before the walk has finished.
+ *
+ *     Only one DEVITER_F_RW iterator may be in the device tree at
+ *     once.
+ *
+ *     DEVITER_F_SHUTDOWN implies DEVITER_F_RW.
+ *
+ *     Results are undefined if the flags DEVITER_F_ROOT_FIRST and
+ *     DEVITER_F_LEAVES_FIRST are used in combination.
+ *
+ * deviter_first(di, flags): initialize the device iterator `di'
+ *     and return the first device_t in the device tree, or NULL
+ *     if there are no devices.  The statement
+ *
+ *         dv = deviter_first(di);
+ *
+ *     is shorthand for
+ *
+ *         deviter_init(di);
+ *         dv = deviter_next(di);
+ *
+ * deviter_next(di): return the next device_t in the device tree,
+ *     or NULL if there are no more devices.  deviter_next(di)
+ *     is undefined if `di' was not initialized with deviter_init() or
+ *     deviter_first().
+ *
+ * deviter_release(di): stops iteration (subsequent calls to
+ *     deviter_next() will return NULL), releases any locks and
+ *     resources held by the device iterator.
+ *
+ * Device iteration does not return device_t's in any particular
+ * order.  An iterator will never return the same device_t twice.
+ * Device iteration is guaranteed to complete---i.e., if deviter_next(di)
+ * is called repeatedly on the same `di', it will eventually return
+ * NULL.  It is ok to attach/detach devices during device iteration.
+ */
+void
+deviter_init(deviter_t *di, deviter_flags_t flags)
+{
+	device_t dv;
+	bool rw;
+
+	mutex_enter(&alldevs_mtx);
+	if ((flags & DEVITER_F_SHUTDOWN) != 0) {
+		flags |= DEVITER_F_RW;
+		alldevs_nwrite++;
+		alldevs_writer = NULL;
+		alldevs_nread = 0;
+	} else {
+		rw = (flags & DEVITER_F_RW) != 0;
+
+		if (alldevs_nwrite > 0 && alldevs_writer == NULL)
+			;
+		else while ((alldevs_nwrite != 0 && alldevs_writer != curlwp) ||
+		       (rw && alldevs_nread != 0))
+			cv_wait(&alldevs_cv, &alldevs_mtx);
+
+		if (rw) {
+			if (alldevs_nwrite++ == 0)
+				alldevs_writer = curlwp;
+		} else
+			alldevs_nread++;
+	}
+	mutex_exit(&alldevs_mtx);
+
+	memset(di, 0, sizeof(*di));
+
+	di->di_flags = flags;
+
+	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
+	case DEVITER_F_LEAVES_FIRST:
+		TAILQ_FOREACH(dv, &alldevs, dv_list)
+			di->di_curdepth = MAX(di->di_curdepth, dv->dv_depth);
+		break;
+	case DEVITER_F_ROOT_FIRST:
+		TAILQ_FOREACH(dv, &alldevs, dv_list)
+			di->di_maxdepth = MAX(di->di_maxdepth, dv->dv_depth);
+		break;
+	default:
+		break;
+	}
+
+	deviter_reinit(di);
+}
+
+static void
+deviter_reinit(deviter_t *di)
+{
+	if ((di->di_flags & DEVITER_F_RW) != 0)
+		di->di_prev = TAILQ_LAST(&alldevs, devicelist);
+	else
+		di->di_prev = TAILQ_FIRST(&alldevs);
+}
+
+device_t
+deviter_first(deviter_t *di, deviter_flags_t flags)
+{
+	deviter_init(di, flags);
+	return deviter_next(di);
+}
+
+static device_t
+deviter_next1(deviter_t *di)
+{
+	device_t dv;
+
+	dv = di->di_prev;
+
+	if (dv == NULL)
+		;
+	else if ((di->di_flags & DEVITER_F_RW) != 0)
+		di->di_prev = TAILQ_PREV(dv, devicelist, dv_list);
+	else
+		di->di_prev = TAILQ_NEXT(dv, dv_list);
+
+	return dv;
+}
+
+device_t
+deviter_next(deviter_t *di)
+{
+	device_t dv = NULL;
+
+	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
+	case 0:
+		return deviter_next1(di);
+	case DEVITER_F_LEAVES_FIRST:
+		while (di->di_curdepth >= 0) {
+			if ((dv = deviter_next1(di)) == NULL) {
+				di->di_curdepth--;
+				deviter_reinit(di);
+			} else if (dv->dv_depth == di->di_curdepth)
+				break;
+		}
+		return dv;
+	case DEVITER_F_ROOT_FIRST:
+		while (di->di_curdepth <= di->di_maxdepth) {
+			if ((dv = deviter_next1(di)) == NULL) {
+				di->di_curdepth++;
+				deviter_reinit(di);
+			} else if (dv->dv_depth == di->di_curdepth)
+				break;
+		}
+		return dv;
+	default:
+		return NULL;
+	}
+}
+
+void
+deviter_release(deviter_t *di)
+{
+	bool rw = (di->di_flags & DEVITER_F_RW) != 0;
+
+	mutex_enter(&alldevs_mtx);
+	if (alldevs_nwrite > 0 && alldevs_writer == NULL)
+		--alldevs_nwrite;
+	else {
+
+		if (rw) {
+			if (--alldevs_nwrite == 0)
+				alldevs_writer = NULL;
+		} else
+			--alldevs_nread;
+
+		cv_signal(&alldevs_cv);
+	}
+	mutex_exit(&alldevs_mtx);
 }

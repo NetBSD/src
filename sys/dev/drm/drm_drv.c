@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.5.12.2 2008/01/09 01:52:35 matt Exp $ */
+/* drm_drv.c,v 1.5.12.2 2008/01/09 01:52:35 matt Exp */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.5.12.2 2008/01/09 01:52:35 matt Exp $");
+__KERNEL_RCSID(0, "drm_drv.c,v 1.5.12.2 2008/01/09 01:52:35 matt Exp");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -224,6 +224,9 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 			dev->pci_map_data[unit].size = 0;
 		}
 		if(dev->pci_map_data[unit].maptype == PCI_MAPREG_TYPE_MEM)
+			dev->pci_map_data[unit].flags |= BUS_SPACE_MAP_LINEAR;
+		if(dev->pci_map_data[unit].maptype
+                    == (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT))
 			dev->pci_map_data[unit].flags |= BUS_SPACE_MAP_LINEAR;
 	}
 	for(unit=0; unit<DRM_MAX_PCI_RESOURCE; unit++) {

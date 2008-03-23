@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.15.24.2 2008/01/09 01:53:14 matt Exp $	*/
+/*	midi_pcppi.c,v 1.15.24.2 2008/01/09 01:53:14 matt Exp	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.15.24.2 2008/01/09 01:53:14 matt Exp $");
+__KERNEL_RCSID(0, "midi_pcppi.c,v 1.15.24.2 2008/01/09 01:53:14 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,15 +67,15 @@ struct midi_pcppi_softc {
 	midisyn sc_midisyn;
 };
 
-int	midi_pcppi_match(struct device *, struct cfdata *, void *);
-void	midi_pcppi_attach(struct device *, struct device *, void *);
+int	midi_pcppi_match(device_t, cfdata_t , void *);
+void	midi_pcppi_attach(device_t, device_t, void *);
 
 void	midi_pcppi_on   (midisyn *, uint_fast16_t, midipitch_t, int16_t);
 void	midi_pcppi_off  (midisyn *, uint_fast16_t, uint_fast8_t);
 void	midi_pcppi_close(midisyn *);
 static void midi_pcppi_repitchv(midisyn *, uint_fast16_t, midipitch_t);
 
-CFATTACH_DECL(midi_pcppi, sizeof(struct midi_pcppi_softc),
+CFATTACH_DECL_NEW(midi_pcppi, sizeof(struct midi_pcppi_softc),
     midi_pcppi_match, midi_pcppi_attach, NULL, NULL);
 
 struct midisyn_methods midi_pcppi_hw = {
@@ -88,22 +88,19 @@ struct midisyn_methods midi_pcppi_hw = {
 int midi_pcppi_attached = 0;	/* Not very nice */
 
 int
-midi_pcppi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+midi_pcppi_match(device_t parent, cfdata_t match, void *aux)
 {
 	return (!midi_pcppi_attached);
 }
 
 void
-midi_pcppi_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+midi_pcppi_attach(device_t parent, device_t self, void *aux)
 {
-	struct midi_pcppi_softc *sc = (struct midi_pcppi_softc *)self;
+	struct midi_pcppi_softc *sc = device_private(self);
 	struct pcppi_attach_args *pa = (struct pcppi_attach_args *)aux;
 	midisyn *ms;
 
+	sc->sc_mididev.dev = self;
 	ms = &sc->sc_midisyn;
 	ms->mets = &midi_pcppi_hw;
 	strcpy(ms->name, "PC speaker");

@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.23.16.1 2008/01/09 01:52:49 matt Exp $	*/
+/*	atwvar.h,v 1.23.16.1 2008/01/09 01:52:49 matt Exp	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -207,8 +207,6 @@ struct atw_softc {
 	bus_space_tag_t		sc_st;		/* bus space tag */
 	bus_space_handle_t	sc_sh;		/* bus space handle */
 	bus_dma_tag_t		sc_dmat;	/* bus dma tag */
-	void			*sc_sdhook;	/* shutdown hook */
-	void			*sc_powerhook;	/* power management hook */
 	u_int32_t		sc_cacheline;	/* cache line size */
 	u_int32_t		sc_maxburst;	/* maximum burst length */
 
@@ -460,6 +458,6 @@ int	atw_detach(struct atw_softc *);
 int	atw_activate(struct device *, enum devact);
 int	atw_intr(void *arg);
 void	atw_power(int, void *);
-void	atw_shutdown(void *);
+bool	atw_shutdown(device_t, int);
 
 #endif /* _DEV_IC_ATWVAR_H_ */

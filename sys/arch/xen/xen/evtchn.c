@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.20.24.2 2008/01/09 01:50:18 matt Exp $	*/
+/*	evtchn.c,v 1.20.24.2 2008/01/09 01:50:18 matt Exp	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.20.24.2 2008/01/09 01:50:18 matt Exp $");
+__KERNEL_RCSID(0, "evtchn.c,v 1.20.24.2 2008/01/09 01:50:18 matt Exp");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.20.24.2 2008/01/09 01:50:18 matt Exp $"
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/reboot.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm.h>
 
@@ -189,6 +190,8 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	int	(*ih_fun)(void *, void *);
 	extern struct uvmexp uvmexp;
 	u_int32_t iplmask;
+	int i;
+	u_int32_t iplbit;
 
 #ifdef DIAGNOSTIC
 	if (evtch >= NR_EVENT_CHANNELS) {
@@ -228,7 +231,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		    evtch, evtsource[evtch]->ev_maxlevel, ilevel);
 #endif
 		hypervisor_set_ipending(evtsource[evtch]->ev_imask,
-		    evtch / 32, evtch % 32);
+		    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 		/* leave masked */
 		return 0;
 	}
@@ -250,10 +253,9 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 #endif
 			cli();
 			hypervisor_set_ipending(iplmask,
-			    evtch / 32, evtch % 32);
+			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
-			splx(ilevel);
-			return 0;
+			goto splx;
 		}
 		iplmask &= ~IUNMASK(ci, ih->ih_level);
 		ci->ci_ilevel = ih->ih_level;
@@ -266,8 +268,36 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	x86_intunlock(regs);
 #endif
 	hypervisor_enable_event(evtch);
-	splx(ilevel);
-
+splx:
+	/*
+	 * C version of spllower(). ASTs will be checked when
+	 * hypevisor_callback() exits, so no need to check here.
+	 */
+	iplbit = 1 << (NIPL - 1);
+	i = (NIPL - 1);
+	while ((iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending)) != 0) {
+		if (iplbit == 0) {
+			/* another pending ipl went in while running a handler*/
+			iplbit = 1 << (NIPL - 1);
+			i = (NIPL - 1);
+		}
+		if (iplmask & iplbit) {
+			ci->ci_ipending &= ~iplbit;
+			KASSERT(i > ilevel);
+			ci->ci_ilevel = i;
+			for (ih = ci->ci_isources[i]->ipl_handlers; ih != NULL;
+			    ih = ih->ih_ipl_next) {
+				sti();
+				ih_fun = (void *)ih->ih_fun;
+				ih_fun(ih->ih_arg, regs);
+				cli();
+			}
+			hypervisor_enable_ipl(i);
+		}
+		i--;
+		iplbit >>= 1;
+	}
+	ci->ci_ilevel = ilevel;
 	return 0;
 }
 
@@ -448,10 +478,9 @@ int
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
     const char *evname)
 {
-	struct iplsource *ipls;
+	struct cpu_info *ci = &cpu_info_primary;
 	struct evtsource *evts;
 	struct intrhand *ih, **ihp;
-	struct cpu_info *ci;
 	int s;
 
 #ifdef IRQ_DEBUG
@@ -481,22 +510,12 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	ih->ih_evt_next = NULL;
 	ih->ih_ipl_next = NULL;
 
-	ci = &cpu_info_primary;
 	s = splhigh();
-	if (ci->ci_isources[level] == NULL) {
-		MALLOC(ipls, struct iplsource *, sizeof (struct iplsource),
-		    M_DEVBUF, M_WAITOK|M_ZERO);
-		if (ipls == NULL)
-			panic("can't allocate fixed interrupt source");
-		ipls->ipl_recurse = xenev_stubs[level].ist_recurse;
-		ipls->ipl_resume = xenev_stubs[level].ist_resume;
-		ipls->ipl_handlers = ih;
-		ci->ci_isources[level] = ipls;
-	} else {
-		ipls = ci->ci_isources[level];
-		ih->ih_ipl_next = ipls->ipl_handlers;
-		ipls->ipl_handlers = ih;
-	}
+
+	/* register handler for spllower() */
+	event_set_iplhandler(ih, level);
+
+	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
 		MALLOC(evts, struct evtsource *, sizeof (struct evtsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
@@ -533,6 +552,28 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	splx(s);
 
 	return 0;
+}
+
+void
+event_set_iplhandler(struct intrhand *ih, int level)
+{
+	struct cpu_info *ci = &cpu_info_primary;
+	struct iplsource *ipls;
+
+	if (ci->ci_isources[level] == NULL) {
+		MALLOC(ipls, struct iplsource *, sizeof (struct iplsource),
+		    M_DEVBUF, M_WAITOK|M_ZERO);
+		if (ipls == NULL)
+			panic("can't allocate fixed interrupt source");
+		ipls->ipl_recurse = xenev_stubs[level].ist_recurse;
+		ipls->ipl_resume = xenev_stubs[level].ist_resume;
+		ipls->ipl_handlers = ih;
+		ci->ci_isources[level] = ipls;
+	} else {
+		ipls = ci->ci_isources[level];
+		ih->ih_ipl_next = ipls->ipl_handlers;
+		ipls->ipl_handlers = ih;
+	}
 }
 
 int
@@ -634,11 +675,11 @@ xen_debug_handler(void *arg)
 	    " evtchn_pending_sel 0x%lx\n",
 		upcall_pending, upcall_mask, pending_sel);
 	printf("evtchn_mask");
-	for (i = 0 ; i < 32; i++)
+	for (i = 0 ; i <= LONG_MASK; i++)
 		printf(" %lx", (u_long)evtchn_mask[i]);
 	printf("\n");
 	printf("evtchn_pending");
-	for (i = 0 ; i < 32; i++)
+	for (i = 0 ; i <= LONG_MASK; i++)
 		printf(" %lx", (u_long)evtchn_pending[i]);
 	printf("\n");
 	return 0;

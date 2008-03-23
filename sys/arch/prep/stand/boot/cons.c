@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.6 2006/04/13 18:46:46 garbled Exp $	*/
+/*	cons.c,v 1.6 2006/04/13 18:46:46 garbled Exp	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -163,7 +163,7 @@ cnscan(void)
 
 	if (cn_tab)
 		return ((*cn_tab->cn_scan)(cn_tab->cn_dev));
-	return (0);
+	return -1;
 }
 
 #ifdef CONS_VGA

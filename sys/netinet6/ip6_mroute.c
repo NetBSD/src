@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.83.8.2 2008/01/09 01:57:37 matt Exp $	*/
+/*	ip6_mroute.c,v 1.83.8.2 2008/01/09 01:57:37 matt Exp	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.83.8.2 2008/01/09 01:57:37 matt Exp $");
+__KERNEL_RCSID(0, "ip6_mroute.c,v 1.83.8.2 2008/01/09 01:57:37 matt Exp");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -491,7 +491,7 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
  * Disable multicast routing
  */
 int
-ip6_mrouter_done()
+ip6_mrouter_done(void)
 {
 	mifi_t mifi;
 	int i;

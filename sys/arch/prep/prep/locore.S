@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.9 2006/05/08 17:08:34 garbled Exp $	*/
+/*	locore.S,v 1.9 2006/05/08 17:08:34 garbled Exp	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -79,6 +79,8 @@ GLOBAL(endsym)
 	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
+GLOBAL(oeacpufeat)
+	.long	0			/* cpu features */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to

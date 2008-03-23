@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.96.6.3 2008/01/09 01:58:26 matt Exp $	*/
+/*	ffs_softdep.c,v 1.96.6.3 2008/01/09 01:58:26 matt Exp	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.96.6.3 2008/01/09 01:58:26 matt Exp $");
+__KERNEL_RCSID(0, "ffs_softdep.c,v 1.96.6.3 2008/01/09 01:58:26 matt Exp");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -93,7 +93,7 @@ MALLOC_JUSTDEFINE(M_NEWBLK, "newblk", "New block allocation");
 /*
  * Names of softdep types.
  */
-const char *softdep_typenames[] = {
+const char * const softdep_typenames[] = {
 	"invalid",
 	"pagedep",
 	"inodedep",
@@ -205,7 +205,7 @@ static	int softdep_process_worklist(struct mount *);
 static	void softdep_move_dependencies(struct buf *, struct buf *);
 static	int softdep_count_dependencies(struct buf *bp, int);
 
-static struct bio_ops bioops_softdep = {
+static const struct bio_ops bioops_softdep = {
 	softdep_disk_io_initiation,		/* io_start */
 	softdep_disk_write_complete,		/* io_complete */
 	softdep_deallocate_dependencies,	/* io_deallocate */
@@ -1064,7 +1064,7 @@ softdep_initialize()
 	if (i < sizeof(struct buf))
 		i = sizeof(struct buf);
 	softdep_large_cache = pool_cache_init(i, 0, 0, 0, "sdeplarge", NULL,
-	    IPL_NONE, NULL, NULL, NULL);
+	    IPL_SOFTBIO, NULL, NULL, NULL);
 	KASSERT(softdep_large_cache != NULL);	/* XXX */
 
 	i =  sizeof(struct allocdirect);
@@ -1075,7 +1075,7 @@ softdep_initialize()
 	if (i < sizeof(struct inodedep))
 		i = sizeof(struct inodedep);
 	softdep_medium_cache = pool_cache_init(i, 0, 0, 0, "sdepmedium", NULL,
-	    IPL_NONE, NULL, NULL, NULL);
+	    IPL_SOFTBIO, NULL, NULL, NULL);
 	KASSERT(softdep_medium_cache != NULL);	/* XXX */
 
 	i = sizeof(struct newblk);
@@ -1096,7 +1096,7 @@ softdep_initialize()
 	if (i <  sizeof(struct newdirblk))
 		i =  sizeof(struct newdirblk);
 	softdep_small_cache = pool_cache_init(i, 0, 0, 0, "sdepsmall", NULL,
-	    IPL_NONE, NULL, NULL, NULL);
+	    IPL_SOFTBIO, NULL, NULL, NULL);
 	KASSERT(softdep_small_cache != NULL);	/* XXX */
 
 	LIST_INIT(&mkdirlisthd);
@@ -5575,7 +5575,7 @@ getdirtybuf(bpp, waitfor)
 			break;
 		if (waitfor != MNT_WAIT)
 			return (0);
-		(void)bbusy(bp, false, 0);
+		(void)bbusy(bp, false, 0, NULL);
 	}
 	mutex_enter(bp->b_objlock);
 	if ((bp->b_oflags & BO_DELWRI) == 0) {

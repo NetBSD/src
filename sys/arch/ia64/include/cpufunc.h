@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	cpufunc.h,v 1.1 2006/04/07 14:21:18 cherry Exp	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -59,6 +59,7 @@ extern uint64_t ia64_port_base;
 #define	__PIO_ADDR(x)		(__volatile void*)(ia64_port_base |	\
 	(((x) & 0xFFFC) << 10) | ((x) & 0xFFF))
 
+#if 0
 /*
  * I/O port reads with ia32 semantics.
  */
@@ -181,6 +182,7 @@ outsl(unsigned int port, const void *addr, size_t count)
 	while (count--)
 		outl(port, *buf++);
 }
+#endif
 
 static __inline void
 disable_intr(void)

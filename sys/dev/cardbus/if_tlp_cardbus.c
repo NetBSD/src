@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.53.24.2 2008/01/09 01:52:30 matt Exp $	*/
+/*	if_tlp_cardbus.c,v 1.53.24.2 2008/01/09 01:52:30 matt Exp	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.53.24.2 2008/01/09 01:52:30 matt Exp $");
+__KERNEL_RCSID(0, "if_tlp_cardbus.c,v 1.53.24.2 2008/01/09 01:52:30 matt Exp");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -459,13 +459,6 @@ tlp_cardbus_attach(struct device *parent, struct device *self,
 
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
-
-	/*
-	 * The CardBus cards will make it to store-and-forward mode as
-	 * soon as you put them under any kind of load, so just start
-	 * out there.
-	 */
-	sc->sc_txthresh = TXTH_SF;
 
 	/*
 	 * Finish off the attach.

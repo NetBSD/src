@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.11.6.2 2008/01/09 01:56:32 matt Exp $	*/
+/*	vfs_trans.c,v 1.11.6.2 2008/01/09 01:56:32 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.11.6.2 2008/01/09 01:56:32 matt Exp $");
+__KERNEL_RCSID(0, "vfs_trans.c,v 1.11.6.2 2008/01/09 01:56:32 matt Exp");
 
 /*
  * File system transaction operations.
@@ -177,7 +177,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	struct fstrans_lwp_info *fli, *new_fli;
 	struct fstrans_mount_info *fmi;
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 
 	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
 		return 0;
@@ -534,7 +534,7 @@ fscow_run(struct buf *bp, bool data_valid)
 	struct fstrans_mount_info *fmi;
 	struct fscow_handler *hp;
 
-	if ((bp->b_oflags & BO_COWDONE))
+	if ((bp->b_flags & B_COWDONE))
 		goto done;
 	if (bp->b_vp == NULL)
 		goto done;
@@ -554,11 +554,8 @@ fscow_run(struct buf *bp, bool data_valid)
 	rw_exit(&fmi->fmi_cow_lock);
 
  done:
- 	if (error == 0) {
- 		mutex_enter(bp->b_objlock);
- 		bp->b_oflags |= BO_COWDONE;
- 		mutex_exit(bp->b_objlock);
- 	}
+ 	if (error == 0)
+ 		bp->b_flags |= B_COWDONE;
 
 	return error;
 }

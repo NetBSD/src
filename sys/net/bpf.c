@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.130.8.1 2008/01/09 01:57:07 matt Exp $	*/
+/*	bpf.c,v 1.130.8.1 2008/01/09 01:57:07 matt Exp	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.130.8.1 2008/01/09 01:57:07 matt Exp $");
+__KERNEL_RCSID(0, "bpf.c,v 1.130.8.1 2008/01/09 01:57:07 matt Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -403,6 +403,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_seesent = 1;
 	d->bd_pid = l->l_proc->p_pid;
 	callout_init(&d->bd_callout, 0);
+	selinit(&d->bd_sel);
 
 	mutex_enter(&bpf_mtx);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
@@ -439,6 +440,7 @@ bpf_close(struct file *fp, struct lwp *l)
 	LIST_REMOVE(d, bd_list);
 	mutex_exit(&bpf_mtx);
 	callout_destroy(&d->bd_callout);
+	seldestroy(&d->bd_sel);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;
 
@@ -566,7 +568,7 @@ bpf_wakeup(struct bpf_d *d)
 	if (d->bd_async)
 		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
 
-	selnotify(&d->bd_sel, 0);
+	selnotify(&d->bd_sel, 0, 0);
 }
 
 
@@ -1064,7 +1066,7 @@ bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
  * Return true iff the specific operation will not block indefinitely - with
  * the assumption that it is safe to positively acknowledge a request for the
  * ability to write to the BPF device.
- * Otherwise, return false but make a note that a selwakeup() must be done.
+ * Otherwise, return false but make a note that a selnotify() must be done.
  */
 static int
 bpf_poll(struct file *fp, int events, struct lwp *l)
@@ -1311,7 +1313,7 @@ bpf_mtap(void *arg, struct mbuf *m)
  * try to free it or keep a pointer a to it).
  */
 void
-bpf_mtap_af(void *arg, u_int32_t af, struct mbuf *m)
+bpf_mtap_af(void *arg, uint32_t af, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1324,7 +1326,7 @@ bpf_mtap_af(void *arg, u_int32_t af, struct mbuf *m)
 }
 
 void
-bpf_mtap_et(void *arg, u_int16_t et, struct mbuf *m)
+bpf_mtap_et(void *arg, uint16_t et, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1333,10 +1335,10 @@ bpf_mtap_et(void *arg, u_int16_t et, struct mbuf *m)
 	m0.m_len = 14;
 	m0.m_data = m0.m_dat;
 
-	((u_int32_t *)m0.m_data)[0] = 0;
-	((u_int32_t *)m0.m_data)[1] = 0;
-	((u_int32_t *)m0.m_data)[2] = 0;
-	((u_int16_t *)m0.m_data)[6] = et;
+	((uint32_t *)m0.m_data)[0] = 0;
+	((uint32_t *)m0.m_data)[1] = 0;
+	((uint32_t *)m0.m_data)[2] = 0;
+	((uint16_t *)m0.m_data)[6] = et;
 
 	bpf_mtap(arg, &m0);
 }

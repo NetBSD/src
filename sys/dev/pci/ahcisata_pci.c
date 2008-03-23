@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.1.14.1 2008/01/09 01:53:32 matt Exp $	*/
+/*	ahcisata_pci.c,v 1.1.14.1 2008/01/09 01:53:32 matt Exp	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.14.1 2008/01/09 01:53:32 matt Exp $");
+__KERNEL_RCSID(0, "ahcisata_pci.c,v 1.1.14.1 2008/01/09 01:53:32 matt Exp");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -50,23 +50,22 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.14.1 2008/01/09 01:53:32 matt E
 #include <dev/ic/ahcisatavar.h>
 
 struct ahci_pci_softc {
-	struct ahci_softc ah_sc; /* must come first, struct device */
+	struct ahci_softc ah_sc;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
 };
 
 
-static int  ahci_pci_match(struct device *, struct cfdata *, void *);
-static void ahci_pci_attach(struct device *, struct device *, void *);
-static bool ahci_pci_resume(device_t);
+static int  ahci_pci_match(device_t, cfdata_t, void *);
+static void ahci_pci_attach(device_t, device_t, void *);
+static bool ahci_pci_resume(device_t PMF_FN_PROTO);
 
 
-CFATTACH_DECL(ahcisata_pci, sizeof(struct ahci_pci_softc),
+CFATTACH_DECL_NEW(ahcisata_pci, sizeof(struct ahci_pci_softc),
     ahci_pci_match, ahci_pci_attach, NULL, NULL);
 
 static int
-ahci_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ahci_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	bus_space_tag_t regt;
@@ -75,27 +74,31 @@ ahci_pci_match(struct device *parent, struct cfdata *match,
 	int ret = 0;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
-	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI) {
+	    ((PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
+	     PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI) ||
+	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)) {
 		/* check if the chip is in ahci mode */
 		if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 		    &regt, &regh, NULL, &size) != 0)
-			return (0);
-		if (bus_space_read_4(regt, regh, AHCI_GHC) & AHCI_GHC_AE)
+			return 0;
+		if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA
+		    && PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI)
+			ret = 3;
+		else if (bus_space_read_4(regt, regh, AHCI_GHC) & AHCI_GHC_AE)
 			ret = 3;
 		bus_space_unmap(regt, regh, size);
-		return (3);
+		return ret;
 	}
 
-	return (ret);
+	return ret;
 }
 
 static void
-ahci_pci_attach(struct device *parent, struct device *self, void *aux)
+ahci_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct ahci_pci_softc *psc = (struct ahci_pci_softc *)self;
+	struct ahci_pci_softc *psc = device_private(self);
 	struct ahci_softc *sc = &psc->ah_sc;
 	bus_size_t size;
 	char devinfo[256];
@@ -103,10 +106,12 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t intrhandle;
 	void *ih;
 
+	sc->sc_atac.atac_dev = self;
+
 	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->sc_ahcit, &sc->sc_ahcih, NULL, &size) != 0) {
-		aprint_error("%s: can't map ahci registers\n", AHCINAME(sc));
+		aprint_error_dev(self, "can't map ahci registers\n");
 		return;
 	}
 	psc->sc_pc = pa->pa_pc;
@@ -129,6 +134,14 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: interrupting at %s\n", AHCINAME(sc),
 	    intrstr ? intrstr : "unknown interrupt");
 	sc->sc_dmat = pa->pa_dmat;
+
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID) {
+		AHCIDEBUG_PRINT(("%s: RAID mode\n", AHCINAME(sc)), DEBUG_PROBE);
+		sc->sc_atac_capflags = ATAC_CAP_RAID;
+	} else {
+		AHCIDEBUG_PRINT(("%s: SATA mode\n", AHCINAME(sc)), DEBUG_PROBE);
+	}
+
 	ahci_attach(sc);
 
 	if (!pmf_device_register(self, NULL, ahci_pci_resume))
@@ -136,7 +149,7 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static bool
-ahci_pci_resume(device_t dv)
+ahci_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	struct ahci_pci_softc *psc = device_private(dv);
 	struct ahci_softc *sc = &psc->ah_sc;

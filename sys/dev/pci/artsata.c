@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.16 2007/07/19 21:53:15 dsl Exp $	*/
+/*	artsata.c,v 1.16 2007/07/19 21:53:15 dsl Exp	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.16 2007/07/19 21:53:15 dsl Exp $");
+__KERNEL_RCSID(0, "artsata.c,v 1.16 2007/07/19 21:53:15 dsl Exp");
 
 #include "opt_pciide.h"
 
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.16 2007/07/19 21:53:15 dsl Exp $");
 
 static void artisea_chip_map(struct pciide_softc*, struct pci_attach_args *);
 
-static int  artsata_match(struct device *, struct cfdata *, void *);
-static void artsata_attach(struct device *, struct device *, void *);
+static int  artsata_match(device_t, cfdata_t, void *);
+static void artsata_attach(device_t, device_t, void *);
 
 static const struct pciide_product_desc pciide_artsata_products[] =  {
 	{ PCI_PRODUCT_INTEL_31244,
@@ -96,12 +96,11 @@ static const struct artisea_cmd_map artisea_dpa_cmd_map[] =
 
 #define ARTISEA_NUM_CHAN 4
 
-CFATTACH_DECL(artsata, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(artsata, sizeof(struct pciide_softc),
     artsata_match, artsata_attach, NULL, NULL);
 
 static int
-artsata_match(struct device *parent, struct cfdata *match,
-    void *aux)
+artsata_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -113,10 +112,12 @@ artsata_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-artsata_attach(struct device *parent, struct device *self, void *aux)
+artsata_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_artsata_products));
@@ -139,21 +140,20 @@ artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
 
 	if (sc->sc_pci_ih == NULL) {
 		if (pci_intr_map(pa, &intrhandle) != 0) {
-			aprint_error("%s: couldn't map native-PCI interrupt\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "couldn't map native-PCI interrupt\n");
 			goto bad;
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pci_intr, sc);
 		if (sc->sc_pci_ih != NULL) {
-			aprint_normal("%s: using %s for native-PCI interrupt\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "using %s for native-PCI interrupt\n",
 			    intrstr ? intrstr : "unknown interrupt");
 		} else {
-			aprint_error(
-			    "%s: couldn't establish native-PCI interrupt",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "couldn't establish native-PCI interrupt");
 			if (intrstr != NULL)
 				aprint_normal(" at %s", intrstr);
 			aprint_normal("\n");
@@ -165,16 +165,16 @@ artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
 	if (bus_space_subregion (sc->sc_ba5_st, sc->sc_ba5_sh,
 	    ARTISEA_DPA_PORT_BASE(wdc_cp->ch_channel), 0x200,
 	    &wdr->cmd_baseioh) != 0) {
-		aprint_error("%s: couldn't map %s channel cmd regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map %s channel cmd regs\n", cp->name);
 		goto bad;
 	}
 
 	wdr->ctl_iot = sc->sc_ba5_st;
 	if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 	    ARTISEA_SUPDDCTLR, 1, &cp->ctl_baseioh) != 0) {
-		aprint_error("%s: couldn't map %s channel ctl regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map %s channel ctl regs\n", cp->name);
 		goto bad;
 	}
 	wdr->ctl_ioh = cp->ctl_baseioh;
@@ -184,9 +184,9 @@ artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 		    artisea_dpa_cmd_map[i].offset, artisea_dpa_cmd_map[i].size,
 		    &wdr->cmd_iohs[i]) != 0) {
-			aprint_error("%s: couldn't subregion %s channel "
-				     "cmd regs\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "couldn't subregion %s channel cmd regs\n",
+			    cp->name);
 			goto bad;
 		}
 	}
@@ -199,27 +199,24 @@ artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
 	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
 	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSSR, 1,
 	    &wdr->sata_status) != 0) {
-		aprint_error("%s: couldn't map channel %d "
-		    "sata_status regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map channel %d sata_status regs\n",
 		    wdc_cp->ch_channel);
 		goto bad;
 	}
 	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
 	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSER, 1,
 	    &wdr->sata_error) != 0) {
-		aprint_error("%s: couldn't map channel %d "
-		    "sata_error regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map channel %d sata_error regs\n",
 		    wdc_cp->ch_channel);
 		goto bad;
 	}
 	if (bus_space_subregion(wdr->sata_iot, wdr->sata_baseioh,
 	    ARTISEA_SUPERSET_DPA_OFF + ARTISEA_SUPDSSCR, 1,
 	    &wdr->sata_control) != 0) {
-		aprint_error("%s: couldn't map channel %d "
-		    "sata_control regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map channel %d sata_control regs\n",
 		    wdc_cp->ch_channel);
 		goto bad;
 	}
@@ -247,7 +244,7 @@ artisea_chansetup(struct pciide_softc *sc, int channel,
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		device_xname(sc->sc_wdcdev.sc_atac.atac_dev), cp->name);
 		return 0;
 	}
 	return 1;
@@ -261,8 +258,8 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	u_int32_t dma_ctl;
 	u_int32_t cacheline_len;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 
 	sc->sc_dma_ok = 1;
 
@@ -293,7 +290,7 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sc->sc_dma_iot = sc->sc_ba5_st;
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+	if (device_cfdata(sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
 		aprint_verbose(
 		    ", but unused (forced off by config file)\n");
@@ -336,8 +333,8 @@ artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	interface = PCI_INTERFACE(pa->pa_class);
 
-	aprint_normal("%s: interface wired in DPA mode\n",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "interface wired in DPA mode\n");
 
 	if (pci_mapreg_map(pa, ARTISEA_PCI_DPA_BASE, PCI_MAPREG_MEM_TYPE_64BIT,
 	    0, &sc->sc_ba5_st, &sc->sc_ba5_sh, NULL, NULL) != 0)
@@ -374,8 +371,8 @@ artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if ((bus_space_read_4 (sc->sc_ba5_st, sc->sc_ba5_sh,
 	    ARTISEA_DPA_PORT_BASE(0) + ARTISEA_SUPERSET_DPA_OFF +
 	    ARTISEA_SUPDPFR) & SUPDPFR_SSCEN) != 0) {
-		aprint_error("%s: Spread-specturm clocking not supported by device\n",
-		     sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "Spread-specturm clocking not supported by device\n");
 		return;
 	}
 
@@ -412,8 +409,8 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 #ifdef PCIIDE_I31244_DISABLEDMA
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_31244 &&
 	    PCI_REVISION(pa->pa_class) == 0) {

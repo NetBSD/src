@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.11.48.1 2007/11/06 23:22:01 matt Exp $	*/
+/*	locore.h,v 1.11.48.1 2007/11/06 23:22:01 matt Exp	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -166,8 +166,8 @@
 	swap.b	Rn,	Rn						;\
 	swap.w	Rn,	Rn	/* Rn = 0x10000000 */			;\
 	stc	sr,	Rm						;\
-	or	Rn,	Rm						;\
-	ldc	Rm,	sr	/* block exceptions */
+	or	Rm,	Rn						;\
+	ldc	Rn,	sr	/* block exceptions */
 
 #define	__EXCEPTION_UNBLOCK(Rn, Rm)					;\
 	mov	#0xef,	Rn	/* ~0x10 */				;\

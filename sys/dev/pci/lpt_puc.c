@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_puc.c,v 1.12.24.1 2007/11/06 23:29:17 matt Exp $	*/
+/*	lpt_puc.c,v 1.12.24.1 2007/11/06 23:29:17 matt Exp	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.12.24.1 2007/11/06 23:29:17 matt Exp $");
+__KERNEL_RCSID(0, "lpt_puc.c,v 1.12.24.1 2007/11/06 23:29:17 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_puc.c,v 1.12.24.1 2007/11/06 23:29:17 matt Exp $
 #include <dev/ic/lptvar.h>
 
 static int
-lpt_puc_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+lpt_puc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct puc_attach_args *aa = aux;
 
@@ -66,12 +65,13 @@ lpt_puc_probe(struct device *parent, struct cfdata *match,
 }
 
 static void
-lpt_puc_attach(struct device *parent, struct device *self, void *aux)
+lpt_puc_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_softc *sc = (void *)self;
+	struct lpt_softc *sc = device_private(self);
 	struct puc_attach_args *aa = aux;
 	const char *intrstr;
 
+	sc->sc_dev = self;
 	sc->sc_iot = aa->t;
 	sc->sc_ioh = aa->h;
 
@@ -79,16 +79,16 @@ lpt_puc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
 	    lptintr, sc);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
+		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf(": interrupting at %s\n", intrstr);
+	aprint_normal(": interrupting at %s\n", intrstr);
 
 	lpt_attach_subr(sc);
 }
 
-CFATTACH_DECL(lpt_puc, sizeof(struct lpt_softc),
+CFATTACH_DECL_NEW(lpt_puc, sizeof(struct lpt_softc),
     lpt_puc_probe, lpt_puc_attach, NULL, NULL);

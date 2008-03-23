@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.32.10.2 2008/01/09 01:47:51 matt Exp $	*/
+/*	cpu_subr.c,v 1.32.10.2 2008/01/09 01:47:51 matt Exp	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.32.10.2 2008/01/09 01:47:51 matt Exp $");
+__KERNEL_RCSID(0, "cpu_subr.c,v 1.32.10.2 2008/01/09 01:47:51 matt Exp");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.32.10.2 2008/01/09 01:47:51 matt Exp 
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/hid_601.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/cpufeat.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -212,6 +213,7 @@ static const struct cputab models[] = {
 	{ "8245",	MPC8245,	REVFMT_MAJMIN },
 	{ "970",	IBM970,		REVFMT_MAJMIN },
 	{ "970FX",	IBM970FX,	REVFMT_MAJMIN },
+	{ "POWER3II",   IBMPOWER3II,    REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
 };
 
@@ -231,6 +233,29 @@ struct cpu_info cpu_info[1] = { { .ci_curlwp = &lwp0, }, };
 int cpu_altivec;
 int cpu_psluserset, cpu_pslusermod;
 char cpu_model[80];
+
+/* This is to be called from locore.S, and nowhere else. */
+
+void
+cpu_model_init(void)
+{
+	u_int pvr, vers;
+
+	pvr = mfpvr();
+	vers = pvr >> 16;
+
+	oeacpufeat = 0;
+	
+	if ((vers >= IBMRS64II && vers <= IBM970GX) || vers == MPC620 ||
+		vers == IBMCELL || vers == IBMPOWER6P5)
+		oeacpufeat |= OEACPU_64 | OEACPU_64_BRIDGE | OEACPU_NOBAT;
+	
+	else if (vers == MPC601)
+		oeacpufeat |= OEACPU_601;
+
+	else if (MPC745X_P(vers) && vers != MPC7450)
+		oeacpufeat |= OEACPU_XBSEN | OEACPU_HIGHBAT | OEACPU_HIGHSPRG;
+}
 
 void
 cpu_fmttab_print(const struct fmttab *fmt, register_t data)
@@ -270,8 +295,8 @@ cpu_probe_cache(void)
 
 
 	/* Presently common across almost all implementations. */
-	curcpu()->ci_ci.dcache_line_size = CACHELINESIZE;
-	curcpu()->ci_ci.icache_line_size = CACHELINESIZE;
+	curcpu()->ci_ci.dcache_line_size = 32;
+	curcpu()->ci_ci.icache_line_size = 32;
 
 
 	switch (vers) {
@@ -308,6 +333,13 @@ cpu_probe_cache(void)
 		curcpu()->ci_ci.dcache_size = 32 K;
 		curcpu()->ci_ci.icache_size = 32 K;
 		assoc = 4;
+		break;
+	case IBMPOWER3II:
+		curcpu()->ci_ci.dcache_size = 64 K;
+		curcpu()->ci_ci.icache_size = 32 K;
+		curcpu()->ci_ci.dcache_line_size = 128;
+		curcpu()->ci_ci.icache_line_size = 128;
+		assoc = 128; /* not a typo */
 		break;
 	case IBM970:
 	case IBM970FX:
@@ -399,7 +431,7 @@ cpu_setup(self, ci)
 	struct device *self;
 	struct cpu_info *ci;
 {
-	u_int hid0, pvr, vers;
+	u_int hid0, hid0_save, pvr, vers;
 	const char *bitmask;
 	char hidbuf[128];
 	char model[80];
@@ -411,11 +443,7 @@ cpu_setup(self, ci)
 	aprint_normal(": %s, ID %d%s\n", model,  cpu_number(),
 	    cpu_number() == 0 ? " (primary)" : "");
 
-#if defined (PPC_OEA) || defined (PPC_OEA64)
-	hid0 = mfspr(SPR_HID0);
-#elif defined (PPC_OEA64_BRIDGE)
-	hid0 = mfspr(SPR_HID0);
-#endif
+	hid0_save = hid0 = mfspr(SPR_HID0);
 
 	cpu_probe_cache();
 
@@ -457,17 +485,23 @@ cpu_setup(self, ci)
 		/* Enable the 7450 branch caches */
 		hid0 |= HID0_SGE | HID0_BTIC;
 		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
+		/* Enable more and larger BAT registers */
+		if (oeacpufeat & OEACPU_XBSEN)
+			hid0 |= HID0_XBSEN;
+		if (oeacpufeat & OEACPU_HIGHBAT)
+			hid0 |= HID0_HIGH_BAT_EN;
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
 		if (vers == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
-		hid0 &= ~(HID0_HIGH_BAT_EN | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM /* | HID0_XBSEN */;
+		hid0 &= ~HID0_SLEEP;
+		hid0 |= HID0_NAP | HID0_DPM;
 		powersave = 1;
 		break;
 
 	case IBM970:
 	case IBM970FX:
+	case IBMPOWER3II:
 	default:
 		/* No power-saving mode is available. */ ;
 	}
@@ -499,10 +533,11 @@ cpu_setup(self, ci)
 		break;
 	}
 
-#if defined (PPC_OEA)
-	mtspr(SPR_HID0, hid0);
-	__asm volatile("sync;isync");
-#endif
+	if (hid0 != hid0_save) {
+		mtspr(SPR_HID0, hid0);
+		__asm volatile("sync;isync");
+	}
+
 
 	switch (vers) {
 	case MPC601:
@@ -522,7 +557,8 @@ cpu_setup(self, ci)
 		break;
 	}
 	bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
-	aprint_normal("%s: HID0 %s, powersave: %d\n", self->dv_xname, hidbuf, powersave);
+	aprint_normal("%s: HID0 %s, powersave: %d\n", self->dv_xname, hidbuf,
+	    powersave);
 
 	ci->ci_khz = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.124.2.2 2008/01/09 01:57:54 matt Exp $	*/
+/*	nfs_syscalls.c,v 1.124.2.2 2008/01/09 01:57:54 matt Exp	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.124.2.2 2008/01/09 01:57:54 matt Exp $");
+__KERNEL_RCSID(0, "nfs_syscalls.c,v 1.124.2.2 2008/01/09 01:57:54 matt Exp");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -166,8 +166,8 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL);
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_NFS,
+	    KAUTH_REQ_NETWORK_NFS_SVC, NULL, NULL, NULL);
 	if (error)
 		return (error);
 

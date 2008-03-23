@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.8.14.2 2008/01/09 01:48:00 matt Exp $ */
+/* nvram_pnpbus.c,v 1.8.14.2 2008/01/09 01:48:00 matt Exp */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.8.14.2 2008/01/09 01:48:00 matt Exp $");
+__KERNEL_RCSID(0, "nvram_pnpbus.c,v 1.8.14.2 2008/01/09 01:48:00 matt Exp");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -210,7 +210,6 @@ nvram_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: attaching clock", device_xname(self));
 	mk48txx_attach((struct mk48txx_softc *)&sc->sc_mksc);
 	aprint_normal("\n");
-	todr_attach(&sc->sc_mksc.sc_handle);
 }
 
 /*

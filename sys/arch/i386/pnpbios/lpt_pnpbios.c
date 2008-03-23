@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $ */
+/* lpt_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "lpt_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,15 +50,14 @@ struct lpt_pnpbios_softc {
 	struct	lpt_softc sc_lpt;
 };
 
-int lpt_pnpbios_match(struct device *, struct cfdata *, void *);
-void lpt_pnpbios_attach(struct device *, struct device *, void *);
+int lpt_pnpbios_match(device_t, cfdata_t, void *);
+void lpt_pnpbios_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(lpt_pnpbios, sizeof(struct lpt_pnpbios_softc),
+CFATTACH_DECL_NEW(lpt_pnpbios, sizeof(struct lpt_pnpbios_softc),
     lpt_pnpbios_match, lpt_pnpbios_attach, NULL, NULL);
 
 int
-lpt_pnpbios_match(struct device *parent, struct cfdata *match,
-    void *aux)
+lpt_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -70,12 +69,13 @@ lpt_pnpbios_match(struct device *parent, struct cfdata *match,
 }
 
 void
-lpt_pnpbios_attach(struct device *parent, struct device *self,
-    void *aux)
+lpt_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_pnpbios_softc *psc = (void *)self;
+	struct lpt_pnpbios_softc *psc = device_private(self);
 	struct lpt_softc *sc = &psc->sc_lpt;
 	struct pnpbiosdev_attach_args *aa = aux;
+
+	sc->sc_dev = self;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) { 	
 		printf(": can't map i/o space\n");

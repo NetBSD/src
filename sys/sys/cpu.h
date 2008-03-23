@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11.2.2 2008/01/09 01:58:06 matt Exp $	*/
+/*	cpu.h,v 1.11.2.2 2008/01/09 01:58:06 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -57,6 +57,10 @@ void cpu_need_resched(struct cpu_info *, int);
     (void)cii, ci = curcpu(); ci != NULL; ci = NULL
 #endif
 
+#ifdef __HAVE_MD_CPU_OFFLINE
+void	cpu_offline_md(void);
+#endif
+
 lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
 struct	cpu_info *cpu_lookup(cpuid_t);
 struct	cpu_info *cpu_lookup_byindex(u_int);
@@ -64,6 +68,7 @@ int	cpu_setonline(struct cpu_info *, bool);
 bool	cpu_intr_p(void);
 
 extern kmutex_t cpu_lock;
+extern u_int maxcpus;
   
 static inline u_int
 cpu_index(struct cpu_info *ci)

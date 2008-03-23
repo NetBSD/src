@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.21.6.2 2008/01/09 01:55:55 matt Exp $	*/
+/*	union_vnops.c,v 1.21.6.2 2008/01/09 01:55:55 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.21.6.2 2008/01/09 01:55:55 matt Exp $");
+__KERNEL_RCSID(0, "union_vnops.c,v 1.21.6.2 2008/01/09 01:55:55 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ int union_getattr(void *);
 int union_setattr(void *);
 int union_read(void *);
 int union_write(void *);
-int union_lease(void *);
 int union_ioctl(void *);
 int union_poll(void *);
 int union_revoke(void *);
@@ -155,7 +154,6 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_setattr_desc, union_setattr },		/* setattr */
 	{ &vop_read_desc, union_read },			/* read */
 	{ &vop_write_desc, union_write },		/* write */
-	{ &vop_lease_desc, union_lease },		/* lease */
 	{ &vop_ioctl_desc, union_ioctl },		/* ioctl */
 	{ &vop_poll_desc, union_poll },			/* select */
 	{ &vop_revoke_desc, union_revoke },		/* revoke */
@@ -199,8 +197,7 @@ const struct vnodeopv_desc union_vnodeop_opv_desc =
 }
 
 static void
-union_fixup(un)
-	struct union_node *un;
+union_fixup(struct union_node *un)
 {
 
 	vn_lock(un->un_uppervp, LK_EXCLUSIVE | LK_RETRY);
@@ -208,11 +205,8 @@ union_fixup(un)
 }
 
 static int
-union_lookup1(udvp, dvpp, vpp, cnp)
-	struct vnode *udvp;
-	struct vnode **dvpp;
-	struct vnode **vpp;
-	struct componentname *cnp;
+union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
+	struct componentname *cnp)
 {
 	int error;
 	struct vnode *tdvp;
@@ -255,13 +249,11 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 	 */
 	while (dvp != udvp && (dvp->v_type == VDIR) &&
 	       (mp = dvp->v_mountedhere)) {
-
-		if (vfs_busy(mp, 0, 0))
+		if (vfs_busy(mp, RW_READER, 0))
 			continue;
-
 		vput(dvp);
 		error = VFS_ROOT(mp, &tdvp);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		if (error) {
 			return (error);
 		}
@@ -273,8 +265,7 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 }
 
 int
-union_lookup(v)
-	void *v;
+union_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnodeop_desc *a_desc;
@@ -528,8 +519,7 @@ union_lookup(v)
 }
 
 int
-union_create(v)
-	void *v;
+union_create(void *v)
 {
 	struct vop_create_args /* {
 		struct vnode *a_dvp;
@@ -568,8 +558,7 @@ union_create(v)
 }
 
 int
-union_whiteout(v)
-	void *v;
+union_whiteout(void *v)
 {
 	struct vop_whiteout_args /* {
 		struct vnode *a_dvp;
@@ -587,8 +576,7 @@ union_whiteout(v)
 }
 
 int
-union_mknod(v)
-	void *v;
+union_mknod(void *v)
 {
 	struct vop_mknod_args /* {
 		struct vnode *a_dvp;
@@ -627,8 +615,7 @@ union_mknod(v)
 }
 
 int
-union_open(v)
-	void *v;
+union_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnodeop_desc *a_desc;
@@ -689,8 +676,7 @@ union_open(v)
 }
 
 int
-union_close(v)
-	void *v;
+union_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -728,8 +714,7 @@ union_close(v)
  * the user caused an implicit file copy.
  */
 int
-union_access(v)
-	void *v;
+union_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnodeop_desc *a_desc;
@@ -796,8 +781,7 @@ union_access(v)
  * track object sizes
  */
 int
-union_getattr(v)
-	void *v;
+union_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -884,8 +868,7 @@ union_getattr(v)
 }
 
 int
-union_setattr(v)
-	void *v;
+union_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode *a_vp;
@@ -954,8 +937,7 @@ union_setattr(v)
 }
 
 int
-union_read(v)
-	void *v;
+union_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -998,8 +980,7 @@ union_read(v)
 }
 
 int
-union_write(v)
-	void *v;
+union_write(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -1033,23 +1014,7 @@ union_write(v)
 }
 
 int
-union_lease(v)
-	void *v;
-{
-	struct vop_lease_args /* {
-		struct vnode *a_vp;
-		kauth_cred_t a_cred;
-		int a_flag;
-	} */ *ap = v;
-	struct vnode *ovp = OTHERVP(ap->a_vp);
-
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_lease), ap));
-}
-
-int
-union_ioctl(v)
-	void *v;
+union_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
@@ -1065,8 +1030,7 @@ union_ioctl(v)
 }
 
 int
-union_poll(v)
-	void *v;
+union_poll(void *v)
 {
 	struct vop_poll_args /* {
 		struct vnode *a_vp;
@@ -1079,8 +1043,7 @@ union_poll(v)
 }
 
 int
-union_revoke(v)
-	void *v;
+union_revoke(void *v)
 {
 	struct vop_revoke_args /* {
 		struct vnode *a_vp;
@@ -1098,8 +1061,7 @@ union_revoke(v)
 }
 
 int
-union_mmap(v)
-	void *v;
+union_mmap(void *v)
 {
 	struct vop_mmap_args /* {
 		struct vnode *a_vp;
@@ -1113,8 +1075,7 @@ union_mmap(v)
 }
 
 int
-union_fsync(v)
-	void *v;
+union_fsync(void *v)
 {
 	struct vop_fsync_args /* {
 		struct vnode *a_vp;
@@ -1155,8 +1116,7 @@ union_fsync(v)
 }
 
 int
-union_seek(v)
-	void *v;
+union_seek(void *v)
 {
 	struct vop_seek_args /* {
 		struct vnode *a_vp;
@@ -1171,8 +1131,7 @@ union_seek(v)
 }
 
 int
-union_remove(v)
-	void *v;
+union_remove(void *v)
 {
 	struct vop_remove_args /* {
 		struct vnode *a_dvp;
@@ -1218,8 +1177,7 @@ union_remove(v)
 }
 
 int
-union_link(v)
-	void *v;
+union_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -1310,8 +1268,7 @@ union_link(v)
 }
 
 int
-union_rename(v)
-	void *v;
+union_rename(void *v)
 {
 	struct vop_rename_args  /* {
 		struct vnode *a_fdvp;
@@ -1411,8 +1368,7 @@ out:
 }
 
 int
-union_mkdir(v)
-	void *v;
+union_mkdir(void *v)
 {
 	struct vop_mkdir_args /* {
 		struct vnode *a_dvp;
@@ -1451,8 +1407,7 @@ union_mkdir(v)
 }
 
 int
-union_rmdir(v)
-	void *v;
+union_rmdir(void *v)
 {
 	struct vop_rmdir_args /* {
 		struct vnode *a_dvp;
@@ -1498,8 +1453,7 @@ union_rmdir(v)
 }
 
 int
-union_symlink(v)
-	void *v;
+union_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -1536,8 +1490,7 @@ union_symlink(v)
  * eliminating duplicate names from the returned data stream.
  */
 int
-union_readdir(v)
-	void *v;
+union_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnodeop_desc *a_desc;
@@ -1560,8 +1513,7 @@ union_readdir(v)
 }
 
 int
-union_readlink(v)
-	void *v;
+union_readlink(void *v)
 {
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
@@ -1585,8 +1537,7 @@ union_readlink(v)
 }
 
 int
-union_abortop(v)
-	void *v;
+union_abortop(void *v)
 {
 	struct vop_abortop_args /* {
 		struct vnode *a_dvp;
@@ -1613,8 +1564,7 @@ union_abortop(v)
 }
 
 int
-union_inactive(v)
-	void *v;
+union_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		const struct vnodeop_desc *a_desc;
@@ -1652,8 +1602,7 @@ union_inactive(v)
 }
 
 int
-union_reclaim(v)
-	void *v;
+union_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -1665,8 +1614,7 @@ union_reclaim(v)
 }
 
 int
-union_lock(v)
-	void *v;
+union_lock(void *v)
 {
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
@@ -1705,6 +1653,7 @@ start:
 			 * We MUST always use the order of: take upper
 			 * vp lock, manipulate union node flags, drop
 			 * upper vp lock.  This code must not be an
+			 * exception.
 			 */
 			error = vn_lock(un->un_uppervp, flags);
 			if (error)
@@ -1754,8 +1703,7 @@ start:
  * If UN_KLOCK isn't set, then the upper vnode is unlocked here.
  */
 int
-union_unlock(v)
-	void *v;
+union_unlock(void *v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
@@ -1792,8 +1740,7 @@ union_unlock(v)
 }
 
 int
-union_bmap(v)
-	void *v;
+union_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -1819,8 +1766,7 @@ union_bmap(v)
 }
 
 int
-union_print(v)
-	void *v;
+union_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
@@ -1843,8 +1789,7 @@ union_print(v)
 }
 
 int
-union_islocked(v)
-	void *v;
+union_islocked(void *v)
 {
 	struct vop_islocked_args /* {
 		struct vnode *a_vp;
@@ -1854,8 +1799,7 @@ union_islocked(v)
 }
 
 int
-union_pathconf(v)
-	void *v;
+union_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -1879,8 +1823,7 @@ union_pathconf(v)
 }
 
 int
-union_advlock(v)
-	void *v;
+union_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode *a_vp;
@@ -1902,8 +1845,7 @@ union_advlock(v)
  * This goes away with a merged VM/buffer cache.
  */
 int
-union_strategy(v)
-	void *v;
+union_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -1924,8 +1866,7 @@ union_strategy(v)
 }
 
 int
-union_getpages(v)
-	void *v;
+union_getpages(void *v)
 {
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
@@ -1955,8 +1896,7 @@ union_getpages(v)
 }
 
 int
-union_putpages(v)
-	void *v;
+union_putpages(void *v)
 {
 	struct vop_putpages_args /* {
 		struct vnode *a_vp;
@@ -1973,10 +1913,10 @@ union_putpages(v)
 
 	ap->a_vp = OTHERVP(vp);
 	mutex_exit(&vp->v_interlock);
-	mutex_enter(&ap->a_vp->v_interlock);
 	if (ap->a_flags & PGO_RECLAIM) {
 		return 0;
 	}
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
 }

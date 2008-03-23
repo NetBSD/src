@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.12.28.1 2007/11/06 23:22:02 matt Exp $	*/
+/*	cache.c,v 1.12.28.1 2007/11/06 23:22:02 matt Exp	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.12.28.1 2007/11/06 23:22:02 matt Exp $");
+__KERNEL_RCSID(0, "cache.c,v 1.12.28.1 2007/11/06 23:22:02 matt Exp");
 
+#include "opt_cache.h"
 #include "opt_memsize.h"	/* IOM_RAM_BEGIN */
 
 #include <sys/param.h>
@@ -147,7 +148,7 @@ sh_cache_information()
 	}
 
 	/* Write-through/back */
-	aprint_normal("cpu0: P0, U0, P3 write-%s; P1 write-%s\n",
+	aprint_normal("cpu0: U0, P0, P3 write-%s; P1 write-%s\n",
 	    sh_cache_write_through_p0_u0_p3 ? "through" : "back",
 	    sh_cache_write_through_p1 ? "through" : "back");
 }

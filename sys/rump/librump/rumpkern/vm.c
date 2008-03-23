@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.14.2.3 2008/01/09 01:58:01 matt Exp $	*/
+/*	vm.c,v 1.14.2.3 2008/01/09 01:58:01 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -173,7 +173,6 @@ vn_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	mutex_enter(&vp->v_interlock);
 	return VOP_GETPAGES(vp, off, pgs, npages, centeridx, access_type,
 	    advice, flags);
 }
@@ -183,7 +182,6 @@ vn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	mutex_enter(&vp->v_interlock);
 	return VOP_PUTPAGES(vp, offlo, offhi, flags);
 }
 
@@ -262,6 +260,7 @@ void
 uao_detach(struct uvm_object *uobj)
 {
 
+	mutex_enter(&uobj->vmobjlock);
 	ao_put(uobj, 0, 0, PGO_ALLPAGES | PGO_FREE);
 	kmem_free(uobj, sizeof(*uobj));
 }
@@ -307,6 +306,7 @@ rump_ubc_magic_uiomove(void *va, size_t n, struct uio *uio, int *rvp,
 
 	allocsize = npages * sizeof(pgs);
 	pgs = kmem_zalloc(allocsize, KM_SLEEP);
+	mutex_enter(&uwinp->uwin_obj->vmobjlock);
 	rv = uwinp->uwin_obj->pgops->pgo_get(uwinp->uwin_obj,
 	    uwinp->uwin_off + ((uint8_t *)va - uwinp->uwin_mem),
 	    pgs, &npages, 0, 0, 0, 0);
@@ -539,14 +539,18 @@ void
 uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 {
 
+	mutex_enter(&vp->v_interlock);
 	vp->v_size = vp->v_writesize = newsize;
+	mutex_exit(&vp->v_interlock);
 }
 
 void
 uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 {
 
+	mutex_enter(&vp->v_interlock);
 	vp->v_writesize = newsize;
+	mutex_exit(&vp->v_interlock);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.48.4.1 2008/01/09 01:55:55 matt Exp $	*/
+/*	union_vfsops.c,v 1.48.4.1 2008/01/09 01:55:55 matt Exp	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.48.4.1 2008/01/09 01:55:55 matt Exp $");
+__KERNEL_RCSID(0, "union_vfsops.c,v 1.48.4.1 2008/01/09 01:55:55 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,7 @@ VFS_PROTOS(union);
  * Mount union filesystem
  */
 int
-union_mount(mp, path, data, data_len)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	size_t *data_len;
+union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;
@@ -375,9 +371,7 @@ union_unmount(struct mount *mp, int mntflags)
 }
 
 int
-union_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+union_root(struct mount *mp, struct vnode **vpp)
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int error;
@@ -402,9 +396,7 @@ union_root(mp, vpp)
 }
 
 int
-union_statvfs(mp, sbp)
-	struct mount *mp;
-	struct statvfs *sbp;
+union_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
@@ -481,6 +473,23 @@ union_vget(struct mount *mp, ino_t ino,
 	return (EOPNOTSUPP);
 }
 
+static int
+union_renamelock_enter(struct mount *mp)
+{
+	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
+
+	/* Lock just the upper fs, where the action happens. */
+	return VFS_RENAMELOCK_ENTER(um->um_uppervp->v_mount);
+}
+
+static void
+union_renamelock_exit(struct mount *mp)
+{
+	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
+
+	VFS_RENAMELOCK_EXIT(um->um_uppervp->v_mount);
+}
+
 SYSCTL_SETUP(sysctl_vfs_union_setup, "sysctl vfs.union subtree setup")
 {
 
@@ -529,6 +538,8 @@ struct vfsops union_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	union_renamelock_enter,
+	union_renamelock_exit,
 	union_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
