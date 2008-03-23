@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.62.2.3 2008/01/09 01:36:48 matt Exp $	*/
+/*	puffs.c,v 1.62.2.3 2008/01/09 01:36:48 matt Exp	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.62.2.3 2008/01/09 01:36:48 matt Exp $");
+__RCSID("puffs.c,v 1.62.2.3 2008/01/09 01:36:48 matt Exp");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ finalpush(struct puffs_usermount *pu)
 		if (fio->stat & FIO_WRGONE)
 			continue;
 
-		puffs_framev_output(pu, fio->fctrl, fio);
+		puffs__framev_output(pu, fio->fctrl, fio);
 	}
 }
 
@@ -184,22 +184,35 @@ puffs_getstate(struct puffs_usermount *pu)
 void
 puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 {
-	long psize;
+	long psize, minsize;
 	int stackshift;
+	int bonus;
+
+	assert(puffs_getstate(pu) == PUFFS_STATE_BEFOREMOUNT);
 
 	psize = sysconf(_SC_PAGESIZE);
-	if (ss < 2*psize) {
-		ss = 2*psize;
-		fprintf(stderr, "puffs_setstacksize: adjusting stacksize "
-		    "to minimum %zu\n", ss);
+	minsize = 4*psize;
+	if (ss < minsize || ss == PUFFS_STACKSIZE_MIN) {
+		if (ss != PUFFS_STACKSIZE_MIN)
+			fprintf(stderr, "puffs_setstacksize: adjusting "
+			    "stacksize to minimum %ld\n", minsize);
+		ss = 4*psize;
 	}
  
-	assert(puffs_getstate(pu) == PUFFS_STATE_BEFOREMOUNT);
 	stackshift = -1;
+	bonus = 0;
 	while (ss) {
+		if (ss & 0x1)
+			bonus++;
 		ss >>= 1;
 		stackshift++;
 	}
+	if (bonus > 1) {
+		stackshift++;
+		fprintf(stderr, "puffs_setstacksize: using next power of two: "
+		    "%d\n", 1<<stackshift);
+	}
+
 	pu->pu_cc_stackshift = stackshift;
 }
 
@@ -606,14 +619,13 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	LIST_INIT(&pu->pu_pnodelst);
 	LIST_INIT(&pu->pu_ios);
 	LIST_INIT(&pu->pu_ios_rmlist);
-	LIST_INIT(&pu->pu_ccnukelst);
+	LIST_INIT(&pu->pu_ccmagazin);
 	TAILQ_INIT(&pu->pu_sched);
-	TAILQ_INIT(&pu->pu_exq);
 
-	pu->pu_framectrl[PU_FRAMECTRL_FS].rfb = puffs_fsframe_read;
-	pu->pu_framectrl[PU_FRAMECTRL_FS].wfb = puffs_fsframe_write;
-	pu->pu_framectrl[PU_FRAMECTRL_FS].cmpfb = puffs_fsframe_cmp;
-	pu->pu_framectrl[PU_FRAMECTRL_FS].gotfb = puffs_fsframe_gotframe;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].rfb = puffs__fsframe_read;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].wfb = puffs__fsframe_write;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].cmpfb = puffs__fsframe_cmp;
+	pu->pu_framectrl[PU_FRAMECTRL_FS].gotfb = puffs__fsframe_gotframe;
 	pu->pu_framectrl[PU_FRAMECTRL_FS].fdnotfn = puffs_framev_unmountonclose;
 
 	/* defaults for some user-settable translation functions */
@@ -658,7 +670,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 		puffs_pn_put(pn);
 
 	finalpush(pu);
-	puffs_framev_exit(pu);
+	puffs__framev_exit(pu);
 	if (pu->pu_state & PU_HASKQ)
 		close(pu->pu_kq);
 	free(pu);
@@ -666,48 +678,30 @@ puffs_exit(struct puffs_usermount *pu, int force)
 	return 0; /* always succesful for now, WILL CHANGE */
 }
 
-int
-puffs_mainloop(struct puffs_usermount *pu)
+/*
+ * Actual mainloop.  This is called from a context which can block.
+ * It is called either from puffs_mainloop (indirectly, via
+ * puffs_cc_continue() or from puffs_cc_yield()).
+ */
+void
+puffs__theloop(struct puffs_cc *pcc)
 {
+	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_framectrl *pfctrl;
 	struct puffs_fctrl_io *fio;
-	struct puffs_cc *pcc;
 	struct kevent *curev;
 	size_t nchanges;
-	int ndone, sverrno;
-
-	assert(puffs_getstate(pu) >= PUFFS_STATE_RUNNING);
-
-	pu->pu_kq = kqueue();
-	if (pu->pu_kq == -1)
-		goto out;
-	pu->pu_state |= PU_HASKQ;
-
-	puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK);
-	if (puffs__framev_addfd_ctrl(pu, puffs_getselectable(pu),
-	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE,
-	    &pu->pu_framectrl[PU_FRAMECTRL_FS]) == -1)
-		goto out;
-
-	curev = realloc(pu->pu_evs, (2*pu->pu_nfds)*sizeof(struct kevent));
-	if (curev == NULL)
-		goto out;
-	pu->pu_evs = curev;
-
-	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
-		EV_SET(curev, fio->io_fd, EVFILT_READ, EV_ADD,
-		    0, 0, (uintptr_t)fio);
-		curev++;
-		EV_SET(curev, fio->io_fd, EVFILT_WRITE, EV_ADD | EV_DISABLE,
-		    0, 0, (uintptr_t)fio);
-		curev++;
-	}
-	if (kevent(pu->pu_kq, pu->pu_evs, 2*pu->pu_nfds, NULL, 0, NULL) == -1)
-		goto out;
-
-	pu->pu_state |= PU_INLOOP;
+	int ndone;
 
 	while (puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED) {
+		/*
+		 * Schedule existing requests.
+		 */
+		while ((pcc = TAILQ_FIRST(&pu->pu_sched)) != NULL) {
+			TAILQ_REMOVE(&pu->pu_sched, pcc, pcc_schedent);
+			puffs__goto(pcc);
+		}
+
 		if (pu->pu_ml_lfn)
 			pu->pu_ml_lfn(pu);
 
@@ -745,7 +739,7 @@ puffs_mainloop(struct puffs_usermount *pu)
 			 * case is that we can fit everything into the
 			 * socket buffer.
 			 */
-			puffs_framev_output(pu, pfctrl, fio);
+			puffs__framev_output(pu, pfctrl, fio);
 		}
 
 		/*
@@ -780,7 +774,7 @@ puffs_mainloop(struct puffs_usermount *pu)
 
 		if (ndone == -1) {
 			if (errno != EINTR)
-				goto out;
+				break;
 			else
 				continue;
 		}
@@ -809,32 +803,24 @@ puffs_mainloop(struct puffs_usermount *pu)
 				fio->stat &= ~FIO_WR;
 
 				/* XXX: how to know if it's a transient error */
-				puffs_framev_writeclose(pu, fio,
+				puffs__framev_writeclose(pu, fio,
 				    (int)curev->data);
-				puffs_framev_notify(fio, PUFFS_FBIO_ERROR);
+				puffs__framev_notify(fio, PUFFS_FBIO_ERROR);
 				continue;
 			}
 
 			what = 0;
 			if (curev->filter == EVFILT_READ) {
-				puffs_framev_input(pu, pfctrl, fio);
+				puffs__framev_input(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_READ;
 			}
 
 			else if (curev->filter == EVFILT_WRITE) {
-				puffs_framev_output(pu, pfctrl, fio);
+				puffs__framev_output(pu, pfctrl, fio);
 				what |= PUFFS_FBIO_WRITE;
 			}
 			if (what)
-				puffs_framev_notify(fio, what);
-		}
-
-		/*
-		 * Schedule continuations.
-		 */
-		while ((pcc = TAILQ_FIRST(&pu->pu_sched)) != NULL) {
-			TAILQ_REMOVE(&pu->pu_sched, pcc, entries);
-			puffs_goto(pcc);
+				puffs__framev_notify(fio, what);
 		}
 
 		/*
@@ -846,6 +832,53 @@ puffs_mainloop(struct puffs_usermount *pu)
 			free(fio);
 		}
 	}
+}
+
+int
+puffs_mainloop(struct puffs_usermount *pu)
+{
+	struct puffs_fctrl_io *fio;
+	struct puffs_cc *pcc;
+	struct kevent *curev;
+	int sverrno, rv;
+
+	assert(puffs_getstate(pu) >= PUFFS_STATE_RUNNING);
+
+	pu->pu_kq = kqueue();
+	if (pu->pu_kq == -1)
+		goto out;
+	pu->pu_state |= PU_HASKQ;
+
+	puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK);
+	if (puffs__framev_addfd_ctrl(pu, puffs_getselectable(pu),
+	    PUFFS_FBIO_READ | PUFFS_FBIO_WRITE,
+	    &pu->pu_framectrl[PU_FRAMECTRL_FS]) == -1)
+		goto out;
+
+	curev = realloc(pu->pu_evs, (2*pu->pu_nfds)*sizeof(struct kevent));
+	if (curev == NULL)
+		goto out;
+	pu->pu_evs = curev;
+
+	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
+		EV_SET(curev, fio->io_fd, EVFILT_READ, EV_ADD,
+		    0, 0, (uintptr_t)fio);
+		curev++;
+		EV_SET(curev, fio->io_fd, EVFILT_WRITE, EV_ADD | EV_DISABLE,
+		    0, 0, (uintptr_t)fio);
+		curev++;
+	}
+	if (kevent(pu->pu_kq, pu->pu_evs, 2*pu->pu_nfds, NULL, 0, NULL) == -1)
+		goto out;
+
+	pu->pu_state |= PU_INLOOP;
+
+	/* Create alternate execution context and jump to it */
+	rv = puffs__cc_create(pu, puffs__theloop, &pcc);
+	if (rv)
+		goto out;
+	puffs_cc_continue(pcc);
+
 	finalpush(pu);
 	errno = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.9.4.2 2008/01/09 01:36:52 matt Exp $	*/
+/*	requests.c,v 1.9.4.2 2008/01/09 01:36:52 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.9.4.2 2008/01/09 01:36:52 matt Exp $");
+__RCSID("requests.c,v 1.9.4.2 2008/01/09 01:36:52 matt Exp");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: requests.c,v 1.9.4.2 2008/01/09 01:36:52 matt Exp $");
  */
 /*ARGSUSED*/
 int
-puffs_fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+puffs__fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	int fd, int *done)
 {
 	struct putter_hdr phdr;
@@ -64,8 +64,6 @@ puffs_fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	size_t howmuch, winlen, curoff;
 	ssize_t n;
 	int lenstate;
-
-	puffs_framebuf_reserve_space(pb, PUFFS_MSG_MAXSIZE);
 
 	/* How much to read? */
  the_next_level:
@@ -117,7 +115,7 @@ puffs_fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
  */
 /*ARGSUSED*/
 int
-puffs_fsframe_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+puffs__fsframe_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	int fd, int *done)
 {
 	void *win;
@@ -200,7 +198,7 @@ puffs_fsframe_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
  */
 /*ARGSUSED*/
 int
-puffs_fsframe_cmp(struct puffs_usermount *pu,
+puffs__fsframe_cmp(struct puffs_usermount *pu,
 	struct puffs_framebuf *pb1, struct puffs_framebuf *pb2, int *notresp)
 {
 	struct puffs_req *preq1, *preq2;
@@ -233,17 +231,9 @@ puffs_fsframe_cmp(struct puffs_usermount *pu,
 }
 
 void
-puffs_fsframe_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
+puffs__fsframe_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
-	struct puffs_framebuf *newpb;
 
-	if ((newpb = puffs_framebuf_make()) == NULL)
-		abort();
-	/* XXX: optimize */
-	puffs__framebuf_moveinfo(pb, newpb);
-	puffs_framebuf_seekset(newpb, 0);
-	if (puffs_framebuf_reserve_space(newpb, PUFFS_MSG_MAXSIZE) == -1)
-		abort();
-
-	puffs_dopufbuf(pu, newpb);
+	puffs_framebuf_seekset(pb, 0);
+	puffs__ml_dispatch(pu, pb);
 }

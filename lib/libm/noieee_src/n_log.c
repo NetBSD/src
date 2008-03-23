@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log.c,v 1.6 2003/08/07 16:44:51 agc Exp $ */
+/*      n_log.c,v 1.6 2003/08/07 16:44:51 agc Exp */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,10 +34,17 @@ static char sccsid[] = "@(#)log.c	8.2 (Berkeley) 11/30/93";
 #endif
 #endif /* not lint */
 
+#include "../src/namespace.h"
+
 #include <math.h>
 #include <errno.h>
 
 #include "mathimpl.h"
+
+#ifdef __weak_alias
+__weak_alias(log, _log);
+__weak_alias(logf, _logf);
+#endif
 
 /* Table-driven natural logarithm.
  *
@@ -475,4 +482,10 @@ __log__D(double x)
 	TRUNC(r.a);
 	r.b = (u1 - r.a) + u2;
 	return (r);
+}
+
+float
+logf(float x)
+{
+	return(log((double)x));
 }

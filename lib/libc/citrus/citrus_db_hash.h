@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_hash.h,v 1.1 2003/06/25 09:51:31 tshiozak Exp $	*/
+/*	citrus_db_hash.h,v 1.1 2003/06/25 09:51:31 tshiozak Exp	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -30,7 +30,7 @@
 #define _CITRUS_DB_HASH_H_
 
 __BEGIN_DECLS
-u_int32_t	_citrus_db_hash_std(void *, struct _citrus_region *);
+uint32_t	_citrus_db_hash_std(void *, struct _citrus_region *);
 __END_DECLS
 
 #endif

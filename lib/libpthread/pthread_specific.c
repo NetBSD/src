@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.11.2.1 2008/01/09 01:36:39 matt Exp $	*/
+/*	pthread_specific.c,v 1.11.2.1 2008/01/09 01:36:39 matt Exp	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.11.2.1 2008/01/09 01:36:39 matt Exp $");
+__RCSID("pthread_specific.c,v 1.11.2.1 2008/01/09 01:36:39 matt Exp");
 
 /* Functions and structures dealing with thread-specific data */
 
@@ -82,7 +82,7 @@ pthread_curcpu_np(void)
 	unsigned int cpu = pthread__self()->pt_lwpctl->lc_curcpu;
 
 	/* for pthread__dummy_lwpctl */
-	if (cpu == LWPCTL_CPU_NONE)
+	if (cpu == (unsigned int)LWPCTL_CPU_NONE)
 		return 0;
 
 	return cpu;

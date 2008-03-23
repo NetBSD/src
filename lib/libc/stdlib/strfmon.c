@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $	*/
+/*	strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $");
+__RCSID("strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,10 +75,15 @@ __RCSID("$NetBSD: strfmon.c,v 1.4 2006/03/19 01:50:49 christos Exp $");
 } while (/* CONSTCOND */ 0)
 
 #define GET_NUMBER(VAR)	do {					\
-	VAR = 0;						\
+	int ovar;						\
+	ovar = VAR = 0;						\
 	while (isdigit((unsigned char)*fmt)) {			\
 		VAR *= 10;					\
 		VAR += *fmt - '0';				\
+		if (ovar > VAR)					\
+			goto e2big_error;			\
+		else						\
+			ovar = VAR;				\
 		fmt++;						\
 	}							\
 } while (/* CONSTCOND */ 0)

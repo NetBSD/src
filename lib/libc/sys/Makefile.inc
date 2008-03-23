@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.176.4.2 2008/01/09 01:34:17 matt Exp $
+#	Makefile.inc,v 1.176.4.2 2008/01/09 01:34:17 matt Exp
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -23,7 +23,8 @@ CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
 
 # glue to offer userland wrappers for some syscalls
-SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c swapon.c
+SRCS+=	posix_fadvise.c sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c \
+	swapon.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -34,15 +35,19 @@ GLUE+=	adjtime.c clock_settime.c ftruncate.c \
 
 # 'glue' files might .c or .S depending on the architecture
 .for glue in ${GLUE}
-.if exists(${glue:.c=.S})
+. if exists(${glue:.c=.S})
 # Build the ASM glue file
 SRCS+=${glue:.c=.S}
-.else
+. else
+.  if exists(__${glue:.c=.S})
+SRCS+=__${glue:.c=.S} ${glue}
+.  else
 # Build the C glue file
 SRCS+= ${glue}
 # and an asm entry for __<syscall>
 ASM_GLUE+= __${glue:.c=.S}
-.endif
+.  endif
+. endif
 .endfor
 
 # glue to syscalls that may pass structs or unions, which cannot be
@@ -82,14 +87,14 @@ ASM=	access.S acct.S \
 		_lwp_create.S _lwp_exit.S _lwp_kill.S _lwp_park.S \
 		_lwp_self.S _lwp_wait.S _lwp_unpark.S _lwp_unpark_all.S \
 		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S _lwp_detach.S \
-		_lwp_getprivate.S _lwp_setprivate.S \
+		_lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
 	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
-		mlock.S mlockall.S __mount50.S mprotect.S __msgctl13.S \
-		mremap.S msgget.S munlock.S munlockall.S munmap.S \
+		mlock.S mlockall.S modctl.S __mount50.S mprotect.S __msgctl13.S \
+		msgget.S munlock.S munlockall.S munmap.S \
 	nfssvc.S __ntp_gettime30.S \
 	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
-		posix_fadvise.S \
+		__posix_fadvise50.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
 	quotactl.S \
 	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
@@ -108,12 +113,25 @@ ASM=	access.S acct.S \
 	umask.S undelete.S unlink.S unmount.S utimes.S utrace.S uuidgen.S \
 	vadvise.S
 
+# modules with potentially non default implementations
+ASM_MD=	_lwp_getprivate.S mremap.S 
+
+.for f in ${ASM_MD}
+. if !exists(${f})
+   ASM+=	${f}
+. else
+   SRCS+=	${f}
+. endif
+.endfor
+
 WEAKASM= accept.S aio_suspend.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S fsync_range.S \
 	kill.S mq_receive.S mq_send.S mq_timedreceive.S mq_timedsend.S \
 	msgrcv.S msgsnd.S __msync13.S \
 	nanosleep.S open.S poll.S pollts.S pselect.S read.S readlink.S readv.S \
-	sched_yield.S select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	_sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
+	_sched_getaffinity.S sched_yield.S \
+	select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	wait4.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \

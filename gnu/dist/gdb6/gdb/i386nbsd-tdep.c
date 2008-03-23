@@ -337,7 +337,7 @@ static struct trad_frame_cache *
 i386nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 {
   struct trad_frame_cache *cache;
-  CORE_ADDR func, sp, addr;
+  CORE_ADDR func, sp, addr, tmp;
   ULONGEST cs;
   char *name;
   int i;
@@ -353,9 +353,25 @@ i386nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 
   find_pc_partial_function (func, &name, NULL, NULL);
   if (name && strncmp (name, "Xintr", 5) == 0)
-    addr = sp + 8;		/* It's an interrupt frame.  */
+    {
+      /* It's an interrupt frame. */
+      tmp = read_memory_unsigned_integer (sp + 4, 4);
+      if (tmp < 15)
+        {
+          /* Reasonable value for 'ppl': already on interrupt stack. */
+          addr = sp + 8;
+        }
+      else
+        {
+          /* Switch to previous stack. */
+          addr = tmp + 4;
+        }
+    }
   else
-    addr = sp + 4;
+    {
+      /* It's a trap frame. */
+      addr = sp + 4;
+    }
 
   for (i = 0; i < ARRAY_SIZE (i386nbsd_tf_reg_offset); i++)
     if (i386nbsd_tf_reg_offset[i] != -1)
@@ -418,10 +434,17 @@ i386nbsd_trapframe_sniffer (const struct frame_unwind *self,
 
 
   find_pc_partial_function (frame_pc_unwind (next_frame), &name, NULL, NULL);
-  return (name && (strcmp (name, "calltrap") == 0
-		   || strcmp (name, "syscall1") == 0
-		   || strncmp (name, "Xintr", 5) == 0
-		   || strncmp (name, "Xsoft", 5) == 0));
+  return (name && ((strcmp (name, "alltraps") == 0)
+		   || (strcmp (name, "calltrap") == 0)
+		   || (strncmp (name, "Xtrap", 5) == 0)
+		   || (strcmp (name, "syscall1") == 0)
+		   || (strcmp (name, "Xsyscall") == 0)
+		   || (strncmp (name, "Xintr", 5) == 0)
+		   || (strncmp (name, "Xresume", 7) == 0)
+		   || (strncmp (name, "Xstray", 6) == 0)
+		   || (strncmp (name, "Xrecurse", 8) == 0)
+		   || (strncmp (name, "Xsoft", 5) == 0)
+		   || (strncmp (name, "Xdoreti", 5) == 0)));
 }
 
 const struct frame_unwind i386nbsd_trapframe_unwind = {

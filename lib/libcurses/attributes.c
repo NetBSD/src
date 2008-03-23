@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.15 2007/05/28 15:01:54 blymn Exp $	*/
+/*	attributes.c,v 1.15 2007/05/28 15:01:54 blymn Exp	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.15 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("attributes.c,v 1.15 2007/05/28 15:01:54 blymn Exp");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -49,7 +49,7 @@ void __wcolor_set(WINDOW *, attr_t);
 #ifndef _CURSES_USE_MACROS
 /*
  * attr_get --
- *	Get attributes and color pair from stdscr
+ *	Get wide attributes and color pair from stdscr
  */
 /* ARGSUSED */
 int
@@ -60,7 +60,7 @@ attr_get(attr_t *attr, short *pair, void *opt)
 
 /*
  * attr_on --
- *	Test and set attributes on stdscr
+ *	Test and set wide attributes on stdscr
  */
 /* ARGSUSED */
 int
@@ -71,7 +71,7 @@ attr_on(attr_t attr, void *opt)
 
 /*
  * attr_off --
- *	Test and unset attributes on stdscr
+ *	Test and unset wide attributes on stdscr
  */
 /* ARGSUSED */
 int
@@ -82,7 +82,7 @@ attr_off(attr_t attr, void *opt)
 
 /*
  * attr_set --
- *	Set attributes and color pair on stdscr
+ *	Set wide attributes and color pair on stdscr
  */
 /* ARGSUSED */
 int
@@ -136,7 +136,7 @@ attrset(int attr)
 
 /*
  * wattr_get --
- *	Get attributes and colour pair from window
+ *	Get wide attributes and colour pair from window
  *	Note that attributes also includes colour.
  */
 /* ARGSUSED */
@@ -160,10 +160,7 @@ wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
 
 /*
  * wattr_on --
- *	Test and set attributes on stdscr
- *
- *	Modes are blinking, bold (extra bright), dim (half-bright),
- *	blanking (invisible), protected and reverse video
+ *	Test and set wide attributes on window
  */
 /* ARGSUSED */
 int
@@ -201,9 +198,9 @@ wattr_on(WINDOW *win, attr_t attr, void *opt)
 			win->wattr |= WA_VERTICAL;
 #endif /* HAVE_WCHAR */
 	}
-	if (attr & __STANDOUT)
+	if (attr & __STANDOUT && __tc_so != NULL && __tc_se != NULL)
 		wstandout(win);
-	if (attr & __UNDERSCORE)
+	if (attr & __UNDERSCORE && __tc_us != NULL && __tc_ue != NULL)
 		wunderscore(win);
 	if ((attr_t) attr & __COLOR)
 		__wcolor_set(win, (attr_t) attr);
@@ -212,7 +209,7 @@ wattr_on(WINDOW *win, attr_t attr, void *opt)
 
 /*
  * wattr_off --
- *	Test and unset attributes on stdscr
+ *	Test and unset wide attributes on window
  *
  *	Note that the 'me' sequence unsets all attributes.  We handle
  *	which attributes should really be set in refresh.c:makech().
@@ -266,7 +263,7 @@ wattr_off(WINDOW *win, attr_t attr, void *opt)
 
 /*
  * wattr_set --
- *	Set attributes and color pair on stdscr
+ *	Set wide attributes and color pair on window
  */
 int
 wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
@@ -344,7 +341,7 @@ wcolor_set(WINDOW *win, short pair, void *opt)
 
 /*
  * getattrs --
- * Get window attributes.
+ *	Get window attributes.
  */
 chtype
 getattrs(WINDOW *win)
@@ -353,6 +350,92 @@ getattrs(WINDOW *win)
 	__CTRACE(__CTRACE_ATTR, "getattrs: win %p\n", win);
 #endif
 	return((chtype) win->wattr);
+}
+
+/*
+ * termattrs --
+ *	Get terminal attributes
+ */
+chtype
+termattrs(void)
+{
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "termattrs\n");
+#endif
+	chtype ch = 0;
+
+	if (__tc_me != NULL) {
+		if (__tc_mb != NULL)
+			ch |= __BLINK;
+		if (__tc_md != NULL)
+			ch |= __BOLD;
+		if (__tc_mh != NULL)
+			ch |= __DIM;
+		if (__tc_mk != NULL)
+			ch |= __BLANK;
+		if (__tc_mp != NULL)
+			ch |= __PROTECT;
+		if (__tc_mr != NULL)
+			ch |= __REVERSE;
+	}
+	if (__tc_so != NULL && __tc_se != NULL)
+		ch |= __STANDOUT;
+	if (__tc_us != NULL && __tc_ue != NULL)
+		ch |= __UNDERSCORE;
+	if (__tc_as != NULL && __tc_ae != NULL)
+		ch |= __ALTCHARSET;
+
+	return ch;
+}
+
+/*
+ * term_attrs --
+ *	Get terminal wide attributes
+ */
+attr_t
+term_attrs(void)
+{
+#ifdef DEBUG
+	__CTRACE(__CTRACE_ATTR, "term_attrs\n");
+#endif
+	attr_t attr = 0;
+
+	if (__tc_me != NULL) {
+		if (__tc_mb != NULL)
+			attr |= WA_BLINK;
+		if (__tc_md != NULL)
+			attr |= WA_BOLD;
+		if (__tc_mh != NULL)
+			attr |= WA_DIM;
+		if (__tc_mk != NULL)
+			attr |= WA_INVIS;
+		if (__tc_mp != NULL)
+			attr |= WA_PROTECT;
+		if (__tc_mr != NULL)
+			attr |= WA_REVERSE;
+#ifdef HAVE_WCHAR
+		if (__tc_Xo != NULL)
+			attr |= WA_LOW;
+		if (__tc_Xt != NULL)
+			attr |= WA_TOP;
+		if (__tc_Xl != NULL)
+			attr |= WA_LEFT;
+		if (__tc_Xr != NULL)
+			attr |= WA_RIGHT;
+		if (__tc_Xh != NULL)
+			attr |= WA_HORIZONTAL;
+		if (__tc_Xv != NULL)
+			attr |= WA_VERTICAL;
+#endif /* HAVE_WCHAR */
+	}
+	if (__tc_so != NULL && __tc_se != NULL)
+		attr |= WA_STANDOUT;
+	if (__tc_us != NULL && __tc_ue != NULL)
+		attr |= WA_UNDERLINE;
+	if (__tc_as != NULL && __tc_ae != NULL)
+		attr |= WA_ALTCHARSET;
+
+	return attr;
 }
 
 /*

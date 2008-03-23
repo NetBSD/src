@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.21.12.1 2008/01/09 01:36:31 matt Exp $	*/
+/*	pthread.h,v 1.21.12.1 2008/01/09 01:36:31 matt Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 
 #include <time.h>	/* For timespec */
 #include <sched.h>
+#include <sys/featuretest.h>
 
 #include <pthread_types.h>
 
@@ -186,10 +187,14 @@ int	pthread_barrierattr_destroy(pthread_barrierattr_t *);
 int	pthread_getschedparam(pthread_t, int * __restrict,
 	    struct sched_param * __restrict);
 int	pthread_setschedparam(pthread_t, int, const struct sched_param *);
+int	pthread_setschedprio(pthread_t, int);
 
 int 	*pthread__errno(void);
 
 #if defined(_NETBSD_SOURCE)
+int	pthread_getaffinity_np(pthread_t, size_t, cpuset_t *);
+int	pthread_setaffinity_np(pthread_t, size_t, cpuset_t *);
+
 int	pthread_mutex_held_np(pthread_mutex_t *);
 pthread_t pthread_mutex_owner_np(pthread_mutex_t *);
 

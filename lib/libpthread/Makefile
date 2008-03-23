@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42.2.2 2008/01/09 01:36:29 matt Exp $
+#	Makefile,v 1.42.2.2 2008/01/09 01:36:29 matt Exp
 #
 
 WARNS=	4
@@ -54,14 +54,11 @@ SRCS+=	pthread_cond.c
 SRCS+=	pthread_lock.c 
 SRCS+=	pthread_misc.c
 SRCS+=	pthread_mutex.c
-SRCS+=	pthread_mutex2.c
 SRCS+=	pthread_rwlock.c
-SRCS+=	pthread_rwlock2.c
 SRCS+=	pthread_specific.c
 SRCS+=	pthread_spin.c
 SRCS+=	pthread_tsd.c
 SRCS+=	res_state.c
-SRCS+=	sched.c
 SRCS+=	sem.c
 # Architecture-dependent files
 SRCS+=	_context_u.S
@@ -83,10 +80,10 @@ pthread_lock.po: pthread_lock.o
 	${_MKTARGET_CREATE}
 	cp pthread_lock.o pthread_lock.po
 
-COPTS.pthread_mutex2.c+=	-fomit-frame-pointer -falign-functions=32
-pthread_mutex2.po: pthread_mutex2.o
+COPTS.pthread_mutex.c+=	-fomit-frame-pointer -falign-functions=32
+pthread_mutex.po: pthread_mutex.o
 	${_MKTARGET_CREATE}
-	cp pthread_mutex2.o pthread_mutex2.po
+	cp pthread_mutex.o pthread_mutex.po
 
 COPTS.pthread.c += -Wno-stack-protector
 
@@ -118,8 +115,7 @@ MAN+=	pthread.3 \
 	pthread_setname_np.3 \
 	pthread_setspecific.3 pthread_sigmask.3 pthread_spin_destroy.3 \
 	pthread_spin_init.3 pthread_spin_lock.3 pthread_spin_unlock.3 \
-	pthread_suspend_np.3 pthread_testcancel.3 \
-	sched_yield.3
+	pthread_suspend_np.3 pthread_testcancel.3
 
 MLINKS+=	pthread_attr.3 pthread_attr_init.3
 MLINKS+=	pthread_attr.3 pthread_attr_destroy.3

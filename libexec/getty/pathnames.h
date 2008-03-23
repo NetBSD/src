@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.8 2003/08/07 09:46:42 agc Exp $	*/
+/*	pathnames.h,v 1.8 2003/08/07 09:46:42 agc Exp	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,6 +33,5 @@
 
 #include <paths.h>
 
-#define	_PATH_GETTYTAB	"/etc/gettytab"
 #define	_PATH_LOGIN	"/usr/bin/login"
 #define	_PATH_LOCK	"/var/spool/lock/LCK.."

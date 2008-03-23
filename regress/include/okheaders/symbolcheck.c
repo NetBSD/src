@@ -25,7 +25,6 @@
 #include <sys/condvar.h>
 #include <sys/conf.h>
 #include <sys/core.h>
-#include <sys/device.h>
 #include <sys/dir.h>
 #include <sys/dirent.h>
 #include <sys/disk.h>

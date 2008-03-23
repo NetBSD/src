@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_int.h,v 1.49.2.2 2008/01/09 01:36:36 matt Exp $	*/
+/*	pthread_int.h,v 1.49.2.2 2008/01/09 01:36:36 matt Exp	*/
 
 /*-
- * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,6 +51,10 @@
 #include "pthread_queue.h"
 #include "pthread_md.h"
 
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
+
+#include <sys/atomic.h>
 #include <sys/tree.h>
 
 #include <lwp.h>
@@ -198,6 +202,8 @@ int	pthread__park(pthread_t, pthread_spin_t *, pthread_queue_t *,
 void	pthread__lockprim_init(void) PTHREAD_HIDE;
 void	pthread_lockinit(pthread_spin_t *) PTHREAD_HIDE;
 
+static inline void pthread__spinlock(pthread_t, pthread_spin_t *)
+    __attribute__((__always_inline__));
 static inline void
 pthread__spinlock(pthread_t self, pthread_spin_t *lock)
 {
@@ -206,12 +212,16 @@ pthread__spinlock(pthread_t self, pthread_spin_t *lock)
 	(*self->pt_lockops.plo_lock)(lock);
 }
 
+static inline int pthread__spintrylock(pthread_t, pthread_spin_t *)
+    __attribute__((__always_inline__));
 static inline int
 pthread__spintrylock(pthread_t self, pthread_spin_t *lock)
 {
 	return (*self->pt_lockops.plo_try)(lock);
 }
 
+static inline void pthread__spinunlock(pthread_t, pthread_spin_t *)
+    __attribute__((__always_inline__));
 static inline void
 pthread__spinunlock(pthread_t self, pthread_spin_t *lock)
 {
@@ -283,14 +293,6 @@ void	pthread__errorfunc(const char *, int, const char *, const char *)
 			   PTHREAD_HIDE;
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
 void	pthread__cancelled(void) PTHREAD_HIDE;
-
-void	*pthread__atomic_cas_ptr(volatile void *, const void *, const void *) PTHREAD_HIDE;
-void	*pthread__atomic_swap_ptr(volatile void *, const void *) PTHREAD_HIDE;
-void	pthread__atomic_or_ulong(volatile unsigned long *, unsigned long) PTHREAD_HIDE;
-void	pthread__membar_full(void) PTHREAD_HIDE;
-void	pthread__membar_producer(void) PTHREAD_HIDE;
-void	pthread__membar_consumer(void) PTHREAD_HIDE;
-
 int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
@@ -315,7 +317,5 @@ int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
 #define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
 #define	RW_COUNT(rw)		((rw)->rw_owner & RW_THREAD)
 #define	RW_FLAGS(rw)		((rw)->rw_owner & ~RW_THREAD)
-
-#define	ptr_owner		ptr_writer
 
 #endif /* _LIB_PTHREAD_INT_H */

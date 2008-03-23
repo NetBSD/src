@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1 2004/05/20 23:13:02 christos Exp $	*/
+/*	inet_network.c,v 1.1 2004/05/20 23:13:02 christos Exp	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.1 2004/05/20 23:13:02 christos Exp $");
+__RCSID("inet_network.c,v 1.1 2004/05/20 23:13:02 christos Exp");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ again:
 	if (*cp == '0')
 		digit = 1, base = 8, cp++;
 	if (*cp == 'x' || *cp == 'X')
-		base = 16, cp++;
+		digit = 0, base = 16, cp++;
 	while ((c = *cp) != 0) {
 		if (isdigit(c)) {
 			if (base == 8 && (c == '8' || c == '9'))
@@ -94,15 +94,13 @@ again:
 	}
 	if (!digit)
 		return (INADDR_NONE);
+	if (pp >= parts + 4 || val > 0xff)
+		return (INADDR_NONE);
 	if (*cp == '.') {
-		if (pp >= parts + 4 || val > 0xff)
-			return (INADDR_NONE);
 		*pp++ = val, cp++;
 		goto again;
 	}
 	if (*cp && !isspace((u_char) *cp))
-		return (INADDR_NONE);
-	if (pp >= parts + 4 || val > 0xff)
 		return (INADDR_NONE);
 	*pp++ = val;
 	n = pp - parts;

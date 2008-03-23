@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.75.2.2 2008/01/09 01:36:54 matt Exp $	*/
+/*	refuse.c,v 1.75.2.2 2008/01/09 01:36:54 matt Exp	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.75.2.2 2008/01/09 01:36:54 matt Exp $");
+__RCSID("refuse.c,v 1.75.2.2 2008/01/09 01:36:54 matt Exp");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1185,7 +1185,7 @@ puffs_fuse_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
 		ret = fuse->op.statfs(PNPATH(puffs_getroot(pu)), svfsb);
 	}
 
-        return ret;
+        return -ret;
 }
 
 

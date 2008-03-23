@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.10.22.1 2007/11/06 23:11:35 matt Exp $	*/
+/*	kvm_sparc64.c,v 1.10.22.1 2007/11/06 23:11:35 matt Exp	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.10.22.1 2007/11/06 23:11:35 matt Exp $");
+__RCSID("kvm_sparc64.c,v 1.10.22.1 2007/11/06 23:11:35 matt Exp");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -119,7 +119,7 @@ _kvm_kvatop(kd, va, pa)
 	if (va < kernbase)
 		goto lose;
 
-	/* Handle the wired 4MB TTEs */
+	/* Handle the wired 4MB TTEs and per-CPU mappings */
 	if (cpup->memsegoffset > sizeof(cpu_kcore_hdr_t) &&
 	    cpup->newmagic == SPARC64_KCORE_NEWMAGIC) {
 		/*
@@ -135,6 +135,19 @@ _kvm_kvatop(kd, va, pa)
 			return (int)(start+PAGE_SIZE_4M - va);
 		}
 
+		if (cpup->numcpuinfos > 0) {
+			/* we have per-CPU mapping info */
+			uint64_t start, base;
+
+			base = cpup->cpubase - 32*1024;
+			if (va >= base && va < (base + cpup->percpusz)) {
+				start = va - base;
+				*pa = cpup->cpusp
+				    + cpup->thiscpu*cpup->percpusz
+				    + start;
+				return cpup->percpusz - start;
+			}
+		}
 	} else {
 		/*
 		 * old format: just a textbase/size and database/size
@@ -161,7 +174,7 @@ _kvm_kvatop(kd, va, pa)
 	 * Parse kernel page table.
 	 */
 	pseg = (uint64_t *)(u_long)cpup->segmapoffset;
-	if (pread(kd->pmfd, &pdir, sizeof(pdir),
+	if (_kvm_pread(kd, kd->pmfd, &pdir, sizeof(pdir),
 		_kvm_pa2off(kd, (u_long)&pseg[va_to_seg(va)])) 
 		!= sizeof(pdir)) {
 		_kvm_syserr(kd, 0, "could not read L1 PTE");
@@ -173,7 +186,7 @@ _kvm_kvatop(kd, va, pa)
 		goto lose;
 	}
 
-	if (pread(kd->pmfd, &ptbl, sizeof(ptbl),
+	if (_kvm_pread(kd, kd->pmfd, &ptbl, sizeof(ptbl),
 		_kvm_pa2off(kd, (u_long)&pdir[va_to_dir(va)])) 
 		!= sizeof(ptbl)) {
 		_kvm_syserr(kd, 0, "could not read L2 PTE");
@@ -185,7 +198,7 @@ _kvm_kvatop(kd, va, pa)
 		goto lose;
 	}
 
-	if (pread(kd->pmfd, &data, sizeof(data),
+	if (_kvm_pread(kd, kd->pmfd, &data, sizeof(data),
 		_kvm_pa2off(kd, (u_long)&ptbl[va_to_pte(va)])) 
 		!= sizeof(data)) {
 		_kvm_syserr(kd, 0, "could not read TTE");

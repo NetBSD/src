@@ -1,4 +1,4 @@
-/* $NetBSD: ras2.c,v 1.7.10.1 2008/01/09 01:37:37 matt Exp $ */
+/* ras2.c,v 1.7.10.1 2008/01/09 01:37:37 matt Exp */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@ main(void)
         itv.it_interval.tv_usec = 0;
         itv.it_value.tv_sec = 10;
         itv.it_value.tv_usec = 0;
-        setitimer(ITIMER_VIRTUAL, &itv, NULL);
 
 	if (rasctl(RAS_ADDR(main), RAS_SIZE(main), RAS_INSTALL) < 0) {
 		if (errno == EOPNOTSUPP) {
@@ -84,6 +83,7 @@ main(void)
 		wait(&rv);
 		return WEXITSTATUS(rv);
 	}
+	setitimer(ITIMER_VIRTUAL, &itv, NULL);
 
 	RAS_START(main);
 	count++;

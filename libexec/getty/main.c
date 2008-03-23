@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.52.4.1 2008/01/09 01:37:11 matt Exp $	*/
+/*	main.c,v 1.52.4.1 2008/01/09 01:37:11 matt Exp	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.52.4.1 2008/01/09 01:37:11 matt Exp $");
+__RCSID("main.c,v 1.52.4.1 2008/01/09 01:37:11 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -51,22 +51,21 @@ __RCSID("$NetBSD: main.c,v 1.52.4.1 2008/01/09 01:37:11 matt Exp $");
 #include <sys/resource.h>
 #include <sys/utsname.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <time.h>
-#include <ctype.h>
+#include <limits.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <termcap.h>
 #include <time.h>
+#include <ttyent.h>
 #include <unistd.h>
 #include <util.h>
-#include <limits.h>
-#include <ttyent.h>
-#include <termcap.h>
 
 #include "gettytab.h"
 #include "pathnames.h"

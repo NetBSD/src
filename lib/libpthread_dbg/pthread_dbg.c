@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.37.2.1 2007/11/06 23:11:48 matt Exp $	*/
+/*	pthread_dbg.c,v 1.37.2.1 2007/11/06 23:11:48 matt Exp	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.37.2.1 2007/11/06 23:11:48 matt Exp $");
+__RCSID("pthread_dbg.c,v 1.37.2.1 2007/11/06 23:11:48 matt Exp");
 
 #define __EXPOSE_STACK 1
 
@@ -419,16 +419,17 @@ td_tsd_iter(td_proc_t *proc,
     int (*call)(pthread_key_t, void (*)(void *), void *), void *arg)
 {
 	int val;
-	int i, allocated;
+	int i;
+	void *allocated;
 	void (*destructor)(void *);
 
 	for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
-		val = READ(proc, proc->tsdallocaddr + i * sizeof(int),
+		val = READ(proc, proc->tsdallocaddr + i * sizeof(allocated),
 		    &allocated, sizeof(allocated));
 		if (val != 0)
 			return val;
 
-		if (allocated) {
+		if ((uintptr_t)allocated) {
 			val = READ(proc,  proc->tsddestaddr +
 			    i * sizeof(destructor),
 			    &destructor, sizeof(destructor));

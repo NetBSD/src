@@ -1,4 +1,4 @@
-/*      $NetBSD: n_exp.c,v 1.7 2003/08/07 16:44:50 agc Exp $ */
+/*      n_exp.c,v 1.7 2003/08/07 16:44:50 agc Exp */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,13 @@ static char sccsid[] = "@(#)exp.c	8.1 (Berkeley) 6/4/93";
  */
 
 #define _LIBM_STATIC
+#include "../src/namespace.h"
 #include "mathimpl.h"
+
+#ifdef __weak_alias
+__weak_alias(exp, _exp);
+__weak_alias(expf, _expf);
+#endif
 
 vc(ln2hi,  6.9314718055829871446E-1  ,7217,4031,0000,f7d0,   0, .B17217F7D00000)
 vc(ln2lo,  1.6465949582897081279E-12 ,bcd5,2ce7,d9cc,e4f1, -39, .E7BCD5E4F1D9CC)
@@ -155,6 +161,12 @@ exp(double x)
 	else
 	/* exp(INF) is INF, exp(+big#) overflows to INF */
 	    return( finite(x) ?  scalb(1.0,5000)  : x);
+}
+
+float
+expf(float x)
+{
+	return(exp((double)x));
 }
 
 /* returns exp(r = x + c) for |c| < |x| with no overlap.  */

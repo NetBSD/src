@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.14.6.2 2008/01/09 01:36:34 matt Exp $	*/
+/*	pthread_cancelstub.c,v 1.14.6.2 2008/01/09 01:36:34 matt Exp	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.14.6.2 2008/01/09 01:36:34 matt Exp $");
+__RCSID("pthread_cancelstub.c,v 1.14.6.2 2008/01/09 01:36:34 matt Exp");
 
 /*
  * This is necessary because the names are always weak (they are not
@@ -425,6 +425,10 @@ pwrite(int d, const void *buf, size_t nbytes, off_t offset)
 
 	return retval;
 }
+
+#ifdef _FORTIFY_SOURCE
+#undef read
+#endif
 
 ssize_t
 read(int d, void *buf, size_t nbytes)
