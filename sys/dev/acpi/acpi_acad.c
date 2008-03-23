@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.31 2007/12/09 20:27:52 jmcneill Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.32 2008/03/23 16:22:00 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.31 2007/12/09 20:27:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.32 2008/03/23 16:22:00 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ static void acpiacad_clear_status(struct acpiacad_softc *);
 static void acpiacad_notify_handler(ACPI_HANDLE, UINT32, void *);
 static void acpiacad_init_envsys(device_t);
 static void acpiacad_refresh(struct sysmon_envsys *, envsys_data_t *);
+static bool acpiacad_resume(device_t PMF_FN_PROTO);
 
 /*
  * acpiacad_match:
@@ -151,10 +152,24 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 	sc->sc_flags = AACAD_F_VERBOSE;
 #endif
 
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, acpiacad_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	acpiacad_init_envsys(self);
+}
+
+/*
+ * acpiacad_resume:
+ *
+ * 	Clear status after resuming to fetch new status.
+ */
+static bool
+acpiacad_resume(device_t dv PMF_FN_ARGS)
+{
+	struct acpiacad_softc *sc = device_private(dv);
+
+	acpiacad_clear_status(sc);
+	return true;
 }
 
 /*
@@ -290,6 +305,7 @@ acpiacad_init_envsys(device_t dv)
 	sc->sc_sme->sme_cookie = dv;
 	sc->sc_sme->sme_refresh = acpiacad_refresh;
 	sc->sc_sme->sme_class = SME_CLASS_ACADAPTER;
+	sc->sc_sme->sme_flags = SME_INIT_REFRESH;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error_dev(dv, "unable to register with sysmon\n");
