@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.55 2008/02/03 22:51:21 martin Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.56 2008/03/23 17:09:19 macallan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.55 2008/02/03 22:51:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.56 2008/03/23 17:09:19 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -319,7 +319,8 @@ sparc64_pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 
 		if (sc->sc_bus != b) {
 			printf("%s: WARNING: incorrect bus # for \"%s\" "
-			"(%d/%d/%d)\n", sc->sc_dev.dv_xname, name, b, d, f);
+			"(%d/%d/%d)\n", device_xname(sc->sc_dev),
+			name, b, d, f);
 			continue;
 		}
                 if ((locators[PCICF_DEV] != PCICF_DEV_DEFAULT) &&
