@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.15.2.2 2007/06/13 10:38:44 liamjfoy Exp $ */
+/* $NetBSD: privcmd.c,v 1.15.2.3 2008/03/23 09:43:00 jdc Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.15.2.2 2007/06/13 10:38:44 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.15.2.3 2008/03/23 09:43:00 jdc Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -68,6 +68,15 @@ privcmd_ioctl(void *v)
 
 	switch (ap->a_command) {
 	case IOCTL_PRIVCMD_HYPERCALL:
+	case IOCTL_PRIVCMD_HYPERCALL_OLD:
+	/*
+	 * oprivcmd_hypercall_t is privcmd_hypercall_t without the last entry
+	 */
+	{
+		privcmd_hypercall_t *hc = ap->a_data;
+
+		if (hc->op >= (PAGE_SIZE >> 5))
+			return EINVAL;
 		__asm volatile (
 			"pushl %%ebx; pushl %%ecx; pushl %%edx;"
 			"pushl %%esi; pushl %%edi; "
@@ -87,8 +96,20 @@ privcmd_ioctl(void *v)
 			"popl %%edi; popl %%esi; popl %%edx;"
 			"popl %%ecx; popl %%ebx"
 			: "=a" (error) : "0" (ap->a_data) : "memory" );
-		error = -error;
+		if (ap->a_command == IOCTL_PRIVCMD_HYPERCALL) {
+			if (error >= 0) {
+				hc->retval = error;
+				error = 0;
+			} else {
+				/* error occured, return the errno */
+				error = -error;
+				hc->retval = 0;
+			}
+		} else {
+			error = -error;
+		}
 		break;
+	}
 #ifndef XEN3
 #if defined(COMPAT_30)
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
