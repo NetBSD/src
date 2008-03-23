@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.pri.c,v 1.8 2003/04/02 18:36:39 jsm Exp $	*/
+/*	hack.pri.c,v 1.8 2003/04/02 18:36:39 jsm Exp	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.pri.c,v 1.8 2003/04/02 18:36:39 jsm Exp $");
+__RCSID("hack.pri.c,v 1.8 2003/04/02 18:36:39 jsm Exp");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -720,7 +720,7 @@ void
 cornbot(lth)
 	int             lth;
 {
-	if (lth < sizeof(oldbot)) {
+	if ((unsigned)lth < sizeof(oldbot)) {
 		oldbot[lth] = 0;
 		flags.botl = 1;
 	}

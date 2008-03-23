@@ -1,16 +1,26 @@
-/* $NetBSD: create.c,v 1.8 2005/02/25 15:04:43 simonb Exp $	 */
+/* create.c,v 1.8 2005/02/25 15:04:43 simonb Exp	 */
 
 /* create.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: create.c,v 1.8 2005/02/25 15:04:43 simonb Exp $");
+__RCSID("create.c,v 1.8 2005/02/25 15:04:43 simonb Exp");
 #endif				/* not lint */
 
 #include "header.h"
 #include "extern.h"
 #include <unistd.h>
+
+static void makemaze(int);
+static int cannedlevel(int);
+static void treasureroom(int);
+static void troom(int, int, int, int, int, int);
+static void makeobject(int);
+static void fillmroom(int, int, int);
+static void froom(int, int, int);
 static void fillroom(int, int);
+static void sethp(int);
+static void checkgen(void);
 
 /*
 	makeplayer()
@@ -70,30 +80,31 @@ newcavelevel(x)
 		savelevel();	/* put the level back into storage	 */
 	level = x;		/* get the new level and put in working
 				 * storage */
-	if (beenhere[x] == 0)
-		for (i = 0; i < MAXY; i++)
-			for (j = 0; j < MAXX; j++)
-				know[j][i] = mitem[j][i] = 0;
-	else {
+	if (beenhere[x]) {
 		getlevel();
 		sethp(0);
-		goto chgn;
+		checkgen();
+		return;
 	}
+
+	/* fill in new level */
+	for (i = 0; i < MAXY; i++)
+		for (j = 0; j < MAXX; j++)
+			know[j][i] = mitem[j][i] = 0;
 	makemaze(x);
 	makeobject(x);
 	beenhere[x] = 1;
 	sethp(1);
+	checkgen();		/* wipe out any genocided monsters */
 
 #if WIZID
 	if (wizard || x == 0)
 #else
 	if (x == 0)
 #endif
-
 		for (j = 0; j < MAXY; j++)
 			for (i = 0; i < MAXX; i++)
 				know[i][j] = 1;
-chgn:	checkgen();		/* wipe out any genocided monsters */
 }
 
 /*
@@ -103,7 +114,8 @@ chgn:	checkgen();		/* wipe out any genocided monsters */
 	subroutine to make the caverns for a given level.  only walls are made.
  */
 static int      mx, mxl, mxh, my, myl, myh, tmp2;
-void
+
+static void
 makemaze(k)
 	int             k;
 {
@@ -228,7 +240,7 @@ eat(xx, yy)
  *		~	eye of larn		!	cure dianthroritis
  *		-	random object
  */
-int
+static int
 cannedlevel(k)
 	int             k;
 {
@@ -305,7 +317,7 @@ cannedlevel(k)
 	level 10's treasure room has the eye in it and demon lords
 	level V3 has potion of cure dianthroritis and demon prince
  */
-void
+static void
 treasureroom(lv)
 	int             lv;
 {
@@ -328,7 +340,7 @@ treasureroom(lv)
  *	room is filled with objects and monsters
  *	the coordinate given is that of the upper left corner of the room
  */
-void
+static void
 troom(lv, xsize, ysize, tx, ty, glyph)
 	int             lv, xsize, ysize, tx, ty, glyph;
 {
@@ -386,7 +398,7 @@ troom(lv, xsize, ysize, tx, ty, glyph)
 	***********
 	subroutine to create the objects in the maze for the given level
  */
-void
+static void
 makeobject(j)
 	int             j;
 {
@@ -480,7 +492,7 @@ makeobject(j)
 	subroutine to fill in a number of objects of the same kind
  */
 
-void
+static void
 fillmroom(n, what, arg)
 	int             n, arg;
 	char            what;
@@ -489,13 +501,12 @@ fillmroom(n, what, arg)
 	for (i = 0; i < n; i++)
 		fillroom(what, arg);
 }
-void
-froom(n, itm, arg)
-	int             n, arg;
-	char            itm;
+
+static void
+froom(int n, int theitem, int arg)
 {
 	if (rnd(151) < n)
-		fillroom(itm, arg);
+		fillroom(theitem, arg);
 }
 
 /*
@@ -563,7 +574,7 @@ fillmonst(what)
 	must be done when entering a new level
 	if sethp(1) then wipe out old monsters else leave them there
  */
-void
+static void
 sethp(flg)
 	int             flg;
 {
@@ -589,8 +600,8 @@ sethp(flg)
 /*
  *	Function to destroy all genocided monsters on the present level
  */
-void
-checkgen()
+static void
+checkgen(void)
 {
 	int             x, y;
 	for (y = 0; y < MAXY; y++)

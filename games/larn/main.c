@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.18 2007/04/22 02:09:02 mouse Exp $	*/
+/*	main.c,v 1.18 2007/04/22 02:09:02 mouse Exp	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.18 2007/04/22 02:09:02 mouse Exp $");
+__RCSID("main.c,v 1.18 2007/04/22 02:09:02 mouse Exp");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -15,12 +15,14 @@ __RCSID("$NetBSD: main.c,v 1.18 2007/04/22 02:09:02 mouse Exp $");
 #include "header.h"
 #include "extern.h"
 
+static int whatitem(const char *);
+
 static char     copyright[] = "\nLarn is copyrighted 1986 by Noah Morgan.\n";
 int             srcount = 0;	/* line counter for showstr()	 */
 int             dropflag = 0;	/* if 1 then don't lookforobject() next round */
 int             rmst = 80;	/* random monster creation counter		 */
 int             userid;		/* the players login user id number */
-uid_t           uid, euid;	/* used for security */
+gid_t           gid, egid;	/* used for security */
 u_char          nowelcome = 0, nomove = 0;	/* if (nomove) then don't
 						 * count next iteration as a
 						 * move */
@@ -63,9 +65,9 @@ main(argc, argv)
 	struct passwd  *pwe;
 
 	i = 0;
-	euid = geteuid();
-	uid = getuid();
-	seteuid(uid);		/* give up "games" if we have it */
+	egid = getegid();
+	gid = getgid();
+	setegid(gid);		/* give up "games" if we have it */
 	/*
 	 *	first task is to identify the player
 	 */
@@ -327,7 +329,7 @@ qshowstr()
 	sigsav = nosignal;
 	nosignal = 1;		/* don't allow ^c etc */
 	if (c[GOLD]) {
-		lprintf(".)   %d gold pieces", (long) c[GOLD]);
+		lprintf(".)   %ld gold pieces", (long) c[GOLD]);
 		srcount++;
 	}
 	for (k = 26; k >= 0; k--)
@@ -338,7 +340,7 @@ qshowstr()
 						show3(j);
 			k = 0;
 		}
-	lprintf("\nElapsed time is %d.  You have %d mobuls left", (long) ((gltime + 99) / 100 + 1), (long) ((TIMELIMIT - gltime) / 100));
+	lprintf("\nElapsed time is %ld.  You have %ld mobuls left", (long) ((gltime + 99) / 100 + 1), (long) ((TIMELIMIT - gltime) / 100));
 	more();
 	nosignal = sigsav;
 }
@@ -576,7 +578,7 @@ showquaff()
 void
 show1(idx, str2)
 	int    idx;
-	char  *str2[];
+	const char  *str2[];
 {
 	lprintf("\n%c)   %s", idx + 'a', objectname[iven[idx]]);
 	if (str2 != 0 && str2[ivenarg[idx]][0] != 0)
@@ -584,15 +586,14 @@ show1(idx, str2)
 }
 
 void
-show3(index)
-	int    index;
+show3(int indx)
 {
-	switch (iven[index]) {
+	switch (iven[indx]) {
 	case OPOTION:
-		show1(index, potionname);
+		show1(indx, potionname);
 		break;
 	case OSCROLL:
-		show1(index, scrollname);
+		show1(indx, scrollname);
 		break;
 
 	case OLARNEYE:
@@ -606,20 +607,20 @@ show3(index)
 	case OCOOKIE:
 	case OSAPPHIRE:
 	case ONOTHEFT:
-		show1(index, (char **) 0);
+		show1(indx, NULL);
 		break;
 
 	default:
-		lprintf("\n%c)   %s", index + 'a', objectname[iven[index]]);
-		if (ivenarg[index] > 0)
-			lprintf(" + %d", (long) ivenarg[index]);
-		else if (ivenarg[index] < 0)
-			lprintf(" %d", (long) ivenarg[index]);
+		lprintf("\n%c)   %s", indx + 'a', objectname[iven[indx]]);
+		if (ivenarg[indx] > 0)
+			lprintf(" + %ld", (long) ivenarg[indx]);
+		else if (ivenarg[indx] < 0)
+			lprintf(" %ld", (long) ivenarg[indx]);
 		break;
 	}
-	if (c[WIELD] == index)
+	if (c[WIELD] == indx)
 		lprcat(" (weapon in hand)");
-	if ((c[WEAR] == index) || (c[SHIELD] == index))
+	if ((c[WEAR] == indx) || (c[SHIELD] == indx))
 		lprcat(" (being worn)");
 	if (++srcount >= 22) {
 		srcount = 0;
@@ -902,7 +903,7 @@ parse()
 
 		case 'g':
 			cursors();
-			lprintf("\nThe stuff you are carrying presently weighs %d pounds", (long) packweight());
+			lprintf("\nThe stuff you are carrying presently weighs %ld pounds", (long) packweight());
 		case ' ':
 			yrepcount = 0;
 			nomove = 1;
@@ -911,7 +912,9 @@ parse()
 		case 'v':
 			yrepcount = 0;
 			cursors();
-			lprintf("\nCaverns of Larn, Version %d.%d, Diff=%d", (long) VERSION, (long) SUBVERSION, (long) c[HARDGAME]);
+			lprintf("\nCaverns of Larn, Version %ld.%ld, Diff=%ld",
+				(long) VERSION, (long) SUBVERSION,
+				(long) c[HARDGAME]);
 			if (wizard)
 				lprcat(" Wizard");
 			nomove = 1;
@@ -947,7 +950,8 @@ parse()
 		case 'P':
 			cursors();
 			if (outstanding_taxes > 0)
-				lprintf("\nYou presently owe %d gp in taxes.", (long) outstanding_taxes);
+				lprintf("\nYou presently owe %ld gp in taxes.",
+					(long) outstanding_taxes);
 			else
 				lprcat("\nYou do not owe any taxes.");
 			return;
@@ -1102,7 +1106,7 @@ void
 dropobj()
 {
 	int    i;
-	char  *p;
+	unsigned char  *p;
 	long            amt;
 	p = &item[playerx][playery];
 	while (1) {
@@ -1146,7 +1150,7 @@ dropobj()
 					amt = 32767000L;
 				}
 				c[GOLD] -= amt;
-				lprintf("You drop %d gold pieces", (long) amt);
+				lprintf("You drop %ld gold pieces", (long)amt);
 				iarg[playerx][playery] = i;
 				bottomgold();
 				know[playerx][playery] = 0;
@@ -1198,10 +1202,11 @@ readscr()
  *	subroutine to eat a cookie one is carrying
  */
 void
-eatcookie()
+eatcookie(void)
 {
-	int    i;
-	char           *p;
+	const char *p;
+	int i;
+
 	while (1) {
 		if ((i = whatitem("eat")) == '\33')
 			return;
@@ -1264,16 +1269,15 @@ quaff()
 /*
 	function to ask what player wants to do
  */
-int
-whatitem(str)
-	char           *str;
+static int
+whatitem(const char *str)
 {
 	int             i;
 	cursors();
 	lprintf("\nWhat do you want to %s [* for all] ? ", str);
 	i = 0;
 	while (i > 'z' || (i < 'a' && i != '*' && i != '\33' && i != '.'))
-		i = lgetchar();
+		i = ttgetch();
 	if (i == '\33')
 		lprcat(" aborted");
 	return (i);
@@ -1290,7 +1294,7 @@ readnum(mx)
 	int    i;
 	unsigned long amt = 0;
 	sncbr();
-	if ((i = lgetchar()) == '*')
+	if ((i = ttgetch()) == '*')
 		amt = mx;	/* allow him to say * for all gold */
 	else
 		while (i != '\n') {
@@ -1301,7 +1305,7 @@ readnum(mx)
 			}
 			if ((i <= '9') && (i >= '0') && (amt < 99999999))
 				amt = amt * 10 + i - '0';
-			i = lgetchar();
+			i = ttgetch();
 		}
 	scbr();
 	return (amt);

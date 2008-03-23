@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.77.4.1 2008/01/09 01:33:06 matt Exp $	*/
+/*	stdlib.h,v 1.77.4.1 2008/01/09 01:33:06 matt Exp	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -176,6 +176,9 @@ char	*initstate(unsigned long, char *, size_t);
 long	 random(void);
 char	*setstate(char *);
 void	 srandom(unsigned long);
+#ifdef _NETBSD_SOURCE
+#define	RANDOM_MAX	(((long)1 << 31) - 1)
+#endif
 
 char	*mkdtemp(char *);
 int	 mkstemp(char *);
@@ -238,10 +241,10 @@ int	 posix_memalign(void **, size_t, size_t);
 #if defined(_NETBSD_SOURCE)
 #if defined(alloca) && (alloca == __builtin_alloca) && \
 	defined(__GNUC__) && (__GNUC__ < 2)
-void	*alloca(int);     /* built-in for gcc */ 
-#else 
-void	*alloca(size_t); 
-#endif /* __GNUC__ */ 
+void	*alloca(int);     /* built-in for gcc */
+#else
+void	*alloca(size_t);
+#endif /* __GNUC__ */
 
 uint32_t arc4random(void);
 void	 arc4random_stir(void);
@@ -257,6 +260,7 @@ int	 cgetnum(char *, const char *, long *);
 int	 cgetset(const char *);
 int	 cgetstr(char *, const char *, char **);
 int	 cgetustr(char *, const char *, char **);
+void	 csetexpandtc(int);
 
 int	 daemon(int, int);
 __aconst char *devname(dev_t, mode_t);

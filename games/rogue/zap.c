@@ -1,4 +1,4 @@
-/*	$NetBSD: zap.c,v 1.6.22.1 2008/01/09 01:31:00 matt Exp $	*/
+/*	zap.c,v 1.6.22.1 2008/01/09 01:31:00 matt Exp	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zap.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: zap.c,v 1.6.22.1 2008/01/09 01:31:00 matt Exp $");
+__RCSID("zap.c,v 1.6.22.1 2008/01/09 01:31:00 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,15 @@ __RCSID("$NetBSD: zap.c,v 1.6.22.1 2008/01/09 01:31:00 matt Exp $");
 
 #include "rogue.h"
 
+static object *get_zapped_monster(short, short *, short *);
+static void tele_away(object *);
+static void wdrain_life(object *);
+static void zap_monster(object *, unsigned short);
+
 boolean wizard = 0;
 
 void
-zapp()
+zapp(void)
 {
 	short wch;
 	boolean first_miss = 1;
@@ -96,7 +101,7 @@ zapp()
 		wand->class--;
 		row = rogue.row; col = rogue.col;
 		if ((wand->which_kind == COLD) || (wand->which_kind == FIRE)) {
-			bounce((short) wand->which_kind, d, row, col, 0);
+			bounce((short)wand->which_kind, d, row, col, 0);
 		} else {
 			monster = get_zapped_monster(d, &row, &col);
 			if (wand->which_kind == DRAIN_LIFE) {
@@ -109,13 +114,11 @@ zapp()
 			}
 		}
 	}
-	(void) reg_move();
+	(void)reg_move();
 }
 
-object *
-get_zapped_monster(dir, row, col)
-	short dir;
-	short *row, *col;
+static object *
+get_zapped_monster(short dir, short *row, short *col)
 {
 	short orow, ocol;
 
@@ -135,10 +138,8 @@ get_zapped_monster(dir, row, col)
 	}
 }
 
-void
-zap_monster(monster, kind)
-	object *monster;
-	unsigned short kind;
+static void
+zap_monster(object *monster, unsigned short kind)
 {
 	short row, col;
 	object *nm;
@@ -175,7 +176,7 @@ zap_monster(monster, kind)
 		}
 		nm = monster->next_monster;
 		tc = monster->trail_char;
-		(void) gr_monster(monster, get_rand(0, MONSTERS-1));
+		(void)gr_monster(monster, get_rand(0, MONSTERS-1));
 		monster->row = row;
 		monster->col = col;
 		monster->next_monster = nm;
@@ -203,9 +204,8 @@ zap_monster(monster, kind)
 	}
 }
 
-void
-tele_away(monster)
-	object *monster;
+static void
+tele_away(object *monster)
 {
 	short row, col;
 
@@ -224,7 +224,7 @@ tele_away(monster)
 }
 
 void
-wizardize()
+wizardize(void)
 {
 	char buf[100];
 
@@ -234,7 +234,7 @@ wizardize()
 	} else {
 		if (get_input_line("wizard's password:", "", buf, sizeof(buf),
 				"", 0, 0)) {
-			(void) xxx(1);
+			(void)xxx(1);
 			xxxx(buf, strlen(buf));
 			if (!strncmp(buf, "\247\104\126\272\115\243\027", 7)) {
 				wizard = 1;
@@ -247,9 +247,8 @@ wizardize()
 	}
 }
 
-void
-wdrain_life(monster)
-	object *monster;
+static void
+wdrain_life(object *monster)
 {
 	short hp;
 	object *lmon, *nm;
@@ -263,14 +262,14 @@ wdrain_life(monster)
 			nm = lmon->next_monster;
 			if (get_room_number(lmon->row, lmon->col) == cur_room) {
 				wake_up(lmon);
-				(void) mon_damage(lmon, hp);
+				(void)mon_damage(lmon, hp);
 			}
 			lmon = nm;
 		}
 	} else {
 		if (monster) {
 			wake_up(monster);
-			(void) mon_damage(monster, hp);
+			(void)mon_damage(monster, hp);
 		}
 	}
 	print_stats(STAT_HP);
@@ -278,8 +277,7 @@ wdrain_life(monster)
 }
 
 void
-bounce(ball, dir, row, col, r)
-	short ball, dir, row, col, r;
+bounce(short ball, short dir, short row, short col, short r)
 {
 	short orow, ocol;
 	const char *s;
@@ -335,7 +333,7 @@ bounce(ball, dir, row, col, r)
 
 		wake_up(monster);
 		if (rand_percent(33)) {
-			messagef(0, "the %s misses the %s", s, 
+			messagef(0, "the %s misses the %s", s,
 				mon_name(monster));
 			goto ND;
 		}
@@ -353,7 +351,7 @@ bounce(ball, dir, row, col, r)
 			}
 			messagef(0, "the %s hits the %s", s,
 				mon_name(monster));
-			(void) mon_damage(monster, damage);
+			(void)mon_damage(monster, damage);
 		} else {
 			damage = -1;
 			if (!(monster->m_flags & FREEZES)) {
@@ -368,9 +366,9 @@ bounce(ball, dir, row, col, r)
 				damage = -2;
 			}
 			if (damage != -1) {
-				messagef(0, "the %s hits the %s", s, 
+				messagef(0, "the %s hits the %s", s,
 					mon_name(monster));
-				(void) mon_damage(monster, damage);
+				(void)mon_damage(monster, damage);
 			}
 		}
 	} else if ((row == rogue.row) && (col == rogue.col)) {
@@ -383,7 +381,7 @@ bounce(ball, dir, row, col, r)
 				damage = (damage * 3) / 2;
 				damage -= get_armor_class(rogue.armor);
 			}
-			rogue_damage(damage, (object *) 0,
+			rogue_damage(damage, NULL,
 					((ball == FIRE) ? KFIRE : HYPOTHERMIA));
 			messagef(0, "the %s hits", s);
 		}

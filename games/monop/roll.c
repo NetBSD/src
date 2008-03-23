@@ -1,4 +1,4 @@
-/*	$NetBSD: roll.c,v 1.9 2003/08/07 09:37:29 agc Exp $	*/
+/*	roll.c,v 1.9 2003/08/07 09:37:29 agc Exp	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,47 +34,26 @@
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: roll.c,v 1.9 2003/08/07 09:37:29 agc Exp $");
+__RCSID("roll.c,v 1.9 2003/08/07 09:37:29 agc Exp");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
 #include <stdlib.h>
+
+#include "monop.h"
 
 /*
  *	This routine rolls ndie nside-sided dice.
  */
-
-#if defined(pdp11)
-#define	MAXRAND	32767L
 
 int
 roll(ndie, nsides)
 	int ndie, nsides;
 {
 	long tot;
-	unsigned n, r;
 
-	tot = 0;
-	n = ndie;
-	while (n--)
-		tot += rand();
-	return (int) ((tot * (long) nsides) / ((long) MAXRAND + 1)) + ndie;
-}
-
-#else
-
-int
-roll(ndie, nsides)
-	int ndie, nsides;
-{
-	int tot, r;
-	double num_sides;
-
-	num_sides = nsides;
 	tot = 0;
 	while (ndie--)
-		tot += (r = rand()) * (num_sides / RAND_MAX) + 1;
-	return tot;
+		tot += (random() % nsides) + 1;
+	return (int)tot;
 }
-#endif

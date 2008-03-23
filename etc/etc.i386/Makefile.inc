@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.51.4.1 2008/01/09 01:29:52 matt Exp $
+#	Makefile.inc,v 1.51.4.1 2008/01/09 01:29:52 matt Exp
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -12,6 +12,7 @@ KERNEL_SETS+=	XEN2_DOM0
 KERNEL_SETS+=	XEN2_DOMU
 KERNEL_SETS+=	XEN3_DOM0
 KERNEL_SETS+=	XEN3_DOMU
+KERNEL_SETS+=	XEN3PAE_DOMU
 # KERNEL_SETS+=	GENERIC_TINY
 # KERNEL_SETS+=	GENERIC_PS2TINY
 
@@ -20,6 +21,7 @@ BUILD_KERNELS+=	INSTALL_LARGE
 BUILD_KERNELS+=	INSTALL
 BUILD_KERNELS+=	INSTALL_XEN2_DOMU
 BUILD_KERNELS+=	INSTALL_XEN3_DOMU
+BUILD_KERNELS+=	INSTALL_XEN3PAE_DOMU
 # BUILD_KERNELS+=	INSTALL_SMALL
 # BUILD_KERNELS+=	INSTALL_TINY
 # BUILD_KERNELS+=	INSTALL_PS2
@@ -33,6 +35,6 @@ snap_md_post:
 	cd ${KERNSRCDIR}/arch/i386/stand/dosboot && ${MAKE} release
 	cd ${KERNSRCDIR}/arch/i386/stand/pxeboot && ${MAKE} release
 	cd ${KERNSRCDIR}/arch/i386/stand/misc && ${MAKE} release
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/floppy '*.fs'
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*.*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*.fs'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.*'

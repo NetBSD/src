@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.7 2001/02/05 00:57:33 christos Exp $	*/
+/*	global.c,v 1.7 2001/02/05 00:57:33 christos Exp	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -11,19 +11,17 @@
  * losemhp(x)		subroutine to remove max # hit points from the player
  * raisehp(x) 		subroutine to gain hit points
  * raisemhp(x)		subroutine to gain maximum hit points
- * losespells(x)	subroutine to lose spells
  * losemspells(x)	subroutine to lose maximum spells
- * raisespells(x)	subroutine to gain spells
  * raisemspells(x)	subroutine to gain maximum spells
- * recalc()		function to recalculate the armor class of the player
  * makemonst(lev)	function to return monster number for a randomly
  *			selected monster
  * positionplayer()	function to be sure player is not in a wall
+ * recalc()		function to recalculate the armor class of the player
  * quit()		subroutine to ask if the player really wants to quit
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.7 2001/02/05 00:57:33 christos Exp $");
+__RCSID("global.c,v 1.7 2001/02/05 00:57:33 christos Exp");
 #endif /* not lint */
 
 #include <string.h>
@@ -31,16 +29,12 @@ __RCSID("$NetBSD: global.c,v 1.7 2001/02/05 00:57:33 christos Exp $");
 #include "header.h"
 #include "extern.h"
 extern int      score[], dropflag;
-extern int      random;		/* the random number seed		*/
 extern char     *what[], *who[];
 extern char     winner[];
 extern char     sciv[SCORESIZE + 1][26][2];
 extern char    *password;
 
 /*
-	***********
-	RAISE LEVEL
-	***********
 	raiselevel()
 
 	subroutine to raise the player one level
@@ -55,9 +49,6 @@ raiselevel()
 }
 
 /*
-	***********
-	LOOSE LEVEL
-	***********
     loselevel()
 
 	subroutine to lower the players character level by one
@@ -70,9 +61,6 @@ loselevel()
 }
 
 /*
-	****************
-	RAISE EXPERIENCE
-	****************
 	raiseexperience(x)
 
 	subroutine to increase experience points
@@ -95,15 +83,12 @@ raiseexperience(x)
 	if (c[LEVEL] != i) {
 		cursors();
 		beep();
-		lprintf("\nWelcome to level %d", (long) c[LEVEL]);	/* if we changed levels	 */
+		lprintf("\nWelcome to level %ld", (long) c[LEVEL]);	/* if we changed levels	 */
 	}
 	bottomline();
 }
 
 /*
-	****************
-	LOOSE EXPERIENCE
-	****************
 	loseexperience(x)
 
 	subroutine to lose experience points
@@ -129,15 +114,12 @@ loseexperience(x)
 	if (i != c[LEVEL]) {
 		cursors();
 		beep();
-		lprintf("\nYou went down to level %d!", (long) c[LEVEL]);
+		lprintf("\nYou went down to level %ld!", (long) c[LEVEL]);
 	}
 	bottomline();
 }
 
 /*
-	********
-	LOOSE HP
-	********
 	losehp(x)
 	losemhp(x)
 
@@ -169,9 +151,6 @@ losemhp(x)
 }
 
 /*
-	********
-	RAISE HP
-	********
 	raisehp(x)
 	raisemhp(x)
 
@@ -194,22 +173,10 @@ raisemhp(x)
 }
 
 /*
-	************
-	RAISE SPELLS
-	************
-	raisespells(x)
 	raisemspells(x)
 
 	subroutine to gain maximum spells
  */
-void
-raisespells(x)
-	int    x;
-{
-	if ((c[SPELLS] += x) > c[SPELLMAX])
-		c[SPELLS] = c[SPELLMAX];
-}
-
 void
 raisemspells(x)
 	int    x;
@@ -219,22 +186,10 @@ raisemspells(x)
 }
 
 /*
-	************
-	LOOSE SPELLS
-	************
-	losespells(x)
 	losemspells(x)
 
 	subroutine to lose maximum spells
  */
-void
-losespells(x)
-	int    x;
-{
-	if ((c[SPELLS] -= x) < 0)
-		c[SPELLS] = 0;
-}
-
 void
 losemspells(x)
 	int    x;
@@ -433,7 +388,7 @@ quit()
 	strcpy(lastmonst, "");
 	lprcat("\n\nDo you really want to quit?");
 	while (1) {
-		i = lgetchar();
+		i = ttgetch();
 		if (i == 'y') {
 			died(300);
 			return;
@@ -464,7 +419,7 @@ more()
 	lprcat("\n  --- press ");
 	standout("space");
 	lprcat(" to continue --- ");
-	while (lgetchar() != ' ');
+	while (ttgetch() != ' ');
 }
 
 /*
@@ -472,8 +427,7 @@ more()
 	returns 0 if success, 1 if a failure
  */
 int
-take(itm, arg)
-	int             itm, arg;
+take(int theitem, int arg)
 {
 	int    i, limit;
 	/* cursors(); */
@@ -481,10 +435,10 @@ take(itm, arg)
 		limit = 26;
 	for (i = 0; i < limit; i++)
 		if (iven[i] == 0) {
-			iven[i] = itm;
+			iven[i] = theitem;
 			ivenarg[i] = arg;
 			limit = 0;
-			switch (itm) {
+			switch (theitem) {
 			case OPROTRING:
 			case ODAMRING:
 			case OBELT:
@@ -545,12 +499,12 @@ int
 drop_object(k)
 	int             k;
 {
-	int             itm;
+	int             theitem;
 	if ((k < 0) || (k > 25))
 		return (0);
-	itm = iven[k];
+	theitem = iven[k];
 	cursors();
-	if (itm == 0) {
+	if (theitem == 0) {
 		lprintf("\nYou don't have item %c! ", k + 'a');
 		return (1);
 	}
@@ -561,7 +515,7 @@ drop_object(k)
 	}
 	if (playery == MAXY - 1 && playerx == 33)
 		return (1);	/* not in entrance */
-	item[playerx][playery] = itm;
+	item[playerx][playery] = theitem;
 	iarg[playerx][playery] = ivenarg[k];
 	srcount = 0;
 	lprcat("\n  You drop:");
@@ -574,7 +528,7 @@ drop_object(k)
 		c[WEAR] = -1;
 	if (c[SHIELD] == k)
 		c[SHIELD] = -1;
-	adjustcvalues(itm, ivenarg[k]);
+	adjustcvalues(theitem, ivenarg[k]);
 	dropflag = 1;		/* say dropped an item so wont ask to pick it
 				 * up right away */
 	return (0);
@@ -742,12 +696,11 @@ creategem()
 	that affects these characteristics
  */
 void
-adjustcvalues(itm, arg)
-	int             itm, arg;
+adjustcvalues(int theitem, int arg)
 {
 	int    flag;
 	flag = 0;
-	switch (itm) {
+	switch (theitem) {
 	case ODEXRING:
 		c[DEXTERITY] -= arg + 1;
 		flag = 1;
@@ -797,31 +750,6 @@ adjustcvalues(itm, arg)
 }
 
 /*
-	function to read a string from token input "string"
-	returns a pointer to the string
- */
-void
-gettokstr(str)
-	char  *str;
-{
-	int    i, j;
-	i = 50;
-	while ((lgetchar() != '"') && (--i > 0));
-	i = 36;
-	while (--i > 0) {
-		if ((j = lgetchar()) != '"')
-			*str++ = j;
-		else
-			i = 0;
-	}
-	*str = 0;
-	i = 50;
-	if (j != '"')
-		/* if end due to too long, then find closing quote */
-		while ((lgetchar() != '"') && (--i > 0));
-}
-
-/*
 	function to ask user for a password (no echo)
 	returns 1 if entered correctly, 0 if not
  */
@@ -837,7 +765,7 @@ getpassword()
 	lflush();
 	i = strlen(password);
 	for (j = 0; j < i; j++)
-		read(0, gpwp++, 1);
+		*gpwp++ = ttgetch();
 	gpwbuf[i] = 0;
 	sncbr();		/* system("stty echo -cbreak"); */
 	if (strcmp(gpwbuf, password) != 0) {
@@ -858,7 +786,7 @@ getyn()
 	int    i;
 	i = 0;
 	while (i != 'y' && i != 'n' && i != '\33')
-		i = lgetchar();
+		i = ttgetch();
 	return (i);
 }
 

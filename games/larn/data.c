@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.11 2007/04/22 02:09:02 mouse Exp $	 */
+/*	data.c,v 1.11 2007/04/22 02:09:02 mouse Exp	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)data.c	5.3 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: data.c,v 1.11 2007/04/22 02:09:02 mouse Exp $");
+__RCSID("data.c,v 1.11 2007/04/22 02:09:02 mouse Exp");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char     aa6[] = "    major deity    ";
 static char     aa7[] = "  novice guardian  ";
 static char     aa8[] = "apprentice guardian";
 static char     aa9[] = "    The Creator    ";
-u_char           *class[] =
+const char   *class[] =
 {
 	"  novice explorer  ", "apprentice explorer", " practiced explorer",	/* -3 */
 	"   expert explorer ", "  novice adventurer", "     adventurer    ",	/* -6 */
@@ -173,12 +173,12 @@ int             enable_scroll = 0;	/* constant for enabled/disabled
 char            aborted[] = " aborted";
 struct sphere  *spheres = 0;	/* pointer to linked list for spheres of
 				 * annihilation */
-char           *levelname[] =
+const char     *levelname[] =
 {" H", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9", "10", "V1", "V2", "V3"};
 
 char            objnamelist[] = " ATOP%^F&^+M=%^$$f*OD#~][[)))(((||||||||{?!BC}o:@.<<<<EVV))([[]]](^ [H*** ^^ S tsTLc............................................";
 char            monstnamelist[] = " BGHJKOScjtAELNQRZabhiCTYdegmvzFWflorXV pqsyUkMwDDPxnDDuD        ...............................................................";
-char           *objectname[] =
+const char     *objectname[] =
 {0, "a holy altar", "a handsome jewel encrusted throne", "the orb", "a pit",
 	"a staircase leading upwards", "an elevator going up", "a bubbling fountain",
 	"a great marble statue", "a teleport trap", "the college of Larn",
@@ -333,10 +333,10 @@ struct monst    monster[] = {
 
 /* name array for scrolls		 */
 
-char           *scrollname[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "",
+const char     *scrollname[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "",
 "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
 
-char           *scrollhide[] = {
+const char     *scrollhide[] = {
 	" enchant armor",
 	" enchant weapon",
 	" enlightenment",
@@ -367,12 +367,12 @@ char           *scrollhide[] = {
 	"  "
 };
 
-char           *potionname[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "",
+const char     *potionname[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "",
 	"", "", "", "", "", "", "", "", "", "", "", "", "", "",
 "", "", "", "", "", "", ""};
 
 /* name array for magic potions	 */
-char           *potionhide[] = {
+const char     *potionhide[] = {
 	" sleep",
 	" healing",
 	" raise level",
@@ -418,7 +418,7 @@ char           *potionhide[] = {
 u_char          spelknow[SPNUM] = {0};
 u_char          splev[] = {1, 4, 9, 14, 18, 22, 26, 29, 32, 35, 37, 37, 37, 37, 37};
 
-char           *spelcode[] = {
+const char     *spelcode[] = {
 	"pro", "mle", "dex", "sle", "chm", "ssp",
 	"web", "str", "enl", "hel", "cbl", "cre", "pha", "inv",
 	"bal", "cld", "ply", "can", "has", "ckl", "vpr",
@@ -427,7 +427,7 @@ char           *spelcode[] = {
 	"sph", "gen", "sum", "wtw", "alt", "per"
 };
 
-char           *spelname[] = {
+const char     *spelname[] = {
 	"protection", "magic missile", "dexterity",
 	"sleep", "charm monster", "sonic spear",
 
@@ -450,7 +450,7 @@ char           *spelname[] = {
 	""
 };
 
-char           *speldescript[] = {
+const char     *speldescript[] = {
 	/* 1 */
 	"generates a +2 protection field",
 	"creates and hurls a magic missile equivalent to a +1 magic arrow",
@@ -604,7 +604,7 @@ char            spelweird[MAXMONST + 8][SPNUM] = {
 
 };
 
-char           *spelmes[] = {"",
+const char     *spelmes[] = {"",
 	 /* 1 */ "the web had no effect on the %s",
 	 /* 2 */ "the %s changed shape to avoid the web",
 	 /* 3 */ "the %s isn't afraid of you",
@@ -621,56 +621,6 @@ char           *spelmes[] = {"",
 	 /* 14 */ "the %s sees through your illusions",
 	 /* 15 */ "the %s loves the cold!",
 	 /* 16 */ "the %s loves the water!"
-};
-
-u_char          to_lower[] =	/* tolower[character] = lower case converted
-				 * character */
-{
-	0000, 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017,	/* NUL-SI */
-	0020, 0021, 0022, 0023, 0024, 0025, 0026, 0027, 0030, 0031, 0032, 0033, 0034, 0035, 0036, 0037,	/* DLE-US */
-	0040, 0041, 0042, 0043, 0044, 0045, 0046, 0047, 0050, 0051, 0052, 0053, 0054, 0055, 0056, 0057,	/* SP-/ */
-	0060, 0061, 0062, 0063, 0064, 0065, 0066, 0067, 0070, 0071, 0072, 0073, 0074, 0075, 0076, 0077,	/* 0-? */
-	0100, 0141, 0142, 0143, 0144, 0145, 0146, 0147, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157,	/* @-O */
-	0160, 0161, 0162, 0163, 0164, 0165, 0166, 0167, 0170, 0171, 0172, 0133, 0134, 0135, 0136, 0137,	/* P-_ */
-	0140, 0141, 0142, 0143, 0144, 0145, 0146, 0147, 0150, 0151, 0152, 0153, 0154, 0155, 0156, 0157,	/* `-o */
-	0160, 0161, 0162, 0163, 0164, 0165, 0166, 0167, 0170, 0171, 0172, 0173, 0174, 0175, 0176, 0177,	/* p-DEL */
-};
-
-u_char          to_upper[] =	/* toupper[character] = upper case converted
-				 * character */
-{
-	0000, 0001, 0002, 0003, 0004, 0005, 0006, 0007, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017,	/* NUL-SI */
-	0020, 0021, 0022, 0023, 0024, 0025, 0026, 0027, 0030, 0031, 0032, 0033, 0034, 0035, 0036, 0037,	/* DLE-US */
-	0040, 0041, 0042, 0043, 0044, 0045, 0046, 0047, 0050, 0051, 0052, 0053, 0054, 0055, 0056, 0057,	/* SP-/ */
-	0060, 0061, 0062, 0063, 0064, 0065, 0066, 0067, 0070, 0071, 0072, 0073, 0074, 0075, 0076, 0077,	/* 0-? */
-	0100, 0101, 0102, 0103, 0104, 0105, 0106, 0107, 0110, 0111, 0112, 0113, 0114, 0115, 0116, 0117,	/* @-O */
-	0120, 0121, 0122, 0123, 0124, 0125, 0126, 0127, 0130, 0131, 0132, 0133, 0134, 0135, 0136, 0137,	/* P-_ */
-	0140, 0101, 0102, 0103, 0104, 0105, 0106, 0107, 0110, 0111, 0112, 0113, 0114, 0115, 0116, 0117,	/* `-o */
-	0120, 0121, 0122, 0123, 0124, 0125, 0126, 0127, 0130, 0131, 0132, 0173, 0174, 0175, 0176, 0177,	/* p-DEL */
-};
-
-u_char          is_digit[] =	/* isdigit[character] = TRUE || FALSE */
-{
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* NUL-SI */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* DLE-US */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* SP-/ */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,	/* 0-? */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* @-O */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* P-_ */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* `-o */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* p-DEL */
-};
-
-u_char          is_alpha[] =	/* isalpha[character] = TRUE || FALSE */
-{
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* NUL-SI */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* DLE-US */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* SP-/ */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* 0-? */
-	0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,	/* @-O */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,	/* P-_ */
-	0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,	/* `-o */
-	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,	/* p-DEL */
 };
 
 /*

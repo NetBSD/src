@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.wizard.c,v 1.6 2003/04/02 18:36:41 jsm Exp $	*/
+/*	hack.wizard.c,v 1.6 2003/04/02 18:36:41 jsm Exp	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.wizard.c,v 1.6 2003/04/02 18:36:41 jsm Exp $");
+__RCSID("hack.wizard.c,v 1.6 2003/04/02 18:36:41 jsm Exp");
 #endif				/* not lint */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
@@ -141,7 +141,9 @@ hithim:
 		 * on level 26 again.
 		 */
 		if (hitu(mtmp, d(mtmp->data->damn, mtmp->data->damd))
-		    && !rn2(20) && stealamulet(mtmp));
+		    && !rn2(20) && stealamulet(mtmp)) {
+			/* nothing */
+		}
 	} else
 		inrange(mtmp);	/* try magic */
 	return (0);

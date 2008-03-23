@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.8.10.1 2008/01/09 01:30:57 matt Exp $	*/
+/*	move.c,v 1.8.10.1 2008/01/09 01:30:57 matt Exp	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.8.10.1 2008/01/09 01:30:57 matt Exp $");
+__RCSID("move.c,v 1.8.10.1 2008/01/09 01:30:57 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,7 @@ boolean jump = 0;
 const char *you_can_move_again = "you can move again";
 
 int
-one_move_rogue(dirch, pickup)
-	short dirch, pickup;
+one_move_rogue(short dirch, short pickup)
 {
 	short row, col;
 	object *obj;
@@ -74,7 +73,7 @@ one_move_rogue(dirch, pickup)
 	if (confused) {
 		dirch = gr_dir();
 	}
-	(void) is_direction(dirch, &d);
+	(void)is_direction(dirch, &d);
 	get_dir_rc(d, &row, &col, 1);
 
 	if (!can_move(rogue.row, rogue.col, row, col)) {
@@ -86,7 +85,7 @@ one_move_rogue(dirch, pickup)
 				messagef(1, "you are being held");
 			} else {
 				messagef(0, "you are still stuck in the bear trap");
-				(void) reg_move();
+				(void)reg_move();
 			}
 			return(MOVE_FAILED);
 		}
@@ -99,7 +98,7 @@ one_move_rogue(dirch, pickup)
 	}
 	if (dungeon[row][col] & MONSTER) {
 		rogue_hit(object_at(&level_monsters, row, col), 0);
-		(void) reg_move();
+		(void)reg_move();
 		return(MOVE_FAILED);
 	}
 	if (dungeon[row][col] & DOOR) {
@@ -155,14 +154,14 @@ MOVE_ON:
 		}
 		messagef(1, "%s(%c)", desc, obj->ichar);
 NOT_IN_PACK:
-		(void) reg_move();
+		(void)reg_move();
 		return(STOPPED_ON_SOMETHING);
 	}
 	if (dungeon[row][col] & (DOOR | STAIRS | TRAP)) {
 		if ((!levitate) && (dungeon[row][col] & TRAP)) {
 			trap_player(row, col);
 		}
-		(void) reg_move();
+		(void)reg_move();
 		return(STOPPED_ON_SOMETHING);
 	}
 MVED:	if (reg_move()) {			/* fainted from hunger */
@@ -172,8 +171,7 @@ MVED:	if (reg_move()) {			/* fainted from hunger */
 }
 
 void
-multiple_move_rogue(dirch)
-	short dirch;
+multiple_move_rogue(short dirch)
 {
 	short row, col;
 	short m;
@@ -209,7 +207,8 @@ multiple_move_rogue(dirch)
 	case 'Y':
 	case 'U':
 	case 'N':
-		while ((!interrupted) && (one_move_rogue((dirch + 32), 1) == MOVED)) ;
+		while ((!interrupted) && (one_move_rogue((dirch + 32), 1) == MOVED))
+			;
 
 		if (	(!interrupted) && passgo &&
 				(dungeon[rogue.row][rogue.col] & TUNNEL)) {
@@ -220,8 +219,7 @@ multiple_move_rogue(dirch)
 }
 
 boolean
-is_passable(row, col)
-	int row, col;
+is_passable(int row, int col)
 {
 	if ((row < MIN_ROW) || (row > (DROWS - 2)) || (col < 0) ||
 		(col > (DCOLS-1))) {
@@ -234,8 +232,7 @@ is_passable(row, col)
 }
 
 boolean
-next_to_something(drow, dcol)
-	int drow, dcol;
+next_to_something(int drow, int dcol)
 {
 	short i, j, i_end, j_end, row, col;
 	short pass_count = 0;
@@ -296,8 +293,7 @@ next_to_something(drow, dcol)
 }
 
 boolean
-can_move(row1, col1, row2, col2) 
-	int row1, col1, row2, col2;
+can_move(int row1, int col1, int row2, int col2)
 {
 	if (!is_passable(row2, col2)) {
 		return(0);
@@ -314,7 +310,7 @@ can_move(row1, col1, row2, col2)
 }
 
 void
-move_onto()
+move_onto(void)
 {
 	short ch, d;
 	boolean first_miss = 1;
@@ -328,14 +324,12 @@ move_onto()
 	}
 	check_message();
 	if (ch != CANCEL) {
-		(void) one_move_rogue(ch, 0);
+		(void)one_move_rogue(ch, 0);
 	}
 }
 
 boolean
-is_direction(c, d)
-	short c;
-	short *d;
+is_direction(short c, short *d)
 {
 	switch(c) {
 	case 'h':
@@ -371,25 +365,24 @@ is_direction(c, d)
 }
 
 boolean
-check_hunger(msg_only)
-	boolean msg_only;
+check_hunger(boolean msg_only)
 {
 	short i, n;
 	boolean fainted = 0;
 
 	if (rogue.moves_left == HUNGRY) {
-		(void) strlcpy(hunger_str, "hungry", sizeof(hunger_str));
+		(void)strlcpy(hunger_str, "hungry", sizeof(hunger_str));
 		messagef(0, "%s", hunger_str);
 		print_stats(STAT_HUNGER);
 	}
 	if (rogue.moves_left == WEAK) {
-		(void) strlcpy(hunger_str, "weak", sizeof(hunger_str));
+		(void)strlcpy(hunger_str, "weak", sizeof(hunger_str));
 		messagef(1, "%s", hunger_str);
 		print_stats(STAT_HUNGER);
 	}
 	if (rogue.moves_left <= FAINT) {
 		if (rogue.moves_left == FAINT) {
-			(void) strlcpy(hunger_str, "faint", sizeof(hunger_str));
+			(void)strlcpy(hunger_str, "faint", sizeof(hunger_str));
 			messagef(1, "%s", hunger_str);
 			print_stats(STAT_HUNGER);
 		}
@@ -412,7 +405,7 @@ check_hunger(msg_only)
 		return(fainted);
 	}
 	if (rogue.moves_left <= STARVE) {
-		killed_by((object *) 0, STARVATION);
+		killed_by(NULL, STARVATION);
 	}
 
 	switch(e_rings) {
@@ -427,12 +420,12 @@ check_hunger(msg_only)
 		break;
 	case 1:
 		rogue.moves_left--;
-		(void) check_hunger(1);
+		(void)check_hunger(1);
 		rogue.moves_left -= (rogue.moves_left % 2);
 		break;
 	case 2:
 		rogue.moves_left--;
-		(void) check_hunger(1);
+		(void)check_hunger(1);
 		rogue.moves_left--;
 		break;
 	}
@@ -440,7 +433,7 @@ check_hunger(msg_only)
 }
 
 boolean
-reg_move()
+reg_move(void)
 {
 	boolean fainted;
 
@@ -497,8 +490,7 @@ reg_move()
 }
 
 void
-rest(count)
-	int count;
+rest(int count)
 {
 	int i;
 
@@ -508,12 +500,12 @@ rest(count)
 		if (interrupted) {
 			break;
 		}
-		(void) reg_move();
+		(void)reg_move();
 	}
 }
 
 char
-gr_dir()
+gr_dir(void)
 {
 	short d;
 
@@ -549,7 +541,7 @@ gr_dir()
 }
 
 void
-heal()
+heal(void)
 {
 	static short heal_exp = -1, n, c = 0;
 	static boolean alt;
@@ -614,8 +606,7 @@ heal()
 }
 
 boolean
-can_turn(nrow, ncol)
-	short nrow, ncol;
+can_turn(short nrow, short ncol)
 {
 	if ((dungeon[nrow][ncol] & TUNNEL) && is_passable(nrow, ncol)) {
 		return(1);
@@ -624,9 +615,7 @@ can_turn(nrow, ncol)
 }
 
 void
-turn_passage(dir, fast)
-	short dir;
-	boolean fast;
+turn_passage(short dir, boolean fast)
 {
 	short crow = rogue.row, ccol = rogue.col, turns = 0;
 	short ndir = 0;

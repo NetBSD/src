@@ -1,4 +1,4 @@
-/*	$NetBSD: throw.c,v 1.7.10.1 2008/01/09 01:30:59 matt Exp $	*/
+/*	throw.c,v 1.7.10.1 2008/01/09 01:30:59 matt Exp	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: throw.c,v 1.7.10.1 2008/01/09 01:30:59 matt Exp $");
+__RCSID("throw.c,v 1.7.10.1 2008/01/09 01:30:59 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: throw.c,v 1.7.10.1 2008/01/09 01:30:59 matt Exp $");
 #include "rogue.h"
 
 void
-throw()
+throw(void)
 {
 	short wch, d;
 	boolean first_miss = 1;
@@ -120,8 +120,7 @@ throw()
 }
 
 boolean
-throw_at_monster(monster, weapon)
-	object *monster, *weapon;
+throw_at_monster(object *monster, object *weapon)
 {
 	short damage, hit_chance;
 	short t;
@@ -146,20 +145,17 @@ throw_at_monster(monster, weapon)
 	weapon->quantity = t;
 
 	if (!rand_percent(hit_chance)) {
-		(void) strlcat(hit_message, "misses  ", HIT_MESSAGE_SIZE);
+		(void)strlcat(hit_message, "misses  ", HIT_MESSAGE_SIZE);
 		return(0);
 	}
 	s_con_mon(monster);
-	(void) strlcat(hit_message, "hit  ", HIT_MESSAGE_SIZE);
-	(void) mon_damage(monster, damage);
+	(void)strlcat(hit_message, "hit  ", HIT_MESSAGE_SIZE);
+	(void)mon_damage(monster, damage);
 	return(1);
 }
 
 object *
-get_thrown_at_monster(obj, dir, row, col)
-	object *obj;
-	short dir;
-	short *row, *col;
+get_thrown_at_monster(object *obj, short dir, short *row, short *col)
 {
 	short orow, ocol;
 	short i, ch;
@@ -201,9 +197,7 @@ get_thrown_at_monster(obj, dir, row, col)
 }
 
 void
-flop_weapon(weapon, row, col)
-	object *weapon;
-	short row, col;
+flop_weapon(object *weapon, short row, short col)
 {
 	object *new_weapon, *monster;
 	short i = 0;
@@ -263,8 +257,7 @@ flop_weapon(weapon, row, col)
 }
 
 void
-rand_around(i, r, c)
-	short i, *r, *c;
+rand_around(short i, short *r, short *c)
 {
 	static char pos[] = "\010\007\001\003\004\005\002\006\0";
 	static short row, col;

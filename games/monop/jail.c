@@ -1,4 +1,4 @@
-/*	$NetBSD: jail.c,v 1.6 2003/08/07 09:37:28 agc Exp $	*/
+/*	jail.c,v 1.6 2003/08/07 09:37:28 agc Exp	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)jail.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: jail.c,v 1.6 2003/08/07 09:37:28 agc Exp $");
+__RCSID("jail.c,v 1.6 2003/08/07 09:37:28 agc Exp");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 /*
  *	This routine uses a get-out-of-jail-free card to get the
@@ -58,21 +58,6 @@ card()
 	ret_card(cur_p);
 	cur_p->loc = 10;			/* just visiting	*/
 	cur_p->in_jail = 0;
-}
-
-/*
- *	This routine returns the players get-out-of-jail-free card
- * to a deck.
- */
-void
-ret_card(plr)
-	PLAY *plr;
-{
-	plr->num_gojf--;
-	if (CC_D.gojf_used)
-		CC_D.gojf_used = FALSE;
-	else
-		CH_D.gojf_used = FALSE;
 }
 
 /*
@@ -112,8 +97,7 @@ moveit:
 			return TRUE;
 		}
 		return FALSE;
-	}
-	else {
+	} else {
 		printf("Double roll gets you out.\n");
 		goto moveit;
 	}

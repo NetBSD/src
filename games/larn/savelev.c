@@ -1,9 +1,9 @@
-/*	$NetBSD: savelev.c,v 1.4 1997/10/18 20:03:45 christos Exp $	*/
+/*	savelev.c,v 1.4 1997/10/18 20:03:45 christos Exp	*/
 
 /* savelev.c		 Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: savelev.c,v 1.4 1997/10/18 20:03:45 christos Exp $");
+__RCSID("savelev.c,v 1.4 1997/10/18 20:03:45 christos Exp");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
@@ -15,7 +15,7 @@ void
 savelevel()
 {
 	struct cel *pcel;
-	char  *pitem, *pknow, *pmitem;
+	u_char  *pitem, *pknow, *pmitem;
 	short *phitp, *piarg;
 	struct cel *pecel;
 	pcel = &cell[level * MAXX * MAXY];	/* pointer to this level's
@@ -32,7 +32,8 @@ savelevel()
 		pcel->hitp = *phitp++;
 		pcel->item = *pitem++;
 		pcel->know = *pknow++;
-		pcel++->iarg = *piarg++;
+		pcel->iarg = *piarg++;
+		pcel++;
 	}
 }
 
@@ -43,7 +44,7 @@ void
 getlevel()
 {
 	struct cel *pcel;
-	char  *pitem, *pknow, *pmitem;
+	u_char  *pitem, *pknow, *pmitem;
 	short *phitp, *piarg;
 	struct cel *pecel;
 	pcel = &cell[level * MAXX * MAXY];	/* pointer to this level's
@@ -60,6 +61,7 @@ getlevel()
 		*phitp++ = pcel->hitp;
 		*pitem++ = pcel->item;
 		*pknow++ = pcel->know;
-		*piarg++ = pcel++->iarg;
+		*piarg++ = pcel->iarg;
+		pcel++;
 	}
 }

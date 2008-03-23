@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.12 2004/01/27 20:30:30 jsm Exp $	*/
+/*	monop.h,v 1.12 2004/01/27 20:30:30 jsm Exp	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,6 +48,8 @@
 #define	N_SQRS	40	/* number of squares on board		*/
 #define	MAX_PL	9	/* maximum number of players		*/
 #define	MAX_PRP	(N_PROP+N_RR+N_UTIL) /* max # ownable property	*/
+#define	N_HOUSE	32	/* total number of houses available	*/
+#define	N_HOTEL	12	/* total number of hotels available	*/
 
 				/* square type numbers			*/
 #define	PRPTY	0	/* normal property			*/
@@ -65,12 +67,7 @@
 
 #define	lucky(str)	printf("%s%s\n",str,lucky_mes[roll(1,num_luck)-1])
 #define	printline()	printf("------------------------------\n")
-#define	sqnum(sqp)	(sqp - board)
-#define	swap(A1,A2)	if ((A1) != (A2)) { \
-					(A1) ^= (A2); \
-					(A2) ^= (A1); \
-					(A1) ^= (A2); \
-				}
+#define	sqnum(sqp)	((short)(sqp - board))
 
 struct sqr_st {			/* structure for square			*/
 	const char	*name;		/* place name			*/
@@ -124,7 +121,7 @@ struct plr_st {			/* player description structure		*/
 	short	loc;			/* location on board		*/
 	short	in_jail;		/* count of turns in jail	*/
 	int	money;			/* amount of money		*/
-	OWN	*own_list;		/* start of propery list	*/
+	OWN	*own_list;		/* start of property list	*/
 };
 
 typedef struct plr_st	PLAY;
@@ -132,10 +129,29 @@ typedef struct prp_st	PROP;
 typedef struct prp_st	RR_S;
 typedef struct prp_st	UTIL_S;
 
+extern bool	trading, spec, fixing, told_em;
+
+extern const char	*const yncoms[], *const comlist[], *name_list[], *const lucky_mes[];
+
+extern int	num_play, player, num_doub, num_luck;
+
+extern void (*const func[])(void);
+
+extern MON	mon[N_MON];
+
+extern PLAY	*play, *cur_p;
+
+extern PROP	prop[N_PROP];
+
+extern RR_S	rr[N_RR];
+
+extern SQUARE	board[N_SQRS + 1];
+
+extern UTIL_S	util[2];
+
 
 /* cards.c */
-void init_decks(void);
-void get_card(DECK *);
+void ret_card(PLAY *);
 
 /* execute.c */
 void execute(int);
@@ -154,7 +170,6 @@ void sell_houses(void);
 
 /* jail.c */
 void card(void);
-void ret_card(PLAY *);
 void pay(void);
 int move_jail(int, int );
 void printturn(void);

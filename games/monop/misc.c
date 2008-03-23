@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2006/03/19 00:03:18 christos Exp $	*/
+/*	misc.c,v 1.14 2006/03/19 00:03:18 christos Exp	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.14 2006/03/19 00:03:18 christos Exp $");
+__RCSID("misc.c,v 1.14 2006/03/19 00:03:18 christos Exp");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
 #include <ctype.h>
+#include <limits.h>
 #include <signal.h>
+#include <errno.h>
+
+#include "monop.h"
 
 /*
  *	This routine executes a truncated set of commands until a
@@ -94,29 +97,25 @@ int
 get_int(prompt)
 	const char *prompt;
 {
-	int num;
+	long num;
 	char *sp;
-	int c;
 	char buf[257];
 
 	for (;;) {
-inter:
-		printf(prompt);
-		num = 0;
-		for (sp = buf; (c=getchar()) != '\n'; *sp++ = c)
-			if (c == -1)	/* check for interrupted system call */
-				goto inter;
-		*sp = c;
-		if (sp == buf)
-			continue;
-		for (sp = buf; isspace((unsigned char)*sp); sp++)
-			continue;
-		for (; isdigit((unsigned char)*sp); sp++)
-			num = num * 10 + *sp - '0';
-		if (*sp == '\n')
-			return num;
-		else
+		printf("%s", prompt);
+		fgets(buf, sizeof(buf), stdin);
+		if (feof(stdin))
+			return 0;
+		sp = strchr(buf, '\n');
+		if (sp)
+			*sp = '\0';
+		errno = 0;
+		num = strtol(buf, &sp, 10);
+		if (errno || strlen(sp) > 0 || num < 0 || num >= INT_MAX) {
 			printf("I can't understand that\n");
+			continue;
+		}
+		return num;
 	}
 }
 
@@ -130,11 +129,11 @@ set_ownlist(pl)
 	int num;		/* general counter		*/
 	MON *orig;		/* remember starting monop ptr	*/
 	OWN *op;		/* current owned prop		*/
-	OWN *orig_op;		/* origianl prop before loop	*/
+	OWN *orig_op;		/* original prop before loop	*/
 
 	op = play[pl].own_list;
 #ifdef DEBUG
-	printf("op [%d] = play[pl [%d] ].own_list;\n", op, pl);
+	printf("op [%p] = play[pl [%d] ].own_list;\n", op, pl);
 #endif
 	while (op) {
 #ifdef DEBUG
@@ -161,7 +160,7 @@ set_ownlist(pl)
 			    op = op->next) {
 #ifdef DEBUG
 				printf("iter: %d\n", num);
-				printf("op = %d, op->sqr = %d, "
+				printf("op = %p, op->sqr = %p, "
 				    "op->sqr->type = %d\n", op, op->sqr,
 				    op->sqr->type);
 #endif
@@ -189,13 +188,13 @@ set_ownlist(pl)
 #endif
 				op = op->next;
 #ifdef DEBUG
-				printf("[%d];\n", op);
+				printf("[%p];\n", op);
 #endif
 			}
 #ifdef DEBUG
-			printf("num = %d\n");
+			printf("num = %d\n", num);
 #endif
-			if (orig == 0) {
+			if (orig == NULL) {
 				printf("panic:  bad monopoly descriptor: "
 				    "orig = %p\n", orig);
 				printf("player # %d\n", pl+1);
@@ -204,7 +203,8 @@ set_ownlist(pl)
 				if (orig_op) {
 					printf("orig_op->sqr->type = %d (PRPTY)\n",
 					    orig_op->sqr->type);
-					printf("orig_op->next = %p\n", op->next);
+					printf("orig_op->next = %p\n",
+					    orig_op->next);
 					printf("orig_op->sqr->desc = %p\n",
 					    orig_op->sqr->desc);
 				}
@@ -217,6 +217,7 @@ set_ownlist(pl)
 					    op->sqr->desc);
 				}
 				printf("num = %d\n", num);
+				exit(1);
 			}
 #ifdef DEBUG
 			printf("orig->num_in = %d\n", orig->num_in);
