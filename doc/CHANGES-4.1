@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.39 2008/03/19 19:28:05 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.40 2008/03/23 10:38:04 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -125,7 +125,7 @@ sys/dev/usb/if_auereg.h				1.19, 1.20 via patch
 	workqueue item.
 	[is, ticket #1048]
 
-src/sys/arch/x86/isa/clock.c 1.23 via patch
+sys/arch/x86/isa/clock.c			1.23 via patch
 	fixes clock accounting problem in i8254_get_timecount that caused
 	the auich auich_calibrate() function to get the wrong ac97 freq
 	(may cause audio to play at wrong speed on some systems).
@@ -565,4 +565,54 @@ bin/mt/mt.1					1.34
 	Clarify that "mt offline" ejects tapes. Also some grammar and
 	formatting fixes. PR bin/37727 from Randolf Richardson.
 	[dholland, ticket #1100]
+
+sys/dev/ic/ahcisata_core.c			1.6
+
+	Move a delay() inside a loop, so that the 1s delay is really 1s.
+	[bouyer, ticket #1082]
+
+sys/arch/xen/include/xenio.h			1.6 via patch
+sys/arch/xen/include/xenio3.h			1.2 via patch
+sys/arch/xen/xen/privcmd.c			1.25 via patch
+
+	Fix IOCTL_PRIVCMD_HYPERCALL issue which shows up with xen-3.1.3.
+	Add a 'retval' member to the privcmd_hypercall_t argument.
+	Handle the old IOCTL_PRIVCMD_HYPERCALL under COMPAT_40.
+	[bouyer, ticket #1083]
+
+sys/arch/xen/i386/xen_machdep.c			1.17-1.18
+
+	Support root= as an alias for bootdev=, for consistency with multiboot
+	support. Suggested by Pavel Cahyna.
+	[bouyer, ticket #1084]
+
+sys/dev/ic/ahcisata_core.c			1.8 via patch
+
+	Add ATAPI support to ahcisata(4). lightly tested with a DVD burner,
+	by mounting a CD and reading from it, and blanking a DVD-RW using
+	cdrecord.
+	[bouyer, ticket #1085]
+
+sys/arch/xen/i386/xen_shm_machdep.c		1.3 via patch
+sys/arch/xen/x86/xenfunc.c			1.4 via patch
+sys/arch/xen/xen/pci_intr_machdep.c		1.4 via patch
+sys/arch/xen/xen/pci_machdep.c			1.12 via patch
+sys/arch/xen/xen/xbdback.c			1.30 via patch
+sys/arch/xen/xen/xbdback_xenbus.c		1.14 via patch
+sys/arch/xen/xen/xen_acpi_machdep.c		1.4 via patch
+sys/arch/xen/xen/xenevt.c			1.20 via patch
+sys/arch/xen/xen/xengnt.c			1.6 via patch
+sys/arch/xen/xen/xennetback.c			1.31 via patch
+
+	Add missing __KERNEL_RCSID()
+	[bouyer, ticket #1086]
+
+distrib/sets/lists/comp/md.i386			1.104 via patch
+sys/arch/i386/Makefile				1.33 via patch
+sys/arch/xen/include/Makefile			1.3 via patch
+usr.bin/kdump/Makefile.ioctl-c			1.20 via patch
+
+	Install xenio.h and xenio3.h in /usr/include/xen, for the benefit
+	of xentools3.
+	[bouyer, ticket #1087]
 
