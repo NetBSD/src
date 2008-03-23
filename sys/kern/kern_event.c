@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.50 2008/03/22 10:24:17 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.51 2008/03/23 22:39:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.50 2008/03/22 10:24:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.51 2008/03/23 22:39:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1079,19 +1079,18 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 
 		while (count != 0) {
 			kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
-			if (kn == marker) {
-				/* it's our marker, stop */
-				TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
-				if (count < maxevents || (tsp != NULL &&
-				    (timeout = gettimeleft(&atv,
-				    &sleeptv)) <= 0))
-					break;
-				goto retry;
-			}
-			if ((kn->kn_status & KN_MARKER) != 0) {
+			while ((kn->kn_status & KN_MARKER) != 0) {
+				if (kn == marker) {
+					/* it's our marker, stop */
+					TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+					if (count < maxevents || (tsp != NULL &&
+					    (timeout = gettimeleft(&atv,
+					    &sleeptv)) <= 0))
+						goto done;
+					goto retry;
+				}
 				/* someone else's marker. */
 				kn = TAILQ_NEXT(kn, kn_tqe);
-				continue;
 			}
 			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 			kq->kq_count--;
@@ -1154,6 +1153,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 			}
 		}
 	}
+ done:
  	mutex_spin_exit(&kq->kq_lock);
 	if (marker != NULL)
 		kmem_free(marker, sizeof(*marker));
