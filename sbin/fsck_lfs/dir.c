@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.21.8.1 2007/11/06 23:12:34 matt Exp $	 */
+/* dir.c,v 1.21.8.1 2007/11/06 23:12:34 matt Exp	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -139,7 +139,7 @@ dirscan(struct inodesc *idesc)
 	struct uvnode *vp;
 
 	if (idesc->id_type != DATA)
-		errexit("wrong type to dirscan %d\n", idesc->id_type);
+		errexit("wrong type to dirscan %d", idesc->id_type);
 	if (idesc->id_entryno == 0 &&
 	    (idesc->id_filesize & (DIRBLKSIZ - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, DIRBLKSIZ);

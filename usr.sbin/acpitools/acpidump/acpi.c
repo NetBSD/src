@@ -1,8 +1,9 @@
-/*	$NetBSD: acpi.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
+/*	acpi.c,v 1.2 2007/01/14 05:33:18 dogcow Exp	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
+ * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +31,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi.c,v 1.4 2001/10/22 17:25:25 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
+__RCSID("acpi.c,v 1.2 2007/01/14 05:33:18 dogcow Exp");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -84,8 +85,9 @@ acpi_print_dsdt_definition(void)
 	(void)strlcpy(oemtblid, (const char *)dsdt_header.oemtblid,
 	    sizeof(oemtblid));
 
-	printf("DefinitionBlock (\"acpi_dsdt.aml\",	//Output filename\"DSDT\",		//Signature0x%x,		//DSDT Revision\"%s\",		//OEMID\"%s\",		//TABLE ID0x%x		//OEM Revision\n)\n",
-	dsdt_header.rev, oemid, oemtblid, dsdt_header.oemrev);
+	printf("DefinitionBlock (\"%s\", \"%s\", 0x%x, \"%s\", \"%s\", 0x%x)",
+	    "acpi_dst.aml", "DSDT", dsdt_header.rev, oemid, oemtblid,
+	    dsdt_header.oemrev);
 }
 
 static void
@@ -124,7 +126,7 @@ acpi_handle_facp(struct FACPbody *facp)
 	acpi_print_facp(facp);
 	dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->dsdt_ptr);
 	if (acpi_checksum(dsdp, dsdp->len))
-		errx(1, "DSDT is corrupt\n");
+		errx(1, "DSDT is corrupt");
 	acpi_handle_dsdt(dsdp);
 	aml_dump(dsdp);
 }
@@ -141,6 +143,10 @@ init_namespace(void)
 	newname->property = aml_alloc_object(aml_t_string, NULL);
 	newname->property->str.needfree = 0;
 	newname->property->str.string = __UNCONST("Microsoft Windows NT");
+
+	newname = aml_create_name(&env, (const unsigned char *)"\\_OSI");
+	newname->property = aml_alloc_object(aml_t_method, NULL);
+	newname->property->meth.argnum = 1;
 }
 
 /*
@@ -349,8 +355,10 @@ acpi_handle_rsdt(struct ACPIsdt *rsdp)
 	acpi_print_rsdt(rsdp);
 	for (i = 0; i < entries; i++) {
 		sdp = (struct ACPIsdt *) acpi_map_sdt(rsdp->body[i]);
-		if (acpi_checksum(sdp, sdp->len))
-			errx(1, "RSDT entry %d is corrupt\n", i);
+		if (acpi_checksum(sdp, sdp->len)) {
+			warnx("RSDT entry %d: bad checksum", i);
+			continue;
+		}
 		if (!memcmp(sdp->signature, "FACP", 4)) {
 			acpi_handle_facp((struct FACPbody *) sdp->body);
 		} else {

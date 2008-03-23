@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.49.4.2 2008/01/09 02:02:14 matt Exp $
+# postinstall,v 1.49.4.2 2008/01/09 02:02:14 matt Exp
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -454,6 +454,11 @@ obsolete_libs()
 	dir=$1
 
 	(
+
+	if [ ! -e "${DEST_DIR}/${dir}" ]
+	then
+		return 0
+	fi
 
 	cd "${DEST_DIR}/${dir}" || err 2 "can't cd to ${DEST_DIR}/${dir}"
 	echo lib*.so.* \
@@ -1113,12 +1118,12 @@ do_x11()
 	_etcx11=${DEST_DIR}/etc/X11
 	if [ ! -d "${_etcx11}" ]; then
 		msg "${_etcx11} is not a directory; skipping check"
-		return 1
+		return 0
 	fi
 	_libx11=${DEST_DIR}/usr/X11R6/lib/X11
 	if [ ! -d "${_libx11}" ]; then
 		msg "${_libx11} is not a directory; skipping check"
-		return 1
+		return 0
 	fi
 
 	_notfixed=""

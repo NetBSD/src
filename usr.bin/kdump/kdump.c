@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.93.2.1 2008/01/09 02:00:44 matt Exp $	*/
+/*	kdump.c,v 1.93.2.1 2008/01/09 02:00:44 matt Exp	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.93.2.1 2008/01/09 02:00:44 matt Exp $");
+__RCSID("kdump.c,v 1.93.2.1 2008/01/09 02:00:44 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,7 @@ static const char * const linux_ptrace_ops[] = {
 	NULL, NULL,
 	"PTRACE_GETREGS", "PTRACE_SETREGS", "PTRACE_GETFPREGS",
 	"PTRACE_SETFPREGS", "PTRACE_ATTACH", "PTRACE_DETACH",
+	NULL, NULL, NULL, NULL, NULL, NULL,
 	"PTRACE_SYSCALL",
 };
 

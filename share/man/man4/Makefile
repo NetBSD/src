@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.439.2.2 2008/01/09 01:39:03 matt Exp $
+#	Makefile,v 1.439.2.2 2008/01/09 01:39:03 matt Exp
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
@@ -57,7 +57,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
 # USB devices
 MAN+=	uaudio.4 ubsa.4 ubt.4 uchcom.4 ucom.4 ucycom.4 \
 	udsbr.4 uftdi.4 ugen.4 ugensa.4 uhid.4 \
-	uhidev.4 uipaq.4 uirda.4 ukbd.4 ukyopon.4 ulpt.4 \
+	uhidev.4 uhmodem.4 uipaq.4 uirda.4 ukbd.4 ukyopon.4 ulpt.4 \
 	umass.4 umct.4 umidi.4 umodem.4 ums.4 uplcom.4 urio.4 usb.4 \
 	uscanner.4 uslsa.4 usscanner.4 ustir.4 uvisor.4 uvscom.4 uyap.4 \
 	aue.4 atu.4 axe.4 cdce.4 cue.4 kue.4 upl.4 url.4 udav.4 \
@@ -175,7 +175,7 @@ MLINKS+=edc.4 i386/ed.4
 SUBDIR= man4.acorn26 man4.acorn32 man4.alpha man4.amiga man4.arc man4.atari \
 	man4.cobalt man4.dreamcast man4.evbarm man4.evbmips man4.evbppc \
 	man4.hp300 man4.hp700 man4.hpcarm man4.hpcmips man4.hpcsh man4.i386 \
-	man4.mac68k man4.macppc man4.mvme68k man4.pc532 man4.pmax man4.prep \
+	man4.mac68k man4.macppc man4.mvme68k man4.pmax man4.prep \
 	man4.sgimips man4.sparc man4.sparc64 man4.sun2 man4.sun3 man4.vax \
 	man4.x68k
 

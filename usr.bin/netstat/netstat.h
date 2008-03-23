@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.35 2006/05/28 16:51:40 elad Exp $	*/
+/*	netstat.h,v 1.35 2006/05/28 16:51:40 elad Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,7 +161,7 @@ void	iso_protopr __P((u_long, char *));
 void	iso_protopr1 __P((u_long, int));
 void	tp_protopr __P((u_long, char *));
 void	tp_inproto __P((u_long));
-void	tp_stats __P((u_long, caddr_t));
+void	tp_stats __P((u_long, char *));
 
 void	mroutepr __P((u_long, u_long, u_long, u_long));
 void	mrt_stats __P((u_long, u_long));
