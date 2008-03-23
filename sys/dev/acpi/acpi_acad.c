@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.32 2008/03/23 16:22:00 xtraeme Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.33 2008/03/23 18:38:57 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.32 2008/03/23 16:22:00 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.33 2008/03/23 18:38:57 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,7 @@ acpiacad_get_status(void *arg)
 		return;
 
 	mutex_enter(&sc->sc_mtx);
+	sc->sc_notifysent = 0;
 	if (sc->sc_status != status) {
 		sc->sc_status = status;
 		if (status)
@@ -197,7 +198,6 @@ acpiacad_get_status(void *arg)
 		else
 			sc->sc_sensor.value_cur = 0;
 		AACAD_SET(sc, AACAD_F_STCHANGED);
-		sc->sc_notifysent = 0;
 	}
 
 	sc->sc_sensor.state = ENVSYS_SVALID;
