@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1121 2008/03/22 13:28:12 jmmv Exp $
+#	$NetBSD: mi,v 1.1122 2008/03/23 07:32:13 bjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2190,9 +2190,9 @@
 ./usr/lib/libhdb.a				comp-c-lib		kerberos
 ./usr/lib/libhdb_p.a				comp-c-proflib		kerberos,profile
 ./usr/lib/libheimntlm.a				comp-krb5-lib		kerberos
-./usr/lib/libheimntlm_p.a			comp-krb5-proflib	kerberos
+./usr/lib/libheimntlm_p.a			comp-krb5-proflib	kerberos,profile
 ./usr/lib/libhx509.a				comp-krb5-lib		kerberos
-./usr/lib/libhx509_p.a				comp-krb5-proflib	kerberos
+./usr/lib/libhx509_p.a				comp-krb5-proflib	kerberos,profile
 ./usr/lib/libintl.a				comp-c-lib
 ./usr/lib/libintl_p.a				comp-c-proflib		profile
 ./usr/lib/libipsec.a				comp-c-lib
