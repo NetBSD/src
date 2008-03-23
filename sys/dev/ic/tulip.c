@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.160 2008/03/23 10:32:51 tsutsui Exp $	*/
+/*	$NetBSD: tulip.c,v 1.161 2008/03/23 11:08:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.160 2008/03/23 10:32:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.161 2008/03/23 11:08:25 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -2660,25 +2660,25 @@ tlp_filter_setup(struct tulip_softc *sc)
 			goto hashperfect;
 		}
 		cnt++;
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 0);
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 1);
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 2));
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
 		cnt++;
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
 	}
 
 	/* Pad the rest with our station address. */
 	for (; cnt < TULIP_MAXADDRS; cnt++) {
-		*sp++ = TULIP_SP_FIELD(enaddr, 0);
-		*sp++ = TULIP_SP_FIELD(enaddr, 1);
-		*sp++ = TULIP_SP_FIELD(enaddr, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
@@ -2732,9 +2732,9 @@ tlp_filter_setup(struct tulip_softc *sc)
 		 * Hash-Perfect mode; put our station address after
 		 * the hash table.
 		 */
-		sp[39] = TULIP_SP_FIELD(enaddr, 0);
-		sp[40] = TULIP_SP_FIELD(enaddr, 1);
-		sp[41] = TULIP_SP_FIELD(enaddr, 2);
+		sp[39] = htole32(TULIP_SP_FIELD(enaddr, 0));
+		sp[40] = htole32(TULIP_SP_FIELD(enaddr, 1));
+		sp[41] = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
@@ -2751,14 +2751,14 @@ tlp_filter_setup(struct tulip_softc *sc)
 	cnt = 0;
 	if (ifp->if_flags & IFF_BROADCAST) {
 		cnt++;
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
 	}
 	for (; cnt < TULIP_MAXADDRS; cnt++) {
-		*sp++ = TULIP_SP_FIELD(enaddr, 0);
-		*sp++ = TULIP_SP_FIELD(enaddr, 1);
-		*sp++ = TULIP_SP_FIELD(enaddr, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags |= IFF_ALLMULTI;
 
