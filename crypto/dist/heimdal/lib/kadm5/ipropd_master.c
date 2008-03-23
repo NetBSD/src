@@ -35,7 +35,7 @@
 #include <rtbl.h>
 
 __RCSID("$Heimdal: ipropd_master.c 22211 2007-12-07 19:27:27Z lha $"
-        "$NetBSD: ipropd_master.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
+        "$NetBSD: ipropd_master.c,v 1.3 2008/03/23 23:09:04 he Exp $");
 
 static krb5_log_facility *log_facility;
 
@@ -930,7 +930,7 @@ main(int argc, char **argv)
 	krb5_warnx(context, "%s terminated", getprogname());
     else
 	krb5_warnx(context, "%s unexpected exit reason: %d", 
-		   getprogname(), exit_flag);
+		   getprogname(), (int)exit_flag);
 
     write_master_down(context);
 
