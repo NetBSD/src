@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.6 2008/01/03 02:48:03 pooka Exp $	*/
+/*	$NetBSD: pool.c,v 1.7 2008/03/23 14:39:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -59,12 +59,8 @@ pool_cache_init(size_t size, u_int align, u_int align_offset, u_int flags,
 	void *arg)
 {
 	pool_cache_t pc;
-	char *ptr;
 
-	ptr = kmem_zalloc(sizeof(*pc) + CACHE_LINE_SIZE, KM_SLEEP);
-	pc = (pool_cache_t)(((uintptr_t)ptr + CACHE_LINE_SIZE - 1) &
-	    ~(CACHE_LINE_SIZE - 1));
-
+	pc = kmem_zalloc(sizeof(*pc), KM_SLEEP);
 	pool_init(&pc->pc_pool, size, align, align_offset, flags,
 	    wchan, palloc, ipl);
 	pc->pc_ctor = ctor;
@@ -79,7 +75,7 @@ pool_cache_destroy(pool_cache_t pc)
 {
 
 	pool_destroy(&pc->pc_pool);
-	kmem_free(pc, sizeof(*pc) + CACHE_LINE_SIZE);
+	kmem_free(pc, sizeof(*pc));
 }
 
 void *
