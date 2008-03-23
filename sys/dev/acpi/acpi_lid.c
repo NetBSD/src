@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.23 2008/02/29 06:35:40 dyoung Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.24 2008/03/23 14:20:15 xtraeme Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.23 2008/02/29 06:35:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.24 2008/03/23 14:20:15 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,7 @@ CFATTACH_DECL(acpilid, sizeof(struct acpilid_softc),
 static void	acpilid_status_changed(void *);
 static void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *);
 
+static void	acpilid_wake_event(struct acpilid_softc *, bool);
 static bool	acpilid_suspend(device_t PMF_FN_PROTO);
 
 /*
