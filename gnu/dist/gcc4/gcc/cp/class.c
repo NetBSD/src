@@ -294,6 +294,16 @@ build_base_path (enum tree_code code,
   /* Do we need to look in the vtable for the real offset?  */
   virtual_access = (v_binfo && fixed_type_p <= 0);
 
+  /* Don't bother with the calculations inside sizeof; they'll ICE if the
+     source type is incomplete and the pointer value doesn't matter.  */
+  if (skip_evaluation)
+    {
+      expr = build_nop (build_pointer_type (target_type), expr);
+      if (!want_pointer)
+	expr = build_indirect_ref (expr, NULL);
+      return expr;
+    }
+
   /* Do we need to check for a null pointer?  */
   if (want_pointer && !nonnull)
     {

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2006/01/20 16:52:55 christos Exp $
+# Makefile,v 1.6 2006/01/20 16:52:55 christos Exp
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -139,6 +139,7 @@ MAN=	openpam.3 \
 	pam_vprompt.3
 
 INCS=		security/openpam.h \
+		security/openpam_attr.h \
 		security/openpam_version.h \
 		security/pam_appl.h \
 		security/pam_constants.h \

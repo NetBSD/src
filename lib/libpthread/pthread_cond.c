@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.34.2.2 2008/01/09 01:36:34 matt Exp $	*/
+/*	pthread_cond.c,v 1.34.2.2 2008/01/09 01:36:34 matt Exp	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.34.2.2 2008/01/09 01:36:34 matt Exp $");
+__RCSID("pthread_cond.c,v 1.34.2.2 2008/01/09 01:36:34 matt Exp");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -145,7 +145,7 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	self->pt_willpark = 1;
 	pthread_mutex_unlock(mutex);
 	(void)pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
-	    NULL, 1, &mutex->ptm_blocked);
+	    NULL, 1, __UNVOLATILE(&mutex->ptm_waiters));
 	pthread_mutex_lock(mutex);
 
 	/*
@@ -235,7 +235,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	self->pt_willpark = 1;
 	pthread_mutex_unlock(mutex);
 	retval = pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
-	    abstime, 1, &mutex->ptm_blocked);
+	    abstime, 1, __UNVOLATILE(&mutex->ptm_waiters));
 	pthread_mutex_lock(mutex);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.73.4.2 2008/01/09 01:36:26 matt Exp $	*/
+/*	kvm_proc.c,v 1.73.4.2 2008/01/09 01:36:26 matt Exp	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.73.4.2 2008/01/09 01:36:26 matt Exp $");
+__RCSID("kvm_proc.c,v 1.73.4.2 2008/01/09 01:36:26 matt Exp");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -162,8 +162,8 @@ struct miniproc {
  * 'struct uucred', or something) this will have to be updated again.
  */
 struct kvm_kauth_cred {
-	kmutex_t cr_lock;		/* lock on cr_refcnt */
 	u_int cr_refcnt;		/* reference count */
+	uint8_t cr_pad[CACHE_LINE_SIZE - sizeof(u_int)];
 	uid_t cr_uid;			/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
@@ -272,12 +272,12 @@ _kvm_ureadm(kd, p, va, cnt)
 		if (KREAD(kd, addr, &pg))
 			return (NULL);
 
-		if (pread(kd->pmfd, kd->swapspc, (size_t)kd->nbpg,
+		if (_kvm_pread(kd, kd->pmfd, kd->swapspc, (size_t)kd->nbpg,
 		    (off_t)pg.phys_addr) != kd->nbpg)
 			return (NULL);
 	} else {
 		if (kd->swfd < 0 ||
-		    pread(kd->swfd, kd->swapspc, (size_t)kd->nbpg,
+		    _kvm_pread(kd, kd->swfd, kd->swapspc, (size_t)kd->nbpg,
 		    (off_t)(anon.an_swslot * kd->nbpg)) != kd->nbpg)
 			return (NULL);
 	}

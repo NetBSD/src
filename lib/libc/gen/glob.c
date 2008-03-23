@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.18.8.1 2008/01/09 01:34:05 matt Exp $	*/
+/*	glob.c,v 1.18.8.1 2008/01/09 01:34:05 matt Exp	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.18.8.1 2008/01/09 01:34:05 matt Exp $");
+__RCSID("glob.c,v 1.18.8.1 2008/01/09 01:34:05 matt Exp");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,6 +61,8 @@ __RCSID("$NetBSD: glob.c,v 1.18.8.1 2008/01/09 01:34:05 matt Exp $");
  *	expand {1,2}{a,b} to 1a 1b 2a 2b 
  * GLOB_PERIOD:
  *	allow metacharacters to match leading dots in filenames.
+ * GLOB_NO_DOTDIRS:
+ *	. and .. are hidden from wildcards, even if GLOB_PERIOD is set.
  * gl_matchc:
  *	Number of matches in the current invocation of glob.
  */
@@ -76,6 +78,7 @@ __RCSID("$NetBSD: glob.c,v 1.18.8.1 2008/01/09 01:34:05 matt Exp $");
 #include <glob.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -584,6 +587,8 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
 	__gl_stat_t sb;
 	Char *p, *q;
 	int anymeta;
+	Char *pend;
+	ptrdiff_t diff;
 
 	_DIAGASSERT(pathbuf != NULL);
 	_DIAGASSERT(pathend != NULL);
@@ -625,7 +630,26 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
 			*q++ = *p++;
 		}
 
-		if (!anymeta) {		/* No expansion, do next segment. */
+                /*
+		 * No expansion, or path ends in slash-dot shash-dot-dot,
+		 * do next segment.
+		 */
+		if (pglob->gl_flags & GLOB_PERIOD) {
+			for (pend = pathend; pend > pathbuf && pend[-1] == '/';
+			    pend--)
+				continue;
+			diff = pend - pathbuf;
+		} else {
+			/* XXX: GCC */
+			diff = 0;
+			pend = pathend;
+		}
+			
+                if ((!anymeta) ||
+		    ((pglob->gl_flags & GLOB_PERIOD) &&
+		     (diff >= 1 && pend[-1] == DOT) &&
+		     (diff >= 2 && (pend[-2] == SLASH || pend[-2] == DOT)) &&
+		     (diff < 3 || pend[-3] == SLASH))) {
 			pathend = q;
 			pattern = p;
 			while (*pattern == SEP) {
@@ -704,6 +728,14 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
 		if ((pglob->gl_flags & GLOB_PERIOD) == 0)
 			if (dp->d_name[0] == DOT && *pattern != DOT)
 				continue;
+		/*
+		 * If GLOB_NO_DOTDIRS is set, . and .. vanish.
+		 */
+		if ((pglob->gl_flags & GLOB_NO_DOTDIRS) &&
+		    (dp->d_name[0] == DOT) &&
+		    ((dp->d_name[1] == EOS) ||
+		     ((dp->d_name[1] == DOT) && (dp->d_name[2] == EOS))))
+			continue;
 		/*
 		 * The resulting string contains EOS, so we can
 		 * use the pathlim character, if it is the nul

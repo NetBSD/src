@@ -33,10 +33,6 @@ static void segv_crash_handler (int);
 static void segv_handler (int, siginfo_t *, void *);
 static void darwin_rs6000_extra_signals (void);
 
-/* This doesn't have a prototype in signal.h in 10.2.x and earlier,
-   fixed in later releases.  */
-extern int sigaltstack(const struct sigaltstack *, struct sigaltstack *);
-
 #undef HOST_HOOKS_EXTRA_SIGNALS
 #define HOST_HOOKS_EXTRA_SIGNALS darwin_rs6000_extra_signals
 
@@ -68,7 +64,11 @@ segv_handler (int sig ATTRIBUTE_UNUSED,
   sigaddset (&sigset, SIGSEGV);
   sigprocmask (SIG_UNBLOCK, &sigset, NULL);
 
+#if __DARWIN_UNIX03
+  faulting_insn = *(unsigned *)uc->uc_mcontext->__ss.__srr0;
+#else
   faulting_insn = *(unsigned *)uc->uc_mcontext->ss.srr0;
+#endif
 
   /* Note that this only has to work for GCC, so we don't have to deal
      with all the possible cases (GCC has no AltiVec code, for
@@ -116,8 +116,13 @@ segv_handler (int sig ATTRIBUTE_UNUSED,
       exit (FATAL_EXIT_CODE);
     }
 
+#if __DARWIN_UNIX03
+  fprintf (stderr, "[address=%08lx pc=%08x]\n",
+	  uc->uc_mcontext->__es.__dar, uc->uc_mcontext->__ss.__srr0);
+#else
   fprintf (stderr, "[address=%08lx pc=%08x]\n", 
 	   uc->uc_mcontext->es.dar, uc->uc_mcontext->ss.srr0);
+#endif
   internal_error ("Segmentation Fault");
   exit (FATAL_EXIT_CODE);
 }

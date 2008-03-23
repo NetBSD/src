@@ -1,4 +1,4 @@
-/*	$NetBSD: n_cabs.S,v 1.5 2003/08/07 16:44:45 agc Exp $	*/
+/*	n_cabs.S,v 1.5 2003/08/07 16:44:45 agc Exp	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,8 +43,22 @@
  */
 
 /*	entry for c functions cabs and hypot */
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(hypotf, _hypotf)
+#endif
+
+ENTRY(_hypotf, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(_hypot)
+	cvtdf	%r0,%r0
+	ret
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(hypot, _hypot)
+#endif
+
 ALTENTRY(cabs)
-ENTRY(hypot, 0x8040) 		# save %r6, enable floating overflow
+ENTRY(_hypot, 0x8040) 		# save %r6, enable floating overflow
 	movq	4(%ap),%r0	# %r0:1 = x
 	movq	12(%ap),%r2	# %r2:3 = y
 	jbr	cabs2

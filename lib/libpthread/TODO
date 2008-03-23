@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.10.2.2 2008/01/09 01:36:30 matt Exp $
+TODO,v 1.10.2.2 2008/01/09 01:36:30 matt Exp
 
 Bugs to fix:
 
@@ -7,7 +7,7 @@ Bugs to fix:
 
 Interfaces/features to implement:
 
-- Realtime exensions: priority scheduling, priority inheritance.
+- Realtime exensions: priority inheritance.
 
 - Allow threads to change their stack size.
 

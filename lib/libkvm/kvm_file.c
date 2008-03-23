@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.24 2006/02/16 20:48:42 christos Exp $	*/
+/*	kvm_file.c,v 1.24 2006/02/16 20:48:42 christos Exp	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.24 2006/02/16 20:48:42 christos Exp $");
+__RCSID("kvm_file.c,v 1.24 2006/02/16 20:48:42 christos Exp");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,6 +45,9 @@ __RCSID("$NetBSD: kvm_file.c,v 1.24 2006/02/16 20:48:42 christos Exp $");
  * most other applications are interested only in open/close/read/nlist).
  */
 
+#define _KERNEL
+#include <sys/types.h>
+#undef _KERNEL
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/lwp.h>
@@ -55,7 +58,6 @@ __RCSID("$NetBSD: kvm_file.c,v 1.24 2006/02/16 20:48:42 christos Exp $");
 #undef _KERNEL
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <nlist.h>
 #include <kvm.h>
 

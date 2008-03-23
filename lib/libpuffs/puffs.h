@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.81.2.2 2008/01/09 01:36:49 matt Exp $	*/
+/*	puffs.h,v 1.81.2.2 2008/01/09 01:36:49 matt Exp	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -263,6 +263,9 @@ enum {
 #define PUFFSDEV_BLOCK 0
 #define PUFFSDEV_NONBLOCK 1
 
+#define PUFFS_STACKSIZE_DEFAULT (1<<PUFFS_CC_STACKSHIFT_DEFAULT)
+#define PUFFS_STACKSIZE_MIN ((size_t)-1)
+
 #define		DENT_DOT	0
 #define		DENT_DOTDOT	1
 #define		DENT_ADJ(a)	((a)-2)	/* nth request means dir's n-2th */
@@ -355,7 +358,7 @@ enum {
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
 
-#define PUFFS_DEVEL_LIBVERSION 32
+#define PUFFS_DEVEL_LIBVERSION 34
 #define puffs_init(a,b,c,d,e) \
     _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e)
 
@@ -462,8 +465,11 @@ void			puffs_vattr_null(struct vattr *);
 
 void			puffs_null_setops(struct puffs_ops *);
 
-int			puffs_dopufbuf(struct puffs_usermount *,
-				       struct puffs_framebuf *);
+int			puffs_dispatch_create(struct puffs_usermount *,
+					      struct puffs_framebuf *,
+					      struct puffs_cc **);
+int			puffs_dispatch_exec(struct puffs_cc *,
+					    struct puffs_framebuf **);
 
 /*
  * generic/dummy routines applicable for some file systems
@@ -528,7 +534,6 @@ void			puffs_cc_continue(struct puffs_cc *);
 void			puffs_cc_schedule(struct puffs_cc *);
 int			puffs_cc_getcaller(struct puffs_cc *,pid_t *,lwpid_t *);
 struct puffs_cc		*puffs_cc_getcc(struct puffs_usermount *);
-void			*puffs_docc(void *);
 
 /*
  * Flushing / invalidation routines

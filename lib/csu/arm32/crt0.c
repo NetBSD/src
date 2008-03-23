@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.11 2005/12/24 21:54:43 perry Exp $	*/
+/*	crt0.c,v 1.11 2005/12/24 21:54:43 perry Exp	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -37,6 +37,16 @@
 
 #include "common.h"
 
+#if defined (_ARM_ARCH_6) || defined (__ARM_ARCH_5__) || \
+    defined (__ARM_ARCH_5T__) || defined (__ARM_ARCH_5TE__) || \
+    defined (__ARM_ARCH_5TEJ__)
+#define _ARM_ARCH_5
+#endif
+
+#if defined (_ARM_ARCH_5) || defined (__ARM_ARCH_4T__)
+#define _ARM_ARCH_4T
+#endif
+
 #undef mmap
 #define mmap(addr, len, prot, flags, fd, off)   		\
 	__syscall(SYS_mmap, (addr), (len), (prot), (flags),	\
@@ -69,7 +79,7 @@ Lps_strings:
 ");
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.11 2005/12/24 21:54:43 perry Exp $");
+__RCSID("crt0.c,v 1.11 2005/12/24 21:54:43 perry Exp");
 #endif /* LIBC_SCCS and not lint */
 
 void
@@ -130,8 +140,15 @@ __asm("
 ___syscall:
 	swi	0
 	mvncs	r0, #0
-	mov	pc, lr
-");
+"
+#ifdef _ARM_ARCH_4T
+"	bx	lr
+"
+#else
+"	mov	pc, lr
+"
+#endif
+);
 #endif	/* DYNAMIC */
 
 #include "common.c"
