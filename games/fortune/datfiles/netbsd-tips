@@ -133,3 +133,11 @@ NetBSD's default cron jobs are defined in the /var/cron/tabs/root
 file.  As the superuser, use "crontab -l" to view it. To edit it,
 use "crontab -e" (which defaults to using the vi(1) editor).
 %
+You can make sure that your system is stable and behaves correctly by
+running the tests in /usr/tests (which come from the tests.tgz set).
+To do so:
+
+  vi /etc/atf/NetBSD.conf
+  cd /usr/tests
+  atf-run | atf-report
+%
