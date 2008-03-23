@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.59 2008/03/09 19:25:56 jmcneill Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.60 2008/03/23 11:08:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -574,12 +574,8 @@ do {									\
 #define	TULIP_ISSET(sc, reg, mask)					\
 	(TULIP_READ((sc), (reg)) & (mask))
 
-#if BYTE_ORDER == BIG_ENDIAN
-#define	TULIP_SP_FIELD_C(x)	((x) << 16)
-#else
-#define	TULIP_SP_FIELD_C(x)	(x)
-#endif
-#define	TULIP_SP_FIELD(x, f)	TULIP_SP_FIELD_C(((u_int16_t *)(x))[(f)])
+#define	TULIP_SP_FIELD_C(a, b)	((b) << 8 | (a))
+#define	TULIP_SP_FIELD(x, f)	TULIP_SP_FIELD_C((x)[f * 2], (x)[f * 2 + 1])
 
 #ifdef _KERNEL
 extern const char * const tlp_chip_names[];
