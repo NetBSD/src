@@ -1,4 +1,4 @@
-/*	$Id: symtabs.c,v 1.1.1.1.2.2 2007/11/06 23:08:55 matt Exp $	*/
+/*	symtabs.c,v 1.1.1.1.2.2 2007/11/06 23:08:55 matt Exp	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -179,10 +179,10 @@ lookup(char *key, int ttype)
 {
 	struct symtab *sym;
 	struct tree *w, *new, *last;
-	int cix, bit, fbit, svbit, ix, bitno, match;
+	int cix, bit, fbit, svbit, bitno;
 	int type, uselvl;
+	intptr_t ix, match, code = (intptr_t)key;
 
-	long code = (long)key;
 	type = ttype & SMASK;
 	uselvl = (blevel > 0 && type != SSTRING);
 
@@ -228,7 +228,7 @@ lookup(char *key, int ttype)
 	}
 
 	sym = (struct symtab *)w;
-	match = (long)sym->sname;
+	match = (intptr_t)sym->sname;
 
 	ix = code ^ match;
 	if (ix == 0)
@@ -343,10 +343,11 @@ struct symtab *
 hide(struct symtab *sym)
 {
 	struct symtab *new;
+	int typ = sym->sflags & SMASK;
 
-	new = getsymtab(sym->sname, SNORMAL|STEMP);
-	new->snext = tmpsyms[SNORMAL];
-	tmpsyms[SNORMAL] = new;
+	new = getsymtab(sym->sname, typ|STEMP);
+	new->snext = tmpsyms[typ];
+	tmpsyms[typ] = new;
 #ifdef PCC_DEBUG
 	if (ddebug)
 		printf("\t%s hidden at level %d (%p -> %p)\n",

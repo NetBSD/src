@@ -28,7 +28,7 @@
 /* Don't compile this if we don't have bzlib. */
 #if HAVE_BZLIB_H
 
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_bzip2.c,v 1.12 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_bzip2.c,v 1.13 2007/12/30 04:58:21 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -320,6 +320,10 @@ drive_compressor(struct archive_write *a, struct private_data *state, int finish
 			state->stream.avail_out = bytes_written;
 		}
 
+		/* If there's nothing to do, we're done. */
+		if (!finishing && state->stream.avail_in == 0)
+			return (ARCHIVE_OK);
+
 		ret = BZ2_bzCompress(&(state->stream),
 		    finishing ? BZ_FINISH : BZ_RUN);
 
@@ -339,7 +343,9 @@ drive_compressor(struct archive_write *a, struct private_data *state, int finish
 			/* Any other return value indicates an error */
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_PROGRAMMER,
-			    "Bzip2 compression failed");
+			    "Bzip2 compression failed;"
+			    " BZ2_bzCompress() returned %d",
+			    ret);
 			return (ARCHIVE_FATAL);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.2.4.2 2008/01/09 01:21:01 matt Exp $	*/
+/*	atomic_dec.S,v 1.2.4.2 2008/01/09 01:21:01 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,9 +41,9 @@
 	.text
 
 ENTRY_NOPROFILE(_atomic_dec_32)
-1:	lwarx	r10,0,r3
-	addi	r10,r10,-1
-	stwcx.	r10,0,r3
+1:	lwarx	%r10,0,%r3
+	addi	%r10,%r10,-1
+	stwcx.	%r10,0,%r3
 	bne-	1b
 	blr
 ATOMIC_OP_ALIAS(atomic_dec_32,_atomic_dec_32)
@@ -57,11 +57,11 @@ STRONG_ALIAS(_atomic_dec_ptr,_atomic_dec_32)
 #endif
 
 ENTRY_NOPROFILE(_atomic_dec_32_nv)
-1:	lwarx	r10,0,r3
-	addi	r10,r10,-1
-	stwcx.	r10,0,r3
+1:	lwarx	%r10,0,%r3
+	addi	%r10,%r10,-1
+	stwcx.	%r10,0,%r3
 	bne-	1b
-	mr	r3,r10
+	mr	%r3,%r10
 	blr
 ATOMIC_OP_ALIAS(atomic_dec_32_nv,_atomic_dec_32_nv)
 ATOMIC_OP_ALIAS(atomic_dec_uint_nv,_atomic_dec_32_nv)

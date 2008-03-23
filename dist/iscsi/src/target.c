@@ -909,6 +909,7 @@ login_command_t(target_session_t * sess, uint8_t *header)
 			sess->d = i;
 		} else if ((i = find_target_tsih(sess->globals, cmd.tsih)) < 0) {
 			iscsi_trace_error(__FILE__, __LINE__, "Abnormal SessionType cmd.tsih %d not found\n", cmd.tsih);
+			i = sess->d;
 		}
 		if (param_equiv(sess->params, "SessionType", "")) {
 			iscsi_trace_error(__FILE__, __LINE__, "SessionType not specified\n");

@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,12 @@ AT_CHECK([APP_HELPER(app_opts_args) -v foo], 0, [stdout], [])
 AT_CHECK([grep -- '-v given with argument foo' stdout], 0, [ignore], [])
 AT_CHECK([APP_HELPER(app_opts_args) -z], 1, [], [stderr])
 AT_CHECK([grep 'Unknown option.*-z' stderr], 0, [ignore], [])
+
+dnl Check that option processing stops after an argument.
+AT_CHECK([APP_HELPER(app_opts_args) -- -d], 0, [stdout], [])
+AT_CHECK([grep -- '-d given' stdout], 1, [], [])
+AT_CHECK([APP_HELPER(app_opts_args) arg -d], 0, [stdout], [])
+AT_CHECK([grep -- '-d given' stdout], 1, [], [])
 
 dnl Check that an application that does not redefine any method does
 dnl not show unexpected arguments in the usage message.

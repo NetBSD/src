@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.31.4.1 2008/01/09 01:22:35 matt Exp $	*/
+/*	ipsec_doi.c,v 1.31.4.1 2008/01/09 01:22:35 matt Exp	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -1062,10 +1062,10 @@ cmp_aproppair_i(a, b)
 			return -1;
 		}
 
-		if (p->prop->proto_id != r->prop->proto_id) {
+		if (p->prop->spi_size != r->prop->spi_size) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid spi size: %d.\n",
-				p->prop->proto_id);
+				p->prop->spi_size);
 			return -1;
 		}
 
@@ -4313,6 +4313,11 @@ ipsecdoi_id2sockaddr(buf, saddr, prefixlen, ul_proto)
 				: id_b->port);		/* see sockaddr2id() */
 		memcpy(&((struct sockaddr_in6 *)saddr)->sin6_addr,
 			buf->v + sizeof(*id_b), sizeof(struct in6_addr));
+		((struct sockaddr_in6 *)saddr)->sin6_scope_id =
+			(IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)saddr)->sin6_addr)
+				? ((struct sockaddr_in6 *)id_b)->sin6_scope_id
+				: 0);
+
 		break;
 #endif
 	default:

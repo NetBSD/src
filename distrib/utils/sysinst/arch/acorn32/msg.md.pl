@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/06/12 11:20:03 dsl Exp $	*/
+/*	msg.md.pl,v 1.5 2003/06/12 11:20:03 dsl Exp	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:11:21 thorpej Exp */
 
@@ -39,18 +39,12 @@
  *
  */
 
-/* arm32 machine dependent messages, Polish */
+/* acorn32 machine dependent messages, Polish */
 
 
 message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 
-}
-
-message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac czy chcesz
-zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
-Ktora instalacje chcesz zrobic?
 }
 
 message badreadbb
@@ -76,11 +70,7 @@ message dobootblks
 message set_kernel_1
 {Kernel (GENERIC)}
 message set_kernel_2
-{Kernel (GENERIC_RPC_WSCONS)}
-message set_kernel_3
 {Kernel (GENERIC_NC)}
-message set_kernel_4
-{Kernel (GENERIC_NC_WSCONS)}
 
 message arm32fspart
 {Partycje NetBSD na dysku %s wygladaja teraz tak (Rozmiary i Przesuniecia w %s):

@@ -1,0 +1,1 @@
+#include <atf/signals.hpp>

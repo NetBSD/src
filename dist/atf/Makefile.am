@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,10 +41,12 @@
 doc_DATA = AUTHORS COPYING NEWS README ROADMAP
 EXTRA_DIST = $(doc_DATA)
 
-dist-hook: admin/revision-dist.h check-readme check-style
+dist-hook: $(srcdir)/admin/revision-dist.h check-install check-style
 
-AM_CPPFLAGS = -DATF_CONFDIR=\"$(atf_confdir)\" \
+AM_CPPFLAGS = -DATF_ARCH=\"$(atf_arch)\" \
+              -DATF_CONFDIR=\"$(atf_confdir)\" \
               -DATF_LIBEXECDIR=\"$(libexecdir)\" \
+              -DATF_MACHINE=\"$(atf_machine)\" \
               -DATF_PKGDATADIR=\"$(pkgdatadir)\" \
               -DATF_SHELL=\"$(ATF_SHELL)\" \
               -DATF_WORKDIR=\"$(ATF_WORKDIR)\"
@@ -57,15 +59,15 @@ ATF_COMPILE_SH = ./tools/atf-host-compile
 # `admin' directory.
 # -------------------------------------------------------------------------
 
-.PHONY: check-readme
-check-readme:
-	$(srcdir)/admin/check-readme.sh $(srcdir)/README
+.PHONY: check-install
+check-install:
+	$(srcdir)/admin/check-install.sh $(srcdir)/INSTALL
 
 .phony: check-style
 check-style:
 	$(srcdir)/admin/check-style.sh
 
-EXTRA_DIST += admin/check-readme.sh \
+EXTRA_DIST += admin/check-install.sh \
               admin/check-style-common.awk \
               admin/check-style-cpp.awk \
               admin/check-style-man.awk \
@@ -121,6 +123,8 @@ libatf_la_SOURCES = atf/application.cpp \
                     atf/parser.hpp \
                     atf/sanity.cpp \
                     atf/sanity.hpp \
+                    atf/signals.cpp \
+                    atf/signals.hpp \
                     atf/tests.cpp \
                     atf/tests.hpp \
                     atf/text.cpp \
@@ -151,6 +155,8 @@ atf_HEADERS = atf/application.hpp \
               atf/utils.hpp
 atfdir = $(includedir)/atf
 
+dist_man_MANS = atf/atf-c++-api.3
+
 # -------------------------------------------------------------------------
 # `data' directory.
 # -------------------------------------------------------------------------
@@ -167,6 +173,19 @@ egdir = $(atf_egdir)
 eg_DATA = data/atf-run.hooks
 EXTRA_DIST += $(eg_DATA)
 
+pkgconfigdir = $(atf_pkgconfigdir)
+pkgconfig_DATA = data/atf.pc
+CLEANFILES += data/atf.pc
+EXTRA_DIST += data/atf.pc.in
+data/atf.pc: $(srcdir)/data/atf.pc.in
+	test -d data || mkdir -p data
+	sed -e 's,__ATF_VERSION__,@PACKAGE_VERSION@,g' \
+	    -e 's,__CXX__,$(CXX),g' \
+	    -e 's,__INCLUDEDIR__,$(includedir),g' \
+	    -e 's,__LIBDIR__,$(libdir),g' \
+	    <$(srcdir)/data/atf.pc.in >data/atf.pc.tmp
+	mv data/atf.pc.tmp data/atf.pc
+
 xsldir = $(atf_xsldir)
 xsl_DATA = data/tests-results.xsl
 EXTRA_DIST += $(xsl_DATA)
@@ -179,9 +198,9 @@ man_MANS = doc/atf.7
 CLEANFILES += doc/atf.7
 EXTRA_DIST += doc/atf.7.in
 
-dist_man_MANS = doc/atf-formats.5 \
-                doc/atf-test-case.4 \
-                doc/atf-test-program.1
+dist_man_MANS += doc/atf-formats.5 \
+                 doc/atf-test-case.4 \
+                 doc/atf-test-program.1
 
 doc/atf.7: $(srcdir)/doc/atf.7.in
 	test -d doc || mkdir -p doc
@@ -190,15 +209,22 @@ doc/atf.7: $(srcdir)/doc/atf.7.in
 	mv doc/atf.7.tmp doc/atf.7
 
 # -------------------------------------------------------------------------
+# `m4' directory.
+# -------------------------------------------------------------------------
+
+ACLOCAL_AMFLAGS = -I m4
+
+# -------------------------------------------------------------------------
 # `subrs' directory.
 # -------------------------------------------------------------------------
 
-subrs_DATA = subrs/atf.config.subr \
-             subrs/atf.footer.subr \
+subrs_DATA = subrs/atf.footer.subr \
              subrs/atf.header.subr \
              subrs/atf.init.subr
 subrsdir = $(pkgdatadir)
 EXTRA_DIST += $(subrs_DATA)
+
+dist_man_MANS += subrs/atf-sh-api.3
 
 # -------------------------------------------------------------------------
 # `tests/bootstrap' directory.
@@ -288,10 +314,31 @@ testsdir = $(exec_prefix)/tests
 pkgtestsdir = $(exec_prefix)/tests/atf
 
 installcheck-local:
-	cd $(pkgtestsdir) && $(TESTS_ENVIRONMENT) atf-run | atf-report
+	logfile=$$(pwd)/installcheck.log; \
+	cd $(pkgtestsdir); \
+	$(TESTS_ENVIRONMENT) atf-run | tee $${logfile} | atf-report; \
+	res=$${?}; \
+	echo; \
+	echo "The verbatim output of atf-run has been saved to" \
+	     "installcheck.log"; \
+	exit $${res}
+CLEANFILES += installcheck.log
 
 pkgtests_DATA = tests/atf/Atffile
 EXTRA_DIST += $(pkgtests_DATA)
+
+atf_data_DATA = tests/atf/data/Atffile
+atf_datadir = $(pkgtestsdir)/data
+EXTRA_DIST += $(atf_data_DATA)
+
+atf_data_SCRIPTS = tests/atf/data/t_pkg_config
+CLEANFILES += tests/atf/data/t_pkg_config
+EXTRA_DIST += tests/atf/data/t_pkg_config.sh
+tests/atf/data/t_pkg_config: \
+		$(srcdir)/tests/atf/data/t_pkg_config.sh \
+		$(ATF_COMPILE_DEPS)
+	test -d tests/atf/data || mkdir -p tests/atf/data
+	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/atf/data/t_pkg_config.sh
 
 atf_formats_DATA = tests/atf/formats/Atffile \
                    tests/atf/formats/d_atffile_1 \
@@ -680,6 +727,22 @@ tests/atf/tools/t_atf_config: $(srcdir)/tests/atf/tools/t_atf_config.sh \
 	test -d tests/atf/tools || mkdir -p tests/atf/tools
 	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/atf/tools/t_atf_config.sh
 
+atf_tools_SCRIPTS += tests/atf/tools/t_atf_exec
+CLEANFILES += tests/atf/tools/t_atf_exec
+EXTRA_DIST += tests/atf/tools/t_atf_exec.sh
+tests/atf/tools/t_atf_exec: $(srcdir)/tests/atf/tools/t_atf_exec.sh \
+                            $(ATF_COMPILE_DEPS)
+	test -d tests/atf/tools || mkdir -p tests/atf/tools
+	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/atf/tools/t_atf_exec.sh
+
+atf_tools_SCRIPTS += tests/atf/tools/t_atf_killpg
+CLEANFILES += tests/atf/tools/t_atf_killpg
+EXTRA_DIST += tests/atf/tools/t_atf_killpg.sh
+tests/atf/tools/t_atf_killpg: $(srcdir)/tests/atf/tools/t_atf_killpg.sh \
+                              $(ATF_COMPILE_DEPS)
+	test -d tests/atf/tools || mkdir -p tests/atf/tools
+	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/atf/tools/t_atf_killpg.sh
+
 atf_tools_SCRIPTS += tests/atf/tools/t_atf_report
 CLEANFILES += tests/atf/tools/t_atf_report
 EXTRA_DIST += tests/atf/tools/t_atf_report.sh
@@ -735,6 +798,11 @@ tests_atf_units_t_sanity_SOURCES = tests/atf/units/t_sanity.cpp
 tests_atf_units_t_sanity_LDADD = -latf
 tests_atf_units_t_sanity_LDFLAGS = -L.
 
+atf_units_PROGRAMS += tests/atf/units/t_signals
+tests_atf_units_t_signals_SOURCES = tests/atf/units/t_signals.cpp
+tests_atf_units_t_signals_LDADD = -latf
+tests_atf_units_t_signals_LDFLAGS = -L.
+
 atf_units_PROGRAMS += tests/atf/units/t_tests
 tests_atf_units_t_tests_SOURCES = tests/atf/units/t_tests.cpp
 tests_atf_units_t_tests_LDADD = -latf
@@ -775,11 +843,13 @@ tests_build_libuseless_a_SOURCES = \
     tests/build/t_include_macros_hpp.cpp \
     tests/build/t_include_parser_hpp.cpp \
     tests/build/t_include_sanity_hpp.cpp \
+    tests/build/t_include_signals_hpp.cpp \
     tests/build/t_include_tests_hpp.cpp \
     tests/build/t_include_text_hpp.cpp \
     tests/build/t_include_ui_hpp.cpp \
     tests/build/t_include_user_hpp.cpp \
-    tests/build/t_include_utils_hpp.cpp
+    tests/build/t_include_utils_hpp.cpp \
+    tests/build/t_use_macros_hpp.cpp
 
 # -------------------------------------------------------------------------
 # `tools' directory.
@@ -814,11 +884,23 @@ tools_atf_compile_LDADD = -latf
 tools_atf_compile_LDFLAGS = -L.
 dist_man_MANS += tools/atf-compile.1
 
+libexec_PROGRAMS += tools/atf-exec
+tools_atf_exec_SOURCES = tools/atf-exec.cpp
+tools_atf_exec_LDADD = -latf
+tools_atf_exec_LDFLAGS = -L.
+dist_man_MANS += tools/atf-exec.1
+
 libexec_PROGRAMS += tools/atf-format
 tools_atf_format_SOURCES = tools/atf-format.cpp
 tools_atf_format_LDADD = -latf
 tools_atf_format_LDFLAGS = -L.
 dist_man_MANS += tools/atf-format.1
+
+libexec_PROGRAMS += tools/atf-killpg
+tools_atf_killpg_SOURCES = tools/atf-killpg.cpp
+tools_atf_killpg_LDADD = -latf
+tools_atf_killpg_LDFLAGS = -L.
+dist_man_MANS += tools/atf-killpg.1
 
 bin_PROGRAMS += tools/atf-report
 tools_atf_report_SOURCES = tools/atf-report.cpp
@@ -839,7 +921,7 @@ tools_atf_version_LDFLAGS = -L.
 dist_man_MANS += tools/atf-version.1
 
 BUILT_SOURCES = revision.h
-revision.h: admin/revision.h admin/revision-dist.h
+revision.h: admin/revision.h $(srcdir)/admin/revision-dist.h
 	@if [ -f admin/revision.h ]; then \
 	    cmp -s admin/revision.h revision.h || \
 	        cp admin/revision.h revision.h; \

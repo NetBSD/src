@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_cpio.c,v 1.11 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_cpio.c,v 1.13 2007/12/30 04:58:22 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -142,12 +142,17 @@ archive_write_cpio_header(struct archive_write *a, struct archive_entry *entry)
 	format_octal(archive_entry_mtime(entry), &h.c_mtime, sizeof(h.c_mtime));
 	format_octal(pathlength, &h.c_namesize, sizeof(h.c_namesize));
 
+	/* Non-regular files don't store bodies. */
+	if (archive_entry_filetype(entry) != AE_IFREG)
+		archive_entry_set_size(entry, 0);
+
 	/* Symlinks get the link written as the body of the entry. */
 	p = archive_entry_symlink(entry);
 	if (p != NULL  &&  *p != '\0')
 		format_octal(strlen(p), &h.c_filesize, sizeof(h.c_filesize));
 	else
-		format_octal(archive_entry_size(entry), &h.c_filesize, sizeof(h.c_filesize));
+		format_octal(archive_entry_size(entry),
+		    &h.c_filesize, sizeof(h.c_filesize));
 
 	ret = (a->compressor.write)(a, &h, sizeof(h));
 	if (ret != ARCHIVE_OK)
@@ -223,6 +228,7 @@ archive_write_cpio_finish(struct archive_write *a)
 
 	cpio = (struct cpio *)a->format_data;
 	trailer = archive_entry_new();
+	/* nlink = 1 here for GNU cpio compat. */
 	archive_entry_set_nlink(trailer, 1);
 	archive_entry_set_pathname(trailer, "TRAILER!!!");
 	er = archive_write_cpio_header(a, trailer);

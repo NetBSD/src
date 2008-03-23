@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.4.2.2 2008/01/09 01:26:17 matt Exp $	*/
+/*	perform.c,v 1.1.1.4.2.2 2008/01/09 01:26:17 matt Exp	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.4.2.2 2008/01/09 01:26:17 matt Exp $");
+__RCSID("perform.c,v 1.1.1.4.2.2 2008/01/09 01:26:17 matt Exp");
 #endif
 #endif
 
@@ -191,6 +191,9 @@ installprereq(const char *name, int *errc, int doupdate)
 			    Force ? "-f" : "",
 			    Prefix ? "-p" : "", Prefix ? Prefix : "",
 			    Verbose ? "-v" : "",
+			    OverrideMachine ? "-m" : "",
+			    OverrideMachine ? OverrideMachine : "",
+			    NoInstall ? "-I" : "",
 			    "-A", name, NULL)) {
 		warnx("autoload of dependency `%s' failed%s",
 			name, Force ? " (proceeding anyway)" : "!");
@@ -814,8 +817,12 @@ pkg_do(const char *pkg, lpkg_head_t *pkgs)
 		(void) fexec(CHMOD_CMD, "+x", INSTALL_FNAME, NULL);	/* make sure */
 		if (Verbose)
 			printf("Running install with PRE-INSTALL for %s.\n", PkgName);
+		errno = 0;
 		if (!Fake && fexec("./" INSTALL_FNAME, PkgName, "PRE-INSTALL", NULL)) {
-			warnx("install script returned error status");
+			if (errno != 0)
+				warn("exec of install script failed");
+			else
+				warnx("install script returned error status");
 			errc = 1;
 			goto success;	/* nothing to uninstall yet */
 		}

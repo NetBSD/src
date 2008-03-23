@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.13.10.1 2008/01/09 01:22:37 matt Exp $
+.\"	racoonctl.8,v 1.13.10.1 2008/01/09 01:22:37 matt Exp
 .\"
 .\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
@@ -55,17 +55,17 @@ delete-sa
 .Nm
 establish-sa
 .Op Fl u Ar identity
+.Op Fl w
 .Ar saopts
 .Nm
 vpn-connect
-.Op Fl u identity
+.Op Fl u Ar identity
 .Ar vpn_gateway
 .Nm
 vpn-disconnect
 .Ar vpn_gateway
 .Nm
 show-event
-.Op Fl l
 .Nm
 logout-user
 .Ar login
@@ -104,6 +104,8 @@ is used to flush all SAs if no SA class is provided, or a class of SAs,
 either ISAKMP SAs, IPsec ESP SAs, IPsec AH SAs, or all IPsec SAs.
 .It Xo establish-sa
 .Oo Fl u Ar username
+.Oc
+.Oo Fl w
 .Oc Ar saopts
 .Xc
 Establish an SA, either an ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
@@ -114,6 +116,11 @@ can be used when establishing an ISAKMP SA while hybrid auth is in use.
 will prompt you for the password associated with
 .Ar username
 and these credentials will be used in the Xauth exchange.
+.Pp
+Specifying
+.Fl w
+will make racoonctl wait until the SA is actually established or
+an error occurs.
 .Pp
 .Ar saopts
 has the following format:
@@ -135,16 +142,9 @@ Delete an SA, either an ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
 This is a particular case of the previous command.
 It will kill all SAs associated with
 .Ar vpn_gateway .
-.It show-event Op Fl l
-Dump all events reported by
-.Xr racoon 8 ,
-then quit.
-The
-.Fl l
-flag causes
-.Nm
-to not stop once all the events have been read, but rather to loop
-awaiting and reporting new events.
+.It show-event
+Listen for all events reported by
+.Xr racoon 8 .
 .It logout-user Ar login
 Delete all SA established on behalf of the Xauth user
 .Ar login .

@@ -1,6 +1,6 @@
-Automated Testing Framework (atf)
-Copyright (c) 2007 The NetBSD Foundation, Inc.
-All rights reserved.
+                     Automated Testing Framework (atf)
+                        The NetBSD Foundation, Inc.
+---------------------------------------------------------------------------
 
 
 Introduction
@@ -13,17 +13,12 @@ of salt: the focus of a specific release may change completely depending
 on how things develop.
 
 
-Plans for 0.4
+Plans for 0.5
 =============
 
-* Add a way to add an upper-bound limit for test run times.  Otherwise a
-  test that enters an infinite loop can stall the whole process.
-
-* Add a class, similar in idea to boost::noncopyable, to easily mark some
-  classes as not copyable.  Or, failing to do that, any other way to do
-  the same.
-
-* Add a .pc file for libatf.
+* Add a tool to collect multiple outputs of atf-run (from different
+  machines) and generate a single (XML-only?) log with everything.
+  Must allow easy conversion to HTML for online publishing.
 
 
 Plans for pre-1.0
@@ -40,11 +35,6 @@ Plans for pre-1.0
 
 * Add an atf_check-like function to the C++ binding to allow easy testing
   of executables.
-
-* The test suite should not use atf-compile to generate helper test cases.
-  Reason: NetBSD will include atf-compile in the comp.tgz set.  If it is
-  not installed, a lot of tests will be skipped without a "real" reason.
-  Use real helpers instead.
 
 * Make the shell library work with 'set -e'?
 
@@ -67,8 +57,6 @@ Plans for pre-1.0
 
 * Make sure that the tests in tests/atf have, at the very least, the same
   coverage as the ones in tests/bootstrap.
-
-* Add manual pages for the library interfaces.
 
 * Document the code.
 
@@ -95,8 +83,8 @@ Plans for post-1.0
   to a finer granularity (test cases) is harder and maybe not worth it.
 
 
-Things to we will not do
-========================
+Things that we will not do
+==========================
 
 This is a list of things that will *not* be addressed anytime soon in the
 project.  Of course most of them would be nice to have in the future, but
@@ -125,4 +113,5 @@ change our mind in the future and add move some of these to the above list.
   standards.
 
 
--- EOF
+---------------------------------------------------------------------------
+                              End of document

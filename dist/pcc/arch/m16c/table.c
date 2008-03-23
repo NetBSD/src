@@ -519,14 +519,6 @@ struct optab table[] = {
                 0,      RRIGHT,
                 "	mov.w AR,AL\n", },
 	
-    /*
-{ MOVE,		FOREFF|INAREG,
-	SAREG|SBREG,	TWORD|TPOINT,
-	SAREG,			TWORD|TPOINT,
-		NAREG,	RESC1,
-		"	mov.w AL, AR\n", },
-    */
-    
 { UMUL, 	INAREG,
 	SBREG,	TPOINT|TWORD,
 	SANY,  	TFTN,

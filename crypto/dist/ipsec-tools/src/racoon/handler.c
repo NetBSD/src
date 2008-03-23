@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.15.4.2 2008/01/09 01:22:34 matt Exp $	*/
+/*	handler.c,v 1.15.4.2 2008/01/09 01:22:34 matt Exp	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -142,8 +142,9 @@ getph1byindex0(index)
  * with phase 2's destinaion.
  */
 struct ph1handle *
-getph1byaddr(local, remote)
+getph1byaddr(local, remote, established)
 	struct sockaddr *local, *remote;
+	int established;
 {
 	struct ph1handle *p;
 
@@ -156,6 +157,11 @@ getph1byaddr(local, remote)
 			continue;
 		plog(LLV_DEBUG2, LOCATION, NULL, "p->local: %s\n", saddr2str(p->local));
 		plog(LLV_DEBUG2, LOCATION, NULL, "p->remote: %s\n", saddr2str(p->remote));
+
+		if(established && p->status != PHASE1ST_ESTABLISHED){
+			plog(LLV_DEBUG2, LOCATION, NULL, "status %d, skipping\n", p->status);
+			continue;
+		}
 		if (CMPSADDR(local, p->local) == 0
 			&& CMPSADDR(remote, p->remote) == 0){
 			plog(LLV_DEBUG2, LOCATION, NULL, "matched\n");
@@ -267,6 +273,7 @@ newph1()
 	iph1->dpd_fails = 0;
 	iph1->dpd_r_u = NULL;
 #endif
+	evt_list_init(&iph1->evt_listeners);
 
 	return iph1;
 }
@@ -283,8 +290,7 @@ delph1(iph1)
 
 	/* SA down shell script hook */
 	script_hook(iph1, SCRIPT_PHASE1_DOWN);
-
-	EVT_PUSH(iph1->local, iph1->remote, EVTT_PHASE1_DOWN, NULL);
+	evt_list_cleanup(&iph1->evt_listeners);
 
 #ifdef ENABLE_NATT
 	if (iph1->natt_flags & NAT_KA_QUEUED)
@@ -489,8 +495,8 @@ getph2byid(src, dst, spid)
 
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (spid == p->spid &&
-		    CMPSADDR(src, p->src) == 0 &&
-		    CMPSADDR(dst, p->dst) == 0){
+		    cmpsaddrwild(src, p->src) == 0 &&
+		    cmpsaddrwild(dst, p->dst) == 0){
 			/* Sanity check to detect zombie handlers
 			 * XXX Sould be done "somewhere" more interesting,
 			 * because we have lots of getph2byxxxx(), but this one
@@ -576,6 +582,7 @@ newph2()
 		return NULL;
 
 	iph2->status = PHASE1ST_SPAWN;
+	evt_list_init(&iph2->evt_listeners);
 
 	return iph2;
 }
@@ -589,6 +596,8 @@ void
 initph2(iph2)
 	struct ph2handle *iph2;
 {
+	evt_list_cleanup(&iph2->evt_listeners);
+
 	sched_scrub_param(iph2);
 	iph2->sce = NULL;
 	iph2->scr = NULL;
@@ -1132,7 +1141,7 @@ static int revalidate_ph2(struct ph2handle *iph2){
 	if (iph2->ph1 != NULL)
 		iph1=iph2->ph1;
 	else
-		iph1=getph1byaddr(iph2->src, iph2->dst);
+		iph1=getph1byaddr(iph2->src, iph2->dst, 0);
 
 	if(iph1 != NULL && iph1->rmconf != NULL) {
 		check_level = iph1->rmconf->pcheck_level;

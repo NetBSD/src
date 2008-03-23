@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.22.4.1 2008/01/09 01:28:06 matt Exp $
+.\"	hardware,v 1.22.4.1 2008/01/09 01:28:06 matt Exp
 .
 .Ss2 Supported machines
 The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
@@ -242,9 +242,4 @@ been tested on UltraSPARC PCI systems that may
 .Sq "just work" .
 .
 .Ss2 Unsupported devices
-.(bullet -offset indent
-SMP (NetBSD/sparc64 currently only uses one CPU if more than one is 
-present)
-.It
 smart card reader
-.bullet)

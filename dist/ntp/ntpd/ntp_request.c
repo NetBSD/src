@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.6 2007/01/06 19:45:23 kardel Exp $	*/
+/*	ntp_request.c,v 1.6 2007/01/06 19:45:23 kardel Exp	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -1175,7 +1175,7 @@ mem_stats(
 	/*
 	 * Importations from the peer module
 	 */
-	extern int peer_hash_count[NTP_HASH_SIZE];
+	extern int peer_hash_count[];
 	extern int peer_free_count;
 	extern u_long peer_timereset;
 	extern u_long findpeer_calls;

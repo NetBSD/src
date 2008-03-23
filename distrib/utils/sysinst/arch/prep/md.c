@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.27 2006/09/04 00:11:00 hubertf Exp $	*/
+/*	md.c,v 1.27 2006/09/04 00:11:00 hubertf Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -303,4 +303,10 @@ md_init(void)
 {
 
 	/* Nothing to do */
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
 }

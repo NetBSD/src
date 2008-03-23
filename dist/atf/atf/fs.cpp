@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,6 +55,7 @@ extern "C" {
 #include "atf/fs.hpp"
 #include "atf/sanity.hpp"
 #include "atf/text.hpp"
+#include "atf/user.hpp"
 #include "atf/utils.hpp"
 
 namespace impl = atf::fs;
@@ -63,6 +64,64 @@ namespace impl = atf::fs;
 // ------------------------------------------------------------------------
 // Auxiliary functions.
 // ------------------------------------------------------------------------
+
+//!
+//! \brief A version of access(2) using the effective user.
+//!
+//! An implementation of access(2) but using the effective user value
+//! instead of the real one.  Also avoids false positives for root when
+//! asking for execute permissions, which appear in SunOS.
+//!
+static
+int
+effective_access(const impl::path& p, int mode)
+{
+    struct stat st;
+
+    if (::lstat(p.c_str(), &st) == -1)
+        return -1;
+
+    // Early return if we are only checking for existence and the file
+    // exists (stat call returned).
+    if (F_OK == 0 && mode == 0)
+        return 0;
+    else if (mode & F_OK)
+        return 0;
+
+    bool ok = false;
+    if (atf::user::is_root()) {
+        if (!ok && !(mode & X_OK)) {
+            // Allow root to read/write any file.
+            ok = true;
+        }
+
+        if (!ok && (st.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))) {
+            // Allow root to execute the file if any of its execution bits
+            // are set.
+            ok = true;
+        }
+    } else {
+        if (!ok && (atf::user::euid() == st.st_uid)) {
+            ok = ((mode & R_OK) && (st.st_mode & S_IRUSR)) ||
+                 ((mode & W_OK) && (st.st_mode & S_IWUSR)) ||
+                 ((mode & X_OK) && (st.st_mode & S_IXUSR));
+        }
+        if (!ok && (atf::user::is_member_of_group(st.st_gid))) {
+            ok = ((mode & R_OK) && (st.st_mode & S_IRGRP)) ||
+                 ((mode & W_OK) && (st.st_mode & S_IWGRP)) ||
+                 ((mode & X_OK) && (st.st_mode & S_IXGRP));
+        }
+        if (!ok) {
+            ok = ((mode & R_OK) && (st.st_mode & S_IROTH)) ||
+                 ((mode & W_OK) && (st.st_mode & S_IWOTH)) ||
+                 ((mode & X_OK) && (st.st_mode & S_IXOTH));
+        }
+    }
+
+    if (!ok)
+        errno = EACCES;
+    return ok ? 0 : -1;
+}
 
 //!
 //! \brief A controlled version of access(2).
@@ -77,13 +136,13 @@ safe_access(const impl::path& p, int mode, int experr)
 {
     bool ok;
 
-    int res = ::access(p.c_str(), mode);
+    int res = effective_access(p, mode);
     if (res == 0)
         ok = true;
     else if (res == -1 && errno == experr)
         ok = false;
     else
-        throw atf::system_error("safe_access(" + p.str() + ")",
+        throw atf::system_error("effective_access(" + p.str() + ")",
                                 "access(2) failed", errno);
 
     return ok;
@@ -502,6 +561,10 @@ impl::is_executable(const path& p)
 void
 impl::remove(const path& p)
 {
+    if (file_info(p).get_type() == file_info::dir_type)
+        throw atf::system_error(IMPL_NAME "::remove(" + p.str() + ")",
+                                "Is a directory",
+                                EPERM);
     if (::unlink(p.c_str()) == -1)
         throw atf::system_error(IMPL_NAME "::remove(" + p.str() + ")",
                                 "unlink(" + p.str() + ") failed",
@@ -592,7 +655,10 @@ impl::cleanup(const path& p)
     std::vector< path > mntpts = find_mount_points(p, file_info(p));
     for (std::vector< path >::const_iterator iter = mntpts.begin();
          iter != mntpts.end(); iter++) {
-        const path& p2 = *iter;
+        // At least, FreeBSD's unmount(2) requires the path to be absolute.
+        // Let's make it absolute in all cases just to be safe that this does
+        // not affect other systems.
+        path p2 = (*iter).is_absolute() ? (*iter) : (*iter).to_absolute();
 #if defined(HAVE_UNMOUNT)
         if (::unmount(p2.c_str(), 0) == -1)
             throw system_error(IMPL_NAME "::cleanup(" + p.str() + ")",

@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
+/*	memchr.c,v 1.2 2007/06/04 18:19:27 christos Exp	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memchr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memchr.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
+__RCSID("memchr.c,v 1.2 2007/06/04 18:19:27 christos Exp");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,9 +55,10 @@ memchr(const void *s, int c, size_t n)
 
 	if (n != 0) {
 		const unsigned char *p = s;
+		const unsigned char cmp = c;
 
 		do {
-			if (*p++ == c)
+			if (*p++ == cmp)
 				return __UNCONST(p - 1);
 		} while (--n != 0);
 	}

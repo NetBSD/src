@@ -1,4 +1,4 @@
-/*	$Id: macdefs.h,v 1.1.1.1.2.2 2007/11/06 23:08:31 matt Exp $	*/
+/*	macdefs.h,v 1.1.1.1.2.2 2007/11/06 23:08:31 matt Exp	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -97,10 +97,13 @@ typedef	unsigned long long U_CONSZ;
 typedef long long OFFSZ;
 
 #define CONFMT	"%lld"		/* format for printing constants */
+#ifdef ELFABI
+#define LABFMT	".L%d"		/* format for printing labels */
+#else
 #define LABFMT	"L%d"		/* format for printing labels */
+#endif
 #define	STABLBL	"LL%d"		/* format for stab (debugging) labels */
-
-#define	MYP2TREE(p) myp2tree(p);
+#define STAB_LINE_ABSOLUTE	/* S_LINE fields use absolute addresses */
 
 #undef	FIELDOPS		/* no bit-field instructions */
 #if 0
@@ -255,12 +258,9 @@ typedef long long OFFSZ;
 
 int COLORMAP(int c, int *r);
 
-#define MYREADER(p) myreader(p)
-#define MYCANON(p) mycanon(p)
-#define	MYOPTIM
-
 #define	SHSTR		(MAXSPECIAL+1)	/* short struct */
 #define	SFUNCALL	(MAXSPECIAL+2)	/* struct assign after function call */
+#define SPCON		(MAXSPECIAL+3)  /* positive constant */
 
 struct stub {
 	struct { struct stub *q_forw, *q_back; } link;

@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.28 2007/05/29 05:39:10 kientzle Exp $
+ * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.29 2008/01/02 00:21:27 kientzle Exp $
  */
 
 #include "bsdtar_platform.h"
@@ -99,7 +99,6 @@ struct bsdtar {
 
 void	bsdtar_errc(struct bsdtar *, int _eval, int _code,
 	    const char *fmt, ...);
-void	bsdtar_strmode(struct archive_entry *entry, char *bp);
 void	bsdtar_warnc(struct bsdtar *, int _code, const char *fmt, ...);
 void	cleanup_exclusions(struct bsdtar *);
 void	do_chdir(struct bsdtar *);

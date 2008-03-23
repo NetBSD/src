@@ -45,7 +45,7 @@
 #include "atf/application.hpp"
 #include "atf/ui.hpp"
 
-class atf_version : public atf::application {
+class atf_version : public atf::application::app {
     static const char* m_description;
 
 public:
@@ -59,7 +59,7 @@ const char* atf_version::m_description =
     "installed version of ATF.";
 
 atf_version::atf_version(void) :
-    application(m_description, "atf-version(1)")
+    app(m_description, "atf-version(1)", "atf(7)")
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.27.4.1 2007/11/06 23:07:34 matt Exp $	*/
+/*	isakmp.c,v 1.27.4.1 2007/11/06 23:07:34 matt Exp	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -88,6 +88,9 @@
 #include "pfkey.h"
 #include "crypto_openssl.h"
 #include "policy.h"
+#include "algorithm.h"
+#include "proposal.h"
+#include "sainfo.h"
 #include "isakmp_ident.h"
 #include "isakmp_agg.h"
 #include "isakmp_base.h"
@@ -1026,7 +1029,7 @@ quick_main(iph2, msg)
 }
 
 /* new negotiation of phase 1 for initiator */
-int
+struct ph1handle *
 isakmp_ph1begin_i(rmconf, remote, local)
 	struct remoteconf *rmconf;
 	struct sockaddr *remote, *local;
@@ -1039,7 +1042,7 @@ isakmp_ph1begin_i(rmconf, remote, local)
 	/* get new entry to isakmp status table. */
 	iph1 = newph1();
 	if (iph1 == NULL)
-		return -1;
+		return NULL;
 
 	iph1->status = PHASE1ST_START;
 	iph1->rmconf = rmconf;
@@ -1055,7 +1058,7 @@ isakmp_ph1begin_i(rmconf, remote, local)
 	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL) {
 		remph1(iph1);
 		delph1(iph1);
-		return -1;
+		return NULL;
 	}
 #endif
 #ifdef ENABLE_FRAG
@@ -1072,7 +1075,7 @@ isakmp_ph1begin_i(rmconf, remote, local)
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
 		remph1(iph1);
 		delph1(iph1);
-		return -1;
+		return NULL;
 	}
 
 	(void)insph1(iph1);
@@ -1108,7 +1111,7 @@ isakmp_ph1begin_i(rmconf, remote, local)
 		remph1(iph1);
 		delph1(iph1);
 
-		return -1;
+		return NULL;
 	}
 
 #ifdef ENABLE_STATS
@@ -1119,7 +1122,7 @@ isakmp_ph1begin_i(rmconf, remote, local)
 		timedelta(&start, &end));
 #endif
 
-	return 0;
+	return iph1;
 }
 
 /* new negotiation of phase 1 for responder */
@@ -1943,8 +1946,7 @@ isakmp_ph1resend(iph1)
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase1 negotiation failed due to time up. %s\n",
 			isakmp_pindex(&iph1->index, iph1->msgid));
-		EVT_PUSH(iph1->local, iph1->remote, 
-		    EVTT_PEER_NO_RESPONSE, NULL);
+		evt_phase1(iph1, EVT_PHASE1_NO_RESPONSE, NULL);
 
 		return -1;
 	}
@@ -1953,8 +1955,7 @@ isakmp_ph1resend(iph1)
 		plog(LLV_ERROR, LOCATION, NULL,
 			 "phase1 negotiation failed due to send error. %s\n",
 			 isakmp_pindex(&iph1->index, iph1->msgid));
-		EVT_PUSH(iph1->local, iph1->remote, 
-				 EVTT_PEER_NO_RESPONSE, NULL);
+		evt_phase1(iph1, EVT_PHASE1_NO_RESPONSE, NULL);
 		return -1;
 	}
 
@@ -2003,7 +2004,7 @@ isakmp_ph2resend(iph2)
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase2 negotiation failed due to time up. %s\n",
 				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
-		EVT_PUSH(iph2->src, iph2->dst, EVTT_PEER_NO_RESPONSE, NULL);
+		evt_phase2(iph2, EVT_PHASE2_NO_RESPONSE, NULL);
 		unbindph12(iph2);
 		return -1;
 	}
@@ -2012,8 +2013,7 @@ isakmp_ph2resend(iph2)
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase2 negotiation failed due to send error. %s\n",
 				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
-		EVT_PUSH(iph2->src, iph2->dst, EVTT_PEER_NO_RESPONSE, NULL);
-
+		evt_phase2(iph2, EVT_PHASE2_NO_RESPONSE, NULL);
 		return -1;
 	}
 
@@ -2104,7 +2104,7 @@ isakmp_ph1delete(iph1)
 	plog(LLV_INFO, LOCATION, NULL,
 		"ISAKMP-SA deleted %s-%s spi:%s\n",
 		src, dst, isakmp_pindex(&iph1->index, 0));
-	EVT_PUSH(iph1->local, iph1->remote, EVTT_PHASE1_DOWN, NULL);
+	evt_phase1(iph1, EVT_PHASE1_DOWN, NULL);
 	racoon_free(src);
 	racoon_free(dst);
 
@@ -2233,10 +2233,10 @@ isakmp_post_acquire(iph2)
 			set_port(iph2->dst, extract_port(iph1->remote));
 		}
 	} else {
-		iph1 = getph1byaddr(iph2->src, iph2->dst);
+		iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 	}
 #else
-	iph1 = getph1byaddr(iph2->src, iph2->dst);
+	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 #endif
 
 	/* no ISAKMP-SA found. */
@@ -2251,7 +2251,7 @@ isakmp_post_acquire(iph2)
 			saddrwop2str(iph2->dst));
 
 		/* start phase 1 negotiation as a initiator. */
-		if (isakmp_ph1begin_i(rmconf, iph2->dst, iph2->src) < 0) {
+		if (isakmp_ph1begin_i(rmconf, iph2->dst, iph2->src) == NULL) {
 			SCHED_KILL(sc);
 			return -1;
 		}
@@ -2283,6 +2283,71 @@ isakmp_post_acquire(iph2)
 
 	return 0;
 }
+
+int
+isakmp_get_sainfo(iph2, sp_out, sp_in)
+	struct ph2handle *iph2;
+	struct secpolicy *sp_out, *sp_in;
+{
+	int remoteid=0;
+
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"new acquire %s\n", spidx2str(&sp_out->spidx));
+
+	/* get sainfo */
+	{
+		vchar_t *idsrc, *iddst;
+
+		idsrc = ipsecdoi_sockaddr2id((struct sockaddr *)&sp_out->spidx.src,
+			sp_out->spidx.prefs, sp_out->spidx.ul_proto);
+		if (idsrc == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to get ID for %s\n",
+				spidx2str(&sp_out->spidx));
+			return -1;
+		}
+		iddst = ipsecdoi_sockaddr2id((struct sockaddr *)&sp_out->spidx.dst,
+			sp_out->spidx.prefd, sp_out->spidx.ul_proto);
+		if (iddst == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to get ID for %s\n",
+				spidx2str(&sp_out->spidx));
+			vfree(idsrc);
+			return -1;
+		}
+		{
+			struct remoteconf *conf;
+			conf = getrmconf(iph2->dst);
+			if (conf != NULL)
+				remoteid=conf->ph1id;
+			else{
+				plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
+				remoteid=0;
+			}
+		}
+		iph2->sainfo = getsainfo(idsrc, iddst, NULL, NULL, remoteid);
+		vfree(idsrc);
+		vfree(iddst);
+		if (iph2->sainfo == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to get sainfo.\n");
+			return -1;
+			/* XXX should use the algorithm list from register message */
+		}
+
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"selected sainfo: %s\n", sainfo2str(iph2->sainfo));
+	}
+
+	if (set_proposal_from_policy(iph2, sp_out, sp_in) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to create saprop.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 
 /*
  * receive GETSPI from kernel.
@@ -2368,12 +2433,12 @@ isakmp_chkph1there(iph2)
 		}
 	} else {
 		plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: searching byaddr.\n");
-		iph1 = getph1byaddr(iph2->src, iph2->dst);
+		iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 		if(iph1 != NULL)
 			plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: found byaddr.\n");
 	}
 #else
-	iph1 = getph1byaddr(iph2->src, iph2->dst);
+	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 #endif
 
 	/* XXX Even if ph1 as responder is there, should we not start
@@ -2540,7 +2605,7 @@ isakmp_newcookie(place, remote, local)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		alen = sizeof(struct in_addr);
+		alen = sizeof(struct in6_addr);
 		sa1 = (caddr_t)&((struct sockaddr_in6 *)remote)->sin6_addr;
 		sa2 = (caddr_t)&((struct sockaddr_in6 *)local)->sin6_addr;
 		break;
@@ -3035,9 +3100,9 @@ log_ph1established(iph1)
 		src, dst,
 		isakmp_pindex(&iph1->index, 0));
 	
-	EVT_PUSH(iph1->local, iph1->remote, EVTT_PHASE1_UP, NULL);
+	evt_phase1(iph1, EVT_PHASE1_UP, NULL);
 	if(!iph1->rmconf->mode_cfg)
-		EVT_PUSH(iph1->local, iph1->remote, EVTT_NO_ISAKMP_CFG, NULL);
+		evt_phase1(iph1, EVT_PHASE1_MODE_CFG, NULL);
 
 	racoon_free(src);
 	racoon_free(dst);
@@ -3300,7 +3365,7 @@ purge_remote(iph1)
 	iph1->status = PHASE1ST_EXPIRED;
 
 	/* Check if we have another, still valid, phase1 SA. */
-	new_iph1 = getph1byaddr(iph1->local, iph1->remote);
+	new_iph1 = getph1byaddr(iph1->local, iph1->remote, 1);
 
 	/*
 	 * Delete all orphaned or binded to the deleting ph1handle phase2 SAs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.50.8.1 2007/11/06 23:07:19 matt Exp $	*/
+/*	keyword.c,v 1.50.8.1 2007/11/06 23:07:19 matt Exp	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.50.8.1 2007/11/06 23:07:19 matt Exp $");
+__RCSID("keyword.c,v 1.50.8.1 2007/11/06 23:07:19 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -118,6 +118,7 @@ VAR var[] = {
 	VAR4("comm", "COMMAND", COMM|ARGV0|LJUST, command),
 	VAR4("command", "COMMAND", COMM|LJUST, command),
 	PVAR("cpu", "CPU", 0, p_estcpu, UINT, "u"),
+	VAR4("cpuid", "CPUID", LWP, cpuid),
 	VAR3("cputime", "time", ALIAS),
 	VAR6("ctime", "CTIME", 0, putimeval, POFF(p_uctime_sec), TIMEVAL),
 	GID("egid", "EGID", p_gid),

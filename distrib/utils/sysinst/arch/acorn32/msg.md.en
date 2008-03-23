@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.6 2003/06/12 11:20:02 dsl Exp $	*/
+/*	msg.md.en,v 1.6 2003/06/12 11:20:02 dsl Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,18 +37,12 @@
  *
  */
 
-/* arm32 machine dependent messages, english */
+/* acorn32 machine dependent messages, english */
 
 
 message md_hello
 {If you booted from a floppy, you may now remove the disk.
 
-}
-
-message fullpart
-{We are now going to install NetBSD on the disk %s.  You may
-choose to install NetBSD on the entire disk or part of the disk.
-Which would you like to do?
 }
 
 message badreadbb
@@ -74,11 +68,7 @@ message dobootblks
 message set_kernel_1
 {Kernel (GENERIC)}
 message set_kernel_2
-{Kernel (GENERIC_RPC_WSCONS)}
-message set_kernel_3 
 {Kernel (GENERIC_NC)}
-message set_kernel_4
-{Kernel (GENERIC_NC_WSCONS)}
 
 
 message arm32fspart

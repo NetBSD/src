@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -60,7 +60,7 @@ cat_file(std::ostream& os, const std::string& path)
     is.close();
 }
 
-class atf_compile : public atf::application {
+class atf_compile : public atf::application::app {
     static const char* m_description;
 
     std::string m_outfile;
@@ -82,7 +82,7 @@ const char* atf_compile::m_description =
     "POSIX shell language, generating an executable.";
 
 atf_compile::atf_compile(void) :
-    application(m_description, "atf-compile(1)")
+    app(m_description, "atf-compile(1)", "atf(7)")
 {
 }
 
@@ -97,6 +97,7 @@ atf_compile::options_set
 atf_compile::specific_options(void)
     const
 {
+    using atf::application::option;
     options_set opts;
     opts.insert(option('o', "out-file", "Name of the output file"));
     return opts;
@@ -121,7 +122,6 @@ atf_compile::compile(std::ostream& os)
     os << "#! " << atf::config::get("atf_shell") << std::endl;
     cat_file(os, atf::config::get("atf_pkgdatadir") + "/atf.init.subr");
     os << std::endl;
-    os << ". ${Atf_Pkgdatadir}/atf.config.subr" << std::endl;
     os << ". ${Atf_Pkgdatadir}/atf.header.subr" << std::endl;
     os << std::endl;
     for (int i = 0; i < m_argc; i++) {
@@ -137,10 +137,10 @@ int
 atf_compile::main(void)
 {
     if (m_argc < 1)
-        throw atf::usage_error("No test program specified");
+        throw atf::application::usage_error("No test program specified");
 
     if (m_outfile.empty())
-        throw atf::usage_error("No output file specified");
+        throw atf::application::usage_error("No output file specified");
 
     std::ofstream os(m_outfile.c_str());
     if (!os)

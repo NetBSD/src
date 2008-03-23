@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.es,v 1.1 2005/08/26 15:44:44 xtraeme Exp $	*/
+/*	menus.md.es,v 1.1 2005/08/26 15:44:44 xtraeme Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,5 +36,5 @@
  *
  */
 
-/* pmax machine dependent menus, spanish */
+/* mipsco machine dependent menus, spanish */
 

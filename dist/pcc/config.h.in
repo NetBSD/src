@@ -1,5 +1,11 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define path to alternate assembler */
+#undef ASSEMBLER
+
+/* Define path to alternate preprocessor */
+#undef COMPILER
+
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */
@@ -51,8 +57,20 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define if host is BIG endian */
+#undef HOST_BIG_ENDIAN
+
+/* Define if host is LITTLE endian */
+#undef HOST_LITTLE_ENDIAN
+
 /* lex is flex */
 #undef ISFLEX
+
+/* Define alternate standard lib directory */
+#undef LIBDIR
+
+/* Define path to alternate linker */
+#undef LINKER
 
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
@@ -78,6 +96,9 @@
 /* Minor minor version no */
 #undef PCC_MINORMINOR
 
+/* Define path to alternate preprocessor */
+#undef PREPROCESSOR
+
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.
@@ -88,6 +109,15 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Define alternate standard include directory */
+#undef STDINC
+
+/* Define if target is BIG endian */
+#undef TARGET_BIG_ENDIAN
+
+/* Define if target is LITTLE endian */
+#undef TARGET_LITTLE_ENDIAN
 
 /* Target OS */
 #undef TARGOS

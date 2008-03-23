@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk.c,v 1.3 2007/07/06 15:43:11 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_write_disk.c,v 1.8 2008/01/23 05:47:08 kientzle Exp $");
 
 #if ARCHIVE_VERSION_STAMP >= 1009000
 
@@ -50,6 +50,97 @@ static void create(struct archive_entry *ae, const char *msg)
 	    st.st_mode, archive_entry_mode(ae));
 	assert(st.st_mode == (archive_entry_mode(ae) & ~UMASK));
 }
+
+static void create_reg_file(struct archive_entry *ae, const char *msg)
+{
+	static const char data[]="abcdefghijklmnopqrstuvwxyz";
+	struct archive *ad;
+	struct stat st;
+
+	/* Write the entry to disk. */
+	assert((ad = archive_write_disk_new()) != NULL);
+	failure("%s", msg);
+	/*
+	 * A touchy API design issue: archive_write_data() does (as of
+	 * 2.4.12) enforce the entry size as a limit on the data
+	 * written to the file.  This was not enforced prior to
+	 * 2.4.12.  The change was prompted by the refined
+	 * hardlink-restore semantics introduced at that time.  In
+	 * short, libarchive needs to know whether a "hardlink entry"
+	 * is going to overwrite the contents so that it can know
+	 * whether or not to open the file for writing.  This implies
+	 * that there is a fundamental semantic difference between an
+	 * entry with a zero size and one with a non-zero size in the
+	 * case of hardlinks and treating the hardlink case
+	 * differently from the regular file case is just asking for
+	 * trouble.  So, a zero size must always mean that no data
+	 * will be accepted, which is consistent with the file size in
+	 * the entry being a maximum size.
+	 */
+	archive_entry_set_size(ae, sizeof(data));
+	assertEqualIntA(ad, 0, archive_write_header(ad, ae));
+	assertEqualInt(sizeof(data), archive_write_data(ad, data, sizeof(data)));
+	assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
+#if ARCHIVE_API_VERSION > 1
+	assertEqualInt(0, archive_write_finish(ad));
+#else
+	archive_write_finish(ad);
+#endif
+	/* Test the entries on disk. */
+	assert(0 == stat(archive_entry_pathname(ae), &st));
+	failure("st.st_mode=%o archive_entry_mode(ae)=%o",
+	    st.st_mode, archive_entry_mode(ae));
+	assertEqualInt(st.st_mode, (archive_entry_mode(ae) & ~UMASK));
+	assertEqualInt(st.st_size, sizeof(data));
+}
+
+static void create_reg_file2(struct archive_entry *ae, const char *msg)
+{
+	const int datasize = 100000;
+	char *data;
+	char *compare;
+	struct archive *ad;
+	struct stat st;
+	int i, fd;
+
+	data = malloc(datasize);
+	for (i = 0; i < datasize; i++)
+		data[i] = (char)(i % 256);
+
+	/* Write the entry to disk. */
+	assert((ad = archive_write_disk_new()) != NULL);
+	failure("%s", msg);
+	/*
+	 * See above for an explanation why this next call
+	 * is necessary.
+	 */
+	archive_entry_set_size(ae, datasize);
+	assertEqualIntA(ad, 0, archive_write_header(ad, ae));
+	for (i = 0; i < datasize - 999; i += 1000) {
+		assertEqualIntA(ad, ARCHIVE_OK,
+		    archive_write_data_block(ad, data + i, 1000, i));
+	}
+	assertEqualIntA(ad, 0, archive_write_finish_entry(ad));
+#if ARCHIVE_API_VERSION > 1
+	assertEqualInt(0, archive_write_finish(ad));
+#else
+	archive_write_finish(ad);
+#endif
+	/* Test the entries on disk. */
+	assert(0 == stat(archive_entry_pathname(ae), &st));
+	failure("st.st_mode=%o archive_entry_mode(ae)=%o",
+	    st.st_mode, archive_entry_mode(ae));
+	assertEqualInt(st.st_mode, (archive_entry_mode(ae) & ~UMASK));
+	assertEqualInt(st.st_size, i);
+
+	compare = malloc(datasize);
+	fd = open(archive_entry_pathname(ae), O_RDONLY);
+	assertEqualInt(datasize, read(fd, compare, datasize));
+	close(fd);
+	assert(memcmp(compare, data, datasize) == 0);
+	free(compare);
+	free(data);
+}
 #endif
 
 DEFINE_TEST(test_write_disk)
@@ -66,7 +157,14 @@ DEFINE_TEST(test_write_disk)
 	assert((ae = archive_entry_new()) != NULL);
 	archive_entry_copy_pathname(ae, "file");
 	archive_entry_set_mode(ae, S_IFREG | 0755);
-	create(ae, "Test creating a regular file");
+	create_reg_file(ae, "Test creating a regular file");
+	archive_entry_free(ae);
+
+	/* Another regular file. */
+	assert((ae = archive_entry_new()) != NULL);
+	archive_entry_copy_pathname(ae, "file2");
+	archive_entry_set_mode(ae, S_IFREG | 0755);
+	create_reg_file2(ae, "Test creating another regular file");
 	archive_entry_free(ae);
 
 	/* A regular file over an existing file */

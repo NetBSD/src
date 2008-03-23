@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,36 @@ mangle_fds_body()
     done
 }
 
+atf_test_case stop
+stop_head()
+{
+    atf_set "descr" "Tests that sending a stop signal to a test case does" \
+                    "not report it as failed"
+}
+stop_body()
+{
+    srcdir=$(atf_get_srcdir)
+    h_cpp=${srcdir}/h_cpp
+    h_sh=${srcdir}/h_sh
+
+    for h in ${h_cpp} ${h_sh}; do
+        ${h} -s ${srcdir} -v pidfile=$(pwd)/pid -v donefile=$(pwd)/done \
+             -r3 fork_stop 3>resout &
+        ppid=${!}
+        echo "Waiting for pid file for test program ${ppid}"
+        while test ! -f pid; do sleep 1; done
+        pid=$(cat pid)
+        echo "Test case's pid is ${pid}"
+        kill -STOP ${pid}
+        touch done
+        echo "Wrote done file"
+        kill -CONT ${pid}
+        wait ${ppid}
+        atf_check "grep 'fork_stop, passed' resout" 0 ignore null
+        rm -f pid done
+    done
+}
+
 atf_test_case umask
 umask_head()
 {
@@ -84,6 +114,7 @@ umask_body()
 atf_init_test_cases()
 {
     atf_add_test_case mangle_fds
+    atf_add_test_case stop
     atf_add_test_case umask
 }
 

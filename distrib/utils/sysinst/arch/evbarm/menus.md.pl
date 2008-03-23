@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.5 2003/06/11 21:35:41 dsl Exp $	*/
+/*	menus.md.pl,v 1.5 2003/06/11 21:35:41 dsl Exp	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2002/03/31 02:14:06 thorpej Exp */
 
@@ -39,5 +39,5 @@
  *
  */
 
-/* shark machine dependent menus, Polish */
+/* evbarm machine dependent menus, Polish */
 

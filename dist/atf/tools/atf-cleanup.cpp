@@ -41,7 +41,7 @@
 #include "atf/fs.hpp"
 #include "atf/ui.hpp"
 
-class atf_cleanup : public atf::application {
+class atf_cleanup : public atf::application::app {
     static const char* m_description;
 
     std::string specific_args(void) const;
@@ -58,7 +58,7 @@ const char* atf_cleanup::m_description =
     "recurse into them if the unmounting fails.";
 
 atf_cleanup::atf_cleanup(void) :
-    application(m_description, "atf-cleanup(1)")
+    app(m_description, "atf-cleanup(1)", "atf(7)")
 {
 }
 

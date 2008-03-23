@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.126.4.2 2008/01/09 01:27:56 matt Exp $
+.\"	contents,v 1.126.4.2 2008/01/09 01:27:56 matt Exp
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@ kernel containing code for everything supported in this release.
 This kernel runs on Vr41xx and TX3922 CPUs only.
 .\} \" hpcmips
 .\} \" !atari/mac68k/sgimips/evgppc
-.if \n[macppc]:\n[sparc]:\n[i386]:\n[amd64] \{\
+.if \n[macppc]:\n[sparc]:\n[sparc64]:\n[i386]:\n[amd64] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
 .Nx
@@ -270,7 +270,7 @@ see below.
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
 .if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[ews4800mips]:\
-\n[i386]:\n[news68k]:\n[newsmips]:\n[pc532]:\n[sparc]:\n[x68k]:\n[prep]:\
+\n[i386]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[x68k]:\n[prep]:\
 \n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
@@ -912,6 +912,28 @@ kernel, which which supports the OpenFirmware JavaStation-1, named
 .showsize 1 3
 .\}
 .el \{\
+.ie \n[sparc64] \{\
+.It Sy kern-GENERIC
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC
+kernel named
+.Pa /netbsd .
+You
+.Em must
+install this or the kern-GENERIC.MP distribution set.
+.showsize 4 8
+.It Sy kern-GENERIC.MP
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC.MP
+kernel, which will use multiple processors (if present), named
+.Pa /netbsd .
+.showsize 4 8
+.\}
+.el \{\
 .ie \n[evbppc] \{\
 .It Sy kern-WALNUT
 This set contains a
@@ -988,6 +1010,7 @@ that your system may need to boot.
 .showsize
 .\} \" !\n[xen]
 .\} \" !\n[evbppc]
+.\} \" !\n[sparc64]
 .\} \" !\n[sparc]
 .\} \" !\n[sgimips]
 .\} \" !\n[macppc]
@@ -1845,35 +1868,6 @@ This must be the third file written to the tape.
 .tag)
 .\}
 .
-.
-.if \n[pc532] \{\
-.Pp
-The initial installation process on a pc532 without a previous
-.Nx
-installation is supported by the following files:
-.(tag floppy-144.fs
-.It Pa floppy-144.fs
-A file system containing the boot loader and install kernel with
-a 2 MB root.
-.It Pa download.c
-The source for a program to download
-.Pa inst-11.fs
-into memory via the pc532
-.Tn ROM
-monitor .
-.tag)
-.Pp
-The upgrade process is supported by having a copy of a \*V kernel
-available.
-This file is:
-.(tag kern.tgz
-.It Pa kern.tgz
-Contains a kernel produced from the
-.Pa DEFAULT
-configuration file in
-.Pa pc532/conf .
-.tag)
-.\}
 .
 .if \n[sgimips] \{\
 .Pp

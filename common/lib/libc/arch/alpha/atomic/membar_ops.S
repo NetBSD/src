@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.2.4.2 2008/01/09 01:20:51 matt Exp $	*/
+/*	membar_ops.S,v 1.2.4.2 2008/01/09 01:20:51 matt Exp	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include "atomic_op_asm.h"
 
-#if defined(_KERNEL)
-
 	.text
+
+#ifdef _KERNEL
 
 /*
  * We start out with no-op versions that do nothing.  We hot-patch when
@@ -51,20 +51,12 @@ LEAF_NOPROFILE(_membar_producer, 0)
 	nop
 	END(_membar_producer)
 EXPORT(_membar_producer_end)
-ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
 
 LEAF_NOPROFILE(_membar_sync, 0)
 	RET
 	nop
 	END(_membar_sync)
 EXPORT(_membar_sync_end)
-ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
-ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
-STRONG_ALIAS(_membar_enter,_membar_sync)
-ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
-STRONG_ALIAS(_membar_exit,_membar_sync)
-ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
-STRONG_ALIAS(_membar_consumer,_membar_sync)
 
 LEAF_NOPROFILE(_membar_producer_mp, 0)
 	wmb
@@ -78,6 +70,27 @@ LEAF_NOPROFILE(_membar_sync_mp, 0)
 	END(_membar_sync_mp)
 EXPORT(_membar_sync_mp_end)
 
-#else /* _KERNEL */
+#else	/* _KERNEL */
 
-#endif /* _KERNEL */
+LEAF_NOPROFILE(_membar_producer, 0)
+	mb
+	RET
+	END(_membar_producer)
+EXPORT(_membar_producer_end)
+
+LEAF_NOPROFILE(_membar_sync, 0)
+	mb
+	RET
+	END(_membar_sync)
+EXPORT(_membar_sync_end)
+
+#endif	/* _KERNEL */
+
+ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
+ATOMIC_OP_ALIAS(membar_sync,_membar_sync)
+ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
+STRONG_ALIAS(_membar_enter,_membar_sync)
+ATOMIC_OP_ALIAS(membar_exit,_membar_sync)
+STRONG_ALIAS(_membar_exit,_membar_sync)
+ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
+STRONG_ALIAS(_membar_consumer,_membar_sync)

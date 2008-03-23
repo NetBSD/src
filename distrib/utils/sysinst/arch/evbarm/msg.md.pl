@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2004/12/28 17:56:40 joff Exp $	*/
+/*	msg.md.pl,v 1.5 2004/12/28 17:56:40 joff Exp	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -39,18 +39,12 @@
  *
  */
 
-/* shark machine dependent messages, Polish */
+/* evbarm machine dependent messages, Polish */
 
 
 message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 
-}
-
-message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac czy chcesz
-zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
-Ktora instalacje chcesz zrobic?
 }
 
 message badreadbb
