@@ -1,4 +1,4 @@
-/*	$NetBSD: tlp.c,v 1.6 2008/03/16 09:38:17 tsutsui Exp $	*/
+/*	$NetBSD: tlp.c,v 1.7 2008/03/23 17:19:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <lib/libsa/net.h>
 
 #include <mips/cpuregs.h>
+
+#include <machine/cpu.h>
 
 #include "boot.h"
 

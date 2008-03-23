@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.7 2008/03/16 10:10:43 tsutsui Exp $	*/
+/*	$NetBSD: cons.c,v 1.8 2008/03/23 17:19:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,6 +77,8 @@
  */
 
 #include <lib/libsa/stand.h>
+
+#include <machine/cpu.h>
 
 #include "boot.h"
 #include "cons.h"
