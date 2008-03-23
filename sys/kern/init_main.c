@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.344 2008/03/22 18:04:42 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.345 2008/03/23 10:39:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.344 2008/03/22 18:04:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.345 2008/03/23 10:39:52 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -372,7 +372,7 @@ main(void)
 	 * defined in kernel config, adjust the number such as we use roughly
 	 * 1.0% of memory for vnode cache (but not less than NVNODE vnodes).
 	 */
-	usevnodes = (ptoa((unsigned)physmem) / 100) / sizeof(struct vnode);
+	usevnodes = calc_cache_size(kernel_map, 1) / sizeof(vnode_t);
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
@@ -853,4 +853,23 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
+}
+
+/*
+ * calculate cache size from physmem and vm_map size.
+ */
+vaddr_t
+calc_cache_size(struct vm_map *map, int pct)
+{
+	vsize_t mapsize;
+	paddr_t t;
+
+	/* XXX should consider competing cache if any */
+	/* XXX should consider submaps */
+	mapsize = vm_map_max(map) - vm_map_min(map);
+	t = (paddr_t)physmem * pct / 100 * PAGE_SIZE;
+	if (t > mapsize) {
+		t = mapsize;
+	}
+	return t;
 }

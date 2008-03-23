@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.216 2008/03/17 21:16:03 rmind Exp $	*/
+/*	$NetBSD: systm.h,v 1.217 2008/03/23 10:39:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -59,6 +59,7 @@ struct tty;
 struct uio;
 struct vnode;
 struct vmspace;
+struct vm_map;
 
 extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
@@ -491,5 +492,7 @@ void assert_sleepable(void);
 #else /* defined(DEBUG) */
 #define	ASSERT_SLEEPABLE()	/* nothing */
 #endif /* defined(DEBUG) */
+
+vaddr_t calc_cache_size(struct vm_map *, int);
 
 #endif	/* !_SYS_SYSTM_H_ */
