@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.87 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.88 2008/03/23 19:35:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.87 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.88 2008/03/23 19:35:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1347,15 +1347,14 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 	 * This avoid triggering strict family checks in netinet/in_pcb.c et.al.
 	 */
 	if (bdom == AF_UNSPEC) {
-		file_t *fp;
 		struct socket *so;
 
 		/* getsock() will use the descriptor for us */
-		if ((error = getsock(s, &fp)) != 0)
+		if ((error = fd_getsock(s, &so)) != 0)
 			goto bad;
 
-		so = (struct socket *)fp->f_data;
 		bdom = so->so_proto->pr_domain->dom_family;
+		fd_putfile(s);
 
 		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}
@@ -1384,7 +1383,6 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 			    "sockaddr_in6 rejected",
 			    p->p_pid, p->p_comm, uid);
 			error = EINVAL;
-			fd_putfile(s);
 			goto bad;
 		}
 		salen = sizeof (struct sockaddr_in6);
@@ -1409,7 +1407,6 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 #endif
 
 	*mp = m;
-	fd_putfile(s);
 	return 0;
 
     bad:
