@@ -1,4 +1,4 @@
-/*	$NetBSD: less.h,v 1.8 2006/10/26 01:33:08 mrg Exp $	*/
+/*	less.h,v 1.8 2006/10/26 01:33:08 mrg Exp	*/
 
 /*
  * Copyright (C) 1984-2005  Mark Nudelman
@@ -280,7 +280,7 @@ struct scrpos
 
 typedef union parg
 {
-	char *p_string;
+	constant char *p_string;
 	int p_int;
 	LINENUM p_linenum;
 } PARG;

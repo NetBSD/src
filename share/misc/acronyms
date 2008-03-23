@@ -1,5 +1,4 @@
-$NetBSD: acronyms,v 1.169.2.2 2008/01/09 01:39:24 matt Exp $
-
+acronyms,v 1.169.2.2 2008/01/09 01:39:24 matt Exp
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -43,6 +42,7 @@ BS	bullshit
 BTDT	been there, done that
 BTTH	boot to the head
 BTW	by the way
+CFV	call for votes
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
@@ -105,6 +105,7 @@ IANAL	I am not a lawyer
 IC	I see
 ICBW	I could be wrong
 ICCL	I couldn't care less
+IDK	I don't know
 IHAFC	I haven't a fucking clue
 IHBW	I have been wrong
 IHNFC	I have no fucking clue
@@ -158,6 +159,7 @@ NBD	no big deal
 NFC	no fucking clue
 NFI	no fucking idea
 NFW	no fucking way
+NIFOC	naked in front of computer
 NIH	not invented here
 NMF	not my fault
 NMP	not my problem
@@ -167,6 +169,7 @@ NP	no problem
 NRFPT	not ready for prime time
 NRN	no reply necessary
 NSFW	not suitable for work
+NVM	never mind
 OIC	oh, I see
 OMG	oh, my god
 OMW	on my way
@@ -179,6 +182,7 @@ PDQ	pretty darn quick
 PEBKAC	problem exists between keyboard and chair
 PFO	please fuck off
 PFY	pimply faced youth
+PHB	pointy haired boss
 PITA	pain in the ass
 PKSP	pound keys and spew profanity
 PNG	persona non grata
@@ -191,6 +195,8 @@ PPL	pretty please
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 RFC	request for comments
+RFD	request for discussion
+RFE	request for enhancements
 RIP	rest in peace
 RL	real life
 RLC	rod length check

@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.5.4.2 2008/01/09 02:01:55 matt Exp $ */
+/* btconfig.c,v 1.5.4.2 2008/01/09 02:01:55 matt Exp */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.5.4.2 2008/01/09 02:01:55 matt Exp $");
+__RCSID("btconfig.c,v 1.5.4.2 2008/01/09 02:01:55 matt Exp");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -649,6 +649,7 @@ print_info(int level)
 	case HCI_SPEC_V11:	printf("1.0b\n");	break;
 	case HCI_SPEC_V12:	printf("1.2\n");	break;
 	case HCI_SPEC_V20:	printf("2.0\n");	break;
+	case HCI_SPEC_V21:	printf("2.1\n");	break;
 	default:		printf("unknown\n");	break;
 	}
 
@@ -817,6 +818,8 @@ print_features(const char *str, uint8_t *f)
 
 	/* ------------------- byte 5 --------------------*/
 	if (*f & HCI_LMP_5SLOT_EDR_ACL)	    tag("<5 slot EDR ACL>");
+	if (*f & HCI_LMP_SNIFF_SUBRATING)   tag("<sniff subrating>");
+	if (*f & HCI_LMP_PAUSE_ENCRYPTION)  tag("<pause encryption>");
 	if (*f & HCI_LMP_AFH_CAPABLE_MASTER)tag("<AFH capable master>");
 	if (*f & HCI_LMP_AFH_CLASS_MASTER)  tag("<AFH class master>");
 	if (*f & HCI_LMP_EDR_eSCO_2MBPS)    tag("<EDR eSCO 2Mbps>");
@@ -825,9 +828,16 @@ print_features(const char *str, uint8_t *f)
 	f++;
 
 	/* ------------------- byte 6 --------------------*/
+	if (*f & HCI_LMP_EXTENDED_INQUIRY)  tag("<extended inquiry>");
+	if (*f & HCI_LMP_SIMPLE_PAIRING)    tag("<secure simple pairing>");
+	if (*f & HCI_LMP_ENCAPSULATED_PDU)  tag("<encapsulated PDU>");
+	if (*f & HCI_LMP_ERRDATA_REPORTING) tag("<errdata reporting>");
+	if (*f & HCI_LMP_NOFLUSH_PB_FLAG)   tag("<no flush PB flag>");
 	f++;
 
 	/* ------------------- byte 7 --------------------*/
+	if (*f & HCI_LMP_LINK_SUPERVISION_TO)tag("<link supervision timeout changed>");
+	if (*f & HCI_LMP_INQ_RSP_TX_POWER)  tag("<inquiry rsp TX power level>");
 	if (*f & HCI_LMP_EXTENDED_FEATURES) tag("<extended features>");
 
 	tag(NULL);
@@ -1005,10 +1015,6 @@ print_result(int num, struct result *r, int rssi)
 {
 	hci_remote_name_req_cp ncp;
 	hci_remote_name_req_compl_ep nep;
-#if 0
-	hci_read_remote_features_cp fcp;
-	hci_read_remote_features_compl_ep fep;
-#endif
 	struct hostent *hp;
 
 	printf("%3d: bdaddr %s",
@@ -1035,15 +1041,6 @@ print_result(int num, struct result *r, int rssi)
 
 	class = (r->uclass[2] << 16) | (r->uclass[1] << 8) | (r->uclass[0]);
 	print_class("   : ");
-
-#if 0
-	hci_req(HCI_CMD_READ_REMOTE_FEATURES,
-		HCI_EVENT_READ_REMOTE_FEATURES_COMPL,
-		&fcp, sizeof(fcp),
-		&fep, sizeof(fep));
-
-	print_features("   : features", fep.features);
-#endif
 
 	printf("   : page scan rep mode 0x%02x\n", r->page_scan_rep_mode);
 	printf("   : clock offset %d\n", le16toh(r->clock_offset));

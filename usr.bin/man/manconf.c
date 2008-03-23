@@ -1,4 +1,4 @@
-/*	$NetBSD: manconf.c,v 1.5 2006/04/10 14:39:06 chuck Exp $	*/
+/*	manconf.c,v 1.5 2006/04/10 14:39:06 chuck Exp	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: manconf.c,v 1.5 2006/04/10 14:39:06 chuck Exp $");
+__RCSID("manconf.c,v 1.5 2006/04/10 14:39:06 chuck Exp");
 #endif
 #endif /* not lint */
 
@@ -77,11 +77,11 @@ xstrdup(const char *str, size_t *lenp)
 	len = strlen(str) + 1;
 	copy = malloc(len);
 	if (!copy)
-		return(NULL);
-	memcpy(copy, str, len);
+		return NULL;
+	(void)memcpy(copy, str, len);
 	if (lenp)
 		*lenp = len - 1;	/* subtract out the null */
-	return(copy);
+	return copy;
 }
 
 /*
@@ -108,7 +108,7 @@ config(const char *fname)
 	if (fname == NULL)
 		fname = _PATH_MANCONF;
 	if ((cfp = fopen(fname, "r")) == NULL)
-		err(1, "%s", fname);
+		err(EXIT_FAILURE, "%s", fname);
 	TAILQ_INIT(&head);
 	for (lcnt = 1; (p = fgetln(cfp, &len)) != NULL; ++lcnt) {
 		if (len == 1)			/* Skip empty lines. */
@@ -120,19 +120,21 @@ config(const char *fname)
 		p[len - 1] = '\0';		/* Terminate the line. */
 
 						/* Skip leading space. */
-		for (; *p != '\0' && isspace((unsigned char)*p); ++p);
+		for (/*EMPTY*/; *p != '\0' && isspace((unsigned char)*p); ++p)
+			continue;
 						/* Skip empty/comment lines. */
 		if (*p == '\0' || *p == '#')
 			continue;
 						/* Find first token. */
-		for (t = p; *t && !isspace((unsigned char)*t); ++t);
+		for (t = p; *t && !isspace((unsigned char)*t); ++t)
+			continue;
 		if (*t == '\0')			/* Need more than one token.*/
 			continue;
 		*t = '\0';
 
 		tp = gettag(p, 1);
 		if (!tp)
-			errx(1, "gettag: malloc failed");
+			errx(EXIT_FAILURE, "gettag: malloc failed");
 
 		/*
 		 * Attach new records. Check to see if it is a
@@ -141,7 +143,7 @@ config(const char *fname)
 
 		if (*p == '_') {		/* not a section record */
 			/*
-			 * Special cases: _build and _crunch take the 
+			 * Special cases: _build and _crunch take the
 			 * rest of the line as a single entry.
 			 */
 			if (!strcmp(p, "_build") || !strcmp(p, "_crunch")) {
@@ -152,17 +154,18 @@ config(const char *fname)
 				 * has only a single token on it.
 				 */
 				while (*++t && isspace((unsigned char)*t));
-				if (addentry(tp, t, 0) < 0)
-					errx(1, "addentry: malloc failed");
+				if (addentry(tp, t, 0) == -1)
+					errx(EXIT_FAILURE,
+					    "addentry: malloc failed");
 			} else {
-				for(++t; (p = strtok(t, " \t\n")) != NULL;
-					t = NULL) {
-					if (addentry(tp, p, 0) < 0)
-						errx(1, 
+				for (++t; (p = strtok(t, " \t\n")) != NULL;
+				     t = NULL) {
+					if (addentry(tp, p, 0) == -1)
+						errx(EXIT_FAILURE,
 						   "addentry: malloc failed");
 				}
 			}
-				
+
 		} else {			/* section record */
 
 			/*
@@ -170,14 +173,14 @@ config(const char *fname)
 			 * paths or all relative paths, but not both.
 			 */
 			type = (TAILQ_FIRST(&tp->entrylist) != NULL) ?
-			  *(TAILQ_FIRST(&tp->entrylist)->s) : 0;
+			    *(TAILQ_FIRST(&tp->entrylist)->s) : 0;
 
 			for (++t; (p = strtok(t, " \t\n")) != NULL; t = NULL) {
 
 				/* ensure an assigned type */
 				if (type == 0)
 					type = *p;
-				
+
 				/* check for illegal mix */
 				if (*p != type) {
 	warnx("section %s: %s: invalid entry, does not match previous types",
@@ -185,19 +188,19 @@ config(const char *fname)
 	warnx("man.conf cannot mix absolute and relative paths in an entry");
 					continue;
 				}
-				if (addentry(tp, p, 0) < 0)
-					errx(1, "addentry: malloc failed");
+				if (addentry(tp, p, 0) == -1)
+					errx(EXIT_FAILURE,
+					    "addentry: malloc failed");
 			}
 		}
 	}
-
-	fclose(cfp);
+	(void)fclose(cfp);
 }
 
 /*
  * gettag --
  *	if (!create) return tag for given name if it exists, or NULL otherwise
- * 
+ *
  *	if (create) return tag for given name if it exists, try and create
  *	a new tag if it does not exist.  return NULL if unable to create new
  *	tag.
@@ -209,9 +212,9 @@ gettag(const char *name, int create)
 
 	TAILQ_FOREACH(tp, &head, q)
 		if (!strcmp(name, tp->s))
-			return (tp);
+			return tp;
 	if (!create)
-		return(NULL);
+		return NULL;
 
 	/* try and add it in */
 	tp = malloc(sizeof(*tp));
@@ -220,20 +223,20 @@ gettag(const char *name, int create)
 	if (!tp || !tp->s) {
 		if (tp)
 			free(tp);
-		return(NULL);
+		return NULL;
 	}
 	TAILQ_INIT(&tp->entrylist);
 	TAILQ_INSERT_TAIL(&head, tp, q);
-	return (tp);
+	return tp;
 }
 
 /*
  * addentry --
- *	add an entry to a list.   
+ *	add an entry to a list.
  *	returns -1 if malloc failed, otherwise 0.
  */
 int
-addentry(TAG *tp, const char *newent, int head)
+addentry(TAG *tp, const char *newent, int ishead)
 {
 	ENTRY *ep;
 
@@ -243,13 +246,12 @@ addentry(TAG *tp, const char *newent, int head)
 	if (!ep || !ep->s) {
 		if (ep)
 			free(ep);
-		return(-1);
+		return -1;
 	}
-
-	if (head)
+	if (ishead)
 		TAILQ_INSERT_HEAD(&tp->entrylist, ep, q);
 	else
 		TAILQ_INSERT_TAIL(&tp->entrylist, ep, q);
 
-	return(0);
+	return 0;
 }

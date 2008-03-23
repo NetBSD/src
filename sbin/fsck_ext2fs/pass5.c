@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.13.10.1 2008/01/09 01:38:04 matt Exp $	*/
+/*	pass5.c,v 1.13.10.1 2008/01/09 01:38:04 matt Exp	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.13.10.1 2008/01/09 01:38:04 matt Exp $");
+__RCSID("pass5.c,v 1.13.10.1 2008/01/09 01:38:04 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ pass5(void)
 	ibmap = malloc(fs->e2fs_bsize);
 	bbmap = malloc(fs->e2fs_bsize);
 	if (ibmap == NULL || bbmap == NULL) {
-		errexit("out of memory\n");
+		errexit("out of memory");
 	}
 
 	for (c = 0; c < fs->e2fs_ncg; c++) {
@@ -167,7 +167,7 @@ pass5(void)
 				break;
 
 			default:
-				errexit("BAD STATE %d FOR INODE I=%ld\n",
+				errexit("BAD STATE %d FOR INODE I=%ld",
 				    statemap[j], j);
 			}
 		}

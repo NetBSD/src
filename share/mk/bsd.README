@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.196.4.2 2008/01/09 01:39:25 matt Exp $
+#	bsd.README,v 1.196.4.2 2008/01/09 01:39:25 matt Exp
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -141,11 +141,12 @@ MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		install the shared linker into /libexec.
 		Default: yes
 
-MKGCC		If "no", don't build gcc(1) or any of the gcc-related
+MKGCC		If "no", don't build gcc(1) or any of the GCC-related
 		libraries (libgcc, libobjc, libstdc++).
 		Default: yes
 
-MKGCCCMDS	If "no", don't build gcc(1).
+MKGCCCMDS	If "no", don't build gcc(1), but do build the GCC-related
+		libraries (libgcc, libobjc, libstdc++).
 		Default: yes
 
 MKGDB		If "no", don't build gdb(1).
@@ -205,6 +206,17 @@ MKMAN		If "no", don't build or install the man or catman pages,
 		Default: yes
 
 MKMANZ		If not "no", compress manual pages at installation time.
+		Default: no
+
+MKMODULAR	If "no", don't build the versions of modload(8), modstat(8)
+		and modunload(8) that use the new modules framework present
+		in the kernel (enabled separately using 'options MODULAR'
+		int the configuration file).  Also don't build any other
+		stuff that may rely on this support, such as tests or kernel
+		modules.
+		Note: This flag will disappear when the new modules framework
+		is complete enough to replace the old LKM, effectively
+		switching it to "yes" by default.
 		Default: no
 
 MKNLS		If "no", don't build or install the NLS files and locale
@@ -323,7 +335,7 @@ USE_SKEY	If "no", disables building S/key authentication
 		support it.  If ${MKSKEY} is "no", USE_SKEY will
 		also be forced to "no".
 
-USE_SSP		If "no", disables gcc stack protection code, which
+USE_SSP		If "no", disables GCC stack protection code, which
 		detects stack overflows and aborts the program. This
 		imposes some performance penalty.
 		Default: no
@@ -517,8 +529,7 @@ USETOOLS	Indicates whether the tools specified by ${TOOLDIR} should
 		make(1) include files).
 
 OBJECT_FMT	Object file format.  [set to "ELF" on architectures that
-		use ELF -- currently all architectures but ns32k, set to
-		"a.out" on ns32k].
+		use ELF -- currently all architectures].
 
 TOOLCHAIN_MISSING
 		If not "no", this indicates that the platform being built
@@ -599,7 +610,7 @@ FILESGRP_<fn>	File group of the specific file <fn>.
 
 FILESMODE_<fn>	File mode of the specific file <fn>.
 
-FILESDIR_<fn>	The location to install the specific file <fn>>
+FILESDIR_<fn>	The location to install the specific file <fn>.
 
 FILESNAME_<fn>	Optional name to install <fn> as.
 
@@ -614,7 +625,8 @@ UUDECODE_FILES	List of files which are stored as <file>.uue in the source
 		The source files have a `.uue' suffix, the generated files do 
 		not.
 
-UUDECODE_FILES_RENAME_fn Rename the output from the decode to the provided name.
+UUDECODE_FILES_RENAME_<fn>
+		Rename the output from the decode to the provided name.
 		
 		*NOTE: These files are simply decoded, with no install or other
 		       rule applying implicitly except being added to the clean

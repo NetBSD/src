@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.11.4.1 2008/01/09 02:02:29 matt Exp $	*/
+/*	services_mkdb.c,v 1.11.4.1 2008/01/09 02:02:29 matt Exp	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.11.4.1 2008/01/09 02:02:29 matt Exp $");
+__RCSID("services_mkdb.c,v 1.11.4.1 2008/01/09 02:02:29 matt Exp");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -391,6 +391,7 @@ mkaliases(StringList *sl, char *buf, size_t len)
 {
 	size_t nc, i, pos;
 
+	buf[0] = 0;
 	for (i = 1, pos = 0; i < sl->sl_cur; i++) {
 		nc = strlcpy(buf + pos, sl->sl_str[i], len);
 		if (nc >= len)

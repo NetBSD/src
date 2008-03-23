@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.3 2006/01/05 10:46:21 bouyer Exp $
+.\" gpio.4,v 1.3 2006/01/05 10:46:21 bouyer Exp
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -15,16 +15,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 5, 2006
+.Dd January 9, 2008
 .Dt GPIO 4
 .Os
 .Sh NAME
 .Nm gpio
 .Nd General Purpose Input/Output
 .Sh SYNOPSIS
-.Cd "gpio* at nsclpcsio?"
-.Cd "gpio* at gscpcib?"
 .Cd "gpio* at elansc?"
+.Cd "gpio* at gcscpcib?"
+.Cd "gpio* at gscpcib?"
+.Cd "gpio* at nsclpcsio?"
 .Pp
 .In sys/types.h
 .In sys/gpio.h
@@ -129,6 +130,12 @@ push-pull output
 output disabled
 .It Dv GPIO_PIN_PULLUP
 internal pull-up enabled
+.It Dv GPIO_PIN_PULLDOWN
+internal pull-down enabled
+.It Dv GPIO_PIN_INVIN
+invert input
+.It Dv GPIO_PIN_INVOUT
+invert output
 .El
 .Pp
 Note that the
@@ -149,9 +156,6 @@ file.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr elansc 4 ,
-.Xr gscpcib 4 ,
-.Xr nsclpcsio 4 ,
 .Xr gpioctl 8
 .Sh HISTORY
 The

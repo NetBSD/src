@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.84.2.1 2008/01/09 01:39:25 matt Exp $
+#	bsd.kmod.mk,v 1.84.2.1 2008/01/09 01:39:25 matt Exp
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -24,8 +24,10 @@ DPSRCS+=	${_YKMSRCS}
 CLEANFILES+=	${_YKMSRCS}
 CLEANFILES+=	tmp.o
 
-.if ${MACHINE_CPU} == "powerpc" || \
-      ${MACHINE_CPU} == "arm"
+.if \
+    ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "hppa" || \
+    ${MACHINE_CPU} == "powerpc"
 CLEANFILES+=	${KMOD}_tramp.o ${KMOD}_tramp.S tmp.S ${KMOD}_tmp.o
 .endif
 
@@ -38,8 +40,10 @@ realall:	${PROG}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
 
-.if ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_CPU} == "arm"
+.if \
+    ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "hppa" || \
+    ${MACHINE_CPU} == "powerpc"
 ${KMOD}_tmp.o: ${OBJS} ${DPADD}
 	${_MKTARGET_COMPILE}
 	${LD} -r -o tmp.o ${OBJS}
@@ -53,7 +57,7 @@ ${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk
 
 ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${_MKTARGET_LINK}
-	${LD} -e ${KMOD}_lkmentry -r \
+	${LD} -r \
 		`${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
 			 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmwrap.awk` \
 		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
@@ -67,7 +71,7 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 .else
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
-	${LD} -e ${KMOD}_lkmentry -r -o tmp.o ${OBJS}
+	${LD} -r -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
 .endif
 

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.68.2.1 2008/01/09 01:39:24 matt Exp $
+.\"     vnodeops.9,v 1.68.2.1 2008/01/09 01:39:24 matt Exp
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 26, 2007
+.Dd January 19, 2008
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -303,18 +303,17 @@ struct componentname {
         /*
          * Arguments to lookup.
          */
-        u_long  cn_nameiop;     /* namei operation */
-        u_long  cn_flags;       /* flags to namei */
-        struct  lwp *cn_lwp;    /* lwp requesting lookup */
+        uint32_t cn_nameiop;    /* namei operation */
+        uint32_t cn_flags;      /* flags to namei */
         kauth_cred_t cn_cred;   /* credentials */
         /*
          * Shared between lookup and commit routines.
          */
         char    *cn_pnbuf;      /* pathname buffer */
         const char *cn_nameptr; /* pointer to looked up name */
-        long    cn_namelen;     /* length of looked up component */
+        size_t  cn_namelen;     /* length of looked up component */
         u_long  cn_hash;        /* hash value of looked up name */
-        long    cn_consume;     /* chars to consume in lookup() */
+        size_t  cn_consume;     /* chars to consume in lookup() */
 };
 .Ed
 .Pp
@@ -991,23 +990,11 @@ appropriate error code is returned.
 The directory should be locked on entry and will remain locked on
 return.
 .Pp
-If
-.Fn VOP_READDIR
-is called from the NFS server, the extra arguments
-.Fa eofflag ,
+In case
 .Fa ncookies
 and
 .Fa cookies
-are used.
-The value of
-.Fa *eofflag
-will be set to
-.Dv true
-if the end of the directory is reached while
-reading.
-The directory seek cookies are returned to the NFS client and may be
-used later to restart a directory read part way through the directory.
-There should be one cookie returned per directory entry.
+are supplied, one cookie should be returned per directory entry.
 The value of the cookie for each directory entry should be the offset
 within the directory where the on-disk version of the following
 directory entry starts.
@@ -1038,8 +1025,13 @@ code is returned.
 The vnode should be locked on entry and will remain locked on return.
 .It Fn VOP_ABORTOP "dvp" "cnp"
 Abort pending operation on vnode
-.Fa dvp .
-This operation is rarely implemented in file systems.
+.Fa dvp
+and free resources allocated in
+.Fa cnp .
+.Pp
+This operation is rarely implemented in file systems and
+.Fn genfs_abortop
+is typically used instead.
 .It Fn VOP_INACTIVE "vp"
 Release the inactive vnode.
 .Fn VOP_INACTIVE
@@ -1117,6 +1109,10 @@ Convert the logical block number
 of a file specified by vnode
 .Fa vp
 to its physical block number on the disk.
+The physical block is returned in
+.Fa bnp .
+In case the logical block is not allocated, \-1 is used.
+.Pp
 If
 .Fa vpp
 is not

@@ -1,4 +1,4 @@
-/*	$NetBSD: yppush.c,v 1.19 2004/10/30 16:01:48 dsl Exp $	*/
+/*	yppush.c,v 1.19 2004/10/30 16:01:48 dsl Exp	*/
 
 /*
  *
@@ -45,7 +45,6 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -175,7 +174,7 @@ main(int argc, char *argv[])
          * now open the database so we can extract "order number"
          * (i.e. timestamp) of the map.
          */
-	ypdb = ypdb_open(ypi.map, 0, O_RDONLY);
+	ypdb = ypdb_open(ypi.map);
 	if (ypdb == NULL)
 		err(1, "ypdb_open %s/%s/%s", YP_DB_PATH, ypi.ourdomain,
 		    ypi.map);

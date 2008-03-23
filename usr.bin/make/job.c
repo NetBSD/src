@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.124.8.2 2008/01/09 02:00:47 matt Exp $	*/
+/*	job.c,v 1.124.8.2 2008/01/09 02:00:47 matt Exp	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.124.8.2 2008/01/09 02:00:47 matt Exp $";
+static char rcsid[] = "job.c,v 1.124.8.2 2008/01/09 02:00:47 matt Exp";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.124.8.2 2008/01/09 02:00:47 matt Exp $");
+__RCSID("job.c,v 1.124.8.2 2008/01/09 02:00:47 matt Exp");
 #endif
 #endif /* not lint */
 #endif
@@ -710,7 +710,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     while (*cmd == '@' || *cmd == '-' || (*cmd == '+')) {
 	switch (*cmd) {
 	case '@':
-	    shutUp = TRUE;
+	    shutUp = DEBUG(LOUD) ? FALSE : TRUE;
 	    break;
 	case '-':
 	    errOff = TRUE;
