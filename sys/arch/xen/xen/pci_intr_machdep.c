@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.2 2006/09/28 18:53:16 bouyer Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.2.2.1 2008/03/23 10:26:05 jdc Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.2.2.1 2008/03/23 10:26:05 jdc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
