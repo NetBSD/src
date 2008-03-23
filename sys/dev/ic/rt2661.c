@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.16.2.2 2008/01/09 01:52:59 matt Exp $	*/
+/*	rt2661.c,v 1.16.2.2 2008/01/09 01:52:59 matt Exp	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.16.2.2 2008/01/09 01:52:59 matt Exp $");
+__KERNEL_RCSID(0, "rt2661.c,v 1.16.2.2 2008/01/09 01:52:59 matt Exp");
 
 #include "bpfilter.h"
 
@@ -1229,6 +1229,8 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 				panic("%s: could not load old rx mbuf",
 				    sc->sc_dev.dv_xname);
 			}
+			/* physical address may have changed */
+			desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 			ifp->if_ierrors++;
 			goto skip;
 		}
@@ -1336,19 +1338,22 @@ rt2661_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_if;
 	uint32_t r1, r2;
 
+	r1 = RAL_READ(sc, RT2661_INT_SOURCE_CSR);
+	r2 = RAL_READ(sc, RT2661_MCU_INT_SOURCE_CSR);
+	if (r1 == 0 && r2 == 0)
+		return 0;	/* not for us */
+
 	/* disable MAC and MCU interrupts */
 	RAL_WRITE(sc, RT2661_INT_MASK_CSR, 0xffffff7f);
 	RAL_WRITE(sc, RT2661_MCU_INT_MASK_CSR, 0xffffffff);
 
+	/* acknowledge interrupts */
+	RAL_WRITE(sc, RT2661_INT_SOURCE_CSR, r1);
+	RAL_WRITE(sc, RT2661_MCU_INT_SOURCE_CSR, r2);
+
 	/* don't re-enable interrupts if we're shutting down */
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return 0;
-
-	r1 = RAL_READ(sc, RT2661_INT_SOURCE_CSR);
-	RAL_WRITE(sc, RT2661_INT_SOURCE_CSR, r1);
-
-	r2 = RAL_READ(sc, RT2661_MCU_INT_SOURCE_CSR);
-	RAL_WRITE(sc, RT2661_MCU_INT_SOURCE_CSR, r2);
 
 	if (r1 & RT2661_MGT_DONE)
 		rt2661_tx_dma_intr(sc, &sc->mgtq);
@@ -2080,7 +2085,9 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = ieee80211_ioctl(ic, cmd, data);
 		if (error == ENETRESET &&
 		    ic->ic_opmode == IEEE80211_M_MONITOR) {
-			rt2661_set_chan(sc, ic->ic_ibss_chan);
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			     (IFF_UP | IFF_RUNNING))
+				rt2661_set_chan(sc, ic->ic_ibss_chan);
 			error = 0;
 		}
 		break;

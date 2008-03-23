@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.28.6.2 2008/01/09 01:55:40 matt Exp $	*/
+/*	cd9660_vnops.c,v 1.28.6.2 2008/01/09 01:55:40 matt Exp	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.28.6.2 2008/01/09 01:55:40 matt Exp $");
+__KERNEL_RCSID(0, "cd9660_vnops.c,v 1.28.6.2 2008/01/09 01:55:40 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,7 @@ int	iso_shipdir(struct isoreaddir *);
  * super user is granted all permissions.
  */
 int
-cd9660_access(v)
-	void *v;
+cd9660_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -122,8 +121,7 @@ cd9660_access(v)
 }
 
 int
-cd9660_getattr(v)
-	void *v;
+cd9660_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -181,8 +179,7 @@ cd9660_getattr(v)
  * Vnode op for reading.
  */
 int
-cd9660_read(v)
-	void *v;
+cd9660_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -265,10 +262,7 @@ out:
 }
 
 int
-iso_uiodir(idp, dp, off)
-	struct isoreaddir *idp;
-	struct dirent *dp;
-	off_t off;
+iso_uiodir(struct isoreaddir *idp, struct dirent *dp, off_t off)
 {
 	int error;
 
@@ -297,8 +291,7 @@ iso_uiodir(idp, dp, off)
 }
 
 int
-iso_shipdir(idp)
-	struct isoreaddir *idp;
+iso_shipdir(struct isoreaddir *idp)
 {
 	struct dirent *dp;
 	int cl, sl, assoc;
@@ -354,8 +347,7 @@ iso_shipdir(idp)
  * Vnode op for readdir
  */
 int
-cd9660_readdir(v)
-	void *v;
+cd9660_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -558,9 +550,9 @@ cd9660_readdir(v)
 typedef struct iso_directory_record ISODIR;
 typedef struct iso_node             ISONODE;
 typedef struct iso_mnt              ISOMNT;
+
 int
-cd9660_readlink(v)
-	void *v;
+cd9660_readlink(void *v)
 {
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
@@ -653,8 +645,7 @@ cd9660_readlink(v)
 }
 
 int
-cd9660_link(v)
-	void *v;
+cd9660_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -668,8 +659,7 @@ cd9660_link(v)
 }
 
 int
-cd9660_symlink(v)
-	void *v;
+cd9660_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -689,8 +679,7 @@ cd9660_symlink(v)
  * then call the device strategy routine.
  */
 int
-cd9660_strategy(v)
-	void *v;
+cd9660_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -738,8 +727,7 @@ cd9660_print(void *v)
  * Return POSIX pathconf information applicable to cd9660 filesystems.
  */
 int
-cd9660_pathconf(v)
-	void *v;
+cd9660_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -784,8 +772,7 @@ cd9660_pathconf(v)
  * Allow changing the size for special files (and fifos).
  */
 int
-cd9660_setattr(v)
-	void *v;
+cd9660_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnodeop_desc *a_desc;
@@ -831,7 +818,6 @@ cd9660_setattr(v)
 #define	cd9660_create	genfs_eopnotsupp
 #define	cd9660_mknod	genfs_eopnotsupp
 #define	cd9660_write	genfs_eopnotsupp
-#define	cd9660_lease_check	genfs_lease_check
 #define	cd9660_fsync	genfs_nullop
 #define	cd9660_remove	genfs_eopnotsupp
 #define	cd9660_rename	genfs_eopnotsupp
@@ -857,7 +843,6 @@ const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, cd9660_read },		/* read */
 	{ &vop_write_desc, cd9660_write },		/* write */
-	{ &vop_lease_desc, cd9660_lease_check },	/* lease */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, cd9660_ioctl },		/* ioctl */
 	{ &vop_poll_desc, cd9660_poll },		/* poll */
@@ -908,7 +893,6 @@ const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
-	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -957,7 +941,6 @@ const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_setattr_desc, cd9660_setattr },		/* setattr */
 	{ &vop_read_desc, fifo_read },			/* read */
 	{ &vop_write_desc, fifo_write },		/* write */
-	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */

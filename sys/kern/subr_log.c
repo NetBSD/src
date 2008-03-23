@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.41.8.2 2008/01/09 01:56:17 matt Exp $	*/
+/*	subr_log.c,v 1.41.8.2 2008/01/09 01:56:17 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.41.8.2 2008/01/09 01:56:17 matt Exp $");
+__KERNEL_RCSID(0, "subr_log.c,v 1.41.8.2 2008/01/09 01:56:17 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,7 @@ logwakeup(void)
 
 	if (!cold && log_open) {
 		mutex_spin_enter(&log_lock);
-		selnotify(&log_selp, NOTE_SUBMIT);
+		selnotify(&log_selp, 0, NOTE_SUBMIT);
 		if (log_async)
 			softint_schedule(log_sih);
 		cv_broadcast(&log_cv);

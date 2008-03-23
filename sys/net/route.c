@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.95.6.2 2008/01/09 01:57:15 matt Exp $	*/
+/*	route.c,v 1.95.6.2 2008/01/09 01:57:15 matt Exp	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.95.6.2 2008/01/09 01:57:15 matt Exp $");
+__KERNEL_RCSID(0, "route.c,v 1.95.6.2 2008/01/09 01:57:15 matt Exp");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -236,9 +236,7 @@ route_init(void)
 void
 rtflushall(int family)
 {
-	int s;
 	struct domain *dom;
-	struct route *ro;
 
 	if (rtcache_debug())
 		printf("%s: enter\n", __func__);
@@ -246,29 +244,22 @@ rtflushall(int family)
 	if ((dom = pffinddomain(family)) == NULL)
 		return;
 
-	s = splnet();
-	while ((ro = LIST_FIRST(&dom->dom_rtcache)) != NULL) {
-		KASSERT(ro->_ro_rt != NULL);
-		rtcache_clear(ro);
-	}
-	splx(s);
+	rtcache_invalidate(&dom->dom_rtcache);
 }
 
 void
 rtcache(struct route *ro)
 {
-	int s;
 	struct domain *dom;
 
 	KASSERT(ro->_ro_rt != NULL);
+	KASSERT(ro->ro_invalid == false);
 	KASSERT(rtcache_getdst(ro) != NULL);
 
 	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) == NULL)
 		return;
 
-	s = splnet();
 	LIST_INSERT_HEAD(&dom->dom_rtcache, ro, ro_rtcache_next);
-	splx(s);
 }
 
 /*
@@ -1154,64 +1145,85 @@ rt_timer_timer(void *arg)
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 }
 
-static void
+static struct rtentry *
 _rtcache_init(struct route *ro, int flag)
 {
 	KASSERT(ro->_ro_rt == NULL);
 
 	if (rtcache_getdst(ro) == NULL)
-		return;
-	ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag);
-	if (ro->_ro_rt != NULL) {
+		return NULL;
+	ro->ro_invalid = false;
+	if ((ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag)) != NULL)
 		rtcache(ro);
-	}
+
+	return ro->_ro_rt;
 }
 
-void
+struct rtentry *
 rtcache_init(struct route *ro)
 {
-	_rtcache_init(ro, 1);
+	return _rtcache_init(ro, 1);
 }
 
-void
+struct rtentry *
 rtcache_init_noclone(struct route *ro)
 {
-	_rtcache_init(ro, 0);
+	return _rtcache_init(ro, 0);
 }
 
-void
+struct rtentry *
 rtcache_update(struct route *ro, int clone)
 {
 	rtcache_clear(ro);
-	_rtcache_init(ro, clone);
+	return _rtcache_init(ro, clone);
 }
 
 void
 rtcache_copy(struct route *new_ro, const struct route *old_ro)
 {
+	struct rtentry *rt;
+
+	KASSERT(new_ro != old_ro);
+
+	if ((rt = rtcache_validate(old_ro)) != NULL)
+		rt->rt_refcnt++;
+
 	if (rtcache_getdst(old_ro) == NULL ||
 	    rtcache_setdst(new_ro, rtcache_getdst(old_ro)) != 0)
 		return;
-	new_ro->_ro_rt = old_ro->_ro_rt;
-	if (new_ro->_ro_rt != NULL) {
+
+	new_ro->ro_invalid = false;
+	if ((new_ro->_ro_rt = rt) != NULL)
 		rtcache(new_ro);
-		++new_ro->_ro_rt->rt_refcnt;
+}
+
+static struct dom_rtlist invalid_routes = LIST_HEAD_INITIALIZER(dom_rtlist);
+
+void
+rtcache_invalidate(struct dom_rtlist *rtlist)
+{
+	struct route *ro;
+
+	while ((ro = LIST_FIRST(rtlist)) != NULL) {
+		KASSERT(ro->_ro_rt != NULL);
+		ro->ro_invalid = true;
+		LIST_REMOVE(ro, ro_rtcache_next);
+		LIST_INSERT_HEAD(&invalid_routes, ro, ro_rtcache_next);
 	}
 }
 
 void
 rtcache_clear(struct route *ro)
 {
-	int s;
+	if (ro->_ro_rt == NULL)
+		return;
 
-	s = splnet();
-	if (ro->_ro_rt != NULL) {
-		KASSERT(rtcache_getdst(ro) != NULL);
-		RTFREE(ro->_ro_rt);
-		ro->_ro_rt = NULL;
-		LIST_REMOVE(ro, ro_rtcache_next);
-	}
-	splx(s);
+	KASSERT(rtcache_getdst(ro) != NULL);
+
+	LIST_REMOVE(ro, ro_rtcache_next);
+
+	RTFREE(ro->_ro_rt);
+	ro->_ro_rt = NULL;
 }
 
 struct rtentry *
@@ -1219,6 +1231,7 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
     int *hitp)
 {
 	const struct sockaddr *odst;
+	struct rtentry *rt = NULL;
 
 	odst = rtcache_getdst(ro);
 
@@ -1226,17 +1239,17 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
 		;
 	else if (sockaddr_cmp(odst, dst) != 0)
 		rtcache_free(ro);
-	else if (rtcache_validate(ro) == NULL)
+	else if ((rt = rtcache_validate(ro)) == NULL)
 		rtcache_clear(ro);
 
-	if (ro->_ro_rt == NULL) {
+	if (rt == NULL) {
 		*hitp = 0;
-		rtcache_setdst(ro, dst);
-		_rtcache_init(ro, clone);
+		if (rtcache_setdst(ro, dst) == 0)
+			rt = _rtcache_init(ro, clone);
 	} else
 		*hitp = 1;
 
-	return ro->_ro_rt;
+	return rt;
 }
 
 void

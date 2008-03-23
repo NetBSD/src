@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.24 2005/12/10 23:21:38 elad Exp $	*/
+/*	if_sppp.h,v 1.24 2005/12/10 23:21:38 elad Exp	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ struct spppdnssettings {
 /* get the DNS addresses we received from the peer */
 struct spppdnsaddrs {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
-	u_int32_t dns[2];		/* IP addresses */
+	uint32_t dns[2];		/* IP addresses */
 };
 
 #define SPPPGETDNSADDRS		_IOWR('i', 131, struct spppdnsaddrs)

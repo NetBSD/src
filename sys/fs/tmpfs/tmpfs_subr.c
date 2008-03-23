@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.36.2.3 2008/01/09 01:55:52 matt Exp $	*/
+/*	tmpfs_subr.c,v 1.36.2.3 2008/01/09 01:55:52 matt Exp	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.36.2.3 2008/01/09 01:55:52 matt Exp $");
+__KERNEL_RCSID(0, "tmpfs_subr.c,v 1.36.2.3 2008/01/09 01:55:52 matt Exp");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -337,7 +337,6 @@ int
 tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 {
 	int error;
-	struct vnode *nvp;
 	struct vnode *vp;
 
 	/* If there is already a vnode, then lock it. */
@@ -379,26 +378,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		/* FALLTHROUGH */
 	case VCHR:
 		vp->v_op = tmpfs_specop_p;
-		nvp = checkalias(vp, node->tn_spec.tn_dev.tn_rdev, mp);
-		if (nvp != NULL) {
-			/* Discard unneeded vnode, but save its inode. */
-			nvp->v_data = node;
-
-			/* XXX spec_vnodeops has no locking, so we have to
-			 * do it explicitly. */
-			vp->v_vflag &= ~VV_LOCKSWORK;
-			VOP_UNLOCK(vp, 0);
-			vp->v_op = spec_vnodeop_p;
-			vgone(vp);
-
-			/* Reinitialize aliased node. */
-			vp = nvp;
-			error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			if (error != 0) {
-				mutex_exit(&node->tn_vlock);
-				return error;
-			}
-		}
+		spec_node_init(vp, node->tn_spec.tn_dev.tn_rdev);
 		break;
 
 	case VDIR:
@@ -878,7 +858,7 @@ int
 tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
 	int error;
-	u_int newpages, oldpages;
+	unsigned int newpages, oldpages;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 	off_t oldsize;
@@ -948,7 +928,7 @@ out:
  * Returns information about the number of available memory pages,
  * including physical and virtual ones.
  *
- * If 'total' is true, the value returned is the total amount of memory 
+ * If 'total' is true, the value returned is the total amount of memory
  * pages configured for the system (either in use or free).
  * If it is FALSE, the value returned is the amount of free memory pages.
  *

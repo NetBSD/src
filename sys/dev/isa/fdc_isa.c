@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.14.24.1 2007/11/06 23:27:35 matt Exp $	*/
+/*	fdc_isa.c,v 1.14.24.1 2007/11/06 23:27:35 matt Exp	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.14.24.1 2007/11/06 23:27:35 matt Exp $");
+__KERNEL_RCSID(0, "fdc_isa.c,v 1.14.24.1 2007/11/06 23:27:35 matt Exp");
 
 #include "rnd.h"
 
@@ -94,8 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.14.24.1 2007/11/06 23:27:35 matt Exp $
 #include <dev/isa/fdreg.h>
 #include <dev/isa/fdcvar.h>
 
-int	fdc_isa_probe(struct device *, struct cfdata *, void *);
-void	fdc_isa_attach(struct device *, struct device *, void *);
+static int	fdc_isa_probe(device_t, cfdata_t, void *);
+static void	fdc_isa_attach(device_t, device_t, void *);
+static int	fdc_isa_detach(device_t, int);
 
 struct fdc_isa_softc {
 	struct fdc_softc sc_fdc;	/* base fdc device */
@@ -103,17 +104,15 @@ struct fdc_isa_softc {
 	bus_space_handle_t sc_baseioh;	/* base I/O handle */
 };
 
-CFATTACH_DECL(fdc_isa, sizeof(struct fdc_isa_softc),
-    fdc_isa_probe, fdc_isa_attach, NULL, NULL);
+CFATTACH_DECL2_NEW(fdc_isa, sizeof(struct fdc_isa_softc),
+    fdc_isa_probe, fdc_isa_attach, fdc_isa_detach, NULL, NULL, fdc_childdet);
 
 #ifdef NEWCONFIG
 void	fdc_isa_forceintr(void *);
 #endif
 
-int
-fdc_isa_probe(struct device *parent,
-    struct cfdata *match,
-    void *aux)
+static int
+fdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
@@ -187,38 +186,57 @@ fdc_isa_probe(struct device *parent,
 	return (rv);
 }
 
-void
-fdc_isa_attach(struct device *parent,
-    struct device *self,
-    void *aux)
+static int
+fdc_isa_detach(device_t self, int flags)
 {
-	struct fdc_softc *fdc = (void *) self;
-	struct fdc_isa_softc *isc = (void *) self;
+	int rc;
+	struct fdc_isa_softc *isc = device_private(self);
+	struct fdc_softc *fdc = &isc->sc_fdc;
+
+	if ((rc = fdcdetach(self, flags)) != 0)
+		return rc;
+
+	isa_intr_disestablish(fdc->sc_ic, fdc->sc_ih);
+
+	bus_space_unmap(fdc->sc_iot, fdc->sc_fdctlioh, 1);
+
+	bus_space_unmap(fdc->sc_iot, isc->sc_baseioh, 6 /* FDC_NPORT */);
+
+	return 0;
+}
+
+static void
+fdc_isa_attach(device_t parent, device_t self, void *aux)
+{
+	struct fdc_isa_softc *isc = device_private(self);
+	struct fdc_softc *fdc = &isc->sc_fdc;
 	struct isa_attach_args *ia = aux;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
+	fdc->sc_dev = self;
 	fdc->sc_iot = ia->ia_iot;
 	fdc->sc_ic = ia->ia_ic;
 	fdc->sc_drq = ia->ia_drq[0].ir_drq;
 
 	if (bus_space_map(fdc->sc_iot, ia->ia_io[0].ir_addr,
 	    6 /* FDC_NPORT */, 0, &isc->sc_baseioh)) {
-		printf("%s: unable to map I/O space\n", fdc->sc_dev.dv_xname);
+		aprint_normal_dev(fdc->sc_dev, "unable to map I/O space\n");
 		return;
 	}
 
 	if (bus_space_subregion(fdc->sc_iot, isc->sc_baseioh, 2, 4,
 	    &fdc->sc_ioh)) {
-		printf("%s: unable to subregion I/O space\n",
-		    fdc->sc_dev.dv_xname);
+		aprint_normal_dev(fdc->sc_dev,
+		    "unable to subregion I/O space\n");
 		return;
 	}
 
 	if (bus_space_map(fdc->sc_iot, ia->ia_io[0].ir_addr + fdctl + 2, 1, 0,
 	    &fdc->sc_fdctlioh)) {
-		printf("%s: unable to map CTL I/O space\n",
-		    fdc->sc_dev.dv_xname);
+		aprint_normal_dev(fdc->sc_dev,
+		    "unable to map CTL I/O space\n");
 		return;
 	}
 

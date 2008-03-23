@@ -1,17 +1,14 @@
-/* $NetBSD: acpi_timer.c,v 1.8.26.1 2007/11/06 23:25:33 matt Exp $ */
+/* acpi_timer.c,v 1.8.26.1 2007/11/06 23:25:33 matt Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.8.26.1 2007/11/06 23:25:33 matt Exp $");
+__KERNEL_RCSID(0, "acpi_timer.c,v 1.8.26.1 2007/11/06 23:25:33 matt Exp");
 
 #include <sys/types.h>
-#include <dev/acpi/acpi_timer.h>
-
-#ifdef __HAVE_TIMECOUNTER
-
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <dev/acpi/acpica.h>
+#include <dev/acpi/acpi_timer.h>
 
 static int acpitimer_test(void);
 static uint32_t acpitimer_delta(uint32_t, uint32_t);
@@ -133,14 +130,3 @@ acpitimer_test()
 
 	return (n);
 }
-
-#else
-
-int
-acpitimer_init()
-{
-
-	return (0);
-}
-
-#endif

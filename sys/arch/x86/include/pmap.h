@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2.10.4 2008/01/09 01:49:48 matt Exp $	*/
+/*	pmap.h,v 1.2.10.4 2008/01/09 01:49:48 matt Exp	*/
 
 /*
  *
@@ -106,6 +106,14 @@
 
 #define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
 
+/* size of a PDP: usually one page, exept for PAE */
+#ifdef PAE
+#define PDP_SIZE 4
+#else
+#define PDP_SIZE 1
+#endif
+
+
 #if defined(_KERNEL)
 /*
  * pmap data structures: see pmap.c for details of locking.
@@ -139,7 +147,11 @@ struct pmap {
 #define	pm_lock	pm_obj[0].vmobjlock
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
+#ifdef PAE
+	paddr_t pm_pdirpa[PDP_SIZE];
+#else
 	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
+#endif
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
@@ -159,24 +171,15 @@ struct pmap {
 
 /* pm_flags */
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
-#define	PMF_USER_XPIN	0x02	/* pmap pdirpa is pinned (Xen) */
-#define	PMF_USER_RELOAD	0x04	/* reload user pmap on PTE unmap (Xen) */
 
-
-/*
- * for each managed physical page we maintain a list of <PMAP,VA>'s
- * which it is mapped at.  the list is headed by a pv_head structure.
- * there is one pv_head per managed phys page (allocated at boot time).
- * the pv_head structure points to a list of pv_entry structures (each
- * describes one mapping).
- */
-
-struct pv_entry {			/* locked by its list's pvh_lock */
-	SPLAY_ENTRY(pv_entry) pv_node;	/* splay-tree node */
-	struct pmap *pv_pmap;		/* the pmap */
-	vaddr_t pv_va;			/* the virtual address */
-	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
-};
+/* macro to access pm_pdirpa */
+#ifdef PAE
+#define pmap_pdirpa(pmap, index) \
+	((pmap)->pm_pdirpa[l2tol3(index)] + l2tol2(index) * sizeof(pd_entry_t))
+#else
+#define pmap_pdirpa(pmap, index) \
+	((pmap)->pm_pdirpa + (index) * sizeof(pd_entry_t))
+#endif
 
 /*
  * global kernel variables
@@ -354,7 +357,12 @@ void	sse2_copy_page(void *, void *);
 #ifdef XEN
 
 #define XPTE_MASK	L1_FRAME
+/* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
+#if defined(__x86_64__) || defined(PAE)
 #define XPTE_SHIFT	9
+#else
+#define XPTE_SHIFT	10
+#endif
 
 /* PTE access inline fuctions */
 
@@ -386,7 +394,7 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 {
         int s = splvm();
 
-        xpq_queue_pte_update((pt_entry_t *) xpmap_ptetomach(pte), npte);
+        xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
         xpq_flush_queue();
         splx(s);
 }

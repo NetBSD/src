@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.57.16.1 2008/01/09 01:58:20 matt Exp $	*/
+/*	time.h,v 1.57.16.1 2008/01/09 01:58:20 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,7 +74,7 @@ struct timezone {
 };
 
 /* Operations on timevals. */
-#define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0
+#define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0L
 #define	timerisset(tvp)		((tvp)->tv_sec || (tvp)->tv_usec)
 #define	timercmp(tvp, uvp, cmp)						\
 	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
@@ -99,6 +99,12 @@ struct timezone {
 		}							\
 	} while (/* CONSTCOND */ 0)
 
+/*
+ * hide bintime for _STANDALONE because this header is used for hpcboot.exe,
+ * which is built with compilers which don't recognize LL suffix.
+ *	http://mail-index.NetBSD.org/tech-userlevel/2008/02/27/msg000181.html
+ */
+#if !defined(_STANDALONE)
 struct bintime {
 	time_t	sec;
 	uint64_t frac;
@@ -157,7 +163,7 @@ static __inline void
 bintime2timespec(const struct bintime *bt, struct timespec *ts)
 {
 
-	ts->tv_sec = (/* XXX NetBSD not SUS compliant - MUST FIX */time_t)bt->sec;
+	ts->tv_sec = bt->sec;
 	ts->tv_nsec =
 	    (long)(((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
@@ -188,10 +194,11 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
 }
+#endif /* !defined(_STANDALONE) */
 
 /* Operations on timespecs. */
-#define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
-#define	timespecisset(tsp)		((tsp)->tv_sec || (tsp)->tv_nsec)
+#define	timespecclear(tsp)	(tsp)->tv_sec = (time_t)((tsp)->tv_nsec = 0L)
+#define	timespecisset(tsp)	((tsp)->tv_sec || (tsp)->tv_nsec)
 #define	timespeccmp(tsp, usp, cmp)					\
 	(((tsp)->tv_sec == (usp)->tv_sec) ?				\
 	    ((tsp)->tv_nsec cmp (usp)->tv_nsec) :			\

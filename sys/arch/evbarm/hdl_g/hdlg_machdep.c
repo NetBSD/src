@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.4.24.1 2007/11/09 05:37:56 matt Exp $	*/
+/*	hdlg_machdep.c,v 1.4.24.1 2007/11/09 05:37:56 matt Exp	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.4.24.1 2007/11/09 05:37:56 matt Exp $");
+__KERNEL_RCSID(0, "hdlg_machdep.c,v 1.4.24.1 2007/11/09 05:37:56 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.4.24.1 2007/11/09 05:37:56 matt E
 #include <evbarm/hdl_g/hdlgvar.h>
 #include <evbarm/hdl_g/obiovar.h>
 
-#include "opt_ipkdb.h"
 #include "ksyms.h"
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
@@ -141,11 +140,7 @@ u_int cpu_reset_address = 0x00000000;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -652,13 +647,6 @@ initarm(void *arg)
 
 #ifdef BOOTHOWTO
 	boothowto = BOOTHOWTO;
-#endif
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 #if NKSYMS || defined(DDB) || defined(LKM)

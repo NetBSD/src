@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.27.20.1 2008/01/09 01:46:35 matt Exp $	*/
+/*	freebsd_syscall.c,v 1.27.20.1 2008/01/09 01:46:35 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.27.20.1 2008/01/09 01:46:35 matt Exp $");
+__KERNEL_RCSID(0, "freebsd_syscall.c,v 1.27.20.1 2008/01/09 01:46:35 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ freebsd_syscall_plain(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
@@ -171,7 +170,6 @@ freebsd_syscall_fancy(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
@@ -210,7 +208,7 @@ freebsd_syscall_fancy(frame)
 	}
 
 	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -242,7 +240,7 @@ out:
 		break;
 	}
 
-	trace_exit(code, args, rval, error);
+	trace_exit(code, rval, error);
 
 	userret(l);
 }

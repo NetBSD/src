@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.135.2.2 2008/01/09 01:58:39 matt Exp $	*/
+/*	uvm_extern.h,v 1.135.2.2 2008/01/09 01:58:39 matt Exp	*/
 
 /*
  *
@@ -590,7 +590,6 @@ void			uvm_kick_scheduler(void);
 void			uvm_swapin(struct lwp *);
 bool			uvm_uarea_alloc(vaddr_t *);
 void			uvm_uarea_free(vaddr_t, struct cpu_info *);
-void			uvm_uarea_drain(bool);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
 void			uvm_lwp_hold(struct lwp *);
@@ -691,6 +690,8 @@ void			uvm_setpagesize(void);
 void			uvm_aio_biodone1(struct buf *);
 void			uvm_aio_biodone(struct buf *);
 void			uvm_aio_aiodone(struct buf *);
+void			uvm_aio_aiodone_pages(struct vm_page **, int, bool,
+			    int);
 
 /* uvm_pdaemon.c */
 void			uvm_pageout(void *);

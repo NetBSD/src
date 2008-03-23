@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21.2.2 2008/01/09 01:49:10 matt Exp $ */
+/*	syscall.c,v 1.21.2.2 2008/01/09 01:49:10 matt Exp */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21.2.2 2008/01/09 01:49:10 matt Exp $");
+__KERNEL_RCSID(0, "syscall.c,v 1.21.2.2 2008/01/09 01:49:10 matt Exp");
 
 #define NEW_FPSTATE
 
@@ -413,7 +413,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	ap = &args;
 #endif
 	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(code, code, NULL, ap->r)) != 0) {
+	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
 		KERNEL_UNLOCK_LAST(l);
 		goto out;
 	}
@@ -467,7 +467,7 @@ out:
 	}
 
 	if (ap)
-		trace_exit(code, ap->r, rval, error);
+		trace_exit(code, rval, error);
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
@@ -477,8 +477,7 @@ out:
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 
@@ -496,8 +495,7 @@ child_return(arg)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;

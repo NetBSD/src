@@ -1,4 +1,4 @@
-/*	$NetBSD: ka680.c,v 1.15 2007/03/04 06:01:01 christos Exp $	*/
+/*	ka680.c,v 1.15 2007/03/04 06:01:01 christos Exp	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -35,7 +35,7 @@
 /* minor modifications for KA690 cache support by isildur@vaxpower.org */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.15 2007/03/04 06:01:01 christos Exp $");
+__KERNEL_RCSID(0, "ka680.c,v 1.15 2007/03/04 06:01:01 christos Exp");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -53,13 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: ka680.c,v 1.15 2007/03/04 06:01:01 christos Exp $");
 #include <machine/clock.h>
 #include <machine/scb.h>
 
-static void	ka680_conf __P((void));
-static void	ka680_cache_enable __P((void));
-static void	ka680_softmem __P((void *));
-static void	ka680_hardmem __P((void *));
-static void	ka680_steal_pages __P((void));
-static void	ka680_memerr __P((void));
-static int	ka680_mchk __P((void *));
+static void	ka680_conf(void);
+static void	ka680_attach_cpu(device_t);
+static void	ka680_cache_enable(void);
+static void	ka680_softmem(void *);
+static void	ka680_hardmem(void *);
+static void	ka680_steal_pages(void);
+static void	ka680_memerr(void);
+static int	ka680_mchk(void *);
  
 /*
  * KA680-specific IPRs. KA680 has the funny habit to control all caches
@@ -85,31 +86,31 @@ static int	ka680_mchk __P((void *));
 #define PCCTL_D_EN	0x01
 
  
+static const char * const ka680_devs[] = { "cpu", "sgec", "shac", "uba", NULL };
+
 /* 
  * Declaration of KA680-specific calls.
  */
-struct cpu_dep ka680_calls = {
-	ka680_steal_pages,
-	ka680_mchk,
-	ka680_memerr, 
-	ka680_conf,
-	generic_gettime,
-	generic_settime,
-	24,	 /* ~VUPS */
-	2,	/* SCB pages */
-	generic_halt,
-	generic_reboot,
-	NULL,
-	NULL,
-	CPU_RAISEIPL,
+const struct cpu_dep ka680_calls = {
+	.cpu_steal_pages = ka680_steal_pages,
+	.cpu_mchk	= ka680_mchk,
+	.cpu_memerr	= ka680_memerr, 
+	.cpu_conf	= ka680_conf,
+	.cpu_gettime	= generic_gettime,
+	.cpu_settime	= generic_settime,
+	.cpu_vups	= 24,	 /* ~VUPS */
+	.cpu_scbsz	= 2,	/* SCB pages */
+	.cpu_halt	= generic_halt,
+	.cpu_reboot	= generic_reboot,
+	.cpu_flags	= CPU_RAISEIPL,
+	.cpu_devs	= ka680_devs,
+	.cpu_attach_cpu	= ka680_attach_cpu,
 };
 
 
 void
-ka680_conf()
+ka680_conf(void)
 {
-	const char *cpuname;
-
 	/* Don't ask why, but we seem to need this... */
 
 	volatile int *hej = (void *)mfpr(PR_ISP);
@@ -118,28 +119,39 @@ ka680_conf()
 
 	cpmbx = (struct cpmbx *)vax_map_physmem(0x20140400, 1);
 
-	switch(vax_boardtype) {
-		case VAX_BTYP_680: switch((vax_siedata & 0xff00) >> 8) {
+}
+
+void
+ka680_attach_cpu(device_t self)
+{
+	const char *cpuname;
+
+	switch (vax_boardtype) {
+		case VAX_BTYP_680:
+			switch((vax_siedata & 0xff00) >> 8) {
 			case VAX_STYP_675: cpuname = "KA675"; break;
 			case VAX_STYP_680: cpuname = "KA680"; break;
 			case VAX_STYP_690: cpuname = "KA690"; break;
 			default: cpuname = "unknown KA680-class";
-		} break;
-		case VAX_BTYP_681: switch((vax_siedata & 0xff00) >> 8) {
+			}
+			break;
+		case VAX_BTYP_681:
+			switch ((vax_siedata & 0xff00) >> 8) {
 			case VAX_STYP_681: cpuname = "KA681"; break;
 			case VAX_STYP_691: cpuname = "KA691"; break;
 			case VAX_STYP_694: cpuname = (vax_cpudata & 0x1000) ?
 				"KA694" : "KA692"; break;
 			default: cpuname = "unknown KA681-class";
-		} break;
-		default: cpuname = "unknown NVAX class";
+			}
+			break;
+		default: cpuname = "unknown class"; break;
 	}
 
-	printf("cpu0: %s, ucode rev %d\n", cpuname, vax_cpudata & 0xff);
+	aprint_normal("%s, NVAX (ucode rev %d)\n", cpuname, vax_cpudata & 0xff);
 }
 
 void
-ka680_cache_enable()
+ka680_cache_enable(void)
 {
 	int start, pslut, fslut, cslut, havevic;
 
@@ -267,7 +279,7 @@ ka680_softmem(void *arg)
 }
 
 void
-ka680_steal_pages()
+ka680_steal_pages(void)
 {
 	/*
 	 * Get the soft and hard memory error vectors now.
@@ -280,7 +292,7 @@ ka680_steal_pages()
 }
 
 void
-ka680_memerr()
+ka680_memerr(void)
 {
 	printf("Memory err!\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.140.2.2 2008/01/09 01:49:05 matt Exp $ */
+/*	autoconf.c,v 1.140.2.2 2008/01/09 01:49:05 matt Exp */
 
 /*
  * Copyright (c) 1996
@@ -48,10 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.140.2.2 2008/01/09 01:49:05 matt Exp $");
+__KERNEL_RCSID(0, "autoconf.c,v 1.140.2.2 2008/01/09 01:49:05 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -287,8 +288,10 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 		bi = (void*)(u_long)(((uint32_t*)bootargs)[3]);
 		bmagic = (long)(((uint32_t*)bootargs)[0]);
 	} else {
-		printf("Bad bootinfo size.\n"
-				"This kernel requires NetBSD boot loader.\n");
+		printf("Bad bootinfo size.\n");
+die_old_boot_loader:
+		printf("This kernel requires NetBSD boot loader version 1.9 "
+		       "or newer\n");
 		panic("sparc64_init.");
 	}
 
@@ -297,9 +300,8 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 
 	/* Read in the information provided by NetBSD boot loader */
 	if (SPARC_MACHINE_OPENFIRMWARE != bmagic) {
-		printf("No bootinfo information.\n"
-				"This kernel requires NetBSD boot loader.\n");
-		panic("sparc64_init.");
+		printf("No bootinfo information.\n");
+		goto die_old_boot_loader;
 	}
 
 	bootinfo = (void*)(u_long)((uint64_t*)bi)[1];
@@ -707,32 +709,6 @@ romgetcursoraddr(int **rowp, int **colp)
 }
 
 /*
- * find a device matching "name" and unit number
- */
-struct device *
-getdevunit(const char *name, int unit)
-{
-	struct device *dev = TAILQ_FIRST(&alldevs);
-	char num[10], fullname[16];
-	int lunit;
-
-	/* compute length of name and decimal expansion of unit number */
-	sprintf(num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strcpy(fullname, name);
-	strcat(fullname, num);
-
-	while (strcmp(device_xname(dev), fullname) != 0) {
-		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
-			return NULL;
-	}
-	return dev;
-}
-
-/*
  * Match a struct device against the bootpath, by
  * comparing it's firmware package handle. If they match
  * exactly, we found the boot device.
@@ -875,6 +851,14 @@ device_register(struct device *dev, void *aux)
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 
+		/*
+		 * There are two "cd" attachments:
+		 *   atapibus -> atabus -> controller
+		 *   scsibus -> controller
+		 * We want the node of the controller.
+		 */
+		if (device_is_a(busdev, "atapibus"))
+			busdev = device_parent(busdev);
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, periph->periph_target,
 		    periph->periph_lun);
@@ -887,55 +871,54 @@ device_register(struct device *dev, void *aux)
 	}
 
 	/* set properties for PCI framebuffers */
-	if (busdev != NULL) {
+	if (busdev == NULL)
+		return;
 
-		if (device_is_a(busdev, "pci")) {
-			/* see if this is going to be console */
-			struct pci_attach_args *pa = aux;
-			prop_dictionary_t dict;
-			int node, sub;
-			int console = 0;
+	if (device_is_a(busdev, "pci")) {
+		/* see if this is going to be console */
+		struct pci_attach_args *pa = aux;
+		prop_dictionary_t dict;
+		int node, sub;
+		int console = 0;
 
-			dict = device_properties(dev);
-			node = PCITAG_NODE(pa->pa_tag);
-			device_setofnode(dev, node);
+		dict = device_properties(dev);
+		node = PCITAG_NODE(pa->pa_tag);
+		device_setofnode(dev, node);
 
-			/* we only care about display devices from here on */
-			if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
-				return;
+		/* we only care about display devices from here on */
+		if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+			return;
 
-			console = (node == console_node);
+		console = (node == console_node);
 
-			if (!console) {
-				/*
-				 * see if any child matches since OF attaches
-				 * nodes for each head and /chosen/stdout
-				 * points to the head rather than the device
-				 * itself in this case
-				 */
-				sub = OF_child(node);
-				while ((sub != 0) && (sub != console_node)) {
-					sub = OF_peer(sub);
-				}
-				if (sub == console_node) {
-					console = true;
-				}
+		if (!console) {
+			/*
+			 * see if any child matches since OF attaches
+			 * nodes for each head and /chosen/stdout
+			 * points to the head rather than the device
+			 * itself in this case
+			 */
+			sub = OF_child(node);
+			while ((sub != 0) && (sub != console_node)) {
+				sub = OF_peer(sub);
 			}
-
-			if (console) {
-				uint64_t cmap_cb;
-
-				prop_dictionary_set_uint32(dict,
-				    "instance_handle", console_instance);
-				copyprops(busdev, console_node, dict);
-
-				gfb_cb.gcc_cookie = 
-				    (void *)(intptr_t)console_instance;
-				gfb_cb.gcc_set_mapreg = of_set_palette;
-				cmap_cb = (uint64_t)&gfb_cb;
-				prop_dictionary_set_uint64(dict,
-				    "cmap_callback", cmap_cb);
+			if (sub == console_node) {
+				console = true;
 			}
+		}
+		
+		if (console) {
+			uint64_t cmap_cb;
+			prop_dictionary_set_uint32(dict,
+			    "instance_handle", console_instance);
+			copyprops(busdev, console_node, dict);
+
+			gfb_cb.gcc_cookie = 
+			    (void *)(intptr_t)console_instance;
+			gfb_cb.gcc_set_mapreg = of_set_palette;
+			cmap_cb = (uint64_t)&gfb_cb;
+			prop_dictionary_set_uint64(dict,
+			    "cmap_callback", cmap_cb);
 		}
 	}
 }
@@ -967,7 +950,9 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "height", temp);
 	}
 	of_to_uint32_prop(dict, console_node, "linebytes", "linebytes");
-	if (!of_to_uint32_prop(dict, console_node, "depth", "depth")) {
+	if (!of_to_uint32_prop(dict, console_node, "depth", "depth") &&
+	    /* Some cards have an extra space in the property name */
+	    !of_to_uint32_prop(dict, console_node, "depth ", "depth")) {
 		/*
 		 * XXX we should check linebytes vs. width but those
 		 * FBs that don't have a depth property ( /chaos/control... )

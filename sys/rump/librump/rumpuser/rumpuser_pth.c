@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.1.6.4 2008/01/09 01:58:02 matt Exp $	*/
+/*	rumpuser_pth.c,v 1.1.6.4 2008/01/09 01:58:02 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "rumpuser.h"
 
@@ -43,6 +44,15 @@ static pthread_key_t curlwpkey;
 static pthread_key_t isintr;
 
 #define NOFAIL(a) do {if (!(a)) abort();} while (/*CONSTCOND*/0)
+#define NOFAIL_ERRNO(a)							\
+do {									\
+	int fail_rv = (a);						\
+	if (fail_rv) {							\
+		printf("panic: rumpuser fatal failure %d (%s)\n",	\
+		    fail_rv, strerror(fail_rv));			\
+		    abort();						\
+	}								\
+} while (/*CONSTCOND*/0)
 
 struct rumpuser_mtx {
 	pthread_mutex_t pthmtx;
@@ -63,16 +73,17 @@ struct rumpuser_aio *rua_aios[N_AIOS];
 
 struct rumpuser_rw rumpspl;
 
+#ifndef RUMP_WITHOUT_THREADS
 static void *
 iothread(void *arg)
 {
 	struct rumpuser_aio *rua;
 
-	NOFAIL(pthread_mutex_lock(&rua_mtx.pthmtx) == 0);
+	NOFAIL_ERRNO(pthread_mutex_lock(&rua_mtx.pthmtx));
 	for (;;) {
 		while (rua_head == rua_tail) {
-			NOFAIL(pthread_cond_wait(&rua_cv.pthcv,
-			    &rua_mtx.pthmtx) == 0);
+			NOFAIL_ERRNO(pthread_cond_wait(&rua_cv.pthcv,
+			    &rua_mtx.pthmtx));
 		}
 
 		rua = rua_aios[rua_tail];
@@ -87,14 +98,17 @@ iothread(void *arg)
 			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
 
 		free(rua);
-		NOFAIL(pthread_mutex_lock(&rua_mtx.pthmtx) == 0);
+		NOFAIL_ERRNO(pthread_mutex_lock(&rua_mtx.pthmtx));
 	}
 }
+#endif /* RUMP_WITHOUT_THREADS */
 
 int
 rumpuser_thrinit()
 {
+#ifndef RUMP_WITHOUT_THREADS
 	pthread_t iothr;
+#endif
 
 	pthread_mutex_init(&rua_mtx.pthmtx, NULL);
 	pthread_cond_init(&rua_cv.pthcv, NULL);
@@ -103,7 +117,9 @@ rumpuser_thrinit()
 	pthread_key_create(&curlwpkey, NULL);
 	pthread_key_create(&isintr, NULL);
 
+#ifndef RUMP_WITHOUT_THREADS
 	pthread_create(&iothr, NULL, iothread, NULL);
+#endif
 
 	return 0;
 }
@@ -134,7 +150,7 @@ void
 rumpuser_mutex_init(struct rumpuser_mtx **mtx)
 {
 	NOFAIL(*mtx = malloc(sizeof(struct rumpuser_mtx)));
-	NOFAIL(pthread_mutex_init(&((*mtx)->pthmtx), NULL) == 0);
+	NOFAIL_ERRNO(pthread_mutex_init(&((*mtx)->pthmtx), NULL));
 }
 
 void
@@ -146,7 +162,7 @@ rumpuser_mutex_recursive_init(struct rumpuser_mtx **mtx)
 	pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
 
 	NOFAIL(*mtx = malloc(sizeof(struct rumpuser_mtx)));
-	NOFAIL(pthread_mutex_init(&((*mtx)->pthmtx), &mattr) == 0);
+	NOFAIL_ERRNO(pthread_mutex_init(&((*mtx)->pthmtx), &mattr));
 
 	pthread_mutexattr_destroy(&mattr);
 }
@@ -155,7 +171,7 @@ void
 rumpuser_mutex_enter(struct rumpuser_mtx *mtx)
 {
 
-	NOFAIL(pthread_mutex_lock(&mtx->pthmtx) == 0);
+	NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx));
 }
 
 int
@@ -169,15 +185,22 @@ void
 rumpuser_mutex_exit(struct rumpuser_mtx *mtx)
 {
 
-	NOFAIL(pthread_mutex_unlock(&mtx->pthmtx) == 0);
+	NOFAIL_ERRNO(pthread_mutex_unlock(&mtx->pthmtx));
 }
 
 void
 rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 {
 
-	NOFAIL(pthread_mutex_destroy(&mtx->pthmtx) == 0);
+	NOFAIL_ERRNO(pthread_mutex_destroy(&mtx->pthmtx));
 	free(mtx);
+}
+
+int
+rumpuser_mutex_held(struct rumpuser_mtx *mtx)
+{
+
+	return pthread_mutex_held_np(&mtx->pthmtx);
 }
 
 void
@@ -185,7 +208,7 @@ rumpuser_rw_init(struct rumpuser_rw **rw)
 {
 
 	NOFAIL(*rw = malloc(sizeof(struct rumpuser_rw)));
-	NOFAIL(pthread_rwlock_init(&((*rw)->pthrw), NULL) == 0);
+	NOFAIL_ERRNO(pthread_rwlock_init(&((*rw)->pthrw), NULL));
 }
 
 void
@@ -193,9 +216,9 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
 {
 
 	if (write)
-		NOFAIL(pthread_rwlock_wrlock(&rw->pthrw) == 0);
+		NOFAIL_ERRNO(pthread_rwlock_wrlock(&rw->pthrw));
 	else
-		NOFAIL(pthread_rwlock_rdlock(&rw->pthrw) == 0);
+		NOFAIL_ERRNO(pthread_rwlock_rdlock(&rw->pthrw));
 }
 
 int
@@ -212,15 +235,36 @@ void
 rumpuser_rw_exit(struct rumpuser_rw *rw)
 {
 
-	NOFAIL(pthread_rwlock_unlock(&rw->pthrw) == 0);
+	NOFAIL_ERRNO(pthread_rwlock_unlock(&rw->pthrw));
 }
 
 void
 rumpuser_rw_destroy(struct rumpuser_rw *rw)
 {
 
-	NOFAIL(pthread_rwlock_destroy(&rw->pthrw) == 0);
+	NOFAIL_ERRNO(pthread_rwlock_destroy(&rw->pthrw));
 	free(rw);
+}
+
+int
+rumpuser_rw_held(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_held_np(&rw->pthrw);
+}
+
+int
+rumpuser_rw_rdheld(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_rdheld_np(&rw->pthrw);
+}
+
+int
+rumpuser_rw_wrheld(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_wrheld_np(&rw->pthrw);
 }
 
 void
@@ -228,14 +272,14 @@ rumpuser_cv_init(struct rumpuser_cv **cv)
 {
 
 	NOFAIL(*cv = malloc(sizeof(struct rumpuser_cv)));
-	NOFAIL(pthread_cond_init(&((*cv)->pthcv), NULL) == 0);
+	NOFAIL_ERRNO(pthread_cond_init(&((*cv)->pthcv), NULL));
 }
 
 void
 rumpuser_cv_destroy(struct rumpuser_cv *cv)
 {
 
-	NOFAIL(pthread_cond_destroy(&cv->pthcv) == 0);
+	NOFAIL_ERRNO(pthread_cond_destroy(&cv->pthcv));
 	free(cv);
 }
 
@@ -243,7 +287,7 @@ void
 rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 {
 
-	NOFAIL(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx) == 0);
+	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
 }
 
 int
@@ -253,8 +297,11 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	struct timespec ts;
 	int rv;
 
-	ts.tv_sec = stdticks / 100;
-	ts.tv_nsec = (stdticks % 100) * 100000000;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec  += stdticks / 100;
+	ts.tv_nsec += (stdticks % 100) * 10000000;
+	ts.tv_sec  += ts.tv_nsec / 1000000000;
+	ts.tv_nsec %= 1000000000;
 
 	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
 	if (rv != 0 && rv != ETIMEDOUT)
@@ -269,14 +316,14 @@ void
 rumpuser_cv_signal(struct rumpuser_cv *cv)
 {
 
-	NOFAIL(pthread_cond_signal(&cv->pthcv) == 0);
+	NOFAIL_ERRNO(pthread_cond_signal(&cv->pthcv));
 }
 
 void
 rumpuser_cv_broadcast(struct rumpuser_cv *cv)
 {
 
-	NOFAIL(pthread_cond_broadcast(&cv->pthcv) == 0);
+	NOFAIL_ERRNO(pthread_cond_broadcast(&cv->pthcv));
 }
 
 /*

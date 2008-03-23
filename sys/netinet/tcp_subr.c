@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.218.4.1 2008/01/09 01:57:30 matt Exp $	*/
+/*	tcp_subr.c,v 1.218.4.1 2008/01/09 01:57:30 matt Exp	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.218.4.1 2008/01/09 01:57:30 matt Exp $");
+__KERNEL_RCSID(0, "tcp_subr.c,v 1.218.4.1 2008/01/09 01:57:30 matt Exp");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -840,9 +840,9 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		ip6->ip6_plen = htons(tlen);
 		if (tp && tp->t_in6pcb) {
 			struct ifnet *oifp;
-			ro = (struct route *)&tp->t_in6pcb->in6p_route;
-			oifp = (rt = rtcache_getrt(ro)) != NULL ? rt->rt_ifp
-			                                        : NULL;
+			ro = &tp->t_in6pcb->in6p_route;
+			oifp = (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
+			                                           : NULL;
 			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb, oifp);
 		} else
 			ip6->ip6_hlim = ip6_defhlim;
@@ -1029,7 +1029,7 @@ tcp_newtcpcb(int family, void *aux)
 		struct in6pcb *in6p = (struct in6pcb *)aux;
 
 		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p,
-			(rt = rtcache_getrt(&in6p->in6p_route)) != NULL
+			(rt = rtcache_validate(&in6p->in6p_route)) != NULL
 			    ? rt->rt_ifp
 			    : NULL);
 		in6p->in6p_ppcb = (void *)tp;
@@ -1051,14 +1051,17 @@ tcp_newtcpcb(int family, void *aux)
 	/*
 	 * Initialize our timebase.  When we send timestamps, we take
 	 * the delta from tcp_now -- this means each connection always
-	 * gets a timebase of 0, which makes it, among other things,
+	 * gets a timebase of 1, which makes it, among other things,
 	 * more difficult to determine how long a system has been up,
 	 * and thus how many TCP sequence increments have occurred.
+	 *
+	 * We start with 1, because 0 doesn't work with linux, which
+	 * considers timestamp 0 in a SYN packet as a bug and disables
+	 * timestamps.
 	 */
-	tp->ts_timebase = tcp_now;
+	tp->ts_timebase = tcp_now - 1;
 	
-	tp->t_congctl = tcp_congctl_global;
-	tp->t_congctl->refcnt++;
+	tcp_congctl_select(tp, tcp_congctl_global_name);
 
 	return (tp);
 }
@@ -1179,7 +1182,7 @@ tcp_close(struct tcpcb *tp)
 	 * update anything that the user "locked".
 	 */
 	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
-	    ro && (rt = rtcache_getrt(ro)) != NULL &&
+	    ro && (rt = rtcache_validate(ro)) != NULL &&
 	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr)) {
 		u_long i = 0;
 
@@ -1241,7 +1244,7 @@ tcp_close(struct tcpcb *tp)
 	/* free the SACK holes list. */
 	tcp_free_sackholes(tp);
 	
-	tp->t_congctl->refcnt--;
+	tcp_congctl_release(tp);
 
 	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
@@ -1277,8 +1280,7 @@ tcp_close(struct tcpcb *tp)
 }
 
 int
-tcp_freeq(tp)
-	struct tcpcb *tp;
+tcp_freeq(struct tcpcb *tp)
 {
 	struct ipqent *qe;
 	int rv = 0;
@@ -2149,16 +2151,16 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	tcp_seq tcp_iss;
 
 #if NRND > 0
-	static int beenhere;
+	static bool tcp_iss_gotten_secret;
 
 	/*
 	 * If we haven't been here before, initialize our cryptographic
 	 * hash secret.
 	 */
-	if (beenhere == 0) {
+	if (tcp_iss_gotten_secret == false) {
 		rnd_extract_data(tcp_iss_secret, sizeof(tcp_iss_secret),
 		    RND_EXTRACT_ANY);
-		beenhere = 1;
+		tcp_iss_gotten_secret = true;
 	}
 
 	if (tcp_do_rfc1948) {

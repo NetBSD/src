@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.73 2007/03/04 19:21:55 christos Exp $	*/
+/*	locore.c,v 1.73 2007/03/04 19:21:55 christos Exp	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.73 2007/03/04 19:21:55 christos Exp $");
+__KERNEL_RCSID(0, "locore.c,v 1.73 2007/03/04 19:21:55 christos Exp");
 
 #include "opt_compat_netbsd.h"
 
@@ -68,25 +68,25 @@ struct user *proc0paddr;
  * The strict CPU-dependent information is set up here, in
  * form of a pointer to a struct that is specific for each CPU.
  */
-extern struct cpu_dep ka780_calls;
-extern struct cpu_dep ka750_calls;
-extern struct cpu_dep ka860_calls;
-extern struct cpu_dep ka820_calls;
-extern struct cpu_dep ka6400_calls;
-extern struct cpu_dep ka88_calls;
-extern struct cpu_dep ka43_calls;
-extern struct cpu_dep ka46_calls;
-extern struct cpu_dep ka48_calls;
-extern struct cpu_dep vxt_calls;
-extern struct cpu_dep ka49_calls;
-extern struct cpu_dep ka53_calls;
-extern struct cpu_dep ka410_calls;
-extern struct cpu_dep ka610_calls;
-extern struct cpu_dep ka630_calls;
-extern struct cpu_dep ka650_calls;
-extern struct cpu_dep ka660_calls;
-extern struct cpu_dep ka670_calls;
-extern struct cpu_dep ka680_calls;
+extern const struct cpu_dep ka780_calls;
+extern const struct cpu_dep ka750_calls;
+extern const struct cpu_dep ka860_calls;
+extern const struct cpu_dep ka820_calls;
+extern const struct cpu_dep ka6400_calls;
+extern const struct cpu_dep ka88_calls;
+extern const struct cpu_dep ka43_calls;
+extern const struct cpu_dep ka46_calls;
+extern const struct cpu_dep ka48_calls;
+extern const struct cpu_dep vxt_calls;
+extern const struct cpu_dep ka49_calls;
+extern const struct cpu_dep ka53_calls;
+extern const struct cpu_dep ka410_calls;
+extern const struct cpu_dep ka610_calls;
+extern const struct cpu_dep ka630_calls;
+extern const struct cpu_dep ka650_calls;
+extern const struct cpu_dep ka660_calls;
+extern const struct cpu_dep ka670_calls;
+extern const struct cpu_dep ka680_calls;
 
 /*
  * Start is called from boot; the first routine that is called
@@ -97,7 +97,7 @@ extern struct cpu_dep ka680_calls;
 void
 _start(struct rpb *prpb)
 {
-	extern void *scratch;
+	extern uintptr_t scratch;
 	struct pte *pt;
 
 	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
@@ -338,7 +338,7 @@ _start(struct rpb *prpb)
 	pt = kvtopte((u_int)lwp0.l_addr + REDZONEADDR);
 	pt->pg_v = 0;
 
-	((struct pcb *)proc0paddr)->framep = scratch;
+	((struct pcb *)proc0paddr)->framep = (void *)scratch;
 
 	/*
 	 * Change mode down to userspace is done by faking a stack

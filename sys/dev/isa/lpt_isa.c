@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.63.24.1 2007/11/06 23:27:50 matt Exp $	*/
+/*	lpt_isa.c,v 1.63.24.1 2007/11/06 23:27:50 matt Exp	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.63.24.1 2007/11/06 23:27:50 matt Exp $");
+__KERNEL_RCSID(0, "lpt_isa.c,v 1.63.24.1 2007/11/06 23:27:50 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,14 +87,16 @@ int lpt_isa_debug = 0;
 struct lpt_isa_softc {
 	struct lpt_softc sc_lpt;
 	int sc_irq;
+	isa_chipset_tag_t sc_ic;
 
 };
 
-int lpt_isa_probe(struct device *, struct cfdata *, void *);
-void lpt_isa_attach(struct device *, struct device *, void *);
+int lpt_isa_probe(device_t, cfdata_t, void *);
+static void lpt_isa_attach(device_t, device_t, void *);
+static int lpt_isa_detach(device_t, int);
 
-CFATTACH_DECL(lpt_isa, sizeof(struct lpt_isa_softc),
-    lpt_isa_probe, lpt_isa_attach, NULL, NULL);
+CFATTACH_DECL_NEW(lpt_isa, sizeof(struct lpt_isa_softc),
+    lpt_isa_probe, lpt_isa_attach, lpt_isa_detach, NULL);
 
 int lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    bus_size_t, u_char, u_char);
@@ -143,8 +145,7 @@ lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh,
  *	3) Set the data and control ports to a value of 0
  */
 int
-lpt_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+lpt_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
@@ -214,33 +215,53 @@ out:
 }
 
 void
-lpt_isa_attach(struct device *parent, struct device *self, void *aux)
+lpt_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_isa_softc *sc = (void *)self;
+	struct lpt_isa_softc *sc = device_private(self);
 	struct lpt_softc *lsc = &sc->sc_lpt;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
+	lsc->sc_dev = self;
+
 	if (ia->ia_nirq < 1 ||
 	    ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		sc->sc_irq = -1;
-		printf(": polled\n");
+		aprint_normal(": polled\n");
 	} else {
 		sc->sc_irq = ia->ia_irq[0].ir_irq;
-		printf("\n");
+		aprint_normal("\n");
 	}
 
 	iot = lsc->sc_iot = ia->ia_iot;
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, LPT_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_normal_dev(self, "can't map i/o space\n");
 		return;
 	}
 	lsc->sc_ioh = ioh;
 
 	lpt_attach_subr(lsc);
 
+	sc->sc_ic = ia->ia_ic;
 	if (sc->sc_irq != -1)
-		lsc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq,
+		lsc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq,
 		    IST_EDGE, IPL_TTY, lptintr, lsc);
+}
+
+static int
+lpt_isa_detach(device_t self, int flags)
+{
+	int rc;
+	struct lpt_isa_softc *sc = device_private(self);
+	struct lpt_softc *lsc = &sc->sc_lpt;
+
+	if ((rc = lpt_detach_subr(self, flags)) != 0)
+		return rc;
+
+	if (sc->sc_irq != -1)
+		isa_intr_disestablish(sc->sc_ic, lsc->sc_ih);
+
+	bus_space_unmap(lsc->sc_iot, lsc->sc_ioh, LPT_NPORTS);
+	return 0;
 }

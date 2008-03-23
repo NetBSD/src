@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.39.8.1 2007/11/06 23:29:03 matt Exp $	*/
+/*	if_pcn.c,v 1.39.8.1 2007/11/06 23:29:03 matt Exp	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.39.8.1 2007/11/06 23:29:03 matt Exp $");
+__KERNEL_RCSID(0, "if_pcn.c,v 1.39.8.1 2007/11/06 23:29:03 matt Exp");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -422,8 +422,6 @@ static int	pcn_79c970_mediachange(struct ifnet *);
 static void	pcn_79c970_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static void	pcn_79c971_mediainit(struct pcn_softc *);
-static int	pcn_79c971_mediachange(struct ifnet *);
-static void	pcn_79c971_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /*
  * Description of a PCnet-PCI variant.  Used to select media access
@@ -546,7 +544,7 @@ pcn_lookup_variant(uint16_t chipid)
 }
 
 static int
-pcn_match(struct device *parent, struct cfdata *cf, void *aux)
+pcn_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -575,9 +573,9 @@ pcn_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pcn_attach(struct device *parent, struct device *self, void *aux)
+pcn_attach(device_t parent, device_t self, void *aux)
 {
-	struct pcn_softc *sc = (struct pcn_softc *) self;
+	struct pcn_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -626,7 +624,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
@@ -1824,7 +1822,8 @@ pcn_init(struct ifnet *ifp)
 	}
 
 	/* Set the media. */
-	(void) (*sc->sc_mii.mii_media.ifm_change)(ifp);
+	if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
+		goto out;
 
 	/* Enable interrupts and external activity (and ACK IDON). */
 	pcn_csr_write(sc, LE_CSR0, LE_C0_INEA|LE_C0_STRT|LE_C0_IDON);
@@ -1898,12 +1897,12 @@ pcn_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		pcn_rxdrain(sc);
-
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		pcn_rxdrain(sc);
 }
 
 /*
@@ -2025,7 +2024,10 @@ pcn_set_filter(struct pcn_softc *sc)
 static void
 pcn_79c970_mediainit(struct pcn_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const char *sep = "";
+
+	sc->sc_mii.mii_ifp = ifp;
 
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, pcn_79c970_mediachange,
 	    pcn_79c970_mediastatus);
@@ -2142,8 +2144,10 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
 	sc->sc_mii.mii_readreg = pcn_mii_readreg;
 	sc->sc_mii.mii_writereg = pcn_mii_writereg;
 	sc->sc_mii.mii_statchg = pcn_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, pcn_79c971_mediachange,
-	    pcn_79c971_mediastatus);
+
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
@@ -2155,44 +2159,14 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
 }
 
 /*
- * pcn_79c971_mediastatus:	[ifmedia interface function]
- *
- *	Get the current interface media status (Am79c971 version).
- */
-static void
-pcn_79c971_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct pcn_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/*
- * pcn_79c971_mediachange:	[ifmedia interface function]
- *
- *	Set hardware to newly-selected media (Am79c971 version).
- */
-static int
-pcn_79c971_mediachange(struct ifnet *ifp)
-{
-	struct pcn_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
-}
-
-/*
  * pcn_mii_readreg:	[mii interface function]
  *
  *	Read a PHY register on the MII.
  */
 static int
-pcn_mii_readreg(struct device *self, int phy, int reg)
+pcn_mii_readreg(device_t self, int phy, int reg)
 {
-	struct pcn_softc *sc = (void *) self;
+	struct pcn_softc *sc = device_private(self);
 	uint32_t rv;
 
 	pcn_bcr_write(sc, LE_BCR33, reg | (phy << PHYAD_SHIFT));
@@ -2209,9 +2183,9 @@ pcn_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the MII.
  */
 static void
-pcn_mii_writereg(struct device *self, int phy, int reg, int val)
+pcn_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct pcn_softc *sc = (void *) self;
+	struct pcn_softc *sc = device_private(self);
 
 	pcn_bcr_write(sc, LE_BCR33, reg | (phy << PHYAD_SHIFT));
 	pcn_bcr_write(sc, LE_BCR34, val);
@@ -2223,9 +2197,9 @@ pcn_mii_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-pcn_mii_statchg(struct device *self)
+pcn_mii_statchg(device_t self)
 {
-	struct pcn_softc *sc = (void *) self;
+	struct pcn_softc *sc = device_private(self);
 
 	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
 		pcn_bcr_write(sc, LE_BCR9, LE_B9_FDEN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38.12.1 2007/11/06 23:15:01 matt Exp $	*/
+/*	vm_machdep.c,v 1.38.12.1 2007/11/06 23:15:01 matt Exp	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,11 +44,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38.12.1 2007/11/06 23:15:01 matt Exp $");
+__KERNEL_RCSID(0, "vm_machdep.c,v 1.38.12.1 2007/11/06 23:15:01 matt Exp");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
 #include "opt_perfctrs.h"
+#include "opt_cputypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,21 +141,27 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	}
 #endif
 
+	l2->l_md.md_flags = l1->l_md.md_flags & MDP_VFPUSED;
+
+#ifdef FPU_VFP
+	/*
+	 * Copy the floating point state from the VFP to the PCB
+	 * if this process has state stored there.
+	 */
+	if (l1->l_addr->u_pcb.pcb_vfpcpu != NULL)
+		vfp_saveregs_lwp(l1, 1);
+#endif
+
 	/* Copy the pcb */
 	*pcb = l1->l_addr->u_pcb;
 
 	/* 
-	 * Set up the undefined stack for the process.
+	 * Set up the stack for the process.
 	 * Note: this stack is not in use if we are forking from p1
 	 */
-	pcb->pcb_un.un_32.pcb32_und_sp = (u_int)l2->l_addr +
-	    USPACE_UNDEF_STACK_TOP;
 	pcb->pcb_un.un_32.pcb32_sp = (u_int)l2->l_addr + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
-	/* Fill the undefined stack with a known pattern */
-	memset(((u_char *)l2->l_addr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
-	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
 	/* Fill the kernel stack with a known pattern */
 	memset(((u_char *)l2->l_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
 	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
@@ -190,6 +197,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_r4 = (u_int)func;
 	sf->sf_r5 = (u_int)arg;
+	sf->sf_sp = (u_int)tf;
 	sf->sf_pc = (u_int)lwp_trampoline;
 	pcb->pcb_un.un_32.pcb32_sp = (u_int)sf;
 }
@@ -211,16 +219,17 @@ cpu_lwp_free(struct lwp *l, int proc)
 	arm_fpe_core_changecontext(0);
 #endif	/* ARMFPE */
 
+#ifdef FPU_VFP
+	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
+		vfp_saveregs_lwp(l, 0);
+#endif
+
 #ifdef STACKCHECKS
 	/* Report how much stack has been used - debugging */
 	if (l) {
 		u_char *ptr;
 		int loop;
 
-		ptr = ((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM;
-		for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM)
-		    && *ptr == 0xdd; ++loop, ++ptr) ;
-		log(LOG_INFO, "%d bytes of undefined stack fill pattern\n", loop);
 		ptr = ((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM;
 		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
 		    && *ptr == 0xdd; ++loop, ++ptr) ;
@@ -262,6 +271,11 @@ void
 cpu_swapout(l)
 	struct lwp *l;
 {
+#ifdef FPU_VFP
+	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
+		vfp_saveregs_lwp(l, 1);
+#endif
+
 #if 0
 	struct proc *p = l->l_proc;
 

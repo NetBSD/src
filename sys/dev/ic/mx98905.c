@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.9.16.2 2008/01/09 01:52:56 matt Exp $	*/
+/*	mx98905.c,v 1.9.16.2 2008/01/09 01:52:56 matt Exp	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.9.16.2 2008/01/09 01:52:56 matt Exp $");
+__KERNEL_RCSID(0, "mx98905.c,v 1.9.16.2 2008/01/09 01:52:56 matt Exp");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -164,7 +164,7 @@ mx98905_write_wait(sc)
 	if (maxwait == 0) {
 		log(LOG_WARNING,
 		    "%s: remote transmit DMA failed to complete\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		dp8390_reset(sc);
 	}
 }

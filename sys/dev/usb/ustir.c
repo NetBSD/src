@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.20.8.1 2008/01/09 01:54:48 matt Exp $	*/
+/*	ustir.c,v 1.20.8.1 2008/01/09 01:54:48 matt Exp	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.20.8.1 2008/01/09 01:54:48 matt Exp $");
+__KERNEL_RCSID(0, "ustir.c,v 1.20.8.1 2008/01/09 01:54:48 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,14 @@ ustir_dumpdata(u_int8_t const *data, size_t dlen, char const *desc)
 }
 #endif
 
-USB_DECLARE_DRIVER(ustir);
+int ustir_match(device_t, struct cfdata *, void *);
+void ustir_attach(device_t, device_t, void *);
+void ustir_childdet(device_t, device_t);
+int ustir_detach(device_t, int);
+int ustir_activate(device_t, enum devact);
+extern struct cfdriver ustir_cd;
+CFATTACH_DECL2(ustir, sizeof(struct ustir_softc), ustir_match,
+    ustir_attach, ustir_detach, ustir_activate, NULL, ustir_childdet);
 
 USB_MATCH(ustir)
 {
@@ -365,8 +372,19 @@ USB_ATTACH(ustir)
 	ia.ia_handle = sc;
 
 	sc->sc_child = config_found(self, &ia, ir_print);
+	selinit(&sc->sc_rd_sel);
+	selinit(&sc->sc_wr_sel);
 
 	USB_ATTACH_SUCCESS_RETURN;
+}
+
+void
+ustir_childdet(device_t self, device_t child)
+{
+	struct ustir_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
 }
 
 USB_DETACH(ustir)
@@ -405,13 +423,14 @@ USB_DETACH(ustir)
 	}
 	splx(s);
 
-	if (sc->sc_child != NULL) {
+	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
-		sc->sc_child = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	seldestroy(&sc->sc_rd_sel);
+	seldestroy(&sc->sc_wr_sel);
 
 	return rv;
 }
@@ -568,7 +587,7 @@ deframe_rd_ur(struct ustir_softc *sc)
 		case FR_FRAMEOK:
 			sc->sc_ur_framelen = sc->sc_framestate.bufindex;
 			wakeup(&sc->sc_ur_framelen); /* XXX should use flag */
-			selnotify(&sc->sc_rd_sel, 0);
+			selnotify(&sc->sc_rd_sel, 0, 0);
 			return 1;
 		}
 	}
@@ -792,7 +811,7 @@ ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		/* Wake up for possible output */
 		wakeup(&sc->sc_wr_buf);
-		selnotify(&sc->sc_wr_sel, 0);
+		selnotify(&sc->sc_wr_sel, 0, 0);
 	}
 }
 
@@ -840,9 +859,9 @@ ustir_start_read(struct ustir_softc *sc)
 }
 
 Static int
-ustir_activate(device_ptr_t self, enum devact act)
+ustir_activate(device_t self, enum devact act)
 {
-	struct ustir_softc *sc = (struct ustir_softc *)self;
+	struct ustir_softc *sc = device_private(self);
 	int error = 0;
 
 	switch (act) {

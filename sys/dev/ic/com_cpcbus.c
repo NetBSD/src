@@ -1,4 +1,4 @@
-/*	$NetBSD: com_cpcbus.c,v 1.8.28.1 2007/11/06 23:26:30 matt Exp $	*/
+/*	com_cpcbus.c,v 1.8.28.1 2007/11/06 23:26:30 matt Exp	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cpcbus.c,v 1.8.28.1 2007/11/06 23:26:30 matt Exp $");
+__KERNEL_RCSID(0, "com_cpcbus.c,v 1.8.28.1 2007/11/06 23:26:30 matt Exp");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,14 +57,14 @@ struct com_cpc_softc {
 	void *sc_ih;
 };
 
-static int	com_cpc_match(struct device *, struct cfdata *, void *);
-static void	com_cpc_attach(struct device *, struct device *, void *);
+static int	com_cpc_match(device_t, cfdata_t , void *);
+static void	com_cpc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_cpcbus, sizeof(struct com_cpc_softc),
+CFATTACH_DECL_NEW(com_cpcbus, sizeof(struct com_cpc_softc),
     com_cpc_match, com_cpc_attach, NULL, NULL);
 
 int
-com_cpc_match(struct device *parent, struct cfdata *cf, void *aux)
+com_cpc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 
@@ -72,17 +72,19 @@ com_cpc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-com_cpc_attach(struct device *parent, struct device *self, void *aux)
+com_cpc_attach(device_t parent, device_t self, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
-	struct com_cpc_softc *sc = (struct com_cpc_softc *)self;
+	struct com_cpc_softc *sc = device_private(self);
 	int iobase = caa->cpca_addr;
 	int irq = caa->cpca_irq;
 	bus_space_handle_t ioh;
 
+	sc->sc_com.sc_dev = self;
+
 	if (!com_is_console(caa->cpca_tag, iobase, &ioh) &&
 	    bus_space_map(caa->cpca_tag, iobase, COM_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_com.sc_regs, caa->cpca_tag, ioh, iobase);

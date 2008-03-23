@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_lwp.c,v 1.25.2.3 2008/01/09 01:56:21 matt Exp $	*/
+/*	sys_lwp.c,v 1.25.2.3 2008/01/09 01:56:21 matt Exp	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.25.2.3 2008/01/09 01:56:21 matt Exp $");
+__KERNEL_RCSID(0, "sys_lwp.c,v 1.25.2.3 2008/01/09 01:56:21 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 		lwp_unlock(l2);
 	} else {
 		l2->l_stat = LSSUSPENDED;
-		lwp_unlock_to(l2, &l2->l_cpu->ci_schedstate.spc_lwplock);
+		lwp_unlock_to(l2, l2->l_cpu->ci_schedstate.spc_lwplock);
 	}
 	mutex_exit(&p->p_smutex);
 
@@ -312,7 +312,7 @@ sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_
 		error = EBUSY;
 	} else {
 		/* Wake it up.  lwp_unsleep() will release the LWP lock. */
-		lwp_unsleep(t);
+		(void)lwp_unsleep(t, true);
 		error = 0;
 	}
 
@@ -502,7 +502,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 	lwp_lock(t);
 	if (t->l_syncobj == &lwp_park_sobj) {
 		/* Releases the LWP lock. */
-		lwp_unsleep(t);
+		(void)lwp_unsleep(t, true);
 	} else {
 		/*
 		 * Set the operation pending.  The next call to _lwp_park
@@ -708,7 +708,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		 */
 		if (t->l_syncobj == &lwp_park_sobj) {
 			/* Releases the LWP lock. */
-			lwp_unsleep(t);
+			(void)lwp_unsleep(t, true);
 		} else {
 			/*
 			 * Set the operation pending.  The next call to
@@ -824,7 +824,8 @@ sys__lwp_ctl(struct lwp *l, const struct sys__lwp_ctl_args *uap, register_t *ret
 	vaddr_t vaddr;
 
 	features = SCARG(uap, features);
-	if ((features & ~LWPCTL_FEATURE_CURCPU) != 0)
+	features &= ~(LWPCTL_FEATURE_CURCPU | LWPCTL_FEATURE_PCTR);
+	if (features != 0)
 		return ENODEV;
 	if ((error = lwp_ctl_alloc(&vaddr)) != 0)
 		return error;

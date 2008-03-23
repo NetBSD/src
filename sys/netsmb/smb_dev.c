@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.26 2007/03/04 06:03:35 christos Exp $	*/
+/*	smb_dev.c,v 1.26 2007/03/04 06:03:35 christos Exp	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.26 2007/03/04 06:03:35 christos Exp $");
+__KERNEL_RCSID(0, "smb_dev.c,v 1.26 2007/03/04 06:03:35 christos Exp");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,7 +208,7 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype,
 /*
 	STAILQ_INIT(&sdp->sd_rqlist);
 	STAILQ_INIT(&sdp->sd_rplist);
-	bzero(&sdp->sd_pollinfo, sizeof(struct selinfo));
+	selinit(&sdp->sd_pollinfo);
 */
 	s = splnet();
 	sdp->sd_level = -1;
@@ -238,17 +238,18 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 	smb_makescred(&scred, l, NULL);
 	ssp = sdp->sd_share;
 	if (ssp != NULL) {
-		smb_share_lock(ssp, 0);
+		smb_share_lock(ssp);
 		smb_share_rele(ssp, &scred);
 	}
 	vcp = sdp->sd_vc;
 	if (vcp != NULL) {
-		smb_vc_lock(vcp, 0);
+		smb_vc_lock(vcp);
 		smb_vc_rele(vcp, &scred);
 	}
 /*
 	smb_flushq(&sdp->sd_rqlist);
 	smb_flushq(&sdp->sd_rplist);
+	seldestroy(&sdp->sd_pollinfo);
 */
 	smb_devtbl[minor(dev)] = NULL;
 	free(sdp, M_NSMBDEV);
@@ -286,7 +287,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 		if (error)
 			break;
 		sdp->sd_vc = vcp;
-		smb_vc_unlock(vcp, 0);
+		smb_vc_unlock(vcp);
 		sdp->sd_level = SMBL_VC;
 		break;
 	    case SMBIOC_OPENSHARE:
@@ -299,7 +300,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 		if (error)
 			break;
 		sdp->sd_share = ssp;
-		smb_share_unlock(ssp, 0);
+		smb_share_unlock(ssp);
 		sdp->sd_level = SMBL_SHARE;
 		break;
 	    case SMBIOC_REQUEST:
@@ -323,7 +324,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 				on = fl->ioc_flags & SMBV_PERMANENT;
 				if ((vcp = sdp->sd_vc) == NULL)
 					return ENOTCONN;
-				error = smb_vc_get(vcp, LK_EXCLUSIVE, &scred);
+				error = smb_vc_get(vcp, &scred);
 				if (error)
 					break;
 				if (on && (vcp->obj.co_flags & SMBV_PERMANENT) == 0) {
@@ -341,7 +342,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 				on = fl->ioc_flags & SMBS_PERMANENT;
 				if ((ssp = sdp->sd_share) == NULL)
 					return ENOTCONN;
-				error = smb_share_get(ssp, LK_EXCLUSIVE, &scred);
+				error = smb_share_get(ssp, &scred);
 				if (error)
 					break;
 				if (on && (ssp->obj.co_flags & SMBS_PERMANENT) == 0) {
@@ -369,12 +370,12 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag,
 			break;
 		if (vcp) {
 			sdp->sd_vc = vcp;
-			smb_vc_unlock(vcp, 0);
+			smb_vc_unlock(vcp);
 			sdp->sd_level = SMBL_VC;
 		}
 		if (ssp) {
 			sdp->sd_share = ssp;
-			smb_share_unlock(ssp, 0);
+			smb_share_unlock(ssp);
 			sdp->sd_level = SMBL_SHARE;
 		}
 		break;
@@ -502,7 +503,7 @@ smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	if (ssp == NULL)
 		return ENOTCONN;
 
-	error = smb_share_get(ssp, LK_EXCLUSIVE, scred);
+	error = smb_share_get(ssp, scred);
 	if (error)
 		return error;
 

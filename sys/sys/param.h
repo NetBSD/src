@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.274.2.3 2008/01/09 01:58:13 matt Exp $	*/
+/*	param.h,v 1.274.2.3 2008/01/09 01:58:13 matt Exp	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499004800	/* NetBSD 4.99.48 */
+#define	__NetBSD_Version__	499005500	/* NetBSD 4.99.55 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -244,6 +244,10 @@
 #define	NPRI_USER		64
 #define	MAXPRI_USER		(PRI_USER + NPRI_USER - 1)
 
+/* Priority range used by POSIX real-time features */
+#define	SCHED_PRI_MIN		0
+#define	SCHED_PRI_MAX		63
+
 /*
  * Kernel thread priorities.
  */
@@ -259,6 +263,8 @@
 #define	PRI_BIO		(MAXPRI_KTHREAD - schedppq * 4)
 
 #define	PRI_IDLE	PRI_USER
+
+extern const int schedppq;
 
 /*
  * Miscellaneous.

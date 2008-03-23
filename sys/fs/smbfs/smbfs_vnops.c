@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.59.16.2 2008/01/09 01:55:50 matt Exp $	*/
+/*	smbfs_vnops.c,v 1.59.16.2 2008/01/09 01:55:50 matt Exp	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.59.16.2 2008/01/09 01:55:50 matt Exp $");
+__KERNEL_RCSID(0, "smbfs_vnops.c,v 1.59.16.2 2008/01/09 01:55:50 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -900,9 +900,6 @@ smbfs_print(v)
 	    (int)np->n_nmlen, np->n_name,
 	    np->n_parent ? np->n_parent : NULL,
 	    (np->n_flag & NOPEN) != 0);
-	printf("       ");
-	lockmgr_printinfo(vp->v_vnlock);
-	printf("\n");
 	return (0);
 }
 

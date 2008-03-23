@@ -1,4 +1,4 @@
-/* $NetBSD: hpet_acpi.c,v 1.1.18.1 2007/11/06 23:25:36 matt Exp $ */
+/* hpet_acpi.c,v 1.1.18.1 2007/11/06 23:25:36 matt Exp */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.1.18.1 2007/11/06 23:25:36 matt Exp $");
+__KERNEL_RCSID(0, "hpet_acpi.c,v 1.1.18.1 2007/11/06 23:25:36 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,11 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: hpet_acpi.c,v 1.1.18.1 2007/11/06 23:25:36 matt Exp 
 
 #include <dev/ic/hpetvar.h>
 
-static int	hpet_acpi_match(struct device *, struct cfdata *, void *);
-static void	hpet_acpi_attach(struct device *, struct device *, void *);
+static int	hpet_acpi_match(device_t, cfdata_t, void *);
+static void	hpet_acpi_attach(device_t, device_t, void *);
 
 
-CFATTACH_DECL(hpet_acpi, sizeof(struct hpet_softc), hpet_acpi_match,
+CFATTACH_DECL_NEW(hpet_acpi, sizeof(struct hpet_softc), hpet_acpi_match,
     hpet_acpi_attach, NULL, NULL);
 
 /*
@@ -67,8 +67,7 @@ static const char * const hpet_acpi_ids[] = {
  * hpet_acpi_match: autoconf(9) match routine
  */
 static int
-hpet_acpi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+hpet_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -79,9 +78,9 @@ hpet_acpi_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-hpet_acpi_attach(struct device *parent, struct device *self, void *aux)
+hpet_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct hpet_softc *sc = (struct hpet_softc *)self;
+	struct hpet_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
@@ -91,7 +90,7 @@ hpet_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
@@ -99,19 +98,19 @@ hpet_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our mem registers */
 	mem = acpi_res_mem(&res, 0);
 	if (mem == NULL) {
-		aprint_error("%s: unable to find mem register resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "unable to find mem register resource\n");
 		goto out;
 	}
 
 	sc->sc_memt = aa->aa_memt;
 	if (bus_space_map(sc->sc_memt, mem->ar_base, mem->ar_length,
 		    0, &sc->sc_memh)) {
-		aprint_error("%s: can't map mem space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't map mem space\n");
 		goto out;
 	}
 
-	hpet_attach_subr(sc);
+	hpet_attach_subr(self);
 
  out:
 	acpi_resource_cleanup(&res);

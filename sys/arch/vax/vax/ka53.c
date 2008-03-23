@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.14 2007/03/04 06:00:59 christos Exp $	*/
+/*	ka53.c,v 1.14 2007/03/04 06:00:59 christos Exp	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.14 2007/03/04 06:00:59 christos Exp $");
+__KERNEL_RCSID(0, "ka53.c,v 1.14 2007/03/04 06:00:59 christos Exp");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,30 +58,32 @@ static void    ka53_softmem(void *);
 static void    ka53_hardmem(void *);
 static void    ka53_steal_pages(void);
 static void    ka53_cache_enable(void);
+static void    ka53_attach_cpu(device_t);
+
+static const char * const ka53_devs[] = { "cpu", "sgec", "vsbus", "uba", NULL };
 
 /* 
  * Declaration of 53-specific calls.
  */
-struct cpu_dep ka53_calls = {
-	ka53_steal_pages,
-	ka53_mchk,
-	ka53_memerr, 
-	ka53_conf,
-	generic_gettime,
-	generic_settime,
-	32,	 /* ~VUPS */
-	2,	/* SCB pages */
-	generic_halt,
-	generic_reboot,
-	NULL,
-	NULL,
-	CPU_RAISEIPL,
+const struct cpu_dep ka53_calls = {
+	.cpu_steal_pages = ka53_steal_pages,
+	.cpu_mchk	= ka53_mchk,
+	.cpu_memerr	= ka53_memerr, 
+	.cpu_conf	= ka53_conf,
+	.cpu_gettime	= generic_gettime,
+	.cpu_settime	= generic_settime,
+	.cpu_vups	= 32,	 /* ~VUPS */
+	.cpu_scbsz	= 2,	/* SCB pages */
+	.cpu_halt	= generic_halt,
+	.cpu_reboot	= generic_reboot,
+	.cpu_flags	= CPU_RAISEIPL,
+	.cpu_devs	= ka53_devs,
+	.cpu_attach_cpu	= ka53_attach_cpu,
 };
 
 void
-ka53_conf()
+ka53_conf(void)
 {
-	const char *cpuname;
 
 	/* Don't ask why, but we seem to need this... */
 	volatile int *hej = (void *)mfpr(PR_ISP);
@@ -89,6 +91,12 @@ ka53_conf()
 	hej[-1] = hej[-1];
 
 	cpmbx = (struct cpmbx *)vax_map_physmem(0x20140400, 1);
+}
+
+void
+ka53_attach_cpu(device_t self)
+{
+	const char *cpuname;
 
 	switch((vax_siedata & 0xff00) >> 8) {
 		case VAX_STYP_51: cpuname = "KA51"; break;
@@ -144,7 +152,7 @@ ka53_softmem(void *arg)
 #define PCCTL_D_EN	0x01
 
 void
-ka53_cache_enable()
+ka53_cache_enable(void)
 {
 	int start, slut;
 
@@ -207,7 +215,7 @@ ka53_cache_enable()
 }
 
 void
-ka53_memerr()
+ka53_memerr(void)
 {
 	printf("Memory err!\n");
 }
@@ -221,7 +229,7 @@ ka53_mchk(void *addr)
 }
 
 void
-ka53_steal_pages()
+ka53_steal_pages(void)
 {
 
 	/*

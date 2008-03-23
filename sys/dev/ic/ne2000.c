@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.54.16.1 2007/11/06 23:26:57 matt Exp $	*/
+/*	ne2000.c,v 1.54.16.1 2007/11/06 23:26:57 matt Exp	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.54.16.1 2007/11/06 23:26:57 matt Exp $");
+__KERNEL_RCSID(0, "ne2000.c,v 1.54.16.1 2007/11/06 23:26:57 matt Exp");
 
 #include "opt_ipkdb.h"
 
@@ -136,7 +136,7 @@ ne2000_attach(nsc, myea)
 	switch (nsc->sc_type) {
 	case NE2000_TYPE_UNKNOWN:
 	default:
-		printf("%s: where did the card go?\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(dsc->sc_dev, "where did the card go?\n");
 		return (1);
 	case NE2000_TYPE_NE1000:
 		memsize = 8192;
@@ -295,7 +295,7 @@ ne2000_attach(nsc, myea)
 		dsc->sc_media_init = dp8390_media_init;
 
 	if (dp8390_config(dsc)) {
-		printf("%s: setup failed\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(dsc->sc_dev, "setup failed\n");
 		return (1);
 	}
 
@@ -321,7 +321,7 @@ ne2000_detect(nict, nich, asict, asich)
 {
 	static u_int8_t test_pattern[32] = "THIS is A memory TEST pattern";
 	u_int8_t test_buffer[32], tmp;
-	int i, rv = 0;
+	int i, rv = NE2000_TYPE_UNKNOWN;
 
 	/* Reset the board. */
 #ifdef GWETHER
@@ -642,7 +642,7 @@ ne2000_write_mbuf(sc, m, buf)
 	if (maxwait == 0) {
 		log(LOG_WARNING,
 		    "%s: remote transmit DMA failed to complete\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		dp8390_reset(sc);
 	}
 

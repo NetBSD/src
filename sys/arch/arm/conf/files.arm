@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.85.12.4 2008/01/28 18:21:34 matt Exp $
+#	files.arm,v 1.85.12.4 2008/01/28 18:21:34 matt Exp
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -13,6 +13,7 @@ defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_XSCALE_IXP425
 defflag	opt_cputypes.h		CPU_ARM1136: CPU_ARM11
 defflag	opt_cputypes.h		CPU_ARM1176: CPU_ARM11
+defflag opt_cputypes.h		FPU_VFP
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
 defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_THROUGH
@@ -39,6 +40,9 @@ file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
 file	arch/arm/fpe-arm/armfpe_init.c		armfpe
 file	arch/arm/fpe-arm/armfpe.S		armfpe
 
+# VFP support
+file	arch/arm/vfp/vfp_init.c			fpu_vfp
+
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG
 
@@ -48,9 +52,6 @@ defflag	opt_arm32_pmap.h	ARM32_NEW_VM_LAYOUT PMAPCOUNTERS
 
 # MI console support
 file	dev/cons.c
-
-# generic networking files
-file	arch/arm/arm/in_cksum_arm.S		inet
 
 # DDB
 file	arch/arm/arm/db_disasm.c		ddb
@@ -90,6 +91,7 @@ file	arch/arm/arm/bootconfig.c
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/compat_16_machdep.c	compat_16
 file	arch/arm/arm/copystr.S
+file	arch/arm/arm/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
 file	arch/arm/arm/cpufunc_asm_arm3.S		cpu_arm3
@@ -114,6 +116,7 @@ file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
 file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10
 file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10
 file	arch/arm/arm/cpufunc_asm_armv6.S	cpu_arm11
+makeoptions	cpu_arm11	"AOPTS.cpufunc_asm_armv6.S"+="-Wa,-march=armv6"
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
 							cpu_sa1110 |
 							cpu_ixp12x0
@@ -130,7 +133,6 @@ file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs
 file	arch/arm/arm/sig_machdep.c
 file	arch/arm/arm/sigcode.S
-file	arch/arm/arm/softintr.c
 file	arch/arm/arm/syscall.c
 file	arch/arm/arm/undefined.c
 # vectors.S gets included manually by Makefile.acorn26, since it needs

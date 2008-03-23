@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.30.8.1 2008/01/09 01:57:52 matt Exp $	*/
+/*	nfs_export.c,v 1.30.8.1 2008/01/09 01:57:52 matt Exp	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.30.8.1 2008/01/09 01:57:52 matt Exp $");
+__KERNEL_RCSID(0, "nfs_export.c,v 1.30.8.1 2008/01/09 01:57:52 matt Exp");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -223,8 +223,8 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct fid *fid;
 	size_t fid_size;
 
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0)
+	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_NFS,
+	    KAUTH_REQ_NETWORK_NFS_EXPORT, NULL, NULL, NULL) != 0)
 		return EPERM;
 
 	/* Lookup the file system path. */
@@ -249,7 +249,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	}
 
 	/* Mark the file system busy. */
-	error = vfs_busy(mp, LK_NOWAIT, NULL);
+	error = vfs_busy(mp, RW_READER, NULL);
 	vput(vp);
 	if (error != 0)
 		return error;
@@ -294,7 +294,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 
 out:
 	netexport_wrunlock();
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	return error;
 }
 

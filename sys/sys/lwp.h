@@ -1,7 +1,7 @@
-/* 	$NetBSD: lwp.h,v 1.63.2.2 2008/01/09 01:58:11 matt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.63.2.3 2008/03/23 02:05:10 matt Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,6 +45,7 @@
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/signalvar.h>
+#include <sys/sched.h>
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
 
@@ -98,9 +99,12 @@ struct lwp {
 	int		l_cpticks;	/* t: Ticks of CPU time */
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
+	psetid_t	l_psid;		/* l: assigned processor-set ID */
+	struct cpu_info *l_target_cpu;	/* l: target CPU to migrate */
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
+	cpuset_t	l_affinity;	/* l: CPU set for affinity */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -191,6 +195,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
+#define	LW_AFFINITY	0x00200000 /* Affinity is assigned to the thread */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
@@ -270,11 +275,14 @@ lwp_t *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_update_creds(lwp_t *);
-lwp_t *lwp_find(struct proc *, int);
+void	lwp_migrate(lwp_t *, struct cpu_info *);
+lwp_t *lwp_find2(pid_t, lwpid_t);
+lwp_t *lwp_find(proc_t *, int);
 void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
+u_int	lwp_unsleep(lwp_t *, bool);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
@@ -344,14 +352,6 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 	(*l->l_syncobj->sobj_lendpri)(l, pri);
 }
 
-static inline void
-lwp_unsleep(lwp_t *l)
-{
-	KASSERT(mutex_owned(l->l_mutex));
-
-	(*l->l_syncobj->sobj_unsleep)(l);
-}
-
 static inline pri_t
 lwp_eprio(lwp_t *l)
 {
@@ -380,6 +380,39 @@ static inline void
 spc_unlock(struct cpu_info *ci)
 {
 	mutex_spin_exit(ci->ci_schedstate.spc_mutex);
+}
+
+static inline void
+spc_dlock(struct cpu_info *ci1, struct cpu_info *ci2)
+{
+	struct schedstate_percpu *spc1 = &ci1->ci_schedstate;
+	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
+
+	KASSERT(ci1 != ci2);
+	if (spc1->spc_mutex == spc2->spc_mutex) {
+		mutex_spin_enter(spc1->spc_mutex);
+	} else if (ci1 < ci2) {
+		mutex_spin_enter(spc1->spc_mutex);
+		mutex_spin_enter(spc2->spc_mutex);
+	} else {
+		mutex_spin_enter(spc2->spc_mutex);
+		mutex_spin_enter(spc1->spc_mutex);
+	}
+}
+
+static inline void
+spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
+{
+	struct schedstate_percpu *spc1 = &ci1->ci_schedstate;
+	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
+
+	KASSERT(ci1 != ci2);
+	if (spc1->spc_mutex == spc2->spc_mutex) {
+		mutex_spin_exit(spc1->spc_mutex);
+	} else {
+		mutex_spin_exit(spc1->spc_mutex);
+		mutex_spin_exit(spc2->spc_mutex);
+	}
 }
 
 #endif /* _KERNEL */

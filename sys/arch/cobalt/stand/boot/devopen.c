@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2.4.1 2007/11/06 23:15:46 matt Exp $	*/
+/*	devopen.c,v 1.2.4.1 2007/11/06 23:15:46 matt Exp	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ devparse(const char *fname, int *dev, uint8_t *unit, uint8_t *part,
 				return EPART;
 
 			/* partition number */
+			p = 0;
 			if (i < devlen)
 				p = fname[i++] - 'a';
 

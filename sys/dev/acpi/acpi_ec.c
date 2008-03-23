@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.41.8.2 2008/01/09 01:52:18 matt Exp $	*/
+/*	acpi_ec.c,v 1.41.8.2 2008/01/09 01:52:18 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.41.8.2 2008/01/09 01:52:18 matt Exp $");
+__KERNEL_RCSID(0, "acpi_ec.c,v 1.41.8.2 2008/01/09 01:52:18 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,8 @@ static void acpiec_attach(device_t, device_t, void *);
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
     bus_addr_t, bus_addr_t, ACPI_HANDLE, uint8_t);
 
-static bool acpiec_resume(device_t);
-static bool acpiec_suspend(device_t);
+static bool acpiec_resume(device_t PMF_FN_PROTO);
+static bool acpiec_suspend(device_t PMF_FN_PROTO);
 
 static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
     ACPI_HANDLE *, uint8_t *);
@@ -396,7 +396,7 @@ post_data_map:
 }
 
 static bool
-acpiec_suspend(device_t dv)
+acpiec_suspend(device_t dv PMF_FN_ARGS)
 {
 	acpiec_cold = true;
 
@@ -404,7 +404,7 @@ acpiec_suspend(device_t dv)
 }
 
 static bool
-acpiec_resume(device_t dv)
+acpiec_resume(device_t dv PMF_FN_ARGS)
 {
 	acpiec_cold = false;
 
@@ -554,7 +554,7 @@ static ACPI_STATUS
 acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int i;
+	int i, timeo = 1000 * EC_CMD_TIMEOUT;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
@@ -570,9 +570,17 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 	}
 
 	if (cold || acpiec_cold) {
-		while (sc->sc_state != EC_STATE_FREE) {
-			delay(1);
+		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
+			delay(1000);
 			acpiec_gpe_state_machine(dv);
+		}
+		if (sc->sc_state != EC_STATE_FREE) {
+			mutex_exit(&sc->sc_mtx);
+			AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+			acpiec_unlock(dv);
+			aprint_error_dev(dv, "command timed out, state %d\n",
+			    sc->sc_state);
+			return AE_ERROR;
 		}
 	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
@@ -594,7 +602,7 @@ static ACPI_STATUS
 acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int i;
+	int i, timeo = 1000 * EC_CMD_TIMEOUT;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
@@ -611,9 +619,17 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 	}
 
 	if (cold || acpiec_cold) {
-		while (sc->sc_state != EC_STATE_FREE) {
-			delay(1);
+		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
+			delay(1000);
 			acpiec_gpe_state_machine(dv);
+		}
+		if (sc->sc_state != EC_STATE_FREE) {
+			mutex_exit(&sc->sc_mtx);
+			AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+			acpiec_unlock(dv);
+			aprint_error_dev(dv, "command timed out, state %d\n",
+			    sc->sc_state);
+			return AE_ERROR;
 		}
 	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);

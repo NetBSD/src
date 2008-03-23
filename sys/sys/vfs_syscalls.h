@@ -1,10 +1,12 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.4.8.1 2008/01/09 01:58:21 matt Exp $        */
+/*     vfs_syscalls.h,v 1.4.8.1 2008/01/09 01:58:21 matt Exp        */
 
 #ifndef _SYS_VFS_SYSCALLS_H_
 #define _SYS_VFS_SYSCALLS_H_
 
 struct stat;
 struct statvfs;
+
+extern int dovfsusermount;
 
 /*
  * syscall helpers for compat code.

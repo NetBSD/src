@@ -1,4 +1,4 @@
-/* $NetBSD: fdvar.h,v 1.3 2005/12/11 12:22:02 christos Exp $ */
+/* fdvar.h,v 1.3 2005/12/11 12:22:02 christos Exp */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct fd_type {
 
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct disk sc_dk;
 
 	const struct fd_type *sc_deftype; /* default type descriptor */
@@ -90,7 +90,7 @@ struct fd_softc {
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_cylin;		/* where we think the head is */
 
-	void *sc_sdhook;	/* saved shutdown hook for drive. */
+	void *sc_roothook;	/* mountroot hook */
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */

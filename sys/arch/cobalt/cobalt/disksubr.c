@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.20.6.2 2008/01/09 01:45:38 matt Exp $	*/
+/*	disksubr.c,v 1.20.6.2 2008/01/09 01:45:38 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.20.6.2 2008/01/09 01:45:38 matt Exp $");
+__KERNEL_RCSID(0, "disksubr.c,v 1.20.6.2 2008/01/09 01:45:38 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,11 +162,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			pp = &lp->d_partitions[RAW_PART + 1 + i];
 			pp->p_offset = dp->mbrp_start;
 			pp->p_size = dp->mbrp_size;
-			if (dp->mbrp_type == MBR_PTYPE_LNXEXT2)
-				pp->p_fstype = FS_EX2FS;
-
-			if (dp->mbrp_type == MBR_PTYPE_LNXSWAP)
-				pp->p_fstype = FS_SWAP;
+			pp->p_fstype = xlat_mbr_fstype(dp->mbrp_type);
 
 			/* is this ours? */
 			if (dp == ourdp) {

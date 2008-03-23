@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.101.8.1 2008/01/09 01:56:12 matt Exp $	*/
+/*	kern_verifiedexec.c,v 1.101.8.1 2008/01/09 01:56:12 matt Exp	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.101.8.1 2008/01/09 01:56:12 matt Exp $");
+__KERNEL_RCSID(0, "kern_verifiedexec.c,v 1.101.8.1 2008/01/09 01:56:12 matt Exp");
 
 #include "opt_veriexec.h"
 
@@ -710,6 +710,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 	fp = kmem_alloc(vfe->ops->hash_len, KM_SLEEP);
 	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ);
+	pmap_update(pmap_kernel());
 
 	page_fp = (u_char *) vfe->page_fp + (vfe->ops->hash_len * idx);
 	(vfe->ops->init)(ctx);
@@ -719,6 +720,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 	(vfe->ops->final)(fp, ctx);
 
 	pmap_kremove(kva, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, kva, PAGE_SIZE, UVM_KMF_VAONLY);
 
 	error = veriexec_fp_cmp(vfe->ops, page_fp, fp);
@@ -956,7 +958,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		vp = arg1;
 		KASSERT(vp != NULL);
 
-		dev = vp->v_un.vu_specinfo->si_rdev;
+		dev = vp->v_rdev;
 		d_type = D_OTHER;
 		bvp = NULL;
 

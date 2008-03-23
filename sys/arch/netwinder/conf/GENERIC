@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87.10.2 2008/01/09 01:47:27 matt Exp $
+# GENERIC,v 1.87.10.2 2008/01/09 01:47:27 matt Exp
 #
 # GENERIC machine description file
 # 
@@ -170,7 +170,6 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	PORTMASTER	# Enable PortMaster only options
 #options 	DIAGNOSTIC	# internally consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 makeoptions	DEBUG="-g"	# compile full symbol table

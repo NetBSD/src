@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.164.2.2 2008/01/09 01:56:09 matt Exp $	*/
+/*	kern_subr.c,v 1.164.2.2 2008/01/09 01:56:09 matt Exp	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.164.2.2 2008/01/09 01:56:09 matt Exp $");
+__KERNEL_RCSID(0, "kern_subr.c,v 1.164.2.2 2008/01/09 01:56:09 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -142,6 +142,8 @@ MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 int tftproot_dhcpboot(struct device *);
 #endif
 
+dev_t	dumpcdev;	/* for savecore */
+
 void
 uio_setup_sysspace(struct uio *uio)
 {
@@ -154,19 +156,11 @@ uiomove(void *buf, size_t n, struct uio *uio)
 {
 	struct vmspace *vm = uio->uio_vmspace;
 	struct iovec *iov;
-	u_int cnt;
+	size_t cnt;
 	int error = 0;
-	size_t on;
 	char *cp = buf;
-#ifdef MULTIPROCESSOR
-	int hold_count;
-#endif
 
-	if ((on = n) >= 1024) {
-		KERNEL_UNLOCK_ALL(NULL, &hold_count);
-	}
-
-	ASSERT_SLEEPABLE(NULL, "uiomove");
+	ASSERT_SLEEPABLE();
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
@@ -208,9 +202,6 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		n -= cnt;
 	}
 
-	if (on >= 1024) {
-		KERNEL_LOCK(hold_count, NULL);
-	}
 	return (error);
 }
 
@@ -441,10 +432,8 @@ hook_proc_run(hook_list_t *list, struct proc *p)
 {
 	struct hook_desc *hd;
 
-	for (hd = LIST_FIRST(list); hd != NULL; hd = LIST_NEXT(hd, hk_list)) {
-		((void (*)(struct proc *, void *))*hd->hk_fn)(p,
-		    hd->hk_arg);
-	}
+	LIST_FOREACH(hd, list, hk_list)
+		((void (*)(struct proc *, void *))*hd->hk_fn)(p, hd->hk_arg);
 }
 
 /*
@@ -485,6 +474,14 @@ doshutdownhooks(void)
 {
 	struct hook_desc *dp;
 
+	if (panicstr != NULL) {
+		/*
+		 * Do as few things as possible after a panic.
+		 * We don't know the state the system is in.
+		 */
+		return;
+	}
+
 	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
 		LIST_REMOVE(dp, hk_list);
 		(*dp->hk_fn)(dp->hk_arg);
@@ -500,7 +497,7 @@ doshutdownhooks(void)
 #endif
 	}
 
-	pmf_system_shutdown();
+	pmf_system_shutdown(boothowto);
 }
 
 /*
@@ -1110,6 +1107,7 @@ setroot(struct device *bootdv, int bootpartition)
 		}
 	}
 
+	dumpcdev = devsw_blk2chr(dumpdev);
 	aprint_normal(" dumps on %s", dumpdv->dv_xname);
 	if (DEV_USES_PARTITIONS(dumpdv))
 		aprint_normal("%c", DISKPART(dumpdev) + 'a');
@@ -1118,6 +1116,7 @@ setroot(struct device *bootdv, int bootpartition)
 
  nodumpdev:
 	dumpdev = NODEV;
+	dumpcdev = NODEV;
 	aprint_normal("\n");
 }
 
@@ -1125,7 +1124,6 @@ static struct device *
 finddevice(const char *name)
 {
 	const char *wname;
-	struct device *dv;
 #if defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
 #endif /* BOOT_FROM_MEMORY_HOOKS */
@@ -1140,11 +1138,7 @@ finddevice(const char *name)
 	}
 #endif /* BOOT_FROM_MEMORY_HOOKS */
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
-		if (strcmp(dv->dv_xname, name) == 0)
-			break;
-	}
-	return dv;
+	return device_find_by_xname(name);
 }
 
 static struct device *
@@ -1355,18 +1349,15 @@ trace_is_enabled(struct proc *p)
  * Start trace of particular system call. If process is being traced,
  * this routine is called by MD syscall dispatch code just before
  * a system call is actually executed.
- * MD caller guarantees the passed 'code' is within the supported
- * system call number range for emulation the process runs under.
  */
 int
-trace_enter(register_t code, register_t realcode,
-    const struct sysent *callp, const register_t *args)
+trace_enter(register_t code, const register_t *args, int narg)
 {
 #ifdef SYSCALL_DEBUG
 	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
 
-	ktrsyscall(code, realcode, callp, args);
+	ktrsyscall(code, args, narg);
 
 #ifdef PTRACE
 	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
@@ -1384,8 +1375,7 @@ trace_enter(register_t code, register_t realcode,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(register_t code, const register_t *args, 
-    register_t rval[], int error)
+trace_exit(register_t code, register_t rval[], int error)
 {
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(code, error, rval);

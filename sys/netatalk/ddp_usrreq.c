@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.25.8.1 2008/01/09 01:57:20 matt Exp $	 */
+/*	ddp_usrreq.c,v 1.25.8.1 2008/01/09 01:57:20 matt Exp	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.25.8.1 2008/01/09 01:57:20 matt Exp $");
+__KERNEL_RCSID(0, "ddp_usrreq.c,v 1.25.8.1 2008/01/09 01:57:20 matt Exp");
 
 #include "opt_mbuftrace.h"
 
@@ -366,8 +366,8 @@ at_pcbconnect(ddp, addr, l)
          * If we've changed our address, we may have an old "good looking"
          * route here.  Attempt to detect it.
          */
-	rtcache_check(ro);
-	if ((rt = rtcache_getrt(ro)) != NULL) {
+	if ((rt = rtcache_validate(ro)) != NULL ||
+	    (rt = rtcache_update(ro, 1)) != NULL) {
 		if (hintnet) {
 			net = hintnet;
 		} else {
@@ -386,13 +386,15 @@ at_pcbconnect(ddp, addr, l)
 		cdst = satocsat(rtcache_getdst(ro));
 		if (aa == NULL || (cdst->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
-		    cdst->sat_addr.s_node != sat->sat_addr.s_node))
+		    cdst->sat_addr.s_node != sat->sat_addr.s_node)) {
 			rtcache_free(ro);
+			rt = NULL;
+		}
 	}
 	/*
          * If we've got no route for this interface, try to find one.
          */
-	if ((rt = rtcache_getrt(ro)) == NULL) {
+	if (rt == NULL) {
 		union {
 			struct sockaddr		dst;
 			struct sockaddr_at	dsta;
@@ -401,14 +403,12 @@ at_pcbconnect(ddp, addr, l)
 		sockaddr_at_init(&u.dsta, &sat->sat_addr, 0);
 		if (hintnet)
 			u.dsta.sat_addr.s_net = hintnet;
-		rtcache_setdst(ro, &u.dst);
-
-		rtcache_init(ro);
+		rt = rtcache_lookup(ro, &u.dst);
 	}
 	/*
          * Make sure any route that we have has a valid interface.
          */
-	if ((rt = rtcache_getrt(ro)) != NULL && (ifp = rt->rt_ifp) != NULL) {
+	if (rt != NULL && (ifp = rt->rt_ifp) != NULL) {
 		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 			if (aa->aa_ifp == ifp)
 				break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.63.8.1 2008/01/09 01:52:15 matt Exp $	*/
+/*	rnd.c,v 1.63.8.1 2008/01/09 01:52:15 matt Exp	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.63.8.1 2008/01/09 01:52:15 matt Exp $");
+__KERNEL_RCSID(0, "rnd.c,v 1.63.8.1 2008/01/09 01:52:15 matt Exp");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -221,7 +221,7 @@ rnd_wakeup_readers(void)
 			rnd_status &= ~RND_READWAITING;
 			wakeup(&rnd_selq);
 		}
-		selnotify(&rnd_selq, 0);
+		selnotify(&rnd_selq, 0, 0);
 
 #ifdef RND_VERBOSE
 		if (!rnd_have_entropy)
@@ -321,6 +321,7 @@ rnd_init(void)
 
 	LIST_INIT(&rnd_sources);
 	SIMPLEQ_INIT(&rnd_samples);
+	selinit(&rnd_selq);
 
 	rndpool_init(&rnd_pool);
 

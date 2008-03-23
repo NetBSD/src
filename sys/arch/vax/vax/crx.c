@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.11 2007/03/04 06:00:58 christos Exp $	*/
+/*	crx.c,v 1.11 2007/03/04 06:00:58 christos Exp	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.11 2007/03/04 06:00:58 christos Exp $");
+__KERNEL_RCSID(0, "crx.c,v 1.11 2007/03/04 06:00:58 christos Exp");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -54,9 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.11 2007/03/04 06:00:58 christos Exp $");
 #include <machine/ka820.h>
 #include <vax/vax/crx.h>
 
-dev_type_open(crxopen);
-dev_type_close(crxclose);
-dev_type_read(crxrw);
+static dev_type_open(crxopen);
+static dev_type_close(crxclose);
+static dev_type_read(crxrw);
 
 const struct cdevsw crx_cdevsw = {
 	crxopen, crxclose, crxrw, crxrw, noioctl,
@@ -92,15 +92,12 @@ struct rx50state {
  */
 /*ARGSUSED*/
 int
-crxopen(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct lwp *l;
+crxopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit;
 
 #if	CRXDEBUG
-	printf("crxopen(csa%d)\n", minor(dev));
+	printf("crxopen(csa%d)\n", rx50unit(dev));
 #endif
 	if ((unit = rx50unit(dev)) >= 2)
 		return (ENXIO);
@@ -118,16 +115,12 @@ crxopen(dev, flags, fmt, l)
  */
 /*ARGSUSED*/
 int
-crxclose(dev, flags, fmt, l)
-	dev_t dev;
-	int flags, fmt;
-	struct lwp *l;
+crxclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 #if	CRXDEBUG
-	printf("crxclose(csa%d)\n", minor(dev));
+	printf("crxclose(csa%d)\n", rx50unit(dev));
 #endif
-
-	rx50state.rs_flags &= ~(1 << dev);	/* atomic */
+	rx50state.rs_flags &= ~(1 << rx50unit(dev));	/* atomic */
 	return 0;
 }
 
@@ -135,20 +128,17 @@ crxclose(dev, flags, fmt, l)
  * Perform a read (uio->uio_rw==UIO_READ) or write (uio->uio_rw==UIO_WRITE).
  */
 int
-crxrw(dev, uio, flags)
-	dev_t dev;
-	register struct uio *uio;
-	int flags;
+crxrw(dev_t dev, struct uio *uio, int flags)
 {
-	register struct rx50state *rs;
-	register char *cp;
-	register int error, i, t;
+	struct rx50state *rs;
+	char *cp;
+	int error, i, t;
 	char secbuf[512];
 	static char driveselect[2] = { RXCMD_DRIVE0, RXCMD_DRIVE1 };
 
 #if	CRXDEBUG
 	printf("crxrw(csa%d): %s\n", 
-		minor(dev), uio->uio_rw==UIO_READ?"read":"write");
+		rx50unit(dev), uio->uio_rw==UIO_READ?"read":"write");
 	printf("crxrw: ka820port = %x\n", ka820port_ptr->csr);
 #endif
 	/* enforce whole-sector I/O */
@@ -158,7 +148,7 @@ crxrw(dev, uio, flags)
 	rs = &rx50state;
 
 	/* lock out others */
-	i = spl4();
+	i = splvm();
 	while (rs->rs_flags & RS_BUSY) {
 		rs->rs_flags |= RS_WANT;
 		(void) tsleep(&rx50state, PRIBIO, "crxbusy", 0);
@@ -206,7 +196,7 @@ crxrw(dev, uio, flags)
 #endif
 		rxaddr->rxgo = 0;	/* start it up */
 		ka820port_ptr->csr |= KA820PORT_RXIRQ;
-		i = spl4();
+		i = splvm();
 		while ((rs->rs_flags & RS_DONE) == 0) {
 #if	CRXDEBUG
 			printf("crx: sleeping on I/O\n");
@@ -242,10 +232,9 @@ crxrw(dev, uio, flags)
 }
 
 void
-crxintr(arg)
-	void *arg;
+crxintr(void *arg)
 {
-	register struct rx50state *rs = &rx50state;
+	struct rx50state *rs = &rx50state;
 
 	/* ignore spurious interrupts */
 	if ((rxaddr->rxcmd & RXCMD_DONE) == 0)

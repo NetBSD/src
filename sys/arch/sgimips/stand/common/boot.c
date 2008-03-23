@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2005/12/11 12:18:58 christos Exp $	*/
+/*	boot.c,v 1.12 2005/12/11 12:18:58 christos Exp	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  * contain a zero.  We therefore start from one.
  */
 
-char           *kernelnames[] = {
+const char *kernelnames[] = {
 	"placekeeper",
 	"netbsd.sgimips",
 	"netbsd",
@@ -106,13 +106,15 @@ char           *kernelnames[] = {
 };
 
 extern const struct arcbios_fv *ARCBIOS;
-static int      debug = 0;
+static int debug = 0;
 
-int             main(int, char **);
+int main(int, char **);
 
 /* Storage must be static. */
 struct btinfo_symtab bi_syms;
 struct btinfo_bootpath bi_bpath;
+
+static uint8_t bootinfo[BOOTINFO_SIZE];
 
 /*
  * This gets arguments from the ARCS monitor, calls ARCS routines to open
@@ -138,18 +140,17 @@ main(int argc, char **argv)
 
 	/* print a banner */
 	printf("\n");
-	printf("NetBSD/sgimips " NETBSD_VERS " Bootstrap, Revision %s\n",
-	       bootprog_rev);
+	printf("%s " NETBSD_VERS " Bootstrap, Revision %s\n",
+	    bootprog_name, bootprog_rev);
 	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
 
 	memset(marks, 0, sizeof marks);
 
 	/* initialise bootinfo structure early */
-	bi_init();
+	bi_init(bootinfo);
 
 	/* Parse arguments, if present.  */
-
 	while ((ch = getopt(argc, argv, "v")) != -1) {
 		switch (ch) {
 		case 'v':
@@ -164,19 +165,19 @@ main(int argc, char **argv)
 	 * If argv[0] contains the string "cdrom(", we're probably doing an
 	 * install.  The bootpath will therefore be partition 0 of whatever
 	 * device we've booted from.  Derive the install kernel name from
-	 * the bootloader name ("ip32boot", "ip22boot", or "aoutboot").
+	 * the bootloader name ("ip3xboot", "ip2xboot", or "aoutboot").
 	 */
 
-	if (strstr(argv[0], "cdrom("))
-	{
+	if (strstr(argv[0], "cdrom(")) {
 		strcpy(bootfile, argv[0]);
 		i = (strrchr(bootfile, ')') - bootfile);
-		bootfile[i-1] = '0';
+		bootfile[i - 1] = '0';
 		if (strstr(bootfile, "ip3x"))
-			sprintf( (strrchr(bootfile, ')') + 1), "ip3x");
+			kernel = "ip3x";
 		else
-			sprintf( (strrchr(bootfile, ')') + 1), "ip2x");
-		if ( (loadfile(bootfile, marks, LOAD_KERNEL)) >= 0 )
+			kernel = "ip2x";
+		sprintf((strrchr(bootfile, ')') + 1), kernel);
+		if ((loadfile(bootfile, marks, LOAD_KERNEL)) >= 0)
 			goto finish;
 	}
 
@@ -184,7 +185,8 @@ main(int argc, char **argv)
 
 	if (bootpath == NULL) {
 		/* XXX need to actually do the fixup */
-		printf("\nPlease set the OSLoadPartition environment variable.\n");
+		printf("\nPlease set the OSLoadPartition "
+		    "environment variable.\n");
 		return 0;
 	}
 
@@ -228,7 +230,6 @@ main(int argc, char **argv)
 				break;
 			i++;
 		}
-
 	}
 
 	if (win < 0) {
@@ -237,24 +238,22 @@ main(int argc, char **argv)
 	}
 
 finish:
-#if 0
-	strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
-	bi_add(&bi_bpath, BTINFO_BOOTPATH);
+	strlcpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
+	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 
 	bi_syms.nsym = marks[MARK_NSYM];
 	bi_syms.ssym = marks[MARK_SYM];
 	bi_syms.esym = marks[MARK_END];
-	bi_add(&bi_syms, BTINFO_SYMTAB);
-#endif
-	entry = (void *) marks[MARK_ENTRY];
+	bi_add(&bi_syms, BTINFO_SYMTAB, sizeof(bi_syms));
+	entry = (void *)marks[MARK_ENTRY];
 
 	if (debug) {
 		printf("Starting at %p\n\n", entry);
 		printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM],
 		       marks[MARK_SYM], marks[MARK_END]);
 	}
-	(*entry) (argc, argv, 0 /* BOOTINFO_MAGIC */, NULL);
+	(*entry)(argc, argv, BOOTINFO_MAGIC, bootinfo);
 
 	printf("Kernel returned!  Halting...\n");
-	return (0);
+	return 0;
 }

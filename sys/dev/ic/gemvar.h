@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.15.24.1 2008/01/09 01:52:52 matt Exp $ */
+/*	gemvar.h,v 1.15.24.1 2008/01/09 01:52:52 matt Exp */
 
 /*
  *
@@ -117,7 +117,6 @@ struct gem_softc {
 	struct device	sc_dev;		/* generic device information */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	struct mii_data	sc_mii;		/* MII media control */
-#define sc_media	sc_mii.mii_media/* shorthand */
 	struct callout	sc_tick_ch;	/* tick callout */
 
 	/* The following bus handles are to be provided by the bus front-end */
@@ -140,9 +139,14 @@ struct gem_softc {
 #define	GEM_APPLE_GMAC		3	/* Apple GMAC variant */
 #define GEM_APPLE_K2_GMAC	4	/* Apple K2 GMAC */
 
+#define GEM_IS_SUN(sc) \
+	((sc)->sc_variant == GEM_SUN_GEM || \
+	(sc)->sc_variant == GEM_SUN_ERI)
 #define	GEM_IS_APPLE(sc) \
 	((sc)->sc_variant == GEM_APPLE_GMAC || \
 	(sc)->sc_variant == GEM_APPLE_K2_GMAC)
+
+	int		sc_chiprev;	/* hardware revision */
 
 	u_int		sc_flags;	/* */
 	short		sc_if_flags;	/* copy of ifp->if_flags */

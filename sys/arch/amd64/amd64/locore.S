@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25.10.2 2008/01/09 01:44:45 matt Exp $	*/
+/*	locore.S,v 1.25.10.2 2008/01/09 01:44:45 matt Exp	*/
 
 /*
  * Copyright-o-rama!
@@ -904,8 +904,12 @@ ENTRY(cpu_switchto)
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
-	/* Set curlwp. */
-	movq	%r12,CPUVAR(CURLWP)
+	/*
+	 * Set curlwp.  This must be globally visible in order to permit
+	 * non-interlocked mutex release.
+	 */
+	movq	%r12,%rcx
+	xchgq	%rcx,CPUVAR(CURLWP)
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testb	%dl,%dl
@@ -1041,6 +1045,7 @@ IDTVEC(syscall)
 #endif
 
 	movq	CPUVAR(CURLWP),%r14
+	incl	CPUVAR(NSYSCALL)	# count it atomically
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%r15
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.4.4.3 2008/01/09 01:58:02 matt Exp $	*/
+/*	rumpuser.h,v 1.4.4.3 2008/01/09 01:58:02 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -58,6 +58,7 @@ void rumpuser_read_bio(int, void *, size_t, off_t, void *);
 void rumpuser_write_bio(int, const void *, size_t, off_t, void *);
 
 int rumpuser_gettimeofday(struct timeval *, int *);
+int rumpuser_getenv(const char *, char *, size_t, int *);
 
 uint16_t rumpuser_bswap16(uint16_t);
 uint32_t rumpuser_bswap32(uint32_t);
@@ -66,6 +67,8 @@ uint64_t rumpuser_bswap64(uint64_t);
 int rumpuser_gethostname(char *, size_t, int *);
 
 char *rumpuser_realpath(const char *, char *, int *);
+
+void rumpuser_yield(void);
 
 /* rumpuser_pth */
 
@@ -83,6 +86,7 @@ void rumpuser_mutex_enter(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
 void rumpuser_mutex_destroy(struct rumpuser_mtx *);
+int  rumpuser_mutex_held(struct rumpuser_mtx *);
 
 struct rumpuser_rw;
 
@@ -91,6 +95,9 @@ void rumpuser_rw_enter(struct rumpuser_rw *, int);
 int  rumpuser_rw_tryenter(struct rumpuser_rw *, int);
 void rumpuser_rw_exit(struct rumpuser_rw *);
 void rumpuser_rw_destroy(struct rumpuser_rw *);
+int  rumpuser_rw_held(struct rumpuser_rw *);
+int  rumpuser_rw_rdheld(struct rumpuser_rw *);
+int  rumpuser_rw_wrheld(struct rumpuser_rw *);
 
 struct rumpuser_cv;
 

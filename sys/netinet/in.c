@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.117.8.2 2008/01/09 01:57:24 matt Exp $	*/
+/*	in.c,v 1.117.8.2 2008/01/09 01:57:24 matt Exp	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.117.8.2 2008/01/09 01:57:24 matt Exp $");
+__KERNEL_RCSID(0, "in.c,v 1.117.8.2 2008/01/09 01:57:24 matt Exp");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -423,6 +423,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 				ia->ia_broadaddr.sin_family = AF_INET;
 			}
 			ia->ia_ifp = ifp;
+			ia->ia_idsalt = arc4random() % 65535;
 			LIST_INIT(&ia->ia_multiaddrs);
 			newifaddr = 1;
 		}

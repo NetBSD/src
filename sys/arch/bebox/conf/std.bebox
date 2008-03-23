@@ -1,4 +1,4 @@
-#	$NetBSD: std.bebox,v 1.14 2005/12/11 12:17:03 christos Exp $
+#	std.bebox,v 1.14 2005/12/11 12:17:03 christos Exp
 #
 # standard, required NetBSD/bebox 'options'
 
@@ -11,6 +11,6 @@ makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
-options 	INTSTK=0x2000
+options		PIC_I8259
 
-makeoptions	TEXTADDR=0x3100
+options 	INTSTK=0x2000

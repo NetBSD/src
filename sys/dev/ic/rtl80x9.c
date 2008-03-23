@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9.c,v 1.11.46.1 2007/11/06 23:27:04 matt Exp $	*/
+/*	rtl80x9.c,v 1.11.46.1 2007/11/06 23:27:04 matt Exp	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl80x9.c,v 1.11.46.1 2007/11/06 23:27:04 matt Exp $");
+__KERNEL_RCSID(0, "rtl80x9.c,v 1.11.46.1 2007/11/06 23:27:04 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,8 +178,8 @@ rtl80x9_media_init(sc)
 	int i, defmedia;
 	u_int8_t conf2, conf3;
 
-	printf("%s: 10base2, 10baseT, 10baseT-FDX, auto, default ",
-	    sc->sc_dev.dv_xname);
+	aprint_normal_dev(sc->sc_dev,
+	    "10base2, 10baseT, 10baseT-FDX, auto, default ");
 
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, ED_P0_CR, ED_CR_PAGE_3);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.44.4.2 2008/01/09 01:55:48 matt Exp $	*/
+/*	puffs_subr.c,v 1.44.4.2 2008/01/09 01:55:48 matt Exp	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.44.4.2 2008/01/09 01:55:48 matt Exp $");
+__KERNEL_RCSID(0, "puffs_subr.c,v 1.44.4.2 2008/01/09 01:55:48 matt Exp");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -154,7 +154,7 @@ puffs_parkdone_poll(struct puffs_mount *pmp, struct puffs_req *preq, void *arg)
 	pn->pn_revents |= revents;
 	mutex_exit(&pn->pn_mtx);
 
-	selnotify(&pn->pn_sel, 0);
+	selnotify(&pn->pn_sel, revents, 0);
 
 	puffs_releasenode(pn);
 }
@@ -199,14 +199,14 @@ puffs_gop_markupdate(struct vnode *vp, int flags)
 
 void
 puffs_senderr(struct puffs_mount *pmp, int type, int error,
-	const char *str, void *cookie)
+	const char *str, puffs_cookie_t ck)
 {
 	struct puffs_msgpark *park;
 	struct puffs_error *perr;
 
 	puffs_msgmem_alloc(sizeof(struct puffs_error), &park, (void *)&perr, 1);
 	puffs_msg_setfaf(park);
-	puffs_msg_setinfo(park, PUFFSOP_ERROR, type, cookie);
+	puffs_msg_setinfo(park, PUFFSOP_ERROR, type, ck);
 
 	perr->perr_error = error;
 	strlcpy(perr->perr_str, str, sizeof(perr->perr_str));

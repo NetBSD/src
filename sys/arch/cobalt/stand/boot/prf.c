@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.2.4.1 2007/11/06 23:15:48 matt Exp $	*/
+/*	prf.c,v 1.2.4.1 2007/11/06 23:15:48 matt Exp	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include "boot.h"
 
 void
 putchar(int c)

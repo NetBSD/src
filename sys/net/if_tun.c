@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.97.16.2 2008/01/09 01:57:15 matt Exp $	*/
+/*	if_tun.c,v 1.97.16.2 2008/01/09 01:57:15 matt Exp	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.97.16.2 2008/01/09 01:57:15 matt Exp $");
+__KERNEL_RCSID(0, "if_tun.c,v 1.97.16.2 2008/01/09 01:57:15 matt Exp");
 
 #include "opt_inet.h"
 
@@ -170,6 +170,8 @@ tun_clone_create(struct if_clone *ifc, int unit)
 
 		tp->tun_unit = unit;
 		simple_lock_init(&tp->tun_lock);
+		selinit(&tp->tun_rsel);
+		selinit(&tp->tun_wsel);
 	} else {
 		/* Revive tunnel instance; clear ifp part */
 		(void)memset(&tp->tun_if, 0, sizeof(struct ifnet));
@@ -215,7 +217,7 @@ tunattach0(struct tun_softc *tp)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-	bpfattach(ifp, DLT_NULL, sizeof(u_int32_t));
+	bpfattach(ifp, DLT_NULL, sizeof(uint32_t));
 #endif
 }
 
@@ -247,7 +249,7 @@ tun_clone_destroy(struct ifnet *ifp)
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
 
-	selwakeup(&tp->tun_rsel);
+	selnotify(&tp->tun_rsel, 0, 0);
 
 	simple_unlock(&tp->tun_lock);
 	splx(s);
@@ -257,8 +259,11 @@ tun_clone_destroy(struct ifnet *ifp)
 #endif
 	if_detach(ifp);
 
-	if (!zombie)
+	if (!zombie) {
+		seldestroy(&tp->tun_rsel);
+		seldestroy(&tp->tun_wsel);
 		free(tp, M_DEVBUF);
+	}
 
 	return (0);
 }
@@ -320,6 +325,8 @@ tunclose(dev_t dev, int flag, int mode,
 	s = splnet();
 	if ((tp = tun_find_zunit(minor(dev))) != NULL) {
 		/* interface was "destroyed" before the close */
+		seldestroy(&tp->tun_rsel);
+		seldestroy(&tp->tun_wsel);
 		free(tp, M_DEVBUF);
 		goto out_nolock;
 	}
@@ -355,7 +362,7 @@ tunclose(dev_t dev, int flag, int mode,
 		}
 	}
 	tp->tun_pgid = 0;
-	selnotify(&tp->tun_rsel, 0);
+	selnotify(&tp->tun_rsel, 0, 0);
 
 	TUNDEBUG ("%s: closed\n", ifp->if_xname);
 	simple_unlock(&tp->tun_lock);
@@ -424,6 +431,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int		error = 0, s;
 	struct tun_softc *tp = (struct tun_softc *)(ifp->if_softc);
+	struct ifreq *ifr = data;
 
 	s = splnet();
 	simple_lock(&tp->tun_lock);
@@ -440,20 +448,18 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFBRDADDR:
 		TUNDEBUG("%s: broadcast address set\n", ifp->if_xname);
 		break;
-	case SIOCSIFMTU: {
-		struct ifreq *ifr = (struct ifreq *) data;
+	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > TUNMTU || ifr->ifr_mtu < 576) {
-		    error = EINVAL;
-		    break;
+			error = EINVAL;
+			break;
 		}
 		TUNDEBUG("%s: interface mtu set\n", ifp->if_xname);
-		ifp->if_mtu = ifr->ifr_mtu;
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
-	}
 	case SIOCADDMULTI:
-	case SIOCDELMULTI: {
-		struct ifreq *ifr = (struct ifreq *) data;
-		if (ifr == 0) {
+	case SIOCDELMULTI:
+		if (ifr == NULL) {
 	        	error = EAFNOSUPPORT;           /* XXX */
 			break;
 		}
@@ -471,7 +477,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		break;
-	}
 	case SIOCSIFFLAGS:
 		break;
 	default:
@@ -588,7 +593,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		fownsignal(tp->tun_pgid, SIGIO, POLL_IN, POLLIN|POLLRDNORM,
 		    NULL);
 
-	selnotify(&tp->tun_rsel, 0);
+	selnotify(&tp->tun_rsel, 0, 0);
 out:
 	simple_unlock(&tp->tun_lock);
 	splx(s);
@@ -974,7 +979,7 @@ tunstart(struct ifnet *ifp)
 			fownsignal(tp->tun_pgid, SIGIO, POLL_OUT,
 				POLLOUT|POLLWRNORM, NULL);
 
-		selwakeup(&tp->tun_rsel);
+		selnotify(&tp->tun_rsel, 0, 0);
 	}
 	simple_unlock(&tp->tun_lock);
 }

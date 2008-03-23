@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.7.2.2 2008/01/09 01:54:51 matt Exp $ */
+/*	genfb.c,v 1.7.2.2 2008/01/09 01:54:51 matt Exp */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.7.2.2 2008/01/09 01:54:51 matt Exp $");
+__KERNEL_RCSID(0, "genfb.c,v 1.7.2.2 2008/01/09 01:54:51 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,16 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	int i, j;
 	bool console;
 
+	dict = device_properties(&sc->sc_dev);
+	prop_dictionary_get_bool(dict, "is_console", &console);
+
+	/* do not attach when we're not console */
+	if (!console) {
+		aprint_normal("%s: no console, unable to continue\n",
+		    sc->sc_dev.dv_xname);
+		return -1;
+	}
+
 	aprint_verbose("%s: framebuffer at %p, size %dx%d, depth %d, "
 	    "stride %d\n", sc->sc_dev.dv_xname, sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
@@ -165,10 +175,6 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_WAITOK);
 
-	dict = device_properties(&sc->sc_dev);
-
-	prop_dictionary_get_bool(dict, "is_console", &console);
-
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &genfb_accessops);
 	sc->vd.init_screen = genfb_init_screen;
@@ -178,24 +184,16 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	ri = &sc->sc_console_screen.scr_ri;
 
-	if (console) {
-		vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
-		    &defattr);
-		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
+	    &defattr);
+	sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
-		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
-		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
-		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
-		    defattr);
-	} else {
-		/*
-		 * since we're not the console we can postpone the rest
-		 * until someone actually allocates a screen for us
-		 */
-		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-	}
+	sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
+	sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
+	sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
+	sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
+	wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
+	    defattr);
 
 	/* Clear the whole screen to bring it to a known state. */
 	(*ri->ri_ops.eraserows)(ri, 0, ri->ri_rows, defattr);

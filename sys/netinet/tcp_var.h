@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.150.4.1 2008/01/09 01:57:31 matt Exp $	*/
+/*	tcp_var.h,v 1.150.4.1 2008/01/09 01:57:31 matt Exp	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -334,7 +334,7 @@ struct tcpcb {
 
 	uint8_t t_ecn_retries;		/* # of ECN setup retries */
 	
-	struct tcp_congctl *t_congctl;	/* per TCB congctl algorithm */
+	const struct tcp_congctl *t_congctl;	/* per TCB congctl algorithm */
 
 	/* Keepalive per socket */
 	u_int	t_keepinit;
@@ -368,8 +368,7 @@ static __inline void tcp_reass_unlock (struct tcpcb *)
 	__unused;
 
 static __inline int
-tcp_reass_lock_try(tp)
-	struct tcpcb *tp;
+tcp_reass_lock_try(struct tcpcb *tp)
 {
 	int s;
 
@@ -388,8 +387,7 @@ tcp_reass_lock_try(tp)
 }
 
 static __inline void
-tcp_reass_unlock(tp)
-	struct tcpcb *tp;
+tcp_reass_unlock(struct tcpcb *tp)
 {
 	int s;
 

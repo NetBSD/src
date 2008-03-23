@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.24.2.1 2007/11/06 23:33:27 matt Exp $	*/
+/*	if_ecosubr.c,v 1.24.2.1 2007/11/06 23:33:27 matt Exp	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.24.2.1 2007/11/06 23:33:27 matt Exp $");
+__KERNEL_RCSID(0, "if_ecosubr.c,v 1.24.2.1 2007/11/06 23:33:27 matt Exp");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -96,7 +96,7 @@ struct eco_retryparms {
 };
 
 /* Default broadcast address */
-static const u_int8_t eco_broadcastaddr[] = { 0xff, 0xff };
+static const uint8_t eco_broadcastaddr[] = { 0xff, 0xff };
 
 static int eco_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
@@ -113,7 +113,7 @@ static void eco_retry_free(struct eco_retry *er);
 static void eco_retry(void *);
 
 void
-eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
+eco_ifattach(struct ifnet *ifp, const uint8_t *lla)
 {
 	struct ecocom *ec = (void *)ifp;
 
@@ -457,7 +457,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 				}
 			}
 			for (i = 0; i < m->m_len; i++)
-				printf(" %02x", mtod(m, u_int8_t *)[i]);
+				printf(" %02x", mtod(m, uint8_t *)[i]);
 			printf("\n");
 			goto drop;
 		}
@@ -522,7 +522,7 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int error = 0;
+	int error;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -532,49 +532,54 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case AF_INET:
 			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
 			    (error = (*ifp->if_init)(ifp)) != 0)
-				break;
+				return error;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
 			if ((ifp->if_flags & IFF_RUNNING) == 0)
-				error = (*ifp->if_init)(ifp);
+				return (*ifp->if_init)(ifp);
 			break;
 		}
-		break;
+		return 0;
 	case SIOCSIFMTU:
-		ifp->if_mtu = ifr->ifr_mtu;
-
-		/* Make sure the device notices the MTU change. */
-		if (ifp->if_flags & IFF_UP)
-			error = (*ifp->if_init)(ifp);
+		if ((error = ifioctl_common(ifp, command, data)) != ENETRESET)
+			return error;
+		else if (ifp->if_flags & IFF_UP)
+			return (*ifp->if_init)(ifp);
+		else
+			return 0;
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.
 			 */
 			(*ifp->if_stop)(ifp, 1);
-		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			return 0;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = (*ifp->if_init)(ifp);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			return (*ifp->if_init)(ifp);
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect the hardware state.
 			 */
-			error = (*ifp->if_init)(ifp);
+			return (*ifp->if_init)(ifp);
+		case 0:
+			return 0;
 		}
 		break;
 	default:
-		error = ENOTTY;
+		return ENOTTY;
 	}
 
-	return error;
+	return 0;
 }
 
 /*
@@ -719,7 +724,7 @@ eco_immediate(struct ifnet *ifp, struct mbuf *m)
 {
 	struct eco_header *eh, *reh;
 	struct mbuf *n;
-	static const u_int8_t machinepeek_data[] = { 42, 0, 0, 1 };
+	static const uint8_t machinepeek_data[] = { 42, 0, 0, 1 };
 
 	eh = mtod(m, struct eco_header *);
 	switch (eh->eco_control) {
@@ -806,7 +811,7 @@ eco_inputidle(struct ifnet *ifp)
  * Convert Econet address to printable (loggable) representation.
  */
 char *
-eco_sprintf(const u_int8_t *ea)
+eco_sprintf(const uint8_t *ea)
 {
 	static char buf[8];
 

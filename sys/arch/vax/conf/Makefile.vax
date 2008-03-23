@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.78.14.1 2008/01/09 01:49:32 matt Exp $
+#	Makefile.vax,v 1.78.14.1 2008/01/09 01:49:32 matt Exp
 
 # Makefile for NetBSD
 #
@@ -69,7 +69,7 @@ LINKFLAGS_NORMAL=	-S
 tmscp.o ts.o uba.o uda.o clock.o emulate.o intvec.o: Makefile
 sbi.o subr.o: Makefile
 
-unimpl_emul.o: assym.h
+lock_stubs.o unimpl_emul.o: assym.h
 
 ##
 ## (7) misc settings

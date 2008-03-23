@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.148.8.1 2007/11/06 23:30:42 matt Exp $	*/
+/*	usb_subr.c,v 1.148.8.1 2007/11/06 23:30:42 matt Exp	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.148.8.1 2007/11/06 23:30:42 matt Exp $");
+__KERNEL_RCSID(0, "usb_subr.c,v 1.148.8.1 2007/11/06 23:30:42 matt Exp");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1510,7 +1510,6 @@ usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 				printf(" port %d", up->portno);
 			printf(" (addr %d) disconnected\n", dev->address);
 			config_detach(dev->subdevs[i], DETACH_FORCE);
-			dev->subdevs[i] = 0;
 		}
 	}
 

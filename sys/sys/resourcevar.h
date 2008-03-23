@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.38.8.2 2008/01/09 01:58:16 matt Exp $	*/
+/*	resourcevar.h,v 1.38.8.2 2008/01/09 01:58:16 matt Exp	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -97,20 +97,15 @@ struct plimit {
  * Structure associated with user caching.
  */
 struct uidinfo {
-	LIST_ENTRY(uidinfo) ui_hash;
+	SLIST_ENTRY(uidinfo) ui_hash;
 	uid_t	ui_uid;
-	long	ui_proccnt;	/* Number of processes */
-	long	ui_lockcnt;	/* Number of locks */
-	rlim_t	ui_sbsize;	/* socket buffer size */
-	kmutex_t ui_lock;	/* mutex for everything */
-
+	u_long	ui_proccnt;	/* Number of processes */
+	u_long	ui_lockcnt;	/* Number of locks */
+	rlim_t	ui_sbsize;	/* Socket buffer size */
 };
-#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
 
-extern LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
-extern u_long uihash;		/* size of hash table - 1 */
-int       chgproccnt(uid_t, int);
-int       chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
+int	chgproccnt(uid_t, int);
+int	chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
 struct uidinfo *uid_find(uid_t);
 void	uid_init(void);
 
@@ -122,15 +117,15 @@ extern uid_t security_setidcore_owner;
 extern gid_t security_setidcore_group;
 extern mode_t security_setidcore_mode;
 
-void	 addupc_intr(struct lwp *, u_long);
-void	 addupc_task(struct lwp *, u_long, u_int);
-void	 calcru(struct proc *, struct timeval *, struct timeval *,
+void	addupc_intr(struct lwp *, u_long);
+void	addupc_task(struct lwp *, u_long, u_int);
+void	calcru(struct proc *, struct timeval *, struct timeval *,
 	    struct timeval *, struct timeval *);
 
 struct plimit *lim_copy(struct plimit *lim);
-void lim_addref(struct plimit *lim);
-void lim_privatise(struct proc *p, bool set_shared);
-void limfree(struct plimit *);
+void	lim_addref(struct plimit *lim);
+void	lim_privatise(struct proc *p, bool set_shared);
+void	limfree(struct plimit *);
 
 void	resource_init(void);
 void	ruadd(struct rusage *, struct rusage *);

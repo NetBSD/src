@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.18 2006/09/08 23:08:05 mrg Exp $ */
+/*	pte.h,v 1.18 2006/09/08 23:08:05 mrg Exp */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -129,30 +129,6 @@ struct sun4u_tte {
 };
 #endif
 typedef struct sun4u_tte pte_t;
-
-/* TLB shootdown handler arguments. */
-struct ipi_tlb_args {
-	vaddr_t ita_vaddr;
-	int ita_ctx;
-};
-
-/* Assembly routines to flush TLB mappings */
-void sp_tlb_flush_pte(vaddr_t, int);
-void sp_tlb_flush_ctx(int);
-void sp_tlb_flush_all(void);
-
-#if defined(MULTIPROCESSOR)
-void smp_tlb_flush_pte(vaddr_t, int);
-void smp_tlb_flush_ctx(int);
-void smp_tlb_flush_all(void);
-#define	tlb_flush_pte(va,ctx)	smp_tlb_flush_pte(va, ctx)
-#define	tlb_flush_ctx(ctx)	smp_tlb_flush_ctx(ctx)
-#define	tlb_flush_all()		smp_tlb_flush_all()
-#else
-#define	tlb_flush_pte(va,ctx)	sp_tlb_flush_pte(va, ctx)
-#define	tlb_flush_ctx(ctx)	sp_tlb_flush_ctx(ctx)
-#define	tlb_flush_all()		sp_tlb_flush_all()
-#endif
 
 #endif /* _LOCORE */
 

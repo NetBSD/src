@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.8.16.1 2007/11/06 23:30:55 matt Exp $	*/
+/*	xmi.c,v 1.8.16.1 2007/11/06 23:30:55 matt Exp	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.8.16.1 2007/11/06 23:30:55 matt Exp $");
+__KERNEL_RCSID(0, "xmi.c,v 1.8.16.1 2007/11/06 23:30:55 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.8.16.1 2007/11/06 23:30:55 matt Exp $");
 
 static int xmi_print(void *, const char *);
 
-struct xmi_list xmi_list[] = {
+const struct xmi_list xmi_list[] = {
 	{XMIDT_KA62, 0, "ka6200"},
 	{XMIDT_KA64, 1, "ka6400"},
 	{XMIDT_KA65, 0, "ka6500"},
@@ -64,8 +64,8 @@ struct xmi_list xmi_list[] = {
 int
 xmi_print(void *aux, const char *name)
 {
-	struct xmi_attach_args *xa = aux;
-	struct xmi_list *xl;
+	struct xmi_attach_args * const xa = aux;
+	const struct xmi_list *xl;
 
 	for (xl = &xmi_list[0]; xl->xl_nr; xl++)
 		if (xl->xl_nr == bus_space_read_2(xa->xa_iot, xa->xa_ioh, 0))
@@ -91,7 +91,7 @@ xmi_attach(struct xmi_softc *sc)
 	struct xmi_attach_args xa;
 	int nodenr;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	xa.xa_iot = sc->sc_iot;
 	xa.xa_busnr = sc->sc_busnr;
@@ -108,8 +108,8 @@ xmi_attach(struct xmi_softc *sc)
 	for (nodenr = 0; nodenr < NNODEXMI; nodenr++) {
 		if (bus_space_map(sc->sc_iot, sc->sc_addr + XMI_NODE(nodenr),
 		    PAGE_SIZE, 0, &xa.xa_ioh)) {
-			printf("xmi_attach: bus_space_map failed, node %d\n",
-			    nodenr);
+			aprint_error_dev(sc->sc_dev,
+			    "bus_space_map failed, node %d\n", nodenr);
 			return;
 		}
 		if (badaddr((void *)xa.xa_ioh, 4)) {
@@ -119,6 +119,6 @@ xmi_attach(struct xmi_softc *sc)
 		xa.xa_nodenr = nodenr;
 		xa.xa_ivec = 256 + lastiv;
 		lastiv += 4;
-		config_found(&sc->sc_dev, &xa, xmi_print);
+		config_found(sc->sc_dev, &xa, xmi_print);
 	}
 }

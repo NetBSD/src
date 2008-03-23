@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.14.34.1 2007/11/06 23:28:31 matt Exp $	*/
+/*	sb_ofisa.c,v 1.14.34.1 2007/11/06 23:28:31 matt Exp	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.14.34.1 2007/11/06 23:28:31 matt Exp $");
+__KERNEL_RCSID(0, "sb_ofisa.c,v 1.14.34.1 2007/11/06 23:28:31 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,17 +60,14 @@ __KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.14.34.1 2007/11/06 23:28:31 matt Exp 
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
 
-int	sb_ofisa_match(struct device *, struct cfdata *, void *);
-void	sb_ofisa_attach(struct device *, struct device *, void *);
+int	sb_ofisa_match(device_t, cfdata_t, void *);
+void	sb_ofisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sb_ofisa, sizeof(struct sbdsp_softc),
+CFATTACH_DECL_NEW(sb_ofisa, sizeof(struct sbdsp_softc),
     sb_ofisa_match, sb_ofisa_attach, NULL, NULL);
 
 int
-sb_ofisa_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+sb_ofisa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = {
@@ -94,9 +91,7 @@ sb_ofisa_match(parent, cf, aux)
 }
 
 void
-sb_ofisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sb_ofisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbdsp_softc *sc = device_private(self);
 	struct ofisa_attach_args *aa = aux;
@@ -105,6 +100,8 @@ sb_ofisa_attach(parent, self, aux)
 	struct ofisa_dma_desc dma[2];
 	int n, ndrq;
 	char *model;
+
+	sc->sc_dev = self;
 
 	/*
 	 * We're living on an OFW.  We have to ask the OFW what our
@@ -148,7 +145,7 @@ sb_ofisa_attach(parent, self, aux)
 
 	sc->sc_iot = aa->iot;
 	if (bus_space_map(sc->sc_iot, reg.addr, reg.len, 0, &sc->sc_ioh)) {
-		printf(": unable to map register space\n");
+		aprint_error(": unable to map register space\n");
 		return;
 	}
 
@@ -171,18 +168,18 @@ sb_ofisa_attach(parent, self, aux)
 				sc->sc_drq16 = dma[n].drq;
 			break;
 		default:
-			printf(": weird DMA width %d\n", dma[n].width);
+			aprint_error(": weird DMA width %d\n", dma[n].width);
 			return;
 		}
 	}
 
 	if (sc->sc_drq8 == DRQUNK) {
-		printf(": no 8-bit DMA channel\n");
+		aprint_error(": no 8-bit DMA channel\n");
 		return;
 	}
 
 	if (sbmatch(sc) == 0) {
-		printf(": sbmatch failed\n");
+		aprint_error(": sbmatch failed\n");
 		return;
 	}
 
@@ -193,7 +190,7 @@ sb_ofisa_attach(parent, self, aux)
 	if (n > 0) {
 		model = alloca(n);
 		if (OF_getprop(aa->oba.oba_phandle, "model", model, n) == n)
-			printf(": %s\n%s", model, sc->sc_dev.dv_xname);
+			aprint_normal(": %s\n%s", model, device_xname(self));
 	}
 
 	sbattach(sc);

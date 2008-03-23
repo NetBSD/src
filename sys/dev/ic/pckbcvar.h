@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.12.46.1 2008/01/09 01:52:58 matt Exp $ */
+/* pckbcvar.h,v 1.12.46.1 2008/01/09 01:52:58 matt Exp */
 
 /*
  * Copyright (c) 1998
@@ -81,7 +81,7 @@ typedef void (*pckbc_inputfcn)(void *, int);
  * State per device.
  */
 struct pckbc_softc {
-	struct device sc_dv;
+	device_t sc_dv;
 	struct pckbc_internal *id;
 
 	void (*intr_establish)(struct pckbc_softc *, pckbc_slot_t);
@@ -112,6 +112,6 @@ void pckbcintr_soft(void *);
 int pckbc_machdep_cnattach(pckbc_tag_t, pckbc_slot_t);
 
 /* power management */
-bool pckbc_resume(device_t);
+bool pckbc_resume(device_t PMF_FN_PROTO);
 
 #endif /* _DEV_IC_PCKBCVAR_H_ */

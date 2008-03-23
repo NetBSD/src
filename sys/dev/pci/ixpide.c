@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.9.20.1 2007/11/06 23:29:15 matt Exp $	*/
+/*	ixpide.c,v 1.9.20.1 2007/11/06 23:29:15 matt Exp	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.9.20.1 2007/11/06 23:29:15 matt Exp $");
+__KERNEL_RCSID(0, "ixpide.c,v 1.9.20.1 2007/11/06 23:29:15 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,13 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.9.20.1 2007/11/06 23:29:15 matt Exp $")
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_ixp_reg.h>
 
-static int	ixpide_match(struct device *, struct cfdata *, void *);
-static void	ixpide_attach(struct device *, struct device *, void *);
+static int	ixpide_match(device_t, cfdata_t, void *);
+static void	ixpide_attach(device_t, device_t, void *);
 
 static void	ixp_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	ixp_setup_channel(struct ata_channel *);
 
-CFATTACH_DECL(ixpide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(ixpide, sizeof(struct pciide_softc),
     ixpide_match, ixpide_attach, NULL, NULL);
 
 static const char ixpdesc[] = "ATI Technologies IXP IDE Controller";
@@ -65,8 +65,7 @@ static const struct pciide_product_desc pciide_ixpide_products[] = {
 };
 
 static int
-ixpide_match(struct device *parent, struct cfdata *cfdata,
-    void *aux)
+ixpide_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -79,10 +78,12 @@ ixpide_match(struct device *parent, struct cfdata *cfdata,
 }
 
 static void
-ixpide_attach(struct device *parent, struct device *self, void *aux)
+ixpide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_ixpide_products));
@@ -99,8 +100,8 @@ ixp_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 

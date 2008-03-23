@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_mainbus.c,v 1.9 2005/12/11 12:19:29 christos Exp $	   */
+/*	bi_mainbus.c,v 1.9 2005/12/11 12:19:29 christos Exp	   */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi_mainbus.c,v 1.9 2005/12/11 12:19:29 christos Exp $");
+__KERNEL_RCSID(0, "bi_mainbus.c,v 1.9 2005/12/11 12:19:29 christos Exp");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,38 +42,40 @@ __KERNEL_RCSID(0, "$NetBSD: bi_mainbus.c,v 1.9 2005/12/11 12:19:29 christos Exp 
 #include <machine/sid.h>
 #include <machine/scb.h>
 #include <machine/cpu.h>
+#include <machine/mainbus.h>
 
 #include <dev/bi/bivar.h>
 #include <dev/bi/bireg.h>
 
-static	int bi_mainbus_match __P((struct device *, struct cfdata *, void *));
-static	void bi_mainbus_attach __P((struct device *, struct device *, void *));
+#include "ioconf.h"
 
-CFATTACH_DECL(bi_mainbus, sizeof(struct bi_softc),
+static	int bi_mainbus_match(device_t, cfdata_t, void *);
+static	void bi_mainbus_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(bi_mainbus, sizeof(struct bi_softc),
     bi_mainbus_match, bi_mainbus_attach, NULL, NULL);
 
-extern	struct vax_bus_space vax_mem_bus_space;
-extern	struct vax_bus_dma_tag vax_bus_dma_tag;
-
 static int
-bi_mainbus_match(struct device *parent, struct cfdata *vcf, void *aux)
+bi_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (vax_bustype == VAX_BIBUS)
-		return 1;
-	return 0;
+	struct mainbus_attach_args * const ma = aux;
+
+	return !strcmp(bi_cd.cd_name, ma->ma_type);
 }
 
 static void
-bi_mainbus_attach(struct device *parent, struct device *self, void *aux)
+bi_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct bi_softc *sc = (void *)self;
+	struct bi_softc * const sc = device_private(self);
+	struct mainbus_attach_args * const ma = aux;
 
+	sc->sc_dev = self;
 	/*
 	 * Fill in bus specific data.
 	 */
 	sc->sc_addr = (bus_addr_t)BI_BASE(0, 0);
-	sc->sc_iot = &vax_mem_bus_space; /* No special I/O handling */
-	sc->sc_dmat = &vax_bus_dma_tag;	/* No special DMA handling either */
+	sc->sc_iot = ma->ma_iot;	/* No special I/O handling */
+	sc->sc_dmat = ma->ma_dmat;	/* No special DMA handling either */
 	sc->sc_intcpu = 1 << mfpr(PR_BINID);
 	sc->sc_lastiv = 256; /* Lowest available vector address */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.48.46.1 2007/11/06 23:27:47 matt Exp $	*/
+/*	isavar.h,v 1.48.46.1 2007/11/06 23:27:47 matt Exp	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ struct isa_attach_args {
  * ISA master bus
  */
 struct isa_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 
 	bus_space_tag_t sc_iot;		/* isa io space tag */
 	bus_space_tag_t sc_memt;	/* isa mem space tag */

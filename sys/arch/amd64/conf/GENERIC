@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160.2.2 2008/01/09 01:44:49 matt Exp $
+# GENERIC,v 1.160.2.2 2008/01/09 01:44:49 matt Exp
 #
 # GENERIC machine description file
 #
@@ -22,9 +22,9 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.160.2.2 $"
+#ident 		"GENERIC-1.160.2.2"
 
-maxusers	32		# estimated number of users
+maxusers	64		# estimated number of users
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -982,7 +982,7 @@ btsco* at bthub?
 weasel* at pci?
 
 # Pull in optional local configuration
-include	"arch/amd64/conf/GENERIC.local"
+cinclude "arch/amd64/conf/GENERIC.local"
 
 # Pseudo-Devices
 

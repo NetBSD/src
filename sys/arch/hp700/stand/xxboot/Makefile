@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2006/09/28 21:17:01 skrll Exp $
+#	Makefile,v 1.8 2006/09/28 21:17:01 skrll Exp
 
 PROG=	xxboot
+NOMAN=	# defined
 SRCS=	start.S main.c readufs.c readufs_ffs.c readufs_lfs.c milli_tiny.S
 
 CPPFLAGS+=	-mpa-risc-1-0 -I${.CURDIR}/../../../.. -I. -D_STANDALONE
@@ -24,7 +25,6 @@ LINKS=	${BINDIR}/${PROG} ${BINDIR}/sdboot
 BINDIR=		/usr/mdec
 STRIPFLAG=
 BINMODE=	444
-MKMAN=		no
 
 # standalone program
 LIBCRTBEGIN=

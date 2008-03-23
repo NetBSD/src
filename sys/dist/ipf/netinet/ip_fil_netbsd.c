@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.40.8.2 2008/01/09 01:55:30 matt Exp $	*/
+/*	ip_fil_netbsd.c,v 1.40.8.2 2008/01/09 01:55:30 matt Exp	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.40.8.2 2008/01/09 01:55:30 matt Exp $");
+__KERNEL_RCSID(0, "ip_fil_netbsd.c,v 1.40.8.2 2008/01/09 01:55:30 matt Exp");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.51 2007/05/31 12:27:35 darrenr Exp";
@@ -305,6 +305,9 @@ ipfilterattach(int count)
 int ipfattach()
 {
 	int s;
+#if (__NetBSD_Version__ >= 499005500)
+	int i;
+#endif
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
@@ -398,7 +401,12 @@ int ipfattach()
 # endif
 #endif
 
+#if (__NetBSD_Version__ >= 499005500)
+	for (i = 0; i < IPL_LOGSIZE; i++)
+		selinit(&ipfselwait[i]);
+#else
 	bzero((char *)ipfselwait, sizeof(ipfselwait));
+#endif
 	bzero((char *)frcache, sizeof(frcache));
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
@@ -435,6 +443,9 @@ pfil_error:
 int ipfdetach()
 {
 	int s;
+#if (__NetBSD_Version__ >= 499005500)
+	int i;
+#endif
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if __NetBSD_Version__ >= 105150000
@@ -505,6 +516,11 @@ int ipfdetach()
 	fr_deinitialise();
 
 	SPL_X(s);
+
+#if (__NetBSD_Version__ >= 499005500)
+	for (i = 0; i < IPL_LOGSIZE; i++)
+		seldestroy(&ipfselwait[i]);
+#endif
 	return 0;
 }
 
@@ -1149,8 +1165,7 @@ frdest_t *fdp;
 		sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
-	rtcache_init(ro);
-	rt = rtcache_getrt(ro);
+	rt = rtcache_init(ro);
 	if ((ifp == NULL) && (rt != NULL))
 		ifp = rt->rt_ifp;
 
@@ -1441,9 +1456,7 @@ frdest_t *fdp;
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
 
-	rtcache_init(ro);
-
-	rt = rtcache_getrt(ro);
+	rt = rtcache_init(ro);
 	if ((ifp == NULL) && (rt != NULL))
 		ifp = rt->rt_ifp;
 
@@ -1557,8 +1570,7 @@ fr_info_t *fin;
 #if __NetBSD_Version__ >= 499001100
 	sockaddr_in_init(&u.dst4, &fin->fin_src, 0);
 	rtcache_setdst(&iproute, &u.dst);
-	rtcache_init(&iproute);
-	rt = rtcache_getrt(&iproute);
+	rt = rtcache_init(&iproute);
 	if (rt == NULL)
 		rc = 0;
 	else

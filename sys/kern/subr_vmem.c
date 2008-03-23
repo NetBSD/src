@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.32.8.3 2008/01/09 01:56:20 matt Exp $	*/
+/*	subr_vmem.c,v 1.32.8.3 2008/01/09 01:56:20 matt Exp	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.32.8.3 2008/01/09 01:56:20 matt Exp $");
+__KERNEL_RCSID(0, "subr_vmem.c,v 1.32.8.3 2008/01/09 01:56:20 matt Exp");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.32.8.3 2008/01/09 01:56:20 matt Exp 
 #include <sys/malloc.h>
 #include <sys/once.h>
 #include <sys/pool.h>
-#include <sys/proc.h>
 #include <sys/vmem.h>
 #include <sys/workqueue.h>
 #else /* defined(_KERNEL) */
@@ -78,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.32.8.3 2008/01/09 01:56:20 matt Exp 
 #define	mutex_enter(a)		/* nothing */
 #define	mutex_exit(a)		/* nothing */
 #define	mutex_owned(a)		/* nothing */
-#define	ASSERT_SLEEPABLE(lk, msg) /* nothing */
+#define	ASSERT_SLEEPABLE()	 /* nothing */
 #define	IPL_VM			0
 #endif /* defined(_KERNEL) */
 
@@ -857,7 +856,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
-		ASSERT_SLEEPABLE(NULL, __func__);
+		ASSERT_SLEEPABLE();
 	}
 
 #if defined(QCACHE)
@@ -892,7 +891,7 @@ vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
-		ASSERT_SLEEPABLE(NULL, __func__);
+		ASSERT_SLEEPABLE();
 	}
 	KASSERT((align & vm->vm_quantum_mask) == 0);
 	KASSERT((align & (align - 1)) == 0);
@@ -1187,11 +1186,11 @@ vmem_rehash_start(void)
 	int error;
 
 	error = workqueue_create(&vmem_rehash_wq, "vmem_rehash",
-	    vmem_rehash_all, NULL, PRI_VM, IPL_SOFTCLOCK, 0);
+	    vmem_rehash_all, NULL, PRI_VM, IPL_SOFTCLOCK, WQ_MPSAFE);
 	if (error) {
 		panic("%s: workqueue_create %d\n", __func__, error);
 	}
-	callout_init(&vmem_rehash_ch, 0);
+	callout_init(&vmem_rehash_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&vmem_rehash_ch, vmem_rehash_all_kick, NULL);
 
 	vmem_rehash_interval = hz * 10;

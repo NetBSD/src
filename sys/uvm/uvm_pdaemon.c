@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.87.6.2 2008/01/09 01:58:43 matt Exp $	*/
+/*	uvm_pdaemon.c,v 1.87.6.2 2008/01/09 01:58:43 matt Exp	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.87.6.2 2008/01/09 01:58:43 matt Exp $");
+__KERNEL_RCSID(0, "uvm_pdaemon.c,v 1.87.6.2 2008/01/09 01:58:43 matt Exp");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -328,11 +328,6 @@ uvm_pageout(void *arg)
 		mutex_exit(&bufcache_lock);
 
 		/*
-		 * free any cached u-areas we don't need
-		 */
-		uvm_uarea_drain(true);
-
-		/*
 		 * complete draining the pools.
 		 */
 		pool_drain_end(pp, where);
@@ -538,10 +533,12 @@ swapcluster_flush(struct swapcluster *swc, bool now)
 	 * now start the pageout.
 	 */
 
-	uvmexp.pdpageouts++;
-	uvm_pageout_start(nused);
-	error = uvm_swap_put(slot, swc->swc_pages, nused, 0);
-	KASSERT(error == 0);
+	if (nused > 0) {
+		uvmexp.pdpageouts++;
+		uvm_pageout_start(nused);
+		error = uvm_swap_put(slot, swc->swc_pages, nused, 0);
+		KASSERT(error == 0 || error == ENOMEM);
+	}
 
 	/*
 	 * zero swslot to indicate that we are
