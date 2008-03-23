@@ -1,4 +1,4 @@
-/*	$NetBSD: hit.c,v 1.7.22.1 2008/01/09 01:30:55 matt Exp $	*/
+/*	hit.c,v 1.7.22.1 2008/01/09 01:30:55 matt Exp	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hit.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hit.c,v 1.7.22.1 2008/01/09 01:30:55 matt Exp $");
+__RCSID("hit.c,v 1.7.22.1 2008/01/09 01:30:55 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -55,12 +55,15 @@ __RCSID("$NetBSD: hit.c,v 1.7.22.1 2008/01/09 01:30:55 matt Exp $");
 
 #include "rogue.h"
 
-object *fight_monster = 0;
+static int damage_for_strength(void);
+static int get_w_damage(const object *);
+static int to_hit(const object *);
+
+static object *fight_monster = NULL;
 char hit_message[HIT_MESSAGE_SIZE] = "";
 
 void
-mon_hit(monster)
-	object *monster;
+mon_hit(object *monster)
 {
 	short damage, hit_chance;
 	const char *mn;
@@ -98,12 +101,12 @@ mon_hit(monster)
 	if (!(monster->m_flags & STATIONARY)) {
 		damage = get_damage(monster->m_damage, 1);
 		if (cur_level >= (AMULET_LEVEL * 2)) {
-			minus = (float) ((AMULET_LEVEL * 2) - cur_level);
+			minus = (float)((AMULET_LEVEL * 2) - cur_level);
 		} else {
-			minus = (float) get_armor_class(rogue.armor) * 3.00;
-			minus = minus/100.00 * (float) damage;
+			minus = (float)get_armor_class(rogue.armor) * 3.00;
+			minus = minus/100.00 * (float)damage;
 		}
-		damage -= (short) minus;
+		damage -= (short)minus;
 	} else {
 		damage = monster->stationary_damage++;
 	}
@@ -119,9 +122,7 @@ mon_hit(monster)
 }
 
 void
-rogue_hit(monster, force_hit)
-	object *monster;
-	boolean force_hit;
+rogue_hit(object *monster, boolean force_hit)
 {
 	short damage, hit_chance;
 
@@ -136,7 +137,7 @@ rogue_hit(monster, force_hit)
 		}
 		if (!rand_percent(hit_chance)) {
 			if (!fight_monster) {
-				(void) strlcpy(hit_message, "you miss  ",
+				(void)strlcpy(hit_message, "you miss  ",
 					       sizeof(hit_message));
 			}
 			goto RET;
@@ -150,7 +151,7 @@ rogue_hit(monster, force_hit)
 		}
 		if (mon_damage(monster, damage)) {	/* still alive? */
 			if (!fight_monster) {
-				(void) strlcpy(hit_message, "you hit  ",
+				(void)strlcpy(hit_message, "you hit  ",
 					       sizeof(hit_message));
 			}
 		}
@@ -160,10 +161,7 @@ RET:	check_gold_seeker(monster);
 }
 
 void
-rogue_damage(d, monster, other)
-	short d;
-	object *monster;
-	short other;
+rogue_damage(short d, object *monster, short other)
 {
 	if (d >= rogue.hp_current) {
 		rogue.hp_current = 0;
@@ -177,9 +175,7 @@ rogue_damage(d, monster, other)
 }
 
 int
-get_damage(ds, r)
-	const char *ds;
-	boolean r;
+get_damage(const char *ds, boolean r)
 {
 	int i = 0, j, n, d, total = 0;
 
@@ -211,9 +207,8 @@ get_damage(ds, r)
 	return(total);
 }
 
-int
-get_w_damage(obj)
-	const object *obj;
+static int
+get_w_damage(const object *obj)
 {
 	char new_damage[32];
 	int tmp_to_hit, tmp_damage;
@@ -231,15 +226,14 @@ get_w_damage(obj)
 	}
 	tmp_damage = get_number(obj->damage + i) + obj->d_enchant;
 
-	snprintf(new_damage, sizeof(new_damage), "%dd%d", 
+	snprintf(new_damage, sizeof(new_damage), "%dd%d",
 		tmp_to_hit, tmp_damage);
 
 	return(get_damage(new_damage, 1));
 }
 
 int
-get_number(s)
-	const char *s;
+get_number(const char *s)
 {
 	int i = 0;
 	int total = 0;
@@ -252,8 +246,7 @@ get_number(s)
 }
 
 long
-lget_number(s)
-	const char *s;
+lget_number(const char *s)
 {
 	short i = 0;
 	long total = 0;
@@ -265,9 +258,8 @@ lget_number(s)
 	return(total);
 }
 
-int
-to_hit(obj)
-	const object *obj;
+static int
+to_hit(const object *obj)
 {
 	if (!obj) {
 		return(1);
@@ -275,8 +267,8 @@ to_hit(obj)
 	return(get_number(obj->damage) + obj->hit_enchant);
 }
 
-int
-damage_for_strength()
+static int
+damage_for_strength(void)
 {
 	short strength;
 
@@ -307,9 +299,7 @@ damage_for_strength()
 }
 
 int
-mon_damage(monster, damage)
-	object *monster;
-	short damage;
+mon_damage(object *monster, short damage)
 {
 	const char *mn;
 	short row, col;
@@ -320,7 +310,7 @@ mon_damage(monster, damage)
 		row = monster->row;
 		col = monster->col;
 		dungeon[row][col] &= ~MONSTER;
-		mvaddch(row, col, (int) get_dungeon_char(row, col));
+		mvaddch(row, col, get_dungeon_char(row, col));
 
 		fight_monster = 0;
 		cough_up(monster);
@@ -340,8 +330,7 @@ mon_damage(monster, damage)
 }
 
 void
-fight(to_the_death)
-	boolean to_the_death;
+fight(boolean to_the_death)
 {
 	short ch, c, d;
 	short row, col;
@@ -379,7 +368,7 @@ fight(to_the_death)
 		possible_damage = fight_monster->stationary_damage - 1;
 	}
 	while (fight_monster) {
-		(void) one_move_rogue(ch, 0);
+		(void)one_move_rogue(ch, 0);
 		if (((!to_the_death) && (rogue.hp_current <= possible_damage)) ||
 			interrupted || (!(dungeon[row][col] & MONSTER))) {
 			fight_monster = 0;
@@ -393,10 +382,7 @@ fight(to_the_death)
 }
 
 void
-get_dir_rc(dir, row, col, allow_off_screen)
-	short dir;
-	short *row, *col;
-	short allow_off_screen;
+get_dir_rc(short dir, short *row, short *col, short allow_off_screen)
 {
 	switch(dir) {
 	case LEFT:
@@ -447,8 +433,7 @@ get_dir_rc(dir, row, col, allow_off_screen)
 }
 
 int
-get_hit_chance(weapon)
-	const object *weapon;
+get_hit_chance(const object *weapon)
 {
 	short hit_chance;
 
@@ -459,8 +444,7 @@ get_hit_chance(weapon)
 }
 
 int
-get_weapon_damage(weapon)
-	const object *weapon;
+get_weapon_damage(const object *weapon)
 {
 	short damage;
 
@@ -471,8 +455,7 @@ get_weapon_damage(weapon)
 }
 
 void
-s_con_mon(monster)
-	object *monster;
+s_con_mon(object *monster)
 {
 	if (con_mon) {
 		monster->m_flags |= CONFUSED;

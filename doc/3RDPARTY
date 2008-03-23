@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.550.2.2 2008/01/09 01:29:24 matt Exp $
+#	3RDPARTY,v 1.550.2.2 2008/01/09 01:29:24 matt Exp
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -52,8 +52,8 @@ Fix symbolic links before import.
 Check src/usr.sbin/amd/include/config.h is correct after import.
 
 Package:	Automated Testing Framework (ATF)
-Version:	0.3
-Current Vers:	0.3
+Version:	0.4
+Current Vers:	0.4
 Maintainer:	Julio M. Merino Vidal <jmmv@NetBSD.org>
 Archive site:	ftp://ftp.NetBSD.org/pub/NetBSD/misc/jmmv/atf/
 Home page:	http://www.NetBSD.org/~jmmv/atf/
@@ -139,7 +139,7 @@ Notes:
 
 Package:	bzip2
 Version:	1.0.2
-Current Vers:	1.0.4
+Current Vers:	1.0.5
 Maintainer:	Julian Seward <jseward@acm.org>
 Archive Site:	http://sources.redhat.com/bzip2/
 Home Page:	http://www.bzip.org/
@@ -199,13 +199,13 @@ I have merged all the changes already.
 
 Package:	db
 Version:	1.85
-Current Vers:	1.86/4.4.20
+Current Vers:	1.86/4.6.21
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
-Archive Site:	http://www.sleepycat.com/download/index.shtml
-Home Page:	http://www.sleepycat.com/products/db.shtml
+Archive Site:	http://www.oracle.com/technology/software/products/berkeley-db/
+Home Page:	http://www.oracle.com/database/berkeley-db/
 Mailing List:
 Responsible:
-License:	BSD or specific SleepyCat license
+License:	BSD or Oracle Commercial License
 Notes:
 Note that we cannot use db 2.x for license reasons.
 Three bug fixes against 1.85 sent back to bostic.  Changes to
@@ -259,7 +259,7 @@ Only double-precision addressed at this time.
 
 Package:	file
 Version:	4.21
-Current Vers:	4.21
+Current Vers:	4.23
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:
@@ -303,7 +303,7 @@ for GCC4:
 
 Package:	gdb
 Version:	5.3/6.4
-Current Vers:	6.7
+Current Vers:	6.7.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
@@ -381,18 +381,6 @@ Responsible:	joda, lha
 License:	BSD
 Notes:
 
-Package:	hostapd
-Version:	0.4.9
-Current Vers:	0.4.9
-Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
-Archive Site:	http://hostap.epitest.fi/releases/
-Home Page:	http://hostap.epitest.fi/hostapd/
-Mailing List:
-Responsible:	None
-License:	BSD or GPLv2
-Notes:
-See /usr/src/dist/hostapd/NetBSD-upgrade for update instructions.
-
 Package:	hunt
 Version:	2003-04-16
 Current Vers:	2003-04-16
@@ -466,7 +454,7 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
 Version:	less394
-Current Vers:	less416
+Current Vers:	less418
 Maintainer:	Mark Nudleman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
@@ -609,8 +597,8 @@ be to get multibyte characters support. For now this means waiting for
 additions in our libcurses.
 
 Package:	OpenPAM
-Version:	20050616
-Current Vers:	20050616
+Version:	20071221
+Current Vers:	20071221
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
@@ -618,6 +606,7 @@ Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
 Notes:
+Next import will need $ Id removal..
 
 Package:	OpenSSH
 Version:	4.6
@@ -697,8 +686,8 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20071224
-Current Vers.:	20071224
+Version:	20080202
+Current Vers.:	200820202
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org
 Mailing List:	tech-pkg@NetBSD.org
@@ -724,7 +713,7 @@ and more.
 
 Package:	postfix
 Version:	2.4.5
-Current Vers:	2.4.6
+Current Vers:	2.5.0
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
@@ -912,17 +901,17 @@ Notes:
 Use src/lib/libc/time/tzcode2netbsd to prepare the source tree
 for import.
 
-Package:	wpa_supplicant
-Version:	0.4.9
-Current Vers:	0.4.9
+Package:	wpa_supplicant/hostapd
+Version:	0.6.2
+Current Vers:	0.6.3
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
-Home Page:	http://hostap.epitest.fi/
+Home Page:	http://hostap.epitest.fi/wpa_supplicant/
 Mailing List:
-Responsible:	scw, dyoung
+Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
 Notes:
-See /usr/src/dist/wpa_supplicant/NetBSD-upgrade for update instructions.
+See /usr/src/dist/wpa/NetBSD-upgrade for update instructions.
 
 Package:	XFree86
 Version:	4.5.0

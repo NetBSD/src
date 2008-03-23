@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2006/05/11 23:16:28 mrg Exp $
+#	Makefile,v 1.17 2006/05/11 23:16:28 mrg Exp
 #	@(#)Makefile	5.12 (Berkeley) 5/30/93
 
 # EXTRA
@@ -62,7 +62,7 @@ MAN=	larn.6
 CPPFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE -DTERMIOS
 SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	monster.c store.c diag.c help.c config.c nap.c bill.c scores.c \
-	signal.c moreobj.c movem.c regen.c fortune.c savelev.c
+	signal.c action.c moreobj.c movem.c regen.c fortune.c savelev.c
 DPADD=	${LIBTERM}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
@@ -72,12 +72,6 @@ SETGIDGAME=yes
 DAT=larnmaze larnopts larn.help
 FILES=${DAT:S@^@${.CURDIR}/datfiles/@g}
 FILESDIR=/usr/share/games/larn
-.endif
-
-.if ${HAVE_GCC} == 4
-.for f in main display data io monster savelev
-COPTS.${f}.c+=  -Wno-pointer-sign
-.endfor
 .endif
 
 .include <bsd.prog.mk>

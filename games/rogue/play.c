@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.6.22.1 2008/01/09 01:30:58 matt Exp $	*/
+/*	play.c,v 1.6.22.1 2008/01/09 01:30:58 matt Exp	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play.c,v 1.6.22.1 2008/01/09 01:30:58 matt Exp $");
+__RCSID("play.c,v 1.6.22.1 2008/01/09 01:30:58 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -56,10 +56,11 @@ __RCSID("$NetBSD: play.c,v 1.6.22.1 2008/01/09 01:30:58 matt Exp $");
 #include "rogue.h"
 
 boolean interrupted = 0;
-const char *unknown_command = "unknown command";
+
+static const char unknown_command[] = "unknown command";
 
 void
-play_level()
+play_level(void)
 {
 	short ch;
 	int count;
@@ -106,7 +107,7 @@ CH:
 		case 'u':
 		case 'n':
 		case 'b':
-			(void) one_move_rogue(ch, 1);
+			(void)one_move_rogue(ch, 1);
 			break;
 		case 'H':
 		case 'J':

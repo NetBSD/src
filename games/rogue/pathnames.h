@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 2003/08/07 09:37:39 agc Exp $	*/
+/*	pathnames.h,v 1.4 2003/08/07 09:37:39 agc Exp	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -32,3 +32,4 @@
  */
 
 #define	_PATH_SCOREFILE	"/var/games/rogue.scores"
+#define _PATH_SCREENDUMP "rogue.screen"

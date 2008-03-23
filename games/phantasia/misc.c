@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2005/02/15 12:58:21 jsm Exp $	*/
+/*	misc.c,v 1.14 2005/02/15 12:58:21 jsm Exp	*/
 
 /*
  * misc.c  Phantasia miscellaneous support routines
@@ -954,13 +954,13 @@ error(whichfile)
 }
 
 double
-distance(x1, x2, y1, y2)
-	double  x1, x2, y1, y2;
+distance(x_1, x_2, y_1, y_2)
+	double  x_1, x_2, y_1, y_2;
 {
 	double  deltax, deltay;
 
-	deltax = x1 - x2;
-	deltay = y1 - y2;
+	deltax = x_1 - x_2;
+	deltay = y_1 - y_2;
 	return (sqrt(deltax * deltax + deltay * deltay));
 }
 
