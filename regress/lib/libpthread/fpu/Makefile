@@ -1,5 +1,5 @@
 PROG=fpu
-MKMAN=no
+NOMAN=# defined
 COPTS=-O2
 LDADD+=-lpthread -lm
 

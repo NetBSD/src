@@ -10,6 +10,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* Define to 1 if getopt allows a + sign for POSIX behavior */
+/* #undef HAVE_GNU_GETOPT */
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
@@ -53,7 +56,7 @@
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if you have the `unmount' function. */
-/* #undef HAVE_UNMOUNT */
+#define HAVE_UNMOUNT 1
 
 /* Define to 1 if you have the `unsetenv' function. */
 #define HAVE_UNSETENV 1
@@ -61,7 +64,7 @@
 /* Define to 1 if unsetenv is in std */
 /* #undef HAVE_UNSETENV_IN_STD */
 
-/* Define to 1 if vnsprintf is in std */
+/* Define to 1 if vsnprintf is in std */
 /* #undef HAVE_VSNPRINTF_IN_STD */
 
 /* Name of package */
@@ -71,22 +74,22 @@
 #define PACKAGE_BUGREPORT "atf-devel@NetBSD.org"
 
 /* Define to the copyright string applicable to this package. */
-#define PACKAGE_COPYRIGHT "Copyright (c) 2007 The NetBSD Foundation, Inc."
+#define PACKAGE_COPYRIGHT "Copyright (c) 2007, 2008 The NetBSD Foundation, Inc."
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "Automated Testing Framework"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Automated Testing Framework 0.3"
+#define PACKAGE_STRING "Automated Testing Framework 0.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "atf"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.3"
+#define PACKAGE_VERSION "0.4"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.3"
+#define VERSION "0.4"

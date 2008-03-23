@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.42.4.1 2008/01/09 01:37:13 matt Exp $	 */
+/*	symbol.c,v 1.42.4.1 2008/01/09 01:37:13 matt Exp	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.42.4.1 2008/01/09 01:37:13 matt Exp $");
+__RCSID("symbol.c,v 1.42.4.1 2008/01/09 01:37:13 matt Exp");
 #endif /* not lint */
 
 #include <err.h>
@@ -63,7 +63,7 @@ typedef void (*fptr_t)(void);
 static bool
 _rtld_is_exported(const Elf_Sym *def)
 {
-	static fptr_t _rtld_exports[] = {
+	static const fptr_t _rtld_exports[] = {
 		(fptr_t)dlopen,
 		(fptr_t)dlclose,
 		(fptr_t)dlsym,

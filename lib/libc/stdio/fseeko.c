@@ -1,4 +1,4 @@
-/*	$NetBSD: fseeko.c,v 1.6 2006/12/18 00:40:14 christos Exp $	*/
+/*	fseeko.c,v 1.6 2006/12/18 00:40:14 christos Exp	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fseeko.c,v 1.6 2006/12/18 00:40:14 christos Exp $");
+__RCSID("fseeko.c,v 1.6 2006/12/18 00:40:14 christos Exp");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -145,7 +145,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 		goto dumb;
 	if ((fp->_flags & __SOPT) == 0) {
 		if (seekfn != __sseek ||
-		    fp->_file < 0 || fstat(fp->_file, &st) ||
+		    __sfileno(fp) == -1 || fstat(__sfileno(fp), &st) ||
 		    !S_ISREG(st.st_mode)) {
 			fp->_flags |= __SNPT;
 			goto dumb;
@@ -161,7 +161,7 @@ fseeko(FILE *fp, off_t offset, int whence)
 	if (whence == SEEK_SET)
 		target = offset;
 	else {
-		if (fstat(fp->_file, &st))
+		if (fstat(__sfileno(fp), &st))
 			goto dumb;
 		target = st.st_size + offset;
 	}

@@ -32,8 +32,12 @@
 #include <machine/reg.h>
 #include <machine/frame.h>
 
+/* Support for debugging kernel virtual memory images.  */
+#include <machine/pcb.h>
+
 #include "arm-tdep.h"
 #include "inf-ptrace.h"
+#include "bsd-kvm.h"
 
 #ifndef HAVE_GREGSET_T
 typedef struct reg gregset_t;
@@ -46,6 +50,52 @@ typedef struct fpreg fpregset_t;
 #include "gregset.h"
 
 extern int arm_apcs_32;
+
+static int
+armnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
+{
+  struct switchframe sf;
+
+  /* The following is true for NetBSD/arm32 in 5.0 and after:
+
+     The pcb contains r8-r13 (sp) at the point of context switch in
+     cpu_switchto() or call of dumpsys(). At that point we have a
+     stack frame as described by `struct switchframe', which for
+     NetBSD/arm32 has the following layout:
+
+	r4   ascending.
+	r5        |
+	r6        |
+	r7       \|/
+	old sp
+	pc
+
+     we reconstruct the register state as it would look when we just
+     returned from cpu_switchto() or dumpsys().  */
+
+  if (!arm_apcs_32)
+    return 0;
+
+  /* The stack pointer shouldn't be zero.  */
+  if (pcb->pcb_un.un_32.pcb32_sp == 0)
+    return 0;
+
+  read_memory (pcb->pcb_un.un_32.pcb32_sp, (gdb_byte *) &sf, sizeof sf);
+
+  regcache_raw_supply (regcache, ARM_PC_REGNUM, &sf.sf_pc);
+  regcache_raw_supply (regcache, ARM_SP_REGNUM, &pcb->pcb_un.un_32.pcb32_sp);
+  regcache_raw_supply (regcache, 12, &pcb->pcb_un.un_32.pcb32_r12);
+  regcache_raw_supply (regcache, 11, &pcb->pcb_un.un_32.pcb32_r11);
+  regcache_raw_supply (regcache, 10, &pcb->pcb_un.un_32.pcb32_r10);
+  regcache_raw_supply (regcache, 9, &pcb->pcb_un.un_32.pcb32_r9);
+  regcache_raw_supply (regcache, 8, &pcb->pcb_un.un_32.pcb32_r8);
+  regcache_raw_supply (regcache, 7, &sf.sf_r7);
+  regcache_raw_supply (regcache, 6, &sf.sf_r6);
+  regcache_raw_supply (regcache, 5, &sf.sf_r5);
+  regcache_raw_supply (regcache, 4, &sf.sf_r4);
+
+  return 1;
+}
 
 void
 supply_gregset (gregset_t *gregset)
@@ -549,6 +599,10 @@ _initialize_arm_netbsd_nat (void)
   t->to_store_registers = armnbsd_store_registers;
   add_target (t);
 
+  /* Support debugging kernel virtual memory images.  */
+  bsd_kvm_add_target (armnbsd_supply_pcb);
+
   deprecated_add_core_fns (&arm_netbsd_core_fns);
   deprecated_add_core_fns (&arm_netbsd_elfcore_fns);
 }
+

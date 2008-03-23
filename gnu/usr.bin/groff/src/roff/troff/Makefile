@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2006/10/09 08:32:54 mrg Exp $
+# Makefile,v 1.8 2006/10/09 08:32:54 mrg Exp
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/roff/troff/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -10,6 +10,7 @@ SRCS=		dictionary.cpp div.cpp env.cpp input.cpp \
 DPADD+=		${LIBGROFF} ${LIBM} ${LIBSUPCXX}
 LDADD+=		${LIBGROFF} -lm -lsupc++
 CLEANFILES=	majorminor.cpp ${MAN}
+USETBL=
 
 .include <bsd.prog.mk>
 

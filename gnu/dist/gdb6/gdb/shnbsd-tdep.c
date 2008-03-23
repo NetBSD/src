@@ -23,14 +23,21 @@
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
+#include "regset.h"
 #include "value.h"
 #include "osabi.h"
 
+#include "trad-frame.h"
+#include "tramp-frame.h"
+
+#include "gdb_assert.h"
+#include "gdb_string.h"
+
 #include "solib-svr4.h"
 
-#include "nbsd-tdep.h"
 #include "sh-tdep.h"
 #include "shnbsd-tdep.h"
+#include "nbsd-tdep.h"
 
 /* Convert an r0-r15 register number into an offset into a ptrace
    register structure.  */
@@ -54,120 +61,113 @@ static const int regmap[] =
   ( 5 * 4),	/* r15 */
 };
 
-#define SIZEOF_STRUCT_REG (21 * 4)
+/* Sizeof `struct reg' in <machine/reg.h>.  */
+#define SHNBSD_SIZEOF_GREGS	(21 * 4)
 
-void
-shnbsd_supply_reg (char *regs, int regno)
+/* From <machine/mcontext.h>.  */
+static const int shnbsd_mc_reg_offset[] =
 {
-  int i;
-
-  if (regno == PC_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, PC_REGNUM, regs + (0 * 4));
-
-  if (regno == SR_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, SR_REGNUM, regs + (1 * 4));
-
-  if (regno == PR_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, PR_REGNUM, regs + (2 * 4));
-
-  if (regno == MACH_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, MACH_REGNUM, regs + (3 * 4));
-
-  if (regno == MACL_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, MACL_REGNUM, regs + (4 * 4));
-
-  if ((regno >= R0_REGNUM && regno <= (R0_REGNUM + 15)) || regno == -1)
-    {
-      for (i = R0_REGNUM; i <= (R0_REGNUM + 15); i++)
-	if (regno == i || regno == -1)
-          regcache_raw_supply (current_regcache, i,
-			       regs + regmap[i - R0_REGNUM]);
-    }
-}
-
-void
-shnbsd_fill_reg (char *regs, int regno)
-{
-  int i;
-
-  if (regno == PC_REGNUM || regno == -1)
-    regcache_raw_collect (current_regcache, PC_REGNUM, regs + (0 * 4));
-
-  if (regno == SR_REGNUM || regno == -1)
-    regcache_raw_collect (current_regcache, SR_REGNUM, regs + (1 * 4));
-
-  if (regno == PR_REGNUM || regno == -1)
-    regcache_raw_collect (current_regcache, PR_REGNUM, regs + (2 * 4));
-
-  if (regno == MACH_REGNUM || regno == -1)
-    regcache_raw_collect (current_regcache, MACH_REGNUM, regs + (3 * 4));
-
-  if (regno == MACL_REGNUM || regno == -1)
-    regcache_raw_collect (current_regcache, MACL_REGNUM, regs + (4 * 4));
-
-  if ((regno >= R0_REGNUM && regno <= (R0_REGNUM + 15)) || regno == -1)
-    {
-      for (i = R0_REGNUM; i <= (R0_REGNUM + 15); i++)
-	if (regno == i || regno == -1)
-          regcache_raw_collect (current_regcache, i,
-				regs + regmap[i - R0_REGNUM]);
-    }
-}
-
-static void
-fetch_core_registers (char *core_reg_sect, unsigned core_reg_size,
-                      int which, CORE_ADDR ignore)
-{
-  /* We get everything from the .reg section.  */
-  if (which != 0)
-    return;
-
-  if (core_reg_size < SIZEOF_STRUCT_REG)
-    {
-      warning (_("Wrong size register set in core file."));
-      return;
-    }
-
-  /* Integer registers.  */
-  shnbsd_supply_reg (core_reg_sect, -1);
-}
-
-static void
-fetch_elfcore_registers (char *core_reg_sect, unsigned core_reg_size,
-                         int which, CORE_ADDR ignore)
-{
-  switch (which)
-    {
-    case 0:  /* Integer registers.  */
-      if (core_reg_size != SIZEOF_STRUCT_REG)
-	warning (_("Wrong size register set in core file."));
-      else
-	shnbsd_supply_reg (core_reg_sect, -1);
-      break;
-
-    default:
-      /* Don't know what kind of register request this is; just ignore it.  */
-      break;
-    }
-}
-
-static struct core_fns shnbsd_core_fns =
-{
-  bfd_target_unknown_flavour,		/* core_flavour */
-  default_check_format,			/* check_format */
-  default_core_sniffer,			/* core_sniffer */
-  fetch_core_registers,			/* core_read_registers */
-  NULL					/* next */
+  (20 * 4),	/* r0 */
+  (19 * 4),	/* r1 */
+  (18 * 4),	/* r2 */ 
+  (17 * 4),	/* r3 */ 
+  (16 * 4),	/* r4 */
+  (15 * 4),	/* r5 */
+  (14 * 4),	/* r6 */
+  (13 * 4),	/* r7 */
+  (12 * 4),	/* r8 */ 
+  (11 * 4),	/* r9 */
+  (10 * 4),	/* r10 */
+  ( 9 * 4),	/* r11 */
+  ( 8 * 4),	/* r12 */
+  ( 7 * 4),	/* r13 */
+  ( 6 * 4),	/* r14 */
+  (21 * 4),	/* r15/sp */
+  ( 1 * 4),	/* pc */
+  ( 5 * 4),	/* pr */
+  -1,
+  -1,
+  ( 4 * 4),	/* mach */
+  ( 3 * 4),	/* macl */
+  ( 2 * 4),	/* sr */
 };
 
-static struct core_fns shnbsd_elfcore_fns =
+/* Supply register REGNUM from the buffer specified by GREGS and LEN
+   in the general-purpose register set REGSET to register cache
+   REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
+
+static void
+shnbsd_supply_gregset (const struct regset *regset,
+		       struct regcache *regcache,
+		       int regnum, const void *gregs, size_t len)
 {
-  bfd_target_elf_flavour,		/* core_flavour */
-  default_check_format,			/* check_format */
-  default_core_sniffer,			/* core_sniffer */
-  fetch_elfcore_registers,		/* core_read_registers */
-  NULL					/* next */
-};
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  const gdb_byte *regs = gregs;
+  int i;
+
+  gdb_assert (len >= SHNBSD_SIZEOF_GREGS);
+
+  if (regnum == gdbarch_pc_regnum (gdbarch) || regnum == -1)
+    regcache_raw_supply (regcache, gdbarch_pc_regnum (gdbarch),
+			 regs + (0 * 4));
+
+  if (regnum == SR_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, SR_REGNUM, regs + (1 * 4));
+
+  if (regnum == PR_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, PR_REGNUM, regs + (2 * 4));
+
+  if (regnum == MACH_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, MACH_REGNUM, regs + (3 * 4));
+
+  if (regnum == MACL_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, MACL_REGNUM, regs + (4 * 4));
+
+  for (i = R0_REGNUM; i <= (R0_REGNUM + 15); i++)
+    {
+      if (regnum == i || regnum == -1)
+	regcache_raw_supply (regcache, i, regs + regmap[i - R0_REGNUM]);
+    }
+}
+
+/* Collect register REGNUM in the general-purpose register set
+   REGSET. from register cache REGCACHE into the buffer specified by
+   GREGS and LEN.  If REGNUM is -1, do this for all registers in
+   REGSET.  */
+
+static void
+shnbsd_collect_gregset (const struct regset *regset,
+			const struct regcache *regcache,
+			int regnum, void *gregs, size_t len)
+{
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  gdb_byte *regs = gregs;
+  int i;
+
+  gdb_assert (len >= SHNBSD_SIZEOF_GREGS);
+
+  if (regnum == gdbarch_pc_regnum (gdbarch) || regnum == -1)
+    regcache_raw_collect (regcache, gdbarch_pc_regnum (gdbarch),
+			  regs + (0 * 4));
+
+  if (regnum == SR_REGNUM || regnum == -1)
+    regcache_raw_collect (regcache, SR_REGNUM, regs + (1 * 4));
+
+  if (regnum == PR_REGNUM || regnum == -1)
+    regcache_raw_collect (regcache, PR_REGNUM, regs + (2 * 4));
+
+  if (regnum == MACH_REGNUM || regnum == -1)
+    regcache_raw_collect (regcache, MACH_REGNUM, regs + (3 * 4));
+
+  if (regnum == MACL_REGNUM || regnum == -1)
+    regcache_raw_collect (regcache, MACL_REGNUM, regs + (4 * 4));
+
+  for (i = R0_REGNUM; i <= (R0_REGNUM + 15); i++)
+    {
+      if (regnum == i || regnum == -1)
+	regcache_raw_collect (regcache, i, regs + regmap[i - R0_REGNUM]);
+    }
+}
 
 /* Hitachi SH instruction encoding masks and opcodes */
 
@@ -370,6 +370,105 @@ shnbsd_software_single_step (enum target_signal ignore,
     }
 }
 
+/* SH register sets.  */
+
+static struct regset shnbsd_gregset =
+{
+  NULL,
+  shnbsd_supply_gregset
+};
+
+/* Return the appropriate register set for the core section identified
+   by SECT_NAME and SECT_SIZE.  */
+
+const struct regset *
+shnbsd_regset_from_core_section (struct gdbarch *gdbarch,
+				 const char *sect_name, size_t sect_size)
+{
+  if (strcmp (sect_name, ".reg") == 0 && sect_size >= SHNBSD_SIZEOF_GREGS)
+    return &shnbsd_gregset;
+
+  return NULL;
+}
+
+void
+shnbsd_supply_reg (struct regcache *regcache, const char *regs, int regnum)
+{
+  shnbsd_supply_gregset (&shnbsd_gregset, regcache, regnum,
+			 regs, SHNBSD_SIZEOF_GREGS);
+}
+
+void
+shnbsd_fill_reg (const struct regcache *regcache, char *regs, int regnum)
+{
+  shnbsd_collect_gregset (&shnbsd_gregset, regcache, regnum,
+			  regs, SHNBSD_SIZEOF_GREGS);
+}
+
+static void
+shnbsd_sigtramp_cache_init (const struct tramp_frame *,
+			     struct frame_info *,
+			     struct trad_frame_cache *,
+			     CORE_ADDR);
+
+/* The siginfo signal trampoline for NetBSD/sh3 versions 2.0 and later */
+static const struct tramp_frame shnbsd_sigtramp_si2 =
+{
+  SIGTRAMP_FRAME,
+  2,
+  {
+    { 0x64f3, -1 },			/* mov     r15,r4 */
+    { 0xd002, -1 },			/* mov.l   .LSYS_setcontext */
+    { 0xc380, -1 },			/* trapa   #-128 */
+    { 0xa003, -1 },			/* bra     .Lskip1 */
+    { 0x0009, -1 },			/* nop */
+    { 0x0009, -1 },			/* nop */
+ /* .LSYS_setcontext */
+    { 0x0134, -1 }, { 0x0000, -1 },     /* 0x134 */
+ /* .Lskip1 */
+    { 0x6403, -1 },			/* mov     r0,r4 */
+    { 0xd002, -1 },			/* mov.l   .LSYS_exit  */
+    { 0xc380, -1 },			/* trapa   #-128 */
+    { 0xa003, -1 },			/* bra     .Lskip2 */
+    { 0x0009, -1 },			/* nop */
+    { 0x0009, -1 },			/* nop */
+ /* .LSYS_exit */
+    { 0x0001, -1 }, { 0x0000, -1 },     /* 0x1 */
+/* .Lskip2 */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  shnbsd_sigtramp_cache_init
+};
+
+static void
+shnbsd_sigtramp_cache_init (const struct tramp_frame *self,
+			     struct frame_info *next_frame,
+			     struct trad_frame_cache *this_cache,
+			     CORE_ADDR func)
+{
+  struct gdbarch *gdbarch = get_frame_arch (next_frame);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  CORE_ADDR sp = frame_unwind_register_unsigned (next_frame, SP_REGNUM);
+  CORE_ADDR base;
+  const int *reg_offset;
+  int num_regs;
+  int i;
+
+  reg_offset = shnbsd_mc_reg_offset;
+  num_regs = ARRAY_SIZE (shnbsd_mc_reg_offset);
+  /* SP already points at the ucontext. */
+  base = sp;
+  /* offsetof(ucontext_t, uc_mcontext) == 36 */
+  base += 36;
+
+  for (i = 0; i < num_regs; i++)
+    if (reg_offset[i] != -1)
+      trad_frame_set_reg_addr (this_cache, i, base + reg_offset[i]);
+
+  /* Construct the frame ID using the function start.  */
+  trad_frame_set_id (this_cache, frame_id_build (sp, func));
+}
+
 static void
 shnbsd_init_abi (struct gdbarch_info info,
                   struct gdbarch *gdbarch)
@@ -378,15 +477,30 @@ shnbsd_init_abi (struct gdbarch_info info,
      we must use software single-stepping.  */
   set_gdbarch_software_single_step (gdbarch, shnbsd_software_single_step);
 
+  set_gdbarch_regset_from_core_section
+    (gdbarch, shnbsd_regset_from_core_section);
+
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
 		                nbsd_ilp32_solib_svr4_fetch_link_map_offsets);
+  tramp_frame_prepend_unwinder (gdbarch, &shnbsd_sigtramp_si2);
+
+}
+
+static enum gdb_osabi
+shnbsd_core_osabi_sniffer (bfd *abfd)
+{
+  if (strcmp (bfd_get_target (abfd), "netbsd-core") == 0)
+    return GDB_OSABI_NETBSD_AOUT;
+
+  return GDB_OSABI_UNKNOWN;
 }
 
 void
 _initialize_shnbsd_tdep (void)
 {
-  deprecated_add_core_fns (&shnbsd_core_fns);
-  deprecated_add_core_fns (&shnbsd_elfcore_fns);
+  /* BFD doesn't set a flavour for NetBSD style a.out core files.  */
+  gdbarch_register_osabi_sniffer (bfd_arch_sh, bfd_target_unknown_flavour,
+                                  shnbsd_core_osabi_sniffer);
 
   gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_NETBSD_ELF,
 			  shnbsd_init_abi);

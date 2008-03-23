@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.16 2000/07/06 03:10:34 christos Exp $	*/
+/*	pmap_getport.c,v 1.16 2000/07/06 03:10:34 christos Exp	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.16 2000/07/06 03:10:34 christos Exp $");
+__RCSID("pmap_getport.c,v 1.16 2000/07/06 03:10:34 christos Exp");
 #endif
 #endif
 
@@ -72,39 +72,59 @@ static const struct timeval tottimeout = { 60, 0 };
  * Calls the pmap service remotely to do the lookup.
  * Returns 0 if no map exists.
  */
+
+static void
+remote_pmap_getport(CLIENT *client, struct pmap *parms, u_short *port)
+{
+	if (CLNT_CALL(client, (rpcproc_t)PMAPPROC_GETPORT, (xdrproc_t)xdr_pmap,
+	    parms, (xdrproc_t)xdr_u_short, port, tottimeout) != RPC_SUCCESS) {
+		rpc_createerr.cf_stat = RPC_PMAPFAILURE;
+		clnt_geterr(client, &rpc_createerr.cf_error);
+	} else if (*port == 0) {
+		rpc_createerr.cf_stat = RPC_PROGNOTREGISTERED;
+		clnt_geterr(client, &rpc_createerr.cf_error);
+	}
+	CLNT_DESTROY(client);
+}
+
+static CLIENT *
+get_client(struct sockaddr_in *address, int tcp)
+{
+	int sock = -1;
+	if (tcp)
+		return clnttcp_create(address, PMAPPROG, PMAPVERS, &sock, 0, 0);
+	else
+		return clntudp_bufcreate(address, PMAPPROG, PMAPVERS, timeout,
+		    &sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
+}
+
 u_short
-pmap_getport(address, program, version, protocol)
-	struct sockaddr_in *address;
-	u_long program;
-	u_long version;
-	u_int protocol;
+pmap_getport(struct sockaddr_in *address, u_long program, u_long version,
+    u_int protocol)
 {
 	u_short port = 0;
-	int sock = -1;
 	CLIENT *client;
 	struct pmap parms;
 
 	_DIAGASSERT(address != NULL);
 
+	parms.pm_prog = program;
+	parms.pm_vers = version;
+	parms.pm_prot = protocol;
+	parms.pm_port = 0;  /* not needed or used */
+
 	address->sin_port = htons(PMAPPORT);
-	client = clntudp_bufcreate(address, PMAPPROG,
-	    PMAPVERS, timeout, &sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
-	if (client != NULL) {
-		parms.pm_prog = program;
-		parms.pm_vers = version;
-		parms.pm_prot = protocol;
-		parms.pm_port = 0;  /* not needed or used */
-		if (CLNT_CALL(client, (rpcproc_t)PMAPPROC_GETPORT,
-		    (xdrproc_t)xdr_pmap,
-		    &parms, (xdrproc_t)xdr_u_short, &port, tottimeout) !=
-		    RPC_SUCCESS){
-			rpc_createerr.cf_stat = RPC_PMAPFAILURE;
-			clnt_geterr(client, &rpc_createerr.cf_error);
-		} else if (port == 0) {
-			rpc_createerr.cf_stat = RPC_PROGNOTREGISTERED;
-		}
-		CLNT_DESTROY(client);
+
+	client = get_client(address, protocol == IPPROTO_TCP);
+	if (client != NULL)
+		remote_pmap_getport(client, &parms, &port);
+
+	if (port == 0) {
+		client = get_client(address, protocol != IPPROTO_TCP);
+		if (client != NULL)
+			remote_pmap_getport(client, &parms, &port);
 	}
+
 	address->sin_port = 0;
-	return (port);
+	return port;
 }

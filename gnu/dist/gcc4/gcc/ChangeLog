@@ -1,3 +1,345 @@
+2008-02-01  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	Backport:
+	2007-08-02  Nathan Froyd  <froydnj@codesourcery.com>
+
+	PR middle-end/25445
+	* varasm.c (default_binds_local_p_1): Consult flag_whole_program
+	if we are compiling with -fPIC.
+
+2008-01-31  Richard Henderson  <rth@redhat.com>
+
+        PR c/34993
+        * tree.c (build_type_attribute_qual_variant): Skip TYPE_DOMAIN
+        for unbounded arrays.
+
+2008-01-31  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	* config/s390/fixdfdi.h (__fixunstfdi, __fixtfdi): Rearrange
+	the overflow check to make it easier to read.
+	(__fixtfdi): Change the type of the ll member in union
+	long_double to UDItype_x.
+
+2008-01-24  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
+
+	Backport:
+	2007-11-07  Kenneth Zadeck <zadeck@naturalbridge.com>
+	
+	PR middle-end/33826
+	* ipa-pure-const (static_execute): Added code to keep recursive
+	functions from being marked as pure or const.
+	* ipa-utils (searchc): Fixed comment.
+	
+2008-01-16  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	PR libgfortran/34699
+	* pa-hpux.h (LINK_SPEC): Only search /lib/pa1.1 and /usr/lib/pa1.1 on
+	static links.
+	* pa-hpux10.h (LINK_SPEC): Likewise.
+	* pa-hpux11.h (LINK_SPEC): Don't search /lib/pa1.1 and /usr/lib/pa1.1.
+
+2008-01-14  Eric Botcazou  <ebotcazou@adacore.com>
+
+	PR rtl-optimization/31944
+	* cse.c (remove_pseudo_from_table): New function.
+	(merge_equiv_classes): Use above function to remove pseudo-registers.
+	(invalidate): Likewise.
+
+2007-12-31  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
+
+	PR driver/33772
+	* collect2.c (SHLIB_SUFFIX): Define if not defined.
+	(write_c_file_stat): Use SHLIB_SUFFIX.
+	* som.h (SHLIB_SUFFIX): Define.
+	* doc/tm.texi (SHLIB_SUFFIX): Document.
+
+2007-12-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR bootstrap/34003
+	* c-decl.c (merge_decls): Copy RTL from olddecl to newdecl.
+	* config/pa/pa.c (pa_encode_section_info): If !first, preserve
+	SYMBOL_FLAG_REFERENCED flag.
+
+2007-12-19  Kaz Kylheku  <kaz@zeugmasystems.com>
+
+	PR rtl-optimization/34456
+	* resource.c (mark_set_resources): Use regs_invalidated_by_call
+	rather than call_used_regs and global_regs.
+
+2007-11-29  Matthias Klose  <doko@ubuntu.com>
+
+	Backport from mainline:
+	2007-11-17  Richard Guenther  <rguenther@suse.de>
+
+	PR middle-end/34130
+	* fold-const.c (extract_muldiv_1): Do not move negative
+	constants inside ABS_EXPR.
+
+2007-11-16  Richard Guenther  <rguenther@suse.de>
+
+	PR middle-end/34030
+	* fold-const.c (fold_binary): Use correct types for folding
+	1 << X & Y to Y >> X & 1.
+
+2007-11-07  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	PR rtl-optimization/33822
+	* rtl.h (REG_OFFSET): Fix comment.
+	* var-tracking.c (INT_MEM_OFFSET): New macro.
+	(var_mem_set): Use it.
+	(var_mem_delete_and_set): Likewise.
+	(var_mem_delete): Likewise.
+	(vt_get_decl_and_offset): Likewise.
+	(offset_valid_for_tracked_p): New predicate.
+	(count_uses): Do not track locations with invalid offsets.
+	(add_uses): Likewise.
+	(add_stores): Likewise.
+
+2007-11-04  Hirohisa Yamaguchi  <umq@ueo.co.jp>
+
+	* config/freebsd-spec.h (FBSD_TARGET_OS_CPP_BUILTINS): Fix
+	broken else-if chain.
+
+2007-11-04  Gerald Pfeifer  <gerald@pfeifer.com>
+
+	* config.gcc: Proactively add FreeBSD 10 and FreeBSD 11.
+	* config/freebsd-spec.h (FBSD_TARGET_OS_CPP_BUILTINS): Ditto.
+
+2007-11-02  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	Backport from mainline:
+	2006-12-11  Zdenek Dvorak  <dvorakz@suse.cz>
+
+	PR rtl-optimization/30113
+	* loop-iv.c (implies_p): Require the mode of the operands to be
+	scalar.
+
+2007-10-30  Ian Lance Taylor  <iant@google.com>
+
+	* ifcvt.c (noce_can_store_speculate_p): New static function.
+	(noce_process_if_block): Call it.
+	(find_if_header): Only call find_if_case_1 and find_if_case_2 if
+	life_data_ok is set.
+	(if_convert): Always compute postdominators.
+
+2007-10-29  Janis Johnson  <janis187@us.ibm.com>
+
+	* doc/invoke.texi (Option Summary, optimizations): Remove
+	-fbounds-check.  Show that the value for options -falign-jumps,
+	-falign-labels, -falign-loops, -falign-functions,
+	-fsched-stalled-insns, and -fsched-stalled-insns-dep is optional.
+	Break up a long line.  Add -ftree-vrp and -funit-at-a-time.
+	(Option Summary, code gen options)  Add -fno-stack-limit.
+	* doc/invoke.texi (Option Summary, optimizations):
+	(Optimization Options): Remove -fbounds-check, which is also
+	documented under Code Generation Options.  In the descriptions for
+	-fsched-stalled-insns and -fsched-stalled-insns-dep, show the
+	options with and without values.  Change -fno-cprop-registers
+	to -fcprop-registers to match other options, and say when it is
+	enabled rather than disabled.  Remove extra index entry for
+	-fno-cx-limited-range.  Add opindex for several optimization
+	options, and fix typos in the opindex commands for several others.
+	(Code Gen Options): Add index entry for -ftls-model.
+
+2007-10-23  Eric Botcazou  <ebotcazou@libertysurf.fr>
+
+	* doc/rtl.texi (Flags): Fix MEM_SCALAR_P entry.
+	Document MEM_POINTER.  Replace mentions of "integrated"
+	field with "return_val".  Delete outdated stuff.
+
+2007-10-20  Jakub Jelinek  <jakub@redhat.com>
+
+	* config/rs6000/linux-unwind.h (ppc_fallback_frame_state): Point
+	saved CR2 offset to low 32 bits of regs->ccr rather than the whole
+	64-bit register in 64-bit libgcc.
+
+2007-09-23  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.ac (ld_vers): Support GNU linker version xx.xx.*
+	* configure: Regenerated.
+
+2007-09-23  Jakub Jelinek  <jakub@redhat.com>
+
+	* configure.ac (MAKEINFO): Handle makeinfo version 4.10 and above.
+	* configure: Regenerated.
+
+2007-09-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR bootstrap/33418
+	* configure.ac (ld_vers): Support Linux linker.
+	* configure: Regenerated.
+
+2007-09-06  Richard Sandiford  <richard@codesourcery.com>
+
+	PR target/33256
+	* config/mips/mips.c (mips_classify_symbolic_expression): New function.
+	(mips_classify_address): Use it instead of mips_symbolic_constant_p.
+	(print_operand_reloc): Likewise.
+
+2007-08-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR middle-end/32912
+	* fold-const.c (fold_binary): Only optimize X | ~X and X ^ ~X for
+	integral types.
+
+2007-08-22  Richard Guenther  <rguenther@suse.de>
+
+	PR tree-optimization/33142
+	* tree-vrp.c (extract_range_from_unary_expr): Compare with
+	TYPE_MIN/MAX_VALUE using tree_int_cst_equal.
+
+2007-08-21  Adam Nemet  <anemet@caviumnetworks.com>
+
+	* config/mips/predicates.md (const_call_insn_operand): Invoke
+	SYMBOL_REF_LONG_CALL_P only on SYMBOL_REFs.
+
+2007-08-02  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	* config/s390/s390.md ("*xordi3_cconly"): Change xr to xg.
+
+2007-08-01  Andreas Krebbel  <krebbel1@de.ibm.com>
+
+	* config/s390/s390.md (TF in GPR splitter): Change operand_subword
+	parameter to TFmode.
+
+2007-07-16  Richard Guenther  <rguenther@suse.de>
+	    Uros Bizjak  <ubizjak@gmail.com>
+
+	* tree-if-conv.c (find_phi_replacement_condition): Unshare "*cond"
+	before forcing it to gimple operand.
+
+2007-07-13  Paolo Bonzini  <bonzini@gnu.org>
+
+	Revert these patches:
+
+	2007-07-09  Paolo Bonzini  <bonzini@gnu.org>
+
+        PR middle-end/32004
+        * function.c (rest_of_match_asm_constraints): Pass PROP_REG_INFO.
+
+	2007-07-06  Paolo Bonzini  <bonzini@gnu.org>
+
+	PR middle-end/32004
+	* function.c (match_asm_constraints_1, rest_of_match_asm_constraints,
+	pass_match_asm_constraints): New.
+	* passes.c (init_optimization_passes): Add new pass.
+	* stmt.c (expand_asm_operands): Set cfun->has_asm_statement.
+	* function.h (struct function): Add has_asm_statement bit.
+	(current_function_has_asm_statement): New.
+	* tree-pass.h (pass_match_asm_constraints): New.
+
+2007-07-09  Paolo Bonzini  <bonzini@gnu.org>
+
+        PR middle-end/32004
+        * function.c (rest_of_match_asm_constraints): Pass PROP_REG_INFO.
+
+2007-07-09  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR tree-optimization/32681
+	* tree-if-conv.c (find_phi_replacement_condition): Use the condition
+	saved in second_edge->aux when first_bb is a loop header.
+
+2007-07-07 Anatoly Sokolov <aesok@post.ru>
+
+	PR target/31331
+	* config/avr/avr.c (avr_naked_function_p): Handle receiving a type
+	rather than a decl. 
+	(avr_attribute_table): Make "naked" attribute apply to function types
+	rather than to decls.
+	(avr_handle_fntype_attribute): New function.
+
+2007-07-07  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/32660
+	Backport from mainline.
+	* config/i386/sse.md (*vec_extractv2di_1_sse2): New.
+	(*vec_extractv2di_1_sse): New.
+
+2007-07-06  Paolo Bonzini  <bonzini@gnu.org>
+
+	PR middle-end/32004
+	* function.c (match_asm_constraints_1, rest_of_match_asm_constraints,
+	pass_match_asm_constraints): New.
+	* passes.c (init_optimization_passes): Add new pass.
+	* stmt.c (expand_asm_operands): Set cfun->has_asm_statement.
+	* function.h (struct function): Add has_asm_statement bit.
+	(current_function_has_asm_statement): New.
+	* tree-pass.h (pass_match_asm_constraints): New.
+
+2007-07-06  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR rtl-optimization/32450
+	* function.c (thread_prologue_and_epilogue_insns): Emit blockage insn
+	to ensure that instructions are not moved into the prologue when
+	profiling is on.
+
+2007-07-04  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR tree-optimization/31966
+	PR tree-optimization/32533
+	* tree-if-conv.c (add_to_dst_predicate_list): Use "edge", not
+	"basic_block" description as its third argument.  Update function
+	calls to get destination bb from "edge" argument.  Save "cond" into
+	aux field of the edge.  Update prototype for changed arguments.
+	(if_convertible_loop_p): Clear aux field of incoming edges if bb
+	contains phi node.
+	(find_phi_replacement_condition): Operate on incoming edges, not
+	on predecessor blocks.  If there is a condition saved in the
+	incoming edge aux field, AND it with incoming bb predicate.
+	Return source bb of the first edge.
+	(clean_predicate_lists): Clean aux field of outgoing node edges.
+	(tree_if_conversion): Do not initialize cond variable. Move
+	variable declaration into the loop.
+	(replace_phi_with_cond_gimple_modify_stmt): Remove unneded
+	initializations of new_stmt, arg0 and arg1 variables.
+
+2007-07-04  Kaz Kojima  <kkojima@gcc.gnu.org>
+
+	PR target/32506
+	Backport from mainline.
+	* config/sh/sh.md (udivsi3_i1_media): Use target_reg_operand
+	predicate instead of target_operand.
+	(divsi3_i1_media, divsi3_media_2): Likewise.
+
+2007-07-03  Rainer Orth  <ro@TechFak.Uni-Bielefeld.DE>
+
+	PR target/28307
+	* gthr-posix.h [SUPPORTS_WEAK && GTHREAD_USE_WEAK]
+	(__gthrw_pragma): Provide default definition.
+	(__gthrw2): Use it.
+	* gthr-posix.c (__gthrw_pragma): Define.
+
+2007-06-30  Alexandre Oliva  <aoliva@redhat.com>
+
+	* dwarf2out.c (dwarf2out_finish): Accept namespaces as context of
+	limbo die nodes.
+
+2007-06-28  Seongbae Park  <seongbae.park@gmail.com>
+
+	* config/arm/arm.c (arm_get_frame_offsets): Set
+	offsets->locals_base to avoid negative stack size.
+	(thumb1_expand_prologue): Assert on negative stack size.
+
+2007-06-28  Jakub Jelinek  <jakub@redhat.com>
+
+	* config/rs6000/rs6000.c (rs6000_function_ok_for_sibcall): Ensure
+	decl is non-external for AIX ABI.
+
+2007-06-28  David Edelsohn  <edelsohn@gnu.org>
+
+	* config/rs6000/predicates.md (current_file_function_operand):
+	Ensure the symbol is non-external for AIX ABI.
+
+2007-06-21  Uros Bizjak  <ubizjak@gmail.com>
+
+	PR target/32389
+	* config/i386/i386.h (enum ix86_stack_slot): Add SLOT_VIRTUAL.
+	* config/i386/i386.c (assign_386_stack_local): Assert that
+	SLOT_VIRTUAL is valid only before virtual regs are instantiated.
+	(ix86_expand_builtin) [IX86_BUILTIN_LDMXCSR, IX86_BUILTIN_STMXCSR]:
+	Use SLOT_VIRTUAL stack slot instead of SLOT_TEMP.
+	* config/i386/i386.md (truncdfsf2, truncxfsf2, truncxfdf2): Ditto.
+
 2007-06-20  Jakub Jelinek  <jakub@redhat.com>
 
 	PR inline-asm/32109

@@ -40,7 +40,9 @@ extern int errno;
    /* We want the directory in Unix syntax, not in VMS syntax.  */
 #  define getcwd(Buf, Max) (getcwd) (Buf, Max, 0)
 # else
+#  ifndef _FORTIFY_SOURCE
 char *getcwd ();
+#  endif
 # endif
 #else
 char *getwd ();

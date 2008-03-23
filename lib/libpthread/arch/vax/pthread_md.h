@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:17 perry Exp $	*/
+/*	pthread_md.h,v 1.4 2005/12/24 21:11:17 perry Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,5 +84,8 @@ pthread__sp(void)
 
 #define PTHREAD_FPREG_TO_UCONTEXT(uc, reg) do {				\
 	} while (/*CONSTCOND*/0)
+
+/* Don't need additional memory barriers. */
+#define	PTHREAD__ATOMIC_IS_MEMBAR
 
 #endif /* _LIB_PTHREAD_VAX_MD_H */
