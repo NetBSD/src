@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2006/11/12 22:44:00 dyoung Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2008/03/23 10:32:05 jdc Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -32,6 +32,6 @@ links:
 	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 
-SUBDIR=	compile include stand ../x86/include
+SUBDIR=	compile include stand ../x86/include ../xen/include
 
 .include <bsd.subdir.mk>
