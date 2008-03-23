@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.10.10.1 2008/01/09 01:30:56 matt Exp $	*/
+/*	inventory.c,v 1.10.10.1 2008/01/09 01:30:56 matt Exp	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: inventory.c,v 1.10.10.1 2008/01/09 01:30:56 matt Exp $");
+__RCSID("inventory.c,v 1.10.10.1 2008/01/09 01:30:56 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: inventory.c,v 1.10.10.1 2008/01/09 01:30:56 matt Exp $");
 boolean is_wood[WANDS];
 const char *press_space = " --press space to continue--";
 
-const char *const wand_materials[WAND_MATERIALS] = {
+static const char *const wand_materials[WAND_MATERIALS] = {
 	"steel ",
 	"bronze ",
 	"gold ",
@@ -93,7 +93,7 @@ const char *const wand_materials[WAND_MATERIALS] = {
 	"wooden "
 };
 
-const char *const gems[GEMS] = {
+static const char *const gems[GEMS] = {
 	"diamond ",
 	"stibotantalite ",
 	"lapi-lazuli ",
@@ -110,7 +110,7 @@ const char *const gems[GEMS] = {
 	"garnet "
 };
 
-const char *const syllables[MAXSYLLABLES] = {
+static const char *const syllables[MAXSYLLABLES] = {
 	"blech ",
 	"foo ",
 	"barf ",
@@ -160,7 +160,7 @@ struct id_com_s {
 	const char *com_desc;
 };
 
-const struct id_com_s com_id_tab[COMS] = {
+static const struct id_com_s com_id_tab[COMS] = {
 	{'?',	"?       prints help"},
 	{'r',	"r       read scroll"},
 	{'/',	"/       identify object"},
@@ -212,9 +212,7 @@ const struct id_com_s com_id_tab[COMS] = {
 };
 
 void
-inventory(pack, mask)
-	const object *pack;
-	unsigned short mask;
+inventory(const object *pack, unsigned short mask)
 {
 	object *obj;
 	short i = 0, j;
@@ -225,7 +223,7 @@ inventory(pack, mask)
 		short letter;
 		short sepchar;
 		char desc[DCOLS];
-		char savebuf[DCOLS+8];   
+		char savebuf[DCOLS+8];
 	} descs[MAX_PACK_COUNT+1];
 
 
@@ -260,8 +258,8 @@ inventory(pack, mask)
 		}
 		descs[row].savebuf[j-col] = 0;
 		if (row < i) {
-			mvprintw(row, col, " %c%c %s", 
-				descs[row].letter, descs[row].sepchar, 
+			mvprintw(row, col, " %c%c %s",
+				descs[row].letter, descs[row].sepchar,
 				descs[row].desc);
 		}
 		else {
@@ -281,7 +279,7 @@ inventory(pack, mask)
 }
 
 void
-id_com()
+id_com(void)
 {
 	int ch = 0;
 	short i, j, k;
@@ -358,8 +356,7 @@ MORE:
 }
 
 int
-pr_com_id(ch)
-	int ch;
+pr_com_id(int ch)
 {
 	int i;
 
@@ -372,9 +369,7 @@ pr_com_id(ch)
 }
 
 int
-get_com_id(indexp, ch)
-	int *indexp;
-	short ch;
+get_com_id(int *indexp, short ch)
 {
 	short i;
 
@@ -388,8 +383,7 @@ get_com_id(indexp, ch)
 }
 
 int
-pr_motion_char(ch)
-	int ch;
+pr_motion_char(int ch)
 {
 	if (	(ch == 'J') ||
 			(ch == 'K') ||
@@ -416,7 +410,7 @@ pr_motion_char(ch)
 			ch += 32;
 			until = "";
 		}
-		(void) get_com_id(&n, ch);
+		(void)get_com_id(&n, ch);
 		check_message();
 		messagef(0, "run %s%s", com_id_tab[n].com_desc + 8, until);
 		return(1);
@@ -426,7 +420,7 @@ pr_motion_char(ch)
 }
 
 void
-mix_colors()
+mix_colors(void)
 {
 	short i, j, k;
 	char t[MAX_ID_TITLE_LEN];
@@ -442,7 +436,7 @@ mix_colors()
 }
 
 void
-make_scroll_titles()
+make_scroll_titles(void)
 {
 	short i, j, n;
 	short sylls, s;
@@ -450,18 +444,18 @@ make_scroll_titles()
 
 	for (i = 0; i < SCROLS; i++) {
 		sylls = get_rand(2, 5);
-		(void) strlcpy(id_scrolls[i].title, "'", maxlen);
+		(void)strlcpy(id_scrolls[i].title, "'", maxlen);
 
 		for (j = 0; j < sylls; j++) {
 			s = get_rand(1, (MAXSYLLABLES-1));
-			(void) strlcat(id_scrolls[i].title, syllables[s],
+			(void)strlcat(id_scrolls[i].title, syllables[s],
 					maxlen);
 		}
 		/* trim trailing space */
 		n = strlen(id_scrolls[i].title);
 		id_scrolls[i].title[n-1] = 0;
 
-		(void) strlcat(id_scrolls[i].title, "' ", maxlen);
+		(void)strlcat(id_scrolls[i].title, "' ", maxlen);
 	}
 }
 
@@ -470,18 +464,16 @@ struct sbuf {
 	size_t maxlen;
 };
 
-static void sbuf_init __P((struct sbuf *s, char *buf, size_t maxlen));
-static void sbuf_addstr __P((struct sbuf *s, const char *str));
-static void sbuf_addf __P((struct sbuf *s, const char *fmt, ...));
-static void desc_count __P((struct sbuf *s, int n));
-static void desc_called __P((struct sbuf *s, const object *));
+static void sbuf_init(struct sbuf *s, char *buf, size_t maxlen);
+static void sbuf_addstr(struct sbuf *s, const char *str);
+static void sbuf_addf(struct sbuf *s, const char *fmt, ...)
+	__attribute__((__format__(__printf__, 2, 3)));
+static void desc_count(struct sbuf *s, int n);
+static void desc_called(struct sbuf *s, const object *);
 
 static
 void
-sbuf_init(s, buf, maxlen)
-	struct sbuf *s;
-	char *buf;
-	size_t maxlen;
+sbuf_init(struct sbuf *s, char *buf, size_t maxlen)
 {
 	s->buf = buf;
 	s->maxlen = maxlen;
@@ -491,15 +483,10 @@ sbuf_init(s, buf, maxlen)
 
 static
 void
-sbuf_addstr(s, str)
-	struct sbuf *s;
-	const char *str;
+sbuf_addstr(struct sbuf *s, const char *str)
 {
 	strlcat(s->buf, str, s->maxlen);
 }
-
-static void sbuf_addf(struct sbuf *s, const char *fmt, ...)
-	__attribute__((__format__(__printf__, 2, 3)));
 
 static
 void
@@ -516,9 +503,7 @@ sbuf_addf(struct sbuf *s, const char *fmt, ...)
 
 static
 void
-desc_count(s, n)
-	struct sbuf *s;
-	int n;
+desc_count(struct sbuf *s, int n)
 {
 	if (n == 1) {
 		sbuf_addstr(s, "an ");
@@ -529,9 +514,7 @@ desc_count(s, n)
 
 static
 void
-desc_called(s, obj)
-	struct sbuf *s;
-	const object *obj;
+desc_called(struct sbuf *s, const object *obj)
 {
 	struct id *id_table;
 
@@ -542,10 +525,7 @@ desc_called(s, obj)
 }
 
 void
-get_desc(obj, desc, desclen)
-	const object *obj;
-	char *desc;
-	size_t desclen;
+get_desc(const object *obj, char *desc, size_t desclen)
 {
 	const char *item_name;
 	struct id *id_table;
@@ -553,7 +533,7 @@ get_desc(obj, desc, desclen)
 	unsigned short objtype_id_status;
 
 	if (obj->what_is == AMULET) {
-		(void) strlcpy(desc, "the amulet of Yendor ", desclen);
+		(void)strlcpy(desc, "the amulet of Yendor ", desclen);
 		return;
 	}
 
@@ -690,7 +670,7 @@ get_desc(obj, desc, desclen)
 }
 
 void
-get_wand_and_ring_materials()
+get_wand_and_ring_materials(void)
 {
 	short i, j;
 	boolean used[WAND_MATERIALS];
@@ -703,7 +683,7 @@ get_wand_and_ring_materials()
 			j = get_rand(0, WAND_MATERIALS-1);
 		} while (used[j]);
 		used[j] = 1;
-		(void) strlcpy(id_wands[i].title, wand_materials[j],
+		(void)strlcpy(id_wands[i].title, wand_materials[j],
 			       sizeof(id_wands[i].title));
 		is_wood[i] = (j > MAX_METAL);
 	}
@@ -715,14 +695,13 @@ get_wand_and_ring_materials()
 			j = get_rand(0, GEMS-1);
 		} while (used[j]);
 		used[j] = 1;
-		(void) strlcpy(id_rings[i].title, gems[j],
+		(void)strlcpy(id_rings[i].title, gems[j],
 			       sizeof(id_rings[i].title));
 	}
 }
 
 void
-single_inv(ichar)
-	short ichar;
+single_inv(short ichar)
 {
 	short ch, ch2;
 	char desc[DCOLS];
@@ -743,8 +722,7 @@ single_inv(ichar)
 }
 
 struct id *
-get_id_table(obj)
-	const object *obj;
+get_id_table(const object *obj)
 {
 	switch(obj->what_is) {
 	case SCROL:
@@ -760,12 +738,11 @@ get_id_table(obj)
 	case ARMOR:
 		return(id_armors);
 	}
-	return((struct id *) 0);
+	return((struct id *)0);
 }
 
 void
-inv_armor_weapon(is_weapon)
-	boolean is_weapon;
+inv_armor_weapon(boolean is_weapon)
 {
 	if (is_weapon) {
 		if (rogue.weapon) {
@@ -783,7 +760,7 @@ inv_armor_weapon(is_weapon)
 }
 
 void
-id_type()
+id_type(void)
 {
 	const char *id;
 	int ch;

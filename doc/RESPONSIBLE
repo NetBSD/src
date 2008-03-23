@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.81.4.2 2008/01/09 01:29:27 matt Exp $
+#	RESPONSIBLE,v 1.81.4.2 2008/01/09 01:29:27 matt Exp
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -37,7 +37,7 @@ openssh		christos
 pax/tar		christos
 pcc		ragge
 ping		christos
-ping6		itojun
+ping6		core
 postfix		heas
 postinstall	core
 ppp(async)	christos
@@ -48,7 +48,7 @@ sendmail	atatat
 sh		christos, dsl
 sort		jdolecek
 sysctl		atatat
-tcpdump		itojun
+tcpdump		core
 texinfo		wiz
 toolchain	thorpej, mrg
 top		simonb
@@ -60,12 +60,12 @@ wpa_supplicant	scw, dyoung
 Userland Libraries:
 
 atf		jmmv
-citrus		itojun
+citrus		core
 curses		blymn, jdc
 edit		christos, jdolecek
 kerberos	lha, joda
 openssl		thorpej, christos
-pcap		itojun
+pcap		core
 pthread		nathanw
 resolver(bind)	christos
 softfloat	bjh21
@@ -199,8 +199,8 @@ networking:
 
 general net	thorpej, matt
 ipf		darrenr, martti
-kame/ipv6	itojun
-pf		itojun, peter, yamt
+kame/ipv6	core
+pf		peter, yamt
 ppp(async)	christos
 ppp(sync)	martin
 
@@ -221,7 +221,7 @@ cobalt		soren
 evbarm		thorpej
 evbmips		simonb
 evbppc		simonb, eeh
-evbsh3		itojun
+evbsh3		core
 hp300		tsutsui
 hp700		fredette
 hpcarm		ichiro, toshii
@@ -233,7 +233,7 @@ luna68k		nisimura
 mac68k		scottr
 macppc		tsubai
 mipsco		wdk
-mmeye		itojun
+mmeye		core
 mvme68k		scw
 mvmeppc		scw
 news68k		tsutsui

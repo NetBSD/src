@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.340.4.2 2008/01/09 01:29:53 matt Exp $
+#	NetBSD.dist,v 1.340.4.2 2008/01/09 01:29:53 matt Exp
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -40,7 +40,7 @@
 ./etc/openssl
 ./etc/openssl/certs
 ./etc/openssl/misc
-./etc/openssl/private
+./etc/openssl/private		mode=0700
 ./etc/pam.d
 ./etc/postfix
 ./etc/powerd
@@ -311,6 +311,7 @@
 ./usr/include/uvm
 ./usr/lib
 ./usr/lib/i18n
+./usr/lib/pkgconfig
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
@@ -337,6 +338,7 @@
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/puffs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
+./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/sys
 ./usr/libdata/debug/usr/tests/util
@@ -751,7 +753,6 @@
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/macppc
 ./usr/share/man/cat4/mvme68k
-./usr/share/man/cat4/pc532
 ./usr/share/man/cat4/pmax
 ./usr/share/man/cat4/prep
 ./usr/share/man/cat4/sgimips
@@ -800,7 +801,6 @@
 ./usr/share/man/cat8/newsmips
 ./usr/share/man/cat8/next68k
 ./usr/share/man/cat8/ofppc
-./usr/share/man/cat8/pc532
 ./usr/share/man/cat8/playstation2
 ./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/prep
@@ -823,7 +823,6 @@
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/i386
 ./usr/share/man/cat9/mac68k
-./usr/share/man/cat9/pc532
 ./usr/share/man/cat9/pmax
 ./usr/share/man/cat9/sparc
 ./usr/share/man/cat9/sun3
@@ -857,7 +856,6 @@
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/macppc
 ./usr/share/man/man4/mvme68k
-./usr/share/man/man4/pc532
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/prep
 ./usr/share/man/man4/sgimips
@@ -906,7 +904,6 @@
 ./usr/share/man/man8/newsmips
 ./usr/share/man/man8/next68k
 ./usr/share/man/man8/ofppc
-./usr/share/man/man8/pc532
 ./usr/share/man/man8/playstation2
 ./usr/share/man/man8/pmax
 ./usr/share/man/man8/prep
@@ -929,7 +926,6 @@
 ./usr/share/man/man9/hp300
 ./usr/share/man/man9/i386
 ./usr/share/man/man9/mac68k
-./usr/share/man/man9/pc532
 ./usr/share/man/man9/pmax
 ./usr/share/man/man9/sparc
 ./usr/share/man/man9/sun3
@@ -963,7 +959,6 @@
 ./usr/share/man/html4/mac68k
 ./usr/share/man/html4/macppc
 ./usr/share/man/html4/mvme68k
-./usr/share/man/html4/pc532
 ./usr/share/man/html4/pmax
 ./usr/share/man/html4/prep
 ./usr/share/man/html4/sgimips
@@ -1012,7 +1007,6 @@
 ./usr/share/man/html8/newsmips
 ./usr/share/man/html8/next68k
 ./usr/share/man/html8/ofppc
-./usr/share/man/html8/pc532
 ./usr/share/man/html8/playstation2
 ./usr/share/man/html8/pmax
 ./usr/share/man/html8/prep
@@ -1035,7 +1029,6 @@
 ./usr/share/man/html9/hp300
 ./usr/share/man/html9/i386
 ./usr/share/man/html9/mac68k
-./usr/share/man/html9/pc532
 ./usr/share/man/html9/pmax
 ./usr/share/man/html9/sparc
 ./usr/share/man/html9/sun3
@@ -1096,6 +1089,7 @@
 ./usr/share/zoneinfo/US
 ./usr/tests
 ./usr/tests/atf
+./usr/tests/atf/data
 ./usr/tests/atf/formats
 ./usr/tests/atf/sh_interface
 ./usr/tests/atf/test_programs
@@ -1105,6 +1099,7 @@
 ./usr/tests/fs/puffs
 ./usr/tests/fs/tmpfs
 ./usr/tests/games
+./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/sys
 ./usr/tests/util

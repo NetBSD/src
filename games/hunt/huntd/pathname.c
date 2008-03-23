@@ -1,4 +1,4 @@
-/*	$NetBSD: pathname.c,v 1.3 2003/06/11 12:00:23 wiz Exp $	*/
+/*	pathname.c,v 1.3 2003/06/11 12:00:23 wiz Exp	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pathname.c,v 1.3 2003/06/11 12:00:23 wiz Exp $");
+__RCSID("pathname.c,v 1.3 2003/06/11 12:00:23 wiz Exp");
 #endif /* not lint */
 
 /*
@@ -55,7 +55,7 @@ char	*Stat_name =	"/tmp/hunt.stats";
 
 # else
 
-char	*Driver =	HUNTD;
+const char *Driver =	HUNTD;
 #  ifdef INTERNET
 u_short	Test_port =	('h' << 8) | 't';
 #  else

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.8 2004/01/27 20:30:30 jsm Exp $	*/
+/*	print.c,v 1.8 2004/01/27 20:30:30 jsm Exp	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.8 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("print.c,v 1.8 2004/01/27 20:30:30 jsm Exp");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 static const char *header = "Name      Own      Price Mg # Rent";
 
@@ -48,7 +48,7 @@ static void printmorg(const SQUARE *);
  *	This routine prints out the current board
  */
 void
-printboard() 
+printboard()
 {
 	int i;
 
@@ -64,7 +64,7 @@ printboard()
  *	This routine lists where each player is.
  */
 void
-where() 
+where()
 {
 	int i;
 
@@ -82,9 +82,7 @@ where()
  *	This routine prints out an individual square
  */
 void
-printsq(sqn, eoln)
-	int sqn;
-	bool eoln;
+printsq(int sqn, bool eoln)
 {
 	int rnt;
 	PROP *pp;
@@ -123,8 +121,7 @@ printsq(sqn, eoln)
 					printf("0 %4d", pp->rent[0] * 2);
 			else
 				printf("H %4d", pp->rent[5]);
-		}
-		else
+		} else
 			printf("  %4d", pp->rent[0]);
 		break;
 	  case UTIL:

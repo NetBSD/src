@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2007/07/24 10:49:26 pavel Exp $
+#	Makefile.inc,v 1.9 2007/07/24 10:49:26 pavel Exp
 #
 #	etc.mvme68k/Makefile.inc -- mvme68k-specific etc Makefile targets
 #
@@ -17,12 +17,12 @@ INSTALLATION_DIRS+=	installation/miniroot	\
 snap_md_post:
 .for file in netboot sboot
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
-	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot
 .endfor
 .for file in bootst stboot
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
-	    ${RELEASEDIR}/${MACHINE}/installation/tapeimage
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/tapeimage
 .endfor
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/netboot -a
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/tapeimage -a
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot -a
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/tapeimage -a
 

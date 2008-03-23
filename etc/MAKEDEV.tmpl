@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.87.2.2 2008/01/09 01:29:49 matt Exp $
+#	MAKEDEV.tmpl,v 1.87.2.2 2008/01/09 01:29:49 matt Exp
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -606,7 +606,7 @@ makedir()
 		return
 	fi
 	if $do_specfile; then
-		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
+		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root optional"
 	else
 		nooutput -2 mkdir $1
 		chmod $2 $1

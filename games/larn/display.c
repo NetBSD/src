@@ -1,16 +1,21 @@
-/*	$NetBSD: display.c,v 1.5 2004/01/27 20:30:30 jsm Exp $	*/
+/*	display.c,v 1.5 2004/01/27 20:30:30 jsm Exp	*/
 
 /* display.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.5 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("display.c,v 1.5 2004/01/27 20:30:30 jsm Exp");
 #endif /* not lint */
 
 #include "header.h"
 #include "extern.h"
+
 #define makecode(_a,_b,_c) (((_a)<<16) + ((_b)<<8) + (_c))
 
-static void botsub(int, char *);
+static void bot_hpx(void);
+static void bot_spellx(void);
+static void botside(void);
+static void botsub(int, const char *);
+static void seepage(void);
 
 static int      minx, maxx, miny, maxy, k, m;
 static char     bot1f = 0, bot2f = 0, bot3f = 0;
@@ -64,18 +69,18 @@ bot_linex()
 	if (cbak[SPELLS] <= -50 || (always)) {
 		cursor(1, 18);
 		if (c[SPELLMAX] > 99)
-			lprintf("Spells:%3d(%3d)", (long) c[SPELLS], (long) c[SPELLMAX]);
+			lprintf("Spells:%3ld(%3ld)", (long) c[SPELLS], (long) c[SPELLMAX]);
 		else
-			lprintf("Spells:%3d(%2d) ", (long) c[SPELLS], (long) c[SPELLMAX]);
-		lprintf(" AC: %-3d  WC: %-3d  Level", (long) c[AC], (long) c[WCLASS]);
+			lprintf("Spells:%3ld(%2ld) ", (long) c[SPELLS], (long) c[SPELLMAX]);
+		lprintf(" AC: %-3ld  WC: %-3ld  Level", (long) c[AC], (long) c[WCLASS]);
 		if (c[LEVEL] > 99)
-			lprintf("%3d", (long) c[LEVEL]);
+			lprintf("%3ld", (long) c[LEVEL]);
 		else
-			lprintf(" %-2d", (long) c[LEVEL]);
-		lprintf(" Exp: %-9d %s\n", (long) c[EXPERIENCE], class[c[LEVEL] - 1]);
-		lprintf("HP: %3d(%3d) STR=%-2d INT=%-2d ",
+			lprintf(" %-2ld", (long) c[LEVEL]);
+		lprintf(" Exp: %-9ld %s\n", (long) c[EXPERIENCE], class[c[LEVEL] - 1]);
+		lprintf("HP: %3ld(%3ld) STR=%-2ld INT=%-2ld ",
 			(long) c[HP], (long) c[HPMAX], (long) (c[STRENGTH] + c[STREXTRA]), (long) c[INTELLIGENCE]);
-		lprintf("WIS=%-2d CON=%-2d DEX=%-2d CHA=%-2d LV:",
+		lprintf("WIS=%-2ld CON=%-2ld DEX=%-2ld CHA=%-2ld LV:",
 			(long) c[WISDOM], (long) c[CONSTITUTION], (long) c[DEXTERITY], (long) c[CHARISMA]);
 
 		if ((level == 0) || (wizard))
@@ -84,7 +89,7 @@ bot_linex()
 			lprcat(" ?");
 		else
 			lprcat(levelname[level]);
-		lprintf("  Gold: %-6d", (long) c[GOLD]);
+		lprintf("  Gold: %-6ld", (long) c[GOLD]);
 		always = 1;
 		botside();
 		c[TMP] = c[STRENGTH] + c[STREXTRA];
@@ -92,31 +97,31 @@ bot_linex()
 			cbak[i] = c[i];
 		return;
 	}
-	botsub(makecode(SPELLS, 8, 18), "%3d");
+	botsub(makecode(SPELLS, 8, 18), "%3ld");
 	if (c[SPELLMAX] > 99)
-		botsub(makecode(SPELLMAX, 12, 18), "%3d)");
+		botsub(makecode(SPELLMAX, 12, 18), "%3ld)");
 	else
-		botsub(makecode(SPELLMAX, 12, 18), "%2d) ");
-	botsub(makecode(HP, 5, 19), "%3d");
-	botsub(makecode(HPMAX, 9, 19), "%3d");
-	botsub(makecode(AC, 21, 18), "%-3d");
-	botsub(makecode(WCLASS, 30, 18), "%-3d");
-	botsub(makecode(EXPERIENCE, 49, 18), "%-9d");
+		botsub(makecode(SPELLMAX, 12, 18), "%2ld) ");
+	botsub(makecode(HP, 5, 19), "%3ld");
+	botsub(makecode(HPMAX, 9, 19), "%3ld");
+	botsub(makecode(AC, 21, 18), "%-3ld");
+	botsub(makecode(WCLASS, 30, 18), "%-3ld");
+	botsub(makecode(EXPERIENCE, 49, 18), "%-9ld");
 	if (c[LEVEL] != cbak[LEVEL]) {
 		cursor(59, 18);
 		lprcat(class[c[LEVEL] - 1]);
 	}
 	if (c[LEVEL] > 99)
-		botsub(makecode(LEVEL, 40, 18), "%3d");
+		botsub(makecode(LEVEL, 40, 18), "%3ld");
 	else
-		botsub(makecode(LEVEL, 40, 18), " %-2d");
+		botsub(makecode(LEVEL, 40, 18), " %-2ld");
 	c[TMP] = c[STRENGTH] + c[STREXTRA];
-	botsub(makecode(TMP, 18, 19), "%-2d");
-	botsub(makecode(INTELLIGENCE, 25, 19), "%-2d");
-	botsub(makecode(WISDOM, 32, 19), "%-2d");
-	botsub(makecode(CONSTITUTION, 39, 19), "%-2d");
-	botsub(makecode(DEXTERITY, 46, 19), "%-2d");
-	botsub(makecode(CHARISMA, 53, 19), "%-2d");
+	botsub(makecode(TMP, 18, 19), "%-2ld");
+	botsub(makecode(INTELLIGENCE, 25, 19), "%-2ld");
+	botsub(makecode(WISDOM, 32, 19), "%-2ld");
+	botsub(makecode(CONSTITUTION, 39, 19), "%-2ld");
+	botsub(makecode(DEXTERITY, 46, 19), "%-2ld");
+	botsub(makecode(CHARISMA, 53, 19), "%-2ld");
 	if ((level != cbak[CAVELEVEL]) || (c[TELEFLAG] != cbak[TELEFLAG])) {
 		if ((level == 0) || (wizard))
 			c[TELEFLAG] = 0;
@@ -128,7 +133,7 @@ bot_linex()
 		else
 			lprcat(levelname[level]);
 	}
-	botsub(makecode(GOLD, 69, 19), "%-6d");
+	botsub(makecode(GOLD, 69, 19), "%-6ld");
 	botside();
 }
 
@@ -139,31 +144,31 @@ bot_linex()
 void
 bottomgold()
 {
-	botsub(makecode(GOLD, 69, 19), "%-6d");
-	/* botsub(GOLD,"%-6d",69,19); */
+	botsub(makecode(GOLD, 69, 19), "%-6ld");
+	/* botsub(GOLD,"%-6ld",69,19); */
 }
 
 /*
 	special routine to update hp and level fields on bottom lines
 	called in monster.c hitplayer() and spattack()
  */
-void
-bot_hpx()
+static void
+bot_hpx(void)
 {
 	if (c[EXPERIENCE] != cbak[EXPERIENCE]) {
 		recalc();
 		bot_linex();
 	} else
-		botsub(makecode(HP, 5, 19), "%3d");
+		botsub(makecode(HP, 5, 19), "%3ld");
 }
 
 /*
 	special routine to update number of spells called from regen()
  */
-void
-bot_spellx()
+static void
+bot_spellx(void)
 {
-	botsub(makecode(SPELLS, 9, 18), "%2d");
+	botsub(makecode(SPELLS, 9, 18), "%2ld");
 }
 
 /*
@@ -171,7 +176,7 @@ bot_spellx()
  */
 static struct bot_side_def {
 	int             typ;
-	char           *string;
+	const char     *string;
 }
                 bot_data[] =
 {
@@ -194,8 +199,8 @@ static struct bot_side_def {
 	{ WTW, "Wall-Walk" }
 };
 
-void
-botside()
+static void
+botside(void)
 {
 	int    i, idx;
 	for (i = 0; i < 17; i++) {
@@ -217,9 +222,7 @@ botside()
 }
 
 static void
-botsub(idx, str)
-	int    idx;
-	char           *str;
+botsub(int idx, const char *str)
 {
 	int    x, y;
 	y = idx & 0xff;
@@ -281,7 +284,7 @@ u_char            screen[MAXX][MAXY], d_flag;	/* template for the screen */
 void
 drawscreen()
 {
-	int    i, j, k;
+	int    i, j, kk;
 	int             lastx, lasty;	/* variables used to optimize the
 					 * object printing */
 	if (d_xmin == 0 && d_xmax == MAXX && d_ymin == 0 && d_ymax == MAXY) {
@@ -299,9 +302,9 @@ drawscreen()
 		for (j = d_xmin; j < d_xmax; j++)
 			if (know[j][i] == 0)
 				screen[j][i] = ' ';
-			else if ((k = mitem[j][i]) != 0)
-				screen[j][i] = monstnamelist[k];
-			else if ((k = item[j][i]) == OWALL)
+			else if ((kk = mitem[j][i]) != 0)
+				screen[j][i] = monstnamelist[kk];
+			else if ((kk = item[j][i]) == OWALL)
 				screen[j][i] = '#';
 			else
 				screen[j][i] = ' ';
@@ -325,10 +328,10 @@ drawscreen()
 		}
 		while (j <= m) {
 			if (j <= m - 3) {
-				for (k = j; k <= j + 3; k++)
-					if (screen[k][i] != ' ')
-						k = 1000;
-				if (k < 1000) {
+				for (kk = j; kk <= j + 3; kk++)
+					if (screen[kk][i] != ' ')
+						kk = 1000;
+				if (kk < 1000) {
 					while (screen[j][i] == ' ' && j <= m)
 						j++;
 					cursor(j + 1, i + 1);
@@ -341,15 +344,15 @@ drawscreen()
 
 	for (lastx = lasty = 127, i = d_ymin; i < d_ymax; i++)
 		for (j = d_xmin; j < d_xmax; j++) {
-			if ((k = item[j][i]) != 0)
-				if (k != OWALL)
+			if ((kk = item[j][i]) != 0)
+				if (kk != OWALL)
 					if ((know[j][i]) && (mitem[j][i] == 0))
-						if (objnamelist[k] != ' ') {
+						if (objnamelist[kk] != ' ') {
 							if (lasty != i + 1 || lastx != j)
 								cursor(lastx = j + 1, lasty = i + 1);
 							else
 								lastx++;
-							lprc(objnamelist[k]);
+							lprc(objnamelist[kk]);
 						}
 		}
 
@@ -375,7 +378,7 @@ void
 showcell(x, y)
 	int             x, y;
 {
-	int    i, j, k, m;
+	int    i, j, kk, mm;
 	if (c[BLINDCOUNT])
 		return;		/* see nothing if blind		 */
 	if (c[AWARENESS]) {
@@ -400,34 +403,34 @@ showcell(x, y)
 		maxy = MAXY - 1;
 
 	for (j = miny; j <= maxy; j++)
-		for (m = minx; m <= maxx; m++)
-			if (know[m][j] == 0) {
-				cursor(m + 1, j + 1);
+		for (mm = minx; mm <= maxx; mm++)
+			if (know[mm][j] == 0) {
+				cursor(mm + 1, j + 1);
 				x = maxx;
 				while (know[x][j])
 					--x;
-				for (i = m; i <= x; i++) {
-					if ((k = mitem[i][j]) != 0)
-						lprc(monstnamelist[k]);
+				for (i = mm; i <= x; i++) {
+					if ((kk = mitem[i][j]) != 0)
+						lprc(monstnamelist[kk]);
 					else
-						switch (k = item[i][j]) {
+						switch (kk = item[i][j]) {
 						case OWALL:
 						case 0:
 						case OIVTELETRAP:
 						case OTRAPARROWIV:
 						case OIVDARTRAP:
 						case OIVTRAPDOOR:
-							lprc(objnamelist[k]);
+							lprc(objnamelist[kk]);
 							break;
 
 						default:
 							setbold();
-							lprc(objnamelist[k]);
+							lprc(objnamelist[kk]);
 							resetbold();
 						};
 					know[i][j] = 1;
 				}
-				m = maxx;
+				mm = maxx;
 			}
 }
 
@@ -497,42 +500,42 @@ moveplayer(dir)
 				 * [8-southwest] if direction=0, don't
 				 * move--just show where he is */
 {
-	int    k, m, i, j;
+	int    kk, mm, i, j;
 	if (c[CONFUSE])
 		if (c[LEVEL] < rnd(30))
 			dir = rund(9);	/* if confused any dir */
-	k = playerx + diroffx[dir];
-	m = playery + diroffy[dir];
-	if (k < 0 || k >= MAXX || m < 0 || m >= MAXY) {
+	kk = playerx + diroffx[dir];
+	mm = playery + diroffy[dir];
+	if (kk < 0 || kk >= MAXX || mm < 0 || mm >= MAXY) {
 		nomove = 1;
 		return (yrepcount = 0);
 	}
-	i = item[k][m];
-	j = mitem[k][m];
+	i = item[kk][mm];
+	j = mitem[kk][mm];
 	if (i == OWALL && c[WTW] == 0) {
 		nomove = 1;
 		return (yrepcount = 0);
 	}			/* hit a wall	 */
-	if (k == 33 && m == MAXY - 1 && level == 1) {
+	if (kk == 33 && mm == MAXY - 1 && level == 1) {
 		newcavelevel(0);
-		for (k = 0; k < MAXX; k++)
-			for (m = 0; m < MAXY; m++)
-				if (item[k][m] == OENTRANCE) {
-					playerx = k;
-					playery = m;
+		for (kk = 0; kk < MAXX; kk++)
+			for (mm = 0; mm < MAXY; mm++)
+				if (item[kk][mm] == OENTRANCE) {
+					playerx = kk;
+					playery = mm;
 					positionplayer();
 					drawscreen();
 					return (0);
 				}
 	}
 	if (j > 0) {
-		hitmonster(k, m);
+		hitmonster(kk, mm);
 		return (yrepcount = 0);
 	}			/* hit a monster */
 	lastpx = playerx;
 	lastpy = playery;
-	playerx = k;
-	playery = m;
+	playerx = kk;
+	playery = mm;
 	if (i && i != OTRAPARROWIV && i != OIVTELETRAP && i != OIVDARTRAP && i != OIVTRAPDOOR)
 		return (yrepcount = 0);
 	else
@@ -614,8 +617,8 @@ seemagic(arg)
 /*
  *	subroutine to paginate the seemagic function
  */
-void
-seepage()
+static void
+seepage(void)
 {
 	if (++count == 3) {
 		lincount++;
