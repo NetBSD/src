@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/03/22 09:24:06 mlelstv Exp $
+# $NetBSD: Makefile,v 1.2 2008/03/23 08:24:18 mlelstv Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ MAN= krb5-config.1
 
 krb5-config: krb5-config.in
 	sed     -e "s!@PACKAGE\@!heimdal!g" \
-	        -e "s!@VERSION\@!1.0.1!g" \
+	        -e "s!@VERSION\@!1.1!g" \
 	        -e "s!@prefix\@!/!g" \
 	        -e "s!@exec_prefix\@!/!g" \
 	        -e "s!@libdir\@!/usr/lib!g" \
