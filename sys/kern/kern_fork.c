@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.159 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.160 2008/03/23 17:40:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.159 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.160 2008/03/23 17:40:25 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -250,7 +250,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Enforce limits.
 	 */
 	count = chgproccnt(uid, 1);
-	if (__predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
+	if (uid != 0 &&
+	    __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		atomic_dec_uint(&nprocs);
 		if (forkfsleep)
