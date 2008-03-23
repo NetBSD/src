@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.78 2008/03/21 07:47:43 dyoung Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.79 2008/03/23 16:40:12 cube Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -157,7 +157,7 @@ struct pci_quirkdata {
 #define	PCI_QUIRK_SKIP_FUNC7		PCI_QUIRK_SKIP_FUNC(7)
 
 struct pci_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot, sc_memt;
 	bus_dma_tag_t sc_dmat;
 	bus_dma_tag_t sc_dmat64;
@@ -168,7 +168,7 @@ struct pci_softc {
 	pcitag_t sc_intrtag;
 	int sc_flags;
 	/* accounting of child devices */
-	struct device *sc_devices[32*8];
+	device_t sc_devices[32*8];
 #define PCI_SC_DEVICESC(d, f) sc_devices[(d) * 8 + (f)]
 };
 

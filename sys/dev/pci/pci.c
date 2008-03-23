@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.114 2008/03/21 07:47:43 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.115 2008/03/23 16:40:12 cube Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.114 2008/03/21 07:47:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.115 2008/03/23 16:40:12 cube Exp $");
 
 #include "opt_pci.h"
 
@@ -111,7 +111,7 @@ pcirescan(device_t self, const char *ifattr, const int *locators)
 }
 
 static int
-pcimatch(device_t parent, struct cfdata *cf, void *aux)
+pcimatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -142,6 +142,8 @@ pciattach(device_t parent, device_t self, void *aux)
 		PCICF_DEV_DEFAULT, PCICF_FUNCTION_DEFAULT
 	};
 
+	sc->sc_dev = self;
+
 	pci_attach_hook(parent, self, pba);
 
 	aprint_naive("\n");
@@ -164,7 +166,7 @@ do {									\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	aprint_verbose_dev(self, " ");
+	aprint_verbose_dev(self, "");
 
 	if (io_enabled)
 		PRINT("i/o space");
@@ -198,9 +200,9 @@ do {									\
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
 
-	device_pmf_driver_set_child_register(&sc->sc_dev, pci_child_register);
+	device_pmf_driver_set_child_register(sc->sc_dev, pci_child_register);
 
-	pcirescan(&sc->sc_dev, "pci", wildcard);
+	pcirescan(sc->sc_dev, "pci", wildcard);
 
 fail:
 	if (!pmf_device_register(self, NULL, NULL))
@@ -361,7 +363,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		locs[PCICF_DEV] = device;
 		locs[PCICF_FUNCTION] = function;
 
-		subdev = config_found_sm_loc(&sc->sc_dev, "pci", locs, &pa,
+		subdev = config_found_sm_loc(sc->sc_dev, "pci", locs, &pa,
 					     pciprint, config_stdsubmatch);
 		sc->PCI_SC_DEVICESC(device, function) = subdev;
 		ret = (subdev != NULL);
@@ -384,7 +386,7 @@ pcidevdetached(device_t self, device_t child)
 	psc->PCI_SC_DEVICESC(d, f) = 0;
 }
 
-CFATTACH_DECL2(pci, sizeof(struct pci_softc),
+CFATTACH_DECL2_NEW(pci, sizeof(struct pci_softc),
     pcimatch, pciattach, pcidetach, NULL, pcirescan, pcidevdetached);
 
 int
@@ -447,7 +449,7 @@ pci_find_device(struct pci_attach_args *pa,
 	for (i = 0; i < pci_cd.cd_ndevs; i++) {
 		pcidev = pci_cd.cd_devs[i];
 		if (pcidev != NULL &&
-		    pci_enumerate_bus((struct pci_softc *)pcidev, wildcard,
+		    pci_enumerate_bus(device_private(pcidev), wildcard,
 		    		      match, pa) != 0)
 			return (1);
 	}
