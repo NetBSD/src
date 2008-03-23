@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.132 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.133 2008/03/23 00:46:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.132 2008/03/21 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.133 2008/03/23 00:46:25 rmind Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -664,23 +664,8 @@ nfssvc_nfsd(nsd, argp, l)
 		 * gathered together.
 		 */
 		do {
-#ifdef DIAGNOSTIC
-			int lockcount;
-#endif
 			switch (cacherep) {
 			case RC_DOIT:
-#ifdef DIAGNOSTIC
-				/*
-				 * NFS server procs should neither release
-				 * locks already held, nor leave things
-				 * locked.  Catch this sooner, rather than
-				 * later (when we try to relock something we
-				 * already have locked).  Careful inspection
-				 * of the failing routine usually turns up the
-				 * lock leak.. once we know what it is..
-				 */
-				lockcount = l->l_locks;
-#endif
 				mreq = NULL;
 				netexport_rdlock();
 				if (writes_todo || nd == NULL ||
@@ -694,25 +679,6 @@ nfssvc_nfsd(nsd, argp, l)
 					    (*(nfsrv3_procs[nd->nd_procnum]))
 					    (nd, slp, l, &mreq);
 				netexport_rdunlock();
-#ifdef DIAGNOSTIC
-				if (l->l_locks != lockcount) {
-					/*
-					 * If you see this panic, audit
-					 * nfsrv3_procs[nd->nd_procnum] for
-					 * vnode locking errors (usually, it's
-					 * due to forgetting to vput()
-					 * something).
-					 */
-#ifdef DEBUG
-					extern void printlockedvnodes(void);
-					printlockedvnodes();
-#endif
-					printf("nfsd: locking botch in op %d"
-					    " (before %d, after %d)\n",
-					    nd ? nd->nd_procnum : -1,
-					    lockcount, l->l_locks);
-				}
-#endif
 				if (mreq == NULL) {
 					if (nd != NULL) {
 						if (nd->nd_nam2)

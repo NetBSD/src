@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.83 2008/03/22 18:04:42 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.84 2008/03/23 00:46:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ struct lwp {
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
-	u_short		l_locks;	/* !: lockmgr count of held locks */
+	u_short		l_unused;
 	u_short		l_blcnt;	/* !: count of kernel_lock held */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
