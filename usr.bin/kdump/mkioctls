@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.35 2008/03/11 20:39:57 joerg Exp $
+#	$NetBSD: mkioctls,v 1.36 2008/03/23 18:53:51 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -76,7 +76,8 @@ do
 	echo "#include <$i>"
 done | sed -e "s,${DESTDIR}/usr/include/,,g"
 
-${CC:-cc} -E -nostdinc -idirafter $DESTDIR/usr/include -dM ${1+"$@"} | ${AWK:-awk} '
+${CC:-cc} -E -nostdinc -idirafter ${DESTDIR}/usr/include -dM ${1+"$@"} | \
+${AWK:-awk} '
 BEGIN {
 	keep["SLIOCGUNIT"] = 1;	# Same as PPPIOCGASYNCMAP
 	keep["TUNSLMODE"] = 1;	# Same as PPPIOCGASYNCMAP
@@ -174,7 +175,9 @@ BEGIN {
 	# 
 	if ($i ~ /^[A-Z0-9a-z_]*$/) {
 		if (keep[$i] != 1) {
+			printf("\t#ifdef %s\n", $i);
 			printf("\tcase %s:\n\t\treturn \"%s\";\n", $i, $i);
+			printf("\t#endif /* %s */\n", $i);
 			keep[$i] = 1;
 		}
 	}
