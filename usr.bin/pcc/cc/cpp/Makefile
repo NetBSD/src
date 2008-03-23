@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2007/11/06 23:36:13 matt Exp $
+#	Makefile,v 1.1.2.2 2007/11/06 23:36:13 matt Exp
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,8 @@ SRCS=   cpy.y scanner.c cpp.c
 BINDIR= /usr/libexec
 
 YFLAGS+=	-d
-CPPFLAGS+=	-I${DIST}/cc/cpp -I${.CURDIR}
+CPPFLAGS+=	-I${DIST}/cc/cpp -I${.CURDIR} -I${DIST} -I${DIST}/mip
+CPPFLAGS+=	-I${.CURDIR}/../..
 CPPFLAGS+=	-DCPP_DEBUG
 
 CLEANFILES+=	lex.yy.c y.tab.h cpp.cat1

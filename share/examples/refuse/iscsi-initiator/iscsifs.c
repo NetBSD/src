@@ -27,6 +27,8 @@
  */
 #include <sys/types.h>
 
+#define FUSE_USE_VERSION	26
+
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -89,6 +91,10 @@ typedef struct sti_t {
 	struct stat             st;		/* normal stat info */
 	uint64_t                target;		/* cached target number, so we don't have an expensive pathname-based lookup */
 } sti_t;
+
+#ifndef __UNCONST
+#define __UNCONST(x)	(x)
+#endif
 
 /* read the capacity (maximum LBA and blocksize) from the target */
 int 
@@ -436,8 +442,8 @@ iscsifs_write(const char *path, const char *buf, size_t size, off_t offset,
 	   struct fuse_file_info * fi)
 {
 	virt_dirent_t	*ep;
-        uint64_t target;   
-        sti_t *p;
+        uint64_t	 target;   
+        sti_t		*p;
 
 	if ((ep = virtdir_find(&iscsi, path, strlen(path))) == NULL) {
 		return -ENOENT;
@@ -691,5 +697,5 @@ main(int argc, char **argv)
 
 		tv.c += 1;
 	}
-	return fuse_main(argc, argv, &iscsiops, NULL);
+	return fuse_main(argc - optind, argv + optind, &iscsiops, NULL);
 }

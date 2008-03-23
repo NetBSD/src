@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2005/01/10 03:11:18 lukem Exp $
+# Makefile,v 1.12 2005/01/10 03:11:18 lukem Exp
 
 NOMAN=	# defined
 NOLINT= # defined
@@ -16,7 +16,7 @@ SRCS= make_cmds.c make_cmds.h parse.y lex.l
 
 YHEADER=	1
 
-CFLAGS+= -I.					\
+CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/lib/sl		\
 	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DESTDIR}/usr/include/krb5		\

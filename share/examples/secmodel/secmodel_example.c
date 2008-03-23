@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.14.4.1 2008/01/09 01:39:02 matt Exp $ */
+/* secmodel_example.c,v 1.14.4.1 2008/01/09 01:39:02 matt Exp */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.14.4.1 2008/01/09 01:39:02 matt Exp $");
+__KERNEL_RCSID(0, "secmodel_example.c,v 1.14.4.1 2008/01/09 01:39:02 matt Exp");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,6 +185,15 @@ secmodel_example_system_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 		break;
 
+	case KAUTH_SYSTEM_CPU:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_CPU_SETSTATE:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
 	case KAUTH_SYSTEM_DEBUG:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_DEBUG_IPKDB:
@@ -194,9 +203,22 @@ secmodel_example_system_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 		break;
 
+	case KAUTH_SYSTEM_PSET:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_PSET_ASSIGN:
+		case KAUTH_REQ_SYSTEM_PSET_BIND:
+		case KAUTH_REQ_SYSTEM_PSET_CREATE:
+		case KAUTH_REQ_SYSTEM_PSET_DESTROY:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
 	case KAUTH_SYSTEM_LKM:
 	case KAUTH_SYSTEM_FILEHANDLE:
 	case KAUTH_SYSTEM_MKNOD:
+	case KAUTH_SYSTEM_MODULE:
 	case KAUTH_SYSTEM_SETIDCORE:
 	case KAUTH_SYSTEM_SWAPCTL:
 	case KAUTH_SYSTEM_ACCOUNTING:
@@ -224,14 +246,28 @@ secmodel_example_process_cb(kauth_cred_t cred, kauth_action_t action,
 	result = KAUTH_RESULT_DENY;
 
 	switch (action) {
-	case KAUTH_PROCESS_CANPROCFS:
+	case KAUTH_PROCESS_KTRACE:
+		switch ((u_long)arg1) {
+		case KAUTH_REQ_PROCESS_KTRACE_PERSISTENT:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
+	case KAUTH_PROCESS_PROCFS:
 	case KAUTH_PROCESS_CANSEE:
-	case KAUTH_PROCESS_CANSIGNAL:
-	case KAUTH_PROCESS_CANPTRACE:
+	case KAUTH_PROCESS_SIGNAL:
+	case KAUTH_PROCESS_PTRACE:
 	case KAUTH_PROCESS_CORENAME:
 	case KAUTH_PROCESS_FORK:
+	case KAUTH_PROCESS_KEVENT_FILTER:
 	case KAUTH_PROCESS_NICE:
 	case KAUTH_PROCESS_RLIMIT:
+	case KAUTH_PROCESS_SCHEDULER_GETAFFINITY:
+	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
+	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
+	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
 	case KAUTH_PROCESS_SETID:
 	case KAUTH_PROCESS_STOPFLAG:
 	default:
@@ -312,6 +348,16 @@ secmodel_example_network_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 		break;
 
+	case KAUTH_NETWORK_NFS:
+		switch ((u_long)arg0) {
+		case KAUTH_REQ_NETWORK_NFS_EXPORT:
+		case KAUTH_REQ_NETWORK_NFS_SVC:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
 	case KAUTH_NETWORK_ROUTE:
 		break;
 
@@ -382,6 +428,7 @@ secmodel_example_device_cb(kauth_cred_t cred, kauth_action_t action,
 	switch (action) {
 	case KAUTH_DEVICE_TTY_OPEN:
 	case KAUTH_DEVICE_TTY_PRIVSET:
+	case KAUTH_DEVICE_TTY_STI:
 		break;
 
 	case KAUTH_DEVICE_RAWIO_SPEC:

@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2004/03/06 11:44:41 rtr Exp $
+#	Makefile,v 1.2 2004/03/06 11:44:41 rtr Exp
+
+NOMAN=# defined (must come before bsd.own.mk)
 
 .include <bsd.own.mk>
 
 KMOD=	mga
-MKMAN=	no
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared/drm/kernel
 SRCS=	mga_dma.c mga_irq.c mga_state.c mga_warp.c

@@ -1,9 +1,8 @@
-/* $NetBSD: user.c,v 1.117 2006/11/02 21:42:08 pavel Exp $ */
+/* user.c,v 1.117 2006/11/02 21:42:08 pavel Exp */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
  * Copyright (c) 2005 Liam J. Foy.  All rights reserved.
- * Copyright (c) 2005 Hubert Feyrer <hubert@feyrer.de>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.117 2006/11/02 21:42:08 pavel Exp $");
+__RCSID("user.c,v 1.117 2006/11/02 21:42:08 pavel Exp");
 #endif
 
 #include <sys/types.h>
@@ -1776,7 +1775,7 @@ usermgmt_usage(const char *prog)
 		    "usage: %s [-rSv] [-p preserve-value] user\n", prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "userinfo") == 0) {
-		(void)fprintf(stderr, "usage: %s [-ev] user\n", prog);
+		(void)fprintf(stderr, "usage: %s [-e] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
 		(void)fprintf(stderr, "usage: %s [-ov] [-g gid]"
@@ -2391,13 +2390,10 @@ userinfo(int argc, char **argv)
 
 	exists = 0;
 	buf[0] = '\0';
-	while ((i = getopt(argc, argv, "ev")) != -1) {
+	while ((i = getopt(argc, argv, "e")) != -1) {
 		switch(i) {
 		case 'e':
 			exists = 1;
-			break;
-		case 'v':
-			verbose = 1;
 			break;
 		default:
 			usermgmt_usage("userinfo");

@@ -1,4 +1,4 @@
-.\"     $NetBSD: selrecord.9,v 1.6 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: select.9,v 1.1.2.2 2008/03/23 00:45:37 matt Exp $
 .\"
 .\" Copyright (C) 2002 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -28,88 +28,104 @@
 .\" $FreeBSD: src/share/man/man9/selrecord.9,v 1.2 2002/05/30 13:29:17 ru Exp $
 .\"
 .\" FreeBSD: .Dd March 20, 2002
-.Dd December 20, 2005
-.Dt SELRECORD 9
+.Dd March 2, 2008
+.Dt SELECT 9
 .Os
 .Sh NAME
+.Nm seldestroy ,
+.Nm selinit ,
 .Nm selrecord ,
-.Nm selwakeup
-.Nd record and wakeup select requests
+.Nm selnotify
+.Nd select and poll subsystem
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/select.h
 .Ft void
+.Fn seldestroy "struct selinfo *sip"
+.Ft void
+.Fn selinit "struct selinfo *sip"
+.Ft void
 .Fn selrecord "struct lwp *selector" "struct selinfo *sip"
 .Ft void
-.Fn selwakeup "struct selinfo *sip"
-.Ft void
-.Fn selnotify "struct selinfo *sip" "long knhint"
+.Fn selnotify "struct selinfo *sip" "int events" "long knhint"
 .Sh DESCRIPTION
+.Fn selinit
+and
+.Fn seldestroy
+functions must be used to initialize and destroy the
+.Va struct selinfo .
+The
+.Fn seldestroy
+function may block.
+.Pp
 .Fn selrecord
 and
 .Fn selwakeup
-are the two central functions used by
-.Xr select 2 ,
-.Xr poll 2 ,
-and the objects that are being selected on.
-They handle the task of recording which threads are waiting on which objects
-and the waking of the proper threads when an event of interest occurs on an
-object.
+are used by device drivers to coordinate
+with the kernel implementation of
+.Xr select 2
+and
+.Xr poll 2 .
+Each object that can be polled contains a
+.Dv selinfo
+record.
+Device drivers provide locking for the
+.Dv selinfo
+record.
 .Pp
 .Fn selrecord
 records that the calling thread is interested in events related to a given
 object.
-If another thread is already waiting on the object a collision will be flagged
-in
-.Fa sip
-which will be later dealt with by
-.Fn selwakeup .
+.Fn selrecord
+should only be called when the poll routine determines that the object
+is not ready for I/O: there are no events of interest pending.
+The check for pending I/O and call to 
+.Fn selrecord
+must be atomic.
+Atomicity can be provided by holding the object's lock across the test
+and call to 
+.Fn selrecord .
+For non-MPSAFE drivers, the global
+.Dv kernel_lock
+is enough to provide atomicity.
 .Pp
-.Fn selwakeup
+.Fn selnotify
 is called by the underlying object handling code in order to notify any waiting
 threads that an event of interest has occurred.
-If a collision has occurred,
-.Fn selwakeup
-will increment
-.Va nselcoll ,
-and wakeup all threads waiting on the global variable
-.Va selwait
-so that they can handle it.
-If the thread waiting on the object is not currently sleeping or the wait
-channel is not
-.Va selwait ,
-.Fn selwakeup
-will clear the
-.Dv L_SELECT
-flag which should be noted by
-.Xr select 2
-and
-.Xr poll 2
-when they wake up.
+The same lock held across the poll method and call to 
+.Fn selrecord
+must be held across the call to 
+.Fn selwakeup .
+The lock prevents an event of interest being signalled while a thread is
+in the process of recording its interest.
 .Pp
-.Fn selwakeup
-may acquire and release
-.Va sched_lock .
+The
+.Fa events
+indicates which event happen.
+Zero may be used if unknow.
 .Pp
 .Fn selnotify
-calls
-.Fn selwakeup
-and then calls
+also calls
 .Fn KNOTE
-with
-.Va knhint .
-In most cases,
-.Fn selnotify
-should be used rather than using
-.Fn selwakeup
-directly.
+passing
+.Va knhint
+as an argument.
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual code implementing select and poll
+subsystem can be found.
+All pathnames are relative to
+.Pa /usr/src .
+.Pp
+The core of the select and poll subsystem implementation is in
+.Pa sys/kern/sys_generic.c .
+Data structures and function prototypes are located in
+.Pa sys/sys/select.h ,
+.Pa sys/sys/poll.h
+and
+.Pa sys/sys/selinfo.h .
 .Sh SEE ALSO
 .Xr poll 2 ,
 .Xr select 2 ,
 .Xr knote 9
-.Sh AUTHORS
-.An -nosplit
-This man page was written by
-.An Chad David Aq davidc@FreeBSD.org
-and
-.An Alfred Perlstein Aq alfred@FreeBSD.org .

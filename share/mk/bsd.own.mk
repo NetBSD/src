@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.496.4.2 2008/01/09 01:39:26 matt Exp $
+#	bsd.own.mk,v 1.496.4.2 2008/01/09 01:39:26 matt Exp
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -39,17 +39,6 @@ NEED_OWN_INSTALL_TARGET?=	yes
 # should be set to "yes" for that port only.
 #
 TOOLCHAIN_MISSING?=	no
-
-#
-# Transitional for toolchain upgrade to GCC4.1
-#
-# not working:
-#	ns32k
-#
-.if \
-    ${MACHINE_ARCH} == "ns32k"
-HAVE_GCC?=	3
-.endif
 
 # default to GCC4
 HAVE_GCC?=	4
@@ -262,7 +251,7 @@ TOOL_ROFF_DVI=		${TOOL_GROFF} -Tdvi
 TOOL_ROFF_HTML=		${TOOL_GROFF} -Tlatin1 -mdoc2html
 TOOL_ROFF_PS=		${TOOL_GROFF} -Tps
 TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
-TOOL_RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
+TOOL_RPCGEN=		RPCGEN_CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
 TOOL_SED=		${TOOLDIR}/bin/${_TOOL_PREFIX}sed
 TOOL_SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
 TOOL_STAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}stat
@@ -388,14 +377,9 @@ DEBUGMODE?=	${NONBINMODE}
 #
 # OBJECT_FMT:		currently either "ELF" or "a.out".
 #
-# All platforms are ELF, except for ns32k (which does not yet have
-# an ELF BFD back-end).
+# All platforms are ELF.
 #
-.if ${MACHINE_ARCH} == "ns32k"
-OBJECT_FMT?=	a.out		# allow overrides, to ease transition
-.else
 OBJECT_FMT=	ELF
-.endif
 
 #
 # If this platform's toolchain is missing, we obviously cannot build it.
@@ -429,13 +413,6 @@ NOPROFILE=	# defined
 .endif
 
 #
-# The hppa port is incomplete.
-#
-.if ${MACHINE_ARCH} == "hppa"
-MKGDB=		no
-.endif
-
-#
 # The ia64 port is incomplete.
 #
 .if ${MACHINE_ARCH} == "ia64"
@@ -449,15 +426,6 @@ MKGDB=		no
 #
 .if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 MKPICLIB:=	no
-.endif
-
-#
-# Shared libraries are not supported on ns32k with current GNU tools.
-# Disable native gdb too.
-#
-.if ${MACHINE_ARCH} == "ns32k"
-NOPIC=		# defined
-MKGDB=		no
 .endif
 
 #
@@ -493,7 +461,6 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 .if ${OBJECT_FMT} == "ELF" && \
     (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
-     ${MACHINE_ARCH} == "ns32k" || \
      ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_CPU} == "m68k" || \
      ${MACHINE_GNU_ARCH} == "sh" || \
@@ -549,11 +516,14 @@ dependall:	.NOTMAIN realdepend .MAKE
 # Supported NO* options (if defined, MK* will be forced to "no",
 # regardless of user's mk.conf setting).
 #
+# Source makefiles should set NO*, and not MK*, and must do so before
+# including bsd.own.mk.
+#
 .for var in \
-	CRYPTO DOC HTML LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE \
-	SHARE STATICLIB
-.if defined(NO${var})
-MK${var}:=	no
+	NOCRYPTO NODOC NOHTML NOLINKLIB NOLINT NOMAN NONLS NOOBJ NOPIC \
+	NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB
+.if defined(${var})
+MK${var:S/^NO//}:=	no
 .endif
 .endfor
 
@@ -592,7 +562,8 @@ MK${var}?=	yes
 #
 .for var in \
 	CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 DEBUG DEBUGLIB \
-	MANZ OBJDIRS PRIVATELIB PUFFS SOFTFLOAT UNPRIVED UPDATE X11
+	MANZ MODULAR OBJDIRS PRIVATELIB PUFFS SOFTFLOAT \
+	UNPRIVED UPDATE X11
 MK${var}?=	no
 .endfor
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.35.10.2 2008/01/09 02:02:06 matt Exp $	*/
+/*	lpr.c,v 1.35.10.2 2008/01/09 02:02:06 matt Exp	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.35.10.2 2008/01/09 02:02:06 matt Exp $");
+__RCSID("lpr.c,v 1.35.10.2 2008/01/09 02:02:06 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: lpr.c,v 1.35.10.2 2008/01/09 02:02:06 matt Exp $");
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
 #include <err.h>
 
 #include "lp.h"

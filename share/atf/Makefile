@@ -1,23 +1,29 @@
-# $NetBSD: Makefile,v 1.1.4.2 2008/01/09 01:38:46 matt Exp $
+# Makefile,v 1.1.4.2 2008/01/09 01:38:46 matt Exp
 
 .include <bsd.own.mk>
 
 SRCDIR=		${NETBSDSRCDIR}/dist/atf
-.PATH:		${SRCDIR}/subrs
+.PATH:		${SRCDIR}/data ${SRCDIR}/subrs
 
 .if ${MKSHARE} != "no"
+# Files in ${SRCDIR}/data.
+FILES=			atf.pc
+FILESDIR_atf.pc=	/usr/lib/pkgconfig
+
+# Files in ${SRCDIR}/subrs.
 FILESDIR=	/usr/share/atf
 FILESMODE=	444
-FILES=		atf.config.subr \
-		atf.footer.subr \
+FILES+=		atf.footer.subr \
 		atf.header.subr \
 		atf.init.subr
 .endif
 
-realall: atf.config.subr
-atf.config.subr: atf.config.subr.in
-	sed -e 's,@SH_TRAP_DASH@,yes,g' \
-	    <${SRCDIR}/subrs/atf.config.subr.in >atf.config.subr
-CLEANFILES+=	atf.config.subr
+realall: atf.pc
+atf.pc: atf.pc.in
+	sed -e 's,__CXX__,${CXX},g' \
+	    -e 's,__INCLUDEDIR__,/usr/include,g' \
+	    -e 's,__LIBDIR__,/usr/lib,g' \
+	    <${SRCDIR}/data/atf.pc.in >atf.pc
+CLEANFILES+=	atf.pc
 
 .include <bsd.prog.mk>

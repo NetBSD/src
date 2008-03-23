@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.11 2006/11/27 16:54:10 christos Exp $	*/
+/*	utmpentry.c,v 1.11 2006/11/27 16:54:10 christos Exp	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.11 2006/11/27 16:54:10 christos Exp $");
+__RCSID("utmpentry.c,v 1.11 2006/11/27 16:54:10 christos Exp");
 #endif
 
 #include <sys/stat.h>
@@ -56,6 +56,10 @@ __RCSID("$NetBSD: utmpentry.c,v 1.11 2006/11/27 16:54:10 christos Exp $");
 #endif
 
 #include "utmpentry.h"
+
+
+/* Fail the compile if x is not true, by constructing an illegal type. */
+#define COMPILE_ASSERT(x) ((void)sizeof(struct { unsigned : ((x) ? 1 : -1); }))
 
 
 #ifdef SUPPORT_UTMP
@@ -272,12 +276,22 @@ getutentries(const char *fname, struct utmpentry **epp)
 static void
 getentry(struct utmpentry *e, struct utmp *up)
 {
+	COMPILE_ASSERT(sizeof(e->name) > sizeof(up->ut_name));
+	COMPILE_ASSERT(sizeof(e->line) > sizeof(up->ut_line));
+	COMPILE_ASSERT(sizeof(e->host) > sizeof(up->ut_host));
+
+	/*
+	 * e has just been calloc'd. We don't need to clear it or
+	 * append null-terminators, because its length is strictly
+	 * greater than the source string. Use strncpy to _read_
+	 * up->ut_* because they may not be terminated. For this
+	 * reason we use the size of the _source_ as the length
+	 * argument.
+	 */
 	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
-	e->name[sizeof(e->name) - 1] = '\0';
 	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
-	e->line[sizeof(e->line) - 1] = '\0';
 	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
-	e->name[sizeof(e->name) - 1] = '\0';
+
 	e->tv.tv_sec = up->ut_time;
 	e->tv.tv_usec = 0;
 	e->pid = 0;
@@ -293,12 +307,22 @@ getentry(struct utmpentry *e, struct utmp *up)
 static void
 getentryx(struct utmpentry *e, struct utmpx *up)
 {
+	COMPILE_ASSERT(sizeof(e->name) > sizeof(up->ut_name));
+	COMPILE_ASSERT(sizeof(e->line) > sizeof(up->ut_line));
+	COMPILE_ASSERT(sizeof(e->host) > sizeof(up->ut_host));
+
+	/*
+	 * e has just been calloc'd. We don't need to clear it or
+	 * append null-terminators, because its length is strictly
+	 * greater than the source string. Use strncpy to _read_
+	 * up->ut_* because they may not be terminated. For this
+	 * reason we use the size of the _source_ as the length
+	 * argument.
+	 */
 	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
-	e->name[sizeof(e->name) - 1] = '\0';
 	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
-	e->line[sizeof(e->line) - 1] = '\0';
 	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
-	e->name[sizeof(e->name) - 1] = '\0';
+
 	e->tv = up->ut_tv;
 	e->pid = up->ut_pid;
 	e->term = up->ut_exit.e_termination;

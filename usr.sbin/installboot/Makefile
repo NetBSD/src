@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2006/09/01 21:47:21 uwe Exp $
+#	Makefile,v 1.37 2006/09/01 21:47:21 uwe Exp
 #
 
 .include <bsd.own.mk>
@@ -36,18 +36,14 @@ CPPFLAGS+=	-DNO_FFS_SWAP
 .else
 SRCS+= ffs_bswap.c
 .endif
+#SRCS+= ext2fs.c ext2fs_bswap.c
 .endif
 
 WARNS?=	3
 
 UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 CPPFLAGS+=	-I${.CURDIR} -I.
-.PATH:		${.CURDIR}/arch ${UFSSRC}/ffs
-
-# XXX
-.if ${MACHINE_ARCH} == "m68000"
-COPTS.ffs.c=	-O0
-.endif
+.PATH:		${.CURDIR}/arch ${UFSSRC}/ffs ${UFSSRC}/ext2fs
 
 .if !defined(HOSTPROGNAME)
 .if ${HAVE_GCC} == 4

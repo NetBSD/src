@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.52.4.2 2008/01/09 01:39:19 matt Exp $
+.\" kauth.9,v 1.52.4.2 2008/01/09 01:39:19 matt Exp
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 8, 2008
+.Dd February 28, 2008
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -182,6 +182,15 @@ Check if calling
 .Xr fchroot 2
 is allowed.
 .El
+.It Dv KAUTH_SYSTEM_CPU
+Check CPU-manipulation access.
+.Pp
+.Ar req
+can be any of the following:
+.Bl -tag
+.It Dv KAUTH_REQ_SYSTEM_CPU_SETSTATE
+Set CPU state, including setting it online or offline.
+.El
 .It Dv KAUTH_SYSTEM_DEBUG
 This request concentrates several debugging-related operations.
 .Ar req
@@ -254,6 +263,21 @@ with the new mount flags, and
 is a
 .Ft void *
 with file-system specific data, if any.
+.El
+.It Dv KAUTH_SYSTEM_PSET
+Check processor-set manipulation.
+.Pp
+.Ar req
+can be any of the following:
+.Bl -tag
+.It Dv KAUTH_REQ_SYSTEM_PSET_ASSIGN
+Change processor-set processor assignment.
+.It Dv KAUTH_REQ_SYSTEM_PSET_BIND
+Bind an LWP to a processor-set.
+.It Dv KAUTH_REQ_SYSTEM_PSET_CREATE
+Create a processor-set.
+.It Dv KAUTH_REQ_SYSTEM_PSET_DESTROY
+Destroy a processor-set.
 .El
 .It Dv KAUTH_SYSTEM_REBOOT
 Check if rebooting is allowed.
@@ -337,13 +361,22 @@ The authorization wrapper for this scope is declared as
 .Pp
 The following operations are available for this scope:
 .Bl -tag
-.It Dv KAUTH_PROCESS_CANKTRACE
+.It Dv KAUTH_PROCESS_KTRACE
 Checks whether an object with one set of credentials can
 .Xr ktrace 1
 another process
 .Ar p ,
 possibly with a different set of credentials.
-.It Dv KAUTH_PROCESS_CANPROCFS
+.Pp
+If
+.Ar arg1
+is
+.Dv KAUTH_REQ_PROCESS_KTRACE_PERSISTENT ,
+this checks if persistent tracing can be done.
+Persistent tracing maintains the trace across a set-user-id/set-group-id
+.Xr exec 2 ,
+and normally requires privileged credentials.
+.It Dv KAUTH_PROCESS_PROCFS
 Checks whether object with passed credentials can use
 .Em procfs
 to access process
@@ -355,11 +388,11 @@ is the
 for the target element in the target process, and
 .Ar arg2
 is the access type, which can be either
-.Dv KAUTH_REQ_PROCESS_CANPROCFS_CTL ,
-.Dv KAUTH_REQ_PROCESS_CANPROCFS_READ ,
-.Dv KAUTH_REQ_PROCESS_CANPROCFS_RW ,
+.Dv KAUTH_REQ_PROCESS_PROCFS_CTL ,
+.Dv KAUTH_REQ_PROCESS_PROCFS_READ ,
+.Dv KAUTH_REQ_PROCESS_PROCFS_RW ,
 or
-.Dv KAUTH_REQ_PROCESS_CANPROCFS_WRITE ,
+.Dv KAUTH_REQ_PROCESS_PROCFS_WRITE ,
 indicating
 .Em control ,
 .Em read ,
@@ -367,7 +400,7 @@ indicating
 or
 .Em write
 access respectively.
-.It Dv KAUTH_PROCESS_CANPTRACE
+.It Dv KAUTH_PROCESS_PTRACE
 Checks whether object with passed credentials can use
 .Xr ptrace 2
 to access process
@@ -381,7 +414,23 @@ command.
 Checks whether an object with one set of credentials can access
 information about another process, possibly with a different set of
 credentials.
-.It Dv KAUTH_PROCESS_CANSIGNAL
+.Pp
+.Ar arg1
+indicates the class of information being viewed, and can either of
+.Dv KAUTH_REQ_PROCESS_CANSEE_ARGS ,
+.Dv KAUTH_REQ_PROCESS_CANSEE_ENTRY ,
+.Dv KAUTH_REQ_PROCESS_CANSEE_ENV ,
+or
+.Dv KAUTH_REQ_PROCESS_CANSEE_OPENFILES .
+.It Dv KAUTH_PROCESS_SCHEDULER_GETAFFINITY
+Checks whether viewing the scheduler affinity is allowed.
+.It Dv KAUTH_PROCESS_SCHEDULER_SETAFFINITY
+Checks whether setting the scheduler affinity is allowed.
+.It Dv KAUTH_PROCESS_SCHEDULER_GETPARAMS
+Checks whether viewing the scheduler policy and parameters is allowed.
+.It Dv KAUTH_PROCESS_SCHEDULER_SETPARAMS
+Checks whether modifying the scheduler policy and parameters is allowed.
+.It Dv KAUTH_PROCESS_SIGNAL
 Checks whether an object with one set of credentials can post signals
 to another process.
 .Pp
@@ -390,18 +439,29 @@ is the process the signal is being posted to, and
 .Ar arg1
 is the signal number.
 .It Dv KAUTH_PROCESS_CORENAME
-Checks whether the coredump name for the process
-.Ar p
-can be changed.
+Controls access to process corename.
 .Pp
 .Ar arg1
-is the new corename.
+can be
+.Dv KAUTH_REQ_PROCESS_CORENAME_GET
+or
+.Dv KAUTH_REQ_PROCESS_CORENAME_SET ,
+indicating access to read or write the process' corename, respectively.
+.Pp
+When modifying the corename,
+.Ar arg2
+holds the new corename to be used.
 .It Dv KAUTH_PROCESS_FORK
 Checks if the process can fork.
 .Ar arg1
 is an
 .Ft int
 indicating how many processes exist on the system at the time of the check.
+.It Dv KAUTH_PROCESS_KEVENT_FILTER
+Checks whether setting a process
+.Xr kevent 2
+filter is allowed.
+.Pp
 .It Dv KAUTH_PROCESS_NICE
 Checks whether the
 .Em nice
@@ -410,14 +470,20 @@ value of
 can be changed to
 .Ar arg1 .
 .It Dv KAUTH_PROCESS_RLIMIT
-Checks whether the
-.Em rlimit
-value for
+Controls access to process resource limits.
+.Pp
+.Ar arg1
+can be
+.Dv KAUTH_REQ_PROCESS_RLIMIT_GET
+or
+.Dv KAUTH_REQ_PROCESS_RLIMIT_SET ,
+indicating access to read or write the process' resource limits, respectively.
+.Pp
+When modifying resource limits,
 .Ar arg2
-in
-.Ar p
-can be set to
-.Ar arg1 .
+is the new value to be used and
+.Ar arg3
+indicates which resource limit is to be modified.
 .It Dv KAUTH_PROCESS_SETID
 Check if changing the user- or group-ids, groups, or login-name for
 .Ar p
@@ -530,6 +596,19 @@ is.
 .It Dv KAUTH_NETWORK_FORWSRCRT
 Checks whether status of forwarding of source-routed packets can be modified
 or not.
+.It Dv KAUTH_NETWORK_NFS
+Check is an NFS related operation is allowed.
+.Pp
+.Ar req
+can be any of the following:
+.Bl -tag
+.It Dv KAUTH_REQ_NETWORK_NFS_EXPORT
+Check if modifying the NFS export table is allowed.
+.It Dv KAUTH_REQ_NETWORK_NFS_SVC
+Check if access to the NFS
+.Xr nfssvc 2
+syscall is allowed.
+.El
 .It Dv KAUTH_NETWORK_ROUTE
 Checks if a routing-related request is allowed.
 .Pp
@@ -629,10 +708,8 @@ Affects
 .Em amd64 ,
 .Em arm ,
 .Em i386 ,
-.Em pc532 ,
 .Em powerpc ,
 .Em sh3 ,
-.Em sh5 ,
 .Em vax ,
 .Em xen .
 .El
@@ -673,6 +750,13 @@ Open the terminal device pointed to by
 .It Dv KAUTH_DEVICE_TTY_PRIVSET
 Set privileged settings on the terminal device pointed to by
 .Ar tty .
+.It Dv KAUTH_DEVICE_TTY_STI
+Use the
+.Dq TIOCSTI
+device
+.Xr ioctl 2 ,
+allowing to inject characters into the terminal buffer, simulating terminal
+input.
 .El
 .Pp
 .Ft int Fn kauth_authorize_device_spec "kauth_cred_t cred" \

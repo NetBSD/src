@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2005/03/22 04:18:49 rtr Exp $
+# Makefile,v 1.1 2005/03/22 04:18:49 rtr Exp
+
+NOMAN=# defined (must come before bsd.own.mk)
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/dmx/examples
 PROG=	dmxreconfig
-MKMAN=	no
 
 LDADD=	-ldmx -lXext -lX11
 DPADD=  ${LIBDMX} ${LIBXEXT} ${LIBX11}

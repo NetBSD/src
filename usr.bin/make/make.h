@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.67.4.2 2008/01/09 02:00:47 matt Exp $	*/
+/*	make.h,v 1.67.4.2 2008/01/09 02:00:47 matt Exp	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -423,7 +423,8 @@ extern int debug;
 #define DEBUG_FOR	0x0400
 #define DEBUG_SHELL	0x0800
 #define DEBUG_ERROR	0x1000
-#define	DEBUG_GRAPH3	0x10000
+#define DEBUG_LOUD	0x2000
+#define DEBUG_GRAPH3	0x10000
 #define DEBUG_SCRIPT	0x20000
 #define DEBUG_PARSE	0x40000
 

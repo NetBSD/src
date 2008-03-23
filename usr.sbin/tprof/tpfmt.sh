@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: fmt.sh,v 1.3.2.2 2008/01/09 02:02:34 matt Exp $
+#	$NetBSD: tpfmt.sh,v 1.2.4.2 2008/03/23 00:50:08 matt Exp $
 
 # /*-
 #  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
 #  * SUCH DAMAGE.
 #  */
 
-# usage: tprof -c sleep 1 | sh fmt.sh
+# usage: tprof -c sleep 1 | sh tpfmt.sh
 
 if [ ! "${SIZEOF_PTR}" ]; then
 	SIZEOF_PTR=4

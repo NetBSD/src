@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2007/11/06 23:36:12 matt Exp $
+#	Makefile,v 1.1.2.2 2007/11/06 23:36:12 matt Exp
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes
 
+CPPFLAGS+=-I../..
 DIST=	${NETBSDSRCDIR}/dist/pcc
 SUBDIST=${DIST}/cc/cc
 .PATH:	${SUBDIST}

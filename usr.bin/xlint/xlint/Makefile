@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/05/18 07:57:38 lukem Exp $
+#	Makefile,v 1.14 2003/05/18 07:57:38 lukem Exp
 
 .PATH:		${.CURDIR}/../lint1
 .PATH:		${.CURDIR}/../../mkdep
@@ -10,5 +10,10 @@ MAN=		lint.1
 
 CPPFLAGS+=	-I${.CURDIR}/../lint1
 CPPFLAGS+=	-I${.CURDIR}/../../mkdep
+
+.if (${HOSTPROG:U} == "")
+DPADD+=		${LIBUTIL}
+LDADD+=		-lutil
+.endif
 
 .include <bsd.prog.mk>

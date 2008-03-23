@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.155.4.1 2008/01/09 01:39:26 matt Exp $
+#	bsd.sys.mk,v 1.155.4.1 2008/01/09 01:39:26 matt Exp
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -16,6 +16,8 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
+# Set linker warnings to be fatal
+LDFLAGS+=	-Wl,--fatal-warnings
 .endif
 .if ${WARNS} > 1
 CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
@@ -77,10 +79,6 @@ LDFLAGS+=	-Wl,-pie -shared-libgcc
 
 .if ${MACHINE} == "sparc64" && ${MACHINE_ARCH} == "sparc"
 CFLAGS+=	-Wa,-Av8plus
-.endif
-
-.if ${MACHINE_ARCH} == "ns32k"
-CFLAGS+=	-Wno-uninitialized
 .endif
 
 CFLAGS+=	${CPUFLAGS}

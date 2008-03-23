@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.103.4.2 2008/01/09 01:39:06 matt Exp $
+.\"	ddb.4,v 1.103.4.2 2008/01/09 01:39:06 matt Exp
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd December 13, 2007
+.Dd February 18, 2008
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -116,6 +116,10 @@ from the keyboard:
 .Bl -tag -offset indent -width "mvme68k" -compact
 .It alpha
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt] on PC style keyboards.
+.It amd64
+\*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
+.br
+\*[Lt]Break\*[Gt] on serial console.
 .It amiga
 \*[Lt]LAlt\*[Gt]-\*[Lt]LAmiga\*[Gt]-\*[Lt]F10\*[Gt]
 .It atari
@@ -486,8 +490,6 @@ depending upon the machine:
 print register operands
 .It m68k
 use Motorola syntax
-.It pc532
-print instruction bytes in hex
 .It vax
 don't assume that each external label is a procedure entry mask
 .El

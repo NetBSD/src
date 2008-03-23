@@ -1,4 +1,4 @@
-/*	$NetBSD: btuartd.c,v 1.2.4.2 2008/01/09 02:01:56 matt Exp $	*/
+/*	btuartd.c,v 1.2.4.2 2008/01/09 02:01:56 matt Exp	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: btuartd.c,v 1.2.4.2 2008/01/09 02:01:56 matt Exp $");
+__RCSID("btuartd.c,v 1.2.4.2 2008/01/09 02:01:56 matt Exp");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -34,6 +34,7 @@ __RCSID("$NetBSD: btuartd.c,v 1.2.4.2 2008/01/09 02:01:56 matt Exp $");
 
 #include <bluetooth.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>

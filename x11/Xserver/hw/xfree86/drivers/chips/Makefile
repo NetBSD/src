@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/12/21 00:24:04 macallan Exp $
+#	Makefile,v 1.4 2006/12/21 00:24:04 macallan Exp
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -42,7 +42,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/chips \
 
 CPPFLAGS+=	-DPSZ=8
 
-.if ${MACHINE} == "macppc"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
 CPPFLAGS+=	-DNO_VBE
 .endif
 

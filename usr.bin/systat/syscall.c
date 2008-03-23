@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2007/02/18 17:00:08 dsl Exp $	*/
+/*	syscall.c,v 1.3 2007/02/18 17:00:08 dsl Exp	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syscall.c,v 1.3 2007/02/18 17:00:08 dsl Exp $");
+__RCSID("syscall.c,v 1.3 2007/02/18 17:00:08 dsl Exp");
 
 /* System call stats */
 
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: syscall.c,v 1.3 2007/02/18 17:00:08 dsl Exp $");
 #include <sys/user.h>
 #include <sys/namei.h>
 #include <sys/sysctl.h>
-#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 

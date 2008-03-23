@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.15.10.1 2008/01/09 01:38:04 matt Exp $	*/
+/*	pass1.c,v 1.15.10.1 2008/01/09 01:38:04 matt Exp	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.15.10.1 2008/01/09 01:38:04 matt Exp $");
+__RCSID("pass1.c,v 1.15.10.1 2008/01/09 01:38:04 matt Exp");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: pass1.c,v 1.15.10.1 2008/01/09 01:38:04 matt Exp $");
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
+#include "exitvalues.h"
 
 static daddr_t badblk;
 static daddr_t dupblk;
@@ -285,7 +286,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0)
-				errexit("%s\n", "");
+				exit(FSCK_EXIT_CHECK_FAILED);
 		} else {
 			zlnp->zlncnt = inumber;
 			zlnp->next = zlnhead;
@@ -347,7 +348,7 @@ pass1check(struct inodesc *idesc)
 			if (preen)
 				printf(" (SKIPPING)\n");
 			else if (reply("CONTINUE") == 0)
-				errexit("%s\n", "");
+				exit(FSCK_EXIT_CHECK_FAILED);
 			return (STOP);
 		}
 	}
@@ -365,14 +366,14 @@ pass1check(struct inodesc *idesc)
 				if (preen)
 					printf(" (SKIPPING)\n");
 				else if (reply("CONTINUE") == 0)
-					errexit("%s\n", "");
+					exit(FSCK_EXIT_CHECK_FAILED);
 				return (STOP);
 			}
 			new = (struct dups *)malloc(sizeof(struct dups));
 			if (new == NULL) {
 				pfatal("DUP TABLE OVERFLOW.");
 				if (reply("CONTINUE") == 0)
-					errexit("%s\n", "");
+					exit(FSCK_EXIT_CHECK_FAILED);
 				return (STOP);
 			}
 			new->dup = blkno;

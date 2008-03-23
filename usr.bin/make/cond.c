@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.37 2007/02/04 19:23:49 dsl Exp $	*/
+/*	cond.c,v 1.37 2007/02/04 19:23:49 dsl Exp	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.37 2007/02/04 19:23:49 dsl Exp $";
+static char rcsid[] = "cond.c,v 1.37 2007/02/04 19:23:49 dsl Exp";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.37 2007/02/04 19:23:49 dsl Exp $");
+__RCSID("cond.c,v 1.37 2007/02/04 19:23:49 dsl Exp");
 #endif
 #endif /* not lint */
 #endif
@@ -903,16 +903,24 @@ error:
 		     * Use Var_Parse to parse the spec in parens and return
 		     * True if the resulting string is empty.
 		     */
-		    int	    length;
+		    int	    did_warn, length;
 		    void    *freeIt;
 		    char    *val;
 
 		    condExpr += 5;
 
-		    for (arglen = 0;
-			 condExpr[arglen] != '(' && condExpr[arglen] != '\0';
-			 arglen += 1)
-			continue;
+		    did_warn = 0;
+		    for (arglen = 0; condExpr[arglen] != '\0'; arglen += 1) {
+			if (condExpr[arglen] == '(')
+			    break;
+			if (!isspace((unsigned char)condExpr[arglen]) &&
+			    !did_warn) {
+
+			    Parse_Error(PARSE_WARNING,
+				"Extra characters after \"empty\"");
+			    did_warn = 1;
+			}
+		    }
 
 		    if (condExpr[arglen] != '\0') {
 			val = Var_Parse(&condExpr[arglen - 1], VAR_CMD,

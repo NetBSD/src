@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.92 2007/04/15 22:53:08 matt Exp $
+#	sys.mk,v 1.92 2007/04/15 22:53:08 matt Exp
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -28,13 +28,14 @@ CC?=		cc
     ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb" || \
-    ${MACHINE_ARCH} == "ns32k" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
 DBG?=	-O2
 .elif ${MACHINE_ARCH} == "vax"
 DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
+.elif ${MACHINE_ARCH} == "m68000"
+DBG?=	-O0
 .else
 DBG?=	-O
 .endif

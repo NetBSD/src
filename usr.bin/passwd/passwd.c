@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.26 2006/03/23 23:37:07 wiz Exp $	*/
+/*	passwd.c,v 1.26 2006/03/23 23:37:07 wiz Exp	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.26 2006/03/23 23:37:07 wiz Exp $");
+__RCSID("passwd.c,v 1.26 2006/03/23 23:37:07 wiz Exp");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,7 @@ main(int argc, char **argv)
 		errx(1, "who are you ??");
 
 	(*personality->pw_process)(username, argc, argv);
-	exit(0);
+	return 0;
 }
 
 #else /* ! USE_PAM */
