@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.191 2008/03/23 10:33:15 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.192 2008/03/23 10:39:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.191 2008/03/23 10:33:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.192 2008/03/23 10:39:52 yamt Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -413,7 +413,7 @@ buf_memcalc(void)
 			printf("forcing bufcache %d -> 95", bufcache);
 			bufcache = 95;
 		}
-		n = physmem / 100 * bufcache;
+		n = calc_cache_size(buf_map, bufcache) / PAGE_SIZE;
 	}
 
 	n <<= PAGE_SHIFT;
@@ -437,12 +437,6 @@ bufinit(void)
 	mutex_init(&buffer_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&needbuffer_cv, "needbuf");
 
-	/*
-	 * Initialize buffer cache memory parameters.
-	 */
-	bufmem = 0;
-	buf_setwm();
-
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
 		buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -451,6 +445,12 @@ bufinit(void)
 			panic("bufinit: cannot allocate submap");
 	} else
 		buf_map = kernel_map;
+
+	/*
+	 * Initialize buffer cache memory parameters.
+	 */
+	bufmem = 0;
+	buf_setwm();
 
 	/* On "small" machines use small pool page sizes where possible */
 	use_std = (physmem < atop(16*1024*1024));
