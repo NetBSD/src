@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.33 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: emul.c,v 1.34 2008/03/23 14:12:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -511,4 +511,16 @@ lwp_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+vaddr_t
+calc_cache_size(struct vm_map *map, int pct)
+{
+	paddr_t t;
+
+	t = (paddr_t)physmem * pct / 100 * PAGE_SIZE;
+	if ((vaddr_t)t != t) {
+		panic("%s: needs tweak", __func__);
+	}
+	return t;
 }
