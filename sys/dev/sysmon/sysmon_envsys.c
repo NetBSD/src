@@ -1,7 +1,7 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.80 2008/02/02 02:02:37 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.81 2008/03/23 16:09:41 xtraeme Exp $	*/
 
 /*-
- * Copyright (c) 2007 Juan Romero Pardines.
+ * Copyright (c) 2007, 2008 Juan Romero Pardines.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.80 2008/02/02 02:02:37 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.81 2008/03/23 16:09:41 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -120,6 +120,7 @@ static void sysmon_envsys_destroy_plist(prop_array_t);
 static void sme_remove_userprops(void);
 static int sme_add_property_dictionary(struct sysmon_envsys *, prop_array_t,
 				       prop_dictionary_t);
+static void sme_initial_refresh(void *);
 
 /*
  * sysmon_envsys_init:
@@ -660,7 +661,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	prop_dictionary_t dict, dict2;
 	prop_array_t array;
 	envsys_data_t *edata = NULL;
-	int i, error = 0;
+	int error = 0;
 
 	KASSERT(sme != NULL);
 	KASSERT(sme->sme_name != NULL);
@@ -778,18 +779,20 @@ out:
 	mutex_exit(&sme_mtx);
 
 	/*
-	 * No errors? register the events that were set in the driver.
+	 * No errors? register the events that were set in the driver
+	 * and make an initial data refresh if was requested.
 	 */
 	if (error == 0) {
-		i = 0;
+		sysmon_task_queue_init();
 		SLIST_FOREACH(sme_evdrv, &sme_evdrv_list, evdrv_head) {
-			if (i == 0)
-				sysmon_task_queue_init();
 			sysmon_task_queue_sched(0,
 			    sme_event_drvadd, sme_evdrv->evdrv);
 		}
 		DPRINTF(("%s: driver '%s' registered (nsens=%d)\n",
 		    __func__, sme->sme_name, sme->sme_nsensors));
+
+		if (sme->sme_flags & SME_INIT_REFRESH)
+			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
 	}
 
 out2:
@@ -990,6 +993,25 @@ again:
 		}
 	}
 	return sme;
+}
+
+/*
+ * sme_initial_refresh:
+ * 	
+ * 	+ Do an initial refresh of the sensors in a device just after
+ * 	  interrupts are enabled in the autoconf(9) process.
+ *
+ */
+static void
+sme_initial_refresh(void *arg)
+{
+	struct sysmon_envsys *sme = arg;
+	envsys_data_t *edata;
+
+	mutex_enter(&sme_mtx);
+	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head)
+		(*sme->sme_refresh)(sme, edata);
+	mutex_exit(&sme_mtx);
 }
 
 /*
