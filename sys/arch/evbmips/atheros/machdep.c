@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8.10.1 2007/11/06 23:16:07 matt Exp $ */
+/* machdep.c,v 1.8.10.1 2007/11/06 23:16:07 matt Exp */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.10.1 2007/11/06 23:16:07 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.8.10.1 2007/11/06 23:16:07 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -215,7 +215,7 @@ cal_timer(void)
 
 	/* XXX: i don't understand this logic, it was borrowed from Malta */
 	curcpu()->ci_divisor_delay = ((cntfreq + 500000) / 1000000);
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 }
 
 void
@@ -269,7 +269,7 @@ mach_init(void)
 #endif
 
 	/*
-	 * This would be a good place to parse a boot command line, bif
+	 * This would be a good place to parse a boot command line, if
 	 * we got one from the bootloader.  Right now we have no way to
 	 * get one from e.g. vxworks.
 	 */

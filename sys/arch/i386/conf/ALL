@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.118.2.2 2008/01/09 01:46:26 matt Exp $
+# ALL,v 1.118.2.2 2008/01/09 01:46:26 matt Exp
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,12 +17,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.118.2.2 $"
+#ident 		"ALL-1.118.2.2"
 
 maxusers	32		# estimated number of users
 
 # CPU-related options.
-options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # insert delay no-ops in interrupts; recommended on very old machines
@@ -43,6 +42,9 @@ options 	VIA_PADLOCK
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 options 	INTEL_ONDEMAND_CLOCKMOD
+
+# XBOX support
+options		XBOX
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -90,6 +92,7 @@ options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
+options 	MODULAR		# new modules framework
 
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -189,6 +192,7 @@ options 	SOFTDEP		# FFS soft updates support.
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options		UFS_EXTATTR
 options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -436,6 +440,8 @@ options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 # System Controllers
 elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 gpio* 	at elansc?
+elanpar*	at elansc?
+elanpex*	at elansc?
 
 # PCI bridges
 amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
@@ -443,6 +449,8 @@ hpet* 	at amdpcib?
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
 					# SpeedStep support
 hpet0 		at ichlpcib?		# High Precision Event Timer
+gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
+gpio* 	at gcscpcib? 			# timecounter, watchdog and GPIO
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
 gscpcib* at pci? dev ? function ?	# NS Geode PCI-ISA w/ GPIO support
 viapcib* at pci? dev ? function ?	# VIA VT8235 PCI-ISA w/ SMBus support
@@ -464,6 +472,7 @@ eisa0	at pceb?
 
 # ISA bus support
 isa0 	at amdpcib?
+isa0 	at gcscpcib?
 isa0	at ichlpcib?
 isa0	at piixpcib?
 isa0	at gscpcib?
@@ -537,8 +546,12 @@ options 	VESAFB_PM		# power management support
 wsdisplay*	at vesafb? console ?
 
 # VIA Unichrome framebuffer console
-unichromefb*   at pci? dev ? function ?
-wsdisplay*     at unichromefb?
+unichromefb*	at pci? dev ? function ?
+wsdisplay*	at unichromefb?
+
+# XBOX framebuffer console
+xboxfb0		at pci? dev ? function ?
+wsdisplay*	at xboxfb? console ?
 
 # DRI driver
 i915drm*	at vga?		# Intel i915, i945 DRM driver
@@ -635,6 +648,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 adt7463c* at iic? addr 0x2D		# Tyan S2881
 adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+pic16lc*	at iic? addr 0x10	# XBOX PIC16LC
+xbseeprom*	at iic? addr 0x54	# XBOX serial EEPROM
 
 # IBM Thinkpad Active Protection System
 aps0 	at isa? port 0x1600
@@ -1104,6 +1120,10 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*	at uhmodem? portno ?
+
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
@@ -1192,6 +1212,10 @@ uyap* at uhub? port ?
 # D-Link DSB-R100 USB radio
 udsbr*	at uhub? port ?
 radio*	at udsbr?
+
+# XBOX controller
+xboxcontroller*	at uhub? port ?
+wsmouse*	at xboxcontroller? mux 0
 
 # USB Generic driver
 ugen*	at uhub? port ?

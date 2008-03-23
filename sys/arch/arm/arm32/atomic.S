@@ -45,13 +45,13 @@
 ENTRY(atomic_set_bit)
 	mrs	r2, cpsr
 	orr	r3, r2, #(I32_bit)
-	msr	cpsr_all, r3
+	msr	cpsr_c, r3
 
 	ldr	r3, [r0]
 	orr	r3, r3, r1
 	str	r3, [r0]
 
-	msr	cpsr_all, r2
+	msr	cpsr_c, r2
 	mov	pc, lr
 
 
@@ -59,13 +59,13 @@ ENTRY(atomic_set_bit)
 ENTRY(atomic_clear_bit)
 	mrs	r2, cpsr
 	orr	r3, r2, #(I32_bit)
-	msr	cpsr_all, r3
+	msr	cpsr_c, r3
 
 	ldr	r3, [r0]
 	bic	r3, r3, r1
 	str	r3, [r0]
 
-	msr	cpsr_all, r2
+	msr	cpsr_c, r2
 	mov	pc, lr
 
 #endif	/* ATOMIC_SET_BIT_NONINLINE_REQUIRED */

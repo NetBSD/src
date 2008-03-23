@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.58.2.1 2008/01/09 01:57:16 matt Exp $	*/
+/*	route.h,v 1.58.2.1 2008/01/09 01:57:16 matt Exp	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,6 +39,10 @@
 #include <sys/types.h>
 #include <net/if.h>
 
+#if !(defined(_KERNEL) || defined(_STANDALONE))
+#include <stdbool.h>
+#endif
+
 /*
  * Kernel resident routing tables.
  *
@@ -55,6 +59,7 @@ struct route {
 	struct	rtentry		*_ro_rt;
 	struct	sockaddr	*ro_sa;
 	LIST_ENTRY(route)	ro_rtcache_next;
+	bool			ro_invalid;
 };
 
 /*
@@ -122,12 +127,12 @@ rt_getkey(const struct rtentry *rt)
  * We should eventually move it to a compat file.
  */
 struct ortentry {
-	u_int32_t rt_hash;		/* to speed lookups */
+	uint32_t rt_hash;		/* to speed lookups */
 	struct	sockaddr rt_dst;	/* key */
 	struct	sockaddr rt_gateway;	/* value */
 	int16_t	rt_flags;		/* up/down?, host/net */
 	int16_t	rt_refcnt;		/* # held references */
-	u_int32_t rt_use;		/* raw # packets forwarded */
+	uint32_t rt_use;		/* raw # packets forwarded */
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 };
 
@@ -292,6 +297,7 @@ extern	struct	rtstat	rtstat;
 extern	struct	radix_node_head *rt_tables[AF_MAX+1];
 
 struct socket;
+struct dom_rtlist;
 
 void	 route_init(void);
 int	 route_output(struct mbuf *, ...);
@@ -365,14 +371,15 @@ out:
 
 struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 
-void	rtcache_init(struct route *);
-void	rtcache_init_noclone(struct route *);
+struct rtentry *rtcache_init(struct route *);
+struct rtentry *rtcache_init_noclone(struct route *);
 void	rtcache_copy(struct route *, const struct route *);
+void rtcache_invalidate(struct dom_rtlist *);
 
 struct rtentry *rtcache_lookup2(struct route *, const struct sockaddr *, int,
     int *);
 void	rtcache_clear(struct route *);
-void	rtcache_update(struct route *, int);
+struct rtentry *rtcache_update(struct route *, int);
 void	rtcache_free(struct route *);
 int	rtcache_setdst(struct route *, const struct sockaddr *);
 
@@ -402,40 +409,22 @@ rtcache_getdst(const struct route *ro)
 	return ro->ro_sa;
 }
 
-static inline struct rtentry *
-rtcache_getrt(const struct route *ro)
-{
-	return ro->_ro_rt;
-}
-
-/* If the cache is not not empty, and the cached route is still
- * present in the routing table, return the cached route.  Otherwise,
- * return NULL.
+/* If the cache is not empty, and the cached route is still present
+ * in the routing table, return the cached route.  Otherwise, return
+ * NULL.
  */
 static inline struct rtentry *
 rtcache_validate(const struct route *ro)
 {
 	struct rtentry *rt = ro->_ro_rt;
 
+	if (ro->ro_invalid)
+		return NULL;
+
 	if (rt != NULL && (rt->rt_flags & RTF_UP) != 0 && rt->rt_ifp != NULL)
 		return rt;
 	return NULL;
 
-}
-
-static inline void
-rtcache_check1(struct route *ro, int clone)
-{
-	/* XXX The rt_ifp check should be asserted. */
-	if (rtcache_validate(ro) == NULL)
-		rtcache_update(ro, clone);
-	KASSERT(ro->_ro_rt == NULL || ro->_ro_rt->rt_ifp != NULL);
-}
-
-static inline void
-rtcache_check(struct route *ro)
-{
-	return rtcache_check1(ro, 1);
 }
 
 static inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_arch.cpp,v 1.6 2006/02/19 13:04:42 peter Exp $	*/
+/*	arm_arch.cpp,v 1.6 2006/02/19 13:04:42 peter Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ ARMArchitecture::~ARMArchitecture(void)
 }
 
 void
-ARMArchitecture::systemInfo()
+ARMArchitecture::systemInfo(void)
 {
 	Architecture::systemInfo();
 
@@ -72,110 +72,4 @@ ARMArchitecture::systemInfo()
 	DPRINTF((TEXT("CPSR :%08x\n"), GetCPSR()));
 	EI();
 	SetKMode(_kmode);
-}
-
-BOOL
-ARMArchitecture::init(void)
-{
-	if (!_mem->init()) {
-		DPRINTF((TEXT("can't initialize memory manager.\n")));
-		return FALSE;
-	}
-	// set D-RAM information
-	_mem->loadBank(DRAM_BANK0_START, DRAM_BANK_SIZE);
-	_mem->loadBank(DRAM_BANK1_START, DRAM_BANK_SIZE);
-	_mem->loadBank(DRAM_BANK2_START, DRAM_BANK_SIZE);
-	_mem->loadBank(DRAM_BANK3_START, DRAM_BANK_SIZE);
-
-	return TRUE;
-}
-
-BOOL
-ARMArchitecture::setupLoader()
-{
-	vaddr_t v;
-	vsize_t sz = BOOT_FUNC_END - BOOT_FUNC_START;
-
-	// check 2nd bootloader size.
-	if (sz > _mem->getPageSize()) {
-		DPRINTF((TEXT("2nd bootloader size(%dbyte) is larger than page size(%d).\n"),
-		    sz, _mem->getPageSize()));
-		return FALSE;
-	}
-
-	// get physical mapped page and copy loader to there.
-	// don't writeback D-cache here. make sure to writeback before jump.
-	if (!_mem->getPage(v , _loader_addr)) {
-		DPRINTF((TEXT("can't get page for 2nd loader.\n")));
-		return FALSE;
-	}
-	DPRINTF((TEXT("2nd bootloader vaddr=0x%08x paddr=0x%08x\n"),
-	    (unsigned)v,(unsigned)_loader_addr));
-
-	memcpy(reinterpret_cast <LPVOID>(v),
-	    reinterpret_cast <LPVOID>(BOOT_FUNC_START), sz);
-	DPRINTF((TEXT("2nd bootloader copy done.\n")));
-
-	return TRUE;
-}
-
-void
-ARMArchitecture::jump(paddr_t info, paddr_t pvec)
-{
-	kaddr_t sp;
-	vaddr_t v;
-	paddr_t p;
-
-	// stack for bootloader
-	_mem->getPage(v, p);
-	sp = ptokv(p) + _mem->getPageSize();
-
-	// writeback whole D-cache
-	WritebackDCache();
-
-	SetKMode(1);
-	FlatJump(info, pvec, sp, _loader_addr);
-	// NOTREACHED
-}
-
-void
-ARMArchitecture::testFramebuffer()
-{
-	// get frame buffer address from LCD controller register.
-	paddr_t fbaddr_p = _mem->readPhysical4(0xb0100010); // 0xc0002e00
-	// map frame buffer
-	vaddr_t fbaddr_v = _mem->mapPhysicalPage(fbaddr_p, 0x50000,
-	    PAGE_READWRITE);
-
-	// test frame buffer
-	int j, k;
-	DI();
-	for (j = 0; j < 480; j++)
-		for (k = 0; k < 640; k++)
-			VOLATILE_REF8(fbaddr_v + 0x200 + j * 640 + k)
-			    = j * k & 0xff;
-	for (j = 120; j < 360; j++)
-		for (k = 120; k < 520; k++)
-			VOLATILE_REF8(fbaddr_v + 0x200 + j * 640 + k) = 0x3;
-	EI();
-	_mem->unmapPhysicalPage(fbaddr_v);
-}
-
-void
-ARMArchitecture::testUART()
-{
-#define	TBY			VOLATILE_REF(uart + 0x20)
-#define	UTDR			VOLATILE_REF(uart + 0x14)
-#define	TBY_BUSY		while (TBY & 0x1)
-#define	UTDR_PUTCHAR(c)		(UTDR =(c))
-#define	_(c)								\
-__BEGIN_MACRO								\
-	TBY_BUSY;							\
-	UTDR_PUTCHAR(c);						\
-__END_MACRO
-	vaddr_t uart =
-	    _mem->mapPhysicalPage(0x80050000, 0x100, PAGE_READWRITE);
-	_('H');_('e');_('l');_('l');_('o');_(' ');
-	_('W');_('o');_('r');_('l');_('d');_('\r');_('\n');
-	_mem->unmapPhysicalPage(uart);
 }

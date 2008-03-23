@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.6.4.2 2008/01/09 01:58:02 matt Exp $	*/
+/*	rumpuser.c,v 1.6.4.2 2008/01/09 01:58:02 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -247,6 +247,13 @@ rumpuser_gettimeofday(struct timeval *tv, int *error)
 }
 
 int
+rumpuser_getenv(const char *name, char *buf, size_t blen, int *error)
+{
+
+	DOCALL(int, getenv_r(name, buf, blen));
+}
+
+int
 rumpuser_gethostname(char *name, size_t namelen, int *error)
 {
 
@@ -286,6 +293,12 @@ rumpuser_realpath(const char *path, char resolvedname[MAXPATHLEN], int *error)
 		*error = 0;
 
 	return rv;
+}
+
+void
+rumpuser_yield(void)
+{
+
 }
 
 #ifdef __linux__

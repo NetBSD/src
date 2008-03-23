@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.247.2.3 2008/01/09 01:56:01 matt Exp $	*/
+/*	kern_exec.c,v 1.247.2.3 2008/01/09 01:56:01 matt Exp	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.247.2.3 2008/01/09 01:56:01 matt Exp $");
+__KERNEL_RCSID(0, "kern_exec.c,v 1.247.2.3 2008/01/09 01:56:01 matt Exp");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -431,6 +431,27 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p = l->l_proc;
 
 	/*
+	 * Check if we have exceeded our number of processes limit.
+	 * This is so that we handle the case where a root daemon
+	 * forked, ran setuid to become the desired user and is trying
+	 * to exec. The obvious place to do the reference counting check
+	 * is setuid(), but we don't do the reference counting check there
+	 * like other OS's do because then all the programs that use setuid()
+	 * must be modified to check the return code of setuid() and exit().
+	 * It is dangerous to make setuid() fail, because it fails open and
+	 * the program will continue to run as root. If we make it succeed
+	 * and return an error code, again we are not enforcing the limit.
+	 * The best place to enforce the limit is here, when the process tries
+	 * to execute a new image, because eventually the process will need
+	 * to call exec in order to do something useful.
+	 */
+			
+	if ((p->p_flag & PK_SUGID) &&
+	    chgproccnt(kauth_cred_getuid(p->p_cred), 0) >
+	    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
+		return EAGAIN;
+
+	/*
 	 * Drain existing references and forbid new ones.  The process
 	 * should be left alone until we're done here.  This is necessary
 	 * to avoid race conditions - e.g. in ptrace() - that might allow
@@ -575,15 +596,22 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	szsigcode = pack.ep_esch->es_emul->e_esigcode -
 	    pack.ep_esch->es_emul->e_sigcode;
 
+#ifdef __MACHINE_STACK_GROWS_UP
+/* See big comment lower down */
+#define	RTLD_GAP	32
+#else
+#define	RTLD_GAP	0
+#endif
+
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
 		len = ((argc + envc + 2 + pack.ep_esch->es_arglen) *
-		    sizeof(int) + sizeof(int) + dp + STACKGAPLEN +
+		    sizeof(int) + sizeof(int) + dp + RTLD_GAP +
 		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
 		    - argp;
 	else
 		len = ((argc + envc + 2 + pack.ep_esch->es_arglen) *
-		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
+		    sizeof(char *) + sizeof(int) + dp + RTLD_GAP +
 		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
 		    - argp;
 
@@ -741,15 +769,15 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	stack = (char *)STACK_ALLOC(STACK_GROW(vm->vm_minsaddr,
 		STACK_PTHREADSPACE + sizeof(struct ps_strings) + szsigcode),
 		len - (sizeof(struct ps_strings) + szsigcode));
+
 #ifdef __MACHINE_STACK_GROWS_UP
 	/*
 	 * The copyargs call always copies into lower addresses
 	 * first, moving towards higher addresses, starting with
 	 * the stack pointer that we give.  When the stack grows
 	 * down, this puts argc/argv/envp very shallow on the
-	 * stack, right at the first user stack pointer, and puts
-	 * STACKGAPLEN very deep in the stack.  When the stack
-	 * grows up, the situation is reversed.
+	 * stack, right at the first user stack pointer.
+	 * When the stack grows up, the situation is reversed.
 	 *
 	 * Normally, this is no big deal.  But the ld_elf.so _rtld()
 	 * function expects to be called with a single pointer to
@@ -762,10 +790,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * so we have a problem.
 	 *
 	 * Instead of changing how _rtld works, we take the easy way
-	 * out and steal 32 bytes before we call copyargs.  This
-	 * space is effectively stolen from STACKGAPLEN.
+	 * out and steal 32 bytes before we call copyargs.
+	 * This extra space was allowed for when 'len' was calculated.
 	 */
-	stack += 32;
+	stack += RTLD_GAP;
 #endif /* __MACHINE_STACK_GROWS_UP */
 
 	/* Now copy argc, args & environ to new stack */
@@ -863,12 +891,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		l->l_cred = kauth_cred_copy(l->l_cred);
 #ifdef KTRACE
 		/*
-		 * If process is being ktraced, turn off - unless
-		 * root set it.
+		 * If the persistent trace flag isn't set, turn off.
 		 */
 		if (p->p_tracep) {
 			mutex_enter(&ktrace_lock);
-			if (!(p->p_traceflag & KTRFAC_ROOT))
+			if (!(p->p_traceflag & KTRFAC_PERSISTENT))
 				ktrderef(p);
 			mutex_exit(&ktrace_lock);
 		}

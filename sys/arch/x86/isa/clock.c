@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.9.10.2 2008/01/09 01:49:50 matt Exp $	*/
+/*	clock.c,v 1.9.10.2 2008/01/09 01:49:50 matt Exp	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.2 2008/01/09 01:49:50 matt Exp $");
+__KERNEL_RCSID(0, "clock.c,v 1.9.10.2 2008/01/09 01:49:50 matt Exp");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -153,8 +153,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.2 2008/01/09 01:49:50 matt Exp $");
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
 
-#include "config_time.h"		/* for CONFIG_TIME */
-
 #ifndef __x86_64__
 #include "mca.h"
 #endif
@@ -166,11 +164,11 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.9.10.2 2008/01/09 01:49:50 matt Exp $");
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-int sysbeepmatch(struct device *, struct cfdata *, void *);
-void sysbeepattach(struct device *, struct device *, void *);
+int sysbeepmatch(device_t, cfdata_t, void *);
+void sysbeepattach(device_t, device_t, void *);
 int sysbeepdetach(device_t, int);
 
-CFATTACH_DECL(sysbeep, sizeof(struct device),
+CFATTACH_DECL_NEW(sysbeep, 0,
     sysbeepmatch, sysbeepattach, sysbeepdetach, NULL);
 
 static int ppi_attached;
@@ -432,7 +430,8 @@ i8254_get_timecount(struct timecounter *tc)
 	/* insb to make the read atomic */
 	insb(IO_TIMER1+TIMER_CNTR0, &rdval, 2);
 	count = rtclock_tval - rdval;
-	if (rtclock_tval && (count < i8254_lastcount || !i8254_ticked)) {
+	if (rtclock_tval && (count < i8254_lastcount &&
+			     (!i8254_ticked || rtclock_tval == 0xFFFF))) {
 		i8254_ticked = 1;
 		i8254_offset += rtclock_tval;
 	}
@@ -536,15 +535,13 @@ i8254_delay(unsigned int n)
 
 #if (NPCPPI > 0)
 int
-sysbeepmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+sysbeepmatch(device_t parent, cfdata_t match, void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-sysbeepattach(struct device *parent, struct device *self,
-    void *aux)
+sysbeepattach(device_t parent, device_t self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");

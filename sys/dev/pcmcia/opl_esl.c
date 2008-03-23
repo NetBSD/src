@@ -1,4 +1,4 @@
-/* $NetBSD: opl_esl.c,v 1.14.24.1 2007/11/06 23:29:48 matt Exp $ */
+/* opl_esl.c,v 1.14.24.1 2007/11/06 23:29:48 matt Exp */
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.14.24.1 2007/11/06 23:29:48 matt Exp $");
+__KERNEL_RCSID(0, "opl_esl.c,v 1.14.24.1 2007/11/06 23:29:48 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,18 +59,18 @@ __KERNEL_RCSID(0, "$NetBSD: opl_esl.c,v 1.14.24.1 2007/11/06 23:29:48 matt Exp $
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/eslvar.h>
 
-int	opl_esl_match(struct device *, struct cfdata *, void *);
-void	opl_esl_attach(struct device *, struct device *, void *);
-int	opl_esl_detach(struct device *, int);
+int	opl_esl_match(device_t, cfdata_t, void *);
+void	opl_esl_attach(device_t, device_t, void *);
+int	opl_esl_detach(device_t, int);
 
-CFATTACH_DECL(opl_esl, sizeof(struct opl_softc),
+CFATTACH_DECL_NEW(opl_esl, sizeof(struct opl_softc),
     opl_esl_match, opl_esl_attach, opl_esl_detach, NULL);
 
 int
-opl_esl_match(struct device *parent, struct cfdata *match, void *aux)
+opl_esl_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
-	struct esl_pcmcia_softc *ssc = (struct esl_pcmcia_softc *)parent;
+	struct esl_pcmcia_softc *ssc = device_private(parent);
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
@@ -79,11 +79,12 @@ opl_esl_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-opl_esl_attach(struct device *parent, struct device *self, void *aux)
+opl_esl_attach(device_t parent, device_t self, void *aux)
 {
-	struct esl_pcmcia_softc *ssc = (struct esl_pcmcia_softc *)parent;
-	struct opl_softc *sc = (struct opl_softc *)self;
+	struct esl_pcmcia_softc *ssc = device_private(parent);
+	struct opl_softc *sc = device_private(self);
 
+	sc->mididev.dev = self;
 	sc->iot = ssc->sc_iot;
 	sc->ioh = ssc->sc_ioh;
 	sc->offs = 0;
@@ -93,9 +94,9 @@ opl_esl_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-opl_esl_detach(struct device *self, int flags)
+opl_esl_detach(device_t self, int flags)
 {
-	struct opl_softc *sc = (struct opl_softc *)self;
+	struct opl_softc *sc = device_private(self);
 	int rv;
 
 	rv = opl_detach(sc, flags);

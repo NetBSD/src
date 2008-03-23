@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.15.16.2 2008/01/09 01:54:13 matt Exp $ */
+/* pckbd.c,v 1.15.16.2 2008/01/09 01:54:13 matt Exp */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.16.2 2008/01/09 01:54:13 matt Exp $");
+__KERNEL_RCSID(0, "pckbd.c,v 1.15.16.2 2008/01/09 01:54:13 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,14 +115,14 @@ struct pckbd_internal {
 };
 
 struct pckbd_softc {
-        struct  device sc_dev;
+        device_t sc_dev;
 
 	struct pckbd_internal *id;
 	int sc_enabled;
 
 	int sc_ledstate;
 
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int rawkbd;
 #endif
@@ -130,10 +130,10 @@ struct pckbd_softc {
 
 static int pckbd_is_console(pckbport_tag_t, pckbport_slot_t);
 
-int pckbdprobe(struct device *, struct cfdata *, void *);
-void pckbdattach(struct device *, struct device *, void *);
+int pckbdprobe(device_t, cfdata_t, void *);
+void pckbdattach(device_t, device_t, void *);
 
-CFATTACH_DECL(pckbd, sizeof(struct pckbd_softc),
+CFATTACH_DECL_NEW(pckbd, sizeof(struct pckbd_softc),
     pckbdprobe, pckbdattach, NULL, NULL);
 
 int	pckbd_enable(void *, int);
@@ -247,7 +247,7 @@ pckbd_is_console(pckbport_tag_t tag, pckbport_slot_t slot)
 }
 
 static bool
-pckbd_suspend(device_t dv)
+pckbd_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct pckbd_softc *sc = device_private(dv);
 	u_char cmd[1];
@@ -270,7 +270,7 @@ pckbd_suspend(device_t dv)
 }
 
 static bool
-pckbd_resume(device_t dv)
+pckbd_resume(device_t dv PMF_FN_ARGS)
 {
 	struct pckbd_softc *sc = device_private(dv);
 	u_char cmd[1], resp[1];
@@ -301,7 +301,7 @@ pckbd_resume(device_t dv)
  * these are both bad jokes
  */
 int
-pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
+pckbdprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 	int res;
@@ -353,7 +353,7 @@ pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pckbdattach(struct device *parent, struct device *self, void *aux)
+pckbdattach(device_t parent, device_t self, void *aux)
 {
 	struct pckbd_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;
@@ -364,6 +364,7 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	isconsole = pckbd_is_console(pa->pa_tag, pa->pa_slot);
 
 	if (isconsole) {
@@ -392,7 +393,7 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	sc->id->t_sc = sc;
 
 	pckbport_set_inputhandler(sc->id->t_kbctag, sc->id->t_kbcslot,
-			       pckbd_input, sc, sc->sc_dev.dv_xname);
+			       pckbd_input, sc, device_xname(sc->sc_dev));
 
 	a.console = isconsole;
 
@@ -408,7 +409,7 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	 * Attach the wskbd, saving a handle to it.
 	 * XXX XXX XXX
 	 */
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a, wskbddevprint);
 }
 
 int
@@ -643,6 +644,15 @@ pckbd_bell(u_int pitch, u_int period, u_int volume, int poll)
 }
 
 void
+pckbd_unhook_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
+{
+	if (pckbd_bell_fn != fn && pckbd_bell_fn_arg != arg)
+		return;
+	pckbd_bell_fn = NULL;
+	pckbd_bell_fn_arg = NULL;
+}
+
+void
 pckbd_hookup_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
 {
 
@@ -697,6 +707,14 @@ void
 pckbd_cnpollc(void *v, int on)
 {
 	struct pckbd_internal *t = v;
+
+	if (on) {
+		u_char cmd[1];
+
+		cmd[0] = KBC_ENABLE;
+		(void)pckbport_poll_cmd(t->t_kbctag, t->t_kbcslot, cmd,
+		    1, 0, 0, 0);
+	}
 
 	pckbport_set_poll(t->t_kbctag, t->t_kbcslot, on);
 }

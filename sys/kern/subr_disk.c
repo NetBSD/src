@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.88.6.2 2008/01/09 01:56:15 matt Exp $	*/
+/*	subr_disk.c,v 1.88.6.2 2008/01/09 01:56:15 matt Exp	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.88.6.2 2008/01/09 01:56:15 matt Exp $");
+__KERNEL_RCSID(0, "subr_disk.c,v 1.88.6.2 2008/01/09 01:56:15 matt Exp");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -185,7 +185,7 @@ disk_find(const char *name)
 }
 
 void
-disk_init(struct disk *diskp, char *name, struct dkdriver *driver)
+disk_init(struct disk *diskp, const char *name, const struct dkdriver *driver)
 {
 
 	/*

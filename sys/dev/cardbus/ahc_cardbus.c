@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.21.24.1 2007/11/06 23:25:48 matt Exp $	*/
+/*	ahc_cardbus.c,v 1.21.24.1 2007/11/06 23:25:48 matt Exp	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.21.24.1 2007/11/06 23:25:48 matt Exp $");
+__KERNEL_RCSID(0, "ahc_cardbus.c,v 1.21.24.1 2007/11/06 23:25:48 matt Exp");
 
 #include "opt_ahc_cardbus.h"
 
@@ -176,7 +176,7 @@ ahc_cardbus_attach(struct device *parent, struct device *self,
 		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, reg);
 	}
 
-	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
+	ahc_set_name(ahc, device_xname(&ahc->sc_dev));
 
 	ahc->parent_dmat = ca->ca_dmat;
 	ahc->tag = bst;

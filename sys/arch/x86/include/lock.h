@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.14.24.3 2008/01/09 01:49:48 matt Exp $	*/
+/*	lock.h,v 1.14.24.3 2008/01/09 01:49:48 matt Exp	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -82,8 +82,8 @@ void	__cpu_simple_unlock(__cpu_simple_lock_t *);
 
 #ifdef SPINLOCK_BACKOFF_HOOK
 #undef SPINLOCK_BACKOFF_HOOK
-#define	SPINLOCK_BACKOFF_HOOK	x86_pause()
 #endif
+#define	SPINLOCK_BACKOFF_HOOK	x86_pause()
 
 #else
 

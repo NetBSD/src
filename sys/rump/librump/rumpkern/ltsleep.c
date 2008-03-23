@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.2.4.4 2008/01/09 01:58:00 matt Exp $	*/
+/*	ltsleep.c,v 1.2.4.4 2008/01/09 01:58:00 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,8 @@ struct ltsleeper {
 
 static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
 static kmutex_t sleepermtx;
+
+kcondvar_t lbolt; /* Oh Kath Ra */
 
 int
 ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,

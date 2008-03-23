@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.197.8.3 2008/01/09 01:56:25 matt Exp $	*/
+/*	tty.c,v 1.197.8.3 2008/01/09 01:56:25 matt Exp	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.197.8.3 2008/01/09 01:56:25 matt Exp $");
+__KERNEL_RCSID(0, "tty.c,v 1.197.8.3 2008/01/09 01:56:25 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,8 +1094,8 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_spin_exit(&tty_lock);
 		break;
 	case TIOCSTI:			/* simulate terminal input */
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
+		if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_STI,
+		    tp) != 0) {
 			if (!ISSET(flag, FREAD))
 				return (EPERM);
 			if (!isctty(p, tp))
@@ -1423,7 +1423,7 @@ ttyflush(struct tty *tp, int rw)
 		cdev_stop(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		clwakeup(&tp->t_outq);
-		selnotify(&tp->t_wsel, NOTE_SUBMIT);
+		selnotify(&tp->t_wsel, 0, NOTE_SUBMIT);
 	}
 }
 
@@ -2076,7 +2076,7 @@ ttypull(struct tty *tp)
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		clwakeup(&tp->t_outq);
-		selnotify(&tp->t_wsel, NOTE_SUBMIT);
+		selnotify(&tp->t_wsel, 0, NOTE_SUBMIT);
 	}
 	return tp->t_outq.c_cc != 0;
 }
@@ -2247,7 +2247,7 @@ ttwakeup(struct tty *tp)
 
 	KASSERT(mutex_owned(&tty_lock));
 
-	selnotify(&tp->t_rsel, NOTE_SUBMIT);
+	selnotify(&tp->t_rsel, 0, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		ttysig(tp, TTYSIG_PG2, SIGIO);
 #if 0

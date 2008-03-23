@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.13.16.2 2008/01/09 01:52:56 matt Exp $ */
+/* mtd803.c,v 1.13.16.2 2008/01/09 01:52:56 matt Exp */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.13.16.2 2008/01/09 01:52:56 matt Exp $");
+__KERNEL_RCSID(0, "mtd803.c,v 1.13.16.2 2008/01/09 01:52:56 matt Exp");
 
 #include "bpfilter.h"
 
@@ -125,8 +125,6 @@ void mtd_stop(struct ifnet *, int);
 int mtd_ioctl(struct ifnet *, u_long, void *);
 void mtd_setmulti(struct mtd_softc *);
 void mtd_watchdog(struct ifnet *);
-int mtd_mediachange(struct ifnet *);
-void mtd_mediastatus(struct ifnet *, struct ifmediareq *);
 
 int mtd_init(struct ifnet *);
 void mtd_reset(struct mtd_softc *);
@@ -141,8 +139,7 @@ int mtd_bufirq(struct mtd_softc *);
 
 
 int
-mtd_config(sc)
-	struct mtd_softc *sc;
+mtd_config(struct mtd_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	int i;
@@ -168,7 +165,9 @@ mtd_config(sc)
 	sc->mii.mii_writereg = mtd_mii_writereg;
 	sc->mii.mii_statchg = mtd_mii_statchg;
 
-	ifmedia_init(&sc->mii.mii_media, 0, mtd_mediachange, mtd_mediastatus);
+	sc->ethercom.ec_mii = &sc->mii;
+	ifmedia_init(&sc->mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 
 	mii_attach(&sc->dev, &sc->mii, 0xffffffff, MII_PHY_ANY, 0, 0);
 
@@ -203,8 +202,7 @@ mtd_config(sc)
  * Must be called at splnet()
  */
 int
-mtd_init(ifp)
-	struct ifnet *ifp;
+mtd_init(struct ifnet *ifp)
 {
 	struct mtd_softc *sc = ifp->if_softc;
 
@@ -255,8 +253,7 @@ mtd_init(ifp)
 
 
 int
-mtd_init_desc(sc)
-	struct mtd_softc *sc;
+mtd_init_desc(struct mtd_softc *sc)
 {
 	int rseg, err, i;
 	bus_dma_segment_t seg;
@@ -414,37 +411,32 @@ mtd_init_desc(sc)
 
 
 void
-mtd_mii_statchg(struct device *self)
+mtd_mii_statchg(device_t self)
 {
-	/*struct mtd_softc *sc = (void *)self;*/
-
 	/* Should we do something here? :) */
 }
 
 
 int
-mtd_mii_readreg(struct device *self, int phy, int reg)
+mtd_mii_readreg(device_t self, int phy, int reg)
 {
-	struct mtd_softc *sc = (void *)self;
+	struct mtd_softc *sc = device_private(self);
 
 	return (MTD_READ_2(sc, MTD_PHYBASE + reg * 2));
 }
 
 
 void
-mtd_mii_writereg(struct device *self, int phy, int reg, int val)
+mtd_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct mtd_softc *sc = (void *)self;
+	struct mtd_softc *sc = device_private(self);
 
 	MTD_WRITE_2(sc, MTD_PHYBASE + reg * 2, val);
 }
 
 
 int
-mtd_put(sc, index, m)
-	struct mtd_softc *sc;
-	int index;
-	struct mbuf *m;
+mtd_put(struct mtd_softc *sc, int index, struct mbuf *m)
 {
 	int len, tlen;
 	char *buf = (char *)sc->buf + MTD_NUM_RXD * MTD_RXBUF_SIZE
@@ -478,8 +470,7 @@ mtd_put(sc, index, m)
 
 
 void
-mtd_start(ifp)
-	struct ifnet *ifp;
+mtd_start(struct ifnet *ifp)
 {
 	struct mtd_softc *sc = ifp->if_softc;
 	struct mbuf *m;
@@ -531,9 +522,7 @@ mtd_start(ifp)
 
 
 void
-mtd_stop (ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+mtd_stop(struct ifnet *ifp, int disable)
 {
 	struct mtd_softc *sc = ifp->if_softc;
 
@@ -557,8 +546,7 @@ mtd_stop (ifp, disable)
 
 
 void
-mtd_watchdog(ifp)
-	struct ifnet *ifp;
+mtd_watchdog(struct ifnet *ifp)
 {
 	struct mtd_softc *sc = ifp->if_softc;
 	int s;
@@ -577,34 +565,21 @@ mtd_watchdog(ifp)
 
 
 int
-mtd_ioctl(ifp, cmd, data)
-	struct ifnet * ifp;
-	u_long cmd;
-	void *data;
+mtd_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mtd_softc *sc = ifp->if_softc;
 	int s, error = 0;
 
 	s = splnet();
 
-	/* Don't do anything special */
-	switch(cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			 if (ifp->if_flags & IFF_RUNNING)
-				 mtd_setmulti(sc);
-			 error = 0;
-		}
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		break;
+	if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware
+		 * filter accordingly.
+		 */
+		 if (ifp->if_flags & IFF_RUNNING)
+			 mtd_setmulti(sc);
+		 error = 0;
 	}
 
 	splx(s);
@@ -613,10 +588,7 @@ mtd_ioctl(ifp, cmd, data)
 
 
 struct mbuf *
-mtd_get(sc, index, totlen)
-	struct mtd_softc *sc;
-	int index;
-	int totlen;
+mtd_get(struct mtd_softc *sc, int index, int totlen)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	struct mbuf *m, *m0, *newm;
@@ -671,8 +643,7 @@ mtd_get(sc, index, totlen)
 
 
 int
-mtd_rxirq(sc)
-	struct mtd_softc *sc;
+mtd_rxirq(struct mtd_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	int len;
@@ -741,8 +712,7 @@ mtd_rxirq(sc)
 
 
 int
-mtd_txirq(sc)
-	struct mtd_softc *sc;
+mtd_txirq(struct mtd_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 
@@ -759,8 +729,7 @@ mtd_txirq(sc)
 
 
 int
-mtd_bufirq(sc)
-	struct mtd_softc *sc;
+mtd_bufirq(struct mtd_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 
@@ -774,8 +743,7 @@ mtd_bufirq(sc)
 
 
 int
-mtd_irq_h(args)
-	void *args;
+mtd_irq_h(void *args)
 {
 	struct mtd_softc *sc = args;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
@@ -872,8 +840,7 @@ mtd_irq_h(args)
 
 
 void
-mtd_setmulti(sc)
-	struct mtd_softc *sc;
+mtd_setmulti(struct mtd_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	u_int32_t rxtx_stat;
@@ -919,8 +886,7 @@ mtd_setmulti(sc)
 
 
 void
-mtd_reset(sc)
-	struct mtd_softc *sc;
+mtd_reset(struct mtd_softc *sc)
 {
 	int i;
 
@@ -943,35 +909,6 @@ mtd_reset(sc)
 
 	/* Wait a little so chip can stabilize */
 	DELAY(1000);
-}
-
-
-int
-mtd_mediachange(ifp)
-	struct ifnet *ifp;
-{
-	struct mtd_softc *sc = ifp->if_softc;
-
-	if (IFM_TYPE(sc->mii.mii_media.ifm_media) != IFM_ETHER)
-		return EINVAL;
-
-	return mii_mediachg(&sc->mii);
-}
-
-
-void
-mtd_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct mtd_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return;
-
-	mii_pollstat(&sc->mii);
-	ifmr->ifm_active = sc->mii.mii_media_active;
-	ifmr->ifm_status = sc->mii.mii_media_status;
 }
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.313.2.2 2008/01/09 01:46:31 matt Exp $
+#	files.i386,v 1.313.2.2 2008/01/09 01:46:31 matt Exp
 #
 # new style config file for i386 architecture
 #
@@ -23,9 +23,6 @@ defflag			XBOX
 # VM86 emulation
 defflag			VM86
 defflag			KVM86
-
-# Floating point emulation
-defflag			MATH_EMULATE
 
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
@@ -70,21 +67,22 @@ defflag 	POWERNOW_K7
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/busfunc.S
 file	arch/i386/i386/cpufunc.S
+file	arch/i386/i386/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
+file	arch/i386/i386/dumpsys.c
 file	kern/subr_disk_mbr.c		disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
-file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
-file	arch/i386/i386/math_emulate.c	math_emulate
+file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
@@ -156,8 +154,6 @@ file	arch/i386/i386/mainbus.c	mainbus
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
 # XXX devices to 'pci'.
 #
-include "dev/wsfb/files.wsfb"
-
 include	"dev/pci/files.pci"
 include "dev/pci/files.agp"
 file	arch/i386/pci/pcibios.c		pcibios
@@ -179,9 +175,17 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 include "arch/x86/pci/files.pci"
 
 # AMD Elan SC520 System Controller (PCI-Host bridge)
-device	elansc: sysmon_wdog, gpiobus
+define elanparbus { }
+define elanpexbus { }
+device	elansc: sysmon_wdog, gpiobus, elanparbus, elanpexbus
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
+
+device elanpar
+attach elanpar at elanparbus
+
+device elanpex
+attach elanpex at elanpexbus
 
 # AMD Geode CS5535 Companion IDE controller
 device	gcscide: ata, ata_dma, ata_udma, pciide_common, wdc_common
@@ -217,6 +221,11 @@ file	arch/i386/pci/pceb.c		pceb
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
 file	arch/i386/pci/gscpcib.c		gscpcib
+
+# AMD Geode CS5535/CS5536 PCI-ISA bridge
+device	gcscpcib: isabus, sysmon_wdog, gpiobus
+attach	gcscpcib at pci
+file	arch/i386/pci/gcscpcib.c	gcscpcib
 
 device	piixpcib: isabus, bioscall
 attach	piixpcib at pci
@@ -262,9 +271,6 @@ file	arch/i386/isa/lms.c		lms
 device	mms: wsmousedev
 attach	mms at isa
 file	arch/i386/isa/mms.c		mms
-
-include	"dev/wscons/files.wscons"
-include	"dev/wsfont/files.wsfont"
 
 include	"dev/pckbport/files.pckbport"
 
@@ -495,8 +501,6 @@ device	vesabios {}
 attach	vesabios at vesabiosbus
 file	arch/i386/bios/vesabios.c		vesabios needs-flag
 defflag	opt_vesabios.h	VESABIOSVERBOSE
-
-include	"dev/rasops/files.rasops"
 
 device	vesafb: displaydev, wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
 attach	vesafb at vesabios

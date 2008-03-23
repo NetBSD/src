@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.26.6.2 2008/01/09 01:49:51 matt Exp $	*/
+/*	pci_machdep.c,v 1.26.6.2 2008/01/09 01:49:51 matt Exp	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.26.6.2 2008/01/09 01:49:51 matt Exp $");
+__KERNEL_RCSID(0, "pci_machdep.c,v 1.26.6.2 2008/01/09 01:49:51 matt Exp");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -242,8 +242,7 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 #endif
 
 void
-pci_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
+pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 
 	if (pba->pba_bus == 0)
@@ -376,6 +375,7 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	pcireg_t data;
 	int s;
 
+	KASSERT((reg & 0x3) == 0);
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
 		int bus, dev, fn;
@@ -428,6 +428,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 {
 	int s;
 
+	KASSERT((reg & 0x3) == 0);
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
 		int bus, dev, fn;

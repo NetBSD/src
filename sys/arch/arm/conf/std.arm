@@ -1,0 +1,5 @@
+#	$NetBSD: std.arm,v 1.1.16.2 2008/03/23 02:03:55 matt Exp $
+#
+# standard NetBSD/arm options
+
+options		CPU_IN_CKSUM

@@ -1,8 +1,8 @@
-/*	$NetBSD: itesio_isa.c,v 1.12.2.2 2008/01/09 01:53:13 matt Exp $ */
+/*	itesio_isa.c,v 1.12.2.2 2008/01/09 01:53:13 matt Exp */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2006-2007 Juan Romero Pardines <juan@xtrarom.org>
+ * Copyright (c) 2006-2007 Juan Romero Pardines <xtraeme@netbsd.org>
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.12.2.2 2008/01/09 01:53:13 matt Exp $");
+__KERNEL_RCSID(0, "itesio_isa.c,v 1.12.2.2 2008/01/09 01:53:13 matt Exp");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.12.2.2 2008/01/09 01:53:13 matt Exp
 #define RFACT(x, y)	(RFACT_NONE * ((x) + (y)) / (y))
 
 /* autoconf(9) functions */
-static int	itesio_isa_match(device_t, struct cfdata *, void *);
+static int	itesio_isa_match(device_t, cfdata_t, void *);
 static void	itesio_isa_attach(device_t, device_t, void *);
 static int	itesio_isa_detach(device_t, int);
 
@@ -109,7 +109,7 @@ static const int itesio_vrfact[] = {
 };
 
 static int
-itesio_isa_match(device_t parent, struct cfdata *match, void *aux)
+itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;

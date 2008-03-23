@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.33.2.1 2008/01/09 01:54:03 matt Exp $	*/
+/*	vga_pci.c,v 1.33.2.1 2008/01/09 01:54:03 matt Exp	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.33.2.1 2008/01/09 01:54:03 matt Exp $");
+__KERNEL_RCSID(0, "vga_pci.c,v 1.33.2.1 2008/01/09 01:54:03 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,9 @@ struct vga_pci_softc {
 static int	vga_pci_match(struct device *, struct cfdata *, void *);
 static void	vga_pci_attach(struct device *, struct device *, void *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
-static bool	vga_pci_resume(device_t dv);
+static bool	vga_pci_resume(device_t dv PMF_FN_PROTO);
 
-CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
+CFATTACH_DECL_NEW(vga_pci, sizeof(struct vga_pci_softc),
     vga_pci_match, vga_pci_attach, NULL, NULL);
 
 static int	vga_pci_ioctl(void *, u_long, void *, int, struct lwp *);
@@ -175,12 +175,13 @@ vga_pci_match(struct device *parent, struct cfdata *match,
 static void
 vga_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct vga_pci_softc *psc = (void *) self;
+	struct vga_pci_softc *psc = device_private(self);
 	struct vga_softc *sc = &psc->sc_vga;
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	int bar, reg;
 
+	sc->sc_dev = self;
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
@@ -209,8 +210,8 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (PCI_MAPREG_MEM_TYPE(psc->sc_bars[bar].vb_type) ==
 		    PCI_MAPREG_MEM_TYPE_64BIT) {
 			/* XXX */
-			aprint_error("%s: WARNING: ignoring 64-bit BAR @ 0x%02x\n",
-			    sc->sc_dev.dv_xname, reg);
+			aprint_error_dev(self,
+			    "WARNING: ignoring 64-bit BAR @ 0x%02x\n", reg);
 			bar++;
 			continue;
 		}
@@ -220,8 +221,8 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 		     &psc->sc_bars[bar].vb_base,
 		     &psc->sc_bars[bar].vb_size,
 		     &psc->sc_bars[bar].vb_flags))
-			aprint_error("%s: WARNING: strange BAR @ 0x%02x\n",
-			       sc->sc_dev.dv_xname, reg);
+			aprint_error_dev(self,
+			    "WARNING: strange BAR @ 0x%02x\n", reg);
 	}
 
 	/* XXX Expansion ROM? */
@@ -246,7 +247,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static bool
-vga_pci_resume(device_t dv)
+vga_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	struct vga_pci_softc *sc = device_private(dv);
 

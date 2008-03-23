@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.99.2.2 2008/01/09 01:56:29 matt Exp $	*/
+/*	uipc_usrreq.c,v 1.99.2.2 2008/01/09 01:56:29 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.99.2.2 2008/01/09 01:56:29 matt Exp $");
+__KERNEL_RCSID(0, "uipc_usrreq.c,v 1.99.2.2 2008/01/09 01:56:29 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -655,7 +655,6 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
-	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error)
 		goto bad;

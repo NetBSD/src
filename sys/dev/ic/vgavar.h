@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.26.16.1 2008/01/09 01:53:05 matt Exp $ */
+/* vgavar.h,v 1.26.16.1 2008/01/09 01:53:05 matt Exp */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -80,7 +80,7 @@ struct vga_config {
 };
 
 struct vga_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct vga_config *sc_vc;
 };
 

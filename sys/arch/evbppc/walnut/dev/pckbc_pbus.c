@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pbus.c,v 1.3 2005/12/11 12:17:13 christos Exp $	*/
+/*	pckbc_pbus.c,v 1.3 2005/12/11 12:17:13 christos Exp	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pbus.c,v 1.3 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "pckbc_pbus.c,v 1.3 2005/12/11 12:17:13 christos Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,17 +62,17 @@ struct pckbc_pbus_softc {
 };
 
 
-static int	pckbc_pbus_probe(struct device *, struct cfdata *, void *);
-static void	pckbc_pbus_attach(struct device *, struct device *, void *);
+static int	pckbc_pbus_probe(device_t, cfdata_t, void *);
+static void	pckbc_pbus_attach(device_t, device_t, void *);
 static void	pckbc_pbus_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
-CFATTACH_DECL(pckbc_pbus, sizeof(struct pckbc_pbus_softc),
+CFATTACH_DECL_NEW(pckbc_pbus, sizeof(struct pckbc_pbus_softc),
     pckbc_pbus_probe, pckbc_pbus_attach, NULL, NULL);
 
 int pckbcfound = 0;
 
 int
-pckbc_pbus_probe(struct device *parent, struct cfdata *cf, void *aux)
+pckbc_pbus_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pbus_attach_args *paa = aux;
 
@@ -86,16 +86,17 @@ pckbc_pbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 struct pckbc_softc *pckbc0; /* XXX */
 
 void
-pckbc_pbus_attach(struct device *parent, struct device *self, void *aux)
+pckbc_pbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct pckbc_pbus_softc *msc = (void *)self;
+	struct pckbc_pbus_softc *msc = device_private(self);
 	struct pckbc_softc *sc = &msc->sc_pckbc;
 	struct pbus_attach_args *paa = aux;
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
 	bus_space_tag_t iot = paa->pb_bt;
 	u_long addr = paa->pb_addr;
-	
+
+	sc->sc_dv = self;
 	/*
 	 * Set up IRQs
 	 */
@@ -125,7 +126,7 @@ pckbc_pbus_attach(struct device *parent, struct device *self, void *aux)
 	t->t_sc = sc;
 	sc->id = t;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Finish off the attach. */
 	pckbc_attach(sc);
@@ -142,13 +143,12 @@ pckbc_pbus_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	int irq = msc->sc_irq[slot];
 
 	if (slot > PCKBC_NSLOTS) {
-		printf("pckbc_pbus_intr_establish: attempt to establish "
+		aprint_error("pckbc_pbus_intr_establish: attempt to establish "
 		    "interrupt at slot %d\n", slot);
 		return;
 	}
 		
 	intr_establish(irq, IST_LEVEL, IPL_SERIAL, pckbcintr, sc);
-	printf("%s: %s slot interrupting at irq %d\n", sc->sc_dv.dv_xname,
+	aprint_normal_dev(sc->sc_dv, "%s slot interrupting at irq %d\n",
 	    pckbc_slot_names[slot], irq);
-
 }

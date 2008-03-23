@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.45.6.2 2008/01/09 01:58:06 matt Exp $	*/
+/*	disk.h,v 1.45.6.2 2008/01/09 01:58:06 matt Exp	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,9 @@
  * Disk device structures.
  */
 
+#ifdef _KERNEL
 #include <sys/device.h>
+#endif
 #include <sys/dkio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
@@ -408,7 +410,7 @@ struct disk_geom {
 
 struct disk {
 	TAILQ_ENTRY(disk) dk_link;	/* link in global disklist */
-	char		*dk_name;	/* disk name */
+	const char	*dk_name;	/* disk name */
 	prop_dictionary_t dk_info;	/* reference to disk-info dictionary */
 	int		dk_bopenmask;	/* block devices open */
 	int		dk_copenmask;	/* character devices open */
@@ -423,7 +425,7 @@ struct disk {
 	 */
 	struct io_stats	*dk_stats;
 
-	struct	dkdriver *dk_driver;	/* pointer to driver */
+	const struct dkdriver *dk_driver;	/* pointer to driver */
 
 	/*
 	 * Information required to be the parent of a disk wedge.
@@ -503,7 +505,7 @@ struct proc;
 
 void	disk_attach(struct disk *);
 void	disk_detach(struct disk *);
-void	disk_init(struct disk *, char *, struct dkdriver *);
+void	disk_init(struct disk *, const char *, const struct dkdriver *);
 void	disk_destroy(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);

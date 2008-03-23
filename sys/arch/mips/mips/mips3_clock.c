@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.5.10.2 2008/01/09 01:47:17 matt Exp $	*/
+/*	mips3_clock.c,v 1.5.10.2 2008/01/09 01:47:17 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,10 +78,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.5.10.2 2008/01/09 01:47:17 matt Exp $");
+__KERNEL_RCSID(0, "mips3_clock.c,v 1.5.10.2 2008/01/09 01:47:17 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/timetc.h>
 #include <sys/cpu.h>
 
@@ -96,25 +97,42 @@ __KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.5.10.2 2008/01/09 01:47:17 matt Ex
 void
 mips3_delay(int n)
 {
+	u_long divisor_delay;
 	uint32_t cur, last, delta, usecs;
 
 	last = mips3_cp0_count_read();
 	delta = usecs = 0;
 
+	divisor_delay = curcpu()->ci_divisor_delay;
+	if (divisor_delay == 0) {
+		/*
+		 * Frequency values in curcpu() are not initialized.
+		 * Assume faster frequency since longer delays are harmless.
+		 * Note CPU_MIPS_DOUBLE_COUNT is ignored here.
+		 */
+#define FAST_FREQ	(300 * 1000 * 1000)	/* fast enough? */
+		divisor_delay = FAST_FREQ / (1000 * 1000);
+	}
+
 	while (n > usecs) {
 		cur = mips3_cp0_count_read();
 
-		/* Check to see if the timer has wrapped around. */
-		if (cur < last)
-			delta += ((curcpu()->ci_cycles_per_hz - last) + cur);
-		else
-			delta += (cur - last);
+		/*
+		 * The MIPS3 CP0 counter always counts upto UINT32_MAX,
+		 * so no need to check wrapped around case.
+		 */
+		delta += (cur - last);
 
 		last = cur;
 
-		if (delta >= curcpu()->ci_divisor_delay) {
-			usecs += delta / curcpu()->ci_divisor_delay;
-			delta %= curcpu()->ci_divisor_delay;
+		while (delta >= divisor_delay) {
+			/*
+			 * delta is not so larger than divisor_delay here,
+			 * and using DIV/DIVU ops could be much slower.
+			 * (though longer delay may be harmless)
+			 */
+			usecs++;
+			delta -= divisor_delay;
 		}
 	}
 }

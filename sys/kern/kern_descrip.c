@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.159.8.3 2008/01/09 01:56:00 matt Exp $	*/
+/*	kern_descrip.c,v 1.159.8.3 2008/01/09 01:56:00 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.159.8.3 2008/01/09 01:56:00 matt Exp $");
+__KERNEL_RCSID(0, "kern_descrip.c,v 1.159.8.3 2008/01/09 01:56:00 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,16 +271,16 @@ filedesc_init(void)
 
 	mutex_init(&filelist_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	file_cache = pool_cache_init(sizeof(struct file), 0, 0, 0,
-	    "filepl", NULL, IPL_NONE, file_ctor, file_dtor, NULL);
+	file_cache = pool_cache_init(sizeof(struct file), CACHE_LINE_SIZE, 0,
+	    0, "filepl", NULL, IPL_NONE, file_ctor, file_dtor, NULL);
 	KASSERT(file_cache != NULL);
 
 	cwdi_cache = pool_cache_init(sizeof(struct cwdinfo), 0, 0, 0,
 	    "cwdipl", NULL, IPL_NONE, cwdi_ctor, cwdi_dtor, NULL);
 	KASSERT(cwdi_cache != NULL);
 
-	filedesc0_cache = pool_cache_init(sizeof(struct filedesc0), 0, 0, 0,
-	    "fdescpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	filedesc0_cache = pool_cache_init(sizeof(struct filedesc0),
+	    CACHE_LINE_SIZE, 0, 0, "fdescpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	KASSERT(filedesc0_cache != NULL);
 }
 
@@ -1660,18 +1660,10 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	return (error);
 }
 
-/* ARGSUSED */
 int
-sys_posix_fadvise(struct lwp *l, const struct sys_posix_fadvise_args *uap, register_t *retval)
+do_posix_fadvise(struct lwp *l, int fd, off_t offset, off_t len, int advice,
+	register_t *retval)
 {
-	/* {
-		syscallarg(int) fd;
-		syscallarg(off_t) offset;
-		syscallarg(off_t) len;
-		syscallarg(int) advice;
-	} */
-	const int fd = SCARG(uap, fd);
-	const int advice = SCARG(uap, advice);
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	int error = 0;
@@ -1701,10 +1693,13 @@ sys_posix_fadvise(struct lwp *l, const struct sys_posix_fadvise_args *uap, regis
 		KASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
 		/*
-		 * we ignore offset and size.
+		 * we ignore offset and size.  must lock the file to do
+		 * this, as f_advice is sub-word sized.
 		 */
 
-		fp->f_advice = advice;
+		mutex_enter(&fp->f_lock);
+		fp->f_advice = (u_char)advice;
+		mutex_exit(&fp->f_lock);
 		break;
 
 	case POSIX_FADV_WILLNEED:
@@ -1726,6 +1721,23 @@ out:
 	}
 	*retval = error;
 	return 0;
+}
+
+/* ARGSUSED */
+int
+sys___posix_fadvise50(struct lwp *l,
+	const struct sys___posix_fadvise50_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(int) pad;
+		syscallarg(off_t) offset;
+		syscallarg(off_t) len;
+		syscallarg(int) advice;
+	} */
+
+	return do_posix_fadvise(l, SCARG(uap, fd), SCARG(uap, offset),
+		SCARG(uap, len), SCARG(uap, advice), retval);
 }
 
 /*

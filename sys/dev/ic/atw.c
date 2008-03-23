@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.127.8.2 2008/01/09 01:52:48 matt Exp $  */
+/*	atw.c,v 1.127.8.2 2008/01/09 01:52:48 matt Exp  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.127.8.2 2008/01/09 01:52:48 matt Exp $");
+__KERNEL_RCSID(0, "atw.c,v 1.127.8.2 2008/01/09 01:52:48 matt Exp");
 
 #include "bpfilter.h"
 
@@ -213,9 +213,7 @@ void	atw_txdrain(struct atw_softc *);
 /* Device (de)activation and power state */
 void	atw_disable(struct atw_softc *);
 int	atw_enable(struct atw_softc *);
-void	atw_power(int, void *);
 void	atw_reset(struct atw_softc *);
-void	atw_shutdown(void *);
 
 /* Interrupt handlers */
 void	atw_linkintr(struct atw_softc *, u_int32_t);
@@ -321,9 +319,9 @@ is_running(struct ifnet *ifp)
 }
 
 int
-atw_activate(struct device *self, enum devact act)
+atw_activate(device_t self, enum devact act)
 {
-	struct atw_softc *sc = (struct atw_softc *)self;
+	struct atw_softc *sc = device_private(self);
 	int rv = 0, s;
 
 	s = splnet();
@@ -864,23 +862,11 @@ atw_attach(struct atw_softc *sc)
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
 #endif
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(atw_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    atw_power, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register1(&sc->sc_dev, NULL, NULL, atw_shutdown)) {
+		aprint_error_dev(&sc->sc_dev,
+		    "couldn't establish power handler\n");
+	} else
+		pmf_class_network_register(&sc->sc_dev, &sc->sc_if);
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
 	sc->sc_rxtap.ar_ihdr.it_len = htole16(sizeof(sc->sc_rxtapu));
@@ -2692,11 +2678,6 @@ atw_stop(struct ifnet *ifp, int disable)
 
 	atw_txdrain(sc);
 
-	if (disable) {
-		atw_rxdrain(sc);
-		atw_disable(sc);
-	}
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
@@ -2704,7 +2685,10 @@ atw_stop(struct ifnet *ifp, int disable)
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 
-	if (!disable)
+	if (disable) {
+		atw_rxdrain(sc);
+		atw_disable(sc);
+	} else
 		atw_reset(sc);
 }
 
@@ -2748,6 +2732,8 @@ atw_detach(struct atw_softc *sc)
 	if ((sc->sc_flags & ATWF_ATTACHED) == 0)
 		return (0);
 
+	pmf_device_deregister(&sc->sc_dev);
+
 	callout_stop(&sc->sc_scan_ch);
 
 	ieee80211_ifdetach(&sc->sc_ic);
@@ -2777,9 +2763,6 @@ atw_detach(struct atw_softc *sc)
 	    sizeof(struct atw_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
-
 	if (sc->sc_srom)
 		free(sc->sc_srom, M_DEVBUF);
 
@@ -2789,12 +2772,13 @@ atw_detach(struct atw_softc *sc)
 }
 
 /* atw_shutdown: make sure the interface is stopped at reboot time. */
-void
-atw_shutdown(void *arg)
+bool
+atw_shutdown(device_t self, int flags)
 {
-	struct atw_softc *sc = arg;
+	struct atw_softc *sc = device_private(self);
 
 	atw_stop(&sc->sc_if, 1);
+	return true;
 }
 
 int
@@ -3843,45 +3827,6 @@ atw_start(struct ifnet *ifp)
 		sc->sc_tx_timer = 5;
 		ifp->if_timer = 1;
 	}
-}
-
-/*
- * atw_power:
- *
- *	Power management (suspend/resume) hook.
- */
-void
-atw_power(int why, void *arg)
-{
-	struct atw_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
-	int s;
-
-	DPRINTF(sc, ("%s: atw_power(%d,)\n", sc->sc_dev.dv_xname, why));
-
-	s = splnet();
-	switch (why) {
-	case PWR_STANDBY:
-		/* XXX do nothing. */
-		break;
-	case PWR_SUSPEND:
-		atw_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			atw_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
 }
 
 /*

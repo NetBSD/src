@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isapnp.c,v 1.23.24.1 2007/11/06 23:28:09 matt Exp $	*/
+/*	if_ne_isapnp.c,v 1.23.24.1 2007/11/06 23:28:09 matt Exp	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.23.24.1 2007/11/06 23:28:09 matt Exp $");
+__KERNEL_RCSID(0, "if_ne_isapnp.c,v 1.23.24.1 2007/11/06 23:28:09 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_isapnp.c,v 1.23.24.1 2007/11/06 23:28:09 matt 
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-static int ne_isapnp_match(struct device *, struct cfdata *, void *);
-static void ne_isapnp_attach(struct device *, struct device *, void *);
+static int ne_isapnp_match(device_t, cfdata_t , void *);
+static void ne_isapnp_attach(device_t, device_t, void *);
 
 struct ne_isapnp_softc {
 	struct	ne2000_softc sc_ne2000;		/* real "ne2000" softc */
@@ -83,12 +83,11 @@ struct ne_isapnp_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(ne_isapnp, sizeof(struct ne_isapnp_softc),
+CFATTACH_DECL_NEW(ne_isapnp, sizeof(struct ne_isapnp_softc),
     ne_isapnp_match, ne_isapnp_attach, NULL, NULL);
 
 static int
-ne_isapnp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ne_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
@@ -99,10 +98,7 @@ ne_isapnp_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-ne_isapnp_attach(
-	struct device *parent,
-	struct device *self,
-	void *aux)
+ne_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct ne_isapnp_softc * const isc = device_private(self);
 	struct ne2000_softc * const nsc = &isc->sc_ne2000;
@@ -115,11 +111,12 @@ ne_isapnp_attach(
 	const char *typestr;
 	int netype;
 
-	printf("\n");
+	aprint_normal("\n");
+
+	dsc->sc_dev = self;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: can't configure isapnp resources\n",
-		    dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't configure isapnp resources\n");
 		return;
 	}
 
@@ -130,7 +127,7 @@ ne_isapnp_attach(
 
 	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET,
 	    NE2000_ASIC_NPORTS, &asich)) {
-		printf("%s: can't subregion i/o space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't subregion i/o space\n");
 		return;
 	}
 
@@ -170,11 +167,11 @@ ne_isapnp_attach(
 		break;
 
 	default:
-		printf("%s: where did the card go?!\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "where did the card go?!\n");
 		return;
 	}
 
-	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, typestr);
+	aprint_normal_dev(self, "%s Ethernet\n", typestr);
 
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
@@ -189,6 +186,6 @@ ne_isapnp_attach(
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, dp8390_intr, dsc);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    dsc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 }

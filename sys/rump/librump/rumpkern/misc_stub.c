@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.3.6.1 2008/01/09 01:58:00 matt Exp $	*/
+/*	misc_stub.c,v 1.3.6.1 2008/01/09 01:58:00 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,16 @@
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/module.h>
+#include <sys/cpu.h>
+
+#ifdef __sparc__
+ /* 
+  * XXX Least common denominator - smallest sparc pagesize.
+  * Could just be declared, pooka says rump doesn't use ioctl.
+  */
+int nbpg = 4096;
+#endif
 
 void
 preempt()
@@ -95,4 +105,18 @@ void
 sysctl_unlock(void)
 {
 
+}
+
+void
+module_init_class(modclass_t mc)
+{
+
+}
+
+struct cpu_info *
+cpu_lookup_byindex(u_int index)
+{
+	extern struct cpu_info rump_cpu;
+
+	return &rump_cpu;
 }

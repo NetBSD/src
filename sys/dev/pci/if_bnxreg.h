@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.2.10.1 2008/01/09 01:53:44 matt Exp $	*/
+/*	if_bnxreg.h,v 1.2.10.1 2008/01/09 01:53:44 matt Exp	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.17 2006/11/20 21:26:27 brad Exp $	*/
 
 /*-
@@ -658,7 +658,7 @@ struct flash_spec {
  * PCI registers defined in the PCI 2.2 spec.
  */
 #define BNX_PCI_BAR0			0x10
-#define BNX_PCI_PCIX_CMD		0x42
+#define BNX_PCI_PCIX_CMD		0x40
 
 /****************************************************************************/
 /* Convenience definitions.                                                 */

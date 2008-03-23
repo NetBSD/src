@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.8 2006/01/16 20:30:18 bouyer Exp $	*/
+/*	rside.c,v 1.8 2006/01/16 20:30:18 bouyer Exp	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.8 2006/01/16 20:30:18 bouyer Exp $");
+__KERNEL_RCSID(0, "rside.c,v 1.8 2006/01/16 20:30:18 bouyer Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,10 +121,10 @@ struct rside_softc {
 	struct wdc_regs sc_wdc_regs[2];
 };
 
-static int	rside_probe	(struct device *, struct cfdata *, void *);
-static void	rside_attach	(struct device *, struct device *, void *);
+static int	rside_probe	(device_t, cfdata_t, void *);
+static void	rside_attach	(device_t, device_t, void *);
 
-CFATTACH_DECL(rside, sizeof(struct rside_softc),
+CFATTACH_DECL_NEW(rside, sizeof(struct rside_softc),
 		rside_probe, rside_attach, NULL, NULL);
 
 /*
@@ -147,7 +147,7 @@ const struct {
  */
 
 static int
-rside_probe(struct device *parent, struct cfdata *cf, void *aux)
+rside_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	/* if we're including this, then for now assume it exists */
 	return 1;
@@ -159,16 +159,16 @@ rside_probe(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 static void
-rside_attach(struct device *parent, struct device *self, void *aux)
+rside_attach(device_t parent, device_t self, void *aux)
 {
-	struct rside_softc *sc = (void *)self;
+	struct rside_softc *sc = device_private(self);
 	struct rsbus_attach_args *rs = aux;
 	int channel, i;
 	struct rside_channel *scp;
 	struct ata_channel *cp;
 	struct wdc_regs *wdr;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * we need our own bus tag as the register spacing
@@ -180,6 +180,7 @@ rside_attach(struct device *parent, struct device *self, void *aux)
 	 * cookie.
 	 */
 
+	sc->sc_wdcdev.dev = self;
 	sc->sc_wdcdev.regs = sc->sc_wdc_regs;
 	sc->sc_tag = *rs->sa_iot;
 	sc->sc_tag.bs_cookie = (void *) DRIVE_REGISTER_SPACING_SHIFT;
@@ -233,7 +234,8 @@ rside_attach(struct device *parent, struct device *self, void *aux)
 		if ((scp->rc_ih = intr_claim((channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2),
 						IPL_BIO, "rside", wdcintr, cp)) == NULL)
 			panic("%s: Cannot claim interrupt %d\n",
-			    self->dv_xname, (channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2));
+			    device_xname(self),
+			    (channel == 0 ? IRQ_NEVENT1 : IRQ_NEVENT2));
 
 		wdcattach(cp);
 	}

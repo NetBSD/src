@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.91.2.2 2008/01/09 01:58:27 matt Exp $	*/
+/*	ffs_vnops.c,v 1.91.2.2 2008/01/09 01:58:27 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.91.2.2 2008/01/09 01:58:27 matt Exp $");
+__KERNEL_RCSID(0, "ffs_vnops.c,v 1.91.2.2 2008/01/09 01:58:27 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ffs_read },			/* read */
 	{ &vop_write_desc, ffs_write },			/* write */
-	{ &vop_lease_desc, ufs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
@@ -134,7 +133,6 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsspec_read },		/* read */
 	{ &vop_write_desc, ufsspec_write },		/* write */
-	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -189,7 +187,6 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
 	{ &vop_write_desc, ufsfifo_write },		/* write */
-	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
@@ -469,14 +466,6 @@ ffs_reclaim(void *v)
 	int error;
 
 	fstrans_start(mp, FSTRANS_LAZY);
-	/*
-	 * The inode must be freed and updated before being removed
-	 * from its hash chain.  Other threads trying to gain a hold
-	 * on the inode will be stalled because it is locked (VI_XLOCK).
-	 */
-	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		ffs_vfree(vp, ip->i_number, ip->i_omode);
-	}
 	if ((error = ufs_reclaim(vp)) != 0) {
 		fstrans_done(mp);
 		return (error);
@@ -731,9 +720,14 @@ ffs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
-	struct lock *lkp;
+	struct vnlock *lkp;
 	int flags = ap->a_flags;
 	int result;
+
+	if ((flags & LK_INTERLOCK) != 0) {
+		mutex_exit(&vp->v_interlock);
+		flags &= ~LK_INTERLOCK;
+	}
 
 	/*
 	 * Fake lock during file system suspension.
@@ -741,20 +735,12 @@ ffs_lock(void *v)
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((flags & LK_INTERLOCK) != 0)
-			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
-	KASSERT((flags & ~(LK_SHARED | LK_EXCLUSIVE | LK_SLEEPFAIL |
-	    LK_INTERLOCK | LK_NOWAIT | LK_CANRECURSE)) == 0);
 	for (;;) {
-		if ((flags & LK_INTERLOCK) == 0) {
-			mutex_enter(&vp->v_interlock);
-			flags |= LK_INTERLOCK;
-		}
 		lkp = vp->v_vnlock;
-		result = lockmgr(lkp, flags, &vp->v_interlock);
+		result = vlockmgr(lkp, flags);
 		if (lkp == vp->v_vnlock || result != 0)
 			return result;
 		/*
@@ -763,8 +749,7 @@ ffs_lock(void *v)
 		 * thread slept.  The lock currently held is not the right
 		 * lock.  Release it, and try to get the new lock.
 		 */
-		(void) lockmgr(lkp, LK_RELEASE, NULL);
-		flags &= ~LK_INTERLOCK;
+		(void) vlockmgr(lkp, LK_RELEASE);
 	}
 }
 
@@ -781,18 +766,17 @@ ffs_unlock(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
 
+	KASSERT(ap->a_flags == 0);
+
 	/*
 	 * Fake unlock during file system suspension.
 	 */
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((ap->a_flags & LK_INTERLOCK) != 0)
-			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
-	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock));
+	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
 }
 
 /*
@@ -806,5 +790,5 @@ ffs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockstatus(vp->v_vnlock));
+	return (vlockstatus(vp->v_vnlock));
 }

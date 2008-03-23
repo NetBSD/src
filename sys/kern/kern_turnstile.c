@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.10.8.3 2008/01/09 01:56:12 matt Exp $	*/
+/*	kern_turnstile.c,v 1.10.8.3 2008/01/09 01:56:12 matt Exp	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.10.8.3 2008/01/09 01:56:12 matt Exp $");
+__KERNEL_RCSID(0, "kern_turnstile.c,v 1.10.8.3 2008/01/09 01:56:12 matt Exp");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -359,7 +359,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 		ts->ts_inheritor = NULL;
 		l = curlwp;
 
-		dolock = l->l_mutex == &l->l_cpu->ci_schedstate.spc_lwplock;
+		dolock = l->l_mutex == l->l_cpu->ci_schedstate.spc_lwplock;
 		if (dolock) {
 			lwp_lock(l);
 		}
@@ -426,8 +426,8 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
  *	has received a signal.  It's not a valid action for turnstiles,
  *	since LWPs blocking on a turnstile are not interruptable.
  */
-void
-turnstile_unsleep(lwp_t *l)
+u_int
+turnstile_unsleep(lwp_t *l, bool cleanup)
 {
 
 	lwp_unlock(l);

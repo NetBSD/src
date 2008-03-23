@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.96.8.2 2008/01/09 01:52:08 matt Exp $	*/
+/*	db_command.c,v 1.96.8.2 2008/01/09 01:52:08 matt Exp	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.96.8.2 2008/01/09 01:52:08 matt Exp $");
+__KERNEL_RCSID(0, "db_command.c,v 1.96.8.2 2008/01/09 01:52:08 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -350,7 +350,8 @@ static const struct db_command db_command_table[] = {
 	{ DDB_ADD_CMD("until",	db_trace_until_call_cmd,0,
 	    "Stop at the next call or return instruction.","[/p]",NULL) },
 	{ DDB_ADD_CMD("w",		db_write_cmd,		CS_MORE|CS_SET_DOT,
-	    "Set a watchpoint for a region. ","address[,size]",NULL) },
+	    "Write the expressions at succeeding locations.",
+	    "[/bhl] address expression [expression ...]",NULL) },
 	{ DDB_ADD_CMD("watch",	db_watchpoint_cmd,	CS_MORE,
 	    "Set a watchpoint for a region. ","address[,size]",NULL) },
 	{ DDB_ADD_CMD("whatis",	db_whatis_cmd, 0,
@@ -1361,6 +1362,7 @@ db_sync_cmd(db_expr_t addr, bool have_addr,
 	 * called from cpu_reboot.
 	 */
 	db_recover = 0;
+	panicstr = "dump forced via kernel debugger";
 	cpu_reboot(RB_DUMP, NULL);
 }
 

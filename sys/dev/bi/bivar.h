@@ -1,4 +1,4 @@
-/*	$NetBSD: bivar.h,v 1.12 2005/12/11 12:21:15 christos Exp $ */
+/*	bivar.h,v 1.12 2005/12/11 12:21:15 christos Exp */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -37,7 +37,7 @@
  * per-BI-adapter state.
  */
 struct bi_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;		/* Space tag for the BI bus */
 	bus_dma_tag_t sc_dmat;
 	bus_addr_t sc_addr;		/* Address base address for this bus */

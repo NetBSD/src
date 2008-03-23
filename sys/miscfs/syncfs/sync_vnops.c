@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.17.10.2 2008/01/09 01:57:07 matt Exp $	*/
+/*	sync_vnops.c,v 1.17.10.2 2008/01/09 01:57:07 matt Exp	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.17.10.2 2008/01/09 01:57:07 matt Exp $");
+__KERNEL_RCSID(0, "sync_vnops.c,v 1.17.10.2 2008/01/09 01:57:07 matt Exp");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -158,13 +158,13 @@ sync_fsync(v)
 	 * not already on the sync list.
 	 */
 	mutex_enter(&mountlist_lock);
-	if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock) == 0) {
+	if (vfs_trybusy(mp, RW_WRITER, &mountlist_lock) == 0) {
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
 		VFS_SYNC(mp, MNT_LAZY, ap->a_cred);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 	} else
 		mutex_exit(&mountlist_lock);
 	return (0);
@@ -201,14 +201,7 @@ int
 sync_print(v)
 	void *v;
 {
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 
-	printf("syncer vnode");
-	if (vp->v_vnlock != NULL)
-		lockmgr_printinfo(vp->v_vnlock);
-	printf("\n");
+	printf("syncer vnode\n");
 	return (0);
 }

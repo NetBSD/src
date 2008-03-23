@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4.4.3 2008/01/09 01:49:54 matt Exp $	*/
+/*	cpu.c,v 1.4.4.3 2008/01/09 01:49:54 matt Exp	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.4.3 2008/01/09 01:49:54 matt Exp $");
+__KERNEL_RCSID(0, "cpu.c,v 1.4.4.3 2008/01/09 01:49:54 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -120,15 +120,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.4.3 2008/01/09 01:49:54 matt Exp $");
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
-int     cpu_match(struct device *, struct cfdata *, void *);
-void    cpu_attach(struct device *, struct device *, void *);
+int     cpu_match(device_t, cfdata_t, void *);
+void    cpu_attach(device_t, device_t, void *);
 
-static bool	cpu_suspend(device_t);
-static bool	cpu_resume(device_t);
+static bool	cpu_suspend(device_t PMF_FN_PROTO);
+static bool	cpu_resume(device_t PMF_FN_PROTO);
 
 struct cpu_softc {
-	struct device sc_dev;		/* device tree glue */
+	device_t sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
+	bool sc_wasonline;
 };
 
 int mp_cpu_start(struct cpu_info *, paddr_t); 
@@ -137,7 +138,7 @@ const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
 
 
-CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
+CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
 
 /*
@@ -148,7 +149,7 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
 #ifdef TRAPLOG
 struct tlog tlog_primary;
 #endif
-struct cpu_info cpu_info_primary = {
+struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
@@ -220,8 +221,7 @@ cpu_init_first(void)
 #endif
 
 int
-cpu_match(struct device *parent, struct cfdata *match,
-    void *aux)
+cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -264,14 +264,17 @@ cpu_vm_init(struct cpu_info *ci)
 
 
 void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
-	struct cpu_softc *sc = (void *) self;
+	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
+	uintptr_t ptr;
 #if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
 #endif
+
+	sc->sc_dev = self;
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
@@ -279,7 +282,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		aprint_naive(": Application Processor\n");
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
+		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		    M_DEVBUF, M_WAITOK);
+		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
+		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL) {
@@ -301,7 +307,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			printf("\n");
 			panic("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
-			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
+			    device_xname(sc->sc_dev), lapic_cpu_number(),
+			    cpunum);
 		}
 #endif
 	}
@@ -327,7 +334,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		if (error != 0) {
 			aprint_normal("\n");
 			aprint_error("%s: mi_cpu_attach failed with %d\n",
-			    sc->sc_dev.dv_xname, error);
+			    device_xname(sc->sc_dev), error);
 			return;
 		}
 #endif
@@ -369,6 +376,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		 * Enable local apic
 		 */
 		lapic_enable();
+		lapic_set_lvt();
 		lapic_calibrate_timer(ci);
 #endif
 #if NIOAPIC > 0
@@ -396,7 +404,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		aprint_normal("%s: not started\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: not started\n", device_xname(sc->sc_dev));
 #endif
 		break;
 
@@ -417,7 +425,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 		aprint_verbose(
 		    "%s: idle lwp at %p, idle sp at %p\n",
-		    sc->sc_dev.dv_xname, l,
+		    device_xname(sc->sc_dev), l,
 #ifdef i386
 		    (void *)l->l_addr->u_pcb.pcb_esp
 #else
@@ -899,9 +907,23 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 }
 #endif	/* __x86_64__ */
 
+void
+cpu_offline_md(void)
+{
+	int s;
+
+	s = splhigh();
+#ifdef __i386__
+	npxsave_cpu(true);
+#else
+	fpusave_cpu(true);
+#endif
+	splx(s);
+}
+
 /* XXX joerg restructure and restart CPUs individually */
 static bool
-cpu_suspend(device_t dv)
+cpu_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
@@ -914,18 +936,26 @@ cpu_suspend(device_t dv)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	mutex_enter(&cpu_lock);
-	err = cpu_setonline(ci, false);
-	mutex_exit(&cpu_lock);
-	return err == 0;
+	sc->sc_wasonline = !(ci->ci_schedstate.spc_flags & SPCF_OFFLINE);
+
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, false);
+		mutex_exit(&cpu_lock);
+	
+		if (err)
+			return false;
+	}
+
+	return true;
 }
 
 static bool
-cpu_resume(device_t dv)
+cpu_resume(device_t dv PMF_FN_ARGS)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
-	int err;
+	int err = 0;
 
 	if (ci->ci_flags & CPUF_PRIMARY)
 		return true;
@@ -934,9 +964,11 @@ cpu_resume(device_t dv)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	mutex_enter(&cpu_lock);
-	err = cpu_setonline(ci, true);
-	mutex_exit(&cpu_lock);
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, true);
+		mutex_exit(&cpu_lock);
+	}
 
 	return err == 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.55.8.3 2008/01/09 01:52:50 matt Exp $	*/
+/*	comvar.h,v 1.55.8.3 2008/01/09 01:52:50 matt Exp	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -143,7 +143,7 @@ struct com_regs {
 #endif
 
 struct com_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_si;
 	struct tty *sc_tty;
 
@@ -213,21 +213,11 @@ struct com_softc {
 	void (*disable)(struct com_softc *);
 	int enabled;
 
-#ifdef __HAVE_TIMECOUNTER
 	struct pps_state sc_pps_state;	/* pps state */
-#else /* !__HAVE_TIMECOUNTER */
-	/* PPS signal on DCD, with or without inkernel clock disciplining */
-	u_char	sc_ppsmask;			/* pps signal mask */
-	u_char	sc_ppsassert;			/* pps leading edge */
-	u_char	sc_ppsclear;			/* pps trailing edge */
-	pps_info_t ppsinfo;
-	pps_params_t ppsparam;
-#endif /* !__HAVE_TIMECOUNTER */
 
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
 #endif
-	void			*sc_powerhook;	/* power management hook */
 	kmutex_t		sc_lock;
 };
 
@@ -236,9 +226,10 @@ int comintr(void *);
 void com_attach_subr(struct com_softc *);
 int com_probe_subr(struct com_regs *);
 int com_detach(struct device *, int);
-bool com_resume(device_t);
+bool com_resume(device_t PMF_FN_PROTO);
 int com_activate(struct device *, enum devact);
-void com_cleanup(void *);
+bool com_cleanup(device_t, int);
+bool com_suspend(device_t PMF_FN_PROTO);
 
 #ifndef IPL_SERIAL
 #define	IPL_SERIAL	IPL_TTY

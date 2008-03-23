@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.88.2.2 2008/01/09 01:52:59 matt Exp $	*/
+/*	rtl8169.c,v 1.88.2.2 2008/01/09 01:52:59 matt Exp	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.88.2.2 2008/01/09 01:52:59 matt Exp $");
+__KERNEL_RCSID(0, "rtl8169.c,v 1.88.2.2 2008/01/09 01:52:59 matt Exp");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -165,9 +165,6 @@ static void re_watchdog(struct ifnet *);
 
 static int re_enable(struct rtk_softc *);
 static void re_disable(struct rtk_softc *);
-
-static int re_ifmedia_upd(struct ifnet *);
-static void re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static int re_gmii_readreg(struct device *, int, int);
 static void re_gmii_writereg(struct device *, int, int, int);
@@ -685,7 +682,7 @@ re_attach(struct rtk_softc *sc)
 	for (i = 0; i < RE_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
 		    round_page(IP_MAXPACKET),
-		    RE_TX_DESC_CNT(sc) - RE_NTXDESC_RSVD, RE_TDESC_CMD_FRAGLEN,
+		    RE_TX_DESC_CNT(sc), RE_TDESC_CMD_FRAGLEN,
 		    0, 0, &sc->re_ldata.re_txq[i].txq_dmamap);
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX\n",
@@ -781,8 +778,9 @@ re_attach(struct rtk_softc *sc)
 	sc->mii.mii_readreg = re_miibus_readreg;
 	sc->mii.mii_writereg = re_miibus_writereg;
 	sc->mii.mii_statchg = re_miibus_statchg;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, re_ifmedia_upd,
-	    re_ifmedia_sts);
+	sc->ethercom.ec_mii = &sc->mii;
+	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	ifmedia_set(&sc->mii.mii_media, IFM_ETHER | IFM_AUTO);
@@ -1089,12 +1087,12 @@ re_rxeof(struct rtk_softc *sc)
 		RE_RXDESCSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 		rxstat = le32toh(cur_rx->re_cmdstat);
+		rxvlan = le32toh(cur_rx->re_vlanctl);
 		RE_RXDESCSYNC(sc, i, BUS_DMASYNC_PREREAD);
 		if ((rxstat & RE_RDESC_STAT_OWN) != 0) {
 			break;
 		}
 		total_len = rxstat & sc->re_rxlenmask;
-		rxvlan = le32toh(cur_rx->re_vlanctl);
 		rxs = &sc->re_ldata.re_rxsoft[i];
 		m = rxs->rxs_mbuf;
 
@@ -1311,7 +1309,7 @@ re_txeof(struct rtk_softc *sc)
 			 * them out. This only seems to be required with
 			 * the PCIe devices.
 			 */
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 		}
 	} else
 		ifp->if_timer = 0;
@@ -1460,7 +1458,7 @@ re_start(struct ifnet *ifp)
 	struct re_txq		*txq;
 	struct re_desc		*d;
 	struct m_tag		*mtag;
-	uint32_t		cmdstat, re_flags;
+	uint32_t		cmdstat, re_flags, vlanctl;
 	int			ofree, idx, error, nsegs, seg;
 	int			startdesc, curdesc, lastdesc;
 	bool			pad;
@@ -1475,7 +1473,7 @@ re_start(struct ifnet *ifp)
 			break;
 
 		if (sc->re_ldata.re_txq_free == 0 ||
-		    sc->re_ldata.re_tx_free <= RE_NTXDESC_RSVD) {
+		    sc->re_ldata.re_tx_free == 0) {
 			/* no more free slots left */
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -1537,7 +1535,7 @@ re_start(struct ifnet *ifp)
 			nsegs++;
 		}
 
-		if (nsegs > sc->re_ldata.re_tx_free - RE_NTXDESC_RSVD) {
+		if (nsegs > sc->re_ldata.re_tx_free) {
 			/*
 			 * Not enough free descriptors to transmit this packet.
 			 */
@@ -1554,6 +1552,16 @@ re_start(struct ifnet *ifp)
 		 */
 		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Set up hardware VLAN tagging. Note: vlan tag info must
+		 * appear in all descriptors of a multi-descriptor
+		 * transmission attempt.
+		 */
+		vlanctl = 0;
+		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL)
+			vlanctl = bswap16(VLAN_TAG_VALUE(mtag)) |
+			    RE_TDESC_VLANCTL_TAG;
 
 		/*
 		 * Map the segment array into descriptors.
@@ -1585,7 +1593,7 @@ re_start(struct ifnet *ifp)
 			}
 #endif
 
-			d->re_vlanctl = 0;
+			d->re_vlanctl = htole32(vlanctl);
 			re_set_bufaddr(d, map->dm_segs[seg].ds_addr);
 			cmdstat = re_flags | map->dm_segs[seg].ds_len;
 			if (seg == 0)
@@ -1606,7 +1614,7 @@ re_start(struct ifnet *ifp)
 			bus_addr_t paddaddr;
 
 			d = &sc->re_ldata.re_tx_list[curdesc];
-			d->re_vlanctl = 0;
+			d->re_vlanctl = htole32(vlanctl);
 			paddaddr = RE_TXPADDADDR(sc);
 			re_set_bufaddr(d, paddaddr);
 			cmdstat = re_flags |
@@ -1621,17 +1629,6 @@ re_start(struct ifnet *ifp)
 			curdesc = RE_NEXT_TX_DESC(sc, curdesc);
 		}
 		KASSERT(lastdesc != -1);
-
-		/*
-		 * Set up hardware VLAN tagging. Note: vlan tag info must
-		 * appear in the first descriptor of a multi-descriptor
-		 * transmission attempt.
-		 */
-		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL) {
-			sc->re_ldata.re_tx_list[startdesc].re_vlanctl =
-			    htole32(bswap16(VLAN_TAG_VALUE(mtag)) |
-			    RE_TDESC_VLANCTL_TAG);
-		}
 
 		/* Transfer ownership of packet to the chip. */
 
@@ -1674,7 +1671,7 @@ re_start(struct ifnet *ifp)
 		if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
 			CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
 		else
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 
 		/*
 		 * Use the countdown timer for interrupt moderation.
@@ -1891,34 +1888,6 @@ re_init(struct ifnet *ifp)
 	return error;
 }
 
-/*
- * Set media options.
- */
-static int
-re_ifmedia_upd(struct ifnet *ifp)
-{
-	struct rtk_softc	*sc;
-
-	sc = ifp->if_softc;
-
-	return mii_mediachg(&sc->mii);
-}
-
-/*
- * Report current media status.
- */
-static void
-re_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct rtk_softc	*sc;
-
-	sc = ifp->if_softc;
-
-	mii_pollstat(&sc->mii);
-	ifmr->ifm_active = sc->mii.mii_media_active;
-	ifmr->ifm_status = sc->mii.mii_media_status;
-}
-
 static int
 re_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
@@ -1930,21 +1899,23 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > RE_JUMBO_MTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->mii.mii_media, command);
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				rtk_setmulti(sc);
-			error = 0;
-		}
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command == SIOCSIFCAP)
+			error = (*ifp->if_init)(ifp);
+		else if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING)
+			rtk_setmulti(sc);
 		break;
 	}
 

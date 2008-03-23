@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.481.2.2 2008/01/09 01:54:46 matt Exp $
+usbdevs,v 1.481.2.2 2008/01/09 01:54:46 matt Exp
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -350,6 +350,7 @@ vendor BECKHOFF		0x0978	Beckhoff
 vendor MINDSATWORK	0x097a	Minds At Work
 vendor POINTCHIPS	0x09a6	PointChips
 vendor INTERSIL		0x09aa	Intersil
+vendor TRIPPLITE2	0x09ae	Tripp Lite
 vendor ALTIUS		0x09b3	Altius Solutions
 vendor ARRIS		0x09c1	Arris Interactive
 vendor ACTIVCARD	0x09c3	ACTIVCARD
@@ -662,7 +663,9 @@ product ANCHOR EZUSB		0x2131	EZUSB
 product ANCHOR EZLINK		0x2720	EZLINK
 
 /* AnyDATA Inc. products */
+product ANYDATA A2502		0x6202	NTT DoCoMo A2502
 product ANYDATA ADU_E100H	0x6501	ADU-E100H
+product ANYDATA ADU_500A	0x6502	ADU-E500A
 
 /* AOX, Inc. products */
 product AOX USB101		0x0008	USB ethernet controller engine
@@ -905,6 +908,7 @@ product DELL BC02		0x8000	BC02 Bluetooth USB Adapter
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
 product DELL TM350		0x8103	TrueMobile 350 Bluetooth USB Adapter
 product DELL HSDPA		0x8137	Dell/Novatel Wireless HSDPA Modem
+product DELL W5500		0x8155	Dell Wireless W5500 HSDPA Modem
 
 /* DeLorme products */
 product DELORME EARTHMATE	0x0100	Earthmate GPS
@@ -1650,8 +1654,13 @@ product NOVATECH RT2573		0x9021	RT2573
 
 /* NovAtel products */
 product NOVATEL FLEXPACKGPS	0x0100	NovAtel FlexPack GPS receiver
-product NOVATEL2 CDMA_MODEM	0x1110	Novatel Wireless Merlin CDMA
+product NOVATEL2 EXPRESSCARD	0x1100	ExpressCard 3G
+product NOVATEL2 MERLINV620	0x1110	Novatel Wireless Merlin CDMA
+product NOVATEL2 S720		0x1130	S720
 product NOVATEL2 MERLINU740	0x1400	Novatel Merlin U740
+product NOVATEL2 XU870		0x1430	XU870
+product NOVATEL2 ES620		0x2100	ES620 CDMA
+product NOVATEL2 U720		0x2110	U720
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
@@ -1829,6 +1838,7 @@ product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
 /* Qualcomm products */
 product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
+product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
 
 /* Qualcomm Kyocera products */
@@ -1939,6 +1949,7 @@ product SGI SN1_L1_SC		0x1234	SN1 L1 System Controller
 
 /* ShanTou products */
 product SHANTOU ST268_USB_NIC	0x0268  ST268 USB NIC
+product SHANTOU ADM8515		0x8515	ADM8515 Ethernet
 
 /* Shark products */
 product SHARK PA		0x0400	Pocket Adapter
@@ -1976,7 +1987,17 @@ product SIEMENS2 WL54G		0x3c06	54g USB Network Adapter
 
 /* Sierra Wireless products */
 product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
+product SIERRA AIRCARD595	0x0019	Sierra Wireless AirCard 595
 product SIERRA MINI5725		0x0220	Sierra Wireless miniPCI 5275
+product SIERRA EM5625		0x0017	EM5625
+product SIERRA MC5720		0x0018	MC5720
+product SIERRA MC5725		0x0020	MC5725
+product SIERRA MC8755_2		0x6802	MC8755
+product SIERRA MC8765		0x6803	MC8765
+product SIERRA MC8755		0x6804	MC8755 HSDPA
+product SIERRA MC8775		0x6812	MC8775 HSDPA
+product SIERRA MC8755_3		0x6813	MC8755 HSDPA
+product SIERRA AIRCARD875	0x6820	Aircard 875 HSDPA
 
 /* Sigmatel products */
 product SIGMATEL SIR4116	0x4116	StIR4116 SIR
@@ -2182,6 +2203,7 @@ product TREK THUMBDRIVE_8MB	0x9988	ThumbDrive 8MB
 
 /* Tripp-Lite products */
 product TRIPPLITE U209		0x2008	U209 Serial adapter
+product TRIPPLITE2 UPS		0x1007	Tripp Lite UPS
 
 /* Trumpion products */
 product TRUMPION T33521		0x1003	USB/MP3 decoder

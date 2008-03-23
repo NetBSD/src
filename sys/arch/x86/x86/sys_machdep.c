@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2.12.2 2008/01/09 01:49:59 matt Exp $	*/
+/*	sys_machdep.c,v 1.2.12.2 2008/01/09 01:49:59 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2.12.2 2008/01/09 01:49:59 matt Exp $");
+__KERNEL_RCSID(0, "sys_machdep.c,v 1.2.12.2 2008/01/09 01:49:59 matt Exp");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -95,10 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.2.12.2 2008/01/09 01:49:59 matt Ex
 #ifdef PERFCTRS
 #include <machine/pmc.h>
 #endif
-
-/* XXX needs changes from vmlocking branch */
-#define	mutex_enter(x)	/* nothing */
-#define	mutex_exit(x)	/* nothing */
 
 extern struct vm_map *kernel_map;
 

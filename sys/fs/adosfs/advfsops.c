@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.41.4.2 2008/01/09 01:55:39 matt Exp $	*/
+/*	advfsops.c,v 1.41.4.2 2008/01/09 01:55:39 matt Exp	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.41.4.2 2008/01/09 01:55:39 matt Exp $");
+__KERNEL_RCSID(0, "advfsops.c,v 1.41.4.2 2008/01/09 01:55:39 matt Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.41.4.2 2008/01/09 01:55:39 matt Exp $
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/disklabel.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <sys/fcntl.h>
 #include <sys/namei.h>
@@ -176,18 +177,7 @@ adosfs_mountfs(devvp, mp, l)
 	part = DISKPART(devvp->v_rdev);
 	amp = NULL;
 
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return (error);
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0))
-	    != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	/*
@@ -401,6 +391,7 @@ adosfs_vget(mp, an, vpp)
 	ap->amp = amp;
 	ap->block = an;
 	ap->nwords = amp->nwords;
+	genfs_node_init(vp, &adosfs_genfsops);
 	adosfs_ainshash(amp, ap);
 
 	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
@@ -581,7 +572,6 @@ adosfs_vget(mp, an, vpp)
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
 
-	genfs_node_init(vp, &adosfs_genfsops);
 	*vpp = vp;
 	brelse(bp, 0);
 	uvm_vnp_setsize(vp, ap->fsize);
@@ -837,6 +827,8 @@ struct vfsops adosfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	adosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

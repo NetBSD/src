@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.11.2.2 2008/01/09 01:57:59 matt Exp $	*/
+/*	emul.c,v 1.11.2.2 2008/01/09 01:57:59 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,11 +54,7 @@
 #include "rump_private.h"
 #include "rumpuser.h"
 
-#ifdef __HAVE_TIMECOUNTER
 time_t time_second = 1;
-#else
-volatile struct timeval time = { 1, 0 };
-#endif
 
 kmutex_t proclist_mutex;
 kmutex_t proclist_lock;
@@ -67,16 +63,15 @@ struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
 struct vm_map *kernel_map;
-int physmem;
+int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
+int hardclock_ticks;
 
-MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 char hostname[MAXHOSTNAMELEN];
@@ -89,6 +84,11 @@ u_long	bufmem;
 u_int	nbuf;
 
 const char *panicstr;
+const char ostype[] = "NetBSD";
+const char osrelease[] = "999"; /* paradroid 4evah */
+const char kernel_ident[] = "RUMP-ROAST";
+const char *domainname;
+int domainnamelen;
 
 const struct filterops seltrue_filtops;
 
@@ -135,6 +135,16 @@ printf_nolog(const char *fmt, ...)
 	va_end(ap);
 }
 
+void
+aprint_normal(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
@@ -163,7 +173,8 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 
 	strlcpy(kaddr, uaddr, len);
-	*done = strlen(kaddr);
+	if (done)
+		*done = strlen(kaddr)+1; /* includes termination */
 	return 0;
 }
 
@@ -351,6 +362,14 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
+#ifdef RUMP_WITHOUT_THREADS
+	/* XXX: fake it */
+	if (strcmp(fmt, "vrele") == 0)
+		return 0;
+	else
+		panic("threads not available, undef RUMP_WITHOUT_THREADS");
+#endif
+
 	KASSERT(fmt != NULL);
 	if (ci != NULL)
 		panic("%s: bounded threads not supported", __func__);
@@ -468,4 +487,28 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 		return error;
 
 	return 0;
+}
+
+void
+suspendsched()
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+yield(void)
+{
+
+	rumpuser_yield();
+}
+
+
+u_int
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
 }

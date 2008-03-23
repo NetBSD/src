@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.81.14.2 2007/10/12 02:22:21 matt Exp $	*/
+/*	cpufunc.c,v 1.81.14.2 2007/10/12 02:22:21 matt Exp	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.81.14.2 2007/10/12 02:22:21 matt Exp $");
+__KERNEL_RCSID(0, "cpufunc.c,v 1.81.14.2 2007/10/12 02:22:21 matt Exp");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2283,11 +2283,17 @@ arm10_setup(args)
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
 
+	if (vector_page == ARM_VECTORS_HIGH)
+		cpuctrl |= CPU_CONTROL_VECRELOC;
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
 	/* Now really make sure they are clean.  */
 	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+
+	/* Allow detection code to find the VFP if it's fitted.  */
+	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;

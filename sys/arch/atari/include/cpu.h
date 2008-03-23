@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58.2.1 2007/11/06 23:15:25 matt Exp $	*/
+/*	cpu.h,v 1.58.2.1 2007/11/06 23:15:25 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -203,11 +203,6 @@ extern int machineid;
 #define CPU_CONSDEV	1	/* dev_t: console terminal device */
 #define CPU_MAXID	2	/* number of valid machdep ids */
 
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
-
 #ifdef _KERNEL
 /*
  * Prototypes from atari_init.c
@@ -219,11 +214,6 @@ int	cpu_dumpsize __P((void));
  * Prototypes from autoconf.c
  */
 void	config_console __P((void));
-
-/*
- * Prototypes from clock.c
- */
-long	clkread __P((void));
 
 /*
  * Prototypes from fpu.c

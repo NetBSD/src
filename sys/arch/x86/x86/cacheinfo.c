@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.10.32.2 2008/01/09 01:49:53 matt Exp $	*/
+/*	cacheinfo.c,v 1.10.32.2 2008/01/09 01:49:53 matt Exp	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.10.32.2 2008/01/09 01:49:53 matt Exp $");
+__KERNEL_RCSID(0, "cacheinfo.c,v 1.10.32.2 2008/01/09 01:49:53 matt Exp");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -180,8 +180,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	 * Get extended values for K8 and up.
 	 */
 	if (family == 0xf) {
-		family += (ci->ci_signature >> 20) & 0xff;
-		model += (ci->ci_signature >> 16) & 0xf;
+		family += CPUID2EXTFAMILY(ci->ci_signature);
+		model += CPUID2EXTMODEL(ci->ci_signature);
 	}
 
 	/*

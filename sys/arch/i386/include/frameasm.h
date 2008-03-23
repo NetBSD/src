@@ -1,10 +1,30 @@
-/*	$NetBSD: frameasm.h,v 1.7.24.2 2008/01/09 01:46:42 matt Exp $	*/
+/*	frameasm.h,v 1.7.24.2 2008/01/09 01:46:42 matt Exp	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#include "opt_xen.h"
+#endif
+
+#if !defined(XEN)
+#define CLI(reg)        cli
+#define STI(reg)        sti
+#else
+/* XXX assym.h */
+#define TRAP_INSTR      int $0x82
+#define XEN_BLOCK_EVENTS(reg)   movb $1,EVTCHN_UPCALL_MASK(reg)
+#define XEN_UNBLOCK_EVENTS(reg) movb $0,EVTCHN_UPCALL_MASK(reg)
+#define XEN_TEST_PENDING(reg)   testb $0xFF,EVTCHN_UPCALL_PENDING(reg)
+
+#define CLI(reg)        movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+                        XEN_BLOCK_EVENTS(reg)
+#define STI(reg)        movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+			XEN_UNBLOCK_EVENTS(reg)
+#define STIC(reg)       movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+			XEN_UNBLOCK_EVENTS(reg)  ; \
+			testb $0xff,EVTCHN_UPCALL_PENDING(reg)
 #endif
 
 #ifndef TRAPLOG
@@ -102,10 +122,7 @@
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
 
 #define	CHECK_ASTPENDING(reg)	movl	CPUVAR(CURLWP),reg	; \
-				cmpl	$0, reg			; \
-				je	1f			; \
-				cmpl	$0, L_MD_ASTPENDING(reg); \
-				1:
+				cmpl	$0, L_MD_ASTPENDING(reg)
 #define	CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
 
 /*

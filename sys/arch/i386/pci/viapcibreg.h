@@ -1,4 +1,4 @@
-/* $NetBSD: viapcibreg.h,v 1.1 2006/03/17 12:19:49 jmcneill Exp $ */
+/* viapcibreg.h,v 1.1 2006/03/17 12:19:49 jmcneill Exp */
 
 /*-
  * Copyright (c) 2005, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
 #define	SMB_BASE2		0x80
 #define	SMB_BASE3		0xd0
 
-#define	SMB_HOST_CONFIG		0xd2
+#define	SMB_HOST_CONFIG		0xd0 /* Lower word, actually */
 #define	SMB_REVISION		(SMB_HOST_CONFIG + 4)
 
 /* SMBus register offsets; from Linux and FreeBSD */

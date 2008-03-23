@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.6.50.1 2007/11/06 23:20:37 matt Exp $	*/
+/*	openpicreg.h,v 1.6.50.1 2007/11/06 23:20:37 matt Exp	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -69,7 +69,12 @@
 
 /*
  * INTERRUPT SOURCE register (IDU base + 0x10000)
+ * ABOVE ONLY TRUE FOR NON-DISTRIBUTED OPENPICS!!
  */
+
+#define OPENPIC_DSRC_VECTOR_OFFSET(irq)		((irq) * 0x20)
+#define OPENPIC_DSRC_IDEST_OFFSET(irq)		((irq) * 0x20 + 0x10)
+
 
 /* interrupt vector/priority reg */
 #ifndef OPENPIC_SRC_VECTOR

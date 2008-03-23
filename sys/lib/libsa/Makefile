@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59.34.1 2008/01/09 01:56:35 matt Exp $
+#	Makefile,v 1.59.34.1 2008/01/09 01:56:35 matt Exp
 
 LIB=	sa
 NOPIC=	# defined
@@ -19,8 +19,8 @@ CPPFLAGS=	-I${SADIR} ${SACPPFLAGS} ${SAMISCCPPFLAGS} \
 # stand routines
 SRCS+=	alloc.c bcopy.c bzero.c errno.c exit.c exec.c files.c \
 	getfile.c gets.c globals.c memcmp.c memcpy.c memmove.c memset.c \
-	panic.c printf.c qsort.c snprintf.c sprintf.c strerror.c subr_prf.c \
-	twiddle.c vsprintf.c checkpasswd.c
+	panic.c printf.c qsort.c snprintf.c sprintf.c strchr.c strerror.c \
+	subr_prf.c twiddle.c vsprintf.c checkpasswd.c
 
 # io routines
 SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
@@ -52,7 +52,7 @@ SRCS+=	cd9660.c
 SRCS+=	ustarfs.c
 SRCS+=	dosfs.c
 SRCS+=	ext2fs.c
-# for historic comparibility ufs == ffsv1
+# for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
 # only needed during build

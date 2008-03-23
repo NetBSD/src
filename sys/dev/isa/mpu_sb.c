@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_sb.c,v 1.11.24.1 2007/11/06 23:27:53 matt Exp $	*/
+/*	mpu_sb.c,v 1.11.24.1 2007/11/06 23:27:53 matt Exp	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.11.24.1 2007/11/06 23:27:53 matt Exp $");
+__KERNEL_RCSID(0, "mpu_sb.c,v 1.11.24.1 2007/11/06 23:27:53 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,18 +57,17 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.11.24.1 2007/11/06 23:27:53 matt Exp $"
 #include <dev/isa/isavar.h>
 #include <dev/isa/sbdspvar.h>
 
-int	mpu_sb_match(struct device *, struct cfdata *, void *);
-void	mpu_sb_attach(struct device *, struct device *, void *);
+int	mpu_sb_match(device_t, cfdata_t, void *);
+void	mpu_sb_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(mpu_sb, sizeof(struct mpu_softc),
     mpu_sb_match, mpu_sb_attach, NULL, NULL);
 
 int
-mpu_sb_match(struct device *parent, struct cfdata *match,
-    void *aux)
+mpu_sb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
-	struct sbdsp_softc *ssc = (struct sbdsp_softc *)parent;
+	struct sbdsp_softc *ssc = device_private(parent);
 	struct mpu_softc sc;
 
 	if (aa->type != AUDIODEV_TYPE_MPU)
@@ -80,12 +79,12 @@ mpu_sb_match(struct device *parent, struct cfdata *match,
 }
 
 void
-mpu_sb_attach(struct device *parent, struct device *self, void *aux)
+mpu_sb_attach(device_t parent, device_t self, void *aux)
 {
-	struct sbdsp_softc *ssc = (struct sbdsp_softc *)parent;
-	struct mpu_softc *sc = (struct mpu_softc *)self;
+	struct sbdsp_softc *ssc = device_private(parent);
+	struct mpu_softc *sc = device_private(self);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->ioh = ssc->sc_mpu_ioh;
 	sc->iot = ssc->sc_mpu_iot;

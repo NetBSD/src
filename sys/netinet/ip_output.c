@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.180.8.2 2008/01/09 01:57:28 matt Exp $	*/
+/*	ip_output.c,v 1.180.8.2 2008/01/09 01:57:28 matt Exp	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.180.8.2 2008/01/09 01:57:28 matt Exp $");
+__KERNEL_RCSID(0, "ip_output.c,v 1.180.8.2 2008/01/09 01:57:28 matt Exp");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -260,28 +260,7 @@ ip_output(struct mbuf *m0, ...)
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
 		ip->ip_off = htons(0);
-		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
-			ip->ip_id = 0;
-		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
-			ip->ip_id = ip_newid();
-		} else {
-
-			/*
-			 * TSO capable interfaces (typically?) increment
-			 * ip_id for each segment.
-			 * "allocate" enough ids here to increase the chance
-			 * for them to be unique.
-			 *
-			 * note that the following calculation is not
-			 * needed to be precise.  wasting some ip_id is fine.
-			 */
-
-			unsigned int segsz = m->m_pkthdr.segsz;
-			unsigned int datasz = ntohs(ip->ip_len) - hlen;
-			unsigned int num = howmany(datasz, segsz);
-
-			ip->ip_id = ip_newid_range(num);
-		}
+		/* ip->ip_id filled in after we find out source ia */
 		ip->ip_hl = hlen >> 2;
 		ipstat.ips_localout++;
 	} else {
@@ -307,9 +286,9 @@ ip_output(struct mbuf *m0, ...)
 	else if (dst->sin_family != AF_INET ||
 		 !in_hosteq(dst->sin_addr, ip->ip_dst))
 		rtcache_free(ro);
-	else
-		rtcache_check(ro);
-	if ((rt = rtcache_getrt(ro)) == NULL) {
+
+	if ((rt = rtcache_validate(ro)) == NULL &&
+	    (rt = rtcache_update(ro, 1)) == NULL) {
 		dst = &u.dst4;
 		rtcache_setdst(ro, &u.dst);
 	}
@@ -334,8 +313,8 @@ ip_output(struct mbuf *m0, ...)
 		IFP_TO_IA(ifp, ia);
 	} else {
 		if (rt == NULL)
-			rtcache_init(ro);
-		if ((rt = rtcache_getrt(ro)) == NULL) {
+			rt = rtcache_init(ro);
+		if (rt == NULL) {
 			ipstat.ips_noroute++;
 			error = EHOSTUNREACH;
 			goto bad;
@@ -497,6 +476,30 @@ ip_output(struct mbuf *m0, ...)
 		m->m_flags &= ~M_BCAST;
 
 sendit:
+	if ((flags & (IP_FORWARDING|IP_NOIPNEWID)) == 0) {
+		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
+			ip->ip_id = 0;
+		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+			ip->ip_id = ip_newid(ia);
+		} else {
+
+			/*
+			 * TSO capable interfaces (typically?) increment
+			 * ip_id for each segment.
+			 * "allocate" enough ids here to increase the chance
+			 * for them to be unique.
+			 *
+			 * note that the following calculation is not
+			 * needed to be precise.  wasting some ip_id is fine.
+			 */
+
+			unsigned int segsz = m->m_pkthdr.segsz;
+			unsigned int datasz = ntohs(ip->ip_len) - hlen;
+			unsigned int num = howmany(datasz, segsz);
+
+			ip->ip_id = ip_newid_range(ia, num);
+		}
+	}
 	/*
 	 * If we're doing Path MTU Discovery, we need to set DF unless
 	 * the route's MTU is locked.
@@ -609,13 +612,13 @@ sendit:
 		 * if we have tunnel mode SA, we may need to ignore
 		 * IP_ROUTETOIF.
 		 */
-		if (state.ro != &iproute || rtcache_getrt(state.ro) != NULL) {
+		if (state.ro != &iproute ||
+		    rtcache_validate(state.ro) != NULL) {
 			flags &= ~IP_ROUTETOIF;
 			ro = state.ro;
 		}
 	} else
 		ro = state.ro;
-	rt = rtcache_getrt(ro);
 	dst = satocsin(state.dst);
 	if (error) {
 		/* mbuf is already reclaimed in ipsec4_output. */
@@ -643,7 +646,7 @@ sendit:
 	hlen = ip->ip_hl << 2;
 	ip_len = ntohs(ip->ip_len);
 
-	if (rt == NULL) {
+	if ((rt = rtcache_validate(ro)) == NULL) {
 		if ((flags & IP_ROUTETOIF) == 0) {
 			printf("ip_output: "
 				"can't update route after IPsec processing\n");
@@ -1723,8 +1726,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 
 			sockaddr_in_init(&u.dst4, &mreq->imr_multiaddr, 0);
 			rtcache_setdst(&ro, &u.dst);
-			rtcache_init(&ro);
-			ifp = (rt = rtcache_getrt(&ro)) != NULL ? rt->rt_ifp
+			ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp
 			                                        : NULL;
 			rtcache_free(&ro);
 		} else {

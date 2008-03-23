@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ess.c,v 1.13.24.1 2007/11/06 23:27:54 matt Exp $	*/
+/*	opl_ess.c,v 1.13.24.1 2007/11/06 23:27:54 matt Exp	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.13.24.1 2007/11/06 23:27:54 matt Exp $");
+__KERNEL_RCSID(0, "opl_ess.c,v 1.13.24.1 2007/11/06 23:27:54 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,17 +63,17 @@ __KERNEL_RCSID(0, "$NetBSD: opl_ess.c,v 1.13.24.1 2007/11/06 23:27:54 matt Exp $
 
 extern int	ess_speaker_ctl(void *, int);
 
-int	opl_ess_match(struct device *, struct cfdata *, void *);
-void	opl_ess_attach(struct device *, struct device *, void *);
+int	opl_ess_match(device_t, cfdata_t, void *);
+void	opl_ess_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(opl_ess, sizeof(struct opl_softc),
+CFATTACH_DECL_NEW(opl_ess, sizeof(struct opl_softc),
     opl_ess_match, opl_ess_attach, NULL, NULL);
 
 int
-opl_ess_match(struct device *parent, struct cfdata *match, void *aux)
+opl_ess_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
-	struct ess_softc *ssc = (struct ess_softc *)parent;
+	struct ess_softc *ssc = device_private(parent);
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
@@ -81,11 +81,12 @@ opl_ess_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-opl_ess_attach(struct device *parent, struct device *self, void *aux)
+opl_ess_attach(device_t parent, device_t self, void *aux)
 {
-	struct ess_softc *ssc = (struct ess_softc *)parent;
-	struct opl_softc *sc = (struct opl_softc *)self;
+	struct ess_softc *ssc = device_private(parent);
+	struct opl_softc *sc = device_private(self);
 
+	sc->mididev.dev = self;
 	sc->ioh = ssc->sc_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;

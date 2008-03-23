@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.13.10.2 2008/01/09 01:53:31 matt Exp $	*/
+/*	agp_via.c,v 1.13.10.2 2008/01/09 01:53:31 matt Exp	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.13.10.2 2008/01/09 01:53:31 matt Exp $");
+__KERNEL_RCSID(0, "agp_via.c,v 1.13.10.2 2008/01/09 01:53:31 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ agp_via_attach(struct device *parent, struct device *self, void *aux)
 
 	if (PCI_CAP_AGP_MAJOR(capval) >= 3) {
 		agpsel = pci_conf_read(pa->pa_pc, pa->pa_tag, AGP_VIA_AGPSEL);
-		if ((agpsel & (1 << 1)) == 0) {
+		if ((agpsel & (1 << 9)) == 0) {
 			asc->regs = via_v3_regs;
 			printf(" (v3)");
 		} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.69.4.2 2008/01/09 01:57:00 matt Exp $	*/
+/*	fdesc_vfsops.c,v 1.69.4.2 2008/01/09 01:57:00 matt Exp	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.69.4.2 2008/01/09 01:57:00 matt Exp $");
+__KERNEL_RCSID(0, "fdesc_vfsops.c,v 1.69.4.2 2008/01/09 01:57:00 matt Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.69.4.2 2008/01/09 01:57:00 matt E
 #include <sys/malloc.h>
 #include <sys/kauth.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/fdesc/fdesc.h>
 
 VFS_PROTOS(fdesc);
@@ -277,6 +278,8 @@ struct vfsops fdesc_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	fdesc_vnodeopv_descs,
 	0,
 	{ NULL, NULL},

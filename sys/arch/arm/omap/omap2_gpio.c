@@ -112,6 +112,7 @@ gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
 
+	aprint_normal_dev(&gpio->gpio_dev, "unblock: mask=%x\n", irq_mask);
 	gpio->gpio_enable_mask |= irq_mask;
 	/*
 	 * If this a level source, ack it now.  If it's still asserted
@@ -126,6 +127,7 @@ gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
 
+	aprint_normal_dev(&gpio->gpio_dev, "block: mask=%x\n", irq_mask);
 	gpio->gpio_enable_mask &= ~irq_mask;
 	GPIO_WRITE(gpio, GPIO_CLEARIRQENABLE1, irq_mask);
 	/*
@@ -149,6 +151,7 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	if (pending == 0)
 		return 0;
 
+	aprint_normal_dev(&gpio->gpio_dev, "pending=%x\n", pending);
 	/*
 	 * Now find all the pending bits and mark them as pending.
 	 */
@@ -282,7 +285,7 @@ omap2gpio_pin_ctl(void *arg, int pin, int flags)
 static void
 gpio_defer(device_t self)
 {
-	struct gpio_softc * const gpio = (void *) self;
+	struct gpio_softc * const gpio = device_private(self);
 	struct gpio_chipset_tag * const gp = &gpio->gpio_chipset;
 	struct gpiobus_attach_args gba;
 	gpio_pin_t *pins;

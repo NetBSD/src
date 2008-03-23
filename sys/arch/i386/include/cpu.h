@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.143.10.2 2008/01/09 01:46:41 matt Exp $	*/
+/*	cpu.h,v 1.143.10.2 2008/01/09 01:46:41 matt Exp	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,9 +40,9 @@
 #ifdef _KERNEL
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#include "opt_math_emulate.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
+#include "opt_xen.h"
 #endif
 
 /*
@@ -82,6 +82,7 @@ struct cpu_info {
 	 */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	int		ci_want_resched;
 	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
@@ -93,11 +94,11 @@ struct cpu_info {
 	uint8_t ci_coreid;
 	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
 	/*
 	 * Private members.
 	 */
+	struct cc_microtime_state ci_cc __aligned(64);/* cc_microtime state */
 	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
@@ -107,7 +108,11 @@ struct cpu_info {
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
 
+#ifdef XEN
+	struct iplsource  *ci_isources[NIPL];
+#else
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+#endif
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 
@@ -146,7 +151,6 @@ struct cpu_info {
  					/* proc-dependant init */
 	void (*ci_info)(struct cpu_info *);
 
-	int		ci_want_resched;
 	struct trapframe *ci_ddb_regs;
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
@@ -191,6 +195,9 @@ struct cpu_info {
 	uint32_t	ci_suspend_cr2;
 	uint32_t	ci_suspend_cr3;
 	uint32_t	ci_suspend_cr4;
+#ifdef XEN
+	int		ci_fpused;	/* FPU was used by curlwp */
+#endif
 };
 
 /*
@@ -276,9 +283,14 @@ void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 
 extern uint32_t cpus_attached;
-
+#ifndef XEN
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()
+#else
+/* XXX initgdt() calls pmap_kenter_pa() which calls splvm() before %fs is set */
+#define curcpu()		(&cpu_info_primary)
+#define curlwp			curcpu()->ci_curlwp
+#endif
 #define	curpcb			(&curlwp->l_addr->u_pcb)
 
 /*
@@ -371,15 +383,13 @@ void	dumpconf(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
 
-extern int tmx86_has_longrun;
-extern u_int crusoe_longrun;
-extern u_int crusoe_frequency;
-extern u_int crusoe_voltage; 
-extern u_int crusoe_percentage;
-extern u_int tmx86_set_longrun_mode(u_int);
-void tmx86_get_longrun_status_all(void);
-u_int tmx86_get_longrun_mode(void);
-void identifycpu(struct cpu_info *);
+/* longrun.c */
+u_int 	tmx86_get_longrun_mode(void);
+void 	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
+void 	tmx86_init_longrun(void);
+
+/* identcpu.c */
+void 	identifycpu(struct cpu_info *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -387,34 +397,38 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 /* locore.s */
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
+#ifdef XEN
+void	lgdt_finish(void);
+void	i386_switch_context(lwp_t *);
+#endif
 void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);
 void	lwp_trampoline(void);
-
+#ifdef XEN
+void	startrtclock(void);
+void	xen_delay(unsigned int);
+void	xen_initclocks(void);
+#else
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
+#endif
 
 /* cpu.c */
 
 void	cpu_probe_features(struct cpu_info *);
 
 /* npx.c */
-void	npxsave_lwp(struct lwp *, int);
-void	npxsave_cpu(struct cpu_info *, int);
+void	npxsave_lwp(struct lwp *, bool);
+void	npxsave_cpu(bool);
 
 /* vm_machdep.c */
 int kvtop(void *);
-
-#ifdef MATH_EMULATE
-/* math_emulate.c */
-int	math_emulate(struct trapframe *, ksiginfo_t *);
-#endif
 
 #ifdef USER_LDT
 /* sys_machdep.h */
@@ -456,33 +470,16 @@ void x86_bus_space_mallocok(void);
 #define	CPU_OSFXSR		8	/* int: OS uses FXSAVE/FXRSTOR */
 #define	CPU_SSE			9	/* int: OS/CPU supports SSE */
 #define	CPU_SSE2		10	/* int: OS/CPU supports SSE2 */
-#define CPU_TMLR_MODE		11 	/* int: longrun mode
+#define	CPU_TMLR_MODE		11	/* int: longrun mode
 					 * 0: minimum frequency
 					 * 1: economy
 					 * 2: performance
 					 * 3: maximum frequency
 					 */
-#define CPU_TMLR_FREQUENCY	12 	/* int: current frequency */
-#define CPU_TMLR_VOLTAGE	13 	/* int: curret voltage */
-#define CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
+#define	CPU_TMLR_FREQUENCY	12	/* int: current frequency */
+#define	CPU_TMLR_VOLTAGE	13	/* int: curret voltage */
+#define	CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
 #define	CPU_MAXID		15	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "biosbasemem", CTLTYPE_INT }, \
-	{ "biosextmem", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "diskinfo", CTLTYPE_STRUCT }, \
-	{ "fpu_present", CTLTYPE_INT }, \
-	{ "osfxsr", CTLTYPE_INT }, \
-	{ "sse", CTLTYPE_INT }, \
-	{ "sse2", CTLTYPE_INT }, \
-	{ "tm_longrun_mode", CTLTYPE_INT }, \
-	{ "tm_longrun_frequency", CTLTYPE_INT }, \
-	{ "tm_longrun_voltage", CTLTYPE_INT }, \
-	{ "tm_longrun_percentage", CTLTYPE_INT }, \
-}
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

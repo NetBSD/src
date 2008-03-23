@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.23.2.2 2008/01/09 01:54:03 matt Exp $	*/
+/*	viaenv.c,v 1.23.2.2 2008/01/09 01:54:03 matt Exp	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.23.2.2 2008/01/09 01:54:03 matt Exp $");
+__KERNEL_RCSID(0, "viaenv.c,v 1.23.2.2 2008/01/09 01:54:03 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ unsigned int viaenv_debug = 0;
 #define VIANUMSENSORS 10	/* three temp, two fan, five voltage */
 
 struct viaenv_softc {
-	struct device sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_space_handle_t sc_pm_ioh;
@@ -78,10 +77,10 @@ struct viaenv_softc {
 };
 
 /* autoconf(9) glue */
-static int viaenv_match(struct device *, struct cfdata *, void *);
-static void viaenv_attach(struct device *, struct device *, void *);
+static int 	viaenv_match(device_t, cfdata_t, void *);
+static void 	viaenv_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(viaenv, sizeof(struct viaenv_softc),
+CFATTACH_DECL_NEW(viaenv, sizeof(struct viaenv_softc),
     viaenv_match, viaenv_attach, NULL, NULL);
 
 /* envsys(4) glue */
@@ -92,9 +91,9 @@ static int val_to_rpm(unsigned int, int);
 static long val_to_uV(unsigned int, int);
 
 static int
-viaenv_match(struct device *parent, struct cfdata *match, void *aux)
+viaenv_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_VIATECH)
 		return 0;
@@ -275,10 +274,10 @@ viaenv_refresh_sensor_data(struct viaenv_softc *sc, envsys_data_t *edata)
 }
 
 static void
-viaenv_attach(struct device *parent, struct device *self, void *aux)
+viaenv_attach(device_t parent, device_t self, void *aux)
 {
-	struct viaenv_softc *sc = (struct viaenv_softc *)self;
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	struct viaenv_softc *sc = device_private(self);
+	struct pci_attach_args *pa = aux;
 	pcireg_t iobase, control;
 	int i;
 
@@ -302,8 +301,7 @@ viaenv_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Check if the Hardware Monitor enable bit is set */
 	if ((control & 1) == 0) {
-		aprint_normal("%s : Hardware Monitor disabled\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "Hardware Monitor disabled\n");
 		goto nohwm;
 	}
 
@@ -311,8 +309,7 @@ viaenv_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, iobase & 0xff80,
 	    VIAENV_PMSIZE, 0, &sc->sc_ioh)) {
-		aprint_error("%s: failed to map I/O space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "failed to map I/O space\n");
 		goto nohwm;
 	}
 
@@ -359,13 +356,12 @@ viaenv_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Hook into the System Monitor.
 	 */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = viaenv_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		printf("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
@@ -374,8 +370,8 @@ nohwm:
 	/* Check if power management I/O space is enabled */
 	control = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_GENCFG);
 	if ((control & VIAENV_GENCFG_PMEN) == 0) {
-                aprint_normal("%s: Power Managament controller disabled\n",
-		    sc->sc_dev.dv_xname);
+                aprint_normal_dev(self,
+		    "Power Managament controller disabled\n");
                 goto nopm;
         }
 
@@ -383,13 +379,12 @@ nohwm:
         iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, VIAENV_PMBASE);
         if (bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(iobase),
             VIAENV_PMSIZE, 0, &sc->sc_pm_ioh)) {
-                aprint_error("%s: failed to map PM I/O space\n",
-		    sc->sc_dev.dv_xname);
+                aprint_error_dev(self, "failed to map PM I/O space\n");
                 goto nopm;
         }
 
 	/* Attach our PM timer with the generic acpipmtimer function */
-	acpipmtimer_attach(&sc->sc_dev, sc->sc_iot, sc->sc_pm_ioh,
+	acpipmtimer_attach(self, sc->sc_iot, sc->sc_pm_ioh,
 	    VIAENV_PM_TMR,
 	    ((control & VIAENV_GENCFG_TMR32) ? ACPIPMT_32BIT : 0));
 

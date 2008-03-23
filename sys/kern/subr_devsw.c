@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.11.8.3 2008/01/09 01:56:15 matt Exp $	*/
+/*	subr_devsw.c,v 1.11.8.3 2008/01/09 01:56:15 matt Exp	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.11.8.3 2008/01/09 01:56:15 matt Exp $");
+__KERNEL_RCSID(0, "subr_devsw.c,v 1.11.8.3 2008/01/09 01:56:15 matt Exp");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.11.8.3 2008/01/09 01:56:15 matt Exp
 #include <sys/systm.h>
 #include <sys/poll.h>
 #include <sys/tty.h>
+#include <sys/cpu.h>
 #include <sys/buf.h>
 
 #ifdef DEVSW_DEBUG

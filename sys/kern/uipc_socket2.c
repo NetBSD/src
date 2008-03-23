@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.85.4.1 2007/11/06 23:32:42 matt Exp $	*/
+/*	uipc_socket2.c,v 1.85.4.1 2007/11/06 23:32:42 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.85.4.1 2007/11/06 23:32:42 matt Exp $");
+__KERNEL_RCSID(0, "uipc_socket2.c,v 1.85.4.1 2007/11/06 23:32:42 matt Exp");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -168,6 +168,7 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
 	so->so_state = head->so_state | SS_NOFDREF;
+	so->so_nbio = head->so_nbio;
 	so->so_proto = head->so_proto;
 	so->so_timeo = head->so_timeo;
 	so->so_pgid = head->so_pgid;
@@ -315,20 +316,21 @@ sb_lock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb, int code)
 {
-	selnotify(&sb->sb_sel, 0);
+	int band;
+
+	if (code == POLL_IN)
+		band = POLLIN|POLLRDNORM;
+	else
+		band = POLLOUT|POLLWRNORM;
+	selnotify(&sb->sb_sel, band, 0);
+
 	sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
 		sb->sb_flags &= ~SB_WAIT;
 		wakeup((void *)&sb->sb_cc);
 	}
-	if (sb->sb_flags & SB_ASYNC) {
-		int band;
-		if (code == POLL_IN)
-			band = POLLIN|POLLRDNORM;
-		else
-			band = POLLOUT|POLLWRNORM;
+	if (sb->sb_flags & SB_ASYNC)
 		fownsignal(so->so_pgid, SIGIO, code, band, so);
-	}
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
 }
@@ -431,7 +433,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (l && kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+		if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
 			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;
@@ -456,8 +458,7 @@ sbrelease(struct sockbuf *sb, struct socket *so)
 {
 
 	sbflush(sb);
-	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0,
-	    RLIM_INFINITY);
+	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0, RLIM_INFINITY);
 	sb->sb_mbmax = 0;
 }
 

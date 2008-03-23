@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.131.6.2 2008/01/09 01:57:33 matt Exp $	*/
+/*	in6.c,v 1.131.6.2 2008/01/09 01:57:33 matt Exp	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.131.6.2 2008/01/09 01:57:33 matt Exp $");
+__KERNEL_RCSID(0, "in6.c,v 1.131.6.2 2008/01/09 01:57:33 matt Exp");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -2100,7 +2100,7 @@ in6if_do_dad(struct ifnet *ifp)
  * to in6_maxmtu.
  */
 void
-in6_setmaxmtu()
+in6_setmaxmtu(void)
 {
 	unsigned long maxmtu = 0;
 	struct ifnet *ifp;

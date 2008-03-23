@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.8.8.1 2008/01/09 01:56:23 matt Exp $	*/
+/*	sys_sig.c,v 1.8.8.1 2008/01/09 01:56:23 matt Exp	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.8.8.1 2008/01/09 01:56:23 matt Exp $");
+__KERNEL_RCSID(0, "sys_sig.c,v 1.8.8.1 2008/01/09 01:56:23 matt Exp");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -279,7 +279,7 @@ sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 			return (ESRCH);
 		mutex_enter(&p->p_mutex);
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANSIGNAL, p, (void *)(uintptr_t)signum,
+		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signum),
 		    NULL, NULL);
 		if (!error && signum) {
 			mutex_enter(&proclist_mutex);
@@ -557,7 +557,7 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 
 	if (ss) {
 		/*
-		 * When returning from sigpause, we want
+		 * When returning from sigsuspend, we want
 		 * the old mask to be restored after the
 		 * signal handler has finished.  Thus, we
 		 * save it here and mark the sigctx structure

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.16.2.2 2008/01/09 01:54:00 matt Exp $ */
+/* piixpm.c,v 1.16.2.2 2008/01/09 01:54:00 matt Exp */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.16.2.2 2008/01/09 01:54:00 matt Exp $");
+__KERNEL_RCSID(0, "piixpm.c,v 1.16.2.2 2008/01/09 01:54:00 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ struct piixpm_softc {
 int	piixpm_match(struct device *, struct cfdata *, void *);
 void	piixpm_attach(struct device *, struct device *, void *);
 
-static bool	piixpm_suspend(device_t);
-static bool	piixpm_resume(device_t);
+static bool	piixpm_suspend(device_t PMF_FN_PROTO);
+static bool	piixpm_resume(device_t PMF_FN_PROTO);
 
 int	piixpm_i2c_acquire_bus(void *, int);
 void	piixpm_i2c_release_bus(void *, int);
@@ -157,7 +157,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
-	DPRINTF((": conf 0x%x", conf));
+	DPRINTF(("%s: conf 0x%x\n", sc->sc_dev.dv_xname, conf));
 
 	if ((PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL) ||
 	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_PMC))
@@ -240,7 +240,7 @@ nopowermanagement:
 }
 
 static bool
-piixpm_suspend(device_t dv)
+piixpm_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct piixpm_softc *sc = device_private(dv);
 
@@ -253,7 +253,7 @@ piixpm_suspend(device_t dv)
 }
 
 static bool
-piixpm_resume(device_t dv)
+piixpm_resume(device_t dv PMF_FN_ARGS)
 {
 	struct piixpm_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.6.36.1 2008/01/09 01:50:08 matt Exp $ */
+/* xenbus.h,v 1.6.36.1 2008/01/09 01:50:08 matt Exp */
 /******************************************************************************
  * xenbus.h
  *
@@ -121,6 +121,8 @@ int xenbus_read(struct xenbus_transaction *t,
 		  char **);
 int xenbus_read_ul(struct xenbus_transaction *,
 		  const char *, const char *, unsigned long *, int);
+int xenbus_read_ull(struct xenbus_transaction *,
+		  const char *, const char *, unsigned long long *, int);
 int xenbus_write(struct xenbus_transaction *t,
 		 const char *dir, const char *node, const char *string);
 int xenbus_mkdir(struct xenbus_transaction *t,

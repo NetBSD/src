@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.32.38.1 2007/11/09 05:38:00 matt Exp $ */
+/*	ixm1200_machdep.c,v 1.32.38.1 2007/11/09 05:38:00 matt Exp */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.32.38.1 2007/11/09 05:38:00 matt Exp $");
+__KERNEL_RCSID(0, "ixm1200_machdep.c,v 1.32.38.1 2007/11/09 05:38:00 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -117,8 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.32.38.1 2007/11/09 05:38:00 ma
 #include <evbarm/ixm1200/ixm1200reg.h>
 #include <evbarm/ixm1200/ixm1200var.h>
 
-#include "opt_ipkdb.h"
-
 /* XXX for consinit related hacks */
 #include <sys/conf.h>
 
@@ -158,11 +156,7 @@ u_int cpu_reset_address = (u_int) ixp12x0_reset;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE  1
 #define ABT_STACK_SIZE  1
-#ifdef IPKDB
-#define UND_STACK_SIZE  2
-#else
 #define UND_STACK_SIZE  1
-#endif
 
 BootConfig bootconfig;          /* Boot config storage */
 char *boot_args = NULL;
@@ -743,13 +737,6 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");
 #endif
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif  /* NIPKDB */
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);

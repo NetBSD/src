@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.18.2.1 2007/11/06 23:26:34 matt Exp $	*/
+/*	dp83932.c,v 1.18.2.1 2007/11/06 23:26:34 matt Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.18.2.1 2007/11/06 23:26:34 matt Exp $");
+__KERNEL_RCSID(0, "dp83932.c,v 1.18.2.1 2007/11/06 23:26:34 matt Exp");
 
 #include "bpfilter.h"
 
@@ -211,6 +211,11 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	ifp->if_init = sonic_init;
 	ifp->if_stop = sonic_stop;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	/*
+	 * We can suport 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/*
 	 * Attach the interface.
@@ -551,19 +556,15 @@ sonic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch (cmd) {
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				(void) sonic_init(ifp);
-			error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware
+		 * filter accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			(void) sonic_init(ifp);
+		error = 0;
 	}
 
 	splx(s);
@@ -1094,14 +1095,14 @@ sonic_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		sonic_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		sonic_rxdrain(sc);
 }
 
 /*

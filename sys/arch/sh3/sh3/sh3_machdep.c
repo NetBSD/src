@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.64.2.2 2008/01/09 01:48:49 matt Exp $	*/
+/*	sh3_machdep.c,v 1.64.2.2 2008/01/09 01:48:49 matt Exp	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.64.2.2 2008/01/09 01:48:49 matt Exp $");
+__KERNEL_RCSID(0, "sh3_machdep.c,v 1.64.2.2 2008/01/09 01:48:49 matt Exp");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -124,7 +124,6 @@ struct vm_map *phys_map;
 int physmem;
 struct user *proc0paddr;	/* init_main.c use this. */
 struct pcb *curpcb;
-struct md_upte *curupte;	/* SH3 wired u-area hack */
 
 #if !defined(IOM_RAM_BEGIN)
 #error "define IOM_RAM_BEGIN"
@@ -239,7 +238,6 @@ sh_proc0_init()
 	 * current stack ... r15
 	 */
 	curpcb = lwp0.l_md.md_pcb = &lwp0.l_addr->u_pcb;
-	curupte = lwp0.l_md.md_upte;
 
 	sf = &curpcb->pcb_sf;
 

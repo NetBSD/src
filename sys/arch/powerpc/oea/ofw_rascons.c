@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.1.18.2 2008/01/09 01:47:52 matt Exp $	*/
+/*	ofw_rascons.c,v 1.1.18.2 2008/01/09 01:47:52 matt Exp	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.1.18.2 2008/01/09 01:47:52 matt Exp $");
+__KERNEL_RCSID(0, "ofw_rascons.c,v 1.1.18.2 2008/01/09 01:47:52 matt Exp");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -89,11 +89,6 @@ rascons_cnattach(void)
 	struct rasops_info *ri = &rascons_console_screen.scr_ri;
 	long defattr;
 	int crow = 0;
-	char type[16];
-
-	OF_getprop(console_node, "device_type", type, sizeof(type));
-	if (strcmp(type, "display") != 0)
-		return -1;
 
 	/* get current cursor position */
 	OF_interpret("line#", 0, 1, &crow);

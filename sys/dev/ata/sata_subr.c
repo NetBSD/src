@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.8.24.1 2008/01/09 01:52:26 matt Exp $	*/
+/*	sata_subr.c,v 1.8.24.1 2008/01/09 01:52:26 matt Exp	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.8.24.1 2008/01/09 01:52:26 matt Exp $");
+__KERNEL_RCSID(0, "sata_subr.c,v 1.8.24.1 2008/01/09 01:52:26 matt Exp");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -121,22 +121,22 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 	case SStatus_DET_DEV_NE:
 		aprint_error("%s port %d: device connected, but "
 		    "communication not established\n",
-		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
+		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel);
 		break;
 
 	case SStatus_DET_OFFLINE:
 		aprint_error("%s port %d: PHY offline\n",
-		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel);
+		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel);
 		break;
 
 	case SStatus_DET_DEV:
 		aprint_normal("%s port %d: device present, speed: %s\n",
-		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 		    sata_speed(sstatus));
 		break;
 	default:
 		aprint_error("%s port %d: unknown SStatus: 0x%08x\n",
-		    chp->ch_atac->atac_dev.dv_xname, chp->ch_channel,
+		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 		    sstatus);
 	}
 	return(sstatus & SStatus_DET_mask);

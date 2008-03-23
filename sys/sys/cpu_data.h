@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.12.2.1 2007/11/06 23:34:44 matt Exp $	*/
+/*	cpu_data.h,v 1.12.2.1 2007/11/06 23:34:44 matt Exp	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ struct lwp;
 
 #include <sys/sched.h>	/* for schedstate_percpu */
 #include <sys/condvar.h>
+#include <sys/percpu_types.h>
 
 /*
  * MI per-cpu data
@@ -84,12 +85,12 @@ struct cpu_data {
 	u_int		cpu_simple_locks;	/* # of simple locks held */
 	u_int		cpu_spin_locks2;	/* # of spin locks held XXX */
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
+	u_int		cpu_softints;		/* pending (slow) softints */
+	u_int		cpu_nsyscall;		/* syscall counter */
+	u_int		cpu_nswtch;		/* context switch counter */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
-	u_int		cpu_softints;		/* pending (slow) softints */
-	kmutex_t	cpu_uarea_lock;		/* uarea alloc lock */
-	u_int		cpu_uarea_cnt;		/* count of free uareas */
-	vaddr_t		cpu_uarea_list;		/* free uareas */
+	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
 };
 
 /* compat definitions */

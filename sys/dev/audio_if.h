@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.63.16.1 2008/01/09 01:52:10 matt Exp $	*/
+/*	audio_if.h,v 1.63.16.1 2008/01/09 01:52:10 matt Exp	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -253,8 +253,7 @@ struct audio_attach_args {
 #define AUDIODEV_TYPE_AUX	4
 
 /* Attach the MI driver(s) to the MD driver. */
-struct device *audio_attach_mi(const struct audio_hw_if *, void *,
-    struct device *);
+device_t audio_attach_mi(const struct audio_hw_if *, void *, device_t);
 int	audioprint(void *, const char *);
 
 /* Device identity flags */

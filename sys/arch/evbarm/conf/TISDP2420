@@ -206,7 +206,8 @@ gpio*		at omapgpio?
 com0		at obio? addr 0x4806a000 intr -1 mult 4	# UART1
 ##com1		at obio? addr 0x4806c000 intr 73 mult 4	# UART2
 ##com2		at obio? addr 0x4806e000 intr 74 mult 4	# UART3 (IR)
-options CONSADDR=0x4806a000, CONSPEED=115200
+options CONSADDR=0x4806a000, CONSPEED=57600
+#options CONSADDR=0x4806a000, CONSPEED=115200
 ##options KGDB_DEVADDR=0x4806e000, KGDB_DEVRATE=115200	# UART3
 
 # Interrupt controller

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.10.8.2 2008/01/09 01:55:42 matt Exp $	*/
+/*	filecore_node.c,v 1.10.8.2 2008/01/09 01:55:42 matt Exp	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.10.8.2 2008/01/09 01:55:42 matt Exp $");
+__KERNEL_RCSID(0, "filecore_node.c,v 1.10.8.2 2008/01/09 01:55:42 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ filecore_ihashins(ip)
 	simple_unlock(&filecore_ihash_slock);
 
 	vp = ip->i_vnode;
-	lockmgr(&vp->v_lock, LK_EXCLUSIVE, &vp->v_interlock);
+	vlockmgr(&vp->v_lock, LK_EXCLUSIVE);
 }
 
 /*
@@ -233,9 +233,6 @@ filecore_inactive(v)
 	struct filecore_node *ip = VTOI(vp);
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("filecore_inactive: pushing active", vp);
-
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
@@ -260,7 +257,7 @@ filecore_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("filecore_reclaim: pushing active", vp);
 	/*
 	 * Remove the inode from its hash chain.

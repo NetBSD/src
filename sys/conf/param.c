@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.52.8.1 2008/01/09 01:52:06 matt Exp $	*/
+/*	param.c,v 1.52.8.1 2008/01/09 01:52:06 matt Exp	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.52.8.1 2008/01/09 01:52:06 matt Exp $");
+__KERNEL_RCSID(0, "param.c,v 1.52.8.1 2008/01/09 01:52:06 matt Exp");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
 #include "opt_sysv.h"
 #include "opt_sysvparam.h"
 #include "opt_nmbclusters.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +111,11 @@ int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
 u_int	maxfiles = MAXFILES;
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
+#ifdef MULTIPROCESSOR
+u_int	maxcpus = MAXCPUS;
+#else
+u_int	maxcpus = 1;
+#endif
 
 /*
  * Various mbuf-related parameters.  These can also be changed at run-time

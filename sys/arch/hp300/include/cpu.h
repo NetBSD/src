@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55.2.1 2007/11/06 23:16:42 matt Exp $	*/
+/*	cpu.h,v 1.55.2.1 2007/11/06 23:16:42 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -141,7 +141,8 @@ struct clockframe {
 #define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
 #else
 /* but until we start using PSL_M, we have to do this instead */
-#define	CLKF_INTR(framep)	(0)	/* XXX */
+#include <machine/intr.h>
+#define	CLKF_INTR(framep)	(idepth > 1)	/* XXX */
 #endif
 
 
@@ -176,11 +177,6 @@ extern int astpending;		/* need to trap before returning to user mode */
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_MAXID		2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 /*
  * The rest of this should probably be moved to <machine/hp300spu.h>,

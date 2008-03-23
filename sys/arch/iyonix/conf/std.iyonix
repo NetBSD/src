@@ -1,9 +1,10 @@
-#	$NetBSD: std.iyonix,v 1.4.10.1 2007/11/06 23:18:01 matt Exp $
+#	std.iyonix,v 1.4.10.1 2007/11/06 23:18:01 matt Exp
 #
 # standard NetBSD/iyonix for GENERIC options
 
 machine	iyonix arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 options 	EXEC_ELF32
 options 	EXEC_AOUT

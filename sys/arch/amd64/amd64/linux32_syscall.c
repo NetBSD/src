@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.14.2.2 2008/01/09 01:44:45 matt Exp $ */
+/*	linux32_syscall.c,v 1.14.2.2 2008/01/09 01:44:45 matt Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.14.2.2 2008/01/09 01:44:45 matt Exp $");
+__KERNEL_RCSID(0, "linux32_syscall.c,v 1.14.2.2 2008/01/09 01:44:45 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -16,7 +16,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.14.2.2 2008/01/09 01:44:45 mat
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-#include <compat/linux32/arch/amd64/linux32_errno.h>
+#include <compat/linux32/linux32_syscall.h>
+#include <compat/linux32/common/linux32_errno.h>
 
 void linux32_syscall_intern(struct proc *);
 void linux32_syscall(struct trapframe *);
@@ -25,7 +26,6 @@ void
 linux32_syscall_intern(struct proc *p)
 {
 
-	p->p_trace_enabled = trace_is_enabled(p);
 	p->p_md.md_syscall = linux32_syscall;
 }
 
@@ -37,7 +37,7 @@ linux32_syscall(frame)
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	size_t argsize;
+	size_t narg;
 	register32_t code, args[6];
 	register_t rval[2];
 	int i;
@@ -47,13 +47,12 @@ linux32_syscall(frame)
 	p = l->l_proc;
 
 	code = frame->tf_rax;
-	uvmexp.syscalls++;
 
 	LWP_CACHE_CREDS(l, p);
 
 	callp = p->p_emul->e_sysent;
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (LINUX32_SYS_NSYSENT - 1);
 	callp += code;
 
 	/*
@@ -70,13 +69,13 @@ linux32_syscall(frame)
 	KERNEL_LOCK(1, l);
 
 	if (__predict_false(p->p_trace_enabled)) {
-		argsize = callp->sy_argsize;
-		if (__predict_false(argsize > sizeof args))
-			panic("impossible syscall argsize, code %d, size %zd",
-			    code, argsize);
-		for (i = 0; i < (argsize >> 2); i++)
+		narg = callp->sy_narg;
+		if (__predict_false(narg > __arraycount(args)))
+			panic("impossible syscall narg, code %d, narg %zd",
+			    code, narg);
+		for (i = 0; i < narg; i++)
 			args64[i] = args[i] & 0xffffffff;
-		if ((error = trace_enter(code, code, NULL, args64)) != 0)
+		if ((error = trace_enter(code, args64, narg)) != 0)
 			goto out;
 	}
 
@@ -110,6 +109,6 @@ out:
 	}
 
 	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, args64, rval, error);
+		trace_exit(code, rval, error);
 	userret(l);
 }

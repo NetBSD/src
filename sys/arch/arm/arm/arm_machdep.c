@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.15.14.1 2008/01/09 01:45:08 matt Exp $	*/
+/*	arm_machdep.c,v 1.15.14.1 2008/01/09 01:45:08 matt Exp	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -73,11 +73,12 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
+#include "opt_cputypes.h"
 #include "opt_arm_debug.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.15.14.1 2008/01/09 01:45:08 matt Exp $");
+__KERNEL_RCSID(0, "arm_machdep.c,v 1.15.14.1 2008/01/09 01:45:08 matt Exp");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -157,6 +158,11 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	else
 #endif
 	l->l_addr->u_pcb.pcb_flags = 0;
+#ifdef FPU_VFP
+	l->l_md.md_flags &= ~MDP_VFPUSED;
+	if (l->l_addr->u_pcb.pcb_vfpcpu != NULL)
+		vfp_saveregs_lwp(l, 0);
+#endif
 }
 
 /*

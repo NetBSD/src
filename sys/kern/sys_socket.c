@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.51 2007/07/09 21:10:56 ad Exp $	*/
+/*	sys_socket.c,v 1.51 2007/07/09 21:10:56 ad Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.51 2007/07/09 21:10:56 ad Exp $");
+__KERNEL_RCSID(0, "sys_socket.c,v 1.51 2007/07/09 21:10:56 ad Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.51 2007/07/09 21:10:56 ad Exp $");
 #include <net/if.h>
 #include <net/route.h>
 
-struct	fileops socketops = {
+const struct fileops socketops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
 	soo_stat, soo_close, soo_kqfilter
 };
@@ -95,16 +95,14 @@ soo_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	struct proc *p = l->l_proc;
 	int error = 0;
 
+	if (cmd == FIONBIO) {
+		so->so_nbio = *(int *)data;
+		return 0;
+	}
+
 	KERNEL_LOCK(1, curlwp);
 
 	switch (cmd) {
-
-	case FIONBIO:
-		if (*(int *)data)
-			so->so_state |= SS_NBIO;
-		else
-			so->so_state &= ~SS_NBIO;
-		break;
 
 	case FIOASYNC:
 		if (*(int *)data) {
@@ -190,41 +188,8 @@ soo_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
 int
 soo_poll(struct file *fp, int events, struct lwp *l)
 {
-	struct socket *so = (struct socket *)fp->f_data;
-	int revents = 0;
-	int s;
 
-	KERNEL_LOCK(1, curlwp);
-	s = splsoftnet();
-
-	if (events & (POLLIN | POLLRDNORM))
-		if (soreadable(so))
-			revents |= events & (POLLIN | POLLRDNORM);
-
-	if (events & (POLLOUT | POLLWRNORM))
-		if (sowritable(so))
-			revents |= events & (POLLOUT | POLLWRNORM);
-
-	if (events & (POLLPRI | POLLRDBAND))
-		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
-			revents |= events & (POLLPRI | POLLRDBAND);
-
-	if (revents == 0) {
-		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-			selrecord(l, &so->so_rcv.sb_sel);
-			so->so_rcv.sb_flags |= SB_SEL;
-		}
-
-		if (events & (POLLOUT | POLLWRNORM)) {
-			selrecord(l, &so->so_snd.sb_sel);
-			so->so_snd.sb_flags |= SB_SEL;
-		}
-	}
-
-	splx(s);
-	KERNEL_UNLOCK_ONE(curlwp);
-
-	return revents;
+	return sopoll(fp->f_data, events);
 }
 
 int

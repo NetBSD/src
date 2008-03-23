@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.70.8.1 2007/11/06 23:33:30 matt Exp $	*/
+/*	if_gif.c,v 1.70.8.1 2007/11/06 23:33:30 matt Exp	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.70.8.1 2007/11/06 23:33:30 matt Exp $");
+__KERNEL_RCSID(0, "if_gif.c,v 1.70.8.1 2007/11/06 23:33:30 matt Exp");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -483,9 +483,6 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq     *ifr = (struct ifreq*)data;
 	int error = 0, size;
 	struct sockaddr *dst, *src;
-#ifdef SIOCSIFMTU
-	u_long mtu;
-#endif
 
 	switch (cmd) {
 	case SIOCSIFMTU:
@@ -528,17 +525,15 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-#ifdef	SIOCSIFMTU /* xxx */
 	case SIOCGIFMTU:
 		break;
 
 	case SIOCSIFMTU:
-		mtu = ifr->ifr_mtu;
-		if (mtu < GIF_MTU_MIN || mtu > GIF_MTU_MAX)
-			return (EINVAL);
-		ifp->if_mtu = mtu;
+		if (ifr->ifr_mtu < GIF_MTU_MIN || ifr->ifr_mtu > GIF_MTU_MAX)
+			return EINVAL;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
-#endif /* SIOCSIFMTU */
 
 #ifdef INET
 	case SIOCSIFPHYADDR:
@@ -885,9 +880,9 @@ gif_delete_tunnel(struct ifnet *ifp)
 
 #ifdef ISO
 struct eonhdr {
-	u_int8_t version;
-	u_int8_t class;
-	u_int16_t cksum;
+	uint8_t version;
+	uint8_t class;
+	uint16_t cksum;
 };
 
 /*

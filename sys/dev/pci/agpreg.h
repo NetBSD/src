@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.14.2.1 2008/01/09 01:53:32 matt Exp $	*/
+/*	agpreg.h,v 1.14.2.1 2008/01/09 01:53:32 matt Exp	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -59,7 +59,7 @@
 #define	AGP_INTEL_I8XX_ERRSTS	0xc8
 
 /* Common register */
-#define	AGP_INTEL_ERRSTS	0x91	/* Not i8XX */
+#define	AGP_INTEL_ERRSTS	0x90 /* bytes at 0x91 and 0x92, not i8XX */
 #define AGP_INTEL_AGPCMD	0xa8
 # define AGPCMD_SBA		(1U << 9)
 # define AGPCMD_AGPEN		(1U << 8)
@@ -90,7 +90,7 @@
 #define AGP3_VIA_GARTCTRL	0x90
 #define AGP3_VIA_APSIZE		0x94
 #define AGP3_VIA_ATTBASE	0x98
-#define AGP_VIA_AGPSEL		0xfd
+#define AGP_VIA_AGPSEL		0xfc
 
 /*
  * Config offsets for SiS AGP chipsets.
@@ -201,7 +201,7 @@
 /*
  * Config registers for 852GM/855GM/865G device 0
  */
-#define AGP_I855_GCC1			0x52
+#define AGP_I855_GCC1			0x50 /* upper word */
 #define AGP_I855_GCC1_DEV2		0x08
 #define AGP_I855_GCC1_DEV2_ENABLED	0x00
 #define AGP_I855_GCC1_DEV2_DISABLED	0x08
@@ -228,7 +228,7 @@
 #define 	AGP_I915_GCC1_GMS_STOLEN_32M	0x50
 #define 	AGP_I915_GCC1_GMS_STOLEN_48M	0x60
 #define 	AGP_I915_GCC1_GMS_STOLEN_64M	0x70
-#define AGP_I915_MSAC			0x62
+#define AGP_I915_MSAC			0x60 /* upper word */
 #define 	AGP_I915_MSAC_APER_128M		0x02
 
 /*

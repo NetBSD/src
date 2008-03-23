@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.22.20.1 2008/01/09 01:46:38 matt Exp $	*/
+/*	mach_syscall.c,v 1.22.20.1 2008/01/09 01:46:38 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.22.20.1 2008/01/09 01:46:38 matt Exp $");
+__KERNEL_RCSID(0, "mach_syscall.c,v 1.22.20.1 2008/01/09 01:46:38 matt Exp");
 
 #include "opt_vm86.h"
 
@@ -91,7 +91,6 @@ mach_syscall_plain(frame)
 	size_t argsize;
 	register_t code, args[MACH_SYS_MAXSYSARGS], rval[2];
 
-	uvmexp.syscalls++;
 	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
@@ -179,7 +178,6 @@ mach_syscall_fancy(frame)
 	size_t argsize;
 	register_t code, realcode, args[MACH_SYS_MAXSYSARGS], rval[2];
 
-	uvmexp.syscalls++;
 	LWP_CACHE_CREDS(l, p);
 
 	code = frame->tf_eax;
@@ -225,7 +223,7 @@ mach_syscall_fancy(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(code, realcode, callp - code, args)) != 0)
+	if ((error = trace_enter(realcode, args, callp->sy_narg)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -256,7 +254,7 @@ out:
 		break;
 	}
 
-	trace_exit(realcode, args, rval, error);
+	trace_exit(realcode, rval, error);
 
 	userret(l);
 }

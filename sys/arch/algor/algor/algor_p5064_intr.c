@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.16.24.1 2008/01/09 01:44:29 matt Exp $	*/
+/*	algor_p5064_intr.c,v 1.16.24.1 2008/01/09 01:44:29 matt Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.16.24.1 2008/01/09 01:44:29 matt Exp $");
+__KERNEL_RCSID(0, "algor_p5064_intr.c,v 1.16.24.1 2008/01/09 01:44:29 matt Exp");
 
 #include "opt_ddb.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.16.24.1 2008/01/09 01:44:29 m
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -301,7 +302,7 @@ const struct evcnt *algor_p5064_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p5064_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
 void	algor_p5064_pci_intr_disestablish(void *, void *);
-void	*algor_p5064_pciide_compat_intr_establish(void *, struct device *,
+void	*algor_p5064_pciide_compat_intr_establish(void *, device_t,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
 void	algor_p5064_pci_conf_interrupt(void *, int, int, int, int, int *);
 
@@ -412,21 +413,32 @@ algor_p5064_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 
 	REGVAL(P5064_LOCINT) = 0;
 
-	/* Compute the number of cycles per second. */
+	/* Update CPU frequency values */
 	cps = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16;
-
-	/* Compute the number of ticks for hz. */
-	cycles_per_hz = cps / hz;
-
-	/* Compute the delay divisor. */
-	delay_divisor = (cps / 1000000) / 2;
+#if 1
+	/* XXX for unaccurate emulators */
+	if (cps < 10 * 1000 * 1000) {
+		/* unlikely, use a reasonable value */
+		cps = 75 * 1000 * 1000;
+	}
+#endif
+	/* XXX mips_cpu_flags isn't set here; assume CPU_MIPS_DOUBLE_COUNT */
+	curcpu()->ci_cpu_freq = cps * 2;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + (1000000 / 2)) / 1000000);
+	/* XXX assume CPU_MIPS_DOUBLE_COUNT */
+	curcpu()->ci_cycles_per_hz /= 2;
+	curcpu()->ci_divisor_delay /= 2;
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
 	    cps, ctrdiff[2], ctrdiff[3]);
 	printf("CPU clock speed = %lu.%02luMHz "
-	    "(hz cycles = %lu, delay divisor = %u)\n",
-	    cps / 1000000, (cps % 1000000) / 10000,
-	    cycles_per_hz, delay_divisor);
+	    "(hz cycles = %lu, delay divisor = %lu)\n",
+	    curcpu()->ci_cpu_freq / 1000000,
+	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
+	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
 }
 
 void *
@@ -667,7 +679,7 @@ algor_p5064_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
 }
 
 void *
-algor_p5064_pciide_compat_intr_establish(void *v, struct device *dev,
+algor_p5064_pciide_compat_intr_establish(void *v, device_t dev,
     struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc; 
@@ -685,9 +697,8 @@ algor_p5064_pciide_compat_intr_establish(void *v, struct device *dev,
 	cookie = algor_p5064_intr_establish(P5064_IRQ_IDE0 + chan, func, arg);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at on-board %s IRQ\n",
-	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan),
-	    p5064_intrnames[P5064_IRQ_IDE0 + chan]);
+	aprint_normal_dev(dev, "%s channel interrupting at on-board %s IRQ\n",
+	    PCIIDE_CHANNEL_NAME(chan), p5064_intrnames[P5064_IRQ_IDE0 + chan]);
 	return (cookie);
 }
 

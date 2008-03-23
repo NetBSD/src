@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.39.40.1 2008/01/09 01:58:44 matt Exp $	*/
+/*	uvm_stat.h,v 1.39.40.1 2008/01/09 01:58:44 matt Exp	*/
 
 /*
  *
@@ -68,7 +68,7 @@ struct uvm_history {
 	LIST_ENTRY(uvm_history) list;	/* link on list of all histories */
 	int n;				/* number of entries */
 	int f; 				/* next free one */
-	int unused;			/* old location of struct simplelock */
+	int unused;			/* old location of lock */
 	struct uvm_history_ent *e;	/* the malloc'd entries */
 	kmutex_t l;			/* lock on this history */
 };
@@ -131,7 +131,7 @@ do { \
 	(NAME).namelen = strlen(__STRING(NAME)); \
 	(NAME).n = sizeof(BUF) / sizeof(struct uvm_history_ent); \
 	(NAME).f = 0; \
-	mutex_init((&(NAME).l, MUTEX_SPIN, IPL_HIGH); \
+	mutex_init(&(NAME).l, MUTEX_SPIN, IPL_HIGH); \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \

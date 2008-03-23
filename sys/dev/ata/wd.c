@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.343.6.3 2008/01/09 01:52:26 matt Exp $ */
+/*	wd.c,v 1.343.6.3 2008/01/09 01:52:26 matt Exp */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.343.6.3 2008/01/09 01:52:26 matt Exp $");
+__KERNEL_RCSID(0, "wd.c,v 1.343.6.3 2008/01/09 01:52:26 matt Exp");
 
 #include "opt_ata.h"
 
@@ -140,10 +140,10 @@ int	wdactivate(struct device *, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
-static bool	wd_suspend(device_t);
+static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
-CFATTACH_DECL(wd, sizeof(struct wd_softc),
+CFATTACH_DECL_NEW(wd, sizeof(struct wd_softc),
     wdprobe, wdattach, wddetach, wdactivate);
 
 extern struct cfdriver wd_cd;
@@ -194,6 +194,7 @@ void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
+bool  wd_shutdown(device_t, int);
 
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
@@ -298,11 +299,13 @@ wdprobe(struct device *parent, struct cfdata *match, void *aux)
 void
 wdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct wd_softc *wd = (void *)self;
+	struct wd_softc *wd = device_private(self);
 	struct ata_device *adev= aux;
 	int i, blank;
 	char tbuf[41], pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
+
+	wd->sc_dev = self;
 
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 	callout_init(&wd->sc_restart_ch, 0);
@@ -315,13 +318,13 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	wd->drvp = adev->adev_drv_data;
 
 	wd->drvp->drv_done = wddone;
-	wd->drvp->drv_softc = &wd->sc_dev;
+	wd->drvp->drv_softc = wd->sc_dev;
 
 	aprint_naive("\n");
 
 	/* read our drive info */
 	if (wd_get_params(wd, AT_WAIT, &wd->sc_params) != 0) {
-		aprint_error("\n%s: IDENTIFY failed\n", wd->sc_dev.dv_xname);
+		aprint_error("\n%s: IDENTIFY failed\n", device_xname(self));
 		return;
 	}
 
@@ -351,7 +354,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 		char sbuf[sizeof(WD_QUIRK_FMT) + 64];
 		bitmask_snprintf(wd->sc_quirks, WD_QUIRK_FMT,
 		    sbuf, sizeof(sbuf));
-		aprint_normal("%s: quirks %s\n", wd->sc_dev.dv_xname, sbuf);
+		aprint_normal_dev(self, "quirks %s\n", sbuf);
 	}
 
 	if ((wd->sc_params.atap_multi & 0xff) > 1) {
@@ -360,8 +363,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 		wd->sc_multi = 1;
 	}
 
-	aprint_verbose("%s: drive supports %d-sector PIO transfers,",
-	    wd->sc_dev.dv_xname, wd->sc_multi);
+	aprint_verbose_dev(self, "drive supports %d-sector PIO transfers,",
+	    wd->sc_multi);
 
 	/* 48-bit LBA addressing */
 	if ((wd->sc_params.atap_cmd2_en & ATA_CMD2_LBA48) != 0)
@@ -397,9 +400,9 @@ wdattach(struct device *parent, struct device *self, void *aux)
 		    wd->sc_params.atap_sectors;
 	}
 	format_bytes(pbuf, sizeof(pbuf), wd->sc_capacity * DEV_BSIZE);
-	aprint_normal("%s: %s, %d cyl, %d head, %d sec, "
+	aprint_normal_dev(self, "%s, %d cyl, %d head, %d sec, "
 	    "%d bytes/sect x %llu sectors\n",
-	    self->dv_xname, pbuf,
+	    pbuf,
 	    (wd->sc_flags & WDF_LBA) ? (int)(wd->sc_capacity /
 		(wd->sc_params.atap_heads * wd->sc_params.atap_sectors)) :
 		wd->sc_params.atap_cylinders,
@@ -407,43 +410,34 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	    DEV_BSIZE, (unsigned long long)wd->sc_capacity);
 
 	ATADEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
-	    self->dv_xname, wd->sc_params.atap_dmatiming_mimi,
+	    device_xname(self), wd->sc_params.atap_dmatiming_mimi,
 	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
 	/*
 	 * Initialize and attach the disk structure.
 	 */
 	/* we fill in dk_info later */
-	disk_init(&wd->sc_dk, wd->sc_dev.dv_xname, &wddkdriver);
+	disk_init(&wd->sc_dk, device_xname(wd->sc_dev), &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
 #if NRND > 0
-	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
+	rnd_attach_source(&wd->rnd_source, device_xname(wd->sc_dev),
 			  RND_TYPE_DISK, 0);
 #endif
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
 
-	if (!pmf_device_register(self, wd_suspend, NULL))
+	if (!pmf_device_register1(self, wd_suspend, NULL, wd_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static bool
-wd_suspend(device_t dv)
+wd_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct wd_softc *sc = device_private(dv);
-	/* For shutdown and panic processing, use polling. */
-	int modus = doing_shutdown ? AT_POLL : AT_WAIT;
 
-	wd_flushcache(sc, modus);
-	/*
-	 * Only put the disk into standby mode if this not a shutdown or
-	 * if this is an explicit halt -p.
-	 */
-	if (doing_shutdown == 0 ||
-	    (boothowto & RB_POWERDOWN) == RB_POWERDOWN)
-		wd_standby(sc, modus);
-
+	wd_flushcache(sc, AT_WAIT);
+	wd_standby(sc, AT_WAIT);
 	return true;
 }
 
@@ -469,7 +463,7 @@ wdactivate(struct device *self, enum devact act)
 int
 wddetach(struct device *self, int flags)
 {
-	struct wd_softc *sc = (struct wd_softc *)self;
+	struct wd_softc *sc = device_private(self);
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
@@ -528,12 +522,13 @@ wddetach(struct device *self, int flags)
 void
 wdstrategy(struct buf *bp)
 {
-	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(bp->b_dev));
+	struct wd_softc *wd =
+	    device_private(device_lookup(&wd_cd, WDUNIT(bp->b_dev)));
 	struct disklabel *lp = wd->sc_dk.dk_label;
 	daddr_t blkno;
 	int s;
 
-	ATADEBUG_PRINT(("wdstrategy (%s)\n", wd->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("wdstrategy (%s)\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
 
 	/* Valid request?  */
@@ -625,7 +620,7 @@ wdstart(void *arg)
 	struct wd_softc *wd = arg;
 	struct buf *bp = NULL;
 
-	ATADEBUG_PRINT(("wdstart %s\n", wd->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("wdstart %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
 	while (wd->openings > 0) {
 
@@ -647,7 +642,8 @@ static void
 wd_split_mod15_write(struct buf *bp)
 {
 	struct buf *obp = bp->b_private;
-	struct wd_softc *sc = wd_cd.cd_devs[DISKUNIT(obp->b_dev)];
+	struct wd_softc *sc =
+	    device_private(wd_cd.cd_devs[DISKUNIT(obp->b_dev)]);
 
 	if (__predict_false(bp->b_error != 0)) {
 		/*
@@ -780,13 +776,13 @@ __wdstart(struct wd_softc *wd, struct buf *bp)
 void
 wddone(void *v)
 {
-	struct wd_softc *wd = v;
+	struct wd_softc *wd = device_private(v);
 	struct buf *bp = wd->sc_bp;
 	const char *errmsg;
 	int do_perror = 0;
 	int nblks;
 
-	ATADEBUG_PRINT(("wddone %s\n", wd->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("wddone %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
 	if (bp == NULL)
 		return;
@@ -811,7 +807,7 @@ wddone(void *v)
 			goto noerror;
 		errmsg = "error";
 		do_perror = 1;
-		if (wd->sc_wdc_bio.r_error & WDCE_IDNF &&
+		if ((wd->sc_wdc_bio.r_error & (WDCE_IDNF | WDCE_ABRT)) &&
 		    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) == 0) {
 			nblks = wd->sc_wdc_bio.bcount /
 			    wd->sc_dk.dk_label->d_secsize;
@@ -871,8 +867,8 @@ retry2:
 		break;
 	case NOERROR:
 noerror:	if ((wd->sc_wdc_bio.flags & ATA_CORR) || wd->retries > 0)
-			printf("%s: soft error (corrected)\n",
-			    wd->sc_dev.dv_xname);
+			aprint_error_dev(wd->sc_dev,
+			    "soft error (corrected)\n");
 		break;
 	case ERR_NODEV:
 		bp->b_error = EIO;
@@ -900,7 +896,7 @@ wdrestart(void *v)
 	struct buf *bp = wd->sc_bp;
 	int s;
 
-	ATADEBUG_PRINT(("wdrestart %s\n", wd->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("wdrestart %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
 	s = splbio();
 	__wdstart(v, bp);
@@ -930,11 +926,11 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int part, error;
 
 	ATADEBUG_PRINT(("wdopen\n"), DEBUG_FUNCS);
-	wd = device_lookup(&wd_cd, WDUNIT(dev));
+	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
 	if (wd == NULL)
 		return (ENXIO);
 
-	if (! device_is_active(&wd->sc_dev))
+	if (! device_is_active(wd->sc_dev))
 		return (ENODEV);
 
 	part = WDPART(dev);
@@ -1013,7 +1009,8 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 int
 wdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
+	struct wd_softc *wd =
+	    device_private(device_lookup(&wd_cd, WDUNIT(dev)));
 	int part = WDPART(dev);
 
 	ATADEBUG_PRINT(("wdclose\n"), DEBUG_FUNCS);
@@ -1108,7 +1105,7 @@ wdgetdisklabel(struct wd_softc *wd)
 		wd->drvp->drive_flags |= DRIVE_RESET;
 		splx(s);
 	}
-	errstring = readdisklabel(MAKEWDDEV(0, device_unit(&wd->sc_dev),
+	errstring = readdisklabel(MAKEWDDEV(0, device_unit(wd->sc_dev),
 				  RAW_PART), wdstrategy, lp,
 				  wd->sc_dk.dk_cpulabel);
 	if (errstring) {
@@ -1123,11 +1120,11 @@ wdgetdisklabel(struct wd_softc *wd)
 			wd->drvp->drive_flags |= DRIVE_RESET;
 			splx(s);
 		}
-		errstring = readdisklabel(MAKEWDDEV(0, device_unit(&wd->sc_dev),
+		errstring = readdisklabel(MAKEWDDEV(0, device_unit(wd->sc_dev),
 		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
-		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);
+		aprint_error_dev(wd->sc_dev, "%s\n", errstring);
 		return;
 	}
 
@@ -1158,7 +1155,7 @@ wdperror(const struct wd_softc *wd)
 	int i;
 	const char *sep = "";
 
-	const char *devname = wd->sc_dev.dv_xname;
+	const char *devname = device_xname(wd->sc_dev);
 	struct ata_drive_datas *drvp = wd->drvp;
 	int errno = wd->sc_wdc_bio.r_error;
 
@@ -1184,7 +1181,8 @@ wdperror(const struct wd_softc *wd)
 int
 wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 {
-	struct wd_softc *wd = device_lookup(&wd_cd, WDUNIT(dev));
+	struct wd_softc *wd =
+	    device_private(device_lookup(&wd_cd, WDUNIT(dev)));
 	int error = 0, s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
@@ -1479,7 +1477,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, wd->sc_dev.dv_xname);
+		strcpy(dkw->dkw_parent, device_xname(wd->sc_dev));
 		return (dkwedge_add(dkw));
 	    }
 
@@ -1491,7 +1489,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, wd->sc_dev.dv_xname);
+		strcpy(dkw->dkw_parent, device_xname(wd->sc_dev));
 		return (dkwedge_del(dkw));
 	    }
 
@@ -1571,7 +1569,7 @@ wdsize(dev_t dev)
 
 	ATADEBUG_PRINT(("wdsize\n"), DEBUG_FUNCS);
 
-	wd = device_lookup(&wd_cd, WDUNIT(dev));
+	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
 	if (wd == NULL)
 		return (-1);
 
@@ -1610,7 +1608,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		return EFAULT;
 	wddoingadump = 1;
 
-	wd = device_lookup(&wd_cd, WDUNIT(dev));
+	wd = device_private(device_lookup(&wd_cd, WDUNIT(dev)));
 	if (wd == NULL)
 		return (ENXIO);
 
@@ -1766,7 +1764,7 @@ wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
-	prop_dictionary_set(device_properties(&wd->sc_dev),
+	prop_dictionary_set(device_properties(wd->sc_dev),
 			    "disk-info", disk_info);
 
 	/*
@@ -1863,15 +1861,14 @@ wd_setcache(struct wd_softc *wd, int bits)
 	else
 		ata_c.r_features = WDSF_WRITE_CACHE_DS;
 	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
-		printf("%s: wd_setcache command not complete\n",
-		    wd->sc_dev.dv_xname);
+		aprint_error_dev(wd->sc_dev,
+		    "wd_setcache command not complete\n");
 		return EIO;
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
 		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
-		printf("%s: wd_setcache: status=%s\n", wd->sc_dev.dv_xname,
-		    sbuf);
+		aprint_error_dev(wd->sc_dev, "wd_setcache: status=%s\n", sbuf);
 		return EIO;
 	}
 	return 0;
@@ -1889,7 +1886,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	ata_c.flags = flags;
 	ata_c.timeout = 30000; /* 30s timeout */
 	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
-		aprint_error_dev(&wd->sc_dev,
+		aprint_error_dev(wd->sc_dev,
 		    "standby immediate command didn't complete\n");
 		return EIO;
 	}
@@ -1900,7 +1897,7 @@ wd_standby(struct wd_softc *wd, int flags)
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
 		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
-		aprint_error_dev(&wd->sc_dev, "wd_standby: status=%s\n", sbuf);
+		aprint_error_dev(wd->sc_dev, "wd_standby: status=%s\n", sbuf);
 		return EIO;
 	}
 	return 0;
@@ -1930,8 +1927,8 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	ata_c.flags = flags;
 	ata_c.timeout = 30000; /* 30s timeout */
 	if (wd->atabus->ata_exec_command(wd->drvp, &ata_c) != ATACMD_COMPLETE) {
-		printf("%s: flush cache command didn't complete\n",
-		    wd->sc_dev.dv_xname);
+		aprint_error_dev(wd->sc_dev,
+		    "flush cache command didn't complete\n");
 		return EIO;
 	}
 	if (ata_c.flags & AT_ERROR) {
@@ -1941,11 +1938,22 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		char sbuf[sizeof(at_errbits) + 64];
 		bitmask_snprintf(ata_c.flags, at_errbits, sbuf, sizeof(sbuf));
-		printf("%s: wd_flushcache: status=%s\n", wd->sc_dev.dv_xname,
+		aprint_error_dev(wd->sc_dev, "wd_flushcache: status=%s\n",
 		    sbuf);
 		return EIO;
 	}
 	return 0;
+}
+
+bool
+wd_shutdown(device_t dev, int how)
+{
+
+	struct wd_softc *wd = device_private(dev);
+	wd_flushcache(wd, AT_POLL);
+	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
+		wd_standby(wd, AT_POLL);
+	return true;
 }
 
 /*

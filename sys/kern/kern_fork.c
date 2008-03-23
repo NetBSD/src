@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.142.2.3 2008/01/09 01:56:02 matt Exp $	*/
+/*	kern_fork.c,v 1.142.2.3 2008/01/09 01:56:02 matt Exp	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.142.2.3 2008/01/09 01:56:02 matt Exp $");
+__KERNEL_RCSID(0, "kern_fork.c,v 1.142.2.3 2008/01/09 01:56:02 matt Exp");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -233,7 +233,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (__predict_false(tnprocs >= maxproc))
 		error = -1;
 	else
-		error = kauth_authorize_process(p1->p_cred,
+		error = kauth_authorize_process(l1->l_cred,
 		    KAUTH_PROCESS_FORK, p1, KAUTH_ARG(tnprocs), NULL, NULL);
 
 	if (error) {
@@ -453,6 +453,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	mutex_exit(&proclist_lock);
 
+	p2->p_trace_enabled = trace_is_enabled(p2);
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif

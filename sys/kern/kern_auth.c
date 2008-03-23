@@ -1,11 +1,8 @@
-/* $NetBSD: kern_auth.c,v 1.51.8.3 2008/01/09 01:55:58 matt Exp $ */
+/* kern_auth.c,v 1.51.8.3 2008/01/09 01:55:58 matt Exp */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.51.8.3 2008/01/09 01:55:58 matt Exp $");
+__KERNEL_RCSID(0, "kern_auth.c,v 1.51.8.3 2008/01/09 01:55:58 matt Exp");
 
 #include <sys/types.h>
 #include <sys/param.h>

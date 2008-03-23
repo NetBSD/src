@@ -1,4 +1,4 @@
-/*	$NetBSD: osk5912_machdep.c,v 1.1.30.1 2007/10/29 00:48:23 matt Exp $ */
+/*	osk5912_machdep.c,v 1.1.30.1 2007/10/29 00:48:23 matt Exp */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -99,12 +99,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osk5912_machdep.c,v 1.1.30.1 2007/10/29 00:48:23 matt Exp $");
+__KERNEL_RCSID(0, "osk5912_machdep.c,v 1.1.30.1 2007/10/29 00:48:23 matt Exp");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_md.h"
 #include "opt_com.h"
 #include "md.h"
@@ -163,11 +162,7 @@ u_int cpu_reset_address = 0;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -490,13 +485,6 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
-#endif
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 #ifdef KGDB

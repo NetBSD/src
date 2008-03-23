@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.28 2005/12/11 12:18:25 christos Exp $
+# Makefile.next68k,v 1.28 2005/12/11 12:18:25 christos Exp
 
 # Makefile for NetBSD
 #
@@ -52,6 +52,8 @@ MD_SFILES=	${NEXT68K}/next68k/locore.s
 
 locore.o: ${NEXT68K}/next68k/locore.s assym.h
 	${NORMAL_S}
+
+copy.o copypage.o lock_stubs.o: assym.h
 
 ##
 ## (5) link settings

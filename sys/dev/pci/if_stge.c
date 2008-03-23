@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.38.2.1 2007/11/06 23:29:06 matt Exp $	*/
+/*	if_stge.c,v 1.38.2.1 2007/11/06 23:29:06 matt Exp	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.38.2.1 2007/11/06 23:29:06 matt Exp $");
+__KERNEL_RCSID(0, "if_stge.c,v 1.38.2.1 2007/11/06 23:29:06 matt Exp");
 
 #include "bpfilter.h"
 
@@ -289,23 +289,20 @@ static int	stge_intr(void *);
 static void	stge_txintr(struct stge_softc *);
 static void	stge_rxintr(struct stge_softc *);
 
-static int	stge_mii_readreg(struct device *, int, int);
-static void	stge_mii_writereg(struct device *, int, int, int);
-static void	stge_mii_statchg(struct device *);
+static int	stge_mii_readreg(device_t, int, int);
+static void	stge_mii_writereg(device_t, int, int, int);
+static void	stge_mii_statchg(device_t);
 
-static int	stge_mediachange(struct ifnet *);
-static void	stge_mediastatus(struct ifnet *, struct ifmediareq *);
-
-static int	stge_match(struct device *, struct cfdata *, void *);
-static void	stge_attach(struct device *, struct device *, void *);
+static int	stge_match(device_t, struct cfdata *, void *);
+static void	stge_attach(device_t, device_t, void *);
 
 int	stge_copy_small = 0;
 
 CFATTACH_DECL(stge, sizeof(struct stge_softc),
     stge_match, stge_attach, NULL, NULL);
 
-static uint32_t stge_mii_bitbang_read(struct device *);
-static void	stge_mii_bitbang_write(struct device *, uint32_t);
+static uint32_t stge_mii_bitbang_read(device_t);
+static void	stge_mii_bitbang_write(device_t, uint32_t);
 
 static const struct mii_bitbang_ops stge_mii_bitbang_ops = {
 	stge_mii_bitbang_read,
@@ -373,8 +370,7 @@ stge_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-stge_match(struct device *parent, struct cfdata *cf,
-    void *aux)
+stge_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -385,9 +381,9 @@ stge_match(struct device *parent, struct cfdata *cf,
 }
 
 static void
-stge_attach(struct device *parent, struct device *self, void *aux)
+stge_attach(device_t parent, device_t self, void *aux)
 {
-	struct stge_softc *sc = (struct stge_softc *) self;
+	struct stge_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -443,8 +439,8 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
-	    NULL)) && error != EOPNOTSUPP) {
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
+	    error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
 		return;
@@ -596,8 +592,9 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = stge_mii_readreg;
 	sc->sc_mii.mii_writereg = stge_mii_writereg;
 	sc->sc_mii.mii_statchg = stge_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, stge_mediachange,
-	    stge_mediastatus);
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -1019,29 +1016,23 @@ static int
 stge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct stge_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		error = 0;
 
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				stge_set_filter(sc);
-			error = 0;
+			stge_set_filter(sc);
 		}
-		break;
 	}
 
 	/* Try to get more packets going. */
@@ -1658,7 +1649,8 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Set the current media.
 	 */
-	mii_mediachg(&sc->sc_mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/*
 	 * Start the one second MII clock.
@@ -1751,14 +1743,14 @@ stge_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		stge_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		stge_rxdrain(sc);
 }
 
 static int
@@ -1938,7 +1930,7 @@ stge_set_filter(struct stge_softc *sc)
  *	Read a PHY register on the MII of the TC9021.
  */
 static int
-stge_mii_readreg(struct device *self, int phy, int reg)
+stge_mii_readreg(device_t self, int phy, int reg)
 {
 
 	return (mii_bitbang_readreg(self, &stge_mii_bitbang_ops, phy, reg));
@@ -1950,7 +1942,7 @@ stge_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the MII of the TC9021.
  */
 static void
-stge_mii_writereg(struct device *self, int phy, int reg, int val)
+stge_mii_writereg(device_t self, int phy, int reg, int val)
 {
 
 	mii_bitbang_writereg(self, &stge_mii_bitbang_ops, phy, reg, val);
@@ -1962,9 +1954,9 @@ stge_mii_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-stge_mii_statchg(struct device *self)
+stge_mii_statchg(device_t self)
 {
-	struct stge_softc *sc = (struct stge_softc *) self;
+	struct stge_softc *sc = device_private(self);
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_MACCtrl |= MC_DuplexSelect;
@@ -1982,9 +1974,9 @@ stge_mii_statchg(struct device *self)
  *	Read the MII serial port for the MII bit-bang module.
  */
 static uint32_t
-stge_mii_bitbang_read(struct device *self)
+stge_mii_bitbang_read(device_t self)
 {
-	struct stge_softc *sc = (void *) self;
+	struct stge_softc *sc = device_private(self);
 
 	return (bus_space_read_1(sc->sc_st, sc->sc_sh, STGE_PhyCtrl));
 }
@@ -1995,40 +1987,10 @@ stge_mii_bitbang_read(struct device *self)
  *	Write the MII serial port for the MII bit-bang module.
  */
 static void
-stge_mii_bitbang_write(struct device *self, uint32_t val)
+stge_mii_bitbang_write(device_t self, uint32_t val)
 {
-	struct stge_softc *sc = (void *) self;
+	struct stge_softc *sc = device_private(self);
 
 	bus_space_write_1(sc->sc_st, sc->sc_sh, STGE_PhyCtrl,
 	    val | sc->sc_PhyCtrl);
-}
-
-/*
- * stge_mediastatus:	[ifmedia interface function]
- *
- *	Get the current interface media status.
- */
-static void
-stge_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct stge_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/*
- * stge_mediachange:	[ifmedia interface function]
- *
- *	Set hardware to newly-selected media.
- */
-static int
-stge_mediachange(struct ifnet *ifp)
-{
-	struct stge_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
 }

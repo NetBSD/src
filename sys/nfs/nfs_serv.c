@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.129.6.2 2008/01/09 01:57:52 matt Exp $	*/
+/*	nfs_serv.c,v 1.129.6.2 2008/01/09 01:57:52 matt Exp	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.129.6.2 2008/01/09 01:57:52 matt Exp $");
+__KERNEL_RCSID(0, "nfs_serv.c,v 1.129.6.2 2008/01/09 01:57:52 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.129.6.2 2008/01/09 01:57:52 matt Exp 
 /* Global vars */
 extern u_int32_t nfs_xdrneg1;
 extern u_int32_t nfs_false, nfs_true;
-extern enum vtype nv3tov_type[8];
+extern const enum vtype nv3tov_type[8];
 extern struct nfsstats nfsstats;
 extern const nfstype nfsv2_type[9];
 extern const nfstype nfsv3_type[9];
@@ -1481,8 +1481,8 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
 			if (va.va_type != VFIFO &&
-			    (error = kauth_authorize_generic(cred,
-			    KAUTH_GENERIC_ISSUSER, NULL))) {
+			    (error = kauth_authorize_system(cred,
+			    KAUTH_SYSTEM_MKNOD, 0, NULL, NULL, NULL))) {
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -1668,8 +1668,8 @@ abort:
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	} else {
 		if (va.va_type != VFIFO &&
-		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL))) {
+		    (error = kauth_authorize_system(cred,
+		    KAUTH_SYSTEM_MKNOD, 0, NULL, NULL, NULL))) {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			goto out;
@@ -1759,16 +1759,15 @@ nfsrv_remove(nfsd, slp, lwp, mrq)
 	}
 	if (!error) {
 		vp = nd.ni_vp;
-		if (vp->v_type == VDIR &&
-		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		if (vp->v_type == VDIR) {
+			error = EPERM;
 			goto out;
+		}
 		/*
 		 * The root of a mounted filesystem cannot be deleted.
 		 */
 		if (vp->v_vflag & VV_ROOT) {
 			error = EBUSY;
-			goto out;
 		}
 out:
 		if (!error) {
@@ -1824,10 +1823,12 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 	struct nameidata fromnd, tond;
 	struct vnode *fvp, *tvp, *tdvp;
 	struct vnode *fdirp = NULL, *tdirp = NULL;
+	struct mount *localfs = NULL;
 	struct vattr fdirfor, fdiraft, tdirfor, tdiraft;
 	nfsrvfh_t fnsfh, tnsfh;
 	u_quad_t frev;
 	uid_t saved_uid;
+	uint32_t saveflag;
 
 #ifndef nolint
 	fvp = (struct vnode *)0;
@@ -1861,6 +1862,35 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 		VOP_UNLOCK(fromnd.ni_dvp, 0);
 	}
 	fvp = fromnd.ni_vp;
+
+	localfs = fvp->v_mount;
+	error = VFS_RENAMELOCK_ENTER(localfs);
+	if (error) {
+		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
+		vrele(fromnd.ni_dvp);
+		vrele(fvp);
+		goto out1;
+	}
+
+	/* Copied, regrettably, from vfs_syscalls.c (q.v.) */
+	vrele(fvp);
+	saveflag = fromnd.ni_cnd.cn_flags & SAVESTART;
+	fromnd.ni_cnd.cn_flags &= ~SAVESTART;
+	vn_lock(fromnd.ni_dvp, LK_EXCLUSIVE | LK_RETRY);
+	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd);
+	fromnd.ni_cnd.cn_flags |= saveflag;
+	if (error) {
+		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VFS_RENAMELOCK_EXIT(localfs);
+		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
+		vrele(fromnd.ni_dvp);
+		goto out1;
+	}
+	VOP_UNLOCK(fromnd.ni_vp, 0);
+	if (fromnd.ni_dvp != fromnd.ni_vp)
+		VOP_UNLOCK(fromnd.ni_dvp, 0);
+	fvp = fromnd.ni_vp;
+
 	nfsm_srvmtofh(&tnsfh);
 	if (v3) {
 		nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED);
@@ -1881,6 +1911,7 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 		tdirfor_ret = VOP_GETATTR(tdirp, &tdirfor, cred);
 	}
 	if (error) {
+		VFS_RENAMELOCK_EXIT(localfs);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		vrele(fvp);
@@ -1949,6 +1980,7 @@ out:
 		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
+		VFS_RENAMELOCK_EXIT(localfs);
 	} else {
 		VOP_ABORTOP(tond.ni_dvp, &tond.ni_cnd);
 		if (tdvp == tvp)
@@ -1957,6 +1989,7 @@ out:
 			vput(tdvp);
 		if (tvp)
 			vput(tvp);
+		VFS_RENAMELOCK_EXIT(localfs);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		vrele(fvp);
@@ -1997,6 +2030,9 @@ nfsmout:
 	if (tond.ni_cnd.cn_nameiop) {
 		vrele(tond.ni_startdir);
 		PNBUF_PUT(tond.ni_cnd.cn_pnbuf);
+	}
+	if (localfs) {
+		VFS_RENAMELOCK_EXIT(localfs);
 	}
 	if (fromnd.ni_cnd.cn_nameiop) {
 		vrele(fromnd.ni_startdir);
@@ -2046,9 +2082,10 @@ nfsrv_link(nfsd, slp, lwp, mrq)
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		return (0);
 	}
-	if (vp->v_type == VDIR && (error = kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	if (vp->v_type == VDIR) {
+		error = EPERM;
 		goto out1;
+	}
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
 	nd.ni_cnd.cn_flags = LOCKPARENT;

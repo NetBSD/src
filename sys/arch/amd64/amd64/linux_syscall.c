@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.14.12.2 2008/01/09 01:44:45 matt Exp $ */
+/*	linux_syscall.c,v 1.14.12.2 2008/01/09 01:44:45 matt Exp */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14.12.2 2008/01/09 01:44:45 matt Exp $");
+__KERNEL_RCSID(0, "linux_syscall.c,v 1.14.12.2 2008/01/09 01:44:45 matt Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14.12.2 2008/01/09 01:44:45 matt
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/arch/amd64/linux_siginfo.h>
-#include <compat/linux/arch/amd64/linux_syscall.h>
 #include <compat/linux/arch/amd64/linux_machdep.h>
 
 void linux_syscall_intern(struct proc *);
@@ -72,7 +71,6 @@ void
 linux_syscall_intern(struct proc *p)
 {
 
-	p->p_trace_enabled = trace_is_enabled(p);
 	p->p_md.md_syscall = linux_syscall;
 }
 
@@ -95,13 +93,12 @@ linux_syscall(struct trapframe *frame)
 	p = l->l_proc;
 
 	code = frame->tf_rax;
-	uvmexp.syscalls++;
 
 	LWP_CACHE_CREDS(l, p);
 
 	callp = p->p_emul->e_sysent;
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (LINUX_SYS_NSYSENT - 1);
 	callp += code;
 
 	/*
@@ -111,7 +108,7 @@ linux_syscall(struct trapframe *frame)
 
 	KERNEL_LOCK(1, l);
 	if (__predict_false(p->p_trace_enabled)
-	    && (error = trace_enter(code, code, NULL, args)) != 0)
+	    && (error = trace_enter(code, args, callp->sy_narg)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -141,7 +138,7 @@ out:
 	}
 
 	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, args, rval, error);
+		trace_exit(code, rval, error);
 
 	userret(l);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.112.2.2 2008/01/09 01:49:02 matt Exp $
+#	files.sparc64,v 1.112.2.2 2008/01/09 01:49:02 matt Exp
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -17,13 +17,6 @@ attach mainbus at root
 device pcons
 attach pcons at mainbus
 file	arch/sparc64/dev/pcons.c		pcons needs-flag
-
-#
-# Raster Console support
-#
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/wsfb/files.wsfb"
 
 include "dev/sun/files.sun"
 include "dev/i2o/files.i2o"
@@ -169,6 +162,8 @@ file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
 file	dev/sun/disksubr.c 
 
+file	arch/sparc64/sparc64/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
+
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
 file	arch/sparc/fpu/fpu_compare.c
@@ -183,8 +178,6 @@ file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
 file	arch/sparc64/sparc64/clock.c
 file	arch/sparc64/sparc64/emul.c
-file	arch/sparc64/sparc64/in_cksum.S
-file	arch/sparc64/sparc64/in4_cksum.c	inet
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 file	arch/sparc64/sparc64/kobj_machdep.c	modular

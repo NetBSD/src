@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.4.4.1 2007/11/06 23:15:46 matt Exp $	*/
+/*	cons.c,v 1.4.4.1 2007/11/06 23:15:46 matt Exp	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -96,10 +96,29 @@ int siocnscan(void *);
 # endif
 #endif
 
+#ifdef CONS_ZS
+void zscnprobe(struct consdev *);
+void zscninit(struct consdev *);
+void zscnputchar(void *, int);
+int zscngetchar(void *);
+int zscnscan(void *);
+#include "zs.h"
+#ifndef ZSCHAN
+#define ZSCHAN ZS_CHAN_A
+#endif
+#ifndef ZSSPEED
+#define ZSSPEED 115200
+#endif
+#endif
+
 struct consdev constab[] = {
 #ifdef CONS_SERIAL
 	{ "com", COMPORT, COMSPEED,
 	    siocnprobe, siocninit, siocngetchar, siocnputchar, siocnscan },
+#endif
+#ifdef CONS_ZS
+	{ "zs", ZSCHAN, ZSSPEED,
+	    zscnprobe, zscninit, zscngetchar, zscnputchar, zscnscan },
 #endif
 	{ 0 }
 };
@@ -151,7 +170,7 @@ cnscan(void)
 
 	if (cn_tab)
 		return (*cn_tab->cn_scan)(cn_tab->cn_dev);
-	return 0;
+	return -1;
 }
 
 #ifdef CONS_FB
@@ -245,7 +264,8 @@ void
 siocnprobe(struct consdev *cp)
 {
 
-	if (*((uint32_t *)COMPROBE) != 0)
+	if (*((uint32_t *)COMPROBE) != 0 &&
+	    cobalt_id != COBALT_ID_QUBE2700)
 		cp->cn_pri = CN_REMOTE;
 }
 
@@ -279,3 +299,47 @@ siocnscan(void *dev)
 	return NS16550_scankbd((struct NS16550 *)dev);
 }
 #endif /* CONS_SERIAL */
+
+#ifdef CONS_ZS
+/*
+ * optional z85c30 serial console on Qube2700
+ */
+void
+zscnprobe(struct consdev *cp)
+{
+
+	if (*((uint32_t *)ZSPROBE) != 0 &&
+	    cobalt_id == COBALT_ID_QUBE2700)
+		cp->cn_pri = CN_REMOTE;
+}
+
+void
+zscninit(struct consdev *cp)
+{
+
+	cp->cn_dev = zs_init(cp->address, cp->speed);
+}
+
+int
+zscngetchar(void *dev)
+{
+
+	return zs_getc(dev);
+}
+
+void
+zscnputchar(void *dev, int c)
+{
+
+	if (c == '\n')
+		zs_putc(dev, '\r');
+	zs_putc(dev, c);
+}
+
+int
+zscnscan(void *dev)
+{
+
+	return zs_scan(dev);
+}
+#endif	/* CONS_ZS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.84.8.2 2008/01/09 01:52:46 matt Exp $	*/
+/*	ath.c,v 1.84.8.2 2008/01/09 01:52:46 matt Exp	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.84.8.2 2008/01/09 01:52:46 matt Exp $");
+__KERNEL_RCSID(0, "ath.c,v 1.84.8.2 2008/01/09 01:52:46 matt Exp");
 #endif
 
 /*
@@ -199,11 +199,6 @@ static void	ath_restore_diversity(struct ath_softc *);
 static int	ath_rate_setup(struct ath_softc *, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 
-#ifdef __NetBSD__
-int	ath_enable(struct ath_softc *);
-void	ath_disable(struct ath_softc *);
-#endif
-
 #if NBPFILTER > 0
 static void	ath_bpfattach(struct ath_softc *);
 #endif
@@ -264,51 +259,6 @@ static	void ath_printtxbuf(struct ath_buf *bf, int);
 #define	KEYPRINTF(sc, k, ix, mac)
 #endif
 
-#ifdef __NetBSD__
-int
-ath_activate(struct device *self, enum devact act)
-{
-	struct ath_softc *sc = (struct ath_softc *)self;
-	int rv = 0, s;
-
-	s = splnet();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->sc_if);
-		break;
-	}
-	splx(s);
-	return rv;
-}
-
-int
-ath_enable(struct ath_softc *sc)
-{
-	if (ATH_IS_ENABLED(sc) == 0) {
-		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
-			printf("%s: device enable failed\n",
-				device_xname(&sc->sc_dev));
-			return (EIO);
-		}
-		sc->sc_flags |= ATH_ENABLED;
-	}
-	return (0);
-}
-
-void
-ath_disable(struct ath_softc *sc)
-{
-	if (!ATH_IS_ENABLED(sc))
-		return;
-	if (sc->sc_disable != NULL)
-		(*sc->sc_disable)(sc);
-	sc->sc_flags &= ~ATH_ENABLED;
-}
-#endif /* __NetBSD__ */
-
 MALLOC_DEFINE(M_ATHDEV, "athdev", "ath driver dma buffers");
 
 int
@@ -339,7 +289,10 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		goto bad;
 	}
 	sc->sc_ah = ah;
-	sc->sc_invalid = 0;	/* ready to go, enable interrupt handling */
+
+	if (!prop_dictionary_set_bool(device_properties(&sc->sc_dev),
+	    "pmf-powerdown", false))
+		goto bad;
 
 	/*
 	 * Check if the MAC has multi-rate retry support.
@@ -655,7 +608,8 @@ bad2:
 bad:
 	if (ah)
 		ath_hal_detach(ah);
-	sc->sc_invalid = 1;
+	/* XXX don't get under the abstraction like this */
+	sc->sc_dev.dv_flags &= ~DVF_ACTIVE;
 	return error;
 }
 
@@ -705,12 +659,45 @@ ath_detach(struct ath_softc *sc)
 }
 
 void
+ath_suspend(struct ath_softc *sc)
+{
+	/*
+	 * Set the chip in full sleep mode.  Note that we are
+	 * careful to do this only when bringing the interface
+	 * completely to a stop.  When the chip is in this state
+	 * it must be carefully woken up or references to
+	 * registers in the PCI clock domain may freeze the bus
+	 * (and system).  This varies by chip and is mostly an
+	 * issue with newer parts that go to sleep more quickly.
+	 */
+	ath_hal_setpower(sc->sc_ah, HAL_PM_FULL_SLEEP);
+}
+
+bool
 ath_resume(struct ath_softc *sc)
 {
+	int i;
+	struct ath_hal *ah = sc->sc_ah;
+
+	ath_hal_setpower(ah, HAL_PM_AWAKE);
+
+	/*
+	 * Reset the key cache since some parts do not
+	 * reset the contents on initial power up.
+	 */
+	for (i = 0; i < sc->sc_keymax; i++)
+		ath_hal_keyreset(ah, i);
+
+	ath_hal_resettxqueue(ah, sc->sc_bhalq);
+	for (i = 0; i < HAL_NUM_TX_QUEUES; i++)
+		if (ATH_TXQ_SETUP(sc, i))
+			ath_hal_resettxqueue(ah, i);
+
 	if (sc->sc_softled) {
 		ath_hal_gpioCfgOutput(sc->sc_ah, sc->sc_ledpin);
 		ath_hal_gpioset(sc->sc_ah, sc->sc_ledpin, !sc->sc_ledon);
 	}
+	return true;
 }
 
 /*
@@ -724,7 +711,7 @@ ath_intr(void *arg)
 	struct ath_hal *ah = sc->sc_ah;
 	HAL_INT status;
 
-	if (sc->sc_invalid) {
+	if (!device_is_active(&sc->sc_dev)) {
 		/*
 		 * The hardware is not ready/present, don't touch anything.
 		 * Note this can happen early on if the IRQ is shared.
@@ -946,15 +933,12 @@ ath_init(struct ath_softc *sc)
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 		__func__, ifp->if_flags);
 
-	if (!device_has_power(&sc->sc_dev))
-		return EBUSY;
-
-	ATH_LOCK(sc);
-
-	if ((error = ath_enable(sc)) != 0) {
-		ATH_UNLOCK(sc);
-		return error;
-	}
+	if (device_is_active(&sc->sc_dev)) {
+		ATH_LOCK(sc);
+	} else if (!pmf_device_resume_self(&sc->sc_dev))
+		return ENXIO;
+	else
+		ATH_LOCK(sc);
 
 	/*
 	 * Stop anything previously setup.  This is safe
@@ -1048,8 +1032,8 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
 
-	DPRINTF(sc, ATH_DEBUG_ANY, "%s: invalid %u if_flags 0x%x\n",
-		__func__, sc->sc_invalid, ifp->if_flags);
+	DPRINTF(sc, ATH_DEBUG_ANY, "%s: invalid %d if_flags 0x%x\n",
+		__func__, !device_is_enabled(&sc->sc_dev), ifp->if_flags);
 
 	ATH_LOCK_ASSERT(sc);
 	if (ifp->if_flags & IFF_RUNNING) {
@@ -1075,7 +1059,7 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 		ifp->if_flags &= ~IFF_RUNNING;
 		ifp->if_timer = 0;
-		if (!sc->sc_invalid) {
+		if (device_is_enabled(&sc->sc_dev)) {
 			if (sc->sc_softled) {
 				callout_stop(&sc->sc_ledtimer);
 				ath_hal_gpioset(ah, sc->sc_ledpin,
@@ -1085,7 +1069,7 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 			ath_hal_intrset(ah, 0);
 		}
 		ath_draintxq(sc);
-		if (!sc->sc_invalid) {
+		if (device_is_enabled(&sc->sc_dev)) {
 			ath_stoprecv(sc);
 			ath_hal_phydisable(ah);
 		} else
@@ -1093,7 +1077,7 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 		IF_PURGE(&ifp->if_snd);
 		ath_beacon_free(sc);
 		if (disable)
-			ath_disable(sc);
+			pmf_device_suspend_self(&sc->sc_dev);
 	}
 }
 
@@ -1104,18 +1088,6 @@ ath_stop(struct ifnet *ifp, int disable)
 
 	ATH_LOCK(sc);
 	ath_stop_locked(ifp, disable);
-	if (!sc->sc_invalid) {
-		/*
-		 * Set the chip in full sleep mode.  Note that we are
-		 * careful to do this only when bringing the interface
-		 * completely to a stop.  When the chip is in this state
-		 * it must be carefully woken up or references to
-		 * registers in the PCI clock domain may freeze the bus
-		 * (and system).  This varies by chip and is mostly an
-		 * issue with newer parts that go to sleep more quickly.
-		 */
-		ath_hal_setpower(sc->sc_ah, HAL_PM_FULL_SLEEP);
-	}
 	ATH_UNLOCK(sc);
 }
 
@@ -1249,7 +1221,8 @@ ath_start(struct ifnet *ifp)
 	struct ether_header *eh;
 	ath_bufhead frags;
 
-	if ((ifp->if_flags & IFF_RUNNING) == 0 || sc->sc_invalid)
+	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
+	    !device_is_active(&sc->sc_dev))
 		return;
 	for (;;) {
 		/*
@@ -1730,6 +1703,11 @@ ath_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 
 	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s: delete key %u\n", __func__, keyix);
 
+	if (!device_has_power(&sc->sc_dev)) {
+		aprint_error_dev(&sc->sc_dev, "deleting keyix %d w/o power\n",
+		    k->wk_keyix);
+	}
+
 	ath_hal_keyreset(ah, keyix);
 	/*
 	 * Handle split tx/rx keying required for TKIP with h/w MIC.
@@ -1764,6 +1742,10 @@ ath_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 {
 	struct ath_softc *sc = ic->ic_ifp->if_softc;
 
+	if (!device_has_power(&sc->sc_dev)) {
+		aprint_error_dev(&sc->sc_dev, "setting keyix %d w/o power\n",
+		    k->wk_keyix);
+	}
 	return ath_keyset(sc, k, mac, ic->ic_bss);
 }
 
@@ -1839,49 +1821,16 @@ ath_calcrxfilter(struct ath_softc *sc, enum ieee80211_state state)
 }
 
 static void
-ath_mcastfilter_accum(void *dl, u_int32_t *mfilt)
-{
-	u_int32_t val;
-	u_int8_t pos;
-
-	/* calculate XOR of eight 6bit values */
-	val = LE_READ_4((char *)dl + 0);
-	pos = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
-	val = LE_READ_4((char *)dl + 3);
-	pos ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
-	pos &= 0x3f;
-	mfilt[pos / 32] |= (1 << (pos % 32));
-}
-
-static void
-ath_mcastfilter_compute(struct ath_softc *sc, u_int32_t *mfilt)
-{
-	struct ifnet *ifp = &sc->sc_if;
-	struct ether_multi *enm;
-	struct ether_multistep estep;
-
-	mfilt[0] = mfilt[1] = 0;
-	ETHER_FIRST_MULTI(estep, &sc->sc_ec, enm);
-	while (enm != NULL) {
-		/* XXX Punt on ranges. */
-		if (!IEEE80211_ADDR_EQ(enm->enm_addrlo, enm->enm_addrhi)) {
-			mfilt[0] = mfilt[1] = ~((u_int32_t)0);
-			ifp->if_flags |= IFF_ALLMULTI;
-			return;
-		}
-		ath_mcastfilter_accum(enm->enm_addrlo, mfilt);
-		ETHER_NEXT_MULTI(estep, enm);
-	}
-	ifp->if_flags &= ~IFF_ALLMULTI;
-}
-
-static void
 ath_mode_init(struct ath_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_if;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
-	u_int32_t rfilt, mfilt[2];
+	struct ether_multi *enm;
+	struct ether_multistep estep;
+	u_int32_t rfilt, mfilt[2], val;
 	int i;
+	uint8_t pos;
 
 	/* configure rx filter */
 	rfilt = ath_calcrxfilter(sc, ic->ic_state);
@@ -1911,30 +1860,28 @@ ath_mode_init(struct ath_softc *sc)
 	ath_hal_setmac(ah, ic->ic_myaddr);
 
 	/* calculate and install multicast filter */
-#ifdef __FreeBSD__
-	if ((ifp->if_flags & IFF_ALLMULTI) == 0) {
-		mfilt[0] = mfilt[1] = 0;
-		IF_ADDR_LOCK(ifp);
-		TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-			void *dl;
-
-			/* calculate XOR of eight 6bit values */
-			dl = LLADDR((struct sockaddr_dl *) ifma->ifma_addr);
-			val = LE_READ_4((char *)dl + 0);
-			pos = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
-			val = LE_READ_4((char *)dl + 3);
-			pos ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
-			pos &= 0x3f;
-			mfilt[pos / 32] |= (1 << (pos % 32));
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	mfilt[0] = mfilt[1] = 0;
+	ETHER_FIRST_MULTI(estep, &sc->sc_ec, enm);
+	while (enm != NULL) {
+		void *dl;
+		/* XXX Punt on ranges. */
+		if (!IEEE80211_ADDR_EQ(enm->enm_addrlo, enm->enm_addrhi)) {
+			mfilt[0] = mfilt[1] = 0xffffffff;
+			ifp->if_flags |= IFF_ALLMULTI;
+			break;
 		}
-		IF_ADDR_UNLOCK(ifp);
-	} else {
-		mfilt[0] = mfilt[1] = ~0;
+		dl = enm->enm_addrlo;
+		val = LE_READ_4((char *)dl + 0);
+		pos = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
+		val = LE_READ_4((char *)dl + 3);
+		pos ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
+		pos &= 0x3f;
+		mfilt[pos / 32] |= (1 << (pos % 32));
+
+		ETHER_NEXT_MULTI(estep, enm);
 	}
-#endif
-#ifdef __NetBSD__
-	ath_mcastfilter_compute(sc, mfilt);
-#endif
+
 	ath_hal_setmcastfilter(ah, mfilt[0], mfilt[1]);
 	DPRINTF(sc, ATH_DEBUG_MODE, "%s: RX filter 0x%x, MC filter %08x:%08x\n",
 		__func__, rfilt, mfilt[0], mfilt[1]);
@@ -4216,7 +4163,7 @@ ath_draintxq(struct ath_softc *sc)
 	int i;
 
 	/* XXX return value */
-	if (!sc->sc_invalid) {
+	if (device_is_active(&sc->sc_dev)) {
 		/* don't touch the hardware if marked invalid */
 		(void) ath_hal_stoptxdma(ah, sc->sc_bhalq);
 		DPRINTF(sc, ATH_DEBUG_RESET,
@@ -5051,11 +4998,12 @@ ath_printrxbuf(struct ath_buf *bf, int done)
 
 	for (i = 0, ds = bf->bf_desc; i < bf->bf_nseg; i++, ds++) {
 		printf("R%d (%p %" PRIx64
-		    ") %08x %08x %08x %08x %08x %08x %c\n", i, ds,
+		    ") %08x %08x %08x %08x %08x %08x %02x %02x %c\n", i, ds,
 		    (uint64_t)bf->bf_daddr + sizeof (struct ath_desc) * i,
 		    ds->ds_link, ds->ds_data,
 		    ds->ds_ctl0, ds->ds_ctl1,
 		    ds->ds_hw[0], ds->ds_hw[1],
+		    ds->ds_rxstat.rs_status, ds->ds_rxstat.rs_keyix,
 		    !done ? ' ' : (ds->ds_rxstat.rs_status == 0) ? '*' : '!');
 	}
 }
@@ -5088,7 +5036,8 @@ ath_watchdog(struct ifnet *ifp)
 	int i;
 
 	ifp->if_timer = 0;
-	if ((ifp->if_flags & IFF_RUNNING) == 0 || sc->sc_invalid)
+	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
+	    !device_is_active(&sc->sc_dev))
 		return;
 	for (i = 0; i < HAL_NUM_TX_QUEUES; i++) {
 		if (!ATH_TXQ_SETUP(sc, i))
@@ -5202,9 +5151,8 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * torn down much of our state.  There's
 			 * probably a better way to deal with this.
 			 */
-			if (!sc->sc_invalid && ic->ic_bss != NULL)
-				ath_init(sc);	/* XXX lose error */
-		} else
+			error = ath_init(sc);
+		} else if (device_is_active(&sc->sc_dev))
 			ath_stop_locked(ifp, 1);
 		break;
 	case SIOCADDMULTI:
@@ -5234,14 +5182,13 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	default:
 		error = ieee80211_ioctl(ic, cmd, data);
-		if (error == ENETRESET) {
-			if (IS_RUNNING(ifp) &&
-			    ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
-				ath_init(sc);	/* XXX lose error */
+		if (error != ENETRESET)
+			;
+		else if (IS_RUNNING(ifp) &&
+		         ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
+			error = ath_init(sc);
+		else
 			error = 0;
-		}
-		if (error == ERESTART)
-			error = IS_RUNNING(ifp) ? ath_reset(ifp) : 0;
 		break;
 	}
 	ATH_UNLOCK(sc);

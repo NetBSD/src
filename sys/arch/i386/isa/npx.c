@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.116.24.2 2008/01/09 01:46:44 matt Exp $	*/
+/*	npx.c,v 1.116.24.2 2008/01/09 01:46:44 matt Exp	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.116.24.2 2008/01/09 01:46:44 matt Exp $");
+__KERNEL_RCSID(0, "npx.c,v 1.116.24.2 2008/01/09 01:46:44 matt Exp");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.116.24.2 2008/01/09 01:46:44 matt Exp $");
 #endif
 
 #include "opt_multiprocessor.h"
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +129,11 @@ static int	npxdna_s87(struct cpu_info *);
 static int	npxdna_xmm(struct cpu_info  *);
 static int	x86fpflags_to_ksiginfo(uint32_t flags);
 
+#ifdef XEN
+#define	clts()
+#define	stts()
+#endif
+
 static	enum npx_type		npx_type;
 volatile u_int			npx_intrs_while_probing;
 volatile u_int			npx_traps_while_probing;
@@ -155,14 +161,16 @@ static int
 npxdna_empty(struct cpu_info *ci)
 {
 
-	/* raise a DNA TRAP, math_emulate would take over eventually */
-	IPRINTF(("Emul"));
+#ifndef XEN
+	panic("npxdna vector not initialized");
+#endif
 	return 0;
 }
 
 
 int    (*npxdna_func)(struct cpu_info *) = npxdna_empty;
 
+#ifndef XEN
 /*
  * This calls i8259_* directly, but currently we can count on systems
  * having a i8259 compatible setup all the time. Maybe have to change
@@ -265,7 +273,6 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 
 	irqmask = i8259_setmask(irqmask);
 
-	idt_vec_reserve(NRSVIDT + irq);
 	idt[NRSVIDT + irq] = save_idt_npxintr;
 
 	idt[16] = save_idt_npxtrap;
@@ -280,11 +287,12 @@ void npxinit(struct cpu_info *ci)
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0) {
 		i386_fpu_fdivbug = 1;
-		aprint_normal("%s: WARNING: Pentium FDIV bug detected!\n",
-		    ci->ci_dev->dv_xname);
+		aprint_normal_dev(ci->ci_dev,
+		    "WARNING: Pentium FDIV bug detected!\n");
 	}
 	lcr0(rcr0() | (CR0_TS));
 }
+#endif
 
 /*
  * Common attach routine.
@@ -296,7 +304,9 @@ npxattach(struct npx_softc *sc)
 	npx_softc = sc;
 	npx_type = sc->sc_type;
 
+#ifndef XEN
 	npxinit(&cpu_info_primary);
+#endif
 	i386_fpu_present = 1;
 
 	if (i386_use_fxsave)
@@ -304,8 +314,21 @@ npxattach(struct npx_softc *sc)
 	else
 		npxdna_func = npxdna_s87;
 
-	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
-		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
+}
+
+int
+npxdetach(device_t self, int flags)
+{
+	struct npx_softc *sc = device_private(self);
+
+	if (sc->sc_type == NPX_INTERRUPT)
+		return EBUSY;
+
+	pmf_device_deregister(self);
+	
+	return 0;
 }
 
 /*
@@ -335,12 +358,14 @@ npxintr(void *arg, struct intrframe *frame)
 	sc = npx_softc;
 
 	uvmexp.traps++;
-	IPRINTF(("%s: fp intr\n", ci->ci_dev->dv_xname));
+	IPRINTF(("%s: fp intr\n", device_xname(ci->ci_dev)));
 
+#ifndef XEN
 	/*
 	 * Clear the interrupt latch.
 	 */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0);
+#endif
 
 	/*
 	 * If we're saving, ignore the interrupt.  The FPU will generate
@@ -497,8 +522,17 @@ npxdna_xmm(struct cpu_info *ci)
 	KDASSERT(i386_use_fxsave == 1);
 
 	if (ci->ci_fpsaving) {
+#ifndef XEN
 		printf("recursive npx trap; cr0=%x\n", rcr0());
 		return (0);
+#else
+		/*
+		 * Because we don't have clts() we will trap on the fnsave in
+		 * fpu_save, if we're saving the FPU state not from interrupt
+		 * context (f.i. during fork()).  Just return in this case.
+		 */
+		return (1);
+#endif /* XEN */
 	}
 
 	s = splhigh();		/* lock out IPI's while we clean house.. */
@@ -513,7 +547,7 @@ npxdna_xmm(struct cpu_info *ci)
 	 */
 	if (ci->ci_fpcurlwp != NULL) {
 		IPRINTF(("Save"));
-		npxsave_cpu(ci, 1);
+		npxsave_cpu(true);
 	} else {
 		clts();
 		IPRINTF(("Init"));
@@ -525,7 +559,7 @@ npxdna_xmm(struct cpu_info *ci)
 
 	KDASSERT(ci->ci_fpcurlwp == NULL);
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l, 1);
+		npxsave_lwp(l, true);
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 	s = splhigh();
@@ -572,39 +606,51 @@ npxdna_s87(struct cpu_info *ci)
 	KDASSERT(i386_use_fxsave == 0);
 
 	if (ci->ci_fpsaving) {
+#ifndef XEN
 		printf("recursive npx trap; cr0=%x\n", rcr0());
 		return (0);
+#else
+		/*
+		 * Because we don't have clts() we will trap on the fnsave in
+		 * fpu_save, if we're saving the FPU state not from interrupt
+		 * context (f.i. during fork()).  Just return in this case.
+		 */
+		return (1);
+#endif /* XEN */
 	}
 
 	s = splhigh();		/* lock out IPI's while we clean house.. */
 	l = ci->ci_curlwp;
 
-	IPRINTF(("%s: dna for lwp %p\n", ci->ci_dev->dv_xname, l));
+	IPRINTF(("%s: dna for lwp %p\n", device_xname(ci->ci_dev), l));
 	/*
 	 * If someone else was using our FPU, save their state (which does an
 	 * implicit initialization); otherwise, initialize the FPU state to
 	 * clear any exceptions.
 	 */
 	if (ci->ci_fpcurlwp != NULL)
-		npxsave_cpu(ci, 1);
+		npxsave_cpu(true);
 	else {
 		clts();
-		IPRINTF(("%s: fp init\n", ci->ci_dev->dv_xname));
+		IPRINTF(("%s: fp init\n", device_xname(ci->ci_dev)));
 		fninit();
 		fwait();
 		stts();
 	}
 	splx(s);
 
-	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
+	IPRINTF(("%s: done saving\n", device_xname(ci->ci_dev)));
 	KDASSERT(ci->ci_fpcurlwp == NULL);
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l, 1);
+		npxsave_lwp(l, true);
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 	s = splhigh();
 	ci->ci_fpcurlwp = l;
 	l->l_addr->u_pcb.pcb_fpcpu = ci;
+#ifdef XEN
+	ci->ci_fpused = 1;
+#endif
 	splx(s);
 
 
@@ -632,18 +678,17 @@ npxdna_s87(struct cpu_info *ci)
 }
 
 void
-npxsave_cpu(struct cpu_info *ci, int save)
+npxsave_cpu(bool save)
 {
+	struct cpu_info *ci = curcpu();
 	struct lwp *l;
 	int s;
-
-	KDASSERT(ci == curcpu());
 
 	l = ci->ci_fpcurlwp;
 	if (l == NULL)
 		return;
 
-	IPRINTF(("%s: fp CPU %s lwp %p\n", ci->ci_dev->dv_xname,
+	IPRINTF(("%s: fp CPU %s lwp %p\n", device_xname(ci->ci_dev),
 	    save? "save" : "flush", l));
 
 	if (save) {
@@ -680,6 +725,9 @@ npxsave_cpu(struct cpu_info *ci, int save)
 	s = splhigh();
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 	ci->ci_fpcurlwp = NULL;
+#ifdef XEN
+	ci->ci_fpused  = 1;
+#endif
 	splx(s);
 }
 
@@ -694,24 +742,27 @@ npxsave_cpu(struct cpu_info *ci, int save)
  * saves us a reload once per fork().
  */
 void
-npxsave_lwp(struct lwp *l, int save)
+npxsave_lwp(struct lwp *l, bool save)
 {
-	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
 
 	KDASSERT(l->l_addr != NULL);
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
-	if (oci == NULL)
+	if (oci == NULL) {
+#ifdef XEN
+		HYPERVISOR_fpu_taskswitch();
+#endif
 		return;
+	}
 
-	IPRINTF(("%s: fp %s lwp %p\n", ci->ci_dev->dv_xname,
+	IPRINTF(("%s: fp %s lwp %p\n", device_xname(ci->ci_dev),
 	    save? "save" : "flush", l));
 
 #if defined(MULTIPROCESSOR)
-	if (oci == ci) {
+	if (oci == curcpu()) {
 		int s = splhigh();
-		npxsave_cpu(ci, save);
+		npxsave_cpu(save);
 		splx(s);
 	} else {
 #ifdef DIAGNOSTIC
@@ -719,8 +770,8 @@ npxsave_lwp(struct lwp *l, int save)
 #endif
 
 		IPRINTF(("%s: fp ipi to %s %s lwp %p\n",
-		    ci->ci_dev->dv_xname,
-		    oci->ci_dev->dv_xname,
+		    device_xname(ci->ci_dev),
+		    device_xname(oci->ci_dev),
 		    save? "save" : "flush", l));
 
 		x86_send_ipi(oci,
@@ -740,8 +791,10 @@ npxsave_lwp(struct lwp *l, int save)
 			__insn_barrier();
 		}
 	}
-#else
-	KASSERT(ci->ci_fpcurlwp == l);
-	npxsave_cpu(ci, save);
+#else /* MULTIPROCESSOR */
+	npxsave_cpu(save);
+#endif /* MULTIPROCESSOR */
+#ifdef XEN
+	HYPERVISOR_fpu_taskswitch();
 #endif
 }

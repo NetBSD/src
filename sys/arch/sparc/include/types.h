@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.47.10.2 2008/01/09 01:48:56 matt Exp $ */
+/*	types.h,v 1.47.10.2 2008/01/09 01:48:56 matt Exp */
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,8 +102,6 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-#define	__HAVE_TIMECOUNTER
-#define __HAVE_GENERIC_TODR
 
 #ifdef SUN4U
 #define	__HAVE_ATOMIC64_OPS

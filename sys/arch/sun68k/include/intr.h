@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14.18.2 2008/01/09 01:49:16 matt Exp $	*/
+/*	intr.h,v 1.14.18.2 2008/01/09 01:49:16 matt Exp	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -55,6 +55,8 @@
 #define _IPL_SOFT_LEVEL_MAX	3
 
 #ifdef _KERNEL
+
+extern int idepth;
 
 typedef int ipl_t;
 typedef struct {

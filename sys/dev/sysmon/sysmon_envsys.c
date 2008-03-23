@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.46.2.2 2008/01/09 01:54:33 matt Exp $	*/
+/*	sysmon_envsys.c,v 1.46.2.2 2008/01/09 01:54:33 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.46.2.2 2008/01/09 01:54:33 matt Exp $");
+__KERNEL_RCSID(0, "sysmon_envsys.c,v 1.46.2.2 2008/01/09 01:54:33 matt Exp");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -528,8 +528,8 @@ sysmon_envsys_create(void)
 /*
  * sysmon_envsys_destroy:
  *
- * 	+ Removes all sensors from the tail queue and frees the
- * 	  sysmon_envsys object.
+ * 	+ Removes all sensors from the tail queue, destroys the callout
+ * 	  and frees the sysmon_envsys object.
  */
 void
 sysmon_envsys_destroy(struct sysmon_envsys *sme)
@@ -542,7 +542,7 @@ sysmon_envsys_destroy(struct sysmon_envsys *sme)
 		edata = TAILQ_FIRST(&sme->sme_sensors_list);
 		TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	}
-
+	callout_destroy(&sme->sme_callout);
 	kmem_free(sme, sizeof(*sme));
 }
 

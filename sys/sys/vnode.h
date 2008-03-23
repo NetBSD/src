@@ -1,4 +1,37 @@
-/*	$NetBSD: vnode.h,v 1.172.2.2 2008/01/09 01:58:21 matt Exp $	*/
+/*	vnode.h,v 1.172.2.2 2008/01/09 01:58:21 matt Exp	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,9 +68,10 @@
 #define	_SYS_VNODE_H_
 
 #include <sys/event.h>
-#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/condvar.h>
+#include <sys/rwlock.h>
+#include <sys/mutex.h>
 
 /* XXX: clean up includes later */
 #include <uvm/uvm_param.h>	/* XXX */
@@ -93,6 +127,12 @@ struct buf;
 LIST_HEAD(buflists, buf);
 TAILQ_HEAD(vnodelst, vnode);
 
+struct vnlock {
+	krwlock_t	vl_lock;
+	u_int		vl_canrecurse;
+	u_int		vl_recursecnt;
+};
+
 /*
  * Reading or writing any of these items requires holding the appropriate
  * lock.  Field markings and the corresponding locks:
@@ -113,15 +153,15 @@ TAILQ_HEAD(vnodelst, vnode);
 struct vnode {
 	struct uvm_object v_uobj;		/* i: the VM object */
 	kcondvar_t	v_cv;			/* i: synchronization */
-	int		v_waitcnt;		/* i: # waiters for VXLOCK */
 	voff_t		v_size;			/* i: size of file */
 	voff_t		v_writesize;		/* i: new size after write */
 	int		v_iflag;		/* i: VI_* flags */
 	int		v_vflag;		/* v: VV_* flags */
 	int		v_uflag;		/* u: VU_* flags */
 	int		v_numoutput;		/* i: # of pending writes */
-	long		v_writecount;		/* i: ref count of writers */
-	long		v_holdcnt;		/* i: page & buffer refs */
+	int		v_writecount;		/* i: ref count of writers */
+	int		v_holdcnt;		/* i: page & buffer refs */
+	int		v_synclist_slot;	/* s: synclist slot index */
 	struct mount	*v_mount;		/* v: ptr to vfs we are in */
 	int		(**v_op)(void *);	/* :: vnode operations vector */
 	TAILQ_ENTRY(vnode) v_freelist;		/* f: vnode freelist */
@@ -129,21 +169,20 @@ struct vnode {
 	TAILQ_ENTRY(vnode) v_mntvnodes;		/* m: vnodes for mount point */
 	struct buflists	v_cleanblkhd;		/* x: clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* x: dirty blocklist head */
-	int		v_synclist_slot;	/* s: synclist slot index */
 	TAILQ_ENTRY(vnode) v_synclist;		/* s: vnodes with dirty bufs */
 	LIST_HEAD(, namecache) v_dnclist;	/* n: namecaches (children) */
 	LIST_HEAD(, namecache) v_nclist;	/* n: namecaches (parent) */
 	union {
 		struct mount	*vu_mountedhere;/* v: ptr to vfs (VDIR) */
 		struct socket	*vu_socket;	/* v: unix ipc (VSOCK) */
-		struct specinfo	*vu_specinfo;	/* v: device (VCHR, VBLK) */
+		struct specnode	*vu_specnode;	/* v: device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* v: fifo (VFIFO) */
 		struct uvm_ractx *vu_ractx;	/* i: read-ahead ctx (VREG) */
 	} v_un;
 	enum vtype	v_type;			/* :: vnode type */
 	enum vtagtype	v_tag;			/* :: type of underlying data */
-	struct lock	v_lock;			/* v: lock for this vnode */
-	struct lock	*v_vnlock;		/* v: pointer to lock */
+	struct vnlock	v_lock;			/* v: lock for this vnode */
+	struct vnlock	*v_vnlock;		/* v: pointer to lock */
 	void 		*v_data;		/* :: private data for fs */
 	struct klist	v_klist;		/* i: notes attached to vnode */
 };
@@ -151,7 +190,7 @@ struct vnode {
 #define	v_interlock	v_uobj.vmobjlock
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
-#define	v_specinfo	v_un.vu_specinfo
+#define	v_specnode	v_un.vu_specnode
 #define	v_fifoinfo	v_un.vu_fifoinfo
 #define	v_ractx		v_un.vu_ractx
 
@@ -193,7 +232,6 @@ typedef struct vnode vnode_t;
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
 #define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
 #define	VI_XLOCK	0x00001000	/* vnode is locked to change type */
-#define	VI_ALIASED	0x00002000	/* vnode has an alias */
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
@@ -201,6 +239,7 @@ typedef struct vnode vnode_t;
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
+#define	VI_FREEING	0x00400000	/* vnode is being freed */
 
 /*
  * The third set are locked by the underlying file system.
@@ -210,8 +249,9 @@ typedef struct vnode vnode_t;
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
-    "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
-    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\31DIROP\32VU_SOFTDEP" 
+    "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
+    "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
+    "\31DIROP\32SOFTDEP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -362,7 +402,14 @@ vismarker(struct vnode *vp)
 
 #define	NULLVP	((struct vnode *)NULL)
 
-#define	VN_KNOTE(vp, b)		KNOTE(&vp->v_klist, (b))
+static __inline void
+VN_KNOTE(struct vnode *vp, long hint)
+{
+
+	mutex_enter(&vp->v_interlock);
+	KNOTE(&vp->v_klist, hint);
+	mutex_exit(&vp->v_interlock);
+}
 
 /*
  * Global vnode data.
@@ -543,8 +590,6 @@ struct vnode;
 /* see vnode(9) */
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
-struct vnode *
-	checkalias(struct vnode *, dev_t, struct mount *);
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
 	    struct vnode **);
 void	ungetnewvnode(struct vnode *);
@@ -563,12 +608,14 @@ void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
-void	vrele2(struct vnode *, bool);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
 void	vclean(struct vnode *, int);
-void	vrelel(struct vnode *, int, int);
+void	vrevoke(struct vnode *);
+void	vrelel(struct vnode *, int);
+#define VRELEL_NOINACTIVE	0x01
+#define VRELEL_ONHEAD 		0x02
 struct vnode *
 	vnalloc(struct mount *);
 void	vnfree(struct vnode *);
@@ -609,6 +656,9 @@ void	vntblinit(void);
 void	vn_syncer_add_to_worklist(struct vnode *, int);
 void	vn_syncer_remove_from_worklist(struct vnode *);
 int	speedup_syncer(void);
+int	dorevoke(struct vnode *, kauth_cred_t);
+int	vlockmgr(struct vnlock *, int);
+int	vlockstatus(struct vnlock *);
 
 /* from vfs_syscalls.c - abused by compat code */
 int	getvnode(struct filedesc *, int, struct file **);

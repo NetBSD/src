@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.40.6.2 2008/01/09 01:56:00 matt Exp $	*/
+/*	kern_event.c,v 1.40.6.2 2008/01/09 01:56:00 matt Exp	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.40.6.2 2008/01/09 01:56:00 matt Exp $");
+__KERNEL_RCSID(0, "kern_event.c,v 1.40.6.2 2008/01/09 01:56:00 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,9 +382,8 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
-	    (p->p_flag & PK_SUGID)) && kauth_authorize_generic(curl->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
+	if (kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_KEVENT_FILTER,
+	    p, NULL, NULL, NULL) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;
@@ -629,6 +628,7 @@ sys_kqueue(struct lwp *l, const void *v, register_t *retval)
 	memset((char *)kq, 0, sizeof(struct kqueue));
 	simple_lock_init(&kq->kq_lock);
 	TAILQ_INIT(&kq->kq_head);
+	selinit(&kq->kq_sel);
 	fp->f_data = (void *)kq;	/* store the kqueue with the fp */
 	*retval = fd;
 	if (fdp->fd_knlistsize < 0)
@@ -1243,6 +1243,7 @@ kqueue_close(struct file *fp, struct lwp *l)
 			}
 		}
 	}
+	seldestroy(&kq->kq_sel);
 	pool_put(&kqueue_pool, kq);
 	fp->f_data = NULL;
 
@@ -1265,7 +1266,7 @@ kqueue_wakeup(struct kqueue *kq)
 	}
 
 	/* Notify select/poll and kevent. */
-	selnotify(&kq->kq_sel, 0);
+	selnotify(&kq->kq_sel, 0, 0);
 	simple_unlock(&kq->kq_lock);
 	splx(s);
 }
@@ -1328,7 +1329,9 @@ knote_fdclose(struct lwp *l, int fd)
 
 	fdp = l->l_proc->p_fd;
 	list = &fdp->fd_knlist[fd];
+	KERNEL_LOCK(1, NULL);		/* not all users have locking */
 	knote_remove(l, list);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*

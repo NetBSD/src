@@ -53,18 +53,15 @@ struct com_mainbus_softc
     void *sc_ih;                /* interrupt handler */
 };
 
-int com_mainbus_probe(struct device *, struct cfdata *, void *);
-void com_mainbus_attach(struct device *, struct device *, void *);
+int com_mainbus_probe(device_t, cfdata_t , void *);
+void com_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_mainbus, sizeof(struct com_mainbus_softc),
+CFATTACH_DECL_NEW(com_mainbus, sizeof(struct com_mainbus_softc),
               com_mainbus_probe, com_mainbus_attach, NULL, NULL);
 
 int com_mainbus_attached = 0;
 int
-com_mainbus_probe(parent, match, aux)
-     struct device *parent;
-     struct cfdata *match;
-     void *aux;
+com_mainbus_probe(device_t parent, cfdata_t match, void *aux)
 {
     struct confargs *ca = aux;
 
@@ -80,17 +77,17 @@ com_mainbus_probe(parent, match, aux)
 }
 
 void
-com_mainbus_attach(parent, self, aux)
-     struct device *parent, *self;
-     void *aux;
+com_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-    struct com_mainbus_softc *msc = (void *) self;
+    struct com_mainbus_softc *msc = device_private(self);
     struct com_softc *sc = &msc->sc_com;
     int serial, interrupt_length;
     int interrupts[8];
     bus_space_tag_t iot;
     bus_space_handle_t ioh;
     bus_addr_t iobase;
+
+    sc->sc_dev = self;
 
     serial = OF_finddevice("/ht@0/isa@4/serial@0x3f8");
     if (serial != -1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.88.8.2 2008/01/09 01:58:26 matt Exp $	*/
+/*	ffs_inode.c,v 1.88.8.2 2008/01/09 01:58:26 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.88.8.2 2008/01/09 01:58:26 matt Exp $");
+__KERNEL_RCSID(0, "ffs_inode.c,v 1.88.8.2 2008/01/09 01:58:26 matt Exp");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -124,15 +124,6 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	if (DOINGSOFTDEP(vp)) {
-		if (ip->i_omode != 0) {
-			/*
-			 * XXX If the inode has been unlinked, wait
-			 * for the update (and so dependencies) to
-			 * flush.  Ensures that the slate is clean
-			 * when the inode is reused.
-			 */
-			waitfor |= UPDATE_WAIT;
-		}
 		softdep_update_inodeblock(ip, bp, waitfor);
 	} else if (ip->i_ffs_effnlink != ip->i_nlink)
 		panic("ffs_update: bad link cnt");

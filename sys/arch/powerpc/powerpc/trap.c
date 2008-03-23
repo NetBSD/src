@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120.10.2 2008/01/09 01:47:57 matt Exp $	*/
+/*	trap.c,v 1.120.10.2 2008/01/09 01:47:57 matt Exp	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120.10.2 2008/01/09 01:47:57 matt Exp $");
+__KERNEL_RCSID(0, "trap.c,v 1.120.10.2 2008/01/09 01:47:57 matt Exp");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -144,7 +144,7 @@ trap(struct trapframe *frame)
 					    trunc_page(va), false)) {
 					return;
 				}
-#if defined(DIAGNOSTIC) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
+#if defined(DIAGNOSTIC) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
 				    " (DSISR %#x): USER_SR unset\n",
@@ -670,11 +670,11 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 			 * case when we are running with the cache disabled
 			 * for debugging.
 			 */
-			static char zeroes[CACHELINESIZE];
+			static char zeroes[MAXCACHELINESIZE];
 			int error;
 			error = copyout(zeroes,
-					(void *)(frame->dar & -CACHELINESIZE),
-					CACHELINESIZE);
+					(void *)(frame->dar & -curcpu()->ci_ci.dcache_line_size),
+					curcpu()->ci_ci.dcache_line_size);
 			if (error)
 				return -1;
 			return 0;

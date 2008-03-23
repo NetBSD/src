@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12.14.1 2007/11/06 23:20:59 matt Exp $	*/
+/*	bus_space.c,v 1.12.14.1 2007/11/06 23:20:59 matt Exp	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.14.1 2007/11/06 23:20:59 matt Exp $");
+__KERNEL_RCSID(0, "bus_space.c,v 1.12.14.1 2007/11/06 23:20:59 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12.14.1 2007/11/06 23:20:59 matt Exp
 #define _POWERPC_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
 
-#if defined (PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#if !defined (PPC_IBM4XX)
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 #include <powerpc/oea/sr_601.h>
+#include <powerpc/oea/cpufeat.h>
 #include <powerpc/spr.h>
+
+extern unsigned long oeacpufeat;
 #endif
 
 /* read_N */
@@ -526,7 +529,6 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 #ifdef DEBUG
 		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
 		    t, t->pbs_base, t->pbs_limit, bpa, size);
-		 
 #endif
 		return (EINVAL);
 	}
@@ -564,20 +566,11 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 #endif
 
 	pa = t->pbs_offset + bpa;
-#ifdef PPC_OEA
-	if ((mfpvr() >> 16) != MPC601) {
+#if defined (PPC_OEA) || defined(PPC_OEA601)
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16) == MPC601) {
 		/*
-		 * Let's try to BAT map this address if possible
-		 */
-		register_t batu = battable[pa >> ADDR_SR_SHFT].batu;
-		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, pa) &&
-		    BAT_VA_MATCH_P(batu, pa + size - 1)) {
-			*bshp = pa;
-			return (0);
-		} 
-	} else {
-		/*
-		 * Same as above, but via the MPC601's I/O segments
+		 * Map via the MPC601's I/O segments
 		 */
 		register_t sr = iosrtable[pa >> ADDR_SR_SHFT];
 		if (SR601_VALID_P(sr) && ((pa >> ADDR_SR_SHFT) ==
@@ -585,8 +578,22 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 			*bshp = pa;
 			return (0);
 		}
+	} else
+#endif /* PPC_OEA601 */
+	if ((oeacpufeat & OEACPU_NOBAT) == 0) {
+		/*
+		 * Let's try to BAT map this address if possible
+		 * (note this assumes 1:1 VA:PA)
+		 */
+		register_t batu = battable[BAT_VA2IDX(pa)].batu;
+		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, pa) &&
+		    BAT_VA_MATCH_P(batu, pa + size - 1)) {
+			*bshp = pa;
+			return (0);
+		}
 	}
-#endif
+#endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
+
 #ifndef PPC_IBM4XX
 	if (extent_flags == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
@@ -630,17 +637,9 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 
 	size = _BUS_SPACE_STRIDE(t, size);
 
-#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
-	if ((mfpvr() >> 16) != MPC601) {
-		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
-		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, va) &&
-		    BAT_VA_MATCH_P(batu, va + size - 1)) {
-			pa = va;
-			va = 0;
-		} else { 
-			pmap_extract(pmap_kernel(), va, &pa);
-		}
-	} else {
+#if defined (PPC_OEA) || defined(PPC_OEA601)
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16) == MPC601) {
 		register_t sr = iosrtable[va >> ADDR_SR_SHFT];
 		if (SR601_VALID_P(sr) && ((pa >> ADDR_SR_SHFT) ==
 		    ((pa + size - 1) >> ADDR_SR_SHFT))) {
@@ -649,10 +648,22 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		} else {
 			pmap_extract(pmap_kernel(), va, &pa);
 		}
-	}
+	} else
+#endif /* PPC_OEA601 */
+	if ((oeacpufeat & OEACPU_NOBAT) == 0) {
+		register_t batu = battable[BAT_VA2IDX(va)].batu;
+		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, va) &&
+		    BAT_VA_MATCH_P(batu, va + size - 1)) {
+			pa = va;
+			va = 0;
+		} else { 
+			pmap_extract(pmap_kernel(), va, &pa);
+		}
+	} else
+		pmap_extract(pmap_kernel(), va, &pa);
 #else
 	pmap_extract(pmap_kernel(), va, &pa);
-#endif
+#endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
 	bpa = pa - t->pbs_offset;
 
 	if (extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags)) {
@@ -677,8 +688,13 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	size = _BUS_SPACE_STRIDE(t, size);
 	rstart = _BUS_SPACE_STRIDE(t, rstart);
 
-	if (rstart + size > t->pbs_limit)
+	if (rstart + size > t->pbs_limit) {
+#ifdef DEBUG
+		printf("%s(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
+		   __func__, t, t->pbs_base, t->pbs_limit, rstart, size);
+#endif
 		return (EINVAL);
+	}
 
 	/*
 	 * Can't map I/O space as linear.
@@ -698,23 +714,26 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 
 	*bpap = bpa;
 	pa = t->pbs_offset + bpa;
-#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
-	if ((mfpvr() >> 16) != MPC601) {
-		register_t batu = battable[pa >> ADDR_SR_SHFT].batu;
-		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, pa) &&
-		    BAT_VA_MATCH_P(batu, pa + size - 1)) {
-			*bshp = pa;
-			return (0);
-		} 
-	} else {
+#if defined (PPC_OEA) || defined(PPC_OEA601)
+#ifdef PPC_OEA601
+	if ((mfpvr() >> 16) == MPC601) {
 		register_t sr = iosrtable[pa >> ADDR_SR_SHFT];
 		if (SR601_VALID_P(sr) && SR601_PA_MATCH_P(sr, pa) &&
 		    SR601_PA_MATCH_P(sr, pa + size - 1)) {
 			*bshp = pa;
 			return (0);
 		}
+	} else
+#endif /* PPC_OEA601 */
+	if ((oeacpufeat & OEACPU_NOBAT) == 0) {
+		register_t batu = battable[BAT_VA2IDX(pa)].batu;
+		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, pa) &&
+		    BAT_VA_MATCH_P(batu, pa + size - 1)) {
+			*bshp = pa;
+			return (0);
+		}
 	}
-#endif
+#endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
 	*bshp = (bus_space_handle_t) mapiodev(pa, size);
 	if (*bshp == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags);

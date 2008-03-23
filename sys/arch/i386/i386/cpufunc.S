@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.2.14.3 2008/01/09 01:46:33 matt Exp $	*/
+/*	cpufunc.S,v 1.2.14.3 2008/01/09 01:46:33 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.2.14.3 2008/01/09 01:46:33 matt Exp $");
+__KERNEL_RCSID(0, "cpufunc.S,v 1.2.14.3 2008/01/09 01:46:33 matt Exp");
 
 #include "opt_xen.h"
 
@@ -145,7 +145,10 @@ ENTRY(rdpmc)
 	ret
 
 NENTRY(breakpoint)
+	pushl	%ebp
+	movl	%esp, %ebp
 	int	$0x03		/* paranoid, not 'int3' */
+	popl	%ebp
 	ret
 
 NENTRY(x86_atomic_testset_ul)

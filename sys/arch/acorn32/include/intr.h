@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.5.26.2 2008/01/28 18:29:03 matt Exp $	*/
+/* 	intr.h,v 1.5.26.2 2008/01/28 18:29:03 matt Exp	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -67,7 +67,7 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
-#ifdef __HAVE_FAST_SOFTINTRS
+#ifdef __HAVE_FAST_SOFTINTS
 /* Software interrupt priority levels */
 
 #define SOFTIRQ_CLOCK	0

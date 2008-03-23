@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.12.10.2 2008/01/09 01:48:44 matt Exp $ */
+/* if_mec.c,v 1.12.10.2 2008/01/09 01:48:44 matt Exp */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.12.10.2 2008/01/09 01:48:44 matt Exp $");
+__KERNEL_RCSID(0, "if_mec.c,v 1.12.10.2 2008/01/09 01:48:44 matt Exp");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -338,8 +338,6 @@ STATIC int	mec_mii_readreg(struct device *, int, int);
 STATIC void	mec_mii_writereg(struct device *, int, int, int);
 STATIC int	mec_mii_wait(struct mec_softc *);
 STATIC void	mec_statchg(struct device *);
-STATIC void	mec_mediastatus(struct ifnet *, struct ifmediareq *);
-STATIC int	mec_mediachange(struct ifnet *);
 
 static void	enaddr_aton(const char *, uint8_t *);
 
@@ -379,11 +377,12 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	struct mec_softc *sc = (void *)self;
 	struct mace_attach_args *maa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t command;
+	uint64_t address, command;
 	const char *macaddr;
 	struct mii_softc *child;
 	bus_dma_segment_t seg;
 	int i, err, rseg;
+	bool mac_is_fake;
 
 	sc->sc_st = maa->maa_st;
 	if (bus_space_subregion(sc->sc_st, maa->maa_sh,
@@ -454,16 +453,64 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to get MAC address!\n");
 		goto fail_4;
 	}
-	enaddr_aton(macaddr, sc->sc_enaddr);
+	/*
+	 * On some machines the DS2502 chip storing the serial number/
+	 * mac address is on the pci riser board - if this board is
+	 * missing, ARCBIOS will not know a good ethernet address (but
+	 * otherwise the machine will work fine).
+	 */
+	mac_is_fake = false;
+	if (strcmp(macaddr, "ff:ff:ff:ff:ff:ff") == 0) {
+		uint32_t ui = 0;
+		const char * netaddr =
+			ARCBIOS->GetEnvironmentVariable("netaddr");
+
+		/*
+		 * Create a MAC address by abusing the "netaddr" env var
+		 */
+		sc->sc_enaddr[0] = 0xf2;
+		sc->sc_enaddr[1] = 0x0b;
+		sc->sc_enaddr[2] = 0xa4;
+		if (netaddr) {
+			mac_is_fake = true;
+			while (*netaddr) {
+				int v = 0;
+				while (*netaddr && *netaddr != '.') {
+					if (*netaddr >= '0' && *netaddr <= '9')
+						v = v*10 + (*netaddr - '0');
+					netaddr++;
+				}
+				ui <<= 8;
+				ui |= v;
+				if (*netaddr == '.')
+					netaddr++;
+			}
+		}
+		memcpy(sc->sc_enaddr+3, ((uint8_t *)&ui)+1, 3);
+	}
+	if (!mac_is_fake)
+		enaddr_aton(macaddr, sc->sc_enaddr);
+
+	/* set the Ethernet address */
+	address = 0;
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		address = address << 8;
+		address |= sc->sc_enaddr[i];
+	}
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_STATION, address);
 
 	/* reset device */
 	mec_reset(sc);
 
 	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
 
-	printf(": MAC-110 Ethernet, rev %d\n",
-	    (command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT);
+	printf(": MAC-110 Ethernet, rev %u\n",
+	    (u_int)((command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT));
 
+	if (mac_is_fake)
+		printf("%s: could not get ethernet address from firmware"
+		    " - generated one from the \"netaddr\" environment"
+		    " variable\n", sc->sc_dev.dv_xname);
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 
@@ -475,8 +522,9 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_statchg = mec_statchg;
 
 	/* Set up PHY properties */
-	ifmedia_init(&sc->sc_mii.mii_media, 0, mec_mediachange,
-	    mec_mediastatus);
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
@@ -642,30 +690,6 @@ mec_statchg(struct device *self)
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
 }
 
-STATIC void
-mec_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct mec_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-STATIC int
-mec_mediachange(struct ifnet *ifp)
-{
-	struct mec_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return 0;
-
-	return mii_mediachg(&sc->sc_mii);
-}
-
 /*
  * XXX
  * maybe this function should be moved to common part
@@ -703,7 +727,7 @@ mec_init(struct ifnet *ifp)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct mec_rxdesc *rxd;
-	int i;
+	int i, rc;
 
 	/* cancel any pending I/O */
 	mec_stop(ifp, 0);
@@ -747,11 +771,12 @@ mec_init(struct ifnet *ifp)
 
 	callout_reset(&sc->sc_tick_ch, hz, mec_tick, sc);
 
+	if ((rc = ether_mediachange(ifp)) != 0)
+		return rc;
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	mec_start(ifp);
-
-	mii_mediachg(&sc->sc_mii);
 
 	return 0;
 }
@@ -761,8 +786,10 @@ mec_reset(struct mec_softc *sc)
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint64_t address, control;
-	int i;
+	uint64_t control;
+
+	/* stop DMA first */
+	bus_space_write_8(st, sh, MEC_DMA_CONTROL, 0);
 
 	/* reset chip */
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, MEC_MAC_CORE_RESET);
@@ -770,19 +797,12 @@ mec_reset(struct mec_softc *sc)
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, 0);
 	delay(1000);
 
-	/* set Ethernet address */
-	address = 0;
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		address = address << 8;
-		address += sc->sc_enaddr[i];
-	}
-	bus_space_write_8(st, sh, MEC_STATION, address);
-
 	/* Default to 100/half and let auto-negotiation work its magic */
 	control = MEC_MAC_SPEED_SELECT | MEC_MAC_FILTER_MATCHMULTI |
 	    MEC_MAC_IPG_DEFAULT;
 
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
+	/* stop DMA again for sanity */
 	bus_space_write_8(st, sh, MEC_DMA_CONTROL, 0);
 
 	DPRINTF(MEC_DEBUG_RESET, ("mec: control now %llx\n",
@@ -1101,31 +1121,20 @@ mec_stop(struct ifnet *ifp, int disable)
 STATIC int
 mec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct mec_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (void *)data;
 	int s, error;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				error = mec_init(ifp);
-			else
-				error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			error = mec_init(ifp);
+		else
+			error = 0;
 	}
 
 	/* Try to get more packets going. */
@@ -1482,4 +1491,6 @@ mec_shutdown(void *arg)
 	struct mec_softc *sc = arg;
 
 	mec_stop(&sc->sc_ethercom.ec_if, 1);
+	/* make sure to stop DMA etc. */
+	mec_reset(sc);
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.54 2006/08/28 13:43:36 yamt Exp $    */
+/*      param.h,v 1.54 2006/08/28 13:43:36 yamt Exp    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -146,7 +146,7 @@
 
 /* Prototype needed for delay() */
 #ifndef	_LOCORE
-void	delay __P((int));
+void	delay(int);
 /* inline macros used inside kernel */
 #include <machine/macros.h>
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.2.20.1 2008/01/09 01:46:57 matt Exp $	*/
+/*	button.c,v 1.2.20.1 2008/01/09 01:46:57 matt Exp	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.2.20.1 2008/01/09 01:46:57 matt Exp $");
+__KERNEL_RCSID(0, "button.c,v 1.2.20.1 2008/01/09 01:46:57 matt Exp");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -138,7 +138,13 @@ btn_event_queue_flush(void)
 int
 btnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	static bool btn_event_queue_selinfo_init;	/* XXX */
 	int error;
+
+	if (!btn_event_queue_selinfo_init) {
+		selinit(&btn_event_queue_selinfo);
+		btn_event_queue_selinfo_init = true;
+	}
 
 	if (minor(dev) != 0) {
 		return (ENODEV);
@@ -381,7 +387,7 @@ btn_event_send(struct btn_event *bev, int event)
 			} else {
 				simple_unlock(&btn_event_queue_slock);
 			}
-			selnotify(&btn_event_queue_selinfo, 0);
+			selnotify(&btn_event_queue_selinfo, 0, 0);
 		}
 		return;
 	}

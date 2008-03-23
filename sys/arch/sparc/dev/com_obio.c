@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.19 2006/07/13 22:56:02 gdamore Exp $	*/
+/*	com_obio.c,v 1.19 2006/07/13 22:56:02 gdamore Exp	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.19 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "com_obio.c,v 1.19 2006/07/13 22:56:02 gdamore Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,14 +103,14 @@ struct com_obio_softc {
 	struct evcnt osc_intrcnt;	/* interrupt counting */
 };
 
-static int com_obio_match(struct device *, struct cfdata *, void *);
-static void com_obio_attach(struct device *, struct device *, void *);
+static int com_obio_match(device_t, cfdata_t , void *);
+static void com_obio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_obio, sizeof(struct com_obio_softc),
+CFATTACH_DECL_NEW(com_obio, sizeof(struct com_obio_softc),
     com_obio_match, com_obio_attach, NULL, NULL);
 
 static int
-com_obio_match(struct device *parent, struct cfdata *cf, void *aux)
+com_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -166,15 +166,17 @@ com_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-com_obio_attach(struct device *parent, struct device *self, void *aux)
+com_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_obio_softc *osc = (void *)self;
+	struct com_obio_softc *osc = device_private(self);
 	struct com_softc *sc = &osc->osc_com;
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot;
 	bus_addr_t iobase;
+
+	sc->sc_dev = self;
 
 	if (strcmp("modem", sa->sa_name) == 0) {
 		osc->osc_tadpole = 1;
@@ -199,7 +201,7 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 	if (!com_is_console(iot, iobase, &ioh) &&
 	    sbus_bus_map(iot, sa->sa_slot, iobase, sa->sa_size,
 			 BUS_SPACE_MAP_LINEAR, &ioh) != 0) {
-		printf(": can't map registers\n");
+		aprint_error(": can't map registers\n");
 		return;
 	}
 
@@ -223,14 +225,10 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 		(void)bus_intr_establish(sc->sc_regs.cr_iot, sa->sa_pri,
 		    IPL_SERIAL, comintr, sc);
 		evcnt_attach_dynamic(&osc->osc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		    osc->osc_com.sc_dev.dv_xname, "intr");
+		    device_xname(self), "intr");
 	}
 
-	/*
-	 * Shutdown hook for buggy BIOSs that don't recognize the UART
-	 * without a disabled FIFO.
-	 */
-	if (shutdownhook_establish(com_cleanup, sc) == NULL) {
-		panic("com_obio_attach: could not establish shutdown hook");
+	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
+		aprint_error_dev(self, "could not establish shutdown hook");
 	}
 }

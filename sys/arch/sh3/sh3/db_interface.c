@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.43.10.2 2008/01/09 01:48:47 matt Exp $	*/
+/*	db_interface.c,v 1.43.10.2 2008/01/09 01:48:47 matt Exp	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43.10.2 2008/01/09 01:48:47 matt Exp $");
+__KERNEL_RCSID(0, "db_interface.c,v 1.43.10.2 2008/01/09 01:48:47 matt Exp");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,19 +85,36 @@ static void db_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void __db_print_symbol(db_expr_t);
 static void __db_print_tfstack(struct trapframe *, struct trapframe *);
 
+static void db_reset_cmd(db_expr_t, bool, db_expr_t, const char *);
+
 #ifdef KSTACK_DEBUG
 static void db_stackcheck_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 
 
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,	NULL, NULL,NULL) },
-	{ DDB_ADD_CMD("cache",	db_cachedump_cmd,	0,	NULL, NULL,NULL) },
-	{ DDB_ADD_CMD("frame",	db_frame_cmd,		0,	NULL, NULL,NULL) },
+	{ DDB_ADD_CMD("cache", db_cachedump_cmd, 0,
+		"Dump contents of the cache address array.",
+		"[address]",
+		"   address: if specified, dump only matching entries" ) },
+
+	{ DDB_ADD_CMD("frame", db_frame_cmd, 0,
+		"Dump switch frame and trap frames of curlwp.",
+		NULL, NULL) },
+
+	{ DDB_ADD_CMD("reset", db_reset_cmd, 0,
+		"Reset machine (by taking a trap with exceptions disabled).",
+		NULL, NULL) },
 #ifdef KSTACK_DEBUG
-	{ DDB_ADD_CMD("stack",	db_stackcheck_cmd,	0,	NULL, NULL,NULL) },
+	{ DDB_ADD_CMD("stack", db_stackcheck_cmd, 0,
+		"Dump kernel stacks of all lwps.",
+		NULL, NULL) },
 #endif
-	{  DDB_ADD_CMD(NULL,     NULL,              0,  NULL, NULL,NULL) }
+	{ DDB_ADD_CMD("tlb", db_tlbdump_cmd, 0,
+		"Dump TLB contents.",
+		NULL, NULL) },
+
+	{ DDB_ADD_CMD(NULL, NULL, 0, NULL, NULL,NULL) }
 };
 
 int db_active;
@@ -498,7 +515,7 @@ __db_cachedump_sh4(vaddr_t va)
 	}
 
 	db_printf("[I-cache]\n");
-	db_printf("  Entry             V           V           V           V\n");
+	db_printf("  Entry             V           V           V           V");
 	for (i = istart; i < iend; i++) {
 		if ((i & 3) == 0)
 			db_printf("\n[%3d-%3d] ", i, i + 3);
@@ -506,8 +523,8 @@ __db_cachedump_sh4(vaddr_t va)
 		db_printf("%08x _%c ", r & CCIA_TAGADDR_MASK, ON(r, CCIA_V));
 	}
 
-	db_printf("\n[D-cache]\n");
-	db_printf("  Entry            UV          UV          UV          UV\n");
+	db_printf("\n\n[D-cache]\n");
+	db_printf("  Entry            UV          UV          UV          UV");
 	for (i = istart; i < iend; i++) {
 		if ((i & 3) == 0)
 			db_printf("\n[%3d-%3d] ", i, i + 3);
@@ -630,7 +647,7 @@ __db_print_symbol(db_expr_t value)
  * Stack overflow check
  */
 static void
-db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_stackcheck_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		  const char *modif)
 {
 	struct lwp *l;
@@ -676,4 +693,17 @@ db_stackcheck_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 #undef	MAX_FRAME
 }
 #endif /* KSTACK_DEBUG */
+
+
+static void
+db_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+	     const char *modif)
+{
+    _cpu_exception_suspend();
+    asm volatile ("trapa #0xc3");
+
+    /* NOTREACHED, but just in case ... */
+    printf("Reset failed\n");
+}
+
 #endif /* !KGDB */

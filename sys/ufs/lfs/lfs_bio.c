@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_bio.c,v 1.103.6.2 2008/01/09 01:58:29 matt Exp $	*/
+/*	lfs_bio.c,v 1.103.6.2 2008/01/09 01:58:29 matt Exp	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.103.6.2 2008/01/09 01:58:29 matt Exp $");
+__KERNEL_RCSID(0, "lfs_bio.c,v 1.103.6.2 2008/01/09 01:58:29 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,7 +455,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(bp->b_cflags & BC_BUSY);
 	KASSERT(flags & BW_CLEAN || !LFS_IS_MALLOC_BUF(bp));
-	KASSERT(((bp->b_oflags | bp->b_cflags) & (BO_DELWRI|BC_LOCKED))
+	KASSERT(((bp->b_oflags | bp->b_flags) & (BO_DELWRI|B_LOCKED))
 	    != BO_DELWRI);
 
 	/*
@@ -482,7 +482,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * Set the delayed write flag and use reassignbuf to move the buffer
 	 * from the clean list to the dirty one.
 	 *
-	 * Set the BC_LOCKED flag and unlock the buffer, causing brelse to move
+	 * Set the B_LOCKED flag and unlock the buffer, causing brelse to move
 	 * the buffer onto the LOCKED free list.  This is necessary, otherwise
 	 * getnewbuf() would try to reclaim the buffers using bawrite, which
 	 * isn't going to work.
@@ -492,7 +492,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * enough space reserved so that there's room to write meta-data
 	 * blocks.
 	 */
-	if ((bp->b_cflags & BC_LOCKED) == 0) {
+	if ((bp->b_flags & B_LOCKED) == 0) {
 		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
 
 		ip = VTOI(vp);
@@ -583,19 +583,19 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	if (only_onefs) {
 		KASSERT(fs != NULL);
-		if (vfs_busy(fs->lfs_ivnode->v_mount, LK_NOWAIT,
-			     &mountlist_lock))
+		if (vfs_trybusy(fs->lfs_ivnode->v_mount, RW_READER,
+		    &mountlist_lock))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
 		mutex_exit(&lfs_lock);
-		vfs_unbusy(fs->lfs_ivnode->v_mount);
+		vfs_unbusy(fs->lfs_ivnode->v_mount, false);
 	} else {
 		locked_fakequeue_count = 0;
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+			if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 				DLOG((DLOG_FLUSH, "lfs_flush: fs vfs_busy\n"));
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
@@ -609,7 +609,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 			}
 			mutex_enter(&mountlist_lock);
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
-			vfs_unbusy(mp);
+			vfs_unbusy(mp, false);
 		}
 		mutex_exit(&mountlist_lock);
 	}
@@ -809,18 +809,6 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 }
 
 /*
- * Definitions for the buffer free lists.
- */
-#define BQUEUES		4		/* number of free buffer queues */
-
-#define BQ_LOCKED	0		/* super-blocks &c */
-#define BQ_LRU		1		/* lru, useful buffers */
-#define BQ_AGE		2		/* rubbish */
-#define BQ_EMPTY	3		/* buffer headers with no memory */
-
-extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
-
-/*
  * Count buffers on the "locked" queue, and compare it to a pro-forma count.
  * Don't count malloced buffers, since they don't detract from the total.
  */
@@ -832,7 +820,7 @@ lfs_countlocked(int *count, long *bytes, const char *msg)
 	long int size = 0L;
 
 	mutex_enter(&bufcache_lock);
-	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED], b_freelist) {
+	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED].bq_queue, b_freelist) {
 		KASSERT(bp->b_iodone == NULL);
 		n++;
 		size += bp->b_bufsize;

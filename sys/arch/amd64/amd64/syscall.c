@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.25.2.2 2008/01/09 01:44:48 matt Exp $	*/
+/*	syscall.c,v 1.25.2.2 2008/01/09 01:44:48 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25.2.2 2008/01/09 01:44:48 matt Exp $");
+__KERNEL_RCSID(0, "syscall.c,v 1.25.2.2 2008/01/09 01:44:48 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ void
 syscall_intern(struct proc *p)
 {
 
-	p->p_trace_enabled = trace_is_enabled(p);
 	p->p_md.md_syscall = syscall;
 }
 
@@ -102,7 +101,6 @@ syscall(struct trapframe *frame)
 	p = l->l_proc;
 
 	code = frame->tf_rax & (SYS_NSYSENT - 1);
-	uvmexp.syscalls++;
 
 	LWP_CACHE_CREDS(l, p);
 
@@ -128,7 +126,7 @@ syscall(struct trapframe *frame)
 
 	if (!__predict_false(p->p_trace_enabled)
 	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
-	    || (error = trace_enter(code, code, NULL, args)) == 0) {
+	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
 
@@ -144,7 +142,7 @@ syscall(struct trapframe *frame)
 	if (__predict_false(p->p_trace_enabled)
 	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
 		code = frame->tf_rax & (SYS_NSYSENT - 1);
-		trace_exit(code, args, rval, error);
+		trace_exit(code, rval, error);
 	}
 
 	if (__predict_true(error == 0)) {

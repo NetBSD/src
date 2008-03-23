@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.2.2.1 2008/01/09 01:57:59 matt Exp $	*/
+/*	auth.c,v 1.2.2.1 2008/01/09 01:57:59 matt Exp	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -64,7 +64,8 @@ void
 rump_cred_destroy(kauth_cred_t cred)
 {
 
-	kmem_free(cred, sizeof(struct kauth_cred));
+	if (cred != RUMPCRED_SUSER)
+		kmem_free(cred, sizeof(struct kauth_cred));
 }
 
 int
@@ -90,6 +91,20 @@ kauth_authorize_system(kauth_cred_t cred, kauth_action_t op,
 
 	/* always allow */
 	return 0;
+}
+
+uid_t
+kauth_cred_getuid(kauth_cred_t cred)
+{
+
+	return kauth_cred_geteuid(cred);
+}
+
+gid_t
+kauth_cred_getgid(kauth_cred_t cred)
+{
+
+	return cred == RUMPCRED_SUSER ? 0 : cred->cr_gid;
 }
 
 uid_t
@@ -167,6 +182,26 @@ kauth_cred_to_uucred(struct uucred *uucred, const kauth_cred_t cred)
 }
 
 void
+kauth_cred_seteuid(kauth_cred_t cred, uid_t uid)
+{
+
+	if (cred == RUMPCRED_SUSER)
+		return;
+
+	cred->cr_uid = uid;
+}
+
+void
+kauth_cred_setegid(kauth_cred_t cred, gid_t gid)
+{
+
+	if (cred == RUMPCRED_SUSER)
+		return;
+
+	cred->cr_gid = gid;
+}
+
+void
 kauth_cred_hold(kauth_cred_t cred)
 {
 
@@ -185,4 +220,11 @@ kauth_cred_get()
 {
 
 	return curlwp->l_cred;
+}
+
+kauth_cred_t
+kauth_cred_dup(kauth_cred_t cred)
+{
+
+	panic("%s: unimplemented", __func__);
 }

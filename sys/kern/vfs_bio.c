@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.176.2.2 2008/01/09 01:56:29 matt Exp $	*/
+/*	vfs_bio.c,v 1.176.2.2 2008/01/09 01:56:29 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.176.2.2 2008/01/09 01:56:29 matt Exp $");
+__KERNEL_RCSID(0, "vfs_bio.c,v 1.176.2.2 2008/01/09 01:56:29 matt Exp");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -188,22 +188,8 @@ static void brele(buf_t *);
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-struct bio_ops *bioopsp;	/* I/O operation notification */
-
-/*
- * Definitions for the buffer free lists.
- */
-#define	BQUEUES		3		/* number of free buffer queues */
-
-#define	BQ_LOCKED	0		/* super-blocks &c */
-#define	BQ_LRU		1		/* lru, useful buffers */
-#define	BQ_AGE		2		/* rubbish */
-
-struct bqueue {
-	TAILQ_HEAD(, buf)	bq_queue;
-	uint64_t		bq_bytes;
-	buf_t			*bq_marker;
-} bufqueues[BQUEUES];
+struct bqueue bufqueues[BQUEUES];
+const struct bio_ops *bioopsp;	/* I/O operation notification */
 
 static kcondvar_t needbuffer_cv;
 
@@ -996,7 +982,7 @@ brelsel(buf_t *bp, int set)
 	 */
 
 	/* If it's locked, don't report an error; try again later. */
-	if (ISSET(bp->b_cflags, BC_LOCKED))
+	if (ISSET(bp->b_flags, B_LOCKED))
 		bp->b_error = 0;
 
 	/* If it's not cacheable, or an error, mark it invalid. */
@@ -1011,8 +997,8 @@ brelsel(buf_t *bp, int set)
 		 * otherwise leave it in its current position.
 		 */
 		CLR(bp->b_cflags, BC_VFLUSH);
-		if (!ISSET(bp->b_cflags, BC_INVAL|BC_LOCKED|BC_AGE) &&
-		    bp->b_error == 0) {
+		if (!ISSET(bp->b_cflags, BC_INVAL|BC_AGE) &&
+		    !ISSET(bp->b_flags, B_LOCKED) && bp->b_error == 0) {
 			KDASSERT(checkfreelist(bp, &bufqueues[BQ_LRU]));
 			goto already_queued;
 		} else {
@@ -1060,7 +1046,7 @@ brelsel(buf_t *bp, int set)
 		 * livelock where BQ_AGE only has buffers with dependencies,
 		 * and we thus never get to the dependent buffers in BQ_LRU.
 		 */
-		if (ISSET(bp->b_cflags, BC_LOCKED)) {
+		if (ISSET(bp->b_flags, B_LOCKED)) {
 			/* locked in core */
 			bufq = &bufqueues[BQ_LOCKED];
 		} else if (!ISSET(bp->b_cflags, BC_AGE)) {
@@ -1141,7 +1127,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
  loop:
 	bp = incore(vp, blkno);
 	if (bp != NULL) {
-		err = bbusy(bp, ((slpflag & PCATCH) != 0), slptimeo);
+		err = bbusy(bp, ((slpflag & PCATCH) != 0), slptimeo, NULL);
 		if (err != 0) {
 			if (err == EPASSTHROUGH)
 				goto loop;
@@ -1175,10 +1161,10 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 	mutex_exit(&bufcache_lock);
 
 	/*
-	 * LFS can't track total size of BC_LOCKED buffer (locked_queue_bytes)
+	 * LFS can't track total size of B_LOCKED buffer (locked_queue_bytes)
 	 * if we re-size buffers here.
 	 */
-	if (ISSET(bp->b_cflags, BC_LOCKED)) {
+	if (ISSET(bp->b_flags, B_LOCKED)) {
 		KASSERT(bp->b_bufsize >= size);
 	} else {
 		if (allocbuf(bp, size, preserve)) {
@@ -1510,7 +1496,7 @@ biodone2(buf_t *bp)
 	/* Note that the transfer is done. */
 	if (ISSET(bp->b_oflags, BO_DONE))
 		panic("biodone2 already");
-	CLR(bp->b_oflags, BO_COWDONE);
+	CLR(bp->b_flags, B_COWDONE);
 	SET(bp->b_oflags, BO_DONE);
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
@@ -1951,7 +1937,7 @@ nestiobuf_iodone(buf_t *bp)
  * nestiobuf_setup: setup a "nested" buffer.
  *
  * => 'mbp' is a "master" buffer which is being divided into sub pieces.
- * => 'bp' should be a buffer allocated by getiobuf or getiobuf_nowait.
+ * => 'bp' should be a buffer allocated by getiobuf.
  * => 'offset' is a byte offset in the master buffer.
  * => 'size' is a size in bytes of this nested buffer.
  */
@@ -2031,7 +2017,7 @@ buf_destroy(buf_t *bp)
 }
 
 int
-bbusy(buf_t *bp, bool intr, int timo)
+bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 {
 	int error;
 
@@ -2042,6 +2028,8 @@ bbusy(buf_t *bp, bool intr, int timo)
 			return EDEADLK;
 		bp->b_cflags |= BC_WANTED;
 		bref(bp);
+		if (interlock != NULL)
+			mutex_exit(interlock);
 		if (intr) {
 			error = cv_timedwait_sig(&bp->b_busy, &bufcache_lock,
 			    timo);
@@ -2050,6 +2038,8 @@ bbusy(buf_t *bp, bool intr, int timo)
 			    timo);
 		}
 		brele(bp);
+		if (interlock != NULL)
+			mutex_enter(interlock);
 		if (error != 0)
 			return error;
 		return EPASSTHROUGH;

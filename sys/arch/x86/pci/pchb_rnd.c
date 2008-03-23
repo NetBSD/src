@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.3.10.2 2008/01/09 01:49:51 matt Exp $	*/
+/*	pchb_rnd.c,v 1.3.10.2 2008/01/09 01:49:51 matt Exp	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.3.10.2 2008/01/09 01:49:51 matt Exp $");
+__KERNEL_RCSID(0, "pchb_rnd.c,v 1.3.10.2 2008/01/09 01:49:51 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 		}
 		if (i == PCHB_RNG_RETRIES) {
 			bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
-			aprint_verbose_dev(&sc->sc_dev,
+			aprint_verbose_dev(sc->sc_dev,
 			    "timeout reading test samples, RNG disabled.\n");
 			return;
 		}
@@ -175,7 +175,7 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 
 	if (count_ff == PCHB_RNG_MIN_SAMPLES) {
 		bus_space_unmap(sc->sc_st, sc->sc_sh, I82802_IOSIZE);
-		aprint_verbose_dev(&sc->sc_dev,
+		aprint_verbose_dev(sc->sc_dev,
 		    "returns constant 0xff stream, RNG disabled.\n");
 		return;
 	}
@@ -189,11 +189,11 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 	 *	http://csrc.nist.gov/fips/fips1401.htm
 	 */
 
-	aprint_normal_dev(&sc->sc_dev, "random number generator enabled\n");
+	aprint_normal_dev(sc->sc_dev, "random number generator enabled\n");
 
 	callout_init(&sc->sc_rnd_ch, 0);
 	/* pch is polled for entropy, so no estimate is available. */
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
 	sc->sc_rnd_i = sizeof(sc->sc_rnd_ax);
 	pchb_rnd_callout(sc);

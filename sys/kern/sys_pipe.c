@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_pipe.c,v 1.85.8.3 2008/01/09 01:56:22 matt Exp $	*/
+/*	sys_pipe.c,v 1.85.8.3 2008/01/09 01:56:22 matt Exp	*/
 
 /*-
- * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.85.8.3 2008/01/09 01:56:22 matt Exp $");
+__KERNEL_RCSID(0, "sys_pipe.c,v 1.85.8.3 2008/01/09 01:56:22 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,9 @@ pipe_create(struct pipe **pipep, int allockva, struct pipe_mutex *mutex)
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	pipe->pipe_lock = &mutex->pm_mutex;
-	cv_init(&pipe->pipe_cv, "pipe");
+	cv_init(&pipe->pipe_rcv, "piperd");
+	cv_init(&pipe->pipe_wcv, "pipewr");
+	cv_init(&pipe->pipe_draincv, "pipedrain");
 	cv_init(&pipe->pipe_lkcv, "pipelk");
 	selinit(&pipe->pipe_sel);
 
@@ -423,11 +425,6 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 {
 	int band;
 
-	selnotify(&selp->pipe_sel, NOTE_SUBMIT);
-
-	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
-		return;
-
 	switch (code) {
 	case POLL_IN:
 		band = POLLIN|POLLRDNORM;
@@ -451,6 +448,11 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 		break;
 	}
 
+	selnotify(&selp->pipe_sel, band, NOTE_SUBMIT);
+
+	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
+		return;
+
 	fownsignal(sigp->pipe_pgid, SIGIO, code, band, selp);
 }
 
@@ -461,12 +463,13 @@ pipe_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 {
 	struct pipe *rpipe = (struct pipe *) fp->f_data;
 	struct pipebuf *bp = &rpipe->pipe_buffer;
+	kmutex_t *lock = rpipe->pipe_lock;
 	int error;
 	size_t nread = 0;
 	size_t size;
 	size_t ocnt;
 
-	mutex_enter(rpipe->pipe_lock);
+	mutex_enter(lock);
 	++rpipe->pipe_busy;
 	ocnt = bp->cnt;
 
@@ -486,9 +489,9 @@ again:
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
 
-			mutex_exit(rpipe->pipe_lock);
+			mutex_exit(lock);
 			error = uiomove((char *)bp->buffer + bp->out, size, uio);
-			mutex_enter(rpipe->pipe_lock);
+			mutex_enter(lock);
 			if (error)
 				break;
 
@@ -525,9 +528,9 @@ again:
 				size = uio->uio_resid;
 
 			va = (char *)rpipe->pipe_map.kva + rpipe->pipe_map.pos;
-			mutex_exit(rpipe->pipe_lock);
+			mutex_exit(lock);
 			error = uiomove(va, size, uio);
-			mutex_enter(rpipe->pipe_lock);
+			mutex_enter(lock);
 			if (error)
 				break;
 			nread += size;
@@ -535,7 +538,7 @@ again:
 			rpipe->pipe_map.cnt -= size;
 			if (rpipe->pipe_map.cnt == 0) {
 				rpipe->pipe_state &= ~PIPE_DIRECTR;
-				cv_broadcast(&rpipe->pipe_cv);
+				cv_broadcast(&rpipe->pipe_wcv);
 			}
 			continue;
 		}
@@ -582,10 +585,10 @@ again:
 		/*
 		 * If the "write-side" is blocked, wake it up now.
 		 */
-		cv_broadcast(&rpipe->pipe_cv);
+		cv_broadcast(&rpipe->pipe_wcv);
 
 		/* Now wait until the pipe is filled */
-		error = cv_wait_sig(&rpipe->pipe_cv, rpipe->pipe_lock);
+		error = cv_wait_sig(&rpipe->pipe_rcv, lock);
 		if (error != 0)
 			goto unlocked_error;
 		goto again;
@@ -597,8 +600,11 @@ again:
 
 unlocked_error:
 	--rpipe->pipe_busy;
-	if (rpipe->pipe_busy == 0 || bp->cnt < MINPIPESIZE) {
-		cv_broadcast(&rpipe->pipe_cv);
+	if (rpipe->pipe_busy == 0) {
+		cv_broadcast(&rpipe->pipe_draincv);
+	}
+	if (bp->cnt < MINPIPESIZE) {
+		cv_broadcast(&rpipe->pipe_wcv);
 	}
 
 	/*
@@ -612,7 +618,7 @@ unlocked_error:
 		rpipe->pipe_state &= ~PIPE_SIGNALR;
 	}
 
-	mutex_exit(rpipe->pipe_lock);
+	mutex_exit(lock);
 	return (error);
 }
 
@@ -626,12 +632,14 @@ pipe_loan_alloc(struct pipe *wpipe, int npages)
 	vsize_t len;
 
 	len = (vsize_t)npages << PAGE_SHIFT;
+	atomic_add_int(&amountpipekva, len);
 	wpipe->pipe_map.kva = uvm_km_alloc(kernel_map, len, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	if (wpipe->pipe_map.kva == 0)
+	if (wpipe->pipe_map.kva == 0) {
+		atomic_add_int(&amountpipekva, -len);
 		return (ENOMEM);
+	}
 
-	atomic_add_int(&amountpipekva, len);
 	wpipe->pipe_map.npages = npages;
 	wpipe->pipe_map.pgs = malloc(npages * sizeof(struct vm_page *), M_PIPE,
 	    M_WAITOK);
@@ -672,11 +680,12 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	vaddr_t bbase, kva, base, bend;
 	vsize_t blen, bcnt;
 	voff_t bpos;
+	kmutex_t *lock = wpipe->pipe_lock;
 
 	KASSERT(mutex_owned(wpipe->pipe_lock));
 	KASSERT(wpipe->pipe_map.cnt == 0);
 
-	mutex_exit(wpipe->pipe_lock);
+	mutex_exit(lock);
 
 	/*
 	 * Handle first PIPE_CHUNK_SIZE bytes of buffer. Deal with buffers
@@ -708,7 +717,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	if (wpipe->pipe_map.kva == 0) {
 		error = pipe_loan_alloc(wpipe, npages);
 		if (error) {
-			mutex_enter(wpipe->pipe_lock);
+			mutex_enter(lock);
 			return (error);
 		}
 	}
@@ -719,7 +728,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 			 pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		pipe_loan_free(wpipe);
-		mutex_enter(wpipe->pipe_lock);
+		mutex_enter(lock);
 		return (ENOMEM); /* so that caller fallback to ordinary write */
 	}
 
@@ -739,13 +748,13 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	 * have to wait until the pipe is drained.  Release the
 	 * pipe lock while we wait.
 	 */
-	mutex_enter(wpipe->pipe_lock);
+	mutex_enter(lock);
 	wpipe->pipe_state |= PIPE_DIRECTW;
 	pipeunlock(wpipe);
 
 	while (error == 0 && wpipe->pipe_buffer.cnt > 0) {
-		cv_broadcast(&wpipe->pipe_cv);
-		error = cv_wait_sig(&wpipe->pipe_cv, wpipe->pipe_lock);
+		cv_broadcast(&wpipe->pipe_rcv);
+		error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
 			error = EPIPE;
 	}
@@ -755,9 +764,9 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 
 	/* Wait until the reader is done */
 	while (error == 0 && (wpipe->pipe_state & PIPE_DIRECTR)) {
-		cv_broadcast(&wpipe->pipe_cv);
+		cv_broadcast(&wpipe->pipe_rcv);
 		pipeselwakeup(wpipe, wpipe, POLL_IN);
-		error = cv_wait_sig(&wpipe->pipe_cv, wpipe->pipe_lock);
+		error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
 			error = EPIPE;
 	}
@@ -767,16 +776,17 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 
 	/* Acquire the pipe lock and cleanup */
 	(void)pipelock(wpipe, 0);
-	mutex_exit(wpipe->pipe_lock);
+	mutex_exit(lock);
 
 	if (pgs != NULL) {
 		pmap_kremove(wpipe->pipe_map.kva, blen);
+		pmap_update(pmap_kernel());
 		uvm_unloan(pgs, npages, UVM_LOAN_TOPAGE);
 	}
 	if (error || amountpipekva > maxpipekva)
 		pipe_loan_free(wpipe);
 
-	mutex_enter(wpipe->pipe_lock);
+	mutex_enter(lock);
 	if (error) {
 		pipeselwakeup(wpipe, wpipe, POLL_ERR);
 
@@ -788,7 +798,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 		 */
 		if (wpipe->pipe_map.cnt == bcnt) {
 			wpipe->pipe_map.cnt = 0;
-			cv_broadcast(&wpipe->pipe_cv);
+			cv_broadcast(&wpipe->pipe_wcv);
 			return (error);
 		}
 
@@ -815,34 +825,33 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 {
 	struct pipe *wpipe, *rpipe;
 	struct pipebuf *bp;
+	kmutex_t *lock;
 	int error;
 
 	/* We want to write to our peer */
 	rpipe = (struct pipe *) fp->f_data;
+	lock = rpipe->pipe_lock;
 	error = 0;
 
-	mutex_enter(rpipe->pipe_lock);
+	mutex_enter(lock);
 	wpipe = rpipe->pipe_peer;
 
 	/*
 	 * Detect loss of pipe read side, issue SIGPIPE if lost.
 	 */
-	if (wpipe == NULL) {
-		mutex_exit(rpipe->pipe_lock);
-		return EPIPE;
-	} else if ((wpipe->pipe_state & PIPE_EOF) != 0) {
-		mutex_exit(rpipe->pipe_lock);
+	if (wpipe == NULL || (wpipe->pipe_state & PIPE_EOF) != 0) {
+		mutex_exit(lock);
 		return EPIPE;
 	}
 	++wpipe->pipe_busy;
 
 	/* Aquire the long-term pipe lock */
-	if ((error = pipelock(wpipe,1)) != 0) {
+	if ((error = pipelock(wpipe, 1)) != 0) {
 		--wpipe->pipe_busy;
 		if (wpipe->pipe_busy == 0) {
-			cv_broadcast(&wpipe->pipe_cv);
+			cv_broadcast(&wpipe->pipe_draincv);
 		}
-		mutex_exit(rpipe->pipe_lock);
+		mutex_exit(lock);
 		return (error);
 	}
 
@@ -875,10 +884,9 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		 * We break out if a signal occurs or the reader goes away.
 		 */
 		while (error == 0 && wpipe->pipe_state & PIPE_DIRECTW) {
-			cv_broadcast(&wpipe->pipe_cv);
+			cv_broadcast(&wpipe->pipe_rcv);
 			pipeunlock(wpipe);
-			error = cv_wait_sig(&wpipe->pipe_cv,
-			    wpipe->pipe_lock);
+			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 			(void)pipelock(wpipe, 0);
 			if (wpipe->pipe_state & PIPE_EOF)
 				error = EPIPE;
@@ -945,7 +953,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				segsize = size;
 
 			/* Transfer first segment */
-			mutex_exit(wpipe->pipe_lock);
+			mutex_exit(lock);
 			error = uiomove((char *)bp->buffer + bp->in, segsize,
 			    uio);
 
@@ -963,7 +971,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				error = uiomove(bp->buffer,
 				    size - segsize, uio);
 			}
-			mutex_enter(wpipe->pipe_lock);
+			mutex_enter(lock);
 			if (error)
 				break;
 
@@ -985,7 +993,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			/*
 			 * If the "read-side" has been blocked, wake it up now.
 			 */
-			cv_broadcast(&wpipe->pipe_cv);
+			cv_broadcast(&wpipe->pipe_rcv);
 
 			/*
 			 * don't block on non-blocking I/O
@@ -1003,7 +1011,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				pipeselwakeup(wpipe, wpipe, POLL_OUT);
 
 			pipeunlock(wpipe);
-			error = cv_wait_sig(&wpipe->pipe_cv, wpipe->pipe_lock);
+			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 			(void)pipelock(wpipe, 0);
 			if (error != 0)
 				break;
@@ -1019,8 +1027,11 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	}
 
 	--wpipe->pipe_busy;
-	if (wpipe->pipe_busy == 0 || bp->cnt > 0) {
-		cv_broadcast(&wpipe->pipe_cv);
+	if (wpipe->pipe_busy == 0) {
+		cv_broadcast(&wpipe->pipe_draincv);
+	}
+	if (bp->cnt > 0) {
+		cv_broadcast(&wpipe->pipe_rcv);
 	}
 
 	/*
@@ -1046,7 +1057,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	wpipe->pipe_state |= PIPE_SIGNALR;
 
 	pipeunlock(wpipe);
-	mutex_exit(wpipe->pipe_lock);
+	mutex_exit(lock);
 	return (error);
 }
 
@@ -1058,6 +1069,7 @@ pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 	struct proc *p = l->l_proc;
+	kmutex_t *lock = pipe->pipe_lock;
 
 	switch (cmd) {
 
@@ -1065,43 +1077,43 @@ pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		return (0);
 
 	case FIOASYNC:
-		mutex_enter(pipe->pipe_lock);
+		mutex_enter(lock);
 		if (*(int *)data) {
 			pipe->pipe_state |= PIPE_ASYNC;
 		} else {
 			pipe->pipe_state &= ~PIPE_ASYNC;
 		}
-		mutex_exit(pipe->pipe_lock);
+		mutex_exit(lock);
 		return (0);
 
 	case FIONREAD:
-		mutex_enter(pipe->pipe_lock);
+		mutex_enter(lock);
 #ifndef PIPE_NODIRECT
 		if (pipe->pipe_state & PIPE_DIRECTW)
 			*(int *)data = pipe->pipe_map.cnt;
 		else
 #endif
 			*(int *)data = pipe->pipe_buffer.cnt;
-		mutex_exit(pipe->pipe_lock);
+		mutex_exit(lock);
 		return (0);
 
 	case FIONWRITE:
 		/* Look at other side */
 		pipe = pipe->pipe_peer;
-		mutex_enter(pipe->pipe_lock);
+		mutex_enter(lock);
 #ifndef PIPE_NODIRECT
 		if (pipe->pipe_state & PIPE_DIRECTW)
 			*(int *)data = pipe->pipe_map.cnt;
 		else
 #endif
 			*(int *)data = pipe->pipe_buffer.cnt;
-		mutex_exit(pipe->pipe_lock);
+		mutex_exit(lock);
 		return (0);
 
 	case FIONSPACE:
 		/* Look at other side */
 		pipe = pipe->pipe_peer;
-		mutex_enter(pipe->pipe_lock);
+		mutex_enter(lock);
 #ifndef PIPE_NODIRECT
 		/*
 		 * If we're in direct-mode, we don't really have a
@@ -1114,7 +1126,7 @@ pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 #endif
 			*(int *)data = pipe->pipe_buffer.size -
 			    pipe->pipe_buffer.cnt;
-		mutex_exit(pipe->pipe_lock);
+		mutex_exit(lock);
 		return (0);
 
 	case TIOCSPGRP:
@@ -1222,10 +1234,10 @@ pipe_free_kmem(struct pipe *pipe)
 	if (pipe->pipe_buffer.buffer != NULL) {
 		if (pipe->pipe_buffer.size > PIPE_SIZE)
 			atomic_dec_uint(&nbigpipe);
-		atomic_add_int(&amountpipekva, -pipe->pipe_buffer.size);
 		uvm_km_free(kernel_map,
 			(vaddr_t)pipe->pipe_buffer.buffer,
 			pipe->pipe_buffer.size, UVM_KMF_PAGEABLE);
+		atomic_add_int(&amountpipekva, -pipe->pipe_buffer.size);
 		pipe->pipe_buffer.buffer = NULL;
 	}
 #ifndef PIPE_NODIRECT
@@ -1246,13 +1258,14 @@ static void
 pipeclose(struct file *fp, struct pipe *pipe)
 {
 	struct pipe_mutex *mutex;
+	kmutex_t *lock;
 	struct pipe *ppipe;
 	u_int refcnt;
 
 	if (pipe == NULL)
 		return;
-
-	mutex_enter(pipe->pipe_lock);
+	lock = pipe->pipe_lock;
+	mutex_enter(lock);
 	pipeselwakeup(pipe, pipe, POLL_HUP);
 
 	/*
@@ -1262,8 +1275,8 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	pipe->pipe_state |= PIPE_EOF;
 	if (pipe->pipe_busy) {
 		while (pipe->pipe_busy) {
-			cv_broadcast(&pipe->pipe_cv);
-			cv_wait_sig(&pipe->pipe_cv, pipe->pipe_lock);
+			cv_broadcast(&pipe->pipe_wcv);
+			cv_wait_sig(&pipe->pipe_draincv, lock);
 		}
 	}
 
@@ -1273,22 +1286,24 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	if ((ppipe = pipe->pipe_peer) != NULL) {
 		pipeselwakeup(ppipe, ppipe, POLL_HUP);
 		ppipe->pipe_state |= PIPE_EOF;
-		cv_broadcast(&ppipe->pipe_cv);
+		cv_broadcast(&ppipe->pipe_rcv);
 		ppipe->pipe_peer = NULL;
 	}
 
 	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
 
-	mutex = (struct pipe_mutex *)pipe->pipe_lock;
+	mutex = (struct pipe_mutex *)lock;
 	refcnt = --(mutex->pm_refcnt);
 	KASSERT(refcnt == 0 || refcnt == 1);
-	mutex_exit(pipe->pipe_lock);
+	mutex_exit(lock);
 
 	/*
 	 * free resources
 	 */
 	pipe_free_kmem(pipe);
-	cv_destroy(&pipe->pipe_cv);
+	cv_destroy(&pipe->pipe_rcv);
+	cv_destroy(&pipe->pipe_wcv);
+	cv_destroy(&pipe->pipe_draincv);
 	cv_destroy(&pipe->pipe_lkcv);
 	seldestroy(&pipe->pipe_sel);
 	pool_cache_put(pipe_cache, pipe);

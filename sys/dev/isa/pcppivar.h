@@ -1,4 +1,4 @@
-/* $NetBSD: pcppivar.h,v 1.7 2005/12/11 12:22:03 christos Exp $ */
+/* pcppivar.h,v 1.7 2005/12/11 12:22:03 christos Exp */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -37,11 +37,12 @@ struct pcppi_attach_args {
 };
 
 struct pcppi_softc {
-        struct device sc_dv;  
+        device_t sc_dv;  
 
         bus_space_tag_t sc_iot;
         bus_space_handle_t sc_ppi_ioh;
-        struct attimer_softc *sc_timer;
+        bus_size_t sc_size;
+        device_t sc_timer;
         
         struct callout sc_bell_ch;
 
@@ -51,6 +52,7 @@ struct pcppi_softc {
 };
 
 void pcppi_attach(struct pcppi_softc *);
+int pcppi_detach(device_t, int);
 
 #define	PCPPI_BELL_SLEEP	0x01	/* synchronous; sleep for complete */
 #define	PCPPI_BELL_POLL		0x02	/* synchronous; poll for complete */

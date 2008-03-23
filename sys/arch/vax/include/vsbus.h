@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.16 2007/03/04 06:00:57 christos Exp $ */
+/*	vsbus.h,v 1.16 2007/03/04 06:00:57 christos Exp */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@ struct	vsbus_attach_args {
 	u_char	va_maskno;		/* Interrupt vector in mask */
 	vaddr_t	va_dmaaddr;		/* DMA area address */
 	vsize_t	va_dmasize;		/* DMA area size */
-	bus_space_tag_t va_iot;
+	bus_space_tag_t va_memt;
 	bus_dma_tag_t va_dmat;
 };
 
@@ -75,7 +75,7 @@ struct	vsbus_attach_args {
 #define	SMSIZE		0x20000		/* Actually 256k, only 128k used */
 
 struct	vsbus_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	u_char	*sc_intmsk;	/* Mask register */
 	u_char	*sc_intclr;	/* Clear interrupt register */
 	u_char	*sc_intreq;	/* Interrupt request register */
@@ -84,6 +84,7 @@ struct	vsbus_softc {
 	vaddr_t sc_dmaaddr;	/* Mass storage virtual DMA area */
 	vsize_t sc_dmasize;	/* Size of the DMA area */
 
+	bus_space_tag_t sc_iot;
 	struct vax_bus_dma_tag sc_dmatag;
 	struct vax_sgmap sc_sgmap;
 };

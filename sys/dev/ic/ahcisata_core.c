@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.4.10.2 2008/01/09 01:52:44 matt Exp $	*/
+/*	ahcisata_core.c,v 1.4.10.2 2008/01/09 01:52:44 matt Exp	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.4.10.2 2008/01/09 01:52:44 matt Exp $");
+__KERNEL_RCSID(0, "ahcisata_core.c,v 1.4.10.2 2008/01/09 01:52:44 matt Exp");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -234,6 +234,9 @@ ahci_attach(struct ahci_softc *sc)
 	case AHCI_VS_11:
 		aprint_normal("1.1");
 		break;
+	case AHCI_VS_12:
+		aprint_normal("1.2");
+		break;
 	default:
 		aprint_normal("0x%x", ahci_rev);
 		break;
@@ -243,6 +246,7 @@ ahci_attach(struct ahci_softc *sc)
 	    sc->sc_atac.atac_nchannels, sc->sc_ncmds,
 	    ahci_cap & ~(AHCI_CAP_NPMASK|AHCI_CAP_NCS));
 	sc->sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA;
+	sc->sc_atac.atac_cap |= sc->sc_atac_capflags;
 	sc->sc_atac.atac_pio_cap = 4;
 	sc->sc_atac.atac_dma_cap = 2;
 	sc->sc_atac.atac_udma_cap = 6;
@@ -1200,7 +1204,7 @@ ahci_atapibus_attach(struct atabus_softc * ata_sc)
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
-	adapt->adapt_dev = &atac->atac_dev;
+	adapt->adapt_dev = atac->atac_dev;
 	adapt->adapt_nchannels = atac->atac_nchannels;
 	adapt->adapt_request = ahci_atapi_scsipi_request;
 	adapt->adapt_minphys = ahci_atapi_minphys;
@@ -1218,7 +1222,7 @@ ahci_atapibus_attach(struct atabus_softc * ata_sc)
 	chan->chan_max_periph = 1;
 	chan->chan_ntargets = 1;
 	chan->chan_nluns = 1;
-	chp->atapibus = config_found_ia(&ata_sc->sc_dev, "atapi", chan,
+	chp->atapibus = config_found_ia(ata_sc->sc_dev, "atapi", chan,
 		atapiprint);
 }
 
@@ -1239,7 +1243,7 @@ void
 ahci_atapi_kill_pending(struct scsipi_periph *periph)
 {
 	struct atac_softc *atac =
-	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	struct ata_channel *chp =
 	    atac->atac_channels[periph->periph_channel->chan_channel];
 
@@ -1253,7 +1257,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 	struct scsipi_periph *periph;
 	struct scsipi_xfer *sc_xfer;
-	struct ahci_softc *sc = (void *)adapt->adapt_dev;
+	struct ahci_softc *sc = device_private(adapt->adapt_dev);
 	struct atac_softc *atac = &sc->sc_atac;
 	struct ata_xfer *xfer;
 	int channel = chan->chan_channel;
@@ -1264,7 +1268,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 		sc_xfer = arg;
 		periph = sc_xfer->xs_periph;
 		drive = periph->periph_target;
-		if (!device_is_active(&atac->atac_dev)) {
+		if (!device_is_active(atac->atac_dev)) {
 			sc_xfer->error = XS_DRIVER_STUFFUP;
 			scsipi_done(sc_xfer);
 			return;
@@ -1490,7 +1494,8 @@ ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
 	struct scsipi_periph *periph;
 	struct ataparams ids;
 	struct ataparams *id = &ids;
-	struct ahci_softc *ahcic = (void *)chan->chan_adapter->adapt_dev;
+	struct ahci_softc *ahcic =
+	    device_private(chan->chan_adapter->adapt_dev);
 	struct atac_softc *atac = &ahcic->sc_atac;
 	struct ata_channel *chp = atac->atac_channels[chan->chan_channel];
 	struct ata_drive_datas *drvp = &chp->ch_drive[target];
@@ -1521,7 +1526,7 @@ ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
 		periph = scsipi_alloc_periph(M_NOWAIT);
 		if (periph == NULL) {
 			printf("%s: unable to allocate periph for drive %d\n",
-			    sc->sc_dev.dv_xname, target);
+			    device_xname(&sc->sc_dev), target);
 			return;
 		}
 		periph->periph_dev = NULL;

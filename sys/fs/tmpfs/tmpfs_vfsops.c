@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.27.4.3 2008/01/09 01:55:52 matt Exp $	*/
+/*	tmpfs_vfsops.c,v 1.27.4.3 2008/01/09 01:55:52 matt Exp	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.4.3 2008/01/09 01:55:52 matt Exp $");
+__KERNEL_RCSID(0, "tmpfs_vfsops.c,v 1.27.4.3 2008/01/09 01:55:52 matt Exp");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.27.4.3 2008/01/09 01:55:52 matt E
 #include <sys/vnode.h>
 #include <sys/proc.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <fs/tmpfs/tmpfs.h>
 
 /* --------------------------------------------------------------------- */
@@ -137,12 +138,16 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	else
 		pages = args->ta_size_max / PAGE_SIZE +
 		    (args->ta_size_max % PAGE_SIZE == 0 ? 0 : 1);
+	if (pages > INT_MAX)
+		pages = INT_MAX;
 	KASSERT(pages > 0);
 
 	if (args->ta_nodes_max <= 3)
 		nodes = 3 + pages * PAGE_SIZE / 1024;
 	else
 		nodes = args->ta_nodes_max;
+	if (nodes > INT_MAX)
+		nodes = INT_MAX;
 	KASSERT(nodes >= 3);
 
 	/* Allocate the tmpfs mount structure and fill it. */
@@ -232,7 +237,6 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 				struct tmpfs_dirent *nde;
 
 				nde = TAILQ_NEXT(de, td_entries);
-				KASSERT(de->td_node->tn_vnode == NULL);
 				tmpfs_free_dirent(tmp, de, false);
 				de = nde;
 				node->tn_size -= sizeof(struct tmpfs_dirent);
@@ -271,7 +275,7 @@ tmpfs_root(struct mount *mp, struct vnode **vpp)
 
 static int
 tmpfs_vget(struct mount *mp, ino_t ino,
-    struct vnode **vpp) 
+    struct vnode **vpp)
 {
 
 	printf("tmpfs_vget called; need for it unknown yet\n");
@@ -440,6 +444,8 @@ struct vfsops tmpfs_vfsops = {
 	tmpfs_snapshot,			/* vfs_snapshot */
 	vfs_stdextattrctl,		/* vfs_extattrctl */
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	tmpfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },

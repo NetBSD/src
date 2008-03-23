@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.11 2007/03/04 06:01:01 christos Exp $	*/
+/*	ka6400.c,v 1.11 2007/03/04 06:01:01 christos Exp	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.11 2007/03/04 06:01:01 christos Exp $");
+__KERNEL_RCSID(0, "ka6400.c,v 1.11 2007/03/04 06:01:01 christos Exp");
 
 #include "opt_multiprocessor.h"
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.11 2007/03/04 06:01:01 christos Exp $")
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/user.h>
 
 #include <machine/ka670.h>
 #include <machine/cpu.h>
@@ -70,56 +71,54 @@ __KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.11 2007/03/04 06:01:01 christos Exp $")
 
 static int *rssc;
 struct cca *cca;
+int mastercpu;
 
-static int ka6400_match(struct device *, struct cfdata *, void *);
-static void ka6400_attach(struct device *, struct device *, void*);
+static int ka6400_match(device_t , cfdata_t, void *);
+static void ka6400_attach(device_t , device_t , void*);
 static void ka6400_memerr(void);
 static void ka6400_conf(void);
 static int ka6400_mchk(void *);
 static void ka6400_steal_pages(void);
+
+static const char * const ka6400_devs[] = { "xmi", NULL };
+
+const struct cpu_dep ka6400_calls = {
+	.cpu_steal_pages = ka6400_steal_pages,
+	.cpu_mchk	= ka6400_mchk,
+	.cpu_memerr	= ka6400_memerr,
+	.cpu_conf	= ka6400_conf,
+	.cpu_gettime	= generic_gettime,
+	.cpu_settime	= generic_settime,
+	.cpu_vups	= 12,	/* ~VUPS */
+	.cpu_scbsz	= 16,	/* SCB pages */
+};
+
 #if defined(MULTIPROCESSOR)
-static void ka6400_startslave(struct device *, struct cpu_info *);
+static void ka6400_startslave(struct cpu_info *);
 static void ka6400_txrx(int, const char *, int);
 static void ka6400_sendstr(int, const char *);
 static void ka6400_sergeant(int);
 static int rxchar(void);
 static void ka6400_putc(int);
 static void ka6400_cnintr(void);
+
+#include <dev/cons.h>
+#include <vax/vax/gencons.h>
 cons_decl(gen);
+
+const struct cpu_mp_dep ka6400_mp_calls = {
+	.cpu_startslave	= ka6400_startslave,
+	.cpu_cnintr	= ka6400_cnintr,
+};
 #endif
 
-struct	cpu_dep ka6400_calls = {
-	ka6400_steal_pages,
-	ka6400_mchk,
-	ka6400_memerr,
-	ka6400_conf,
-	generic_gettime,
-	generic_settime,
-	6,	/* ~VUPS */
-	16,	/* SCB pages */
-	0,
-	0,
-	0,
-	0,
-	0,
-#if defined(MULTIPROCESSOR)
-	ka6400_startslave,
-#endif
-};
-
-struct ka6400_softc {
-	struct device sc_dev;
-	struct cpu_info *sc_ci;
-	int sc_nodeid;		/* CPU node ID */
-};
-
-CFATTACH_DECL(cpu_xmi, sizeof(struct ka6400_softc),
+CFATTACH_DECL_NEW(cpu_xmi, 0,
     ka6400_match, ka6400_attach, NULL, NULL);
 
 static int
-ka6400_match(struct device *parent, struct cfdata *cf, void *aux)
+ka6400_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct xmi_attach_args *xa = aux;
+	struct xmi_attach_args * const xa = aux;
 
 	if (bus_space_read_2(xa->xa_iot, xa->xa_ioh, XMI_TYPE) != XMIDT_KA64)
 		return 0;
@@ -132,34 +131,38 @@ ka6400_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ka6400_attach(struct device *parent, struct device *self, void *aux)
+ka6400_attach(device_t parent, device_t self, void *aux)
 {
-	struct ka6400_softc *sc = (void *)self;
-	struct xmi_attach_args *xa = aux;
+	struct cpu_info *ci;
+	struct xmi_attach_args * const xa = aux;
 	int vp;
 
 	vp = (cca->cca_vecenab & (1 << xa->xa_nodenr));
-	printf("\n%s: ka6400 (%s) rev %d%s\n", self->dv_xname,
+	aprint_normal("\n");
+	aprint_normal_dev(self, "KA6400 (%s) rev %d%s\n",
 	    mastercpu == xa->xa_nodenr ? "master" : "slave",
 	    bus_space_read_4(xa->xa_iot, xa->xa_ioh, XMI_TYPE) >> 16,
 	    (vp ? ", vector processor present" : ""));
 
-	sc->sc_nodeid = xa->xa_nodenr;
-
 	if (xa->xa_nodenr != mastercpu) {
 #if defined(MULTIPROCESSOR)
-		sc->sc_ci = cpu_slavesetup(self);
 		v_putc = ka6400_putc;	/* Need special console handling */
+		cpu_slavesetup(self, xa->xa_nodenr);
 #endif
 		return;
 	}
 
 	mtpr(0, PR_VPSR); /* Can't use vector processor */
-	curcpu()->ci_dev = self;
+
+	ci = curcpu();
+	self->dv_private = ci;
+	ci->ci_dev = self;
+	ci->ci_cpuid = device_unit(self);
+	ci->ci_slotid = xa->xa_nodenr;
 }
 
 void
-ka6400_conf()
+ka6400_conf(void)
 {
 	int mapaddr;
 
@@ -190,22 +193,22 @@ ka6400_conf()
 #define MS62_ILK3	44
 #define MS62_CTL2	48
 
-static int ms6400_match(struct device *, struct cfdata *, void *);
-static void ms6400_attach(struct device *, struct device *, void*);
+static int ms6400_match(device_t , cfdata_t, void *);
+static void ms6400_attach(device_t , device_t , void*);
 
 struct mem_xmi_softc {
-	struct device sc_dev;
+	struct device *sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
 
-CFATTACH_DECL(mem_xmi, sizeof(struct mem_xmi_softc),
+CFATTACH_DECL_NEW(mem_xmi, sizeof(struct mem_xmi_softc),
     ms6400_match, ms6400_attach, NULL, NULL);
 
 static int
-ms6400_match(struct device *parent, struct cfdata *cf, void *aux)
+ms6400_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct xmi_attach_args *xa = aux;
+	struct xmi_attach_args * const xa = aux;
 
 	if (bus_space_read_2(xa->xa_iot, xa->xa_ioh, XMI_TYPE) != XMIDT_MS62)
 		return 0;
@@ -218,19 +221,19 @@ ms6400_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ms6400_attach(struct device *parent, struct device *self, void *aux)
+ms6400_attach(device_t parent, device_t self, void *aux)
 {
-	struct mem_xmi_softc *sc = (void *)self;
-	struct xmi_attach_args *xa = aux;
+	struct mem_xmi_softc * const sc = device_private(self);
+	struct xmi_attach_args * const xa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = xa->xa_iot;
 	sc->sc_ioh = xa->xa_ioh;
-	printf("\n%s: MS62, rev %d, size 32MB\n", self->dv_xname,
-	    MEMRD(MS62_TYPE) >> 16);
+	aprint_normal(": MS62, rev %d, size 32MB\n", MEMRD(MS62_TYPE) >> 16);
 }
 
 static void
-ka6400_memerr()
+ka6400_memerr(void)
 {
 	printf("ka6400_memerr\n");
 }
@@ -318,9 +321,9 @@ ka6400_steal_pages(void)
 }
 	
 
-#if defined(MULTIPROCESSOR) && 0
+#if defined(MULTIPROCESSOR)
 int
-rxchar()
+rxchar(void)
 {
 	int ret;
 
@@ -334,13 +337,12 @@ rxchar()
 }
 
 static void
-ka6400_startslave(struct device *dev, struct cpu_info *ci)
+ka6400_startslave(struct cpu_info *ci)
 {
-	struct ka6400_softc *sc = (void *)dev;
-	int id = sc->sc_binid;
+	const int id = ci->ci_slotid;
 	int i;
 
-	expect = sc->sc_binid;
+	expect = id;
 	/* First empty queue */
 	for (i = 0; i < 10000; i++)
 		if (rxchar())
@@ -350,17 +352,17 @@ ka6400_startslave(struct device *dev, struct cpu_info *ci)
 	ka6400_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
 	ka6400_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka6400_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
-	ka6400_txrx(id, "D/I 10 %x\r", (int)ci->ci_pcb);	/* PCB for idle proc */
+	ka6400_txrx(id, "D/I 10 %x\r",			/* PCB for idle proc */
+	    ci->ci_data.cpu_onproc->l_addr->u_pcb.pcb_paddr);
 	ka6400_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka6400_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN)); /* Enable MM */
 	ka6400_txrx(id, "S %x\r", (int)&vax_mp_tramp); /* Start! */
 	expect = 0;
 	for (i = 0; i < 10000; i++)
-		if ((volatile)ci->ci_flags & CI_RUNNING)
+		if (ci->ci_flags & CI_RUNNING)
 			break;
 	if (i == 10000)
-		printf("%s: (ID %d) failed starting??!!??\n",
-		    dev->dv_xname, sc->sc_binid);
+		aprint_error_dev(ci->ci_dev, "(ID %d) failed starting!\n", id);
 }
 
 void
@@ -376,7 +378,7 @@ ka6400_txrx(int id, const char *fmt, int arg)
 void
 ka6400_sendstr(int id, const char *buf)
 {
-	register u_int utchr; /* Ends up in R11 with PCC */
+	u_int utchr;
 	int ch, i;
 
 	while (*buf) {
@@ -386,11 +388,7 @@ ka6400_sendstr(int id, const char *buf)
 		 * It seems like mtpr to TXCD sets the V flag if it fails.
 		 * Cannot check that flag in C...
 		 */
-#ifdef __GNUC__
 		__asm("1:;mtpr %0,$92;bvs 1b" :: "g"(utchr));
-#else
-		__asm("1:;mtpr r11,$92;bvs 1b");
-#endif
 		buf++;
 		i = 30000;
 		while ((ch = rxchar()) == 0 && --i)
@@ -443,7 +441,7 @@ ka6400_putc(int c)
  * Got character IPI.
  */
 void
-ka6400_cnintr()
+ka6400_cnintr(void)
 {
 	if (ch != 0)
 		gencnputc(0, ch);

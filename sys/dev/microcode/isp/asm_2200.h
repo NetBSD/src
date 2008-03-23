@@ -1,4 +1,4 @@
-/* $NetBSD: asm_2200.h,v 1.8 2007/05/24 22:12:04 mjacob Exp $ */
+/* asm_2200.h,v 1.8 2007/05/24 22:12:04 mjacob Exp */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002 by Qlogic, Inc.
  * All rights reserved.
@@ -4863,3 +4863,7 @@ static const uint16_t isp_2200_risc_code[] = {
 	0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080, 0x0100, 0x0200,
 	0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000, 0xa332
 };
+#ifdef	ISP_2200_RISC_CODE
+#undef	ISP_2200_RISC_CODE
+#endif
+#define	ISP_2200_RISC_CODE (const uint16_t *) isp_2200_risc_code

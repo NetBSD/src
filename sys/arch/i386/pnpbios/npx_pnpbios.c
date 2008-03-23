@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $	*/
+/*	npx_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "npx_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,15 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: npx_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Ex
 
 #include <i386/isa/npxvar.h> 
 
-int	npx_pnpbios_match(struct device *, struct cfdata *, void *);
-void	npx_pnpbios_attach(struct device *, struct device *, void *);
+int	npx_pnpbios_match(device_t, cfdata_t, void *);
+void	npx_pnpbios_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(npx_pnpbios, sizeof(struct npx_softc),
+CFATTACH_DECL_NEW(npx_pnpbios, sizeof(struct npx_softc),
     npx_pnpbios_match, npx_pnpbios_attach, NULL, NULL);
 
 int
-npx_pnpbios_match(struct device *parent, struct cfdata *match,
-    void *aux)
+npx_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -74,14 +73,15 @@ npx_pnpbios_match(struct device *parent, struct cfdata *match,
 }
 
 void
-npx_pnpbios_attach(struct device *parent, struct device *self,
-    void *aux)
+npx_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
-	struct npx_softc *sc = (void *)self;
+	struct npx_softc *sc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
 	int irq, ist;
 
-	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) { 	
+	sc->sc_dev = self;
+
+	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
@@ -91,8 +91,7 @@ npx_pnpbios_attach(struct device *parent, struct device *self,
 	pnpbios_print_devres(self, aa);
 
 	if (pnpbios_getirqnum(aa->pbt, aa->resc, 0, &irq, &ist) != 0) {
-		aprint_error("%s: unable to get IRQ number or type\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to get IRQ number or type\n");
 		return;
 	}
 
@@ -100,8 +99,7 @@ npx_pnpbios_attach(struct device *parent, struct device *self,
 
 	switch (sc->sc_type) {
 	case NPX_INTERRUPT:
-		aprint_normal("%s: interrupting at irq %d\n",
-		    sc->sc_dev.dv_xname, irq);
+		aprint_normal_dev(self, "interrupting at irq %d\n", irq);
 		lcr0(rcr0() & ~CR0_NE);
 		sc->sc_ih = isa_intr_establish(0/*XXX*/, irq, ist, IPL_NONE,
 		     (int (*)(void *))npxintr, NULL);
@@ -109,14 +107,12 @@ npx_pnpbios_attach(struct device *parent, struct device *self,
 	case NPX_EXCEPTION:
 		/*FALLTHROUGH*/
 	case NPX_CPUID:
-		aprint_verbose("%s:%s using exception 16\n",
-		    sc->sc_dev.dv_xname,
-		    sc->sc_type == NPX_CPUID ? " reported by CPUID;" : "");
+		aprint_verbose_dev(self, "%susing exception 16\n",
+		    sc->sc_type == NPX_CPUID ? "reported by CPUID; " : "");
 		sc->sc_type = NPX_EXCEPTION;
 		break;
 	case NPX_BROKEN:
-		aprint_error("%s: error reporting broken; not using\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "error reporting broken; not using\n");
 		sc->sc_type = NPX_NONE;
 		return;
 	case NPX_NONE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.42.10.2 2008/01/09 01:48:53 matt Exp $	*/
+/*	tctrl.c,v 1.42.10.2 2008/01/09 01:48:53 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.42.10.2 2008/01/09 01:48:53 matt Exp $");
+__KERNEL_RCSID(0, "tctrl.c,v 1.42.10.2 2008/01/09 01:48:53 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,6 +310,7 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ext_pending = 0;
 
 	mutex_init(&sc->sc_requestlock, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&sc->sc_rsel);
 
 	/* setup sensors and register the power button */
 	tctrl_sensor_setup(sc);
@@ -743,7 +744,7 @@ tctrl_apm_record_event(struct tctrl_softc *sc, u_int event_type)
 		sc->sc_event_ptr %= APM_NEVENTS;
 		evp->type = event_type;
 		evp->index = ++tctrl_apm_evindex;
-		selnotify(&sc->sc_rsel, 0);
+		selnotify(&sc->sc_rsel, 0, 0);
 		return(sc->sc_flags & TCTRL_APM_CTLOPEN) ? 0 : 1;
 	}
 	return(1);
@@ -1451,18 +1452,15 @@ tctrl_event_thread(void *v)
 	int s;
 	
 	while (sd == NULL) {
-		for (dv = alldevs.tqh_first; dv; dv = dv->dv_list.tqe_next) {
-			if (strcmp(dv->dv_xname, "sd0") == 0) {
-			    	sd = (struct sd_softc *)dv;
-			}
-			if (le == NULL) {
-				if (strcmp(dv->dv_xname, "le0") == 0)
-					le = (struct lance_softc *)dv;
-			}
-		}
-		if (sd == NULL)
+		dv = device_find_by_xname("sd0");
+		if (dv != NULL)
+			sd = device_private(dv);
+		else
 			tsleep(&sc->sc_events, PWAIT, "probe_disk", hz);
 	}			
+	dv = device_find_by_xname("le0");
+	if (dv != NULL)
+		le = device_private(dv);
 	printf("found %s\n", sd->sc_dev.dv_xname);
 	rcount = sd->sc_dk.dk_stats->io_rxfer;
 	wcount = sd->sc_dk.dk_stats->io_wxfer;

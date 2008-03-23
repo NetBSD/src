@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.42.16.2 2008/01/09 01:54:49 matt Exp $ */
+/* wsdisplayvar.h,v 1.42.16.2 2008/01/09 01:54:49 matt Exp */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -173,6 +173,8 @@ void	wsdisplay_preattach(const struct wsscreen_descr *, void *, int, int,
 
 int	wsdisplaydevprint(void *, const char *);
 int	wsemuldisplaydevprint(void *, const char *);
+
+int	wsdisplay_handlex(int);
 
 /*
  * Console interface.

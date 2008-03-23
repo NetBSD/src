@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.4.10.2 2008/01/09 01:57:22 matt Exp $	*/
+/*	hci_unit.c,v 1.4.10.2 2008/01/09 01:57:22 matt Exp	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.4.10.2 2008/01/09 01:57:22 matt Exp $");
+__KERNEL_RCSID(0, "hci_unit.c,v 1.4.10.2 2008/01/09 01:57:22 matt Exp");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -272,6 +272,22 @@ hci_unit_lookup(bdaddr_t *addr)
 	}
 
 	return unit;
+}
+
+/*
+ * update num_cmd_pkts and push on pending commands queue
+ */
+void
+hci_num_cmds(struct hci_unit *unit, uint8_t num)
+{
+	struct mbuf *m;
+
+	unit->hci_num_cmd_pkts = num;
+
+	while (unit->hci_num_cmd_pkts > 0 && MBUFQ_FIRST(&unit->hci_cmdwait)) {
+		MBUFQ_DEQUEUE(&unit->hci_cmdwait, m);
+		hci_output_cmd(unit, m);
+	}
 }
 
 /*

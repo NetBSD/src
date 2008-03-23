@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.51.10.1 2007/11/06 23:22:31 matt Exp $
+#	genassym.cf,v 1.51.10.1 2007/11/06 23:22:31 matt Exp
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ define	CPUINFO_XMSG_CMPLT	offsetof(struct cpu_info, msg.complete)
 define	CPUINFO_IDLESPIN	offsetof(struct cpu_info, idlespin)
 define	CPUINFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPUINFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define	CPUINFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 
 # PTE bits and related information
 define	PG_W		PG_W

@@ -1,0 +1,7 @@
+#	$NetBSD: files.unionfs,v 1.1.12.2 2008/03/23 02:04:57 matt Exp $
+
+deffs	fs_unionfs.h			UNIONFS
+
+file	fs/unionfs/unionfs_subr.c	unionfs
+file	fs/unionfs/unionfs_vfsops.c	unionfs
+file	fs/unionfs/unionfs_vnops.c	unionfs

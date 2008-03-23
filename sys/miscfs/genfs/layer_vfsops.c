@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.26.24.1 2008/01/09 01:57:02 matt Exp $	*/
+/*	layer_vfsops.c,v 1.26.24.1 2008/01/09 01:57:02 matt Exp	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.26.24.1 2008/01/09 01:57:02 matt Exp $");
+__KERNEL_RCSID(0, "layer_vfsops.c,v 1.26.24.1 2008/01/09 01:57:02 matt Exp");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -306,4 +306,16 @@ SYSCTL_SETUP(sysctl_vfs_layerfs_setup, "sysctl vfs.layerfs subtree setup")
 	 * they can't tell if layerfs has been instantiated yet, they
 	 * can't do that...not easily.  not yet.  :-)
 	 */
+}
+
+int
+layerfs_renamelock_enter(struct mount *mp)
+{
+	return VFS_RENAMELOCK_ENTER(MOUNTTOLAYERMOUNT(mp)->layerm_vfs);
+}
+
+void
+layerfs_renamelock_exit(struct mount *mp)
+{
+	VFS_RENAMELOCK_EXIT(MOUNTTOLAYERMOUNT(mp)->layerm_vfs);
 }

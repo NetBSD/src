@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.40.8.2 2008/01/09 01:58:08 matt Exp $	*/
+/*	filedesc.h,v 1.40.8.2 2008/01/09 01:58:08 matt Exp	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -170,6 +170,7 @@ struct stat;
 int	do_sys_fstat(struct lwp *, int, struct stat *);
 struct flock;
 int	do_fcntl_lock(struct lwp *, int, int, struct flock *);
+int	do_posix_fadvise(struct lwp *, int, off_t, off_t, int, register_t *);
 
 extern kmutex_t filelist_lock;
 

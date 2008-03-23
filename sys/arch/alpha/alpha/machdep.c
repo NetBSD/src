@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.299.10.2 2008/01/09 01:44:32 matt Exp $ */
+/* machdep.c,v 1.299.10.2 2008/01/09 01:44:32 matt Exp */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299.10.2 2008/01/09 01:44:32 matt Exp $");
+__KERNEL_RCSID(0, "machdep.c,v 1.299.10.2 2008/01/09 01:44:32 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299.10.2 2008/01/09 01:44:32 matt Exp 
 #include <sys/conf.h>
 #include <sys/ksyms.h>
 #include <sys/kauth.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
+
 #include <machine/kcore.h>
 #include <machine/fpu.h>
 
@@ -113,7 +116,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.299.10.2 2008/01/09 01:44:32 matt Exp 
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
@@ -1682,7 +1684,7 @@ fpusave_cpu(struct cpu_info *ci, int save)
 
 #if defined(MULTIPROCESSOR)
 	s = splhigh();		/* block IPIs for the duration */
-	atomic_setbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
+	atomic_or_ulong(&ci->ci_flags, CPUF_FPUSAVE);
 #endif
 
 	l = ci->ci_fpcurlwp;
@@ -1705,7 +1707,7 @@ fpusave_cpu(struct cpu_info *ci, int save)
 
  out:
 #if defined(MULTIPROCESSOR)
-	atomic_clearbits_ulong(&ci->ci_flags, CPUF_FPUSAVE);
+	atomic_and_ulong(&ci->ci_flags, ~CPUF_FPUSAVE);
 	splx(s);
 #endif
 	return;

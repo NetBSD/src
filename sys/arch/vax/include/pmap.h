@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.71.22.1 2008/01/09 01:49:34 matt Exp $	   */
+/*	pmap.h,v 1.71.22.1 2008/01/09 01:49:34 matt Exp	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -94,15 +94,6 @@
 #define LTOHPN		(1 << LTOHPS)
 
 /*
- * Link struct if more than one process share pmap (like vfork).
- * This is rarely used.
- */
-struct pm_share {
-	struct pm_share	*ps_next;
-	struct pcb	*ps_pcb;
-};
-
-/*
  * Pmap structure
  *  pm_stack holds lowest allocated memory for the process stack.
  */
@@ -110,7 +101,7 @@ struct pm_share {
 typedef struct pmap {
 	struct pte	*pm_p1ap;	/* Base of alloced p1 pte space */
 	int		 pm_count;	/* reference count */
-	struct pm_share	*pm_share;	/* PCBs using this pmap */
+	struct pcb	*pm_pcbs;	/* PCBs using this pmap */
 	struct pte	*pm_p0br;	/* page 0 base register */
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
@@ -155,6 +146,7 @@ extern	struct pmap kernel_pmap_store;
  * Real nice (fast) routines to get the virtual address of a physical page
  * (and vice versa).
  */
+#define	PMAP_VTOPHYS(va)	((va) & ~KERNBASE)
 #define PMAP_MAP_POOLPAGE(pa)	((pa) | KERNBASE)
 #define PMAP_UNMAP_POOLPAGE(va) ((va) & ~KERNBASE)
 
@@ -181,7 +173,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 	sva = PG_PFNUM(va);
 	if (va < 0x40000000) {
-		if (sva > (pmap->pm_p0lr & ~AST_MASK))
+		if (sva >= (pmap->pm_p0lr & ~AST_MASK))
 			goto fail;
 		pte = (int *)pmap->pm_p0br;
 	} else {
@@ -189,7 +181,11 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			goto fail;
 		pte = (int *)pmap->pm_p1br;
 	}
-	if (kvtopte(&pte[sva])->pg_pfn && pte[sva]) {
+	/*
+	 * Since the PTE tables are sparsely allocated, make sure the page
+	 * table page actually exists before deferencing the pte itself.
+	 */
+	if (kvtopte(&pte[sva])->pg_v && (pte[sva] & PG_FRAME)) {
 		if (pap)
 			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
 		return (true);
@@ -297,7 +293,7 @@ pmap_remove_all(struct pmap *pmap)
 	    : "r0","r1","r2","r3","r4","r5");
 
 /* Prototypes */
-void	pmap_bootstrap __P((void));
-vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
+void	pmap_bootstrap(void);
+vaddr_t pmap_map(vaddr_t, vaddr_t, vaddr_t, int);
 
 #endif /* PMAP_H */

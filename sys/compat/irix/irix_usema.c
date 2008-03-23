@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.21.8.1 2008/01/09 01:50:52 matt Exp $ */
+/*	irix_usema.c,v 1.21.8.1 2008/01/09 01:50:52 matt Exp */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21.8.1 2008/01/09 01:50:52 matt Exp $");
+__KERNEL_RCSID(0, "irix_usema.c,v 1.21.8.1 2008/01/09 01:50:52 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21.8.1 2008/01/09 01:50:52 matt Exp
 #include <sys/mount.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/simplelock.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
@@ -108,7 +107,7 @@ struct vfsops irix_usema_dummy_vfsops = {
 	"usema_dummy", 0,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_dummy_vfs_init, NULL, NULL, NULL, NULL, NULL,
-	NULL,
+	NULL, NULL, NULL,
 	irix_usema_vnodeopv_descs,
 };
 void irix_usema_dummy_vfs_init(void) { return; } /* Do nothing */
@@ -135,7 +134,6 @@ const struct vnodeopv_entry_desc irix_usema_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, irix_usema_fcntl },
 	{ &vop_poll_desc, irix_usema_poll },
 	{ &vop_abortop_desc, genfs_abortop },
-	{ &vop_lease_desc, genfs_nullop },
 	{ &vop_lock_desc, genfs_lock },
 	{ &vop_unlock_desc, genfs_unlock },
 	{ &vop_islocked_desc, genfs_islocked },
@@ -304,7 +302,7 @@ irix_usema_close(void *v)
 	printf("irix_usema_close() vn = %p\n", vp);
 #endif
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 
 	/* vp is a vnode duplicated from rvp. eventually also close rvp */
 	rvp = (struct vnode *)(vp->v_data);
@@ -320,7 +318,7 @@ irix_usema_close(void *v)
 	if ((iur = iur_lookup_by_vn(vp)) != NULL)
 		iur_remove(iur);
 
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return error;
 }

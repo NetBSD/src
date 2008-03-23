@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.118.10.2 2008/01/09 01:47:03 matt Exp $
+#	files.mac68k,v 1.118.10.2 2008/01/09 01:47:03 matt Exp
 
 # mac68k-specific configuration info
 
@@ -16,8 +16,6 @@ maxusers 2 8 64
 
 device mainbus { }			# no locators (yet?)
 attach mainbus at root
-
-include "dev/wscons/files.wscons"
 
 device	obio { [addr = -1] }
 attach	obio at mainbus

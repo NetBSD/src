@@ -1,8 +1,8 @@
-/*	$NetBSD: itesio_isavar.h,v 1.4.2.2 2008/01/09 01:53:13 matt Exp $	*/
+/*	itesio_isavar.h,v 1.4.2.2 2008/01/09 01:53:13 matt Exp	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
- * Copyright (c) 2006-2007 Juan Romero Pardines <juan@xtrarom.org>
+ * Copyright (c) 2006-2007 Juan Romero Pardines <xtraeme@netbsd.org>
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.39.2.2 2008/01/09 01:52:57 matt Exp $ */
+/*	nslm7x.c,v 1.39.2.2 2008/01/09 01:52:57 matt Exp */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.39.2.2 2008/01/09 01:52:57 matt Exp $");
+__KERNEL_RCSID(0, "nslm7x.c,v 1.39.2.2 2008/01/09 01:52:57 matt Exp");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1696,12 +1696,12 @@ lm_attach(struct lm_softc *lmsc)
 	/*
 	 * Hook into the System Monitor.
 	 */
-	lmsc->sc_sme->sme_name = lmsc->sc_dev.dv_xname;
+	lmsc->sc_sme->sme_name = device_xname(lmsc->sc_dev);
 	lmsc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
 	if (sysmon_envsys_register(lmsc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    lmsc->sc_dev.dv_xname);
+		aprint_error_dev(lmsc->sc_dev,
+		    "unable to register with sysmon\n");
 		sysmon_envsys_destroy(lmsc->sc_sme);
 	}
 }
@@ -1753,8 +1753,8 @@ lm_match(struct lm_softc *sc)
 	}
 
 	aprint_normal("\n");
-	aprint_normal("%s: National Semiconductor %s Hardware monitor\n",
-	    sc->sc_dev.dv_xname, model);
+	aprint_normal_dev(sc->sc_dev,
+	    "National Semiconductor %s Hardware monitor\n", model);
 
 	lm_setup_sensors(sc, lm78_sensors);
 	sc->refresh_sensor_data = lm_refresh_sensor_data;
@@ -1768,8 +1768,7 @@ def_match(struct lm_softc *sc)
 
 	chipid = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
 	aprint_normal("\n");
-	aprint_error("%s: Unknown chip (ID %d)\n", sc->sc_dev.dv_xname,
-	    chipid);
+	aprint_error_dev(sc->sc_dev, "Unknown chip (ID %d)\n", chipid);
 
 	lm_setup_sensors(sc, lm78_sensors);
 	sc->refresh_sensor_data = lm_refresh_sensor_data;
@@ -1867,16 +1866,15 @@ wb_match(struct lm_softc *sc)
 		}
 		break;
 	default:
-		aprint_normal("%s: unknown Winbond chip (ID 0x%x)\n",
-		    sc->sc_dev.dv_xname, sc->chipid);
+		aprint_normal_dev(sc->sc_dev,
+		    "unknown Winbond chip (ID 0x%x)\n", sc->chipid);
 		/* Handle as a standard LM78. */
 		lm_setup_sensors(sc, lm78_sensors);
 		sc->refresh_sensor_data = lm_refresh_sensor_data;
 		return 1;
 	}
 
-	aprint_normal("%s: Winbond %s Hardware monitor\n",
-	    sc->sc_dev.dv_xname, model);
+	aprint_normal_dev(sc->sc_dev, "Winbond %s Hardware monitor\n", model);
 
 	sc->refresh_sensor_data = wb_refresh_sensor_data;
 	return 1;
@@ -1911,22 +1909,22 @@ lm_refresh_volt(struct lm_softc *sc, int n)
 	int data;
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
-	if (data == 0xff)
+	if (data == 0xff) {
 		sc->sensors[n].state = ENVSYS_SINVALID;
-
-	sc->sensors[n].flags = ENVSYS_FCHANGERFACT;
-	sc->sensors[n].value_cur = (data << 4);
-
-	if (sc->sensors[n].rfact) {
-		sc->sensors[n].value_cur *= sc->sensors[n].rfact;
-		sc->sensors[n].value_cur /= 10;
 	} else {
-		sc->sensors[n].value_cur *= sc->lm_sensors[n].rfact;
-		sc->sensors[n].value_cur /= 10;
-		sc->sensors[n].rfact = sc->lm_sensors[n].rfact;
+		sc->sensors[n].flags = ENVSYS_FCHANGERFACT;
+		sc->sensors[n].value_cur = (data << 4);
+		if (sc->sensors[n].rfact) {
+			sc->sensors[n].value_cur *= sc->sensors[n].rfact;
+			sc->sensors[n].value_cur /= 10;
+		} else {
+			sc->sensors[n].value_cur *= sc->lm_sensors[n].rfact;
+			sc->sensors[n].value_cur /= 10;
+			sc->sensors[n].rfact = sc->lm_sensors[n].rfact;
+		}
+		sc->sensors[n].state = ENVSYS_SVALID;
 	}
 
-	sc->sensors[n].state = ENVSYS_SVALID;
 	DPRINTF(("%s: volt[%d] data=0x%x value_cur=%d\n",
 	    __func__, n, data, sc->sensors[n].value_cur));
 }

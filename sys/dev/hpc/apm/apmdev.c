@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.12.8.1 2008/01/09 01:52:39 matt Exp $ */
+/*	apmdev.c,v 1.12.8.1 2008/01/09 01:52:39 matt Exp */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.12.8.1 2008/01/09 01:52:39 matt Exp $");
+__KERNEL_RCSID(0, "apmdev.c,v 1.12.8.1 2008/01/09 01:52:39 matt Exp");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -412,7 +412,7 @@ apm_record_event(struct apm_softc *sc, u_int event_type)
 	sc->event_ptr %= APM_NEVENTS;
 	evp->type = event_type;
 	evp->index = ++apm_evindex;
-	selnotify(&sc->sc_rsel, 0);
+	selnotify(&sc->sc_rsel, 0, 0);
 	return (sc->sc_flags & SCFLAG_OWRITE) ? 0 : 1; /* user may handle */
 }
 
@@ -700,6 +700,8 @@ apmattach(struct device *parent, struct device *self, void *aux)
 	sc->ops->cpu_busy(sc->cookie);
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&sc->sc_rsel);
+	selinit(&sc->sc_xsel);
 
 	/* Initial state is `resumed'. */
 	sc->sc_power_state = PWR_RESUME;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.312.2.4 2008/01/09 01:55:57 matt Exp $	*/
+/*	init_main.c,v 1.312.2.4 2008/01/09 01:55:57 matt Exp	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.4 2008/01/09 01:55:57 matt Exp $");
+__KERNEL_RCSID(0, "init_main.c,v 1.312.2.4 2008/01/09 01:55:57 matt Exp");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -115,6 +115,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.4 2008/01/09 01:55:57 matt Exp
 #include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
+#include <sys/percpu.h>
+#include <sys/pset.h>
+#include <sys/sysctl.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
 #include <sys/sysctl.h>
@@ -129,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.312.2.4 2008/01/09 01:55:57 matt Exp
 #include <sys/disk.h>
 #include <sys/mqueue.h>
 #include <sys/msgbuf.h>
+#include <sys/module.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -242,9 +246,7 @@ __secmodel_none(void)
 void
 main(void)
 {
-#ifdef __HAVE_TIMECOUNTER
 	struct timeval time;
-#endif
 	struct lwp *l;
 	struct proc *p;
 	struct pdevinit *pdev;
@@ -262,18 +264,6 @@ main(void)
 #endif
 
 	/*
-	 * XXX This is a temporary check to be removed before
-	 * NetBSD 5.0 is released.
-	 */
-#if !defined(__i386__ ) && !defined(__x86_64__)
-	if (curlwp != l) {
-		printf("NOTICE: curlwp should be set before main()\n");
-		DELAY(250000);
-		curlwp = l;
-	}
-#endif
-
-	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
 	 */
@@ -285,11 +275,16 @@ main(void)
 
 	kmem_init();
 
+	percpu_init();
+
 	/* Initialize the extent manager. */
 	extent_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
+
+	/* Start module system. */
+	module_init();
 
 	/* Initialize callouts, part 1. */
 	callout_startup();
@@ -307,12 +302,6 @@ main(void)
 
 	/* Initialize the buffer cache */
 	bufinit();
-
-	/*
-	 * Initialize mbuf's.  Do this now because we might attempt to
-	 * allocate mbufs or mbuf clusters during autoconfiguration.
-	 */
-	mbinit();
 
 	/* Initialize sockets. */
 	soinit();
@@ -353,9 +342,18 @@ main(void)
 	turnstile_init();
 	sleeptab_init(&sleeptab);
 
+	/* Initialize processor-sets */
+	psets_init();
+
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
+
+	/*
+	 * Initialize mbuf's.  Do this now because we might attempt to
+	 * allocate mbufs or mbuf clusters during autoconfiguration.
+	 */
+	mbinit();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -411,10 +409,8 @@ main(void)
 	sysmon_wdog_init();
 #endif
 
-#ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
-#endif /* __HAVE_TIMECOUNTER */
 
 	/* Initialize the device switch tables. */
 	devsw_init();
@@ -554,6 +550,13 @@ main(void)
 		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
 
 	/*
+	 * Load any remaining builtin modules, and hand back temporary
+	 * storage to the VM system.
+	 */
+	module_init_class(MODULE_CLASS_ANY);
+	module_jettison();
+
+	/*
 	 * Finalize configuration now that all real devices have been
 	 * found.  This needs to be done before the root device is
 	 * selected, since finalization may create the root device.
@@ -615,11 +618,7 @@ main(void)
 	 * from the file system.  Reset l->l_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-#ifdef __HAVE_TIMECOUNTER
 	getmicrotime(&time);
-#else
-	mono_time = time;
-#endif
 	boottime = time;
 	mutex_enter(&proclist_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
