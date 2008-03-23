@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.14 2007/03/04 06:02:25 christos Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.15 2008/03/23 16:40:12 cube Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.14 2007/03/04 06:02:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.15 2008/03/23 16:40:12 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,15 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.14 2007/03/04 06:02:25 christos Exp
 #include <dev/pci/pciio.h>
 
 static int
-pciopen(dev_t dev, int flags, int mode,
-    struct lwp *l)
+pciopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct pci_softc *sc;
+	device_t dv;
 	int unit;
 
 	unit = minor(dev);
-	sc = device_lookup(&pci_cd, unit);
-	if (sc == NULL)
+	dv = device_lookup(&pci_cd, unit);
+	if (dv == NULL)
 		return (ENXIO);
 
 	return (0);
@@ -73,7 +72,8 @@ pciopen(dev_t dev, int flags, int mode,
 static int
 pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct pci_softc *sc = device_lookup(&pci_cd, minor(dev));
+	struct pci_softc *sc =
+	    device_lookup_private(&pci_cd, minor(dev));
 	struct pciio_bdf_cfgreg *bdfr = (void *) data;
 	struct pciio_businfo *binfo = (void *) data;
 	pcitag_t tag;
@@ -113,7 +113,7 @@ static paddr_t
 pcimmap(dev_t dev, off_t offset, int prot)
 {
 #if 0
-	struct pci_softc *sc = device_lookup(&pci_cd, minor(dev));
+	struct pci_softc *sc = device_lookup_private(&pci_cd, minor(dev));
 
 	/*
 	 * Since we allow mapping of the entire bus, we
