@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.98 2008/03/22 17:53:34 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.99 2008/03/23 16:39:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.98 2008/03/22 17:53:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.99 2008/03/23 16:39:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1609,6 +1609,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 		 */
 		uao = lp->lp_uao;
 		(*uao->pgops->pgo_reference)(uao);
+		lcp->lcp_kaddr = vm_map_min(kernel_map);
 		error = uvm_map(kernel_map, &lcp->lcp_kaddr, PAGE_SIZE,
 		    uao, lp->lp_cur, PAGE_SIZE,
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
