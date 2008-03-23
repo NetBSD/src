@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.49 2008/02/29 14:34:49 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.50 2008/03/23 16:09:41 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.49 2008/02/29 14:34:49 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.50 2008/03/23 16:09:41 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -62,8 +62,6 @@ static const struct sme_sensor_event sme_sensor_event[] = {
 	{ -1, 			-1 }
 };
 
-kmutex_t sme_mtx, sme_events_mtx, sme_callout_mtx;
-kcondvar_t sme_cv;
 static bool sysmon_low_power = false;
 
 #define SME_EVTIMO	(SME_EVENTS_DEFTIMEOUT * hz)
@@ -471,10 +469,14 @@ sme_events_worker(struct work *wk, void *arg)
 		}
 	}
 
-	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d units=%d value_cur=%d\n",
-	    __func__, sme->sme_name, see->see_edata->desc,
-	    see->see_edata->sensor,
+	DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d state=%d units=%d "
+	    "value_cur=%d\n", __func__, sme->sme_name, see->see_edata->desc,
+	    see->see_edata->sensor, see->see_edata->state,
 	    see->see_edata->units, see->see_edata->value_cur));
+
+	/* skip the event if current sensor is in invalid state */
+	if (see->see_edata->state == ENVSYS_SINVALID)
+		goto out;
 
 #define SME_SEND_NORMALEVENT()						\
 do {									\
@@ -615,6 +617,7 @@ do {									\
 		break;
 	}
 
+out:
 	see->see_flags &= ~SME_EVENT_WORKING;
 	cv_broadcast(&sme_cv);
 	mutex_exit(&sme_mtx);
@@ -640,17 +643,20 @@ sme_acadapter_check(void)
 {
 	struct sysmon_envsys *sme;
 	envsys_data_t *edata;
-	bool sensor = false;
+	bool dev = false, sensor = false;
 
 	KASSERT(mutex_owned(&sme_mtx));
 
-	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list)
-		if (sme->sme_class == SME_CLASS_ACADAPTER)
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+		if (sme->sme_class == SME_CLASS_ACADAPTER) {
+			dev = true;
 			break;
+		}
+	}
 	/*
 	 * No AC Adapter devices were found.
 	 */
-	if (!sme)
+	if (!dev)
 		return false;
 	/*
 	 * Check if there's an AC adapter device connected.
@@ -658,6 +664,8 @@ sme_acadapter_check(void)
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
 		if (edata->units == ENVSYS_INDICATOR) {
 			sensor = true;
+			/* refresh current sensor */
+			(*sme->sme_refresh)(sme, edata);
 			if (edata->value_cur)
 				return false;
 		}
