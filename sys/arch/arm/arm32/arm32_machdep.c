@@ -461,11 +461,13 @@ cpu_intr_p(void)
 	 (IPL_SOFTNET    << (SOFTINT_NET    * 4)) | \
 	 (IPL_SOFTBIO    << (SOFTINT_BIO    * 4)) | \
 	 (IPL_SOFTCLOCK  << (SOFTINT_CLOCK  * 4)))
-#define	SOFTINT2IPL(l)	((SOFTINT2IPLMAP >> (l)) & 0x0f)
+#define	SOFTINT2IPL(l)	((SOFTINT2IPLMAP >> ((l) * 4)) & 0x0f)
 
 /*
  * This returns a mask of softint IPLs that be dispatch at <ipl>
  * We want to shift 2 since we want a mask of <ipl> + 1.
+ * SOFTIPLMASK(IPL_NONE)	= 0xfffffffe
+ * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0xffffffe0
  */
 #define	SOFTIPLMASK(ipl) ((~((2 << (ipl)) - 1)) & (15 << IPL_SOFTCLOCK))
 
