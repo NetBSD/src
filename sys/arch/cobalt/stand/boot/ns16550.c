@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.3 2007/10/17 19:54:09 garbled Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.4 2008/03/23 17:19:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -36,6 +36,10 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+
+#include <machine/cpu.h>
+
 #include "boot.h"
 #include "ns16550.h"
 
@@ -46,7 +50,7 @@ NS16550_init(int addr, int speed)
 {
 	struct NS16550 *com_port;
 
-	com_port = (struct NS16550 *)(COMBASE + addr);
+	com_port = (void *)MIPS_PHYS_TO_KSEG1(COM_BASE + addr);
 
 	com_port->lcr = 0x80;  /* Access baud rate */
 	speed = comspeed(speed);

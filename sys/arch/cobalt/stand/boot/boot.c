@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2008/03/02 06:17:41 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2008/03/23 17:19:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -70,9 +70,6 @@
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <machine/cpu.h>
-#include <machine/leds.h>
-
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libsa/dev_net.h>
@@ -82,6 +79,8 @@
 #include <sys/boot_flag.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+
+#include <machine/cpu.h>
 
 #include <cobalt/dev/gtreg.h>
 
