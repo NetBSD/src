@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@
 #define _ATF_TEXT_HPP_
 
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -106,6 +107,24 @@ to_string(const T& ob)
     std::ostringstream ss;
     ss << ob;
     return ss.str();
+}
+
+//!
+//! \brief Converts the given string to another type.
+//!
+//! Attempts to convert the given string to the requested type.  Throws
+//! an exception if the conversion failed.
+//!
+template< class T >
+T
+to_type(const std::string& str)
+{
+    std::istringstream ss(str);
+    T value;
+    ss >> value;
+    if (!ss.eof() || (!ss.eof() && !ss.good()))
+        throw std::runtime_error("Cannot convert string to requested type");
+    return value;
 }
 
 } // namespace text

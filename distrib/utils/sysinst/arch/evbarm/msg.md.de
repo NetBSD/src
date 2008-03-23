@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.4 2004/12/28 17:56:40 joff Exp $	*/
+/*	msg.md.de,v 1.4 2004/12/28 17:56:40 joff Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,18 +37,12 @@
  *
  */
 
-/* arm32 machine dependent messages, German */
+/* evbarm machine dependent messages, German */
 
 
 message md_hello
 {Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
 entfernen.
-
-}
-
-message fullpart
-{NetBSD wird nun auf die Festplatte %s installiert. Möchten Sie die ganze
-oder nur einen Teil dieser Festplatte für NetBSD verwenden?
 
 }
 

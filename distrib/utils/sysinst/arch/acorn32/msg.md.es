@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:31 xtraeme Exp $	*/
+/*	msg.md.es,v 1.2 2005/08/26 16:32:31 xtraeme Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,18 +37,12 @@
  *
  */
 
-/* arm32 machine dependent messages, spanish */
+/* acorn32 machine dependent messages, spanish */
 
 
 message md_hello
 {Si ha iniciado desde disquette, ahora debería retirar el disco.
 
-}
-
-message fullpart
-{Ahora vamos a instalar NetBSD en el disco %s. Debería escoger
-entre instalar NetBSD en el disco entero o en una parte del disco.
-¿Que le gustaría hacer?
 }
 
 message badreadbb
@@ -76,11 +70,7 @@ message dobootblks
 message set_kernel_1
 {Nucleo (GENERIC)}
 message set_kernel_2
-{Nucleo (GENERIC_RPC_WSCONS)}
-message set_kernel_3 
 {Nucleo (GENERIC_NC)}
-message set_kernel_4
-{Nucleo (GENERIC_NC_WSCONS)}
 
 
 message arm32fspart

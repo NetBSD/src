@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.8 2007/08/01 14:20:40 jmmv Exp $	*/
+/*	msg.md.en,v 1.8 2007/08/01 14:20:40 jmmv Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* arm32 machine dependent messages, english */
+/* shark machine dependent messages, english */
 
 
 message md_hello
@@ -47,12 +47,6 @@ message md_hello
 
 message Keyboard_type {Keyboard type}
 message kb_default {}
-
-message fullpart
-{We are now going to install NetBSD on the disk %s.  You may
-choose to install NetBSD on the entire disk or part of the disk.
-Which would you like to do?
-}
 
 message badreadbb
 {Cannot read filecore boot block

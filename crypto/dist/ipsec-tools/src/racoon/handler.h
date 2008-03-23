@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.9.10.1 2008/01/09 01:22:34 matt Exp $	*/
+/*	handler.h,v 1.9.10.1 2008/01/09 01:22:34 matt Exp	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -41,6 +41,7 @@
 
 #include "isakmp_var.h"
 #include "oakley.h"
+#include "evt.h"
 
 /* Phase 1 handler */
 /*
@@ -211,7 +212,7 @@ struct ph1handle {
 #ifdef ENABLE_HYBRID
 	struct isakmp_cfg_state *mode_cfg;	/* ISAKMP mode config state */
 #endif       
-
+	EVT_LISTENER_LIST(evt_listeners);
 };
 
 /* Phase 2 handler */
@@ -324,6 +325,7 @@ struct ph2handle {
 
 	LIST_ENTRY(ph2handle) chain;
 	LIST_ENTRY(ph2handle) ph1bind;	/* chain to ph1handle */
+	EVT_LISTENER_LIST(evt_listeners);
 };
 
 /*
@@ -430,7 +432,7 @@ struct policyindex;
 extern struct ph1handle *getph1byindex __P((isakmp_index *));
 extern struct ph1handle *getph1byindex0 __P((isakmp_index *));
 extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
-	struct sockaddr *));
+										   struct sockaddr *, int));
 extern struct ph1handle *getph1byaddrwop __P((struct sockaddr *,
 	struct sockaddr *));
 extern struct ph1handle *getph1bydstaddrwop __P((struct sockaddr *));

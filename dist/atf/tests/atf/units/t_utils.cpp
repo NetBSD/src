@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -44,9 +44,9 @@
 // ------------------------------------------------------------------------
 
 class test_array {
-    int m_dummy;
-
 public:
+    int m_value;
+
     static ssize_t m_nblocks;
 
     void* operator new(size_t size)
@@ -208,6 +208,25 @@ ATF_TEST_CASE_BODY(auto_array_assign)
     ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
 }
 
+ATF_TEST_CASE(auto_array_access);
+ATF_TEST_CASE_HEAD(auto_array_access)
+{
+    set("descr", "Tests the auto_array smart pointer class' access "
+                 "operator");
+}
+ATF_TEST_CASE_BODY(auto_array_access)
+{
+    using atf::utils::auto_array;
+
+    auto_array< test_array > t(new test_array[10]);
+
+    for (int i = 0; i < 10; i++)
+        t[i].m_value = i * 2;
+
+    for (int i = 0; i < 10; i++)
+        ATF_CHECK_EQUAL(t[i].m_value, i * 2);
+}
+
 // ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
@@ -221,4 +240,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, auto_array_release);
     ATF_ADD_TEST_CASE(tcs, auto_array_reset);
     ATF_ADD_TEST_CASE(tcs, auto_array_assign);
+    ATF_ADD_TEST_CASE(tcs, auto_array_access);
 }

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,25 @@ dir_full_body()
     atf_check 'test -e foo' 1 null null
 }
 
+mount_tmpfs_portable()
+{
+    platform=$(uname)
+    case ${platform} in
+    Linux|NetBSD)
+        mount -t tmpfs tmpfs ${1}
+        ;;
+    FreeBSD)
+        mdmfs -s 16m md ${1}
+        ;;
+    SunOS)
+        mount -F tmpfs tmpfs $(pwd)/${1}
+        ;;
+    *)
+        atf_fail "Internal error in test program"
+        ;;
+    esac
+}
+
 atf_test_case mount
 mount_head()
 {
@@ -89,16 +108,16 @@ mount_body()
 {
     platform=$(uname)
     case ${platform} in
-    Linux|NetBSD)
+    Linux|FreeBSD|NetBSD|SunOS)
         mkdir foo
         mkdir foo/bar
         mkdir foo/bar/mnt
-        atf_check 'mount -t tmpfs tmpfs foo/bar/mnt' 0 null null
+        atf_check 'mount_tmpfs_portable foo/bar/mnt' 0 null null
         mkdir foo/baz
-        atf_check 'mount -t tmpfs tmpfs foo/baz' 0 null null
+        atf_check 'mount_tmpfs_portable foo/baz' 0 null null
         mkdir foo/baz/foo
         mkdir foo/baz/foo/bar
-        atf_check 'mount -t tmpfs tmpfs foo/baz/foo/bar' 0 null null
+        atf_check 'mount_tmpfs_portable foo/baz/foo/bar' 0 null null
         ;;
     *)
         # XXX Possibly specify in meta-data too.
@@ -124,10 +143,10 @@ symlink_body()
 {
     platform=$(uname)
     case ${platform} in
-    Linux|NetBSD)
+    Linux|FreeBSD|NetBSD|SunOS)
         atf_check 'mkdir foo' 0 null null
         atf_check 'mkdir foo/bar' 0 null null
-        atf_check 'mount -t tmpfs tmpfs foo/bar' 0 null null
+        atf_check 'mount_tmpfs_portable foo/bar' 0 null null
         atf_check 'touch a' 0 null null
         atf_check 'ln -s $(pwd)/a foo/bar' 0 null null
         ;;

@@ -1,4 +1,4 @@
-# $P4: //depot/projects/openpam/modules/pam_unix/Makefile.am#2 $
+# $Id: Makefile.am,v 1.1.1.2.10.1 2008/03/23 00:17:07 matt Exp $
 
 pkglibdir = @OPENPAM_MODULES_DIR@
 INCLUDES = -I$(top_srcdir)/include

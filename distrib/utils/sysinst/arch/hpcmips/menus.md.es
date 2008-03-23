@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.es,v 1.1 2005/08/26 15:44:43 xtraeme Exp $	*/
+/*	menus.md.es,v 1.1 2005/08/26 15:44:43 xtraeme Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,5 +36,5 @@
  *
  */
 
-/* Menu definitions for sysinst. i386 version, machine dependent. */
+/* Menu definitions for sysinst. hpcmips version, machine dependent. */
 

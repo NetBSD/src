@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2006/04/05 16:55:05 garbled Exp $	*/
+/*	md.c,v 1.4 2006/04/05 16:55:05 garbled Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,6 +97,11 @@ md_get_info(void)
 	dlsize = dlcyl*dlhead*dlsec;
 	if (disklabel.d_secperunit > dlsize)
 		dlsize = disklabel.d_secperunit;
+
+	/*
+	 * hp700 PDC can only address up to 2GB.
+	 */
+	root_limit = ((unsigned)2*1024*1024*1024) / (unsigned)sectorsize;
 
 	return 1;
 }
@@ -202,6 +207,12 @@ md_pre_update()
 void
 md_init()
 {
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
 }
 
 int

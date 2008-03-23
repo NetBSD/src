@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2007/05/10 23:22:28 dogcow Exp $
+#	Makefile,v 1.14 2007/05/10 23:22:28 dogcow Exp
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -12,15 +12,16 @@ DBG=		-Os -mmemcpy
 
 CRUNCHBIN=	ramdiskbin
 CRUNCHGEN_FLAGS= -d "${DBG}"
-LISTS=		${.CURDIR}/list # ${DISTRIBDIR}/common/list.sysinst
+LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst.en
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	minimal
 IMAGEDEPENDS=	${CRUNCHBIN} \
-		dot.profile termcap.mini \
+		dot.profile \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
-		${NETBSDSRCDIR}/distrib/common/services
+		${NETBSDSRCDIR}/distrib/common/services \
+		${NETBSDSRCDIR}/distrib/common/termcap.mini
 SMALLPROG_INET6=1
 
 # Use stubs to eliminate some large stuff from libc

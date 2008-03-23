@@ -108,18 +108,6 @@ shumul(NODE *p)
 }
 
 /*
- * Rewrite increment/decrement operation.
- */
-int
-setincr(NODE *p)
-{
-	if (x2debug)
-		printf("setincr(%p)\n", p);
-
-	return(0);
-}
-
-/*
  * Rewrite operations on binary operators (like +, -, etc...).
  * Called as a result of table lookup.
  */
@@ -188,4 +176,39 @@ int
 setorder(NODE *p)
 {
 	return 0; /* nothing differs on hppa */
+}
+
+/*
+ * Set registers "live" at function calls (like arguments in registers).
+ * This is for liveness analysis of registers.
+ */
+int *
+livecall(NODE *p)
+{
+	static int r[5], *s = &r[4];
+	 
+	*s = -1;
+	if (p->n_op == UCALL || p->n_op == UFORTCALL || p->n_op == USTCALL ||
+	    p->n_op == FORTCALL)
+		return s;
+
+	for (p = p->n_right; p->n_op == CM; p = p->n_left)
+		if (p->n_right->n_op == ASSIGN &&
+		    p->n_right->n_left->n_op == REG)
+			*--s = p->n_right->n_left->n_rval;
+
+	if (p->n_op == ASSIGN &&
+	    p->n_left->n_op == REG)
+		*--s = p->n_left->n_rval;
+
+	return s;
+}
+
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
 }

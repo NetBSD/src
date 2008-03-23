@@ -39,31 +39,54 @@
 
 #include <ostream>
 #include <set>
+#include <stdexcept>
 #include <string>
 
-#include <atf/exceptions.hpp>
-
 namespace atf {
+namespace application {
 
-class application {
+// ------------------------------------------------------------------------
+// The "usage_error" class.
+// ------------------------------------------------------------------------
+
+class usage_error : public std::runtime_error {
+    char m_text[4096];
+
+public:
+    usage_error(const char*, ...) throw();
+    ~usage_error(void) throw();
+
+    const char* what(void) const throw();
+};
+
+// ------------------------------------------------------------------------
+// The "option" class.
+// ------------------------------------------------------------------------
+
+class option {
+    char m_character;
+    std::string m_argument;
+    std::string m_description;
+
+    friend class app;
+
+public:
+    option(char, const std::string&, const std::string&);
+
+    bool operator<(const option&) const;
+};
+
+// ------------------------------------------------------------------------
+// The "app" class.
+// ------------------------------------------------------------------------
+
+class app {
     void process_options(void);
     void usage(std::ostream&);
 
     bool inited(void);
 
 protected:
-    class option {
-        char m_character;
-        std::string m_argument;
-        std::string m_description;
-
-        friend class application;
-
-    public:
-        option(char, const std::string&, const std::string&);
-
-        bool operator<(const option&) const;
-    };
     typedef std::set< option > options_set;
 
     int m_argc;
@@ -71,7 +94,7 @@ protected:
 
     const char* m_prog_name;
     std::string m_description;
-    std::string m_manpage;
+    std::string m_manpage, m_global_manpage;
 
     options_set options(void);
 
@@ -82,12 +105,13 @@ protected:
     virtual int main(void) = 0;
 
 public:
-    application(const std::string&, const std::string&);
-    virtual ~application(void);
+    app(const std::string&, const std::string&, const std::string&);
+    virtual ~app(void);
 
     int run(int, char* const* argv);
 };
 
+} // namespace application
 } // namespace atf
 
 #endif // !defined(_ATF_APPLICATION_HPP_)

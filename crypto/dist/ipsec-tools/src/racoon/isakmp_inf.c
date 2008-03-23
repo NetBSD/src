@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.22 2007/07/18 12:07:51 vanhu Exp $	*/
+/*	isakmp_inf.c,v 1.22 2007/07/18 12:07:51 vanhu Exp	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -169,7 +169,7 @@ isakmp_info_recv(iph1, msg0)
 	if (msg->l < sizeof(*isakmp) + sizeof(*gen)) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 			"ignore information because the "
-			"message is way too short\n");
+			"message is way too short - %d byte(s).\n", msg->l);
 		goto end;
 	}
 
@@ -196,7 +196,7 @@ isakmp_info_recv(iph1, msg0)
 		if (msg->l < sizeof(*isakmp) + ntohs(gen->len) + sizeof(*nd)) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 				"ignore information because the "
-				"message is too short\n");
+				"message is too short - %d byte(s).\n", msg->l);
 			goto end;
 		}
 
@@ -515,8 +515,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 		del_ph1=getph1byindex((isakmp_index *)(delete + 1));
 		if(del_ph1 != NULL){
 
-			EVT_PUSH(del_ph1->local, del_ph1->remote,
-					 EVTT_PEERPH1_NOPROP, NULL);
+			evt_phase1(iph1, EVT_PHASE1_PEER_DELETED, NULL);
 			SCHED_KILL(del_ph1->scr);
 
 			/*
@@ -536,8 +535,6 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 				delete->spi_size, delete->proto_id);
 			return 0;
 		}
-		EVT_PUSH(iph1->local, iph1->remote, 
-		    EVTT_PEER_DELETE, NULL);
 		purge_ipsec_spi(iph1->remote, delete->proto_id,
 		    (u_int32_t *)(delete + 1), num_spi);
 		break;
@@ -640,7 +637,7 @@ isakmp_info_send_d2(iph2)
 	 * don't send delete information if there is no phase 1 handler.
 	 * It's nonsensical to negotiate phase 1 to send the information.
 	 */
-	iph1 = getph1byaddr(iph2->src, iph2->dst); 
+	iph1 = getph1byaddr(iph2->src, iph2->dst, 0); 
 	if (iph1 == NULL){
 		plog(LLV_DEBUG2, LOCATION, NULL,
 			 "No ph1 handler found, could not send DELETE_SA\n");
@@ -1613,11 +1610,16 @@ isakmp_info_send_r_u(arg)
 
 	plog(LLV_DEBUG, LOCATION, iph1->remote, "DPD monitoring....\n");
 
+	iph1->dpd_r_u=NULL;
+
 	if (iph1->dpd_fails >= iph1->rmconf->dpd_maxfails) {
-		EVT_PUSH(iph1->local, iph1->remote, EVTT_DPD_TIMEOUT, NULL);
+
+		plog(LLV_INFO, LOCATION, iph1->remote,
+			"DPD: remote (ISAKMP-SA spi=%s) seems to be dead.\n",
+			isakmp_pindex(&iph1->index, 0));
+
+		evt_phase1(iph1, EVT_PHASE1_DPD_TIMEOUT, NULL);
 		purge_remote(iph1);
-		plog(LLV_DEBUG, LOCATION, iph1->remote,
-			 "DPD: remote seems to be dead\n");
 
 		/* Do not reschedule here: phase1 is deleted,
 		 * DPD will be reactivated when a new ph1 will be negociated

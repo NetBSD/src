@@ -1,3 +1,7 @@
-# $P4: //depot/projects/openpam/bin/Makefile.am#2 $
+# $Id: Makefile.am,v 1.1.1.2.10.1 2008/03/23 00:17:05 matt Exp $
 
-SUBDIRS = su
+SUBDIRS =
+
+if WITH_SU
+SUBDIRS += su
+endif

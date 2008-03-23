@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.96 2007/06/18 16:58:42 xtraeme Exp $ */
+/*	disks.c,v 1.96 2007/06/18 16:58:42 xtraeme Exp */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -358,6 +358,9 @@ make_filesystems(void)
 			fsname = "lfs";
 			break;
 		case FS_MSDOS:
+#ifdef USE_NEWFS_MSDOS
+			asprintf(&newfs, "/sbin/newfs_msdos");
+#endif
 			mnt_opts = "-tmsdos";
 			fsname = "msdos";
 			break;
@@ -368,8 +371,32 @@ make_filesystems(void)
 			fsname = "sysvbfs";
 			break;
 #endif
+#ifdef USE_EXT2FS
+		case FS_EX2FS:
+			asprintf(&newfs, "/sbin/newfs_ext2fs");
+			mnt_opts = "-text2fs";
+			fsname = "ext2fs";
+			break;
+#endif
 		}
 		if (lbl->pi_flags & PIF_NEWFS && newfs != NULL) {
+#ifdef USE_NEWFS_MSDOS
+			if (lbl->pi_fstype == FS_MSDOS) {
+			        /* newfs only if mount fails */
+			        if (run_program(RUN_SILENT | RUN_ERROR_OK,
+				    "mount -rt msdos /dev/%s%c /mnt2",
+				    diskdev, 'a' + ptn) != 0)
+					error = run_program(
+					    RUN_DISPLAY | RUN_PROGRESS,
+					    "%s /dev/r%s%c",
+					    newfs, diskdev, 'a' + ptn);
+				else {
+			        	run_program(RUN_SILENT | RUN_ERROR_OK,
+					    "umount /mnt2");
+					error = 0;
+				}
+			} else
+#endif
 			error = run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "%s /dev/r%s%c", newfs, diskdev, 'a' + ptn);
 		} else {
@@ -501,9 +528,11 @@ make_fstab(void)
 	scripting_fprintf(f, "kernfs\t\t/kern\tkernfs\trw\n");
 	scripting_fprintf(f, "ptyfs\t\t/dev/pts\tptyfs\trw\n");
 	scripting_fprintf(f, "procfs\t\t/proc\tprocfs\trw,noauto\n");
+	scripting_fprintf(f, "/dev/cd0a\t\t/cdrom\tcd9660\tro,noauto\n");
 	make_target_dir("/kern");
 	make_target_dir("/proc");
 	make_target_dir("/dev/pts");
+	make_target_dir("/cdrom");
 
 	scripting_fprintf(NULL, "EOF\n");
 

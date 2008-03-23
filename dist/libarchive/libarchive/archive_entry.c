@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.44 2007/07/15 19:10:34 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.45 2007/12/30 04:58:21 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -34,9 +34,6 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.44 2007/07/15 19:10:3
 #endif
 #ifdef MAJOR_IN_MKDEV
 #include <sys/mkdev.h>
-# if !defined makedev && (defined mkdev || defined _WIN32 || defined __WIN32__)
-#  define makedev mkdev
-# endif
 #else
 #ifdef MAJOR_IN_SYSMACROS
 #include <sys/sysmacros.h>
@@ -73,6 +70,22 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.44 2007/07/15 19:10:3
 
 #undef max
 #define	max(a, b)	((a)>(b)?(a):(b))
+
+/* Play games to come up with a suitable makedev() definition. */
+#ifdef __QNXNTO__
+/* QNX.  <sigh> */
+#include <sys/netmgr.h>
+#define ae_makedev(maj, min) makedev(ND_LOCAL_NODE, (maj), (min))
+#elif defined makedev
+/* There's a "makedev" macro. */
+#define ae_makedev(maj, min) makedev((maj), (min))
+#elif defined mkdev || defined _WIN32 || defined __WIN32__
+/* Windows. <sigh> */
+#define ae_makedev(maj, min) mkdev((maj), (min))
+#else
+/* There's a "makedev" function. */
+#define ae_makedev(maj, min) makedev((maj), (min))
+#endif
 
 static void	aes_clean(struct aes *);
 static void	aes_copy(struct aes *dest, struct aes *src);
@@ -194,6 +207,8 @@ aes_get_mbs(struct aes *aes)
 static const wchar_t *
 aes_get_wcs(struct aes *aes)
 {
+	int r;
+
 	if (aes->aes_wcs == NULL && aes->aes_mbs == NULL)
 		return NULL;
 	if (aes->aes_wcs == NULL && aes->aes_mbs != NULL) {
@@ -208,8 +223,13 @@ aes_get_wcs(struct aes *aes)
 		aes->aes_wcs = aes->aes_wcs_alloc;
 		if (aes->aes_wcs == NULL)
 			__archive_errx(1, "No memory for aes_get_wcs()");
-		mbstowcs(aes->aes_wcs_alloc, aes->aes_mbs, wcs_length);
+		r = mbstowcs(aes->aes_wcs_alloc, aes->aes_mbs, wcs_length);
 		aes->aes_wcs_alloc[wcs_length] = 0;
+		if (r == -1) {
+			/* Conversion failed, don't lie to our clients. */
+			free(aes->aes_wcs_alloc);
+			aes->aes_wcs = aes->aes_wcs_alloc = NULL;
+		}
 	}
 	return (aes->aes_wcs);
 }
@@ -294,6 +314,8 @@ aes_copy_wcs_len(struct aes *aes, const wchar_t *wcs, size_t len)
 struct archive_entry *
 archive_entry_clear(struct archive_entry *entry)
 {
+	if (entry == NULL)
+		return (NULL);
 	aes_clean(&entry->ae_fflags_text);
 	aes_clean(&entry->ae_gname);
 	aes_clean(&entry->ae_hardlink);
@@ -402,7 +424,7 @@ dev_t
 archive_entry_dev(struct archive_entry *entry)
 {
 	if (entry->ae_stat.aest_dev_is_broken_down)
-		return makedev(entry->ae_stat.aest_devmajor,
+		return ae_makedev(entry->ae_stat.aest_devmajor,
 		    entry->ae_stat.aest_devminor);
 	else
 		return (entry->ae_stat.aest_dev);
@@ -548,7 +570,7 @@ dev_t
 archive_entry_rdev(struct archive_entry *entry)
 {
 	if (entry->ae_stat.aest_rdev_is_broken_down)
-		return makedev(entry->ae_stat.aest_rdevmajor,
+		return ae_makedev(entry->ae_stat.aest_rdevmajor,
 		    entry->ae_stat.aest_rdevminor);
 	else
 		return (entry->ae_stat.aest_rdev);
@@ -739,6 +761,28 @@ archive_entry_set_link(struct archive_entry *entry, const char *target)
 		aes_set_mbs(&entry->ae_hardlink, target);
 }
 
+/* Set symlink if symlink is already set, else set hardlink. */
+void
+archive_entry_copy_link(struct archive_entry *entry, const char *target)
+{
+	if (entry->ae_symlink.aes_mbs != NULL ||
+	    entry->ae_symlink.aes_wcs != NULL)
+		aes_copy_mbs(&entry->ae_symlink, target);
+	else
+		aes_copy_mbs(&entry->ae_hardlink, target);
+}
+
+/* Set symlink if symlink is already set, else set hardlink. */
+void
+archive_entry_copy_link_w(struct archive_entry *entry, const wchar_t *target)
+{
+	if (entry->ae_symlink.aes_mbs != NULL ||
+	    entry->ae_symlink.aes_wcs != NULL)
+		aes_copy_wcs(&entry->ae_symlink, target);
+	else
+		aes_copy_wcs(&entry->ae_hardlink, target);
+}
+
 void
 archive_entry_set_mode(struct archive_entry *entry, mode_t m)
 {
@@ -777,6 +821,14 @@ void
 archive_entry_copy_pathname_w(struct archive_entry *entry, const wchar_t *name)
 {
 	aes_copy_wcs(&entry->ae_pathname, name);
+}
+
+void
+archive_entry_set_perm(struct archive_entry *entry, mode_t p)
+{
+	entry->stat_valid = 0;
+	entry->ae_stat.aest_mode &= AE_IFMT;
+	entry->ae_stat.aest_mode |= ~AE_IFMT & p;
 }
 
 void
@@ -1122,7 +1174,7 @@ const wchar_t *
 archive_entry_acl_text_w(struct archive_entry *entry, int flags)
 {
 	int count;
-	int length;
+	size_t length;
 	const wchar_t *wname;
 	const wchar_t *prefix;
 	wchar_t separator;

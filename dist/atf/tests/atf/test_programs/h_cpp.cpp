@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -51,6 +51,7 @@ extern "C" {
 #include "atf/env.hpp"
 #include "atf/fs.hpp"
 #include "atf/macros.hpp"
+#include "atf/text.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
@@ -281,6 +282,23 @@ ATF_TEST_CASE_BODY(fork_mangle_fds)
 #endif
 }
 
+ATF_TEST_CASE(fork_stop);
+ATF_TEST_CASE_HEAD(fork_stop)
+{
+    set("descr", "Helper test case for the t_fork test program");
+}
+ATF_TEST_CASE_BODY(fork_stop)
+{
+    std::ofstream os(config().get("pidfile").c_str());
+    os << ::getpid() << std::endl;
+    os.close();
+    std::cout << "Wrote pid file" << std::endl;
+    std::cout << "Waiting for done file" << std::endl;
+    while (::access(config().get("donefile").c_str(), F_OK) != 0)
+        ::usleep(10000);
+    std::cout << "Exiting" << std::endl;
+}
+
 ATF_TEST_CASE(fork_umask);
 ATF_TEST_CASE_HEAD(fork_umask)
 {
@@ -318,6 +336,16 @@ ATF_TEST_CASE_BODY(ident_2)
     ATF_CHECK_EQUAL(get("ident"), "ident_2");
 }
 
+ATF_TEST_CASE(require_arch);
+ATF_TEST_CASE_HEAD(require_arch)
+{
+    set("descr", "Helper test case for the t_meta_data test program");
+    set("require.arch", config().get("arch", "not-set"));
+}
+ATF_TEST_CASE_BODY(require_arch)
+{
+}
+
 ATF_TEST_CASE(require_config);
 ATF_TEST_CASE_HEAD(require_config)
 {
@@ -328,6 +356,16 @@ ATF_TEST_CASE_BODY(require_config)
 {
     std::cout << "var1: " << config().get("var1") << std::endl;
     std::cout << "var2: " << config().get("var2") << std::endl;
+}
+
+ATF_TEST_CASE(require_machine);
+ATF_TEST_CASE_HEAD(require_machine)
+{
+    set("descr", "Helper test case for the t_meta_data test program");
+    set("require.machine", config().get("machine", "not-set"));
+}
+ATF_TEST_CASE_BODY(require_machine)
+{
 }
 
 ATF_TEST_CASE(require_progs_body);
@@ -388,6 +426,28 @@ ATF_TEST_CASE_HEAD(require_user_unprivileged2)
 }
 ATF_TEST_CASE_BODY(require_user_unprivileged2)
 {
+}
+
+ATF_TEST_CASE(timeout);
+ATF_TEST_CASE_HEAD(timeout)
+{
+    set("descr", "Helper test case for the t_meta_data test program");
+    set("timeout", config().get("timeout", "0"));
+}
+ATF_TEST_CASE_BODY(timeout)
+{
+    sleep(atf::text::to_type< int >(config().get("sleep")));
+}
+
+ATF_TEST_CASE(timeout2);
+ATF_TEST_CASE_HEAD(timeout2)
+{
+    set("descr", "Helper test case for the t_meta_data test program");
+    set("timeout", config().get("timeout2", "0"));
+}
+ATF_TEST_CASE_BODY(timeout2)
+{
+    sleep(atf::text::to_type< int >(config().get("sleep2")));
 }
 
 // ------------------------------------------------------------------------
@@ -507,18 +567,23 @@ ATF_INIT_TEST_CASES(tcs)
 
     // Add helper tests for t_fork.
     ATF_ADD_TEST_CASE(tcs, fork_mangle_fds);
+    ATF_ADD_TEST_CASE(tcs, fork_stop);
     ATF_ADD_TEST_CASE(tcs, fork_umask);
 
     // Add helper tests for t_meta_data.
     ATF_ADD_TEST_CASE(tcs, ident_1);
     ATF_ADD_TEST_CASE(tcs, ident_2);
+    ATF_ADD_TEST_CASE(tcs, require_arch);
     ATF_ADD_TEST_CASE(tcs, require_config);
+    ATF_ADD_TEST_CASE(tcs, require_machine);
     ATF_ADD_TEST_CASE(tcs, require_progs_body);
     ATF_ADD_TEST_CASE(tcs, require_progs_head);
     ATF_ADD_TEST_CASE(tcs, require_user_root);
     ATF_ADD_TEST_CASE(tcs, require_user_root2);
     ATF_ADD_TEST_CASE(tcs, require_user_unprivileged);
     ATF_ADD_TEST_CASE(tcs, require_user_unprivileged2);
+    ATF_ADD_TEST_CASE(tcs, timeout);
+    ATF_ADD_TEST_CASE(tcs, timeout2);
 
     // Add helper tests for t_srcdir.
     ATF_ADD_TEST_CASE(tcs, srcdir_exists);

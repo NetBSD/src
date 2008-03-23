@@ -1,6 +1,42 @@
-Automated Testing Framework (atf)
-Copyright (c) 2007 The NetBSD Foundation, Inc.
-All rights reserved.
+                     Automated Testing Framework (atf)
+                        The NetBSD Foundation, Inc.
+---------------------------------------------------------------------------
+
+
+Version 0.4
+===========
+
+Release date: February 4th, 2008
+Status:       Experimental
+
+Changes:
+
+* Added two new manual pages, atf-c++-api and atf-sh-api, describing the
+  C++ and POSIX shell interfaces used to write test programs.
+
+* Added a pkg-config file, useful to get the flags to build against the
+  C++ library or to easily detect the presence of ATF.
+
+* Added a way for test cases to require a specific architecture and/or
+  machine type through the new 'require.arch' and 'require.machine'
+  meta-data properties, respectively.
+
+* Added the 'timeout' property to test cases, useful to set an upper-bound
+  limit for the test's run time and thus prevent global test program stalls
+  due to the test case's misbehavior.
+
+* Added the atf-exec(1) internal utility, used to execute a command after
+  changing the process group it belongs to.
+
+* Added the atf-killpg(1) internal utility, used to kill process groups.
+
+* Multiple portability fixes.  Of special interest, full support for SunOS
+  (Solaris Express Developer Edition 2007/09) using the Sun Studio 12 C++
+  compiler.
+
+* Fixed a serious bug that prevented atf-run(1) from working at all under
+  Fedora 8 x86_64.  Due to the nature of the bug, other platforms were
+  likely affected too.
 
 
 Version 0.3
@@ -87,4 +123,5 @@ Changes:
   Google Summer of Code 2007 program.
 
 
--- EOF
+---------------------------------------------------------------------------
+                              End of document

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.53 2007/05/04 21:19:36 christos Exp $	*/
+/*	extern.h,v 1.53 2007/05/04 21:19:36 christos Exp	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -157,7 +157,7 @@ int chk_same(ARCHD *);
 int node_creat(ARCHD *);
 int unlnk_exist(char *, int);
 int chk_path(char *, uid_t, gid_t);
-void set_ftime(char *fnm, time_t mtime, time_t atime, int frc);
+void set_ftime(char *fnm, time_t mtime, time_t atime, int frc, int slk);
 int set_ids(char *, uid_t, gid_t);
 void set_pmode(char *, mode_t);
 void set_chflags(char *fnm, u_int32_t flags);
@@ -183,7 +183,7 @@ void ls_tty(ARCHD *);
 void safe_print(const char *, FILE *);
 u_long asc_ul(char *, int, int);
 int ul_asc(u_long, char *, int, int);
-#if !defined(NET2_STAT) && !defined(_LP64)
+#if !defined(_LP64)
 unsigned long long asc_ull(char *, int, int);
 int ull_asc(unsigned long long, char *, int, int);
 #endif

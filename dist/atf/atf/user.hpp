@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,9 +37,15 @@
 #if !defined(_ATF_USER_HPP_)
 #define _ATF_USER_HPP_
 
+extern "C" {
+#include <sys/types.h>
+}
+
 namespace atf {
 namespace user {
 
+uid_t euid(void);
+bool is_member_of_group(gid_t);
 bool is_root(void);
 bool is_unprivileged(void);
 

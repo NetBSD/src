@@ -67,7 +67,30 @@ int regclassmap[NUMCLASS][MAXREGS];
 static void
 compl(struct optab *q, char *str)
 {
-	printf("table entry %td, op %s: %s\n", q - table, opst[q->op], str);
+	int op = q->op;
+	char *s;
+
+	if (op < OPSIMP) {
+		s = opst[op];
+	} else
+		s = "Special op";
+	printf("table entry %td, op %s: %s\n", q - table, s, str);
+}
+
+static int
+getrcl(struct optab *q)
+{
+	int v = q->needs & (NACOUNT|NBCOUNT|NCCOUNT|NDCOUNT);
+	int r = q->rewrite & RESC1 ? 1 : q->rewrite & RESC2 ? 2 : 3;
+	int i = 0;
+
+#define INCK(c) while (v & c##COUNT) { \
+	v -= c##REG, i++; if (i == r) return I##c##REG; }
+	INCK(NA)
+	INCK(NB)
+	INCK(NC)
+	INCK(ND)
+	return 0;
 }
 
 int
@@ -144,6 +167,14 @@ main(int argc, char *argv[])
 #undef F
 			if ((q->visit & INREGS) && !(q->rewrite & RDEST)) {
 				compl(q, "ASSIGN reclaim must be RDEST");
+				rval++;
+			}
+		}
+		/* check that reclaim is not the wrong class */
+		if ((q->rewrite & (RESC1|RESC2|RESC3)) && 
+		    !(q->needs & REWRITE)) {
+			if ((q->visit & getrcl(q)) == 0) {
+				compl(q, "rwong RESCx class");
 				rval++;
 			}
 		}
@@ -305,7 +336,7 @@ mktables()
 				int opmtemp;
 				if ((opmtemp=mamask[op->op - OPSIMP])&SPFLG) {
 					if (i==NAME || i==ICON || i==TEMP ||
-					    i==OREG || i == REG) {
+					    i==OREG || i == REG || i == FCON) {
 						P((fc, "%td, ", op - table));
 						curalen++;
 					}

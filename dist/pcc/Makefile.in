@@ -1,9 +1,10 @@
-#	$Id: Makefile.in,v 1.1.1.1.2.2 2007/11/06 23:07:53 matt Exp $
+#	Makefile.in,v 1.1.1.1.2.2 2007/11/06 23:07:53 matt Exp
 #
 # Makefile.in for top-level of pcc.
 #
 
 @SET_MAKE@
+VPATH=@srcdir@
 CC=@CC@
 CFLAGS=@CFLAGS@
 LDFLAGS=@LDFLAGS@

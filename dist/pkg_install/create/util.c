@@ -142,6 +142,8 @@ load_memory_file(const char *disk_name,
 
 	update_ids(file);
 
+	if ((file->st.st_mode & S_IFMT) != S_IFREG)
+		errx(1, "meta data file %s is not regular file", disk_name);
 	if (file->st.st_size > SSIZE_MAX ||
 	    (file->data = malloc(file->st.st_size)) == NULL)
 		errx(2, "cannot allocate memory for file %s", disk_name);
