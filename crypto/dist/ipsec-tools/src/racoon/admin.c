@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.18 2007/07/18 12:07:51 vanhu Exp $	*/
+/*	$NetBSD: admin.c,v 1.18.8.1 2008/03/24 07:14:29 keiichi Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -76,6 +76,7 @@
 #include "evt.h"
 #include "pfkey.h"
 #include "ipsec_doi.h"
+#include "policy.h"
 #include "admin.h"
 #include "admin_var.h"
 #include "isakmp_inf.h"
@@ -93,7 +94,7 @@ mode_t adminsock_mode = 0600;
 
 static struct sockaddr_un sunaddr;
 static int admin_process __P((int, char *));
-static int admin_reply __P((int, struct admin_com *, vchar_t *));
+static int admin_reply __P((int, struct admin_com *, int, vchar_t *));
 
 int
 admin_handler()
@@ -147,16 +148,16 @@ admin_handler()
 		goto end;
 	}
 
-	if (com.ac_cmd == ADMIN_RELOAD_CONF) {
-		/* reload does not work at all! */
-		signal_handler(SIGHUP);
-		goto end;
-	}
-
 	error = admin_process(so2, combuf);
 
-    end:
-	(void)close(so2);
+end:
+	if (error == -2) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"[%d] admin connection established\n", so2);
+	} else {
+		(void)close(so2);
+	}
+
 	if (combuf)
 		racoon_free(combuf);
 
@@ -176,56 +177,57 @@ admin_process(so2, combuf)
 	vchar_t *id = NULL;
 	vchar_t *key = NULL;
 	int idtype = 0;
-	int error = -1;
+	int error = 0, ac_errno = 0;
+	struct evt_listener_list *event_list = NULL;
 
-	com->ac_errno = 0;
+	if (com->ac_cmd & ADMIN_FLAG_VERSION)
+		com->ac_cmd &= ~ADMIN_FLAG_VERSION;
+	else
+		com->ac_version = 0;
 
 	switch (com->ac_cmd) {
 	case ADMIN_RELOAD_CONF:
-		/* don't entered because of proccessing it in other place. */
-		plog(LLV_ERROR, LOCATION, NULL, "should never reach here\n");
-		goto out;
+		signal_handler(SIGHUP);
+		break;
 
-	case ADMIN_SHOW_SCHED:
-	{
+	case ADMIN_SHOW_SCHED: {
 		caddr_t p = NULL;
 		int len;
 
-		com->ac_errno = -1;
-
-		if (sched_dump(&p, &len) == -1)
-			goto out2;
-
-		if ((buf = vmalloc(len)) == NULL)
-			goto out2;
-
-		memcpy(buf->v, p, len);
-
-		com->ac_errno = 0;
-out2:
-		racoon_free(p);
+		if (sched_dump(&p, &len) != -1) {
+			buf = vmalloc(len);
+			if (buf != NULL)
+				memcpy(buf->v, p, len);
+			else
+				ac_errno = ENOMEM;
+			racoon_free(p);
+		} else
+			ac_errno = ENOMEM;
 		break;
 	}
 
 	case ADMIN_SHOW_EVT:
-		/* It's not really an error, don't force racoonctl to quit */
-		if ((buf = evt_dump()) == NULL)
-			com->ac_errno = 0; 
+		if (com->ac_version == 0) {
+			buf = evt_dump();
+			ac_errno = 0;
+		}
 		break;
 
 	case ADMIN_SHOW_SA:
 	case ADMIN_FLUSH_SA:
-	    {
 		switch (com->ac_proto) {
 		case ADMIN_PROTO_ISAKMP:
 			switch (com->ac_cmd) {
 			case ADMIN_SHOW_SA:
 				buf = dumpph1();
 				if (buf == NULL)
-					com->ac_errno = -1;
+					ac_errno = ENOMEM;
 				break;
 			case ADMIN_FLUSH_SA:
 				flushph1();
+				break;
+			default:
+				ac_errno = ENOTSUP;
 				break;
 			}
 			break;
@@ -233,42 +235,42 @@ out2:
 		case ADMIN_PROTO_AH:
 		case ADMIN_PROTO_ESP:
 			switch (com->ac_cmd) {
-			case ADMIN_SHOW_SA:
-			    {
+			case ADMIN_SHOW_SA: {
 				u_int p;
 				p = admin2pfkey_proto(com->ac_proto);
-				if (p == -1)
-					goto out;
-				buf = pfkey_dump_sadb(p);
-				if (buf == NULL)
-					com->ac_errno = -1;
-			    }
+				if (p != -1) {
+					buf = pfkey_dump_sadb(p);
+					if (buf == NULL)
+						ac_errno = ENOMEM;
+				} else
+					ac_errno = EINVAL;
 				break;
+			}
 			case ADMIN_FLUSH_SA:
 				pfkey_flush_sadb(com->ac_proto);
 				break;
+			default:
+				ac_errno = ENOTSUP;
+				break;
 			}
 			break;
-
 		case ADMIN_PROTO_INTERNAL:
 			switch (com->ac_cmd) {
 			case ADMIN_SHOW_SA:
 				buf = NULL; /*XXX dumpph2(&error);*/
-				if (buf == NULL)
-					com->ac_errno = error;
+				ac_errno = ENOTSUP;
 				break;
 			case ADMIN_FLUSH_SA:
 				/*XXX flushph2();*/
-				com->ac_errno = 0;
+				break;
+			default:
+				ac_errno = ENOTSUP;
 				break;
 			}
 			break;
-
 		default:
-			/* ignore */
-			com->ac_errno = -1;
+			ac_errno = ENOTSUP;
 		}
-	    }
 		break;
 
 	case ADMIN_DELETE_SA: {
@@ -300,7 +302,6 @@ out2:
 
 		racoon_free(loc);
 		racoon_free(rem);
-
 		break;
 	}
 
@@ -352,15 +353,12 @@ out2:
 		}
 		
 		racoon_free(rem);
-
 		break;
 	}
 
 	case ADMIN_ESTABLISH_SA_PSK: {
 		struct admin_com_psk *acp;
 		char *data;
-
-		com->ac_cmd = ADMIN_ESTABLISH_SA;
 
 		acp = (struct admin_com_psk *)
 		    ((char *)com + sizeof(*com) + 
@@ -389,25 +387,35 @@ out2:
 		memcpy(key->v, data, key->l);
 	}
 	/* FALLTHROUGH */
-	case ADMIN_ESTABLISH_SA:
-	    {
+	case ADMIN_ESTABLISH_SA: {
+		struct admin_com_indexes *ndx;
 		struct sockaddr *dst;
 		struct sockaddr *src;
-		src = (struct sockaddr *)
-			&((struct admin_com_indexes *)
-			    ((caddr_t)com + sizeof(*com)))->src;
-		dst = (struct sockaddr *)
-			&((struct admin_com_indexes *)
-			    ((caddr_t)com + sizeof(*com)))->dst;
+
+		ndx = (struct admin_com_indexes *) ((caddr_t)com + sizeof(*com));
+		src = (struct sockaddr *) &ndx->src;
+		dst = (struct sockaddr *) &ndx->dst;
 
 		switch (com->ac_proto) {
 		case ADMIN_PROTO_ISAKMP: {
+			struct ph1handle *ph1;
 			struct remoteconf *rmconf;
 			struct sockaddr *remote = NULL;
 			struct sockaddr *local = NULL;
 			u_int16_t port;
 
-			com->ac_errno = -1;
+			ac_errno = -1;
+
+			/* connected already? */
+			ph1 = getph1byaddrwop(src, dst);
+			if (ph1 != NULL) {
+				event_list = &ph1->evt_listeners;
+				if (ph1->status == PHASE1ST_ESTABLISHED)
+					ac_errno = EEXIST;
+				else
+					ac_errno = 0;
+				break;
+			}
 
 			/* search appropreate configuration */
 			rmconf = getrmconf(dst);
@@ -459,10 +467,12 @@ out2:
 				"%s\n", saddrwop2str(remote));
 
 			/* begin ident mode */
-			if (isakmp_ph1begin_i(rmconf, remote, local) < 0)
+			ph1 = isakmp_ph1begin_i(rmconf, remote, local);
+			if (ph1 == NULL)
 				goto out1;
 
-			com->ac_errno = 0;
+			event_list = &ph1->evt_listeners;
+			ac_errno = 0;
 out1:
 			if (local != NULL)
 				racoon_free(local);
@@ -471,25 +481,126 @@ out1:
 			break;
 		}
 		case ADMIN_PROTO_AH:
-		case ADMIN_PROTO_ESP:
+		case ADMIN_PROTO_ESP: {
+			struct ph2handle *iph2;
+			struct secpolicy *sp_out = NULL, *sp_in = NULL;
+			struct policyindex spidx;
+
+			ac_errno = -1;
+
+			/* got outbound policy */
+			memset(&spidx, 0, sizeof(spidx));
+			spidx.dir = IPSEC_DIR_OUTBOUND;
+			memcpy(&spidx.src, src, sizeof(spidx.src));
+			memcpy(&spidx.dst, dst, sizeof(spidx.dst));
+			spidx.prefs = ndx->prefs;
+			spidx.prefd = ndx->prefd;
+			spidx.ul_proto = ndx->ul_proto;
+
+			sp_out = getsp_r(&spidx);
+			if (sp_out) {
+				plog(LLV_DEBUG, LOCATION, NULL,
+					"suitable outbound SP found: %s.\n",
+					spidx2str(&sp_out->spidx));
+			} else {
+				ac_errno = ENOENT;
+				plog(LLV_NOTIFY, LOCATION, NULL,
+					"no outbound policy found: %s\n",
+					spidx2str(&spidx));
+				break;
+			}
+
+			iph2 = getph2byid(src, dst, sp_out->id);
+			if (iph2 != NULL) {
+				event_list = &iph2->evt_listeners;
+				if (iph2->status == PHASE2ST_ESTABLISHED)
+					ac_errno = EEXIST;
+				else
+					ac_errno = 0;
+				break;
+			}
+
+			/* get inbound policy */
+			memset(&spidx, 0, sizeof(spidx));
+			spidx.dir = IPSEC_DIR_INBOUND;
+			memcpy(&spidx.src, dst, sizeof(spidx.src));
+			memcpy(&spidx.dst, src, sizeof(spidx.dst));
+			spidx.prefs = ndx->prefd;
+			spidx.prefd = ndx->prefs;
+			spidx.ul_proto = ndx->ul_proto;
+
+			sp_in = getsp_r(&spidx);
+			if (sp_in) {
+				plog(LLV_DEBUG, LOCATION, NULL,
+					"suitable inbound SP found: %s.\n",
+					spidx2str(&sp_in->spidx));
+			} else {
+				ac_errno = ENOENT;
+				plog(LLV_NOTIFY, LOCATION, NULL,
+					"no inbound policy found: %s\n",
+				spidx2str(&spidx));
+				break;
+			}
+
+			/* allocate a phase 2 */
+			iph2 = newph2();
+			if (iph2 == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"failed to allocate phase2 entry.\n");
+				break;
+			}
+			iph2->side = INITIATOR;
+			iph2->satype = admin2pfkey_proto(com->ac_proto);
+			iph2->spid = sp_out->id;
+			iph2->seq = pk_getseq();
+			iph2->status = PHASE2ST_STATUS2;
+
+			/* set end addresses of SA */
+			iph2->dst = dupsaddr(dst);
+			iph2->src = dupsaddr(src);
+			if (iph2->dst == NULL || iph2->src == NULL) {
+				delph2(iph2);
+				break;
+			}
+
+			if (isakmp_get_sainfo(iph2, sp_out, sp_in) < 0) {
+				delph2(iph2);
+				break;
+			}
+
+			insph2(iph2);
+			if (isakmp_post_acquire(iph2) < 0) {
+				unbindph12(iph2);
+				remph2(iph2);
+				delph2(iph2);
+				break;
+			}
+
+			event_list = &iph2->evt_listeners;
+			ac_errno = 0;
 			break;
+		}
 		default:
 			/* ignore */
-			com->ac_errno = -1;
+			ac_errno = ENOTSUP;
 		}
-	    }
 		break;
+	}
 
 	default:
 		plog(LLV_ERROR, LOCATION, NULL,
 			"invalid command: %d\n", com->ac_cmd);
-		com->ac_errno = -1;
+		ac_errno = ENOTSUP;
 	}
 
-	if ((error = admin_reply(so2, com, buf)) != 0)
+	if ((error = admin_reply(so2, com, ac_errno, buf)) != 0)
 		goto out;
 
-	error = 0;
+	/* start pushing events if so requested */
+	if ((ac_errno == 0) &&
+	    (com->ac_version >= 1) &&
+	    (com->ac_cmd == ADMIN_SHOW_EVT || event_list != NULL))
+		error = evt_subscribe(event_list, so2);
 out:
 	if (buf != NULL)
 		vfree(buf);
@@ -498,12 +609,13 @@ out:
 }
 
 static int
-admin_reply(so, combuf, buf)
-	int so;
-	struct admin_com *combuf;
+admin_reply(so, req, ac_errno, buf)
+	int so, ac_errno;
+	struct admin_com *req;
 	vchar_t *buf;
 {
 	int tlen;
+	struct admin_com *combuf;
 	char *retbuf = NULL;
 
 	if (buf != NULL)
@@ -518,8 +630,11 @@ admin_reply(so, combuf, buf)
 		return -1;
 	}
 
-	memcpy(retbuf, combuf, sizeof(*combuf));
-	((struct admin_com *)retbuf)->ac_len = tlen;
+	combuf = (struct admin_com *) retbuf;
+	combuf->ac_len = tlen;
+	combuf->ac_cmd = req->ac_cmd & ~ADMIN_FLAG_VERSION;
+	combuf->ac_errno = ac_errno;
+	combuf->ac_proto = req->ac_proto;
 
 	if (buf != NULL)
 		memcpy(retbuf + sizeof(*combuf), buf->v, buf->l);

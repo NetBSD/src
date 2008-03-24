@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.8 2008/01/04 22:15:09 ad Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.8.2.1 2008/03/24 07:14:56 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.8 2008/01/04 22:15:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.8.2.1 2008/03/24 07:14:56 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,9 +150,9 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct tr2_intr_handler *ih;
 	struct clockframe cf;
-	uint32_t r, cause0;
+	uint32_t r, handled;
 
-	cause0 = cause;
+	handled = 0;
 
 	if (ipending & MIPS_INT_MASK_5) {	/* CLOCK */
 		cf.pc = pc;
@@ -163,9 +163,9 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 
 		hardclock(&cf);
 		timer_tr2_ev.ev_count++;
-		cause &= ~MIPS_INT_MASK_5;
+		handled |= MIPS_INT_MASK_5;
 	}
-	_splset((status & MIPS_INT_MASK_5) | MIPS_SR_INT_IE);
+	_splset((status & handled) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_4) {	/* KBD, MOUSE, SERIAL */
 		r = *PICNIC_INT4_STATUS_REG;
@@ -191,9 +191,9 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			r &= ~PICNIC_INT_SERIAL;
 		}
 
-		cause &= ~MIPS_INT_MASK_4;
+		handled |= MIPS_INT_MASK_4;
 	}
-	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	_splset((status & handled) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_3) {	/* VME */
 		printf("VME interrupt\n");
@@ -230,7 +230,7 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		}
 
 		if ((r & PICNIC_INT_FDDLPT) &&
-		    ((cause0 & status) & MIPS_INT_MASK_5)) {
+		    ((cause & status) & MIPS_INT_MASK_5)) {
 #ifdef DEBUG
 			printf("FDD LPT interrupt\n");
 #endif
@@ -242,9 +242,9 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			r &= ~PICNIC_INT_FDDLPT;
 		}
 
-		cause &= ~MIPS_INT_MASK_2;
+		handled |= MIPS_INT_MASK_2;
 	}
-	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	_splset((status & handled) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_1)
 		panic("unknown interrupt INT1\n");
@@ -257,8 +257,9 @@ tr2_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		} else {
 			printf("unknown interrupt INT0\n");
 		}
-		cause &= ~MIPS_INT_MASK_0;
+		handled |= MIPS_INT_MASK_0;
 	}
+	cause &= ~handled;
 	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 }
 

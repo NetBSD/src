@@ -1,4 +1,4 @@
-/*	$NetBSD: jail.c,v 1.7 2008/02/19 09:45:02 dholland Exp $	*/
+/*	$NetBSD: jail.c,v 1.7.2.1 2008/03/24 07:14:42 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)jail.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: jail.c,v 1.7 2008/02/19 09:45:02 dholland Exp $");
+__RCSID("$NetBSD: jail.c,v 1.7.2.1 2008/03/24 07:14:42 keiichi Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 /*
  *	This routine uses a get-out-of-jail-free card to get the
@@ -58,21 +58,6 @@ card()
 	ret_card(cur_p);
 	cur_p->loc = 10;			/* just visiting	*/
 	cur_p->in_jail = 0;
-}
-
-/*
- *	This routine returns the players get-out-of-jail-free card
- * to a deck.
- */
-void
-ret_card(plr)
-	PLAY *plr;
-{
-	plr->num_gojf--;
-	if (CC_D.gojf_used)
-		CC_D.gojf_used = FALSE;
-	else
-		CH_D.gojf_used = FALSE;
 }
 
 /*

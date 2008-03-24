@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.20 2006/02/11 17:57:31 cdi Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.20.64.1 2008/03/24 07:15:04 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.20 2006/02/11 17:57:31 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.20.64.1 2008/03/24 07:15:04 keiichi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,16 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_ebus.c,v 1.20 2006/02/11 17:57:31 cdi Exp $");
 
 #include <dev/ic/lptvar.h>
 
-int	lpt_ebus_match(struct device *, struct cfdata *, void *);
-void	lpt_ebus_attach(struct device *, struct device *, void *);
+int	lpt_ebus_match(device_t, cfdata_t , void *);
+void	lpt_ebus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(lpt_ebus, sizeof(struct lpt_softc),
+CFATTACH_DECL_NEW(lpt_ebus, sizeof(struct lpt_softc),
     lpt_ebus_match, lpt_ebus_attach, NULL, NULL);
 
 #define	ROM_LPT_NAME	"ecpp"
 
 int
-lpt_ebus_match(struct device *parent, struct cfdata *match, void *aux)
+lpt_ebus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -68,12 +68,13 @@ lpt_ebus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-lpt_ebus_attach(struct device *parent, struct device *self, void *aux)
+lpt_ebus_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_softc *sc = (void *)self;
+	struct lpt_softc *sc = device_private(self);
 	struct ebus_attach_args *ea = aux;
 	int i;
 
+	sc->sc_dev = self;
 	sc->sc_iot = ea->ea_bustag;
 	/*
 	 * Addresses that should be supplied by the prom:
@@ -94,14 +95,14 @@ lpt_ebus_attach(struct device *parent, struct device *self, void *aux)
 			      ea->ea_reg[0].size,
 			      0,
 			      &sc->sc_ioh) != 0) {
-		printf(": can't map register space\n");
+		aprint_error(": can't map register space\n");
                 return;
 	}
 
 	for (i = 0; i < ea->ea_nintr; i++)
 		bus_intr_establish(ea->ea_bustag, ea->ea_intr[i],
 				   IPL_SERIAL, lptintr, sc);
-	printf("\n");
+	aprint_normal("\n");
 
 	lpt_attach_subr(sc);
 }

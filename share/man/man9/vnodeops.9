@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.71 2008/01/19 19:56:47 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.71.2.1 2008/03/24 07:14:50 keiichi Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -303,18 +303,17 @@ struct componentname {
         /*
          * Arguments to lookup.
          */
-        u_long  cn_nameiop;     /* namei operation */
-        u_long  cn_flags;       /* flags to namei */
-        struct  lwp *cn_lwp;    /* lwp requesting lookup */
+        uint32_t cn_nameiop;    /* namei operation */
+        uint32_t cn_flags;      /* flags to namei */
         kauth_cred_t cn_cred;   /* credentials */
         /*
          * Shared between lookup and commit routines.
          */
         char    *cn_pnbuf;      /* pathname buffer */
         const char *cn_nameptr; /* pointer to looked up name */
-        long    cn_namelen;     /* length of looked up component */
+        size_t  cn_namelen;     /* length of looked up component */
         u_long  cn_hash;        /* hash value of looked up name */
-        long    cn_consume;     /* chars to consume in lookup() */
+        size_t  cn_consume;     /* chars to consume in lookup() */
 };
 .Ed
 .Pp

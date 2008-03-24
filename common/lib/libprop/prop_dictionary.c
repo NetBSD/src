@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.22 2008/01/05 01:15:02 ad Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.22.2.1 2008/03/24 07:14:29 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -693,6 +693,20 @@ prop_dictionary_copy_mutable(prop_dictionary_t opd)
 		pd->pd_flags &= ~PD_F_IMMUTABLE;
 
 	return (pd);
+}
+
+/*
+ * prop_dictionary_make_immutable --
+ *	Set the immutable flag on that dictionary.
+ */
+void
+prop_dictionary_make_immutable(prop_dictionary_t pd)
+{
+
+	_PROP_RWLOCK_WRLOCK(pd->pd_rwlock);
+	if (prop_dictionary_is_immutable(pd) == false)
+		pd->pd_flags |= PD_F_IMMUTABLE;
+	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
 }
 
 /*

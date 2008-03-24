@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.12 2007/10/28 18:01:55 jmmv Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.12.12.1 2008/03/24 07:15:04 keiichi Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.12 2007/10/28 18:01:55 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.12.12.1 2008/03/24 07:15:04 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,16 +60,16 @@ struct vga_ofbus_softc {
 extern int console_ihandle;
 #endif
 
-int	vga_ofbus_match (struct device *, struct cfdata *, void *);
-void	vga_ofbus_attach (struct device *, struct device *, void *);
+int	vga_ofbus_match (device_t, cfdata_t, void *);
+void	vga_ofbus_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(vga_ofbus, sizeof(struct vga_ofbus_softc),
+CFATTACH_DECL_NEW(vga_ofbus, sizeof(struct vga_ofbus_softc),
     vga_ofbus_match, vga_ofbus_attach, NULL, NULL);
 
 static const char *compat_strings[] = { "pnpPNP,900", 0 };
 
 int
-vga_ofbus_match(struct device *parent, struct cfdata *match, void *aux)
+vga_ofbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofbus_attach_args *oba = aux;
 
@@ -84,13 +84,14 @@ vga_ofbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-vga_ofbus_attach(struct device *parent, struct device *self, void *aux)
+vga_ofbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct vga_ofbus_softc *osc = (void *) self;
+	struct vga_ofbus_softc *osc = device_private(self);
 	struct vga_softc *sc = &osc->sc_vga;
 	struct ofbus_attach_args *oba = aux;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 	osc->sc_phandle = oba->oba_phandle;
 
 	vga_common_attach(sc, &isa_io_bs_tag, &isa_mem_bs_tag,

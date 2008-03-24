@@ -1,12 +1,16 @@
-#	$NetBSD: Makefile,v 1.8 2006/09/11 22:24:09 dbj Exp $
+#	$NetBSD: Makefile,v 1.8.14.1 2008/03/24 07:14:45 keiichi Exp $
 #
 
 CPPFLAGS+=-I${.CURDIR}
 .if defined(DEBUG_FORMS)
 CFLAGS+=-gdwarf-2
 CPPFLAGS+=-DDEBUG
+LDFLAGS+=-g
 .endif
 LIB=	form
+
+LIBDPLIBS+=	curses	${.CURDIR}/../libcurses
+
 SRCS=	driver.c field_types.c internals.c field.c form.c post.c type_alnum.c \
         type_alpha.c type_integer.c type_numeric.c type_enum.c type_regex.c \
 	type_ipv4.c type_ipv6.c
@@ -71,10 +75,8 @@ MLINKS+=	forms.3 form.3 form_page.3 current_field.3 \
 		form_win.3 set_form_win.3 form_field_buffer.3 set_max_field.3 \
 		form_new_page.3 set_new_page.3 form_post.3 unpost_form.3
 
-
 INCS=	form.h
 INCSDIR=/usr/include
-LDFLAGS += -g
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>

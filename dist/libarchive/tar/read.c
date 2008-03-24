@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.34 2007/07/20 01:24:49 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.35 2008/01/02 00:21:27 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -291,8 +291,9 @@ list_item_verbose(struct bsdtar *bsdtar, FILE *out, struct archive_entry *entry)
 	}
 	if (!now)
 		time(&now);
-	bsdtar_strmode(entry, tmp);
-	fprintf(out, "%s %d ", tmp, (int)(st->st_nlink));
+	fprintf(out, "%s %d ",
+	    archive_entry_strmode(entry),
+	    (int)(st->st_nlink));
 
 	/* Use uname if it's present, else uid. */
 	p = archive_entry_uname(entry);

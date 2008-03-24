@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.50 2008/01/02 11:49:19 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.50.2.1 2008/03/24 07:16:33 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -108,8 +108,8 @@
  * items (depending on who locked what).  some time, in BSD, the bit
  * fields were dumped and all the flags were lumped into one short.
  * that is fine for a single threaded uniprocessor OS, but bad if you
- * want to actual make use of locking (simple_lock's).  so, we've
- * separated things back out again.
+ * want to actual make use of locking.  so, we've separated things
+ * back out again.
  *
  * note the page structure has no lock of its own.
  */
@@ -309,9 +309,7 @@ static int vm_physseg_find(paddr_t, int *);
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
  */
 static __inline int
-vm_physseg_find(pframe, offp)
-	paddr_t pframe;
-	int	*offp;
+vm_physseg_find(paddr_t pframe, int *offp)
 {
 #if VM_PHYSSEG_MAX == 1
 
@@ -391,8 +389,7 @@ vm_physseg_find(pframe, offp)
  * back from an I/O mapping (ugh!).   used in some MD code as well.
  */
 static __inline struct vm_page *
-PHYS_TO_VM_PAGE(pa)
-	paddr_t pa;
+PHYS_TO_VM_PAGE(paddr_t pa)
 {
 	paddr_t pf = atop(pa);
 	int	off;

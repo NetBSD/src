@@ -1,4 +1,4 @@
-.\"   $NetBSD: nfsd.8,v 1.20 2006/01/01 17:03:54 yamt Exp $
+.\"   $NetBSD: nfsd.8,v 1.20.16.1 2008/03/24 07:16:35 keiichi Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)nfsd.8	8.4 (Berkeley) 3/29/95
 .\"
-.Dd January 2, 2006
+.Dd March 17, 2008
 .Dt NFSD 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@ server
 .Sh SYNOPSIS
 .Nm
 .Op Fl 6rut
-.Op Fl n Ar num_servers
+.Op Fl n Ar num_threads
 .Sh DESCRIPTION
 .Nm
 runs on a server machine to service
@@ -68,7 +68,10 @@ or
 .Fl t
 options to re-register NFS if the portmap server is restarted.
 .It Fl n
-Specifies how many servers to create.
+Specifies how many server threads to create.
+The default is 4.
+A server should run enough threads to handle
+the maximum level of concurrency from its clients.
 .It Fl 6
 Listen to IPv6 requests as well as IPv4 requests. If IPv6 support is not
 available, nfsd will silently continue and just use IPv4.
@@ -88,14 +91,7 @@ serves
 .Tn UDP
 and
 .Tn TCP
-transports using six daemons.
-.Pp
-A server should run enough daemons to handle
-the maximum level of concurrency from its clients,
-typically four to six.
-The maximum number of daemon is 1024, the default is 4.
-If the number of servers on the command line exceeds 1024, it is reset to
-the default.
+transports using six threads.
 .Pp
 .Nm
 listens for service requests at the port indicated in the

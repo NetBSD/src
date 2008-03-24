@@ -33,7 +33,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 5, 2008
+.Dd February 26, 2008
 .Dt ATF-SH-API 3
 .Os
 .Sh NAME
@@ -197,40 +197,56 @@ the user can quickly know why the test did not pass.
 .Fn atf_check cmd expcode expout experr
 .Pp
 This function takes four parameters: the command to execute, the expected
-numerical exit code, the expected behavior of stdout and the expected
-behavior of stderr.
-.Sq expout
+numerical exit code, the expected behavior of
+.Dv stdout
+and the expected
+behavior of
+.Dv stderr .
+.Fa expout
 can be one of the following:
-.Bl -tag .width expoutXXXX
-.It expout
-What the command writes to the stdout channel must match exactly what is
+.Bl -tag -width expout
+.It Li expout
+What the command writes to the
+.Dv stdout
+channel must match exactly what is
 found in the
 .Pa expout
 file.
-.It ignore
-The test does not check what the command writes to the stdout channel.
-.It null
-The command must not write anything to the stdout channel.
-.It stdout
-What the command writes to the stdout channel is written to a
+.It Li ignore
+The test does not check what the command writes to the
+.Dv stdout
+channel.
+.It Li null
+The command must not write anything to the
+.Dv stdout
+channel.
+.It Li stdout
+What the command writes to the
+.Dv stdout
+channel is written to a
 .Pa stdout
 file, available for further inspection.
 .El
 .Pp
 Similarly,
-.Sq experr
+.Fa experr
 can be one of
-.Sq experr ,
-.Sq ignore ,
-.Sq null or
-.Sq stderr ,
+.Sq Li experr ,
+.Sq Li ignore ,
+.Sq Li null ,
+or
+.Sq Li stderr ,
 all of which follow the same semantics of their corresponding counterparts
-for the stdout case.
+for the
+.Fa expout
+case.
 .Pp
 It is important to note that when a failure is detected, this function will
 print as much information as possible to be able to identify the cause of
 the failure.
-For example, if the stdout does not match with the expected contents, a
+For example, if the
+.Dv stdout
+does not match with the expected contents, a
 diff will be printed.
 .Pp
 .Fn atf_check_equal expr1 expr2

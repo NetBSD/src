@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.35 2008/01/30 09:50:24 ad Exp $	*/
+/*	$NetBSD: vfs.c,v 1.35.2.1 2008/03/24 07:16:28 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -93,21 +93,6 @@ vnode_t *specfs_hash[SPECHSZ];
 int (*mountroot)(void);
 
 int
-sys_sync(struct lwp *l, const void *v, register_t *rv)
-{
-
-	panic("%s: unimplemented", __func__);
-}
-
-int
-dounmount(struct mount *mp, int flags, struct lwp *l)
-{
-
-	VFS_UNMOUNT(mp, MNT_FORCE);
-	panic("control fd is dead");
-}
-
-int
 vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 	int attrnamespace, const char *attrname)
 {
@@ -115,6 +100,20 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 	if (vp != NULL)
 		VOP_UNLOCK(vp, 0);
 	return EOPNOTSUPP;
+}
+
+int
+vfs_allocate_syncvnode(struct mount *mp)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+vfs_deallocate_syncvnode(struct mount *mp)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 struct mount mnt_dummy;
@@ -220,7 +219,7 @@ int
 lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 {
 
-	return 0;
+	panic("%s: unimplemented", __func__);
 }
 
 void
@@ -236,4 +235,39 @@ rumpvfs_init()
 
 	vfs_opv_init(rump_opv_descs);
 	rootvnode = rump_makevnode("/", 0, VDIR, -1);
+}
+
+void
+rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
+{
+	struct lwp *l = curlwp;
+	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+
+	KASSERT(cvp);
+
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
+	if (cwdi->cwdi_rdir)
+		vrele(cwdi->cwdi_rdir);
+	if (rvp)
+		vref(rvp);
+	cwdi->cwdi_rdir = rvp;
+
+	vrele(cwdi->cwdi_cdir);
+	vref(cvp);
+	cwdi->cwdi_cdir = cvp;
+	rw_exit(&cwdi->cwdi_lock);
+}
+
+struct vnode *
+rump_cdir_get()
+{
+	struct vnode *vp;
+	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;
+
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	vp = cwdi->cwdi_cdir;
+	rw_exit(&cwdi->cwdi_lock);
+	vref(vp);
+
+	return vp;
 }

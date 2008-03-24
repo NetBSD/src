@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_socket.c,v 1.151 2008/02/06 21:57:54 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.151.2.1 2008/03/24 07:16:14 keiichi Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.151 2008/02/06 21:57:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.151.2.1 2008/03/24 07:16:14 keiichi Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -280,7 +280,7 @@ sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 }
 
 static size_t
-sodopendfree()
+sodopendfree(void)
 {
 	size_t rv;
 
@@ -299,7 +299,7 @@ sodopendfree()
  */
 
 static size_t
-sodopendfreel()
+sodopendfreel(void)
 {
 	struct mbuf *m, *next;
 	size_t rv = 0;
@@ -1682,8 +1682,9 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 void
 sohasoutofband(struct socket *so)
 {
+
 	fownsignal(so->so_pgid, SIGURG, POLL_PRI, POLLPRI|POLLRDBAND, so);
-	selwakeup(&so->so_rcv.sb_sel);
+	selnotify(&so->so_rcv.sb_sel, POLLPRI | POLLRDBAND, 0);
 }
 
 static void
@@ -1800,6 +1801,59 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	sb->sb_flags |= SB_KNOTE;
 	return (0);
 }
+
+static int
+sodopoll(struct socket *so, int events)
+{
+	int revents;
+
+	revents = 0;
+
+	if (events & (POLLIN | POLLRDNORM))
+		if (soreadable(so))
+			revents |= events & (POLLIN | POLLRDNORM);
+
+	if (events & (POLLOUT | POLLWRNORM))
+		if (sowritable(so))
+			revents |= events & (POLLOUT | POLLWRNORM);
+
+	if (events & (POLLPRI | POLLRDBAND))
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
+			revents |= events & (POLLPRI | POLLRDBAND);
+
+	return revents;
+}
+
+int
+sopoll(struct socket *so, int events)
+{
+	int revents = 0;
+	int s;
+
+	if ((revents = sodopoll(so, events)) != 0)
+		return revents;
+
+	KERNEL_LOCK(1, curlwp);
+	s = splsoftnet();
+
+	if ((revents = sodopoll(so, events)) == 0) {
+		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
+			selrecord(curlwp, &so->so_rcv.sb_sel);
+			so->so_rcv.sb_flags |= SB_SEL;
+		}
+
+		if (events & (POLLOUT | POLLWRNORM)) {
+			selrecord(curlwp, &so->so_snd.sb_sel);
+			so->so_snd.sb_flags |= SB_SEL;
+		}
+	}
+
+	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
+
+	return revents;
+}
+
 
 #include <sys/sysctl.h>
 

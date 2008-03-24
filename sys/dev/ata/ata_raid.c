@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.24 2008/01/02 11:48:36 ad Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.24.2.1 2008/03/24 07:15:15 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.24 2008/01/02 11:48:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.24.2.1 2008/03/24 07:15:15 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -236,7 +236,7 @@ ataraid_print(void *aux, const char *pnp)
 void
 ata_raid_check_component(struct device *self)
 {
-	struct wd_softc *sc = (void *) self;
+	struct wd_softc *sc = device_private(self);
 
 	if (ata_raid_read_config_adaptec(sc) == 0)
 		return;

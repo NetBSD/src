@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 2008/02/20 05:08:46 dholland Exp $	*/
+/*	$NetBSD: print.c,v 1.10.2.1 2008/03/24 07:14:42 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.10 2008/02/20 05:08:46 dholland Exp $");
+__RCSID("$NetBSD: print.c,v 1.10.2.1 2008/03/24 07:14:42 keiichi Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 static const char *header = "Name      Own      Price Mg # Rent";
 
@@ -82,9 +82,7 @@ where()
  *	This routine prints out an individual square
  */
 void
-printsq(sqn, eoln)
-	int sqn;
-	bool eoln;
+printsq(int sqn, bool eoln)
 {
 	int rnt;
 	PROP *pp;

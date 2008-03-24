@@ -1,4 +1,4 @@
-/* $NetBSD: dtide.c,v 1.24 2007/10/19 12:01:07 ad Exp $ */
+/* $NetBSD: dtide.c,v 1.24.12.1 2008/03/24 07:16:05 keiichi Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.24 2007/10/19 12:01:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtide.c,v 1.24.12.1 2008/03/24 07:16:05 keiichi Exp $");
 
 #include <sys/param.h>
 
@@ -59,17 +59,17 @@ struct dtide_softc {
 	bus_space_handle_t	sc_magich;
 };
 
-static int dtide_match(struct device *, struct cfdata *, void *);
-static void dtide_attach(struct device *, struct device *, void *);
+static int dtide_match(device_t, cfdata_t, void *);
+static void dtide_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(dtide, sizeof(struct dtide_softc),
+CFATTACH_DECL_NEW(dtide, sizeof(struct dtide_softc),
     dtide_match, dtide_attach, NULL, NULL);
 
 static const int dtide_cmdoffsets[] = { DTIDE_CMDBASE0, DTIDE_CMDBASE1 };
 static const int dtide_ctloffsets[] = { DTIDE_CTLBASE0, DTIDE_CTLBASE1 };
 
 static int
-dtide_match(struct device *parent, struct cfdata *cf, void *aux)
+dtide_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -77,7 +77,7 @@ dtide_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-dtide_attach(struct device *parent, struct device *self, void *aux)
+dtide_attach(device_t parent, device_t self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	struct dtide_softc *sc = device_private(self);
@@ -86,6 +86,7 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 	int i, j;
 	bus_space_tag_t bst;
 
+	sc->sc_wdc.sc_atac.atac_dev = self;
 	sc->sc_wdc.regs = sc->sc_wdc_regs;
 
 	sc->sc_wdc.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_NOIRQ;
@@ -96,7 +97,7 @@ dtide_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_map(pa->pa_fast_t, pa->pa_fast_base + DTIDE_MAGICBASE, 0, 1,
 	    &sc->sc_magich);
 	podulebus_shift_tag(pa->pa_fast_t, DTIDE_REGSHIFT, &bst);
-	printf("\n");
+	aprint_normal("\n");
 	for (i = 0; i < DTIDE_NCHANNELS; i++) {
 		ch = sc->sc_chp[i] = &sc->sc_chan[i];
 		wdr = &sc->sc_wdc_regs[i];

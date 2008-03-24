@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.239 2008/02/05 09:31:44 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.239.2.1 2008/03/24 07:14:40 keiichi Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -338,6 +338,19 @@ Notes:		http://www.kame.net
 		integration effort.  The branch is not actively used, as I
 		(itojun) use patch(1) and diff(1) for the KAME syncs.
 
+Branch:		keiichi-mipv6
+Description:	Developing Mobile IPv6 function
+Status:		Active
+Start Date:	21 Feb 2008
+End Date:	
+Base Tag:	keiichi-mipv6-base
+Maintainer:	Keiichi Shima <keiichi@netbsd.org>
+Scope:		sys, sbin, libc/net, distrib/sets, share/man/
+Notes:		http://www.mobileip.jp/
+		Work on developing Mobile IPv6/NEMO BS functions and
+		related MIPv6 based advanced functions on NetBSD.
+		Please consult keiichi for joining this activity.
+
 Branch:		kent-audio2
 Description:	In-kernel audio mixer
 Status:		Active
@@ -384,12 +397,12 @@ Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
 Notes:	
 
-Branch:		mjf-devfs
+Branch:		mjf-devfs2
 Description:	device file system supporting dynamic device nodes
 Status:		Active
-Start Date:	12 November 2007
+Start Date:	21 February 2008
 End Date:
-Base Tag:	mjf-devfs-base
+Base Tag:	mjf-devfs2-base
 Maintainer:	Matt Fleming <mjf@NetBSD.org>
 Scope:		kernel and userland
 Notes:		This branch will move away from the static device nodes that
@@ -406,6 +419,18 @@ Base Tag:	mjf-ufs-trans-base
 Maintainer:	Matt Fleming <mjf@NetBSD.org>
 Scope:		kernel
 Notes:
+
+Branch:		nick-net80211-sync
+Description:	sync of net80211 with FreeBSD
+Status:		Active
+Start Date:	21 February 2008
+End Date:
+Base Tag:	nick-net80211-base
+Maintainer:	Nick Hudson <skrll@NetBSD.org>
+Scope:		sys/
+Notes:		Sync'ing net80211 with FreeBSD and drivers update. The branch is
+		currently only the kernel, but will likely extend to some userland
+		areas.
 
 Branch:	  	pkgviews
 Description:  	package views, enabling multiple conflicting packages to co-exist
@@ -500,26 +525,15 @@ Notes:
 		- consider to remove other submaps.  eg. mb_map
 
 Branch:		yamt-lazymbuf
-Description:	implement and evaluate lazy mapping of mbuf external data pages
-		also, change the way to share mbuf external storage.
-		it's intended as the first step of larger changes.
-			1. support operations (esp. bus_dma load) on
-			   unmapped mbuf.
-			2. unify mbuf and buf.
-			   (or, at least some parts of them)
-			3. then it should be trivial to implement
-			   i/o coalescing, etc.
+Description:	change the way to share mbuf external storage so that
+		it can work without kernel_lock.
 Status:		Active
 Start Date:	Wed Jul  6 2005
 End Date:	
-Base Tag:	yamt-lazymbuf-base10
+Base Tag:	yamt-lazymbuf-base13
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
-		i386		DONE
-		amd64		DONE
-		other ports should work as the trunk does.
-		(conditionalized by __HAVE_LAZY_MBUF macro)
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
@@ -664,7 +678,7 @@ Notes:
 
 Branch:		bouyer-xeni386
 Description:	switch xen on i386 to the x86 pmap and the xen/x86/x86_xpmap.c bootstrap, and add i386 PAE support
-Status:		Active
+Status:		Terminated
 Start Date:	10 Dec 2007
 End Date:	23 Jan 2008
 Base Tag:	bouyer-xeni386-base
@@ -855,6 +869,19 @@ Scope:		basesrc, syssrc, sharesrc
 Notes:		Citrus Project is developing dynamically-loadable, codeset-
 		independent locale subsystem.  Part of the implementation
 		(LC_CTYPE) called XPG4DL is now integrated to -current.
+
+Branch:		mjf-devfs
+Description:	device file system supporting dynamic device nodes
+Status:		Terminated
+Start Date:	12 November 2007
+End Date:	21 February 2008
+Base Tag:	mjf-devfs-base
+Maintainer:	Matt Fleming <mjf@NetBSD.org>
+Scope:		kernel and userland
+Notes:		This branch will move away from the static device nodes that
+		are created with MAKEDEV scripts and allow nodes to be created
+		and removed dynamically as devices are attached and detached
+		from the machine.
 
 Branch:		mrg-vm-swap
 Description:	dynamic swap allocation, swap-to-files support

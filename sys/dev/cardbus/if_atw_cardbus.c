@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.19 2007/12/09 20:27:56 jmcneill Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.19.6.1 2008/03/24 07:15:15 keiichi Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.19 2007/12/09 20:27:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.19.6.1 2008/03/24 07:15:15 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -129,7 +129,6 @@ void	atw_cardbus_setup(struct atw_cardbus_softc *);
 
 int	atw_cardbus_enable(struct atw_softc *);
 void	atw_cardbus_disable(struct atw_softc *);
-void	atw_cardbus_power(struct atw_softc *, int);
 
 static void atw_cardbus_intr_ack(struct atw_softc *);
 
@@ -200,7 +199,6 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	 */
 	sc->sc_enable = atw_cardbus_enable;
 	sc->sc_disable = atw_cardbus_disable;
-	sc->sc_power = atw_cardbus_power;
 
 	sc->sc_intr_ack = atw_cardbus_intr_ack;
 
@@ -375,26 +373,6 @@ atw_cardbus_disable(struct atw_softc *sc)
 
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
-}
-
-void
-atw_cardbus_power(struct atw_softc *sc, int why)
-{
-	struct atw_cardbus_softc *csc = (void *) sc;
-
-	printf("%s: atw_cardbus_power\n", sc->sc_dev.dv_xname);
-
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if (ATW_IS_ENABLED(sc) == 0)
-			panic("atw_cardbus_power");
-#endif
-		atw_cardbus_setup(csc);
-	}
 }
 
 void

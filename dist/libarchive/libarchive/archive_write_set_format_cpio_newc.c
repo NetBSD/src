@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_cpio_newc.c,v 1.1 2007/06/22 05:47:00 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_cpio_newc.c,v 1.3 2008/01/23 05:43:25 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -148,12 +148,17 @@ archive_write_newc_header(struct archive_write *a, struct archive_entry *entry)
 	format_hex(pathlength, &h.c_namesize, sizeof(h.c_namesize));
 	format_hex(0, &h.c_checksum, sizeof(h.c_checksum));
 
+	/* Non-regular files don't store bodies. */
+	if (archive_entry_filetype(entry) != AE_IFREG)
+		archive_entry_set_size(entry, 0);
+
 	/* Symlinks get the link written as the body of the entry. */
 	p = archive_entry_symlink(entry);
 	if (p != NULL  &&  *p != '\0')
 		format_hex(strlen(p), &h.c_filesize, sizeof(h.c_filesize));
 	else
-		format_hex(archive_entry_size(entry), &h.c_filesize, sizeof(h.c_filesize));
+		format_hex(archive_entry_size(entry),
+		    &h.c_filesize, sizeof(h.c_filesize));
 
 	ret = (a->compressor.write)(a, &h, sizeof(h));
 	if (ret != ARCHIVE_OK)
@@ -171,9 +176,15 @@ archive_write_newc_header(struct archive_write *a, struct archive_entry *entry)
 
 	cpio->entry_bytes_remaining = archive_entry_size(entry);
 	cpio->padding = 3 & (-cpio->entry_bytes_remaining);
+
 	/* Write the symlink now. */
-	if (p != NULL  &&  *p != '\0')
+	if (p != NULL  &&  *p != '\0') {
 		ret = (a->compressor.write)(a, p, strlen(p));
+		if (ret != ARCHIVE_OK)
+			return (ARCHIVE_FATAL);
+		pad = 0x3 & -strlen(p);
+		ret = (a->compressor.write)(a, "\0\0\0", pad);
+	}
 
 	return (ret);
 }

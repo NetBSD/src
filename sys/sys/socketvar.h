@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.102 2008/02/06 21:57:55 ad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.102.2.1 2008/03/24 07:16:28 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -339,6 +339,7 @@ int	sosetopt(struct socket *, int, int, struct mbuf *);
 int	soshutdown(struct socket *, int);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
+int	sopoll(struct socket *, int);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);

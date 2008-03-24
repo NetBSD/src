@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.24 2007/03/04 06:00:57 christos Exp $	*/
+/*	$NetBSD: nexus.h,v 1.24.36.1 2008/03/24 07:15:06 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -48,7 +48,7 @@ enum bustypes {
 	VAX_UNIBUS,		/* Direct backplane (730) */
 	VAX_ABUS,		/* SBI placeholder (8600) */
 	VAX_BIBUS,		/* BI bus (8200) */
-	VAX_NBIBUS,		/* NBI backplane (8800) */
+	VAX_NMIBUS,		/* NMI backplane (8800) */
 	VAX_VSBUS,		/* Virtual vaxstation bus */
 	VAX_IBUS,		/* Internal Microvax bus */
 	VAX_XMIBUS,		/* XMI master bus (6000) */
@@ -103,23 +103,23 @@ struct sbi_attach_args {
 	int sa_sbinum;
 	bus_space_tag_t sa_iot;
 	bus_space_handle_t sa_ioh;
+	bus_dma_tag_t sa_dmat;
 };
 
 /* Memory device struct. This should be somewhere else */
 struct mem_softc {
-	struct	device sc_dev;
+	struct	device *sc_dev;
 	void *	sc_memaddr;
 	int	sc_memtype;
 	int	sc_memnr;
 };
 
-struct bp_conf {
-	const char *type;
-	int num;
-	int partyp;
-	int bp_addr;
+struct ibus_attach_args {
+	const char *ia_type;
+	int ia_num;
+	int ia_partyp;
+	paddr_t ia_addr;
 };
-
 #endif
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2007/07/24 10:49:23 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.12.10.1 2008/03/24 07:14:41 keiichi Exp $
 #
 #	etc.acorn32/Makefile.inc -- acorn32-specific etc Makefile targets
 #
@@ -15,6 +15,6 @@ INSTALLATION_DIRS+=	installation/kernel	\
 
 snap_md_post:
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/boot32,ffa \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/kernel '*.gz'
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*.gz' boot32,ffa
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/kernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.gz' boot32,ffa

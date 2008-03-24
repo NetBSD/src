@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.100 2008/02/20 16:37:52 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.100.2.1 2008/03/24 07:15:07 keiichi Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2008/02/20 16:37:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100.2.1 2008/03/24 07:15:07 keiichi Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -148,9 +148,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->PC = (uintptr_t)cpu_lwp_bootstrap + 2;
 	pcb->PSL = PSL_HIGHIPL;
 	pcb->ESP = (uintptr_t)&pcb->iftrap;
-#ifndef MULTIPROCESSOR
-	pcb->SSP = (uintptr_t)curcpu();
-#endif
+	pcb->SSP = (uintptr_t)l2;
+
 	/* pcb->R[0] (oldlwp) set by Swtchto */
 	pcb->R[1] = (uintptr_t)l2;
 	pcb->R[2] = (uintptr_t)func;
@@ -227,7 +226,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
  * Map in a bunch of pages read/writable for the kernel.
  */
 void
-ioaccess(vaddr_t vaddr, paddr_t paddr, int npgs)
+ioaccess(vaddr_t vaddr, paddr_t paddr, size_t npgs)
 {
 	uint32_t *pte = (uint32_t *)kvtopte(vaddr);
 	int i;
@@ -240,7 +239,7 @@ ioaccess(vaddr_t vaddr, paddr_t paddr, int npgs)
  * Opposite to the above: just forget their mapping.
  */
 void
-iounaccess(vaddr_t vaddr, int npgs)
+iounaccess(vaddr_t vaddr, size_t npgs)
 {
 	uint32_t *pte = (uint32_t *)kvtopte(vaddr);
 	int i;

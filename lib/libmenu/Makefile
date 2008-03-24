@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/07/29 12:58:10 blymn Exp $
+#	$NetBSD: Makefile,v 1.7.28.1 2008/03/24 07:14:45 keiichi Exp $
 #
 
 CPPFLAGS+=-I${.CURDIR}
@@ -8,6 +8,9 @@ CPPFLAGS+=-DDEBUG
 LDFLAGS+=-g
 .endif
 LIB=	menu
+
+LIBDPLIBS+=	curses	${.CURDIR}/../libcurses
+
 SRCS=	menu.c item.c userptr.c internals.c driver.c post.c attributes.c
 MAN=	menu_attributes.3 menu_item_name.3 menu_items.3 menu_userptr.3 \
         menu_cursor.3 menu_item_new.3 menu_mark.3 menu_win.3 menu_driver.3 \

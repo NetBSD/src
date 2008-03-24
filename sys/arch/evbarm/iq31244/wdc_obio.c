@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.3 2006/01/16 20:30:19 bouyer Exp $ */
+/*	$NetBSD: wdc_obio.c,v 1.3.68.1 2008/03/24 07:14:55 keiichi Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.3 2006/01/16 20:30:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.3.68.1 2008/03/24 07:14:55 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,46 +66,47 @@ struct wdc_obio_softc {
 	void	*sc_ih;
 };
 
-static int	wdc_obio_probe(struct device *, struct cfdata *, void *);
-static void	wdc_obio_attach(struct device *, struct device *, void *);
+static int	wdc_obio_probe(device_t, cfdata_t, void *);
+static void	wdc_obio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
+CFATTACH_DECL_NEW(wdc_obio, sizeof(struct wdc_obio_softc),
     wdc_obio_probe, wdc_obio_attach, NULL, NULL);
 
 static int
-wdc_obio_probe(struct device *parent, struct cfdata *match, void *aux)
+wdc_obio_probe(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-wdc_obio_attach(struct device *parent, struct device *self, void *aux)
+wdc_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdc_obio_softc *sc = (void *)self;
+	struct wdc_obio_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct obio_attach_args *oba = aux;
 	int i;
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
 	wdr->cmd_iot = oba->oba_st;
 	wdr->ctl_iot = oba->oba_st;
 	if (bus_space_map(wdr->cmd_iot, oba->oba_addr, IQ31244_CFLASH_SIZE,
 	    0, &wdr->cmd_baseioh)) {
-		printf(": couldn't map registers\n");
+		aprint_error(": couldn't map registers\n");
 		return;
 	}
 
 	for (i = 0; i < 8; i++) {
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 		    IQ31244_CFLASH_CMD_BASE + i, 1, &wdr->cmd_iohs[i]) != 0) {
-			printf(": couldn't subregion registers\n");
+			aprint_error(": couldn't subregion registers\n");
 			return;
 		}
 	}
 
 	if (bus_space_subregion(wdr->ctl_iot, wdr->cmd_baseioh,
 	    IQ31244_CFLASH_CTL_BASE, 1, &wdr->ctl_ioh) != 0) {
-		printf(": couldn't subregion registers\n");
+		aprint_error(": couldn't subregion registers\n");
 		return;
 	}
 
@@ -121,7 +122,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	sc->ata_channel.ch_ndrive = 2;
 	wdc_init_shadow_regs(&sc->ata_channel);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* 
 	 * The interrupt line is controlled by a jumper.  We can't detect 
@@ -134,8 +135,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 			wdcintr, &sc->ata_channel);
 	else {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_NOIRQ;
-		printf("%s: Using polled I/O\n",
-			sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		aprint_normal_dev(self, "Using polled I/O\n");
 	}
 
 	wdcattach(&sc->ata_channel);

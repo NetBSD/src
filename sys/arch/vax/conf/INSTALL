@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47 2006/12/29 21:49:03 yamt Exp $
+#	$NetBSD: INSTALL,v 1.47.40.1 2008/03/24 07:15:05 keiichi Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -113,10 +113,12 @@ mainbus0	at root
 # Devices directly attached to mainbus.
 sbi*		at mainbus0	# SBI's, VAX-11/78[05] main bus
 bi*		at mainbus0	# VAXBI bus
-abus0		at mainbus0	# 8600 internal bus.
 cmi0		at mainbus0	# 11/750 internal bus.
 vsbus0		at mainbus0	# Internal "virtual" VAXstation bus
-ibus0		at mainbus0	# Internal MicroVAX bus
+sbi*		at mainbus0	# SBI adapter
+uba0		at mainbus0	# Q-Bus adapter
+ze0		at mainbus0	# SGEC on-board ethernet
+le0		at mainbus0	# LANCE
 
 # Devices connected at VAXBI
 cpu0		at bi? node?	# KA820/KA825 CPU
@@ -133,7 +135,6 @@ uba*		at cmi? tr?	# Unibus adapters
 mba*		at cmi? tr?	# Massbus adapters
 
 # Devices connected at abus
-sbi*		at abus0
 
 # Devices connected at sbi
 mem*		at sbi? tr?	# Memory subsystems
@@ -144,7 +145,6 @@ mba*		at sbi? tr?	# Massbus adapters
 hp*		at mba? drive?	# RM/RP disk drives
 
 # Devices on internal MicroVAX bus
-uba0		at ibus?	# Q-Bus adapter
 #asc0		at ibus?	# VAX 4000/105A SCSI ctlr
 
 # Disk controllers at Unibus
@@ -188,9 +188,8 @@ cd*		at scsibus? target? lun?
 de*		at uba? csr 0174510	# DELUA/DEUNA
 qe*		at uba? csr 0174440	# DEQNA/DELQA
 qe*		at uba? csr 0174460	# DEQNA/DELQA
-le0		at vsbus0 csr 0x200e0000# LANCE
-ze0		at vsbus0 csr 0x20008000# SGEC ethernet
-ze0		at ibus0		# SGEC on-board ethernet
+le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
+
 
 # Terminal lines
 dhu*		at uba? csr 0160440	# DHU-11

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.70 2007/10/19 12:01:11 ad Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.70.12.1 2008/03/24 07:16:08 keiichi Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.70 2007/10/19 12:01:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.70.12.1 2008/03/24 07:16:08 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,17 +47,17 @@ __KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.70 2007/10/19 12:01:11 ad Exp $");
 #include <dev/sbus/sbusvar.h>
 #include <sys/reboot.h>
 
-static void isp_sbus_reset0(struct ispsoftc *);
-static void isp_sbus_reset1(struct ispsoftc *);
+static void isp_sbus_reset0(ispsoftc_t *);
+static void isp_sbus_reset1(ispsoftc_t *);
 static int isp_sbus_intr(void *);
 static int
-isp_sbus_rd_isr(struct ispsoftc *, uint32_t *, uint16_t *, uint16_t *);
-static uint32_t isp_sbus_rd_reg(struct ispsoftc *, int);
-static void isp_sbus_wr_reg (struct ispsoftc *, int, uint32_t);
-static int isp_sbus_mbxdma(struct ispsoftc *);
-static int isp_sbus_dmasetup(struct ispsoftc *, XS_T *, ispreq_t *, uint32_t *,
+isp_sbus_rd_isr(ispsoftc_t *, uint32_t *, uint16_t *, uint16_t *);
+static uint32_t isp_sbus_rd_reg(ispsoftc_t *, int);
+static void isp_sbus_wr_reg (ispsoftc_t *, int, uint32_t);
+static int isp_sbus_mbxdma(ispsoftc_t *);
+static int isp_sbus_dmasetup(ispsoftc_t *, XS_T *, ispreq_t *, uint32_t *,
     uint32_t);
-static void isp_sbus_dmateardown(struct ispsoftc *, XS_T *, uint32_t);
+static void isp_sbus_dmateardown(ispsoftc_t *, XS_T *, uint32_t);
 
 #ifndef	ISP_DISABLE_FW
 #include <dev/microcode/isp/asm_sbus.h>
@@ -81,9 +81,10 @@ static const struct ispmdvec mdvec = {
 };
 
 struct isp_sbussoftc {
-	struct ispsoftc	sbus_isp;
+	ispsoftc_t	sbus_isp;
 	struct sbusdev	sbus_sd;
 	sdparam		sbus_dev;
+	struct scsipi_channel sbus_chan;
 	bus_space_tag_t	sbus_bustag;
 	bus_space_handle_t sbus_reg;
 	int		sbus_node;
@@ -103,9 +104,6 @@ static int
 isp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	int rv;
-#ifdef DEBUG
-	static int oneshot = 1;
-#endif
 	struct sbus_attach_args *sa = aux;
 
 	rv = (strcmp(cf->cf_name, sa->sa_name) == 0 ||
@@ -113,15 +111,7 @@ isp_match(struct device *parent, struct cfdata *cf, void *aux)
 		strcmp("ptisp", sa->sa_name) == 0 ||
 		strcmp("SUNW,isp", sa->sa_name) == 0 ||
 		strcmp("QLGC,isp", sa->sa_name) == 0);
-#ifdef DEBUG
-	if (rv && oneshot) {
-		oneshot = 0;
-		printf("Qlogic ISP Driver, NetBSD (sbus) Platform Version "
-		    "%d.%d Core Version %d.%d\n",
-		    ISP_PLATFORM_VERSION_MAJOR, ISP_PLATFORM_VERSION_MINOR,
-		    ISP_CORE_VERSION_MAJOR, ISP_CORE_VERSION_MINOR);
-	}
-#endif
+
 	return (rv);
 }
 
@@ -132,9 +122,11 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	int freq, ispburst, sbusburst;
 	struct sbus_attach_args *sa = aux;
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) self;
-	struct ispsoftc *isp = &sbc->sbus_isp;
+	ispsoftc_t *isp = &sbc->sbus_isp;
 
 	printf(" for %s\n", sa->sa_name);
+
+	isp->isp_nchan = isp->isp_osinfo.adapter.adapt_nchannels = 1;
 
 	sbc->sbus_bustag = sa->sa_bustag;
 	if (sa->sa_nintr != 0)
@@ -197,6 +189,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	isp->isp_param = &sbc->sbus_dev;
 	isp->isp_dmatag = sa->sa_dmatag;
 	MEMZERO(isp->isp_param, sizeof (sdparam));
+	isp->isp_osinfo.chan = &sbc->sbus_chan;
 
 	sbc->sbus_poff[BIU_BLOCK >> _BLK_REG_SHFT] = BIU_REGS_OFF;
 	sbc->sbus_poff[MBOX_BLOCK >> _BLK_REG_SHFT] = SBUS_MBOX_REGS_OFF;
@@ -207,7 +200,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Establish interrupt channel */
 	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO,
 	    isp_sbus_intr, sbc);
-	sbus_establish(&sbc->sbus_sd, &sbc->sbus_isp.isp_osinfo._dev);
+	sbus_establish(&sbc->sbus_sd, &sbc->sbus_isp.isp_osinfo.dev);
 
 	/*
 	 * Set up logging levels.
@@ -227,7 +220,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	isp->isp_confopts = device_cfdata(self)->cf_flags;
-	isp->isp_role = ISP_DEFAULT_ROLES;
+	SDPARAM(isp, 0)->role = ISP_DEFAULT_ROLES;
 
 	/*
 	 * There's no tool on sparc to set NVRAM for ISPs, so ignore it.
@@ -239,7 +232,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (strcmp("PTI,ptisp", sa->sa_name) == 0 ||
 	    strcmp("ptisp", sa->sa_name) == 0) {
-		SDPARAM(isp)->isp_ptisp = 1;
+		SDPARAM(isp, 0)->isp_ptisp = 1;
 	}
 	ISP_LOCK(isp);
 	isp_reset(isp);
@@ -260,22 +253,17 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ISP_UNLOCK(isp);
 	isp_attach(isp);
-	if (isp->isp_state != ISP_RUNSTATE) {
-		ISP_LOCK(isp);
-		isp_uninit(isp);
-		ISP_UNLOCK(isp);
-	}
 }
 
 
 static void
-isp_sbus_reset0(struct ispsoftc *isp)
+isp_sbus_reset0(ispsoftc_t *isp)
 {
 	ISP_DISABLE_INTS(isp);
 }
 
 static void
-isp_sbus_reset1(struct ispsoftc *isp)
+isp_sbus_reset1(ispsoftc_t *isp)
 {
 	ISP_ENABLE_INTS(isp);
 }
@@ -285,7 +273,7 @@ isp_sbus_intr(void *arg)
 {
 	uint32_t isr;
 	uint16_t sema, mbox;
-	struct ispsoftc *isp = arg;
+	ispsoftc_t *isp = arg;
 
 	if (ISP_READ_ISR(isp, &isr, &sema, &mbox) == 0) {
 		isp->isp_intbogus++;
@@ -307,7 +295,7 @@ isp_sbus_intr(void *arg)
 	bus_space_read_2(sbc->sbus_bustag, sbc->sbus_reg, off)
 
 static int
-isp_sbus_rd_isr(struct ispsoftc *isp, uint32_t *isrp,
+isp_sbus_rd_isr(ispsoftc_t *isp, uint32_t *isrp,
     uint16_t *semap, uint16_t *mbp)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
@@ -330,7 +318,7 @@ isp_sbus_rd_isr(struct ispsoftc *isp, uint32_t *isrp,
 }
 
 static uint32_t
-isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
+isp_sbus_rd_reg(ispsoftc_t *isp, int regoff)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
@@ -339,7 +327,7 @@ isp_sbus_rd_reg(struct ispsoftc *isp, int regoff)
 }
 
 static void
-isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, uint32_t val)
+isp_sbus_wr_reg(ispsoftc_t *isp, int regoff, uint32_t val)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	int offset = sbc->sbus_poff[(regoff & _BLK_REG_MASK) >> _BLK_REG_SHFT];
@@ -348,7 +336,7 @@ isp_sbus_wr_reg(struct ispsoftc *isp, int regoff, uint32_t val)
 }
 
 static int
-isp_sbus_mbxdma(struct ispsoftc *isp)
+isp_sbus_mbxdma(ispsoftc_t *isp)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dma_segment_t reqseg, rspseg;
@@ -492,7 +480,7 @@ dmafail:
  */
 
 static int
-isp_sbus_dmasetup(struct ispsoftc *isp, XS_T *xs, ispreq_t *rq,
+isp_sbus_dmasetup(ispsoftc_t *isp, XS_T *xs, ispreq_t *rq,
     uint32_t *nxtip, uint32_t optr)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
@@ -570,7 +558,7 @@ mbxsync:
 }
 
 static void
-isp_sbus_dmateardown(struct ispsoftc *isp, XS_T *xs, uint32_t handle)
+isp_sbus_dmateardown(ispsoftc_t *isp, XS_T *xs, uint32_t handle)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.161 2008/02/10 14:37:41 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.161.2.1 2008/03/24 07:14:59 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -383,15 +383,13 @@ void	dumpconf(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
 
-extern int tmx86_has_longrun;
-extern u_int crusoe_longrun;
-extern u_int crusoe_frequency;
-extern u_int crusoe_voltage; 
-extern u_int crusoe_percentage;
-extern u_int tmx86_set_longrun_mode(u_int);
-void tmx86_get_longrun_status_all(void);
-u_int tmx86_get_longrun_mode(void);
-void identifycpu(struct cpu_info *);
+/* longrun.c */
+u_int 	tmx86_get_longrun_mode(void);
+void 	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
+void 	tmx86_init_longrun(void);
+
+/* identcpu.c */
+void 	identifycpu(struct cpu_info *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -472,33 +470,16 @@ void x86_bus_space_mallocok(void);
 #define	CPU_OSFXSR		8	/* int: OS uses FXSAVE/FXRSTOR */
 #define	CPU_SSE			9	/* int: OS/CPU supports SSE */
 #define	CPU_SSE2		10	/* int: OS/CPU supports SSE2 */
-#define CPU_TMLR_MODE		11 	/* int: longrun mode
+#define	CPU_TMLR_MODE		11	/* int: longrun mode
 					 * 0: minimum frequency
 					 * 1: economy
 					 * 2: performance
 					 * 3: maximum frequency
 					 */
-#define CPU_TMLR_FREQUENCY	12 	/* int: current frequency */
-#define CPU_TMLR_VOLTAGE	13 	/* int: curret voltage */
-#define CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
+#define	CPU_TMLR_FREQUENCY	12	/* int: current frequency */
+#define	CPU_TMLR_VOLTAGE	13	/* int: curret voltage */
+#define	CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
 #define	CPU_MAXID		15	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "biosbasemem", CTLTYPE_INT }, \
-	{ "biosextmem", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "diskinfo", CTLTYPE_STRUCT }, \
-	{ "fpu_present", CTLTYPE_INT }, \
-	{ "osfxsr", CTLTYPE_INT }, \
-	{ "sse", CTLTYPE_INT }, \
-	{ "sse2", CTLTYPE_INT }, \
-	{ "tm_longrun_mode", CTLTYPE_INT }, \
-	{ "tm_longrun_frequency", CTLTYPE_INT }, \
-	{ "tm_longrun_voltage", CTLTYPE_INT }, \
-	{ "tm_longrun_percentage", CTLTYPE_INT }, \
-}
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

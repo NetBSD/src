@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.199 2008/02/13 09:51:37 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.199.2.1 2008/03/24 07:16:27 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.199 2008/02/13 09:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.199.2.1 2008/03/24 07:16:27 keiichi Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2512,8 +2512,17 @@ nfsrv_fhtovp(nfsrvfh_t *nsfh, int lockflag, struct vnode **vpp,
 	} else if (kerbflag) {
 		vput(*vpp);
 		return (NFSERR_AUTHERR | AUTH_TOOWEAK);
-	} else if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) == 0 || (exflags & MNT_EXPORTANON)) {
+	} else if (kauth_cred_geteuid(cred) == 0 || /* NFS maproot, see below */
+	    (exflags & MNT_EXPORTANON)) {
+		/*
+		 * This is used by the NFS maproot option. While we can change
+		 * the secmodel on our own host, we can't change it on the
+		 * clients. As means of least surprise, we're doing the
+		 * traditional thing here.
+		 * Should look into adding a "mapprivileged" or similar where
+		 * the users can be explicitly specified...
+		 * [elad, yamt 2008-03-05]
+		 */
 		kauth_cred_clone(credanon, cred);
 	}
 	if (exflags & MNT_EXRDONLY)

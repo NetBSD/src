@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.23 2007/11/16 08:00:14 xtraeme Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.23.10.1 2008/03/24 07:15:17 keiichi Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -158,8 +158,7 @@
 #define WB_MAX_SENSORS		19
 
 struct lm_softc {
-	struct	device sc_dev;
-
+	device_t sc_dev;
 	bus_space_tag_t	lm_iot;
 	bus_space_handle_t lm_ioh;
 

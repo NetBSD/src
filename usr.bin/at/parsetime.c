@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.15 2007/03/12 21:28:48 mlelstv Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.15.8.1 2008/03/24 07:16:34 keiichi Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -38,6 +38,7 @@
 /* System Headers */
 
 #include <sys/types.h>
+#include <err.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -59,7 +60,7 @@
 enum {	/* symbols */
 	MIDNIGHT, NOON, TEATIME,
 	PM, AM, TOMORROW, TODAY, NOW,
-	MINUTES, HOURS, DAYS, WEEKS,
+	MINUTES, HOURS, DAYS, WEEKS, MONTHS, YEARS,
 	NUMBER, PLUS, DOT, SLASH, ID, JUNK,
 	JAN, FEB, MAR, APR, MAY, JUN,
 	JUL, AUG, SEP, OCT, NOV, DEC,
@@ -97,6 +98,10 @@ struct {
 	{ "week", WEEKS, 0 },		/* week ... */
 	{ "w", WEEKS, 0 },
 	{ "weeks", WEEKS, 1 },		/* (pluralized) */
+	{ "month", MONTHS, 0 },		/* month ... */
+	{ "months", MONTHS, 1 },	/* (pluralized) */
+	{ "year", YEARS, 0 },		/* year ... */
+	{ "years", YEARS, 1 },		/* (pluralized) */
 	{ "jan", JAN, 0 },
 	{ "feb", FEB, 0 },
 	{ "mar", MAR, 0 },
@@ -109,6 +114,18 @@ struct {
 	{ "oct", OCT, 0 },
 	{ "nov", NOV, 0 },
 	{ "dec", DEC, 0 },
+	{ "january", JAN, 0 },
+	{ "february", FEB, 0 },
+	{ "march", MAR, 0 },
+	{ "april", APR, 0 },
+	{ "may", MAY, 0 },
+	{ "june", JUN, 0 },
+	{ "july", JUL, 0 },
+	{ "august", AUG, 0 },
+	{ "september", SEP, 0 },
+	{ "october", OCT, 0 },
+	{ "november", NOV, 0 },
+	{ "december", DEC, 0 },
 	{ "sunday", SUN, 0 },
 	{ "sun", SUN, 0 },
 	{ "monday", MON, 0 },
@@ -141,13 +158,12 @@ static int sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.15 2007/03/12 21:28:48 mlelstv Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.15.8.1 2008/03/24 07:16:34 keiichi Exp $");
 #endif
 #endif
 
 /* Local functions */
 static void	assign_date (struct tm *, long, long, long);
-static void	dateadd (int, struct tm *);
 static void	expect (int);
 static void	init_scanner (int, char **);
 static void	month (struct tm *);
@@ -286,49 +302,9 @@ expect(int desired)
 
 
 /*
- * dateadd() adds a number of minutes to a date.  It is extraordinarily
- * stupid regarding day-of-month overflow, and will most likely not
- * work properly
- */
-static void
-dateadd(int minutes, struct tm *tm)
-{
-	/* increment days */
-
-	while (minutes > 24*60) {
-		minutes -= 24*60;
-		tm->tm_mday++;
-	}
-
-	/* increment hours */
-	while (minutes > 60) {
-		minutes -= 60;
-		tm->tm_hour++;
-		if (tm->tm_hour > 23) {
-			tm->tm_mday++;
-			tm->tm_hour = 0;
-		}
-	}
-
-	/* increment minutes */
-	tm->tm_min += minutes;
-
-	if (tm->tm_min > 59) {
-		tm->tm_hour++;
-		tm->tm_min -= 60;
-
-		if (tm->tm_hour > 23) {
-			tm->tm_mday++;
-			tm->tm_hour = 0;
-		}
-	}
-} /* dateadd */
-
-
-/*
  * plus() parses a now + time
  *
- *  at [NOW] PLUS NUMBER [MINUTES|HOURS|DAYS|WEEKS]
+ *  at [NOW] PLUS NUMBER [MINUTES|HOURS|DAYS|WEEKS|MONTHS|YEARS]
  *
  */
 static void
@@ -343,20 +319,34 @@ plus(struct tm *tm)
 	expectplur = (delay != 1) ? 1 : 0;
 
 	switch (token()) {
+	case YEARS:
+		tm->tm_year += delay;
+		break;
+	case MONTHS:
+		tm->tm_mon += delay;
+		break;
 	case WEEKS:
 		delay *= 7;
 	case DAYS:
-		delay *= 24;
+		tm->tm_mday += delay;
+		break;
 	case HOURS:
-		delay *= 60;
+		tm->tm_hour += delay;
+		break;
 	case MINUTES:
-		if (expectplur != sc_tokplur)
-			(void)fprintf(stderr, "at: pluralization is wrong\n");
-		dateadd(delay, tm);
-		return;
+		tm->tm_min += delay;
+		break;
+	default:
+		plonk(sc_tokid);
+		break;
 	}
 
-	plonk(sc_tokid);
+	if (expectplur != sc_tokplur)
+		warnx("pluralization is wrong");
+
+	tm->tm_isdst = -1;
+	if (mktime(tm) == -1)
+		plonk(sc_tokid);
 } /* plus */
 
 
@@ -581,12 +571,12 @@ parsetime(int argc, char **argv)
 	struct tm nowtime, runtime;
 	int hr = 0; /* this MUST be initialized to zero for
 	               midnight/noon/teatime */
-	int fulltime = 0;
 
 	nowtimer = time(NULL);
 	nowtime = *localtime(&nowtimer);
 
 	runtime = nowtime;
+	runtime.tm_sec = 0;
 
 	if (argc <= optind)
 		usage();
@@ -595,20 +585,12 @@ parsetime(int argc, char **argv)
 
 	switch (token()) {
 	case NOW:
-		/* now is optional prefix for PLUS tree
-		   in this case the PLUS tree is optional. */
-		switch (token()) {
-		case PLUS:
-			plus(&runtime);
-			break;
-		case EOF:
-			break;
-		default:
-			plonk(sc_tokid);
-			break;
-		}
-		fulltime = 1;
-		break;
+		if (scc < 1)
+			return nowtimer;
+
+		/* now is optional prefix for PLUS tree */
+		expect(PLUS);
+		/*FALLTHROUGH*/
 	case PLUS:
 		plus(&runtime);
 		break;
@@ -645,23 +627,14 @@ parsetime(int argc, char **argv)
 	} /* ugly case statement */
 	expect(EOF);
 
-	if (!fulltime) {
-		runtime.tm_sec = 0;
-		runtime.tm_isdst = 0;
-	}
-
 	/*
-	 * adjust for daylight savings time
+	 * convert back to time_t
 	 */
 	runtime.tm_isdst = -1;
 	runtimer = mktime(&runtime);
-	if (runtime.tm_isdst > 0) {
-		runtimer -= 3600;
-		runtimer = mktime(&runtime);
-	}
 
 	if (runtimer < 0)
-		panic("Time not valid (possibly due to daylight saving time)");
+		panic("Invalid time");
 
 	if (nowtimer > runtimer)
 		panic("Trying to travel back in time");

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.37 2008/02/06 22:12:40 dsl Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.37.2.1 2008/03/24 07:14:59 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.37 2008/02/06 22:12:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.37.2.1 2008/03/24 07:14:59 keiichi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -90,7 +90,6 @@ svr4_syscall_plain(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	LWP_CACHE_CREDS(l, l->l_proc);
 
@@ -170,7 +169,6 @@ svr4_syscall_fancy(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	LWP_CACHE_CREDS(l, l->l_proc);
 

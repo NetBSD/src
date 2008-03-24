@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.72.2.1 2008/02/22 02:53:34 keiichi Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.72.2.2 2008/03/24 07:16:24 keiichi Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.72.2.1 2008/02/22 02:53:34 keiichi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.72.2.2 2008/03/24 07:16:24 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,7 +578,7 @@ defrouter_delreq(struct nd_defrouter *dr)
  * remove all default routes from default router list
  */
 void
-defrouter_reset()
+defrouter_reset(void)
 {
 	struct nd_defrouter *dr;
 
@@ -614,7 +614,7 @@ defrouter_reset()
  * complicated and the possibility of introducing bugs.
  */
 void
-defrouter_select()
+defrouter_select(void)
 {
 	int s = splsoftnet();
 	struct nd_defrouter *dr, *selected_dr = NULL, *installed_dr = NULL;
@@ -1357,7 +1357,7 @@ find_pfxlist_reachable_router(struct nd_prefix *pr)
  * is no router around us.
  */
 void
-pfxlist_onlink_check()
+pfxlist_onlink_check(void)
 {
 	struct nd_prefix *pr;
 	struct in6_ifaddr *ifa;

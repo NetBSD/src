@@ -1,4 +1,4 @@
-/* $NetBSD: asm_1040.h,v 1.5 2007/05/24 22:12:02 mjacob Exp $ */
+/* $NetBSD: asm_1040.h,v 1.5.24.1 2008/03/24 07:15:30 keiichi Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
  * All rights reserved.
@@ -3543,3 +3543,7 @@ static const uint16_t isp_1040_risc_code[] = {
 	0x300c, 0x817e, 0x872b, 0x8772, 0xa8a8, 0x0000, 0xdf21
 };
 #endif
+#ifdef	ISP_1040_RISC_CODE
+#undef	ISP_1040_RISC_CODE
+#endif
+#define	ISP_1040_RISC_CODE (const uint16_t *) isp_1040_risc_code

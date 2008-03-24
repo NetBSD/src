@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2007/12/19 17:15:54 macallan Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2008/03/24 07:16:39 keiichi Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -13,7 +13,8 @@ SRCS=	glint_driver.c pm2_dac.c pm2ramdac.c pm2_accel.c pm_dac.c \
 	pm2vramdac.c pm2_video.c pm3_dac.c pm3_accel.c pm3_video.c \
 	TIramdac.c glint_shadow.c sx_accel.c glint_dga.c
 
-.if ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "macppc"
+.if ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "macppc" || \
+    ${MACHINE} == "ofppc"
 CPPFLAGS+=	-DGLINT_AVOID_INT10
 .endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.8 2002/10/02 03:31:58 thorpej Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.8.108.1 2008/03/24 07:14:51 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.8 2002/10/02 03:31:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.8.108.1 2008/03/24 07:14:51 keiichi Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -51,27 +51,23 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.8 2002/10/02 03:31:58 thorpej Exp $")
 
 /* Prototypes for functions */
 
-static int lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
-    bus_size_t,	u_char, u_char));
-static int lptprobe __P((bus_space_tag_t, u_int));
-static int  lpt_pioc_probe  __P((struct device *, struct cfdata *, void *));
-static void lpt_pioc_attach __P((struct device *, struct device *, void *));
+static int lpt_port_test (bus_space_tag_t, bus_space_handle_t, bus_addr_t,
+    bus_size_t,	u_char, u_char);
+static int lptprobe (bus_space_tag_t, u_int);
+static int  lpt_pioc_probe  (device_t, cfdata_t , void *);
+static void lpt_pioc_attach (device_t, device_t, void *);
 
 /* device attach structure */
 
-CFATTACH_DECL(lpt_pioc, sizeof(struct lpt_softc),
+CFATTACH_DECL_NEW(lpt_pioc, sizeof(struct lpt_softc),
     lpt_pioc_probe, lpt_pioc_attach, NULL, NULL);
 
 /*
  * Internal routine to lptprobe to do port tests of one byte value.
  */
 static int
-lpt_port_test(iot, ioh, base, off, data, mask)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	bus_addr_t base;
-	bus_size_t off;
-	u_char data, mask;
+lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh,
+    bus_addr_t base, bus_size_t off, u_char data, u_char mask)
 {
 	int timeout;
 	u_char temp;
@@ -108,9 +104,7 @@ lpt_port_test(iot, ioh, base, off, data, mask)
  *	3) Set the data and control ports to a value of 0
  */
 static int
-lptprobe(iot, iobase)
-	bus_space_tag_t iot;
-	u_int iobase;
+lptprobe(bus_space_tag_t iot, u_int iobase)
 {
 	bus_space_handle_t ioh;
 	u_char mask, data;
@@ -165,10 +159,7 @@ out:
  */
 
 static int
-lpt_pioc_probe(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+lpt_pioc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pioc_attach_args *pa = aux;
 	int rv;
@@ -196,9 +187,7 @@ lpt_pioc_probe(parent, match, aux)
  */
 
 static void
-lpt_pioc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_pioc_attach(device_t parent, device_t self, void *aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct pioc_attach_args *pa = aux;
@@ -206,16 +195,19 @@ lpt_pioc_attach(parent, self, aux)
 	bus_space_handle_t ioh;
 	u_int iobase;
 
+	sc->sc_dev = self;
 	if (pa->pa_irq != MAINBUSCF_IRQ_DEFAULT)
-		printf("\n");
+		aprint_normal("\n");
 	else
-		printf(": polled\n");
+		aprint_normal(": polled\n");
 
 	iobase = pa->pa_iobase + pa->pa_offset;
 
 	iot = sc->sc_iot = pa->pa_iot;
-	if (bus_space_map(iot, iobase, LPT_NPORTS, 0, &ioh))
-		panic("lptattach: couldn't map I/O ports");
+	if (bus_space_map(iot, iobase, LPT_NPORTS, 0, &ioh)) {
+		aprint_error_dev(self, "couldn't map I/O ports");
+		return;
+	}
 	sc->sc_ioh = ioh;
 
 	lpt_attach_subr(sc);

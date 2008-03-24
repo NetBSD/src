@@ -1,4 +1,4 @@
-/*	$NetBSD: lcspx.c,v 1.9 2007/10/17 19:58:00 garbled Exp $ */
+/*	$NetBSD: lcspx.c,v 1.9.12.1 2008/03/24 07:15:09 keiichi Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.9 2007/10/17 19:58:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.9.12.1 2008/03/24 07:15:09 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,14 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: lcspx.c,v 1.9 2007/10/17 19:58:00 garbled Exp $");
 #define	SPXADDR		0x38000000	/* Frame buffer */
 #define	SPXSIZE		0x00800000	/* 8MB in size */
 
-static	int lcspx_match(struct device *, struct cfdata *, void *);
-static	void lcspx_attach(struct device *, struct device *, void *);
+static	int lcspx_match(device_t, cfdata_t, void *);
+static	void lcspx_attach(device_t, device_t, void *);
 
-struct	lcspx_softc {
-	struct	device ss_dev;
-};
-
-CFATTACH_DECL(lcspx, sizeof(struct lcspx_softc),
+CFATTACH_DECL_NEW(lcspx, 0,
     lcspx_match, lcspx_attach, NULL, NULL);
 
 static void	lcspx_cursor(void *, int, int, int);
@@ -116,7 +112,7 @@ const struct wsscreen_descr *_lcspx_scrlist[] = {
 };
 
 const struct wsscreen_list lcspx_screenlist = {
-	sizeof(_lcspx_scrlist) / sizeof(struct wsscreen_descr *),
+	__arraycount(_lcspx_scrlist),
 	_lcspx_scrlist,
 };
 
@@ -162,10 +158,10 @@ static	struct lcspx_screen *curscr;
 static	callout_t lcspx_cursor_ch;
 
 int
-lcspx_match(struct device *parent, struct cfdata *match, void *aux)
+lcspx_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct vsbus_softc *sc = (void *)parent;
-	struct vsbus_attach_args *va = aux;
+	struct vsbus_softc * const sc = device_private(parent);
+	struct vsbus_attach_args * const va = aux;
 	char *ch = (char *)va->va_addr;
 
 	if (vax_boardtype != VAX_BTYP_49)
@@ -184,21 +180,21 @@ lcspx_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-lcspx_attach(struct device *parent, struct device *self, void *aux)
+lcspx_attach(device_t parent, device_t self, void *aux)
 {
-	struct vsbus_attach_args *va = aux;
+	struct vsbus_attach_args * const va = aux; 
 	struct wsemuldisplaydev_attach_args aa;
 	int fcookie;
 	struct wsdisplay_font *console_font;
 
-	printf("\n");
+	aprint_normal("\n");
 	aa.console = lcspxaddr != NULL;
 	if (lcspxaddr == 0) {
 		callout_init(&lcspx_cursor_ch, 0);
 		lcspxaddr = (void *)vax_map_physmem(va->va_paddr, (SPXSIZE/VAX_NBPG));
 	}
 	if (lcspxaddr == 0) {
-		printf("%s: Couldn't alloc graphics memory.\n", self->dv_xname);
+		aprint_error_dev(self, "Couldn't alloc graphics memory.\n");
 		return;
 	}
 	curscr = &lcspx_conscreen;
@@ -206,13 +202,12 @@ lcspx_attach(struct device *parent, struct device *self, void *aux)
 	aa.scrdata = &lcspx_screenlist;
 	aa.accessops = &lcspx_accessops;
 	if ((fcookie = wsfont_find(NULL, 8, 15, 0,
-		WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R)) < 0)
-	{
-		printf("%s: could not find 8x15 font\n", self->dv_xname);
+		WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R)) < 0) {
+		aprint_error_dev(self, "could not find 8x15 font\n");
 		return;
 	}
 	if (wsfont_lock(fcookie, &console_font) != 0) {
-		printf("%s: could not lock 8x15 font\n", self->dv_xname);
+		aprint_error_dev(self, "could not lock 8x15 font\n");
 		return;
 	}
 	qf = console_font->data;

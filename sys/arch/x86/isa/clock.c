@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.25 2008/01/19 15:06:52 kardel Exp $	*/
+/*	$NetBSD: clock.c,v 1.25.2.1 2008/03/24 07:15:09 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2008/01/19 15:06:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25.2.1 2008/03/24 07:15:09 keiichi Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -164,11 +164,11 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.25 2008/01/19 15:06:52 kardel Exp $");
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
 
-int sysbeepmatch(struct device *, struct cfdata *, void *);
-void sysbeepattach(struct device *, struct device *, void *);
+int sysbeepmatch(device_t, cfdata_t, void *);
+void sysbeepattach(device_t, device_t, void *);
 int sysbeepdetach(device_t, int);
 
-CFATTACH_DECL(sysbeep, sizeof(struct device),
+CFATTACH_DECL_NEW(sysbeep, 0,
     sysbeepmatch, sysbeepattach, sysbeepdetach, NULL);
 
 static int ppi_attached;
@@ -535,15 +535,13 @@ i8254_delay(unsigned int n)
 
 #if (NPCPPI > 0)
 int
-sysbeepmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+sysbeepmatch(device_t parent, cfdata_t match, void *aux)
 {
 	return (!ppi_attached);
 }
 
 void
-sysbeepattach(struct device *parent, struct device *self,
-    void *aux)
+sysbeepattach(device_t parent, device_t self, void *aux)
 {
 	aprint_naive("\n");
 	aprint_normal("\n");

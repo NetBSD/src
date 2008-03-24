@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.17 2008/01/15 00:27:58 drochner Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.17.2.1 2008/03/24 07:15:46 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -59,7 +59,7 @@
 #define	AGP_INTEL_I8XX_ERRSTS	0xc8
 
 /* Common register */
-#define	AGP_INTEL_ERRSTS	0x91	/* Not i8XX */
+#define	AGP_INTEL_ERRSTS	0x90 /* bytes at 0x91 and 0x92, not i8XX */
 #define AGP_INTEL_AGPCMD	0xa8
 # define AGPCMD_SBA		(1U << 9)
 # define AGPCMD_AGPEN		(1U << 8)
@@ -90,7 +90,7 @@
 #define AGP3_VIA_GARTCTRL	0x90
 #define AGP3_VIA_APSIZE		0x94
 #define AGP3_VIA_ATTBASE	0x98
-#define AGP_VIA_AGPSEL		0xfd
+#define AGP_VIA_AGPSEL		0xfc
 
 /*
  * Config offsets for SiS AGP chipsets.

@@ -19,6 +19,7 @@
    Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
+#include "regcache.h"
 
 #include "alpha-tdep.h"
 #include "alphabsd-tdep.h"
@@ -27,29 +28,29 @@
    ptrace register structure used by BSD on Alpha.  */
 
 void
-alphabsd_supply_reg (char *regs, int regno)
+alphabsd_supply_reg (struct regcache *regcache, const char *regs, int regno)
 {
   /* PC is at slot 32; UNIQUE not present.  */
-  alpha_supply_int_regs (regno, regs, regs + 31*8, NULL);
+  alpha_supply_int_regs (regcache, regno, regs, regs + 31 * 8, NULL);
 }
 
 void
-alphabsd_fill_reg (char *regs, int regno)
+alphabsd_fill_reg (const struct regcache *regcache, char *regs, int regno)
 {
   /* PC is at slot 32; UNIQUE not present.  */
-  alpha_fill_int_regs (regno, regs, regs + 31*8, NULL);
+  alpha_fill_int_regs (regcache, regno, regs, regs + 31 * 8, NULL);
 }
 
 void
-alphabsd_supply_fpreg (char *fpregs, int regno)
+alphabsd_supply_fpreg (struct regcache *regcache, const char *fpregs, int regno)
 {
   /* FPCR is at slot 33; slot 32 unused.  */
-  alpha_supply_fp_regs (regno, fpregs, fpregs + 32*8);
+  alpha_supply_fp_regs (regcache, regno, fpregs, fpregs + 32 * 8);
 }
 
 void
-alphabsd_fill_fpreg (char *fpregs, int regno)
+alphabsd_fill_fpreg (const struct regcache *regcache, char *fpregs, int regno)
 {
   /* FPCR is at slot 33; slot 32 unused.  */
-  alpha_fill_fp_regs (regno, fpregs, fpregs + 32*8);
+  alpha_fill_fp_regs (regcache, regno, fpregs, fpregs + 32 * 8);
 }

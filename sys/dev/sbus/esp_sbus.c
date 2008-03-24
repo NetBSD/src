@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.41 2008/02/13 04:17:26 simonb Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.41.2.1 2008/03/24 07:16:08 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.41 2008/02/13 04:17:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.41.2.1 2008/03/24 07:16:08 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,8 +308,11 @@ espattach_sbus(parent, self, aux)
 	 * find the matching esp driver.
 	 */
 	dma_dev = device_find_by_driver_unit("dma", device_unit(self));
-	if (dma_dev == NULL)
-		panic("%s: no corresponding DMA device", device_xname(self));
+	if (dma_dev == NULL) {
+		printf("\n%s: no corresponding DMA device\n",
+		    device_xname(self));
+		return;
+	}
 	esc->sc_dma = device_private(dma_dev);
 	esc->sc_dma->sc_client = sc;
 

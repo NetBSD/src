@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2007/02/23 21:26:44 agc Exp $
+# $NetBSD: Makefile,v 1.1.8.1 2008/03/24 07:14:49 keiichi Exp $
 
 PROG=dbfs
 LDADD+= -lrefuse
 CPPFLAGS+= -g
-MKMAN=no
+NOMAN=# defined
 WARNS=4
 
 .include <bsd.prog.mk>

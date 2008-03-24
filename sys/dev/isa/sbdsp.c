@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.127 2007/10/19 12:00:22 ad Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.127.12.1 2008/03/24 07:15:29 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.127 2007/10/19 12:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.127.12.1 2008/03/24 07:15:29 keiichi Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -267,7 +267,7 @@ sb_printsc(struct sbdsp_softc *sc)
  * Probe for the soundblaster hardware.
  */
 int
-sbdsp_probe(struct sbdsp_softc *sc)
+sbdsp_probe(struct sbdsp_softc *sc, cfdata_t match)
 {
 
 	if (sbdsp_reset(sc) < 0) {
@@ -275,7 +275,7 @@ sbdsp_probe(struct sbdsp_softc *sc)
 		return 0;
 	}
 	/* if flags set, go and probe the jazz16 stuff */
-	if (device_cfdata(&sc->sc_dev)->cf_flags & 1)
+	if (match->cf_flags & 1)
 		sbdsp_jazz16_probe(sc);
 	else
 		sbversion(sc);
@@ -422,8 +422,8 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
 		    sc->sc_drq8_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 		if (error) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create map for drq %d\n", sc->sc_drq8);
 			return;
 		}
 	}
@@ -434,14 +434,14 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
 		    sc->sc_drq16_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 		if (error) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create map for drq %d\n", sc->sc_drq16);
 			isa_dmamap_destroy(sc->sc_ic, sc->sc_drq8);
 			return;
 		}
 	}
 
-	powerhook_establish(sc->sc_dev.dv_xname, sbdsp_powerhook, sc);
+	powerhook_establish(device_xname(sc->sc_dev), sbdsp_powerhook, sc);
 }
 
 static void

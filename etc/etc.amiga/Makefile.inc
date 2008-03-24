@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2007/07/24 10:49:24 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.25.10.1 2008/03/24 07:14:41 keiichi Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
@@ -14,5 +14,5 @@ INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/misc
 
 snap_md_post:
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*'
-#	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/miniroot '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*'
+#	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot '*.gz'

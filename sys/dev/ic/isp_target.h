@@ -1,29 +1,30 @@
-/* $NetBSD: isp_target.h,v 1.24 2007/05/24 21:30:43 mjacob Exp $ */
-/*
- * Copyright (c) 1997-2006 by Matthew Jacob
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+-/* $NetBSD: isp_target.h,v 1.24.24.1 2008/03/24 07:15:17 keiichi Exp $ */
+/*-
+ *  Copyright (c) 1997-2008 by Matthew Jacob
+ *  All rights reserved.
  * 
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  * 
- * THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 
+ *  THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ *  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ *  SUCH DAMAGE.
+ * 
  */
 /*
  * Qlogic Target Mode Structure and Flag Definitions
@@ -169,19 +170,40 @@ typedef struct {
 	uint16_t	in_srr_reloff_hi;
 	uint16_t	in_srr_iu;
 	uint16_t	in_srr_oxid;
-	uint8_t		in_reserved3[18];
-	uint8_t		in_reserved4;
+	/*
+	 * If bit 2 is set in in_flags, the following
+	 * two tags are valid. If the received ELS is
+	 * a LOGO, then these tags contain the N Port ID
+	 * from the LOGO payload. If the received ELS
+	 * request is TPRLO, these tags contain the
+	 * Third Party Originator N Port ID.
+	 */
+	uint16_t	in_nport_id_hi;
+	uint8_t		in_nport_id_lo;
+	uint8_t		in_reserved3;
+	/*
+	 * If bit 2 is set in in_flags, the following
+	 * tag is valid. If the received ELS is a LOGO,
+	 * then this tag contains the n-port handle
+	 * from the LOGO payload. If the received ELS
+	 * request is TPRLO, this tag contain the
+	 * n-port handle for the Third Party Originator.
+	 */
+	uint16_t	in_np_handle;
+	uint8_t		in_reserved4[12];
+	uint8_t		in_reserved5;
 	uint8_t		in_vpindex;
-	uint32_t	in_reserved5;
+	uint32_t	in_reserved6;
 	uint16_t	in_portid_lo;
 	uint8_t		in_portid_hi;
-	uint8_t		in_reserved6;
-	uint16_t	in_reserved7;
+	uint8_t		in_reserved7;
+	uint16_t	in_reserved8;
 	uint16_t	in_oxid;
 } in_fcentry_24xx_t;
 
 #define	IN24XX_FLAG_PUREX_IOCB		0x1
 #define	IN24XX_FLAG_GLOBAL_LOGOUT	0x2
+#define	IN24XX_FLAG_NPHDL_VALID		0x4
 
 #define	IN24XX_LIP_RESET	0x0E
 #define	IN24XX_LINK_RESET	0x0F
@@ -193,6 +215,21 @@ typedef struct {
 					 * login-affectin ELS received- check
 					 * subcode for specific opcode
 					 */
+
+/*
+ * For f/w > 4.0.25, these offsets in the Immediate Notify contain
+ * the WWNN/WWPN if the ELS is PLOGI, PDISC or ADISC. The WWN is in
+ * Big Endian format.
+ */
+#define	IN24XX_PLOGI_WWNN_OFF	0x20
+#define	IN24XX_PLOGI_WWPN_OFF	0x28
+
+/*
+ * For f/w > 4.0.25, this offset in the Immediate Notify contain
+ * the WWPN if the ELS is LOGO. The WWN is in Big Endian format.
+ */
+#define	IN24XX_LOGO_WWPN_OFF	0x28
+
 /*
  * Notify Acknowledge Entry structure
  */
@@ -431,7 +468,7 @@ typedef struct {
 
 #define	AT2_HAS_TAG(val)	1
 #define	AT2_GET_TAG(val)	((val) & 0xffffffff)
-#define	AT2_GET_INST(val)	((val) >> 32)
+#define	AT2_GET_INST(val)	(((val) >> 32) & 0xffff)
 #define	AT2_GET_HANDLE		AT2_GET_TAG
 #define	AT2_GET_BUS(val)	(((val) >> 48) & 0xff)
 
@@ -446,7 +483,7 @@ typedef struct {
 	tid |= (((uint64_t)(bus & 0xff)) << 48)
 
 #define	FC_TAG_INSERT_INST(tid, inst)					\
-	tid &= ~0xffff00000000ull;					\
+	tid &= ~0x0000ffff00000000ull;					\
 	tid |= (((uint64_t)inst) << 32)
 
 /*
@@ -474,6 +511,7 @@ typedef struct {
 	fc_hdr_t	at_hdr;
 	fcp_cmnd_iu_t	at_cmnd;
 } at7_entry_t;
+#define	AT7_NORESRC_RXID	0xffffffff
 
 
 /*
@@ -722,7 +760,7 @@ typedef struct {
 	uint8_t		ct_iid_hi;	/* hi 8 bits of portid */
 	uint8_t		ct_reserved;
 	uint32_t	ct_rxid;
-	uint16_t	ct_senselen;	/* mode 0 only */
+	uint16_t	ct_senselen;	/* mode 1 only */
 	uint16_t	ct_flags;
 	int32_t		ct_resid;	/* residual length */
 	uint16_t	ct_oxid;
@@ -761,10 +799,10 @@ typedef struct {
 #define	CT7_EXPLCT_CONF	0x0020
 #define	CT7_FLAG_MODE0	0x0000
 #define	CT7_FLAG_MODE1	0x0040
-#define	CT7_FLAG_MODE7	0x0080
+#define	CT7_FLAG_MODE2	0x0080
 #define		CT7_FLAG_MMASK	0x00C0
-#define	CT7_FASTPOST	0x0100
-#define	CT7_ATTR_MASK	0x1e00	/* task attributes from atio7 */
+#define	CT7_NOACK	0x0100
+#define	CT7_TASK_ATTR_SHIFT	9
 #define	CT7_CONFIRM	0x2000
 #define	CT7_TERMINATE	0x4000
 #define CT7_SENDSTATUS	0x8000
@@ -883,6 +921,8 @@ typedef struct {
 #define	ISP24XX_ABTS_RSP_LOGOUT		0x29
 #define	ISP24XX_ABTS_RSP_SUBCODE	0x31
 
+#define	ISP24XX_NO_TASK			0xffffffff
+
 /*
  * Debug macros
  */
@@ -909,11 +949,11 @@ void isp_notify_ack(ispsoftc_t *, void *);
 
 /*
  * Enable/Disable/Modify a logical unit.
- * (softc, cmd, bus, tgt, lun, cmd_cnt, inotify_cnt, opaque)
+ * (softc, cmd, bus, tgt, lun, cmd_cnt, inotify_cnt)
  */
 #define	DFLT_CMND_CNT	0xfe	/* unmonitored */
 #define	DFLT_INOT_CNT	0xfe	/* unmonitored */
-int isp_lun_cmd(ispsoftc_t *, int, int, int, int, int, int, uint32_t);
+int isp_lun_cmd(ispsoftc_t *, int, int, int, int, int);
 
 /*
  * General request queue 'put' routine for target mode entries.
@@ -932,7 +972,7 @@ int isp_target_put_atio(ispsoftc_t *, void *);
  * General routine to send a final CTIO for a command- used mostly for
  * local responses.
  */
-int isp_endcmd(ispsoftc_t *, void *, uint32_t, uint32_t);
+int isp_endcmd(ispsoftc_t *, ...);
 #define	ECMD_SVALID	0x100
 
 /*

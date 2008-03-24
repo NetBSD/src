@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_condvar.c,v 1.14 2007/11/06 00:42:41 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.14.10.1 2008/03/24 07:16:13 keiichi Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.14 2007/11/06 00:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.14.10.1 2008/03/24 07:16:13 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.14 2007/11/06 00:42:41 ad Exp $")
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
 
-static void	cv_unsleep(lwp_t *);
+static u_int	cv_unsleep(lwp_t *, bool);
 
 static syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
@@ -91,9 +91,9 @@ cv_destroy(kcondvar_t *cv)
 {
 
 #ifdef DIAGNOSTIC
-	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
-	KASSERT(cv->cv_waiters == 0);
+	KASSERT(cv_is_valid(cv));
 	cv->cv_wmesg = deadcv;
+	cv->cv_waiters = -3;
 #endif
 }
 
@@ -108,7 +108,7 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 {
 	sleepq_t *sq;
 
-	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
+	KASSERT(cv_is_valid(cv));
 	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
 	l->l_cv_signalled = 0;
@@ -140,7 +140,7 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
 	if (__predict_false(error != 0) && l->l_cv_signalled != 0)
 		cv_signal(cv);
 
-	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
+	KASSERT(cv_is_valid(cv));
 
 	return error;
 }
@@ -153,19 +153,20 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
  *	interrupted: for example, when a signal is received.  Must be
  *	called with the LWP locked, and must return it unlocked.
  */
-static void
-cv_unsleep(lwp_t *l)
+static u_int
+cv_unsleep(lwp_t *l, bool cleanup)
 {
 	kcondvar_t *cv;
 
+	cv = (kcondvar_t *)(uintptr_t)l->l_wchan;
+
 	KASSERT(l->l_wchan != NULL);
 	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
+	KASSERT(cv_is_valid(cv));
+	KASSERT(cv->cv_waiters > 0);
 
-	cv = (kcondvar_t *)(uintptr_t)l->l_wchan;
-	KASSERT(cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL);
 	cv->cv_waiters--;
-
-	sleepq_unsleep(l);
+	return sleepq_unsleep(l, cleanup);
 }
 
 /*
@@ -278,6 +279,8 @@ cv_signal(kcondvar_t *cv)
 	lwp_t *l;
 	sleepq_t *sq;
 
+	KASSERT(cv_is_valid(cv));
+
 	if (cv->cv_waiters == 0)
 		return;
 
@@ -294,6 +297,8 @@ cv_signal(kcondvar_t *cv)
 		l->l_cv_signalled = 1;
 	} else
 		sleepq_unlock(sq);
+
+	KASSERT(cv_is_valid(cv));
 }
 
 /*
@@ -308,6 +313,8 @@ cv_broadcast(kcondvar_t *cv)
 	sleepq_t *sq;
 	u_int cnt;
 
+	KASSERT(cv_is_valid(cv));
+
 	if (cv->cv_waiters == 0)
 		return;
 
@@ -317,6 +324,8 @@ cv_broadcast(kcondvar_t *cv)
 		sleepq_wake(sq, cv, cnt);
 	} else
 		sleepq_unlock(sq);
+
+	KASSERT(cv_is_valid(cv));
 }
 
 /*
@@ -331,9 +340,13 @@ cv_wakeup(kcondvar_t *cv)
 {
 	sleepq_t *sq;
 
+	KASSERT(cv_is_valid(cv));
+
 	sq = sleeptab_lookup(&sleeptab, cv);
 	cv->cv_waiters = 0;
 	sleepq_wake(sq, cv, (u_int)-1);
+
+	KASSERT(cv_is_valid(cv));
 }
 
 /*
@@ -348,4 +361,23 @@ cv_has_waiters(kcondvar_t *cv)
 
 	/* No need to interlock here */
 	return cv->cv_waiters != 0;
+}
+
+/*
+ * cv_is_valid:
+ *
+ *	For diagnostic assertions: return non-zero if a condition
+ *	variable appears to be valid.  No locks need be held.
+ */
+bool
+cv_is_valid(kcondvar_t *cv)
+{
+
+	if (cv->cv_wmesg == deadcv || cv->cv_wmesg == NULL)
+		return false;
+	if ((cv->cv_waiters & 0xff000000) != 0) {
+		/* Arbitrary: invalid number of waiters. */
+		return false;
+	}
+	return cv->cv_waiters >= 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.46.12.1 2008/02/22 02:53:33 keiichi Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.46.12.2 2008/03/24 07:16:24 keiichi Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -137,7 +137,6 @@ struct	ip6po_nhinfo {
 #define ip6po_nextroute	ip6po_nhinfo.ip6po_nhi_route
 
 struct	ip6_pktopts {
-	struct	mbuf *ip6po_m;	/* Pointer to mbuf storing the data */
 	int	ip6po_hlim;		/* Hoplimit for outgoing packets */
 	struct	in6_pktinfo *ip6po_pktinfo; /* Outgoing IF/address information */
 	struct	ip6po_nhinfo ip6po_nhinfo; /* Next-hop address information */

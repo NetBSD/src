@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.24 2008/01/11 14:27:34 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.24.2.1 2008/03/24 07:14:30 keiichi Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -515,8 +515,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 		del_ph1=getph1byindex((isakmp_index *)(delete + 1));
 		if(del_ph1 != NULL){
 
-			EVT_PUSH(del_ph1->local, del_ph1->remote,
-					 EVTT_PEERPH1_NOPROP, NULL);
+			evt_phase1(iph1, EVT_PHASE1_PEER_DELETED, NULL);
 			SCHED_KILL(del_ph1->scr);
 
 			/*
@@ -536,8 +535,6 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 				delete->spi_size, delete->proto_id);
 			return 0;
 		}
-		EVT_PUSH(iph1->local, iph1->remote, 
-		    EVTT_PEER_DELETE, NULL);
 		purge_ipsec_spi(iph1->remote, delete->proto_id,
 		    (u_int32_t *)(delete + 1), num_spi);
 		break;
@@ -1621,7 +1618,7 @@ isakmp_info_send_r_u(arg)
 			"DPD: remote (ISAKMP-SA spi=%s) seems to be dead.\n",
 			isakmp_pindex(&iph1->index, 0));
 
-		EVT_PUSH(iph1->local, iph1->remote, EVTT_DPD_TIMEOUT, NULL);
+		evt_phase1(iph1, EVT_PHASE1_DPD_TIMEOUT, NULL);
 		purge_remote(iph1);
 
 		/* Do not reschedule here: phase1 is deleted,

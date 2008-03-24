@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.15 2007/02/08 21:36:58 drochner Exp $	*/
+/*	$NetBSD: utilities.c,v 1.15.10.1 2008/03/24 07:14:48 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.15 2007/02/08 21:36:58 drochner Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.15.10.1 2008/03/24 07:14:48 keiichi Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: utilities.c,v 1.15 2007/02/08 21:36:58 drochner Exp $");
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
+#include "exitvalues.h"
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
@@ -165,7 +166,7 @@ bufinit(void)
 		if (bp == NULL || bufp == NULL) {
 			if (i >= MINBUFS)
 				break;
-			errexit("cannot allocate buffer pool\n");
+			errexit("cannot allocate buffer pool");
 		}
 		bp->b_un.b_buf = bufp;
 		bp->b_prev = &bufhead;
@@ -192,7 +193,7 @@ getdatablk(daddr_t blkno, long size)
 		if ((bp->b_flags & B_INUSE) == 0)
 			break;
 	if (bp == &bufhead)
-		errexit("deadlocked buffer pool\n");
+		errexit("deadlocked buffer pool");
 	getblk(bp, blkno, size);
 	diskreads++;
 	/* fall through */
@@ -254,7 +255,7 @@ rwerror(const char *mesg, daddr_t blk)
 		printf("\n");
 	pfatal("CANNOT %s: BLK %lld", mesg, (long long)blk);
 	if (reply("CONTINUE") == 0)
-		errexit("Program terminated\n");
+		errexit("Program terminated");
 }
 
 void
@@ -285,7 +286,7 @@ ckfini(int markclean)
 		free((char *)bp);
 	}
 	if (bufhead.b_size != cnt)
-		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
+		errexit("Panic: lost %d buffers", bufhead.b_size - cnt);
 	pbp = pdirbp = (struct bufarea *)0;
 	if (markclean && (sblock.e2fs.e2fs_state & E2FS_ISCLEAN) == 0) {
 		/*
@@ -466,7 +467,7 @@ void
 catch(int n)
 {
 	ckfini(0);
-	exit(12);
+	exit(FSCK_EXIT_SIGNALLED);
 }
 
 /*
@@ -529,7 +530,7 @@ dofix(struct inodesc *idesc, const char *msg)
 		return (0);
 
 	default:
-		errexit("UNKNOWN INODESC FIX MODE %d\n", idesc->id_fix);
+		errexit("UNKNOWN INODESC FIX MODE %d", idesc->id_fix);
 	}
 	/* NOTREACHED */
 }

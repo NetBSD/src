@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.20 2006/10/16 03:02:01 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.20.16.1 2008/03/24 07:14:48 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.20 2006/10/16 03:02:01 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.20.16.1 2008/03/24 07:14:48 keiichi Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ __RCSID("$NetBSD: dir.c,v 1.20 2006/10/16 03:02:01 christos Exp $");
 #include "extern.h"
 
 const char	*lfname = "lost+found";
-int	lfmode = 01777;
+int	lfmode = 01700;
 struct	ext2fs_dirtemplate emptydir = {
 	.dot_ino = 0,
 	.dot_reclen = DIRBLKSIZ,
@@ -165,7 +165,7 @@ dirscan(struct inodesc *idesc)
 		err(8, "Can't allocate directory block");
 
 	if (idesc->id_type != DATA)
-		errexit("wrong type to dirscan %d\n", idesc->id_type);
+		errexit("wrong type to dirscan %d", idesc->id_type);
 	if (idesc->id_entryno == 0 &&
 	    (idesc->id_filesize & (sblock.e2fs_bsize - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, sblock.e2fs_bsize);

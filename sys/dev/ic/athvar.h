@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.23 2007/12/22 00:41:02 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.23.2.1 2008/03/24 07:15:16 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -170,8 +170,6 @@ struct ath_softc {
 	struct ethercom		sc_ec;		/* interface common */
 	struct ath_stats	sc_stats;	/* interface statistics */
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */
-	int			(*sc_enable)(struct ath_softc *);
-	void			(*sc_disable)(struct ath_softc *);
 	void			(*sc_power)(struct ath_softc *, int);
 	int			sc_regdomain;
 	int			sc_countrycode;
@@ -192,8 +190,7 @@ struct ath_softc {
 	struct ath_ratectrl	*sc_rc;		/* tx rate control support */
 	struct ath_tx99		*sc_tx99;	/* tx99 adjunct state */
 	void			(*sc_setdefantenna)(struct ath_softc *, u_int);
-	unsigned int		sc_invalid : 1,	/* disable hardware accesses */
-				sc_mrretry : 1,	/* multi-rate retry support */
+	unsigned int		sc_mrretry : 1,	/* multi-rate retry support */
 				sc_softled : 1,	/* enable LED gpio status */
 				sc_splitmic: 1,	/* split TKIP MIC keys */
 				sc_needmib : 1,	/* enable MIB stats intr */
@@ -297,16 +294,14 @@ struct ath_softc {
 #define	sc_rx_th		u_rx_rt.th
 
 #define	ATH_ATTACHED		0x0001		/* attach has succeeded */
-#define ATH_ENABLED		0x0002		/* chip is enabled */
-
-#define	ATH_IS_ENABLED(sc)	((sc)->sc_flags & ATH_ENABLED)
 
 #define	ATH_TXQ_SETUP(sc, i)	((sc)->sc_txqsetup & (1<<i))
 
 int	ath_attach(u_int16_t, struct ath_softc *);
 int	ath_detach(struct ath_softc *);
 int	ath_activate(struct device *, enum devact);
-void	ath_resume(struct ath_softc *);
+bool	ath_resume(struct ath_softc *);
+void	ath_suspend(struct ath_softc *);
 int	ath_intr(void *);
 int	ath_reset(struct ifnet *);
 void	ath_sysctlattach(struct ath_softc *);

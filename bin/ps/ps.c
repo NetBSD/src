@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.65 2008/02/10 17:48:00 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.65.2.1 2008/03/24 07:14:29 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.65 2008/02/10 17:48:00 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.65.2.1 2008/03/24 07:14:29 keiichi Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,9 +282,10 @@ main(int argc, char *argv[])
 
 			flag = 0;
 			ttypath = NULL;
-			if (strcmp(ttname, "?") == 0)
+			if (strcmp(ttname, "?") == 0) {
 				flag = KERN_PROC_TTY_NODEV;
-			else if (strcmp(ttname, "-") == 0)
+				xflg = 1;
+			} else if (strcmp(ttname, "-") == 0)
 				flag = KERN_PROC_TTY_REVOKE;
 			else if (strcmp(ttname, "co") == 0)
 				ttypath = _PATH_CONSOLE;

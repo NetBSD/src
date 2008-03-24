@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.22 2008/02/10 17:40:54 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.22.2.1 2008/03/24 07:16:23 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.22 2008/02/10 17:40:54 plunky Exp $
+ * $Id: hci.h,v 1.22.2.1 2008/03/24 07:16:23 keiichi Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2424,6 +2424,7 @@ struct hci_link {
 #define HCI_LINK_AUTH		(1<<3)	/* link is authenticated */
 #define HCI_LINK_ENCRYPT	(1<<4)	/* link is encrypted */
 #define HCI_LINK_SECURE		(1<<5)	/* link is secured */
+#define HCI_LINK_CREATE_CON	(1<<6)	/* "Create Connection" pending */
 
 /*
  * Bluetooth Memo
@@ -2526,9 +2527,9 @@ struct hci_link *hci_sco_newconn(struct hci_unit *, bdaddr_t *);
 void hci_sco_recv(struct mbuf *, struct hci_unit *);
 void hci_sco_start(struct hci_link *);
 void hci_sco_complete(struct hci_link *, int);
-struct hci_link *hci_link_alloc(struct hci_unit *);
+struct hci_link *hci_link_alloc(struct hci_unit *, bdaddr_t *, uint8_t);
 void hci_link_free(struct hci_link *, int);
-struct hci_link *hci_link_lookup_bdaddr(struct hci_unit *, bdaddr_t *, uint16_t);
+struct hci_link *hci_link_lookup_bdaddr(struct hci_unit *, bdaddr_t *, uint8_t);
 struct hci_link *hci_link_lookup_handle(struct hci_unit *, uint16_t);
 
 /* hci_misc.c */
@@ -2550,6 +2551,7 @@ int hci_enable(struct hci_unit *);
 void hci_disable(struct hci_unit *);
 struct hci_unit *hci_unit_lookup(bdaddr_t *);
 int hci_send_cmd(struct hci_unit *, uint16_t, void *, uint8_t);
+void hci_num_cmds(struct hci_unit *, uint8_t);
 bool hci_input_event(struct hci_unit *, struct mbuf *);
 bool hci_input_acl(struct hci_unit *, struct mbuf *);
 bool hci_input_sco(struct hci_unit *, struct mbuf *);

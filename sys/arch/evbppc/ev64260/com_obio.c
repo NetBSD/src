@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.6 2006/07/13 22:56:01 gdamore Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.6.54.1 2008/03/24 07:14:56 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.6 2006/07/13 22:56:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.6.54.1 2008/03/24 07:14:56 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,14 +100,14 @@ struct com_obio_softc {
 	/* OBIO-specific goo. */
 };
 
-static int com_obio_match (struct device *, struct cfdata *, void *);
-static void com_obio_attach (struct device *, struct device *, void *);
+static int com_obio_match (device_t, cfdata_t , void *);
+static void com_obio_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(com_obio, sizeof(struct com_obio_softc),
+CFATTACH_DECL_NEW(com_obio, sizeof(struct com_obio_softc),
     com_obio_match, com_obio_attach, NULL, NULL);
 
 int
-com_obio_match(struct device *parent, struct cfdata *cf, void *aux)
+com_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *oa = aux;
 	bus_space_handle_t ioh;
@@ -131,19 +131,20 @@ com_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-com_obio_attach(struct device *parent, struct device *self, void *aux)
+com_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_obio_softc *osc = (void *)self;
+	struct com_obio_softc *osc = device_private(self);
 	struct com_softc *sc = &osc->osc_com;
 	struct obio_attach_args *oa = aux;
 	bus_space_handle_t ioh;
 
+	sc->sc_dev = self;
 	sc->sc_frequency = COM_FREQ*2;
 
 	if (!com_is_console(oa->oa_memt, oa->oa_offset, &ioh) &&
 	    bus_space_map(oa->oa_memt, oa->oa_offset, oa->oa_size,
 		0, &ioh) != 0) {
-		printf(": can't map registers\n");
+		aprint_error(": can't map registers\n");
 		return;
 	}
 
@@ -153,7 +154,7 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (oa->oa_irq >= 0) {
 		intr_establish(oa->oa_irq, IST_EDGE, IPL_SERIAL, comintr, sc);
-		printf("%s: interrupting at %s\n",
-		    sc->sc_dev.dv_xname, intr_string(oa->oa_irq));
+		aprint_normal_dev(self, "interrupting at %s\n",
+		    intr_string(oa->oa_irq));
 	}
 }

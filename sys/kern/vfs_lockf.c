@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.61 2008/01/02 11:48:56 ad Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.61.2.1 2008/03/24 07:16:15 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.61 2008/01/02 11:48:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.61.2.1 2008/03/24 07:16:15 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.61 2008/01/02 11:48:56 ad Exp $");
 #include <sys/pool.h>
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
+#include <sys/atomic.h>
 #include <sys/kauth.h>
 
 /*
@@ -191,16 +192,16 @@ lf_alloc(uid_t uid, int allowfail)
 {
 	struct uidinfo *uip;
 	struct lockf *lock;
+	u_long lcnt;
 
 	uip = uid_find(uid);
-	mutex_enter(&uip->ui_lock);
-	if (uid && allowfail && uip->ui_lockcnt >
+	lcnt = atomic_inc_ulong_nv(&uip->ui_lockcnt);
+	if (uid && allowfail && lcnt >
 	    (allowfail == 1 ? maxlocksperuid : (maxlocksperuid * 2))) {
-		mutex_exit(&uip->ui_lock);
+		atomic_dec_ulong(&uip->ui_lockcnt);
 		return NULL;
 	}
-	uip->ui_lockcnt++;
-	mutex_exit(&uip->ui_lock);
+
 	lock = pool_get(&lockfpool, PR_WAITOK);
 	lock->lf_uid = uid;
 	cv_init(&lock->lf_cv, "lockf");
@@ -213,9 +214,8 @@ lf_free(struct lockf *lock)
 	struct uidinfo *uip;
 
 	uip = uid_find(lock->lf_uid);
-	mutex_enter(&uip->ui_lock);
-	uip->ui_lockcnt--;
-	mutex_exit(&uip->ui_lock);
+	atomic_dec_ulong(&uip->ui_lockcnt);
+
 	cv_destroy(&lock->lf_cv);
 	pool_put(&lockfpool, lock);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_base.c,v 1.7 2006/10/02 21:51:33 manu Exp $	*/
+/*	$NetBSD: isakmp_base.c,v 1.7.16.1 2008/03/24 07:14:30 keiichi Exp $	*/
 
 /*	$KAME: isakmp_base.c,v 1.49 2003/11/13 02:30:20 sakane Exp $	*/
 
@@ -716,8 +716,7 @@ base_i3recv(iph1, msg)
 			/* message printed inner oakley_validate_auth() */
 			goto end;
 		}
-		EVT_PUSH(iph1->local, iph1->remote, 
-		    EVTT_PEERPH1AUTH_FAILED, NULL);
+		evt_phase1(iph1, EVT_PHASE1_AUTH_FAILED, NULL);
 		isakmp_info_send_n1(iph1, ptype, NULL);
 		goto end;
 	}
@@ -1242,8 +1241,7 @@ base_r2recv(iph1, msg)
 			/* message printed inner oakley_validate_auth() */
 			goto end;
 		}
-		EVT_PUSH(iph1->local, iph1->remote, 
-		    EVTT_PEERPH1AUTH_FAILED, NULL);
+		evt_phase1(iph1, EVT_PHASE1_AUTH_FAILED, NULL);
 		isakmp_info_send_n1(iph1, ptype, NULL);
 		goto end;
 	}

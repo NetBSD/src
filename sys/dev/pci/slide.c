@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.18 2007/04/26 19:47:04 garbled Exp $	*/
+/*	$NetBSD: slide.c,v 1.18.24.1 2008/03/24 07:15:49 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.18 2007/04/26 19:47:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.18.24.1 2008/03/24 07:15:49 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,10 @@ __KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.18 2007/04/26 19:47:04 garbled Exp $");
 static void sl82c105_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void sl82c105_setup_channel(struct ata_channel*);
 
-static int  slide_match(struct device *, struct cfdata *, void *);
-static void slide_attach(struct device *, struct device *, void *);
+static int  slide_match(device_t, cfdata_t, void *);
+static void slide_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(slide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(slide, sizeof(struct pciide_softc),
     slide_match, slide_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_symphony_products[] = {
@@ -84,8 +84,7 @@ static const struct pciide_product_desc pciide_winbond_products[] =  {
 };
 
 static int
-slide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+slide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -101,11 +100,13 @@ slide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-slide_attach(struct device *parent, struct device *self, void *aux)
+slide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
 	const struct pciide_product_desc *pp = NULL;
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYMPHONY)
 		pp = pciide_lookup_product(pa->pa_id, pciide_symphony_products);
@@ -141,8 +142,8 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 
 	/*
 	 * Check to see if we're part of the Winbond 83c553 Southbridge.
@@ -180,8 +181,8 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			continue;
 		if ((channel == 0 && (idecr & IDECR_P0EN) == 0) ||
 		    (channel == 1 && (idecr & IDECR_P1EN) == 0)) {
-			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "%s channel ignored (disabled)\n", cp->name);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}

@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.6 2007/10/30 15:07:08 tsutsui Exp $
+$NetBSD: version,v 1.6.12.1 2008/03/24 07:14:55 keiichi Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -10,3 +10,6 @@ is taken as the current.
 0.4:	parse "root=/dev/hdXN" args passed from the firmware and
 	set default boot device accordingly
 0.5:	Add support for netboot via tlp0
+0.6:	Print a cobalt model name in banner
+0.7:	Add support for netboot via 21041 on Qube2700
+0.8:	Add support for optional Z85C30 serial console on Qube2700

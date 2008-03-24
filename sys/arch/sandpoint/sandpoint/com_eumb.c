@@ -1,4 +1,4 @@
-/* $NetBSD: com_eumb.c,v 1.2 2007/10/17 19:56:58 garbled Exp $ */
+/* $NetBSD: com_eumb.c,v 1.2.18.1 2008/03/24 07:15:03 keiichi Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.2 2007/10/17 19:56:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.2.18.1 2008/03/24 07:15:03 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: com_eumb.c,v 1.2 2007/10/17 19:56:58 garbled Exp $")
 #include <sandpoint/sandpoint/eumbvar.h>
 #include "locators.h"
 
-static int  com_eumb_match(struct device *, struct cfdata *, void *);
-static void com_eumb_attach(struct device *, struct device *, void *);
+static int  com_eumb_match(device_t, cfdata_t , void *);
+static void com_eumb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_eumb, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(com_eumb, sizeof(struct com_softc),
     com_eumb_match, com_eumb_attach, NULL, NULL);
 
 static int found;
@@ -71,7 +71,7 @@ static struct com_regs cnregs;
  * single 4-wire UART as console.
  */
 int
-com_eumb_match(struct device *parent, struct cfdata *cf, void *aux)
+com_eumb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct eumb_attach_args *eaa = aux;
 	int unit = eaa->eumb_unit;
@@ -84,14 +84,15 @@ com_eumb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-com_eumb_attach(struct device *parent, struct device *self, void *aux)
+com_eumb_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	struct eumb_attach_args *eaa = aux;
 	int comaddr, epicirq;
 	bus_space_handle_t ioh;
 	extern u_long ticks_per_sec;
 
+	sc->sc_dev = self;
 	found = 1;
 
 	comaddr = (eaa->eumb_unit == 1) ? 0x4600 : 0x4500;

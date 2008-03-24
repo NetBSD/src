@@ -1,10 +1,24 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1022 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1022.2.1 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
 For an exhaustive list, please subscribe to the `source-changes' mailing list,
 or see the mailing list archives.  For more information, send a message
 containing just the word `help' to `majordomo@NetBSD.org'.]
+
+------------------------------------------------------------------------------
+PLEASE USE THE FOLLOWING STYLE WHEN ADDING ITEMS:
+
+	theme: Content ...
+		more content ...
+		more content. [developer DATE-FORMAT]
+
+That's it, one tab to start an item, and two tabs to indent the content.
+Also please start the content with a capital and end it with a dot.
+
+This is very important for the www scripts, otherwise it won't be able to
+parse the file and the HTML output will be mangled.
+------------------------------------------------------------------------------
 
 
 Changes from NetBSD 4.0 to NetBSD 5.0:
@@ -22,7 +36,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		(WLAN/DSL/ppp/...). [kardel 20070106]
 	kernel: Global 'securelevel' variable removed; it is now internal to
 		the secmodel. [elad 20070110]
-	GCC: Updated to version 4.1.2-20070110. [mrg 20070111]
+	gcc(1): Updated to version 4.1.2-20070110. [mrg 20070111]
 	acpitools: Added from FreeBSD via fvdl. [christos 20070114]
 	scsictl(8): Added setspeed command, to set the highest speed that the
 		optical drive should use for reading data,
@@ -64,7 +78,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: Import of DRM (Direct Rendering Manager). Not yet enabled
 		by default. [drochner 20070320]
 	libc: Add support for LC_TIME. [manu 20070328]
-	genfb: Generic framebuffer console driver with PCI and SBus
+	genfb(4): Generic framebuffer console driver with PCI and SBus
 		frontends. [macallan 20070411]
 	sgimips: Add support for SGI O2 PS/2 controller macekbc(4) and
 		onboard display adapter crmfb(4). [jmcneill 20070412]
@@ -100,7 +114,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		3. clean up related MD/MI interfaces.
 		4. make scheduler(s) modular.
 		[yamt 20070518]
-	ld.elf_so: Support Solaris $ORIGIN etc. expansions in paths.
+	ld.elf_so(1): Support Solaris $ORIGIN etc. expansions in paths.
 		[christos 20070518]
 	uslsa(4): Added CP210x USB-RS232 ucom driver, as submitted by
 		Jonathan A. Kollasch in PR kern/33496. [dogcow 20070520]
@@ -122,7 +136,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	newgrp(1): Add POSIX (IEEE Std 1003.1, 2004 / Open Group Base
 		Specifications Issue 6) User Portability Utility to change
 		effective group ID. [ginsbach 20060621]
-	GCC: Updated to version 4.1.3-20070620.  [mrg 20070621]
+	gcc(1): Updated to version 4.1.3-20070620.  [mrg 20070621]
 	ntp: Updated to version 4.2.4p2. [kardel 20070624]
 	tcpdrop(8): Ported by anon ymous (from FreeBSD/OpenBSD).
 		[christos 20070625]
@@ -153,7 +167,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[kiyohara 20070728]
 	shark: Add dhclient(8) to the install disk image to be able to
 		configure network interfaces through DHCP.  [jmmv 20070729]
-	sparc: The cgfourteen driver now supports wscons. [macallan 20070730]
+	sparc: The cgfourteen(4) driver now supports wscons. [macallan 20070730]
 	shark: Switched the installation disk to use wscons instead of
 		pccons. [jmmv 20070731]
 	tcp(4): TCP socket buffers automatic sizing, ported from FreeBSD.
@@ -170,7 +184,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		kernel sources and run in userspace.  Their main use is
 		testing/debugging. Currently supported are a number of
 		file systems (e.g. ffs) through puffs(3). [pooka 20070805]
-	wscons: Add scrollback support to vcons, this should work with
+	wscons(4): Add scrollback support to vcons, this should work with
 		any framebuffer console driver that uses vcons.
 		[macallan 20070805]
 	wtf(6): Search pkgsrc's help database when ran inside a package
@@ -218,7 +232,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	gre(4): Available encapsulations increase to IPv6, UDP in
 		IPv6, and UDP in IPv4.  The Mobile IP encapsulation
 		is no more. [dyoung 20071005]
-	malloc: Replace the default memory allocator with 'jemalloc',
+	malloc(3): Replace the default memory allocator with 'jemalloc',
 		designed to perform well in both single- and multi-
 		threaded processes. This provides a significant
 		performance boost for many threaded workloads that
@@ -226,7 +240,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: A new SCHED_M2 scheduler, improves the performance on
 		MP systems, supports real-time and time-sharing classes,
 		ready for the CPU affinity. [rmind 20071009]
-	powerpc, prep, pmppc, evbppc, macppc, ibmnws, bebox, sandpoint, ofwppc:
+	powerpc, prep, pmppc, evbppc, macppc, ibmnws, bebox, sandpoint, ofppc:
 		Merge ppcoea-renovation branch. [garbled 20071017]
 	prep: Convert to generic powerpc PCI framework. [garbled 20071017]
 	powerpc: New generic interrupt handler framework. [macallan 20071017]
@@ -260,7 +274,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	powerpc: Generic powerpc OpenFirmware code. [garbled 20071017]
 	ofppc: Completely rewrite ofppc port from scratch. [garbled 20071017]
 	bebox: Convert to generic powerpc PCI/ISA framework. [ober 20071017]
-	macppc: Use genfb as the default framebuffer instead of ofb.
+	macppc: Use genfb(4) as the default framebuffer instead of ofb.
 		[macallan 20071017]
 	macppc: Switch to new ADB subsystem. [macallan 20071017]
 	macppc: Add support for bus speed control found in some Intrepid-based
@@ -292,7 +306,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		PCM data to userland. [jmcneill 20071111]
 	r128fb(4): New accelerated console driver for ATI Rage 128 graphics
 		controllers. [macallan 20071111]
-	atf: Initial import of the Automated Testing Framework, version 0.3.
+	atf(7): Initial import of the Automated Testing Framework, version 0.3.
 		Provides a framework to easily define and run test cases for
 		the NetBSD operating system.  Work until 0.1 sponsored by
 		Google Summer of Code 2007 and mentored by martin.
@@ -333,7 +347,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ofppc: Added support for the bplan/Genesi Pegasos II. [garbled 20071210]
 	sandpoint: Convert to shared powerpc major numbers. [nisimura 20071211]
 	macppc: Convert to shared powerpc major numbers. [macallan 20071211]
-	acpi: Updated ACPI-CA to 20070320. [jmcneill 20071211]
+	acpi(4): Updated ACPI-CA to 20070320. [jmcneill 20071211]
 	kernel: Added a new power management framework, see pmf(9) for details.
 		[jmcneill,joerg 20071211]
 	ifconfig(8): Add 'list scan' to ifconfig, which list access point in
@@ -351,7 +365,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	sparc64: Add support for Sun PGX32 / TechSource Raptor GFX 8P to
 		genfb ( mostly workarounds for firmware bugs ), also build
 		XFree86's glint driver for accelerated X. [macallan 20071219]
-	newsyslog: newsyslog.conf flag 'J' will bzip2 logfiles.
+	newsyslog(8): newsyslog.conf flag 'J' will bzip2 logfiles.
 		[dogcow 20071221]
 	thinkpad(4): Add driver for IBM/Lenovo Thinkpad hotkeys and
 		brightness controls. [jmcneill 20071221]
@@ -378,7 +392,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		or unused). [xtraeme 20080102]
 	ofppc: Support intallation and RAID bootable root. [mrg 20080102]
 	gem(4): Add support for Sun SX fibre cards.  [jdc 20080105]
-	kernel: All platforms have been converted to use generic TODR.
+	kernel: All platforms have been converted to use generic todr(9).
 		[gdamore,joerg 20080108]
 	ulpt(4): Implement non-blocking read. [gdt 20080108]
 	gcscpcib(4): Added driver for the AMD CS5535 and CS5536 Companion
@@ -393,7 +407,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		simpler in implementation. Implementation by Jed Davis and
 		Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
 		[tls 20080110]
-	hppa: Added gdb support. [skrll 20080110]
+	hppa: Added gdb(1) support. [skrll 20080110]
 	auvia(4): Make this work on big endian machines. [tsutsui 20080114]
 	kernel: Implementation of processor-sets and affinity. [rmind 20080115]
 	libpthread: POSIX real-time extensions. [rmind 20080115]
@@ -407,25 +421,25 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	bktr(4): Added amd64 support. [jmcneill 20080116]
 	ofppc: Add support for the IBM 7044-270. [garbled 20080117]
 	fdisk(8): Fix possible division by zero errors. [tsutsui 20080120]
-	kernel: All platforms have been converted to use timecounter.
+	kernel: All platforms have been converted to use timecounter(9).
 		[joerg 20080120]
-	usb: Add uhmodem(4) driver for Huawei E220 wireless modem.
+	usb(4): Add uhmodem(4) driver for Huawei E220 wireless modem.
 		[ichiro 20080121]
-	compat_linux32: Add ossaudio support. [jmcneill 20080121]
+	compat_linux32: Add ossaudio(3) support. [jmcneill 20080121]
 	xen: Added support for the i386 PAE extention to Xen3 domU
 		[bouyer 20080123]
 	uhub(4): The device attachment function has been optimized to
 		improve system startup time. [jmcneill 20080124]
 	kernel: The interface for IP checksumming was changed to reduce
 		duplication and more general use. [joerg 20080125]
-	hostapd/wpa_supplicant: Upgrade to 0.6.2 [christos 20080126]
+	hostapd(8), wpa_supplicant(8): Upgrade to 0.6.2 [christos 20080126]
 	nfe(4): Wakeup some newer chips from powerdown mode.
 		From FreeBSD/Linux driver via OpenBSD. [tsutsui 20080126]
 	sgimips: Enable bootinfo passed from bootloader so that now kernel
 		symbol table and ksyms(4) are usable. [tsutsui 20080126]
 	hpcmips: Fix silent hangup problem on TX3922 machines.
 		From Risto Sainio. [tsutsui 20080126]
-	openpam: upgrade to 20071221 [christos 20080126]
+	openpam(3): upgrade to 20071221 [christos 20080126]
 	azalia(4): Analog Devices AD1984 codec support has been improved
 		to support headphones and 4 channel playback, and now
 		exposes an outputs.master mixer control that mirrors the
@@ -433,11 +447,32 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[jmcneill 20080130]
 	arc: Add sysinst support. [tsutsui 20080202]
 	cobalt: Add sysinst support. [tsutsui 20080202]
-	GCC: Updated to version 4.1.3-20080202.  [mrg 20080202]
-	atf: Import 0.4.  [jmmv 20080204]
+	gcc(1): Updated to version 4.1.3-20080202.  [mrg 20080202]
+	atf(7): Import 0.4.  [jmmv 20080204]
 	sgimips: Add hardware acceleration for crmfb [macallan 20080205]
 	modules: Added the MKMODULAR option to the build system to easily
 		enable the build of the new kernel modules framework.
 		[jmmv 20080209]
 	iwn(4): Added a driver for the Intel Pro/Wireless Lan 4965AGN          
-		Mini-PCI Adapter, ported from OpenBSD. [ober 2008-02-09]
+		Mini-PCI Adapter, ported from OpenBSD. [ober 20080209]
+	ofppc: Add support for the 7046-B50. [garbled 2008-02-13]
+	powerpc: Add tuned assembler from IBM for memcpy(3), memmove(3) and
+		memcmp(3).  [garbled 20080221]
+	puc(4): Add support for I-O DATA RSA-PCI 2 port serial board.
+		[tsutsui 20080222]
+	monop(6): Save and restore format changed; compatibility with old
+		save files broken, but they were not usable anyway.
+		[dholland 20080223]
+	mfi(4): Added support for LSI SAS1078 and Dell PERC 6, from OpenBSD.
+		[xtraeme 20080225]
+	cobalt: Add netboot support for 21041 on Qube 2700. [tsutsui 20080301]
+	cobalt: Print startup and shutdown messages on LCD panel.
+		[tsutsui 20080304]
+	sparc64: SMP support now works on some models. [nakayama 20080314]
+	cobalt: Add bootloader support for optional Z85C30 serial on Qube 2700.
+		[tsutsui 20080316]
+	re(4): Make hardware vlan(4) tag insertion/extraction work properly.
+		[tsutsui 20080318]
+	cobalt: Fix a botched spl(9) bug which could cause network freeze
+		on traffic between two network interfaces. [tsutsui 20080318]
+	bzip2(1): Upgrade to 1.0.5 [christos 20080318]

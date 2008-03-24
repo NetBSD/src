@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.43 2008/02/15 04:37:37 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.43.2.1 2008/03/24 07:15:04 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43 2008/02/15 04:37:37 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43.2.1 2008/03/24 07:15:04 keiichi Exp $")
 
 
 /*
@@ -84,75 +84,86 @@ __KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43 2008/02/15 04:37:37 uwe Exp $")
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * LINTSTUB: Func: struct lwp *cpu_switchto(struct lwp *olwp, struct lwp *nlwp)
- *	Switch to the specified LWP.
+ * LINTSTUB: Func: lwp_t *cpu_switchto(lwp_t *olwp, lwp_t *nlwp, bool returning)
+ *	Switch from olwp to nlwp.
+ *	If returning is true, we do the fast softint dance
+ *	 and can skip user-space related activities (pmap, ras, etc...)
+ *	Return olwp (in the nlwp context).
  */
 ENTRY(cpu_switchto)
-	tst	r4, r4			/* olwp can be NULL */
+	tst	r4, r4			! olwp can be NULL
 	bt	.L_saved
 
-	/* Save old lwp's context to switchframe */
-	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
+	!! save old lwp's context to switchframe
+	mov.l	@(L_MD_PCB, r4), r1	! olwp->l_md.md_pcb
 	SAVEPCB(r1)
 .L_saved:
-	/* free to use callee-save registers now */
+	!! free to use callee-save registers now
 
-	/* old and new lwps are already in r4, r5 */
+	mov.l	.L_curlwp, r2
+	mov.l	.L_curpcb, r3
+	mov.l	@(L_MD_PCB, r5), r10	! nlwp->l_md.md_pcb
+	!tst	r6, r6			! "full" switch?
+	mov.l	r5, @r2			! curlwp = nlwp;
+	!bt/s	.L_prepare_switch
+	 mov.l	r10, @r3		! curpcb = nlwp->l_md.md_pcb;
+
+	!mov	r5, r8		! preserve nlwp
+	!bra	.L_restore_nlwp
+	! mov	r4, r9		! preserve olwp
+
+.L_prepare_switch:
+	!! arguments to cpu_switch_prepare are already in the right registers
 	mov.l	.L_cpu_switch_prepare, r0
-	mov	r5, r8		/* preserve nlwp */
+	mov	r5, r8		! preserve nlwp
 	jsr	@r0
-	 mov	r4, r9		/* preserve olwp */
+	 mov	r4, r9		! preserve olwp
 
-	mov	r8, r4		/* nlwp */
+.L_restore_nlwp:
+	!! restore new lwp's context from switchframe
+	!! r10 is nlwp->l_md.md_pcb == &nlwp->l_md.md_pcb->pcb_sf
 
-	/* Restore new lwp's context from switchframe */
-	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
-	/* no additional offset to l->l_md.md_pcb->pcb_sf */
+	!! setup nlwp's kernel stack first
+	mov.l	@(SF_R7_BANK, r10), r0	! kernel stack bottom
+	mov.l	@(SF_R6_BANK, r10), r2	! current trapframe
+	mov.l	@(SF_R15, r10), r3	! current kernel sp
 
-	/* Setup kernel stack first */
-	mov.l	@(SF_R7_BANK, r1), r0	/* stack top */
-	mov.l	@(SF_R6_BANK, r1), r2	/* current frame */
-	mov.l	@(SF_R15, r1), r3	/* current stack */
-	/* During kernel stack switching, all interrupts are disabled. */
-	__EXCEPTION_BLOCK(r1, r5)
-	/* switch to new kernel stack */
-	ldc	r0,	r7_bank
-	ldc	r2,	r6_bank
-	mov	r3,	r15
+	!! while switching kernel stack, all exceptions must be disabled
+	__EXCEPTION_BLOCK(r1, r11)	! saves SR in r11
+	ldc	r0, r7_bank
+	ldc	r2, r6_bank
+	mov	r3, r15
 
 #if !defined(P1_STACK) && defined(SH4)
-	/* Wire u-area */
+	!! wire u-area in TLB
 	MOV	(switch_resume, r0)
 	jsr	@r0
-	 mov	r4,	r8	/* save new lwp */
-	mov	r8,	r4
+	 mov	r8, r4		! nlwp
 #endif
-	__EXCEPTION_UNBLOCK(r0, r1)
-	/* Now OK to use kernel stack. */
+	!! safe to use nlwp's kernel stack now
+	ldc	r11, sr		! __EXCEPTION_UNBLOCK
 
-	mov	r9, r2		/* olwp */
-
-	/* Finish restoring new lwp's context from switchframe */
-	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
-	/* no additional offset to l->l_md.md_pcb->pcb_sf */
-	add	#4,	r1		/* r15 already restored */
-	mov.l	@r1+,	r14
-	mov.l	@r1+,	r13
-	mov.l	@r1+,	r12
-	mov.l	@r1+,	r11
-	mov.l	@r1+,	r10
-	mov.l	@r1+,	r9
-	mov.l	@r1+,	r8
-	lds.l	@r1+,	pr
-	add	#4,	r1		/* r6_bank already restored */
-	ldc.l	@r1+,	sr
-					/* r7_bank already restored*/
-
-	/* r2 has the return value; stuff it into r0 now. */
+	!! finish restoring new lwp's context from switchframe
+	mov	r10, r1		! &nlwp->l_md.md_pcb->pcb_sf
+	mov	r9, r2		! preserve olwp, we are about to clobber r9
+	add	#4, r1		! r15 already restored
+	mov.l	@r1+, r14
+	mov.l	@r1+, r13
+	mov.l	@r1+, r12
+	mov.l	@r1+, r11
+	mov.l	@r1+, r10
+	mov.l	@r1+, r9
+	mov.l	@r1+, r8
+	lds.l	@r1+, pr
+	add	#4, r1		! r6_bank already restored
+	ldc.l	@r1+, sr
+				! r7_bank already restored
 	rts
-	 mov	r2, r0
+	 mov	r2, r0		! return olwp
 
 	.align	2
+.L_curlwp:		.long	_C_LABEL(curlwp)
+.L_curpcb:		.long	_C_LABEL(curpcb)
 .L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
 #ifdef SH4
 FUNC_SYMBOL(switch_resume)

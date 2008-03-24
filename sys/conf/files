@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.892.2.1 2008/02/22 02:53:32 keiichi Exp $
+#	$NetBSD: files,v 1.892.2.2 2008/03/24 07:15:10 keiichi Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -489,11 +489,12 @@ defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
 				ISP_DISABLE_2100_SUPPORT
 				ISP_DISABLE_2200_SUPPORT
 				ISP_DISABLE_2300_SUPPORT
+				ISP_DISABLE_2322_SUPPORT
 				ISP_DISABLE_2400_SUPPORT
 				ISP_DISABLE_FW
 				ISP_TARGET_MODE
-				ISP_FW_CRASH_DUMP
 defparam opt_isp.h		ISP_LOGDEFAULT
+				ISP_VPORTS
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_library.c		isp
@@ -1094,7 +1095,7 @@ file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
-device	slhci: usbus
+device	slhci: usbus, usbroothub
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # USB HID processing (as used by bluetooth and usb code)

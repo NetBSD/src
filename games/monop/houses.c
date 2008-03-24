@@ -1,4 +1,4 @@
-/*	$NetBSD: houses.c,v 1.10 2008/02/19 09:32:34 dholland Exp $	*/
+/*	$NetBSD: houses.c,v 1.10.2.1 2008/03/24 07:14:42 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: houses.c,v 1.10 2008/02/19 09:32:34 dholland Exp $");
+__RCSID("$NetBSD: houses.c,v 1.10.2.1 2008/03/24 07:14:42 keiichi Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 static const char	*names[N_MON+2];
 static char	cur_prop[80];
@@ -48,6 +48,10 @@ static MON	*monops[N_MON];
 static void buy_h(MON *);
 static void sell_h(MON *);
 static void list_cur(MON *);
+static int get_avail_houses(void);
+static int get_avail_hotels(void);
+static bool ready_for_hotels(MON *);
+
 /*
  *	These routines deal with buying and selling houses
  */
@@ -57,7 +61,7 @@ buy_houses()
 	int num_mon;
 	MON *mp;
 	OWN *op;
-	bool good,got_morg;
+	bool good, got_morg;
 	int i,p;
 
 over:
@@ -74,9 +78,9 @@ over:
 			got_morg = good = FALSE;
 			for (i = 0; i < mp->num_in; i++) {
 				if (op->sqr->desc->morg)
-					got_morg++;
+					got_morg = TRUE;
 				if (op->sqr->desc->houses != 5)
-					good++;
+					good = TRUE;
 				op = op->next;
 			}
 			if (!good || got_morg)
@@ -114,12 +118,29 @@ buy_h(mnp)
 	int i;
 	MON *mp;
 	int price;
-	short input[3],temp[3];
-	int tot;
+	short input[3], result[3];
+	int wanted_houses, wanted_hotels;
+	int total_purchase;
 	PROP *pp;
+	int avail_houses, avail_hotels;
+	bool buying_hotels;
 
 	mp = mnp;
 	price = mp->h_cost * 50;
+
+	avail_houses = get_avail_houses();
+	avail_hotels = get_avail_hotels();
+	buying_hotels = ready_for_hotels(mnp);
+
+	if (avail_houses == 0 && !buying_hotels) {
+		printf("Building shortage:  no houses available.");
+		return;
+	}
+	if (avail_hotels == 0 && buying_hotels) {
+		printf("Building shortage:  no hotels available.");
+		return;
+	}
+
 blew_it:
 	list_cur(mp);
 	printf("Houses will cost $%d\n", price);
@@ -130,34 +151,64 @@ over:
 		if (pp->houses == 5) {
 			printf("%s (H):\n", mp->sq[i]->name);
 			input[i] = 0;
-			temp[i] = 5;
+			result[i] = 5;
 			continue;
 		}
 		(void)snprintf(cur_prop, sizeof(cur_prop), "%s (%d): ",
 			mp->sq[i]->name, pp->houses);
 		input[i] = get_int(cur_prop);
-		temp[i] = input[i] + pp->houses;
-		if (temp[i] > 5) {
+		result[i] = input[i] + pp->houses;
+		if (result[i] > 5 || result[i] < 0) {
 			printf("That's too many.  The most you can buy is %d\n",
-				5 - pp->houses);
+			    5 - pp->houses);
 				goto over;
 			}
 	}
-	if (mp->num_in == 3 && (abs(temp[0] - temp[1]) > 1 ||
-	    abs(temp[0] - temp[2]) > 1 || abs(temp[1] - temp[2]) > 1)) {
+	if (mp->num_in == 3 &&
+	    (abs(result[0] - result[1]) > 1 ||
+	    abs(result[0] - result[2]) > 1 ||
+	     abs(result[1] - result[2]) > 1)) {
 err:		printf("That makes the spread too wide.  Try again\n");
 		goto blew_it;
 	}
-	else if (mp->num_in == 2 && abs(temp[0] - temp[1]) > 1)
+	else if (mp->num_in == 2 && abs(result[0] - result[1]) > 1)
 		goto err;
-	for (tot = i = 0; i < mp->num_in; i++)
-		tot += input[i];
-	if (tot) {
-		printf("You asked for %d houses for $%d\n", tot, tot * price);
+
+	wanted_houses = 0;
+	wanted_hotels = 0;
+	total_purchase = 0;
+
+	for (i = 0; i < mp->num_in; i++) {
+		wanted_houses += input[i];
+		total_purchase += input[i];
+		if (result[i] == 5 && input[i] > 0) {
+			wanted_hotels++;
+			wanted_houses--;
+		}
+	}
+	if (wanted_houses > avail_houses) {
+		printf("You have asked for %d %s but only %d are available.  "
+		    "Try again\n",
+		    wanted_houses, wanted_houses == 1 ? "house" : "houses",
+		    avail_houses);
+		goto blew_it;
+	} else if (wanted_hotels > avail_hotels) {
+		printf("You have asked for %d %s but only %d are available.  "
+		    "Try again\n",
+		    wanted_hotels, wanted_hotels == 1 ? "hotel" : "hotels",
+		    avail_hotels);
+		goto blew_it;
+	}
+
+	if (total_purchase) {
+		printf("You asked for %d %s and %d %s for $%d\n",
+		    wanted_houses, wanted_houses == 1 ? "house" : "houses",
+		    wanted_hotels, wanted_hotels == 1 ? "hotel" : "hotels",
+		    total_purchase * price);
 		if (getyn("Is that ok? ") == 0) {
-			cur_p->money -= tot * price;
-			for (tot = i = 0; i < mp->num_in; i++)
-				mp->sq[i]->desc->houses = temp[i];
+			cur_p->money -= total_purchase * price;
+			for (i = 0; i < mp->num_in; i++)
+				mp->sq[i]->desc->houses = result[i];
 		}
 	}
 }
@@ -185,7 +236,7 @@ over:
 			good = 0;
 			do
 				if (!good && op->sqr->desc->houses != 0)
-					good++;
+					good = TRUE;
 			while (op->next && op->sqr->desc->mon_desc == mp
 			    && (op = op->next));
 			if (!good)
@@ -261,7 +312,8 @@ err:		printf("That makes the spread too wide.  Try again\n");
 	for (tot = i = 0; i < mp->num_in; i++)
 		tot += input[i];
 	if (tot) {
-		printf("You asked to sell %d houses for $%d\n",tot,tot * price);
+		printf("You asked to sell %d house%s for $%d\n", tot,
+		    tot == 1 ? "" : "s", tot * price);
 		if (getyn("Is that ok? ") == 0) {
 			cur_p->money += tot * price;
 			for (tot = i = 0; i < mp->num_in; i++)
@@ -285,4 +337,54 @@ list_cur(mp)
 			printf("%s (%d) ", sqp->name, sqp->desc->houses);
 	}
 	putchar('\n');
+}
+
+static int
+get_avail_houses(void)
+{
+	int i, c;
+	SQUARE *sqp;
+
+	c = 0;
+	for (i = 0; i < N_SQRS; i++) {
+		sqp = &board[i];
+		if (sqp->type == PRPTY && sqp->owner >= 0 && sqp->desc->monop) {
+			if (sqp->desc->houses < 5 && sqp->desc->houses > 0)
+				c += sqp->desc->houses;
+		}
+	}
+	return(N_HOUSE - c);
+}
+
+static int
+get_avail_hotels(void)
+{
+	int i, c;
+	SQUARE *sqp;
+
+	c = 0;
+	for (i = 0; i < N_SQRS; i++) {
+		sqp = &board[i];
+		if (sqp->type == PRPTY && sqp->owner >= 0 && sqp->desc->monop) {
+			if (sqp->desc->houses == 5)
+				c++;
+		}
+	}
+	return(N_HOTEL - c);
+}
+
+/*
+ * If we can put a hotel on, we can't put any houses on, and if we can
+ * put houses on, then we can't put a hotel on yet.
+ */
+static bool
+ready_for_hotels(MON *mp)
+{
+	int i;
+
+	for (i = 0; i < mp->num_in; i++) {
+		if (mp->sq[i]->desc->houses < 4)
+			return(FALSE);
+	}
+	return(TRUE);
 }

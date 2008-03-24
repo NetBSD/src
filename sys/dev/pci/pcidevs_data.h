@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.929 2008/02/13 13:57:00 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.929.2.1 2008/03/24 07:15:49 keiichi Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.929 2008/02/13 13:56:46 tron Exp
+ *	NetBSD: pcidevs,v 1.931 2008/02/24 16:01:46 xtraeme Exp
  */
 
 /*
@@ -6012,6 +6012,10 @@ static const struct pci_product pci_products[] = {
 	    "PERC 5",
 	},
 	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_6,
+	    "PERC 6",
+	},
+	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
 	    "PERC 3/Di",
 	},
@@ -9126,6 +9130,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBSCII,
 	    "CBSCII NinjaSCSI-32Bi SCSI",
+	},
+	{
+	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_RSAPCI,
+	    "RSA-PCI 2-port serial",
 	},
 	{
 	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152,
@@ -14044,4 +14052,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2912;
+const int pci_nproducts = 2914;

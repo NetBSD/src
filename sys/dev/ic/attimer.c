@@ -1,4 +1,4 @@
-/*	$NetBSD: attimer.c,v 1.6 2008/01/03 01:21:44 dyoung Exp $	*/
+/*	$NetBSD: attimer.c,v 1.6.2.1 2008/03/24 07:15:16 keiichi Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.6 2008/01/03 01:21:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer.c,v 1.6.2.1 2008/03/24 07:15:16 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ attimer_attach(struct attimer_softc *sc)
 {
 	sc->sc_flags |= ATT_CONFIGURED;
 
-	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
-		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
 }
 
 int
@@ -81,7 +81,7 @@ attimer_detach(device_t self, int flags)
  * computer with more than one pcppi/attimer accessible.
  */
 
-struct attimer_softc *
+device_t
 attimer_attach_speaker(void)
 {
 	int i;
@@ -90,20 +90,22 @@ attimer_attach_speaker(void)
 	for (i = 0; i < attimer_cd.cd_ndevs; i++) {
 		if (attimer_cd.cd_devs[i] == NULL)
 			continue;
-		sc = (struct attimer_softc *)attimer_cd.cd_devs[i];
+		sc = device_private(attimer_cd.cd_devs[i]);
 		if ((sc->sc_flags & ATT_CONFIGURED) &&
 		    !(sc->sc_flags & ATT_ATTACHED)) {
 			sc->sc_flags |= ATT_ATTACHED;
-			return sc;
+			return sc->sc_dev;
 		}
 	}
 	return NULL;
 }
 
 void
-attimer_set_pitch(struct attimer_softc *sc, int pitch)
+attimer_set_pitch(device_t dev, int pitch)
 {
+	struct attimer_softc *sc = device_private(dev);
 	int s;
+
 	s = splhigh();
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, TIMER_MODE,
 	    TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);

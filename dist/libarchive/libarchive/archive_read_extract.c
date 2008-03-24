@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_extract.c,v 1.59 2007/05/29 01:00:18 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_extract.c,v 1.60 2008/01/18 04:53:45 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -67,6 +67,7 @@ get_extract(struct archive_read *a)
 			archive_set_error(&a->archive, ENOMEM, "Can't extract");
 			return (NULL);
 		}
+		memset(a->extract, 0, sizeof(*a->extract));
 		a->extract->ad = archive_write_disk_new();
 		if (a->extract->ad == NULL) {
 			archive_set_error(&a->archive, ENOMEM, "Can't extract");
@@ -130,11 +131,13 @@ archive_read_extract_set_progress_callback(struct archive *_a,
 static int
 copy_data(struct archive *ar, struct archive *aw)
 {
-	int r;
-	const void *buff;
-	size_t size;
 	off_t offset;
+	const void *buff;
+	struct extract *extract;
+	size_t size;
+	int r;
 
+	extract = get_extract((struct archive_read *)ar);
 	for (;;) {
 		r = archive_read_data_block(ar, &buff, &size, &offset);
 		if (r == ARCHIVE_EOF)
@@ -149,6 +152,9 @@ copy_data(struct archive *ar, struct archive *aw)
 			    "%s", archive_error_string(aw));
 			return (r);
 		}
+		if (extract->extract_progress)
+			(extract->extract_progress)
+			    (extract->extract_progress_user_data);
 	}
 }
 

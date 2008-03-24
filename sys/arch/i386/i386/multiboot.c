@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.12 2007/03/07 21:43:45 thorpej Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.12.36.1 2008/03/24 07:14:59 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.12 2007/03/07 21:43:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.12.36.1 2008/03/24 07:14:59 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ void
 multiboot_post_reloc(void)
 {
 	struct multiboot_info *mi;
-	
+
 	if (! Multiboot_Loader)
 		return;
 
@@ -544,6 +544,8 @@ setup_console(struct multiboot_info *mi)
 		    sizeof(bi.devname));
 
 	if (found) {
+		bool valid;
+
 		if (strncmp(bi.devname, "com", sizeof(bi.devname)) == 0) {
 			char tmp[10];
 
@@ -563,10 +565,16 @@ setup_console(struct multiboot_info *mi)
 					bi.addr = strtoul(tmp, NULL, 10);
 			} else
 				bi.addr = 0; /* Use default address. */
-		}
 
-		bootinfo_add((struct btinfo_common *)&bi, BTINFO_CONSOLE,
-		    sizeof(struct btinfo_console));
+			valid = true;
+		} else if (strncmp(bi.devname, "pc", sizeof(bi.devname)) == 0)
+			valid = true;
+		else
+			valid = false;
+
+		if (valid)
+			bootinfo_add((struct btinfo_common *)&bi,
+			    BTINFO_CONSOLE, sizeof(struct btinfo_console));
 	}
 }
 

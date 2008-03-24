@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.12 2007/12/09 20:27:52 jmcneill Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.12.6.1 2008/03/24 07:15:11 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.12 2007/12/09 20:27:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.12.6.1 2008/03/24 07:15:11 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,27 +105,27 @@ static int acpiapm_node = CTL_EOL, standby_node = CTL_EOL;
 
 struct acpi_softc;
 extern ACPI_STATUS acpi_enter_sleep_state(struct acpi_softc *, int);
-static int acpiapm_match(struct device *, struct cfdata *, void *);
-static void acpiapm_attach(struct device *, struct device *, void *);
+static int acpiapm_match(device_t, cfdata_t , void *);
+static void acpiapm_attach(device_t, device_t, void *);
 static int sysctl_state(SYSCTLFN_PROTO);
 
-CFATTACH_DECL(acpiapm, sizeof(struct apm_softc),
+CFATTACH_DECL_NEW(acpiapm, sizeof(struct apm_softc),
     acpiapm_match, acpiapm_attach, NULL, NULL);
 
 static int
 /*ARGSUSED*/
-acpiapm_match(struct device *parent,
-	struct cfdata *match, void *aux)
+acpiapm_match(device_t parent, cfdata_t match, void *aux)
 {
 	return apm_match();
 }
 
 static void
 /*ARGSUSED*/
-acpiapm_attach(struct device *parent, struct device *self, void *aux)
+acpiapm_attach(device_t parent, device_t self, void *aux)
 {
-	struct apm_softc *sc = (struct apm_softc *)self;
+	struct apm_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_ops = &acpiapm_accessops;
 	sc->sc_cookie = parent;
 	sc->sc_vers = 0x0102;
@@ -239,7 +239,7 @@ acpiapm_enable(void *opaque, int onoff)
 static int
 acpiapm_set_powstate(void *opaque, u_int devid, u_int powstat)
 {
-	struct acpi_softc *sc = opaque;
+	struct acpi_softc *sc = device_private((device_t)opaque);
 
 	if (devid != APM_DEV_ALLDEVS)
 		return APM_ERR_UNRECOG_DEV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6 2003/03/05 11:28:14 agc Exp $	*/
+/*	$NetBSD: proc.h,v 1.6.102.1 2008/03/24 07:14:53 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,8 +43,12 @@ struct trapframe;
 struct lwp;
 
 struct mdlwp {
-	int	md_dummy;		/* must have at least one member */
+	int	md_flags;
 };
+
+/* Flags setttings for md_flags */
+#define MDP_VFPUSED	0x00000001	/* Process used the VFP */
+
 
 struct mdproc {
 	void	(*md_syscall)(struct trapframe *, struct lwp *, u_int32_t);

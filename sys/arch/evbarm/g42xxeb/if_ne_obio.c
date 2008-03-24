@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_obio.c,v 1.4 2007/03/04 05:59:44 christos Exp $ */
+/*	$NetBSD: if_ne_obio.c,v 1.4.36.1 2008/03/24 07:14:55 keiichi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.4 2007/03/04 05:59:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.4.36.1 2008/03/24 07:14:55 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,12 +68,12 @@ struct ne_obio_softc {
 	int  intr_no;
 };
 
-int	ne_obio_match( struct device *, struct cfdata *, void *);
-void	ne_obio_attach( struct device *, struct device *, void *);
+int	ne_obio_match(device_t, cfdata_t , void *);
+void	ne_obio_attach(device_t, device_t, void *);
 
 
-CFATTACH_DECL(ne_obio, sizeof (struct ne_obio_softc), ne_obio_match, ne_obio_attach,
-    NULL, NULL);
+CFATTACH_DECL_NEW(ne_obio, sizeof (struct ne_obio_softc), ne_obio_match,
+    ne_obio_attach, NULL, NULL);
 
 //#define DEBUG_GPIO  2
 //#define DEBUG_GPIO2  5
@@ -117,9 +117,9 @@ ne_obio_enable(struct dp8390_softc *dsc)
 	struct ne_obio_softc *sc = (struct ne_obio_softc *)dsc;
 	struct obio_softc *psc;
 
-	printf("%s: enabled\n", dsc->sc_dev.dv_xname);
+	aprint_normal_dev(dsc->sc_dev, "enabled\n");
 
-	psc = (struct obio_softc *)device_parent(&dsc->sc_dev);
+	psc = device_private(device_parent(dsc->sc_dev));
 
 	/* Establish the interrupt handler. */
 	sc->sc_ih = obio_intr_establish(psc, sc->intr_no, IPL_NET,
@@ -132,23 +132,24 @@ ne_obio_enable(struct dp8390_softc *dsc)
 
 
 int
-ne_obio_match( struct device *parent, struct cfdata *match, void *aux )
+ne_obio_match(device_t parent, cfdata_t match, void *aux )
 {
 	/* XXX: probe? */
 	return 1;
 }
 
 void
-ne_obio_attach( struct device *parent, struct device *self, void *aux )
+ne_obio_attach(device_t parent, device_t self, void *aux )
 {
-	struct ne_obio_softc *sc = (struct ne_obio_softc *)self;
+	struct ne_obio_softc *sc = device_private(self);
 	struct obio_attach_args *oba = aux;
 	bus_space_tag_t iot = oba->oba_iot;
 	bus_space_handle_t  nioh, aioh;
 	uint8_t my_ea[ETHER_ADDR_LEN];
 	int i;
 
-	printf("\n");
+	aprint_normal("\n");
+	sc->nsc.sc_dp8390.sc_dev = self;
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, oba->oba_addr, NE2000_NPORTS, 0, &nioh))

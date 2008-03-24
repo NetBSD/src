@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.9 2008/01/19 22:10:16 dyoung Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.9.2.1 2008/03/24 07:15:16 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.9 2008/01/19 22:10:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.9.2.1 2008/03/24 07:15:16 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,15 +66,15 @@ __KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.9 2008/01/19 22:10:16 dyoung Exp $");
 #include <dev/ic/dl10019reg.h>
 #include <dev/ic/dl10019var.h>
 
-int	dl10019_mii_readreg(struct device *, int, int);
-void	dl10019_mii_writereg(struct device *, int, int, int);
-void	dl10019_mii_statchg(struct device *);
+int	dl10019_mii_readreg(device_t, int, int);
+void	dl10019_mii_writereg(device_t, int, int, int);
+void	dl10019_mii_statchg(device_t);
 
 /*
  * MII bit-bang glue.
  */
-u_int32_t dl10019_mii_bitbang_read(struct device *);
-void dl10019_mii_bitbang_write(struct device *, u_int32_t);
+u_int32_t dl10019_mii_bitbang_read(device_t);
+void dl10019_mii_bitbang_write(device_t, u_int32_t);
 
 const struct mii_bitbang_ops dl10019_mii_bitbang_ops = {
 	dl10019_mii_bitbang_read,
@@ -134,7 +134,7 @@ dl10019_media_init(struct dp8390_softc *sc)
 
 	dl10019_mii_reset(sc);
 
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -186,9 +186,9 @@ dl10019_stop_card(struct dp8390_softc *sc)
 }
 
 u_int32_t
-dl10019_mii_bitbang_read(struct device *self)
+dl10019_mii_bitbang_read(device_t self)
 {
-	struct dp8390_softc *sc = (void *) self;
+	struct dp8390_softc *sc = device_private(self);
 
 	/* We're already in Page 0. */
 	return (bus_space_read_1(sc->sc_regt, sc->sc_regh, NEDL_DL0_GPIO) &
@@ -196,9 +196,9 @@ dl10019_mii_bitbang_read(struct device *self)
 }
 
 void
-dl10019_mii_bitbang_write(struct device *self, u_int32_t val)
+dl10019_mii_bitbang_write(device_t self, u_int32_t val)
 {
-	struct dp8390_softc *sc = (void *) self;
+	struct dp8390_softc *sc = device_private(self);
 	u_int8_t gpio;
 
 	/* We're already in Page 0. */
@@ -208,9 +208,9 @@ dl10019_mii_bitbang_write(struct device *self, u_int32_t val)
 }
 
 int
-dl10019_mii_readreg(struct device *self, int phy, int reg)
+dl10019_mii_readreg(device_t self, int phy, int reg)
 {
-	struct ne2000_softc *nsc = (void *) self;
+	struct ne2000_softc *nsc = device_private(self);
 	const struct mii_bitbang_ops *ops;
 	int val;
 
@@ -223,9 +223,9 @@ dl10019_mii_readreg(struct device *self, int phy, int reg)
 }
 
 void
-dl10019_mii_writereg(struct device *self, int phy, int reg, int val)
+dl10019_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct ne2000_softc *nsc = (void *) self;
+	struct ne2000_softc *nsc = device_private(self);
 	const struct mii_bitbang_ops *ops;
 
 	ops = (nsc->sc_type == NE2000_TYPE_DL10022) ?
@@ -235,10 +235,10 @@ dl10019_mii_writereg(struct device *self, int phy, int reg, int val)
 }
 
 void
-dl10019_mii_statchg(struct device *self)
+dl10019_mii_statchg(device_t self)
 {
-	struct dp8390_softc *sc = (void *) self;
-	struct ne2000_softc *nsc = (void *) self;
+	struct dp8390_softc *sc = device_private(self);
+	struct ne2000_softc *nsc = device_private(self);
 
 	/*
 	 * Disable collision detection on the DL10022 if

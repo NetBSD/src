@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_sa1100.h,v 1.3 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: arm_sa1100.h,v 1.3.70.1 2008/03/24 07:14:57 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,23 +39,19 @@
 #ifndef _HPCBOOT_ARM_SA1100_H_
 #define	_HPCBOOT_ARM_SA1100_H_
 
-/*
- * HP-820 JORNADA Strong-ARM SA-1100
- */
+class SA1100Architecture : public ARMArchitecture {
+private:
+	// test routine for SA-1100 peripherals.
+	virtual void testFramebuffer(void);
+	virtual void testUART(void);
 
-#define	PAGE_SIZE		0x1000
-#define	DRAM_BANK_NUM		4		/* total 512MByte */
-#define	DRAM_BANK_SIZE		0x08000000	/* 128Mbyte */
+public:
+	SA1100Architecture(Console *&, MemoryManager *&);
+	virtual ~SA1100Architecture(void);
 
-#define	DRAM_BANK0_START	0xc0000000
-#define	DRAM_BANK0_SIZE		DRAM_BANK_SIZE
-#define	DRAM_BANK1_START	0xc8000000
-#define	DRAM_BANK1_SIZE		DRAM_BANK_SIZE
-#define	DRAM_BANK2_START	0xd0000000
-#define	DRAM_BANK2_SIZE		DRAM_BANK_SIZE
-#define	DRAM_BANK3_START	0xd8000000
-#define	DRAM_BANK3_SIZE		DRAM_BANK_SIZE
-#define	ZERO_BANK_START		0xe0000000
-#define	ZERO_BANK_SIZE		DRAM_BANK_SIZE
+	virtual BOOL init(void);
+	virtual BOOL setupLoader(void);
+	virtual void jump(paddr_t info, paddr_t pvec);
+};
 
 #endif // _HPCBOOT_ARM_SA1100_H_

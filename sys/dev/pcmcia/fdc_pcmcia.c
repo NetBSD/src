@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.18 2007/10/19 12:01:04 ad Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.18.12.1 2008/03/24 07:16:05 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.18 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.18.12.1 2008/03/24 07:16:05 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,12 +64,12 @@ struct fdc_pcmcia_softc {
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
-int fdc_pcmcia_match(struct device *, struct cfdata *, void *);
+int fdc_pcmcia_match(device_t, cfdata_t, void *);
 int fdc_pcmcia_validate_config(struct pcmcia_config_entry *);
-void fdc_pcmcia_attach(struct device *, struct device *, void *);
+void fdc_pcmcia_attach(device_t, device_t, void *);
 static void fdc_conf(struct fdc_softc *);
 
-CFATTACH_DECL(fdc_pcmcia, sizeof(struct fdc_pcmcia_softc),
+CFATTACH_DECL_NEW(fdc_pcmcia, sizeof(struct fdc_pcmcia_softc),
     fdc_pcmcia_match, fdc_pcmcia_attach, NULL, NULL);
 
 const struct pcmcia_product fdc_pcmcia_products[] = {
@@ -80,8 +80,7 @@ const size_t fdc_pcmcia_nproducts =
     sizeof(fdc_pcmcia_products) / sizeof(fdc_pcmcia_products[0]);
 
 static void
-fdc_conf(fdc)
-	struct fdc_softc *fdc;
+fdc_conf(struct fdc_softc *fdc)
 {
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
@@ -134,10 +133,7 @@ fdc_conf(fdc)
 }
 
 int
-fdc_pcmcia_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+fdc_pcmcia_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -148,11 +144,9 @@ fdc_pcmcia_match(parent, match, aux)
 }
 
 void
-fdc_pcmcia_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
-	struct fdc_pcmcia_softc *psc = (void *)self;
+	struct fdc_pcmcia_softc *psc = device_private(self);
 	struct fdc_softc *fdc = &psc->sc_fdc;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
@@ -160,12 +154,12 @@ fdc_pcmcia_attach(parent, self, aux)
 	struct fdc_attach_args fa;
 	int error;
 
+	fdc->sc_dev = self;
 	psc->sc_pf = pf;
 
 	error = pcmcia_function_configure(pf, fdc_pcmcia_validate_config);
         if (error) {
-                aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
-                    error);
+                aprint_error_dev(self, "configure failed, error=%d\n", error);
                 return;
         }
 
@@ -181,7 +175,7 @@ fdc_pcmcia_attach(parent, self, aux)
 	TAILQ_INIT(&fdc->sc_drives);
 
 	if (!fdcfind(fdc->sc_iot, fdc->sc_ioh, 1))
-		aprint_error("%s: coundn't find fdc\n", self->dv_xname);
+		aprint_error_dev(self, "coundn't find fdc\n");
 
 	fdc_conf(fdc);
 

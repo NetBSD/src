@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.80 2007/11/14 22:58:27 dyoung Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.80.10.1 2008/03/24 07:16:24 keiichi Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.80 2007/11/14 22:58:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.80.10.1 2008/03/24 07:16:24 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -113,7 +113,7 @@ struct	udp6stat udp6stat;
 static	void udp6_notify(struct in6pcb *, int);
 
 void
-udp6_init()
+udp6_init(void)
 {
 	/* initialization done in udp_input() due to initialization order */
 }

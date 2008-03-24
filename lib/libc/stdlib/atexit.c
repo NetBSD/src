@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.19 2007/08/08 01:05:34 kristerw Exp $	*/
+/*	$NetBSD: atexit.c,v 1.19.6.1 2008/03/24 07:14:45 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.19 2007/08/08 01:05:34 kristerw Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.19.6.1 2008/03/24 07:14:45 keiichi Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -81,8 +81,10 @@ static struct atexit_handler *atexit_handler_stack;
 
 #ifdef _REENTRANT
 /* ..and a mutex to protect it all. */
-static mutex_t atexit_mutex = MUTEX_INITIALIZER;
+static mutex_t atexit_mutex;
 #endif /* _REENTRANT */
+
+void	__libc_atexit_init(void) __attribute__ ((visibility("hidden")));
 
 /*
  * Allocate an atexit handler descriptor.  If "dso" is NULL, it indicates
@@ -116,6 +118,19 @@ atexit_handler_alloc(void *dso)
 	 */
 	ah = malloc(sizeof(*ah));
 	return (ah);
+}
+
+/*
+ * Initialize atexit_mutex with the PTHREAD_MUTEX_RECURSIVE attribute.
+ * Note that __cxa_finalize may generate calls to __cxa_atexit.
+ */
+void
+__libc_atexit_init(void)
+{
+	mutexattr_t atexit_mutex_attr;
+	mutexattr_init(&atexit_mutex_attr);
+	mutexattr_settype(&atexit_mutex_attr, PTHREAD_MUTEX_RECURSIVE);
+	mutex_init(&atexit_mutex, &atexit_mutex_attr);
 }
 
 /*
@@ -162,24 +177,12 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 void
 __cxa_finalize(void *dso)
 {
-	static thr_t owner;
 	static u_int call_depth;
 	struct atexit_handler *ah, *dead_handlers = NULL, **prevp;
 	void (*cxa_func)(void *);
 	void (*atexit_func)(void);
 
-	/*
-	 * We implement our own recursive mutex here because we need
-	 * to keep track of the call depth anyway, and it saves us
-	 * having to dynamically initialize the mutex.
-	 */
-	if (mutex_trylock(&atexit_mutex) == 0)
-		owner = thr_self();
-	else if (owner != thr_self()) {
-		mutex_lock(&atexit_mutex);
-		owner = thr_self();
-	}
-
+	mutex_lock(&atexit_mutex);
 	call_depth++;
 
 	/*

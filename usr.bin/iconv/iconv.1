@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.1,v 1.2 2003/07/04 07:58:10 wiz Exp $
+.\" $NetBSD: iconv.1,v 1.2.30.1 2008/03/24 07:16:34 keiichi Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 4, 2003
+.Dd March 20, 2008
 .Dt ICONV 1
 .Os
 .\" ----------------------------------------------------------------------
@@ -39,6 +39,18 @@
 .Ar from_name
 .Fl t
 .Ar to_name
+.Op Ar file ...
+.Nm
+.Fl f
+.Ar from_name
+.Op Fl cs
+.Op Fl t Ar to_name
+.Op Ar file ...
+.Nm
+.Fl t
+.Ar to_name
+.Op Fl cs
+.Op Fl f Ar from_name
 .Op Ar file ...
 .Nm
 .Fl l

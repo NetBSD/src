@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.20 2008/02/18 19:43:02 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.20.2.1 2008/03/24 07:15:03 keiichi Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.20 2008/02/18 19:43:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.20.2.1 2008/03/24 07:15:03 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ struct crmfb_softc {
 	uint32_t		sc_fbsize;
 	int			sc_mte_direction;
 	uint8_t			*sc_scratch;
+	paddr_t			sc_linear;
 	struct rasops_info	sc_rasops;
 	int 			sc_cells;
 	int			sc_current_cell;
@@ -260,8 +261,6 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_tiles_x = (sc->sc_width + 127) >> 7;
 	sc->sc_tiles_y = (sc->sc_height + 127) >> 7;
 	sc->sc_fbsize = 0x10000 * sc->sc_tiles_x * sc->sc_tiles_y;
-	aprint_normal("so we need %d x %d tiles -> %08x\n", sc->sc_tiles_x,
-	    sc->sc_tiles_y, sc->sc_fbsize);
 
 	sc->sc_dmai.size = 256 * sizeof(uint16_t);
 	rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmai.size, 65536, 0,
@@ -284,8 +283,8 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	if (rv)
 		panic("crmfb_attach: can't load DMA map");
 
-	/* allocate an extra tile for character drawing */
-	sc->sc_dma.size = sc->sc_fbsize + 0x10000;
+	/* allocate an extra 64Kb for a linear buffer */
+	sc->sc_dma.size = 0x10000 * (16 * sc->sc_tiles_x + 1);
 	rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dma.size, 65536, 0,
 	    sc->sc_dma.segs,
 	    sizeof(sc->sc_dma.segs) / sizeof(sc->sc_dma.segs[0]),
@@ -311,7 +310,8 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	for (i = 0; i < (sc->sc_tiles_x * sc->sc_tiles_y); i++) {
 		p[i] = ((uint32_t)v >> 16) + i;
 	}
-	sc->sc_scratch = (char *)KERNADDR(sc->sc_dma) + sc->sc_fbsize;
+	sc->sc_scratch = (char *)KERNADDR(sc->sc_dma) + (0xf0000 * sc->sc_tiles_x);
+	sc->sc_linear = (paddr_t)DMAADDR(sc->sc_dma) + 0x100000 * sc->sc_tiles_x;
 
 	aprint_normal("%s: allocated %d byte fb @ %p (%p)\n", 
 	    sc->sc_dev.dv_xname,
@@ -319,6 +319,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 
 	sc->sc_current_cell = 0;
 
+	crmfb_setup_video(sc, 8);
 	ri = &crmfb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
 
@@ -333,7 +334,6 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	crmfb_defaultscreen.capabilities = ri->ri_caps;
 	crmfb_defaultscreen.modecookie = NULL;
 
-	crmfb_setup_video(sc, 8);
 	crmfb_setup_palette(sc);
 	crmfb_fill_rect(sc, 0, 0, sc->sc_width, sc->sc_height,
 	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
@@ -486,7 +486,7 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	/* we probably shouldn't let anyone mmap the framebuffer */
 #if 1
-	if (offset >= 0 && offset < sc->sc_fbsize) {
+	if (offset >= 0 && offset < (0x100000 * sc->sc_tiles_x)) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
 		    sc->sc_dma.nsegs, offset, prot,
 		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
@@ -505,8 +505,9 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* and now the scratch area */
 	if ((offset >= 0x15010000) && (offset < 0x15020000))
 		return bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
-		   sc->sc_dma.nsegs, offset - 0x15010000 + sc->sc_fbsize,
-		   prot, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+		     sc->sc_dma.nsegs,
+		     offset + (0x100000 * sc->sc_tiles_x) - 0x15010000,
+		     prot, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	return -1;
 }
 
@@ -650,7 +651,7 @@ crmfb_set_palette(struct crmfb_softc *sc, int reg, uint8_t r, uint8_t g,
 	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_CMAP_FIFO) >= 63)
 		DELAY(10);
 
-	val = (r << 24) | (g << 16) | (b << 8);
+	val = (r << 8) | (g << 16) | (b << 24);
 	crmfb_write_reg(sc, CRMFB_CMAP + (reg * 4), val);
 
 	return;
@@ -782,8 +783,8 @@ static int
 crmfb_setup_video(struct crmfb_softc *sc, int depth)
 {
 	uint64_t reg;
-	uint32_t d, h, mode;
-	int i, bail, tile_width, tlbptr, j, tx, shift;
+	uint32_t d, h, mode, page;
+	int i, bail, tile_width, tlbptr, lptr, j, tx, shift;
 	const char *wantsync;
 	uint16_t v;
 
@@ -917,32 +918,51 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	tx = ((sc->sc_width + (tile_width - 1)) & ~(tile_width - 1)) / 
 	    tile_width;
 
-	for (i = 0; i < sc->sc_tiles_y; i++) {
+#ifdef CRMFB_DEBUG
+	printf("tx: %d\n", tx);
+#endif
+
+	for (i = 0; i < 16; i++) {
 		reg = 0;
 		shift = 64;
+		lptr = 0;
 		for (j = 0; j < tx; j++) {
 			shift -= 16;
 			reg |= (((uint64_t)(v | 0x8000)) << shift);
 			if (shift == 0) {
 				shift = 64;
 				bus_space_write_8(sc->sc_iot, sc->sc_reh,
-				    CRIME_RE_TLB_A + tlbptr + (j & 0xffc) * 2, 
+				    CRIME_RE_TLB_A + tlbptr + lptr, 
 				    reg);
+#ifdef CRMFB_DEBUG
+				printf("%04x: %016llx\n", tlbptr + lptr, reg);
+#endif
+				reg = 0;
+				lptr += 8;
 			}
 			v++;
 		}
 		if (shift != 64) {
 			bus_space_write_8(sc->sc_iot, sc->sc_reh,
-			    CRIME_RE_TLB_A + tlbptr + (j & 0xffc) * 2, reg);
+			    CRIME_RE_TLB_A + tlbptr + lptr, reg);
+#ifdef CRMFB_DEBUG
+			printf("%04x: %016llx\n", tlbptr + lptr, reg);
+#endif
 		}
 		tlbptr += 32;
 	}
+	sc->sc_scratch = (char *)KERNADDR(sc->sc_dma) + (0xf0000 * tx);
 
-	/* put the scratch page into the lower left of the fb */
-	reg = (((uint64_t)(DMAADDR(sc->sc_dma) + sc->sc_fbsize) | 0x80000000) &
-	    0xffff0000) << 32;
-	bus_space_write_8(sc->sc_iot, sc->sc_reh, CRIME_RE_TLB_A + 0x1e0, reg);
-
+	/* now put the last 64kB into the 1st linear TLB */
+	page = (sc->sc_linear >> 12) | 0x80000000;
+	tlbptr = 0;
+	for (i = 0; i < 8; i++) {
+		reg = ((uint64_t)page << 32) | (page + 1);
+		bus_space_write_8(sc->sc_iot, sc->sc_reh,
+		    CRIME_RE_LINEAR_A + tlbptr, reg);
+		page += 2;
+		tlbptr += 8;
+	}
 	wbflush();
 
 	/* do some very basic engine setup */

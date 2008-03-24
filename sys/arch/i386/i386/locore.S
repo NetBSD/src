@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.66 2008/01/23 19:46:44 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.66.2.1 2008/03/24 07:14:58 keiichi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -141,7 +141,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.66 2008/01/23 19:46:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.66.2.1 2008/03/24 07:14:58 keiichi Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1090,6 +1090,7 @@ syscall1:
 1:
 #endif /* DIAGNOSTIC */
 	movl	CPUVAR(CURLWP),%edx
+	incl	CPUVAR(NSYSCALL)	# count it atomically
 	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
 	movl	L_PROC(%edx),%edx
 	pushl	%esp

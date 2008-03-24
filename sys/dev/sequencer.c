@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.43 2007/12/05 17:19:48 pooka Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.43.8.1 2008/03/24 07:15:11 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.43 2007/12/05 17:19:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.43.8.1 2008/03/24 07:15:11 keiichi Exp $");
 
 #include "sequencer.h"
 
@@ -269,7 +269,7 @@ seq_timeout(void *addr)
 	seq_startoutput(sc);
 	if (SEQ_QLEN(&sc->outq) < sc->lowat) {
 		seq_wakeup(&sc->wchan);
-		selnotify(&sc->wsel, 0);
+		selnotify(&sc->wsel, 0, 0);
 		if (sc->async != NULL) {
 			mutex_enter(&proclist_mutex);
 			if ((p = sc->async) != NULL)
@@ -326,7 +326,7 @@ seq_softintr(void *cookie)
 	struct proc *p;
 
 	seq_wakeup(&sc->rchan);
-	selnotify(&sc->rsel, 0);
+	selnotify(&sc->rsel, 0, 0);
 	if (sc->async != NULL) {
 		mutex_enter(&proclist_mutex);
 		if ((p = sc->async) != NULL)
@@ -1189,7 +1189,7 @@ midiseq_open(int unit, int flags)
 	error = cdev_open(dev, flags, 0, 0);
 	if (error)
 		return (0);
-	sc = midi_cd.cd_devs[unit];
+	sc = device_private(midi_cd.cd_devs[unit]);
 	sc->seqopen = 1;
 	md = malloc(sizeof *md, M_DEVBUF, M_WAITOK|M_ZERO);
 	sc->seq_md = md;

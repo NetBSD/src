@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.63 2007/05/29 05:39:10 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.64 2008/02/19 05:27:17 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -1543,7 +1543,7 @@ test_for_append(struct bsdtar *bsdtar)
 	if (stat(bsdtar->filename, &s) != 0)
 		return;
 
-	if (!S_ISREG(s.st_mode))
+	if (!S_ISREG(s.st_mode) && !S_ISBLK(s.st_mode))
 		bsdtar_errc(bsdtar, 1, 0,
 		    "Cannot append to %s: not a regular file.",
 		    bsdtar->filename);

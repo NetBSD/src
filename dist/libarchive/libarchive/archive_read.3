@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libarchive/archive_read.3,v 1.34 2007/05/29 01:00:18 kientzle Exp $
+.\" $FreeBSD: src/lib/libarchive/archive_read.3,v 1.35 2007/09/19 16:37:45 kientzle Exp $
 .\"
 .Dd August 19, 2006
 .Dt archive_read 3
@@ -267,7 +267,7 @@ to create the entry on disk and copy data into it.
 The
 .Va flags
 argument is passed unmodified to
-.Xr archiv_write_disk_set_options 3 .
+.Xr archive_write_disk_set_options 3 .
 .It Fn archive_read_extract_set_progress_callback
 Sets a pointer to a user-defined callback that can be used
 for updating progress displays during extraction.

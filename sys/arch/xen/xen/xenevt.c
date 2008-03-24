@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.22 2008/02/19 19:50:53 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.22.2.1 2008/03/24 07:15:10 keiichi Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.22 2008/02/19 19:50:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.22.2.1 2008/03/24 07:15:10 keiichi Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -263,7 +263,7 @@ xenevt_donotify(struct xenevt_d *d)
 	s = splsoftserial();
 	simple_lock(&d->lock);
 	 
-	selnotify(&d->sel, 1);
+	selnotify(&d->sel, 0, 1);
 	wakeup(&d->ring_read);
 
 	simple_unlock(&d->lock);
@@ -306,6 +306,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
 		simple_lock_init(&d->lock);
+		selinit(&d->sel);
 		return fdclone(l, fp, fd, flags, &xenevt_fileops, d);
 #ifdef XEN3
 	case DEV_XSD:
@@ -388,6 +389,7 @@ xenevt_fclose(struct file *fp, struct lwp *l)
 #endif
 		}
 	}
+	seldestroy(&d->sel);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;
 

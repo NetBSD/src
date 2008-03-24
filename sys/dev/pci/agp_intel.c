@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.28 2008/02/15 13:28:25 gson Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.28.2.1 2008/03/24 07:15:46 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.28 2008/02/15 13:28:25 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.28.2.1 2008/03/24 07:15:46 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ static int agp_intel_bind_page(struct agp_softc *, off_t, bus_addr_t);
 static int agp_intel_unbind_page(struct agp_softc *, off_t);
 static void agp_intel_flush_tlb(struct agp_softc *);
 static int agp_intel_init(struct agp_softc *);
-static bool agp_intel_resume(device_t);
+static bool agp_intel_resume(device_t PMF_FN_PROTO);
 
 static struct agp_methods agp_intel_methods = {
 	agp_intel_get_aperture,
@@ -264,9 +264,9 @@ agp_intel_init(struct agp_softc *sc)
 
 	default:
 		{
-		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS - 1);
-		reg |= 0x7000;
-		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS - 1, reg);
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS);
+		/* clear error bits (write-one-to-clear) - just write back */
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS, reg);
 		}
 	}
 
@@ -397,7 +397,7 @@ agp_intel_flush_tlb(struct agp_softc *sc)
 }
 
 static bool
-agp_intel_resume(device_t dv)
+agp_intel_resume(device_t dv PMF_FN_ARGS)
 {
 	struct agp_softc *sc = device_private(dv);
 

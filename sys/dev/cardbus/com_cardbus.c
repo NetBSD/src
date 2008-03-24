@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.20 2006/11/16 01:32:48 christos Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.20.44.1 2008/03/24 07:15:15 keiichi Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.20 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.20.44.1 2008/03/24 07:15:15 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,17 +69,17 @@ struct com_cardbus_softc {
 	int			cc_type;
 };
 
-#define DEVNAME(CSC) ((CSC)->cc_com.sc_dev.dv_xname)
+#define DEVICET(CSC) ((CSC)->cc_com.sc_dev)
 
-static int com_cardbus_match (struct device*, struct cfdata*, void*);
-static void com_cardbus_attach (struct device*, struct device*, void*);
-static int com_cardbus_detach (struct device*, int);
+static int com_cardbus_match (device_t, cfdata_t, void*);
+static void com_cardbus_attach (device_t, device_t, void*);
+static int com_cardbus_detach (device_t, int);
 
 static void com_cardbus_setup(struct com_cardbus_softc*);
 static int com_cardbus_enable (struct com_softc*);
 static void com_cardbus_disable(struct com_softc*);
 
-CFATTACH_DECL(com_cardbus, sizeof(struct com_cardbus_softc),
+CFATTACH_DECL_NEW(com_cardbus, sizeof(struct com_cardbus_softc),
     com_cardbus_match, com_cardbus_attach, com_cardbus_detach, com_activate);
 
 static struct csdev {
@@ -115,8 +115,7 @@ find_csdev(struct cardbus_attach_args *ca)
 }
 
 static int
-com_cardbus_match(struct device *parent, struct cfdata *match,
-    void *aux)
+com_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -168,7 +167,7 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 		index = i;
 	}
 	if(index == -1) {
-		printf(": couldn't find any base address tuple\n");
+		aprint_error(": couldn't find any base address tuple\n");
 		return 1;
 	}
 	csc->cc_reg = CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[index].flags);
@@ -179,12 +178,11 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 	return 0;
 
   multi_bar:
-	printf(": there are more than one possible base\n");
+	aprint_error(": there are more than one possible base\n");
 
-	printf("%s: address for this device, "
-	       "please report the following information\n",
-	       DEVNAME(csc));
-	printf("%s: vendor 0x%x product 0x%x\n", DEVNAME(csc),
+	aprint_error_dev(DEVICET(csc), "address for this device, "
+	       "please report the following information\n");
+	aprint_error_dev(DEVICET(csc), "vendor 0x%x product 0x%x\n",
 	       CARDBUS_VENDOR(ca->ca_id), CARDBUS_PRODUCT(ca->ca_id));
 	for(i = 0; i < 7; i++) {
 		/* ignore zero sized BARs */
@@ -194,8 +192,8 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 		if(CARDBUS_CIS_ASI_BAR(cis_ptr) ==
 		   CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[i].flags))
 			continue;
-		printf("%s: base address %x type %s size %x\n",
-		       DEVNAME(csc),
+		aprint_error_dev(DEVICET(csc),
+		       "base address %x type %s size %x\n",
 		       CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[i].flags),
 		       (ca->ca_cis.bar[i].flags & 0x10) ? "i/o" : "mem",
 		       ca->ca_cis.bar[i].size);
@@ -204,8 +202,7 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 }
 
 static void
-com_cardbus_attach (struct device *parent, struct device *self,
-    void *aux)
+com_cardbus_attach (device_t parent, device_t self, void *aux)
 {
 	struct com_softc *sc = device_private(self);
 	struct com_cardbus_softc *csc = device_private(self);
@@ -213,6 +210,7 @@ com_cardbus_attach (struct device *parent, struct device *self,
 	bus_space_handle_t	ioh;
 	bus_space_tag_t		iot;
 
+	sc->sc_dev = self;
 	csc->cc_ct = ca->ca_ct;
 	csc->cc_tag = Cardbus_make_tag(csc->cc_ct);
 
@@ -227,7 +225,7 @@ com_cardbus_attach (struct device *parent, struct device *self,
 			      &ioh,
 			      &csc->cc_addr,
 			      &csc->cc_size) != 0) {
-		printf("failed to map memory");
+		aprint_error("failed to map memory");
 		return;
 	}
 
@@ -251,9 +249,9 @@ com_cardbus_attach (struct device *parent, struct device *self,
 	sc->enabled = 0;
 
 	if (ca->ca_cis.cis1_info[0] && ca->ca_cis.cis1_info[1]) {
-		printf(": %s %s\n", ca->ca_cis.cis1_info[0],
+		aprint_normal(": %s %s\n", ca->ca_cis.cis1_info[0],
 		    ca->ca_cis.cis1_info[1]);
-		printf("%s", DEVNAME(csc));
+		aprint_normal("%s", device_xname(DEVICET(csc)));
 	}
 
 	com_cardbus_setup(csc);
@@ -300,7 +298,7 @@ com_cardbus_enable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
 	struct cardbus_softc *psc =
-		(struct cardbus_softc *)device_parent(&sc->sc_dev);
+		device_private(device_parent(sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -312,13 +310,13 @@ com_cardbus_enable(struct com_softc *sc)
 	csc->cc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline,
 					    IPL_SERIAL, comintr, sc);
 	if (csc->cc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		       DEVNAME(csc));
+		aprint_error_dev(DEVICET(csc),
+		    "couldn't establish interrupt\n");
 		return 1;
 	}
 
-	printf("%s: interrupting at irq %d\n",
-	       DEVNAME(csc), psc->sc_intrline);
+	aprint_normal_dev(DEVICET(csc), "interrupting at irq %d\n",
+	    psc->sc_intrline);
 
 	return 0;
 }
@@ -328,7 +326,7 @@ com_cardbus_disable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
 	struct cardbus_softc *psc =
-		(struct cardbus_softc *)device_parent(&sc->sc_dev);
+		device_private(device_parent(sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -339,7 +337,7 @@ com_cardbus_disable(struct com_softc *sc)
 }
 
 static int
-com_cardbus_detach(struct device *self, int flags)
+com_cardbus_detach(device_t self, int flags)
 {
 	struct com_cardbus_softc *csc = device_private(self);
 	struct com_softc *sc = device_private(self);

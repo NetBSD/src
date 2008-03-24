@@ -1,6 +1,6 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.54 2007/11/23 16:19:28 sborrill Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.54.4.1 2008/03/24 07:14:40 keiichi Exp $
 .\"
-.\" Copyright (c) 2001-2007 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd September 1, 2007
+.Dd March 18, 2008
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -834,14 +834,14 @@ source tree.
 .It Sy build
 Build the entire
 .Nx
-system.
+system (except the kernel).
 This orders portions of the source tree such that prerequisites
 will be built in the proper order.
 .
 .It Sy distribution
 Do a
 .Dq make build ,
-and then install a full distribution into
+and then install a full distribution (which does not include a kernel) into
 .Sy DESTDIR ,
 including files in
 .Sy DESTDIR Ns Pa /dev ,
@@ -895,7 +895,7 @@ to check for inconsistencies (and possibly to fix them).
 Create distribution sets from
 .Sy DESTDIR
 into
-.Sy RELEASEDIR/MACHINE Ns Pa /binary/sets .
+.Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /binary/sets .
 Should be run after
 .Dq make distribution
 (as
@@ -910,7 +910,7 @@ Create source sets of the source tree into
 Create syspkgs from
 .Sy DESTDIR
 into
-.Sy RELEASEDIR/MACHINE Ns Pa /binary/syspkgs .
+.Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /binary/syspkgs .
 Should be run after
 .Dq make distribution
 (as
@@ -957,7 +957,7 @@ is attempted, RELEASEDIR must be populated by
 or equivalent.
 .Pp
 Note that other, smaller, CD-ROM images may be created in the
-.Sy RELEASEDIR/MACHINE Ns Pa /installation/cdrom
+.Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /installation/cdrom
 directory by
 .Dq "make release" .
 These smaller images usually contain the same tools as the larger images in
@@ -1001,7 +1001,7 @@ is attempted, RELEASEDIR must be populated by
 or equivalent.
 .Pp
 Note that other, smaller, CD-ROM images may be created in the
-.Sy RELEASEDIR/MACHINE Ns Pa /installation/cdrom
+.Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /installation/cdrom
 directory by
 .Dq make release .
 These smaller images usually contain the same tools as the larger images in
@@ -1148,7 +1148,7 @@ Install a
 copy of the kernel built by
 .Sy kernel Ns = Ns Ar kconf
 into
-.Sy RELEASEDIR/MACHINE Ns Pa /binary/kernel ,
+.Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /binary/kernel ,
 usually as
 .Pa netbsd- Ns Ar kconf Ns Pa .gz ,
 although the

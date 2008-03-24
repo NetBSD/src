@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.37 2008/01/08 12:17:32 joerg Exp $
+#	$NetBSD: Makefile.powerpc,v 1.37.2.1 2008/03/24 07:15:02 keiichi Exp $
 #
 # Makefile for NetBSD
 #
@@ -117,6 +117,7 @@ lock_stubs.o setfault.o: assym.h
 ## (9) port independent kernel machinery
 ##
 .include "$S/conf/Makefile.kern.inc"
+${KERNLIB} ${KERNLIB_PROF} ${KERNLIBLN}: assym.h
 
 ##
 ## (10) Appending make options.

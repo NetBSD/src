@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.37 2007/03/04 06:02:25 christos Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.37.32.1 2008/03/24 07:15:49 keiichi Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.37 2007/03/04 06:02:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.37.32.1 2008/03/24 07:15:49 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -152,8 +152,8 @@ pciide_common_attach(sc, pa, pp)
 
 	/* if displaydev == NULL, printf is done in chip-specific map */
 	if (displaydev)
-		aprint_normal("%s: %s (rev. 0x%02x)\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, displaydev,
+		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "%s (rev. 0x%02x)\n", displaydev,
 		    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pc = pa->pa_pc;
@@ -193,8 +193,8 @@ pciide_chipen(sc, pa)
 	if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0) {
 		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG);
-		aprint_normal("%s: device disabled (at %s)\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "device disabled (at %s)\n",
 		   (csr & PCI_COMMAND_IO_ENABLE) == 0 ?
 		   "device" : "bridge");
 		return 0;
@@ -221,16 +221,16 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	wdr->cmd_iot = pa->pa_iot;
 	if (bus_space_map(wdr->cmd_iot, PCIIDE_COMPAT_CMD_BASE(compatchan),
 	    PCIIDE_COMPAT_CMD_SIZE, 0, &wdr->cmd_baseioh) != 0) {
-		aprint_error("%s: couldn't map %s channel cmd regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map %s channel cmd regs\n", cp->name);
 		goto bad;
 	}
 
 	wdr->ctl_iot = pa->pa_iot;
 	if (bus_space_map(wdr->ctl_iot, PCIIDE_COMPAT_CTL_BASE(compatchan),
 	    PCIIDE_COMPAT_CTL_SIZE, 0, &wdr->ctl_ioh) != 0) {
-		aprint_error("%s: couldn't map %s channel ctl regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map %s channel ctl regs\n", cp->name);
 		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 		    PCIIDE_COMPAT_CMD_SIZE);
 		goto bad;
@@ -239,9 +239,9 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
-			aprint_error("%s: couldn't subregion %s channel "
-				     "cmd regs\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "couldn't subregion %s channel cmd regs\n",
+			    cp->name);
 			goto bad;
 		}
 	}
@@ -273,24 +273,23 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 
 	if (sc->sc_pci_ih == NULL) {
 		if (pci_intr_map(pa, &intrhandle) != 0) {
-			aprint_error("%s: couldn't map native-PCI interrupt\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "couldn't map native-PCI interrupt\n");
 			goto bad;
 		}
 		intrstr = pci_intr_string(pa->pa_pc, intrhandle);
 		sc->sc_pci_ih = pci_intr_establish(pa->pa_pc,
 		    intrhandle, IPL_BIO, pci_intr, sc);
 		if (sc->sc_pci_ih != NULL) {
-			aprint_normal("%s: using %s for native-PCI interrupt\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "using %s for native-PCI interrupt\n",
 			    intrstr ? intrstr : "unknown interrupt");
 		} else {
-			aprint_error(
-			    "%s: couldn't establish native-PCI interrupt",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "couldn't establish native-PCI interrupt");
 			if (intrstr != NULL)
-				aprint_normal(" at %s", intrstr);
-			aprint_normal("\n");
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
 			goto bad;
 		}
 	}
@@ -298,16 +297,16 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->ch_channel),
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &wdr->cmd_iot, &wdr->cmd_baseioh, NULL, cmdsizep) != 0) {
-		aprint_error("%s: couldn't map %s channel cmd regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map %s channel cmd regs\n", cp->name);
 		goto bad;
 	}
 
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->ch_channel),
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &wdr->ctl_iot, &cp->ctl_baseioh, NULL, ctlsizep) != 0) {
-		aprint_error("%s: couldn't map %s channel ctl regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "couldn't map %s channel ctl regs\n", cp->name);
 		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 		    *cmdsizep);
 		goto bad;
@@ -319,8 +318,8 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	 */
 	if (bus_space_subregion(wdr->ctl_iot, cp->ctl_baseioh, 2, 1,
 	    &wdr->ctl_ioh) != 0) {
-		aprint_error("%s: unable to subregion %s channel ctl regs\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "unable to subregion %s channel ctl regs\n", cp->name);
 		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 		     *cmdsizep);
 		bus_space_unmap(wdr->cmd_iot, cp->ctl_baseioh, *ctlsizep);
@@ -330,9 +329,9 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
-			aprint_error("%s: couldn't subregion %s channel "
-				     "cmd regs\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "couldn't subregion %s channel cmd regs\n",
+			    cp->name);
 			goto bad;
 		}
 	}
@@ -410,7 +409,7 @@ pciide_mapreg_dma(sc, pa)
 			sc->sc_wdcdev.dma_finish = pciide_dma_finish;
 		}
 
-		if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+		if (device_cfdata(sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 		    PCIIDE_OPTIONS_NODMA) {
 			aprint_verbose(
 			    ", but unused (forced off by config file)");
@@ -556,16 +555,18 @@ pciide_dma_table_setup(sc, channel, drive)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, dma_table_size,
 	    IDEDMA_TBL_ALIGN, IDEDMA_TBL_ALIGN, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(dmaerrfmt, sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-		    channel, "allocate", drive, error);
+		aprint_error(dmaerrfmt,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
+		    "allocate", drive, error);
 		return error;
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    dma_table_size,
 	    (void **)&dma_maps->dma_table,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error(dmaerrfmt, sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-		    channel, "map", drive, error);
+		aprint_error(dmaerrfmt,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
+		    "map", drive, error);
 		return error;
 	}
 	ATADEBUG_PRINT(("pciide_dma_table_setup: table at %p len %lu, "
@@ -575,16 +576,18 @@ pciide_dma_table_setup(sc, channel, drive)
 	if ((error = bus_dmamap_create(sc->sc_dmat, dma_table_size,
 	    1, dma_table_size, IDEDMA_TBL_ALIGN, BUS_DMA_NOWAIT,
 	    &dma_maps->dmamap_table)) != 0) {
-		aprint_error(dmaerrfmt, sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-		    channel, "create", drive, error);
+		aprint_error(dmaerrfmt,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
+		    "create", drive, error);
 		return error;
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat,
 	    dma_maps->dmamap_table,
 	    dma_maps->dma_table,
 	    dma_table_size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(dmaerrfmt, sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-		    channel, "load", drive, error);
+		aprint_error(dmaerrfmt,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
+		    "load", drive, error);
 		return error;
 	}
 	ATADEBUG_PRINT(("pciide_dma_table_setup: phy addr of table 0x%lx\n",
@@ -595,8 +598,9 @@ pciide_dma_table_setup(sc, channel, drive)
 	    NIDEDMA_TABLES(sc), sc->sc_dma_maxsegsz, sc->sc_dma_boundary,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 	    &dma_maps->dmamap_xfer)) != 0) {
-		aprint_error(dmaerrfmt, sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-		    channel, "create xfer", drive, error);
+		aprint_error(dmaerrfmt,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
+		    "create xfer", drive, error);
 		return error;
 	}
 	return 0;
@@ -619,8 +623,9 @@ pciide_dma_dmamap_setup(sc, channel, drive, databuf, datalen, flags)
 	    databuf, datalen, NULL, BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
 	    ((flags & WDC_DMA_READ) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
-		printf(dmaerrfmt, sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-		    channel, "load xfer", drive, error);
+		aprint_error(dmaerrfmt,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
+		    "load xfer", drive, error);
 		return error;
 	}
 
@@ -748,15 +753,16 @@ pciide_dma_finish(v, channel, drive, force)
 	bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_xfer);
 
 	if ((status & IDEDMA_CTL_ERR) != 0 && force != WDC_DMAEND_ABRT_QUIET) {
-		printf("%s:%d:%d: bus-master DMA error: status=0x%x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, channel, drive,
-		    status);
+		aprint_error("%s:%d:%d: bus-master DMA error: status=0x%x\n",
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
+		    drive, status);
 		error |= WDC_DMAST_ERR;
 	}
 
 	if ((status & IDEDMA_CTL_INTR) == 0 && force != WDC_DMAEND_ABRT_QUIET) {
-		printf("%s:%d:%d: bus-master DMA error: missing interrupt, "
-		    "status=0x%x\n", sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		aprint_error("%s:%d:%d: bus-master DMA error: missing "
+		    "interrupt, status=0x%x\n", 
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev),
 		    channel, drive, status);
 		error |= WDC_DMAST_NOIRQ;
 	}
@@ -798,12 +804,12 @@ pciide_chansetup(sc, channel, interface)
 	if (cp->ata_channel.ch_queue == NULL) {
 		aprint_error("%s %s channel: "
 		    "can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+		device_xname(sc->sc_wdcdev.sc_atac.atac_dev), cp->name);
 		return 0;
 	}
 	cp->ata_channel.ch_ndrive = 2;
-	aprint_verbose("%s: %s channel %s to %s mode\n",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name,
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "%s channel %s to %s mode\n", cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
 	    "configured" : "wired",
 	    (interface & PCIIDE_INTERFACE_PCI(channel)) ?
@@ -846,13 +852,13 @@ pciide_map_compat_intr(pa, cp, compatchan)
 
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	cp->ih =
-	   pciide_machdep_compat_intr_establish(&sc->sc_wdcdev.sc_atac.atac_dev,
+	   pciide_machdep_compat_intr_establish(sc->sc_wdcdev.sc_atac.atac_dev,
 	   pa, compatchan, pciide_compat_intr, cp);
 	if (cp->ih == NULL) {
 #endif
-		aprint_error("%s: no compatibility interrupt for use by %s "
-		    "channel\n", sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-		    cp->name);
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "no compatibility interrupt for use by %s "
+		    "channel\n", cp->name);
 		cp->ata_channel.ch_flags |= ATACH_DISABLED;
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	}
@@ -881,10 +887,10 @@ default_chip_map(sc, pa)
 
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
 #if NATA_DMA
-		aprint_verbose("%s: bus-master DMA support present",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "bus-master DMA support present");
 		if (sc->sc_pp == &default_product_desc &&
-		    (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+		    (device_cfdata(sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 		    PCIIDE_OPTIONS_DMA) == 0) {
 			aprint_verbose(", but unused (no driver support)");
 			sc->sc_dma_ok = 0;
@@ -895,12 +901,13 @@ default_chip_map(sc, pa)
 				    "support");
 		}
 #else
-		aprint_verbose("%s: bus-master DMA support present, but unused (no driver support)",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "bus-master DMA support present, but unused (no driver "
+		    "support)");
 #endif	/* NATA_DMA */
 	} else {
-		aprint_verbose("%s: hardware does not support DMA",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "hardware does not support DMA");
 #if NATA_DMA
 		sc->sc_dma_ok = 0;
 #endif
@@ -971,9 +978,8 @@ default_chip_map(sc, pa)
 		    PCI_COMMAND_STATUS_REG, csr);
 next:
 		if (failreason) {
-			aprint_error("%s: %s channel ignored (%s)\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name,
-			    failreason);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "%s channel ignored (%s)\n", cp->name, failreason);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    cmdsize);
@@ -1004,7 +1010,8 @@ next:
 				aprint_error(
 				    "%s:%d:%d: can't allocate DMA maps, "
 				    "using PIO transfers\n",
-				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+				    device_xname(
+				      sc->sc_wdcdev.sc_atac.atac_dev),
 				    channel, drive);
 				sc->sc_dma_ok = 0;
 				sc->sc_wdcdev.sc_atac.atac_cap &= ~ATAC_CAP_DMA;

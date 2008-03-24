@@ -1,14 +1,17 @@
-#	$NetBSD: Makefile,v 1.120 2007/11/12 14:56:24 jmmv Exp $
+#	$NetBSD: Makefile,v 1.120.4.1 2008/03/24 07:14:43 keiichi Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
 SUBDIR=	csu libc .WAIT libarch libatf libbsdmalloc libbluetooth libbz2 \
 	libcompat libcrypt \
-	libcurses libevent libform libintl libkvm libl libm \
-	libmenu libossaudio libpcap libpci libpmc libposix libprop libpthread \
+	libcurses libevent libintl libkvm libl libm \
+	libossaudio libpcap libpci libpmc libposix libprop libpthread \
 	libpthread_dbg libpuffs libresolv librmt librpcsvc librt libsdp \
 	libterm libusbhid libutil libwrap liby libz
+
+# libform and libmenu need libcurses
+SUBDIR+=	.WAIT libform libmenu 
 
 .if (${MKSKEY} != "no")
 SUBDIR+= libskey

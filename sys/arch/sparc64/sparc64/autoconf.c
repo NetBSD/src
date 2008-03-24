@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.151 2008/02/12 17:30:58 joerg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.151.2.1 2008/03/24 07:15:05 keiichi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,10 +48,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.151 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.151.2.1 2008/03/24 07:15:05 keiichi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -850,6 +851,14 @@ device_register(struct device *dev, void *aux)
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
 
+		/*
+		 * There are two "cd" attachments:
+		 *   atapibus -> atabus -> controller
+		 *   scsibus -> controller
+		 * We want the node of the controller.
+		 */
+		if (device_is_a(busdev, "atapibus"))
+			busdev = device_parent(busdev);
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_path_drive_match(dev, ofnode, periph->periph_target,
 		    periph->periph_lun);

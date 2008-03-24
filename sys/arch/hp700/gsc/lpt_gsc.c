@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_gsc.c,v 1.8 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: lpt_gsc.c,v 1.8.70.1 2008/03/24 07:14:56 keiichi Exp $	*/
 
 /*	$OpenBSD: lpt_gsc.c,v 1.6 2000/07/21 17:41:06 mickey Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.8 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.8.70.1 2008/03/24 07:14:56 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,10 +80,10 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_gsc.c,v 1.8 2005/12/11 12:17:24 christos Exp $")
 int lpt_isa_debug = 0;
 #endif
 
-int	lpt_gsc_probe(struct device *, struct cfdata *, void *);
-void	lpt_gsc_attach(struct device *, struct device *, void *);
+int	lpt_gsc_probe(device_t, cfdata_t , void *);
+void	lpt_gsc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(lpt_gsc, sizeof(struct lpt_softc),
+CFATTACH_DECL_NEW(lpt_gsc, sizeof(struct lpt_softc),
     lpt_gsc_probe, lpt_gsc_attach, NULL, NULL);
 
 int	lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
@@ -133,7 +133,7 @@ lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh, bus_addr_t base,
  *	3) Set the data and control ports to a value of 0
  */
 int
-lpt_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
+lpt_gsc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
@@ -196,25 +196,26 @@ lpt_gsc_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-lpt_gsc_attach(struct device *parent, struct device *self, void *aux)
+lpt_gsc_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_softc *sc = (void *)self;
+	struct lpt_softc *sc = device_private(self);
 	struct gsc_attach_args *ga = aux;
 
 	/* sc->sc_flags |= LPT_POLLED; */
 
+	sc->sc_dev = self;
 	sc->sc_state = 0;
 	sc->sc_iot = ga->ga_iot;
 	if (bus_space_map(sc->sc_iot, ga->ga_hpa + LPTGSC_OFFSET,
 			  LPT_NPORTS, 0, &sc->sc_ioh)) {
-		printf(": can't map i/o ports\n");
+		aprint_error(": can't map i/o ports\n");
 		return;
 	}
 
 	lpt_attach_subr(sc);
 
-	sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_TTY,
+	sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_TTY,
 					 lptintr, sc,
 					 ga->ga_int_reg, ga->ga_irq);
-	printf("\n");
+	aprint_normal("\n");
 }
