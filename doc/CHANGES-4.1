@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.42 2008/03/24 20:54:14 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.43 2008/03/24 21:03:44 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -699,4 +699,10 @@ sys/dev/ic/rtl81x9reg.h				1.28
 	on tech-net.  Should also close PR kern/37959.
 	Other various, cosmetic fixes.
 	[tsutsui, ticket #1105]
+
+sys/secmodel/overlay/overlay.h			1.2
+sys/secmodel/overlay/secmodel_overlay.c		1.4 via patch
+
+	Support device scope.
+	[elad, ticket #1108]
 
