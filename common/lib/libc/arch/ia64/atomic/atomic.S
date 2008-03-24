@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.1 2008/03/20 07:10:31 kochi Exp $	*/
+/*	$NetBSD: atomic.S,v 1.2 2008/03/24 14:59:30 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -195,6 +195,12 @@ ALIAS(atomic_cas_64,_atomic_cas_64)
 ALIAS(atomic_cas_ulong,_atomic_cas_64)
 ALIAS(atomic_cas_ptr,_atomic_cas_64)
 
+ALIAS(atomic_cas_32_ni,_atomic_cas_32)
+ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
+ALIAS(atomic_cas_64_ni,_atomic_cas_64)
+ALIAS(atomic_cas_ulong_ni,_atomic_cas_64)
+ALIAS(atomic_cas_ptr_ni,_atomic_cas_64)
+
 ALIAS(membar_consumer,_membar_consumer)
 ALIAS(membar_producer,_membar_producer)
 ALIAS(membar_enter,_membar_enter)
@@ -248,3 +254,7 @@ STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_64)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_64)
+
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_64)
