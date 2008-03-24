@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.41 2008/03/24 20:25:02 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.42 2008/03/24 20:54:14 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -675,3 +675,28 @@ lib/libbz2/shlib_version:			patch
 
 	Upgrade bzip2 to 1.0.5, fixing CVE-2008-1372 and CVE-2005-0953
 	[adrianp, ticket #1106]
+sys/arch/cobalt/dev/panel.c			1.16
+
+	Print "NetBSD/cobalt Starting up...  " to LCD panel on boot, and also
+	print "NetBSD/cobalt Shutting donw..." on halt via shutdown hook.
+	This would be useful for users who don't have serial console.
+	[tsutsui, ticket #1103]
+
+sys/arch/cobalt/cobalt/machdep.c		1.93 via patch
+
+	Fix botched spl(9) bug I introduced back in 3.99.18 (rev 1.64):
+	Don't enable unhandled interrupts before all interrupts are processed.
+	Should fix "long download, network frozen" problems reported on
+	port-cobalt by several people.
+	[tsutsui, ticket #1104]
+
+sys/dev/ic/rtl8169.c				1.94, 1.95, 1.97, 1.98
+sys/dev/ic/rtl81x9reg.h				1.28
+
+	It looks vlan tag info must appear not only in the first descriptor
+	but in all descriptors of a multi-descriptor transmission attempt on
+	re(4).  Problem was reported and fix was confirmed by Chris Brookes
+	on tech-net.  Should also close PR kern/37959.
+	Other various, cosmetic fixes.
+	[tsutsui, ticket #1105]
+
