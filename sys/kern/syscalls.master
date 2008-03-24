@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.194 2008/03/24 12:24:37 yamt Exp $
+	$NetBSD: syscalls.master,v 1.195 2008/03/24 23:46:43 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -109,11 +109,11 @@
 25	STD MPSAFE	{ uid_t sys_geteuid(void); }
 26	STD MPSAFE	{ int sys_ptrace(int req, pid_t pid, void *addr, \
 			    int data); }
-27	STD 		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
+27	STD MPSAFE	{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
-28	STD 		{ ssize_t sys_sendmsg(int s, \
+28	STD MPSAFE	{ ssize_t sys_sendmsg(int s, \
 			    const struct msghdr *msg, int flags); }
-29	STD 		{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
+29	STD MPSAFE	{ ssize_t sys_recvfrom(int s, void *buf, size_t len, \
 			    int flags, struct sockaddr *from, \
 			    unsigned int *fromlenaddr); }
 30	STD		{ int sys_accept(int s, struct sockaddr *name, \
@@ -223,9 +223,9 @@
 99	COMPAT_43	{ int sys_accept(int s, void *name, \
 			    int *anamelen); } oaccept
 100	STD MPSAFE	{ int sys_getpriority(int which, id_t who); }
-101	COMPAT_43	{ int sys_send(int s, void *buf, int len, \
+101	COMPAT_43 MPSAFE	{ int sys_send(int s, void *buf, int len, \
 			    int flags); } osend
-102	COMPAT_43	{ int sys_recv(int s, void *buf, int len, \
+102	COMPAT_43 MPSAFE	{ int sys_recv(int s, void *buf, int len, \
 			    int flags); } orecv
 103	COMPAT_13 MPSAFE	{ int sys_sigreturn(struct sigcontext13 *sigcntxp); } \
 			    sigreturn13
@@ -242,9 +242,9 @@
 111	COMPAT_13 MPSAFE	{ int sys_sigsuspend(int mask); } sigsuspend13
 112	COMPAT_43 MPSAFE	{ int sys_sigstack(struct sigstack *nss, \
 			    struct sigstack *oss); } osigstack
-113	COMPAT_43	{ int sys_recvmsg(int s, struct omsghdr *msg, \
+113	COMPAT_43 MPSAFE	{ int sys_recvmsg(int s, struct omsghdr *msg, \
 			    int flags); } orecvmsg
-114	COMPAT_43	{ int sys_sendmsg(int s, void *msg, int flags); } \
+114	COMPAT_43 MPSAFE	{ int sys_sendmsg(int s, void *msg, int flags); } \
 			    osendmsg
 115	OBSOL		vtrace
 116	STD MPSAFE	{ int sys_gettimeofday(struct timeval *tp, \
@@ -261,7 +261,7 @@
 			    const void *tzp); }
 123	STD MPSAFE	{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD MPSAFE	{ int sys_fchmod(int fd, mode_t mode); }
-125	COMPAT_43	{ int sys_recvfrom(int s, void *buf, size_t len, \
+125	COMPAT_43 MPSAFE	{ int sys_recvfrom(int s, void *buf, size_t len, \
 			    int flags, void *from, int *fromlenaddr); } \
 			    orecvfrom
 126	STD MPSAFE	{ int sys_setreuid(uid_t ruid, uid_t euid); }
@@ -272,7 +272,7 @@
 130	COMPAT_43 MPSAFE	{ int sys_ftruncate(int fd, long length); } oftruncate
 131	STD MPSAFE	{ int sys_flock(int fd, int how); }
 132	STD MPSAFE	{ int sys_mkfifo(const char *path, mode_t mode); }
-133	STD 		{ ssize_t sys_sendto(int s, const void *buf, \
+133	STD MPSAFE	{ ssize_t sys_sendto(int s, const void *buf, \
 			    size_t len, int flags, const struct sockaddr *to, \
 			    unsigned int tolen); }
 134	STD		{ int sys_shutdown(int s, int how); }
