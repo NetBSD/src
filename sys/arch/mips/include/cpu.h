@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2008/01/09 20:38:35 wiz Exp $	*/
+/*	$NetBSD: cpu.h,v 1.88.2.1 2008/03/24 07:15:01 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -112,13 +112,6 @@ do {									\
 #ifndef CPU_MAXID
 #define CPU_MAXID		5	/* number of valid machdep ids */
 
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "root_device", CTLTYPE_STRING }, \
-	{ "llsc", CTLTYPE_INT }, \
-}
 #endif
 
 #ifdef _KERNEL

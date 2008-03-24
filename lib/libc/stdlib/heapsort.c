@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.15 2004/11/28 06:57:14 jmc Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.15.22.1 2008/03/24 07:14:45 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.15 2004/11/28 06:57:14 jmc Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.15.22.1 2008/03/24 07:14:45 keiichi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -162,12 +162,10 @@ __weak_alias(heapsort,_heapsort)
  * only advantage over quicksort is that it requires little additional memory.
  */
 int
-heapsort(vbase, nmemb, size, compar)
-	void *vbase;
-	size_t nmemb, size;
-	int (*compar) __P((const void *, const void *));
+heapsort(void *vbase, size_t nmemb, size_t size,
+    int (*compar) __P((const void *, const void *)))
 {
-	int cnt, i, j, l;
+	size_t cnt, i, j, l;
 	char tmp, *tmp1, *tmp2;
 	char *base, *k, *p, *t;
 

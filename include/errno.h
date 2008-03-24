@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.9 2005/12/24 19:16:02 perry Exp $	*/
+/*	$NetBSD: errno.h,v 1.9.16.1 2008/03/24 07:14:43 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -44,8 +44,14 @@
 #include <sys/featuretest.h>
 
 __BEGIN_DECLS
-#ifndef errno
+
+/* note: this appears in both errno.h and signal.h */
+#ifndef __errno
 int *__errno(void);
+#define __errno __errno
+#endif
+
+#ifndef errno
 #define errno (*__errno())
 #endif
 

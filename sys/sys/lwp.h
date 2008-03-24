@@ -1,7 +1,7 @@
-/* 	$NetBSD: lwp.h,v 1.78 2008/01/26 17:55:29 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.78.2.1 2008/03/24 07:16:28 keiichi Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,6 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <sys/pset.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/specificdata.h>
@@ -283,6 +282,7 @@ void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
+u_int	lwp_unsleep(lwp_t *, bool);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
@@ -350,14 +350,6 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 		return;
 
 	(*l->l_syncobj->sobj_lendpri)(l, pri);
-}
-
-static inline void
-lwp_unsleep(lwp_t *l)
-{
-	KASSERT(mutex_owned(l->l_mutex));
-
-	(*l->l_syncobj->sobj_unsleep)(l);
 }
 
 static inline pri_t

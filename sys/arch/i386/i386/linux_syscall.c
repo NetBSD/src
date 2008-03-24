@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.42 2008/02/06 22:12:39 dsl Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.42.2.1 2008/03/24 07:14:58 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.42 2008/02/06 22:12:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.42.2.1 2008/03/24 07:14:58 keiichi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -69,7 +69,6 @@ void
 linux_syscall_intern(struct proc *p)
 {
 
-	p->p_trace_enabled = trace_is_enabled(p);
 	p->p_md.md_syscall = linux_syscall;
 }
 
@@ -86,7 +85,6 @@ linux_syscall(struct trapframe *frame)
 	int error;
 	register_t code, args[6], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	LWP_CACHE_CREDS(l, l->l_proc);
 

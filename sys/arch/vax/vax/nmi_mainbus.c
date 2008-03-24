@@ -1,4 +1,4 @@
-/*	$NetBSD: nmi_mainbus.c,v 1.8 2007/03/04 06:01:02 christos Exp $	   */
+/*	$NetBSD: nmi_mainbus.c,v 1.8.36.1 2008/03/24 07:15:07 keiichi Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.8 2007/03/04 06:01:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.8.36.1 2008/03/24 07:15:07 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,28 +44,27 @@ __KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.8 2007/03/04 06:01:02 christos Exp
 #include <machine/scb.h>
 #include <machine/cpu.h>
 #include <machine/ka88.h>
+#include <machine/mainbus.h>
 
-
-extern	struct vax_bus_space vax_mem_bus_space;
-extern	struct vax_bus_dma_tag vax_bus_dma_tag;
+#include "ioconf.h"
 
 static int
 nmi_mainbus_print(void *aux, const char *name)
 {
 	struct nmi_attach_args *na = aux;
-	char *c;
+	const char *c;
 
 	if (name) {
-		if (na->slot < 10)
+		if (na->na_slot < 10)
 			c = "bi";
-		else if (na->slot < 20)
+		else if (na->na_slot < 20)
 			c = "mem";
 		else
 			c = "cpu";
 		aprint_normal("%s at %s", c, name);
-		if (na->slot < 10)
-			aprint_normal(" slot %d", na->slot);
-		if (vax_boardtype == VAX_BTYP_8800 && na->slot > 20)
+		if (na->na_slot < 10)
+			aprint_normal(" slot %d", na->na_slot);
+		if (vax_boardtype == VAX_BTYP_8800 && na->na_slot > 20)
 			aprint_normal(" (%s)", ka88_confdata & KA88_LEFTPRIM ?
 			    "right" : "left");
 	}
@@ -73,53 +72,61 @@ nmi_mainbus_print(void *aux, const char *name)
 }
 
 static int
-nmi_mainbus_match(struct device *parent, struct cfdata *vcf, void *aux)
+nmi_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (vax_bustype == VAX_NBIBUS)
-		return 1;
-	return 0;
+	struct mainbus_attach_args * const ma = aux;
+
+	return !strcmp(nmi_cd.cd_name, ma->ma_type);
 }
 
 static void
-nmi_mainbus_attach(struct device *parent, struct device *self, void *aux)
+nmi_mainbus_attach(device_t parent, device_t self, void *aux)
 {
+	struct mainbus_attach_args * const ma = aux;
 	struct nmi_attach_args na;
 	int nbia, *r = 0;
 
-	printf("\n");
+	aprint_normal("\n");
+
+	na.na_iot = ma->ma_iot;
+	na.na_dmat = ma->ma_dmat;
 
 	/* One CPU is always found */
-	na.slot = 20;
+	na.na_type = "cpu";
+	na.na_slot = 20;
 	config_found(self, (void *)&na, nmi_mainbus_print);
 
 	/* Check for a second one */
 	if (vax_boardtype == VAX_BTYP_8800) {
-		na.slot = 21;
+		na.na_type = "cpu";
+		na.na_slot = 21;
 		config_found(self, (void *)&na, nmi_mainbus_print);
 	}
 
 	/* One memory adapter is also present */
-	na.slot = 10;
+	na.na_type = "mem";
+	na.na_slot = 10;
 	config_found(self, (void *)&na, nmi_mainbus_print);
 
 	/* Enable BI interrupts */
 	mtpr(NICTRL_DEV0|NICTRL_DEV1|NICTRL_MNF, PR_NICTRL);
 
 	/* Search for NBIA/NBIB adapters */
+	na.na_type = "bi";
 	for (nbia = 0; nbia < 2; nbia++) {
 		if (r)
 			vax_unmap_physmem((vaddr_t)r, 1);
 		r = (int *)vax_map_physmem(NBIA_REGS(nbia), 1);
 		if (badaddr((void *)r, 4))
 			continue;
-		na.slot = 2 * nbia;
+		na.na_slot = 2 * nbia;
 		if (r[1] & 2)
 			config_found(self, (void *)&na, nmi_mainbus_print);
-		na.slot++;
+		na.na_slot++;
 		if (r[1] & 4)
 			config_found(self, (void *)&na, nmi_mainbus_print);
 	}
 }
 
-CFATTACH_DECL(nmi_mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(nmi_mainbus, 0,
     nmi_mainbus_match, nmi_mainbus_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.9 2007/07/18 12:07:52 vanhu Exp $	*/
+/*	$NetBSD: session.c,v 1.9.8.1 2008/03/24 07:14:30 keiichi Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -146,14 +146,7 @@ session(void)
 	natt_keepalive_init ();
 #endif
 
-	if (privsep_init() != 0)
-		exit(1);
-
-	for (i = 0; i <= NSIG; i++)
-		sigreq[i] = 0;
-
 	/* write .pid file */
-	racoon_pid = getpid();
 	if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE] == NULL) 
 		strlcpy(pid_file, _PATH_VARRUN "racoon.pid", MAXPATHLEN);
 	else if (lcconf->pathinfo[LC_PATHTYPE_PIDFILE][0] == '/') 
@@ -170,12 +163,24 @@ session(void)
 			fclose(fp);
 			exit(1);
 		}
-		fprintf(fp, "%ld\n", (long)racoon_pid);
-		fclose(fp);
 	} else {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"cannot open %s", pid_file);
 	}
+
+	if (privsep_init() != 0)
+		exit(1);
+
+	/*
+	 * The fork()'ed privileged side will close its copy of fp.  We wait
+	 * until here to get the correct child pid.
+	 */
+	racoon_pid = getpid();
+	fprintf(fp, "%ld\n", (long)racoon_pid);
+	fclose(fp);
+
+	for (i = 0; i <= NSIG; i++)
+		sigreq[i] = 0;
 
 	while (1) {
 		if (dying)
@@ -192,6 +197,7 @@ session(void)
 		/* scheduling */
 		timeout = schedular();
 
+		nfds = evt_get_fdmask(nfds, &rfds);
 		error = select(nfds, &rfds, (fd_set *)0, (fd_set *)0, timeout);
 		if (error < 0) {
 			switch (errno) {
@@ -211,6 +217,7 @@ session(void)
 		    (FD_ISSET(lcconf->sock_admin, &rfds)))
 			admin_handler();
 #endif
+		evt_handle_fdmask(&rfds);
 
 		for (p = lcconf->myaddrs; p; p = p->next) {
 			if (!p->addr)
@@ -361,10 +368,8 @@ static void reload_conf(){
 	save_rmconf();
 	initrmconf();
 
-	/* Do a part of pfkey_init() ?
-	 * SPD reload ?
-	 */
-	
+	pfkey_reload();
+
 	save_params();
 	error = cfparse();
 	if (error != 0){
@@ -451,7 +456,7 @@ check_sigreq()
 		case SIGTERM:			
 			plog(LLV_INFO, LOCATION, NULL, 
 			    "caught signal %d\n", sig);
-			EVT_PUSH(NULL, NULL, EVTT_RACOON_QUIT, NULL);
+			evt_generic(EVT_RACOON_QUIT, NULL);
 			pfkey_send_flush(lcconf->sock_pfkey, 
 			    SADB_SATYPE_UNSPEC);
 #ifdef ENABLE_FASTQUIT

@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.18 2006/06/25 16:46:15 tsutsui Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.18.54.1 2008/03/24 07:14:53 keiichi Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.18 2006/06/25 16:46:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.18.54.1 2008/03/24 07:14:53 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ jazzio_intr(uint32_t mask, struct clockframe *cf)
 		(*jirp->ih_func)(jirp->ih_arg);
 		jirp->ih_evcnt.ev_count++;
 	}
-	return ~MIPS_INT_MASK_1;
+	return MIPS_INT_MASK_1;
 }
 
 void

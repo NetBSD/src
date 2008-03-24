@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.6 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: privsep.c,v 1.6.16.1 2008/03/24 07:14:30 keiichi Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -116,6 +116,8 @@ privsep_recv(sock, bufp, lenp)
 	    sizeof(com), MSG_PEEK, NULL, NULL)) == -1) {
 		if (errno == EINTR)
 			continue;
+		if (errno == ECONNRESET)
+		    return -1;
 
 		plog(LLV_ERROR, LOCATION, NULL,
 		    "privsep_recv failed: %s\n",
@@ -123,6 +125,10 @@ privsep_recv(sock, bufp, lenp)
 		return -1;
 	}
 	
+	/* EOF, other side has closed. */
+	if (len == 0)
+	    return -1;
+
 	/* Check for short packets */
 	if (len < sizeof(com)) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -142,6 +148,8 @@ privsep_recv(sock, bufp, lenp)
 	    com.ac_len, 0, NULL, NULL)) == -1) {
 		if (errno == EINTR)
 			continue;
+		if (errno == ECONNRESET)
+		    return -1;
 		plog(LLV_ERROR, LOCATION, NULL,
 		    "failed to recv privsep command: %s\n", 
 		    strerror(errno));
@@ -174,7 +182,7 @@ privsep_init(void)
 	/* 
 	 * When running privsep, certificate and script paths 
 	 * are mandatory, as they enable us to check path safety
-	 * in the privilegied instance
+	 * in the privileged instance
 	 */
 	if ((lcconf->pathinfo[LC_PATHTYPE_CERT] == NULL) ||
 	    (lcconf->pathinfo[LC_PATHTYPE_SCRIPT] == NULL)) {
@@ -183,7 +191,7 @@ privsep_init(void)
 		return -1;
 	}
 
-	if (socketpair(PF_LOCAL, SOCK_DGRAM, 0, privsep_sock) != 0) {
+	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, privsep_sock) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL, 
 		    "Cannot allocate privsep_sock: %s\n", strerror(errno));
 		return -1;
@@ -197,6 +205,8 @@ privsep_init(void)
 		break;
 
 	case 0: /* Child: drop privileges */
+		(void)close(privsep_sock[0]);
+
 		if (lcconf->chroot != NULL) {
 			if (chdir(lcconf->chroot) != 0) {
 				plog(LLV_ERROR, LOCATION, NULL, 
@@ -243,7 +253,7 @@ privsep_init(void)
 		return 0;
 		break;
 
-	default: /* Parent: privilegied process */
+	default: /* Parent: privileged process */
 		break;
 	}
 
@@ -254,8 +264,6 @@ privsep_init(void)
 	for (i = sysconf(_SC_OPEN_MAX); i > 0; i--) {
 		if (i == privsep_sock[0])
 			continue;
-		if (i == privsep_sock[1])
-			continue;
 		if ((f_foreground) && (i == 1))
 			continue;
 		(void)close(i);
@@ -265,9 +273,9 @@ privsep_init(void)
 	ploginit();
 
 	plog(LLV_INFO, LOCATION, NULL, 
-	    "racoon privilegied process running with PID %d\n", getpid());
+	    "racoon privileged process running with PID %d\n", getpid());
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 	setproctitle("[priv]");
 #endif
 	

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2008/01/28 15:48:18 pooka Exp $
+#	$NetBSD: Makefile,v 1.29.2.1 2008/03/24 07:16:28 keiichi Exp $
 #
 
 .include <bsd.own.mk>
@@ -22,8 +22,8 @@ SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 SRCS+=	clock_subr.c kern_descrip.c kern_lock.c kern_stub.c param.c	\
 	subr_bufq.c subr_hash.c subr_prf2.c subr_specificdata.c		\
 	subr_time.c subr_workqueue.c sys_generic.c vfs_bio.c		\
-	vfs_cache.c vfs_getcwd.c vfs_init.c vfs_lookup.c vfs_subr.c	\
-	vfs_subr2.c vfs_vnops.c vnode_if.c
+	vfs_cache.c vfs_getcwd.c vfs_hooks.c vfs_init.c vfs_lookup.c	\
+	vfs_subr.c vfs_subr2.c vfs_vnops.c vfs_syscalls.c vnode_if.c
 
 # sys/miscfs
 SRCS+=	genfs_vfsops.c genfs_vnops.c sync_subr.c
@@ -35,7 +35,7 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 # src/lib/libkern
 SRCS+=	__assert.c scanc.c skpc.c
 
-SRCS+=	rumpvnode_if.c
+SRCS+=	rumpvnode_if.c rump_syscalls.c
 
 RUMPUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
 OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
@@ -43,7 +43,7 @@ OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/common/include	\
 		-I${NETBSDSRCDIR}/sys/rump/librump/rumpuser		\
 		-I${.CURDIR}/opt -DMAXUSERS=32
-#CPPFLAGS+=	-DRUMP_WITHOUT_THREADS
+CPPFLAGS+=	-DRUMP_WITHOUT_THREADS
 
 CFLAGS+=	-Wno-pointer-sign
 

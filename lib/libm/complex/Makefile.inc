@@ -1,15 +1,15 @@
-# $NetBSD: Makefile.inc,v 1.1 2008/02/20 09:55:38 drochner Exp $
+# $NetBSD: Makefile.inc,v 1.1.2.1 2008/03/24 07:14:45 keiichi Exp $
 
 .PATH: ${.CURDIR}/complex
 
-COMMON_SRCS+= cabs.c cabsf.c carg.c cargf.c
-COMMON_SRCS+= creal.c crealf.c cimag.c cimagf.c conj.c conjf.c
-COMMON_SRCS+= csqrt.c cexp.c clog.c cpow.c
-COMMON_SRCS+= cephes_subr.c csin.c ccos.c ctan.c csinh.c ccosh.c ctanh.c
-COMMON_SRCS+= casin.c cacos.c catan.c casinh.c cacosh.c catanh.c
-COMMON_SRCS+= csqrtf.c cexpf.c clogf.c cpowf.c
-COMMON_SRCS+= cephes_subrf.c csinf.c ccosf.c ctanf.c csinhf.c ccoshf.c ctanhf.c
-COMMON_SRCS+= casinf.c cacosf.c catanf.c casinhf.c cacoshf.c catanhf.c
+SRCS+= cabs.c cabsf.c carg.c cargf.c
+SRCS+= creal.c crealf.c cimag.c cimagf.c conj.c conjf.c
+SRCS+= csqrt.c cexp.c clog.c cpow.c
+SRCS+= cephes_subr.c csin.c ccos.c ctan.c csinh.c ccosh.c ctanh.c
+SRCS+= casin.c cacos.c catan.c casinh.c cacosh.c catanh.c
+SRCS+= csqrtf.c cexpf.c clogf.c cpowf.c
+SRCS+= cephes_subrf.c csinf.c ccosf.c ctanf.c csinhf.c ccoshf.c ctanhf.c
+SRCS+= casinf.c cacosf.c catanf.c casinhf.c cacoshf.c catanhf.c
 
 MAN+= cabs.3 cacos.3 cacosh.3 carg.3 casin.3 casinh.3 catan.3 catanh.3
 MAN+= ccos.3 ccosh.3 cexp.3 cimag.3 clog.3 conj.3 cpow.3 creal.3

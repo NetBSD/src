@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.45 2008/02/14 21:40:51 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.45.2.1 2008/03/24 07:14:45 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.45 2008/02/14 21:40:51 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.45.2.1 2008/03/24 07:14:45 keiichi Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -221,7 +221,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 
 		/* If it has become free, try to acquire it again. */
 		if (MUTEX_OWNER(owner) == 0) {
-			for (; MUTEX_OWNER(owner) == 0; owner = next) {
+			do {
 				new = (void *)
 				    ((uintptr_t)self | (uintptr_t)owner);
 				next = atomic_cas_ptr(&ptm->ptm_owner, owner,
@@ -232,15 +232,15 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 #endif
 					return 0;
 				}
-			}
+				owner = next;
+			} while (MUTEX_OWNER(owner) == 0);
 			/*
 			 * We have lost the race to acquire the mutex.
 			 * The new owner could be running on another
 			 * CPU, in which case we should spin and avoid
 			 * the overhead of blocking.
 			 */
-			if (!MUTEX_HAS_WAITERS(owner))
-				continue;
+			continue;
 		}
 
 		/*
@@ -322,7 +322,7 @@ int
 pthread_mutex_trylock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
-	void *val;
+	void *val, *new, *next;
 
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
@@ -333,11 +333,23 @@ pthread_mutex_trylock(pthread_mutex_t *ptm)
 		return 0;
 	}
 
-	if (MUTEX_OWNER(val) == (uintptr_t)self && MUTEX_RECURSIVE(val)) {
-		if (ptm->ptm_recursed == INT_MAX)
-			return EAGAIN;
-		ptm->ptm_recursed++;
-		return 0;
+	if (MUTEX_RECURSIVE(val)) {
+		if (MUTEX_OWNER(val) == 0) {
+			new = (void *)((uintptr_t)self | (uintptr_t)val);
+			next = atomic_cas_ptr(&ptm->ptm_owner, val, new);
+			if (__predict_true(next == val)) {
+#ifndef PTHREAD__ATOMIC_IS_MEMBAR
+				membar_enter();
+#endif
+				return 0;
+			}
+		}
+		if (MUTEX_OWNER(val) == (uintptr_t)self) {
+			if (ptm->ptm_recursed == INT_MAX)
+				return EAGAIN;
+			ptm->ptm_recursed++;
+			return 0;
+		}
 	}
 
 	return EBUSY;

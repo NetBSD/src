@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.77 2007/10/17 19:57:32 garbled Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.77.12.1 2008/03/24 07:15:05 keiichi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,8 +50,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77 2007/10/17 19:57:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.77.12.1 2008/03/24 07:15:05 keiichi Exp $");
 
+#include "opt_multiprocessor.h"
 #include "opt_coredump.h"
 
 #include <sys/param.h>
@@ -231,7 +232,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #endif
 	memcpy(npcb, opcb, sizeof(struct pcb));
        	if (l1->l_md.md_fpstate) {
-       		save_and_clear_fpstate(l1);
+       		fpusave_lwp(l1, true);
 		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
 		memcpy(l2->l_md.md_fpstate, l1->l_md.md_fpstate,
@@ -295,68 +296,68 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 #endif
 }
 
+static inline void
+fpusave_cpu(bool save)
+{
+	struct lwp *l = fplwp;
+
+	if (l == NULL)
+		return;
+
+	if (save)
+		savefpstate(l->l_md.md_fpstate);
+	else
+		clearfpstate();
+
+	fplwp = NULL;
+}
+
 void
-save_and_clear_fpstate(struct lwp *l)
+fpusave_lwp(struct lwp *l, bool save)
 {
 #ifdef MULTIPROCESSOR
-	struct cpu_info *ci;
-#endif
+	volatile struct cpu_info *ci;
 
 	if (l == fplwp) {
-		savefpstate(l->l_md.md_fpstate);
-		fplwp = NULL;
+		int s = intr_disable();
+		fpusave_cpu(save);
+		intr_restore(s);
 		return;
 	}
-#ifdef MULTIPROCESSOR
+
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci == curcpu())
+		int spincount;
+
+		if (ci == curcpu() || !CPUSET_HAS(cpus_active, ci->ci_index))
 			continue;
 		if (ci->ci_fplwp != l)
 			continue;
-		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_save_fpstate);
+		sparc64_send_ipi(ci->ci_cpuid, save ?
+				 sparc64_ipi_save_fpstate :
+				 sparc64_ipi_drop_fpstate, (uintptr_t)l, 0);
+
+		spincount = 0;
+		while (ci->ci_fplwp == l) {
+			membar_sync();
+			spincount++;
+			if (spincount > 10000000)
+				panic("fpusave_lwp ipi didn't");
+		}
 		break;
 	}
+#else
+	if (l == fplwp)
+		fpusave_cpu(save);
 #endif
 }
 
 
 void
-cpu_lwp_free(l, proc)
-	struct lwp *l;
-	int proc;
+cpu_lwp_free(struct lwp *l, int proc)
 {
-#ifdef MULTIPROCESSOR
-	struct cpu_info *ci;
-	int found;
 
-	found = 0;
-#endif
-	if (l->l_md.md_fpstate != NULL) {
-		if (l == fplwp) {
-			clearfpstate();
-			fplwp = NULL;
-#ifdef MULTIPROCESSOR
-			found = 1;
-#endif
-		}
-#ifdef MULTIPROCESSOR
-		if (found)
-			return;
-#endif
-	}
-#ifdef MULTIPROCESSOR
-	/* check if anyone else has this lwp as fplwp */
-	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci == curcpu())
-			continue;
-		if (l == ci->ci_fplwp) {
-			/* drop the fplwp from the other fpu */
-			sparc64_send_ipi(ci->ci_cpuid,
-			    sparc64_ipi_drop_fpstate);
-			break;
-		}
-	}
-#endif
+	if (l->l_md.md_fpstate != NULL)
+		fpusave_lwp(l, false);
 }
 
 void
@@ -436,7 +437,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	md_core.md_tf.tf_in[7] = l->l_md.md_tf->tf_in[7];
 #endif
 	if (l->l_md.md_fpstate) {
-		save_and_clear_fpstate(l);
+		fpusave_lwp(l, true);
 		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
 		memset(&md_core.md_fpstate, 0,

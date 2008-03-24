@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mace.c,v 1.6 2005/12/11 12:18:54 christos Exp $	*/
+/*	$NetBSD: lpt_mace.c,v 1.6.70.1 2008/03/24 07:15:03 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.6 2005/12/11 12:18:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mace.c,v 1.6.70.1 2008/03/24 07:15:03 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,36 +67,37 @@ struct lpt_mace_softc {
 	/* XXX intr cookie */
 };
 
-static int	lpt_mace_match(struct device *, struct cfdata *, void *);
-static void	lpt_mace_attach(struct device *, struct device *, void *);
+static int	lpt_mace_match(device_t, cfdata_t , void *);
+static void	lpt_mace_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(lpt_mace, sizeof(struct lpt_mace_softc),
+CFATTACH_DECL_NEW(lpt_mace, sizeof(struct lpt_mace_softc),
     lpt_mace_match, lpt_mace_attach, NULL, NULL);
 
 static int
-lpt_mace_match(struct device *parent, struct cfdata *match, void *aux)
+lpt_mace_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 static void
-lpt_mace_attach(struct device *parent, struct device *self, void *aux)
+lpt_mace_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_mace_softc *msc = (void *)self;
+	struct lpt_mace_softc *msc = device_private(self);
 	struct lpt_softc *sc = &msc->sc_lpt;
 	struct mace_attach_args *maa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = maa->maa_st;
 
 	/* XXX should use bus_space_map() */
 	if (bus_space_subregion(sc->sc_iot, maa->maa_sh,
 	    maa->maa_offset, LPT_NPORTS, &sc->sc_ioh) != 0) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	lpt_attach_subr(sc);
 

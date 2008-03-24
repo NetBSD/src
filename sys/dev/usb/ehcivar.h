@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.26 2007/12/09 20:28:23 jmcneill Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.26.6.1 2008/03/24 07:16:09 keiichi Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,6 @@ typedef struct ehci_softc {
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	u_int32_t sc_cmd;		/* shadow of cmd reg during suspend */
-	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 	u_int sc_ncomp;
 	u_int sc_npcomp;
@@ -159,6 +158,8 @@ typedef struct ehci_softc {
 usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
-int		ehci_activate(device_ptr_t, enum devact);
-bool		ehci_suspend(device_t dv);
-bool		ehci_resume(device_t dv);
+int		ehci_activate(device_t, enum devact);
+void		ehci_childdet(device_t, device_t);
+bool		ehci_suspend(device_t PMF_FN_PROTO);
+bool		ehci_resume(device_t PMF_FN_PROTO);
+bool		ehci_shutdown(device_t, int);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2005/11/12 22:57:47 spz Exp $
+#	$NetBSD: Makefile,v 1.10.16.1 2008/03/24 07:16:39 keiichi Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -22,7 +22,7 @@ SRCS+=	xf86sbusBus.c
 CPPFLAGS+=-DUSE_MODULAR_KBD
 .endif
 
-.if ${MACHINE} == "macppc"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
 CPPFLAGS+=-DUSE_MODULAR_KBD
 .endif
 

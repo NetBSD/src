@@ -1,4 +1,4 @@
-#	$NetBSD: files.lubbock,v 1.6 2005/12/11 12:17:07 christos Exp $
+#	$NetBSD: files.lubbock,v 1.6.70.1 2008/03/24 07:14:55 keiichi Exp $
 #
 # Intel LUBBOCK evaluation board configuration info
 #
@@ -32,9 +32,6 @@ attach  sackbc at sacc
 file	arch/arm/sa11x0/sa1111_kbc.c	sackbc
 
 include "dev/pckbport/files.pckbport"
-
-# PCMCIA
-include "dev/pcmcia/files.pcmcia"
 
 device	sacpcic: pcmciabus
 attach	sacpcic at sacc

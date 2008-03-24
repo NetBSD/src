@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.11 2007/10/19 12:00:36 ad Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.11.12.1 2008/03/24 07:15:46 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.11 2007/10/19 12:00:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.11.12.1 2008/03/24 07:15:46 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_mvme.c,v 1.11 2007/10/19 12:00:36 ad Exp $");
 #if !defined(DEBUG) || !defined(notdef)
 #define LPRINTF(a)
 #else
-#define LPRINTF		if (lptdebug) printf a
+#define LPRINTF		if (lptdebug) aprint_verbose_dev a
 int lptdebug = 1;
 #endif
 
@@ -172,13 +172,13 @@ lptopen(dev, flag, mode, l)
 
 	if (unit >= lpt_cd.cd_ndevs)
 		return (ENXIO);
-	sc = lpt_cd.cd_devs[unit];
+	sc = device_private(lpt_cd.cd_devs[unit]);
 	if (!sc)
 		return (ENXIO);
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
+		aprint_verbose_dev(sc->sc_dev, "stat=0x%x not zero\n",
 		    sc->sc_state);
 #endif
 
@@ -187,7 +187,7 @@ lptopen(dev, flag, mode, l)
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
-	LPRINTF(("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags));
+	LPRINTF((sc->sc_dev, "open: flags=0x%x\n", flags));
 
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert Input Prime for 100 usec to start up printer */
@@ -223,7 +223,7 @@ lptopen(dev, flag, mode, l)
 
 	(sc->sc_funcs->lf_open) (sc, sc->sc_flags & LPT_NOINTR);
 
-	LPRINTF(("%s: opened\n", sc->sc_dev.dv_xname));
+	LPRINTF((sc->sc_dev, "opened\n"));
 	return (0);
 }
 
@@ -257,7 +257,7 @@ lptclose(dev, flag, mode, l)
 	int unit;
 
 	unit = LPTUNIT(dev);
-	sc = lpt_cd.cd_devs[unit];
+	sc = device_private(lpt_cd.cd_devs[unit]);
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
@@ -270,7 +270,7 @@ lptclose(dev, flag, mode, l)
 	sc->sc_state = 0;
 	brelse(sc->sc_inbuf, 0);
 
-	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
+	LPRINTF((sc->sc_dev, "%s: closed\n"));
 	return (0);
 }
 
@@ -313,7 +313,7 @@ pushbytes(sc)
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				LPRINTF(("%s: write %d\n", sc->sc_dev.dv_xname,
+				LPRINTF((sc->sc_dev, "write %d\n",
 					sc->sc_count));
 				s = spltty();
 				(void) lpt_intr(sc);
@@ -342,7 +342,7 @@ lptwrite(dev, uio, flags)
 	size_t n;
 	int error;
 
-	sc = lpt_cd.cd_devs[LPTUNIT(dev)];
+	sc = device_private(lpt_cd.cd_devs[LPTUNIT(dev)]);
 	error = 0;
 
 	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {

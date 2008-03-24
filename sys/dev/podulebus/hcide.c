@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.21 2007/10/19 12:01:07 ad Exp $	*/
+/*	$NetBSD: hcide.c,v 1.21.12.1 2008/03/24 07:16:05 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.21 2007/10/19 12:01:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.21.12.1 2008/03/24 07:16:05 keiichi Exp $");
 
 #include <sys/param.h>
 
@@ -56,17 +56,17 @@ struct hcide_softc {
 	struct wdc_regs sc_wdc_regs[HCIDE_NCHANNELS];
 };
 
-static int  hcide_match  (struct device *, struct cfdata *, void *);
-static void hcide_attach (struct device *, struct device *, void *);
+static int  hcide_match  (device_t, cfdata_t, void *);
+static void hcide_attach (device_t, device_t, void *);
 
-CFATTACH_DECL(hcide, sizeof(struct hcide_softc),
+CFATTACH_DECL_NEW(hcide, sizeof(struct hcide_softc),
     hcide_match, hcide_attach, NULL, NULL);
 
 static const int hcide_cmdoffsets[] = { HCIDE_CMD0, HCIDE_CMD1, HCIDE_CMD2 };
 static const int hcide_ctloffsets[] = { HCIDE_CTL, HCIDE_CTL, HCIDE_CTL };
 
 static int
-hcide_match(struct device *parent, struct cfdata *cf, void *aux)
+hcide_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -77,7 +77,7 @@ hcide_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-hcide_attach(struct device *parent, struct device *self, void *aux)
+hcide_attach(device_t parent, device_t self, void *aux)
 {
 	struct hcide_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
@@ -85,13 +85,14 @@ hcide_attach(struct device *parent, struct device *self, void *aux)
 	struct ata_channel *ch;
 	int i, j;
 
+	sc->sc_wdc.sc_atac.atac_dev = self;
 	sc->sc_wdc.regs = sc->sc_wdc_regs;
 
 	sc->sc_wdc.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_NOIRQ;
 	sc->sc_wdc.sc_atac.atac_pio_cap = 0; /* XXX correct? */
 	sc->sc_wdc.sc_atac.atac_nchannels = HCIDE_NCHANNELS;
 	sc->sc_wdc.sc_atac.atac_channels = sc->sc_chp;
-	printf("\n");
+	aprint_normal("\n");
 	for (i = 0; i < HCIDE_NCHANNELS; i++) {
 		ch = sc->sc_chp[i] = &sc->sc_chan[i];
 		wdr = &sc->sc_wdc_regs[i];

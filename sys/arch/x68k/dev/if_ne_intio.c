@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.10 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.10.70.1 2008/03/24 07:15:09 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.10 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.10.70.1 2008/03/24 07:15:09 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -85,17 +85,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_intio.c,v 1.10 2005/12/11 12:19:37 christos Ex
 #define NE_INTIO_INTR  (0xf9)
 #define NE_INTIO_INTR2 (0xf8)
 
-static int  ne_intio_match(struct device *, struct cfdata *, void *);
-static void ne_intio_attach(struct device *, struct device *, void *);
+static int  ne_intio_match(device_t, cfdata_t, void *);
+static void ne_intio_attach(device_t, device_t, void *);
 static int  ne_intio_intr(void *);
 
 #define ne_intio_softc ne2000_softc
 
-CFATTACH_DECL(ne_intio, sizeof(struct ne_intio_softc),
+CFATTACH_DECL_NEW(ne_intio, sizeof(struct ne_intio_softc),
     ne_intio_match, ne_intio_attach, NULL, NULL);
 
 static int
-ne_intio_match(struct device *parent, struct cfdata *cf, void *aux)
+ne_intio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_bst;
@@ -141,9 +141,9 @@ ne_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ne_intio_attach(struct device *parent, struct device *self, void *aux)
+ne_intio_attach(device_t parent, device_t self, void *aux)
 {
-	struct ne_intio_softc *sc = (struct ne_intio_softc *)self;
+	struct ne_intio_softc *sc = device_private(self);
 	struct dp8390_softc *dsc = &sc->sc_dp8390;
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_bst;
@@ -153,19 +153,20 @@ ne_intio_attach(struct device *parent, struct device *self, void *aux)
 	const char *typestr;
 	int netype;
 
-	printf(": Nereid Ethernet\n");
+	dsc->sc_dev = self;
+	aprint_normal(": Nereid Ethernet\n");
 
 	/* Map I/O space */
 	if (bus_space_map(iot, ia->ia_addr, NE2000_NPORTS*2,
 			BUS_SPACE_MAP_SHIFTED_EVEN, &ioh)){
-		printf("%s: can't map I/O space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't map I/O space\n");
 		return;
 	}
 
 	asict = iot;
 	if (bus_space_subregion(iot, ioh, NE2000_ASIC_OFFSET*2,
 			NE2000_ASIC_NPORTS*2, &asich)) {
-		printf("%s: can't subregion I/O space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't subregion I/O space\n");
 		return;
 	}
 
@@ -206,11 +207,11 @@ ne_intio_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		printf("%s: where did the card go?!\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "where did the card go?!\n");
 		return;
 	}
 
-	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, typestr);
+	aprint_normal_dev(self, "%s Ethernet\n", typestr);
 
 	/* This interface is always enabled */
 	dsc->sc_enabled = 1;
@@ -223,8 +224,8 @@ ne_intio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Establish the interrupt handler */
 	if (intio_intr_establish(ia->ia_intr, "ne", ne_intio_intr, dsc))
-		printf("%s: couldn't establish interrupt handler\n",
-			dsc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 }
 
 static int

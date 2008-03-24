@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.9 2006/07/13 22:56:00 gdamore Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.9.54.1 2008/03/24 07:14:53 keiichi Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.9 2006/07/13 22:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.9.54.1 2008/03/24 07:14:53 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,14 +91,14 @@ __KERNEL_RCSID(0, "$NetBSD: com_jazzio.c,v 1.9 2006/07/13 22:56:00 gdamore Exp $
 
 extern int com_freq;
 
-int	com_jazzio_probe(struct device *, struct cfdata *, void *);
-void	com_jazzio_attach(struct device *, struct device *, void *);
+int	com_jazzio_probe(device_t, cfdata_t , void *);
+void	com_jazzio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_jazzio, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(com_jazzio, sizeof(struct com_softc),
     com_jazzio_probe, com_jazzio_attach, NULL, NULL);
 
 int
-com_jazzio_probe(struct device *parent, struct cfdata *match, void *aux)
+com_jazzio_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot;
@@ -125,20 +125,21 @@ com_jazzio_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-com_jazzio_attach(struct device *parent, struct device *self, void *aux)
+com_jazzio_attach(device_t parent, device_t self, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
-	struct com_softc *sc = (void *)self;
+	struct com_softc *sc = device_private(self);
 	int iobase;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
+	sc->sc_dev = self;
 	iobase = ja->ja_addr;
 	iot = ja->ja_bust;
 
 	if (!com_is_console(iot, iobase, &ioh) &&
 	    bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.h,v 1.4 2003/08/07 11:25:51 agc Exp $	*/
+/*	$NetBSD: ypdb.h,v 1.4.28.1 2008/03/24 07:16:36 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -66,7 +66,8 @@ datum	ypdb_fetch(DBM *, datum);
 datum	ypdb_firstkey(DBM *);
 datum	ypdb_nextkey(DBM *);
 datum	ypdb_setkey(DBM *, datum);
-DBM     *ypdb_open(const char *, int, int);
+DBM     *ypdb_open(const char *);
+DBM     *ypdb_mktemp(char *);
 int	ypdb_store(DBM *, datum, datum, int);
 __END_DECLS
 

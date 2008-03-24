@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.31 2007/07/10 21:05:03 ad Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.31.24.1 2008/03/24 07:16:27 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31 2007/07/10 21:05:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31.24.1 2008/03/24 07:16:27 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,6 +201,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 
 done:
 	l->l_selflag = 0;
+	selclear();
 	mutex_exit(&select_lock);
 	/* select is not restarted after signals... */
 	if (error == ERESTART)

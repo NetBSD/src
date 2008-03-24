@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.179 2008/01/31 11:45:16 tnn Exp $
+$NetBSD: acronyms,v 1.179.2.1 2008/03/24 07:14:50 keiichi Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -42,6 +42,7 @@ BS	bullshit
 BTDT	been there, done that
 BTTH	boot to the head
 BTW	by the way
+CFV	call for votes
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
@@ -168,6 +169,7 @@ NP	no problem
 NRFPT	not ready for prime time
 NRN	no reply necessary
 NSFW	not suitable for work
+NVM	never mind
 OIC	oh, I see
 OMG	oh, my god
 OMW	on my way
@@ -180,6 +182,7 @@ PDQ	pretty darn quick
 PEBKAC	problem exists between keyboard and chair
 PFO	please fuck off
 PFY	pimply faced youth
+PHB	pointy haired boss
 PITA	pain in the ass
 PKSP	pound keys and spew profanity
 PNG	persona non grata
@@ -192,6 +195,7 @@ PPL	pretty please
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 RFC	request for comments
+RFD	request for discussion
 RFE	request for enhancements
 RIP	rest in peace
 RL	real life

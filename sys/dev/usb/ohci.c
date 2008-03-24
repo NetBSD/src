@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.186 2008/02/03 10:57:12 drochner Exp $	*/
+/*	$NetBSD: ohci.c,v 1.186.2.1 2008/03/24 07:16:09 keiichi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.186 2008/02/03 10:57:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.186.2.1 2008/03/24 07:16:09 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,6 @@ Static usbd_status	ohci_alloc_std_chain(struct ohci_pipe *,
 			    ohci_softc_t *, int, int, usbd_xfer_handle,
 			    ohci_soft_td_t *, ohci_soft_td_t **);
 
-Static void		ohci_shutdown(void *v);
 Static usbd_status	ohci_open(usbd_pipe_handle);
 Static void		ohci_poll(struct usbd_bus *);
 Static void		ohci_softintr(void *);
@@ -362,9 +361,9 @@ Static const struct usbd_pipe_methods ohci_device_isoc_methods = {
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-ohci_activate(device_ptr_t self, enum devact act)
+ohci_activate(device_t self, enum devact act)
 {
-	struct ohci_softc *sc = (struct ohci_softc *)self;
+	struct ohci_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -380,6 +379,15 @@ ohci_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
+void
+ohci_childdet(device_t self, device_t child)
+{
+	struct ohci_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
+}
+
 int
 ohci_detach(struct ohci_softc *sc, int flags)
 {
@@ -392,10 +400,6 @@ ohci_detach(struct ohci_softc *sc, int flags)
 		return (rv);
 
 	usb_uncallout(sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	shutdownhook_disestablish(sc->sc_shutdownhook);
-#endif
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
@@ -901,7 +905,6 @@ ohci_init(ohci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_control = sc->sc_intre = 0;
-	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 #endif
 
 	usb_callout_init(sc->sc_tmo_rhsc);
@@ -1003,17 +1006,18 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 /*
  * Shut down the controller when the system is going down.
  */
-void
-ohci_shutdown(void *v)
+bool
+ohci_shutdown(device_t self, int flags)
 {
-	ohci_softc_t *sc = v;
+	ohci_softc_t *sc = device_private(self);
 
 	DPRINTF(("ohci_shutdown: stopping the HC\n"));
 	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+	return true;
 }
 
 bool
-ohci_resume(device_t dv)
+ohci_resume(device_t dv PMF_FN_ARGS)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
@@ -1047,7 +1051,7 @@ ohci_resume(device_t dv)
 }
 
 bool
-ohci_suspend(device_t dv)
+ohci_suspend(device_t dv PMF_FN_ARGS)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;

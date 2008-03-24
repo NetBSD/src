@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.27 2008/01/26 17:55:30 rmind Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.27.2.1 2008/03/24 07:14:44 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.27 2008/01/26 17:55:30 rmind Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.27.2.1 2008/03/24 07:14:44 keiichi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -143,9 +143,7 @@ sysconf(int name)
 
 /* 1003.1b */
 	case _SC_PAGESIZE:
-		mib[0] = CTL_HW;
-		mib[1] = HW_PAGESIZE;
-		break;
+		return _getpagesize();
 	case _SC_FSYNC:
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_FSYNC;

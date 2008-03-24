@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.13 2003/08/07 16:43:33 agc Exp $	*/
+/*	$NetBSD: stdio.c,v 1.13.28.1 2008/03/24 07:14:44 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)stdio.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: stdio.c,v 1.13 2003/08/07 16:43:33 agc Exp $");
+__RCSID("$NetBSD: stdio.c,v 1.13.28.1 2008/03/24 07:14:44 keiichi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ __sread(cookie, buf, n)
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(buf != NULL);
 
-	ret = read(fp->_file, buf, (size_t)n);
+	ret = read(__sfileno(fp), buf, (size_t)n);
 	/* if the read succeeded, update the current offset */
 	if (ret >= 0)
 		fp->_offset += ret;
@@ -89,9 +89,9 @@ __swrite(cookie, buf, n)
 	_DIAGASSERT(buf != NULL);
 
 	if (fp->_flags & __SAPP)
-		(void) lseek(fp->_file, (off_t)0, SEEK_END);
+		(void) lseek(__sfileno(fp), (off_t)0, SEEK_END);
 	fp->_flags &= ~__SOFF;	/* in case FAPPEND mode is set */
-	return (write(fp->_file, buf, (size_t)n));
+	return write(__sfileno(fp), buf, (size_t)n);
 }
 
 fpos_t
@@ -105,7 +105,7 @@ __sseek(cookie, offset, whence)
 
 	_DIAGASSERT(fp != NULL);
 	
-	ret = lseek(fp->_file, (off_t)offset, whence);
+	ret = lseek(__sfileno(fp), (off_t)offset, whence);
 	if (ret == -1L)
 		fp->_flags &= ~__SOFF;
 	else {
@@ -122,5 +122,5 @@ __sclose(cookie)
 
 	_DIAGASSERT(cookie != NULL);
 
-	return (close(((FILE *)cookie)->_file));
+	return close(__sfileno((FILE *)cookie));
 }

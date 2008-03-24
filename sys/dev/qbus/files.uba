@@ -1,9 +1,9 @@
-#	$NetBSD: files.uba,v 1.16 2005/12/11 12:23:29 christos Exp $
+#	$NetBSD: files.uba,v 1.16.66.1 2008/03/24 07:16:05 keiichi Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
 # Included by ports that need it.
-device	uba { csr }
+device	uba { csr }: bus
 
 define	qfont
 define	ifuba

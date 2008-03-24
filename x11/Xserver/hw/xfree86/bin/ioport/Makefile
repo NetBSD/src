@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/27 15:30:03 soren Exp $
+#	$NetBSD: Makefile,v 1.4.30.1 2008/03/24 07:16:38 keiichi Exp $
+
+NOMAN=# defined (must come before bsd.own.mk)
 
 .include <bsd.own.mk>
 
 PROG=	ioport
-MKMAN=	no
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/etc
 
 SRCS=	ioport.c

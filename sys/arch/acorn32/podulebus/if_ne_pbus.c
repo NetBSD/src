@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.13 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.13.72.1 2008/03/24 07:14:51 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.13 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.13.72.1 2008/03/24 07:14:51 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,25 +103,25 @@ struct ne_pbus_softc {
 /*
  * Attach data and prototypes for driver
  */
-static int  ne_pbus_probe	__P((struct device *, struct cfdata *, void *));
-static void ne_pbus_attach	__P((struct device *, struct device *, void *));
+static int  ne_pbus_probe	(device_t, cfdata_t , void *);
+static void ne_pbus_attach	(device_t, device_t, void *);
 
-CFATTACH_DECL(ne_pbus, sizeof(struct ne_pbus_softc),
+CFATTACH_DECL_NEW(ne_pbus, sizeof(struct ne_pbus_softc),
     ne_pbus_probe, ne_pbus_attach, NULL, NULL);
 
 /*
  * Prototypes for interface specific routines
  */
-static u_int8_t *em_ea		__P((struct ne_pbus_softc *sc, u_int8_t *buffer));
-static void em_postattach	__P((struct ne_pbus_softc *sc));
-static void eh600_postattach	__P((struct ne_pbus_softc *sc));
-static void eh600_preattach	__P((struct ne_pbus_softc *sc));
-static u_int8_t *eh600_ea	__P((struct ne_pbus_softc *sc, u_int8_t *buffer));
+static u_int8_t *em_ea		(struct ne_pbus_softc *sc, u_int8_t *buffer);
+static void em_postattach	(struct ne_pbus_softc *sc);
+static void eh600_postattach	(struct ne_pbus_softc *sc);
+static void eh600_preattach	(struct ne_pbus_softc *sc);
+static u_int8_t *eh600_ea	(struct ne_pbus_softc *sc, u_int8_t *buffer);
 
-void	eh600_init_media        __P((struct dp8390_softc *));
+void	eh600_init_media        (struct dp8390_softc *);
 
-void	en_postattach		__P((struct ne_pbus_softc *));
-void	en_init_media           __P((struct dp8390_softc *));
+void	en_postattach		(struct ne_pbus_softc *);
+void	en_init_media           (struct dp8390_softc *);
 
 /*
  * Define a structure to hold all the information required on an NE2000
@@ -147,19 +147,19 @@ struct ne_clone {
 	unsigned char	reserved0;	/* not used (padding) */
 	const char	*name;		/* name */
 	u_int8_t *	(*getea)	/* do this to get the MAC */
-			    __P((struct ne_pbus_softc *sc, u_int8_t *buffer));
+			    (struct ne_pbus_softc *sc, u_int8_t *buffer);
 	void		(*preattach)	/* do this before attach */
-			    __P((struct ne_pbus_softc *sc));
+			    (struct ne_pbus_softc *sc);
 	void		(*postattach)	/* do this after attach */
-			    __P((struct ne_pbus_softc *sc));
+			    (struct ne_pbus_softc *sc);
         int          	(*mediachange)  /* media change */
-                            __P((struct dp8390_softc *));
+                            (struct dp8390_softc *);
         void          	(*mediastatus)  /* media status */
-                            __P((struct dp8390_softc *, struct ifmediareq *));
+                            (struct dp8390_softc *, struct ifmediareq *);
         void          	(*init_card)    /* media init card */
-                            __P((struct dp8390_softc *));
+                            (struct dp8390_softc *);
         void          	(*init_media)   /* media init */
-                            __P((struct dp8390_softc *));
+                            (struct dp8390_softc *);
 } ne_clones[] = {
 	/* ANT EtherM netslot interface */
 	{
@@ -216,10 +216,7 @@ struct ne_clone {
  * Determine if the device is present.
  */
 static int
-ne_pbus_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ne_pbus_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podule_attach_args *pa = (void *) aux;
 	int loop;
@@ -237,12 +234,10 @@ ne_pbus_probe(parent, cf, aux)
  * Install interface into kernel networking data structures.
  */
 static void
-ne_pbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ne_pbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct podule_attach_args *pa = (void *)aux;
-	struct ne_pbus_softc *npsc = (void *)self;
+	struct ne_pbus_softc *npsc = device_private(self);
 	struct ne2000_softc *nsc = &npsc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 
@@ -252,6 +247,7 @@ ne_pbus_attach(parent, self, aux)
 	u_int8_t *myea;
 	int loop;
 
+	dsc->sc_dev = self;
 	media = NULL;
 	nmedia = defmedia = 0;
 	/* Check a few things about the attach args */
@@ -318,7 +314,7 @@ ne_pbus_attach(parent, self, aux)
 	}
 
 	/* Report the interface name */
-	printf(": %s ethernet\n", ne->name);
+	aprint_normal(": %s ethernet\n", ne->name);
 
 	/*
 	 * Ok we need our own bus tag as the register spacing
@@ -339,21 +335,20 @@ ne_pbus_attach(parent, self, aux)
 	/* Map all the I/O space for the NIC */
 	if (bus_space_map(dsc->sc_regt, ne->nicbase, ne->nicsize,
 	    0, &dsc->sc_regh)) {
-		printf("%s: cannot map i/o space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "cannot map i/o space\n");
 		return;
 	}
 	/* Map the I/O space for the ASIC */
 	if (bus_space_map(nsc->sc_asict, ne->asicbase, ne->asicsize,
 	    0, &nsc->sc_asich)) {
-		printf("%s: cannot map i/o space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "cannot map i/o space\n");
 		return;
 	}
 	/* Map any extra register space required by the card */
 	if (ne->extrasize > 0) {
 		if (bus_space_map(&npsc->sc_tag, ne->extrabase, ne->extrasize,
 				  0, &npsc->sc_extrah)) {
-			printf("%s: cannot map extra space\n",
-			       dsc->sc_dev.dv_xname);
+			aprint_error_dev(self, "cannot map extra space\n");
 			return;
 		}
 	}
@@ -388,27 +383,27 @@ ne_pbus_attach(parent, self, aux)
 	 * from the EEPROM.
 	 */
 	ne2000_attach(nsc, myea);
-	printf("%s: ", dsc->sc_dev.dv_xname);
+	aprint_normal_dev(self, "");
 	switch (nsc->sc_type) {
 	case NE2000_TYPE_NE1000:
-		printf("NE1000");
+		aprint_normal("NE1000");
 		break;
 	case NE2000_TYPE_NE2000:
-		printf("NE2000");
+		aprint_normal("NE2000");
 		break;
 	case NE2000_TYPE_AX88190:
-		printf("AX88190");
+		aprint_normal("AX88190");
 		break;
 	case NE2000_TYPE_DL10019:
-		printf("DL10019");
+		aprint_normal("DL10019");
 		break;
         case NE2000_TYPE_DL10022:
-		printf("DL10022");
+		aprint_normal("DL10022");
 		break;
 	default:
 		printf("??");
 	};
-	printf(" chipset, %d Kb memory\n", dsc->mem_start/1024);
+	aprint_normal(" chipset, %d Kb memory\n", dsc->mem_start/1024);
 
 	/* Does the interface need a postattach call ? */
 	if (ne->postattach)
@@ -416,12 +411,12 @@ ne_pbus_attach(parent, self, aux)
 
 	/* Install an interrupt handler */
 	evcnt_attach_dynamic(&npsc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "intr");
+	    device_xname(self), "intr");
 	npsc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_NET, dp8390_intr,
 	    dsc, &npsc->sc_intrcnt);
 	if (npsc->sc_ih == NULL)
 		panic("%s: Cannot install interrupt handler",
-		   dsc->sc_dev.dv_xname);
+		   device_xname(self));
 	/* this feels wrong to do this here */
 	npsc->sc_ih->ih_maskaddr = npsc->sc_podule->irq_addr;
 	npsc->sc_ih->ih_maskbits = npsc->sc_podule->irq_mask;
@@ -434,10 +429,8 @@ ne_pbus_attach(parent, self, aux)
  * The EtherM interface uses the machines ethernet address so just
  * fill it out
  */
-static u_int8_t *
-em_ea(sc, buffer)
-	struct ne_pbus_softc *sc;
-	u_int8_t *buffer;
+static uint8_t *
+em_ea(struct ne_pbus_softc *sc, uint8_t *buffer)
 {
 	/*
 	 * Use the podulebus netslot_ea() function to get the netslot
@@ -455,8 +448,7 @@ em_ea(sc, buffer)
  * the driver, print out some more information using this register.
  */
 static void
-em_postattach(sc)
-	struct ne_pbus_softc *sc;
+em_postattach(struct ne_pbus_softc *sc)
 {
 	int dsr;
 
@@ -464,8 +456,8 @@ em_postattach(sc)
 	 * Report information from the Diagnostic Status Register for
 	 * the EtherM card
 	 */
-	printf("%s: 16KB buffer memory",
-	    sc->sc_ne2000.sc_dp8390.sc_dev.dv_xname);
+	aprint_normal_dev(sc->sc_ne2000.sc_dp8390.sc_dev,
+	    "16KB buffer memory");
 
 	/* Get the Diagnostic Status Register */
 	dsr = bus_space_read_1(sc->sc_ne2000.sc_asict,
@@ -473,22 +465,22 @@ em_postattach(sc)
 
 	/* Check for bits that indicate a fault */
 	if (!(dsr & EM_DSR_20M))
-		printf(", VCO faulty");
+		aprint_normal(", VCO faulty");
 	if (!(dsr & EM_DSR_TCOK))
-		printf(", TxClk faulty");
+		aprint_normal(", TxClk faulty");
 
 	/* Report status of card */
 	if (dsr & EM_DSR_POL)
-		printf(", UTP reverse polarity");
+		aprint_normal(", UTP reverse polarity");
 	if (dsr & EM_DSR_JAB)
-		printf(", jabber");
+		aprint_normal(", jabber");
 	if (dsr & EM_DSR_LNK)
-		printf(", link OK");
+		aprint_normal(", link OK");
 	if (dsr & EM_DSR_LBK)
-		printf(", loopback");
+		aprint_normal(", loopback");
 	if (dsr & EM_DSR_UTP)
-		printf(", UTP");
-	printf("\n");
+		aprint_normal(", UTP");
+	aprint_normal("\n");
 }
 
 
@@ -499,8 +491,7 @@ em_postattach(sc)
  * detects properly. 
  */
 static void
-eh600_preattach(sc)
-	struct ne_pbus_softc *sc;
+eh600_preattach(struct ne_pbus_softc *sc)
 {
 	u_char tmp;
 	struct ne2000_softc *nsc = &sc->sc_ne2000;
@@ -526,8 +517,7 @@ eh600_preattach(sc)
  * description set up by dp8390.c and ne2000.c to reflect this.
  */
 static void
-eh600_postattach(sc)
-	struct ne_pbus_softc *sc;
+eh600_postattach(struct ne_pbus_softc *sc)
 {
 	struct ne2000_softc *nsc = &sc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
@@ -550,14 +540,12 @@ eh600_postattach(sc)
 
 	dsc->rec_page_stop = dsc->tx_page_start + 
 		(dsc->mem_size >> ED_PAGE_SHIFT);
-	printf("%s: 32KB buffer memory\n", dsc->sc_dev.dv_xname);
-
+	aprint_normal_dev(dsc->sc_dev, "32KB buffer memory\n");
 }
 /*
  * EtherLan 600 media.
  */
-void eh600_init_media(sc)
-	struct dp8390_softc *sc;
+void eh600_init_media(struct dp8390_softc *sc)
 {
 	static int eh600_media[] = {
 		IFM_ETHER|IFM_AUTO,
@@ -568,8 +556,8 @@ void eh600_init_media(sc)
 	static const int eh600_nmedia =
 	    sizeof(eh600_media) / sizeof(eh600_media[0]);
 
-	printf("%s: 10base2, 10baseT, auto, default auto\n",
-	    sc->sc_dev.dv_xname);
+	aprint_normal_dev(sc->sc_dev,
+	    "10base2, 10baseT, auto, default auto\n");
 
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
 	for (i = 0; i < eh600_nmedia; i++)
@@ -580,8 +568,7 @@ void eh600_init_media(sc)
 
 
 void
-en_postattach(sc)
-	struct ne_pbus_softc *sc;
+en_postattach(struct ne_pbus_softc *sc)
 {
 
 	mx98905_attach(&sc->sc_ne2000.sc_dp8390);
@@ -591,14 +578,12 @@ en_postattach(sc)
  * EtherN media.
  */
 void
-en_init_media(sc)
-	struct dp8390_softc *sc;
+en_init_media(struct dp8390_softc *sc)
 {
 	static int en_media[] = {
 		IFM_ETHER|IFM_10_T
 	};
-	printf("%s: 10baseT, default 10baseT\n",
-	    sc->sc_dev.dv_xname);
+	aprint_normal_dev(sc->sc_dev, "10baseT, default 10baseT\n");
 
 	ifmedia_init(&sc->sc_media, 0, dp8390_mediachange, dp8390_mediastatus);
 	ifmedia_add(&sc->sc_media, en_media[0], 0, NULL);
@@ -618,10 +603,8 @@ en_init_media(sc)
 #define POD_READ(addr) \
 	podule->read_rom(podule->sync_base, addr)
 
-static u_int8_t *
-eh600_ea(sc, buffer)
-	struct ne_pbus_softc *sc;
-	u_int8_t *buffer;
+static uint8_t *
+eh600_ea(struct ne_pbus_softc *sc, uint8_t *buffer)
 {
 	podule_t *podule = sc->sc_podule;
 	u_int address;

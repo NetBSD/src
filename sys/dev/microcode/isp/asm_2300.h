@@ -1,4 +1,4 @@
-/* $NetBSD: asm_2300.h,v 1.8 2007/05/24 22:12:04 mjacob Exp $ */
+/* $NetBSD: asm_2300.h,v 1.8.24.1 2008/03/24 07:15:31 keiichi Exp $ */
 /*
  * Copyright (C) 2001, 2002, 2003, 2004, 2005 by Qlogic, Inc.
  * All rights reserved.
@@ -6607,3 +6607,7 @@ static const uint16_t isp_2300_risc_code[] = {
 	0x0040, 0x0080, 0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000,
 	0x4000, 0x8000, 0xd24b
 };
+#ifdef	ISP_2300_RISC_CODE
+#undef	ISP_2300_RISC_CODE
+#endif
+#define	ISP_2300_RISC_CODE (const uint16_t *) isp_2300_risc_code

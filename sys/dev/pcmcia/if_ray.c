@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.68 2007/12/09 20:28:14 jmcneill Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.68.6.1 2008/03/24 07:16:05 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.68 2007/12/09 20:28:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.68.6.1 2008/03/24 07:16:05 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1396,8 +1396,10 @@ ray_recv(sc, ccs)
 			len -= 4;
 #endif
 		ni = SRAM_READ_FIELD_1(sc, ccs, ray_cmd_rx, c_nextfrag);
-		RAY_DPRINTF(("%s: recv frag index %d len %ld bufp 0x%x ni %d\n",
-		    sc->sc_xname, i, (u_long)len, (int)bufp, ni));
+		RAY_DPRINTF((
+		    "%s: recv frag index %d len %ld bufp 0x%llx ni %d\n",
+		    sc->sc_xname, i, (u_long)len, (unsigned long long)bufp,
+		    ni));
 		if (len + lenread > pktlen) {
 			RAY_DPRINTF(("%s: BAD LEN current 0x%lx pktlen 0x%lx\n",
 			    sc->sc_xname, (u_long)(len + lenread),

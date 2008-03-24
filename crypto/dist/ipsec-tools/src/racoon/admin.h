@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.h,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: admin.h,v 1.4.16.1 2008/03/24 07:14:29 keiichi Exp $	*/
 
 /* Id: admin.h,v 1.11 2005/06/19 22:37:47 manubsd Exp */
 
@@ -46,9 +46,17 @@ extern mode_t adminsock_mode;
 struct admin_com {
 	u_int16_t ac_len;	/* total packet length including data */
 	u_int16_t ac_cmd;
-	int16_t ac_errno;
+	union {
+		int16_t ac_errno;
+		uint16_t ac_version;
+	};
 	u_int16_t ac_proto;
 };
+
+/*
+ * Version field in request is valid.
+ */
+#define ADMIN_FLAG_VERSION	0x8000
 
 /*
  * No data follows as the data.

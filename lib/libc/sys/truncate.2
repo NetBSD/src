@@ -1,4 +1,4 @@
-.\"	$NetBSD: truncate.2,v 1.22 2006/07/27 15:48:30 christos Exp $
+.\"	$NetBSD: truncate.2,v 1.22.16.1 2008/03/24 07:14:45 keiichi Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 26, 2006
+.Dd March 16, 2008
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -130,6 +130,16 @@ is not open for writing.
 .El
 .Sh SEE ALSO
 .Xr open 2
+.Sh STANDARDS
+Use of
+.Fn truncate
+to extend a file is an
+.St -p1003.1-2004
+extension, and is thus not portable.
+Files can be extended in a portable way seeking (using
+.Xr lseek 2 )
+to the required size and writing a single character with
+.Xr write 2 .
 .Sh HISTORY
 The
 .Fn truncate
@@ -140,7 +150,3 @@ function calls appeared in
 .Sh BUGS
 These calls should be generalized to allow ranges
 of bytes in a file to be discarded.
-.Pp
-Use of
-.Fn truncate
-to extend a file is not portable.

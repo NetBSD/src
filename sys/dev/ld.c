@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.54 2008/01/04 21:17:48 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.54.2.1 2008/03/24 07:15:11 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54 2008/01/04 21:17:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54.2.1 2008/03/24 07:15:11 keiichi Exp $");
 
 #include "rnd.h"
 
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54 2008/01/04 21:17:48 ad Exp $");
 static void	ldgetdefaultlabel(struct ld_softc *, struct disklabel *);
 static void	ldgetdisklabel(struct ld_softc *);
 static void	ldminphys(struct buf *bp);
-static void	ldshutdown(void *);
+static bool	ld_shutdown(device_t, int);
 static void	ldstart(struct ld_softc *, struct buf *);
 static void	ld_set_properties(struct ld_softc *);
 static void	ld_config_interrupts (struct device *);
@@ -100,7 +100,6 @@ const struct cdevsw ld_cdevsw = {
 };
 
 static struct	dkdriver lddkdriver = { ldstrategy, ldminphys };
-static void	*ld_sdh;
 
 void
 ldattach(struct ld_softc *sc)
@@ -159,9 +158,11 @@ ldattach(struct ld_softc *sc)
 	    RND_TYPE_DISK, 0);
 #endif
 
-	/* Set the `shutdownhook'. */
-	if (ld_sdh == NULL)
-		ld_sdh = shutdownhook_establish(ldshutdown, NULL);
+	/* Register with PMF */
+	if (!pmf_device_register1(&sc->sc_dv, NULL, NULL, ld_shutdown))
+		aprint_error_dev(&sc->sc_dv,
+		    "couldn't establish power handler\n");
+
 	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	/* Discover wedges on this disk. */
@@ -248,6 +249,9 @@ ldenddetach(struct ld_softc *sc)
 	rnd_detach_source(&sc->sc_rnd_source);
 #endif
 
+	/* Deregister with PMF */
+	pmf_device_deregister(&sc->sc_dv);
+
 	/*
 	 * XXX We can't really flush the cache here, beceause the
 	 * XXX device may already be non-existent from the controller's
@@ -263,19 +267,17 @@ ldenddetach(struct ld_softc *sc)
 }
 
 /* ARGSUSED */
-static void
-ldshutdown(void *cookie)
+static bool
+ld_shutdown(device_t dev, int flags)
 {
-	struct ld_softc *sc;
-	int i;
+	struct ld_softc *sc = device_private(dev);
 
-	for (i = 0; i < ld_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup(&ld_cd, i)) == NULL)
-			continue;
-		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0)
-			printf("%s: unable to flush cache\n",
-			    sc->sc_dv.dv_xname);
+	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0) {
+		printf("%s: unable to flush cache\n", device_xname(dev));
+		return false;
 	}
+
+	return true;
 }
 
 /* ARGSUSED */

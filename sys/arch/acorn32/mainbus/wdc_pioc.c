@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.21 2006/01/16 20:30:18 bouyer Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.21.70.1 2008/03/24 07:14:51 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.21 2006/01/16 20:30:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.21.70.1 2008/03/24 07:14:51 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,11 +66,11 @@ struct wdc_pioc_softc {
 };
 
 /* prototypes for functions */
-static int  wdc_pioc_probe  __P((struct device *, struct cfdata *, void *));
-static void wdc_pioc_attach __P((struct device *, struct device *, void *));
+static int  wdc_pioc_probe  (device_t, cfdata_t, void *);
+static void wdc_pioc_attach (device_t, device_t, void *);
 
 /* device attach structure */
-CFATTACH_DECL(wdc_pioc, sizeof(struct wdc_pioc_softc),
+CFATTACH_DECL_NEW(wdc_pioc, sizeof(struct wdc_pioc_softc),
     wdc_pioc_probe, wdc_pioc_attach, NULL, NULL);
 
 /*
@@ -81,10 +81,7 @@ CFATTACH_DECL(wdc_pioc, sizeof(struct wdc_pioc_softc),
  */
 
 static int
-wdc_pioc_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+wdc_pioc_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pioc_attach_args *pa = aux;
 	struct ata_channel ch;
@@ -146,42 +143,42 @@ wdc_pioc_probe(parent, cf, aux)
  */
 
 static void
-wdc_pioc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdc_pioc_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdc_pioc_softc *sc = (void *)self;
+	struct wdc_pioc_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct pioc_attach_args *pa = aux;
 	u_int iobase;
 	int i;
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 	iobase = pa->pa_iobase + pa->pa_offset;
 	wdr->cmd_iot = pa->pa_iot;
 	wdr->ctl_iot = pa->pa_iot;
 	if (bus_space_map(wdr->cmd_iot, iobase,
 	    WDC_PIOC_REG_NPORTS, 0, &wdr->cmd_baseioh))
-		panic("%s: couldn't map drive registers", self->dv_xname);
+		panic("%s: couldn't map drive registers", device_xname(self));
 	for (i = 0; i < WDC_PIOC_REG_NPORTS; i++) {
 		if (bus_space_subregion(wdr->cmd_iot,
 			wdr->cmd_baseioh, i,	i == 0 ? 4 : 1,
 			&wdr->cmd_iohs[i]) != 0)
 			panic("%s: couldn't submap drive registers",
-			    self->dv_xname);
+			    device_xname(self));
 	}
 
 	if (bus_space_map(wdr->ctl_iot,
 	    iobase + WDC_PIOC_AUXREG_OFFSET, WDC_PIOC_AUXREG_NPORTS, 0,
 	    &wdr->ctl_ioh))
-		panic("%s: couldn't map aux registers", self->dv_xname);
+		panic("%s: couldn't map aux registers", device_xname(self));
 
 	sc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "wdc",  wdcintr,
 	     &sc->sc_channel);
 	if (!sc->sc_ih)
-		panic("%s: Cannot claim IRQ %d", self->dv_xname, pa->pa_irq);
+		panic("%s: Cannot claim IRQ %d", device_xname(self),
+		    pa->pa_irq);
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
 	sc->sc_chanlist[0] = &sc->sc_channel;

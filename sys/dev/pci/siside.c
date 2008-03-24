@@ -1,4 +1,4 @@
-/*	$NetBSD: siside.c,v 1.22 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: siside.c,v 1.22.36.1 2008/03/24 07:15:49 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.22 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siside.c,v 1.22.36.1 2008/03/24 07:15:49 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,10 +49,10 @@ static void sis96x_setup_channel(struct ata_channel *);
 static int  sis_hostbr_match(struct pci_attach_args *);
 static int  sis_south_match(struct pci_attach_args *);
 
-static int  siside_match(struct device *, struct cfdata *, void *);
-static void siside_attach(struct device *, struct device *, void *);
+static int  siside_match(device_t, cfdata_t, void *);
+static void siside_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(siside, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(siside, sizeof(struct pciide_softc),
     siside_match, siside_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_sis_products[] =  {
@@ -84,8 +84,7 @@ static const struct pciide_product_desc pciide_sis_products[] =  {
 };
 
 static int
-siside_match(struct device *parent, struct cfdata *match,
-    void *aux)
+siside_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -97,14 +96,15 @@ siside_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-siside_attach(struct device *parent, struct device *self, void *aux)
+siside_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_sis_products));
-
 }
 
 static struct sis_hostbr_type {
@@ -227,8 +227,8 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_normal("%s: Silicon Integrated Systems ",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "Silicon Integrated Systems ");
 	pci_find_device(NULL, sis_hostbr_match);
 	if (sis_hostbr_type_match) {
 		if (sis_hostbr_type_match->type == SIS_TYPE_SOUTH) {
@@ -271,8 +271,8 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	}
 	aprint_normal(" IDE controller (rev. 0x%02x)\n",
 	    PCI_REVISION(pa->pa_class));
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 
@@ -322,8 +322,8 @@ sis_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			continue;
 		if ((channel == 0 && (sis_ctr0 & SIS_CTRL0_CHAN0_EN) == 0) ||
 		    (channel == 1 && (sis_ctr0 & SIS_CTRL0_CHAN1_EN) == 0)) {
-			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "%s channel ignored (disabled)\n", cp->name);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
@@ -521,12 +521,12 @@ sis_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
-	aprint_normal("%s: Silicon Integrated Systems 180/96X SATA controller (rev. 0x%02x)\n",
-		      sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-		      PCI_REVISION(pa->pa_class));
+	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "Silicon Integrated Systems 180/96X SATA controller "
+	    "(rev. 0x%02x)\n", PCI_REVISION(pa->pa_class));
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 

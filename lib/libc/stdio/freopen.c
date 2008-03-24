@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.14 2003/08/07 16:43:25 agc Exp $	*/
+/*	$NetBSD: freopen.c,v 1.14.28.1 2008/03/24 07:14:44 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.14 2003/08/07 16:43:25 agc Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.14.28.1 2008/03/24 07:14:44 keiichi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: freopen.c,v 1.14 2003/08/07 16:43:25 agc Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <wchar.h>
+#include <limits.h>
 #include "reentrant.h"
 #include "local.h"
 
@@ -97,7 +98,7 @@ freopen(file, mode, fp)
 			(void) __sflush(fp);
 		/* if close is NULL, closing is a no-op, hence pointless */
 		isopen = fp->_close != NULL;
-		if ((wantfd = fp->_file) < 0 && isopen) {
+		if ((wantfd = __sfileno(fp)) == -1 && isopen) {
 			(void) (*fp->_close)(fp->_cookie);
 			isopen = 0;
 		}
@@ -169,6 +170,19 @@ freopen(file, mode, fp)
 			(void) close(f);
 			f = wantfd;
 		}
+	}
+
+	/*
+	 * File descriptors are a full int, but _file is only a short.
+	 * If we get a valid file descriptor that is greater or equal to
+	 * USHRT_MAX, then the fd will get sign-extended into an
+	 * invalid file descriptor.  Handle this case by failing the
+	 * open. (We treat the short as unsigned, and special-case -1).
+	 */
+	if (f >= USHRT_MAX) {
+		(void)close(f);
+		errno = EMFILE;
+		return NULL;
 	}
 
 	fp->_flags = flags;

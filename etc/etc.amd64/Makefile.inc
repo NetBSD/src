@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2007/12/20 23:32:24 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.10.4.1 2008/03/24 07:14:41 keiichi Exp $
 #
 #	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
@@ -17,6 +17,6 @@ INSTALLATION_DIRS+= 	installation/misc
 
 snap_md_post:
 	cd ${KERNSRCDIR}/arch/i386/stand/pxeboot && ${MAKE} release
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/floppy '*.fs'
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*.*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*.fs'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.*'

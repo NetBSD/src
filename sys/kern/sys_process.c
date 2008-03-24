@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.135 2008/01/23 15:04:40 elad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.135.2.1 2008/03/24 07:16:14 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.135 2008/01/23 15:04:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.135.2.1 2008/03/24 07:16:14 keiichi Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -504,6 +504,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 #endif
 			}
 		}
+		p->p_trace_enabled = trace_is_enabled(p);
 		mutex_exit(&t->p_smutex);
 
 		/*

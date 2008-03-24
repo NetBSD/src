@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.6 2007/10/30 15:07:07 tsutsui Exp $	*/
+/*	$NetBSD: boot.h,v 1.6.12.1 2008/03/24 07:14:55 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -44,6 +44,11 @@
 #define DEFKERNELNAME	kernelnames[0]
 
 extern char *kernelnames[];
+extern u_int cobalt_id;
+#define COBALT_ID_QUBE2700	3
+#define COBALT_ID_RAQ		4
+#define COBALT_ID_QUBE2		5
+#define COBALT_ID_RAQ2		6 
 
 /*
  * com
@@ -97,3 +102,8 @@ int tgets(char *);
 void pdcache_wb(uint32_t, u_int);
 void pdcache_inv(uint32_t, u_int);
 void pdcache_wbinv(uint32_t, u_int);
+
+/*
+ * pci
+ */
+uint32_t pcicfgread(uint32_t, uint32_t);

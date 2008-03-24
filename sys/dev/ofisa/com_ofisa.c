@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ofisa.c,v 1.12 2007/10/19 12:00:37 ad Exp $	*/
+/*	$NetBSD: com_ofisa.c,v 1.12.12.1 2008/03/24 07:15:46 keiichi Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.12 2007/10/19 12:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ofisa.c,v 1.12.12.1 2008/03/24 07:15:46 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,17 +62,14 @@ struct com_ofisa_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int com_ofisa_probe(struct device *, struct cfdata *, void *);
-void com_ofisa_attach(struct device *, struct device *, void *);
+int com_ofisa_probe(device_t, cfdata_t , void *);
+void com_ofisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_ofisa, sizeof(struct com_ofisa_softc),
+CFATTACH_DECL_NEW(com_ofisa, sizeof(struct com_ofisa_softc),
     com_ofisa_probe, com_ofisa_attach, NULL, NULL);
 
 int
-com_ofisa_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+com_ofisa_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = { "pnpPNP,501", NULL };
@@ -88,9 +85,7 @@ com_ofisa_probe(parent, cf, aux)
 }
 
 void
-com_ofisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_ofisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct com_ofisa_softc *osc = device_private(self);
         struct com_softc *sc = &osc->sc_com;
@@ -104,6 +99,8 @@ com_ofisa_attach(parent, self, aux)
 	char freqbuf[4];
 	int n;
 
+	sc->sc_dev = self;
+
 	/*
 	 * We're living on an ofw.  We have to ask the OFW what our
 	 * registers and interrupts properties look like.
@@ -116,11 +113,11 @@ com_ofisa_attach(parent, self, aux)
 	n = com_ofisa_md_reg_fixup(parent, self, aux, &reg, 1, n);
 #endif
 	if (n != 1) {
-		printf(": error getting register data\n");
+		aprint_error(": error getting register data\n");
 		return;
 	}
 	if (reg.len != 8) {
-		printf(": weird register size (%lu, expected 8)\n",
+		aprint_error(": weird register size (%lu, expected 8)\n",
 		    (unsigned long)reg.len);
 		return;
 	}
@@ -130,7 +127,7 @@ com_ofisa_attach(parent, self, aux)
 	n = com_ofisa_md_intr_fixup(parent, self, aux, &intr, 1, n);
 #endif
 	if (n != 1) {
-		printf(": error getting interrupt data\n");
+		aprint_error(": error getting interrupt data\n");
 		return;
 	}
 
@@ -147,7 +144,7 @@ com_ofisa_attach(parent, self, aux)
 
 	if (!com_is_console(iot, iobase, &ioh) &&
 	    bus_space_map(iot, iobase, reg.len, 0, &ioh)) {
-		printf(": can't map register space\n");
+		aprint_error(": can't map register space\n");
                 return;
         }
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);

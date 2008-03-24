@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
+/*	$NetBSD: lubbock_start.S,v 1.1.100.1 2008/03/24 07:14:55 keiichi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -148,7 +148,8 @@ Lstart:
 #ifndef STARTUP_PAGETABLE_ADDR
 #define STARTUP_PAGETABLE_ADDR 0xa0004000
 #endif
-Lstartup_pagetable	.word	STARTUP_PAGETABLE_ADDR
+Lstartup_pagetable:
+	.word	STARTUP_PAGETABLE_ADDR
 mmu_init_table:	
 	/* fill all table VA==PA */
 	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP(AP_KRW))

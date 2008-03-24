@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.417 2008/02/11 05:57:30 dyoung Exp $
+# $NetBSD: shl.mi,v 1.417.4.1 2008/03/24 07:14:39 keiichi Exp $
 #
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 # Note: don't delete entries from here - mark them as "obsolete" instead.
@@ -11,7 +11,7 @@
 ./lib/libipsec.so.2.2				base-net-shlib
 ./lib/libkvm.so.5.3				base-sys-shlib
 ./lib/libm.so.0.6				base-sys-shlib
-./lib/libprop.so.0.5				base-sys-shlib
+./lib/libprop.so.0.6				base-sys-shlib
 ./lib/libradius.so.1.0				base-sys-shlib
 ./lib/libtermcap.so.0.6				base-sys-shlib
 ./lib/libtermlib.so.0.6				base-sys-shlib
@@ -48,7 +48,7 @@
 ./usr/lib/libbind9.so.0.0			base-bind-shlib
 ./usr/lib/libbluetooth.so.3.0			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
-./usr/lib/libbz2.so.1.0				base-sys-shlib
+./usr/lib/libbz2.so.1.1				base-sys-shlib
 ./usr/lib/libc.so.12.159			base-sys-shlib
 ./usr/lib/libcdk.so.1.0				base-obsolete		obsolete
 ./usr/lib/libcom_err.so.4.1			base-krb5-shlib		kerberos
@@ -93,7 +93,7 @@
 ./usr/lib/libpcap.so.2.0			base-net-shlib
 ./usr/lib/libpci.so.1.0				base-sys-shlib
 ./usr/lib/libposix.so.0.1			base-sys-shlib
-./usr/lib/libprop.so.0.5			base-sys-shlib
+./usr/lib/libprop.so.0.6			base-sys-shlib
 ./usr/lib/libpthread.so.0.10			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.0.1			base-obsolete		obsolete
 ./usr/lib/libpthread_dbg.so.1.0			base-sys-shlib

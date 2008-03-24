@@ -1,4 +1,4 @@
-/*	$NetBSD: irframevar.h,v 1.16 2007/03/06 20:45:59 drochner Exp $	*/
+/*	$NetBSD: irframevar.h,v 1.16.32.1 2008/03/24 07:15:29 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct irframe_methods {
 };
 
 struct irframe_softc {
-	struct	device			sc_dev;
+	device_t			sc_dev;
 	const struct irframe_methods	*sc_methods;
 	void				*sc_handle;
 	char				sc_open;

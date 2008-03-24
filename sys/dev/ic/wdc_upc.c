@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.24 2007/10/19 12:00:05 ad Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.24.12.1 2008/03/24 07:15:18 keiichi Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.24 2007/10/19 12:00:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.24.12.1 2008/03/24 07:15:18 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.24 2007/10/19 12:00:05 ad Exp $");
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 
-static int wdc_upc_match(struct device *, struct cfdata *, void *);
-static void wdc_upc_attach(struct device *, struct device *, void *);
+static int wdc_upc_match(device_t, cfdata_t, void *);
+static void wdc_upc_attach(device_t, device_t, void *);
 
 struct wdc_upc_softc {
 	struct wdc_softc sc_wdc;
@@ -55,11 +55,11 @@ struct wdc_upc_softc {
 	struct wdc_regs sc_wdc_regs;
 };
 
-CFATTACH_DECL(wdc_upc, sizeof(struct wdc_upc_softc),
+CFATTACH_DECL_NEW(wdc_upc, sizeof(struct wdc_upc_softc),
     wdc_upc_match, wdc_upc_attach, NULL, NULL);
 
 static int
-wdc_upc_match(struct device *parent, struct cfdata *cf, void *aux)
+wdc_upc_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* upc_submatch does it all anyway */
@@ -67,13 +67,14 @@ wdc_upc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-wdc_upc_attach(struct device *parent, struct device *self, void *aux)
+wdc_upc_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdc_upc_softc *sc = (struct wdc_upc_softc *)self;
+	struct wdc_upc_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct upc_attach_args *ua = aux;
 	int i;
 
+	sc->sc_wdc.sc_atac.atac_dev = self;
 	sc->sc_wdc.regs = wdr = &sc->sc_wdc_regs;
 
 	sc->sc_wdc.sc_atac.atac_cap = ATAC_CAP_DATA16;
@@ -92,8 +93,8 @@ wdc_upc_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(ua->ua_iot, ua->ua_ioh, i,
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
-			aprint_error("%s: can't subregion I/O space\n",
-			    sc->sc_wdc.sc_atac.atac_dev.dv_xname);
+			aprint_error_dev(sc->sc_wdc.sc_atac.atac_dev,
+			    "can't subregion I/O space\n");
 			return;
 		}
 	}

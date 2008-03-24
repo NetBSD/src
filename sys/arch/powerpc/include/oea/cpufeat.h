@@ -1,4 +1,4 @@
-/* $NetBSD: cpufeat.h,v 1.2 2008/02/14 05:35:36 matt Exp $ */
+/* $NetBSD: cpufeat.h,v 1.2.4.1 2008/03/24 07:15:02 keiichi Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,6 +52,7 @@
 #define OEACPU_601		(1 << 4)
 #define OEACPU_HIGHSPRG		(1 << 5)
 #define OEACPU_ALTIVEC		(1 << 6)
+#define OEACPU_XBSEN		(1 << 7)	/* BATS > 256MB */
 
 #ifdef _KERNEL
 void cpu_model_init(void);

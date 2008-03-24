@@ -1,7 +1,7 @@
-/*	$NetBSD: sleepq.h,v 1.9 2007/11/07 00:23:44 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.9.10.1 2008/03/24 07:16:28 keiichi Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -83,7 +83,7 @@ typedef struct sleeptab {
 void	sleepq_init(sleepq_t *, kmutex_t *);
 int	sleepq_remove(sleepq_t *, lwp_t *);
 void	sleepq_enqueue(sleepq_t *, wchan_t, const char *, syncobj_t *);
-void	sleepq_unsleep(lwp_t *);
+u_int	sleepq_unsleep(lwp_t *, bool);
 void	sleepq_timeout(void *);
 lwp_t	*sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
@@ -193,7 +193,7 @@ void	turnstile_exit(wchan_t);
 void	turnstile_block(turnstile_t *, int, wchan_t, syncobj_t *);
 void	turnstile_wakeup(turnstile_t *, int, int, lwp_t *);
 void	turnstile_print(volatile void *, void (*)(const char *, ...));
-void	turnstile_unsleep(lwp_t *);
+u_int	turnstile_unsleep(lwp_t *, bool);
 void	turnstile_changepri(lwp_t *, pri_t);
 
 extern pool_cache_t turnstile_cache;

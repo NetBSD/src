@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.152 2008/01/03 20:48:02 jdc Exp $
+# $NetBSD: mi,v 1.152.4.1 2008/03/24 07:14:40 keiichi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -30,11 +30,12 @@
 ./usr/share/doc/html/bind9/arm/Bv9ARM.ch08.html	misc-bind-htmldoc	doc
 ./usr/share/doc/html/bind9/arm/Bv9ARM.ch09.html	misc-bind-htmldoc	doc
 ./usr/share/doc/html/bind9/arm/Bv9ARM.html	misc-bind-htmldoc	doc
-./usr/share/doc/html/bzip2/manual_1.html	misc-util-htmldoc	share
-./usr/share/doc/html/bzip2/manual_2.html	misc-util-htmldoc	share
-./usr/share/doc/html/bzip2/manual_3.html	misc-util-htmldoc	share
-./usr/share/doc/html/bzip2/manual_4.html	misc-util-htmldoc	share
-./usr/share/doc/html/bzip2/manual_toc.html	misc-util-htmldoc	share
+./usr/share/doc/html/bzip2/manual.html		misc-util-htmldoc	share
+./usr/share/doc/html/bzip2/manual_1.html	misc-obsolete		obsolete
+./usr/share/doc/html/bzip2/manual_2.html	misc-obsolete		obsolete
+./usr/share/doc/html/bzip2/manual_3.html	misc-obsolete		obsolete
+./usr/share/doc/html/bzip2/manual_4.html	misc-obsolete		obsolete
+./usr/share/doc/html/bzip2/manual_toc.html	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp			misc-ntp-htmldoc
 ./usr/share/doc/html/ntp/Oncore-SHMEM.htm	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/accopt.htm		misc-obsolete		obsolete

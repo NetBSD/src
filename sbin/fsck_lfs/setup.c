@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.33 2007/10/08 21:39:50 ad Exp $ */
+/* $NetBSD: setup.c,v 1.33.6.1 2008/03/24 07:14:49 keiichi Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ setup(const char *dev)
 	if (fs == NULL) {
 		if (preen)
 			printf("%s: ", cdevname());
-		errexit("BAD SUPER BLOCK OR IFILE INODE NOT FOUND\n");
+		errexit("BAD SUPER BLOCK OR IFILE INODE NOT FOUND");
 	}
 	if ((lp = getdisklabel((char *) NULL, fsreadfd)) != NULL)
 		dev_bsize = secsize = lp->d_secsize;

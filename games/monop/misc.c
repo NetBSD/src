@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.17 2008/02/20 04:10:01 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.17.2.1 2008/03/24 07:14:42 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.17 2008/02/20 04:10:01 dholland Exp $");
+__RCSID("$NetBSD: misc.c,v 1.17.2.1 2008/03/24 07:14:42 keiichi Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
 #include <ctype.h>
+#include <limits.h>
 #include <signal.h>
+#include <errno.h>
+
+#include "monop.h"
 
 /*
  *	This routine executes a truncated set of commands until a
@@ -94,29 +97,25 @@ int
 get_int(prompt)
 	const char *prompt;
 {
-	int num;
+	long num;
 	char *sp;
-	int c;
 	char buf[257];
 
 	for (;;) {
-inter:
 		printf("%s", prompt);
-		num = 0;
-		for (sp = buf; (c=getchar()) != '\n'; *sp++ = c)
-			if (c == -1)	/* check for interrupted system call */
-				goto inter;
-		*sp = c;
-		if (sp == buf)
-			continue;
-		for (sp = buf; isspace((unsigned char)*sp); sp++)
-			continue;
-		for (; isdigit((unsigned char)*sp); sp++)
-			num = num * 10 + *sp - '0';
-		if (*sp == '\n')
-			return num;
-		else
+		fgets(buf, sizeof(buf), stdin);
+		if (feof(stdin))
+			return 0;
+		sp = strchr(buf, '\n');
+		if (sp)
+			*sp = '\0';
+		errno = 0;
+		num = strtol(buf, &sp, 10);
+		if (errno || strlen(sp) > 0 || num < 0 || num >= INT_MAX) {
 			printf("I can't understand that\n");
+			continue;
+		}
+		return num;
 	}
 }
 
@@ -218,6 +217,7 @@ set_ownlist(pl)
 					    op->sqr->desc);
 				}
 				printf("num = %d\n", num);
+				exit(1);
 			}
 #ifdef DEBUG
 			printf("orig->num_in = %d\n", orig->num_in);

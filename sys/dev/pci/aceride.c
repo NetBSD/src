@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.24 2008/01/01 14:57:06 chris Exp $	*/
+/*	$NetBSD: aceride.c,v 1.24.2.1 2008/03/24 07:15:46 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.24 2008/01/01 14:57:06 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.24.2.1 2008/03/24 07:15:46 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,15 +47,15 @@ static void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void acer_setup_channel(struct ata_channel*);
 static int  acer_pci_intr(void *);
 
-static int  aceride_match(struct device *, struct cfdata *, void *);
-static void aceride_attach(struct device *, struct device *, void *);
+static int  aceride_match(device_t, cfdata_t, void *);
+static void aceride_attach(device_t, device_t, void *);
 
 struct aceride_softc {
 	struct pciide_softc pciide_sc;
 	struct pci_attach_args pcib_pa;
 };
 
-CFATTACH_DECL(aceride, sizeof(struct aceride_softc),
+CFATTACH_DECL_NEW(aceride, sizeof(struct aceride_softc),
     aceride_match, aceride_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_acer_products[] =  {
@@ -72,8 +72,7 @@ static const struct pciide_product_desc pciide_acer_products[] =  {
 };
 
 static int
-aceride_match(struct device *parent, struct cfdata *match,
-    void *aux)
+aceride_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -87,14 +86,15 @@ aceride_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-aceride_attach(struct device *parent, struct device *self, void *aux)
+aceride_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_acer_products));
-
 }
 
 static int
@@ -125,8 +125,8 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
@@ -177,7 +177,7 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		bool force_compat_mode;
 		bool property_is_set;
 		property_is_set = prop_dictionary_get_bool(
-				device_properties(&sc->sc_wdcdev.sc_atac.atac_dev),
+				device_properties(sc->sc_wdcdev.sc_atac.atac_dev),
 				"ali1543-ide-force-compat-mode",
 				&force_compat_mode);
 		if (property_is_set && force_compat_mode) {
@@ -203,8 +203,8 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (rev == 0xC3) {
 		/* install reset bug workaround */
 		if (pci_find_device(&acer_sc->pcib_pa, acer_pcib_match) == 0) {
-			printf("%s: WARNING: can't find pci-isa bridge\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "WARNING: can't find pci-isa bridge\n");
 		} else
 			sc->sc_wdcdev.reset = acer_do_reset;
 	}
@@ -215,8 +215,8 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 		if ((interface & PCIIDE_CHAN_EN(channel)) == 0) {
-			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "%s channel ignored (disabled)\n", cp->name);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
@@ -365,8 +365,9 @@ acer_pci_intr(void *arg)
 		if (chids & ACER_CHIDS_INT(i)) {
 			crv = wdcintr(wdc_cp);
 			if (crv == 0) {
-				printf("%s:%d: bogus intr\n",
-				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
+				aprint_error("%s:%d: bogus intr\n",
+				    device_xname(
+				      sc->sc_wdcdev.sc_atac.atac_dev), i);
 				pciide_irqack(wdc_cp);
 			} else
 				rv = 1;
