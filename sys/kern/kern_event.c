@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.51 2008/03/23 22:39:48 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.52 2008/03/24 09:09:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.51 2008/03/23 22:39:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.52 2008/03/24 09:09:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1009,6 +1009,57 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	return (error);
 }
 
+#if defined(DEBUG)
+static void
+kq_check(struct kqueue *kq)
+{
+	const struct knote *kn;
+	int count;
+	int nmarker;
+
+	KASSERT(mutex_owned(&kq->kq_lock));
+	KASSERT(kq->kq_count >= 0);
+
+	count = 0;
+	nmarker = 0;
+	TAILQ_FOREACH(kn, &kq->kq_head, kn_tqe) {
+		if ((kn->kn_status & (KN_MARKER | KN_QUEUED)) == 0) {
+			panic("%s: kq=%p kn=%p inconsist 1", __func__, kq, kn);
+		}
+		if ((kn->kn_status & KN_MARKER) == 0) {
+			if (kn->kn_kq != kq) {
+				panic("%s: kq=%p kn=%p inconsist 2",
+				    __func__, kq, kn);
+			}
+			if ((kn->kn_status & KN_ACTIVE) == 0) {
+				panic("%s: kq=%p kn=%p: not active",
+				    __func__, kq, kn);
+			}
+			count++;
+			if (count > kq->kq_count) {
+				goto bad;
+			}
+		} else {
+			nmarker++;
+#if 0
+			if (nmarker > 10000) {
+				panic("%s: kq=%p too many markers: %d != %d, "
+				    "nmarker=%d",
+				    __func__, kq, kq->kq_count, count, nmarker);
+			}
+#endif
+		}
+	}
+	if (kq->kq_count != count) {
+bad:
+		panic("%s: kq=%p inconsist 3: %d != %d, nmarker=%d",
+		    __func__, kq, kq->kq_count, count, nmarker);
+	}
+}
+#else /* defined(DEBUG) */
+#define	kq_check(a)	/* nothing */
+#endif /* defined(DEBUG) */
+
 /*
  * Scan through the list of events on fp (for a maximum of maxevents),
  * returning the results in to ulistp. Timeout is determined by tsp; if
@@ -1092,9 +1143,11 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 				/* someone else's marker. */
 				kn = TAILQ_NEXT(kn, kn_tqe);
 			}
+			kq_check(kq);
 			TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 			kq->kq_count--;
 			kn->kn_status &= ~KN_QUEUED;
+			kq_check(kq);
 			if (kn->kn_status & KN_DISABLED) {
 				/* don't want disabled events */
 				continue;
@@ -1130,9 +1183,11 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 				kn->kn_status &= ~KN_ACTIVE;
 			} else {
 				/* add event back on list */
+				kq_check(kq);
 				TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 				kq->kq_count++;
 				kn->kn_status |= KN_QUEUED;
+				kq_check(kq);
 			}
 			if (nkev == kevcnt) {
 				/* do copyouts in kevcnt chunks */
@@ -1255,6 +1310,7 @@ kqueue_poll(file_t *fp, int events)
 		} else {
 			selrecord(curlwp, &kq->kq_sel);
 		}
+		kq_check(kq);
 		mutex_spin_exit(&kq->kq_lock);
 	}
 
@@ -1451,9 +1507,11 @@ knote_enqueue(struct knote *kn)
 		kn->kn_status &= ~KN_DISABLED;
 	}
 	if ((kn->kn_status & (KN_ACTIVE | KN_QUEUED)) == KN_ACTIVE) {
+		kq_check(kq);
 		TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 		kn->kn_status |= KN_QUEUED;
 		kq->kq_count++;
+		kq_check(kq);
 		cv_broadcast(&kq->kq_cv);
 		selnotify(&kq->kq_sel, 0, NOTE_SUBMIT);
 	}
@@ -1474,10 +1532,11 @@ knote_dequeue(struct knote *kn)
 
 	mutex_spin_enter(&kq->kq_lock);
 	if ((kn->kn_status & KN_QUEUED) != 0) {
-		KASSERT(kq->kq_count > 0);
+		kq_check(kq);
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 		kn->kn_status &= ~KN_QUEUED;
 		kq->kq_count--;
+		kq_check(kq);
 	}
 	mutex_spin_exit(&kq->kq_lock);
 }
@@ -1497,9 +1556,11 @@ knote_activate(struct knote *kn)
 	mutex_spin_enter(&kq->kq_lock);
 	kn->kn_status |= KN_ACTIVE;
 	if ((kn->kn_status & (KN_QUEUED | KN_DISABLED)) == 0) {
+		kq_check(kq);
 		TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 		kn->kn_status |= KN_QUEUED;
 		kq->kq_count++;
+		kq_check(kq);
 		cv_broadcast(&kq->kq_cv);
 		selnotify(&kq->kq_sel, 0, NOTE_SUBMIT);
 	}
