@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.34 2008/03/23 14:12:39 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.35 2008/03/24 19:40:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,7 @@
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <sys/syslog.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
@@ -523,4 +524,30 @@ calc_cache_size(struct vm_map *map, int pct)
 		panic("%s: needs tweak", __func__);
 	}
 	return t;
+}
+
+int
+seltrue(dev_t dev, int events, struct lwp *l)
+{
+        return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
+}
+
+void
+selrecord(lwp_t *selector, struct selinfo *sip)
+{
+}
+
+void
+selinit(struct selinfo *sip)
+{
+}
+
+void
+selnotify(struct selinfo *sip, int events, long knhint)
+{
+}
+
+void
+seldestroy(struct selinfo *sip)
+{
 }
