@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.20 2008/03/24 20:24:29 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.21 2008/03/24 20:55:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -189,3 +189,11 @@ lib/libbz2/shlib_version:			patch
 
 	Upgrade bzip2 to 1.0.5, fixing CVE-2008-1372 and CVE-2005-0953
 	[adrianp, ticket #1106]
+
+sys/dev/pci/machfb.c				1.51
+sys/dev/pci/voodoofb.c				1.14
+
+	Introduce two missing KAUTH_GENERIC_ISSUSER check in the voodoo and
+	machfb mmap() code.  Discussed with and okay macallan@.
+	[elad, ticket #1107]
+
