@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1122 2008/03/23 07:32:13 bjs Exp $
+#	$NetBSD: mi,v 1.1123 2008/03/24 12:30:43 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7225,7 +7225,7 @@
 ./usr/share/man/cat9/MCLGET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MEXTADD.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MEXTMALLOC.0		comp-sys-catman		.cat
-./usr/share/man/cat9/MEXTREMOVE.0		comp-sys-catman		.cat
+./usr/share/man/cat9/MEXTREMOVE.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/MFREE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MGET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/MGETHDR.0			comp-sys-catman		.cat
@@ -12245,7 +12245,7 @@
 ./usr/share/man/man9/MCLGET.9			comp-sys-man		.man
 ./usr/share/man/man9/MEXTADD.9			comp-sys-man		.man
 ./usr/share/man/man9/MEXTMALLOC.9		comp-sys-man		.man
-./usr/share/man/man9/MEXTREMOVE.9		comp-sys-man		.man
+./usr/share/man/man9/MEXTREMOVE.9		comp-obsolete		obsolete
 ./usr/share/man/man9/MFREE.9			comp-sys-man		.man
 ./usr/share/man/man9/MGET.9			comp-sys-man		.man
 ./usr/share/man/man9/MGETHDR.9			comp-sys-man		.man

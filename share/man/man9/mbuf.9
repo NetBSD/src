@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.45 2007/07/30 22:48:47 alc Exp $
+.\"	$NetBSD: mbuf.9,v 1.46 2008/03/24 12:30:17 yamt Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 28, 2006
+.Dd March 24, 2008
 .Dt MBUF 9
 .Os
 .Sh NAME
@@ -73,7 +73,6 @@
 .Nm M_TRAILINGSPACE ,
 .Nm M_PREPEND ,
 .Nm MCHTYPE ,
-.Nm MEXTREMOVE ,
 .Nm MFREE ,
 .Nd "functions and macros for managing memory used by networking code"
 .Sh SYNOPSIS
@@ -146,8 +145,6 @@
 .Fn M_PREPEND "struct mbuf *m" "int plen" "int how"
 .Ft void
 .Fn MCHTYPE "struct mbuf *m" "int type"
-.Ft void
-.Fn MEXTREMOVE "struct mbuf *m"
 .Ft void
 .Fn MFREE "struct mbuf *m" "struct mbuf *n"
 .Sh DESCRIPTION
@@ -612,8 +609,7 @@ The flag
 .Dv M_EXT
 is set upon success.
 Implemented as a macro.
-If a free routine is specified, it will be called when the mbuf is freed or
-when MEXTREMOVE is called for the mbuf.
+If a free routine is specified, it will be called when the mbuf is freed.
 In the case of former, the first argument for a free routine is the mbuf
 .Fa m
 and the routine is expected to free it in addition to the external storage
@@ -717,13 +713,6 @@ Change mbuf
 .Fa m
 to new type
 .Fa type .
-Implemented as a macro.
-.It Fn MEXTREMOVE "struct mbuf *m"
-Removes external storage from mbuf
-.Fa m .
-The flag
-.Dv M_EXT
-is removed.
 Implemented as a macro.
 .It Fn MFREE "struct mbuf *m" "struct mbuf *n"
 Frees a single mbuf
