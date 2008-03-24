@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.130 2008/02/27 14:24:24 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.131 2008/03/24 08:53:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.130 2008/02/27 14:24:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.131 2008/03/24 08:53:25 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1307,7 +1307,10 @@ uvm_pagezerocheck(struct vm_page *pg)
 		p++;
 	}
 	pmap_kremove(uvm_zerocheckkva, PAGE_SIZE);
-	pmap_update(pmap_kernel());
+	/*
+	 * pmap_update() is not necessary here because no one except us
+	 * uses this VA.
+	 */
 }
 #endif /* DEBUG */
 
