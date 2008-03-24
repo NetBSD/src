@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.69 2008/01/02 11:48:21 ad Exp $ */
+/* $NetBSD: pmap.h,v 1.69.2.1 2008/03/24 07:14:52 keiichi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -189,6 +189,8 @@ typedef struct pv_entry {
 
 #ifdef _KERNEL
 
+#include <sys/atomic.h>
+
 #ifndef _LKM
 #include "opt_dec_kn8ae.h"			/* XXX */
 
@@ -359,8 +361,7 @@ do {									\
 	u_long cpu_mask = (1UL << cpu_number());			\
 									\
 	if ((pmap)->pm_needisync & cpu_mask) {				\
-		atomic_clearbits_ulong(&(pmap)->pm_needisync,		\
-		    cpu_mask);						\
+		atomic_and_ulong(&(pmap)->pm_needisync,	~cpu_mask);	\
 		alpha_pal_imb();					\
 	}								\
 } while (0)

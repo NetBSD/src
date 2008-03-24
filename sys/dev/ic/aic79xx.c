@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.37 2007/03/04 06:01:48 christos Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.37.32.1 2008/03/24 07:15:16 keiichi Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.37 2007/03/04 06:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.37.32.1 2008/03/24 07:15:16 keiichi Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5150,10 +5150,8 @@ ahd_set_unit(struct ahd_softc *ahd, int unit)
 }
 
 void
-ahd_set_name(struct ahd_softc *ahd, char *name)
+ahd_set_name(struct ahd_softc *ahd, const char *name)
 {
-	if (ahd->name != NULL)
-		free(ahd->name, M_DEVBUF);
 	ahd->name = name;
 }
 
@@ -5207,8 +5205,6 @@ ahd_free(struct ahd_softc *ahd)
 		free(ahd->black_hole, M_DEVBUF);
 	}
 #endif
-	if (ahd->name != NULL)
-		free(ahd->name, M_DEVBUF);
 	if (ahd->seep_config != NULL)
 		free(ahd->seep_config, M_DEVBUF);
 	if (ahd->saved_stack != NULL)

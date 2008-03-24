@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.14 2008/01/10 07:49:04 dyoung Exp $ */
+/* $NetBSD: gpio.c,v 1.14.2.1 2008/03/24 07:15:15 keiichi Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.14 2008/01/10 07:49:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.14.2.1 2008/03/24 07:15:15 keiichi Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -49,7 +49,7 @@ struct gpio_softc {
 
 int	gpio_match(device_t, struct cfdata *, void *);
 void	gpio_attach(device_t, device_t, void *);
-bool	gpio_resume(device_t);
+bool	gpio_resume(device_t PMF_FN_PROTO);
 int	gpio_detach(device_t, int);
 int	gpio_activate(device_t, enum devact);
 int	gpio_search(device_t, struct cfdata *, const int *, void *);
@@ -77,7 +77,7 @@ gpio_match(device_t parent, struct cfdata *cf, void *aux)
 }
 
 bool
-gpio_resume(device_t self)
+gpio_resume(device_t self PMF_FN_ARGS)
 {
 	struct gpio_softc *sc = device_private(self);
 	int pin;

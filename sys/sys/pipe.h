@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.23 2008/01/02 19:16:00 yamt Exp $ */
+/* $NetBSD: pipe.h,v 1.23.2.1 2008/03/24 07:16:28 keiichi Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -102,7 +102,9 @@ struct pipemapping {
  */
 struct pipe {
 	kmutex_t *pipe_lock;		/* pipe mutex */
-	kcondvar_t pipe_cv;		/* general synchronization */
+	kcondvar_t pipe_rcv;		/* cv for readers */
+	kcondvar_t pipe_wcv;		/* cv for writers */
+	kcondvar_t pipe_draincv;	/* cv for close */
 	kcondvar_t pipe_lkcv;		/* locking */
 	struct	pipebuf pipe_buffer;	/* data storage */
 	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */

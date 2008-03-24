@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.2 2008/01/17 09:01:57 yamt Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.2.8.1 2008/03/24 07:16:14 keiichi Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.2 2008/01/17 09:01:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.2.8.1 2008/03/24 07:16:14 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -159,7 +159,7 @@ percpu_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 	unsigned int offset;
 	unsigned int nextoff;
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 	KASSERT(dummy == NULL);
 
 	if ((vmflags & VM_NOSLEEP) != 0)
@@ -204,7 +204,7 @@ void
 percpu_init(void)
 {
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 	rw_init(&percpu_swap_lock);
 	mutex_init(&percpu_allocation_lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -225,7 +225,7 @@ percpu_init_cpu(struct cpu_info *ci)
 	percpu_cpu_t * const pcc = cpu_percpu(ci);
 	size_t size = percpu_nextoff; /* XXX racy */
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 	pcc->pcc_size = size;
 	if (size) {
 		pcc->pcc_data = kmem_zalloc(pcc->pcc_size, KM_SLEEP);
@@ -246,7 +246,7 @@ percpu_alloc(size_t size)
 	unsigned int offset;
 	percpu_t *pc;
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 	offset = vmem_alloc(percpu_offset_arena, size, VM_SLEEP | VM_BESTFIT);
 	pc = (percpu_t *)(uintptr_t)offset;
 	percpu_zero(pc, size);
@@ -264,7 +264,7 @@ void
 percpu_free(percpu_t *pc, size_t size)
 {
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 	vmem_free(percpu_offset_arena, (vmem_addr_t)percpu_offset(pc), size);
 }
 
@@ -303,7 +303,7 @@ void
 percpu_traverse_enter(void)
 {
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 	rw_enter(&percpu_swap_lock, RW_READER);
 }
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.390 2008/02/07 14:36:40 itohy Exp $
+.\"	$NetBSD: main,v 1.390.4.1 2008/03/24 07:14:38 keiichi Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1688,7 +1688,7 @@ below).
 .Pp
 If you'd like to help with this effort, and have an idea as to how
 you could be useful, send us mail or subscribe to:
-.Mt netbsd-help@NetBSD.org .
+.Mt netbsd-users@NetBSD.org .
 .Pp
 As a favor, please avoid mailing huge documents or files to these
 mailing lists.
@@ -2012,6 +2012,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Christian Limpach Ta Mt cl@NetBSD.org
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
 .It Ta Joel Lindholm Ta Mt joel@NetBSD.org
+.It Ta Tonnerre Lombard Ta Mt tonnerre@NetBSD.org
 .It Ta Mike Long Ta Mt mikel@NetBSD.org
 .It Ta Michael Lorenz Ta Mt macallan@NetBSD.org
 .It Ta Warner Losh Ta Mt imp@NetBSD.org

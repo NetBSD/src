@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.4 2007/12/24 14:46:29 ad Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.4.2.1 2008/03/24 07:14:46 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.4 2007/12/24 14:46:29 ad Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.4.2.1 2008/03/24 07:14:46 keiichi Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: pthread_tsd.c,v 1.4 2007/12/24 14:46:29 ad Exp $");
 
 static pthread_mutex_t tsd_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int nextkey;
-int pthread__tsd_alloc[PTHREAD_KEYS_MAX];
+void *pthread__tsd_alloc[PTHREAD_KEYS_MAX];
 void (*pthread__tsd_destructors[PTHREAD_KEYS_MAX])(void *);
 
 __strong_alias(__libc_thr_keycreate,pthread_key_create)
@@ -64,7 +64,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	/* Find an available slot */
 	/* 1. Search from "nextkey" to the end of the list. */
 	for (i = nextkey; i < PTHREAD_KEYS_MAX; i++)
-		if (pthread__tsd_alloc[i] == 0)
+		if (pthread__tsd_alloc[i] == NULL)
 			break;
 
 	if (i == PTHREAD_KEYS_MAX) {
@@ -72,7 +72,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 		 *    of the list back to "nextkey".
 		 */
 		for (i = 0; i < nextkey; i++)
-			if (pthread__tsd_alloc[i] == 0)
+			if (pthread__tsd_alloc[i] == NULL)
 				break;
 		
 		if (i == nextkey) {
@@ -85,7 +85,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	}
 
 	/* Got one. */
-	pthread__tsd_alloc[i] = 1;
+	pthread__tsd_alloc[i] = (void *)__builtin_return_address(0);
 	nextkey = (i + 1) % PTHREAD_KEYS_MAX;
 	pthread__tsd_destructors[i] = destructor;
 	pthread_mutex_unlock(&tsd_mutex);

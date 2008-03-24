@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.25 2007/12/21 21:52:10 xtraeme Exp $ */
+/* $NetBSD: com_acpi.c,v 1.25.2.1 2008/03/24 07:15:11 keiichi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.25 2007/12/21 21:52:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.25.2.1 2008/03/24 07:15:11 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,16 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.25 2007/12/21 21:52:10 xtraeme Exp $"
 
 #include <dev/ic/comvar.h>
 
-static int	com_acpi_match(struct device *, struct cfdata *, void *);
-static void	com_acpi_attach(struct device *, struct device *, void *);
+static int	com_acpi_match(device_t, cfdata_t , void *);
+static void	com_acpi_attach(device_t, device_t, void *);
 
 struct com_acpi_softc {
 	struct com_softc sc_com;
 	void *sc_ih;
 };
 
-CFATTACH_DECL(com_acpi, sizeof(struct com_acpi_softc), com_acpi_match,
-    com_acpi_attach, NULL, NULL);
+CFATTACH_DECL_NEW(com_acpi, sizeof(struct com_acpi_softc), com_acpi_match,
+    com_acpi_attach, NULL, com_activate);
 
 /*
  * Supported device IDs
@@ -79,8 +79,7 @@ static const char * const com_acpi_ids[] = {
  * com_acpi_match: autoconf(9) match routine
  */
 static int
-com_acpi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+com_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -94,9 +93,9 @@ com_acpi_match(struct device *parent, struct cfdata *match,
  * com_acpi_attach: autoconf(9) attach routine
  */
 static void
-com_acpi_attach(struct device *parent, struct device *self, void *aux)
+com_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_acpi_softc *asc = (struct com_acpi_softc *)self;
+	struct com_acpi_softc *asc = device_private(self);
 	struct com_softc *sc = &asc->sc_com;
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
@@ -108,8 +107,10 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
+
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+	rv = acpi_resource_parse(sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
@@ -117,30 +118,28 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		aprint_error("%s: unable to find i/o register resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "unable to find i/o register resource\n");
 		goto out;
 	}
 
 	/* find our IRQ */
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		aprint_error("%s: unable to find irq resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to find irq resource\n");
 		goto out;
 	}
 
 	if (!com_is_console(aa->aa_iot, io->ar_base, &ioh)) {
 		if (bus_space_map(sc->sc_regs.cr_iot, io->ar_base, io->ar_length,
 		    0, &ioh)) {
-			aprint_error("%s: can't map i/o space\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(self, "can't map i/o space\n");
 			goto out;
 		}
 	}
 	COM_INIT_REGS(sc->sc_regs, aa->aa_iot, ioh, io->ar_base);
 
-	aprint_normal("%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", device_xname(self));
 
 	if (com_probe_subr(&sc->sc_regs) == 0) {
 		aprint_error(": com probe failed\n");

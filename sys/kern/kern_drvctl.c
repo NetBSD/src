@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.14 2008/02/12 17:30:59 joerg Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.14.2.1 2008/03/24 07:16:13 keiichi Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.14 2008/02/12 17:30:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.14.2.1 2008/03/24 07:16:13 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,12 +63,15 @@ pmdevbyname(int cmd, struct devpmargs *a)
 
 	switch (cmd) {
 	case DRVSUSPENDDEV:
-		return pmf_device_recursive_suspend(d) ? 0 : EBUSY;
+		return pmf_device_recursive_suspend(d, PMF_F_NONE) ? 0 : EBUSY;
 	case DRVRESUMEDEV:
-		if (a->flags & DEVPM_F_SUBTREE)
-			return pmf_device_resume_subtree(d) ? 0 : EBUSY;
-		else
-			return pmf_device_recursive_resume(d) ? 0 : EBUSY;
+		if (a->flags & DEVPM_F_SUBTREE) {
+			return pmf_device_resume_subtree(d, PMF_F_NONE)
+			    ? 0 : EBUSY;
+		} else {
+			return pmf_device_recursive_resume(d, PMF_F_NONE)
+			    ? 0 : EBUSY;
+		}
 	default:
 		return EPASSTHROUGH;
 	}
@@ -78,12 +81,14 @@ static int
 listdevbyname(struct devlistargs *l)
 {
 	device_t d, child;
-	int cnt = 0, idx, error;
+	deviter_t di;
+	int cnt = 0, idx, error = 0;
 
 	if ((d = device_find_by_xname(l->l_devname)) == NULL)
 		return ENXIO;
 
-	TAILQ_FOREACH(child, &alldevs, dv_list) {
+	for (child = deviter_first(&di, 0); child != NULL;
+	     child = deviter_next(&di)) {
 		if (device_parent(child) != d)
 			continue;
 		idx = cnt++;
@@ -91,12 +96,13 @@ listdevbyname(struct devlistargs *l)
 			continue;
 		error = copyoutstr(device_xname(child), l->l_childname[idx],
 				sizeof(l->l_childname[idx]), NULL);
-		if (error)
-			return error;
+		if (error != 0)
+			break;
 	}
+	deviter_release(&di);
 
 	l->l_children = cnt;
-	return 0;
+	return error;
 }
 
 static int
@@ -244,6 +250,7 @@ drvctl_command_get_properties(struct lwp *l,
 	prop_dictionary_t args_dict;
 	prop_string_t devname_string;
 	device_t dev;
+	deviter_t di;
 	
 	args_dict = prop_dictionary_get(command_dict, "drvctl-arguments");
 	if (args_dict == NULL)
@@ -253,18 +260,21 @@ drvctl_command_get_properties(struct lwp *l,
 	if (devname_string == NULL)
 		return (EINVAL);
 	
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
+	for (dev = deviter_first(&di, 0); dev != NULL;
+	     dev = deviter_next(&di)) {
 		if (prop_string_equals_cstring(devname_string,
-					       device_xname(dev)))
+					       device_xname(dev))) {
+			prop_dictionary_set(results_dict, "drvctl-result-data",
+			    device_properties(dev));
 			break;
+		}
 	}
+
+	deviter_release(&di);
 
 	if (dev == NULL)
 		return (ESRCH);
-	
-	prop_dictionary_set(results_dict, "drvctl-result-data",
-			    device_properties(dev));
-	
+
 	return (0);
 }
 

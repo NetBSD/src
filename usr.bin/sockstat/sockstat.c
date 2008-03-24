@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.11 2007/12/26 16:01:38 ad Exp $ */
+/*	$NetBSD: sockstat.c,v 1.11.2.1 2008/03/24 07:16:35 keiichi Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,9 +34,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.11 2007/12/26 16:01:38 ad Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.11.2.1 2008/03/24 07:16:35 keiichi Exp $");
 #endif
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>

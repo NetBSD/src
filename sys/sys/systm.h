@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.214 2008/02/06 22:12:42 dsl Exp $	*/
+/*	$NetBSD: systm.h,v 1.214.2.1 2008/03/24 07:16:29 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -148,6 +148,7 @@ int	eopnotsupp(void);
 
 enum hashtype {
 	HASH_LIST,
+	HASH_SLIST,
 	HASH_TAILQ
 };
 
@@ -483,5 +484,12 @@ do {						\
 /* Preemption control. */
 void	crit_enter(void);
 void	crit_exit(void);
+
+void assert_sleepable(void);
+#if defined(DEBUG)
+#define	ASSERT_SLEEPABLE()	assert_sleepable()
+#else /* defined(DEBUG) */
+#define	ASSERT_SLEEPABLE()	/* nothing */
+#endif /* defined(DEBUG) */
 
 #endif	/* !_SYS_SYSTM_H_ */

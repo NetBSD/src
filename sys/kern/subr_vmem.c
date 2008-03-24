@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.41 2008/01/24 13:57:52 ad Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.41.2.1 2008/03/24 07:16:14 keiichi Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.41 2008/01/24 13:57:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.41.2.1 2008/03/24 07:16:14 keiichi Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.41 2008/01/24 13:57:52 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/once.h>
 #include <sys/pool.h>
-#include <sys/proc.h>
 #include <sys/vmem.h>
 #include <sys/workqueue.h>
 #else /* defined(_KERNEL) */
@@ -78,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.41 2008/01/24 13:57:52 ad Exp $");
 #define	mutex_enter(a)		/* nothing */
 #define	mutex_exit(a)		/* nothing */
 #define	mutex_owned(a)		/* nothing */
-#define	ASSERT_SLEEPABLE(lk, msg) /* nothing */
+#define	ASSERT_SLEEPABLE()	 /* nothing */
 #define	IPL_VM			0
 #endif /* defined(_KERNEL) */
 
@@ -857,7 +856,7 @@ vmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags)
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
-		ASSERT_SLEEPABLE(NULL, __func__);
+		ASSERT_SLEEPABLE();
 	}
 
 #if defined(QCACHE)
@@ -892,7 +891,7 @@ vmem_xalloc(vmem_t *vm, vmem_size_t size0, vmem_size_t align, vmem_size_t phase,
 	KASSERT(size > 0);
 	KASSERT(strat == VM_BESTFIT || strat == VM_INSTANTFIT);
 	if ((flags & VM_SLEEP) != 0) {
-		ASSERT_SLEEPABLE(NULL, __func__);
+		ASSERT_SLEEPABLE();
 	}
 	KASSERT((align & vm->vm_quantum_mask) == 0);
 	KASSERT((align & (align - 1)) == 0);

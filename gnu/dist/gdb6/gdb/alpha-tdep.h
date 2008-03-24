@@ -22,6 +22,8 @@
 #ifndef ALPHA_TDEP_H
 #define ALPHA_TDEP_H
 
+struct regcache;
+
 /* Say how long (ordinary) registers are.  This is a piece of bogosity
    used in push_word and a few other places; register_size() is the
    real way to know how big a register is.  */
@@ -106,10 +108,13 @@ extern CORE_ADDR alpha_after_prologue (CORE_ADDR pc);
 extern void alpha_mdebug_init_abi (struct gdbarch_info, struct gdbarch *);
 extern void alpha_dwarf2_init_abi (struct gdbarch_info, struct gdbarch *);
 
-extern void alpha_supply_int_regs (int, const void *, const void *,
-				   const void *);
-extern void alpha_fill_int_regs (int, void *, void *, void *);
-extern void alpha_supply_fp_regs (int, const void *, const void *);
-extern void alpha_fill_fp_regs (int, void *, void *);
+extern void alpha_supply_int_regs (struct regcache *, int, const void *,
+				   const void *, const void *);
+extern void alpha_fill_int_regs (const struct regcache *, int,
+				 void *, void *, void *);
+extern void alpha_supply_fp_regs (struct regcache *, int,
+				  const void *, const void *);
+extern void alpha_fill_fp_regs (const struct regcache *,
+				int, void *, void *);
 
 #endif /* ALPHA_TDEP_H */

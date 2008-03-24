@@ -32,6 +32,8 @@
 #include "m68k-tdep.h"
 #include "inf-ptrace.h"
 
+#include "nbsd-nat.h"
+
 static int
 m68kbsd_gregset_supplies_p (int regnum)
 {
@@ -229,6 +231,9 @@ _initialize_m68kbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = m68kbsd_fetch_inferior_registers;
   t->to_store_registers = m68kbsd_store_inferior_registers;
+
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+
   add_target (t);
 
   /* Support debugging kernel virtual memory images.  */

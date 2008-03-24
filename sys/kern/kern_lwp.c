@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lwp.c,v 1.93 2008/01/28 12:23:42 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.93.2.1 2008/03/24 07:16:13 keiichi Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.93 2008/01/28 12:23:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.93.2.1 2008/03/24 07:16:13 keiichi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1097,7 +1097,8 @@ lwp_migrate(lwp_t *l, struct cpu_info *ci)
 }
 
 /*
- * Find the LWP in the process.
+ * Find the LWP in the process.  Arguments may be zero, in such case,
+ * the calling process and first LWP in the list will be used.
  * On success - returns LWP locked.
  */
 struct lwp *
@@ -1107,14 +1108,17 @@ lwp_find2(pid_t pid, lwpid_t lid)
 	lwp_t *l;
 
 	/* Find the process */
-	p = p_find(pid, PFIND_UNLOCK_FAIL);
+	p = (pid == 0) ? curlwp->l_proc : p_find(pid, PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		return NULL;
 	mutex_enter(&p->p_smutex);
-	mutex_exit(&proclist_lock);
+	if (pid != 0) {
+		/* Case of p_find */
+		mutex_exit(&proclist_lock);
+	}
 
 	/* Find the thread */
-	l = lwp_find(p, lid);
+	l = (lid == 0) ? LIST_FIRST(&p->p_lwps) : lwp_find(p, lid);
 	if (l != NULL)
 		lwp_lock(l);
 	mutex_exit(&p->p_smutex);
@@ -1280,6 +1284,16 @@ lwp_trylock(struct lwp *l)
 		mutex_spin_exit(old);
 	}
 }
+
+u_int
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
 
 /*
  * Handle exceptions for mi_userret().  Called if a member of LW_USERRET is
@@ -1683,6 +1697,7 @@ lwp_ctl_exit(void)
 
 	l = curlwp;
 	l->l_lwpctl = NULL;
+	l->l_lcpage = NULL;
 	p = l->l_proc;
 	lp = p->p_lwpctl;
 

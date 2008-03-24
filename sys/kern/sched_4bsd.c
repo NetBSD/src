@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.13 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.13.2.1 2008/03/24 07:16:14 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.13 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.13.2.1 2008/03/24 07:16:14 keiichi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -473,7 +473,7 @@ runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
  * to be empty.
  */
 void
-sched_rqinit()
+sched_rqinit(void)
 {
 
 	runqueue_init(&global_queue);
@@ -497,7 +497,7 @@ sched_cpuattach(struct cpu_info *ci)
 }
 
 void
-sched_setup()
+sched_setup(void)
 {
 
 	rrticks = hz / 10;

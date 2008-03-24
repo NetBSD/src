@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.583 2008/02/13 07:33:27 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.583.2.1 2008/03/24 07:14:40 keiichi Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -139,7 +139,7 @@ Notes:
 
 Package:	bzip2
 Version:	1.0.2
-Current Vers:	1.0.4
+Current Vers:	1.0.5
 Maintainer:	Julian Seward <jseward@acm.org>
 Archive Site:	http://sources.redhat.com/bzip2/
 Home Page:	http://www.bzip.org/
@@ -199,13 +199,13 @@ I have merged all the changes already.
 
 Package:	db
 Version:	1.85
-Current Vers:	1.86/4.4.20
+Current Vers:	1.86/4.6.21
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
-Archive Site:	http://www.sleepycat.com/download/index.shtml
-Home Page:	http://www.sleepycat.com/products/db.shtml
+Archive Site:	http://www.oracle.com/technology/software/products/berkeley-db/
+Home Page:	http://www.oracle.com/database/berkeley-db/
 Mailing List:
 Responsible:
-License:	BSD or specific SleepyCat license
+License:	BSD or Oracle Commercial License
 Notes:
 Note that we cannot use db 2.x for license reasons.
 Three bug fixes against 1.85 sent back to bostic.  Changes to
@@ -903,7 +903,7 @@ for import.
 
 Package:	wpa_supplicant/hostapd
 Version:	0.6.2
-Current Vers:	0.6.2
+Current Vers:	0.6.3
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/wpa_supplicant/

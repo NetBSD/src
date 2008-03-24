@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_entry_private.h,v 1.1 2007/05/29 01:00:18 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_entry_private.h,v 1.2 2007/12/30 04:58:21 kientzle Exp $
  */
 
 #ifndef ARCHIVE_ENTRY_PRIVATE_H_INCLUDED
@@ -149,6 +149,8 @@ struct archive_entry {
 
 	struct ae_xattr *xattr_head;
 	struct ae_xattr *xattr_p;
+
+	char		 strmode[11];
 };
 
 

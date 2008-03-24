@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.66 2007/12/15 19:44:37 perry Exp $	*/
+/*	$NetBSD: parser.c,v 1.66.2.1 2008/03/24 07:14:29 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.66 2007/12/15 19:44:37 perry Exp $");
+__RCSID("$NetBSD: parser.c,v 1.66.2.1 2008/03/24 07:14:29 keiichi Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ int needprompt;			/* true if interactive and at start of line */
 int lasttoken;			/* last token read */
 MKINIT int tokpushback;		/* last token pushed back */
 char *wordtext;			/* text of last word returned by readtoken */
-MKINIT int checkkwd;            /* 1 == check for kwds, 2 == also eat newlines */
+MKINIT int checkkwd;		/* 1 == check for kwds, 2 == also eat newlines */
 struct nodelist *backquotelist;
 union node *redirnode;
 struct heredoc *heredoc;

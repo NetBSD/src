@@ -1,4 +1,4 @@
-/*	$NetBSD: cca.h,v 1.1 2000/07/06 17:34:29 ragge Exp $	*/
+/*	$NetBSD: cca.h,v 1.1.124.1 2008/03/24 07:15:06 keiichi Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -37,40 +37,40 @@
  */
 
 struct cca {
-	struct	cca *cca_base;	/* Physical base address of block */
-	short 	cca_size;	/* Size of this struct */
-	short	cca_id;		/* 'CC' */
-	char	cca_maxcpu;	/* max number of CPUs */
-	char	cca_cksum;	/* Checksum of all earlier bytes */
-	char	cca_flags;
-	char	cca_revision;
+	struct cca *cca_base;	/* Physical base address of block */
+	uint16_t cca_size;	/* Size of this struct */
+	uint16_t cca_id;	/* 'CC' */
+	uint8_t  cca_maxcpu;	/* max number of CPUs */
+	uint8_t  cca_cksum;	/* Checksum of all earlier bytes */
+	uint8_t  cca_flags;
+	uint8_t  cca_revision;
 
-	u_int64_t cca_ready;	/* Data ready? */
-	u_int64_t cca_console;	/* Processors in console mode */
-	u_int64_t cca_enabled;	/* enabled/disabled */
-	long	cca_bitmapsz;	/* Size of memory bitmap */
-	long	cca_bitmap;	/* Address of memory bitmap */
-	long	cca_bmcksum;	/* Bitmap checksum */
-	long	cca_bootdev;	/* Node numbers */
-	u_int64_t cca_starting;	/* Processors currently starting */
-	u_int64_t cca_restart;	/* Processors currently restarting */
-	long	cca_pad1[3];
-	u_int64_t cca_halted;	/* Processors currently halted bny user */
-	char	cca_sernum[8];	/* Serial number */
-	char	cca_revs[16][8];/* CPU revisions */
-	u_int64_t cca_vecenab;	/* Processors with enabled vector processors */
-	u_int64_t cca_vecwork;	/* Processors with working vector processors */
-	long	cca_vecrevs[16];/* Vector processor revisions */
-	char	cca_pad2[208];
+	uint64_t cca_ready;	/* Data ready? */
+	uint64_t cca_console;	/* Processors in console mode */
+	uint64_t cca_enabled;	/* enabled/disabled */
+	uint32_t cca_bitmapsz;	/* Size of memory bitmap */
+	uint32_t cca_bitmap;	/* Address of memory bitmap */
+	uint32_t cca_bmcksum;	/* Bitmap checksum */
+	uint32_t cca_bootdev;	/* Node numbers */
+	uint64_t cca_starting;	/* Processors currently starting */
+	uint64_t cca_restart;	/* Processors currently restarting */
+	uint32_t cca_pad1[3];
+	uint64_t cca_halted;	/* Processors currently halted bny user */
+	uint8_t  cca_sernum[8];	/* Serial number */
+	uint8_t  cca_revs[16][8];/* CPU revisions */
+	uint64_t cca_vecenab;	/* Processors with enabled vector processors */
+	uint64_t cca_vecwork;	/* Processors with working vector processors */
+	uint32_t cca_vecrevs[16];/* Vector processor revisions */
+	uint8_t  cca_pad2[208];
 /* Inter-CPU communication structs */
 	struct {
-		char	cc_flags;	/* Status flags */
-		char	cc_to;		/* Node sending to */
-		char	cc_from;	/* Node sending from */
-		char	cc_pad;
-		char	cc_txlen;	/* Length of transmit message */
-		char	cc_rxlen;	/* Length of receive message */
-		char	cc_unbuf;
+		uint8_t	cc_flags;	/* Status flags */
+		uint8_t	cc_to;		/* Node sending to */
+		uint8_t	cc_from;	/* Node sending from */
+		uint8_t	cc_pad;
+		uint8_t	cc_txlen;	/* Length of transmit message */
+		uint8_t	cc_rxlen;	/* Length of receive message */
+		uint8_t	cc_unbuf;
 		char	cc_txbuf[80];	/* Transmit buffer */
 		char	cc_rxbuf[80];	/* Receive buffer */
 	} cca_cc[64];

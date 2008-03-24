@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.341 2008/01/20 18:09:11 joerg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.341.2.1 2008/03/24 07:16:13 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341 2008/01/20 18:09:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.2.1 2008/03/24 07:16:13 keiichi Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341 2008/01/20 18:09:11 joerg Exp $"
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/percpu.h>
+#include <sys/pset.h>
 #include <sys/sysctl.h>
 #include <sys/reboot.h>
 #include <sys/user.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.44 2006/10/18 21:34:39 he Exp $	*/
+/*	$NetBSD: tree.c,v 1.44.14.1 2008/03/24 07:16:35 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.44 2006/10/18 21:34:39 he Exp $");
+__RCSID("$NetBSD: tree.c,v 1.44.14.1 2008/03/24 07:16:35 keiichi Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3261,7 +3261,7 @@ constant(tnode_t *tn, int required)
 	if (required)
 		error(55);
 	else
-		gnuism(318);
+		c99ism(318);
 
 	if (!isityp(v->v_tspec))
 		v->v_tspec = INT;

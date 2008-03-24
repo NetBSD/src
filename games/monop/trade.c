@@ -1,4 +1,4 @@
-/*	$NetBSD: trade.c,v 1.12 2008/02/19 10:48:47 dholland Exp $	*/
+/*	$NetBSD: trade.c,v 1.12.2.1 2008/03/24 07:14:42 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trade.c,v 1.12 2008/02/19 10:48:47 dholland Exp $");
+__RCSID("$NetBSD: trade.c,v 1.12.2.1 2008/03/24 07:14:42 keiichi Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 struct trd_st {			/* how much to give to other player	*/
 	int	trader;			/* trader number		*/
@@ -252,6 +252,9 @@ resign()
 		  case RR:
 		  case PRPTY:
 			new_own = board[cur_p->loc].owner;
+			/* If you ran out of money by buying current location */
+			if (new_own == player)
+				new_own = num_play;
 			break;
 		  default:		/* Chance, taxes, etc */
 			new_own = num_play;
@@ -307,16 +310,17 @@ resign()
 		if (cur_p->num_gojf)
 			ret_card(cur_p);
 	}
+	free(play[player].name);
 	for (i = player; i < num_play; i++) {
 		name_list[i] = name_list[i+1];
 		if (i + 1 < num_play)
 			play[i] = play[i+1];
 	}
-	name_list[num_play--] = 0;
+	name_list[num_play--] = NULL;
 	for (i = 0; i < N_SQRS; i++)
 		if (board[i].owner > player)
 			--board[i].owner;
-	player = --player < 0 ? num_play - 1 : player;
+	player = player == 0 ? num_play - 1 : player - 1;
 	next_play();
 	if (num_play < 2) {
 		printf("\nThen %s WINS!!!!!\n", play[0].name);

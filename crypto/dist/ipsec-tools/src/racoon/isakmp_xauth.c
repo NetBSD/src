@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.13 2007/08/07 04:35:01 manu Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.13.6.1 2008/03/24 07:14:30 keiichi Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1577,13 +1577,11 @@ isakmp_xauth_set(iph1, attr)
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "Xauth authentication failed\n");
 
-			EVT_PUSH(iph1->local, iph1->remote, 
-			    EVTT_XAUTH_FAILED, NULL);
+			evt_phase1(iph1, EVT_PHASE1_XAUTH_FAILED, NULL);
 
 			iph1->mode_cfg->flags |= ISAKMP_CFG_DELETE_PH1;
 		} else {
-			EVT_PUSH(iph1->local, iph1->remote, 
-			    EVTT_XAUTH_SUCCESS, NULL);
+			evt_phase1(iph1, EVT_PHASE1_XAUTH_SUCCESS, NULL);
 		}
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_cmpci.c,v 1.13 2007/10/19 12:00:53 ad Exp $	*/
+/*	$NetBSD: opl_cmpci.c,v 1.13.12.1 2008/03/24 07:15:48 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.13 2007/10/19 12:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.13.12.1 2008/03/24 07:15:48 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: opl_cmpci.c,v 1.13 2007/10/19 12:00:53 ad Exp $");
 #include <dev/pci/cmpcivar.h>
 
 static int
-opl_cmpci_match(struct device *parent, struct cfdata *match, void *aux)
+opl_cmpci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
-	struct cmpci_softc *ssc = (struct cmpci_softc *)parent;
+	struct cmpci_softc *ssc = device_private(parent);
 
 	if (aa->type != AUDIODEV_TYPE_OPL)
 		return (0);
@@ -75,11 +75,12 @@ opl_cmpci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-opl_cmpci_attach(struct device *parent, struct device *self, void *aux)
+opl_cmpci_attach(device_t parent, device_t self, void *aux)
 {
-	struct cmpci_softc *ssc = (struct cmpci_softc *)parent;
-	struct opl_softc *sc = (struct opl_softc *)self;
+	struct cmpci_softc *ssc = device_private(parent);
+	struct opl_softc *sc = device_private(self);
 
+	sc->mididev.dev = self;
 	sc->ioh = ssc->sc_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = CMPCI_REG_FM_BASE;
@@ -88,5 +89,5 @@ opl_cmpci_attach(struct device *parent, struct device *self, void *aux)
 	opl_attach(sc);
 }
 
-CFATTACH_DECL(opl_cmpci, sizeof (struct opl_softc),
+CFATTACH_DECL_NEW(opl_cmpci, sizeof (struct opl_softc),
     opl_cmpci_match, opl_cmpci_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/02/10 12:40:10 jmmv Exp $
+# $NetBSD: Makefile,v 1.1.2.1 2008/03/24 07:16:33 keiichi Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,9 @@ TESTSDIR=	${TESTSBASE}/modules
 .if ${MKMODULAR} != no
 
 TESTS_CXX=	t_modctl
+LDADD=		-lprop
+
+TESTS_SH=	t_modload
 
 SUBDIR=		k_helper
 

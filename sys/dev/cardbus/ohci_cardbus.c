@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.24 2007/10/19 11:59:39 ad Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.24.12.1 2008/03/24 07:15:15 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.24 2007/10/19 11:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.24.12.1 2008/03/24 07:15:15 keiichi Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -74,9 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.24 2007/10/19 11:59:39 ad Exp $")
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
-int	ohci_cardbus_match(struct device *, struct cfdata *, void *);
-void	ohci_cardbus_attach(struct device *, struct device *, void *);
-int	ohci_cardbus_detach(device_ptr_t, int);
+int	ohci_cardbus_match(device_t, struct cfdata *, void *);
+void	ohci_cardbus_attach(device_t, device_t, void *);
+int	ohci_cardbus_detach(device_t, int);
 
 struct ohci_cardbus_softc {
 	ohci_softc_t		sc;
@@ -98,8 +98,7 @@ CFATTACH_DECL(ohci_cardbus, sizeof(struct ohci_cardbus_softc),
 #define cardbus_devinfo pci_devinfo
 
 int
-ohci_cardbus_match(struct device *parent,
-    struct cfdata *match, void *aux)
+ohci_cardbus_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
@@ -112,10 +111,9 @@ ohci_cardbus_match(struct device *parent,
 }
 
 void
-ohci_cardbus_attach(struct device *parent, struct device *self,
-    void *aux)
+ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ohci_cardbus_softc *sc = (struct ohci_cardbus_softc *)self;
+	struct ohci_cardbus_softc *sc = device_private(self);
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -192,15 +190,18 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	usb_cardbus_add(&sc->sc_cardbus, ca, &sc->sc.sc_bus);
 #endif
 
+	if (!pmf_device_register1(self, ohci_suspend, ohci_resume,
+	                          ohci_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 int
-ohci_cardbus_detach(device_ptr_t self, int flags)
+ohci_cardbus_detach(device_t self, int flags)
 {
-	struct ohci_cardbus_softc *sc = (struct ohci_cardbus_softc *)self;
+	struct ohci_cardbus_softc *sc = device_private(self);
 	struct cardbus_devfunc *ct = sc->sc_ct;
 	int rv;
 

@@ -1,10 +1,17 @@
-#	$NetBSD: files.sh3,v 1.39 2008/02/02 02:19:42 uwe Exp $
+#	$NetBSD: files.sh3,v 1.39.2.1 2008/03/24 07:15:04 keiichi Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
 
 defparam	PCLOCK
 defflag	opt_kstack_debug.h	KSTACK_DEBUG
+
+defflag opt_cache.h		CACHE_DEBUG
+defflag opt_cache.h		SH4_CACHE_DISABLE_EMODE
+defflag opt_cache.h		SH4_CACHE_DISABLE_ICACHE
+defflag opt_cache.h		SH4_CACHE_DISABLE_DCACHE
+defflag opt_cache.h		SH4_CACHE_WB_U0_P0_P3
+defflag opt_cache.h		SH4_CACHE_WB_P1
 
 file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb | kgdb

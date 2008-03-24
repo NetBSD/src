@@ -1,29 +1,38 @@
-/* $NetBSD: isp_stds.h,v 1.1 2007/05/24 21:30:43 mjacob Exp $ */
-/*
- * Copyright (c) 2006-2007 by Matthew Jacob
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+/* $NetBSD: isp_stds.h,v 1.1.30.1 2008/03/24 07:15:16 keiichi Exp $ */
+/*-
+ *  Copyright (c) 1997-2008 by Matthew Jacob
+ *  All rights reserved.
  * 
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  * 
- * THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 
+ *  THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ *  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ *  SUCH DAMAGE.
+ * 
+ * 
+ *  Matthew Jacob
+ *  Feral Software
+ *  421 Laurel Avenue
+ *  Menlo Park, CA 94025
+ *  USA
+ * 
+ *  gplbsd at feral com
  */
 /*
  * Structures that derive directly from public standards.
@@ -137,8 +146,18 @@ typedef struct {
 } rft_id_t;
 
 /*
+ * FCP Response IU Bits of interest
+ * Source: NCITS T10, Project 1144D, Revision 08 (aka FCP2r08)
+ */
+#define	FCP_CONF_REQ			0x10
+#define	FCP_RESID_UNDERFLOW		0x08
+#define	FCP_RESID_OVERFLOW		0x04
+#define	FCP_SNSLEN_VALID		0x02
+#define	FCP_RSPLEN_VALID		0x01
+
+/*
  * FCP Response Code Definitions
- * Source: NCITS T10, Project 1144D, Revision 07a (aka FCP2r07a)
+ * Source: NCITS T10, Project 1144D, Revision 08 (aka FCP2r08)
  */
 #define	FCP_RSPNS_CODE_OFFSET		3
 
@@ -176,7 +195,10 @@ typedef struct {
 #define	ABTX			0x06
 #define	PRLI			0x20
 #define	PRLO			0x21
+#define	SCN			0x22
 #define	TPRLO			0x24
+#define	PDISC			0x50
+#define	ADISC			0x52
 #define	RNC			0x53
 
 /*

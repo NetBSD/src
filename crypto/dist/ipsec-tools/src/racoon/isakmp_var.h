@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.7 2007/02/20 09:11:14 vanhu Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.7.8.1 2008/03/24 07:14:30 keiichi Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -35,6 +35,7 @@
 #define _ISAKMP_VAR_H
 
 #include "vmbuf.h"
+#include "policy.h"
 
 #define PORT_ISAKMP 500
 #define PORT_ISAKMP_NATT 4500
@@ -62,8 +63,8 @@ struct isakmp_pl_ke;	/* XXX */
 struct isakmp_pl_nonce;	/* XXX */
 
 extern int isakmp_handler __P((int));
-extern int isakmp_ph1begin_i __P((struct remoteconf *, struct sockaddr *,
-	struct sockaddr *));
+extern struct ph1handle *isakmp_ph1begin_i __P((struct remoteconf *,
+	struct sockaddr *, struct sockaddr *));
 
 extern vchar_t *isakmp_parsewoh __P((int, struct isakmp_gen *, int));
 extern vchar_t *isakmp_parse __P((vchar_t *));
@@ -87,6 +88,7 @@ extern void isakmp_ph2expire __P((struct ph2handle *));
 extern void isakmp_ph2delete_stub __P((void *));
 extern void isakmp_ph2delete __P((struct ph2handle *));
 
+extern int isakmp_get_sainfo __P((struct ph2handle *, struct secpolicy *, struct secpolicy *));
 extern int isakmp_post_acquire __P((struct ph2handle *));
 extern int isakmp_post_getspi __P((struct ph2handle *));
 extern void isakmp_chkph1there_stub __P((void *));

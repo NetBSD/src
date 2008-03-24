@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.18 2008/01/11 14:06:56 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.18.2.1 2008/03/24 07:14:29 keiichi Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -273,6 +273,7 @@ newph1()
 	iph1->dpd_fails = 0;
 	iph1->dpd_r_u = NULL;
 #endif
+	evt_list_init(&iph1->evt_listeners);
 
 	return iph1;
 }
@@ -289,8 +290,7 @@ delph1(iph1)
 
 	/* SA down shell script hook */
 	script_hook(iph1, SCRIPT_PHASE1_DOWN);
-
-	EVT_PUSH(iph1->local, iph1->remote, EVTT_PHASE1_DOWN, NULL);
+	evt_list_cleanup(&iph1->evt_listeners);
 
 #ifdef ENABLE_NATT
 	if (iph1->natt_flags & NAT_KA_QUEUED)
@@ -495,8 +495,8 @@ getph2byid(src, dst, spid)
 
 	LIST_FOREACH(p, &ph2tree, chain) {
 		if (spid == p->spid &&
-		    CMPSADDR(src, p->src) == 0 &&
-		    CMPSADDR(dst, p->dst) == 0){
+		    cmpsaddrwild(src, p->src) == 0 &&
+		    cmpsaddrwild(dst, p->dst) == 0){
 			/* Sanity check to detect zombie handlers
 			 * XXX Sould be done "somewhere" more interesting,
 			 * because we have lots of getph2byxxxx(), but this one
@@ -582,6 +582,7 @@ newph2()
 		return NULL;
 
 	iph2->status = PHASE1ST_SPAWN;
+	evt_list_init(&iph2->evt_listeners);
 
 	return iph2;
 }
@@ -595,6 +596,8 @@ void
 initph2(iph2)
 	struct ph2handle *iph2;
 {
+	evt_list_cleanup(&iph2->evt_listeners);
+
 	sched_scrub_param(iph2);
 	iph2->sce = NULL;
 	iph2->scr = NULL;

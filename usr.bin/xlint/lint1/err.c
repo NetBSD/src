@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.31 2006/10/23 00:15:58 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.31.14.1 2008/03/24 07:16:35 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.31 2006/10/23 00:15:58 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.31.14.1 2008/03/24 07:16:35 keiichi Exp $");
 #endif
 
 #include <sys/types.h>
@@ -377,7 +377,7 @@ const	char *msgs[] = {
 	"GCC style struct or union member name in initializer",	      /* 315 */
 	"__FUNCTION__ is a GCC extension",			      /* 316 */
 	"__func__ is a C9X feature",				      /* 317 */
-	"variable array dimension is a GCC extension",		      /* 318 */
+	"variable array dimension is a C99/GCC extension",	      /* 318 */
 	"compound literals are a C9X/GCC extension",		      /* 319 */
 	"({ }) is a GCC extension",				      /* 320 */
 	"array initializer with designators is a C9X feature",	      /* 321 */

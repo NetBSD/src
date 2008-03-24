@@ -250,7 +250,7 @@ amd64nbsd_trapframe_sniffer (const struct frame_unwind *self,
 		   || (strncmp (name, "Xstray", 6) == 0)
 		   || (strncmp (name, "Xrecurse", 8) == 0)
 		   || (strncmp (name, "Xsoft", 5) == 0)
-		   || (strcmp (name, "Xdoreti", 5) == 0)));
+		   || (strcmp (name, "Xdoreti") == 0)));
 }
 
 static const struct frame_unwind amd64nbsd_trapframe_unwind = {

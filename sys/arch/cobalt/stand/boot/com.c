@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.6 2007/10/17 19:54:09 garbled Exp $	*/
+/*	$NetBSD: com.c,v 1.6.12.1 2008/03/24 07:14:55 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -65,6 +65,8 @@
  */
 
 #include <sys/types.h>
+#include <lib/libsa/stand.h>
+#include "boot.h"
 
 #define	COM_FREQ	1843200	/* 16-bit baud rate divisor */
 #define	COM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */

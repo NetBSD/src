@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.141.8.1 2008/02/22 02:53:33 keiichi Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.141.8.2 2008/03/24 07:16:24 keiichi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.141.8.1 2008/02/22 02:53:33 keiichi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.141.8.2 2008/03/24 07:16:24 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -171,7 +171,7 @@ static void icmp6_redirect_timeout(struct rtentry *, struct rttimer *);
 
 
 void
-icmp6_init()
+icmp6_init(void)
 {
 	mld_init();
 	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/09/18 06:49:27 rtr Exp $
+#	$NetBSD: Makefile,v 1.5.24.1 2008/03/24 07:16:38 keiichi Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
@@ -57,7 +57,7 @@ CPPFLAGS+=	-DAVOID_CPIO
 # XXX from the Imakefile
 # -DAVOID_NON_PCI must be defined for those platforms that do not
 # tolerate PCI master aborts.
-.if ${MACHINE} == "macppc"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
 CPPFLAGS+=	-DAVOID_NON_PCI
 .endif
 

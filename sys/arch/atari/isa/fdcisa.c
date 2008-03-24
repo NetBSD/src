@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.10 2005/12/11 12:16:59 christos Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.10.70.1 2008/03/24 07:14:54 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.10 2005/12/11 12:16:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.10.70.1 2008/03/24 07:14:54 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,22 +89,19 @@ __KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.10 2005/12/11 12:16:59 christos Exp $")
 
 
 /* controller driver configuration */
-int	fdc_isa_probe __P((struct device *, struct cfdata *, void *));
-void	fdc_isa_attach __P((struct device *, struct device *, void *));
+int	fdc_isa_probe (device_t, cfdata_t, void *);
+void	fdc_isa_attach (device_t, device_t, void *);
 
 struct fdc_isa_softc {
 	struct fdc_softc	sc_fdc;		/* base fdc device */
 	bus_space_handle_t	sc_baseioh;	/* base I/O handle */
 };
 
-CFATTACH_DECL(fdcisa, sizeof(struct fdc_isa_softc),
+CFATTACH_DECL_NEW(fdcisa, sizeof(struct fdc_isa_softc),
     fdc_isa_probe, fdc_isa_attach, NULL, NULL);
 
 int
-fdc_isa_probe(parent, cfp, aux)
-	struct device	*parent;
-	struct cfdata	*cfp;
-	void		*aux;
+fdc_isa_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	struct isa_attach_args	*ia = aux;
 	static int		fdc_matched = 0;
@@ -188,36 +185,34 @@ out:
 }
 
 void
-fdc_isa_attach(parent, self, aux)
-struct device	*parent, *self;
-void		*aux;
+fdc_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc	*fdc = (void *)self;
-	struct fdc_isa_softc	*isc = (void *)self;
+	struct fdc_isa_softc	*isc = device_private(self);
+	struct fdc_softc	*fdc = &isc->sc_fdc;
 	struct isa_attach_args	*ia = aux;
-	printf("\n");
 
+	aprint_normal("\n");
+
+	fdc->sc_dev = self;
 	fdc->sc_iot = ia->ia_iot;
 	fdc->sc_ic = ia->ia_ic;
 	fdc->sc_drq = ia->ia_drq[0].ir_drq;
 
 	if (bus_space_map(fdc->sc_iot, ia->ia_io[0].ir_addr,
 	    6 /* FDC_NPORT */, 0, &isc->sc_baseioh)) {
-		printf("%s: unable to map I/O space\n", fdc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map I/O space\n");
 		return;
 	}
 
 	if (bus_space_subregion(fdc->sc_iot, isc->sc_baseioh, 2, 4,
 	    &fdc->sc_ioh)) {
-		printf("%s: unable to subregion I/O space\n",
-		    fdc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to subregion I/O space\n");
 		return;
 	}
 
 	if (bus_space_map(fdc->sc_iot, ia->ia_io[0].ir_addr + fdctl + 2, 1, 0,
 	    &fdc->sc_fdctlioh)) {
-		printf("%s: unable to map CTL I/O space\n",
-		    fdc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map CTL I/O space\n");
 		return;
 	}
 

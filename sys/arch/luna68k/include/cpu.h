@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.24 2007/10/17 19:55:03 garbled Exp $ */
+/* $NetBSD: cpu.h,v 1.24.12.1 2008/03/24 07:15:00 keiichi Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -166,11 +166,6 @@ extern int	astpending;	/* need to trap before returning to user mode */
  */
 #define CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define CPU_MAXID		2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 /*
  * Values for machtype

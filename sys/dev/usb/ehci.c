@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.131 2008/02/03 10:57:12 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.131.2.1 2008/03/24 07:16:09 keiichi Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.131 2008/02/03 10:57:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.131.2.1 2008/03/24 07:16:09 keiichi Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -128,8 +128,6 @@ struct ehci_pipe {
 		/* XXX */
 	} u;
 };
-
-Static void		ehci_shutdown(void *);
 
 Static usbd_status	ehci_open(usbd_pipe_handle);
 Static void		ehci_poll(struct usbd_bus *);
@@ -414,8 +412,6 @@ ehci_init(ehci_softc_t *sc)
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &ehci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
-
-	sc->sc_shutdownhook = shutdownhook_establish(ehci_shutdown, sc);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
 
@@ -909,6 +905,15 @@ ehci_poll(struct usbd_bus *bus)
 		ehci_intr1(sc);
 }
 
+void
+ehci_childdet(device_t self, device_t child)
+{
+	struct ehci_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
+}
+
 int
 ehci_detach(struct ehci_softc *sc, int flags)
 {
@@ -922,9 +927,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	usb_uncallout(sc->sc_tmo_intrlist, ehci_intrlist_timeout, sc);
 
-	if (sc->sc_shutdownhook != NULL)
-		shutdownhook_disestablish(sc->sc_shutdownhook);
-
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
 	/* XXX free other data structures XXX */
@@ -937,9 +939,9 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 
 int
-ehci_activate(device_ptr_t self, enum devact act)
+ehci_activate(device_t self, enum devact act)
 {
-	struct ehci_softc *sc = (struct ehci_softc *)self;
+	struct ehci_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -966,9 +968,9 @@ ehci_activate(device_ptr_t self, enum devact act)
  * bus glue needs to call out to it.
  */
 bool
-ehci_suspend(device_t dv)
+ehci_suspend(device_t dv PMF_FN_ARGS)
 {
-	ehci_softc_t *sc = (ehci_softc_t *)dv;
+	ehci_softc_t *sc = device_private(dv);
 	int i, s;
 	uint32_t cmd, hcr;
 
@@ -1017,11 +1019,11 @@ ehci_suspend(device_t dv)
 }
 
 bool
-ehci_resume(device_t dv)
+ehci_resume(device_t dv PMF_FN_ARGS)
 {
-	ehci_softc_t *sc = (ehci_softc_t *)dv;
-	uint32_t cmd, hcr;
+	ehci_softc_t *sc = device_private(dv);
 	int i;
+	uint32_t cmd, hcr;
 
 	/* restore things in case the bios sucks */
 	EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
@@ -1074,14 +1076,15 @@ ehci_resume(device_t dv)
 /*
  * Shut down the controller when the system is going down.
  */
-void
-ehci_shutdown(void *v)
+bool
+ehci_shutdown(device_t self, int flags)
 {
-	ehci_softc_t *sc = v;
+	ehci_softc_t *sc = device_private(self);
 
 	DPRINTF(("ehci_shutdown: stopping the HC\n"));
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
+	return true;
 }
 
 usbd_status

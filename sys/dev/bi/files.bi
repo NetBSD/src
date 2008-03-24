@@ -1,10 +1,10 @@
-#	$NetBSD: files.bi,v 1.2 2000/04/09 16:49:57 ragge Exp $
+#	$NetBSD: files.bi,v 1.2.122.1 2008/03/24 07:15:15 keiichi Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. BI bus.
 # Included by ports that need it.
 
-device	bi { node=-1 }
+device	bi { node=-1 }: bus
 
 file	dev/bi/bi.c				bi
 

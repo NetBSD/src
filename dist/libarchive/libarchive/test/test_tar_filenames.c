@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_tar_filenames.c,v 1.7 2007/07/14 17:52:01 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_tar_filenames.c,v 1.8 2008/01/01 22:28:04 kientzle Exp $");
 
 /*
  * Exercise various lengths of filenames in tar archives,
@@ -41,7 +41,7 @@ test_filename(const char *prefix, int dlen, int flen)
 	struct archive *a;
 	size_t used;
 	size_t prefix_length = 0;
-	int i = 0;
+	unsigned i = 0;
 
 	if (prefix) {
 		strcpy(filename, prefix);

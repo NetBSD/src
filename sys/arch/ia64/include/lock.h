@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: lock.h,v 1.1.70.1 2008/03/24 07:15:00 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,5 +43,84 @@
 #ifndef _IA64_LOCK_H_
 #define	_IA64_LOCK_H_
 
+static __inline int
+__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
+{
+	return *__ptr == __SIMPLELOCK_LOCKED;
+}
+
+static __inline int
+__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
+{
+	return *__ptr == __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
+{
+
+	*__ptr = __SIMPLELOCK_LOCKED;
+}
+
+static __inline void
+__cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
+{
+
+	*__ptr = __SIMPLELOCK_UNLOCKED;
+}
+
+#ifdef _KERNEL
+
+#define	SPINLOCK_SPIN_HOOK	/* nothing */
+#define	SPINLOCK_BACKOFF_HOOK	/* XXX(kochi): hint@pause */
+
+#endif
+
+static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
+	__unused;
+static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
+	__unused;
+static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
+	__unused;
+static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
+	__unused;
+
+static __inline void
+__cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
+{
+
+	*lockp = __SIMPLELOCK_UNLOCKED;
+	__insn_barrier();
+}
+
+static __inline int
+__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
+{
+	uint8_t val;
+
+	val = __SIMPLELOCK_LOCKED;
+/*	__asm volatile ("xchgb %0,(%2)" : 
+	    "=r" (val)
+	    :"0" (val), "r" (lockp)); */
+	__insn_barrier();
+	return val == __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *lockp)
+{
+
+	while (!__cpu_simple_lock_try(lockp))
+		/* nothing */;
+	__insn_barrier();
+}
+
+static __inline void
+__cpu_simple_unlock(__cpu_simple_lock_t *lockp)
+{
+
+	__insn_barrier();
+	*lockp = __SIMPLELOCK_UNLOCKED;
+}
 
 #endif /* _IA64_LOCK_H_ */

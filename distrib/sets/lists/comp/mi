@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1115.2.1 2008/02/22 02:53:32 keiichi Exp $
+#	$NetBSD: mi,v 1.1115.2.2 2008/03/24 07:14:39 keiichi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5940,6 +5940,11 @@
 ./usr/share/man/cat3/prop_string_mutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_string_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/proplib.0			comp-c-catman		.cat
+./usr/share/man/cat3/pset.0			comp-c-catman		.cat
+./usr/share/man/cat3/pset_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/pset_assign.0		comp-c-catman		.cat
+./usr/share/man/cat3/pset_bind.0		comp-c-catman		.cat
+./usr/share/man/cat3/pset_destroy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/psignal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_atfork.0		comp-c-catman		.cat
@@ -6159,6 +6164,14 @@
 ./usr/share/man/cat3/scandir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanw.0			comp-c-catman		.cat
+./usr/share/man/cat3/sched.0			comp-c-catman		.cat
+./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
+./usr/share/man/cat3/sched_getparam.0		comp-c-catman		.cat
+./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_getscheduler.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_get_priority_max.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_get_priority_min.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_rr_get_interval.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_yield.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
@@ -6781,6 +6794,7 @@
 ./usr/share/man/cat3/zlib.0			comp-c-catman		.cat
 ./usr/share/man/cat5/config.0			comp-util-catman	.cat
 ./usr/share/man/cat5/config.samples.0		comp-util-catman	.cat
+./usr/share/man/cat5/cpio.0			comp-util-catman	.cat
 ./usr/share/man/cat5/cvs.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat5/libarchive-formats.0	comp-util-catman	.cat
 ./usr/share/man/cat5/mk.conf.0			comp-util-catman	.cat
@@ -7644,9 +7658,12 @@
 ./usr/share/man/cat9/secmodel_bsd44.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_overlay.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_securelevel.0	comp-sys-catman		.cat
+./usr/share/man/cat9/seldestroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/select.0			comp-sys-catman		.cat
+./usr/share/man/cat9/selinit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/selnotify.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/selrecord.0		comp-sys-catman		.cat
-./usr/share/man/cat9/selwakeup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/selwakeup.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/sendsig.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/setjmp.0			comp-sys-catman		.cat
@@ -10588,6 +10605,11 @@
 ./usr/share/man/man3/prop_string_mutable.3	comp-c-man		.man
 ./usr/share/man/man3/prop_string_size.3		comp-c-man		.man
 ./usr/share/man/man3/proplib.3			comp-c-man		.man
+./usr/share/man/man3/pset.3			comp-c-man		.man
+./usr/share/man/man3/pset_create.3		comp-c-man		.man
+./usr/share/man/man3/pset_assign.3		comp-c-man		.man
+./usr/share/man/man3/pset_bind.3		comp-c-man		.man
+./usr/share/man/man3/pset_destroy.3		comp-c-man		.man
 ./usr/share/man/man3/psignal.3			comp-c-man		.man
 ./usr/share/man/man3/pthread.3			comp-c-man		.man
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man		.man
@@ -10807,6 +10829,14 @@
 ./usr/share/man/man3/scandir.3			comp-c-man		.man
 ./usr/share/man/man3/scanf.3			comp-c-man		.man
 ./usr/share/man/man3/scanw.3			comp-c-man		.man
+./usr/share/man/man3/sched.3			comp-c-man		.man
+./usr/share/man/man3/sched_setparam.3		comp-c-man		.man
+./usr/share/man/man3/sched_getparam.3		comp-c-man		.man
+./usr/share/man/man3/sched_setscheduler.3	comp-c-man		.man
+./usr/share/man/man3/sched_getscheduler.3	comp-c-man		.man
+./usr/share/man/man3/sched_get_priority_max.3	comp-c-man		.man
+./usr/share/man/man3/sched_get_priority_min.3	comp-c-man		.man
+./usr/share/man/man3/sched_rr_get_interval.3	comp-c-man		.man
 ./usr/share/man/man3/sched_yield.3		comp-c-man		.man
 ./usr/share/man/man3/scrl.3			comp-c-man		.man
 ./usr/share/man/man3/scroll.3			comp-c-man		.man
@@ -11425,6 +11455,7 @@
 ./usr/share/man/man3/zlib.3			comp-c-man		.man
 ./usr/share/man/man5/config.5			comp-util-man		.man
 ./usr/share/man/man5/config.samples.5		comp-util-man		.man
+./usr/share/man/man5/cpio.5			comp-util-man		.man
 ./usr/share/man/man5/cvs.5			comp-cvs-man		cvs,.man
 ./usr/share/man/man5/libarchive-formats.5	comp-util-man		.man
 ./usr/share/man/man5/mk.conf.5			comp-util-man		.man
@@ -12287,9 +12318,12 @@
 ./usr/share/man/man9/secmodel_bsd44.9		comp-sys-man		.man
 ./usr/share/man/man9/secmodel_overlay.9		comp-sys-man		.man
 ./usr/share/man/man9/secmodel_securelevel.9	comp-sys-man		.man
+./usr/share/man/man9/seldestroy.9		comp-sys-man		.man
+./usr/share/man/man9/select.9			comp-sys-man		.man
+./usr/share/man/man9/selinit.9			comp-sys-man		.man
 ./usr/share/man/man9/selnotify.9		comp-sys-man		.man
 ./usr/share/man/man9/selrecord.9		comp-sys-man		.man
-./usr/share/man/man9/selwakeup.9		comp-sys-man		.man
+./usr/share/man/man9/selwakeup.9		comp-obsolete		obsolete
 ./usr/share/man/man9/sendsig.9			comp-sys-man		.man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/setjmp.9			comp-sys-man		.man

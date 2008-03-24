@@ -1,4 +1,4 @@
-/*	$NetBSD: fopen.c,v 1.12 2003/08/07 16:43:24 agc Exp $	*/
+/*	$NetBSD: fopen.c,v 1.12.28.1 2008/03/24 07:14:44 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fopen.c,v 1.12 2003/08/07 16:43:24 agc Exp $");
+__RCSID("$NetBSD: fopen.c,v 1.12.28.1 2008/03/24 07:14:44 keiichi Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: fopen.c,v 1.12 2003/08/07 16:43:24 agc Exp $");
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 #include "reentrant.h"
 #include "local.h"
 
@@ -81,6 +82,18 @@ fopen(file, mode)
 			goto release;
 		}
 	}
+	/*
+	 * File descriptors are a full int, but _file is only a short.
+	 * If we get a valid file descriptor that is greater or equal to
+	 * USHRT_MAX, then the fd will get sign-extended into an
+	 * invalid file descriptor.  Handle this case by failing the
+	 * open. (We treat the short as unsigned, and special-case -1).
+	 */
+	if (f >= USHRT_MAX) {
+		errno = EMFILE;
+		goto release;
+	}
+
 	fp->_file = f;
 	fp->_flags = flags;
 	fp->_cookie = fp;

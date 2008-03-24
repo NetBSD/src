@@ -1,4 +1,4 @@
-/* $NetBSD: pckbportvar.h,v 1.6 2005/12/11 12:23:22 christos Exp $ */
+/* $NetBSD: pckbportvar.h,v 1.6.66.1 2008/03/24 07:16:04 keiichi Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -62,7 +62,7 @@ struct pckbport_tag {
 
 	pckbport_inputfcn t_inputhandler[PCKBPORT_NSLOTS];
 	void *t_inputarg[PCKBPORT_NSLOTS];
-	char *t_subname[PCKBPORT_NSLOTS];
+	const char *t_subname[PCKBPORT_NSLOTS];
 
 	struct pckbport_accessops const *t_ops;
 	/* First argument to all those */
@@ -79,7 +79,7 @@ extern int pckbport_console_attached;
 
 /* Calls from pckbd etc */
 void pckbport_set_inputhandler(pckbport_tag_t, pckbport_slot_t,
-				 pckbport_inputfcn, void *, char *);
+				 pckbport_inputfcn, void *, const char *);
 
 void pckbport_flush(pckbport_tag_t, pckbport_slot_t);
 int pckbport_poll_cmd(pckbport_tag_t, pckbport_slot_t, u_char *, int,
@@ -96,8 +96,7 @@ int pckbport_cnattach(void *, struct pckbport_accessops const *,
 			      pckbport_slot_t);
 pckbport_tag_t pckbport_attach(void *,
 				       struct pckbport_accessops const *);
-struct device *pckbport_attach_slot(struct device *, pckbport_tag_t,
-					    pckbport_slot_t);
+device_t pckbport_attach_slot(device_t, pckbport_tag_t, pckbport_slot_t);
 void pckbportintr(pckbport_tag_t, pckbport_slot_t, int);
 
 /* md hook for use without mi wscons */
