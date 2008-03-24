@@ -34,7 +34,7 @@
 #include "iprop.h"
 
 __RCSID("$Heimdal: ipropd_slave.c 22211 2007-12-07 19:27:27Z lha $"
-        "$NetBSD: ipropd_slave.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
+        "$NetBSD: ipropd_slave.c,v 1.3 2008/03/24 08:27:23 dogcow Exp $");
 
 static krb5_log_facility *log_facility;
 static char *server_time_lost = "5 min";
@@ -626,8 +626,8 @@ main(int argc, char **argv)
     else if(exit_flag == SIGINT || exit_flag == SIGTERM)
 	krb5_warnx(context, "%s terminated", getprogname());
     else
-	krb5_warnx(context, "%s unexpected exit reason: %d", 
-		   getprogname(), exit_flag);
+	krb5_warnx(context, "%s unexpected exit reason: %ld", 
+		   getprogname(), (long)exit_flag);
 
     return 0;
 }
