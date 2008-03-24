@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrmonitor.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: if_agrmonitor.c,v 1.4 2008/03/24 09:14:52 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrmonitor.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrmonitor.c,v 1.4 2008/03/24 09:14:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -67,6 +67,16 @@ agrport_monitor(struct agr_port *port)
 	}
 
 	if ((status & (IFM_AVALID | IFM_ACTIVE)) == IFM_AVALID) {
+		media = IFM_ETHER | IFM_NONE; /* XXX ether */
+	}
+
+	if (media == IFM_NONE) {
+		/*
+		 * possible eg. when the phy is not configured.
+		 */
+#if defined(DEBUG)
+		printf("%s: IFM_NONE\n", __func__);
+#endif /* defined(DEBUG) */
 		media = IFM_ETHER | IFM_NONE; /* XXX ether */
 	}
 
