@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.67.2.7 2008/01/21 09:47:22 yamt Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.67.2.8 2008/03/24 09:39:10 yamt Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.67.2.7 2008/01/21 09:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.67.2.8 2008/03/24 09:39:10 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -502,11 +502,8 @@ in6_pcbdetach(struct in6pcb *in6p)
 	sofree(so);
 	if (in6p->in6p_options)
 		m_freem(in6p->in6p_options);
-	if (in6p->in6p_outputopts) {
-		if (in6p->in6p_outputopts->ip6po_rthdr != NULL)
-			rtcache_free(&in6p->in6p_outputopts->ip6po_route);
-		if (in6p->in6p_outputopts->ip6po_m)
-			(void)m_free(in6p->in6p_outputopts->ip6po_m);
+	if (in6p->in6p_outputopts != NULL) {
+		ip6_clearpktopts(in6p->in6p_outputopts, -1);
 		free(in6p->in6p_outputopts, M_IP6OPT);
 	}
 	rtcache_free(&in6p->in6p_route);

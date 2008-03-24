@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.7.16.5 2008/02/27 08:36:56 yamt Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.7.16.6 2008/03/24 09:39:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.7.16.5 2008/02/27 08:36:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.7.16.6 2008/03/24 09:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -500,6 +500,53 @@ devsw_name2blk(const char *name, char *devname, size_t devnamelen)
 		}
 		mutex_exit(&devsw_lock);
 		return (bmajor);
+	}
+
+	mutex_exit(&devsw_lock);
+	return (-1);
+}
+
+/*
+ * Convert from device name to char major number.
+ *
+ * => Caller must ensure that the device is not detached, and therefore
+ *    that the major number is still valid when dereferenced.
+ */
+int
+devsw_name2chr(const char *name, char *devname, size_t devnamelen)
+{
+	struct devsw_conv *conv;
+	int cmajor, i;
+
+	if (name == NULL)
+		return (-1);
+
+	mutex_enter(&devsw_lock);
+	for (i = 0 ; i < max_devsw_convs ; i++) {
+		size_t len;
+
+		conv = &devsw_conv[i];
+		if (conv->d_name == NULL)
+			continue;
+		len = strlen(conv->d_name);
+		if (strncmp(conv->d_name, name, len) != 0)
+			continue;
+		if (*(name +len) && !isdigit(*(name + len)))
+			continue;
+		cmajor = conv->d_cmajor;
+		if (cmajor < 0 || cmajor >= max_cdevsws ||
+		    cdevsw[cmajor] == NULL)
+			break;
+		if (devname != NULL) {
+#ifdef DEVSW_DEBUG
+			if (strlen(conv->d_name) >= devnamelen)
+				printf("devsw_name2chr: too short buffer");
+#endif /* DEVSW_DEBUG */
+			strncpy(devname, conv->d_name, devnamelen);
+			devname[devnamelen - 1] = '\0';
+		}
+		mutex_exit(&devsw_lock);
+		return (cmajor);
 	}
 
 	mutex_exit(&devsw_lock);

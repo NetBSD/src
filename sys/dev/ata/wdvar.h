@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.29.4.4 2008/03/17 09:14:37 yamt Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.29.4.5 2008/03/24 09:38:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -38,7 +38,7 @@
 
 struct wd_softc {
 	/* General disk infos */
-	struct device sc_dev;
+	device_t sc_dev;
 	struct disk sc_dk;
 	struct bufq_state *sc_q;
 	struct callout sc_restart_ch;

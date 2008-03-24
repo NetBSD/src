@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.29.2.5 2008/01/21 09:41:58 yamt Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.29.2.6 2008/03/24 09:38:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.29.2.5 2008/01/21 09:41:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.29.2.6 2008/03/24 09:38:42 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -111,15 +111,14 @@ static int	osf1_mount_nfs(struct lwp *, const struct osf1_sys_mount_args *);
 int
 osf1_sys_fstatfs(struct lwp *l, const struct osf1_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
-	struct file *fp;
+	file_t *fp;
 	struct mount *mp;
 	struct statvfs *sp;
 	struct osf1_statfs osfs;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)))
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)))
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
@@ -130,7 +129,7 @@ osf1_sys_fstatfs(struct lwp *l, const struct osf1_sys_fstatfs_args *uap, registe
 	error = copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
 	    SCARG(uap, len)));
  out:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
 

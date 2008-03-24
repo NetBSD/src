@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.24.22.2 2007/09/03 14:22:57 yamt Exp $ */
+/*	$NetBSD: view.c,v 1.24.22.3 2008/03/24 09:38:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.24.22.2 2007/09/03 14:22:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.24.22.3 2008/03/24 09:38:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,7 +343,7 @@ view_get_colormap(struct view_softc *vu, colormap_t *ucm)
 	/* add one incase of zero, ick. */
 	if (ucm->size + 1 > SIZE_T_MAX / sizeof(u_long))
 		return EINVAL;
-	cme = malloc(sizeof (u_long)*(ucm->size + 1), M_IOCTLOPS, M_WAITOK);
+	cme = malloc(sizeof (u_long)*(ucm->size + 1), M_TEMP, M_WAITOK);
 	if (cme == NULL)
 		return(ENOMEM);
 
@@ -355,7 +355,7 @@ view_get_colormap(struct view_softc *vu, colormap_t *ucm)
 	else
 		error = copyout(cme, uep, sizeof(u_long) * ucm->size);
 	ucm->entry = uep;	  /* set entry back to users. */
-	free(cme, M_IOCTLOPS);
+	free(cme, M_TEMP);
 	return(error);
 }
 
@@ -366,7 +366,7 @@ view_set_colormap(struct view_softc *vu, colormap_t *ucm)
 	int error;
 
 	error = 0;
-	cm = malloc(sizeof(u_long) * ucm->size + sizeof (*cm), M_IOCTLOPS,
+	cm = malloc(sizeof(u_long) * ucm->size + sizeof (*cm), M_TEMP,
 	    M_WAITOK);
 	if (cm == NULL)
 		return(ENOMEM);
@@ -377,7 +377,7 @@ view_set_colormap(struct view_softc *vu, colormap_t *ucm)
 	    copyin(ucm->entry, cm->entry, sizeof (u_long) * ucm->size)) == 0)
 	    && (vu->view == NULL || grf_use_colormap(vu->view, cm)))
 		error = EINVAL;
-	free(cm, M_IOCTLOPS);
+	free(cm, M_TEMP);
 	return(error);
 }
 

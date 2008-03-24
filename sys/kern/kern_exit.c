@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.148.2.9 2008/02/04 09:24:11 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.148.2.10 2008/03/24 09:39:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148.2.9 2008/02/04 09:24:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148.2.10 2008/03/24 09:39:01 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -197,6 +197,7 @@ void
 exit1(struct lwp *l, int rv)
 {
 	struct proc	*p, *q, *nq;
+	struct pgrp	*pgrp;
 	ksiginfo_t	ksi;
 	ksiginfoq_t	kq;
 	int		wakeinit;
@@ -276,7 +277,7 @@ exit1(struct lwp *l, int rv)
 	 * Close open files, release open-file table and free signal
 	 * actions.  This may block!
 	 */
-	fdfree(l);
+	fd_free();
 	cwdfree(p->p_cwdi);
 	p->p_cwdi = NULL;
 	doexithooks(p);
@@ -364,15 +365,16 @@ exit1(struct lwp *l, int rv)
 			tp = sp->s_ttyp;
 			mutex_spin_enter(&tty_lock);
 			if (tp->t_session == sp) {
-				if (tp->t_pgrp) {
-					mutex_enter(&proclist_mutex);
-					pgsignal(tp->t_pgrp, SIGHUP, 1);
-					mutex_exit(&proclist_mutex);
-				}
 				/* we can't guarantee the revoke will do this */
+				pgrp = tp->t_pgrp;
 				tp->t_pgrp = NULL;
 				tp->t_session = NULL;
 				mutex_spin_exit(&tty_lock);
+				if (pgrp != NULL) {
+					mutex_enter(&proclist_mutex);
+					pgsignal(pgrp, SIGHUP, 1);
+					mutex_exit(&proclist_mutex);
+				}
 				mutex_exit(&proclist_lock);
 				(void) ttywait(tp);
 				mutex_enter(&proclist_lock);

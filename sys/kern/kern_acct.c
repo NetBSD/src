@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.61.2.8 2008/02/04 09:24:08 yamt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.61.2.9 2008/03/24 09:39:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.61.2.8 2008/02/04 09:24:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.61.2.9 2008/03/24 09:39:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ acct_stop(void)
 	KASSERT(rw_write_held(&acct_lock));
 
 	if (acct_vp != NULLVP && acct_vp->v_type != VBAD) {
-		error = vn_close(acct_vp, FWRITE, acct_cred, NULL);
+		error = vn_close(acct_vp, FWRITE, acct_cred);
 #ifdef DIAGNOSTIC
 		if (error != 0)
 			printf("acct_stop: failed to close, errno = %d\n",
@@ -374,7 +374,7 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 	rw_exit(&acct_lock);
 	return (error);
  bad:
-	vn_close(nd.ni_vp, FWRITE, l->l_cred, l);
+	vn_close(nd.ni_vp, FWRITE, l->l_cred);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.5.6.2 2007/10/27 11:26:18 yamt Exp $	*/
+/*	$NetBSD: ansi.h,v 1.5.6.3 2008/03/24 09:38:38 yamt Exp $	*/
 
 /*	$OpenBSD: ansi.h,v 1.4 2000/02/22 17:29:12 millert Exp $	*/
 
@@ -76,11 +76,5 @@ typedef union {
 	char __mbstate8[128];
 } __mbstate_t;
 #define _BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
-
-/*
- * We describe off_t here so its declaration can be visible to
- * stdio without pulling in all of <sys/type.h>, thus appeasing ANSI.
- */
-#define _BSD_OFF_T_	long long		/* file offset */
 
 #endif	/* _ANSI_H_ */

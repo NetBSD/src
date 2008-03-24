@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.2 2001/06/22 01:42:20 thorpej Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.2.40.1 2008/03/24 09:38:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.2 2001/06/22 01:42:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.2.40.1 2008/03/24 09:38:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.2 2001/06/22 01:42:20 thorpej E
 #include <dev/isa/isavar.h>
 
 void *
-pciide_machdep_compat_intr_establish(struct device *dev,
+pciide_machdep_compat_intr_establish(device_t dev,
     struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;

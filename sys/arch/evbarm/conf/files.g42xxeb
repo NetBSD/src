@@ -1,4 +1,4 @@
-#	$NetBSD: files.g42xxeb,v 1.1.10.1 2007/09/03 14:24:01 yamt Exp $
+#	$NetBSD: files.g42xxeb,v 1.1.10.2 2008/03/24 09:38:38 yamt Exp $
 #
 # Genetec corp. G4255EB evaluation board configuration info
 #
@@ -30,9 +30,6 @@ file	arch/evbarm/g42xxeb/if_ne_obio.c		ne_obio
 device	opio {[addr=-1], [intr=-1]}
 attach	opio at obio
 file	arch/evbarm/g42xxeb/gb225.c			opio
-
-# PCMCIA
-include "dev/pcmcia/files.pcmcia"
 
 device	opcic: pcmciabus
 attach	opcic at opio

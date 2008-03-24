@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.29.6.11 2008/03/17 09:15:33 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.29.6.12 2008/03/24 09:39:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.29.6.11 2008/03/17 09:15:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.29.6.12 2008/03/24 09:39:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -583,6 +583,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	l2->l_pflag = LP_MPSAFE;
+	l2->l_fd = p2->p_fd;
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/* Mark it as a system LWP and not a candidate for swapping */
@@ -829,12 +830,10 @@ lwp_exit_switchaway(struct lwp *l)
 	struct cpu_info *ci;
 	struct lwp *idlelwp;
 
-	/* Unlocked, but is for statistics only. */
-	uvmexp.swtch++;
-
 	(void)splsched();
 	l->l_flag &= ~LW_RUNNING;
 	ci = curcpu();	
+	ci->ci_data.cpu_nswtch++;
 	idlelwp = ci->ci_data.cpu_idlelwp;
 	idlelwp->l_stat = LSONPROC;
 
@@ -1173,6 +1172,9 @@ lwp_update_creds(struct lwp *l)
 	mutex_enter(&p->p_mutex);
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
+	mutex_enter(&p->p_smutex);
+	l->l_prflag &= ~LPR_CRMOD;
+	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_mutex);
 	if (oc != NULL)
 		kauth_cred_free(oc);
@@ -1284,6 +1286,16 @@ lwp_trylock(struct lwp *l)
 		mutex_spin_exit(old);
 	}
 }
+
+u_int
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
 
 /*
  * Handle exceptions for mi_userret().  Called if a member of LW_USERRET is
@@ -1597,6 +1609,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 		 */
 		uao = lp->lp_uao;
 		(*uao->pgops->pgo_reference)(uao);
+		lcp->lcp_kaddr = vm_map_min(kernel_map);
 		error = uvm_map(kernel_map, &lcp->lcp_kaddr, PAGE_SIZE,
 		    uao, lp->lp_cur, PAGE_SIZE,
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,

@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.32.2.7 2008/01/21 09:42:12 yamt Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.32.2.8 2008/03/24 09:38:45 yamt Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.32.2.7 2008/01/21 09:42:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.32.2.8 2008/03/24 09:38:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,14 +212,13 @@ svr4_32_sys_time(struct lwp *l, const struct svr4_32_sys_time_args *uap, registe
 int
 svr4_32_sys_getdents64(struct lwp *l, const struct svr4_32_sys_getdents64_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *sbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	char *outp;		/* SVR4-format */
 	int resid, svr4_32_reclen;	/* SVR4-format */
-	struct file *fp;
+	file_t *fp;
 	struct uio auio;
 	struct iovec aiov;
 	struct svr4_32_dirent64 idb;
@@ -229,7 +228,7 @@ svr4_32_sys_getdents64(struct lwp *l, const struct svr4_32_sys_getdents64_args *
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -237,7 +236,7 @@ svr4_32_sys_getdents64(struct lwp *l, const struct svr4_32_sys_getdents64_args *
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -325,7 +324,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(sbuf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return error;
 }
 
@@ -333,14 +332,13 @@ out:
 int
 svr4_32_sys_getdents(struct lwp *l, const struct svr4_32_sys_getdents_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *sbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	char *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
-	struct file *fp;
+	file_t *fp;
 	struct uio auio;
 	struct iovec aiov;
 	struct svr4_32_dirent idb;
@@ -350,7 +348,7 @@ svr4_32_sys_getdents(struct lwp *l, const struct svr4_32_sys_getdents_args *uap,
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -358,7 +356,7 @@ svr4_32_sys_getdents(struct lwp *l, const struct svr4_32_sys_getdents_args *uap,
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -447,7 +445,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(sbuf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return error;
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.722.2.11 2008/03/17 09:14:36 yamt Exp $
+#	$NetBSD: files,v 1.722.2.12 2008/03/24 09:38:46 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1428,6 +1428,7 @@ file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xcall.c
 file	kern/sys_aio.c
+file	kern/sys_descrip.c
 file	kern/sys_generic.c
 file	kern/sys_module.c
 file	kern/sys_mqueue.c
@@ -1436,6 +1437,7 @@ file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
 file	kern/sys_process.c		ptrace | ktrace
 file	kern/sys_pset.c
+file	kern/sys_select.c
 file	kern/sys_sig.c
 file	kern/sys_sched.c
 file	kern/sys_socket.c

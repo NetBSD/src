@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_stat.c,v 1.52.4.6 2008/01/21 09:42:08 yamt Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.52.4.7 2008/03/24 09:38:45 yamt Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.52.4.6 2008/01/21 09:42:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.52.4.7 2008/03/24 09:38:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,7 @@ svr4_sys_stat(struct lwp *l, const struct svr4_sys_stat_args *uap, register_t *r
 	struct svr4_stat	svr4_st;
 	int			error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -215,7 +215,7 @@ svr4_sys_lstat(struct lwp *l, const struct svr4_sys_lstat_args *uap, register_t 
 	struct svr4_stat	svr4_st;
 	int			error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -244,7 +244,7 @@ svr4_sys_fstat(struct lwp *l, const struct svr4_sys_fstat_args *uap, register_t 
 	struct svr4_stat	svr4_st;
 	int			error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &st);
+	error = do_sys_fstat(SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
 
@@ -262,7 +262,7 @@ svr4_sys_xstat(struct lwp *l, const struct svr4_sys_xstat_args *uap, register_t 
 	struct svr4_xstat	svr4_st;
 	int			error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -282,7 +282,7 @@ svr4_sys_lxstat(struct lwp *l, const struct svr4_sys_lxstat_args *uap, register_
 	struct svr4_xstat	svr4_st;
 	int			error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -302,7 +302,7 @@ svr4_sys_fxstat(struct lwp *l, const struct svr4_sys_fxstat_args *uap, register_
 	struct svr4_xstat	svr4_st;
 	int			error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &st);
+	error = do_sys_fstat(SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
 
@@ -319,7 +319,7 @@ svr4_sys_stat64(struct lwp *l, const struct svr4_sys_stat64_args *uap, register_
 	struct svr4_stat64	svr4_st;
 	int			error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -339,7 +339,7 @@ svr4_sys_lstat64(struct lwp *l, const struct svr4_sys_lstat64_args *uap, registe
 	struct svr4_stat64	svr4_st;
 	int			error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -359,7 +359,7 @@ svr4_sys_fstat64(struct lwp *l, const struct svr4_sys_fstat64_args *uap, registe
 	struct stat		st;
 	int			error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &st);
+	error = do_sys_fstat(SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
 

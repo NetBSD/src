@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_log.c,v 1.35.2.7 2008/03/17 09:15:34 yamt Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.35.2.8 2008/03/24 09:39:02 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.35.2.7 2008/03/17 09:15:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.35.2.8 2008/03/24 09:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,6 @@ logsoftintr(void *cookie)
 static int
 logioctl(dev_t dev, u_long com, void *data, int flag, struct lwp *lwp)
 {
-	struct proc *p = lwp->l_proc;
 	long l;
 
 	switch (com) {
@@ -357,11 +356,11 @@ logioctl(dev_t dev, u_long com, void *data, int flag, struct lwp *lwp)
 
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		return fsetown(p, &log_pgid, com, data);
+		return fsetown(&log_pgid, com, data);
 
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		return fgetown(p, log_pgid, com, data);
+		return fgetown(log_pgid, com, data);
 
 	default:
 		return (EPASSTHROUGH);

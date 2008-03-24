@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.98.2.9 2008/02/11 14:59:59 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.98.2.10 2008/03/24 09:39:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.98.2.9 2008/02/11 14:59:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.98.2.10 2008/03/24 09:39:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,13 +408,13 @@ filt_genfsread(struct knote *kn, long hint)
 		return (1);
 	case 0:
 		mutex_enter(&vp->v_interlock);
-		kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
+		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
 		rv = (kn->kn_data != 0);
 		mutex_exit(&vp->v_interlock);
 		return rv;
 	default:
 		KASSERT(mutex_owned(&vp->v_interlock));
-		kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
+		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
 		return (kn->kn_data != 0);
 	}
 }
@@ -445,7 +445,7 @@ filt_genfsvnode(struct knote *kn, long hint)
 		break;
 	}
 
-	return (kn->kn_fflags != 0);
+	return (fflags != 0);
 }
 
 static const struct filterops genfsread_filtops =

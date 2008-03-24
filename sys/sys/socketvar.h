@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.82.2.7 2008/02/11 15:00:09 yamt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.82.2.8 2008/03/24 09:39:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -276,14 +276,14 @@ struct	mbuf *getsombuf(struct socket *, int);
 /*
  * File operations on sockets.
  */
-int	soo_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
-int	soo_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
-int	soo_fcntl(struct file *, u_int cmd, void *, struct lwp *);
-int	soo_ioctl(struct file *, u_long cmd, void *, struct lwp *);
-int	soo_poll(struct file *, int, struct lwp *);
-int	soo_kqfilter(struct file *, struct knote *);
-int 	soo_close(struct file *, struct lwp *);
-int	soo_stat(struct file *, struct stat *, struct lwp *);
+int	soo_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
+int	soo_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
+int	soo_fcntl(file_t *, u_int cmd, void *);
+int	soo_ioctl(file_t *, u_long cmd, void *);
+int	soo_poll(file_t *, int);
+int	soo_kqfilter(file_t *, struct knote *);
+int 	soo_close(file_t *);
+int	soo_stat(file_t *, struct stat *);
 void	sbappend(struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct sockbuf *, struct mbuf *);
 int	sbappendaddr(struct sockbuf *, const struct sockaddr *, struct mbuf *,
@@ -339,6 +339,7 @@ int	sosetopt(struct socket *, int, int, struct mbuf *);
 int	soshutdown(struct socket *, int);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
+int	sopoll(struct socket *, int);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.65.2.11 2008/03/17 09:15:34 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.65.2.12 2008/03/24 09:39:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.11 2008/03/17 09:15:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.12 2008/03/24 09:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,12 +123,11 @@ static int pipe_read(struct file *fp, off_t *offset, struct uio *uio,
 		kauth_cred_t cred, int flags);
 static int pipe_write(struct file *fp, off_t *offset, struct uio *uio,
 		kauth_cred_t cred, int flags);
-static int pipe_close(struct file *fp, struct lwp *l);
-static int pipe_poll(struct file *fp, int events, struct lwp *l);
+static int pipe_close(struct file *fp);
+static int pipe_poll(struct file *fp, int events);
 static int pipe_kqfilter(struct file *fp, struct knote *kn);
-static int pipe_stat(struct file *fp, struct stat *sb, struct lwp *l);
-static int pipe_ioctl(struct file *fp, u_long cmd, void *data,
-		struct lwp *l);
+static int pipe_stat(struct file *fp, struct stat *sb);
+static int pipe_ioctl(struct file *fp, u_long cmd, void *data);
 
 static const struct fileops pipeops = {
 	pipe_read, pipe_write, pipe_ioctl, fnullop_fcntl, pipe_poll,
@@ -254,7 +253,9 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	struct pipe *rpipe, *wpipe;
 	struct pipe_mutex *mutex;
 	int fd, error;
+	proc_t *p;
 
+	p = curproc;
 	rpipe = wpipe = NULL;
 	mutex = pool_cache_get(pipe_mutex_cache, PR_WAITOK);
 	if (mutex == NULL)
@@ -265,15 +266,7 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 		return (ENFILE);
 	}
 
-	/*
-	 * Note: the file structure returned from falloc() is marked
-	 * as 'larval' initially. Unless we mark it as 'mature' by
-	 * FILE_SET_MATURE(), any attempt to do anything with it would
-	 * return EBADF, including e.g. dup(2) or close(2). This avoids
-	 * file descriptor races if we block in the second falloc().
-	 */
-
-	error = falloc(l, &rf, &fd);
+	error = fd_allocfile(&rf, &fd);
 	if (error)
 		goto free2;
 	retval[0] = fd;
@@ -282,7 +275,7 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	rf->f_data = (void *)rpipe;
 	rf->f_ops = &pipeops;
 
-	error = falloc(l, &wf, &fd);
+	error = fd_allocfile(&wf, &fd);
 	if (error)
 		goto free3;
 	retval[1] = fd;
@@ -294,15 +287,11 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	rpipe->pipe_peer = wpipe;
 	wpipe->pipe_peer = rpipe;
 
-	FILE_SET_MATURE(rf);
-	FILE_SET_MATURE(wf);
-	FILE_UNUSE(rf, l);
-	FILE_UNUSE(wf, l);
+	fd_affix(p, rf, (int)retval[0]);
+	fd_affix(p, wf, (int)retval[1]);
 	return (0);
 free3:
-	FILE_UNUSE(rf, l);
-	ffree(rf);
-	fdremove(l->l_proc->p_fd, retval[0]);
+	fd_abort(p, rf, (int)retval[0]);
 free2:
 	pipeclose(NULL, wpipe);
 	pipeclose(NULL, rpipe);
@@ -1065,10 +1054,9 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
  * we implement a very minimal set of ioctls for compatibility with sockets.
  */
 int
-pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
+pipe_ioctl(struct file *fp, u_long cmd, void *data)
 {
-	struct pipe *pipe = (struct pipe *)fp->f_data;
-	struct proc *p = l->l_proc;
+	struct pipe *pipe = fp->f_data;
 	kmutex_t *lock = pipe->pipe_lock;
 
 	switch (cmd) {
@@ -1131,20 +1119,20 @@ pipe_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		return fsetown(p, &pipe->pipe_pgid, cmd, data);
+		return fsetown(&pipe->pipe_pgid, cmd, data);
 
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		return fgetown(p, pipe->pipe_pgid, cmd, data);
+		return fgetown(pipe->pipe_pgid, cmd, data);
 
 	}
 	return (EPASSTHROUGH);
 }
 
 int
-pipe_poll(struct file *fp, int events, struct lwp *l)
+pipe_poll(struct file *fp, int events)
 {
-	struct pipe *rpipe = (struct pipe *)fp->f_data;
+	struct pipe *rpipe = fp->f_data;
 	struct pipe *wpipe;
 	int eof = 0;
 	int revents = 0;
@@ -1181,10 +1169,10 @@ pipe_poll(struct file *fp, int events, struct lwp *l)
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(l, &rpipe->pipe_sel);
+			selrecord(curlwp, &rpipe->pipe_sel);
 
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(l, &wpipe->pipe_sel);
+			selrecord(curlwp, &wpipe->pipe_sel);
 	}
 	mutex_exit(rpipe->pipe_lock);
 
@@ -1192,9 +1180,9 @@ pipe_poll(struct file *fp, int events, struct lwp *l)
 }
 
 static int
-pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
+pipe_stat(struct file *fp, struct stat *ub)
 {
-	struct pipe *pipe = (struct pipe *)fp->f_data;
+	struct pipe *pipe = fp->f_data;
 
 	memset((void *)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
@@ -1218,9 +1206,9 @@ pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
 
 /* ARGSUSED */
 static int
-pipe_close(struct file *fp, struct lwp *l)
+pipe_close(struct file *fp)
 {
-	struct pipe *pipe = (struct pipe *)fp->f_data;
+	struct pipe *pipe = fp->f_data;
 
 	fp->f_data = NULL;
 	pipeclose(fp, pipe);
@@ -1264,6 +1252,12 @@ pipeclose(struct file *fp, struct pipe *pipe)
 
 	if (pipe == NULL)
 		return;
+
+	KASSERT(cv_is_valid(&pipe->pipe_rcv));
+	KASSERT(cv_is_valid(&pipe->pipe_wcv));
+	KASSERT(cv_is_valid(&pipe->pipe_draincv));
+	KASSERT(cv_is_valid(&pipe->pipe_lkcv));
+
 	lock = pipe->pipe_lock;
 	mutex_enter(lock);
 	pipeselwakeup(pipe, pipe, POLL_HUP);
@@ -1317,7 +1311,7 @@ filt_pipedetach(struct knote *kn)
 	struct pipe *pipe;
 	kmutex_t *lock;
 
-	pipe = (struct pipe *)kn->kn_fp->f_data;
+	pipe = ((file_t *)kn->kn_obj)->f_data;
 	lock = pipe->pipe_lock;
 
 	mutex_enter(lock);
@@ -1352,7 +1346,7 @@ filt_pipedetach(struct knote *kn)
 static int
 filt_piperead(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *rpipe = ((file_t *)kn->kn_obj)->f_data;
 	struct pipe *wpipe;
 
 	if ((hint & NOTE_SUBMIT) == 0) {
@@ -1383,7 +1377,7 @@ filt_piperead(struct knote *kn, long hint)
 static int
 filt_pipewrite(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
+	struct pipe *rpipe = ((file_t *)kn->kn_obj)->f_data;
 	struct pipe *wpipe;
 
 	if ((hint & NOTE_SUBMIT) == 0) {
@@ -1421,7 +1415,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 	struct pipe *pipe;
 	kmutex_t *lock;
 
-	pipe = (struct pipe *)kn->kn_fp->f_data;
+	pipe = ((file_t *)kn->kn_obj)->f_data;
 	lock = pipe->pipe_lock;
 
 	mutex_enter(lock);

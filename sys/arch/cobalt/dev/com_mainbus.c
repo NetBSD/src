@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.9.12.3 2008/03/17 09:14:16 yamt Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.9.12.4 2008/03/24 09:38:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.9.12.3 2008/03/17 09:14:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.9.12.4 2008/03/24 09:38:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,6 @@ void
 com_mainbus_cninit(struct consdev *cn)
 {
 
-	comcnattach(0, 0x1c800000, 115200, COM_MAINBUS_FREQ, COM_TYPE_NORMAL,
+	comcnattach(0, COM_BASE, 115200, COM_MAINBUS_FREQ, COM_TYPE_NORMAL,
 	    CONMODE);
 }

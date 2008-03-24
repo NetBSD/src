@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.248.2.9 2008/03/17 09:15:32 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.248.2.10 2008/03/24 09:39:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.9 2008/03/17 09:15:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.10 2008/03/24 09:39:01 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -133,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.9 2008/03/17 09:15:32 yamt Exp
 #include <sys/mqueue.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
+#include <sys/event.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -371,7 +372,7 @@ main(void)
 	 * defined in kernel config, adjust the number such as we use roughly
 	 * 1.0% of memory for vnode cache (but not less than NVNODE vnodes).
 	 */
-	usevnodes = (ptoa((unsigned)physmem) / 100) / sizeof(struct vnode);
+	usevnodes = calc_cache_size(kernel_map, 1) / sizeof(vnode_t);
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
@@ -381,10 +382,10 @@ main(void)
 	fstrans_init();
 
 	/* Initialize the file descriptor system. */
-	filedesc_init();
+	fd_sys_init();
 
-	/* Initialize the select()/poll() system calls. */
-	selsysinit();
+	/* Initialize kqueue. */
+	kqueue_init();
 
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
@@ -852,4 +853,23 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
+}
+
+/*
+ * calculate cache size from physmem and vm_map size.
+ */
+vaddr_t
+calc_cache_size(struct vm_map *map, int pct)
+{
+	vsize_t mapsize;
+	paddr_t t;
+
+	/* XXX should consider competing cache if any */
+	/* XXX should consider submaps */
+	mapsize = vm_map_max(map) - vm_map_min(map);
+	t = (paddr_t)physmem * pct / 100 * PAGE_SIZE;
+	if (t > mapsize) {
+		t = mapsize;
+	}
+	return t;
 }

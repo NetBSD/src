@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ts.c,v 1.1.12.1 2006/06/21 14:50:54 yamt Exp $ */
+/*	$NetBSD: wdc_ts.c,v 1.1.12.2 2008/03/24 09:38:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ts.c,v 1.1.12.1 2006/06/21 14:50:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ts.c,v 1.1.12.2 2008/03/24 09:38:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,46 +63,47 @@ struct wdc_ts_softc {
 	void	*sc_ih;
 };
 
-static int	wdc_ts_probe(struct device *, struct cfdata *, void *);
-static void	wdc_ts_attach(struct device *, struct device *, void *);
+static int	wdc_ts_probe(device_t, cfdata_t, void *);
+static void	wdc_ts_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(wdc_ts, sizeof(struct wdc_ts_softc),
+CFATTACH_DECL_NEW(wdc_ts, sizeof(struct wdc_ts_softc),
     wdc_ts_probe, wdc_ts_attach, NULL, NULL);
 
 static int
-wdc_ts_probe(struct device *parent, struct cfdata *match, void *aux)
+wdc_ts_probe(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-wdc_ts_attach(struct device *parent, struct device *self, void *aux)
+wdc_ts_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdc_ts_softc *sc = (void *)self;
+	struct wdc_ts_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct tspld_attach_args *ta = aux;
 	int i;
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
 	wdr->cmd_iot = ta->ta_iot;
 	wdr->ctl_iot = ta->ta_iot;
 	if (bus_space_map(wdr->cmd_iot, 0x11000000, 8, 0, &wdr->cmd_baseioh) ||
 	    bus_space_map(wdr->ctl_iot, 0x10400006, 1, 0, &wdr->ctl_ioh)) {
-		printf(": couldn't map registers\n");
+		aprint_error(": couldn't map registers\n");
 		return;
 	}
 
 	for (i = 0; i < 8; i++) {
 		if (bus_space_subregion(wdr->cmd_iot,
 		      wdr->cmd_baseioh, i, 1, &wdr->cmd_iohs[i]) != 0) {
-			printf(": couldn't subregion registers\n");
+			aprint_error(": couldn't subregion registers\n");
 			return;
 		}
 	}
 
 
 	if (bus_space_map(wdr->cmd_iot, 0x21000000, 2, 0, &wdr->cmd_iohs[0])) {
-		printf(": couldn't map registers\n");
+		aprint_error(": couldn't map registers\n");
 		return;
 	}
 
@@ -119,7 +120,7 @@ wdc_ts_attach(struct device *parent, struct device *self, void *aux)
 	sc->ata_channel.ch_ndrive = 2;
 	wdc_init_shadow_regs(&sc->ata_channel);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_ih = ep93xx_intr_establish(32, IPL_BIO, wdcintr, &sc->ata_channel);
 

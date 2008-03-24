@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.58.4.6 2008/03/17 09:15:33 yamt Exp $
+#	$NetBSD: makesyscalls.sh,v 1.58.4.7 2008/03/24 09:39:02 yamt Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -42,6 +42,7 @@ case $# in
 esac
 
 # the config file sets the following variables:
+#	sysalign	check for alignment of off_t
 #	sysnames	the syscall names file
 #	sysnumhdr	the syscall numbers file
 #	syssw		the syscall switch file
@@ -61,6 +62,8 @@ esac
 # source the config file.
 sys_nosys="sys_nosys"	# default is sys_nosys(), if not specified otherwise
 maxsysargs=8		# default limit is 8 (32bit) arguments
+rumpcalls="/dev/null"
+rumpcallshdr="/dev/null"
 . ./$1
 
 # tmp files:
@@ -130,17 +133,11 @@ BEGIN {
 	namesname = \"$namesname\"
 	constprefix = \"$constprefix\"
 	registertype = \"$registertype\"
+	sysalign=\"$sysalign\"
 	if (!registertype) {
 	    registertype = \"register_t\"
 	}
 	nsysent = \"$nsysent\"
-
-	if (length(rumpcalls) == 0) {
-		rumpcalls = "/dev/null"
-	}
-	if (length(rumpcallshdr) == 0) {
-		rumpcallshdr = "/dev/null"
-	}
 
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
@@ -430,7 +427,7 @@ function parseline() {
 		if (argtype[argc] == "")
 			parserr($f, "argument definition")
 		if (argtype[argc] == "off_t") {
-			if ((argalign % 2) != 0 &&
+			if ((argalign % 2) != 0 && sysalign &&
 			    funcname != "sys_posix_fadvise") # XXX for now
 				parserr($f, "a padding argument")
 		} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.46.2.10 2008/03/17 09:15:32 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.46.2.11 2008/03/24 09:39:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46.2.10 2008/03/17 09:15:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46.2.11 2008/03/24 09:39:01 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -192,8 +192,8 @@ static int sysctl_hw_cnmagic(SYSCTLFN_PROTO);
 static u_int sysctl_map_flags(const u_int *, u_int);
 static void fill_kproc2(struct proc *, struct kinfo_proc2 *);
 static void fill_lwp(struct lwp *l, struct kinfo_lwp *kl);
-static void fill_file(struct kinfo_file *, const struct file *, struct proc *,
-		      int);
+static void fill_file(struct kinfo_file *, const file_t *, const fdfile_t *,
+		      int, pid_t);
 
 /*
  * ********************************************************************
@@ -1925,6 +1925,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 	u_int i, op;
 	size_t len, needed, elem_size, out_size;
 	int error, arg, elem_count;
+	fdfile_t *ff;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -1978,7 +1979,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				continue;
 			}
 			if (len >= elem_size && elem_count > 0) {
-				fill_file(&kf, fp, NULL, 0);
+				fill_file(&kf, fp, NULL, 0, 0);
 				LIST_INSERT_AFTER(fp, tp, f_list);
 				mutex_exit(&fp->f_lock);
 				mutex_exit(&filelist_lock);
@@ -2040,29 +2041,30 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 
 			/* XXX Do we need to check permission per file? */
 			fd = p->p_fd;
-			rw_enter(&fd->fd_lock, RW_READER);
+			mutex_enter(&fd->fd_lock);
 			for (i = 0; i < fd->fd_nfiles; i++) {
-				fp = fd->fd_ofiles[i];
-				if (fp == NULL) {
+				if ((ff = fd->fd_ofiles[i]) == NULL) {
 					continue;
 				}
-				mutex_enter(&fp->f_lock);
-				if (!FILE_IS_USABLE(fp)) {
-					mutex_exit(&fp->f_lock);
+				mutex_enter(&ff->ff_lock);
+				if ((fp = ff->ff_file) == NULL) {
+					mutex_exit(&ff->ff_lock);
 					continue;
 				}
 				if (len >= elem_size && elem_count > 0) {
-					fill_file(&kf, fd->fd_ofiles[i], p, i);
+					fill_file(&kf, fp, ff, i, p->p_pid);
 					mutex_exit(&fp->f_lock);
-					rw_exit(&fd->fd_lock);
+					mutex_exit(&ff->ff_lock);
+					mutex_exit(&fd->fd_lock);
 					error = dcopyout(l, &kf, dp, out_size);
-					rw_enter(&fd->fd_lock, RW_READER);
+					mutex_enter(&fd->fd_lock);
 					if (error)
 						break;
 					dp += elem_size;
 					len -= elem_size;
 				} else {
 					mutex_exit(&fp->f_lock);
+					mutex_exit(&ff->ff_lock);
 				}
 				if (elem_count > 0) {
 					needed += elem_size;
@@ -2070,7 +2072,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 						elem_count--;
 				}
 			}
-			rw_exit(&fd->fd_lock);
+			mutex_exit(&fd->fd_lock);
 
 			/*
 			 * Release reference to process.
@@ -2093,7 +2095,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 }
 
 static void
-fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
+fill_file(struct kinfo_file *kp, const file_t *fp, const fdfile_t *ff,
+	  int i, pid_t pid)
 {
 
 	memset(kp, 0, sizeof(*kp));
@@ -2104,7 +2107,6 @@ fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
 	kp->ki_ftype =		fp->f_type;
 	kp->ki_count =		fp->f_count;
 	kp->ki_msgcount =	fp->f_msgcount;
-	kp->ki_usecount =	fp->f_usecount;
 	kp->ki_fucred =		PTRTOUINT64(fp->f_cred);
 	kp->ki_fuid =		kauth_cred_geteuid(fp->f_cred);
 	kp->ki_fgid =		kauth_cred_getegid(fp->f_cred);
@@ -2124,12 +2126,11 @@ fill_file(struct kinfo_file *kp, const struct file *fp, struct proc *p, int i)
 	}
 
 	/* process information when retrieved via KERN_FILE_BYPID */
-	if (p) {
-		KASSERT(rw_lock_held(&p->p_fd->fd_lock));
-
-		kp->ki_pid =		p->p_pid;
+	if (ff != NULL) {
+		kp->ki_pid =		pid;
 		kp->ki_fd =		i;
-		kp->ki_ofileflags =	p->p_fd->fd_ofileflags[i];
+		kp->ki_ofileflags =	ff->ff_exclose;
+		kp->ki_usecount =	ff->ff_refcnt;
 	}
 }
 

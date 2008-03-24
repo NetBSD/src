@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.34.2.7 2008/02/04 09:25:08 yamt Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.34.2.8 2008/03/24 09:39:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.34.2.7 2008/02/04 09:25:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.34.2.8 2008/03/24 09:39:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -424,7 +424,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 	vp = nd.ni_vp;
 	VOP_UNLOCK(vp, 0);
 	if (vp->v_type != VREG) {
-		(void) vn_close(vp, FREAD|FWRITE, l->l_cred, l);
+		(void) vn_close(vp, FREAD|FWRITE, l->l_cred);
 		return (EACCES);
 	}
 	if (*vpp != vp)
@@ -560,7 +560,7 @@ again:
 	dqflush(qvp);
 #endif
 	qvp->v_vflag &= ~VV_SYSTEM;
-	error = vn_close(qvp, FREAD|FWRITE, l->l_cred, l);
+	error = vn_close(qvp, FREAD|FWRITE, l->l_cred);
 	mutex_enter(&dqlock);
 	ump->um_quotas[type] = NULLVP;
 	cred = ump->um_cred[type];

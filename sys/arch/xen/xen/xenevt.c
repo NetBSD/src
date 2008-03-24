@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.5.4.8 2008/03/17 09:14:36 yamt Exp $      */
+/*      $NetBSD: xenevt.c,v 1.5.4.9 2008/03/24 09:38:40 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.5.4.8 2008/03/17 09:14:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.5.4.9 2008/03/24 09:38:40 yamt Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -74,9 +74,9 @@ static int	xenevt_fread(struct file *, off_t *, struct uio *,
     kauth_cred_t, int);
 static int	xenevt_fwrite(struct file *, off_t *, struct uio *,
     kauth_cred_t, int);
-static int	xenevt_fioctl(struct file *, u_long, void *, struct lwp *);
-static int	xenevt_fpoll(struct file *, int, struct lwp *);
-static int	xenevt_fclose(struct file *, struct lwp *);
+static int	xenevt_fioctl(struct file *, u_long, void *);
+static int	xenevt_fpoll(struct file *, int);
+static int	xenevt_fclose(struct file *);
 /* static int	xenevt_fkqfilter(struct file *, struct knote *); */
 
 static const struct fileops xenevt_fileops = {
@@ -301,13 +301,13 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 	switch(minor(dev)) {
 	case DEV_EVT:
 		/* falloc() will use the descriptor for us. */
-		if ((error = falloc(l, &fp, &fd)) != 0)
+		if ((error = fd_allocfile(&fp, &fd)) != 0)
 			return error;
 
 		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
 		simple_lock_init(&d->lock);
 		selinit(&d->sel);
-		return fdclone(l, fp, fd, flags, &xenevt_fileops, d);
+		return fd_clone(fp, fd, flags, &xenevt_fileops, d);
 #ifdef XEN3
 	case DEV_XSD:
 		/* no clone for /dev/xsd_kva */
@@ -366,7 +366,7 @@ xenevtmmap(dev_t dev, off_t off, int prot)
 }
 
 static int
-xenevt_fclose(struct file *fp, struct lwp *l)
+xenevt_fclose(struct file *fp)
 {
 	struct xenevt_d *d = fp->f_data;
 	int i;
@@ -502,7 +502,7 @@ out:
 }
 
 static int
-xenevt_fioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
+xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 {
 	struct xenevt_d *d = fp->f_data;
 #ifdef XEN3
@@ -622,7 +622,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr, struct lwp *l)
  */      
 
 static int
-xenevt_fpoll(struct file *fp, int events, struct lwp *l)
+xenevt_fpoll(struct file *fp, int events)
 {
 	struct xenevt_d *d = fp->f_data;
 	int revents = events & (POLLOUT | POLLWRNORM); /* we can always write */
@@ -635,7 +635,7 @@ xenevt_fpoll(struct file *fp, int events, struct lwp *l)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			/* Record that someone is waiting */
-			selrecord(l, &d->sel);
+			selrecord(curlwp, &d->sel);
 		}
 	}
 	simple_unlock(&d->lock);

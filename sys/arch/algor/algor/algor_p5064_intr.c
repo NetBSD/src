@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_intr.c,v 1.11.16.4 2008/01/21 09:35:04 yamt Exp $	*/
+/*	$NetBSD: algor_p5064_intr.c,v 1.11.16.5 2008/03/24 09:38:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.11.16.4 2008/01/21 09:35:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_intr.c,v 1.11.16.5 2008/03/24 09:38:37 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -302,7 +302,7 @@ const struct evcnt *algor_p5064_pci_intr_evcnt(void *, pci_intr_handle_t);
 void	*algor_p5064_pci_intr_establish(void *, pci_intr_handle_t, int,
 	    int (*)(void *), void *);
 void	algor_p5064_pci_intr_disestablish(void *, void *);
-void	*algor_p5064_pciide_compat_intr_establish(void *, struct device *,
+void	*algor_p5064_pciide_compat_intr_establish(void *, device_t,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
 void	algor_p5064_pci_conf_interrupt(void *, int, int, int, int, int *);
 
@@ -679,7 +679,7 @@ algor_p5064_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
 }
 
 void *
-algor_p5064_pciide_compat_intr_establish(void *v, struct device *dev,
+algor_p5064_pciide_compat_intr_establish(void *v, device_t dev,
     struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
 	pci_chipset_tag_t pc = pa->pa_pc; 
@@ -697,9 +697,8 @@ algor_p5064_pciide_compat_intr_establish(void *v, struct device *dev,
 	cookie = algor_p5064_intr_establish(P5064_IRQ_IDE0 + chan, func, arg);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at on-board %s IRQ\n",
-	    dev->dv_xname, PCIIDE_CHANNEL_NAME(chan),
-	    p5064_intrnames[P5064_IRQ_IDE0 + chan]);
+	aprint_normal_dev(dev, "%s channel interrupting at on-board %s IRQ\n",
+	    PCIIDE_CHANNEL_NAME(chan), p5064_intrnames[P5064_IRQ_IDE0 + chan]);
 	return (cookie);
 }
 

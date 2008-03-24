@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.5.6.6 2008/01/21 09:41:28 yamt Exp $ */
+/* $NetBSD: linux_sg.c,v 1.5.6.7 2008/03/24 09:38:41 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5.6.6 2008/01/21 09:41:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5.6.7 2008/03/24 09:38:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,19 +72,16 @@ int
 linux_ioctl_sg(struct lwp *l, const struct linux_sys_ioctl_args *uap,
     register_t *retval)
 {
-	struct file *fp;
-	struct filedesc *fdp;
+	file_t *fp;
 	u_long com = SCARG(uap, com);
 	int error = 0;
-	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
+	int (*ioctlf)(file_t *, u_long, void *);
 	struct linux_sg_io_hdr lreq;
 	struct scsireq req;
 
-        fdp = l->l_proc->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	FILE_USE(fp);
 	ioctlf = fp->f_ops->fo_ioctl;
 
 	*retval = 0;
@@ -143,7 +140,7 @@ linux_ioctl_sg(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 		req.datalen = lreq.dxfer_len;
 		req.databuf = lreq.dxferp;
 
-		error = ioctlf(fp, SCIOCCOMMAND, (void *)&req, l);
+		error = ioctlf(fp, SCIOCCOMMAND, &req);
 		if (error) {
 			DPRINTF(("SCIOCCOMMAND failed %d\n", error));
 			break;
@@ -212,8 +209,8 @@ linux_ioctl_sg(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 		break;
 	}
 
-done:
-	FILE_UNUSE(fp, l);
+ done:
+	fd_putfile(SCARG(uap, fd));
 
 	DPRINTF(("Return=%d\n", error));
 	return error;
