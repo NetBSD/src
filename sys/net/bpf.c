@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.135 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.136 2008/03/24 12:24:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.135 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.136 2008/03/24 12:24:37 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -126,11 +126,11 @@ LIST_HEAD(, bpf_d) bpf_list;
 
 static int	bpf_allocbufs(struct bpf_d *);
 static void	bpf_deliver(struct bpf_if *,
-		            void *(*cpfn)(void *, const void *, size_t),
+		            void *(*cpfn)(void *, void *, size_t),
 			    void *, u_int, u_int, struct ifnet *);
 static void	bpf_freed(struct bpf_d *);
 static void	bpf_ifname(struct ifnet *, struct ifreq *);
-static void	*bpf_mcpy(void *, const void *, size_t);
+static void	*bpf_mcpy(void *, void *, size_t);
 static int	bpf_movein(struct uio *, int, int,
 			        struct mbuf **, struct sockaddr *);
 static void	bpf_attachd(struct bpf_d *, struct bpf_if *);
@@ -140,8 +140,7 @@ static void	bpf_timed_out(void *);
 static inline void
 		bpf_wakeup(struct bpf_d *);
 static void	catchpacket(struct bpf_d *, u_char *, u_int, u_int,
-                            void *(*)(void *, const void *, size_t),
-                            struct timeval*);
+                            void *(*)(void *, void *, size_t), struct timeval*);
 static void	reset_d(struct bpf_d *);
 static int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 static int	bpf_setdlt(struct bpf_d *, u_int);
@@ -1189,7 +1188,7 @@ bpf_tap(void *arg, u_char *pkt, u_int pktlen)
 				microtime(&tv);
 				gottime = 1;
 			}
-		catchpacket(d, pkt, pktlen, slen, memcpy, &tv);
+		catchpacket(d, pkt, pktlen, slen, (void *)memcpy, &tv);
 		}
 	}
 }
@@ -1199,9 +1198,9 @@ bpf_tap(void *arg, u_char *pkt, u_int pktlen)
  * from m_copydata in sys/uipc_mbuf.c.
  */
 static void *
-bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
+bpf_mcpy(void *dst_arg, void *src_arg, size_t len)
 {
-	const struct mbuf *m;
+	struct mbuf *m;
 	u_int count;
 	u_char *dst;
 
@@ -1229,7 +1228,7 @@ bpf_mcpy(void *dst_arg, const void *src_arg, size_t len)
  * rcvif   either NULL or the interface the packet came in on.
  */
 static inline void
-bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
+bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, void *, size_t),
 	    void *marg, u_int pktlen, u_int buflen, struct ifnet *rcvif)
 {
 	u_int slen;
@@ -1285,7 +1284,7 @@ bpf_mtap2(void *arg, void *data, u_int dlen, struct mbuf *m)
 void
 bpf_mtap(void *arg, struct mbuf *m)
 {
-	void *(*cpfn)(void *, const void *, size_t);
+	void *(*cpfn)(void *, void *, size_t);
 	struct bpf_if *bp = arg;
 	u_int pktlen, buflen;
 	void *marg;
@@ -1293,7 +1292,7 @@ bpf_mtap(void *arg, struct mbuf *m)
 	pktlen = m_length(m);
 
 	if (pktlen == m->m_len) {
-		cpfn = memcpy;
+		cpfn = (void *)memcpy;
 		marg = mtod(m, void *);
 		buflen = pktlen;
 	} else {
@@ -1410,7 +1409,7 @@ bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
  */
 static void
 catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
-	    void *(*cpfn)(void *, const void *, size_t), struct timeval *tv)
+	    void *(*cpfn)(void *, void *, size_t), struct timeval *tv)
 {
 	struct bpf_hdr *hp;
 	int totlen, curlen;

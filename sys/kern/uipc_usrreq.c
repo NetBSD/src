@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.107 2008/03/21 23:38:40 rmind Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.108 2008/03/24 12:24:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.107 2008/03/21 23:38:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.108 2008/03/24 12:24:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		if (control) {
 			KASSERT(l != NULL);
-			if ((error = unp_internalize(control, l)) != 0)
+			if ((error = unp_internalize(&control, l)) != 0)
 				goto die;
 		}
 		switch (so->so_type) {
@@ -982,9 +982,10 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 }
 
 int
-unp_internalize(struct mbuf *control, struct lwp *l)
+unp_internalize(struct mbuf **controlp, struct lwp *l)
 {
 	struct filedesc *fdescp = curlwp->l_fd;
+	struct mbuf *control = *controlp;
 	struct cmsghdr *newcm, *cm = mtod(control, struct cmsghdr *);
 	file_t **rp, **files;
 	file_t *fp;
@@ -1052,8 +1053,10 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 	}
 
 	if (error == 0) {
-		if (control->m_flags & M_EXT)
-			MEXTREMOVE(control);
+		if (control->m_flags & M_EXT) {
+			m_freem(control);
+			*controlp = control = m_get(M_WAIT, MT_CONTROL);
+		}
 		MEXTADD(control, newcm, CMSG_SPACE(nfds * sizeof(file_t *)),
 		    M_MBUF, NULL, NULL);
 		cm = newcm;

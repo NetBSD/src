@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.124 2008/01/17 14:49:29 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.125 2008/03/24 12:24:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,13 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.124 2008/01/17 14:49:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.125 2008/03/24 12:24:37 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
@@ -144,6 +145,20 @@ struct mowner unknown_mowners[] = {
 };
 struct mowner revoked_mowner = MOWNER_INIT("revoked", "");
 #endif
+
+#define	MEXT_ISEMBEDDED(m) ((m)->m_ext_ref == (m))
+
+#define	MCLADDREFERENCE(o, n)						\
+do {									\
+	KASSERT(((o)->m_flags & M_EXT) != 0);				\
+	KASSERT(((n)->m_flags & M_EXT) == 0);				\
+	KASSERT((o)->m_ext.ext_refcnt >= 1);				\
+	(n)->m_flags |= ((o)->m_flags & M_EXTCOPYFLAGS);		\
+	atomic_inc_uint(&(o)->m_ext.ext_refcnt);			\
+	(n)->m_ext_ref = (o)->m_ext_ref;				\
+	mowner_ref((n), (n)->m_flags);					\
+	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
+} while (/* CONSTCOND */ 0)
 
 /*
  * Initialize the mbuf allocator.
@@ -483,6 +498,7 @@ m_get(int nowait, int type)
 
 	mbstat_type_add(type, 1);
 	mowner_init(m, type);
+	m->m_ext_ref = m;
 	m->m_type = type;
 	m->m_next = NULL;
 	m->m_nextpkt = NULL;
@@ -664,7 +680,6 @@ m_copym0(struct mbuf *m, int off0, int len, int wait, int deep)
 		if (m->m_flags & M_EXT) {
 			if (!deep) {
 				n->m_data = m->m_data + off;
-				n->m_ext = m->m_ext;
 				MCLADDREFERENCE(m, n);
 			} else {
 				/*
@@ -723,7 +738,6 @@ m_copypacket(struct mbuf *m, int how)
 	n->m_len = m->m_len;
 	if (m->m_flags & M_EXT) {
 		n->m_data = m->m_data;
-		n->m_ext = m->m_ext;
 		MCLADDREFERENCE(m, n);
 	} else {
 		memcpy(mtod(n, char *), mtod(m, char *), n->m_len);
@@ -742,7 +756,6 @@ m_copypacket(struct mbuf *m, int how)
 		n->m_len = m->m_len;
 		if (m->m_flags & M_EXT) {
 			n->m_data = m->m_data;
-			n->m_ext = m->m_ext;
 			MCLADDREFERENCE(m, n);
 		} else {
 			memcpy(mtod(n, char *), mtod(m, char *), n->m_len);
@@ -1064,9 +1077,8 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 	}
 extpacket:
 	if (m->m_flags & M_EXT) {
-		n->m_ext = m->m_ext;
-		MCLADDREFERENCE(m, n);
 		n->m_data = m->m_data + len;
+		MCLADDREFERENCE(m, n);
 	} else {
 		memcpy(mtod(n, void *), mtod(m, char *) + len, remain);
 	}
@@ -1513,6 +1525,68 @@ m_getptr(struct mbuf *m, int loc, int *off)
 	return (NULL);
 }
 
+/*
+ * m_ext_free: release a reference to the mbuf external storage.
+ *
+ * => free the mbuf m itsself as well.
+ */
+
+void
+m_ext_free(struct mbuf *m)
+{
+	bool embedded = MEXT_ISEMBEDDED(m);
+	bool dofree = true;
+	u_int refcnt;
+
+	KASSERT((m->m_flags & M_EXT) != 0);
+	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
+	KASSERT((m->m_ext_ref->m_flags & M_EXT) != 0);
+	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
+	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
+
+	if (__predict_true(m->m_ext.ext_refcnt == 1)) {
+		refcnt = m->m_ext.ext_refcnt = 0;
+	} else {
+		refcnt = atomic_dec_uint_nv(&m->m_ext.ext_refcnt);
+	}
+	if (refcnt > 0) {
+		if (embedded) {
+			/*
+			 * other mbuf's m_ext_ref still points to us.
+			 */
+			dofree = false;
+		} else {
+			m->m_ext_ref = m;
+		}
+	} else {
+		/*
+		 * dropping the last reference
+		 */
+		if (!embedded) {
+			m->m_ext.ext_refcnt++; /* XXX */
+			m_ext_free(m->m_ext_ref);
+			m->m_ext_ref = m;
+		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
+			pool_cache_put_paddr((struct pool_cache *)
+			    m->m_ext.ext_arg,
+			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
+		} else if (m->m_ext.ext_free) {
+			(*m->m_ext.ext_free)(m,
+			    m->m_ext.ext_buf, m->m_ext.ext_size,
+			    m->m_ext.ext_arg);
+			/*
+			 * 'm' is already freed by the ext_free callback.
+			 */
+			dofree = false;
+		} else {
+			free(m->m_ext.ext_buf, m->m_ext.ext_type);
+		}
+	}
+	if (dofree) {
+		pool_cache_put(mb_cache, m);
+	}
+}
+
 #if defined(DDB)
 void
 m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
@@ -1548,9 +1622,9 @@ nextchain:
 		    buf, m->m_pkthdr.csum_data, m->m_pkthdr.segsz);
 	}
 	if ((m->m_flags & M_EXT)) {
-		(*pr)("  shared=%u, ext_buf=%p, ext_size=%zd, "
+		(*pr)("  ext_refcnt=%u, ext_buf=%p, ext_size=%zd, "
 		    "ext_free=%p, ext_arg=%p\n",
-		    (int)MCLISREFERENCED(m),
+		    m->m_ext.ext_refcnt,
 		    m->m_ext.ext_buf, m->m_ext.ext_size,
 		    m->m_ext.ext_free, m->m_ext.ext_arg);
 	}
