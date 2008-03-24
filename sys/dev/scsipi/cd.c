@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.272 2008/01/02 11:48:38 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.273 2008/03/24 18:27:06 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.272 2008/01/02 11:48:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.273 2008/03/24 18:27:06 cube Exp $");
 
 #include "rnd.h"
 
@@ -170,15 +170,15 @@ static int	cd_set_pa_immed(struct cd_softc *, int);
 static int	cd_load_unload(struct cd_softc *, struct ioc_load_unload *);
 static int	cd_setblksize(struct cd_softc *);
 
-static int	cdmatch(struct device *, struct cfdata *, void *);
-static void	cdattach(struct device *, struct device *, void *);
-static int	cdactivate(struct device *, enum devact);
-static int	cddetach(struct device *, int);
+static int	cdmatch(device_t, cfdata_t, void *);
+static void	cdattach(device_t, device_t, void *);
+static int	cdactivate(device_t, enum devact);
+static int	cddetach(device_t, int);
 
 static int	mmc_getdiscinfo(struct scsipi_periph *, struct mmc_discinfo *);
 static int	mmc_gettrackinfo(struct scsipi_periph *, struct mmc_trackinfo *);
 
-CFATTACH_DECL(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
+CFATTACH_DECL_NEW(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
     cdactivate);
 
 extern struct cfdriver cd_cd;
@@ -228,8 +228,7 @@ static const struct scsipi_periphsw cd_switch = {
  * A device suitable for this driver
  */
 static int
-cdmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+cdmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -242,13 +241,15 @@ cdmatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-cdattach(struct device *parent, struct device *self, void *aux)
+cdattach(device_t parent, device_t self, void *aux)
 {
 	struct cd_softc *cd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
+
+	cd->sc_dev = self;
 
 	mutex_init(&cd->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -265,7 +266,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	cd->sc_periph = periph;
 
-	periph->periph_dev = &cd->sc_dev;
+	periph->periph_dev = cd->sc_dev;
 	periph->periph_switch = &cd_switch;
 
 	/*
@@ -280,13 +281,13 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&cd->sc_dk, cd->sc_dev.dv_xname, &cddkdriver);
+	disk_init(&cd->sc_dk, device_xname(cd->sc_dev), &cddkdriver);
 	disk_attach(&cd->sc_dk);
 
 	printf("\n");
 
 #if NRND > 0
-	rnd_attach_source(&cd->rnd_source, cd->sc_dev.dv_xname,
+	rnd_attach_source(&cd->rnd_source, device_xname(cd->sc_dev),
 			  RND_TYPE_DISK, 0);
 #endif
 
@@ -295,7 +296,7 @@ cdattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-cdactivate(struct device *self, enum devact act)
+cdactivate(device_t self, enum devact act)
 {
 	int rv = 0;
 
@@ -314,7 +315,7 @@ cdactivate(struct device *self, enum devact act)
 }
 
 static int
-cddetach(struct device *self, int flags)
+cddetach(device_t self, int flags)
 {
 	struct cd_softc *cd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
@@ -373,14 +374,11 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct cd_softc *cd;
 	struct scsipi_periph *periph;
 	struct scsipi_adapter *adapt;
-	int unit, part;
+	int part;
 	int error;
 	int rawpart;
 
-	unit = CDUNIT(dev);
-	if (unit >= cd_cd.cd_ndevs)
-		return (ENXIO);
-	cd = cd_cd.cd_devs[unit];
+	cd = device_lookup_private(&cd_cd, CDUNIT(dev));
 	if (cd == NULL)
 		return (ENXIO);
 
@@ -389,8 +387,8 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	part = CDPART(dev);
 
 	SC_DEBUG(periph, SCSIPI_DB1,
-	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    cd_cd.cd_ndevs, CDPART(dev)));
+	    ("cdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev,
+	    CDUNIT(dev), cd_cd.cd_ndevs, CDPART(dev)));
 
 	/*
 	 * If this is the first open of this device, add a reference
@@ -530,7 +528,7 @@ bad3:
 static int
 cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
+	struct cd_softc *cd = device_lookup_private(&cd_cd, CDUNIT(dev));
 	struct scsipi_periph *periph = cd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = CDPART(dev);
@@ -573,7 +571,7 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static void
 cdstrategy(struct buf *bp)
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
+	struct cd_softc *cd = device_lookup_private(&cd_cd,CDUNIT(bp->b_dev));
 	struct disklabel *lp;
 	struct scsipi_periph *periph = cd->sc_periph;
 	daddr_t blkno;
@@ -765,7 +763,7 @@ done:
 static void
 cdstart(struct scsipi_periph *periph)
 {
-	struct cd_softc *cd = (void *)periph->periph_dev;
+	struct cd_softc *cd = device_private(periph->periph_dev);
 	struct buf *bp = 0;
 	struct scsipi_rw_10 cmd_big;
 	struct scsi_rw_6 cmd_small;
@@ -904,7 +902,7 @@ cdrestart(void *v)
 static void
 cddone(struct scsipi_xfer *xs, int error)
 {
-	struct cd_softc *cd = (void *)xs->xs_periph->periph_dev;
+	struct cd_softc *cd = device_private(xs->xs_periph->periph_dev);
 	struct buf *bp = xs->bp;
 
 	if (bp) {
@@ -931,7 +929,8 @@ cdbounce(struct buf *bp)
 {
 	struct cdbounce *bounce = (struct cdbounce *)bp->b_private;
 	struct buf *obp = bounce->obp;
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(obp->b_dev)];
+	struct cd_softc *cd =
+	    device_private(cd_cd.cd_devs[CDUNIT(obp->b_dev)]);
 	struct disklabel *lp = cd->sc_dk.dk_label;
 
 	if (bp->b_error != 0) {
@@ -1079,7 +1078,7 @@ cd_interpret_sense(struct scsipi_xfer *xs)
 static void
 cdminphys(struct buf *bp)
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(bp->b_dev)];
+	struct cd_softc *cd = device_lookup_private(&cd_cd, CDUNIT(bp->b_dev));
 	long xmax;
 
 	/*
@@ -1246,7 +1245,7 @@ do_cdioreadentries(struct cd_softc *cd, struct ioc_read_toc_entry *te,
 static int
 cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
+	struct cd_softc *cd = device_lookup_private(&cd_cd, CDUNIT(dev));
 	struct scsipi_periph *periph = cd->sc_periph;
 	struct cd_formatted_toc toc;
 	int part = CDPART(dev);
@@ -1722,7 +1721,7 @@ cdgetdisklabel(struct cd_softc *cd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	errstring = readdisklabel(MAKECDDEV(0, device_unit(&cd->sc_dev),
+	errstring = readdisklabel(MAKECDDEV(0, device_unit(cd->sc_dev),
 	    RAW_PART), cdstrategy, lp, cd->sc_dk.dk_cpulabel);
 
 	/* if all went OK, we are passed a NULL error string */
@@ -1730,7 +1729,7 @@ cdgetdisklabel(struct cd_softc *cd)
 		return;
 
 	/* Reset to default label -- after printing error and the warning */
-	printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);
+	aprint_error_dev(cd->sc_dev, "%s\n", errstring);
 	memset(cd->sc_dk.dk_cpulabel, 0, sizeof(struct cpu_disklabel));
 	cdgetdefaultlabel(cd, &toc, lp);
 }
@@ -2059,8 +2058,7 @@ cdsize(dev_t dev)
 }
 
 static int
-cddump(dev_t dev, daddr_t blkno, void *va,
-    size_t size)
+cddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 
 	/* Not implemented. */
