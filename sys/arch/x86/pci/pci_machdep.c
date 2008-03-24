@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11.2.5 2008/01/21 09:40:12 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11.2.6 2008/03/24 09:38:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.5 2008/01/21 09:40:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.6 2008/03/24 09:38:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -242,8 +242,7 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 #endif
 
 void
-pci_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
+pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 {
 
 	if (pba->pba_bus == 0)

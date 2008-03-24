@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.2.14.2 2006/06/21 14:52:47 yamt Exp $ */
+/*	$NetBSD: exception.S,v 1.2.14.3 2008/03/24 09:38:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -27,12 +27,12 @@
  * SUCH DAMAGE.
  */
 
-#include "assym.h"
-	
 #include <machine/asm.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 
+#include "assym.h"
+	
 /*
  * ar.k7 = kernel memory stack
  * ar.k6 = kernel register stack

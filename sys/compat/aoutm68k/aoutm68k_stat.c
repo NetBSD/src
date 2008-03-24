@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.10.18.5 2008/01/21 09:40:40 yamt Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.10.18.6 2008/03/24 09:38:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10.18.5 2008/01/21 09:40:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10.18.6 2008/03/24 09:38:40 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -80,7 +80,7 @@ aoutm68k_compat_43_sys_stat(struct lwp *l, const struct aoutm68k_compat_43_sys_s
 	struct stat sb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return error;
 
@@ -96,7 +96,7 @@ aoutm68k_compat_43_sys_fstat(struct lwp *l, const struct aoutm68k_compat_43_sys_
 	struct stat sb;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	error = do_sys_fstat(SCARG(uap, fd), &sb);
 	if (error != 0)
 		return error;
 
@@ -112,7 +112,7 @@ aoutm68k_compat_43_sys_lstat(struct lwp *l, const struct aoutm68k_compat_43_sys_
 	struct stat sb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
 
@@ -130,7 +130,7 @@ aoutm68k_compat_12_sys_stat(struct lwp *l, const struct aoutm68k_compat_12_sys_s
 	struct stat sb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return error;
 
@@ -146,7 +146,7 @@ aoutm68k_compat_12_sys_fstat(struct lwp *l, const struct aoutm68k_compat_12_sys_
 	struct stat sb;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	error = do_sys_fstat(SCARG(uap, fd), &sb);
 	if (error != 0)
 		return error;
 
@@ -162,7 +162,7 @@ aoutm68k_compat_12_sys_lstat(struct lwp *l, const struct aoutm68k_compat_12_sys_
 	struct stat sb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
 
@@ -179,7 +179,7 @@ aoutm68k_sys___stat13(struct lwp *l, const struct aoutm68k_sys___stat13_args *ua
 	struct stat sb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return error;
 
@@ -195,7 +195,7 @@ aoutm68k_sys___fstat13(struct lwp *l, const struct aoutm68k_sys___fstat13_args *
 	struct stat sb;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	error = do_sys_fstat(SCARG(uap, fd), &sb);
 	if (error != 0)
 		return error;
 
@@ -212,7 +212,7 @@ aoutm68k_sys___lstat13(struct lwp *l, const struct aoutm68k_sys___lstat13_args *
 	struct stat sb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
 

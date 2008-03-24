@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtw_pci.c,v 1.3.2.5 2008/03/17 09:15:11 yamt Exp $	*/
+/*	$NetBSD: if_rtw_pci.c,v 1.3.2.6 2008/03/24 09:38:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.3.2.5 2008/03/17 09:15:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_pci.c,v 1.3.2.6 2008/03/24 09:38:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ rtw_pci_attach(device_t parent, device_t self, void *aux)
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc, NULL)) != 0 &&
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) != 0 &&
 	    error != EOPNOTSUPP) {
 		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;

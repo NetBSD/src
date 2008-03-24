@@ -1,9 +1,9 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.15.4.4 2008/01/21 09:40:48 yamt Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.15.4.5 2008/03/24 09:38:40 yamt Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.15.4.4 2008/01/21 09:40:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.15.4.5 2008/03/24 09:38:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,7 +77,6 @@ darwin_sys_load_shared_file(struct lwp *l, const struct darwin_sys_load_shared_f
 		syscallarg(int *) flags;
 	} */
 	struct file *fp;
-	struct filedesc *fdp;
 	struct vnode *vp = NULL;
 	vaddr_t base;
 	struct proc *p = l->l_proc;
@@ -125,14 +124,12 @@ darwin_sys_load_shared_file(struct lwp *l, const struct darwin_sys_load_shared_f
 		goto bad1;
 
 	fd = (int)fdc;
-	fdp = p->p_fd;
-	fp = fd_getfile(fdp, fd);
+	fp = fd_getfile(fd);
 	if (fp == NULL) {
 		error = EBADF;
-		goto bad2;
+		goto bad1point5;
 	}
-	FILE_USE(fp);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	vref(vp);
 
 	if (SCARG(uap, count) < 0 ||
@@ -230,7 +227,8 @@ bad2:
 	if (mapp)
 		free(mapp, M_TEMP);
 	vrele(vp);
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
+bad1point5:
 	SCARG(&close_cup, fd) = fd;
 	if ((error = sys_close(l, &close_cup, retval)) != 0)
 		goto bad1;

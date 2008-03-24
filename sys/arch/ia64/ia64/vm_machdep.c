@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.14.2 2006/06/21 14:52:48 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.14.3 2008/03/24 09:38:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -49,19 +49,6 @@
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-}
-
-/*
- * cpu_exit is called as the last action during exit.
- * We block interrupts and call switch_exit.  switch_exit switches
- * to proc0's PCB and stack, then jumps into the middle of cpu_switch,
- * as if it were switching from proc0.
- */
-void
-cpu_exit(struct lwp *l)
-{
-	(void) splhigh();
-	/* NOTREACHED */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.2.14.2 2006/06/21 14:52:48 yamt Exp $	*/
+/*	$NetBSD: support.S,v 1.2.14.3 2008/03/24 09:38:39 yamt Exp $	*/
 	
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -55,11 +55,10 @@
  * rights to redistribute these changes.
  */
 
-#include "assym.h"
-
 #include <machine/asm.h>
 #include <machine/ia64_cpu.h>
 
+#include "assym.h"
 
 .text
 

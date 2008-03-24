@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.6.4.6 2008/02/11 15:00:10 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.6.4.7 2008/03/24 09:39:14 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.6.4.6 2008/02/11 15:00:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.6.4.7 2008/03/24 09:39:14 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -236,6 +236,7 @@ pageq_insert_tail(pageq_t *q, struct vm_page *pg)
 	q->q_len++;
 }
 
+#if defined(LISTQ)
 static void
 pageq_insert_head(pageq_t *q, struct vm_page *pg)
 {
@@ -243,6 +244,7 @@ pageq_insert_head(pageq_t *q, struct vm_page *pg)
 	TAILQ_INSERT_HEAD(&q->q_q, pg, pageq);
 	q->q_len++;
 }
+#endif
 
 static void
 pageq_remove(pageq_t *q, struct vm_page *pg)
@@ -281,6 +283,7 @@ clockpro_insert_tail(struct clockpro_state *s, int qidx, struct vm_page *pg)
 	pageq_insert_tail(q, pg);
 }
 
+#if defined(LISTQ)
 static void
 clockpro_insert_head(struct clockpro_state *s, int qidx, struct vm_page *pg)
 {
@@ -290,6 +293,7 @@ clockpro_insert_head(struct clockpro_state *s, int qidx, struct vm_page *pg)
 	pageq_insert_head(q, pg);
 }
 
+#endif
 /* ---------------------------------------- */
 
 typedef uint32_t nonres_cookie_t;
@@ -1345,7 +1349,7 @@ clockpro_dump(void)
 	INITCOUNT();
 	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_LISTQ)->q_q, pageq) {
 #if !defined(LISTQ)
-		printf("listq %p\n");
+		printf("listq %p\n", pg);
 #endif /* !defined(LISTQ) */
 		if (clockpro_getq(pg) != CLOCKPRO_LISTQ) {
 			printf("listq corrupt %p\n", pg);

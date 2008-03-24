@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.137.2.7 2008/03/17 09:14:43 yamt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.137.2.8 2008/03/24 09:38:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.7 2008/03/17 09:14:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.8 2008/03/24 09:38:50 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1231,7 +1231,7 @@ tlp_rxintr(struct tulip_softc *sc)
 	struct ether_header *eh;
 	struct tulip_rxsoft *rxs;
 	struct mbuf *m;
-	u_int32_t rxstat;
+	u_int32_t rxstat, errors;
 	int i, len;
 
 	for (i = sc->sc_rxptr;; i = TULIP_NEXTRX(i)) {
@@ -1273,13 +1273,24 @@ tlp_rxintr(struct tulip_softc *sc)
 		 * If an error occurred, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
+		 */
+		errors = TDSTAT_Rx_DE | TDSTAT_Rx_RF | TDSTAT_Rx_TL |
+		    TDSTAT_Rx_CS | TDSTAT_Rx_RE | TDSTAT_Rx_DB | TDSTAT_Rx_CE;
+		/*
 	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long
 		 * error.
 		 */
-		if (rxstat & TDSTAT_ES &&
-		    ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
-		     (rxstat & (TDSTAT_Rx_DE | TDSTAT_Rx_RF |
-				TDSTAT_Rx_DB | TDSTAT_Rx_CE)) != 0)) {
+		if ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) != 0)
+			errors &= ~TDSTAT_Rx_TL;
+		/*
+		 * If chip doesn't have MII, ignore the MII error bit.
+		 */
+		if ((sc->sc_flags & TULIPF_HAS_MII) == 0)
+			errors &= ~TDSTAT_Rx_RE;
+
+		if ((rxstat & TDSTAT_ES) != 0 &&
+		    (rxstat & errors) != 0) {
+			rxstat &= errors;
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
@@ -2649,25 +2660,25 @@ tlp_filter_setup(struct tulip_softc *sc)
 			goto hashperfect;
 		}
 		cnt++;
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 0);
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 1);
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 2));
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
 		cnt++;
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
 	}
 
 	/* Pad the rest with our station address. */
 	for (; cnt < TULIP_MAXADDRS; cnt++) {
-		*sp++ = TULIP_SP_FIELD(enaddr, 0);
-		*sp++ = TULIP_SP_FIELD(enaddr, 1);
-		*sp++ = TULIP_SP_FIELD(enaddr, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
@@ -2721,9 +2732,9 @@ tlp_filter_setup(struct tulip_softc *sc)
 		 * Hash-Perfect mode; put our station address after
 		 * the hash table.
 		 */
-		sp[39] = TULIP_SP_FIELD(enaddr, 0);
-		sp[40] = TULIP_SP_FIELD(enaddr, 1);
-		sp[41] = TULIP_SP_FIELD(enaddr, 2);
+		sp[39] = htole32(TULIP_SP_FIELD(enaddr, 0));
+		sp[40] = htole32(TULIP_SP_FIELD(enaddr, 1));
+		sp[41] = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
@@ -2740,14 +2751,14 @@ tlp_filter_setup(struct tulip_softc *sc)
 	cnt = 0;
 	if (ifp->if_flags & IFF_BROADCAST) {
 		cnt++;
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
 	}
 	for (; cnt < TULIP_MAXADDRS; cnt++) {
-		*sp++ = TULIP_SP_FIELD(enaddr, 0);
-		*sp++ = TULIP_SP_FIELD(enaddr, 1);
-		*sp++ = TULIP_SP_FIELD(enaddr, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags |= IFF_ALLMULTI;
 

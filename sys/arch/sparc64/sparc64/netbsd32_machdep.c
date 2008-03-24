@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.49.2.7 2008/03/17 09:14:28 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.49.2.8 2008/03/24 09:38:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49.2.7 2008/03/17 09:14:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49.2.8 2008/03/24 09:38:40 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49.2.7 2008/03/17 09:14:28 ya
 #include <sys/select.h>
 #include <sys/ucontext.h>
 #include <sys/ioctl.h>
+#include <sys/kmem.h>
 
 #include <dev/sun/event_var.h>
 
@@ -1117,10 +1118,10 @@ netbsd32_md_ioctl(struct file *fp, netbsd32_u_long cmd, void *data32, struct lwp
 	case OPIOCNEXTPROP32:
 		IOCTL_STRUCT_CONV_TO(OPIOCNEXTPROP, opiocdesc);
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data32, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data32);
 	}
 	if (memp)
-		free(memp, M_IOCTLOPS);
+		kmem_free(memp, size);
 	return (error);
 }
 

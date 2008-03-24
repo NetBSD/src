@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.99.2.4 2008/01/21 09:42:16 yamt Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.99.2.5 2008/03/24 09:38:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99.2.4 2008/01/21 09:42:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99.2.5 2008/03/24 09:38:46 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -346,8 +346,7 @@ ultrix_sys_mmap(struct lwp *l, const struct ultrix_sys_mmap_args *uap, register_
 int
 ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
-	struct file *fp;
+	struct socket *so;
 	struct mbuf *m = NULL;
 	int error;
 	struct sys_setsockopt_args ap;
@@ -359,15 +358,14 @@ ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *ua
 	SCARG(&ap, valsize) = SCARG(uap, valsize);
 
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, SCARG(&ap, s), &fp))  != 0)
+	if ((error = fd_getsock(SCARG(&ap, s), &so))  != 0)
 		return error;
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(&ap, name) == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
-		error = sosetopt((struct socket *)fp->f_data, SCARG(&ap, level),
-		    SO_LINGER, m);
+		error = sosetopt(so, SCARG(&ap, level), SO_LINGER, m);
 	}
 	if (SCARG(&ap, level) == IPPROTO_IP) {
 #define		EMUL_IP_MULTICAST_IF		2
@@ -402,10 +400,9 @@ ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *ua
 		}
 		m->m_len = SCARG(&ap, valsize);
 	}
-	error = sosetopt((struct socket *)fp->f_data, SCARG(&ap, level),
-	    SCARG(&ap, name), m);
+	error = sosetopt(so, SCARG(&ap, level), SCARG(&ap, name), m);
  out:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, s));
 	return error;
 }
 
@@ -798,7 +795,7 @@ ultrix_sys_fcntl(struct lwp *l, const struct ultrix_sys_fcntl_args *uap, registe
 		error = ultrix_to_bsd_flock(&ufl, &fl);
 		if (error)
 			return error;
-		error = do_fcntl_lock(l, SCARG(uap, fd), SCARG(uap, cmd), &fl);
+		error = do_fcntl_lock(SCARG(uap, fd), SCARG(uap, cmd), &fl);
 		if (SCARG(uap, cmd) != F_GETLK || error != 0)
 			return error;
 		bsd_to_ultrix_flock(&fl, &ufl);

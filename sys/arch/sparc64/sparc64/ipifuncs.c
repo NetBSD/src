@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.1.18.7 2008/03/17 09:14:28 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.1.18.8 2008/03/24 09:38:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.18.7 2008/03/17 09:14:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.18.8 2008/03/24 09:38:40 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -218,7 +218,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 		stxa(IDCR(upaid), ASI_INTERRUPT_DISPATCH, 0);
 		membar_sync();
 		/* Workaround for SpitFire erratum #54, from FreeBSD */
-		(void)ldxa(P_DCR_0, ASI_DATAPATH_READ);
+		(void)ldxa(P_DCR_0, ASI_INTERRUPT_RECEIVE_DATA);
 		membar_sync();
 
 		for (ik = 0; ik < 1000000; ik++) {
@@ -234,6 +234,11 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 
 		if ((ldxa(0, ASR_IDSR) & IDSR_NACK) == 0)
 			return;
+		/*
+		 * Wait for a while with enabling interrupts to avoid
+		 * deadlocks.  XXX - random value is better.
+		 */
+		DELAY(1);
 	}
 
 	if (panicstr == NULL)

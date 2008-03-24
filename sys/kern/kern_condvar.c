@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.3.4.6 2008/03/17 09:15:32 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.3.4.7 2008/03/24 09:39:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3.4.6 2008/03/17 09:15:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3.4.7 2008/03/24 09:39:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3.4.6 2008/03/17 09:15:32 yamt Ex
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
 
-static void	cv_unsleep(lwp_t *);
+static u_int	cv_unsleep(lwp_t *, bool);
 
 static syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
@@ -153,8 +153,8 @@ cv_exit(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l, const int error)
  *	interrupted: for example, when a signal is received.  Must be
  *	called with the LWP locked, and must return it unlocked.
  */
-static void
-cv_unsleep(lwp_t *l)
+static u_int
+cv_unsleep(lwp_t *l, bool cleanup)
 {
 	kcondvar_t *cv;
 
@@ -166,7 +166,7 @@ cv_unsleep(lwp_t *l)
 	KASSERT(cv->cv_waiters > 0);
 
 	cv->cv_waiters--;
-	sleepq_unsleep(l);
+	return sleepq_unsleep(l, cleanup);
 }
 
 /*

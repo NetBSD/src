@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.21.4.6 2008/03/17 09:15:11 yamt Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.21.4.7 2008/03/24 09:38:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.21.4.6 2008/03/17 09:15:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.21.4.7 2008/03/24 09:38:51 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -228,20 +228,20 @@ static int	ste_intr(void *);
 static void	ste_txintr(struct ste_softc *);
 static void	ste_rxintr(struct ste_softc *);
 
-static int	ste_mii_readreg(struct device *, int, int);
-static void	ste_mii_writereg(struct device *, int, int, int);
-static void	ste_mii_statchg(struct device *);
+static int	ste_mii_readreg(device_t, int, int);
+static void	ste_mii_writereg(device_t, int, int, int);
+static void	ste_mii_statchg(device_t);
 
-static int	ste_match(struct device *, struct cfdata *, void *);
-static void	ste_attach(struct device *, struct device *, void *);
+static int	ste_match(device_t, struct cfdata *, void *);
+static void	ste_attach(device_t, device_t, void *);
 
 int	ste_copy_small = 0;
 
 CFATTACH_DECL(ste, sizeof(struct ste_softc),
     ste_match, ste_attach, NULL, NULL);
 
-static uint32_t ste_mii_bitbang_read(struct device *);
-static void	ste_mii_bitbang_write(struct device *, uint32_t);
+static uint32_t ste_mii_bitbang_read(device_t);
+static void	ste_mii_bitbang_write(device_t, uint32_t);
 
 static const struct mii_bitbang_ops ste_mii_bitbang_ops = {
 	ste_mii_bitbang_read,
@@ -290,7 +290,7 @@ ste_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ste_match(struct device *parent, struct cfdata *cf, void *aux)
+ste_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -301,9 +301,9 @@ ste_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ste_attach(struct device *parent, struct device *self, void *aux)
+ste_attach(device_t parent, device_t self, void *aux)
 {
-	struct ste_softc *sc = (struct ste_softc *) self;
+	struct ste_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -358,7 +358,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
@@ -1609,7 +1609,7 @@ ste_set_filter(struct ste_softc *sc)
  *	Read a PHY register on the MII of the ST-201.
  */
 static int
-ste_mii_readreg(struct device *self, int phy, int reg)
+ste_mii_readreg(device_t self, int phy, int reg)
 {
 
 	return (mii_bitbang_readreg(self, &ste_mii_bitbang_ops, phy, reg));
@@ -1621,7 +1621,7 @@ ste_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the MII of the ST-201.
  */
 static void
-ste_mii_writereg(struct device *self, int phy, int reg, int val)
+ste_mii_writereg(device_t self, int phy, int reg, int val)
 {
 
 	mii_bitbang_writereg(self, &ste_mii_bitbang_ops, phy, reg, val);
@@ -1633,9 +1633,9 @@ ste_mii_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-ste_mii_statchg(struct device *self)
+ste_mii_statchg(device_t self)
 {
-	struct ste_softc *sc = (struct ste_softc *) self;
+	struct ste_softc *sc = device_private(self);
 
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_MacCtrl0 |= MC0_FullDuplexEnable;
@@ -1653,9 +1653,9 @@ ste_mii_statchg(struct device *self)
  *	Read the MII serial port for the MII bit-bang module.
  */
 static uint32_t
-ste_mii_bitbang_read(struct device *self)
+ste_mii_bitbang_read(device_t self)
 {
-	struct ste_softc *sc = (void *) self;
+	struct ste_softc *sc = device_private(self);
 
 	return (bus_space_read_1(sc->sc_st, sc->sc_sh, STE_PhyCtrl));
 }
@@ -1666,9 +1666,9 @@ ste_mii_bitbang_read(struct device *self)
  *	Write the MII serial port for the MII bit-bang module.
  */
 static void
-ste_mii_bitbang_write(struct device *self, uint32_t val)
+ste_mii_bitbang_write(device_t self, uint32_t val)
 {
-	struct ste_softc *sc = (void *) self;
+	struct ste_softc *sc = device_private(self);
 
 	bus_space_write_1(sc->sc_st, sc->sc_sh, STE_PhyCtrl, val);
 }

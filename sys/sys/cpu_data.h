@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_data.h,v 1.3.12.9 2008/03/17 09:15:47 yamt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.3.12.10 2008/03/24 09:39:10 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,6 +91,7 @@ struct cpu_data {
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
 	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
+	struct selcpu	*cpu_selcpu;		/* per-CPU select() info */
 };
 
 /* compat definitions */

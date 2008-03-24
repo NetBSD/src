@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.9.4.3 2007/10/27 11:36:35 yamt Exp $	*/
+/*	$NetBSD: tree.h,v 1.9.4.4 2008/03/24 09:39:10 yamt Exp $	*/
 /*	$OpenBSD: tree.h,v 1.7 2002/10/17 21:51:54 art Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -386,6 +386,7 @@ attr struct type *name##_RB_INSERT(struct name *, struct type *);	\
 attr struct type *name##_RB_FIND(struct name *, struct type *);		\
 attr struct type *name##_RB_NFIND(struct name *, struct type *);	\
 attr struct type *name##_RB_NEXT(struct type *);			\
+attr struct type *name##_RB_PREV(struct type *);			\
 attr struct type *name##_RB_MINMAX(struct name *, int);			\
 									\
 
@@ -678,6 +679,28 @@ name##_RB_NEXT(struct type *elm)					\
 	return (elm);							\
 }									\
 									\
+/* ARGSUSED */								\
+attr struct type *							\
+name##_RB_PREV(struct type *elm)					\
+{									\
+	if (RB_LEFT(elm, field)) {					\
+		elm = RB_LEFT(elm, field);				\
+		while (RB_RIGHT(elm, field))				\
+			elm = RB_RIGHT(elm, field);			\
+	} else {							\
+		if (RB_PARENT(elm, field) &&				\
+		    (elm == RB_RIGHT(RB_PARENT(elm, field), field)))	\
+			elm = RB_PARENT(elm, field);			\
+		else {							\
+			while (RB_PARENT(elm, field) &&			\
+			    (elm == RB_LEFT(RB_PARENT(elm, field), field)))\
+				elm = RB_PARENT(elm, field);		\
+			elm = RB_PARENT(elm, field);			\
+		}							\
+	}								\
+	return (elm);							\
+}									\
+									\
 attr struct type *							\
 name##_RB_MINMAX(struct name *head, int val)				\
 {									\
@@ -701,6 +724,7 @@ name##_RB_MINMAX(struct name *head, int val)				\
 #define RB_FIND(name, x, y)	name##_RB_FIND(x, y)
 #define RB_NFIND(name, x, y)	name##_RB_NFIND(x, y)
 #define RB_NEXT(name, x, y)	name##_RB_NEXT(y)
+#define RB_PREV(name, x, y)	name##_RB_PREV(y)
 #define RB_MIN(name, x)		name##_RB_MINMAX(x, RB_NEGINF)
 #define RB_MAX(name, x)		name##_RB_MINMAX(x, RB_INF)
 
@@ -708,5 +732,10 @@ name##_RB_MINMAX(struct name *head, int val)				\
 	for ((x) = RB_MIN(name, head);					\
 	     (x) != NULL;						\
 	     (x) = name##_RB_NEXT(x))
+
+#define RB_FOREACH_REVERSE(x, name, head)				\
+	for ((x) = RB_MAX(name, head);					\
+	     (x) != NULL;						\
+	     (x) = name##_RB_PREV(x))
 
 #endif	/* _SYS_TREE_H_ */

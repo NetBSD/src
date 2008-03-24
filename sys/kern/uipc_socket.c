@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_socket.c,v 1.111.2.14 2008/03/17 09:15:34 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111.2.15 2008/03/24 09:39:02 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.14 2008/03/17 09:15:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.15 2008/03/24 09:39:02 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -526,29 +526,23 @@ int
 fsocreate(int domain, struct socket **sop, int type, int protocol,
     struct lwp *l, int *fdout)
 {
-	struct filedesc	*fdp;
 	struct socket	*so;
 	struct file	*fp;
 	int		fd, error;
 
-	fdp = l->l_proc->p_fd;
-	/* falloc() will use the desciptor for us */
-	if ((error = falloc(l, &fp, &fd)) != 0)
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return (error);
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
 	error = socreate(domain, &so, type, protocol, l);
 	if (error != 0) {
-		FILE_UNUSE(fp, l);
-		fdremove(fdp, fd);
-		ffree(fp);
+		fd_abort(curproc, fp, fd);
 	} else {
 		if (sop != NULL)
 			*sop = so;
 		fp->f_data = so;
-		FILE_SET_MATURE(fp);
-		FILE_UNUSE(fp, l);
+		fd_affix(curproc, fp, fd);
 		*fdout = fd;
 	}
 	return error;
@@ -1678,7 +1672,7 @@ filt_sordetach(struct knote *kn)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	SLIST_REMOVE(&so->so_rcv.sb_sel.sel_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))
 		so->so_rcv.sb_flags &= ~SB_KNOTE;
@@ -1690,7 +1684,7 @@ filt_soread(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -1709,7 +1703,7 @@ filt_sowdetach(struct knote *kn)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	SLIST_REMOVE(&so->so_snd.sb_sel.sel_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))
 		so->so_snd.sb_flags &= ~SB_KNOTE;
@@ -1721,7 +1715,7 @@ filt_sowrite(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	kn->kn_data = sbspace(&so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -1744,7 +1738,7 @@ filt_solisten(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 
 	/*
 	 * Set kn_data to number of incoming connections, not
@@ -1767,7 +1761,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	struct socket	*so;
 	struct sockbuf	*sb;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		if (so->so_options & SO_ACCEPTCONN)
@@ -1787,6 +1781,59 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	sb->sb_flags |= SB_KNOTE;
 	return (0);
 }
+
+static int
+sodopoll(struct socket *so, int events)
+{
+	int revents;
+
+	revents = 0;
+
+	if (events & (POLLIN | POLLRDNORM))
+		if (soreadable(so))
+			revents |= events & (POLLIN | POLLRDNORM);
+
+	if (events & (POLLOUT | POLLWRNORM))
+		if (sowritable(so))
+			revents |= events & (POLLOUT | POLLWRNORM);
+
+	if (events & (POLLPRI | POLLRDBAND))
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
+			revents |= events & (POLLPRI | POLLRDBAND);
+
+	return revents;
+}
+
+int
+sopoll(struct socket *so, int events)
+{
+	int revents = 0;
+	int s;
+
+	if ((revents = sodopoll(so, events)) != 0)
+		return revents;
+
+	KERNEL_LOCK(1, curlwp);
+	s = splsoftnet();
+
+	if ((revents = sodopoll(so, events)) == 0) {
+		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
+			selrecord(curlwp, &so->so_rcv.sb_sel);
+			so->so_rcv.sb_flags |= SB_SEL;
+		}
+
+		if (events & (POLLOUT | POLLWRNORM)) {
+			selrecord(curlwp, &so->so_snd.sb_sel);
+			so->so_snd.sb_flags |= SB_SEL;
+		}
+	}
+
+	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
+
+	return revents;
+}
+
 
 #include <sys/sysctl.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: darwin_mount.c,v 1.5.4.6 2008/01/21 09:40:48 yamt Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.5.4.7 2008/03/24 09:38:41 yamt Exp $ */
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.5.4.6 2008/01/21 09:40:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.5.4.7 2008/03/24 09:38:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,15 +69,14 @@ darwin_sys_fstatfs(struct lwp *l, const struct darwin_sys_fstatfs_args *uap, reg
 		syscallarg(int) fd;
 		syscallarg(struct darwin_statfs *) buf;
 	} */
-	struct proc *p = l->l_proc;
-	struct file *fp;
+	file_t *fp;
 	struct mount *mp;
 	struct statvfs *bs;
 	struct darwin_statfs ds;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)))
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)))
 		return (error);
 
 	mp = ((struct vnode *)fp->f_data)->v_mount;
@@ -91,7 +90,7 @@ darwin_sys_fstatfs(struct lwp *l, const struct darwin_sys_fstatfs_args *uap, reg
 	error = copyout(&ds, SCARG(uap, buf), sizeof(ds));
 
 out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
 

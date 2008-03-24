@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_32_filio.c,v 1.7.12.4 2008/01/21 09:42:11 yamt Exp $	 */
+/*	$NetBSD: svr4_32_filio.c,v 1.7.12.5 2008/03/24 09:38:45 yamt Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.7.12.4 2008/01/21 09:42:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.7.12.5 2008/03/24 09:38:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,28 +66,31 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.7.12.4 2008/01/21 09:42:11 yamt 
 
 
 int
-svr4_32_fil_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *data)
+svr4_32_fil_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *data)
 {
 	int error;
 	int num;
-	struct filedesc *fdp = p->p_fd;
-	int (*ctl)(struct file *, u_long, void *, struct lwp *) =
-			fp->f_ops->fo_ioctl;
+	int (*ctl)(file_t *, u_long, void *) = fp->f_ops->fo_ioctl;
+	filedesc_t *fdp;
+	fdfile_t *ff;
 
 	*retval = 0;
 
-        if ((fp = fd_getfile(fdp, fd)) == NULL)
+        if ((fp = fd_getfile(fd)) == NULL)
                 return EBADF;
+	fdp = curlwp->l_fd;
+	ff = fdp->fd_ofiles[fd];
+	error = 0;
+
 	switch (cmd) {
 	case SVR4_FIOCLEX:
-		fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
-		FILE_UNLOCK(fp);
-		return 0;
+		ff->ff_exclose = 1;
+		fdp->fd_exclose = 1;
+		break;
 
 	case SVR4_FIONCLEX:
-		fdp->fd_ofileflags[fd] &= ~UF_EXCLOSE;
-		FILE_UNLOCK(fp);
-		return 0;
+		ff->ff_exclose = 0;
+		break;
 
 	case SVR4_FIOGETOWN:
 	case SVR4_FIOSETOWN:
@@ -102,21 +105,19 @@ svr4_32_fil_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_
 		case SVR4_FIONREAD:	cmd = FIONREAD;  break;
 		}
 
-		FILE_USE(fp);
 		error = copyin(data, &num, sizeof(num));
 
 		if (error == 0)
-			error = (*ctl)(fp, cmd,  &num, p);
-		FILE_UNUSE(fp, l);
-
-		if (error)
-			return error;
-
-		return copyout(&num, data, sizeof(num));
+			error = (*ctl)(fp, cmd,  &num);
+		if (error == 0)
+			error = copyout(&num, data, sizeof(num));
+		break;
 
 	default:
-		FILE_UNLOCK(fp);
 		DPRINTF(("Unknown svr4_32 filio %lx\n", cmd));
-		return 0;	/* ENOSYS really */
+		break;
 	}
+
+	fd_putfile(fd);
+	return error;
 }

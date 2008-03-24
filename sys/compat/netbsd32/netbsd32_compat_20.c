@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.8 2008/02/04 09:23:10 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.9 2008/03/24 09:38:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.8 2008/02/04 09:23:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.9 2008/03/24 09:38:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,15 +183,14 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
 		syscallarg(int) fd;
 		syscallarg(netbsd32_statfsp_t) buf;
 	} */
-	struct file *fp;
+	file_t *fp;
 	struct mount *mp;
 	struct statvfs *sp;
 	struct netbsd32_statfs s32;
 	int error;
-	struct proc *p = l->l_proc;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
@@ -201,7 +200,7 @@ compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatf
 	compat_20_netbsd32_from_statvfs(sp, &s32);
 	error = copyout(&s32, SCARG_P32(uap, buf), sizeof(s32));
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.59.4.7 2008/01/21 09:46:55 yamt Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.59.4.8 2008/03/24 09:39:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.59.4.7 2008/01/21 09:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.59.4.8 2008/03/24 09:39:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,7 +484,7 @@ portal_open(v)
 	 * Check that the mode the file is being opened for is a subset
 	 * of the mode of the existing descriptor.
 	 */
- 	fp = l->l_proc->p_fd->fd_ofiles[fd];
+ 	fp = l->l_proc->p_fd->fd_ofiles[fd]->ff_file;
 	if (((ap->a_mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
 		portal_closefd(l, fd); /* XXXNJWLWP */
 		error = EACCES;

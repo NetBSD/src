@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_ioctl.c,v 1.42.4.7 2008/01/21 09:41:24 yamt Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.42.4.8 2008/03/24 09:38:41 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.42.4.7 2008/01/21 09:41:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.42.4.8 2008/03/24 09:38:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -119,15 +119,12 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 		 * device number and check if that is the sequencer entry.
 		 */
 		struct file *fp;
-		struct filedesc *fdp;
 		struct vnode *vp;
 		struct vattr va;
 		extern const struct cdevsw sequencer_cdevsw;
 
-		fdp = l->l_proc->p_fd;
-		if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+		if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 			return EBADF;
-		FILE_USE(fp);
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&
 		    vp->v_type == VCHR &&
@@ -139,7 +136,7 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 		else {
 			error = linux_ioctl_termios(l, uap, retval);
 		}
-		FILE_UNUSE(fp, l);
+		fd_putfile(SCARG(uap, fd));
 #else
 		error = linux_ioctl_termios(l, uap, retval);
 #endif

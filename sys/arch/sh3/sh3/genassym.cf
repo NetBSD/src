@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9.16.1 2007/09/03 14:29:29 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.9.16.2 2008/03/24 09:38:39 yamt Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@ include <sys/errno.h>
 include <uvm/uvm_extern.h>
 include <sh3/vmparam.h>
 include <sh3/pte.h>
+
+define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 
 define	TF_SIZE			sizeof(struct trapframe)
 define	TF_EXPEVT		offsetof(struct trapframe, tf_expevt)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.10.2.4 2008/03/17 09:15:11 yamt Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.10.2.5 2008/03/24 09:38:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.10.2.4 2008/03/17 09:15:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.10.2.5 2008/03/24 09:38:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,8 @@ atw_pci_enable(struct atw_softc *sc)
 	psc->psc_intrcookie = pci_intr_establish(psc->psc_pc, psc->psc_ih,
 	    IPL_NET, atw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "unable to establish interrupt\n");
 		return (1);
 	}
 
@@ -202,10 +202,9 @@ atw_pci_attach(device_t parent, device_t self, void *aux)
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
-		    error);
+		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -259,23 +258,21 @@ atw_pci_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &psc->psc_ih)) {
-		printf("%s: unable to map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, psc->psc_ih);
 	psc->psc_intrcookie = pci_intr_establish(pc, psc->psc_ih, IPL_NET,
 	    atw_intr, sc);
 	if (psc->psc_intrcookie == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	sc->sc_enable = atw_pci_enable;
 	sc->sc_disable = atw_pci_disable;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32var.h,v 1.3.4.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: ninjaata32var.h,v 1.3.4.3 2008/03/24 09:38:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -29,7 +29,7 @@
 #ifndef _NJATA32VAR_H_
 #define _NJATA32VAR_H_
 
-#define NJATA32NAME(sc)		(sc->sc_wdcdev.sc_atac.atac_dev.dv_xname)
+#define NJATA32NAME(sc)		(device_xname(sc->sc_wdcdev.sc_atac.atac_dev))
 
 /* ??? */
 #define NJATA32_MAX_XFER	(64 * 1024)

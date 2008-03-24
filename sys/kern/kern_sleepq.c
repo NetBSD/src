@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sleepq.c,v 1.5.2.8 2008/02/27 08:36:55 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.5.2.9 2008/03/24 09:39:02 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.5.2.8 2008/02/27 08:36:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.5.2.9 2008/03/24 09:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -270,7 +270,7 @@ sleepq_block(int timo, bool catch)
 
 	if (early) {
 		/* lwp_unsleep() will release the lock */
-		lwp_unsleep(l);
+		lwp_unsleep(l, true);
 	} else {
 		if (timo)
 			callout_schedule(&l->l_timeout_ch, timo);
@@ -347,8 +347,8 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
  *	sleepq_unsleep() is called with the LWP's mutex held, and will
  *	always release it.
  */
-void
-sleepq_unsleep(lwp_t *l)
+u_int
+sleepq_unsleep(lwp_t *l, bool cleanup)
 {
 	sleepq_t *sq = l->l_sleepq;
 	int swapin;
@@ -358,10 +358,14 @@ sleepq_unsleep(lwp_t *l)
 	KASSERT(l->l_mutex == sq->sq_mutex);
 
 	swapin = sleepq_remove(sq, l);
-	sleepq_unlock(sq);
 
-	if (swapin)
-		uvm_kick_scheduler();
+	if (cleanup) {
+		sleepq_unlock(sq);
+		if (swapin)
+			uvm_kick_scheduler();
+	}
+
+	return swapin;
 }
 
 /*
@@ -387,7 +391,7 @@ sleepq_timeout(void *arg)
 		return;
 	}
 
-	lwp_unsleep(l);
+	lwp_unsleep(l, true);
 }
 
 /*
