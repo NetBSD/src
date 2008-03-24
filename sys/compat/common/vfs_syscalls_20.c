@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.4.4.9 2008/02/04 09:23:00 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.4.4.10 2008/03/24 09:38:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.4.4.9 2008/02/04 09:23:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.4.4.10 2008/03/24 09:38:40 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -177,14 +177,13 @@ compat_20_sys_fstatfs(struct lwp *l, const struct compat_20_sys_fstatfs_args *ua
 		syscallarg(int) fd;
 		syscallarg(struct statfs12 *) buf;
 	} */
-	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
 	struct statvfs *sbuf;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
@@ -192,7 +191,7 @@ compat_20_sys_fstatfs(struct lwp *l, const struct compat_20_sys_fstatfs_args *ua
 		goto out;
 	error = vfs2fs(SCARG(uap, buf), sbuf);
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	free(sbuf, M_TEMP);
 	return error;
 }

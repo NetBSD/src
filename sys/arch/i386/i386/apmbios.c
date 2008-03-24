@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.7.2.4 2008/03/17 09:14:20 yamt Exp $ */
+/*	$NetBSD: apmbios.c,v 1.7.2.5 2008/03/24 09:38:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.7.2.4 2008/03/17 09:14:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.7.2.5 2008/03/24 09:38:38 yamt Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -496,7 +496,7 @@ apmbiosattach(struct device *parent, struct device *self,
 	res = kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
 	if (res) {
 		aprint_error_dev(self,
-		    "%s: kvm86 error (APM_INSTALLATION_CHECK)\n");
+		    "kvm86 error (APM_INSTALLATION_CHECK)\n");
 		goto bail_disconnected;
 	}
 #else
@@ -517,7 +517,7 @@ apmbiosattach(struct device *parent, struct device *self,
 #ifdef APM_USE_KVM86
 	res = kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
 	if (res) {
-		aprint_error_dev(self, "%s: kvm86 error (APM_DISCONNECT)\n");
+		aprint_error_dev(self, "kvm86 error (APM_DISCONNECT)\n");
 		goto bail_disconnected;
 	}
 #else
@@ -541,7 +541,7 @@ apmbiosattach(struct device *parent, struct device *self,
 	res = kvm86_bioscall_simple(APM_SYSTEM_BIOS, &regs);
 	if (res) {
 		aprint_error_dev(self,
-		    "%s: kvm86 error (APM_32BIT_CONNECT)\n");
+		    "kvm86 error (APM_32BIT_CONNECT)\n");
 		goto bail_disconnected;
 	}
 #else

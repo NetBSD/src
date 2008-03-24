@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.3.4.8 2008/03/17 09:15:33 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.3.4.9 2008/03/24 09:39:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.3.4.8 2008/03/17 09:15:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.3.4.9 2008/03/24 09:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -519,6 +519,9 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 	 */
 	uvmexp.softs++;
 
+	KASSERT(si->si_cpu == curcpu());
+	KASSERT(si->si_lwp->l_wchan == NULL);
+	KASSERT(si->si_active);
 	si->si_evcnt.ev_count++;
 	si->si_active = 0;
 }

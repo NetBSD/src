@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.9.6.6 2008/01/21 09:40:45 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.9.6.7 2008/03/24 09:38:40 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9.6.6 2008/01/21 09:40:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9.6.7 2008/03/24 09:38:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ compat_30_sys___stat13(struct lwp *l, const struct compat_30_sys___stat13_args *
 	struct stat13 osb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
@@ -128,7 +128,7 @@ compat_30_sys___lstat13(struct lwp *l, const struct compat_30_sys___lstat13_args
 	struct stat13 osb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
@@ -167,7 +167,7 @@ compat_30_sys_fhstat(struct lwp *l, const struct compat_30_sys_fhstat_args *uap,
 		return EOPNOTSUPP;
 	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
-	error = vn_stat(vp, &sb, l);
+	error = vn_stat(vp, &sb);
 	vput(vp);
 	if (error)
 		return (error);
@@ -187,21 +187,16 @@ compat_30_sys___fstat13(struct lwp *l, const struct compat_30_sys___fstat13_args
 		syscallarg(int) fd;
 		syscallarg(struct stat13 *) sb;
 	} */
-	struct proc *p = l->l_proc;
 	int fd = SCARG(uap, fd);
-	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct stat sb;
 	struct stat13 osb;
 	int error;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return EBADF;
-
-	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &sb, l);
-	FILE_UNUSE(fp, l);
-
+	error = (*fp->f_ops->fo_stat)(fp, &sb);
+	fd_putfile(fd);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
@@ -220,7 +215,6 @@ compat_30_sys_getdents(struct lwp *l, const struct compat_30_sys_getdents_args *
 		syscallarg(char *) buf;
 		syscallarg(size_t) count;
 	} */
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *tbuf;	/* BSD-format */
@@ -237,7 +231,7 @@ compat_30_sys_getdents(struct lwp *l, const struct compat_30_sys_getdents_args *
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
 		return error;
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -245,7 +239,7 @@ compat_30_sys_getdents(struct lwp *l, const struct compat_30_sys_getdents_args *
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -335,7 +329,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return error;
 }
 

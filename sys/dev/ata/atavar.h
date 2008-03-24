@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.69.2.4 2008/01/21 09:42:37 yamt Exp $	*/
+/*	$NetBSD: atavar.h,v 1.69.2.5 2008/03/24 09:38:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -98,7 +98,7 @@ struct ata_queue {
 
 /* ATA bus instance state information. */
 struct atabus_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct ata_channel *sc_chan;
 	int sc_flags;
 #define ATABUSCF_OPEN	0x01
@@ -185,7 +185,7 @@ struct ata_drive_datas {
 	/* Callbacks into the drive's driver. */
 	void	(*drv_done)(void *);	/* transfer is done */
 
-	struct device *drv_softc;	/* ATA drives softc, if any */
+	device_t drv_softc;	/* ATA drives softc, if any */
 	void *chnl_softc;		/* channel softc */
 };
 
@@ -380,7 +380,7 @@ struct ata_channel {
  * XXX There is still some lingering wdc-centricity here.
  */
 struct atac_softc {
-	struct device atac_dev;		/* generic device info */
+	device_t atac_dev;		/* generic device info */
 
 	int	atac_cap;		/* controller capabilities */
 

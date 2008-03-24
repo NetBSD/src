@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.179.2.10 2008/03/17 09:15:47 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.179.2.11 2008/03/24 09:39:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -59,6 +59,7 @@ struct tty;
 struct uio;
 struct vnode;
 struct vmspace;
+struct vm_map;
 
 extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
@@ -148,6 +149,7 @@ int	eopnotsupp(void);
 
 enum hashtype {
 	HASH_LIST,
+	HASH_SLIST,
 	HASH_TAILQ
 };
 
@@ -490,5 +492,7 @@ void assert_sleepable(void);
 #else /* defined(DEBUG) */
 #define	ASSERT_SLEEPABLE()	/* nothing */
 #endif /* defined(DEBUG) */
+
+vaddr_t calc_cache_size(struct vm_map *, int);
 
 #endif	/* !_SYS_SYSTM_H_ */

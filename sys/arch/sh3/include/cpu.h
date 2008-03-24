@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36.12.7 2008/03/17 09:14:23 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36.12.8 2008/03/24 09:38:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -59,6 +59,7 @@ struct cpu_info {
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
 	int	ci_want_resched;
+	int	ci_idepth;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -78,11 +79,6 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_proc_fork(p1, p2)		/* nothing */
 
 /*
- * Interrupt stack location.
- */
-extern vaddr_t intstack, intfp, intsp;
-
-/*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
  */
@@ -95,7 +91,7 @@ struct clockframe {
 
 #define	CLKF_USERMODE(cf)	(!KERNELMODE((cf)->ssr))
 #define	CLKF_PC(cf)		((cf)->spc)
-#define	CLKF_INTR(cf)		((vaddr_t)(cf)->ssp <= intsp)
+#define	CLKF_INTR(cf)		(curcpu()->ci_idepth > 0)
 
 /*
  * This is used during profiling to integrate system time.  It can safely

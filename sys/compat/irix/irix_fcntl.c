@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.13.4.6 2008/02/04 09:23:01 yamt Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.13.4.7 2008/03/24 09:38:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.13.4.6 2008/02/04 09:23:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.13.4.7 2008/03/24 09:38:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -236,19 +236,18 @@ irix_sys_fcntl(struct lwp *l, const struct irix_sys_fcntl_args *uap, register_t 
 static int
 fd_truncate(struct lwp *l, int fd, int whence, off_t start, register_t *retval)
 {
-	struct filedesc *fdp = l->l_proc->p_fd;
-	struct file *fp;
+	file_t *fp;
 	struct vnode *vp;
 	struct vattr vattr;
 	struct sys_ftruncate_args ft;
 	int error;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((error = fd_getvnode(fd, &fp)) != 0)
 		return EBADF;
 
-	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		FILE_UNLOCK(fp);
+	vp = fp->f_data;
+	if (vp->v_type == VFIFO) {
+		fd_putfile(fd);
 		return ESPIPE;
 	}
 
@@ -271,7 +270,7 @@ fd_truncate(struct lwp *l, int fd, int whence, off_t start, register_t *retval)
 		return EINVAL;
 		break;
 	}
-	FILE_UNLOCK(fp);
+	fd_putfile(fd);
 
 	SCARG(&ft, fd) = fd;
 	return sys_ftruncate(l, &ft, retval);
@@ -286,10 +285,9 @@ irix_sys_open(struct lwp *l, const struct irix_sys_open_args *uap, register_t *r
 		syscallarg(mode_t) mode;
 	} */
 	extern const struct cdevsw irix_usema_cdevsw;
-	struct proc *p = l->l_proc;
 	int error;
 	int fd;
-	struct file *fp;
+	file_t *fp;
 	struct vnode *vp;
 	struct vnode *nvp;
 
@@ -297,12 +295,10 @@ irix_sys_open(struct lwp *l, const struct irix_sys_open_args *uap, register_t *r
 		return error;
 
 	fd = (int)*retval;
-	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return EBADF;
 
-	FILE_USE(fp);
-
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 
 	/*
 	 * A special hook for the usemaclone driver: we need to clone
@@ -318,10 +314,8 @@ irix_sys_open(struct lwp *l, const struct irix_sys_open_args *uap, register_t *r
 		if ((error = getnewvnode(VCHR, vp->v_mount,
 		    irix_usema_vnodeop_p,
 		    (struct vnode **)&fp->f_data)) != 0) {
-			(void) vn_close(vp, fp->f_flag, fp->f_cred, l);
-			FILE_UNUSE(fp, l);
-			ffree(fp);
-			fdremove(p->p_fd, fd);
+			(void) vn_close(vp, fp->f_flag, fp->f_cred);
+			fd_close(fd);
 			return error;
 		}
 
@@ -337,7 +331,7 @@ irix_sys_open(struct lwp *l, const struct irix_sys_open_args *uap, register_t *r
 		nvp->v_data = (void *)vp;
 		vref(vp);
 	}
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.25.2.2 2007/12/07 17:24:23 yamt Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.25.2.3 2008/03/24 09:38:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.25.2.2 2007/12/07 17:24:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.25.2.3 2008/03/24 09:38:37 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,12 +68,12 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.25.2.2 2007/12/07 17:24:23 yamt Exp $")
 /*
  * XXX This code currently doesn't even try to allow 32-bit data port use.
  */
-static int	claim_hw __P((struct ata_channel *, int));
-static void	free_hw __P((struct ata_channel *));
-static void	read_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
-				bus_size_t, u_int16_t *, bus_size_t));
-static void	write_multi_2_swap __P((bus_space_tag_t, bus_space_handle_t,
-				bus_size_t, const u_int16_t *, bus_size_t));
+static int	claim_hw (struct ata_channel *, int);
+static void	free_hw (struct ata_channel *);
+static void	read_multi_2_swap (bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, u_int16_t *, bus_size_t);
+static void	write_multi_2_swap (bus_space_tag_t, bus_space_handle_t,
+				bus_size_t, const u_int16_t *, bus_size_t);
 
 struct wdc_mb_softc {
 	struct wdc_softc sc_wdcdev;
@@ -84,17 +84,14 @@ struct wdc_mb_softc {
 	void	*sc_ih;
 };
 
-int	wdc_mb_probe	__P((struct device *, struct cfdata *, void *));
-void	wdc_mb_attach	__P((struct device *, struct device *, void *));
+int	wdc_mb_probe	(device_t, struct cfdata *, void *);
+void	wdc_mb_attach	(device_t, device_t, void *);
 
-CFATTACH_DECL(wdc_mb, sizeof(struct wdc_mb_softc),
+CFATTACH_DECL_NEW(wdc_mb, sizeof(struct wdc_mb_softc),
     wdc_mb_probe, wdc_mb_attach, NULL, NULL);
 
 int
-wdc_mb_probe(parent, cfp, aux)
-	struct device *parent;
-	struct cfdata *cfp;
-	void *aux;
+wdc_mb_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	static int	wdc_matched = 0;
 	struct ata_channel ch;
@@ -160,16 +157,15 @@ wdc_mb_probe(parent, cfp, aux)
 }
 
 void
-wdc_mb_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wdc_mb_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdc_mb_softc *sc = (void *)self;
+	struct wdc_mb_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	int i;
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 	wdr->cmd_iot = wdr->ctl_iot =
 	    mb_alloc_bus_space_tag();
@@ -179,15 +175,14 @@ wdc_mb_attach(parent, self, aux)
 	wdr->cmd_iot->abs_wms_2 = write_multi_2_swap;
 	if (bus_space_map(wdr->cmd_iot, FALCON_WD_BASE, FALCON_WD_LEN, 0,
 			  &wdr->cmd_baseioh)) {
-		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 		    i * 4, 4, &wdr->cmd_iohs[i]) != 0) {
-			printf("%s: couldn't subregion cmd reg %i\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
+			aprint_error_dev(self,
+			    "couldn't subregion cmd reg %i\n", i);
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    FALCON_WD_LEN);
 			return;
@@ -197,8 +192,7 @@ wdc_mb_attach(parent, self, aux)
 	if (bus_space_subregion(wdr->cmd_iot,
 	    wdr->cmd_baseioh, FALCON_WD_AUX, 4, &wdr->ctl_ioh)) {
 		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, FALCON_WD_LEN);
-		printf("%s: couldn't subregion aux reg\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		aprint_error_dev(self, "couldn't subregion aux reg\n");
 		return;
 	}
 

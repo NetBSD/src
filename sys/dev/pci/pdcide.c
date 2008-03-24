@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.21.2.2 2007/02/26 09:10:34 yamt Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.21.2.3 2008/03/24 09:38:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.21.2.2 2007/02/26 09:10:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.21.2.3 2008/03/24 09:38:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,10 +49,10 @@ static int  pdc20265_pci_intr(void *);
 static void pdc20262_dma_start(void *, int, int);
 static int  pdc20262_dma_finish(void *, int, int, int);
 
-static int  pdcide_match(struct device *, struct cfdata *, void *);
-static void pdcide_attach(struct device *, struct device *, void *);
+static int  pdcide_match(device_t, cfdata_t, void *);
+static void pdcide_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pdcide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(pdcide, sizeof(struct pciide_softc),
     pdcide_match, pdcide_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_promise_products[] =  {
@@ -119,8 +119,7 @@ static const struct pciide_product_desc pciide_promise_products[] =  {
 };
 
 static int
-pdcide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+pdcide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -132,10 +131,12 @@ pdcide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-pdcide_attach(struct device *parent, struct device *self, void *aux)
+pdcide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_promise_products));
@@ -211,8 +212,8 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (st & PDC2xx_STATE_NATIVE)
 		interface |= PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
@@ -312,8 +313,8 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			continue;
 		if ((st & (PDC_IS_262(sc) ?
 		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
-			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "%s channel ignored (disabled)\n", cp->name);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
@@ -342,7 +343,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 
 	idedma_ctl = 0;
 	ATADEBUG_PRINT(("pdc202xx_setup_channel %s: scr 0x%x\n",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+	    device_xname(sc->sc_wdcdev.sc_atac.atac_dev),
 	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh, PDC262_U66)),
 	    DEBUG_PROBE);
 
@@ -373,7 +374,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_U66, scr);
 		ATADEBUG_PRINT(("pdc202xx_setup_channel %s:%d: ATAPI 0x%x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, channel,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
 		    bus_space_read_4(sc->sc_dma_iot, sc->sc_dma_ioh,
 		    PDC262_ATAPI(channel))), DEBUG_PROBE);
 		if (chp->ch_drive[0].drive_flags & DRIVE_ATAPI ||
@@ -431,7 +432,7 @@ pdc202xx_setup_channel(struct ata_channel *chp)
 		}
 		ATADEBUG_PRINT(("pdc202xx_setup_channel: %s:%d:%d "
 		    "timings 0x%x\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
+		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev),
 		    chp->ch_channel, drive, mode), DEBUG_PROBE);
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    PDC2xx_TIM(chp->ch_channel, drive), mode);
@@ -514,9 +515,9 @@ pdc202xx_pci_intr(void *arg)
 		if (scr & PDC2xx_SCR_INT(i)) {
 			crv = wdcintr(wdc_cp);
 			if (crv == 0)
-				printf("%s:%d: bogus intr (reg 0x%x)\n",
-				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname,
-				    i, scr);
+				aprint_error("%s:%d: bogus intr (reg 0x%x)\n",
+				    device_xname(
+				      sc->sc_wdcdev.sc_atac.atac_dev), i, scr);
 			else
 				rv = 1;
 		}
@@ -557,8 +558,8 @@ pdc20265_pci_intr(void *arg)
 			continue;
 		crv = wdcintr(wdc_cp);
 		if (crv == 0)
-			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
+			aprint_error("%s:%d: bogus intr\n",
+			    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), i);
 		else
 			rv = 1;
 	}

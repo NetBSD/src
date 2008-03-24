@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.16.4.2 2007/09/03 14:32:39 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.16.4.3 2008/03/24 09:38:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -32,12 +32,12 @@
 #define IOCTL_STRUCT_CONV_TO(cmd, type)	\
 		size = IOCPARM_LEN(cmd); \
 		if (size > sizeof(stkbuf)) \
-			data = memp = malloc(size, M_IOCTLOPS, M_WAITOK); \
+			data = memp = kmem_alloc(size, KM_SLEEP); \
 		else \
 			data = (void *)stkbuf; \
 		__CONCAT(netbsd32_to_, type)((struct __CONCAT(netbsd32_, type) *) \
 			data32, (struct type *)data, cmd); \
-		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data, l); \
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data); \
 		__CONCAT(netbsd32_from_, type)((struct type *)data, \
 			(struct __CONCAT(netbsd32_, type) *)data32, cmd); \
 		break

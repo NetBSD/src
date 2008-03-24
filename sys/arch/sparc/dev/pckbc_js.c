@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.12.16.4 2008/03/17 09:14:24 yamt Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.12.16.5 2008/03/24 09:38:39 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.12.16.4 2008/03/17 09:14:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.12.16.5 2008/03/24 09:38:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ pckbc_obio_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static int
-pckbc_ebus_match(device_tparent, cfdata_t cf, void *aux)
+pckbc_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 

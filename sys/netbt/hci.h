@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.1.2.11 2008/03/17 09:15:41 yamt Exp $	*/
+/*	$NetBSD: hci.h,v 1.1.2.12 2008/03/24 09:39:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.1.2.11 2008/03/17 09:15:41 yamt Exp $
+ * $Id: hci.h,v 1.1.2.12 2008/03/24 09:39:09 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2551,6 +2551,7 @@ int hci_enable(struct hci_unit *);
 void hci_disable(struct hci_unit *);
 struct hci_unit *hci_unit_lookup(bdaddr_t *);
 int hci_send_cmd(struct hci_unit *, uint16_t, void *, uint8_t);
+void hci_num_cmds(struct hci_unit *, uint8_t);
 bool hci_input_event(struct hci_unit *, struct mbuf *);
 bool hci_input_acl(struct hci_unit *, struct mbuf *);
 bool hci_input_sco(struct hci_unit *, struct mbuf *);

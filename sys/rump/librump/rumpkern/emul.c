@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.11.4.8 2008/03/17 09:15:46 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.11.4.9 2008/03/24 09:39:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -458,7 +458,7 @@ sigispending(struct lwp *l, int signo)
 }
 
 void
-knote_fdclose(struct lwp *l, int fd)
+knote_fdclose(int fd)
 {
 
 	/* since we don't add knotes, we don't have to remove them */
@@ -501,4 +501,26 @@ yield(void)
 {
 
 	rumpuser_yield();
+}
+
+
+u_int
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+vaddr_t
+calc_cache_size(struct vm_map *map, int pct)
+{
+	paddr_t t;
+
+	t = (paddr_t)physmem * pct / 100 * PAGE_SIZE;
+	if ((vaddr_t)t != t) {
+		panic("%s: needs tweak", __func__);
+	}
+	return t;
 }

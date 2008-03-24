@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60.2.7 2008/03/17 09:14:28 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60.2.8 2008/03/24 09:38:40 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60.2.7 2008/03/17 09:14:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60.2.8 2008/03/24 09:38:40 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -334,7 +334,7 @@ fpusave_lwp(struct lwp *l, bool save)
 			continue;
 		sparc64_send_ipi(ci->ci_cpuid, save ?
 				 sparc64_ipi_save_fpstate :
-				 sparc64_ipi_drop_fpstate, 0, 0);
+				 sparc64_ipi_drop_fpstate, (uintptr_t)l, 0);
 
 		spincount = 0;
 		while (ci->ci_fplwp == l) {

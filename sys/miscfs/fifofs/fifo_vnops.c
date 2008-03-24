@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.51.4.5 2008/02/27 08:37:00 yamt Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.51.4.6 2008/03/24 09:39:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.51.4.5 2008/02/27 08:37:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.51.4.6 2008/03/24 09:39:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,13 +341,13 @@ fifo_ioctl(void *v)
 		return (0);
 	if (ap->a_fflag & FREAD) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
-		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, curlwp);
+		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data);
 		if (error)
 			return (error);
 	}
 	if (ap->a_fflag & FWRITE) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
-		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, curlwp);
+		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data);
 		if (error)
 			return (error);
 	}
@@ -370,12 +370,12 @@ fifo_poll(void *v)
 	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, curlwp);
+			revents |= soo_poll(&filetmp, ap->a_events);
 	}
 	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, curlwp);
+			revents |= soo_poll(&filetmp, ap->a_events);
 	}
 
 	return (revents);

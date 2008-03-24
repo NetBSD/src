@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.12.2.8 2008/03/17 09:15:46 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.12.2.9 2008/03/24 09:39:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -45,13 +45,13 @@
 #include "rump_private.h"
 #include "rumpuser.h"
 
-struct proc rump_proc;
+struct proc proc0;
 struct cwdinfo rump_cwdi;
 struct pstats rump_stats;
 struct plimit rump_limits;
 kauth_cred_t rump_cred = RUMPCRED_SUSER;
 struct cpu_info rump_cpu;
-struct filedesc0 rump_filedesc0;
+struct filedesc rump_filedesc0;
 struct proclist allproc;
 
 kmutex_t rump_giantlock;
@@ -100,13 +100,14 @@ rump_init()
 		desiredvnodes = 1<<16;
 	}
 
+	rw_init(&rump_cwdi.cwdi_lock);
 	l = &lwp0;
-	p = &rump_proc;
+	p = &proc0;
 	p->p_stats = &rump_stats;
 	p->p_cwdi = &rump_cwdi;
 	p->p_limit = &rump_limits;
 	p->p_pid = 0;
-	p->p_fd = &rump_filedesc0.fd_fd;
+	p->p_fd = &rump_filedesc0;
 	p->p_vmspace = &rump_vmspace;
 	l->l_cred = rump_cred;
 	l->l_proc = p;
@@ -125,8 +126,8 @@ rump_init()
 
 	vfsinit();
 	bufinit();
-	filedesc_init();
-	selsysinit();
+	fd_sys_init();
+	selsysinit(&rump_cpu);
 
 	rumpvfs_init();
 
@@ -147,10 +148,8 @@ rump_init()
 
 	sigemptyset(&sigcantmask);
 
-	rw_init(&rump_cwdi.cwdi_lock);
+	fd_init(&rump_filedesc0);
 	rump_cwdi.cwdi_cdir = rootvnode;
-
-	fdinit1(&rump_filedesc0);
 }
 
 struct mount *
@@ -629,7 +628,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 
 	l = kmem_zalloc(sizeof(struct lwp), KM_SLEEP);
 	p = kmem_zalloc(sizeof(struct proc), KM_SLEEP);
-	p->p_cwdi = cwdinit(&rump_proc);
+	p->p_cwdi = cwdinit();
 
 	p->p_stats = &rump_stats;
 	p->p_limit = &rump_limits;
@@ -639,7 +638,8 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	l->l_proc = p;
         l->l_lid = lid;
 
-	p->p_fd = fdinit(NULL);
+	p->p_fd = fd_init(&rump_filedesc0);
+        l->l_fd = p->p_fd;
 
 	if (set)
 		rumpuser_set_curlwp(l);
@@ -653,7 +653,7 @@ rump_clear_curlwp()
 	struct lwp *l;
 
 	l = rumpuser_get_curlwp();
-	fdfree(l);
+	fd_free();
 	cwdfree(l->l_proc->p_cwdi);
 	kmem_free(l->l_proc, sizeof(*l->l_proc));
 	kmem_free(l, sizeof(*l));

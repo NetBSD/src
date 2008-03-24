@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.205.2.8 2008/03/17 09:14:28 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.205.2.9 2008/03/24 09:38:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3766,17 +3766,13 @@ sparc64_ipi_pause_trap_point:
  *	%g2 = %tick of master CPU
  */
 ENTRY(sparc64_ipi_sync_tick)
-	rdpr	%pstate, %g1
-	andn	%g1, PSTATE_IE, %g7		! disable interrupts
-	wrpr	%g7, 0, %pstate
 	rdpr	%tick, %g3			! read old tick
 	rd	TICK_CMPR, %g5
 	sub	%g2, %g3, %g3			! delta btw old and new
 	add	%g5, %g3, %g5			! add delta to TICK_CMPR
 	wr	%g5, TICK_CMPR
-	wrpr	%g2, 0, %tick			! write new tick
 	ba	ret_from_intr_vector
-	 wrpr	%g1, %pstate			! restore interrupts
+	 wrpr	%g2, 0, %tick			! write new tick
 
 /*
  * Increment IPI event counter, defined in machine/{cpu,intr}.h.
@@ -3802,8 +3798,9 @@ ENTRY(sparc64_ipi_flush_pte)
 12:
 #endif
 #ifdef SPITFIRE
+	srlx	%g2, PG_SHIFT4U, %g2		! drop unused va bits
 	mov	CTX_SECONDARY, %g5
-	andn	%g2, 0xfff, %g2			! drop unused va bits
+	sllx	%g2, PG_SHIFT4U, %g2
 	ldxa	[%g5] ASI_DMMU, %g6		! Save secondary context
 	sethi	%hi(KERNBASE), %g7
 	membar	#LoadStore
@@ -4133,9 +4130,18 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	ldx	[%l4 + %l3], %o0
 	add	%l4, %l3, %l4
 	clr	%l5			! Zero handled count
+#ifdef MULTIPROCESSOR
+	mov	1, %l3			! Ack softint
+1:	add	%o0, 1, %l7
+	casxa	[%l4] ASI_N, %o0, %l7
+	cmp	%o0, %l7
+	bne,a,pn %xcc, 1b		! retry if changed
+	 mov	%l7, %o0
+#else
 	inc	%o0	
 	mov	1, %l3			! Ack softint
 	stx	%o0, [%l4]
+#endif
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	
 	wrpr	%l6, %pil
@@ -5456,8 +5462,9 @@ ENTRY(sp_tlb_flush_pte)
 	andn	%o3, PSTATE_IE, %o4			! disable interrupts
 	wrpr	%o4, 0, %pstate
 #endif
+	srlx	%o0, PG_SHIFT4U, %o0			! drop unused va bits
 	mov	CTX_SECONDARY, %o2
-	andn	%o0, 0xfff, %o0				! drop unused va bits
+	sllx	%o0, PG_SHIFT4U, %o0
 	ldxa	[%o2] ASI_DMMU, %o5			! Save secondary context
 	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
@@ -9512,17 +9519,22 @@ Lkcerr:
 /*
  * IPI handler to store the current FPU state.
  * void sparc64_ipi_save_fpstate(void *);
+ *
+ * On entry:
+ *	%g2 = lwp
  */
 ENTRY(sparc64_ipi_save_fpstate)
+	sethi	%hi(FPLWP), %g1
+	LDPTR	[%g1 + %lo(FPLWP)], %g3
+	cmp	%g3, %g2
+	bne,pn	CCCR, 7f		! skip if fplwp != %g2
+	 LDPTR	[%g3 + L_FPSTATE], %g3
+
 	mov	CTX_SECONDARY, %g5
 	ldxa	[%g5] ASI_DMMU, %g6
 	membar	#LoadStore
 	stxa	%g0, [%g5] ASI_DMMU
 	membar	#Sync
-
-	sethi	%hi(FPLWP), %g1
-	LDPTR	[%g1 + %lo(FPLWP)], %g3
-	LDPTR	[%g3 + L_FPSTATE], %g3
 
 	rdpr	%pstate, %g2		! enable FP before we begin
 	rd	%fprs, %g5
@@ -9564,6 +9576,7 @@ ENTRY(sparc64_ipi_save_fpstate)
 	STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
 	stxa	%g6, [%g5] ASI_DMMU
 	membar	#Sync
+7:
 	IPIEVC_INC(IPI_EVCNT_FPU_SYNCH,%g2,%g3)
 	ba,a	ret_from_intr_vector
 	 nop
@@ -9631,16 +9644,20 @@ ENTRY(sparc64_ipi_save_fpstate)
 /*
  * IPI handler to drop the current FPU state.
  * void sparc64_ipi_drop_fpstate(void *);
+ *
+ * On entry:
+ *	%g2 = lwp
  */
 ENTRY(sparc64_ipi_drop_fpstate)
 	rdpr	%pstate, %g1
 	wr	%g0, FPRS_FEF, %fprs
 	or	%g1, PSTATE_PEF, %g1
 	wrpr	%g1, 0, %pstate
-	sethi	%hi(FPLWP), %g1
+	set	FPLWP, %g1
+	CASPTR	[%g1] ASI_N, %g2, %g0	! fplwp = NULL if fplwp == %g2
 	IPIEVC_INC(IPI_EVCNT_FPU_FLUSH,%g2,%g3)
-	ba	ret_from_intr_vector
-	 STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
+	ba,a	ret_from_intr_vector
+	 nop
 #endif
 
 /*

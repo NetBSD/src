@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.2.14.6 2007/10/27 11:26:53 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.2.14.7 2008/03/24 09:38:39 yamt Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.14.6 2007/10/27 11:26:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.2.14.7 2008/03/24 09:38:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ static uint64_t pmap_ptc_e_count1 = 3;
 static uint64_t pmap_ptc_e_count2 = 2;
 static uint64_t pmap_ptc_e_stride1 = 0x2000;
 static uint64_t pmap_ptc_e_stride2 = 0x100000000;
-struct lock pmap_ptc_lock;
+kmutex_t pmap_ptc_lock;			/* Global PTC lock */
 
 /* VHPT Base */
 
@@ -137,7 +137,7 @@ vaddr_t pmap_vhpt_log2size;
 
 struct ia64_bucket *pmap_vhpt_bucket;
 int pmap_vhpt_nbuckets;
-struct lock pmap_vhptlock;
+kmutex_t pmap_vhptlock;		       /* VHPT collision chain lock */
 
 int pmap_vhpt_inserts;
 int pmap_vhpt_resident;
@@ -155,7 +155,7 @@ static int pmap_rididx;
 static int pmap_ridmapsz;
 static int pmap_ridmax;
 static uint64_t *pmap_ridmap;
-struct lock pmap_rid_lock;
+kmutex_t pmap_rid_lock;			/* RID allocator lock */
 
 
 bool		pmap_initialized;	/* Has pmap_init completed? */
@@ -204,10 +204,11 @@ struct pool pmap_pmap_pool;
 struct pool pmap_ia64_lpte_pool;
 struct pool pmap_pv_pool;
 
-struct lock pmap_main_lock;
-struct simplelock pmap_all_pmaps_slock;
+kmutex_t pmap_main_lock;
+kmutex_t pmap_all_pmaps_slock;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+/* XXX(kochi) need to use only spin lock? */
 #define	PMAP_MAP_TO_HEAD_LOCK() \
 	spinlockmgr(&pmap_main_lock, LK_SHARED, NULL)
 #define	PMAP_MAP_TO_HEAD_UNLOCK() \
@@ -244,9 +245,9 @@ struct simplelock pmap_all_pmaps_slock;
  * The VHPT bucket head structure.
  */
 struct ia64_bucket {
-        uint64_t        chain;
-        struct lock     lock;
-        u_int           length;
+	uint64_t	chain;
+	kmutex_t	lock;
+	u_int		length;
 };
 
 
@@ -384,7 +385,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		va = IA64_PHYS_TO_RR7(pa);
 		memset((void *)va, 0, size);
 		pmap_pages_stolen += npgs;
-		return (va);
+		return va;
 	}
 
 	/*
@@ -517,7 +518,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 	va = IA64_PHYS_TO_RR7(pa);
 	memset((void *)va, 0, size);
 	pmap_pages_stolen += npgs;
-	return (va);
+	return va;
 }
 
 
@@ -561,7 +562,7 @@ pmap_bootstrap()
 		       pmap_ptc_e_count2,
 		       pmap_ptc_e_stride1,
 		       pmap_ptc_e_stride2);
-	spinlockinit(&pmap_ptc_lock, "Global PTC lock", LK_RECURSE_FAIL);
+	mutex_init(&pmap_ptc_lock, MUTEX_SPIN, IPL_VM);
 
 	/*
 	 * Setup RIDs. RIDs 0..7 are reserved for the kernel.
@@ -609,7 +610,7 @@ pmap_bootstrap()
 	 *      mtx_init(&pmap_ridmutex, "RID allocator lock", NULL, MTX_DEF);
 	 *	MTX_DEF can *sleep*.
 	 */
-	lockinit(&pmap_rid_lock, 0, "RID allocator lock", 0, LK_RECURSEFAIL);
+	mutex_init(&pmap_rid_lock, MUTEX_ADAPTIVE, IPL_VM);
 
 
 	/*
@@ -713,7 +714,7 @@ pmap_bootstrap()
 	if (bootverbose)
 		printf("Putting VHPT at 0x%lx\n", base);
 
-	spinlockinit(&pmap_vhptlock, "VHPT collision chain lock", LK_RECURSEFAIL);
+	mutex_init(&pmap_vhptlock, MUTEX_SPIN, IPL_VM);
 
 	__asm __volatile("mov cr.pta=%0;; srlz.i;;" ::
 	    "r" (vhpt_base + (1<<8) + (pmap_vhpt_log2size<<2) + 1));
@@ -740,22 +741,22 @@ pmap_bootstrap()
 		pte[i].tag = 1UL << 63;	/* Invalid tag */
 		pte[i].chain = (uintptr_t)(pmap_vhpt_bucket + i);
 		/* Stolen memory is zeroed! */
-		spinlockinit(&pmap_vhpt_bucket[i].lock, "VHPT bucket lock", LK_RECURSEFAIL);
-		    
+		mutex_init(&pmap_vhpt_bucket[i].lock, MUTEX_SPIN,
+		    IPL_VM);
 	}
 
 	/*
 	 * Initialize the locks.
 	 */
-	spinlockinit(&pmap_main_lock, "pmaplk", 0);
-	simple_lock_init(&pmap_all_pmaps_slock);
+	mutex_init(&pmap_main_lock, MUTEX_ADAPTIVE, IPL_VM);
+	mutex_init(&pmap_all_pmaps_slock, MUTEX_SPIN, IPL_VM);
 
 	/*
 	 * Initialize the kernel pmap (which is statically allocated).
 	 */
 	memset(pmap_kernel(), 0, sizeof(struct pmap));
 
-	simple_lock_init(pmap_kernel()->pm_slock);
+	mutex_init(&pmap_kernel()->pm_slock, MUTEX_SPIN, IPL_VM);
 	for (i = 0; i < 5; i++)
 		pmap_kernel()->pm_rid[i] = 0;
 	pmap_kernel()->pm_active = 1;
@@ -828,8 +829,8 @@ vtophys(va)
 	paddr_t pa;
 
 	if (pmap_extract(pmap_kernel(), va, &pa) == true)
-		return (pa);
-	return (0);
+		return pa;
+	return 0;
 }
 
 /*
@@ -1108,13 +1109,13 @@ pmap_create(void)
         TAILQ_INIT(&pmap->pm_pvlist);
         memset(&pmap->pm_stats, 0, sizeof (pmap->pm_stats) );
 
-	simple_lock_init(&pmap->pm_slock);
+	mutex_init(&pmap->pm_slock, MUTEX_SPIN, IPL_VM);
 
-	simple_lock(&pmap_all_pmaps_slock);
+	mutex_enter(&pmap_all_pmaps_slock);
 	TAILQ_INSERT_TAIL(&pmap_all_pmaps, pmap, pm_list);
-	simple_unlock(&pmap_all_pmaps_slock);
+	mutex_exit(&pmap_all_pmaps_slock);
 
-	return (pmap);
+	return pmap;
 }
 
 /*
@@ -1138,9 +1139,9 @@ pmap_destroy(pmap_t pmap)
 	/*
 	 * Remove it from the global list of all pmaps.
 	 */
-	simple_lock(&pmap_all_pmaps_slock);
+	mutex_enter(&pmap_all_pmaps_slock);
 	TAILQ_REMOVE(&pmap_all_pmaps, pmap, pm_list);
-	simple_unlock(&pmap_all_pmaps_slock);
+	mutex_exit(&pmap_all_pmaps_slock);
 
 	pool_put(&pmap_pmap_pool, pmap);
 
@@ -1205,7 +1206,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	if ((sva & PAGE_MASK) || (eva & PAGE_MASK))
 		panic("pmap_protect: unaligned addresses");
 
-	uvm_lock_pageq();
+	//uvm_lock_pageq();
 	PMAP_LOCK(pmap);
 	oldpmap = pmap_install(pmap);
 	while (sva < eva) {
@@ -1233,7 +1234,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		sva += PAGE_SIZE;
 	}
-	uvm_unlock_pageq();
+	//uvm_unlock_pageq();
 	pmap_install(oldpmap);
 	PMAP_UNLOCK(pmap);
 }
@@ -1253,7 +1254,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
         paddr_t pa;
 
         pa = 0;
-        simple_lock(pmap->pm_slock);
+        mutex_enter(&pmap->pm_slock);
         oldpmap = pmap_install(pmap); /* XXX: isn't this a little inefficient ? */
         pte = pmap_find_vhpt(va);
         if (pte != NULL && pmap_present(pte))
@@ -1261,7 +1262,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	else
 		return false;	
         pmap_install(oldpmap);
-        simple_unlock(pmap->pm_slock);
+        mutex_exit(&pmap->pm_slock);
         return true;
 
 }
@@ -1328,7 +1329,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
                         PMAP_UNLOCK(pmap);
                 }
 
-		UVM_LOCK_ASSERT_PAGEQ(); 
+		//UVM_LOCK_ASSERT_PAGEQ(); 
 
                 pg->flags |= PG_RDONLY;
         } else {
@@ -1362,7 +1363,7 @@ pmap_reference(pmap_t pmap)
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	return (false);
+	return false;
 }
 
 /*
@@ -1378,7 +1379,7 @@ paddr_t
 pmap_phys_address(paddr_t ppn)
 {
 
-	return (ia64_ptob(ppn));
+	return ia64_ptob(ppn);
 }
 
 
@@ -1546,7 +1547,7 @@ pmap_page_purge(struct vm_page * pg)
 		panic("pmap_page_protect: illegal for unmanaged page, va: 0x%lx", VM_PAGE_TO_PHYS(pg));
 	}
 #endif
-	UVM_LOCK_ASSERT_PAGEQ();
+	//UVM_LOCK_ASSERT_PAGEQ();
 
 	while ((pv = TAILQ_FIRST(&pg->mdpage.pv_list)) != NULL) {
 		struct ia64_lpte *pte;
@@ -1564,7 +1565,7 @@ pmap_page_purge(struct vm_page * pg)
 		PMAP_UNLOCK(pmap);
 	}
 
-	UVM_LOCK_ASSERT_PAGEQ(); 
+	//UVM_LOCK_ASSERT_PAGEQ(); 
 	pg->flags |= PG_RDONLY;
 
 }
@@ -1576,11 +1577,11 @@ pmap_switch(pmap_t pm)
         pmap_t prevpm;
         int i;
 
-        LOCK_ASSERT(simple_lock_held(&sched_lock));
+        //LOCK_ASSERT(simple_lock_held(&sched_lock));
 		    
 	prevpm = curcpu()->ci_pmap;
         if (prevpm == pm)
-                return (prevpm);
+                return prevpm;
 //        if (prevpm != NULL)
 //                atomic_clear_32(&prevpm->pm_active, PCPU_GET(cpumask));
         if (pm == NULL) {
@@ -1597,7 +1598,7 @@ pmap_switch(pmap_t pm)
         }
         curcpu()->ci_pmap = pm;
         __asm __volatile("srlz.d");
-        return (prevpm);
+        return prevpm;
 }
 
 static pmap_t
@@ -1610,7 +1611,7 @@ pmap_install(pmap_t pm)
         splsched = splsched();
         prevpm = pmap_switch(pm);
 	splx(splsched);
-        return (prevpm);
+        return prevpm;
 }
 
 static uint32_t
@@ -1619,7 +1620,7 @@ pmap_allocate_rid(void)
 	uint64_t bit, bits;
 	int rid;
 
-	lockmgr(&pmap_rid_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&pmap_rid_lock);
 	if (pmap_ridcount == pmap_ridmax)
 		panic("pmap_allocate_rid: All Region IDs used");
 
@@ -1640,7 +1641,7 @@ pmap_allocate_rid(void)
 
 	pmap_ridmap[pmap_rididx] |= bit;
 	pmap_ridcount++;
-	lockmgr(&pmap_rid_lock, LK_RELEASE, NULL);
+	mutex_exit(&pmap_rid_lock);
 
 	return rid;
 }
@@ -1654,10 +1655,10 @@ pmap_free_rid(uint32_t rid)
 	idx = rid / 64;
 	bit = ~(1UL << (rid & 63));
 
-	simple_lock(&pmap_rid_lock);
+	mutex_enter(&pmap_rid_lock);
 	pmap_ridmap[idx] &= bit;
 	pmap_ridcount--;
-	simple_unlock(&pmap_rid_lock);
+	mutex_exit(&pmap_rid_lock);
 }
 
 /***************************************************
@@ -1717,7 +1718,7 @@ pmap_find_kpte(vaddr_t va)
 {
 	KASSERT((va >> 61) == 5);
 	KASSERT(IA64_RR_MASK(va) < (nkpt * PAGE_SIZE * NKPTEPG));
-	return (&ia64_kptdir[KPTE_DIR_INDEX(va)][KPTE_PTE_INDEX(va)]);
+	return &ia64_kptdir[KPTE_DIR_INDEX(va)][KPTE_PTE_INDEX(va)];
 }
 
 
@@ -1888,10 +1889,10 @@ get_pv_entry(pmap_t locked_pmap)
 {
 	pv_entry_t allocated_pv;
 
-	LOCK_ASSERT(simple_lock_held(locked_pmap->slock));
-	UVM_LOCK_ASSERT_PAGEQ();
+	//LOCK_ASSERT(simple_lock_held(locked_pmap->slock));
+	//UVM_LOCK_ASSERT_PAGEQ();
 	allocated_pv = 	pool_get(&pmap_pv_pool, PR_NOWAIT);
-	return (allocated_pv);
+	return allocated_pv;
 
 
 	/* XXX: Nice to have all this stuff later:
@@ -1927,7 +1928,7 @@ pmap_enter_vhpt(struct ia64_lpte *pte, vaddr_t va)
 	vhpte = (struct ia64_lpte *)ia64_thash(va);
 	bckt = (struct ia64_bucket *)vhpte->chain;
 	/* XXX: fixme */
-	KASSERT(!spinlockmgr(&bckt->lock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&bckt->lock);
 	pte->chain = bckt->chain;
 	ia64_mf();
 	bckt->chain = pte_pa;
@@ -1935,7 +1936,7 @@ pmap_enter_vhpt(struct ia64_lpte *pte, vaddr_t va)
 	pmap_vhpt_inserts++;
 	bckt->length++;
 	/*XXX : fixme */
-	KASSERT(!spinlockmgr(&bckt->lock, LK_RELEASE, NULL));
+	mutex_exit(&bckt->lock);
 
 }
 
@@ -1957,7 +1958,7 @@ pmap_remove_vhpt(vaddr_t va)
 	bckt = (struct ia64_bucket *)vhpte->chain;
 
 	lpte = NULL;
-	KASSERT(!spinlockmgr(&bckt->lock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&bckt->lock);
 
 
 	chain = bckt->chain;
@@ -1968,8 +1969,8 @@ pmap_remove_vhpt(vaddr_t va)
 		pte = (struct ia64_lpte *)IA64_PHYS_TO_RR7(chain);
 	}
 	if (chain == 0) {
-		KASSERT(!spinlockmgr(&bckt->lock, LK_RELEASE, NULL));
-		return (ENOENT);
+		mutex_exit(&bckt->lock);
+		return ENOENT;
 	}
 
 	/* Snip this pv_entry out of the collision chain. */
@@ -1980,8 +1981,8 @@ pmap_remove_vhpt(vaddr_t va)
 	ia64_mf();
 
 	bckt->length--;
-	KASSERT(!spinlockmgr(&bckt->lock, LK_RELEASE, NULL));
-	return (0);
+	mutex_exit(&bckt->lock);
+	return 0;
 }
 
 
@@ -1999,15 +2000,15 @@ pmap_find_vhpt(vaddr_t va)
 	pte = (struct ia64_lpte *)ia64_thash(va);
 	bckt = (struct ia64_bucket *)pte->chain;
 
-	KASSERT(!spinlockmgr(&bckt->lock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&bckt->lock);
 	chain = bckt->chain;
 	pte = (struct ia64_lpte *)IA64_PHYS_TO_RR7(chain);
 	while (chain != 0 && pte->tag != tag) {
 		chain = pte->chain;
 		pte = (struct ia64_lpte *)IA64_PHYS_TO_RR7(chain);
 	}
-	KASSERT(!spinlockmgr(&bckt->lock, LK_EXCLUSIVE, NULL));
-	return ((chain != 0) ? pte : NULL);
+	mutex_exit(&bckt->lock);
+	return (chain != 0) ? pte : NULL;
 }
 
 
@@ -2035,7 +2036,7 @@ pmap_remove_entry(pmap_t pmap, struct vm_page * pg, vaddr_t va, pv_entry_t pv)
 		TAILQ_REMOVE(&pg->mdpage.pv_list, pv, pv_list);
 		pg->mdpage.pv_list_count--;
 		if (TAILQ_FIRST(&pg->mdpage.pv_list) == NULL) {
-			UVM_LOCK_ASSERT_PAGEQ(); 
+			//UVM_LOCK_ASSERT_PAGEQ(); 
 			pg->flags |= PG_RDONLY;
 		}
 
@@ -2061,8 +2062,8 @@ pmap_insert_entry(pmap_t pmap, vaddr_t va, struct vm_page *pg)
 	pv->pv_pmap = pmap;
 	pv->pv_va = va;
 
-	LOCK_ASSERT(simple_lock_held(pmap->slock));
-	UVM_LOCK_ASSERT_PAGEQ(); 
+	//LOCK_ASSERT(simple_lock_held(pmap->slock));
+	//UVM_LOCK_ASSERT_PAGEQ(); 
 	TAILQ_INSERT_TAIL(&pmap->pm_pvlist, pv, pv_plist);
 	TAILQ_INSERT_TAIL(&pg->mdpage.pv_list, pv, pv_list);
 	pg->mdpage.pv_list_count++;
@@ -2100,8 +2101,8 @@ pmap_pv_page_alloc(struct pool *pp, int flags)
 	paddr_t pg;
 
 	if (pmap_poolpage_alloc(&pg))
-		return ((void *)IA64_PHYS_TO_RR7(pg));
-	return (NULL);
+		return (void *)IA64_PHYS_TO_RR7(pg);
+	return NULL;
 }
 
 /*
@@ -2135,18 +2136,18 @@ pmap_poolpage_alloc(paddr_t *pap)
 		pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
-		simple_lock(&pg->mdpage.pv_slock);
+		mutex_enter(&pg->mdpage.pv_mutex);
 		if (pg->wire_count != 0) {
 			printf("pmap_physpage_alloc: page 0x%lx has "
 			    "%d references\n", pa, pg->wire_count);
 			panic("pmap_physpage_alloc");
 		}
-		simple_unlock(&pg->mdpage.pv_slock);
+		mutex_exit(&pg->mdpage.pv_mutex);
 #endif
 		*pap = pa;
-		return (true);
+		return true;
 	}
-	return (false);
+	return false;
 }
 
 /*
@@ -2163,10 +2164,10 @@ pmap_poolpage_free(paddr_t pa)
 		panic("pmap_physpage_free: bogus physical page address");
 
 #ifdef DEBUG
-	simple_lock(&pg->mdpage.pv_slock);
+	mutex_enter(&pg->mdpage.pv_mutex);
 	if (pg->wire_count != 0)
 		panic("pmap_physpage_free: page still has references");
-	simple_unlock(&pg->mdpage.pv_slock);
+	mutex_exit(&pg->mdpage.pv_mutex);
 #endif
 
 	uvm_pagefree(pg);

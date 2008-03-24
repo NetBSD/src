@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.13.2.9 2008/03/17 09:15:32 yamt Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.13.2.10 2008/03/24 09:39:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.13.2.9 2008/03/17 09:15:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.13.2.10 2008/03/24 09:39:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1184,7 +1184,7 @@ union_readdirhook(struct vnode **vpp, struct file *fp, struct lwp *l)
 	VOP_UNLOCK(lvp, 0);
 	fp->f_data = lvp;
 	fp->f_offset = 0;
-	error = vn_close(vp, FREAD, fp->f_cred, l);
+	error = vn_close(vp, FREAD, fp->f_cred);
 	if (error)
 		return (error);
 	*vpp = lvp;

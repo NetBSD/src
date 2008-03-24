@@ -1,4 +1,4 @@
-/*	$NetBSD: tlp.c,v 1.3.12.3 2008/03/17 09:14:16 yamt Exp $	*/
+/*	$NetBSD: tlp.c,v 1.3.12.4 2008/03/24 09:38:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <lib/libsa/net.h>
 
 #include <mips/cpuregs.h>
+
+#include <machine/cpu.h>
 
 #include "boot.h"
 

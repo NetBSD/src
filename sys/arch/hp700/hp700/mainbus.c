@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.28.2.4 2007/09/03 14:25:40 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28.2.5 2008/03/24 09:38:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28.2.4 2007/09/03 14:25:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28.2.5 2008/03/24 09:38:38 yamt Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1555,7 +1555,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Scan mainbus for monarch CPU and attach it.
 	 *
-	 * How to do device scaning? Try to use PDC_SYSTEM_MAP.
+	 * How to do device scanning? Try to use PDC_SYSTEM_MAP.
 	 * We are on a "new" system if it succedes, so use PDC_SYSTEM_MAP.
 	 * Otherwise we must be on an "old" system, so use PDC_MEMMAP.
 	 */

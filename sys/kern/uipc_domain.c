@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.52.2.6 2008/01/21 09:46:29 yamt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.52.2.7 2008/03/24 09:39:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.52.2.6 2008/01/21 09:46:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.52.2.7 2008/03/24 09:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -439,13 +439,14 @@ sysctl_unpcblist(SYSCTLFN_ARGS)
 		if (so->so_proto->pr_domain->dom_family != pf)
 			continue;
 		if (len >= elem_size && elem_count > 0) {
-			FILE_LOCK(fp);
-			FILE_USE(fp);
+			mutex_enter(&fp->f_lock);
+			fp->f_count++;
+			mutex_exit(&fp->f_lock);
 			LIST_INSERT_AFTER(fp, dfp, f_list);
 			mutex_exit(&filelist_lock);
 			sysctl_dounpcb(&pcb, so);
 			error = copyout(&pcb, dp, out_size);
-			FILE_UNUSE(fp, NULL);
+			closef(fp);
 			mutex_enter(&filelist_lock);
 			np = LIST_NEXT(dfp, f_list);
 			LIST_REMOVE(dfp, f_list);

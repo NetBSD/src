@@ -1,4 +1,4 @@
-/* $NetBSD: sb_pnpbios.c,v 1.9.6.2 2008/03/17 09:14:21 yamt Exp $ */
+/* $NetBSD: sb_pnpbios.c,v 1.9.6.3 2008/03/24 09:38:38 yamt Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.9.6.2 2008/03/17 09:14:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.9.6.3 2008/03/24 09:38:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ sb_pnpbios_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &sc->sc_drq8)) {
-		aprint_errpr(": can't get DMA channel\n");
+		aprint_error(": can't get DMA channel\n");
 		return;
 	}
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->sc_drq16))
@@ -106,8 +106,8 @@ sb_pnpbios_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("%s", device_xname(self));
 
-	if (!sbmatch(sc)) {
-		aprint_error_dev(self, "%s: sbmatch failed\n");
+	if (!sbmatch(sc, 0, device_cfdata(self))) {
+		aprint_error_dev(self, "sbmatch failed\n");
 		return;
 	}
 

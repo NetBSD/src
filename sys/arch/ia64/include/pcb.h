@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.1.14.2 2006/06/21 14:52:48 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.1.14.3 2008/03/24 09:38:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -45,7 +45,7 @@ struct pcb {
 	struct _callee_saved_fp	pcb_preserved_fp;
 	struct _high_fp		pcb_high_fp;
 	struct pcpu		*pcb_fpcpu;
-	struct simplelock	pcb_fpcpu_slock;
+	kmutex_t		pcb_fpcpu_slock;
 
 
 	/* IA32 specific registers. */

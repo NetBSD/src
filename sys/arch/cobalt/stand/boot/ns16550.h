@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.h,v 1.1.18.1 2007/09/03 14:23:53 yamt Exp $	*/
+/*	$NetBSD: ns16550.h,v 1.1.18.2 2008/03/24 09:38:38 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -61,10 +61,6 @@ struct NS16550 {
 
 #define LCR_EERS 0xBF  /* Enable access to Enhanced Register Set */
 #define LCR_DLAB 0x80  /* Divisor latch access enable */
-
-#ifndef COMBASE
-#define COMBASE	0x80000000
-#endif
 
 #ifndef COMPROBE
 #define COMPROBE 0xa020001c

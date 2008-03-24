@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.29.2.7 2008/03/17 09:14:37 yamt Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.29.2.8 2008/03/24 09:38:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.7 2008/03/17 09:14:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.8 2008/03/24 09:38:46 yamt Exp $");
 
 #include "sequencer.h"
 
@@ -1177,7 +1177,7 @@ midiseq_open(int unit, int flags)
 	int major;
 	dev_t dev;
 	
-	major = devsw_name2blk("midi", NULL, 0);
+	major = devsw_name2chr("midi", NULL, 0);
 	dev = makedev(major, unit);
 
 	midi_getinfo(dev, &mi);
@@ -1210,7 +1210,7 @@ midiseq_close(struct midi_dev *md)
 	int major;
 	dev_t dev;
 	
-	major = devsw_name2blk("midi", NULL, 0);
+	major = devsw_name2chr("midi", NULL, 0);
 	dev = makedev(major, md->unit);
 
 	DPRINTFN(2, ("midiseq_close: %d\n", md->unit));

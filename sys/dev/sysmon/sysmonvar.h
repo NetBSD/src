@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.10.16.7 2008/01/21 09:44:39 yamt Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.10.16.8 2008/03/24 09:39:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -71,6 +71,9 @@ struct sysmon_envsys {
 #define SME_FLAG_BUSY 		0x00000001 	/* device busy */
 #define SME_DISABLE_REFRESH	0x00000002	/* disable sme_refresh */
 #define SME_CALLOUT_INITIALIZED	0x00000004	/* callout was initialized */
+#define SME_INIT_REFRESH        0x00000008      /* call sme_refresh() after
+						   interrupts are enabled in
+						   the autoconf(9) process. */
 
 	void *sme_cookie;		/* for ENVSYS back-end */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: hpetvar.h,v 1.1.20.2 2007/09/03 14:34:37 yamt Exp $ */
+/* $NetBSD: hpetvar.h,v 1.1.20.3 2008/03/24 09:38:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -32,14 +32,12 @@
 #define _DEV_IC_HPETVAR_H_
 
 struct hpet_softc {
-	struct device	sc_dev;
-
 	bus_space_tag_t	sc_memt;
 	bus_space_handle_t sc_memh;
 
 	struct timecounter sc_tc;
 };
 
-void	hpet_attach_subr(struct hpet_softc *);
+void	hpet_attach_subr(device_t);
 
 #endif /* _DEV_IC_HPETVAR_H_ */

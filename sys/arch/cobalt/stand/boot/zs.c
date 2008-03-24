@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.2.2 2008/03/17 09:14:16 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.2.3 2008/03/24 09:38:38 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2008 Izumi Tsutsui.
@@ -32,7 +32,11 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+
 #include <dev/ic/z8530reg.h>
+
+#include <machine/cpu.h>
 
 #include "boot.h"
 #include "zs.h"
@@ -126,7 +130,7 @@ zs_init(int addr, int speed)
 {
 	void *zs;
 
-	zs = (void *)(ZSBASE + addr);
+	zs = (void *)MIPS_PHYS_TO_KSEG1(ZS_BASE + addr);
 	zs_reset(zs);
 
 	return zs;

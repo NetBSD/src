@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.40.12.7 2008/01/21 09:42:29 yamt Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.40.12.8 2008/03/24 09:38:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.40.12.7 2008/01/21 09:42:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.40.12.8 2008/03/24 09:38:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -740,6 +740,7 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_sme->sme_cookie = dv;
 	sc->sc_sme->sme_refresh = acpibat_refresh;
 	sc->sc_sme->sme_class = SME_CLASS_BATTERY;
+	sc->sc_sme->sme_flags = SME_INIT_REFRESH;
 
 	sc->sc_updateinterval.tv_sec = 1;
 	sc->sc_updateinterval.tv_usec = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.104.2.8 2008/02/04 09:23:17 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.104.2.9 2008/03/24 09:38:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.8 2008/02/04 09:23:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.9 2008/03/24 09:38:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1101,7 +1101,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    UIO_USERSPACE)) != 0) {
 				for (j = 0; j < lookedup; ++j)
 					(void)vn_close(vpp[j], FREAD|FWRITE,
-					    uc, l);
+					    uc);
 				free(vpp, M_DEVBUF);
 				free(cpp, M_DEVBUF);
 				goto out;
@@ -1115,7 +1115,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((error = ccdinit(cs, cpp, vpp, l)) != 0) {
 			for (j = 0; j < lookedup; ++j)
 				(void)vn_close(vpp[j], FREAD|FWRITE,
-				    uc, l);
+				    uc);
 			free(vpp, M_DEVBUF);
 			free(cpp, M_DEVBUF);
 			goto out;
@@ -1183,7 +1183,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				    cs->sc_cinfo[i].ci_vp);
 #endif
 			(void)vn_close(cs->sc_cinfo[i].ci_vp, FREAD|FWRITE,
-			    uc, l);
+			    uc);
 			free(cs->sc_cinfo[i].ci_path, M_DEVBUF);
 		}
 

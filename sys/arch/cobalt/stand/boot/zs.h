@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.h,v 1.1.2.2 2008/03/17 09:14:16 yamt Exp $	*/
+/*	$NetBSD: zs.h,v 1.1.2.3 2008/03/24 09:38:38 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2008 Izumi Tsutsui.
@@ -29,10 +29,6 @@
 /*
  * optional Z85C30 serial on Qube 2700
  */
-
-#ifndef ZSBASE
-#define ZSBASE		0xbc800000
-#endif
 
 /* A/~B (Channel A/Channel B) pin is connected to DAdr0 */
 #define ZS_CHAN_A	0x01

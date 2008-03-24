@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.h,v 1.6.2.2 2006/12/30 20:46:55 yamt Exp $	*/
+/*	$NetBSD: exception.h,v 1.6.2.3 2008/03/24 09:38:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -156,17 +156,17 @@
 #define	SH4_INTEVT_IRQ14	0x3c0
 #define	SH4_INTEVT_IRQ15	0x3e0
 
+#define	SH4_INTEVT_PCISERR	0xa00
+#define	SH4_INTEVT_PCIDMA3	0xa20
+#define	SH4_INTEVT_PCIDMA2	0xa40
+#define	SH4_INTEVT_PCIDMA1	0xa60
+#define	SH4_INTEVT_PCIDMA0	0xa80
+#define	SH4_INTEVT_PCIPWON	0xaa0
+#define	SH4_INTEVT_PCIPWDWN	0xac0
+#define	SH4_INTEVT_PCIERR	0xae0
+
 #define	SH4_INTEVT_TMU3		0xb00
 #define	SH4_INTEVT_TMU4		0xb80
-
-#define	SH4_INTEVT_PCISERR	0xa00
-#define	SH4_INTEVT_PCIERR	0xae0
-#define	SH4_INTEVT_PCIPWDWN	0xac0
-#define	SH4_INTEVT_PCIPWON	0xaa0
-#define	SH4_INTEVT_PCIDMA0	0xa80
-#define	SH4_INTEVT_PCIDMA1	0xa60
-#define	SH4_INTEVT_PCIDMA2	0xa40
-#define	SH4_INTEVT_PCIDMA3	0xa20
 
 #ifndef _LOCORE
 

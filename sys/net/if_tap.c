@@ -1,7 +1,7 @@
-/*	$NetBSD: if_tap.c,v 1.10.2.8 2008/03/17 09:15:41 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.10.2.9 2008/03/24 09:39:09 yamt Exp $	*/
 
 /*
- *  Copyright (c) 2003, 2004 The NetBSD Foundation.
+ *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.8 2008/03/17 09:15:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.9 2008/03/24 09:39:09 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -132,15 +132,14 @@ static int	tap_dev_poll(int, int, struct lwp *);
 static int	tap_dev_kqfilter(int, struct knote *);
 
 /* Fileops access routines */
-static int	tap_fops_close(struct file *, struct lwp *);
-static int	tap_fops_read(struct file *, off_t *, struct uio *,
+static int	tap_fops_close(file_t *);
+static int	tap_fops_read(file_t *, off_t *, struct uio *,
     kauth_cred_t, int);
-static int	tap_fops_write(struct file *, off_t *, struct uio *,
+static int	tap_fops_write(file_t *, off_t *, struct uio *,
     kauth_cred_t, int);
-static int	tap_fops_ioctl(struct file *, u_long, void *,
-    struct lwp *);
-static int	tap_fops_poll(struct file *, int, struct lwp *);
-static int	tap_fops_kqfilter(struct file *, struct knote *);
+static int	tap_fops_ioctl(file_t *, u_long, void *);
+static int	tap_fops_poll(file_t *, int);
+static int	tap_fops_kqfilter(file_t *, struct knote *);
 
 static const struct fileops tap_fileops = {
 	tap_fops_read,
@@ -694,21 +693,20 @@ static int
 tap_dev_cloner(struct lwp *l)
 {
 	struct tap_softc *sc;
-	struct file *fp;
+	file_t *fp;
 	int error, fd;
 
-	if ((error = falloc(l, &fp, &fd)) != 0)
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return (error);
 
 	if ((sc = tap_clone_creator(-1)) == NULL) {
-		FILE_UNUSE(fp, l);
-		ffree(fp);
+		fd_abort(curproc, fp, fd);
 		return (ENXIO);
 	}
 
 	sc->sc_flags |= TAP_INUSE;
 
-	return fdclone(l, fp, fd, FREAD|FWRITE, &tap_fileops,
+	return fd_clone(fp, fd, FREAD|FWRITE, &tap_fileops,
 	    (void *)(intptr_t)device_unit(sc->sc_dev));
 }
 
@@ -742,7 +740,7 @@ tap_cdev_close(dev_t dev, int flags, int fmt,
  * would dead lock.  TAP_GOING ensures that this situation doesn't happen.
  */
 static int
-tap_fops_close(struct file *fp, struct lwp *l)
+tap_fops_close(file_t *fp)
 {
 	int unit = (intptr_t)fp->f_data;
 	struct tap_softc *sc;
@@ -806,7 +804,7 @@ tap_cdev_read(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-tap_fops_read(struct file *fp, off_t *offp, struct uio *uio,
+tap_fops_read(file_t *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
 	return tap_dev_read((intptr_t)fp->f_data, uio, flags);
@@ -904,7 +902,7 @@ tap_cdev_write(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-tap_fops_write(struct file *fp, off_t *offp, struct uio *uio,
+tap_fops_write(file_t *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
 	return tap_dev_write((intptr_t)fp->f_data, uio, flags);
@@ -974,9 +972,9 @@ tap_cdev_ioctl(dev_t dev, u_long cmd, void *data, int flags,
 }
 
 static int
-tap_fops_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
+tap_fops_ioctl(file_t *fp, u_long cmd, void *data)
 {
-	return tap_dev_ioctl((intptr_t)fp->f_data, cmd, (void *)data, l);
+	return tap_dev_ioctl((intptr_t)fp->f_data, cmd, data, curlwp);
 }
 
 static int
@@ -1007,11 +1005,11 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 		} break;
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		error = fsetown(l->l_proc, &sc->sc_pgid, cmd, data);
+		error = fsetown(&sc->sc_pgid, cmd, data);
 		break;
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		error = fgetown(l->l_proc, sc->sc_pgid, cmd, data);
+		error = fgetown(sc->sc_pgid, cmd, data);
 		break;
 	case FIOASYNC:
 		if (*(int *)data)
@@ -1050,9 +1048,9 @@ tap_cdev_poll(dev_t dev, int events, struct lwp *l)
 }
 
 static int
-tap_fops_poll(struct file *fp, int events, struct lwp *l)
+tap_fops_poll(file_t *fp, int events)
 {
-	return tap_dev_poll((intptr_t)fp->f_data, events, l);
+	return tap_dev_poll((intptr_t)fp->f_data, events, curlwp);
 }
 
 static int
@@ -1099,7 +1097,7 @@ tap_cdev_kqfilter(dev_t dev, struct knote *kn)
 }
 
 static int
-tap_fops_kqfilter(struct file *fp, struct knote *kn)
+tap_fops_kqfilter(file_t *fp, struct knote *kn)
 {
 	return tap_dev_kqfilter((intptr_t)fp->f_data, kn);
 }

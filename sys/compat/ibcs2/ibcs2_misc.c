@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.75.2.6 2008/02/04 09:23:01 yamt Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.75.2.7 2008/03/24 09:38:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.6 2008/02/04 09:23:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.75.2.7 2008/03/24 09:38:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,14 +371,13 @@ ibcs2_sys_getdents(struct lwp *l, const struct ibcs2_sys_getdents_args *uap, reg
 		syscallarg(char *) buf;
 		syscallarg(int) nbytes;
 	} */
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	char *outp;		/* iBCS2-format */
 	int resid, ibcs2_reclen;/* iBCS2-format */
-	struct file *fp;
+	file_t *fp;
 	struct uio auio;
 	struct iovec aiov;
 	struct ibcs2_dirent idb;
@@ -389,13 +388,13 @@ ibcs2_sys_getdents(struct lwp *l, const struct ibcs2_sys_getdents_args *uap, reg
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
 		goto out1;
 	}
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -486,7 +485,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
 
@@ -498,14 +497,13 @@ ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t 
 		syscallarg(char *) buf;
 		syscallarg(u_int) nbytes;
 	} */
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	char *outp;		/* iBCS2-format */
 	int resid, ibcs2_reclen;/* iBCS2-format */
-	struct file *fp;
+	file_t *fp;
 	struct uio auio;
 	struct iovec aiov;
 	struct ibcs2_direct {
@@ -520,7 +518,7 @@ ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t 
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0) {
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0) {
 		if (error == EINVAL)
 			return sys_read(l, (const void *)uap, retval);
 		else
@@ -532,7 +530,7 @@ ibcs2_sys_read(struct lwp *l, const struct ibcs2_sys_read_args *uap, register_t 
 	}
 	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
-		FILE_UNUSE(fp, l);
+		fd_putfile(SCARG(uap, fd));
 		return sys_read(l, (const void *)uap, retval);
 	}
 	buflen = min(MAXBSIZE, max(DEV_BSIZE, (size_t)SCARG(uap, nbytes)));
@@ -616,7 +614,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
 
@@ -1195,15 +1193,14 @@ xenix_sys_rdchk(struct lwp *l, const struct xenix_sys_rdchk_args *uap, register_
 	/* {
 		syscallarg(int) fd;
 	} */
-	struct file *fp;
+	file_t *fp;
 	int nbytes;
 	int error;
 
-	if ((fp = fd_getfile(l->l_proc->p_fd, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return (EBADF);
-	FILE_USE(fp);
-	error = (*fp->f_ops->fo_ioctl)(fp, FIONREAD, &nbytes, l);
-	FILE_UNUSE(fp, l);
+	error = (*fp->f_ops->fo_ioctl)(fp, FIONREAD, &nbytes);
+	fd_putfile(SCARG(uap, fd));
 
 	if (error != 0)
 		return error;
@@ -1437,5 +1434,5 @@ xenix_sys_locking(struct lwp *l, const struct xenix_sys_locking_args *uap, regis
 	fl.l_start = 0;
 	fl.l_whence = SEEK_CUR;
 
-	return do_fcntl_lock(l, SCARG(uap, fd), cmd, &fl);
+	return do_fcntl_lock(SCARG(uap, fd), cmd, &fl);
 }

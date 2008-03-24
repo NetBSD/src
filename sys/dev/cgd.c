@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.27.2.7 2008/01/21 09:42:23 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.27.2.8 2008/03/24 09:38:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.27.2.7 2008/01/21 09:42:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.27.2.8 2008/03/24 09:38:46 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -575,7 +575,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 
 bail:
 	free(inbuf, M_TEMP);
-	(void)vn_close(vp, FREAD|FWRITE, l->l_cred, l);
+	(void)vn_close(vp, FREAD|FWRITE, l->l_cred);
 	return ret;
 }
 
@@ -594,7 +594,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 	splx(s);
 	bufq_free(cs->sc_dksc.sc_bufq);
 
-	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, l->l_cred, l);
+	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, l->l_cred);
 	cs->sc_cfuncs->cf_destroy(cs->sc_cdata.cf_priv);
 	free(cs->sc_tpath, M_DEVBUF);
 	free(cs->sc_data, M_DEVBUF);

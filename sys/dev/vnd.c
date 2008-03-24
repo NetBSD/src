@@ -1,7 +1,7 @@
-/*	$NetBSD: vnd.c,v 1.114.2.8 2008/03/17 09:14:37 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.114.2.9 2008/03/24 09:38:46 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.8 2008/03/17 09:14:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.9 2008/03/24 09:38:46 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1215,7 +1215,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 close_and_exit:
-		(void) vn_close(nd.ni_vp, fflags, l->l_cred, l);
+		(void) vn_close(nd.ni_vp, fflags, l->l_cred);
 unlock_and_exit:
 #ifdef VND_COMPRESSION
 		/* free any allocated memory (for compressed file) */
@@ -1493,7 +1493,6 @@ static void
 vndclear(struct vnd_softc *vnd, int myminor)
 {
 	struct vnode *vp = vnd->sc_vp;
-	struct lwp *l = curlwp;
 	int fflags = FREAD;
 	int bmaj, cmaj, i, mn;
 	int s;
@@ -1548,7 +1547,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 	      | VNF_VUNCONF | VNF_COMP);
 	if (vp == (struct vnode *)0)
 		panic("vndclear: null vp");
-	(void) vn_close(vp, fflags, vnd->sc_cred, l);
+	(void) vn_close(vp, fflags, vnd->sc_cred);
 	kauth_cred_free(vnd->sc_cred);
 	vnd->sc_vp = (struct vnode *)0;
 	vnd->sc_cred = (kauth_cred_t)0;

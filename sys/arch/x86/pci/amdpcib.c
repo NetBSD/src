@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib.c,v 1.1.2.2 2007/10/27 11:28:57 yamt Exp $ */
+/* $NetBSD: amdpcib.c,v 1.1.2.3 2008/03/24 09:38:40 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.1.2.2 2007/10/27 11:28:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.1.2.3 2008/03/24 09:38:40 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -39,24 +39,21 @@ __KERNEL_RCSID(0, "$NetBSD: amdpcib.c,v 1.1.2.2 2007/10/27 11:28:57 yamt Exp $")
 #include <dev/pci/pcidevs.h>
 
 struct amdpcib_softc {
-	struct device		sc_dev;
-
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
 };
 
-static int	amdpcib_match(struct device *, struct cfdata *, void *);
-static void	amdpcib_attach(struct device *, struct device *, void *);
+static int	amdpcib_match(device_t, cfdata_t, void *);
+static void	amdpcib_attach(device_t, device_t, void *);
 static int	amdpcib_search(device_t, cfdata_t, const int *, void *);
-
 
 extern void	pcibattach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(amdpcib, sizeof(struct amdpcib_softc), amdpcib_match,
+CFATTACH_DECL_NEW(amdpcib, sizeof(struct amdpcib_softc), amdpcib_match,
     amdpcib_attach, NULL, NULL);
 
 static int
-amdpcib_match(struct device *parent, struct cfdata *match, void *aux)
+amdpcib_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -68,17 +65,12 @@ amdpcib_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-amdpcib_attach(struct device *parent, struct device *self, void *aux)
+amdpcib_attach(device_t parent, device_t self, void *aux)
 {
-	struct amdpcib_softc *sc;
-	struct pci_attach_args *pa;
-
-	sc = (struct amdpcib_softc *)self;
-	pa = (struct pci_attach_args *)aux;
+	struct pci_attach_args *pa = aux;
 
 	pcibattach(parent, self, aux);
-
-	config_search_loc(amdpcib_search, &sc->sc_dev, "amdpcib", NULL, pa);
+	config_search_loc(amdpcib_search, self, "amdpcib", NULL, pa);
 }
 
 static int

@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_stat.c,v 1.11.4.5 2008/01/21 09:41:05 yamt Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.11.4.6 2008/03/24 09:38:41 yamt Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.11.4.5 2008/01/21 09:41:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.11.4.6 2008/03/24 09:38:41 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -160,7 +160,7 @@ irix_sys_xstat(struct lwp *l, const struct irix_sys_xstat_args *uap, register_t 
 	struct stat st;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &st);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -178,7 +178,7 @@ irix_sys_lxstat(struct lwp *l, const struct irix_sys_lxstat_args *uap, register_
 	struct stat st;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &st);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &st);
 	if (error != 0)
 		return error;
 	return convert_irix_stat(&st, SCARG(uap, buf), SCARG(uap, version));
@@ -195,7 +195,7 @@ irix_sys_fxstat(struct lwp *l, const struct irix_sys_fxstat_args *uap, register_
 	struct stat st;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &st);
+	error = do_sys_fstat(SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
 	return convert_irix_stat(&st, SCARG(uap, buf), SCARG(uap, version));

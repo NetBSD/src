@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.103.2.11 2008/03/17 09:15:11 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.103.2.12 2008/03/24 09:38:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.103.2.11 2008/03/17 09:15:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.103.2.12 2008/03/24 09:38:51 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -544,16 +544,16 @@ static void	wm_tbi_check_link(struct wm_softc *);
 
 static void	wm_gmii_reset(struct wm_softc *);
 
-static int	wm_gmii_i82543_readreg(struct device *, int, int);
-static void	wm_gmii_i82543_writereg(struct device *, int, int, int);
+static int	wm_gmii_i82543_readreg(device_t, int, int);
+static void	wm_gmii_i82543_writereg(device_t, int, int, int);
 
-static int	wm_gmii_i82544_readreg(struct device *, int, int);
-static void	wm_gmii_i82544_writereg(struct device *, int, int, int);
+static int	wm_gmii_i82544_readreg(device_t, int, int);
+static void	wm_gmii_i82544_writereg(device_t, int, int, int);
 
-static int	wm_gmii_i80003_readreg(struct device *, int, int);
-static void	wm_gmii_i80003_writereg(struct device *, int, int, int);
+static int	wm_gmii_i80003_readreg(device_t, int, int);
+static void	wm_gmii_i80003_writereg(device_t, int, int, int);
 
-static void	wm_gmii_statchg(struct device *);
+static void	wm_gmii_statchg(device_t);
 
 static void	wm_gmii_mediainit(struct wm_softc *);
 static int	wm_gmii_mediachange(struct ifnet *);
@@ -562,8 +562,8 @@ static void	wm_gmii_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	wm_kmrn_i80003_readreg(struct wm_softc *, int);
 static void	wm_kmrn_i80003_writereg(struct wm_softc *, int, int);
 
-static int	wm_match(struct device *, struct cfdata *, void *);
-static void	wm_attach(struct device *, struct device *, void *);
+static int	wm_match(device_t, struct cfdata *, void *);
+static void	wm_attach(device_t, device_t, void *);
 static int	wm_is_onboard_nvm_eeprom(struct wm_softc *);
 static void	wm_get_auto_rd_done(struct wm_softc *);
 static int	wm_get_swsm_semaphore(struct wm_softc *);
@@ -899,7 +899,7 @@ wm_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-wm_match(struct device *parent, struct cfdata *cf, void *aux)
+wm_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -910,9 +910,9 @@ wm_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-wm_attach(struct device *parent, struct device *self, void *aux)
+wm_attach(device_t parent, device_t self, void *aux)
 {
-	struct wm_softc *sc = (void *) self;
+	struct wm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -1034,7 +1034,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, preg);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
@@ -4474,9 +4474,9 @@ i82543_mii_recvbits(struct wm_softc *sc)
  *	Read a PHY register on the GMII (i82543 version).
  */
 static int
-wm_gmii_i82543_readreg(struct device *self, int phy, int reg)
+wm_gmii_i82543_readreg(device_t self, int phy, int reg)
 {
-	struct wm_softc *sc = (void *) self;
+	struct wm_softc *sc = device_private(self);
 	int rv;
 
 	i82543_mii_sendbits(sc, 0xffffffffU, 32);
@@ -4497,9 +4497,9 @@ wm_gmii_i82543_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the GMII (i82543 version).
  */
 static void
-wm_gmii_i82543_writereg(struct device *self, int phy, int reg, int val)
+wm_gmii_i82543_writereg(device_t self, int phy, int reg, int val)
 {
-	struct wm_softc *sc = (void *) self;
+	struct wm_softc *sc = device_private(self);
 
 	i82543_mii_sendbits(sc, 0xffffffffU, 32);
 	i82543_mii_sendbits(sc, val | (MII_COMMAND_ACK << 16) |
@@ -4513,9 +4513,9 @@ wm_gmii_i82543_writereg(struct device *self, int phy, int reg, int val)
  *	Read a PHY register on the GMII.
  */
 static int
-wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
+wm_gmii_i82544_readreg(device_t self, int phy, int reg)
 {
-	struct wm_softc *sc = (void *) self;
+	struct wm_softc *sc = device_private(self);
 	uint32_t mdic = 0;
 	int i, rv;
 
@@ -4554,9 +4554,9 @@ wm_gmii_i82544_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the GMII.
  */
 static void
-wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
+wm_gmii_i82544_writereg(device_t self, int phy, int reg, int val)
 {
-	struct wm_softc *sc = (void *) self;
+	struct wm_softc *sc = device_private(self);
 	uint32_t mdic = 0;
 	int i;
 
@@ -4586,9 +4586,9 @@ wm_gmii_i82544_writereg(struct device *self, int phy, int reg, int val)
  * ressource ...
  */
 static int
-wm_gmii_i80003_readreg(struct device *self, int phy, int reg)
+wm_gmii_i80003_readreg(device_t self, int phy, int reg)
 {
-	struct wm_softc *sc = (void *) self;
+	struct wm_softc *sc = device_private(self);
 	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 	int rv;
 
@@ -4619,9 +4619,9 @@ wm_gmii_i80003_readreg(struct device *self, int phy, int reg)
  * ressource ...
  */
 static void
-wm_gmii_i80003_writereg(struct device *self, int phy, int reg, int val)
+wm_gmii_i80003_writereg(device_t self, int phy, int reg, int val)
 {
-	struct wm_softc *sc = (void *) self;
+	struct wm_softc *sc = device_private(self);
 	int func = ((CSR_READ(sc, WMREG_STATUS) >> STATUS_FUNCID_SHIFT) & 1);
 
 	if (phy != 1) /* only one PHY on kumeran bus */
@@ -4648,9 +4648,9 @@ wm_gmii_i80003_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-wm_gmii_statchg(struct device *self)
+wm_gmii_statchg(device_t self)
 {
-	struct wm_softc *sc = (void *) self;
+	struct wm_softc *sc = device_private(self);
 	struct mii_data *mii = &sc->sc_mii;
 
 	sc->sc_ctrl &= ~(CTRL_TFCE | CTRL_RFCE);

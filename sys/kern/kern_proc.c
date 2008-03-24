@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.80.12.9 2008/03/17 09:15:33 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.80.12.10 2008/03/24 09:39:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80.12.9 2008/03/17 09:15:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80.12.10 2008/03/24 09:39:01 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -207,7 +207,7 @@ struct pgrp pgrp0 = {
 	.pg_members = LIST_HEAD_INITIALIZER(&pgrp0.pg_members),
 	.pg_session = &session0,
 };
-struct filedesc0 filedesc0;
+filedesc_t filedesc0;
 struct cwdinfo cwdi0 = {
 	.cwdi_cmask = CMASK,		/* see cmask below */
 	.cwdi_refcnt = 1,
@@ -244,7 +244,7 @@ struct proc proc0 = {
 	.p_emul = &emul_netbsd,
 	.p_cwdi = &cwdi0,
 	.p_limit = &limit0,
-	.p_fd = &filedesc0.fd_fd,
+	.p_fd = &filedesc0,
 	.p_vmspace = &vmspace0,
 	.p_stats = &pstat0,
 	.p_sigacts = &sigacts0,
@@ -411,7 +411,7 @@ proc0_init(void)
 	uvm_init_limits(p);
 
 	/* Initialize file descriptor table for proc0. */
-	fdinit1(&filedesc0);
+	fd_init(&filedesc0);
 
 	/*
 	 * Initialize proc0's vmspace, which uses the kernel pmap.
@@ -1320,7 +1320,7 @@ proc_crmod_enter(void)
 void
 proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 {
-	struct lwp *l = curlwp;
+	struct lwp *l = curlwp, *l2;
 	struct proc *p = l->l_proc;
 	kauth_cred_t oc;
 
@@ -1328,6 +1328,10 @@ proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 	if (scred != NULL) {
 		mutex_enter(&p->p_smutex);
 		p->p_cred = scred;
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+			if (l2 != l)
+				l2->l_prflag |= LPR_CRMOD;
+		}
 		mutex_exit(&p->p_smutex);
 
 		/* Ensure the LWP cached credentials are up to date. */

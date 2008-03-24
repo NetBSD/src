@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.2.16.2 2008/03/17 09:14:16 yamt Exp $	*/
+/*	$NetBSD: cons.c,v 1.2.16.3 2008/03/24 09:38:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,6 +77,8 @@
  */
 
 #include <lib/libsa/stand.h>
+
+#include <machine/cpu.h>
 
 #include "boot.h"
 #include "cons.h"

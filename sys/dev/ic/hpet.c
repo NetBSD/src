@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.1.20.6 2008/03/17 09:14:42 yamt Exp $ */
+/* $NetBSD: hpet.c,v 1.1.20.7 2008/03/24 09:38:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.20.6 2008/03/17 09:14:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.1.20.7 2008/03/24 09:38:50 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -51,13 +51,15 @@ static u_int	hpet_get_timecount(struct timecounter *);
 static bool	hpet_resume(device_t PMF_FN_PROTO);
 
 void
-hpet_attach_subr(struct hpet_softc *sc) {
+hpet_attach_subr(device_t dv)
+{
+	struct hpet_softc *sc = device_private(dv);
 	struct timecounter *tc;
 	uint32_t val;
 
 	tc = &sc->sc_tc;
 
-	tc->tc_name = sc->sc_dev.dv_xname;
+	tc->tc_name = device_xname(dv);
 	tc->tc_get_timecount = hpet_get_timecount;
 	tc->tc_quality = 2000;
 
@@ -77,12 +79,13 @@ hpet_attach_subr(struct hpet_softc *sc) {
 	tc->tc_priv = sc;
 	tc_init(tc);
 
-	if (!pmf_device_register(&sc->sc_dev, NULL, hpet_resume))
-		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
+	if (!pmf_device_register(dv, NULL, hpet_resume))
+		aprint_error_dev(dv, "couldn't establish power handler\n");
 }
 
 static u_int
-hpet_get_timecount(struct timecounter *tc) {
+hpet_get_timecount(struct timecounter *tc)
+{
 	struct hpet_softc *sc = tc->tc_priv;
 
 	return bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_MCOUNT_LO);

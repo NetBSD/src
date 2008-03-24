@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.1.12.2 2007/09/03 14:41:03 yamt Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.1.12.3 2008/03/24 09:39:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.1.12.2 2007/09/03 14:41:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.1.12.3 2008/03/24 09:39:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -55,6 +55,7 @@ hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
 {
 	u_long hashsize, i;
 	LIST_HEAD(, generic) *hashtbl_list;
+	SLIST_HEAD(, generic) *hashtbl_slist;
 	TAILQ_HEAD(, generic) *hashtbl_tailq;
 	size_t esize;
 	void *p;
@@ -67,6 +68,9 @@ hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
 	switch (htype) {
 	case HASH_LIST:
 		esize = sizeof(*hashtbl_list);
+		break;
+	case HASH_SLIST:
+		esize = sizeof(*hashtbl_slist);
 		break;
 	case HASH_TAILQ:
 		esize = sizeof(*hashtbl_tailq);
@@ -87,6 +91,11 @@ hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
 		hashtbl_list = p;
 		for (i = 0; i < hashsize; i++)
 			LIST_INIT(&hashtbl_list[i]);
+		break;
+	case HASH_SLIST:
+		hashtbl_slist = p;
+		for (i = 0; i < hashsize; i++)
+			SLIST_INIT(&hashtbl_slist[i]);
 		break;
 	case HASH_TAILQ:
 		hashtbl_tailq = p;
