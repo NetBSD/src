@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.4 2008/03/24 10:22:41 xtraeme Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.5 2008/03/24 10:33:17 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.4 2008/03/24 10:22:41 xtraeme Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.5 2008/03/24 10:33:17 xtraeme Exp $");
 #endif
 
 #include <stdio.h>
@@ -270,7 +270,7 @@ showcpuset(cpuset_t *cpuset)
 
 	size = 3 * ncpu;	/* XXX */
 	buf = malloc(size + 1);
-	if (cpuset == NULL)
+	if (buf == NULL)
 		err(EXIT_FAILURE, "malloc");
 	memset(buf, '\0', size + 1);
 
