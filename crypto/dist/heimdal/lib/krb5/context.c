@@ -35,7 +35,7 @@
 #include <com_err.h>
 
 __RCSID("$Heimdal: context.c 22293 2007-12-14 05:25:59Z lha $"
-        "$NetBSD: context.c,v 1.13 2008/03/22 08:37:13 mlelstv Exp $");
+        "$NetBSD: context.c,v 1.14 2008/03/24 13:56:41 mlelstv Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
@@ -332,7 +332,7 @@ krb5_set_config_files(krb5_context context, char **filenames)
 	}
 	filenames++;
     }
-#if 0
+#if 1
     /* with this enabled and if there are no config files, Kerberos is
        considererd disabled */
     if(tmp == NULL)
