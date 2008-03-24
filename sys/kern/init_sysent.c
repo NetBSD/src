@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.216 2008/03/22 14:20:30 ad Exp $ */
+/* $NetBSD: init_sysent.c,v 1.217 2008/03/24 12:24:37 yamt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.216 2008/03/22 14:20:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.217 2008/03/24 12:24:37 yamt Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -427,7 +427,7 @@ struct sysent sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 154 = unimplemented */
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-	{ ns(struct sys_nfssvc_args), 0,
+	{ ns(struct sys_nfssvc_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_nfssvc },		/* 155 = nfssvc */
 #else
 	{ 0, 0, 0,

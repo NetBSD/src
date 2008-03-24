@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.155 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.156 2008/03/24 12:24:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.155 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.156 2008/03/24 12:24:37 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -253,25 +253,16 @@ sokvafree(vaddr_t sva, vsize_t len)
 static void
 sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 {
-	vaddr_t va, sva, eva;
+	vaddr_t sva, eva;
 	vsize_t len;
-	paddr_t pa;
-	int i, npgs;
+	int npgs;
+
+	KASSERT(pgs != NULL);
 
 	eva = round_page((vaddr_t) buf + size);
 	sva = trunc_page((vaddr_t) buf);
 	len = eva - sva;
 	npgs = len >> PAGE_SHIFT;
-
-	if (__predict_false(pgs == NULL)) {
-		pgs = alloca(npgs * sizeof(*pgs));
-
-		for (i = 0, va = sva; va < eva; i++, va += PAGE_SIZE) {
-			if (pmap_extract(pmap_kernel(), va, &pa) == false)
-				panic("sodoloanfree: va 0x%lx not mapped", va);
-			pgs[i] = PHYS_TO_VM_PAGE(pa);
-		}
-	}
 
 	pmap_kremove(sva, len);
 	pmap_update(pmap_kernel());
@@ -313,10 +304,11 @@ sodopendfreel(void)
 
 		for (; m != NULL; m = next) {
 			next = m->m_next;
+			KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) == 0);
+			KASSERT(m->m_ext.ext_refcnt == 0);
 
 			rv += m->m_ext.ext_size;
-			sodoloanfree((m->m_flags & M_EXT_PAGES) ?
-			    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
+			sodoloanfree(m->m_ext.ext_pgs, m->m_ext.ext_buf,
 			    m->m_ext.ext_size);
 			pool_cache_put(mb_cache, m);
 		}
@@ -331,15 +323,7 @@ void
 soloanfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 
-	if (m == NULL) {
-
-		/*
-		 * called from MEXTREMOVE.
-		 */
-
-		sodoloanfree(NULL, buf, size);
-		return;
-	}
+	KASSERT(m != NULL);
 
 	/*
 	 * postpone freeing mbuf.
@@ -361,8 +345,10 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	struct iovec *iov = uio->uio_iov;
 	vaddr_t sva, eva;
 	vsize_t len;
-	vaddr_t lva, va;
-	int npgs, i, error;
+	vaddr_t lva;
+	int npgs, error;
+	vaddr_t va;
+	int i;
 
 	if (VMSPACE_IS_KERNEL_P(uio->uio_vmspace))
 		return (0);
