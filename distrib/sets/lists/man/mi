@@ -1,11 +1,11 @@
-# $NetBSD: mi,v 1.955.2.16 2007/09/28 20:17:10 xtraeme Exp $
+# $NetBSD: mi,v 1.955.2.16.2.1 2008/03/24 20:19:50 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
 ./usr/share/info/awk.info			man-util-info		info
 ./usr/share/info/bfd.info			man-computil-info	bfd,info
 ./usr/share/info/binutils.info			man-computil-info	bfd,info
-./usr/share/info/bzip2.info			man-util-info		info
+./usr/share/info/bzip2.info			man-obsolere		obsolete
 ./usr/share/info/cpp.info			man-util-info		gcccmds,info
 ./usr/share/info/cvs.info			man-cvs-info		cvs,info
 ./usr/share/info/cvsclient.info			man-cvs-info		cvs,info
