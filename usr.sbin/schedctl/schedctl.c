@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.3 2008/02/09 17:01:51 yamt Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.4 2008/03/24 10:22:41 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.3 2008/02/09 17:01:51 yamt Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.4 2008/03/24 10:22:41 xtraeme Exp $");
 #endif
 
 #include <stdio.h>
@@ -82,11 +82,10 @@ main(int argc, char **argv)
 	cpuset = NULL;
 	set = false;
 
-	sp = malloc(sizeof(struct sched_param));
+	sp = calloc(1, sizeof(struct sched_param));
 	if (sp == NULL)
-		err(EXIT_FAILURE, "malloc");
+		err(EXIT_FAILURE, "calloc");
 
-	memset(sp, 0, sizeof(struct sched_param));
 	sp->sched_priority = PRI_NONE;
 	policy = SCHED_NONE;
 
@@ -223,10 +222,9 @@ makecpuset(char *str)
 	if (str == NULL)
 		return NULL;
 
-	cpuset = malloc(sizeof(cpuset_t));
+	cpuset = calloc(1, sizeof(cpuset_t));
 	if (cpuset == NULL)
 		err(EXIT_FAILURE, "malloc");
-	memset(cpuset, 0, sizeof(cpuset_t));
 
 	cpustr = strdup(str);
 	if (cpustr == NULL)
@@ -293,9 +291,7 @@ showcpuset(cpuset_t *cpuset)
 static void
 usage(void)
 {
-	const char *progname = getprogname();
-
-	fprintf(stderr, "usage: %s -p pid [ -t lid ] [ -A processor ]\n"
-	    "\t [ -C class ] [ -P priority ]\n", progname);
+	fprintf(stderr, "usage: %s -p pid [-t lid] [-A processor] "
+	    "[-C class] [-P priority]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
