@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.246 2008/03/17 09:17:43 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.247 2008/03/24 09:38:04 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -530,7 +530,7 @@ Description:	change the way to share mbuf external storage so that
 Status:		Active
 Start Date:	Wed Jul  6 2005
 End Date:	
-Base Tag:	yamt-lazymbuf-base13
+Base Tag:	yamt-lazymbuf-base14
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
