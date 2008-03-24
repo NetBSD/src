@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.110 2008/02/25 05:56:13 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.111 2008/03/24 18:03:27 jmmv Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -99,7 +99,7 @@ LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 # -fno-reorder-blocks.  Don't make this a config(1) defflag without
 # making sure this fragment remains valid.
 .if ${HAVE_GCC} > 3 && !empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
-CFLAGS.kern_synch.c+=	-fno-reorder-blocks
+COPTS.kern_synch.c+=	-fno-reorder-blocks
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
