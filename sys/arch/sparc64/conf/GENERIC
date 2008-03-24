@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2008/02/02 13:42:43 tron Exp $
+# $NetBSD: GENERIC,v 1.99 2008/03/24 13:48:18 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.99 $"
 
 maxusers	64
 
@@ -903,6 +903,7 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	bcsp			# BlueCore Serial Protocol
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
+pseudo-device	lockstat		# lock profiling
 
 options		FILEASSOC		# fileassoc(9) - required for Veriexec 
 
