@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.91 2008/03/21 13:42:39 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.92 2008/03/24 16:57:28 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -55,7 +55,7 @@
 typedef wchar_t	chtype;
 typedef wchar_t	attr_t;
 
-#ifndef HAVE_WCHAR
+#if !defined(HAVE_WCHAR) && !defined(DISABLE_WCHAR)
 #define HAVE_WCHAR 1
 #endif
 
