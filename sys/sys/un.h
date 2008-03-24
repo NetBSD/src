@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.41 2008/02/23 09:37:54 is Exp $	*/
+/*	$NetBSD: un.h,v 1.42 2008/03/24 12:24:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -91,7 +91,7 @@ void	unp_mark (struct file *);
 void	unp_scan (struct mbuf *, void (*)(struct file *), int);
 void	unp_shutdown (struct unpcb *);
 int 	unp_externalize (struct mbuf *, struct lwp *);
-int	unp_internalize (struct mbuf *, struct lwp *);
+int	unp_internalize (struct mbuf **, struct lwp *);
 void 	unp_dispose (struct mbuf *);
 int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
 	    struct lwp *);
