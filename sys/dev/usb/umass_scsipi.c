@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.30 2007/03/04 06:02:49 christos Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.31 2008/03/24 14:44:26 cube Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.30 2007/03/04 06:02:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.31 2008/03/24 14:44:26 cube Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -519,8 +519,8 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 
 	periph = scsipi_alloc_periph(M_NOWAIT);
 	if (periph == NULL) {
-		printf("%s: can't allocate link for drive %d\n",
-		       atapi->sc_dev.dv_xname, target);
+		aprint_error_dev(atapi->sc_dev,
+		    "can't allocate link for drive %d\n", target);
 		return;
 	}
 

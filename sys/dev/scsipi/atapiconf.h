@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.21 2006/11/23 08:44:42 he Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.22 2008/03/24 14:44:26 cube Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
 #include <dev/scsipi/scsipiconf.h>
 
 struct atapibus_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct scsipi_channel *sc_channel;	/* our scsipi_channel */
 };
 

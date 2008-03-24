@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.13 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.14 2008/03/24 14:44:26 cube Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.13 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.14 2008/03/24 14:44:26 cube Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1519,14 +1519,15 @@ ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
 	if (ata_get_params(drvp,  AT_WAIT, id) == 0) {
 #ifdef ATAPI_DEBUG_PROBE
 		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
-		    AHCINAME(sc), target,
+		    AHCINAME(ahcic), target,
 		    id->atap_config & ATAPI_CFG_CMD_MASK,
 		    id->atap_config & ATAPI_CFG_DRQ_MASK);
 #endif
 		periph = scsipi_alloc_periph(M_NOWAIT);
 		if (periph == NULL) {
-			printf("%s: unable to allocate periph for drive %d\n",
-			    device_xname(&sc->sc_dev), target);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to allocate periph for drive %d\n",
+			    target);
 			return;
 		}
 		periph->periph_dev = NULL;
