@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.192 2008/03/23 10:39:52 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.193 2008/03/25 23:21:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.192 2008/03/23 10:39:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.193 2008/03/25 23:21:43 yamt Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -388,6 +388,10 @@ brele(buf_t *bp)
 	}
 }
 
+/*
+ * note that for some ports this is used by pmap bootstrap code to
+ * determine kva size.
+ */
 u_long
 buf_memcalc(void)
 {
@@ -413,7 +417,9 @@ buf_memcalc(void)
 			printf("forcing bufcache %d -> 95", bufcache);
 			bufcache = 95;
 		}
-		n = calc_cache_size(buf_map, bufcache) / PAGE_SIZE;
+		n = calc_cache_size(buf_map, bufcache,
+		    (buf_map != kernel_map) ? 100 : BUFCACHE_VA_MAXPCT)
+		    / PAGE_SIZE;
 	}
 
 	n <<= PAGE_SHIFT;
