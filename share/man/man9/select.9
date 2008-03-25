@@ -1,4 +1,4 @@
-.\"     $NetBSD: select.9,v 1.1 2008/03/02 00:30:21 rmind Exp $
+.\"     $NetBSD: select.9,v 1.2 2008/03/25 21:51:32 xtraeme Exp $
 .\"
 .\" Copyright (C) 2002 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" $FreeBSD: src/share/man/man9/selrecord.9,v 1.2 2002/05/30 13:29:17 ru Exp $
 .\"
 .\" FreeBSD: .Dd March 20, 2002
-.Dd March 2, 2008
+.Dd March 25, 2008
 .Dt SELECT 9
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The core of the select and poll subsystem implementation is in
-.Pa sys/kern/sys_generic.c .
+.Pa sys/kern/sys_select.c .
 Data structures and function prototypes are located in
 .Pa sys/sys/select.h ,
 .Pa sys/sys/poll.h
