@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.458 2008/03/25 19:41:56 apb Exp $
+#	$NetBSD: Makefile,v 1.459 2008/03/25 20:04:33 reed Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
@@ -130,9 +130,12 @@ MLINKS+=drm.4 tdfxdrm.4
 MLINKS+=drm.4 viadrm.4
 
 MLINKS+=ata.4 atabus.4
+MLINKS+=audio.4 audioctl.4
 MLINKS+=audio.4 mixer.4
 MLINKS+=audio.4 sound.4
 MLINKS+=bha.4 bt.4
+MLINKS+=bktr.4 tuner.4
+MLINKS+=bktr.4 vbi.4
 MLINKS+=cardbus.4 cardslot.4
 MLINKS+=cardbus.4 cbb.4
 MLINKS+=crypto.4 swcrypto.4
@@ -156,6 +159,8 @@ MLINKS+=pcppi.4 isabeep.4
 MLINKS+=pcppi.4 sysbeep.4
 MLINKS+=pms.4 pmsi.4
 MLINKS+=rcons.4 rasterconsole.4
+MLINKS+=rnd.4 random.4
+MLINKS+=rnd.4 urandom.4
 MLINKS+=scsi.4 atapi.4
 MLINKS+=scsi.4 atapibus.4
 MLINKS+=scsi.4 scsibus.4
@@ -167,6 +172,7 @@ MLINKS+=tty.4 dty.4
 MLINKS+=url.4 urlphy.4
 MLINKS+=usb.4 uhub.4
 MLINKS+=usb.4 usbtask.4
+MLINKS+=wsmux.4 wsmuxctl.4
 MLINKS+=zstty.4 zs.4 zstty.4 zsc.4
 
 # This is a hack
