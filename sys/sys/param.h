@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.311 2008/03/24 12:26:30 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.312 2008/03/25 23:21:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -135,6 +135,12 @@
 #ifndef NVNODE
 #define	NVNODE	(NPROC + NTEXT + 100)
 #define	NVNODE_IMPLICIT
+#endif
+#ifndef VNODE_VA_MAXPCT
+#define	VNODE_VA_MAXPCT	20
+#endif
+#ifndef BUFCACHE_VA_MAXPCT
+#define	BUFCACHE_VA_MAXPCT	20
 #endif
 #endif /* _KERNEL */
 

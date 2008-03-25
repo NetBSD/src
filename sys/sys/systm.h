@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.217 2008/03/23 10:39:52 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.218 2008/03/25 23:21:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -493,6 +493,6 @@ void assert_sleepable(void);
 #define	ASSERT_SLEEPABLE()	/* nothing */
 #endif /* defined(DEBUG) */
 
-vaddr_t calc_cache_size(struct vm_map *, int);
+vaddr_t calc_cache_size(struct vm_map *, int, int);
 
 #endif	/* !_SYS_SYSTM_H_ */
