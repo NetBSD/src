@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.31 2007/11/24 13:20:53 isaki Exp $	*/
+/*	$NetBSD: bootp.c,v 1.32 2008/03/25 21:23:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -125,15 +125,15 @@ bootp(int sock)
 #endif
 
 	bp = &wbuf.wbootp;
-	bzero(bp, sizeof(*bp));
+	(void)memset(bp, 0, sizeof(*bp));
 
 	bp->bp_op = BOOTREQUEST;
 	bp->bp_htype = 1;		/* 10Mb Ethernet (48 bits) */
 	bp->bp_hlen = 6;
 	bp->bp_xid = htonl(d->xid);
 	MACPY(d->myea, bp->bp_chaddr);
-	strncpy((char *)bp->bp_file, bootfile, sizeof(bp->bp_file));
-	bcopy(vm_rfc1048, bp->bp_vend, sizeof(vm_rfc1048));
+	(void)strncpy((char *)bp->bp_file, bootfile, sizeof(bp->bp_file));
+	(void)memcpy(bp->bp_vend, vm_rfc1048, sizeof(vm_rfc1048));
 #ifdef SUPPORT_DHCP
 	bp->bp_vend[4] = TAG_DHCP_MSGTYPE;
 	bp->bp_vend[5] = 1;
@@ -145,7 +145,7 @@ bootp(int sock)
 	vcilen = strlen(vci);
 	bp->bp_vend[7] = TAG_CLASSID;
 	bp->bp_vend[8] = vcilen;
-	bcopy(vci, &bp->bp_vend[9], vcilen);
+	(void)memcpy(&bp->bp_vend[9], vci, vcilen);
 	bp->bp_vend[9 + vcilen] = TAG_END;
 #else
 	bp->bp_vend[4] = TAG_END;
@@ -175,14 +175,14 @@ bootp(int sock)
 		bp->bp_vend[6] = DHCPREQUEST;
 		bp->bp_vend[7] = TAG_REQ_ADDR;
 		bp->bp_vend[8] = 4;
-		bcopy(&rbuf.rbootp.bp_yiaddr, &bp->bp_vend[9], 4);
+		(void)memcpy(&bp->bp_vend[9], &rbuf.rbootp.bp_yiaddr, 4);
 		bp->bp_vend[13] = TAG_SERVERID;
 		bp->bp_vend[14] = 4;
-		bcopy(&dhcp_serverip.s_addr, &bp->bp_vend[15], 4);
+		(void)memcpy(&bp->bp_vend[15], &dhcp_serverip.s_addr, 4);
 		bp->bp_vend[19] = TAG_LEASETIME;
 		bp->bp_vend[20] = 4;
 		leasetime = htonl(300);
-		bcopy(&leasetime, &bp->bp_vend[21], 4);
+		(void)memcpy(&bp->bp_vend[21], &leasetime, 4);
 		/*
 		 * Insert a NetBSD Vendor Class Identifier option.
 		 */
@@ -190,7 +190,7 @@ bootp(int sock)
 		vcilen = strlen(vci);
 		bp->bp_vend[25] = TAG_CLASSID;
 		bp->bp_vend[26] = vcilen;
-		bcopy(vci, &bp->bp_vend[27], vcilen);
+		(void)memcpy(&bp->bp_vend[27], vci, vcilen);
 		bp->bp_vend[27 + vcilen] = TAG_END;
 
 		expected_dhcpmsgtype = DHCPACK;
@@ -209,7 +209,7 @@ bootp(int sock)
 	servip = rbuf.rbootp.bp_siaddr;
 	if (rootip.s_addr == INADDR_ANY)
 		rootip = servip;
-	bcopy(rbuf.rbootp.bp_file, bootfile, sizeof(bootfile));
+	(void)memcpy(bootfile, rbuf.rbootp.bp_file, sizeof(bootfile));
 	bootfile[sizeof(bootfile) - 1] = '\0';
 
 	if (IN_CLASSA(myip.s_addr))
@@ -373,14 +373,14 @@ vend_rfc1048(u_char *cp, u_int len)
 			break;
 
 		if (tag == TAG_SUBNET_MASK) {
-			bcopy(cp, &smask, sizeof(smask));
+			(void)memcpy(&smask, cp, sizeof(smask));
 		}
 		if (tag == TAG_GATEWAY) {
-			bcopy(cp, &gateip.s_addr, sizeof(gateip.s_addr));
+			(void)memcpy(&gateip.s_addr, cp, sizeof(gateip.s_addr));
 		}
 		if (tag == TAG_SWAPSERVER) {
 			/* let it override bp_siaddr */
-			bcopy(cp, &rootip.s_addr, sizeof(rootip.s_addr));
+			(void)memcpy(&rootip.s_addr, cp, sizeof(rootip.s_addr));
 		}
 		if (tag == TAG_ROOTPATH) {
 			strncpy(rootpath, (char *)cp, sizeof(rootpath));
@@ -397,7 +397,7 @@ vend_rfc1048(u_char *cp, u_int len)
 			dhcp_ok = 1;
 		}
 		if (tag == TAG_SERVERID) {
-			bcopy(cp, &dhcp_serverip.s_addr,
+			(void)memcpy(&dhcp_serverip.s_addr, cp, 
 			      sizeof(dhcp_serverip.s_addr));
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.20 2007/12/02 04:59:25 tsutsui Exp $	*/
+/*	$NetBSD: cread.c,v 1.21 2008/03/25 21:23:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -109,7 +109,7 @@ void
 zmemcpy(unsigned char *dest, unsigned char *source, unsigned int len)
 {
 
-	bcopy(source, dest, len);
+	memcpy(dest, source, len);
 }
 
 static int
@@ -237,7 +237,7 @@ open(const char *fname, int mode)
 	ss[fd] = s = alloc(sizeof(struct sd));
 	if (s == 0)
 		goto errout;
-	bzero(s, sizeof(struct sd));
+	(void)memset(s, 0, sizeof(struct sd));
 
 	if (inflateInit2(&(s->stream), -15) != Z_OK)
 		goto errout;
@@ -419,7 +419,8 @@ lseek(int fd, off_t offset, int where)
 			inflateEnd(&(s->stream));
 
 			sav_inbuf = s->inbuf; /* don't allocate again */
-			bzero(s, sizeof(struct sd)); /* this resets total_out to 0! */
+			(void)memset(s, 0, sizeof(struct sd));
+			/* this resets total_out to 0! */
 
 			inflateInit2(&(s->stream), -15);
 			s->stream.next_in = s->inbuf = sav_inbuf;
