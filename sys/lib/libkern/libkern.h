@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.76 2008/03/25 23:19:51 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.77 2008/03/25 23:21:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -246,7 +246,7 @@ struct mtprng_state {
 /* Prototypes for non-quad routines. */
 /* XXX notyet #ifdef _STANDALONE */
 int	 bcmp __P((const void *, const void *, size_t));
-int	 bcopy __P((void *, const void *, size_t));
+void 	*bcopy __P((void *, const void *, size_t));
 void	 bzero __P((void *, size_t));
 /* #endif */
 
