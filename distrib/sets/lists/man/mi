@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1060 2008/03/25 19:41:56 apb Exp $
+# $NetBSD: mi,v 1.1061 2008/03/25 20:04:33 reed Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -573,6 +573,7 @@
 ./usr/share/man/cat4/acorn32/iomdkbc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/kbd.0		man-obsolete		obsolete
 ./usr/share/man/cat4/acorn32/kmem.0		man-sys-catman		.cat
+./usr/share/man/cat4/acorn32/lpa.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/lpt.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/mainbus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acorn32/mem.0		man-sys-catman		.cat
@@ -731,6 +732,7 @@
 ./usr/share/man/cat4/auacer.0			man-sys-catman		.cat
 ./usr/share/man/cat4/audio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/audiocs.0			man-sys-catman		.cat
+./usr/share/man/cat4/audioctl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aue.0			man-sys-catman		.cat
 ./usr/share/man/cat4/auich.0			man-sys-catman		.cat
 ./usr/share/man/cat4/auixp.0			man-sys-catman		.cat
@@ -988,6 +990,7 @@
 ./usr/share/man/cat4/i386/kmem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/le.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/lms.0			man-sys-catman		.cat
+./usr/share/man/cat4/i386/lpa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/lpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/mem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/mms.0			man-sys-catman		.cat
@@ -1153,6 +1156,7 @@
 ./usr/share/man/cat4/mvme68k/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/kmem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/le.0		man-obsolete		obsolete
+./usr/share/man/cat4/mvme68k/lpa.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/lpt.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/mainbus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mvme68k/mem.0		man-sys-catman		.cat
@@ -1276,6 +1280,7 @@
 ./usr/share/man/cat4/radio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/raid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ral.0			man-sys-catman		.cat
+./usr/share/man/cat4/random.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rasterconsole.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ray.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rcons.0			man-sys-catman		.cat
@@ -1463,6 +1468,7 @@
 ./usr/share/man/cat4/trm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tty.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tun.0			man-sys-catman		.cat
+./usr/share/man/cat4/tuner.0			man-sys-catman		.cat
 ./usr/share/man/cat4/twa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/twe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/txp.0			man-sys-catman		.cat
@@ -1504,6 +1510,7 @@
 ./usr/share/man/cat4/unix.0			man-sys-catman		.cat
 ./usr/share/man/cat4/upl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uplcom.0			man-sys-catman		.cat
+./usr/share/man/cat4/urandom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/url.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urlphy.0			man-sys-catman		.cat
@@ -1573,6 +1580,7 @@
 ./usr/share/man/cat4/vax/va.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/vp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/vv.0			man-sys-catman		.cat
+./usr/share/man/cat4/vbi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/veriexec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/verifiedexec.0		man-obsolete		obsolete
 ./usr/share/man/cat4/vga.0			man-sys-catman		.cat
@@ -1600,6 +1608,7 @@
 ./usr/share/man/cat4/wskbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wsmouse.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wsmux.0			man-sys-catman		.cat
+./usr/share/man/cat4/wsmuxctl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wss.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/bmd.0			man-sys-catman		.cat
@@ -3107,6 +3116,7 @@
 ./usr/share/man/man4/acorn32/iomdkbc.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/kbd.4		man-obsolete		obsolete
 ./usr/share/man/man4/acorn32/kmem.4		man-sys-man		.man
+./usr/share/man/man4/acorn32/lpa.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/lpt.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/mainbus.4		man-sys-man		.man
 ./usr/share/man/man4/acorn32/mem.4		man-sys-man		.man
@@ -3265,6 +3275,7 @@
 ./usr/share/man/man4/auacer.4			man-sys-man		.man
 ./usr/share/man/man4/audio.4			man-sys-man		.man
 ./usr/share/man/man4/audiocs.4			man-sys-man		.man
+./usr/share/man/man4/audioctl.4			man-sys-man		.man
 ./usr/share/man/man4/aue.4			man-sys-man		.man
 ./usr/share/man/man4/auich.4			man-sys-man		.man
 ./usr/share/man/man4/auixp.4			man-sys-man		.man
@@ -3522,6 +3533,7 @@
 ./usr/share/man/man4/i386/kmem.4		man-sys-man		.man
 ./usr/share/man/man4/i386/le.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/lms.4			man-sys-man		.man
+./usr/share/man/man4/i386/lpa.4			man-sys-man		.man
 ./usr/share/man/man4/i386/lpt.4			man-sys-man		.man
 ./usr/share/man/man4/i386/mem.4			man-sys-man		.man
 ./usr/share/man/man4/i386/mms.4			man-sys-man		.man
@@ -3687,6 +3699,7 @@
 ./usr/share/man/man4/mvme68k/intro.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/kmem.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/le.4		man-obsolete		obsolete
+./usr/share/man/man4/mvme68k/lpa.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/lpt.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/mainbus.4		man-sys-man		.man
 ./usr/share/man/man4/mvme68k/mem.4		man-sys-man		.man
@@ -3810,6 +3823,7 @@
 ./usr/share/man/man4/radio.4			man-sys-man		.man
 ./usr/share/man/man4/raid.4			man-sys-man		.man
 ./usr/share/man/man4/ral.4			man-sys-man		.man
+./usr/share/man/man4/random.4			man-sys-man		.man
 ./usr/share/man/man4/rasterconsole.4		man-sys-man		.man
 ./usr/share/man/man4/ray.4			man-sys-man		.man
 ./usr/share/man/man4/rcons.4			man-sys-man		.man
@@ -3997,6 +4011,7 @@
 ./usr/share/man/man4/trm.4			man-sys-man		.man
 ./usr/share/man/man4/tty.4			man-sys-man		.man
 ./usr/share/man/man4/tun.4			man-sys-man		.man
+./usr/share/man/man4/tuner.4			man-sys-man		.man
 ./usr/share/man/man4/twa.4			man-sys-man		.man
 ./usr/share/man/man4/twe.4			man-sys-man		.man
 ./usr/share/man/man4/txp.4			man-sys-man		.man
@@ -4038,6 +4053,7 @@
 ./usr/share/man/man4/unix.4			man-sys-man		.man
 ./usr/share/man/man4/upl.4			man-sys-man		.man
 ./usr/share/man/man4/uplcom.4			man-sys-man		.man
+./usr/share/man/man4/urandom.4			man-sys-man		.man
 ./usr/share/man/man4/urio.4			man-sys-man		.man
 ./usr/share/man/man4/url.4			man-sys-man		.man
 ./usr/share/man/man4/urlphy.4			man-sys-man		.man
@@ -4107,6 +4123,7 @@
 ./usr/share/man/man4/vax/va.4			man-sys-man		.man
 ./usr/share/man/man4/vax/vp.4			man-sys-man		.man
 ./usr/share/man/man4/vax/vv.4			man-sys-man		.man
+./usr/share/man/man4/vbi.4			man-sys-man		.man
 ./usr/share/man/man4/veriexec.4			man-sys-man		.man
 ./usr/share/man/man4/verifiedexec.4		man-obsolete		obsolete
 ./usr/share/man/man4/vga.4			man-sys-man		.man
@@ -4134,6 +4151,7 @@
 ./usr/share/man/man4/wskbd.4			man-sys-man		.man
 ./usr/share/man/man4/wsmouse.4			man-sys-man		.man
 ./usr/share/man/man4/wsmux.4			man-sys-man		.man
+./usr/share/man/man4/wsmuxctl.4			man-sys-man		.man
 ./usr/share/man/man4/wss.4			man-sys-man		.man
 ./usr/share/man/man4/wt.4			man-sys-man		.man
 ./usr/share/man/man4/x68k/bmd.4			man-sys-man		.man
