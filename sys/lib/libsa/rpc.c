@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.26 2007/11/24 13:20:57 isaki Exp $	*/
+/*	$NetBSD: rpc.c,v 1.27 2008/03/25 21:23:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -153,7 +153,7 @@ rpc_call(struct iodesc *d, n_long prog, n_long vers, n_long proc,
 #if 1
 	/* Auth credentials: always auth unix (as root) */
 	send_head -= sizeof(struct auth_unix);
-	bzero(send_head, sizeof(struct auth_unix));
+	(void)memset(send_head, 0, sizeof(struct auth_unix));
 	send_head -= sizeof(*auth);
 	auth = (struct auth_info *)send_head;
 	auth->authtype = htonl(RPCAUTH_UNIX);

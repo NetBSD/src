@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.13 2008/03/14 22:21:53 dsl Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.14 2008/03/25 21:23:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -175,7 +175,7 @@ dos_mount(DOS_FS *fs, struct open_file *fd)
 {
 	int     err;
 
-	bzero(fs, sizeof(DOS_FS));
+	(void)memset(fs, 0, sizeof(DOS_FS));
 	fs->fd = fd;
 	if ((err = !(fs->buf = alloc(SECSIZ)) ? errno : 0) ||
 	    (err = ioget(fs->fd, 0, fs->buf, 1)) ||
@@ -255,7 +255,7 @@ dosfs_open(const char *path, struct open_file *fd)
 	f->offset = 0;
 	f->c = 0;
 #else
-	bzero(f, sizeof(DOS_FILE));
+	(void)memset(f, 0, sizeof(DOS_FILE));
 #endif
 	f->fs = fs;
 	fs->links++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.42 2007/11/24 13:20:56 isaki Exp $	*/
+/*	$NetBSD: nfs.c,v 1.43 2008/03/25 21:23:50 christos Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -151,12 +151,12 @@ nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
 	args = &sdata.d;
 	repl = &rdata.d;
 
-	bzero(args, sizeof(*args));
+	(void)memset(args, 0, sizeof(*args));
 	len = strlen(path);
 	if ((size_t)len > sizeof(args->path))
 		len = sizeof(args->path);
 	args->len = htonl(len);
-	bcopy(path, args->path, len);
+	(void)memcpy(args->path, path, len);
 	len = 4 + roundup(len, 4);
 
 	cc = rpc_call(d, RPCPROG_MNT, RPCMNT_VER1, RPCMNT_MOUNT,
@@ -173,7 +173,7 @@ nfs_getrootfh(struct iodesc *d, char *path, u_char *fhp)
 		errno = ntohl(repl->errno);
 		return -1;
 	}
-	bcopy(repl->fh, fhp, sizeof(repl->fh));
+	(void)memcpy(fhp, repl->fh, sizeof(repl->fh));
 	return 0;
 }
 
@@ -214,11 +214,11 @@ nfs_lookupfh(struct nfs_iodesc *d, const char *name, int len,
 	args = &sdata.d;
 	repl = &rdata.d;
 
-	bzero(args, sizeof(*args));
-	bcopy(d->fh, args->fh, sizeof(args->fh));
+	(void)memset(args, 0, sizeof(*args));
+	(void)memcpy(args->fh, d->fh, sizeof(args->fh));
 	if ((size_t)len > sizeof(args->name))
 		len = sizeof(args->name);
-	bcopy(name, args->name, len);
+	(void)memcpy(args->name, name, len);
 	args->len = htonl(len);
 	len = 4 + roundup(len, 4);
 	len += NFS_FHSIZE;
@@ -235,8 +235,8 @@ nfs_lookupfh(struct nfs_iodesc *d, const char *name, int len,
 		/* saerrno.h now matches NFS error numbers. */
 		return ntohl(repl->errno);
 	}
-	bcopy( repl->fh, &newfd->fh, sizeof(newfd->fh));
-	bcopy(&repl->fa, &newfd->fa, sizeof(newfd->fa));
+	(void)memcpy(&newfd->fh, repl->fh, sizeof(newfd->fh));
+	(void)memcpy(&newfd->fa, &repl->fa, sizeof(newfd->fa));
 	return 0;
 }
 
@@ -262,7 +262,7 @@ nfs_readlink(struct nfs_iodesc *d, char *buf)
 		printf("readlink: called\n");
 #endif
 
-	bcopy(d->fh, sdata.fh, NFS_FHSIZE);
+	(void)memcpy(sdata.fh, d->fh, NFS_FHSIZE);
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READLINK,
 	              sdata.fh, NFS_FHSIZE,
 	              &rdata.d, sizeof(rdata.d));
@@ -279,7 +279,7 @@ nfs_readlink(struct nfs_iodesc *d, char *buf)
 	if (rdata.d.len > NFS_MAXPATHLEN)
 		return ENAMETOOLONG;
 
-	bcopy(rdata.d.path, buf, rdata.d.len);
+	(void)memcpy(buf, rdata.d.path, rdata.d.len);
 	buf[rdata.d.len] = 0;
 	return 0;
 }
@@ -309,7 +309,7 @@ nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 	args = &sdata.d;
 	repl = &rdata.d;
 
-	bcopy(d->fh, args->fh, NFS_FHSIZE);
+	(void)memcpy(args->fh, d->fh, NFS_FHSIZE);
 	args->off = htonl((n_long)off);
 	if (len > NFSREAD_SIZE)
 		len = NFSREAD_SIZE;
@@ -339,7 +339,7 @@ nfs_readdata(struct nfs_iodesc *d, off_t off, void *addr, size_t len)
 		errno = EBADRPC;
 		return -1;
 	}
-	bcopy(repl->data, addr, x);
+	(void)memcpy(addr, repl->data, x);
 	return x;
 }
 
@@ -472,8 +472,8 @@ nfs_open(const char *path, struct open_file *f)
 				goto out;
 			}
 
-			bcopy(cp, &namebuf[link_len], len + 1);
-			bcopy(linkbuf, namebuf, link_len);
+			(void)memcpy(&namebuf[link_len], cp, len + 1);
+			(void)memcpy(namebuf, linkbuf, link_len);
 
 			/*
 			 * If absolute pathname, restart at root.
