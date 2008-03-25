@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.5 2008/03/25 23:13:15 christos Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.6 2008/03/25 23:16:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.5 2008/03/25 23:13:15 christos Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.6 2008/03/25 23:16:29 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -157,21 +157,6 @@ done:
 #endif
 }
 #else
-#ifdef BCOPY
-/*
- * This is designed to be small, not fast.
- */
-void *
-bcopy(const void *s2, void *s1, size_t n)
-{
-	const char *f = s2;
-	char *t = s1;
-
-	while (n-- > 0)
-		*t++ = *f++;
-	return s1;
-}
-#endif
 #ifdef MEMCOPY
 /*
  * This is designed to be small, not fast.
@@ -186,8 +171,7 @@ memcpy(void *s1, const void *s2, size_t n)
 		*t++ = *f++;
 	return s1;
 }
-#endif
-#ifdef MEMMOVE
+#elif defined(MEMMOVE)
 /*
  * This is designed to be small, not fast.
  */
@@ -206,6 +190,20 @@ memmove(void *s1, const void *s2, size_t n)
 		while (n-- > 0)
 			*t++ = *f++;
 	}
+	return s1;
+}
+#else
+/*
+ * This is designed to be small, not fast.
+ */
+void *
+bcopy(const void *s2, void *s1, size_t n)
+{
+	const char *f = s2;
+	char *t = s1;
+
+	while (n-- > 0)
+		*t++ = *f++;
 	return s1;
 }
 #endif
