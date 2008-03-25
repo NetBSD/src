@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70 2008/01/21 08:13:55 dyoung Exp $
+#	$NetBSD: Makefile,v 1.71 2008/03/25 20:04:33 reed Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	apm.4 autoconf.4 \
@@ -10,6 +10,7 @@ MAN=	apm.4 autoconf.4 \
 	pcibios.4 pnpbios.4 spic.4 vald.4 \
 	vesafb.4
 MLINKS=	mem.4 kmem.4
+MLINKS+=lpt.4 lpa.4
 MLINKS+=pcibios.4 PCIBIOS.4
 MLINKS+=console.4 cons.4
 MANSUBDIR=/i386
