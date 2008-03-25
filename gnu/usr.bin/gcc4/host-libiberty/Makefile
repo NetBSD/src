@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2006/09/29 20:14:10 apb Exp $
+#	$NetBSD: Makefile,v 1.3 2008/03/25 03:59:17 mrg Exp $
 
 libiberty/libiberty.a:
-	[ ! -d libiberty ] && mkdir libiberty || exit 0
+	[ ! -d libiberty ] && mkdir libiberty || true
 	(cd libiberty; \
 		CC=${HOST_CC:Q} \
 		MAKE=${MAKE:Q} \
