@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.12 2007/03/04 06:02:52 christos Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.13 2008/03/25 00:49:20 cube Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,12 +40,12 @@
  * A ws event source, i.e., wskbd, wsmouse, or wsmux.
  */
 struct wsevsrc {
-	struct device me_dv;
+	device_t me_dv;
 	const struct wssrcops *me_ops;	/* method pointers */
 	struct wseventvar me_evar;	/* wseventvar opened directly */
 	struct wseventvar *me_evp;	/* our wseventvar when open */
 #if NWSDISPLAY > 0
-	struct device *me_dispdv;       /* our display if part of one */
+	device_t me_dispdv;       /* our display if part of one */
 #endif
 #if NWSMUX > 0
 	struct wsmux_softc *me_parent;	/* parent mux device */
@@ -61,9 +61,9 @@ struct wssrcops {
 	int type;		/* device type: WSMUX_{MOUSE,KBD,MUX} */
 	int (*dopen)(struct wsevsrc *, struct wseventvar *);
 	int (*dclose)(struct wsevsrc *);
-	int (*dioctl)(struct device *, u_long, void *, int, struct lwp *);
-	int (*ddispioctl)(struct device *, u_long, void *, int, struct lwp *);
-	int (*dsetdisplay)(struct device *, struct wsevsrc *);
+	int (*dioctl)(device_t, u_long, void *, int, struct lwp *);
+	int (*ddispioctl)(device_t, u_long, void *, int, struct lwp *);
+	int (*dsetdisplay)(device_t, struct wsevsrc *);
 };
 
 #define wsevsrc_open(me, evp) \
@@ -71,11 +71,11 @@ struct wssrcops {
 #define wsevsrc_close(me) \
 	((me)->me_ops->dclose((me)))
 #define wsevsrc_ioctl(me, cmd, data, flag, l) \
-	((me)->me_ops->dioctl(&(me)->me_dv, cmd, (void *)data, flag, l))
+	((me)->me_ops->dioctl((me)->me_dv, cmd, (void *)data, flag, l))
 #define wsevsrc_display_ioctl(me, cmd, data, flag, l) \
-	((me)->me_ops->ddispioctl(&(me)->me_dv, cmd, (void *)data, flag, l))
+	((me)->me_ops->ddispioctl((me)->me_dv, cmd, (void *)data, flag, l))
 #define wsevsrc_set_display(me, arg) \
-	((me)->me_ops->dsetdisplay(&(me)->me_dv, arg))
+	((me)->me_ops->dsetdisplay((me)->me_dv, arg))
 
 #if NWSMUX > 0
 struct wsmux_softc {
@@ -92,7 +92,7 @@ struct	wsmux_softc *wsmux_getmux(int);
 struct	wsmux_softc *wsmux_create(const char *, int);
 int	wsmux_attach_sc(struct wsmux_softc *, struct wsevsrc *);
 void	wsmux_detach_sc(struct wsevsrc *);
-int	wsmux_set_display(struct wsmux_softc *, struct device *);
+int	wsmux_set_display(struct wsmux_softc *, device_t);
 
 int	wskbd_add_mux(int, struct wsmux_softc *);
 int	wsmouse_add_mux(int, struct wsmux_softc *);
