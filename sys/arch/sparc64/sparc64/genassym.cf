@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.55 2008/03/17 04:04:00 nakayama Exp $
+#	$NetBSD: genassym.cf,v 1.56 2008/03/25 16:01:15 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -153,7 +153,6 @@ define	PM_WIRED	offsetof(struct pmap, pm_stats.wired_count)
 define	A_TLB_TSB_LOCK	TLB_TSB_LOCK
 
 # interrupt/fault metering
-define	V_SWTCH		offsetof(struct uvmexp, swtch)
 define	V_INTR		offsetof(struct uvmexp, intrs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
 
