@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.6 2008/03/25 23:16:29 christos Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.7 2008/03/25 23:23:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.6 2008/03/25 23:16:29 christos Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.7 2008/03/25 23:23:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -196,7 +196,7 @@ memmove(void *s1, const void *s2, size_t n)
 /*
  * This is designed to be small, not fast.
  */
-void *
+void
 bcopy(const void *s2, void *s1, size_t n)
 {
 	const char *f = s2;
@@ -204,7 +204,6 @@ bcopy(const void *s2, void *s1, size_t n)
 
 	while (n-- > 0)
 		*t++ = *f++;
-	return s1;
 }
 #endif
 #endif
