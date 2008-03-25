@@ -1,4 +1,4 @@
-/* $NetBSD: wsemulvar.h,v 1.13 2006/10/09 11:03:43 peter Exp $ */
+/* $NetBSD: wsemulvar.h,v 1.14 2008/03/25 00:49:20 cube Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -30,7 +30,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct device;
 struct wsdisplay_emulops;
 
 enum wsemul_resetops {
