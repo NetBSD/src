@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.35 2008/03/24 19:40:18 martin Exp $	*/
+/*	$NetBSD: emul.c,v 1.36 2008/03/25 23:21:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -515,7 +515,7 @@ lwp_unsleep(lwp_t *l, bool cleanup)
 }
 
 vaddr_t
-calc_cache_size(struct vm_map *map, int pct)
+calc_cache_size(struct vm_map *map, int pct, int va_pct)
 {
 	paddr_t t;
 
