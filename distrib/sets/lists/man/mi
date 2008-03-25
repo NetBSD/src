@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1059 2008/03/22 08:37:24 mlelstv Exp $
+# $NetBSD: mi,v 1.1060 2008/03/25 19:41:56 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1410,6 +1410,7 @@
 ./usr/share/man/cat4/sti.0			man-sys-catman		.cat
 ./usr/share/man/cat4/stpcide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/strip.0			man-sys-catman		.cat
+./usr/share/man/cat4/stuirda.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sun2/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sun2/bwtwo.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sun2/ec.0			man-sys-catman		.cat
@@ -3943,6 +3944,7 @@
 ./usr/share/man/man4/sti.4			man-sys-man		.man
 ./usr/share/man/man4/stpcide.4			man-sys-man		.man
 ./usr/share/man/man4/strip.4			man-sys-man		.man
+./usr/share/man/man4/stuirda.4			man-sys-man		.man
 ./usr/share/man/man4/sun2/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/sun2/bwtwo.4		man-sys-man		.man
 ./usr/share/man/man4/sun2/ec.4			man-sys-man		.man
