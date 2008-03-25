@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2007/10/28 10:06:41 ragge Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2008/03/25 00:30:11 yamt Exp $
 
 MDIR=	${DIST}/arch/${TARGMACH}
 MIPDIR=	${DIST}/mip
@@ -31,3 +31,7 @@ CPPFLAGS+= -I${.CURDIR} -I${.CURDIR}/..
 
 DPSRCS+=../../config.h
 CLEANFILES+=../../config.h
+
+.if exists(${.CURDIR}/../../../Makefile.inc)
+.include "${.CURDIR}/../../../Makefile.inc"
+.endif
