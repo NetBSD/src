@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.2 2008/01/09 00:01:33 tnn Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.3 2008/03/25 15:06:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.2 2008/01/09 00:01:33 tnn Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.3 2008/03/25 15:06:02 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -112,8 +112,8 @@ usage(void)
 	const char *progname = getprogname();
 
 	fprintf(stderr, "usage: %s list\n", progname);
-	fprintf(stderr, "       %s offline cpuid\n", progname);
-	fprintf(stderr, "       %s online cpuid\n", progname);
+	fprintf(stderr, "       %s offline cpuno\n", progname);
+	fprintf(stderr, "       %s online cpuno\n", progname);
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
@@ -148,13 +148,15 @@ u_int
 getcpuid(char **argv)
 {
 	char *argp;
-	u_int id;
+	cpustate_t cs;
 
-	id = (int)strtoul(argv[0], &argp, 0);
+	cs.cs_id = (int)strtoul(argv[0], &argp, 0);
 	if (*argp != '\0')
 		usage();
+	if (ioctl(fd, IOC_CPU_MAPID, &cs.cs_id) < 0)
+		err(EXIT_FAILURE, "IOC_CPU_MAPID");
 
-	return id;
+	return cs.cs_id;
 }
 
 void
@@ -167,8 +169,8 @@ cpu_list(char **argv)
 	if (ioctl(fd, IOC_CPU_GETCOUNT, &cnt) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_GETCOUNT");
 
-	printf("ID   Unbound LWPs Interrupts     Last change\n");
- 	printf("---- ------------ -------------- ----------------------------\n");
+	printf("No   ID     Unbound LWPs Interrupts     Last change\n");
+ 	printf("---- ------ ------------ -------------- ----------------------------\n");
 
 	for (i = 0; i < cnt; i++) {
 		cs.cs_id = i;
@@ -184,7 +186,7 @@ cpu_list(char **argv)
 			intr = "intr";
 		else
 			intr = "nointr";
-		printf("%-4d %-12s %-12s   %s", cs.cs_id, state,
+		printf("%-4d %-7x %-12s %-12s   %s", i, cs.cs_id, state,
 		   intr, asctime(localtime(&cs.cs_lastmod)));
 	}
 }
