@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2008/03/25 21:23:50 christos Exp $
+#	$NetBSD: Makefile,v 1.65 2008/03/25 23:12:31 christos Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -24,6 +24,7 @@ SRCS+=	alloc.c errno.c exit.c exec.c files.c \
 
 # string routines
 SRCS+=	memcmp.c memcpy.c memmove.c memset.c strchr.c
+SRCS+=	bcopy.c bzero.c	# Remove me eventually.
 
 # io routines
 SRCS+=	closeall.c dev.c disklabel.c dkcksum.c ioctl.c nullfs.c stat.c fstat.c
