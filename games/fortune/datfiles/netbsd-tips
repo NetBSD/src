@@ -54,10 +54,10 @@ initial state with:
  printf "\033c
 %
 If you installed a package, but don't know what the software is
-called or what executables, to run use the pkg_add with the -L
-switch to list the package's files and search for /bin:
+called or what executables to run, use pkg_info with the -L switch
+to list the package's files and search for /bin:
 
- pkg_add -L PACKAGE-NAME | grep /bin
+ pkg_info -L PACKAGE-NAME | grep /bin
 %
 A new user can be added by using the useradd tool with the -m switch
 to create the home directory. Then set the password. For example:
