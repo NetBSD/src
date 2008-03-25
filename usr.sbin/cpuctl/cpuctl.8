@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpuctl.8,v 1.1 2007/08/04 11:03:05 ad Exp $
+.\"	$NetBSD: cpuctl.8,v 1.2 2008/03/25 15:06:02 martin Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ Valid commands are:
 .Pp
 For each CPU in the system, display the current state and time of the last
 state change.
-.It offline Ar cpuid
+.It offline Ar cpuno
 .Pp
 Set the specified CPU off line.
 .Pp
@@ -70,7 +70,7 @@ A future release of the system may allow device interrupts to be re-routed
 away from individual CPUs.
 .Pp
 At least one CPU in the system must remain on line.
-.It online Ar cpuid
+.It online Ar cpuno
 .Pp
 Set the specified CPU on line, making it available to run unbound LWPs.
 .El
