@@ -1,6 +1,6 @@
-.\" $NetBSD: usb.4,v 1.86 2008/03/24 23:14:02 xtraeme Exp $
+.\" $NetBSD: usb.4,v 1.87 2008/03/25 19:53:13 apb Exp $
 .\"
-.\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 24, 2008
+.Dd March 25, 2008
 .Dt USB 4
 .Os
 .Sh NAME
@@ -221,6 +221,8 @@ mouse devices
 .El
 .Ss Miscellaneous devices
 .Bl -tag -width 12n -offset ind -compact
+.It Xr stuirda 4
+Sigmaltel 4116/4220 USB-IrDA bridge
 .It Xr uep 4
 USB eGalax touch-panel
 .It Xr ugen 4
