@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.46 2008/02/20 22:33:18 drochner Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.47 2008/03/25 00:49:20 cube Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -220,7 +220,7 @@ void wsdisplay_scroll(void *, int);
 #define WSDISPLAY_SCROLL_RESET		(1 << 2)
 #define WSDISPLAY_SCROLL_LOW		(1 << 3)
 
-int wsdisplay_stat_inject(struct device *, u_int, int);
+int wsdisplay_stat_inject(device_t, u_int, int);
 
 /*
  * for general use

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.119 2008/03/12 23:26:18 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.120 2008/03/25 00:49:20 cube Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.119 2008/03/12 23:26:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.120 2008/03/25 00:49:20 cube Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -757,7 +757,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 #if NWSKBD > 0
 		kme = wskbd_set_console_display(sc->sc_dev, sc->sc_input);
 		if (kme != NULL)
-			aprint_normal(", using %s", kme->me_dv.dv_xname);
+			aprint_normal(", using %s", device_xname(kme->me_dv));
 #if NWSMUX == 0
 		sc->sc_input = kme;
 #endif
