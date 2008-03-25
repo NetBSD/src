@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.29 2008/03/25 21:23:50 christos Exp $	*/
+/*	$NetBSD: arp.c,v 1.30 2008/03/25 22:54:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -163,6 +163,7 @@ arpwhohas(struct iodesc *d, struct in_addr addr)
 		    inet_ntoa(addr), ether_sprintf(ah->arp_sha));
 	}
 #endif
+/*###166 [cc] warning: statement with no effect%%%*/
 	MACPY(ah->arp_sha, al->ea);
 	++arp_num;
 
