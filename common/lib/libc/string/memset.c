@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.2 2007/06/04 18:19:27 christos Exp $	*/
+/*	$NetBSD: memset.c,v 1.3 2008/03/25 23:13:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
+__RCSID("$NetBSD: memset.c,v 1.3 2008/03/25 23:13:15 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: memset.c,v 1.2 2007/06/04 18:19:27 christos Exp $");
 #undef memset
 #endif
 
+#ifndef __OPTIMIZE_SIZE__
 #ifdef BZERO
 #define	RETURN	return
 #define	VAL	0
@@ -141,3 +142,24 @@ memset(void *dst0, int c0, size_t length)
 		} while (--t != 0);
 	RETURN;
 }
+#else
+#ifdef BZERO
+void
+bzero(void *dstv, size_t length)
+{
+	u_char *dst = dstv;
+	while (length-- > 0)
+		*dst++ = 0;
+}
+#endif
+#ifdef MEMSET
+void *
+memset(void *dstv, int c, size_t length)
+{
+	u_char *dst = dstv;
+	while (length-- > 0)
+		*dst++ = c;
+	return *dst;
+}
+#endif
+#endif
