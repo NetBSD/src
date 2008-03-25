@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.214 2008/03/22 16:51:30 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.215 2008/03/25 20:44:12 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2008/03/22 16:51:30 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2008/03/25 20:44:12 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2574,7 +2574,10 @@ pmap_clear_reference(pg)
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_referenced(pg)) {
-		printf("pmap_clear_reference(): %p still referenced!\n", pg);
+		pv = &pg->mdpage.mdpg_pvh;
+		printf("pmap_clear_reference(): %p still referenced "
+			"(pmap = %p, ctx = %d)\n", pg, pv->pv_pmap,
+			pv->pv_pmap ? pmap_ctx(pv->pv_pmap) : 0);
 		Debugger();
 	}
 	DPRINTF(PDB_CHANGEPROT|PDB_REF,
