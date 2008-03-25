@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1123 2008/03/24 12:30:43 yamt Exp $
+#	$NetBSD: mi,v 1.1124 2008/03/25 07:03:02 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2542,12 +2542,14 @@
 ./usr/libdata/debug/usr/bin/grolj4.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/grops.debug		comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/grotty.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/gss.debug		comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/gzip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/head.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/hesinfo.debug	comp-hesiod-debug	hesiod,debug
 ./usr/libdata/debug/usr/bin/hexdump.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/host.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/hpftodit.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/hxtool.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/iconv.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/id.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ident.debug		comp-util-debug		debug
@@ -2757,6 +2759,7 @@
 ./usr/libdata/debug/usr/bin/uustat.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/uux.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/vacation.debug	comp-mail-debug		debug
+./usr/libdata/debug/usr/bin/verify_krb5_conf.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/vi.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/vis.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/vmstat.debug	comp-util-debug		debug
@@ -2846,6 +2849,8 @@
 ./usr/libdata/debug/usr/libexec/hpropd.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/httpd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/identd.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/libexec/ipropd-master.debug	comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/libexec/ipropd-slave.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/kadmind.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/kpasswdd.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/lfs_cleanerd.debug	comp-obsolete	obsolete
@@ -2967,6 +2972,7 @@
 ./usr/libdata/debug/usr/sbin/ipnat.debug	comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/usr/sbin/ippool.debug	comp-ipf-root		ipfilter,debug
 ./usr/libdata/debug/usr/sbin/ipresend.debug	comp-ipf-debug		ipfilter,debug
+./usr/libdata/debug/usr/sbin/iprop-log.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/ipsend.debug	comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/usr/sbin/iptest.debug	comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/usr/sbin/irdaattach.debug	comp-sysutil-debug	debug
@@ -2978,8 +2984,11 @@
 ./usr/libdata/debug/usr/sbin/isdntrace.debug	comp-isdn-debug		debug
 ./usr/libdata/debug/usr/sbin/iwictl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/kadmin.debug	comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/sbin/kcm.debug		comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/kdc.debug		comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/sbin/kdigest.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/kgmon.debug	comp-debug-debug	debug
+./usr/libdata/debug/usr/sbin/kimpersonate.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/kstash.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/ktutil.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/lastlogin.debug	comp-sysutil-debug	debug
