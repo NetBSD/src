@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2007/12/03 15:34:19 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2008/03/26 23:49:16 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2007/12/03 15:34:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2008/03/26 23:49:16 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,15 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2007/12/03 15:34:19 ad Exp $");
 
 extern struct cfdriver cpu_cd;
 
-static int cpu_match(struct device *, struct cfdata *, void *);
-static void cpu_attach(struct device *, struct device *, void *);
+static int cpu_match(device_t, struct cfdata *, void *);
+static void cpu_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cpu, sizeof (struct device),
+
+CFATTACH_DECL_NEW(cpu, 0,
     cpu_match, cpu_attach, NULL, NULL);
 
 
 static int
-cpu_match(struct device *parent, struct cfdata *cf, void *aux)
+cpu_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -68,7 +69,7 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 
 #define	MHZ(x) ((x) / 1000000), (((x) % 1000000) / 1000)
