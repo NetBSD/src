@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.88 2008/03/23 19:35:54 ad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.89 2008/03/26 20:08:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.88 2008/03/23 19:35:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.89 2008/03/26 20:08:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -318,9 +318,9 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 	 * for Linux apps if the sysctl value is set to 1.
 	 */
 	if (!error && ip6_v6only && SCARG(&bsa, domain) == PF_INET6) {
-		file_t *fp;
+		struct socket *so;
 
-		if (getsock(*retval, &fp) == 0) {
+		if (fd_getsock(*retval, &so) == 0) {
 			struct mbuf *m;
 
 			m = m_get(M_WAIT, MT_SOOPTS);
@@ -328,8 +328,7 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 			*mtod(m, int *) = 0;
 
 			/* ignore error */
-			(void) sosetopt((struct socket *)fp->f_data,
-				IPPROTO_IPV6, IPV6_V6ONLY, m);
+			(void) sosetopt(so, IPPROTO_IPV6, IPV6_V6ONLY, m);
 
 			fd_putfile(*retval);
 		}
@@ -887,18 +886,13 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 	 * and returns EOPNOTSUPP for other levels
 	 */
 	if (SCARG(&bsa, level) != SOL_SOCKET) {
-		file_t *fp;
 		struct socket *so;
-		int error, s, family;
+		int error, family;
 
 		/* getsock() will use the descriptor for us */
-	    	if ((error = getsock(SCARG(&bsa, s), &fp)) != 0)
+	    	if ((error = fd_getsock(SCARG(&bsa, s), &so)) != 0)
 		    	return error;
-
-		s = splsoftnet();
-		so = (struct socket *)fp->f_data;
 		family = so->so_proto->pr_domain->dom_family;
-		splx(s);
 		fd_putfile(SCARG(&bsa, s));
 
 		if (family == AF_LOCAL)
@@ -1214,16 +1208,14 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 	error = do_sys_connect(l, SCARG(uap, s), nam);
 
 	if (error == EISCONN) {
-		file_t *fp;
 		struct socket *so;
 		int s, state, prflags, nbio;
 
 		/* getsock() will use the descriptor for us */
-	    	if (getsock(SCARG(uap, s), &fp) != 0)
+	    	if (fd_getsock(SCARG(uap, s), &so) != 0)
 		    	return EISCONN;
 
 		s = splsoftnet();
-		so = (struct socket *)fp->f_data;
 		state = so->so_state;
 		nbio = so->so_nbio;
 		prflags = so->so_proto->pr_flags;
