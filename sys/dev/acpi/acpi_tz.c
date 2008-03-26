@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.33 2008/03/26 15:31:59 xtraeme Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.34 2008/03/26 16:48:53 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.33 2008/03/26 15:31:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.34 2008/03/26 16:48:53 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ acpitz_get_status(void *opaque)
 		sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
 		if (sc->sc_flags & ATZ_F_VERBOSE)
 			printf("%s: force refetch zone\n", device_xname(dv));
-		acpitz_get_zone(sc, 0);
+		acpitz_get_zone(dv, 0);
 	}
 
 	if (acpitz_get_integer(dv, "_TMP", &tmp)) {
