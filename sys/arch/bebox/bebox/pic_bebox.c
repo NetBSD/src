@@ -1,4 +1,4 @@
-/* $NetBSD: pic_bebox.c,v 1.4 2008/02/08 16:53:34 kiyohara Exp $ */
+/* $NetBSD: pic_bebox.c,v 1.5 2008/03/26 14:34:42 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.4 2008/02/08 16:53:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.5 2008/03/26 14:34:42 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.4 2008/02/08 16:53:34 kiyohara Exp $
 #include <arch/powerpc/pic/picvar.h>
 
 extern paddr_t bebox_mb_reg;
-static unsigned long mask;
 
 #define BEBOX_INTR_MASK		0x0ffffffc
 #define BEBOX_SET_MASK		0x80000000
@@ -91,22 +90,16 @@ static void
 bebox_enable_irq(struct pic_ops *pic, int irq, int type)
 {
 
-	mask |= (1 << (31 - irq));
 	*(volatile unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) =
-	    BEBOX_INTR_MASK;
-	*(volatile unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) =
-	    BEBOX_SET_MASK | mask;
+	    BEBOX_SET_MASK | (1 << (31 - irq));
 }
 
 static void
 bebox_disable_irq(struct pic_ops *pic, int irq)
 {
 
-	mask &= ~(1 << (31 - irq));
 	*(volatile unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) =
-	    BEBOX_INTR_MASK;
-	*(volatile unsigned int *)(bebox_mb_reg + CPU0_INT_MASK) =
-	    BEBOX_SET_MASK | mask;
+	    (1 << (31 - irq));
 }
 
 static int
@@ -115,7 +108,8 @@ bebox_get_irq(struct pic_ops *pic, int mode)
 	unsigned int state;
 
 	state = *(volatile unsigned int *)(bebox_mb_reg + INT_STATE_REG);
-	state &= (mask & BEBOX_INTR_MASK);
+	state &= BEBOX_INTR_MASK;
+	state &= *(volatile unsigned int *)(bebox_mb_reg + CPU0_INT_MASK);
 	if (state == 0)
 		return 255;
 	return __builtin_clz(state);
