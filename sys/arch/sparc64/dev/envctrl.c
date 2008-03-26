@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.9 2008/03/26 19:15:49 tnn Exp $ */
+/*	$NetBSD: envctrl.c,v 1.10 2008/03/26 20:21:38 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.9 2008/03/26 19:15:49 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.10 2008/03/26 20:21:38 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -190,7 +190,6 @@ envctrlattach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_sme->sme_name = device_xname(self);
-	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
