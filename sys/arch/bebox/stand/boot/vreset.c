@@ -1,4 +1,4 @@
-/*	$NetBSD: vreset.c,v 1.9 2006/01/29 21:42:41 dsl Exp $	*/
+/*	$NetBSD: vreset.c,v 1.10 2008/03/26 15:09:50 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -528,7 +528,6 @@ vga_reset(u_char *ISA_mem)
 		setTextRegs(VgaTextRegs);      /* reload registers           */
 		outw(0x3C4, 0x0100);           /* re-enable video            */
 		outb(0x3c2, 0x63);  	       /* MISC */
-		printf("VGA Chip Vendor ID: 0x%08x\n", PCIVendor(slot));
 		delayLoop(1);
 		break;
 	};
@@ -786,7 +785,7 @@ printslots(void)
 	int i;
 	for (i = 0; i < NSLOTS; i++) {
 		printf("PCI Slot number: %d", i);
-		printf(" Vendor ID: 0x%08x\n", PCIVendor(i));
+		printf(" Vendor ID: 0x%x\n", PCIVendor(i));
 	}
 }
 #endif /* DEBUG */
