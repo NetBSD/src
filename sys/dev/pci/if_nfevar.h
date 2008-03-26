@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.6 2008/01/26 14:13:07 tsutsui Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.7 2008/03/26 14:46:21 cube Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.11 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@ struct nfe_rx_ring {
 };
 
 struct nfe_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct ethercom		sc_ethercom;
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
 	bus_space_handle_t	sc_memh;
