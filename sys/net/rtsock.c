@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.98 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.99 2008/03/26 14:53:14 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.99 2008/03/26 14:53:14 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98 2008/02/20 17:05:53 matt Exp $");
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 #ifdef RTSOCK_DEBUG
 #include <netinet/in.h>
 #endif /* RTSOCK_DEBUG */
@@ -89,7 +90,10 @@ DOMAIN_DEFINE(routedomain);	/* forward declare and add to link set */
 
 struct	sockaddr route_dst = { .sa_len = 2, .sa_family = PF_ROUTE, };
 struct	sockaddr route_src = { .sa_len = 2, .sa_family = PF_ROUTE, };
-struct	sockproto route_proto = { .sp_family = PF_ROUTE, };
+
+int	route_maxqlen = IFQ_MAXLEN;
+static struct	ifqueue route_intrq;
+static void	*route_sih;
 
 struct walkarg {
 	int	w_op;
@@ -111,6 +115,7 @@ static int sysctl_dumpentry(struct rtentry *, void *);
 static int sysctl_iflist(int, struct walkarg *, int);
 static int sysctl_rtable(SYSCTLFN_PROTO);
 static inline void rt_adjustcount(int, int);
+static void route_enqueue(struct mbuf *, int);
 
 /* Sleazy use of local variables throughout file, warning!!!! */
 #define dst	info.rti_info[RTAX_DST]
@@ -211,6 +216,7 @@ intern_netmask(const struct sockaddr *mask)
 int
 route_output(struct mbuf *m, ...)
 {
+	struct sockproto proto = { .sp_family = PF_ROUTE, };
 	struct rt_msghdr *rtm = NULL;
 	struct rtentry *rt = NULL;
 	struct rtentry *saved_nrt = NULL;
@@ -458,9 +464,9 @@ flush:
 	if (rp)
 		rp->rcb_proto.sp_family = 0; /* Avoid us */
 	if (family)
-		route_proto.sp_protocol = family;
+		proto.sp_protocol = family;
 	if (m)
-		raw_input(m, &route_proto, &route_src, &route_dst);
+		raw_input(m, &proto, &route_src, &route_dst);
 	if (rp)
 		rp->rcb_proto.sp_family = PF_ROUTE;
     }
@@ -711,8 +717,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, int error)
 	if (m == NULL)
 		return;
 	mtod(m, struct rt_msghdr *)->rtm_addrs = rtinfo->rti_addrs;
-	route_proto.sp_protocol = sa ? sa->sa_family : 0;
-	raw_input(m, &route_proto, &route_src, &route_dst);
+	route_enqueue(m, sa ? sa->sa_family : 0);
 }
 
 /*
@@ -740,8 +745,7 @@ rt_ifmsg(struct ifnet *ifp)
 	m = rt_msg1(RTM_IFINFO, &info, (void *)&ifm, sizeof(ifm));
 	if (m == NULL)
 		return;
-	route_proto.sp_protocol = 0;
-	raw_input(m, &route_proto, &route_src, &route_dst);
+	route_enqueue(m, 0);
 #ifdef COMPAT_14
 	memset(&info, 0, sizeof(info));
 	memset(&oifm, 0, sizeof(oifm));
@@ -769,8 +773,7 @@ rt_ifmsg(struct ifnet *ifp)
 	m = rt_msg1(RTM_OIFINFO, &info, (void *)&oifm, sizeof(oifm));
 	if (m == NULL)
 		return;
-	route_proto.sp_protocol = 0;
-	raw_input(m, &route_proto, &route_src, &route_dst);
+	route_enqueue(m, 0);
 #endif
 }
 
@@ -832,8 +835,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 				continue;
 			mtod(m, struct rt_msghdr *)->rtm_addrs = info.rti_addrs;
 		}
-		route_proto.sp_protocol = sa ? sa->sa_family : 0;
-		raw_input(m, &route_proto, &route_src, &route_dst);
+		route_enqueue(m, sa ? sa->sa_family : 0);
 	}
 }
 
@@ -866,8 +868,7 @@ rt_ifannouncemsg(struct ifnet *ifp, int what)
 	m = rt_makeifannouncemsg(ifp, RTM_IFANNOUNCE, what, &info);
 	if (m == NULL)
 		return;
-	route_proto.sp_protocol = 0;
-	raw_input(m, &route_proto, &route_src, &route_dst);
+	route_enqueue(m, 0);
 }
 
 /*
@@ -909,8 +910,7 @@ rt_ieee80211msg(struct ifnet *ifp, int what, void *data, size_t data_len)
 	if (m->m_flags & M_PKTHDR)
 		m->m_pkthdr.len += data_len;
 	mtod(m, struct if_announcemsghdr *)->ifan_msglen += data_len;
-	route_proto.sp_protocol = 0;
-	raw_input(m, &route_proto, &route_src, &route_dst);
+	route_enqueue(m, 0);
 }
 
 /*
@@ -1161,6 +1161,57 @@ again:
 		*given = (11 * w.w_needed) / 10;
 	}
 	return error;
+}
+
+/*
+ * Routing message software interrupt routine
+ */
+static void
+route_intr(void *cookie)
+{
+	struct sockproto proto = { .sp_family = PF_ROUTE, };
+	struct mbuf *m;
+	int s;
+
+	while (!IF_IS_EMPTY(&route_intrq)) {
+		s = splnet();
+		IF_DEQUEUE(&route_intrq, m);
+		splx(s);
+		if (m == NULL)
+			break;
+		proto.sp_family = M_GETCTX(m, uintptr_t);
+		raw_input(m, &proto, &route_src, &route_dst);
+	}
+}
+
+/*
+ * Enqueue a message to the software interrupt routine.
+ */
+static void
+route_enqueue(struct mbuf *m, int family)
+{
+	int s, wasempty;
+
+	s = splnet();
+	if (IF_QFULL(&route_intrq)) {
+		IF_DROP(&route_intrq);
+		m_freem(m);
+	} else {
+		wasempty = IF_IS_EMPTY(&route_intrq);
+		M_SETCTX(m, (uintptr_t)family);
+		IF_ENQUEUE(&route_intrq, m);
+		if (wasempty)
+			softint_schedule(route_sih);
+	}
+	splx(s);
+}
+
+void
+rt_init(void)
+{
+
+	route_intrq.ifq_maxlen = route_maxqlen;
+	route_sih = softint_establish(SOFTINT_NET, route_intr, NULL);
 }
 
 /*
