@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.125 2008/02/24 13:25:37 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.126 2008/03/26 18:46:35 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3944,4 +3944,10 @@ usr.bin/column/column.c				1.18
 	Fix memory allocations in column. Fixes SegFault reported by
 	Jeremy Reed on tech-misc.
 	[oster, ticket #1907]
+
+bin/mt/mt.1					1.34
+
+	Clarify that "mt offline" ejects tapes. Also some grammar and
+	formatting fixes. PR bin/37727 from Randolf Richardson. 
+	[dholland, ticket #1911]
 
