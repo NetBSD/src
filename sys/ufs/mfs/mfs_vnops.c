@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.48 2008/02/21 14:10:57 ad Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.49 2008/03/26 14:19:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.48 2008/02/21 14:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.49 2008/03/26 14:19:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.48 2008/02/21 14:10:57 ad Exp $");
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -164,10 +164,10 @@ mfs_strategy(void *v)
 		bp->b_resid = 0;
 		biodone(bp);
 	} else {
-		mutex_enter(&mfsp->mfs_lock);
+		mutex_enter(&mfs_lock);
 		BUFQ_PUT(mfsp->mfs_buflist, bp);
 		cv_broadcast(&mfsp->mfs_cv);
-		mutex_exit(&mfsp->mfs_lock);
+		mutex_exit(&mfs_lock);
 	}
 	return (0);
 }
@@ -232,13 +232,13 @@ mfs_close(void *v)
 	/*
 	 * Finish any pending I/O requests.
 	 */
-	mutex_enter(&mfsp->mfs_lock);
+	mutex_enter(&mfs_lock);
 	while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
-		mutex_exit(&mfsp->mfs_lock);
+		mutex_exit(&mfs_lock);
 		mfs_doio(bp, mfsp->mfs_baseoff);
-		mutex_enter(&mfsp->mfs_lock);
+		mutex_enter(&mfs_lock);
 	}
-	mutex_exit(&mfsp->mfs_lock);
+	mutex_exit(&mfs_lock);
 	/*
 	 * On last close of a memory filesystem
 	 * we must invalidate any in core blocks, so that
@@ -255,10 +255,10 @@ mfs_close(void *v)
 	/*
 	 * Send a request to the filesystem server to exit.
 	 */
-	mutex_enter(&mfsp->mfs_lock);
+	mutex_enter(&mfs_lock);
 	mfsp->mfs_shutdown = 1;
 	cv_broadcast(&mfsp->mfs_cv);
-	mutex_exit(&mfsp->mfs_lock);
+	mutex_exit(&mfs_lock);
 	return (0);
 }
 
@@ -293,12 +293,19 @@ mfs_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
+	int refcnt;
 
-	cv_destroy(&mfsp->mfs_cv);
-	mutex_destroy(&mfsp->mfs_lock);
-
-	FREE(vp->v_data, M_MFSNODE);
+	mutex_enter(&mfs_lock);
 	vp->v_data = NULL;
+	refcnt = --mfsp->mfs_refcnt;
+	mutex_exit(&mfs_lock);
+
+	if (refcnt == 0) {
+		bufq_free(mfsp->mfs_buflist);
+		cv_destroy(&mfsp->mfs_cv);
+		kmem_free(mfsp, sizeof(*mfsp));
+	}
+
 	return (0);
 }
 
