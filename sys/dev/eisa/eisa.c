@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.43 2008/03/26 18:06:34 matt Exp $	*/
+/*	$NetBSD: eisa.c,v 1.44 2008/03/26 18:08:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.43 2008/03/26 18:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.44 2008/03/26 18:08:08 matt Exp $");
 
 #include "opt_eisaverbose.h"
 
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: eisa.c,v 1.43 2008/03/26 18:06:34 matt Exp $");
 
 #include "locators.h"
 
-static int	eisamatch(struct device *, struct cfdata *, void *);
-static void	eisaattach(struct device *, struct device *, void *);
+static int	eisamatch(device_t, cfdata_t, void *);
+static void	eisaattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(eisa, 0,
     eisamatch, eisaattach, NULL, NULL);
@@ -65,7 +65,7 @@ static int	eisaprint(void *, const char *);
 static void	eisa_devinfo(const char *, char *, size_t);
 
 static int
-eisamatch(struct device *parent, struct cfdata *cf,
+eisamatch(device_t parent, cfdata_t cf,
     void *aux)
 {
 	/* XXX check other indicators */
@@ -88,7 +88,7 @@ eisaprint(void *aux, const char *pnp)
 }
 
 static void
-eisaattach(struct device *parent, struct device *self, void *aux)
+eisaattach(device_t parent, device_t self, void *aux)
 {
 	struct eisabus_attach_args *eba = aux;
 	bus_space_tag_t iot, memt;
