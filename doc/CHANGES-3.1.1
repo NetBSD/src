@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.53 2007/09/17 20:17:09 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.54 2008/03/26 18:54:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -406,4 +406,55 @@ sys/netinet/ip_input.c				1.253
 	Fix PR kern/36800: in FAST_IPSEC, spl level may not be restored
 	properly.
 	[degroote, ticket #1840]
+
+dist/bzip2/CHANGES:				patch
+dist/bzip2/LICENSE:				patch
+dist/bzip2/Makefile-libbz2_so:			patch
+dist/bzip2/Makefile:				patch
+dist/bzip2/README.COMPILATION.PROBLEMS:		patch
+dist/bzip2/README:				patch
+dist/bzip2/Y2K_INFO:				patch
+dist/bzip2/blocksort.c:				patch
+dist/bzip2/bzdiff.1:				patch
+dist/bzip2/bzdiff:				patch
+dist/bzip2/bzgrep.1:				patch
+dist/bzip2/bzgrep:				patch
+dist/bzip2/bzip2.1:				patch
+dist/bzip2/bzip2.c:				patch
+dist/bzip2/bzip2netbsd:				patch
+dist/bzip2/bzip2recover.c:			patch
+dist/bzip2/bzlib.c:				patch
+dist/bzip2/bzlib.h:				patch
+dist/bzip2/bzlib_private.h:			patch
+dist/bzip2/bzmore.1:				patch
+dist/bzip2/compress.c:				patch
+dist/bzip2/crctable.c:				patch
+dist/bzip2/decompress.c:			patch
+dist/bzip2/dlltest.c:				patch
+dist/bzip2/huffman.c:				patch
+dist/bzip2/manual.html:				patch
+dist/bzip2/manual.texi:				patch
+dist/bzip2/manual_1.html:			patch
+dist/bzip2/manual_2.html:			patch
+dist/bzip2/manual_3.html:			patch
+dist/bzip2/manual_4.html:			patch
+dist/bzip2/manual_abt.html:			patch
+dist/bzip2/manual_ovr.html:			patch
+dist/bzip2/manual_toc.html:			patch
+dist/bzip2/mk251.c:				patch
+dist/bzip2/randtable.c:				patch
+dist/bzip2/spewG.c:				patch
+dist/bzip2/unzcrash.c:				patch
+dist/bzip2/words0:				patch
+dist/bzip2/words2:				patch
+dist/bzip2/words3:				patch
+distrib/sets/lists/base/shl.mi:			patch
+distrib/sets/lists/man/mi:			patch
+distrib/sets/lists/misc/mi:			patch
+doc/3RDPARTY:					patch
+lib/libbz2/Makefile:				patch
+lib/libbz2/shlib_version:			patch
+
+	Upgrade bzip2 to 1.0.5, fixing CVE-2008-1372 and CVE-2005-0953
+	[adrianp, ticket #1917]
 
