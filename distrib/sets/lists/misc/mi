@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113.2.7 2006/07/12 15:06:32 tron Exp $
+# $NetBSD: mi,v 1.113.2.7.2.1 2008/03/26 18:53:39 bouyer Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -6,11 +6,12 @@
 ./usr/share/dict/web2				misc-reference-share	share
 ./usr/share/dict/web2a				misc-reference-share	share
 ./usr/share/dict/words				misc-reference-share	share
-./usr/share/doc/html/bzip2/manual_1.html	misc-util-htmldoc	share
-./usr/share/doc/html/bzip2/manual_2.html	misc-util-htmldoc	share
-./usr/share/doc/html/bzip2/manual_3.html	misc-util-htmldoc	share
-./usr/share/doc/html/bzip2/manual_4.html	misc-util-htmldoc	share
-./usr/share/doc/html/bzip2/manual_toc.html	misc-util-htmldoc	share
+./usr/share/doc/html/bzip2/manual.html		misc-util-htmldoc	share
+./usr/share/doc/html/bzip2/manual_1.html	misc-obsolete		obsolete
+./usr/share/doc/html/bzip2/manual_2.html	misc-obsolete		obsolete
+./usr/share/doc/html/bzip2/manual_3.html	misc-obsolete		obsolete
+./usr/share/doc/html/bzip2/manual_4.html	misc-obsolete		obsolete
+./usr/share/doc/html/bzip2/manual_toc.html	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/Oncore-SHMEM.htm	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/accopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/assoc.htm		misc-obsolete		obsolete
