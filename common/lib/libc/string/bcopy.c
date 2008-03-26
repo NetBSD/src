@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.c,v 1.7 2008/03/25 23:23:34 christos Exp $	*/
+/*	$NetBSD: bcopy.c,v 1.8 2008/03/26 06:19:36 apb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bcopy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcopy.c,v 1.7 2008/03/25 23:23:34 christos Exp $");
+__RCSID("$NetBSD: bcopy.c,v 1.8 2008/03/26 06:19:36 apb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,17 +69,15 @@ typedef	long word;		/* "word" used for optimal copy speed */
  * This is the routine that actually implements
  * (the portable versions of) bcopy, memcpy, and memmove.
  */
-#ifdef MEMCOPY
+#if defined(MEMCOPY)
 void *
 memcpy(void *dst0, const void *src0, size_t length)
-#else
-#ifdef MEMMOVE
+#elif defined(MEMMOVE)
 void *
 memmove(void *dst0, const void *src0, size_t length)
 #else
 void
 bcopy(const void *src0, void *dst0, size_t length)
-#endif
 #endif
 {
 	char *dst = dst0;
@@ -156,8 +154,8 @@ done:
 	return;
 #endif
 }
-#else
-#ifdef MEMCOPY
+#else /* __OPTIMIZE_SIZE__ */
+#if defined(MEMCOPY)
 /*
  * This is designed to be small, not fast.
  */
@@ -206,4 +204,4 @@ bcopy(const void *s2, void *s1, size_t n)
 		*t++ = *f++;
 }
 #endif
-#endif
+#endif /* __OPTIMIZE_SIZE__ */
