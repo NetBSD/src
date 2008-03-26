@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.22 2007/10/19 12:00:42 ad Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.23 2008/03/26 17:50:32 matt Exp $	*/
 
 /*
  * cy_pci.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.22 2007/10/19 12:00:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.23 2008/03/26 17:50:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,7 @@ cy_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-cy_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+cy_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -85,15 +84,17 @@ cy_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-cy_pci_attach(struct device *parent, struct device *self, void *aux)
+cy_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct cy_pci_softc *psc = (void *) self;
-	struct cy_softc *sc = (void *) &psc->sc_cy;
+	struct cy_pci_softc *psc = device_private(self);
+	struct cy_softc *sc = &psc->sc_cy;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
 	const struct cy_pci_product *cp;
 	const char *intrstr;
 	int plx_ver;
+
+	sc->sc_dev = self;
 
 	aprint_naive(": Multi-port serial controller\n");
 
@@ -107,21 +108,18 @@ cy_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_IO, 0,
 	    &psc->sc_iot, &psc->sc_ioh, NULL, NULL) != 0) {
-		aprint_error("%s: unable to map PLX registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "unable to map PLX registers\n");
 		return;
 	}
 
 	if (pci_mapreg_map(pa, 0x18, cp->cp_memtype, 0,
 	    &sc->sc_memt, &sc->sc_bsh, NULL, NULL) != 0) {
-		aprint_error("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,"unable to map device registers\n");
 		return;
 	}
 
 	if (cy_find(sc) == 0) {
-		aprint_error("%s: unable to find CD1400s\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "unable to find CD1400s\n");
 		return;
 	}
 
@@ -133,19 +131,19 @@ cy_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error(": unable to map interrupt\n");
+		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_TTY, cy_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error(": unable to establish interrupt");
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	cy_attach(sc);
 
@@ -168,5 +166,5 @@ cy_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-CFATTACH_DECL(cy_pci, sizeof(struct cy_pci_softc),
+CFATTACH_DECL_NEW(cy_pci, sizeof(struct cy_pci_softc),
     cy_pci_match, cy_pci_attach, NULL, NULL);

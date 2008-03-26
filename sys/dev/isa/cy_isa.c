@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.22 2007/10/19 12:00:15 ad Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.23 2008/03/26 17:50:32 matt Exp $	*/
 
 /*
  * cy.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.22 2007/10/19 12:00:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.23 2008/03/26 17:50:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -26,14 +26,14 @@ __KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.22 2007/10/19 12:00:15 ad Exp $");
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
 
-int	cy_isa_probe(struct device *, struct cfdata *, void *);
-void	cy_isa_attach(struct device *, struct device *, void *);
+int	cy_isa_probe(device_t, cfdata_t, void *);
+void	cy_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cy_isa, sizeof(struct cy_softc),
+CFATTACH_DECL_NEW(cy_isa, sizeof(struct cy_softc),
     cy_isa_probe, cy_isa_attach, NULL, NULL);
 
 int
-cy_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+cy_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct cy_softc sc;
@@ -43,8 +43,6 @@ cy_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 		return (0);
 	if (ia->ia_nirq < 1)
 		return (0);
-
-	memcpy(&sc.sc_dev, match, sizeof(struct device));
 
 	sc.sc_memt = ia->ia_memt;
 	sc.sc_bustype = CY_BUSTYPE_ISA;
@@ -76,11 +74,12 @@ cy_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-cy_isa_attach(struct device *parent, struct device *self, void *aux)
+cy_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct cy_softc *sc = (void *) self;
+	struct cy_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
+	sc->sc_dev = self;
 	sc->sc_memt = ia->ia_memt;
 	sc->sc_bustype = CY_BUSTYPE_ISA;
 
@@ -88,13 +87,13 @@ cy_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr, CY_MEMSIZE, 0,
 	    &sc->sc_bsh) != 0) {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map device registers\n");
 		return;
 	}
 
 	if (cy_find(sc) == 0) {
-		printf("%s: unable to find CD1400s\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "unable to find CD1400s\n");
 		return;
 	}
 
@@ -103,6 +102,5 @@ cy_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_TTY, cy_intr, sc);
 	if (sc->sc_ih == NULL)
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "unable to establish interrupt\n");
 }
