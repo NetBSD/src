@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.29 2008/02/24 05:34:01 isaki Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.30 2008/03/26 14:46:21 cube Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.29 2008/02/24 05:34:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.30 2008/03/26 14:46:21 cube Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -73,12 +73,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.29 2008/02/24 05:34:01 isaki Exp $");
 #include <dev/pci/if_nfereg.h>
 #include <dev/pci/if_nfevar.h>
 
-int	nfe_match(struct device *, struct cfdata *, void *);
-void	nfe_attach(struct device *, struct device *, void *);
+int	nfe_match(device_t, cfdata_t, void *);
+void	nfe_attach(device_t, device_t, void *);
 void	nfe_power(int, void *);
-void	nfe_miibus_statchg(struct device *);
-int	nfe_miibus_readreg(struct device *, int, int);
-void	nfe_miibus_writereg(struct device *, int, int, int);
+void	nfe_miibus_statchg(device_t);
+int	nfe_miibus_readreg(device_t, int, int);
+void	nfe_miibus_writereg(device_t, int, int, int);
 int	nfe_intr(void *);
 int	nfe_ioctl(struct ifnet *, u_long, void *);
 void	nfe_txdesc32_sync(struct nfe_softc *, struct nfe_desc32 *, int);
@@ -109,7 +109,8 @@ void	nfe_get_macaddr(struct nfe_softc *, uint8_t *);
 void	nfe_set_macaddr(struct nfe_softc *, const uint8_t *);
 void	nfe_tick(void *);
 
-CFATTACH_DECL(nfe, sizeof(struct nfe_softc), nfe_match, nfe_attach, NULL, NULL);
+CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc), nfe_match, nfe_attach,
+    NULL, NULL);
 
 /*#define NFE_NO_JUMBO*/
 
@@ -183,7 +184,7 @@ const struct nfe_product {
 };
 
 int
-nfe_match(struct device *dev, struct cfdata *match, void *aux)
+nfe_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct nfe_product *np;
@@ -199,9 +200,9 @@ nfe_match(struct device *dev, struct cfdata *match, void *aux)
 }
 
 void
-nfe_attach(struct device *parent, struct device *self, void *aux)
+nfe_attach(device_t parent, device_t self, void *aux)
 {
-	struct nfe_softc *sc = (struct nfe_softc *)self;
+	struct nfe_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -211,6 +212,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t memtype;
 	char devinfo[256];
 
+	sc->sc_dev = self;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n",
 	    devinfo, PCI_REVISION(pa->pa_class));
@@ -224,26 +226,25 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		/* FALLTHROUGH */
 	default:
-		printf("%s: could not map mem space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not map mem space\n");
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf("%s: could not map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not map interrupt\n");
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nfe_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: could not establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -252,8 +253,8 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_flags |= NFE_CORRECT_MACADDR;
 
 	nfe_get_macaddr(sc, sc->sc_enaddr);
-	printf("%s: Ethernet address %s\n",
-	    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_enaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n",
+	    ether_sprintf(sc->sc_enaddr));
 
 	sc->sc_flags = 0;
 
@@ -319,14 +320,12 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	 * Allocate Tx and Rx rings.
 	 */
 	if (nfe_alloc_tx_ring(sc, &sc->txq) != 0) {
-		printf("%s: could not allocate Tx ring\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not allocate Tx ring\n");
 		return;
 	}
 
 	if (nfe_alloc_rx_ring(sc, &sc->rxq) != 0) {
-		printf("%s: could not allocate Rx ring\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not allocate Rx ring\n");
 		nfe_free_tx_ring(sc, &sc->txq);
 		return;
 	}
@@ -343,7 +342,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, NFE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
-	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 
 #if NVLAN > 0
 	if (sc->sc_flags & NFE_HW_VLAN)
@@ -368,7 +367,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "no PHY found!\n");
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL,
 		    0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_MANUAL);
@@ -388,9 +387,9 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-nfe_miibus_statchg(struct device *dev)
+nfe_miibus_statchg(device_t dev)
 {
-	struct nfe_softc *sc = (struct nfe_softc *)dev;
+	struct nfe_softc *sc = device_private(dev);
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t phy, seed, misc = NFE_MISC1_MAGIC, link = NFE_MEDIA_SET;
 
@@ -430,9 +429,9 @@ nfe_miibus_statchg(struct device *dev)
 }
 
 int
-nfe_miibus_readreg(struct device *dev, int phy, int reg)
+nfe_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct nfe_softc *sc = (struct nfe_softc *)dev;
+	struct nfe_softc *sc = device_private(dev);
 	uint32_t val;
 	int ntries;
 
@@ -452,13 +451,13 @@ nfe_miibus_readreg(struct device *dev, int phy, int reg)
 	}
 	if (ntries == 1000) {
 		DPRINTFN(2, ("%s: timeout waiting for PHY\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 		return 0;
 	}
 
 	if (NFE_READ(sc, NFE_PHY_STATUS) & NFE_PHY_ERROR) {
 		DPRINTFN(2, ("%s: could not read PHY\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 		return 0;
 	}
 
@@ -467,15 +466,15 @@ nfe_miibus_readreg(struct device *dev, int phy, int reg)
 		sc->mii_phyaddr = phy;
 
 	DPRINTFN(2, ("%s: mii read phy %d reg 0x%x ret 0x%x\n",
-	    sc->sc_dev.dv_xname, phy, reg, val));
+	    device_xname(sc->sc_dev), phy, reg, val));
 
 	return val;
 }
 
 void
-nfe_miibus_writereg(struct device *dev, int phy, int reg, int val)
+nfe_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct nfe_softc *sc = (struct nfe_softc *)dev;
+	struct nfe_softc *sc = device_private(dev);
 	uint32_t ctl;
 	int ntries;
 
@@ -541,7 +540,7 @@ nfe_intr(void *arg)
 			NFE_READ(sc, NFE_PHY_STATUS);
 			NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
 			DPRINTF(("%s: link state changed\n",
-			    sc->sc_dev.dv_xname));
+			    device_xname(sc->sc_dev)));
 		}
 	}
 
@@ -825,7 +824,7 @@ nfe_rxeof(struct nfe_softc *sc)
 				if (error != 0) {
 					/* very unlikely that it will fail.. */
 					panic("%s: could not load old rx mbuf",
-					    sc->sc_dev.dv_xname);
+					    device_xname(sc->sc_dev));
 				}
 				ifp->if_ierrors++;
 				goto skip;
@@ -853,7 +852,7 @@ mbufcopied:
 			if (flags & NFE_RX_IP_CSUMOK) {
 				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 				DPRINTFN(3, ("%s: ip4csum-rx ok\n",
-				    sc->sc_dev.dv_xname));
+				    device_xname(sc->sc_dev)));
 			}
 			/*
 			 * XXX
@@ -863,11 +862,11 @@ mbufcopied:
 			if (flags & NFE_RX_UDP_CSUMOK) {
 				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
 				DPRINTFN(3, ("%s: udp4csum-rx ok\n",
-				    sc->sc_dev.dv_xname));
+				    device_xname(sc->sc_dev)));
 			} else if (flags & NFE_RX_TCP_CSUMOK) {
 				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
 				DPRINTFN(3, ("%s: tcp4csum-rx ok\n",
-				    sc->sc_dev.dv_xname));
+				    device_xname(sc->sc_dev)));
 			}
 		}
 
@@ -946,8 +945,8 @@ nfe_txeof(struct nfe_softc *sc)
 				continue;
 
 			if ((flags & NFE_TX_ERROR_V1) != 0) {
-				printf("%s: tx v1 error 0x%04x\n",
-				    sc->sc_dev.dv_xname, flags);
+				aprint_error_dev(sc->sc_dev,
+				    "tx v1 error 0x%04x\n", flags);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -957,16 +956,16 @@ nfe_txeof(struct nfe_softc *sc)
 				continue;
 
 			if ((flags & NFE_TX_ERROR_V2) != 0) {
-				printf("%s: tx v2 error 0x%04x\n",
-				    sc->sc_dev.dv_xname, flags);
+				aprint_error_dev(sc->sc_dev,
+				    "tx v2 error 0x%04x\n", flags);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
 		}
 
 		if (data->m == NULL) {	/* should not get there */
-			printf("%s: last fragment bit w/o associated mbuf!\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "last fragment bit w/o associated mbuf!\n");
 			continue;
 		}
 
@@ -1017,8 +1016,8 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m0, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map mbuf (error %d)\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev, "could not map mbuf (error %d)\n",
+		    error);
 		return error;
 	}
 
@@ -1161,7 +1160,7 @@ nfe_watchdog(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 
-	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(sc->sc_dev, "watchdog timeout\n");
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	nfe_init(ifp);
@@ -1343,32 +1342,31 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	error = bus_dmamap_create(sc->sc_dmat, NFE_RX_RING_COUNT * descsize, 1,
 	    NFE_RX_RING_COUNT * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
 	if (error != 0) {
-		printf("%s: could not create desc DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not create desc DMA map\n");
 		goto fail;
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, NFE_RX_RING_COUNT * descsize,
 	    PAGE_SIZE, 0, &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not allocate DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate DMA memory\n");
 		goto fail;
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
 	    NFE_RX_RING_COUNT * descsize, (void **)desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map desc DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not map desc DMA memory\n");
 		goto fail;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ring->map, *desc,
 	    NFE_RX_RING_COUNT * descsize, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not load desc DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not load desc DMA map\n");
 		goto fail;
 	}
 
@@ -1378,8 +1376,8 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	if (sc->sc_flags & NFE_USE_JUMBO) {
 		ring->bufsz = NFE_JBYTES;
 		if ((error = nfe_jpool_alloc(sc)) != 0) {
-			printf("%s: could not allocate jumbo frames\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate jumbo frames\n");
 			goto fail;
 		}
 	}
@@ -1392,16 +1390,16 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
-			printf("%s: could not allocate rx mbuf\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not allocate rx mbuf\n");
 			error = ENOMEM;
 			goto fail;
 		}
 
 		if (sc->sc_flags & NFE_USE_JUMBO) {
 			if ((jbuf = nfe_jalloc(sc, i)) == NULL) {
-				printf("%s: could not allocate jumbo buffer\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				    "could not allocate jumbo buffer\n");
 				goto fail;
 			}
 			MEXTADD(data->m, jbuf->buf, NFE_JBYTES, 0, nfe_jfree,
@@ -1412,14 +1410,14 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 			error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 			    MCLBYTES, 0, BUS_DMA_NOWAIT, &data->map);
 			if (error != 0) {
-				printf("%s: could not create DMA map\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				    "could not create DMA map\n");
 				goto fail;
 			}
 			MCLGET(data->m, M_DONTWAIT);
 			if (!(data->m->m_flags & M_EXT)) {
-				printf("%s: could not allocate mbuf cluster\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				    "could not allocate mbuf cluster\n");
 				error = ENOMEM;
 				goto fail;
 			}
@@ -1428,8 +1426,8 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 			    mtod(data->m, void *), MCLBYTES, NULL,
 			    BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error != 0) {
-				printf("%s: could not load rx buf DMA map",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				    "could not load rx buf DMA map");
 				goto fail;
 			}
 			physaddr = data->map->dm_segs[0].ds_addr;
@@ -1548,8 +1546,8 @@ nfe_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	/* find the jbuf from the base pointer */
 	i = ((char *)buf - (char *)sc->rxq.jpool) / NFE_JBYTES;
 	if (i < 0 || i >= NFE_JPOOL_COUNT) {
-		printf("%s: request to free a buffer (%p) not managed by us\n",
-		    sc->sc_dev.dv_xname, buf);
+		aprint_error_dev(sc->sc_dev,
+		    "request to free a buffer (%p) not managed by us\n", buf);
 		return;
 	}
 	jbuf = &sc->rxq.jbuf[i];
@@ -1576,32 +1574,32 @@ nfe_jpool_alloc(struct nfe_softc *sc)
 	error = bus_dmamap_create(sc->sc_dmat, NFE_JPOOL_SIZE, 1,
 	    NFE_JPOOL_SIZE, 0, BUS_DMA_NOWAIT, &ring->jmap);
 	if (error != 0) {
-		printf("%s: could not create jumbo DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not create jumbo DMA map\n");
 		goto fail;
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, NFE_JPOOL_SIZE, PAGE_SIZE, 0,
 	    &ring->jseg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s could not allocate jumbo DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate jumbo DMA memory\n");
 		goto fail;
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->jseg, nsegs, NFE_JPOOL_SIZE,
 	    &ring->jpool, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map jumbo DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not map jumbo DMA memory\n");
 		goto fail;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ring->jmap, ring->jpool,
 	    NFE_JPOOL_SIZE, NULL, BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not load jumbo DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not load jumbo DMA map\n");
 		goto fail;
 	}
 
@@ -1667,32 +1665,31 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 	    NFE_TX_RING_COUNT * descsize, 0, BUS_DMA_NOWAIT, &ring->map);
 
 	if (error != 0) {
-		printf("%s: could not create desc DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not create desc DMA map\n");
 		goto fail;
 	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, NFE_TX_RING_COUNT * descsize,
 	    PAGE_SIZE, 0, &ring->seg, 1, &nsegs, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not allocate DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate DMA memory\n");
 		goto fail;
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
 	    NFE_TX_RING_COUNT * descsize, (void **)desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map desc DMA memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "could not map desc DMA memory\n");
 		goto fail;
 	}
 
 	error = bus_dmamap_load(sc->sc_dmat, ring->map, *desc,
 	    NFE_TX_RING_COUNT * descsize, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not load desc DMA map\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "could not load desc DMA map\n");
 		goto fail;
 	}
 
@@ -1704,8 +1701,8 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		    NFE_MAX_SCATTER, NFE_JBYTES, 0, BUS_DMA_NOWAIT,
 		    &ring->data[i].map);
 		if (error != 0) {
-			printf("%s: could not create DMA map\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "could not create DMA map\n");
 			goto fail;
 		}
 	}
