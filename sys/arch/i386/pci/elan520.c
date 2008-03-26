@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.27 2008/03/26 15:49:03 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.28 2008/03/26 16:45:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.27 2008/03/26 15:49:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.28 2008/03/26 16:45:32 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,8 @@ static bool elanpar_shutdown(device_t, int);
 static bool elanpex_shutdown(device_t, int);
 
 static void elansc_protect(struct elansc_softc *, int, paddr_t, uint32_t);
+
+static const uint32_t sfkb = 64 * 1024, fkb = 4 * 1024;
 
 static void
 elansc_childdetached(device_t self, device_t child)
@@ -578,7 +580,6 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 	int i, j, nregion, pidx, tidx = 0, xnregion;
 	uint32_t par;
 	uint32_t protsize, unprotsize;
-	const uint32_t sfkb = 64 * 1024, fkb = 4 * 1024;
 	paddr_t start_pa, end_pa;
 	extern char kernel_text, etext;
 	bus_space_tag_t memt;
@@ -677,7 +678,6 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 static void
 elansc_protect(struct elansc_softc *sc, int pidx, paddr_t addr, uint32_t sz)
 {
-	const uint32_t sfkb = 64 * 1024, fkb = 4 * 1024;
 	uint32_t addr_field, blksz, par, size_field;
 
 	/* set attribute, target. */
