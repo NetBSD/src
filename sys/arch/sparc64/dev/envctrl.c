@@ -1,4 +1,4 @@
-/*	$NetBSD: envctrl.c,v 1.8 2007/11/16 08:00:12 xtraeme Exp $ */
+/*	$NetBSD: envctrl.c,v 1.9 2008/03/26 19:15:49 tnn Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.8 2007/11/16 08:00:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.9 2008/03/26 19:15:49 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,11 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: envctrl.c,v 1.8 2007/11/16 08:00:12 xtraeme Exp $");
 #include <dev/i2c/pcf8583reg.h>	/* for WDT */
 #include <dev/ic/pcf8584var.h>
 
-static int envctrlmatch(struct device *, struct cfdata *, void *);
-static void envctrlattach(struct device *, struct device *, void *);
+static int envctrlmatch(device_t, cfdata_t, void *);
+static void envctrlattach(device_t, device_t, void *);
 
 struct envctrl_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
@@ -89,7 +89,7 @@ struct envctrl_softc {
 	uint8_t sc_cpu_fan_speeds[112];
 };
 
-CFATTACH_DECL(envctrl, sizeof(struct envctrl_softc),
+CFATTACH_DECL_NEW(envctrl, sizeof(struct envctrl_softc),
     envctrlmatch, envctrlattach, NULL, NULL);
 
 static void envctrl_thread(void *);
@@ -109,7 +109,7 @@ static void envctrl_update_sensors(struct envctrl_softc *);
 static void envctrl_interpolate_ob_table(int *, uint8_t *);
 
 static int
-envctrlmatch(struct device *parent, struct cfdata *cf, void *aux)
+envctrlmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -117,13 +117,14 @@ envctrlmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-envctrlattach(struct device *parent, struct device *self, void *aux)
+envctrlattach(device_t parent, device_t self, void *aux)
 {
-	struct envctrl_softc *sc = (struct envctrl_softc *)self;
+	struct envctrl_softc *sc = device_private(self);
 	struct ebus_attach_args *ea = aux;
 	bus_addr_t devaddr;
 	int i, error;
 
+	sc->sc_dev = self;
 	sc->sc_iot = ea->ea_bustag;
 	devaddr = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	if (bus_space_map(sc->sc_iot, devaddr, ea->ea_reg[0].size,
@@ -148,7 +149,7 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	aprint_normal("\n%s: Ultra Enterprise 450 environmental monitoring\n",
-	    sc->sc_dev.dv_xname);
+	    device_xname(self));
 
 	envctrl_init_components(sc);
 
@@ -188,13 +189,13 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
@@ -202,7 +203,7 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 	envctrl_update_sensors(sc);
 
 	for (i = 0; i < 3; i++) {
-		aprint_normal("%s: PS %i: ", sc->sc_dev.dv_xname, i);
+		aprint_normal("%s: PS %i: ", device_xname(self), i);
 		if (sc->sc_ps_state[i] & ENVCTRL_PS_PRESENT) {
 			aprint_normal("absent\n");
 			continue;
@@ -218,7 +219,7 @@ envctrlattach(struct device *parent, struct device *self, void *aux)
 		aprint_normal("\n");
 	}
 
-	aprint_verbose("%s: keyswitch is ", sc->sc_dev.dv_xname);
+	aprint_verbose("%s: keyswitch is ", device_xname(self));
 	if ((sc->sc_keyswitch & ENVCTRL_KEY_LOCK) == 0)
 		aprint_verbose("unlocked\n");
 	else {
