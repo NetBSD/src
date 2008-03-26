@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.2 2007/10/19 11:59:58 ad Exp $ */
+/*	$NetBSD: pcf8584.c,v 1.3 2008/03/26 19:14:24 tnn Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8584.c,v 1.2 2007/10/19 11:59:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8584.c,v 1.3 2008/03/26 19:14:24 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -162,7 +162,7 @@ pcf8584_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	if (BUSY()) {
 		/* We're the only master on the bus, something is wrong. */
-		printf("*%s: i2c bus busy!\n", ha->ha_parent->dv_xname);
+		printf("*%s: i2c bus busy!\n", device_xname(ha->ha_parent));
 		pcf8584_bus_reset(ha, flags);
 	}
 	if (op == I2C_OP_READ_WITH_STOP)
@@ -185,7 +185,7 @@ pcf8584_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			pcf8584_wait(ha, flags);
 			if (!PENDING()) {
 				printf("%s: lost intr during i2c read\n",
-				    ha->ha_parent->dv_xname);
+				    device_xname(ha->ha_parent));
 				goto fail;
 			}
 			if (NAK())
@@ -203,7 +203,7 @@ pcf8584_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		pcf8584_wait(ha, flags);
 		if (!PENDING()) {
 			printf("%s: no intr on final i2c nak\n",
-			    ha->ha_parent->dv_xname);
+			    device_xname(ha->ha_parent));
 			goto fail;
 		}
 		CSR_W(PCF8584_CMD_STOP);
@@ -214,7 +214,7 @@ pcf8584_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			pcf8584_wait(ha, flags);
 			if (!PENDING()) {
 				printf("%s: no intr during i2c write\n",
-				    ha->ha_parent->dv_xname);
+				    device_xname(ha->ha_parent));
 				goto fail;
 			}
 			if (NAK())
