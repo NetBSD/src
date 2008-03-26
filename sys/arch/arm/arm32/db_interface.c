@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.44 2007/10/17 19:53:31 garbled Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.45 2008/03/26 13:01:13 chris Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.44 2007/10/17 19:53:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2008/03/26 13:01:13 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -365,8 +365,13 @@ cpu_Debugger(void)
 }
 
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("frame",	db_show_frame_cmd,	0, NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("panic",	db_show_panic_cmd,	0, NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("frame",	db_show_frame_cmd,	0,
+			"Displays the contents of a trapframe",
+			"[address]",
+			"   address:\taddress of trapfame to display")},
+	{ DDB_ADD_CMD("panic",	db_show_panic_cmd,	0,
+			"Displays the last panic string",
+		     	NULL,NULL) },
 #ifdef ARM32_DB_COMMANDS
 	ARM32_DB_COMMANDS,
 #endif
