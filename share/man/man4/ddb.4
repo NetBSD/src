@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.111 2008/02/18 18:36:21 tron Exp $
+.\"	$NetBSD: ddb.4,v 1.112 2008/03/26 13:03:51 chris Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1037,29 +1037,21 @@ set (e.g.
 .Ic machine reboot ) .
 Some of these commands are:
 .Ss ALPHA
-.Bl -tag -width "intrchain" -compact
+.Bl -tag -width "traptrace" -compact
 .It Ic halt
 Call the PROM monitor to halt the CPU.
 .It Ic reboot
 Call the PROM monitor to reboot the CPU.
 .El
 .Ss ARM32
-.Bl -tag -width "intrchain" -compact
-.It Ic vmstat
-Equivalent to
-.Xr vmstat 1
-output with "-s" option (statistics).
-.It Ic vnode
-Print out a description of a vnode.
-.It Ic intrchain
-Print the list of IRQ handlers.
+.Bl -tag -width "traptrace" -compact
 .It Ic panic
 Print the current "panic" string.
 .It Ic frame
 Given a trap frame address, print out the trap frame.
 .El
 .Ss MIPS
-.Bl -tag -width "intrchain" -compact
+.Bl -tag -width "traptrace" -compact
 .It Ic kvtop
 Print the physical address for a given kernel virtual address.
 .It Ic tlb
@@ -1071,7 +1063,7 @@ kernels compiled with
 option.
 .El
 .Ss SH3
-.Bl -tag -width "intrchain" -compact
+.Bl -tag -width "traptrace" -compact
 .It Ic tlb
 Print TLB entries
 .It Ic cache
@@ -1087,12 +1079,12 @@ kernels compiled with the
 option.
 .El
 .Ss SPARC
-.Bl -tag -width "intrchain" -compact
+.Bl -tag -width "traptrace" -compact
 .It Ic prom
 Exit to the Sun PROM monitor.
 .El
 .Ss SPARC64
-.Bl -tag -width "intrchain" -compact
+.Bl -tag -width "traptrace" -compact
 .It Ic ctx
 Print process context information.
 .It Ic cpu
@@ -1185,7 +1177,7 @@ Print register window information. Argument is a stack frame number (0 is
 top of stack, which is used when no index is given).
 .El
 .Ss SUN3 and SUN3X
-.Bl -tag -width "intrchain" -compact
+.Bl -tag -width "traptrace" -compact
 .It Ic abort
 Drop into monitor via abort (allows continue).
 .It Ic halt
