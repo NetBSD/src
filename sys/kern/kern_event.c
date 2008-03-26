@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.52 2008/03/24 09:09:55 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.53 2008/03/26 13:32:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.52 2008/03/24 09:09:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.53 2008/03/26 13:32:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,6 @@ static void	kqueue_doclose(struct kqueue *, struct klist *, int);
 
 static void	knote_detach(struct knote *, filedesc_t *fdp, bool);
 static void	knote_enqueue(struct knote *);
-static void	knote_dequeue(struct knote *);
 static void	knote_activate(struct knote *);
 
 static void	filt_kqdetach(struct knote *);
@@ -1157,17 +1156,20 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 				KERNEL_LOCK(1, NULL);		/* XXXSMP */
 				rv = (*kn->kn_fop->f_event)(kn, 0);
 				KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
+				mutex_spin_enter(&kq->kq_lock);
+				/* Re-poll if note was re-enqueued. */
+				if ((kn->kn_status & KN_QUEUED) != 0)
+					continue;
 				if (rv == 0) {
 					/*
 					 * non-ONESHOT event that hasn't
 					 * triggered again, so de-queue.
 					 */
-					mutex_spin_enter(&kq->kq_lock);
 					kn->kn_status &= ~KN_ACTIVE;
 					continue;
 				}
-				mutex_spin_enter(&kq->kq_lock);
 			}
+			/* XXXAD should be got from f_event if !oneshot. */
 			*kevp++ = kn->kn_kevent;
 			nkev++;
 			if (kn->kn_flags & EV_ONESHOT) {
@@ -1466,23 +1468,40 @@ static void
 knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 {
 	struct klist *list;
+	struct kqueue *kq;
+
+	kq = kn->kn_kq;
 
 	KASSERT((kn->kn_status & KN_MARKER) == 0);
 	KASSERT(mutex_owned(&fdp->fd_lock));
 
+	/* Remove from monitored object. */
 	if (dofop) {
 		KERNEL_LOCK(1, NULL);		/* XXXSMP */
 		(*kn->kn_fop->f_detach)(kn);
 		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 	}
 
+	/* Remove from descriptor table. */
 	if (kn->kn_fop->f_isfd)
 		list = (struct klist *)&fdp->fd_ofiles[kn->kn_id]->ff_knlist;
 	else
 		list = &fdp->fd_knhash[KN_HASH(kn->kn_id, fdp->fd_knhashmask)];
 
 	SLIST_REMOVE(list, kn, knote, kn_link);
-	knote_dequeue(kn);
+
+	/* Remove from kqueue. */
+	/* XXXAD should verify not in use by kqueue_scan. */
+	mutex_spin_enter(&kq->kq_lock);
+	if ((kn->kn_status & KN_QUEUED) != 0) {
+		kq_check(kq);
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+		kn->kn_status &= ~KN_QUEUED;
+		kq->kq_count--;
+		kq_check(kq);
+	}
+	mutex_spin_exit(&kq->kq_lock);
+
 	mutex_exit(&fdp->fd_lock);
 	if (kn->kn_fop->f_isfd)		
 		fd_putfile(kn->kn_id);
@@ -1517,30 +1536,6 @@ knote_enqueue(struct knote *kn)
 	}
 	mutex_spin_exit(&kq->kq_lock);
 }
-
-/*
- * Dequeue event for knote.
- */
-static void
-knote_dequeue(struct knote *kn)
-{
-	struct kqueue *kq;
-
-	KASSERT((kn->kn_status & KN_MARKER) == 0);
-
-	kq = kn->kn_kq;
-
-	mutex_spin_enter(&kq->kq_lock);
-	if ((kn->kn_status & KN_QUEUED) != 0) {
-		kq_check(kq);
-		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
-		kn->kn_status &= ~KN_QUEUED;
-		kq->kq_count--;
-		kq_check(kq);
-	}
-	mutex_spin_exit(&kq->kq_lock);
-}
-
 /*
  * Queue new event for knote.
  */
