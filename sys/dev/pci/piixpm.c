@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.22 2008/03/10 21:18:08 sketch Exp $ */
+/* $NetBSD: piixpm.c,v 1.23 2008/03/26 11:14:33 jmcneill Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.22 2008/03/10 21:18:08 sketch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.23 2008/03/26 11:14:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,7 @@ piixpm_match(struct device *parent, struct cfdata *match,
 		case PCI_PRODUCT_ATI_SB200_SMB:
 		case PCI_PRODUCT_ATI_SB300_SMB:
 		case PCI_PRODUCT_ATI_SB400_SMB:
+		case PCI_PRODUCT_ATI_SB600_SMB:	/* matches SB600/SB700/SB800 */
 			return 1;
 		}
 		break;
