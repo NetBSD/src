@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2002/08/19 09:41:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.9.6.1 2008/03/26 18:51:23 bouyer Exp $
 
 NOMAN=		# defined
 
@@ -13,27 +13,14 @@ SRCS=		blocksort.c huffman.c crctable.c randtable.c compress.c \
 INCS=		bzlib.h
 INCSDIR=	/usr/include
 
-TEXINFO=	bzip2.info
-CLEANFILES+=	bzip2.texi
-
 # XXX huffman.c gets mis-compiled with 2.95.3
 .if ${MACHINE_ARCH} == "vax"
 COPTS+=		-O0
 .endif
 
-bzip2.texi: manual.texi
-	@-rm -f $@
-	sed -e 's/@parindent.*//' \
-	    -e 's/@parskip.*//' \
-	    -e 's/@node Overview, Implementation, Top, Top/@node Overview, (dir), Top, (dir)/' \
-	    -e 's/@itemize$$/@itemize @bullet/' \
-	    -e 's/@bf{\(.*\)}/\1/' \
-	    <$> >$@
-
 .if ${MKSHARE} != "no"
 FILESDIR=	${HTMLDOCDIR}/bzip2
-FILES=		manual_toc.html manual_1.html manual_2.html manual_3.html \
-		manual_4.html
+FILES=		manual.html
 .endif
 
 .include <bsd.info.mk>
