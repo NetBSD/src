@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.30 2004/08/19 13:43:54 christos Exp $	*/
+/*	$NetBSD: vacation.c,v 1.30.2.1 2008/03/26 18:46:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.30 2004/08/19 13:43:54 christos Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.30.2.1 2008/03/26 18:46:07 bouyer Exp $");
 #endif /* not lint */
 
 /*
@@ -106,7 +106,6 @@ static int toanybody = 0;	/* Don't check if we appear in the to or cc */
 
 static int debug = 0;
 
-int main(int, char **);
 static void opendb(void);
 static int junkmail(const char *);
 static int nsearch(const char *, const char *);
@@ -116,7 +115,7 @@ static void getfrom(char *);
 static void sendmessage(const char *);
 static void setinterval(time_t);
 static void setreply(void);
-static void usage(void);
+static void usage(void) __attribute__((__noreturn__));
 
 int
 main(int argc, char **argv)
@@ -131,7 +130,7 @@ main(int argc, char **argv)
 	opterr = 0;
 	interval = -1;
 	openlog(getprogname(), 0, LOG_USER);
-	while ((ch = getopt(argc, argv, "a:df:F:Iijr:s:t:T:")) != -1)
+	while ((ch = getopt(argc, argv, "a:df:F:Iijm:r:s:t:T:")) != -1)
 		switch((char)ch) {
 		case 'a':			/* alias */
 			if (!(cur = (alias_t *)malloc((size_t)sizeof(alias_t))))
@@ -244,7 +243,8 @@ main(int argc, char **argv)
 		    getprogname(), *argv);
 		exit(1);
 	}
-	if (chdir(pw->pw_dir)) {
+	if (chdir(pw->pw_dir) == -1 && 
+	    (dbprefix[0] != '/' || msgfile[0] != '/')) {
 		syslog(LOG_ERR, "%s: no such directory %s.",
 		    getprogname(), pw->pw_dir);
 		exit(1);
@@ -386,7 +386,11 @@ readheaders(void)
 							break;
 					*++p = '\0';
 				}
-				(void)strlcpy(subject, s, sizeof(subject));
+				if (s) {
+					(void)strlcpy(subject, s, sizeof(subject));
+				} else {
+					subject[0] = '\0';
+				}
 			}
 			if ((fflag & SENDER_FROM) != 0 &&
 			    COMPARE(buf, "Sender:") == 0)
@@ -623,6 +627,7 @@ sendmessage(const char *myname)
 		}
 	} 
 	(void)fprintf(sfp, "To: %s\n", from);
+	(void)fputs("Auto-Submitted: auto-replied\n", sfp);
 	while (fgets(buf, sizeof buf, mfp) != NULL) {
 		char *p;
 		if ((p = strstr(buf, "$SUBJECT")) != NULL) {
