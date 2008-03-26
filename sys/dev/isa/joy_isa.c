@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.11 2007/10/19 12:00:20 ad Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.12 2008/03/26 18:27:07 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.11 2007/10/19 12:00:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.12 2008/03/26 18:27:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,15 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.11 2007/10/19 12:00:20 ad Exp $");
 
 #define JOY_NPORTS    1
 
-int	joy_isa_probe(struct device *, struct cfdata *, void *);
-void	joy_isa_attach(struct device *, struct device *, void *);
+static int	joy_isa_probe(device_t, cfdata_t, void *);
+static void	joy_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(joy_isa, sizeof(struct joy_softc),
+CFATTACH_DECL_NEW(joy_isa, sizeof(struct joy_softc),
     joy_isa_probe, joy_isa_attach, NULL, NULL);
 
-int
-joy_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+static int
+joy_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -64,13 +63,13 @@ joy_isa_probe(struct device *parent, struct cfdata *match,
 	int rval = 0;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return (0);
+		return 0;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, JOY_NPORTS, 0, &ioh))
-		return (0);
+		return 0;
 
 #ifdef WANT_JOYSTICK_CONNECTED
 	bus_space_write_1(iot, ioh, 0, 0xff);
@@ -91,22 +90,23 @@ joy_isa_probe(struct device *parent, struct cfdata *match,
 		ia->ia_nirq = 0;
 		ia->ia_ndrq = 0;
 	}
-	return (rval);
+	return rval;
 }
 
-void
-joy_isa_attach(struct device *parent, struct device *self, void *aux)
+static void
+joy_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct joy_softc *sc = (struct joy_softc *) self;
+	struct joy_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_iot = ia->ia_iot;
+	sc->sc_dev = self;
 
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, JOY_NPORTS, 0,
 	    &sc->sc_ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 

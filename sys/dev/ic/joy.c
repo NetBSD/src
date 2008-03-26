@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.16 2007/12/01 23:40:28 jmcneill Exp $	*/
+/*	$NetBSD: joy.c,v 1.17 2008/03/26 18:27:07 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.16 2007/12/01 23:40:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.17 2008/03/26 18:27:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,14 +78,12 @@ const struct cdevsw joy_cdevsw = {
 };
 
 void
-joyattach(sc)
-	struct joy_softc *sc;
+joyattach(struct joy_softc *sc)
 {
-
 	sc->timeout[0] = sc->timeout[1] = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0xff);
 	DELAY(10000);		/* 10 ms delay */
-	aprint_normal_dev(&sc->sc_dev, "joystick %sconnected\n",
+	aprint_normal_dev(sc->sc_dev, "joystick %sconnected\n",
 	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0) & 0x0f) == 0x0f ?
 	    "not " : "");
 }
@@ -96,11 +94,11 @@ joydetach(struct joy_softc *sc, int flags)
 	int maj, mn;
 
 	maj = cdevsw_lookup_major(&joy_cdevsw);
-	mn = device_unit(&sc->sc_dev) << 1;
+	mn = device_unit(sc->sc_dev) << 1;
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn + 1, mn + 1, VCHR);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -110,37 +108,34 @@ joyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int i = JOYPART(dev);
 	struct joy_softc *sc;
 
-	if (unit >= joy_cd.cd_ndevs)
-		return (ENXIO);
-	sc = joy_cd.cd_devs[unit];
-	if (sc == 0)
-		return (ENXIO);
+	sc = device_lookup_private(&joy_cd, unit);
+	if (sc == NULL)
+		return ENXIO;
 
 	if (sc->timeout[i])
-		return (EBUSY);
+		return EBUSY;
 
 	sc->x_off[i] = sc->y_off[i] = 0;
 	sc->timeout[i] = JOY_TIMEOUT;
-	return (0);
+	return 0;
 }
 
 int
-joyclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+joyclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = JOYUNIT(dev);
 	int i = JOYPART(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	struct joy_softc *sc = device_lookup_private(&joy_cd, unit);
 
 	sc->timeout[i] = 0;
-	return (0);
+	return 0;
 }
 
 int
 joyread(dev_t dev, struct uio *uio, int flag)
 {
 	int unit = JOYUNIT(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	struct joy_softc *sc = device_lookup_private(&joy_cd, unit);
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct joystick c;
@@ -175,42 +170,41 @@ joyread(dev_t dev, struct uio *uio, int flag)
 	state >>= 4;
 	c.b1 = ~state & 1;
 	c.b2 = ~(state >> 1) & 1;
-	return (uiomove(&c, sizeof(struct joystick), uio));
+	return uiomove(&c, sizeof(struct joystick), uio);
 }
 
 int
-joyioctl(dev_t dev, u_long cmd, void *data, int flag,
-    struct lwp *l)
+joyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = JOYUNIT(dev);
-	struct joy_softc *sc = joy_cd.cd_devs[unit];
+	struct joy_softc *sc = device_lookup_private(&joy_cd, unit);
 	int i = JOYPART(dev);
 	int x;
 
 	switch (cmd) {
 	case JOY_SETTIMEOUT:
-		x = *(int *) data;
+		x = *(int *)data;
 		if (x < 1 || x > 10000)	/* 10ms maximum! */
-			return (EINVAL);
+			return EINVAL;
 		sc->timeout[i] = x;
 		break;
 	case JOY_GETTIMEOUT:
-		*(int *) data = sc->timeout[i];
+		*(int *)data = sc->timeout[i];
 		break;
 	case JOY_SET_X_OFFSET:
-		sc->x_off[i] = *(int *) data;
+		sc->x_off[i] = *(int *)data;
 		break;
 	case JOY_SET_Y_OFFSET:
-		sc->y_off[i] = *(int *) data;
+		sc->y_off[i] = *(int *)data;
 		break;
 	case JOY_GET_X_OFFSET:
-		*(int *) data = sc->x_off[i];
+		*(int *)data = sc->x_off[i];
 		break;
 	case JOY_GET_Y_OFFSET:
-		*(int *) data = sc->y_off[i];
+		*(int *)data = sc->y_off[i];
 		break;
 	default:
-		return (ENXIO);
+		return ENXIO;
 	}
 	return 0;
 }
