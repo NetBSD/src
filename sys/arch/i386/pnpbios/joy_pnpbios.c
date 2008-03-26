@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: joy_pnpbios.c,v 1.11 2008/03/26 18:27:07 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.11 2008/03/26 18:27:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,37 +53,36 @@ __KERNEL_RCSID(0, "$NetBSD: joy_pnpbios.c,v 1.10 2006/11/16 01:32:39 christos Ex
 
 #include <dev/ic/joyvar.h>
 
-int	joy_pnpbios_match(struct device *, struct cfdata *, void *);
-void	joy_pnpbios_attach(struct device *, struct device *, void *);
+static int	joy_pnpbios_match(device_t, cfdata_t, void *);
+static void	joy_pnpbios_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(joy_pnpbios, sizeof(struct joy_softc),
+CFATTACH_DECL_NEW(joy_pnpbios, sizeof(struct joy_softc),
     joy_pnpbios_match, joy_pnpbios_attach, NULL, NULL);
 
-int
-joy_pnpbios_match(struct device *parent, struct cfdata *match,
-    void *aux)
+static int
+joy_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
 	if (strcmp(aa->idstr, "PNPB02F"))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
-void
-joy_pnpbios_attach(struct device *parent, struct device *self,
-    void *aux)
+static void
+joy_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
-	struct joy_softc *sc = (struct joy_softc *)self;
+	struct joy_softc *sc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
+	sc->sc_dev = self;
 	pnpbios_print_devres(self, aa);
 
 	joyattach(sc);

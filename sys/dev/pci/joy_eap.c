@@ -1,7 +1,7 @@
-/* $NetBSD: joy_eap.c,v 1.8 2007/12/11 11:25:53 lukem Exp $ */
+/* $NetBSD: joy_eap.c,v 1.9 2008/03/26 18:27:07 xtraeme Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.8 2007/12/11 11:25:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.9 2008/03/26 18:27:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -21,14 +21,14 @@ struct joy_eap_aa {
 	bus_space_handle_t aa_ioh;
 };
 
-struct device *
-eap_joy_attach(struct device *eapdev, struct eap_gameport_args *gpa)
+device_t 
+eap_joy_attach(device_t eapdev, struct eap_gameport_args *gpa)
 {
 	int i;
 	bus_space_handle_t ioh;
 	u_int32_t icsc;
 	struct joy_eap_aa aa;
-	struct device *joydev;
+	device_t joydev;
 
 	/*
 	 * There are 4 possible locations. Just try to map one of them.
@@ -43,7 +43,7 @@ eap_joy_attach(struct device *eapdev, struct eap_gameport_args *gpa)
 			break;
 	}
 	if (i == 4)
-		return (0);
+		return 0;
 
 	printf("%s: enabling gameport at legacy io port 0x%x\n",
 		eapdev->dv_xname, 0x200 + i * 8);
@@ -61,11 +61,11 @@ eap_joy_attach(struct device *eapdev, struct eap_gameport_args *gpa)
 	/* this cannot fail */
 	KASSERT(joydev != NULL);
 
-	return (joydev);
+	return joydev;
 }
 
 int
-eap_joy_detach(struct device *joydev, struct eap_gameport_args *gpa)
+eap_joy_detach(device_t joydev, struct eap_gameport_args *gpa)
 {
 	int res;
 	struct joy_softc *sc = (struct joy_softc *)joydev;
@@ -73,7 +73,7 @@ eap_joy_detach(struct device *joydev, struct eap_gameport_args *gpa)
 
 	res = config_detach(joydev, 0);
 	if (res)
-		return (res);
+		return res;
 
 	/* disable gameport on eap */
 	icsc = bus_space_read_4(gpa->gpa_iot, gpa->gpa_ioh, EAP_ICSC);
@@ -81,40 +81,40 @@ eap_joy_detach(struct device *joydev, struct eap_gameport_args *gpa)
 	bus_space_write_4(gpa->gpa_iot, gpa->gpa_ioh, EAP_ICSC, icsc);
 
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 1);
-	return (0);
+	return 0;
 }
 
 static int
-joy_eap_match(struct device *parent, struct cfdata *match,
-    void *aux)
+joy_eap_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct joy_eap_aa *eaa = aux;
 
 	if (eaa->aa_aaa.type != AUDIODEV_TYPE_AUX)
-		return (0);
-	return (1);
+		return 0;
+	return 1;
 }
 
 static void
-joy_eap_attach(struct device *parent, struct device *self, void *aux)
+joy_eap_attach(device_t parent, device_t self, void *aux)
 {
-	struct joy_softc *sc = (struct joy_softc *)self;
+	struct joy_softc *sc = device_private(self);
 	struct joy_eap_aa *eaa = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_iot = eaa->aa_iot;
 	sc->sc_ioh = eaa->aa_ioh;
+	sc->sc_dev = self;
 
 	joyattach(sc);
 }
 
 static int
-joy_eap_detach(struct device *self, int flags)
+joy_eap_detach(device_t self, int flags)
 {
 
-	return (joydetach((struct joy_softc *)self, flags));
+	return joydetach((struct joy_softc *)self, flags);
 }
 
-CFATTACH_DECL(joy_eap, sizeof (struct joy_softc),
+CFATTACH_DECL_NEW(joy_eap, sizeof (struct joy_softc),
 	joy_eap_match, joy_eap_attach, joy_eap_detach, NULL);
