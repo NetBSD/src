@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bt.c,v 1.1 2007/04/16 23:34:43 macallan Exp $ */
+/*	$NetBSD: adb_bt.c,v 1.2 2008/03/26 18:04:15 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.1 2007/04/16 23:34:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.2 2008/03/26 18:04:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,14 +72,14 @@ __KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.1 2007/04/16 23:34:43 macallan Exp $");
 #define BT_F7		0x0c
 #define BT_NUMLOCK	0x7f
 
-static int adbbt_match(struct device *, struct cfdata *, void *);
-static void adbbt_attach(struct device *, struct device *, void *);
+static int adbbt_match(device_t, cfdata_t, void *);
+static void adbbt_attach(device_t, device_t, void *);
 
 struct adbbt_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct adb_device *sc_adbdev;
 	struct adb_bus_accessops *sc_ops;
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 	int sc_msg_len;
 	int sc_event;
 	int sc_poll;
@@ -92,7 +92,7 @@ struct adbbt_softc {
 };	
 
 /* Driver definition. */
-CFATTACH_DECL(adbbt, sizeof(struct adbbt_softc),
+CFATTACH_DECL_NEW(adbbt, sizeof(struct adbbt_softc),
     adbbt_match, adbbt_attach, NULL, NULL);
 
 extern struct cfdriver adbbt_cd;
@@ -118,10 +118,7 @@ struct wskbd_mapdata adbbt_keymapdata = {
 };
 
 static int
-adbbt_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+adbbt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args *aaa = aux;
 
@@ -133,12 +130,13 @@ adbbt_match(parent, cf, aux)
 }
 
 static void
-adbbt_attach(struct device *parent, struct device *self, void *aux)
+adbbt_attach(device_t parent, device_t self, void *aux)
 {
-	struct adbbt_softc *sc = (struct adbbt_softc *)self;
+	struct adbbt_softc *sc = device_private(self);
 	struct adb_attach_args *aaa = aux;
 	struct wskbddev_attach_args a;
 
+	sc->sc_dev = self;
 	sc->sc_ops = aaa->ops;
 	sc->sc_adbdev = aaa->dev;
 	sc->sc_adbdev->cookie = sc;
