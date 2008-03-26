@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25 2008/03/11 02:24:43 ad Exp $
+#	$NetBSD: genassym.cf,v 1.26 2008/03/26 12:36:33 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
 
 define	CC_DENOM		offsetof(struct cc_microtime_state, cc_denom)
-define	CC_DELTA		offsetof(struct cc_microtime_state, cc_denom)
+define	CC_DELTA		offsetof(struct cc_microtime_state, cc_delta)
 define	CC_VAL			offsetof(struct cc_microtime_state, cc_val)
 define	CC_GEN			offsetof(struct cc_microtime_state, cc_gen)
 define	CC_CC			offsetof(struct cc_microtime_state, cc_cc)
