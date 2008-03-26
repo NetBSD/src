@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.931 2008/02/24 16:02:01 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.932 2008/03/26 11:13:30 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.931 2008/02/24 16:01:46 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.932 2008/03/26 11:12:43 jmcneill Exp
  */
 
 /*
@@ -4012,8 +4012,8 @@ static const struct pci_product pci_products[] = {
 	    "SB600 PCI to PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SMBUS,
-	    "SB600 SMBus Controller",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SMB,
+	    "SB600/SB700/SB800 SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_EHCI,
@@ -4046,6 +4046,54 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PLB_438D,
 	    "SB600 PCI to LPC Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_IDE,
+	    "SB700/SB800 SATA Controller (IDE mode)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_AHCI,
+	    "SB700/SB800 SATA Controller (AHCI mode)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID,
+	    "SB700/SB800 RAID SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID5,
+	    "SB700/SB800 RAID5 SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_FC,
+	    "SB700/SB800 FC SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_EHCI,
+	    "SB700/SB800 USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_SATA,
+	    "SB800 SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI0,
+	    "SB700/SB800 USB OHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI1,
+	    "SB700/SB800 USB OHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI2,
+	    "SB700/SB800 USB OHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_IDE,
+	    "SB700/SB800 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_LPC,
+	    "SB700/SB800 LPC Host Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
@@ -14052,4 +14100,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2914;
+const int pci_nproducts = 2926;
