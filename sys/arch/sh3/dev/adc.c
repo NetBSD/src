@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.7 2006/10/27 00:08:32 uwe Exp $ */
+/*	$NetBSD: adc.c,v 1.8 2008/03/27 00:23:40 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.7 2006/10/27 00:08:32 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.8 2008/03/27 00:23:40 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,23 +42,18 @@ __KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.7 2006/10/27 00:08:32 uwe Exp $");
 #define ADC_(x)    (*((volatile uint8_t *)SH7709_AD ## x))
 
 
-struct adc_softc {
-	struct device sc_dev;
-};
+static int	adc_match(device_t, struct cfdata *, void *);
+static void	adc_attach(device_t, device_t, void *);
 
-static int	adc_match(struct device *, struct cfdata *, void *);
-static void	adc_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(adc, sizeof(struct adc_softc),
+CFATTACH_DECL_NEW(adc, 0,
     adc_match, adc_attach, NULL, NULL);
 
-static int	adc_search(struct device *, struct cfdata *,
-			   const int *, void *);
+static int	adc_search(device_t, struct cfdata *, const int *, void *);
 static int	adc_print(void *, const char *);
 
 
 static int
-adc_match(struct device *parent, struct cfdata *cfp, void *aux)
+adc_match(device_t parent, struct cfdata *cfp, void *aux)
 {
 
 	/* REMINDER: also in 7727 and 7729 */
@@ -74,9 +69,8 @@ adc_match(struct device *parent, struct cfdata *cfp, void *aux)
 
 
 static void
-adc_attach(struct device *parent, struct device *self, void *aux)
+adc_attach(device_t parent, device_t self, void *aux)
 {
-	/* struct adc_softc *sc = (struct adc_softc *)self; */
 
 	ADC_(CSR) = 0;
 	ADC_(CR) = 0;
@@ -87,7 +81,7 @@ adc_attach(struct device *parent, struct device *self, void *aux)
 
 
 static int
-adc_search(struct device *parent, struct cfdata *cf,
+adc_search(device_t parent, struct cfdata *cf,
 	   const int *ldesc, void *aux)
 {
 
