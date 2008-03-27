@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.17 2008/03/22 04:12:32 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.18 2008/03/27 14:51:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.17 2008/03/22 04:12:32 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.18 2008/03/27 14:51:02 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -46,13 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.17 2008/03/22 04:12:32 nakayama Exp $
 #include <machine/db_machdep.h>
 
 #include <machine/cpu.h>
+#include <machine/cpu_counter.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <machine/sparc64.h>
-
-#define SPARC64_IPI_RETRIES	10000
-
-#define	sparc64_ipi_sleep()	delay(1000)
 
 #if defined(DDB) || defined(KGDB)
 #ifdef DDB
@@ -209,7 +206,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 	intr_func = (uint64_t)(u_long)func;
 
 	/* Schedule an interrupt. */
-	for (i = 0; i < SPARC64_IPI_RETRIES; i++) {
+	for (i = 0; i < 25; i++) {
 		int s = intr_disable();
 
 		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, intr_func);
@@ -242,25 +239,25 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 	}
 
 	if (panicstr == NULL)
-		panic("cpu%d: ipi_send: couldn't send ipi to UPAID %u", 
-			cpu_number(), upaid);
+		panic("cpu%d: ipi_send: couldn't send ipi to UPAID %u"
+			" (tried %d times)", i, cpu_number(), upaid);
 }
 
 /*
  * Wait for IPI operation to complete.
+ * Return 0 on success.
  */
 int
 sparc64_ipi_wait(sparc64_cpuset_t volatile *cpus_watchset, sparc64_cpuset_t cpus_mask)
 {
-	int i;
+	uint64_t limit = tick() + cpu_frequency(curcpu());
 
-	for (i = 0; i < SPARC64_IPI_RETRIES; i++) {
+	while (tick() < limit) {
 		membar_sync();
 		if (CPUSET_EQUAL(*cpus_watchset, cpus_mask))
-			break;
-		sparc64_ipi_sleep();
+			return 0;
 	}
-	return (i == SPARC64_IPI_RETRIES);
+	return 1;
 }
 
 /*
