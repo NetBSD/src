@@ -1,4 +1,4 @@
-/* $NetBSD: xbseeprom.c,v 1.3 2008/03/27 12:14:54 jmcneill Exp $ */
+/* $NetBSD: xbseeprom.c,v 1.4 2008/03/27 17:34:54 ad Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,12 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.3 2008/03/27 12:14:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.4 2008/03/27 17:34:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/sysctl.h>
 
 #include <dev/i2c/i2cvar.h>
