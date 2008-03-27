@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.40 2008/02/29 14:42:32 jmmv Exp $
+# $NetBSD: XEN2_DOM0,v 1.41 2008/03/27 16:33:32 tnn Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -163,7 +163,8 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 
-options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTSTATIC
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+#options	NFS_BOOT_BOOTSTATIC
 #options 	NFS_BOOTSTATIC_MYIP="\"169.254.1.2\""
 #options 	NFS_BOOTSTATIC_GWIP="\"169.254.1.1\""
 #options 	NFS_BOOTSTATIC_MASK="\"255.255.255.0\""
