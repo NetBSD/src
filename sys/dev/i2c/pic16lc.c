@@ -1,7 +1,7 @@
-/* $NetBSD: pic16lc.c,v 1.10 2007/11/16 08:00:14 xtraeme Exp $ */
+/* $NetBSD: pic16lc.c,v 1.11 2008/03/27 12:15:16 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.10 2007/11/16 08:00:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.11 2008/03/27 12:15:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.10 2007/11/16 08:00:14 xtraeme Exp $")
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pic16lcreg.h>
 
-static int	pic16lc_match(struct device *, struct cfdata *, void *);
-static void	pic16lc_attach(struct device *, struct device *, void *);
+static int	pic16lc_match(device_t, cfdata_t, void *);
+static void	pic16lc_attach(device_t, device_t, void *);
 
 static int	pic16lc_intr(void *);
 
@@ -63,7 +63,7 @@ void		pic16lc_poweroff(void);
 void		pic16lc_setled(uint8_t);
 
 struct pic16lc_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
@@ -89,11 +89,9 @@ CFATTACH_DECL(pic16lc, sizeof(struct pic16lc_softc),
     pic16lc_match, pic16lc_attach, NULL, NULL);
 
 static int
-pic16lc_match(struct device *parent, struct cfdata *cf, void *opaque)
+pic16lc_match(device_t parent, cfdata_t cf, void *opaque)
 {
-	struct i2c_attach_args *ia;
-
-	ia = (struct i2c_attach_args *)opaque;
+	struct i2c_attach_args *ia = opaque;
 
 	if (pic16lc != NULL) /* we can only have one... */
 		return 0;
@@ -104,16 +102,14 @@ pic16lc_match(struct device *parent, struct cfdata *cf, void *opaque)
 }
 
 static void
-pic16lc_attach(struct device *parent, struct device *self, void *opaque)
+pic16lc_attach(device_t parent, device_t self, void *opaque)
 {
-	struct pic16lc_softc *sc;
-	struct i2c_attach_args *ia;
+	struct pic16lc_softc *sc = device_private(self);
+	struct i2c_attach_args *ia = opaque;
 	u_char ver[4];
 	int i;
 
-	sc = (struct pic16lc_softc *)self;
-	ia = (struct i2c_attach_args *)opaque;
-
+	sc->sc_dev = self;
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
@@ -175,8 +171,7 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 
 	sc->sc_ih = iic_smbus_intr_establish_proc(sc->sc_tag, pic16lc_intr, sc);
 	if (sc->sc_ih == NULL)
-		aprint_error("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "%s: couldn't establish interrupt\n");
 
 	return;
 }
@@ -231,36 +226,33 @@ pic16lc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static int
 pic16lc_intr(void *opaque)
 {
-	struct pic16lc_softc *sc;
+	struct pic16lc_softc *sc = (struct pic16lc_softc *)opaque;
 	uint8_t val;
-	int rv;
-
-	sc = (struct pic16lc_softc *)opaque;
-	rv = 0;
+	int rv = 0;
 
 	pic16lc_read_1(sc, PIC16LC_REG_INTSTATUS, &val);
 	if (val == 0)
 		return rv;
 
 	if (val & PIC16LC_REG_INTSTATUS_POWER)
-		printf("%s: power button pressed\n", pic16lc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "power button pressed\n");
 	if (val & PIC16LC_REG_INTSTATUS_TRAYCLOSED)
-		printf("%s: tray closed\n", pic16lc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "tray closed\n");
 	if (val & PIC16LC_REG_INTSTATUS_TRAYOPENING) {
-		printf("%s: tray opening\n", pic16lc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "tray opening\n");
 		pic16lc_write_1(sc, PIC16LC_REG_INTACK, 0x02);
 	}
 	if (val & PIC16LC_REG_INTSTATUS_AVPACK_UNPLUG)
-		printf("%s: A/V pack removed\n", pic16lc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "A/V pack removed\n");
 	if (val & PIC16LC_REG_INTSTATUS_AVPACK_PLUG)
-		printf("%s: A/V pack inserted\n", pic16lc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "A/V pack inserted\n");
 	if (val & PIC16LC_REG_INTSTATUS_EJECT_BUTTON) {
 		pic16lc_write_1(sc, PIC16LC_REG_INTACK, 0x04);
 		pic16lc_write_1(sc, PIC16LC_REG_TRAYEJECT, 0x00);
 		++rv;
 	}
 	if (val & PIC16LC_REG_INTSTATUS_TRAYCLOSING)
-		printf("%s: tray closing\n", pic16lc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "tray closing\n");
 
 	return rv;
 }
