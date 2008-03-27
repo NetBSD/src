@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.13 2008/02/25 21:22:32 xtraeme Exp $ */
+/* $NetBSD: mfi.c,v 1.14 2008/03/27 21:15:29 xtraeme Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.13 2008/02/25 21:22:32 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.14 2008/03/27 21:15:29 xtraeme Exp $");
 
 #include "bio.h"
 
@@ -890,8 +890,8 @@ mfi_scsi_io(struct mfi_ccb *ccb, struct scsipi_xfer *xs, uint32_t blockno,
 	ccb->ccb_data = xs->data;
 	ccb->ccb_len = xs->datalen;
 
-	if (mfi_create_sgl(ccb, xs->xs_control & XS_CTL_NOSLEEP) ?
-	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK)
+	if (mfi_create_sgl(ccb, (xs->xs_control & XS_CTL_NOSLEEP) ?
+	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK))
 		return 1;
 
 	return 0;
@@ -986,8 +986,8 @@ mfi_scsi_ld(struct mfi_ccb *ccb, struct scsipi_xfer *xs)
 		ccb->ccb_data = xs->data;
 		ccb->ccb_len = xs->datalen;
 
-		if (mfi_create_sgl(ccb, xs->xs_control & XS_CTL_NOSLEEP) ?
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK)
+		if (mfi_create_sgl(ccb, (xs->xs_control & XS_CTL_NOSLEEP) ?
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK))
 			return 1;
 	}
 
@@ -1826,7 +1826,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	case MFI_MGMT_VD:
 		vdhs = bio_hs;
 		vdhs->bv_status = BIOC_SVONLINE;
-		vdhs->bv_size = pd->mpd_size / 2; /* XXX why? / 2 */
+		vdhs->bv_size = pd->mpd_size * 512; /* bytes per block */
 		vdhs->bv_level = -1; /* hotspare */
 		vdhs->bv_nodisk = 1;
 		break;
@@ -1834,7 +1834,7 @@ mfi_bio_hs(struct mfi_softc *sc, int volid, int type, void *bio_hs)
 	case MFI_MGMT_SD:
 		sdhs = bio_hs;
 		sdhs->bd_status = BIOC_SDHOTSPARE;
-		sdhs->bd_size = pd->mpd_size / 2; /* XXX why? / 2 */
+		sdhs->bd_size = pd->mpd_size * 512; /* bytes per block */
 		sdhs->bd_channel = pd->mpd_enc_idx;
 		sdhs->bd_target = pd->mpd_enc_slot;
 		inqbuf = (struct scsipi_inquiry_data *)&pd->mpd_inq_data;
@@ -1976,6 +1976,13 @@ mfi_xscale_intr(struct mfi_softc *sc)
 static void
 mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
+	    ccb->ccb_pframe - MFIMEM_DVA(sc->sc_frames),
+	    sc->sc_frames_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_sense),
+	    ccb->ccb_psense - MFIMEM_DVA(sc->sc_sense),
+	    MFI_SENSE_SIZE, BUS_DMASYNC_PREREAD);
+
 	mfi_write(sc, MFI_IQP, (ccb->ccb_pframe >> 3) |
 	    ccb->ccb_extra_frames);
 }
