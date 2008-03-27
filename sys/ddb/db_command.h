@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.31 2007/12/25 18:33:36 perry Exp $	*/
+/*	$NetBSD: db_command.h,v 1.32 2008/03/27 01:15:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ struct db_command {
 #define CS_COMPAT	0x4		/*is set for compatibilty with old ddb versions*/
 	
 #define CS_SHOW		0x8		/*select show list*/
-#define CS_MACH		0x16		/*select machine dependent list*/
+#define CS_MACH		0x10		/*select machine dependent list*/
 
 #define	CS_SET_DOT	0x100		/* set dot after command */
 #define	CS_NOREPEAT	0x200		/* don't set last_command */
