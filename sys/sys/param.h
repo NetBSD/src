@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.312 2008/03/25 23:21:42 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.313 2008/03/27 18:28:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -163,6 +163,9 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
+#ifndef COHERENCY_UNIT
+#define	COHERENCY_UNIT		64
+#endif
 #ifndef CACHE_LINE_SIZE
 #define	CACHE_LINE_SIZE		64
 #endif
@@ -269,8 +272,6 @@
 #define	PRI_BIO		(MAXPRI_KTHREAD - schedppq * 4)
 
 #define	PRI_IDLE	PRI_USER
-
-extern const int schedppq;
 
 /*
  * Miscellaneous.
@@ -409,6 +410,10 @@ extern const int schedppq;
 	    ((t +0u) / hz) * 1000u : \
 	    ((t +0u) * 1000u) / hz)
 #endif
+
+extern const int schedppq;
+extern size_t coherency_unit;
+
 #endif /* _KERNEL */
 
 /*
