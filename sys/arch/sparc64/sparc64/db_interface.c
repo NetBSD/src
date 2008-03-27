@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.110 2008/03/14 15:40:22 nakayama Exp $ */
+/*	$NetBSD: db_interface.c,v 1.111 2008/03/27 15:21:35 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.110 2008/03/14 15:40:22 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.111 2008/03/27 15:21:35 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -563,6 +563,11 @@ void
 db_prom_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 
+	if (cpu_number()) {
+		printf("this command is not safe while running on another "
+		    "CPU, please do\n\"mach cpu 0\" and then try again\n");
+		return;
+	}
 	prom_abort();
 }
 
