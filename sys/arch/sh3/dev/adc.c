@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.8 2008/03/27 00:23:40 uwe Exp $ */
+/*	$NetBSD: adc.c,v 1.9 2008/03/27 03:16:29 uwe Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.8 2008/03/27 00:23:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.9 2008/03/27 03:16:29 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,18 +42,18 @@ __KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.8 2008/03/27 00:23:40 uwe Exp $");
 #define ADC_(x)    (*((volatile uint8_t *)SH7709_AD ## x))
 
 
-static int	adc_match(device_t, struct cfdata *, void *);
+static int	adc_match(device_t, cfdata_t, void *);
 static void	adc_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(adc, 0,
     adc_match, adc_attach, NULL, NULL);
 
-static int	adc_search(device_t, struct cfdata *, const int *, void *);
+static int	adc_search(device_t, cfdata_t, const int *, void *);
 static int	adc_print(void *, const char *);
 
 
 static int
-adc_match(device_t parent, struct cfdata *cfp, void *aux)
+adc_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* REMINDER: also in 7727 and 7729 */
@@ -61,7 +61,7 @@ adc_match(device_t parent, struct cfdata *cfp, void *aux)
 	    && (cpu_product != CPU_PRODUCT_7709A))
 		return (0);
 
-	if (strcmp(cfp->cf_name, "adc") != 0)
+	if (strcmp(cf->cf_name, "adc") != 0)
 		return (0);
 
 	return (1);
@@ -75,14 +75,15 @@ adc_attach(device_t parent, device_t self, void *aux)
 	ADC_(CSR) = 0;
 	ADC_(CR) = 0;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	config_search_ia(adc_search, self, "adc", NULL);
 }
 
 
 static int
-adc_search(device_t parent, struct cfdata *cf,
-	   const int *ldesc, void *aux)
+adc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)
