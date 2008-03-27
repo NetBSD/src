@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.17 2008/03/04 08:12:12 mrg Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.18 2008/03/27 18:01:08 phx Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.17 2008/03/04 08:12:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.18 2008/03/27 18:01:08 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.17 2008/03/04 08:12:12 mrg Exp $")
 #include <dev/ofw/openfirm.h>
 
 #include <machine/powerpc.h>
+#include <machine/autoconf.h>
 
 #define	OFMEM_REGIONS	32
 static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
@@ -132,59 +133,32 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 		} else
 			i++;
 	}
-#if 0
-	/*
-	 * If the last available set doesn't match the top
-	 * of ram, work around it and add an extra entry to
-	 * OFavail[] to account for this.
-	 */
-	if ((OFavail[cnt-1].start + OFavail[cnt-1].size) != 
-	    (OFmem[regcnt-1].start + OFmem[regcnt-1].size)) {
-		printf("WARNING: adjusting memory to match end:\n");
-		printf("WARNING: old final %08x:%08x\n",
-		       (uint)OFavail[cnt-1].start, (uint)OFavail[cnt-1].size);
-#if 0
-		OFavail[cnt].start =
-		    OFavail[cnt-1].start + OFavail[cnt-1].size;
-		OFavail[cnt].size =
-		    OFmem[regcnt-1].size - OFavail[cnt].start;
-		cnt++;
-#else
-#if 0
-	OFavail[cnt-1].start =   0x1e000000;
-	OFavail[cnt-1].size =    0x01000000;
-#else
-	//OFavail[cnt-1].start = 0x1e000000;
-	OFavail[cnt-1].size +=   0x00400000;
-//	cnt++;
-//	OFavail[cnt-1].start =   0x17000000;
-//	OFavail[cnt-1].size =    0x00400000;
-#endif
-#endif
-		printf("WARNING: second to final final %08x:%08x\n",
-		       (uint)OFavail[cnt-2].start, (uint)OFavail[cnt-2].size);
-		printf("WARNING: new final %08x:%08x\n",
-		       (uint)OFavail[cnt-1].start, (uint)OFavail[cnt-1].size);
-	}
-#endif
-if (0)
-{
-  int node;
-  int ok;
-  char name[32], newname[32];
 
-  node = OF_finddevice("/chosen/mmu");
-  if (node != -1) {
-   strcpy(name, "name");
-   while (1) {
-    ok = OF_nextprop(node, name, newname);
-    printf("name = %s, ok = %d\n", name, ok);
-    if (ok <= 0)
-     break;
-    printf("got name: %s\n", newname);
-   }
-  }
-}
+	if (strncmp(model_name, "Pegasos", 7) == 0) {
+		/*
+		 * Some versions of SmartFirmware, only recognize the first
+		 * 256MB segment as available. Work around it and add an
+		 * extra entry to OFavail[] to account for this.
+		 */
+#define AVAIL_THRESH (0x10000000-1)
+		if (((OFavail[cnt-1].start + OFavail[cnt-1].size +
+		    AVAIL_THRESH) & ~AVAIL_THRESH) <
+		    (OFmem[regcnt-1].start + OFmem[regcnt-1].size)) {
+
+			OFavail[cnt].start =
+			    (OFavail[cnt-1].start + OFavail[cnt-1].size +
+			    AVAIL_THRESH) & ~AVAIL_THRESH;
+			OFavail[cnt].size =
+			    OFmem[regcnt-1].size - OFavail[cnt].start;
+			aprint_normal("WARNING: add memory segment %lx - %lx,"
+			    "\nWARNING: which was not recognized by "
+			    "the Firmware.\n",
+			    (unsigned long)OFavail[cnt].start,
+			    (unsigned long)OFavail[cnt].start +
+			    OFavail[cnt].size);
+			cnt++;
+		}
+	}
 
 	*memp = OFmem;
 	*availp = OFavail;
