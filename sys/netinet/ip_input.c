@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.262 2008/02/06 03:20:51 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.263 2008/03/27 00:18:56 cube Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.262 2008/02/06 03:20:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.263 2008/03/27 00:18:56 cube Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1954,17 +1954,17 @@ ip_forward(struct mbuf *m, int srcrt)
 	case EMSGSIZE:
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
-#if !defined(IPSEC) && !defined(FAST_IPSEC)
-		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
-			destmtu = rt->rt_ifp->if_mtu;
-#else
-		/*
-		 * If the packet is routed over IPsec tunnel, tell the
-		 * originator the tunnel MTU.
-		 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
-		 * XXX quickhack!!!
-		 */
+
 		if ((rt = rtcache_validate(&ipforward_rt)) != NULL) {
+
+#if defined(IPSEC) || defined(FAST_IPSEC)
+			/*
+			 * If the packet is routed over IPsec tunnel, tell the
+			 * originator the tunnel MTU.
+			 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
+			 * XXX quickhack!!!
+			 */
+
 			struct secpolicy *sp;
 			int ipsecerror;
 			size_t ipsechdr;
@@ -1973,10 +1973,11 @@ ip_forward(struct mbuf *m, int srcrt)
 			sp = ipsec4_getpolicybyaddr(mcopy,
 			    IPSEC_DIR_OUTBOUND, IP_FORWARDING,
 			    &ipsecerror);
+#endif
 
-			if (sp == NULL)
-				destmtu = rt->rt_ifp->if_mtu;
-			else {
+			destmtu = rt->rt_ifp->if_mtu;
+#if defined(IPSEC) || defined(FAST_IPSEC)
+			if (sp != NULL) {
 				/* count IPsec header size */
 				ipsechdr = ipsec4_hdrsiz(mcopy,
 				    IPSEC_DIR_OUTBOUND, NULL);
@@ -2005,8 +2006,8 @@ ip_forward(struct mbuf *m, int srcrt)
 				KEY_FREESP(&sp);
 #endif
 			}
+#endif /*defined(IPSEC) || defined(FAST_IPSEC)*/
 		}
-#endif /*IPSEC*/
 		ipstat.ips_cantfrag++;
 		break;
 
