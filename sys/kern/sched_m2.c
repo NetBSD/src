@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.22 2008/03/11 18:18:49 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.23 2008/03/27 18:30:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.22 2008/03/11 18:18:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.23 2008/03/27 18:30:15 ad Exp $");
 
 #include <sys/param.h>
 
@@ -176,7 +176,7 @@ sched_rqinit(void)
 #endif
 
 	/* Pool of the scheduler-specific structures */
-	sil_pool = pool_cache_init(sizeof(sched_info_lwp_t), CACHE_LINE_SIZE,
+	sil_pool = pool_cache_init(sizeof(sched_info_lwp_t), coherency_unit,
 	    0, 0, "lwpsd", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	/* Attach the primary CPU here */
@@ -219,12 +219,12 @@ sched_cpuattach(struct cpu_info *ci)
 	}
 
 	/* Allocate the run queue */
-	size = roundup2(sizeof(runqueue_t), CACHE_LINE_SIZE) + CACHE_LINE_SIZE;
+	size = roundup2(sizeof(runqueue_t), coherency_unit) + coherency_unit;
 	rq_ptr = kmem_zalloc(size, KM_SLEEP);
 	if (rq_ptr == NULL) {
 		panic("sched_cpuattach: could not allocate the runqueue");
 	}
-	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), CACHE_LINE_SIZE));
+	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), coherency_unit));
 
 	/* Initialize run queues */
 	KASSERT(sizeof(kmutex_t) <= CACHE_LINE_SIZE);

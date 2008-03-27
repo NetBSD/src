@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.155 2008/03/17 17:05:54 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.156 2008/03/27 18:30:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.155 2008/03/17 17:05:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.156 2008/03/27 18:30:15 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -612,10 +612,10 @@ pool_subsystem_init(void)
 		pa_reclaim_register(pa);
 	}
 
-	pool_init(&cache_pool, sizeof(struct pool_cache), CACHE_LINE_SIZE,
+	pool_init(&cache_pool, sizeof(struct pool_cache), coherency_unit,
 	    0, 0, "pcache", &pool_allocator_nointr, IPL_NONE);
 
-	pool_init(&cache_cpu_pool, sizeof(pool_cache_cpu_t), CACHE_LINE_SIZE,
+	pool_init(&cache_cpu_pool, sizeof(pool_cache_cpu_t), coherency_unit,
 	    0, 0, "pcachecpu", &pool_allocator_nointr, IPL_NONE);
 }
 
@@ -855,12 +855,12 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 
 		size = sizeof(pcg_t) +
 		    (PCG_NOBJECTS_NORMAL - 1) * sizeof(pcgpair_t);
-		pool_init(&pcg_normal_pool, size, CACHE_LINE_SIZE, 0, 0,
+		pool_init(&pcg_normal_pool, size, coherency_unit, 0, 0,
 		    "pcgnormal", &pool_allocator_meta, IPL_VM);
 
 		size = sizeof(pcg_t) +
 		    (PCG_NOBJECTS_LARGE - 1) * sizeof(pcgpair_t);
-		pool_init(&pcg_large_pool, size, CACHE_LINE_SIZE, 0, 0,
+		pool_init(&pcg_large_pool, size, coherency_unit, 0, 0,
 		    "pcglarge", &pool_allocator_meta, IPL_VM);
 	}
 
@@ -2206,7 +2206,6 @@ pool_cache_cpu_init1(struct cpu_info *ci, pool_cache_t pc)
 	index = ci->ci_index;
 
 	KASSERT(index < MAXCPUS);
-	KASSERT(((uintptr_t)pc->pc_cpus & (CACHE_LINE_SIZE - 1)) == 0);
 
 	if ((cc = pc->pc_cpus[index]) != NULL) {
 		KASSERT(cc->cc_cpuindex == index);
@@ -2399,7 +2398,6 @@ pool_cache_cpu_enter(pool_cache_t pc, int *s)
 	if (cc->cc_ipl != IPL_NONE) {
 		*s = splraiseipl(cc->cc_iplcookie);
 	}
-	KASSERT(((uintptr_t)cc & (CACHE_LINE_SIZE - 1)) == 0);
 
 	return cc;
 }
