@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.7 2008/03/17 16:46:47 ad Exp $	*/
+/*	$NetBSD: i386func.S,v 1.8 2008/03/27 13:00:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.7 2008/03/17 16:46:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.8 2008/03/27 13:00:25 ad Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -166,6 +166,7 @@ ENTRY(lgdt)
 	jmp	_C_LABEL(x86_flush)
 
 ENTRY(tsc_get_timecount)
+	jmp	_C_LABEL(tsc_slow_timecount)
 	pushl	%edi
 	pushl	%esi
 	movl	CPUVAR(CURLWP), %esi
