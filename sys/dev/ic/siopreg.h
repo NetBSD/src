@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.18 2007/12/25 18:33:39 perry Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.19 2008/03/27 10:06:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -195,6 +195,7 @@ static const struct scf_period dt_scf_period[] __unused = {
 #define ISTAT_DIP	0x01
 
 #define SIOP_CTEST0	0x18 /* Chip test 0, R/W */
+#define CTEST0_EHP	0x04    /* 720/770 */
 
 #define SIOP_CTEST1	0x19 /* Chip test 1, R/W */
 
@@ -212,6 +213,7 @@ static const struct scf_period dt_scf_period[] __unused = {
 #define SIOP_DFIFO	0x20 /* DMA FIFO */
 
 #define SIOP_CTEST4	0x21 /* Chip test 4, R/W */
+#define CTEST4_MUX	0x80    /* 720/770 */
 #define CTEST4_BDIS	0x80
 #define CTEST_ZMOD	0x40
 #define CTEST_ZSD	0x20
@@ -263,7 +265,8 @@ static const struct scf_period dt_scf_period[] __unused = {
 #define SIOP_DCNTL	0x3B /* DMA control, R/W */
 #define DCNTL_CLSE	0x80
 #define DCNTL_PFF	0x40
-#define DCNTL_PFEN	0x20
+#define DCNTL_EA	0x20    /* 720/770 */
+#define DCNTL_PFEN	0x20    /* 8xx */
 #define DCNTL_SSM	0x10
 #define DCNTL_IRQM	0x08
 #define DCNTL_STD	0x04
