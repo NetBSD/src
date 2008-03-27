@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_sb.c,v 1.13 2008/03/15 21:09:02 cube Exp $	*/
+/*	$NetBSD: mpu_sb.c,v 1.14 2008/03/27 10:22:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.13 2008/03/15 21:09:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.14 2008/03/27 10:22:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,28 +57,28 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.13 2008/03/15 21:09:02 cube Exp $");
 #include <dev/isa/isavar.h>
 #include <dev/isa/sbdspvar.h>
 
-int	mpu_sb_match(device_t, cfdata_t, void *);
-void	mpu_sb_attach(device_t, device_t, void *);
+static int	mpu_sb_match(device_t, cfdata_t, void *);
+static void	mpu_sb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mpu_sb, sizeof(struct mpu_softc),
+CFATTACH_DECL_NEW(mpu_sb, sizeof(struct mpu_softc),
     mpu_sb_match, mpu_sb_attach, NULL, NULL);
 
-int
+static int
 mpu_sb_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
+	struct audio_attach_args *aa = aux;
 	struct sbdsp_softc *ssc = device_private(parent);
 	struct mpu_softc sc;
 
 	if (aa->type != AUDIODEV_TYPE_MPU)
-		return (0);
+		return 0;
 	memset(&sc, 0, sizeof sc);
 	sc.ioh = ssc->sc_mpu_ioh;
 	sc.iot = ssc->sc_mpu_iot;
-	return (mpu_find(&sc));
+	return mpu_find(&sc);
 }
 
-void
+static void
 mpu_sb_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbdsp_softc *ssc = device_private(parent);
@@ -89,6 +89,7 @@ mpu_sb_attach(device_t parent, device_t self, void *aux)
 	sc->ioh = ssc->sc_mpu_ioh;
 	sc->iot = ssc->sc_mpu_iot;
 	sc->model = "SB MPU-401 MIDI UART";
+	sc->sc_dev = self;
 
 	mpu_attach(sc);
 }
