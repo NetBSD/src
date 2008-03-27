@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64func.S,v 1.3 2008/03/17 16:46:47 ad Exp $	*/
+/*	$NetBSD: amd64func.S,v 1.4 2008/03/27 13:00:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include "assym.h"
 
 ENTRY(tsc_get_timecount)
+	jmp	_C_LABEL(tsc_slow_timecount)
 	movq	CPUVAR(CURLWP), %rsi
 1:
 	movl	L_NCSW(%rsi), %ecx	/* gen = l_ncsw */
