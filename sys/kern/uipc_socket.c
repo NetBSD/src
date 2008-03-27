@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.156 2008/03/24 12:24:37 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.157 2008/03/27 19:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.156 2008/03/24 12:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.157 2008/03/27 19:06:52 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -814,8 +814,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	if (p)
-		p->p_stats->p_ru.ru_msgsnd++;
+	if (l)
+		l->l_ru.ru_msgsnd++;
 	if (control)
 		clen = control->m_len;
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
@@ -1109,7 +1109,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
 	if (l != NULL)
-		l->l_proc->p_stats->p_ru.ru_msgrcv++;
+		l->l_ru.ru_msgrcv++;
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 1");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 1");

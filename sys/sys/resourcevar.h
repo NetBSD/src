@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.43 2008/03/17 21:16:03 rmind Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.44 2008/03/27 19:06:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -129,6 +129,7 @@ void	limfree(struct plimit *);
 
 void	resource_init(void);
 void	ruadd(struct rusage *, struct rusage *);
+void	rulwps(proc_t *, struct rusage *);
 struct	pstats *pstatscopy(struct pstats *);
 void 	pstatsfree(struct pstats *);
 extern rlim_t maxdmap;
