@@ -1,3 +1,5 @@
+/*	$NetBSD: rtc.c,v 1.4 2008/03/27 00:32:58 uwe Exp $ */
+
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.3 2008/03/27 00:31:06 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.4 2008/03/27 00:32:58 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
