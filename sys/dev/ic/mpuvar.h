@@ -1,4 +1,4 @@
-/*	$NetBSD: mpuvar.h,v 1.8 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: mpuvar.h,v 1.9 2008/03/27 10:22:01 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 struct mpu_softc {
-	struct device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	bus_space_tag_t iot;		/* tag */
 	bus_space_handle_t ioh;		/* handle */
 	const char *model;
