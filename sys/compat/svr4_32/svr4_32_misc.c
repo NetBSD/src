@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.59 2008/03/21 21:54:59 ad Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.60 2008/03/27 19:06:51 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.59 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.60 2008/03/27 19:06:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,20 +761,21 @@ svr4_32_sys_times(struct lwp *l, const struct svr4_32_sys_times_args *uap, regis
 {
 	struct tms		 tms;
 	struct timeval		 t;
-	struct rusage		 *ru;
+	struct rusage		 ru, *rup;
 	struct proc		 *p = l->l_proc;
 
-	ru = &l->l_proc->p_stats->p_ru;
+	ru = l->l_proc->p_stats->p_ru;
 	mutex_enter(&p->p_smutex);
-	calcru(p, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
+	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
+	rulwps(p, &ru);
 	mutex_exit(&p->p_smutex);
 
-	tms.tms_utime = timeval_to_clock_t(&ru->ru_utime);
-	tms.tms_stime = timeval_to_clock_t(&ru->ru_stime);
+	tms.tms_utime = timeval_to_clock_t(&ru.ru_utime);
+	tms.tms_stime = timeval_to_clock_t(&ru.ru_stime);
 
-	ru = &l->l_proc->p_stats->p_cru;
-	tms.tms_cutime = timeval_to_clock_t(&ru->ru_utime);
-	tms.tms_cstime = timeval_to_clock_t(&ru->ru_stime);
+	rup = &l->l_proc->p_stats->p_cru;
+	tms.tms_cutime = timeval_to_clock_t(&rup->ru_utime);
+	tms.tms_cstime = timeval_to_clock_t(&rup->ru_stime);
 
 	microtime(&t);
 	*retval = timeval_to_clock_t(&t);

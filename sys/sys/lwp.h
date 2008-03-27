@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.84 2008/03/23 00:46:25 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.85 2008/03/27 19:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/sched.h>
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
+#include <sys/resource.h>
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
@@ -163,6 +164,7 @@ struct lwp {
 	u_short		l_blcnt;	/* !: count of kernel_lock held */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
+	struct rusage	l_ru;		/* !: accounting information */
 
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */

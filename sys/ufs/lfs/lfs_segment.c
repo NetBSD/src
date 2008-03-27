@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.209 2008/02/15 13:30:56 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.210 2008/03/27 19:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.209 2008/02/15 13:30:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.210 2008/03/27 19:06:52 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2313,7 +2313,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		devvp->v_numoutput++;
 		mutex_exit(&devvp->v_interlock);
 		VOP_STRATEGY(devvp, cbp);
-		curproc->p_stats->p_ru.ru_oublock++;
+		curlwp->l_ru.ru_oublock++;
 	}
 
 	if (lfs_dostats) {
@@ -2379,7 +2379,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 	else
 		BIO_SETPRIO(bp, BPRIO_TIMELIMITED);
-	curproc->p_stats->p_ru.ru_oublock++;
+	curlwp->l_ru.ru_oublock++;
 
 	mutex_enter(&devvp->v_interlock);
 	devvp->v_numoutput++;

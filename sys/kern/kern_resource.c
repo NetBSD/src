@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.136 2008/03/18 02:35:29 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.137 2008/03/27 19:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.136 2008/03/18 02:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.137 2008/03/27 19:06:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,6 +506,7 @@ sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap,
 		mutex_enter(&p->p_smutex);
 		memcpy(&ru, &p->p_stats->p_ru, sizeof(ru));
 		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
+		rulwps(p, &ru);
 		mutex_exit(&p->p_smutex);
 		break;
 
@@ -535,6 +536,20 @@ ruadd(struct rusage *ru, struct rusage *ru2)
 	ip = &ru->ru_first; ip2 = &ru2->ru_first;
 	for (i = &ru->ru_last - &ru->ru_first; i >= 0; i--)
 		*ip++ += *ip2++;
+}
+
+void
+rulwps(proc_t *p, struct rusage *ru)
+{
+	lwp_t *l;
+
+	KASSERT(mutex_owned(&p->p_smutex));
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		ruadd(ru, &l->l_ru);
+		ru->ru_nvcsw += (l->l_ncsw - l->l_nivcsw);
+		ru->ru_nivcsw += l->l_nivcsw;
+	}
 }
 
 /*

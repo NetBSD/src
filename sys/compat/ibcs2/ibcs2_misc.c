@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.99 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.100 2008/03/27 19:06:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.99 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.100 2008/03/27 19:06:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -941,19 +941,20 @@ ibcs2_sys_times(struct lwp *l, const struct ibcs2_sys_times_args *uap, register_
 	} */
 	struct tms tms;
 	struct timeval t;
-	struct rusage *ru;
+	struct rusage ru, *rup;
 #define CONVTCK(r)      (r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
-	ru = &l->l_proc->p_stats->p_ru;
+	ru = l->l_proc->p_stats->p_ru;
 	mutex_enter(&l->l_proc->p_smutex);
-	calcru(l->l_proc, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
+	calcru(l->l_proc, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
+	rulwps(l->l_proc, &ru);
 	mutex_exit(&l->l_proc->p_smutex);
-	tms.tms_utime = CONVTCK(ru->ru_utime);
-	tms.tms_stime = CONVTCK(ru->ru_stime);
+	tms.tms_utime = CONVTCK(ru.ru_utime);
+	tms.tms_stime = CONVTCK(ru.ru_stime);
 
-	ru = &l->l_proc->p_stats->p_cru;
-	tms.tms_cutime = CONVTCK(ru->ru_utime);
-	tms.tms_cstime = CONVTCK(ru->ru_stime);
+	rup = &l->l_proc->p_stats->p_cru;
+	tms.tms_cutime = CONVTCK(rup->ru_utime);
+	tms.tms_cstime = CONVTCK(rup->ru_stime);
 
 	microtime(&t);
 	*retval = CONVTCK(t);

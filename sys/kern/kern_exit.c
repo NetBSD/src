@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.201 2008/03/23 16:53:45 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.202 2008/03/27 19:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.201 2008/03/23 16:53:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.202 2008/03/27 19:06:52 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -921,10 +921,15 @@ proc_free(struct proc *p, struct rusage *ru)
 
 	parent = p->p_pptr;
 	sched_proc_exit(parent, p);
+
 	/*
 	 * Add child times of exiting process onto its own times.
 	 * This cannot be done any earlier else it might get done twice.
 	 */
+	l = LIST_FIRST(&p->p_lwps);
+	p->p_stats->p_ru.ru_nvcsw += (l->l_ncsw - l->l_nivcsw);
+	p->p_stats->p_ru.ru_nivcsw += l->l_nivcsw;
+	ruadd(&p->p_stats->p_ru, &l->l_ru);
 	ruadd(&p->p_stats->p_ru, &p->p_stats->p_cru);
 	ruadd(&parent->p_stats->p_cru, &p->p_stats->p_ru);
 	if (ru != NULL)
@@ -950,8 +955,6 @@ proc_free(struct proc *p, struct rusage *ru)
 	 */
 	proc_free_pid(p);
 	mutex_exit(&proclist_lock);
-
-	l = LIST_FIRST(&p->p_lwps);
 
 	/*
 	 * Delay release until after lwp_free.
