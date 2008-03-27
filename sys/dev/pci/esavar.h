@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.9 2007/12/09 20:28:07 jmcneill Exp $ */
+/* $NetBSD: esavar.h,v 1.10 2008/03/27 14:13:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -87,7 +87,7 @@ struct esa_channel {
 };
 
 struct esa_voice {
-	struct device		*parent;	/* pointer to our parent */
+	device_t		parent;	/* pointer to our parent */
 	struct esa_channel	play;
 	struct esa_channel	rec;
 	struct esa_dma		*dma;
@@ -97,7 +97,7 @@ struct esa_voice {
 
 struct esa_softc
 {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;
