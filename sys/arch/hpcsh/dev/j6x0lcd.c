@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.11 2006/10/27 00:08:32 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.12 2008/03/27 03:34:41 uwe Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.11 2006/10/27 00:08:32 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.12 2008/03/27 03:34:41 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -128,7 +128,8 @@ static const uint16_t j6x0lcd_contrast620lx_control_bits[] = {
 
 
 struct j6x0lcd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
+
 	int sc_brightness;
 	int sc_contrast;
 
@@ -137,10 +138,10 @@ struct j6x0lcd_softc {
 	const uint16_t *sc_contrast_control_bits;
 };
 
-static int	j6x0lcd_match(struct device *, struct cfdata *, void *);
-static void	j6x0lcd_attach(struct device *, struct device *, void *);
+static int	j6x0lcd_match(device_t, cfdata_t, void *);
+static void	j6x0lcd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(j6x0lcd, sizeof(struct j6x0lcd_softc),
+CFATTACH_DECL_NEW(j6x0lcd, sizeof(struct j6x0lcd_softc),
     j6x0lcd_match, j6x0lcd_attach, NULL, NULL);
 
 
@@ -153,7 +154,7 @@ static void	j6x0lcd_contrast_set(struct j6x0lcd_softc *, int);
 
 
 static int
-j6x0lcd_match(struct device *parent, struct cfdata *cfp, void *aux)
+j6x0lcd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/*
@@ -165,7 +166,7 @@ j6x0lcd_match(struct device *parent, struct cfdata *cfp, void *aux)
 	    && !platid_match(&platid, &platid_mask_MACH_HP_LX))
 		return (0);
 
-	if (strcmp(cfp->cf_name, "j6x0lcd") != 0)
+	if (strcmp(cf->cf_name, "j6x0lcd") != 0)
 		return (0);
 
 	return (1);
@@ -173,11 +174,14 @@ j6x0lcd_match(struct device *parent, struct cfdata *cfp, void *aux)
 
 
 static void
-j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
+j6x0lcd_attach(device_t parent, device_t self, void *aux)
 {
-	struct j6x0lcd_softc *sc = (struct j6x0lcd_softc *)self;
+	struct j6x0lcd_softc *sc;
 	uint16_t bcr, bdr;
 	uint8_t dcr, ddr;
+
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	/*
 	 * Brightness is controlled by DAC channel 0.
