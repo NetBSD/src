@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.2 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.3 2008/03/27 02:08:14 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.2 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.3 2008/03/27 02:08:14 uwe Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,6 +142,7 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	struct wdc_regs *wdr;
 	int i;
 
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
