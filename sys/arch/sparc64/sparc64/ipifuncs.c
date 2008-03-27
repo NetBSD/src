@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.18 2008/03/27 14:51:02 martin Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.19 2008/03/27 15:20:47 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.18 2008/03/27 14:51:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.19 2008/03/27 15:20:47 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -206,7 +206,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 	intr_func = (uint64_t)(u_long)func;
 
 	/* Schedule an interrupt. */
-	for (i = 0; i < 25; i++) {
+	for (i = 0; i < 1000; i++) {
 		int s = intr_disable();
 
 		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, intr_func);
@@ -240,7 +240,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 
 	if (panicstr == NULL)
 		panic("cpu%d: ipi_send: couldn't send ipi to UPAID %u"
-			" (tried %d times)", i, cpu_number(), upaid);
+			" (tried %d times)", cpu_number(), upaid, i);
 }
 
 /*
