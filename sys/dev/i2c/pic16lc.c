@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.11 2008/03/27 12:15:16 jmcneill Exp $ */
+/* $NetBSD: pic16lc.c,v 1.12 2008/03/27 17:36:02 ad Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.11 2008/03/27 12:15:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.12 2008/03/27 17:36:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,13 +135,13 @@ pic16lc_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	/* hook into sysmon */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = pic16lc_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
@@ -171,7 +171,7 @@ pic16lc_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_ih = iic_smbus_intr_establish_proc(sc->sc_tag, pic16lc_intr, sc);
 	if (sc->sc_ih == NULL)
-		aprint_error_dev(self, "%s: couldn't establish interrupt\n");
+		aprint_error_dev(self, "couldn't establish interrupt\n");
 
 	return;
 }
