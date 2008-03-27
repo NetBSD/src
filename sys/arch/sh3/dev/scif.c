@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.55 2007/12/03 15:34:18 ad Exp $ */
+/*	$NetBSD: scif.c,v 1.56 2008/03/27 01:48:50 uwe Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.55 2007/12/03 15:34:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.56 2008/03/27 01:48:50 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -131,7 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.55 2007/12/03 15:34:18 ad Exp $");
 
 
 struct scif_softc {
-	struct device sc_dev;		/* boilerplate */
+	device_t sc_dev;
 
 	struct tty *sc_tty;
 	void *sc_si;
@@ -184,10 +184,10 @@ struct scif_softc {
 };
 
 
-static int scif_match(device_t, struct cfdata *, void *);
+static int scif_match(device_t, cfdata_t, void *);
 static void scif_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(scif, sizeof(struct scif_softc),
+CFATTACH_DECL_NEW(scif, sizeof(struct scif_softc),
     scif_match, scif_attach, NULL, NULL);
 
 static int scif_attached = 0;	/* XXX: FIXME: don't limit to just one! */
@@ -416,7 +416,7 @@ scif_getc(void)
 }
 
 static int
-scif_match(device_t parent, struct cfdata *cfp, void *aux)
+scif_match(device_t parent, cfdata_t cfp, void *aux)
 {
 
 	if (scif_attached)
@@ -431,8 +431,11 @@ scif_match(device_t parent, struct cfdata *cfp, void *aux)
 static void
 scif_attach(device_t parent, device_t self, void *aux)
 {
-	struct scif_softc *sc = device_private(self);
+	struct scif_softc *sc;
 	struct tty *tp;
+
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	scif_attached = 1;
 
@@ -506,8 +509,10 @@ scif_attach(device_t parent, device_t self, void *aux)
 static void
 scifstart(struct tty *tp)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(tp->t_dev));
+	struct scif_softc *sc;
 	int s;
+
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(tp->t_dev));
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
@@ -568,11 +573,12 @@ out:
 static int
 scifparam(struct tty *tp, struct termios *t)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(tp->t_dev));
+	struct scif_softc *sc;
 	int ospeed = t->c_ospeed;
 	int s;
 
-	if (!device_is_active(&sc->sc_dev))
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(tp->t_dev));
+	if (!device_is_active(sc->sc_dev))
 		return (EIO);
 
 	/* Check requested parameters. */
@@ -711,12 +717,12 @@ scifopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s, s2;
 	int error;
 
-	sc = device_lookup(&scif_cd, SCIFUNIT(dev));
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(dev));
 	if (sc == 0 || !ISSET(sc->sc_hwflags, SCIF_HW_DEV_OK) ||
 	    sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -816,8 +822,11 @@ bad:
 int
 scifclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct scif_softc *sc;
+	struct tty *tp;
+
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(dev));
+	tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -826,7 +835,7 @@ scifclose(dev_t dev, int flag, int mode, struct lwp *l)
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (0);
 
 	return (0);
@@ -835,8 +844,11 @@ scifclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 scifread(dev_t dev, struct uio *uio, int flag)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct scif_softc *sc;
+	struct tty *tp;
+
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(dev));
+	tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
@@ -844,8 +856,11 @@ scifread(dev_t dev, struct uio *uio, int flag)
 int
 scifwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct scif_softc *sc;
+	struct tty *tp;
+
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(dev));
+	tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
@@ -853,8 +868,11 @@ scifwrite(dev_t dev, struct uio *uio, int flag)
 int
 scifpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct scif_softc *sc;
+	struct tty *tp;
+
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(dev));
+	tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
@@ -862,8 +880,11 @@ scifpoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 sciftty(dev_t dev)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct scif_softc *sc;
+	struct tty *tp;
+
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(dev));
+	tp = sc->sc_tty;
 
 	return (tp);
 }
@@ -871,14 +892,16 @@ sciftty(dev_t dev)
 int
 scifioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct scif_softc *sc;
+	struct tty *tp;
 	int error;
 	int s;
 
-	if (!device_is_active(&sc->sc_dev))
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(dev));
+	if (!device_is_active(sc->sc_dev))
 		return (EIO);
 
+	tp = sc->sc_tty;
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return (error);
@@ -959,8 +982,10 @@ scif_break(struct scif_softc *sc, int onoff)
 void
 scifstop(struct tty *tp, int flag)
 {
-	struct scif_softc *sc = device_lookup(&scif_cd, SCIFUNIT(tp->t_dev));
+	struct scif_softc *sc;
 	int s;
+
+	sc = device_lookup_private(&scif_cd, SCIFUNIT(tp->t_dev));
 
 	s = splserial();
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -989,7 +1014,7 @@ scifdiag(void *arg)
 	splx(s);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    device_xname(&sc->sc_dev),
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
@@ -1133,7 +1158,7 @@ scifsoft(void *arg)
 	struct scif_softc *sc = arg;
 	struct tty *tp;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	tp = sc->sc_tty;
@@ -1165,7 +1190,7 @@ scifintr(void *arg)
 	u_short ssr2;
 	int count;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (0);
 
 	end = sc->sc_ebuf;
