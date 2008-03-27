@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2008/03/27 12:12:40 lukem Exp $
+# $NetBSD: Makefile,v 1.4 2008/03/27 22:01:56 mlelstv Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ krb5-config: krb5-config.in
 	        -e "s!@prefix\@!/!g" \
 	        -e "s!@exec_prefix\@!/!g" \
 	        -e "s!@libdir\@!/usr/lib!g" \
-	        -e "s!@includedir\@!/usr/include!g" \
+	        -e "s!@includedir\@!/usr/include/krb5!g" \
 	        -e "s!@LIB_crypt\@!-lcrypt!g" \
 	        -e "s!@LIB_dbopen\@!!g" \
 	        -e "s!@INCLUDE_hcrypto\@!!g" \
