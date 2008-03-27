@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.8 2008/03/23 00:44:15 rmind Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.9 2008/03/27 18:30:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.8 2008/03/23 00:44:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.9 2008/03/27 18:30:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -96,7 +96,7 @@ void
 mqueue_sysinit(void)
 {
 
-	mqmsg_cache = pool_cache_init(MQ_DEF_MSGSIZE, CACHE_LINE_SIZE,
+	mqmsg_cache = pool_cache_init(MQ_DEF_MSGSIZE, coherency_unit,
 	    0, 0, "mqmsg_cache", NULL, IPL_NONE, NULL, NULL, NULL);
 	mutex_init(&mqlist_mtx, MUTEX_DEFAULT, IPL_NONE);
 }

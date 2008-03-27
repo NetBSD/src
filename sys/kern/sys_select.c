@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.1 2008/03/23 14:02:49 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.2 2008/03/27 18:30:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.1 2008/03/23 14:02:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.2 2008/03/27 18:30:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -722,9 +722,9 @@ selsysinit(struct cpu_info *ci)
 {
 	selcpu_t *sc;
 
-	sc = kmem_alloc(roundup2(sizeof(selcpu_t), CACHE_LINE_SIZE) +
-	    CACHE_LINE_SIZE, KM_SLEEP);
-	sc = (void *)roundup2((uintptr_t)sc, CACHE_LINE_SIZE);
+	sc = kmem_alloc(roundup2(sizeof(selcpu_t), coherency_unit) +
+	    coherency_unit, KM_SLEEP);
+	sc = (void *)roundup2((uintptr_t)sc, coherency_unit);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
 	sleepq_init(&sc->sc_sleepq, &sc->sc_lock);
 	sc->sc_ncoll = 0;

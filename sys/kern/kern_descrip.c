@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.173 2008/03/21 21:53:35 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.174 2008/03/27 18:33:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.173 2008/03/21 21:53:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.174 2008/03/27 18:33:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,20 +140,20 @@ fd_sys_init(void)
 
 	mutex_init(&filelist_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	file_cache = pool_cache_init(sizeof(file_t), CACHE_LINE_SIZE, 0,
+	file_cache = pool_cache_init(sizeof(file_t), coherency_unit, 0,
 	    0, "file", NULL, IPL_NONE, file_ctor, file_dtor, NULL);
 	KASSERT(file_cache != NULL);
 
-	fdfile_cache = pool_cache_init(sizeof(fdfile_t), CACHE_LINE_SIZE, 0,
+	fdfile_cache = pool_cache_init(sizeof(fdfile_t), coherency_unit, 0,
 	    PR_LARGECACHE, "fdfile", NULL, IPL_NONE, fdfile_ctor, fdfile_dtor,
 	    NULL);
 	KASSERT(fdfile_cache != NULL);
 
-	cwdi_cache = pool_cache_init(sizeof(struct cwdinfo), CACHE_LINE_SIZE,
+	cwdi_cache = pool_cache_init(sizeof(struct cwdinfo), coherency_unit,
 	    0, 0, "cwdi", NULL, IPL_NONE, cwdi_ctor, cwdi_dtor, NULL);
 	KASSERT(cwdi_cache != NULL);
 
-	filedesc_cache = pool_cache_init(sizeof(filedesc_t), CACHE_LINE_SIZE,
+	filedesc_cache = pool_cache_init(sizeof(filedesc_t), coherency_unit,
 	    0, 0, "filedesc", NULL, IPL_NONE, filedesc_ctor, filedesc_dtor,
 	    NULL);
 	KASSERT(filedesc_cache != NULL);

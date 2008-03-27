@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.99 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.100 2008/03/27 18:30:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.99 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.100 2008/03/27 18:30:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,16 +206,13 @@ static pool_cache_t pipe_mutex_cache;
 void
 pipe_init(void)
 {
-	size_t size;
 
 	pipe_cache = pool_cache_init(sizeof(struct pipe), 0, 0, 0, "pipepl",
 	    NULL, IPL_NONE, NULL, NULL, NULL);
 	KASSERT(pipe_cache != NULL);
 
-	size = (sizeof(struct pipe_mutex) + (CACHE_LINE_SIZE - 1)) &
-	    (CACHE_LINE_SIZE - 1);
-	pipe_mutex_cache = pool_cache_init(size, CACHE_LINE_SIZE,
-	    0, 0, "pipemtxpl", NULL, IPL_NONE, pipe_mutex_ctor,
+	pipe_mutex_cache = pool_cache_init(sizeof(struct pipe_mutex),
+	    coherency_unit, 0, 0, "pipemtxpl", NULL, IPL_NONE, pipe_mutex_ctor,
 	    pipe_mutex_dtor, NULL);
 	KASSERT(pipe_cache != NULL);
 }
