@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1033 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1034 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -477,3 +477,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		on traffic between two network interfaces. [tsutsui 20080318]
 	bzip2(1): Upgrade to 1.0.5. [christos 20080318]
 	kerberos: Upgrade to Heimdal-1.1. [mlelstv 20080322]
+	cobalt: Add kernel support for optional Z85C30 serial on Qube 2700.
+		[tsutsui 20080327]
