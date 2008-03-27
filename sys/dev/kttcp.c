@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.26 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.27 2008/03/27 19:06:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.26 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.27 2008/03/27 19:06:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -210,8 +210,7 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	/* WRS XXX - are we doing per-lwp or per-proc stats? */
-	l->l_proc->p_stats->p_ru.ru_msgsnd++;
+	l->l_ru.ru_msgsnd++;
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
 
  restart:
@@ -453,7 +452,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 	 */
 #ifdef notyet /* XXXX */
 	if (uio->uio_lwp)
-		uio->uio_lwp->l_proc->p_stats->p_ru.ru_msgrcv++;
+		uio->uio_lwp->l_ru.ru_msgrcv++;
 #endif
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "kttcp_soreceive 1");

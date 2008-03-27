@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.125 2008/03/21 21:55:00 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.126 2008/03/27 19:06:52 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.125 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.126 2008/03/27 19:06:52 ad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -551,7 +551,7 @@ gre_sosend(struct socket *so, struct mbuf *top, struct lwp *l)
 
 	resid = top->m_pkthdr.len;
 	if (p)
-		p->p_stats->p_ru.ru_msgsnd++;
+		l->l_ru.ru_msgsnd++;
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
 
 	if ((error = sblock(&so->so_snd, M_NOWAIT)) != 0)
@@ -662,7 +662,7 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
 	if (l != NULL)
-		l->l_proc->p_stats->p_ru.ru_msgrcv++;
+		l->l_ru.ru_msgrcv++;
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 1");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 1");
