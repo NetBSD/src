@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.5 2008/03/17 16:54:51 ad Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.6 2008/03/27 12:01:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ struct lwp *syncobj_noowner(wchan_t);
 extern syncobj_t	sched_syncobj;
 extern syncobj_t	mutex_syncobj;
 extern syncobj_t	rw_syncobj;
+extern syncobj_t	sleep_syncobj;
 
 #endif /* defined(_KERNEL) */
 
