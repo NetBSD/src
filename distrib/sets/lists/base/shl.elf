@@ -1,9 +1,10 @@
-# $NetBSD: shl.elf,v 1.137 2008/03/27 06:31:21 lukem Exp $
+# $NetBSD: shl.elf,v 1.138 2008/03/27 23:16:33 lukem Exp $
+#
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 #
-# NOTE: Do not mark "old" major shared libraries as "obsolete";
-#       just remove the entry, as third-party applications may
-#       be linked against the old shared library.
+# Note: Do not mark "old" major shared libraries ("lib<name>.so.<N>")
+#       as "obsolete"; just remove the entry, as third-party
+#       applications may be linked against the old shared library.
 #
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -80,7 +81,6 @@
 ./usr/lib/i18n/libmapper_std.so.4		base-i18n-shlib
 ./usr/lib/i18n/libmapper_zone.so		base-i18n-shlib
 ./usr/lib/i18n/libmapper_zone.so.4		base-i18n-shlib
-./usr/lib/libamu.so.2				base-obsolete		obsolete
 ./usr/lib/libamu.so.3				base-amd-shlib
 ./usr/lib/libarchive.so				base-sys-shlib
 ./usr/lib/libarchive.so.2			base-sys-shlib
@@ -98,7 +98,6 @@
 ./usr/lib/libc.so				base-sys-shlib
 ./usr/lib/libc.so.12				base-sys-shlib
 ./usr/lib/libcdk.so				base-obsolete		obsolete
-./usr/lib/libcdk.so.1				base-obsolete		obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		kerberos
 ./usr/lib/libcom_err.so.5			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so				base-sys-shlib
@@ -144,7 +143,6 @@
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi
 ./usr/lib/libiscsi.so.0				base-iscsi-shlib	iscsi
 ./usr/lib/libkadm.so				base-obsolete		obsolete
-./usr/lib/libkadm.so.5				base-obsolete		obsolete
 ./usr/lib/libkadm5clnt.so			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5clnt.so.9			base-krb5-shlib		kerberos
 ./usr/lib/libkadm5srv.so			base-krb5-shlib		kerberos
@@ -152,13 +150,10 @@
 ./usr/lib/libkafs.so				base-krb5-shlib		kerberos
 ./usr/lib/libkafs.so.8				base-krb5-shlib		kerberos
 ./usr/lib/libkdb.so				base-obsolete		obsolete
-./usr/lib/libkdb.so.5				base-obsolete		obsolete
 ./usr/lib/libkrb.so				base-obsolete		obsolete
-./usr/lib/libkrb.so.6				base-obsolete		obsolete
 ./usr/lib/libkrb5.so				base-krb5-shlib		kerberos
 ./usr/lib/libkrb5.so.21				base-krb5-shlib		kerberos
 ./usr/lib/libkstream.so				base-obsolete		obsolete
-./usr/lib/libkstream.so.2			base-obsolete		obsolete
 ./usr/lib/libkvm.so				base-sys-shlib
 ./usr/lib/libkvm.so.5				base-sys-shlib
 ./usr/lib/liblwres.so				base-bind-shlib
@@ -210,11 +205,6 @@
 ./usr/lib/libss.so				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.5				base-krb5-shlib		kerberos
 ./usr/lib/libssh.so				base-secsh-shlib	crypto
-./usr/lib/libssh.so.2				base-obsolete		obsolete
-./usr/lib/libssh.so.3				base-obsolete		obsolete
-./usr/lib/libssh.so.4				base-obsolete		obsolete
-./usr/lib/libssh.so.5				base-obsolete		obsolete
-./usr/lib/libssh.so.6				base-obsolete		obsolete
 ./usr/lib/libssh.so.7				base-secsh-shlib	crypto
 ./usr/lib/libssl.so				base-crypto-shlib	crypto
 ./usr/lib/libssl.so.4				base-crypto-shlib	crypto
