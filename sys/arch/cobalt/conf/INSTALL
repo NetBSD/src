@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.32 2008/03/01 05:40:38 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.33 2008/03/27 15:24:35 tsutsui Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.32 $"
+#ident 		"INSTALL-$Revision: 1.33 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -147,6 +147,10 @@ mcclock0	at mainbus? addr 0x10000070
 
 com0		at mainbus? addr 0x1c800000 level 3
 options 	COM_16650
+
+zsc0		at mainbus? addr 0x1c800000 irq 4
+zstty0		at zsc0 channel 0
+zstty1		at zsc0 channel 1
 
 panel0 		at mainbus? addr 0x1f000000
 

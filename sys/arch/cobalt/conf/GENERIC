@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114 2008/03/01 05:37:33 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.115 2008/03/27 15:24:35 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.114 $"
+#ident 		"GENERIC-$Revision: 1.115 $"
 
 maxusers	32
 
@@ -155,6 +155,10 @@ mcclock0	at mainbus? addr 0x10000070
 
 com0		at mainbus? addr 0x1c800000 level 3
 options 	COM_16650
+
+zsc0		at mainbus? addr 0x1c800000 irq 4
+zstty0		at zsc0 channel 0
+zstty1		at zsc0 channel 1
 
 panel0 		at mainbus? addr 0x1f000000
 
