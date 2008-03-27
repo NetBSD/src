@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.15 2007/03/04 06:00:40 christos Exp $ */
+/*	$NetBSD: wdog.c,v 1.16 2008/03/27 02:03:03 uwe Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.15 2007/03/04 06:00:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.16 2008/03/27 02:03:03 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -51,15 +51,15 @@ __KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.15 2007/03/04 06:00:40 christos Exp $");
 #include <sh3/exception.h>
 
 struct wdog_softc {
-	struct device sc_dev;		/* generic device structures */
+	device_t sc_dev;
 	int flags;
 };
 
-static int wdogmatch(struct device *, struct cfdata *, void *);
-static void wdogattach(struct device *, struct device *, void *);
+static int wdogmatch(device_t, cfdata_t, void *);
+static void wdogattach(device_t, device_t, void *);
 static int wdogintr(void *);
 
-CFATTACH_DECL(wdog, sizeof(struct wdog_softc),
+CFATTACH_DECL_NEW(wdog, sizeof(struct wdog_softc),
     wdogmatch, wdogattach, NULL, NULL);
 
 extern struct cfdriver wdog_cd;
@@ -88,7 +88,7 @@ wdog_wr_csr(unsigned char x)
 }
 
 static int
-wdogmatch(struct device *parent, struct cfdata *cfp, void *aux)
+wdogmatch(device_t parent, cfdata_t cfp, void *aux)
 {
 
 	if (strcmp(cfp->cf_name, "wdog"))
@@ -102,28 +102,32 @@ wdogmatch(struct device *parent, struct cfdata *cfp, void *aux)
  */
 /* ARGSUSED */
 static void
-wdogattach(struct device *parent, struct device *self, void *aux)
+wdogattach(device_t parent, device_t self, void *aux)
 {
-	struct wdog_softc *sc = (struct wdog_softc *)self;
+	struct wdog_softc *sc;
 
-	sc->flags = 0;
+	sc = device_private(self);
+	sc->sc_dev = self;
+
+	aprint_naive("\n");
+	aprint_normal(": internal watchdog timer\n");
 
 	wdog_wr_csr(WTCSR_WT | WTCSR_CKS_4096);	/* default to wt mode */
 
 	intc_intr_establish(SH_INTEVT_WDT_ITI, IST_LEVEL, IPL_SOFTCLOCK,
 	    wdogintr, 0);
-
-	printf("\nwdog0: internal watchdog timer\n");
 }
 
 /*ARGSUSED*/
 int
 wdogopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct wdog_softc *sc = wdog_cd.cd_devs[0]; /* XXX */
+	struct wdog_softc *sc;
 
-	if (minor(dev) != 0)
+	sc = device_lookup_private(&wdog_cd, minor(dev));
+	if (sc == NULL)
 		return (ENXIO);
+
 	if (sc->flags & WDOGF_OPEN)
 		return (EBUSY);
 	sc->flags |= WDOGF_OPEN;
@@ -134,7 +138,9 @@ wdogopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 wdogclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct wdog_softc *sc = wdog_cd.cd_devs[0]; /* XXX */
+	struct wdog_softc *sc;
+
+	sc = device_lookup_private(&wdog_cd, minor(dev));
 
 	if (sc->flags & WDOGF_OPEN)
 		sc->flags = 0;
