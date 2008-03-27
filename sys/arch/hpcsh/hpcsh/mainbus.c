@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2006/02/24 13:06:12 cube Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18 2008/03/27 03:35:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2006/02/24 13:06:12 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2008/03/27 03:35:12 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,27 +46,28 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2006/02/24 13:06:12 cube Exp $");
 
 #include "locators.h"
 
-static int mainbus_match(struct device *, struct cfdata *, void *);
-static void mainbus_attach(struct device *, struct device *, void *);
-static int mainbus_search(struct device *, struct cfdata *,
-			  const int *, void *);
+static int mainbus_match(device_t, cfdata_t, void *);
+static void mainbus_attach(device_t, device_t, void *);
+static int mainbus_search(device_t, cfdata_t, const int *, void *);
 static int mainbus_print(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 static int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
 static void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	/* CPU  */
 	config_found_ia(self, "mainbus",
 	    &(struct mainbus_attach_args){.ma_name = "cpu"}, mainbus_print);
@@ -79,8 +80,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-mainbus_search(struct device *parent, struct cfdata *cf,
-	       const int *ldesc, void *aux)
+mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct mainbus_attach_args maa;
 	int locator = cf->cf_loc[MAINBUSCF_ID];
