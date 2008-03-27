@@ -1,4 +1,4 @@
-/* $NetBSD: xbseeprom.c,v 1.2 2008/03/27 12:08:37 jmcneill Exp $ */
+/* $NetBSD: xbseeprom.c,v 1.3 2008/03/27 12:14:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.2 2008/03/27 12:08:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.3 2008/03/27 12:14:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.2 2008/03/27 12:08:37 jmcneill Exp $
 
 #include <dev/i2c/i2cvar.h>
 
-static int	xbseeprom_match(struct device *, struct cfdata *, void *);
-static void	xbseeprom_attach(struct device *, struct device *, void *);
+static int	xbseeprom_match(device_t, cfdata_t, void *);
+static void	xbseeprom_attach(device_t, device_t, void *);
 
 struct xbseeprom_data {
 	/* factory settings */
@@ -111,11 +111,9 @@ CFATTACH_DECL(xbseeprom, sizeof(struct xbseeprom_softc),
     xbseeprom_match, xbseeprom_attach, NULL, NULL);
 
 static int
-xbseeprom_match(struct device *parent, struct cfdata *cf, void *opaque)
+xbseeprom_match(device_t parent, cfdata_t cf, void *opaque)
 {
-	struct i2c_attach_args *ia;
-
-	ia = (struct i2c_attach_args *)opaque;
+	struct i2c_attach_args *ia = opaque;
 
 	/* Serial EEPROM always lives at 0x54 on Xbox */
 	if (ia->ia_addr == 0x54)
@@ -125,14 +123,12 @@ xbseeprom_match(struct device *parent, struct cfdata *cf, void *opaque)
 }
 
 static void
-xbseeprom_attach(struct device *parent, struct device *self, void *opaque)
+xbseeprom_attach(device_t parent, device_t self, void *opaque)
 {
 	struct xbseeprom_softc *sc = device_private(self);
-	struct i2c_attach_args *ia;
+	struct i2c_attach_args *ia = opaque;
 	uint8_t *ptr;
 	int i;
-
-	ia = (struct i2c_attach_args *)opaque;
 
 	sc->sc_dev = self;
 	sc->sc_tag = ia->ia_tag;
