@@ -1,14 +1,14 @@
-# $NetBSD: Makefile,v 1.2 2008/03/23 08:24:18 mlelstv Exp $
+# $NetBSD: Makefile,v 1.3 2008/03/27 12:12:40 lukem Exp $
 
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:          ${DIST}/heimdal/tools
 
-WARNS?=  1
+WARNS?=		1
 
-PROG= krb5-config
-MAN= krb5-config.1
+SCRIPTS=	krb5-config
+MAN=		krb5-config.1
 
 krb5-config: krb5-config.in
 	sed     -e "s!@PACKAGE\@!heimdal!g" \
