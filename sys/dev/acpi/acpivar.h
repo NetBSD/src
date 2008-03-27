@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.31 2007/12/09 20:27:53 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.32 2008/03/27 02:51:26 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -106,7 +106,7 @@ struct acpi_scope {
  *	Software state of the ACPI subsystem.
  */
 struct acpi_softc {
-	struct device sc_dev;		/* base device info */
+	device_t sc_dev;		/* base device info */
 	bus_space_tag_t sc_iot;		/* PCI I/O space tag */
 	bus_space_tag_t sc_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t sc_pc;	/* PCI chipset tag */
