@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.10 2006/04/05 15:03:27 tsutsui Exp $	*/
+/*	$NetBSD: console.c,v 1.11 2008/03/27 15:21:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.10 2006/04/05 15:03:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.11 2008/03/27 15:21:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: console.c,v 1.10 2006/04/05 15:03:27 tsutsui Exp $")
 #include <dev/cons.h>
 
 #include <cobalt/dev/com_mainbusvar.h>
+#include <machine/z8530var.h>
 
 #include "com_mainbus.h"
+#include "zsc.h"
 #include "nullcons.h"
 
 int	console_present = 0;	/* Do we have a console? */
@@ -51,6 +53,10 @@ struct	consdev	constab[] = {
 	{ com_mainbus_cnprobe, com_mainbus_cninit,
 	    NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD },
 #endif
+#if NZSC > 0
+	{ zscnprobe, zscninit, zscngetc, zscnputc, nullcnpollc,
+	    NULL, NULL, NULL, NODEV, CN_DEAD },
+#endif
 #if NNULLCONS > 0
 	{ nullcnprobe, nullcninit,
 	    NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD },
@@ -58,14 +64,38 @@ struct	consdev	constab[] = {
 	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD }
 };
 
+#define CONSOLE_PROBE	0x0020001c	/* console flag passed by firmware */
+
 void
 consinit(void)
 {
+	struct btinfo_flags *bi_flags;
 	static int initted;
 
 	if (initted)
 		return;
 	initted = 1;
+
+	/*
+	 * Linux code has a comment that serial console must be probed
+	 * early, otherwise the value which allows to detect serial port
+	 * could be overwritten. Okay, probe here and record the result
+	 * for the future use.
+	 *
+	 * Note that if the kernel was booted with a boot loader,
+	 * the latter *has* to provide a flag indicating whether console
+	 * is present or not because the value might be overwritten by
+	 * the loaded kernel.
+	 */
+	bi_flags = lookup_bootinfo(BTINFO_FLAGS);
+	if (bi_flags == NULL) {
+		/* No boot information, probe console now */
+		console_present =
+		    *(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(CONSOLE_PROBE);
+	} else {
+		/* Get the value determined by the boot loader. */
+		console_present = bi_flags->bi_flags & BI_SERIAL_CONSOLE;
+	}
 
 	cninit();
 }
