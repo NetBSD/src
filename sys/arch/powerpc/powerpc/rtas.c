@@ -1,4 +1,4 @@
-/*	$NetBSD: rtas.c,v 1.6 2007/12/28 05:12:41 garbled Exp $ */
+/*	$NetBSD: rtas.c,v 1.7 2008/03/27 17:54:46 phx Exp $ */
 
 /*
  * CHRP RTAS support routines
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.6 2007/12/28 05:12:41 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtas.c,v 1.7 2008/03/27 17:54:46 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,11 @@ rtas_attach(struct device *parent, struct device *self, void *aux)
 	rtas_size = of_decode_int(buf);
 
 	/*
-	 * Instantiate the RTAS
+	 * Instantiate the RTAS.
+	 * The physical base address should be in the first 256 MB segment.
 	 */
-	if (uvm_pglistalloc(rtas_size, 0, ~0, 4096, 256 << 20, &pglist, 1, 0))
+	if (uvm_pglistalloc(rtas_size, 0, 0x0fffffff, 4096, 256 << 20,
+	    &pglist, 1, 0))
 		goto fail;
 
 	sc->ra_base_pa = TAILQ_FIRST(&pglist)->phys_addr;
