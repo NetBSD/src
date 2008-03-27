@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.57 2008/02/14 15:01:45 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.58 2008/03/27 18:30:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.57 2008/02/14 15:01:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.58 2008/03/27 18:30:15 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,7 +100,9 @@ struct kauth_cred {
 	 * sharing between CPUs.
 	 */
 	u_int cr_refcnt;		/* reference count */
-	uint8_t cr_pad[CACHE_LINE_SIZE - sizeof(u_int)];
+#if COHERENCY_UNIT > 4
+	uint8_t cr_pad[COHERENCY_UNIT - 4];
+#endif
 	uid_t cr_uid;			/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
@@ -803,7 +805,7 @@ kauth_init(void)
 	rw_init(&kauth_lock);
 
 	kauth_cred_cache = pool_cache_init(sizeof(struct kauth_cred),
-	    CACHE_LINE_SIZE, 0, 0, "kcredpl", NULL, IPL_NONE,
+	    coherency_unit, 0, 0, "kcredpl", NULL, IPL_NONE,
 	    NULL, NULL, NULL);
 
 	/* Create specificdata domain. */
