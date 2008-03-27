@@ -1,5 +1,10 @@
-# $NetBSD: shl.elf,v 1.136 2008/03/27 06:05:32 lukem Exp $
+# $NetBSD: shl.elf,v 1.137 2008/03/27 06:31:21 lukem Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
+#
+# NOTE: Do not mark "old" major shared libraries as "obsolete";
+#       just remove the entry, as third-party applications may
+#       be linked against the old shared library.
+#
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
 ./lib/libcrypt.so				base-sys-shlib
