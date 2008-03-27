@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.17 2008/02/17 04:10:45 uwe Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.18 2008/03/27 23:57:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.17 2008/02/17 04:10:45 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.18 2008/03/27 23:57:58 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,18 +64,18 @@ STATIC struct hd64461_module {
 #define HD64461_NMODULE							\
 	(sizeof hd64461_modules / sizeof(struct hd64461_module))
 
-STATIC int hd64461_match(struct device *, struct cfdata *, void *);
-STATIC void hd64461_attach(struct device *, struct device *, void *);
+STATIC int hd64461_match(device_t, cfdata_t, void *);
+STATIC void hd64461_attach(device_t, device_t, void *);
 STATIC int hd64461_print(void *, const char *);
 #ifdef DEBUG
 STATIC void hd64461_info(void);
 #endif
 
-CFATTACH_DECL(hd64461if, sizeof(struct device),
+CFATTACH_DECL_NEW(hd64461if, 0,
     hd64461_match, hd64461_attach, NULL, NULL);
 
 STATIC int
-hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
+hd64461_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	switch (cpu_product) {
@@ -94,13 +94,14 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 STATIC void
-hd64461_attach(struct device *parent, struct device *self, void *aux)
+hd64461_attach(device_t parent, device_t self, void *aux)
 {
 	struct hd64461_attach_args ha;
 	struct hd64461_module *module;
 	int i;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 #ifdef DEBUG
 	if (bootverbose)
 		hd64461_info();
