@@ -1,4 +1,4 @@
-/*	$NetBSD: btn_obio.c,v 1.4 2008/03/27 02:40:14 uwe Exp $	*/
+/*	$NetBSD: btn_obio.c,v 1.5 2008/03/27 03:01:05 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -29,7 +29,7 @@
 #include "pwrsw_obio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.4 2008/03/27 02:40:14 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btn_obio.c,v 1.5 2008/03/27 03:01:05 uwe Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,7 +118,7 @@ btn_obio_attach(device_t parent, device_t self, void *aux)
 	int i;
 
 	aprint_naive("\n");
-	aprint_normal(": USL-5P Button\n");
+	aprint_normal(": USL-5P buttons\n");
 
 	sc = device_private(self);
 	sc->sc_dev = self;
