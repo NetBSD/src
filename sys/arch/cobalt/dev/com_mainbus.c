@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.16 2008/03/22 18:32:20 tsutsui Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.17 2008/03/27 15:21:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.16 2008/03/22 18:32:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.17 2008/03/27 15:21:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,15 +36,12 @@ __KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.16 2008/03/22 18:32:20 tsutsui Exp
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
-#include <machine/nvram.h>
-#include <machine/bootinfo.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <cobalt/cobalt/console.h>
 #include <cobalt/dev/com_mainbusvar.h>
-
-extern int console_present;
 
 struct com_mainbus_softc {
 	struct com_softc sc_com;
@@ -102,29 +99,9 @@ com_mainbus_attach(device_t parent, device_t self, void *aux)
 void
 com_mainbus_cnprobe(struct consdev *cn)
 {
-	struct btinfo_flags *bi_flags;
 
-	/*
-	 * Linux code has a comment that serial console must be probed
-	 * early, otherwise the value which allows to detect serial port
-	 * could be overwritten. Okay, probe here and record the result
-	 * for the future use.
-	 *
-	 * Note that if the kernel was booted with a boot loader,
-	 * the latter *has* to provide a flag indicating whether console
-	 * is present or not because the value might be overwritten by
-	 * the loaded kernel.
-	 */
-	if ((bi_flags = lookup_bootinfo(BTINFO_FLAGS)) == NULL) {
-		/* No boot information, probe console now */
-		console_present = *(volatile uint32_t *)
-					MIPS_PHYS_TO_KSEG1(0x0020001c);
-	} else {
-		/* Get the value determined by the boot loader. */
-		console_present = bi_flags->bi_flags & BI_SERIAL_CONSOLE;
-	}
-
-	cn->cn_pri = (console_present != 0) ? CN_NORMAL : CN_DEAD;
+	cn->cn_pri = (console_present != 0 && cobalt_id != COBALT_ID_QUBE2700)
+	    ? CN_NORMAL : CN_DEAD;
 }
 
 void

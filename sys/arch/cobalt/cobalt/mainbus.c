@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.16 2006/07/18 12:21:42 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17 2008/03/27 15:21:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.16 2006/07/18 12:21:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2008/03/27 15:21:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ mainbus_search(struct device *parent, struct cfdata *cf, const int *ldesc,
 		ma->ma_addr = cf->cf_loc[MAINBUSCF_ADDR];
 		ma->ma_iot = 0;
 		ma->ma_level = cf->cf_loc[MAINBUSCF_LEVEL];
+		ma->ma_irq = cf->cf_loc[MAINBUSCF_IRQ];
 		if (config_match(parent, cf, ma) > 0)
 			config_attach(parent, cf, ma, mainbus_print);
 	} while (cf->cf_fstate == FSTATE_STAR);
@@ -93,6 +94,8 @@ mainbus_print(void *aux, const char *pnp)
 		aprint_normal(" addr 0x%lx", ma->ma_addr);
 	if (ma->ma_level != MAINBUSCF_LEVEL_DEFAULT)
 		aprint_normal(" level %d", ma->ma_level);
+	if (ma->ma_irq != MAINBUSCF_IRQ_DEFAULT)
+		aprint_normal(" irq %d", ma->ma_irq);
 
 	return UNCONF;
 }
