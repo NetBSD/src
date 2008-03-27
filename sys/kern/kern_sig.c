@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.274 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.275 2008/03/27 19:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.274 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.275 2008/03/27 19:06:52 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -906,7 +906,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	    sigismember(&p->p_sigctx.ps_sigcatch, signo) &&
 	    !sigismember(&l->l_sigmask, signo)) {
 		mutex_exit(&proclist_mutex);
-		p->p_stats->p_ru.ru_nsignals++;
+		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, &l->l_sigmask);
 		mutex_exit(&p->p_smutex);
 		ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
@@ -1807,7 +1807,7 @@ postsig(int signo)
 	 * Commit to taking the signal before releasing the mutex.
 	 */
 	action = SIGACTION_PS(ps, signo).sa_handler;
-	p->p_stats->p_ru.ru_nsignals++;
+	l->l_ru.ru_nsignals++;
 	sigget(l->l_sigpendset, &ksi, signo, NULL);
 
 	if (ktrpoint(KTR_PSIG)) {

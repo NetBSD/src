@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.99 2008/03/23 16:39:34 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.100 2008/03/27 19:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.99 2008/03/23 16:39:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.100 2008/03/27 19:06:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -859,6 +859,7 @@ void
 lwp_free(struct lwp *l, bool recycle, bool last)
 {
 	struct proc *p = l->l_proc;
+	struct rusage *ru;
 	ksiginfoq_t kq;
 
 	KASSERT(l != curlwp);
@@ -874,6 +875,10 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		 */
 		bintime_add(&p->p_rtime, &l->l_rtime);
 		p->p_pctcpu += l->l_pctcpu;
+		ru = &p->p_stats->p_ru;
+		ruadd(ru, &l->l_ru);
+		ru->ru_nvcsw += (l->l_ncsw - l->l_nivcsw);
+		ru->ru_nivcsw += l->l_nivcsw;
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;
 		p->p_nzlwps--;

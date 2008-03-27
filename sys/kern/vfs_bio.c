@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.193 2008/03/25 23:21:43 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.194 2008/03/27 19:06:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.193 2008/03/25 23:21:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.194 2008/03/27 19:06:52 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -683,7 +683,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 		VOP_STRATEGY(vp, bp);
 
 		/* Pay for the read. */
-		curproc->p_stats->p_ru.ru_inblock++;
+		curlwp->l_ru.ru_inblock++;
 	} else if (async)
 		brelse(bp, 0);
 
@@ -832,7 +832,7 @@ bwrite(buf_t *bp)
 		reassignbuf(bp, bp->b_vp);
 		mutex_exit(&bufcache_lock);
 	} else {
-		curproc->p_stats->p_ru.ru_oublock++;
+		curlwp->l_ru.ru_oublock++;
 		mutex_enter(bp->b_objlock);
 		CLR(bp->b_oflags, BO_DONE | BO_DELWRI);
 	}
@@ -906,7 +906,7 @@ bdwrite(buf_t *bp)
 		mutex_enter(&bufcache_lock);
 		mutex_enter(bp->b_objlock);
 		SET(bp->b_oflags, BO_DELWRI);
-		curproc->p_stats->p_ru.ru_oublock++;
+		curlwp->l_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 		mutex_exit(&bufcache_lock);
 	} else {
@@ -951,7 +951,7 @@ bdirty(buf_t *bp)
 
 	if (!ISSET(bp->b_oflags, BO_DELWRI)) {
 		SET(bp->b_oflags, BO_DELWRI);
-		curproc->p_stats->p_ru.ru_oublock++;
+		curlwp->l_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 	}
 }

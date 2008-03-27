@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.124 2008/03/21 21:55:00 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.125 2008/03/27 19:06:52 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.124 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125 2008/03/27 19:06:52 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2852,6 +2852,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	struct lwp *l, *l2;
 	struct timeval ut, st, rt;
 	sigset_t ss1, ss2;
+	struct rusage ru;
 
 	KASSERT(mutex_owned(&proclist_lock));
 	KASSERT(mutex_owned(&p->p_mutex));
@@ -3015,25 +3016,26 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_ustime_sec = st.tv_sec;
 		ki->p_ustime_usec = st.tv_usec;
 
-		ki->p_uru_maxrss = p->p_stats->p_ru.ru_maxrss;
-		ki->p_uru_ixrss = p->p_stats->p_ru.ru_ixrss;
-		ki->p_uru_idrss = p->p_stats->p_ru.ru_idrss;
-		ki->p_uru_isrss = p->p_stats->p_ru.ru_isrss;
-		ki->p_uru_minflt = p->p_stats->p_ru.ru_minflt;
-		ki->p_uru_majflt = p->p_stats->p_ru.ru_majflt;
-		ki->p_uru_nswap = p->p_stats->p_ru.ru_nswap;
-		ki->p_uru_inblock = p->p_stats->p_ru.ru_inblock;
-		ki->p_uru_oublock = p->p_stats->p_ru.ru_oublock;
-		ki->p_uru_msgsnd = p->p_stats->p_ru.ru_msgsnd;
-		ki->p_uru_msgrcv = p->p_stats->p_ru.ru_msgrcv;
-		ki->p_uru_nsignals = p->p_stats->p_ru.ru_nsignals;
-
+		memcpy(&ru, &p->p_stats->p_ru, sizeof(ru));
 		ki->p_uru_nvcsw = 0;
 		ki->p_uru_nivcsw = 0;
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			ki->p_uru_nvcsw += (l->l_ncsw - l->l_nivcsw);
 			ki->p_uru_nivcsw += l->l_nivcsw;
+			ruadd(&ru, &l2->l_ru);
 		}
+		ki->p_uru_maxrss = ru.ru_maxrss;
+		ki->p_uru_ixrss = ru.ru_ixrss;
+		ki->p_uru_idrss = ru.ru_idrss;
+		ki->p_uru_isrss = ru.ru_isrss;
+		ki->p_uru_minflt = ru.ru_minflt;
+		ki->p_uru_majflt = ru.ru_majflt;
+		ki->p_uru_nswap = ru.ru_nswap;
+		ki->p_uru_inblock = ru.ru_inblock;
+		ki->p_uru_oublock = ru.ru_oublock;
+		ki->p_uru_msgsnd = ru.ru_msgsnd;
+		ki->p_uru_msgrcv = ru.ru_msgrcv;
+		ki->p_uru_nsignals = ru.ru_nsignals;
 
 		timeradd(&p->p_stats->p_cru.ru_utime,
 			 &p->p_stats->p_cru.ru_stime, &ut);
