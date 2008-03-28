@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.36 2008/03/07 21:48:46 dyoung Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.37 2008/03/28 17:14:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.36 2008/03/07 21:48:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.37 2008/03/28 17:14:45 drochner Exp $");
 
 #include "ehci.h"
 
@@ -98,7 +98,10 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	usbd_status r;
 	const char *vendor;
-	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	const char *devname = device_xname(self);
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = self;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
@@ -155,7 +158,7 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if NEHCI > 0
-	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
+	usb_pci_add(&sc->sc_pci, pa, self);
 #endif
 
 	if (!pmf_device_register1(self, ohci_suspend, ohci_resume,
@@ -189,6 +192,6 @@ ohci_pci_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-CFATTACH_DECL2(ohci_pci, sizeof(struct ohci_pci_softc),
+CFATTACH_DECL2_NEW(ohci_pci, sizeof(struct ohci_pci_softc),
     ohci_pci_match, ohci_pci_attach, ohci_pci_detach, ohci_activate, NULL,
     ohci_childdet);

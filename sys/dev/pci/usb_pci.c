@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_pci.c,v 1.5 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: usb_pci.c,v 1.6 2008/03/28 17:14:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.5 2005/12/11 12:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_pci.c,v 1.6 2008/03/28 17:14:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ struct usb_pci_alldevs ehci_pci_alldevs =
 	TAILQ_HEAD_INITIALIZER(ehci_pci_alldevs);
 
 void
-usb_pci_add(struct usb_pci *up, struct pci_attach_args *pa, struct usbd_bus *bu)
+usb_pci_add(struct usb_pci *up, struct pci_attach_args *pa, device_t bu)
 {
 	TAILQ_INSERT_TAIL(&ehci_pci_alldevs, up, next);
 	up->bus = pa->pa_bus;

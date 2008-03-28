@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.42 2008/03/07 21:57:56 dyoung Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.43 2008/03/28 17:14:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.42 2008/03/07 21:57:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.43 2008/03/28 17:14:46 drochner Exp $");
 
 #include "ehci.h"
 
@@ -101,6 +101,9 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	usbd_status r;
 	int s;
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	aprint_naive("\n");
 
@@ -191,7 +194,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if NEHCI > 0
-	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
+	usb_pci_add(&sc->sc_pci, pa, self);
 #endif
 
 	if (!pmf_device_register(self, uhci_suspend, uhci_pci_resume))
@@ -238,6 +241,6 @@ uhci_pci_resume(device_t dv PMF_FN_ARGS)
 	return uhci_resume(dv PMF_FN_CALL);
 }
 
-CFATTACH_DECL2(uhci_pci, sizeof(struct uhci_pci_softc),
+CFATTACH_DECL2_NEW(uhci_pci, sizeof(struct uhci_pci_softc),
     uhci_pci_match, uhci_pci_attach, uhci_pci_detach, uhci_activate,
     NULL, uhci_childdet);

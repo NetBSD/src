@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.18 2008/03/07 22:32:52 dyoung Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.19 2008/03/28 17:14:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.18 2008/03/07 22:32:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.19 2008/03/28 17:14:45 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct ehci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-CFATTACH_DECL(ehci_cardbus, sizeof(struct ehci_cardbus_softc),
+CFATTACH_DECL_NEW(ehci_cardbus, sizeof(struct ehci_cardbus_softc),
     ehci_cardbus_match, ehci_cardbus_attach, ehci_cardbus_detach, ehci_activate);
 
 #define CARDBUS_INTERFACE_EHCI PCI_INTERFACE_EHCI
@@ -143,8 +143,11 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 	usbd_status r;
 	const char *vendor;
 	u_int ncomp;
-	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	const char *devname = device_xname(self);
 	struct usb_cardbus *up;
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = self;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
@@ -206,7 +209,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	TAILQ_FOREACH(up, &ehci_cardbus_alldevs, next) {
 		if (up->bus == ca->ca_bus) {
 			DPRINTF(("ehci_cardbus_attach: companion %s\n",
-				 USBDEVNAME(up->usb->bdev)));
+				 device_xname(up->usb)));
 			sc->sc.sc_comps[ncomp++] = up->usb;
 			if (ncomp >= EHCI_COMPANION_MAX)
 				break;
@@ -256,7 +259,7 @@ ehci_cardbus_detach(device_t self, int flags)
 }
 
 void
-usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca, struct usbd_bus *bu)
+usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca, device_t bu)
 {
 	TAILQ_INSERT_TAIL(&ehci_cardbus_alldevs, up, next);
 	up->bus = ca->ca_bus;
