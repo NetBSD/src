@@ -1,4 +1,4 @@
-/* $NetBSD: strtof_vaxf.c,v 1.4 2008/03/21 23:13:48 christos Exp $ */
+/* $NetBSD: strtof_vaxf.c,v 1.5 2008/03/28 00:56:54 he Exp $ */
 
 /****************************************************************
 
@@ -58,7 +58,7 @@ strtof(CONST char *s, char **sp)
 		errno = ERANGE;
 		u.L[0] = Big0;
 		u.L[1] = Big1;
-		return u.d;
+		return u.f;
 	}
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
