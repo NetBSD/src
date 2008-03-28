@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_jensenio.c,v 1.6 2007/10/17 19:52:59 garbled Exp $ */
+/* $NetBSD: mcclock_jensenio.c,v 1.7 2008/03/28 19:05:49 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.6 2007/10/17 19:52:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.7 2008/03/28 19:05:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,10 +89,10 @@ struct mcclock_jensenio_softc {
 	bus_space_handle_t	sc_std_rtc_ioh;
 };
 
-int	mcclock_jensenio_match(struct device *, struct cfdata *, void *);
-void	mcclock_jensenio_attach(struct device *, struct device *, void *);
+int	mcclock_jensenio_match(device_t, cfdata_t, void *);
+void	mcclock_jensenio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mcclock_jensenio, sizeof (struct mcclock_jensenio_softc),
+CFATTACH_DECL_NEW(mcclock_jensenio, sizeof(struct mcclock_jensenio_softc),
     mcclock_jensenio_match, mcclock_jensenio_attach, NULL, NULL);
 
 void	mcclock_jensenio_write(struct mc146818_softc *, u_int, u_int);
@@ -100,22 +100,22 @@ u_int	mcclock_jensenio_read(struct mc146818_softc *, u_int);
 
 
 int
-mcclock_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
+mcclock_jensenio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct jensenio_attach_args *ja = aux;
 
 	/* Always present. */
-	if (strcmp(ja->ja_name, match->cf_name) == 0)
+	if (strcmp(ja->ja_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);
 }
 
 void
-mcclock_jensenio_attach(struct device *parent, struct device *self, void *aux)
+mcclock_jensenio_attach(device_t parent, device_t self, void *aux)
 {
+	struct mcclock_jensenio_softc *jsc = device_private(self);
 	struct jensenio_attach_args *ja = aux;
-	struct mcclock_jensenio_softc *jsc = (void *)self;
 	struct mc146818_softc *sc = &jsc->sc_mc146818;
 
 	sc->sc_bst = ja->ja_iot;

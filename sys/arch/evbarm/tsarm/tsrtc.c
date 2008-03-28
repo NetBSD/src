@@ -1,4 +1,4 @@
-/*	$NetBSD: tsrtc.c,v 1.3 2008/01/10 15:17:41 tsutsui Exp $	*/
+/*	$NetBSD: tsrtc.c,v 1.4 2008/03/28 19:05:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.3 2008/01/10 15:17:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.4 2008/03/28 19:05:49 tsutsui Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.3 2008/01/10 15:17:41 tsutsui Exp $");
 #include <evbarm/tsarm/tspldvar.h>
 #include <evbarm/tsarm/tsarmreg.h>
 
-int	tsrtc_match __P((struct device *, struct cfdata *, void *));
-void	tsrtc_attach __P((struct device *, struct device *, void *));
+int	tsrtc_match(device_t, cfdata_t, void *);
+void	tsrtc_attach(device_t, device_t, void *);
 
 struct tsrtc_softc {
 	struct mc146818_softc	sc_mc;
@@ -56,25 +56,23 @@ struct tsrtc_softc {
 	bus_space_handle_t	sc_idxh;
 };
 
-CFATTACH_DECL(tsrtc, sizeof (struct tsrtc_softc),
+CFATTACH_DECL_NEW(tsrtc, sizeof (struct tsrtc_softc),
     tsrtc_match, tsrtc_attach, NULL, NULL);
 
-void	tsrtc_write __P((struct mc146818_softc *, u_int, u_int));
-u_int	tsrtc_read __P((struct mc146818_softc *, u_int));
+void	tsrtc_write(struct mc146818_softc *, u_int, u_int);
+u_int	tsrtc_read(struct mc146818_softc *, u_int);
 
 
 int
-tsrtc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+tsrtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct tspld_attach_args *aa = aux;
 	struct tsrtc_softc tsrtc, *sc;
 	unsigned int t1, t2;
 	static int found = -1;
 
-	if (found != -1) return found;
+	if (found != -1)
+		return found;
 
 	sc = &tsrtc;
 	sc->sc_iot = aa->ta_iot;
@@ -108,11 +106,9 @@ tsrtc_match(parent, match, aux)
 }
 
 void
-tsrtc_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+tsrtc_attach(device_t parent, device_t self, void *aux)
 {
-	struct tsrtc_softc *sc = (void *)self;
+	struct tsrtc_softc *sc = device_private(self);
 	struct tspld_attach_args *aa = aux;
 
 	sc->sc_iot = aa->ta_iot;
@@ -129,16 +125,14 @@ tsrtc_attach(parent, self, aux)
 	sc->sc_mc.sc_flag = MC146818_BCD;
 	mc146818_attach(&sc->sc_mc);
 
-	printf("\n");
+	aprint_error("\n");
 
 	(*sc->sc_mc.sc_mcwrite)((struct mc146818_softc *)sc, MC_REGB, 
 		MC_REGB_24HR);
 }
 
 void
-tsrtc_write(mc_sc, reg, datum)
-	struct mc146818_softc *mc_sc;
-	u_int reg, datum;
+tsrtc_write(struct mc146818_softc *mc_sc, u_int reg, u_int datum)
 {
 	struct tsrtc_softc *sc = (struct tsrtc_softc *)mc_sc;
 
@@ -147,9 +141,7 @@ tsrtc_write(mc_sc, reg, datum)
 }
 
 u_int
-tsrtc_read(mc_sc, reg)
-	struct mc146818_softc *mc_sc;
-	u_int reg;
+tsrtc_read(struct mc146818_softc *mc_sc, u_int reg)
 {
 	struct tsrtc_softc *sc = (struct tsrtc_softc *)mc_sc;
 	u_int datum;
