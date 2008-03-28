@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.274 2008/03/20 19:31:33 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.275 2008/03/28 23:22:53 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9528,13 +9528,14 @@ ENTRY(sparc64_ipi_save_fpstate)
 	LDPTR	[%g1 + %lo(FPLWP)], %g3
 	cmp	%g3, %g2
 	bne,pn	CCCR, 7f		! skip if fplwp != %g2
-	 LDPTR	[%g3 + L_FPSTATE], %g3
 
-	mov	CTX_SECONDARY, %g5
+	 mov	CTX_SECONDARY, %g5
 	ldxa	[%g5] ASI_DMMU, %g6
 	membar	#LoadStore
 	stxa	%g0, [%g5] ASI_DMMU
 	membar	#Sync
+
+	LDPTR	[%g3 + L_FPSTATE], %g3
 
 	rdpr	%pstate, %g2		! enable FP before we begin
 	rd	%fprs, %g5
