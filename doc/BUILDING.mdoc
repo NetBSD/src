@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.56 2008/03/18 04:24:38 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.57 2008/03/28 05:23:44 dholland Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -127,9 +127,16 @@ Sources for items used when making a full release snapshot, such as
 files installed in
 .Sy DESTDIR Ns Pa /etc
 on the destination system, boot media, and release notes.
-.It Sy regress/
+.It Sy tests/ , regress/
 Regression test harness.
 Can be cross-compiled, but only run natively.
+.Pa tests/
+uses the
+.Xr atf 7
+test framework;
+.Pa regress/
+contains older tests that have not yet been migrated to
+.Xr atf 7 .
 .It Sy sys/
 .Nx
 kernel sources.
@@ -197,10 +204,12 @@ Path name to C compiler used to create the toolchain.
 Path name to C++ compiler used to create the toolchain.
 .
 .It Sy MACHINE
-Machine type.
+Machine type, e.g.,
+.Dq macppc .
 .
 .It Sy MACHINE_ARCH
-Machine architecture.
+Machine architecture, e.g.,
+.Dq powerpc .
 .
 .It Sy MAKE
 Path name to invoke
@@ -321,7 +330,7 @@ will provide a default of
 .Sy .OBJDIR )
 unless run in
 .Sq expert
-mode
+mode.
 .
 .It Sy MAKECONF
 The name of the
@@ -421,6 +430,13 @@ If set to
 .Dq no ,
 then all built files will be located inside the regular source tree.
 .DFLTy
+.Pp
+Note that setting
+.Sy MKOBJ
+to
+.Dq no
+is not recommended and may cause problems when updating the tree with
+.Xr cvs 1 .
 .
 .It Sy MKPIC
 .YorN
@@ -558,16 +574,7 @@ This may cause build or runtime problems when building the whole
 .Nx
 source tree.
 .El
-.DFLT
-.Dq yes
-if building all or part of a whole
-.Nx
-source tree (detected automatically);
-.Dq no
-otherwise (to preserve traditional semantics of the
-.Aq bsd.*.mk
-.Xr make 1
-include files).
+.DFLTy
 .
 .It Sy X11SRCDIR
 Directory containing the X11R6 source.
@@ -603,6 +610,18 @@ Indicates whether object directories will be created automatically
 .Dq make obj
 pass) at the start of a build.
 .DFLTn
+.Pp
+If using
+.Sy build.sh ,
+the default is
+.Dq yes .
+This may be set back to
+.Dq no
+by giving
+.Sy build.sh
+the
+.Fl o
+option.
 .
 .It Sy MKUPDATE
 .YorN
@@ -614,6 +633,12 @@ above, this implies the effects of
 .Dq make cleandir
 is avoided).
 .DFLTn
+.Pp
+If using
+.Sy build.sh ,
+this may be set by giving the
+.Fl u
+option.
 .
 .It Sy NBUILDJOBS
 Now obsolete.
@@ -621,7 +646,8 @@ Use the
 .Xr make 1
 option
 .Fl j ,
-instead (see below)
+instead.
+See below.
 .DFLTu
 .
 .It Sy NOCLEANDIR
@@ -632,6 +658,9 @@ This has the effect of allowing only changed
 files in a source tree to be recompiled.
 This can speed up builds when updating only a few files in the tree.
 .DFLTu
+.Pp
+See also
+.Sy MKUPDATE .
 .
 .It Sy NODISTRIBDIRS
 If set, avoids the
@@ -657,7 +686,7 @@ However, this option should not be used when updating the entire
 .Nx
 source tree arbitrarily; it is suggested to use
 .Sy MKUPDATE=yes
-in that case.
+instead in that case.
 .DFLTu
 .
 .It Sy RELEASEDIR
@@ -676,7 +705,7 @@ will provide a default of
 .Sy .OBJDIR )
 unless run in
 .Sq expert
-mode
+mode.
 .
 .El
 .
@@ -711,7 +740,8 @@ When building any full
 source tree, this should be set to the
 .Dq share/mk
 directory in the source tree.
-(This is set automatically when building from the top level.)
+This is set automatically when building from the top level, or when using
+.Sy build.sh .
 .
 .It Fl n
 Display the commands that would have been executed, but do not
@@ -861,8 +891,8 @@ is not the root directory.
 Install the distribution from
 .Sy DESTDIR
 to
-.Sy INSTALLWORLDDIR
-(which defaults to the root directory).
+.Sy INSTALLWORLDDIR ,
+which defaults to the root directory.
 Ensures that
 .Sy INSTALLWORLDDIR
 is not the root directory if cross compiling.
@@ -875,9 +905,9 @@ By default, all sets except
 .Dq etc
 and
 .Dq xetc
-are installed (so most files in
+are installed, so most files in
 .Sy INSTALLWORLDDIR Ns Pa /etc
-will not be installed or modified).
+will not be installed or modified.
 .Pp
 .Em Note :
 Before performing this operation with
@@ -897,10 +927,10 @@ Create distribution sets from
 into
 .Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /binary/sets .
 Should be run after
-.Dq make distribution
-(as
+.Dq make distribution ,
+as
 .Dq make build
-does not install all of the required files).
+alone does not install all of the required files.
 .
 .It Sy sourcesets
 Create source sets of the source tree into
@@ -912,10 +942,10 @@ Create syspkgs from
 into
 .Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /binary/syspkgs .
 Should be run after
-.Dq make distribution
-(as
+.Dq make distribution ,
+as
 .Dq make build
-does not install all of the required files).
+alone does not install all of the required files.
 .
 .It Sy release
 Do a
@@ -930,7 +960,7 @@ This requires that
 .Sy RELEASEDIR
 be set (see above).
 .
-.It iso-image
+.It Sy iso-image
 Create a
 .Nx
 installation CD-ROM image in the
@@ -1020,7 +1050,10 @@ but which can be installed from
 .It Sy regression-tests
 Can only be run after building the regression tests in the directory
 .Dq regress .
-Runs the compiled regression tests on the local host.
+Runs those compiled regression tests on the local host.
+Note that most tests are now managed instead using
+.Xr atf 7 ;
+this target should probably run those as well but currently does not.
 .
 .El
 .
@@ -1069,23 +1102,30 @@ The following operations are supported by
 .It Sy build
 Build the system as per
 .Dq make build .
-This option implies the
+Before the main part of the build commences, this command runs the
 .Sy obj
-and
+operation (unless the
+.Fl o
+option is given),
+.Dq make cleandir
+(unless the
+.Fl u
+option is given),
+and the
 .Sy tools
-operations.
+operation.
 .
 .It Sy distribution
 Build a full distribution as per
 .Dq make distribution .
-This option implies the
+This command first runs the
 .Sy build
 operation.
 .
 .It Sy release
 Build a full release as per
 .Dq make release .
-This option implies the
+This command first runs the
 .Sy distribution
 operation.
 .
@@ -1103,6 +1143,17 @@ Perform
 .It Sy tools
 Build and install the host tools from
 .Pa src/tools .
+This command will first run
+.Dq make obj
+and
+.Dq make cleandir
+in the 
+.Pa tools
+subdirectory unless the
+.Fl o
+or
+.Fl u
+options (respectively) are given.
 .
 .It Sy install Ns = Ns Ar idir
 Install the contents of
@@ -1137,15 +1188,27 @@ The new kernel will be built in a subdirectory of
 which is typically
 .Sy sys/arch/MACHINE/compile
 or an associated object directory.
-In order to ensure that the kernel is built using up-to-date tools,
-it is strongly recommended that the tools be rebuilt (using the
+.Pp
+This command does
+.Em not
+imply the
 .Sy tools
-operation).
+command; run the
+.Sy tools
+command first unless it is
+.Em certain
+that the tools already exist and are up to date.
+.Pp
+This command will run
+.Dq make cleandir
+on the kernel in question first unless the
+.Fl u
+option is given.
 .
 .It Sy releasekernel Ns = Ns Ar kconf
 Install a
 .Xr gzip 1 Ns ed
-copy of the kernel built by
+copy of the kernel previously built by
 .Sy kernel Ns = Ns Ar kconf
 into
 .Sy RELEASEDIR/RELEASEMACHINEDIR Ns Pa /binary/kernel ,
@@ -1245,7 +1308,11 @@ you use this option.
 Print a help message.
 .
 .It Fl j Ar njob
-Passed through to 
+Run up to
+.Ar njob
+.Xr make 1 
+subjobs in parallel;
+passed through to 
 .Xr make 1 .
 Makefiles should use .WAIT or have explicit dependancies 
 as necessary to enforce build ordering.
@@ -1342,8 +1409,9 @@ Set the value of
 to
 .Dq no .
 Otherwise, it will be automatically set to
-.Dq yes
-(which is opposite to the default behaviour).
+.Dq yes .
+This default is opposite to the behaviour when not using
+.Sy build.sh .
 .
 .It Fl R Ar rel
 Set the value of
@@ -1372,9 +1440,9 @@ If a relative path is specified, it will be converted to an
 absolute path before being used.
 If set, the bootstrap
 .Dq make
-will only be rebuilt as needed (when the source files for
+will only be rebuilt if the source files for
 .Xr make 1
-change).
+have changed.
 .
 .It Fl U
 Set
@@ -1460,7 +1528,7 @@ with several key variables pre-set, including
 .Sy MACHINE , MACHINE_ARCH ,
 and
 .Sy TOOLDIR .
-.Sy build.sh
+.Sy \*[toolprefix]make-MACHINE
 will also set variables specified with
 .Fl V ,
 and unset variables specified with
@@ -1531,7 +1599,7 @@ portion of the release build.
 Use the 
 .Xr make 1
 option
-.Fl j ,
+.Fl j
 instead.
 .
 .It Sy USE_NEW_TOOLCHAIN
