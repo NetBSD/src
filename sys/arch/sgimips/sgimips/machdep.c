@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.118 2008/01/26 14:35:24 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119 2008/03/28 16:40:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2008/01/26 14:35:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2008/03/28 16:40:25 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -252,6 +252,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	vsize_t size;
 	struct arcbios_mem *mem;
 	const char *cpufreq, *osload;
+	char *bootpath = NULL;
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
 	int i, rv;
@@ -286,15 +287,19 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	/* set up bootinfo structures */
 	if (magic == BOOTINFO_MAGIC && bip != NULL) {
 		struct btinfo_magic *bi_magic;
+		struct btinfo_bootpath *bi_path;
 
 		memcpy(bi_buf, bip, BOOTINFO_SIZE);
 		bootinfo = bi_buf;
 		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
-		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
+		if (bi_magic != NULL && bi_magic->magic == BOOTINFO_MAGIC) {
+			bootinfo_msg = "bootinfo found.\n";
+			bi_path = lookup_bootinfo(BTINFO_BOOTPATH);
+			if (bi_path != NULL)
+				bootpath = bi_path->bootpath;
+		} else
 			bootinfo_msg =
 			    "invalid magic number in bootinfo structure.\n";
-		else
-			bootinfo_msg = "bootinfo found.\n";
 	} else
 		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
@@ -331,31 +336,80 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	curcpu()->ci_cpu_freq = strtoul(cpufreq, NULL, 10) * 1000000;
 
 	/*
-	 * Try to get the boot device information from ARCBIOS. If we fail,
-	 * attempt to use the environment variables passed as follows:
+	 * Check machine (IPn) type.
 	 *
-	 * argv[0] can be either the bootloader loaded by the PROM, or a
-	 * kernel loaded directly by the PROM.
-	 *
-	 * If argv[0] is the bootloader, then argv[1] might be the kernel
-	 * that was loaded.  How to tell which one to use?
-	 *
-	 * If argv[1] isn't an environment string, try to use it to set the
-	 * boot device.
+	 * Note even on IP12 (which doesn't have ARCBIOS),
+	 * arcbios_system_identifiler[] has been initilialized
+	 * in arcemu_ip12_init().
+	 */
+	for (i = 0; arcbios_system_identifier[i] != '\0'; i++) {
+		if (arcbios_system_identifier[i] >= '0' &&
+		    arcbios_system_identifier[i] <= '9') {
+			mach_type = strtoul(&arcbios_system_identifier[i],
+			    NULL, 10);
+			break;
+		}
+	}
+	if (mach_type <= 0)
+		panic("invalid architecture");
+
+	/*
+	 * Get boot device infomation.
+	 */
+
+	/* Try to get the boot device information from bootinfo first. */
+	if (bootpath != NULL)
+		makebootdev(bootpath);
+	else {
+		/*
+		 * If we are loaded directly by ARCBIOS,
+		 * argv[0] is the path of the loaded kernel.
+		 */
+		if (argc > 0 && argv[0] != NULL)
+			makebootdev(argv[0]);
+	}
+
+	/*
+	 * Also try to get the default bootpath from ARCBIOS envronment
+	 * bacause bootpath is not set properly by old bootloaders and
+	 * argv[0] might be invalid on some machine.
 	 */
 	osload = ARCBIOS->GetEnvironmentVariable("OSLoadPartition");
 	if (osload != NULL)
 		makebootdev(osload);
-	else if (argc > 1 && strchr(argv[1], '=') != 0)
-		makebootdev(argv[1]);
 
-	boothowto = RB_SINGLE;
+	/*
+	 * The case where the kernel has been loaded by a
+	 * boot loader will usually have been catched by
+	 * the first makebootdev() case earlier on, but
+	 * we still use OSLoadPartition to get the preferred
+	 * root filesystem location, even if it's not
+	 * actually the location of the loaded kernel.
+	 */
+	for (i = 0; i < argc; i++) {
+		if (strncmp(argv[i], "OSLoadPartition=", 15) == 0)
+			makebootdev(argv[i] + 16);
+	}
+
+	/*
+	 * When the kernel is loaded directly by the firmware, and
+	 * no explicit OSLoadPartition is set, we fall back on
+	 * SystemPartition for the boot device.
+	 */
+	for (i = 0; i < argc; i++) {
+		if (strncmp(argv[i], "SystemPartition", 15) == 0)
+			makebootdev(argv[i] + 16);
+	}
 
 	/*
 	 * Single- or multi-user ('auto' in SGI terms).
 	 *
 	 * Query ARCBIOS first, then default to environment variables.
 	 */
+
+	/* Set default to single user. */
+	boothowto = RB_SINGLE;
+
 	osload = ARCBIOS->GetEnvironmentVariable("OSLoadOptions");
 	if (osload != NULL && strcmp(osload, "auto") == 0)
 		boothowto &= ~RB_SINGLE;
@@ -363,17 +417,6 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	for (i = 0; i < argc; i++) {
 		if (strcmp(argv[i], "OSLoadOptions=auto") == 0)
 			boothowto &= ~RB_SINGLE;
-
-		/*
-		 * The case where the kernel has been loaded by a
-		 * boot loader will usually have been catched by
-		 * the first makebootdev() case earlier on, but
-		 * we still use OSLoadPartition to get the preferred
-		 * root filesystem location, even if it's not
-		 * actually the location of the loaded kernel.
-		 */
-		if (strncmp(argv[i], "OSLoadPartition=", 15) == 0)
-			makebootdev(argv[i] + 16);
 	}
 
 	/*
@@ -422,30 +465,9 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 #ifdef DEBUG
 	boothowto |= AB_DEBUG;
 #endif
-
-	/*
-	 * When the kernel is loaded directly by the firmware, and
-	 * no explicit OSLoadPartition is set, we fall back on
-	 * SystemPartition for the boot device.
-	 */
-	for (i = 0; i < argc; i++) {
-		if (strncmp(argv[i], "SystemPartition", 15) == 0)
-			makebootdev(argv[i] + 16);
-
-		aprint_debug("argv[%d]: %s\n", i, argv[i]);
-	}
-
-	for (i = 0; arcbios_system_identifier[i] != '\0'; i++) {
-		if (arcbios_system_identifier[i] >= '0' &&
-		    arcbios_system_identifier[i] <= '9') {
-			mach_type = strtoul(&arcbios_system_identifier[i],
-			    NULL, 10);
-			break;
-		}
-	}
-
-	if (mach_type <= 0)
-		panic("invalid architecture");
+	aprint_debug("argc = %d\n", argc);
+	for (i = 0; i < argc; i++)
+		aprint_debug("argv[%d] = %s\n", i, argv[i]);
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* init symbols if present */

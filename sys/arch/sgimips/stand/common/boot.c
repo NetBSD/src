@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.15 2008/02/23 06:51:28 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.16 2008/03/28 16:40:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -238,7 +238,7 @@ main(int argc, char **argv)
 	}
 
 finish:
-	strlcpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
+	strlcpy(bi_bpath.bootpath, bootfile, BTINFO_BOOTPATH_LEN);
 	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 
 	bi_syms.nsym = marks[MARK_NSYM];
