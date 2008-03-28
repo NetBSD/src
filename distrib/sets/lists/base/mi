@@ -1,7 +1,17 @@
-# $NetBSD: mi,v 1.741 2008/03/22 08:37:24 mlelstv Exp $
+# $NetBSD: mi,v 1.742 2008/03/28 01:22:44 lukem Exp $
 #
-# Note: don't delete entries from here - mark them as "obsolete" instead.
+# Note:	Don't delete entries from here - mark them as "obsolete" instead,
+#	unless otherwise stated below.
 #
+# Note:	Do not mark "old" major and major.minor shared libraries as
+#	"obsolete"; just remove the entry, as third-party applications
+#	may be linked against the old major shared library, and
+#	that is a symlink to the old major.minor shared library.
+#	E.g., "lib<name>.so.<N>" and "lib<name>.so.<N>.<M>"
+#	Exceptions to this rule may include shared libraries that
+#	are dlopen()ed at run-time, such as extra locales, etc.
+#
+("lib<name>.so.<N>" and)
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -106,11 +116,7 @@
 ./etc/uucp					base-obsolete		obsolete
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
-./lib/libdes.so.6				base-obsolete		obsolete
-./lib/libdes.so.6.0				base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
-./lib/libssp.so.0				base-obsolete		obsolete
-./lib/libssp.so.0.0				base-obsolete		obsolete
 ./libdata					base-sys-root
 ./libdata/firmware				base-sys-root
 ./libdata/firmware/ral				base-sys-root
@@ -876,15 +882,9 @@
 ./usr/lib					base-sys-usr
 ./usr/lib/i18n					base-i18n-root
 ./usr/lib/libntp.so				base-obsolete		obsolete
-./usr/lib/libntp.so.0				base-obsolete		obsolete
-./usr/lib/libntp.so.0.0				base-obsolete		obsolete
 ./usr/lib/libssp.so				base-obsolete		obsolete
-./usr/lib/libssp.so.0				base-obsolete		obsolete
-./usr/lib/libssp.so.0.0				base-obsolete		obsolete
 ./usr/lib/libusb.a				base-obsolete		obsolete
 ./usr/lib/libusb.so				base-obsolete		obsolete
-./usr/lib/libusb.so.0				base-obsolete		obsolete
-./usr/lib/libusb.so.0.1				base-obsolete		obsolete
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
