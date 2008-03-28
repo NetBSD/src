@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$NetBSD: asm2gas,v 1.7 2008/03/27 07:15:16 apb Exp $
+#	$NetBSD: asm2gas,v 1.8 2008/03/28 22:27:33 apb Exp $
 
 #
-# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# Copyright (c) 1998,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -40,14 +40,17 @@
 # This ugly script converts assembler code from Motorola's format to a
 # form that gas (MIT syntax) can digest.
 
-: ${TOOL_SED:=sed}
+: ${SED:=sed}	# Which sed to use
+P=''		# Prefix for register names, may be '%' or ''
 
-cat "$1" | "${TOOL_SED}" -e '
+cat "$1" | "${SED}" -e '
   # format canonicalization
 
-  s/^#/|#/
-  /[ 	]IDNT[ 	]/{s/^/|/;p;d;}
+  # leave "#include" alone; change "#" and "*" comment lines to use "|".
+  /^\#include/{p;d;}
+  /^\#/{s//|#/;p;d;}
   /^\*/{s//|/;p;d;}
+  /[ 	]IDNT[ 	]/{s/^/|/;p;d;}
   s/;/|/
   /[ 	]equ[ 	]/{
     s/\([A-Za-z_][A-Za-z0-9_]*\)[ 	]*equ[ 	]*/\1,/
@@ -80,7 +83,7 @@ cat "$1" | "${TOOL_SED}" -e '
     G
     s/\n//
   }
-' | sed -e '
+' | "${SED}" -e '
   # operator conversion
 
   s/^	section	7/	.text/
@@ -138,36 +141,74 @@ cat "$1" | "${TOOL_SED}" -e '
   /^	db[a-z][a-z]*\.w	/{s/\.w//;p;d;}
   /^	fb[a-eg-z][a-z]*\.w	/{s/\.w//;p;d;}
   /^	fb[a-eg-z][a-z]*\.l	/{s/\.l/l/;p;d;}
-' | sed -e '
+' | "${SED}" -e '
   # operand conversion
 
-  s/\([^_a-zA-Z0-9]\)FPIAR\([^_a-zA-Z0-9]\)/\1FPI\2/g
-  s/\([^_a-zA-Z0-9]\)FPIAR\([^_a-zA-Z0-9]\)/\1FPI\2/g
-  s/\([^_a-zA-Z0-9]\)FPIAR$/\1FPI/g
-  s/\([^_a-zA-Z0-9]\)fpiar\([^_a-zA-Z0-9]\)/\1fpi\2/g
-  s/\([^_a-zA-Z0-9]\)fpiar\([^_a-zA-Z0-9]\)/\1fpi\2/g
-  s/\([^_a-zA-Z0-9]\)fpiar$/\1fpi/g
+  # register names "FPIAR" -> "%FPI", etc., possibly without the "%"
+  s/\([^_a-zA-Z0-9]\)FPIAR\([^_a-zA-Z0-9]\)/\1'"$P"'FPI\2/g
+  s/\([^_a-zA-Z0-9]\)FPIAR$/\1'"$P"'FPI/g
+  s/\([^_a-zA-Z0-9]\)fpiar\([^_a-zA-Z0-9]\)/\1'"$P"'fpi\2/g
+  s/\([^_a-zA-Z0-9]\)fpiar$/\1'"$P"'fpi/g
+  s/\([^_a-zA-Z0-9]\)FPCR\([^_a-zA-Z0-9]\)/\1'"$P"'FPCR\2/g
+  s/\([^_a-zA-Z0-9]\)FPCR$/\1'"$P"'FPCR/g
+  s/\([^_a-zA-Z0-9]\)fpcr\([^_a-zA-Z0-9]\)/\1'"$P"'fpcr\2/g
+  s/\([^_a-zA-Z0-9]\)fpcr$/\1'"$P"'fpcr/g
+  s/\([^_a-zA-Z0-9]\)FPSR\([^_a-zA-Z0-9]\)/\1'"$P"'FPSR\2/g
+  s/\([^_a-zA-Z0-9]\)FPSR$/\1'"$P"'FPSR/g
+  s/\([^_a-zA-Z0-9]\)fpsr\([^_a-zA-Z0-9]\)/\1'"$P"'fpsr\2/g
+  s/\([^_a-zA-Z0-9]\)fpsr$/\1'"$P"'fpsr/g
 
+  # Hexadecimal numbers
   s/\$\([0-9a-fA-F]\)/0x\1/g
   s/#:/#:0x/g
 
-  s/-(\([sSpPaA][pPcC0-7]\))/\1@-/g
-  s/(\([sSpPaA][pPcC0-7]\))+/\1@+/g
-  s/\([-+A-Za-z0-9_]*\)(\([sSpPaA][pPcC0-7]\)\([),]\)/\2@(\1\3/g
+  # Insert "%" before more register names (only if $P = "%").
+  # Some of the rules are repeated because of overlap between trailing
+  # context in one match and leading context in another match; otherwise
+  # only half the register names in "d4{d3:4},d0" would be converted.
+  s/\([^[:alnum:]_%]\)\([dDaA][0-7]\)\([^[:alnum:]_]\)/\1'"$P"'\2\3/g
+  s/\([^[:alnum:]_%]\)\([fF][pP][0-7]\)\([^[:alnum:]_]\)/\1'"$P"'\2\3/g
+  s/\([^[:alnum:]_%]\)\(sp\)\([^[:alnum:]_]\)/\1'"$P"'\2\3/g
+  s/\([^[:alnum:]_%]\)\(pc\)\([^[:alnum:]_]\)/\1'"$P"'\2\3/g
 
+  s/\([^[:alnum:]_%]\)\([dDaA][0-7]\)\([^[:alnum:]_]\)/\1'"$P"'\2\3/g
+  s/\([^[:alnum:]_%]\)\([fF][pP][0-7]\)\([^[:alnum:]_]\)/\1'"$P"'\2\3/g
+  s/\([^[:alnum:]_%]\)\(sp\)\([^[:alnum:]_]\)/\1'"$P"'\2\3/g
+  s/\([^[:alnum:]_%]\)\(pc\)\([^[:alnum:]_]\)/\1'"$P"'\2\3/g
+
+  s/\([^[:alnum:]_%]\)\([dDaA][0-7]\)$/\1'"$P"'\2/g
+  s/\([^[:alnum:]_%]\)\([dDaA][0-7]\)$/\1'"$P"'\2/g
+  s/\([^[:alnum:]_%]\)\([fF][pP][0-7]\)$/\1'"$P"'\2/g
+  s/\([^[:alnum:]_%]\)\(sp\)$/\1'"$P"'\2/g
+
+  s/\(,\)\([dDaA][0-7]\)/\1'"$P"'\2/g
+  s/\(,\)\([fF][pP][0-7]\)/\1'"$P"'\2/g
+
+  # "-(%sp)" -> "%sp@-", etc. (possibly without the "%")
+  s/-(\('"$P"'[sSpPaA][pPcC0-7]\))/\1@-/g
+  # "(%sp)+" -> "%sp@+", etc. (possibly without the "%")
+  s/(\('"$P"'[sSpPaA][pPcC0-7]\))+/\1@+/g
+  # "foo(%sp,...)" -> "%sp@(foo,...)", etc. (possibly without the "%")
+  s/\([-+A-Za-z0-9_]*\)(\('"$P"'[sSpPaA][pPcC0-7]\)\([),]\)/\2@(\1\3/g
+
+  # ".w" -> ":w"; ".w*nn" -> ":w:nn"; "*nn" -> ":l:nn"; etc.
   s/\.\([bBwWlL])\)/:\1/g
   s/\.\([bBwWlL]\)\*\([0-9][0-9]*)\)/:\1:\2/g
   s/\*\([0-9][0-9]*\))/:l:\1)/g
+  # "{nn:mm}" -> "{#nn:#mm}"
   s/{\([0-9][0-9]*\):\([0-9][0-9]*\)}/{#\1:#\2}/g
-  s/{\([dD][0-7]\):\([0-9][0-9]*\)}/{\1:#\2}/g
+  # "{%d0:nn}" -> "{%d0:#nn}", etc. (possibly without the "%")
+  s/{\('"$P"'[dD][0-7]\):\([0-9][0-9]*\)}/{\1:#\2}/g
 
+  # Remove empty "()" or "(0)" after "@"
   s/@(0*)/@/g
+  # Remove leading "," or trailing ":" in parentheses
   s/(,/(/g;s/:)/)/g
 
   # make up for a gas bug
   /^	fmovemx	/{
-	s/	\([fF][pP][0-7]\),/	\1-\1,/
-	s/,\([fF][pP][0-7]\)	/,\1-\1	/
-	s/,\([fF][pP][0-7]\)$/,\1-\1/
+	s/	\('"$P"'[fF][pP][0-7]\),/	\1-\1,/
+	s/,\('"$P"'[fF][pP][0-7]\)	/,\1-\1	/
+	s/,\('"$P"'[fF][pP][0-7]\)$/,\1-\1/
   }
 '
