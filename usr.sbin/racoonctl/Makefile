@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2005/02/19 16:55:05 thorpej Exp $
+# $NetBSD: Makefile,v 1.2 2008/03/28 14:37:08 he Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -12,7 +12,7 @@ DIST=	${NETBSDSRCDIR}/crypto/dist/ipsec-tools
 CFLAGS+=-g
 CPPFLAGS+=	-I${DIST}/src/racoon -I${DIST}/src/libipsec	\
 		-I${NETBSDSRCDIR}/lib/libipsec 			\
-		-DIPSEC_DEBUG -DHAVE_CONFIG_H 			\
+		-DIPSEC_DEBUG -DHAVE_CONFIG_H -DNOUSE_PRIVSEP	\
 		-DADMINPORTDIR=\"/var/racoon\"
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
