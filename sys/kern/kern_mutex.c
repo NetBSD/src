@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.31 2008/03/27 19:11:05 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.32 2008/03/28 16:23:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.31 2008/03/27 19:11:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.32 2008/03/28 16:23:39 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -283,7 +283,6 @@ syncobj_t mutex_syncobj = {
 #define	MUTEX_OBJ_MAGIC	0x5aa3c85d
 struct kmutexobj {
 	kmutex_t	mo_lock;
-	void		*mo_chain;
 	u_int		mo_magic;
 	u_int		mo_refcnt;
 };
@@ -951,7 +950,6 @@ mutex_obj_ctor(void *arg, void *obj, int flags)
 	struct kmutexobj * mo = obj;
 
 	mo->mo_magic = MUTEX_OBJ_MAGIC;
-	mo->mo_chain = NULL;
 
 	return 0;
 }
@@ -1003,7 +1001,6 @@ mutex_obj_free(kmutex_t *lock)
 
 	KASSERT(mo->mo_magic == MUTEX_OBJ_MAGIC);
 	KASSERT(mo->mo_refcnt > 0);
-	KASSERT(mo->mo_chain == NULL);
 
 	if (atomic_dec_uint_nv(&mo->mo_refcnt) > 0) {
 		return false;
