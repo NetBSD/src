@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.108 2008/03/24 12:24:37 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.109 2008/03/28 12:14:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.108 2008/03/24 12:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.109 2008/03/28 12:14:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -625,6 +625,15 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	if (unp->unp_vnode != 0)
 		return (EINVAL);
 
+	if ((unp->unp_flags & UNP_BUSY) != 0) {
+		/*
+		 * EALREADY may not be strictly accurate, but since this
+		 * is a major application error it's hardly a big deal.
+		 */
+		return (EALREADY);
+	}
+	unp->unp_flags |= UNP_BUSY;
+
 	p = l->l_proc;
 	/*
 	 * Allocate the new sockaddr.  We have to allocate one
@@ -669,10 +678,12 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	unp->unp_connid.unp_egid = kauth_cred_getegid(p->p_cred);
 	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp, 0);
+	unp->unp_flags &= ~UNP_BUSY;
 	return (0);
 
  bad:
 	free(sun, M_SONAME);
+	unp->unp_flags &= ~UNP_BUSY;
 	return (error);
 }
 
@@ -687,6 +698,16 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	struct proc *p;
 	int error;
 	struct nameidata nd;
+
+	unp = sotounpcb(so);
+	if ((unp->unp_flags & UNP_BUSY) != 0) {
+		/*
+		 * EALREADY may not be strictly accurate, but since this
+		 * is a major application error it's hardly a big deal.
+		 */
+		return (EALREADY);
+	}
+	unp->unp_flags |= UNP_BUSY;
 
 	p = l->l_proc;
 	/*
@@ -727,7 +748,6 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			error = ECONNREFUSED;
 			goto bad;
 		}
-		unp = sotounpcb(so);
 		unp2 = sotounpcb(so2);
 		unp3 = sotounpcb(so3);
 		if (unp2->unp_addr) {
@@ -753,6 +773,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	vput(vp);
  bad2:
 	free(sun, M_SONAME);
+	unp->unp_flags &= ~UNP_BUSY;
 	return (error);
 }
 
