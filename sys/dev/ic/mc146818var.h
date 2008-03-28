@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818var.h,v 1.4 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mc146818var.h,v 1.5 2008/03/28 19:05:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 struct mc146818_softc {
-	struct device sc_dev;
+	device_t *sc_dev;
 
 	bus_space_tag_t sc_bst;			/* bus space tag */
 	bus_space_handle_t sc_bsh;		/* bus space handle */
