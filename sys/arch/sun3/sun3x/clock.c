@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2008/01/26 14:02:54 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 2008/03/28 20:26:13 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2008/01/26 14:02:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2008/03/28 20:26:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,10 +142,10 @@ void _isr_clock(void);	/* in locore.s */
 void clock_intr(struct clockframe);
 
 
-static int  clock_match(struct device *, struct cfdata *, void *);
-static void clock_attach(struct device *, struct device *, void *);
+static int  clock_match(device_t, cfdata_t, void *);
+static void clock_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(clock, sizeof(struct mk48txx_softc),
+CFATTACH_DECL_NEW(clock, sizeof(struct mk48txx_softc),
     clock_match, clock_attach, NULL, NULL);
 
 #ifdef	SUN3_470
@@ -154,10 +154,10 @@ CFATTACH_DECL(clock, sizeof(struct mk48txx_softc),
 
 #define intersil_clear() (void)intersil_clock->clk_intr_reg
 
-static int  oclock_match(struct device *, struct cfdata *, void *);
-static void oclock_attach(struct device *, struct device *, void *);
+static int  oclock_match(device_t, cfdata_t, void *);
+static void oclock_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(oclock, sizeof(struct intersil7170_softc),
+CFATTACH_DECL_NEW(oclock, sizeof(struct intersil7170_softc),
     oclock_match, oclock_attach, NULL, NULL);
 
 
@@ -165,7 +165,7 @@ CFATTACH_DECL(oclock, sizeof(struct intersil7170_softc),
  * Is there an intersil clock?
  */
 static int 
-oclock_match(struct device *parent, struct cfdata *cf, void *aux)
+oclock_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -195,16 +195,16 @@ oclock_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach the intersil clock.
  */
 static void 
-oclock_attach(struct device *parent, struct device *self, void *aux)
+oclock_attach(device_t parent, device_t self, void *aux)
 {
+	struct intersil7170_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	struct intersil7170_softc *sc = (void *)self;
 
 	/* Get a mapping for it. */
 	sc->sc_bst = ca->ca_bustag;
 	if (bus_space_map(sc->sc_bst, ca->ca_paddr, sizeof(struct intersil7170),
 	    0, &sc->sc_bsh) != 0) {
-		printf(": can't map registers\n");
+		aprint_error(": can't map registers\n");
 		return;
 	}
 
@@ -214,7 +214,8 @@ oclock_attach(struct device *parent, struct device *self, void *aux)
 	/* Verify correct probe order... */
 	if (mostek_clk_va) {
 		mostek_clk_va = NULL;
-		printf("%s: warning - mostek found also!\n", self->dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(self, "warning - mostek found also!\n");
 	}
 #endif
 
@@ -236,7 +237,7 @@ oclock_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_year0 = 1968;
 	intersil7170_attach(sc);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Can not hook up the ISR until cpu_initclocks()
@@ -253,7 +254,7 @@ oclock_attach(struct device *parent, struct device *self, void *aux)
  * (See comment at top of this file.)
  */
 static int 
-clock_match(struct device *parent, struct cfdata *cf, void *args)
+clock_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
 
@@ -277,26 +278,26 @@ clock_match(struct device *parent, struct cfdata *cf, void *args)
  * Attach the mostek clock.
  */
 static void 
-clock_attach(struct device *parent, struct device *self, void *aux)
+clock_attach(device_t parent, device_t self, void *aux)
 {
-	struct mk48txx_softc *sc = (void *)self;
+	struct mk48txx_softc *sc = device_private(self);
 	struct confargs *ca = aux;
 
 	sc->sc_bst = ca->ca_bustag;
 	if (bus_space_map(sc->sc_bst, ca->ca_paddr - MKCLOCK_REG_OFFSET,
 	    MK48T02_CLKSZ, 0, &sc->sc_bsh) != 0) {
-		printf("can't map device space\n");
+		aprint_error(": can't map device space\n");
 		return;
 	}
 
-	mostek_clk_va = (void *)(sc->sc_bsh + MKCLOCK_REG_OFFSET); /* XXX */
+	mostek_clk_va = bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
 
 	sc->sc_model = "mk48t02";
 	sc->sc_year0 = 1968;
 
 	mk48txx_attach(sc);
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 /*
