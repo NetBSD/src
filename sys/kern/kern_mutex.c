@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.32 2008/03/28 16:23:39 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.33 2008/03/28 22:19:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.32 2008/03/28 16:23:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.33 2008/03/28 22:19:39 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -721,8 +721,11 @@ mutex_vector_exit(kmutex_t *mtx)
 
 	if (MUTEX_SPIN_P(mtx)) {
 #ifdef FULL
-		if (!__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock))
+		if (__predict_false(!__SIMPLELOCK_LOCKED_P(&mtx->mtx_lock))) {
+			if (panicstr != NULL)
+				return;
 			MUTEX_ABORT(mtx, "exiting unheld spin mutex");
+		}
 		MUTEX_UNLOCKED(mtx);
 		__cpu_simple_unlock(&mtx->mtx_lock);
 #endif
