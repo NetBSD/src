@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.97 2008/03/28 18:14:23 he Exp $
+# $NetBSD: HACKS,v 1.98 2008/03/28 21:18:24 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -302,17 +302,6 @@ descr
 	code does not conform.  For now we use -Wno-pointer-sign and
 	-fno-strict-aliasing.
 kcah
-
-hack
-mdate	13 Mar 2008
-who	he
-file	usr.sbin/racoon/Makefile	: 1.19
-descr
-	Needs to avoid building privsep.c with the stack protector
-	because it uses variably-sized local arrays via CMSG_SIZE()
-	in two functions.
-kcah
-
 
 port	vax
 
