@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.202 2008/03/11 13:33:16 uwe Exp $
+#	$NetBSD: bsd.README,v 1.203 2008/03/28 06:04:40 dholland Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -598,7 +598,7 @@ FILESOWN	File owner.  [${BINOWN}]
 
 FILESGRP	File group.  [${BINGRP}]
 
-FILESMODE	File mode.  [${BINMODE}]
+FILESMODE	File mode.  [${NONBINMODE}]
 
 FILESDIR	The location to install the files.
 
