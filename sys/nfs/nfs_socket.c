@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.167 2008/01/02 19:26:46 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.168 2008/03/28 14:29:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.167 2008/01/02 19:26:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.168 2008/03/28 14:29:57 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1137,8 +1137,7 @@ tryagain:
 	 * do it now.
 	 */
 	if (nmp->nm_so && (nmp->nm_sotype != SOCK_DGRAM ||
-		(nmp->nm_flag & NFSMNT_DUMBTIMR) ||
-		nmp->nm_sent < nmp->nm_cwnd)) {
+	    (nmp->nm_flag & NFSMNT_DUMBTIMR) || nmp->nm_sent < nmp->nm_cwnd)) {
 		splx(s);
 		if (nmp->nm_soflags & PR_CONNREQUIRED)
 			error = nfs_sndlock(nmp, rep);
