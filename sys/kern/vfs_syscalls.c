@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.347 2008/03/25 22:13:32 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.348 2008/03/28 05:02:08 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.347 2008/03/25 22:13:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.348 2008/03/28 05:02:08 dholland Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3298,6 +3298,17 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	 * in nfs_serv.c. Proceed accordingly.
 	 */
 	vrele(fvp);
+	if ((fromnd.ni_cnd.cn_namelen == 1 && 
+	     fromnd.ni_cnd.cn_nameptr[0] == '.') ||
+	    (fromnd.ni_cnd.cn_namelen == 2 && 
+	     fromnd.ni_cnd.cn_nameptr[0] == '.' &&
+	     fromnd.ni_cnd.cn_nameptr[1] == '.')) {
+		error = EINVAL;
+		VFS_RENAMELOCK_EXIT(fs);
+		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
+		vrele(fromnd.ni_dvp);
+		goto out1;
+	}
 	saveflag = fromnd.ni_cnd.cn_flags & SAVESTART;
 	fromnd.ni_cnd.cn_flags &= ~SAVESTART;
 	vn_lock(fromnd.ni_dvp, LK_EXCLUSIVE | LK_RETRY);
