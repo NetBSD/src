@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.22 2008/03/17 16:54:51 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.23 2008/03/28 20:48:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.22 2008/03/17 16:54:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.23 2008/03/28 20:48:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -282,7 +282,7 @@ sleepq_block(int timo, bool catch)
 			 * Even if the callout appears to have fired, we need to
 			 * stop it in order to synchronise with other CPUs.
 			 */
-			if (callout_stop(&l->l_timeout_ch))
+			if (callout_halt(&l->l_timeout_ch))
 				error = EWOULDBLOCK;
 		}
 	}
