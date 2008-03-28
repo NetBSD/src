@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2007/05/28 12:06:39 tls Exp $
+# $NetBSD: Makefile,v 1.19 2008/03/28 18:10:53 he Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -30,6 +30,8 @@ CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H
 CPPFLAGS+= -DADMINPORTDIR=\"/var/run\"
 CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
 CPPFLAGS+= -DSADB_X_EALG_AESCBC=SADB_X_EALG_AES
+
+CPPFLAGS.privsep.c+= -fno-stack-protector
 
 LDADD+= -ll -ly -lipsec -lutil
 DPADD+= ${LIBL} ${LIBY} ${LIBCRYPTO} ${LIBUTIL}
