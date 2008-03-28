@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.14 2008/02/23 06:51:28 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.15 2008/03/28 16:41:37 tsutsui Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -20,6 +20,9 @@ AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls
 CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
 CFLAGS=		-ffreestanding -Os -Wall -Werror -mno-abicalls -msoft-float -G 1024
+CFLAGS+=	-Wall -Werror
+CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
+CFLAGS+=	-Wno-pointer-sign
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
 NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
