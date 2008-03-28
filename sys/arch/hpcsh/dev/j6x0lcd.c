@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.12 2008/03/27 03:34:41 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.13 2008/03/28 01:19:12 uwe Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.12 2008/03/27 03:34:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.13 2008/03/28 01:19:12 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -180,6 +180,8 @@ j6x0lcd_attach(device_t parent, device_t self, void *aux)
 	uint16_t bcr, bdr;
 	uint8_t dcr, ddr;
 
+	aprint_naive("\n");
+
 	sc = device_private(self);
 	sc->sc_dev = self;
 
@@ -244,8 +246,8 @@ j6x0lcd_attach(device_t parent, device_t self, void *aux)
 	hd64461_reg_write_2(HD64461_GPBCR_REG16, bcr);
 	hd64461_reg_write_2(HD64461_GPBDR_REG16, bdr);
 
-	printf(": brightness %d, contrast %d\n",
-	       sc->sc_brightness, sc->sc_contrast);
+	aprint_normal(": brightness %d, contrast %d\n",
+		      sc->sc_brightness, sc->sc_contrast);
 
 
 	/* LCD brightness hooks */
