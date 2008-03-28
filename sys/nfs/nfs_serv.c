@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.137 2008/03/08 08:03:46 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.138 2008/03/28 05:02:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.137 2008/03/08 08:03:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138 2008/03/28 05:02:08 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1874,6 +1874,17 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 
 	/* Copied, regrettably, from vfs_syscalls.c (q.v.) */
 	vrele(fvp);
+	if ((fromnd.ni_cnd.cn_namelen == 1 && 
+	     fromnd.ni_cnd.cn_nameptr[0] == '.') ||
+	    (fromnd.ni_cnd.cn_namelen == 2 && 
+	     fromnd.ni_cnd.cn_nameptr[0] == '.' &&
+	     fromnd.ni_cnd.cn_nameptr[1] == '.')) {
+		error = EINVAL;
+		VFS_RENAMELOCK_EXIT(localfs);
+		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
+		vrele(fromnd.ni_dvp);
+		goto out1;
+	}
 	saveflag = fromnd.ni_cnd.cn_flags & SAVESTART;
 	fromnd.ni_cnd.cn_flags &= ~SAVESTART;
 	vn_lock(fromnd.ni_dvp, LK_EXCLUSIVE | LK_RETRY);
