@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.4 2008/03/27 10:47:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.5 2008/03/28 08:35:44 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,9 +235,9 @@ agp_amd64_attach(device_t parent, device_t self, void *aux)
 		return ENXIO;
 	asc->n_mctrl = n;
 
-	aprint_normal("%d Miscellaneous Control unit(s) found.\n",
+	aprint_normal(": %d Miscellaneous Control unit(s) found.\n",
 	    asc->n_mctrl);
-	aprint_normal_dev(self, "");
+	aprint_normal("%s", device_xname(self));
 
 	sc->as_chipc = asc;
 	sc->as_methods = &agp_amd64_methods;
