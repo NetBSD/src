@@ -1,0 +1,152 @@
+		Using Racoon with Privilege Separation
+		     Tue Mar 25 16:37:09 MDT 2008
+
+
+Racoon can run in a chroot'd environment.  When so instructed, it runs as two
+processes, one of which handles a small number of simple requests and runs as
+root in the full native filesystem, and another which runs as a less
+privileged user in a chroot'd environment and which handles all the other and
+very complex business of racoon.
+
+Because racoon does many complex things there are many opportunities for
+coding errors to lead to compromises and so this separation is important.  If
+someone breaks into your system using racoon and you have enabled privilege
+separation, they will find themselves in a very limited environment and unable
+to do much damage.  They may be able to alter the host's security associations
+or obtain the private keys stored on that system using file descriptors
+available to the unprivileged instance of racoon, and from there they will be
+able to alter security associations on other hosts in disruptive or dangerous
+ways if you have generate_policy enabled on those hosts.  But that's because
+in its current form generate_policy is itself dangerous and requires that you
+trust anyone with the credentials to use it.
+
+They will also be able to execute any scripts you have placed in the scripts
+directory, although racoon will prevent them from mis-using the traditional
+environment variables PATH, LD_LIBRARY_PATH, and IFS.  But if you have
+introduced vulnerabilities into your scripts you may want to re-visit them.
+The thing to watch for is blindly trusting the environment variables passed
+in by racoon - assume they could be set to anything by a malicious entity and
+check them for suitability before using them.
+
+All these possibilities are present when privilege separation is not enabled,
+and they are greatly reduced when it is enabled because the resources
+available to the attacker are less.
+
+*****
+
+The basic concept with racoon's privilege separation is that a minimal
+environment containing all the files racoon needs to operate - with the
+exception of private keys, scripts, and system-wide authentication services -
+is placed in a stripped-down copy of the original environment.  The private
+keys and scripts are left in the original environment where only the
+privileged instance of racoon will have access to them.
+
+Here are basic instructions for setting up racoon to run with privilege
+separation:
+
+
+First, create a user/group for racoon to run under.  For example, user:group
+ike:ike.  The account should not have a usable password or real home
+directory, so copy the general format of another system-services type account
+such as 'daemon'.
+
+You already have files in, e.g. /usr/local/etc/racoon - perhaps racoon.conf, a
+certs directory containing certificates, a scripts directory, and other
+miscellaneous files such as welcome messages.  Perform the following steps:
+
+cd /usr/local/etc/racoon
+mkdir root
+mv certs root
+mkdir certs
+mv root/certs/*.key certs
+
+If you want to be able to switch back and forth between using and not using
+privsep, do this too:
+
+cd /usr/local/etc/racoon/certs
+for i in ../root/certs/*
+do
+	ln -s $i .
+done
+
+Now root/certs contains certificates and certs contains the keys.  The idea is
+that the public certificates are in the chroot'd area
+(/usr/local/etc/racoon/root) and the keys are available only to the privileged
+instance of racoon.
+
+Move any other racoon configuration data into /usr/local/etc/racoon/root,
+with the exception of the scripts directory and racoon.conf.
+
+All the files in /usr/local/etc/racoon/root should be owned by root and the
+ike:ike user you created should not have write access to any directories or
+files (unless you are using something like 'path backupsa', but you get the
+idea).
+
+Create the device nodes:
+
+mkdir root/dev
+
+Do whatever your OS requires to populate the new dev directory with a
+minimal set of devices, e.g. mknod, MAKEDEV, or mount devfs...  In freebsd
+this is done by adding a line to /etc/fstab:
+
+devfs	/usr/local/etc/racoon/root/dev	devfs	rw		0	0
+
+and then adding a line like this to /etc/rc.conf:
+
+devfs_set_rulesets="/usr/local/etc/racoon/root/dev=devfsrules_basic"
+
+and then adding the following lines to /etc/devfs.rules:
+
+[devfsrules_basic=10]
+add include $devfsrules_hide_all
+add include $devfsrules_unhide_basic
+
+and then either rebooting or entering "mount -a && /etc/rc.d/devfs start".
+
+When done with that:
+
+mkdir -p root/usr/local/etc
+ln -s ../../../ root/usr/local/etc/racoon
+
+This dummy hierarchy keeps the config file consistent between both copies of
+racoon. Of course, you could actually put the certs directory and any other
+configuration data down in the hierarchy but I prefer to leave it at the root
+and link to it as shown.  You may end up with something like this:
+
+root# ls -FC /usr/local/etc/racoon/root
+certs/	dev/	usr/
+
+root# ls -l /usr/local/etc/racoon/root/usr/local/etc
+lrwxr-xr-x  1 root  wheel  9 Mar  7 22:13 racoon -> ../../../
+
+root# ls -FC /usr/local/etc/racoon/root/usr/local/etc/racoon/
+certs/	dev/	usr/
+
+Presumably your racoon.conf already contains something like:
+
+path certificate "/usr/local/etc/racoon/certs";
+path script "/usr/local/etc/racoon/scripts";
+
+If so, great. If not, add them. Then, finally, add the privsep section:
+
+privsep {
+	user "ike";
+	group "ike";
+	chroot "/usr/local/etc/racoon/root";
+}
+
+Apply the patches posted to the list and rebuild racoon (the patches will be
+incorporated into the release subsequent to the date of this memo, so if you
+use that or a later release you can skip this step).
+
+Restart racoon and hopefully things will work.  As of the date of this memo,
+re-loading the configuration file with racoonctl will not work with privsep
+enabled.  However, the problem is not insurmountable and if you figure it out
+let us know.
+
+I have not tested privsep with many of racoon's features such as XAUTH or
+scripts, so if you have trouble with them and work anything out please reply
+to the list so that your discoveries may be incorporated into this document.
+
+Last modified: $Date: 2008/03/28 04:18:52 $
