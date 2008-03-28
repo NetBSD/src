@@ -1,7 +1,7 @@
-/*	$NetBSD: test_mutex1.c,v 1.3 2007/02/05 22:48:01 ad Exp $	*/
+/*	$NetBSD: test_mutex1.c,v 1.4 2008/03/28 20:28:27 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: test_mutex1.c,v 1.3 2007/02/05 22:48:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: test_mutex1.c,v 1.4 2008/03/28 20:28:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,37 +53,22 @@ int	testcall(struct lwp *, void *, register_t *);
 void	thread1(void *);
 void	thread2(void *);
 void	thread3(void *);
-void	thread_exit(int);
-void	thread_enter(int *);
+void	thread_exit(void);
 
-struct proc	*test_threads[NTHREADS];
+lwp_t		*test_threads[NTHREADS];
 kmutex_t	test_mutex;
 kcondvar_t	test_cv;
 int		test_count;
 int		test_exit;
 
 void
-thread_enter(int *nlocks)
-{
-	struct lwp *l = curlwp;
-
-	KERNEL_UNLOCK_ALL(l, nlocks);
-	lwp_lock(l);
-	l->l_usrpri = MAXPRI;
-	lwp_changepri(l, MAXPRI);
-	lwp_unlock(l);
-}
-
-void
-thread_exit(int nlocks)
+thread_exit(void)
 {
 
 	mutex_enter(&test_mutex);
 	if (--test_count == 0)
 		cv_signal(&test_cv);
 	mutex_exit(&test_mutex);
-
-	KERNEL_LOCK(nlocks, curlwp);
 	kthread_exit(0);
 }
 
@@ -93,9 +78,7 @@ thread_exit(int nlocks)
 void
 thread1(void *cookie)
 {
-	int count, nlocks;
-
-	thread_enter(&nlocks);
+	int count;
 
 	for (count = 0; !test_exit; count++) {
 		mutex_enter(&test_mutex);
@@ -108,7 +91,7 @@ thread1(void *cookie)
 			yield();
 	}
 
-	thread_exit(nlocks);
+	thread_exit();
 }
 
 /*
@@ -117,9 +100,7 @@ thread1(void *cookie)
 void
 thread2(void *cookie)
 {
-	int count, nlocks;
-
-	thread_enter(&nlocks);
+	int count;
 
 	for (count = 0; !test_exit; count++) {
 		KERNEL_LOCK(1, curlwp);
@@ -132,7 +113,7 @@ thread2(void *cookie)
 			yield();
 	}
 
-	thread_exit(nlocks);
+	thread_exit();
 }
 
 /*
@@ -141,9 +122,7 @@ thread2(void *cookie)
 void
 thread3(void *cookie)
 {
-	int count, nlocks;
-
-	thread_enter(&nlocks);
+	int count;
 
 	for (count = 0; !test_exit; count++) {
 		mutex_enter(&test_mutex);
@@ -155,7 +134,7 @@ thread3(void *cookie)
 			yield();
 	}
 
-	thread_exit(nlocks);
+	thread_exit();
 }
 
 int
@@ -184,7 +163,8 @@ testcall(struct lwp *l, void *uap, register_t *retval)
 			func = thread3;
 			break;
 		}
-		kthread_create1(func, NULL, &test_threads[i], "thread%d", i);
+		kthread_create(0, KTHREAD_MPSAFE, NULL, func, NULL,
+		    &test_threads[i], "thread%d", i);
 	}
 
 	printf("test: sleeping\n");
@@ -192,7 +172,7 @@ testcall(struct lwp *l, void *uap, register_t *retval)
 	mutex_enter(&test_mutex);
 	while (test_count != 0) {
 		(void)cv_timedwait(&test_cv, &test_mutex, hz * SECONDS);
-		test_exit = 1;
+		test_exit = NTHREADS;
 	}
 	mutex_exit(&test_mutex);
 
