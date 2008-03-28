@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.13 2007/11/12 19:19:32 plunky Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.14 2008/03/28 21:17:37 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.13 2007/11/12 19:19:32 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.14 2008/03/28 21:17:37 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.13 2007/11/12 19:19:32 plunky Exp $");
 
 /* bthidev softc */
 struct bthidev_softc {
-	struct btdev		sc_btdev;
 	uint16_t		sc_state;
 	uint16_t		sc_flags;
 	device_t		sc_dev;
