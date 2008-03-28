@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.152 2008/03/12 14:31:12 cube Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.153 2008/03/28 01:37:25 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.152 2008/03/12 14:31:12 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.153 2008/03/28 01:37:25 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,6 +578,8 @@ ne_pcmcia_attach(device_t parent, device_t self, void *aux)
 	u_int8_t myea[6], *enaddr;
 	const char *typestr = "";
 	int error;
+
+	aprint_naive("\n");
 
 	dsc->sc_dev = self;
 	psc->sc_pf = pa->pf;
