@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.424 2008/03/28 01:22:44 lukem Exp $
+# $NetBSD: shl.mi,v 1.425 2008/03/28 05:47:27 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -7,12 +7,11 @@
 #	"obsolete"; just remove the entry, as third-party applications
 #	may be linked against the old major shared library, and
 #	that is a symlink to the old major.minor shared library.
-#	E.g., "lib<name>.so.<N>" and "lib<name>.so.<N>.<M>"
+#	e.g., "lib<name>.so.<N>" and "lib<name>.so.<N>.<M>"
 #	Exceptions to this rule may include shared libraries that
 #	are dlopen()ed at run-time, such as extra locales, etc.
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
-#
 #
 ./lib/libc.so.12.159				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
