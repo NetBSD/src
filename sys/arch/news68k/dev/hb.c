@@ -1,4 +1,4 @@
-/*	$NetBSD: hb.c,v 1.17 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: hb.c,v 1.18 2008/03/28 18:19:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.17 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.18 2008/03/28 18:19:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,17 +42,16 @@ __KERNEL_RCSID(0, "$NetBSD: hb.c,v 1.17 2005/12/11 12:18:23 christos Exp $");
 
 #include "ioconf.h"
 
-static int  hb_match(struct device *, struct cfdata *, void *);
-static void hb_attach(struct device *, struct device *, void *);
-static int  hb_search(struct device *, struct cfdata *,
-		      const int *, void *);
+static int  hb_match(device_t, cfdata_t, void *);
+static void hb_attach(device_t, device_t, void *);
+static int  hb_search(device_t, cfdata_t, const int *, void *);
 static int  hb_print(void *, const char *);
 
-CFATTACH_DECL(hb, sizeof(struct device),
+CFATTACH_DECL_NEW(hb, 0,
     hb_match, hb_attach, NULL, NULL);
 
 static int
-hb_match(struct device *parent, struct cfdata *cf, void *aux)
+hb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -66,19 +65,18 @@ hb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-hb_attach(struct device *parent, struct device *self, void *aux)
+hb_attach(device_t parent, device_t self, void *aux)
 {
 	struct hb_attach_args ha;
 
-	printf("\n");
+	aprint_normal("\n");
 	memset(&ha, 0, sizeof(ha));
 
 	config_search_ia(hb_search, self, "hb", &ha);
 }
 
 static int
-hb_search(struct device *parent, struct cfdata *cf,
-	  const int *ldesc, void *aux)
+hb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -109,11 +107,11 @@ hb_print(void *args, const char *name)
 #if 0
 	if (ha->ha_addr > 0)
 #endif
-		aprint_normal (" addr 0x%08lx", ha->ha_address);
+		aprint_normal(" addr 0x%08lx", ha->ha_address);
 	if (ha->ha_ipl > 0)
-		aprint_normal (" ipl %d", ha->ha_ipl);
+		aprint_normal(" ipl %d", ha->ha_ipl);
 	if (ha->ha_vect > 0) {
-		aprint_normal (" vect %d", ha->ha_vect);
+		aprint_normal(" vect %d", ha->ha_vect);
 	}
 
 	return QUIET;
