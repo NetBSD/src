@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.7 2008/03/07 21:57:56 dyoung Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.8 2008/03/28 17:14:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.7 2008/03/07 21:57:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.8 2008/03/28 17:14:45 drochner Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -78,7 +78,7 @@ static int	uhci_cardbus_match(device_t, struct cfdata *, void *);
 static void	uhci_cardbus_attach(device_t, device_t, void *);
 static int	uhci_cardbus_detach(device_t, int);
 
-CFATTACH_DECL(uhci_cardbus, sizeof(struct uhci_cardbus_softc),
+CFATTACH_DECL_NEW(uhci_cardbus, sizeof(struct uhci_cardbus_softc),
     uhci_cardbus_match, uhci_cardbus_attach, uhci_cardbus_detach, uhci_activate);
 
 #define CARDBUS_INTERFACE_UHCI	PCI_INTERFACE_UHCI
@@ -111,9 +111,12 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	cardbustag_t tag = ca->ca_tag;
 	cardbusreg_t csr;
 	const char *vendor;
-	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	const char *devname = device_xname(self);
 	char devinfo[256];
 	usbd_status r;
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = self;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, CARDBUS_REVISION(ca->ca_class));
@@ -195,7 +198,7 @@ XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
 	}
 
 #if NEHCI_CARDBUS > 0
-	usb_cardbus_add(&sc->sc_cardbus, ca, &sc->sc.sc_bus);
+	usb_cardbus_add(&sc->sc_cardbus, ca, self);
 #endif
 
 	/* Attach usb device. */

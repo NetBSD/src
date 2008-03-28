@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_cardbus.h,v 1.3 2005/12/11 12:21:15 christos Exp $	*/
+/*	$NetBSD: usb_cardbus.h,v 1.4 2008/03/28 17:14:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,8 +46,8 @@ struct usb_cardbus {
 	TAILQ_ENTRY(usb_cardbus) next;
 	u_int		bus;
 	u_int		function;
-	struct usbd_bus *usb;
+	device_t	usb;
 };
 void usb_cardbus_add(struct usb_cardbus *, struct cardbus_attach_args *,
-		     struct usbd_bus *);
+		     device_t);
 void usb_cardbus_rem(struct usb_cardbus *);

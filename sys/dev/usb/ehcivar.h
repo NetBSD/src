@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.28 2008/03/07 22:32:52 dyoung Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.29 2008/03/28 17:14:46 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,8 @@ struct ehci_soft_islot {
 #define EHCI_COMPANION_MAX 8
 
 typedef struct ehci_softc {
-	struct usbd_bus sc_bus;		/* base device */
+	device_t sc_dev;
+	struct usbd_bus sc_bus;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
@@ -100,7 +101,7 @@ typedef struct ehci_softc {
 
 	u_int sc_ncomp;
 	u_int sc_npcomp;
-	struct usbd_bus *sc_comps[EHCI_COMPANION_MAX];
+	device_t sc_comps[EHCI_COMPANION_MAX];
 
 	usb_dma_t sc_fldma;
 	ehci_link_t *sc_flist;

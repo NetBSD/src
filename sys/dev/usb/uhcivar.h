@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.42 2008/02/22 23:04:52 dyoung Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.43 2008/03/28 17:14:46 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -130,7 +130,8 @@ struct uhci_vframe {
 };
 
 typedef struct uhci_softc {
-	struct usbd_bus sc_bus;		/* base device */
+	device_t sc_dev;
+	struct usbd_bus sc_bus;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
