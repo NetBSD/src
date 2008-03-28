@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.108 2008/03/08 18:46:18 ws Exp $	*/
+/*	$NetBSD: usb.c,v 1.109 2008/03/28 17:14:46 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.108 2008/03/08 18:46:18 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.109 2008/03/28 17:14:46 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -99,7 +99,9 @@ int	usb_noexplore = 0;
 #endif
 
 struct usb_softc {
+#if 0
 	USBBASEDEVICE	sc_dev;		/* base device */
+#endif
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 
@@ -129,8 +131,8 @@ const struct cdevsw usb_cdevsw = {
 	nostop, notty, usbpoll, nommap, usbkqfilter, D_OTHER,
 };
 
-Static void	usb_discover(void *);
-Static void	usb_create_event_thread(void *);
+Static void	usb_discover(struct usb_softc *);
+Static void	usb_create_event_thread(device_t);
 Static void	usb_event_thread(void *);
 Static void	usb_task_thread(void *);
 
@@ -165,7 +167,7 @@ static void usb_childdet(device_t, device_t);
 
 extern struct cfdriver usb_cd;
 
-CFATTACH_DECL2(usb, sizeof(struct usb_softc),
+CFATTACH_DECL2_NEW(usb, sizeof(struct usb_softc),
     usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet);
 
 USB_MATCH(usb)
@@ -177,7 +179,7 @@ USB_MATCH(usb)
 USB_ATTACH(usb)
 {
 	static bool usb_selevent_init;	/* XXX */
-	struct usb_softc *sc = (struct usb_softc *)self;
+	struct usb_softc *sc = device_private(self);
 	usbd_device_handle dev;
 	usbd_status err;
 	int usbrev;
@@ -191,7 +193,7 @@ USB_ATTACH(usb)
 	DPRINTF(("usbd_attach\n"));
 
 	sc->sc_bus = aux;
-	sc->sc_bus->usbctl = sc;
+	sc->sc_bus->usbctl = self;
 	sc->sc_port.power = USB_MAX_POWER;
 
 	usbrev = sc->sc_bus->usbrev;
@@ -217,7 +219,7 @@ USB_ATTACH(usb)
 		sc->sc_bus->use_polling++;
 
 	ue = usb_alloc_event();
-	ue->u.ue_ctrlr.ue_bus = USBDEVUNIT(sc->sc_dev);
+	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_ATTACH, ue);
 
 #ifdef USB_USE_SOFTINTR
@@ -225,20 +227,21 @@ USB_ATTACH(usb)
 	sc->sc_bus->soft = softint_establish(SOFTINT_NET,
 	    sc->sc_bus->methods->soft_intr, sc->sc_bus);
 	if (sc->sc_bus->soft == NULL) {
-		aprint_error("%s: can't register softintr\n", USBDEVNAME(sc->sc_dev));
+		aprint_error("%s: can't register softintr\n",
+			     device_xname(self));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 #endif
 
-	err = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0, speed, 0,
+	err = usbd_new_device(self, sc->sc_bus, 0, speed, 0,
 		  &sc->sc_port);
 	if (!err) {
 		dev = sc->sc_port.device;
 		if (dev->hub == NULL) {
 			sc->sc_dying = 1;
 			aprint_error("%s: root device is not a hub\n",
-			       USBDEVNAME(sc->sc_dev));
+				     device_xname(self));
 			USB_ATTACH_ERROR_RETURN;
 		}
 		sc->sc_bus->root_hub = dev;
@@ -248,19 +251,19 @@ USB_ATTACH(usb)
 		 * until the USB event thread is running, which means that
 		 * the keyboard will not work until after cold boot.
 		 */
-		if (cold && (device_cfdata(&sc->sc_dev)->cf_flags & 1))
+		if (cold && (device_cfdata(self)->cf_flags & 1))
 			dev->hub->explore(sc->sc_bus->root_hub);
 #endif
 	} else {
 		aprint_error("%s: root hub problem, error=%d\n",
-		       USBDEVNAME(sc->sc_dev), err);
+			     device_xname(self), err);
 		sc->sc_dying = 1;
 	}
 	if (cold)
 		sc->sc_bus->use_polling--;
 
 	config_pending_incr();
-	usb_kthread_create(usb_create_event_thread, sc);
+	usb_create_event_thread(self);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -272,16 +275,16 @@ static const char *taskq_names[] = USB_TASKQ_NAMES;
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 void
-usb_create_event_thread(void *arg)
+usb_create_event_thread(device_t self)
 {
-	struct usb_softc *sc = arg;
+	struct usb_softc *sc = device_private(self);
 	struct usb_taskq *taskq;
 	int i;
 
 	if (usb_kthread_create1(PRI_NONE, 0, NULL, usb_event_thread, sc,
-	    &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname)) {
+			&sc->sc_event_thread, "%s", device_xname(self))) {
 		printf("%s: unable to create event thread for\n",
-		       sc->sc_dev.dv_xname);
+		       device_xname(self));
 		panic("usb_create_event_thread");
 	}
 	for (i = 0; i < USB_NUM_TASKQS; i++) {
@@ -438,7 +441,7 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return (0);
 	}
 
-	USB_GET_SC_OPEN(usb, unit, sc);
+	sc = device_lookup_private(&usb_cd, unit);
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -569,7 +572,7 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 	}
 
-	USB_GET_SC(usb, unit, sc);
+	sc = device_lookup_private(&usb_cd, unit);
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -763,9 +766,8 @@ usbkqfilter(dev_t dev, struct knote *kn)
 
 /* Explore device tree from the root. */
 Static void
-usb_discover(void *v)
+usb_discover(struct usb_softc *sc)
 {
-	struct usb_softc *sc = v;
 
 	DPRINTFN(2,("usb_discover\n"));
 #ifdef USB_DEBUG
@@ -974,7 +976,7 @@ usb_detach(device_t self, int flags)
 #endif
 
 	ue = usb_alloc_event();
-	ue->u.ue_ctrlr.ue_bus = USBDEVUNIT(sc->sc_dev);
+	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_DETACH, ue);
 
 	return (0);

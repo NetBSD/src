@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.26 2008/03/07 21:48:46 dyoung Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.27 2008/03/28 17:14:45 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.26 2008/03/07 21:48:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.27 2008/03/28 17:14:45 drochner Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -89,7 +89,7 @@ struct ohci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-CFATTACH_DECL(ohci_cardbus, sizeof(struct ohci_cardbus_softc),
+CFATTACH_DECL_NEW(ohci_cardbus, sizeof(struct ohci_cardbus_softc),
     ohci_cardbus_match, ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate);
 
 #define CARDBUS_INTERFACE_OHCI PCI_INTERFACE_OHCI
@@ -122,7 +122,10 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	usbd_status r;
 	const char *vendor;
-	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	const char *devname = device_xname(self);
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = self;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
@@ -187,7 +190,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	}
 
 #if NEHCI_CARDBUS > 0
-	usb_cardbus_add(&sc->sc_cardbus, ca, &sc->sc.sc_bus);
+	usb_cardbus_add(&sc->sc_cardbus, ca, self);
 #endif
 
 	if (!pmf_device_register1(self, ohci_suspend, ohci_resume,

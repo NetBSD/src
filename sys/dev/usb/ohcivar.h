@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.42 2008/03/07 21:36:51 dyoung Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.43 2008/03/28 17:14:46 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -82,7 +82,8 @@ typedef struct ohci_soft_itd {
 #define OHCI_HASH_SIZE 128
 
 typedef struct ohci_softc {
-	struct usbd_bus sc_bus;		/* base device */
+	device_t sc_dev;
+	struct usbd_bus sc_bus;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
