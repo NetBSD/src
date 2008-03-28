@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_test.c,v 1.1 2007/01/17 20:56:49 ad Exp $	*/
+/*	$NetBSD: lkminit_test.c,v 1.2 2008/03/28 20:28:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_test.c,v 1.1 2007/01/17 20:56:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_test.c,v 1.2 2008/03/28 20:28:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -50,11 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_test.c,v 1.1 2007/01/17 20:56:49 ad Exp $");
 
 int	testcall(struct lwp *, void *, register_t *);
 int	LKMENTRY(struct lkm_table *lkmtp, int, int);
-int	sys_lkmnosys(struct lwp *, void *, register_t *);
+int	sys_lkmnosys(struct lwp *, const void *, register_t *);
 int	testmod_handle(struct lkm_table *, int);
 
 static struct sysent newent = {
-	0, 0, 0, testcall
+	0, 0, 0, (void *)testcall
 };
 
 static struct sysent	oldent;
