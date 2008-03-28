@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.215 2008/03/25 20:44:12 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.216 2008/03/28 18:22:59 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2008/03/25 20:44:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2008/03/28 18:22:59 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -149,9 +149,50 @@ static int ctx_alloc(struct pmap *);
 #ifdef MULTIPROCESSOR
 static void ctx_free(struct pmap *, struct cpu_info *);
 #define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
+
+/*
+ * Check if any MMU has a non-zero context
+ */
+static inline bool
+pmap_has_ctx(struct pmap *p)
+{
+	int i;
+
+	/* any context on any cpu? */
+	for (i = 0; i < sparc_ncpus; i++)
+		if (p->pm_ctx[i] > 0)
+			return true;
+
+	return false;	
+}
+
+/*
+ * Check if this pmap has a live mapping on some MMU.
+ */
+static inline bool
+pmap_is_on_mmu(struct pmap *p)
+{
+	/* The kernel pmap is always on all MMUs */
+	if (p == pmap_kernel())
+		return true;
+
+	return pmap_has_ctx(p);
+}
 #else
 static void ctx_free(struct pmap *);
 #define pmap_ctx(PM)	((PM)->pm_ctx)
+
+static inline bool
+pmap_has_ctx(struct pmap *p)
+{
+	return pmap_ctx(p) > 0;
+}
+
+static inline bool
+pmap_is_on_mmu(struct pmap *p)
+{
+	return p == pmap_kernel() || pmap_ctx(p) > 0;
+}
 #endif
 
 /*
@@ -1860,7 +1901,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		i = ptelookup_va(va);
 		tte.tag = TSB_TAG(0, pmap_ctx(pm), va);
 		s = splhigh();
-		if (wasmapped && (pmap_ctx(pm) || pm == pmap_kernel())) {
+		if (wasmapped && pmap_is_on_mmu(pm)) {
 			tsb_invalidate(va, pm);
 		}
 		if (flags & (VM_PROT_READ | VM_PROT_WRITE)) {
@@ -1882,7 +1923,7 @@ pmap_enter(pm, va, pa, prot, flags)
 
 		KASSERT(pmap_ctx(pm)>=0);
 #ifdef MULTIPROCESSOR
-		if (wasmapped && (pmap_ctx(pm) || pm == pmap_kernel()))
+		if (wasmapped && pmap_is_on_mmu(pm))
 			tlb_flush_pte(va, pm);
 		else
 			sp_tlb_flush_pte(va, pmap_ctx(pm));
@@ -1890,7 +1931,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		tlb_flush_pte(va, pm);
 #endif
 		splx(s);
-	} else if (wasmapped && (pmap_ctx(pm) || pm == pmap_kernel())) {
+	} else if (wasmapped && pmap_is_on_mmu(pm)) {
 		/* Force reload -- protections may be changed */
 		KASSERT(pmap_ctx(pm)>=0);
 		tsb_invalidate(va, pm);
@@ -1999,7 +2040,7 @@ pmap_remove(pm, va, endva)
 				     (int)va_to_seg(va), (int)va_to_pte(va)));
 		REMOVE_STAT(removes);
 
-		if (!pmap_ctx(pm) && pm != pmap_kernel())
+		if (pm != pmap_kernel() && !pmap_has_ctx(pm))
 			continue;
 
 		/*
@@ -2101,7 +2142,7 @@ pmap_protect(pm, sva, eva, prot)
 			panic("pmap_protect: pseg_set needs spare! rv=%d\n",
 			    rv);
 
-		if (!pmap_ctx(pm) && pm != pmap_kernel())
+		if (pm != pmap_kernel() && !pmap_has_ctx(pm))
 			continue;
 
 		KASSERT(pmap_ctx(pm)>=0);
@@ -2477,7 +2518,7 @@ pmap_clear_modify(pg)
 			if (rv & 1)
 				printf("pmap_clear_modify: pseg_set needs"
 				    " spare! rv=%d\n", rv);
-			if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
+			if (pmap_is_on_mmu(pmap)) {
 				KASSERT(pmap_ctx(pmap)>=0);
 				tsb_invalidate(va, pmap);
 				tlb_flush_pte(va, pmap);
@@ -2560,7 +2601,7 @@ pmap_clear_reference(pg)
 			if (rv & 1)
 				panic("pmap_clear_reference: pseg_set needs"
 				    " spare! rv=%d\n", rv);
-			if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
+			if (pmap_is_on_mmu(pmap)) {
 				KASSERT(pmap_ctx(pmap)>=0);
 				tsb_invalidate(va, pmap);
 				tlb_flush_pte(va, pmap);
@@ -2795,7 +2836,7 @@ pmap_page_protect(pg, prot)
 					panic("pmap_page_protect: "
 					       "pseg_set needs spare! rv=%d\n",
 					       rv);
-				if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
+				if (pmap_is_on_mmu(pmap)) {
 					KASSERT(pmap_ctx(pmap)>=0);
 					tsb_invalidate(va, pmap);
 					tlb_flush_pte(va, pmap);
@@ -2834,7 +2875,7 @@ pmap_page_protect(pg, prot)
 			if (rv & 1)
 				panic("pmap_page_protect: pseg_set needs"
 				     " spare! rv=%d\n", rv);
-			if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
+			if (pmap_is_on_mmu(pmap)) {
 				KASSERT(pmap_ctx(pmap)>=0);
 				tsb_invalidate(va, pmap);
 				tlb_flush_pte(va, pmap);
@@ -2878,7 +2919,7 @@ pmap_page_protect(pg, prot)
 			if (rv & 1)
 				panic("pmap_page_protect: pseg_set needs"
 				    " spare! rv=%d\n", rv);
-			if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
+			if (pmap_is_on_mmu(pmap)) {
 			    	KASSERT(pmap_ctx(pmap)>=0);
 				tsb_invalidate(va, pmap);
 				tlb_flush_pte(va, pmap);
@@ -3324,7 +3365,7 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 				panic("pmap_page_cache: pseg_set needs"
 				    " spare! rv=%d\n", rv);
 		}
-		if (pmap_ctx(pv->pv_pmap) || pv->pv_pmap == pmap_kernel()) {
+		if (pmap_is_on_mmu(pv->pv_pmap)) {
 			/* Force reload -- cache bits have changed */
 			KASSERT(pmap_ctx(pv->pv_pmap)>=0);
 			tsb_invalidate(va, pv->pv_pmap);
