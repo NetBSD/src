@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.9 2007/07/18 12:07:52 vanhu Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.10 2008/03/28 04:18:52 manu Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -56,12 +56,25 @@
 
 #include "var.h"
 #include "misc.h"
+#include "vmbuf.h"
 #include "plog.h"
 #include "sockmisc.h"
 #include "debug.h"
 #include "gcmalloc.h"
 #include "debugrm.h"
 #include "libpfkey.h"
+
+#ifdef NOUSE_PRIVSEP
+#define BIND bind
+#define SOCKET socket
+#define SETSOCKOPT setsockopt
+#else
+#include "admin.h"
+#include "privsep.h"
+#define BIND privsep_bind
+#define SOCKET privsep_socket
+#define SETSOCKOPT privsep_setsockopt
+#endif
 
 #ifndef IP_IPSEC_POLICY
 #define IP_IPSEC_POLICY 16	/* XXX: from linux/in.h */
@@ -270,7 +283,7 @@ getlocaladdr(remote)
 	}
 	
 	/* get real interface received packet */
-	if ((s = socket(remote->sa_family, SOCK_DGRAM, 0)) < 0) {
+	if ((s = SOCKET(remote->sa_family, SOCK_DGRAM, 0)) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"socket (%s)\n", strerror(errno));
 		goto err;
@@ -636,7 +649,7 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 			 * Better approach is to prepare bind'ed udp sockets for
 			 * each of the interface addresses.
 			 */
-			sendsock = socket(src->sa_family, SOCK_DGRAM, 0);
+			sendsock = SOCKET(src->sa_family, SOCK_DGRAM, 0);
 			if (sendsock < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"socket (%s)\n", strerror(errno));
@@ -671,7 +684,8 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 				return -1;
 			}
 
-			if (bind(sendsock, (struct sockaddr *)src, sysdep_sa_len(src)) < 0) {
+			if (BIND(sendsock, (struct sockaddr *)src,
+				 sysdep_sa_len(src)) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"bind 1 (%s)\n", strerror(errno));
 				close(sendsock);
@@ -735,7 +749,7 @@ setsockopt_bypass(so, family)
 			ipsec_strerror());
 		return -1;
 	}
-	if (setsockopt(so, level,
+	if (SETSOCKOPT(so, level,
 	               (level == IPPROTO_IP ?
 	                         IP_IPSEC_POLICY : IPV6_IPSEC_POLICY),
 	               buf, ipsec_get_policylen(buf)) < 0) {
@@ -754,7 +768,7 @@ setsockopt_bypass(so, family)
 			ipsec_strerror());
 		return -1;
 	}
-	if (setsockopt(so, level,
+	if (SETSOCKOPT(so, level,
 	               (level == IPPROTO_IP ?
 	                         IP_IPSEC_POLICY : IPV6_IPSEC_POLICY),
 	               buf, ipsec_get_policylen(buf)) < 0) {

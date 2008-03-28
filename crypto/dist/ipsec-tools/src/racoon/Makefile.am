@@ -44,6 +44,7 @@ racoonctl_LDFLAGS = libracoon.la ../libipsec/libipsec.la
 racoonctl_DEPENDENCIES = ../libipsec/libipsec.la libracoon.la
 
 libracoon_la_SOURCES = kmpstat.c vmbuf.c sockmisc.c misc.c
+libracoon_la_CFLAGS = -DNOUSE_PRIVSEP
 
 plainrsa_gen_SOURCES = plainrsa-gen.c plog.c \
 	crypto_openssl.c logger.c 
@@ -84,6 +85,7 @@ EXTRA_DIST = \
    ${man5_MANS} ${man8_MANS} \
    missing/crypto/rijndael/boxes-fst.dat \
    doc/FAQ doc/README.certificate doc/README.gssapi doc/README.plainrsa \
+   doc/README.privsep \
    contrib/sp.pl stats.pl \
    samples/psk.txt.sample  samples/racoon.conf.sample \
    samples/psk.txt.in samples/racoon.conf.in \

@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.7 2008/03/06 04:29:20 manu Exp $	*/
+/*	$NetBSD: privsep.c,v 1.8 2008/03/28 04:18:52 manu Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -42,8 +42,11 @@
 #include <signal.h>
 #include <pwd.h>
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/param.h>
+
+#include <netinet/in.h>
 
 #include "gcmalloc.h"
 #include "vmbuf.h"
@@ -75,6 +78,28 @@ static int port_check(int);
 static int unsafe_env(char *const *);
 static int unknown_name(int);
 static int unsafe_path(char *, int);
+static int rec_fd(int);
+static int send_fd(int, int);
+
+struct socket_args {
+	int domain;
+	int type;
+	int protocol;
+};
+
+struct sockopt_args {
+	int s;
+	int level;
+	int optname;
+	const void *optval;
+	socklen_t optlen;
+};
+
+struct bind_args {
+	int s;
+	const struct sockaddr *addr;
+	socklen_t addrlen;
+};
 
 static int
 privsep_send(sock, buf, len)
@@ -124,7 +149,7 @@ privsep_recv(sock, bufp, lenp)
 		    strerror(errno));
 		return -1;
 	}
-	
+
 	/* EOF, other side has closed. */
 	if (len == 0)
 	    return -1;
@@ -508,6 +533,172 @@ privsep_init(void)
 
 			memcpy(reply + 1, psk->v, psk->l);
 			vfree(psk);
+			break;
+		}
+
+		case PRIVSEP_SOCKET: {
+			struct socket_args socket_args;
+			int s;
+
+			/* Make sure the string is NULL terminated */
+			if (safety_check(combuf, 0) != 0)
+				break;
+
+			if (combuf->bufs.buflen[0] !=
+			    sizeof(struct socket_args)) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "privsep_socket: corrupted message\n");
+				goto out;
+			}
+			memcpy(&socket_args, bufs[0],
+			       sizeof(struct socket_args));
+
+			if (socket_args.domain != PF_INET &&
+			    socket_args.domain != PF_INET6) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "privsep_socket: "
+				     "unauthorized domain (%d)\n",
+				     socket_args.domain);
+				goto out;
+			}
+
+			if ((s = socket(socket_args.domain, socket_args.type,
+					socket_args.protocol)) == -1) {
+				reply->hdr.ac_errno = errno;
+				break;
+			}
+
+			if (send_fd(privsep_sock[0], s) < 0) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				     "privsep_socket: send_fd failed\n");
+				close(s);
+				goto out;
+			}
+
+			break;
+		}
+
+		case PRIVSEP_BIND: {
+			struct bind_args bind_args;
+			int err, port = 0;
+
+			/* Make sure the string is NULL terminated */
+			if (safety_check(combuf, 0) != 0)
+				break;
+
+			if (combuf->bufs.buflen[0] !=
+			    sizeof(struct bind_args)) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "privsep_bind: corrupted message\n");
+				goto out;
+			}
+			memcpy(&bind_args, bufs[0], sizeof(struct bind_args));
+
+			if (combuf->bufs.buflen[1] != bind_args.addrlen) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "privsep_bind: corrupted message\n");
+				goto out;
+			}
+			bind_args.addr = (const struct sockaddr *)bufs[1];
+
+			if ((bind_args.s = rec_fd(privsep_sock[0])) < 0) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				     "privsep_bind: rec_fd failed\n");
+				goto out;
+			}
+
+			switch (bind_args.addr->sa_family) {
+			case AF_INET:
+				port = ntohs(((struct sockaddr_in *)
+					      bind_args.addr)->sin_port);
+				break;
+			case AF_INET6:
+				port = ntohs(((struct sockaddr_in6 *)
+					      bind_args.addr)->sin6_port);
+				break;
+			default:
+				plog(LLV_ERROR, LOCATION, NULL,
+				     "privsep_bind: "
+				     "unauthorized address family (%d)\n",
+				     bind_args.addr->sa_family);
+				goto out;
+			}
+
+			if (port != PORT_ISAKMP && port != PORT_ISAKMP_NATT &&
+			    port != lcconf->port_isakmp &&
+			    port != lcconf->port_isakmp_natt) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				     "privsep_bind: "
+				     "unauthorized port (%d)\n",
+				     port);
+				goto out;
+			}
+
+			err = bind(bind_args.s, bind_args.addr,
+				   bind_args.addrlen);
+			if (err) {
+				reply->hdr.ac_errno = errno;
+				close(bind_args.s);
+				break;
+			}
+			close(bind_args.s);
+
+			break;
+		}
+
+		case PRIVSEP_SETSOCKOPTS: {
+			struct sockopt_args sockopt_args;
+			int err;
+
+			/* Make sure the string is NULL terminated */
+			if (safety_check(combuf, 0) != 0)
+				break;
+
+			if (combuf->bufs.buflen[0] !=
+			    sizeof(struct sockopt_args)) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "privsep_setsockopt: "
+				     "corrupted message\n");
+				goto out;
+			}
+			memcpy(&sockopt_args, bufs[0],
+			       sizeof(struct sockopt_args));
+
+			if (combuf->bufs.buflen[1] != sockopt_args.optlen) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "privsep_setsockopt: corrupted message\n");
+				goto out;
+			}
+			sockopt_args.optval = bufs[1];
+
+			if (sockopt_args.optname != 
+			    (sockopt_args.level == 
+			     IPPROTO_IP ? IP_IPSEC_POLICY :
+			     IPV6_IPSEC_POLICY)) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "privsep_setsockopt: "
+				     "unauthorized option (%d)\n",
+				     sockopt_args.optname);
+				goto out;
+			}
+
+			if ((sockopt_args.s = rec_fd(privsep_sock[0])) < 0) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				     "privsep_setsockopt: rec_fd failed\n");
+				goto out;
+			}
+
+			err = setsockopt(sockopt_args.s,
+					 sockopt_args.level,
+					 sockopt_args.optname,
+					 sockopt_args.optval,
+					 sockopt_args.optlen);
+			if (err) {
+				reply->hdr.ac_errno = errno;
+				close(sockopt_args.s);
+				break;
+			}
+
 			break;
 		}
 
@@ -949,6 +1140,222 @@ out:
 	return NULL;
 }
 
+/*
+ * Create a privileged socket.  On BSD systems a socket obtains special
+ * capabilities if it is created by root; setsockopt(IP_IPSEC_POLICY) will
+ * succeed but will be ineffective if performed on an unprivileged socket.
+ */
+int
+privsep_socket(domain, type, protocol)
+	int domain;
+	int type;
+	int protocol;
+{
+	struct privsep_com_msg *msg;
+	size_t len;
+	char *data;
+	struct socket_args socket_args;
+	int s, saved_errno = 0;
+
+	if (geteuid() == 0)
+		return socket(domain, type, protocol);
+
+	len = sizeof(*msg) + sizeof(socket_args);
+
+	if ((msg = racoon_malloc(len)) == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "Cannot allocate memory: %s\n", strerror(errno));
+		return -1;
+	}
+	bzero(msg, len);
+	msg->hdr.ac_cmd = PRIVSEP_SOCKET;
+	msg->hdr.ac_len = len;
+
+	socket_args.domain = domain;
+	socket_args.type = type;
+	socket_args.protocol = protocol;
+
+	data = (char *)(msg + 1);
+	msg->bufs.buflen[0] = sizeof(socket_args);
+	memcpy(data, &socket_args, msg->bufs.buflen[0]);
+
+	if (privsep_send(privsep_sock[1], msg, len) != 0)
+		goto out;
+
+	/* Get the privileged socket descriptor from the privileged process. */
+	if ((s = rec_fd(privsep_sock[1])) == -1)
+		goto out;
+
+	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
+		goto out;
+
+	if (msg->hdr.ac_errno != 0) {
+		errno = msg->hdr.ac_errno;
+		goto out;
+	}
+
+	racoon_free(msg);
+	return s;
+
+out:
+	racoon_free(msg);
+	return -1;
+}
+
+/*
+ * Bind() a socket to a port.  This works just like regular bind(), except that
+ * if you want to bind to the designated isakmp ports and you don't have the
+ * privilege to do so, it will ask a privileged process to do it.
+ */
+int
+privsep_bind(s, addr, addrlen)
+	int s;
+	const struct sockaddr *addr;
+	socklen_t addrlen;
+{
+	struct privsep_com_msg *msg;
+	size_t len;
+	char *data;
+	struct bind_args bind_args;
+	int err, saved_errno = 0;
+
+	if ((err = bind(s, addr, addrlen) == 0) || 
+	    (saved_errno = errno) != EACCES ||
+	    geteuid() == 0) {
+		if (saved_errno)
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "privsep_bind (%s)\n", strerror(saved_errno));
+		errno = saved_errno;
+		return err;
+	}
+
+	len = sizeof(*msg) + sizeof(bind_args) + addrlen;
+
+	if ((msg = racoon_malloc(len)) == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "Cannot allocate memory: %s\n", strerror(errno));
+		return -1;
+	}
+	bzero(msg, len);
+	msg->hdr.ac_cmd = PRIVSEP_BIND;
+	msg->hdr.ac_len = len;
+
+	bind_args.s = -1;
+	bind_args.addr = NULL;
+	bind_args.addrlen = addrlen;
+
+	data = (char *)(msg + 1);
+	msg->bufs.buflen[0] = sizeof(bind_args);
+	memcpy(data, &bind_args, msg->bufs.buflen[0]);
+
+	data += msg->bufs.buflen[0];
+	msg->bufs.buflen[1] = addrlen;
+	memcpy(data, addr, addrlen);
+
+	if (privsep_send(privsep_sock[1], msg, len) != 0)
+		goto out;
+
+	/* Send the socket descriptor to the privileged process. */
+	if (send_fd(privsep_sock[1], s) < 0)
+		goto out;
+
+	if (privsep_recv(privsep_sock[1], &msg, &len) != 0)
+		goto out;
+
+	if (msg->hdr.ac_errno != 0) {
+		errno = msg->hdr.ac_errno;
+		goto out;
+	}
+
+	racoon_free(msg);
+	return 0;
+
+out:
+	racoon_free(msg);
+	return -1;
+}
+
+/*
+ * Set socket options.  This works just like regular setsockopt(), except that
+ * if you want to change IP_IPSEC_POLICY or IPV6_IPSEC_POLICY and you don't
+ * have the privilege to do so, it will ask a privileged process to do it.
+ */
+int
+privsep_setsockopt(s, level, optname, optval, optlen)
+	int s;
+	int level;
+	int optname;
+	const void *optval;
+	socklen_t optlen;
+{
+	struct privsep_com_msg *msg;
+	size_t len;
+	char *data;
+	struct sockopt_args sockopt_args;
+	int err, saved_errno = 0;
+
+	if ((err = setsockopt(s, level, optname, optval, optlen) == 0) || 
+	    (saved_errno = errno) != EACCES ||
+	    geteuid() == 0) {
+		if (saved_errno)
+			plog(LLV_ERROR, LOCATION, NULL,
+			     "privsep_setsockopt (%s)\n",
+			     strerror(saved_errno));
+
+		errno = saved_errno;
+		return err;
+	}
+
+	len = sizeof(*msg) + sizeof(sockopt_args) + optlen;
+
+	if ((msg = racoon_malloc(len)) == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, 
+		    "Cannot allocate memory: %s\n", strerror(errno));
+		return -1;
+	}
+	bzero(msg, len);
+	msg->hdr.ac_cmd = PRIVSEP_SETSOCKOPTS;
+	msg->hdr.ac_len = len;
+
+	sockopt_args.s = -1;
+	sockopt_args.level = level;
+	sockopt_args.optname = optname;
+	sockopt_args.optval = NULL;
+	sockopt_args.optlen = optlen;
+
+	data = (char *)(msg + 1);
+	msg->bufs.buflen[0] = sizeof(sockopt_args);
+	memcpy(data, &sockopt_args, msg->bufs.buflen[0]);
+
+	data += msg->bufs.buflen[0];
+	msg->bufs.buflen[1] = optlen;
+	memcpy(data, optval, optlen);
+
+	if (privsep_send(privsep_sock[1], msg, len) != 0)
+		goto out;
+
+	if (send_fd(privsep_sock[1], s) < 0)
+		goto out;
+
+	if (privsep_recv(privsep_sock[1], &msg, &len) != 0) {
+	    plog(LLV_ERROR, LOCATION, NULL,
+		 "privsep_recv failed\n");
+		goto out;
+	}
+
+	if (msg->hdr.ac_errno != 0) {
+		errno = msg->hdr.ac_errno;
+		goto out;
+	}
+
+	racoon_free(msg);
+	return 0;
+
+out:
+	racoon_free(msg);
+	return -1;
+}
+
 #ifdef ENABLE_HYBRID
 int
 privsep_xauth_login_system(usr, pwd)
@@ -1165,6 +1572,72 @@ unknown_name(name)
 		    "privsep_script_exec: unsafe name index\n");
 		return -1;
 	}
+
+	return 0;
+}
+
+/* Receive a file descriptor through the argument socket */
+static int
+rec_fd(s)
+	int s;
+{
+	struct msghdr msg;
+	struct cmsghdr *cmsg;
+	int fd;
+	char cmsbuf[CMSG_SPACE(sizeof(fd))];
+	struct iovec iov;
+	char iobuf[1];
+
+	iov.iov_base = iobuf;
+	iov.iov_len = 1;
+
+	bzero(&msg, sizeof(msg));
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = cmsbuf;
+	msg.msg_controllen = sizeof(cmsbuf);
+
+	if (recvmsg(s, &msg, MSG_WAITALL) == -1)
+		return -1;
+
+	cmsg = CMSG_FIRSTHDR(&msg);
+	return *(int *)CMSG_DATA(cmsg);
+}
+
+/* Send the file descriptor fd through the argument socket s */
+static int
+send_fd(s, fd)
+	int s;
+	int fd;
+{
+	struct msghdr msg;
+	struct cmsghdr *cmsg;
+	char cmsbuf[CMSG_SPACE(sizeof(fd))];
+	struct iovec iov;
+
+	iov.iov_base = " ";
+	iov.iov_len = 1;
+
+	bzero(&msg, sizeof(msg));
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = cmsbuf;
+	msg.msg_controllen = sizeof(cmsbuf);
+	msg.msg_flags = 0;
+
+	cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	cmsg->cmsg_len = CMSG_LEN(sizeof(fd));
+	*(int *)CMSG_DATA(cmsg) = fd;
+	msg.msg_controllen = cmsg->cmsg_len;
+
+	if (sendmsg(s, &msg, 0) == -1)
+		return -1;
 
 	return 0;
 }
