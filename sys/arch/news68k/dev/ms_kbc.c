@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_kbc.c,v 1.9 2007/03/04 06:00:24 christos Exp $	*/
+/*	$NetBSD: ms_kbc.c,v 1.10 2008/03/28 18:19:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.9 2007/03/04 06:00:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.10 2008/03/28 18:19:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,8 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.9 2007/03/04 06:00:24 christos Exp $");
 
 #include <news68k/news68k/isr.h>
 
-static int ms_kbc_match(struct device *, struct cfdata *, void *);
-static void ms_kbc_attach(struct device *, struct device *, void *);
+static int ms_kbc_match(device_t, cfdata_t, void *);
+static void ms_kbc_attach(device_t, device_t, void *);
 static void ms_kbc_init(struct ms_softc *);
 int ms_kbc_intr(void *);
 
@@ -55,7 +55,7 @@ static int ms_kbc_enable(void *);
 static void ms_kbc_disable(void *);
 static int ms_kbc_ioctl(void *, u_long, void *, int, struct lwp *);
 
-CFATTACH_DECL(ms_kbc, sizeof(struct ms_softc),
+CFATTACH_DECL_NEW(ms_kbc, sizeof(struct ms_softc),
     ms_kbc_match, ms_kbc_attach, NULL, NULL);
 
 struct wsmouse_accessops ms_kbc_accessops = {
@@ -65,7 +65,7 @@ struct wsmouse_accessops ms_kbc_accessops = {
 };
 
 static int
-ms_kbc_match(struct device *parent, struct cfdata *cf, void *aux)
+ms_kbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct kbc_attach_args *ka = aux;
 
@@ -76,14 +76,14 @@ ms_kbc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ms_kbc_attach(struct device *parent, struct device *self, void *aux)
+ms_kbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct ms_softc *sc = (void *)self;
+	struct ms_softc *sc = device_private(self);
 	struct kbc_attach_args *ka = aux;
 	struct wsmousedev_attach_args wsa;
 	int ipl;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_bt = ka->ka_bt;
 	sc->sc_bh = ka->ka_bh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbc.c,v 1.10 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: kbc.c,v 1.11 2008/03/28 18:19:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbc.c,v 1.10 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbc.c,v 1.11 2008/03/28 18:19:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,14 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: kbc.c,v 1.10 2005/12/11 12:18:23 christos Exp $");
 #define KBC_SIZE 0x10 /* XXX */
 
 /* Definition of the driver for autoconfig. */
-static int  kbc_match(struct device *, struct cfdata *, void *);
-static void kbc_attach(struct device *, struct device *, void *);
+static int  kbc_match(device_t, cfdata_t, void *);
+static void kbc_attach(device_t, device_t, void *);
 static int  kbc_print(void *, const char *name);
 
-CFATTACH_DECL(kbc, sizeof(struct device),
+CFATTACH_DECL_NEW(kbc, 0,
     kbc_match, kbc_attach, NULL, NULL);
 
-static int kbc_match(struct device *parent, struct cfdata *cf, void *aux)
+static int kbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	u_int addr;
@@ -76,7 +76,7 @@ static int kbc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-kbc_attach(struct device *parent, struct device *self, void *aux)
+kbc_attach(device_t parent, device_t self, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	struct kbc_attach_args ka;
@@ -84,11 +84,11 @@ kbc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t bh;
 
 	if (bus_space_map(bt, ha->ha_address, KBC_SIZE, 0, &bh) != 0) {
-		printf("can't map device space\n");
+		aprint_error(": can't map device space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	ka.ka_bt = bt;
 	ka.ka_bh = bh;

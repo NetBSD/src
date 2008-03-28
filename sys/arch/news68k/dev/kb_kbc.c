@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_kbc.c,v 1.7 2007/02/16 21:52:47 tsutsui Exp $	*/
+/*	$NetBSD: kb_kbc.c,v 1.8 2008/03/28 18:19:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.7 2007/02/16 21:52:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.8 2008/03/28 18:19:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,19 +49,19 @@ __KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.7 2007/02/16 21:52:47 tsutsui Exp $");
 
 #include <news68k/news68k/isr.h>
 
-static int kb_kbc_match(struct device *, struct cfdata *, void *);
-static void kb_kbc_attach(struct device *, struct device *, void *);
+static int kb_kbc_match(device_t, cfdata_t, void *);
+static void kb_kbc_attach(device_t, device_t, void *);
 static void kb_kbc_init(struct kb_softc *);
 int	kb_kbc_intr(void *);
 int	kb_kbc_cnattach(void);
 
-CFATTACH_DECL(kb_kbc, sizeof(struct kb_softc),
+CFATTACH_DECL_NEW(kb_kbc, sizeof(struct kb_softc),
     kb_kbc_match, kb_kbc_attach, NULL, NULL);
 
 struct console_softc kb_kbc_conssc;
 
 static int
-kb_kbc_match(struct device *parent, struct cfdata *cf, void *aux)
+kb_kbc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct kbc_attach_args *ka = aux;
 
@@ -72,14 +72,14 @@ kb_kbc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-kb_kbc_attach(struct device *parent, struct device *self, void *aux)
+kb_kbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct kb_softc *sc = (void *)self;
+	struct kb_softc *sc = device_private(self);
 	struct kbc_attach_args *ka = aux;
 	struct wskbddev_attach_args wsa;
 	int ipl;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_bt = ka->ka_bt;
 	sc->sc_bh = ka->ka_bh;
