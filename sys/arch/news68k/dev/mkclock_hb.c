@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.12 2008/01/10 15:31:26 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.13 2008/03/28 20:26:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.12 2008/01/10 15:31:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.13 2008/03/28 20:26:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,14 +57,14 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.12 2008/01/10 15:31:26 tsutsui Exp 
 
 #include "ioconf.h"
 
-static int  mkclock_hb_match(struct device *, struct cfdata  *, void *);
-static void mkclock_hb_attach(struct device *, struct device *, void *);
+static int  mkclock_hb_match(device_t, cfdata_t, void *);
+static void mkclock_hb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mkclock_hb, sizeof(struct mk48txx_softc),
+CFATTACH_DECL_NEW(mkclock_hb, sizeof(struct mk48txx_softc),
     mkclock_hb_match, mkclock_hb_attach, NULL, NULL);
 
 static int
-mkclock_hb_match(struct device *parent, struct cfdata *cf, void *aux)
+mkclock_hb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	static int mkclock_hb_matched;
@@ -84,19 +84,19 @@ mkclock_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mkclock_hb_attach(struct device *parent, struct device *self, void *aux)
+mkclock_hb_attach(device_t parent, device_t self, void *aux)
 {
-	struct mk48txx_softc *sc = (void *)self;
+	struct mk48txx_softc *sc = device_private(self);
 	struct hb_attach_args *ha = aux;
 
 	sc->sc_bst = ha->ha_bust;
 	if (bus_space_map(sc->sc_bst, (bus_addr_t)ha->ha_address, ha->ha_size,
 	    0, &sc->sc_bsh) != 0)
-		printf("can't map device space\n");
+		aprint_error("can't map device space\n");
 
 	sc->sc_model = "mk48t02";
 	sc->sc_year0 = 1900;
 	mk48txx_attach(sc);
 
-	printf("\n");
+	aprint_normal("\n");
 }

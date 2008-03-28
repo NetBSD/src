@@ -1,4 +1,4 @@
-/*	$NetBSD: timekeeper.c,v 1.10 2008/01/10 15:31:26 tsutsui Exp $	*/
+/*	$NetBSD: timekeeper.c,v 1.11 2008/03/28 20:26:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.10 2008/01/10 15:31:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.11 2008/03/28 20:26:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,19 +61,16 @@ __KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.10 2008/01/10 15:31:26 tsutsui Exp 
 
 #include <mvme68k/dev/mainbus.h>
 
-int timekeeper_match(struct device *, struct cfdata *, void *);
-void timekeeper_attach(struct device *, struct device *, void *);
+#include "ioconf.h"
 
-CFATTACH_DECL(timekeeper, sizeof(struct mk48txx_softc),
+int timekeeper_match(device_t, cfdata_t, void *);
+void timekeeper_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(timekeeper, sizeof(struct mk48txx_softc),
     timekeeper_match, timekeeper_attach, NULL, NULL);
 
-extern struct cfdriver timekeeper_cd;
-
 int
-timekeeper_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+timekeeper_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -84,12 +81,9 @@ timekeeper_match(parent, cf, aux)
 }
 
 void
-timekeeper_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+timekeeper_attach(device_t parent, device_t self, void *aux)
 {
-	struct mk48txx_softc *sc = (void *)self;
+	struct mk48txx_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	bus_size_t size;
 
@@ -108,7 +102,7 @@ timekeeper_attach(parent, self, aux)
 	sc->sc_year0 = YEAR0;
 	mk48txx_attach(sc);
 
-	printf(" Time-Keeper RAM\n");
-	printf("%s: %ld bytes NVRAM plus Realtime Clock\n",
-	    sc->sc_dev.dv_xname, sc->sc_nvramsz);
+	aprint_normal(" Time-Keeper RAM\n");
+	aprint_normal_dev(self, "%ld bytes NVRAM plus Realtime Clock\n",
+	    sc->sc_nvramsz);
 }

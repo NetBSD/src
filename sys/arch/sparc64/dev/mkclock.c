@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.2 2008/01/10 15:31:27 tsutsui Exp $ */
+/*	$NetBSD: mkclock.c,v 1.3 2008/03/28 20:26:13 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.2 2008/01/10 15:31:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.3 2008/03/28 20:26:13 tsutsui Exp $");
 
 /*    
  * Clock driver for 'mkclock' - Mostek MK48Txx TOD clock.
@@ -89,21 +89,21 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.2 2008/01/10 15:31:27 tsutsui Exp $");
 /*
  * clock (eeprom) attaches at the sbus or the ebus (PCI)
  */
-static int	mkclock_sbus_match(struct device *, struct cfdata *, void *);
-static void	mkclock_sbus_attach(struct device *, struct device *, void *);
+static int	mkclock_sbus_match(device_t, cfdata_t, void *);
+static void	mkclock_sbus_attach(device_t, device_t, void *);
 
-static int	mkclock_ebus_match(struct device *, struct cfdata *, void *);
-static void	mkclock_ebus_attach(struct device *, struct device *, void *);
+static int	mkclock_ebus_match(device_t, cfdata_t, void *);
+static void	mkclock_ebus_attach(device_t, device_t, void *);
 
 static void	mkclock_attach(struct mk48txx_softc *, int);
 
 static int	mkclock_wenable(struct todr_chip_handle *, int);
 
 
-CFATTACH_DECL(mkclock_sbus, sizeof(struct mk48txx_softc),
+CFATTACH_DECL_NEW(mkclock_sbus, sizeof(struct mk48txx_softc),
     mkclock_sbus_match, mkclock_sbus_attach, NULL, NULL);
 
-CFATTACH_DECL(mkclock_ebus, sizeof(struct mk48txx_softc),
+CFATTACH_DECL_NEW(mkclock_ebus, sizeof(struct mk48txx_softc),
     mkclock_ebus_match, mkclock_ebus_attach, NULL, NULL);
 
 /*
@@ -111,7 +111,7 @@ CFATTACH_DECL(mkclock_ebus, sizeof(struct mk48txx_softc),
  * own special match function to call it the "clock".
  */
 static int
-mkclock_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mkclock_sbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -119,7 +119,7 @@ mkclock_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-mkclock_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
+mkclock_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -151,9 +151,9 @@ mkclock_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 
 /* ARGSUSED */
 static void
-mkclock_sbus_attach(struct device *parent, struct device *self, void *aux)
+mkclock_sbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mk48txx_softc *sc = (void *)self;
+	struct mk48txx_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
 	int sz;
 
@@ -168,7 +168,7 @@ mkclock_sbus_attach(struct device *parent, struct device *self, void *aux)
 			 sz,
 			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_READONLY,
 			 &sc->sc_bsh) != 0) {
-		printf("%s: can't map register\n", self->dv_xname);
+		aprint_error(": can't map register\n");
 		return;
 	}
 	mkclock_attach(sc, sa->sa_node);
@@ -193,7 +193,7 @@ mkclock_ebus_attach(struct device *parent, struct device *self, void *aux)
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
 			 &sc->sc_bsh) != 0) {
-		printf("%s: can't map register\n", self->dv_xname);
+		aprint_error(": can't map register\n");
 		return;
 	}
 	mkclock_attach(sc, ea->ea_node);
@@ -219,7 +219,7 @@ mkclock_attach(struct mk48txx_softc *sc, int node)
 
 	mk48txx_attach(sc);
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 /*
