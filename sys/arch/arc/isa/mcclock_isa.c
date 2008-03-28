@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.11 2008/01/10 15:17:40 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.12 2008/03/28 19:05:49 tsutsui Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.11 2008/01/10 15:17:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.12 2008/03/28 19:05:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,10 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.11 2008/01/10 15:17:40 tsutsui Exp
 
 #include <arc/isa/mcclock_isavar.h>
 
-int mcclock_isa_match(struct device *, struct cfdata *, void *);
-void mcclock_isa_attach(struct device *, struct device *, void *);
+int mcclock_isa_match(device_t, cfdata_t, void *);
+void mcclock_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mcclock_isa, sizeof(struct mc146818_softc),
+CFATTACH_DECL_NEW(mcclock_isa, sizeof(struct mc146818_softc),
     mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
 /* Deskstation clock access code */
@@ -110,7 +110,7 @@ static void mc_isa_write(struct mc146818_softc *, u_int, u_int);
 int mcclock_isa_conf = 0;
 
 int
-mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
+mcclock_isa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -152,9 +152,9 @@ mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
+mcclock_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct mc146818_softc *sc = (void *)self;
+	struct mc146818_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_bst = ia->ia_iot;
@@ -168,7 +168,7 @@ mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	mc146818_attach(sc);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Turn interrupts off, just in case. */
 	mc_isa_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
