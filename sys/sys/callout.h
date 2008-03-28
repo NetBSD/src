@@ -1,7 +1,7 @@
-/*	$NetBSD: callout.h,v 1.26 2007/07/10 21:12:32 ad Exp $	*/
+/*	$NetBSD: callout.h,v 1.27 2008/03/28 20:44:38 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2003, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -111,6 +111,7 @@ void	callout_setfunc(callout_t *, void (*)(void *), void *);
 void	callout_reset(callout_t *, int, void (*)(void *), void *);
 void	callout_schedule(callout_t *, int);
 bool	callout_stop(callout_t *);
+bool	callout_halt(callout_t *);
 bool	callout_pending(callout_t *);
 bool	callout_expired(callout_t *);
 bool	callout_active(callout_t *);
