@@ -1,7 +1,7 @@
-/*	$NetBSD: test_mutex2.c,v 1.3 2007/02/05 22:48:02 ad Exp $	*/
+/*	$NetBSD: test_mutex2.c,v 1.4 2008/03/28 20:28:27 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: test_mutex2.c,v 1.3 2007/02/05 22:48:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: test_mutex2.c,v 1.4 2008/03/28 20:28:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -51,10 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: test_mutex2.c,v 1.3 2007/02/05 22:48:02 ad Exp $");
 
 int	testcall(struct lwp *, void *, register_t *);
 void	thread1(void *);
-void	thread_exit(int);
-void	thread_enter(int *);
+void	thread_enter(void);
 
-struct proc	*test_threads[NTHREADS];
+lwp_t		*test_threads[NTHREADS];
 kmutex_t	test_mutex;
 kcondvar_t	test_cv;
 int		test_count;
@@ -72,36 +71,20 @@ static int primes[NTHREADS] = {
 };
 
 void
-thread_enter(int *nlocks)
-{
-	struct lwp *l = curlwp;
-
-	KERNEL_UNLOCK_ALL(l, nlocks);
-	lwp_lock(l);
-	l->l_usrpri = MAXPRI;
-	lwp_changepri(l, MAXPRI);
-	lwp_unlock(l);
-}
-
-void
-thread_exit(int nlocks)
+thread_exit(void)
 {
 
 	mutex_enter(&test_mutex);
 	if (--test_count == 0)
 		cv_signal(&test_cv);
 	mutex_exit(&test_mutex);
-
-	KERNEL_LOCK(nlocks, curlwp);
 	kthread_exit(0);
 }
 
 void
 thread1(void *cookie)
 {
-	int count, nlocks;
-
-	thread_enter(&nlocks);
+	int count;
 
 	for (count = 0; !test_exit; count++) {
 		mutex_enter(&test_mutex);
@@ -111,8 +94,6 @@ thread1(void *cookie)
 		if ((count % curproc->p_pid) == 0)
 			yield();
 	}
-
-	thread_exit(nlocks);
 }
 
 int
@@ -129,8 +110,8 @@ testcall(struct lwp *l, void *uap, register_t *retval)
 	test_exit = 0;
 
 	for (i = 0; i < test_count; i++)
-		kthread_create1(thread1, &primes[i], &test_threads[i],
-		    "thread%d", i);
+		kthread_create(0, KTHREAD_MPSAFE, NULL, thread1, &primes[i],
+		    &test_threads[i], "thread%d", i);
 
 	printf("test: sleeping\n");
 
