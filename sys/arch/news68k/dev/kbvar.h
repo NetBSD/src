@@ -1,4 +1,4 @@
-/*	$NetBSD: kbvar.h,v 1.1 2001/01/25 14:33:29 tsutsui Exp $	*/
+/*	$NetBSD: kbvar.h,v 1.2 2008/03/28 18:19:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2001 Izumi Tsutsui.  All rights reserved.
@@ -37,8 +37,8 @@ struct console_softc {
 };
 
 struct kb_softc {
-	struct device sc_dev;
-	struct device *sc_wskbddev;
+	device_t sc_dev;
+	device_t sc_wskbddev;
 	struct console_softc *sc_conssc;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;

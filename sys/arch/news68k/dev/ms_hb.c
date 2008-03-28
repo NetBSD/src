@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.10 2007/03/04 06:00:24 christos Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.11 2008/03/28 18:19:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.10 2007/03/04 06:00:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.11 2008/03/28 18:19:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.10 2007/03/04 06:00:24 christos Exp $");
 #define MS_SIZE 0x10 /* XXX */
 #define MS_IPL 5
 
-static int ms_hb_match(struct device *, struct cfdata *, void *);
-static void ms_hb_attach(struct device *, struct device *, void *);
+static int ms_hb_match(device_t, cfdata_t, void *);
+static void ms_hb_attach(device_t, device_t, void *);
 static void ms_hb_init(struct ms_softc *);
 int ms_hb_intr(void *);
 
@@ -58,7 +58,7 @@ static int ms_hb_enable(void *);
 static int ms_hb_ioctl(void *, u_long, void *, int, struct lwp *);
 static void ms_hb_disable(void *);
 
-CFATTACH_DECL(ms_hb, sizeof(struct ms_softc),
+CFATTACH_DECL_NEW(ms_hb, sizeof(struct ms_softc),
     ms_hb_match, ms_hb_attach, NULL, NULL);
 
 struct wsmouse_accessops ms_hb_accessops = {
@@ -68,7 +68,7 @@ struct wsmouse_accessops ms_hb_accessops = {
 };
 
 static int
-ms_hb_match(struct device *parent, struct cfdata *cf, void *aux)
+ms_hb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	u_int addr;
@@ -89,9 +89,9 @@ ms_hb_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-ms_hb_attach(struct device *parent, struct device *self, void *aux)
+ms_hb_attach(device_t parent, device_t self, void *aux)
 {
-	struct ms_softc *sc = (void *)self;
+	struct ms_softc *sc = device_private(self);
 	struct hb_attach_args *ha = aux;
 	bus_space_tag_t bt = ha->ha_bust;
 	bus_space_handle_t bh;
@@ -99,11 +99,11 @@ ms_hb_attach(struct device *parent, struct device *self, void *aux)
 	int ipl;
 
 	if (bus_space_map(bt, ha->ha_address, MS_SIZE, 0, &bh) != 0) {
-		printf("can't map device space\n");
+		aprint_error(": can't map device space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_bt = bt;
 	sc->sc_bh = bh;
