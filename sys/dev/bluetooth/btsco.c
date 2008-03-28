@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.18 2007/11/11 12:59:05 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.19 2008/03/28 21:17:37 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.18 2007/11/11 12:59:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.19 2008/03/28 21:17:37 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -86,7 +86,6 @@ int btsco_debug = BTSCO_DEBUG;
 
 /* btsco softc */
 struct btsco_softc {
-	struct btdev		 sc_btdev;
 	uint16_t		 sc_flags;
 	const char		*sc_name;	/* our device_xname */
 

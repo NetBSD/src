@@ -1,4 +1,4 @@
-/*	$NetBSD: bthub.c,v 1.12 2007/11/03 17:41:03 plunky Exp $	*/
+/*	$NetBSD: bthub.c,v 1.13 2008/03/28 21:17:37 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.12 2007/11/03 17:41:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.13 2008/03/28 21:17:37 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -58,17 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: bthub.c,v 1.12 2007/11/03 17:41:03 plunky Exp $");
  *	Bluetooth Device Hub
  */
 
-struct bthub_softc {
-	device_t		sc_dev;
-	LIST_HEAD(,btdev)	sc_list;
-};
-
 /* autoconf(9) glue */
 static int	bthub_match(device_t, struct cfdata *, void *);
 static void	bthub_attach(device_t, device_t, void *);
 static int	bthub_detach(device_t, int);
 
-CFATTACH_DECL_NEW(bthub, sizeof(struct bthub_softc),
+CFATTACH_DECL_NEW(bthub, 0,
     bthub_match, bthub_attach, bthub_detach, NULL);
 
 /* control file */
@@ -100,13 +95,9 @@ bthub_match(device_t self, struct cfdata *cfdata, void *arg)
 static void
 bthub_attach(device_t parent, device_t self, void *aux)
 {
-	struct bthub_softc *sc = device_private(self);
 	bdaddr_t *addr = aux;
 	prop_dictionary_t dict;
 	prop_object_t obj;
-
-	LIST_INIT(&sc->sc_list);
-	sc->sc_dev = self;
 
 	dict = device_properties(self);
 	obj = prop_data_create_data(addr, sizeof(*addr));
@@ -124,24 +115,9 @@ bthub_attach(device_t parent, device_t self, void *aux)
 static int
 bthub_detach(device_t self, int flags)
 {
-	struct bthub_softc *sc = device_private(self);
-	struct btdev *btdev;
-	int err;
 
-	while (!LIST_EMPTY(&sc->sc_list)) {
-		btdev = LIST_FIRST(&sc->sc_list);
-		LIST_REMOVE(btdev, sc_next);
-
-		err = config_detach(btdev->sc_dev, flags);
-		if (err && (flags & DETACH_FORCE) == 0) {
-			LIST_INSERT_HEAD(&sc->sc_list, btdev, sc_next);
-			return err;
-		}
-	}
-
-	return 0;
+	return config_detach_children(self, flags);
 }
-
 
 /*****************************************************************************
  *
@@ -177,13 +153,12 @@ static int
 bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
     int flag, struct lwp *l)
 {
-	struct bthub_softc *sc;
-	struct btdev *btdev;
 	prop_data_t laddr, raddr;
 	prop_string_t service;
 	prop_dictionary_t prop;
 	prop_object_t obj;
-	device_t dev;
+	device_t dev, self;
+	deviter_t di;
 	int unit;
 
 	/* validate local address */
@@ -196,16 +171,15 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		if (unit == bthub_cd.cd_ndevs)
 			return ENXIO;
 
-		dev = bthub_cd.cd_devs[unit];
-		if (dev == NULL)
+		self = bthub_cd.cd_devs[unit];
+		if (self == NULL)
 			continue;
 
-		prop = device_properties(dev);
+		prop = device_properties(self);
 		obj = prop_dictionary_get(prop, BTDEVladdr);
 		if (prop_data_equals(laddr, obj))
 			break;
 	}
-	sc = device_private(dev);
 
 	/* validate remote address */
 	raddr = prop_dictionary_get(dict, BTDEVraddr);
@@ -219,8 +193,12 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		return EINVAL;
 
 	/* locate matching child device, if any */
-	LIST_FOREACH(btdev, &sc->sc_list, sc_next) {
-		prop = device_properties(btdev->sc_dev);
+	deviter_init(&di, 0);
+	while ((dev = deviter_next(&di)) != NULL) {
+		if (device_parent(dev) != self)
+			continue;
+
+		prop = device_properties(dev);
 
 		obj = prop_dictionary_get(prop, BTDEVraddr);
 		if (!prop_object_equals(raddr, obj))
@@ -232,13 +210,14 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 
 		break;
 	}
+	deviter_release(&di);
 
 	switch (cmd) {
 	case BTDEV_ATTACH:	/* attach BTDEV */
-		if (btdev != NULL)
+		if (dev != NULL)
 			return EADDRINUSE;
 
-		dev = config_found(sc->sc_dev, dict, bthub_print);
+		dev = config_found(self, dict, bthub_print);
 		if (dev == NULL)
 			return ENXIO;
 
@@ -246,18 +225,13 @@ bthub_pioctl(dev_t devno, unsigned long cmd, prop_dictionary_t dict,
 		prop_dictionary_set(prop, BTDEVladdr, laddr);
 		prop_dictionary_set(prop, BTDEVraddr, raddr);
 		prop_dictionary_set(prop, BTDEVservice, service);
-
-		btdev = device_private(dev);
-		btdev->sc_dev = dev;
-		LIST_INSERT_HEAD(&sc->sc_list, btdev, sc_next);
 		break;
 
 	case BTDEV_DETACH:	/* detach BTDEV */
-		if (btdev == NULL)
+		if (dev == NULL)
 			return ENXIO;
 
-		LIST_REMOVE(btdev, sc_next);
-		config_detach(btdev->sc_dev, DETACH_FORCE);
+		config_detach(dev, DETACH_FORCE);
 		break;
 	}
 
