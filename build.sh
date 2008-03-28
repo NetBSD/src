@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.186 2008/03/16 07:52:59 lukem Exp $
+#	$NetBSD: build.sh,v 1.187 2008/03/28 04:24:18 dholland Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -552,7 +552,7 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras] [-D dest]
                 the environment, ${toolprefix}make will be (re)built unconditionally.
     -U          Set MKUNPRIVED=yes; build without requiring root privileges,
     		install from an UNPRIVED build with proper file permissions.
-    -u          Set MKUPDATE=yes; do not run "make clean" first.
+    -u          Set MKUPDATE=yes; do not run "make cleandir" first.
 		Without this, everything is rebuilt, including the tools.
     -V v=[val]  Set variable \`v' to \`val'.
     -w wrapper  Create ${toolprefix}make script as wrapper.
@@ -1127,7 +1127,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.186 2008/03/16 07:52:59 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.187 2008/03/28 04:24:18 dholland Exp $
 # with these arguments: ${_args}
 #
 
