@@ -1,3 +1,10 @@
+2008-03-28  Emmanuel Dreyfus  <manu@netbsd.org>
+	From Cyrus Rahman <crahman@gmail.com>
+	* src/racoon/{sockmisc.c|isakmp.c|isakmp_inf.c|privsep.c|privsep.h}
+	  src/racoon/Makefile.am: allow interface reconfiguration when
+	  running in privilege séparation mode
+	  src/racoon/doc/README.privsep: new file on privilege separation
+
 2008-03-06  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/oakley.c: Generates a log if cert validation has been
 	  disabled by configuration.
