@@ -1,10 +1,15 @@
-# $NetBSD: shl.elf,v 1.138 2008/03/27 23:16:33 lukem Exp $
+# $NetBSD: shl.elf,v 1.139 2008/03/28 01:22:44 lukem Exp $
 #
-# Note: libtermcap and libtermlib are hardlinked and share the same version.
+# Note:	Do not mark "old" major and major.minor shared libraries as
+#	"obsolete"; just remove the entry, as third-party applications
+#	may be linked against the old major shared library, and
+#	that is a symlink to the old major.minor shared library.
+#	E.g., "lib<name>.so.<N>" and "lib<name>.so.<N>.<M>"
+#	Exceptions to this rule may include shared libraries that
+#	are dlopen()ed at run-time, such as extra locales, etc.
 #
-# Note: Do not mark "old" major shared libraries ("lib<name>.so.<N>")
-#       as "obsolete"; just remove the entry, as third-party
-#       applications may be linked against the old shared library.
+# Note:	libtermcap and libtermlib are hardlinked and share the same version.
+#
 #
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
