@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.133 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.133.6.1 2008/03/29 16:17:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.133 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.133.6.1 2008/03/29 16:17:58 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1689,6 +1689,13 @@ bpf_setdlt(struct bpf_d *d, u_int dlt)
 	}
 	splx(s);
 	return 0;
+}
+
+void
+bpf_init(void)
+{
+	int major = cdevsw_lookup_major(&bpf_cdevsw);
+	device_register_name(makedev(major, 0), NULL, true, DEV_OTHER, "bpf");
 }
 
 static int

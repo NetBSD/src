@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.355 2008/01/02 11:48:37 ad Exp $ */
+/*	$NetBSD: wd.c,v 1.355.6.1 2008/03/29 16:17:57 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.355 2008/01/02 11:48:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.355.6.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include "opt_ata.h"
 
@@ -303,6 +303,8 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	int i, blank;
 	char tbuf[41], pbuf[9], c, *p, *q;
 	const struct wd_quirk *wdq;
+	uint16_t np;
+	int bmajor, cmajor;
 
 	ATADEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 	callout_init(&wd->sc_restart_ch, 0);
@@ -426,6 +428,23 @@ wdattach(struct device *parent, struct device *self, void *aux)
 
 	if (!pmf_device_register(self, wd_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	bmajor = bdevsw_lookup_major(&wd_bdevsw);
+	cmajor = cdevsw_lookup_major(&wd_cdevsw);
+
+	np = wd->sc_dk.dk_label->d_npartitions;
+
+	for (i = 0; i < np; i++) {
+		device_register_name(
+	    	    MAKEDISKDEV(bmajor, device_unit(&wd->sc_dev), i),
+	    	    self, false, DEV_DISK,
+		    "wd%d%c", device_unit(&wd->sc_dev), 'a' + i);
+
+		device_register_name(
+	    	    MAKEDISKDEV(cmajor, device_unit(&wd->sc_dev), i),
+	    	    self, true, DEV_DISK,
+		    "rwd%d%c", device_unit(&wd->sc_dev), 'a' + i);
+	}
 }
 
 static bool
@@ -470,7 +489,7 @@ int
 wddetach(struct device *self, int flags)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
-	int s, bmaj, cmaj, i, mn;
+	int s, bmaj, cmaj, i, mn, unit;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
@@ -478,9 +497,15 @@ wddetach(struct device *self, int flags)
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = WDMINOR(device_unit(self), i);
+		unit = device_unit(self);
+		mn = WDMINOR(unit, i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
+
+		device_unregister_name(makedev(bmaj, mn), 
+		    "wd%d%c", unit, 'a' + i);
+		device_unregister_name(makedev(cmaj, mn),
+		    "rwd%d%c", unit, 'a' + i);
 	}
 
 	/* Delete all of our wedges. */

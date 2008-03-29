@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.272 2008/01/02 11:48:38 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.272.6.1 2008/03/29 16:17:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.272 2008/01/02 11:48:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.272.6.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include "rnd.h"
 
@@ -247,10 +247,23 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	struct cd_softc *cd = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
+	int bmajor, cmajor;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
 	mutex_init(&cd->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	/* lookup major numbers */
+	bmajor = bdevsw_lookup_major(&cd_bdevsw);
+	cmajor = cdevsw_lookup_major(&cd_cdevsw);
+
+	/* Register name for block device */
+	device_register_name(makedev(bmajor, 0), self, false, DEV_DISK, "cd0a");
+	device_register_name(makedev(bmajor, 3), self, false, DEV_DISK, "cd0d");
+
+	/* Register name for raw-mode device */
+	device_register_name(makedev(cmajor, 0), self, true, DEV_DISK, "rcd0a");
+	device_register_name(makedev(cmajor, 3), self, true, DEV_DISK, "rcd0d");
 
 	if (scsipi_periph_bustype(sa->sa_periph) == SCSIPI_BUSTYPE_SCSI &&
 	    periph->periph_version == 0)
@@ -317,16 +330,22 @@ static int
 cddetach(struct device *self, int flags)
 {
 	struct cd_softc *cd = device_private(self);
-	int s, bmaj, cmaj, i, mn;
+	int s, bmaj, cmaj, i, mn, unit;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
 	cmaj = cdevsw_lookup_major(&cd_cdevsw);
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = CDMINOR(device_unit(self), i);
+		unit = device_unit(self);
+		mn = CDMINOR(unit, i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
+
+		device_unregister_name(makedev(bmaj, mn), "cd%d%c", 
+		    unit, 'a' + i);
+		device_unregister_name(makedev(cmaj, mn), "rcd%d%c", 
+		    unit, 'a' + i);
 	}
 
 	/* kill any pending restart */

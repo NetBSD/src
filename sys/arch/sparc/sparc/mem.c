@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.40 2007/03/04 09:23:29 macallan Exp $ */
+/*	$NetBSD: mem.c,v 1.40.40.1 2008/03/29 16:17:57 mjf Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.40 2007/03/04 09:23:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.40.40.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -98,6 +98,8 @@ extern vaddr_t prom_vstart;
 extern vaddr_t prom_vend;
 void *zeropage;
 
+void memattach(int);
+
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
 
@@ -105,6 +107,21 @@ const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
+
+void
+memattach(int n)
+{
+	int major = cdevsw_lookup_major(&mem_cdevsw);
+
+	device_register_name(makedev(major, DEV_MEM), 
+	    NULL, true, DEV_OTHER, "mem");
+	device_register_name(makedev(major, DEV_KMEM), 
+	    NULL, true, DEV_OTHER, "kmem");
+	device_register_name(makedev(major, DEV_NULL), 
+	    NULL, true, DEV_OTHER, "null");
+	device_register_name(makedev(major, DEV_ZERO), 
+	    NULL, true, DEV_OTHER, "zero");
+}
 
 /*ARGSUSED*/
 int

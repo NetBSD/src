@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_comm.c,v 1.1.6.3 2008/03/15 13:32:50 mjf Exp $ */
+/* 	$NetBSD: devfs_comm.c,v 1.1.6.4 2008/03/29 16:17:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.3 2008/03/15 13:32:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.4 2008/03/29 16:17:58 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,7 +158,8 @@ devfs_create_node(int32_t mcookie, const char *path, dev_t dcookie,
 	 * TODO: We currently don't support creating nodes in anything
 	 * but the root directory. This will change eventually.
 	 */
-	error = devfs_internal_mknod(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	error = devfs_internal_mknod(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, 
+	    &vattr, flags);
 
 	if (error == 0)
 		vput(nd.ni_vp); /* special device vnode */
@@ -196,13 +197,13 @@ abort:
  */
 int
 devfs_internal_mknod(struct vnode *dvp, struct vnode **vpp, 
-	struct componentname *cnp, struct vattr *vap)
+	struct componentname *cnp, struct vattr *vap, int flags)
 {
 	if (vap->va_type != VBLK && vap->va_type != VCHR &&
 	    vap->va_type != VFIFO)
 		return EINVAL;
 
-	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL, flags);
 }
 
 int

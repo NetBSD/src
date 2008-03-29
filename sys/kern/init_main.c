@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.341 2008/01/20 18:09:11 joerg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.341.6.1 2008/03/29 16:17:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341 2008/01/20 18:09:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.1 2008/03/29 16:17:56 mjf Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -176,6 +176,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341 2008/01/20 18:09:11 joerg Exp $"
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
+
+#include <fs/devfs/devfs.h>
 
 #include <sys/cpu.h>
 
@@ -658,6 +660,14 @@ main(void)
 
 	/* Initialize exec structures */
 	exec_init(1);
+
+	/*
+	 * If devfs support not disabled on boot, mount a devfs on /dev.
+	 */
+	if (!(boothowto & AB_NODEVFS)) {
+		if ((error = devfs_kernel_mount()) != 0)
+			aprint_normal("Failed to mount devfs on /dev\n");
+	}
 
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!

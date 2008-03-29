@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.64 2007/12/05 17:19:48 pooka Exp $	*/
+/*	$NetBSD: rnd.c,v 1.64.12.1 2008/03/29 16:17:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.64 2007/12/05 17:19:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.64.12.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -289,9 +289,17 @@ void
 rndattach(int num)
 {
 	u_int32_t c;
+	int major;
 
 	/* Trap unwary players who don't call rnd_init() early */
 	KASSERT(rnd_ready);
+
+	major = cdevsw_lookup_major(&rnd_cdevsw);
+
+	device_register_name(makedev(major, 0), NULL, 
+	    true, DEV_OTHER, "random");
+	device_register_name(makedev(major, 1), NULL, 
+	    true, DEV_OTHER, "urandom");
 
 	/* mix in another counter */
 	c = rnd_counter();

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.269 2007/12/25 18:33:43 perry Exp $	*/
+/*	$NetBSD: sd.c,v 1.269.6.1 2008/03/29 16:17:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269 2007/12/25 18:33:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -226,6 +226,9 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	int error, result;
 	struct disk_parms *dp = &sd->params;
 	char pbuf[9];
+	int i;
+	uint16_t np;
+	int cmajor, bmajor;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
@@ -321,6 +324,23 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	dkwedge_discover(&sd->sc_dk);
 
 	sd_set_properties(sd);
+
+	np = sd->sc_dk.dk_label->d_npartitions;
+
+	/* locate the major numbers */
+	bmajor = bdevsw_lookup_major(&sd_bdevsw);
+	cmajor = cdevsw_lookup_major(&sd_cdevsw);
+	for (i = 0; i < 16; i++) {                                      
+		device_register_name(
+		    MAKEDISKDEV(bmajor, device_unit(&sd->sc_dev), i),
+			&sd->sc_dev, false, DEV_DISK,
+			"sd%d%c", device_unit(&sd->sc_dev), 'a'+i);
+			
+		device_register_name(
+		    MAKEDISKDEV(cmajor, device_unit(&sd->sc_dev), i),
+			&sd->sc_dev, true, DEV_DISK,
+			"rsd%d%c", device_unit(&sd->sc_dev), 'a' + i);
+	}
 }
 
 static int
@@ -347,16 +367,33 @@ sddetach(struct device *self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
+	int error;
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&sd_bdevsw);
 	cmaj = cdevsw_lookup_major(&sd_cdevsw);
 
-	/* Nuke the vnodes for any open instances */
+	/* 
+	 * Nuke the vnodes for any open instances and deregister 
+	 * any device node names.
+	 */
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		mn = SDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
+
+		error = device_unregister_name(makedev(bmaj, mn), 
+		    "sd%d%c", device_unit(self), 'a' + i);
+#ifdef DIAGNOSTIC
+		if (error != 0)
+			panic("could not unregister block device name");
+#endif
+		error = device_unregister_name(makedev(cmaj, mn), 
+		    "rsd%d%c", device_unit(self), 'a' + i);
+#ifdef DIAGNOSTIC
+		if (error != 0)
+			panic("could not unregister char device name");
+#endif
 	}
 
 	/* kill any pending restart */

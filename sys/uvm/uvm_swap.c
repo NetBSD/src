@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.136 2008/01/30 14:25:21 hannken Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.136.6.1 2008/03/29 16:17:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.136 2008/01/30 14:25:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.136.6.1 2008/03/29 16:17:58 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1795,4 +1795,11 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
 
 	return (error);
+}
+
+void
+swap_init(void)
+{
+	int major = cdevsw_lookup_major(&swap_cdevsw);
+	device_register_name(makedev(major, 0), NULL, true, DEV_OTHER, "drum");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.129.14.1 2008/03/20 12:11:07 mjf Exp $	*/
+/*	$NetBSD: conf.h,v 1.129.14.2 2008/03/29 16:17:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,6 +45,7 @@
 
 #include <sys/queue.h>
 #include <sys/device.h>
+#include <sys/mutex.h>
 
 struct buf;
 struct knote;

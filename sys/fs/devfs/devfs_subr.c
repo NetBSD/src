@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_subr.c,v 1.1.6.2 2008/03/15 13:32:50 mjf Exp $ */
+/* 	$NetBSD: devfs_subr.c,v 1.1.6.3 2008/03/29 16:17:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.2 2008/03/15 13:32:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.3 2008/03/29 16:17:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.2 2008/03/15 13:32:50 mjf Exp $
 #include <sys/kauth.h>
 #include <sys/proc.h>
 #include <sys/atomic.h>
+#include <sys/conf.h>
+#include <sys/disklabel.h>
 
 #include <uvm/uvm.h>
 
@@ -124,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.2 2008/03/15 13:32:50 mjf Exp $
 int
 devfs_alloc_node(struct devfs_mount *tmp, enum vtype type,
     uid_t uid, gid_t gid, mode_t mode, struct devfs_node *parent,
-    char *target, dev_t rdev, struct devfs_node **node)
+    char *target, dev_t rdev, struct devfs_node **node, int visible)
 {
 	struct devfs_node *nnode;
 
@@ -156,6 +158,12 @@ devfs_alloc_node(struct devfs_mount *tmp, enum vtype type,
 	 */
 	nnode->tn_id = (ino_t)((uintptr_t)nnode / sizeof(*nnode));
 	nnode->tn_gen = arc4random();
+
+	/* Initialise visibility for this node */
+	if (visible != -1)
+		nnode->tn_visible = visible;
+	else
+		nnode->tn_visible = tmp->tm_visible;
 
 	/* Generic initialization. */
 	nnode->tn_type = type;
@@ -476,7 +484,7 @@ devfs_free_vp(struct vnode *vp)
  */
 int
 devfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
-    struct componentname *cnp, char *target)
+    struct componentname *cnp, char *target, int visibility)
 {
 	int error;
 	struct devfs_dirent *de;
@@ -509,8 +517,10 @@ devfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 		parent = NULL;
 
 	/* Allocate a node that represents the new file. */
-	error = devfs_alloc_node(tmp, vap->va_type, kauth_cred_geteuid(cnp->cn_cred),
-	    dnode->tn_gid, vap->va_mode, parent, target, vap->va_rdev, &node);
+	error = devfs_alloc_node(tmp, vap->va_type, 
+	    kauth_cred_geteuid(cnp->cn_cred), dnode->tn_gid, 
+	    vap->va_mode, parent, target, vap->va_rdev, &node, visibility);
+	    
 	if (error != 0)
 		goto out;
 
@@ -767,6 +777,8 @@ devfs_dir_lookupbycookie(struct devfs_node *node, off_t cookie)
  * The function returns 0 on success, -1 if there was not enough space
  * in the uio structure to hold the directory entry or an appropriate
  * error code if another error happens.
+ *
+ * If a directory entry is invisible, it is not returned in the uio space.
  */
 int
 devfs_dir_getdents(struct devfs_node *node, struct uio *uio, off_t *cntp)
@@ -798,6 +810,10 @@ devfs_dir_getdents(struct devfs_node *node, struct uio *uio, off_t *cntp)
 	/* Read as much entries as possible; i.e., until we reach the end of
 	 * the directory or we exhaust uio space. */
 	do {
+		/* If this node is invisible, do not return it in the uio */
+		if (!DEVFS_VISIBLE_NODE(de->td_node))
+			goto next;
+
 		/* Create a dirent structure representing the current
 		 * devfs_node and fill it. */
 		dentp->d_fileno = de->td_node->tn_id;
@@ -851,6 +867,7 @@ devfs_dir_getdents(struct devfs_node *node, struct uio *uio, off_t *cntp)
 		error = uiomove(dentp, dentp->d_reclen, uio);
 
 		(*cntp)++;
+next:
 		de = TAILQ_NEXT(de, td_entries);
 	} while (error == 0 && uio->uio_resid > 0 && de != NULL);
 
@@ -1353,8 +1370,8 @@ out:
  *
  * => If 'init' is > 0 then this file system is being mounted by init(8),
  * which means that we must retain an extra reference to a vnode in the
- * file system so that it can only be unmounted when the system is
- * shutting down.
+ * file system so that it can only be unmounted when forced. This happens
+ * when the system is shutting down.
  */
 int
 devfs_init_nodes(struct devfs_mount *dmp, struct mount *mp, int init)
@@ -1372,12 +1389,13 @@ devfs_init_nodes(struct devfs_mount *dmp, struct mount *mp, int init)
 
 	/* console device node */
 	dev = makedev(0, 0);
-	if ((error = devfs_new_node(dmp, mp, dvp, dev, cpath)) != 0)
+	error = devfs_new_node(dmp, mp, dvp, dev, cpath, VCHR, S_IFCHR | 0600);
+	if (error != 0)
 		goto out;
 		
 	/* dctl device node */
 	dev = makedev(dctl_major, 0);
-	error = devfs_new_node(dmp, mp, dvp, dev, dpath);
+	error = devfs_new_node(dmp, mp, dvp, dev, dpath, VCHR, S_IFCHR | 0600);
 
 out:
 	VOP_UNLOCK(dvp, 0);
@@ -1392,15 +1410,15 @@ out:
  */
 int
 devfs_new_node(struct devfs_mount *dmp, struct mount *mp, struct vnode *dvp,
-	dev_t dev, char *path)
+	dev_t dev, char *path, enum vtype type, int flags)
 {
 	int error;
 	struct devfs_node *node;
 	struct devfs_dirent *de;
 	struct vnode *vpp;
 
-	error = devfs_alloc_node(dmp, VCHR, 0, 0, S_IFCHR | 0600, 
-	    dmp->tm_root, NULL, dev, &node);
+	error = devfs_alloc_node(dmp, type, 0, 0, flags,
+	    dmp->tm_root, NULL, dev, &node, -1);
 	if (error != 0)
 		goto out;
 

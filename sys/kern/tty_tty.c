@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.36 2007/11/26 19:02:05 pooka Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.36.14.1 2008/03/29 16:17:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.36 2007/11/26 19:02:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.36.14.1 2008/03/29 16:17:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,3 +160,10 @@ const struct cdevsw ctty_cdevsw = {
 	cttyopen, nullclose, cttyread, cttywrite, cttyioctl,
 	nullstop, notty, cttypoll, nommap, cttykqfilter, D_TTY
 };
+
+void
+cttyinit(void)
+{
+	int major = cdevsw_lookup_major(&ctty_cdevsw);
+	device_register_name(makedev(major, 0), NULL, true, DEV_TTY, "tty");
+}

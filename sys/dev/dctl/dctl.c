@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctl.c,v 1.1.6.3 2008/03/21 19:13:36 mjf Exp $ */
+/* 	$NetBSD: dctl.c,v 1.1.6.4 2008/03/29 16:17:57 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.3 2008/03/21 19:13:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.4 2008/03/29 16:17:57 mjf Exp $");
 
 #if defined(DEBUG) && !defined(DCTLDEBUG)
 #define	DCTLDEBUG
@@ -328,7 +328,7 @@ dctl_record_event(struct dctl_msg *msg)
 	}
 
 	de->de_msg = msg;
-	de->de_on_mount = false;
+	de->de_on_mount = 0;
 	SIMPLEQ_INSERT_TAIL(&event_list, de, de_entries);
 	
 	sc->sc_event_count++;
@@ -518,9 +518,9 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			/* move to the mount list */
 			if (ee->de_msg->d_type == DCTL_NEW_MOUNT) {
 				/* is it already there? */
-				if (ee->de_on_mount != true) {
+				if (ee->de_on_mount == 0) {
 					SIMPLEQ_INSERT_TAIL(&mount_event_list, ee, dm_entries);
-					ee->de_on_mount = true;
+					ee->de_on_mount = 1;
 				}
 				sc->sc_event_count--;
 				error = 0;

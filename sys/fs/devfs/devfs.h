@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs.h,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $ */
+/* 	$NetBSD: devfs.h,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -387,7 +387,7 @@ struct devfs_fid {
 
 int	devfs_alloc_node(struct devfs_mount *, enum vtype,
 	    uid_t uid, gid_t gid, mode_t mode, struct devfs_node *,
-	    char *, dev_t, struct devfs_node **);
+	    char *, dev_t, struct devfs_node **, int);
 void	devfs_free_node(struct devfs_mount *, struct devfs_node *);
 int	devfs_alloc_dirent(struct devfs_mount *, struct devfs_node *,
 	    const char *, uint16_t, struct devfs_dirent **);
@@ -396,7 +396,7 @@ void	devfs_free_dirent(struct devfs_mount *, struct devfs_dirent *,
 int	devfs_alloc_vp(struct mount *, struct devfs_node *, struct vnode **);
 void	devfs_free_vp(struct vnode *);
 int	devfs_alloc_file(struct vnode *, struct vnode **, struct vattr *,
-	    struct componentname *, char *);
+	    struct componentname *, char *, int);
 void	devfs_dir_attach(struct vnode *, struct devfs_dirent *);
 void	devfs_dir_detach(struct vnode *, struct devfs_dirent *);
 struct devfs_dirent *	devfs_dir_lookup(struct devfs_node *node,
@@ -422,7 +422,12 @@ int	devfs_truncate(struct vnode *, off_t);
 
 int	devfs_init_nodes(struct devfs_mount *, struct mount *, int);
 int	devfs_new_node(struct devfs_mount *, struct mount *, struct vnode *,
-	    dev_t, char *);
+	    dev_t, char *, enum vtype, int);
+
+/*
+ * Prototypes for devfs_vfsops.c.
+ */
+int	devfs_kernel_mount(void);
 
 /* --------------------------------------------------------------------- */
 

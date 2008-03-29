@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.243 2008/01/04 21:18:05 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.243.6.1 2008/03/29 16:17:57 mjf Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243 2008/01/04 21:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243.6.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3603,17 +3603,47 @@ static void
 raid_attach(struct device *parent, struct device *self,
     void *aux)
 {
+	int i, unit;
+	int bmaj = bdevsw_lookup_major(&raid_bdevsw);
+	int cmaj = cdevsw_lookup_major(&raid_cdevsw);
 
+	unit = device_unit(self);
+
+	/* register device nodes */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		/* block devices */
+		device_register_name(MAKEDISKDEV(bmaj, unit, i), self, false, 
+		    DEV_DISK, "raid%d%c", unit, 'a' + i);
+		/* char devices */
+		device_register_name(MAKEDISKDEV(cmaj, unit, i), self, true,
+		    DEV_DISK, "rraid%d%c", unit, 'a' + i);
+	}
 }
 
 
 static int
 raid_detach(struct device *self, int flags)
 {
+	int i, unit;
+	int bmaj = bdevsw_lookup_major(&raid_bdevsw);
+	int cmaj = cdevsw_lookup_major(&raid_cdevsw);
+
 	struct raid_softc *rs = (struct raid_softc *)self;
 
 	if (rs->sc_flags & RAIDF_INITED)
 		return EBUSY;
+
+	unit = device_unit(self);
+
+	/* unregister device nodes */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		/* block devices */
+		device_unregister_name(MAKEDISKDEV(bmaj, unit, i), 
+		    "raid%d%c", unit, 'a' + i);
+		/* char devices */
+		device_unregister_name(MAKEDISKDEV(cmaj, unit, i), 
+		    "rraid%d%c", unit, 'a' + i);
+	}
 
 	return 0;
 }

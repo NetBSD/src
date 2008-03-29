@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.48 2007/03/04 06:02:52 christos Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.48.36.1 2008/03/29 16:17:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.48 2007/03/04 06:02:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.48.36.1 2008/03/29 16:17:58 mjf Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -713,6 +713,36 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 		CIRCLEQ_REMOVE(&sc->sc_cld, me, me_next);
 	}
 
+	/* register device nodes */
+	if (!error) {
+		int maj = cdevsw_lookup_major(&wsmux_cdevsw);
+		int unit = sc->sc_base.me_dv.dv_unit;
+		size_t len = strlen(me->me_dv.dv_xname) + 1;
+		char *name = malloc(len, M_DEVBUF, M_NOWAIT);
+		char *p;
+
+		if (name == NULL) {
+			printf("wsmux_attach_sc: no memory\n");
+			return (ENOMEM);
+		}
+
+		snprintf(name, len, me->me_dv.dv_xname);
+		p = name;
+
+		while (!isdigit(*p))
+			p++;
+		*p = '\0';
+
+		device_register_name(makedev(maj, unit), &sc->sc_base.me_dv,
+		    true, DEV_OTHER, sc->sc_base.me_dv.dv_xname);
+		device_register_name(makedev(maj, unit), &sc->sc_base.me_dv,
+		    true, DEV_OTHER, name);
+
+		/* XXX: control devices are 128 + unit number */
+		device_register_name(makedev(maj, unit + 128),
+		    &sc->sc_base.me_dv, true, DEV_OTHER, "wsmuxctl%d", unit);
+	}
+
 	DPRINTF(("wsmux_attach_sc: %s(%p) done, error=%d\n",
 		 sc->sc_base.me_dv.dv_xname, sc, error));
 	return (error);
@@ -723,9 +753,35 @@ void
 wsmux_detach_sc(struct wsevsrc *me)
 {
 	struct wsmux_softc *sc = me->me_parent;
+	int maj, unit;
+	size_t len;
+	char *name;
+	char *p;
 
 	DPRINTF(("wsmux_detach_sc: %s(%p) parent=%p\n",
 		 me->me_dv.dv_xname, me, sc));
+
+	len = strlen(me->me_dv.dv_xname) + 1;
+	name = malloc(len, M_DEVBUF, M_NOWAIT);
+	if (name == NULL) {
+		printf("wsmux_attach_sc: no memory\n");
+		return;
+	}
+
+	snprintf(name, len, me->me_dv.dv_xname);
+	p = name;
+
+	while (!isdigit(*p))
+		p++;
+	*p = '\0';
+
+	/* remove device nodes */
+	maj = cdevsw_lookup_major(&wsmux_cdevsw);
+	unit = sc->sc_base.me_dv.dv_unit;
+	device_unregister_name(makedev(maj, unit), sc->sc_base.me_dv.dv_xname);
+	device_unregister_name(makedev(maj, unit + 128), "wsmuxctl%d", unit);
+	device_unregister_name(makedev(maj, unit), name);
+	free(name, M_DEVBUF);
 
 #ifdef DIAGNOSTIC
 	if (sc == NULL) {
