@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.55 2007/12/09 20:28:25 jmcneill Exp $ */
+/* $NetBSD: wsmouse.c,v 1.55.10.1 2008/03/29 16:17:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.55 2007/12/09 20:28:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.55.10.1 2008/03/29 16:17:58 mjf Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -247,6 +247,7 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 #if NWSMUX > 0
 	int mux, error;
 #endif
+	int major;
 
 	sc->sc_accessops = ap->accessops;
 	sc->sc_accesscookie = ap->accesscookie;
@@ -278,6 +279,10 @@ wsmouse_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	major = cdevsw_lookup_major(&wsmouse_cdevsw);
+	device_register_name(makedev(major, device_unit(self)), self,
+	    true, DEV_OTHER, device_xname(self));
 }
 
 int
@@ -341,6 +346,8 @@ wsmouse_detach(struct device  *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
+
+	device_unregister_name(makedev(maj, mn), device_xname(self));
 
 	return (0);
 }

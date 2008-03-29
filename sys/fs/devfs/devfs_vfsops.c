@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_vfsops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $ */
+/* 	$NetBSD: devfs_vfsops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,8 +88,10 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Ex
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/namei.h>
 
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/syncfs/syncfs.h>
 #include <fs/devfs/devfs.h>
 #include <dev/dctl/dctl.h>
 
@@ -194,15 +196,16 @@ devfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    "node", tmp);
 	devfs_str_pool_init(&tmp->tm_str_pool, tmp);
 
+	tmp->tm_visible = args->ta_visible;
+
 	/* Allocate the root node. */
 	error = devfs_alloc_node(tmp, VDIR, args->ta_root_uid,
 	    args->ta_root_gid, args->ta_root_mode & ALLPERMS, NULL, NULL,
-	    VNOVAL, &root);
+	    VNOVAL, &root, tmp->tm_visible);
 	KASSERT(error == 0 && root != NULL);
 	root->tn_links++;
 	tmp->tm_root = root;
 
-	tmp->tm_visible = args->ta_visible;
 	tmp->tm_init = args->ta_init;
 
 	mp->mnt_data = tmp;
@@ -221,12 +224,18 @@ devfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error != 0)
 		return error;
 
-	error = dctl_mount_msg(path, mp->mnt_stat.f_fsidx.__fsid_val[0]);
+	error = dctl_mount_msg(path, 
+	    mp->mnt_stat.f_fsidx.__fsid_val[0], tmp->tm_visible);
 	if (error != 0)
 		return error;
 
-	return set_statvfs_info(path, UIO_USERSPACE, "devfs", UIO_SYSSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
+	/* We've been called from within the kernel */
+	if (tmp->tm_init)
+		return set_statvfs_info(path, UIO_SYSSPACE, "devfs", 
+		    UIO_SYSSPACE, mp->mnt_op->vfs_name, mp, l);
+
+	return set_statvfs_info(path, UIO_USERSPACE, "devfs", 
+	    UIO_SYSSPACE, mp->mnt_op->vfs_name, mp, l);
 }
 
 /* --------------------------------------------------------------------- */
@@ -266,7 +275,8 @@ devfs_unmount(struct mount *mp, int mntflags)
 			vref(tmp->tm_root->tn_vnode);
 	}
 
-	error = dctl_unmount_msg(mp->mnt_stat.f_fsidx.__fsid_val[0]);
+	error = dctl_unmount_msg(mp->mnt_stat.f_fsidx.__fsid_val[0],
+	    tmp->tm_visible);
 
 	/* I have no idea what to do here */
 	if (error != 0)
@@ -508,3 +518,78 @@ struct vfsops devfs_vfsops = {
 	{ NULL, NULL },
 };
 VFS_ATTACH(devfs_vfsops);
+
+int
+devfs_kernel_mount(void)
+{
+	int error;
+	struct devfs_args dargs;
+	struct mount *mp;
+	struct nameidata nd;
+	size_t len = sizeof(dargs);
+
+	dargs.ta_init = dargs.ta_visible = 1;
+	dargs.ta_version = DEVFS_ARGS_VERSION;
+
+	NDINIT(&nd, LOOKUP, LOCKPARENT, UIO_SYSSPACE, "/dev");
+
+	if ((error = namei(&nd)) != 0)
+		goto out;
+
+	if (nd.ni_vp == NULL) {
+		error = ENOENT;
+		goto out;
+	}
+
+	if ((mp = kmem_zalloc(sizeof(*mp), KM_NOSLEEP)) == NULL)
+		panic("could not alloc memory for devfs mount");
+
+	mp->mnt_op = &devfs_vfsops;
+	mp->mnt_refcnt = 1;
+
+	TAILQ_INIT(&mp->mnt_vnodelist);
+	rw_init(&mp->mnt_lock);
+	mutex_init(&mp->mnt_renamelock, 
+	    MUTEX_DEFAULT, IPL_NONE);
+	(void)vfs_busy(mp, RW_WRITER, 0);
+
+	mp->mnt_vnodecovered = nd.ni_vp;
+	mp->mnt_stat.f_owner = kauth_cred_geteuid(curlwp->l_cred);
+	mount_initspecific(mp);
+
+	devfs_vfsops.vfs_refcount++;
+	error = (devfs_vfsops.vfs_mount)(mp, "/dev", &dargs, &len);
+	devfs_vfsops.vfs_refcount--;
+	if (error != 0) {
+		nd.ni_vp->v_mountedhere = NULL;
+		mp->mnt_op->vfs_refcount--;
+		vfs_unbusy(mp, false);
+		vfs_destroy(mp);
+		goto out;
+	}
+
+	VOP_UNLOCK(rootvnode, 0);
+	mp->mnt_flag &= ~MNT_OP_FLAGS;
+
+	/*
+	 * Put the new filesystem on the mount list after root.
+	 */
+	cache_purge(nd.ni_vp);
+
+	mp->mnt_iflag &= ~IMNT_WANTRDWR;
+	mutex_enter(&mountlist_lock);
+	nd.ni_vp->v_mountedhere = mp;
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	mutex_exit(&mountlist_lock);
+	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
+		error = vfs_allocate_syncvnode(mp);
+	vfs_unbusy(mp, false);
+	(void) VFS_STATVFS(mp, &mp->mnt_stat);
+	error = VFS_START(mp, 0);
+	if (error) {
+		vrele(nd.ni_vp);
+		vfs_destroy(mp);
+	}
+out:
+	return error;
+}

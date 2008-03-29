@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.117 2008/02/20 22:33:18 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.117.6.1 2008/03/29 16:17:57 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.117 2008/02/20 22:33:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.117.6.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -362,11 +362,17 @@ wsdisplay_addscreen(struct wsdisplay_softc *sc, int idx,
 	long defattr;
 	struct wsscreen *scr;
 	int s;
+	int unit;
+	int maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
 	if (idx < 0 || idx >= WSDISPLAY_MAXSCREEN)
 		return (EINVAL);
 	if (sc->sc_scr[idx] != NULL)
 		return (EBUSY);
+
+	unit = device_unit(sc->sc_dev);
+	device_register_name(makedev(maj, WSDISPLAYMINOR(unit, idx - 1)),
+	    sc->sc_dev, true, DEV_TTY, "ttyE%d", idx - 1);
 
 	scrdesc = wsdisplay_screentype_pick(sc->sc_scrdata, screentype);
 	if (!scrdesc)
@@ -463,11 +469,15 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 	struct wsscreen *scr;
 	int s;
 	void *cookie;
+	int maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
 	if (idx < 0 || idx >= WSDISPLAY_MAXSCREEN)
 		return (EINVAL);
 	if ((scr = sc->sc_scr[idx]) == NULL)
 		return (ENXIO);
+
+	device_unregister_name(makedev(maj, device_unit(sc->sc_dev)),
+	    "ttyE%d", idx - 1);
 
 	if (scr->scr_dconf == &wsdisplay_console_conf ||
 	    scr->scr_syncops ||
@@ -541,6 +551,9 @@ wsdisplay_emul_attach(device_t parent, device_t self, void *aux)
 	struct wsdisplay_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args *ap = aux;
 
+	/* locate the major number */
+	int maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
+
 	sc->sc_dev = self;
 
 	/* Don't allow more than one console to attach */
@@ -552,14 +565,13 @@ wsdisplay_emul_attach(device_t parent, device_t self, void *aux)
 	     ap->accessops, ap->accesscookie);
 
 	if (ap->console) {
-		int maj;
-
-		/* locate the major number */
-		maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
-
 		cn_tab->cn_dev = makedev(maj, WSDISPLAYMINOR(device_unit(self),
 					 0));
 	}
+
+	/* Setup the control and stat device nodes */
+	device_register_name(makedev(maj, 254), self, true, DEV_TTY, "ttyEstat");
+	device_register_name(makedev(maj, 255), self, true, DEV_TTY, "ttyEcfg");
 }
 
 /* Print function (for parent devices). */

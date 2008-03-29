@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_vnops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $ */
+/* 	$NetBSD: devfs_vnops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_vnops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_vnops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -305,7 +305,7 @@ devfs_create(void *v)
 
 	KASSERT(vap->va_type == VREG || vap->va_type == VSOCK);
 
-	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL, -1);
 }
 
 /* --------------------------------------------------------------------- */
@@ -1047,7 +1047,7 @@ devfs_mkdir(void *v)
 
 	KASSERT(vap->va_type == VDIR);
 
-	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL);
+	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL, -1);
 }
 
 /* --------------------------------------------------------------------- */
@@ -1138,7 +1138,7 @@ devfs_symlink(void *v)
 
 	KASSERT(vap->va_type == VLNK);
 
-	return devfs_alloc_file(dvp, vpp, vap, cnp, target);
+	return devfs_alloc_file(dvp, vpp, vap, cnp, target, -1);
 }
 
 /* --------------------------------------------------------------------- */
