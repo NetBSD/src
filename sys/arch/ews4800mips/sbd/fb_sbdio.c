@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.5 2007/03/17 13:51:46 msaitoh Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.6 2008/03/29 08:14:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.5 2007/03/17 13:51:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.6 2008/03/29 08:14:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,16 +66,16 @@ __KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.5 2007/03/17 13:51:46 msaitoh Exp $")
 
 
 struct fb_softc {
-	struct device sc_dv;
+	device_t sc_dev;
 	struct rasops_info *sc_ri;
 	struct ga *sc_ga;
 	int sc_nscreens;
 };
 
-int fb_sbdio_match(struct device *, struct cfdata *, void *);
-void fb_sbdio_attach(struct device *, struct device *, void *);
+int fb_sbdio_match(device_t, cfdata_t, void *);
+void fb_sbdio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(fb_sbdio, sizeof(struct fb_softc),
+CFATTACH_DECL_NEW(fb_sbdio, sizeof(struct fb_softc),
     fb_sbdio_match, fb_sbdio_attach, NULL, NULL);
 
 int _fb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
@@ -123,7 +123,7 @@ static paddr_t fb_consaddr;
 
 
 int
-fb_sbdio_match(struct device *parent, struct cfdata *match, void *aux)
+fb_sbdio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbdio_attach_args *sa = aux;
 
@@ -131,17 +131,18 @@ fb_sbdio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-fb_sbdio_attach(struct device *parent, struct device *self, void *aux)
+fb_sbdio_attach(device_t parent, device_t self, void *aux)
 {
+	struct fb_softc *sc = device_private(self);
 	struct sbdio_attach_args *sa = aux;
 	struct wsemuldisplaydev_attach_args wa;
-	struct fb_softc *sc = (void *)self;
 	struct rasops_info *ri;
 	struct ga *ga;
 	vaddr_t memva, regva;
 	int console;
 
-	printf(" at %p, %p\n", (void *)sa->sa_addr1, (void *)sa->sa_addr2);
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	console = (sa->sa_addr1 == fb_consaddr);
 	if (console) {
