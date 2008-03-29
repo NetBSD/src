@@ -1,4 +1,4 @@
-/* $NetBSD: mkclock_pnpbus.c,v 1.3 2007/04/29 20:23:35 msaitoh Exp $ */
+/* $NetBSD: mkclock_pnpbus.c,v 1.4 2008/03/29 06:16:54 tsutsui Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_pnpbus.c,v 1.3 2007/04/29 20:23:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_pnpbus.c,v 1.4 2008/03/29 06:16:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,12 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock_pnpbus.c,v 1.3 2007/04/29 20:23:35 msaitoh E
 
 extern int prep_clock_mk48txx;
 
-static int	mkclock_pnpbus_probe(struct device *, struct cfdata *, void *);
+static int	mkclock_pnpbus_probe(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(mkclock_pnpbus, 0, mkclock_pnpbus_probe, NULL, NULL, NULL);
+CFATTACH_DECL_NEW(mkclock_pnpbus, 0, mkclock_pnpbus_probe, NULL, NULL, NULL);
 
 static int
-mkclock_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
+mkclock_pnpbus_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pnpbus_dev_attach_args *pna = aux;
 
