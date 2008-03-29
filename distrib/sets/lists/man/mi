@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1061 2008/03/25 20:04:33 reed Exp $
+# $NetBSD: mi,v 1.1062 2008/03/29 01:24:30 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3634,6 +3634,7 @@
 ./usr/share/man/man4/ld.4			man-sys-man		.man
 ./usr/share/man/man4/le.4			man-sys-man		.man
 ./usr/share/man/man4/lkm.4			man-sys-man		.man
+./usr/share/man/man4/lii.4			man-sys-man		.man
 ./usr/share/man/man4/lm.4			man-sys-man		.man
 ./usr/share/man/man4/lmc.4			man-sys-man		.man
 ./usr/share/man/man4/lmtemp.4			man-sys-man		.man
