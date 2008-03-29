@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.23 2007/11/26 23:29:36 ad Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.24 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.23 2007/11/26 23:29:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.24 2008/03/29 19:15:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,10 +108,10 @@ extern void (*zs_delay)(void);
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
-	volatile u_char pad1[3];
-	volatile u_char zc_csr;		/* ctrl,status, and indirect access */
-	volatile u_char pad2[3];
-	volatile u_char zc_data;	/* data */
+	volatile uint8_t pad1[3];
+	volatile uint8_t zc_csr;	/* ctrl,status, and indirect access */
+	volatile uint8_t pad2[3];
+	volatile uint8_t zc_data;	/* data */
 };
 
 static void *zsaddr[NZS];
@@ -122,7 +122,7 @@ static int zs_hwflags[NZS][2];
 /* Default speed for all channels */
 static int zs_defspeed = 9600;
 
-static u_char zs_init_reg[16] = {
+static uint8_t zs_init_reg[16] = {
 	0,	/* 0: CMD (reset, etc.) */
 	0,	/* 1: No interrupts yet. */
 	0,	/* IVECT */
@@ -159,9 +159,9 @@ zs_get_chan_addr(int zs_unit, int channel)
 	if (addr == NULL)
 		return NULL;
 	if (channel == 0) {
-		zc = (void *)((char *)addr + PORTA_OFFSET);
+		zc = (void *)((uint8_t *)addr + PORTA_OFFSET);
 	} else {
-		zc = (void *)((char *)addr + PORTB_OFFSET);
+		zc = (void *)((uint8_t *)addr + PORTB_OFFSET);
 	}
 	return zc;
 }
@@ -178,17 +178,17 @@ zs_ap_delay(void)
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-int zs_ap_match(struct device *, struct cfdata *, void *);
-void zs_ap_attach(struct device *, struct device *, void *);
+int zs_ap_match(device_t, cfdata_t, void *);
+void zs_ap_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zsc_ap, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zsc_ap, sizeof(struct zsc_softc),
     zs_ap_match, zs_ap_attach, NULL, NULL);
 
 /*
  * Is the zs chip present?
  */
 int
-zs_ap_match(struct device *parent, struct cfdata *cf, void *aux)
+zs_ap_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -205,9 +205,9 @@ zs_ap_match(struct device *parent, struct cfdata *cf, void *aux)
  * not set up the keyboard as ttya, etc.
  */
 void
-zs_ap_attach(struct device *parent, struct device *self, void *aux)
+zs_ap_attach(device_t parent, device_t self, void *aux)
 {
-	struct zsc_softc *zsc = (void *)self;
+	struct zsc_softc *zsc = device_private(self);
 	struct apbus_attach_args *apa = aux;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
@@ -222,10 +222,11 @@ zs_ap_attach(struct device *parent, struct device *self, void *aux)
 	volatile u_int *esccregs = (void *)(apa->apa_hwbase + ESCC_REG);
 	static int didintr;
 
-	zs_unit = device_unit(&zsc->zsc_dev);
+	zsc->zsc_dev = self;
+	zs_unit = device_unit(self);
 	zsaddr[zs_unit] = (void *)apa->apa_hwbase;
 
-	printf(" slot%d addr 0x%lx\n", apa->apa_slotno, apa->apa_hwbase);
+	aprint_normal(" slot%d addr 0x%lx\n", apa->apa_slotno, apa->apa_hwbase);
 
 	txAfifo[DMA_MODE_REG] = rxAfifo[DMA_MODE_REG] = DMA_EXTRDY;
 	txBfifo[DMA_MODE_REG] = rxBfifo[DMA_MODE_REG] = DMA_EXTRDY;
@@ -292,8 +293,8 @@ zs_ap_attach(struct device *parent, struct device *self, void *aux)
 		 */
 		if (!config_found(self, (void *)&zsc_args, zs_print)) {
 			/* No sub-driver.  Just reset it. */
-			u_char reset = (channel == 0) ?
-				ZSWR9_A_RESET : ZSWR9_B_RESET;
+			uint8_t reset = (channel == 0) ?
+			    ZSWR9_A_RESET : ZSWR9_B_RESET;
 			s = splhigh();
 			zs_write_reg(cs, 9, reset);
 			splx(s);
@@ -359,7 +360,8 @@ int
 zs_getc(void *arg)
 {
 	volatile struct zschan *zc = arg;
-	int s, c, rr0;
+	int s, c;
+	uint8_t rr0;
 
 	s = splhigh();
 	/* Wait for a character to arrive. */
@@ -386,7 +388,8 @@ void
 zs_putc(void *arg, int c)
 {
 	volatile struct zschan *zc = arg;
-	int s, rr0;
+	int s;
+	uint8_t rr0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */

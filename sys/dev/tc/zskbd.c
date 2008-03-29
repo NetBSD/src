@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.15 2007/03/04 06:02:47 christos Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.16 2008/03/29 19:15:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.15 2007/03/04 06:02:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zskbd.c,v 1.16 2008/03/29 19:15:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ struct zskbd_internal {
 static struct zskbd_internal zskbd_console_internal;
 
 struct zskbd_softc {
-	struct device zskbd_dev;	/* required first: base device */
+	device_t zskbd_dev;	/* required first: base device */
 
 	struct zskbd_internal *sc_itl;
 
@@ -120,10 +120,10 @@ static struct zsops zsops_zskbd;
 
 static void	zskbd_input(struct zskbd_softc *, int);
 
-static int	zskbd_match(struct device *, struct cfdata *, void *);
-static void	zskbd_attach(struct device *, struct device *, void *);
+static int	zskbd_match(device_t, cfdata_t, void *);
+static void	zskbd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zskbd, sizeof(struct zskbd_softc),
+CFATTACH_DECL_NEW(zskbd, sizeof(struct zskbd_softc),
     zskbd_match, zskbd_attach, NULL, NULL);
 
 static int	zskbd_enable(void *, int);
@@ -161,7 +161,7 @@ int zskbd_cnattach(struct zs_chanstate *);	/* EXPORTED */
  * kbd_match: how is this zs channel configured?
  */
 static int
-zskbd_match(struct device *parent, struct cfdata *cf, void *aux)
+zskbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -177,7 +177,7 @@ zskbd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-zskbd_attach(struct device *parent, struct device *self, void *aux)
+zskbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct zsc_softc *zsc = device_private(parent);
 	struct zskbd_softc *zskbd = device_private(self);
@@ -186,6 +186,8 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	struct zskbd_internal *zsi;
 	struct wskbddev_attach_args a;
 	int s, isconsole;
+
+	zskbd->zskbd_dev = self;
 
 	cs = zsc->zsc_cs[args->channel];
 	cs->cs_private = zskbd;
@@ -204,7 +206,7 @@ zskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 	zskbd->sc_itl = zsi;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Initialize the speed, etc. */
 	s = splzs();
@@ -293,7 +295,7 @@ zskbd_cnpollc(void *v, int on)
 static void
 zskbd_set_leds(void *v, int leds)
 {
-	struct zskbd_softc *sc = (struct zskbd_softc *)v;
+	struct zskbd_softc *sc = v;
 
 	lk201_set_leds(&sc->sc_itl->zsi_ks, leds);
 }
@@ -301,7 +303,7 @@ zskbd_set_leds(void *v, int leds)
 static int
 zskbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct zskbd_softc *sc = (struct zskbd_softc *)v;
+	struct zskbd_softc *sc = v;
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
@@ -465,7 +467,7 @@ zskbd_softint(struct zs_chanstate *cs)
 		if (ring_data & (ZSRR1_FE | ZSRR1_PE)) {
 #if 0 /* XXX */
 			log(LOG_ERR, "%s: input error (0x%x)\n",
-				zskbd->zskbd_dev.dv_xname, ring_data);
+			    device_xname(zskbd->zskbd_dev), ring_data);
 			c = -1;	/* signal input error */
 #endif
 		}
@@ -476,7 +478,7 @@ zskbd_softint(struct zs_chanstate *cs)
 	if (intr_flags & INTR_RX_OVERRUN) {
 #if 0 /* XXX */
 		log(LOG_ERR, "%s: input overrun\n",
-		    zskbd->zskbd_dev.dv_xname);
+		    device_xname(zskbd->zskbd_dev));
 #endif
 	}
 	zskbd->zskbd_rbget = get;
@@ -487,7 +489,7 @@ zskbd_softint(struct zs_chanstate *cs)
 		 */
 #if 0
 		log(LOG_ERR, "%s: transmit interrupt?\n",
-		    zskbd->zskbd_dev.dv_xname);
+		    device_xname(zskbd->zskbd_dev));
 #endif
 	}
 
@@ -496,7 +498,7 @@ zskbd_softint(struct zs_chanstate *cs)
 		 * Status line change.  (Not expected.)
 		 */
 		log(LOG_ERR, "%s: status interrupt?\n",
-		    zskbd->zskbd_dev.dv_xname);
+		    device_xname(zskbd->zskbd_dev));
 		cs->cs_rr0_delta = 0;
 	}
 

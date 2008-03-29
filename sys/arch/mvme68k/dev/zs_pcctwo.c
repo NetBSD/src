@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.12 2008/01/12 09:54:28 tsutsui Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.13 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcctwo.c,v 1.12 2008/01/12 09:54:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcctwo.c,v 1.13 2008/03/29 19:15:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs_pcctwo.c,v 1.12 2008/01/12 09:54:28 tsutsui Exp $
 #include "ioconf.h"
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_pcctwo_match(struct device *, struct cfdata *, void *);
-static void	zsc_pcctwo_attach(struct device *, struct device *, void *);
+static int	zsc_pcctwo_match(device_t, cfdata_t, void *);
+static void	zsc_pcctwo_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zsc_pcctwo, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zsc_pcctwo, sizeof(struct zsc_softc),
     zsc_pcctwo_match, zsc_pcctwo_attach, NULL, NULL);
 
 cons_decl(zsc_pcctwo);
@@ -91,7 +91,7 @@ cons_decl(zsc_pcctwo);
  * Is the zs chip present?
  */
 static int
-zsc_pcctwo_match(struct device *parent, struct cfdata *cf, void *aux)
+zsc_pcctwo_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcctwo_attach_args *pa = aux;
 
@@ -109,14 +109,16 @@ zsc_pcctwo_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a found zs.
  */
 static void
-zsc_pcctwo_attach(struct device *parent, struct device *self, void *aux)
+zsc_pcctwo_attach(device_t parent, device_t self, void *aux)
 {
-	struct zsc_softc *zsc = (void *)self;
+	struct zsc_softc *zsc = device_private(self);
 	struct pcctwo_attach_args *pa = aux;
 	struct zsdevice zs;
 	bus_space_handle_t bush;
 	int zs_level;
 	static int vector = MCCHIPV_ZS0;
+
+	zsc->zsc_dev = self;
 
 	/* Map the device's registers */
 	bus_space_map(pa->pa_bust, pa->pa_offset, 8, 0, &bush);
@@ -124,16 +126,16 @@ zsc_pcctwo_attach(struct device *parent, struct device *self, void *aux)
 	zs_level = pa->pa_ipl;
 
 	/* XXX: This is a gross hack. I need to bus-space zs.c ... */
-	zs.zs_chan_b.zc_csr = (volatile u_char *)bush + 1;
-	zs.zs_chan_b.zc_data = (volatile u_char *)bush + 3;
-	zs.zs_chan_a.zc_csr = (volatile u_char *)bush + 5;
-	zs.zs_chan_a.zc_data = (volatile u_char *)bush + 7;
+	zs.zs_chan_b.zc_csr = (volatile uint8_t *)bush + 1;
+	zs.zs_chan_b.zc_data = (volatile uint8_t *)bush + 3;
+	zs.zs_chan_a.zc_csr = (volatile uint8_t *)bush + 5;
+	zs.zs_chan_a.zc_data = (volatile uint8_t *)bush + 7;
 
 	/* Do common parts of SCC configuration. */
 	zs_config(zsc, &zs, vector + PCCTWO_VECBASE, PCLK_162);
 
 	evcnt_attach_dynamic(&zsc->zsc_evcnt, EVCNT_TYPE_INTR,
-	    pcctwointr_evcnt(zs_level), "rs232", zsc->zsc_dev.dv_xname);
+	    pcctwointr_evcnt(zs_level), "rs232", device_xname(zsc->zsc_dev));
 
 	/*
 	 * Now safe to install interrupt handlers.
@@ -179,10 +181,10 @@ zsc_pcctwocninit(struct consdev *cp)
 	    &bush);
 
 	/* XXX: This is a gross hack. I need to bus-space zs.c ... */
-	zs.zs_chan_b.zc_csr = (volatile u_char *)bush + 1;
-	zs.zs_chan_b.zc_data = (volatile u_char *)bush + 3;
-	zs.zs_chan_a.zc_csr = (volatile u_char *)bush + 5;
-	zs.zs_chan_a.zc_data = (volatile u_char *)bush + 7;
+	zs.zs_chan_b.zc_csr = (volatile uint8_t *)bush + 1;
+	zs.zs_chan_b.zc_data = (volatile uint8_t *)bush + 3;
+	zs.zs_chan_a.zc_csr = (volatile uint8_t *)bush + 5;
+	zs.zs_chan_a.zc_data = (volatile uint8_t *)bush + 7;
 
 	/* Do common parts of console init. */
 	zs_cnconfig(0, 0, &zs, PCLK_162);
