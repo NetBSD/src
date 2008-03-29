@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1125 2008/03/29 17:51:42 wiz Exp $
+#	$NetBSD: mi,v 1.1126 2008/03/29 19:58:37 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1249,6 +1249,7 @@
 ./usr/include/krb5/com_err.h			comp-krb5-include	kerberos
 ./usr/include/krb5/com_right.h			comp-krb5-include	kerberos
 ./usr/include/krb5/crmf_asn1.h			comp-krb5-include	kerberos
+./usr/include/krb5/der.h			comp-krb5-include	kerberos
 ./usr/include/krb5/digest_asn1.h		comp-krb5-include	kerberos
 ./usr/include/krb5/getarg.h			comp-krb5-include	kerberos
 ./usr/include/krb5/hdb-private.h		comp-obsolete		obsolete

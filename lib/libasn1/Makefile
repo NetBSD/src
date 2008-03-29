@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2008/03/22 08:37:26 mlelstv Exp $
+# $NetBSD: Makefile,v 1.30 2008/03/29 19:58:37 mlelstv Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -44,7 +44,8 @@ INCS=	\
 	pkcs9_asn1.h \
 	digest_asn1.h \
 	kx509_asn1.h \
-	asn1_err.h
+	asn1_err.h \
+	der.h
 
 INCSDIR= /usr/include/krb5
 
