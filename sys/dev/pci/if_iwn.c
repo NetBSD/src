@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.8 2008/03/29 09:36:29 blymn Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.9 2008/03/29 09:38:42 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.8 2008/03/29 09:36:29 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.9 2008/03/29 09:38:42 blymn Exp $");
 
 
 /*
@@ -1968,7 +1968,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	if (!noack && !IEEE80211_IS_MULTICAST(wh->i_addr1)){
 		flags |= IWN_TX_NEED_ACK;
 	}else if (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
-		flags |= htole32(IWN_TX_NEED_RTS | IWN_TX_FULL_TXOP);
+		flags |= (IWN_TX_NEED_RTS | IWN_TX_FULL_TXOP);
 
 	tx->id = IEEE80211_IS_MULTICAST(wh->i_addr1) ? IWN_ID_BROADCAST : IWN_ID_BSS;
 
