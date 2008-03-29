@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 2007/03/05 16:39:21 he Exp $	*/
+/*	$NetBSD: mem.c,v 1.10.40.1 2008/03/29 18:47:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2007/03/05 16:39:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.40.1 2008/03/29 18:47:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -102,6 +102,21 @@ const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
 	nostop, notty, nopoll, mmmmap, nokqfilter,
 };
+
+void
+mem_init(void)
+{
+	int cmaj = cdevsw_lookup_major(&mem_cdevsw);
+
+	device_register_name(makedev(cmaj, DEV_MEM), NULL, 
+	    true, DEV_OTHER, "mem");
+	device_register_name(makedev(cmaj, DEV_KMEM), NULL,
+	    true, DEV_OTHER, "kmem");
+	device_register_name(makedev(cmaj, DEV_NULL), NULL,
+	    true, DEV_OTHER, "null");
+	device_register_name(makedev(cmaj, DEV_ZERO), NULL,
+	    true, DEV_OTHER, "zero");
+}
 
 /*ARGSUSED*/
 int
