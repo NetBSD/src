@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_sbdio.c,v 1.5 2008/03/29 07:35:04 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_sbdio.c,v 1.6 2008/03/29 08:14:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_sbdio.c,v 1.5 2008/03/29 07:35:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_sbdio.c,v 1.6 2008/03/29 08:14:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,8 +84,6 @@ mkclock_sbdio_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 
 	sc->sc_dev = self;
-	aprint_normal(" at 0x%p", (void *)sa->sa_addr1);
-
 	switch (sa->sa_flags) {
 	case 0x0000:
 		sc->sc_model = "mk48t08";
