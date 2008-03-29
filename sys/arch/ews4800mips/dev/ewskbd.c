@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.6 2007/10/17 19:54:21 garbled Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.7 2008/03/29 08:14:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 Izumi Tsutsui
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.6 2007/10/17 19:54:21 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.7 2008/03/29 08:14:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -75,7 +75,7 @@ int ewskbd_debug = 0;
 #endif
 
 struct ewskbd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct ewskbd_devconfig *sc_dc;
 };
 
@@ -105,8 +105,8 @@ struct ewskbd_devconfig {
 	int enabled;
 };
 
-static int  ewskbd_zsc_match(struct device *, struct cfdata *, void *);
-static void ewskbd_zsc_attach(struct device *, struct device *, void *);
+static int  ewskbd_zsc_match(device_t, cfdata_t, void *);
+static void ewskbd_zsc_attach(device_t, device_t, void *);
 static int  ewskbd_zsc_init(struct zs_chanstate *);
 static void ewskbd_zsc_rxint(struct zs_chanstate *);
 static void ewskbd_zsc_stint(struct zs_chanstate *, int);
@@ -125,7 +125,7 @@ static void ewskbd_zsc_wskbd_getc(void *, u_int *, int *);
 static void ewskbd_wskbd_pollc(void *, int);
 static void ewskbd_wskbd_bell(void *, u_int, u_int, u_int);
 
-CFATTACH_DECL(ewskbd_zsc, sizeof(struct ewskbd_softc),
+CFATTACH_DECL_NEW(ewskbd_zsc, sizeof(struct ewskbd_softc),
     ewskbd_zsc_match, ewskbd_zsc_attach, NULL, NULL);
 
 static struct zsops ewskbd_zsops = {
@@ -157,7 +157,7 @@ static struct zs_chanstate conschan;
 static int ewskbd_is_console;
 
 static int
-ewskbd_zsc_match(struct device *parent, struct cfdata *cf, void *aux)
+ewskbd_zsc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zsc_attach_args *zsc_args = aux;
 	struct zsc_softc *zsc = (void *)parent;
@@ -175,14 +175,15 @@ static void
 ewskbd_zsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ewskbd_softc *sc;
-	struct zs_chanstate *cs;
 	struct zsc_softc *zsc;
+	struct zs_chanstate *cs;
 	struct zsc_attach_args *zsc_args;
 	struct wskbddev_attach_args wskaa;
 	int channel;
 
+	sc = device_private(self);
 	zsc = (void *)parent;
-	sc = (void *)self;
+	sc->sc_dev = self;
 	zsc_args = aux;
 
 	/* Establish ourself with the MD z8530 driver */
