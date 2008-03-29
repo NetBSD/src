@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.17 2007/06/07 11:32:46 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.18 2008/03/29 09:40:41 ragge Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -26,6 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/param.h>	/* for MAXPATHLEN */
 
 #include "file.h"
 #include "magic.h"
@@ -35,7 +36,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/param.h>	/* for MAXPATHLEN */
 #include <sys/stat.h>
 #ifdef QUICK
 #include <sys/mman.h>
@@ -68,7 +68,7 @@
 #if 0
 FILE_RCSID("@(#)$File: magic.c,v 1.41 2007/03/26 17:59:50 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.17 2007/06/07 11:32:46 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.18 2008/03/29 09:40:41 ragge Exp $");
 #endif
 #endif	/* lint */
 
