@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.119 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.120 2008/03/29 18:49:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.119 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.120 2008/03/29 18:49:13 skrll Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -743,14 +743,12 @@ uvm_swapout_threads(void)
 static void
 uvm_swapout(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-
 	KASSERT(mutex_owned(&l->l_swaplock));
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
 		printf("swapout: lid %d.%d(%s)@%p, stat %x pri %d free %d\n",
-	   p->p_pid, l->l_lid, p->p_comm, l->l_addr, l->l_stat,
+	   l->l_proc->p_pid, l->l_lid, p->p_comm, l->l_addr, l->l_stat,
 	   l->l_slptime, uvmexp.free);
 #endif
 
