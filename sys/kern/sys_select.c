@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.2 2008/03/27 18:30:15 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.3 2008/03/29 14:08:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.2 2008/03/27 18:30:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.3 2008/03/29 14:08:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,14 +663,14 @@ selnotify(struct selinfo *sip, int events, long knhint)
 		 * inform all potentially interested waiters.
 		 */
 		sip->sel_collision = 0;
-		while (__predict_false(mask != 0)) {
+		do {
 			index = ffs(mask) - 1;
 			mask &= ~(1 << index);
 			sc = cpu_lookup_byindex(index)->ci_data.cpu_selcpu;
 			mutex_spin_enter(&sc->sc_lock);
 			sc->sc_ncoll++;
 			sleepq_wake(&sc->sc_sleepq, sc, (u_int)-1);
-		}
+		} while (__predict_false(mask != 0));
 	}
 }
 
