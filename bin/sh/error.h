@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.16 2003/08/07 09:05:30 agc Exp $	*/
+/*	$NetBSD: error.h,v 1.17 2008/03/29 09:58:00 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -88,11 +88,13 @@ extern volatile int intpending;
 #define CLEAR_PENDING_INT intpending = 0
 #define int_pending() intpending
 
+#if ! defined(SHELL_BUILTIN)
 void exraise(int) __attribute__((__noreturn__));
 void onint(void);
 void error(const char *, ...) __attribute__((__noreturn__));
 void exerror(int, const char *, ...) __attribute__((__noreturn__));
 const char *errmsg(int, int);
+#endif /* ! SHELL_BUILTIN */
 
 void sh_err(int, const char *, ...) __attribute__((__noreturn__));
 void sh_verr(int, const char *, va_list) __attribute__((__noreturn__));
