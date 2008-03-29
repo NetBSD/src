@@ -1,4 +1,4 @@
-/*	$NetBSD: ahareg.h,v 1.12 2005/12/11 12:21:25 christos Exp $	*/
+/*	$NetBSD: ahareg.h,v 1.13 2008/03/29 17:27:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-99 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ typedef u_int8_t physlen[3];
 #define AHA_STAT_IDLE		0x10	/* Host Adapter Idle */
 #define AHA_STAT_CDF		0x08	/* cmd/data out port full */
 #define AHA_STAT_DF		0x04	/* Data in port full */
+#define AHA_STAT_RSVD		0x02	/* Unused */
 #define AHA_STAT_INVDCMD	0x01	/* Invalid command */
 
 /*
@@ -112,6 +113,7 @@ typedef u_int8_t physlen[3];
  * AHA_INTR bits
  */
 #define AHA_INTR_ANYINTR	0x80	/* Any interrupt */
+#define AHA_INTR_RSVD		0x70	/* unused bits */
 #define AHA_INTR_SCRD		0x08	/* SCSI reset detected */
 #define AHA_INTR_HACC		0x04	/* Command complete */
 #define AHA_INTR_MBOA		0x02	/* MBX out empty */
