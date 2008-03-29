@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.18 2007/10/19 12:00:23 ad Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.19 2008/03/29 17:36:45 ad Exp $	*/
 
 /*
  *
@@ -32,9 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.18 2007/10/19 12:00:23 ad Exp $");
-
-#undef	TCICISADEBUG
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.19 2008/03/29 17:36:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +176,7 @@ tcic_isa_probe(struct device *parent, struct cfdata *match,
 		return (0);
 	}
 
-	DPRINTF(("tcic probing 0x%03x\n", ia->ia_iobase));
+	DPRINTF(("tcic probing 0x%03x\n", ia->ia_iomem[0].ir_addr));
 	found = 0;
 
 	/*
