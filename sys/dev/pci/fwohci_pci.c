@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.29 2008/02/29 06:13:39 dyoung Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.30 2008/03/29 16:37:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.29 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.30 2008/03/29 16:37:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 	if (!pmf_device_register(self, fwohci_pci_suspend, fwohci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (fwohci_init(&(psc->psc_sc), &(psc->psc_sc.fc._dev)) != 0) {
+	if (fwohci_init(&(psc->psc_sc), psc->psc_sc.fc.dev) != 0) {
 		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);
 		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
 		    psc->psc_sc.bssize);
