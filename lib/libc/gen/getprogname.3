@@ -1,4 +1,4 @@
-.\" $NetBSD: getprogname.3,v 1.6 2003/07/26 19:24:42 salo Exp $
+.\" $NetBSD: getprogname.3,v 1.7 2008/03/29 16:51:40 dholland Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd February 11, 2001
+.Dd March 29, 2008
 .Dt GETPROGNAME 3
 .Os
 .Sh NAME
@@ -109,3 +109,8 @@ and
 .Nm setprogname
 function calls appeared in
 .Nx 1.6 .
+.Sh RESTRICTIONS
+The string returned by
+.Fn getprogname
+is supplied by the invoking process and should not be trusted by
+setuid or setgid programs.
