@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.4 2008/03/28 19:05:50 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.5 2008/03/29 05:42:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.4 2008/03/28 19:05:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.5 2008/03/29 05:42:46 tsutsui Exp $");
 
 /*
  * Clock driver for 'rtc' - mc146818 driver.
@@ -136,6 +136,7 @@ rtc_ebus_attach(device_t parent, device_t self, void *aux)
 	char *model;
 	int sz;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ea->ea_bustag;
 
 	/* hard code to 8K? */

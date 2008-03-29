@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.16 2008/03/28 20:26:13 tsutsui Exp $ */
+/*	$NetBSD: oclock.c,v 1.17 2008/03/29 05:47:53 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.16 2008/03/28 20:26:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.17 2008/03/29 05:47:53 tsutsui Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -130,6 +130,7 @@ oclockattach(device_t parent, device_t self, void *aux)
 
 	oldclk = 1;  /* we've got an oldie! */
 
+	sc->sc_dev = self;
 	sc->sc_bst = oba->oba_bustag;
 	if (bus_space_map(sc->sc_bst,
 			  oba->oba_paddr,

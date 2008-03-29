@@ -1,4 +1,4 @@
-/*	$NetBSD: tsrtc.c,v 1.4 2008/03/28 19:05:49 tsutsui Exp $	*/
+/*	$NetBSD: tsrtc.c,v 1.5 2008/03/29 05:42:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.4 2008/03/28 19:05:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.5 2008/03/29 05:42:45 tsutsui Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -111,6 +111,7 @@ tsrtc_attach(device_t parent, device_t self, void *aux)
 	struct tsrtc_softc *sc = device_private(self);
 	struct tspld_attach_args *aa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = aa->ta_iot;
 	if (bus_space_map(sc->sc_iot, TS7XXX_IO8_HWBASE + TS7XXX_RTCIDX,
 	    1, 0, &sc->sc_idxh))

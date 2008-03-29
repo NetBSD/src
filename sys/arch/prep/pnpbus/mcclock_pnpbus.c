@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_pnpbus.c,v 1.5 2008/03/28 19:05:49 tsutsui Exp $ */
+/* $NetBSD: mcclock_pnpbus.c,v 1.6 2008/03/29 05:42:46 tsutsui Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.5 2008/03/28 19:05:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.6 2008/03/29 05:42:46 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,6 +110,7 @@ mcclock_pnpbus_attach(device_t parent, device_t self, void *aux)
 	struct mc146818_softc *sc = device_private(self);
 	struct pnpbus_dev_attach_args *pna = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bst = pna->pna_iot;
 	if (pnpbus_io_map(&pna->pna_res, 0, &sc->sc_bst, &sc->sc_bsh)) {
 		/* XXX should we panic instead? */

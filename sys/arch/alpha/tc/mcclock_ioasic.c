@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.14 2008/03/28 19:05:49 tsutsui Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.15 2008/03/29 05:42:45 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.14 2008/03/28 19:05:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.15 2008/03/29 05:42:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,6 +88,7 @@ mcclock_ioasic_attach(device_t parent, device_t self, void *aux)
 	/* XXX no bus_space(9) for TURBOchannel yet */
 	isc->sc_dp = (void *)ioasicdev->iada_addr;
 
+	sc->sc_dev = self;
 	sc->sc_mcread = mcclock_ioasic_read;
 	sc->sc_mcwrite = mcclock_ioasic_write;
 

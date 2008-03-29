@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.4 2008/03/28 19:05:49 tsutsui Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.5 2008/03/29 05:42:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.4 2008/03/28 19:05:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.5 2008/03/29 05:42:46 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,7 @@ rtc_attach(device_t parent, device_t self, void *aux)
 	struct mc146818_softc *sc = device_private(self);
 	struct mainbus_attach_args *maa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bst = maa->mb_bt;
 	if (bus_space_map(sc->sc_bst, maa->mb_addr, PMPPC_RTC_SIZE, 0,
 			  &sc->sc_bsh)) {

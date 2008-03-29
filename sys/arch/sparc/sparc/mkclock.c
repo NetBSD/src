@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.16 2008/03/28 20:26:13 tsutsui Exp $ */
+/*	$NetBSD: mkclock.c,v 1.17 2008/03/29 05:47:53 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.16 2008/03/28 20:26:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.17 2008/03/29 05:47:53 tsutsui Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -148,6 +148,7 @@ clockattach_mainbus(device_t parent, device_t self, void *aux)
 	struct mk48txx_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ma->ma_bustag;
 
 	/*

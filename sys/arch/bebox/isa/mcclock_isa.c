@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.3 2008/03/28 19:05:49 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.4 2008/03/29 05:42:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,7 +117,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.3 2008/03/28 19:05:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4 2008/03/29 05:42:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,7 @@ mcclock_isa_attach(device_t parent, device_t self, void *aux)
 	struct mc146818_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ia->ia_iot;
 	if (bus_space_map(sc->sc_bst, ia->ia_io[0].ir_addr,
 		ia->ia_io[0].ir_size, 0, &sc->sc_bsh)) {
