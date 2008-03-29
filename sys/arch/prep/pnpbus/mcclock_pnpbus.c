@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_pnpbus.c,v 1.7 2008/03/29 06:13:44 tsutsui Exp $ */
+/* $NetBSD: mcclock_pnpbus.c,v 1.8 2008/03/29 17:52:46 matt Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.7 2008/03/29 06:13:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.8 2008/03/29 17:52:46 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,7 +140,7 @@ ds1585_reboot(void)
 	if (!have_ds1585)
 		return;
 
-	sc = device_private(mcclock_cd.cd_devs[MCCLOCK_STD_DEV]);
+	sc = device_lookup_private(&mcclock_cd, MCCLOCK_STD_DEV);
 
 	/* monitors b0: 05,03,01  b1: 49, WIE=1 */
 
