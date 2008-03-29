@@ -1,8 +1,0 @@
-first stdout line for first-test
-second stdout line for first-test
-__atf_tc_separator__
-first stdout line for second-test
-second stdout line for second-test
-__atf_tc_separator__
-first stdout line for third-test
-second stdout line for third-test

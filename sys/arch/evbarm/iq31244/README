@@ -1,8 +1,0 @@
-$NetBSD: README,v 1.1 2003/05/14 21:41:34 thorpej Exp $
-
-The IQ31244 ("Red Canyon") is a reference board based around the
-i80321 I/O processor and i31244 S-ATA controller.
-
-To software, it is very similar to the IQ80321 eval board.  As such, we
-share almost all of the IQ80321 code, and name our functions in a way
-compatible with the IQ80321 code.
