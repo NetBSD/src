@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.16 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.16.2.1 2008/03/29 20:47:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16 2008/03/21 21:55:00 ad Exp $");
 /*
  * System-wide limits and counter of AIO operations.
  */
-static u_int aio_listio_max = AIO_LISTIO_MAX;
+u_int aio_listio_max = AIO_LISTIO_MAX;
 static u_int aio_max = AIO_MAX;
 static u_int aio_jobs_count;
 
@@ -727,23 +727,17 @@ sys_aio_return(struct lwp *l, const struct sys_aio_return_args *uap, register_t 
 }
 
 int
-sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_t *retval)
+sys___aio_suspend50(struct lwp *l, const struct sys___aio_suspend50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(const struct aiocb *const[]) list;
 		syscallarg(int) nent;
 		syscallarg(const struct timespec *) timeout;
 	} */
-	struct proc *p = l->l_proc;
-	struct aioproc *aio;
-	struct aio_job *a_job;
-	struct aiocb **aiocbp_list;
+	struct aiocb **list;
 	struct timespec ts;
-	int i, error, nent, timo;
-
-	if (p->p_aio == NULL)
-		return EAGAIN;
-	aio = p->p_aio;
+	int error, nent;
 
 	nent = SCARG(uap, nent);
 	if (nent <= 0 || nent > aio_listio_max)
@@ -755,8 +749,33 @@ sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_
 		    sizeof(struct timespec));
 		if (error)
 			return error;
-		timo = mstohz((ts.tv_sec * 1000) + (ts.tv_nsec / 1000000));
-		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec > 0)
+	}
+	list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
+	error = copyin(SCARG(uap, list), list, nent * sizeof(struct aiocb));
+	if (error)
+		goto out;
+	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
+out:
+	kmem_free(list, nent * sizeof(struct aio_job));
+	return error;
+}
+
+int
+aio_suspend1(struct lwp *l, struct aiocb **aiocbp_list, int nent,
+    struct timespec *ts)
+{
+	struct proc *p = l->l_proc;
+	struct aioproc *aio;
+	struct aio_job *a_job;
+	int i, error, timo;
+
+	if (p->p_aio == NULL)
+		return EAGAIN;
+	aio = p->p_aio;
+
+	if (ts) {
+		timo = mstohz((ts->tv_sec * 1000) + (ts->tv_nsec / 1000000));
+		if (timo == 0 && ts->tv_sec == 0 && ts->tv_nsec > 0)
 			timo = 1;
 		if (timo <= 0)
 			return EAGAIN;
@@ -764,13 +783,6 @@ sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_
 		timo = 0;
 
 	/* Get the list from user-space */
-	aiocbp_list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
-	error = copyin(SCARG(uap, list), aiocbp_list,
-	    nent * sizeof(struct aiocb));
-	if (error) {
-		kmem_free(aiocbp_list, nent * sizeof(struct aio_job));
-		return error;
-	}
 
 	mutex_enter(&aio->aio_mtx);
 	for (;;) {
@@ -820,8 +832,6 @@ sys_aio_suspend(struct lwp *l, const struct sys_aio_suspend_args *uap, register_
 		}
 	}
 	mutex_exit(&aio->aio_mtx);
-
-	kmem_free(aiocbp_list, nent * sizeof(struct aio_job));
 	return error;
 }
 

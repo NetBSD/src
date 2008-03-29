@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.48 2008/01/30 11:47:02 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.48.8.1 2008/03/29 20:47:01 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48 2008/01/30 11:47:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48.8.1 2008/03/29 20:47:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,11 +424,11 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	calcru(p, NULL, NULL, NULL, &rt);
 
 	len = snprintf(bf, LBFSZ,
-	    "%d (%s) %c %d %d %d %d %d "
+	    "%d (%s) %c %d %d %d %lld %d "
 	    "%u "
 	    "%lu %lu %lu %lu %lu %lu %lu %lu "
 	    "%d %d %d "
-	    "%lu %lu %lu %lu %" PRIu64 " "
+	    "%lld %lld %lu %lu %" PRIu64 " "
 	    "%lu %lu %lu "
 	    "%u %u "
 	    "%u %u %u %u "
@@ -450,17 +450,17 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    cru->ru_minflt,
 	    ru->ru_majflt,
 	    cru->ru_majflt,
-	    USEC_2_TICKS(ru->ru_utime.tv_usec),
-	    USEC_2_TICKS(ru->ru_stime.tv_usec),
-	    USEC_2_TICKS(cru->ru_utime.tv_usec),
-	    USEC_2_TICKS(cru->ru_stime.tv_usec),
+	    (long)USEC_2_TICKS(ru->ru_utime.tv_usec),
+	    (long)USEC_2_TICKS(ru->ru_stime.tv_usec),
+	    (long)USEC_2_TICKS(cru->ru_utime.tv_usec),
+	    (long)USEC_2_TICKS(cru->ru_stime.tv_usec),
 
 	    l->l_priority,				/* XXX: priority */
 	    p->p_nice - 20,
 	    0,
 
-	    rt.tv_sec,
-	    p->p_stats->p_start.tv_sec,
+	    (long long)rt.tv_sec,
+	    (long long)p->p_stats->p_start.tv_sec,
 	    (unsigned long)(vm->vm_tsize + vm->vm_dsize + vm->vm_ssize), /* size */
 	    (unsigned long)(vm->vm_rssize),	/* resident */
 	    p->p_rlimit[RLIMIT_RSS].rlim_cur,
@@ -533,8 +533,8 @@ procfs_douptime(struct lwp *curl, struct proc *p,
 	microuptime(&runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
 	len = snprintf(bf, LBFSZ,
-	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
-	    runtime.tv_sec, runtime.tv_usec / 10000,
+	    "%lld.%02lu %" PRIu64 ".%02" PRIu64 "\n",
+	    (long long)runtime.tv_sec, (long)runtime.tv_usec / 10000,
 	    idle / hz, (((idle % hz) * 100) / hz) % 100);
 
 	if (len == 0)

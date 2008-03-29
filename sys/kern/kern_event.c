@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.53 2008/03/26 13:32:32 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.53.2.1 2008/03/29 20:47:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.53 2008/03/26 13:32:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.53.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -714,17 +714,17 @@ sys_kqueue(struct lwp *l, const void *v, register_t *retval)
 /*
  * kevent(2) system call.
  */
-static int
+int
 kevent_fetch_changes(void *private, const struct kevent *changelist,
-		     struct kevent *changes, size_t index, int n)
+    struct kevent *changes, size_t index, int n)
 {
 
 	return copyin(changelist + index, changes, n * sizeof(*changes));
 }
 
-static int
+int
 kevent_put_events(void *private, struct kevent *events,
-		  struct kevent *eventlist, size_t index, int n)
+    struct kevent *eventlist, size_t index, int n)
 {
 
 	return copyout(events, eventlist + index, n * sizeof(*events));
@@ -738,7 +738,8 @@ static const struct kevent_ops kevent_native_ops = {
 };
 
 int
-sys_kevent(struct lwp *l, const struct sys_kevent_args *uap, register_t *retval)
+sys___kevent50(struct lwp *l, const struct sys___kevent50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.183 2008/03/17 08:27:50 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.183.2.1 2008/03/29 20:47:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.183 2008/03/17 08:27:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.183.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1007,7 +1007,7 @@ setroot(struct device *bootdv, int bootpartition)
 
 		rootdevname = devsw_blk2name(major(rootdev));
 		if (rootdevname == NULL) {
-			printf("unknown device major 0x%x\n", rootdev);
+			printf("unknown device major 0x%llx\n", rootdev);
 			boothowto |= RB_ASKNAME;
 			goto top;
 		}
@@ -1017,7 +1017,7 @@ setroot(struct device *bootdv, int bootpartition)
 
 		rootdv = finddevice(buf);
 		if (rootdv == NULL) {
-			printf("device %s (0x%x) not configured\n",
+			printf("device %s (0x%llx) not configured\n",
 			    buf, rootdev);
 			boothowto |= RB_ASKNAME;
 			goto top;

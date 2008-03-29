@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.26 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.26.2.1 2008/03/29 20:46:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.26 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.26.2.1 2008/03/29 20:46:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +78,10 @@ cvtstat(struct stat13 *ost, const struct stat *st)
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
 	ost->st_rdev = st->st_rdev;
-	ost->st_atimespec = st->st_atimespec;
-	ost->st_mtimespec = st->st_mtimespec;
-	ost->st_ctimespec = st->st_ctimespec;
-	ost->st_birthtimespec = st->st_birthtimespec;
+	timespec_to_timespec50(&st->st_atimespec, &ost->st_atimespec);
+	timespec_to_timespec50(&st->st_mtimespec, &ost->st_mtimespec);
+	timespec_to_timespec50(&st->st_ctimespec, &ost->st_ctimespec);
+	timespec_to_timespec50(&st->st_birthtimespec, &ost->st_birthtimespec);
 	ost->st_size = st->st_size;
 	ost->st_blocks = st->st_blocks;
 	ost->st_blksize = st->st_blksize;

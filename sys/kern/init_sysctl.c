@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.125 2008/03/27 19:06:52 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.125.2.1 2008/03/29 20:47:00 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_compat_netbsd.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -76,6 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125 2008/03/27 19:06:52 ad Exp $")
 
 #ifdef COMPAT_NETBSD32
 #include <compat/netbsd32/netbsd32.h>
+#endif
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
 #endif
 
 #include <sys/cpu.h>
@@ -441,6 +445,17 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("System boot time"),
 		       NULL, 0, &boottime, sizeof(boottime),
 		       CTL_KERN, KERN_BOOTTIME, CTL_EOL);
+#ifdef COMPAT_50
+	{
+		extern struct timeval50 boottime50;
+		sysctl_createv(clog, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_STRUCT, "oboottime",
+			       SYSCTL_DESCR("System boot time"),
+			       NULL, 0, &boottime50, sizeof(boottime50),
+			       CTL_KERN, KERN_OBOOTTIME, CTL_EOL);
+	}
+#endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRING, "domainname",
@@ -2907,7 +2922,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 		ki->p_tsess = PTRTOUINT64(tp->t_session);
 	} else {
-		ki->p_tdev = NODEV;
+		ki->p_tdev = (uint32_t)NODEV;
 	}
 
 	mutex_enter(&p->p_smutex);

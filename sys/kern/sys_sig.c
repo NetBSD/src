@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.12 2008/02/19 12:20:02 yamt Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.12.8.1 2008/03/29 20:47:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.12 2008/02/19 12:20:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.12.8.1 2008/03/29 20:47:01 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -353,7 +353,8 @@ sys_setcontext(struct lwp *l, const struct sys_setcontext_args *uap, register_t 
  * it's own sigtimedwait() wrapper to DTRT WRT individual threads.
  */
 int
-sys___sigtimedwait(struct lwp *l, const struct sys___sigtimedwait_args *uap, register_t *retval)
+sys_____sigtimedwait50(struct lwp *l,
+    const struct sys_____sigtimedwait50_args *uap, register_t *retval)
 {
 
 	return __sigtimedwait1(l, uap, retval, copyout, copyin, copyout);
@@ -616,7 +617,8 @@ sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
 }
 
 int
-__sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, register_t *retval,
+__sigtimedwait1(struct lwp *l, const struct sys_____sigtimedwait50_args *uap,
+    register_t *retval,
     copyout_t put_info, copyin_t fetch_timeout, copyout_t put_timeout)
 {
 	/* {

@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.33 2008/03/22 18:04:42 ad Exp $	*/
+/*	$NetBSD: select.h,v 1.33.2.1 2008/03/29 20:47:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -64,10 +64,10 @@ int	pollsock(struct socket *, const struct timeval *, int);
 
 __BEGIN_DECLS
 int	pselect(int, fd_set * __restrict, fd_set * __restrict,
-	    fd_set * __restrict, const struct timespec * __restrict,
-	    const sigset_t * __restrict);
+    fd_set * __restrict, const struct timespec * __restrict,
+    const sigset_t * __restrict) __RENAME(__pselect50);
 int	select(int, fd_set * __restrict, fd_set * __restrict,
-	    fd_set * __restrict, struct timeval * __restrict);
+    fd_set * __restrict, struct timeval * __restrict) __RENAME(__select50);
 __END_DECLS
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.80 2008/02/26 13:37:09 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.80.2.1 2008/03/29 20:47:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -154,7 +154,7 @@ typedef	__daddr_t	daddr_t;	/* disk address */
 typedef	int64_t		daddr_t;	/* disk address */
 #endif
 
-typedef	uint32_t	dev_t;		/* device number */
+typedef	uint64_t	dev_t;		/* device number */
 typedef	uint32_t	fixpt_t;	/* fixed point number */
 
 #ifndef	gid_t

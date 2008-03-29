@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.22 2008/02/23 17:49:29 sborrill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.22.2.1 2008/03/29 20:46:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -307,7 +307,7 @@ parsebootconf(const char *conf)
 #endif
 
 	/* Clear bootconf structure */
-	bzero((void *)&bootconf, sizeof(bootconf));
+	(void)memset(&bootconf, 0, sizeof(bootconf));
 	
 	/* Set timeout to configured */
 	bootconf.timeout = boot_params.bp_timeout;

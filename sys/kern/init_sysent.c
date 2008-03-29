@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.220 2008/03/27 17:14:21 ad Exp $ */
+/* $NetBSD: init_sysent.c,v 1.220.2.1 2008/03/29 20:47:00 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.220 2008/03/27 17:14:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.220.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -121,8 +121,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_open },		/* 5 = open */
 	{ ns(struct sys_close_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_close },		/* 6 = close */
-	{ ns(struct sys_wait4_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_wait4 },		/* 7 = wait4 */
+	{ ns(struct compat_50_sys_wait4_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_wait4) },/* 7 = compat_50_wait4 */
 	{ ns(struct compat_43_sys_creat_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)compat_43(sys_creat) },/* 8 = compat_43_ocreat */
 	{ ns(struct sys_link_args), SYCALL_MPSAFE | 0,
@@ -135,8 +135,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_chdir },		/* 12 = chdir */
 	{ ns(struct sys_fchdir_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_fchdir },		/* 13 = fchdir */
-	{ ns(struct sys_mknod_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_mknod },		/* 14 = mknod */
+	{ ns(struct compat_50_sys_mknod_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_mknod) },/* 14 = compat_50_mknod */
 	{ ns(struct sys_chmod_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_chmod },		/* 15 = chmod */
 	{ ns(struct sys_chown_args), SYCALL_MPSAFE | 0,
@@ -288,14 +288,14 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_getpgrp },		/* 81 = getpgrp */
 	{ ns(struct sys_setpgid_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_setpgid },		/* 82 = setpgid */
-	{ ns(struct sys_setitimer_args), 0,
-	    (sy_call_t *)sys_setitimer },	/* 83 = setitimer */
+	{ ns(struct compat_50_sys_setitimer_args), 0,
+	    (sy_call_t *)compat_50(sys_setitimer) },/* 83 = compat_50_setitimer */
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    (sy_call_t *)compat_43(sys_wait) },	/* 84 = compat_43_owait */
 	{ ns(struct compat_12_sys_swapon_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)compat_12(sys_swapon) },/* 85 = compat_12_oswapon */
-	{ ns(struct sys_getitimer_args), 0,
-	    (sy_call_t *)sys_getitimer },	/* 86 = getitimer */
+	{ ns(struct compat_50_sys_getitimer_args), 0,
+	    (sy_call_t *)compat_50(sys_getitimer) },/* 86 = compat_50_getitimer */
 	{ ns(struct compat_43_sys_gethostname_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)compat_43(sys_gethostname) },/* 87 = compat_43_ogethostname */
 	{ ns(struct compat_43_sys_sethostname_args), SYCALL_MPSAFE | 0,
@@ -308,8 +308,8 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 91 = unimplemented getdopt */
 	{ ns(struct sys_fcntl_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_fcntl },		/* 92 = fcntl */
-	{ ns(struct sys_select_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_select },		/* 93 = select */
+	{ ns(struct compat_50_sys_select_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_select) },/* 93 = compat_50_select */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 94 = unimplemented setdopt */
 	{ ns(struct sys_fsync_args), SYCALL_MPSAFE | 0,
@@ -354,10 +354,10 @@ struct sysent sysent[] = {
 	    (sy_call_t *)compat_43(sys_sendmsg) },/* 114 = compat_43_osendmsg */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 115 = obsolete vtrace */
-	{ ns(struct sys_gettimeofday_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_gettimeofday },	/* 116 = gettimeofday */
-	{ ns(struct sys_getrusage_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_getrusage },	/* 117 = getrusage */
+	{ ns(struct compat_50_sys_gettimeofday_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_gettimeofday) },/* 116 = compat_50_gettimeofday */
+	{ ns(struct compat_50_sys_getrusage_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_getrusage) },/* 117 = compat_50_getrusage */
 	{ ns(struct sys_getsockopt_args), 0,
 	    (sy_call_t *)sys_getsockopt },	/* 118 = getsockopt */
 	{ 0, 0, 0,
@@ -366,8 +366,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_readv },		/* 120 = readv */
 	{ ns(struct sys_writev_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_writev },		/* 121 = writev */
-	{ ns(struct sys_settimeofday_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_settimeofday },	/* 122 = settimeofday */
+	{ ns(struct compat_50_sys_settimeofday_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_settimeofday) },/* 122 = compat_50_settimeofday */
 	{ ns(struct sys_fchown_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_fchown },		/* 123 = fchown */
 	{ ns(struct sys_fchmod_args), SYCALL_MPSAFE | 0,
@@ -398,12 +398,12 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_mkdir },		/* 136 = mkdir */
 	{ ns(struct sys_rmdir_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_rmdir },		/* 137 = rmdir */
-	{ ns(struct sys_utimes_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_utimes },		/* 138 = utimes */
+	{ ns(struct compat_50_sys_utimes_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_utimes) },/* 138 = compat_50_utimes */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 139 = obsolete 4.2 sigreturn */
-	{ ns(struct sys_adjtime_args), 0,
-	    (sy_call_t *)sys_adjtime },		/* 140 = adjtime */
+	{ ns(struct compat_50_sys_adjtime_args), 0,
+	    (sy_call_t *)compat_50(sys_adjtime) },/* 140 = compat_50_adjtime */
 	{ ns(struct compat_43_sys_getpeername_args), 0,
 	    (sy_call_t *)compat_43(sys_getpeername) },/* 141 = compat_43_ogetpeername */
 	{ 0, 0, SYCALL_MPSAFE | 0,
@@ -522,8 +522,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_lfs_markv },	/* 185 = lfs_markv */
 	{ ns(struct sys_lfs_segclean_args), 0,
 	    (sy_call_t *)sys_lfs_segclean },	/* 186 = lfs_segclean */
-	{ ns(struct sys_lfs_segwait_args), 0,
-	    (sy_call_t *)sys_lfs_segwait },	/* 187 = lfs_segwait */
+	{ ns(struct compat_50_sys_lfs_segwait_args), 0,
+	    (sy_call_t *)compat_50(sys_lfs_segwait) },/* 187 = compat_50_lfs_segwait */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 184 = excluded lfs_bmapv */
@@ -570,8 +570,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_munlock },		/* 204 = munlock */
 	{ ns(struct sys_undelete_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_undelete },	/* 205 = undelete */
-	{ ns(struct sys_futimes_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_futimes },		/* 206 = futimes */
+	{ ns(struct compat_50_sys_futimes_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_futimes) },/* 206 = compat_50_futimes */
 	{ ns(struct sys_getpgid_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_getpgid },		/* 207 = getpgid */
 	{ ns(struct sys_reboot_args), 0,
@@ -678,32 +678,32 @@ struct sysent sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 231 = excluded shmget */
 #endif
-	{ ns(struct sys_clock_gettime_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_clock_gettime },	/* 232 = clock_gettime */
-	{ ns(struct sys_clock_settime_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_clock_settime },	/* 233 = clock_settime */
-	{ ns(struct sys_clock_getres_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_clock_getres },	/* 234 = clock_getres */
+	{ ns(struct compat_50_sys_clock_gettime_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_clock_gettime) },/* 232 = compat_50_clock_gettime */
+	{ ns(struct compat_50_sys_clock_settime_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_clock_settime) },/* 233 = compat_50_clock_settime */
+	{ ns(struct compat_50_sys_clock_getres_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_clock_getres) },/* 234 = compat_50_clock_getres */
 	{ ns(struct sys_timer_create_args), 0,
 	    (sy_call_t *)sys_timer_create },	/* 235 = timer_create */
 	{ ns(struct sys_timer_delete_args), 0,
 	    (sy_call_t *)sys_timer_delete },	/* 236 = timer_delete */
-	{ ns(struct sys_timer_settime_args), 0,
-	    (sy_call_t *)sys_timer_settime },	/* 237 = timer_settime */
-	{ ns(struct sys_timer_gettime_args), 0,
-	    (sy_call_t *)sys_timer_gettime },	/* 238 = timer_gettime */
+	{ ns(struct compat_50_sys_timer_settime_args), 0,
+	    (sy_call_t *)compat_50(sys_timer_settime) },/* 237 = compat_50_timer_settime */
+	{ ns(struct compat_50_sys_timer_gettime_args), 0,
+	    (sy_call_t *)compat_50(sys_timer_gettime) },/* 238 = compat_50_timer_gettime */
 	{ ns(struct sys_timer_getoverrun_args), 0,
 	    (sy_call_t *)sys_timer_getoverrun },/* 239 = timer_getoverrun */
-	{ ns(struct sys_nanosleep_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_nanosleep },	/* 240 = nanosleep */
+	{ ns(struct compat_50_sys_nanosleep_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_nanosleep) },/* 240 = compat_50_nanosleep */
 	{ ns(struct sys_fdatasync_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_fdatasync },	/* 241 = fdatasync */
 	{ ns(struct sys_mlockall_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_mlockall },	/* 242 = mlockall */
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_munlockall },	/* 243 = munlockall */
-	{ ns(struct sys___sigtimedwait_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys___sigtimedwait },	/* 244 = __sigtimedwait */
+	{ ns(struct compat_50_sys___sigtimedwait_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys___sigtimedwait) },/* 244 = compat_50___sigtimedwait */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 245 = unimplemented sys_sigqueue */
 	{ ns(struct sys_modctl_args), SYCALL_MPSAFE | 0,
@@ -767,10 +767,10 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_mq_send },		/* 263 = mq_send */
 	{ ns(struct sys_mq_receive_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_mq_receive },	/* 264 = mq_receive */
-	{ ns(struct sys_mq_timedsend_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_mq_timedsend },	/* 265 = mq_timedsend */
-	{ ns(struct sys_mq_timedreceive_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_mq_timedreceive },	/* 266 = mq_timedreceive */
+	{ ns(struct compat_50_sys_mq_timedsend_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_mq_timedsend) },/* 265 = compat_50_mq_timedsend */
+	{ ns(struct compat_50_sys_mq_timedreceive_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_mq_timedreceive) },/* 266 = compat_50_mq_timedreceive */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 267 = unimplemented */
 	{ 0, 0, 0,
@@ -789,8 +789,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_lchmod },		/* 274 = lchmod */
 	{ ns(struct sys_lchown_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_lchown },		/* 275 = lchown */
-	{ ns(struct sys_lutimes_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_lutimes },		/* 276 = lutimes */
+	{ ns(struct compat_50_sys_lutimes_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_lutimes) },/* 276 = compat_50_lutimes */
 	{ ns(struct sys___msync13_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys___msync13 },	/* 277 = __msync13 */
 	{ ns(struct compat_30_sys___stat13_args), SYCALL_MPSAFE | 0,
@@ -840,22 +840,22 @@ struct sysent sysent[] = {
 	{ ns(struct compat_20_sys_fhstatfs_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)compat_20(sys_fhstatfs) },/* 300 = compat_20_fhstatfs */
 #if defined(SYSVSEM) || !defined(_KERNEL)
-	{ ns(struct sys_____semctl13_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_____semctl13 },	/* 301 = ____semctl13 */
+	{ ns(struct compat_50_sys_____semctl13_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_____semctl13) },/* 301 = compat_50_____semctl13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 301 = excluded ____semctl13 */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-	{ ns(struct sys___msgctl13_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys___msgctl13 },	/* 302 = __msgctl13 */
+	{ ns(struct compat_50_sys___msgctl13_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys___msgctl13) },/* 302 = compat_50___msgctl13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 302 = excluded __msgctl13 */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-	{ ns(struct sys___shmctl13_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys___shmctl13 },	/* 303 = __shmctl13 */
+	{ ns(struct compat_50_sys___shmctl13_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys___shmctl13) },/* 303 = compat_50___shmctl13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 303 = excluded __shmctl13 */
@@ -892,8 +892,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys__lwp_kill },	/* 318 = _lwp_kill */
 	{ ns(struct sys__lwp_detach_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys__lwp_detach },	/* 319 = _lwp_detach */
-	{ ns(struct sys__lwp_park_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys__lwp_park },	/* 320 = _lwp_park */
+	{ ns(struct compat_50_sys__lwp_park_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys__lwp_park) },/* 320 = compat_50__lwp_park */
 	{ ns(struct sys__lwp_unpark_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys__lwp_unpark },	/* 321 = _lwp_unpark */
 	{ ns(struct sys__lwp_unpark_all_args), SYCALL_MPSAFE | 0,
@@ -942,8 +942,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_rasctl },		/* 343 = rasctl */
 	{ 0, 0, SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_kqueue },		/* 344 = kqueue */
-	{ ns(struct sys_kevent_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_kevent },		/* 345 = kevent */
+	{ ns(struct compat_50_sys_kevent_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_kevent) },/* 345 = compat_50_kevent */
 	{ ns(struct sys__sched_setparam_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys__sched_setparam },	/* 346 = _sched_setparam */
 	{ ns(struct sys__sched_getparam_args), SYCALL_MPSAFE | 0,
@@ -998,10 +998,10 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_extattr_list_file },/* 371 = extattr_list_file */
 	{ ns(struct sys_extattr_list_link_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_extattr_list_link },/* 372 = extattr_list_link */
-	{ ns(struct sys_pselect_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_pselect },		/* 373 = pselect */
-	{ ns(struct sys_pollts_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_pollts },		/* 374 = pollts */
+	{ ns(struct compat_50_sys_pselect_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_pselect) },/* 373 = compat_50_pselect */
+	{ ns(struct compat_50_sys_pollts_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_pollts) },/* 374 = compat_50_pollts */
 	{ ns(struct sys_setxattr_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_setxattr },	/* 375 = setxattr */
 	{ ns(struct sys_lsetxattr_args), SYCALL_MPSAFE | 0,
@@ -1026,20 +1026,20 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_lremovexattr },	/* 385 = lremovexattr */
 	{ ns(struct sys_fremovexattr_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_fremovexattr },	/* 386 = fremovexattr */
-	{ ns(struct sys___stat30_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys___stat30 },	/* 387 = __stat30 */
-	{ ns(struct sys___fstat30_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys___fstat30 },	/* 388 = __fstat30 */
-	{ ns(struct sys___lstat30_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys___lstat30 },	/* 389 = __lstat30 */
+	{ ns(struct compat_50_sys___stat30_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys___stat30) },/* 387 = compat_50___stat30 */
+	{ ns(struct compat_50_sys___fstat30_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys___fstat30) },/* 388 = compat_50___fstat30 */
+	{ ns(struct compat_50_sys___lstat30_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys___lstat30) },/* 389 = compat_50___lstat30 */
 	{ ns(struct sys___getdents30_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys___getdents30 },	/* 390 = __getdents30 */
 	{ 0, 0, 0,
 	    (sy_call_t *)nullop },			/* 391 = ignored old posix_fadvise */
 	{ ns(struct compat_30_sys___fhstat30_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)compat_30(sys___fhstat30) },/* 392 = compat_30___fhstat30 */
-	{ ns(struct sys___ntp_gettime30_args), 0,
-	    (sy_call_t *)sys___ntp_gettime30 },	/* 393 = __ntp_gettime30 */
+	{ ns(struct compat_50_sys___ntp_gettime30_args), 0,
+	    (sy_call_t *)compat_50(sys___ntp_gettime30) },/* 393 = compat_50___ntp_gettime30 */
 	{ ns(struct sys___socket30_args), 0,
 	    (sy_call_t *)sys___socket30 },	/* 394 = __socket30 */
 	{ ns(struct sys___getfh30_args), SYCALL_MPSAFE | 0,
@@ -1060,8 +1060,8 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys_aio_read },	/* 402 = aio_read */
 	{ ns(struct sys_aio_return_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_aio_return },	/* 403 = aio_return */
-	{ ns(struct sys_aio_suspend_args), SYCALL_MPSAFE | 0,
-	    (sy_call_t *)sys_aio_suspend },	/* 404 = aio_suspend */
+	{ ns(struct compat_50_sys_aio_suspend_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)compat_50(sys_aio_suspend) },/* 404 = compat_50_aio_suspend */
 	{ ns(struct sys_aio_write_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys_aio_write },	/* 405 = aio_write */
 	{ ns(struct sys_lio_listio_args), SYCALL_MPSAFE | 0,
@@ -1086,74 +1086,84 @@ struct sysent sysent[] = {
 	    (sy_call_t *)sys__pset_bind },	/* 415 = _pset_bind */
 	{ ns(struct sys___posix_fadvise50_args), SYCALL_MPSAFE | 0,
 	    (sy_call_t *)sys___posix_fadvise50 },/* 416 = __posix_fadvise50 */
+	{ ns(struct sys___select50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___select50 },	/* 417 = __select50 */
+	{ ns(struct sys___gettimeofday50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___gettimeofday50 },/* 418 = __gettimeofday50 */
+	{ ns(struct sys___settimeofday50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___settimeofday50 },/* 419 = __settimeofday50 */
+	{ ns(struct sys___utimes50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___utimes50 },	/* 420 = __utimes50 */
+	{ ns(struct sys___adjtime50_args), 0,
+	    (sy_call_t *)sys___adjtime50 },	/* 421 = __adjtime50 */
+#if defined(LFS) || !defined(_KERNEL)
+	{ ns(struct sys___lfs_segwait50_args), 0,
+	    (sy_call_t *)sys___lfs_segwait50 },	/* 422 = __lfs_segwait50 */
+#else
 	{ 0, 0, 0,
-	    sys_nosys },			/* 417 = filler */
+	    sys_nosys },			/* 422 = excluded __lfs_segwait50 */
+#endif
+	{ ns(struct sys___futimes50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___futimes50 },	/* 423 = __futimes50 */
+	{ ns(struct sys___lutimes50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___lutimes50 },	/* 424 = __lutimes50 */
+	{ ns(struct sys___setitimer50_args), 0,
+	    (sy_call_t *)sys___setitimer50 },	/* 425 = __setitimer50 */
+	{ ns(struct sys___getitimer50_args), 0,
+	    (sy_call_t *)sys___getitimer50 },	/* 426 = __getitimer50 */
+	{ ns(struct sys___clock_gettime50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___clock_gettime50 },/* 427 = __clock_gettime50 */
+	{ ns(struct sys___clock_settime50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___clock_settime50 },/* 428 = __clock_settime50 */
+	{ ns(struct sys___clock_getres50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___clock_getres50 },/* 429 = __clock_getres50 */
+	{ ns(struct sys___nanosleep50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___nanosleep50 },	/* 430 = __nanosleep50 */
+	{ ns(struct sys_____sigtimedwait50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys_____sigtimedwait50 },/* 431 = ____sigtimedwait50 */
+	{ ns(struct sys___mq_timedsend50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___mq_timedsend50 },/* 432 = __mq_timedsend50 */
+	{ ns(struct sys___mq_timedreceive50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___mq_timedreceive50 },/* 433 = __mq_timedreceive50 */
+	{ ns(struct sys____lwp_park50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys____lwp_park50 },	/* 434 = ___lwp_park50 */
+	{ ns(struct sys___kevent50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___kevent50 },	/* 435 = __kevent50 */
+	{ ns(struct sys___pselect50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___pselect50 },	/* 436 = __pselect50 */
+	{ ns(struct sys___pollts50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___pollts50 },	/* 437 = __pollts50 */
+	{ ns(struct sys___aio_suspend50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___aio_suspend50 },	/* 438 = __aio_suspend50 */
+	{ ns(struct sys___stat50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___stat50 },	/* 439 = __stat50 */
+	{ ns(struct sys___fstat50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___fstat50 },	/* 440 = __fstat50 */
+	{ ns(struct sys___lstat50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___lstat50 },	/* 441 = __lstat50 */
+	{ ns(struct sys_____semctl50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys_____semctl50 },	/* 442 = ____semctl50 */
+	{ ns(struct sys___shmctl50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___shmctl50 },	/* 443 = __shmctl50 */
+	{ ns(struct sys___msgctl50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___msgctl50 },	/* 444 = __msgctl50 */
+	{ ns(struct sys___getrusage50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___getrusage50 },	/* 445 = __getrusage50 */
+	{ ns(struct sys___timer_settime50_args), 0,
+	    (sy_call_t *)sys___timer_settime50 },/* 446 = __timer_settime50 */
+	{ ns(struct sys___timer_gettime50_args), 0,
+	    (sy_call_t *)sys___timer_gettime50 },/* 447 = __timer_gettime50 */
+#if defined(NTP) || !defined(_KERNEL)
+	{ ns(struct sys___ntp_gettime50_args), 0,
+	    (sy_call_t *)sys___ntp_gettime50 },	/* 448 = __ntp_gettime50 */
+#else
 	{ 0, 0, 0,
-	    sys_nosys },			/* 418 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 419 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 420 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 421 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 422 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 423 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 424 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 425 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 426 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 427 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 428 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 429 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 430 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 431 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 432 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 433 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 434 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 435 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 436 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 437 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 438 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 439 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 440 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 441 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 442 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 443 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 444 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 445 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 446 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 447 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 448 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 449 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 450 = filler */
+	    sys_nosys },			/* 448 = excluded ___ntp_gettime50 */
+#endif
+	{ ns(struct sys___wait450_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___wait450 },	/* 449 = __wait450 */
+	{ ns(struct sys___mknod50_args), SYCALL_MPSAFE | 0,
+	    (sy_call_t *)sys___mknod50 },	/* 450 = __mknod50 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 451 = filler */
 	{ 0, 0, 0,

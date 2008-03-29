@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.13 2008/01/20 18:09:13 joerg Exp $	*/
+/*	$NetBSD: timex.h,v 1.13.8.1 2008/03/29 20:47:04 christos Exp $	*/
 
 /*-
  ***********************************************************************
@@ -221,6 +221,7 @@ struct timex {
 };
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#include <sys/cdefs.h>
 
 #ifdef _KERNEL
 void	ntp_update_second(int64_t *adjustment, time_t *newsec);
@@ -230,15 +231,12 @@ void	ntp_gettime(struct ntptimeval *);
 int ntp_timestatus(void);
 #endif /* __NetBSD__ */
 #else /* !_KERNEL */
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 #ifdef __NetBSD__
 #ifndef __LIBC12_SOURCE__
-int ntp_gettime(struct ntptimeval *) __RENAME(__ntp_gettime30);
+int ntp_gettime(struct ntptimeval *) __RENAME(__ntp_gettime50);
 #endif
-#else
-int ntp_gettime(struct ntptimeval *);
 #endif
 int ntp_adjtime(struct timex *);
 __END_DECLS

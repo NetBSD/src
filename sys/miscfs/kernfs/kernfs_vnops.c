@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.134 2008/01/02 11:49:00 ad Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.134.8.1 2008/03/29 20:47:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.134 2008/01/02 11:49:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.134.8.1 2008/03/29 20:47:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -400,7 +400,8 @@ kernfs_xread(kfs, off, bufp, len, wrlen)
 		struct timeval tv;
 
 		microtime(&tv);
-		snprintf(*bufp, len, "%ld %ld\n", tv.tv_sec, tv.tv_usec);
+		snprintf(*bufp, len, "%lld %ld\n", (long long)tv.tv_sec,
+		    (long)tv.tv_usec);
 		break;
 	}
 
@@ -827,7 +828,7 @@ kernfs_getattr(v)
 	/* Make all times be current TOD, except for the "boottime" node. */
 	if (kfs->kfs_kt->kt_namlen == 8 &&
 	    !memcmp(kfs->kfs_kt->kt_name, "boottime", 8)) {
-		TIMEVAL_TO_TIMESPEC(&boottime, &vap->va_ctime);
+		vap->va_ctime = boottime;
 	} else {
 		getnanotime(&vap->va_ctime);
 	}
