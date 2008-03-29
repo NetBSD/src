@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.190 2008/03/28 17:14:46 drochner Exp $	*/
+/*	$NetBSD: ohci.c,v 1.191 2008/03/29 02:20:41 nakayama Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.190 2008/03/28 17:14:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.191 2008/03/29 02:20:41 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -933,7 +933,7 @@ usbd_status
 ohci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	struct ohci_softc *sc = (struct ohci_softc *)bus;
+	struct ohci_softc *sc = bus->hci_private;
 #endif
 	usbd_status status;
 
@@ -949,12 +949,11 @@ void
 ohci_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	struct ohci_softc *sc = (struct ohci_softc *)bus;
+	struct ohci_softc *sc = bus->hci_private;
 #endif
 #ifdef __NetBSD__
 	if (dma->block->flags & USB_DMA_RESERVE) {
-		usb_reserve_freem(&((struct ohci_softc *)bus)->sc_dma_reserve,
-		    dma);
+		usb_reserve_freem(&sc->sc_dma_reserve, dma);
 		return;
 	}
 #endif
@@ -964,7 +963,7 @@ ohci_freem(struct usbd_bus *bus, usb_dma_t *dma)
 usbd_xfer_handle
 ohci_allocx(struct usbd_bus *bus)
 {
-	struct ohci_softc *sc = (struct ohci_softc *)bus;
+	struct ohci_softc *sc = bus->hci_private;
 	usbd_xfer_handle xfer;
 
 	xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers);
@@ -991,7 +990,7 @@ ohci_allocx(struct usbd_bus *bus)
 void
 ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 {
-	struct ohci_softc *sc = (struct ohci_softc *)bus;
+	struct ohci_softc *sc = bus->hci_private;
 
 #ifdef DIAGNOSTIC
 	if (xfer->busy_free != XFER_BUSY) {
