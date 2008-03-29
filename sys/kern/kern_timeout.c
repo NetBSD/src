@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.33 2008/03/28 21:58:43 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.34 2008/03/29 14:00:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.33 2008/03/28 21:58:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.34 2008/03/29 14:00:55 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -259,7 +259,7 @@ callout_destroy(callout_t *cs)
 	 * running, the current thread should have stopped it.
 	 */
 	KASSERT((c->c_flags & CALLOUT_PENDING) == 0);
-	if (c->c_oncpu != NULL) {
+	if (c->c_oncpu != NULL && c->c_onlwp != curlwp) { 
 		KASSERT(
 		    ((struct cpu_info *)c->c_oncpu)->ci_data.cpu_callout != c);
 	}
