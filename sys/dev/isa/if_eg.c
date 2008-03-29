@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.73 2007/10/19 12:00:17 ad Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.74 2008/03/29 17:13:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.73 2007/10/19 12:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.74 2008/03/29 17:13:03 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -354,7 +354,7 @@ egprobe(struct device *parent, struct cfdata *match,
 	/* hard reset card */
 	bus_space_write_1(iot, ioh, EG_CONTROL, EG_CTL_RESET);
 	bus_space_write_1(iot, ioh, EG_CONTROL, 0);
-	for (i = 0; i < 5000; i++) {
+	for (i = 0; i < 500; i++) {
 		delay(1000);
 		if ((bus_space_read_1(iot, ioh, EG_STATUS) &
 		    EG_PCB_STAT) == EG_PCB_NULL)
