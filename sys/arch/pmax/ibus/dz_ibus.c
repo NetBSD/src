@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.7 2008/03/15 00:57:15 matt Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.8 2008/03/29 15:59:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.7 2008/03/15 00:57:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.8 2008/03/29 15:59:57 tsutsui Exp $");
 
 #include "dzkbd.h"
 #include "dzms.h"
@@ -170,6 +170,8 @@ dz_ibus_attach(device_t parent, device_t self, void *aux)
 
 	DELAY(100000);
 
+	sc->sc_dev = self;
+
 	/* 
 	 * XXX - This is evil and ugly, but... due to the nature of how
 	 * bus_space_* works on pmax it will do for the time being.
@@ -204,7 +206,7 @@ dz_ibus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
 
-	printf(": DC-7085, 4 lines");
+	aprint_normal(": DC-7085, 4 lines");
 	ibus_intr_establish(parent, (void *)iba->ia_cookie, IPL_TTY,
 	    dz_ibus_intr, sc);
 	dzattach(sc, NULL, dz_ibus_consln);
@@ -392,8 +394,8 @@ dz_ibus_print(void *aux, const char *pnp)
 
 	daa = aux;
 	if (pnp != NULL)
-		printf("lkkbd/vsms at %s", pnp);
-	printf(" line %d", daa->daa_line);
+		aprint_normal("lkkbd/vsms at %s", pnp);
+	aprint_normal(" line %d", daa->daa_line);
 	return (UNCONF);
 }
 
