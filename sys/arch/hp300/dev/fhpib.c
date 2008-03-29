@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.37 2007/12/05 12:03:08 tsutsui Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.38 2008/03/29 06:47:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.37 2007/12/05 12:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.38 2008/03/29 06:47:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ static struct hpib_controller fhpib_controller = {
 };
 
 struct fhpib_softc {
-	struct device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 	struct fhpibdevice *sc_regs;	/* device registers */
 	int	sc_cmd;
 	struct hpibbus_softc *sc_hpibbus; /* XXX */
@@ -149,14 +149,14 @@ struct fhpib_softc {
 	struct callout sc_ppwatch_ch;
 };
 
-static int	fhpibmatch(struct device *, struct cfdata *, void *);
-static void	fhpibattach(struct device *, struct device *, void *);
+static int	fhpibmatch(device_t, cfdata_t, void *);
+static void	fhpibattach(device_t, device_t, void *);
 
-CFATTACH_DECL(fhpib, sizeof(struct fhpib_softc),
+CFATTACH_DECL_NEW(fhpib, sizeof(struct fhpib_softc),
     fhpibmatch, fhpibattach, NULL, NULL);
 
 static int
-fhpibmatch(struct device *parent, struct cfdata *match, void *aux)
+fhpibmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -167,20 +167,21 @@ fhpibmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-fhpibattach(struct device *parent, struct device *self, void *aux)
+fhpibattach(device_t parent, device_t self, void *aux)
 {
-	struct fhpib_softc *sc = (struct fhpib_softc *)self;
+	struct fhpib_softc *sc = device_private(self);
 	struct dio_attach_args *da = aux;
 	struct hpibdev_attach_args ha;
 	bus_space_handle_t bsh;
 
+	sc->sc_dev = self;
 	if (bus_space_map(da->da_bst, da->da_addr, da->da_size, 0, &bsh)) {
-		printf("\n%s: can't map registers\n", self->dv_xname);
+		aprint_error(": can't map registers\n");
 		return;
 	}
 	sc->sc_regs = bus_space_vaddr(da->da_bst, bsh);
 
-	printf(": %s\n", DIO_DEVICE_DESC_FHPIB);
+	aprint_normal(": %s\n", DIO_DEVICE_DESC_FHPIB);
 
 	/* Establish the interrupt handler. */
 	(void)dio_intr_establish(fhpibintr, sc, da->da_ipl, IPL_BIO);
@@ -198,8 +199,7 @@ fhpibattach(struct device *parent, struct device *self, void *aux)
 static void
 fhpibreset(struct hpibbus_softc *hs)
 {
-	struct fhpib_softc *sc =
-	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
+	struct fhpib_softc *sc = device_private(device_parent(hs->sc_dev));
 	struct fhpibdevice *hd = sc->sc_regs;
 
 	hd->hpib_cid = 0xFF;
@@ -221,7 +221,7 @@ fhpibreset(struct hpibbus_softc *hs)
 #ifdef DEBUG
 		if (fhpibdebug & FDB_DMA)
 			printf("fhpibtype: %s has word DMA\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 #endif
 	}
 }
@@ -241,8 +241,7 @@ fhpibifc(struct fhpibdevice *hd)
 static int
 fhpibsend(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 {
-	struct fhpib_softc *sc =
-	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
+	struct fhpib_softc *sc = device_private(device_parent(hs->sc_dev));
 	struct fhpibdevice *hd = sc->sc_regs;
 	int cnt = origcnt;
 	int timo;
@@ -293,7 +292,7 @@ senderr:
 #ifdef DEBUG
 	if (fhpibdebug & FDB_FAIL) {
 		printf("%s: fhpibsend failed: slave %d, sec %x, ",
-		    sc->sc_dev.dv_xname, slave, sec);
+		    device_xname(sc->sc_dev), slave, sec);
 		printf("sent %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
@@ -303,8 +302,7 @@ senderr:
 static int
 fhpibrecv(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int origcnt)
 {
-	struct fhpib_softc *sc =
-	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
+	struct fhpib_softc *sc = device_private(device_parent(hs->sc_dev));
 	struct fhpibdevice *hd = sc->sc_regs;
 	int cnt = origcnt;
 	int timo;
@@ -355,7 +353,7 @@ recvbyteserror:
 #ifdef DEBUG
 	if (fhpibdebug & FDB_FAIL) {
 		printf("%s: fhpibrecv failed: slave %d, sec %x, ",
-		    sc->sc_dev.dv_xname, slave, sec);
+		    device_xname(sc->sc_dev), slave, sec);
 		printf("got %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
@@ -366,8 +364,7 @@ static void
 fhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
     int rw, int timo)
 {
-	struct fhpib_softc *sc =
-	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
+	struct fhpib_softc *sc = device_private(device_parent(hs->sc_dev));
 	struct fhpibdevice *hd = sc->sc_regs;
 	int i;
 	char *addr = ptr;
@@ -380,7 +377,7 @@ fhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
 		hs->sc_flags |= HPIBF_READ;
 #ifdef DEBUG
 	else if (hs->sc_flags & HPIBF_READ) {
-		printf("fhpibgo: HPIBF_READ still set\n");
+		printf("%s: HPIBF_READ still set\n", __func__);
 		hs->sc_flags &= ~HPIBF_READ;
 	}
 #endif
@@ -411,9 +408,9 @@ fhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
 		dmago(hs->sc_dq->dq_chan, addr, count, flags|DMAGO_READ);
 		if (fhpibrecv(hs, slave, sec, 0, 0) < 0) {
 #ifdef DEBUG
-			printf("fhpibgo: recv failed, retrying...\n");
+			printf("%s: recv failed, retrying...\n", __func__);
 #endif
-			(void) fhpibrecv(hs, slave, sec, 0, 0);
+			(void)fhpibrecv(hs, slave, sec, 0, 0);
 		}
 		i = hd->hpib_cmd;
 		hd->hpib_cmd = sc->sc_cmd;
@@ -438,9 +435,9 @@ fhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
 	dmago(hs->sc_dq->dq_chan, addr, count, flags);
 	if (fhpibsend(hs, slave, sec, 0, 0) < 0) {
 #ifdef DEBUG
-		printf("fhpibgo: send failed, retrying...\n");
+		printf("%s: send failed, retrying...\n", __func__);
 #endif
-		(void) fhpibsend(hs, slave, sec, 0, 0);
+		(void)fhpibsend(hs, slave, sec, 0, 0);
 	}
 	i = hd->hpib_cmd;
 	hd->hpib_cmd = sc->sc_cmd;
@@ -458,8 +455,7 @@ static void
 fhpibdmadone(void *arg)
 {
 	struct hpibbus_softc *hs = arg;
-	struct fhpib_softc *sc =
-	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
+	struct fhpib_softc *sc = device_private(device_parent(hs->sc_dev));
 	int s = splbio();
 
 	if (hs->sc_flags & HPIBF_IO) {
@@ -485,8 +481,7 @@ fhpibdmadone(void *arg)
 static void
 fhpibdone(struct hpibbus_softc *hs)
 {
-	struct fhpib_softc *sc =
-	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
+	struct fhpib_softc *sc = device_private(device_parent(hs->sc_dev));
 	struct fhpibdevice *hd = sc->sc_regs;
 	char *addr;
 	int cnt;
@@ -496,9 +491,9 @@ fhpibdone(struct hpibbus_softc *hs)
 	hs->sc_count -= cnt;
 #ifdef DEBUG
 	if ((fhpibdebug & FDB_DMA) &&
-	    fhpibdebugunit == device_unit(&sc->sc_dev))
-		printf("fhpibdone: addr %p cnt %d\n",
-		       hs->sc_addr, hs->sc_count);
+	    fhpibdebugunit == device_unit(sc->sc_dev))
+		printf("%s: addr %p cnt %d\n",
+		    __func__, hs->sc_addr, hs->sc_count);
 #endif
 	if (hs->sc_flags & HPIBF_READ) {
 		hd->hpib_imask = IM_IDLE | IM_BYTE;
@@ -541,7 +536,7 @@ fhpibintr(void *arg)
 		if ((fhpibdebug & FDB_FAIL) && (stat0 & IDS_IR) &&
 		    (hs->sc_flags & (HPIBF_IO|HPIBF_DONE)) != HPIBF_IO)
 			printf("%s: fhpibintr: bad status %x\n",
-			sc->sc_dev.dv_xname, stat0);
+			    device_xname(sc->sc_dev), stat0);
 		/* fhpibbadint[0]++;			XXX */
 #endif
 		return 0;
@@ -554,8 +549,8 @@ fhpibintr(void *arg)
 	}
 #ifdef DEBUG
 	if ((fhpibdebug & FDB_DMA) &&
-	    fhpibdebugunit == device_unit(&sc->sc_dev))
-		printf("fhpibintr: flags %x\n", hs->sc_flags);
+	    fhpibdebugunit == device_unit(sc->sc_dev))
+		printf("%s: flags %x\n", __func__, hs->sc_flags);
 #endif
 	hq = TAILQ_FIRST(&hs->sc_queue);
 	if (hs->sc_flags & HPIBF_IO) {
@@ -576,15 +571,15 @@ fhpibintr(void *arg)
 		if ((fhpibdebug & FDB_FAIL) &&
 		    doppollint && (stat0 & IM_PPRESP) == 0)
 			printf("%s: fhpibintr: bad intr reg %x\n",
-			    sc->sc_dev.dv_xname, stat0);
+			    device_xname(sc->sc_dev), stat0);
 #endif
 		hd->hpib_stat = 0;
 		hd->hpib_imask = 0;
 #ifdef DEBUG
 		stat0 = fhpibppoll(hs);
 		if ((fhpibdebug & FDB_PPOLL) &&
-		    fhpibdebugunit == device_unit(&sc->sc_dev))
-			printf("fhpibintr: got PPOLL status %x\n", stat0);
+		    fhpibdebugunit == device_unit(sc->sc_dev))
+			printf("%s: got PPOLL status %x\n", __func__, stat0);
 		if ((stat0 & (0x80 >> hq->hq_slave)) == 0) {
 			/*
 			 * XXX give it another shot (68040)
@@ -594,10 +589,10 @@ fhpibintr(void *arg)
 			stat0 = fhpibppoll(hs);
 			if ((stat0 & (0x80 >> hq->hq_slave)) == 0 &&
 			    (fhpibdebug & FDB_PPOLL) &&
-			    fhpibdebugunit == device_unit(&sc->sc_dev))
-				printf("fhpibintr: PPOLL: unit %d slave %d stat %x\n",
-				       device_unit(&sc->sc_dev), hq->hq_slave,
-				       stat0);
+			    fhpibdebugunit == device_unit(sc->sc_dev))
+				printf("%s: PPOLL: unit %d slave %d stat %x\n",
+				    __func__, device_unit(sc->sc_dev),
+				    hq->hq_slave, stat0);
 		}
 #endif
 		hs->sc_flags &= ~HPIBF_PPOLL;
@@ -609,8 +604,7 @@ fhpibintr(void *arg)
 static int
 fhpibppoll(struct hpibbus_softc *hs)
 {
-	struct fhpib_softc *sc =
-	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
+	struct fhpib_softc *sc = device_private(device_parent(hs->sc_dev));
 	struct fhpibdevice *hd = sc->sc_regs;
 	int ppoll;
 
@@ -639,7 +633,7 @@ fhpibwait(struct fhpibdevice *hd, int x)
 	if (timo == 0) {
 #ifdef DEBUG
 		if (fhpibdebug & FDB_FAIL)
-			printf("fhpibwait(%p, %x) timeout\n", hd, x);
+			printf("%s(%p, %x) timeout\n", __func__, hd, x);
 #endif
 		return -1;
 	}
@@ -654,8 +648,7 @@ static void
 fhpibppwatch(void *arg)
 {
 	struct hpibbus_softc *hs = arg;
-	struct fhpib_softc *sc =
-	    (struct fhpib_softc *)device_parent(&hs->sc_dev);
+	struct fhpib_softc *sc = device_private(device_parent(hs->sc_dev));
 	struct fhpibdevice *hd = sc->sc_regs;
 	int slave;
 
@@ -672,9 +665,9 @@ fhpibppwatch(void *arg)
 		return;
 	}
 	if ((fhpibdebug & FDB_PPOLL) &&
-	    device_unit(&sc->sc_dev) == fhpibdebugunit)
-		printf("fhpibppwatch: sense request on %s\n",
-		    sc->sc_dev.dv_xname);
+	    device_unit(sc->sc_dev) == fhpibdebugunit)
+		printf("%s: sense request on %s\n",
+		    __func__, device_xname(sc->sc_dev));
 #endif
 	hd->hpib_psense = ~slave;
 	hd->hpib_pmask = slave;

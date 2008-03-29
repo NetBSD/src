@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.23 2007/12/31 13:38:49 ad Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.24 2008/03/29 06:47:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -111,14 +111,14 @@ struct	grfsw {
 };
 
 struct	grf_softc {
-	struct	device sc_dev;		/* generic device info */
+	device_t sc_dev;		/* generic device info */
 	int	sc_scode;		/* select code; for grfdevno() */
 	struct	grf_data *sc_data;	/* display state information */
 	struct	ite_softc *sc_ite;	/* pointer to ite; may be NULL */
 };
 
 struct	grfdev_softc {
-	struct	device sc_dev;		/* generic device info */
+	device_t sc_dev;		/* generic device info */
 	struct	grf_data *sc_data;	/* generic grf data */
 	int	sc_scode;		/* select code, -1 for intio */
 	int	sc_isconsole;		/* device is the console */
