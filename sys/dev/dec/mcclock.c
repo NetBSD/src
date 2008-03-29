@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.19 2008/01/04 01:00:43 simonb Exp $ */
+/* $NetBSD: mcclock.c,v 1.20 2008/03/29 15:59:03 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.19 2008/01/04 01:00:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.20 2008/03/29 15:59:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,7 +70,7 @@ mcclock_attach(sc, busfns)
 	const struct mcclock_busfns *busfns;
 {
 
-	printf(": mc146818 or compatible\n");
+	printf(": mc146818 or compatible");
 
 	sc->sc_busfns = busfns;
 
