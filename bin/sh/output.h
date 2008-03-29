@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.17 2003/08/07 09:05:36 agc Exp $	*/
+/*	$NetBSD: output.h,v 1.18 2008/03/29 09:49:52 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -74,8 +74,8 @@ int xwrite(int, char *, int);
 int xioctl(int, unsigned long, char *);
 
 #define outc(c, file)	(--(file)->nleft < 0? (emptyoutbuf(file), *(file)->nextc++ = (c)) : (*(file)->nextc++ = (c)))
-#define out1c(c)	outc(c, out1);
-#define out2c(c)	outc(c, out2);
+#define out1c(c)	outc(c, out1)
+#define out2c(c)	outc(c, out2)
 
 #define OUTPUT_INCL
 #endif
