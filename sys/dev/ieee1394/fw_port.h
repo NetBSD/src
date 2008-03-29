@@ -1,4 +1,4 @@
-/*	$NetBSD: fw_port.h,v 1.27 2007/12/25 18:33:39 perry Exp $	*/
+/*	$NetBSD: fw_port.h,v 1.28 2008/03/29 16:22:53 kiyohara Exp $	*/
 /*
  * Copyright (c) 2004 KIYOHARA Takashi
  * All rights reserved.
@@ -64,8 +64,7 @@
 #define fw_get_nameunit(dev)		device_get_nameunit((dev))
 #define fw_get_unit(dev)		device_get_unit((dev))
 
-#define fw_printf(dev, fmt, ...) \
-	device_printf((dev), (fmt), __VA_ARGS__);
+#define fw_printf(dev, ...)		device_printf((dev), __VA_ARGS__)
 
 /* atomic macros */
 #define fw_atomic_set_int(P, V)		atomic_set_int((P), (V))
@@ -615,15 +614,11 @@ struct fw_hwaddr {
 #define fw_get_nameunit(dev)		(dev)->dv_xname
 #define fw_get_unit(dev)		device_unit((dev))
 
-#define fw_printf(dev, fmt, ...)		\
-	do {					\
-		printf("%s: ", (dev)->dv_xname);\
-		printf((fmt), ##__VA_ARGS__);	\
-	} while (/*CONSTCOND*/0)
+#define fw_printf(dev, ...)		aprint_normal_dev((dev), __VA_ARGS__)
 
 /* atomic macros */
 /* XXXX: unsafe... */
-#define fw_atomic_set_int(P, V)	(*(u_int*)(P) |= (V))
+#define fw_atomic_set_int(P, V)	(*(u_int *)(P) |= (V))
 static __inline int
 fw_atomic_readandclear_int(int *p)
 {
@@ -716,7 +711,7 @@ _fw_bus_dma_tag_create(bus_dma_tag_t parent,
 {
 	fw_bus_dma_tag_t tag;
 
-	tag = malloc(sizeof (struct fw_bus_dma_tag), M_DEVBUF, M_NOWAIT);
+	tag = malloc(sizeof(struct fw_bus_dma_tag), M_DEVBUF, M_NOWAIT);
 	if (tag == NULL)
 		return ENOMEM;
 
@@ -837,12 +832,10 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 #define FW_ATTACH(dname) 	\
 	void			\
 	__CONCAT(dname,attach)	\
-	    (struct device *parent, struct device *self, void *aux)
+	    (device_t parent, device_t self, void *aux)
 #define FW_ATTACH_START(dname, sc, fwa)					\
-	struct __CONCAT(dname,_softc) *sc =				\
-	    (struct __CONCAT(dname,_softc) *)self;			\
-	__unused struct fw_attach_args *fwa =		\
-	    (struct fw_attach_args *)aux
+	struct __CONCAT(dname,_softc) *sc = device_private(self);	\
+	__unused struct fw_attach_args *fwa = (struct fw_attach_args *)aux
 #define FW_ATTACH_RETURN(r)	return
 
 /*
@@ -850,23 +843,21 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
  */
 #define FW_DETACH(dname)	\
 	int			\
-	__CONCAT(dname,detach)(struct device *self, int flags)
-#define FW_DETACH_START(dname, sc)					\
-	struct __CONCAT(dname,_softc) *sc =				\
-	    (struct __CONCAT(dname,_softc) *)self
+	__CONCAT(dname,detach)(device_t self, int flags)
+#define FW_DETACH_START(dname, sc)	\
+	struct __CONCAT(dname,_softc) *sc = device_private(self)
 
 /*
  * fw open macro for NetBSD
  */
 #define FW_OPEN(dname)	\
 	int		\
-	__CONCAT(dname,_open)(dev_t _dev, int flags, int fmt,  \
-	fw_proc_t td)
-#define FW_OPEN_START							\
-	struct firewire_softc *sc, *dev;				\
-									\
-	sc = dev = device_lookup(&ieee1394if_cd, DEV2UNIT(_dev));	\
-	if (dev == NULL)						\
+	__CONCAT(dname,_open)(dev_t _dev, int flags, int fmt,  fw_proc_t td)
+#define FW_OPEN_START							 \
+	struct firewire_softc *sc, *dev;				 \
+									 \
+	sc = dev = device_lookup_private(&ieee1394if_cd, DEV2UNIT(_dev));\
+	if (dev == NULL)						 \
 		return ENXIO
 
 /*
@@ -874,13 +865,13 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
  */
 #define FW_CLOSE(dname)		\
 	int			\
-	__CONCAT(dname,_close)(dev_t _dev, int flags, \
-	int fmt, fw_proc_t td)
-#define FW_CLOSE_START							  \
-	int unit = DEV2UNIT(_dev);					  \
-	struct firewire_softc *dev = device_lookup(&ieee1394if_cd, unit); \
-									  \
-	if (dev == NULL)						  \
+	__CONCAT(dname,_close)(dev_t _dev, int flags, int fmt, fw_proc_t td)
+#define FW_CLOSE_START						\
+	int unit = DEV2UNIT(_dev);				\
+	struct firewire_softc *dev;				\
+								\
+	dev = device_lookup_private(&ieee1394if_cd, unit);	\
+	if (dev == NULL)					\
 		return ENXIO
 
 /*
@@ -889,12 +880,12 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 #define FW_READ(dname)	\
 	int		\
 	__CONCAT(dname,_read)(dev_t _dev, struct uio *uio, int ioflag) 
-#define FW_READ_START					\
-	int unit = DEV2UNIT(_dev);			\
-	struct firewire_softc *dev;			\
-							\
-	dev = device_lookup(&ieee1394if_cd, unit);	\
-	if (dev == NULL)				\
+#define FW_READ_START						\
+	int unit = DEV2UNIT(_dev);				\
+	struct firewire_softc *dev;				\
+								\
+	dev = device_lookup_private(&ieee1394if_cd, unit);	\
+	if (dev == NULL)					\
 		return ENXIO
 
 /*
@@ -903,28 +894,27 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 #define FW_WRITE(dname)	\
 	int		\
 	__CONCAT(dname,_write)(dev_t _dev, struct uio *uio, int ioflag)
-#define FW_WRITE_START					\
-	int unit = DEV2UNIT(_dev);			\
-	struct firewire_softc *dev;			\
-							\
-	dev = device_lookup(&ieee1394if_cd, unit);	\
-	if (dev == NULL)				\
+#define FW_WRITE_START						\
+	int unit = DEV2UNIT(_dev);				\
+	struct firewire_softc *dev;				\
+								\
+	dev = device_lookup_private(&ieee1394if_cd, unit);	\
+	if (dev == NULL)					\
 		return ENXIO
 
 /*
  * fw ioctl macro for NetBSD
  */
-#define FW_IOCTL(dname)					\
-	int						\
-	__CONCAT(dname,_ioctl)				\
-	    (dev_t _dev, u_long cmd, void *data,	\
-	    int flag, fw_proc_t td)
-#define FW_IOCTL_START					\
-	int unit = DEV2UNIT(_dev);			\
-	struct firewire_softc *sc, *dev;		\
-							\
-	sc = dev = device_lookup(&ieee1394if_cd, unit);	\
-	if (dev == NULL)				\
+#define FW_IOCTL(dname)		\
+	int			\
+	__CONCAT(dname,_ioctl)	\
+	    (dev_t _dev, u_long cmd, void *data, int flag, fw_proc_t td)
+#define FW_IOCTL_START						\
+	int unit = DEV2UNIT(_dev);				\
+	struct firewire_softc *sc, *dev;			\
+								\
+	sc = dev = device_lookup_private(&ieee1394if_cd, unit);	\
+	if (dev == NULL)					\
 		return ENXIO
 
 /*
@@ -932,14 +922,13 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
  */
 #define FW_POLL(dname)	\
 	int		\
-	__CONCAT(dname,_poll)(dev_t _dev, int events, \
-	fw_proc_t td)
-#define FW_POLL_START					\
-	int unit = DEV2UNIT(_dev);			\
-	struct firewire_softc *dev;			\
-							\
-	dev = device_lookup(&ieee1394if_cd, unit);	\
-	if (dev == NULL)				\
+	__CONCAT(dname,_poll)(dev_t _dev, int events, fw_proc_t td)
+#define FW_POLL_START						\
+	int unit = DEV2UNIT(_dev);				\
+	struct firewire_softc *dev;				\
+								\
+	dev = device_lookup_private(&ieee1394if_cd, unit);	\
+	if (dev == NULL)					\
 		return ENXIO
 
 /*
@@ -947,34 +936,32 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
  */
 #define FW_MMAP(dname)	\
 	paddr_t		\
-	__CONCAT(dname,_mmap)(dev_t _dev, off_t offset, \
-	int nproto)
-#define FW_MMAP_START					\
-	int unit = DEV2UNIT(_dev);			\
-	struct firewire_softc *dev;			\
-							\
-	dev = device_lookup(&ieee1394if_cd, unit);	\
-	if (dev == NULL)				\
+	__CONCAT(dname,_mmap)(dev_t _dev, off_t offset, int nproto)
+#define FW_MMAP_START						\
+	int unit = DEV2UNIT(_dev);				\
+	struct firewire_softc *dev;				\
+								\
+	dev = device_lookup_private(&ieee1394if_cd, unit);	\
+	if (dev == NULL)					\
 		return ENXIO
 
 /*
  * fw strategy macro for NetBSD
  */
-#define FW_STRATEGY_START				\
-	dev_t _dev = bp->bio_dev;			\
-	int unit = DEV2UNIT(_dev);			\
-	struct firewire_softc *sc, *dev;		\
-							\
-	sc = dev = device_lookup(&ieee1394if_cd, unit);	\
-	if (dev == NULL)				\
+#define FW_STRATEGY_START					\
+	dev_t _dev = bp->bio_dev;				\
+	int unit = DEV2UNIT(_dev);				\
+	struct firewire_softc *sc, *dev;			\
+								\
+	sc = dev = device_lookup_private(&ieee1394if_cd, unit);	\
+	if (dev == NULL)					\
 		return
 
 /*
  * if macro for NetBSD
  */
 #define IF_DETACH_START(dname, sc)		\
-	struct __CONCAT(dname,_softc) *sc =	\
-	    (struct __CONCAT(dname,_softc) *)self
+	struct __CONCAT(dname,_softc) *sc = device_private(self)
 #define IF_IOCTL_START(dname, sc)		\
 	struct __CONCAT(dname,_softc) *sc =	\
 	    ((struct fwip_eth_softc *)ifp->if_softc)->fwip
@@ -1013,12 +1000,11 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
  * firewire macro for NetBSD
  */
 #define FIREWIRE_ATTACH_START						\
-	struct firewire_comm *fc = (struct firewire_comm *)parent;	\
+	struct firewire_comm *fc = device_private(parent);		\
 									\
 	aprint_normal(": IEEE1394 bus\n");				\
 									\
-	fc->bdev = (struct device *)sc;					\
-	sc->dev = &sc->_dev;						\
+	fc->bdev = sc->dev = self;					\
 	SLIST_INIT(&sc->devlist)
 #define FWDEV_DESTROYDEV(sc)
 #define FIREWIRE_GENERIC_ATTACH						    \
@@ -1027,7 +1013,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 		struct firewire_dev_list *devlist, *elm;		    \
 									    \
 		devlist = malloc(					    \
-		    sizeof (struct firewire_dev_list), M_DEVBUF, M_NOWAIT); \
+		    sizeof(struct firewire_dev_list), M_DEVBUF, M_NOWAIT);  \
 		if (devlist == NULL)					    \
 			break;						    \
 									    \
@@ -1064,12 +1050,12 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 	} while (/*CONSTCOND*/0)
 #define FIREWIRE_SBP_ATTACH						      \
 	do {								      \
-		struct firewire_softc *sc = (struct firewire_softc *)fc->bdev;\
+		struct firewire_softc *sc = device_private(fc->bdev);	      \
 		struct firewire_dev_list *devlist, *elm;		      \
 		int locs[IEEE1394IFCF_NLOCS];				      \
 									      \
 		devlist = malloc(					      \
-		    sizeof (struct firewire_dev_list), M_DEVBUF, M_NOWAIT);   \
+		    sizeof(struct firewire_dev_list), M_DEVBUF, M_NOWAIT);    \
 		if (devlist == NULL) {					      \
 			printf("memory allocation failed\n");		      \
 			break;						      \
@@ -1100,7 +1086,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 	} while (/*CONSTCOND*/0)
 #define FIREWIRE_SBP_DETACH						      \
 	do {								      \
-		struct firewire_softc *sc = (struct firewire_softc *)fc->bdev;\
+		struct firewire_softc *sc = device_private(fc->bdev);	      \
 		struct firewire_dev_list *devlist;			      \
 									      \
 		SLIST_FOREACH(devlist, &sc->devlist, link) {		      \
@@ -1117,12 +1103,11 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 #define FIREWIRE_CHILDREN_FOREACH_FUNC(func, fdc)			      \
 	do {								      \
 		struct firewire_dev_list *devlist;			      \
-		struct firewire_softc *sc = (struct firewire_softc *)fc->bdev;\
+		struct firewire_softc *sc = device_private(fc->bdev);	      \
 									      \
 		if (!SLIST_EMPTY(&sc->devlist)) {			      \
 			SLIST_FOREACH(devlist, &sc->devlist, link) {	      \
-				(fdc) =					      \
-				    (struct firewire_dev_comm *)devlist->dev; \
+				(fdc) =	device_private(devlist->dev);	      \
 				if ((fdc)->func != NULL)		      \
 					(fdc)->func((fdc));		      \
 			}						      \
@@ -1136,7 +1121,7 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
 	do {							\
 		aprint_normal(": SBP-2/SCSI over IEEE1394\n");	\
 								\
-		sbp->fd.dev = &sbp->fd._dev;			\
+		sbp->fd.dev = self;				\
 	} while (/*CONSTCOND*/0)
 #define SBP_SCSIBUS_ATTACH						    \
 	do {								    \
@@ -1201,11 +1186,12 @@ fw_bus_dmamem_alloc(fw_bus_dma_tag_t ft, void **vp, int f, bus_dmamap_t *mp)
  * fwip macro for NetBSD
  */
 #define FWIP_ATTACH_START						\
-	device_t dev = &fwip->fd._dev;					\
+	device_t dev = self;						\
 	struct fw_hwaddr *hwaddr;
 #define FWIP_ATTACH_SETUP						      \
 	do {								      \
 		aprint_normal(": IP over IEEE1394\n");			      \
+		fwip->fd.dev = self;					      \
 		fwip->fw_softc.fwip_ifp = &fwip->fw_softc.fwcom.fc_if;	      \
 		hwaddr = (struct fw_hwaddr *)&fwip->fw_softc.fwcom.ic_hwaddr; \
 	} while (/*CONSTCOND*/0)
