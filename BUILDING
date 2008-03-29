@@ -314,7 +314,10 @@ CONFIGURATION
                         build or runtime problems when building the whole
                         NetBSD source tree.
 
-                 Default: ``yes''
+                 Default: ``yes'', unless TOOLCHAIN_MISSING is set to ``yes''.
+
+                 USETOOLS is also set to ``no'' when using <bsd.*.mk> outside
+                 the NetBSD source tree.
 
      X11SRCDIR   Directory containing the X11R6 source.  If specified, must be
                  an absolute path.  The main X11R6 source is found in
