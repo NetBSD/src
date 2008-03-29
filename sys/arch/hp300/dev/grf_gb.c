@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.37 2007/12/31 13:38:48 ad Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.38 2008/03/29 06:47:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.37 2007/12/31 13:38:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.38 2008/03/29 06:47:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.37 2007/12/31 13:38:48 ad Exp $");
 #include "ite.h"
 
 #define CRTC_DATA_LENGTH  0x0e
-static u_char crtc_init_data[CRTC_DATA_LENGTH] = {
+static uint8_t crtc_init_data[CRTC_DATA_LENGTH] = {
 	0x29, 0x20, 0x23, 0x04, 0x30, 0x0b, 0x30,
 	0x30, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00
 };
@@ -164,18 +164,18 @@ static int	gb_init(struct grf_data *gp, int, uint8_t *);
 static int	gb_mode(struct grf_data *gp, int, void *);
 static void	gb_microcode(struct gboxfb *);
 
-static int	gbox_intio_match(struct device *, struct cfdata *, void *);
-static void	gbox_intio_attach(struct device *, struct device *, void *);
+static int	gbox_intio_match(device_t, cfdata_t, void *);
+static void	gbox_intio_attach(device_t, device_t, void *);
 
-static int	gbox_dio_match(struct device *, struct cfdata *, void *);
-static void	gbox_dio_attach(struct device *, struct device *, void *);
+static int	gbox_dio_match(device_t, cfdata_t, void *);
+static void	gbox_dio_attach(device_t, device_t, void *);
 
 int	gboxcnattach(bus_space_tag_t, bus_addr_t, int);
 
-CFATTACH_DECL(gbox_intio, sizeof(struct grfdev_softc),
+CFATTACH_DECL_NEW(gbox_intio, sizeof(struct grfdev_softc),
     gbox_intio_match, gbox_intio_attach, NULL, NULL);
 
-CFATTACH_DECL(gbox_dio, sizeof(struct grfdev_softc),
+CFATTACH_DECL_NEW(gbox_dio, sizeof(struct grfdev_softc),
     gbox_dio_match, gbox_dio_attach, NULL, NULL);
 
 /* Gatorbox grf switch */
@@ -204,7 +204,7 @@ static struct itesw gbox_itesw = {
 #endif /* NITE > 0 */
 
 static int
-gbox_intio_match(struct device *parent, struct cfdata *match, void *aux)
+gbox_intio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
@@ -226,11 +226,13 @@ gbox_intio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-gbox_intio_attach(struct device *parent, struct device *self, void *aux)
+gbox_intio_attach(device_t parent, device_t self, void *aux)
 {
-	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct grfdev_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	void *grf;
+
+	sc->sc_dev = self;
 
 	grf = (void *)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
@@ -240,7 +242,7 @@ gbox_intio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-gbox_dio_match(struct device *parent, struct cfdata *match, void *aux)
+gbox_dio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -252,21 +254,21 @@ gbox_dio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-gbox_dio_attach(struct device *parent, struct device *self, void *aux)
+gbox_dio_attach(device_t parent, device_t self, void *aux)
 {
-	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct grfdev_softc *sc = device_private(self);
 	struct dio_attach_args *da = aux;
 	bus_space_handle_t bsh;
 	void *grf;
 
+	sc->sc_dev = self;
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == gbconscode)
 		grf = gbconaddr;
 	else {
 		if (bus_space_map(da->da_bst, da->da_addr, da->da_size,
 		    0, &bsh)) {
-			printf("%s: can't map framebuffer\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error(": can't map framebuffer\n");
 			return;
 		}
 		grf = bus_space_vaddr(da->da_bst, bsh);
