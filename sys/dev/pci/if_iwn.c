@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.7 2008/03/13 16:29:48 taca Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.8 2008/03/29 09:36:29 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.7 2008/03/13 16:29:48 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.8 2008/03/29 09:36:29 blymn Exp $");
 
 
 /*
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.7 2008/03/13 16:29:48 taca Exp $");
 #include <dev/pci/if_iwnreg.h>
 #include <dev/pci/if_iwnvar.h>
 
-#if 0 
+#if 0
 static const struct pci_matchid iwn_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2 }
@@ -196,18 +196,18 @@ int iwn_debug = 2;
 #define DPRINTFN(n, x)
 #endif
 
-CFATTACH_DECL_NEW(iwn, sizeof(struct iwn_softc), iwn_match, iwn_attach, 
+CFATTACH_DECL_NEW(iwn, sizeof(struct iwn_softc), iwn_match, iwn_attach,
     iwn_detach, NULL);
 
 static int
 iwn_match(device_t parent, struct cfdata *match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-  
+
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
 		return 0;
 
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_4965AGN_1 || 
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_4965AGN_1 ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2)
 		return 1;
 
@@ -228,7 +228,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	char devinfo[256];
 	pci_intr_handle_t ih;
 	pcireg_t memtype, data;
-	int i, error, revision; 
+	int i, error, revision;
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -236,11 +236,11 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	callout_init(&sc->calib_to, 0);
 	callout_setfunc(&sc->calib_to, iwn_calib_timeout, sc);
-	
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%2x)\n", devinfo, revision);
-	
+
 
 	/* clear device specific PCI configuration register 0x41 */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
@@ -276,7 +276,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwn_intr, sc);
 
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "could not establish interrupt"); 
+		aprint_error_dev(self, "could not establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
@@ -288,7 +288,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		aprint_error_dev(self, "could not reset adapter\n");
 		return;
 	}
-	
+
 	/*
 	 * Allocate DMA memory for firmware transfers.
 	 */
@@ -329,7 +329,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 			goto fail4;
 		}
 	}
-	
+
 	if (iwn_alloc_rx_ring(sc, &sc->rxq) != 0)  {
 		aprint_error_dev(self, "could not allocate Rx ring\n");
 		goto fail4;
@@ -350,7 +350,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	    IEEE80211_C_SHSLOT |	/* short slot time supported */
 	    IEEE80211_C_SHPREAMBLE|	/* short preamble supported */
 	    IEEE80211_C_WME;            /* 802.11e */
-	
+
 	/* read supported channels and MAC address from EEPROM */
 	iwn_read_eeprom(sc);
 
@@ -392,7 +392,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		pmf_class_network_register(self, ifp);
 
 	iwn_radiotap_attach(sc);
-	
+
 	ieee80211_announce(ic);
 
 	return;
@@ -449,7 +449,7 @@ iwn_radiotap_attach(struct iwn_softc *sc)
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN, 
+	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
 	    &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
@@ -525,12 +525,12 @@ iwn_setup_beacon(struct iwn_softc *sc, struct ieee80211_node *ni)
 
 	/* first scatter/gather segment is used by the beacon command */
 	paddr = ring->cmd_dma.paddr + ring->cur * sizeof (struct iwn_tx_cmd);
-	
+
 	IWN_SET_DESC_NSEGS(desc, 2);
 	IWN_SET_DESC_SEG(desc, 0, paddr , 4 + sizeof(struct iwn_cmd_beacon));
 	IWN_SET_DESC_SEG(desc, 1,  data->map->dm_segs[0].ds_addr,
 	    data->map->dm_segs[1].ds_len);
-		
+
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
@@ -599,7 +599,7 @@ iwn_alloc_shared(struct iwn_softc *sc)
         int error;
   	/* must be aligned on a 1KB boundary */
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &sc->shared_dma,
-	    (void **)&sc->shared, sizeof (struct iwn_shared), 
+	    (void **)&sc->shared, sizeof (struct iwn_shared),
 	    1024,BUS_DMA_NOWAIT);
 	if (error != 0)
 		aprint_error_dev(sc->sc_dev,
@@ -641,7 +641,7 @@ iwn_alloc_fwmem(struct iwn_softc *sc)
 	if (error != 0){
 		aprint_error_dev(sc->sc_dev,
 		    "could not allocate firmware transfer area DMA memory\n" );
-				
+
 	}
 	return error;
 }
@@ -728,7 +728,7 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
         struct iwn_rx_data *data;
         struct iwn_rbuf *rbuf;
         int i, error;
-	
+
 	ring->cur = 0;
 
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma,
@@ -745,7 +745,7 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 	 */
 	for (i = 0; i < IWN_RX_RING_COUNT; i++) {
 		data = &ring->data[i];
-		
+
 		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
 			aprint_error_dev(sc->sc_dev, "could not allocate rx mbuf\n");
@@ -838,7 +838,7 @@ iwn_alloc_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring, int count,
 	}
 
 	ring->data = malloc(count * sizeof (struct iwn_tx_data), M_DEVBUF, M_NOWAIT);
-			
+
 	if (ring->data == NULL) {
 		aprint_error_dev(sc->sc_dev,"could not allocate tx data slots\n");
 		goto fail;
@@ -979,7 +979,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	switch (nstate) {
 
 	case IEEE80211_S_SCAN:
-		
+
 		if (sc->is_scanning)
 			break;
 
@@ -992,7 +992,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 		if ((error = iwn_scan(sc, IEEE80211_CHAN_G)) != 0) {
 			aprint_error_dev(sc->sc_dev, "could not initiate scan\n");
-			ic->ic_flags &= ~(IEEE80211_F_SCAN | IEEE80211_F_ASCAN);			
+			ic->ic_flags &= ~(IEEE80211_F_SCAN | IEEE80211_F_ASCAN);
 			return error;
 		}
 		ic->ic_state = nstate;
@@ -1206,13 +1206,13 @@ iwn_load_firmware(struct iwn_softc *sc)
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
 		goto fail1;
 	}
-	
+
 	size = firmware_get_size(fw);
 
 	/* extract firmware header information */
 	if (size < sizeof (struct iwn_firmware_hdr)) {
 		aprint_error_dev(sc->sc_dev, "truncated firmware header: %zu bytes\n", size);
-		    
+
 		error = EINVAL;
 		goto fail2;
 	}
@@ -1291,7 +1291,7 @@ iwn_load_firmware(struct iwn_softc *sc)
 	/* now press "execute" ;-) */
 	IWN_WRITE(sc, IWN_RESET, 0);
 
-	/* ..and wait at most one second for adapter to initialize */ 
+	/* ..and wait at most one second for adapter to initialize */
 	if ((error = tsleep(sc, PCATCH, "iwninit", hz)) != 0) {
 		/* this isn't what was supposed to happen.. */
 		aprint_error_dev(sc->sc_dev, "timeout waiting for adapter to initialize\n");
@@ -1828,7 +1828,7 @@ iwn_intr(void *arg)
 
 	if (r1 & IWN_RF_TOGGLED) {
 		uint32_t tmp = IWN_READ(sc, IWN_GPIO_CTL);
-		aprint_error_dev(sc->sc_dev, "RF switch: radio %s\n", 
+		aprint_error_dev(sc->sc_dev, "RF switch: radio %s\n",
 		    (tmp & IWN_GPIO_RF_ENABLED) ? "enabled" : "disabled");
 	}
 	if (r1 & IWN_CT_REACHED) {
@@ -1961,15 +1961,15 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	cmd->flags = 0;
 	cmd->qid = ring->qid;
 	cmd->idx = ring->cur;
-	
+
 	tx = (struct iwn_cmd_data *)cmd->data;
-	
+
 	flags = IWN_TX_AUTO_SEQ;
 	if (!noack && !IEEE80211_IS_MULTICAST(wh->i_addr1)){
 		flags |= IWN_TX_NEED_ACK;
 	}else if (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
 		flags |= htole32(IWN_TX_NEED_RTS | IWN_TX_FULL_TXOP);
-	
+
 	tx->id = IEEE80211_IS_MULTICAST(wh->i_addr1) ? IWN_ID_BROADCAST : IWN_ID_BSS;
 
 	if (type == IEEE80211_FC0_TYPE_MGT) {
@@ -1986,7 +1986,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 			tx->timeout = htole16(2);
 	} else
 		tx->timeout = htole16(0);
-	
+
 	if (hdrlen & 3) {
 		/* first segment's length must be a multiple of 4 */
 		flags |= IWN_TX_NEED_PADDING;
@@ -2111,7 +2111,7 @@ iwn_start(struct ifnet *ifp)
 		IF_DEQUEUE(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
 			/* management frames go into ring 0 */
-		  
+
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
@@ -2136,7 +2136,7 @@ iwn_start(struct ifnet *ifp)
 			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
-	
+
 			if (m0->m_len < sizeof (*eh) &&
 			    (m0 = m_pullup(m0, sizeof (*eh))) != NULL) {
 				ifp->if_oerrors++;
@@ -2156,13 +2156,13 @@ iwn_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				continue;
 			}
-			
+
 			/* no QoS encapsulation for EAPOL frames */
 			ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
 			    M_WME_GETAC(m0) : WME_AC_BE;
-			
+
 			if (sc->txq[ac].queued > sc->txq[ac].count - 8) {
-				
+
 				/* there is no place left in this ring */
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
@@ -2203,7 +2203,7 @@ iwn_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
-			aprint_error_dev(sc->sc_dev, "device timeout\n"); 
+			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			ifp->if_flags &= ~IFF_UP;
 			iwn_stop(ifp, 1);
 			ifp->if_oerrors++;
@@ -2221,7 +2221,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void * data)
 
 #define IS_RUNNING(ifp)							\
 	((ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))
-	
+
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int s, error = 0;
@@ -2253,7 +2253,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void * data)
 	}
 
 	if (error == ENETRESET) {
-		if (IS_RUNNING(ifp) && 
+		if (IS_RUNNING(ifp) &&
 		    (ic->ic_roaming != IEEE80211_ROAMING_MANUAL))
 			iwn_init(ifp);
 		error = 0;
@@ -3113,7 +3113,7 @@ iwn_auth(struct iwn_softc *sc)
 
 	/* configuration has changed, set Tx power accordingly */
 	if ((error = iwn_set_txpower(sc, ni->ni_chan, 1)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not set Tx power\n"); 
+		aprint_error_dev(sc->sc_dev, "could not set Tx power\n");
 		return error;
 	}
 
@@ -3193,7 +3193,7 @@ iwn_run(struct iwn_softc *sc)
 	DPRINTF(("adding BSS node\n"));
 	error = iwn_cmd(sc, IWN_CMD_ADD_NODE, &node, sizeof node, 1);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not add BSS node\n"); 
+		aprint_error_dev(sc->sc_dev, "could not add BSS node\n");
 		return error;
 	}
 	DPRINTF(("setting MRR for node %d\n", node.id));
@@ -3213,7 +3213,7 @@ iwn_run(struct iwn_softc *sc)
 	}
 
 	/* start periodic calibration timer */
-	sc->calib.state = IWN_CALIB_STATE_ASSOC; 
+	sc->calib.state = IWN_CALIB_STATE_ASSOC;
 	sc->calib_cnt = 0;
 	callout_schedule(&sc->calib_to, hz / 2);
 
@@ -3744,7 +3744,7 @@ iwn_init(struct ifnet *ifp)
 	sc->rawtemp = sc->ucode_info.temp[3].chan20MHz;
 	sc->temp = iwn_get_temperature(sc);
 	DPRINTF(("temperature=%d\n", sc->temp));
-	
+
 	if ((error = iwn_config(sc)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not configure device\n");
 		goto fail1;
@@ -3765,7 +3765,7 @@ iwn_init(struct ifnet *ifp)
 	DPRINTF(("iwn_init ok\n"));
 	return 0;
 
-fail1:	
+fail1:
 	DPRINTF(("iwn_init error\n"));
 	iwn_stop(ifp, 1);
 	return error;
