@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.12 2008/03/29 17:51:08 matt Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.13 2008/03/29 17:55:35 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.12 2008/03/29 17:51:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.13 2008/03/29 17:55:35 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -222,12 +222,9 @@ prep_nvram_read_val(int addr)
 {
 	struct nvram_pnpbus_softc *sc;
 
-	if (nvram_cd.cd_devs == NULL || nvram_cd.cd_ndevs == 0
-            || nvram_cd.cd_devs[NVRAM_STD_DEV] == NULL) {
-                return 0;
-        }
-
-        sc = (struct nvram_pnpbus_softc *) nvram_cd.cd_devs[NVRAM_STD_DEV];
+        sc = device_lookup_private(&nvram_cd, NVRAM_STD_DEV);
+	if (sc == NULL)
+		return 0;
 
 	/* tell the NVRAM what we want */
 	bus_space_write_1(sc->sc_as, sc->sc_ash, 0, addr);
@@ -246,12 +243,9 @@ prep_nvram_write_val(int addr, uint8_t val)
 {
 	struct nvram_pnpbus_softc *sc;
 
-	if (nvram_cd.cd_devs == NULL || nvram_cd.cd_ndevs == 0
-            || nvram_cd.cd_devs[NVRAM_STD_DEV] == NULL) {
-                return;
-        }
-
-        sc = (struct nvram_pnpbus_softc *) nvram_cd.cd_devs[NVRAM_STD_DEV];
+        sc = device_lookup_private(&nvram_cd, NVRAM_STD_DEV);
+	if (sc == NULL)
+		return;
 
 	/* tell the NVRAM what we want */
 	bus_space_write_1(sc->sc_as, sc->sc_ash, 0, addr);
