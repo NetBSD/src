@@ -1,5 +1,0 @@
-$NetBSD: version,v 1.4 2006/07/13 21:32:12 bjh21 Exp $
-
-0.01:	Just about enough code to launch a kernel from it.
-0.02:	Reading directory entries and loading whole files.
-0.03:	Improved error messages and major memory leak fixed.

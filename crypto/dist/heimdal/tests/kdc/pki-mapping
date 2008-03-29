@@ -1,4 +1,0 @@
-# $Heimdal: pki-mapping 19661 2007-01-04 01:58:01Z lha $
-# $NetBSD: pki-mapping,v 1.1 2008/03/22 09:42:44 mlelstv Exp $
-foo@TEST.H5L.SE:CN=pkinit,C=SE
-foo@TEST.H5L.SE:CN=bar,DC=test,DC=h5l,DC=se

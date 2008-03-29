@@ -1,8 +1,0 @@
-#	$NetBSD: rc.sample,v 1.3 2002/01/21 14:42:27 wiz Exp $
-#
-# echo -n starting machine-specific daemon:
-if [ -x /etc/shutdown.local ]; then
-	echo -n ' poffd';		poffd "/etc/shutdown.local %"
-fi
-
-# echo '.'
