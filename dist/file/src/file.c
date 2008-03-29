@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.18 2007/06/07 11:32:46 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.19 2008/03/29 09:40:41 ragge Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -30,6 +30,7 @@
 /*
  * file - find type of a file or files - main program.
  */
+#include <sys/param.h>	/* for MAXPATHLEN */
 
 #include "file.h"
 #include "magic.h"
@@ -39,7 +40,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/param.h>	/* for MAXPATHLEN */
 #include <sys/stat.h>
 #ifdef RESTORE_TIME
 # if (__COHERENT__ >= 0x420)
@@ -76,7 +76,7 @@
 #if 0
 FILE_RCSID("@(#)$File: file.c,v 1.111 2007/05/08 14:44:18 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.18 2007/06/07 11:32:46 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.19 2008/03/29 09:40:41 ragge Exp $");
 #endif
 #endif	/* lint */
 
