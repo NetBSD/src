@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.173 2008/01/02 19:26:45 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.174 2008/03/29 13:48:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.173 2008/01/02 19:26:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.174 2008/03/29 13:48:00 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -76,11 +76,8 @@ static int nfs_doio_phys __P((struct buf *, struct uio *));
  * Any similarity to readip() is purely coincidental
  */
 int
-nfs_bioread(vp, uio, ioflag, cred, cflag)
-	struct vnode *vp;
-	struct uio *uio;
-	int ioflag, cflag;
-	kauth_cred_t cred;
+nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag,
+	    kauth_cred_t cred, int cflag)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct buf *bp = NULL, *rabp;
@@ -439,8 +436,7 @@ diragain:
  * Vnode op for write using bio
  */
 int
-nfs_write(v)
-	void *v;
+nfs_write(void *v)
 {
 	struct vop_write_args /* {
 		struct vnode *a_vp;
@@ -588,11 +584,7 @@ nfs_write(v)
  * NULL.
  */
 struct buf *
-nfs_getcacheblk(vp, bn, size, l)
-	struct vnode *vp;
-	daddr_t bn;
-	int size;
-	struct lwp *l;
+nfs_getcacheblk(struct vnode *vp, daddr_t bn, int size, struct lwp *l)
 {
 	struct buf *bp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -614,12 +606,8 @@ nfs_getcacheblk(vp, bn, size, l)
  * doing the flush, just wait for completion.
  */
 int
-nfs_vinvalbuf(vp, flags, cred, l, intrflg)
-	struct vnode *vp;
-	int flags;
-	kauth_cred_t cred;
-	struct lwp *l;
-	int intrflg;
+nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
+		struct lwp *l, int intrflg)
 {
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -732,8 +720,7 @@ nfs_flushstalebuf(struct vnode *vp, kauth_cred_t cred, struct lwp *l,
  */
 
 int
-nfs_asyncio(bp)
-	struct buf *bp;
+nfs_asyncio(struct buf *bp)
 {
 	struct nfs_iod *iod;
 	struct nfsmount *nmp;
@@ -844,9 +831,7 @@ again:
  * nfs_doio for read.
  */
 static int
-nfs_doio_read(bp, uiop)
-	struct buf *bp;
-	struct uio *uiop;
+nfs_doio_read(struct buf *bp, struct uio *uiop)
 {
 	struct vnode *vp = bp->b_vp;
 	struct nfsnode *np = VTONFS(vp);
@@ -926,9 +911,7 @@ nfs_doio_read(bp, uiop)
  * nfs_doio for write.
  */
 static int
-nfs_doio_write(bp, uiop)
-	struct buf *bp;
-	struct uio *uiop;
+nfs_doio_write(struct buf *bp, struct uio *uiop)
 {
 	struct vnode *vp = bp->b_vp;
 	struct nfsnode *np = VTONFS(vp);
@@ -1137,9 +1120,7 @@ again:
  * nfs_doio for B_PHYS.
  */
 static int
-nfs_doio_phys(bp, uiop)
-	struct buf *bp;
-	struct uio *uiop;
+nfs_doio_phys(struct buf *bp, struct uio *uiop)
 {
 	struct vnode *vp = bp->b_vp;
 	int error;
@@ -1172,8 +1153,7 @@ nfs_doio_phys(bp, uiop)
  * synchronously or from an nfsiod.
  */
 int
-nfs_doio(bp)
-	struct buf *bp;
+nfs_doio(struct buf *bp)
 {
 	int error;
 	struct uio uio;
@@ -1211,8 +1191,7 @@ nfs_doio(bp)
  */
 
 int
-nfs_getpages(v)
-	void *v;
+nfs_getpages(void *v)
 {
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
