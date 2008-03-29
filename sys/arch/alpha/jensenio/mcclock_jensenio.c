@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_jensenio.c,v 1.7 2008/03/28 19:05:49 tsutsui Exp $ */
+/* $NetBSD: mcclock_jensenio.c,v 1.8 2008/03/29 05:42:45 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.7 2008/03/28 19:05:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jensenio.c,v 1.8 2008/03/29 05:42:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -118,6 +118,7 @@ mcclock_jensenio_attach(device_t parent, device_t self, void *aux)
 	struct jensenio_attach_args *ja = aux;
 	struct mc146818_softc *sc = &jsc->sc_mc146818;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ja->ja_iot;
 	if (bus_space_map(sc->sc_bst, ja->ja_ioaddr, 0x02, 0,
 	    &sc->sc_bsh))

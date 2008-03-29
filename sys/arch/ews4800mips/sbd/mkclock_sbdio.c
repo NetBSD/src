@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_sbdio.c,v 1.3 2008/03/28 20:26:12 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_sbdio.c,v 1.4 2008/03/29 05:47:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_sbdio.c,v 1.3 2008/03/28 20:26:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_sbdio.c,v 1.4 2008/03/29 05:47:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,6 +83,7 @@ mkclock_sbdio_attach(device_t parent, device_t self, void *aux)
 	struct sbdio_attach_args *sa = aux;
 	bus_size_t size;
 
+	sc->sc_dev = self;
 	aprint_normal(" at %p", (void *)sa->sa_addr1);
 
 	sc->sc_bst = sa->sa_bust;
