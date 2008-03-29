@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.11 2008/01/10 15:31:26 tsutsui Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.12 2008/03/29 17:51:08 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.11 2008/01/10 15:31:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.12 2008/03/29 17:51:08 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -506,7 +506,7 @@ prep_nvramopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct nvram_pnpbus_softc *sc;
 
-	sc = device_lookup(&nvram_cd, NVRAM_STD_DEV);
+	sc = device_lookup_private(&nvram_cd, NVRAM_STD_DEV);
 	if (sc == NULL)
 		return ENODEV;
 
@@ -523,7 +523,7 @@ prep_nvramclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct nvram_pnpbus_softc *sc;
 
-	sc = device_lookup(&nvram_cd, NVRAM_STD_DEV);
+	sc = device_lookup_private(&nvram_cd, NVRAM_STD_DEV);
 	if (sc == NULL) 
 		return ENODEV;
 	sc->sc_open = 0;
