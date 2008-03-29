@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.896 2008/03/23 14:02:49 ad Exp $
+#	$NetBSD: files,v 1.897 2008/03/29 15:59:26 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1045,7 +1045,7 @@ file	dev/ic/igsfb_subr.c		igsfb
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_sgc | sti_phantom)
+file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens)
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"

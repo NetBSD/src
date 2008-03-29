@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.41 2008/03/24 08:34:06 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.42 2008/03/29 15:59:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.41 2008/03/24 08:34:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42 2008/03/29 15:59:26 skrll Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1491,7 +1491,7 @@ mb_module_callback(struct device *self, struct confargs *ca)
 	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
 		return;
-	config_found_sm_loc(self, "mainbus", NULL, ca, mbprint, mbsubmatch);
+	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }
 
 static void
@@ -1500,7 +1500,7 @@ mb_cpu_mem_callback(struct device *self, struct confargs *ca)
 	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY) &&
 	    ca->ca_hpa != pdc_hpa.hpa)
-		config_found_sm_loc(self, "mainbus", NULL, ca, mbprint,
+		config_found_sm_loc(self, "gedoens", NULL, ca, mbprint,
 				    mbsubmatch);
 }
 
