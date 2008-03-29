@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.12 2008/01/12 09:54:28 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.13 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
 #include <dev/ic/z8530sc.h>
 
 struct zsc_softc {
-	struct	device zsc_dev;		/* required first: base device */
+	device_t zsc_dev;		/* required first: base device */
 	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
 	/* Machine-dependent part follows... */
 	struct zs_chanstate  zsc_cs_store[2];
@@ -102,13 +102,13 @@ struct zsc_softc {
  * These could be inlines, but with the delay, speed is moot.
  */
 
-u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
-u_char zs_read_csr(struct zs_chanstate *cs);
-u_char zs_read_data(struct zs_chanstate *cs);
+uint8_t zs_read_reg(struct zs_chanstate *cs, uint8_t reg);
+uint8_t zs_read_csr(struct zs_chanstate *cs);
+uint8_t zs_read_data(struct zs_chanstate *cs);
 
-void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
-void  zs_write_csr(struct zs_chanstate *cs, u_char val);
-void  zs_write_data(struct zs_chanstate *cs, u_char val);
+void  zs_write_reg(struct zs_chanstate *cs, uint8_t reg, uint8_t val);
+void  zs_write_csr(struct zs_chanstate *cs, uint8_t val);
+void  zs_write_data(struct zs_chanstate *cs, uint8_t val);
 
 /* Interrupt priority for the SCC chip; needs to match ZSHARD_PRI. */
 #define splzs()		splserial()

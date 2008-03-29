@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.21 2006/03/30 16:12:10 thorpej Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.22 2008/03/29 19:15:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.21 2006/03/30 16:12:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.22 2008/03/29 19:15:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,11 +97,11 @@ struct zsops zsops_kbd = {
 	kbd_zs_softint,	/* process software interrupt */
 };
 
-static int	kbd_zs_match(struct device *, struct cfdata *, void *);
-static void	kbd_zs_attach(struct device *, struct device *, void *);
+static int	kbd_zs_match(device_t, cfdata_t, void *);
+static void	kbd_zs_attach(device_t, device_t, void *);
 static void	kbd_zs_write_data(struct kbd_sun_softc *, int);
 
-CFATTACH_DECL(kbd_zs, sizeof(struct kbd_sun_softc),
+CFATTACH_DECL_NEW(kbd_zs, sizeof(struct kbd_sun_softc),
     kbd_zs_match, kbd_zs_attach, NULL, NULL);
 
 /* Fall-back baud rate */
@@ -111,10 +111,7 @@ int	kbd_zs_bps = KBD_DEFAULT_BPS;
  * kbd_zs_match: how is this zs channel configured?
  */
 int
-kbd_zs_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+kbd_zs_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -126,18 +123,17 @@ kbd_zs_match(parent, cf, aux)
 }
 
 void
-kbd_zs_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+kbd_zs_attach(device_t parent, device_t self, void *aux)
 {
-	struct zsc_softc *zsc = device_private(parent);
 	struct kbd_sun_softc *k = device_private(self);
+	struct zsc_softc *zsc = device_private(parent);
 	struct zsc_attach_args *args = aux;
 	struct zs_chanstate *cs;
 	int channel;
 	int reset, s;
 	int bps;
+
+	k->k_kbd.k_dev = self;
 
 	/* provide upper layer with a link to the middle layer */
 	k->k_kbd.k_ops = &kbd_ops_sun;
@@ -153,7 +149,7 @@ kbd_zs_attach(parent, self, aux)
 	if ((bps = cs->cs_defspeed) == 0)
 		bps = kbd_zs_bps;
 
-	printf(": baud rate %d", bps);
+	aprint_normal(": baud rate %d", bps);
 
 	if ((args->hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
 		/*
@@ -166,9 +162,9 @@ kbd_zs_attach(parent, self, aux)
 
 		cons_attach_input(cc, args->consdev);
 		k->k_kbd.k_isconsole = 1;
-		printf(" (console input)");
+		aprint_normal(" (console input)");
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Initialize the speed, etc. */
 	s = splzs();
@@ -213,8 +209,7 @@ kbd_zs_write_data(k, c)
 }
 
 static void
-kbd_zs_rxint(cs)
-	struct zs_chanstate *cs;
+kbd_zs_rxint(struct zs_chanstate *cs)
 {
 	struct kbd_sun_softc *k;
 	int put, put_next;
@@ -277,8 +272,7 @@ kbd_zs_rxint(cs)
 
 
 static void
-kbd_zs_txint(cs)
-	struct zs_chanstate *cs;
+kbd_zs_txint(struct zs_chanstate *cs)
 {
 	struct kbd_sun_softc *k;
 
@@ -291,9 +285,7 @@ kbd_zs_txint(cs)
 
 
 static void
-kbd_zs_stint(cs, force)
-	struct zs_chanstate *cs;
-	int force;
+kbd_zs_stint(struct zs_chanstate *cs, int force)
 {
 	struct kbd_sun_softc *k;
 	int rr0;
@@ -331,8 +323,7 @@ kbd_zs_stint(cs, force)
  * Note: this is called at splsoftclock()
  */
 static void
-kbd_zs_softint(cs)
-	struct zs_chanstate *cs;
+kbd_zs_softint(struct zs_chanstate *cs)
 {
 	struct kbd_sun_softc *k;
 	int get, c, s;
@@ -368,7 +359,7 @@ kbd_zs_softint(cs)
 			 * send a reset to resync key translation.
 			 */
 			log(LOG_ERR, "%s: input error (0x%x)\n",
-				k->k_kbd.k_dev.dv_xname, ring_data);
+			    device_xname(k->k_kbd.k_dev), ring_data);
 			get = k->k_rbput; /* flush */
 			goto send_reset;
 		}
@@ -378,7 +369,7 @@ kbd_zs_softint(cs)
 	}
 	if (intr_flags & INTR_RX_OVERRUN) {
 		log(LOG_ERR, "%s: input overrun\n",
-		    k->k_kbd.k_dev.dv_xname);
+		    device_xname(k->k_kbd.k_dev));
 	send_reset:
 		/* Send a reset to resync translation. */
 		kbd_sun_output(k, KBD_CMD_RESET);
@@ -400,7 +391,7 @@ kbd_zs_softint(cs)
 		 * Status line change.  (Not expected.)
 		 */
 		log(LOG_ERR, "%s: status interrupt?\n",
-		    k->k_kbd.k_dev.dv_xname);
+		    device_xname(k->k_kbd.k_dev));
 		cs->cs_rr0_delta = 0;
 	}
 

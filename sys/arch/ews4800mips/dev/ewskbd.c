@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.7 2008/03/29 08:14:40 tsutsui Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.8 2008/03/29 19:15:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2005 Izumi Tsutsui
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.7 2008/03/29 08:14:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.8 2008/03/29 19:15:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -160,7 +160,7 @@ static int
 ewskbd_zsc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zsc_attach_args *zsc_args = aux;
-	struct zsc_softc *zsc = (void *)parent;
+	struct zsc_softc *zsc = device_private(parent);
 
 	/* keyboard is on channel B */
 	if ((zsc->zsc_flags & 0x0001 /* kbms port */) != 0 &&
@@ -182,7 +182,7 @@ ewskbd_zsc_attach(struct device *parent, struct device *self, void *aux)
 	int channel;
 
 	sc = device_private(self);
-	zsc = (void *)parent;
+	zsc = device_private(parent);
 	sc->sc_dev = self;
 	zsc_args = aux;
 

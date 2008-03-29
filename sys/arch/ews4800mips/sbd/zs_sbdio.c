@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_sbdio.c,v 1.8 2008/03/29 08:14:41 tsutsui Exp $	*/
+/*	$NetBSD: zs_sbdio.c,v 1.9 2008/03/29 19:15:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.8 2008/03/29 08:14:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_sbdio.c,v 1.9 2008/03/29 19:15:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static uint8_t zs_init_reg[16] = {
 static int zs_sbdio_match(device_t, cfdata_t, void *);
 static void zs_sbdio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zsc_sbdio, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zsc_sbdio, sizeof(struct zsc_softc),
     zs_sbdio_match, zs_sbdio_attach, NULL, NULL);
 
 int
@@ -112,7 +112,7 @@ zs_sbdio_match(device_t parent, cfdata_t cf, void *aux)
 void
 zs_sbdio_attach(device_t parent, device_t self, void *aux)
 {
-	struct zsc_softc *zsc = (void *)self;
+	struct zsc_softc *zsc = device_private(self);
 	struct sbdio_attach_args *sa = aux;
 	struct zsc_attach_args zsc_args;
 	struct zschan *zc;
@@ -120,6 +120,7 @@ zs_sbdio_attach(device_t parent, device_t self, void *aux)
 	struct zsdevice *zs_addr;
 	int s, zs_unit, channel;
 
+	zsc->zsc_dev = self;
 	aprint_normal("\n");
 
 	zs_unit = device_unit(self);

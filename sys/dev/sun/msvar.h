@@ -1,4 +1,4 @@
-/*	$NetBSD: msvar.h,v 1.7 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: msvar.h,v 1.8 2008/03/29 19:15:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,8 +69,13 @@
  * us sync up with the mouse after an error.)
  */
 struct ms_softc {
-	struct	device ms_dev;		/* required first: base device */
-	struct	zs_chanstate *ms_cs;
+	device_t ms_dev;		/* required first: base device */
+	union {
+		void *msu_priv;
+		struct zs_chanstate *msu_cs;
+	} ms_u;
+#define ms_priv	ms_u.msu_priv
+#define ms_cs	ms_u.msu_cs
 
 	/*
 	 * The deviopen and deviclose routines are provided
