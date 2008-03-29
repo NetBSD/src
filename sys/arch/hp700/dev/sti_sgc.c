@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.12 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.13 2008/03/29 15:59:26 skrll Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.12 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.13 2008/03/29 15:59:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,12 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.12 2005/12/11 12:17:24 christos Exp $"
 int sti_sgc_probe(struct device *, struct cfdata *, void *);
 void sti_sgc_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(sti_sgc, sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach,
+CFATTACH_DECL(sti_gedoens, sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach,
     NULL, NULL);
-
-CFATTACH_DECL(sti_phantomas, sizeof(struct sti_softc), sti_sgc_probe, 
-    sti_sgc_attach, NULL, NULL);
-
 
 paddr_t sti_sgc_getrom(struct confargs *);
 
