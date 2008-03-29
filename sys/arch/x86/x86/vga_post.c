@@ -1,3 +1,5 @@
+/* $NetBSD: vga_post.c,v 1.9 2008/03/29 17:49:01 jmcneill Exp $ */
+
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -28,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.8 2008/03/13 17:40:24 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.9 2008/03/29 17:49:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
