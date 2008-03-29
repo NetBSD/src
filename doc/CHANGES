@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1034 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1035 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -479,3 +479,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kerberos: Upgrade to Heimdal-1.1. [mlelstv 20080322]
 	cobalt: Add kernel support for optional Z85C30 serial on Qube 2700.
 		[tsutsui 20080327]
+	lii(4): Added a driver for the Atheros L2 Fast-Ethernet controller,
+		notably found on Asus's EeePC. [cube 20080328]
