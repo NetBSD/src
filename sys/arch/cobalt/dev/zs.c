@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 2008/03/27 15:21:46 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.2 2008/03/29 19:15:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.1 2008/03/27 15:21:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.2 2008/03/29 19:15:34 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -88,11 +88,11 @@ int zs_def_cflag = (CREAD | CS8 | HUPCL);
 
 
 /* Definition of the driver for autoconfig. */
-static int  zs_match(struct device *, struct cfdata *, void *);
-static void zs_attach(struct device *, struct device *, void *);
+static int  zs_match(device_t, cfdata_t, void *);
+static void zs_attach(device_t, device_t, void *);
 static int  zs_print(void *, const char *name);
 
-CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zsc, sizeof(struct zsc_softc),
     zs_match, zs_attach, NULL, NULL);
 
 static int zshard(void *);
@@ -110,7 +110,7 @@ static uint8_t *zs_cons;
 /* default speed for all channels */
 static int zs_defspeed = ZS_DEFSPEED;
 
-static u_char zs_init_reg[16] = {
+static uint8_t zs_init_reg[16] = {
 	0,					/* 0: CMD (reset, etc.) */
 	0,					/* 1: No interrupts yet. */
 	0,					/* 2: no IVECT */
@@ -134,7 +134,7 @@ static const int chanoff[] = { ZS_CHAN_A, ZS_CHAN_B };
 
 
 static int
-zs_match(struct device *parent, struct cfdata *cf, void *aux)
+zs_match(device_t parent, cfdata_t cf, void *aux)
 {
 	static int matched;
 
@@ -157,7 +157,7 @@ zs_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a found zs.
  */
 static void
-zs_attach(struct device *parent, struct device *self, void *aux)
+zs_attach(device_t parent, device_t self, void *aux)
 {
 	struct zsc_softc *zsc = device_private(self);
 	struct mainbus_attach_args *maa = aux;
@@ -165,6 +165,8 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t *zs_base;
 	struct zs_chanstate *cs;
 	int s, channel;
+
+	zsc->zsc_dev = self;
 
 	/* XXX: MI z8530 doesn't use bus_space(9) yet */
 	zs_base = (void *)MIPS_PHYS_TO_KSEG1(maa->ma_addr);
@@ -383,7 +385,7 @@ zs_set_modes(struct zs_chanstate *cs, int cflag)
  * Read or write the chip with suitable delays.
  */
 
-u_char
+uint8_t
 zs_read_reg(struct zs_chanstate *cs, uint8_t reg)
 {
 	uint8_t val;
@@ -405,7 +407,7 @@ zs_write_reg(struct zs_chanstate *cs, uint8_t reg, uint8_t val)
 	ZS_DELAY();
 }
 
-u_char
+uint8_t
 zs_read_csr(struct zs_chanstate *cs)
 {
 	uint8_t val;
