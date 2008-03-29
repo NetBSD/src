@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1124 2008/03/25 07:03:02 mlelstv Exp $
+#	$NetBSD: mi,v 1.1125 2008/03/29 17:51:42 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1207,6 +1207,7 @@
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
 ./usr/include/grp.h				comp-c-include
+./usr/include/gssapi.h				comp-krb5-include	kerberos
 ./usr/include/gssapi/gssapi.h			comp-krb5-include	kerberos
 ./usr/include/gssapi/gssapi_krb5.h		comp-krb5-include	kerberos
 ./usr/include/gssapi/gssapi_spnego.h		comp-krb5-include	kerberos
