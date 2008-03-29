@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.79 2007/11/19 18:51:40 ad Exp $	*/
+/*	$NetBSD: ite.c,v 1.80 2008/03/29 06:47:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.79 2007/11/19 18:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.80 2008/03/29 06:47:07 tsutsui Exp $");
 
 #include "hil.h"
 
@@ -158,10 +158,10 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.79 2007/11/19 18:51:40 ad Exp $");
  */
 int	iteburst = 64;
 
-static int	itematch(struct device *, struct cfdata *, void *);
-static void	iteattach(struct device *, struct device *, void *);
+static int	itematch(device_t, cfdata_t, void *);
+static void	iteattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ite, sizeof(struct ite_softc),
+CFATTACH_DECL_NEW(ite, sizeof(struct ite_softc),
     itematch, iteattach, NULL, NULL);
 
 /* XXX this has always been global, but shouldn't be */
@@ -238,36 +238,38 @@ static u_char  ite_console_attributes[0x2200];
 }
 
 static int
-itematch(struct device *parent, struct cfdata *match, void *aux)
+itematch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-iteattach(struct device *parent, struct device *self, void *aux)
+iteattach(device_t parent, device_t self, void *aux)
 {
-	struct ite_softc *ite = (struct ite_softc *)self;
-	struct grf_softc *grf = (struct grf_softc *)parent;
+	struct ite_softc *ite = device_private(self);
+	struct grf_softc *grf = device_private(parent);
 	struct grfdev_attach_args *ga = aux;
+
+	ite->sc_dev = self;
 
 	/* Allocate the ite_data. */
 	if (ga->ga_isconsole) {
 		ite->sc_data = &ite_cn;
-		printf(": console");
+		aprint_normal(": console");
 
 		/*
 		 * We didn't know which unit this would be during
 		 * the console probe, so we have to fixup cn_dev here.
 		 */
 		cn_tab->cn_dev = makedev(cdevsw_lookup_major(&ite_cdevsw),
-					 device_unit(self));
+		    device_unit(self));
 	} else {
 		ite->sc_data = malloc(sizeof(struct ite_data), M_DEVBUF,
 		    M_NOWAIT | M_ZERO);
 		if (ite->sc_data == NULL) {
-			printf("\n%s: malloc for ite_data failed\n",
-			    ite->sc_dev.dv_xname);
+			aprint_normal("\n");
+			aprint_error_dev(self, "malloc for ite_data failed\n");
 			return;
 		}
 		ite->sc_data->flags = ITE_ALIVE;
@@ -279,7 +281,7 @@ iteattach(struct device *parent, struct device *self, void *aux)
 	ite->sc_grf = grf;
 	grf->sc_ite = ite;
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 void
@@ -391,7 +393,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 	int first = 0;
 
 	if (unit >= ite_cd.cd_ndevs ||
-	    (sc = ite_cd.cd_devs[unit]) == NULL)
+	    (sc = device_private(ite_cd.cd_devs[unit])) == NULL)
 		return ENXIO;
 	ip = sc->sc_data;
 
@@ -434,7 +436,7 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 static int
 iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 
@@ -452,7 +454,7 @@ iteclose(dev_t dev, int flag, int mode, struct lwp *l)
 static int
 iteread(dev_t dev, struct uio *uio, int flag)
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flag);
@@ -461,7 +463,7 @@ iteread(dev_t dev, struct uio *uio, int flag)
 int
 itewrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
@@ -470,7 +472,7 @@ itewrite(dev_t dev, struct uio *uio, int flag)
 int
 itepoll(dev_t dev, int events, struct lwp *l)
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
 	struct tty *tp = sc->sc_data->tty;
 
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -479,7 +481,7 @@ itepoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 itetty(dev_t dev)
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
 
 	return sc->sc_data->tty;
 }
@@ -487,7 +489,7 @@ itetty(dev_t dev)
 int
 iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct ite_softc *sc = device_private(ite_cd.cd_devs[ITEUNIT(dev)]);
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 	int error;
@@ -506,7 +508,7 @@ itestart(struct tty *tp)
 	struct ite_softc *sc;
 	struct ite_data *ip;
 
-	sc = ite_cd.cd_devs[ITEUNIT(tp->t_dev)];
+	sc = device_private(ite_cd.cd_devs[ITEUNIT(tp->t_dev)]);
 	ip = sc->sc_data;
 
 	s = splkbd();

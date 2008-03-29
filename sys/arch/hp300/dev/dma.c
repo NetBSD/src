@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.38 2007/12/05 12:03:08 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.39 2008/03/29 06:47:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.38 2007/12/05 12:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.39 2008/03/29 06:47:07 tsutsui Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -118,7 +118,7 @@ struct dma_channel {
 };
 
 struct dma_softc {
-	struct  device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 
@@ -140,10 +140,10 @@ struct dma_softc {
 #define DMAF_VCFLUSH	0x02
 #define DMAF_NOINTR	0x04
 
-static int	dmamatch(struct device *, struct cfdata *, void *);
-static void	dmaattach(struct device *, struct device *, void *);
+static int	dmamatch(device_t, cfdata_t, void *);
+static void	dmaattach(device_t, device_t, void *);
 
-CFATTACH_DECL(dma, sizeof(struct dma_softc),
+CFATTACH_DECL_NEW(dma, sizeof(struct dma_softc),
     dmamatch, dmaattach, NULL, NULL);
 
 static int	dmaintr(void *);
@@ -168,7 +168,7 @@ long	dmalword[NDMACHAN];
 static struct dma_softc *dma_softc;
 
 static int
-dmamatch(struct device *parent, struct cfdata *match, void *aux)
+dmamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	static int dmafound = 0;                /* can only have one */
@@ -181,14 +181,16 @@ dmamatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-dmaattach(struct device *parent, struct device *self, void *aux)
+dmaattach(device_t parent, device_t self, void *aux)
 {
-	struct dma_softc *sc = (struct dma_softc *)self;
+	struct dma_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	struct dma_channel *dc;
 	struct dmareg *dma;
 	int i;
 	char rev;
+
+	sc->sc_dev = self;
 
 	/* There's just one. */
 	dma_softc = sc;
@@ -196,11 +198,11 @@ dmaattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bst = ia->ia_bst;
 	if (bus_space_map(sc->sc_bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
 	     &sc->sc_bsh)) {
-		printf("%s: can't map registers\n", sc->sc_dev.dv_xname);
+		aprint_error(": can't map registers\n");
 		return;
 	}
 
-	dma = (struct dmareg *)bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
+	dma = bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
 	sc->sc_dmareg = dma;
 
 	/*
@@ -214,7 +216,8 @@ dmaattach(struct device *parent, struct device *self, void *aux)
 	if (hp300_bus_space_probe(sc->sc_bst, sc->sc_bsh, DMA_ID2, 1) == 0) {
 		rev = 'B';
 #if !defined(HP320)
-		panic("dmainit: DMA card requires hp320 support");
+		aprint_normal("\n");
+		panic("%s: DMA card requires hp320 support", __func__);
 #endif
 	} else
 		rev = dma->dma_id[2];
@@ -239,7 +242,8 @@ dmaattach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		default:
-			panic("dmainit: more than 2 channels?");
+			aprint_normal("\n");
+			panic("%s: more than 2 channels?", __func__);
 			/* NOTREACHED */
 		}
 	}
@@ -249,7 +253,7 @@ dmaattach(struct device *parent, struct device *self, void *aux)
 	callout_reset(&sc->sc_debug_ch, 30 * hz, dmatimeout, sc);
 #endif
 
-	printf(": 98620%c, 2 channels, %d-bit DMA\n",
+	aprint_normal(": 98620%c, 2 channels, %d-bit DMA\n",
 	    rev, (rev == 'B') ? 16 : 32);
 
 	/*
@@ -523,7 +527,7 @@ dmago(int unit, char *addr, int count, int flags)
 		if (((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD)) ||
 		    ((dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD))) {
 			printf("dmago: cmd %x, flags %x\n",
-			       dc->dm_cmd, dc->dm_flags);
+			    dc->dm_cmd, dc->dm_flags);
 			for (seg = 0; seg <= dc->dm_last; seg++)
 				printf("  %d: %d@%p\n", seg,
 				    dc->dm_chain[seg].dc_count,
@@ -602,8 +606,9 @@ dmaintr(void *arg)
 		if (dmadebug & DDB_IO) {
 			if (((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD)) ||
 			    ((dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)))
-			  printf("dmaintr: flags %x unit %d stat %x next %d\n",
-			   dc->dm_flags, i, stat, dc->dm_cur + 1);
+			 	printf("dmaintr: flags %x unit %d stat %x "
+				    "next %d\n",
+				    dc->dm_flags, i, stat, dc->dm_cur + 1);
 		}
 		if (stat & DMA_ARMED)
 			printf("dma channel %d: intr when armed\n", i);

@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.27 2007/03/04 05:59:47 christos Exp $	*/
+/*	$NetBSD: frodo.c,v 1.28 2008/03/29 06:47:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.27 2007/03/04 05:59:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.28 2008/03/29 06:47:07 tsutsui Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -98,7 +98,7 @@ struct frodo_interhand {
 };
 
 struct frodo_softc {
-	struct device	sc_dev;		/* generic device glue */
+	device_t	sc_dev;		/* generic device glue */
 	volatile uint8_t *sc_regs;	/* register base */
 	struct frodo_interhand sc_intr[FRODO_NINTR]; /* interrupt handlers */
 	int		sc_ipl;
@@ -107,17 +107,17 @@ struct frodo_softc {
 	struct bus_space_tag sc_tag;	/* bus space tag */
 };
 
-static int	frodomatch(struct device *, struct cfdata *, void *);
-static void	frodoattach(struct device *, struct device *, void *);
+static int	frodomatch(device_t, cfdata_t, void *);
+static void	frodoattach(device_t, device_t, void *);
 
 static int	frodoprint(void *, const char *);
-static int	frodosubmatch(struct device *, struct cfdata *, const int *, void *);
+static int	frodosubmatch(device_t, cfdata_t, const int *, void *);
 
 static int	frodointr(void *);
 
 static void	frodo_imask(struct frodo_softc *, uint16_t, uint16_t);
 
-CFATTACH_DECL(frodo, sizeof(struct frodo_softc),
+CFATTACH_DECL_NEW(frodo, sizeof(struct frodo_softc),
     frodomatch, frodoattach, NULL, NULL);
 
 static const struct frodo_device frodo_subdevs[] = {
@@ -129,7 +129,7 @@ static const struct frodo_device frodo_subdevs[] = {
 };
 
 static int
-frodomatch(struct device *parent, struct cfdata *match, void *aux)
+frodomatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	static int frodo_matched = 0;
@@ -149,20 +149,21 @@ frodomatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-frodoattach(struct device *parent, struct device *self, void *aux)
+frodoattach(device_t parent, device_t self, void *aux)
 {
-	struct frodo_softc *sc = (struct frodo_softc *)self;
+	struct frodo_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t bst = &sc->sc_tag;
 	const struct frodo_device *fd;
 	struct frodo_attach_args fa;
 
+	sc->sc_dev = self;
 	sc->sc_regs = (volatile uint8_t *)ia->ia_addr;
 	sc->sc_ipl = ia->ia_ipl;
 
 	if ((FRODO_READ(sc, FRODO_IISR) & FRODO_IISR_SERVICE) == 0)
-		printf(": service mode enabled");
-	printf("\n");
+		aprint_error(": service mode enabled");
+	aprint_normal("\n");
 
 	/* Initialize bus_space_tag_t for frodo */
 	frodo_init_bus_space(bst);
@@ -214,8 +215,7 @@ frodoattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-frodosubmatch(struct device *parent, struct cfdata *cf,
-	      const int *ldesc, void *aux)
+frodosubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct frodo_attach_args *fa = aux;
 
@@ -238,20 +238,19 @@ frodoprint(void *aux, const char *pnp)
 }
 
 void
-frodo_intr_establish(struct device *frdev, int (*func)(void *), void *arg,
+frodo_intr_establish(device_t frdev, int (*func)(void *), void *arg,
     int line, int priority)
 {
-	struct frodo_softc *sc = (struct frodo_softc *)frdev;
+	struct frodo_softc *sc = device_private(frdev);
 	struct hp300_intrhand *ih = sc->sc_ih;
 
 	if (line < 0 || line >= FRODO_NINTR) {
-		printf("%s: bad interrupt line %d\n",
-		    sc->sc_dev.dv_xname, line);
+		aprint_error_dev(frdev, "bad interrupt line %d\n", line);
 		goto lose;
 	}
 	if (sc->sc_intr[line].ih_fn != NULL) {
-		printf("%s: interrupt line %d already used\n",
-		    sc->sc_dev.dv_xname, line);
+		aprint_error_dev(frdev, "interrupt line %d already used\n",
+		    line);
 		goto lose;
 	}
 
@@ -281,15 +280,15 @@ frodo_intr_establish(struct device *frdev, int (*func)(void *), void *arg,
 }
 
 void
-frodo_intr_disestablish(struct device *frdev, int line)
+frodo_intr_disestablish(device_t frdev, int line)
 {
-	struct frodo_softc *sc = (struct frodo_softc *)frdev;
+	struct frodo_softc *sc = device_private(frdev);
 	struct hp300_intrhand *ih = sc->sc_ih;
 	int newpri;
 
 	if (sc->sc_intr[line].ih_fn == NULL) {
 		printf("%s: no handler for line %d\n",
-		    sc->sc_dev.dv_xname, line);
+		    device_xname(sc->sc_dev), line);
 		panic("frodo_intr_disestablish");
 	}
 
@@ -334,7 +333,7 @@ frodointr(void *arg)
 		if (fih->ih_fn == NULL ||
 		    (*fih->ih_fn)(fih->ih_arg) == 0)
 			printf("%s: spurious interrupt on line %d\n",
-			    sc->sc_dev.dv_xname, line);
+			    device_xname(sc->sc_dev), line);
 		if (taken++ > 100)
 			panic("frodointr: looping!");
 	} while (FRODO_GETPEND(sc) != 0);
