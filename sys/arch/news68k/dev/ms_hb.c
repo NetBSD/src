@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.11 2008/03/28 18:19:56 tsutsui Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.12 2008/03/29 05:48:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.11 2008/03/28 18:19:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.12 2008/03/29 05:48:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,6 +98,7 @@ ms_hb_attach(device_t parent, device_t self, void *aux)
 	struct wsmousedev_attach_args wsa;
 	int ipl;
 
+	sc->sc_dev = self;
 	if (bus_space_map(bt, ha->ha_address, MS_SIZE, 0, &bh) != 0) {
 		aprint_error(": can't map device space\n");
 		return;

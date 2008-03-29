@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_kbc.c,v 1.10 2008/03/28 18:19:56 tsutsui Exp $	*/
+/*	$NetBSD: ms_kbc.c,v 1.11 2008/03/29 05:48:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.10 2008/03/28 18:19:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.11 2008/03/29 05:48:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,6 +83,7 @@ ms_kbc_attach(device_t parent, device_t self, void *aux)
 	struct wsmousedev_attach_args wsa;
 	int ipl;
 
+	sc->sc_dev = self;
 	aprint_normal("\n");
 
 	sc->sc_bt = ka->ka_bt;

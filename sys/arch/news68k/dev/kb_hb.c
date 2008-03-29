@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.10 2008/03/28 18:19:56 tsutsui Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.11 2008/03/29 05:48:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.10 2008/03/28 18:19:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_hb.c,v 1.11 2008/03/29 05:48:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,8 @@ kb_hb_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bh;
 	struct wskbddev_attach_args wsa;
 	int ipl;
+
+	sc->sc_dev = self;
 
 	if (bus_space_map(bt, ha->ha_address, KB_SIZE, 0, &bh) != 0) {
 		aprint_error(": can't map device space\n");
