@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.218 2008/02/29 21:23:55 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.218.2.1 2008/03/29 20:47:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218 2008/02/29 21:23:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218.2.1 2008/03/29 20:47:02 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1206,7 +1206,7 @@ if_down(struct ifnet *ifp)
 	struct ifaddr *ifa;
 
 	ifp->if_flags &= ~IFF_UP;
-	microtime(&ifp->if_lastchange);
+	nanotime(&ifp->if_lastchange);
 	IFADDR_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
@@ -1230,7 +1230,7 @@ if_up(struct ifnet *ifp)
 #endif
 
 	ifp->if_flags |= IFF_UP;
-	microtime(&ifp->if_lastchange);
+	nanotime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
 	IFADDR_FOREACH(ifa, ifp)

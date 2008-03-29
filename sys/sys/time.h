@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.61 2008/03/16 13:19:55 yamt Exp $	*/
+/*	$NetBSD: time.h,v 1.61.2.1 2008/03/29 20:47:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,8 +42,8 @@
  * and used in other calls.
  */
 struct timeval {
-	long    tv_sec;		/* seconds */
-	long    tv_usec;	/* and microseconds */
+	time_t    	tv_sec;		/* seconds */
+	suseconds_t	tv_usec;	/* and microseconds */
 };
 
 /*
@@ -190,7 +190,7 @@ static __inline void
 timeval2bintime(const struct timeval *tv, struct bintime *bt)
 {
 
-	bt->sec = (/* XXX NetBSD not SUS compliant - MUST FIX */time_t)tv->tv_sec;
+	bt->sec = tv->tv_sec;
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
 }
@@ -267,22 +267,25 @@ struct	itimerspec {
 #include <time.h>
 
 __BEGIN_DECLS
+#ifndef __LIBC12_SOURCE__
 #if (_POSIX_C_SOURCE - 0) >= 200112L || \
     defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-int	getitimer(int, struct itimerval *);
-int	gettimeofday(struct timeval * __restrict, void *__restrict);
+int	getitimer(int, struct itimerval *) __RENAME(__getitimer50);
+int	gettimeofday(struct timeval * __restrict, void *__restrict)
+    __RENAME(__gettimeofday50);
 int	setitimer(int, const struct itimerval * __restrict,
-	    struct itimerval * __restrict);
-int	utimes(const char *, const struct timeval [2]);
+	    struct itimerval * __restrict) __RENAME(__setitimer50);
+int	utimes(const char *, const struct timeval [2]) __RENAME(__utimes50);
 #endif /* _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_NETBSD_SOURCE)
-int	adjtime(const struct timeval *, struct timeval *);
-int	futimes(int, const struct timeval [2]);
-int	lutimes(const char *, const struct timeval [2]);
+int	adjtime(const struct timeval *, struct timeval *) __RENAME(__adjtime50);
+int	futimes(int, const struct timeval [2]) __RENAME(__futimes50);
+int	lutimes(const char *, const struct timeval [2]) __RENAME(__lutimes50);
 int	settimeofday(const struct timeval * __restrict,
-	    const void *__restrict);
+	    const void *__restrict) __RENAME(__settimeofday50);
 #endif /* _NETBSD_SOURCE */
+#endif /* __LIBC12_SOURCE__ */
 __END_DECLS
 
 #endif	/* !_STANDALONE */

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.35 2008/03/21 21:54:59 ad Exp $ */
+/* $NetBSD: dksubr.c,v 1.35.2.1 2008/03/29 20:47:00 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.35 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.35.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ dk_open(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	int	ret = 0;
 	struct disk *dk = &dksc->sc_dkdev;
 
-	DPRINTF_FOLLOW(("dk_open(%s, %p, 0x%x, 0x%x)\n",
+	DPRINTF_FOLLOW(("dk_open(%s, %p, 0x%llx, 0x%x)\n",
 	    di->di_dkname, dksc, dev, flags));
 
 	mutex_enter(&dk->dk_openlock);
@@ -160,7 +160,7 @@ dk_close(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 	int	pmask = 1 << part;
 	struct disk *dk = &dksc->sc_dkdev;
 
-	DPRINTF_FOLLOW(("dk_close(%s, %p, 0x%x, 0x%x)\n",
+	DPRINTF_FOLLOW(("dk_close(%s, %p, 0x%llx, 0x%x)\n",
 	    di->di_dkname, dksc, dev, flags));
 
 	mutex_enter(&dk->dk_openlock);
@@ -301,7 +301,7 @@ dk_ioctl(struct dk_intf *di, struct dk_softc *dksc, dev_t dev,
 #endif
 	int	error = 0;
 
-	DPRINTF_FOLLOW(("dk_ioctl(%s, %p, 0x%x, 0x%lx)\n",
+	DPRINTF_FOLLOW(("dk_ioctl(%s, %p, 0x%llx, 0x%lx)\n",
 	    di->di_dkname, dksc, dev, cmd));
 
 	/* ensure that the pseudo disk is open for writes for these commands */

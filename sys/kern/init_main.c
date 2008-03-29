@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.347 2008/03/27 19:11:05 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.347.2.1 2008/03/29 20:47:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347 2008/03/27 19:11:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347 2008/03/27 19:11:05 ad Exp $");
 #include "opt_fileassoc.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
+#include "opt_compat_netbsd.h"
 
 #include "rnd.h"
 #include "sysmon_envsys.h"
@@ -231,6 +232,11 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347 2008/03/27 19:11:05 ad Exp $");
 
 #include <secmodel/secmodel.h>
 
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+struct timeval50 boottime50;
+#endif
+
 extern struct proc proc0;
 extern struct lwp lwp0;
 extern struct cwdinfo cwdi0;
@@ -244,7 +250,7 @@ struct	proc *initproc;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold = 1;			/* still working on startup */
-struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
+struct timespec boottime;	        /* time at system startup - will only follow settime deltas */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -280,7 +286,7 @@ __secmodel_none(void)
 void
 main(void)
 {
-	struct timeval time;
+	struct timespec time;
 	struct lwp *l;
 	struct proc *p;
 	struct pdevinit *pdev;
@@ -656,13 +662,20 @@ main(void)
 	 * from the file system.  Reset l->l_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-	getmicrotime(&time);
+	getnanotime(&time);
 	boottime = time;
+#ifdef COMPAT_50
+	{
+		struct timeval tv;
+		TIMESPEC_TO_TIMEVAL(&tv, &time);
+		timeval_to_timeval50(&tv, &boottime50);
+	}
+#endif
 	mutex_enter(&proclist_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
 		mutex_enter(&p->p_smutex);
-		p->p_stats->p_start = time;
+		TIMESPEC_TO_TIMEVAL(&p->p_stats->p_start, &time);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
 			memset(&l->l_rtime, 0, sizeof(l->l_rtime));

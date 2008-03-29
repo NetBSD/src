@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.43 2008/01/02 11:49:07 ad Exp $	*/
+/*	$NetBSD: shm.h,v 1.43.8.1 2008/03/29 20:47:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
 
 __BEGIN_DECLS
 void	*shmat(int, const void *, int);
-int	shmctl(int, int, struct shmid_ds *) __RENAME(__shmctl13);
+int	shmctl(int, int, struct shmid_ds *) __RENAME(__shmctl50);
 int	shmdt(const void *);
 int	shmget(key_t, size_t, int);
 __END_DECLS

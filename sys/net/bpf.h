@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.48 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: bpf.h,v 1.48.72.1 2008/03/29 20:47:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -120,6 +120,11 @@ struct bpf_version {
 #define BIOCGDLT	 _IOR('B',106, u_int)
 #define BIOCGETIF	 _IOR('B',107, struct ifreq)
 #define BIOCSETIF	 _IOW('B',108, struct ifreq)
+#ifdef COMPAT_50
+#include <compat/sys/time.h>
+#define BIOCSORTIMEOUT	 _IOW('B',109, struct timeval50)
+#define BIOCGORTIMEOUT	 _IOR('B',110, struct timeval50)
+#endif
 #define BIOCSRTIMEOUT	 _IOW('B',109, struct timeval)
 #define BIOCGRTIMEOUT	 _IOR('B',110, struct timeval)
 #define BIOCGSTATS	 _IOR('B',111, struct bpf_stat)
@@ -136,10 +141,15 @@ struct bpf_version {
 #define BIOCSSEESENT	 _IOW('B',121, u_int)
 
 /*
- * Structure prepended to each packet.
+ * Structure prepended to each packet. This is "wire" format, so we
+ * cannot change it unfortunately to 64 bit times [yet].
  */
+struct bpf_timespec {
+	int32_t tv_sec;
+	int32_t tv_nsec;
+};
 struct bpf_hdr {
-	struct timeval	bh_tstamp;	/* time stamp */
+	struct bpf_timespec bh_tstamp;	/* time stamp */
 	uint32_t	bh_caplen;	/* length of captured portion */
 	uint32_t	bh_datalen;	/* original length of packet */
 	uint16_t	bh_hdrlen;	/* length of bpf header (this struct

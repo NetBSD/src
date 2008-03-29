@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.32 2008/02/10 13:56:17 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.32.8.1 2008/03/29 20:47:00 christos Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.32 2008/02/10 13:56:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.32.8.1 2008/03/29 20:47:00 christos Exp $");
 
 #include "opt_ntp.h"
 
@@ -526,7 +526,7 @@ tc_getfrequency(void)
  * when we booted.
  */
 void
-tc_setclock(struct timespec *ts)
+tc_setclock(const struct timespec *ts)
 {
 	struct timespec ts2;
 	struct bintime bt, bt2;
@@ -543,9 +543,9 @@ tc_setclock(struct timespec *ts)
 
 	if (timestepwarnings) {
 		bintime2timespec(&bt2, &ts2);
-		log(LOG_INFO, "Time stepped from %jd.%09ld to %jd.%09ld\n",
-		    (intmax_t)ts2.tv_sec, ts2.tv_nsec,
-		    (intmax_t)ts->tv_sec, ts->tv_nsec);
+		log(LOG_INFO, "Time stepped from %lld.%09ld to %lld.%09ld\n",
+		    ts2.tv_sec, ts2.tv_nsec,
+		    ts->tv_sec, ts->tv_nsec);
 	}
 }
 
@@ -634,7 +634,6 @@ tc_windup(void)
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
 	bintime2timeval(&bt, &th->th_microtime);
 	bintime2timespec(&bt, &th->th_nanotime);
-
 	/* Now is a good time to change timecounters. */
 	if (th->th_counter != timecounter) {
 		th->th_counter = timecounter;

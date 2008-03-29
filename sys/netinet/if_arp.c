@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.131 2008/01/20 18:09:12 joerg Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.131.8.1 2008/03/29 20:47:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131 2008/01/20 18:09:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131.8.1 2008/03/29 20:47:02 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -545,11 +545,12 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			break;
 		}
 		/* Announce a new entry if requested. */
-		if (rt->rt_flags & RTF_ANNOUNCE)
+		if (rt->rt_flags & RTF_ANNOUNCE) {
 			arprequest(ifp,
 			    &satocsin(rt_getkey(rt))->sin_addr,
 			    &satocsin(rt_getkey(rt))->sin_addr,
 			    CLLADDR(satocsdl(gate)));
+		}
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
@@ -774,7 +775,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		rt->rt_flags &= ~RTF_REJECT;
 		if (la->la_asked == 0 || rt->rt_expire != time_second) {
 			rt->rt_expire = time_second;
-			if (la->la_asked++ < arp_maxtries)
+			if (la->la_asked++ < arp_maxtries) {
 				arprequest(ifp,
 				    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 				    &satocsin(dst)->sin_addr,
@@ -783,7 +784,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 				    CLLADDR(rt->rt_ifp->if_sadl):
 #endif
 				    CLLADDR(ifp->if_sadl));
-			else {
+			} else {
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
 				la->la_asked = 0;
@@ -1510,7 +1511,7 @@ db_show_rtentry(struct rtentry *rt, void *w)
 {
 	db_printf("rtentry=%p", rt);
 
-	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%ld\n",
+	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%lld\n",
 			  rt->rt_flags, rt->rt_refcnt,
 			  rt->rt_use, rt->rt_expire);
 

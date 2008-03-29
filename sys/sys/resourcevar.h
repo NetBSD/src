@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.44 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.44.2.1 2008/03/29 20:47:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ struct pstats {
 #define	pstat_endzero	pstat_startcopy
 
 #define	pstat_startcopy	p_timer
-	struct	itimerval p_timer[3];	/* virtual-time timers */
+	struct	itimerspec p_timer[3];	/* virtual-time timers */
 
 	struct uprof {			/* profile arguments */
 		char *	pr_base;	/* buffer base */

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_route.h,v 1.4 2005/12/11 12:19:56 christos Exp $ */
+/*	$NetBSD: darwin_route.h,v 1.4.72.1 2008/03/29 20:46:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct darwin_if_data {
 	u_long did_noproto;
 	u_long did_recvtiming;
 	u_long did_xmittiming;
-	struct timeval did_lastchange;
+	struct darwin_timeval did_lastchange;
 	u_long did_default_proto;
 	u_long did_hwassist;
 	u_long did_reserved1;

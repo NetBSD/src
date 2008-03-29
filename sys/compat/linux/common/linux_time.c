@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.22 2007/12/20 23:02:57 dsl Exp $ */
+/*	$NetBSD: linux_time.c,v 1.22.8.1 2008/03/29 20:46:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.22 2007/12/20 23:02:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.22.8.1 2008/03/29 20:46:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -87,13 +87,13 @@ int
 linux_sys_gettimeofday(struct lwp *l, const struct linux_sys_gettimeofday_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(struct timeval *) tz;
+		syscallarg(struct timeval50 *) tz;
 		syscallarg(struct timezone *) tzp;
 	} */
 	int error = 0;
 
 	if (SCARG(uap, tp)) {
-		error = sys_gettimeofday(l, (const void *)uap, retval);
+		error = compat_50_sys_gettimeofday(l, (const void *)uap, retval);
 		if (error)
 			return (error);
 	}
@@ -111,13 +111,13 @@ int
 linux_sys_settimeofday(struct lwp *l, const struct linux_sys_settimeofday_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(struct timeval *) tp;
+		syscallarg(struct timeval50 *) tp;
 		syscallarg(struct timezone *) tzp;
 	} */
 	int error = 0;
 
 	if (SCARG(uap, tp)) {
-		error = sys_settimeofday(l, (const void *)uap, retval);
+		error = compat_50_sys_settimeofday(l, (const void *)uap, retval);
 		if (error)
 			return (error);
 	}

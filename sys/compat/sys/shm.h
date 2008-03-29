@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.4 2005/11/12 00:39:22 simonb Exp $	*/
+/*	$NetBSD: shm.h,v 1.4.78.1 2008/03/29 20:46:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -47,10 +47,27 @@ struct shmid_ds14 {
 	pid_t		shm_lpid;	/* process ID of last shm op */
 	pid_t		shm_cpid;	/* process ID of creator */
 	short		shm_nattch;	/* number of current attaches */
-	time_t		shm_atime;	/* time of last shmat() */
-	time_t		shm_dtime;	/* time of last shmdt() */
-	time_t		shm_ctime;	/* time of last change by shmctl() */
+	int32_t		shm_atime;	/* time of last shmat() */
+	int32_t		shm_dtime;	/* time of last shmdt() */
+	int32_t		shm_ctime;	/* time of last change by shmctl() */
 	void		*shm_internal;	/* sysv stupidity */
+};
+
+struct shmid_ds13 {
+	struct ipc_perm	shm_perm;	/* operation permission structure */
+	size_t		shm_segsz;	/* size of segment in bytes */
+	pid_t		shm_lpid;	/* process ID of last shm operation */
+	pid_t		shm_cpid;	/* process ID of creator */
+	shmatt_t	shm_nattch;	/* number of current attaches */
+	int32_t		shm_atime;	/* time of last shmat() */
+	int32_t		shm_dtime;	/* time of last shmdt() */
+	int32_t		shm_ctime;	/* time of last change by shmctl() */
+
+	/*
+	 * These members are private and used only in the internal
+	 * implementation of this interface.
+	 */
+	void		*_shm_internal;
 };
 #endif
 
