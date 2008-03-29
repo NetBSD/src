@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_ap.c,v 1.7 2008/03/29 05:47:53 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_ap.c,v 1.8 2008/03/29 14:34:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.7 2008/03/29 05:47:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.8 2008/03/29 14:34:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,7 +83,7 @@ mkclock_ap_attach(device_t parent, device_t self, void *aux)
 	struct apbus_attach_args *apa = aux;
 
 	sc->sc_dev = self;
-	aprintf_normal(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
+	aprint_normal(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
 	if (bus_space_map(sc->sc_bst, apa->apa_hwbase - MKCLOCK_AP_OFFSET,
 	    MK48T02_CLKSZ, 0, &sc->sc_bsh) != 0)
 		aprint_error(": can't map device space\n");
