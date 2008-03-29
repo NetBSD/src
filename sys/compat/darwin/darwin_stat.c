@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_stat.c,v 1.13 2008/03/21 21:54:58 ad Exp $ */
+/*	$NetBSD: darwin_stat.c,v 1.13.2.1 2008/03/29 20:46:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.13 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.13.2.1 2008/03/29 20:46:57 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.13 2008/03/21 21:54:58 ad Exp $");
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
-#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_types.h>
+#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
@@ -134,13 +134,9 @@ darwin_sys_mknod(struct lwp *l, const struct darwin_sys_mknod_args *uap, registe
 	/* {
 		syscallarg(char) path;
 		syscallarg(mode_t) mode;
-		syscallarg(dev_t) dev:
+		syscallarg(darwin_dev_t) dev:
 	} */
-	struct sys_mknod_args cup;
 
-	SCARG(&cup, path) = SCARG(uap, path);
-	SCARG(&cup, mode) = SCARG(uap, mode);
-	SCARG(&cup, dev) = darwin_to_native_dev(SCARG(uap, dev));
-
-	return sys_mknod(l, &cup, retval);
+	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
+	    darwin_to_native_dev(SCARG(uap, dev)), retval);
 }

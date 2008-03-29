@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.23 2008/03/15 16:44:03 ws Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.23.2.1 2008/03/29 20:47:02 christos Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.23 2008/03/15 16:44:03 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.23.2.1 2008/03/29 20:47:02 christos Exp $");
 
 /*
  * TODO:
@@ -641,7 +641,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 #endif /* INET6 */
 	}
 
-	microtime(&sc->sc_if.if_lastchange);
+	nanotime(&sc->sc_if.if_lastchange);
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
@@ -999,7 +999,7 @@ carp_send_ad(void *v)
 		ch_ptr->carp_cksum = carp_cksum(m, len - sizeof(*ip));
 		m->m_data -= sizeof(*ip);
 
-		microtime(&sc->sc_if.if_lastchange);
+		nanotime(&sc->sc_if.if_lastchange);
 		sc->sc_if.if_opackets++;
 		sc->sc_if.if_obytes += len;
 		carpstats.carps_opackets++;
@@ -1084,7 +1084,7 @@ carp_send_ad(void *v)
 		ch_ptr->carp_cksum = carp_cksum(m, len - sizeof(*ip6));
 		m->m_data -= sizeof(*ip6);
 
-		microtime(&sc->sc_if.if_lastchange);
+		nanotime(&sc->sc_if.if_lastchange);
 		sc->sc_if.if_opackets++;
 		sc->sc_if.if_obytes += len;
 		carpstats.carps_opackets6++;

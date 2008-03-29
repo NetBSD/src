@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.85 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.85.2.1 2008/03/29 20:47:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -148,10 +148,7 @@ struct lwp {
 	/* Private data */
 	specificdata_reference
 		l_specdataref;		/* !: subsystem lwp-specific data */
-	union {
-		struct timeval tv;
-		struct timespec ts;
-	} l_ktrcsw;			/* !: for ktrace CSW trace XXX */
+	struct timespec l_ktrcsw;	/* !: for ktrace CSW trace XXX */
 	void		*l_private;	/* !: svr4-style lwp-private data */
 	struct lwp	*l_switchto;	/* !: mi_switch: switch to this LWP */
 	struct kauth_cred *l_cred;	/* !: cached credentials */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.128 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.128.2.1 2008/03/29 20:46:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.128 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.128.2.1 2008/03/29 20:46:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -556,7 +556,7 @@ ccdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdopen(0x%x, 0x%x)\n", dev, flags);
+		printf("ccdopen(0x%llx, 0x%x)\n", dev, flags);
 #endif
 	if (unit >= numccd)
 		return (ENXIO);
@@ -617,7 +617,7 @@ ccdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdclose(0x%x, 0x%x)\n", dev, flags);
+		printf("ccdclose(0x%llx, 0x%x)\n", dev, flags);
 #endif
 
 	if (unit >= numccd)
@@ -865,7 +865,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
-		printf(" dev 0x%x(u%lu): cbp %p bn %" PRId64 " addr %p"
+		printf(" dev 0x%llx(u%lu): cbp %p bn %" PRId64 " addr %p"
 		       " bcnt %d\n",
 		    ci->ci_dev, (unsigned long) (ci-cs->sc_cinfo), cbp,
 		    cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
@@ -913,7 +913,7 @@ ccdiodone(struct buf *vbp)
 	if (ccddebug & CCDB_IO) {
 		printf("ccdiodone: bp %p bcount %d resid %d\n",
 		       bp, bp->b_bcount, bp->b_resid);
-		printf(" dev 0x%x(u%d), cbp %p bn %" PRId64 " addr %p"
+		printf(" dev 0x%llx(u%d), cbp %p bn %" PRId64 " addr %p"
 		       " bcnt %d\n",
 		       cbp->cb_buf.b_dev, cbp->cb_comp, cbp,
 		       cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
@@ -950,7 +950,7 @@ ccdread(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdread(0x%x, %p)\n", dev, uio);
+		printf("ccdread(0x%llx, %p)\n", dev, uio);
 #endif
 	if (unit >= numccd)
 		return (ENXIO);
@@ -971,7 +971,7 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
-		printf("ccdwrite(0x%x, %p)\n", dev, uio);
+		printf("ccdwrite(0x%llx, %p)\n", dev, uio);
 #endif
 	if (unit >= numccd)
 		return (ENXIO);

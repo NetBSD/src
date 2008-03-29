@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.85 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.85.8.1 2008/03/29 20:47:02 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.85 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.85.8.1 2008/03/29 20:47:02 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1458,11 +1458,11 @@ strip_watchdog(struct ifnet *ifp)
 
 #ifdef DEBUG
 	if (ifp->if_flags & IFF_DEBUG)
-		addlog("\n%s: in watchdog, state %s timeout %ld\n",
+		addlog("\n%s: in watchdog, state %s timeout %lld\n",
 		       ifp->if_xname,
  		       ((unsigned) sc->sc_state < 3) ?
 		       strip_statenames[sc->sc_state] : "<<illegal state>>",
-		       sc->sc_statetimo - time_second);
+		       (long long)(sc->sc_statetimo - time_second));
 #endif
 
 	/*

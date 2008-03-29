@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_time.h,v 1.5 1998/09/04 19:54:40 christos Exp $	 */
+/*	$NetBSD: svr4_time.h,v 1.5.146.1 2008/03/29 20:46:59 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -43,8 +43,8 @@
 #include <sys/time.h>
 
 struct svr4_utimbuf {
-	time_t actime;
-	time_t modtime;
+	svr4_time_t actime;
+	svr4_time_t modtime;
 };
 
 #endif /* !_SVR4_TIME_H_ */

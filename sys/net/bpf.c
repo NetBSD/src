@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.137 2008/03/26 02:21:52 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.137.2.1 2008/03/29 20:47:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.137 2008/03/26 02:21:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.137.2.1 2008/03/29 20:47:01 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -140,7 +140,7 @@ static void	bpf_timed_out(void *);
 static inline void
 		bpf_wakeup(struct bpf_d *);
 static void	catchpacket(struct bpf_d *, u_char *, u_int, u_int,
-    void *(*)(void *, const void *, size_t), struct timeval *);
+    void *(*)(void *, const void *, size_t), struct timespec *);
 static void	reset_d(struct bpf_d *);
 static int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 static int	bpf_setdlt(struct bpf_d *, u_int);
@@ -833,6 +833,36 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 			break;
 		}
 
+#ifdef BIOCGORTIMEOUT
+	/*
+	 * Get read timeout.
+	 */
+	case BIOCGORTIMEOUT:
+		{
+			struct timeval50 *tv = addr;
+
+			tv->tv_sec = d->bd_rtout / hz;
+			tv->tv_usec = (d->bd_rtout % hz) * tick;
+			break;
+		}
+#endif
+
+#ifdef BIOCSORTIMEOUT
+	/*
+	 * Set read timeout.
+	 */
+	case BIOCSORTIMEOUT:
+		{
+			struct timeval50 *tv = addr;
+
+			/* Compute number of ticks. */
+			d->bd_rtout = tv->tv_sec * hz + tv->tv_usec / tick;
+			if ((d->bd_rtout == 0) && (tv->tv_usec != 0))
+				d->bd_rtout = 1;
+			break;
+		}
+#endif
+
 	/*
 	 * Get read timeout.
 	 */
@@ -844,7 +874,6 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 			tv->tv_usec = (d->bd_rtout % hz) * tick;
 			break;
 		}
-
 	/*
 	 * Get packet stats.
 	 */
@@ -1170,7 +1199,7 @@ bpf_tap(void *arg, u_char *pkt, u_int pktlen)
 	struct bpf_if *bp;
 	struct bpf_d *d;
 	u_int slen;
-	struct timeval tv;
+	struct timespec ts;
 	int gottime=0;
 
 	/*
@@ -1185,10 +1214,10 @@ bpf_tap(void *arg, u_char *pkt, u_int pktlen)
 		slen = bpf_filter(d->bd_filter, pkt, pktlen, pktlen);
 		if (slen != 0) {
 			if (!gottime) {
-				microtime(&tv);
+				nanotime(&ts);
 				gottime = 1;
 			}
-		catchpacket(d, pkt, pktlen, slen, (void *)memcpy, &tv);
+			catchpacket(d, pkt, pktlen, slen, memcpy, &ts);
 		}
 	}
 }
@@ -1233,7 +1262,7 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 {
 	u_int slen;
 	struct bpf_d *d;
-	struct timeval tv;
+	struct timespec ts;
 	int gottime = 0;
 
 	for (d = bp->bif_dlist; d != 0; d = d->bd_next) {
@@ -1244,10 +1273,10 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		slen = bpf_filter(d->bd_filter, marg, pktlen, buflen);
 		if (slen != 0) {
 			if(!gottime) {
-				microtime(&tv);
+				nanotime(&ts);
 				gottime = 1;
 			}
-			catchpacket(d, marg, pktlen, slen, cpfn, &tv);
+			catchpacket(d, marg, pktlen, slen, cpfn, &ts);
 		}
 	}
 }
@@ -1411,7 +1440,7 @@ bpf_mtap_sl_out(void *arg, u_char *chdr, struct mbuf *m)
  */
 static void
 catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
-    void *(*cpfn)(void *, const void *, size_t), struct timeval *tv)
+    void *(*cpfn)(void *, const void *, size_t), struct timespec *ts)
 {
 	struct bpf_hdr *hp;
 	int totlen, curlen;
@@ -1457,7 +1486,8 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 * Append the bpf header.
 	 */
 	hp = (struct bpf_hdr *)((char *)d->bd_sbuf + curlen);
-	hp->bh_tstamp = *tv;
+	hp->bh_tstamp.tv_sec = ts->tv_sec;
+	hp->bh_tstamp.tv_nsec = ts->tv_nsec;
 	hp->bh_datalen = pktlen;
 	hp->bh_hdrlen = hdrlen;
 	/*

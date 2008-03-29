@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.67 2008/03/21 21:54:59 ad Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.67.2.1 2008/03/29 20:46:59 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.67 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stat.c,v 1.67.2.1 2008/03/29 20:46:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,7 +606,7 @@ svr4_sys_utime(struct lwp *l, const struct svr4_sys_utime_args *uap, register_t 
 int
 svr4_sys_utimes(struct lwp *l, const struct svr4_sys_utimes_args *uap, register_t *retval)
 {
-	return sys_utimes(l, (const void *)uap, retval);
+	return compat_50_sys_utimes(l, (const void *)uap, retval);
 }
 
 

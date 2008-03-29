@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.5 2008/03/27 17:14:21 ad Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.5.2.1 2008/03/29 20:47:03 christos Exp $ */
 
 /*
  * System call marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.5 2008/03/27 17:14:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.5.2.1 2008/03/29 20:47:03 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,10 +126,10 @@ rump_sys_fchdir(int fd, int *error)
 }
 
 int
-rump_sys_mknod(const char * path, mode_t mode, dev_t dev, int *error)
+rump_sys_mknod(const char * path, mode_t mode, uint32_t dev, int *error)
 {
 	register_t retval;
-	struct sys_mknod_args arg;
+	struct sys_mknodcompat_50__args arg;
 
 	SPARG(&arg, path) = path;
 	SPARG(&arg, mode) = mode;
@@ -329,6 +329,20 @@ rump_sys_lchown(const char * path, uid_t uid, gid_t gid, int *error)
 	SPARG(&arg, gid) = gid;
 
 	*error = sys_lchown(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
+rump_sys___mknod50(const char * path, mode_t mode, dev_t dev, int *error)
+{
+	register_t retval;
+	struct sys___mknod50_args arg;
+
+	SPARG(&arg, path) = path;
+	SPARG(&arg, mode) = mode;
+	SPARG(&arg, dev) = dev;
+
+	*error = sys___mknod50(curlwp, &arg, &retval);
 	return retval;
 }
 

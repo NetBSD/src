@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.32 2007/03/09 14:11:23 ad Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.32.38.1 2008/03/29 20:47:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.32 2007/03/09 14:11:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.32.38.1 2008/03/29 20:47:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,8 +149,9 @@ procfs_dostatus(
 
 	mutex_enter(&p->p_smutex);
 	if (l->l_flag & LW_INMEM)
-		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %ld,%ld",
-		    p->p_stats->p_start.tv_sec, p->p_stats->p_start.tv_usec);
+		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %lld,%ld",
+		    (long long)p->p_stats->p_start.tv_sec,
+		    (long)p->p_stats->p_start.tv_usec);
 	else
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " -1,-1");
 
@@ -159,8 +160,8 @@ procfs_dostatus(
 
 		calcru(p, &ut, &st, (void *) 0, NULL);
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf),
-		    " %ld,%ld %ld,%ld", ut.tv_sec, ut.tv_usec, st.tv_sec,
-		    st.tv_usec);
+		    " %lld,%ld %lld,%ld", (long long)ut.tv_sec,
+		    (long)ut.tv_usec, (long long)st.tv_sec, (long)st.tv_usec);
 	}
 	mutex_exit(&p->p_smutex);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.70 2008/03/26 14:54:19 ad Exp $	*/
+/*	$NetBSD: route.h,v 1.70.2.1 2008/03/29 20:47:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -66,7 +66,7 @@ struct route {
  * These numbers are used by reliable protocols for determining
  * retransmission behavior and are included in the routing structure.
  */
-struct rt_metrics {
+struct ort_metrics {
 	u_long	rmx_locks;	/* Kernel must leave these values alone */
 	u_long	rmx_mtu;	/* MTU for this path */
 	u_long	rmx_hopcount;	/* max hops expected */
@@ -77,6 +77,19 @@ struct rt_metrics {
 	u_long	rmx_rtt;	/* estimated round trip time */
 	u_long	rmx_rttvar;	/* estimated rtt variance */
 	u_long	rmx_pksent;	/* packets sent using this route */
+};
+
+struct rt_metrics {
+	u_long	rmx_locks;	/* Kernel must leave these values alone */
+	u_long	rmx_mtu;	/* MTU for this path */
+	u_long	rmx_hopcount;	/* max hops expected */
+	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
+	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
+	u_long	rmx_ssthresh;	/* outbound gateway buffer limit */
+	u_long	rmx_rtt;	/* estimated round trip time */
+	u_long	rmx_rttvar;	/* estimated rtt variance */
+	time_t	rmx_expire;	/* lifetime for route, e.g. redirect */
+	time_t	rmx_pksent;	/* packets sent using this route */
 };
 
 /*
@@ -180,7 +193,7 @@ struct rt_msghdr {
 	int	rtm_errno;	/* why failed */
 	int	rtm_use;	/* from rtentry */
 	u_long	rtm_inits;	/* which metrics we are initializing */
-	struct	rt_metrics rtm_rmx; /* metrics themselves */
+	struct	ort_metrics rtm_rmx; /* metrics themselves */
 };
 
 #define RTM_VERSION	3	/* Up the ante and ignore older versions */
@@ -198,13 +211,14 @@ struct rt_msghdr {
 #define RTM_RESOLVE	0xb	/* req to resolve dst to LL addr */
 #define RTM_NEWADDR	0xc	/* address being added to iface */
 #define RTM_DELADDR	0xd	/* address being removed from iface */
-#define RTM_OIFINFO	0xe	/* Old (pre-1.5) RTM_IFINFO message */
-#define RTM_IFINFO	0xf	/* iface/link going up/down etc. */
+#define RTM_OOIFINFO	0xe	/* Old (pre-1.5) RTM_IFINFO message */
+#define RTM_OIFINFO	0xf	/* iface/link going up/down etc. */
 #define	RTM_IFANNOUNCE	0x10	/* iface arrival/departure */
 #define	RTM_IEEE80211	0x11	/* IEEE80211 wireless event */
 #define	RTM_SETGATE	0x12	/* set prototype gateway for clones
 				 * (see example in arp_rtrequest).
 				 */
+#define RTM_IFINFO	0x13	/* iface/link going up/down etc. */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -282,6 +296,22 @@ struct rttimer_queue {
 
 
 #ifdef _KERNEL
+
+extern struct	sockaddr route_dst;
+extern struct	sockaddr route_src;
+extern struct	sockproto route_proto;
+
+struct rt_walkarg {
+	int	w_op;
+	int	w_arg;
+	int	w_given;
+	int	w_needed;
+	void *	w_where;
+	int	w_tmemsize;
+	int	w_tmemneeded;
+	void *	w_tmem;
+};
+
 #if 0
 #define	RT_DPRINTF(__fmt, ...)	do { } while (/*CONSTCOND*/0)
 #else
@@ -310,9 +340,10 @@ void	 rt_ifmsg(struct ifnet *);
 void	 rt_maskedcopy(const struct sockaddr *,
 	    struct sockaddr *, const struct sockaddr *);
 void	 rt_missmsg(int, struct rt_addrinfo *, int, int);
+struct mbuf *rt_msg1(int, struct rt_addrinfo *, void *, int);
 void	 rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
 int	 rt_setgate(struct rtentry *, const struct sockaddr *);
-void	 rt_setmetrics(u_long, const struct rt_metrics *, struct rt_metrics *);
+void	 rt_setmetrics(u_long, const struct ort_metrics *, struct rt_metrics *);
 int      rt_timer_add(struct rtentry *,
              void(*)(struct rtentry *, struct rttimer *),
 	     struct rttimer_queue *);
@@ -439,6 +470,7 @@ RTFREE(struct rtentry *rt)
 
 int
 rt_walktree(sa_family_t, int (*)(struct rtentry *, void *), void *);
+void route_enqueue(struct mbuf *, int);
 
 #endif /* _KERNEL */
 #endif /* !_NET_ROUTE_H_ */

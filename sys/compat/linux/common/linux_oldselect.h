@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.h,v 1.1 1998/10/01 04:00:20 erh Exp $	*/
+/*	$NetBSD: linux_oldselect.h,v 1.1.146.1 2008/03/29 20:46:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct linux_oldselect {
 	fd_set *readfds;
 	fd_set *writefds;
 	fd_set *exceptfds;
-	struct timeval *timeout;
+	struct linux_timeval *timeout;
 };
 
 #endif /* !_MULTIARCH_LINUX_OLDSELECT_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.335 2008/02/24 23:16:24 dholland Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.335.2.1 2008/03/29 20:47:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335 2008/02/24 23:16:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335.2.1 2008/03/29 20:47:01 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1852,7 +1852,7 @@ vfs_mountroot(void)
 	case DV_IFNET:
 		if (rootdev != NODEV)
 			panic("vfs_mountroot: rootdev set for DV_IFNET "
-			    "(0x%08x -> %d,%d)", rootdev,
+			    "(0x%llx -> %d,%d)", rootdev,
 			    major(rootdev), minor(rootdev));
 		break;
 
@@ -1908,7 +1908,7 @@ vfs_mountroot(void)
 	if (v == NULL) {
 		printf("no file system for %s", root_device->dv_xname);
 		if (device_class(root_device) == DV_DISK)
-			printf(" (dev 0x%x)", rootdev);
+			printf(" (dev 0x%llx)", rootdev);
 		printf("\n");
 		error = EFTYPE;
 	}

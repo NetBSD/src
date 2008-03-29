@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.177 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.177.2.1 2008/03/29 20:47:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.177 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.177.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -345,7 +345,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
+		printf("vndopen(0x%llx, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL) {
@@ -409,7 +409,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
+		printf("vndclose(0x%llx, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
 	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL)
@@ -856,7 +856,7 @@ vndread(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(0x%x, %p)\n", dev, uio);
+		printf("vndread(0x%llx, %p)\n", dev, uio);
 #endif
 
 	sc = device_private(device_lookup(&vnd_cd, unit));
@@ -878,7 +878,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(0x%x, %p)\n", dev, uio);
+		printf("vndwrite(0x%llx, %p)\n", dev, uio);
 #endif
 
 	sc = device_private(device_lookup(&vnd_cd, unit));
@@ -929,7 +929,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
+		printf("vndioctl(0x%llx, 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, l->l_proc, unit);
 #endif
 	vnd = device_private(device_lookup(&vnd_cd, unit));

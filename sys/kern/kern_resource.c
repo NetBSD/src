@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.137 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.137.2.1 2008/03/29 20:47:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.137 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.137.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap,
+sys___getrusage50(struct lwp *l, const struct sys___getrusage50_args *uap,
     register_t *retval)
 {
 	/* {

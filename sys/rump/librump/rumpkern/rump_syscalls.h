@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.5 2008/03/27 17:14:21 ad Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.5.2.1 2008/03/29 20:47:03 christos Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -15,7 +15,7 @@ int rump_sys_link(const char *, const char *, int *);
 int rump_sys_unlink(const char *, int *);
 int rump_sys_chdir(const char *, int *);
 int rump_sys_fchdir(int, int *);
-int rump_sys_mknod(const char *, mode_t, dev_t, int *);
+int rump_compat_50__mknod(const char *, mode_t, uint32_t, int *);
 int rump_sys_chmod(const char *, mode_t, int *);
 int rump_sys_chown(const char *, uid_t, gid_t, int *);
 int rump_sys_unmount(const char *, int, int *);
@@ -31,3 +31,4 @@ int rump_sys_rmdir(const char *, int *);
 int rump_sys_truncate(const char *, int, off_t, int *);
 int rump_sys_lchmod(const char *, mode_t, int *);
 int rump_sys_lchown(const char *, uid_t, gid_t, int *);
+int rump_sys___mknod50(const char *, mode_t, dev_t, int *);

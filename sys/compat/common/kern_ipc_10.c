@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.23 2007/12/20 23:02:44 dsl Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.23.8.1 2008/03/29 20:46:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.23 2007/12/20 23:02:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.23.8.1 2008/03/29 20:46:57 christos Exp $");
 
 #include "opt_sysv.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.23 2007/12/20 23:02:44 dsl Exp $")
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sem.h>
+#include <sys/shm.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.106 2008/01/21 23:36:26 pooka Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.106.8.1 2008/03/29 20:47:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106 2008/01/21 23:36:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.8.1 2008/03/29 20:47:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -155,7 +155,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 	*bnp = 0;
 #ifdef DIAGNOSTIC
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0) {
-		printf("dev = 0x%x, bsize = %d, size = %d, fs = %s\n",
+		printf("dev = 0x%llx, bsize = %d, size = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("ffs_alloc: bad size");
 	}
@@ -248,7 +248,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
 	    (u_int)nsize > fs->fs_bsize || fragoff(fs, nsize) != 0) {
 		printf(
-		    "dev = 0x%x, bsize = %d, osize = %d, nsize = %d, fs = %s\n",
+		    "dev = 0x%llx, bsize = %d, osize = %d, nsize = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, osize, nsize, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad size");
 	}
@@ -266,7 +266,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		bprev = ufs_rw32(ip->i_ffs1_db[lbprev], UFS_FSNEEDSWAP(fs));
 
 	if (bprev == 0) {
-		printf("dev = 0x%x, bsize = %d, bprev = %" PRId64 ", fs = %s\n",
+		printf("dev = 0x%llx, bsize = %d, bprev = %" PRId64 ", fs = %s\n",
 		    ip->i_dev, fs->fs_bsize, bprev, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad bprev");
 	}
@@ -365,7 +365,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		fs->fs_optim = FS_OPTSPACE;
 		break;
 	default:
-		printf("dev = 0x%x, optim = %d, fs = %s\n",
+		printf("dev = 0x%llx, optim = %d, fs = %s\n",
 		    ip->i_dev, fs->fs_optim, fs->fs_fsmnt);
 		panic("ffs_realloccg: bad optim");
 		/* NOTREACHED */
@@ -1625,7 +1625,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	}
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
-		printf("dev = 0x%x, bno = %" PRId64 " bsize = %d, "
+		printf("dev = 0x%llx, bno = %" PRId64 " bsize = %d, "
 		       "size = %ld, fs = %s\n",
 		    dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("blkfree: bad size");
@@ -1663,7 +1663,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 				brelse(bp, 0);
 				return;
 			}
-			printf("dev = 0x%x, block = %" PRId64 ", fs = %s\n",
+			printf("dev = 0x%llx, block = %" PRId64 ", fs = %s\n",
 			    dev, bno, fs->fs_fsmnt);
 			panic("blkfree: freeing free block");
 		}
@@ -1696,7 +1696,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 		frags = numfrags(fs, size);
 		for (i = 0; i < frags; i++) {
 			if (isset(blksfree, cgbno + i)) {
-				printf("dev = 0x%x, block = %" PRId64
+				printf("dev = 0x%llx, block = %" PRId64
 				       ", fs = %s\n",
 				    dev, bno + i, fs->fs_fsmnt);
 				panic("blkfree: freeing free frag");
@@ -1837,7 +1837,7 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 		cgbno = fsbtodb(fs, cgtod(fs, cg));
 	}
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
+		panic("ifree: range: dev = 0x%llx, ino = %llu, fs = %s",
 		    dev, (unsigned long long)ino, fs->fs_fsmnt);
 	error = bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
@@ -1856,7 +1856,7 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	inosused = cg_inosused(cgp, needswap);
 	ino %= fs->fs_ipg;
 	if (isclr(inosused, ino)) {
-		printf("ifree: dev = 0x%x, ino = %llu, fs = %s\n",
+		printf("ifree: dev = 0x%llx, ino = %llu, fs = %s\n",
 		    dev, (unsigned long long)ino + cg * fs->fs_ipg,
 		    fs->fs_fsmnt);
 		if (fs->fs_ronly == 0)

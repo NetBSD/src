@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.20 2007/10/17 19:55:05 garbled Exp $	*/
+/*	$NetBSD: ansi.h,v 1.20.18.1 2008/03/29 20:46:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,10 +47,10 @@
  *	#endif
  */
 #define	_BSD_CLOCK_T_		unsigned long	/* clock() */
-#define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
-#define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
-#define	_BSD_SSIZE_T_		int		/* byte count or error */
-#define	_BSD_TIME_T_		long		/* time() */
+#define	_BSD_PTRDIFF_T_		long		/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
+#define	_BSD_SSIZE_T_		long		/* byte count or error */
+#define	_BSD_TIME_T_		long long	/* time() */
 #if __GNUC_PREREQ__(3,0)
 #define	_BSD_VA_LIST_		__builtin_va_list	/* va_list */
 #else

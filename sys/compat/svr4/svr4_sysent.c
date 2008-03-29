@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_sysent.c,v 1.80 2007/12/20 23:10:51 dsl Exp $ */
+/* $NetBSD: svr4_sysent.c,v 1.80.8.1 2008/03/29 20:46:59 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sysent.c,v 1.80 2007/12/20 23:10:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sysent.c,v 1.80.8.1 2008/03/29 20:46:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -327,8 +327,8 @@ struct sysent svr4_sysent[] = {
 	    (sy_call_t *)sys_setegid },		/* 136 = setegid */
 	{ ns(struct svr4_sys_sysconfig_args), 0,
 	    (sy_call_t *)svr4_sys_sysconfig },	/* 137 = sysconfig */
-	{ ns(struct sys_adjtime_args), 0,
-	    (sy_call_t *)sys_adjtime },		/* 138 = adjtime */
+	{ ns(struct compat_50_sys_adjtime_args), 0,
+	    (sy_call_t *)compat_50_sys_adjtime },/* 138 = adjtime */
 	{ ns(struct svr4_sys_systeminfo_args), 0,
 	    (sy_call_t *)svr4_sys_systeminfo },	/* 139 = systeminfo */
 	{ 0, 0, 0,
@@ -365,10 +365,10 @@ struct sysent svr4_sysent[] = {
 	    (sy_call_t *)svr4_sys_vhangup },	/* 155 = vhangup */
 	{ ns(struct svr4_sys_gettimeofday_args), 0,
 	    (sy_call_t *)svr4_sys_gettimeofday },/* 156 = gettimeofday */
-	{ ns(struct sys_getitimer_args), 0,
-	    (sy_call_t *)sys_getitimer },	/* 157 = getitimer */
-	{ ns(struct sys_setitimer_args), 0,
-	    (sy_call_t *)sys_setitimer },	/* 158 = setitimer */
+	{ ns(struct compat_50_sys_getitimer_args), 0,
+	    (sy_call_t *)compat_50_sys_getitimer },/* 157 = getitimer */
+	{ ns(struct compat_50_sys_setitimer_args), 0,
+	    (sy_call_t *)compat_50_sys_setitimer },/* 158 = setitimer */
 	{ ns(struct svr4_sys__lwp_create_args), 0,
 	    (sy_call_t *)svr4_sys__lwp_create },/* 159 = _lwp_create */
 	{ 0, 0, 0,
@@ -449,8 +449,8 @@ struct sysent svr4_sysent[] = {
 	    sys_nosys },			/* 197 = unimplemented timer_gettime */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 198 = unimplemented timer_getoverrun */
-	{ ns(struct sys_nanosleep_args), 0,
-	    (sy_call_t *)sys_nanosleep },	/* 199 = nanosleep */
+	{ ns(struct compat_50_sys_nanosleep_args), 0,
+	    (sy_call_t *)compat_50_sys_nanosleep },/* 199 = nanosleep */
 	{ ns(struct svr4_sys_facl_args), 0,
 	    (sy_call_t *)svr4_sys_facl },	/* 200 = facl */
 	{ 0, 0, 0,

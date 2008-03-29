@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_sysent.c,v 1.46 2007/12/20 23:10:43 dsl Exp $ */
+/* $NetBSD: ibcs2_sysent.c,v 1.46.8.1 2008/03/29 20:46:58 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.46 2007/12/20 23:10:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.46.8.1 2008/03/29 20:46:58 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -18,6 +18,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_sysent.c,v 1.46 2007/12/20 23:10:43 dsl Exp $"
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <compat/sys/time.h>
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
@@ -515,8 +516,8 @@ struct sysent ibcs2_sysent[] = {
 	    sys_nosys },			/* 234 = unimplemented xenix_unexecseg */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 235 = unimplemented */
-	{ ns(struct sys_select_args), 0,
-	    (sy_call_t *)sys_select },		/* 236 = select */
+	{ ns(struct compat_50_sys_select_args), 0,
+	    (sy_call_t *)compat_50_sys_select },/* 236 = select */
 	{ ns(struct ibcs2_sys_eaccess_args), 0,
 	    (sy_call_t *)ibcs2_sys_eaccess },	/* 237 = eaccess */
 	{ 0, 0, 0,

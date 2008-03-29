@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.47 2008/02/27 19:55:59 matt Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.47.2.1 2008/03/29 20:47:00 christos Exp $	*/
 
 /*-
  ***********************************************************************
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.47 2008/02/27 19:55:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.47.2.1 2008/03/29 20:47:00 christos Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -890,7 +890,7 @@ ntp_timestatus(void)
  * ntp_gettime() - NTP user application interface
  */
 int
-sys___ntp_gettime30(struct lwp *l, const struct sys___ntp_gettime30_args *uap, register_t *retval)
+sys___ntp_gettime50(struct lwp *l, const struct sys___ntp_gettime50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(struct ntptimeval *) ntvp;
@@ -909,33 +909,6 @@ sys___ntp_gettime30(struct lwp *l, const struct sys___ntp_gettime30_args *uap, r
 	}
 	return(error);
 }
-
-#ifdef COMPAT_30
-int
-compat_30_sys_ntp_gettime(struct lwp *l, const struct compat_30_sys_ntp_gettime_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(struct ntptimeval30 *) ontvp;
-	} */
-	struct ntptimeval ntv;
-	struct ntptimeval30 ontv;
-	int error = 0;
-
-	if (SCARG(uap, ntvp)) {
-		ntp_gettime(&ntv);
-		TIMESPEC_TO_TIMEVAL(&ontv.time, &ntv.time);
-		ontv.maxerror = ntv.maxerror;
-		ontv.esterror = ntv.esterror;
-
-		error = copyout((void *)&ontv, (void *)SCARG(uap, ntvp),
-				sizeof(ontv));
- 	}
-	if (!error)
-		*retval = ntp_timestatus();
-
-	return (error);
-}
-#endif
 
 /*
  * return information about kernel precision timekeeping
@@ -975,18 +948,10 @@ SYSCTL_SETUP(sysctl_kern_ntptime_setup, "sysctl kern.ntptime node setup")
 /* For some reason, raising SIGSYS (as sys_nosys would) is problematic. */
 
 int
-sys___ntp_gettime30(struct lwp *l, const struct sys___ntp_gettime30_args *uap, register_t *retval)
+sys___ntp_gettime50(struct lwp *l, const struct sys___ntp_gettime50_args *uap, register_t *retval)
 {
 
 	return(ENOSYS);
 }
 
-#ifdef COMPAT_30
-int
-compat_30_sys_ntp_gettime(struct lwp *l, const struct compat_30_sys_ntp_gettime_args *uap, register_t *retval)
-{
-
- 	return(ENOSYS);
-}
-#endif
 #endif /* !NTP */

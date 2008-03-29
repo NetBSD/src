@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.14 2007/12/20 23:02:46 dsl Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.14.8.1 2008/03/29 20:46:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14 2007/12/20 23:02:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14.8.1 2008/03/29 20:46:57 christos Exp $");
 
 #include "opt_ptrace.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14 2007/12/20 23:02:46 dsl Exp $
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_ptrace.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.138 2008/03/28 05:02:08 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.138.2.1 2008/03/29 20:47:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138 2008/03/28 05:02:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138.2.1 2008/03/29 20:47:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -952,7 +952,7 @@ nfsrv_write(nfsd, slp, lwp, mrq)
 		 * for debugging purposes.
 		 */
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_usec);
+		*tl = txdr_unsigned(boottime.tv_nsec / 1000);
 	} else {
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 		nfsm_srvfillattr(&va, fp);
@@ -1257,7 +1257,7 @@ loop1:
 			     * for debugging purposes.
 			     */
 			    *tl++ = txdr_unsigned(boottime.tv_sec);
-			    *tl = txdr_unsigned(boottime.tv_usec);
+			    *tl = txdr_unsigned(boottime.tv_nsec / 1000);
 			} else {
 			    nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 			    nfsm_srvfillattr(&va, fp);
@@ -3160,7 +3160,7 @@ nfsrv_commit(nfsd, slp, lwp, mrq)
 	if (!error) {
 		nfsm_build(tl, u_int32_t *, NFSX_V3WRITEVERF);
 		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_usec);
+		*tl = txdr_unsigned(boottime.tv_nsec / 1000);
 	} else {
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.191 2008/03/27 17:14:21 ad Exp $ */
+/* $NetBSD: syscallargs.h,v 1.191.2.1 2008/03/29 20:47:03 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -67,13 +67,13 @@ struct sys_close_args {
 };
 check_syscall_args(sys_close)
 
-struct sys_wait4_args {
+struct compat_50_sys_wait4_args {
 	syscallarg(int) pid;
 	syscallarg(int *) status;
 	syscallarg(int) options;
-	syscallarg(struct rusage *) rusage;
+	syscallarg(struct rusage50 *) rusage;
 };
-check_syscall_args(sys_wait4)
+check_syscall_args(compat_50_sys_wait4)
 
 struct compat_43_sys_creat_args {
 	syscallarg(const char *) path;
@@ -102,12 +102,12 @@ struct sys_fchdir_args {
 };
 check_syscall_args(sys_fchdir)
 
-struct sys_mknod_args {
+struct compat_50_sys_mknod_args {
 	syscallarg(const char *) path;
 	syscallarg(mode_t) mode;
-	syscallarg(dev_t) dev;
+	syscallarg(uint32_t) dev;
 };
-check_syscall_args(sys_mknod)
+check_syscall_args(compat_50_sys_mknod)
 
 struct sys_chmod_args {
 	syscallarg(const char *) path;
@@ -451,23 +451,23 @@ struct sys_setpgid_args {
 };
 check_syscall_args(sys_setpgid)
 
-struct sys_setitimer_args {
+struct compat_50_sys_setitimer_args {
 	syscallarg(int) which;
-	syscallarg(const struct itimerval *) itv;
-	syscallarg(struct itimerval *) oitv;
+	syscallarg(const struct itimerval50 *) itv;
+	syscallarg(struct itimerval50 *) oitv;
 };
-check_syscall_args(sys_setitimer)
+check_syscall_args(compat_50_sys_setitimer)
 
 struct compat_12_sys_swapon_args {
 	syscallarg(const char *) name;
 };
 check_syscall_args(compat_12_sys_swapon)
 
-struct sys_getitimer_args {
+struct compat_50_sys_getitimer_args {
 	syscallarg(int) which;
-	syscallarg(struct itimerval *) itv;
+	syscallarg(struct itimerval50 *) itv;
 };
-check_syscall_args(sys_getitimer)
+check_syscall_args(compat_50_sys_getitimer)
 
 struct compat_43_sys_gethostname_args {
 	syscallarg(char *) hostname;
@@ -494,14 +494,14 @@ struct sys_fcntl_args {
 };
 check_syscall_args(sys_fcntl)
 
-struct sys_select_args {
+struct compat_50_sys_select_args {
 	syscallarg(int) nd;
 	syscallarg(fd_set *) in;
 	syscallarg(fd_set *) ou;
 	syscallarg(fd_set *) ex;
-	syscallarg(struct timeval *) tv;
+	syscallarg(struct timeval50 *) tv;
 };
-check_syscall_args(sys_select)
+check_syscall_args(compat_50_sys_select)
 
 struct sys_fsync_args {
 	syscallarg(int) fd;
@@ -627,17 +627,17 @@ struct compat_43_sys_sendmsg_args {
 };
 check_syscall_args(compat_43_sys_sendmsg)
 
-struct sys_gettimeofday_args {
-	syscallarg(struct timeval *) tp;
+struct compat_50_sys_gettimeofday_args {
+	syscallarg(struct timeval50 *) tp;
 	syscallarg(void *) tzp;
 };
-check_syscall_args(sys_gettimeofday)
+check_syscall_args(compat_50_sys_gettimeofday)
 
-struct sys_getrusage_args {
+struct compat_50_sys_getrusage_args {
 	syscallarg(int) who;
-	syscallarg(struct rusage *) rusage;
+	syscallarg(struct rusage50 *) rusage;
 };
-check_syscall_args(sys_getrusage)
+check_syscall_args(compat_50_sys_getrusage)
 
 struct sys_getsockopt_args {
 	syscallarg(int) s;
@@ -662,11 +662,11 @@ struct sys_writev_args {
 };
 check_syscall_args(sys_writev)
 
-struct sys_settimeofday_args {
-	syscallarg(const struct timeval *) tv;
+struct compat_50_sys_settimeofday_args {
+	syscallarg(const struct timeval50 *) tv;
 	syscallarg(const void *) tzp;
 };
-check_syscall_args(sys_settimeofday)
+check_syscall_args(compat_50_sys_settimeofday)
 
 struct sys_fchown_args {
 	syscallarg(int) fd;
@@ -768,17 +768,17 @@ struct sys_rmdir_args {
 };
 check_syscall_args(sys_rmdir)
 
-struct sys_utimes_args {
+struct compat_50_sys_utimes_args {
 	syscallarg(const char *) path;
-	syscallarg(const struct timeval *) tptr;
+	syscallarg(const struct timeval50 *) tptr;
 };
-check_syscall_args(sys_utimes)
+check_syscall_args(compat_50_sys_utimes)
 
-struct sys_adjtime_args {
-	syscallarg(const struct timeval *) delta;
-	syscallarg(struct timeval *) olddelta;
+struct compat_50_sys_adjtime_args {
+	syscallarg(const struct timeval50 *) delta;
+	syscallarg(struct timeval50 *) olddelta;
 };
-check_syscall_args(sys_adjtime)
+check_syscall_args(compat_50_sys_adjtime)
 
 struct compat_43_sys_getpeername_args {
 	syscallarg(int) fdes;
@@ -986,11 +986,11 @@ struct sys_lfs_segclean_args {
 };
 check_syscall_args(sys_lfs_segclean)
 
-struct sys_lfs_segwait_args {
+struct compat_50_sys_lfs_segwait_args {
 	syscallarg(fsid_t *) fsidp;
-	syscallarg(struct timeval *) tv;
+	syscallarg(struct timeval50 *) tv;
 };
-check_syscall_args(sys_lfs_segwait)
+check_syscall_args(compat_50_sys_lfs_segwait)
 #else
 #endif
 
@@ -1109,11 +1109,11 @@ struct sys_undelete_args {
 };
 check_syscall_args(sys_undelete)
 
-struct sys_futimes_args {
+struct compat_50_sys_futimes_args {
 	syscallarg(int) fd;
-	syscallarg(const struct timeval *) tptr;
+	syscallarg(const struct timeval50 *) tptr;
 };
-check_syscall_args(sys_futimes)
+check_syscall_args(compat_50_sys_futimes)
 
 struct sys_getpgid_args {
 	syscallarg(pid_t) pid;
@@ -1228,23 +1228,23 @@ check_syscall_args(sys_shmget)
 #else
 #endif
 
-struct sys_clock_gettime_args {
+struct compat_50_sys_clock_gettime_args {
 	syscallarg(clockid_t) clock_id;
-	syscallarg(struct timespec *) tp;
+	syscallarg(struct timespec50 *) tp;
 };
-check_syscall_args(sys_clock_gettime)
+check_syscall_args(compat_50_sys_clock_gettime)
 
-struct sys_clock_settime_args {
+struct compat_50_sys_clock_settime_args {
 	syscallarg(clockid_t) clock_id;
-	syscallarg(const struct timespec *) tp;
+	syscallarg(const struct timespec50 *) tp;
 };
-check_syscall_args(sys_clock_settime)
+check_syscall_args(compat_50_sys_clock_settime)
 
-struct sys_clock_getres_args {
+struct compat_50_sys_clock_getres_args {
 	syscallarg(clockid_t) clock_id;
-	syscallarg(struct timespec *) tp;
+	syscallarg(struct timespec50 *) tp;
 };
-check_syscall_args(sys_clock_getres)
+check_syscall_args(compat_50_sys_clock_getres)
 
 struct sys_timer_create_args {
 	syscallarg(clockid_t) clock_id;
@@ -1258,30 +1258,30 @@ struct sys_timer_delete_args {
 };
 check_syscall_args(sys_timer_delete)
 
-struct sys_timer_settime_args {
+struct compat_50_sys_timer_settime_args {
 	syscallarg(timer_t) timerid;
 	syscallarg(int) flags;
-	syscallarg(const struct itimerspec *) value;
-	syscallarg(struct itimerspec *) ovalue;
+	syscallarg(const struct itimerspec50 *) value;
+	syscallarg(struct itimerspec50 *) ovalue;
 };
-check_syscall_args(sys_timer_settime)
+check_syscall_args(compat_50_sys_timer_settime)
 
-struct sys_timer_gettime_args {
+struct compat_50_sys_timer_gettime_args {
 	syscallarg(timer_t) timerid;
-	syscallarg(struct itimerspec *) value;
+	syscallarg(struct itimerspec50 *) value;
 };
-check_syscall_args(sys_timer_gettime)
+check_syscall_args(compat_50_sys_timer_gettime)
 
 struct sys_timer_getoverrun_args {
 	syscallarg(timer_t) timerid;
 };
 check_syscall_args(sys_timer_getoverrun)
 
-struct sys_nanosleep_args {
-	syscallarg(const struct timespec *) rqtp;
-	syscallarg(struct timespec *) rmtp;
+struct compat_50_sys_nanosleep_args {
+	syscallarg(const struct timespec50 *) rqtp;
+	syscallarg(struct timespec50 *) rmtp;
 };
-check_syscall_args(sys_nanosleep)
+check_syscall_args(compat_50_sys_nanosleep)
 
 struct sys_fdatasync_args {
 	syscallarg(int) fd;
@@ -1293,12 +1293,12 @@ struct sys_mlockall_args {
 };
 check_syscall_args(sys_mlockall)
 
-struct sys___sigtimedwait_args {
+struct compat_50_sys___sigtimedwait_args {
 	syscallarg(const sigset_t *) set;
 	syscallarg(siginfo_t *) info;
-	syscallarg(struct timespec *) timeout;
+	syscallarg(struct timespec50 *) timeout;
 };
-check_syscall_args(sys___sigtimedwait)
+check_syscall_args(compat_50_sys___sigtimedwait)
 
 struct sys_modctl_args {
 	syscallarg(int) cmd;
@@ -1413,23 +1413,23 @@ struct sys_mq_receive_args {
 };
 check_syscall_args(sys_mq_receive)
 
-struct sys_mq_timedsend_args {
+struct compat_50_sys_mq_timedsend_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(const char *) msg_ptr;
 	syscallarg(size_t) msg_len;
 	syscallarg(unsigned) msg_prio;
-	syscallarg(const struct timespec *) abs_timeout;
+	syscallarg(const struct timespec50 *) abs_timeout;
 };
-check_syscall_args(sys_mq_timedsend)
+check_syscall_args(compat_50_sys_mq_timedsend)
 
-struct sys_mq_timedreceive_args {
+struct compat_50_sys_mq_timedreceive_args {
 	syscallarg(mqd_t) mqdes;
 	syscallarg(char *) msg_ptr;
 	syscallarg(size_t) msg_len;
 	syscallarg(unsigned *) msg_prio;
-	syscallarg(const struct timespec *) abs_timeout;
+	syscallarg(const struct timespec50 *) abs_timeout;
 };
-check_syscall_args(sys_mq_timedreceive)
+check_syscall_args(compat_50_sys_mq_timedreceive)
 
 struct sys___posix_rename_args {
 	syscallarg(const char *) from;
@@ -1471,11 +1471,11 @@ struct sys_lchown_args {
 };
 check_syscall_args(sys_lchown)
 
-struct sys_lutimes_args {
+struct compat_50_sys_lutimes_args {
 	syscallarg(const char *) path;
-	syscallarg(const struct timeval *) tptr;
+	syscallarg(const struct timeval50 *) tptr;
 };
-check_syscall_args(sys_lutimes)
+check_syscall_args(compat_50_sys_lutimes)
 
 struct sys___msync13_args {
 	syscallarg(void *) addr;
@@ -1625,33 +1625,33 @@ struct compat_20_sys_fhstatfs_args {
 check_syscall_args(compat_20_sys_fhstatfs)
 #if defined(SYSVSEM) || !defined(_KERNEL)
 
-struct sys_____semctl13_args {
+struct compat_50_sys_____semctl13_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
 	syscallarg(int) cmd;
 	syscallarg(union __semun *) arg;
 };
-check_syscall_args(sys_____semctl13)
+check_syscall_args(compat_50_sys_____semctl13)
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
 
-struct sys___msgctl13_args {
+struct compat_50_sys___msgctl13_args {
 	syscallarg(int) msqid;
 	syscallarg(int) cmd;
 	syscallarg(struct msqid_ds *) buf;
 };
-check_syscall_args(sys___msgctl13)
+check_syscall_args(compat_50_sys___msgctl13)
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 
-struct sys___shmctl13_args {
+struct compat_50_sys___shmctl13_args {
 	syscallarg(int) shmid;
 	syscallarg(int) cmd;
-	syscallarg(struct shmid_ds *) buf;
+	syscallarg(struct shmid_ds13 *) buf;
 };
-check_syscall_args(sys___shmctl13)
+check_syscall_args(compat_50_sys___shmctl13)
 #else
 #endif
 
@@ -1722,13 +1722,13 @@ struct sys__lwp_detach_args {
 };
 check_syscall_args(sys__lwp_detach)
 
-struct sys__lwp_park_args {
-	syscallarg(const struct timespec *) ts;
+struct compat_50_sys__lwp_park_args {
+	syscallarg(const struct timespec50 *) ts;
 	syscallarg(lwpid_t) unpark;
 	syscallarg(const void *) hint;
 	syscallarg(const void *) unparkhint;
 };
-check_syscall_args(sys__lwp_park)
+check_syscall_args(compat_50_sys__lwp_park)
 
 struct sys__lwp_unpark_args {
 	syscallarg(lwpid_t) target;
@@ -1792,15 +1792,15 @@ struct sys_rasctl_args {
 };
 check_syscall_args(sys_rasctl)
 
-struct sys_kevent_args {
+struct compat_50_sys_kevent_args {
 	syscallarg(int) fd;
 	syscallarg(const struct kevent *) changelist;
 	syscallarg(size_t) nchanges;
 	syscallarg(struct kevent *) eventlist;
 	syscallarg(size_t) nevents;
-	syscallarg(const struct timespec *) timeout;
+	syscallarg(const struct timespec50 *) timeout;
 };
-check_syscall_args(sys_kevent)
+check_syscall_args(compat_50_sys_kevent)
 
 struct sys__sched_setparam_args {
 	syscallarg(pid_t) pid;
@@ -1984,23 +1984,23 @@ struct sys_extattr_list_link_args {
 };
 check_syscall_args(sys_extattr_list_link)
 
-struct sys_pselect_args {
+struct compat_50_sys_pselect_args {
 	syscallarg(int) nd;
 	syscallarg(fd_set *) in;
 	syscallarg(fd_set *) ou;
 	syscallarg(fd_set *) ex;
-	syscallarg(const struct timespec *) ts;
+	syscallarg(const struct timespec50 *) ts;
 	syscallarg(const sigset_t *) mask;
 };
-check_syscall_args(sys_pselect)
+check_syscall_args(compat_50_sys_pselect)
 
-struct sys_pollts_args {
+struct compat_50_sys_pollts_args {
 	syscallarg(struct pollfd *) fds;
 	syscallarg(u_int) nfds;
-	syscallarg(const struct timespec *) ts;
+	syscallarg(const struct timespec50 *) ts;
 	syscallarg(const sigset_t *) mask;
 };
-check_syscall_args(sys_pollts)
+check_syscall_args(compat_50_sys_pollts)
 
 struct sys_setxattr_args {
 	syscallarg(const char *) path;
@@ -2092,23 +2092,23 @@ struct sys_fremovexattr_args {
 };
 check_syscall_args(sys_fremovexattr)
 
-struct sys___stat30_args {
+struct compat_50_sys___stat30_args {
 	syscallarg(const char *) path;
-	syscallarg(struct stat *) ub;
+	syscallarg(struct stat30 *) ub;
 };
-check_syscall_args(sys___stat30)
+check_syscall_args(compat_50_sys___stat30)
 
-struct sys___fstat30_args {
+struct compat_50_sys___fstat30_args {
 	syscallarg(int) fd;
-	syscallarg(struct stat *) sb;
+	syscallarg(struct stat30 *) sb;
 };
-check_syscall_args(sys___fstat30)
+check_syscall_args(compat_50_sys___fstat30)
 
-struct sys___lstat30_args {
+struct compat_50_sys___lstat30_args {
 	syscallarg(const char *) path;
-	syscallarg(struct stat *) ub;
+	syscallarg(struct stat30 *) ub;
 };
-check_syscall_args(sys___lstat30)
+check_syscall_args(compat_50_sys___lstat30)
 
 struct sys___getdents30_args {
 	syscallarg(int) fd;
@@ -2123,10 +2123,10 @@ struct compat_30_sys___fhstat30_args {
 };
 check_syscall_args(compat_30_sys___fhstat30)
 
-struct sys___ntp_gettime30_args {
-	syscallarg(struct ntptimeval *) ntvp;
+struct compat_50_sys___ntp_gettime30_args {
+	syscallarg(struct ntptimeval50 *) ntvp;
 };
-check_syscall_args(sys___ntp_gettime30)
+check_syscall_args(compat_50_sys___ntp_gettime30)
 
 struct sys___socket30_args {
 	syscallarg(int) domain;
@@ -2191,12 +2191,12 @@ struct sys_aio_return_args {
 };
 check_syscall_args(sys_aio_return)
 
-struct sys_aio_suspend_args {
+struct compat_50_sys_aio_suspend_args {
 	syscallarg(const struct aiocb *const *) list;
 	syscallarg(int) nent;
-	syscallarg(const struct timespec *) timeout;
+	syscallarg(const struct timespec50 *) timeout;
 };
-check_syscall_args(sys_aio_suspend)
+check_syscall_args(compat_50_sys_aio_suspend)
 
 struct sys_aio_write_args {
 	syscallarg(struct aiocb *) aiocbp;
@@ -2264,6 +2264,248 @@ struct sys___posix_fadvise50_args {
 };
 check_syscall_args(sys___posix_fadvise50)
 
+struct sys___select50_args {
+	syscallarg(int) nd;
+	syscallarg(fd_set *) in;
+	syscallarg(fd_set *) ou;
+	syscallarg(fd_set *) ex;
+	syscallarg(struct timeval *) tv;
+};
+check_syscall_args(sys___select50)
+
+struct sys___gettimeofday50_args {
+	syscallarg(struct timeval *) tp;
+	syscallarg(void *) tzp;
+};
+check_syscall_args(sys___gettimeofday50)
+
+struct sys___settimeofday50_args {
+	syscallarg(const struct timeval *) tv;
+	syscallarg(const void *) tzp;
+};
+check_syscall_args(sys___settimeofday50)
+
+struct sys___utimes50_args {
+	syscallarg(const char *) path;
+	syscallarg(const struct timeval *) tptr;
+};
+check_syscall_args(sys___utimes50)
+
+struct sys___adjtime50_args {
+	syscallarg(const struct timeval *) delta;
+	syscallarg(struct timeval *) olddelta;
+};
+check_syscall_args(sys___adjtime50)
+#if defined(LFS) || !defined(_KERNEL)
+
+struct sys___lfs_segwait50_args {
+	syscallarg(fsid_t *) fsidp;
+	syscallarg(struct timeval *) tv;
+};
+check_syscall_args(sys___lfs_segwait50)
+#else
+#endif
+
+struct sys___futimes50_args {
+	syscallarg(int) fd;
+	syscallarg(const struct timeval *) tptr;
+};
+check_syscall_args(sys___futimes50)
+
+struct sys___lutimes50_args {
+	syscallarg(const char *) path;
+	syscallarg(const struct timeval *) tptr;
+};
+check_syscall_args(sys___lutimes50)
+
+struct sys___setitimer50_args {
+	syscallarg(int) which;
+	syscallarg(const struct itimerval *) itv;
+	syscallarg(struct itimerval *) oitv;
+};
+check_syscall_args(sys___setitimer50)
+
+struct sys___getitimer50_args {
+	syscallarg(int) which;
+	syscallarg(struct itimerval *) itv;
+};
+check_syscall_args(sys___getitimer50)
+
+struct sys___clock_gettime50_args {
+	syscallarg(clockid_t) clock_id;
+	syscallarg(struct timespec *) tp;
+};
+check_syscall_args(sys___clock_gettime50)
+
+struct sys___clock_settime50_args {
+	syscallarg(clockid_t) clock_id;
+	syscallarg(const struct timespec *) tp;
+};
+check_syscall_args(sys___clock_settime50)
+
+struct sys___clock_getres50_args {
+	syscallarg(clockid_t) clock_id;
+	syscallarg(struct timespec *) tp;
+};
+check_syscall_args(sys___clock_getres50)
+
+struct sys___nanosleep50_args {
+	syscallarg(const struct timespec *) rqtp;
+	syscallarg(struct timespec *) rmtp;
+};
+check_syscall_args(sys___nanosleep50)
+
+struct sys_____sigtimedwait50_args {
+	syscallarg(const sigset_t *) set;
+	syscallarg(siginfo_t *) info;
+	syscallarg(struct timespec *) timeout;
+};
+check_syscall_args(sys_____sigtimedwait50)
+
+struct sys___mq_timedsend50_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(const char *) msg_ptr;
+	syscallarg(size_t) msg_len;
+	syscallarg(unsigned) msg_prio;
+	syscallarg(const struct timespec *) abs_timeout;
+};
+check_syscall_args(sys___mq_timedsend50)
+
+struct sys___mq_timedreceive50_args {
+	syscallarg(mqd_t) mqdes;
+	syscallarg(char *) msg_ptr;
+	syscallarg(size_t) msg_len;
+	syscallarg(unsigned *) msg_prio;
+	syscallarg(const struct timespec *) abs_timeout;
+};
+check_syscall_args(sys___mq_timedreceive50)
+
+struct sys____lwp_park50_args {
+	syscallarg(const struct timespec *) ts;
+	syscallarg(lwpid_t) unpark;
+	syscallarg(const void *) hint;
+	syscallarg(const void *) unparkhint;
+};
+check_syscall_args(sys____lwp_park50)
+
+struct sys___kevent50_args {
+	syscallarg(int) fd;
+	syscallarg(const struct kevent *) changelist;
+	syscallarg(size_t) nchanges;
+	syscallarg(struct kevent *) eventlist;
+	syscallarg(size_t) nevents;
+	syscallarg(const struct timespec *) timeout;
+};
+check_syscall_args(sys___kevent50)
+
+struct sys___pselect50_args {
+	syscallarg(int) nd;
+	syscallarg(fd_set *) in;
+	syscallarg(fd_set *) ou;
+	syscallarg(fd_set *) ex;
+	syscallarg(const struct timespec *) ts;
+	syscallarg(const sigset_t *) mask;
+};
+check_syscall_args(sys___pselect50)
+
+struct sys___pollts50_args {
+	syscallarg(struct pollfd *) fds;
+	syscallarg(u_int) nfds;
+	syscallarg(const struct timespec *) ts;
+	syscallarg(const sigset_t *) mask;
+};
+check_syscall_args(sys___pollts50)
+
+struct sys___aio_suspend50_args {
+	syscallarg(const struct aiocb *const *) list;
+	syscallarg(int) nent;
+	syscallarg(const struct timespec *) timeout;
+};
+check_syscall_args(sys___aio_suspend50)
+
+struct sys___stat50_args {
+	syscallarg(const char *) path;
+	syscallarg(struct stat *) ub;
+};
+check_syscall_args(sys___stat50)
+
+struct sys___fstat50_args {
+	syscallarg(int) fd;
+	syscallarg(struct stat *) sb;
+};
+check_syscall_args(sys___fstat50)
+
+struct sys___lstat50_args {
+	syscallarg(const char *) path;
+	syscallarg(struct stat *) ub;
+};
+check_syscall_args(sys___lstat50)
+
+struct sys_____semctl50_args {
+	syscallarg(int) semid;
+	syscallarg(int) semnum;
+	syscallarg(int) cmd;
+	syscallarg(union __semun *) arg;
+};
+check_syscall_args(sys_____semctl50)
+
+struct sys___shmctl50_args {
+	syscallarg(int) shmid;
+	syscallarg(int) cmd;
+	syscallarg(struct shmid_ds *) buf;
+};
+check_syscall_args(sys___shmctl50)
+
+struct sys___msgctl50_args {
+	syscallarg(int) msqid;
+	syscallarg(int) cmd;
+	syscallarg(struct msqid_ds *) buf;
+};
+check_syscall_args(sys___msgctl50)
+
+struct sys___getrusage50_args {
+	syscallarg(int) who;
+	syscallarg(struct rusage *) rusage;
+};
+check_syscall_args(sys___getrusage50)
+
+struct sys___timer_settime50_args {
+	syscallarg(timer_t) timerid;
+	syscallarg(int) flags;
+	syscallarg(const struct itimerspec *) value;
+	syscallarg(struct itimerspec *) ovalue;
+};
+check_syscall_args(sys___timer_settime50)
+
+struct sys___timer_gettime50_args {
+	syscallarg(timer_t) timerid;
+	syscallarg(struct itimerspec *) value;
+};
+check_syscall_args(sys___timer_gettime50)
+#if defined(NTP) || !defined(_KERNEL)
+
+struct sys___ntp_gettime50_args {
+	syscallarg(struct ntptimeval *) ntvp;
+};
+check_syscall_args(sys___ntp_gettime50)
+#else
+#endif
+
+struct sys___wait450_args {
+	syscallarg(int) pid;
+	syscallarg(int *) status;
+	syscallarg(int) options;
+	syscallarg(struct rusage *) rusage;
+};
+check_syscall_args(sys___wait450)
+
+struct sys___mknod50_args {
+	syscallarg(const char *) path;
+	syscallarg(mode_t) mode;
+	syscallarg(dev_t) dev;
+};
+check_syscall_args(sys___mknod50)
+
 /*
  * System call prototypes.
  */
@@ -2282,7 +2524,7 @@ int	sys_open(struct lwp *, const struct sys_open_args *, register_t *);
 
 int	sys_close(struct lwp *, const struct sys_close_args *, register_t *);
 
-int	sys_wait4(struct lwp *, const struct sys_wait4_args *, register_t *);
+int	compat_50_sys_wait4(struct lwp *, const struct compat_50_sys_wait4_args *, register_t *);
 
 int	compat_43_sys_creat(struct lwp *, const struct compat_43_sys_creat_args *, register_t *);
 
@@ -2294,7 +2536,7 @@ int	sys_chdir(struct lwp *, const struct sys_chdir_args *, register_t *);
 
 int	sys_fchdir(struct lwp *, const struct sys_fchdir_args *, register_t *);
 
-int	sys_mknod(struct lwp *, const struct sys_mknod_args *, register_t *);
+int	compat_50_sys_mknod(struct lwp *, const struct compat_50_sys_mknod_args *, register_t *);
 
 int	sys_chmod(struct lwp *, const struct sys_chmod_args *, register_t *);
 
@@ -2439,13 +2681,13 @@ int	sys_getpgrp(struct lwp *, const void *, register_t *);
 
 int	sys_setpgid(struct lwp *, const struct sys_setpgid_args *, register_t *);
 
-int	sys_setitimer(struct lwp *, const struct sys_setitimer_args *, register_t *);
+int	compat_50_sys_setitimer(struct lwp *, const struct compat_50_sys_setitimer_args *, register_t *);
 
 int	compat_43_sys_wait(struct lwp *, const void *, register_t *);
 
 int	compat_12_sys_swapon(struct lwp *, const struct compat_12_sys_swapon_args *, register_t *);
 
-int	sys_getitimer(struct lwp *, const struct sys_getitimer_args *, register_t *);
+int	compat_50_sys_getitimer(struct lwp *, const struct compat_50_sys_getitimer_args *, register_t *);
 
 int	compat_43_sys_gethostname(struct lwp *, const struct compat_43_sys_gethostname_args *, register_t *);
 
@@ -2457,7 +2699,7 @@ int	sys_dup2(struct lwp *, const struct sys_dup2_args *, register_t *);
 
 int	sys_fcntl(struct lwp *, const struct sys_fcntl_args *, register_t *);
 
-int	sys_select(struct lwp *, const struct sys_select_args *, register_t *);
+int	compat_50_sys_select(struct lwp *, const struct compat_50_sys_select_args *, register_t *);
 
 int	sys_fsync(struct lwp *, const struct sys_fsync_args *, register_t *);
 
@@ -2497,9 +2739,9 @@ int	compat_43_sys_recvmsg(struct lwp *, const struct compat_43_sys_recvmsg_args 
 
 int	compat_43_sys_sendmsg(struct lwp *, const struct compat_43_sys_sendmsg_args *, register_t *);
 
-int	sys_gettimeofday(struct lwp *, const struct sys_gettimeofday_args *, register_t *);
+int	compat_50_sys_gettimeofday(struct lwp *, const struct compat_50_sys_gettimeofday_args *, register_t *);
 
-int	sys_getrusage(struct lwp *, const struct sys_getrusage_args *, register_t *);
+int	compat_50_sys_getrusage(struct lwp *, const struct compat_50_sys_getrusage_args *, register_t *);
 
 int	sys_getsockopt(struct lwp *, const struct sys_getsockopt_args *, register_t *);
 
@@ -2507,7 +2749,7 @@ int	sys_readv(struct lwp *, const struct sys_readv_args *, register_t *);
 
 int	sys_writev(struct lwp *, const struct sys_writev_args *, register_t *);
 
-int	sys_settimeofday(struct lwp *, const struct sys_settimeofday_args *, register_t *);
+int	compat_50_sys_settimeofday(struct lwp *, const struct compat_50_sys_settimeofday_args *, register_t *);
 
 int	sys_fchown(struct lwp *, const struct sys_fchown_args *, register_t *);
 
@@ -2539,9 +2781,9 @@ int	sys_mkdir(struct lwp *, const struct sys_mkdir_args *, register_t *);
 
 int	sys_rmdir(struct lwp *, const struct sys_rmdir_args *, register_t *);
 
-int	sys_utimes(struct lwp *, const struct sys_utimes_args *, register_t *);
+int	compat_50_sys_utimes(struct lwp *, const struct compat_50_sys_utimes_args *, register_t *);
 
-int	sys_adjtime(struct lwp *, const struct sys_adjtime_args *, register_t *);
+int	compat_50_sys_adjtime(struct lwp *, const struct compat_50_sys_adjtime_args *, register_t *);
 
 int	compat_43_sys_getpeername(struct lwp *, const struct compat_43_sys_getpeername_args *, register_t *);
 
@@ -2623,7 +2865,7 @@ int	sys_lfs_markv(struct lwp *, const struct sys_lfs_markv_args *, register_t *)
 
 int	sys_lfs_segclean(struct lwp *, const struct sys_lfs_segclean_args *, register_t *);
 
-int	sys_lfs_segwait(struct lwp *, const struct sys_lfs_segwait_args *, register_t *);
+int	compat_50_sys_lfs_segwait(struct lwp *, const struct compat_50_sys_lfs_segwait_args *, register_t *);
 
 #else
 #endif
@@ -2661,7 +2903,7 @@ int	sys_munlock(struct lwp *, const struct sys_munlock_args *, register_t *);
 
 int	sys_undelete(struct lwp *, const struct sys_undelete_args *, register_t *);
 
-int	sys_futimes(struct lwp *, const struct sys_futimes_args *, register_t *);
+int	compat_50_sys_futimes(struct lwp *, const struct compat_50_sys_futimes_args *, register_t *);
 
 int	sys_getpgid(struct lwp *, const struct sys_getpgid_args *, register_t *);
 
@@ -2707,23 +2949,23 @@ int	sys_shmget(struct lwp *, const struct sys_shmget_args *, register_t *);
 
 #else
 #endif
-int	sys_clock_gettime(struct lwp *, const struct sys_clock_gettime_args *, register_t *);
+int	compat_50_sys_clock_gettime(struct lwp *, const struct compat_50_sys_clock_gettime_args *, register_t *);
 
-int	sys_clock_settime(struct lwp *, const struct sys_clock_settime_args *, register_t *);
+int	compat_50_sys_clock_settime(struct lwp *, const struct compat_50_sys_clock_settime_args *, register_t *);
 
-int	sys_clock_getres(struct lwp *, const struct sys_clock_getres_args *, register_t *);
+int	compat_50_sys_clock_getres(struct lwp *, const struct compat_50_sys_clock_getres_args *, register_t *);
 
 int	sys_timer_create(struct lwp *, const struct sys_timer_create_args *, register_t *);
 
 int	sys_timer_delete(struct lwp *, const struct sys_timer_delete_args *, register_t *);
 
-int	sys_timer_settime(struct lwp *, const struct sys_timer_settime_args *, register_t *);
+int	compat_50_sys_timer_settime(struct lwp *, const struct compat_50_sys_timer_settime_args *, register_t *);
 
-int	sys_timer_gettime(struct lwp *, const struct sys_timer_gettime_args *, register_t *);
+int	compat_50_sys_timer_gettime(struct lwp *, const struct compat_50_sys_timer_gettime_args *, register_t *);
 
 int	sys_timer_getoverrun(struct lwp *, const struct sys_timer_getoverrun_args *, register_t *);
 
-int	sys_nanosleep(struct lwp *, const struct sys_nanosleep_args *, register_t *);
+int	compat_50_sys_nanosleep(struct lwp *, const struct compat_50_sys_nanosleep_args *, register_t *);
 
 int	sys_fdatasync(struct lwp *, const struct sys_fdatasync_args *, register_t *);
 
@@ -2731,7 +2973,7 @@ int	sys_mlockall(struct lwp *, const struct sys_mlockall_args *, register_t *);
 
 int	sys_munlockall(struct lwp *, const void *, register_t *);
 
-int	sys___sigtimedwait(struct lwp *, const struct sys___sigtimedwait_args *, register_t *);
+int	compat_50_sys___sigtimedwait(struct lwp *, const struct compat_50_sys___sigtimedwait_args *, register_t *);
 
 int	sys_modctl(struct lwp *, const struct sys_modctl_args *, register_t *);
 
@@ -2772,9 +3014,9 @@ int	sys_mq_send(struct lwp *, const struct sys_mq_send_args *, register_t *);
 
 int	sys_mq_receive(struct lwp *, const struct sys_mq_receive_args *, register_t *);
 
-int	sys_mq_timedsend(struct lwp *, const struct sys_mq_timedsend_args *, register_t *);
+int	compat_50_sys_mq_timedsend(struct lwp *, const struct compat_50_sys_mq_timedsend_args *, register_t *);
 
-int	sys_mq_timedreceive(struct lwp *, const struct sys_mq_timedreceive_args *, register_t *);
+int	compat_50_sys_mq_timedreceive(struct lwp *, const struct compat_50_sys_mq_timedreceive_args *, register_t *);
 
 int	sys___posix_rename(struct lwp *, const struct sys___posix_rename_args *, register_t *);
 
@@ -2788,7 +3030,7 @@ int	sys_lchmod(struct lwp *, const struct sys_lchmod_args *, register_t *);
 
 int	sys_lchown(struct lwp *, const struct sys_lchown_args *, register_t *);
 
-int	sys_lutimes(struct lwp *, const struct sys_lutimes_args *, register_t *);
+int	compat_50_sys_lutimes(struct lwp *, const struct compat_50_sys_lutimes_args *, register_t *);
 
 int	sys___msync13(struct lwp *, const struct sys___msync13_args *, register_t *);
 
@@ -2839,17 +3081,17 @@ int	compat_30_sys_fhstat(struct lwp *, const struct compat_30_sys_fhstat_args *,
 int	compat_20_sys_fhstatfs(struct lwp *, const struct compat_20_sys_fhstatfs_args *, register_t *);
 
 #if defined(SYSVSEM) || !defined(_KERNEL)
-int	sys_____semctl13(struct lwp *, const struct sys_____semctl13_args *, register_t *);
+int	compat_50_sys_____semctl13(struct lwp *, const struct compat_50_sys_____semctl13_args *, register_t *);
 
 #else
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
-int	sys___msgctl13(struct lwp *, const struct sys___msgctl13_args *, register_t *);
+int	compat_50_sys___msgctl13(struct lwp *, const struct compat_50_sys___msgctl13_args *, register_t *);
 
 #else
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
-int	sys___shmctl13(struct lwp *, const struct sys___shmctl13_args *, register_t *);
+int	compat_50_sys___shmctl13(struct lwp *, const struct compat_50_sys___shmctl13_args *, register_t *);
 
 #else
 #endif
@@ -2885,7 +3127,7 @@ int	sys__lwp_kill(struct lwp *, const struct sys__lwp_kill_args *, register_t *)
 
 int	sys__lwp_detach(struct lwp *, const struct sys__lwp_detach_args *, register_t *);
 
-int	sys__lwp_park(struct lwp *, const struct sys__lwp_park_args *, register_t *);
+int	compat_50_sys__lwp_park(struct lwp *, const struct compat_50_sys__lwp_park_args *, register_t *);
 
 int	sys__lwp_unpark(struct lwp *, const struct sys__lwp_unpark_args *, register_t *);
 
@@ -2921,7 +3163,7 @@ int	sys_rasctl(struct lwp *, const struct sys_rasctl_args *, register_t *);
 
 int	sys_kqueue(struct lwp *, const void *, register_t *);
 
-int	sys_kevent(struct lwp *, const struct sys_kevent_args *, register_t *);
+int	compat_50_sys_kevent(struct lwp *, const struct compat_50_sys_kevent_args *, register_t *);
 
 int	sys__sched_setparam(struct lwp *, const struct sys__sched_setparam_args *, register_t *);
 
@@ -2971,9 +3213,9 @@ int	sys_extattr_list_file(struct lwp *, const struct sys_extattr_list_file_args 
 
 int	sys_extattr_list_link(struct lwp *, const struct sys_extattr_list_link_args *, register_t *);
 
-int	sys_pselect(struct lwp *, const struct sys_pselect_args *, register_t *);
+int	compat_50_sys_pselect(struct lwp *, const struct compat_50_sys_pselect_args *, register_t *);
 
-int	sys_pollts(struct lwp *, const struct sys_pollts_args *, register_t *);
+int	compat_50_sys_pollts(struct lwp *, const struct compat_50_sys_pollts_args *, register_t *);
 
 int	sys_setxattr(struct lwp *, const struct sys_setxattr_args *, register_t *);
 
@@ -2999,17 +3241,17 @@ int	sys_lremovexattr(struct lwp *, const struct sys_lremovexattr_args *, registe
 
 int	sys_fremovexattr(struct lwp *, const struct sys_fremovexattr_args *, register_t *);
 
-int	sys___stat30(struct lwp *, const struct sys___stat30_args *, register_t *);
+int	compat_50_sys___stat30(struct lwp *, const struct compat_50_sys___stat30_args *, register_t *);
 
-int	sys___fstat30(struct lwp *, const struct sys___fstat30_args *, register_t *);
+int	compat_50_sys___fstat30(struct lwp *, const struct compat_50_sys___fstat30_args *, register_t *);
 
-int	sys___lstat30(struct lwp *, const struct sys___lstat30_args *, register_t *);
+int	compat_50_sys___lstat30(struct lwp *, const struct compat_50_sys___lstat30_args *, register_t *);
 
 int	sys___getdents30(struct lwp *, const struct sys___getdents30_args *, register_t *);
 
 int	compat_30_sys___fhstat30(struct lwp *, const struct compat_30_sys___fhstat30_args *, register_t *);
 
-int	sys___ntp_gettime30(struct lwp *, const struct sys___ntp_gettime30_args *, register_t *);
+int	compat_50_sys___ntp_gettime30(struct lwp *, const struct compat_50_sys___ntp_gettime30_args *, register_t *);
 
 int	sys___socket30(struct lwp *, const struct sys___socket30_args *, register_t *);
 
@@ -3031,7 +3273,7 @@ int	sys_aio_read(struct lwp *, const struct sys_aio_read_args *, register_t *);
 
 int	sys_aio_return(struct lwp *, const struct sys_aio_return_args *, register_t *);
 
-int	sys_aio_suspend(struct lwp *, const struct sys_aio_suspend_args *, register_t *);
+int	compat_50_sys_aio_suspend(struct lwp *, const struct compat_50_sys_aio_suspend_args *, register_t *);
 
 int	sys_aio_write(struct lwp *, const struct sys_aio_write_args *, register_t *);
 
@@ -3050,5 +3292,79 @@ int	sys_pset_assign(struct lwp *, const struct sys_pset_assign_args *, register_
 int	sys__pset_bind(struct lwp *, const struct sys__pset_bind_args *, register_t *);
 
 int	sys___posix_fadvise50(struct lwp *, const struct sys___posix_fadvise50_args *, register_t *);
+
+int	sys___select50(struct lwp *, const struct sys___select50_args *, register_t *);
+
+int	sys___gettimeofday50(struct lwp *, const struct sys___gettimeofday50_args *, register_t *);
+
+int	sys___settimeofday50(struct lwp *, const struct sys___settimeofday50_args *, register_t *);
+
+int	sys___utimes50(struct lwp *, const struct sys___utimes50_args *, register_t *);
+
+int	sys___adjtime50(struct lwp *, const struct sys___adjtime50_args *, register_t *);
+
+#if defined(LFS) || !defined(_KERNEL)
+int	sys___lfs_segwait50(struct lwp *, const struct sys___lfs_segwait50_args *, register_t *);
+
+#else
+#endif
+int	sys___futimes50(struct lwp *, const struct sys___futimes50_args *, register_t *);
+
+int	sys___lutimes50(struct lwp *, const struct sys___lutimes50_args *, register_t *);
+
+int	sys___setitimer50(struct lwp *, const struct sys___setitimer50_args *, register_t *);
+
+int	sys___getitimer50(struct lwp *, const struct sys___getitimer50_args *, register_t *);
+
+int	sys___clock_gettime50(struct lwp *, const struct sys___clock_gettime50_args *, register_t *);
+
+int	sys___clock_settime50(struct lwp *, const struct sys___clock_settime50_args *, register_t *);
+
+int	sys___clock_getres50(struct lwp *, const struct sys___clock_getres50_args *, register_t *);
+
+int	sys___nanosleep50(struct lwp *, const struct sys___nanosleep50_args *, register_t *);
+
+int	sys_____sigtimedwait50(struct lwp *, const struct sys_____sigtimedwait50_args *, register_t *);
+
+int	sys___mq_timedsend50(struct lwp *, const struct sys___mq_timedsend50_args *, register_t *);
+
+int	sys___mq_timedreceive50(struct lwp *, const struct sys___mq_timedreceive50_args *, register_t *);
+
+int	sys____lwp_park50(struct lwp *, const struct sys____lwp_park50_args *, register_t *);
+
+int	sys___kevent50(struct lwp *, const struct sys___kevent50_args *, register_t *);
+
+int	sys___pselect50(struct lwp *, const struct sys___pselect50_args *, register_t *);
+
+int	sys___pollts50(struct lwp *, const struct sys___pollts50_args *, register_t *);
+
+int	sys___aio_suspend50(struct lwp *, const struct sys___aio_suspend50_args *, register_t *);
+
+int	sys___stat50(struct lwp *, const struct sys___stat50_args *, register_t *);
+
+int	sys___fstat50(struct lwp *, const struct sys___fstat50_args *, register_t *);
+
+int	sys___lstat50(struct lwp *, const struct sys___lstat50_args *, register_t *);
+
+int	sys_____semctl50(struct lwp *, const struct sys_____semctl50_args *, register_t *);
+
+int	sys___shmctl50(struct lwp *, const struct sys___shmctl50_args *, register_t *);
+
+int	sys___msgctl50(struct lwp *, const struct sys___msgctl50_args *, register_t *);
+
+int	sys___getrusage50(struct lwp *, const struct sys___getrusage50_args *, register_t *);
+
+int	sys___timer_settime50(struct lwp *, const struct sys___timer_settime50_args *, register_t *);
+
+int	sys___timer_gettime50(struct lwp *, const struct sys___timer_gettime50_args *, register_t *);
+
+#if defined(NTP) || !defined(_KERNEL)
+int	sys___ntp_gettime50(struct lwp *, const struct sys___ntp_gettime50_args *, register_t *);
+
+#else
+#endif
+int	sys___wait450(struct lwp *, const struct sys___wait450_args *, register_t *);
+
+int	sys___mknod50(struct lwp *, const struct sys___mknod50_args *, register_t *);
 
 #endif /* _SYS_SYSCALLARGS_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.73 2008/01/15 22:40:15 njoly Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.73.8.1 2008/03/29 20:46:59 christos Exp $ */
 
 /*
  * System call numbers.
@@ -226,13 +226,13 @@
 /* syscall: "getrlimit" ret: "int" args: "u_int" "struct orlimit *" */
 #define	LINUX_SYS_getrlimit	76
 
-/* syscall: "getrusage" ret: "int" args: "int" "struct rusage *" */
+/* syscall: "getrusage" ret: "int" args: "int" "struct rusage50 *" */
 #define	LINUX_SYS_getrusage	77
 
-/* syscall: "gettimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
+/* syscall: "gettimeofday" ret: "int" args: "struct timeval50 *" "struct timezone *" */
 #define	LINUX_SYS_gettimeofday	78
 
-/* syscall: "settimeofday" ret: "int" args: "struct timeval *" "struct timezone *" */
+/* syscall: "settimeofday" ret: "int" args: "struct timeval50 *" "struct timezone *" */
 #define	LINUX_SYS_settimeofday	79
 
 /* syscall: "getgroups16" ret: "int" args: "int" "linux_gid16_t *" */
@@ -307,10 +307,10 @@
 /* syscall: "socketcall" ret: "int" args: "int" "void *" */
 #define	LINUX_SYS_socketcall	102
 
-/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval *" "struct itimerval *" */
+/* syscall: "setitimer" ret: "int" args: "u_int" "struct itimerval50 *" "struct itimerval50 *" */
 #define	LINUX_SYS_setitimer	104
 
-/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval *" */
+/* syscall: "getitimer" ret: "int" args: "u_int" "struct itimerval50 *" */
 #define	LINUX_SYS_getitimer	105
 
 /* syscall: "stat" ret: "int" args: "const char *" "struct linux_stat *" */
@@ -385,7 +385,7 @@
 /* syscall: "getdents" ret: "int" args: "int" "struct linux_dirent *" "unsigned int" */
 #define	LINUX_SYS_getdents	141
 
-/* syscall: "select" ret: "int" args: "int" "fd_set *" "fd_set *" "fd_set *" "struct timeval *" */
+/* syscall: "select" ret: "int" args: "int" "fd_set *" "fd_set *" "fd_set *" "struct timeval50 *" */
 #define	LINUX_SYS_select	142
 
 /* syscall: "flock" ret: "int" args: "int" "int" */
@@ -442,7 +442,7 @@
 /* syscall: "sched_get_priority_min" ret: "int" args: "int" */
 #define	LINUX_SYS_sched_get_priority_min	160
 
-/* syscall: "nanosleep" ret: "int" args: "const struct timespec *" "struct timespec *" */
+/* syscall: "nanosleep" ret: "int" args: "const struct timespec50 *" "struct timespec50 *" */
 #define	LINUX_SYS_nanosleep	162
 
 /* syscall: "mremap" ret: "void *" args: "void *" "size_t" "size_t" "u_long" */
@@ -638,7 +638,7 @@
 
 #else
 #endif
-/* syscall: "futex" ret: "int" args: "int *" "int" "int" "const struct timespec *" "int *" "int" */
+/* syscall: "futex" ret: "int" args: "int *" "int" "int" "const struct linux_timespec *" "int *" "int" */
 #define	LINUX_SYS_futex	240
 
 #ifdef LINUX_NPTL

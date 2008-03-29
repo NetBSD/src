@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.29 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: resource.h,v 1.29.56.1 2008/03/29 20:47:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -134,7 +134,7 @@ int	donice(struct lwp *, struct proc *, int);
 __BEGIN_DECLS
 int	getpriority(int, id_t);
 int	getrlimit(int, struct rlimit *);
-int	getrusage(int, struct rusage *);
+int	getrusage(int, struct rusage *) __RENAME(__getrusage50);
 int	setpriority(int, id_t, int);
 int	setrlimit(int, const struct rlimit *);
 __END_DECLS
