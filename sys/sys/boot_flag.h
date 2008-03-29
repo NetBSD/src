@@ -1,4 +1,4 @@
-/* $NetBSD: boot_flag.h,v 1.5 2005/12/11 12:25:20 christos Exp $ */
+/* $NetBSD: boot_flag.h,v 1.5.70.1 2008/03/29 16:17:56 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@
 		break;						\
 	case 'm': /* mini root present in memory */		\
 		(retval) |= RB_MINIROOT;			\
+		break;						\
+	case 'n': /* disable devfs */				\
+		(retval) |= AB_NODEVFS;				\
 		break;						\
 	case 'q': /* boot quietly */				\
 		(retval) |= AB_QUIET;				\

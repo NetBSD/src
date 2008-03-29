@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.69 2007/03/04 05:59:57 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.69.40.1 2008/03/29 16:17:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.69 2007/03/04 05:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.69.40.1 2008/03/29 16:17:56 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_freebsd.h"
@@ -256,4 +256,19 @@ mmmmap(dev_t dev, off_t off, int prot)
 	}
 
 	return x86_btop(off);
+}
+
+void
+mem_init(void)
+{
+	int major = cdevsw_lookup_major(&mem_cdevsw);
+
+	device_register_name(makedev(major, DEV_MEM), 
+	    NULL, true, DEV_OTHER, "mem");
+	device_register_name(makedev(major, DEV_KMEM), 
+	    NULL, true, DEV_OTHER, "kmem");
+	device_register_name(makedev(major, DEV_NULL), 
+	    NULL, true, DEV_OTHER, "null");
+	device_register_name(makedev(major, DEV_ZERO), 
+	    NULL, true, DEV_OTHER, "zero");
 }

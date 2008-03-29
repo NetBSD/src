@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.54 2007/12/09 20:28:05 jmcneill Exp $	*/
+/*	$NetBSD: agp.c,v 1.54.10.1 2008/03/29 16:17:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.54 2007/12/09 20:28:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.54.10.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,10 @@ static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
 static bool agp_resume(device_t);
+static int agpopen(dev_t, int, int, struct lwp *);
+static int agpclose(dev_t, int, int, struct lwp *);
+static paddr_t agpmmap(dev_t, off_t, int);
+static int agpioctl(dev_t, u_long, void *, int, struct lwp *);
 
 #include "agp_ali.h"
 #include "agp_amd.h"
@@ -219,6 +223,11 @@ const struct agp_product {
 	  NULL,			NULL },
 };
 
+const struct cdevsw agp_cdevsw = {
+	agpopen, agpclose, noread, nowrite, agpioctl,
+	    nostop, notty, nopoll, agpmmap, nokqfilter, D_OTHER
+};
+
 static const struct agp_product *
 agp_lookup(const struct pci_attach_args *pa)
 {
@@ -293,6 +302,8 @@ agpattach(struct device *parent, struct device *self, void *aux)
 	struct agp_softc *sc = (void *)self;
 	const struct agp_product *ap;
 	int memsize, i, ret;
+	int major = cdevsw_lookup_major(&agp_cdevsw);
+	int unit;
 
 	ap = agp_lookup(pa);
 	if (ap == NULL) {
@@ -340,6 +351,10 @@ agpattach(struct device *parent, struct device *self, void *aux)
 		if (!pmf_device_register(self, NULL, agp_resume))
 			aprint_error_dev(self, "couldn't establish power handler\n");
 	}
+
+	unit = device_unit(self);
+	device_register_name(makedev(major, unit), self, true, DEV_VIDEO,
+	    "agp%d", unit);
 }
 
 CFATTACH_DECL(agp, sizeof(struct agp_softc),
@@ -935,11 +950,6 @@ agpmmap(dev_t dev, off_t offset, int prot)
 	return (bus_space_mmap(sc->as_apt, sc->as_apaddr, offset, prot,
 	    BUS_SPACE_MAP_LINEAR));
 }
-
-const struct cdevsw agp_cdevsw = {
-	agpopen, agpclose, noread, nowrite, agpioctl,
-	    nostop, notty, nopoll, agpmmap, nokqfilter, D_OTHER
-};
 
 /* Implementation of the kernel api */
 

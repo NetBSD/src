@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.112 2007/12/13 14:49:42 joerg Exp $ */
+/* $NetBSD: wskbd.c,v 1.112.6.1 2008/03/29 16:17:57 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.112 2007/12/13 14:49:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.112.6.1 2008/03/29 16:17:57 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -384,6 +384,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 #if NWSMUX > 0
 	int mux, error;
 #endif
+	int major;
 
 	sc->sc_isconsole = ap->console;
 
@@ -470,6 +471,10 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else if (!pmf_class_input_register(self))
 		aprint_error_dev(self, "couldn't register as input device\n");
+
+	major = cdevsw_lookup_major(&wskbd_cdevsw);
+	device_register_name(makedev(major, device_unit(self)), self,
+	    true, DEV_OTHER, "%s", device_xname(self));
 }
 
 static bool
@@ -622,6 +627,8 @@ wskbd_detach(struct device  *self, int flags)
 	/* Nuke the vnodes for any open instances. */
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
+
+	device_unregister_name(makedev(maj, mn), device_xname(self));
 
 	return (0);
 }

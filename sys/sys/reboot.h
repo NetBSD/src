@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.25 2007/12/25 18:33:48 perry Exp $	*/
+/*	$NetBSD: reboot.h,v 1.25.6.1 2008/03/29 16:17:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -63,6 +63,7 @@
 #define	AB_VERBOSE	0x00020000	/* boot verbosely */
 #define	AB_SILENT	0x00040000	/* boot silently */
 #define	AB_DEBUG	0x00080000	/* boot with debug messages */
+#define	AB_NODEVFS	0x00100000	/* boot without devfs support */
 
 /*
  * The top 4 bits are architecture specific and are used to

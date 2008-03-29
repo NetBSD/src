@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.94 2007/12/09 09:16:28 apb Exp $	*/
+/*	$NetBSD: init.c,v 1.94.6.1 2008/03/29 16:17:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.94 2007/12/09 09:16:28 apb Exp $");
+__RCSID("$NetBSD: init.c,v 1.94.6.1 2008/03/29 16:17:56 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,10 +93,12 @@ const struct timespec dtrtime = {.tv_sec = 0, .tv_nsec = 250000};
 
 #if defined(RESCUEDIR)
 #define	INIT_BSHELL	RESCUEDIR "/sh"
+#define	INIT_DEVFSD	RESCUEDIR "/devfsd"
 #define	INIT_MOUNT_MFS	RESCUEDIR "/mount_mfs"
 #define	INIT_PATH	RESCUEDIR ":" _PATH_STDPATH
 #else
 #define	INIT_BSHELL	_PATH_BSHELL
+#define	INIT_DEVFSD	"/sbin/devfsd"
 #define	INIT_MOUNT_MFS	"/sbin/mount_mfs"
 #define	INIT_PATH	_PATH_STDPATH
 #endif
@@ -215,6 +217,10 @@ static int mfs_dev(void);
 
 #endif
 
+#ifdef DEVFS_DEV
+static int devfs_dev(void);
+#endif
+
 /*
  * The mother of all processes.
  */
@@ -258,6 +264,15 @@ main(int argc, char **argv)
 #ifdef MFS_DEV_IF_NO_CONSOLE
 	if (mfs_dev() == -1)
 		requested_transition = single_user;
+#endif
+
+#ifdef DEVFS_DEV
+	printf("Trying to mount devfs\n");
+	if (devfs_dev() == -1) {
+		printf("Failed to mount devfs, going single-user\n");
+		requested_transition = single_user;
+	}
+	printf("Done with devfs code, continuing...\n");
 #endif
 
 #ifndef LETS_GET_SMALL
@@ -1690,6 +1705,42 @@ mfs_dev(void)
 	}
 	warn("Unable to run MAKEDEV");
 	_exit(12);
+}
+#endif
+
+#ifdef DEVFS_DEV
+/*
+ * We run devfsd(8) in single-run mode so that it creates all the 
+ * device nodes. 
+ */
+int
+devfs_dev(void)
+{
+	pid_t pid;
+	int status;
+
+	/* Assume devfs has already been mounted on /dev by the kernel */
+	switch ((pid = fork())) {
+	case 0:
+		printf("Forked: Time to run devfsd\n");
+		(void)execl(INIT_DEVFSD, "devfsd", "-s", "-v", NULL);
+		printf("devfsd finished\n");
+		_exit(9);
+		/*NOTREACHED*/
+
+	case -1:
+		return(-1);
+
+	default:
+		printf("Waiting for devfsd to complete\n");
+		if (waitpid(pid, &status, 0) == -1)
+			return(-1);
+		printf("devfsd done: status=%d\n", status);
+		if (status != 0)
+			return(-1);
+		break;
+	}
+	return(0);
 }
 #endif
 
