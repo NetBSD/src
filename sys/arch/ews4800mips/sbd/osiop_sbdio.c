@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_sbdio.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: osiop_sbdio.c,v 1.2 2008/03/29 08:14:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2005 Izumi Tsutsui.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_sbdio.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_sbdio.c,v 1.2 2008/03/29 08:14:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,6 @@ osiop_sbdio_attach(struct device *parent, struct device *self, void *aux)
 	struct sbdio_attach_args *sa = aux;
 	struct osiop_softc *sc = (void *)self;
 	int error, scid;
-
-	printf(" at %p irq %d ", (void *)sa->sa_addr1, sa->sa_irq);
 
 	sc->sc_dmat = sa->sa_dmat;
 	sc->sc_bst  = sa->sa_bust;

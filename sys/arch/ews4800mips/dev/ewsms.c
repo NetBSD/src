@@ -1,4 +1,4 @@
-/*	$NetBSD: ewsms.c,v 1.4 2007/03/04 05:59:47 christos Exp $	*/
+/*	$NetBSD: ewsms.c,v 1.5 2008/03/29 08:14:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.4 2007/03/04 05:59:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.5 2008/03/29 08:14:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.4 2007/03/04 05:59:47 christos Exp $");
 	(EWSMS_SYNC_BTN_R|EWSMS_SYNC_BTN_M|EWSMS_SYNC_BTN_L)
 
 struct ewsms_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	/* tail-chasing fifo */
 	uint8_t sc_rxq[EWSMS_RXQ_LEN];
@@ -103,8 +103,8 @@ struct ewsms_softc {
 	struct device *sc_wsmousedev;
 };
 
-static int  ewsms_zsc_match(struct device *, struct cfdata *, void *);
-static void ewsms_zsc_attach(struct device *, struct device *, void *);
+static int  ewsms_zsc_match(device_t, cfdata_t, void *);
+static void ewsms_zsc_attach(device_t, device_t, void *);
 static int  ewsms_zsc_reset(struct zs_chanstate *);
 static void ewsms_zsc_rxint(struct zs_chanstate *);
 static void ewsms_zsc_txint(struct zs_chanstate *);
@@ -116,7 +116,7 @@ static int  ewsms_wsmouse_enable(void *);
 static void ewsms_wsmouse_disable(void *);
 static int  ewsms_wsmouse_ioctl(void *, u_long, void *, int, struct lwp *);
 
-CFATTACH_DECL(ewsms_zsc, sizeof(struct ewsms_softc),
+CFATTACH_DECL_NEW(ewsms_zsc, sizeof(struct ewsms_softc),
     ewsms_zsc_match, ewsms_zsc_attach, NULL, NULL);
 
 static struct zsops ewsms_zsops = {
@@ -133,7 +133,7 @@ static const struct wsmouse_accessops ewsms_wsmouse_accessops = {
 };
 
 int
-ewsms_zsc_match(struct device *parent, struct cfdata *cf, void *aux)
+ewsms_zsc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct zsc_softc *zsc = (void *)parent;
 	struct zsc_attach_args *zsc_args = aux;
@@ -148,10 +148,10 @@ ewsms_zsc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ewsms_zsc_attach(struct device *parent, struct device *self, void *aux)
+ewsms_zsc_attach(device_t parent, device_t self, void *aux)
 {
+	struct ewsms_softc *sc = device_private(self);
 	struct zsc_softc *zsc = (void *)parent;
-	struct ewsms_softc *sc = (void *)self;
 	struct zsc_attach_args *zsc_args = aux;
 	struct zs_chanstate *cs;
 	struct wsmousedev_attach_args wsmaa;
@@ -163,6 +163,7 @@ ewsms_zsc_attach(struct device *parent, struct device *self, void *aux)
 	cs->cs_ops = &ewsms_zsops;
 	cs->cs_private = sc;
 
+	sc->sc_dev = self;
 	sc->sc_enabled = 0;
 	sc->sc_rxq_head = 0;
 	sc->sc_rxq_tail = 0;
