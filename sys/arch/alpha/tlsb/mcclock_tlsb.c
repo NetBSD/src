@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.15 2008/03/28 19:05:49 tsutsui Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.16 2008/03/29 05:42:45 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.15 2008/03/28 19:05:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.16 2008/03/29 05:42:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -95,6 +95,7 @@ mcclock_tlsb_attach(device_t parent, device_t self, void *aux)
 	/* XXX Should be bus.h'd, so we can accommodate the kn7aa. */
 	tsc->regbase = TLSB_GBUS_BASE + ga->ga_offset;
 
+	sc->sc_dev = self;
 	sc->sc_mcread  = mcclock_tlsb_read;
 	sc->sc_mcwrite = mcclock_tlsb_write;
 

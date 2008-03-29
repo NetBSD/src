@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.11 2008/03/28 20:26:13 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.12 2008/03/29 05:47:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.11 2008/03/28 20:26:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.12 2008/03/29 05:47:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -167,6 +167,8 @@ mkclock_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct mk48txx_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
+
+	sc->sc_dev = self;
 
 	/* Map I/O space. */
 	sc->sc_bst = ia->ia_iot;

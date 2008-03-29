@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazzio.c,v 1.10 2008/03/28 19:05:49 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_jazzio.c,v 1.11 2008/03/29 05:42:45 tsutsui Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.10 2008/03/28 19:05:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.11 2008/03/29 05:42:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,7 @@ mcclock_jazzio_attach(device_t parent, device_t self, void *aux)
 	if (mcclock_jazzio_conf == NULL)
 		panic("mcclock_jazzio_conf isn't initialized");
 
+	sc->sc_dev = self;
 	sc->sc_bst = ja->ja_bust;
 	if (bus_space_map(sc->sc_bst,
 	    ja->ja_addr, mcclock_jazzio_conf->mjc_iosize, 0, &sc->sc_bsh)) {

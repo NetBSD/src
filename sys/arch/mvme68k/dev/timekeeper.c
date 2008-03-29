@@ -1,4 +1,4 @@
-/*	$NetBSD: timekeeper.c,v 1.11 2008/03/28 20:26:13 tsutsui Exp $	*/
+/*	$NetBSD: timekeeper.c,v 1.12 2008/03/29 05:47:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.11 2008/03/28 20:26:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.12 2008/03/29 05:47:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ timekeeper_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args *ma = aux;
 	bus_size_t size;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ma->ma_bust;
 
 	if (machineid == MVME_147) {
