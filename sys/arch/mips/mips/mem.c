@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35 2007/10/17 19:55:38 garbled Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.16.1 2008/03/29 18:47:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35 2007/10/17 19:55:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.16.1 2008/03/29 18:47:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -114,6 +114,21 @@ const struct cdevsw mem_ultrix_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 #endif /* defined(pmax) */
+
+void
+mem_init(void)
+{
+	int cmaj = cdevsw_lookup_major(&mem_cdevsw);
+
+	device_register_name(makedev(cmaj, DEV_MEM), NULL, 
+	    true, DEV_OTHER, "mem");
+	device_register_name(makedev(cmaj, DEV_KMEM), NULL,
+	    true, DEV_OTHER, "kmem");
+	device_register_name(makedev(cmaj, DEV_NULL), NULL,
+	    true, DEV_OTHER, "null");
+	device_register_name(makedev(cmaj, DEV_ZERO), NULL,
+	    true, DEV_OTHER, "zero");
+}
 
 /*ARGSUSED*/
 int

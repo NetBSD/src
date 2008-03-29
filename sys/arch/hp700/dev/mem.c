@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2007/12/06 17:00:32 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.12.1 2008/03/29 18:47:00 mjf Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15 2007/12/06 17:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.12.1 2008/03/29 18:47:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,7 @@ memattach(struct device *parent, struct device *self, void *aux)
 	struct mem_softc *sc = (struct mem_softc *)self;
 	int s, err, pagezero_cookie;
 	char bits[128];
+	int cmaj = cdevsw_lookup_major(&mem_cdevsw);
 
 	printf (":");
 
@@ -257,6 +258,17 @@ memattach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	printf("\n");
+
+	device_register_name(makedev(cmaj, DEV_MEM), NULL, 
+	    true, DEV_OTHER, "mem");
+	device_register_name(makedev(cmaj, DEV_KMEM), NULL,
+	    true, DEV_OTHER, "kmem");
+	device_register_name(makedev(cmaj, DEV_NULL), NULL,
+	    true, DEV_OTHER, "null");
+	device_register_name(makedev(cmaj, DEV_ZERO), NULL,
+	    true, DEV_OTHER, "zero");
+}
+
 }
 
 void

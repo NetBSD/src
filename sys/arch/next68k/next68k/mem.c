@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.25 2007/03/05 12:30:38 tsutsui Exp $ */
+/*	$NetBSD: mem.c,v 1.25.40.1 2008/03/29 18:47:01 mjf Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.25 2007/03/05 12:30:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.25.40.1 2008/03/29 18:47:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,21 @@ const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
 	nostop, notty, nopoll, mmmmap, nokqfilter,
 };
+
+void
+mem_init(void)
+{
+	int cmaj = cdevsw_lookup_major(&mem_cdevsw);
+
+	device_register_name(makedev(cmaj, DEV_MEM), NULL, 
+	    true, DEV_OTHER, "mem");
+	device_register_name(makedev(cmaj, DEV_KMEM), NULL,
+	    true, DEV_OTHER, "kmem");
+	device_register_name(makedev(cmaj, DEV_NULL), NULL,
+	    true, DEV_OTHER, "null");
+	device_register_name(makedev(cmaj, DEV_ZERO), NULL,
+	    true, DEV_OTHER, "zero");
+}
 
 /*ARGSUSED*/
 int
