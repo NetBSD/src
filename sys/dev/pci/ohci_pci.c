@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.37 2008/03/28 17:14:45 drochner Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.38 2008/03/29 02:20:41 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.37 2008/03/28 17:14:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.38 2008/03/29 02:20:41 nakayama Exp $");
 
 #include "ehci.h"
 
@@ -101,7 +101,7 @@ ohci_pci_attach(device_t parent, device_t self, void *aux)
 	const char *devname = device_xname(self);
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
