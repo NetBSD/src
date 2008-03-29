@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.60 2008/03/28 20:26:13 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.61 2008/03/29 05:47:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.60 2008/03/28 20:26:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.61 2008/03/29 05:47:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,8 @@ oclock_attach(device_t parent, device_t self, void *aux)
 {
 	struct intersil7170_softc *sc = device_private(self);
 	struct confargs *ca = aux;
+
+	sc->sc_dev = self;
 
 	/* Get a mapping for it. */
 	sc->sc_bst = ca->ca_bustag;

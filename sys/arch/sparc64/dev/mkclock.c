@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.4 2008/03/29 02:14:29 tsutsui Exp $ */
+/*	$NetBSD: mkclock.c,v 1.5 2008/03/29 05:47:53 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.4 2008/03/29 02:14:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.5 2008/03/29 05:47:53 tsutsui Exp $");
 
 /*    
  * Clock driver for 'mkclock' - Mostek MK48Txx TOD clock.
@@ -157,6 +157,7 @@ mkclock_sbus_attach(device_t parent, device_t self, void *aux)
 	struct sbus_attach_args *sa = aux;
 	int sz;
 
+	sc->sc_dev = self;
 	sc->sc_bst = sa->sa_bustag;
 
 	/* use sa->sa_regs[0].size? */
@@ -183,6 +184,7 @@ mkclock_ebus_attach(struct device *parent, struct device *self, void *aux)
 	struct ebus_attach_args *ea = aux;
 	int sz;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ea->ea_bustag;
 
 	/* hard code to 8K? */
