@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.34 2008/03/26 16:48:53 xtraeme Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.35 2008/03/29 13:33:12 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.34 2008/03/26 16:48:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.35 2008/03/29 13:33:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -551,7 +551,7 @@ acpitz_get_integer(device_t dv, const char *cm, UINT32 *val)
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, cm, &tmp);
 	if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
-		printf("%s: failed to evaluate %s: %s\n", device_private(dv),
+		aprint_debug_dev(dv, "failed to evaluate %s: %s\n",
 		    cm, AcpiFormatException(rv));
 #endif
 		*val = ATZ_TMP_INVALID;
