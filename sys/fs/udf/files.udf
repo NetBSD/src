@@ -1,9 +1,0 @@
-#	$NetBSD: files.udf,v 1.1 2006/02/02 15:19:15 reinoud Exp $
-
-deffs	fs_udf.h			UDF
-
-file	fs/udf/udf_osta.c		udf
-file	fs/udf/udf_vfsops.c		udf
-file	fs/udf/udf_vnops.c		udf
-file	fs/udf/udf_subr.c		udf
-
