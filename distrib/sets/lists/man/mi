@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1062 2008/03/29 01:24:30 mjf Exp $
+# $NetBSD: mi,v 1.1063 2008/03/29 12:03:47 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1090,6 +1090,7 @@
 ./usr/share/man/cat4/lc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ld.0			man-sys-catman		.cat
 ./usr/share/man/cat4/le.0			man-sys-catman		.cat
+./usr/share/man/cat4/lii.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lkm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lmc.0			man-sys-catman		.cat
