@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.115 2008/03/08 20:51:57 phx Exp $
+# $NetBSD: GENERIC,v 1.116 2008/03/29 21:55:32 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.115 $"
+#ident 		"GENERIC-$Revision: 1.116 $"
 
 maxusers	32
 
@@ -195,16 +195,17 @@ pcib*		at pci? dev ? function ?
 isa*		at pcib?
 
 # Console Devices
-#genfb*		at pci? dev ? function ?
-#pckbc0		at isa?			# pc keyboard controller
-#pckbd*		at pckbc?		# PC keyboard
-#pms*		at pckbc?		# PS/2 mouse for wsmouse
+genfb*		at pci? dev ? function ?
+#radeonfb*	at pci? dev ? function ?
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
 #wscons stuff
-#wskbd*		at pckbd? console ?
-#wsmouse*	at pms? mux 0
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
 # make sure the console display is always wsdisplay0 XXX Why?
-#wsdisplay0      at wsemuldisplaydev? console 1
-#wsdisplay*      at wsemuldisplaydev?
+wsdisplay0      at wsemuldisplaydev? console 1
+wsdisplay*      at wsemuldisplaydev?
 
 attimer0	at isa?			# AT Timer
 pcppi0		at isa?			# PC prog. periph. interface
