@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.99 2008/03/26 14:53:14 ad Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.100 2008/03/29 13:00:43 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.99 2008/03/26 14:53:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100 2008/03/29 13:00:43 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1179,7 +1179,7 @@ route_intr(void *cookie)
 		splx(s);
 		if (m == NULL)
 			break;
-		proto.sp_family = M_GETCTX(m, uintptr_t);
+		proto.sp_protocol = M_GETCTX(m, uintptr_t);
 		raw_input(m, &proto, &route_src, &route_dst);
 	}
 }
