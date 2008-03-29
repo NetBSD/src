@@ -1,4 +1,4 @@
-/*	$NetBSD: bltin.h,v 1.11 2003/08/07 09:05:40 agc Exp $	*/
+/*	$NetBSD: bltin.h,v 1.12 2008/03/29 09:55:40 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,10 +36,16 @@
 
 /*
  * This file is included by programs which are optionally built into the
- * shell.  If SHELL is defined, we try to map the standard UNIX library
- * routines to ash routines using defines.
+ * shell.
+ *
+ * We always define SHELL_BUILTIN, to allow other included headers to
+ * hide some of their symbols if appropriate.
+ *
+ * If SHELL is defined, we try to map the standard UNIX library routines
+ * to ash routines using defines.
  */
 
+#define SHELL_BUILTIN
 #include "../shell.h"
 #include "../mystring.h"
 #ifdef SHELL
@@ -50,15 +56,16 @@
 #undef putc
 #undef putchar
 #undef fileno
+#define FILE struct output
 #define stdout out1
 #define stderr out2
-#define printf out1fmt
-#define putc(c, file)	outc(c, file)
-#define putchar(c)	out1c(c)
-#define FILE struct output
-#define fprintf outfmt
-#define fputs outstr
-#define fflush flushout
+#define _RETURN_INT(x)	((x), 0) /* map from void foo() to int bar() */
+#define fprintf(...)	_RETURN_INT(outfmt(__VA_ARGS__))
+#define printf(...)	_RETURN_INT(out1fmt(__VA_ARGS__))
+#define putc(c, file)	_RETURN_INT(outc(c, file))
+#define putchar(c)	_RETURN_INT(out1c(c))
+#define fputs(...)	_RETURN_INT(outstr(__VA_ARGS__))
+#define fflush(f)	_RETURN_INT(flushout(f))
 #define fileno(f) ((f)->fd)
 #define INITARGS(argv)
 #define	err sh_err
@@ -76,17 +83,14 @@
 
 #define getenv(p) bltinlookup((p),0)
 
-#else
+#else /* ! SHELL */
 #undef NULL
 #include <stdio.h>
 #undef main
 #define INITARGS(argv)	if ((commandname = argv[0]) == NULL) {fputs("Argc is zero\n", stderr); exit(2);} else
-#endif
+#endif /* ! SHELL */
 
 pointer stalloc(int);
-void error(const char *, ...);
-void sh_warnx(const char *, ...);
-void sh_exit(int) __attribute__((__noreturn__));
 
 int echocmd(int, char **);
 
