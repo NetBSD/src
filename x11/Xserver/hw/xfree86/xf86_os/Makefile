@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/03/08 10:39:00 phx Exp $
+#	$NetBSD: Makefile,v 1.16 2008/03/29 23:26:15 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -33,7 +33,8 @@ CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT -DWSCONS_SUPPORT \
 .if ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
 SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
-CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_PPC_MMAP
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC \
+			-DUSE_PPC_MMAP -DPCI_VIA_TTYE0
 .endfor
 .endif
 
@@ -48,7 +49,8 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 SRCS.bsd+=	sparc64_video.c bsdResource.c pm_noop.c lnx_agp.c \
 		ioperm_noop.c netbsdSbus.c
 .for _FN in ${SRCS.bsd}
-CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC \
+			-DPCI_VIA_TTYE0
 .endfor
 .endif
 
