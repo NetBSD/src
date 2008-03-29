@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.19 2007/11/19 18:51:43 ad Exp $	*/
+/*	$NetBSD: kd.c,v 1.20 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.19 2007/11/19 18:51:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.20 2008/03/29 19:15:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -507,7 +507,7 @@ void
 cons_attach_input(struct cons_channel *cc, struct consdev *cn)
 {
 	struct kd_softc *kd = &kd_softc;
-	struct kbd_softc *kds = cc->cc_dev;
+	struct kbd_softc *kds = cc->cc_private;
 	struct kbd_state *ks;
 
 	/* Share the keyboard state */
@@ -530,7 +530,7 @@ cons_attach_input(struct cons_channel *cc, struct consdev *cn)
 	cn_tab->cn_pri = CN_INTERNAL;
 
 	/* Set up initial PROM input channel for /dev/console */
-	prom_cons_channel.cc_dev = NULL;
+	prom_cons_channel.cc_private = NULL;
 	prom_cons_channel.cc_iopen = kd_rom_iopen;
 	prom_cons_channel.cc_iclose = kd_rom_iclose;
 
@@ -570,7 +570,7 @@ kdcninit(struct consdev *cn)
 	kbd_xlate_init(ks);
 
 	/* Set up initial PROM input channel for /dev/console */
-	prom_cons_channel.cc_dev = NULL;
+	prom_cons_channel.cc_private = NULL;
 	prom_cons_channel.cc_iopen = kd_rom_iopen;
 	prom_cons_channel.cc_iclose = kd_rom_iclose;
 	cons_attach_input(&prom_cons_channel);

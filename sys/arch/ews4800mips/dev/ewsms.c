@@ -1,4 +1,4 @@
-/*	$NetBSD: ewsms.c,v 1.5 2008/03/29 08:14:40 tsutsui Exp $	*/
+/*	$NetBSD: ewsms.c,v 1.6 2008/03/29 19:15:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.5 2008/03/29 08:14:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.6 2008/03/29 19:15:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ static const struct wsmouse_accessops ewsms_wsmouse_accessops = {
 int
 ewsms_zsc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct zsc_softc *zsc = (void *)parent;
+	struct zsc_softc *zsc = device_private(parent);
 	struct zsc_attach_args *zsc_args = aux;
 
 	/* mouse on channel A */
@@ -151,7 +151,7 @@ void
 ewsms_zsc_attach(device_t parent, device_t self, void *aux)
 {
 	struct ewsms_softc *sc = device_private(self);
-	struct zsc_softc *zsc = (void *)parent;
+	struct zsc_softc *zsc = device_private(parent);
 	struct zsc_attach_args *zsc_args = aux;
 	struct zs_chanstate *cs;
 	struct wsmousedev_attach_args wsmaa;

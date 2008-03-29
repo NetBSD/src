@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.3 2007/11/26 23:29:37 ad Exp $	*/
+/*	$NetBSD: zs.c,v 1.4 2008/03/29 19:15:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.3 2007/11/26 23:29:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.4 2008/03/29 19:15:34 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -261,7 +261,8 @@ int
 zs_getc(void *arg)
 {
 	struct zs_chanstate *cs = arg;
-	int s, c, rr0;
+	int s, c;
+	uint8_t rr0;
 
 	s = splhigh();
 	/* Wait for a character to arrive. */
@@ -288,7 +289,8 @@ void
 zs_putc(void *arg, int c)
 {
 	struct zs_chanstate *cs = arg;
-	int s, rr0;
+	int s;
+	uint8_t rr0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */

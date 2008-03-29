@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.16 2006/10/03 13:02:32 tsutsui Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.17 2008/03/29 19:15:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.16 2006/10/03 13:02:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.17 2008/03/29 19:15:35 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -82,23 +82,23 @@ __KERNEL_RCSID(0, "$NetBSD: zs_any.c,v 1.16 2006/10/03 13:02:32 tsutsui Exp $");
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zs_any_match(struct device *, struct cfdata *, void *);
-static void	zs_any_attach(struct device *, struct device *, void *);
+static int	zs_any_match(device_t, cfdata_t, void *);
+static void	zs_any_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(zs_obio, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zs_obio, sizeof(struct zsc_softc),
     zs_any_match, zs_any_attach, NULL, NULL);
 
-CFATTACH_DECL(zs_obmem, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zs_obmem, sizeof(struct zsc_softc),
     zs_any_match, zs_any_attach, NULL, NULL);
 
-CFATTACH_DECL(zs_mbmem, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zs_mbmem, sizeof(struct zsc_softc),
     zs_any_match, zs_any_attach, NULL, NULL);
 
 /*
  * Is the zs chip present?
  */
 static int 
-zs_any_match(struct device *parent, struct cfdata *cf, void *aux)
+zs_any_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
@@ -124,12 +124,13 @@ zs_any_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a found zs.
  */
 static void 
-zs_any_attach(struct device *parent, struct device *self, void *aux)
+zs_any_attach(device_t parent, device_t self, void *aux)
 {
-	struct zsc_softc *zsc = (void *) self;
+	struct zsc_softc *zsc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
 
+	zsc->zsc_dev = self;
         zsc->zsc_bustag = ma->ma_bustag;
         zsc->zsc_dmatag = ma->ma_dmatag;
 	/* XXX device_unit() abuse */
@@ -138,8 +139,10 @@ zs_any_attach(struct device *parent, struct device *self, void *aux)
         
 	/* Map in the device. */
 	if (bus_space_map(ma->ma_bustag, ma->ma_paddr, sizeof(struct zsdevice), 
-			  BUS_SPACE_MAP_LINEAR, &bh))
-		panic("zs_any_attach: can't map");
+			  BUS_SPACE_MAP_LINEAR, &bh)) {
+		aprint_normal("\n");
+		panic("%s: can't map", __func__);
+	}
 
 	/* This is where we break the bus_space(9) abstraction: */
 	zs_attach(zsc, (void *)bh, ma->ma_pri);
