@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2008/03/22 08:37:26 mlelstv Exp $
+# $NetBSD: Makefile,v 1.19 2008/03/29 17:51:42 wiz Exp $
 
 USE_FORT?= yes        # network protocol library
 
@@ -256,7 +256,8 @@ MLINKS= \
 	gss_acquire_cred.3		gsskrb5_extract_authz_data_from_sec_context.3 \
 	gss_acquire_cred.3		gsskrb5_register_acceptor_identity.3
 
-INCS=		gssapi/gssapi.h gssapi/gssapi_krb5.h gssapi/gssapi_spnego.h
+INCS=		gssapi.h
+INCS+=		gssapi/gssapi.h gssapi/gssapi_krb5.h gssapi/gssapi_spnego.h
 INCSDIR=	/usr/include
 
 CLEANFILES+= ${BUILT_SOURCES} \
