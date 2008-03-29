@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.57 2008/03/28 05:23:44 dholland Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.58 2008/03/29 05:22:42 dholland Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -574,7 +574,21 @@ This may cause build or runtime problems when building the whole
 .Nx
 source tree.
 .El
-.DFLTy
+.DFLT
+.Dq yes ,
+unless
+.Sy TOOLCHAIN_MISSING
+is set to
+.Dq yes .
+.Pp
+.Sy USETOOLS
+is also set to
+.Dq no
+when using
+.Aq bsd.*.mk
+outside the
+.Nx
+source tree.
 .
 .It Sy X11SRCDIR
 Directory containing the X11R6 source.
