@@ -1,7 +1,7 @@
-/*	$NetBSD: isa.c,v 1.132 2008/03/15 16:56:29 cube Exp $	*/
+/*	$NetBSD: isa.c,v 1.133 2008/03/30 15:24:08 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.132 2008/03/15 16:56:29 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.133 2008/03/30 15:24:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,8 @@ void	isa_free_knowndevs(struct isa_softc *);
 
 int	isasubmatch(device_t, cfdata_t, const int *, void *);
 int	isasearch(device_t, cfdata_t, const int *, void *);
+
+static int	isa_slotcount = -1;	/* -1 == don't know how many */
 
 int
 isamatch(device_t parent, cfdata_t cf, void *aux)
@@ -468,4 +470,18 @@ isa_intr_typename(int type)
 	default:
 		panic("isa_intr_typename: invalid type %d", type);
 	}
+}
+
+int
+isa_get_slotcount(void)
+{
+
+	return isa_slotcount;
+}
+
+void
+isa_set_slotcount(int arg)
+{
+
+	isa_slotcount = arg;
 }
