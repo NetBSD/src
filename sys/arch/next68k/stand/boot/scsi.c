@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.9 2007/03/05 18:06:09 he Exp $        */
+/*      $NetBSD: scsi.c,v 1.10 2008/03/30 16:28:08 he Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -461,7 +461,7 @@ dma_done(void)
     sc->dma_len -= resid;
     if (sc->dma_len < 0)
 	    sc->dma_len = 0;
-    bcopy(dma_buffer, sc->dma_addr, sc->dma_len);
+    memcpy(sc->dma_addr, dma_buffer, sc->dma_len);
     sc->sc_state = SCSI_HASBUS;
     DPRINTF(("DMA done. got %d.\n", sc->dma_len));
     return sc->dma_len;
