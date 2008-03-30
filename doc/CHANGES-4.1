@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.44 2008/03/30 15:05:08 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.45 2008/03/30 15:13:47 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -79,7 +79,7 @@ usr.bin/xargs/xargs.1				1.19
 usr.bin/xargs/xargs.c				1.16, 1.18
 
 	Bring in xargs from FreeBSD to gain -I, -J etc. but keep our
-	GNU compatible exit values. Fixes PRs 36154 and 37666.
+	GNU compatible exit values. Fixes PR#36154 and PR#37666.
 	[apb, ticket #1036]
 
 distrib/sets/lists/base/mi			1.712
@@ -216,7 +216,7 @@ sys/arch/atari/dev/wdc_mb.c			1.29-1.30
           (note we no longer have to specify stride for wdc after this change)
         - add the notion of "shadow register"
           http://mail-index.netbsd.org/source-changes/2004/05/25/0048.html
-        Problem reported by Alan Hourihane in PR port-atari/37464.
+        Problem reported by Alan Hourihane in PR#37464.
 	[tsutsui, ticket #1013]
 
 usr.sbin/postinstall/postinstall		1.56 via patch
@@ -232,8 +232,8 @@ share/examples/puffs/ssshfs/ssshfs.c		patch
 sbin/newfs/mkfs.c				1.104
 sbin/newfs/mount_mfs.8				1.15
 
-	PR/37503 - De Zeurkous -- inaccurate description of -s option
-	PR/37155 - Marcelo Schmidt -- specifying too large of a size
+	PR#37503 - De Zeurkous -- inaccurate description of -s option
+	PR#37155 - Marcelo Schmidt -- specifying too large of a size
 	causes segvs
 	[jnemeth, ticket #1024]
 
@@ -266,7 +266,7 @@ sys/dev/ic/i82557var.h				1.36
 
 usr.sbin/ndiscvt/ndiscvt.8			1.6
 
-	PR/37604 - Danilo Vidovic -- we do have a ndis(4) man page
+	PR#37604 - Danilo Vidovic -- we do have a ndis(4) man page
 	[jnemeth, ticket #1029]
 
 sys/arch/sparc64/sparc64/autoconf.c		1.147
@@ -289,7 +289,7 @@ usr.bin/systat/main.c				1.41
 
 sys/net/bpf_filter.c				1.34
 
-	PR/37663: Guy Harris: bpf_validate rejects valid programs that use the
+	PR#37663: Guy Harris: bpf_validate rejects valid programs that use the
 	multiply instruction
 	[christos, ticket #1032]
 
@@ -375,7 +375,7 @@ sys/arch/hpcmips/conf/TX3922			1.82
 sys/arch/hpcmips/conf/VR41XX			1.43
 
 	Add options COMPAT_16, COMPAT_20 and COMPAT_30 to non-GENERIC kernels.
-	Requested by Risto Sainio in PR port-hpcmips/37911.
+	Requested by Risto Sainio in PR#37911.
 	Add a definition for Fujitsu PenCentra 200 and enable wsmouse at ucbtp.
 	Tested and requested by Risto Sainio.
 	[tsutsui, ticket #1066]
@@ -469,10 +469,10 @@ sys/dev/pci/pcidevs_data.h			regen
 	Add NVIDIA MCP7[37] devices, from OpenBSD.
 	Attach to NVIDIA MCP67/73 Ethernet controllers.
 	Handle a quirk of newer MCP6x chips on reading MAC address.
-	Fix from Richy Kim in PR kern/36576.
+	Fix from Richy Kim in PR#36576.
 	Wakeup some newer chips from powerdown mode.
 	via OpenBSD.
-	Tested by wiz@ in PR kern/37868.
+	Tested by wiz@ in PR#37868.
 	[tsutsui, ticket #1061]
 
 sys/arch/acorn32/stand/boot32/boot32.c		1.31
@@ -497,7 +497,7 @@ etc/rc.d/amd					1.15
 
 	Don't try to shutdown amd(8) gracefully. It seems to cause problems
 	for more people than the old (also broken) behavior. This fixes
-	PR bin/36506 and PR bin/38103.
+	PR#36506 and PR#38103.
 	[tron, ticket #1091]
 
 lib/libc/locale/mbrlen.3			1.9
@@ -535,7 +535,7 @@ sys/dev/pci/pucdata.c				1.53
 sys/dev/mii/rlphy.c				1.13
 
 	Fix autonegotiation on 100BASE-TX on 8139C+ at boot time.
-	This may also fix PR kern/34109.
+	This may also fix PR#34109.
 	[tsutsui, ticket #1098]
 
 sbin/newfs/newfs.8				1.71
@@ -563,7 +563,7 @@ sys/arch/i386/stand/bootxx/Makefile.bootxx	1.31
 bin/mt/mt.1					1.34
 
 	Clarify that "mt offline" ejects tapes. Also some grammar and
-	formatting fixes. PR bin/37727 from Randolf Richardson.
+	formatting fixes. PR#37727 from Randolf Richardson.
 	[dholland, ticket #1100]
 
 sys/dev/ic/ahcisata_core.c			1.6
@@ -696,7 +696,7 @@ sys/dev/ic/rtl81x9reg.h				1.28
 	It looks vlan tag info must appear not only in the first descriptor
 	but in all descriptors of a multi-descriptor transmission attempt on
 	re(4).  Problem was reported and fix was confirmed by Chris Brookes
-	on tech-net.  Should also close PR kern/37959.
+	on tech-net.  Should also close PR#37959.
 	Other various, cosmetic fixes.
 	[tsutsui, ticket #1105]
 
@@ -720,5 +720,6 @@ share/man/man4/rum.4				1.4
 sys/dev/mii/rlphy.c				1.14-1.15
 	Prepare sc_rtl8201l flag in softc and use it in rlphy_status() so that
 	we don't have to check device names of device_parent(). From FreeBSD.
+	PR#38234.
 	[tsutsui, ticket #1111]
 
