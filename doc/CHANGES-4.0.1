@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.21 2008/03/24 20:55:43 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.22 2008/03/30 14:49:40 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -107,7 +107,7 @@ lib/libc/locale/mbrlen.3			1.9
 	bin/38047 fix bad prototype for function mbrlen
 	[tnozaki, ticket #1093]
 
-share/man/man9/uiomove.9	               patch
+share/man/man9/uiomove.9			patch
 	Sync struct uio's documentation with reality in uiomove(9) to reflect
 	the removal of uio_segflg and uio_procp.
 	[elad, #1092]
@@ -196,4 +196,10 @@ sys/dev/pci/voodoofb.c				1.14
 	Introduce two missing KAUTH_GENERIC_ISSUSER check in the voodoo and
 	machfb mmap() code.  Discussed with and okay macallan@.
 	[elad, ticket #1107]
+
+sys/dev/ata/wd.c				1.359
+	The Hitachi HDP725025GLA380 returns "aborted command" instead of
+	"id not found" when hitting the LBA48 bug, so also install the
+	LBA48 bug workaround on "aborted command" errors.
+	[bouyer, ticket #1094]
 
