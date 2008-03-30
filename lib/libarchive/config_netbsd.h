@@ -2,10 +2,10 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "0.9.0"
+#define BSDCPIO_VERSION_STRING "0.9.9a"
 
 /* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "2.4.13"
+#define BSDTAR_VERSION_STRING "2.5.0b"
 
 /* Define to 1 if you have the `acl_create_entry' function. */
 /* #undef HAVE_ACL_CREATE_ENTRY */
@@ -144,6 +144,9 @@
 
 /* Define to 1 if you have the `getopt_long' function. */
 #define HAVE_GETOPT_LONG 1
+
+/* Define to 1 if you have the `getpid' function. */
+#define HAVE_GETPID 1
 
 /* Define to 1 if you have the `getxattr' function. */
 /* #undef HAVE_GETXATTR */
@@ -402,10 +405,10 @@
 #define HAVE_ZLIB_H 1
 
 /* Version number of libarchive as a single integer */
-#define LIBARCHIVE_VERSION "2004013"
+#define LIBARCHIVE_VERSION_NUMBER "2005000"
 
 /* Version number of libarchive */
-#define LIBARCHIVE_VERSION_STRING "2.4.13"
+#define LIBARCHIVE_VERSION_STRING "2.5.0b"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -432,13 +435,13 @@
 #define PACKAGE_NAME "libarchive"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libarchive 2.4.13"
+#define PACKAGE_STRING "libarchive 2.5.0b"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libarchive"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.4.13"
+#define PACKAGE_VERSION "2.5.0b"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -450,7 +453,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define VERSION "2.4.13"
+#define VERSION "2.5.0b"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
