@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.50 2008/03/15 16:56:29 cube Exp $	*/
+/*	$NetBSD: isavar.h,v 1.51 2008/03/30 15:24:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -277,5 +277,8 @@ const char	*isa_intr_typename(int);
  * even if BUS_DMA_ALLOCNOW is specified.
  */
 #define ISABUS_DMA_DEFERCHAN	BUS_DMA_BUS2
+
+void	isa_set_slotcount(int);
+int	isa_get_slotcount(void);
 
 #endif /* _DEV_ISA_ISAVAR_H_ */
