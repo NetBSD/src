@@ -1,4 +1,4 @@
-/*	$NetBSD: smbiosvar.h,v 1.1 2006/10/01 18:37:55 bouyer Exp $ */
+/*	$NetBSD: smbiosvar.h,v 1.2 2008/03/30 15:26:20 ad Exp $ */
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -175,6 +175,22 @@ struct smbios_board {
 	u_int8_t	type;		/* board type */
 	u_int8_t	noc;		/* number of contained objects */
 } __packed;
+
+/*
+ * SMBIOS Structure Type 9 "Expansion slot"
+ */
+struct smbios_slot {
+	uint8_t		designation;
+	uint8_t		type;
+	uint8_t		width;
+	uint8_t		usage;
+	uint8_t		length;
+	uint8_t		slotid[2];
+	uint8_t		characteristics[2];
+} __packed;
+
+#define	SMBIOS_SLOT_ISA		0x03
+#define	SMBIOS_SLOT_EISA	0x05
 
 /*
  * SMBIOS Structure Type 38 "IPMI Information"
