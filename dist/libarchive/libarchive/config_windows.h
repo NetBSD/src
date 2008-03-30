@@ -4,10 +4,10 @@
 #define CONFIG_H_INCLUDED
 
 /* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "0.3.0"
+#define BSDCPIO_VERSION_STRING "0.9.9"
 
 /* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "2.4.12"
+#define BSDTAR_VERSION_STRING "2.5.0"
 
 /* Define to 1 if you have the `acl_create_entry' function. */
 /* #undef HAVE_ACL_CREATE_ENTRY */
@@ -396,10 +396,10 @@
 /* #undef HAVE_ZLIB_H */
 
 /* Version number of libarchive as a single integer */
-#define LIBARCHIVE_VERSION "2004012"
+#define LIBARCHIVE_VERSION_NUMBER "2005000"
 
 /* Version number of libarchive */
-#define LIBARCHIVE_VERSION_STRING "2.4.12"
+#define LIBARCHIVE_VERSION_STRING "2.5.0b"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -464,7 +464,7 @@
 /* #undef const */
 
 /* Define to `int' if <sys/types.h> doesn't define. */
-//#define gid_t int
+#define gid_t int
 
 /* Define to `unsigned long' if <sys/types.h> does not define. */
 #define id_t int
@@ -478,7 +478,7 @@
 #define intmax_t long long
 
 /* Define to `int' if <sys/types.h> does not define. */
-//#define mode_t unsigned short
+#define mode_t unsigned short
 
 /* Define to `long long' if <sys/types.h> does not define. */
 /* #undef off_t */
@@ -487,7 +487,7 @@
 /* #undef size_t */
 
 /* Define to `int' if <sys/types.h> doesn't define. */
-//#define uid_t int
+#define uid_t int
 
 /* Define to the type of an unsigned integer type of width exactly 64 bits if
    such a type exists and the standard includes do not define it. */
@@ -505,6 +505,6 @@
 
 #define uint32_t unsigned long
 #define uint16_t unsigned short
-//#define ssize_t long
+#define ssize_t long
 
 #endif /* CONFIG_H_INCLUDED */

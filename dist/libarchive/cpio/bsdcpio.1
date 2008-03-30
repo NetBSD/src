@@ -59,8 +59,8 @@ is a mode indicator from the following list:
 .Bl -tag -compact -width indent
 .It Fl i
 Input.
-Read an archive from standard input and extract the contents to disk or
-(if the
+Read an archive from standard input (unless overriden) and extract the
+contents to disk or (if the
 .Fl t
 option is specified)
 list the contents to standard output.
@@ -69,7 +69,7 @@ one of the patterns will be extracted.
 .It Fl o
 Output.
 Read a list of filenames from standard input and produce a new archive
-on standard output containing the specified items.
+on standard output (unless overriden) containing the specified items.
 .It Fl p
 Pass-through.
 Read a list of filenames from standard input and copy the files to the
@@ -80,12 +80,21 @@ specified directory.
 Unless specifically stated otherwise, options are applicable in
 all operating modes.
 .Bl -tag -width indent
+.It Fl A
+(o mode only)
+Append to the specified archive.
+(Not yet implemented.)
 .It Fl a
 (o and p modes)
 Reset access times on files after they are read.
 .It Fl B
 (o mode only)
 Block output to records of 5120 bytes.
+.It Fl C Ar size
+(o mode only)
+Block output to records of
+.Ar size
+bytes.
 .It Fl c
 (o mode only)
 Use the old POSIX portable character format.
@@ -94,6 +103,14 @@ Equivalent to
 .It Fl d
 (i and p modes)
 Create directories as necessary.
+.It Fl E Ar file
+(i mode only)
+Read list of file name patterns from
+.Ar file
+to list and extract.
+.It Fl F Ar file
+Read archive from or write archive to
+.Ar file .
 .It Fl f Ar pattern
 (i mode only)
 Ignore files that match
@@ -125,9 +142,18 @@ for more complete information about the
 formats currently supported by the underlying
 .Xr libarchive 3
 library.
+.It Fl I Ar file
+Read archive from
+.Ar file .
 .It Fl i
 Input mode.
 See above for description.
+.It Fl -insecure
+(i and p mode only)
+Disable security checks during extraction or copying.
+This allows extraction via symbolic links and path names containing
+.Sq ..
+in the name.
 .It Fl L
 (o and p modes)
 All symbolic links will be followed.
@@ -141,6 +167,9 @@ instead of copying.
 (i and p modes)
 Set file modification time on created files to match
 those in the source.
+.It Fl O Ar file
+Write archive to
+.Ar file .
 .It Fl o
 Output mode.
 See above for description.
@@ -194,14 +223,17 @@ provide a detailed listing of each file.
 Print the program version information and exit.
 .It Fl y
 (o mode only)
-Compress the archive with bzip2-compatible compression before
-writing to stdout.
+Compress the archive with bzip2-compatible compression before writing it.
 In input mode, this option is ignored;
 bzip2 compression is recognized automatically on input.
+.It Fl Z
+(o mode only)
+Compress the archive with compress-compatible compression before writing it.
+In input mode, this option is ignored;
+compression is recognized automatically on input.
 .It Fl z
 (o mode only)
-Compress the archive with gzip-compatible compression before writing
-it to stdout.
+Compress the archive with gzip-compatible compression before writing it.
 In input mode, this option is ignored;
 gzip compression is recognized automatically on input.
 .El

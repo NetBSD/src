@@ -53,13 +53,14 @@ struct cpio {
 	int		  extract_flags; /* Flags for extract operation */
 	char		  symlink_mode; /* H or L, per BSD conventions */
 	const char	 *compress_program;
+	int		  option_append; /* -A, only relevant for -o */
 	int		  option_atime_restore; /* -a */
 	int		  option_follow_links; /* -L */
 	int		  option_link; /* -l */
 	int		  option_list; /* -t */
 	int		  option_null; /* -0 --null */
 	int		  option_rename; /* -r */
-	char		 *pass_destdir;
+	char		 *destdir;
 	size_t		  pass_destpath_alloc;
 	char		 *pass_destpath;
 	int		  uid_override;
@@ -75,7 +76,10 @@ struct cpio {
 	int		  return_value; /* Value returned by main() */
 	struct archive_entry_linkresolver *linkresolver;
 
+	/* Work data. */
 	struct matching  *matching;
+	char		 *buff;
+	size_t		  buff_size;
 };
 
 /* Name of this program; used in error reporting, initialized in main(). */
@@ -89,10 +93,14 @@ int	owner_parse(const char *, int *, int *);
 
 /* Fake short equivalents for long options that otherwise lack them. */
 enum {
-	OPTION_QUIET = 1,
+	OPTION_INSECURE = 1,
+	OPTION_QUIET,
 	OPTION_VERSION
 };
 
 int	cpio_getopt(struct cpio *cpio);
+int	process_lines(struct cpio *cpio, const char *pathname,
+		    int (*process)(struct cpio *, const char *));
+int	include_from_file(struct cpio *, const char *);
 
 #endif

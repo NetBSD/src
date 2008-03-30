@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libarchive/archive_util.3,v 1.7 2007/05/29 01:00:19 kientzle Exp $
+.\" $FreeBSD: src/lib/libarchive/archive_util.3,v 1.8 2008/03/10 14:44:40 jkoshy Exp $
 .\"
 .Dd January 8, 2005
 .Dt archive_util 3
@@ -57,7 +57,12 @@
 .Ft const char *
 .Fn archive_format_name "struct archive *"
 .Ft void
-.Fn archive_set_error "struct archive *" "int error_code" "const char *fmt" "..."
+.Fo archive_set_error
+.Fa "struct archive *"
+.Fa "int error_code"
+.Fa "const char *fmt"
+.Fa "..."
+.Fc
 .Sh DESCRIPTION
 These functions provide access to various information about the
 .Tn struct archive

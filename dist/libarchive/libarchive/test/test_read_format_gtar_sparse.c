@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_gtar_sparse.c,v 1.7 2008/01/01 22:28:04 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_gtar_sparse.c,v 1.8 2008/03/12 05:12:23 kientzle Exp $");
 
 
 struct contents {
@@ -181,7 +181,6 @@ struct archive_contents {
 static void
 verify_archive_file(const char *name, struct archive_contents *ac)
 {
-	char path[512];
 	struct archive_entry *ae;
 	int err;
 	/* data, size, offset of next expected block. */
@@ -190,13 +189,13 @@ verify_archive_file(const char *name, struct archive_contents *ac)
 	struct contents actual;
 	struct archive *a;
 
-	sprintf(path, "%s/%s", refdir, name);
+	extract_reference_file(name);
 
 	assert((a = archive_read_new()) != NULL);
 	assert(0 == archive_read_support_compression_all(a));
 	assert(0 == archive_read_support_format_tar(a));
-	failure("Can't open %s", path);
-	assert(0 == archive_read_open_filename(a, path, 3));
+	failure("Can't open %s", name);
+	assert(0 == archive_read_open_filename(a, name, 3));
 
 	while (ac->filename != NULL) {
 		struct contents *cts = ac->contents;
