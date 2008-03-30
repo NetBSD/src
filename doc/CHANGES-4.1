@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.46 2008/03/30 15:28:18 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.47 2008/03/30 15:31:07 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -723,8 +723,8 @@ sys/dev/mii/rlphy.c				1.14-1.15
 	PR#38234.
 	[tsutsui, ticket #1111]
 
-sys/netinet/ip_input.c				1.263
-sys/netinet/tcp_subr.c				1.225
+sys/netinet/ip_input.c				1.263 via patch
+sys/netinet/tcp_subr.c				1.225 via patch
 	Make sure we send a reasonable fragment size when IPSEC is configured.
 	Otherwise we end up sending a dubious "0" whenever we cannot find a
 	proper association for the packet.
