@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.74 2008/03/29 17:13:03 ad Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.75 2008/03/30 15:27:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.74 2008/03/29 17:13:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.75 2008/03/30 15:27:24 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -323,6 +323,13 @@ egprobe(struct device *parent, struct cfdata *match,
 	static u_int8_t pcb[EG_PCBLEN];
 
 	rval = 0;
+
+	/*
+	 * XXX This probe is slow.  If there are no ISA expansion slots,
+	 * then skip it.
+	 */
+	if (isa_get_slotcount() == 0)
+		return (0);
 
 	if (ia->ia_nio < 1)
 		return (0);
