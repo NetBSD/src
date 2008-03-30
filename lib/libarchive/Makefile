@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/02/26 15:42:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2008/03/30 05:32:16 joerg Exp $
 
 USE_FORT?=	yes # complex string handling
 
@@ -54,6 +54,7 @@ SRCS=		archive_check_magic.c \
 		archive_write_open_filename.c \
 		archive_write_open_memory.c \
 		archive_write_set_compression_bzip2.c \
+		archive_write_set_compression_compress.c \
 		archive_write_set_compression_gzip.c \
 		archive_write_set_compression_none.c \
 		archive_write_set_compression_program.c \
@@ -222,7 +223,8 @@ MLINKS+=	archive_write_disk.3 archive_write_disk_set_standard_lookup.3
 MLINKS+=	archive_write_disk.3 archive_write_disk_set_user_lookup.3
 MLINKS+=	libarchive.3 archive.3
 
-ARCHIVE_VERSION= 		2.4.13
+ARCHIVE_VERSION= 		2.5.0
+ARCHIVE_VERSION_POST=		b
 ARCHIVE_API_MAJOR=	${ARCHIVE_VERSION:C/([0-9]*).*/\1/}
 ARCHIVE_API_MINOR=	${ARCHIVE_VERSION:C/[0-9]*\.([0-9]*).*/\1/}
 ARCHIVE_API_REV=	${ARCHIVE_VERSION:C/[0-9]*\.[0-9]*\.([0-9]*).*/\1/}
@@ -247,10 +249,8 @@ ARCHIVE_VERSION_STAMP=	\
 # Build archive.h from archive.h.in by substituting version information.
 # Note: NetBSD has inttypes.h, so enable that include in archive.h.in
 archive.h:	archive.h.in
-	sed -e 's/@ARCHIVE_VERSION@/${ARCHIVE_VERSION}/g' \
-	    -e 's/@LIBARCHIVE_VERSION_STRING@/${ARCHIVE_VERSION}/g' \
-	    -e 's/@SHLIB_MAJOR@/${ARCHIVE_API_MAJOR}/g' \
-	    -e 's/@LIBARCHIVE_VERSION@/${ARCHIVE_VERSION_STAMP}/g' \
+	sed -e 's/@LIBARCHIVE_VERSION_NUMBER@/${ARCHIVE_VERSION_STAMP}/g' \
+	    -e 's/@LIBARCHIVE_VERSION_STRING@/${ARCHIVE_VERSION}${ARCHIVE_VERSION_POST}/g' \
 	    -e 's|@ARCHIVE_H_INCLUDE_INTTYPES_H@|#include <inttypes.h>  /* For int64_t */|g' \
 		< ${LIBARCHIVEDIR}/libarchive/archive.h.in > ${.TARGET}
 
