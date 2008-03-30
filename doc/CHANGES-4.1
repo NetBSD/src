@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.45 2008/03/30 15:13:47 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.46 2008/03/30 15:28:18 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -722,4 +722,14 @@ sys/dev/mii/rlphy.c				1.14-1.15
 	we don't have to check device names of device_parent(). From FreeBSD.
 	PR#38234.
 	[tsutsui, ticket #1111]
+
+sys/netinet/ip_input.c				1.263
+sys/netinet/tcp_subr.c				1.225
+	Make sure we send a reasonable fragment size when IPSEC is configured.
+	Otherwise we end up sending a dubious "0" whenever we cannot find a
+	proper association for the packet.
+	Reset sack_newdata along with snd_nxt to avoid improper integer
+	arithmetics that lead to sending data from an incorrect place in the
+	stream, making it appear as corrupted.
+	[cube, ticket #1109]
 
