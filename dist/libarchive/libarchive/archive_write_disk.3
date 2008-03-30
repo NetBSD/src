@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libarchive/archive_write_disk.3,v 1.1 2007/03/03 07:37:36 kientzle Exp $
+.\" $FreeBSD: src/lib/libarchive/archive_write_disk.3,v 1.2 2008/03/10 14:44:41 jkoshy Exp $
 .\"
 .Dd March 2, 2007
 .Dt archive_write_disk 3
@@ -49,11 +49,21 @@
 .Ft int
 .Fn archive_write_disk_set_skip_file "struct archive *" "dev_t" "ino_t"
 .Ft int
-.Fn archive_write_disk_set_group_lookup "struct archive *" "void *" "gid_t (*)(void *, const char *gname, gid_t gid)" "void (*cleanup)(void *)"
+.Fo archive_write_disk_set_group_lookup
+.Fa "struct archive *"
+.Fa "void *"
+.Fa "gid_t (*)(void *, const char *gname, gid_t gid)"
+.Fa "void (*cleanup)(void *)"
+.Fc
 .Ft int
 .Fn archive_write_disk_set_standard_lookup "struct archive *"
 .Ft int
-.Fn archive_write_disk_set_user_lookup "struct archive *" "void *" "uid_t (*)(void *, const char *uname, uid_t uid)" "void (*cleanup)(void *)"
+.Fo archive_write_disk_set_user_lookup
+.Fa "struct archive *"
+.Fa "void *"
+.Fa "uid_t (*)(void *, const char *uname, uid_t uid)"
+.Fa "void (*cleanup)(void *)"
+.Fc
 .Ft int
 .Fn archive_write_header "struct archive *" "struct archive_entry *"
 .Ft ssize_t
@@ -160,7 +170,10 @@ Note that paths ending in
 .Pa ..
 always cause an error, regardless of this flag.
 .El
-.It Fn archive_write_disk_set_group_lookup , Fn archive_write_disk_set_user_lookup
+.It Xo
+.Fn archive_write_disk_set_group_lookup ,
+.Fn archive_write_disk_set_user_lookup
+.Xc
 The
 .Tn struct archive_entry
 objects contain both names and ids that can be used to identify users

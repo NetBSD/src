@@ -40,7 +40,8 @@ DEFINE_TEST(test_option_m)
 	/* Restored without -m, the result should have a current mtime. */
 	assertEqualInt(0, mkdir("without-m", 0755));
 	assertEqualInt(0, chdir("without-m"));
-	r = systemf("%s -i < %s/test_option_m.cpio >out 2>err", testprog, refdir);
+	extract_reference_file("test_option_m.cpio");
+	r = systemf("%s -i < test_option_m.cpio >out 2>err", testprog);
 	now = time(NULL);
 	assertEqualInt(r, 0);
 	assertEmptyFile("out");
@@ -54,7 +55,8 @@ DEFINE_TEST(test_option_m)
 	assertEqualInt(0, chdir(".."));
 	assertEqualInt(0, mkdir("with-m", 0755));
 	assertEqualInt(0, chdir("with-m"));
-	r = systemf("%s -im < %s/test_option_m.cpio >out 2>err", testprog, refdir);
+	extract_reference_file("test_option_m.cpio");
+	r = systemf("%s -im < test_option_m.cpio >out 2>err", testprog);
 	now = time(NULL);
 	assertEqualInt(r, 0);
 	assertEmptyFile("out");

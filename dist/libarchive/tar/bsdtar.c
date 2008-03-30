@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.79 2008/01/22 07:23:44 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.86 2008/03/15 05:08:21 kientzle Exp $");
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -136,9 +136,9 @@ static const char *tar_opts = "+Bb:C:cf:HhI:jkLlmnOoPprtT:UuvW:wX:xyZz";
 
 /* Fake short equivalents for long options that otherwise lack them. */
 enum {
-	OPTION_CHECK_LINKS=1,
+	OPTION_CHECK_LINKS = 1,
+	OPTION_CHROOT,
 	OPTION_EXCLUDE,
-	OPTION_FAST_READ,
 	OPTION_FORMAT,
 	OPTION_HELP,
 	OPTION_INCLUDE,
@@ -171,6 +171,8 @@ static const struct option tar_longopts[] = {
 	{ "bzip2",              no_argument,       NULL, 'j' },
 	{ "cd",                 required_argument, NULL, 'C' },
 	{ "check-links",        no_argument,       NULL, OPTION_CHECK_LINKS },
+	{ "chroot",             no_argument,       NULL, OPTION_CHROOT },
+	{ "compress",           no_argument,       NULL, 'Z' },
 	{ "confirmation",       no_argument,       NULL, 'w' },
 	{ "create",             no_argument,       NULL, 'c' },
 	{ "dereference",	no_argument,	   NULL, 'L' },
@@ -178,7 +180,7 @@ static const struct option tar_longopts[] = {
 	{ "exclude",            required_argument, NULL, OPTION_EXCLUDE },
 	{ "exclude-from",       required_argument, NULL, 'X' },
 	{ "extract",            no_argument,       NULL, 'x' },
-	{ "fast-read",          no_argument,       NULL, OPTION_FAST_READ },
+	{ "fast-read",          no_argument,       NULL, 'q' },
 	{ "file",               required_argument, NULL, 'f' },
 	{ "files-from",         required_argument, NULL, 'T' },
 	{ "format",             required_argument, NULL, OPTION_FORMAT },
@@ -187,6 +189,7 @@ static const struct option tar_longopts[] = {
 	{ "help",               no_argument,       NULL, OPTION_HELP },
 	{ "include",            required_argument, NULL, OPTION_INCLUDE },
 	{ "interactive",        no_argument,       NULL, 'w' },
+	{ "insecure",           no_argument,       NULL, 'P' },
 	{ "keep-old-files",     no_argument,       NULL, 'k' },
 	{ "list",               no_argument,       NULL, 't' },
 	{ "modification-time",  no_argument,       NULL, 'm' },
@@ -210,6 +213,7 @@ static const struct option tar_longopts[] = {
 	{ "strip-components",	required_argument, NULL, OPTION_STRIP_COMPONENTS },
 	{ "to-stdout",          no_argument,       NULL, 'O' },
 	{ "totals",		no_argument,       NULL, OPTION_TOTALS },
+	{ "uncompress",         no_argument,       NULL, 'Z' },
 	{ "unlink",		no_argument,       NULL, 'U' },
 	{ "unlink-first",	no_argument,       NULL, 'U' },
 	{ "update",             no_argument,       NULL, 'u' },
@@ -321,6 +325,9 @@ main(int argc, char **argv)
 		case OPTION_CHECK_LINKS: /* GNU tar */
 			bsdtar->option_warn_links = 1;
 			break;
+		case OPTION_CHROOT: /* NetBSD */
+			bsdtar->option_chroot = 1;
+			break;
 		case OPTION_EXCLUDE: /* GNU tar */
 			if (exclude(bsdtar, optarg))
 				bsdtar_errc(bsdtar, 1, 0,
@@ -333,9 +340,6 @@ main(int argc, char **argv)
 			bsdtar->filename = optarg;
 			if (strcmp(bsdtar->filename, "-") == 0)
 				bsdtar->filename = NULL;
-			break;
-		case OPTION_FAST_READ: /* GNU tar */
-			bsdtar->option_fast_read = 1;
 			break;
 		case 'H': /* BSD convention */
 			bsdtar->symlink_mode = 'H';
@@ -484,6 +488,9 @@ main(int argc, char **argv)
 		case OPTION_POSIX: /* GNU tar */
 			bsdtar->create_format = "pax";
 			break;
+		case 'q': /* FreeBSD GNU tar --fast-read, NetBSD -q */
+			bsdtar->option_fast_read = 1;
+			break;
 		case 'r': /* SUSv2 */
 			set_mode(bsdtar, opt);
 			break;
@@ -625,10 +632,6 @@ main(int argc, char **argv)
 		only_mode(bsdtar, "--check-links", "cr");
 
 	/* Check other parameters only permitted in certain modes. */
-	if (bsdtar->create_compression == 'Z' && bsdtar->mode == 'c') {
-		bsdtar_warnc(bsdtar, 0, ".Z compression not supported");
-		usage(bsdtar);
-	}
 	if (bsdtar->create_compression != '\0') {
 		strcpy(buff, "-?");
 		buff[1] = bsdtar->create_compression;

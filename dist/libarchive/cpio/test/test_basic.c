@@ -53,6 +53,7 @@ basic_cpio(const char *target, const char *pack_options, const char *unpack_opti
 	assertEqualInt(r, 0);
 
 	/* Verify stderr. */
+	failure("Error invoking %s -i %s in dir %s", testprog, unpack_options, target);
 	assertEmptyFile("unpack.err");
 
 	/*

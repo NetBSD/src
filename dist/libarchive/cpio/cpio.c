@@ -60,15 +60,13 @@ __FBSDID("$FreeBSD$");
 
 static int	copy_data(struct archive *, struct archive *);
 static const char *cpio_rename(const char *name);
-static int	file_to_archive(struct cpio *, const char *, const char *);
+static int	entry_to_archive(struct cpio *, struct archive_entry *);
+static int	file_to_archive(struct cpio *, const char *);
 static void	long_help(void);
 static void	mode_in(struct cpio *);
 static void	mode_list(struct cpio *);
 static void	mode_out(struct cpio *);
 static void	mode_pass(struct cpio *, const char *);
-static int	out_file(struct cpio *, const char *pathname);
-static int	process_lines(struct cpio *cpio, const char *pathname,
-		    int (*process)(struct cpio *, const char *));
 static void	restore_time(struct cpio *, struct archive_entry *,
 		    const char *, int fd);
 static void	usage(void);
@@ -77,6 +75,7 @@ static void	version(FILE *);
 int
 main(int argc, char *argv[])
 {
+	static char buff[16384];
 	struct cpio _cpio; /* Allocated on stack. */
 	struct cpio *cpio;
 	int uid, gid;
@@ -84,6 +83,8 @@ main(int argc, char *argv[])
 
 	cpio = &_cpio;
 	memset(cpio, 0, sizeof(*cpio));
+	cpio->buff = buff;
+	cpio->buff_size = sizeof(buff);
 
 	/* Need cpio_progname before calling cpio_warnc. */
 	if (*argv == NULL)
@@ -107,17 +108,27 @@ main(int argc, char *argv[])
 	cpio->format = "odc"; /* Default format */
 	cpio->extract_flags = ARCHIVE_EXTRACT_NO_AUTODIR;
 	cpio->extract_flags |= ARCHIVE_EXTRACT_NO_OVERWRITE_NEWER;
+	cpio->extract_flags |= ARCHIVE_EXTRACT_SECURE_SYMLINKS;
+	cpio->extract_flags |= ARCHIVE_EXTRACT_SECURE_NODOTDOT;
 	/* TODO: If run by root, set owner as well. */
 	cpio->bytes_per_block = 512;
 	cpio->filename = NULL;
 
 	while ((opt = cpio_getopt(cpio)) != -1) {
 		switch (opt) {
+		case 'A': /* NetBSD/OpenBSD */
+			cpio->option_append = 1;
+			break;
 		case 'a': /* POSIX 1997 */
 			cpio->option_atime_restore = 1;
 			break;
 		case 'B': /* POSIX 1997 */
 			cpio->bytes_per_block = 5120;
+			break;
+		case 'C': /* NetBSD/OpenBSD */
+			cpio->bytes_per_block = atoi(optarg);
+			if (cpio->bytes_per_block <= 0)
+				cpio_errc(1, 0, "Invalid blocksize %s", optarg);
 			break;
 		case 'c': /* POSIX 1997 */
 			cpio->format = "odc";
@@ -125,19 +136,32 @@ main(int argc, char *argv[])
 		case 'd': /* POSIX 1997 */
 			cpio->extract_flags &= ~ARCHIVE_EXTRACT_NO_AUTODIR;
 			break;
+		case 'E': /* NetBSD/OpenBSD */
+			include_from_file(cpio, optarg);
+			break;
+		case 'F': /* NetBSD/OpenBSD/GNU cpio */
+			cpio->filename = optarg;
+			break;
 		case 'f': /* POSIX 1997 */
 			exclude(cpio, optarg);
 			break;
-		case 'H': /* GNU cpio, also --format */
+		case 'H': /* GNU cpio (also --format) */
 			cpio->format = optarg;
 			break;
 		case 'h':
 			long_help();
 			break;
+		case 'I': /* NetBSD/OpenBSD */
+			cpio->filename = optarg;
+			break;
 		case 'i': /* POSIX 1997 */
 			cpio->mode = opt;
 			break;
-		case 'L': /* GNU cpio, BSD convention */
+		case OPTION_INSECURE:
+			cpio->extract_flags &= ~ARCHIVE_EXTRACT_SECURE_SYMLINKS;
+			cpio->extract_flags &= ~ARCHIVE_EXTRACT_SECURE_NODOTDOT;
+			break;
+		case 'L': /* GNU cpio */
 			cpio->option_follow_links = 1;
 			break;
 		case 'l': /* POSIX 1997 */
@@ -145,6 +169,9 @@ main(int argc, char *argv[])
 			break;
 		case 'm': /* POSIX 1997 */
 			cpio->extract_flags |= ARCHIVE_EXTRACT_TIME;
+			break;
+		case 'O': /* GNU cpio */
+			cpio->filename = optarg;
 			break;
 		case 'o': /* POSIX 1997 */
 			cpio->mode = opt;
@@ -188,6 +215,9 @@ main(int argc, char *argv[])
 			break;
 #endif
 		case 'y': /* tar convention */
+			cpio->compress = opt;
+			break;
+		case 'Z': /* tar convention */
 			cpio->compress = opt;
 			break;
 		case 'z': /* tar convention */
@@ -311,9 +341,12 @@ version(FILE *out)
 static void
 mode_out(struct cpio *cpio)
 {
+	struct archive_entry *entry, *spare;
 	unsigned long blocks;
 	int r;
 
+	if (cpio->option_append)
+		cpio_errc(1, 0, "Append mode not yet supported.");
 	cpio->archive = archive_write_new();
 	if (cpio->archive == NULL)
 		cpio_errc(1, 0, "Failed to allocate archive object");
@@ -324,6 +357,9 @@ mode_out(struct cpio *cpio)
 	case 'z':
 		archive_write_set_compression_gzip(cpio->archive);
 		break;
+	case 'Z':
+		archive_write_set_compression_compress(cpio->archive);
+		break;
 	default:
 		archive_write_set_compression_none(cpio->archive);
 		break;
@@ -333,11 +369,26 @@ mode_out(struct cpio *cpio)
 		cpio_errc(1, 0, archive_error_string(cpio->archive));
 	archive_write_set_bytes_per_block(cpio->archive, cpio->bytes_per_block);
 	cpio->linkresolver = archive_entry_linkresolver_new();
+	archive_entry_linkresolver_set_strategy(cpio->linkresolver,
+	    archive_format(cpio->archive));
 
 	r = archive_write_open_file(cpio->archive, cpio->filename);
 	if (r != ARCHIVE_OK)
 		cpio_errc(1, 0, archive_error_string(cpio->archive));
-	process_lines(cpio, "-", out_file);
+	process_lines(cpio, "-", file_to_archive);
+
+	/*
+	 * The hardlink detection may have queued up a couple of entries
+	 * that can now be flushed.
+	 */
+	entry = NULL;
+	archive_entry_linkify(cpio->linkresolver, &entry, &spare);
+	while (entry != NULL) {
+		entry_to_archive(cpio, entry);
+		archive_entry_free(entry);
+		entry = NULL;
+		archive_entry_linkify(cpio->linkresolver, &entry, &spare);
+	}
 
 	r = archive_write_close(cpio->archive);
 	if (r != ARCHIVE_OK)
@@ -352,74 +403,36 @@ mode_out(struct cpio *cpio)
 	archive_write_finish(cpio->archive);
 }
 
-static int
-out_file(struct cpio *cpio, const char *path)
-{
-	const char *destpath;
-
-	if (cpio->option_rename)
-		destpath = cpio_rename(path);
-	else
-		destpath = path;
-	if (destpath == NULL)
-		return (0);
-	return (file_to_archive(cpio, path, destpath));
-}
-
 /*
  * This is used by both out mode (to copy objects from disk into
  * an archive) and pass mode (to copy objects from disk to
  * an archive_write_disk "archive").
  */
 static int
-file_to_archive(struct cpio *cpio, const char *srcpath, const char *destpath)
+file_to_archive(struct cpio *cpio, const char *srcpath)
 {
-	static char buff[16384];
 	struct stat st;
-	struct archive_entry *entry;
-	const char *linkname;
-	int fd = -1;
-	ssize_t len;
+	struct archive_entry *entry, *spare;
+	int lnklen;
 	int r;
 
-	if (cpio->verbose)
-		fprintf(stderr,"%s", destpath);
-
+	/*
+	 * Create an archive_entry describing the source file.
+	 */
 	entry = archive_entry_new();
 	if (entry == NULL)
 		cpio_errc(1, 0, "Couldn't allocate entry");
-	archive_entry_set_pathname(entry, destpath);
+	archive_entry_set_pathname(entry, srcpath);
 
-	/* TODO: pathname editing. */
-
+	/* Get stat information. */
 	if (cpio->option_follow_links)
 		r = stat(srcpath, &st);
 	else
 		r = lstat(srcpath, &st);
 	if (r != 0) {
 		cpio_warnc(errno, "Couldn't stat \"%s\"", srcpath);
-		goto cleanup;
-	}
-
-	/* If we're trying to preserve hardlinks, match them here. */
-	if (cpio->linkresolver != NULL
-	    && st.st_nlink > 1
-	    && !S_ISDIR(st.st_mode)) {
-		linkname = archive_entry_linkresolve(cpio->linkresolver, entry);
-		archive_entry_set_hardlink(entry, linkname);
-	}
-
-	if (S_ISLNK(st.st_mode)) {
-		int lnklen;
-
-		lnklen = readlink(srcpath, buff, sizeof(buff));
-		if (lnklen < 0) {
-			cpio_warnc(errno,
-			    "%s: Couldn't read symbolic link", srcpath);
-			goto cleanup;
-		}
-		buff[lnklen] = 0;
-		archive_entry_set_symlink(entry, buff);
+		archive_entry_free(entry);
+		return (0);
 	}
 
 	if (cpio->uid_override >= 0)
@@ -428,7 +441,87 @@ file_to_archive(struct cpio *cpio, const char *srcpath, const char *destpath)
 		st.st_gid = cpio->uid_override;
 	archive_entry_copy_stat(entry, &st);
 
-	/* Obviously, this only gets invoked in pass mode. */
+	/* If its a symlink, pull the target. */
+	if (S_ISLNK(st.st_mode)) {
+		lnklen = readlink(srcpath, cpio->buff, cpio->buff_size);
+		if (lnklen < 0) {
+			cpio_warnc(errno,
+			    "%s: Couldn't read symbolic link", srcpath);
+			archive_entry_free(entry);
+			return (0);
+		}
+		cpio->buff[lnklen] = 0;
+		archive_entry_set_symlink(entry, cpio->buff);
+	}
+
+	/*
+	 * If we're trying to preserve hardlinks, match them here.
+	 */
+	spare = NULL;
+	if (cpio->linkresolver != NULL
+	    && !S_ISDIR(st.st_mode)) {
+		archive_entry_linkify(cpio->linkresolver, &entry, &spare);
+	}
+
+	if (entry != NULL) {
+		r = entry_to_archive(cpio, entry);
+		archive_entry_free(entry);
+	}
+	if (spare != NULL) {
+		if (r == 0)
+			r = entry_to_archive(cpio, spare);
+		archive_entry_free(spare);
+	}
+	return (r);
+}
+
+static int
+entry_to_archive(struct cpio *cpio, struct archive_entry *entry)
+{
+	const char *destpath, *srcpath;
+	int fd = -1;
+	ssize_t bytes_read;
+	size_t len;
+	const char *p;
+	int r;
+
+	/*
+	 * Generate a target path for this entry.
+	 */
+	destpath = srcpath = archive_entry_pathname(entry);
+	if (cpio->destdir) {
+		len = strlen(cpio->destdir) + strlen(srcpath) + 8;
+		if (len >= cpio->pass_destpath_alloc) {
+			while (len >= cpio->pass_destpath_alloc) {
+				cpio->pass_destpath_alloc += 512;
+				cpio->pass_destpath_alloc *= 2;
+			}
+			free(cpio->pass_destpath);
+			cpio->pass_destpath = malloc(cpio->pass_destpath_alloc);
+			if (cpio->pass_destpath == NULL)
+				cpio_errc(1, ENOMEM,
+				    "Can't allocate path buffer");
+		}
+		strcpy(cpio->pass_destpath, cpio->destdir);
+		p = srcpath;
+		while (p[0] == '/')
+			++p;
+		strcat(cpio->pass_destpath, p);
+		destpath = cpio->pass_destpath;
+	}
+	if (cpio->option_rename)
+		destpath = cpio_rename(destpath);
+	if (destpath == NULL)
+		return (0);
+	archive_entry_copy_pathname(entry, destpath);
+
+	/* Print out the destination name to the user. */
+	if (cpio->verbose)
+		fprintf(stderr,"%s", destpath);
+
+	/*
+	 * Obviously, this only gets invoked in pass mode.
+	 */
 	if (cpio->option_link) {
 		/* Note: link(2) doesn't create parent directories. */
 		archive_entry_set_hardlink(entry, srcpath);
@@ -446,17 +539,18 @@ file_to_archive(struct cpio *cpio, const char *srcpath, const char *destpath)
 	 * Make sure we can open the file (if necessary) before
 	 * trying to write the header.
 	 */
-	if (S_ISREG(st.st_mode) && st.st_size > 0) {
-		fd = open(srcpath, O_RDONLY);
-		if (fd < 0) {
-			cpio_warnc(errno,
-			    "%s: could not open file", srcpath);
-			goto cleanup;
+	if (archive_entry_filetype(entry) == AE_IFREG) {
+		if (archive_entry_size(entry) > 0) {
+			fd = open(srcpath, O_RDONLY);
+			if (fd < 0) {
+				cpio_warnc(errno,
+				    "%s: could not open file", srcpath);
+				goto cleanup;
+			}
 		}
-	}
-
-	if (!S_ISREG(st.st_mode))
+	} else {
 		archive_entry_set_size(entry, 0);
+	}
 
 	r = archive_write_header(cpio->archive, entry);
 
@@ -471,17 +565,18 @@ file_to_archive(struct cpio *cpio, const char *srcpath, const char *destpath)
 
 	if (r >= ARCHIVE_WARN && fd >= 0 && archive_entry_size(entry) > 0) {
 		fd = open(srcpath, O_RDONLY);
-		len = read(fd, buff, sizeof(buff));
-		while (len > 0) {
-			r = archive_write_data(cpio->archive, buff, len);
+		bytes_read = read(fd, cpio->buff, cpio->buff_size);
+		while (bytes_read > 0) {
+			r = archive_write_data(cpio->archive,
+			    cpio->buff, bytes_read);
 			if (r < 0)
 				cpio_errc(1, archive_errno(cpio->archive),
 				    archive_error_string(cpio->archive));
-			if (r < len) {
+			if (r < bytes_read) {
 				cpio_warnc(0,
 				    "Truncated write; file may have grown while being archived.");
 			}
-			len = read(fd, buff, sizeof(buff));
+			bytes_read = read(fd, cpio->buff, cpio->buff_size);
 		}
 	}
 
@@ -492,9 +587,6 @@ cleanup:
 		fprintf(stderr,"\n");
 	if (fd >= 0)
 		close(fd);
-	if (entry != NULL)
-		archive_entry_free(entry);
-
 	return (0);
 }
 
@@ -695,49 +787,16 @@ mode_list(struct cpio *cpio)
 	exit(0);
 }
 
-/*
- * TODO: Fix hardlink handling.
- */
-static int
-pass_file(struct cpio *cpio, const char *pathname)
-{
-	size_t len;
-	const char *destpath;
-
-	len = strlen(cpio->pass_destdir) + strlen(pathname) + 8;
-	if (len >= cpio->pass_destpath_alloc) {
-		while (len >= cpio->pass_destpath_alloc) {
-			cpio->pass_destpath_alloc += 512;
-			cpio->pass_destpath_alloc *= 2;
-		}
-		free(cpio->pass_destpath);
-		cpio->pass_destpath = malloc(cpio->pass_destpath_alloc);
-		if (cpio->pass_destpath == NULL)
-			cpio_errc(1, ENOMEM,
-			    "Can't allocate path buffer");
-	}
-	if (pathname[0] == '/')
-		pathname++;
-	strcpy(cpio->pass_destpath, cpio->pass_destdir);
-	strcat(cpio->pass_destpath, pathname);
-	destpath = cpio->pass_destpath;
-	if (cpio->option_rename)
-		destpath = cpio_rename(destpath);
-	if (destpath != NULL)
-		file_to_archive(cpio, pathname, destpath);
-	return (0);
-}
-
 static void
 mode_pass(struct cpio *cpio, const char *destdir)
 {
 	int r;
 
 	/* Ensure target dir has a trailing '/' to simplify path surgery. */
-	cpio->pass_destdir = malloc(strlen(destdir) + 8);
-	strcpy(cpio->pass_destdir, destdir);
+	cpio->destdir = malloc(strlen(destdir) + 8);
+	strcpy(cpio->destdir, destdir);
 	if (destdir[strlen(destdir) - 1] != '/')
-		strcat(cpio->pass_destdir, "/");
+		strcat(cpio->destdir, "/");
 
 	cpio->archive = archive_write_disk_new();
 	if (cpio->archive == NULL)
@@ -747,7 +806,7 @@ mode_pass(struct cpio *cpio, const char *destdir)
 		cpio_errc(1, 0, archive_error_string(cpio->archive));
 	cpio->linkresolver = archive_entry_linkresolver_new();
 	archive_write_disk_set_standard_lookup(cpio->archive);
-	process_lines(cpio, "-", pass_file);
+	process_lines(cpio, "-", file_to_archive);
 
 	archive_entry_linkresolver_free(cpio->linkresolver);
 	r = archive_write_close(cpio->archive);
@@ -810,7 +869,7 @@ cpio_rename(const char *name)
  * function will return non-zero after attempting to process all
  * remaining lines.
  */
-static int
+int
 process_lines(struct cpio *cpio, const char *pathname,
     int (*process)(struct cpio *, const char *))
 {

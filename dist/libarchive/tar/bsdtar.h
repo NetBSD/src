@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.29 2008/01/02 00:21:27 kientzle Exp $
+ * $FreeBSD: src/usr.bin/tar/bsdtar.h,v 1.30 2008/03/15 03:06:46 kientzle Exp $
  */
 
 #include "bsdtar_platform.h"
@@ -57,6 +57,7 @@ struct bsdtar {
 	char		  create_compression; /* j, y, or z */
 	const char	 *compress_program;
 	char		  option_absolute_paths; /* -P */
+	char		  option_chroot; /* --chroot */
 	char		  option_dont_traverse_mounts; /* --one-file-system */
 	char		  option_fast_read; /* --fast-read */
 	char		  option_honor_nodump; /* --nodump */

@@ -25,40 +25,6 @@
 #include "test.h"
 __FBSDID("$FreeBSD$");
 
-static void test_link_resolver_basic(void)
-{
-	struct archive_entry *entry;
-	struct archive_entry_linkresolver *resolver;
-
-	/* Initialize the resolver. */
-	assert(NULL != (resolver = archive_entry_linkresolver_new()));
-
-	/* Create an entry with only 1 link and try to register it. */
-	assert(NULL != (entry = archive_entry_new()));
-	archive_entry_set_pathname(entry, "test1");
-	archive_entry_set_ino(entry, 1);
-	archive_entry_set_dev(entry, 2);
-	archive_entry_set_nlink(entry, 1);
-
-	/* Shouldn't match anything. */
-	assertEqualString(NULL, archive_entry_linkresolve(resolver, entry));
-	/* Still shouldn't match anything. */
-	assertEqualString(NULL, archive_entry_linkresolve(resolver, entry));
-
-	archive_entry_set_nlink(entry, 2);
-	archive_entry_set_ino(entry, 2);
-	/* Shouldn't match, since we haven't seen it before. */
-	assertEqualString(NULL, archive_entry_linkresolve(resolver, entry));
-	/* Should match, since we have seen it once before. */
-	archive_entry_set_pathname(entry, "test2");
-	assertEqualString("test1", archive_entry_linkresolve(resolver, entry));
-	/* Should not match, since we've seen both links. */
-	assertEqualString(NULL, archive_entry_linkresolve(resolver, entry));
-
-	archive_entry_free(entry);
-	archive_entry_linkresolver_free(resolver);
-}
-
 static void test_linkify_tar(void)
 {
 	struct archive_entry *entry, *e2;
@@ -67,7 +33,7 @@ static void test_linkify_tar(void)
 	/* Initialize the resolver. */
 	assert(NULL != (resolver = archive_entry_linkresolver_new()));
 	archive_entry_linkresolver_set_strategy(resolver,
-	    ARCHIVE_ENTRY_LINKIFY_LIKE_TAR);
+	    ARCHIVE_FORMAT_TAR_USTAR);
 
 	/* Create an entry with only 1 link and try to linkify it. */
 	assert(NULL != (entry = archive_entry_new()));
@@ -114,7 +80,7 @@ static void test_linkify_old_cpio(void)
 	/* Initialize the resolver. */
 	assert(NULL != (resolver = archive_entry_linkresolver_new()));
 	archive_entry_linkresolver_set_strategy(resolver,
-	    ARCHIVE_ENTRY_LINKIFY_LIKE_OLD_CPIO);
+	    ARCHIVE_FORMAT_CPIO_POSIX);
 
 	/* Create an entry with 2 link and try to linkify it. */
 	assert(NULL != (entry = archive_entry_new()));
@@ -149,7 +115,7 @@ static void test_linkify_new_cpio(void)
 	/* Initialize the resolver. */
 	assert(NULL != (resolver = archive_entry_linkresolver_new()));
 	archive_entry_linkresolver_set_strategy(resolver,
-	    ARCHIVE_ENTRY_LINKIFY_LIKE_NEW_CPIO);
+	    ARCHIVE_FORMAT_CPIO_SVR4_NOCRC);
 
 	/* Create an entry with only 1 link and try to linkify it. */
 	assert(NULL != (entry = archive_entry_new()));
@@ -215,7 +181,6 @@ static void test_linkify_new_cpio(void)
 
 DEFINE_TEST(test_link_resolver)
 {
-	test_link_resolver_basic();
 	test_linkify_tar();
 	test_linkify_old_cpio();
 	test_linkify_new_cpio();

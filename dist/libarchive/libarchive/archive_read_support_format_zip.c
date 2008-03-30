@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_zip.c,v 1.21 2008/02/26 07:17:47 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_zip.c,v 1.22 2008/02/27 06:05:59 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -743,7 +743,7 @@ archive_read_format_zip_read_data_skip(struct archive_read *a)
 {
 	struct zip *zip;
 	const void *buff = NULL;
-	ssize_t bytes_avail;
+	off_t bytes_skipped;
 
 	zip = (struct zip *)(a->format->data);
 
@@ -766,19 +766,10 @@ archive_read_format_zip_read_data_skip(struct archive_read *a)
 	 * If the length is at the beginning, we can skip the
 	 * compressed data much more quickly.
 	 */
-	while (zip->entry_bytes_remaining > 0) {
-		bytes_avail = (a->decompressor->read_ahead)(a, &buff, 1);
-		if (bytes_avail <= 0) {
-			archive_set_error(&a->archive,
-			    ARCHIVE_ERRNO_FILE_FORMAT,
-			    "Truncated ZIP file body");
-			return (ARCHIVE_FATAL);
-		}
-		if (bytes_avail > zip->entry_bytes_remaining)
-			bytes_avail = zip->entry_bytes_remaining;
-		(a->decompressor->consume)(a, bytes_avail);
-		zip->entry_bytes_remaining -= bytes_avail;
-	}
+	bytes_skipped = (a->decompressor->skip)(a, zip->entry_bytes_remaining);
+	if (bytes_skipped < 0)
+		return (ARCHIVE_FATAL);
+
 	/* This entry is finished and done. */
 	zip->end_of_entry_cleanup = zip->end_of_entry = 1;
 	return (ARCHIVE_OK);

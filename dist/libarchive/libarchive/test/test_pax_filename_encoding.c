@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_pax_filename_encoding.c,v 1.1 2008/03/15 01:43:59 kientzle Exp $");
 
 #include <locale.h>
 
@@ -36,6 +36,7 @@ __FBSDID("$FreeBSD$");
 
 DEFINE_TEST(test_pax_filename_encoding)
 {
+	static const char testname[] = "test_pax_filename_encoding.tar.gz";
 	char buff[65536];
 	/*
 	 * \314\214 is a valid 2-byte UTF-8 sequence.
@@ -53,6 +54,34 @@ DEFINE_TEST(test_pax_filename_encoding)
 	size_t used;
 	struct archive *a;
 	struct archive_entry *entry;
+
+	/*
+	 * Read an archive that has non-UTF8 pax filenames in it.
+	 */
+	extract_reference_file(testname);
+	a = archive_read_new();
+	assertEqualInt(ARCHIVE_OK, archive_read_support_format_tar(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_support_compression_gzip(a));
+	assertEqualInt(ARCHIVE_OK,
+	    archive_read_open_filename(a, testname, 10240));
+	/*
+	 * First entry in this test archive has an invalid UTF-8 sequence
+	 * in it, but the header is not marked as hdrcharset=BINARY, so that
+	 * requires a warning.
+	 */
+	failure("An invalid UTF8 pathname in a pax archive should be read\n"
+	    " without conversion but with a warning");
+	assertEqualInt(ARCHIVE_WARN, archive_read_next_header(a, &entry));
+	assertEqualString(filename, archive_entry_pathname(entry));
+	/*
+	 * Second entry is identical except that it does have
+	 * hdrcharset=BINARY, so no warning should be generated.
+	 */
+	failure("A pathname with hdrcharset=BINARY can have invalid UTF8\n"
+	    " characters in it without generating a warning");
+	assertEqualInt(ARCHIVE_OK, archive_read_next_header(a, &entry));
+	assertEqualString(filename, archive_entry_pathname(entry));
+	archive_read_finish(a);
 
 	/*
 	 * We need a starting locale which has invalid sequences.

@@ -23,10 +23,34 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_archive_api_feature.c,v 1.3 2007/07/06 15:43:11 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_archive_api_feature.c,v 1.4 2008/03/14 22:31:57 kientzle Exp $");
 
 DEFINE_TEST(test_archive_api_feature)
 {
+	char buff[128];
+	char *p;
+
+	/* This is the (hopefully) final versioning API. */
+	assertEqualInt(ARCHIVE_VERSION_NUMBER, archive_version_number());
+	sprintf(buff, "libarchive %d.%d.%d",
+	    archive_version_number() / 1000000,
+	    (archive_version_number() / 1000) % 1000,
+	    archive_version_number() % 1000);
+	failure("Version string is: %s, computed is: %s",
+	    archive_version_string(), buff);
+	assert(memcmp(buff, archive_version_string(), strlen(buff)) == 0);
+	if (strlen(buff) < strlen(archive_version_string())) {
+		p = archive_version_string() + strlen(buff);
+		failure("Version string is: %s", archive_version_string());
+		assert(*p == 'a' || *p == 'b' || *p == 'c' || *p == 'd');
+		++p;
+		failure("Version string is: %s", archive_version_string());
+		assert(*p == '\0');
+	}
+
+/* This is all scheduled to disappear in libarchive 3.0 */
+#if ARCHIVE_VERSION_NUMBER < 3000000
+	assertEqualInt(ARCHIVE_VERSION_STAMP, ARCHIVE_VERSION_NUMBER);
 	assertEqualInt(ARCHIVE_API_FEATURE, archive_api_feature());
 	assertEqualInt(ARCHIVE_API_VERSION, archive_api_version());
 	/*
@@ -48,4 +72,5 @@ DEFINE_TEST(test_archive_api_feature)
 	skipping("archive_version_stamp()");
 #endif
 	assertEqualString(ARCHIVE_LIBRARY_VERSION, archive_version());
+#endif
 }

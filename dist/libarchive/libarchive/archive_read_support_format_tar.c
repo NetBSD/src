@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_tar.c,v 1.65 2008/01/31 07:41:45 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_tar.c,v 1.67 2008/03/15 01:43:58 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -714,7 +714,7 @@ archive_block_is_null(const unsigned char *p)
 {
 	unsigned i;
 
-	for (i = 0; i < ARCHIVE_BYTES_PER_RECORD / sizeof(*p); i++)
+	for (i = 0; i < 512; i++)
 		if (*p++)
 			return (0);
 	return (1);
@@ -1258,9 +1258,11 @@ pax_header(struct archive_read *a, struct tar *tar,
 			archive_entry_copy_gname(entry, value);
 		else {
 			wp = utf8_decode(tar, value, strlen(value));
-			if (wp == NULL)
+			if (wp == NULL) {
 				archive_entry_copy_gname(entry, value);
-			else
+				if (err > ARCHIVE_WARN)
+					err = ARCHIVE_WARN;
+			} else
 				archive_entry_copy_gname_w(entry, wp);
 		}
 	}
@@ -1270,9 +1272,11 @@ pax_header(struct archive_read *a, struct tar *tar,
 			archive_entry_copy_link(entry, value);
 		else {
 			wp = utf8_decode(tar, value, strlen(value));
-			if (wp == NULL)
+			if (wp == NULL) {
 				archive_entry_copy_link(entry, value);
-			else
+				if (err > ARCHIVE_WARN)
+					err = ARCHIVE_WARN;
+			} else
 				archive_entry_copy_link_w(entry, wp);
 		}
 	}
@@ -1282,9 +1286,11 @@ pax_header(struct archive_read *a, struct tar *tar,
 			archive_entry_copy_pathname(entry, value);
 		else {
 			wp = utf8_decode(tar, value, strlen(value));
-			if (wp == NULL)
+			if (wp == NULL) {
 				archive_entry_copy_pathname(entry, value);
-			else
+				if (err > ARCHIVE_WARN)
+					err = ARCHIVE_WARN;
+			} else
 				archive_entry_copy_pathname_w(entry, wp);
 		}
 	}
@@ -1294,9 +1300,11 @@ pax_header(struct archive_read *a, struct tar *tar,
 			archive_entry_copy_uname(entry, value);
 		else {
 			wp = utf8_decode(tar, value, strlen(value));
-			if (wp == NULL)
+			if (wp == NULL) {
 				archive_entry_copy_uname(entry, value);
-			else
+				if (err > ARCHIVE_WARN)
+					err = ARCHIVE_WARN;
+			} else
 				archive_entry_copy_uname_w(entry, wp);
 		}
 	}

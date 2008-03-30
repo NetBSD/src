@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/test/test.h,v 1.6 2007/07/14 17:52:01 kientzle Exp $
+ * $FreeBSD$
  */
 
 /* Every test program should #include "test.h" as the first thing. */
@@ -31,16 +31,20 @@
  * The goal of this file (and the matching test.c) is to
  * simplify the very repetitive test-*.c test programs.
  */
-
+#ifndef _FILE_OFFSET_BITS
 #define _FILE_OFFSET_BITS 64
+#endif
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <wchar.h>
 
 #ifdef USE_DMALLOC
@@ -99,7 +103,7 @@
 #define assertEmptyFile		\
   test_setup(__FILE__, __LINE__);test_assert_empty_file
 /* Assert that file contents match a string; supports printf-style arguments. */
-#define assertFileContents		\
+#define assertFileContents             \
   test_setup(__FILE__, __LINE__);test_assert_file_contents
 
 /*
@@ -131,15 +135,11 @@ int systemf(const char * fmt, ...);
 /* Supports printf-style args: slurpfile(NULL, "%s/myfile", refdir); */
 char *slurpfile(size_t *, const char *fmt, ...);
 
-/*
- * Global vars
- */
-
-/* Directory holding reference files. */
-char *refdir;
+/* Extracts named reference file to the current directory. */
+void extract_reference_file(const char *);
 
 /*
- * Special interfaces for bsdcpio test harness.
+ * Special interfaces for program test harness.
  */
 
 /* Pathname of exe to be tested. */

@@ -24,25 +24,26 @@
  */
 
 /*
- * This same file is used pretty much verbatim for all test harnesses.
- *
- * The next line is used to define various environment variables, etc.
- *
- * The tar and cpio test harnesses are identical except for this line;
- * the libarchive test harness omits some code that is needed only for
- * testing standalone executables.
- */
-#define PROGRAM "BSDCPIO"
-
-/*
  * Various utility routines useful for test programs.
  * Each test program is linked against this file.
  */
 #include <errno.h>
+#include <locale.h>
 #include <stdarg.h>
 #include <time.h>
 
 #include "test.h"
+
+/*
+ * This same file is used pretty much verbatim for all test harnesses.
+ *
+ * The next few lines are the only differences.
+ */
+#define	PROGRAM "bsdcpio"    /* Program being tested. */
+#define ENVBASE "BSDCPIO" /* Prefix for environment variables. */
+#undef	EXTRA_DUMP	     /* How to dump extra data */
+/* How to generate extra version info. */
+#define	EXTRA_VERSION    (systemf("%s --version", testprog) ? "" : "")
 __FBSDID("$FreeBSD$");
 
 /*
@@ -73,6 +74,9 @@ static int failures = 0;
 static int skips = 0;
 /* Cumulative count of assertions. */
 static int assertions = 0;
+
+/* Directory where uuencoded reference files can be found. */
+static char *refdir;
 
 /*
  * My own implementation of the standard assert() macro emits the
@@ -167,7 +171,12 @@ report_failure(void *extra)
 		msg[0] = '\0';
 	}
 
+#ifdef EXTRA_DUMP
+	if (extra != NULL)
+		fprintf(stderr, "   detail: %s\n", EXTRA_DUMP(extra));
+#else
 	(void)extra; /* UNUSED */
+#endif
 
 	if (dump_on_failure) {
 		fprintf(stderr,
@@ -231,15 +240,15 @@ test_assert(const char *file, int line, int value, const char *condition, void *
 	++assertions;
 	if (value) {
 		msg[0] = '\0';
-		return (1);
+		return (value);
 	}
 	failures ++;
 	if (previous_failures(file, line))
-		return (0);
+		return (value);
 	fprintf(stderr, "%s:%d: Assertion failed\n", file, line);
 	fprintf(stderr, "   Condition: %s\n", condition);
 	report_failure(extra);
-	return (0);
+	return (value);
 }
 
 /* assertEqualInt() displays the values of the two integers. */
@@ -502,7 +511,6 @@ test_assert_file_contents(const void *buff, int s, const char *fpattern, ...)
 	return (0);
 }
 
-
 /*
  * Call standard system() call, but build up the command line using
  * sprintf() conventions.
@@ -620,6 +628,8 @@ static int test_run(int i, const char *tmpdir)
 		    tests[i].name);
 		exit(1);
 	}
+	/* Explicitly reset the locale before each test. */
+	setlocale(LC_ALL, "C");
 	/* Run the actual test. */
 	(*tests[i].func)();
 	/* Summarize the results of this test. */
@@ -639,8 +649,10 @@ static void usage(const char *program)
 	printf("Options:\n");
 	printf("  -k  Keep running after failures.\n");
 	printf("      Default: Core dump after any failure.\n");
+#ifdef PROGRAM
 	printf("  -p <path>  Path to executable to be tested.\n");
-	printf("      Default: path taken from " PROGRAM " environment variable.\n");
+	printf("      Default: path taken from " ENVBASE " environment variable.\n");
+#endif
 	printf("  -q  Quiet.\n");
 	printf("  -r <dir>   Path to dir containing reference files.\n");
 	printf("      Default: Current directory.\n");
@@ -649,6 +661,66 @@ static void usage(const char *program)
 		printf("  %d: %s\n", i, tests[i].name);
 	exit(1);
 }
+
+#define uudecode(c) (((c) - 0x20) & 0x3f)
+
+void
+extract_reference_file(const char *name)
+{
+	char buff[1024];
+	FILE *in, *out;
+
+	sprintf(buff, "%s/%s.uu", refdir, name);
+	in = fopen(buff, "r");
+	failure("Couldn't open reference file %s", buff);
+	assert(in != NULL);
+	if (in == NULL)
+		return;
+	/* Read up to and including the 'begin' line. */
+	for (;;) {
+		if (fgets(buff, sizeof(buff), in) == NULL) {
+			/* TODO: This is a failure. */
+			return;
+		}
+		if (memcmp(buff, "begin ", 6) == 0)
+			break;
+	}
+	/* Now, decode the rest and write it. */
+	/* Not a lot of error checking here; the input better be right. */
+	out = fopen(name, "w");
+	while (fgets(buff, sizeof(buff), in) != NULL) {
+		char *p = buff;
+		int bytes;
+
+		if (memcmp(buff, "end", 3) == 0)
+			break;
+
+		bytes = uudecode(*p++);
+		while (bytes > 0) {
+			int n = 0;
+			/* Write out 1-3 bytes from that. */
+			if (bytes > 0) {
+				n = uudecode(*p++) << 18;
+				n |= uudecode(*p++) << 12;
+				fputc(n >> 16, out);
+				--bytes;
+			}
+			if (bytes > 0) {
+				n |= uudecode(*p++) << 6;
+				fputc((n >> 8) & 0xFF, out);
+				--bytes;
+			}
+			if (bytes > 0) {
+				n |= uudecode(*p++);
+				fputc(n & 0xFF, out);
+				--bytes;
+			}
+		}
+	}
+	fclose(out);
+	fclose(in);
+}
+
 
 int main(int argc, char **argv)
 {
@@ -671,15 +743,17 @@ int main(int argc, char **argv)
 		++p;
 	}
 
+#ifdef PROGRAM
 	/* Get the target program from environment, if available. */
-	testprog = getenv(PROGRAM);
+	testprog = getenv(ENVBASE);
+#endif
 
 	/* Allow -k to be controlled through the environment. */
-	if (getenv(PROGRAM "_KEEP_GOING") != NULL)
+	if (getenv(ENVBASE "_KEEP_GOING") != NULL)
 		dump_on_failure = 0;
 
 	/* Get the directory holding test files from environment. */
-	refdir = getenv(PROGRAM "_TEST_FILES");
+	refdir = getenv(ENVBASE "_TEST_FILES");
 
 	/*
 	 * Parse options.
@@ -690,7 +764,11 @@ int main(int argc, char **argv)
 			dump_on_failure = 0;
 			break;
 		case 'p':
+#ifdef PROGRAM
 			testprog = optarg;
+#else
+			usage(progname);
+#endif
 			break;
 		case 'q':
 			quiet_flag++;
@@ -709,9 +787,10 @@ int main(int argc, char **argv)
 	/*
 	 * Sanity-check that our options make sense.
 	 */
+#ifdef PROGRAM
 	if (testprog == NULL)
 		usage(progname);
-
+#endif
 
 	/*
 	 * Create a temp directory for the following tests.
@@ -753,7 +832,12 @@ int main(int argc, char **argv)
 	if (!quiet_flag) {
 		printf("Running tests in: %s\n", tmpdir);
 		printf("Reference files will be read from: %s\n", refdir);
+#ifdef PROGRAM
 		printf("Running tests on: %s\n", testprog);
+#endif
+		printf("Exercising: ");
+		fflush(stdout);
+		printf("%s\n", EXTRA_VERSION);
 	}
 
 	/*

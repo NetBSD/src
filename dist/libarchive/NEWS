@@ -1,3 +1,9 @@
+Mar 14, 2008: libarchive 2.4.14 released.  This is identical to 2.4.13
+	except it contains a one-line fix to the uname/gname problem
+	introduced by the Feb 25 UTF-8 fix.  This bug makes libarchive
+	refuse to add a file to a pax archive if it has a valid gname
+	but not a valid uname.  In some cases, it can also cause the
+	uname to be stored for the gname.
 
 Feb 26, 2008: libarchive 2.4.13 released
 Feb 25, 2008: Handle path, linkname, gname, or uname that can't be converted

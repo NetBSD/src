@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_write_private.h,v 1.2 2007/05/29 01:00:19 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_write_private.h,v 1.3 2008/03/15 11:04:45 kientzle Exp $
  */
 
 #ifndef ARCHIVE_WRITE_PRIVATE_H_INCLUDED
@@ -80,13 +80,6 @@ struct archive_write {
 		int	(*finish)(struct archive_write *);
 		int	(*write)(struct archive_write *, const void *, size_t);
 	} compressor;
-
-	/*
-	 * Again, write support is considerably simpler because there's
-	 * no need for an auction.
-	 */
-	int		  archive_format;
-	const char	 *archive_format_name;
 
 	/*
 	 * Pointers to format-specific functions for writing.  They're

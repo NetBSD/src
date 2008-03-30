@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_ustar.c,v 1.25 2007/12/30 04:58:22 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_ustar.c,v 1.26 2008/03/15 11:04:45 kientzle Exp $");
 
 
 #ifdef HAVE_ERRNO_H
@@ -186,8 +186,8 @@ archive_write_set_format_ustar(struct archive *_a)
 	a->format_finish = archive_write_ustar_finish;
 	a->format_destroy = archive_write_ustar_destroy;
 	a->format_finish_entry = archive_write_ustar_finish_entry;
-	a->archive_format = ARCHIVE_FORMAT_TAR_USTAR;
-	a->archive_format_name = "POSIX ustar";
+	a->archive.archive_format = ARCHIVE_FORMAT_TAR_USTAR;
+	a->archive.archive_format_name = "POSIX ustar";
 	return (ARCHIVE_OK);
 }
 

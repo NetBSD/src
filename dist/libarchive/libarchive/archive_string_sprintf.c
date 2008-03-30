@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_string_sprintf.c,v 1.9 2007/07/15 19:13:59 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_string_sprintf.c,v 1.10 2008/03/14 22:00:09 kientzle Exp $");
 
 /*
  * The use of printf()-family functions can be troublesome
@@ -43,6 +43,16 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_string_sprintf.c,v 1.9 2007/07/15
 
 #include "archive_string.h"
 #include "archive_private.h"
+
+void
+__archive_string_sprintf(struct archive_string *as, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	archive_string_vsprintf(as, fmt, ap);
+	va_end(ap);
+}
 
 /*
  * Like 'vsprintf', but ensures the target is big enough, resizing if

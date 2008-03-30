@@ -104,13 +104,11 @@ include(struct cpio *cpio, const char *pattern)
 	return (0);
 }
 
-#if 0
 int
 include_from_file(struct cpio *cpio, const char *pathname)
 {
 	return (process_lines(cpio, pathname, &include));
 }
-#endif
 
 static void
 add_pattern(struct match **list, const char *pattern)

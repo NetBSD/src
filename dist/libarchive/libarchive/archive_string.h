@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_string.h,v 1.9 2007/05/29 01:00:19 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_string.h,v 1.10 2008/03/14 22:00:09 kientzle Exp $
  *
  */
 
@@ -115,5 +115,8 @@ void	__archive_string_free(struct archive_string *);
 void	__archive_string_vsprintf(struct archive_string *, const char *,
 	    va_list);
 #define	archive_string_vsprintf	__archive_string_vsprintf
+
+void	__archive_string_sprintf(struct archive_string *, const char *, ...);
+#define	archive_string_sprintf	__archive_string_sprintf
 
 #endif

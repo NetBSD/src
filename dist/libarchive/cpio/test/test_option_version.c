@@ -30,13 +30,15 @@ __FBSDID("$FreeBSD$");
  */
 
 static void
-verify(const char *q, size_t s)
+verify(const char *p, size_t s)
 {
+	const char *q = p;
+
 	/* Version message should start with name of program, then space. */
-	failure("version message too short");
+	failure("version message too short:", p);
 	if (!assert(s > 6))
 		return;
-	failure("Version message should begin with 'bsdcpio'");
+	failure("Version message should begin with 'bsdcpio': %s", p);
 	if (!assertEqualMem(q, "bsdcpio ", 8))
 		/* If we're not testing bsdcpio, don't keep going. */
 		return;
@@ -47,14 +49,21 @@ verify(const char *q, size_t s)
 		--s;
 	}
 	/* Version number terminated by space. */
+	failure("Version: %s", p);
 	assert(s > 1);
+	/* Skip a single trailing a,b,c, or d. */
+	if (*q == 'a' || *q == 'b' || *q == 'c' || *q == 'd')
+		++q;
+	failure("Version: %s", p);
 	assert(*q == ' ');
 	++q; --s;
 	/* Separator. */
+	failure("Version: %s", p);
 	assertEqualMem(q, "-- ", 3);
 	q += 3; s -= 3;
 	/* libarchive name and version number */
 	assert(s > 11);
+	failure("Version: %s", p);
 	assertEqualMem(q, "libarchive ", 11);
 	q += 11; s -= 11;
 	/* Version number is a series of digits and periods. */
@@ -62,8 +71,12 @@ verify(const char *q, size_t s)
 		++q;
 		--s;
 	}
+	/* Skip a single trailing a,b,c, or d. */
+	if (*q == 'a' || *q == 'b' || *q == 'c' || *q == 'd')
+		++q;
 	/* All terminated by a newline. */
 	assert(s >= 1);
+	failure("Version: %s", p);
 	assertEqualMem(q, "\n", 1);
 }
 

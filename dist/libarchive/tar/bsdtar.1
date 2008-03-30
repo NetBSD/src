@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/usr.bin/tar/bsdtar.1,v 1.37 2008/01/22 07:23:44 kientzle Exp $
+.\" $FreeBSD: src/usr.bin/tar/bsdtar.1,v 1.40 2008/03/15 03:25:26 kientzle Exp $
 .\"
 .Dd April 13, 2004
 .Dt BSDTAR 1
@@ -147,6 +147,12 @@ but before extracting entries from the archive.
 .It Fl -check-links ( Fl W Cm check-links )
 (c and r modes only)
 Issue a warning message unless all links to each file are archived.
+.It Fl -chroot ( Fl W Cm chroot )
+(x mode only)
+.Fn chroot
+to the current directory after processing any
+.Fl C
+options and before extracting any files.
 .It Fl -exclude Ar pattern ( Fl W Cm exclude Ns = Ns Ar pattern )
 Do not process files or directories that match the
 specified pattern.
@@ -174,15 +180,6 @@ If not specified, the default tape device will be used.
 .Fx ,
 the default tape device is
 .Pa /dev/sa0 . )
-.It Fl -fast-read ( Fl W Cm fast-read )
-(x and t mode only)
-Extract or list only the first archive entry that matches each pattern
-or filename operand.
-Exit as soon as each specified pattern or filename has been matched.
-By default, the archive is always read to the very end, since
-there can be multiple entries with the same name and, by convention,
-later entries overwrite earlier entries.
-This option is provided as a performance optimization.
 .It Fl H
 (c and r mode only)
 Symbolic links named on the command line will be followed; the
@@ -319,6 +316,15 @@ If
 is being run by root, the default is to restore the owner unless the
 .Fl o
 option is also specified.
+.It Fl q ( Fl -fast-read )
+(x and t mode only)
+Extract or list only the first archive entry that matches each pattern
+or filename operand.
+Exit as soon as each specified pattern or filename has been matched.
+By default, the archive is always read to the very end, since
+there can be multiple entries with the same name and, by convention,
+later entries overwrite earlier entries.
+This option is provided as a performance optimization.
 .It Fl -strip-components Ar count ( Fl W Cm strip-components Ns = Ns Ar count )
 (x and t mode only)
 Remove the specified number of leading path elements.
@@ -404,6 +410,15 @@ In extract or list modes, this option is ignored.
 Note that, unlike other
 .Nm tar
 implementations, this implementation recognizes gzip compression
+automatically when reading archives.
+.It Fl Z
+(c mode only)
+Compress the resulting archive with
+.Xr compress 1 .
+In extract or list modes, this option is ignored.
+Note that, unlike other
+.Nm tar
+implementations, this implementation recognizes compress compression
 automatically when reading archives.
 .El
 .Sh ENVIRONMENT
@@ -628,6 +643,7 @@ an archive while preserving any absolute pathnames,
 components, or symlinks to other directories.
 .Sh SEE ALSO
 .Xr bzip2 1 ,
+.Xr compress 1 ,
 .Xr cpio 1 ,
 .Xr gzip 1 ,
 .Xr mt 1 ,

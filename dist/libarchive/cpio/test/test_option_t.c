@@ -31,14 +31,17 @@ DEFINE_TEST(test_option_t)
 	int r;
 
 	/* List reference archive, make sure the TOC is correct. */
-	r = systemf("%s -it < %s/test_option_t.cpio >t.out 2>t.err", testprog, refdir);
+	extract_reference_file("test_option_t.cpio");
+	r = systemf("%s -it < test_option_t.cpio >t.out 2>t.err", testprog);
 	assertEqualInt(r, 0);
 	assertFileContents("1 block\n", 8, "t.err");
-	assertEqualFile("t.out", "%s/test_option_t.stdout", refdir);
+	extract_reference_file("test_option_t.stdout");
+	assertEqualFile("t.out", "test_option_t.stdout");
 
 	/* List reference archive verbosely, make sure the TOC is correct. */
-	r = systemf("%s -itv < %s/test_option_t.cpio >tv.out 2>tv.err", testprog, refdir);
+	r = systemf("%s -itv < test_option_t.cpio >tv.out 2>tv.err", testprog);
 	assertEqualInt(r, 0);
 	assertFileContents("1 block\n", 8, "tv.err");
-	assertEqualFile("tv.out", "%s/test_option_tv.stdout", refdir);
+	extract_reference_file("test_option_tv.stdout");
+	assertEqualFile("tv.out", "test_option_tv.stdout");
 }
