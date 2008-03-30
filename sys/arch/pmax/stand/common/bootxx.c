@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.28 2005/12/11 12:18:39 christos Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.29 2008/03/30 16:24:50 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ loadfile(path, name)
 	/* read the exec header */
 	i = read(fd, (char *)&ehdr, sizeof(ehdr));
 	if ((i != sizeof(ehdr)) ||
-	    (bcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) ||
+	    (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) != 0) ||
 	    (ehdr.e_ident[EI_CLASS] != ELFCLASS32)) {
 		printf("%s: No ELF header\n", bootfname);
 		goto cerr;
