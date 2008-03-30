@@ -1,7 +1,7 @@
-/*	$NetBSD: isapnp.c,v 1.56 2008/03/15 23:35:09 cube Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.57 2008/03/30 15:31:07 ad Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.56 2008/03/15 23:35:09 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.57 2008/03/30 15:31:07 ad Exp $");
 
 #include "isadma.h"
 
@@ -852,6 +852,13 @@ isapnp_match(device_t parent, cfdata_t match, void *aux)
 	struct isapnp_softc sc;
 	struct isa_attach_args *ia = aux;
 	struct isapnp_probe_cookie *ipc;
+
+	/*
+	 * If the system has no ISA expansion slots, skip the probe
+	 * because it's very slow.
+	 */
+	if (isa_get_slotcount() == 0)
+		return (0);
 
 	/*
 	 * Ensure we only probe ISA PnP once; we don't actually consume
