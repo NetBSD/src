@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.13 2007/12/08 18:35:55 dsl Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.14 2008/03/30 20:58:08 christos Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.13 2007/12/08 18:35:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.14 2008/03/30 20:58:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -138,7 +138,7 @@ darwin_commpage_map(struct proc *p)
 	len = (size_t)darwin_commpage_##x##_size;			\
 									\
 	if (len > sizeof(dcp->dcp_##x)) {				\
-		printf("darwin_commpage: %s too big (%d/%d)\n", #x,	\
+		printf("darwin_commpage: %s too big (%zu/%zu)\n", #x,	\
 			len, sizeof(dcp->dcp_##x));			\
 	} else {							\
 		memcpy(dcp->dcp_##x, (void *)darwin_commpage_##x, len);	\
