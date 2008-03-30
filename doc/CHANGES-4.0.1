@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.22 2008/03/30 14:49:40 jdc Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.23 2008/03/30 15:28:05 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -202,4 +202,14 @@ sys/dev/ata/wd.c				1.359
 	"id not found" when hitting the LBA48 bug, so also install the
 	LBA48 bug workaround on "aborted command" errors.
 	[bouyer, ticket #1094]
+
+sys/netinet/ip_input.c				1.263
+sys/netinet/tcp_subr.c				1.225
+	Make sure we send a reasonable fragment size when IPSEC is configured.
+	Otherwise we end up sending a dubious "0" whenever we cannot find a
+	proper association for the packet.
+	Reset sack_newdata along with snd_nxt to avoid improper integer
+	arithmetics that lead to sending data from an incorrect place in the
+	stream, making it appear as corrupted.
+	[cube, ticket #1109]
 
