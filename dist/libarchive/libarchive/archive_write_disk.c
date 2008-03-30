@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.22 2008/02/19 05:39:35 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.24 2008/03/15 04:20:50 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -1167,7 +1167,7 @@ check_symlinks(struct archive_write_disk *a)
 	struct stat st;
 
 	/*
-	 * Gaurd against symlink tricks.  Reject any archive entry whose
+	 * Guard against symlink tricks.  Reject any archive entry whose
 	 * destination would be altered by a symlink.
 	 */
 	/* Whatever we checked last time doesn't need to be re-checked. */
