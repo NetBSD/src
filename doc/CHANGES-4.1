@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.43 2008/03/24 21:03:44 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.44 2008/03/30 15:05:08 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -705,4 +705,20 @@ sys/secmodel/overlay/secmodel_overlay.c		1.4 via patch
 
 	Support device scope.
 	[elad, ticket #1108]
+
+sys/dev/ata/wd.c				1.359
+	The Hitachi HDP725025GLA380 returns "aborted command" instead of
+	"id not found" when hitting the LBA48 bug, so also install the
+	LBA48 bug workaround on "aborted command" errors.
+	[bouyer, ticket #1094]
+
+share/man/man4/rum.4				1.4
+	Correct firmware path in rum(4). 
+	PR#38216 from Nicola Mingotti.
+	[dholland, ticket #1110]
+
+sys/dev/mii/rlphy.c				1.14-1.15
+	Prepare sc_rtl8201l flag in softc and use it in rlphy_status() so that
+	we don't have to check device names of device_parent(). From FreeBSD.
+	[tsutsui, ticket #1111]
 
