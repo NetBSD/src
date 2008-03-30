@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.109 2008/03/28 17:14:46 drochner Exp $	*/
+/*	$NetBSD: usb.c,v 1.110 2008/03/30 15:37:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.109 2008/03/28 17:14:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.110 2008/03/30 15:37:49 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -164,6 +164,7 @@ static void usb_attach(device_t, device_t, void *);
 static int usb_detach(device_t, int);
 static int usb_activate(device_t, enum devact);
 static void usb_childdet(device_t, device_t);
+static void usb_doattach(device_t);
 
 extern struct cfdriver usb_cd;
 
@@ -178,34 +179,18 @@ USB_MATCH(usb)
 
 USB_ATTACH(usb)
 {
-	static bool usb_selevent_init;	/* XXX */
 	struct usb_softc *sc = device_private(self);
-	usbd_device_handle dev;
-	usbd_status err;
 	int usbrev;
-	int speed;
-	struct usb_event *ue;
-
-	if (!usb_selevent_init) {
-		selinit(&usb_selevent);
-		usb_selevent_init = true;
-	}
-	DPRINTF(("usbd_attach\n"));
 
 	sc->sc_bus = aux;
-	sc->sc_bus->usbctl = self;
-	sc->sc_port.power = USB_MAX_POWER;
-
 	usbrev = sc->sc_bus->usbrev;
+
 	aprint_naive("\n");
 	aprint_normal(": USB revision %s", usbrev_str[usbrev]);
 	switch (usbrev) {
 	case USBREV_1_0:
 	case USBREV_1_1:
-		speed = USB_SPEED_FULL;
-		break;
 	case USBREV_2_0:
-		speed = USB_SPEED_HIGH;
 		break;
 	default:
 		aprint_error(", not supported\n");
@@ -214,9 +199,39 @@ USB_ATTACH(usb)
 	}
 	aprint_normal("\n");
 
-	/* Make sure not to use tsleep() if we are cold booting. */
-	if (cold)
-		sc->sc_bus->use_polling++;
+	config_interrupts(self, usb_doattach);
+}
+
+static void
+usb_doattach(device_t self)
+{
+	static bool usb_selevent_init;	/* XXX */
+	struct usb_softc *sc = device_private(self);
+	usbd_device_handle dev;
+	usbd_status err;
+	int speed;
+	struct usb_event *ue;
+
+	if (!usb_selevent_init) {
+		selinit(&usb_selevent);
+		usb_selevent_init = true;
+	}
+	DPRINTF(("usbd_doattach\n"));
+
+	sc->sc_bus->usbctl = self;
+	sc->sc_port.power = USB_MAX_POWER;
+
+	switch (sc->sc_bus->usbrev) {
+	case USBREV_1_0:
+	case USBREV_1_1:
+		speed = USB_SPEED_FULL;
+		break;
+	case USBREV_2_0:
+		speed = USB_SPEED_HIGH;
+		break;
+	default:
+		panic("usb_doattach");
+	}
 
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
@@ -259,8 +274,6 @@ USB_ATTACH(usb)
 			     device_xname(self), err);
 		sc->sc_dying = 1;
 	}
-	if (cold)
-		sc->sc_bus->use_polling--;
 
 	config_pending_incr();
 	usb_create_event_thread(self);
