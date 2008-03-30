@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.45 2007/12/30 04:58:21 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_entry.c,v 1.51 2008/03/14 23:19:46 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -1155,6 +1155,11 @@ archive_entry_acl_next(struct archive_entry *entry, int want_type, int *type,
 		entry->acl_p = entry->acl_p->next;
 	if (entry->acl_p == NULL) {
 		entry->acl_state = 0;
+		*type = 0;
+		*permset = 0;
+		*tag = 0;
+		*id = -1;
+		*name = NULL;
 		return (ARCHIVE_EOF); /* End of ACL entries. */
 	}
 	*type = entry->acl_p->type;
@@ -1536,7 +1541,7 @@ archive_entry_xattr_next(struct archive_entry * entry,
 		return (ARCHIVE_OK);
 	} else {
 		*name = NULL;
-		*name = NULL;
+		*value = NULL;
 		*size = (size_t)0;
 		return (ARCHIVE_WARN);
 	}

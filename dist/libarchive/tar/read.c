@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.35 2008/01/02 00:21:27 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/read.c,v 1.36 2008/03/15 03:06:46 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -118,6 +118,17 @@ read_archive(struct bsdtar *bsdtar, char mode)
 		    archive_error_string(a));
 
 	do_chdir(bsdtar);
+
+	if (mode == 'x' && bsdtar->option_chroot) {
+#if HAVE_CHROOT
+		if (chroot(".") != 0)
+			bsdtar_errc(bsdtar, 1, errno, "Can't chroot to \".\"");
+#else
+		bsdtar_errc(bsdtar, 1, 0,
+		    "chroot isn't supported on this platform");
+#endif
+	}
+
 	for (;;) {
 		/* Support --fast-read option */
 		if (bsdtar->option_fast_read &&

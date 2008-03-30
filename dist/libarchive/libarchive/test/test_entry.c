@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_entry.c,v 1.2 2007/07/06 15:43:11 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_entry.c,v 1.5 2008/03/14 23:19:46 kientzle Exp $");
 
 #include <locale.h>
 
@@ -122,8 +122,37 @@ DEFINE_TEST(test_entry)
 #else
 	skipping("archive_entry_ino()");
 #endif
+
 	/* link */
-	/* TODO: implement these tests. */
+	archive_entry_set_hardlink(e, "hardlinkname");
+	archive_entry_set_symlink(e, NULL);
+	archive_entry_set_link(e, "link");
+	assertEqualString(archive_entry_hardlink(e), "link");
+	assertEqualString(archive_entry_symlink(e), NULL);
+	archive_entry_copy_link(e, "link2");
+	assertEqualString(archive_entry_hardlink(e), "link2");
+	assertEqualString(archive_entry_symlink(e), NULL);
+	archive_entry_copy_link_w(e, L"link3");
+	assertEqualString(archive_entry_hardlink(e), "link3");
+	assertEqualString(archive_entry_symlink(e), NULL);
+	archive_entry_set_hardlink(e, NULL);
+	archive_entry_set_symlink(e, "symlink");
+	archive_entry_set_link(e, "link");
+	assertEqualString(archive_entry_hardlink(e), NULL);
+	assertEqualString(archive_entry_symlink(e), "link");
+	archive_entry_copy_link(e, "link2");
+	assertEqualString(archive_entry_hardlink(e), NULL);
+	assertEqualString(archive_entry_symlink(e), "link2");
+	archive_entry_copy_link_w(e, L"link3");
+	assertEqualString(archive_entry_hardlink(e), NULL);
+	assertEqualString(archive_entry_symlink(e), "link3");
+	/* Arbitrarily override hardlink if both hardlink and symlink set. */
+	archive_entry_set_hardlink(e, "hardlink");
+	archive_entry_set_symlink(e, "symlink");
+	archive_entry_set_link(e, "link");
+	assertEqualString(archive_entry_hardlink(e), "hardlink");
+	assertEqualString(archive_entry_symlink(e), "link");
+
 	/* mode */
 	archive_entry_set_mode(e, 0123456);
 	assertEqualInt(archive_entry_mode(e), 0123456);
@@ -215,10 +244,16 @@ DEFINE_TEST(test_entry)
 	assertEqualInt(1, archive_entry_xattr_count(e));
 	assertEqualInt(ARCHIVE_WARN,
 	    archive_entry_xattr_next(e, &xname, &xval, &xsize));
+	assertEqualString(xname, NULL);
+	assertEqualString(xval, NULL);
+	assertEqualInt(xsize, 0);
 	archive_entry_xattr_clear(e);
 	assertEqualInt(0, archive_entry_xattr_reset(e));
 	assertEqualInt(ARCHIVE_WARN,
 	    archive_entry_xattr_next(e, &xname, &xval, &xsize));
+	assertEqualString(xname, NULL);
+	assertEqualString(xval, NULL);
+	assertEqualInt(xsize, 0);
 	archive_entry_xattr_add_entry(e, "xattr1", "xattrvalue1", 12);
 	assertEqualInt(1, archive_entry_xattr_reset(e));
 	archive_entry_xattr_add_entry(e, "xattr2", "xattrvalue2", 12);
@@ -227,6 +262,9 @@ DEFINE_TEST(test_entry)
 	assertEqualInt(0, archive_entry_xattr_next(e, &xname, &xval, &xsize));
 	assertEqualInt(ARCHIVE_WARN,
 	    archive_entry_xattr_next(e, &xname, &xval, &xsize));
+	assertEqualString(xname, NULL);
+	assertEqualString(xval, NULL);
+	assertEqualInt(xsize, 0);
 
 
 	/*
@@ -350,6 +388,11 @@ DEFINE_TEST(test_entry)
 	assertEqualString(xname, "xattr1");
 	assertEqualString(xval, "xattrvalue");
 	assertEqualInt(xsize, 11);
+	assertEqualInt(ARCHIVE_WARN,
+	    archive_entry_xattr_next(e2, &xname, &xval, &xsize));
+	assertEqualString(xname, NULL);
+	assertEqualString(xval, NULL);
+	assertEqualInt(xsize, 0);
 #endif
 
 	/* Change the original */
@@ -455,6 +498,14 @@ DEFINE_TEST(test_entry)
 	assertEqualInt(tag, ARCHIVE_ENTRY_ACL_USER);
 	assertEqualInt(qual, 77);
 	assertEqualString(name, "user77");
+	assertEqualInt(1, archive_entry_acl_next(e2,
+			   ARCHIVE_ENTRY_ACL_TYPE_ACCESS,
+			   &type, &permset, &tag, &qual, &name));
+	assertEqualInt(type, 0);
+	assertEqualInt(permset, 0);
+	assertEqualInt(tag, 0);
+	assertEqualInt(qual, -1);
+	assertEqualString(name, NULL);
 #endif
 #if ARCHIVE_VERSION_STAMP < 1009000
 	skipping("xattr preserved in archive_entry copy");

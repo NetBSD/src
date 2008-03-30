@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.64 2008/02/19 05:27:17 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/write.c,v 1.65 2008/03/15 02:41:44 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -220,6 +220,9 @@ tar_mode_c(struct bsdtar *bsdtar)
 			archive_write_set_compression_gzip(a);
 			break;
 #endif
+		case 'Z':
+			archive_write_set_compression_compress(a);
+			break;
 		default:
 			bsdtar_errc(bsdtar, 1, 0,
 			    "Unrecognized compression option -%c",

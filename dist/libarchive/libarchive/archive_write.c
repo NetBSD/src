@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write.c,v 1.26 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write.c,v 1.27 2008/03/14 23:09:02 kientzle Exp $");
 
 /*
  * This file contains the "essential" portions of the write API, that
@@ -97,7 +97,12 @@ archive_write_new(void)
 	a->archive.magic = ARCHIVE_WRITE_MAGIC;
 	a->archive.state = ARCHIVE_STATE_NEW;
 	a->archive.vtable = archive_write_vtable();
-	a->bytes_per_block = ARCHIVE_DEFAULT_BYTES_PER_BLOCK;
+	/*
+	 * The value 10240 here matches the traditional tar default,
+	 * but is otherwise arbitrary.
+	 * TODO: Set the default block size from the format selected.
+	 */
+	a->bytes_per_block = 10240;
 	a->bytes_in_last_block = -1;	/* Default */
 
 	/* Initialize a block of nulls for padding purposes. */

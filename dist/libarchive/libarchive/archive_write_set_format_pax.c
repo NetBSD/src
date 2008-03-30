@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_pax.c,v 1.42 2007/12/30 04:58:22 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_pax.c,v 1.46 2008/03/15 11:04:45 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -85,8 +85,8 @@ archive_write_set_format_pax_restricted(struct archive *_a)
 	struct archive_write *a = (struct archive_write *)_a;
 	int r;
 	r = archive_write_set_format_pax(&a->archive);
-	a->archive_format = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
-	a->archive_format_name = "restricted POSIX pax interchange";
+	a->archive.archive_format = ARCHIVE_FORMAT_TAR_PAX_RESTRICTED;
+	a->archive.archive_format_name = "restricted POSIX pax interchange";
 	return (r);
 }
 
@@ -116,8 +116,8 @@ archive_write_set_format_pax(struct archive *_a)
 	a->format_finish = archive_write_pax_finish;
 	a->format_destroy = archive_write_pax_destroy;
 	a->format_finish_entry = archive_write_pax_finish_entry;
-	a->archive_format = ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE;
-	a->archive_format_name = "POSIX pax interchange";
+	a->archive.archive_format = ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE;
+	a->archive.archive_format_name = "POSIX pax interchange";
 	return (ARCHIVE_OK);
 }
 
@@ -470,7 +470,7 @@ archive_write_pax_header(struct archive_write *a,
 		hdrcharset = "BINARY";
 	}
 	gname = archive_entry_gname(entry_main);
-	gname_w = archive_entry_uname_w(entry_main);
+	gname_w = archive_entry_gname_w(entry_main);
 	if (gname != NULL && gname_w == NULL) {
 		archive_set_error(&a->archive, EILSEQ,
 		    "Can't translate gname '%s' to UTF-8", gname);
@@ -701,7 +701,7 @@ archive_write_pax_header(struct archive_write *a,
 	 * already set (we're already generating an extended header, so
 	 * may as well include these).
 	 */
-	if (a->archive_format != ARCHIVE_FORMAT_TAR_PAX_RESTRICTED ||
+	if (a->archive.archive_format != ARCHIVE_FORMAT_TAR_PAX_RESTRICTED ||
 	    need_extension) {
 
 		if (archive_entry_mtime(entry_main) < 0  ||
@@ -764,7 +764,7 @@ archive_write_pax_header(struct archive_write *a,
 	 * Pax-restricted does not store data for hardlinks, in order
 	 * to improve compatibility with ustar.
 	 */
-	if (a->archive_format != ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE &&
+	if (a->archive.archive_format != ARCHIVE_FORMAT_TAR_PAX_INTERCHANGE &&
 	    hardlink != NULL)
 		archive_entry_set_size(entry_main, 0);
 
@@ -1060,7 +1060,13 @@ build_ustar_entry_name(char *dest, const char *src, size_t src_length,
 
 /*
  * The ustar header for the pax extended attributes must have a
- * reasonable name:  SUSv3 suggests 'dirname'/PaxHeader/'filename'
+ * reasonable name:  SUSv3 requires 'dirname'/PaxHeader.'pid'/'filename'
+ * where 'pid' is the PID of the archiving process.  Unfortunately,
+ * that makes testing a pain since the output varies for each run,
+ * so I'm sticking with the simpler 'dirname'/PaxHeader/'filename'
+ * for now.  (Someday, I'll make this settable.  Then I can use the
+ * SUS recommendation as default and test harnesses can override it
+ * to get predictable results.)
  *
  * Joerg Schilling has argued that this is unnecessary because, in
  * practice, if the pax extended attributes get extracted as regular
@@ -1071,19 +1077,14 @@ build_ustar_entry_name(char *dest, const char *src, size_t src_length,
  * recommendation, but I'm not entirely convinced.  I'm also
  * uncomfortable with the fact that "/tmp" is a Unix-ism.
  *
- * GNU tar uses 'dirname'/PaxHeader.<pid>/'filename', where the PID is
- * the PID of the archiving process.  This seems unnecessarily complex
- * to me, as I don't see much value to separating the headers from
- * extracting multiple versions of an archive.
- *
- * The following routine implements the SUSv3 recommendation, and is
- * much simpler because build_ustar_entry_name() above already does
- * most of the work (we just need to give it an extra path element to
- * insert and handle a few pathological cases).
+ * The following routine leverages build_ustar_entry_name() above and
+ * so is simpler than you might think.  It just needs to provide the
+ * additional path element and handle a few pathological cases).
  */
 static char *
 build_pax_attribute_name(char *dest, const char *src)
 {
+	char buff[64];
 	const char *p;
 
 	/* Handle the null filename case. */
@@ -1122,8 +1123,19 @@ build_pax_attribute_name(char *dest, const char *src)
 		return (dest);
 	}
 
+	/*
+	 * TODO: Push this string into the 'pax' structure to avoid
+	 * recomputing it every time.  That will also open the door
+	 * to having clients override it.
+	 */
+#if HAVE_GETPID && 0  /* Disable this for now; see above comment. */
+	sprintf(buff, "PaxHeader.%d", getpid());
+#else
+	/* If the platform can't fetch the pid, don't include it. */
+	strcpy(buff, "PaxHeader");
+#endif
 	/* General case: build a ustar-compatible name adding "/PaxHeader/". */
-	build_ustar_entry_name(dest, src, p - src, "PaxHeader");
+	build_ustar_entry_name(dest, src, p - src, buff);
 
 	return (dest);
 }
