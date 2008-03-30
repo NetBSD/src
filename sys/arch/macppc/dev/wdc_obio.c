@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.49 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.50 2008/03/30 18:16:25 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.49 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.50 2008/03/30 18:16:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,8 +460,8 @@ wdc_obio_detach(device_t self, int flags)
 			sc->sc_wdcdev.regs->cmd_baseioh, WDC_REG_NPORTS << 4);
 
 	/* Unmap DMA registers. */
-	/* XXX unmapiodev(sc->sc_dmareg); */
-	/* XXX free(sc->sc_dmacmd); */
+	bus_space_unmap(sc->sc_wdcdev.regs->cmd_iot, sc->sc_dmaregh, 0x100);
+	free(sc->sc_dmacmd, M_DEVBUF);
 
 	return 0;
 }
