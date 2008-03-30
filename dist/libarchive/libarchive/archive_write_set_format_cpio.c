@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_cpio.c,v 1.13 2007/12/30 04:58:22 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_cpio.c,v 1.14 2008/03/15 11:04:45 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -97,8 +97,8 @@ archive_write_set_format_cpio(struct archive *_a)
 	a->format_finish_entry = archive_write_cpio_finish_entry;
 	a->format_finish = archive_write_cpio_finish;
 	a->format_destroy = archive_write_cpio_destroy;
-	a->archive_format = ARCHIVE_FORMAT_CPIO_POSIX;
-	a->archive_format_name = "POSIX cpio";
+	a->archive.archive_format = ARCHIVE_FORMAT_CPIO_POSIX;
+	a->archive.archive_format_name = "POSIX cpio";
 	return (ARCHIVE_OK);
 }
 

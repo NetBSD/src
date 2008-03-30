@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.24 2007/12/30 04:58:21 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.26 2008/03/14 23:00:53 kientzle Exp $
  */
 
 #ifndef ARCHIVE_ENTRY_H_INCLUDED
@@ -31,7 +31,15 @@
 #include <sys/types.h>
 #include <stddef.h>  /* for wchar_t */
 #include <time.h>
+#ifndef _WIN32
 #include <unistd.h>
+#else
+typedef unsigned int uid_t;
+typedef unsigned int gid_t;
+typedef unsigned int ino_t;
+typedef unsigned int dev_t;
+typedef unsigned short mode_t;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -317,12 +325,12 @@ int	archive_entry_xattr_next(struct archive_entry *,
 	    const char ** /* name */, const void ** /* value */, size_t *);
 
 /*
- * Utility to detect hardlinks.
+ * Utility to match up hardlinks.
  *
  * The 'struct archive_entry_linkresolver' is a cache of archive entries
  * for files with multiple links.  Here's how to use it:
  *   1. Create a lookup object with archive_entry_linkresolver_new()
- *   2. Set the appropriate strategy.
+ *   2. Tell it the archive format you're using.
  *   3. Hand each archive_entry to archive_entry_linkify().
  *      That function will return 0, 1, or 2 entries that should
  *      be written.
@@ -347,8 +355,8 @@ int	archive_entry_xattr_next(struct archive_entry *,
 struct archive_entry_linkresolver;
 
 /*
- * This machine supports three different strategies for marking
- * hardlinks.  The names come from the best-known
+ * There are three different strategies for marking hardlinks.
+ * The descriptions below name them after the best-known
  * formats that rely on each strategy:
  *
  * "Old cpio" is the simplest, it always returns any entry unmodified.
@@ -357,7 +365,7 @@ struct archive_entry_linkresolver;
  *    to detect and properly link the files as they are restored.
  * "tar" is also pretty simple; it caches a copy the first time it sees
  *    any link.  Subsequent appearances are modified to be hardlink
- *    references without any body to the first one.  Used by all tar
+ *    references to the first one without any body.  Used by all tar
  *    formats, although the newest tar formats permit the "old cpio" strategy
  *    as well.  This strategy is very simple for the dearchiver,
  *    and reasonably straightforward for the archiver.
@@ -385,25 +393,13 @@ struct archive_entry_linkresolver;
  *    strategy requires you to rescan the archive from the beginning to
  *    correctly extract an arbitrary link.
  */
-#define ARCHIVE_ENTRY_LINKIFY_LIKE_TAR	0
-#define ARCHIVE_ENTRY_LINKIFY_LIKE_OLD_CPIO 1
-#define ARCHIVE_ENTRY_LINKIFY_LIKE_NEW_CPIO 2
 
 struct archive_entry_linkresolver *archive_entry_linkresolver_new(void);
 void archive_entry_linkresolver_set_strategy(
-	struct archive_entry_linkresolver *, int /* strategy */);
+	struct archive_entry_linkresolver *, int /* format_code */);
 void archive_entry_linkresolver_free(struct archive_entry_linkresolver *);
 void archive_entry_linkify(struct archive_entry_linkresolver *,
     struct archive_entry **, struct archive_entry **);
-
-/*
- * DEPRECATED: This will be removed in libarchive 3.0.  It was an
- * early attempt at providing library-level hardlink recognition
- * support, but it only handles the tar strategy and cannot easily
- * be extended, so it's being replaced with the "linkify" function.
- */
-const char *archive_entry_linkresolve(struct archive_entry_linkresolver *,
-    struct archive_entry *);
 
 #ifdef __cplusplus
 }

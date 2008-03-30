@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_cpio_newc.c,v 1.3 2008/01/23 05:43:25 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_cpio_newc.c,v 1.4 2008/03/15 11:04:45 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -102,8 +102,8 @@ archive_write_set_format_cpio_newc(struct archive *_a)
 	a->format_finish_entry = archive_write_newc_finish_entry;
 	a->format_finish = archive_write_newc_finish;
 	a->format_destroy = archive_write_newc_destroy;
-	a->archive_format = ARCHIVE_FORMAT_CPIO_SVR4_NOCRC;
-	a->archive_format_name = "SVR4 cpio nocrc";
+	a->archive.archive_format = ARCHIVE_FORMAT_CPIO_SVR4_NOCRC;
+	a->archive.archive_format_name = "SVR4 cpio nocrc";
 	return (ARCHIVE_OK);
 }
 
