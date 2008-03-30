@@ -40,10 +40,11 @@ unpack_test(const char *from, const char *options)
 	/*
 	 * Use cpio to unpack the sample archive
 	 */
-	r = systemf("%s -i --quiet %s < %s/%s >unpack.out 2>unpack.err",
-	    testprog, options, refdir, from);
-	failure("Error invoking %s -i --quiet %s < %s/%s",
-	    testprog, options, refdir, from);
+	extract_reference_file(from);
+	r = systemf("%s -i --quiet %s < %s >unpack.out 2>unpack.err",
+	    testprog, options, from);
+	failure("Error invoking %s -i --quiet %s < %s",
+	    testprog, options, from);
 	assertEqualInt(r, 0);
 
 	/* Verify that nothing went to stderr. */
