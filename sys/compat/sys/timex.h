@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.1.68.1 2008/03/29 20:46:59 christos Exp $	*/
+/*	$NetBSD: timex.h,v 1.1.68.2 2008/03/30 20:55:35 christos Exp $	*/
 
 /*-
  ***********************************************************************
@@ -45,9 +45,9 @@ struct ntptimeval30 {
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
-void	ntp_gettime(struct ntptimeval30 *);
-void	__ntp_gettime30(struct ntptimeval50 *);
-void	__ntp_gettime50(struct ntptimeval *);
+int	ntp_gettime(struct ntptimeval30 *);
+int	__ntp_gettime30(struct ntptimeval50 *);
+int	__ntp_gettime50(struct ntptimeval *);
 __END_DECLS
 #endif /* !_KERNEL */
 
