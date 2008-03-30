@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.19 2008/03/29 15:59:25 skrll Exp $
+#	$NetBSD: files.hp700,v 1.20 2008/03/30 12:32:13 skrll Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -122,6 +122,9 @@ file	arch/hp700/dev/com_dino.c	com_dino
 
 attach	sti at gedoens with sti_gedoens
 file	arch/hp700/dev/sti_sgc.c	sti_gedoens
+
+attach	siop at gedoens with siop_gedoens
+file	arch/hp700/dev/siop_sgc.c	siop_gedoens
 
 ###
 

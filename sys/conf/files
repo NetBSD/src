@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.897 2008/03/29 15:59:26 skrll Exp $
+#	$NetBSD: files,v 1.898 2008/03/30 12:32:13 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -533,7 +533,7 @@ file	dev/ic/siop_common.c		siop_common
 # Symbios/NCR 53c720/53c8xx SCSI controllers
 #
 device	siop: scsi,siop_common
-file	dev/ic/siop.c			siop
+file	dev/ic/siop.c			siop & (siop_pci | siop_gedoens)
 defflag	opt_siop.h			SIOP_SYMLED
 
 device	esiop: scsi,siop_common
