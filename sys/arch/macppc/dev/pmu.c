@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.11 2007/12/06 17:00:33 ad Exp $ */
+/*	$NetBSD: pmu.c,v 1.12 2008/03/30 17:57:29 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.11 2007/12/06 17:00:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.12 2008/03/30 17:57:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,8 +539,11 @@ static void
 pmu_adb_poll(void *cookie)
 {
 	struct pmu_softc *sc = cookie;
+	int s;
 
+	s = spltty();
 	pmu_intr(sc);
+	splx(s);
 }
 
 static void
@@ -595,11 +598,8 @@ static int
 pmu_intr(void *arg)
 {
 	struct pmu_softc *sc = arg;
-	unsigned int s, len, i;
+	unsigned int len, i;
 	uint8_t resp[16];
-
-	s = splhigh();		/* can't be too careful - might be called */
-				/* from a routine, NOT an interrupt */
 
 	DPRINTF(":");
 
@@ -665,7 +665,6 @@ pmu_intr(void *arg)
 	printf("\n");
 #endif
 done:
-	splx(s);
 	return 1;
 }
 
