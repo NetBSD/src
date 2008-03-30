@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.425 2008/03/28 05:47:27 lukem Exp $
+# $NetBSD: shl.mi,v 1.426 2008/03/30 05:33:29 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -51,7 +51,7 @@
 ./usr/lib/i18n/libmapper_std.so.4.4		base-i18n-shlib
 ./usr/lib/i18n/libmapper_zone.so.4.4		base-i18n-shlib
 ./usr/lib/libamu.so.3.0				base-amd-shlib
-./usr/lib/libarchive.so.2.0			base-sys-shlib
+./usr/lib/libarchive.so.2.1			base-sys-shlib
 ./usr/lib/libasn1.so.7.0			base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.8.0				base-sys-shlib		bfd
 ./usr/lib/libbind9.so.0.0			base-bind-shlib
