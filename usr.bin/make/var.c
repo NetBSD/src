@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.127 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.128 2008/03/31 00:12:21 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.127 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.128 2008/03/31 00:12:21 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.127 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.128 2008/03/31 00:12:21 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -872,9 +872,15 @@ Boolean
 Var_Exists(const char *name, GNode *ctxt)
 {
     Var	    	  *v;
+    char          *cp;
 
-    v = VarFind(name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
-
+    if ((cp = strchr(name, '$')) != NULL) {
+	cp = Var_Subst(NULL, name, ctxt, FALSE);
+    }
+    v = VarFind(cp ? cp : name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
+    if (cp != NULL) {
+	free(cp);
+    }
     if (v == (Var *)NIL) {
 	return(FALSE);
     } else {
