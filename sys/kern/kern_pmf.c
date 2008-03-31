@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.17 2008/03/12 18:02:22 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.18 2008/03/31 15:28:47 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.17 2008/03/12 18:02:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.18 2008/03/31 15:28:47 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -128,8 +128,6 @@ pmf_event_worker(struct work *wk, void *dummy)
 	}
 
 	free(pew, M_TEMP);
-
-	return;
 }
 
 static bool
