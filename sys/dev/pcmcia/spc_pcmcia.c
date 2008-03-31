@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.18 2007/10/19 12:01:06 ad Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.19 2008/03/31 15:20:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.18 2007/10/19 12:01:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.19 2008/03/31 15:20:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,62 +68,59 @@ struct spc_pcmcia_softc {
 #define	SPC_PCMCIA_ATTACHED	3
 };
 
-int	spc_pcmcia_match(struct device *, struct cfdata *, void *);
-int	spc_pcmcia_validate_config(struct pcmcia_config_entry *);
-void	spc_pcmcia_attach(struct device *, struct device *, void *);
-int	spc_pcmcia_detach(struct device *, int);
-int	spc_pcmcia_enable(struct device *, int);
+static int	spc_pcmcia_match(device_t, cfdata_t, void *);
+static int	spc_pcmcia_validate_config(struct pcmcia_config_entry *);
+static void	spc_pcmcia_attach(device_t, device_t, void *);
+static int	spc_pcmcia_detach(device_t, int);
+static int	spc_pcmcia_enable(device_t, int);
 
-CFATTACH_DECL(spc_pcmcia, sizeof(struct spc_pcmcia_softc),
+CFATTACH_DECL_NEW(spc_pcmcia, sizeof(struct spc_pcmcia_softc),
     spc_pcmcia_match, spc_pcmcia_attach, spc_pcmcia_detach, spc_activate);
 
-const struct pcmcia_product spc_pcmcia_products[] = {
+static const struct pcmcia_product spc_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_SCSI600,
 	  PCMCIA_CIS_FUJITSU_SCSI600 },
 };
-const size_t spc_pcmcia_nproducts =
-    sizeof(spc_pcmcia_products) / sizeof(spc_pcmcia_products[0]);
+static const size_t spc_pcmcia_nproducts = __arraycount(spc_pcmcia_products);
 
 int
-spc_pcmcia_match(struct device *parent, struct cfdata *match,
-    void *aux)
+spc_pcmcia_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
 	if (pcmcia_product_lookup(pa, spc_pcmcia_products, spc_pcmcia_nproducts,
 	    sizeof(spc_pcmcia_products[0]), NULL))
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 int
-spc_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+spc_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
+
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_memspace != 0 ||
 	    cfe->num_iospace != 1)
-		return (EINVAL);
-	return (0);
+		return EINVAL;
+	return 0;
 }
 
 void
-spc_pcmcia_attach(struct device *parent, struct device *self,
-    void *aux)
+spc_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
-	struct spc_pcmcia_softc *sc = (void *)self;
-	struct spc_softc *spc = (void *)self;
+	struct spc_pcmcia_softc *sc = device_private(self);
+	struct spc_softc *spc = &sc->sc_spc;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
 	int error;
 
+	spc->sc_dev = self;
 	sc->sc_pf = pf;
 
 	error = pcmcia_function_configure(pf, spc_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
-		    error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 
@@ -147,36 +144,32 @@ spc_pcmcia_attach(struct device *parent, struct device *self,
 	sc->sc_state = SPC_PCMCIA_ATTACHED;
 	return;
 
-fail:
+ fail:
 	pcmcia_function_unconfigure(pf);
 }
 
 int
-spc_pcmcia_detach(self, flags)
-	struct device *self;
-	int flags;
+spc_pcmcia_detach(device_t self, int flags)
 {
-	struct spc_pcmcia_softc *sc = (void *)self;
+	struct spc_pcmcia_softc *sc = device_private(self);
 	int error;
 
 	if (sc->sc_state != SPC_PCMCIA_ATTACHED)
-		return (0);
+		return 0;
 
 	error = spc_detach(self, flags);
 	if (error)
-		return (error);
+		return error;
 
 	pcmcia_function_unconfigure(sc->sc_pf);
 
-	return (0);
+	return 0;
 }
 
 int
-spc_pcmcia_enable(arg, onoff)
-	struct device *arg;
-	int onoff;
+spc_pcmcia_enable(device_t self, int onoff)
 {
-	struct spc_pcmcia_softc *sc = (void *)arg;
+	struct spc_pcmcia_softc *sc = device_private(self);
 	int error;
 
 	if (onoff) {
@@ -184,13 +177,13 @@ spc_pcmcia_enable(arg, onoff)
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
 		    spc_intr, &sc->sc_spc);
 		if (!sc->sc_ih)
-			return (EIO);
+			return EIO;
 
 		error = pcmcia_function_enable(sc->sc_pf);
 		if (error) {
 			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
 			sc->sc_ih = 0;
-			return (error);
+			return error;
 		}
 
 		/* Initialize only chip.  */
@@ -201,5 +194,5 @@ spc_pcmcia_enable(arg, onoff)
 		sc->sc_ih = 0;
 	}
 
-	return (0);
+	return 0;
 }
