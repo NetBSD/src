@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.1 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.2 2008/03/31 23:18:49 chris Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -44,14 +44,9 @@ struct pxaohci_softc {
 	void		*sc_ih;
 };
 
-static int	pxaohci_match(struct device *, struct cfdata *, void *);
-static void	pxaohci_attach(struct device *, struct device *, void *);
-static int	pxaohci_detach(struct device *, int);
-
-CFATTACH_DECL(pxaohci, sizeof(struct pxaohci_softc),
-    pxaohci_match, pxaohci_attach, pxaohci_detach, ohci_activate);
-
+#if 0
 static void	pxaohci_power(int, void *);
+#endif
 static void	pxaohci_enable(struct pxaohci_softc *);
 static void	pxaohci_disable(struct pxaohci_softc *);
 
@@ -59,7 +54,7 @@ static void	pxaohci_disable(struct pxaohci_softc *);
 #define	HWRITE4(sc,r,v)	bus_space_write_4((sc)->sc.iot, (sc)->sc.ioh, (r), (v))
 
 static int
-pxaohci_match(struct device *parent, struct cfdata *cf, void *aux)
+pxaohci_match(device_t parent, struct cfdata *cf, void *aux)
 {
 
 	if (CPU_IS_PXA270)
@@ -68,21 +63,25 @@ pxaohci_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pxaohci_attach(struct device *parent, struct device *self, void *aux)
+pxaohci_attach(device_t parent, device_t self, void *aux)
 {
-	struct pxaohci_softc *sc = (struct pxaohci_softc *)self;
+	struct pxaohci_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
 	usbd_status r;
+	const char *devname = device_xname(self);
 
+#ifdef USB_DEBUG
 	{
-		extern int ohcidebug;
-		ohcidebug = 16;
+		//extern int ohcidebug;
+		//ohcidebug = 16;
 	}
+#endif
 
 	sc->sc.iot = pxa->pxa_iot;
 	sc->sc.sc_bus.dmatag = pxa->pxa_dmat;
 	sc->sc.sc_size = 0;
 	sc->sc_ih = NULL;
+	sc->sc.sc_dev = self;
 
 	/* Map I/O space */
 	if (bus_space_map(sc->sc.iot, PXA2X0_USBHC_BASE, PXA2X0_USBHC_SIZE, 0,
@@ -115,18 +114,20 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error("%s: init failed, error=%d\n",
-		    sc->sc.sc_bus.bdev.dv_xname, r);
+		    devname, r);
 		goto free_intr;
 	}
 
+#if 0
 	sc->sc.sc_powerhook = powerhook_establish(sc->sc.sc_bus.bdev.dv_xname,
 	    pxaohci_power, sc);
 	if (sc->sc.sc_powerhook == NULL) {
 		aprint_error("%s: cannot establish powerhook\n",
 		    sc->sc.sc_bus.bdev.dv_xname);
 	}
+#endif
 
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus, usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 
 	return;
 
@@ -141,19 +142,21 @@ free_map:
 }
 
 static int
-pxaohci_detach(struct device *self, int flags)
+pxaohci_detach(device_t self, int flags)
 {
-	struct pxaohci_softc *sc = (struct pxaohci_softc *)self;
+	struct pxaohci_softc *sc = device_private(self);
 	int error;
 
 	error = ohci_detach(&sc->sc, flags);
 	if (error)
 		return error;
 
+#if 0
 	if (sc->sc.sc_powerhook) {
 		powerhook_disestablish(sc->sc.sc_powerhook);
 		sc->sc.sc_powerhook = NULL;
 	}
+#endif
 
 	if (sc->sc_ih) {
 		pxa2x0_intr_disestablish(sc->sc_ih);
@@ -173,6 +176,7 @@ pxaohci_detach(struct device *self, int flags)
 	return 0;
 }
 
+#if 0
 static void
 pxaohci_power(int why, void *arg)
 {
@@ -201,6 +205,7 @@ pxaohci_power(int why, void *arg)
 	sc->sc.sc_bus.use_polling--;
 	splx(s);
 }
+#endif
 
 static void
 pxaohci_enable(struct pxaohci_softc *sc)
@@ -244,3 +249,10 @@ pxaohci_disable(struct pxaohci_softc *sc)
 	hr = HREAD4(sc, USBHC_HR);
 	HWRITE4(sc, USBHC_HR, (hr & USBHC_HR_MASK) & ~(USBHC_HR_FHR));
 }
+
+
+CFATTACH_DECL2_NEW(pxaohci, sizeof(struct pxaohci_softc),
+    pxaohci_match, pxaohci_attach, pxaohci_detach, ohci_activate, NULL,
+    ohci_childdet);
+
+
