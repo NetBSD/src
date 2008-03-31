@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.1 2008/03/29 00:16:26 cube Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.2 2008/03/31 14:30:58 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.1 2008/03/29 00:16:26 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.2 2008/03/31 14:30:58 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -343,6 +343,11 @@ lii_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 	return;
 }
