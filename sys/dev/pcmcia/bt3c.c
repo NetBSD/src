@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.16 2007/11/28 20:16:11 plunky Exp $ */
+/* $NetBSD: bt3c.c,v 1.17 2008/03/31 09:37:37 plunky Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.16 2007/11/28 20:16:11 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.17 2008/03/31 09:37:37 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -964,7 +964,7 @@ bt3c_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (cfe == 0) {
-		aprint_error("bt3c_attach: cannot allocate io space\n");
+		aprint_error_dev(self, "cannot allocate io space\n");
 		goto no_config_entry;
 	}
 
@@ -974,7 +974,7 @@ bt3c_attach(device_t parent, device_t self, void *aux)
 	/* Map in the io space */
 	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO,
 			&sc->sc_pcioh, &sc->sc_iow)) {
-		aprint_error("bt3c_attach: cannot map io space\n");
+		aprint_error_dev(self, "cannot map io space\n");
 		goto iomap_failed;
 	}
 
