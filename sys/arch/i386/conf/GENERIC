@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.885 2008/03/29 00:21:01 cube Exp $
+# $NetBSD: GENERIC,v 1.886 2008/03/31 15:19:28 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.885 $"
+#ident 		"GENERIC-$Revision: 1.886 $"
 
 maxusers	64		# estimated number of users
 
@@ -365,6 +365,7 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
 aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
+asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
