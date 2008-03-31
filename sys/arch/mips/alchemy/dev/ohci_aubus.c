@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.11 2008/03/31 02:42:42 dogcow Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.12 2008/03/31 03:19:20 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.11 2008/03/31 02:42:42 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.12 2008/03/31 03:19:20 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,14 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.11 2008/03/31 02:42:42 dogcow Exp $
 #include <dev/usb/ohcivar.h>
 
 
-static int	ohci_aubus_match(struct device *, struct cfdata *, void *);
-static void	ohci_aubus_attach(struct device *, struct device *, void *);
+static int	ohci_aubus_match(device_t, cfdata_t, void *);
+static void	ohci_aubus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ohci_aubus, sizeof (ohci_softc_t),
+CFATTACH_DECL_NEW(ohci_aubus, sizeof (ohci_softc_t),
     ohci_aubus_match, ohci_aubus_attach, NULL, NULL);
 
 int
-ohci_aubus_match(struct device *parent, struct cfdata *match, void *aux)
+ohci_aubus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
@@ -77,9 +77,9 @@ ohci_aubus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
+ohci_aubus_attach(device_t parent, device_t self, void *aux)
 {
-	ohci_softc_t *sc = (ohci_softc_t *)self;
+	ohci_softc_t *sc = device_private(self);
 	void *ih;
 	usbd_status r;
 	uint32_t x, tmp;
