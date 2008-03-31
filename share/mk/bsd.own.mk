@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.504 2008/03/24 05:00:31 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.505 2008/03/31 02:42:27 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -644,14 +644,20 @@ HOST_INSTALL_SYMLINK?=	${INSTALL} ${SYMLINK} ${RENAME}
 #
 # USE_* options which default to "no" and will be forced to "no" if their
 # corresponding MK* variable is set to "no".
-# (The latter is implemented using the .for loop in the next block.)
 #
+.for var in USE_SKEY
+.if (${${var:S/USE_/MK/}} == "no")
+${var}:= no
+.else
+${var}?= no
+.endif
+.endfor
 
 #
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_PAM USE_SKEY USE_YP
+.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_PAM USE_YP
 .if (${${var:S/USE_/MK/}} == "no")
 ${var}:= no
 .else
