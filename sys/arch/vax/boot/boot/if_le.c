@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.10 2006/06/11 08:35:00 he Exp $ */
+/*	$NetBSD: if_le.c,v 1.11 2008/03/31 06:19:59 he Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -172,7 +172,7 @@ igen:
 		initblock = (struct initblock *)
 			(QW_ALLOC(sizeof(struct initblock)) + addoff);
 		initblock->ib_mode = LE_MODE_NORMAL;
-		bcopy(eaddr, initblock->ib_padr, 6);
+		memcpy(initblock->ib_padr, eaddr, 6);
 		initblock->ib_ladrf1 = 0;
 		initblock->ib_ladrf2 = 0;
 
@@ -267,8 +267,9 @@ retry:
 			copyin((rdesc[next_rdesc].bd_adrflg&0xffffff),
 			    pkt, len);
 		else
-			bcopy((char *)(rdesc[next_rdesc].bd_adrflg&0xffffff) +
-			    addoff, pkt, len);
+			memcpy(pkt,
+			    (char *)(rdesc[next_rdesc].bd_adrflg&0xffffff) +
+			    addoff, len);
 	}
 
 	rdesc[next_rdesc].bd_mcnt = 0;
@@ -307,8 +308,8 @@ retry:
 	if (kopiera)
 		copyout(pkt, (tdesc[next_tdesc].bd_adrflg & 0xffffff), len);
 	else
-		bcopy(pkt, (char *)(tdesc[next_tdesc].bd_adrflg & 0xffffff) +
-		    addoff, len);
+		memcpy((char *)(tdesc[next_tdesc].bd_adrflg & 0xffffff) +
+		    addoff, pkt, len);
 	tdesc[next_tdesc].bd_bcnt =
 	    (len < ETHER_MIN_LEN ? -ETHER_MIN_LEN : -len);
 	tdesc[next_tdesc].bd_mcnt = 0;
