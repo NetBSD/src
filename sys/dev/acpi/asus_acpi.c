@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.1 2008/03/31 15:17:21 jmcneill Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.2 2008/03/31 15:29:18 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.1 2008/03/31 15:17:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.2 2008/03/31 15:29:18 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,8 +133,6 @@ asus_attach(device_t parent, device_t self, void *opaque)
 
 	if (!pmf_device_register(self, NULL, asus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	return;
 }
 
 static void
