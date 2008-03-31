@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.61 2008/03/31 00:18:17 jmcneill Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.62 2008/03/31 15:23:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.61 2008/03/31 00:18:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.62 2008/03/31 15:23:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2116,6 +2116,8 @@ static const mixer_item_t alc662_mixer_items[] = {
 
 	{{0, {AudioNmaster, 0}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
 	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
+	{{0, {AudioNmaster".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
 	{{0, {AudioNspeaker".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
 	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
 	{{0, {AudioNspeaker".boost", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
@@ -2127,6 +2129,8 @@ static const mixer_item_t alc662_mixer_items[] = {
 
 	{{0, {AudioNdac, 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
 	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
+	{{0, {AudioNdac".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
 	{{0, {AudioNdac".front", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
 	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
 	{{0, {AudioNdac".surround", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
