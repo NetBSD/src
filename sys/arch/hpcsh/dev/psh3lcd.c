@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3lcd.c,v 1.3 2007/01/21 11:01:09 kiyohara Exp $	*/
+/*	$NetBSD: psh3lcd.c,v 1.4 2008/03/31 15:49:29 kiyohara Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -107,16 +107,16 @@ static const struct psh3lcd_xx0_bcd {	/* 200JC */
 
 
 struct psh3lcd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int sc_brightness;
 	int sc_brightness_max;
 	void (*sc_set_brightness)(int);
 };
 
-static int psh3lcd_match(struct device *, struct cfdata *, void *);
-static void psh3lcd_attach(struct device *, struct device *, void *);
+static int psh3lcd_match(device_t, struct cfdata *, void *);
+static void psh3lcd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(psh3lcd, sizeof(struct psh3lcd_softc),
+CFATTACH_DECL_NEW(psh3lcd, sizeof(struct psh3lcd_softc),
     psh3lcd_match, psh3lcd_attach, NULL, NULL);
 
 
@@ -222,8 +222,7 @@ psh3lcd_set_contrast(int value)
 
 /* ARGSUSED */
 static int
-psh3lcd_match(struct device *parent __unused, struct cfdata *cfp,
-	      void *aux __unused)
+psh3lcd_match(device_t parent __unused, struct cfdata *cfp, void *aux __unused)
 {
 	uint8_t bcr0;
 
@@ -247,11 +246,12 @@ psh3lcd_match(struct device *parent __unused, struct cfdata *cfp,
 
 /* ARGSUSED */
 static void
-psh3lcd_attach(struct device *parent __unused, struct device *self,
-	       void *aux __unused)
+psh3lcd_attach(device_t parent __unused, device_t self, void *aux __unused)
 {
 	struct psh3lcd_softc *sc = device_private(self);
 	uint8_t bcr0, bcr1, bcr2;
+
+	sc->sc_dev = self;
 
 	bcr0 = _reg_read_1(PSH3LCD_BRIGHTNESS_REG0);
 	bcr1 = _reg_read_1(PSH3LCD_BRIGHTNESS_REG1);
