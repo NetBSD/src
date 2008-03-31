@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.3 2005/12/11 12:16:51 christos Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.4 2008/03/31 02:39:40 dogcow Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.3 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.4 2008/03/31 02:39:40 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,6 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *)aux;
 
 	usbd_status r;
-	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 
 	aprint_normal("\n");
 
@@ -106,7 +105,7 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map I/O registers */
 	if (bus_space_map(sc->sc.iot, sa->sa_addr, 0x5c, 0, &sc->sc.ioh)) {
-		printf("%s: can't map mem space\n", devname);
+		aprint_error_dev(self, "can't map mem space\n");
 		return;
 	}
 
@@ -122,7 +121,7 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 	/* establish the interrupt. */
 	sc->sc_ih = s3c24x0_intr_establish(sa->sa_intr, IPL_USB, IST_NONE, ohci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", devname);
+		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
 
@@ -130,7 +129,7 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 	
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", devname, r);
+		aprint_error_dev(self, "init failed, error=%d\n", r);
 		return;
 	}
 
