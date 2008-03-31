@@ -286,6 +286,7 @@ a command prefixed by '+' executes even with -n
 Now we expect an error...
 *** Error code 1 (continuing)
 `all' not remade because of errors.
+V.i386 ?= OK
 The answer is unknown
 The answer is unknown
 The answer is empty
