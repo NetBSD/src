@@ -1,4 +1,4 @@
-/*	$NetBSD: zaurus_reg.h,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: zaurus_reg.h,v 1.3 2008/03/31 23:35:39 chris Exp $	*/
 /*	$OpenBSD: zaurus_reg.h,v 1.7 2005/12/14 14:39:38 uwe Exp $	*/
 /*	NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp */
 
@@ -79,5 +79,10 @@
 #define	C3000_GPIO_SD_WP_PIN		81
 #define C3000_CF1_IRQ_PIN		93
 #define C3000_CF0_IRQ_PIN		94
+
+/* USB related pins */
+#define C3000_USB_DEVICE_PIN		35	/* Client cable is connected */
+#define C3000_USB_HOST_PIN		41	/* Host cable is connected */
+#define C3000_USB_HOST_POWER_PIN	37	/* host provides power for USB */
 
 #endif /* _ZAURUS_REG_H */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.zaurus,v 1.5 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.zaurus,v 1.6 2008/03/31 23:35:39 chris Exp $
 #
 # Sharp Zaurus specific configuration info
 #
@@ -84,6 +84,11 @@ device zapm: apmdevif
 attach zapm at pxaip
 file arch/zaurus/dev/zapm.c		zapm
 
+# usb power control
+device zusb
+attach zusb at pxaip
+file arch/zaurus/dev/zusb.c		zusb
+
 # MMC/SD controller
 #attach pxamci at pxaip with zmci
 #file arch/zaurus/dev/zmci.c		zmci
@@ -92,6 +97,6 @@ file arch/zaurus/dev/zapm.c		zapm
 include "dev/pcmcia/files.pcmcia"
 
 # USB drivers
-#include "dev/usb/files.usb"
+include "dev/usb/files.usb"
 
 include "arch/zaurus/conf/majors.zaurus"
