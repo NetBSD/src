@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.35 2005/09/13 01:44:32 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.36 2008/04/01 19:23:28 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -117,7 +117,7 @@ void tzset(void);
 /*
  * X/Open Portability Guide >= Issue 4
  */
-#if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 extern int daylight;
 #ifndef __LIBC12_SOURCE__
 extern long int timezone __RENAME(__timezone13);

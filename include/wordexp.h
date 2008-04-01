@@ -1,4 +1,4 @@
-/*	$NetBSD: wordexp.h,v 1.1 2004/07/13 15:42:03 seb Exp $	*/
+/*	$NetBSD: wordexp.h,v 1.2 2008/04/01 19:23:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 Tim J. Robbins.
@@ -67,7 +67,7 @@ typedef struct {
 #define	WRDE_BADVAL	2		/* undefined variable */
 #define	WRDE_CMDSUB	3		/* command substitution not allowed */
 #define	WRDE_NOSPACE	4		/* no memory for result */
-#if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	WRDE_NOSYS	5		/* obsolete, reserved */
 #endif
 #define	WRDE_SYNTAX	6		/* shell syntax error */
