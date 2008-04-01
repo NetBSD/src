@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.24 2008/03/23 16:09:41 xtraeme Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.25 2008/04/01 12:25:30 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -40,13 +40,15 @@
 #include <sys/wdog.h>
 #include <sys/power.h>
 #include <sys/queue.h>
-#include <sys/callout.h>
-#include <sys/workqueue.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 struct lwp;
 struct proc;
 struct knote;
 struct uio;
+struct workqueue;
+struct callout;
 
 #define	SYSMON_MINOR_ENVSYS	0
 #define	SYSMON_MINOR_WDOG	1
@@ -100,6 +102,13 @@ struct sysmon_envsys {
 	 * tailq for the sensors that a device maintains.
 	 */
 	TAILQ_HEAD(, envsys_data) sme_sensors_list;
+
+	/*
+	 * Locking/synchronization.
+	 */
+	kmutex_t sme_mtx;
+	kmutex_t sme_callout_mtx;
+	kcondvar_t sme_condvar;
 };
 
 int	sysmonopen_envsys(dev_t, int, int, struct lwp *);
