@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.52 2008/04/01 16:48:18 rmind Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.53 2008/04/01 17:01:34 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.52 2008/04/01 16:48:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.53 2008/04/01 17:01:34 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -167,7 +167,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		error = sme_events_init(sme);
 out:
 	mutex_exit(&sme->sme_mtx);
-	if (error)
+	if (error || critvalup)
 		kmem_free(see, sizeof(*see));
 	return error;
 }
