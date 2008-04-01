@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.136 2008/03/30 15:39:46 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.137 2008/04/01 19:49:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.136 2008/03/30 15:39:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.137 2008/04/01 19:49:31 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -162,7 +162,7 @@ _kernel_lock_dump(volatile void *junk)
  * acquisition is from process context.
  */
 void
-_kernel_lock(int nlocks, struct lwp *l)
+_kernel_lock(int nlocks)
 {
 	struct cpu_info *ci = curcpu();
 	LOCKSTAT_TIMER(spintime);
@@ -170,12 +170,9 @@ _kernel_lock(int nlocks, struct lwp *l)
 	struct lwp *owant;
 	u_int spins;
 	int s;
+	struct lwp *l = curlwp;
 
-	if (nlocks == 0)
-		return;
 	_KERNEL_LOCK_ASSERT(nlocks > 0);
-
-	l = curlwp;
 
 	if (ci->ci_biglock_count != 0) {
 		_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(kernel_lock));
@@ -269,13 +266,12 @@ _kernel_lock(int nlocks, struct lwp *l)
  * all holds.  If 'l' is non-null, the release is from process context.
  */
 void
-_kernel_unlock(int nlocks, struct lwp *l, int *countp)
+_kernel_unlock(int nlocks, int *countp)
 {
 	struct cpu_info *ci = curcpu();
 	u_int olocks;
 	int s;
-
-	l = curlwp;
+	struct lwp *l = curlwp;
 
 	_KERNEL_LOCK_ASSERT(nlocks < 2);
 
