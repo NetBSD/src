@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.347 2008/03/27 19:11:05 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.348 2008/04/01 10:37:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347 2008/03/27 19:11:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.348 2008/04/01 10:37:42 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -283,9 +283,7 @@ main(void)
 	struct timeval time;
 	struct lwp *l;
 	struct proc *p;
-	struct pdevinit *pdev;
 	int s, error;
-	extern struct pdevinit pdevinit[];
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
@@ -491,9 +489,6 @@ main(void)
 #endif
 	ubc_init();		/* must be after autoconfig */
 
-	/* Lock the kernel on behalf of proc0. */
-	KERNEL_LOCK(1, l);
-
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
 	shminit();
@@ -525,10 +520,6 @@ main(void)
 	pax_init();
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
-	/* Attach pseudo-devices. */
-	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
-		(*pdev->pdev_attach)(pdev->pdev_count);
-
 #ifdef	FAST_IPSEC
 	/* Attach network crypto subsystem */
 	ipsec_attach();
@@ -557,9 +548,6 @@ main(void)
 	pipe_init();
 #endif
 
-	/* Setup the scheduler */
-	sched_init();
-
 #ifdef KTRACE
 	/* Initialize ktrace. */
 	ktrinit();
@@ -579,13 +567,6 @@ main(void)
 	 */
 	if (fork1(l, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
 		panic("fork init");
-
-	/*
-	 * Now that device driver threads have been created, wait for
-	 * them to finish any deferred autoconfiguration.
-	 */
-	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
 
 	/*
 	 * Load any remaining builtin modules, and hand back temporary
