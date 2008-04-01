@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.932 2008/03/26 11:12:43 jmcneill Exp $
+$NetBSD: pcidevs,v 1.933 2008/04/01 23:16:16 cegger Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -620,6 +620,7 @@ vendor GUILLEMOT	0x5046	Guillemot
 vendor TURTLE_BEACH	0x5053	Turtle Beach
 vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
+vendor XENSOURCE	0x5853	XenSource, Inc.
 vendor C4T		0x6374	c't Magazin
 vendor KURUSUGAWA	0x6809	Kurusugawa Electronics
 vendor PCHDTV		0x7063	pcHDTV
@@ -4046,6 +4047,9 @@ product WORKBIT NJSC32UDE_BUFFALO	0xf015	NinjaSCSI-32UDE SCSI (BUFFALO)
 product WORKBIT NPATA32_CF32A		0xf021	CF32A CompactFlash Adapter
 product WORKBIT NPATA32_CF32A_BUFFALO	0xf024	CF32A CF Adapter (BUFFALO)
 product WORKBIT NPATA32_KME		0xf02c	NPATA-32 IDE (KME)
+
+/* XenSource products */
+product XENSOURCE XENPLATFORM		0x0001	Xen Platform Device
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
