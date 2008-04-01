@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.32 2007/10/19 12:00:24 ad Exp $	*/
+/*	$NetBSD: ym.c,v 1.33 2008/04/01 20:44:29 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.32 2007/10/19 12:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.33 2008/04/01 20:44:29 xtraeme Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -1017,11 +1017,13 @@ ym_query_devinfo(void *addr, mixer_devinfo_t *dip)
 int
 ym_intr(void *arg)
 {
-	struct ym_softc *sc;
+	struct ym_softc *sc = arg;
+#if NMPU_YM > 0
+	struct mpu_softc *sc_mpu = device_private(sc->sc_mpudev);
+#endif
 	u_int8_t ist;
 	int processed;
 
-	sc = arg;
 	/* OPL3 timer is currently unused. */
 	if (((ist = ym_read(sc, SA3_IRQA_STAT)) &
 	     ~(SA3_IRQ_STAT_SB|SA3_IRQ_STAT_OPL3)) == 0) {
@@ -1044,7 +1046,7 @@ ym_intr(void *arg)
 		 * MPU401 interrupt.
 		 */
 		if (ist & SA3_IRQ_STAT_MPU) {
-			mpu_intr(sc->sc_mpudev);
+			mpu_intr(sc_mpu);
 			processed = 1;
 		}
 #endif

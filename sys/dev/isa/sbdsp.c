@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.128 2008/03/15 21:09:02 cube Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.129 2008/04/01 20:44:29 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.128 2008/03/15 21:09:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.129 2008/04/01 20:44:29 xtraeme Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -1541,10 +1541,12 @@ sbdsp_halt_input(void *addr)
 int
 sbdsp_intr(void *arg)
 {
-	struct sbdsp_softc *sc;
+	struct sbdsp_softc *sc = arg;
+#if NMPU > 0
+	struct mpu_softc *sc_mpu = device_private(sc->sc_mpudev);
+#endif
 	u_char irq;
 
-	sc = arg;
 	DPRINTFN(2, ("sbdsp_intr: intr8=%p, intr16=%p\n",
 		   sc->sc_intr8, sc->sc_intr16));
 	if (ISSB16CLASS(sc)) {
@@ -1573,8 +1575,8 @@ sbdsp_intr(void *arg)
 			sc->sc_intr16(arg);
 	}
 #if NMPU > 0
-	if ((irq & SBP_IRQ_MPU401) && sc->sc_mpudev) {
-		mpu_intr(sc->sc_mpudev);
+	if ((irq & SBP_IRQ_MPU401) && sc_mpu) {
+		mpu_intr(sc_mpu);
 	}
 #endif
 	return 1;
