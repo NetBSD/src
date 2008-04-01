@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1035 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1036 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -481,3 +481,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[tsutsui 20080327]
 	lii(4): Added a driver for the Atheros L2 Fast-Ethernet controller,
 		notably found on Asus's EeePC. [cube 20080328]
+	zaurus: Add sysinst support. [chris 20080401]
