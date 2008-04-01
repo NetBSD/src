@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.114 2007/12/24 17:26:09 perry Exp $	*/
+/*	$NetBSD: unistd.h,v 1.115 2008/04/01 19:23:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ ssize_t	 write(int, const void *, size_t);
 /*
  * IEEE Std 1003.2-92, adopted in X/Open Portability Guide Issue 4 and later
  */
-#if (_POSIX_C_SOURCE - 0) >= 2 || (_XOPEN_SOURCE - 0) >= 4 || \
+#if (_POSIX_C_SOURCE - 0) >= 2 || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)
 int	 getopt(int, char * const [], const char *);
 
@@ -214,17 +214,9 @@ int	 nice(int);
 
 
 /*
- * X/Open Portability Guide <= Issue 3
- */
-#if defined(_XOPEN_SOURCE) && (_XOPEN_SOURCE - 0) <= 3
-int	 rename(const char *, const char *) __RENAME(__posix_rename);
-#endif
-
-
-/*
  * X/Open Portability Guide >= Issue 4
  */
-#if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 __aconst char *crypt(const char *, const char *);
 int	 encrypt(char *, int);
 char	*getpass(const char *);

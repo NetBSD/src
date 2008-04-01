@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.82 2008/02/28 16:13:35 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.83 2008/04/01 19:23:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -148,7 +148,7 @@ int	 rand_r(unsigned int *);
 /*
  * X/Open Portability Guide >= Issue 4
  */
-#if (_XOPEN_SOURCE - 0) >= 4 || defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 double	 drand48(void);
 double	 erand48(unsigned short[3]);
 long	 jrand48(unsigned short[3]);
