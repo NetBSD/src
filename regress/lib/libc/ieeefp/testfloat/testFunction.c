@@ -1,4 +1,4 @@
-/*	$NetBSD: testFunction.c,v 1.4 2002/02/21 07:38:16 itojun Exp $	*/
+/*	$NetBSD: testFunction.c,v 1.5 2008/04/01 19:20:43 drochner Exp $	*/
 
 /* This is a derivative work. */
 
@@ -652,6 +652,8 @@ static void
         roundingModeName = "up";
         roundingCode = float_round_up;
         break;
+     default:
+	return;
     }
     float_rounding_mode = roundingCode;
     syst_float_set_rounding_mode( roundingCode );
