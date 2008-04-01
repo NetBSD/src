@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.12 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.13 2008/04/01 19:49:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -230,7 +230,7 @@ cv_broadcast(kcondvar_t *cv)
 /* kernel biglock, only for vnode_if */
 
 void
-_kernel_lock(int nlocks, struct lwp *l)
+_kernel_lock(int nlocks)
 {
 
 	KASSERT(nlocks == 1);
@@ -238,7 +238,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 }
 
 void
-_kernel_unlock(int nlocks, struct lwp *l, int *countp)
+_kernel_unlock(int nlocks, int *countp)
 {
 
 	KASSERT(nlocks == 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.218 2008/03/25 23:21:42 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.219 2008/04/01 19:49:31 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -463,16 +463,16 @@ void scdebug_call(register_t, const register_t[]);
 void scdebug_ret(register_t, int, const register_t[]);
 
 void	kernel_lock_init(void);
-void	_kernel_lock(int, struct lwp *);
-void	_kernel_unlock(int, struct lwp *, int *);
+void	_kernel_lock(int);
+void	_kernel_unlock(int, int *);
 
 #if defined(MULTIPROCESSOR) || defined(_LKM)
 #define	KERNEL_LOCK(count, lwp)			\
 do {						\
 	if ((count) != 0)			\
-		_kernel_lock((count), (lwp));	\
+		_kernel_lock((count));	\
 } while (/* CONSTCOND */ 0)
-#define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (lwp), (p))
+#define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (p))
 #else
 #define	KERNEL_LOCK(count, lwp)		/* nothing */
 #define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
