@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.60 2007/12/03 15:33:52 ad Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.61 2008/04/01 12:02:52 martin Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.60 2007/12/03 15:33:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.61 2008/04/01 12:02:52 martin Exp $");
 
 #include "opt_adb.h"
 
@@ -1814,6 +1814,7 @@ adb_soft_intr(void)
 				movem.l(a7)+, d0/a2/a1/a0
 			}
 #endif
+
 		}
 
 		s = splhigh();
@@ -2717,7 +2718,7 @@ int
 adb_read_date_time(unsigned long *curtime)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
-	int result;
+	int result, tmout;
 	volatile int flag = 0;
 
 	switch (adbHardware) {
@@ -2736,8 +2737,15 @@ adb_read_date_time(unsigned long *curtime)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		while (0 == flag)	/* wait for result */
-			;
+		for (tmout = 13800; !flag && tmout >= 10; tmout -= 10)
+			delay(10);
+		if (!flag && tmout > 0)
+			delay(tmout);
+
+		if (!flag) {
+			printf("WARNING: ADB command did not complete\n");
+			return -1;
+		}
 
 		*curtime = (long)(*(long *)(output + 1));
 		return 0;
@@ -2754,8 +2762,15 @@ adb_read_date_time(unsigned long *curtime)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		while (0 == flag)	/* wait for result */
-			;
+		for (tmout = 138000; !flag && tmout >= 10; tmout -= 10)
+			delay(10);
+		if (!flag && tmout > 0)
+			delay(tmout);
+
+		if (!flag) {
+			printf("WARNING: ADB command did not complete\n");
+			return -1;
+		}
 
 		*curtime = (long)(*(long *)(output + 1));
 		return 0;
