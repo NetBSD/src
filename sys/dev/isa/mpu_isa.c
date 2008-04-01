@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.18 2008/03/27 10:22:01 xtraeme Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.19 2008/04/01 13:35:39 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.18 2008/03/27 10:22:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.19 2008/04/01 13:35:39 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ mpu_isa_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_AUDIO, mpu_intr, sc);
+	    IST_EDGE, IPL_AUDIO, mpu_intr, &sc->sc_mpu);
 
 	sc->sc_mpu.model = "Roland MPU-401 MIDI UART";
 	sc->sc_dev = self;
