@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.51 2008/04/01 12:25:30 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.52 2008/04/01 16:48:18 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.51 2008/04/01 12:25:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.52 2008/04/01 16:48:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -109,8 +109,8 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 				    	    osee->see_pes.pes_dvname,
 				    	    osee->see_pes.pes_sensname,
 					    osee->see_type));
-					mutex_exit(&sme->sme_mtx);
-					return EEXIST;
+					error = EEXIST;
+					goto out;
 				}
 				critvalup = true;
 				break;
@@ -133,8 +133,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			    "(critval updated)\n", __func__, sme->sme_name,
 			    edata->desc, osee->see_type));
 			error = sme_sensor_upint32(sdict, objkey, critval);
-			mutex_exit(&sme->sme_mtx);
-			return error;
+			goto out;
 		}
 	}
 
