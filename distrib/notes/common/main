@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.393 2008/03/23 00:08:58 pavel Exp $
+.\"	$NetBSD: main,v 1.394 2008/04/01 22:12:38 cegger Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .ig
 
-	To "regenate" this file, go up one level to src/distrib/notes
+	To "regenerate" this file, go up one level to src/distrib/notes
 	and type "make".  This will create
 	src/distrib/notes/<arch>/INSTALL.*.
 
