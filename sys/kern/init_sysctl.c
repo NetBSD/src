@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.125 2008/03/27 19:06:52 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.126 2008/04/01 17:39:58 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.126 2008/04/01 17:39:58 xtraeme Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -3075,7 +3075,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_priority = lwp_eprio(l);
 	kl->l_usrpri = l->l_priority;
 	if (l->l_wmesg)
-		strncpy(kl->l_wmesg, l->l_wmesg, sizeof(kl->l_wmesg));
+		strncpy(kl->l_wmesg, l->l_wmesg, strlen(kl->l_wmesg));
 	kl->l_wchan = PTRTOUINT64(l->l_wchan);
 	kl->l_cpuid = l->l_cpu->ci_cpuid;
 	bintime2timeval(&l->l_rtime, &tv);
@@ -3087,7 +3087,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	if (l->l_name == NULL)
 		kl->l_name[0] = '\0';
 	else
-		strlcpy(kl->l_name, l->l_name, sizeof(kl->l_name));
+		strlcpy(kl->l_name, l->l_name, strlen(kl->l_name));
 }
 
 /*
