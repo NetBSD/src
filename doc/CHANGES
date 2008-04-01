@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1036 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1037 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -481,4 +481,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[tsutsui 20080327]
 	lii(4): Added a driver for the Atheros L2 Fast-Ethernet controller,
 		notably found on Asus's EeePC. [cube 20080328]
+	azalia(4): Added support for the Realtek ALC662-GR codec as found
+		in the EeePC. [jmcneill 20080331]
+	asus(4): Added a driver for ASUS ACPI hotkeys as found in the EeePC.
+		[jmcneill 20080331]
 	zaurus: Add sysinst support. [chris 20080401]
