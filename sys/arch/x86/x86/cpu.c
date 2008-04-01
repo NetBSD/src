@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.23 2008/03/04 15:24:02 cube Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24 2008/04/01 11:09:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2008/03/04 15:24:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2008/04/01 11:09:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -586,6 +586,16 @@ cpu_start_secondary(struct cpu_info *ci)
 	 * wait for it to become ready
 	 */
 	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i>0;i--) {
+#ifdef MPDEBUG
+		extern int cpu_trace[3];
+		static int otrace[3];
+		if (memcmp(otrace, cpu_trace, sizeof(otrace)) != 0) {
+			aprint_debug("%s: trace %02x %02x %02x\n",
+			    ci->ci_dev->dv_xname, cpu_trace[0], cpu_trace[1],
+			    cpu_trace[2]);
+			memcpy(otrace, cpu_trace, sizeof(otrace));
+		}
+#endif
 		i8254_delay(10);
 	}
 	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
