@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.43 2008/03/04 18:23:44 cube Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.44 2008/04/01 19:25:53 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -156,7 +156,6 @@ struct audio_softc {
 
 	bool		sc_rbus;	/* input DMA in progress */
 	bool		sc_pbus;	/* output DMA in progress */
-	bool		sc_idle;	/* suspended due to idleness */
 
 	/**
 	 *  userland
@@ -232,8 +231,6 @@ struct audio_softc {
 
 	mixer_ctrl_t	*sc_mixer_state;
 	int		sc_nmixer_states;
-
-	callout_t	sc_idle_counter;
 };
 
 #endif /* _SYS_DEV_AUDIOVAR_H_ */
