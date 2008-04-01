@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.237 2008/03/12 18:02:21 dyoung Exp $	*/
+/*	$NetBSD: audio.c,v 1.238 2008/04/01 00:52:11 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.237 2008/03/12 18:02:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.238 2008/04/01 00:52:11 jmcneill Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -4105,9 +4105,9 @@ audio_volume_toggle(device_t dv)
 	au_get_gain(sc, &sc->sc_outports, &gain, &balance);
 	if (gain != 0) {
 		sc->sc_lastgain = gain;
-		newgain = sc->sc_lastgain;
-	} else
 		newgain = 0;
+	} else
+		newgain = sc->sc_lastgain;
 	au_set_gain(sc, &sc->sc_outports, newgain, balance);
 	splx(s);
 }
