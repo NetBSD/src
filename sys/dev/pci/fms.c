@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.30 2007/10/19 12:00:43 ad Exp $	*/
+/*	$NetBSD: fms.c,v 1.31 2008/04/01 13:35:39 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.30 2007/10/19 12:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.31 2008/04/01 13:35:39 xtraeme Exp $");
 
 #include "mpu.h"
 
@@ -421,10 +421,12 @@ fms_reset_codec(void *addr)
 static int
 fms_intr(void *arg)
 {
-	struct fms_softc *sc;
+	struct fms_softc *sc = arg;
+#if NMPU > 0
+	struct mpu_softc *sc_mpu = device_private(sc->sc_mpu_dev);
+#endif
 	uint16_t istat;
 
-	sc = arg;
 	istat = bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS);
 
 	if (istat & FM_INTSTATUS_PLAY) {
@@ -459,7 +461,7 @@ fms_intr(void *arg)
 
 #if NMPU > 0
 	if (istat & FM_INTSTATUS_MPU)
-		mpu_intr(sc->sc_mpu_dev);
+		mpu_intr(sc_mpu);
 #endif
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS,

@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.51 2007/10/19 12:00:43 ad Exp $	*/
+/*	$NetBSD: eso.c,v 1.52 2008/04/01 13:35:39 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.51 2007/10/19 12:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.52 2008/04/01 13:35:39 xtraeme Exp $");
 
 #include "mpu.h"
 
@@ -566,10 +566,12 @@ eso_read_mixreg(struct eso_softc *sc, uint8_t reg)
 static int
 eso_intr(void *hdl)
 {
-	struct eso_softc *sc;
+	struct eso_softc *sc = hdl;
+#if NMPU > 0
+	struct mpu_softc *sc_mpu = device_private(sc->sc_mpudev);
+#endif
 	uint8_t irqctl;
 
-	sc = hdl;
 	irqctl = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ESO_IO_IRQCTL);
 
 	/* If it wasn't ours, that's all she wrote. */
@@ -615,8 +617,8 @@ eso_intr(void *hdl)
 	}
 
 #if NMPU > 0
-	if ((irqctl & ESO_IO_IRQCTL_MPUIRQ) && sc->sc_mpudev != NULL)
-		mpu_intr(sc->sc_mpudev);
+	if ((irqctl & ESO_IO_IRQCTL_MPUIRQ) && sc_mpu != NULL)
+		mpu_intr(sc_mpu);
 #endif
 
 	return 1;

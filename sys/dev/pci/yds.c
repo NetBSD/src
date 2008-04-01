@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.40 2008/02/29 06:13:39 dyoung Exp $	*/
+/*	$NetBSD: yds.c,v 1.41 2008/04/01 13:35:39 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.40 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.41 2008/04/01 13:35:39 xtraeme Exp $");
 
 #include "mpu.h"
 
@@ -1015,16 +1015,18 @@ yds_reset_codec(void *sc_)
 static int
 yds_intr(void *p)
 {
-	struct yds_softc *sc;
+	struct yds_softc *sc = p;
+#if NMPU > 0
+	struct mpu_softc *sc_mpu = device_private(sc->sc_mpu);
+#endif
 	u_int status;
 
-	sc = p;
 	status = YREAD4(sc, YDS_STATUS);
 	DPRINTFN(1, ("yds_intr: status=%08x\n", status));
 	if ((status & (YDS_STAT_INT|YDS_STAT_TINT)) == 0) {
 #if NMPU > 0
-		if (sc->sc_mpu)
-			return mpu_intr(sc->sc_mpu);
+		if (sc_mpu)
+			return mpu_intr(sc_mpu);
 #endif
 		return 0;
 	}
