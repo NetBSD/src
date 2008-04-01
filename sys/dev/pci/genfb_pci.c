@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.7 2008/03/09 20:32:30 phx Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.8 2008/04/01 01:11:55 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.7 2008/03/09 20:32:30 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.8 2008/04/01 01:11:55 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,9 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
 	    sc->sc_gen.sc_fbsize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
 
-		panic("%s: unable to map the framebuffer\n", self->dv_xname);
+		aprint_error("%s: unable to map the framebuffer\n",
+		    self->dv_xname);
+		return;
 	}
 	sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 
