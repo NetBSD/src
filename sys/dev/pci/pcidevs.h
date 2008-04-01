@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.933 2008/03/26 11:13:30 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.934 2008/04/01 23:17:32 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.932 2008/03/26 11:12:43 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.933 2008/04/01 23:16:16 cegger Exp
  */
 
 /*
@@ -627,6 +627,7 @@
 #define	PCI_VENDOR_TURTLE_BEACH	0x5053		/* Turtle Beach */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_XENSOURCE	0x5853		/* XenSource, Inc. */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
 #define	PCI_VENDOR_KURUSUGAWA	0x6809		/* Kurusugawa Electronics */
 #define	PCI_VENDOR_PCHDTV	0x7063		/* pcHDTV */
@@ -4053,6 +4054,9 @@
 #define	PCI_PRODUCT_WORKBIT_NPATA32_CF32A	0xf021		/* CF32A CompactFlash Adapter */
 #define	PCI_PRODUCT_WORKBIT_NPATA32_CF32A_BUFFALO	0xf024		/* CF32A CF Adapter (BUFFALO) */
 #define	PCI_PRODUCT_WORKBIT_NPATA32_KME	0xf02c		/* NPATA-32 IDE (KME) */
+
+/* XenSource products */
+#define	PCI_PRODUCT_XENSOURCE_XENPLATFORM	0x0001		/* Xen Platform Device */
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part
