@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.127 2008/04/01 18:06:06 xtraeme Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.128 2008/04/01 21:05:37 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.127 2008/04/01 18:06:06 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.128 2008/04/01 21:05:37 xtraeme Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2988,7 +2988,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_priority = lwp_eprio(l);
 		ki->p_usrpri = l->l_priority;
 		if (l->l_wmesg)
-			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
+			strncpy(ki->p_wmesg, l->l_wmesg, KI_WMESGLEN);
 		ki->p_wchan = PTRTOUINT64(l->l_wchan);
 		lwp_unlock(l);
 	}
@@ -3074,10 +3074,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_holdcnt = l->l_holdcnt;
 	kl->l_priority = lwp_eprio(l);
 	kl->l_usrpri = l->l_priority;
-	if (l->l_wmesg) {
-		KASSERT(strlen(l->l_wmesg) < KI_WMESGLEN);
-		strncpy(kl->l_wmesg, l->l_wmesg, strlen(l->l_wmesg));
-	}
+	if (l->l_wmesg)
+		strncpy(kl->l_wmesg, l->l_wmesg, KI_WMESGLEN);
 	kl->l_wchan = PTRTOUINT64(l->l_wchan);
 	kl->l_cpuid = l->l_cpu->ci_cpuid;
 	bintime2timeval(&l->l_rtime, &tv);
@@ -3088,10 +3086,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_pid = p->p_pid;
 	if (l->l_name == NULL)
 		kl->l_name[0] = '\0';
-	else {
-		KASSERT(strlen(l->l_name) < KI_LNAMELEN);
-		strlcpy(kl->l_name, l->l_name, strlen(l->l_name));
-	}
+	else
+		strlcpy(kl->l_name, l->l_name, KI_LNAMELEN);
 }
 
 /*
