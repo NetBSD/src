@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.932 2008/03/26 11:13:30 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.933 2008/04/01 23:17:32 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.932 2008/03/26 11:12:43 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.933 2008/04/01 23:16:16 cegger Exp
  */
 
 /*
@@ -2320,6 +2320,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "NetPower (2nd PCI Vendor ID)",
 	},
 	{
+	    PCI_VENDOR_XENSOURCE,
+	    "XenSource, Inc.",
+	},
+	{
 	    PCI_VENDOR_C4T,
 	    "c't Magazin",
 	},
@@ -2392,7 +2396,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 588;
+const int pci_nvendors = 589;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -14048,6 +14052,10 @@ static const struct pci_product pci_products[] = {
 	    "NPATA-32 IDE (KME)",
 	},
 	{
+	    PCI_VENDOR_XENSOURCE, PCI_PRODUCT_XENSOURCE_XENPLATFORM,
+	    "Xen Platform Device",
+	},
+	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
 	    "X3201-3 Fast Ethernet Controller",
 	},
@@ -14100,4 +14108,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2926;
+const int pci_nproducts = 2927;
