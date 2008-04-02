@@ -1,3 +1,8 @@
+2008-04-02  Emmanuel Dreyfus  <manu@netbsd.org>
+	From Timo Teräs <timo.teras@iki.fi>
+	* src/racoon/{sockmisc.h|sockmisc.c|Makefile.am}: fix Linux build
+	  after 2008-03-28's change
+
 2008-03-28  Emmanuel Dreyfus  <manu@netbsd.org>
 	From Cyrus Rahman <crahman@gmail.com>
 	* src/racoon/{sockmisc.c|isakmp.c|isakmp_inf.c|privsep.c|privsep.h}
