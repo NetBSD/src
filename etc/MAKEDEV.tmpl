@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.102 2008/03/05 02:29:51 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.103 2008/04/02 01:34:36 dyoung Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1789,6 +1789,10 @@ atabus*)
 
 drvctl)
 	mkdev drvctl c %drvctl_chr% 0 644
+	;;
+
+isv)
+	mkdev isv c %isv_chr% 0 644
 	;;
 
 tap*)
