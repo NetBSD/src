@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.2 2007/10/17 19:56:59 garbled Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.3 2008/04/02 06:20:53 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.2 2007/10/17 19:56:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.3 2008/04/02 06:20:53 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.2 2007/10/17 19:56:59 garbled Exp $")
 
 #include <sandpoint/sandpoint/eumbvar.h>
 
+void iic_bootstrap_init(void);
 int iic_seep_bootstrap_read(int, int, uint8_t *, size_t);
 
 static int  iic_eumb_match(struct device *, struct cfdata *, void *);
@@ -74,6 +75,7 @@ static int motoi2c_send_stop(void *, int);
 static int motoi2c_initiate_xfer(void *, uint16_t, int);
 static int motoi2c_read_byte(void *, uint8_t *, int);
 static int motoi2c_write_byte(void *, uint8_t, int);
+static void wait4done(void);
 
 static struct i2c_controller motoi2c = {
 	.ic_acquire_bus = motoi2c_acquire_bus,
@@ -86,28 +88,30 @@ static struct i2c_controller motoi2c = {
 };
 
 /*
- * MPC824x I2C controller seems to share a common design with
+ * This I2C controller seems to share a common design with
  * i.MX/MC9328.  Different names in bit field definition and
  * not suffered from document error.
  */
-#define I2CADR	0x0000
-#define I2CFDR	0x0004
-#define I2CCR	0x0008
-#define	 I2CCR_MEN   0x80
-#define	 I2CCR_MIEN  0x40
-#define	 I2CCR_MSTA  0x20
-#define	 I2CCR_MTX   0x10
-#define	 I2CCR_TXAK  0x08
-#define	 I2CCR_RSTA  0x04
-#define I2CSR	0x000c
-#define	 I2CSR_MCF   0x80
-#define	 I2CSR_MBB   0x20
-#define	 I2CSR_MAL   0x10
-#define	 I2CSR_MIF   0x02
-#define	 I2CSR_RXAK  0x01
-#define I2CDR	0x0010
-#define	CSR_READ(r)	in32rb(0xfe003000 + (r))
-#define	CSR_WRITE(r,v)	out32rb(0xfe003000 + (r), (v))
+#define I2CADR	0x0000	/* my own I2C addr to respond for an external master */
+#define I2CFDR	0x0004	/* frequency devider */
+#define I2CCR	0x0008	/* control */
+#define	 CR_MEN   0x80	/* enable this HW */
+#define	 CR_MIEN  0x40	/* enable interrupt */
+#define	 CR_MSTA  0x20	/* 0->1 activates START, 1->0 makes STOP condition */
+#define	 CR_MTX   0x10	/* 1 for Tx, 0 for Rx */
+#define	 CR_TXAK  0x08	/* 1 makes no acknowledge when Rx */
+#define	 CR_RSTA  0x04	/* generate repeated START condition */
+#define I2CSR	0x000c	/* status */
+#define	 SR_MCF   0x80	/* date transter has completed */
+#define	 SR_MBB   0x20	/* 1 before STOP condition is detected */
+#define	 SR_MAL   0x10	/* arbitration was lost */
+#define	 SR_MIF   0x02	/* indicates data transter completion */
+#define	 SR_RXAK  0x01
+#define I2CDR	0x0010	/* data */
+
+#define	CSR_READ(r)	in8rb(0xfc003000 + (r))
+#define	CSR_WRITE(r,v)	out8rb(0xfc003000 + (r), (v))
+#define	CSR_WRITE4(r,v)	out32rb(0xfc003000 + (r), (v))
 
 static int found;
 
@@ -136,17 +140,24 @@ iic_eumb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ioh;
 	iba.iba_tag = &sc->sc_i2c;
 
-	CSR_WRITE(I2CCR, 0x0);
-	CSR_WRITE(I2CFDR, 0x0);
-	CSR_WRITE(I2CADR, 127);
-	CSR_WRITE(I2CSR, 0);
-	CSR_WRITE(I2CCR, I2CCR_MEN);
+	iic_bootstrap_init();
 #if 0
 	/* not yet */
 	config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
 	intr_establish(16 + 16, IST_LEVEL, IPL_SERIAL, iic_intr, sc);
 #endif
+}
+
+void
+iic_bootstrap_init()
+{
+
+	CSR_WRITE(I2CCR, 0);
+	CSR_WRITE4(I2CFDR, 0x1031); /* XXX magic XXX */
+	CSR_WRITE(I2CADR, 0);
+	CSR_WRITE(I2CSR, 0);
+	CSR_WRITE(I2CCR, CR_MEN);
 }
 
 int
@@ -156,21 +167,21 @@ iic_seep_bootstrap_read(int i2caddr, int offset, uint8_t *rvp, size_t len)
 	uint8_t cmdbuf[1];
 
 	if (motoi2c_acquire_bus(&motoi2c, I2C_F_POLL) != 0)
-		return (-1);
+		return -1;
 	while (len) {
 		addr = i2caddr + (offset >> 8);
 		cmdbuf[0] = offset & 0xff;
 		if (iic_exec(&motoi2c, I2C_OP_READ_WITH_STOP, addr,
 			     cmdbuf, 1, rvp, 1, I2C_F_POLL)) {
 			motoi2c_release_bus(&motoi2c, I2C_F_POLL);
-			return (-1);
+			return -1;
 		}
 		len--;
 		rvp++;
 		offset++;
 	}
 	motoi2c_release_bus(&motoi2c, I2C_F_POLL);
-	return (0);	
+	return 0;	
 }
 
 static int
@@ -178,10 +189,11 @@ motoi2c_acquire_bus(void *v, int flags)
 {
 	unsigned loop = 10;
 
-	while (loop-- != 0 && CSR_READ(I2CSR) & I2CSR_MBB)
-		/* loop */;
+	while (--loop != 0 && (CSR_READ(I2CSR) & SR_MBB))
+		DELAY(1);
 	if (loop == 0)
 		return -1;
+printf("bus acquired\n");
 	return 0;
 }
 
@@ -190,50 +202,98 @@ motoi2c_release_bus(void *v, int flags)
 {
 	unsigned loop = 10;
 
-	CSR_WRITE(I2CCR, I2CCR_MEN);
-	while (loop-- != 0 && CSR_READ(I2CSR) & I2CSR_MBB)
-		/* loop */;
+	while (--loop != 0 && (CSR_READ(I2CSR) & SR_MBB))
+		DELAY(1);
 }
 
 static int
 motoi2c_send_start(void *v, int flags)
 {
-	unsigned cr = CSR_READ(I2CCR);
+	unsigned cr, sr;
 
-	cr |= I2CCR_TXAK;
+	cr = CSR_READ(I2CCR);
+	cr |= CR_MSTA;
 	CSR_WRITE(I2CCR, cr);
-	/* not yet */
+	do {
+		sr = CSR_READ(I2CSR);
+		if (sr & SR_MAL) {
+			printf("moti2c_send_start() lost sync\n");
+			sr &= ~SR_MAL;
+			CSR_WRITE(I2CSR, sr);
+			return -1;
+		}
+	} while ((sr & SR_MBB) == 0);
+printf("start sent\n");
 	return 0;
 }
 
 static int
 motoi2c_send_stop(void *v, int flags)
 {
-	unsigned cr = CSR_READ(I2CCR);
+	unsigned cr;
 
-	cr &= ~I2CCR_MSTA;
+	cr = CSR_READ(I2CCR);
+	cr &= ~CR_MSTA;
 	CSR_WRITE(I2CCR, cr);
-	/* not yet */
+	(void)CSR_READ(I2CDR);
+printf("stop sent\n");
 	return 0;
 }
 
 static int
 motoi2c_initiate_xfer(void *v, i2c_addr_t addr, int flags)
 {
-	/* not yet */
+	unsigned cr;
+
+	cr = CSR_READ(I2CCR);
+	if (flags & I2C_F_READ) {
+		cr &= ~(CR_MTX | CR_TXAK);
+		cr |= CR_RSTA;
+		CSR_WRITE(I2CCR, cr);
+		cr &= ~CR_RSTA;
+		CSR_WRITE(I2CCR, cr);
+		(void)CSR_READ(I2CDR);
+		wait4done();
+		return 0;
+	}
+	cr |= CR_MTX;
+	CSR_WRITE(I2CCR, cr);
 	return 0;
 }
 
 static int
 motoi2c_read_byte(void *v, uint8_t *bytep, int flags)
 {
-	/* not yet */
+	unsigned cr, val;
+
+	if (flags & I2C_F_LAST) {
+		cr = CSR_READ(I2CCR);
+		cr |= CR_TXAK;
+		CSR_WRITE(I2CCR, cr);
+	}
+	val = CSR_READ(I2CDR);
+	wait4done();
+	*bytep = val;
 	return 0;
 }
 
 static int
 motoi2c_write_byte(void *v, uint8_t byte, int flags)
 {
-	/* not yet */
+
+	CSR_WRITE(I2CDR, byte);
+	wait4done();
 	return 0;
+}
+
+/* busy waiting for byte data transfer completion */
+static void
+wait4done()
+{
+	unsigned sr;
+
+	do {
+		sr = CSR_READ(I2CSR);
+	} while ((sr & SR_MIF) == 0);
+	CSR_WRITE(I2CSR, sr &~ SR_MIF);
 }
