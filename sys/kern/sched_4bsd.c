@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.14 2008/02/27 19:57:32 matt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.15 2008/04/02 17:40:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.14 2008/02/27 19:57:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.15 2008/04/02 17:40:15 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -155,8 +155,10 @@ sched_tick(struct cpu_info *ci)
 
 	spc->spc_ticks = rrticks;
 
-	if (CURCPU_IDLE_P())
+	if (CURCPU_IDLE_P()) {
+		cpu_need_resched(ci, 0);
 		return;
+	}
 
 	if (spc->spc_flags & SPCF_SEENRR) {
 		/*
@@ -165,10 +167,9 @@ sched_tick(struct cpu_info *ci)
 		 * Indicate that the process should yield.
 		 */
 		spc->spc_flags |= SPCF_SHOULDYIELD;
+		cpu_need_resched(ci, 0);
 	} else
 		spc->spc_flags |= SPCF_SEENRR;
-
-	cpu_need_resched(ci, 0);
 }
 
 /*
