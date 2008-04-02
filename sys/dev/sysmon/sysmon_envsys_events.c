@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.53 2008/04/01 17:01:34 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.54 2008/04/02 11:19:22 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.53 2008/04/01 17:01:34 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.54 2008/04/02 11:19:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -364,6 +364,7 @@ sme_events_init(struct sysmon_envsys *sme)
 		return error;
 
 	mutex_init(&sme->sme_callout_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sme->sme_callout, sme_events_check, sme);
 	callout_schedule(&sme->sme_callout, timo);
 	sme->sme_flags |= SME_CALLOUT_INITIALIZED;
@@ -385,11 +386,12 @@ sme_events_destroy(struct sysmon_envsys *sme)
 	KASSERT(mutex_owned(&sme->sme_mtx));
 
 	callout_stop(&sme->sme_callout);
+	workqueue_destroy(sme->sme_wq);
+	mutex_destroy(&sme->sme_callout_mtx);
+	callout_destroy(&sme->sme_callout);
 	sme->sme_flags &= ~SME_CALLOUT_INITIALIZED;
 	DPRINTF(("%s: events framework destroyed for '%s'\n",
 	    __func__, sme->sme_name));
-	workqueue_destroy(sme->sme_wq);
-	mutex_destroy(&sme->sme_callout_mtx);
 }
 
 /*

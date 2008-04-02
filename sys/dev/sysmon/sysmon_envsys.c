@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.82 2008/04/01 12:25:30 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.83 2008/04/02 11:19:22 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.82 2008/04/01 12:25:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.83 2008/04/02 11:19:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -488,7 +488,6 @@ sysmon_envsys_create(void)
 	sme = kmem_zalloc(sizeof(*sme), KM_SLEEP);
 	TAILQ_INIT(&sme->sme_sensors_list);
 	LIST_INIT(&sme->sme_events_list);
-	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 	mutex_init(&sme->sme_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sme->sme_condvar, "sme_wait");
 
@@ -512,7 +511,6 @@ sysmon_envsys_destroy(struct sysmon_envsys *sme)
 		edata = TAILQ_FIRST(&sme->sme_sensors_list);
 		TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	}
-	callout_destroy(&sme->sme_callout);
 	mutex_destroy(&sme->sme_mtx);
 	cv_destroy(&sme->sme_condvar);
 	kmem_free(sme, sizeof(*sme));
@@ -856,13 +854,9 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	KASSERT(sme != NULL);
 
 	/*
-	 * Unregister all events associated with device and stop the
-	 * callout; after this it's safe to unregister it.
+	 * Unregister all events associated with device.
 	 */
 	sme_event_unregister_all(sme);
-	mutex_enter(&sme->sme_mtx);
-	sysmon_envsys_acquire(sme, true);
-	callout_stop(&sme->sme_callout);
 	/*
 	 * Decrement global sensors counter (only used for compatibility
 	 * with previous API) and remove the device from the list.
@@ -871,8 +865,6 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	sysmon_envsys_next_sensor_index -= sme->sme_nsensors;
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_global_mtx);
-	sysmon_envsys_release(sme, true);
-	mutex_exit(&sme->sme_mtx);
 
 	/*
 	 * Remove the device (and all its objects) from the global dictionary.
