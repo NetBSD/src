@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.221 2008/03/17 16:54:51 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.222 2008/04/02 17:38:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.221 2008/03/17 16:54:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.222 2008/04/02 17:38:16 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -298,13 +298,6 @@ yield(void)
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
-	if (l->l_class == SCHED_OTHER) {
-		/*
-		 * Only for timeshared threads.  It will be reset
-		 * by the scheduler in due course.
-		 */
-		l->l_priority = 0;
-	}
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
