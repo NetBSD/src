@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.260 2008/03/24 12:30:17 yamt Exp $
+#       $NetBSD: Makefile,v 1.261 2008/04/02 14:49:31 xtraeme Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -562,6 +562,12 @@ MLINKS+=sysctl.9 old_sysctl.9 \
 	sysctl.9 sysctl_query.9 \
 	sysctl.9 sysctl_teardown.9 \
 	sysctl.9 sysctl_unlock.9
+MLINKS+=sysmon_envsys.9 sysmon_envsys_create.9 \
+	sysmon_envsys.9 sysmon_envsys_destroy.9 \
+	sysmon_envsys.9 sysmon_envsys_register.9 \
+	sysmon_envsys.9 sysmon_envsys_unregister.9 \
+	sysmon_envsys.9 sysmon_envsys_sensor_attach.9 \
+	sysmon_envsys.9 sysmon_envsys_sensor_detach.9
 MLINKS+=time_second.9 boottime.9 time_second.9 time_uptime.9
 MLINKS+=tc.9 tc_intr_establish.9 \
 	tc.9 tc_intr_disestablish.9 \
