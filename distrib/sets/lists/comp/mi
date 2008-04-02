@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1126 2008/03/29 19:58:37 mlelstv Exp $
+#	$NetBSD: mi,v 1.1127 2008/04/02 01:34:36 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -359,6 +359,7 @@
 ./usr/include/dev/isa/isadmavar.h		comp-obsolete		obsolete
 ./usr/include/dev/isa/isareg.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/isavar.h			comp-obsolete		obsolete
+./usr/include/dev/isa/isvio.h			comp-c-include
 ./usr/include/dev/isa/lptreg.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/madreg.h			comp-obsolete		obsolete
 ./usr/include/dev/isa/mcdreg.h			comp-obsolete		obsolete
