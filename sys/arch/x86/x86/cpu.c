@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.24 2008/04/01 11:09:58 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.25 2008/04/02 11:52:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2008/04/01 11:09:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2008/04/02 11:52:54 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -580,7 +580,8 @@ cpu_start_secondary(struct cpu_info *ci)
 	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
-	CPU_STARTUP(ci, mp_trampoline_paddr);
+	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0)
+		return;
 
 	/*
 	 * wait for it to become ready
@@ -849,33 +850,39 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	dwordptr[0] = 0;
 	dwordptr[1] = target >> 4;
 
-	memcpy((uint8_t *)(cmos_data_mapping + 0x467), dwordptr, 4);
+	memcpy((uint8_t *)cmos_data_mapping + 0x467, dwordptr, 4);
 
 #if NLAPIC > 0
+	if ((cpu_feature & CPUID_APIC) == 0) {
+		aprint_error("mp_cpu_start: CPU does not have APIC\n");
+		return ENODEV;
+	}
+
 	/*
 	 * ... prior to executing the following sequence:"
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		if ((error = x86_ipi_init(ci->ci_apicid)) != 0)
+		if ((error = x86_ipi_init(ci->ci_apicid)) != 0) {
+			aprint_error("mp_cpu_start: IPI not taken (1)\n");
 			return error;
+		}
 
 		i8254_delay(10000);
 
-		if (cpu_feature & CPUID_APIC) {
-
-			if ((error = x86_ipi(target / PAGE_SIZE,
-					     ci->ci_apicid,
-					     LAPIC_DLMODE_STARTUP)) != 0)
-				return error;
-			i8254_delay(200);
-
-			if ((error = x86_ipi(target / PAGE_SIZE,
-					     ci->ci_apicid,
-					     LAPIC_DLMODE_STARTUP)) != 0)
-				return error;
-			i8254_delay(200);
+		if ((error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+		    LAPIC_DLMODE_STARTUP)) != 0) {
+			aprint_error("mp_cpu_start: IPI not taken (2)\n");
+			return error;
 		}
+		i8254_delay(200);
+
+		if ((error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+		    LAPIC_DLMODE_STARTUP)) != 0) {
+			aprint_error("mp_cpu_start: IPI not taken (3)\n");
+			return error;
+		}
+		i8254_delay(200);
 	}
 #endif
 	return 0;
