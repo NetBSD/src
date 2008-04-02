@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.10 2008/03/28 04:18:52 manu Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.11 2008/04/02 19:02:50 manu Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -74,15 +74,6 @@
 #define BIND privsep_bind
 #define SOCKET privsep_socket
 #define SETSOCKOPT privsep_setsockopt
-#endif
-
-#ifndef IP_IPSEC_POLICY
-#define IP_IPSEC_POLICY 16	/* XXX: from linux/in.h */
-#endif
-
-#ifndef IPV6_IPSEC_POLICY
-#define IPV6_IPSEC_POLICY 34	/* XXX: from linux/???.h per
-				   "Tom Lendacky" <toml@us.ibm.com> */
 #endif
 
 const int niflags = 0;
