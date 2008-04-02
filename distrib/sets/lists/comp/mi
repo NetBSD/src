@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1127 2008/04/02 01:34:36 dyoung Exp $
+#	$NetBSD: mi,v 1.1128 2008/04/02 14:49:31 xtraeme Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8150,6 +8150,12 @@
 ./usr/share/man/cat9/sysctl_teardown.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysctl_unlock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_envsys_create.0	comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_envsys_destroy.0	comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_envsys_register.0	comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_envsys_unregister.0	comp-sys-catman		.cat
+./usr/share/man/cat9/sysmon_envsys_sensor_attach.0	comp-sys-catman	.cat
+./usr/share/man/cat9/sysmon_envsys_sensor_detach.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/tc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_badaddr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_intr_disestablish.0	comp-sys-catman		.cat
@@ -13170,6 +13176,12 @@
 ./usr/share/man/man9/sysctl_teardown.9		comp-sys-man		.man
 ./usr/share/man/man9/sysctl_unlock.9		comp-sys-man		.man
 ./usr/share/man/man9/sysmon_envsys.9		comp-sys-man		.man
+./usr/share/man/man9/sysmon_envsys_create.9	comp-sys-man 		.man
+./usr/share/man/man9/sysmon_envsys_destroy.9	comp-sys-man 		.man
+./usr/share/man/man9/sysmon_envsys_register.9	comp-sys-man 		.man
+./usr/share/man/man9/sysmon_envsys_unregister.9	comp-sys-man 		.man
+./usr/share/man/man9/sysmon_envsys_sensor_attach.9	comp-sys-man 	.man
+./usr/share/man/man9/sysmon_envsys_sensor_detach.9	comp-sys-man 	.man
 ./usr/share/man/man9/tc.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_badaddr.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_intr_disestablish.9	comp-sys-man		.man
