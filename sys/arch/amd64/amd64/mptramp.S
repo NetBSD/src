@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.5 2007/10/18 15:28:32 yamt Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.6 2008/04/03 01:02:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,6 +97,24 @@
 
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 
+#ifdef MPDEBUG
+
+/*
+ * Debug code to stop aux. processors in various stages based on the
+ * value in cpu_trace.
+ *
+ * %edi points at cpu_trace;  cpu_trace[0] is the "hold point";
+ * cpu_trace[1] is the point which the CPU has reached.
+ * cpu_trace[2] is the last value stored by HALTT.
+ */
+
+#define HALT(x)	1: movl (%edi),%ebx;cmpl $ x,%ebx ; jle 1b ; movl $x,4(%edi)
+#define HALTT(x,y)	movl y,8(%edi); HALT(x)
+#else
+#define HALT(x)	/**/
+#define HALTT(x,y) /**/
+#endif
+
 	.globl	_C_LABEL(idle_loop)
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
@@ -134,6 +152,11 @@ _TRMP_LABEL(mp_startup)
 	movl    $ (MP_TRAMPOLINE+NBPG-16),%esp       # bootstrap stack end,
 						     # with scratch space..
 	
+#ifdef MPDEBUG
+	leal    RELOC(cpu_trace),%edi       
+#endif
+
+	HALT(0x1)
 	/* First, reset the PSL. */
 	pushl   $PSL_MBO
 	popfl
@@ -236,3 +259,10 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	.data
 _C_LABEL(mp_pdirpa):
 	.quad	0
+#ifdef MPDEBUG
+	.global _C_LABEL(cpu_trace)
+_C_LABEL(cpu_trace):
+	.quad  0x40
+	.quad  0xff
+	.quad  0xff		
+#endif
