@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.19 2008/03/05 15:03:36 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.20 2008/04/03 13:59:00 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.19 2008/03/05 15:03:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.20 2008/04/03 13:59:00 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1378,10 +1378,11 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 	char			serial[41];
 	char			rev[17];
 
-	switch (htole32(diskinfo->device_state)) {
+	switch (diskinfo->device_state) {
 	case ARC_FW_DISK_PASSTHRU:
 		bd->bd_status = BIOC_SDPASSTHRU;
 		break;
+	case ARC_FW_DISK_INITIALIZED:
 	case ARC_FW_DISK_RAIDMEMBER:
 		bd->bd_status = BIOC_SDONLINE;
 		break;
@@ -1401,7 +1402,7 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 		break;
 	default:
 		printf("%s: unknown disk device_state: 0x%x\n", __func__,
-		    htole32(diskinfo->device_state));
+		    diskinfo->device_state);
 		bd->bd_status = BIOC_SDINVALID;
 		return;
 	}
