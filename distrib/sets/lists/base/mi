@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.740.6.1 2008/02/21 20:44:54 mjf Exp $
+# $NetBSD: mi,v 1.740.6.2 2008/04/03 11:37:26 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -762,8 +762,8 @@
 ./usr/include/dev				base-c-usr
 ./usr/include/dev/apm				base-c-usr
 ./usr/include/dev/ata				base-c-usr
-./usr/include/dev/dctl				base-c-usr
 ./usr/include/dev/dec				base-c-usr
+./usr/include/dev/devfsctl			base-c-usr
 ./usr/include/dev/dmover			base-c-usr
 ./usr/include/dev/eisa				base-obsolete		obsolete
 ./usr/include/dev/hpc				base-c-usr

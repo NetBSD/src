@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_comm.c,v 1.1.6.4 2008/03/29 16:17:58 mjf Exp $ */
+/* 	$NetBSD: devfs_comm.c,v 1.1.6.5 2008/04/03 11:37:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,18 +31,18 @@
 
 /*
  * This file contains all code that is used to communicate between a
- * devfs mount and dctl(4) (which in turn communicates with devfsd(8)).
+ * devfs mount and devfsctl(4) (which in turn communicates with devfsd(8)).
  *
  * The communication between all components can be illustrated by,
  *
  *	------------		---------	    -------------
- *     | devfsd(8)  |<-------->| dctl(4) |<------->| devfs mount |
+ *     | devfsd(8)  |<-------->| devfsctl(4) |<------->| devfs mount |
  *     |	    |	       |         |         |             |
  *      ------------            ---------           -------------
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.4 2008/03/29 16:17:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.5 2008/04/03 11:37:27 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.4 2008/03/29 16:17:58 mjf Exp $
 
 #include <fs/devfs/devfs.h>
 #include <fs/devfs/devfs_comm.h>
-#include <dev/dctl/dctl.h>
+#include <dev/devfsctl/devfsctl.h>
 
 /* 
  * INFO WE NEED:

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.15.6.1 2008/03/20 12:11:07 mjf Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.15.6.2 2008/04/03 11:37:26 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.1 2008/03/20 12:11:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.2 2008/04/03 11:37:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -972,13 +972,13 @@ device_unregister_name(dev_t dev, const char *fmt, ...)
 }
 
 struct device_name *
-device_lookup_info(dev_t dev)
+device_lookup_info(dev_t dev, int is_char)
 {
 	struct device_name *dn;
 
 	mutex_enter(&dname_lock);
 	TAILQ_FOREACH(dn, &device_names, d_next) {
-		if (dn->d_dev == dev)
+		if ((dn->d_dev == dev) && (dn->d_char == is_char))
 			break;
 	}
 	mutex_exit(&dname_lock);
