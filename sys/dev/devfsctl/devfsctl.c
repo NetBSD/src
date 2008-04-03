@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctl.c,v 1.1.6.4 2008/03/29 16:17:57 mjf Exp $ */
+/* 	$NetBSD: devfsctl.c,v 1.1.2.1 2008/04/03 11:14:48 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,10 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.4 2008/03/29 16:17:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.1 2008/04/03 11:14:48 mjf Exp $");
 
-#if defined(DEBUG) && !defined(DCTLDEBUG)
-#define	DCTLDEBUG
+#if defined(DEBUG) && !defined(DEVFSCTLDEBUG)
+#define	DEVFSCTLDEBUG
 #endif
 
 #include <sys/param.h>
@@ -95,89 +95,89 @@ __KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.4 2008/03/29 16:17:57 mjf Exp $");
 #include <sys/conf.h>
 #include <sys/namei.h>
 
-#include <dev/dctl/dctlvar.h>
-#include <dev/dctl/dctl.h>
+#include <dev/devfsctl/devfsctlvar.h>
+#include <dev/devfsctl/devfsctl.h>
 #include <fs/devfs/devfs_comm.h>
 
 #include <machine/stdarg.h>
 
-#ifdef DCTLDEBUG
-#define DPRINTF(f, x)		do { if (dctldebug & (f)) printf x; } while (0)
+#ifdef DEVFSCTLDEBUG
+#define DPRINTF(f, x)		do { if (devfsctldebug & (f)) printf x; } while (0)
 
 
-#ifdef DCTLDEBUG_VALUE
-int	dctldebug = DCTLDEBUG_VALUE;
+#ifdef DEVFSCTLDEBUG_VALUE
+int	devfsctldebug = DEVFSCTLDEBUG_VALUE;
 #else
-int	dctldebug = 0;
-#endif /* DCTLDEBUG_VALUE */
+int	devfsctldebug = 0;
+#endif /* DEVFSCTLDEBUG_VALUE */
 
 #else
 #define	DPRINTF(f, x)		/**/
-#endif /* DCTLDEBUG */
+#endif /* DEVFSCTLDEBUG */
 
 /*
  * A brief note on the locking protocol: it's very simple; we
  * assert an exclusive lock any time thread context enters the
- * DCTL module.  This is both the DCTL thread itself, as well as
+ * DEVFSCTL module.  This is both the DEVFSCTL thread itself, as well as
  * user context.
  */
-#define	DCTL_LOCK(dctlsc)						\
-	(void) mutex_enter(dctlsc)
-#define	DCTL_UNLOCK(dctlsc)						\
-	(void) mutex_exit(dctlsc)
+#define	DEVFSCTL_LOCK(devfsctlsc)						\
+	(void) mutex_enter(devfsctlsc)
+#define	DEVFSCTL_UNLOCK(devfsctlsc)						\
+	(void) mutex_exit(devfsctlsc)
 
-static int	dctl_record_event(struct dctl_msg *);
-static void	dctl_periodic_device_check(void);
-static void	dctl_thread(void *);
-static int	dctl_mount_change(const char *, int32_t , enum dmsgtype, int);
+static int	devfsctl_record_event(struct devfsctl_msg *);
+static void	devfsctl_periodic_device_check(void);
+static void	devfsctl_thread(void *);
+static int	devfsctl_mount_change(const char *, int32_t , enum dmsgtype, int);
 
-void dctl_init(void);
-void dctlattach(int);
+void devfsctl_init(void);
+void devfsctlattach(int);
 
-dev_type_open(dctlopen);
-dev_type_close(dctlclose);
-dev_type_ioctl(dctlioctl);
-dev_type_poll(dctlpoll);
-dev_type_kqfilter(dctlkqfilter);
+dev_type_open(devfsctlopen);
+dev_type_close(devfsctlclose);
+dev_type_ioctl(devfsctlioctl);
+dev_type_poll(devfsctlpoll);
+dev_type_kqfilter(devfsctlkqfilter);
 
-const struct cdevsw dctl_cdevsw = {
-	dctlopen, dctlclose, noread, nowrite, dctlioctl,
-	nostop, notty, dctlpoll, nommap, dctlkqfilter, D_OTHER,
+const struct cdevsw devfsctl_cdevsw = {
+	devfsctlopen, devfsctlclose, noread, nowrite, devfsctlioctl,
+	nostop, notty, devfsctlpoll, nommap, devfsctlkqfilter, D_OTHER,
 };
 
 /* variables used during operation (XXX cgd) */
-static 	int dctl_open = 0;
-static	struct dctl_softc *sc;
-static 	lwp_t *dctl_thread_handle;
-static 	kmutex_t dctl_lock;
-static 	SIMPLEQ_HEAD(,dctl_event_entry) event_list = 
+static 	int devfsctl_open = 0;
+static	struct devfsctl_softc *sc;
+static 	lwp_t *devfsctl_thread_handle;
+static 	kmutex_t devfsctl_lock;
+static 	SIMPLEQ_HEAD(,devfsctl_event_entry) event_list = 
     SIMPLEQ_HEAD_INITIALIZER(event_list);
-static 	SIMPLEQ_HEAD(,dctl_event_entry) mount_event_list = 
+static 	SIMPLEQ_HEAD(,devfsctl_event_entry) mount_event_list = 
     SIMPLEQ_HEAD_INITIALIZER(mount_event_list);
-static	int dctl_initialised = 0;
+static	int devfsctl_initialised = 0;
 
 /*
  * A new devfs mount has been created, so kick devfsd(8). What devfsd 
  * will actually do is figure out appropriate attributes for device nodes
- * that need to populate this mount and then pass them through dctl to the
+ * that need to populate this mount and then pass them through devfsctl to the
  * mount.
  *
  * 'path' is the absolute pathname this devfs is mounted on.
  * 'cookie' uniquely identifies the mount point.
  */
 int
-dctl_mount_msg(const char *path, int32_t cookie, int visibility)
+devfsctl_mount_msg(const char *path, int32_t cookie, int visibility)
 {
-	return dctl_mount_change(path, cookie, DCTL_NEW_MOUNT, visibility);
+	return devfsctl_mount_change(path, cookie, DEVFSCTL_NEW_MOUNT, visibility);
 }
 
 /*
  * A devfs mount point has been destroyed.
  */
 int
-dctl_unmount_msg(int32_t cookie, int visibility)
+devfsctl_unmount_msg(int32_t cookie, int visibility)
 {
-	return dctl_mount_change(NULL, cookie, DCTL_UNMOUNT, visibility);
+	return devfsctl_mount_change(NULL, cookie, DEVFSCTL_UNMOUNT, visibility);
 }
 
 /*
@@ -186,21 +186,21 @@ dctl_unmount_msg(int32_t cookie, int visibility)
  * it must be the mount point pathname of the devfs being mounted.
  */
 static int
-dctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type,
+devfsctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type,
 	int visibility)
 {
 	int error;
-	struct dctl_msg *msg;
+	struct devfsctl_msg *msg;
 
 	if ((msg = kmem_zalloc(sizeof(*msg), KM_SLEEP)) == NULL) {
-		printf("could not alloc memory for dctl message\n");
+		printf("could not alloc memory for devfsctl message\n");
 		return -1;
 	}
 
 	msg->d_type = type;
 	msg->d_mc = cookie;
 
-	if (type != DCTL_UNMOUNT) {
+	if (type != DEVFSCTL_UNMOUNT) {
 		KASSERT(path != NULL);
 		strlcpy(msg->d_mp.m_pathname, 
 		    path, sizeof(msg->d_mp.m_pathname));
@@ -209,10 +209,10 @@ dctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type,
 
 	msg->d_mp.m_visibility = visibility;
 
-	DCTL_LOCK(&dctl_lock);
-	if ((error = dctl_record_event(msg)) != 0)
+	DEVFSCTL_LOCK(&devfsctl_lock);
+	if ((error = devfsctl_record_event(msg)) != 0)
 		kmem_free(msg, sizeof(*msg));
-	DCTL_UNLOCK(&dctl_lock);
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 	return error;
 }
 
@@ -225,14 +225,14 @@ dctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type,
  * filename is not being updated, nfilename must be NULL.
  */
 int
-dctl_attr_msg(int32_t mount_cookie, dev_t dev_cookie, mode_t nmode, 
+devfsctl_attr_msg(int32_t mount_cookie, dev_t dev_cookie, mode_t nmode, 
 	uid_t nuid, gid_t ngid, int nflags, char *nfilename)
 {
 	int error;
-	struct dctl_msg *msg;
+	struct devfsctl_msg *msg;
 
 	if ((msg = kmem_zalloc(sizeof(*msg), KM_SLEEP)) == NULL) {
-		printf("could not alloc memory for dctl message\n");
+		printf("could not alloc memory for devfsctl message\n");
 		return -1;
 	}
 
@@ -241,9 +241,9 @@ dctl_attr_msg(int32_t mount_cookie, dev_t dev_cookie, mode_t nmode,
 	msg->d_sn.sc_mount = mount_cookie;
 
 	if (nfilename == NULL)
-		msg->d_type = DCTL_UPDATE_NODE_ATTR;
+		msg->d_type = DEVFSCTL_UPDATE_NODE_ATTR;
 	else
-		msg->d_type = DCTL_UPDATE_NODE_NAME;
+		msg->d_type = DEVFSCTL_UPDATE_NODE_NAME;
 
 	msg->d_attr.d_mode = nmode;
 	msg->d_attr.d_uid = nuid;
@@ -258,10 +258,10 @@ dctl_attr_msg(int32_t mount_cookie, dev_t dev_cookie, mode_t nmode,
 	strlcpy(msg->d_attr.d_component.out_pthcmp.d_pthcmp, nfilename, 
 	     sizeof(msg->d_attr.d_component.out_pthcmp.d_pthcmp));
 
-	DCTL_LOCK(&dctl_lock);
-	if ((error = dctl_record_event(msg)) != 0)
+	DEVFSCTL_LOCK(&devfsctl_lock);
+	if ((error = devfsctl_record_event(msg)) != 0)
 		kmem_free(msg, sizeof(*msg));
-	DCTL_UNLOCK(&dctl_lock);
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 	return error;
 }
 
@@ -270,7 +270,7 @@ dctl_attr_msg(int32_t mount_cookie, dev_t dev_cookie, mode_t nmode,
  * by 'dcookie' to create it for us.
  */
 static int
-dctl_push_node(struct dctl_node_cookie nc, struct dctl_specnode_attr *na)
+devfsctl_push_node(struct devfsctl_node_cookie nc, struct devfsctl_specnode_attr *na)
 {
 	int error;
 	int32_t mcookie = nc.sc_mount;
@@ -279,12 +279,12 @@ dctl_push_node(struct dctl_node_cookie nc, struct dctl_specnode_attr *na)
 	struct device_name *dn;
 
 	/* Lookup the device_name for this device */
-	dn = device_lookup_info(dcookie);
+	dn = device_lookup_info(dcookie, na->d_char);
 	if (dn == NULL)
 		return EINVAL;
 
 	error = devfs_create_node(mcookie, path, dcookie, na->d_uid, 
-	    na->d_gid, na->d_mode, na->d_flags, dn->d_char);
+	    na->d_gid, na->d_mode, na->d_flags, na->d_char);
 	    
 	return error;
 }
@@ -294,7 +294,7 @@ dctl_push_node(struct dctl_node_cookie nc, struct dctl_specnode_attr *na)
  * by 'dcookie' to delete it.
  */
 static int
-dctl_delete_node(struct dctl_node_cookie nc, struct dctl_specnode_attr *na)
+devfsctl_delete_node(struct devfsctl_node_cookie nc, struct devfsctl_specnode_attr *na)
 {
 	int error;
 	int32_t mcookie = nc.sc_mount;
@@ -315,12 +315,12 @@ dctl_delete_node(struct dctl_node_cookie nc, struct dctl_specnode_attr *na)
  *
  * 'msg' will tell us what sort of event has occurred.
  *
- * XXX: This must always be called with DCTL_LOCK held.
+ * XXX: This must always be called with DEVFSCTL_LOCK held.
  */
 static int
-dctl_record_event(struct dctl_msg *msg)
+devfsctl_record_event(struct devfsctl_msg *msg)
 {
-	struct dctl_event_entry *de;
+	struct devfsctl_event_entry *de;
 
 	if ((de = kmem_zalloc(sizeof(*de), KM_SLEEP)) == NULL) {
 		printf("unable to allocate memory for dev_event\n");
@@ -342,10 +342,10 @@ dctl_record_event(struct dctl_msg *msg)
  * been removed.
  */
 static void
-dctl_periodic_device_check(void)
+devfsctl_periodic_device_check(void)
 {
 	struct device_name *dn;
-	struct dctl_msg *msg;
+	struct devfsctl_msg *msg;
 
 	/* Check for new and removed devices */
 	mutex_enter(&dname_lock);
@@ -359,7 +359,7 @@ dctl_periodic_device_check(void)
 				continue;
 			}
 
-			msg->d_type = DCTL_NEW_DEVICE;
+			msg->d_type = DEVFSCTL_NEW_DEVICE;
 
 			/* cookie */
 			msg->d_dc = dn->d_dev;
@@ -369,8 +369,11 @@ dctl_periodic_device_check(void)
 			/* type of device */
 			msg->d_kdev.k_type = dn->d_type;
 
+			/* block or char */
+			msg->d_kdev.k_char = dn->d_char;
+
 			dn->d_found = true;
-			if (dctl_record_event(msg) == -1) {
+			if (devfsctl_record_event(msg) == -1) {
 				printf("could not record new device event\n");
 				kmem_free(msg, sizeof(*msg));
 				return;
@@ -384,7 +387,7 @@ dctl_periodic_device_check(void)
 				continue;
 			}
 
-			msg->d_type = DCTL_REMOVED_DEVICE;
+			msg->d_type = DEVFSCTL_REMOVED_DEVICE;
 
 			/* cookie */
 			msg->d_dc = dn->d_dev;
@@ -393,7 +396,7 @@ dctl_periodic_device_check(void)
 
 			TAILQ_REMOVE(&device_names, dn, d_next);
 
-			if (dctl_record_event(msg) == -1) {
+			if (devfsctl_record_event(msg) == -1) {
 				printf("could not record new device event\n");
 				kmem_free(msg, sizeof(*msg));
 				return;
@@ -407,56 +410,56 @@ dctl_periodic_device_check(void)
 }
 
 void
-dctlattach(int n)
+devfsctlattach(int n)
 {
-	if (dctl_initialised)
+	if (devfsctl_initialised)
 		return;
-	dctl_initialised = 1;
+	devfsctl_initialised = 1;
 
 	if ((sc = kmem_zalloc(sizeof(*sc), KM_SLEEP)) == NULL) {
-		printf("unable to allocate mem, dctl dead\n");
+		printf("unable to allocate mem, devfsctl dead\n");
 		return;
 	}
 	TAILQ_INIT(&sc->sc_devlist);
 
-	mutex_init(&dctl_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&devfsctl_lock, MUTEX_DEFAULT, IPL_NONE);
 	SIMPLEQ_INIT(&event_list);
 
-	if (kthread_create(PRI_NONE, 0, NULL, dctl_thread, NULL,
-	    &dctl_thread_handle, "dctl_thread") != 0) {
+	if (kthread_create(PRI_NONE, 0, NULL, devfsctl_thread, NULL,
+	    &devfsctl_thread_handle, "devfsctl_thread") != 0) {
 		/*
-		 * We were unable to create the DCTL thread; bail out.
+		 * We were unable to create the DEVFSCTL thread; bail out.
 		 */
 		printf("unable to create thread, "
-		    "kernel DCTL support disabled\n");
+		    "kernel DEVFSCTL support disabled\n");
 	}
 }
 
 void
-dctl_thread(void *arg)
+devfsctl_thread(void *arg)
 {
 	/*
-	 * Loop forever, doing a periodic check for DCTL events.
+	 * Loop forever, doing a periodic check for DEVFSCTL events.
 	 */
 	for (;;) {
-		DCTL_LOCK(&dctl_lock); 
-		dctl_periodic_device_check();
-		DCTL_UNLOCK(&dctl_lock);
-		(void) tsleep(sc, PWAIT, "dctlev",  (8 * hz) / 7);
+		DEVFSCTL_LOCK(&devfsctl_lock); 
+		devfsctl_periodic_device_check();
+		DEVFSCTL_UNLOCK(&devfsctl_lock);
+		(void) tsleep(sc, PWAIT, "devfsctlev",  (8 * hz) / 7);
 	}
 }
 
 int
-dctlopen(dev_t dev, int flag, int mode, struct lwp *l)
+devfsctlopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error = 0;
-	struct dctl_event_entry *ee;
+	struct devfsctl_event_entry *ee;
 
-	DCTL_LOCK(&dctl_lock); 
-	if (dctl_open != 0)
+	DEVFSCTL_LOCK(&devfsctl_lock); 
+	if (devfsctl_open != 0)
 		error = EBUSY;
 	else 
-		dctl_open = 1;
+		devfsctl_open = 1;
 
 	/* Copy all mounts onto the main event list. */
 	SIMPLEQ_FOREACH(ee, &mount_event_list, dm_entries) {
@@ -467,45 +470,45 @@ dctlopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!SIMPLEQ_EMPTY(&mount_event_list))
 		selnotify(&sc->sc_rsel, 0);
 
-	DCTL_UNLOCK(&dctl_lock);
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 
 	return error;
 }
 
 int
-dctlclose(dev_t dev, int flag, int mode, struct lwp *l)
+devfsctlclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct device_name *dn;
 
-	DCTL_LOCK(&dctl_lock); 
+	DEVFSCTL_LOCK(&devfsctl_lock); 
 
 	mutex_enter(&dname_lock);
 	TAILQ_FOREACH(dn, &device_names, d_next)
 		dn->d_found = false;
 	mutex_exit(&dname_lock);
 
-	dctl_open = 0;
+	devfsctl_open = 0;
 	sc->sc_event_count = 0;
 
-	DCTL_UNLOCK(&dctl_lock);
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 	return 0;
 }
 
 int
-dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+devfsctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
-	struct dctl_msg *msg;
-	struct dctl_event_entry *ee, *ef;
-	struct dctl_ioctl_data *idata;
+	struct devfsctl_msg *msg;
+	struct devfsctl_event_entry *ee, *ef;
+	struct devfsctl_ioctl_data *idata;
 
-	DCTL_LOCK(&dctl_lock);
+	DEVFSCTL_LOCK(&devfsctl_lock);
 	switch (cmd) {
-	case DCTL_IOC_NEXTEVENT:
+	case DEVFSCTL_IOC_NEXTEVENT:
 		if (!sc->sc_event_count)
 			error = EAGAIN;
 		else {
-			msg = (struct dctl_msg *)data;
+			msg = (struct devfsctl_msg *)data;
 			if (msg == NULL) {
 				error = EINVAL;
 				break;
@@ -516,7 +519,7 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			SIMPLEQ_REMOVE_HEAD(&event_list, de_entries);
 
 			/* move to the mount list */
-			if (ee->de_msg->d_type == DCTL_NEW_MOUNT) {
+			if (ee->de_msg->d_type == DEVFSCTL_NEW_MOUNT) {
 				/* is it already there? */
 				if (ee->de_on_mount == 0) {
 					SIMPLEQ_INSERT_TAIL(&mount_event_list, ee, dm_entries);
@@ -524,7 +527,7 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				}
 				sc->sc_event_count--;
 				error = 0;
-			} else if (ee->de_msg->d_type == DCTL_UNMOUNT) {
+			} else if (ee->de_msg->d_type == DEVFSCTL_UNMOUNT) {
 				/* 
 				 * Search the list of mount events and remove
 				 * this mount.
@@ -538,7 +541,7 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 					panic("devfs umount without mount\n");
 
 				SIMPLEQ_REMOVE(&mount_event_list, ef, 
-				    dctl_event_entry, dm_entries);
+				    devfsctl_event_entry, dm_entries);
 
 				kmem_free(ef->de_msg, sizeof(*ef->de_msg));
 				kmem_free(ef, sizeof(*ef));
@@ -556,8 +559,8 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			}
 		}
 		break;
-	case DCTL_IOC_CREATENODE:
-		msg = (struct dctl_msg *)data;
+	case DEVFSCTL_IOC_CREATENODE:
+		msg = (struct devfsctl_msg *)data;
 		if (msg == NULL) {
 			error = EINVAL;
 			break;
@@ -567,17 +570,17 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * Create a device special file for this device using
 		 * the attributes passed to us from userland.
 		 */
-		error = dctl_push_node(msg->d_sn, &msg->d_attr);
+		error = devfsctl_push_node(msg->d_sn, &msg->d_attr);
 		break;
-	case DCTL_IOC_DELETENODE:
-		msg = (struct dctl_msg *)data;
+	case DEVFSCTL_IOC_DELETENODE:
+		msg = (struct devfsctl_msg *)data;
 		if (msg == NULL) {
 			error = EINVAL;
 			break;
 		}
-		error = dctl_delete_node(msg->d_sn, &msg->d_attr);
+		error = devfsctl_delete_node(msg->d_sn, &msg->d_attr);
 		break;
-	case DCTL_IOC_INNERIOCTL:
+	case DEVFSCTL_IOC_INNERIOCTL:
 		/* 
 		 * Because devfsd(8) needs to query devices through ioctls
 		 * _before_ their nodes have been pushed into devfs file
@@ -586,7 +589,7 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		error = EINVAL;
 
-		idata = (struct dctl_ioctl_data *)data;
+		idata = (struct devfsctl_ioctl_data *)data;
 
 		const struct cdevsw *cdev = cdevsw_lookup(idata->d_dev);
 
@@ -636,59 +639,59 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	default:
 		error = ENOTTY;
 	}
-	DCTL_UNLOCK(&dctl_lock);
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 
 	return error;
 }
 
 int
-dctlpoll(dev_t dev, int events, struct lwp *l)
+devfsctlpoll(dev_t dev, int events, struct lwp *l)
 {
 	int revents = 0;
 
-	DCTL_LOCK(&dctl_lock);
+	DEVFSCTL_LOCK(&devfsctl_lock);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_event_count)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(l, &sc->sc_rsel);
 	}
-	DCTL_UNLOCK(&dctl_lock);
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 
 	return (revents);
 }
 
 static void
-filt_dctlrdetach(struct knote *kn)
+filt_devfsctlrdetach(struct knote *kn)
 {
-	struct dctl_softc *sd = kn->kn_hook;
+	struct devfsctl_softc *sd = kn->kn_hook;
 
-	DCTL_LOCK(&dctl_lock);
+	DEVFSCTL_LOCK(&devfsctl_lock);
 	SLIST_REMOVE(&sd->sc_rsel.sel_klist, kn, knote, kn_selnext);
-	DCTL_UNLOCK(&dctl_lock);
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 }
 
 static int
-filt_dctlread(struct knote *kn, long hint)
+filt_devfsctlread(struct knote *kn, long hint)
 {
-	struct dctl_softc *sd = kn->kn_hook;
+	struct devfsctl_softc *sd = kn->kn_hook;
 
 	kn->kn_data = sd->sc_event_count;
 	return (kn->kn_data > 0);
 }
 
-static const struct filterops dctlread_filtops =
-	{ 1, NULL, filt_dctlrdetach, filt_dctlread };
+static const struct filterops devfsctlread_filtops =
+	{ 1, NULL, filt_devfsctlrdetach, filt_devfsctlread };
 
 int
-dctlkqfilter(dev_t dev, struct knote *kn)
+devfsctlkqfilter(dev_t dev, struct knote *kn)
 {
 	struct klist *klist;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		klist = &sc->sc_rsel.sel_klist;
-		kn->kn_fop = &dctlread_filtops;
+		kn->kn_fop = &devfsctlread_filtops;
 		break;
 
 	default:
@@ -697,9 +700,9 @@ dctlkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = sc;
 
-	DCTL_LOCK(&dctl_lock);
+	DEVFSCTL_LOCK(&devfsctl_lock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	DCTL_UNLOCK(&dctl_lock);
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 
 	return (0);
 }

@@ -1,0 +1,4 @@
+# $NetBSD: files.devfsctl,v 1.1.2.1 2008/04/03 11:14:49 mjf Exp $
+
+device	devfsctl
+file	dev/devfsctl/devfsctl.c		devfsctl

@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctlvar.h,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfsctlvar.h,v 1.1.2.1 2008/04/03 11:14:48 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,13 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_DCTL_DCTLVAR_H_
-#define _DEV_DCTL_DCTLVAR_H_
+#ifndef _DEV_DEVFSCTL_DEVFSCTLVAR_H_
+#define _DEV_DEVFSCTL_DEVFSCTLVAR_H_
 
 #include <sys/device.h>
-#include <dev/dctl/dctlio.h>
+#include <dev/devfsctl/devfsctlio.h>
 
-struct dctl_softc {
+struct devfsctl_softc {
 	struct selinfo sc_rsel;
 	int	sc_flags;
 	int	sc_event_count;
@@ -44,4 +44,4 @@ struct dctl_softc {
 	TAILQ_HEAD(,device)	sc_devlist;
 };
 
-#endif /* _DEV_DCTL_DCTLVAR_H_ */
+#endif /* _DEV_DEVFSCTL_DEVFSCTLVAR_H_ */

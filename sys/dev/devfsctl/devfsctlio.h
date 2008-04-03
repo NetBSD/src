@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctlio.h,v 1.1.6.4 2008/03/29 16:17:57 mjf Exp $ */
+/* 	$NetBSD: devfsctlio.h,v 1.1.2.1 2008/04/03 11:14:48 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_DCTL_DCTLIO_H_
-#define _DEV_DCTL_DCTLIO_H_
+#ifndef _DEV_DEVFSCTL_DEVFSCTLIO_H_
+#define _DEV_DEVFSCTL_DEVFSCTLIO_H_
 
 #include <sys/statvfs.h>
 #include <sys/fstypes.h>
@@ -39,19 +39,20 @@
 #include <sys/conf.h>
 
 enum dmsgtype {
-	DCTL_NEW_MOUNT,
-	DCTL_UNMOUNT,
-	DCTL_NEW_DEVICE,
-	DCTL_REMOVED_DEVICE,
-	DCTL_UPDATE_NODE_NAME,
-	DCTL_UPDATE_NODE_ATTR
+	DEVFSCTL_NEW_MOUNT,
+	DEVFSCTL_UNMOUNT,
+	DEVFSCTL_NEW_DEVICE,
+	DEVFSCTL_REMOVED_DEVICE,
+	DEVFSCTL_UPDATE_NODE_NAME,
+	DEVFSCTL_UPDATE_NODE_ATTR
 };
 
-struct dctl_specnode_attr {
+struct devfsctl_specnode_attr {
 	mode_t	d_mode;
 	uid_t	d_uid;
 	gid_t	d_gid;
 	int	d_flags;
+	int	d_char;
 
 	union {
 		struct {
@@ -65,15 +66,16 @@ struct dctl_specnode_attr {
 	} d_component;
 };
 
-struct dctl_mount {
+struct devfsctl_mount {
 	char m_pathname[_VFS_MNAMELEN];
 	int32_t m_id;
 	int m_visibility;
 };
 
-struct dctl_kerndev {
+struct devfsctl_kerndev {
 	char k_name[16];
 	enum devtype k_type;
+	int k_char;
 };
 
 /*
@@ -81,7 +83,7 @@ struct dctl_kerndev {
  * and a mount point. For instance, a device may be multiple special
  * nodes that refer to it.
  */
-struct dctl_node_cookie {
+struct devfsctl_node_cookie {
 	dev_t sc_dev;		/* cookie for device */
 	int32_t sc_mount;	/* cookie for mount point */
 };
@@ -90,34 +92,34 @@ struct dctl_node_cookie {
 	((a.sc_dev == b.sc_dev) && (a.sc_mount == b.sc_mount))
 
 /*
- * This defines the structure of a message that is passed between dctl(4)
+ * This defines the structure of a message that is passed between devfsctl(4)
  * and devfsd(8). The mesasge type in 'd_type' dictates what type of cookie
  * and message-specific data should be used.
  */
-struct dctl_msg {
+struct devfsctl_msg {
 	enum dmsgtype d_type;
 	union {
 		dev_t c_dev;		/* device cookie */
 		int32_t c_mount;	/* mount point cookie */
-		struct dctl_node_cookie c_specnode; /* dev spec node cookie */
+		struct devfsctl_node_cookie c_specnode; /* dev spec node cookie */
 	} d_cookie;
 #define d_dc d_cookie.c_dev
 #define d_mc d_cookie.c_mount
 #define d_sn d_cookie.c_specnode
 	union {
-		struct dctl_specnode_attr a_attr;
-		struct dctl_kerndev a_kdev;
-		struct dctl_mount a_mount;
+		struct devfsctl_specnode_attr a_attr;
+		struct devfsctl_kerndev a_kdev;
+		struct devfsctl_mount a_mount;
 	} d_args;
 #define d_attr d_args.a_attr
 #define d_kdev d_args.a_kdev
 #define d_mp d_args.a_mount
 };
 
-struct dctl_event_entry {
-	struct dctl_msg *de_msg;
-	SIMPLEQ_ENTRY(dctl_event_entry)	de_entries;
-	SIMPLEQ_ENTRY(dctl_event_entry) dm_entries;	/* mount list */
+struct devfsctl_event_entry {
+	struct devfsctl_msg *de_msg;
+	SIMPLEQ_ENTRY(devfsctl_event_entry)	de_entries;
+	SIMPLEQ_ENTRY(devfsctl_event_entry) dm_entries;	/* mount list */
 	int de_on_mount;
 };
 
@@ -125,7 +127,7 @@ struct dctl_event_entry {
  * A structure that contains information about a disk device that
  * is suitable for use by devfsd(8) for matching rules.
  */
-struct dctl_disk_info {
+struct devfsctl_disk_info {
 	const char *di_fstype;	/* file system type */
 };
 
@@ -133,18 +135,24 @@ struct dctl_disk_info {
  * The generic structure used by devfsd(8) to gather information about
  * a device, which will later be used for matching.
  */
-struct dctl_ioctl_data {
+struct devfsctl_ioctl_data {
 	enum devtype d_type;
 	dev_t d_dev;		/* device cookie */
 	u_long d_cmd;
 	union {
-		struct dctl_disk_info di;
+		struct devfsctl_disk_info di;
 	} i_args;
 };
 
-#define	DCTL_IOC_NEXTEVENT _IOR('A', 0, struct dctl_msg) /* fetch event */
-#define DCTL_IOC_CREATENODE _IOW('A', 1, struct dctl_msg) /* create node */
-#define DCTL_IOC_DELETENODE _IOW('A', 2, struct dctl_msg) /* delete node */
-#define DCTL_IOC_INNERIOCTL _IOR('A', 3, struct dctl_ioctl_data)
+/* fetch event */
+#define	DEVFSCTL_IOC_NEXTEVENT _IOR('A', 0, struct devfsctl_msg) 
 
-#endif /* _DEV_DCTL_DCTLIO_H_ */
+/* create node */
+#define DEVFSCTL_IOC_CREATENODE _IOW('A', 1, struct devfsctl_msg) 
+
+/* delete node */
+#define DEVFSCTL_IOC_DELETENODE _IOW('A', 2, struct devfsctl_msg) 
+
+#define DEVFSCTL_IOC_INNERIOCTL _IOR('A', 3, struct devfsctl_ioctl_data)
+
+#endif /* _DEV_DEVFSCTL_DEVFSCTLIO_H_ */
