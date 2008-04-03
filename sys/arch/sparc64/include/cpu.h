@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.77 2008/03/17 04:04:00 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.78 2008/04/03 10:34:45 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -288,10 +288,9 @@ void setsoftnet(void);
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, want_ast = 1)
 
 /*
- * Notify the current process (l) that it has a signal pending,
- * process as soon as possible.
+ * Notify an LWP that it has a signal pending, process as soon as possible.
  */
-#define	cpu_signotify(l)	(want_ast = 1)
+void cpu_signotify(struct lwp *);
 
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for
