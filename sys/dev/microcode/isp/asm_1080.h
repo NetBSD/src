@@ -1,4 +1,4 @@
-/* $NetBSD: asm_1080.h,v 1.5 2007/05/24 22:12:02 mjacob Exp $ */
+/* $NetBSD: asm_1080.h,v 1.5.28.1 2008/04/03 12:42:45 mjf Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
  * All rights reserved.
@@ -4552,3 +4552,7 @@ static const uint16_t isp_1080_risc_code[] = {
 	0x0000, 0xd27a
 };
 #endif
+#ifdef	ISP_1080_RISC_CODE
+#undef	ISP_1080_RISC_CODE
+#endif
+#define	ISP_1080_RISC_CODE (const uint16_t *) isp_1080_risc_code

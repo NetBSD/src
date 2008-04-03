@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.23 2008/02/18 06:26:42 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.23.6.1 2008/04/03 12:42:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.23 2008/02/18 06:26:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.23.6.1 2008/04/03 12:42:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ struct elansc_softc {
 	uint8_t		sc_mpicmode;
 	uint8_t		sc_picicr;
 	int		sc_pg0par;
-	int		sc_textpar;
+	int		sc_textpar[3];
 #if NGPIO > 0
 	/* GPIO interface */
 	struct gpio_chipset_tag sc_gpio_gc;
@@ -120,6 +120,12 @@ static void elanpex_intr_establish(device_t, struct elansc_softc *);
 static void elanpar_intr_establish(device_t, struct elansc_softc *);
 static void elanpex_intr_disestablish(struct elansc_softc *);
 static void elanpar_intr_disestablish(struct elansc_softc *);
+static bool elanpar_shutdown(device_t, int);
+static bool elanpex_shutdown(device_t, int);
+
+static void elansc_protect(struct elansc_softc *, int, paddr_t, uint32_t);
+
+static const uint32_t sfkb = 64 * 1024, fkb = 4 * 1024;
 
 static void
 elansc_childdetached(device_t self, device_t child)
@@ -526,45 +532,99 @@ elansc_disable_par(bus_space_tag_t memt, bus_space_handle_t memh, int idx)
 	bus_space_write_4(memt, memh, MMCR_PAR(idx), par);
 }
 
+struct pareg {
+	paddr_t start;
+	paddr_t end;
+};
+
 static int
+region_paddr_to_par(struct pareg *region0, struct pareg *regions, uint32_t unit)
+{
+	struct pareg *residue = regions;
+	paddr_t start, end;
+	paddr_t start0, end0;
+
+	start0 = region0->start;
+	end0 = region0->end;
+
+	if (start0 % unit != 0)
+		start = start0 + unit - start0 % unit;
+	else
+		start = start0;
+
+	end = end0 - end0 % unit;
+
+	if (start >= end)
+		return 0;
+
+	residue->start = start;
+	residue->end = end;
+	residue++;
+
+	if (start0 < start) {
+		residue->start = start0;
+		residue->end = start;
+		residue++;
+	}
+	if (end < end0) {
+		residue->start = end;
+		residue->end = end0;
+		residue++;
+	}
+	return residue - regions;
+}
+
+static void
 elansc_protect_text(device_t self, struct elansc_softc *sc)
 {
-	int i;
+	int i, j, nregion, pidx, tidx = 0, xnregion;
 	uint32_t par;
 	uint32_t protsize, unprotsize;
-	const uint32_t sfkb = 64 * 1024;
 	paddr_t start_pa, end_pa;
 	extern char kernel_text, etext;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
+	struct pareg region0, regions[3], xregions[3];
+
+	sc->sc_textpar[0] = sc->sc_textpar[1] = sc->sc_textpar[2] = -1;
 
 	memt = sc->sc_memt;
 	memh = sc->sc_memh;
 
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)&kernel_text, &start_pa) ||
-	    !pmap_extract(pmap_kernel(), (vaddr_t)&etext, &end_pa))
-		return -1;
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)&kernel_text,
+	                  &region0.start) ||
+	    !pmap_extract(pmap_kernel(), (vaddr_t)&etext,
+	                  &region0.end))
+		return;
 
-	if (&etext - &kernel_text != end_pa - start_pa) {
+	if (&etext - &kernel_text != region0.end - region0.start) {
 		aprint_error_dev(self, "kernel text may not be contiguous\n");
-		return -1;
+		return;
 	}
 
-	if ((i = elansc_alloc_par(memt, memh)) == -1) {
+	if ((pidx = elansc_alloc_par(memt, memh)) == -1) {
 		aprint_error_dev(self, "cannot allocate PAR\n");
-		return -1;
+		return;
 	}
 
-	par = bus_space_read_4(memt, memh, MMCR_PAR(i));
+	par = bus_space_read_4(memt, memh, MMCR_PAR(pidx));
 
 	aprint_debug_dev(self,
 	    "protect kernel text at physical addresses %p - %p\n",
-	    (void *)start_pa, (void *)end_pa);
+	    (void *)region0.start, (void *)region0.end);
 
-	unprotsize = sfkb - start_pa % sfkb;
-	start_pa += unprotsize;
-	unprotsize += end_pa % sfkb;
-	end_pa -= end_pa % sfkb;
+	nregion = region_paddr_to_par(&region0, regions, sfkb);
+	if (nregion == 0) {
+		aprint_error_dev(self, "kernel text is unprotected\n");
+		return;
+	}
+
+	unprotsize = 0;
+	for (i = 1; i < nregion; i++)
+		unprotsize += regions[i].end - regions[i].start;
+
+	start_pa = regions[0].start;
+	end_pa = regions[0].end;
 
 	aprint_debug_dev(self,
 	    "actually protect kernel text at physical addresses %p - %p\n",
@@ -575,19 +635,82 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 
 	protsize = end_pa - start_pa;
 
-	/* clear PG_SZ, attribute, target, size, address. */
+#if 0
+	/* set PG_SZ, attribute, target, size, address. */
 	par = MMCR_PAR_TARGET_SDRAM | MMCR_PAR_ATTR_NOWRITE | MMCR_PAR_PG_SZ;
 	par |= __SHIFTIN(protsize / sfkb - 1, MMCR_PAR_64KB_SZ);
 	par |= __SHIFTIN(start_pa / sfkb, MMCR_PAR_64KB_ST_ADR);
-	bus_space_write_4(memt, memh, MMCR_PAR(i), par);
-	return i;
+	bus_space_write_4(memt, memh, MMCR_PAR(pidx), par);
+#else
+	elansc_protect(sc, pidx, start_pa, protsize);
+#endif
+
+	sc->sc_textpar[tidx++] = pidx;
+
+	unprotsize = 0;
+	for (i = 1; i < nregion; i++) {
+		xnregion = region_paddr_to_par(&regions[i], xregions, fkb);
+		if (xnregion == 0) {
+			aprint_verbose_dev(self, "skip region %p - %p\n",
+			    (void *)regions[i].start, (void *)regions[i].end);
+			continue;
+		}
+		if ((pidx = elansc_alloc_par(memt, memh)) == -1) {
+			unprotsize += regions[i].end - regions[i].start;
+			continue;
+		}
+		elansc_protect(sc, pidx, xregions[0].start,
+		    xregions[0].end - xregions[0].start);
+		sc->sc_textpar[tidx++] = pidx;
+
+		aprint_debug_dev(self,
+		    "protect add'l kernel text at physical addresses %p - %p\n",
+		    (void *)xregions[0].start, (void *)xregions[0].end);
+
+		for (j = 1; j < xnregion; j++)
+			unprotsize += xregions[j].end - xregions[j].start;
+	}
+	aprint_verbose_dev(self,
+	    "%" PRIu32 " bytes of kernel text still unprotected\n", unprotsize);
+
+}
+
+static void
+elansc_protect(struct elansc_softc *sc, int pidx, paddr_t addr, uint32_t sz)
+{
+	uint32_t addr_field, blksz, par, size_field;
+
+	/* set attribute, target. */
+	par = MMCR_PAR_TARGET_SDRAM | MMCR_PAR_ATTR_NOWRITE;
+
+	KASSERT(addr % fkb == 0 && sz % fkb == 0);
+
+	if (addr % sfkb == 0 && sz % sfkb == 0) {
+		par |= MMCR_PAR_PG_SZ;
+
+		size_field = MMCR_PAR_64KB_SZ;
+		addr_field = MMCR_PAR_64KB_ST_ADR;
+		blksz = 64 * 1024;
+	} else {
+		size_field = MMCR_PAR_4KB_SZ;
+		addr_field = MMCR_PAR_4KB_ST_ADR;
+		blksz = 4 * 1024;
+	}
+
+	KASSERT(sz / blksz - 1 <= __SHIFTOUT_MASK(size_field));
+	KASSERT(addr / blksz <= __SHIFTOUT_MASK(addr_field));
+
+	/* set size and address. */
+	par |= __SHIFTIN(sz / blksz - 1, size_field);
+	par |= __SHIFTIN(addr / blksz, addr_field);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, MMCR_PAR(pidx), par);
 }
 
 static int
 elansc_protect_pg0(device_t self, struct elansc_softc *sc)
 {
-	int i;
-	uint32_t par;
+	int pidx;
 	const paddr_t pg0_paddr = 0;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
@@ -598,19 +721,21 @@ elansc_protect_pg0(device_t self, struct elansc_softc *sc)
 	if (elansc_do_protect_pg0 == 0)
 		return -1;
 
-	if ((i = elansc_alloc_par(memt, memh)) == -1)
+	if ((pidx = elansc_alloc_par(memt, memh)) == -1)
 		return -1;
-
-	par = bus_space_read_4(memt, memh, MMCR_PAR(i));
 
 	aprint_debug_dev(self, "protect page 0\n");
 
-	/* clear PG_SZ, attribute, target, size, address. */
+#if 0
+	/* set PG_SZ, attribute, target, size, address. */
 	par = MMCR_PAR_TARGET_SDRAM | MMCR_PAR_ATTR_NOWRITE;
 	par |= __SHIFTIN(PG0_PROT_SIZE / PAGE_SIZE - 1, MMCR_PAR_4KB_SZ);
 	par |= __SHIFTIN(pg0_paddr / PAGE_SIZE, MMCR_PAR_4KB_ST_ADR);
-	bus_space_write_4(memt, memh, MMCR_PAR(i), par);
-	return i;
+	bus_space_write_4(memt, memh, MMCR_PAR(pidx), par);
+#else
+	elansc_protect(sc, pidx, pg0_paddr, PG0_PROT_SIZE);
+#endif
+	return pidx;
 }
 
 static void
@@ -623,7 +748,7 @@ elanpex_intr_ack(bus_space_tag_t memt, bus_space_handle_t memh)
 }
 
 static bool
-elansc_suspend(device_t dev)
+elansc_suspend(device_t dev PMF_FN_ARGS)
 {
 	bool rc;
 	struct elansc_softc *sc = device_private(dev);
@@ -637,7 +762,7 @@ elansc_suspend(device_t dev)
 }
 
 static bool
-elansc_resume(device_t dev)
+elansc_resume(device_t dev PMF_FN_ARGS)
 {
 	struct elansc_softc *sc = device_private(dev);
 
@@ -705,7 +830,7 @@ elansc_intr_establish(device_t dev, int (*handler)(void *), void *arg)
 }
 
 static bool
-elanpex_resume(device_t self)
+elanpex_resume(device_t self PMF_FN_ARGS)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -714,7 +839,7 @@ elanpex_resume(device_t self)
 }
 
 static bool
-elanpex_suspend(device_t self)
+elanpex_suspend(device_t self PMF_FN_ARGS)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -724,7 +849,7 @@ elanpex_suspend(device_t self)
 }
 
 static bool
-elanpar_resume(device_t self)
+elanpar_resume(device_t self PMF_FN_ARGS)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -733,11 +858,11 @@ elanpar_resume(device_t self)
 }
 
 static bool
-elanpar_suspend(device_t self)
+elanpar_suspend(device_t self PMF_FN_ARGS)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
-	elanpar_intr_disestablish(sc->sc_pih);
+	elanpar_intr_disestablish(sc);
 
 	return true;
 }
@@ -821,13 +946,15 @@ elanpex_attach(device_t parent, device_t self, void *aux)
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
 
-	if (!pmf_device_register(self, elanpex_suspend, elanpex_resume))
+	if (!pmf_device_register1(self, elanpex_suspend, elanpex_resume,
+	                          elanpex_shutdown))
 		aprint_error_dev(self, "could not establish power hooks\n");
 }
 
-static void
-elanpex_intr_disestablish(struct elansc_softc *sc)
+static bool
+elanpex_shutdown(device_t self, int flags)
 {
+	struct elansc_softc *sc = device_private(device_parent(self));
 	uint8_t sysarbctl;
 	uint16_t pcihostmap, mstirq, tgtirq;
 
@@ -856,6 +983,14 @@ elanpex_intr_disestablish(struct elansc_softc *sc)
 	pcihostmap &= ~MMCR_PCIHOSTMAP_PCI_IRQ_MAP;
 	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_PCIHOSTMAP,
 	    pcihostmap);
+
+	return true;
+}
+
+static void
+elanpex_intr_disestablish(struct elansc_softc *sc)
+{
+	elanpex_shutdown(sc->sc_pex, 0);
 
 	if (elansc_pcinmi)
 		nmi_disestablish(sc->sc_eih);
@@ -904,6 +1039,25 @@ elanpar_intr_establish(device_t self, struct elansc_softc *sc)
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_ADDDECCTL, adddecctl);
 }
 
+static bool
+elanpar_shutdown(device_t self, int flags)
+{
+	int i;
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	for (i = 0; i < __arraycount(sc->sc_textpar); i++) {
+		if (sc->sc_textpar[i] == -1)
+			continue;
+		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_textpar[i]);
+		sc->sc_textpar[i] = -1;
+	}
+	if (sc->sc_pg0par != -1) {
+		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_pg0par);
+		sc->sc_pg0par = -1;
+	}
+	return true;
+}
+
 static void
 elanpar_attach(device_t parent, device_t self, void *aux)
 {
@@ -916,13 +1070,16 @@ elanpar_attach(device_t parent, device_t self, void *aux)
 	elansc_print_all_par(self, sc->sc_memt, sc->sc_memh);
 
 	sc->sc_pg0par = elansc_protect_pg0(self, sc);
-	sc->sc_textpar = elansc_protect_text(self, sc);
+	elansc_protect_text(self, sc);
+
+	elansc_print_all_par(self, sc->sc_memt, sc->sc_memh);
 
 	elanpar_intr_establish(self, sc);
 
 	elansc_print_1(self, sc, MMCR_ADDDECCTL);
 
-	if (!pmf_device_register(self, elanpar_suspend, elanpar_resume))
+	if (!pmf_device_register1(self, elanpar_suspend, elanpar_resume,
+	                          elanpar_shutdown))
 		aprint_error_dev(self, "could not establish power hooks\n");
 }
 
@@ -959,14 +1116,7 @@ elanpar_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_textpar != -1) {
-		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_textpar);
-		sc->sc_textpar = -1;
-	}
-	if (sc->sc_pg0par != -1) {
-		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_pg0par);
-		sc->sc_pg0par = -1;
-	}
+	elanpar_shutdown(self, 0);
 
 	elanpar_intr_disestablish(sc);
 

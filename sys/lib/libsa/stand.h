@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.63 2007/12/24 15:46:46 perry Exp $	*/
+/*	$NetBSD: stand.h,v 1.63.6.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -82,13 +82,6 @@
 #define sprintf		libsa_sprintf
 #define vprintf		libsa_vprintf
 #define vsprintf	libsa_vsprintf
-#endif
-#define bcmp(s1, s2, l)	memcmp(s1, s2, l)
-#ifdef LIBSA_USE_MEMSET
-#define	bzero(s, l)	memset(s, 0, l)
-#endif
-#ifdef LIBSA_USE_MEMCPY
-#define	bcopy(s, d, l)	memcpy(d, s, l)	/* For non-overlapping copies only */
 #endif
 
 struct open_file;
@@ -244,7 +237,6 @@ char	*strerror(int);
 __dead void	exit(int);
 __dead void	panic(const char *, ...);
 __dead void	_rtt(void);
-void	(bcopy)(const void *, void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);
 int	memcmp(const void *, const void *, size_t);

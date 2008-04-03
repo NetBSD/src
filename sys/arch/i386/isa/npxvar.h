@@ -1,4 +1,4 @@
-/*	$NetBSD: npxvar.h,v 1.7 2008/01/20 21:49:57 dyoung Exp $	*/
+/*	$NetBSD: npxvar.h,v 1.7.6.1 2008/04/03 12:42:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -75,7 +75,7 @@ enum npx_type {
 };
 
 struct npx_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;

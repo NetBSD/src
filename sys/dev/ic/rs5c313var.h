@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313var.h,v 1.1 2006/09/07 01:12:00 uwe Exp $	*/
+/*	$NetBSD: rs5c313var.h,v 1.1.58.1 2008/04/03 12:42:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Valeriy E. Ushakov
@@ -37,7 +37,7 @@
 struct rs5c313_ops;
 
 struct rs5c313_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	struct todr_chip_handle sc_todr;
 	struct rs5c313_ops *sc_ops;

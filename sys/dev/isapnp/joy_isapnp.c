@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.10 2007/10/19 12:00:32 ad Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.10.16.1 2008/04/03 12:42:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.10 2007/10/19 12:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.10.16.1 2008/04/03 12:42:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,45 +53,41 @@ __KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.10 2007/10/19 12:00:32 ad Exp $");
 
 #include <dev/ic/joyvar.h>
 
-int	joy_isapnp_match(struct device *, struct cfdata *, void *);
-void	joy_isapnp_attach(struct device *, struct device *, void *);
+static int	joy_isapnp_match(device_t, cfdata_t, void *);
+static void	joy_isapnp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(joy_isapnp, sizeof(struct joy_softc),
+CFATTACH_DECL_NEW(joy_isapnp, sizeof(struct joy_softc),
     joy_isapnp_match, joy_isapnp_attach, NULL, NULL);
 
-int
-joy_isapnp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+static int
+joy_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
 	pri = isapnp_devmatch(aux, &isapnp_joy_devinfo, &variant);
 	if (pri && variant > 0)
 		pri = 0;
-	return (pri);
+	return pri;
 }
 
-void
-joy_isapnp_attach(struct device *parent, struct device *self,
-    void *aux)
+static void
+joy_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct joy_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
 	bus_space_handle_t ioh;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "error in region allocation\n");
 		return;
 	}
 
 	if (ipa->ipa_io[0].length == 8) {
 		if (bus_space_subregion(ipa->ipa_iot, ipa->ipa_io[0].h, 1, 1,
 		    &ioh) < 0) {
-			printf("%s: error in region allocation\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(self, "error in region allocation\n");
 			return;
 		}
 	} else
@@ -99,8 +95,9 @@ joy_isapnp_attach(struct device *parent, struct device *self,
 
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dev = self;
 
-	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	aprint_normal_dev(self, "%s %s\n", ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	joyattach(sc);

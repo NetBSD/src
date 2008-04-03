@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.132 2008/01/29 12:41:59 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.132.6.1 2008/04/03 12:43:02 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.132 2008/01/29 12:41:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.132.6.1 2008/04/03 12:43:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.132 2008/01/29 12:41:59 yamt Exp
 #include <sys/atomic.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -65,21 +66,29 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.132 2008/01/29 12:41:59 yamt Exp
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
 
-struct uihashhead *uihashtbl;
-u_long uihash;		/* size of hash table - 1 */
-kmutex_t uihashtbl_lock;
+static SLIST_HEAD(uihashhead, uidinfo) *uihashtbl;
+static u_long 		uihash;
 
-static pool_cache_t plimit_cache;
-static pool_cache_t pstats_cache;
+#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
+
+static pool_cache_t	plimit_cache;
+static pool_cache_t	pstats_cache;
 
 void
 resource_init(void)
 {
+	/*
+	 * In case of MP system, SLIST_FOREACH would force a cache line
+	 * write-back for every modified 'uidinfo', thus we try to keep the
+	 * lists short.
+	 */
+	const u_int uihash_sz = (maxproc > 1 ? 1024 : 64);
 
 	plimit_cache = pool_cache_init(sizeof(struct plimit), 0, 0, 0,
 	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
 	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
+	uihashtbl = hashinit(uihash_sz, HASH_SLIST, M_PROC, M_WAITOK, &uihash);
 }
 
 /*
@@ -87,7 +96,8 @@ resource_init(void)
  */
 
 int
-sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap, register_t *retval)
+sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -148,7 +158,8 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap, register_
 
 /* ARGSUSED */
 int
-sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap, register_t *retval)
+sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -251,7 +262,8 @@ donice(struct lwp *l, struct proc *chgp, int n)
 
 /* ARGSUSED */
 int
-sys_setrlimit(struct lwp *l, const struct sys_setrlimit_args *uap, register_t *retval)
+sys_setrlimit(struct lwp *l, const struct sys_setrlimit_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -384,7 +396,8 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap, register_t *retval)
+sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -478,7 +491,8 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap, register_t *retval)
+sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) who;
@@ -492,6 +506,7 @@ sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap, register_t *r
 		mutex_enter(&p->p_smutex);
 		memcpy(&ru, &p->p_stats->p_ru, sizeof(ru));
 		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
+		rulwps(p, &ru);
 		mutex_exit(&p->p_smutex);
 		break;
 
@@ -521,6 +536,20 @@ ruadd(struct rusage *ru, struct rusage *ru2)
 	ip = &ru->ru_first; ip2 = &ru2->ru_first;
 	for (i = &ru->ru_last - &ru->ru_first; i >= 0; i--)
 		*ip++ += *ip2++;
+}
+
+void
+rulwps(proc_t *p, struct rusage *ru)
+{
+	lwp_t *l;
+
+	KASSERT(mutex_owned(&p->p_smutex));
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		ruadd(ru, &l->l_ru);
+		ru->ru_nvcsw += (l->l_ncsw - l->l_nivcsw);
+		ru->ru_nivcsw += l->l_nivcsw;
+	}
 }
 
 /*
@@ -1019,12 +1048,6 @@ uid_init(void)
 {
 
 	/*
-	 * XXXSMP This could be at IPL_SOFTNET, but for now we want
-	 * to to be deadlock free, so it must be at IPL_VM.
-	 */
-	mutex_init(&uihashtbl_lock, MUTEX_DEFAULT, IPL_VM);
-
-	/*
 	 * Ensure that uid 0 is always in the user hash table, as
 	 * sbreserve() expects it available from interrupt context.
 	 */
@@ -1034,38 +1057,41 @@ uid_init(void)
 struct uidinfo *
 uid_find(uid_t uid)
 {
-	struct uidinfo *uip;
-	struct uidinfo *newuip = NULL;
+	struct uidinfo *uip, *uip_first, *newuip;
 	struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
+	newuip = NULL;
 
-again:
-	mutex_enter(&uihashtbl_lock);
-	LIST_FOREACH(uip, uipp, ui_hash)
-		if (uip->ui_uid == uid) {
-			mutex_exit(&uihashtbl_lock);
-			if (newuip) {
-				mutex_destroy(&newuip->ui_lock);
-				kmem_free(newuip, sizeof(*newuip));
-			}
-			return uip;
-		}
-	if (newuip == NULL) {
-		mutex_exit(&uihashtbl_lock);
-		/* Must not be called from interrupt context. */
+	/*
+	 * To make insertion atomic, abstraction of SLIST will be violated.
+	 */
+	uip_first = uipp->slh_first;
+ again:
+	SLIST_FOREACH(uip, uipp, ui_hash) {
+		if (uip->ui_uid != uid)
+			continue;
+		if (newuip != NULL)
+			kmem_free(newuip, sizeof(*newuip));
+		return uip;
+	}
+	if (newuip == NULL)
 		newuip = kmem_zalloc(sizeof(*newuip), KM_SLEEP);
-		/* XXX this could be IPL_SOFTNET */
-		mutex_init(&newuip->ui_lock, MUTEX_DEFAULT, IPL_VM);
+	newuip->ui_uid = uid;
+
+	/*
+	 * If atomic insert is unsuccessful, another thread might be
+	 * allocated this 'uid', thus full re-check is needed.
+	 */
+	newuip->ui_hash.sle_next = uip_first;
+	membar_producer();
+	uip = atomic_cas_ptr(&uipp->slh_first, uip_first, newuip);
+	if (uip != uip_first) {
+		uip_first = uip;
 		goto again;
 	}
-	uip = newuip;
 
-	LIST_INSERT_HEAD(uipp, uip, ui_hash);
-	uip->ui_uid = uid;
-	mutex_exit(&uihashtbl_lock);
-
-	return uip;
+	return newuip;
 }
 
 /*
@@ -1076,32 +1102,26 @@ int
 chgproccnt(uid_t uid, int diff)
 {
 	struct uidinfo *uip;
-
-	if (diff == 0)
-		return 0;
+	long proccnt;
 
 	uip = uid_find(uid);
-	mutex_enter(&uip->ui_lock);
-	uip->ui_proccnt += diff;
-	KASSERT(uip->ui_proccnt >= 0);
-	mutex_exit(&uip->ui_lock);
-	return uip->ui_proccnt;
+	proccnt = atomic_add_long_nv(&uip->ui_proccnt, diff);
+	KASSERT(proccnt >= 0);
+	return proccnt;
 }
 
 int
 chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t xmax)
 {
 	rlim_t nsb;
+	const long diff = to - *hiwat;
 
-	mutex_enter(&uip->ui_lock);
-	nsb = uip->ui_sbsize + to - *hiwat;
-	if (to > *hiwat && nsb > xmax) {
-		mutex_exit(&uip->ui_lock);
+	nsb = atomic_add_long_nv((long *)&uip->ui_sbsize, diff);
+	if (diff > 0 && nsb > xmax) {
+		atomic_add_long((long *)&uip->ui_sbsize, -diff);
 		return 0;
 	}
 	*hiwat = to;
-	uip->ui_sbsize = nsb;
-	KASSERT(uip->ui_sbsize >= 0);
-	mutex_exit(&uip->ui_lock);
+	KASSERT(nsb >= 0);
 	return 1;
 }

@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.11 2008/01/23 05:24:28 dyoung Exp $ */
+/* $Id: if_ae.c,v 1.11.6.1 2008/04/03 12:42:21 mjf Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.11 2008/01/23 05:24:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.11.6.1 2008/04/03 12:42:21 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -156,10 +156,10 @@ static const struct {
 	{ 0,			NULL },
 };
 
-static int 	ae_match(struct device *, struct cfdata *, void *);
-static void	ae_attach(struct device *, struct device *, void *);
-static int	ae_detach(struct device *, int);
-static int	ae_activate(struct device *, enum devact);
+static int 	ae_match(device_t, struct cfdata *, void *);
+static void	ae_attach(device_t, device_t, void *);
+static int	ae_detach(device_t, int);
+static int	ae_activate(device_t, enum devact);
 
 static void	ae_reset(struct ae_softc *);
 static void	ae_idle(struct ae_softc *, u_int32_t);
@@ -186,10 +186,10 @@ static void	ae_rxintr(struct ae_softc *);
 static void	ae_txintr(struct ae_softc *);
 
 static void	ae_mii_tick(void *);
-static void	ae_mii_statchg(struct device *);
+static void	ae_mii_statchg(device_t);
 
-static int	ae_mii_readreg(struct device *, int, int);
-static void	ae_mii_writereg(struct device *, int, int, int);
+static int	ae_mii_readreg(device_t, int, int);
+static void	ae_mii_writereg(device_t, int, int, int);
 
 #ifdef AE_DEBUG
 #define	DPRINTF(sc, x)	if ((sc)->sc_ethercom.ec_if.if_flags & IFF_DEBUG) \
@@ -211,7 +211,7 @@ CFATTACH_DECL(ae, sizeof(struct ae_softc),
  *	Check for a device match.
  */
 int
-ae_match(struct device *parent, struct cfdata *cf, void *aux)
+ae_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct arbus_attach_args *aa = aux;
 
@@ -228,11 +228,11 @@ ae_match(struct device *parent, struct cfdata *cf, void *aux)
  *	Attach an ae interface to the system.
  */
 void
-ae_attach(struct device *parent, struct device *self, void *aux)
+ae_attach(device_t parent, device_t self, void *aux)
 {
 	const uint8_t *enaddr;
 	prop_data_t ea;
-	struct ae_softc *sc = (void *)self;
+	struct ae_softc *sc = device_private(self);
 	struct arbus_attach_args *aa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, error;
@@ -455,9 +455,9 @@ ae_attach(struct device *parent, struct device *self, void *aux)
  *	Handle device activation/deactivation requests.
  */
 int
-ae_activate(struct device *self, enum devact act)
+ae_activate(device_t self, enum devact act)
 {
-	struct ae_softc *sc = (void *) self;
+	struct ae_softc *sc = device_private(self);
 	int s, error = 0;
 
 	s = splnet();
@@ -482,9 +482,9 @@ ae_activate(struct device *self, enum devact act)
  *	Detach a device interface.
  */
 int
-ae_detach(struct device *self, int flags)
+ae_detach(device_t self, int flags)
 {
-	struct ae_softc *sc = (void *)self;
+	struct ae_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ae_rxsoft *rxs;
 	struct ae_txsoft *txs;
@@ -1635,17 +1635,17 @@ ae_stop(struct ifnet *ifp, int disable)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (disable) {
-		ae_rxdrain(sc);
-		ae_disable(sc);
-	}
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
+
+	if (disable) {
+		ae_rxdrain(sc);
+		ae_disable(sc);
+	}
 
 	/*
 	 * Reset the chip (needed on some flavors to actually disable it).
@@ -1872,9 +1872,9 @@ ae_mii_tick(void *arg)
  *	Callback from PHY when media changes.
  */
 static void
-ae_mii_statchg(struct device *self)
+ae_mii_statchg(device_t self)
 {
-	struct ae_softc *sc = (struct ae_softc *)self;
+	struct ae_softc *sc = device_private(self);
 	uint32_t	macctl, flowc;
 
 	//opmode = AE_READ(sc, CSR_OPMODE);
@@ -1908,9 +1908,9 @@ ae_mii_statchg(struct device *self)
  *	Read a PHY register.
  */
 static int
-ae_mii_readreg(struct device *self, int phy, int reg)
+ae_mii_readreg(device_t self, int phy, int reg)
 {
-	struct ae_softc	*sc = (struct ae_softc *)self;
+	struct ae_softc	*sc = device_private(self);
 	uint32_t	addr;
 	int		i;
 
@@ -1931,9 +1931,9 @@ ae_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register.
  */
 static void
-ae_mii_writereg(struct device *self, int phy, int reg, int val)
+ae_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct ae_softc *sc = (struct ae_softc *)self;
+	struct ae_softc *sc = device_private(self);
 	uint32_t	addr;
 	int		i;
 

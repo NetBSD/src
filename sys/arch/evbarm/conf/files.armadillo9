@@ -1,4 +1,4 @@
-#	$NetBSD: files.armadillo9,v 1.3 2007/12/03 15:33:29 ad Exp $
+#	$NetBSD: files.armadillo9,v 1.3.14.1 2008/04/03 12:42:14 mjf Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -19,5 +19,3 @@ file	arch/evbarm/armadillo/armadillo9_iic.c	armadillo9iic
 
 attach	eppcic at epsoc with armadillo9pcic
 file	arch/evbarm/armadillo/armadillo9_pcic.c	armadillo9pcic
-
-include	"dev/pcmcia/files.pcmcia"

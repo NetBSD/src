@@ -1,144 +1,171 @@
-/*	$NetBSD: siop_gsc.c,v 1.6 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: siop_gsc.c,v 1.6.74.1 2008/04/03 12:42:16 mjf Exp $	*/
 
-/*	$OpenBSD: siop_gsc.c,v 1.1 1998/11/04 17:01:35 mickey Exp $	*/
+/*	$OpenBSD: siop_gsc.c,v 1.4 2007/08/23 21:01:22 kettenis Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
- * All rights reserved.
+ * Copyright (c) 2007 Mark Kettenis
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.6 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.6.74.1 2008/04/03 12:42:16 mjf Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
-#include <machine/iomod.h>
+#include <uvm/uvm_extern.h>
+
 #include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/iomod.h>
 
-#include <scsi/scsi_all.h>
-#include <scsi/scsiconf.h>
+#include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
 
-#include <dev/ic/ncr53c7xxreg.h>
-#include <dev/ic/ncr53c7xxvar.h>
+#include <dev/ic/siopreg.h>
+#include <dev/ic/siopvar_common.h>
+#include <dev/ic/siopvar.h>
 
 #include <hp700/dev/cpudevs.h>
+#include <hp700/gsc/gscbusvar.h>
 
-int	ncr53c7xx_gsc_probe(struct device *, void *, void *);
-void	ncr53c7xx_gsc_attach(struct device *, struct device *, void *);
+#define	SIOP_GSC_RESET	0x0000
+#define	SIOP_GSC_OFFSET	0x0100
 
-CFATTACH_DECL(ncr, sizeof(struct ncr53c7xx_softc),
-    ncr53c7xx_gsc_probe, ncr53c7xx_gsc_attach, NULL, NULL);
+int siop_gsc_match(struct device *, struct cfdata *, void *);
+void siop_gsc_attach(struct device *, struct device *, void *);
+int siop_gsc_intr(void *);
+void siop_gsc_reset(struct siop_common_softc *);
+
+u_int8_t siop_gsc_r1(void *, bus_space_handle_t, bus_size_t);
+u_int16_t siop_gsc_r2(void *, bus_space_handle_t, bus_size_t);
+void siop_gsc_w1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
+void siop_gsc_w2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
+
+struct siop_gsc_softc {
+	struct siop_softc sc_siop;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+	struct hppa_bus_space_tag sc_bustag;
 };
 
-struct cfdriver ncr_cd = {
-	NULL, "ncr", DV_DULL, NULL, 0
-};
-
-struct scsi_adapter ncr53c7xx_gsc_scsiswitch = {
-	ncr53c7xx_scsicmd,
-	ncr53c7xx_minphys,
-	0,			/* no lun support */
-	0,			/* no lun support */
-};
-
-struct scsi_device ncr53c7xx_gsc_scsidev = {
-	NULL,		/* use default error handler */
-	NULL,		/* do not have a start functio */
-	NULL,		/* have no async handler */
-	NULL,		/* Use default done routine */
-};
-
+CFATTACH_DECL(siop_gsc, sizeof(struct siop_gsc_softc),
+    siop_gsc_match, siop_gsc_attach, NULL, NULL);
 
 int
-ncr53c7xx_gsc_probe(struct device *parent, void *match, void *aux)
+siop_gsc_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct confargs *ca = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int rv = 1;
+	struct gsc_attach_args *ga = aux;
 
-	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO ||
-	    (ca->ca_type.iodc_sv_model != HPPA_FIO_GSCSI &&
-	     ca->ca_type.iodc_sv_model != HPPA_FIO_SCSI))
-		if (ca->ca_type.iodc_type != HPPA_TYPE_ADMA ||
-		    ca->ca_type.iodc_sv_model != HPPA_ADMA_FWSCSI)
-			return 0;
-
-	iot = HPPA_BUS_TAG_SET_BYTE(ca->ca_iot);
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))
+	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
+	    ga->ga_type.iodc_sv_model != HPPA_FIO_FWSCSI)
 		return 0;
-	ioh |= IOMOD_DEVOFFSET;
 
-
-
-	ioh &= ~IOMOD_DEVOFFSET;
-	bus_space_unmap(ca->ca_iot, ioh, IOMOD_HPASIZE);
-	return rv;
+	return 1;
 }
 
 void
-ncr53c7xx_gsc_attach(struct device *parent, struct device *self, void *aux)
+siop_gsc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ncr53c7xx_softc *sc = (void *)self;
-	struct confargs *ca = aux;
+	struct siop_gsc_softc *gsc = (struct siop_gsc_softc *)self;
+        struct siop_softc *sc = &gsc->sc_siop;
+	struct gsc_attach_args *ga = aux;
 
-	sc->sc_iot = HPPA_BUS_TAG_SET_BYTE(ca->ca_iot);
-	if (bus_space_map(sc->sc_iot, ca->ca_hpa, IOMOD_HPASIZE,
-			  0, &sc->sc_ioh))
-		panic("ncr53c7xx_gsc_attach: couldn't map I/O ports");
-	sc->sc_ioh |= IOMOD_DEVOFFSET;
+	gsc->sc_iot = ga->ga_iot;
+	if (bus_space_map(gsc->sc_iot, ga->ga_hpa,
+	    IOMOD_HPASIZE, 0, &gsc->sc_ioh)) {
+		printf(": cannot map io space\n");
+		return;
+	}
 
-	sc->sc_clock_freq = ca->ca_pdc_iodc_read->filler2[14] / 1000000;
-	if (!sc->sc_clock_freq)
-		sc->sc_clock_freq = 50;
+	gsc->sc_bustag = *gsc->sc_iot;
+	gsc->sc_bustag.hbt_r1 = siop_gsc_r1;
+	gsc->sc_bustag.hbt_r2 = siop_gsc_r2;
+	gsc->sc_bustag.hbt_w1 = siop_gsc_w1;
+	gsc->sc_bustag.hbt_w2 = siop_gsc_w2;
 
-	if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSCSI)
-		sc->sc_type = 10;
-	else if (ca->ca_type.iodc_sv_model == HPPA_ADMA_FWSCSI)
-		sc->sc_type = 20;
-	else
-		sc->sc_type = 0;
+	sc->sc_c.features = SF_CHIP_PF | SF_CHIP_BE | SF_BUS_WIDE;
+	sc->sc_c.maxburst = 4;
+	sc->sc_c.maxoff = 8;
+	sc->sc_c.clock_div = 3;
+	sc->sc_c.clock_period = 250;
+	sc->sc_c.ram_size = 0;
 
-	sc->sc_ctest7 = 0;
-	sc->sc_dcntl = 0;
-	sc->sc_flags = NCR53C7XX_NODMA;
+	sc->sc_c.sc_reset = siop_gsc_reset;
+	sc->sc_c.sc_dmat = ga->ga_dmatag;
 
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = 7;
-	sc->sc_link.adapter = &ncr53c7xx_gsc_scsiswitch;
-	sc->sc_link.device = &ncr53c7xx_gsc_scsidev;
-	sc->sc_link.openings = 2;
+	sc->sc_c.sc_rt = &gsc->sc_bustag;
+	bus_space_subregion(gsc->sc_iot, gsc->sc_ioh, SIOP_GSC_OFFSET,
+	    IOMOD_HPASIZE - SIOP_GSC_OFFSET, &sc->sc_c.sc_rh);
 
-	ncr53c7xx_initialize(sc);
+	/*
+	 * Reset the SCSI subsystem.
+	 */
+	bus_space_write_1(gsc->sc_iot, gsc->sc_ioh, SIOP_GSC_RESET, 0);
+	DELAY(1000);
+	siop_gsc_reset(&sc->sc_c);
 
-	config_found(self, &sc->sc_link, scsiprint);
+	printf(": NCR53C720 rev %d\n", bus_space_read_1(sc->sc_c.sc_rt,
+	    sc->sc_c.sc_rh, SIOP_CTEST3) >> 4);
+
+	siop_attach(sc);
+
+	(void)hp700_intr_establish(&sc->sc_c.sc_dev, IPL_BIO,
+	    siop_intr, sc, ga->ga_int_reg, ga->ga_irq);
+
+}
+
+void
+siop_gsc_reset(struct siop_common_softc *sc)
+{
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_DCNTL, DCNTL_EA);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST0, CTEST0_EHP);
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST4, CTEST4_MUX);
+
+	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STIME0,
+	    (0xc << STIME0_SEL_SHIFT));
+}
+
+u_int8_t
+siop_gsc_r1(void *v, bus_space_handle_t h, bus_size_t o)
+{
+	return *(volatile u_int8_t *)(h + (o ^ 3));
+}
+
+u_int16_t
+siop_gsc_r2(void *v, bus_space_handle_t h, bus_size_t o)
+{
+	if (o == SIOP_SIST0) {
+		u_int16_t reg;
+
+		reg = siop_gsc_r1(v, h, SIOP_SIST0);
+		reg |= siop_gsc_r1(v, h, SIOP_SIST1) << 8;
+		return reg;
+	}
+	return *(volatile u_int16_t *)(h + (o ^ 2));
+}
+
+void
+siop_gsc_w1(void *v, bus_space_handle_t h, bus_size_t o, u_int8_t vv)
+{
+	*(volatile u_int8_t *)(h + (o ^ 3)) = vv;
+}
+
+void
+siop_gsc_w2(void *v, bus_space_handle_t h, bus_size_t o, u_int16_t vv)
+{
+	*(volatile u_int16_t *)(h + (o ^ 2)) = vv;
 }

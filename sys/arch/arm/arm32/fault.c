@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.65 2008/01/06 03:11:42 matt Exp $	*/
+/*	$NetBSD: fault.c,v 1.65.6.1 2008/04/03 12:42:12 mjf Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.65 2008/01/06 03:11:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.65.6.1 2008/04/03 12:42:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,8 +198,8 @@ data_abort_fixup(trapframe_t *tf, u_int fsr, u_int far, struct lwp *l)
 #ifdef THUMB_CODE
 	if (tf->tf_spsr & PSR_T_bit) {
 		printf("pc = 0x%08x, opcode 0x%04x, 0x%04x, insn = ",
-		    tf->tf_pc, *((u_int16 *)(tf->tf_pc & ~1),
-		    *((u_int16 *)((tf->tf_pc + 2) & ~1));
+		    tf->tf_pc, *((u_int16 *)(tf->tf_pc & ~1)),
+		    *((u_int16 *)((tf->tf_pc + 2) & ~1)));
 	}
 	else
 #endif

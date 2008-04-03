@@ -1,220 +1,4 @@
-#	$NetBSD: files,v 1.892.6.1 2008/02/21 20:44:55 mjf Exp $
-
-#	@(#)files.newconf	7.5 (Berkeley) 5/10/93
-
-version 	20070109
-
-#
-# device classes
-#
-devclass disk
-devclass tape
-devclass ifnet
-devclass tty
-devclass audiodev
-devclass displaydev
-devclass bus
-
-# options understood by the machine-independent part of the kernel
-# (note, these are case-sensitive)
-#
-defflag				INSECURE
-defflag				KMEMSTATS
-defflag				KTRACE
-defflag				MBUFTRACE
-defflag				PTRACE
-defflag				COREDUMP
-defflag opt_modular.h		MODULAR
-
-defparam			DEFCORENAME
-defparam			HZ
-defparam			MAXUPRC
-defparam			RTC_OFFSET
-defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
-
-defflag				BUFQ_DISKSORT
-defflag				BUFQ_FCFS
-defflag				BUFQ_PRIOCSCAN
-defflag				BUFQ_READPRIO
-defflag				NEW_BUFQ_STRATEGY	# same as BUFQ_READPRIO
-
-defflag	opt_sched.h		SCHED_4BSD
-defflag	opt_sched.h		SCHED_M2
-
-defparam			SOMAXKVA
-defflag	opt_sock_counters.h	SOSEND_COUNTERS
-defflag	opt_sosend_loan.h	SOSEND_NO_LOAN
-defflag	opt_route.h		RTCACHE_DEBUG RTFLUSH_DEBUG
-
-defflag				MULTIPROCESSOR
-
-defflag	opt_config.h		INCLUDE_CONFIG_FILE INCLUDE_JUST_CONFIG
-
-defparam opt_dump.h		DUMP_ON_PANIC
-
-defflag	opt_callout.h		CALLWHEEL_STATS
-
-defflag				CPU_IN_CKSUM
-
-defflag opt_posix.h		P1003_1B_SEMAPHORE
-defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
-defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
-
-defflag	opt_ntp.h		PPS_SYNC NTP
-
-defflag	opt_ptm.h		NO_DEV_PTM COMPAT_BSDPTY
-
-defparam opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
-defflag	opt_malloclog.h		MALLOCLOG
-defparam opt_malloclog.h	MALLOCLOGSIZE
-defflag	opt_malloc_debug.h	MALLOC_DEBUG
-defflag	opt_pool.h		POOL_DIAGNOSTIC
-defparam opt_poollog.h		POOL_LOGSIZE
-defflag	opt_powerhook.h		POWERHOOK_DEBUG
-
-defflag	opt_revcache.h		NAMECACHE_ENTER_REVERSE
-
-defflag	opt_execfmt.h		EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32
-				EXEC_ELF64 EXEC_MACHO EXEC_SCRIPT
-				EXEC_ELF_NOTELESS
-
-defflag	opt_dkwedge.h		DKWEDGE_AUTODISCOVER
-				DKWEDGE_METHOD_BSDLABEL
-				DKWEDGE_METHOD_GPT
-				DKWEDGE_METHOD_MBR
-
-defflag	opt_veriexec.h		VERIFIED_EXEC_FP_SHA1
-				VERIFIED_EXEC_FP_SHA256
-				VERIFIED_EXEC_FP_SHA384
-				VERIFIED_EXEC_FP_SHA512
-				VERIFIED_EXEC_FP_MD5
-				VERIFIED_EXEC_FP_RMD160
-
-# Per system call number counts and times
-defflag opt_syscall_stats.h	SYSCALL_STATS
-defflag opt_syscall_stats.h	SYSCALL_TIMES: SYSCALL_STATS 
-# Assume cpu_hascounter() returns true - to use disabled rdtsc() (for soekris)
-defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES 
-file kern/subr_syscall_stats.c	syscall_stats
-
-defparam opt_pax.h		PAX_MPROTECT
-				PAX_SEGVGUARD
- 				PAX_ASLR
- 				PAX_ASLR_DELTA_MMAP_LSB
- 				PAX_ASLR_DELTA_MMAP_LEN
- 				PAX_ASLR_DELTA_STACK_LSB
- 				PAX_ASLR_DELTA_STACK_LEN
- 				PAX_ASLR_DELTA_PROG_LEN
-
-defflag	opt_fileassoc.h		FILEASSOC
-
-defflag	opt_gre.h		GRE_DEBUG
-
-# compatibility options
-#
-defflag	opt_compat_netbsd.h	COMPAT_40
-defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40
-defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
-defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
-defflag	opt_compat_netbsd.h	COMPAT_15: COMPAT_16
-defflag	opt_compat_netbsd.h	COMPAT_14: COMPAT_15
-defflag	opt_compat_netbsd.h	COMPAT_13: COMPAT_14
-defflag	opt_compat_netbsd.h	COMPAT_12: COMPAT_13
-defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12
-defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
-defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
-defflag				COMPAT_OSSAUDIO
-defflag				COMPAT_FREEBSD: COMPAT_30
-defflag				COMPAT_IBCS2
-defflag				COMPAT_IRIX
-defflag				COMPAT_LINUX
-defflag				COMPAT_LINUX32
-defflag				COMPAT_OSF1
-defflag				COMPAT_SUNOS: COMPAT_30
-defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
-defflag				COMPAT_ULTRIX
-defflag				COMPAT_NETBSD32
-defflag				COMPAT_AOUT_M68K: COMPAT_40
-defflag				COMPAT_M68K4K
-defflag				COMPAT_MACH
-defflag				COMPAT_DARWIN
-defflag				COMPAT_VAX1K
-defflag				COMPAT_43
-defflag				COMPAT_PECOFF
-defflag	opt_compat_netbsd.h	COMPAT_NOMID
-
-#
-# Cryptography support.  Include this early, since several things
-# use it.
-
-# Individual crypto transforms
-include "crypto/arc4/files.arc4"
-include "crypto/des/files.des"
-include "crypto/blowfish/files.blowfish"
-include "crypto/cast128/files.cast128"
-include "crypto/rijndael/files.rijndael"
-include "crypto/skipjack/files.skipjack"
-
-# General-purpose crypto processing framework.
-include "opencrypto/files.opencrypto"
-
-#
-# System monitoring framework
-#
-include "dev/sysmon/files.sysmon"
-
-#
-# Networking protocols
-#
-include "net80211/files.net80211"
-include "netatalk/files.netatalk"
-include "netbt/files.netbt"
-include "netinet/files.netinet"
-include "netinet/files.ipfilter"
-include "netinet6/files.netinet6"
-include "netinet6/files.ipsec"
-include "netipsec/files.netipsec"
-include "netiso/files.netiso"
-include "netnatm/files.netnatm"
-include "netsmb/files.netsmb"
-include "net/files.pf"
-
-obsolete defflag		CCITT		# obsolete
-obsolete defflag		HDLC		# obsolete
-obsolete defflag		LLC		# obsolete
-obsolete defflag opt_ns.h	NS NSIP		# obsolete
-obsolete defflag		IPX		# obsolete
-obsolete defflag opt_iso.h	TPCONS
-defflag				PFIL_HOOKS	# pfil(9)
-defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
-defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
-						# Include deflate or bsd
-						# compression, enable pppd
-						# packet filtering support
-defflag opt_pppoe.h		PPPOE_SERVER PPPOE_TERM_UNKNOWN_SESSIONS
-
-# networking options
-#
-defflag				GATEWAY
-defparam opt_nmbclusters.h	NMBCLUSTERS
-defparam			SB_MAX
-
-# file system options
-#
-defflag				SOFTDEP			# XXX files.ufs?
-defflag				QUOTA			# XXX files.ufs?
-defflag				VNODE_LOCKDEBUG
-defflag				MAGICLINKS
-
-# buffer cache size options
-#
-defparam opt_bufcache.h		BUFCACHE BUFPAGES
-
-# userconf
-#
-defflag				USERCONF
-
-# sysctl related
+tl related
 #
 defflag opt_sysctl.h		SYSCTL_DISALLOW_CREATE SYSCTL_DISALLOW_KWRITE
 				SYSCTL_DEBUG_SETUP SYSCTL_DEBUG_CREATE
@@ -489,11 +273,12 @@ defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
 				ISP_DISABLE_2100_SUPPORT
 				ISP_DISABLE_2200_SUPPORT
 				ISP_DISABLE_2300_SUPPORT
+				ISP_DISABLE_2322_SUPPORT
 				ISP_DISABLE_2400_SUPPORT
 				ISP_DISABLE_FW
 				ISP_TARGET_MODE
-				ISP_FW_CRASH_DUMP
 defparam opt_isp.h		ISP_LOGDEFAULT
+				ISP_VPORTS
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_library.c		isp
@@ -532,7 +317,7 @@ file	dev/ic/siop_common.c		siop_common
 # Symbios/NCR 53c720/53c8xx SCSI controllers
 #
 device	siop: scsi,siop_common
-file	dev/ic/siop.c			siop
+file	dev/ic/siop.c			siop & (siop_pci | siop_gedoens)
 defflag	opt_siop.h			SIOP_SYMLED
 
 device	esiop: scsi,siop_common
@@ -1044,7 +829,7 @@ file	dev/ic/igsfb_subr.c		igsfb
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_sgc | sti_phantom)
+file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens)
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
@@ -1094,7 +879,7 @@ file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
-device	slhci: usbus
+device	slhci: usbus, usbroothub
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # USB HID processing (as used by bluetooth and usb code)
@@ -1256,8 +1041,8 @@ defpseudo pud
 file	dev/pud/pud.c			pud
 file	dev/pud/pud_dev.c		pud
 
-defpseudo dctl
-file	dev/dctl/dctl.c			dctl
+defpseudo devfsctl
+file	dev/devfsctl/devfsctl.c		devfsctl
 
 #
 # File systems
@@ -1431,6 +1216,7 @@ file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xcall.c
 file	kern/sys_aio.c
+file	kern/sys_descrip.c
 file	kern/sys_generic.c
 file	kern/sys_module.c
 file	kern/sys_mqueue.c
@@ -1439,6 +1225,7 @@ file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
 file	kern/sys_process.c		ptrace | ktrace
 file	kern/sys_pset.c
+file	kern/sys_select.c
 file	kern/sys_sig.c
 file	kern/sys_sched.c
 file	kern/sys_socket.c

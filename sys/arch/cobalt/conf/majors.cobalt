@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.20 2007/12/31 15:31:52 ad Exp $
+#	$NetBSD: majors.cobalt,v 1.20.6.1 2008/04/03 12:42:13 mjf Exp $
 #
 # Device majors for cobalt
 #
@@ -41,6 +41,7 @@ device-major	cgd		char 35  block 11	cgd
 device-major	panel		char 36			panel
 device-major	ksyms		char 37			ksyms
 device-major	pci		char 38			pci
+device-major	zstty		char 39			zstty
 device-major	altq		char 77			altq
 
 device-major	nsmb		char 98			nsmb

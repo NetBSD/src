@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.27 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.27.6.1 2008/04/03 12:43:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.27 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.27.6.1 2008/04/03 12:43:07 mjf Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -522,7 +522,7 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int error = 0;
+	int error;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -532,50 +532,54 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		case AF_INET:
 			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
 			    (error = (*ifp->if_init)(ifp)) != 0)
-				break;
+				return error;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
 			if ((ifp->if_flags & IFF_RUNNING) == 0)
-				error = (*ifp->if_init)(ifp);
+				return (*ifp->if_init)(ifp);
 			break;
 		}
-		break;
+		return 0;
 	case SIOCSIFMTU:
 		if ((error = ifioctl_common(ifp, command, data)) != ENETRESET)
-			break;
+			return error;
 		else if (ifp->if_flags & IFF_UP)
-			error = (*ifp->if_init)(ifp);
+			return (*ifp->if_init)(ifp);
 		else
-			error = 0;
+			return 0;
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.
 			 */
 			(*ifp->if_stop)(ifp, 1);
-		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			return 0;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = (*ifp->if_init)(ifp);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			return (*ifp->if_init)(ifp);
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect the hardware state.
 			 */
-			error = (*ifp->if_init)(ifp);
+			return (*ifp->if_init)(ifp);
+		case 0:
+			return 0;
 		}
 		break;
 	default:
-		error = ENOTTY;
+		return ENOTTY;
 	}
 
-	return error;
+	return 0;
 }
 
 /*

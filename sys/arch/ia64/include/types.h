@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2008/01/20 18:09:07 joerg Exp $	*/
+/*	$NetBSD: types.h,v 1.3.6.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,7 @@ typedef unsigned long	vsize_t;
 
 typedef int		pmc_evid_t;
 typedef __uint64_t	pmc_ctr_t;
-typedef int		register_t;
+typedef long int	register_t;
 
 typedef	__volatile int		__cpu_simple_lock_t;
 
@@ -65,6 +65,7 @@ typedef	__volatile int		__cpu_simple_lock_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
+#define	__HAVE_ATOMIC64_OPS
 /* XXX: #define	__HAVE_CPU_MAXPROC */
 
 #if defined(_KERNEL)

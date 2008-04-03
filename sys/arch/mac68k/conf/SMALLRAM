@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.30 2007/10/17 19:55:13 garbled Exp $
+#	$NetBSD: SMALLRAM,v 1.30.16.1 2008/04/03 12:42:20 mjf Exp $
 #
 # This is an example of how to configure a small, efficient kernel for
 # a system with limited RAM. Even so it's capable of doing quite a
@@ -79,7 +79,11 @@ no options 	RCONS_16BPP
 
 no options 	ZS_CONSOLE_ABORT
 
+# SBC_PDMA      0x01    Use PDMA for polled transfers
+# SBC_INTR      0x02    Allow SCSI IRQ/DRQ interrupts
+# SBC_RESELECT  0x04    Allow disconnect/reselect
 sbc0	at obio? addr 0 flags 0x1	# MI SCSI NCR 5380
+
 no ncrscsi0
 no esp0
 no esp1

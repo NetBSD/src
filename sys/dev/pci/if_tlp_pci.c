@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.102 2007/10/19 12:00:49 ad Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.102.16.1 2008/04/03 12:42:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.102 2007/10/19 12:00:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.102.16.1 2008/04/03 12:42:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,8 @@ struct tulip_pci_softc {
 #define	TULIP_PCI_SHAREDROM	0x04	/* ROM is shared */
 #define	TULIP_PCI_SLAVEROM	0x08	/* slave of shared ROM */
 
-static int	tlp_pci_match(struct device *, struct cfdata *, void *);
-static void	tlp_pci_attach(struct device *, struct device *, void *);
+static int	tlp_pci_match(device_t, struct cfdata *, void *);
+static void	tlp_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(tlp_pci, sizeof(struct tulip_pci_softc),
     tlp_pci_match, tlp_pci_attach, NULL, NULL);
@@ -336,7 +336,7 @@ tlp_pci_check_slaved(struct tulip_pci_softc *psc, int shared, int slaved)
 }
 
 static int
-tlp_pci_match(struct device *parent, struct cfdata *match, void *aux)
+tlp_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -347,9 +347,9 @@ tlp_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-tlp_pci_attach(struct device *parent, struct device *self, void *aux)
+tlp_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct tulip_pci_softc *psc = (void *) self;
+	struct tulip_pci_softc *psc = device_private(self);
 	struct tulip_softc *sc = &psc->sc_tulip;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -525,7 +525,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);

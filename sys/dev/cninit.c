@@ -1,4 +1,4 @@
-/*	$NetBSD: cninit.c,v 1.8 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: cninit.c,v 1.8.70.1 2008/04/03 12:42:36 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.8 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.8.70.1 2008/04/03 12:42:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: cninit.c,v 1.8 2005/12/11 12:20:53 christos Exp $");
 #include <dev/cons.h>
 
 void
-cninit()
+cninit(void)
 {
 	struct consdev *cp;
 	struct consdev *bestMatch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.88 2007/12/05 12:03:09 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.88.12.1 2008/04/03 12:42:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88 2007/12/05 12:03:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88.12.1 2008/04/03 12:42:16 mjf Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -285,16 +285,15 @@ static void	setbootdev(void);
 static struct dev_data *dev_data_lookup(struct device *);
 static void	dev_data_insert(struct dev_data *, ddlist_t *);
 
-static int	mainbusmatch(struct device *, struct cfdata *, void *);
-static void	mainbusattach(struct device *, struct device *, void *);
-static int	mainbussearch(struct device *, struct cfdata *,
-			      const int *, void *);
+static int	mainbusmatch(device_t, cfdata_t, void *);
+static void	mainbusattach(device_t, device_t, void *);
+static int	mainbussearch(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbusmatch, mainbusattach, NULL, NULL);
 
 static int
-mainbusmatch(struct device *parent, struct cfdata *match, void *aux)
+mainbusmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int mainbus_matched = 0;
 
@@ -307,18 +306,17 @@ mainbusmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mainbusattach(struct device *parent, struct device *self, void *aux)
+mainbusattach(device_t parent, device_t self, void *aux)
 {
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Search for and attach children. */
 	config_search_ia(mainbussearch, self, "mainbus", NULL);
 }
 
 static int
-mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc,
-    void *aux)
+mainbussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)

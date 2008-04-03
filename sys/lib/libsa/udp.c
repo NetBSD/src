@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.6 2007/11/24 13:20:58 isaki Exp $	*/
+/*	$NetBSD: udp.c,v 1.6.14.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -87,7 +87,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
 	ip = (struct ip *)uh - 1;
 	len += sizeof(*ip) + sizeof(*uh);
 
-	bzero(ip, sizeof(*ip) + sizeof(*uh));
+	(void)memset(ip, 0, sizeof(*ip) + sizeof(*uh));
 
 	ip->ip_v = IPVERSION;			/* half-char */
 	ip->ip_hl = sizeof(*ip) >> 2;		/* half-char */
@@ -110,7 +110,7 @@ sendudp(struct iodesc *d, void *pkt, size_t len)
 		/* Calculate checksum (must save and restore ip header) */
 		tip = *ip;
 		ui = (struct udpiphdr *)ip;
-		bzero(ui->ui_x1, sizeof(ui->ui_x1));
+		(void)memset(ui->ui_x1, 0, sizeof(ui->ui_x1));
 		ui->ui_len = uh->uh_ulen;
 		uh->uh_sum = ip_cksum(ui, len);
 		*ip = tip;
@@ -216,7 +216,7 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 
 	/* If there were ip options, make them go away */
 	if (hlen != sizeof(*ip)) {
-		bcopy(((u_char *)ip) + hlen, uh, len - hlen);
+		(void)memcpy(uh, ((u_char *)ip) + hlen, len - hlen);
 		ip->ip_len = htons(sizeof(*ip));
 		n -= hlen - sizeof(*ip);
 	}
@@ -243,7 +243,7 @@ readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 		/* Check checksum (must save and restore ip header) */
 		tip = *ip;
 		ui = (struct udpiphdr *)ip;
-		bzero(ui->ui_x1, sizeof(ui->ui_x1));
+		(void)memset(ui->ui_x1, 0, sizeof(ui->ui_x1));
 		ui->ui_len = uh->uh_ulen;
 		if (ip_cksum(ui, n) != 0) {
 #ifdef NET_DEBUG

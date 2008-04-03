@@ -1,4 +1,4 @@
-/*	$NetBSD: netif.c,v 1.21 2007/11/24 13:20:56 isaki Exp $	*/
+/*	$NetBSD: netif.c,v 1.21.14.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -192,7 +192,7 @@ netif_attach(struct netif *nif, struct iodesc *desc, void *machdep_hint)
 		    nif->nif_unit);
 #endif
 	drv->netif_init(desc, machdep_hint);
-	bzero(drv->netif_ifs[nif->nif_unit].dif_stats,
+	(void)memset(drv->netif_ifs[nif->nif_unit].dif_stats, 0,
 	    sizeof(struct netif_stats));
 }
 
@@ -290,7 +290,7 @@ netif_open(void *machdep_hint)
 	return -1;
 
 fnd:
-	bzero(s, sizeof(*s));
+	(void)memset(s, 0, sizeof(*s));
 	netif_init();
 	nif = netif_select(machdep_hint);
 	if (!nif)

@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.59 2008/01/31 19:01:50 markd Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.59.6.1 2008/04/03 12:42:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.59 2008/01/31 19:01:50 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.59.6.1 2008/04/03 12:42:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,6 +114,8 @@ static int	alc260_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_get_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_unsol_event(codec_t *, int);
 static int	alc262_init_widget(const codec_t *, widget_t *, nid_t);
+static int	alc662_init_dacgroup(codec_t *);
+static int	alc662_mixer_init(codec_t *);
 static int	alc861_init_dacgroup(codec_t *);
 static int	alc861vdgr_init_dacgroup(codec_t *);
 static int	alc880_init_dacgroup(codec_t *);
@@ -126,6 +128,8 @@ static int	alc883_init_dacgroup(codec_t *);
 static int 	alc883_mixer_init(codec_t *);
 static int	alc885_init_dacgroup(codec_t *);
 static int	alc888_init_dacgroup(codec_t *);
+static int	alc888_init_widget(const codec_t *, widget_t *, nid_t);
+static int	alc888_mixer_init(codec_t *);
 static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
 static int	ad1981hd_mixer_init(codec_t *);
 static int	ad1983_mixer_init(codec_t *);
@@ -193,6 +197,11 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0268:
 		this->name = "Realtek ALC268";
 		break;
+	case 0x10ec0662:
+		this->name = "Realtek ALC662-GR";
+		this->mixer_init = alc662_mixer_init;
+		this->init_dacgroup = alc662_init_dacgroup;
+		break;
 	case 0x10ec0861:
 		this->name = "Realtek ALC861";
 		this->init_dacgroup = alc861_init_dacgroup;
@@ -228,6 +237,8 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
 		this->init_dacgroup = alc888_init_dacgroup;
+		this->init_widget = alc888_init_widget;
+		this->mixer_init = alc888_mixer_init;
 		break;
 	case 0x11d41981:
 		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
@@ -2097,6 +2108,99 @@ alc262_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 }
 
 /* ----------------------------------------------------------------
+ * Realtek ALC662-GR
+ * ---------------------------------------------------------------- */
+
+static const mixer_item_t alc662_mixer_items[] = {
+	AZ_MIXER_CLASSES,
+
+	{{0, {AudioNmaster, 0}, AUDIO_MIXER_VALUE, AZ_CLASS_OUTPUT,
+	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
+	{{0, {AudioNmaster".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
+	{{0, {AudioNspeaker".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
+	{{0, {AudioNspeaker".boost", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_PINBOOST},
+	{{0, {AudioNheadphone".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x1b, MI_TARGET_OUTAMP},
+	{{0, {AudioNheadphone".boost", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_OUTPUT,
+	  0, 0, ENUM_OFFON}, 0x1b, MI_TARGET_PINBOOST},
+
+	{{0, {AudioNdac, 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
+	{{0, {AudioNdac".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x14, MI_TARGET_OUTAMP},
+	{{0, {AudioNdac".front", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x02, MI_TARGET_OUTAMP},
+	{{0, {AudioNdac".surround", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x03, MI_TARGET_OUTAMP},
+	{{0, {AudioNdac".clfe", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{"", 0}, 2, 3}}, 0x04, MI_TARGET_OUTAMP},
+
+	{{0, {AudioNmicrophone, 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{"", 0}, 2, MIXER_DELTA(65)}}, 0x08, MI_TARGET_INAMP(0)},
+	{{0, {AudioNmicrophone".mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x08, MI_TARGET_INAMP(0)},
+	{{0, {AudioNmicrophone"2", 0}, AUDIO_MIXER_VALUE, AZ_CLASS_INPUT,
+	  0, 0, .un.v={{"", 0}, 2, MIXER_DELTA(65)}}, 0x09, MI_TARGET_INAMP(0)},
+	{{0, {AudioNmicrophone"2.mute", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_OFFON}, 0x09, MI_TARGET_INAMP(0)},
+
+	{{0, {AudioNmicrophone".dir", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_IO}, 0x18, MI_TARGET_PINDIR},
+	{{0, {AudioNmicrophone"2.dir", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_IO}, 0x19, MI_TARGET_PINDIR},
+	{{0, {AudioNline".dir", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_IO}, 0x1a, MI_TARGET_PINDIR},
+	{{0, {AudioNline"2.dir", 0}, AUDIO_MIXER_ENUM, AZ_CLASS_INPUT,
+	  0, 0, ENUM_IO}, 0x1b, MI_TARGET_PINDIR},
+};
+
+static int
+alc662_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 1,
+		{{3, {0x02, 0x03, 0x04}}}}; /* analog 6ch */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{2, {0x08, 0x09}}}};	/* analog 4ch */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+static int
+alc662_mixer_init(codec_t *this)
+{
+	mixer_ctrl_t mc;
+
+	this->nmixers = __arraycount(alc662_mixer_items);
+	this->mixers = malloc(sizeof(alc662_mixer_items), M_DEVBUF, M_NOWAIT);
+	if (this->mixers == NULL) {
+		aprint_error("%s: out of memory in %s\n", XNAME(this), __func__);
+		return ENOMEM;
+	}
+	memcpy(this->mixers, alc662_mixer_items, sizeof(alc662_mixer_items));
+	generic_mixer_fix_indexes(this);
+	generic_mixer_default(this);
+
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
+	mc.un.ord = 0;		/* pindir: input */
+	generic_mixer_set(this, 0x18, MI_TARGET_PINDIR, &mc);	/* mic1 */
+	generic_mixer_set(this, 0x19, MI_TARGET_PINDIR, &mc);	/* mic2 */
+	generic_mixer_set(this, 0x1a, MI_TARGET_PINDIR, &mc);	/* line1 */
+	mc.un.ord = 1;		/* pindir: output */
+	generic_mixer_set(this, 0x1b, MI_TARGET_PINDIR, &mc);	/* line2 */
+
+
+	return 0;
+}
+
+/* ----------------------------------------------------------------
  * Realtek ALC861
  * ---------------------------------------------------------------- */
 
@@ -2773,6 +2877,64 @@ alc888_init_dacgroup(codec_t *this)
 
 	this->dacs = dacs;
 	this->adcs = adcs;
+	return 0;
+}
+
+static int
+alc888_init_widget(const codec_t *this, widget_t *w, nid_t nid)
+{
+	switch (nid) {
+	case 0x0c:
+		strlcpy(w->name, AudioNmaster, sizeof(w->name));
+		break;
+	}
+	return 0;
+}
+
+static int
+alc888_mixer_init(codec_t *this)
+{
+	mixer_item_t *m, *mdac = NULL;
+	mixer_devinfo_t *d;
+	int err, i;
+
+	err = generic_mixer_init(this);
+	if (err)
+		return err;
+
+	/* Clear mixer indexes, to make generic_mixer_fix_indexes happy */
+	for (i = 0; i < this->nmixers; i++) {
+		d = &this->mixers[i].devinfo;
+		d->index = d->prev = d->next = 0;
+	}
+
+	/* We're looking for front l/r mixer, which we know is nid 0x0c */
+	for (i = 0; i < this->nmixers; i++)
+		if (this->mixers[i].nid == 0x0c) {
+			mdac = &this->mixers[i];
+			break;
+		}
+	if (mdac) {
+		/*
+		 * ALC888 doesn't have a master mixer, so create a fake
+		 * inputs.dac that mirrors outputs.master
+		 */
+		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		if (err)
+			return err;
+
+		m = &this->mixers[this->nmixers];
+		d = &m->devinfo;
+		memcpy(m, mdac, sizeof(*m));
+		d->mixer_class = AZ_CLASS_INPUT;
+		snprintf(d->label.name, sizeof(d->label.name), AudioNdac);
+		this->nmixers++;
+	}
+
+	/* Recreate mixer indexes and defaults after making a mess of things */
+	generic_mixer_fix_indexes(this);
+	generic_mixer_default(this);
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: shpcic.c,v 1.11 2007/11/06 03:23:15 uwe Exp $	*/
+/*	$NetBSD: shpcic.c,v 1.11.14.1 2008/04/03 12:42:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.11 2007/11/06 03:23:15 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shpcic.c,v 1.11.14.1 2008/04/03 12:42:24 mjf Exp $");
 
 #include "opt_pci.h"
 
@@ -65,10 +65,10 @@ int shpcic_debug = SHPCIC_DEBUG + 0;
 #define	PCI_MODE1_ENABLE	0x80000000UL
 
 
-static int	shpcic_match(device_t, struct cfdata *, void *);
+static int	shpcic_match(device_t, cfdata_t, void *);
 static void	shpcic_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(shpcic, sizeof(struct device),
+CFATTACH_DECL_NEW(shpcic, 0,
     shpcic_match, shpcic_attach, NULL, NULL);
 
 
@@ -80,7 +80,7 @@ static int shpcic_intr_priority[2] = { IPL_BIO, IPL_BIO };
 
 
 static int
-shpcic_match(device_t parent, struct cfdata *cf, void *aux)
+shpcic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	pcireg_t id;
 

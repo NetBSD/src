@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_tlsb.c,v 1.14 2007/10/17 19:52:59 garbled Exp $ */
+/* $NetBSD: mcclock_tlsb.c,v 1.14.16.1 2008/04/03 12:42:10 mjf Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.14 2007/10/17 19:52:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_tlsb.c,v 1.14.16.1 2008/04/03 12:42:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,10 +65,10 @@ struct mcclock_tlsb_softc {
 	unsigned long regbase;
 };
 
-int	mcclock_tlsb_match(struct device *, struct cfdata *, void *);
-void	mcclock_tlsb_attach(struct device *, struct device *, void *);
+int	mcclock_tlsb_match(device_t, cfdata_t, void *);
+void	mcclock_tlsb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mcclock_tlsb, sizeof (struct mcclock_tlsb_softc),
+CFATTACH_DECL_NEW(mcclock_tlsb, sizeof(struct mcclock_tlsb_softc),
     mcclock_tlsb_match, mcclock_tlsb_attach, NULL, NULL);
 
 static void	mcclock_tlsb_write(struct mc146818_softc *, u_int, u_int);
@@ -76,7 +76,7 @@ static u_int	mcclock_tlsb_read(struct mc146818_softc *, u_int);
 
 
 int
-mcclock_tlsb_match(struct device *parent, struct cfdata *match, void *aux)
+mcclock_tlsb_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gbus_attach_args *ga = aux;
 
@@ -86,15 +86,16 @@ mcclock_tlsb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-mcclock_tlsb_attach(struct device *parent, struct device *self, void *aux)
+mcclock_tlsb_attach(device_t parent, device_t self, void *aux)
 {
+	struct mcclock_tlsb_softc *tsc = device_private(self);
 	struct gbus_attach_args *ga = aux;
-	struct mcclock_tlsb_softc *tsc = (void *)self;
 	struct mc146818_softc *sc = &tsc->sc_mc146818;
 
 	/* XXX Should be bus.h'd, so we can accommodate the kn7aa. */
 	tsc->regbase = TLSB_GBUS_BASE + ga->ga_offset;
 
+	sc->sc_dev = self;
 	sc->sc_mcread  = mcclock_tlsb_read;
 	sc->sc_mcwrite = mcclock_tlsb_write;
 

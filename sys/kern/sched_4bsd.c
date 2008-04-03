@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.13 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.13.6.1 2008/04/03 12:43:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.13 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.13.6.1 2008/04/03 12:43:03 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -155,8 +155,10 @@ sched_tick(struct cpu_info *ci)
 
 	spc->spc_ticks = rrticks;
 
-	if (CURCPU_IDLE_P())
+	if (CURCPU_IDLE_P()) {
+		cpu_need_resched(ci, 0);
 		return;
+	}
 
 	if (spc->spc_flags & SPCF_SEENRR) {
 		/*
@@ -165,10 +167,9 @@ sched_tick(struct cpu_info *ci)
 		 * Indicate that the process should yield.
 		 */
 		spc->spc_flags |= SPCF_SHOULDYIELD;
+		cpu_need_resched(ci, 0);
 	} else
 		spc->spc_flags |= SPCF_SEENRR;
-
-	cpu_need_resched(ci, 0);
 }
 
 /*
@@ -473,7 +474,7 @@ runqueue_print(const runqueue_t *rq, void (*pr)(const char *, ...))
  * to be empty.
  */
 void
-sched_rqinit()
+sched_rqinit(void)
 {
 
 	runqueue_init(&global_queue);
@@ -497,7 +498,7 @@ sched_cpuattach(struct cpu_info *ci)
 }
 
 void
-sched_setup()
+sched_setup(void)
 {
 
 	rrticks = hz / 10;

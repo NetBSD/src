@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.43 2008/01/04 21:17:47 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.43.6.1 2008/04/03 12:42:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43 2008/01/04 21:17:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.1 2008/04/03 12:42:36 mjf Exp $");
 
 #include "fss.h"
 
@@ -769,9 +769,9 @@ bad:
 	fss_softc_free(sc);
 	if (sc->sc_bs_vp != NULL) {
 		if (sc->sc_flags & FSS_PERSISTENT)
-			vn_close(sc->sc_bs_vp, FREAD, l->l_cred, l);
+			vn_close(sc->sc_bs_vp, FREAD, l->l_cred);
 		else
-			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred, l);
+			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
 	}
 	sc->sc_bs_vp = NULL;
 
@@ -797,9 +797,9 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
-		vn_close(sc->sc_bs_vp, FREAD, l->l_cred, l);
+		vn_close(sc->sc_bs_vp, FREAD, l->l_cred);
 	else
-		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred, l);
+		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
 	sc->sc_bs_vp = NULL;
 	sc->sc_flags &= ~FSS_PERSISTENT;
 

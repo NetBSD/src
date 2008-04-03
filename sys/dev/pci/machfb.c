@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.50 2008/01/15 02:00:49 jmcneill Exp $	*/
+/*	$NetBSD: machfb.c,v 1.50.6.1 2008/04/03 12:42:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.50 2008/01/15 02:00:49 jmcneill Exp $");
+	"$NetBSD: machfb.c,v 1.50.6.1 2008/04/03 12:42:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0,
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/callout.h>
+#include <sys/kauth.h>
 
 #ifdef __sparc__
 #include <machine/promlib.h>
@@ -1666,6 +1667,19 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 		return pa;
 	}
 #endif
+
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
+	if (curlwp != NULL) {
+		if (kauth_authorize_generic(kauth_cred_get(),
+		    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
+			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			return -1;
+		}
+	}
+
 	reg = (pci_conf_read(sc->sc_pc, sc->sc_pcitag, 0x18) & 0xffffff00);
 	if (reg != sc->sc_regphys) {
 #ifdef DIAGNOSTIC

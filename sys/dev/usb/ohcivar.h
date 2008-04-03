@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.40 2007/12/09 20:28:24 jmcneill Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.40.10.1 2008/04/03 12:42:57 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -82,7 +82,8 @@ typedef struct ohci_soft_itd {
 #define OHCI_HASH_SIZE 128
 
 typedef struct ohci_softc {
-	struct usbd_bus sc_bus;		/* base device */
+	device_t sc_dev;
+	struct usbd_bus sc_bus;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
@@ -124,10 +125,6 @@ typedef struct ohci_softc {
 	char sc_vendor[16];
 	int sc_id_vendor;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	void *sc_powerhook;		/* cookie from power hook */
-	void *sc_shutdownhook;		/* cookie from shutdown hook */
-#endif
 	u_int32_t sc_control;		/* Preserved during suspend/standby */
 	u_int32_t sc_intre;
 
@@ -153,7 +150,9 @@ usbd_status	ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int		ohci_detach(ohci_softc_t *, int);
-int		ohci_activate(device_ptr_t, enum devact);
+bool		ohci_shutdown(device_t, int);
+void		ohci_childdet(device_t, device_t);
+int		ohci_activate(device_t, enum devact);
 #endif
-bool		ohci_resume(device_t);
-bool		ohci_suspend(device_t);
+bool		ohci_resume(device_t PMF_FN_PROTO);
+bool		ohci_suspend(device_t PMF_FN_PROTO);

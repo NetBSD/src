@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.17 2007/10/24 23:08:07 xtraeme Exp $	*/
+/*	$NetBSD: rccide.c,v 1.17.16.1 2008/04/03 12:42:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.17 2007/10/24 23:08:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.17.16.1 2008/04/03 12:42:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,10 +43,10 @@ static void serverworks_setup_channel(struct ata_channel *);
 static int  serverworks_pci_intr(void *);
 static int  serverworkscsb6_pci_intr(void *);
 
-static int  rccide_match(struct device *, struct cfdata *, void *);
-static void rccide_attach(struct device *, struct device *, void *);
+static int  rccide_match(device_t, cfdata_t, void *);
+static void rccide_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(rccide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(rccide, sizeof(struct pciide_softc),
     rccide_match, rccide_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_serverworks_products[] =  {
@@ -83,8 +83,7 @@ static const struct pciide_product_desc pciide_serverworks_products[] =  {
 };
 
 static int
-rccide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+rccide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -99,10 +98,12 @@ rccide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-rccide_attach(struct device *parent, struct device *self, void *aux)
+rccide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (void *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_serverworks_products));
@@ -120,8 +121,8 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
@@ -278,8 +279,8 @@ serverworks_pci_intr(arg)
 		wdc_cp = &cp->ata_channel;
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
-			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
+			aprint_error("%s:%d: bogus intr\n",
+			    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), i);
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		} else

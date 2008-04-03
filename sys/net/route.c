@@ -1,7 +1,7 @@
-/*	$NetBSD: route.c,v 1.105 2008/01/21 09:11:24 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.105.6.1 2008/04/03 12:43:07 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.105 2008/01/21 09:11:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.105.6.1 2008/04/03 12:43:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -229,6 +229,7 @@ void
 route_init(void)
 {
 
+	rt_init();
 	rn_init();	/* initialize all zeroes, all ones, mask table */
 	rtable_init((void **)rt_tables);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.24 2008/02/06 22:12:41 dsl Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.24.6.1 2008/04/03 12:42:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.24 2008/02/06 22:12:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.24.6.1 2008/04/03 12:42:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ void
 netbsd32_syscall_intern(struct proc *p)
 {
 
-	p->p_trace_enabled = trace_is_enabled(p);
 	p->p_md.md_syscall = netbsd32_syscall;
 }
 
@@ -85,7 +84,6 @@ netbsd32_syscall(struct trapframe *frame)
 	code = frame->tf_rax & (SYS_NSYSENT - 1);
 	callp = p->p_emul->e_sysent + code;
 
-	uvmexp.syscalls++;
 	LWP_CACHE_CREDS(l, p);
 
 	SYSCALL_COUNT(syscall_counts, code);

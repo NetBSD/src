@@ -1,4 +1,4 @@
-#	$NetBSD: files.ixdp425,v 1.7 2007/12/03 15:33:31 ad Exp $
+#	$NetBSD: files.ixdp425,v 1.7.14.1 2008/04/03 12:42:14 mjf Exp $
 #
 # Intel IXP425 networkproccesor board configuration info
 #
@@ -32,7 +32,5 @@ file    arch/evbarm/ixdp425/ixdp425_led.c		ixdpled needs-flag
 
 # XXX dev/pcmcia needs fdc
 #device fdc {drive = -1}
-
-#include "dev/pcmcia/files.pcmcia"
 
 #file	arch/evbarm/ixdp425/rbus_machdep.c		cardbus

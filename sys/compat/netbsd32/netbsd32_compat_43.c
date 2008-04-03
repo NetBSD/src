@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.48 2008/01/26 21:01:23 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.48.6.1 2008/04/03 12:42:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.48 2008/01/26 21:01:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.48.6.1 2008/04/03 12:42:33 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -143,7 +143,7 @@ compat_43_netbsd32_stat43(struct lwp *l, const struct compat_43_netbsd32_stat43_
 	struct netbsd32_stat43 sb32;
 	int error;
 
-	error = do_sys_stat(l, SCARG_P32(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG_P32(uap, path), FOLLOW, &sb);
 	if (error == 0) {
 		netbsd32_from_stat(&sb, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
@@ -162,7 +162,7 @@ compat_43_netbsd32_lstat43(struct lwp *l, const struct compat_43_netbsd32_lstat4
 	struct netbsd32_stat43 sb32;
 	int error;
 
-	error = do_sys_stat(l, SCARG_P32(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG_P32(uap, path), NOFOLLOW, &sb);
 	if (error == 0) {
 		netbsd32_from_stat(&sb, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, ub), sizeof(sb32));
@@ -181,7 +181,7 @@ compat_43_netbsd32_fstat43(struct lwp *l, const struct compat_43_netbsd32_fstat4
 	struct netbsd32_stat43 sb32;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	error = do_sys_fstat(SCARG(uap, fd), &sb);
 	if (error == 0) {
 		netbsd32_from_stat(&sb, &sb32);
 		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));

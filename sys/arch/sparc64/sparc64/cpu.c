@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.66 2008/01/15 10:35:34 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.66.6.1 2008/04/03 12:42:26 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2008/01/15 10:35:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66.6.1 2008/04/03 12:42:26 mjf Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +89,10 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
+
+#ifdef MULTIPROCESSOR
+static const char *ipi_evcnt_names[IPI_EVCNT_NUM] = IPI_EVCNT_NAMES;
+#endif
 
 static void cpu_reset_fpustate(void);
 
@@ -150,13 +156,16 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_self = cpi;
 	cpi->ci_node = cpu_node;
 	cpi->ci_idepth = -1;
+	memset(cpi->ci_intrpending, -1, sizeof(cpi->ci_intrpending));
 
 	/*
 	 * Finally, add itself to the list of active cpus.
 	 */
 	for (ci = cpus; ci->ci_next != NULL; ci = ci->ci_next)
 		;
+#ifdef MULTIPROCESSOR
 	ci->ci_next = cpi;
+#endif
 	return (cpi);
 }
 
@@ -231,7 +240,12 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		mi_cpu_attach(ci);
 		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
 	}
+	for (i = 0; i < IPI_EVCNT_NUM; ++i)
+		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_INTR,
+				     NULL, dev->dv_xname, ipi_evcnt_names[i]);
 #endif
+	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
+			     dev->dv_xname, "timer");
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
@@ -363,6 +377,7 @@ cpu_boot_secondary_processors()
 		if (ci->ci_cpuid == CPU_UPAID)
 			continue;
 
+		cpu_pmap_prepare(ci, false);
 		cpu_args->cb_node = ci->ci_node;
 		cpu_args->cb_cpuinfo = ci->ci_paddr;
 		membar_sync();
@@ -384,26 +399,30 @@ cpu_boot_secondary_processors()
 		if (!CPUSET_HAS(cpus_active, ci->ci_index))
 			printf("cpu%d: startup failed\n", ci->ci_cpuid);
 	}
+
+	/*
+	 * Sync %tick register with primary CPU.
+	 * No need this actually since we can use counter-timer as timecounter.
+	 */
+	sparc64_broadcast_ipi(sparc64_ipi_sync_tick, tick() + 100, 0);
 }
 
 void
 cpu_hatch()
 {
-	extern void tickintr_establish(void);
 	char *v = (char*)CPUINFO_VA;
 	int i;
 
 	for (i = 0; i < 4*PAGE_SIZE; i += sizeof(long))
 		flush(v + i);
 
+	cpu_pmap_init(curcpu());
 	CPUSET_ADD(cpus_active, cpu_number());
 	cpu_reset_fpustate();
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
+	curcpu()->ci_sched_ih = init_softint(PIL_SCHED, schedintr);
+	tickintr_establish(PIL_STATCLOCK, statintr);
 	spl0();
-
-#if 0
-	tickintr_establish();
-#endif
 }
 #endif /* MULTIPROCESSOR */

@@ -1,4 +1,4 @@
-/* $NetBSD: attimer_acpi.c,v 1.9 2008/01/03 01:21:45 dyoung Exp $ */
+/* $NetBSD: attimer_acpi.c,v 1.9.6.1 2008/04/03 12:42:37 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.9 2008/01/03 01:21:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.9.6.1 2008/04/03 12:42:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,11 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: attimer_acpi.c,v 1.9 2008/01/03 01:21:45 dyoung Exp 
 
 #include <dev/ic/attimervar.h>
 
-static int	attimer_acpi_match(device_t, struct cfdata *, void *);
+static int	attimer_acpi_match(device_t, cfdata_t, void *);
 static void	attimer_acpi_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(attimer_acpi, sizeof(struct attimer_softc), attimer_acpi_match,
-    attimer_acpi_attach, attimer_detach, NULL);
+CFATTACH_DECL_NEW(attimer_acpi, sizeof(struct attimer_softc),
+    attimer_acpi_match, attimer_acpi_attach, attimer_detach, NULL);
 
 /*
  * Supported device IDs
@@ -102,7 +102,7 @@ static const char * const attimer_acpi_ids[] = {
  * attimer_acpi_match: autoconf(9) match routine
  */
 static int
-attimer_acpi_match(device_t parent, struct cfdata *match, void *aux)
+attimer_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -124,11 +124,13 @@ attimer_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_io *io;
 	ACPI_STATUS rv;
 
+	sc->sc_dev = self;
+
 	aprint_naive(": AT Timer\n");
 	aprint_normal(": AT Timer\n");
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+	rv = acpi_resource_parse(sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
@@ -136,8 +138,8 @@ attimer_acpi_attach(device_t parent, device_t self, void *aux)
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		aprint_error("%s: unable to find i/o register resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "unable to find i/o register resource\n");
 		goto out;
 	}
 
@@ -145,7 +147,7 @@ attimer_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_size = io->ar_length;
 	if (bus_space_map(sc->sc_iot, io->ar_base, sc->sc_size,
 		    0, &sc->sc_ioh) != 0) {
-		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		goto out;
 	}
 

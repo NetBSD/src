@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.3 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.3.8.1 2008/04/03 12:42:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.3 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.3.8.1 2008/04/03 12:42:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,8 @@ struct uhmodem_type {
 	u_int16_t		uhmodem_flags;
 #define	E220	0x0001
 #define	A2502	0x0002
+#define	E620	0x0004		/* XXX */
+				/* Whether or not it is a device different from E220 is not clear. */
 };
 
 Static const struct uhmodem_type uhmodem_devs[] = {
@@ -165,6 +167,8 @@ Static const struct uhmodem_type uhmodem_devs[] = {
 	{{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220 }, 2,	E220},
 	/* ANYDATA / NTT DoCoMo A2502 */
 	{{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_A2502 }, 3,	A2502},
+	/* HUAWEI E620 */
+	{{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_MOBILE }, 3,   E620},
 };
 #define uhmodem_lookup(v, p) ((const struct uhmodem_type *)usb_lookup(uhmodem_devs, v, p))
 

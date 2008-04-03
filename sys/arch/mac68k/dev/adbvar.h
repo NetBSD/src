@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.24 2007/03/08 02:24:39 tsutsui Exp $	*/
+/*	$NetBSD: adbvar.h,v 1.24.40.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -66,6 +66,7 @@ extern int	adb_debug;
 void	adb_enqevent(adb_event_t *);
 
 int	adb_op_sync(Ptr, Ptr, Ptr, short);
+void	adb_spin(volatile int *);
 void	adb_op_comprout(void);
 
 /* adbsysasm.s */

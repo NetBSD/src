@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.6 2008/01/03 04:50:19 dyoung Exp $ */
+/*	$NetBSD: pchb.c,v 1.6.6.1 2008/04/03 12:42:30 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2008/01/03 04:50:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6.6.1 2008/04/03 12:42:30 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2008/01/03 04:50:19 dyoung Exp $");
 #define PCISET_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
 
 /* XXX should be in dev/ic/i82443reg.h */
-#define	I82443BX_SDRAMC_REG	0x76
+#define	I82443BX_SDRAMC_REG	0x74 /* upper 16 bits */
 
 /* XXX should be in dev/ic/i82424{reg.var}.h */
 #define I82424_CPU_BCTL_REG		0x53
@@ -78,18 +78,18 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2008/01/03 04:50:19 dyoung Exp $");
 #define I82424_BCTL_PCIMEM_BURSTEN	0x01
 #define I82424_BCTL_PCI_BURSTEN		0x02
 
-int	pchbmatch(struct device *, struct cfdata *, void *);
-void	pchbattach(struct device *, struct device *, void *);
+int	pchbmatch(device_t, cfdata_t, void *);
+void	pchbattach(device_t, device_t, void *);
 int	pchbdetach(device_t, int);
 
-static bool	pchb_resume(device_t);
-static bool	pchb_suspend(device_t);
+static bool	pchb_resume(device_t PMF_FN_ARGS);
+static bool	pchb_suspend(device_t PMF_FN_ARGS);
 
-CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
+CFATTACH_DECL_NEW(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, pchbdetach, NULL);
 
 int
-pchbmatch(struct device *parent, struct cfdata *match, void *aux)
+pchbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -101,11 +101,9 @@ pchbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pchbattach(struct device *parent, struct device *self, void *aux)
+pchbattach(device_t parent, device_t self, void *aux)
 {
-#if NRND > 0
-	struct pchb_softc *sc = (void *) self;
-#endif
+	struct pchb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct pcibus_attach_args pba;
@@ -122,13 +120,15 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	has_agp = 0;
 	attachflags = pa->pa_flags;
 
+	sc->sc_dev = self;
+
 	/*
 	 * Print out a description, and configure certain chipsets which
 	 * have auxiliary PCI buses.
 	 */
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	switch (PCI_VENDOR(pa->pa_id)) {
@@ -161,9 +161,10 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			   buses. */
 			break;
 		default:
-			aprint_error("%s: unknown ServerWorks chip ID "
-			    "0x%04x; trying to attach PCI buses behind it\n",
-			    self->dv_xname, PCI_PRODUCT(pa->pa_id));
+			aprint_error_dev(self,
+			    "unknown ServerWorks chip ID 0x%04x; trying "
+			    "to attach PCI buses behind it\n",
+			    PCI_PRODUCT(pa->pa_id));
 			/* FALLTHROUGH */
 		case PCI_PRODUCT_SERVERWORKS_CNB20_LE_AGP:
 		case PCI_PRODUCT_SERVERWORKS_CNB30_LE_PCI:
@@ -218,12 +219,12 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				 */
 				bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 				    I82443BX_SDRAMC_REG);
-				if ((bcreg & 0x0300) != 0x0100) {
+				if ((bcreg & 0x03000000) != 0x01000000) {
 					aprint_verbose("%s: fixing "
 					    "Idle/Pipeline DRAM "
 					    "Leadoff Timing\n", self->dv_xname);
-					bcreg &= ~0x0300;
-					bcreg |=  0x0100;
+					bcreg &= ~0x03000000;
+					bcreg |=  0x01000000;
 					pci_conf_write(pa->pa_pc, pa->pa_tag,
 					    I82443BX_SDRAMC_REG, bcreg);
 				}
@@ -237,17 +238,16 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			pbnum = PCISET_PCI_BUS_NUMBER(bcreg);
 			switch (bdnum & PCISET_BRIDGETYPE_MASK) {
 			default:
-				aprint_error("%s: bdnum=%x (reserved)\n",
-				       self->dv_xname, bdnum);
+				aprint_error_dev(self, "bdnum=%x (reserved)\n",
+				       bdnum);
 				break;
 			case PCISET_TYPE_COMPAT:
-				aprint_verbose(
-				    "%s: Compatibility PB (bus %d)\n",
-				    self->dv_xname, pbnum);
+				aprint_verbose_dev(self,
+				    "Compatibility PB (bus %d)\n", pbnum);
 				break;
 			case PCISET_TYPE_AUX:
-				aprint_verbose("%s: Auxiliary PB (bus %d)\n",
-				       self->dv_xname, pbnum);
+				aprint_verbose_dev(self,
+				    "Auxiliary PB (bus %d)\n",pbnum);
 				/*
 				 * This host bridge has a second PCI bus.
 				 * Configure it.
@@ -263,9 +263,8 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				bcreg &= ~I82424_BCTL_CPUPCI_POSTEN;
 				pci_conf_write(pa->pa_pc, pa->pa_tag,
 					       I82424_CPU_BCTL_REG, bcreg);
-				aprint_verbose(
-				    "%s: disabled CPU-PCI write posting\n",
-				    self->dv_xname);
+				aprint_verbose_dev(self,
+				    "disabled CPU-PCI write posting\n");
 			}
 			break;
 		case PCI_PRODUCT_INTEL_82451NX_PXB:
@@ -408,7 +407,7 @@ pchbdetach(device_t self, int flags)
 }
 
 static bool
-pchb_suspend(device_t dv)
+pchb_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct pchb_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc;
@@ -425,7 +424,7 @@ pchb_suspend(device_t dv)
 }
 
 static bool
-pchb_resume(device_t dv)
+pchb_resume(device_t dv PMF_FN_ARGS)
 {
 	struct pchb_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc;

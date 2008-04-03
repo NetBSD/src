@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_isa.c,v 1.17 2007/10/17 19:52:58 garbled Exp $ */
+/* $NetBSD: mcclock_isa.c,v 1.17.16.1 2008/04/03 12:42:10 mjf Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.17 2007/10/17 19:52:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.17.16.1 2008/04/03 12:42:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,17 +46,17 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.17 2007/10/17 19:52:58 garbled Exp
 
 #include <alpha/alpha/mcclockvar.h>
 
-int	mcclock_isa_match(struct device *, struct cfdata *, void *);
-void	mcclock_isa_attach(struct device *, struct device *, void *);
+int	mcclock_isa_match(device_t, cfdata_t, void *);
+void	mcclock_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mcclock_isa, sizeof(struct mc146818_softc),
+CFATTACH_DECL_NEW(mcclock_isa, sizeof(struct mc146818_softc),
     mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
 void	mcclock_isa_write(struct mc146818_softc *, u_int, u_int);
 u_int	mcclock_isa_read(struct mc146818_softc *, u_int);
 
 int
-mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
+mcclock_isa_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -95,11 +95,12 @@ mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
+mcclock_isa_attach(device_t parent, device_t self, void *aux)
 {
+	struct mc146818_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
-	struct mc146818_softc *sc = (void *)self;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ia->ia_iot;
 	if (bus_space_map(sc->sc_bst, ia->ia_io[0].ir_addr,
 	    ia->ia_io[0].ir_size, 0, &sc->sc_bsh))

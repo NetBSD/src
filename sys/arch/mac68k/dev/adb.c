@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.51 2007/12/03 15:33:51 ad Exp $	*/
+/*	$NetBSD: adb.c,v 1.51.14.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.51 2007/12/03 15:33:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.51.14.1 2008/04/03 12:42:20 mjf Exp $");
 
 #include "opt_adb.h"
 
@@ -271,39 +271,49 @@ adbprint(void *args, const char *name)
 int
 adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 {
-	int tmout;
 	int result;
 	volatile int flag = 0;
 
 	result = ADBOp(buffer, (void *)adb_op_comprout, __UNVOLATILE(&flag), 
 	    command);	/* send command */
 	if (result == 0) {		/* send ok? */
-		/*
-		 * Total time to wait is calculated as follows:
-		 *  - Tlt (stop to start time): 260 usec
-		 *  - start bit: 100 usec
-		 *  - up to 8 data bytes: 64 * 100 usec = 6400 usec
-		 *  - stop bit (with SRQ): 140 usec
-		 * Total: 6900 usec
-		 *
-		 * This is the total time allowed by the specification.  Any
-		 * device that doesn't conform to this will fail to operate
-		 * properly on some Apple systems.  In spite of this we
-		 * double the time to wait; some Cuda-based apparently
-		 * queues some commands and allows the main CPU to continue
-		 * processing (radical concept, eh?).  To be safe, allow
-		 * time for two complete ADB transactions to occur.
-		 */
-		for (tmout = 13800; !flag && tmout >= 10; tmout -= 10)
-			delay(10);
-		if (!flag && tmout > 0)
-			delay(tmout);
-
+		adb_spin(&flag);
 		if (!flag)
 			result = -2;
 	}
 
 	return result;
+}
+
+/*
+ * adb_spin
+ *
+ * Implements a spin-wait with timeout to be used for synchronous
+ * operations on the ADB bus.
+ *
+ * Total time to wait is calculated as follows:
+ *  - Tlt (stop to start time): 260 usec
+ *  - start bit: 100 usec
+ *  - up to 8 data bytes: 64 * 100 usec = 6400 usec
+ *  - stop bit (with SRQ): 140 usec
+ * Total: 6900 usec
+ *
+ * This is the total time allowed by the specification.  Any device that
+ * doesn't conform to this will fail to operate properly on some Apple
+ * systems.  In spite of this we double the time to wait; Cuda-based
+ * systems apparently queue commands and allow the main CPU to continue
+ * processing (how radical!).  To be safe, allow time for two complete
+ * ADB transactions to occur.
+ */
+void
+adb_spin(volatile int *fp)
+{
+	int tmout;
+
+	for (tmout = 13800; *fp == 0 && tmout >= 10; tmout -= 10)
+		delay(10);
+	if (*fp == 0 && tmout > 0)
+		delay(tmout);
 }
 
 

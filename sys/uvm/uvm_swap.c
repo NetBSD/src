@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.136.6.1 2008/03/29 16:17:58 mjf Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.136.6.2 2008/04/03 12:43:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.136.6.1 2008/03/29 16:17:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.136.6.2 2008/04/03 12:43:15 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1700,6 +1700,17 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	async = (flags & B_ASYNC) != 0;
 
 	/*
+	 * allocate a buf for the i/o.
+	 */
+
+	KASSERT(curlwp != uvm.pagedaemon_lwp || (write && async));
+	bp = getiobuf(swapdev_vp, curlwp != uvm.pagedaemon_lwp);
+	if (bp == NULL) {
+		uvm_aio_aiodone_pages(pps, npages, true, ENOMEM);
+		return ENOMEM;
+	}
+
+	/*
 	 * convert starting drum slot to block number
 	 */
 
@@ -1713,12 +1724,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_READ :
 		UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_WRITE;
 	kva = uvm_pagermapin(pps, npages, mapinflags);
-
-	/*
-	 * now allocate a buf for the i/o.
-	 */
-
-	bp = getiobuf(swapdev_vp, true);
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through

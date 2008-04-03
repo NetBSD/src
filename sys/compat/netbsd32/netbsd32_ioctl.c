@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.37 2007/12/20 23:03:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.37.6.1 2008/04/03 12:42:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.37 2007/12/20 23:03:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.37.6.1 2008/04/03 12:42:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.37 2007/12/20 23:03:01 dsl Exp 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
+#include <sys/kmem.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -317,6 +318,8 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	u_int size, size32;
 	void *data, *memp = NULL;
 	void *data32, *memp32 = NULL;
+	unsigned fd;
+	fdfile_t *ff;
 	int tmp;
 #define STK_PARAMS	128
 	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
@@ -340,23 +343,23 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 #endif
 
 	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	fd = SCARG(uap, fd);
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
-
-	FILE_USE(fp);
-
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
 		goto out;
 	}
 
+	ff = fdp->fd_ofiles[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
-		fdp->fd_ofileflags[SCARG(uap, fd)] &= ~UF_EXCLOSE;
+		ff->ff_exclose = 0;
 		goto out;
 
 	case FIOCLEX:
-		fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
+		ff->ff_exclose = 1;
+		fdp->fd_exclose = 1;
 		goto out;
 	}
 
@@ -364,14 +367,14 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	 * Interpret high order word to find amount of data to be
 	 * copied to/from the user's address space.
 	 */
+	size = 0;
 	size32 = IOCPARM_LEN(com);
 	if (size32 > IOCPARM_MAX) {
 		error = ENOTTY;
 		goto out;
 	}
-	memp = NULL;
 	if (size32 > sizeof(stkbuf)) {
-		memp32 = malloc((u_long)size32, M_IOCTLOPS, M_WAITOK);
+		memp32 = kmem_alloc((size_t)size32, KM_SLEEP);
 		data32 = memp32;
 	} else
 		data32 = (void *)stkbuf32;
@@ -380,10 +383,10 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 			error = copyin(SCARG_P32(uap, data), data32, size32);
 			if (error) {
 				if (memp32)
-					free(memp32, M_IOCTLOPS);
+					kmem_free(memp32, (size_t)size32);
 				goto out;
 			}
-			ktrgenio(SCARG(uap, fd), UIO_WRITE, SCARG_P32(uap, data),
+			ktrgenio(fd, UIO_WRITE, SCARG_P32(uap, data),
 			    size32, 0);
 		} else
 			*(void **)data32 = SCARG_P32(uap, data);
@@ -402,19 +405,23 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	 */
 	switch (SCARG(uap, com)) {
 	case FIONBIO:
+		mutex_enter(&fp->f_lock);
 		if ((tmp = *(int *)data32) != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (void *)&tmp, l);
+		mutex_exit(&fp->f_lock);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (void *)&tmp);
 		break;
 
 	case FIOASYNC:
+		mutex_enter(&fp->f_lock);
 		if ((tmp = *(int *)data32) != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (void *)&tmp, l);
+		mutex_exit(&fp->f_lock);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (void *)&tmp);
 		break;
 
 	case DIOCGPART32:
@@ -511,7 +518,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 #ifdef NETBSD32_MD_IOCTL
 		error = netbsd32_md_ioctl(fp, com, data32, l);
 #else
-		error = (*fp->f_ops->fo_ioctl)(fp, com, data32, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data32);
 #endif
 		break;
 	}
@@ -525,17 +532,16 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	 */
 	if (error == 0 && (com&IOC_OUT) && size32) {
 		error = copyout(data32, SCARG_P32(uap, data), size32);
-		ktrgenio(SCARG(uap, fd), UIO_READ, SCARG_P32(uap, data),
+		ktrgenio(fd, UIO_READ, SCARG_P32(uap, data),
 		    size32, error);
 	}
 
 	/* if we malloced data, free it here */
 	if (memp32)
-		free(memp32, M_IOCTLOPS);
+		kmem_free(memp32, (size_t)size32);
 	if (memp)
-		free(memp, M_IOCTLOPS);
-
+		kmem_free(memp, (size_t)size);
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.55 2007/12/24 17:07:40 hamajima Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.55.6.1 2008/04/03 12:42:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.55 2007/12/24 17:07:40 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.55.6.1 2008/04/03 12:42:50 mjf Exp $");
 
 #include "rnd.h"
 
@@ -99,7 +99,7 @@ static int	fxp_pci_enable(struct fxp_softc *);
 static void	fxp_pci_disable(struct fxp_softc *);
 
 static void fxp_pci_confreg_restore(struct fxp_pci_softc *psc);
-static bool fxp_pci_resume(device_t dv);
+static bool fxp_pci_resume(device_t dv PMF_FN_PROTO);
 
 CFATTACH_DECL(fxp_pci, sizeof(struct fxp_pci_softc),
     fxp_pci_match, fxp_pci_attach, NULL, NULL);
@@ -182,8 +182,7 @@ fxp_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-fxp_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+fxp_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -243,7 +242,7 @@ fxp_pci_confreg_restore(struct fxp_pci_softc *psc)
 }
 
 static bool
-fxp_pci_resume(device_t dv)
+fxp_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	struct fxp_pci_softc *psc = device_private(dv);
 	fxp_pci_confreg_restore(psc);
@@ -252,10 +251,10 @@ fxp_pci_resume(device_t dv)
 }
 
 static void
-fxp_pci_attach(struct device *parent, struct device *self, void *aux)
+fxp_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct fxp_pci_softc *psc = (struct fxp_pci_softc *)self;
-	struct fxp_softc *sc = (struct fxp_softc *)self;
+	struct fxp_pci_softc *psc = device_private(self);
+	struct fxp_softc *sc = &psc->psc_fxp;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -452,7 +451,7 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x8);
 
 	/* power up chip */
-	switch ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	switch ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null))) {
 	case EOPNOTSUPP:
 		break;

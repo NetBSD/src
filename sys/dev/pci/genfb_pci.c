@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.5 2007/12/21 05:32:09 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.5.6.1 2008/04/03 12:42:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.5 2007/12/21 05:32:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.5.6.1 2008/04/03 12:42:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,9 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
 	    sc->sc_gen.sc_fbsize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
 
-		panic("%s: unable to map the framebuffer\n", self->dv_xname);
+		aprint_error("%s: unable to map the framebuffer\n",
+		    self->dv_xname);
+		return;
 	}
 	sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 
@@ -162,10 +164,11 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	ops.genfb_ioctl = pci_genfb_ioctl;
 	ops.genfb_mmap = pci_genfb_mmap;
 
-	genfb_attach(&sc->sc_gen, &ops);
+	if (genfb_attach(&sc->sc_gen, &ops) == 0) {
 
-	/* now try to attach a DRM */
-	config_found_ia(self, "drm", aux, pci_genfb_drm_print);	
+		/* now try to attach a DRM */
+		config_found_ia(self, "drm", aux, pci_genfb_drm_print);	
+	}
 }
 
 static int
@@ -266,11 +269,12 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * somewhere in a MD header and compile this code only if all are
 	 * present
 	 */
-#ifdef macppc
+#ifdef PCI_MAGIC_IO_RANGE
 	/* allow to map our IO space */
-	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		return bus_space_mmap(sc->sc_iot, offset-0xf2000000, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		return bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, BUS_SPACE_MAP_LINEAR);	
 	}
 #endif
 

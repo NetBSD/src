@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.10 2008/01/09 20:38:35 wiz Exp $ */
+/* $NetBSD: machdep.c,v 1.10.6.1 2008/04/03 12:42:14 mjf Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2008/01/09 20:38:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.6.1 2008/04/03 12:42:14 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -269,7 +269,7 @@ mach_init(void)
 #endif
 
 	/*
-	 * This would be a good place to parse a boot command line, bif
+	 * This would be a good place to parse a boot command line, if
 	 * we got one from the bootloader.  Right now we have no way to
 	 * get one from e.g. vxworks.
 	 */

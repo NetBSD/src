@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.13 2007/11/07 15:56:12 ad Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.13.14.1 2008/04/03 12:42:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,7 +133,7 @@ struct xzs_chanstate {
 };
 
 struct zsc_softc {
-	struct	device zsc_dev;		/* required first: base device */
+	device_t zsc_dev;		/* required first: base device */
 	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
 	/* Machine-dependent part follows... */
 	struct xzs_chanstate xzsc_xcs_store[2];
@@ -155,41 +155,41 @@ struct zsc_softc {
  * XXX - no one seems to want to try and check this -wrs
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+uint8_t zs_read_reg(struct zs_chanstate *cs, uint8_t reg);
+uint8_t zs_read_csr(struct zs_chanstate *cs);
+uint8_t zs_read_data(struct zs_chanstate *cs);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *cs, uint8_t reg,uint8_t val);
+void  zs_write_csr(struct zs_chanstate *cs, uint8_t val);
+void  zs_write_data(struct zs_chanstate *cs, uint8_t val);
 
 /* XXX - Could define splzs() here instead of in psl.h */
 #define splzs spltty
 #define	IPL_ZS IPL_TTY
 
 /* Hook for MD ioctl support */
-int	zsmdioctl __P((struct zs_chanstate *cs, u_long cmd, void *data));
+int	zsmdioctl(struct zs_chanstate *cs, u_long cmd, void *data);
 /* XXX - This is a bit gross... */
 #define ZS_MD_IOCTL(cs, cmd, data) zsmdioctl(cs, cmd, data)
 
 /* Callback for "external" clock sources */
-void zsmd_setclock  __P((struct zs_chanstate *cs));
+void zsmd_setclock(struct zs_chanstate *cs);
 #define ZS_MD_SETCLK(cs) zsmd_setclock(cs)
 
 #define PCLK	(9600 * 384)	/* PCLK pin input clock rate */
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
-	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
-	u_char		zc_xxx0[15];
-	volatile u_char	zc_data;	/* data */
-	u_char		zc_xxx1[15];
+	volatile uint8_t zc_csr;	/* ctrl,status, and indirect access */
+	uint8_t		zc_xxx0[15];
+	volatile uint8_t zc_data;	/* data */
+	uint8_t		zc_xxx1[15];
 };
-void	zs_putc __P((/* register volatile struct zschan * */void *, int));
-int	zs_getc __P((/* register volatile struct zschan * */void *));
-void zs_kgdb_init __P((void));
+void	zs_putc(void *, int);
+int	zs_getc(void *);
+void zs_kgdb_init(void);
 
 #ifdef ZS_TXDMA
-void zstty_txdma_int __P((void *));
-void zs_dma_setup __P((struct zs_chanstate *, void *, int));
+void zstty_txdma_int(void *);
+void zs_dma_setup(struct zs_chanstate *, void *, int);
 #endif

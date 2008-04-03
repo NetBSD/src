@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.2 2008/01/10 15:17:40 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.2.6.1 2008/04/03 12:42:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -117,7 +117,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.2 2008/01/10 15:17:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.2.6.1 2008/04/03 12:42:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,10 +139,10 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.2 2008/01/10 15:17:40 tsutsui Exp 
  * appears that some systems use that.
  */
 
-static int mcclock_isa_probe(struct device *, struct cfdata *, void *);
-static void mcclock_isa_attach(struct device *, struct device *, void *);
+static int mcclock_isa_probe(device_t, cfdata_t, void *);
+static void mcclock_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mcclock_isa, sizeof(struct mc146818_softc),
+CFATTACH_DECL_NEW(mcclock_isa, sizeof(struct mc146818_softc),
     mcclock_isa_probe, mcclock_isa_attach, NULL, NULL);
 
 static unsigned
@@ -162,7 +162,7 @@ mcclock_isa_write(struct mc146818_softc *sc, unsigned reg, unsigned datum)
 }
 
 int
-mcclock_isa_probe(struct device *parent, struct cfdata *match, void *aux)
+mcclock_isa_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -205,15 +205,16 @@ mcclock_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
+mcclock_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct mc146818_softc *sc = (struct mc146818_softc *)self;
+	struct mc146818_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ia->ia_iot;
 	if (bus_space_map(sc->sc_bst, ia->ia_io[0].ir_addr,
 		ia->ia_io[0].ir_size, 0, &sc->sc_bsh)) {
-		printf(": can't map registers!\n");
+		aprint_error(": can't map registers!\n");
 		return;
 	}
 
@@ -241,5 +242,5 @@ mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_setcent = mcclock_isa_setcent;
 #endif
 	mc146818_attach(sc);
-	printf("\n");
+	aprint_normal("\n");
 }

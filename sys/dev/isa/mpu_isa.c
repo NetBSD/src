@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.17 2007/10/19 12:00:21 ad Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.17.16.1 2008/04/03 12:42:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.17 2007/10/19 12:00:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.17.16.1 2008/04/03 12:42:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,42 +56,42 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.17 2007/10/19 12:00:21 ad Exp $");
 #include <dev/ic/mpuvar.h>
 
 struct mpu_isa_softc {
+	device_t sc_dev;
 	struct mpu_softc sc_mpu;	/* generic part */
 	void	*sc_ih;			/* ISA interrupt handler */
 };
 
-int	mpu_isa_match(struct device *, struct cfdata *, void *);
-void	mpu_isa_attach(struct device *, struct device *, void *);
+static int	mpu_isa_match(device_t, cfdata_t, void *);
+static void	mpu_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mpu_isa, sizeof(struct mpu_isa_softc),
+CFATTACH_DECL_NEW(mpu_isa, sizeof(struct mpu_isa_softc),
     mpu_isa_match, mpu_isa_attach, NULL, NULL);
 
-int
-mpu_isa_match(struct device *parent, struct cfdata *match,
-    void *aux)
+static int
+mpu_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct mpu_isa_softc sc;
 	int r;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return (0);
+		return 0;
 	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
-		return (0);
+		return 0;
 
 	memset(&sc, 0, sizeof sc);
 	sc.sc_mpu.iot = ia->ia_iot;
 	if (bus_space_map(sc.sc_mpu.iot, ia->ia_io[0].ir_addr, MPU401_NPORT, 0,
 			  &sc.sc_mpu.ioh))
-		return (0);
+		return 0;
 	r = mpu_find(&sc.sc_mpu);
         bus_space_unmap(sc.sc_mpu.iot, sc.sc_mpu.ioh, MPU401_NPORT);
 	if (r) {
@@ -103,16 +103,16 @@ mpu_isa_match(struct device *parent, struct cfdata *match,
 		ia->ia_niomem = 0;
 		ia->ia_ndrq = 0;
 	}
-	return (r);
+	return r;
 }
 
-void
-mpu_isa_attach(struct device *parent, struct device *self, void *aux)
+static void
+mpu_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct mpu_isa_softc *sc = (struct mpu_isa_softc *)self;
+	struct mpu_isa_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	if (bus_space_map(sc->sc_mpu.iot, ia->ia_io[0].ir_addr, MPU401_NPORT,
 	    0, &sc->sc_mpu.ioh)) {
@@ -121,8 +121,9 @@ mpu_isa_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_AUDIO, mpu_intr, sc);
+	    IST_EDGE, IPL_AUDIO, mpu_intr, &sc->sc_mpu);
 
 	sc->sc_mpu.model = "Roland MPU-401 MIDI UART";
+	sc->sc_dev = self;
 	mpu_attach(&sc->sc_mpu);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.29 2008/02/06 22:12:39 dsl Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.29.6.1 2008/04/03 12:42:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.29 2008/02/06 22:12:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.29.6.1 2008/04/03 12:42:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ freebsd_syscall_plain(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
@@ -171,7 +170,6 @@ freebsd_syscall_fancy(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);

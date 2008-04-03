@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.11 2008/01/14 20:30:10 xtraeme Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.11.6.1 2008/04/03 12:42:52 mjf Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.11 2008/01/14 20:30:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.11.6.1 2008/04/03 12:42:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,7 @@ struct nfsmbc_attach_args {
 
 struct nfsmb_softc;
 struct nfsmbc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
@@ -65,7 +65,7 @@ struct nfsmbc_softc {
 };
 
 struct nfsmb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int sc_num;
 	struct device *sc_nfsmbc;
 
@@ -77,12 +77,12 @@ struct nfsmb_softc {
 };
 
 
-static int nfsmbc_match(struct device *, struct cfdata *, void *);
-static void nfsmbc_attach(struct device *, struct device *, void *);
+static int nfsmbc_match(device_t, struct cfdata *, void *);
+static void nfsmbc_attach(device_t, device_t, void *);
 static int nfsmbc_print(void *, const char *);
 
-static int nfsmb_match(struct device *, struct cfdata *, void *);
-static void nfsmb_attach(struct device *, struct device *, void *);
+static int nfsmb_match(device_t, struct cfdata *, void *);
+static void nfsmb_attach(device_t, device_t, void *);
 static int nfsmb_acquire_bus(void *, int);
 static void nfsmb_release_bus(void *, int);
 static int nfsmb_exec(
@@ -101,11 +101,11 @@ static int
     nfsmb_read_2(struct nfsmb_softc *, uint8_t, i2c_addr_t, i2c_op_t, int);
 
 
-CFATTACH_DECL(nfsmbc, sizeof(struct nfsmbc_softc),
+CFATTACH_DECL_NEW(nfsmbc, sizeof(struct nfsmbc_softc),
     nfsmbc_match, nfsmbc_attach, NULL, NULL);
 
 static int
-nfsmbc_match(struct device *parent, struct cfdata *match, void *aux)
+nfsmbc_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -131,9 +131,9 @@ nfsmbc_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-nfsmbc_attach(struct device *parent, struct device *self, void *aux)
+nfsmbc_attach(device_t parent, device_t self, void *aux)
 {
-	struct nfsmbc_softc *sc = (struct nfsmbc_softc *) self;
+	struct nfsmbc_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct nfsmbc_attach_args nfsmbca;
 	pcireg_t reg;
@@ -145,6 +145,7 @@ nfsmbc_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
+	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_pa = pa;
@@ -170,12 +171,12 @@ nfsmbc_attach(struct device *parent, struct device *self, void *aux)
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, baseregs[0]);
 	nfsmbca.nfsmb_num = 1;
 	nfsmbca.nfsmb_addr = NFORCE_SMBBASE(reg);
-	sc->sc_nfsmb[0] = config_found(&sc->sc_dev, &nfsmbca, nfsmbc_print);
+	sc->sc_nfsmb[0] = config_found(sc->sc_dev, &nfsmbca, nfsmbc_print);
 
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, baseregs[1]);
 	nfsmbca.nfsmb_num = 2;
 	nfsmbca.nfsmb_addr = NFORCE_SMBBASE(reg);
-	sc->sc_nfsmb[1] = config_found(&sc->sc_dev, &nfsmbca, nfsmbc_print);
+	sc->sc_nfsmb[1] = config_found(sc->sc_dev, &nfsmbca, nfsmbc_print);
 }
 
 static int
@@ -192,11 +193,11 @@ nfsmbc_print(void *aux, const char *pnp)
 }
 
 
-CFATTACH_DECL(nfsmb, sizeof(struct nfsmb_softc),
+CFATTACH_DECL_NEW(nfsmb, sizeof(struct nfsmb_softc),
     nfsmb_match, nfsmb_attach, NULL, NULL);
 
 static int
-nfsmb_match(struct device *parent, struct cfdata *match, void *aux)
+nfsmb_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct nfsmbc_attach_args *nfsmbcap = aux;
 
@@ -206,15 +207,16 @@ nfsmb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-nfsmb_attach(struct device *parent, struct device *self, void *aux)
+nfsmb_attach(device_t parent, device_t self, void *aux)
 {
-	struct nfsmb_softc *sc = (struct nfsmb_softc *) self;
+	struct nfsmb_softc *sc = device_private(self);
 	struct nfsmbc_attach_args *nfsmbcap = aux;
 	struct i2cbus_attach_args iba;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_nfsmbc = parent;
 	sc->sc_num = nfsmbcap->nfsmb_num;
 	sc->sc_iot = nfsmbcap->nfsmb_iot;
@@ -234,14 +236,13 @@ nfsmb_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, nfsmbcap->nfsmb_addr, NFORCE_SMBSIZE, 0,
 	    &sc->sc_ioh) != 0) {
-		aprint_error("%s: failed to map SMBus space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "failed to map SMBus space\n");
 		return;
 	}
 
 	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c;
-	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
+	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
 static int

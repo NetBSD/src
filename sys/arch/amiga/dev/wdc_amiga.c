@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.29 2006/03/27 19:35:33 aymeric Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.29.62.1 2008/04/03 12:42:11 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.29 2006/03/27 19:35:33 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.29.62.1 2008/04/03 12:42:11 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,15 +72,15 @@ struct wdc_amiga_softc {
 	char	sc_a1200;
 };
 
-int	wdc_amiga_probe(struct device *, struct cfdata *, void *);
-void	wdc_amiga_attach(struct device *, struct device *, void *);
+int	wdc_amiga_probe(device_t, cfdata_t, void *);
+void	wdc_amiga_attach(device_t, device_t, void *);
 int	wdc_amiga_intr(void *);
 
-CFATTACH_DECL(wdc_amiga, sizeof(struct wdc_amiga_softc),
+CFATTACH_DECL_NEW(wdc_amiga, sizeof(struct wdc_amiga_softc),
     wdc_amiga_probe, wdc_amiga_attach, NULL, NULL);
 
 int
-wdc_amiga_probe(struct device *parent, struct cfdata *cfp, void *aux)
+wdc_amiga_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	if ((!is_a4000() && !is_a1200()) || !matchname(aux, "wdc"))
 		return(0);
@@ -88,14 +88,15 @@ wdc_amiga_probe(struct device *parent, struct cfdata *cfp, void *aux)
 }
 
 void
-wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
+wdc_amiga_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdc_amiga_softc *sc = (void *)self;
+	struct wdc_amiga_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	int i;
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
 	if (is_a4000()) {
@@ -114,8 +115,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(wdr->cmd_iot, 0, 0x40, 0,
 			  &wdr->cmd_baseioh)) {
-		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
 
@@ -126,8 +126,7 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 
 			bus_space_unmap(wdr->cmd_iot,
 			    wdr->cmd_baseioh, 0x40);
-			printf("%s: couldn't map registers\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			aprint_error_dev(self, "couldn't map registers\n");
 			return;
 		}
 	}

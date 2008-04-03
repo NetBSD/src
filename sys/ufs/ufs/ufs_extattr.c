@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.20 2008/01/30 14:54:01 ad Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.20.6.1 2008/04/03 12:43:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.20 2008/01/30 14:54:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.20.6.1 2008/04/03 12:43:14 mjf Exp $");
 
 #include "opt_ffs.h"
 
@@ -330,7 +330,7 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 
 	error = ufs_extattr_enable(ump, attrnamespace, attrname, vp, l);
 	if (error != 0)
-		vn_close(vp, FREAD|FWRITE, l->l_cred, l);
+		vn_close(vp, FREAD|FWRITE, l->l_cred);
 	return (error);
 }
 
@@ -692,7 +692,7 @@ ufs_extattr_disable(struct ufsmount *ump, int attrnamespace,
 	LIST_REMOVE(uele, uele_entries);
 
 	error = vn_close(uele->uele_backing_vnode, FREAD|FWRITE,
-	    l->l_cred, l);
+	    l->l_cred);
 
 	free(uele, M_UFS_EXTATTR);
 

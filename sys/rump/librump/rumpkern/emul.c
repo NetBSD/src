@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.29 2008/02/15 23:36:26 ad Exp $	*/
+/*	$NetBSD: emul.c,v 1.29.6.1 2008/04/03 12:43:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,7 @@
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
+#include <sys/select.h>
 #include <sys/syslog.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
@@ -67,10 +68,8 @@ int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
-int dovfsusermount = 1;
 int hardclock_ticks;
 
-MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
@@ -175,7 +174,8 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 
 	strlcpy(kaddr, uaddr, len);
-	*done = strlen(kaddr);
+	if (done)
+		*done = strlen(kaddr)+1; /* includes termination */
 	return 0;
 }
 
@@ -459,7 +459,7 @@ sigispending(struct lwp *l, int signo)
 }
 
 void
-knote_fdclose(struct lwp *l, int fd)
+knote_fdclose(int fd)
 {
 
 	/* since we don't add knotes, we don't have to remove them */
@@ -502,4 +502,52 @@ yield(void)
 {
 
 	rumpuser_yield();
+}
+
+
+u_int
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+vaddr_t
+calc_cache_size(struct vm_map *map, int pct, int va_pct)
+{
+	paddr_t t;
+
+	t = (paddr_t)physmem * pct / 100 * PAGE_SIZE;
+	if ((vaddr_t)t != t) {
+		panic("%s: needs tweak", __func__);
+	}
+	return t;
+}
+
+int
+seltrue(dev_t dev, int events, struct lwp *l)
+{
+        return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
+}
+
+void
+selrecord(lwp_t *selector, struct selinfo *sip)
+{
+}
+
+void
+selinit(struct selinfo *sip)
+{
+}
+
+void
+selnotify(struct selinfo *sip, int events, long knhint)
+{
+}
+
+void
+seldestroy(struct selinfo *sip)
+{
 }

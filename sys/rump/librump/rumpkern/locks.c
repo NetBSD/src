@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.11 2008/01/30 10:22:02 ad Exp $	*/
+/*	$NetBSD: locks.c,v 1.11.6.1 2008/04/03 12:43:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -67,13 +67,8 @@ mutex_spin_enter(kmutex_t *mtx)
 int
 mutex_tryenter(kmutex_t *mtx)
 {
-	int rv;
 
-	rv = rumpuser_mutex_tryenter(mtx->kmtx_mtx);
-	if (rv)
-		return 0;
-	else
-		return 1;
+	return rumpuser_mutex_tryenter(mtx->kmtx_mtx);
 }
 
 void
@@ -235,7 +230,7 @@ cv_broadcast(kcondvar_t *cv)
 /* kernel biglock, only for vnode_if */
 
 void
-_kernel_lock(int nlocks, struct lwp *l)
+_kernel_lock(int nlocks)
 {
 
 	KASSERT(nlocks == 1);
@@ -243,7 +238,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 }
 
 void
-_kernel_unlock(int nlocks, struct lwp *l, int *countp)
+_kernel_unlock(int nlocks, int *countp)
 {
 
 	KASSERT(nlocks == 1);

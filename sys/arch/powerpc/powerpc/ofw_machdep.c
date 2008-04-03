@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.16.58.1 2008/04/03 12:42:23 mjf Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.16.58.1 2008/04/03 12:42:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp
 #include <dev/ofw/openfirm.h>
 
 #include <machine/powerpc.h>
+#include <machine/autoconf.h>
 
 #define	OFMEM_REGIONS	32
 static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
@@ -63,7 +64,7 @@ static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 void
 mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
-	int phandle, i, cnt;
+	int phandle, i, cnt, regcnt;
 	struct mem_region_avail {
 		paddr_t start;
 		paddr_t size;
@@ -76,18 +77,18 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 		goto error;
 
 	memset(OFmem, 0, sizeof OFmem);
-	cnt = OF_getprop(phandle, "reg",
+	regcnt = OF_getprop(phandle, "reg",
 		OFmem, sizeof OFmem[0] * OFMEM_REGIONS);
-	if (cnt <= 0)
+	if (regcnt <= 0)
 		goto error;
 
 	/* Remove zero sized entry in the returned data. */
-	cnt /= sizeof OFmem[0];
-	for (i = 0; i < cnt; )
+	regcnt /= sizeof OFmem[0];
+	for (i = 0; i < regcnt; )
 		if (OFmem[i].size == 0) {
 			memmove(&OFmem[i], &OFmem[i + 1],
-				(cnt - i) * sizeof OFmem[0]);
-			cnt--;
+				(regcnt - i) * sizeof OFmem[0]);
+			regcnt--;
 		} else
 			i++;
 
@@ -131,6 +132,32 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 			cnt--;
 		} else
 			i++;
+	}
+
+	if (strncmp(model_name, "Pegasos", 7) == 0) {
+		/*
+		 * Some versions of SmartFirmware, only recognize the first
+		 * 256MB segment as available. Work around it and add an
+		 * extra entry to OFavail[] to account for this.
+		 */
+#define AVAIL_THRESH (0x10000000-1)
+		if (((OFavail[cnt-1].start + OFavail[cnt-1].size +
+		    AVAIL_THRESH) & ~AVAIL_THRESH) <
+		    (OFmem[regcnt-1].start + OFmem[regcnt-1].size)) {
+
+			OFavail[cnt].start =
+			    (OFavail[cnt-1].start + OFavail[cnt-1].size +
+			    AVAIL_THRESH) & ~AVAIL_THRESH;
+			OFavail[cnt].size =
+			    OFmem[regcnt-1].size - OFavail[cnt].start;
+			aprint_normal("WARNING: add memory segment %lx - %lx,"
+			    "\nWARNING: which was not recognized by "
+			    "the Firmware.\n",
+			    (unsigned long)OFavail[cnt].start,
+			    (unsigned long)OFavail[cnt].start +
+			    OFavail[cnt].size);
+			cnt++;
+		}
 	}
 
 	*memp = OFmem;

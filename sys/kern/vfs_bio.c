@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.189 2008/02/20 17:13:29 matt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.189.6.1 2008/04/03 12:43:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.189 2008/02/20 17:13:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.189.6.1 2008/04/03 12:43:05 mjf Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -225,7 +225,7 @@ static pool_cache_t bufio_cache;
 /* Buffer memory pools */
 static struct pool bmempools[NMEMPOOLS];
 
-struct vm_map *buf_map;
+static struct vm_map *buf_map;
 
 /*
  * Buffer memory pool allocator.
@@ -388,6 +388,10 @@ brele(buf_t *bp)
 	}
 }
 
+/*
+ * note that for some ports this is used by pmap bootstrap code to
+ * determine kva size.
+ */
 u_long
 buf_memcalc(void)
 {
@@ -413,7 +417,9 @@ buf_memcalc(void)
 			printf("forcing bufcache %d -> 95", bufcache);
 			bufcache = 95;
 		}
-		n = physmem / 100 * bufcache;
+		n = calc_cache_size(buf_map, bufcache,
+		    (buf_map != kernel_map) ? 100 : BUFCACHE_VA_MAXPCT)
+		    / PAGE_SIZE;
 	}
 
 	n <<= PAGE_SHIFT;
@@ -437,12 +443,6 @@ bufinit(void)
 	mutex_init(&buffer_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&needbuffer_cv, "needbuf");
 
-	/*
-	 * Initialize buffer cache memory parameters.
-	 */
-	bufmem = 0;
-	buf_setwm();
-
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
 		buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -451,6 +451,12 @@ bufinit(void)
 			panic("bufinit: cannot allocate submap");
 	} else
 		buf_map = kernel_map;
+
+	/*
+	 * Initialize buffer cache memory parameters.
+	 */
+	bufmem = 0;
+	buf_setwm();
 
 	/* On "small" machines use small pool page sizes where possible */
 	use_std = (physmem < atop(16*1024*1024));
@@ -677,7 +683,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 		VOP_STRATEGY(vp, bp);
 
 		/* Pay for the read. */
-		curproc->p_stats->p_ru.ru_inblock++;
+		curlwp->l_ru.ru_inblock++;
 	} else if (async)
 		brelse(bp, 0);
 
@@ -826,7 +832,7 @@ bwrite(buf_t *bp)
 		reassignbuf(bp, bp->b_vp);
 		mutex_exit(&bufcache_lock);
 	} else {
-		curproc->p_stats->p_ru.ru_oublock++;
+		curlwp->l_ru.ru_oublock++;
 		mutex_enter(bp->b_objlock);
 		CLR(bp->b_oflags, BO_DONE | BO_DELWRI);
 	}
@@ -900,7 +906,7 @@ bdwrite(buf_t *bp)
 		mutex_enter(&bufcache_lock);
 		mutex_enter(bp->b_objlock);
 		SET(bp->b_oflags, BO_DELWRI);
-		curproc->p_stats->p_ru.ru_oublock++;
+		curlwp->l_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 		mutex_exit(&bufcache_lock);
 	} else {
@@ -945,7 +951,7 @@ bdirty(buf_t *bp)
 
 	if (!ISSET(bp->b_oflags, BO_DELWRI)) {
 		SET(bp->b_oflags, BO_DELWRI);
-		curproc->p_stats->p_ru.ru_oublock++;
+		curlwp->l_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
 	}
 }
@@ -1937,7 +1943,7 @@ nestiobuf_iodone(buf_t *bp)
  * nestiobuf_setup: setup a "nested" buffer.
  *
  * => 'mbp' is a "master" buffer which is being divided into sub pieces.
- * => 'bp' should be a buffer allocated by getiobuf or getiobuf_nowait.
+ * => 'bp' should be a buffer allocated by getiobuf.
  * => 'offset' is a byte offset in the master buffer.
  * => 'size' is a size in bytes of this nested buffer.
  */

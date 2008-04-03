@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.44 2007/12/15 00:39:19 perry Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.44.6.1 2008/04/03 12:42:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.44 2007/12/15 00:39:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.44.6.1 2008/04/03 12:42:17 mjf Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -91,7 +91,8 @@ struct hd64461video_font {
 };
 
 struct hd64461video_softc {
-	struct device sc_dev;
+	device_t sc_dev;
+
 	enum hd64461_module_id sc_module_id;
 	struct hd64461video_chip *sc_vc;
 
@@ -126,8 +127,8 @@ STATIC struct hd64461video_chip {
 void	hd64461video_cnprobe(struct consdev *);
 void	hd64461video_cninit(struct consdev *);
 
-STATIC int hd64461video_match(struct device *, struct cfdata *, void *);
-STATIC void hd64461video_attach(struct device *, struct device *, void *);
+STATIC int hd64461video_match(device_t, cfdata_t, void *);
+STATIC void hd64461video_attach(device_t, device_t, void *);
 
 STATIC void hd64461video_setup_hpcfbif(struct hd64461video_chip *);
 STATIC void hd64461video_update_videochip_status(struct hd64461video_chip *);
@@ -155,7 +156,7 @@ STATIC void hd64461video_info(struct hd64461video_softc *);
 STATIC void hd64461video_dump(void) __attribute__((__unused__));
 #endif
 
-CFATTACH_DECL(hd64461video, sizeof(struct hd64461video_softc),
+CFATTACH_DECL_NEW(hd64461video, sizeof(struct hd64461video_softc),
     hd64461video_match, hd64461video_attach, NULL, NULL);
 
 STATIC int hd64461video_ioctl(void *, u_long, void *, int, struct lwp *);
@@ -196,7 +197,7 @@ STATIC struct hpcfb_accessops hd64461video_ha = {
 
 
 STATIC int
-hd64461video_match(struct device *parent, struct cfdata *cf, void *aux)
+hd64461video_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
 
@@ -204,32 +205,37 @@ hd64461video_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 STATIC void
-hd64461video_attach(struct device *parent, struct device *self, void *aux)
+hd64461video_attach(device_t parent, device_t self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
-	struct hd64461video_softc *sc = (struct hd64461video_softc *)self;
+	struct hd64461video_softc *sc;
 	struct hpcfb_attach_args hfa;
 	struct video_chip *vc = &hd64461video_chip.vc;
 	char pbuf[9];
 	size_t fbsize, on_screen_size;
 
+	aprint_naive("\n");
+	aprint_normal(": ");
+
+	sc = device_private(self);
+	sc->sc_dev = self;
+
 	sc->sc_module_id = ha->ha_module_id;
 	sc->sc_vc = &hd64461video_chip;
-	printf(": ");
 
 	/* detect frame buffer size */
 	fbsize = hd64461video_frame_buffer_size(&hd64461video_chip);
 	format_bytes(pbuf, sizeof(pbuf), fbsize);
-	printf("frame buffer = %s ", pbuf);
+	aprint_normal("frame buffer = %s ", pbuf);
 
 	/* update chip status */
 	hd64461video_update_videochip_status(&hd64461video_chip);
 //	hd64461video_set_display_mode(&hd64461video_chip);
 
 	if (hd64461video_chip.console)
-		printf(", console");
+		aprint_normal(", console");
 
-	printf("\n");
+	aprint_normal("\n");
 #ifdef HD64461VIDEO_DEBUG
 	hd64461video_info(sc);
 	hd64461video_dump();
@@ -1163,7 +1169,7 @@ hd64461video_power(void *ctx, int type, long id, void *msg)
 
 	switch ((int)msg) {
 	case PWR_RESUME:
-		DPRINTF("%s: ON%s\n", sc->sc_dev.dv_xname,
+		DPRINTF("%s: ON%s\n", device_xname(sc->sc_dev),
 			sc->sc_vc->blanked ? " (blanked)" : "");
 		if (!sc->sc_vc->blanked)
 			hd64461video_on(hvc);
@@ -1171,7 +1177,7 @@ hd64461video_power(void *ctx, int type, long id, void *msg)
 	case PWR_SUSPEND:
 		/* FALLTHROUGH */
 	case PWR_STANDBY:
-		DPRINTF("%s: OFF\n", sc->sc_dev.dv_xname);
+		DPRINTF("%s: OFF\n", device_xname(sc->sc_dev));
 		hd64461video_off(hvc);
 		break;
 	}

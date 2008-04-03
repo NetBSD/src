@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.20 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.20.6.1 2008/04/03 12:43:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.20 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.20.6.1 2008/04/03 12:43:03 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -176,7 +176,7 @@ sched_rqinit(void)
 #endif
 
 	/* Pool of the scheduler-specific structures */
-	sil_pool = pool_cache_init(sizeof(sched_info_lwp_t), CACHE_LINE_SIZE,
+	sil_pool = pool_cache_init(sizeof(sched_info_lwp_t), coherency_unit,
 	    0, 0, "lwpsd", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	/* Attach the primary CPU here */
@@ -219,12 +219,12 @@ sched_cpuattach(struct cpu_info *ci)
 	}
 
 	/* Allocate the run queue */
-	size = roundup2(sizeof(runqueue_t), CACHE_LINE_SIZE) + CACHE_LINE_SIZE;
+	size = roundup2(sizeof(runqueue_t), coherency_unit) + coherency_unit;
 	rq_ptr = kmem_zalloc(size, KM_SLEEP);
 	if (rq_ptr == NULL) {
 		panic("sched_cpuattach: could not allocate the runqueue");
 	}
-	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), CACHE_LINE_SIZE));
+	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), coherency_unit));
 
 	/* Initialize run queues */
 	KASSERT(sizeof(kmutex_t) <= CACHE_LINE_SIZE);
@@ -474,18 +474,17 @@ void
 sched_wakeup(struct lwp *l)
 {
 	sched_info_lwp_t *sil = l->l_sched_info;
+	const u_int slptime = hardclock_ticks - sil->sl_slept;
 
 	/* Update sleep time delta */
-	sil->sl_slpsum += (l->l_slptime == 0) ?
-	    (hardclock_ticks - sil->sl_slept) : hz;
+	sil->sl_slpsum += (l->l_slptime == 0) ? slptime : hz;
 
 	/* If thread was sleeping a second or more - set a high priority */
-	if (l->l_slptime > 1 || (hardclock_ticks - sil->sl_slept) >= hz)
+	if (l->l_slptime > 1 || slptime >= hz)
 		l->l_priority = high_pri[l->l_priority];
 
 	/* Also, consider looking for a better CPU to wake up */
-	if ((l->l_flag & (LW_BOUND | LW_SYSTEM)) == 0)
-		l->l_cpu = sched_takecpu(l);
+	l->l_cpu = sched_takecpu(l);
 }
 
 void
@@ -511,11 +510,31 @@ sched_pstats_hook(struct lwp *l)
 	} else
 		sil->sl_flags &= ~SL_BATCH;
 
+	/*
+	 * If thread is CPU-bound and never sleeps, it would occupy the CPU.
+	 * In such case reset the value of last sleep, and check it later, if
+	 * it is still zero - perform the migration, unmark the batch flag.
+	 */
+	if (batch && (l->l_slptime + sil->sl_slpsum) == 0) {
+		if (l->l_stat != LSONPROC && sil->sl_slept == 0) {
+			struct cpu_info *ci = sched_takecpu(l);
+
+			if (l->l_cpu != ci)
+				l->l_target_cpu = ci;
+			sil->sl_flags &= ~SL_BATCH;
+		} else {
+			sil->sl_slept = 0;
+		}
+	}
+
 	/* Reset the time sums */
 	sil->sl_slpsum = 0;
 	sil->sl_rtsum = 0;
 
-	/* Estimate threads on time-sharing queue only */
+	/*
+	 * Estimate threads on time-sharing queue only, however,
+	 * exclude the highest priority for performance purposes.
+	 */
 	if (l->l_priority >= PRI_HIGHEST_TS)
 		return;
 	KASSERT(l->l_class == SCHED_OTHER);
@@ -553,7 +572,7 @@ lwp_cache_hot(const struct lwp *l)
 	if (l->l_slptime || sil->sl_lrtime == 0)
 		return false;
 
-	return (hardclock_ticks - sil->sl_lrtime < cacheht_time);
+	return (hardclock_ticks - sil->sl_lrtime <= cacheht_time);
 }
 
 /* Check if LWP can migrate to the chosen CPU */
@@ -659,7 +678,7 @@ sched_catchlwp(void)
 
 	/* Lockless check */
 	ci_rq = ci->ci_schedstate.spc_sched_info;
-	if (ci_rq->r_count < min_catch)
+	if (ci_rq->r_mcount < min_catch)
 		return NULL;
 
 	/*
@@ -680,7 +699,7 @@ sched_catchlwp(void)
 		}
 	}
 
-	if (ci_rq->r_count < min_catch) {
+	if (ci_rq->r_mcount < min_catch) {
 		spc_unlock(ci);
 		return NULL;
 	}
@@ -693,22 +712,22 @@ sched_catchlwp(void)
 		/* Check the first and next result from the queue */
 		if (l == NULL)
 			break;
+		KASSERT(l->l_stat == LSRUN);
+		KASSERT(l->l_flag & LW_INMEM);
 
 		/* Look for threads, whose are allowed to migrate */
-		if ((l->l_flag & LW_SYSTEM) || lwp_cache_hot(l) ||
+		if ((l->l_flag & LW_BOUND) || lwp_cache_hot(l) ||
 		    !sched_migratable(l, curci)) {
 			l = TAILQ_NEXT(l, l_runq);
 			continue;
 		}
-		/* Recheck if chosen thread is still on the runqueue */
-		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM)) {
-			sched_dequeue(l);
-			l->l_cpu = curci;
-			lwp_setlock(l, curci->ci_schedstate.spc_mutex);
-			sched_enqueue(l, false);
-			break;
-		}
-		l = TAILQ_NEXT(l, l_runq);
+
+		/* Grab the thread, and move to the local run queue */
+		sched_dequeue(l);
+		l->l_cpu = curci;
+		lwp_unlock_to(l, curci->ci_schedstate.spc_mutex);
+		sched_enqueue(l, false);
+		return l;
 	}
 	spc_unlock(ci);
 
@@ -1045,7 +1064,7 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci_rq = ci->ci_schedstate.spc_sched_info;
 
-		(*pr)("Run-queue (CPU = %d):\n", ci->ci_cpuid);
+		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
 		(*pr)(" pid.lid = %d.%d, threads count = %u, "
 		    "avgcount = %u, highest pri = %d\n",
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
@@ -1066,12 +1085,12 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			sil = l->l_sched_info;
 			ci = l->l_cpu;
-			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %4u %11p %3d "
+			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %4u %11p %3u "
 			    "%u ST=%d RT=%d %d\n",
 			    (int)l->l_lid, l->l_priority, lwp_eprio(l),
 			    l->l_flag, l->l_stat == LSRUN ? "RQ" :
 			    (l->l_stat == LSSLEEP ? "SQ" : "-"),
-			    sil->sl_timeslice, l, ci->ci_cpuid,
+			    sil->sl_timeslice, l, ci->ci_index,
 			    (u_int)(hardclock_ticks - sil->sl_lrtime),
 			    sil->sl_slpsum, sil->sl_rtsum, sil->sl_flags);
 		}

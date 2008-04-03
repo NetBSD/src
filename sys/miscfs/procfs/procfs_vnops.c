@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_vnops.c,v 1.165 2008/01/23 15:04:40 elad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.165.6.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.165 2008/01/23 15:04:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.165.6.1 2008/04/03 12:43:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,14 +793,13 @@ procfs_getattr(v)
 
 	case PFSfd:
 		if (pfs->pfs_fd != -1) {
-			struct file *fp;
+			file_t *fp;
 
-			fp = fd_getfile(procp->p_fd, pfs->pfs_fd);
+			fp = fd_getfile2(procp, pfs->pfs_fd);
 			if (fp == NULL) {
 				error = EBADF;
 				break;
 			}
-			FILE_USE(fp);
 			vap->va_nlink = 1;
 			vap->va_uid = kauth_cred_geteuid(fp->f_cred);
 			vap->va_gid = kauth_cred_getegid(fp->f_cred);
@@ -813,7 +812,7 @@ procfs_getattr(v)
 				vap->va_bytes = vap->va_size = 0;
 				break;
 			}
-			FILE_UNUSE(fp, curlwp);
+			closef(fp);
 			break;
 		}
 		/*FALLTHROUGH*/
@@ -993,7 +992,6 @@ procfs_lookup(v)
 	pid_t pid, vnpid;
 	struct pfsnode *pfs;
 	struct proc *p = NULL;
-	struct lwp *l = NULL;
 	int i, error;
 	pfstype type;
 
@@ -1110,7 +1108,7 @@ procfs_lookup(v)
 
 	case PFSfd: {
 		int fd;
-		struct file *fp;
+		file_t *fp;
 
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ENOENT)) != 0)
 			return error;
@@ -1130,19 +1128,17 @@ procfs_lookup(v)
 		}
 		fd = atoi(pname, cnp->cn_namelen);
 
-		fp = fd_getfile(p->p_fd, fd);
+		fp = fd_getfile2(p, fd);
 		if (fp == NULL) {
 			procfs_proc_unlock(p);
 			return ENOENT;
 		}
-
-		FILE_USE(fp);
-		fvp = (struct vnode *)fp->f_data;
+		fvp = fp->f_data;
 
 		/* Don't show directories */
 		if (fp->f_type == DTYPE_VNODE && fvp->v_type != VDIR) {
 			VREF(fvp);
-			FILE_UNUSE(fp, l);
+			closef(fp);
 			procfs_proc_unlock(p);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY |
 			    (p == curproc ? LK_CANRECURSE : 0));
@@ -1150,7 +1146,7 @@ procfs_lookup(v)
 			return 0;
 		}
 
-		FILE_UNUSE(fp, l);
+		closef(fp);
 		error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 		    PFSfd, fd, p);
 		procfs_proc_unlock(p);
@@ -1336,8 +1332,7 @@ procfs_readdir(v)
 	}
 	case PFSfd: {
 		struct proc *p;
-		struct filedesc	*fdp;
-		struct file *fp;
+		file_t *fp;
 		int lim, nc = 0;
 
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ESRCH)) != 0)
@@ -1352,8 +1347,7 @@ procfs_readdir(v)
 			return ESRCH;
 		}
 
-		fdp = p->p_fd;
-		nfd = fdp->fd_nfiles;
+		nfd = p->p_fd->fd_nfiles;
 
 		lim = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 		if (i >= lim) {
@@ -1387,9 +1381,9 @@ procfs_readdir(v)
 		}
 		for (; uio->uio_resid >= UIO_MX && i < nfd; i++) {
 			/* check the descriptor exists */
-			if ((fp = fd_getfile(fdp, i - 2)) == NULL)
+			if ((fp = fd_getfile2(p, i - 2)) == NULL)
 				continue;
-			mutex_exit(&fp->f_lock);
+			closef(fp);
 
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, PFSfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
@@ -1558,30 +1552,27 @@ procfs_readlink(v)
 		procfs_proc_unlock(pown);
 		len = strlen(bp);
 	} else {
-		struct file *fp;
+		file_t *fp;
 		struct vnode *vxp, *vp;
 
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
 
-		fp = fd_getfile(pown->p_fd, pfs->pfs_fd);
+		fp = fd_getfile2(pown, pfs->pfs_fd);
 		if (fp == NULL) {
 			procfs_proc_unlock(pown);
 			return EBADF;
 		}
 
-		FILE_USE(fp);
 		switch (fp->f_type) {
 		case DTYPE_VNODE:
 			vxp = (struct vnode *)fp->f_data;
 			if (vxp->v_type != VDIR) {
-				FILE_UNUSE(fp, curlwp);
 				error = EINVAL;
 				break;
 			}
 			if ((path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK))
 			    == NULL) {
-				FILE_UNUSE(fp, curlwp);
 				error = ENOMEM;
 				break;
 			}
@@ -1620,7 +1611,7 @@ procfs_readlink(v)
 			error = EINVAL;
 			break;
 		}	
-		FILE_UNUSE(fp, curlwp);
+		closef(fp);
 		procfs_proc_unlock(pown);
 	}
 

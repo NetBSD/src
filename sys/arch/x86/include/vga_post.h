@@ -1,3 +1,5 @@
+/* $NetBSD: vga_post.h,v 1.1.16.1 2008/04/03 12:42:30 mjf Exp $ */
+
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.

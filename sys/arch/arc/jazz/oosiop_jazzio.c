@@ -1,4 +1,4 @@
-/* $NetBSD: oosiop_jazzio.c,v 1.5 2006/04/15 08:49:47 tsutsui Exp $ */
+/* $NetBSD: oosiop_jazzio.c,v 1.5.62.1 2008/04/03 12:42:11 mjf Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.5 2006/04/15 08:49:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.5.62.1 2008/04/03 12:42:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,17 +50,17 @@ __KERNEL_RCSID(0, "$NetBSD: oosiop_jazzio.c,v 1.5 2006/04/15 08:49:47 tsutsui Ex
 
 #include "ioconf.h"
 
-int	oosiop_jazzio_match(struct device *, struct cfdata *, void *);
-void	oosiop_jazzio_attach(struct device *, struct device *, void *);
+int	oosiop_jazzio_match(device_t, cfdata_t, void *);
+void	oosiop_jazzio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(oosiop_jazzio, sizeof(struct oosiop_softc),
+CFATTACH_DECL_NEW(oosiop_jazzio, sizeof(struct oosiop_softc),
     oosiop_jazzio_match, oosiop_jazzio_attach, NULL, NULL);
 
 /*
  * Match driver based on name
  */
 int
-oosiop_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
+oosiop_jazzio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 
@@ -71,18 +71,19 @@ oosiop_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-oosiop_jazzio_attach(struct device *parent, struct device *self, void *aux)
+oosiop_jazzio_attach(device_t parent, device_t self, void *aux)
 {
+	struct oosiop_softc *sc = device_private(self);
 	struct jazzio_attach_args *ja = aux;
-	struct oosiop_softc *sc = (void *)self;
 	int i, scid;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ja->ja_bust;
 	sc->sc_dmat = ja->ja_dmat;
 
 	if (bus_space_map(sc->sc_bst, ja->ja_addr,
 	    OOSIOP_NREGS, 0, &sc->sc_bsh) != 0) {
-		printf(": failed to map regsters\n");
+		aprint_error(": failed to map regsters\n");
 		return;
 	}
 

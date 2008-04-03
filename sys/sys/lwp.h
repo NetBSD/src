@@ -1,7 +1,7 @@
-/* 	$NetBSD: lwp.h,v 1.78 2008/01/26 17:55:29 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.78.6.1 2008/04/03 12:43:12 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,11 +44,11 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <sys/pset.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
+#include <sys/resource.h>
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
@@ -65,7 +65,7 @@
  * p:	l_proc->p_smutex
  * s:	spc_mutex, which may or may not be referenced by l_mutex
  * t:	l_proc->p_stmutex
- * S:	select_lock
+ * S:	l_selcpu->sc_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
  * ?:	undecided
@@ -130,6 +130,7 @@ struct lwp {
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
 	int		l_selflag;	/* S: select() flags */
 	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
+	struct selcpu	*l_selcpu;	/* !: associated per-CPU select data */
 	char		*l_name;	/* (: name, optional */
 
 	/* Signals */
@@ -154,14 +155,16 @@ struct lwp {
 	void		*l_private;	/* !: svr4-style lwp-private data */
 	struct lwp	*l_switchto;	/* !: mi_switch: switch to this LWP */
 	struct kauth_cred *l_cred;	/* !: cached credentials */
+	struct filedesc	*l_fd;		/* !: cached copy of proc::p_fd */
 	void		*l_emuldata;	/* !: kernel lwp-private data */
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
-	u_short		l_locks;	/* !: lockmgr count of held locks */
+	u_short		l_unused;
 	u_short		l_blcnt;	/* !: count of kernel_lock held */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
+	struct rusage	l_ru;		/* !: accounting information */
 
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
@@ -217,6 +220,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
+#define	LPR_CRMOD	0x00000100 /* Credentials modified */
 
 /*
  * Mask indicating that there is "exceptional" work to be done on return to
@@ -246,7 +250,8 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #ifdef _KERNEL
 #define	LWP_CACHE_CREDS(l, p)						\
 do {									\
-	if (__predict_false((l)->l_cred != (p)->p_cred))		\
+	(void)p;							\
+	if (__predict_false((l)->l_prflag & LPR_CRMOD))			\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
 
@@ -283,6 +288,7 @@ void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
+u_int	lwp_unsleep(lwp_t *, bool);
 
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
@@ -350,14 +356,6 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 		return;
 
 	(*l->l_syncobj->sobj_lendpri)(l, pri);
-}
-
-static inline void
-lwp_unsleep(lwp_t *l)
-{
-	KASSERT(mutex_owned(l->l_mutex));
-
-	(*l->l_syncobj->sobj_unsleep)(l);
 }
 
 static inline pri_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.18 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.18.40.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@ struct dmaqueue;
  * Software state per HP-IB bus.
  */
 struct hpibbus_softc {
-	struct	device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 	struct	hpib_controller *sc_ops; /* controller ops vector */
 	volatile int sc_flags;		/* misc flags */
 	struct	dmaqueue *sc_dq;

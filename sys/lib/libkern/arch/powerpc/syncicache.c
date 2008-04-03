@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.13 2005/12/24 23:29:06 perry Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.13.70.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -31,12 +31,14 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
-#if	defined(_KERNEL) || defined(_STANDALONE)
+#if	defined(_KERNEL)
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <uvm/uvm_extern.h>
 #endif
+#if	!defined(_STANDALONE)
 #include <sys/sysctl.h>
+#endif
 
 #include <machine/cpu.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootparam.c,v 1.16 2007/11/24 13:20:53 isaki Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.16.14.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -341,7 +341,7 @@ xdr_string_encode(char **pkt, char *str, int len)
 
 	datap = *pkt;
 	*pkt += padlen;
-	bcopy(str, datap, len);
+	(void)memcpy(datap, str, len);
 
 	return 0;
 }
@@ -365,7 +365,7 @@ xdr_string_decode(char **pkt, char *str, int *len_p)
 		slen = *len_p;
 	datap = *pkt;
 	*pkt += plen;
-	bcopy(datap, str, slen);
+	(void)memcpy(str, datap, slen);
 
 	str[slen] = '\0';
 	*len_p = slen;

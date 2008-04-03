@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.20 2007/12/11 11:34:09 lukem Exp $	*/
+/*	$NetBSD: sbp.c,v 1.20.8.1 2008/04/03 12:42:43 mjf Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.20 2007/12/11 11:34:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.20.8.1 2008/04/03 12:42:43 mjf Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -423,7 +423,7 @@ struct sbp_softc {
 #elif defined(__NetBSD__)
 	struct scsipi_adapter sc_adapter; 
 	struct scsipi_channel sc_channel;
-	struct device *sc_bus;
+	device_t sc_bus;
 	struct lwp *lwp;
 #endif
 	struct sbp_target target;
@@ -438,9 +438,9 @@ struct sbp_softc {
 #define SBP_UNLOCK(sbp)	fw_mtx_unlock(&(sbp)->mtx)
 
 #if defined(__NetBSD__)
-int sbpmatch (struct device *, struct cfdata *, void *);
-void sbpattach (struct device *parent, struct device *self, void *aux);
-int sbpdetach (struct device *self, int flags);
+int sbpmatch (device_t, struct cfdata *, void *);
+void sbpattach (device_t parent, device_t self, void *aux);
+int sbpdetach (device_t self, int flags);
 #endif
 static void sbp_post_explore (void *);
 static void sbp_recv (struct fw_xfer *);
@@ -579,7 +579,7 @@ END_DEBUG
 }
 #elif defined(__NetBSD__)
 int
-sbpmatch(struct device *parent, struct cfdata *cf, void *aux)
+sbpmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct fw_attach_args *fwa = aux;
 
@@ -1210,7 +1210,7 @@ sbp_scan_dev(struct sbp_dev *sdev)
 	fw_callout_reset(&sdev->target->scan_callout, scan_delay * hz / 1000,
 			sbp_cam_scan_target, (void *)sdev->target);
 }
-#else
+#elif defined(__NetBSD__)
 static void
 sbp_scsipi_scan_target(void *arg)
 {
@@ -1218,7 +1218,7 @@ sbp_scsipi_scan_target(void *arg)
 	struct sbp_softc *sbp = target->sbp;
 	struct sbp_dev *sdev;
 	struct scsipi_channel *chan = &sbp->sc_channel;
-	struct scsibus_softc *sc_bus = (struct scsibus_softc *)sbp->sc_bus;
+	struct scsibus_softc *sc_bus = device_private(sbp->sc_bus);
 	int lun, yet;
 
 	do {
@@ -3185,7 +3185,7 @@ sbp_scsipi_request(
 {
 	int i, s;
 	struct sbp_softc *sbp =
-	    (struct sbp_softc *)channel->chan_adapter->adapt_dev;
+	    device_private(channel->chan_adapter->adapt_dev);
 	struct scsipi_xfer *xs = arg;
 	
 	if (debug > 1)
@@ -3241,6 +3241,6 @@ sbp_minphys(struct buf *bp)
 	minphys(bp);
 }
 
-CFATTACH_DECL(sbp, sizeof (struct sbp_softc),
+CFATTACH_DECL_NEW(sbp, sizeof(struct sbp_softc),
     sbpmatch, sbpattach, sbpdetach, NULL);
 #endif

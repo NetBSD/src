@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.29 2008/01/27 20:10:53 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.29.6.1 2008/04/03 12:43:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -539,14 +539,18 @@ void
 uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 {
 
+	mutex_enter(&vp->v_interlock);
 	vp->v_size = vp->v_writesize = newsize;
+	mutex_exit(&vp->v_interlock);
 }
 
 void
 uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 {
 
+	mutex_enter(&vp->v_interlock);
 	vp->v_writesize = newsize;
+	mutex_exit(&vp->v_interlock);
 }
 
 void

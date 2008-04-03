@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.34 2008/01/05 19:14:09 dsl Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.34.6.1 2008/04/03 12:42:35 mjf Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.34 2008/01/05 19:14:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.34.6.1 2008/04/03 12:42:35 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -444,20 +444,17 @@ stio2stios(struct emul_termio *t, struct emul_termios *ts)
 static int
 ultrix_do_ioctl(int fd, int cmd, void *arg, struct lwp *l)
 {
-	struct file *fp;
+	file_t *fp;
 	int error;
 
-	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return EBADF;
 
-	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
-		FILE_UNLOCK(fp);
-		return EBADF;
-	}
-
-	FILE_USE(fp);
-	error = fp->f_ops->fo_ioctl(fp, cmd, arg, l);
-	FILE_UNUSE(fp, l);
+	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
+		error = EBADF;
+	else
+		error = fp->f_ops->fo_ioctl(fp, cmd, arg);
+	fd_putfile(fd);
 	return error;
 }
 

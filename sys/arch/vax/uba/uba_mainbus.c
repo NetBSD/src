@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.8 2005/12/11 12:19:36 christos Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.8.74.1 2008/04/03 12:42:28 mjf Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.8 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.8.74.1 2008/04/03 12:42:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,10 +80,13 @@ __KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.8 2005/12/11 12:19:36 christos Exp
 #include <machine/nexus.h>
 #include <machine/cpu.h>
 #include <machine/sgmap.h>
+#include <machine/mainbus.h>
 
 #include <dev/qbus/ubavar.h>
 
-#include <arch/vax/uba/uba_common.h>
+#include <vax/uba/uba_common.h>
+
+#include "ioconf.h"
 
 /* Some Qbus-specific defines */
 #define	QBASIZE	(8192 * VAX_NBPG)
@@ -95,44 +98,39 @@ __KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.8 2005/12/11 12:19:36 christos Exp
  * It has an address space of 4MB (22 address bits), therefore the name,
  * and is hardware compatible with all 16 and 18 bits Q-bus devices.
  */
-static	int	qba_match __P((struct device *, struct cfdata *, void *));
-static	void	qba_attach __P((struct device *, struct device *, void *));
-static	void	qba_beforescan __P((struct uba_softc*));
-static	void	qba_init __P((struct uba_softc*));
+static	int	qba_match(device_t, cfdata_t, void *);
+static	void	qba_attach(device_t, device_t, void *);
+static	void	qba_beforescan(struct uba_softc*);
+static	void	qba_init(struct uba_softc*);
 
-CFATTACH_DECL(uba_mainbus, sizeof(struct uba_vsoftc),
+CFATTACH_DECL_NEW(uba_mainbus, sizeof(struct uba_vsoftc),
     qba_match, qba_attach, NULL, NULL);
 
 extern	struct vax_bus_space vax_mem_bus_space;
 
 int
-qba_match(parent, vcf, aux)
-	struct device *parent;
-	struct cfdata *vcf;
-	void *aux;
+qba_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct	bp_conf *bp = aux;
+	struct mainbus_attach_args * const ma = aux;
 
-	if (strcmp(bp->type, "uba"))
-		return 0;
-
-	return 1;
+	return !strcmp(uba_cd.cd_name, ma->ma_type);
 }
 
 void
-qba_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+qba_attach(device_t parent, device_t self, void *aux)
 {
-	struct uba_vsoftc *sc = (void *)self;
+	struct mainbus_attach_args * const ma = aux;
+	struct uba_vsoftc * const sc = device_private(self);
 
-	printf(": Q22\n");
+	aprint_normal(": Q22\n");
+
+	sc->uv_sc.uh_dev = self;
 	/*
 	 * Fill in bus specific data.
 	 */
 	sc->uv_sc.uh_beforescan = qba_beforescan;
 	sc->uv_sc.uh_ubainit = qba_init;
-	sc->uv_sc.uh_iot = &vax_mem_bus_space;
+	sc->uv_sc.uh_iot = ma->ma_iot;
 	sc->uv_sc.uh_dmat = &sc->uv_dmat;
 
 	/*
@@ -150,8 +148,7 @@ qba_attach(parent, self, aux)
  * QBA devices to main memory.
  */
 void
-qba_beforescan(sc)
-	struct uba_softc *sc;
+qba_beforescan(struct uba_softc *sc)
 {
 #define	QIPCR	0x1f40
 #define	Q_LMEAE	0x20
@@ -159,8 +156,7 @@ qba_beforescan(sc)
 }
 
 void
-qba_init(sc)
-	struct uba_softc *sc;
+qba_init(struct uba_softc *sc)
 {
 	mtpr(0, PR_IUR);
 	DELAY(500000);

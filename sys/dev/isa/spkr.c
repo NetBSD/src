@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.27 2007/12/20 18:45:32 dyoung Exp $	*/
+/*	$NetBSD: spkr.c,v 1.27.6.1 2008/04/03 12:42:45 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.27 2007/12/20 18:45:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.27.6.1 2008/04/03 12:42:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,14 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.27 2007/12/20 18:45:32 dyoung Exp $");
 
 #include <dev/isa/spkrio.h>
 
-int spkrprobe(struct device *, struct cfdata *, void *);
-void spkrattach(struct device *, struct device *, void *);
+int spkrprobe(device_t, cfdata_t, void *);
+void spkrattach(device_t, device_t, void *);
 
-struct spkr_softc {
-	struct device sc_dev;
-};
-
-CFATTACH_DECL(spkr, sizeof(struct spkr_softc),
+CFATTACH_DECL_NEW(spkr, 0,
     spkrprobe, spkrattach, NULL, NULL);
 
 dev_type_open(spkropen);
@@ -407,15 +403,13 @@ static void *spkr_inbuf;
 static int spkr_attached = 0;
 
 int
-spkrprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+spkrprobe(device_t parent, cfdata_t match, void *aux)
 {
 	return (!spkr_attached);
 }
 
 void
-spkrattach(struct device *parent, struct device *self,
-    void *aux)
+spkrattach(device_t parent, device_t self, void *aux)
 {
 	printf("\n");
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;

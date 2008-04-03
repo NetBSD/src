@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.214 2008/02/06 22:12:42 dsl Exp $	*/
+/*	$NetBSD: systm.h,v 1.214.6.1 2008/04/03 12:43:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -59,6 +59,7 @@ struct tty;
 struct uio;
 struct vnode;
 struct vmspace;
+struct vm_map;
 
 extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
@@ -148,6 +149,7 @@ int	eopnotsupp(void);
 
 enum hashtype {
 	HASH_LIST,
+	HASH_SLIST,
 	HASH_TAILQ
 };
 
@@ -461,16 +463,16 @@ void scdebug_call(register_t, const register_t[]);
 void scdebug_ret(register_t, int, const register_t[]);
 
 void	kernel_lock_init(void);
-void	_kernel_lock(int, struct lwp *);
-void	_kernel_unlock(int, struct lwp *, int *);
+void	_kernel_lock(int);
+void	_kernel_unlock(int, int *);
 
 #if defined(MULTIPROCESSOR) || defined(_LKM)
 #define	KERNEL_LOCK(count, lwp)			\
 do {						\
 	if ((count) != 0)			\
-		_kernel_lock((count), (lwp));	\
+		_kernel_lock((count));	\
 } while (/* CONSTCOND */ 0)
-#define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (lwp), (p))
+#define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (p))
 #else
 #define	KERNEL_LOCK(count, lwp)		/* nothing */
 #define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
@@ -483,5 +485,14 @@ do {						\
 /* Preemption control. */
 void	crit_enter(void);
 void	crit_exit(void);
+
+void assert_sleepable(void);
+#if defined(DEBUG)
+#define	ASSERT_SLEEPABLE()	assert_sleepable()
+#else /* defined(DEBUG) */
+#define	ASSERT_SLEEPABLE()	/* nothing */
+#endif /* defined(DEBUG) */
+
+vaddr_t calc_cache_size(struct vm_map *, int, int);
 
 #endif	/* !_SYS_SYSTM_H_ */

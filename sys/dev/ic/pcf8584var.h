@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584var.h,v 1.1 2007/04/14 19:33:30 tnn Exp $ */
+/*	$NetBSD: pcf8584var.h,v 1.1.36.1 2008/04/03 12:42:42 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 struct pcf8584_handle {
-	struct device *ha_parent;
+	device_t ha_parent;
 	bus_space_tag_t ha_iot;
 	bus_space_handle_t ha_ioh;
 	struct i2c_controller ha_i2c;

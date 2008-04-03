@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mainbus.c,v 1.8 2008/01/10 15:17:40 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_mainbus.c,v 1.8.6.1 2008/04/03 12:42:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.8 2008/01/10 15:17:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.8.6.1 2008/04/03 12:42:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,32 +43,33 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.8 2008/01/10 15:17:40 tsutsui 
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/mc146818var.h>
 
-int	mcclock_mainbus_match(struct device *, struct cfdata *, void *);
-void	mcclock_mainbus_attach(struct device *, struct device *, void *);
+int	mcclock_mainbus_match(device_t, cfdata_t, void *);
+void	mcclock_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mcclock_mainbus, sizeof(struct mc146818_softc),
+CFATTACH_DECL_NEW(mcclock_mainbus, sizeof(struct mc146818_softc),
     mcclock_mainbus_match, mcclock_mainbus_attach, NULL, NULL);
 
 void	mcclock_mainbus_write(struct mc146818_softc *, u_int, u_int);
 u_int	mcclock_mainbus_read(struct mc146818_softc *, u_int);
 
 int
-mcclock_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+mcclock_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ma->ma_name, match->cf_name) == 0)
+	if (strcmp(ma->ma_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);
 }
 
 void
-mcclock_mainbus_attach(struct device *parent, struct device *self, void *aux)
+mcclock_mainbus_attach(device_t parent, device_t self, void *aux)
 {
+	struct mc146818_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
-	struct mc146818_softc *sc = (struct mc146818_softc *)self;
 
+	sc->sc_dev = self;
 	sc->sc_bst = ma->ma_st;
 	if (bus_space_map(sc->sc_bst, ma->ma_addr, 2, 0, &sc->sc_bsh))
 		panic("mcclock_mainbus_attach: couldn't map clock I/O space");

@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_misc.c,v 1.137 2007/12/26 16:01:35 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.137.6.1 2008/04/03 12:42:34 mjf Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.137 2007/12/26 16:01:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.137.6.1 2008/04/03 12:42:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,7 +212,6 @@ svr4_sys_time(struct lwp *l, const struct svr4_sys_time_args *uap, register_t *r
 int
 svr4_sys_getdents64(struct lwp *l, const struct svr4_sys_getdents64_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *tbuf;	/* BSD-format */
@@ -229,7 +228,7 @@ svr4_sys_getdents64(struct lwp *l, const struct svr4_sys_getdents64_args *uap, r
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -325,7 +324,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, fd));
 	return error;
 }
 
@@ -333,7 +332,6 @@ out:
 int
 svr4_sys_getdents(struct lwp *l, const struct svr4_sys_getdents_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *tbuf;	/* BSD-format */
@@ -350,7 +348,7 @@ svr4_sys_getdents(struct lwp *l, const struct svr4_sys_getdents_args *uap, regis
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -447,7 +445,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return error;
 }
 
@@ -748,20 +746,21 @@ svr4_sys_times(struct lwp *l, const struct svr4_sys_times_args *uap, register_t 
 {
 	struct tms		 tms;
 	struct timeval		 t;
-	struct rusage		 *ru;
+	struct rusage		 ru, *rup;
 	struct proc		 *p = l->l_proc;
 
-	ru = &p->p_stats->p_ru;
+	ru = p->p_stats->p_ru;
 	mutex_enter(&p->p_smutex);
-	calcru(p, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
+	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
+	rulwps(p, &ru);
 	mutex_exit(&p->p_smutex);
 
-	tms.tms_utime = timeval_to_clock_t(&ru->ru_utime);
-	tms.tms_stime = timeval_to_clock_t(&ru->ru_stime);
+	tms.tms_utime = timeval_to_clock_t(&ru.ru_utime);
+	tms.tms_stime = timeval_to_clock_t(&ru.ru_stime);
 
-	ru = &p->p_stats->p_cru;
-	tms.tms_cutime = timeval_to_clock_t(&ru->ru_utime);
-	tms.tms_cstime = timeval_to_clock_t(&ru->ru_stime);
+	rup = &p->p_stats->p_cru;
+	tms.tms_cutime = timeval_to_clock_t(&rup->ru_utime);
+	tms.tms_cstime = timeval_to_clock_t(&rup->ru_stime);
 
 	microtime(&t);
 	*retval = timeval_to_clock_t(&t);

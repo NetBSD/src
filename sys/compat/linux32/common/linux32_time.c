@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.16 2007/12/20 23:02:59 dsl Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.16.6.1 2008/04/03 12:42:33 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.16 2007/12/20 23:02:59 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.16.6.1 2008/04/03 12:42:33 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,20 +157,21 @@ linux32_sys_times(struct lwp *l, const struct linux32_sys_times_args *uap, regis
 	struct linux32_tms ltms32;
 
 	struct timeval		 t;
-	struct rusage		 *ru;
+	struct rusage		 ru;
 	struct proc		 *p = l->l_proc;
 
-	ru = &p->p_stats->p_ru;
 	mutex_enter(&p->p_smutex);
-	calcru(p, &ru->ru_utime, &ru->ru_stime, NULL, NULL);
+	ru = p->p_stats->p_ru;
+	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
+	rulwps(p, &ru);
 	mutex_exit(&p->p_smutex);
 
-	ltms32.ltms32_utime = timeval_to_clock_t(&ru->ru_utime);
-	ltms32.ltms32_stime = timeval_to_clock_t(&ru->ru_stime);
+	ltms32.ltms32_utime = timeval_to_clock_t(&ru.ru_utime);
+	ltms32.ltms32_stime = timeval_to_clock_t(&ru.ru_stime);
 
-	ru = &p->p_stats->p_cru;
-	ltms32.ltms32_cutime = timeval_to_clock_t(&ru->ru_utime);
-	ltms32.ltms32_cstime = timeval_to_clock_t(&ru->ru_stime);
+	ru = p->p_stats->p_cru;
+	ltms32.ltms32_cutime = timeval_to_clock_t(&ru.ru_utime);
+	ltms32.ltms32_cstime = timeval_to_clock_t(&ru.ru_stime);
 
 	microtime(&t);
 	*retval = timeval_to_clock_t(&t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.82 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.82.6.1 2008/04/03 12:42:58 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -100,13 +100,11 @@ struct usbd_hub {
 	struct usbd_port        ports[1];
 };
 
-struct usb_softc;
-
 /*****/
 
 struct usbd_bus {
 	/* Filled by HC driver */
-	USBBASEDEVICE		bdev; /* base device, host adapter */
+	void			*hci_private;
 	const struct usbd_bus_methods *methods;
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	/* Filled by usb driver */
@@ -114,7 +112,7 @@ struct usbd_bus {
 	usbd_device_handle	devices[USB_MAX_DEVICES];
 	char			needs_explore;/* a hub a signalled a change */
 	char			use_polling;
-	struct usb_softc       *usbctl;
+	device_t		usbctl;
 	struct usb_device_stats	stats;
 	int 			intr_context;
 	u_int			no_intrs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.157 2008/01/19 22:10:17 dyoung Exp $	*/
+/*	$NetBSD: tulip.c,v 1.157.6.1 2008/04/03 12:42:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.157 2008/01/19 22:10:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.157.6.1 2008/04/03 12:42:42 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -101,8 +101,6 @@ static int	tlp_ioctl(struct ifnet *, u_long, void *);
 static int	tlp_init(struct ifnet *);
 static void	tlp_stop(struct ifnet *, int);
 
-static void	tlp_shutdown(void *);
-
 static void	tlp_rxdrain(struct tulip_softc *);
 static int	tlp_add_rxbuf(struct tulip_softc *, int);
 static void	tlp_srom_idle(struct tulip_softc *);
@@ -110,7 +108,6 @@ static int	tlp_srom_size(struct tulip_softc *);
 
 static int	tlp_enable(struct tulip_softc *);
 static void	tlp_disable(struct tulip_softc *);
-static void	tlp_power(int, void *);
 
 static void	tlp_filter_setup(struct tulip_softc *);
 static void	tlp_winb_filter_setup(struct tulip_softc *);
@@ -199,6 +196,7 @@ void
 tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	device_t self = &sc->sc_dev;
 	int i, error;
 
 	callout_init(&sc->sc_nway_callout, 0);
@@ -539,23 +537,11 @@ tlp_attach(struct tulip_softc *sc, const u_int8_t *enaddr)
 	    RND_TYPE_NET, 0);
 #endif
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(tlp_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    tlp_power, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -626,6 +612,7 @@ tlp_detach(struct tulip_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct tulip_rxsoft *rxs;
 	struct tulip_txsoft *txs;
+	device_t self = &sc->sc_dev;
 	int i;
 
 	/*
@@ -676,26 +663,12 @@ tlp_detach(struct tulip_softc *sc)
 	    sizeof(struct tulip_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
+	pmf_device_deregister(self);
 
 	if (sc->sc_srom)
 		free(sc->sc_srom, M_DEVBUF);
 
 	return (0);
-}
-
-/*
- * tlp_shutdown:
- *
- *	Make sure the interface is stopped at reboot time.
- */
-static void
-tlp_shutdown(void *arg)
-{
-	struct tulip_softc *sc = arg;
-
-	tlp_stop(&sc->sc_ethercom.ec_if, 1);
 }
 
 /*
@@ -1258,7 +1231,7 @@ tlp_rxintr(struct tulip_softc *sc)
 	struct ether_header *eh;
 	struct tulip_rxsoft *rxs;
 	struct mbuf *m;
-	u_int32_t rxstat;
+	u_int32_t rxstat, errors;
 	int i, len;
 
 	for (i = sc->sc_rxptr;; i = TULIP_NEXTRX(i)) {
@@ -1300,13 +1273,24 @@ tlp_rxintr(struct tulip_softc *sc)
 		 * If an error occurred, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
+		 */
+		errors = TDSTAT_Rx_DE | TDSTAT_Rx_RF | TDSTAT_Rx_TL |
+		    TDSTAT_Rx_CS | TDSTAT_Rx_RE | TDSTAT_Rx_DB | TDSTAT_Rx_CE;
+		/*
 	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long
 		 * error.
 		 */
-		if (rxstat & TDSTAT_ES &&
-		    ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
-		     (rxstat & (TDSTAT_Rx_DE | TDSTAT_Rx_RF |
-				TDSTAT_Rx_DB | TDSTAT_Rx_CE)) != 0)) {
+		if ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) != 0)
+			errors &= ~TDSTAT_Rx_TL;
+		/*
+		 * If chip doesn't have MII, ignore the MII error bit.
+		 */
+		if ((sc->sc_flags & TULIPF_HAS_MII) == 0)
+			errors &= ~TDSTAT_Rx_RE;
+
+		if ((rxstat & TDSTAT_ES) != 0 &&
+		    (rxstat & errors) != 0) {
+			rxstat &= errors;
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
@@ -2034,43 +2018,6 @@ tlp_disable(struct tulip_softc *sc)
 }
 
 /*
- * tlp_power:
- *
- *	Power management (suspend/resume) hook.
- */
-static void
-tlp_power(int why, void *arg)
-{
-	struct tulip_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_STANDBY:
-		/* do nothing! */
-		break;
-	case PWR_SUSPEND:
-		tlp_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			tlp_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
-
-/*
  * tlp_rxdrain:
  *
  *	Drain the receive queue.
@@ -2134,11 +2081,6 @@ tlp_stop(struct ifnet *ifp, int disable)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (disable) {
-		tlp_rxdrain(sc);
-		tlp_disable(sc);
-	}
-
 	sc->sc_flags &= ~(TULIPF_WANT_SETUP|TULIPF_DOING_SETUP);
 
 	/*
@@ -2152,6 +2094,11 @@ tlp_stop(struct ifnet *ifp, int disable)
 	 * Reset the chip (needed on some flavors to actually disable it).
 	 */
 	tlp_reset(sc);
+
+	if (disable) {
+		tlp_rxdrain(sc);
+		tlp_disable(sc);
+	}
 }
 
 #define	SROM_EMIT(sc, x)						\
@@ -2713,25 +2660,25 @@ tlp_filter_setup(struct tulip_softc *sc)
 			goto hashperfect;
 		}
 		cnt++;
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 0);
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 1);
-		*sp++ = TULIP_SP_FIELD(enm->enm_addrlo, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enm->enm_addrlo, 2));
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		/* ...and the broadcast address. */
 		cnt++;
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
 	}
 
 	/* Pad the rest with our station address. */
 	for (; cnt < TULIP_MAXADDRS; cnt++) {
-		*sp++ = TULIP_SP_FIELD(enaddr, 0);
-		*sp++ = TULIP_SP_FIELD(enaddr, 1);
-		*sp++ = TULIP_SP_FIELD(enaddr, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
@@ -2785,9 +2732,9 @@ tlp_filter_setup(struct tulip_softc *sc)
 		 * Hash-Perfect mode; put our station address after
 		 * the hash table.
 		 */
-		sp[39] = TULIP_SP_FIELD(enaddr, 0);
-		sp[40] = TULIP_SP_FIELD(enaddr, 1);
-		sp[41] = TULIP_SP_FIELD(enaddr, 2);
+		sp[39] = htole32(TULIP_SP_FIELD(enaddr, 0));
+		sp[40] = htole32(TULIP_SP_FIELD(enaddr, 1));
+		sp[41] = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	goto setit;
@@ -2804,14 +2751,14 @@ tlp_filter_setup(struct tulip_softc *sc)
 	cnt = 0;
 	if (ifp->if_flags & IFF_BROADCAST) {
 		cnt++;
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
-		*sp++ = TULIP_SP_FIELD_C(0xffff);
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
+		*sp++ = htole32(TULIP_SP_FIELD_C(0xff, 0xff));
 	}
 	for (; cnt < TULIP_MAXADDRS; cnt++) {
-		*sp++ = TULIP_SP_FIELD(enaddr, 0);
-		*sp++ = TULIP_SP_FIELD(enaddr, 1);
-		*sp++ = TULIP_SP_FIELD(enaddr, 2);
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 0));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 1));
+		*sp++ = htole32(TULIP_SP_FIELD(enaddr, 2));
 	}
 	ifp->if_flags |= IFF_ALLMULTI;
 

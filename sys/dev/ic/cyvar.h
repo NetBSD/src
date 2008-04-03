@@ -1,4 +1,4 @@
-/*	$NetBSD: cyvar.h,v 1.8 2001/01/20 19:29:06 thorpej Exp $	*/
+/*	$NetBSD: cyvar.h,v 1.8.122.1 2008/04/03 12:42:40 mjf Exp $	*/
 
 /*
  * cy_var.h
@@ -77,7 +77,7 @@ struct cy_port {
 
 /* software state for one card */
 struct cy_softc {
-	struct device   sc_dev;
+	device_t	sc_dev;
 	void           *sc_ih;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_bsh;

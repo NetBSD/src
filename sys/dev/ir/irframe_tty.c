@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.50 2007/12/15 00:39:28 perry Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.50.6.1 2008/04/03 12:42:43 mjf Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.50 2007/12/15 00:39:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.50.6.1 2008/04/03 12:42:43 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -205,7 +205,7 @@ static struct linesw irframet_disc = {
 static void irframet_attach(struct device *, struct device *, void *);
 static int irframet_detach(struct device *, int);
 
-CFATTACH_DECL(irframet, sizeof(struct irframet_softc),
+CFATTACH_DECL_NEW(irframet, sizeof(struct irframet_softc),
 	NULL, irframet_attach, irframet_detach, NULL);
 
 void
@@ -223,11 +223,11 @@ irframettyattach(int n)
 }
 
 static void
-irframet_attach(struct device *parent, struct device *self, void *aux)
+irframet_attach(device_t parent, device_t self, void *aux)
 {
 
 	/* pseudo-device attachment does not print name */
-	printf("%s", self->dv_xname);
+	aprint_normal("%s", device_xname(self));
 #if 0 /* XXX can't do it yet because pseudo-devices don't get aux */
 	struct ir_attach_args ia;
 
@@ -259,6 +259,7 @@ irframetopen(dev_t dev, struct tty *tp)
 	int error, s;
 	struct cfdata *cfdata;
 	struct ir_attach_args ia;
+	device_t d;
 
 	DPRINTF(("%s\n", __func__));
 
@@ -284,16 +285,18 @@ irframetopen(dev_t dev, struct tty *tp)
 	cfdata->cf_atname = "irframet";
 	cfdata->cf_fstate = FSTATE_STAR;
 	cfdata->cf_unit = 0;
-	sc = (struct irframet_softc *)config_attach_pseudo(cfdata);
+	d = config_attach_pseudo(cfdata);
+	sc = device_private(d);
+	sc->sc_irp.sc_dev = d;
 
 	/* XXX should be done in irframet_attach() */
 	ia.ia_methods = &irframet_methods;
 	ia.ia_handle = tp;
-	irframe_attach(0, (struct device *)sc, &ia);
+	irframe_attach(0, d, &ia);
 
 	tp->t_sc = sc;
 	sc->sc_tp = tp;
-	printf("%s attached at tty%02d\n", sc->sc_irp.sc_dev.dv_xname,
+	aprint_normal("%s attached at tty%02d\n", device_xname(d),
 	    minor(tp->t_dev));
 
 	DPRINTF(("%s: set sc=%p\n", __func__, sc));
@@ -321,7 +324,7 @@ irframetclose(struct tty *tp, int flag)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int s;
-	struct cfdata *cfdata;
+	cfdata_t cfdata;
 
 	DPRINTF(("%s: tp=%p\n", __func__, tp));
 
@@ -333,12 +336,12 @@ irframetclose(struct tty *tp, int flag)
 	tp->t_linesw = ttyldisc_default();
 	if (sc != NULL) {
 		tp->t_sc = NULL;
-		printf("%s detached from tty%02d\n", sc->sc_irp.sc_dev.dv_xname,
-		    minor(tp->t_dev));
+		aprint_normal("%s detached from tty%02d\n",
+		    device_xname(sc->sc_irp.sc_dev), minor(tp->t_dev));
 
 		if (sc->sc_tp == tp) {
-			cfdata = sc->sc_irp.sc_dev.dv_cfdata;
-			config_detach(&sc->sc_irp.sc_dev, 0);
+			cfdata = device_cfdata(sc->sc_irp.sc_dev);
+			config_detach(sc->sc_irp.sc_dev, 0);
 			free(cfdata, M_DEVBUF);
 		}
 	}
@@ -368,7 +371,7 @@ irframetioctl(struct tty *tp, u_long cmd, void *data, int flag,
 	error = 0;
 	switch (cmd) {
 	case IRFRAMETTY_GET_DEVICE:
-		*(int *)data = device_unit(&sc->sc_irp.sc_dev);
+		*(int *)data = device_unit(sc->sc_irp.sc_dev);
 		break;
 	case IRFRAMETTY_GET_DONGLE:
 		*(int *)data = sc->sc_dongle;
@@ -431,7 +434,7 @@ irt_frame(struct irframet_softc *sc, u_char *tbuf, u_int len)
 		DPRINTF(("%s: waking up reader\n", __func__));
 		wakeup(sc->sc_frames);
 	}
-	selnotify(&sc->sc_rsel, 0);
+	selnotify(&sc->sc_rsel, 0, 0);
 }
 
 void
@@ -550,6 +553,8 @@ irframet_open(void *h, int flag, int mode,
 		again = true;
 		callout_init(&sc->sc_timeout, 0);
 		mutex_init(&sc->sc_wr_lk, MUTEX_DEFAULT, IPL_NONE);
+		selinit(&sc->sc_rsel);
+		selinit(&sc->sc_wsel);
 	}
 
 	return (0);

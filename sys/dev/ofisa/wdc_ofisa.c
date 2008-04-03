@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.29 2007/10/19 12:00:38 ad Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.29.16.1 2008/04/03 12:42:48 mjf Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.29 2007/10/19 12:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.29.16.1 2008/04/03 12:42:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -66,14 +66,14 @@ struct wdc_ofisa_softc {
 	void	*sc_ih;
 };
 
-static int wdc_ofisa_probe(struct device *, struct cfdata *, void *);
-static void wdc_ofisa_attach(struct device *, struct device *, void *);
+static int wdc_ofisa_probe(device_t, cfdata_t, void *);
+static void wdc_ofisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(wdc_ofisa, sizeof(struct wdc_ofisa_softc),
+CFATTACH_DECL_NEW(wdc_ofisa, sizeof(struct wdc_ofisa_softc),
     wdc_ofisa_probe, wdc_ofisa_attach, NULL, NULL);
 
 static int
-wdc_ofisa_probe(struct device *parent, struct cfdata *cf, void *aux)
+wdc_ofisa_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = { "pnpPNP,600", NULL };
@@ -89,7 +89,7 @@ wdc_ofisa_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
+wdc_ofisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct wdc_ofisa_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
@@ -106,6 +106,7 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	 * We expect exactly two register regions and one interrupt.
 	 */
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
 
 	n = ofisa_reg_get(aa->oba.oba_phandle, reg, 2);
@@ -113,11 +114,11 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	n = wdc_ofisa_md_reg_fixup(parent, self, aux, reg, 2, n);
 #endif
 	if (n != 2) {
-		printf(": error getting register data\n");
+		aprint_error(": error getting register data\n");
 		return;
 	}
 	if (reg[0].len != 8 || reg[1].len != 2) {
-		printf(": weird register size (%lu/%lu, expected 8/2)\n",
+		aprint_error(": weird register size (%lu/%lu, expected 8/2)\n",
 		    (unsigned long)reg[0].len, (unsigned long)reg[1].len);
 		return;
 	}
@@ -127,7 +128,7 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	n = wdc_ofisa_md_intr_fixup(parent, self, aux, &intr, 1, n);
 #endif
 	if (n != 1) {
-		printf(": error getting interrupt data\n");
+		aprint_error(": error getting interrupt data\n");
 		return;
 	}
 
@@ -136,7 +137,7 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
         if (bus_space_map(wdr->cmd_iot, reg[0].addr, 8, 0, &ioh) ||
             bus_space_map(wdr->ctl_iot, reg[1].addr, 1, 0,
 	      &wdr->ctl_ioh)) {
-                printf(": can't map register spaces\n");
+                aprint_error(": can't map register spaces\n");
 		return;
         }
 	wdr->cmd_baseioh = ioh;
@@ -144,7 +145,7 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	for (n = 0; n < WDC_NREG; n++) {
 		if (bus_space_subregion(wdr->cmd_iot, ioh, n,
 		    n == 0 ? 4 : 1, &wdr->cmd_iohs[n]) != 0) {
-                	printf(": can't subregion register space\n");
+                	aprint_error(": can't subregion register space\n");
 			return;
 		}
 	}
@@ -152,7 +153,7 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
 	    IPL_BIO, wdcintr, &sc->sc_channel);
 
-	printf("\n");
+	aprint_normal("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	sc->sc_chanlist[0] = &sc->sc_channel;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanlist;
@@ -167,11 +168,11 @@ wdc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	wdcattach(&sc->sc_channel);
 
 #if 0
-	printf("%s: registers: ", sc->sc_dev.dv_xname);
+	aprint_verbose_dev(self, "registers: ");
 	ofisa_reg_print(reg, 2);
-	printf("\n");
-	printf("%s: interrupts: ", sc->sc_dev.dv_xname);
+	aprint_verbose("\n");
+	aprint_verbose_dev(self, "interrupts: ");
 	ofisa_intr_print(&intr, 1);
-	printf("\n");
+	aprint_verbose("\n");
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.39 2007/12/09 20:28:13 jmcneill Exp $	*/
+/*	$NetBSD: yds.c,v 1.39.10.1 2008/04/03 12:42:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.39 2007/12/09 20:28:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.39.10.1 2008/04/03 12:42:54 mjf Exp $");
 
 #include "mpu.h"
 
@@ -679,7 +679,7 @@ yds_init(struct yds_softc *sc)
 }
 
 static bool
-yds_suspend(device_t dv)
+yds_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct yds_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -694,7 +694,7 @@ yds_suspend(device_t dv)
 }
 
 static bool
-yds_resume(device_t dv)
+yds_resume(device_t dv PMF_FN_ARGS)
 {
 	struct yds_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -1015,16 +1015,18 @@ yds_reset_codec(void *sc_)
 static int
 yds_intr(void *p)
 {
-	struct yds_softc *sc;
+	struct yds_softc *sc = p;
+#if NMPU > 0
+	struct mpu_softc *sc_mpu = device_private(sc->sc_mpu);
+#endif
 	u_int status;
 
-	sc = p;
 	status = YREAD4(sc, YDS_STATUS);
 	DPRINTFN(1, ("yds_intr: status=%08x\n", status));
 	if ((status & (YDS_STAT_INT|YDS_STAT_TINT)) == 0) {
 #if NMPU > 0
-		if (sc->sc_mpu)
-			return mpu_intr(sc->sc_mpu);
+		if (sc_mpu)
+			return mpu_intr(sc_mpu);
 #endif
 		return 0;
 	}

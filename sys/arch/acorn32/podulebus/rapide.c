@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.25 2006/10/09 21:12:44 bjh21 Exp $	*/
+/*	$NetBSD: rapide.c,v 1.25.54.1 2008/04/03 12:42:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.25 2006/10/09 21:12:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.25.54.1 2008/04/03 12:42:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,12 +126,12 @@ struct rapide_softc {
 	struct wdc_regs sc_wdc_regs[2];
 };
 
-int	rapide_probe	__P((struct device *, struct cfdata *, void *));
-void	rapide_attach	__P((struct device *, struct device *, void *));
-void	rapide_shutdown	__P((void *arg));
-int	rapide_intr	__P((void *));
+int	rapide_probe	(device_t, struct cfdata *, void *);
+void	rapide_attach	(device_t, device_t, void *);
+void	rapide_shutdown	(void *arg);
+int	rapide_intr	(void *);
 
-CFATTACH_DECL(rapide, sizeof(struct rapide_softc),
+CFATTACH_DECL_NEW(rapide, sizeof(struct rapide_softc),
     rapide_probe, rapide_attach, NULL, NULL);
 
 /*
@@ -172,10 +172,7 @@ struct {
  */
 
 int
-rapide_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+rapide_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podule_attach_args *pa = (void *)aux;
 
@@ -190,11 +187,9 @@ rapide_probe(parent, cf, aux)
  */
 
 void
-rapide_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+rapide_attach(device_t parent, device_t self, void *aux)
 {
-	struct rapide_softc *sc = (void *)self;
+	struct rapide_softc *sc = device_private(self);
 	struct podule_attach_args *pa = (void *)aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ctlioh;
@@ -209,6 +204,7 @@ rapide_attach(parent, self, aux)
 	if (pa->pa_podule_number == -1)
 		panic("Podule has disappeared !");
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_podule_number = pa->pa_podule_number;
 	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
@@ -229,18 +225,18 @@ rapide_attach(parent, self, aux)
 
 	if (bus_space_map(iot, pa->pa_podule->easi_base +
 	    CONTROL_REGISTERS_OFFSET, CONTROL_REGISTER_SPACE, 0, &ctlioh))
-		panic("%s: Cannot map control registers", self->dv_xname);
+		panic("%s: Cannot map control registers", device_xname(self));
 
 	sc->sc_ctlioh = ctlioh;
 	sc->sc_version = bus_space_read_1(iot, ctlioh, VERSION_REGISTER_OFFSET) & VERSION_REGISTER_MASK;
 /*	bus_space_unmap(iot, ctl_ioh, CONTROL_REGISTER_SPACE);*/
 
-	printf(": Issue %d\n", sc->sc_version + 1);
+	aprint_normal(": Issue %d\n", sc->sc_version + 1);
 	if (sc->sc_version != VERSION_2_ID)
 		return;
 
 	if (shutdownhook_establish(rapide_shutdown, (void *)sc) == NULL)
-		panic("%s: Cannot install shutdown handler", self->dv_xname);
+		panic("%s: Cannot install shutdown handler", device_xname(self));
 
 	/* Set the interrupt info for this podule */
 	sc->sc_podule->irq_addr = pa->pa_podule->easi_base
@@ -308,7 +304,7 @@ rapide_attach(parent, self, aux)
 		ihp->ih_maskbits = rcp->rc_irqmask;
 		if (irq_claim(sc->sc_podule->interrupt, ihp))
 			panic("%s: Cannot claim interrupt %d",
-			    self->dv_xname, sc->sc_podule->interrupt);
+			    device_xname(self), sc->sc_podule->interrupt);
 		/* clear any pending interrupts and enable interrupts */
 		sc->sc_intr_enable_mask |= rcp->rc_irqmask;
 		bus_space_write_1(iot, sc->sc_ctlioh,
@@ -326,8 +322,7 @@ rapide_attach(parent, self, aux)
  */
 
 void
-rapide_shutdown(arg)
-	void *arg;
+rapide_shutdown(void *arg)
 {
 	struct rapide_softc *sc = arg;
 
@@ -343,8 +338,7 @@ rapide_shutdown(arg)
  */
 
 int
-rapide_intr(arg)
-	void *arg;
+rapide_intr(void *arg)
 {
 	struct rapide_channel *rcp = arg;
 	irqhandler_t *ihp = &rcp->rc_ih;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.54 2007/11/19 18:51:47 ad Exp $	*/
+/*	$NetBSD: cy.c,v 1.54.14.1 2008/04/03 12:42:40 mjf Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.54 2007/11/19 18:51:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.54.14.1 2008/04/03 12:42:40 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -39,28 +39,37 @@ __KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.54 2007/11/19 18:51:47 ad Exp $");
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
 
-int	cyparam(struct tty *, struct termios *);
-void	cystart(struct tty *);
-void	cy_poll(void *);
-int	cy_modem_control(struct cy_softc *, struct cy_port *, int, int);
-void	cy_enable_transmitter(struct cy_softc *, struct cy_port *);
-void	cd1400_channel_cmd(struct cy_softc *, struct cy_port *, int);
-int	cy_speed(speed_t, int *, int *, int);
+static int	cyparam(struct tty *, struct termios *);
+static void	cystart(struct tty *);
+static void	cy_poll(void *);
+static int	cy_modem_control(struct cy_softc *, struct cy_port *, int, int);
+static void	cy_enable_transmitter(struct cy_softc *, struct cy_port *);
+static void	cd1400_channel_cmd(struct cy_softc *, struct cy_port *, int);
+static int	cy_speed(speed_t, int *, int *, int);
 
 extern struct cfdriver cy_cd;
 
-dev_type_open(cyopen);
-dev_type_close(cyclose);
-dev_type_read(cyread);
-dev_type_write(cywrite);
-dev_type_ioctl(cyioctl);
-dev_type_stop(cystop);
-dev_type_tty(cytty);
-dev_type_poll(cypoll);
+static dev_type_open(cyopen);
+static dev_type_close(cyclose);
+static dev_type_read(cyread);
+static dev_type_write(cywrite);
+static dev_type_ioctl(cyioctl);
+static dev_type_stop(cystop);
+static dev_type_tty(cytty);
+static dev_type_poll(cypoll);
 
 const struct cdevsw cy_cdevsw = {
-	cyopen, cyclose, cyread, cywrite, cyioctl,
-	cystop, cytty, cypoll, nommap, ttykqfilter, D_TTY
+	.d_open = cyopen,
+	.d_close = cyclose,
+	.d_read = cyread,
+	.d_write = cywrite,
+	.d_ioctl = cyioctl,
+	.d_stop = cystop,
+	.d_tty = cytty,
+	.d_poll = cypoll,
+	.d_mmap = nommap,
+	.d_kqfilter = ttykqfilter,
+	.d_flag = D_TTY
 };
 
 static int      cy_open = 0;
@@ -104,8 +113,7 @@ cy_find(struct cy_softc *sc)
 			chip -= (CY32_ADDR_FIX << bustype);
 
 #ifdef CY_DEBUG
-		printf("%s probe chip %d offset 0x%x ... ",
-		    sc->sc_dev.dv_xname, cy_chip, chip);
+		printf("sy: probe chip %d offset 0x%x ... ", cy_chip, chip);
 #endif
 
 		/* wait until the chip is ready for command */
@@ -227,8 +235,8 @@ cy_attach(struct cy_softc *sc)
 
 	sc->sc_nchannels = port;
 
-	aprint_normal("%s: %d channels (ttyCY%03d..ttyCY%03d)\n",
-	    sc->sc_dev.dv_xname, sc->sc_nchannels, cy_attached_ttys,
+	aprint_normal_dev(sc->sc_dev, "%d channels (ttyCY%03d..ttyCY%03d)\n",
+	    sc->sc_nchannels, cy_attached_ttys,
 	    cy_attached_ttys + (sc->sc_nchannels - 1));
 
 	cy_attached_ttys += sc->sc_nchannels;
@@ -252,7 +260,7 @@ cy_getport(dev_t dev)
 
 	for (i = 0, j = 0; i < cy_cd.cd_ndevs; i++) {
 		k = j;
-		sc = device_lookup(&cy_cd, i);
+		sc = device_lookup_private(&cy_cd, i);
 		if (sc == NULL)
 			continue;
 		if (sc->sc_nchannels == 0)
@@ -285,8 +293,9 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (cy->cy_tty == NULL) {
 		if ((cy->cy_tty = ttymalloc()) == NULL) {
 			splx(s);
-			printf("%s: port %d: can't allocate tty\n",
-			    sc->sc_dev.dv_xname, cy->cy_port_num);
+			aprint_error_dev(sc->sc_dev,
+			    "port %d: can't allocate tty\n",
+			    cy->cy_port_num);
 			return (ENOMEM);
 		}
 		tty_attach(cy->cy_tty);
@@ -323,8 +332,9 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (cy->cy_ibuf == NULL) {
 			cy->cy_ibuf = malloc(CY_IBUF_SIZE, M_DEVBUF, M_NOWAIT);
 			if (cy->cy_ibuf == NULL) {
-				printf("%s: port %d: can't allocate input buffer\n",
-				       sc->sc_dev.dv_xname, cy->cy_port_num);
+				aprint_error_dev(sc->sc_dev,
+				    "port %d: can't allocate input buffer\n",
+				    cy->cy_port_num);
 				splx(s);
 				return ENOMEM;
 			}
@@ -891,7 +901,7 @@ cy_poll(void *arg)
 	splx(s);
 
 	for (card = 0; card < cy_cd.cd_ndevs; card++) {
-		sc = device_lookup(&cy_cd, card);
+		sc = device_lookup_private(&cy_cd, card);
 		if (sc == NULL)
 			continue;
 
@@ -928,8 +938,9 @@ cy_poll(void *arg)
 				 */
 
 #ifdef CY_DEBUG
-				printf("%s: port %d ttyinput 0x%x\n",
-				    sc->sc_dev.dv_xname, port, chr);
+				aprint_debug_dev(sc->sc_dev,
+				    "port %d ttyinput 0x%x\n",
+				    port, chr);
 #endif
 
 				(*tp->t_linesw->l_rint) (chr, tp);
@@ -1029,12 +1040,12 @@ cy_poll(void *arg)
 				 * shouldn't really matter
 				 */
 				log(LOG_WARNING, "%s: port %d fifo overrun\n",
-				    sc->sc_dev.dv_xname, port);
+				    device_xname(sc->sc_dev), port);
 			}
 			if (cy->cy_ibuf_overruns) {
 				cy->cy_ibuf_overruns = 0;
 				log(LOG_WARNING, "%s: port %d ibuf overrun\n",
-				    sc->sc_dev.dv_xname, port);
+				    device_xname(sc->sc_dev), port);
 			}
 		}		/* for(port...) */
 #ifdef CY_DEBUG1
@@ -1100,8 +1111,11 @@ cy_intr(void *arg)
 					goto end_rx_serv;
 
 #ifdef CY_DEBUG
-				printf("%s port %d recv exception, line_stat 0x%x, char 0x%x\n",
-				sc->sc_dev.dv_xname, cy->cy_port_num, line_stat, recv_data);
+				aprint_debug_dev(
+				    sc->sc_dev,
+				    "port %d recv exception, "
+				    "line_stat 0x%x, char 0x%x\n",
+				    cy->cy_port_num, line_stat, recv_data);
 #endif
 				if (ISSET(line_stat, CD1400_RDSR_OE))
 					cy->cy_fifo_overruns++;
@@ -1132,8 +1146,9 @@ cy_intr(void *arg)
 				}
 
 #ifdef CY_DEBUG
-				printf("%s port %d receive ok %d chars\n",
-				    sc->sc_dev.dv_xname, cy->cy_port_num, n_chars);
+				aprint_debug_dev(sc->sc_dev,
+				    "port %d receive ok %d chars\n",
+				    cy->cy_port_num, n_chars);
 #endif
 				while (n_chars--) {
 					*buf_p++ = 0;	/* status: OK */
@@ -1198,8 +1213,9 @@ cy_intr(void *arg)
 			modem_stat = cd_read_reg(sc, cy->cy_chip, CD1400_MSVR2);
 
 #ifdef CY_DEBUG
-			printf("%s port %d modem line change, new stat 0x%x\n",
-			       sc->sc_dev.dv_xname, cy->cy_port_num, modem_stat);
+			aprint_debug_dev(sc->sc_dev,
+			    "port %d modem line change, new stat 0x%x\n",
+			    cy->cy_port_num, modem_stat);
 #endif
 			if (ISSET((cy->cy_carrier_stat ^ modem_stat), CD1400_MSVR2_CD)) {
 				SET(cy->cy_flags, CY_F_CARRIER_CHANGED);
@@ -1229,7 +1245,7 @@ cy_intr(void *arg)
 			cy->cy_tx_int_count++;
 #endif
 #ifdef CY_DEBUG
-			printf("%s port %d tx service\n", sc->sc_dev.dv_xname,
+			aprint_debug_dev(sc->sc_dev, "port %d tx service\n",
 			    cy->cy_port_num);
 #endif
 
@@ -1353,7 +1369,7 @@ cd1400_channel_cmd(struct cy_softc *sc, struct cy_port *cy, int cmd)
 
 	if (waitcnt == 0)
 		log(LOG_ERR, "%s: channel command timeout\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 
 	cd_write_reg(sc, cy->cy_chip, CD1400_CCR, cmd);
 }

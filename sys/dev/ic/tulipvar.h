@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.58 2006/03/25 23:10:50 rpaulo Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.58.58.1 2008/04/03 12:42:43 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -342,8 +342,6 @@ struct tulip_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power management hook */
 
 	struct tulip_stats sc_stats;	/* debugging stats */
 
@@ -576,12 +574,8 @@ do {									\
 #define	TULIP_ISSET(sc, reg, mask)					\
 	(TULIP_READ((sc), (reg)) & (mask))
 
-#if BYTE_ORDER == BIG_ENDIAN
-#define	TULIP_SP_FIELD_C(x)	((x) << 16)
-#else
-#define	TULIP_SP_FIELD_C(x)	(x)
-#endif
-#define	TULIP_SP_FIELD(x, f)	TULIP_SP_FIELD_C(((u_int16_t *)(x))[(f)])
+#define	TULIP_SP_FIELD_C(a, b)	((b) << 8 | (a))
+#define	TULIP_SP_FIELD(x, f)	TULIP_SP_FIELD_C((x)[f * 2], (x)[f * 2 + 1])
 
 #ifdef _KERNEL
 extern const char * const tlp_chip_names[];

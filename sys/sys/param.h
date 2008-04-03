@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.306 2008/02/09 16:59:48 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.306.6.1 2008/04/03 12:43:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499005400	/* NetBSD 4.99.54 */
+#define	__NetBSD_Version__	499005800	/* NetBSD 4.99.58 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -136,6 +136,12 @@
 #define	NVNODE	(NPROC + NTEXT + 100)
 #define	NVNODE_IMPLICIT
 #endif
+#ifndef VNODE_VA_MAXPCT
+#define	VNODE_VA_MAXPCT	20
+#endif
+#ifndef BUFCACHE_VA_MAXPCT
+#define	BUFCACHE_VA_MAXPCT	20
+#endif
 #endif /* _KERNEL */
 
 /* Signals. */
@@ -157,6 +163,9 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
+#ifndef COHERENCY_UNIT
+#define	COHERENCY_UNIT		64
+#endif
 #ifndef CACHE_LINE_SIZE
 #define	CACHE_LINE_SIZE		64
 #endif
@@ -401,6 +410,10 @@
 	    ((t +0u) / hz) * 1000u : \
 	    ((t +0u) * 1000u) / hz)
 #endif
+
+extern const int schedppq;
+extern size_t coherency_unit;
+
 #endif /* _KERNEL */
 
 /*

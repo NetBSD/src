@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.42 2007/12/13 14:40:37 joerg Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.42.6.1 2008/04/03 12:42:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -126,10 +126,10 @@ struct au_mixer_ports {
  * Software state, per audio device.
  */
 struct audio_softc {
-	struct device	dev;
+	device_t	dev;
 	void		*hw_hdl;	/* Hardware driver handle */
 	const struct audio_hw_if *hw_if; /* Hardware interface */
-	struct	device	*sc_dev;	/* Hardware device struct */
+	device_t	sc_dev;		/* Hardware device struct */
 	u_char		sc_open;	/* single use device */
 #define AUOPEN_READ	0x01
 #define AUOPEN_WRITE	0x02
@@ -156,7 +156,6 @@ struct audio_softc {
 
 	bool		sc_rbus;	/* input DMA in progress */
 	bool		sc_pbus;	/* output DMA in progress */
-	bool		sc_idle;	/* suspended due to idleness */
 
 	/**
 	 *  userland
@@ -232,8 +231,6 @@ struct audio_softc {
 
 	mixer_ctrl_t	*sc_mixer_state;
 	int		sc_nmixer_states;
-
-	callout_t	sc_idle_counter;
 };
 
 #endif /* _SYS_DEV_AUDIOVAR_H_ */

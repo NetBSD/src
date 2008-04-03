@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.3 2008/01/04 21:18:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.3.6.1 2008/04/03 12:42:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,9 +199,9 @@ agp_amd64_via_match(const struct pci_attach_args *pa)
 }
 
 int
-agp_amd64_attach(struct device *parent, struct device *self, void *aux)
+agp_amd64_attach(device_t parent, device_t self, void *aux)
 {
-	struct agp_softc *sc = (void *)self;
+	struct agp_softc *sc = device_private(self);
 	struct agp_amd64_softc *asc;
 	struct pci_attach_args *pa = aux;
 	struct agp_gatt *gatt;
@@ -237,7 +237,7 @@ agp_amd64_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal(": %d Miscellaneous Control unit(s) found.\n",
 	    asc->n_mctrl);
-	aprint_normal("%s", sc->as_dev.dv_xname);
+	aprint_normal("%s", device_xname(self));
 
 	sc->as_chipc = asc;
 	sc->as_methods = &agp_amd64_methods;

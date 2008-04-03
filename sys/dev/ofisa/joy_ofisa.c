@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_ofisa.c,v 1.12 2007/10/19 12:00:37 ad Exp $	*/
+/*	$NetBSD: joy_ofisa.c,v 1.12.16.1 2008/04/03 12:42:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.12 2007/10/19 12:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.12.16.1 2008/04/03 12:42:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,17 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: joy_ofisa.c,v 1.12 2007/10/19 12:00:37 ad Exp $");
 
 #define	JOY_NPORTS	1	/* XXX should be in a header file */
 
-int	joy_ofisa_match(struct device *, struct cfdata *, void *);
-void	joy_ofisa_attach(struct device *, struct device *, void *);
+static int	joy_ofisa_match(device_t, cfdata_t, void *);
+static void	joy_ofisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(joy_ofisa, sizeof(struct joy_softc),
+CFATTACH_DECL_NEW(joy_ofisa, sizeof(struct joy_softc),
     joy_ofisa_match, joy_ofisa_attach, NULL, NULL);
 
-int
-joy_ofisa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+joy_ofisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = {
@@ -75,13 +72,11 @@ joy_ofisa_match(parent, match, aux)
 
 	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)
 		rv = 1;
-	return (rv);
+	return rv;
 }
 
-void
-joy_ofisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+joy_ofisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct joy_softc *sc = device_private(self);
 	struct ofisa_attach_args *aa = aux;
@@ -100,23 +95,24 @@ joy_ofisa_attach(parent, self, aux)
 
 	n = ofisa_reg_get(aa->oba.oba_phandle, &reg, 1);
 	if (n != 1) {
-		printf(": error getting register data\n");
+		aprint_error(": error getting register data\n");
 		return;
 	}
 	if (reg.type != OFISA_REG_TYPE_IO) {
-		printf(": register type not i/o\n");
+		aprint_error(": register type not i/o\n");
 		return;
 	}
 	if (reg.len != JOY_NPORTS) {
-		printf(": weird register size (%lu, expected %d)\n",
+		aprint_error(": weird register size (%lu, expected %d)\n",
 		    (unsigned long)reg.len, JOY_NPORTS);
 		return;
 	}
 
 	sc->sc_iot = aa->iot;
+	sc->sc_dev = self;
 
 	if (bus_space_map(sc->sc_iot, reg.addr, reg.len, 0, &sc->sc_ioh)) {
-		printf(": unable to map register space\n");
+		aprint_error(": unable to map register space\n");
 		return;
 	}
 
@@ -127,8 +123,8 @@ joy_ofisa_attach(parent, self, aux)
 			model = NULL;	/* safe; alloca */
 	}
 	if (model != NULL)
-		printf(": %s", model);
-	printf("\n");
+		aprint_normal(": %s", model);
+	aprint_normal("\n");
 
 	joyattach(sc);
 }

@@ -92,7 +92,7 @@ struct pmap {
 	TAILQ_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	TAILQ_HEAD(,pv_entry)	pm_pvlist;	/* list of mappings in pmap */
 	int			pm_count;	/* pmap reference count */
-	struct simplelock	pm_slock;	/* lock on pmap */
+	kmutex_t		pm_slock;	/* lock on pmap */
 	u_int32_t		pm_rid[5];	/* base RID for pmap */
 	int			pm_active;	/* active flag */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
@@ -152,8 +152,8 @@ void pmap_bootstrap(void);
  * operations, locking the kernel pmap is not necessary.  Therefore,
  * it is not necessary to block interrupts when locking pmap strucutres.
  */
-#define	PMAP_LOCK(pmap)		simple_lock(&(pmap)->pm_slock)
-#define	PMAP_UNLOCK(pmap)	simple_unlock(&(pmap)->pm_slock)
+#define	PMAP_LOCK(pmap)		mutex_enter(&(pmap)->pm_slock)
+#define	PMAP_UNLOCK(pmap)	mutex_exit(&(pmap)->pm_slock)
 
 
 #define PMAP_VHPT_LOG2SIZE 16 

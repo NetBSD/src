@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.26 2007/11/10 18:00:11 ad Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.26.14.1 2008/04/03 12:42:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.26 2007/11/10 18:00:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.26.14.1 2008/04/03 12:42:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.26 2007/11/10 18:00:11 ad Exp $");
  * Interface to the lower layer (ttycc)
  ****************************************************************/
 
-static int	sunkbd_match(struct device *, struct cfdata *, void *);
-static void	sunkbd_attach(struct device *, struct device *, void *);
+static int	sunkbd_match(device_t, cfdata_t, void *);
+static void	sunkbd_attach(device_t, device_t, void *);
 static void	sunkbd_write_data(struct kbd_sun_softc *, int);
-static int	sunkbdiopen(struct device *, int mode);
+static int	sunkbdiopen(device_t, int mode);
 
 #if NWSKBD > 0
 void kbd_wskbd_attach(struct kbd_softc *k, int isconsole);
@@ -96,7 +96,7 @@ int	sunkbdstart(struct tty *);
 /* Default keyboard baud rate */
 int	sunkbd_bps = KBD_DEFAULT_BPS;
 
-CFATTACH_DECL(kbd_tty, sizeof(struct kbd_sun_softc),
+CFATTACH_DECL_NEW(kbd_tty, sizeof(struct kbd_sun_softc),
     sunkbd_match, sunkbd_attach, NULL, NULL);
 
 struct linesw sunkbd_disc = {
@@ -117,28 +117,25 @@ struct linesw sunkbd_disc = {
  * sunkbd_match: how is this tty channel configured?
  */
 int
-sunkbd_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void   *aux;
+sunkbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct kbd_ms_tty_attach_args *args = aux;
 
 	if (strcmp(args->kmta_name, "keyboard") == 0)
-		return (1);
+		return 1;
 
 	return 0;
 }
 
 void
-sunkbd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+sunkbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct kbd_sun_softc *k = device_private(self);
 	struct kbd_ms_tty_attach_args *args = aux;
 	struct tty *tp = args->kmta_tp;
 	struct cons_channel *cc;
+
+	k->k_kbd.k_dev = self;
 
 	/* Set up the proper line discipline. */
 	if (ttyldisc_attach(&sunkbd_disc) != 0)
@@ -151,7 +148,7 @@ sunkbd_attach(parent, self, aux)
 
 	/* link the structures together. */
 	k->k_priv = tp;
-	tp->t_sc = (void *)k;
+	tp->t_sc = k;
 
 	/* provide our middle layer with a link to the lower layer (i.e. us) */
 	k->k_deviopen = sunkbdiopen;
@@ -178,7 +175,7 @@ sunkbd_attach(parent, self, aux)
 		/* Tell our parent what the console should be. */
 		args->kmta_consdev = cn_tab;
 		k->k_kbd.k_isconsole = 1;
-		printf(" (console input)");
+		aprint_normal(" (console input)");
 
 		/* Set magic to "L1-A" */
 		magic[0] = KBD_L1;
@@ -192,7 +189,7 @@ sunkbd_attach(parent, self, aux)
 	}
 
 
-	printf("\n");
+	aprint_normal("\n");
 
 #if NWSKBD > 0
 	kbd_wskbd_attach(&k->k_kbd, args->kmta_consdev != NULL);
@@ -212,12 +209,10 @@ sunkbd_attach(parent, self, aux)
  * mechanism.
  */
 int
-sunkbdiopen(dev, flags)
-	struct device *dev;
-	int flags;
+sunkbdiopen(device_t dev, int flags)
 {
-	struct kbd_sun_softc *k = (void *) dev;
-	struct tty *tp = (struct tty *)k->k_priv;
+	struct kbd_sun_softc *k = device_private(dev);
+	struct tty *tp = k->k_priv;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct termios t;
 	int error;
@@ -241,14 +236,11 @@ sunkbdiopen(dev, flags)
  * TTY interface to handle input.
  */
 int
-sunkbdinput(c, tp)
-	int c;
-	struct tty *tp;
+sunkbdinput(int c, struct tty *tp)
 {
-	struct kbd_sun_softc *k = (void *) tp->t_sc;
+	struct kbd_sun_softc *k = tp->t_sc;
 	u_char *cc;
 	int error;
-
 
 	cc = tp->t_cc;
 
@@ -261,7 +253,7 @@ sunkbdinput(c, tp)
 		 * send a reset to resync key translation.
 		 */
 		log(LOG_ERR, "%s: input error (0x%x)\n",
-			k->k_kbd.k_dev.dv_xname, c);
+		    device_xname(k->k_kbd.k_dev), c);
 		c &= TTY_CHARMASK;
 		if (!k->k_txflags & K_TXBUSY) {
 			ttyflush(tp, FREAD | FWRITE);
@@ -274,7 +266,7 @@ sunkbdinput(c, tp)
 	 */
 	if (tp->t_rawq.c_cc + tp->t_canq.c_cc >= TTYHOG) {
 		log(LOG_ERR, "%s: input overrun\n",
-		    k->k_kbd.k_dev.dv_xname);
+		    device_xname(k->k_kbd.k_dev));
 		goto send_reset;
 	}
 
@@ -289,10 +281,9 @@ send_reset:
 }
 
 int
-sunkbdstart(tp)
-	struct tty *tp;
+sunkbdstart(struct tty *tp)
 {
-	struct kbd_sun_softc *k = (void *) tp->t_sc;
+	struct kbd_sun_softc *k = tp->t_sc;
 
 	/*
 	 * Transmit done.  Try to send more, or
@@ -307,11 +298,9 @@ sunkbdstart(tp)
  * used by kbd_sun_start_tx();
  */
 void
-sunkbd_write_data(k, c)
-	struct kbd_sun_softc *k;
-	int c;
+sunkbd_write_data(struct kbd_sun_softc *k, int c)
 {
-	struct tty *tp = (struct tty *)k->k_priv;
+	struct tty *tp = k->k_priv;
 
 	mutex_spin_enter(&tty_lock);
 	ttyoutput(c, tp);

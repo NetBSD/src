@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.127 2008/02/07 01:21:57 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.127.6.1 2008/04/03 12:42:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.127 2008/02/07 01:21:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.127.6.1 2008/04/03 12:42:51 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -595,25 +595,26 @@ static void	sipcom_txintr(struct sip_softc *);
 static void	sip_rxintr(struct sip_softc *);
 static void	gsip_rxintr(struct sip_softc *);
 
-static int	sipcom_dp83820_mii_readreg(struct device *, int, int);
-static void	sipcom_dp83820_mii_writereg(struct device *, int, int, int);
-static void	sipcom_dp83820_mii_statchg(struct device *);
+static int	sipcom_dp83820_mii_readreg(device_t, int, int);
+static void	sipcom_dp83820_mii_writereg(device_t, int, int, int);
+static void	sipcom_dp83820_mii_statchg(device_t);
 
-static int	sipcom_sis900_mii_readreg(struct device *, int, int);
-static void	sipcom_sis900_mii_writereg(struct device *, int, int, int);
-static void	sipcom_sis900_mii_statchg(struct device *);
+static int	sipcom_sis900_mii_readreg(device_t, int, int);
+static void	sipcom_sis900_mii_writereg(device_t, int, int, int);
+static void	sipcom_sis900_mii_statchg(device_t);
 
-static int	sipcom_dp83815_mii_readreg(struct device *, int, int);
-static void	sipcom_dp83815_mii_writereg(struct device *, int, int, int);
-static void	sipcom_dp83815_mii_statchg(struct device *);
+static int	sipcom_dp83815_mii_readreg(device_t, int, int);
+static void	sipcom_dp83815_mii_writereg(device_t, int, int, int);
+static void	sipcom_dp83815_mii_statchg(device_t);
 
 static void	sipcom_mediastatus(struct ifnet *, struct ifmediareq *);
 
-static int	sipcom_match(struct device *, struct cfdata *, void *);
-static void	sipcom_attach(struct device *, struct device *, void *);
+static int	sipcom_match(device_t, struct cfdata *, void *);
+static void	sipcom_attach(device_t, device_t, void *);
 static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
-static bool	sipcom_resume(device_t);
+static bool	sipcom_resume(device_t PMF_FN_PROTO);
+static bool	sipcom_suspend(device_t PMF_FN_PROTO);
 
 int	gsip_copy_small = 0;
 int	sip_copy_small = 0;
@@ -627,16 +628,16 @@ CFATTACH_DECL(sip, sizeof(struct sip_softc),
  * Descriptions of the variants of the SiS900.
  */
 struct sip_variant {
-	int	(*sipv_mii_readreg)(struct device *, int, int);
-	void	(*sipv_mii_writereg)(struct device *, int, int, int);
-	void	(*sipv_mii_statchg)(struct device *);
+	int	(*sipv_mii_readreg)(device_t, int, int);
+	void	(*sipv_mii_writereg)(device_t, int, int, int);
+	void	(*sipv_mii_statchg)(device_t);
 	void	(*sipv_set_filter)(struct sip_softc *);
 	void	(*sipv_read_macaddr)(struct sip_softc *,
 		    const struct pci_attach_args *, u_int8_t *);
 };
 
-static u_int32_t sipcom_mii_bitbang_read(struct device *);
-static void	sipcom_mii_bitbang_write(struct device *, u_int32_t);
+static u_int32_t sipcom_mii_bitbang_read(device_t);
+static void	sipcom_mii_bitbang_write(device_t, u_int32_t);
 
 static const struct mii_bitbang_ops sipcom_mii_bitbang_ops = {
 	sipcom_mii_bitbang_read,
@@ -769,7 +770,7 @@ sipcom_check_64bit(const struct pci_attach_args *pa)
 }
 
 static int
-sipcom_match(struct device *parent, struct cfdata *cf, void *aux)
+sipcom_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -965,17 +966,26 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 }
 
 static bool
-sipcom_resume(device_t self)
+sipcom_resume(device_t self PMF_FN_ARGS)
 {
 	struct sip_softc *sc = device_private(self);
 
 	return sipcom_reset(sc);
 }
 
+static bool
+sipcom_suspend(device_t self PMF_FN_ARGS)
+{
+	struct sip_softc *sc = device_private(self);
+
+	sipcom_rxdrain(sc);
+	return true;
+}
+
 static void
 sipcom_attach(device_t parent, device_t self, void *aux)
 {
-	struct sip_softc *sc = (struct sip_softc *) self;
+	struct sip_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -1085,8 +1095,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	    pmreg | PCI_COMMAND_MASTER_ENABLE);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
-	    NULL)) && error != EOPNOTSUPP) {
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
+	    error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
 		return;
@@ -1363,7 +1373,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	}
 #endif /* SIP_EVENT_COUNTERS */
 
-	if (!pmf_device_register(self, NULL, sipcom_resume))
+	if (!pmf_device_register(self, sipcom_suspend, sipcom_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -2551,13 +2561,13 @@ sipcom_init(struct ifnet *ifp)
 	struct sip_desc *sipd;
 	int i, error = 0;
 
-	if (!device_has_power(&sc->sc_dev))
-		return EBUSY;
-
-	/*
-	 * Cancel any pending I/O.
-	 */
-	sipcom_stop(ifp, 0);
+	if (device_is_active(&sc->sc_dev)) {
+		/*
+		 * Cancel any pending I/O.
+		 */
+		sipcom_stop(ifp, 0);
+	} else if (!pmf_device_resume_self(&sc->sc_dev))
+		return 0;
 
 	/*
 	 * Reset the chip to a known state.
@@ -2877,14 +2887,14 @@ sipcom_stop(struct ifnet *ifp, int disable)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (disable)
-		sipcom_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		pmf_device_suspend_self(&sc->sc_dev);
 
 	if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 	    (cmdsts & CMDSTS_INTR) == 0 && sc->sc_txfree != sc->sc_ntxdesc)
@@ -3287,9 +3297,9 @@ sipcom_dp83815_set_filter(struct sip_softc *sc)
  *	Read a PHY register on the MII of the DP83820.
  */
 static int
-sipcom_dp83820_mii_readreg(struct device *self, int phy, int reg)
+sipcom_dp83820_mii_readreg(device_t self, int phy, int reg)
 {
-	struct sip_softc *sc = (void *) self;
+	struct sip_softc *sc = device_private(self);
 
 	if (sc->sc_cfg & CFG_TBI_EN) {
 		bus_addr_t tbireg;
@@ -3351,9 +3361,9 @@ sipcom_dp83820_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the MII of the DP83820.
  */
 static void
-sipcom_dp83820_mii_writereg(struct device *self, int phy, int reg, int val)
+sipcom_dp83820_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct sip_softc *sc = (void *) self;
+	struct sip_softc *sc = device_private(self);
 
 	if (sc->sc_cfg & CFG_TBI_EN) {
 		bus_addr_t tbireg;
@@ -3382,9 +3392,9 @@ sipcom_dp83820_mii_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-sipcom_dp83820_mii_statchg(struct device *self)
+sipcom_dp83820_mii_statchg(device_t self)
 {
-	struct sip_softc *sc = (struct sip_softc *) self;
+	struct sip_softc *sc = device_private(self);
 	struct mii_data *mii = &sc->sc_mii;
 	u_int32_t cfg, pcr;
 
@@ -3447,9 +3457,9 @@ sipcom_dp83820_mii_statchg(struct device *self)
  *	Read the MII serial port for the MII bit-bang module.
  */
 static u_int32_t
-sipcom_mii_bitbang_read(struct device *self)
+sipcom_mii_bitbang_read(device_t self)
 {
-	struct sip_softc *sc = (void *) self;
+	struct sip_softc *sc = device_private(self);
 
 	return (bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_EROMAR));
 }
@@ -3460,9 +3470,9 @@ sipcom_mii_bitbang_read(struct device *self)
  *	Write the MII serial port for the MII bit-bang module.
  */
 static void
-sipcom_mii_bitbang_write(struct device *self, u_int32_t val)
+sipcom_mii_bitbang_write(device_t self, u_int32_t val)
 {
-	struct sip_softc *sc = (void *) self;
+	struct sip_softc *sc = device_private(self);
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_EROMAR, val);
 }
@@ -3473,9 +3483,9 @@ sipcom_mii_bitbang_write(struct device *self, u_int32_t val)
  *	Read a PHY register on the MII.
  */
 static int
-sipcom_sis900_mii_readreg(struct device *self, int phy, int reg)
+sipcom_sis900_mii_readreg(device_t self, int phy, int reg)
 {
-	struct sip_softc *sc = (struct sip_softc *) self;
+	struct sip_softc *sc = device_private(self);
 	u_int32_t enphy;
 
 	/*
@@ -3510,9 +3520,9 @@ sipcom_sis900_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the MII.
  */
 static void
-sipcom_sis900_mii_writereg(struct device *self, int phy, int reg, int val)
+sipcom_sis900_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct sip_softc *sc = (struct sip_softc *) self;
+	struct sip_softc *sc = device_private(self);
 	u_int32_t enphy;
 
 	if (sc->sc_model->sip_product == PCI_PRODUCT_SIS_900) {
@@ -3544,9 +3554,9 @@ sipcom_sis900_mii_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-sipcom_sis900_mii_statchg(struct device *self)
+sipcom_sis900_mii_statchg(device_t self)
 {
-	struct sip_softc *sc = (struct sip_softc *) self;
+	struct sip_softc *sc = device_private(self);
 	struct mii_data *mii = &sc->sc_mii;
 	u_int32_t flowctl;
 
@@ -3601,9 +3611,9 @@ sipcom_sis900_mii_statchg(struct device *self)
  *	Read a PHY register on the MII.
  */
 static int
-sipcom_dp83815_mii_readreg(struct device *self, int phy, int reg)
+sipcom_dp83815_mii_readreg(device_t self, int phy, int reg)
 {
-	struct sip_softc *sc = (struct sip_softc *) self;
+	struct sip_softc *sc = device_private(self);
 	u_int32_t val;
 
 	/*
@@ -3636,9 +3646,9 @@ sipcom_dp83815_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register to the MII.
  */
 static void
-sipcom_dp83815_mii_writereg(struct device *self, int phy, int reg, int val)
+sipcom_dp83815_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct sip_softc *sc = (struct sip_softc *) self;
+	struct sip_softc *sc = device_private(self);
 
 	/*
 	 * The DP83815 only has an internal PHY.  Only allow
@@ -3656,9 +3666,9 @@ sipcom_dp83815_mii_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-sipcom_dp83815_mii_statchg(struct device *self)
+sipcom_dp83815_mii_statchg(device_t self)
 {
-	struct sip_softc *sc = (struct sip_softc *) self;
+	struct sip_softc *sc = device_private(self);
 
 	/*
 	 * Update TXCFG for full-duplex operation.

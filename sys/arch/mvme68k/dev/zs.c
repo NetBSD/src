@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.38 2008/01/12 09:54:27 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.38.6.1 2008/04/03 12:42:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.38 2008/01/12 09:54:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.38.6.1 2008/04/03 12:42:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static int zs_defspeed[NZSC][2] = {
 static struct zs_chanstate zs_conschan_store;
 static struct zs_chanstate *zs_conschan;
 
-u_char zs_init_reg[16] = {
+uint8_t zs_init_reg[16] = {
 	0,	/* 0: CMD (reset, etc.) */
 	0,	/* 1: No interrupts yet. */
 	0x18 + ZSHARD_PRI,	/* IVECT */
@@ -139,7 +139,7 @@ zs_config(struct zsc_softc *zsc, struct zsdevice *zs, int vector, int pclk)
 	struct zs_chanstate *cs;
 	int zsc_unit, channel, s;
 
-	zsc_unit = device_unit(&zsc->zsc_dev);
+	zsc_unit = device_unit(zsc->zsc_dev);
 	printf(": Zilog 8530 SCC at vector 0x%x\n", vector);
 
 	/*
@@ -200,10 +200,10 @@ zs_config(struct zsc_softc *zsc, struct zsdevice *zs, int vector, int pclk)
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
 		 */
-		if (!config_found(&zsc->zsc_dev, (void *)&zsc_args,
+		if (!config_found(zsc->zsc_dev, (void *)&zsc_args,
 		    zsc_print)) {
 			/* No sub-driver.  Just reset it. */
-			u_char reset = (channel == 0) ?
+			uint8_t reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
 			s = splzs();
 			zs_write_reg(cs,  9, reset);
@@ -271,7 +271,7 @@ zshard_shared(void *arg)
 
 	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
+		zsc = device_private(zsc_cd.cd_devs[unit]);
 		if (zsc != NULL && zsc_intr_hard(zsc)) {
 			if ((zsc->zsc_cs[0]->cs_softreq) ||
 			    (zsc->zsc_cs[1]->cs_softreq))
@@ -378,10 +378,10 @@ zs_set_modes(struct zs_chanstate *cs, int cflag)
  * Read or write the chip with suitable delays.
  */
 
-u_char
-zs_read_reg(struct zs_chanstate *cs, u_char reg)
+uint8_t
+zs_read_reg(struct zs_chanstate *cs, uint8_t reg)
 {
-	u_char val;
+	uint8_t val;
 
 	*cs->cs_reg_csr = reg;
 	ZS_DELAY();
@@ -391,7 +391,7 @@ zs_read_reg(struct zs_chanstate *cs, u_char reg)
 }
 
 void
-zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val)
+zs_write_reg(struct zs_chanstate *cs, uint8_t reg, uint8_t val)
 {
 
 	*cs->cs_reg_csr = reg;
@@ -400,9 +400,10 @@ zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val)
 	ZS_DELAY();
 }
 
-u_char zs_read_csr(struct zs_chanstate *cs)
+uint8_t
+zs_read_csr(struct zs_chanstate *cs)
 {
-	u_char val;
+	uint8_t val;
 
 	val = *cs->cs_reg_csr;
 	ZS_DELAY();
@@ -410,17 +411,17 @@ u_char zs_read_csr(struct zs_chanstate *cs)
 }
 
 void
-zs_write_csr(struct zs_chanstate *cs, u_char val)
+zs_write_csr(struct zs_chanstate *cs, uint8_t val)
 {
 
 	*cs->cs_reg_csr = val;
 	ZS_DELAY();
 }
 
-u_char
+uint8_t
 zs_read_data(struct zs_chanstate *cs)
 {
-	u_char val;
+	uint8_t val;
 
 	val = *cs->cs_reg_data;
 	ZS_DELAY();
@@ -428,7 +429,7 @@ zs_read_data(struct zs_chanstate *cs)
 }
 
 void
-zs_write_data(struct zs_chanstate *cs, u_char val)
+zs_write_data(struct zs_chanstate *cs, uint8_t val)
 {
 
 	*cs->cs_reg_data = val;

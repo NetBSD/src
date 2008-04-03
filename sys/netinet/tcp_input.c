@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.280 2008/02/20 11:44:07 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.280.6.1 2008/04/03 12:43:08 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.280 2008/02/20 11:44:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.280.6.1 2008/04/03 12:43:08 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -412,7 +412,7 @@ static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
     NULL, IPL_VM);
 
 struct ipqent *
-tcpipqent_alloc()
+tcpipqent_alloc(void)
 {
 	struct ipqent *ipqe;
 	int s;
@@ -1755,7 +1755,7 @@ after_listen:
 				 * retransmit timer, otherwise restart timer
 				 * using current (possibly backed-off) value.
 				 * If process is waiting for space,
-				 * wakeup/selwakeup/signal.  If data
+				 * wakeup/selnotify/signal.  If data
 				 * are ready to send, let tcp_output
 				 * decide between more output or persist.
 				 */

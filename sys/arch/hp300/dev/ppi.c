@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.38 2007/10/17 19:54:23 garbled Exp $	*/
+/*	$NetBSD: ppi.c,v 1.38.16.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.38 2007/10/17 19:54:23 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.38.16.1 2008/04/03 12:42:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.38 2007/10/17 19:54:23 garbled Exp $");
 #include "ioconf.h"
 
 struct	ppi_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int	sc_flags;
 	struct	hpibqueue sc_hq;	/* HP-IB job queue entry */
 	struct	ppiparam sc_param;
@@ -111,10 +111,10 @@ struct	ppi_softc {
 #define PPIF_TIMO	0x08
 #define PPIF_DELAY	0x10
 
-static int	ppimatch(struct device *, struct cfdata *, void *);
-static void	ppiattach(struct device *, struct device *, void *);
+static int	ppimatch(device_t, cfdata_t, void *);
+static void	ppiattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ppi, sizeof(struct ppi_softc),
+CFATTACH_DECL_NEW(ppi, sizeof(struct ppi_softc),
     ppimatch, ppiattach, NULL, NULL);
 
 static dev_type_open(ppiopen);
@@ -146,7 +146,7 @@ int	ppidebug = 0x80;
 #endif
 
 static int
-ppimatch(struct device *parent, struct cfdata *match, void *aux)
+ppimatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
 
@@ -162,20 +162,21 @@ ppimatch(struct device *parent, struct cfdata *match, void *aux)
 	 * To prevent matching all unused slots on the bus, we
 	 * don't allow wildcarded locators.
 	 */
-	if (match->hpibbuscf_slave == HPIBBUSCF_SLAVE_DEFAULT ||
-	    match->hpibbuscf_punit == HPIBBUSCF_PUNIT_DEFAULT)
+	if (cf->hpibbuscf_slave == HPIBBUSCF_SLAVE_DEFAULT ||
+	    cf->hpibbuscf_punit == HPIBBUSCF_PUNIT_DEFAULT)
 		return 0;
 
 	return 1;
 }
 
 static void
-ppiattach(struct device *parent, struct device *self, void *aux)
+ppiattach(device_t parent, device_t self, void *aux)
 {
-	struct ppi_softc *sc = (struct ppi_softc *)self;
+	struct ppi_softc *sc = device_private(self);
 	struct hpibbus_attach_args *ha = aux;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	sc->sc_slave = ha->ha_slave;
 
@@ -205,7 +206,7 @@ ppiopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct ppi_softc *sc;
 
 	if (unit >= ppi_cd.cd_ndevs ||
-	    (sc = ppi_cd.cd_devs[unit]) == NULL ||
+	    (sc = device_private(ppi_cd.cd_devs[unit])) == NULL ||
 	    (sc->sc_flags & PPIF_ALIVE) == 0)
 		return ENXIO;
 
@@ -228,7 +229,7 @@ static int
 ppiclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = UNIT(dev);
-	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
+	struct ppi_softc *sc = device_private(ppi_cd.cd_devs[unit]);
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
@@ -246,7 +247,7 @@ ppistart(void *arg)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppistart(%x)\n", device_unit(&sc->sc_dev));
+		printf("ppistart(%x)\n", device_unit(sc->sc_dev));
 #endif
 	sc->sc_flags &= ~PPIF_DELAY;
 	wakeup(sc);
@@ -259,7 +260,7 @@ ppitimo(void *arg)
 
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
-		printf("ppitimo(%x)\n", device_unit(&sc->sc_dev));
+		printf("ppitimo(%x)\n", device_unit(sc->sc_dev));
 #endif
 	sc->sc_flags &= ~(PPIF_UIO|PPIF_TIMO);
 	wakeup(sc);
@@ -291,7 +292,7 @@ static int
 ppirw(dev_t dev, struct uio *uio)
 {
 	int unit = UNIT(dev);
-	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
+	struct ppi_softc *sc = device_private(ppi_cd.cd_devs[unit]);
 	int s, s2, len, cnt;
 	char *cp;
 	int error = 0, gotdata = 0;
@@ -301,7 +302,7 @@ ppirw(dev_t dev, struct uio *uio)
 	if (uio->uio_resid == 0)
 		return 0;
 
-	ctlr = device_unit(device_parent(&sc->sc_dev));
+	ctlr = device_unit(device_parent(sc->sc_dev));
 	slave = sc->sc_slave;
 
 #ifdef DEBUG
@@ -330,7 +331,7 @@ again:
 		s = splsoftclock();
 		s2 = splbio();
 		if ((sc->sc_flags & PPIF_UIO) &&
-		    hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq) == 0)
+		    hpibreq(device_parent(sc->sc_dev), &sc->sc_hq) == 0)
 			(void) tsleep(sc, PRIBIO + 1, "ppirw", 0);
 		/*
 		 * Check if we timed out during sleep or uiomove
@@ -358,7 +359,7 @@ again:
 		else
 			cnt = hpibrecv(ctlr, slave, sc->sc_sec, cp, len);
 		s = splbio();
-		hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
+		hpibfree(device_parent(sc->sc_dev), &sc->sc_hq);
 #ifdef DEBUG
 		if (ppidebug & PDB_IO)
 			printf("ppirw: %s(%d, %d, %x, %p, %d) -> %d\n",
@@ -449,7 +450,7 @@ again:
 static int
 ppiioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
+	struct ppi_softc *sc = device_private(ppi_cd.cd_devs[UNIT(dev)]);
 	struct ppiparam *pp, *upp;
 	int error = 0;
 

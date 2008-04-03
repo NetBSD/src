@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.33 2007/12/20 23:03:05 dsl Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.33.6.1 2008/04/03 12:42:34 mjf Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.33 2007/12/20 23:03:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.33.6.1 2008/04/03 12:42:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -100,13 +100,10 @@ svr4_decode_cmd(cmd, dir, c, num, argsiz)
 int
 svr4_sys_ioctl(struct lwp *l, const struct svr4_sys_ioctl_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
-	struct file	*fp;
-	struct filedesc	*fdp;
+	file_t		*fp;
 	u_long		 cmd;
 	int		 error;
-	int (*fun)(struct file *, struct lwp *, register_t *,
-			int, u_long, void *);
+	int (*fun)(file_t *, struct lwp *, register_t *, int, u_long, void *);
 #ifdef DEBUG_SVR4
 	char		 dir[4];
 	char		 c;
@@ -118,13 +115,10 @@ svr4_sys_ioctl(struct lwp *l, const struct svr4_sys_ioctl_args *uap, register_t 
 	uprintf("svr4_ioctl(%d, _IO%s(%c, %d, %d), %p);\n", SCARG(uap, fd),
 	    dir, c, num, argsiz, SCARG(uap, data));
 #endif
-	fdp = p->p_fd;
 	cmd = SCARG(uap, com);
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return EBADF;
-
-	FILE_USE(fp);
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
@@ -165,6 +159,6 @@ svr4_sys_ioctl(struct lwp *l, const struct svr4_sys_ioctl_args *uap, register_t 
 
 	error = (*fun)(fp, l, retval, SCARG(uap, fd), cmd, SCARG(uap, data));
 out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return (error);
 }

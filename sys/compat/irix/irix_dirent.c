@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_dirent.c,v 1.21 2007/12/20 23:02:50 dsl Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.21.6.1 2008/04/03 12:42:32 mjf Exp $ */
 
 /*-
- * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.21 2007/12/20 23:02:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.21.6.1 2008/04/03 12:42:32 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -79,7 +79,6 @@ irix_sys_ngetdents(struct lwp *l, const struct irix_sys_ngetdents_args *uap, reg
 		syscallarg(unsigned short) nbyte;
 		syscallarg(int *) eof;
 	} */
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *buf;	/* BSD-format */
@@ -93,10 +92,10 @@ irix_sys_ngetdents(struct lwp *l, const struct irix_sys_ngetdents_args *uap, reg
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
 	off_t *cookiebuf = NULL, *cookie;
-	int ncookies;
+	int ncookies, fd;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fildes), &fp)) != 0)
+	fd = SCARG(uap, fildes);
+	if ((error = fd_getvnode(fd, &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -193,7 +192,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	if (SCARG(uap, eof) != NULL)
 		error = copyout(&eofflag, SCARG(uap, eof), sizeof(int));
 	return error;
@@ -233,23 +232,22 @@ irix_sys_ngetdents64(struct lwp *l, const struct irix_sys_ngetdents64_args *uap,
 		syscallarg(int *) eof;
 	} */
 	struct dirent *bdp;
-	struct proc *p = l->l_proc;
 	struct vnode *vp;
 	char *inp, *buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	char *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
-	struct file *fp;
+	file_t *fp;
 	struct uio auio;
 	struct iovec aiov;
 	struct irix_dirent64 idb;
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
 	off_t *cookiebuf = NULL, *cookie;
-	int ncookies;
+	int ncookies, fd;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fildes), &fp)) != 0)
+	fd = SCARG(uap, fildes);
+	if ((error = fd_getvnode(fd, &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -257,7 +255,7 @@ irix_sys_ngetdents64(struct lwp *l, const struct irix_sys_ngetdents64_args *uap,
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -345,7 +343,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	if (SCARG(uap, eof) != NULL)
 		error = copyout(&eofflag, SCARG(uap, eof), sizeof(int));
 	return error;

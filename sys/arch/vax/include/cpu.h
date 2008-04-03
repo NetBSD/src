@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.82 2008/02/20 16:37:52 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.82.6.1 2008/04/03 12:42:27 mjf Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -44,14 +44,6 @@
 #define	CPU_BOOTED_KERNEL	4
 #define CPU_MAXID		5
 
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "printfataltraps", CTLTYPE_INT }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "booted_device", CTLTYPE_STRING }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-}
-
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
@@ -79,17 +71,19 @@ struct cpu_dep {
 	    /* Autoconfiguration */
 	void	(*cpu_conf)(void);
 	int	(*cpu_gettime)(volatile struct timeval *);
-						/* Read cpu clock time */
+					/* Read cpu clock time */
 	void	(*cpu_settime)(volatile struct timeval *);
-						/* Write system time to cpu */
-	short	cpu_vups;	/* speed of cpu */
-	short	cpu_scbsz;	/* (estimated) size of system control block */
-	void	(*cpu_halt)(void); /* Cpu dependent halt call */
-	void	(*cpu_reboot)(int); /* Cpu dependent reboot call */
-	void	(*cpu_clrf)(void); /* Clear cold/warm start flags */
-	void	(*cpu_subconf)(struct device *);/*config cpu dep. devs */
+					/* Write system time to cpu */
+	short	cpu_vups;		/* speed of cpu */
+	short	cpu_scbsz;		/* (estimated) size of SCB */
+	void	(*cpu_halt)(void);	/* Cpu dependent halt call */
+	void	(*cpu_reboot)(int);	/* Cpu dependent reboot call */
+	void	(*cpu_clrf)(void);	/* Clear cold/warm start flags */
+	const char * const *cpu_devs;	/* mainbus devices */
+	void	(*cpu_attach_cpu)(device_t);	/* print CPU info */
+	void	(*cpu_subconf)(device_t, void *, cfprint_t);	/* attach dep. dev */
 	int     cpu_flags;
-	void	(*cpu_badaddr)(void); /* cpu-specific badaddr() */
+	void	(*cpu_badaddr)(void);	/* cpu-specific badaddr() */
 };
 
 #if defined(MULTIPROCESSOR)
@@ -97,8 +91,8 @@ struct cpu_dep {
  * All cpu-dependent calls for multicpu systems goes here.
  */
 struct cpu_mp_dep {
-	void	(*cpu_startslave)(struct device *, struct cpu_info *);
-	void	(*cpu_send_ipi)(struct device *dest);
+	void	(*cpu_startslave)(struct cpu_info *);
+	void	(*cpu_send_ipi)(struct cpu_info *);
 	void	(*cpu_cnintr)(void);
 };
 /*
@@ -113,12 +107,13 @@ struct cpu_mp_dep {
 #define	IPI_DEST_MASTER	-1	/* Destination is mastercpu */
 #define	IPI_DEST_ALL	-2	/* Broadcast */
 
-extern struct cpu_mp_dep *mp_dep_call;
+extern const struct cpu_mp_dep *mp_dep_call;
 #endif /* defined(MULTIPROCESSOR) */
   
 #define	CPU_RAISEIPL	1	/* Must raise IPL until intr is handled */ 
 
-extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */
+extern const struct cpu_dep *dep_call;
+				/* Holds pointer to current CPU struct. */
 
 struct clockframe {
         int     pc;
@@ -130,22 +125,24 @@ struct cpu_info {
 	 * Public members.
 	 */
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct lwp *ci_curlwp;		/* current owner of the processor */
+	struct device *ci_dev;		/* device struct for this cpu */
 	int ci_mtx_oldspl;		/* saved spl */
 	int ci_mtx_count;		/* negative count of mutexes */
+	int ci_cpuid;			/* h/w specific cpu id */
+	int ci_want_resched;		/* Should change process */
 
 	/*
 	 * Private members.
 	 */
-	int ci_want_resched;		/* Should change process */
-	struct device *ci_dev;		/* device struct for this cpu */
 #if defined(__HAVE_FAST_SOFTINTS)
 	lwp_t *ci_softlwps[SOFTINT_COUNT];
 #endif
-#if defined(MULTIPROCESSOR)
-	struct pcb *ci_pcb;		/* Idle PCB for this CPU */
 	vaddr_t ci_istack;		/* Interrupt stack location */
-	int ci_flags;			/* See below */
+	const char *ci_cpustr;
+	int ci_slotid;			/* cpu slot */
+#if defined(MULTIPROCESSOR)
+	struct lwp *ci_curlwp;		/* current lwp (for other cpus) */
+	volatile int ci_flags;		/* See below */
 	long ci_ipimsgs;		/* Sent IPI bits */
 	struct trapframe *ci_ddb_regs;	/* Used by DDB */
 	SIMPLEQ_ENTRY(cpu_info) ci_next; /* next cpu_info */
@@ -157,21 +154,8 @@ struct cpu_info {
 
 extern int cpu_printfataltraps;
 
-#if defined(MULTIPROCESSOR)
-/*
- * "helper" struct. All multicpu systems must have the first two field
- * of its cpu softc like this. (used in multicpu.c).
- */
-struct cpu_mp_softc {
-	struct device sc_dev;
-	struct cpu_info sc_ci;
-};
-#endif /* defined(MULTIPROCESSOR) */
-
-				/* XXX need to cache this in cpu_info */
-#define	ci_cpuid		ci_dev->dv_unit
-#define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
-#define	curlwp			(curcpu()->ci_curlwp)
+#define	curcpu()		(curlwp->l_cpu + 0)
+#define	curlwp			((struct lwp *)mfpr(PR_SSP))
 #define	cpu_number()		(curcpu()->ci_cpuid)
 #define	cpu_need_resched(ci, flags)		\
 	do {					\
@@ -225,9 +209,11 @@ struct device;
 struct buf;
 struct pte;
 
+#include <sys/lwp.h>
+
 /* Some low-level prototypes */
 #if defined(MULTIPROCESSOR)
-void	cpu_slavesetup(struct device *);
+void	cpu_slavesetup(device_t, int);
 void	cpu_boot_secondary_processors(void);
 void	cpu_send_ipi(int, int);
 void	cpu_handle_ipi(void);
@@ -238,10 +224,10 @@ void	dumpsys(void);
 void	swapconf(void);
 void	disk_printtype(int, int);
 void	disk_reallymapin(struct buf *, struct pte *, int, int);
-vaddr_t	vax_map_physmem(paddr_t, int);
-void	vax_unmap_physmem(vaddr_t, int);
-void	ioaccess(vaddr_t, paddr_t, int);
-void	iounaccess(vaddr_t, int);
+vaddr_t	vax_map_physmem(paddr_t, size_t);
+void	vax_unmap_physmem(vaddr_t, size_t);
+void	ioaccess(vaddr_t, paddr_t, size_t);
+void	iounaccess(vaddr_t, size_t);
 void	findcpu(void);
 #ifdef DDB
 int	kdbrint(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.158 2007/12/27 17:05:28 martin Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.158.6.1 2008/04/03 12:42:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.158 2007/12/27 17:05:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.158.6.1 2008/04/03 12:42:34 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -366,7 +366,6 @@ sunos_sys_sigsuspend(struct lwp *l, const struct sunos_sys_sigsuspend_args *uap,
 int
 sunos_sys_getdents(struct lwp *l, const struct sunos_sys_getdents_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
 	char *inp, *buf;	/* BSD-format */
@@ -382,8 +381,7 @@ sunos_sys_getdents(struct lwp *l, const struct sunos_sys_getdents_args *uap, reg
 	off_t *cookiebuf, *cookie;
 	int ncookies;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -391,7 +389,7 @@ sunos_sys_getdents(struct lwp *l, const struct sunos_sys_getdents_args *uap, reg
 		goto out1;
 	}
 
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	if (vp->v_type != VDIR) {
 		error = EINVAL;
 		goto out1;
@@ -484,7 +482,7 @@ out:
 	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
 
@@ -538,22 +536,20 @@ sunos_sys_mctl(struct lwp *l, const struct sunos_sys_mctl_args *uap, register_t 
 int
 sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
-	struct file *fp;
+	struct socket *so;
 	struct mbuf *m = NULL;
 	int name = SCARG(uap, name);
 	int error;
 
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (name == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
-		error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-		    SO_LINGER, m);
+		error = sosetopt(so, SCARG(uap, level), SO_LINGER, m);
 		goto out;
 	}
 	if (SCARG(uap, level) == IPPROTO_IP) {
@@ -588,10 +584,9 @@ sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap,
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
-	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    name, m);
+	error = sosetopt(so, SCARG(uap, level), name, m);
  out:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, s));
 	return (error);
 }
 
@@ -601,17 +596,15 @@ static inline int
 sunos_sys_socket_common(struct lwp *l, register_t *retval, int type)
 {
 	struct socket *so;
-	struct file *fp;
 	int error, fd;
 
 	/* getsock() will use the descriptor for us */
 	fd = (int)*retval;
-	if ((error = getsock(l->l_proc->p_fd, fd, &fp)) == 0) {
-		so = (struct socket *)fp->f_data;
+	if ((error = fd_getsock(fd, &so)) == 0) {
 		if (type == SOCK_DGRAM)
 			so->so_options |= SO_BROADCAST;
+		fd_putfile(fd);
 	}
-	FILE_UNUSE(fp, l);
 	return (error);
 }
 
@@ -719,17 +712,17 @@ sunos_sys_open(struct lwp *l, const struct sunos_sys_open_args *uap, register_t 
 
 	/* XXXSMP */
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
-		struct filedesc *fdp = p->p_fd;
-		struct file *fp;
+		file_t *fp;
+		int fd;
 
-		fp = fd_getfile(fdp, *retval);
+		fd = (int)*retval;
+		fp = fd_getfile(fd);
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL) {
-			FILE_USE(fp);
 			if (fp->f_type == DTYPE_VNODE)
-				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, NULL, l);
-			FILE_UNUSE(fp, l);
+				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, NULL);
+			fd_putfile(fd);
 		}
 	}
 	return ret;
@@ -855,14 +848,13 @@ sunos_sys_statfs(struct lwp *l, const struct sunos_sys_statfs_args *uap, registe
 int
 sunos_sys_fstatfs(struct lwp *l, const struct sunos_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
-	struct file *fp;
+	file_t *fp;
 	struct mount *mp;
 	struct statvfs *sp;
 	int error;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
@@ -871,7 +863,7 @@ sunos_sys_fstatfs(struct lwp *l, const struct sunos_sys_fstatfs_args *uap, regis
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = sunstatfs(sp, (void *)SCARG(uap, buf));
  out:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
 

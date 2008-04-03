@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_pnpbus.c,v 1.4 2008/01/10 15:17:40 tsutsui Exp $ */
+/* $NetBSD: mcclock_pnpbus.c,v 1.4.6.1 2008/04/03 12:42:23 mjf Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.4 2008/01/10 15:17:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.4.6.1 2008/04/03 12:42:23 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -71,12 +71,12 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.4 2008/01/10 15:17:40 tsutsui E
 
 #include <prep/pnpbus/pnpbusvar.h>
 
-static int	mcclock_pnpbus_probe(struct device *, struct cfdata *, void *);
-static void	mcclock_pnpbus_attach(struct device *, struct device *, void *);
+static int	mcclock_pnpbus_probe(device_t, cfdata_t, void *);
+static void	mcclock_pnpbus_attach(device_t, device_t, void *);
 
 extern struct cfdriver mcclock_cd;
 
-CFATTACH_DECL(mcclock_pnpbus, sizeof (struct mc146818_softc),
+CFATTACH_DECL_NEW(mcclock_pnpbus, sizeof(struct mc146818_softc),
     mcclock_pnpbus_probe, mcclock_pnpbus_attach, NULL, NULL);
 
 void	mcclock_pnpbus_write(struct mc146818_softc *, u_int, u_int);
@@ -87,7 +87,7 @@ int have_ds1585 = 0;
 #define MCCLOCK_STD_DEV		0
 
 static int
-mcclock_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
+mcclock_pnpbus_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pnpbus_dev_attach_args *pna = aux;
 	int ret = 0;
@@ -105,16 +105,16 @@ mcclock_pnpbus_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mcclock_pnpbus_attach(struct device *parent, struct device *self, void *aux)
+mcclock_pnpbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mc146818_softc *sc = (void *)self;
+	struct mc146818_softc *sc = device_private(self);
 	struct pnpbus_dev_attach_args *pna = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bst = pna->pna_iot;
 	if (pnpbus_io_map(&pna->pna_res, 0, &sc->sc_bst, &sc->sc_bsh)) {
 		/* XXX should we panic instead? */
-		aprint_error("%s: couldn't map clock I/O space",
-		    device_xname(self));
+		aprint_error(": couldn't map clock I/O space\n");
 		return;
 	}
 
@@ -134,11 +134,13 @@ mcclock_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 void
 ds1585_reboot(void)
 {
-	struct mc146818_softc *sc = mcclock_cd.cd_devs[MCCLOCK_STD_DEV];
+	struct mc146818_softc *sc;
 	int i, j;
 
 	if (!have_ds1585)
 		return;
+
+	sc = device_lookup_private(&mcclock_cd, MCCLOCK_STD_DEV);
 
 	/* monitors b0: 05,03,01  b1: 49, WIE=1 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.3 2008/01/30 09:02:46 ad Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.3.6.1 2008/04/03 12:42:30 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3 2008/01/30 09:02:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.3.6.1 2008/04/03 12:42:30 mjf Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -117,7 +117,7 @@ static vaddr_t acpi_wakeup_vaddr;
 
 static int acpi_md_node = CTL_EOL;
 static int acpi_md_vbios_reset = 1;
-static int acpi_md_beep_on_reset = 1;
+static int acpi_md_beep_on_reset = 0;
 
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
 static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);

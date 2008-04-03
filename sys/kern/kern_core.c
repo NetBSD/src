@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.9 2008/01/25 14:32:14 ad Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.9.6.1 2008/04/03 12:43:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.9 2008/01/25 14:32:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.9.6.1 2008/04/03 12:43:00 mjf Exp $");
 
 #include "opt_coredump.h"
 
@@ -194,7 +194,7 @@ coredump(struct lwp *l, const char *pattern)
 	error = (*p->p_execsw->es_coredump)(l, &io);
  out:
 	VOP_UNLOCK(vp, 0);
-	error1 = vn_close(vp, FWRITE, cred, l);
+	error1 = vn_close(vp, FWRITE, cred);
 	if (error == 0)
 		error = error1;
 done:

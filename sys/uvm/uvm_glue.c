@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.117 2008/02/08 11:49:40 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.117.6.1 2008/04/03 12:43:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.117 2008/02/08 11:49:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.117.6.1 2008/04/03 12:43:14 mjf Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -384,10 +384,8 @@ uvm_uarea_free(vaddr_t uaddr, struct cpu_info *ci)
 }
 
 /*
- * uvm_exit: exit a virtual address space
+ * uvm_proc_exit: exit a virtual address space
  *
- * - the process passed to us is a dead (pre-zombie) process; we
- *   are running on a different context now (the reaper).
  * - borrow proc0's address space because freeing the vmspace
  *   of the dead process may block.
  */
@@ -745,15 +743,13 @@ uvm_swapout_threads(void)
 static void
 uvm_swapout(struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-
 	KASSERT(mutex_owned(&l->l_swaplock));
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
 		printf("swapout: lid %d.%d(%s)@%p, stat %x pri %d free %d\n",
-	   p->p_pid, l->l_lid, p->p_comm, l->l_addr, l->l_stat,
-	   l->l_slptime, uvmexp.free);
+		   l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, l->l_addr,
+		   l->l_stat, l->l_slptime, uvmexp.free);
 #endif
 
 	/*
@@ -770,7 +766,7 @@ uvm_swapout(struct lwp *l)
 	if (l->l_stat == LSRUN)
 		sched_dequeue(l);
 	lwp_unlock(l);
-	p->p_stats->p_ru.ru_nswap++;	/* XXXSMP */
+	l->l_ru.ru_nswap++;
 	++uvmexp.swapouts;
 
 	/*
@@ -783,7 +779,7 @@ uvm_swapout(struct lwp *l)
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
 	uarea_swapout(USER_TO_UAREA(l->l_addr));
-	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
+	pmap_collect(vm_map_pmap(&l->l_proc->p_vmspace->vm_map));
 }
 
 /*

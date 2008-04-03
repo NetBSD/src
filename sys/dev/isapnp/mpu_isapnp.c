@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.16 2007/10/19 12:00:33 ad Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.16.16.1 2008/04/03 12:42:45 mjf Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.16 2007/10/19 12:00:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.16.16.1 2008/04/03 12:42:45 mjf Exp $");
 
 #include "midi.h"
 
@@ -29,43 +29,39 @@ __KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.16 2007/10/19 12:00:33 ad Exp $");
 
 #include <dev/ic/mpuvar.h>
 
-int	mpu_isapnp_match(struct device *, struct cfdata *, void *);
-void	mpu_isapnp_attach(struct device *, struct device *, void *);
+static int	mpu_isapnp_match(device_t, cfdata_t, void *);
+static void	mpu_isapnp_attach(device_t, device_t, void *);
 
 struct mpu_isapnp_softc {
-	struct device sc_dev;
 	void *sc_ih;
 
 	struct mpu_softc sc_mpu;
 };
 
-CFATTACH_DECL(mpu_isapnp, sizeof(struct mpu_isapnp_softc),
+CFATTACH_DECL_NEW(mpu_isapnp, sizeof(struct mpu_isapnp_softc),
     mpu_isapnp_match, mpu_isapnp_attach, NULL, NULL);
 
-int
-mpu_isapnp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+static int
+mpu_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
 	pri = isapnp_devmatch(aux, &isapnp_mpu_devinfo, &variant);
 	if (pri && variant > 0)
 		pri = 0;
-	return (pri);
+	return pri;
 }
 
-void
-mpu_isapnp_attach(struct device *parent, struct device *self,
-    void *aux)
+static void
+mpu_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct mpu_isapnp_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "error in region allocation\n");
 		return;
 	}
 
@@ -73,16 +69,16 @@ mpu_isapnp_attach(struct device *parent, struct device *self,
 	sc->sc_mpu.ioh = ipa->ipa_io[0].h;
 
 	if (!mpu_find(&sc->sc_mpu)) {
-		printf("%s: find failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "find failed\n");
 		return;
 	}
 
-	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	aprint_normal_dev(self, "%s %s\n", ipa->ipa_devident,
 	       ipa->ipa_devclass);
 
 	sc->sc_mpu.model = "Roland MPU-401 MIDI UART";
 
-	midi_attach_mi(&mpu_midi_hw_if, &sc->sc_mpu, &sc->sc_dev);
+	midi_attach_mi(&mpu_midi_hw_if, &sc->sc_mpu, self);
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_AUDIO, mpu_intr, &sc->sc_mpu);

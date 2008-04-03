@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.6 2007/10/30 15:07:07 tsutsui Exp $	*/
+/*	$NetBSD: boot.h,v 1.6.16.1 2008/04/03 12:42:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -97,3 +97,8 @@ int tgets(char *);
 void pdcache_wb(uint32_t, u_int);
 void pdcache_inv(uint32_t, u_int);
 void pdcache_wbinv(uint32_t, u_int);
+
+/*
+ * pci
+ */
+uint32_t pcicfgread(uint32_t, uint32_t);

@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.5 2007/12/24 15:04:19 ad Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.5.6.1 2008/04/03 12:43:13 mjf Exp $        */
 
 #ifndef _SYS_VFS_SYSCALLS_H_
 #define _SYS_VFS_SYSCALLS_H_
@@ -6,12 +6,14 @@
 struct stat;
 struct statvfs;
 
+extern int dovfsusermount;
+
 /*
  * syscall helpers for compat code.
  */
 
 /* Status functions to kernel 'struct stat' buffers */
-int do_sys_stat(struct lwp *, const char *, unsigned int, struct stat *);
+int do_sys_stat(const char *, unsigned int, struct stat *);
 int do_fhstat(struct lwp *, const void *, size_t, struct stat *);
 int do_fhstatvfs(struct lwp *, const void *, size_t, struct statvfs *, int);
 

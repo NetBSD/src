@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.10 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.10.70.1 2008/04/03 12:42:41 mjf Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -69,10 +69,10 @@
 struct spc_acb {
 	struct scsipi_generic scsipi_cmd;
 	int scsipi_cmd_length;
-	u_char *data_addr;		/* Saved data pointer */
+	uint8_t *data_addr;		/* Saved data pointer */
 	int data_length;		/* Residue */
 
-	u_char target_stat;		/* SCSI status byte */
+	uint8_t target_stat;		/* SCSI status byte */
 
 #ifdef notdef
 	struct spc_dma_seg dma[SPC_NSEG]; /* Physical addresses+len */
@@ -80,7 +80,7 @@ struct spc_acb {
 
 	TAILQ_ENTRY(spc_acb) chain;
 	struct scsipi_xfer *xs;	/* SCSI xfer ctrl block from above */
-	int flags;
+	u_int flags;
 #define ACB_ALLOC	0x01
 #define ACB_NEXUS	0x02
 #define ACB_SENSE	0x04
@@ -104,13 +104,13 @@ struct spc_tinfo {
 	u_char  flags;
 #define DO_SYNC		0x01	/* (Re)Negotiate synchronous options */
 #define DO_WIDE		0x02	/* (Re)Negotiate wide options */
-	u_char  period;		/* Period suggestion */
-	u_char  offset;		/* Offset suggestion */
-	u_char	width;		/* Width suggestion */
+	uint8_t period;		/* Period suggestion */
+	uint8_t offset;		/* Offset suggestion */
+	uint8_t width;		/* Width suggestion */
 };
 
 struct spc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -124,15 +124,15 @@ struct spc_softc {
 	struct spc_tinfo sc_tinfo[8];
 
 	/* Data about the current nexus (updated for every cmd switch) */
-	u_char	*sc_dp;		/* Current data pointer */
+	uint8_t	*sc_dp;		/* Current data pointer */
 	size_t	sc_dleft;	/* Data bytes left to transfer */
-	u_char	*sc_cp;		/* Current command pointer */
+	uint8_t	*sc_cp;		/* Current command pointer */
 	size_t	sc_cleft;	/* Command bytes left to transfer */
 
 	/* Adapter state */
-	u_char	 sc_phase;	/* Current bus phase */
-	u_char	 sc_prevphase;	/* Previous bus phase */
-	u_char	 sc_state;	/* State applicable to the adapter */
+	uint8_t	 sc_phase;	/* Current bus phase */
+	uint8_t	 sc_prevphase;	/* Previous bus phase */
+	uint8_t	 sc_state;	/* State applicable to the adapter */
 #define SPC_INIT	0
 #define SPC_IDLE	1
 #define SPC_SELECTING	2	/* SCSI command is arbiting  */
@@ -141,19 +141,19 @@ struct spc_softc {
 #define SPC_DISCONNECT	5	/* MSG_DISCONNECT received */
 #define SPC_CMDCOMPLETE	6	/* MSG_CMDCOMPLETE received */
 #define SPC_CLEANING	7
-	u_char	 sc_flags;
+	uint8_t	 sc_flags;
 #define SPC_DROP_MSGIN	0x01	/* Discard all msgs (parity err detected) */
 #define SPC_ABORTING	0x02	/* Bailing out */
 #define SPC_DOINGDMA	0x04	/* doing DMA */
 #define SPC_INACTIVE	0x80	/* The FIFO data path is active! */
-	u_char	sc_selid;	/* Reselection ID */
+	uint8_t	sc_selid;	/* Reselection ID */
 	struct device *sc_child;/* Our child */
 
 	/* Message stuff */
-	u_char	sc_msgpriq;	/* Messages we want to send */
-	u_char	sc_msgoutq;	/* Messages sent during last MESSAGE OUT */
-	u_char	sc_lastmsg;	/* Message last transmitted */
-	u_char	sc_currmsg;	/* Message currently ready to transmit */
+	uint8_t	sc_msgpriq;	/* Messages we want to send */
+	uint8_t	sc_msgoutq;	/* Messages sent during last MESSAGE OUT */
+	uint8_t	sc_lastmsg;	/* Message last transmitted */
+	uint8_t	sc_currmsg;	/* Message currently ready to transmit */
 #define SEND_DEV_RESET		0x01
 #define SEND_PARITY_ERROR	0x02
 #define SEND_INIT_DET_ERR	0x04
@@ -163,10 +163,10 @@ struct spc_softc {
 #define SEND_SDTR		0x40
 #define SEND_WDTR		0x80
 #define SPC_MAX_MSG_LEN 8
-	u_char  sc_omess[SPC_MAX_MSG_LEN];
-	u_char	*sc_omp;		/* Outgoing message pointer */
-	u_char	sc_imess[SPC_MAX_MSG_LEN];
-	u_char	*sc_imp;		/* Incoming message pointer */
+	uint8_t	sc_omess[SPC_MAX_MSG_LEN];
+	uint8_t	*sc_omp;		/* Outgoing message pointer */
+	uint8_t	sc_imess[SPC_MAX_MSG_LEN];
+	uint8_t	*sc_imp;		/* Incoming message pointer */
 
 	/* Hardware stuff */
 	int	sc_initiator;		/* Our scsi id */
@@ -188,9 +188,26 @@ struct spc_softc {
 #define SPC_SHOWSTART	0x20
 #define SPC_DOBREAK	0x40
 extern int spc_debug; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
-#define SPC_PRINT(b, s)	do {if ((spc_debug & (b)) != 0) printf s;} while (0)
-#define SPC_BREAK()	do {if ((spc_debug & SPC_DOBREAK) != 0) Debugger();} while (0)
-#define SPC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
+#define SPC_PRINT(b, s)							\
+	do {								\
+		if ((spc_debug & (b)) != 0)				\
+			printf s;					\
+	} while (/* CONSTCOND */ 0)
+#define SPC_BREAK()							\
+	do {								\
+		if ((spc_debug & SPC_DOBREAK) != 0)			\
+			Debugger();					\
+	} while (/* CONSTCOND */ 0)
+#define SPC_ASSERT(x)							\
+	do {								\
+		if (x) {						\
+			;						\
+		} else {						\
+			printf("%s at line %d: assertion failed\n",	\
+			    device_xname(sc->sc_dev), __LINE__);	\
+			Debugger();					\
+		}							\
+	} while (/* CONSTCOND */ 0)
 #else
 #define SPC_PRINT(b, s)
 #define SPC_BREAK()
@@ -205,8 +222,8 @@ extern int spc_debug; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 #define SPC_START(s)	SPC_PRINT(SPC_SHOWSTART, s)
 
 void	spc_attach(struct spc_softc *);
-int	spc_activate(struct device *, enum devact);
-int	spc_detach(struct device *, int);
+int	spc_activate(device_t, enum devact);
+int	spc_detach(device_t, int);
 int	spc_intr(void *);
 int	spc_find(bus_space_tag_t, bus_space_handle_t, int);
 void	spc_init(struct spc_softc *, int);

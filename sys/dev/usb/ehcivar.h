@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.26 2007/12/09 20:28:23 jmcneill Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.26.10.1 2008/04/03 12:42:57 mjf Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,8 @@ struct ehci_soft_islot {
 #define EHCI_COMPANION_MAX 8
 
 typedef struct ehci_softc {
-	struct usbd_bus sc_bus;		/* base device */
+	device_t sc_dev;
+	struct usbd_bus sc_bus;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
@@ -97,11 +98,10 @@ typedef struct ehci_softc {
 	int sc_id_vendor;		/* vendor ID for root hub */
 
 	u_int32_t sc_cmd;		/* shadow of cmd reg during suspend */
-	void *sc_shutdownhook;		/* cookie from shutdown hook */
 
 	u_int sc_ncomp;
 	u_int sc_npcomp;
-	struct usbd_bus *sc_comps[EHCI_COMPANION_MAX];
+	device_t sc_comps[EHCI_COMPANION_MAX];
 
 	usb_dma_t sc_fldma;
 	ehci_link_t *sc_flist;
@@ -159,6 +159,8 @@ typedef struct ehci_softc {
 usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
-int		ehci_activate(device_ptr_t, enum devact);
-bool		ehci_suspend(device_t dv);
-bool		ehci_resume(device_t dv);
+int		ehci_activate(device_t, enum devact);
+void		ehci_childdet(device_t, device_t);
+bool		ehci_suspend(device_t PMF_FN_PROTO);
+bool		ehci_resume(device_t PMF_FN_PROTO);
+bool		ehci_shutdown(device_t, int);

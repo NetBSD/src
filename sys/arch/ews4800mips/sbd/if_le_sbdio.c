@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_sbdio.c,v 1.2 2007/03/04 05:59:47 christos Exp $	*/
+/*	$NetBSD: if_le_sbdio.c,v 1.2.40.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.2 2007/03/04 05:59:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.2.40.1 2008/04/03 12:42:15 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,29 +111,29 @@ le_sbdio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(lesc->sc_bst, sa->sa_addr1, 8 /* XXX */,
 	    BUS_SPACE_MAP_LINEAR, &lesc->sc_bsh) != 0) {
-		printf(": cannot map registers\n");
+		aprint_error(": cannot map registers\n");
 		return;
 	}
 
 	/* Allocate DMA memory for the chip. */
 	if (bus_dmamem_alloc(lesc->sc_dmat, LE_MEMSIZE, 0, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT) != 0) {
-		printf(": can't allocate DMA memory\n");
+		aprint_error(": can't allocate DMA memory\n");
 		return;
 	}
 	if (bus_dmamem_map(lesc->sc_dmat, &seg, rseg, LE_MEMSIZE,
 	    (void **)&sc->sc_mem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0) {
-		printf(": can't map DMA memory\n");
+		aprint_error(": can't map DMA memory\n");
 		return;
 	}
 	if (bus_dmamap_create(lesc->sc_dmat, LE_MEMSIZE, 1, LE_MEMSIZE,
 	    0, BUS_DMA_NOWAIT, &lesc->sc_dmamap) != 0) {
-		printf(": can't create DMA map\n");
+		aprint_error(": can't create DMA map\n");
 		return;
 	}
 	if (bus_dmamap_load(lesc->sc_dmat, lesc->sc_dmamap, sc->sc_mem,
 	    LE_MEMSIZE, NULL, BUS_DMA_NOWAIT) != 0) {
-		printf(": can't load DMA map\n");
+		aprint_error(": can't load DMA map\n");
 		return;
 	}
 
@@ -152,8 +152,6 @@ le_sbdio_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	sc->sc_rdcsr = le_sbdio_rdcsr;
 	sc->sc_wrcsr = le_sbdio_wrcsr;
-
-	printf(" at %p irq %d", (void *)sa->sa_addr1, sa->sa_irq);
 
 	am7990_config(&lesc->sc_am7990);
 	intr_establish(sa->sa_irq, am7990_intr, self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.27 2008/01/30 14:08:01 ad Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.27.6.1 2008/04/03 12:43:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.27 2008/01/30 14:08:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.27.6.1 2008/04/03 12:43:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,7 +208,7 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype,
 /*
 	STAILQ_INIT(&sdp->sd_rqlist);
 	STAILQ_INIT(&sdp->sd_rplist);
-	bzero(&sdp->sd_pollinfo, sizeof(struct selinfo));
+	selinit(&sdp->sd_pollinfo);
 */
 	s = splnet();
 	sdp->sd_level = -1;
@@ -249,6 +249,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 /*
 	smb_flushq(&sdp->sd_rqlist);
 	smb_flushq(&sdp->sd_rplist);
+	seldestroy(&sdp->sd_pollinfo);
 */
 	smb_devtbl[minor(dev)] = NULL;
 	free(sdp, M_NSMBDEV);
@@ -469,31 +470,28 @@ int
 smb_dev2share(int fd, int mode, struct smb_cred *scred,
     struct smb_share **sspp)
 {
-	struct lwp *l = scred->scr_l;
-	struct file *fp;
+	file_t *fp;
 	struct vnode *vp;
 	struct smb_dev *sdp;
 	struct smb_share *ssp;
 	dev_t dev;
 	int error;
 
-	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
-	FILE_USE(fp);
-
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE
 	    || (fp->f_flag & (FREAD|FWRITE)) == 0
 	    || vp->v_type != VCHR
 	    || vp->v_rdev == NODEV) {
-		FILE_UNUSE(fp, l);
+		fd_putfile(fd);
 		return (EBADF);
 	}
 
 	dev = vp->v_rdev;
 
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 
 	sdp = SMB_GETDEV(dev);
 	if (!sdp)

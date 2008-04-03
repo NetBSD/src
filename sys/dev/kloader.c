@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.15 2007/12/15 00:39:26 perry Exp $	*/
+/*	$NetBSD: kloader.c,v 1.15.6.1 2008/04/03 12:42:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.15 2007/12/15 00:39:26 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.15.6.1 2008/04/03 12:42:36 mjf Exp $");
 
 #include "debug_kloader.h"
 
@@ -623,7 +623,7 @@ kloader_close()
 	struct vnode *vp = kloader.vp;
 
 	VOP_UNLOCK(vp, 0);
-	vn_close(vp, FREAD, l->l_cred, l);
+	vn_close(vp, FREAD, l->l_cred);
 }
 
 int

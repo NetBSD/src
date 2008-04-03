@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.11 2007/12/03 10:41:59 plunky Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.11.14.1 2008/04/03 12:42:38 mjf Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.11 2007/12/03 10:41:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.11.14.1 2008/04/03 12:42:38 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.11 2007/12/03 10:41:59 plunky Exp $");
 #include <netbt/hci.h>
 
 #include <dev/bluetooth/bcsp.h>
-#include <dev/bluetooth/btuart.h>
 
 #include "ioconf.h"
 

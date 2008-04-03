@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.6 2007/03/11 06:34:24 tsutsui Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.6.38.1 2008/04/03 12:42:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@ extern struct consdev *cn_tab;
 #define cn_isconsole(d)	((d) == cn_tab->cn_dev || (d) == cn_hw->cn_dev)
 
 struct zsc_softc {
-	struct device		zsc_dev;	/* base device */
+	device_t		zsc_dev;	/* base device */
 	bus_space_tag_t		zsc_bustag;	/* bus space/DMA tags */
 	bus_dma_tag_t		zsc_dmatag;
 	struct zs_chanstate	*zsc_cs[2];	/* channel A and B soft state */
@@ -93,13 +93,13 @@ int zs_console_flags(int, int, int);
  * about the function call overhead where ZS_DELAY does nothing.
  */
 
-u_char zs_read_reg(struct zs_chanstate *, u_char);
-u_char zs_read_csr(struct zs_chanstate *);
-u_char zs_read_data(struct zs_chanstate *);
+uint8_t zs_read_reg(struct zs_chanstate *, uint8_t);
+uint8_t zs_read_csr(struct zs_chanstate *);
+uint8_t zs_read_data(struct zs_chanstate *);
 
-void  zs_write_reg(struct zs_chanstate *, u_char, u_char);
-void  zs_write_csr(struct zs_chanstate *, u_char);
-void  zs_write_data(struct zs_chanstate *, u_char);
+void  zs_write_reg(struct zs_chanstate *, uint8_t, uint8_t);
+void  zs_write_csr(struct zs_chanstate *, uint8_t);
+void  zs_write_data(struct zs_chanstate *, uint8_t);
 
 /* Everyone has splzs() in <machine/intr.h> */
 

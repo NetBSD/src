@@ -1,4 +1,4 @@
-/* $NetBSD: ug_isa.c,v 1.5 2007/11/16 08:00:15 xtraeme Exp $ */
+/* $NetBSD: ug_isa.c,v 1.5.14.1 2008/04/03 12:42:45 mjf Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.5 2007/11/16 08:00:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.5.14.1 2008/04/03 12:42:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,17 +57,17 @@ __KERNEL_RCSID(0, "$NetBSD: ug_isa.c,v 1.5 2007/11/16 08:00:15 xtraeme Exp $");
 #include <dev/ic/ugvar.h>
 
 /* autoconf(9) functions */
-static int  ug_isa_match(struct device *, struct cfdata *, void *);
-static void ug_isa_attach(struct device *, struct device *, void *);
-static int  ug_isa_detach(struct device *, int);
+static int  ug_isa_match(device_t, cfdata_t, void *);
+static void ug_isa_attach(device_t, device_t, void *);
+static int  ug_isa_detach(device_t, int);
 
-CFATTACH_DECL(ug_isa, sizeof(struct ug_softc),
+CFATTACH_DECL_NEW(ug_isa, sizeof(struct ug_softc),
     ug_isa_match, ug_isa_attach, ug_isa_detach, NULL);
 
 extern uint8_t ug_ver;
 
 static int
-ug_isa_match(struct device *parent, struct cfdata *match, void *aux)
+ug_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	struct ug_softc wrap_sc;
@@ -121,9 +121,9 @@ ug_isa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ug_isa_attach(struct device *parent, struct device *self, void *aux)
+ug_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct ug_softc *sc = (void *)self;
+	struct ug_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	int i;
 
@@ -137,14 +137,14 @@ ug_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->version = ug_ver;
 
 	if (sc->version == 2) {
-		ug2_attach(sc);
+		ug2_attach(self);
 		return;
 	}
 
 	aprint_normal(": Abit uGuru system monitor\n");
 
 	if (!ug_reset(sc))
-		aprint_error("%s: reset failed.\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "reset failed.\n");
 
 	ug_setup_sensors(sc);
 	sc->sc_sme = sysmon_envsys_create();
@@ -161,15 +161,14 @@ ug_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sme->sme_refresh = ug_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
 
 }
 
 static int
-ug_isa_detach(struct device *self, int flags)
+ug_isa_detach(device_t self, int flags)
 {
 	struct ug_softc *sc = device_private(self);
 

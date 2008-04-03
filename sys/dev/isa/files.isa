@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.155 2007/12/31 01:52:34 wiz Exp $
+#	$NetBSD: files.isa,v 1.155.6.1 2008/04/03 12:42:44 mjf Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -395,6 +395,11 @@ file	dev/isa/vga_isa.c		vga_isa			needs-flag
 device	ega: wsemuldisplaydev, pcdisplayops
 attach	ega at isa
 file	dev/isa/ega.c			ega			needs-flag
+
+# IDEC Supervision/16 image capture board
+device	isv
+attach	isv at isa with isv_isa
+file	dev/isa/isv.c			isv
 
 # generic PC graphics adapter (MGA, CGA, ...)
 device	pcdisplay: wsemuldisplaydev, pcdisplayops

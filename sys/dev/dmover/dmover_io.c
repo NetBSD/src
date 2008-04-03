@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.29 2008/01/04 21:17:52 ad Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.29.6.1 2008/04/03 12:42:39 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.29 2008/01/04 21:17:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.29.6.1 2008/04/03 12:42:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -387,7 +387,7 @@ dmio_read(struct file *fp, off_t *offp, struct uio *uio,
 			}
 			if (ds->ds_flags & DMIO_STATE_SEL) {
 				ds->ds_flags &= ~DMIO_STATE_SEL;
-				selwakeup(&ds->ds_selq);
+				selnotify(&ds->ds_selq, POLLIN | POLLRDNORM, 0);
 			}
 			break;
 		}
@@ -460,7 +460,7 @@ dmio_usrreq_done(struct dmover_request *dreq)
 		}
 		if (ds->ds_flags & DMIO_STATE_SEL) {
 			ds->ds_flags &= ~DMIO_STATE_SEL;
-			selwakeup(&ds->ds_selq);
+			selnotify(&ds->ds_selq, POLLOUT | POLLWRNORM, 0);
 		}
 	}
 	simple_unlock(&ds->ds_slock);
@@ -575,7 +575,7 @@ dmio_write(struct file *fp, off_t *offp, struct uio *uio,
  *	Ioctl file op.
  */
 static int
-dmio_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
+dmio_ioctl(struct file *fp, u_long cmd, void *data)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	int error, s;
@@ -635,7 +635,7 @@ dmio_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
  *	Poll file op.
  */
 static int
-dmio_poll(struct file *fp, int events, struct lwp *l)
+dmio_poll(struct file *fp, int events)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	int s, revents = 0;
@@ -667,7 +667,7 @@ dmio_poll(struct file *fp, int events, struct lwp *l)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
 	if (revents == 0) {
-		selrecord(l, &ds->ds_selq);
+		selrecord(curlwp, &ds->ds_selq);
 		ds->ds_flags |= DMIO_STATE_SEL;
 	}
 
@@ -684,7 +684,7 @@ dmio_poll(struct file *fp, int events, struct lwp *l)
  *	Close file op.
  */
 static int
-dmio_close(struct file *fp, struct lwp *l)
+dmio_close(struct file *fp)
 {
 	struct dmio_state *ds = (struct dmio_state *) fp->f_data;
 	struct dmio_usrreq_state *dus;
@@ -752,7 +752,7 @@ dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error, fd, s;
 
 	/* falloc() will use the descriptor for us. */
-	if ((error = falloc(l, &fp, &fd)) != 0)
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return (error);
 
 	s = splsoftclock();
@@ -765,5 +765,5 @@ dmoverioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	TAILQ_INIT(&ds->ds_complete);
 	selinit(&ds->ds_selq);
 
-	return fdclone(l, fp, fd, flag, &dmio_fileops, ds);
+	return fd_clone(fp, fd, flag, &dmio_fileops, ds);
 }

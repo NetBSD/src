@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.32 2007/12/09 20:27:53 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.32.10.1 2008/04/03 12:42:37 mjf Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.32 2007/12/09 20:27:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.32.10.1 2008/04/03 12:42:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.32 2007/12/09 20:27:53 jmcneill Exp $"
 /* sensor indexes */
 #define ATZ_SENSOR_TEMP	0	/* thermal zone temperature */
 
-static int	acpitz_match(struct device *, struct cfdata *, void *);
-static void	acpitz_attach(struct device *, struct device *, void *);
+static int	acpitz_match(device_t, cfdata_t, void *);
+static void	acpitz_attach(device_t, device_t, void *);
 
 /*
  * ACPI Temperature Zone information. Note all temperatures are reported
@@ -101,7 +101,6 @@ struct acpitz_zone {
 };
 
 struct acpitz_softc {
-	struct device sc_dev;
 	struct acpi_devnode *sc_devnode;
 	struct acpitz_zone sc_zone;
 	struct callout sc_callout;
@@ -119,26 +118,26 @@ struct acpitz_softc {
 static void	acpitz_get_status(void *);
 static void	acpitz_get_zone(void *, int);
 static void	acpitz_get_zone_quiet(void *);
-static char*	acpitz_celcius_string(int);
-static void	acpitz_print_status(struct acpitz_softc *);
+static char	*acpitz_celcius_string(int);
+static void	acpitz_print_status(device_t);
 static void	acpitz_power_off(struct acpitz_softc *);
 static void	acpitz_power_zone(struct acpitz_softc *, int, int);
 static void	acpitz_sane_temp(UINT32 *tmp);
 static ACPI_STATUS
 		acpitz_switch_cooler(ACPI_OBJECT *, void *);
 static void	acpitz_notify_handler(ACPI_HANDLE, UINT32, void *);
-static int	acpitz_get_integer(struct acpitz_softc *, const char *, UINT32 *);
+static int	acpitz_get_integer(device_t, const char *, UINT32 *);
 static void	acpitz_tick(void *);
-static void	acpitz_init_envsys(struct acpitz_softc *);
+static void	acpitz_init_envsys(device_t);
 
-CFATTACH_DECL(acpitz, sizeof(struct acpitz_softc), acpitz_match,
+CFATTACH_DECL_NEW(acpitz, sizeof(struct acpitz_softc), acpitz_match,
     acpitz_attach, NULL, NULL);
 
 /*
  * acpitz_match: autoconf(9) match routine
  */
 static int
-acpitz_match(struct device *parent, struct cfdata *match, void *aux)
+acpitz_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -152,9 +151,9 @@ acpitz_match(struct device *parent, struct cfdata *match, void *aux)
  * acpitz_attach: autoconf(9) attach routine
  */
 static void
-acpitz_attach(struct device *parent, struct device *self, void *aux)
+acpitz_attach(device_t parent, device_t self, void *aux)
 {
-	struct acpitz_softc *sc = (struct acpitz_softc *)self;
+	struct acpitz_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 	ACPI_INTEGER v;
@@ -184,21 +183,21 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
 	sc->sc_first = 1;
 
-	acpitz_get_zone(sc, 1);
-	acpitz_get_status(sc);
+	acpitz_get_zone(self, 1);
+	acpitz_get_status(self);
 
 	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
-	    ACPI_SYSTEM_NOTIFY, acpitz_notify_handler, sc);
+	    ACPI_SYSTEM_NOTIFY, acpitz_notify_handler, self);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error(": unable to install SYSTEM NOTIFY handler: %s\n",
 		    AcpiFormatException(rv));
 		return;
 	}
 
-	callout_init(&sc->sc_callout, 0);
-	callout_setfunc(&sc->sc_callout, acpitz_tick, sc);
+	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_callout, acpitz_tick, self);
 
-	acpitz_init_envsys(sc);
+	acpitz_init_envsys(self);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error(": couldn't establish power handler\n");
@@ -215,7 +214,8 @@ acpitz_get_zone_quiet(void *opaque)
 static void
 acpitz_get_status(void *opaque)
 {
-	struct acpitz_softc *sc = opaque;
+	device_t dv = opaque;
+	struct acpitz_softc *sc = device_private(dv);
 	UINT32 tmp, active;
 	int i, flags;
 
@@ -223,13 +223,12 @@ acpitz_get_status(void *opaque)
 	if (sc->sc_zone_expire <= 0) {
 		sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
 		if (sc->sc_flags & ATZ_F_VERBOSE)
-			printf("%s: force refetch zone\n", sc->sc_dev.dv_xname);
-		acpitz_get_zone(sc, 0);
+			printf("%s: force refetch zone\n", device_xname(dv));
+		acpitz_get_zone(dv, 0);
 	}
 
-	if (acpitz_get_integer(sc, "_TMP", &tmp)) {
-		aprint_error("%s: failed to evaluate _TMP\n",
-		    sc->sc_dev.dv_xname);
+	if (acpitz_get_integer(dv, "_TMP", &tmp)) {
+		aprint_error_dev(dv, "failed to evaluate _TMP\n");
 		return;
 	}
 	sc->sc_zone.tmp = tmp;
@@ -245,7 +244,7 @@ acpitz_get_status(void *opaque)
 	sc->sc_sensor.state = ENVSYS_SVALID;
 
 	if (sc->sc_flags & ATZ_F_VERBOSE)
-		acpitz_print_status(sc);
+		acpitz_print_status(dv);
 
 	if (sc->sc_flags & ATZ_F_PASSIVEONLY) {
 		/* Passive Cooling: XXX not yet */
@@ -264,7 +263,8 @@ acpitz_get_status(void *opaque)
 				active = i;
 		}
 
-		flags = sc->sc_flags & ~(ATZ_F_CRITICAL|ATZ_F_HOT|ATZ_F_PASSIVE);
+		flags = sc->sc_flags &
+		    ~(ATZ_F_CRITICAL|ATZ_F_HOT|ATZ_F_PASSIVE);
 		if (sc->sc_zone.psv != ATZ_TMP_INVALID &&
 		    tmp >= sc->sc_zone.psv)
 			flags |= ATZ_F_PASSIVE;
@@ -280,13 +280,13 @@ acpitz_get_status(void *opaque)
 			sc->sc_flags = flags;
 			if (changed & ATZ_F_CRITICAL) {
 				sc->sc_sensor.state = ENVSYS_SCRITICAL;
-				printf("%s: zone went critical at temp %sC\n",
-				    sc->sc_dev.dv_xname,
+				aprint_normal_dev(dv,
+				    "zone went critical at temp %sC\n",
 				    acpitz_celcius_string(tmp));
 			} else if (changed & ATZ_F_HOT) {
 				sc->sc_sensor.state = ENVSYS_SWARNOVER;
-				printf("%s: zone went hot at temp %sC\n",
-				    sc->sc_dev.dv_xname,
+				aprint_normal_dev(dv,
+				    "zone went hot at temp %sC\n",
 				    acpitz_celcius_string(tmp));
 			}
 		}
@@ -299,7 +299,7 @@ acpitz_get_status(void *opaque)
 			if (active != ATZ_ACTIVE_NONE) {
 				if (sc->sc_flags & ATZ_F_VERBOSE)
 					printf("%s: active cooling level %u\n",
-					    sc->sc_dev.dv_xname, active);
+					    device_xname(dv), active);
 				acpitz_power_zone(sc, active, 1);
 			}
 
@@ -322,10 +322,11 @@ acpitz_celcius_string(int dk)
 }
 
 static void
-acpitz_print_status(struct acpitz_softc *sc)
+acpitz_print_status(device_t dv)
 {
+	struct acpitz_softc *sc = device_private(dv);
 
-	printf("%s: zone temperature is now %sC\n", sc->sc_dev.dv_xname,
+	printf("%s: zone temperature is now %sC\n", device_xname(dv),
 	    acpitz_celcius_string(sc->sc_zone.tmp));
 
 	return;
@@ -407,7 +408,8 @@ acpitz_power_off(struct acpitz_softc *sc)
 static void
 acpitz_get_zone(void *opaque, int verbose)
 {
-	struct acpitz_softc *sc = opaque;
+	device_t dv = opaque;
+	struct acpitz_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 	char buf[8];
 	int i, valid_levels;
@@ -429,7 +431,7 @@ acpitz_get_zone(void *opaque, int verbose)
 		ACPI_OBJECT *obj;
 
 		snprintf(buf, sizeof(buf), "_AC%d", i);
-		if (acpitz_get_integer(sc, buf, &sc->sc_zone.ac[i]))
+		if (acpitz_get_integer(dv, buf, &sc->sc_zone.ac[i]))
 			continue;
 
 		snprintf(buf, sizeof(buf), "_AL%d", i);
@@ -457,15 +459,15 @@ acpitz_get_zone(void *opaque, int verbose)
 		valid_levels++;
 	}
 
-	acpitz_get_integer(sc, "_TMP", &sc->sc_zone.tmp);
-	acpitz_get_integer(sc, "_CRT", &sc->sc_zone.crt);
-	acpitz_get_integer(sc, "_HOT", &sc->sc_zone.hot);
+	acpitz_get_integer(dv, "_TMP", &sc->sc_zone.tmp);
+	acpitz_get_integer(dv, "_CRT", &sc->sc_zone.crt);
+	acpitz_get_integer(dv, "_HOT", &sc->sc_zone.hot);
 	sc->sc_zone.psl.Length = ACPI_ALLOCATE_BUFFER;
 	sc->sc_zone.psl.Pointer = NULL;
 	AcpiEvaluateObject(sc, "_PSL", NULL, &sc->sc_zone.psl);
-	acpitz_get_integer(sc, "_PSV", &sc->sc_zone.psv);
-	acpitz_get_integer(sc, "_TC1", &sc->sc_zone.tc1);
-	acpitz_get_integer(sc, "_TC2", &sc->sc_zone.tc2);
+	acpitz_get_integer(dv, "_PSV", &sc->sc_zone.psv);
+	acpitz_get_integer(dv, "_TC1", &sc->sc_zone.tc1);
+	acpitz_get_integer(dv, "_TC2", &sc->sc_zone.tc2);
 
 	acpitz_sane_temp(&sc->sc_zone.tmp);
 	acpitz_sane_temp(&sc->sc_zone.crt);
@@ -503,7 +505,7 @@ acpitz_get_zone(void *opaque, int verbose)
 static void
 acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 {
-	struct acpitz_softc *sc = opaque;
+	device_t dv = opaque;
 	ACPI_OSD_EXEC_CALLBACK func = NULL;
 	const char *name;
 	int rv;
@@ -519,18 +521,16 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 		name = "get zone";
 		break;
 	default:
-		printf("%s: received unhandled notify message 0x%x\n",
-		    sc->sc_dev.dv_xname, notify);
+		aprint_debug_dev(dv,
+		    "received unhandled notify message 0x%x\n", notify);
 		return;
 	}
 
 	KASSERT(func != NULL);
 
-	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc);
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, func, dv);
 	if (rv != AE_OK)
-		printf("%s: unable to queue %s\n", sc->sc_dev.dv_xname, name);
-
-	return;
+		aprint_debug_dev(dv, "unable to queue %s\n", name);
 }
 
 static void
@@ -542,15 +542,16 @@ acpitz_sane_temp(UINT32 *tmp)
 }
 
 static int
-acpitz_get_integer(struct acpitz_softc *sc, const char *cm, UINT32 *val)
+acpitz_get_integer(device_t dv, const char *cm, UINT32 *val)
 {
+	struct acpitz_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
 	ACPI_INTEGER tmp;
 
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, cm, &tmp);
 	if (ACPI_FAILURE(rv)) {
 #ifdef ACPI_DEBUG
-		printf("%s: failed to evaluate %s: %s\n", sc->sc_dev.dv_xname,
+		aprint_debug_dev(dv, "failed to evaluate %s: %s\n",
 		    cm, AcpiFormatException(rv));
 #endif
 		*val = ATZ_TMP_INVALID;
@@ -565,16 +566,19 @@ acpitz_get_integer(struct acpitz_softc *sc, const char *cm, UINT32 *val)
 static void
 acpitz_tick(void *opaque)
 {
-	struct acpitz_softc *sc = opaque;
+	device_t dv = opaque;
+	struct acpitz_softc *sc = device_private(dv);
 
-	AcpiOsExecute(OSL_NOTIFY_HANDLER, acpitz_get_status, sc);
+	AcpiOsExecute(OSL_NOTIFY_HANDLER, acpitz_get_status, dv);
 
 	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
 
 static void
-acpitz_init_envsys(struct acpitz_softc *sc)
+acpitz_init_envsys(device_t dv)
 {
+	struct acpitz_softc *sc = device_private(dv);
+
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor.monitor = true;
 	sc->sc_sensor.flags = (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
@@ -585,13 +589,11 @@ acpitz_init_envsys(struct acpitz_softc *sc)
 	}
 
 	/* hook into sysmon */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_name = device_xname(dv);
 	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		printf("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(dv, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 	}
 }

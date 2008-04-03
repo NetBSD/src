@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2007/03/04 06:00:56 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.25.40.1 2008/04/03 12:42:27 mjf Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -111,10 +111,10 @@ autoconf()
 
 	if (copyrpb) {
 		struct rpb *prpb = (struct rpb *)bootregs[11];
-		bcopy((void *)prpb, &bootrpb, sizeof(struct rpb));
+		memcpy(&bootrpb, (void *)prpb, sizeof(struct rpb));
 		if (prpb->iovec) {
 			bootrpb.iovec = (int)alloc(prpb->iovecsz);
-			bcopy((void *)prpb->iovec, (void *)bootrpb.iovec,
+			memcpy((void *)bootrpb.iovec, (void *)prpb->iovec,
 			    prpb->iovecsz);
 		}
 	}

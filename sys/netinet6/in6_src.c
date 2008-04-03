@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.40 2007/11/26 08:12:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.40.14.1 2008/04/03 12:43:09 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -1004,7 +1004,7 @@ TAILQ_HEAD(addrsel_policyhead, addrsel_policyent);
 struct addrsel_policyhead addrsel_policytab;
 
 static void
-init_policy_queue()
+init_policy_queue(void)
 {
 	TAILQ_INIT(&addrsel_policytab);
 }

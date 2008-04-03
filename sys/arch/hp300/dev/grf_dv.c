@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.38 2007/12/31 13:38:48 ad Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.38.6.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.38 2007/12/31 13:38:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.38.6.1 2008/04/03 12:42:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,18 +154,18 @@ static int	dv_init(struct grf_data *, int, uint8_t *);
 static int	dv_mode(struct grf_data *, int, void *);
 static void	dv_reset(struct dvboxfb *);
 
-static int	dvbox_intio_match(struct device *, struct cfdata *, void *);
-static void	dvbox_intio_attach(struct device *, struct device *, void *);
+static int	dvbox_intio_match(device_t, cfdata_t, void *);
+static void	dvbox_intio_attach(device_t, device_t, void *);
 
-static int	dvbox_dio_match(struct device *, struct cfdata *, void *);
-static void	dvbox_dio_attach(struct device *, struct device *, void *);
+static int	dvbox_dio_match(device_t, cfdata_t, void *);
+static void	dvbox_dio_attach(device_t, device_t, void *);
 
 int	dvboxcnattach(bus_space_tag_t, bus_addr_t, int);
 
-CFATTACH_DECL(dvbox_intio, sizeof(struct grfdev_softc),
+CFATTACH_DECL_NEW(dvbox_intio, sizeof(struct grfdev_softc),
     dvbox_intio_match, dvbox_intio_attach, NULL, NULL);
 
-CFATTACH_DECL(dvbox_dio, sizeof(struct grfdev_softc),
+CFATTACH_DECL_NEW(dvbox_dio, sizeof(struct grfdev_softc),
     dvbox_dio_match, dvbox_dio_attach, NULL, NULL);
 
 /* DaVinci grf switch */
@@ -194,7 +194,7 @@ static struct itesw dvbox_itesw = {
 #endif /* NITE > 0 */
 
 static int
-dvbox_intio_match(struct device *parent, struct cfdata *match, void *aux)
+dvbox_intio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
@@ -216,11 +216,13 @@ dvbox_intio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-dvbox_intio_attach(struct device *parent, struct device *self, void *aux)
+dvbox_intio_attach(device_t parent, device_t self, void *aux)
 {
-	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct grfdev_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 	void *grf;
+
+	sc->sc_dev = self;
 
 	grf = (void *)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
@@ -230,7 +232,7 @@ dvbox_intio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-dvbox_dio_match(struct device *parent, struct cfdata *match, void *aux)
+dvbox_dio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -242,21 +244,21 @@ dvbox_dio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-dvbox_dio_attach(struct device *parent, struct device *self, void *aux)
+dvbox_dio_attach(device_t parent, device_t self, void *aux)
 {
-	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct grfdev_softc *sc = device_private(self);
 	struct dio_attach_args *da = aux;
 	bus_space_handle_t bsh;
 	void *grf;
 
+	sc->sc_dev = self;
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == dvconscode)
 		grf = dvconaddr;
 	else {
 		if (bus_space_map(da->da_bst, da->da_addr, da->da_size,
 		    0, &bsh)) {
-			printf("%s: can't map framebuffer\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error(": can't map framebuffer\n");
 			return;
 		}
 		grf = bus_space_vaddr(da->da_bst, bsh);

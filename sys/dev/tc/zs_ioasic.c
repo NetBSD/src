@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.35 2007/11/09 00:05:38 ad Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.35.14.1 2008/04/03 12:42:57 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.35 2007/11/09 00:05:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.35.14.1 2008/04/03 12:42:57 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -127,9 +127,9 @@ struct zshan {
 	u_int		sc_pad1;
 #endif
 #if defined(pmax)
-	volatile u_int16_t zc_csr;	/* ctrl,status, and indirect access */
+	volatile uint16_t zc_csr;	/* ctrl,status, and indirect access */
 	unsigned : 16;
-	volatile u_int16_t zc_data;	/* data */
+	volatile uint16_t zc_data;	/* data */
 	unsigned : 16;
 #endif
 };
@@ -186,13 +186,13 @@ zs_ioasic_get_chan_addr(tc_addr_t zsaddr, int channel)
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zs_ioasic_match(struct device *, struct cfdata *, void *);
-static void	zs_ioasic_attach(struct device *, struct device *, void *);
+static int	zs_ioasic_match(device_t, cfdata_t, void *);
+static void	zs_ioasic_attach(device_t, device_t, void *);
 static int	zs_ioasic_print(void *, const char *name);
-static int	zs_ioasic_submatch(struct device *, struct cfdata *,
+static int	zs_ioasic_submatch(device_t, struct cfdata *,
 				   const int *, void *);
 
-CFATTACH_DECL(zsc_ioasic, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zsc_ioasic, sizeof(struct zsc_softc),
     zs_ioasic_match, zs_ioasic_attach, NULL, NULL);
 
 /* Interrupt handlers. */
@@ -203,7 +203,7 @@ static void	zs_ioasic_softintr(void *);
  * Is the zs chip present?
  */
 static int
-zs_ioasic_match(struct device *parent, struct cfdata *cf, void *aux)
+zs_ioasic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 	tc_addr_t zs_addr;
@@ -229,7 +229,7 @@ zs_ioasic_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach a found zs.
  */
 static void
-zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
+zs_ioasic_attach(device_t parent, device_t self, void *aux)
 {
 	struct zsc_softc *zs = device_private(self);
 	struct zsc_attach_args zs_args;
@@ -240,7 +240,8 @@ zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	u_long zflg;
 	int locs[ZSCCF_NLOCS];
 
-	printf("\n");
+	zs->zsc_dev = self;
+	aprint_normal("\n");
 
 	/*
 	 * Initialize software state for each channel.
@@ -259,12 +260,12 @@ zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
 			zc = zs_ioasic_get_chan_addr(d->iada_addr, channel);
 			cs->cs_reg_csr = (volatile void *)&zc->zc_csr;
 
-			bcopy(zs_ioasic_init_reg, cs->cs_creg, 16);
-			bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
+			memcpy(cs->cs_creg, zs_ioasic_init_reg, 16);
+			memcpy(cs->cs_preg, zs_ioasic_init_reg, 16);
 
 			cs->cs_defcflag = zs_def_cflag;
 			cs->cs_defspeed = 9600;		/* XXX */
-			(void) zs_set_modes(cs, cs->cs_defcflag);
+			(void)zs_set_modes(cs, cs->cs_defcflag);
 		}
 
 		zs->zsc_cs[channel] = cs;
@@ -317,8 +318,8 @@ zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
 		if (config_found_sm_loc(self, "zsc", locs, (void *)&zs_args,
 				zs_ioasic_print, zs_ioasic_submatch) == NULL) {
 			/* No sub-driver.  Just reset it. */
-			u_char reset = (channel == 0) ?
-				ZSWR9_A_RESET : ZSWR9_B_RESET;
+			uint8_t reset = (channel == 0) ?
+			    ZSWR9_A_RESET : ZSWR9_B_RESET;
 			s = splhigh();
 			zs_write_reg(cs, 9, reset);
 			splx(s);
@@ -333,7 +334,7 @@ zs_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	zs->zsc_sih = softint_establish(SOFTINT_SERIAL,
 	    zs_ioasic_softintr, zs);
 	if (zs->zsc_sih == NULL)
-		panic("zs_ioasic_attach: unable to register softintr");
+		panic("%s: unable to register softintr", __func__);
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.  The
@@ -372,10 +373,9 @@ zs_ioasic_print(void *aux, const char *name)
 }
 
 static int
-zs_ioasic_submatch(struct device *parent, struct cfdata *cf, const int *locs,
-    void *aux)
+zs_ioasic_submatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 {
-	struct zsc_softc *zs = (void *)parent;
+	struct zsc_softc *zs = device_private(parent);
 	struct zsc_attach_args *pa = aux;
 	const char *defname = "";
 
@@ -446,7 +446,7 @@ zs_ioasic_softintr(void *arg)
 	int s;
 
 	s = spltty();
-	(void) zsc_intr_soft(zsc);
+	(void)zsc_intr_soft(zsc);
 	splx(s);
 }
 
@@ -628,7 +628,7 @@ zs_write_data(struct zs_chanstate *cs, u_int val)
 void
 zs_abort(struct zs_chanstate *cs)
 {
-	int rr0;
+	u_int rr0;
 
 	/* Wait for end of break. */
 	/* XXX - Limit the wait? */
@@ -651,7 +651,8 @@ zs_abort(struct zs_chanstate *cs)
 int
 zs_getc(struct zs_chanstate *cs)
 {
-	int s, c, rr0;
+	int s, c;
+	u_int rr0;
 
 	s = splhigh();
 	/* Wait for a character to arrive. */
@@ -675,7 +676,8 @@ zs_getc(struct zs_chanstate *cs)
 static void
 zs_putc(struct zs_chanstate *cs, int c)
 {
-	register int s, rr0;
+	int s;
+	u_int rr0;
 
 	s = splhigh();
 	/* Wait for transmitter to become ready. */

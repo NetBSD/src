@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.21 2007/11/06 15:24:11 kiyohara Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.21.14.1 2008/04/03 12:42:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.21 2007/11/06 15:24:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.21.14.1 2008/04/03 12:42:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,11 +69,11 @@ struct fwohci_cardbus_softc {
 	void		       *sc_ih;
 };
 
-static int fwohci_cardbus_match(struct device *, struct cfdata *, void *);
-static void fwohci_cardbus_attach(struct device *, struct device *, void *);
-static int fwohci_cardbus_detach(struct device *, int);
+static int fwohci_cardbus_match(device_t, struct cfdata *, void *);
+static void fwohci_cardbus_attach(device_t, device_t, void *);
+static int fwohci_cardbus_detach(device_t, int);
 
-CFATTACH_DECL(fwohci_cardbus, sizeof(struct fwohci_cardbus_softc),
+CFATTACH_DECL_NEW(fwohci_cardbus, sizeof(struct fwohci_cardbus_softc),
     fwohci_cardbus_match, fwohci_cardbus_attach,
     fwohci_cardbus_detach, NULL);
 
@@ -82,8 +82,7 @@ CFATTACH_DECL(fwohci_cardbus, sizeof(struct fwohci_cardbus_softc),
 #define cardbus_devinfo pci_devinfo
 
 static int
-fwohci_cardbus_match(struct device *parent,
-    struct cfdata *match, void *aux)
+fwohci_cardbus_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
@@ -97,8 +96,7 @@ fwohci_cardbus_match(struct device *parent,
 }
 
 static void
-fwohci_cardbus_attach(struct device *parent, struct device *self,
-    void *aux)
+fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	struct fwohci_cardbus_softc *sc = device_private(self);
@@ -107,18 +105,18 @@ fwohci_cardbus_attach(struct device *parent, struct device *self,
 	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t csr;
 	char devinfo[256];
-	const char *devname = self->dv_xname;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo,
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	       CARDBUS_REVISION(ca->ca_class));
+	aprint_naive("\n");
 
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, CARDBUS_OHCI_MAP_REGISTER,
 	      CARDBUS_MAPREG_TYPE_MEM, 0,
 	      &sc->sc_sc.bst, &sc->sc_sc.bsh,
 	      NULL, &sc->sc_sc.bssize)) {
-		printf("%s: can't map OHCI register space\n", devname);
+		aprint_error_dev(self, "can't map OHCI register space\n");
 		return;
 	}
 
@@ -146,20 +144,20 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_BIO, fwohci_filt, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", devname);
+		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
-	printf("%s: interrupting at %d\n", devname, ca->ca_intrline);
+	aprint_normal_dev(self, "interrupting at %d\n", ca->ca_intrline);
 
 	/* XXX NULL should be replaced by some call to Cardbus coed */
-	if (fwohci_init(&sc->sc_sc, &(sc->sc_sc.fc._dev)) != 0) {
+	if (fwohci_init(&sc->sc_sc, sc->sc_sc.fc.dev) != 0) {
 		cardbus_intr_disestablish(cc, cf, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 }
 
 int
-fwohci_cardbus_detach(struct device *self, int flags)
+fwohci_cardbus_detach(device_t self, int flags)
 {
 	struct fwohci_cardbus_softc *sc = device_private(self);
 	cardbus_devfunc_t ct = sc->sc_ct;

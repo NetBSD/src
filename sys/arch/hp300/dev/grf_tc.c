@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.40 2007/12/31 13:38:49 ad Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.40.6.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.40 2007/12/31 13:38:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.40.6.1 2008/04/03 12:42:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -155,18 +155,18 @@ static int	tc_mode(struct grf_data *, int, void *);
 
 static void	topcat_common_attach(struct grfdev_softc *, void *, uint8_t);
 
-static int	topcat_intio_match(struct device *, struct cfdata *, void *);
-static void	topcat_intio_attach(struct device *, struct device *, void *);
+static int	topcat_intio_match(device_t, cfdata_t, void *);
+static void	topcat_intio_attach(device_t, device_t, void *);
 
-static int	topcat_dio_match(struct device *, struct cfdata *, void *);
-static void	topcat_dio_attach(struct device *, struct device *, void *);
+static int	topcat_dio_match(device_t, cfdata_t, void *);
+static void	topcat_dio_attach(device_t, device_t, void *);
 
 int	topcatcnattach(bus_space_tag_t, bus_addr_t, int);
 
-CFATTACH_DECL(topcat_intio, sizeof(struct grfdev_softc),
+CFATTACH_DECL_NEW(topcat_intio, sizeof(struct grfdev_softc),
     topcat_intio_match, topcat_intio_attach, NULL, NULL);
 
-CFATTACH_DECL(topcat_dio, sizeof(struct grfdev_softc),
+CFATTACH_DECL_NEW(topcat_dio, sizeof(struct grfdev_softc),
     topcat_dio_match, topcat_dio_attach, NULL, NULL);
 
 /* Topcat (bobcat) grf switch */
@@ -210,7 +210,7 @@ static struct itesw topcat_itesw = {
 #endif /* NITE > 0 */
 
 static int
-topcat_intio_match(struct device *parent, struct cfdata *match, void *aux)
+topcat_intio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	struct grfreg *grf;
@@ -240,11 +240,13 @@ topcat_intio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-topcat_intio_attach(struct device *parent, struct device *self, void *aux)
+topcat_intio_attach(device_t parent, device_t self, void *aux)
 {
+	struct grfdev_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
-	struct grfdev_softc *sc = (struct grfdev_softc *)self;
 	struct grfreg *grf;
+
+	sc->sc_dev = self;
 
 	grf = (struct grfreg *)ia->ia_addr;
 	sc->sc_scode = -1;	/* XXX internal i/o */
@@ -254,7 +256,7 @@ topcat_intio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-topcat_dio_match(struct device *parent, struct cfdata *match, void *aux)
+topcat_dio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -275,21 +277,21 @@ topcat_dio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-topcat_dio_attach(struct device *parent, struct device *self, void *aux)
+topcat_dio_attach(device_t parent, device_t self, void *aux)
 {
-	struct grfdev_softc *sc = (struct grfdev_softc *)self;
+	struct grfdev_softc *sc = device_private(self);
 	struct dio_attach_args *da = aux;
 	void *grf;
 	bus_space_handle_t bsh;
 
+	sc->sc_dev = self;
 	sc->sc_scode = da->da_scode;
 	if (sc->sc_scode == tcconscode)
 		grf = tcconaddr;
 	else {
 		if (bus_space_map(da->da_bst, da->da_addr, da->da_size, 0,
 		    &bsh)) {
-			printf("%s: can't map framebuffer\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error(": can't map framebuffer\n");
 			return;
 		}
 		grf = bus_space_vaddr(da->da_bst, bsh);
@@ -325,9 +327,8 @@ topcat_common_attach(struct grfdev_softc *sc, void *grf, uint8_t secid)
 		break;
 #endif
 	default:
-		printf("%s: unknown device 0x%x\n",
-		    sc->sc_dev.dv_xname, secid);
-		panic("topcat_common_attach");
+		aprint_error(": unknown device 0x%x\n", secid);
+		panic("%s: unknown topcat", __func__);
 	}
 
 	sc->sc_isconsole = (sc->sc_scode == tcconscode);

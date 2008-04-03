@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.7 2007/11/07 15:56:12 ad Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.7.14.1 2008/04/03 12:42:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@ struct zs_channel {
 };	
 
 struct zsc_softc {
-	struct	device		zsc_dev;	/* required: base device */
+	device_t		zsc_dev;	/* required: base device */
 	struct	zs_chanstate   *zsc_cs[2];	/* channel soft state */
 	struct  zs_channel	zsc_cs_store[2];
 	/* Machine-dependent part follows... */
@@ -108,19 +108,19 @@ struct zsc_softc {
  * The SCC chip requires 3-4 PCLK cycles recovery time between accesses
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+uint8_t zs_read_reg(struct zs_chanstate *cs, uint8_t reg);
+uint8_t zs_read_csr(struct zs_chanstate *cs);
+uint8_t zs_read_data(struct zs_chanstate *cs);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *cs, uint8_t reg, uint8_t val);
+void  zs_write_csr(struct zs_chanstate *cs, uint8_t val);
+void  zs_write_data(struct zs_chanstate *cs, uint8_t val);
 
 /* Zilog Serial hardware interrupts (level 0) */
 #define splzs()		spltty()
 #define	IPL_ZS		IPL_TTY
 
 #if defined(_KERNEL) && defined(KGDB)
-void zs_kgdb_init __P((void));
-void zskgdb __P((struct zs_chanstate *));
+void zs_kgdb_init(void);
+void zskgdb(struct zs_chanstate *);
 #endif

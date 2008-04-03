@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.19 2006/07/13 22:56:01 gdamore Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.19.58.1 2008/04/03 12:42:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.19 2006/07/13 22:56:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.19.58.1 2008/04/03 12:42:17 mjf Exp $");
 
 #include "opt_kgdb.h"
 
@@ -83,15 +83,15 @@ struct com_vrip_softc {
 	int sc_pwctl;
 };
 
-static int com_vrip_probe(struct device *, struct cfdata *, void *);
-static void com_vrip_attach(struct device *, struct device *, void *);
+static int com_vrip_probe(device_t, cfdata_t , void *);
+static void com_vrip_attach(device_t, device_t, void *);
 static int com_vrip_common_probe(bus_space_tag_t, int);
 
 void vrcmu_init(void);
 void vrcmu_supply(int);
 void vrcmu_mask(int);
 
-CFATTACH_DECL(com_vrip, sizeof(struct com_vrip_softc),
+CFATTACH_DECL_NEW(com_vrip, sizeof(struct com_vrip_softc),
     com_vrip_probe, com_vrip_attach, NULL, NULL);
 
 int
@@ -118,7 +118,7 @@ com_vrip_common_probe(bus_space_tag_t iot, int iobase)
 	int rv;
 
 	if (bus_space_map(iot, iobase, 1, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return 0;
 	}
 	rv = comprobe1(iot, ioh);
@@ -127,7 +127,7 @@ com_vrip_common_probe(bus_space_tag_t iot, int iobase)
 }
 
 static int
-com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
+com_vrip_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	bus_space_tag_t iot = va->va_iot;
@@ -137,7 +137,7 @@ com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (va->va_addr == VRIPIFCF_ADDR_DEFAULT ||
 	    va->va_unit == VRIPIFCF_UNIT_DEFAULT) {
-		printf(": need addr and intr.\n");
+		aprint_error(": need addr and intr.\n");
 		return (0);
 	}
 
@@ -162,21 +162,22 @@ com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-com_vrip_attach(struct device *parent, struct device *self, void *aux)
+com_vrip_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_vrip_softc *vsc = (void *) self;
+	struct com_vrip_softc *vsc = device_private(self);
 	struct com_softc *sc = &vsc->sc_com;
 	struct vrip_attach_args *va = aux;
 
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
 
-	vsc->sc_pwctl = device_cfdata(&sc->sc_dev)->cf_loc[VRIPIFCF_PWCTL];
+	sc->sc_dev = self;
+	vsc->sc_pwctl = device_cfdata(sc->sc_dev)->cf_loc[VRIPIFCF_PWCTL];
 
 	DPRINTF(("==com_vrip_attach"));
 
 	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
-		printf(": can't map bus space\n");
+		aprint_error(": can't map bus space\n");
 		return;
 	}
 
@@ -197,9 +198,9 @@ com_vrip_attach(struct device *parent, struct device *self, void *aux)
 	DPRINTF(("Establish intr"));
 	if (!vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
 	    comintr, self)) {
-		printf("%s: can't map interrupt line.\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't map interrupt line.\n");
 	}
 
 	DPRINTF((":return()"));
-	VPRINTF(("%s: pwctl %d\n", vsc->sc_com.sc_dev.dv_xname, vsc->sc_pwctl));
+	VPRINTF(("%s: pwctl %d\n", device_xname(self), vsc->sc_pwctl));
 }

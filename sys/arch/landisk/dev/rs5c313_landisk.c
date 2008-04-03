@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313_landisk.c,v 1.2 2007/11/06 00:36:30 uwe Exp $	*/
+/*	$NetBSD: rs5c313_landisk.c,v 1.2.14.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.2 2007/11/06 00:36:30 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.2.14.1 2008/04/03 12:42:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,10 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.2 2007/11/06 00:36:30 uwe Exp 
 
 
 /* autoconf glue */
-static int rs5c313_landisk_match(device_t, struct cfdata *, void *);
+static int rs5c313_landisk_match(device_t, cfdata_t, void *);
 static void rs5c313_landisk_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(rs5c313_landisk, sizeof(struct rs5c313_softc),
+CFATTACH_DECL_NEW(rs5c313_landisk, sizeof(struct rs5c313_softc),
     rs5c313_landisk_match, rs5c313_landisk_attach, NULL, NULL);
 
 
@@ -77,7 +77,7 @@ static struct rs5c313_ops rs5c313_landisk_ops = {
 
 
 static int
-rs5c313_landisk_match(device_t parent, struct cfdata *cf, void *aux)
+rs5c313_landisk_match(device_t parent, cfdata_t cf, void *aux)
 {
 	static int matched = 0;
 
@@ -94,6 +94,7 @@ rs5c313_landisk_attach(device_t parent, device_t self, void *aux)
 {
 	struct rs5c313_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_ops = &rs5c313_landisk_ops;
 	rs5c313_attach(sc);
 }

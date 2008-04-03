@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_console.cpp,v 1.4 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_console.cpp,v 1.4.74.1 2008/04/03 12:42:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,15 +37,30 @@
  */
 
 #include <arm/arm_console.h>
+#include <arm/arm_pxa2x0_console.h>
+#include <arm/arm_sa1100_console.h>
 
-ARMConsole *ARMConsole::_instance = 0;
+ARMConsole *ARMConsole::_instance = NULL;
 
 ARMConsole *
-ARMConsole::Instance(MemoryManager *&mem)
+ARMConsole::Instance(MemoryManager *&mem, ArchitectureOps arch)
 {
 
-	if (!_instance)
-		_instance = new ARMConsole(mem);
+	if (!_instance) {
+		switch (arch) {
+		    default:
+			_instance = NULL;
+			break;
+
+		    case ARCHITECTURE_ARM_SA1100:
+			_instance = new SA1100Console(mem);
+			break;
+
+		    case ARCHITECTURE_ARM_PXA250:
+			_instance = new PXA2x0Console(mem);
+			break;
+		}
+	}
 
 	return _instance;
 }
@@ -54,24 +69,10 @@ void
 ARMConsole::Destroy(void)
 {
 
-	if (_instance)
+	if (_instance) {
 		delete _instance;
-}
-
-BOOL
-ARMConsole::init(void)
-{
-
-	if (!super::init())
-		return FALSE;
-
-	_uart_base = _mem->mapPhysicalPage(0x80050000, 0x100, PAGE_READWRITE);
-	if (_uart_base == ~0)
-		return FALSE;
-	_uart_busy = _uart_base + 0x20;
-	_uart_transmit = _uart_base + 0x14;
-
-	return TRUE;
+		_instance = NULL;
+	}
 }
 
 void

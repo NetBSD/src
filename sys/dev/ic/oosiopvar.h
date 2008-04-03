@@ -1,4 +1,4 @@
-/* $NetBSD: oosiopvar.h,v 1.5 2007/12/25 18:33:39 perry Exp $ */
+/* $NetBSD: oosiopvar.h,v 1.5.6.1 2008/04/03 12:42:41 mjf Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -104,7 +104,7 @@ struct oosiop_target {
 #define	TGTF_WAITSDTR	0x02	/* Waiting SDTR from target */
 
 struct oosiop_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t	sc_bst;		/* bus space tag */
 	bus_space_handle_t sc_bsh;	/* bus space handle */

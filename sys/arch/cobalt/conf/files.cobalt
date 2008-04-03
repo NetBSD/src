@@ -1,4 +1,4 @@
-#	$NetBSD: files.cobalt,v 1.30 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.cobalt,v 1.30.6.1 2008/04/03 12:42:13 mjf Exp $
 
 maxpartitions 16
 
@@ -7,7 +7,7 @@ maxusers 2 8 64
 file arch/mips/mips/mips3_clock.c
 file arch/mips/mips/mips3_clockintr.c
 
-device mainbus {[addr = -1], [level = -1]}: pcibus
+device mainbus {[addr = -1], [level = -1], [irq = -1]}: pcibus
 attach mainbus at root
 file arch/cobalt/cobalt/mainbus.c	mainbus
 
@@ -17,6 +17,15 @@ file arch/cobalt/cobalt/cpu.c		cpu
 
 attach com at mainbus with com_mainbus
 file arch/cobalt/dev/com_mainbus.c	com_mainbus	needs-flag
+
+device zsc { [channel = -1] }
+attach zsc at mainbus
+file arch/cobalt/dev/zs.c		zsc		needs-flag
+file dev/ic/z8530sc.c			zsc
+
+device zstty: tty
+attach zstty at zsc
+file dev/ic/z8530tty.c			zstty		needs-count
 
 device mcclock: mc146818
 attach mcclock at mainbus
@@ -34,6 +43,7 @@ file arch/cobalt/cobalt/autoconf.c
 file arch/cobalt/cobalt/bus.c
 file arch/cobalt/cobalt/console.c
 file arch/cobalt/cobalt/disksubr.c
+file arch/cobalt/cobalt/interrupt.c
 file arch/cobalt/cobalt/machdep.c
 
 file arch/mips/mips/softintr.c

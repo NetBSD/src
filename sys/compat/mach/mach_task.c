@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.67 2007/12/20 23:03:00 dsl Exp $ */
+/*	$NetBSD: mach_task.c,v 1.67.6.1 2008/04/03 12:42:33 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.67 2007/12/20 23:03:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.67.6.1 2008/04/03 12:42:33 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -454,22 +454,25 @@ mach_task_info(struct mach_trap_args *args)
 	switch(req->req_flavor) {
 	case MACH_TASK_BASIC_INFO: {
 		struct mach_task_basic_info *mtbi;
-		struct rusage *ru;
+		struct rusage ru;
 
 		count = sizeof(*mtbi) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
-		ru = &tp->p_stats->p_ru;
+		ru = tp->p_stats->p_ru;
 		mtbi = (struct mach_task_basic_info *)&rep->rep_info[0];
+		mutex_enter(&tp->p_smutex);
+		rulwps(tp, &ru);
+		mutex_exit(&tp->p_smutex);
 
-		mtbi->mtbi_suspend_count = ru->ru_nvcsw + ru->ru_nivcsw;
-		mtbi->mtbi_virtual_size = ru->ru_ixrss;
-		mtbi->mtbi_resident_size = ru->ru_maxrss;
-		mtbi->mtbi_user_time.seconds = ru->ru_utime.tv_sec;
-		mtbi->mtbi_user_time.microseconds = ru->ru_utime.tv_usec;
-		mtbi->mtbi_system_time.seconds = ru->ru_stime.tv_sec;
-		mtbi->mtbi_system_time.microseconds = ru->ru_stime.tv_usec;
+		mtbi->mtbi_suspend_count = ru.ru_nvcsw + ru.ru_nivcsw;
+		mtbi->mtbi_virtual_size = ru.ru_ixrss;
+		mtbi->mtbi_resident_size = ru.ru_maxrss;
+		mtbi->mtbi_user_time.seconds = ru.ru_utime.tv_sec;
+		mtbi->mtbi_user_time.microseconds = ru.ru_utime.tv_usec;
+		mtbi->mtbi_system_time.seconds = ru.ru_stime.tv_sec;
+		mtbi->mtbi_system_time.microseconds = ru.ru_stime.tv_usec;
 		mtbi->mtbi_policy = 0;
 
 		*msglen = sizeof(*rep) - sizeof(rep->rep_info) + sizeof(*mtbi);
@@ -479,19 +482,19 @@ mach_task_info(struct mach_trap_args *args)
 	/* XXX this is supposed to be about threads, not processes... */
 	case MACH_TASK_THREAD_TIMES_INFO: {
 		struct mach_task_thread_times_info *mttti;
-		struct rusage *ru;
+		struct rusage ru;
 
 		count = sizeof(*mttti) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
-		ru = &tp->p_stats->p_ru;
+		ru = tp->p_stats->p_ru;
 		mttti = (struct mach_task_thread_times_info *)&rep->rep_info[0];
 
-		mttti->mttti_user_time.seconds = ru->ru_utime.tv_sec;
-		mttti->mttti_user_time.microseconds = ru->ru_utime.tv_usec;
-		mttti->mttti_system_time.seconds = ru->ru_stime.tv_sec;
-		mttti->mttti_system_time.microseconds = ru->ru_stime.tv_usec;
+		mttti->mttti_user_time.seconds = ru.ru_utime.tv_sec;
+		mttti->mttti_user_time.microseconds = ru.ru_utime.tv_usec;
+		mttti->mttti_system_time.seconds = ru.ru_stime.tv_sec;
+		mttti->mttti_system_time.microseconds = ru.ru_stime.tv_usec;
 
 		*msglen = sizeof(*rep) - sizeof(rep->rep_info) + sizeof(*mttti);
 		break;
@@ -500,20 +503,23 @@ mach_task_info(struct mach_trap_args *args)
 	/* XXX a few statistics missing here */
 	case MACH_TASK_EVENTS_INFO: {
 		struct mach_task_events_info *mtei;
-		struct rusage *ru;
+		struct rusage ru;
 
 		count = sizeof(*mtei) / sizeof(rep->rep_info[0]);
 		if (req->req_count < count)
 			return mach_msg_error(args, ENOBUFS);
 
 		mtei = (struct mach_task_events_info *)&rep->rep_info[0];
-		ru = &tp->p_stats->p_ru;
+		ru = tp->p_stats->p_ru;
+		mutex_enter(&tp->p_smutex);
+		rulwps(tp, &ru);
+		mutex_exit(&tp->p_smutex);
 
-		mtei->mtei_faults = ru->ru_majflt;
-		mtei->mtei_pageins = ru->ru_minflt;
+		mtei->mtei_faults = ru.ru_majflt;
+		mtei->mtei_pageins = ru.ru_minflt;
 		mtei->mtei_cow_faults = 0; /* XXX */
-		mtei->mtei_message_sent = ru->ru_msgsnd;
-		mtei->mtei_message_received = ru->ru_msgrcv;
+		mtei->mtei_message_sent = ru.ru_msgsnd;
+		mtei->mtei_message_received = ru.ru_msgrcv;
 		mtei->mtei_syscalls_mach = 0; /* XXX */
 		mtei->mtei_syscalls_unix = 0; /* XXX */
 		mtei->mtei_csw = 0; /* XXX */

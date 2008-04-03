@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.12 2008/02/02 21:54:01 dsl Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.12.6.1 2008/04/03 12:42:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ LINUX##_to_bsd_##FLOCK(struct flock *bfp, const struct LINUX##_##FLOCK *lfp) \
 	if ((fl_error = copyin(arg, &lfl, sizeof lfl))) \
 		return fl_error; \
 	LINUX##_to_bsd_##FLOCK(&bfl, &lfl); \
-	fl_error = do_fcntl_lock(l, fd, F_GETLK, &bfl); \
+	fl_error = do_fcntl_lock(fd, F_GETLK, &bfl); \
 	if (fl_error) \
 		return fl_error; \
 	bsd_to_##LINUX##_##FLOCK(&lfl, &bfl); \
@@ -147,7 +147,7 @@ LINUX##_to_bsd_##FLOCK(struct flock *bfp, const struct LINUX##_##FLOCK *lfp) \
 	if ((fl_error = copyin(arg, &lfl, sizeof lfl))) \
 		return fl_error; \
 	LINUX##_to_bsd_##FLOCK(&bfl, &lfl); \
-	return do_fcntl_lock(l, fd, cmd == setlk ? F_SETLK : F_SETLKW, &bfl); \
+	return do_fcntl_lock(fd, cmd == setlk ? F_SETLK : F_SETLKW, &bfl); \
     } while (0)
 
 

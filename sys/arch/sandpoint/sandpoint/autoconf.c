@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.6.1 2008/04/03 12:42:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.6.1 2008/04/03 12:42:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ static struct btinfo_bootpath *bi_path;
 #include <dev/cons.h>
 #include <machine/pio.h>
 
+
 /*
  * Determine i/o configuration for a machine.
  */
@@ -65,6 +66,18 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	genppc_cpu_configure();
+#if 1
+    {
+	int i;
+	uint8_t spd[64];
+	extern int iic_seep_bootstrap_read(int, int, uint8_t *, size_t);
+
+	printf("reading 0x50 SDRAM SPD\n");
+	iic_seep_bootstrap_read(0x50, 0, spd, sizeof(spd));
+	printf("SPD: %02x %02x %02x - %02x %02x %02x %02x %02x\n",
+	    spd[0], spd[1], spd[2], spd[3], spd[4], spd[5], spd[6], spd[7]);
+    }
+#endif
 }
 
 char *booted_kernel; /* should be a genuine filename */

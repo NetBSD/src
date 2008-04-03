@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.30 2007/12/20 23:03:02 dsl Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.30.6.1 2008/04/03 12:42:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.30 2007/12/20 23:03:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.30.6.1 2008/04/03 12:42:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,6 @@ done:
 int
 recvit32(struct lwp *l, int s, struct netbsd32_msghdr *mp, struct iovec *iov, void *namelenp, register_t *retsize)
 {
-	struct file *fp;
 	struct uio auio;
 	int i, len, error, iovlen;
 	struct mbuf *from = 0, *control = 0;
@@ -108,7 +107,7 @@ recvit32(struct lwp *l, int s, struct netbsd32_msghdr *mp, struct iovec *iov, vo
 	p = l->l_proc;
 
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, s, &fp)) != 0)
+	if ((error = fd_getsock(s, &so)) != 0)
 		return (error);
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
@@ -143,7 +142,6 @@ recvit32(struct lwp *l, int s, struct netbsd32_msghdr *mp, struct iovec *iov, vo
 	}
 
 	len = auio.uio_resid;
-	so = (struct socket *)fp->f_data;
 	error = (*so->so_receive)(so, &from, &auio, NULL,
 			  NETBSD32PTR64(mp->msg_control) ? &control : NULL,
 			  &mp->msg_flags);
@@ -213,7 +211,7 @@ recvit32(struct lwp *l, int s, struct netbsd32_msghdr *mp, struct iovec *iov, vo
 	if (control)
 		m_freem(control);
  out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(s);
 	return (error);
 }
 

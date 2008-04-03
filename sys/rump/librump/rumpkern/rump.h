@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.23 2008/01/27 20:01:29 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.23.6.1 2008/04/03 12:43:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/statvfs.h>
 
 struct mount;
 struct vnode;
@@ -64,6 +65,10 @@ struct componentname	*rump_makecn(u_long, u_long, const char *, size_t,
 void			rump_freecn(struct componentname *, int);
 #define RUMPCN_ISLOOKUP 0x01
 #define RUMPCN_FREECRED 0x02
+#define RUMPCN_HASNTBUF 0x04
+int			rump_namei(uint32_t, uint32_t, const char *,
+				   struct vnode **, struct vnode **,
+				   struct componentname **);
 
 void 	rump_getvninfo(struct vnode *, enum vtype *, off_t * /*XXX*/, dev_t *);
 
@@ -106,9 +111,7 @@ void		rump_cred_destroy(kauth_cred_t);
 
 int	rump_vfs_unmount(struct mount *, int);
 int	rump_vfs_root(struct mount *, struct vnode **, int);
-#if 0
 int	rump_vfs_statvfs(struct mount *, struct statvfs *);
-#endif
 int	rump_vfs_sync(struct mount *, int, kauth_cred_t);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
@@ -119,6 +122,9 @@ void	rump_bioops_sync(void);
 struct lwp	*rump_setup_curlwp(pid_t, lwpid_t, int);
 struct lwp	*rump_get_curlwp(void);
 void		rump_clear_curlwp(void);
+
+void		rump_rcvp_set(struct vnode *, struct vnode *);
+struct vnode 	*rump_cdir_get(void);
 
 int	rump_splfoo(void);
 void	rump_splx(int);

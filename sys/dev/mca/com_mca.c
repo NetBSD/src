@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.18 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.18.16.1 2008/04/03 12:42:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.18 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.18.16.1 2008/04/03 12:42:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,14 +103,14 @@ struct com_mca_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int com_mca_probe(struct device *, struct cfdata *, void *);
-void com_mca_attach(struct device *, struct device *, void *);
+int com_mca_probe(device_t, cfdata_t , void *);
+void com_mca_attach(device_t, device_t, void *);
 
 static int ibm_modem_getcfg(struct mca_attach_args *, int *, int *);
 static int neocom1_getcfg(struct mca_attach_args *, int *, int *);
 static int ibm_mpcom_getcfg(struct mca_attach_args *, int *, int *);
 
-CFATTACH_DECL(com_mca, sizeof(struct com_mca_softc),
+CFATTACH_DECL_NEW(com_mca, sizeof(struct com_mca_softc),
     com_mca_probe, com_mca_attach, NULL, NULL);
 
 static const struct com_mca_product {
@@ -130,8 +130,7 @@ static const struct com_mca_product {
 static const struct com_mca_product *com_mca_lookup(int);
 
 static const struct com_mca_product *
-com_mca_lookup(ma_id)
-	int ma_id;
+com_mca_lookup(int ma_id)
 {
 	const struct com_mca_product *cpp;
 
@@ -143,8 +142,7 @@ com_mca_lookup(ma_id)
 }
 
 int
-com_mca_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+com_mca_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct mca_attach_args *ma = aux;
 
@@ -155,8 +153,7 @@ com_mca_probe(struct device *parent, struct cfdata *match,
 }
 
 void
-com_mca_attach(struct device *parent, struct device *self,
-    void *aux)
+com_mca_attach(device_t parent, device_t self, void *aux)
 {
 	struct com_mca_softc *isc = device_private(self);
 	struct com_softc *sc = &isc->sc_com;
@@ -165,6 +162,7 @@ com_mca_attach(struct device *parent, struct device *self,
 	const struct com_mca_product *cpp;
 	bus_space_handle_t ioh;
 
+	sc->sc_dev = self;
 	cpp = com_mca_lookup(ma->ma_id);
 
 	/* get iobase and irq */
@@ -172,35 +170,35 @@ com_mca_attach(struct device *parent, struct device *self,
 		return;
 
 	if (bus_space_map(ma->ma_iot, iobase, COM_NPORTS, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
 	COM_INIT_REGS(sc->sc_regs, ma->ma_iot, ioh, iobase);
 	sc->sc_frequency = COM_FREQ;
 
-	printf(" slot %d i/o %#x-%#x irq %d", ma->ma_slot + 1,
+	aprint_normal(" slot %d i/o %#x-%#x irq %d", ma->ma_slot + 1,
 		iobase, iobase + COM_NPORTS - 1, irq);
 
 	com_attach_subr(sc);
 
-	printf("%s: %s\n", sc->sc_dev.dv_xname, cpp->cp_name);
+	aprint_normal_dev(self, "%s\n", cpp->cp_name);
 
 	isc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_SERIAL,
 			comintr, sc);
 	if (isc->sc_ih == NULL) {
-                printf("%s: couldn't establish interrupt handler\n",
-                    sc->sc_dev.dv_xname);
+                aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
                 return;
         }
 
 	/*
-	 * Shutdown hook for buggy BIOSs that don't recognize the UART
-	 * without a disabled FIFO.
+	 * com_cleanup: shutdown hook for buggy BIOSs that don't
+	 * recognize the UART without a disabled FIFO.
 	 * XXX is this necessary on MCA ? --- jdolecek
 	 */
-	if (shutdownhook_establish(com_cleanup, sc) == NULL)
-		panic("com_mca_attach: could not establish shutdown hook");
+	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup))
+		aprint_error_dev(self, "could not establish shutdown hook\n");
 }
 
 /* map serial_X to iobase and irq */
@@ -224,9 +222,7 @@ static const struct {
  * other stuff though.
  */
 static int
-ibm_modem_getcfg(ma, iobasep, irqp)
-	struct mca_attach_args *ma;
-	int *iobasep, *irqp;
+ibm_modem_getcfg(struct mca_attach_args *ma, int *iobasep, int *irqp)
 {
 	int pos2;
 	int snum;
@@ -252,9 +248,7 @@ ibm_modem_getcfg(ma, iobasep, irqp)
  * Get configuration for NeoTecH Single RS-232 Async. Adapter, SM110.
  */
 static int
-neocom1_getcfg(ma, iobasep, irqp)
-	struct mca_attach_args *ma;
-	int *iobasep, *irqp;
+neocom1_getcfg(struct mca_attach_args *ma, int *iobasep, int *irqp)
 {
 	int pos2, pos3, pos4;
 	static const int neotech_irq[] = { 12, 9, 4, 3 };
@@ -291,9 +285,7 @@ neocom1_getcfg(ma, iobasep, irqp)
  * We only support SERIAL mode, bail out if set to SDLC or BISYNC.
  */
 static int
-ibm_mpcom_getcfg(ma, iobasep, irqp)
-	struct mca_attach_args *ma;
-	int *iobasep, *irqp;
+ibm_mpcom_getcfg(struct mca_attach_args *ma, int *iobasep, int *irqp)
 {
 	int snum, pos2;
 
@@ -309,7 +301,7 @@ ibm_mpcom_getcfg(ma, iobasep, irqp)
 	 */
 
 	if (pos2 & 0x10) {
-		printf(": not set to SERIAL mode, ignored\n");
+		aprint_error(": not set to SERIAL mode, ignored\n");
 		return (1);
 	}
 

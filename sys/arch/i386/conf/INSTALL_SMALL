@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.140 2008/01/16 09:37:06 ad Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.140.6.1 2008/04/03 12:42:17 mjf Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -455,7 +455,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 
 # Pull in optional local configuration
-include	"arch/i386/conf/INSTALL.local"
+cinclude "arch/i386/conf/INSTALL.local"
 
 
 # Pseudo-Devices

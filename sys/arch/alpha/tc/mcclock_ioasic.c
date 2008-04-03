@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.13 2007/10/17 19:52:59 garbled Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.13.16.1 2008/04/03 12:42:10 mjf Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.13 2007/10/17 19:52:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.13.16.1 2008/04/03 12:42:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,17 +58,17 @@ struct mcclock_ioasic_softc {
 	struct mcclock_ioasic_clockdatum *sc_dp;
 };
 
-int	mcclock_ioasic_match(struct device *, struct cfdata *, void *);
-void	mcclock_ioasic_attach(struct device *, struct device *, void *);
+int	mcclock_ioasic_match(device_t, cfdata_t, void *);
+void	mcclock_ioasic_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mcclock_ioasic, sizeof(struct mcclock_ioasic_softc),
+CFATTACH_DECL_NEW(mcclock_ioasic, sizeof(struct mcclock_ioasic_softc),
     mcclock_ioasic_match, mcclock_ioasic_attach, NULL, NULL);
 
 void	mcclock_ioasic_write(struct mc146818_softc *, u_int, u_int);
 u_int	mcclock_ioasic_read(struct mc146818_softc *, u_int);
 
 int
-mcclock_ioasic_match(struct device *parent, struct cfdata *match, void *aux)
+mcclock_ioasic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -79,15 +79,16 @@ mcclock_ioasic_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-mcclock_ioasic_attach(struct device *parent, struct device *self, void *aux)
+mcclock_ioasic_attach(device_t parent, device_t self, void *aux)
 {
+	struct mcclock_ioasic_softc *isc = device_private(self);
 	struct ioasicdev_attach_args *ioasicdev = aux;
-	struct mcclock_ioasic_softc *isc = (void *)self;
 	struct mc146818_softc *sc = &isc->sc_mc146818;
 
 	/* XXX no bus_space(9) for TURBOchannel yet */
 	isc->sc_dp = (void *)ioasicdev->iada_addr;
 
+	sc->sc_dev = self;
 	sc->sc_mcread = mcclock_ioasic_read;
 	sc->sc_mcwrite = mcclock_ioasic_write;
 

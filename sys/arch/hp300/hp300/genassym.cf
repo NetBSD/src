@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.36 2007/10/17 19:54:23 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.36.16.1 2008/04/03 12:42:16 mjf Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -61,8 +61,6 @@ include <machine/intr.h>
 include <machine/psl.h>
 include <machine/reg.h>
 include <machine/pte.h>
-
-include <m68k/saframe.h>
 
 include <hp300/dev/intioreg.h>
 include <hp300/hp300/clockreg.h>

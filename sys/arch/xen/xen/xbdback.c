@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.30 2008/02/17 14:03:16 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.30.6.1 2008/04/03 12:42:31 mjf Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.30 2008/02/17 14:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.30.6.1 2008/04/03 12:42:31 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -491,7 +491,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
 			    xbdi->domid);
 			vbd->start = vbd->size = vbd->dev = 0;
-			vn_close(vbd->vp, FREAD, NOCRED, NULL);
+			vn_close(vbd->vp, FREAD, NOCRED);
 		}
 		SLIST_REMOVE(&xbdi->vbds, vbd, xbd_vbd, next);
 		free(vbd, M_DEVBUF);
@@ -575,7 +575,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			    "device 0x%x (error %d)\n", xbdi->domid,
 			    req->extent.device, error);
 			vbd->start = vbd->size = vbd->dev = 0;
-			vn_close(vbd->vp, FREAD, NOCRED, NULL);
+			vn_close(vbd->vp, FREAD, NOCRED);
 			vbd->vp = NULL;
 			req->status = BLKIF_BE_STATUS_EXTENT_NOT_FOUND;
 			goto end;
@@ -614,7 +614,7 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		    DISKUNIT(vbd->dev), DISKPART(vbd->dev) + 'a',
 		    xbdi->domid);
 		vbd->start = vbd->size = vbd->dev = 0;
-		vn_close(vbd->vp, FREAD, NOCRED, NULL);
+		vn_close(vbd->vp, FREAD, NOCRED);
 		req->status = BLKIF_BE_STATUS_OKAY;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_isa.c,v 1.24 2007/10/19 12:00:18 ad Exp $	*/
+/*	$NetBSD: if_ne_isa.c,v 1.24.16.1 2008/04/03 12:42:44 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.24 2007/10/19 12:00:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.24.16.1 2008/04/03 12:42:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_isa.c,v 1.24 2007/10/19 12:00:18 ad Exp $");
 
 #include <dev/isa/isavar.h>
 
-int	ne_isa_match(struct device *, struct cfdata *, void *);
-void	ne_isa_attach(struct device *, struct device *, void *);
+int	ne_isa_match(device_t, cfdata_t, void *);
+void	ne_isa_attach(device_t, device_t, void *);
 
 struct ne_isa_softc {
 	struct	ne2000_softc sc_ne2000;		/* real "ne2000" softc */
@@ -79,12 +79,11 @@ struct ne_isa_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(ne_isa, sizeof(struct ne_isa_softc),
+CFATTACH_DECL_NEW(ne_isa, sizeof(struct ne_isa_softc),
     ne_isa_match, ne_isa_attach, NULL, NULL);
 
 int
-ne_isa_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ne_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t nict = ia->ia_iot;
@@ -139,9 +138,9 @@ ne_isa_match(struct device *parent, struct cfdata *match,
 }
 
 void
-ne_isa_attach(struct device *parent, struct device *self, void *aux)
+ne_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct ne_isa_softc *isc = (struct ne_isa_softc *)self;
+	struct ne_isa_softc *isc = device_private(self);
 	struct ne2000_softc *nsc = &isc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct isa_attach_args *ia = aux;
@@ -152,18 +151,19 @@ ne_isa_attach(struct device *parent, struct device *self, void *aux)
 	const char *typestr;
 	int netype;
 
-	printf("\n");
+	dsc->sc_dev = self;
+	aprint_normal("\n");
 
 	/* Map i/o space. */
 	if (bus_space_map(nict, ia->ia_io[0].ir_addr, NE2000_NPORTS,
 	    0, &nich)) {
-		printf("%s: can't map i/o space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 
 	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET,
 	    NE2000_ASIC_NPORTS, &asich)) {
-		printf("%s: can't subregion i/o space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "can't subregion i/o space\n");
 		return;
 	}
 
@@ -203,11 +203,11 @@ ne_isa_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		printf("%s: where did the card go?!\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(self, "where did the card go?!\n");
 		return;
 	}
 
-	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, typestr);
+	aprint_normal_dev(self, "%s Ethernet\n", typestr);
 
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
@@ -222,6 +222,6 @@ ne_isa_attach(struct device *parent, struct device *self, void *aux)
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, dp8390_intr, dsc);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    dsc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 }

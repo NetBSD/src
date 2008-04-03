@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2007/10/17 19:54:26 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.16.1 2008/04/03 12:42:16 mjf Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2007/10/17 19:54:26 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.16.1 2008/04/03 12:42:16 mjf Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -325,7 +325,7 @@ device_register(struct device *dev, void *aux)
 	    device_parent(pdev) == NULL)
 		return;
 	pagezero_cookie = hp700_pagezero_map();
-	/* Currently only GSC and PCI devices are supported. */
+
 	/*
 	 * The boot device is described in PAGE0->mem_boot. We need to do it 
 	 * this way as the MD device path (DP) information in struct confargs 
@@ -340,7 +340,7 @@ device_register(struct device *dev, void *aux)
 	 * controller's struct dev in boot_device. The SCSI device is located 
 	 * later, see below.
 	 */
-	if (device_is_a(pdev, "gsc")
+	if ((device_is_a(pdev, "gsc") || device_is_a(pdev, "phantomas"))
 	    && (hppa_hpa_t)PAGE0->mem_boot.pz_hpa == 
 	    ((struct gsc_attach_args *)aux)->ga_ca.ca_hpa)
 		/* This is (the controller of) the boot device. */
@@ -416,6 +416,7 @@ device_register(struct device *dev, void *aux)
 	    == PAGE0->mem_boot.pz_dp.dp_layers[1])
 		/* This is the boot device. */
 		boot_device = dev;
+
 	hp700_pagezero_unmap(pagezero_cookie);
 	return;
 }

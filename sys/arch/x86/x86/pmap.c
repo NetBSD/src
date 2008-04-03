@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2008/02/16 22:01:16 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49.6.1 2008/04/03 12:42:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2008/02/16 22:01:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49.6.1 2008/04/03 12:42:31 mjf Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1290,7 +1290,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	/*
 	 * enable large pages if they are supported.
 	 */
-
+#if 0
 	if (cpu_feature & CPUID_PSE) {
 		paddr_t pa;
 		pd_entry_t *pde;
@@ -1329,6 +1329,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #endif /* defined(DEBUG) */
 	}
 #endif /* !XEN */
+#endif 
 
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
 		/*

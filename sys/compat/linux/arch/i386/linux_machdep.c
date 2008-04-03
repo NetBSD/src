@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_machdep.c,v 1.133 2007/12/20 23:02:52 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.133.6.1 2008/04/03 12:42:32 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.133 2007/12/20 23:02:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.133.6.1 2008/04/03 12:42:32 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -861,29 +861,23 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	struct linux_hd_geometry hdg;
 	struct linux_hd_big_geometry hdg_big;
 	struct biosdisk_info *bip;
-	struct filedesc *fdp;
-	struct file *fp;
+	file_t *fp;
 	int fd;
 	struct disklabel label, *labp;
 	struct partinfo partp;
-	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
+	int (*ioctlf)(struct file *, u_long, void *);
 	u_long start, biostotal, realtotal;
 	u_char heads, sectors;
 	u_int cylinders;
 	struct ioctl_pt pt;
-	struct proc *p = l->l_proc;
 
 	fd = SCARG(uap, fd);
 	SCARG(&bia, fd) = fd;
 	SCARG(&bia, data) = SCARG(uap, data);
 	com = SCARG(uap, com);
 
-	fdp = p->p_fd;
-
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
-
-	FILE_USE(fp);
 
 	switch (com) {
 #if (NWSDISPLAY > 0)
@@ -925,7 +919,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		com = VT_OPENQRY;
 		break;
 	case LINUX_VT_GETMODE:
-		error = fp->f_ops->fo_ioctl(fp, VT_GETMODE, &lvt, l);
+		error = fp->f_ops->fo_ioctl(fp, VT_GETMODE, &lvt);
 		if (error != 0)
 			goto out;
 		lvt.relsig = native_to_linux_signo[lvt.relsig];
@@ -940,7 +934,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		lvt.relsig = linux_to_native_signo[lvt.relsig];
 		lvt.acqsig = linux_to_native_signo[lvt.acqsig];
 		lvt.frsig = linux_to_native_signo[lvt.frsig];
-		error = fp->f_ops->fo_ioctl(fp, VT_SETMODE, &lvt, l);
+		error = fp->f_ops->fo_ioctl(fp, VT_SETMODE, &lvt);
 		goto out;
 	case LINUX_VT_DISALLOCATE:
 		/* XXX should use WSDISPLAYIO_DELSCREEN */
@@ -995,10 +989,10 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		 * the real geometry) if not found, by returning an
 		 * error. See common/linux_hdio.c
 		 */
-		bip = fd2biosinfo(p, fp);
+		bip = fd2biosinfo(curproc, fp);
 		ioctlf = fp->f_ops->fo_ioctl;
-		error = ioctlf(fp, DIOCGDEFLABEL, (void *)&label, l);
-		error1 = ioctlf(fp, DIOCGPART, (void *)&partp, l);
+		error = ioctlf(fp, DIOCGDEFLABEL, (void *)&label);
+		error1 = ioctlf(fp, DIOCGPART, (void *)&partp);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			goto out;
@@ -1048,7 +1042,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
-		error = ioctlf(fp, PTIOCLINUX, (void *)&pt, l);
+		error = ioctlf(fp, PTIOCLINUX, &pt);
 		if (error == EJUSTRETURN) {
 			retval[0] = (register_t)pt.data;
 			error = 0;
@@ -1061,10 +1055,9 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		goto out;
 	}
 	SCARG(&bia, com) = com;
-	/* XXX NJWLWP */
 	error = sys_ioctl(curlwp, &bia, retval);
 out:
-	FILE_UNUSE(fp ,l);
+	fd_putfile(fd);
 	return error;
 }
 

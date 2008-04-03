@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.8 2007/12/03 15:33:26 ad Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.8.14.1 2008/04/03 12:42:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.8 2007/12/03 15:33:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.8.14.1 2008/04/03 12:42:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,33 +52,30 @@ __KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.8 2007/12/03 15:33:26 ad Exp $");
 
 #include <cesfic/dev/zsvar.h>
 
-extern void sic_enable_int __P((int, int, int, int, int));
+extern void sic_enable_int(int, int, int, int, int);
 
-static int	zsc_pcc_match  __P((struct device *, struct cfdata *, void *));
-static void	zsc_pcc_attach __P((struct device *, struct device *, void *));
+static int	zsc_pcc_match(device_t, cfdata_t, void *);
+static void	zsc_pcc_attach(device_t, device_t, void *);
 
 static char *zsbase;
 
-CFATTACH_DECL(zsc_pcc, sizeof(struct zsc_softc),
+CFATTACH_DECL_NEW(zsc_pcc, sizeof(struct zsc_softc),
     zsc_pcc_match, zsc_pcc_attach, NULL, NULL);
 
 static int
-zsc_pcc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+zsc_pcc_match(device_t parent, cfdata_t cf, void *aux)
 {
+
 	return (1);
 }
 
 static void
-zsc_pcc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+zsc_pcc_attach(device_t parent, device_t self, void *aux)
 {
-	struct zsc_softc *zsc = (void *) self;
+	struct zsc_softc *zsc = device_private(self);
 	static int didintr;
+
+	zsc->zsc_dev = self;
 
 	if (!zsbase)
 		mainbus_map(0x58000000, 0x10000, 0, (void *)&zsbase);
@@ -104,9 +101,9 @@ zsc_pcc_attach(parent, self, aux)
 }
 
 void
-zs_cnattach(base)
-	void *base;
+zs_cnattach(void *base)
 {
+
 	zsbase = base;
 
 	zs_cninit(zsbase);

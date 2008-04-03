@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.1.62.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.1.62.1 2008/04/03 12:42:20 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,10 +62,10 @@ struct wdc_obio_softc {
 	void	*sc_ih;
 };
 
-static int	wdc_obio_probe(struct device *, struct cfdata *, void *);
-static void	wdc_obio_attach(struct device *, struct device *, void *);
+static int	wdc_obio_probe(device_t, cfdata_t, void *);
+static void	wdc_obio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
+CFATTACH_DECL_NEW(wdc_obio, sizeof(struct wdc_obio_softc),
     wdc_obio_probe, wdc_obio_attach, NULL, NULL);
 
 #define	WDC_OBIO_REG_NPORTS	WDC_NREG
@@ -75,7 +75,7 @@ CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
 #define	WDC_OBIO_AUXREG_OFFSET	0x2c
 
 static int
-wdc_obio_probe(struct device *parent, struct cfdata *cfp, void *aux)
+wdc_obio_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	struct obio_attach_args *oa = aux;
 	struct ata_channel ch;
@@ -135,15 +135,17 @@ out:
 }
 
 static void
-wdc_obio_attach(struct device *parent, struct device *self, void *aux)
+wdc_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdc_obio_softc *sc = (void *)self;
+	struct wdc_obio_softc *sc = device_private(self);
 	struct obio_attach_args *oa = aux;
 	struct wdc_regs *wdr;
 	int i;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
 	wdr->cmd_iot = oa->oa_iot;
@@ -153,7 +155,7 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 	 || bus_space_map(wdr->ctl_iot,
 	    oa->oa_io[0].or_addr + WDC_OBIO_AUXREG_OFFSET,
 	    WDC_OBIO_AUXREG_SIZE, 0, &wdr->ctl_ioh)) {
-		printf(": couldn't map registers\n");
+		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
 
@@ -161,7 +163,8 @@ wdc_obio_attach(struct device *parent, struct device *self, void *aux)
 		if (bus_space_subregion(wdr->cmd_iot,
 		      wdr->cmd_baseioh, i * 2, (i == 0) ? 2 : 1,
 		      &wdr->cmd_iohs[i]) != 0) {
-			printf(": couldn't subregion registers\n");
+			aprint_error_dev(self,
+			    "couldn't subregion registers\n");
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ms.c,v 1.6 2007/03/04 06:00:39 christos Exp $	*/
+/*	$NetBSD: zs_ms.c,v 1.6.40.1 2008/04/03 12:42:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.6 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.6.40.1 2008/04/03 12:42:24 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,12 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: zs_ms.c,v 1.6 2007/03/04 06:00:39 christos Exp $");
 #define ZSMS_SYNC_BTN_MASK	0x07
 
 struct zsms_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	/* tail-chasing fifo */
-	u_char		rxq[ZSMS_RXQ_LEN];
-	u_char		rxq_head;
-	u_char		rxq_tail;
+	uint8_t		rxq[ZSMS_RXQ_LEN];
+	uint8_t		rxq_head;
+	uint8_t		rxq_tail;
 
 	/* 5-byte packet as described above */
 #define	ZSMS_PACKET_SYNC	0
@@ -82,15 +82,15 @@ struct zsms_softc {
 #define ZSMS_STATE_Y1	0x04
 #define ZSMS_STATE_X2	0x08
 #define ZSMS_STATE_Y2	0x10
-	u_char		state;
+	uint8_t		state;
 
 	/* wsmouse bits */
 	int		enabled;
 	struct device  *wsmousedev;
 };
 
-static int	zsms_match(struct device *, struct cfdata *, void *);
-static void	zsms_attach(struct device *, struct device *, void *);
+static int	zsms_match(device_t, cfdata_t, void *);
+static void	zsms_attach(device_t, device_t, void *);
 static void	zsms_rxint(struct zs_chanstate *);
 static void	zsms_txint(struct zs_chanstate *);
 static void	zsms_stint(struct zs_chanstate *, int);
@@ -102,8 +102,8 @@ static void	zsms_wsmouse_disable(void *);
 static int	zsms_wsmouse_ioctl(void *, u_long, void *, int,
 						   struct lwp *);
 
-CFATTACH_DECL(zsms, sizeof(struct zsms_softc),
-	      zsms_match, zsms_attach, NULL, NULL);
+CFATTACH_DECL_NEW(zsms, sizeof(struct zsms_softc),
+    zsms_match, zsms_attach, NULL, NULL);
 
 static struct zsops zsms_zsops = {
 	zsms_rxint,
@@ -119,8 +119,9 @@ static const struct wsmouse_accessops zsms_wsmouse_accessops = {
 };
 
 int
-zsms_match(struct device *parent, struct cfdata *cf, void *aux)
+zsms_match(device_t parent, cfdata_t cf, void *aux)
 {
+
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20) {
 		struct zsc_attach_args *args = aux;
 
@@ -132,14 +133,19 @@ zsms_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-zsms_attach(struct device *parent, struct device *self, void *aux)
+zsms_attach(device_t parent, device_t self, void *aux)
 {
 	int				s, channel;
-	struct zsc_softc	       *zsc = (struct zsc_softc *)parent;
-	struct zsms_softc	       *sc = (struct zsms_softc *)self;
-	struct zsc_attach_args	       *args = aux;
+	struct zsc_softc	       *zsc;
+	struct zsms_softc	       *sc;
+	struct zsc_attach_args	       *args;
 	struct zs_chanstate	       *cs;
 	struct wsmousedev_attach_args	wsmaa;
+
+	zsc = device_private(parent);
+	sc = device_private(self);
+	sc->sc_dev = self;
+	args = aux;
 
 	/* Establish ourself with the MD z8530 driver */
 	channel = args->channel;
@@ -152,7 +158,7 @@ zsms_attach(struct device *parent, struct device *self, void *aux)
 	sc->rxq_tail = 0;
 	sc->state = ZSMS_STATE_SYNC;
 
-	printf(": baud rate %d\n", ZSMS_BAUD);
+	aprint_normal(": baud rate %d\n", ZSMS_BAUD);
 
 	s = splzs();
 	zs_write_reg(cs, 9, (channel == 0) ? ZSWR9_A_RESET : ZSWR9_B_RESET);
@@ -170,8 +176,8 @@ zsms_attach(struct device *parent, struct device *self, void *aux)
 void
 zsms_rxint(struct zs_chanstate *cs)
 {
-	u_char c, r;
-	struct zsms_softc *sc = (struct zsms_softc *)cs->cs_private;
+	uint8_t c, r;
+	struct zsms_softc *sc = cs->cs_private;
 
 	/* clear errors */
 	r = zs_read_reg(cs, 1);
@@ -191,6 +197,7 @@ zsms_rxint(struct zs_chanstate *cs)
 void
 zsms_txint(struct zs_chanstate *cs)
 {
+
 	zs_write_reg(cs, 0, ZSWR0_RESET_TXINT);
 
 	/* seems like the in thing to do */
@@ -200,6 +207,7 @@ zsms_txint(struct zs_chanstate *cs)
 void
 zsms_stint(struct zs_chanstate *cs, int force)
 {
+
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 	cs->cs_softreq = 1;
 }
@@ -207,7 +215,7 @@ zsms_stint(struct zs_chanstate *cs, int force)
 void
 zsms_softint(struct zs_chanstate *cs)
 {
-	struct zsms_softc *sc = (struct zsms_softc *)cs->cs_private;
+	struct zsms_softc *sc = cs->cs_private;
 
 	/* No need to keep score if nobody is listening */
 	if (!sc->enabled) {
@@ -287,7 +295,7 @@ zsms_wsmouse_input(struct zsms_softc *sc)
 static int
 zsms_wsmouse_enable(void *cookie)
 {
-	struct zsms_softc *sc = (struct zsms_softc *)cookie;
+	struct zsms_softc *sc = cookie;
 
 	if (sc->enabled)
 		return (EBUSY);
@@ -301,7 +309,7 @@ zsms_wsmouse_enable(void *cookie)
 void
 zsms_wsmouse_disable(void *cookie)
 {
-	struct zsms_softc *sc = (struct zsms_softc *)cookie;
+	struct zsms_softc *sc = cookie;
 
 	sc->enabled = 0;
 }
@@ -310,6 +318,7 @@ static int
 zsms_wsmouse_ioctl(void *cookie, u_long cmd,
 		   void *data, int flag, struct lwp *l)
 {
+
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_SGI;

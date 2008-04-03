@@ -1,4 +1,4 @@
-/*	$NetBSD: pwrsw_obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: pwrsw_obio.c,v 1.1.62.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -29,7 +29,7 @@
 #include "btn_obio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwrsw_obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwrsw_obio.c,v 1.1.62.1 2008/04/03 12:42:20 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pwrsw_obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
 #include <landisk/dev/obiovar.h>
 
 struct pwrsw_obio_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	void			*sc_ih;
 
 	struct sysmon_pswitch	sc_smpsw; /* our sysmon glue */
@@ -57,19 +57,19 @@ struct pwrsw_obio_softc {
 #define	SYSMON_ATTACHED	1
 };
 
-static int pwrsw_obio_probe(struct device *, struct cfdata *, void *);
-static void pwrsw_obio_attach(struct device *, struct device *, void *);
+static int pwrsw_obio_probe(device_t, cfdata_t, void *);
+static void pwrsw_obio_attach(device_t, device_t, void *);
 
 static int pwrsw_intr(void *aux);
 static void pwrsw_pressed_event(void *arg);
 
-CFATTACH_DECL(pwrsw_obio, sizeof(struct pwrsw_obio_softc),
+CFATTACH_DECL_NEW(pwrsw_obio, sizeof(struct pwrsw_obio_softc),
     pwrsw_obio_probe, pwrsw_obio_attach, NULL, NULL);
 
 static struct pwrsw_obio_softc *pwrsw_softc;
 
 static int
-pwrsw_obio_probe(struct device *parent, struct cfdata *cfp, void *aux)
+pwrsw_obio_probe(device_t parent, cfdata_t cfp, void *aux)
 {
 	struct obio_attach_args *oa = aux;
 
@@ -85,28 +85,30 @@ pwrsw_obio_probe(struct device *parent, struct cfdata *cfp, void *aux)
 }
 
 static void
-pwrsw_obio_attach(struct device *parent, struct device *self, void *aux)
+pwrsw_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct pwrsw_obio_softc *sc = (void *)self;
+	struct pwrsw_obio_softc *sc;
 
-	printf(": Power Switch\n");
+	aprint_naive("\n");
+	aprint_normal(": Power Switch\n");
+
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	pwrsw_softc = sc;
 
-	sc->sc_smpsw.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw.smpsw_name = device_xname(self);
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
 
 	sc->sc_ih = extintr_establish(LANDISK_INTR_PWRSW, IPL_TTY,
 	    pwrsw_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish intr handler",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to establish interrupt");
 		panic("extintr_establish");
 	}
 
 	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		printf("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		return;
 	}
 	sc->sc_flags |= SYSMON_ATTACHED;
@@ -115,7 +117,7 @@ pwrsw_obio_attach(struct device *parent, struct device *self, void *aux)
 static int
 pwrsw_intr(void *arg)
 {
-	struct pwrsw_obio_softc *sc = (void *)arg;
+	struct pwrsw_obio_softc *sc = arg;
 	int status;
 
 	status = (int8_t)_reg_read_1(LANDISK_BTNSTAT);
@@ -132,7 +134,7 @@ pwrsw_intr(void *arg)
 			extintr_disable_by_num(LANDISK_INTR_BTN);
 #endif
 		} else {
-			printf("%s: pressed\n", sc->sc_dev.dv_xname);
+			aprint_normal_dev(sc->sc_dev, "pressed\n");
 		}
 		_reg_write_1(LANDISK_PWRSW_INTCLR, 1);
 		return (1);
@@ -143,7 +145,7 @@ pwrsw_intr(void *arg)
 static void
 pwrsw_pressed_event(void *arg)
 {
-	struct pwrsw_obio_softc *sc = (void *)arg;
+	struct pwrsw_obio_softc *sc = arg;
 
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.171 2008/01/06 03:11:42 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.171.6.1 2008/04/03 12:42:12 mjf Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -213,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171 2008/01/06 03:11:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.171.6.1 2008/04/03 12:42:12 mjf Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -337,13 +337,13 @@ static struct lock pmap_main_lock;
 #define	pmap_acquire_pmap_lock(pm)			\
 	do {						\
 		if ((pm) != pmap_kernel())		\
-			simple_lock(&(pm)->pm_lock);	\
+			mutex_enter(&(pm)->pm_lock);	\
 	} while (/*CONSTCOND*/0)
 
 #define	pmap_release_pmap_lock(pm)			\
 	do {						\
 		if ((pm) != pmap_kernel())		\
-			simple_unlock(&(pm)->pm_lock);	\
+			mutex_exit(&(pm)->pm_lock);	\
 	} while (/*CONSTCOND*/0)
 
 
@@ -1910,11 +1910,7 @@ pmap_create(void)
 
 	pm = pool_cache_get(&pmap_cache, PR_WAITOK);
 
-	simple_lock_init(&pm->pm_lock);
-	pm->pm_obj.pgops = NULL;	/* currently not a mappable object */
-	TAILQ_INIT(&pm->pm_obj.memq);
-	pm->pm_obj.uo_npages = 0;
-	pm->pm_obj.uo_refs = 1;
+	UVM_OBJ_INIT(&pm->pm_obj, NULL, 1);
 	pm->pm_stats.wired_count = 0;
 	pm->pm_stats.resident_count = 1;
 	pm->pm_cstate.cs_all = 0;
@@ -3240,9 +3236,9 @@ pmap_destroy(pmap_t pm)
 	/*
 	 * Drop reference count
 	 */
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pm->pm_lock);
 	count = --pm->pm_obj.uo_refs;
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pm->pm_lock);
 	if (count > 0) {
 		if (pmap_is_current(pm)) {
 			if (pm != pmap_kernel())
@@ -3271,6 +3267,8 @@ pmap_destroy(pmap_t pm)
 	if (pmap_recent_user == pm)
 		pmap_recent_user = NULL;
 
+	UVM_OBJ_DESTROY(&pm->pm_obj);
+
 	/* return the pmap to the pool */
 	pool_cache_put(&pmap_cache, pm);
 }
@@ -3290,9 +3288,9 @@ pmap_reference(pmap_t pm)
 
 	pmap_use_l1(pm);
 
-	simple_lock(&pm->pm_lock);
+	mutex_enter(&pm->pm_lock);
 	pm->pm_obj.uo_refs++;
-	simple_unlock(&pm->pm_lock);
+	mutex_exit(&pm->pm_lock);
 }
 
 /*
@@ -3668,7 +3666,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 */
 
 	s = splhigh();	/* to be safe */
-	simple_lock(&kpm->pm_lock);
+	mutex_enter(&kpm->pm_lock);
 
 	/* Map 1MB at a time */
 	for (; pmap_curmaxkvaddr < maxkvaddr; pmap_curmaxkvaddr += L1_S_SIZE) {
@@ -3693,7 +3691,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	cpu_tlb_flushD();
 	cpu_cpwait();
 
-	simple_unlock(&kpm->pm_lock);
+	mutex_exit(&kpm->pm_lock);
 	splx(s);
 
 out:
@@ -3857,11 +3855,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pm->pm_domain = PMAP_DOMAIN_KERNEL;
 	pm->pm_activated = true;
 	pm->pm_cstate.cs_all = PMAP_CACHE_STATE_ALL;
-	simple_lock_init(&pm->pm_lock);
-	pm->pm_obj.pgops = NULL;
-	TAILQ_INIT(&pm->pm_obj.memq);
-	pm->pm_obj.uo_npages = 0;
-	pm->pm_obj.uo_refs = 1;
+	UVM_OBJ_INIT(&pm->pm_obj, NULL, 1);
 
 	/*
 	 * Scan the L1 translation table created by initarm() and create

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 2007/11/06 01:00:59 uwe Exp $	*/
+/*	$NetBSD: obio.c,v 1.4.14.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2007/11/06 01:00:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4.14.1 2008/04/03 12:42:20 mjf Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"
@@ -66,16 +66,24 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.4 2007/11/06 01:00:59 uwe Exp $");
 
 #include "locators.h"
 
-static int	obio_match(device_t, struct cfdata *, void *);
+
+struct obio_softc {
+	device_t sc_dev;
+
+	bus_space_tag_t sc_iot;		/* io space tag */
+	bus_space_tag_t sc_memt;	/* mem space tag */
+};
+
+static int	obio_match(device_t, cfdata_t, void *);
 static void	obio_attach(device_t, device_t, void *);
 static int	obio_print(void *, const char *);
-static int	obio_search(device_t, struct cfdata *, const int *, void *);
+static int	obio_search(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL(obio, sizeof(struct obio_softc),
+CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 static int
-obio_match(device_t parent, struct cfdata *cf, void *aux)
+obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obiobus_attach_args *oba = aux;
 
@@ -94,6 +102,8 @@ obio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
+
 	sc->sc_iot = oba->oba_iot;
 	sc->sc_memt = oba->oba_memt;
 
@@ -106,8 +116,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-obio_search(device_t parent, struct cfdata *cf,
-    const int *ldesc, void *aux)
+obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct obio_io res_io[1];
 	struct obio_iomem res_mem[1];

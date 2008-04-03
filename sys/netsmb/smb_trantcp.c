@@ -1,4 +1,37 @@
-/*	$NetBSD: smb_trantcp.c,v 1.31 2007/07/10 21:05:03 ad Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.31.28.1 2008/04/03 12:43:09 mjf Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31 2007/07/10 21:05:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31.28.1 2008/04/03 12:43:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31 2007/07/10 21:05:03 ad Exp $");
 #include <sys/socketvar.h>
 #include <sys/poll.h>
 #include <sys/uio.h>
-#include <sys/sysctl.h>
+#include <sys/select.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -107,105 +140,12 @@ nb_setsockopt_int(struct socket *so, int level, int name, int val)
 #endif
 }
 
-static inline int
-nb_poll(struct nbpcb *nbp, int events, struct lwp *l)
-{
-#ifndef __NetBSD__
-        return nbp->nbp_tso->so_proto->pr_usrreqs->pru_sopoll(nbp->nbp_tso,
-            events, NULL, l);
-#else
-	/* XXX this is exactly equal to soo_poll() */
-	struct socket *so = nbp->nbp_tso;
-	int revents = 0;
-	int s = splsoftnet();
-
-	if (events & (POLLIN | POLLRDNORM))
-		if (soreadable(so))
-			revents |= events & (POLLIN | POLLRDNORM);
-
-	if (events & (POLLOUT | POLLWRNORM))
-		if (sowritable(so))
-			revents |= events & (POLLOUT | POLLWRNORM);
-
-	if (events & (POLLPRI | POLLRDBAND))
-		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
-			revents |= events & (POLLPRI | POLLRDBAND);
-
-	if (revents == 0) {
-		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-			selrecord(l, &so->so_rcv.sb_sel);
-			so->so_rcv.sb_flags |= SB_SEL;
-		}
-
-		if (events & (POLLOUT | POLLWRNORM)) {
-			selrecord(l, &so->so_snd.sb_sel);
-			so->so_snd.sb_flags |= SB_SEL;
-		}
-	}
-
-	splx(s);
-	return (revents);
-#endif
-}
-
-/* XXX WTF re-implemented select()? */
 static int
 nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 	struct lwp *l)
 {
-	extern kcondvar_t select_cv;
-	extern kmutex_t select_lock;
-	struct timeval atv;
-	extern int nselcoll;
-	int ncoll;
-	int timo, error;
 
-	if (tv) {
-		atv = *tv;
-		if (itimerfix(&atv))
-			return (EINVAL);
-		timo = tvtohz(&atv);
-		if (timo <= 0)
-			return (EWOULDBLOCK);
-	} else
-		timo = 0;
-
- 	mutex_enter(&select_lock);
- retry:
-	ncoll = nselcoll;
-	l->l_selflag = 1;
- 	mutex_exit(&select_lock);
-	error = nb_poll(nbp, events, l);
- 	mutex_enter(&select_lock);
-	if (error) {
-		error = 0;
-		goto done;
-	}
-	if (tv) {
-		/*
-		 * We have to recalculate the timeout on every retry.
-		 */
-		timo = tvtohz(&atv);
-		if (timo <= 0) {
-			error = EWOULDBLOCK;
-			goto done;
-		}
-	}
-
-	if (l->l_selflag != 1 || nselcoll != ncoll)
-		goto retry;
-	l->l_selflag = 2;
-	error = cv_timedwait(&select_cv, &select_lock, timo);
-	if (error == 0)
-		goto retry;
-
-done:
-	l->l_selflag = 0;
-	mutex_exit(&select_lock);
-	/* select is not restarted after signals... */
-	if (error == ERESTART)
-		error = 0;
-	return (error);
+	return pollsock(nbp->nbp_tso, tv, events);
 }
 
 static int

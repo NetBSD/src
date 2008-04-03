@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_socket.c,v 1.151 2008/02/06 21:57:54 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.151.6.1 2008/04/03 12:43:05 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.151 2008/02/06 21:57:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.151.6.1 2008/04/03 12:43:05 mjf Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -253,25 +253,16 @@ sokvafree(vaddr_t sva, vsize_t len)
 static void
 sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 {
-	vaddr_t va, sva, eva;
+	vaddr_t sva, eva;
 	vsize_t len;
-	paddr_t pa;
-	int i, npgs;
+	int npgs;
+
+	KASSERT(pgs != NULL);
 
 	eva = round_page((vaddr_t) buf + size);
 	sva = trunc_page((vaddr_t) buf);
 	len = eva - sva;
 	npgs = len >> PAGE_SHIFT;
-
-	if (__predict_false(pgs == NULL)) {
-		pgs = alloca(npgs * sizeof(*pgs));
-
-		for (i = 0, va = sva; va < eva; i++, va += PAGE_SIZE) {
-			if (pmap_extract(pmap_kernel(), va, &pa) == false)
-				panic("sodoloanfree: va 0x%lx not mapped", va);
-			pgs[i] = PHYS_TO_VM_PAGE(pa);
-		}
-	}
 
 	pmap_kremove(sva, len);
 	pmap_update(pmap_kernel());
@@ -280,7 +271,7 @@ sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 }
 
 static size_t
-sodopendfree()
+sodopendfree(void)
 {
 	size_t rv;
 
@@ -299,7 +290,7 @@ sodopendfree()
  */
 
 static size_t
-sodopendfreel()
+sodopendfreel(void)
 {
 	struct mbuf *m, *next;
 	size_t rv = 0;
@@ -313,10 +304,11 @@ sodopendfreel()
 
 		for (; m != NULL; m = next) {
 			next = m->m_next;
+			KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES)) == 0);
+			KASSERT(m->m_ext.ext_refcnt == 0);
 
 			rv += m->m_ext.ext_size;
-			sodoloanfree((m->m_flags & M_EXT_PAGES) ?
-			    m->m_ext.ext_pgs : NULL, m->m_ext.ext_buf,
+			sodoloanfree(m->m_ext.ext_pgs, m->m_ext.ext_buf,
 			    m->m_ext.ext_size);
 			pool_cache_put(mb_cache, m);
 		}
@@ -331,15 +323,7 @@ void
 soloanfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 
-	if (m == NULL) {
-
-		/*
-		 * called from MEXTREMOVE.
-		 */
-
-		sodoloanfree(NULL, buf, size);
-		return;
-	}
+	KASSERT(m != NULL);
 
 	/*
 	 * postpone freeing mbuf.
@@ -361,8 +345,10 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	struct iovec *iov = uio->uio_iov;
 	vaddr_t sva, eva;
 	vsize_t len;
-	vaddr_t lva, va;
-	int npgs, i, error;
+	vaddr_t lva;
+	int npgs, error;
+	vaddr_t va;
+	int i;
 
 	if (VMSPACE_IS_KERNEL_P(uio->uio_vmspace))
 		return (0);
@@ -540,29 +526,23 @@ int
 fsocreate(int domain, struct socket **sop, int type, int protocol,
     struct lwp *l, int *fdout)
 {
-	struct filedesc	*fdp;
 	struct socket	*so;
 	struct file	*fp;
 	int		fd, error;
 
-	fdp = l->l_proc->p_fd;
-	/* falloc() will use the desciptor for us */
-	if ((error = falloc(l, &fp, &fd)) != 0)
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return (error);
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_ops = &socketops;
 	error = socreate(domain, &so, type, protocol, l);
 	if (error != 0) {
-		FILE_UNUSE(fp, l);
-		fdremove(fdp, fd);
-		ffree(fp);
+		fd_abort(curproc, fp, fd);
 	} else {
 		if (sop != NULL)
 			*sop = so;
 		fp->f_data = so;
-		FILE_SET_MATURE(fp);
-		FILE_UNUSE(fp, l);
+		fd_affix(curproc, fp, fd);
 		*fdout = fd;
 	}
 	return error;
@@ -585,6 +565,9 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 	int	s, error;
 
 	s = splsoftnet();
+	if ((so->so_state & (SS_ISCONNECTED | SS_ISCONNECTING | 
+	    SS_ISDISCONNECTING)) != 0)
+		return (EOPNOTSUPP);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, NULL,
 	    NULL, NULL, l);
 	if (error != 0) {
@@ -834,8 +817,8 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	if (p)
-		p->p_stats->p_ru.ru_msgsnd++;
+	if (l)
+		l->l_ru.ru_msgsnd++;
 	if (control)
 		clen = control->m_len;
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
@@ -1129,7 +1112,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
 	if (l != NULL)
-		l->l_proc->p_stats->p_ru.ru_msgrcv++;
+		l->l_ru.ru_msgrcv++;
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 1");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 1");
@@ -1682,8 +1665,9 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 void
 sohasoutofband(struct socket *so)
 {
+
 	fownsignal(so->so_pgid, SIGURG, POLL_PRI, POLLPRI|POLLRDBAND, so);
-	selwakeup(&so->so_rcv.sb_sel);
+	selnotify(&so->so_rcv.sb_sel, POLLPRI | POLLRDBAND, 0);
 }
 
 static void
@@ -1691,7 +1675,7 @@ filt_sordetach(struct knote *kn)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	SLIST_REMOVE(&so->so_rcv.sb_sel.sel_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))
 		so->so_rcv.sb_flags &= ~SB_KNOTE;
@@ -1703,7 +1687,7 @@ filt_soread(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -1722,7 +1706,7 @@ filt_sowdetach(struct knote *kn)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	SLIST_REMOVE(&so->so_snd.sb_sel.sel_klist, kn, knote, kn_selnext);
 	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))
 		so->so_snd.sb_flags &= ~SB_KNOTE;
@@ -1734,7 +1718,7 @@ filt_sowrite(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	kn->kn_data = sbspace(&so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
@@ -1757,7 +1741,7 @@ filt_solisten(struct knote *kn, long hint)
 {
 	struct socket	*so;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 
 	/*
 	 * Set kn_data to number of incoming connections, not
@@ -1780,7 +1764,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	struct socket	*so;
 	struct sockbuf	*sb;
 
-	so = (struct socket *)kn->kn_fp->f_data;
+	so = ((file_t *)kn->kn_obj)->f_data;
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		if (so->so_options & SO_ACCEPTCONN)
@@ -1800,6 +1784,59 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	sb->sb_flags |= SB_KNOTE;
 	return (0);
 }
+
+static int
+sodopoll(struct socket *so, int events)
+{
+	int revents;
+
+	revents = 0;
+
+	if (events & (POLLIN | POLLRDNORM))
+		if (soreadable(so))
+			revents |= events & (POLLIN | POLLRDNORM);
+
+	if (events & (POLLOUT | POLLWRNORM))
+		if (sowritable(so))
+			revents |= events & (POLLOUT | POLLWRNORM);
+
+	if (events & (POLLPRI | POLLRDBAND))
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
+			revents |= events & (POLLPRI | POLLRDBAND);
+
+	return revents;
+}
+
+int
+sopoll(struct socket *so, int events)
+{
+	int revents = 0;
+	int s;
+
+	if ((revents = sodopoll(so, events)) != 0)
+		return revents;
+
+	KERNEL_LOCK(1, curlwp);
+	s = splsoftnet();
+
+	if ((revents = sodopoll(so, events)) == 0) {
+		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
+			selrecord(curlwp, &so->so_rcv.sb_sel);
+			so->so_rcv.sb_flags |= SB_SEL;
+		}
+
+		if (events & (POLLOUT | POLLWRNORM)) {
+			selrecord(curlwp, &so->so_snd.sb_sel);
+			so->so_snd.sb_flags |= SB_SEL;
+		}
+	}
+
+	splx(s);
+	KERNEL_UNLOCK_ONE(curlwp);
+
+	return revents;
+}
+
 
 #include <sys/sysctl.h>
 

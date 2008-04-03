@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lwp.c,v 1.93 2008/01/28 12:23:42 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.93.6.1 2008/04/03 12:43:01 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.93 2008/01/28 12:23:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.93.6.1 2008/04/03 12:43:01 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -583,6 +583,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	l2->l_pflag = LP_MPSAFE;
+	l2->l_fd = p2->p_fd;
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/* Mark it as a system LWP and not a candidate for swapping */
@@ -829,12 +830,10 @@ lwp_exit_switchaway(struct lwp *l)
 	struct cpu_info *ci;
 	struct lwp *idlelwp;
 
-	/* Unlocked, but is for statistics only. */
-	uvmexp.swtch++;
-
 	(void)splsched();
 	l->l_flag &= ~LW_RUNNING;
 	ci = curcpu();	
+	ci->ci_data.cpu_nswtch++;
 	idlelwp = ci->ci_data.cpu_idlelwp;
 	idlelwp->l_stat = LSONPROC;
 
@@ -860,6 +859,7 @@ void
 lwp_free(struct lwp *l, bool recycle, bool last)
 {
 	struct proc *p = l->l_proc;
+	struct rusage *ru;
 	ksiginfoq_t kq;
 
 	KASSERT(l != curlwp);
@@ -875,6 +875,10 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		 */
 		bintime_add(&p->p_rtime, &l->l_rtime);
 		p->p_pctcpu += l->l_pctcpu;
+		ru = &p->p_stats->p_ru;
+		ruadd(ru, &l->l_ru);
+		ru->ru_nvcsw += (l->l_ncsw - l->l_nivcsw);
+		ru->ru_nivcsw += l->l_nivcsw;
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;
 		p->p_nzlwps--;
@@ -1097,7 +1101,8 @@ lwp_migrate(lwp_t *l, struct cpu_info *ci)
 }
 
 /*
- * Find the LWP in the process.
+ * Find the LWP in the process.  Arguments may be zero, in such case,
+ * the calling process and first LWP in the list will be used.
  * On success - returns LWP locked.
  */
 struct lwp *
@@ -1107,14 +1112,17 @@ lwp_find2(pid_t pid, lwpid_t lid)
 	lwp_t *l;
 
 	/* Find the process */
-	p = p_find(pid, PFIND_UNLOCK_FAIL);
+	p = (pid == 0) ? curlwp->l_proc : p_find(pid, PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		return NULL;
 	mutex_enter(&p->p_smutex);
-	mutex_exit(&proclist_lock);
+	if (pid != 0) {
+		/* Case of p_find */
+		mutex_exit(&proclist_lock);
+	}
 
 	/* Find the thread */
-	l = lwp_find(p, lid);
+	l = (lid == 0) ? LIST_FIRST(&p->p_lwps) : lwp_find(p, lid);
 	if (l != NULL)
 		lwp_lock(l);
 	mutex_exit(&p->p_smutex);
@@ -1169,6 +1177,9 @@ lwp_update_creds(struct lwp *l)
 	mutex_enter(&p->p_mutex);
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
+	mutex_enter(&p->p_smutex);
+	l->l_prflag &= ~LPR_CRMOD;
+	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_mutex);
 	if (oc != NULL)
 		kauth_cred_free(oc);
@@ -1280,6 +1291,16 @@ lwp_trylock(struct lwp *l)
 		mutex_spin_exit(old);
 	}
 }
+
+u_int
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
 
 /*
  * Handle exceptions for mi_userret().  Called if a member of LW_USERRET is
@@ -1593,6 +1614,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 		 */
 		uao = lp->lp_uao;
 		(*uao->pgops->pgo_reference)(uao);
+		lcp->lcp_kaddr = vm_map_min(kernel_map);
 		error = uvm_map(kernel_map, &lcp->lcp_kaddr, PAGE_SIZE,
 		    uao, lp->lp_cur, PAGE_SIZE,
 		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
@@ -1683,6 +1705,7 @@ lwp_ctl_exit(void)
 
 	l = curlwp;
 	l->l_lwpctl = NULL;
+	l->l_lcpage = NULL;
 	p = l->l_proc;
 	lp = p->p_lwpctl;
 

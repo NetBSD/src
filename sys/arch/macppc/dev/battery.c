@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.8 2007/12/12 18:19:20 macallan Exp $ */
+/*	$NetBSD: battery.c,v 1.8.6.1 2008/04/03 12:42:21 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.8 2007/12/12 18:19:20 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.8.6.1 2008/04/03 12:42:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,6 +288,9 @@ battery_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		break;
 	case BAT_AC_PRESENT:
 		edata->value_cur = (sc->sc_flags & PMU_PWR_AC_PRESENT);
+		break;
+	case BAT_PRESENT:
+		edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_PRESENT);
 		break;
 	case BAT_VOLTAGE:
 		edata->value_cur = sc->sc_voltage * 1000;
