@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2007/10/17 19:57:47 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.8.16.1 2008/04/03 12:42:27 mjf Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -68,8 +68,6 @@ include <sun3/sun3/cache.h>
 include <sun3/sun3/fc.h>
 
 include <sun3/sun3x/enable.h>
-
-include <m68k/saframe.h>
 
 # XXX: for copy.s
 define	M68030			1

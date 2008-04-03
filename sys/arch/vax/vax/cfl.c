@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.17 2008/01/02 11:48:31 ad Exp $	*/
+/*	$NetBSD: cfl.c,v 1.17.6.1 2008/04/03 12:42:28 mjf Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.17 2008/01/02 11:48:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.17.6.1 2008/04/03 12:42:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,11 +118,11 @@ struct {
 #define	CFL_FINISH	6
 #define	CFL_GETIN	7
 
-static	void cflstart __P((void));
+static void cflstart(void);
 
-dev_type_open(cflopen);
-dev_type_close(cflclose);
-dev_type_read(cflrw);
+static dev_type_open(cflopen);
+static dev_type_close(cflclose);
+static dev_type_read(cflrw);
 
 const struct cdevsw cfl_cdevsw = {
 	cflopen, cflclose, cflrw, cflrw, noioctl,
@@ -131,10 +131,7 @@ const struct cdevsw cfl_cdevsw = {
 
 /*ARGSUSED*/
 int
-cflopen(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+cflopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	if (vax_cputype != VAX_780)
 		return (ENXIO);
@@ -147,10 +144,7 @@ cflopen(dev, flag, mode, l)
 
 /*ARGSUSED*/
 int
-cflclose(dev, flag, mode, l)
-	dev_t dev;
-	int flag, mode;
-	struct lwp *l;
+cflclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int s;
 	s = splbio();
@@ -162,14 +156,11 @@ cflclose(dev, flag, mode, l)
 
 /*ARGSUSED*/
 int
-cflrw(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+cflrw(dev_t dev, struct uio *uio, int flag)
 {
-	register struct buf *bp;
-	register int i;
-	register int s;
+	struct buf *bp;
+	int i;
+	int s;
 	int error;
 
 	if (uio->uio_resid == 0) 
@@ -223,9 +214,9 @@ cflrw(dev, uio, flag)
 }
 
 void
-cflstart()
+cflstart(void)
 {
-	register struct buf *bp;
+	struct buf *bp;
 
 	bp = cfltab.cfl_buf;
 	cfltab.cfl_errcnt = 0;
@@ -245,13 +236,12 @@ cflstart()
 #endif
 }
 
-void cfltint __P((int));
+void cfltint(int);
 
 void
-cfltint(arg)
-	int arg;
+cfltint(int arg)
 {
-	register struct buf *bp = cfltab.cfl_buf;
+	struct buf *bp = cfltab.cfl_buf;
 
 	switch (cfltab.cfl_active) {
 	case CFL_START:/* do a read */
@@ -279,7 +269,7 @@ cfltint(arg)
 	}
 }
 
-void cflrint __P((int));
+void cflrint(int);
 
 void
 cflrint(int ch)

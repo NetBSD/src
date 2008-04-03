@@ -1,7 +1,7 @@
-/*	$NetBSD: darwin_ioctl.c,v 1.8 2007/12/20 23:02:46 dsl Exp $ */
+/*	$NetBSD: darwin_ioctl.c,v 1.8.6.1 2008/04/03 12:42:32 mjf Exp $ */
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.8 2007/12/20 23:02:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioctl.c,v 1.8.6.1 2008/04/03 12:42:32 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,19 +75,18 @@ darwin_sys_ioctl(struct lwp *l, const struct darwin_sys_ioctl_args *uap, registe
 
 	switch (SCARG(uap, com)) {
 	case DARWIN_FIODTYPE: { /* Get file d_type */
-		struct proc *p = l->l_proc;
-		struct file *fp;
+		file_t *fp;
 		struct vnode *vp;
 		int *data = SCARG(uap, data);
 		int type;
 
 		/* getvnode() will use the descriptor for us */
-		if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)))
+		if ((error = fd_getvnode(SCARG(uap, fd), &fp)))
 			return (error);
 
 		vp = fp->f_data;
 		type = vtype_to_dtype(vp->v_type);
-		FILE_UNUSE(fp, l);
+		fd_putfile(SCARG(uap, fd));
 
 		error = copyout(&type, data, sizeof(*data));
 

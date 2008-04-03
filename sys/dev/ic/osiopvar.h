@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.11 2007/12/25 18:33:39 perry Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.11.6.1 2008/04/03 12:42:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -190,7 +190,7 @@ struct osiop_tinfo {
 };
 
 struct osiop_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_bst;		/* bus space tag */
 	bus_space_handle_t sc_reg;	/* register I/O handle */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi_mainbus.c,v 1.6 2005/12/11 12:19:36 christos Exp $	   */
+/*	$NetBSD: xmi_mainbus.c,v 1.6.74.1 2008/04/03 12:42:29 mjf Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi_mainbus.c,v 1.6 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi_mainbus.c,v 1.6.74.1 2008/04/03 12:42:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,37 +42,41 @@ __KERNEL_RCSID(0, "$NetBSD: xmi_mainbus.c,v 1.6 2005/12/11 12:19:36 christos Exp
 #include <machine/sid.h>
 #include <machine/scb.h>
 #include <machine/cpu.h>
+#include <machine/mainbus.h>
 
 #include <dev/xmi/xmivar.h>
 
-static	int xmi_mainbus_match __P((struct device *, struct cfdata *, void *));
-static	void xmi_mainbus_attach __P((struct device *, struct device *, void *));
+#include "ioconf.h"
 
-CFATTACH_DECL(xmi_mainbus, sizeof(struct xmi_softc),
+static	int xmi_mainbus_match(device_t, cfdata_t, void *);
+static	void xmi_mainbus_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(xmi_mainbus, sizeof(struct xmi_softc),
     xmi_mainbus_match, xmi_mainbus_attach, NULL, NULL);
 
-extern	struct vax_bus_space vax_mem_bus_space;
-extern	struct vax_bus_dma_tag vax_bus_dma_tag;
+extern	int mastercpu;
 
 static int
-xmi_mainbus_match(struct device *parent, struct cfdata *vcf, void *aux)
+xmi_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (vax_bustype == VAX_XMIBUS)
-		return 1;
-	return 0;
+	struct mainbus_attach_args * const ma = aux;
+
+	return !strcmp(xmi_cd.cd_name, ma->ma_type);
 }
 
 static void
-xmi_mainbus_attach(struct device *parent, struct device *self, void *aux)
+xmi_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct xmi_softc *sc = (void *)self;
+	struct xmi_softc * const sc = device_private(self);
+	struct mainbus_attach_args * const ma = aux;
 
 	/*
 	 * Fill in bus specific data.
 	 */
+	sc->sc_dev = self;
 	sc->sc_addr = (bus_addr_t)0x21800000; /* XXX */
-	sc->sc_iot = &vax_mem_bus_space; /* No special I/O handling */
-	sc->sc_dmat = &vax_bus_dma_tag;	/* No special DMA handling either */
+	sc->sc_iot = ma->ma_iot;	/* No special I/O handling */
+	sc->sc_dmat = ma->ma_dmat;	/* No special DMA handling either */
 	sc->sc_intcpu = 1 << mastercpu;
 
 	xmi_attach(sc);

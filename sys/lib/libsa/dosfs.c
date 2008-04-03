@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.12 2007/11/24 13:20:55 isaki Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.12.14.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -150,6 +150,23 @@ static int ioread(DOS_FS *, u_int, void *, u_int);
 static int iobuf(DOS_FS *, u_int);
 static int ioget(struct open_file *, u_int, void *, u_int);
 
+#define strcasecmp(s1, s2) dos_strcasecmp(s1, s2)
+static int
+strcasecmp(const char *s1, const char *s2)
+{
+	char c1, c2;
+	#define TO_UPPER(c) ((c) >= 'a' && (c) <= 'z' ? (c) - ('a' - 'A') : (c))
+	for (;;) {
+		c1 = *s1++;
+		c2 = *s2++;
+		if (TO_UPPER(c1) != TO_UPPER(c2))
+			return 1;
+		if (c1 == 0)
+			return 0;
+	}
+	#undef TO_UPPER
+}
+
 /*
  * Mount DOS filesystem
  */
@@ -158,7 +175,7 @@ dos_mount(DOS_FS *fs, struct open_file *fd)
 {
 	int     err;
 
-	bzero(fs, sizeof(DOS_FS));
+	(void)memset(fs, 0, sizeof(DOS_FS));
 	fs->fd = fd;
 	if ((err = !(fs->buf = alloc(SECSIZ)) ? errno : 0) ||
 	    (err = ioget(fs->fd, 0, fs->buf, 1)) ||
@@ -238,7 +255,7 @@ dosfs_open(const char *path, struct open_file *fd)
 	f->offset = 0;
 	f->c = 0;
 #else
-	bzero(f, sizeof(DOS_FILE));
+	(void)memset(f, 0, sizeof(DOS_FILE));
 #endif
 	f->fs = fs;
 	fs->links++;

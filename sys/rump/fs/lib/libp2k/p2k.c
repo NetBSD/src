@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.41 2008/01/28 11:52:38 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.41.6.1 2008/04/03 12:43:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -222,7 +222,7 @@ p2k_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 {
 	struct mount *mp = puffs_getspecific(pu);
 
-	return VFS_STATVFS(mp, sbp);
+	return rump_vfs_statvfs(mp, sbp);
 }
 
 int
@@ -251,13 +251,12 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 	 * against the root cookie, which might change (blah2).
 	 */
 	rump_vp_recycle_nokidding(rvp);
-	rv = VFS_UNMOUNT(mp, flags);
+	rv = rump_vfs_unmount(mp, flags);
 	if (rv) {
 		int rv2;
 
-		rv2 = VFS_ROOT(mp, &rvp2);
+		rv2 = rump_vfs_root(mp, &rvp2, 0);
 		assert(rv2 == 0 && rvp == rvp2);
-		VUL(rvp);
 	}
 	return rv;
 }
@@ -271,7 +270,7 @@ p2k_fs_sync(struct puffs_usermount *pu, int waitfor,
 	int rv;
 
 	cred = cred_create(pcr);
-	rv = VFS_SYNC(mp, waitfor, (kauth_cred_t)cred);
+	rv = rump_vfs_sync(mp, waitfor, (kauth_cred_t)cred);
 	cred_destroy(cred);
 
 	rump_bioops_sync();
@@ -290,7 +289,7 @@ p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	dev_t rdev;
 	int rv;
 
-	rv = VFS_FHTOVP(mp, fid, &vp);
+	rv = rump_vfs_fhtovp(mp, fid, &vp);
 	if (rv)
 		return rv;
 
@@ -309,7 +308,7 @@ p2k_fs_nodetofh(struct puffs_usermount *pu, void *cookie, void *fid,
 {
 	struct vnode *vp = cookie;
 
-	return VFS_VPTOFH(vp, fid, fidsize);
+	return rump_vfs_vptofh(vp, fid, fidsize);
 }
 
 int

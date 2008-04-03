@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.54 2007/10/19 11:59:46 ad Exp $	*/
+/*	$NetBSD: aha.c,v 1.54.16.1 2008/04/03 12:42:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.54 2007/10/19 11:59:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.54.16.1 2008/04/03 12:42:39 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -749,6 +749,19 @@ aha_find(iot, ioh, sc)
 	u_char sts;
 	struct aha_config config;
 	int irq, drq;
+
+	/*
+	 * assume invalid status means the board is not present.
+	 */
+
+	sts = bus_space_read_1(iot, ioh, AHA_STAT_PORT);
+	if (sts == 0)
+		return (0);
+	if ((sts & (AHA_STAT_STST|AHA_STAT_RSVD|AHA_STAT_CDF)) != 0)
+		return (0);
+	sts = bus_space_read_1(iot, ioh, AHA_INTR_PORT);
+	if ((sts & AHA_INTR_RSVD) != 0)
+		return (0);
 
 	/*
 	 * reset board, If it doesn't respond, assume

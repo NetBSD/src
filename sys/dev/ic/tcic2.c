@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.28 2007/10/19 12:00:02 ad Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.28.16.1 2008/04/03 12:42:42 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,9 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.28 2007/10/19 12:00:02 ad Exp $");
-
-#undef	TCICDEBUG
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.28.16.1 2008/04/03 12:42:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1134,7 +1132,7 @@ tcic_chip_io_map(pch, width, offset, size, pcihp, windowp)
 	bus_addr_t ioaddr = pcihp->addr + offset;
 	int i, win;
 #ifdef TCICDEBUG
-	static char *width_names[] = { "auto", "io8", "io16" };
+	static const char *width_names[] = { "auto", "io8", "io16" };
 #endif
 
 	/* XXX Sanity check offset/size. */

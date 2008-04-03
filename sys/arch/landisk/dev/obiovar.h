@@ -1,4 +1,4 @@
-/*	$NetBSD: obiovar.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: obiovar.h,v 1.1.62.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -134,17 +134,6 @@ struct obio_attach_args {
 #define	IOBASEUNK	OBIOCF_PORT_DEFAULT	/* i/o address is unknown */
 #define	IRQUNK		OBIOCF_IRQ_DEFAULT	/* interrupt request line is unknown */
 #define	MADDRUNK	OBIOCF_IOMEM_DEFAULT	/* shared memory address is unknown */
-
-
-/*
- * master bus
- */
-struct obio_softc {
-	struct device sc_dev;		/* base device */
-
-	bus_space_tag_t sc_iot;		/* io space tag */
-	bus_space_tag_t sc_memt;	/* mem space tag */
-};
 
 #define		cf_iobase		cf_loc[OBIOCF_PORT]
 #define		cf_iosize		cf_loc[OBIOCF_SIZE]

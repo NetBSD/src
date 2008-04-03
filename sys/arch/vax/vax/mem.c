@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.36.40.1 2008/03/29 18:47:01 mjf Exp $	*/
+/*	$NetBSD: mem.c,v 1.36.40.2 2008/04/03 12:42:29 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.36.40.1 2008/03/29 18:47:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.36.40.2 2008/04/03 12:42:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -127,9 +127,9 @@ mem_init(void)
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	register vaddr_t v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 
 	while (uio->uio_resid > 0 && error == 0) {

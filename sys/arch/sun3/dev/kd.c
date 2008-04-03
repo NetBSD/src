@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.53 2007/11/19 18:51:44 ad Exp $	*/
+/*	$NetBSD: kd.c,v 1.53.14.1 2008/04/03 12:42:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.53 2007/11/19 18:51:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.53.14.1 2008/04/03 12:42:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -458,7 +458,7 @@ kdcninit(struct consdev *cn)
 	kbd_xlate_init(ks);
 
 	/* Set up initial PROM input channel for /dev/console */
-	prom_cons_channel.cc_dev = NULL;
+	prom_cons_channel.cc_private = NULL;
 	prom_cons_channel.cc_iopen = kd_rom_iopen;
 	prom_cons_channel.cc_iclose = kd_rom_iclose;
 	cons_attach_input(&prom_cons_channel, cn);

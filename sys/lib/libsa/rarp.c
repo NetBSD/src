@@ -1,4 +1,4 @@
-/*	$NetBSD: rarp.c,v 1.26 2007/11/24 13:20:56 isaki Exp $	*/
+/*	$NetBSD: rarp.c,v 1.26.14.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -115,15 +115,15 @@ rarp_getipaddress(int sock)
 		printf("rarp: d=%lx\n", (u_long)d);
 #endif
 
-	bzero((char *)&wbuf.data, sizeof(wbuf.data));
+	(void)memset(&wbuf.data, 0, sizeof(wbuf.data));
 	ap = &wbuf.data.arp;
 	ap->arp_hrd = htons(ARPHRD_ETHER);
 	ap->arp_pro = htons(ETHERTYPE_IP);
 	ap->arp_hln = sizeof(ap->arp_sha); /* hardware address length */
 	ap->arp_pln = sizeof(ap->arp_spa); /* protocol address length */
 	ap->arp_op = htons(ARPOP_REVREQUEST);
-	bcopy(d->myea, ap->arp_sha, 6);
-	bcopy(d->myea, ap->arp_tha, 6);
+	(void)memcpy(ap->arp_sha, d->myea, 6);
+	(void)memcpy(ap->arp_tha, d->myea, 6);
 
 	if (sendrecv(d,
 	    rarpsend, &wbuf.data, sizeof(wbuf.data),
@@ -134,10 +134,10 @@ rarp_getipaddress(int sock)
 	}
 
 	ap = &rbuf.data.arp;
-	bcopy(ap->arp_tpa, (char *)&myip, sizeof(myip));
+	(void)memcpy(&myip, ap->arp_tpa, sizeof(myip));
 #if 0
 	/* XXX - Can NOT assume this is our root server! */
-	bcopy(ap->arp_spa, (char *)&rootip, sizeof(rootip));
+	(void)memcpy(&rootip, ap->arp_spa, sizeof(rootip));
 #endif
 
 	/* Compute our "natural" netmask. */

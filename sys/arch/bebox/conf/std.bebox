@@ -1,4 +1,4 @@
-#	$NetBSD: std.bebox,v 1.15 2008/02/08 16:53:34 kiyohara Exp $
+#	$NetBSD: std.bebox,v 1.15.6.1 2008/04/03 12:42:13 mjf Exp $
 #
 # standard, required NetBSD/bebox 'options'
 
@@ -14,5 +14,3 @@ options 	EXEC_SCRIPT	# exec #! scripts
 options		PIC_I8259
 
 options 	INTSTK=0x2000
-
-makeoptions	TEXTADDR=0x3100

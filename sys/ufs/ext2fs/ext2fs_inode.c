@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.64 2008/01/09 16:15:23 ad Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.64.6.1 2008/04/03 12:43:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.64 2008/01/09 16:15:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.64.6.1 2008/04/03 12:43:13 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 		trace(TR_BREADHIT, pack(vp, fs->e2fs_bsize), lbn);
 	} else {
 		trace(TR_BREADMISS, pack(vp, fs->e2fs_bsize), lbn);
-		curproc->p_stats->p_ru.ru_inblock++;	/* pay for read */
+		curlwp->l_ru.ru_inblock++;	/* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ext2fs_indirtrunc: bad buffer size");

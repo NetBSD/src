@@ -1,4 +1,4 @@
-;	$NetBSD: arm.asm,v 1.6 2006/03/05 04:05:39 uwe Exp $	
+;	$NetBSD: arm.asm,v 1.6.68.1 2008/04/03 12:42:16 mjf Exp $	
 ;
 ; Copyright (c) 2001 The NetBSD Foundation, Inc.
 ; All rights reserved.
@@ -337,7 +337,7 @@
 
 	EXPORT |colorbar|
 |colorbar| PROC
-	stmea	sp!, {r4-r7, lr}
+	stmfd	sp!, {r4-r7, lr}
 	adr	r4, |$FBADDR|
 	ldr	r4, [r4]
 
@@ -357,7 +357,7 @@
 	subs	r7, r7, #1
 	bne	|color_loop|
 
-	ldmea	sp!, {r4-r7, pc}
+	ldmfd	sp!, {r4-r7, pc}
 |$FBADDR|
 	DCD	0xc0003000	; use WindowsCE default.
 	ENDP  ; |colorbar|
@@ -465,7 +465,7 @@
 	ENDP	;|btputc|
 
 |hexdump| PROC
-	stmea	sp!, {r4-r5, lr}
+	stmfd	sp!, {r4-r5, lr}
 	mov	r4, r0
 	mov	r0, #0x30
 	bl	btputc
@@ -497,7 +497,7 @@
 	bl	btputc
 	mov	r0, #0x0a
 	bl	btputc
-	ldmea	sp!, {r4-r5, pc}
+	ldmfd	sp!, {r4-r5, pc}
 	ENDP	;|hexdump|
 
 |$UARTTXADR|

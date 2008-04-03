@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2008/02/19 07:43:29 dogcow Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51.6.1 2008/04/03 12:42:12 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -60,15 +60,6 @@
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
 #define	CPU_MAXID		6	/* number of valid machdep ids */
 
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "debug", CTLTYPE_INT }, \
-	{ "booted_device", CTLTYPE_STRING }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "powersave", CTLTYPE_INT }, \
-}
-
 #ifdef _KERNEL
 
 /*
@@ -78,6 +69,7 @@
 #ifndef _LKM
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_cputypes.h"
 #endif /* !_LKM */
 
 #include <arm/cpuconf.h>
@@ -87,9 +79,13 @@
 #include <sys/user.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
+#ifdef FPU_VFP
+#include <arm/vfpvar.h>
+#endif
 #endif	/* !_LOCORE */
 
 #include <arm/armreg.h>
+
 
 #ifndef _LOCORE
 /* 1 == use cpu_sleep(), 0 == don't */
@@ -222,6 +218,9 @@ struct cpu_info {
 	int ci_idepth;
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
+#endif
+#ifdef FPU_VFP
+	struct vfp_info ci_vfp;
 #endif
 };
 

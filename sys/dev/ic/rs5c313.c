@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313.c,v 1.6 2008/01/09 22:29:20 uwe Exp $	*/
+/*	$NetBSD: rs5c313.c,v 1.6.6.1 2008/04/03 12:42:42 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.6 2008/01/09 22:29:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.6.6.1 2008/04/03 12:42:42 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ static void rs5c313_write_reg(struct rs5c313_softc *, int, int);
 void
 rs5c313_attach(struct rs5c313_softc *sc)
 {
-	device_t self = &sc->sc_dev;
+	device_t self = sc->sc_dev;
 
 	aprint_naive("\n");
 	aprint_normal(": real time clock\n");
@@ -85,7 +85,7 @@ rs5c313_attach(struct rs5c313_softc *sc)
 static int
 rs5c313_init(struct rs5c313_softc *sc)
 {
-	device_t self = &sc->sc_dev;
+	device_t self = sc->sc_dev;
 	int status = 0;
 	int retry;
 

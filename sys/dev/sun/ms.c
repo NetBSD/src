@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.35 2007/03/04 06:02:45 christos Exp $	*/
+/*	$NetBSD: ms.c,v 1.35.36.1 2008/04/03 12:42:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.35 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.35.36.1 2008/04/03 12:42:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +101,7 @@ const struct cdevsw ms_cdevsw = {
  ****************************************************************/
 
 int
-msopen(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
 	int unit;
@@ -112,7 +109,7 @@ msopen(dev, flags, mode, l)
 	unit = minor(dev);
 	if (unit >= ms_cd.cd_ndevs)
 		return (ENXIO);
-	ms = ms_cd.cd_devs[unit];
+	ms = device_private(ms_cd.cd_devs[unit]);
 	if (ms == NULL)
 		return (ENXIO);
 
@@ -122,7 +119,7 @@ msopen(dev, flags, mode, l)
 
 	if (ms->ms_deviopen) {
 		int err;
-		err = (*ms->ms_deviopen)((struct device *)ms, flags);
+		err = (*ms->ms_deviopen)(ms->ms_dev, flags);
 		if (err)
 			return (err);
 	}
@@ -134,21 +131,18 @@ msopen(dev, flags, mode, l)
 }
 
 int
-msclose(dev, flags, mode, l)
-	dev_t dev;
-	int flags, mode;
-	struct lwp *l;
+msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = device_private(ms_cd.cd_devs[minor(dev)]);
 	ms->ms_ready = 0;		/* stop accepting events */
 	ev_fini(&ms->ms_events);
 
 	ms->ms_events.ev_io = NULL;
 	if (ms->ms_deviclose) {
 		int err;
-		err = (*ms->ms_deviclose)((struct device *)ms, flags);
+		err = (*ms->ms_deviclose)(ms->ms_dev, flags);
 		if (err)
 			return (err);
 	}
@@ -156,28 +150,20 @@ msclose(dev, flags, mode, l)
 }
 
 int
-msread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = device_private(ms_cd.cd_devs[minor(dev)]);
 	return (ev_read(&ms->ms_events, uio, flags));
 }
 
 int
-msioctl(dev, cmd, data, flag, l)
-	dev_t dev;
-	u_long cmd;
-	void *data;
-	int flag;
-	struct lwp *l;
+msioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = device_private(ms_cd.cd_devs[minor(dev)]);
 
 	switch (cmd) {
 
@@ -213,25 +199,20 @@ msioctl(dev, cmd, data, flag, l)
 }
 
 int
-mspoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = device_private(ms_cd.cd_devs[minor(dev)]);
 	return (ev_poll(&ms->ms_events, events, l));
 }
 
 int
-mskqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+mskqfilter(dev_t dev, struct knote *kn)
 {
 	struct ms_softc *ms;
 
-	ms = ms_cd.cd_devs[minor(dev)];
+	ms = device_private(ms_cd.cd_devs[minor(dev)]);
 	return (ev_kqfilter(&ms->ms_events, kn));
 }
 
@@ -243,9 +224,7 @@ mskqfilter(dev, kn)
  * Called by our ms_softint() routine on input.
  */
 void
-ms_input(ms, c)
-	struct ms_softc *ms;
-	int c;
+ms_input(struct ms_softc *ms, int c)
 {
 	struct firm_event *fe;
 	int mb, ub, d, get, put, any;

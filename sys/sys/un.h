@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.40 2007/08/09 15:23:01 he Exp $	*/
+/*	$NetBSD: un.h,v 1.40.22.1 2008/04/03 12:43:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -91,7 +91,7 @@ void	unp_mark (struct file *);
 void	unp_scan (struct mbuf *, void (*)(struct file *), int);
 void	unp_shutdown (struct unpcb *);
 int 	unp_externalize (struct mbuf *, struct lwp *);
-int	unp_internalize (struct mbuf *, struct lwp *);
+int	unp_internalize (struct mbuf **, struct lwp *);
 void 	unp_dispose (struct mbuf *);
 int	unp_output (struct mbuf *, struct mbuf *, struct unpcb *,
 	    struct lwp *);
@@ -103,7 +103,7 @@ void	unp_setpeeraddr (struct unpcb *, struct mbuf *);
 #if defined(_NETBSD_SOURCE)
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
-#endif /* !_XOPEN_SOURCE */
+#endif /* !_NetBSD_SOURCE */
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UN_H_ */

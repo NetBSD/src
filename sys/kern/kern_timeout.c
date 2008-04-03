@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_timeout.c,v 1.31 2008/01/04 21:18:11 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.31.6.1 2008/04/03 12:43:02 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.31 2008/01/04 21:18:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.31.6.1 2008/04/03 12:43:02 mjf Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.31 2008/01/04 21:18:11 ad Exp $")
 #include <sys/syncobj.h>
 #include <sys/evcnt.h>
 #include <sys/intr.h>
+#include <sys/cpu.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -186,64 +187,6 @@ static struct evcnt callout_ev_late;
 static struct evcnt callout_ev_block;
 
 /*
- * callout_barrier:
- *
- *	If the callout is already running, wait until it completes.
- *	XXX This should do priority inheritance.
- */
-static void
-callout_barrier(callout_impl_t *c)
-{
-	extern syncobj_t sleep_syncobj;
-	struct cpu_info *ci;
-	struct lwp *l;
-
-	l = curlwp;
-
-	if ((c->c_flags & CALLOUT_MPSAFE) == 0) {
-		/*
-		 * Note: we must be called with the kernel lock held,
-		 * as we use it to synchronize with callout_softclock().
-		 */
-		ci = c->c_oncpu;
-		ci->ci_data.cpu_callout_cancel = c;
-		return;
-	}
-
-	while ((ci = c->c_oncpu) != NULL && ci->ci_data.cpu_callout == c) {
-		KASSERT(l->l_wchan == NULL);
-
-		ci->ci_data.cpu_callout_nwait++;
-		callout_ev_block.ev_count++;
-
-		l->l_kpriority = true;
-		sleepq_enter(&callout_sleepq, l);
-		sleepq_enqueue(&callout_sleepq, ci, "callout", &sleep_syncobj);
-		sleepq_block(0, false);
-		mutex_spin_enter(&callout_lock);
-	}
-}
-
-/*
- * callout_running:
- *
- *	Return non-zero if callout 'c' is currently executing.
- */
-static inline bool
-callout_running(callout_impl_t *c)
-{
-	struct cpu_info *ci;
-
-	if ((ci = c->c_oncpu) == NULL)
-		return false;
-	if (ci->ci_data.cpu_callout != c)
-		return false;
-	if (c->c_onlwp == curlwp)
-		return false;
-	return true;
-}
-
-/*
  * callout_startup:
  *
  *	Initialize the callout facility, called at system startup time.
@@ -265,7 +208,7 @@ callout_startup(void)
 	evcnt_attach_dynamic(&callout_ev_late, EVCNT_TYPE_MISC,
 	    NULL, "callout", "late");
 	evcnt_attach_dynamic(&callout_ev_block, EVCNT_TYPE_MISC,
-	    NULL, "callout", "block waiting");
+	    NULL, "callout", "wait for completion");
 }
 
 /*
@@ -316,7 +259,7 @@ callout_destroy(callout_t *cs)
 	 * running, the current thread should have stopped it.
 	 */
 	KASSERT((c->c_flags & CALLOUT_PENDING) == 0);
-	if (c->c_oncpu != NULL) {
+	if (c->c_oncpu != NULL && c->c_onlwp != curlwp) { 
 		KASSERT(
 		    ((struct cpu_info *)c->c_oncpu)->ci_data.cpu_callout != c);
 	}
@@ -402,29 +345,82 @@ callout_schedule(callout_t *cs, int to_ticks)
 	mutex_spin_exit(&callout_lock);
 }
 
+
 /*
  * callout_stop:
  *
- *	Cancel a pending callout.
+ *	Try to cancel a pending callout.
  */
 bool
 callout_stop(callout_t *cs)
 {
 	callout_impl_t *c = (callout_impl_t *)cs;
+	struct cpu_info *ci;
 	bool expired;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
 
 	mutex_spin_enter(&callout_lock);
 
-	if (callout_running(c))
-		callout_barrier(c);
-
 	if ((c->c_flags & CALLOUT_PENDING) != 0)
 		CIRCQ_REMOVE(&c->c_list);
-
 	expired = ((c->c_flags & CALLOUT_FIRED) != 0);
 	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
+
+	if ((ci = c->c_oncpu) != NULL && ci->ci_data.cpu_callout == c) {
+		/*
+		 * This is for non-MPSAFE callouts only.  To synchronize
+		 * effectively we must be called with kernel_lock held.
+		 * It's also taken in callout_softclock.
+		 */
+		ci = c->c_oncpu;
+		ci->ci_data.cpu_callout_cancel = c;
+	}
+
+	mutex_spin_exit(&callout_lock);
+
+	return expired;
+}
+
+/*
+ * callout_halt:
+ *
+ *	Cancel a pending callout.  If in-flight, block until it completes.
+ *	May not be called from a hard interrupt handler.
+ */
+bool
+callout_halt(callout_t *cs)
+{
+	callout_impl_t *c = (callout_impl_t *)cs;
+	struct cpu_info *ci;
+	struct lwp *l;
+	bool expired;
+
+	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERT(!cpu_intr_p());
+
+	mutex_spin_enter(&callout_lock);
+
+	expired = ((c->c_flags & CALLOUT_FIRED) != 0);
+	if ((c->c_flags & CALLOUT_PENDING) != 0)
+		CIRCQ_REMOVE(&c->c_list);
+	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
+
+	l = curlwp;
+	while (__predict_false((ci = c->c_oncpu) != NULL &&
+	    ci->ci_data.cpu_callout == c && c->c_onlwp != l)) {
+		KASSERT(l->l_wchan == NULL);
+
+		ci->ci_data.cpu_callout_nwait++;
+		callout_ev_block.ev_count++;
+
+		l->l_kpriority = true;
+		sleepq_enter(&callout_sleepq, l);
+		sleepq_enqueue(&callout_sleepq, ci, "callout", &sleep_syncobj);
+		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
+		sleepq_block(0, false);
+		mutex_spin_enter(&callout_lock);
+	}
 
 	mutex_spin_exit(&callout_lock);
 
@@ -583,15 +579,15 @@ callout_softclock(void *v)
 			arg = c->c_arg;
 			c->c_oncpu = ci;
 			c->c_onlwp = l;
+			ci->ci_data.cpu_callout = c;
 
 			mutex_spin_exit(&callout_lock);
 			if (!mpsafe) {
 				KERNEL_LOCK(1, curlwp);
-				if (ci->ci_data.cpu_callout_cancel != c)
-					(*func)(arg);
+				(*func)(arg);
 				KERNEL_UNLOCK_ONE(curlwp);
 			} else
-					(*func)(arg);
+				(*func)(arg);
 			mutex_spin_enter(&callout_lock);
 
 			/*
@@ -599,7 +595,6 @@ callout_softclock(void *v)
 			 * freed already.  If LWPs waiting for callout
 			 * to complete, awaken them.
 			 */
-			ci->ci_data.cpu_callout_cancel = NULL;
 			ci->ci_data.cpu_callout = NULL;
 			if ((count = ci->ci_data.cpu_callout_nwait) != 0) {
 				ci->ci_data.cpu_callout_nwait = 0;

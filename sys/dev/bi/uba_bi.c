@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.11 2005/12/11 12:21:15 christos Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.11.70.1 2008/04/03 12:42:38 mjf Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.11 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.11.70.1 2008/04/03 12:42:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.11 2005/12/11 12:21:15 christos Exp $")
 
 #define	BUA(uba)	((struct dwbua_regs *)(uba))
 
-static	int uba_bi_match(struct device *, struct cfdata *, void *);
-static	void uba_bi_attach(struct device *, struct device *, void *);
+static	int uba_bi_match(device_t, cfdata_t, void *);
+static	void uba_bi_attach(device_t, device_t, void *);
 static	void bua_init(struct uba_softc *);
 static	void bua_purge(struct uba_softc *, int);
 
@@ -92,7 +92,7 @@ static	void bua_purge(struct uba_softc *, int);
 
 static	int allocvec;
 
-CFATTACH_DECL(uba_bi, sizeof(struct uba_softc),
+CFATTACH_DECL_NEW(uba_bi, sizeof(struct uba_softc),
     uba_bi_match, uba_bi_attach, NULL, NULL);
 
 struct dwbua_regs {
@@ -114,10 +114,7 @@ struct dwbua_regs {
  * Poke at a supposed DWBUA to see if it is there.
  */
 static int
-uba_bi_match(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+uba_bi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct bi_attach_args *ba = aux;
 
@@ -133,12 +130,10 @@ uba_bi_match(parent, cf, aux)
 }
 
 void
-uba_bi_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+uba_bi_attach(device_t parent, device_t self, void *aux)
 {
-	struct	uba_softc *sc = (void *)self;
-	struct	bi_attach_args *ba = aux;
+	struct uba_softc *sc = device_private(self);
+	struct bi_attach_args *ba = aux;
 	volatile int timo;
 
 	if (ba->ba_node->biic.bi_dtype == BIDT_DWBUA)
@@ -149,6 +144,7 @@ uba_bi_attach(parent, self, aux)
 	/*
 	 * Fill in bus specific data.
 	 */
+	sc->uh_dev = self;
 	sc->uh_uba = (void *)ba->ba_node;
 	sc->uh_nbdp = NBDPBUA;
 /*	sc->uh_nr is 0; uninteresting here */

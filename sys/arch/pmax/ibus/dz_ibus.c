@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.6 2007/10/17 19:56:15 garbled Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.6.16.1 2008/04/03 12:42:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.6 2007/10/17 19:56:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.6.16.1 2008/04/03 12:42:22 mjf Exp $");
 
 #include "dzkbd.h"
 #include "dzms.h"
@@ -102,8 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.6 2007/10/17 19:56:15 garbled Exp $");
 #define	DZ_LINE_CONSOLE	2
 #define	DZ_LINE_AUX	3
 
-int	dz_ibus_match(struct device *, struct cfdata *, void *);
-void	dz_ibus_attach(struct device *, struct device *, void *);
+int	dz_ibus_match(device_t, cfdata_t, void *);
+void	dz_ibus_attach(device_t, device_t, void *);
 int	dz_ibus_intr(void *);
 void	dz_ibus_cnsetup(paddr_t);
 int	dz_ibus_cngetc(dev_t);
@@ -115,7 +115,7 @@ int	dz_ibus_print(void *, const char *);
 int	dzgetc(struct dz_linestate *);
 void	dzputc(struct dz_linestate *, int);
 
-CFATTACH_DECL(dz_ibus, sizeof(struct dz_softc),
+CFATTACH_DECL_NEW(dz_ibus, sizeof(struct dz_softc),
     dz_ibus_match, dz_ibus_attach, NULL, NULL);
 
 struct consdev dz_ibus_consdev = {
@@ -141,7 +141,7 @@ int	dz_ibus_iscn;
 int	dz_ibus_consln = -1;
 
 int
-dz_ibus_match(struct device *parent, struct cfdata *cf, void *aux)
+dz_ibus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ibus_attach_args *iba;
 
@@ -159,18 +159,18 @@ dz_ibus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-dz_ibus_attach(struct device *parent, struct device *self, void *aux)
+dz_ibus_attach(device_t parent, device_t self, void *aux)
 {
-	struct ibus_attach_args *iba;
-	struct dz_softc *sc;
+	struct ibus_attach_args *iba = aux;
+	struct dz_softc *sc = device_private(self);
 	volatile struct dzregs *dz;
 	struct dzkm_attach_args daa;
 	int i;
 
-	iba = aux;
-	sc = (struct dz_softc *)self;
 
 	DELAY(100000);
+
+	sc->sc_dev = self;
 
 	/* 
 	 * XXX - This is evil and ugly, but... due to the nature of how
@@ -206,7 +206,7 @@ dz_ibus_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
 
-	printf(": DC-7085, 4 lines");
+	aprint_normal(": DC-7085, 4 lines");
 	ibus_intr_establish(parent, (void *)iba->ia_cookie, IPL_TTY,
 	    dz_ibus_intr, sc);
 	dzattach(sc, NULL, dz_ibus_consln);
@@ -394,8 +394,8 @@ dz_ibus_print(void *aux, const char *pnp)
 
 	daa = aux;
 	if (pnp != NULL)
-		printf("lkkbd/vsms at %s", pnp);
-	printf(" line %d", daa->daa_line);
+		aprint_normal("lkkbd/vsms at %s", pnp);
+	aprint_normal(" line %d", daa->daa_line);
 	return (UNCONF);
 }
 

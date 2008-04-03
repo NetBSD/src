@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.11 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.11.6.1 2008/04/03 12:43:01 mjf Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.11 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.11.6.1 2008/04/03 12:43:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -92,7 +92,7 @@ create_idle_lwp(struct cpu_info *ci)
 
 	KASSERT(ci->ci_data.cpu_idlelwp == NULL);
 	error = kthread_create(PRI_IDLE, KTHREAD_MPSAFE | KTHREAD_IDLE,
-	    ci, idle_loop, NULL, &l, "idle/%d", (int)ci->ci_cpuid);
+	    ci, idle_loop, NULL, &l, "idle/%u", ci->ci_index);
 	if (error != 0)
 		panic("create_idle_lwp: error %d", error);
 	lwp_lock(l);

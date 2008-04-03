@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.h,v 1.7 2007/11/03 17:41:03 plunky Exp $	*/
+/*	$NetBSD: btdev.h,v 1.7.16.1 2008/04/03 12:42:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -47,12 +47,5 @@
 #define BTDEVauth		"auth"
 #define BTDEVencrypt		"encrypt"
 #define BTDEVsecure		"secure"
-
-#ifdef _KERNEL
-struct btdev {
-	device_t		sc_dev;
-	LIST_ENTRY(btdev)	sc_next;
-};
-#endif /* _KERNEL */
 
 #endif /* _DEV_BLUETOOTH_BTDEV_H_ */

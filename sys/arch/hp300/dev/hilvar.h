@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.24 2007/12/31 13:38:49 ad Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.24.6.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -125,22 +125,22 @@ struct hilloopdev {
 #define HIL_DERROR	0x80	/* loop has reconfigured, reality altered */
 
 struct hil_softc {
-	struct	device hl_dev;
-	struct	hil_dev	*hl_addr;	/* base of hardware registers */
-	u_char 	hl_cmddone;		/* */
-	u_char 	hl_cmdending;		/* */
-	u_char	hl_actdev;		/* current input device */
-	u_char	hl_cmddev;		/* device to perform command on */
-	u_char	hl_pollbuf[HILBUFSIZE];	/* interrupt time input buffer */
-	u_char	hl_cmdbuf[HILBUFSIZE];	/* */
-	u_char 	*hl_pollbp;		/* pointer into hl_pollbuf */
-	u_char	*hl_cmdbp;		/* pointer into hl_cmdbuf */
-	struct	hiliqueue hl_queue[NHILQ];	/* input queues */
-	struct  hilloopdev hl_device[NHILD];	/* device data */
-	u_char  hl_maxdev;		/* number of devices on loop */
-	u_char	hl_kbddev;		/* keyboard device on loop */
-	u_char	hl_kbdlang;		/* keyboard language */
-	u_char	hl_kbdflags;		/* keyboard state */
+	device_t sc_dev;
+	struct	hil_dev	*sc_addr;	/* base of hardware registers */
+	uint8_t	sc_cmddone;		/* */
+	uint8_t	sc_cmdending;		/* */
+	uint8_t	sc_actdev;		/* current input device */
+	uint8_t	sc_cmddev;		/* device to perform command on */
+	uint8_t	sc_pollbuf[HILBUFSIZE];	/* interrupt time input buffer */
+	uint8_t	sc_cmdbuf[HILBUFSIZE];	/* */
+	uint8_t	*sc_pollbp;		/* pointer into hl_pollbuf */
+	uint8_t	*sc_cmdbp;		/* pointer into hl_cmdbuf */
+	struct	hiliqueue sc_queue[NHILQ];	/* input queues */
+	struct  hilloopdev sc_device[NHILD];	/* device data */
+	uint8_t	sc_maxdev;		/* number of devices on loop */
+	uint8_t	sc_kbddev;		/* keyboard device on loop */
+	uint8_t	sc_kbdlang;		/* keyboard language */
+	uint8_t	sc_kbdflags;		/* keyboard state */
 #if NRND > 0
 	rndsource_element_t rnd_source;
 #endif

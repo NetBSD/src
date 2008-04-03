@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.13 2008/02/07 01:21:54 dyoung Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.13.6.1 2008/04/03 12:42:43 mjf Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.13 2008/02/07 01:21:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.13.6.1 2008/04/03 12:42:43 mjf Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -118,10 +118,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.13 2008/02/07 01:21:54 dyoung Exp $");
 #define TX_MAX_QUEUE	(FWMAXQUEUE - 1)
 
 #if defined(__NetBSD__)
-int fwipmatch (struct device *, struct cfdata *, void *);
-void fwipattach (struct device *, struct device *, void *);
-int fwipdetach (struct device *, int);
-int fwipactivate (struct device *, enum devact);
+int fwipmatch (device_t, struct cfdata *, void *);
+void fwipattach (device_t, device_t, void *);
+int fwipdetach (device_t, int);
+int fwipactivate (device_t, enum devact);
 
 #endif  
 /* network interface */
@@ -247,7 +247,7 @@ fwip_probe(device_t dev)
 }
 #elif defined(__NetBSD__)
 int
-fwipmatch(struct device *parent, struct cfdata *cf, void *aux)
+fwipmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct fw_attach_args *fwa = aux;
 
@@ -401,9 +401,9 @@ FW_DETACH(fwip)
 
 #if defined(__NetBSD__)
 int
-fwipactivate(struct device *self, enum devact act)
+fwipactivate(device_t self, enum devact act)
 {
-	struct fwip_softc *fwip = (struct fwip_softc *)self;
+	struct fwip_softc *fwip = device_private(self);
 	int s, error = 0;
 
 	s = splfwnet();
@@ -1129,6 +1129,6 @@ DRIVER_MODULE(fwip, firewire, fwip_driver, fwip_devclass, 0, 0);
 MODULE_VERSION(fwip, 1);
 MODULE_DEPEND(fwip, firewire, 1, 1, 1);
 #elif defined(__NetBSD__)
-CFATTACH_DECL(fwip, sizeof (struct fwip_softc),
+CFATTACH_DECL_NEW(fwip, sizeof(struct fwip_softc),
     fwipmatch, fwipattach, fwipdetach, NULL);
 #endif

@@ -1,7 +1,7 @@
-/* $NetBSD: esa.c,v 1.44 2008/01/27 01:57:03 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.44.6.1 2008/04/03 12:42:49 mjf Exp $ */
 
 /*
- * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.44 2008/01/27 01:57:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.44.6.1 2008/04/03 12:42:49 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -99,9 +99,10 @@ static struct audio_device esa_device = {
 	"esa"
 };
 
-static int		esa_match(struct device *, struct cfdata *, void *);
-static void		esa_attach(struct device *, struct device *, void *);
-static int		esa_detach(struct device *, int);
+static int		esa_match(device_t, struct cfdata *, void *);
+static void		esa_attach(device_t, device_t, void *);
+static int		esa_detach(device_t, int);
+static void		esa_childdet(device_t, device_t);
 
 /* audio(9) functions */
 static int		esa_query_encoding(void *, struct audio_encoding *);
@@ -162,8 +163,8 @@ static void		esa_remove_list(struct esa_voice *, struct esa_list *,
 					int);
 
 /* power management */
-static bool		esa_suspend(device_t);
-static bool		esa_resume(device_t);
+static bool		esa_suspend(device_t PMF_FN_PROTO);
+static bool		esa_resume(device_t PMF_FN_PROTO);
 
 
 #define ESA_NENCODINGS 8
@@ -226,8 +227,8 @@ static const struct audio_hw_if esa_hw_if = {
 	NULL,	/* powerstate */
 };
 
-CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
-    esa_detach, NULL);
+CFATTACH_DECL2_NEW(esa, sizeof(struct esa_softc), esa_match, esa_attach,
+    esa_detach, NULL, NULL, esa_childdet);
 
 /*
  * audio(9) functions
@@ -306,7 +307,7 @@ esa_commit_settings(void *hdl)
 	int data_bytes;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	p = &vc->play.mode;
 	r = &vc->rec.mode;
 	data_bytes = (((ESA_MINISRC_TMP_BUFFER_SIZE & ~1) +
@@ -379,7 +380,7 @@ esa_halt_output(void *hdl)
 	uint16_t data;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	if (vc->play.active == 0)
@@ -422,7 +423,7 @@ esa_halt_input(void *hdl)
 	uint32_t data;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	if (vc->rec.active == 0)
@@ -467,12 +468,12 @@ esa_malloc(void *hdl, int direction, size_t size,
 	if (p == NULL)
 		return NULL;
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	error = esa_allocmem(sc, size, 16, p);
 	if (error) {
 		free(p, type);
-		printf("%s: esa_malloc: not enough memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "%s: not enough memory\n", __func__);
 		return 0;
 	}
 	p->next = vc->dma;
@@ -490,7 +491,7 @@ esa_free(void *hdl, void *addr, struct malloc_type *type)
 	struct esa_dma **pp;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	for (pp = &vc->dma; (p = *pp) != NULL; pp = &p->next)
 		if (KERNADDR(p) == addr) {
 			esa_freemem(sc, p);
@@ -515,7 +516,7 @@ esa_set_port(void *hdl, mixer_ctrl_t *mc)
 	struct esa_softc *sc;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	return sc->codec_if->vtbl->mixer_set_port(sc->codec_if, mc);
 }
 
@@ -526,7 +527,7 @@ esa_get_port(void *hdl, mixer_ctrl_t *mc)
 	struct esa_softc *sc;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	return sc->codec_if->vtbl->mixer_get_port(sc->codec_if, mc);
 }
 
@@ -537,7 +538,7 @@ esa_query_devinfo(void *hdl, mixer_devinfo_t *di)
 	struct esa_softc *sc;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	return sc->codec_if->vtbl->query_devinfo(sc->codec_if, di);
 }
 
@@ -570,7 +571,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	int dsp_out_size, dsp_in_buf, dsp_out_buf;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	data_bytes = (((ESA_MINISRC_TMP_BUFFER_SIZE & ~1) +
@@ -588,8 +589,8 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	for (p = vc->dma; p && KERNADDR(p) != start; p = p->next)
 		continue;
 	if (p == NULL) {
-		printf("%s: esa_trigger_output: bad addr %p\n",
-		    sc->sc_dev.dv_xname, start);
+		aprint_error_dev(sc->sc_dev, "%s: bad addr %p\n", __func__,
+		    start);
 		return EINVAL;
 	}
 
@@ -704,7 +705,7 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 	int dsp_out_size, dsp_in_buf, dsp_out_buf;
 
 	vc = hdl;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	data_bytes = (((ESA_MINISRC_TMP_BUFFER_SIZE & ~1) +
@@ -728,8 +729,8 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 	for (p = vc->dma; p && KERNADDR(p) != start; p = p->next)
 		continue;
 	if (p == NULL) {
-		printf("%s: esa_trigger_input: bad addr %p\n",
-		    sc->sc_dev.dv_xname, start);
+		aprint_error_dev(sc->sc_dev, "%s: bad addr %p\n",
+		    __func__, start);
 		return EINVAL;
 	}
 
@@ -849,18 +850,18 @@ esa_intr(void *hdl)
 	if (status & ESA_HV_INT_PENDING) {
 		uint8_t event;
 
-		printf("%s: hardware volume interrupt\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "hardware volume interrupt\n");
 		event = bus_space_read_1(iot, ioh, ESA_HW_VOL_COUNTER_MASTER);
 		switch(event) {
 		case 0x99:
 		case 0xaa:
 		case 0x66:
 		case 0x88:
-			printf("%s: esa_intr: FIXME\n", sc->sc_dev.dv_xname);
+			aprint_normal_dev(sc->sc_dev, "esa_intr: FIXME\n");
 			break;
 		default:
-			printf("%s: unknown hwvol event 0x%02x\n",
-			    sc->sc_dev.dv_xname, event);
+			aprint_normal_dev(sc->sc_dev,
+			    "unknown hwvol event 0x%02x\n", event);
 			break;
 		}
 		bus_space_write_1(iot, ioh, ESA_HW_VOL_COUNTER_MASTER, 0x88);
@@ -970,7 +971,7 @@ esa_freemem(struct esa_softc *sc, struct esa_dma *p)
  */
 
 static int
-esa_match(struct device *dev, struct cfdata *match, void *aux)
+esa_match(device_t dev, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -989,7 +990,7 @@ esa_match(struct device *dev, struct cfdata *match, void *aux)
 }
 
 static void
-esa_attach(struct device *parent, struct device *self, void *aux)
+esa_attach(device_t parent, device_t self, void *aux)
 {
 	struct esa_softc *sc;
 	struct pci_attach_args *pa;
@@ -1004,7 +1005,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	int i;
 	int error;
 
-	sc = (struct esa_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	tag = pa->pa_tag;
 	pc = pa->pa_pc;
@@ -1031,44 +1032,43 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, &sc->sc_iob, &sc->sc_ios)) {
-		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
 	/* Initialize softc */
+	sc->sc_dev = self;
 	sc->sc_tag = tag;
 	sc->sc_pct = pc;
 	sc->sc_dmat = pa->pa_dmat;
 
 	/* Map and establish an interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, self);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: can't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
-		    error);
+		aprint_error_dev(sc->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 
 	/* Init chip */
 	if (esa_init(sc) == -1) {
-		aprint_error("%s: esa_attach: unable to initialize the card\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "esa_attach: unable to initialize the card\n");
 		return;
 	}
 
@@ -1077,8 +1077,8 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
 	sc->savemem = (uint16_t *)malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->savemem == NULL) {
-		aprint_error("%s: unable to allocate suspend buffer\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate suspend buffer\n");
 		return;
 	}
 
@@ -1129,10 +1129,10 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		sc->adc1_list.indexmap[i] = -1;
 	}
 	for (i = 0; i < ESA_NUM_VOICES; i++) {
-		sc->voice[i].parent = (struct device *)sc;
+		sc->voice[i].parent = sc->sc_dev;
 		sc->voice[i].index = i;
 		sc->sc_audiodev[i] =
-		    audio_attach_mi(&esa_hw_if, &sc->voice[i], &sc->sc_dev);
+		    audio_attach_mi(&esa_hw_if, &sc->voice[i], sc->sc_dev);
 	}
 
 	if (!pmf_device_register(self, esa_suspend, esa_resume))
@@ -1141,13 +1141,28 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	return;
 }
 
+void
+esa_childdet(device_t self, device_t child)
+{
+	struct esa_softc *sc = device_private(self);
+	int i;
+
+	for (i = 0; i < ESA_NUM_VOICES; i++) {
+		if (sc->sc_audiodev[i] == child) {
+			sc->sc_audiodev[i] = NULL;
+			break;
+		}
+	}
+	KASSERT(i < ESA_NUM_VOICES);
+}
+
 static int
-esa_detach(struct device *self, int flags)
+esa_detach(device_t self, int flags)
 {
 	struct esa_softc *sc;
 	int i;
 
-	sc = (struct esa_softc *)self;
+	sc = device_private(self);
 	for (i = 0; i < ESA_NUM_VOICES; i++) {
 		if (sc->sc_audiodev[i] != NULL)
 			config_detach(sc->sc_audiodev[i], flags);
@@ -1233,11 +1248,11 @@ esa_read_codec(void *aux, uint8_t reg, uint16_t *result)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	if (esa_wait(sc))
-		printf("%s: esa_read_codec: timed out\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "esa_read_codec: timed out\n");
 	bus_space_write_1(iot, ioh, ESA_CODEC_COMMAND, (reg & 0x7f) | 0x80);
 	delay(50);
 	if (esa_wait(sc))
-		printf("%s: esa_read_codec: timed out\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "esa_read_codec: timed out\n");
 	*result = bus_space_read_2(iot, ioh, ESA_CODEC_DATA);
 
 	return 0;
@@ -1254,7 +1269,7 @@ esa_write_codec(void *aux, uint8_t reg, uint16_t data)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	if (esa_wait(sc)) {
-		printf("%s: esa_write_codec: timed out\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "esa_write_codec: timed out\n");
 		return -1;
 	}
 	bus_space_write_2(iot, ioh, ESA_CODEC_DATA, data);
@@ -1509,12 +1524,12 @@ esa_codec_reset(struct esa_softc *sc)
 		if ((data == 0) || (data == 0xffff)) {
 			retry++;
 			if (retry > 3) {
-				printf("%s: esa_codec_reset: failed\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				    "esa_codec_reset: failed\n");
 				break;
 			}
-			printf("%s: esa_codec_reset: retrying\n",
-			    sc->sc_dev.dv_xname);
+			aprint_normal_dev(sc->sc_dev,
+			    "esa_codec_reset: retrying\n");
 		} else
 			retry = 0;
 	} while (retry);
@@ -1540,8 +1555,8 @@ esa_amp_enable(struct esa_softc *sc)
 		polarity_port = 0x1100;
 		break;
 	default:
-		printf("%s: esa_amp_enable: Unknown chip type!!!\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "esa_amp_enable: Unknown chip type!!!\n");
 		return 1;
 	}
 
@@ -1585,7 +1600,7 @@ esa_add_list(struct esa_voice *vc, struct esa_list *el,
 {
 	struct esa_softc *sc;
 
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	el->indexmap[index] = el->currlen;
 	esa_write_assp(sc, ESA_MEMTYPE_INTERNAL_DATA,
 		       el->mem_addr + el->currlen,
@@ -1603,7 +1618,7 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 	int vindex;
 	int i;
 
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	lastindex = el->currlen - 1;
 	vindex = el->indexmap[index];
 
@@ -1620,8 +1635,8 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 			if (el->indexmap[i] == lastindex)
 				break;
 		if (i >= ESA_NUM_VOICES * 2)
-			printf("%s: esa_remove_list: invalid task index\n",
-			       sc->sc_dev.dv_xname);
+			aprint_error_dev(sc->sc_dev,
+			    "esa_remove_list: invalid task index\n");
 		else
 			el->indexmap[i] = vindex;
 	}
@@ -1634,7 +1649,7 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 }
 
 static bool
-esa_suspend(device_t dv)
+esa_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct esa_softc *sc = device_private(dv);
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1662,7 +1677,7 @@ esa_suspend(device_t dv)
 }
 
 static bool
-esa_resume(device_t dv)
+esa_resume(device_t dv PMF_FN_ARGS)
 {
 	struct esa_softc *sc = device_private(dv);
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1737,7 +1752,7 @@ esa_mappage(void *addr, void *mem, off_t off, int prot)
 	struct esa_dma *p;
 
 	vc = addr;
-	sc = (struct esa_softc *)vc->parent;
+	sc = device_private(vc->parent);
 	if (off < 0)
 		return -1;
 	for (p = vc->dma; p && KERNADDR(p) != mem; p = p->next)

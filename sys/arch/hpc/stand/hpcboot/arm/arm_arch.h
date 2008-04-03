@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_arch.h,v 1.4 2006/03/05 04:05:39 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_arch.h,v 1.4.68.1 2008/04/03 12:42:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,20 +45,21 @@
 class Console;
 
 class ARMArchitecture : public Architecture {
-private:
+protected:
 	int _kmode;
 	// test routine for SA-1100 peripherals.
-	void testFramebuffer(void);
-	void testUART(void);
+	virtual void testFramebuffer(void) = 0;
+	virtual void testUART(void) = 0;
 
 public:
 	ARMArchitecture(Console *&, MemoryManager *&);
 	virtual ~ARMArchitecture(void);
 
-	BOOL init(void);
-	BOOL setupLoader(void);
+	virtual BOOL init(void) = 0;
 	void systemInfo(void);
-	void jump(paddr_t info, paddr_t pvce);
+
+	virtual BOOL setupLoader(void) = 0;
+	virtual void jump(paddr_t info, paddr_t pvec) = 0;
 };
 
 __BEGIN_DECLS
@@ -93,14 +94,6 @@ void SetCPSR(uint32_t);
 void SetSVCMode(void);
 void SetSystemMode(void);
 
-// 2nd bootloader
-void boot_func(kaddr_t, kaddr_t, kaddr_t, kaddr_t);
-extern char boot_func_end[];
-#define	BOOT_FUNC_START		reinterpret_cast <vaddr_t>(boot_func)
-#define	BOOT_FUNC_END		reinterpret_cast <vaddr_t>(boot_func_end)
-
-/* jump to 2nd loader */
-void FlatJump(kaddr_t, kaddr_t, kaddr_t, kaddr_t);
 __END_DECLS
 
 #endif // _HPCBOOT_ARM_ARCH_H_

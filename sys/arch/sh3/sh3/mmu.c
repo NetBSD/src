@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu.c,v 1.16 2007/11/06 01:33:00 uwe Exp $	*/
+/*	$NetBSD: mmu.c,v 1.16.14.1 2008/04/03 12:42:25 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.16 2007/11/06 01:33:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmu.c,v 1.16.14.1 2008/04/03 12:42:25 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,15 +96,17 @@ sh_mmu_information(void)
 #endif
 #ifdef SH4
 	if (CPU_IS_SH4) {
+		unsigned int urb;
 		aprint_normal("cpu0: full-associative"
 			      " 4 ITLB, 64 UTLB entries\n");
 		r = _reg_read_4(SH4_MMUCR);
+		urb = (r & SH4_MMUCR_URB_MASK) >> SH4_MMUCR_URB_SHIFT;
 		aprint_normal("cpu0: %s virtual storage mode,"
 			      " SQ access: kernel%s,"
 			      " wired %d\n",
 		    r & SH3_MMUCR_SV ? "single" : "multiple",
 		    r & SH4_MMUCR_SQMD ? "" : "/user",
-		    (r & SH4_MMUCR_URB_MASK) >> SH4_MMUCR_URB_SHIFT);
+		    urb ? 64 - urb : 0);
 	}
 #endif
 }

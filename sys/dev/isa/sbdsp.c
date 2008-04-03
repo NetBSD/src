@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.127 2007/10/19 12:00:22 ad Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.127.16.1 2008/04/03 12:42:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.127 2007/10/19 12:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.127.16.1 2008/04/03 12:42:45 mjf Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -267,7 +267,7 @@ sb_printsc(struct sbdsp_softc *sc)
  * Probe for the soundblaster hardware.
  */
 int
-sbdsp_probe(struct sbdsp_softc *sc)
+sbdsp_probe(struct sbdsp_softc *sc, cfdata_t match)
 {
 
 	if (sbdsp_reset(sc) < 0) {
@@ -275,7 +275,7 @@ sbdsp_probe(struct sbdsp_softc *sc)
 		return 0;
 	}
 	/* if flags set, go and probe the jazz16 stuff */
-	if (device_cfdata(&sc->sc_dev)->cf_flags & 1)
+	if (match->cf_flags & 1)
 		sbdsp_jazz16_probe(sc);
 	else
 		sbversion(sc);
@@ -422,8 +422,8 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
 		    sc->sc_drq8_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 		if (error) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create map for drq %d\n", sc->sc_drq8);
 			return;
 		}
 	}
@@ -434,14 +434,14 @@ sbdsp_attach(struct sbdsp_softc *sc)
 		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
 		    sc->sc_drq16_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 		if (error) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create map for drq %d\n", sc->sc_drq16);
 			isa_dmamap_destroy(sc->sc_ic, sc->sc_drq8);
 			return;
 		}
 	}
 
-	powerhook_establish(sc->sc_dev.dv_xname, sbdsp_powerhook, sc);
+	powerhook_establish(device_xname(sc->sc_dev), sbdsp_powerhook, sc);
 }
 
 static void
@@ -1541,10 +1541,12 @@ sbdsp_halt_input(void *addr)
 int
 sbdsp_intr(void *arg)
 {
-	struct sbdsp_softc *sc;
+	struct sbdsp_softc *sc = arg;
+#if NMPU > 0
+	struct mpu_softc *sc_mpu = device_private(sc->sc_mpudev);
+#endif
 	u_char irq;
 
-	sc = arg;
 	DPRINTFN(2, ("sbdsp_intr: intr8=%p, intr16=%p\n",
 		   sc->sc_intr8, sc->sc_intr16));
 	if (ISSB16CLASS(sc)) {
@@ -1573,8 +1575,8 @@ sbdsp_intr(void *arg)
 			sc->sc_intr16(arg);
 	}
 #if NMPU > 0
-	if ((irq & SBP_IRQ_MPU401) && sc->sc_mpudev) {
-		mpu_intr(sc->sc_mpudev);
+	if ((irq & SBP_IRQ_MPU401) && sc_mpu) {
+		mpu_intr(sc_mpu);
 	}
 #endif
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.24 2007/12/02 04:59:26 tsutsui Exp $	 */
+/*	$NetBSD: tftp.c,v 1.24.14.1 2008/04/03 12:43:06 mjf Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -164,9 +164,9 @@ tftp_makereq(struct tftp_handle *h)
 	wbuf.t.th_opcode = htons((u_short)RRQ);
 	wtail = wbuf.t.th_stuff;
 	l = strlen(h->path);
-	bcopy(h->path, wtail, l + 1);
+	(void)memcpy(wtail, h->path, l + 1);
 	wtail += l + 1;
-	bcopy("octet", wtail, 6);
+	(void)memcpy(wtail, "octet", 6);
 	wtail += 6;
 
 	t = &h->lastdata.t;
@@ -329,8 +329,9 @@ tftp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 				return EINVAL;
 			}
 			count = (size < inbuffer ? size : inbuffer);
-			bcopy(tftpfile->lastdata.t.th_data + offinblock,
-			    addr, count);
+			(void)memcpy(addr,
+			    tftpfile->lastdata.t.th_data + offinblock,
+			    count);
 
 			addr = (char *)addr + count;
 			tftpfile->off += count;

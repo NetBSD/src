@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.929 2008/02/13 13:57:00 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.929.6.1 2008/04/03 12:42:52 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.929 2008/02/13 13:56:46 tron Exp
+ *	NetBSD: pcidevs,v 1.933 2008/04/01 23:16:16 cegger Exp
  */
 
 /*
@@ -2320,6 +2320,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "NetPower (2nd PCI Vendor ID)",
 	},
 	{
+	    PCI_VENDOR_XENSOURCE,
+	    "XenSource, Inc.",
+	},
+	{
 	    PCI_VENDOR_C4T,
 	    "c't Magazin",
 	},
@@ -2392,7 +2396,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 588;
+const int pci_nvendors = 589;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -4012,8 +4016,8 @@ static const struct pci_product pci_products[] = {
 	    "SB600 PCI to PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SMBUS,
-	    "SB600 SMBus Controller",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SMB,
+	    "SB600/SB700/SB800 SMBus Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_EHCI,
@@ -4046,6 +4050,54 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PLB_438D,
 	    "SB600 PCI to LPC Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_IDE,
+	    "SB700/SB800 SATA Controller (IDE mode)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_AHCI,
+	    "SB700/SB800 SATA Controller (AHCI mode)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID,
+	    "SB700/SB800 RAID SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID5,
+	    "SB700/SB800 RAID5 SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_FC,
+	    "SB700/SB800 FC SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_EHCI,
+	    "SB700/SB800 USB EHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_SATA,
+	    "SB800 SATA Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI0,
+	    "SB700/SB800 USB OHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI1,
+	    "SB700/SB800 USB OHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI2,
+	    "SB700/SB800 USB OHCI Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_IDE,
+	    "SB700/SB800 IDE Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_LPC,
+	    "SB700/SB800 LPC Host Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
@@ -6010,6 +6062,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5,
 	    "PERC 5",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_6,
+	    "PERC 6",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
@@ -9126,6 +9182,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBSCII,
 	    "CBSCII NinjaSCSI-32Bi SCSI",
+	},
+	{
+	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_RSAPCI,
+	    "RSA-PCI 2-port serial",
 	},
 	{
 	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152,
@@ -13992,6 +14052,10 @@ static const struct pci_product pci_products[] = {
 	    "NPATA-32 IDE (KME)",
 	},
 	{
+	    PCI_VENDOR_XENSOURCE, PCI_PRODUCT_XENSOURCE_XENPLATFORM,
+	    "Xen Platform Device",
+	},
+	{
 	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
 	    "X3201-3 Fast Ethernet Controller",
 	},
@@ -14044,4 +14108,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2912;
+const int pci_nproducts = 2927;

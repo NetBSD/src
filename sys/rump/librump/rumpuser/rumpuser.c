@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.13 2008/02/19 20:37:09 ad Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.13.6.1 2008/04/03 12:43:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -244,6 +244,13 @@ rumpuser_gettimeofday(struct timeval *tv, int *error)
 {
 
 	DOCALL(int, gettimeofday(tv, NULL));
+}
+
+int
+rumpuser_getenv(const char *name, char *buf, size_t blen, int *error)
+{
+
+	DOCALL(int, getenv_r(name, buf, blen));
 }
 
 int

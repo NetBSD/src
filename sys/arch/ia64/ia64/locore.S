@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.74.1 2008/04/03 12:42:19 mjf Exp $	*/
 	
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -28,9 +28,7 @@
  * $FreeBSD$
  */
 
-#include "assym.h"
-	
-	
+
 #include <machine/asm.h>
 #include <machine/ia64_cpu.h>
 #include <machine/param.h>
@@ -43,6 +41,8 @@
 //#ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
 //#endif
+
+#include "assym.h"
 
 	.section .data.proc0,"aw"
 	.global	kstack

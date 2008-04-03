@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.69 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: route.h,v 1.69.6.1 2008/04/03 12:43:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -303,6 +303,7 @@ void	 route_init(void);
 int	 route_output(struct mbuf *, ...);
 int	 route_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+void	 rt_init(void);
 void	 rt_ifannouncemsg(struct ifnet *, int);
 void	 rt_ieee80211msg(struct ifnet *, int, void *, size_t);
 void	 rt_ifmsg(struct ifnet *);

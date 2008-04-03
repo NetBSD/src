@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.25 2007/11/24 13:20:55 isaki Exp $	*/
+/*	$NetBSD: exec.c,v 1.25.14.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -81,7 +81,7 @@ exec(char *path, char *loadaddr, int howto)
 	printf("%ld", x.a_text);
 	addr = loadaddr;
 	if (N_GETMAGIC(x) == ZMAGIC) {
-		bcopy(&x, addr, sizeof(x));
+		(void)memcpy(addr, &x, sizeof(x));
 		addr += sizeof(x);
 		x.a_text -= sizeof(x);
 	}
@@ -105,7 +105,7 @@ exec(char *path, char *loadaddr, int howto)
 
 	/* Symbols */
 	ssym = addr;
-	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
+	(void)memcpy(addr, &x.a_syms, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
 	if (x.a_syms) {
 		printf("+[%ld", x.a_syms);
@@ -118,7 +118,7 @@ exec(char *path, char *loadaddr, int howto)
 	if (x.a_syms && read(io, &i, sizeof(int)) != sizeof(int))
 		goto shread;
 
-	bcopy(&i, addr, sizeof(int));
+	(void)memcpy(addr, &i, sizeof(int));
 	if (i) {
 		i -= sizeof(int);
 		addr += sizeof(int);

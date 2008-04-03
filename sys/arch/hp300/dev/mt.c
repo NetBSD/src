@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.41 2008/01/02 11:48:25 ad Exp $	*/
+/*	$NetBSD: mt.c,v 1.41.6.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.41 2008/01/02 11:48:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.41.6.1 2008/04/03 12:42:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ static const struct mtinfo {
 static const int nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
 struct	mt_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	callout sc_start_ch;
 	struct	callout sc_intr_ch;
 	int	sc_hpibno;	/* logical HPIB this slave it attached to */
@@ -136,10 +136,10 @@ int	mtdebug = 0;
 #define B_CMD		B_DEVPRIVATE	/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
-static int	mtmatch(struct device *, struct cfdata *, void *);
-static void	mtattach(struct device *, struct device *, void *);
+static int	mtmatch(device_t, cfdata_t, void *);
+static void	mtattach(device_t, device_t, void *);
 
-CFATTACH_DECL(mt, sizeof(struct mt_softc),
+CFATTACH_DECL_NEW(mt, sizeof(struct mt_softc),
     mtmatch, mtattach, NULL, NULL);
 
 static dev_type_open(mtopen);
@@ -170,7 +170,7 @@ static void	mtgo(void *);
 static void	mtintr(void *);
 
 static int
-mtmatch(struct device *parent, struct cfdata *match, void *aux)
+mtmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpibbus_attach_args *ha = aux;
 
@@ -178,14 +178,15 @@ mtmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mtattach(struct device *parent, struct device *self, void *aux)
+mtattach(device_t parent, device_t self, void *aux)
 {
-	struct mt_softc *sc = (struct mt_softc *)self;
+	struct mt_softc *sc = device_private(self);
 	struct hpibbus_attach_args *ha = aux;
 	int unit, hpibno, slave;
 
+	sc->sc_dev = self;
 	if (mtident(sc, ha) == 0) {
-		printf("\n%s: impossible!\n", sc->sc_dev.dv_xname);
+		aprint_error(": impossible!\n");
 		return;
 	}
 
@@ -218,7 +219,7 @@ mtident(struct mt_softc *sc, struct hpibbus_attach_args *ha)
 		if (ha->ha_id == mtinfo[i].hwid) {
 			if (sc != NULL) {
 				sc->sc_type = mtinfo[i].hwid;
-				printf(": %s tape\n", mtinfo[i].desc);
+				aprint_normal(": %s tape\n", mtinfo[i].desc);
 			}
 			return 1;
 		}
@@ -245,7 +246,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 	sc->sc_flags &= ~MTF_DSJTIMEO;
 	if (retval != 1) {
 		dlog(LOG_DEBUG, "%s can't hpibrecv DSJ",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		if (sc->sc_recvtimeo == 0)
 			sc->sc_recvtimeo = hz;
 		if (--sc->sc_recvtimeo == 0)
@@ -256,7 +257,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 	}
 	sc->sc_recvtimeo = 0;
 	sc->sc_statindex = 0;
-	dlog(LOG_DEBUG, "%s readdsj: 0x%x", sc->sc_dev.dv_xname,
+	dlog(LOG_DEBUG, "%s readdsj: 0x%x", device_xname(sc->sc_dev),
 	    sc->sc_lastdsj);
 	sc->sc_lastecmd = ecmd;
 	switch (sc->sc_lastdsj) {
@@ -271,7 +272,7 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 		break;
 
 	    default:
-		log(LOG_ERR, "%s readdsj: DSJ 0x%x\n", sc->sc_dev.dv_xname,
+		log(LOG_ERR, "%s readdsj: DSJ 0x%x\n", device_xname(sc->sc_dev),
 		    sc->sc_lastdsj);
 		return -1;
 	}
@@ -293,13 +294,13 @@ mtreaddsj(struct mt_softc *sc, int ecmd)
 			return -2;
 		}
 		log(LOG_ERR, "%s readdsj: can't read status",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		return -1;
 	}
 	sc->sc_recvtimeo = 0;
 	sc->sc_statindex = 0;
 	dlog(LOG_DEBUG, "%s readdsj: status is %x %x %x %x %x %x",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    sc->sc_stat1, sc->sc_stat2, sc->sc_stat3,
 	    sc->sc_stat4, sc->sc_stat5, sc->sc_stat6);
 	if (sc->sc_lastecmd)
@@ -317,11 +318,11 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error;
 
 	if (unit >= mt_cd.cd_ndevs ||
-	    (sc = mt_cd.cd_devs[unit]) == NULL ||
+	    (sc = device_private(mt_cd.cd_devs[unit])) == NULL ||
 	    (sc->sc_flags & MTF_EXISTS) == 0)
 		return ENXIO;
 
-	dlog(LOG_DEBUG, "%s open: flags 0x%x", sc->sc_dev.dv_xname,
+	dlog(LOG_DEBUG, "%s open: flags 0x%x", device_xname(sc->sc_dev),
 	    sc->sc_flags);
 	if (sc->sc_flags & MTF_OPEN)
 		return EBUSY;
@@ -350,7 +351,7 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 		goto errout;
 	}
 	if (!(sc->sc_stat1 & SR1_ONLINE)) {
-		uprintf("%s: not online\n", sc->sc_dev.dv_xname);
+		uprintf("%s: not online\n", device_xname(sc->sc_dev));
 		error = EIO;
 		goto errout;
 	}
@@ -388,7 +389,7 @@ mtopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (!(sc->sc_stat1 & SR1_BOT)) {
 			if (sc->sc_density != req_den) {
 				uprintf("%s: can't change density mid-tape\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				error = EIO;
 				goto errout;
 			}
@@ -414,7 +415,7 @@ errout:
 static int
 mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct mt_softc *sc = device_private(mt_cd.cd_devs[UNIT(dev)]);
 
 	if (sc->sc_flags & MTF_WRT) {
 		(void) mtcommand(dev, MTWEOF, 2);
@@ -430,7 +431,7 @@ mtclose(dev_t dev, int flag, int fmt, struct lwp *l)
 static int
 mtcommand(dev_t dev, int cmd, int cnt)
 {
-	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct mt_softc *sc = device_private(mt_cd.cd_devs[UNIT(dev)]);
 	struct buf *bp = &sc->sc_bufstore;
 	int error = 0;
 
@@ -469,15 +470,15 @@ mtstrategy(struct buf *bp)
 	int s;
 
 	unit = UNIT(bp->b_dev);
-	sc = mt_cd.cd_devs[unit];
-	dlog(LOG_DEBUG, "%s strategy", sc->sc_dev.dv_xname);
+	sc = device_private(mt_cd.cd_devs[unit]);
+	dlog(LOG_DEBUG, "%s strategy", device_xname(sc->sc_dev));
 	if ((bp->b_flags & (B_CMD | B_READ)) == 0) {
 #define WRITE_BITS_IGNORED	8
 #if 0
 		if (bp->b_bcount & ((1 << WRITE_BITS_IGNORED) - 1)) {
 			tprintf(sc->sc_ttyp,
-				"%s: write record must be multiple of %d\n",
-				sc->sc_dev.dv_xname, 1 << WRITE_BITS_IGNORED);
+			    "%s: write record must be multiple of %d\n",
+			    device_xname(sc->sc_dev), 1 << WRITE_BITS_IGNORED);
 			goto error;
 		}
 #endif
@@ -496,8 +497,8 @@ mtstrategy(struct buf *bp)
 		}
 		if (bp->b_bcount > s) {
 			tprintf(sc->sc_ttyp,
-				"%s: write record (%d) too big: limit (%d)\n",
-				sc->sc_dev.dv_xname, bp->b_bcount, s);
+			    "%s: write record (%d) too big: limit (%d)\n",
+			    device_xname(sc->sc_dev), bp->b_bcount, s);
 #if 0 /* XXX see above */
 	    error:
 #endif
@@ -519,8 +520,8 @@ static void
 mtustart(struct mt_softc *sc)
 {
 
-	dlog(LOG_DEBUG, "%s ustart", sc->sc_dev.dv_xname);
-	if (hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq))
+	dlog(LOG_DEBUG, "%s ustart", device_xname(sc->sc_dev));
+	if (hpibreq(device_parent(sc->sc_dev), &sc->sc_hq))
 		mtstart(sc);
 }
 
@@ -552,7 +553,7 @@ mtstart(void *arg)
 	short	cmdcount = 1;
 	u_char	cmdbuf[2];
 
-	dlog(LOG_DEBUG, "%s start", sc->sc_dev.dv_xname);
+	dlog(LOG_DEBUG, "%s start", device_xname(sc->sc_dev));
 	sc->sc_flags &= ~MTF_WRT;
 	bp = BUFQ_PEEK(sc->sc_tab);
 	if ((sc->sc_flags & MTF_ALIVE) == 0 &&
@@ -678,7 +679,7 @@ mtstart(void *arg)
 			 */
 			if (hpibsend(sc->sc_hpibno, sc->sc_slave, -2, NULL, 0)){
 				log(LOG_ERR, "%s can't reset",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				goto fatalerror;
 			}
 			callout_reset(&sc->sc_intr_ch, 4 * hz, spl_mtintr, sc);
@@ -735,7 +736,7 @@ done:
 	sc->sc_flags &= ~(MTF_HITEOF | MTF_HITBOF);
 	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
-	hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
+	hpibfree(device_parent(sc->sc_dev), &sc->sc_hq);
 	if ((bp = BUFQ_PEEK(sc->sc_tab)) == NULL)
 		sc->sc_active = 0;
 	else
@@ -754,7 +755,7 @@ mtgo(void *arg)
 	struct buf *bp;
 	int rw;
 
-	dlog(LOG_DEBUG, "%s go", sc->sc_dev.dv_xname);
+	dlog(LOG_DEBUG, "%s go", device_xname(sc->sc_dev));
 	bp = BUFQ_PEEK(sc->sc_tab);
 	rw = bp->b_flags & B_READ;
 	hpibgo(sc->sc_hpibno, sc->sc_slave, rw ? MTT_READ : MTL_WRITE,
@@ -771,11 +772,11 @@ mtintr(void *arg)
 
 	bp = BUFQ_PEEK(sc->sc_tab);
 	if (bp == NULL) {
-		log(LOG_ERR, "%s intr: bp == NULL", sc->sc_dev.dv_xname);
+		log(LOG_ERR, "%s intr: bp == NULL", device_xname(sc->sc_dev));
 		return;
 	}
 
-	dlog(LOG_DEBUG, "%s intr", sc->sc_dev.dv_xname);
+	dlog(LOG_DEBUG, "%s intr", device_xname(sc->sc_dev));
 
 	/*
 	 * Some operation completed.  Read status bytes and report errors.
@@ -817,13 +818,13 @@ mtintr(void *arg)
 
 	    default:
 		log(LOG_ERR, "%s intr: can't get drive stat",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		goto error;
 	}
 	if (sc->sc_stat1 & (SR1_ERR | SR1_REJECT)) {
 		i = sc->sc_stat4 & SR4_ERCLMASK;
 		log(LOG_ERR, "%s: %s error, retry %d, SR2/3 %x/%x, code %d",
-			sc->sc_dev.dv_xname, i == SR4_DEVICE ? "device" :
+			device_xname(sc->sc_dev), i == SR4_DEVICE ? "device" :
 			(i == SR4_PROTOCOL ? "protocol" :
 			(i == SR4_SELFTEST ? "selftest" : "unknown")),
 			sc->sc_stat4 & SR4_RETRYMASK, sc->sc_stat2,
@@ -840,7 +841,7 @@ mtintr(void *arg)
 	 */
 	if (sc->sc_stat1 & SR1_SOFTERR) {
 		log(LOG_WARNING, "%s: soft error, retry %d\n",
-			sc->sc_dev.dv_xname, sc->sc_stat4 & SR4_RETRYMASK);
+		    device_xname(sc->sc_dev), sc->sc_stat4 & SR4_RETRYMASK);
 		sc->sc_stat1 &= ~SR1_SOFTERR;
 	}
 	/*
@@ -888,7 +889,7 @@ mtintr(void *arg)
 		i = hpibrecv(sc->sc_hpibno, sc->sc_slave, MTT_BCNT, cmdbuf, 2);
 		if (i != 2) {
 			log(LOG_ERR, "%s intr: can't get xfer length\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			goto error;
 		}
 		i = (int) *((u_short *) cmdbuf);
@@ -897,11 +898,12 @@ mtintr(void *arg)
 				sc->sc_flags |= MTF_HITEOF;
 			bp->b_resid = bp->b_bcount - i;
 			dlog(LOG_DEBUG, "%s intr: bcount %d, resid %d",
-			    sc->sc_dev.dv_xname, bp->b_bcount, bp->b_resid);
+			    device_xname(sc->sc_dev), bp->b_bcount,
+			    bp->b_resid);
 		} else {
 			tprintf(sc->sc_ttyp,
 				"%s: record (%d) larger than wanted (%d)\n",
-				sc->sc_dev.dv_xname, i, bp->b_bcount);
+				device_xname(sc->sc_dev), i, bp->b_bcount);
  error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;
@@ -916,7 +918,7 @@ mtintr(void *arg)
 	bp->b_flags &= ~B_CMD;
 	(void)BUFQ_GET(sc->sc_tab);
 	biodone(bp);
-	hpibfree(device_parent(&sc->sc_dev), &sc->sc_hq);
+	hpibfree(device_parent(sc->sc_dev), &sc->sc_hq);
 	if (BUFQ_PEEK(sc->sc_tab) == NULL)
 		sc->sc_active = 0;
 	else
@@ -926,7 +928,7 @@ mtintr(void *arg)
 static int
 mtread(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct mt_softc *sc = device_private(mt_cd.cd_devs[UNIT(dev)]);
 
 	return physio(mtstrategy, &sc->sc_bufstore,
 	    dev, B_READ, minphys, uio);
@@ -935,7 +937,7 @@ mtread(dev_t dev, struct uio *uio, int flags)
 static int
 mtwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct mt_softc *sc = mt_cd.cd_devs[UNIT(dev)];
+	struct mt_softc *sc = device_private(mt_cd.cd_devs[UNIT(dev)]);
 
 	return physio(mtstrategy, &sc->sc_bufstore,
 	    dev, B_WRITE, minphys, uio);

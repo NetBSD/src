@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iee_sbdio.c,v 1.3 2007/03/04 12:31:29 tsutsui Exp $	*/
+/*	$NetBSD: if_iee_sbdio.c,v 1.3.40.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.3 2007/03/04 12:31:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_sbdio.c,v 1.3.40.1 2008/04/03 12:42:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,6 @@ iee_sbdio_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	int media[2];
 	int rsegs;
-
-	printf(" at %p irq %d ", (void *)sa->sa_addr1, sa->sa_irq);
 
 	sc_ssc->sc_port = (volatile uint32_t *)
 	    MIPS_PHYS_TO_KSEG1(sa->sa_addr1);

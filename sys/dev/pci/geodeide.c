@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.14 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.14.40.1 2008/04/03 12:42:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.14 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.14.40.1 2008/04/03 12:42:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,10 +56,10 @@ static void geodeide_chip_map(struct pciide_softc *,
 static void geodeide_setup_channel(struct ata_channel *);
 static int geodeide_dma_init(void *, int, int, void *, size_t, int);
 
-static int  geodeide_match(struct device *, struct cfdata *, void *);
-static void geodeide_attach(struct device *, struct device *, void *);
+static int  geodeide_match(device_t, cfdata_t, void *);
+static void geodeide_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(geodeide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(geodeide, sizeof(struct pciide_softc),
     geodeide_match, geodeide_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_geode_products[] = {
@@ -81,8 +81,7 @@ static const struct pciide_product_desc pciide_geode_products[] = {
 };
 
 static int
-geodeide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+geodeide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -96,10 +95,12 @@ geodeide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-geodeide_attach(struct device *parent, struct device *self, void *aux)
+geodeide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (void *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_geode_products));
@@ -115,8 +116,8 @@ geodeide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 	if (sc->sc_dma_ok) {

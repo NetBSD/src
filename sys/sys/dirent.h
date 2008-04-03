@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.23 2005/12/26 18:41:36 perry Exp $	*/
+/*	$NetBSD: dirent.h,v 1.23.70.1 2008/04/03 12:43:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,9 +42,9 @@
  *
  * A directory entry has a struct dirent at the front of it, containing its
  * inode number, the length of the entry, and the length of the name
- * contained in the entry.  These are followed by the name padded to a 4
- * byte boundary with null bytes.  All names are guaranteed null terminated.
- * The maximum length of a name in a directory is MAXNAMLEN.
+ * contained in the entry.  These are followed by the name padded to 
+ * _DIRENT_ALIGN() byte boundary with null bytes.  All names are guaranteed
+ * NUL terminated.  The maximum length of a name in a directory is MAXNAMLEN.
  */
 struct dirent {
 	ino_t d_fileno;			/* file number of entry */

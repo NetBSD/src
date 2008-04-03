@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2007/03/04 06:00:02 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6.40.1 2008/04/03 12:42:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -95,13 +95,15 @@
 /*__FBSDID("$FreeBSD: src/sys/ia64/ia64/machdep.c,v 1.203 2005/10/14 12:43:45 davidxu Exp $"); */
 
 #include <sys/param.h> 
-#include <sys/user.h>
-#include <sys/systm.h>
-#include <sys/reboot.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
-#include <sys/proc.h>
-#include <sys/msgbuf.h>
 #include <sys/ksyms.h>
+#include <sys/msgbuf.h>
+#include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+#include <sys/user.h>
 
 #include <machine/ia64_cpu.h>
 #include <machine/pal.h>
@@ -120,8 +122,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
-
-extern void main __P((void));
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -319,9 +319,7 @@ cpu_startup()
 }
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	efi_reset_system();
@@ -330,16 +328,17 @@ cpu_reboot(howto, bootstr)
 	/*NOTREACHED*/
 }
 
-int	cpu_switch (struct lwp *cur, struct lwp *new)
+lwp_t *
+cpu_switchto(lwp_t *cur, lwp_t *new, bool b)
+{
+	return new;
+}
+
+bool
+cpu_intr_p()
 {
 	return 0;
 }
-
-void	cpu_switchto (struct lwp *cur, struct lwp *new)
-{
-	return;
-}
-
 
 /*
  * This is called by main to set dumplo and dumpsize.
@@ -361,7 +360,7 @@ consinit()
 }
 
 void
-map_pal_code(void)
+map_pal_code()
 {
 	pt_entry_t pte;
 	u_int64_t psr;
@@ -390,7 +389,7 @@ map_pal_code(void)
 }
 
 void
-map_gateway_page(void)
+map_gateway_page()
 {
 	pt_entry_t pte;
 	u_int64_t psr;
@@ -453,7 +452,7 @@ calculate_frequencies(void)
 
 
 void
-ia64_init(void)
+ia64_init()
 {
 
 	paddr_t kernstartpfn, kernendpfn, pfn0, pfn1;
@@ -720,7 +719,7 @@ ia64_init(void)
 	proc0paddr->u_pcb.pcb_special.bspstore = 
 		(u_int64_t) proc0paddr + sizeof(struct user);
 
-	simple_lock_init(&proc0paddr->u_pcb.pcb_fpcpu_slock);
+	mutex_init(&proc0paddr->u_pcb.pcb_fpcpu_slock, MUTEX_SPIN, 0);
 
 
 	/*
@@ -782,10 +781,7 @@ ia64_init(void)
  * Set registers on exec.
  */
 void
-setregs(l, pack, stack)
-	register struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(register struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct trapframe *tf;
 	uint64_t *ksttop, *kst, regstkp;
@@ -845,16 +841,16 @@ setregs(l, pack, stack)
 		 */
 
 		/* in0 = sp */
-		suword((void *)tf->tf_special.bspstore - 32, stack);
+		suword((char *)tf->tf_special.bspstore - 32, stack);
 
 		/* in1 == *cleanup */
-		suword((void *)tf->tf_special.bspstore -  24, 0);
+		suword((char *)tf->tf_special.bspstore -  24, 0);
 
 		/* in2 == *obj */
-		suword((void *)tf->tf_special.bspstore -  16, 0);
+		suword((char *)tf->tf_special.bspstore -  16, 0);
 
 		/* in3 = ps_strings */		
-		suword((void *)tf->tf_special.bspstore - 8, 
+		suword((char *)tf->tf_special.bspstore - 8, 
 		       (u_int64_t)l->l_proc->p_psstr); 
 
 	}
@@ -876,22 +872,13 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	return;
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
-	return (EINVAL);
+	return EINVAL;
 }
-
-
-

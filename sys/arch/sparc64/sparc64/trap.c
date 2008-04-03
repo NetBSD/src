@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145 2007/10/24 14:50:40 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.145.16.1 2008/04/03 12:42:26 mjf Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,11 +50,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2007/10/24 14:50:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.16.1 2008/04/03 12:42:26 mjf Exp $");
 
 #define NEW_FPSTATE
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 
@@ -434,6 +435,14 @@ trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
 	ksiginfo_t ksi;
 	int error;
 	int code, sig;
+#ifdef MULTIPROCESSOR
+	int s;
+#define	disintr()	s = intr_disable()
+#define	rstintr()	intr_restore(s)
+#else
+#define	disintr()	/* nothing */
+#define	rstintr()	/* nothing */
+#endif
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -529,14 +538,17 @@ extern void db_printf(const char * , ...);
 				newfplwp = curlwp;
 				/* force other cpus to give up this fpstate */
 				if (newfplwp->l_md.md_fpstate)
-					save_and_clear_fpstate(newfplwp);
+					fpusave_lwp(newfplwp, true);
 			}
 			if (fplwp != newfplwp) {
+				disintr();
 				if (fplwp != NULL) {
 					/* someone else had it, maybe? */
+					KASSERT(fplwp->l_md.md_fpstate != NULL);
 					savefpstate(fplwp->l_md.md_fpstate);
 					fplwp = NULL;
 				}
+				rstintr();
 				/* If we have an allocated fpstate, load it */
 				if (newfplwp->l_md.md_fpstate != NULL) {
 					fplwp = newfplwp;
@@ -668,11 +680,13 @@ badtrap:
 		struct fpstate64 *fs = l->l_md.md_fpstate;
 
 		if (fs == NULL) {
+			KERNEL_LOCK(1, l);
 			/* NOTE: fpstate must be 64-bit aligned */
 			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
 			fs->fs_qsize = 0;
 			l->l_md.md_fpstate = fs;
+			KERNEL_UNLOCK_ONE(l);
 		}
 		/*
 		 * We may have more FPEs stored up and/or ops queued.
@@ -688,11 +702,15 @@ badtrap:
 		}
 		if (fplwp != l) {		/* we do not have it */
 			/* but maybe another CPU has it? */
-			save_and_clear_fpstate(l);
-			if (fplwp != NULL)	/* someone else had it */
+			fpusave_lwp(l, true);
+			disintr();
+			if (fplwp != NULL) {	/* someone else had it */
+				KASSERT(fplwp->l_md.md_fpstate != NULL);
 				savefpstate(fplwp->l_md.md_fpstate);
+			}
 			loadfpstate(fs);
 			fplwp = l;		/* now we do have it */
+			rstintr();
 		}
 		tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
 		break;
@@ -756,8 +774,11 @@ badtrap:
 		 */
 		if (l != fplwp)
 			panic("fpe without being the FP user");
+		disintr();
+		KASSERT(l->l_md.md_fpstate != NULL);
 		savefpstate(l->l_md.md_fpstate);
 		fplwp = NULL;
+		rstintr();
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
 		if (l->l_md.md_fpstate->fs_qsize == 0) {
 			error = copyin((void *)pc,

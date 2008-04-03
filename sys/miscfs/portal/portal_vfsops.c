@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.70 2008/01/28 14:31:19 dholland Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.70.6.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.70 2008/01/28 14:31:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.70.6.1 2008/04/03 12:43:06 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -121,17 +121,17 @@ portal_mount(
 		return (EOPNOTSUPP);
 
 	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, args->pa_socket, &fp)) != 0)
+	if ((error = getsock(args->pa_socket, &fp)) != 0)
 		return (error);
 	so = (struct socket *) fp->f_data;
 	if (so->so_proto->pr_domain->dom_family != AF_LOCAL) {
-		FILE_UNUSE(fp, NULL);
+		fd_putfile(args->pa_socket);
 		return (ESOCKTNOSUPPORT);
 	}
 
 	error = getnewvnode(VT_PORTAL, mp, portal_vnodeop_p, &rvp); /* XXX */
 	if (error) {
-		FILE_UNUSE(fp, NULL);
+		fd_putfile(args->pa_socket);
 		return (error);
 	}
 	MALLOC(rvp->v_data, void *, sizeof(struct portalnode),
@@ -149,6 +149,7 @@ portal_mount(
 	mutex_enter(&fp->f_lock);
 	fp->f_count++;
 	mutex_exit(&fp->f_lock);
+	fd_putfile(args->pa_socket);
 
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -189,14 +190,12 @@ portal_unmount(struct mount *mp, int mntflags)
 	 * daemon to wake up, and then the accept will get ECONNABORTED
 	 * which it interprets as a request to go and bury itself.
 	 */
-	mutex_enter(&VFSTOPORTAL(mp)->pm_server->f_lock);
-	FILE_USE(VFSTOPORTAL(mp)->pm_server);
 	soshutdown((struct socket *) VFSTOPORTAL(mp)->pm_server->f_data, 2);
 	/*
 	 * Discard reference to underlying file.  Must call closef because
 	 * this may be the last reference.
 	 */
-	closef(VFSTOPORTAL(mp)->pm_server, (struct lwp *) 0);
+	closef(VFSTOPORTAL(mp)->pm_server);
 	/*
 	 * Finally, throw away the portalmount structure
 	 */

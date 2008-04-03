@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.130 2008/01/02 19:26:46 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.130.6.1 2008/04/03 12:43:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.130 2008/01/02 19:26:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.130.6.1 2008/04/03 12:43:10 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -154,7 +154,7 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 	} */
 	int error;
 #ifdef NFSSERVER
-	struct file *fp;
+	file_t *fp;
 	struct mbuf *nam;
 	struct nfsd_args nfsdarg;
 	struct nfsd_srvargs nfsd_srvargs, *nsd = &nfsd_srvargs;
@@ -166,8 +166,8 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 	/*
 	 * Must be super user
 	 */
-	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    NULL);
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_NFS,
+	    KAUTH_REQ_NETWORK_NFS_SVC, NULL, NULL, NULL);
 	if (error)
 		return (error);
 
@@ -198,7 +198,7 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 		if (error)
 			return (error);
 		/* getsock() will use the descriptor for us */
-		error = getsock(l->l_proc->p_fd, nfsdarg.sock, &fp);
+		error = getsock(nfsdarg.sock, &fp);
 		if (error)
 			return (error);
 		/*
@@ -210,12 +210,12 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 			error = sockargs(&nam, nfsdarg.name, nfsdarg.namelen,
 				MT_SONAME);
 			if (error) {
-				FILE_UNUSE(fp, NULL);
+				fd_putfile(nfsdarg.sock);
 				return (error);
 			}
 		}
 		error = nfssvc_addsock(fp, nam);
-		FILE_UNUSE(fp, NULL);
+		fd_putfile(nfsdarg.sock);
 #endif /* !NFSSERVER */
 	} else if (SCARG(uap, flag) & NFSSVC_SETEXPORTSLIST) {
 #ifndef NFSSERVER
@@ -385,7 +385,7 @@ nfsrv_sockfree(struct nfssvc_sock *slp)
  */
 int
 nfssvc_addsock(fp, mynam)
-	struct file *fp;
+	file_t *fp;
 	struct mbuf *mynam;
 {
 	struct mbuf *m;
@@ -664,23 +664,8 @@ nfssvc_nfsd(nsd, argp, l)
 		 * gathered together.
 		 */
 		do {
-#ifdef DIAGNOSTIC
-			int lockcount;
-#endif
 			switch (cacherep) {
 			case RC_DOIT:
-#ifdef DIAGNOSTIC
-				/*
-				 * NFS server procs should neither release
-				 * locks already held, nor leave things
-				 * locked.  Catch this sooner, rather than
-				 * later (when we try to relock something we
-				 * already have locked).  Careful inspection
-				 * of the failing routine usually turns up the
-				 * lock leak.. once we know what it is..
-				 */
-				lockcount = l->l_locks;
-#endif
 				mreq = NULL;
 				netexport_rdlock();
 				if (writes_todo || nd == NULL ||
@@ -694,25 +679,6 @@ nfssvc_nfsd(nsd, argp, l)
 					    (*(nfsrv3_procs[nd->nd_procnum]))
 					    (nd, slp, l, &mreq);
 				netexport_rdunlock();
-#ifdef DIAGNOSTIC
-				if (l->l_locks != lockcount) {
-					/*
-					 * If you see this panic, audit
-					 * nfsrv3_procs[nd->nd_procnum] for
-					 * vnode locking errors (usually, it's
-					 * due to forgetting to vput()
-					 * something).
-					 */
-#ifdef DEBUG
-					extern void printlockedvnodes(void);
-					printlockedvnodes();
-#endif
-					printf("nfsd: locking botch in op %d"
-					    " (before %d, after %d)\n",
-					    nd ? nd->nd_procnum : -1,
-					    lockcount, l->l_locks);
-				}
-#endif
 				if (mreq == NULL) {
 					if (nd != NULL) {
 						if (nd->nd_nam2)
@@ -904,7 +870,7 @@ nfsrv_slpderef(slp)
 	ref = --slp->ns_sref;
 	mutex_exit(&nfsd_lock);
 	if (ref == 0 && (slp->ns_flags & SLP_VALID) == 0) {
-		struct file *fp;
+		file_t *fp;
 
 		mutex_enter(&nfsd_lock);
 		KASSERT((slp->ns_gflags & SLP_G_DOREC) == 0);
@@ -916,9 +882,8 @@ nfsrv_slpderef(slp)
 			slp->ns_fp = NULL;
 			KASSERT(fp != NULL);
 			KASSERT(fp->f_data == slp->ns_so);
-			mutex_enter(&fp->f_lock);
-			FILE_USE(fp);
-			closef(fp, (struct lwp *)0);
+			KASSERT(fp->f_count > 0);
+			closef(fp);
 			slp->ns_so = NULL;
 		}
 

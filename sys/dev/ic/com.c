@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.272 2008/01/28 18:12:29 dyoung Exp $	*/
+/*	$NetBSD: com.c,v 1.272.6.1 2008/04/03 12:42:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.272 2008/01/28 18:12:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.272.6.1 2008/04/03 12:42:40 mjf Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -254,7 +254,7 @@ const bus_size_t com_std_map[16] = COM_REG_16550;
 #define	COMDIALOUT(x)	(minor(x) & COMDIALOUT_MASK)
 
 #define	COM_ISALIVE(sc)	((sc)->enabled != 0 && \
-			 device_is_active(&(sc)->sc_dev))
+			 device_is_active((sc)->sc_dev))
 
 #define	BR	BUS_SPACE_BARRIER_READ
 #define	BW	BUS_SPACE_BARRIER_WRITE
@@ -297,16 +297,18 @@ comstatus(struct com_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
-	printf("%s: %s %cclocal  %cdcd %cts_carr_on %cdtr %ctx_stopped\n",
-	    sc->sc_dev.dv_xname, str,
+	aprint_normal_dev(sc->sc_dev,
+	    "%s %cclocal  %cdcd %cts_carr_on %cdtr %ctx_stopped\n",
+	    str,
 	    ISSET(tp->t_cflag, CLOCAL) ? '+' : '-',
 	    ISSET(sc->sc_msr, MSR_DCD) ? '+' : '-',
 	    ISSET(tp->t_state, TS_CARR_ON) ? '+' : '-',
 	    ISSET(sc->sc_mcr, MCR_DTR) ? '+' : '-',
 	    sc->sc_tx_stopped ? '+' : '-');
 
-	printf("%s: %s %ccrtscts %ccts %cts_ttstop  %crts rx_flags=0x%x\n",
-	    sc->sc_dev.dv_xname, str,
+	aprint_normal_dev(sc->sc_dev,
+	    "%s %ccrtscts %ccts %cts_ttstop  %crts rx_flags=0x%x\n",
+	    str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? '+' : '-',
 	    ISSET(sc->sc_msr, MSR_CTS) ? '+' : '-',
 	    ISSET(tp->t_state, TS_TTSTOP) ? '+' : '-',
@@ -470,7 +472,7 @@ fifodelay:
 	aprint_normal(": %s\n", fifo_msg);
 	if (ISSET(sc->sc_hwflags, COM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;
-		aprint_normal("%s: txfifo disabled\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "txfifo disabled\n");
 	}
 
 fifodone:
@@ -485,8 +487,8 @@ fifodone:
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = com_rbuf_size;
 	if (sc->sc_rbuf == NULL) {
-		aprint_error("%s: unable to allocate ring buffer\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate ring buffer\n");
 		return;
 	}
 	sc->sc_ebuf = sc->sc_rbuf + (com_rbuf_size << 1);
@@ -503,9 +505,9 @@ fifodone:
 		maj = cdevsw_lookup_major(&com_cdevsw);
 
 		tp->t_dev = cn_tab->cn_dev = makedev(maj,
-						     device_unit(&sc->sc_dev));
+						     device_unit(sc->sc_dev));
 
-		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "console\n");
 	}
 
 #ifdef KGDB
@@ -522,14 +524,14 @@ fifodone:
 
 			SET(sc->sc_hwflags, COM_HW_KGDB);
 		}
-		aprint_normal("%s: kgdb\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(sc->sc_dev, "kgdb\n");
 	}
 #endif
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, comsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
 
@@ -594,9 +596,9 @@ com_config(struct com_softc *sc)
 }
 
 int
-com_detach(struct device *self, int flags)
+com_detach(device_t self, int flags)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	int maj, mn;
 
         if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
@@ -635,6 +637,7 @@ com_detach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+	callout_destroy(&sc->sc_diag_callout);
 
 	/* Destroy the lock. */
 	mutex_destroy(&sc->sc_lock);
@@ -643,9 +646,9 @@ com_detach(struct device *self, int flags)
 }
 
 int
-com_activate(struct device *self, enum devact act)
+com_activate(device_t self, enum devact act)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -729,12 +732,12 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int s;
 	int error;
 
-	sc = device_lookup(&com_cd, COMUNIT(dev));
+	sc = device_lookup_private(&com_cd, COMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (ENXIO);
 
 #ifdef KGDB
@@ -764,8 +767,8 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
 				splx(s);
-				printf("%s: device enable failed\n",
-				       sc->sc_dev.dv_xname);
+				aprint_error_dev(sc->sc_dev,
+				    "device enable failed\n");
 				return (EIO);
 			}
 			mutex_spin_enter(&sc->sc_lock);
@@ -871,7 +874,8 @@ bad:
 int
 comclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -899,7 +903,8 @@ comclose(dev_t dev, int flag, int mode, struct lwp *l)
 int
 comread(dev_t dev, struct uio *uio, int flag)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -911,7 +916,8 @@ comread(dev_t dev, struct uio *uio, int flag)
 int
 comwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -923,7 +929,8 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 int
 compoll(dev_t dev, int events, struct lwp *l)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -935,7 +942,8 @@ compoll(dev_t dev, int events, struct lwp *l)
 struct tty *
 comtty(dev_t dev)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -944,12 +952,17 @@ comtty(dev_t dev)
 int
 comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
 	int error;
 
+	sc = device_lookup_private(&com_cd, COMUNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
+
+	tp = sc->sc_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -1195,7 +1208,8 @@ cflag2lcr(tcflag_t cflag)
 int
 comparam(struct tty *tp, struct termios *t)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 	int ospeed;
 	u_char lcr;
 
@@ -1403,8 +1417,7 @@ com_iflush(struct com_softc *sc)
 		    CSR_READ_1(regsp, COM_REG_RXDATA);
 #ifdef DIAGNOSTIC
 	if (!timo)
-		printf("%s: com_iflush timeout %02x\n", sc->sc_dev.dv_xname,
-		       reg);
+		aprint_error_dev(sc->sc_dev, "com_iflush timeout %02x\n", reg);
 #endif
 }
 
@@ -1454,7 +1467,8 @@ com_loadchannelregs(struct com_softc *sc)
 int
 comhwiflow(struct tty *tp, int block)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 
 	if (COM_ISALIVE(sc) == 0)
 		return (0);
@@ -1509,7 +1523,8 @@ com_hwiflow(struct com_softc *sc)
 void
 comstart(struct tty *tp)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 	struct com_regs *regsp = &sc->sc_regs;
 	int s;
 
@@ -1571,7 +1586,8 @@ out:
 void
 comstop(struct tty *tp, int flag)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
+	struct com_softc *sc =
+	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 
 	mutex_spin_enter(&sc->sc_lock);
 	if (ISSET(tp->t_state, TS_BUSY)) {
@@ -1599,7 +1615,7 @@ comdiag(void *arg)
 	mutex_spin_exit(&sc->sc_lock);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
@@ -2266,19 +2282,32 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
  * have firmware which doesn't interact properly with a com device in
  * FIFO mode.
  */
-void
-com_cleanup(void *arg)
+bool
+com_cleanup(device_t self, int how)
 {
-	struct com_softc *sc = arg;
+	struct com_softc *sc = device_private(self);
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_FIFO, 0);
+
+	return true;
 }
 
 bool
-com_resume(device_t dev)
+com_suspend(device_t self PMF_FN_ARGS)
 {
-	struct com_softc *sc = device_private(dev);
+	struct com_softc *sc = device_private(self);
+
+	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, 0);
+	(void)CSR_READ_1(&sc->sc_regs, COM_REG_IIR);
+
+	return true;
+}
+
+bool
+com_resume(device_t self PMF_FN_ARGS)
+{
+	struct com_softc *sc = device_private(self);
 
 	mutex_spin_enter(&sc->sc_lock);
 	com_loadchannelregs(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.118 2008/02/15 13:46:05 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.118.6.1 2008/04/03 12:43:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.118 2008/02/15 13:46:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.118.6.1 2008/04/03 12:43:13 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -739,7 +739,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		trace(TR_BREADHIT, pack(vp, fs->lfs_bsize), lbn);
 	} else {
 		trace(TR_BREADMISS, pack(vp, fs->lfs_bsize), lbn);
-		curlwp->l_proc->p_stats->p_ru.ru_inblock++; /* pay for read */
+		curlwp->l_ru.ru_inblock++; /* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("lfs_indirtrunc: bad buffer size");

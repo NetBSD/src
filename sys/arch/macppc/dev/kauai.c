@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.21 2007/10/17 19:55:18 garbled Exp $	*/
+/*	$NetBSD: kauai.c,v 1.21.16.1 2008/04/03 12:42:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.21 2007/10/17 19:55:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.21.16.1 2008/04/03 12:42:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,23 +73,20 @@ struct kauai_softc {
 	void (*sc_calc_timing)(struct kauai_softc *, int);
 };
 
-int kauai_match __P((struct device *, struct cfdata *, void *));
-void kauai_attach __P((struct device *, struct device *, void *));
-int kauai_dma_init __P((void *, int, int, void *, size_t, int));
-void kauai_dma_start __P((void *, int, int));
-int kauai_dma_finish __P((void *, int, int, int));
-void kauai_set_modes __P((struct ata_channel *));
-static void calc_timing_kauai __P((struct kauai_softc *, int));
+static int kauai_match(device_t, cfdata_t, void *);
+static void kauai_attach(device_t, device_t, void *);
+static int kauai_dma_init(void *, int, int, void *, size_t, int);
+static void kauai_dma_start(void *, int, int);
+static int kauai_dma_finish(void *, int, int, int);
+static void kauai_set_modes(struct ata_channel *);
+static void calc_timing_kauai(struct kauai_softc *, int);
 static int getnodebypci(pci_chipset_tag_t, pcitag_t);
 
-CFATTACH_DECL(kauai, sizeof(struct kauai_softc),
+CFATTACH_DECL_NEW(kauai, sizeof(struct kauai_softc),
     kauai_match, kauai_attach, NULL, wdcactivate);
 
 int
-kauai_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+kauai_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -106,11 +103,9 @@ kauai_match(parent, match, aux)
 }
 
 void
-kauai_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+kauai_attach(device_t parent, device_t self, void *aux)
 {
-	struct kauai_softc *sc = (void *)self;
+	struct kauai_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ata_channel *chp = &sc->sc_channel;
 	struct wdc_regs *wdr;
@@ -118,21 +113,23 @@ kauai_attach(parent, self, aux)
 	paddr_t regbase, dmabase;
 	int node, reg[5], i;
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
+
 #ifdef DIAGNOSTIC
 	if ((vaddr_t)sc->sc_dmacmd & 0x0f) {
-		printf(": bad dbdma alignment\n");
+		aprint_error(": bad dbdma alignment\n");
 		return;
 	}
 #endif
 
 	node = getnodebypci(pa->pa_pc, pa->pa_tag);
 	if (node == 0) {
-		printf(": cannot find kauai node\n");
+		aprint_error(": cannot find kauai node\n");
 		return;
 	}
 
 	if (OF_getprop(node, "assigned-addresses", reg, sizeof reg) < 12) {
-		printf(": cannot get address property\n");
+		aprint_error(": cannot get address property\n");
 		return;
 	}
 	regbase = reg[2] + 0x2000;
@@ -148,10 +145,10 @@ kauai_attach(parent, self, aux)
 	}
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": unable to map interrupt\n");
+		aprint_error(": unable to map interrupt\n");
 		return;
 	}
-	printf(": interrupting at %s\n", pci_intr_string(pa->pa_pc, ih));
+	aprint_normal(": interrupting at %s\n", pci_intr_string(pa->pa_pc, ih));
 
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 
@@ -161,7 +158,7 @@ kauai_attach(parent, self, aux)
 	    &wdr->cmd_baseioh) ||
 	    bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 			WDC_AUXREG_OFFSET << 4, 1, &wdr->ctl_ioh)) {
-		printf("%s: couldn't map registers\n", self->dv_xname);
+		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
 	for (i = 0; i < WDC_NREG; i++) {
@@ -169,14 +166,14 @@ kauai_attach(parent, self, aux)
 		    i == 0 ? 4 : 1, &wdr->cmd_iohs[i]) != 0) {
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
 			    WDC_REG_NPORTS << 4);
-			printf("%s: couldn't subregion registers\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+			aprint_error_dev(self,
+			    "couldn't subregion registers\n");
 			return;
 		}
 	}
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, wdcintr, chp) == NULL) {
-		printf("%s: unable to establish interrupt\n", self->dv_xname);
+		aprint_error_dev(self, "unable to establish interrupt\n");
 		return;
 	}
 
@@ -207,8 +204,7 @@ kauai_attach(parent, self, aux)
 }
 
 void
-kauai_set_modes(chp)
-	struct ata_channel *chp;
+kauai_set_modes(struct ata_channel *chp)
 {
 	struct kauai_softc *sc = (void *)chp->ch_atac;
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
@@ -262,9 +258,7 @@ static const u_int udma_timing_kauai[] = {	/* 0x0000ffff */
  * Timing calculation for Kauai.
  */
 void
-calc_timing_kauai(sc, drive)
-	struct kauai_softc *sc;
-	int drive;
+calc_timing_kauai(struct kauai_softc *sc, int drive)
 {
 	struct ata_channel *chp = &sc->sc_channel;
 	struct ata_drive_datas *drvp = &chp->ch_drive[drive];
@@ -289,11 +283,8 @@ calc_timing_kauai(sc, drive)
 }
 
 int
-kauai_dma_init(v, channel, drive, databuf, datalen, flags)
-	void *v;
-	void *databuf;
-	size_t datalen;
-	int flags;
+kauai_dma_init(void *v, int channel, int drive, void *databuf,
+	size_t datalen, int flags)
 {
 	struct kauai_softc *sc = v;
 	dbdma_command_t *cmdp = sc->sc_dmacmd;
@@ -346,9 +337,7 @@ kauai_dma_init(v, channel, drive, databuf, datalen, flags)
 }
 
 void
-kauai_dma_start(v, channel, drive)
-	void *v;
-	int channel, drive;
+kauai_dma_start(void *v, int channel, int drive)
 {
 	struct kauai_softc *sc = v;
 
@@ -356,10 +345,7 @@ kauai_dma_start(v, channel, drive)
 }
 
 int
-kauai_dma_finish(v, channel, drive, read)
-	void *v;
-	int channel, drive;
-	int read;
+kauai_dma_finish(void *v, int channel, int drive, int read)
 {
 	struct kauai_softc *sc = v;
 
@@ -371,9 +357,7 @@ kauai_dma_finish(v, channel, drive, read)
  * Find OF-device corresponding to the PCI device.
  */
 int
-getnodebypci(pc, tag)
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+getnodebypci(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	int bus, dev, func;
 	u_int reg[5];

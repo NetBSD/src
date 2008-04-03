@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.23 2007/10/17 19:54:30 garbled Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.23.16.1 2008/04/03 12:42:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.23 2007/10/17 19:54:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.23.16.1 2008/04/03 12:42:17 mjf Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -76,10 +76,10 @@ static struct pfckbd_core {
 	void (*pc_callout)(void *);
 } pfckbd_core;
 
-static int pfckbd_match(struct device *, struct cfdata *, void *);
-static void pfckbd_attach(struct device *, struct device *, void *);
+static int pfckbd_match(device_t, cfdata_t, void *);
+static void pfckbd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pfckbd, sizeof(struct device),
+CFATTACH_DECL_NEW(pfckbd, 0,
     pfckbd_match, pfckbd_attach, NULL, NULL);
 
 static void pfckbd_ifsetup(struct pfckbd_core *);
@@ -124,7 +124,7 @@ pfckbd_cnattach()
 }
 
 static int
-pfckbd_match(struct device *parent, struct cfdata *cf, void *aux)
+pfckbd_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if ((cpu_product != CPU_PRODUCT_7709)
@@ -135,11 +135,12 @@ pfckbd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pfckbd_attach(struct device *parent, struct device *self, void *aux)
+pfckbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct hpckbd_attach_args haa;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	pfckbd_core.pc_attached = 1;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170var.h,v 1.1 2006/10/04 15:04:43 tsutsui Exp $	*/
+/*	$NetBSD: intersil7170var.h,v 1.1.54.1 2008/04/03 12:42:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 struct intersil7170_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	bus_space_tag_t	sc_bst;			/* bus_space(9) tag */
 	bus_space_handle_t sc_bsh;		/* bus_space(9) handle */

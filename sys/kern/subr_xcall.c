@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.5 2007/11/06 00:42:44 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.5.16.1 2008/04/03 12:43:04 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.5 2007/11/06 00:42:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.5.16.1 2008/04/03 12:43:04 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,7 +131,7 @@ xc_init_cpu(struct cpu_info *ci)
 
 	cv_init(&ci->ci_data.cpu_xcall, "xcall");
 	error = kthread_create(PRI_XCALL, KTHREAD_MPSAFE, ci, xc_thread,
-	    NULL, NULL, "xcall/%d", (int)ci->ci_cpuid);
+	    NULL, NULL, "xcall/%u", ci->ci_index);
 	if (error != 0)
 		panic("xc_init_cpu: error %d", error);
 }

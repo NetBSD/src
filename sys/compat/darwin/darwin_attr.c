@@ -1,7 +1,7 @@
-/*	$NetBSD: darwin_attr.c,v 1.22 2007/12/20 23:02:45 dsl Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.22.6.1 2008/04/03 12:42:32 mjf Exp $ */
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.22 2007/12/20 23:02:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.22.6.1 2008/04/03 12:42:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 		goto out3;
 
 	/* Get the informations for path: file related info */
-	error = vn_stat(vp, &st, l);
+	error = vn_stat(vp, &st);
 	if (error != 0)
 		goto out3;
 

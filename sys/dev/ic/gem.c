@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.74 2008/02/07 01:21:53 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.74.6.1 2008/04/03 12:42:40 mjf Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.74 2008/02/07 01:21:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.74.6.1 2008/04/03 12:42:40 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -666,16 +666,15 @@ gem_stop(struct ifnet *ifp, int disable)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (disable) {
-		gem_rxdrain(sc);
-	}
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
+
+	if (disable)
+		gem_rxdrain(sc);
 }
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.11 2007/11/14 14:51:03 ad Exp $ */
+/* $NetBSD: tsc.c,v 1.11.14.1 2008/04/03 12:42:31 mjf Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.11 2007/11/14 14:51:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.11.14.1 2008/04/03 12:42:31 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -113,7 +113,8 @@ int		tsc_is_broken = 0;
 
 static int64_t tsc_cal_val;  /* last calibrate time stamp */
 
-static timecounter_get_t tsc_get_timecount;
+timecounter_get_t tsc_get_timecount;
+timecounter_get_t tsc_slow_timecount;
 static timecounter_pps_t tsc_calibrate;
 
 void tsc_calibrate_cpu(struct cpu_info *);
@@ -175,8 +176,8 @@ init_TSC_tc(void)
 /*
  * pick up tick count scaled to reference tick count
  */
-static u_int
-tsc_get_timecount(struct timecounter *tc)
+u_int
+tsc_slow_timecount(struct timecounter *tc)
 {
 	struct cpu_info *ci = curcpu();
 	int64_t rcc, cc;

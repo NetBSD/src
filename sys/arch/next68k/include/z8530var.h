@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.7 2007/11/07 15:56:12 ad Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.7.14.1 2008/04/03 12:42:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #include <dev/ic/z8530sc.h>
 
 struct zsc_softc {
-	struct	device zsc_dev;		/* required first: base device */
+	device_t zsc_dev;		/* required first: base device */
 	struct	zs_chanstate *zsc_cs[2];	/* channel A and B soft state */
 	/* Machine-dependent part follows... */
 	struct	evcnt zsc_intrcnt;		/* count interrupts */
@@ -58,13 +58,13 @@ struct zsc_softc {
  * Functions to read and write individual registers in a channel.
  */
 
-u_char zs_read_reg(struct zs_chanstate *, u_char);
-u_char zs_read_csr(struct zs_chanstate *);
-u_char zs_read_data(struct zs_chanstate *);
+uint8_t zs_read_reg(struct zs_chanstate *, uint8_t);
+uint8_t zs_read_csr(struct zs_chanstate *);
+uint8_t zs_read_data(struct zs_chanstate *);
 
-void  zs_write_reg(struct zs_chanstate *, u_char, u_char);
-void  zs_write_csr(struct zs_chanstate *, u_char);
-void  zs_write_data(struct zs_chanstate *, u_char);
+void  zs_write_reg(struct zs_chanstate *, uint8_t, uint8_t);
+void  zs_write_csr(struct zs_chanstate *, uint8_t);
+void  zs_write_data(struct zs_chanstate *, uint8_t);
 
 /* The sparc has splzs() in psl.h */
 

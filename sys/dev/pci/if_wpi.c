@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.35 2008/01/19 03:45:08 simonb Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.35.6.1 2008/04/03 12:42:51 mjf Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.35 2008/01/19 03:45:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.35.6.1 2008/04/03 12:42:51 mjf Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -163,7 +163,7 @@ static int  wpi_reset(struct wpi_softc *);
 static void wpi_hw_config(struct wpi_softc *);
 static int  wpi_init(struct ifnet *);
 static void wpi_stop(struct ifnet *, int);
-static bool wpi_resume(device_t);
+static bool wpi_resume(device_t PMF_FN_PROTO);
 static int	wpi_getrfkill(struct wpi_softc *);
 static void wpi_sysctlattach(struct wpi_softc *);
 
@@ -213,8 +213,6 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
-
-	pci_disable_retry(pa->pa_pc, pa->pa_tag);
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
@@ -3126,11 +3124,10 @@ wpi_stop(struct ifnet *ifp, int disable)
 }
 
 static bool
-wpi_resume(device_t dv)
+wpi_resume(device_t dv PMF_FN_ARGS)
 {
 	struct wpi_softc *sc = device_private(dv);
 
-	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 	(void)wpi_reset(sc);
 
 	return true;

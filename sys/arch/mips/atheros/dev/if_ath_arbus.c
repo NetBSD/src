@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.10 2008/01/07 06:53:08 dyoung Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.10.6.1 2008/04/03 12:42:21 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.10 2008/01/07 06:53:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.10.6.1 2008/04/03 12:42:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ ath_arbus_match(device_t parent, struct cfdata *cf, void *opaque)
 }
 
 static bool
-ath_arbus_resume(device_t dv)
+ath_arbus_resume(device_t dv PMF_FN_ARGS)
 {
 	struct ath_arbus_softc *asc = device_private(dv);
 	ath_resume(&asc->sc_ath);
@@ -156,8 +156,6 @@ ath_arbus_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_st = (HAL_BUS_TAG) &asc->sc_config;
 	sc->sc_sh = (HAL_BUS_HANDLE) asc->sc_ioh;
 	sc->sc_dmat = aa->aa_dmat;
-
-	sc->sc_invalid = 1;
 
 	asc->sc_ih = arbus_intr_establish(aa->aa_cirq, aa->aa_mirq, ath_intr,
 	    sc);

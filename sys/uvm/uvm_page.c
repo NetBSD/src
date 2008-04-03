@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.128 2008/01/13 16:46:47 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.128.6.1 2008/04/03 12:43:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.128 2008/01/13 16:46:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.128.6.1 2008/04/03 12:43:15 mjf Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1013,6 +1013,8 @@ uvm_pagealloc_pgfl(struct pgfreelist *pgfl, int try1, int try2,
 	struct vm_page *pg;
 	int color, trycolor = *trycolorp;
 
+	KASSERT(mutex_owned(&uvm_fpageqlock));
+
 	color = trycolor;
 	do {
 		if ((pg = TAILQ_FIRST((freeq =
@@ -1305,6 +1307,10 @@ uvm_pagezerocheck(struct vm_page *pg)
 		p++;
 	}
 	pmap_kremove(uvm_zerocheckkva, PAGE_SIZE);
+	/*
+	 * pmap_update() is not necessary here because no one except us
+	 * uses this VA.
+	 */
 }
 #endif /* DEBUG */
 

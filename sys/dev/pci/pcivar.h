@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.77 2007/12/09 20:28:12 jmcneill Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.77.10.1 2008/04/03 12:42:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -157,7 +157,7 @@ struct pci_quirkdata {
 #define	PCI_QUIRK_SKIP_FUNC7		PCI_QUIRK_SKIP_FUNC(7)
 
 struct pci_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot, sc_memt;
 	bus_dma_tag_t sc_dmat;
 	bus_dma_tag_t sc_dmat64;
@@ -168,7 +168,7 @@ struct pci_softc {
 	pcitag_t sc_intrtag;
 	int sc_flags;
 	/* accounting of child devices */
-	struct device *sc_devices[32*8];
+	device_t sc_devices[32*8];
 #define PCI_SC_DEVICESC(d, f) sc_devices[(d) * 8 + (f)]
 };
 
@@ -243,9 +243,9 @@ void	pci_conf_capture(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 void	pci_conf_restore(pci_chipset_tag_t, pcitag_t, struct pci_conf_state *);
 int	pci_get_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t *);
 int	pci_set_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t);
-int	pci_activate(pci_chipset_tag_t, pcitag_t, void *,
-    int (*)(pci_chipset_tag_t, pcitag_t, void *, pcireg_t));
-int	pci_activate_null(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
+int	pci_activate(pci_chipset_tag_t, pcitag_t, device_t,
+    int (*)(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t));
+int	pci_activate_null(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t);
 void	pci_disable_retry(pci_chipset_tag_t, pcitag_t);
 
 #endif /* _KERNEL */

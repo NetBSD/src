@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.105 2008/01/25 14:32:14 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.105.6.1 2008/04/03 12:43:05 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.105 2008/01/25 14:32:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.105.6.1 2008/04/03 12:43:05 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.105 2008/01/25 14:32:14 ad Exp $")
 #include <sys/mbuf.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/atomic.h>
 
 /*
  * Unix communications domain.
@@ -316,7 +317,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		if (control) {
 			KASSERT(l != NULL);
-			if ((error = unp_internalize(control, l)) != 0)
+			if ((error = unp_internalize(&control, l)) != 0)
 				goto die;
 		}
 		switch (so->so_type) {
@@ -543,7 +544,7 @@ u_long	unpst_recvspace = PIPSIZ;
 u_long	unpdg_sendspace = 2*1024;	/* really max datagram size */
 u_long	unpdg_recvspace = 4*1024;
 
-int	unp_rights;			/* file descriptors in flight */
+u_int	unp_rights;			/* file descriptors in flight */
 
 int
 unp_attach(struct socket *so)
@@ -614,7 +615,7 @@ int
 unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
-	struct vnode *vp;
+	vnode_t *vp;
 	struct vattr vattr;
 	size_t addrlen;
 	struct proc *p;
@@ -623,6 +624,15 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 
 	if (unp->unp_vnode != 0)
 		return (EINVAL);
+
+	if ((unp->unp_flags & UNP_BUSY) != 0) {
+		/*
+		 * EALREADY may not be strictly accurate, but since this
+		 * is a major application error it's hardly a big deal.
+		 */
+		return (EALREADY);
+	}
+	unp->unp_flags |= UNP_BUSY;
 
 	p = l->l_proc;
 	/*
@@ -668,10 +678,12 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	unp->unp_connid.unp_egid = kauth_cred_getegid(p->p_cred);
 	unp->unp_flags |= UNP_EIDSBIND;
 	VOP_UNLOCK(vp, 0);
+	unp->unp_flags &= ~UNP_BUSY;
 	return (0);
 
  bad:
 	free(sun, M_SONAME);
+	unp->unp_flags &= ~UNP_BUSY;
 	return (error);
 }
 
@@ -679,13 +691,23 @@ int
 unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 {
 	struct sockaddr_un *sun;
-	struct vnode *vp;
+	vnode_t *vp;
 	struct socket *so2, *so3;
 	struct unpcb *unp, *unp2, *unp3;
 	size_t addrlen;
 	struct proc *p;
 	int error;
 	struct nameidata nd;
+
+	unp = sotounpcb(so);
+	if ((unp->unp_flags & UNP_BUSY) != 0) {
+		/*
+		 * EALREADY may not be strictly accurate, but since this
+		 * is a major application error it's hardly a big deal.
+		 */
+		return (EALREADY);
+	}
+	unp->unp_flags |= UNP_BUSY;
 
 	p = l->l_proc;
 	/*
@@ -726,7 +748,6 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 			error = ECONNREFUSED;
 			goto bad;
 		}
-		unp = sotounpcb(so);
 		unp2 = sotounpcb(so2);
 		unp3 = sotounpcb(so3);
 		if (unp2->unp_addr) {
@@ -752,6 +773,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	vput(vp);
  bad2:
 	free(sun, M_SONAME);
+	unp->unp_flags &= ~UNP_BUSY;
 	return (error);
 }
 
@@ -871,20 +893,20 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
 	struct proc *p = l->l_proc;
 	int i, *fdp;
-	struct file **rp;
-	struct file *fp;
+	file_t **rp;
+	file_t *fp;
 	int nfds, error = 0;
 
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
-	    sizeof(struct file *);
-	rp = (struct file **)CMSG_DATA(cm);
+	    sizeof(file_t *);
+	rp = (file_t **)CMSG_DATA(cm);
 
 	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
 
 	/* Make sure the recipient should be able to see the descriptors.. */
 	if (p->p_cwdi->cwdi_rdir != NULL) {
-		rp = (struct file **)CMSG_DATA(cm);
+		rp = (file_t **)CMSG_DATA(cm);
 		for (i = 0; i < nfds; i++) {
 			fp = *rp++;
 			/*
@@ -894,7 +916,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 			 * to access.
 			 */
 			if (fp->f_type == DTYPE_VNODE) {
-				struct vnode *vp = (struct vnode *)fp->f_data;
+				vnode_t *vp = (vnode_t *)fp->f_data;
 				if ((vp->v_type == VDIR) &&
 				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
 					error = EPERM;
@@ -905,7 +927,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 	}
 
  restart:
-	rp = (struct file **)CMSG_DATA(cm);
+	rp = (file_t **)CMSG_DATA(cm);
 	if (error != 0) {
 		for (i = 0; i < nfds; i++) {
 			fp = *rp;
@@ -925,15 +947,15 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 	 */
 	for (i = 0; i < nfds; i++) {
 		fp = *rp++;
-		if ((error = fdalloc(p, 0, &fdp[i])) != 0) {
+		if ((error = fd_alloc(p, 0, &fdp[i])) != 0) {
 			/*
 			 * Back out what we've done so far.
 			 */
-			for (--i; i >= 0; i--)
-				fdremove(p->p_fd, fdp[i]);
-
+			for (--i; i >= 0; i--) {
+				fd_abort(p, NULL, fdp[i]);
+			}
 			if (error == ENOSPC) {
-				fdexpand(p);
+				fd_tryexpand(p);
 				error = 0;
 			} else {
 				/*
@@ -945,31 +967,31 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 			}
 			goto restart;
 		}
-
-		/*
-		 * Make the slot reference the descriptor so that
-		 * fdalloc() works properly.. We finalize it all
-		 * in the loop below.
-		 */
-		rw_enter(&p->p_fd->fd_lock, RW_WRITER);
-		p->p_fd->fd_ofiles[fdp[i]] = fp;
-		rw_exit(&p->p_fd->fd_lock);
 	}
 
 	/*
 	 * Now that adding them has succeeded, update all of the
-	 * descriptor passing state.
-	 */
-	rp = (struct file **)CMSG_DATA(cm);
+	 * descriptor passing state.	 */
+	rp = (file_t **)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fp = *rp++;
+		atomic_dec_uint(&unp_rights);
+		fd_affix(p, fp, fdp[i]);
+		mutex_enter(&fp->f_lock);
 		fp->f_msgcount--;
-		unp_rights--;
+		mutex_exit(&fp->f_lock);
+		/*
+		 * Note that fd_affix() adds a reference to the file.
+		 * The file may already have been closed by another
+		 * LWP in the process, so we must drop the reference
+		 * added by unp_internalize() with closef().
+		 */
+		closef(fp);
 	}
 
 	/*
 	 * Copy temporary array to message and adjust length, in case of
-	 * transition from large struct file pointers to ints.
+	 * transition from large file_t pointers to ints.
 	 */
 	memcpy(CMSG_DATA(cm), fdp, nfds * sizeof(int));
 	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
@@ -981,91 +1003,93 @@ unp_externalize(struct mbuf *rights, struct lwp *l)
 }
 
 int
-unp_internalize(struct mbuf *control, struct lwp *l)
+unp_internalize(struct mbuf **controlp, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
-	struct filedesc *fdescp = p->p_fd;
+	struct filedesc *fdescp = curlwp->l_fd;
+	struct mbuf *control = *controlp;
 	struct cmsghdr *newcm, *cm = mtod(control, struct cmsghdr *);
-	struct file **rp, **files;
-	struct file *fp;
+	file_t **rp, **files;
+	file_t *fp;
 	int i, fd, *fdp;
-	int nfds;
-	u_int neededspace;
+	int nfds, error;
 
-	/* Sanity check the control message header */
+	KASSERT(l == curlwp);
+
+	error = 0;
+	newcm = NULL;
+
+	/* Sanity check the control message header. */
 	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
 	    cm->cmsg_len != control->m_len)
 		return (EINVAL);
 
-	/* Verify that the file descriptors are valid */
+	/*
+	 * Verify that the file descriptors are valid, and acquire
+	 * a reference to each.
+	 */
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) / sizeof(int);
 	fdp = (int *)CMSG_DATA(cm);
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
-		if ((fp = fd_getfile(fdescp, fd)) == NULL)
-			return (EBADF);
-		/* XXXSMP grab reference to file */
-		FILE_UNLOCK(fp);
-	}
-
-	/* Make sure we have room for the struct file pointers */
-	neededspace = CMSG_SPACE(nfds * sizeof(struct file *)) -
-	    control->m_len;
-	if (neededspace > M_TRAILINGSPACE(control)) {
-
-		/* allocate new space and copy header into it */
-		newcm = malloc(
-		    CMSG_SPACE(nfds * sizeof(struct file *)),
-		    M_MBUF, M_WAITOK);
-		if (newcm == NULL) {
-			/* XXXSMP drop references to files */
-			return (E2BIG);
+		if ((fp = fd_getfile(fd)) == NULL) {
+			nfds = i + 1;
+			error = EBADF;
+			goto out;
 		}
-		memcpy(newcm, cm, sizeof(struct cmsghdr));
-		files = (struct file **)CMSG_DATA(newcm);
-	} else {
-		/* we can convert in-place */
-		newcm = NULL;
-		files = (struct file **)CMSG_DATA(cm);
 	}
+
+	/* Allocate new space and copy header into it. */
+	newcm = malloc(CMSG_SPACE(nfds * sizeof(file_t *)), M_MBUF, M_WAITOK);
+	if (newcm == NULL) {
+		error = E2BIG;
+		goto out;
+	}
+	memcpy(newcm, cm, sizeof(struct cmsghdr));
+	files = (file_t **)CMSG_DATA(newcm);
 
 	/*
-	 * Transform the file descriptors into struct file pointers, in
+	 * Transform the file descriptors into file_t pointers, in
 	 * reverse order so that if pointers are bigger than ints, the
-	 * int won't get until we're done.
+	 * int won't get until we're done.  No need to lock, as we have
+	 * already validated the descriptors with fd_getfile().
 	 */
-	rw_enter(&fdescp->fd_lock, RW_READER);
 	fdp = (int *)CMSG_DATA(cm) + nfds;
 	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
-		fp = fdescp->fd_ofiles[*--fdp];
-		FILE_LOCK(fp);
-#ifdef DIAGNOSTIC
-		if (fp->f_iflags & FIF_WANTCLOSE)
-			panic("unp_internalize: file already closed");
-#endif
+		fp = fdescp->fd_ofiles[*--fdp]->ff_file;
+		KASSERT(fp != NULL);
+		mutex_enter(&fp->f_lock);
 		*--rp = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
-		FILE_UNLOCK(fp);
-		unp_rights++;
+		mutex_exit(&fp->f_lock);
+		atomic_inc_uint(&unp_rights);
 	}
-	rw_exit(&fdescp->fd_lock);
 
-	if (newcm) {
-		if (control->m_flags & M_EXT)
-			MEXTREMOVE(control);
-		MEXTADD(control, newcm,
-		    CMSG_SPACE(nfds * sizeof(struct file *)),
+ out:
+ 	/* Release descriptor references. */
+	fdp = (int *)CMSG_DATA(cm);
+	for (i = 0; i < nfds; i++) {
+		fd_putfile(*fdp++);
+	}
+
+	if (error == 0) {
+		if (control->m_flags & M_EXT) {
+			m_freem(control);
+			*controlp = control = m_get(M_WAIT, MT_CONTROL);
+		}
+		MEXTADD(control, newcm, CMSG_SPACE(nfds * sizeof(file_t *)),
 		    M_MBUF, NULL, NULL);
 		cm = newcm;
+		/*
+		 * Adjust message & mbuf to note amount of space
+		 * actually used.
+		 */
+		cm->cmsg_len = CMSG_LEN(nfds * sizeof(file_t *));
+		control->m_len = CMSG_SPACE(nfds * sizeof(file_t *));
 	}
 
-	/* adjust message & mbuf to note amount of space actually used. */
-	cm->cmsg_len = CMSG_LEN(nfds * sizeof(struct file *));
-	control->m_len = CMSG_SPACE(nfds * sizeof(struct file *));
-
-	return (0);
+	return error;
 }
 
 struct mbuf *
@@ -1141,31 +1165,29 @@ extern	struct domain unixdomain;
  * We also make an extra pass *before* the GC to clear the mark bits,
  * which could have been cleared at almost no cost during the previous
  * sweep.
- *
- * XXX MP: this needs to run with locks such that no other thread of
- * control can create or destroy references to file descriptors. it
- * may be necessary to defer the GC until later (when the locking
- * situation is more hospitable); it may be necessary to push this
- * into a separate thread.
  */
 void
 unp_gc(void)
 {
-	struct file *fp, *nextfp;
+	file_t *fp, *nextfp;
 	struct socket *so, *so1;
-	struct file **extra_ref, **fpp;
-	int nunref, i;
+	file_t **extra_ref, **fpp;
+	int nunref, nslots, i;
 
-	if (unp_gcing)
+	if (atomic_swap_uint(&unp_gcing, 1) == 1)
 		return;
-	unp_gcing = 1;
-	unp_defer = 0;
+
+ restart:
+ 	nslots = nfiles * 2;
+ 	extra_ref = kmem_alloc(nslots * sizeof(file_t *), KM_SLEEP);
 
 	mutex_enter(&filelist_lock);
+	unp_defer = 0;
 
 	/* Clear mark bits */
-	LIST_FOREACH(fp, &filehead, f_list)
-		fp->f_flag &= ~(FMARK|FDEFER);
+	LIST_FOREACH(fp, &filehead, f_list) {
+		atomic_and_uint(&fp->f_flag, ~(FMARK|FDEFER));
+	}
 
 	/*
 	 * Iterate over the set of descriptors, marking ones believed
@@ -1174,33 +1196,33 @@ unp_gc(void)
 	 */
 	do {
 		LIST_FOREACH(fp, &filehead, f_list) {
-		    	FILE_LOCK(fp);
-		    	if (fp->f_flag & FDEFER) {
-				fp->f_flag &= ~FDEFER;
+			mutex_enter(&fp->f_lock);
+			if (fp->f_flag & FDEFER) {
+				atomic_and_uint(&fp->f_flag, ~FDEFER);
 				unp_defer--;
-#ifdef DIAGNOSTIC
-				if (fp->f_count == 0)
-					panic("unp_gc: deferred unreferenced socket");
-#endif
+				KASSERT(fp->f_count != 0);
 			} else {
 				if (fp->f_count == 0 ||
 				    (fp->f_flag & FMARK) ||
 				    fp->f_count == fp->f_msgcount) {
-				    	FILE_UNLOCK(fp);
+					mutex_exit(&fp->f_lock);
 					continue;
 				}
 			}
-			fp->f_flag |= FMARK;
+			atomic_or_uint(&fp->f_flag, FMARK);
 
 			if (fp->f_type != DTYPE_SOCKET ||
-			    (so = (struct socket *)fp->f_data) == 0 ||
+			    (so = (struct socket *)fp->f_data) == NULL ||
 			    so->so_proto->pr_domain != &unixdomain ||
 			    (so->so_proto->pr_flags&PR_RIGHTS) == 0) {
-			    	FILE_UNLOCK(fp);
+				mutex_exit(&fp->f_lock);
 				continue;
 			}
 #ifdef notdef
 			if (so->so_rcv.sb_flags & SB_LOCK) {
+				mutex_exit(&fp->f_lock);
+				mutex_exit(&filelist_lock);
+				kmem_free(extra_ref, nslots * sizeof(file_t *));
 				/*
 				 * This is problematical; it's not clear
 				 * we need to wait for the sockbuf to be
@@ -1215,11 +1237,12 @@ unp_gc(void)
 				goto restart;
 			}
 #endif
-		    	FILE_UNLOCK(fp);
+			mutex_exit(&fp->f_lock);
 
 			unp_scan(so->so_rcv.sb_mb, unp_mark, 0);
 			/*
-			 * mark descriptors referenced from sockets queued on the accept queue as well.
+			 * Mark descriptors referenced from sockets queued
+			 * on the accept queue as well.
 			 */
 			if (so->so_options & SO_ACCEPTCONN) {
 				TAILQ_FOREACH(so1, &so->so_q0, so_qe) {
@@ -1231,8 +1254,6 @@ unp_gc(void)
 			}
 		}
 	} while (unp_defer);
-
-	mutex_exit(&filelist_lock);
 
 	/*
 	 * Sweep pass.  Find unmarked descriptors, and free them.
@@ -1276,39 +1297,35 @@ unp_gc(void)
 	 *
 	 * 91/09/19, bsy@cs.cmu.edu
 	 */
-	extra_ref = kmem_alloc(nfiles * sizeof(struct file *), KM_SLEEP);
-
-	mutex_enter(&filelist_lock);
+	if (nslots < nfiles) {
+		mutex_exit(&filelist_lock);
+		kmem_free(extra_ref, nslots * sizeof(file_t *));
+		goto restart;
+	}
 	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
 	    fp = nextfp) {
 		nextfp = LIST_NEXT(fp, f_list);
-		FILE_LOCK(fp);
+		mutex_enter(&fp->f_lock);
 		if (fp->f_count != 0 &&
 		    fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
 			*fpp++ = fp;
 			nunref++;
 			fp->f_count++;
 		}
-		FILE_UNLOCK(fp);
+		mutex_exit(&fp->f_lock);
 	}
 	mutex_exit(&filelist_lock);
 
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
-		FILE_LOCK(fp);
-		FILE_USE(fp);
 		if (fp->f_type == DTYPE_SOCKET)
-			sorflush((struct socket *)fp->f_data);
-		FILE_UNUSE(fp, NULL);
+			sorflush(fp->f_data);
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
-		fp = *fpp;
-		FILE_LOCK(fp);
-		FILE_USE(fp);
-		(void) closef(fp, (struct lwp *)0);
+		closef(*fpp);
 	}
-	kmem_free(extra_ref, nfiles * sizeof(struct file *));
-	unp_gcing = 0;
+	kmem_free(extra_ref, nslots * sizeof(file_t *));
+	atomic_swap_uint(&unp_gcing, 0);
 }
 
 void
@@ -1320,10 +1337,10 @@ unp_dispose(struct mbuf *m)
 }
 
 void
-unp_scan(struct mbuf *m0, void (*op)(struct file *), int discard)
+unp_scan(struct mbuf *m0, void (*op)(file_t *), int discard)
 {
 	struct mbuf *m;
-	struct file **rp;
+	file_t **rp;
 	struct cmsghdr *cm;
 	int i;
 	int qfds;
@@ -1337,10 +1354,10 @@ unp_scan(struct mbuf *m0, void (*op)(struct file *), int discard)
 				    cm->cmsg_type != SCM_RIGHTS)
 					continue;
 				qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm)))
-				    / sizeof(struct file *);
-				rp = (struct file **)CMSG_DATA(cm);
+				    / sizeof(file_t *);
+				rp = (file_t **)CMSG_DATA(cm);
 				for (i = 0; i < qfds; i++) {
-					struct file *fp = *rp;
+					file_t *fp = *rp;
 					if (discard)
 						*rp = 0;
 					(*op)(fp);
@@ -1354,16 +1371,16 @@ unp_scan(struct mbuf *m0, void (*op)(struct file *), int discard)
 }
 
 void
-unp_mark(struct file *fp)
+unp_mark(file_t *fp)
 {
 
 	if (fp == NULL)
 		return;
 
 	/* If we're already deferred, don't screw up the defer count */
-	FILE_LOCK(fp);
+	mutex_enter(&fp->f_lock);
 	if (fp->f_flag & (FMARK | FDEFER)) {
-		FILE_UNLOCK(fp);
+		mutex_exit(&fp->f_lock);
 		return;
 	}
 
@@ -1375,25 +1392,26 @@ unp_mark(struct file *fp)
 	 */
 	if (fp->f_type == DTYPE_SOCKET) {
 		unp_defer++;
-		if (fp->f_count == 0)
-			panic("unp_mark: queued unref");
-		fp->f_flag |= FDEFER;
+		KASSERT(fp->f_count != 0);
+		atomic_or_uint(&fp->f_flag, FDEFER);
 	} else {
-		fp->f_flag |= FMARK;
+		atomic_or_uint(&fp->f_flag, FMARK);
 	}
-	FILE_UNLOCK(fp);
+	mutex_exit(&fp->f_lock);
 	return;
 }
 
 void
-unp_discard(struct file *fp)
+unp_discard(file_t *fp)
 {
+
 	if (fp == NULL)
 		return;
-	FILE_LOCK(fp);
-	fp->f_usecount++;	/* i.e. FILE_USE(fp) sans locking */
+
+	mutex_enter(&fp->f_lock);
+	KASSERT(fp->f_count > 0);
 	fp->f_msgcount--;
-	FILE_UNLOCK(fp);
-	unp_rights--;
-	(void) closef(fp, (struct lwp *)0);
+	mutex_exit(&fp->f_lock);
+	atomic_dec_uint(&unp_rights);
+	(void)closef(fp);
 }

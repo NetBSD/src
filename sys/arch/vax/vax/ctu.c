@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.28 2007/10/17 19:57:59 garbled Exp $ */
+/*	$NetBSD: ctu.c,v 1.28.16.1 2008/04/03 12:42:28 mjf Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.28 2007/10/17 19:57:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.28.16.1 2008/04/03 12:42:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ const struct cdevsw ctu_cdevsw = {
 static callout_t ctu_watch_ch;
 
 void
-ctuattach()
+ctuattach(void)
 {
 
 	callout_init(&ctu_watch_ch, 0);
@@ -216,7 +216,7 @@ ctustrategy(struct buf *bp)
 }
 
 void
-ctustart()
+ctustart(void)
 {
 	struct rsp *rsp = (struct rsp *)tu_sc.sc_rsp;
 	struct buf *bp;

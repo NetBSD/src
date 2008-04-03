@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.134 2008/01/30 14:54:26 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.134.6.1 2008/04/03 12:43:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.134 2008/01/30 14:54:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.134.6.1 2008/04/03 12:43:01 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -64,19 +64,37 @@ bool	kernel_lock_dodebug;
 __cpu_simple_lock_t kernel_lock[CACHE_LINE_SIZE / sizeof(__cpu_simple_lock_t)]
     __aligned(CACHE_LINE_SIZE);
 
-#if defined(LOCKDEBUG)
+#if defined(DEBUG) || defined(LKM)
 void
-assert_sleepable(struct simplelock *interlock, const char *msg)
+assert_sleepable(void)
 {
+#if !defined(_RUMPKERNEL)
+	const char *reason;
 
-	if (panicstr != NULL)
+	if (panicstr != NULL) {
 		return;
-	LOCKDEBUG_BARRIER(kernel_lock, 1);
-	if (CURCPU_IDLE_P() && !cold) {
-		panic("assert_sleepable: idle");
 	}
+
+	LOCKDEBUG_BARRIER(kernel_lock, 1);
+
+	reason = NULL;
+	if (CURCPU_IDLE_P() && !cold) {
+		reason = "idle";
+	}
+	if (cpu_intr_p()) {
+		reason = "interrupt";
+	}
+	if ((curlwp->l_pflag & LP_INTR) != 0) {
+		reason = "softint";
+	}
+
+	if (reason) {
+		panic("%s: %s caller=%p", __func__, reason,
+		    (void *)RETURN_ADDRESS);
+	}
+#endif /* !defined(_RUMPKERNEL) */
 }
-#endif
+#endif /* defined(DEBUG) || defined(LKM) */
 
 /*
  * rump doesn't need the kernel lock so force it out.  We cannot
@@ -144,7 +162,7 @@ _kernel_lock_dump(volatile void *junk)
  * acquisition is from process context.
  */
 void
-_kernel_lock(int nlocks, struct lwp *l)
+_kernel_lock(int nlocks)
 {
 	struct cpu_info *ci = curcpu();
 	LOCKSTAT_TIMER(spintime);
@@ -152,12 +170,9 @@ _kernel_lock(int nlocks, struct lwp *l)
 	struct lwp *owant;
 	u_int spins;
 	int s;
+	struct lwp *l = curlwp;
 
-	if (nlocks == 0)
-		return;
 	_KERNEL_LOCK_ASSERT(nlocks > 0);
-
-	l = curlwp;
 
 	if (ci->ci_biglock_count != 0) {
 		_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(kernel_lock));
@@ -204,7 +219,9 @@ _kernel_lock(int nlocks, struct lwp *l)
 		splx(s);
 		while (__SIMPLELOCK_LOCKED_P(kernel_lock)) {
 			if (SPINLOCK_SPINOUT(spins)) {
-				_KERNEL_LOCK_ABORT("spinout");
+				extern volatile int start_init_exec;
+				if (!start_init_exec)
+					_KERNEL_LOCK_ABORT("spinout");
 			}
 			SPINLOCK_BACKOFF_HOOK;
 			SPINLOCK_SPIN_HOOK;
@@ -249,13 +266,12 @@ _kernel_lock(int nlocks, struct lwp *l)
  * all holds.  If 'l' is non-null, the release is from process context.
  */
 void
-_kernel_unlock(int nlocks, struct lwp *l, int *countp)
+_kernel_unlock(int nlocks, int *countp)
 {
 	struct cpu_info *ci = curcpu();
 	u_int olocks;
 	int s;
-
-	l = curlwp;
+	struct lwp *l = curlwp;
 
 	_KERNEL_LOCK_ASSERT(nlocks < 2);
 

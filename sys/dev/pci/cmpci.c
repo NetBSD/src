@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.36 2007/10/19 12:00:41 ad Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.36.16.1 2008/04/03 12:42:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.36 2007/10/19 12:00:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.36.16.1 2008/04/03 12:42:49 mjf Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -524,10 +524,12 @@ cmpci_attach(struct device *parent, struct device *self, void *aux)
 static int
 cmpci_intr(void *handle)
 {
-	struct cmpci_softc *sc;
+	struct cmpci_softc *sc = handle;
+#if NMPU > 0
+	struct mpu_softc *sc_mpu = device_private(sc->sc_mpudev);
+#endif
 	uint32_t intrstat;
 
-	sc = handle;
 	intrstat = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    CMPCI_REG_INTR_STATUS);
 
@@ -562,8 +564,8 @@ cmpci_intr(void *handle)
 		    CMPCI_REG_CH1_INTR_ENABLE);
 
 #if NMPU > 0
-	if (intrstat & CMPCI_REG_UART_INTR && sc->sc_mpudev != NULL)
-		mpu_intr(sc->sc_mpudev);
+	if (intrstat & CMPCI_REG_UART_INTR && sc_mpu != NULL)
+		mpu_intr(sc_mpu);
 #endif
 
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.h,v 1.20 2007/11/24 13:20:56 isaki Exp $	*/
+/*	$NetBSD: net.h,v 1.20.14.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -54,7 +54,7 @@
 /* Returns true if n_long's on the same net */
 #define	SAMENET(a1, a2, m) ((a1.s_addr & m) == (a2.s_addr & m))
 
-#define MACPY(s, d) bcopy((char *)s, (char *)d, 6)
+#define MACPY(s, d) memcpy(d, s, 6)
 
 #define MAXTMO 20	/* seconds */
 #define MINTMO 2	/* seconds */

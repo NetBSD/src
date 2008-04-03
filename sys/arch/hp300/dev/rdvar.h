@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.17 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.17.74.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -97,7 +97,7 @@ struct rdstats {
 };
 
 struct	rd_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	disk sc_dkdev;
 	struct	callout sc_restart_ch;
 	int	sc_slave;		/* HP-IB slave */

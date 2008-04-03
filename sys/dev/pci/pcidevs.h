@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.930 2008/02/13 13:57:00 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.930.6.1 2008/04/03 12:42:52 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.929 2008/02/13 13:56:46 tron Exp
+ *	NetBSD: pcidevs,v 1.933 2008/04/01 23:16:16 cegger Exp
  */
 
 /*
@@ -627,6 +627,7 @@
 #define	PCI_VENDOR_TURTLE_BEACH	0x5053		/* Turtle Beach */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_XENSOURCE	0x5853		/* XenSource, Inc. */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
 #define	PCI_VENDOR_KURUSUGAWA	0x6809		/* Kurusugawa Electronics */
 #define	PCI_VENDOR_PCHDTV	0x7063		/* pcHDTV */
@@ -1115,7 +1116,7 @@
 #define	PCI_PRODUCT_ATI_SB600_AC97_AUDIO	0x4382		/* SB600 AC97 Audio */
 #define	PCI_PRODUCT_ATI_SB600_AZALIA	0x4383		/* SB600 Azalia */
 #define	PCI_PRODUCT_ATI_SB600_PPB_4384	0x4384		/* SB600 PCI to PCI Bridge */
-#define	PCI_PRODUCT_ATI_SB600_SMBUS	0x4385		/* SB600 SMBus Controller */
+#define	PCI_PRODUCT_ATI_SB600_SMB	0x4385		/* SB600/SB700/SB800 SMBus Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_EHCI	0x4386		/* SB600 USB EHCI Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI0	0x4387		/* SB600 USB OHCI0 Controller */
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI1	0x4388		/* SB600 USB OHCI1 Controller */
@@ -1124,6 +1125,18 @@
 #define	PCI_PRODUCT_ATI_SB600_USB_OHCI4	0x438b		/* SB600 USB OHCI4 Controller */
 #define	PCI_PRODUCT_ATI_IXP_IDE_600	0x438c		/* SB600 IXP IDE Controller */
 #define	PCI_PRODUCT_ATI_SB600_PLB_438D	0x438d		/* SB600 PCI to LPC Bridge */
+#define	PCI_PRODUCT_ATI_SB700_SATA_IDE	0x4390		/* SB700/SB800 SATA Controller (IDE mode) */
+#define	PCI_PRODUCT_ATI_SB700_SATA_AHCI	0x4391		/* SB700/SB800 SATA Controller (AHCI mode) */
+#define	PCI_PRODUCT_ATI_SB700_SATA_RAID	0x4392		/* SB700/SB800 RAID SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_SATA_RAID5	0x4393		/* SB700/SB800 RAID5 SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_SATA_FC	0x4394		/* SB700/SB800 FC SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_USB_EHCI	0x4396		/* SB700/SB800 USB EHCI Controller */
+#define	PCI_PRODUCT_ATI_SB800_SATA	0x4395		/* SB800 SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_USB_OHCI0	0x4397		/* SB700/SB800 USB OHCI Controller */
+#define	PCI_PRODUCT_ATI_SB700_USB_OHCI1	0x4398		/* SB700/SB800 USB OHCI Controller */
+#define	PCI_PRODUCT_ATI_SB700_USB_OHCI2	0x4399		/* SB700/SB800 USB OHCI Controller */
+#define	PCI_PRODUCT_ATI_SB700_IDE	0x439c		/* SB700/SB800 IDE Controller */
+#define	PCI_PRODUCT_ATI_SB700_LPC	0x439d		/* SB700/SB800 LPC Host Controller */
 #define	PCI_PRODUCT_ATI_MACH64_CT	0x4354		/* Mach64 CT */
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_RADEON_RS250_D7	0x4437		/* Radeon Mobility 7000 IGP */
@@ -1707,6 +1720,7 @@
 #define	PCI_PRODUCT_DELL_PERC_4DI_2	0x000f		/* PERC 4/Di */
 #define	PCI_PRODUCT_DELL_PERC_4ESI	0x0013		/* PERC 4e/Si */
 #define	PCI_PRODUCT_DELL_PERC_5	0x0015		/* PERC 5 */
+#define	PCI_PRODUCT_DELL_PERC_6	0x0060		/* PERC 6 */
 #define	PCI_PRODUCT_DELL_PERC_3DI_2_SUB	0x00cf		/* PERC 3/Di */
 #define	PCI_PRODUCT_DELL_PERC_3SI_2_SUB	0x00d0		/* PERC 3/Si */
 #define	PCI_PRODUCT_DELL_PERC_3DI_SUB2	0x00d1		/* PERC 3/Di */
@@ -2579,6 +2593,7 @@
 /* IO Data products */
 #define	PCI_PRODUCT_IODATA_CBIDE2	0x0003		/* CBIDE2/CI-iCN NinjaATA-32Bi IDE */
 #define	PCI_PRODUCT_IODATA_CBSCII	0x0005		/* CBSCII NinjaSCSI-32Bi SCSI */
+#define	PCI_PRODUCT_IODATA_RSAPCI	0x0007		/* RSA-PCI 2-port serial */
 
 /* ITE products */
 #define	PCI_PRODUCT_ITE_IT8152	0x8152		/* IT8152 Host Bridge */
@@ -4039,6 +4054,9 @@
 #define	PCI_PRODUCT_WORKBIT_NPATA32_CF32A	0xf021		/* CF32A CompactFlash Adapter */
 #define	PCI_PRODUCT_WORKBIT_NPATA32_CF32A_BUFFALO	0xf024		/* CF32A CF Adapter (BUFFALO) */
 #define	PCI_PRODUCT_WORKBIT_NPATA32_KME	0xf02c		/* NPATA-32 IDE (KME) */
+
+/* XenSource products */
+#define	PCI_PRODUCT_XENSOURCE_XENPLATFORM	0x0001		/* Xen Platform Device */
 
 /* Xircom products */
 /* is the `-3' here just indicating revision 3, or is it really part

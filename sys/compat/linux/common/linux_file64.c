@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_file64.c,v 1.45 2008/02/02 19:37:53 dsl Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.45.6.1 2008/04/03 12:42:33 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.45 2008/02/02 19:37:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.45.6.1 2008/04/03 12:42:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ linux_sys_fstat64(struct lwp *l, const struct linux_sys_fstat64_args *uap, regis
 	struct stat tmpst;
 	int error;
 
-	error = do_sys_fstat(l,  SCARG(uap, fd), &tmpst);
+	error = do_sys_fstat(SCARG(uap, fd), &tmpst);
 	if (error != 0)
 		return error;
 
@@ -146,7 +146,7 @@ linux_do_stat64(struct lwp *l, const struct linux_sys_stat64_args *uap, register
 	struct stat tmpst;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), flags, &tmpst);
+	error = do_sys_stat(SCARG(uap, path), flags, &tmpst);
 	if (error != 0)
 		return error;
 
@@ -240,7 +240,7 @@ linux_sys_getdents64(struct lwp *l, const struct linux_sys_getdents64_args *uap,
 	int len, reclen;		/* BSD-format */
 	char *outp;			/* Linux-format */
 	int resid, linux_reclen = 0;	/* Linux-format */
-	struct file *fp;
+	file_t *fp;
 	struct uio auio;
 	struct iovec aiov;
 	struct linux_dirent64 idb;
@@ -251,7 +251,7 @@ linux_sys_getdents64(struct lwp *l, const struct linux_sys_getdents64_args *uap,
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -355,6 +355,6 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.121 2008/01/02 11:49:18 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.121.6.1 2008/04/03 12:43:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.121 2008/01/02 11:49:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.121.6.1 2008/04/03 12:43:15 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -307,7 +307,6 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	vm_prot_t prot, maxprot;
 	int flags, fd;
 	vaddr_t defaddr;
-	struct filedesc *fdp = p->p_fd;
 	struct file *fp = NULL;
 	struct vnode *vp;
 	void *handle;
@@ -386,26 +385,24 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	 */
 
 	if ((flags & MAP_ANON) == 0) {
-
-		if ((fp = fd_getfile(fdp, fd)) == NULL)
+		if ((fp = fd_getfile(fd)) == NULL)
 			return (EBADF);
 		if (fp->f_type != DTYPE_VNODE) {
-			mutex_exit(&fp->f_lock);
+			fd_putfile(fd);
 			return (ENODEV);		/* only mmap vnodes! */
 		}
-		vp = (struct vnode *)fp->f_data;	/* convert to vnode */
-
+		vp = fp->f_data;		/* convert to vnode */
 		if (vp->v_type != VREG && vp->v_type != VCHR &&
 		    vp->v_type != VBLK) {
-			mutex_exit(&fp->f_lock);
+			fd_putfile(fd);
 			return (ENODEV);  /* only REG/CHR/BLK support mmap */
 		}
 		if (vp->v_type != VCHR && pos < 0) {
-			mutex_exit(&fp->f_lock);
+			fd_putfile(fd);
 			return (EINVAL);
 		}
 		if (vp->v_type != VCHR && (pos + size) < pos) {
-			mutex_exit(&fp->f_lock);
+			fd_putfile(fd);
 			return (EOVERFLOW);		/* no offset wrapping */
 		}
 
@@ -413,7 +410,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		if (vp->v_type == VCHR
 		    && (vp->v_rdev == zerodev || COMPAT_ZERODEV(vp->v_rdev))) {
 			flags |= MAP_ANON;
-			mutex_exit(&fp->f_lock);
+			fd_putfile(fd);
 			fp = NULL;
 			goto is_anon;
 		}
@@ -456,10 +453,9 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		if (fp->f_flag & FREAD)
 			maxprot |= VM_PROT_READ;
 		else if (prot & PROT_READ) {
-			mutex_exit(&fp->f_lock);
+			fd_putfile(fd);
 			return (EACCES);
 		}
-		FILE_USE(fp);
 
 		/* check write access, shared case first */
 		if (flags & MAP_SHARED) {
@@ -472,19 +468,19 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 			if (fp->f_flag & FWRITE) {
 				if ((error =
 				    VOP_GETATTR(vp, &va, l->l_cred))) {
-				    	FILE_UNUSE(fp, l);
+					fd_putfile(fd);
 					return (error);
 				}
 				if ((va.va_flags &
 				    (SF_SNAPSHOT|IMMUTABLE|APPEND)) == 0)
 					maxprot |= VM_PROT_WRITE;
 				else if (prot & PROT_WRITE) {
-				    	FILE_UNUSE(fp, l);
+					fd_putfile(fd);
 					return (EPERM);
 				}
 			}
 			else if (prot & PROT_WRITE) {
-			    	FILE_UNUSE(fp, l);
+				fd_putfile(fd);
 				return (EACCES);
 			}
 		} else {
@@ -519,7 +515,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		    (p->p_rlimit[RLIMIT_DATA].rlim_cur -
 		     ctob(p->p_vmspace->vm_dsize))) {
 		     	if (fp != NULL)
-			    	FILE_UNUSE(fp, l);
+				fd_putfile(fd);
 			return (ENOMEM);
 		}
 	}
@@ -541,7 +537,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 			 */
 			if (prot & VM_PROT_EXECUTE) {
 			     	if (fp != NULL)
-				    	FILE_UNUSE(fp, l);
+					fd_putfile(fd);
 				return (EPERM);
 			}
 
@@ -574,7 +570,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		*retval = (register_t)(addr + pageoff);
 
      	if (fp != NULL)
-	    	FILE_UNUSE(fp, l);
+		fd_putfile(fd);
 
 	return (error);
 }

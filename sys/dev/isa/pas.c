@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.66 2007/10/19 12:00:21 ad Exp $	*/
+/*	$NetBSD: pas.c,v 1.66.16.1 2008/04/03 12:42:44 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.66 2007/10/19 12:00:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.66.16.1 2008/04/03 12:42:44 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,15 +253,15 @@ pasconf(int model, int sbbase, int sbirq, int sbdrq)
 	paswrite(P_M_MV508_INPUTMIX | 30, PARALLEL_MIXER);
 }
 
-int	pasprobe(struct device *, struct cfdata *, void *);
-void	pasattach(struct device *, struct device *, void *);
-static	int pasfind(struct device *, struct pas_softc *,
+int	pasprobe(device_t, cfdata_t, void *);
+void	pasattach(device_t, device_t, void *);
+static	int pasfind(cfdata_t, struct pas_softc *,
     struct isa_attach_args *, int);
 /* argument to pasfind */
 #define PASPROBE  1
 #define PASATTACH 0
 
-CFATTACH_DECL(pas, sizeof(struct pas_softc),
+CFATTACH_DECL_NEW(pas, sizeof(struct pas_softc),
     pasprobe, pasattach, NULL, NULL);
 
 /*
@@ -269,7 +269,7 @@ CFATTACH_DECL(pas, sizeof(struct pas_softc),
  */
 
 int
-pasprobe(struct device *parent, struct cfdata *match, void *aux)
+pasprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia;
 	struct pas_softc probesc, *sc;
@@ -287,16 +287,14 @@ pasprobe(struct device *parent, struct cfdata *match, void *aux)
 		return 0;
 
 	memset(sc, 0, sizeof *sc);
-	sc->sc_sbdsp.sc_dev.dv_cfdata = match;
-	strcpy(sc->sc_sbdsp.sc_dev.dv_xname, "pas");
-	return pasfind(parent, sc, aux, PASPROBE);
+	return pasfind(match, sc, aux, PASPROBE);
 }
 
 /*
  * Probe for the soundblaster hardware.
  */
 static int
-pasfind(struct device *parent, struct pas_softc *sc,
+pasfind(cfdata_t match, struct pas_softc *sc,
     struct isa_attach_args *ia, int probing)
 {
 	int iobase;
@@ -427,7 +425,7 @@ pasfind(struct device *parent, struct pas_softc *sc,
 	sc->sc_sbdsp.sc_drq8 = ia->ia_drq[0].ir_drq;
 	sc->sc_sbdsp.sc_drq16 = -1; /* XXX */
 
-	if (sbdsp_probe(&sc->sc_sbdsp) == 0) {
+	if (sbdsp_probe(&sc->sc_sbdsp, match) == 0) {
 		DPRINTF(("pas: sbdsp probe failed\n"));
 		goto unmap;
 	}
@@ -459,17 +457,18 @@ pasfind(struct device *parent, struct pas_softc *sc,
  * pseudo-device driver .
  */
 void
-pasattach(struct device *parent, struct device *self, void *aux)
+pasattach(device_t parent, device_t self, void *aux)
 {
 	struct pas_softc *sc;
 	struct isa_attach_args *ia;
 	int iobase;
 
-	sc = (struct pas_softc *)self;
+	sc = device_private(self);
+	sc->sc_sbdsp.sc_dev = self;
 	ia = (struct isa_attach_args *)aux;
 	iobase = ia->ia_io[0].ir_addr;
-	if (!pasfind(parent, sc, ia, PASATTACH)) {
-		printf("%s: pasfind failed\n", sc->sc_sbdsp.sc_dev.dv_xname);
+	if (!pasfind(device_cfdata(self), sc, ia, PASATTACH)) {
+		aprint_error_dev(self, "pasfind failed\n");
 		return;
 	}
 
@@ -478,7 +477,7 @@ pasattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
 
-	printf(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model],
+	aprint_normal(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model],
 	    sc->rev);
 
 	sbdsp_attach(&sc->sc_sbdsp);
@@ -488,7 +487,7 @@ pasattach(struct device *parent, struct device *self, void *aux)
 	snprintf(pas_device.version, sizeof(pas_device.version), "%d",
 	    sc->rev);
 
-	audio_attach_mi(&pas_hw_if, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev);
+	audio_attach_mi(&pas_hw_if, &sc->sc_sbdsp, sc->sc_sbdsp.sc_dev);
 }
 
 int

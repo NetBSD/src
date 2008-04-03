@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0pwr.c,v 1.13 2006/10/27 00:08:32 uwe Exp $ */
+/*	$NetBSD: j6x0pwr.c,v 1.13.52.1 2008/04/03 12:42:17 mjf Exp $ */
 
 /*
  * Copyright (c) 2003, 2006 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.13 2006/10/27 00:08:32 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0pwr.c,v 1.13.52.1 2008/04/03 12:42:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -105,16 +105,16 @@ j6x0pwr_is_not_charging(void)
 static int j6x0pwr_attached = 0;
 
 struct j6x0pwr_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	void *sc_ih;
 	volatile int sc_poweroff;
 };
 
-static int	j6x0pwr_match(struct device *, struct cfdata *, void *);
-static void	j6x0pwr_attach(struct device *, struct device *, void *);
+static int	j6x0pwr_match(device_t, cfdata_t, void *);
+static void	j6x0pwr_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(j6x0pwr, sizeof(struct j6x0pwr_softc),
+CFATTACH_DECL_NEW(j6x0pwr, sizeof(struct j6x0pwr_softc),
     j6x0pwr_match, j6x0pwr_attach, NULL, NULL);
 
 
@@ -127,7 +127,7 @@ static int	j6x0pwr_clear_interrupt(void);
 
 
 static int
-j6x0pwr_match(struct device *parent, struct cfdata *cfp, void *aux)
+j6x0pwr_match(device_t parent, cfdata_t cfp, void *aux)
 {
 
 	/*
@@ -146,13 +146,19 @@ j6x0pwr_match(struct device *parent, struct cfdata *cfp, void *aux)
 
 
 static void
-j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
+j6x0pwr_attach(device_t parent, device_t self, void *aux)
 {
-	struct j6x0pwr_softc *sc = (void *)self;
+	struct j6x0pwr_softc *sc;
 
 	/* XXX: in machdep.c */
 	extern void (*__sleep_func)(void *);
 	extern void *__sleep_ctx;
+
+	sc = device_private(self);
+	sc->sc_dev = self;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* allow only one instance */
 	j6x0pwr_attached = 1;
@@ -170,7 +176,7 @@ j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
 
 	/* register sleep function to APM */
 	__sleep_func = j6x0pwr_sleep;
-	__sleep_ctx = self;
+	__sleep_ctx = sc;
 
 	sc->sc_poweroff = 0;
 
@@ -181,7 +187,6 @@ j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
 	    j6x0pwr_intr, sc);
 
 	_reg_write_1(SH7709_PKDR, 0);	/* Green LED on */
-	printf("\n");
 }
 
 
@@ -195,28 +200,28 @@ j6x0pwr_attach(struct device *parent, struct device *self, void *aux)
  * suspend is added to the kernel (which we need to support ACPI).
  */
 static int
-j6x0pwr_intr(void *self)
+j6x0pwr_intr(void *arg)
 {
-	struct j6x0pwr_softc *sc = (struct j6x0pwr_softc *)self;
+	struct j6x0pwr_softc *sc = arg;
+	device_t self = sc->sc_dev;
 	uint8_t irr0;
 	uint8_t pgdr;
 
 	irr0 = j6x0pwr_clear_interrupt();
 	if ((irr0 & IRR0_IRQ0) == 0) {
 #ifdef DIAGNOSTIC
-		printf_nolog("%s: irr0=0x%02x?\n", sc->sc_dev.dv_xname, irr0);
+		aprint_normal_dev(self, "irr0=0x%02x?\n", irr0);
 #endif
 		return 0;
 	}
 
 	pgdr = _reg_read_1(SH7709_PGDR);
 	if ((pgdr & PGDR_LID_OPEN) == 0) {
-		printf("%s: lid closed %d\n", sc->sc_dev.dv_xname,
-		    sc->sc_poweroff);
+		aprint_normal_dev(self, "lid closed %d\n", sc->sc_poweroff);
 		if (sc->sc_poweroff)
 			return 1;
 	} else {
-		printf("%s: ON/OFF %d\n", sc->sc_dev.dv_xname, sc->sc_poweroff);
+		aprint_normal_dev(self, "ON/OFF %d\n", sc->sc_poweroff);
 		if (sc->sc_poweroff)
 			sc->sc_poweroff = 0;
 	}
@@ -247,10 +252,10 @@ j6x0pwr_clear_interrupt(void)
 
 
 void
-j6x0pwr_sleep(void *self)
+j6x0pwr_sleep(void *arg)
 {
 	/* splhigh on entry */
-	struct j6x0pwr_softc *sc = self;
+	struct j6x0pwr_softc *sc = arg;
 	int s;
 
 	/* Reinstall j6x0pwr_intr as a wakeup handler */

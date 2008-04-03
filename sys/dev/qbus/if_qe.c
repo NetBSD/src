@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.66 2007/12/22 08:23:01 tsutsui Exp $ */
+/*      $NetBSD: if_qe.c,v 1.66.6.1 2008/04/03 12:42:55 mjf Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.66 2007/12/22 08:23:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.66.6.1 2008/04/03 12:42:55 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -82,7 +82,8 @@ struct qe_cdata {
 };
 
 struct	qe_softc {
-	struct device	sc_dev;		/* Configuration common part	*/
+	device_t	sc_dev;		/* Configuration common part	*/
+	struct uba_softc *sc_uh;	/* our parent */
 	struct evcnt	sc_intrcnt;	/* Interrupt counting		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
@@ -105,8 +106,8 @@ struct	qe_softc {
 	int		sc_setup;	/* Setup packet in queue	*/
 };
 
-static	int	qematch(struct device *, struct cfdata *, void *);
-static	void	qeattach(struct device *, struct device *, void *);
+static	int	qematch(device_t, cfdata_t, void *);
+static	void	qeattach(device_t, device_t, void *);
 static	void	qeinit(struct qe_softc *);
 static	void	qestart(struct ifnet *);
 static	void	qeintr(void *);
@@ -115,7 +116,7 @@ static	int	qe_add_rxbuf(struct qe_softc *, int);
 static	void	qe_setup(struct qe_softc *);
 static	void	qetimeout(struct ifnet *);
 
-CFATTACH_DECL(qe, sizeof(struct qe_softc),
+CFATTACH_DECL_NEW(qe, sizeof(struct qe_softc),
     qematch, qeattach, NULL, NULL);
 
 #define	QE_WCSR(csr, val) \
@@ -133,12 +134,12 @@ CFATTACH_DECL(qe, sizeof(struct qe_softc),
  * and wait for interrupt.
  */
 int
-qematch(struct device *parent, struct cfdata *cf, void *aux)
+qematch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct	qe_softc ssc;
 	struct	qe_softc *sc = &ssc;
 	struct	uba_attach_args *ua = aux;
-	struct	uba_softc *ubasc = (struct uba_softc *)parent;
+	struct	uba_softc *uh = device_private(parent);
 	struct ubinfo ui;
 
 #define	PROBESIZE	4096
@@ -146,16 +147,15 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	struct	qe_ring *rp;
 	int error;
 
-	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK);
-	bzero(sc, sizeof(struct qe_softc));
-	bzero(ring, PROBESIZE);
+	ring = malloc(PROBESIZE, M_TEMP, M_WAITOK|M_ZERO);
+	bzero(sc, sizeof(*sc));
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_dmat = ua->ua_dmat;
 
-	ubasc->uh_lastiv -= 4;
+	uh->uh_lastiv -= 4;
 	QE_WCSR(QE_CSR_CSR, QE_RESET);
-	QE_WCSR(QE_CSR_VECTOR, ubasc->uh_lastiv);
+	QE_WCSR(QE_CSR_VECTOR, uh->uh_lastiv);
 
 	/*
 	 * Map the ring area. Actually this is done only to be able to
@@ -164,7 +164,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	 */
 	ui.ui_size = PROBESIZE;
 	ui.ui_vaddr = (void *)&ring[0];
-	if ((error = uballoc((void *)parent, &ui, UBA_CANTWAIT)))
+	if ((error = uballoc(uh, &ui, UBA_CANTWAIT)))
 		return 0;
 
 	/*
@@ -198,7 +198,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	/*
 	 * All done with the bus resources.
 	 */
-	ubfree((void *)parent, &ui);
+	ubfree(uh, &ui);
 	free(ring, M_TEMP);
 	return 1;
 }
@@ -209,17 +209,18 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
  * to accept packets.
  */
 void
-qeattach(struct device *parent, struct device *self, void *aux)
+qeattach(device_t parent, device_t self, void *aux)
 {
-	struct	uba_attach_args *ua = aux;
-	struct	uba_softc *ubasc = (struct uba_softc *)parent;
-	struct	qe_softc *sc = device_private(self);
-	struct	ifnet *ifp = (struct ifnet *)&sc->sc_if;
-	struct	qe_ring *rp;
+	struct uba_attach_args *ua = aux;
+	struct qe_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_if;
+	struct qe_ring *rp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int i, error;
 	char *nullbuf;
 
+	sc->sc_dev = self;
+	sc->sc_uh = device_private(parent);
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_dmat = ua->ua_dmat;
@@ -229,8 +230,8 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	sc->sc_ui.ui_size = sizeof(struct qe_cdata) + ETHER_PAD_LEN;
-	if ((error = ubmemalloc((struct uba_softc *)parent, &sc->sc_ui, 0))) {
-		printf(": unable to ubmemalloc(), error = %d\n", error);
+	if ((error = ubmemalloc(sc->sc_uh, &sc->sc_ui, 0))) {
+		aprint_error(": unable to ubmemalloc(), error = %d\n", error);
 		return;
 	}
 	sc->sc_pqedata = (struct qe_cdata *)sc->sc_ui.ui_baddr;
@@ -251,7 +252,8 @@ qeattach(struct device *parent, struct device *self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 		    &sc->sc_xmtmap[i]))) {
-			printf(": unable to create tx DMA map %d, error = %d\n",
+			aprint_error(
+			    ": unable to create tx DMA map %d, error = %d\n",
 			    i, error);
 			goto fail_4;
 		}
@@ -264,7 +266,8 @@ qeattach(struct device *parent, struct device *self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_rcvmap[i]))) {
-			printf(": unable to create rx DMA map %d, error = %d\n",
+			aprint_error(
+			    ": unable to create rx DMA map %d, error = %d\n",
 			    i, error);
 			goto fail_5;
 		}
@@ -274,7 +277,8 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	 */
 	for (i = 0; i < RXDESCS; i++) {
 		if ((error = qe_add_rxbuf(sc, i)) != 0) {
-			printf(": unable to allocate or map rx buffer %d\n,"
+			aprint_error(
+			    ": unable to allocate or map rx buffer %d,"
 			    " error = %d\n", i, error);
 			goto fail_6;
 		}
@@ -282,14 +286,16 @@ qeattach(struct device *parent, struct device *self, void *aux)
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, ETHER_PAD_LEN, 1,
 	    ETHER_PAD_LEN, 0, BUS_DMA_NOWAIT,&sc->sc_nulldmamap)) != 0) {
-		printf("%s: unable to create pad buffer DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error(
+		    ": unable to create pad buffer DMA map, error = %d\n",
+		    error);
 		goto fail_6;
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_nulldmamap,
 	    nullbuf, ETHER_PAD_LEN, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load pad buffer DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error(
+		    ": unable to load pad buffer DMA map, error = %d\n",
+		    error);
 		goto fail_7;
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_nulldmamap, 0, ETHER_PAD_LEN,
@@ -315,7 +321,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Get the vector that were set at match time, and remember it.
 	 */
-	sc->sc_intvec = ubasc->uh_lastiv;
+	sc->sc_intvec = sc->sc_uh->uh_lastiv;
 	QE_WCSR(QE_CSR_CSR, QE_RESET);
 	DELAY(1000);
 	QE_WCSR(QE_CSR_CSR, QE_RCSR(QE_CSR_CSR) & ~QE_RESET);
@@ -327,7 +333,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
 		enaddr[i] = QE_RCSR(i * 2) & 0xff;
 
 	QE_WCSR(QE_CSR_VECTOR, sc->sc_intvec | 1);
-	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal(": %s, hardware address %s\n",
 		QE_RCSR(QE_CSR_VECTOR) & 1 ? "delqa":"deqna",
 		ether_sprintf(enaddr));
 
@@ -336,9 +342,9 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr,
 		sc, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
-		sc->sc_dev.dv_xname, "intr");
+		device_xname(sc->sc_dev), "intr");
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = qestart;
@@ -744,7 +750,7 @@ qe_add_rxbuf(struct qe_softc *sc, int i)
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
 	if (error)
 		panic("%s: can't load rx DMA map %d, error = %d",
-		    sc->sc_dev.dv_xname, i, error);
+		    device_xname(sc->sc_dev), i, error);
 	sc->sc_rxmbuf[i] = m;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rcvmap[i], 0,
@@ -862,7 +868,7 @@ qetimeout(struct ifnet *ifp)
 	if (sc->sc_inq == 0)
 		return;
 
-	printf("%s: xmit logic died, resetting...\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(sc->sc_dev, "xmit logic died, resetting...\n");
 	/*
 	 * Do a reset of interface, to get it going again.
 	 * Will it work by just restart the transmit logic?

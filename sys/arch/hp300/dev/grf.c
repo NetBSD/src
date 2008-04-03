@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.63 2008/01/25 20:21:44 oster Exp $	*/
+/*	$NetBSD: grf.c,v 1.63.6.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.63 2008/01/25 20:21:44 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.63.6.1 2008/04/03 12:42:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,10 +120,10 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.63 2008/01/25 20:21:44 oster Exp $");
 
 #include "ioconf.h"
 
-static int	grfmatch(struct device *, struct cfdata *, void *);
-static void	grfattach(struct device *, struct device *, void *);
+static int	grfmatch(device_t, cfdata_t, void *);
+static void	grfattach(device_t, device_t, void *);
 
-CFATTACH_DECL(grf, sizeof(struct grf_softc),
+CFATTACH_DECL_NEW(grf, sizeof(struct grf_softc),
     grfmatch, grfattach, NULL, NULL);
 
 static dev_type_open(grfopen);
@@ -153,19 +153,20 @@ int grfdebug = 0;
 #endif
 
 static int
-grfmatch(struct device *parent, struct cfdata *match, void *aux)
+grfmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-grfattach(struct device *parent, struct device *self, void *aux)
+grfattach(device_t parent, device_t self, void *aux)
 {
-	struct grf_softc *sc = (struct grf_softc *)self;
+	struct grf_softc *sc = device_private(self);
 	struct grfdev_attach_args *ga = aux;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	sc->sc_data = ga->ga_data;
 	sc->sc_scode = ga->ga_scode;	/* XXX */
@@ -195,7 +196,7 @@ grfopen(dev_t dev, int flags, int mode, struct lwp *l)
 	int error = 0;
 
 	if (unit >= grf_cd.cd_ndevs ||
-	    (sc = grf_cd.cd_devs[unit]) == NULL)
+	    (sc = device_private(grf_cd.cd_devs[unit])) == NULL)
 		return ENXIO;
 
 	gp = sc->sc_data;
@@ -225,7 +226,7 @@ grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 	struct grf_softc *sc;
 	struct grf_data *gp;
 
-	sc = grf_cd.cd_devs[unit];
+	sc = device_private(grf_cd.cd_devs[unit]);
 
 	gp = sc->sc_data;
 
@@ -245,7 +246,7 @@ grfioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct grf_data *gp;
 	int error, unit = GRFUNIT(dev);
 
-	sc = grf_cd.cd_devs[unit];
+	sc = device_private(grf_cd.cd_devs[unit]);
 
 	gp = sc->sc_data;
 
@@ -287,7 +288,7 @@ grfioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static paddr_t
 grfmmap(dev_t dev, off_t off, int prot)
 {
-	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grf_softc *sc = device_private(grf_cd.cd_devs[GRFUNIT(dev)]);
 
 	return grfaddr(sc, off);
 }
@@ -299,7 +300,7 @@ grfon(dev_t dev/*XXX*/)
 	struct grf_softc *sc;
 	struct grf_data *gp;
 
-	sc = grf_cd.cd_devs[unit];
+	sc = device_private(grf_cd.cd_devs[unit]);
 	gp = sc->sc_data;
 
 	/*
@@ -320,7 +321,7 @@ grfoff(dev_t dev/*XXX*/)
 	struct grf_data *gp;
 	int error;
 
-	sc = grf_cd.cd_devs[unit];
+	sc = device_private(grf_cd.cd_devs[unit]);
 	gp = sc->sc_data;
 
 	(void) grfunmap(dev, (void *)0, curproc);
@@ -354,7 +355,7 @@ grfaddr(struct grf_softc *sc, off_t off)
 int
 grfmap(dev_t dev, void **addrp, struct proc *p)
 {
-	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grf_softc *sc = device_private(grf_cd.cd_devs[GRFUNIT(dev)]);
 	struct grf_data *gp = sc->sc_data;
 	int len, error;
 	struct vnode vn;
@@ -386,7 +387,7 @@ grfmap(dev_t dev, void **addrp, struct proc *p)
 int
 grfunmap(dev_t dev, void *addr, struct proc *p)
 {
-	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grf_softc *sc = device_private(grf_cd.cd_devs[GRFUNIT(dev)]);
 	struct grf_data *gp = sc->sc_data;
 	vsize_t size;
 

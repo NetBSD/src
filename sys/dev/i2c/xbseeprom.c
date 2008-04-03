@@ -1,7 +1,7 @@
-/* $NetBSD: xbseeprom.c,v 1.1 2007/01/06 18:04:53 jmcneill Exp $ */
+/* $NetBSD: xbseeprom.c,v 1.1.44.1 2008/04/03 12:42:39 mjf Exp $ */
 
 /*-
- * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,20 +40,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.1 2007/01/06 18:04:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.1.44.1 2008/04/03 12:42:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/sysctl.h>
 
 #include <dev/i2c/i2cvar.h>
 
-MALLOC_DEFINE(M_XBSEEPROM, "xbseeprom", "Xbox Serial EEPROM");
-
-static int	xbseeprom_match(struct device *, struct cfdata *, void *);
-static void	xbseeprom_attach(struct device *, struct device *, void *);
+static int	xbseeprom_match(device_t, cfdata_t, void *);
+static void	xbseeprom_attach(device_t, device_t, void *);
 
 struct xbseeprom_data {
 	/* factory settings */
@@ -97,7 +95,7 @@ struct xbseeprom_data {
 #define XBSEEPROM_SIZE	(sizeof(struct xbseeprom_data))
 
 struct xbseeprom_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
@@ -113,11 +111,9 @@ CFATTACH_DECL(xbseeprom, sizeof(struct xbseeprom_softc),
     xbseeprom_match, xbseeprom_attach, NULL, NULL);
 
 static int
-xbseeprom_match(struct device *parent, struct cfdata *cf, void *opaque)
+xbseeprom_match(device_t parent, cfdata_t cf, void *opaque)
 {
-	struct i2c_attach_args *ia;
-
-	ia = (struct i2c_attach_args *)opaque;
+	struct i2c_attach_args *ia = opaque;
 
 	/* Serial EEPROM always lives at 0x54 on Xbox */
 	if (ia->ia_addr == 0x54)
@@ -127,20 +123,18 @@ xbseeprom_match(struct device *parent, struct cfdata *cf, void *opaque)
 }
 
 static void
-xbseeprom_attach(struct device *parent, struct device *self, void *opaque)
+xbseeprom_attach(device_t parent, device_t self, void *opaque)
 {
-	struct xbseeprom_softc *sc;
-	struct i2c_attach_args *ia;
+	struct xbseeprom_softc *sc = device_private(self);
+	struct i2c_attach_args *ia = opaque;
 	uint8_t *ptr;
 	int i;
 
-	sc = (struct xbseeprom_softc *)self;
-	ia = (struct i2c_attach_args *)opaque;
-
+	sc->sc_dev = self;
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	sc->sc_data = malloc(XBSEEPROM_SIZE, M_XBSEEPROM, M_NOWAIT);
+	sc->sc_data = kmem_alloc(XBSEEPROM_SIZE, KM_SLEEP);
 	if (sc->sc_data == NULL) {
 		aprint_error(": Not enough memory to copy EEPROM\n");
 		return;
@@ -155,8 +149,7 @@ xbseeprom_attach(struct device *parent, struct device *self, void *opaque)
 
 #if 0
 	/* Display some interesting information */
-	aprint_normal("%s: MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    sc->sc_dev.dv_xname,
+	aprint_normal_dev(self, "MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    sc->sc_data->MACAddress[0], sc->sc_data->MACAddress[1],
 	    sc->sc_data->MACAddress[2], sc->sc_data->MACAddress[3],
 	    sc->sc_data->MACAddress[4], sc->sc_data->MACAddress[5]

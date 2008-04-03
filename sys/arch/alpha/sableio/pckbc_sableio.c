@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_sableio.c,v 1.6 2008/01/05 00:31:51 ad Exp $ */
+/* $NetBSD: pckbc_sableio.c,v 1.6.6.1 2008/04/03 12:42:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.6 2008/01/05 00:31:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_sableio.c,v 1.6.6.1 2008/04/03 12:42:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,16 +68,16 @@ struct pckbc_sableio_softc {
 	pci_chipset_tag_t sc_pc;	/* PCI chipset for registering intrs */
 };
 
-int	pckbc_sableio_match(struct device *, struct cfdata *, void *);
-void	pckbc_sableio_attach(struct device *, struct device *, void *);
+int	pckbc_sableio_match(device_t, cfdata_t, void *);
+void	pckbc_sableio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pckbc_sableio, sizeof(struct pckbc_sableio_softc),
+CFATTACH_DECL_NEW(pckbc_sableio, sizeof(struct pckbc_sableio_softc),
     pckbc_sableio_match, pckbc_sableio_attach, NULL, NULL);
 
 void	pckbc_sableio_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 int
-pckbc_sableio_match(struct device *parent, struct cfdata *match, void *aux)
+pckbc_sableio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sableio_attach_args *sa = aux;
 
@@ -89,14 +89,15 @@ pckbc_sableio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pckbc_sableio_attach(struct device *parent, struct device *self, void *aux)
+pckbc_sableio_attach(device_t parent, device_t self, void *aux)
 {
-	struct pckbc_sableio_softc *ssc = (void *)self;
+	struct pckbc_sableio_softc *ssc = device_private(self);
 	struct pckbc_softc *sc = &ssc->sc_pckbc;
 	struct sableio_attach_args *sa = aux;
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
 
+	sc->sc_dv = self;
 	ssc->sc_pc = sa->sa_pc;
 
 	/*
@@ -130,7 +131,7 @@ pckbc_sableio_attach(struct device *parent, struct device *self, void *aux)
 	t->t_sc = sc;
 	sc->id = t;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Finish off the attach. */
 	pckbc_attach(sc);
@@ -146,13 +147,14 @@ pckbc_sableio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	ssc->sc_ih[slot] = pci_intr_establish(ssc->sc_pc, ssc->sc_irq[slot],
 	    IPL_TTY, pckbcintr, sc);
 	if (ssc->sc_ih[slot] == NULL) {
-		printf("%s: unable to establish interrupt for %s slot",
-		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		aprint_error_dev(sc->sc_dv,
+		    "unable to establish interrupt for %s slot",
+		    pckbc_slot_names[slot]);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: %s slot interrupting at %s\n", sc->sc_dv.dv_xname,
+	aprint_normal_dev(sc->sc_dv, "%s slot interrupting at %s\n",
 	    pckbc_slot_names[slot], intrstr);
 }
