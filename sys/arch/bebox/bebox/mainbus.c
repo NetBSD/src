@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.22 2008/02/08 16:53:34 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22.6.1 2008/04/03 12:42:12 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2008/02/08 16:53:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22.6.1 2008/04/03 12:42:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -130,9 +130,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	SIMPLEQ_INIT(&genppc_pct->pc_pbi);
 	SIMPLEQ_INSERT_TAIL(&genppc_pct->pc_pbi, pbi, next);
-
-	/* find the primary host bridge */
-	/* setup_pciintr_map(pbi, 0, 0, 0);*/
 
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,

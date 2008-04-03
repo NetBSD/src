@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.29 2008/01/29 04:06:46 rafal Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.29.6.1 2008/04/03 12:42:32 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.29 2008/01/29 04:06:46 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.29.6.1 2008/04/03 12:42:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.29 2008/01/29 04:06:46 rafal Exp $"
 #include <sys/mount.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/simplelock.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
@@ -303,7 +302,7 @@ irix_usema_close(void *v)
 	printf("irix_usema_close() vn = %p\n", vp);
 #endif
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 
 	/* vp is a vnode duplicated from rvp. eventually also close rvp */
 	rvp = (struct vnode *)(vp->v_data);
@@ -319,7 +318,7 @@ irix_usema_close(void *v)
 	if ((iur = iur_lookup_by_vn(vp)) != NULL)
 		iur_remove(iur);
 
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return error;
 }

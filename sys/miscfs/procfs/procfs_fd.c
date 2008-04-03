@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_fd.c,v 1.12 2007/11/07 00:23:37 ad Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.12.14.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.12 2007/11/07 00:23:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.12.14.1 2008/04/03 12:43:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,25 +47,18 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.12 2007/11/07 00:23:37 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_dofd(
-    struct lwp *curl,
-    struct proc *p,
-    struct pfsnode *pfs,
-    struct uio *uio
-)
+procfs_dofd(lwp_t *curl, proc_t *p, struct pfsnode *pfs, struct uio *uio)
 {
 	int error;
-	struct file *fp;
+	file_t *fp;
 	off_t offs;
 
-	fp = fd_getfile(p->p_fd, pfs->pfs_fd);
-	if (fp == NULL)
-		return (EBADF);
-
-	FILE_USE(fp);
+	if ((fp = fd_getfile2(p, pfs->pfs_fd)) == NULL)
+		return EBADF;
 
 	offs = fp->f_offset;
 
@@ -74,13 +67,13 @@ procfs_dofd(
 		error = (*fp->f_ops->fo_read)(fp, &offs, uio, curl->l_cred, 0);
 		break;
 	case UIO_WRITE:
-		error = (*fp->f_ops->fo_write)(fp, &offs, uio, curl->l_cred,0);
+		error = (*fp->f_ops->fo_write)(fp, &offs, uio, curl->l_cred, 0);
 		break;
 	default:
 		panic("bad uio op");
 	}
 
-	FILE_UNUSE(fp, curl);
+	closef(fp);
 
 	return (error);
 }

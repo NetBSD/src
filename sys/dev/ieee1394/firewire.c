@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.19 2007/12/15 00:39:28 perry Exp $	*/
+/*	$NetBSD: firewire.c,v 1.19.6.1 2008/04/03 12:42:43 mjf Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.19 2007/12/15 00:39:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.19.6.1 2008/04/03 12:42:43 mjf Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -196,11 +196,11 @@ static int firewire_shutdown    (device_t);
 #endif
 static device_t firewire_add_child   (device_t, int, const char *, int);
 #elif defined(__NetBSD__)
-int firewirematch (struct device *, struct cfdata *, void *);
-void firewireattach (struct device *, struct device *, void *);
-int firewiredetach (struct device *, int);
+int firewirematch (device_t, struct cfdata *, void *);
+void firewireattach (device_t, device_t, void *);
+int firewiredetach (device_t, int);
 int firewire_print (void *, const char *);
-int firewire_resume(struct firewire_comm *);
+int firewire_resume (struct firewire_comm *);
 #endif
 static void firewire_xfer_timeout(void *, int);
 static void fw_try_bmr (void *);
@@ -234,7 +234,7 @@ static device_method_t firewire_methods[] = {
 	{ 0, 0 }
 };
 #elif defined(__NetBSD__)
-CFATTACH_DECL(ieee1394if, sizeof (struct firewire_softc),
+CFATTACH_DECL_NEW(ieee1394if, sizeof(struct firewire_softc),
     firewirematch, firewireattach, firewiredetach, NULL);
 #endif
 const char *fw_linkspeed[] = {
@@ -452,8 +452,7 @@ firewire_probe(device_t dev)
 }
 #elif defined(__NetBSD__)
 int
-firewirematch(struct device *parent, struct cfdata *cf,
-    void *aux)
+firewirematch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct fwbus_attach_args *faa = (struct fwbus_attach_args *)aux;
 	 

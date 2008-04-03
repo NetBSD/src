@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2008/02/15 12:28:09 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.113.6.1 2008/04/03 12:42:22 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.113.6.1 $"
 
 maxusers	32
 
@@ -35,7 +35,7 @@ options 	PIC_I8259
 options 	FIRMWORKSBUGS
 
 # Standard system options
-#options 	INSECURE	# disable kernel security checks
+options 	INSECURE	# disable kernel security checks
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
 
@@ -87,6 +87,7 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network file System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
+file-system 	ADOSFS		# AmigaDOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
@@ -194,16 +195,17 @@ pcib*		at pci? dev ? function ?
 isa*		at pcib?
 
 # Console Devices
-#genfb*		at pci? dev ? function ?
-#pckbc0		at isa?			# pc keyboard controller
-#pckbd*		at pckbc?		# PC keyboard
-#pms*		at pckbc?		# PS/2 mouse for wsmouse
+genfb*		at pci? dev ? function ?
+#radeonfb*	at pci? dev ? function ?
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
 #wscons stuff
-#wskbd*		at pckbd? console ?
-#wsmouse*	at pms? mux 0
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
 # make sure the console display is always wsdisplay0 XXX Why?
-#wsdisplay0      at wsemuldisplaydev? console 1
-#wsdisplay*      at wsemuldisplaydev?
+wsdisplay0      at wsemuldisplaydev? console 1
+wsdisplay*      at wsemuldisplaydev?
 
 attimer0	at isa?			# AT Timer
 pcppi0		at isa?			# PC prog. periph. interface
@@ -223,8 +225,9 @@ siop*		at pci? dev ? function ?	# Symbios 53c8xx SCSI
 esiop*		at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 
 # SCSI bus support
-scsibus*	at siop?
-scsibus*	at esiop?
+scsibus* 	at siop?
+scsibus* 	at esiop?
+scsibus* 	at umass?
 
 # SCSI devices
 sd*		at scsibus? target ? lun ?	# SCSI disk drives

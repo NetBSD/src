@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.3 2008/02/11 08:23:48 xtraeme Exp $	*/
+/*	$NetBSD: jmide.c,v 1.3.6.1 2008/04/03 12:42:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.3 2008/02/11 08:23:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.3.6.1 2008/04/03 12:42:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.3 2008/02/11 08:23:48 xtraeme Exp $");
 
 static const struct jmide_product *jmide_lookup(pcireg_t);
 
-static int  jmide_match(struct device *, struct cfdata *, void *);
-static void jmide_attach(struct device *, struct device *, void *);
+static int  jmide_match(device_t, cfdata_t, void *);
+static void jmide_attach(device_t, device_t, void *);
 static int  jmide_intr(void *);
 
 static void jmpata_chip_map(struct pciide_softc*, struct pci_attach_args*);
@@ -117,9 +117,9 @@ struct jmahci_attach_args {
 	bus_space_handle_t jma_ahcih;
 };
 
-#define JM_NAME(sc) (sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev.dv_xname)
+#define JM_NAME(sc) (device_xname(sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev))
 
-CFATTACH_DECL(jmide, sizeof(struct jmide_softc),
+CFATTACH_DECL_NEW(jmide, sizeof(struct jmide_softc),
     jmide_match, jmide_attach, NULL, NULL);
 
 static const struct jmide_product *
@@ -134,8 +134,7 @@ jmide_lookup(pcireg_t id) {
 }
 
 static int
-jmide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+jmide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -147,10 +146,10 @@ jmide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-jmide_attach(struct device *parent, struct device *self, void *aux)
+jmide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct jmide_softc *sc = (struct jmide_softc *)self;
+	struct jmide_softc *sc = device_private(self);
 	const struct jmide_product *jp;
         char devinfo[256];
 	const char *intrstr;
@@ -161,6 +160,8 @@ jmide_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_JM_CONTROL1);
 	struct pciide_product_desc *pp;
 	int ahci_used = 0;
+
+	sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev = self;
 
 	jp = jmide_lookup(pa->pa_id);
 	if (jp == NULL) {
@@ -224,7 +225,7 @@ jmide_attach(struct device *parent, struct device *self, void *aux)
 				    JM_NAME(sc));
 			} else {
 				sc->sc_ahci = config_found_ia(
-				    &sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev,
+				    sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev,
 				    "jmide_hl", &jma, jmahci_print);
 			}
 			/*
@@ -433,28 +434,29 @@ jmahci_print(void *aux, const char *pnp)
 
 
 #ifdef NJMAHCI
-static int  jmahci_match(struct device *, struct cfdata *, void *);
-static void jmahci_attach(struct device *, struct device *, void *);
+static int  jmahci_match(device_t, cfdata_t, void *);
+static void jmahci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(jmahci, sizeof(struct ahci_softc),
+CFATTACH_DECL_NEW(jmahci, sizeof(struct ahci_softc),
 	jmahci_match, jmahci_attach, NULL, NULL);
 
 static int
-jmahci_match(struct device *parent, struct cfdata *match, void *aux)
+jmahci_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-jmahci_attach(struct device *parent, struct device *self, void *aux)
+jmahci_attach(device_t parent, device_t self, void *aux)
 {
 	struct jmahci_attach_args *jma = aux;
 	struct pci_attach_args *pa = jma->jma_pa;
-	struct ahci_softc *sc = (struct ahci_softc *)self;
+	struct ahci_softc *sc = device_private(self);
 
 	aprint_naive(": AHCI disk controller\n");
 	aprint_normal("\n");
 
+	sc->sc_atac.atac_dev = self;
 	sc->sc_ahcit = jma->jma_ahcit;
 	sc->sc_ahcih = jma->jma_ahcih;
 	sc->sc_dmat = jma->jma_pa->pa_dmat;

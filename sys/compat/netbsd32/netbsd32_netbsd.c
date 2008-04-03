@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.141 2008/01/28 00:19:28 martin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.141.6.1 2008/04/03 12:42:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.141 2008/01/28 00:19:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.141.6.1 2008/04/03 12:42:33 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2498,22 +2498,6 @@ netbsd32_fremovexattr(struct lwp *l, const struct netbsd32_fremovexattr_args *ua
 	return sys_fremovexattr(l, &ua, retval);
 }
 
-#ifdef COMPAT_40
-int
-netbsd32_posix_fadvise(struct lwp *l, const struct netbsd32_posix_fadvise_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) fd;
-		syscallarg(off_t) offset;
-		syscallarg(off_t) len;
-		syscallarg(int) advice;
-	} */
-
-	return do_posix_fadvise(l, SCARG(uap, fd), SCARG(uap, offset),
-	    SCARG(uap, len), SCARG(uap, advice), retval);
-}
-#endif
-
 int
 netbsd32___posix_fadvise50(struct lwp *l,
 	const struct netbsd32___posix_fadvise50_args *uap, register_t *retval)
@@ -2526,8 +2510,8 @@ netbsd32___posix_fadvise50(struct lwp *l,
 		syscallarg(int) advice;
 	} */
 
-	return do_posix_fadvise(l, SCARG(uap, fd), SCARG(uap, offset),
-	    SCARG(uap, len), SCARG(uap, advice), retval);
+	return do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
+	    SCARG(uap, len), SCARG(uap, advice));
 }
 
 /*

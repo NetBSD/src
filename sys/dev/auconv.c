@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.20 2007/03/01 17:31:35 thorpej Exp $	*/
+/*	$NetBSD: auconv.c,v 1.20.36.1 2008/04/03 12:42:36 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,10 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.20 2007/03/01 17:31:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.20.36.1 2008/04/03 12:42:36 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/null.h>

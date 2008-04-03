@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.7 2007/04/16 00:22:55 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.7.28.1 2008/04/03 12:42:38 mjf Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.7 2007/04/16 00:22:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.7.28.1 2008/04/03 12:42:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.7 2007/04/16 00:22:55 macallan Exp $");
  * State info, per mouse instance.
  */
 struct adbms_softc {
-	struct	device	sc_dev;
+	device_t	sc_dev;
 	struct adb_device *sc_adbdev;
 	struct adb_bus_accessops *sc_ops;
 
@@ -104,8 +104,8 @@ struct adbms_softc {
 /*
  * Function declarations.
  */
-static int	adbms_match(struct device *, struct cfdata *, void *);
-static void	adbms_attach(struct device *, struct device *, void *);
+static int	adbms_match(device_t, cfdata_t, void *);
+static void	adbms_attach(device_t, device_t, void *);
 static void	ems_init(struct adbms_softc *);
 //static void	ms_processevent(adb_event_t *event, struct adbms_softc *);
 static void	init_trackpad(struct adbms_softc *);
@@ -116,7 +116,7 @@ static void	adbms_process_event(struct adbms_softc *, int, uint8_t *);
 static int	adbms_send_sync(struct adbms_softc *, uint8_t, int, uint8_t *);
 
 /* Driver definition. */
-CFATTACH_DECL(adbms, sizeof(struct adbms_softc),
+CFATTACH_DECL_NEW(adbms, sizeof(struct adbms_softc),
     adbms_match, adbms_attach, NULL, NULL);
 
 static int adbms_enable(void *);
@@ -141,7 +141,7 @@ const struct wsmouse_accessops adbms_accessops = {
 };
 
 static int
-adbms_match(struct device *parent, struct cfdata *cf, void *aux)
+adbms_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct adb_attach_args *aaa = aux;
 
@@ -152,12 +152,13 @@ adbms_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-adbms_attach(struct device *parent, struct device *self, void *aux)
+adbms_attach(device_t parent, device_t self, void *aux)
 {
-	struct adbms_softc *sc = (struct adbms_softc *)self;
+	struct adbms_softc *sc = device_private(self);
 	struct adb_attach_args *aaa = aux;
 	struct wsmousedev_attach_args a;
 
+	sc->sc_dev = self;
 	sc->sc_ops = aaa->ops;
 	sc->sc_adbdev = aaa->dev;
 	sc->sc_adbdev->cookie = sc;
@@ -482,7 +483,7 @@ adbms_handler(void *cookie, int len, uint8_t *data)
 
 #ifdef ADBMS_DEBUG
 	int i;
-	printf("%s: %02x - ", sc->sc_dev.dv_xname, sc->sc_us);
+	printf("%s: %02x - ", device_xname(sc->sc_dev), sc->sc_us);
 	for (i = 0; i < len; i++) {
 		printf(" %02x", data[i]);
 	}
@@ -732,7 +733,7 @@ init_trackpad(struct adbms_softc *sc)
 	
 	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&me,
 	    CTLFLAG_READWRITE,
-	    CTLTYPE_NODE, sc->sc_dev.dv_xname, NULL,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev), NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 

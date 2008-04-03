@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.6 2007/09/18 19:59:21 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.6.22.1 2008/04/03 12:43:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,22 +34,25 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <stdbool.h>
 #include <stdint.h>
 
 struct vnode;
-
 struct ukfs;
+
+#include "rump.h"
 
 int		ukfs_init(void);
 struct ukfs	*ukfs_mount(const char *, const char *, const char *,
 			  int, void *, size_t);
 void		ukfs_release(struct ukfs *, int);
 
-int		ukfs_ll_namei(struct vnode *, const char **, u_long,
-			   struct vnode **, struct vnode **);
-void		ukfs_ll_recycle(struct vnode *);
+int		ukfs_ll_namei(struct ukfs *, uint32_t, uint32_t, const char *,
+			      struct vnode **, struct vnode **,
+			      struct componentname **);
+void		ukfs_ll_rele(struct vnode *);
 
-int		ukfs_getdents(struct ukfs *, const char *, off_t,
+int		ukfs_getdents(struct ukfs *, const char *, off_t *,
 			      uint8_t *, size_t);
 ssize_t		ukfs_read(struct ukfs *, const char *, off_t,
 			      uint8_t *, size_t);
@@ -58,14 +61,17 @@ ssize_t		ukfs_write(struct ukfs *, const char *, off_t,
 ssize_t		ukfs_readlink(struct ukfs *, const char *, char *, size_t);
 
 int		ukfs_create(struct ukfs *, const char *, mode_t);
-int		ukfs_mkdir(struct ukfs *, const char *, mode_t);
+int		ukfs_mkdir(struct ukfs *, const char *, mode_t, bool);
 int		ukfs_mknod(struct ukfs *, const char *, mode_t, dev_t);
-int		ukfs_symlink(struct ukfs *, const char *, char *);
+int		ukfs_symlink(struct ukfs *, const char *, const char *);
 
 int		ukfs_remove(struct ukfs *, const char *);
 int		ukfs_rmdir(struct ukfs *, const char *);
 
 int		ukfs_link(struct ukfs *, const char *, const char *);
+int		ukfs_rename(struct ukfs *, const char *, const char *);
+
+int		ukfs_chdir(struct ukfs *, const char *);
 
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);

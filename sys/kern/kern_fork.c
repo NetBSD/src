@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_fork.c,v 1.157 2008/01/28 20:09:06 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.157.6.1 2008/04/03 12:43:01 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.157 2008/01/28 20:09:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.157.6.1 2008/04/03 12:43:01 mjf Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -250,7 +250,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Enforce limits.
 	 */
 	count = chgproccnt(uid, 1);
-	if (__predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
+	if (uid != 0 &&
+	    __predict_false(count > p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		atomic_dec_uint(&nprocs);
 		if (forkfsleep)
@@ -338,16 +339,16 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		VREF(p2->p_textvp);
 
 	if (flags & FORK_SHAREFILES)
-		fdshare(p1, p2);
+		fd_share(p2);
 	else if (flags & FORK_CLEANFILES)
-		p2->p_fd = fdinit(p1);
+		p2->p_fd = fd_init(NULL);
 	else
-		p2->p_fd = fdcopy(p1);
+		p2->p_fd = fd_copy();
 
 	if (flags & FORK_SHARECWD)
-		cwdshare(p1, p2);
+		cwdshare(p2);
 	else
-		p2->p_cwdi = cwdinit(p1);
+		p2->p_cwdi = cwdinit();
 
 	/*
 	 * p_limit (rlimit stuff) is usually copy-on-write, so we just need
@@ -453,6 +454,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	mutex_exit(&proclist_lock);
 
+	p2->p_trace_enabled = trace_is_enabled(p2);
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif

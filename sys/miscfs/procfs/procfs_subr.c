@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_subr.c,v 1.85 2008/01/30 09:50:23 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.85.6.1 2008/04/03 12:43:06 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.85 2008/01/30 09:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.85.6.1 2008/04/03 12:43:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,20 +227,18 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 			pfs->pfs_mode = S_IRUSR|S_IXUSR;
 			vp->v_type = VDIR;
 		} else {	/* /proc/N/fd/M = [ps-]rw------- */
-			struct file *fp;
-			struct vnode *vxp;
+			file_t *fp;
+			vnode_t *vxp;
 
-			fp = fd_getfile(p->p_fd, pfs->pfs_fd);
-			if (fp == NULL) {
+			if ((fp = fd_getfile2(p, pfs->pfs_fd)) == NULL) {
 				error = EBADF;
 				goto bad;
 			}
-			FILE_USE(fp);
 
 			pfs->pfs_mode = S_IRUSR|S_IWUSR;
 			switch (fp->f_type) {
 			case DTYPE_VNODE:
-				vxp = (struct vnode *)fp->f_data;
+				vxp = fp->f_data;
 
 				/*
 				 * We make symlinks for directories
@@ -265,10 +263,10 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 				break;
 			default:
 				error = EOPNOTSUPP;
-				FILE_UNUSE(fp, curlwp);
+				closef(fp);
 				goto bad;
 			}
-			FILE_UNUSE(fp, curlwp);
+			closef(fp);
 		}
 		break;
 

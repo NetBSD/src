@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_synch.c,v 1.217 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.217.6.1 2008/04/03 12:43:02 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.217 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.217.6.1 2008/04/03 12:43:02 mjf Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -110,7 +110,7 @@ unsigned int sched_pstats_ticks;
 
 kcondvar_t	lbolt;			/* once a second sleep address */
 
-static void	sched_unsleep(struct lwp *);
+static u_int	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
 static void	sched_lendpri(struct lwp *, pri_t);
 
@@ -298,13 +298,6 @@ yield(void)
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
-	if (l->l_class == SCHED_OTHER) {
-		/*
-		 * Only for timeshared threads.  It will be reset
-		 * by the scheduler in due course.
-		 */
-		l->l_priority = 0;
-	}
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
@@ -425,7 +418,12 @@ mi_switch(lwp_t *l)
 	if (l->l_stat == LSONPROC && (l->l_target_cpu || l != newl)) {
 		KASSERT(lwp_locked(l, spc->spc_lwplock));
 
-		tci = l->l_target_cpu;
+		if (l->l_target_cpu == l->l_cpu) {
+			l->l_target_cpu = NULL;
+		} else {
+			tci = l->l_target_cpu;
+		}
+
 		if (__predict_false(tci != NULL)) {
 			/* Double-lock the runqueues */
 			spc_dlock(ci, tci);
@@ -547,8 +545,8 @@ mi_switch(lwp_t *l)
 		ci->ci_mtx_count--;
 		lwp_unlock(l);
 
-		/* Unlocked, but for statistics only. */
-		uvmexp.swtch++;
+		/* Count the context switch on this CPU. */
+		ci->ci_data.cpu_nswtch++;
 
 		/* Update status for lwpctl, if present. */
 		if (l->l_lwpctl != NULL)
@@ -591,8 +589,10 @@ mi_switch(lwp_t *l)
 		splx(oldspl);
 
 		/* Update status for lwpctl, if present. */
-		if (l->l_lwpctl != NULL)
+		if (l->l_lwpctl != NULL) {
 			l->l_lwpctl->lc_curcpu = (int)cpu_index(ci);
+			l->l_lwpctl->lc_pctr++;
+		}
 
 		retval = 1;
 	} else {
@@ -674,7 +674,7 @@ setrunnable(struct lwp *l)
 	if (l->l_wchan != NULL) {
 		l->l_stat = LSSLEEP;
 		/* lwp_unsleep() will release the lock. */
-		lwp_unsleep(l);
+		lwp_unsleep(l, true);
 		return;
 	}
 
@@ -791,8 +791,8 @@ suspendsched(void)
  *	interrupted: for example, if the sleep timed out.  Because of this,
  *	it's not a valid action for running or idle LWPs.
  */
-static void
-sched_unsleep(struct lwp *l)
+static u_int
+sched_unsleep(struct lwp *l, bool cleanup)
 {
 
 	lwp_unlock(l);

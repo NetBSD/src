@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.150 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.150.6.1 2008/04/03 12:42:57 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.150 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.150.6.1 2008/04/03 12:42:57 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -683,7 +683,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		if (msg)
 			printf("%s: device addr %d (config %d) exceeds power "
 				 "budget, %d mA > %d mA\n",
-			       USBDEVNAME(dev->bus->bdev), dev->address,
+			       device_xname(dev->bus->usbctl), dev->address,
 			       cdp->bConfigurationValue,
 			       power, dev->powersrc->power);
 		err = USBD_NO_POWER;
@@ -983,7 +983,7 @@ usbd_new_device(device_ptr_t parent, usbd_bus_handle bus, int depth,
 	addr = usbd_getnewaddr(bus);
 	if (addr < 0) {
 		printf("%s: No free USB addresses, new device ignored.\n",
-		       USBDEVNAME(bus->bdev));
+		       device_xname(bus->usbctl));
 		return (USBD_NO_ADDR);
 	}
 
@@ -1323,7 +1323,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	struct usbd_port *p;
 	int i, err, s;
 
-	di->udi_bus = USBDEVUNIT(dev->bus->bdev);
+	di->udi_bus = device_unit(dev->bus->usbctl);
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
 	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev, 1);
@@ -1390,7 +1390,7 @@ usbd_fill_deviceinfo_old(usbd_device_handle dev, struct usb_device_info_old *di,
 	struct usbd_port *p;
 	int i, err, s;
 
-	di->udi_bus = USBDEVUNIT(dev->bus->bdev);
+	di->udi_bus = device_unit(dev->bus->usbctl);
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
 	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.28 2008/02/18 18:31:10 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.28.6.1 2008/04/03 12:43:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.28 2008/02/18 18:31:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.28.6.1 2008/04/03 12:43:03 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -80,8 +80,8 @@ typedef union lockdebuglk {
 		u_int	lku_lock;
 		int	lku_oldspl;
 	} ul;
-	uint8_t	lk_pad[CACHE_LINE_SIZE];
-} volatile __aligned(CACHE_LINE_SIZE) lockdebuglk_t;
+	uint8_t	lk_pad[COHERENCY_UNIT];
+} volatile __aligned(COHERENCY_UNIT) lockdebuglk_t;
 
 #define	lk_lock		ul.lku_lock
 #define	lk_oldspl	ul.lku_oldspl

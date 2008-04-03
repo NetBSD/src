@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.15 2007/08/09 15:23:02 he Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.15.22.1 2008/04/03 12:43:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -99,6 +99,7 @@ struct	unpcb {
 #define	UNP_CONNWAIT	0x0002		/* connect blocks until accepted */
 #define	UNP_EIDSVALID	0x0004		/* unp_connid contains valid data */
 #define	UNP_EIDSBIND	0x0008		/* unp_connid was set by bind() */
+#define	UNP_BUSY	0x0010		/* busy connecting or binding */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.13 2005/12/11 12:19:36 christos Exp $ */
+/* $NetBSD: sgmap.c,v 1.13.74.1 2008/04/03 12:42:29 mjf Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.13 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.13.74.1 2008/04/03 12:42:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,14 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.13 2005/12/11 12:19:36 christos Exp $");
 #include <machine/sgmap.h>
 
 void
-vax_sgmap_init(t, sgmap, name, sgvabase, sgvasize, ptva, minptalign)
-	bus_dma_tag_t t;
-	struct vax_sgmap *sgmap;
-	const char *name;
-	bus_addr_t sgvabase;
-	bus_size_t sgvasize;
-	struct pte *ptva;
-	bus_size_t minptalign;
+vax_sgmap_init(bus_dma_tag_t t, struct vax_sgmap *sgmap, const char *name,
+	bus_addr_t sgvabase, bus_size_t sgvasize, struct pte *ptva,
+	bus_size_t minptalign)
 {
 	bus_dma_segment_t seg;
 	size_t ptsize;
@@ -117,11 +112,8 @@ vax_sgmap_init(t, sgmap, name, sgvabase, sgvasize, ptva, minptalign)
 }
 
 int
-vax_sgmap_alloc(map, origlen, sgmap, flags)
-	bus_dmamap_t map;
-	bus_size_t origlen;
-	struct vax_sgmap *sgmap;
-	int flags;
+vax_sgmap_alloc(bus_dmamap_t map, bus_size_t origlen, struct vax_sgmap *sgmap,
+	int flags)
 {
 	int error;
 	bus_size_t len = origlen;
@@ -160,9 +152,7 @@ vax_sgmap_alloc(map, origlen, sgmap, flags)
 }
 
 void
-vax_sgmap_free(map, sgmap)
-	bus_dmamap_t map;
-	struct vax_sgmap *sgmap;
+vax_sgmap_free(bus_dmamap_t map, struct vax_sgmap *sgmap)
 {
 
 #ifdef DIAGNOSTIC
@@ -178,14 +168,8 @@ vax_sgmap_free(map, sgmap)
 }
 
 int
-vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-	struct vax_sgmap *sgmap;
+vax_sgmap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t buflen,
+	struct proc *p, int flags, struct vax_sgmap *sgmap)
 {
 	vaddr_t endva, va = (vaddr_t)buf;
 	paddr_t pa;
@@ -268,48 +252,31 @@ vax_sgmap_load(t, map, buf, buflen, p, flags, sgmap)
 }
 
 int
-vax_sgmap_load_mbuf(t, map, m, flags, sgmap)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
-	struct vax_sgmap *sgmap;
+vax_sgmap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
+	int flags, struct vax_sgmap *sgmap)
 {
 
 	panic("vax_sgmap_load_mbuf : not implemented");
 }
 
 int
-vax_sgmap_load_uio(t, map, uio, flags, sgmap)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
-	struct vax_sgmap *sgmap;
+vax_sgmap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
+	int flags, struct vax_sgmap *sgmap)
 {
 
 	panic("vax_sgmap_load_uio : not implemented");
 }
 
 int
-vax_sgmap_load_raw(t, map, segs, nsegs, size, flags, sgmap)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
-	struct vax_sgmap *sgmap;
+vax_sgmap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
+	int nsegs, bus_size_t size, int flags, struct vax_sgmap *sgmap)
 {
 
 	panic("vax_sgmap_load_raw : not implemented");
 }
 
 void
-vax_sgmap_unload(t, map, sgmap)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct vax_sgmap *sgmap;
+vax_sgmap_unload(bus_dma_tag_t t, bus_dmamap_t map, struct vax_sgmap *sgmap)
 {
 	long *pte, *page_table = (long *)sgmap->aps_pt;
 	int ptecnt;

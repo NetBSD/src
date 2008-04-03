@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.16 2007/12/03 15:34:21 ad Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.16.14.1 2008/04/03 12:42:25 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.16 2007/12/03 15:34:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.16.14.1 2008/04/03 12:42:25 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,11 @@ struct pckbc_js_softc {
 };
 
 
-static int	pckbc_obio_match(struct device *, struct cfdata *, void *);
-static void	pckbc_obio_attach(struct device *, struct device *, void *);
+static int	pckbc_obio_match(device_t, cfdata_t, void *);
+static void	pckbc_obio_attach(device_t, device_t, void *);
 
-static int	pckbc_ebus_match(struct device *, struct cfdata *, void *);
-static void	pckbc_ebus_attach(struct device *, struct device *, void *);
+static int	pckbc_ebus_match(device_t, cfdata_t, void *);
+static void	pckbc_ebus_attach(device_t, device_t, void *);
 
 static void	pckbc_js_attach_common(struct pckbc_js_softc *,
 				       bus_space_tag_t, bus_addr_t, int, int);
@@ -69,17 +69,17 @@ static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbport_slot_t);
 static int	jsc_pckbdintr(void *);
 
 /* Mr.Coffee */
-CFATTACH_DECL(pckbc_obio, sizeof(struct pckbc_js_softc),
+CFATTACH_DECL_NEW(pckbc_obio, sizeof(struct pckbc_js_softc),
     pckbc_obio_match, pckbc_obio_attach, NULL, NULL);
 
 /* ms-IIep */
-CFATTACH_DECL(pckbc_ebus, sizeof(struct pckbc_js_softc),
+CFATTACH_DECL_NEW(pckbc_ebus, sizeof(struct pckbc_js_softc),
     pckbc_ebus_match, pckbc_ebus_attach, NULL, NULL);
 
 #define PCKBC_PROM_DEVICE_NAME "8042"
 
 static int
-pckbc_obio_match(struct device *parent, struct cfdata *cf, void *aux)
+pckbc_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
@@ -88,7 +88,7 @@ pckbc_obio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static int
-pckbc_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
+pckbc_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -97,15 +97,16 @@ pckbc_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 
 
 static void
-pckbc_obio_attach(struct device *parent, struct device *self, void *aux)
+pckbc_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct pckbc_js_softc *jsc = (struct pckbc_js_softc *)self;
+	struct pckbc_js_softc *jsc = device_private(self);
 	union obio_attach_args *uoba = aux;
 	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 	bus_space_tag_t iot;
 	bus_addr_t ioaddr;
 	int intr, isconsole;
 
+	jsc->jsc_pckbc.sc_dv = self;
 	iot = sa->sa_bustag;
 	ioaddr = BUS_ADDR(sa->sa_slot, sa->sa_offset);
 	intr = sa->sa_nintr ? sa->sa_pri : /* level */ 13;
@@ -124,9 +125,9 @@ pckbc_obio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-pckbc_ebus_attach(struct device *parent, struct device *self, void *aux)
+pckbc_ebus_attach(device_t parent, device_t self, void *aux)
 {
-	struct pckbc_js_softc *jsc = (struct pckbc_js_softc *)self;
+	struct pckbc_js_softc *jsc = device_private(self);
 	struct ebus_attach_args *ea = aux;
 	bus_space_tag_t iot;
 	bus_addr_t ioaddr;
@@ -134,6 +135,7 @@ pckbc_ebus_attach(struct device *parent, struct device *self, void *aux)
 	int stdin_node,	node;
 	int isconsole;
 
+	jsc->jsc_pckbc.sc_dv = self;
 	iot = ea->ea_bustag;
 	ioaddr = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	intr = ea->ea_nintr ? ea->ea_intr[0] : /* line */ 0;
@@ -170,9 +172,9 @@ pckbc_js_attach_common(struct pckbc_js_softc *jsc,
 
 		status = pckbc_cnattach(iot, ioaddr, KBCMDP, PCKBC_KBD_SLOT);
 		if (status == 0)
-			printf(": cnattach ok");
+			aprint_normal(": cnattach ok");
 		else
-			printf(": cnattach %d", status);
+			aprint_error(": cnattach %d", status);
 	}
 
 	if (pckbc_is_console(iot, ioaddr)) {
@@ -182,13 +184,13 @@ pckbc_js_attach_common(struct pckbc_js_softc *jsc,
 		bus_space_handle_t ioh_d, ioh_c;
 
 		if (bus_space_map(iot, ioaddr + KBDATAP, 1, 0, &ioh_d) != 0) {
-			printf(": unable to map data register\n");
+			aprint_error(": unable to map data register\n");
 			return;
 		}
 
 		if (bus_space_map(iot, ioaddr + KBCMDP,  1, 0, &ioh_c) != 0) {
 			bus_space_unmap(iot, ioh_d, 1);
-			printf(": unable to map cmd register\n");
+			aprint_error(": unable to map cmd register\n");
 			return;
 		}
 
@@ -204,15 +206,16 @@ pckbc_js_attach_common(struct pckbc_js_softc *jsc,
 		(void) pckbc_poll_data1(t, PCKBC_KBD_SLOT); /* flush */
 
 		if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0)
-			printf(": unable to request self test");
+			aprint_error(": unable to request self test");
 		else {
 			int response;
 
 			response = pckbc_poll_data1(t, PCKBC_KBD_SLOT);
 			if (response == 0x55)
-				printf(": selftest ok");
+				aprint_normal(": selftest ok");
 			else
-				printf(": selftest failed (0x%02x)", response);
+				aprint_error(": selftest failed (0x%02x)",
+				    response);
 		}
 	}
 
@@ -221,7 +224,7 @@ pckbc_js_attach_common(struct pckbc_js_softc *jsc,
 	sc->id = t;
 
 	/* finish off the attach */
-	printf("\n");
+	aprint_normal("\n");
 	pckbc_attach(sc);
 }
 
@@ -238,8 +241,9 @@ pckbc_js_intr_establish(struct pckbc_softc *sc, pckbport_slot_t slot)
 
 	if (jsc->jsc_establised) {
 #ifdef DEBUG
-		printf("%s: %s slot shares interrupt (already established)\n",
-		       sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		aprint_verbose_dev(sc->sc_dv,
+		    "%s slot shares interrupt (already established)\n",
+		    pckbc_slot_names[slot]);
 #endif
 		return;
 	}
@@ -251,15 +255,17 @@ pckbc_js_intr_establish(struct pckbc_softc *sc, pckbport_slot_t slot)
 	jsc->jsc_int_cookie = softint_establish(SOFTINT_SERIAL,
 	    pckbcintr_soft, &jsc->jsc_pckbc);
 	if (jsc->jsc_int_cookie == NULL) {
-		printf("%s: unable to establish %s soft interrupt\n",
-		       sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		aprint_error_dev(sc->sc_dv,
+		    "unable to establish %s soft interrupt\n",
+		    pckbc_slot_names[slot]);
 		return;
 	}
 	res = bus_intr_establish(sc->id->t_iot, jsc->jsc_intr,
 				 IPL_SERIAL, jsc_pckbdintr, jsc);
 	if (res == NULL)
-		printf("%s: unable to establish %s slot interrupt\n",
-		       sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		aprint_error_dev(sc->sc_dv,
+		    "unable to establish %s slot interrupt\n",
+		    pckbc_slot_names[slot]);
 	else
 		jsc->jsc_establised = 1;
 }

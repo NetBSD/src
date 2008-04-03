@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.108 2008/02/03 06:46:29 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.108.6.1 2008/04/03 12:42:35 mjf Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -59,6 +59,7 @@ INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
+COPTS+=		-std=gnu99
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
@@ -98,7 +99,7 @@ LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 # -fno-reorder-blocks.  Don't make this a config(1) defflag without
 # making sure this fragment remains valid.
 .if ${HAVE_GCC} > 3 && !empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
-CFLAGS.kern_synch.c+=	-fno-reorder-blocks
+COPTS.kern_synch.c+=	-fno-reorder-blocks
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
@@ -344,7 +345,9 @@ assym.d: assym.h
 	sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 
-.depend: ${DEPS} assym.d
+DEPS+=	assym.d
+
+.depend: ${DEPS}
 	${_MKTARGET_CREATE}
 	echo "${.ALLSRC}" | ${MKDEP} -D
 .endif

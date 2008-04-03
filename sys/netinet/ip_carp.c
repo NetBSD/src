@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.22 2007/12/21 02:07:55 matt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.22.6.1 2008/04/03 12:43:08 mjf Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.22 2007/12/21 02:07:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.22.6.1 2008/04/03 12:43:08 mjf Exp $");
 
 /*
  * TODO:
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.22 2007/12/21 02:07:55 matt Exp $");
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
+#include <netinet6/scope6_var.h>
 #endif
 
 #include "bpfilter.h"
@@ -1065,9 +1066,14 @@ carp_send_ad(void *v)
 			    &ip6->ip6_src, sizeof(struct in6_addr));
 		/* set the multicast destination */
 
-		ip6->ip6_dst.s6_addr8[0] = 0xff;
-		ip6->ip6_dst.s6_addr8[1] = 0x02;
+		ip6->ip6_dst.s6_addr16[0] = htons(0xff02);
 		ip6->ip6_dst.s6_addr8[15] = 0x12;
+		if (in6_setscope(&ip6->ip6_dst, sc->sc_carpdev, NULL) != 0) {
+			sc->sc_if.if_oerrors++;
+			m_freem(m);
+			CARP_LOG(sc, ("in6_setscope failed"));
+			goto retry_later;
+		}
 
 		ch_ptr = (struct carp_header *)(&ip6[1]);
 		bcopy(&ch, ch_ptr, sizeof(ch));

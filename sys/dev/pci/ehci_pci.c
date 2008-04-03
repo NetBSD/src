@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.34 2008/01/28 00:44:17 jmcneill Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.34.6.1 2008/04/03 12:42:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.34 2008/01/28 00:44:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.34.6.1 2008/04/03 12:42:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ static void ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 				   pcitag_t tag);
 static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 			       pcitag_t tag);
-static bool ehci_pci_suspend(device_t);
-static bool ehci_pci_resume(device_t);
+static bool ehci_pci_suspend(device_t PMF_FN_PROTO);
+static bool ehci_pci_resume(device_t PMF_FN_PROTO);
 
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
@@ -100,7 +100,7 @@ ehci_pci_match(struct device *parent, struct cfdata *match,
 static void
 ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
+	struct ehci_pci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
@@ -108,11 +108,14 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	const char *vendor;
-	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	const char *devname = device_xname(self);
 	char devinfo[256];
 	usbd_status r;
 	int ncomp;
 	struct usb_pci *up;
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	aprint_naive(": USB controller\n");
 
@@ -200,7 +203,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_FOREACH(up, &ehci_pci_alldevs, next) {
 		if (up->bus == pa->pa_bus && up->device == pa->pa_device) {
 			DPRINTF(("ehci_pci_attach: companion %s\n",
-				 USBDEVNAME(up->usb->bdev)));
+				 device_xname(up->usb)));
 			sc->sc.sc_comps[ncomp++] = up->usb;
 			if (ncomp >= EHCI_COMPANION_MAX)
 				break;
@@ -216,18 +219,18 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (!pmf_device_register(self, ehci_pci_suspend, ehci_pci_resume))
+	if (!pmf_device_register1(self, ehci_pci_suspend, ehci_pci_resume,
+	                          ehci_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 static int
 ehci_pci_detach(device_ptr_t self, int flags)
 {
-	struct ehci_pci_softc *sc = (struct ehci_pci_softc *)self;
+	struct ehci_pci_softc *sc = device_private(self);
 	int rv;
 
 	pmf_device_deregister(self);
@@ -247,8 +250,9 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-CFATTACH_DECL(ehci_pci, sizeof(struct ehci_pci_softc),
-    ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate);
+CFATTACH_DECL2_NEW(ehci_pci, sizeof(struct ehci_pci_softc),
+    ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate, NULL,
+    ehci_childdet);
 
 #ifdef EHCI_DEBUG
 static void
@@ -283,7 +287,7 @@ ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 static void
 ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
-	const char *devname = sc->sc_bus.bdev.dv_xname;
+	const char *devname = device_xname(sc->sc_dev);
 	u_int32_t cparams, addr, cap;
 	pcireg_t legsup;
 	int maxcap = 10;
@@ -311,7 +315,7 @@ next:
 static void
 ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
-	const char *devname = sc->sc_bus.bdev.dv_xname;
+	const char *devname = device_xname(sc->sc_dev);
 	u_int32_t cparams, addr, cap;
 	pcireg_t legsup;
 	int maxcap = 10;
@@ -366,21 +370,21 @@ next:
 }
 
 static bool
-ehci_pci_suspend(device_t dv)
+ehci_pci_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct ehci_pci_softc *sc = device_private(dv);
 
-	ehci_suspend(dv);
+	ehci_suspend(dv PMF_FN_CALL);
 	ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
 
 	return true;
 }
 
 static bool
-ehci_pci_resume(device_t dv)
+ehci_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	struct ehci_pci_softc *sc = device_private(dv);
 
 	ehci_get_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
-	return ehci_resume(dv);
+	return ehci_resume(dv PMF_FN_CALL);
 }

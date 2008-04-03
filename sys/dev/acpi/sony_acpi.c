@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.3 2008/01/06 19:42:03 christos Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.3.10.1 2008/04/03 12:42:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.3 2008/01/06 19:42:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.3.10.1 2008/04/03 12:42:37 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.3 2008/01/06 19:42:03 christos Exp $
 #define SONY_NOTIFY_SuspendReleased		0x0c
 
 struct sony_acpi_softc {
-        struct device sc_dev;
+	device_t sc_dev;
 	struct sysctllog *sc_log;
 	struct acpi_devnode *sc_node;
 
@@ -89,24 +89,23 @@ static const char * const sony_acpi_ids[] = {
 	NULL
 };
 
-static int	sony_acpi_match(struct device *, struct cfdata *, void *);
-static void	sony_acpi_attach(struct device *, struct device *, void *);
+static int	sony_acpi_match(device_t, cfdata_t, void *);
+static void	sony_acpi_attach(device_t, device_t, void *);
 static ACPI_STATUS sony_acpi_eval_set_integer(ACPI_HANDLE, const char *,
     ACPI_INTEGER, ACPI_INTEGER *);
 static void	sony_acpi_quirk_setup(struct sony_acpi_softc *);
 static void	sony_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
-static bool	sony_acpi_suspend(device_t);
-static bool	sony_acpi_resume(device_t);
+static bool	sony_acpi_suspend(device_t PMF_FN_PROTO);
+static bool	sony_acpi_resume(device_t PMF_FN_PROTO);
 static void	sony_acpi_brightness_down(device_t);
 static void	sony_acpi_brightness_up(device_t);
 static ACPI_STATUS sony_acpi_find_pic(ACPI_HANDLE, UINT32, void *, void **);
 
-CFATTACH_DECL(sony_acpi, sizeof(struct sony_acpi_softc),
+CFATTACH_DECL_NEW(sony_acpi, sizeof(struct sony_acpi_softc),
     sony_acpi_match, sony_acpi_attach, NULL, NULL);
 
 static int
-sony_acpi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+sony_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -133,7 +132,7 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, buf, &acpi_val);
 	if (ACPI_FAILURE(rv)) {
 #ifdef DIAGNOSTIC
-		printf("%s: couldn't get `%s'\n", device_xname(&sc->sc_dev), buf);
+		printf("%s: couldn't get `%s'\n", device_xname(sc->sc_dev), buf);
 #endif
 		return EIO;
 	}
@@ -153,7 +152,7 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 	if (ACPI_FAILURE(rv)) {
 #ifdef DIAGNOSTIC
 		printf("%s: couldn't set `%s' to %d\n",
-		    device_xname(&sc->sc_dev), buf, val);
+		    device_xname(sc->sc_dev), buf, val);
 #endif
 		return EIO;
 	}
@@ -161,10 +160,9 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 }
 
 static ACPI_STATUS
-sony_walk_cb(ACPI_HANDLE hnd, UINT32 v, void *context,
-    void **status)
+sony_walk_cb(ACPI_HANDLE hnd, UINT32 v, void *context, void **status)
 {
-	struct sony_acpi_softc *sc = (void*)context;
+	struct sony_acpi_softc *sc = (void *)context;
 	const struct sysctlnode *node, *snode;
 	const char *name = acpi_name(hnd);
 	ACPI_INTEGER acpi_val;
@@ -196,7 +194,7 @@ sony_walk_cb(ACPI_HANDLE hnd, UINT32 v, void *context,
 		goto out;
 
 	if ((rv = sysctl_createv(&sc->sc_log, 0, &node, &snode, 0,
-	    CTLTYPE_NODE, device_xname(&sc->sc_dev),
+	    CTLTYPE_NODE, device_xname(sc->sc_dev),
 	    SYSCTL_DESCR("sony controls"),
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto out;
@@ -210,7 +208,7 @@ out:
 #ifdef DIAGNOSTIC
 	if (rv)
 		printf("%s: sysctl_createv failed (rv = %d)\n",
-		    device_xname(&sc->sc_dev), rv);
+		    device_xname(sc->sc_dev), rv);
 #endif
 	return AE_OK;
 }
@@ -246,9 +244,9 @@ sony_acpi_eval_set_integer(ACPI_HANDLE handle, const char *path,
 }
 
 static void
-sony_acpi_attach(struct device *parent, struct device *self, void *aux)
+sony_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct sony_acpi_softc *sc = (void *)self;
+	struct sony_acpi_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 	int i;
@@ -257,6 +255,7 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": Sony Miscellaneous Controller\n");
 
 	sc->sc_node = aa->aa_node;
+	sc->sc_dev = self;
 
 	rv = AcpiWalkNamespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT, 100,
 	    sony_acpi_find_pic, sc, NULL);
@@ -274,7 +273,7 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sony_acpi_quirk_setup(sc);
 
 	/* Configure suspend button and hotkeys */
-	sc->sc_smpsw[SONY_PSW_SLEEP].smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_smpsw[SONY_PSW_SLEEP].smpsw_name = device_xname(self);
 	sc->sc_smpsw[SONY_PSW_SLEEP].smpsw_type = PSWITCH_TYPE_SLEEP;
 	sc->sc_smpsw[SONY_PSW_DISPLAY_CYCLE].smpsw_name =
 	    PSWITCH_HK_DISPLAY_CYCLE;
@@ -285,8 +284,9 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < SONY_PSW_LAST; i++)
 		if (sysmon_pswitch_register(&sc->sc_smpsw[i]) != 0) {
-			aprint_error("%s: couldn't register %s with sysmon\n",
-			    device_xname(self), sc->sc_smpsw[i].smpsw_name);
+			aprint_error_dev(self, 
+			    "couldn't register %s with sysmon\n",
+			    sc->sc_smpsw[i].smpsw_name);
 			sc->sc_smpsw_valid = 0;
 		}
 
@@ -294,16 +294,16 @@ sony_acpi_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, sony_acpi_notify_handler, self);
 	if (ACPI_FAILURE(rv))
-		aprint_error("%s: couldn't install notify handler (%d)\n",
-		    device_xname(self), rv);
+		aprint_error_dev(self,
+		    "couldn't install notify handler (%d)\n", rv);
 
 	/* Install sysctl handler */
 	rv = AcpiWalkNamespace(ACPI_TYPE_METHOD,
 	    sc->sc_node->ad_handle, 1, sony_walk_cb, sc, NULL);
 #ifdef DIAGNOSTIC
 	if (ACPI_FAILURE(rv))
-		aprint_error("%s: Cannot walk ACPI namespace (%d)\n",
-		    device_xname(self), rv);
+		aprint_error_dev(self, "Cannot walk ACPI namespace (%d)\n",
+		    rv);
 #endif
 
 	if (!pmf_device_register(self, sony_acpi_suspend, sony_acpi_resume))
@@ -387,15 +387,15 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 	case SONY_NOTIFY_ZoomReleased:
 		break;
 	default:
-		printf("%s: unknown notify event 0x%x\n",
-		    device_xname(&sc->sc_dev), notify);
+		aprint_debug_dev(dv, "unknown notify event 0x%x\n",
+		    notify);
 		break;
 	}
 	splx(s);
 }
 
 static bool
-sony_acpi_suspend(device_t dv)
+sony_acpi_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct sony_acpi_softc *sc = device_private(dv);
 
@@ -405,7 +405,7 @@ sony_acpi_suspend(device_t dv)
 }
 
 static bool
-sony_acpi_resume(device_t dv)
+sony_acpi_resume(device_t dv PMF_FN_ARGS)
 {
 	struct sony_acpi_softc *sc = device_private(dv);
 

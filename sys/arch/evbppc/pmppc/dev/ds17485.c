@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.3 2008/01/10 15:17:41 tsutsui Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.3.6.1 2008/04/03 12:42:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.3 2008/01/10 15:17:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.3.6.1 2008/04/03 12:42:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,18 +175,18 @@ __KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.3 2008/01/10 15:17:41 tsutsui Exp $");
 #include <arch/evbppc/pmppc/dev/mainbus.h>
 #include <machine/pmppc.h>
 
-static int	rtc_match(struct device *, struct cfdata *, void *);
-static void	rtc_attach(struct device *, struct device *, void *);
+static int	rtc_match(device_t, cfdata_t, void *);
+static void	rtc_attach(device_t, device_t, void *);
 
 static u_int rtc_read(struct mc146818_softc *, u_int);
 static void rtc_write(struct mc146818_softc *, u_int, u_int);
 
-CFATTACH_DECL(rtc, sizeof(struct mc146818_softc),
+CFATTACH_DECL_NEW(rtc, sizeof(struct mc146818_softc),
     rtc_match, rtc_attach, NULL, NULL);
 
 static int	rtc_attached = 0;
 int
-rtc_match(struct device *parent, struct cfdata *cf, void *aux)
+rtc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *maa = aux;
 
@@ -194,15 +194,16 @@ rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-rtc_attach(struct device *parent, struct device *self, void *aux)
+rtc_attach(device_t parent, device_t self, void *aux)
 {
-	struct mc146818_softc *sc = (struct mc146818_softc *)self;
+	struct mc146818_softc *sc = device_private(self);
 	struct mainbus_attach_args *maa = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bst = maa->mb_bt;
 	if (bus_space_map(sc->sc_bst, maa->mb_addr, PMPPC_RTC_SIZE, 0,
 			  &sc->sc_bsh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -219,8 +220,8 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_year0 = 1900;
 	mc146818_attach(sc);
 
-	/* printf(": Dallas Semiconductor DS17485\n"); */
-	printf("\n");
+	/* aprint_normal(": Dallas Semiconductor DS17485\n"); */
+	aprint_normal("\n");
 }
 
 u_int

@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.16 2008/02/07 01:21:56 dyoung Exp $ */
+/* $NetBSD: if_msk.c,v 1.16.6.1 2008/04/03 12:42:50 mjf Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.16 2008/02/07 01:21:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.16.6.1 2008/04/03 12:42:50 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -893,7 +893,10 @@ void msk_reset(struct sk_softc *sc)
 	/* Reset status ring. */
 	bzero((char *)sc->sk_status_ring,
 	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
+	bus_dmamap_sync(sc->sc_dmatag, sc->sk_status_map, 0,
+	    sc->sk_status_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 	sc->sk_status_idx = 0;
+	sc->sk_status_own_idx = 0;
 
 	sk_win_write_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_RESET);
 	sk_win_write_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_UNRESET);
@@ -1256,8 +1259,6 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_5;
 	}
 	sc->sk_status_ring = (struct msk_status_desc *)kva;
-	bzero(sc->sk_status_ring,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
 
 	/* Reset the adapter. */
 	msk_reset(sc);
@@ -1741,11 +1742,12 @@ msk_txeof(struct sk_if_softc *sc_if, int idx)
 		if (sc_if->sk_cdata.sk_tx_cnt <= 0)
 			break;
 		prog++;
+		cur_tx = &sc_if->sk_rdata->sk_tx_ring[cons];
+
 		MSK_CDTXSYNC(sc_if, cons, 1,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-
-		cur_tx = &sc_if->sk_rdata->sk_tx_ring[cons];
 		sk_ctl = cur_tx->sk_ctl;
+		MSK_CDTXSYNC(sc_if, cons, 1, BUS_DMASYNC_PREREAD);
 #ifdef MSK_DEBUG
 		if (mskdebug >= 2)
 			msk_dump_txdesc(cur_tx, cons);
@@ -1816,6 +1818,9 @@ msk_intr(void *xsc)
 	struct ifnet		*ifp0 = NULL, *ifp1 = NULL;
 	int			claimed = 0;
 	u_int32_t		status;
+	uint32_t		st_status;
+	uint16_t		st_len;
+	uint8_t			st_opcode, st_link;
 	struct msk_status_desc	*cur_st;
 
 	status = CSR_READ_4(sc, SK_Y2_ISSR2);
@@ -1841,42 +1846,56 @@ msk_intr(void *xsc)
 		msk_intr_yukon(sc_if1);
 	}
 
-	MSK_CDSTSYNC(sc, sc->sk_status_idx,
-	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	cur_st = &sc->sk_status_ring[sc->sk_status_idx];
+	for (;;) {
+		cur_st = &sc->sk_status_ring[sc->sk_status_idx];
+		MSK_CDSTSYNC(sc, sc->sk_status_idx,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		st_opcode = cur_st->sk_opcode;
+		if ((st_opcode & SK_Y2_STOPC_OWN) == 0) {
+			MSK_CDSTSYNC(sc, sc->sk_status_idx,
+			    BUS_DMASYNC_PREREAD);
+			break;
+		}
+		st_status = le32toh(cur_st->sk_status);
+		st_len = le16toh(cur_st->sk_len);
+		st_link = cur_st->sk_link;
+		st_opcode &= ~SK_Y2_STOPC_OWN;
 
-	while (cur_st->sk_opcode & SK_Y2_STOPC_OWN) {
-		cur_st->sk_opcode &= ~SK_Y2_STOPC_OWN;
-		switch (cur_st->sk_opcode) {
+		switch (st_opcode) {
 		case SK_Y2_STOPC_RXSTAT:
-			msk_rxeof(sc->sk_if[cur_st->sk_link],
-			    letoh16(cur_st->sk_len),
-			    letoh32(cur_st->sk_status));
-			SK_IF_WRITE_2(sc->sk_if[cur_st->sk_link], 0,
+			msk_rxeof(sc->sk_if[st_link], st_len, st_status);
+			SK_IF_WRITE_2(sc->sk_if[st_link], 0,
 			    SK_RXQ1_Y2_PREF_PUTIDX,
-			    sc->sk_if[cur_st->sk_link]->sk_cdata.sk_rx_prod);
+			    sc->sk_if[st_link]->sk_cdata.sk_rx_prod);
 			break;
 		case SK_Y2_STOPC_TXSTAT:
 			if (sc_if0)
-				msk_txeof(sc_if0,
-				    letoh32(cur_st->sk_status)
+				msk_txeof(sc_if0, st_status
 				    & SK_Y2_ST_TXA1_MSKL);
 			if (sc_if1)
 				msk_txeof(sc_if1,
-				    ((letoh32(cur_st->sk_status)
-					& SK_Y2_ST_TXA2_MSKL)
+				    ((st_status & SK_Y2_ST_TXA2_MSKL)
 					>> SK_Y2_ST_TXA2_SHIFTL)
-				    | ((letoh16(cur_st->sk_len) & SK_Y2_ST_TXA2_MSKH) << SK_Y2_ST_TXA2_SHIFTH));
+				    | ((st_len & SK_Y2_ST_TXA2_MSKH) << SK_Y2_ST_TXA2_SHIFTH));
 			break;
 		default:
-			aprint_error("opcode=0x%x\n", cur_st->sk_opcode);
+			aprint_error("opcode=0x%x\n", st_opcode);
 			break;
 		}
 		SK_INC(sc->sk_status_idx, MSK_STATUS_RING_CNT);
+	}
 
-		MSK_CDSTSYNC(sc, sc->sk_status_idx,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		cur_st = &sc->sk_status_ring[sc->sk_status_idx];
+#define MSK_STATUS_RING_OWN_CNT(sc)			\
+	(((sc)->sk_status_idx + MSK_STATUS_RING_CNT -	\
+	    (sc)->sk_status_own_idx) % MSK_STATUS_RING_CNT)
+
+	while (MSK_STATUS_RING_OWN_CNT(sc) > MSK_STATUS_RING_CNT / 2) {
+		cur_st = &sc->sk_status_ring[sc->sk_status_own_idx];
+		cur_st->sk_opcode &= ~SK_Y2_STOPC_OWN;
+		MSK_CDSTSYNC(sc, sc->sk_status_own_idx,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		SK_INC(sc->sk_status_own_idx, MSK_STATUS_RING_CNT);
 	}
 
 	if (status & SK_Y2_IMR_BMU) {

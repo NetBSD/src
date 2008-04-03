@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.41 2008/02/17 06:03:13 uwe Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.41.6.1 2008/04/03 12:42:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.41 2008/02/17 06:03:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.41.6.1 2008/04/03 12:42:17 mjf Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -116,7 +116,7 @@ struct hd64461pcmcia_window_cookie {
 
 struct hd64461pcmcia_channel {
 	struct hd64461pcmcia_softc *ch_parent;
-	struct device *ch_pcmcia;
+	device_t ch_pcmcia;
 	enum controller_channel ch_channel;
 
 	/* memory space */
@@ -146,7 +146,8 @@ struct hd64461pcmcia_event {
 };
 
 struct hd64461pcmcia_softc {
-	struct device sc_dev;
+	device_t sc_dev;
+
 	enum hd64461_module_id sc_module_id;
 	int sc_shutdown;
 
@@ -196,13 +197,12 @@ STATIC struct pcmcia_chip_functions hd64461pcmcia_functions = {
 	hd64461pcmcia_chip_socket_settype,
 };
 
-STATIC int hd64461pcmcia_match(struct device *, struct cfdata *, void *);
-STATIC void hd64461pcmcia_attach(struct device *, struct device *, void *);
+STATIC int hd64461pcmcia_match(device_t, cfdata_t, void *);
+STATIC void hd64461pcmcia_attach(device_t, device_t, void *);
 STATIC int hd64461pcmcia_print(void *, const char *);
-STATIC int hd64461pcmcia_submatch(struct device *, struct cfdata *,
-				  const int *, void *);
+STATIC int hd64461pcmcia_submatch(device_t, cfdata_t, const int *, void *);
 
-CFATTACH_DECL(hd64461pcmcia, sizeof(struct hd64461pcmcia_softc),
+CFATTACH_DECL_NEW(hd64461pcmcia, sizeof(struct hd64461pcmcia_softc),
     hd64461pcmcia_match, hd64461pcmcia_attach, NULL, NULL);
 
 STATIC void hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *,
@@ -244,7 +244,7 @@ _BUS_SPACE_SET_MULTI(_sh3_pcmcia_bug, 1, 8)
 #define	DELAY_MS(x)	delay((x) * 1000)
 
 STATIC int
-hd64461pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
+hd64461pcmcia_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
 
@@ -252,11 +252,14 @@ hd64461pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 STATIC void
-hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
+hd64461pcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
-	struct hd64461pcmcia_softc *sc = (struct hd64461pcmcia_softc *)self;
+	struct hd64461pcmcia_softc *sc;
 	int error;
+
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	sc->sc_module_id = ha->ha_module_id;
 
@@ -329,7 +332,7 @@ hd64461pcmcia_print(void *arg, const char *pnp)
 }
 
 STATIC int
-hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf,
+hd64461pcmcia_submatch(device_t parent, cfdata_t cf,
 		       const int *ldesc, void *aux)
 {
 	struct pcmciabus_attach_args *paa = aux;
@@ -356,7 +359,7 @@ STATIC void
 hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
     enum controller_channel channel)
 {
-	struct device *parent = (struct device *)sc;
+	device_t parent = sc->sc_dev;
 	struct hd64461pcmcia_channel *ch = &sc->sc_ch[channel];
 	struct pcmciabus_attach_args paa;
 	bus_addr_t membase;

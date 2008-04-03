@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.14 2005/12/11 12:16:39 christos Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.14.74.1 2008/04/03 12:42:11 mjf Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.14 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.14.74.1 2008/04/03 12:42:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.14 2005/12/11 12:16:39 christos Exp
 
 int	vga_jazzio_init_tag(const char *, bus_space_tag_t *, bus_space_tag_t *);
 paddr_t	vga_jazzio_mmap(void *, off_t, int);
-int	vga_jazzio_match(struct device *, struct cfdata *, void *);
-void	vga_jazzio_attach(struct device *, struct device *, void *);
+int	vga_jazzio_match(device_t, cfdata_t, void *);
+void	vga_jazzio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(vga_jazzio, sizeof(struct vga_softc),
+CFATTACH_DECL_NEW(vga_jazzio, sizeof(struct vga_softc),
     vga_jazzio_match, vga_jazzio_attach, NULL, NULL);
 
 const struct vga_funcs vga_jazzio_funcs = {
@@ -135,7 +135,7 @@ vga_jazzio_mmap(void *v, off_t offset, int prot)
 }
 
 int
-vga_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
+vga_jazzio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot, memt;
@@ -151,14 +151,15 @@ vga_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-vga_jazzio_attach(struct device *parent, struct device *self, void *aux)
+vga_jazzio_attach(device_t parent, device_t self, void *aux)
 {
-	struct vga_softc *sc = (void *)self;
+	struct vga_softc *sc = device_private(self);
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot, memt;
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	vga_jazzio_init_tag(ja->ja_name, &iot, &memt);
 	vga_common_attach(sc, iot, memt, WSDISPLAY_TYPE_JAZZVGA, 0,
 	    &vga_jazzio_funcs);

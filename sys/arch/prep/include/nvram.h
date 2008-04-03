@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.4 2007/03/21 04:13:53 garbled Exp $ */
+/* $NetBSD: nvram.h,v 1.4.34.1 2008/04/03 12:42:23 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ struct pnviocdesc {
 
 #if defined(_KERNEL)
 struct prep_mk48txx_softc {
-	struct device   sc_dev;
+	device_t *sc_dev;
 	bus_space_tag_t sc_bst;	 /* bus tag & handle */
 	bus_space_handle_t sc_bsh;      /* */
 

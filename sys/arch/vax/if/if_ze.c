@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.12 2005/12/11 12:19:34 christos Exp $ */
+/*      $NetBSD: if_ze.c,v 1.12.74.1 2008/04/03 12:42:27 mjf Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.12 2005/12/11 12:19:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.12.74.1 2008/04/03 12:42:27 mjf Exp $");
 
 #include "opt_cputype.h"
 
@@ -57,42 +57,75 @@ __KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.12 2005/12/11 12:19:34 christos Exp $");
 #include <machine/cpu.h>
 #include <machine/scb.h>
 #include <machine/sid.h>
+#include <machine/mainbus.h>
 
 #include <dev/ic/sgecreg.h>
 #include <dev/ic/sgecvar.h>
 
 #include "ioconf.h"
+
 /*
  * Addresses.
  */
 #define SGECADDR        0x20008000
 #define NISA_ROM        0x20084000
 #define NISA_ROM_VXT    0x200c4000
+#define	NISA_ROM_VSBUS	0x27800000
 #define	SGECVEC		0x108
 
-static	int	zematch __P((struct device *, struct cfdata *, void *));
-static	void	zeattach __P((struct device *, struct device *, void *));
+static int	ze_mainbus_match(device_t, cfdata_t, void *);
+static void	ze_mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ze_ibus, sizeof(struct ze_softc),
-    zematch, zeattach, NULL, NULL);
+static const struct sgec_data {
+	uint32_t sd_boardtype;
+	bus_addr_t sd_addr;
+	bus_addr_t sd_rom;
+	uint16_t sd_intvec;
+	uint8_t sd_romshift;
+} sgec_data[] = {
+	{ VAX_BTYP_660, SGECADDR, NISA_ROM, SGECVEC, 24, },
+#if VXT2000 || VAXANY
+	{ VAX_BTYP_VXT, SGECADDR, NISA_ROM_VXT, 0x200, 0, },
+#endif
+	{ VAX_BTYP_670, SGECADDR, NISA_ROM, SGECVEC, 8, },
+	{ VAX_BTYP_680, SGECADDR, NISA_ROM, SGECVEC, 8, },
+	{ VAX_BTYP_681, SGECADDR, NISA_ROM, SGECVEC, 8, },
+	{ VAX_BTYP_48, SGECADDR, NISA_ROM_VSBUS, SGECVEC, 0, },
+	{ VAX_BTYP_49, SGECADDR, NISA_ROM_VSBUS, SGECVEC, 0, },
+	{ VAX_BTYP_53, SGECADDR, NISA_ROM, SGECVEC, 8, },
+};
+
+static const struct sgec_data *
+ze_find(void)
+{
+	size_t i;
+	const struct sgec_data *sd;
+	for (i = 0, sd = sgec_data; i < __arraycount(sgec_data); i++, sd++) {
+		if (vax_boardtype == sd->sd_boardtype)
+			return sd;
+	}
+
+	return NULL;
+}
+
+CFATTACH_DECL_NEW(ze_mainbus, sizeof(struct ze_softc),
+    ze_mainbus_match, ze_mainbus_attach, NULL, NULL);
 
 /*
  * Check for present SGEC.
  */
 int
-zematch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+ze_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct bp_conf *bp = aux;
+	struct mainbus_attach_args * const ma = aux;
 
 	/*
 	 * Should some more intelligent checking be done???
 	 */
-	if (strcmp(bp->type, "sgec") == 0)
-		return 1;
-	return 0;
+	if (strcmp(ma->ma_type, "sgec"))
+		return 0;
+
+	return ze_find() != NULL;
 }
 
 /*
@@ -101,49 +134,40 @@ zematch(parent, cf, aux)
  * to accept packets.
  */
 void
-zeattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ze_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	extern struct vax_bus_dma_tag vax_bus_dma_tag;
-	struct	ze_softc *sc = (struct ze_softc *)self;
-	paddr_t nisarom;
-	int *ea, i;
+	struct mainbus_attach_args * const ma = aux;
+	struct ze_softc * const sc = device_private(self);
+	const struct sgec_data * const sd = ze_find();
+	const uint32_t *ea;
+	size_t i;
+	int error;
+
+	sc->sc_dev = self;
 
 	/*
 	 * Map in SGEC registers.
 	 */
-	sc->sc_ioh = vax_map_physmem(SGECADDR, 1);
-	sc->sc_iot = 0; /* :-) */
-	sc->sc_dmat = &vax_bus_dma_tag;
-
-	sc->sc_intvec = SGECVEC;
+	sc->sc_dmat = ma->ma_dmat;
+	sc->sc_iot = ma->ma_iot;
+	sc->sc_intvec = sd->sd_intvec;
+	error = bus_space_map(sc->sc_iot, sd->sd_addr, PAGE_SIZE, 0,
+	    &sc->sc_ioh);
+	if (error) {
+		aprint_error(": failed to map %#lx: %d\n", sd->sd_addr, error);
+		return;
+	}
 
 	/*
 	 * Map in, read and release ethernet rom address.
 	 */
-	nisarom = (vax_boardtype == VAX_BTYP_VXT ? NISA_ROM_VXT : NISA_ROM);
-	ea = (int *)vax_map_physmem(nisarom, 1);
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		if (vax_boardtype == VAX_BTYP_660)
-			sc->sc_enaddr[i] = (ea[i] >> 24) & 0377;
-#if VXT2000 || VAXANY
-		else if (vax_boardtype == VAX_BTYP_VXT)
-			sc->sc_enaddr[i] = ea[i] & 0377;
-#endif
-		else
-			sc->sc_enaddr[i] = (ea[i] >> 8) & 0377;
-	}
+	ea = (uint32_t *)vax_map_physmem(sd->sd_rom, 1);
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		sc->sc_enaddr[i] = (ea[i] >> sd->sd_romshift) & 0377;
 	vax_unmap_physmem((vaddr_t)ea, 1);
 
-#if VXT2000 || VAXANY
-	if (vax_boardtype == VAX_BTYP_VXT)
-		scb_vecalloc(0x200, (void (*)(void *)) sgec_intr, sc,
-		    SCB_ISTACK, &sc->sc_intrcnt);
-	else
-#endif
-		scb_vecalloc(SGECVEC, (void (*)(void *)) sgec_intr, sc,
-		    SCB_ISTACK, &sc->sc_intrcnt);
+	scb_vecalloc(sc->sc_intvec, (void (*)(void *)) sgec_intr, sc,
+	    SCB_ISTACK, &sc->sc_intrcnt);
 
 	sgec_attach(sc);
 }

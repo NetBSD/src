@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.321 2008/01/16 09:37:06 ad Exp $
+#	$NetBSD: INSTALL,v 1.321.6.1 2008/04/03 12:42:17 mjf Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -512,6 +512,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 #iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
@@ -742,7 +743,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 
 # Pull in optional local configuration
-include	"arch/i386/conf/INSTALL.local"
+cinclude "arch/i386/conf/INSTALL.local"
 
 
 # Pseudo-Devices

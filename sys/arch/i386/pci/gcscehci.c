@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.1 2007/07/08 01:13:26 jmcneill Exp $ */
+/* $NetBSD: gcscehci.c,v 1.1.36.1 2008/04/03 12:42:19 mjf Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.1 2007/07/08 01:13:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.1.36.1 2008/04/03 12:42:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,19 +97,22 @@ gcscehci_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 gcscehci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct gcscehci_softc *sc = (struct gcscehci_softc *)self;
+	struct gcscehci_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	const char *vendor;
-	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	const char *devname = device_xname(self);
 	char devinfo[256];
 	usbd_status r;
 	bus_addr_t ehcibase;
 	int ncomp;
 	struct usb_pci *up;
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = self;
 
 	aprint_naive(": USB controller\n");
 
@@ -170,7 +173,7 @@ gcscehci_attach(struct device *parent, struct device *self, void *aux)
 	TAILQ_FOREACH(up, &ehci_pci_alldevs, next) {
 		if (up->bus == pa->pa_bus && up->device == pa->pa_device) {
 			DPRINTF(("gcscehci_attach: companion %s\n",
-				 USBDEVNAME(up->usb->bdev)));
+				 device_xname(up->usb)));
 			sc->sc.sc_comps[ncomp++] = up->usb;
 			if (ncomp >= EHCI_COMPANION_MAX)
 				break;
@@ -185,9 +188,8 @@ gcscehci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
-CFATTACH_DECL(gcscehci, sizeof(struct gcscehci_softc),
+CFATTACH_DECL_NEW(gcscehci, sizeof(struct gcscehci_softc),
     gcscehci_match, gcscehci_attach, NULL, ehci_activate);

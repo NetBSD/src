@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.1 2008/01/04 21:06:38 ad Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.1.14.1 2008/04/03 12:42:25 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1 2008/01/04 21:06:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1.14.1 2008/04/03 12:42:25 mjf Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.1 2008/01/04 21:06:38 ad Exp $");
 #include <sys/kobj.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+
+#include <sh3/cache.h>
 
 int
 kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
@@ -83,9 +85,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		if (addr == 0)
 			return -1;
 
-		tmp = (Elf_Addr)(relocbase + addr + rela->r_addend);
-		if (*where != tmp)
-			*where = tmp;
+		tmp = (Elf_Addr)(addr + *where + rela->r_addend);
+		*where = tmp;
 		break;
 
 	case R_TYPE(GLOB_DAT):
@@ -116,6 +117,9 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 int
 kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 {
+
+	if (load)
+		sh_icache_sync_range((vaddr_t)base, size);
 
 	return 0;
 }

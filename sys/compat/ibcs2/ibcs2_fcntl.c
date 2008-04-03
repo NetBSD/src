@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.33 2007/12/20 23:02:49 dsl Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.33.6.1 2008/04/03 12:42:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.33 2007/12/20 23:02:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.33.6.1 2008/04/03 12:42:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,15 +174,13 @@ ibcs2_sys_open(struct lwp *l, const struct ibcs2_sys_open_args *uap, register_t 
 	ret = sys_open(l, &bsd_ua, retval);
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
-		struct filedesc *fdp = p->p_fd;
-		struct file *fp;
+		file_t *fp;
 
-		if ((fp = fd_getfile(fdp, *retval)) != NULL) {
-			FILE_USE(fp);
+		if ((fp = fd_getfile(*retval)) != NULL) {
 			/* ignore any error, just give it a try */
 			if (fp->f_type == DTYPE_VNODE)
-				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, NULL, l);
-			FILE_UNUSE(fp, l);
+				(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, NULL);
+			fd_putfile(*retval);
 		}
 	}
 	return ret;
@@ -308,7 +306,7 @@ ibcs2_sys_fcntl(struct lwp *l, const struct ibcs2_sys_fcntl_args *uap, register_
 		if (error)
 			return error;
 		cvt_iflock2flock(&ifl, &fl);
-		error = do_fcntl_lock(l, SCARG(uap, fd), cmd, &fl);
+		error = do_fcntl_lock(SCARG(uap, fd), cmd, &fl);
 		if (cmd != F_GETLK || error != 0)
 			return error;
 		cvt_flock2iflock(&fl, &ifl);

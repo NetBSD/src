@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.126 2008/02/08 18:10:40 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.126.6.1 2008/04/03 12:42:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.126 2008/02/08 18:10:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.126.6.1 2008/04/03 12:42:18 mjf Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -287,8 +287,8 @@ void npxinit(struct cpu_info *ci)
 	fninit();
 	if (npx586bug1(4195835, 3145727) != 0) {
 		i386_fpu_fdivbug = 1;
-		aprint_normal("%s: WARNING: Pentium FDIV bug detected!\n",
-		    ci->ci_dev->dv_xname);
+		aprint_normal_dev(ci->ci_dev,
+		    "WARNING: Pentium FDIV bug detected!\n");
 	}
 	lcr0(rcr0() | (CR0_TS));
 }
@@ -314,8 +314,8 @@ npxattach(struct npx_softc *sc)
 	else
 		npxdna_func = npxdna_s87;
 
-	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
-		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
+	if (!pmf_device_register(sc->sc_dev, NULL, NULL))
+		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
 }
 
 int
@@ -358,7 +358,7 @@ npxintr(void *arg, struct intrframe *frame)
 	sc = npx_softc;
 
 	uvmexp.traps++;
-	IPRINTF(("%s: fp intr\n", ci->ci_dev->dv_xname));
+	IPRINTF(("%s: fp intr\n", device_xname(ci->ci_dev)));
 
 #ifndef XEN
 	/*
@@ -622,7 +622,7 @@ npxdna_s87(struct cpu_info *ci)
 	s = splhigh();		/* lock out IPI's while we clean house.. */
 	l = ci->ci_curlwp;
 
-	IPRINTF(("%s: dna for lwp %p\n", ci->ci_dev->dv_xname, l));
+	IPRINTF(("%s: dna for lwp %p\n", device_xname(ci->ci_dev), l));
 	/*
 	 * If someone else was using our FPU, save their state (which does an
 	 * implicit initialization); otherwise, initialize the FPU state to
@@ -632,14 +632,14 @@ npxdna_s87(struct cpu_info *ci)
 		npxsave_cpu(true);
 	else {
 		clts();
-		IPRINTF(("%s: fp init\n", ci->ci_dev->dv_xname));
+		IPRINTF(("%s: fp init\n", device_xname(ci->ci_dev)));
 		fninit();
 		fwait();
 		stts();
 	}
 	splx(s);
 
-	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
+	IPRINTF(("%s: done saving\n", device_xname(ci->ci_dev)));
 	KDASSERT(ci->ci_fpcurlwp == NULL);
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
 		npxsave_lwp(l, true);
@@ -688,7 +688,7 @@ npxsave_cpu(bool save)
 	if (l == NULL)
 		return;
 
-	IPRINTF(("%s: fp CPU %s lwp %p\n", ci->ci_dev->dv_xname,
+	IPRINTF(("%s: fp CPU %s lwp %p\n", device_xname(ci->ci_dev),
 	    save? "save" : "flush", l));
 
 	if (save) {
@@ -756,7 +756,7 @@ npxsave_lwp(struct lwp *l, bool save)
 		return;
 	}
 
-	IPRINTF(("%s: fp %s lwp %p\n", ci->ci_dev->dv_xname,
+	IPRINTF(("%s: fp %s lwp %p\n", device_xname(ci->ci_dev),
 	    save? "save" : "flush", l));
 
 #if defined(MULTIPROCESSOR)
@@ -770,8 +770,8 @@ npxsave_lwp(struct lwp *l, bool save)
 #endif
 
 		IPRINTF(("%s: fp ipi to %s %s lwp %p\n",
-		    ci->ci_dev->dv_xname,
-		    oci->ci_dev->dv_xname,
+		    device_xname(ci->ci_dev),
+		    device_xname(oci->ci_dev),
 		    save? "save" : "flush", l));
 
 		x86_send_ipi(oci,

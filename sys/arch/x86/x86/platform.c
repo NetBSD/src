@@ -1,4 +1,4 @@
-/* $NetBSD: platform.c,v 1.3 2007/12/09 21:14:26 xtraeme Exp $ */
+/* $NetBSD: platform.c,v 1.3.14.1 2008/04/03 12:42:31 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,14 +32,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "isa.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3 2007/12/09 21:14:26 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platform.c,v 1.3.14.1 2008/04/03 12:42:31 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/pmf.h>
+
+#include <dev/isa/isavar.h>
 
 #include <arch/x86/include/smbiosvar.h>
 
@@ -52,9 +56,10 @@ platform_init(void)
 {
 	struct smbtable smbios;
 	struct smbios_sys *psys;
+	struct smbios_slot *pslot;
+	int nisa, nother;
 
 	smbios.cookie = 0;
-
 	if (smbios_find_table(SMBIOS_TYPE_SYSTEM, &smbios)) {
 		psys = smbios.tblhdr;
 
@@ -63,6 +68,29 @@ platform_init(void)
 		platform_add(&smbios, "system-version", psys->version);
 		platform_add(&smbios, "system-serial-number", psys->serial);
 	}
+
+	smbios.cookie = 0;
+	nisa = 0;
+	nother = 0;
+	while (smbios_find_table(SMBIOS_TYPE_SLOTS, &smbios)) {
+		pslot = smbios.tblhdr;
+		switch (pslot->type) {
+		case SMBIOS_SLOT_ISA:
+		case SMBIOS_SLOT_EISA:
+			nisa++;
+			break;
+		default:
+			nother++;
+			break;
+		}
+	}
+
+#if NISA > 0
+	if ((nother | nisa) != 0) {
+		/* Only if there seems to be good expansion slot info. */
+		isa_set_slotcount(nisa);
+	}
+#endif
 
 	platform_print();
 }

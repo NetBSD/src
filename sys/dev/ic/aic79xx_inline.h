@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.15 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.15.48.1 2008/04/03 12:42:39 mjf Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -51,9 +51,9 @@
 #define _AIC79XX_INLINE_H_
 
 /******************************** Debugging ***********************************/
-static __inline char *ahd_name(struct ahd_softc *);
+static __inline const char *ahd_name(struct ahd_softc *);
 
-static __inline char *
+static __inline const char *
 ahd_name(struct ahd_softc *ahd)
 {
 	return (ahd->name);

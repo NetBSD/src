@@ -1,4 +1,4 @@
-# $NetBSD: GENERICSBC,v 1.55 2006/10/30 19:40:47 hauke Exp $
+# $NetBSD: GENERICSBC,v 1.55.52.1 2008/04/03 12:42:20 mjf Exp $
 #
 # GENERICSBC machine description file
 
@@ -11,4 +11,8 @@ include		"arch/mac68k/conf/GENERIC"
 # Note that the ncr53c9x esp driver is not concerned.
 
 no ncrscsi0				# SCSI NCR 5380
+
+# SBC_PDMA      0x01    Use PDMA for polled transfers
+# SBC_INTR      0x02    Allow SCSI IRQ/DRQ interrupts
+# SBC_RESELECT  0x04    Allow disconnect/reselect
 sbc0	at obio? addr 0 flags 0x1	# MI SCSI NCR 5380

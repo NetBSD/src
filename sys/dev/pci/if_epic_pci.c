@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.33 2007/10/19 12:00:45 ad Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.33.16.1 2008/04/03 12:42:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.33 2007/10/19 12:00:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.33.16.1 2008/04/03 12:42:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,7 @@ epic_pci_subsys_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-epic_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+epic_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -158,9 +157,9 @@ epic_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-epic_pci_attach(struct device *parent, struct device *self, void *aux)
+epic_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct epic_pci_softc *psc = (struct epic_pci_softc *)self;
+	struct epic_pci_softc *psc = device_private(self);
 	struct epic_softc *sc = &psc->sc_epic;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -185,10 +184,9 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_REVISION(pa->pa_class));
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
-		    error);
+		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -209,8 +207,8 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_st = iot;
 		sc->sc_sh = ioh;
 	} else {
-		aprint_error("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "unable to map device registers\n");
 		return;
 	}
 
@@ -225,21 +223,19 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: unable to map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, epic_intr, sc);
 	if (psc->sc_ih == NULL) {
-		aprint_error("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	esp = epic_pci_subsys_lookup(pa);
 	if (esp)

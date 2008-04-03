@@ -1,7 +1,7 @@
-/*	$NetBSD: mutex.h,v 1.14 2007/12/24 14:57:56 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.14.6.1 2008/04/03 12:43:12 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -208,6 +208,11 @@ int	mutex_tryenter(kmutex_t *);
 
 int	mutex_owned(kmutex_t *);
 lwp_t	*mutex_owner(kmutex_t *);
+
+void	mutex_obj_init(void);
+kmutex_t *mutex_obj_alloc(kmutex_type_t, int);
+void	mutex_obj_hold(kmutex_t *);
+bool	mutex_obj_free(kmutex_t *);
 
 #endif /* _KERNEL */
 

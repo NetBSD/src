@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2 2007/02/17 22:31:38 pavel Exp $
+#	$NetBSD: genassym.cf,v 1.2.42.1 2008/04/03 12:42:19 mjf Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@
 #
 
 if defined(_KERNEL_OPT)
-include "opt_compat_svr4.h"
 include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_multiprocessor.h"
@@ -103,10 +102,6 @@ include <machine/vmparam.h>
 include <machine/intr.h>
 include <machine/frame.h>
 include <machine/types.h>
-
-ifdef COMPAT_SVR4
-include <compat/svr4/svr4_ucontext.h>
-endif
 
 ifdef COMPAT_LINUX
 include <compat/linux/common/linux_signal.h>
@@ -145,8 +140,6 @@ define	EFAULT			EFAULT
 
 # Important offsets into the lwp and proc structs & associated constants
 define	L_ADDR			offsetof(struct lwp, l_addr)
-define	L_BACK			offsetof(struct lwp, l_back)
-define	L_FORW			offsetof(struct lwp, l_forw)
 define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -191,5 +184,3 @@ define 	FRAME_SYSCALL		FRAME_SYSCALL
 define	PC_CURLWP		offsetof(struct cpu_info, ci_curlwp) 
 define	LWP_PCB			offsetof(struct lwp, l_addr) 
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault) 
-
-

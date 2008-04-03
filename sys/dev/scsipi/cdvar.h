@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.27 2007/07/21 19:51:48 ad Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.27.26.1 2008/04/03 12:42:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -32,7 +32,7 @@
 #define	CDRETRIES	4
 
 struct cd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct disk sc_dk;
 	kmutex_t sc_lock;
 

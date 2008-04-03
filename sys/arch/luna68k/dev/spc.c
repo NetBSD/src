@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.6 2007/03/04 06:00:04 christos Exp $ */
+/* $NetBSD: spc.c,v 1.6.40.1 2008/04/03 12:42:20 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.6 2007/03/04 06:00:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.6.40.1 2008/04/03 12:42:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,18 +58,16 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.6 2007/03/04 06:00:04 christos Exp $");
 
 #include <luna68k/luna68k/isr.h>
 
-static int  spc_mainbus_match __P((struct device *, struct cfdata *, void *));
-static void spc_mainbus_attach __P((struct device *, struct device *, void *));
+#include "ioconf.h"
 
-CFATTACH_DECL(spc, sizeof(struct spc_softc),
+static int  spc_mainbus_match(device_t, cfdata_t, void *);
+static void spc_mainbus_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(spc, sizeof(struct spc_softc),
     spc_mainbus_match, spc_mainbus_attach, NULL, NULL);
-extern struct cfdriver spc_cd;
 
 static int
-spc_mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+spc_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -84,14 +82,13 @@ spc_mainbus_match(parent, cf, aux)
 }
 
 static void
-spc_mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+spc_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct spc_softc *sc = (void *)self;
+	struct spc_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 
-	printf ("\n");
+	sc->sc_dev = self;
+	aprint_normal ("\n");
 
 	sc->sc_iot = /* XXX */ 0;
 	sc->sc_ioh = ma->ma_addr;

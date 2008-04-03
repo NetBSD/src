@@ -1,4 +1,37 @@
-/*	$NetBSD: init_main.c,v 1.341.6.1 2008/03/29 16:17:56 mjf Exp $	*/
+/*	$NetBSD: init_main.c,v 1.341.6.2 2008/04/03 12:43:00 mjf Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.1 2008/03/29 16:17:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.2 2008/04/03 12:43:00 mjf Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -116,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.1 2008/03/29 16:17:56 mjf Exp 
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/percpu.h>
+#include <sys/pset.h>
 #include <sys/sysctl.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
@@ -132,6 +166,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341.6.1 2008/03/29 16:17:56 mjf Exp 
 #include <sys/mqueue.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
+#include <sys/event.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -250,9 +285,7 @@ main(void)
 	struct timeval time;
 	struct lwp *l;
 	struct proc *p;
-	struct pdevinit *pdev;
 	int s, error;
-	extern struct pdevinit pdevinit[];
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
@@ -277,6 +310,9 @@ main(void)
 	kmem_init();
 
 	percpu_init();
+
+	/* Initialize lock caches. */
+	mutex_obj_init();
 
 	/* Initialize the extent manager. */
 	extent_init();
@@ -372,7 +408,8 @@ main(void)
 	 * defined in kernel config, adjust the number such as we use roughly
 	 * 1.0% of memory for vnode cache (but not less than NVNODE vnodes).
 	 */
-	usevnodes = (ptoa((unsigned)physmem) / 100) / sizeof(struct vnode);
+	usevnodes =
+	    calc_cache_size(kernel_map, 1, VNODE_VA_MAXPCT) / sizeof(vnode_t);
 	if (usevnodes > desiredvnodes)
 		desiredvnodes = usevnodes;
 #endif
@@ -382,10 +419,10 @@ main(void)
 	fstrans_init();
 
 	/* Initialize the file descriptor system. */
-	filedesc_init();
+	fd_sys_init();
 
-	/* Initialize the select()/poll() system calls. */
-	selsysinit();
+	/* Initialize kqueue. */
+	kqueue_init();
 
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();
@@ -454,9 +491,6 @@ main(void)
 #endif
 	ubc_init();		/* must be after autoconfig */
 
-	/* Lock the kernel on behalf of proc0. */
-	KERNEL_LOCK(1, l);
-
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
 	shminit();
@@ -488,10 +522,6 @@ main(void)
 	pax_init();
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
-	/* Attach pseudo-devices. */
-	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
-		(*pdev->pdev_attach)(pdev->pdev_count);
-
 #ifdef	FAST_IPSEC
 	/* Attach network crypto subsystem */
 	ipsec_attach();
@@ -520,9 +550,6 @@ main(void)
 	pipe_init();
 #endif
 
-	/* Setup the scheduler */
-	sched_init();
-
 #ifdef KTRACE
 	/* Initialize ktrace. */
 	ktrinit();
@@ -542,13 +569,6 @@ main(void)
 	 */
 	if (fork1(l, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
 		panic("fork init");
-
-	/*
-	 * Now that device driver threads have been created, wait for
-	 * them to finish any deferred autoconfiguration.
-	 */
-	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
 
 	/*
 	 * Load any remaining builtin modules, and hand back temporary
@@ -861,4 +881,27 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
+}
+
+/*
+ * calculate cache size from physmem and vm_map size.
+ */
+vaddr_t
+calc_cache_size(struct vm_map *map, int pct, int va_pct)
+{
+	paddr_t t;
+
+	/* XXX should consider competing cache if any */
+	/* XXX should consider submaps */
+	t = (uintmax_t)physmem * pct / 100 * PAGE_SIZE;
+	if (map != NULL) {
+		vsize_t vsize;
+
+		vsize = vm_map_max(map) - vm_map_min(map);
+		vsize = (uintmax_t)vsize * va_pct / 100;
+		if (t > vsize) {
+			t = vsize;
+		}
+	}
+	return t;
 }

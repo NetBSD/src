@@ -1,4 +1,4 @@
-/* $NetBSD: ugvar.h,v 1.3 2007/11/16 08:00:15 xtraeme Exp $ */
+/* $NetBSD: ugvar.h,v 1.3.14.1 2008/04/03 12:42:43 mjf Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -29,8 +29,6 @@
 #define _UGVAR_H_
 
 struct ug_softc {
-	struct device sc_dev;
-
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
@@ -60,7 +58,7 @@ int ug_reset(struct ug_softc *);
 uint8_t ug_read(struct ug_softc *, unsigned short);
 int ug_waitfor(struct ug_softc *, uint16_t, uint8_t);
 void ug_setup_sensors(struct ug_softc *);
-void ug2_attach(struct ug_softc *);
+void ug2_attach(device_t);
 int ug2_wait_ready(struct ug_softc *);
 int ug2_wait_readable(struct ug_softc *);
 int ug2_sync(struct ug_softc *);

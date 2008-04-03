@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.33 2008/01/30 15:42:52 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.33.6.1 2008/04/03 12:42:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.33 2008/01/30 15:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.33.6.1 2008/04/03 12:42:39 mjf Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -169,7 +169,7 @@ dkwedge_detach(struct device *self, int flags)
 }
 
 CFDRIVER_DECL(dk, DV_DISK, NULL);
-CFATTACH_DECL(dk, sizeof(struct device),
+CFATTACH_DECL_NEW(dk, 0,
 	      dkwedge_match, dkwedge_attach, dkwedge_detach, NULL);
 
 /*
@@ -486,7 +486,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
 			(void) vn_close(sc->sc_parent->dk_rawvp, FREAD | FWRITE,
-					NOCRED, curlwp);
+			    NOCRED);
 			sc->sc_parent->dk_rawvp = NULL;
 		}
 		sc->sc_dk.dk_openmask = 0;
@@ -834,7 +834,7 @@ dkwedge_discover(struct disk *pdk)
 		}
 	}
 
-	error = vn_close(vp, FREAD, NOCRED, curlwp);
+	error = vn_close(vp, FREAD, NOCRED);
 	if (error) {
 		aprint_error("%s: unable to close device, error = %d\n",
 		    pdk->dk_name, error);
@@ -979,7 +979,7 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
 			error = vn_close(sc->sc_parent->dk_rawvp,
-					 FREAD | FWRITE, NOCRED, l);
+			    FREAD | FWRITE, NOCRED);
 			sc->sc_parent->dk_rawvp = NULL;
 		}
 	}

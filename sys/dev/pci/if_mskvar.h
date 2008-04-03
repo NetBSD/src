@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.4 2007/03/04 06:02:22 christos Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.4.36.1 2008/04/03 12:42:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -215,6 +215,7 @@ struct sk_softc {
 	struct msk_status_desc	*sk_status_ring;
 	bus_dmamap_t		sk_status_map;
 	int			sk_status_idx;
+	int			sk_status_own_idx;
 #if NRND > 0
 	rndsource_element_t     rnd_source;
 #endif

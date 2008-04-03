@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.127 2008/02/06 21:57:54 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.127.6.1 2008/04/03 12:43:05 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.127 2008/02/06 21:57:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.127.6.1 2008/04/03 12:43:05 mjf Exp $");
 
 #include "opt_pipe.h"
 
@@ -100,20 +100,19 @@ sys_bind(struct lwp *l, const struct sys_bind_args *uap, register_t *retval)
 }
 
 int
-do_sys_bind(struct lwp *l, int s, struct mbuf *nam)
+do_sys_bind(struct lwp *l, int fd, struct mbuf *nam)
 {
-	struct file	*fp;
+	struct socket	*so;
 	int		error;
 
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0) {
+	if ((error = fd_getsock(fd, &so)) != 0) {
 		m_freem(nam);
 		return (error);
 	}
-	MCLAIM(nam, ((struct socket *)fp->f_data)->so_mowner);
-	error = sobind(fp->f_data, nam, l);
+	MCLAIM(nam, so->so_mowner);
+	error = sobind(so, nam, l);
 	m_freem(nam);
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	return error;
 }
 
@@ -125,46 +124,46 @@ sys_listen(struct lwp *l, const struct sys_listen_args *uap, register_t *retval)
 		syscallarg(int)	s;
 		syscallarg(int)	backlog;
 	} */
-	struct file	*fp;
+	struct socket	*so;
 	int		error;
 
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(l->l_proc->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
-	error = solisten(fp->f_data, SCARG(uap, backlog), l);
-	FILE_UNUSE(fp, l);
+	error = solisten(so, SCARG(uap, backlog), l);
+	fd_putfile(SCARG(uap, s));
 	return error;
 }
 
 int
 do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 {
-	struct filedesc	*fdp;
-	struct file	*fp;
+	file_t		*fp, *fp2;
 	struct mbuf	*nam;
 	int		error, s, fd;
-	struct socket	*so;
-	int		fflag;
+	struct socket	*so, *so2;
 
-	fdp = l->l_proc->p_fd;
-
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(fdp, sock, &fp)) != 0)
+	if ((fp = fd_getfile(sock)) == NULL)
+		return (EBADF);
+	if (fp->f_type != DTYPE_SOCKET)
+		return (ENOTSOCK);
+	if ((error = fd_allocfile(&fp2, &fd)) != 0)
 		return (error);
+	nam = m_get(M_WAIT, MT_SONAME);
+	*new_sock = fd;
 	s = splsoftnet();
-	so = (struct socket *)fp->f_data;
-	FILE_UNUSE(fp, l);
+	so = fp->f_data;
+	fd_putfile(sock);	/* XXX wrong, socket can disappear */
 	if (!(so->so_proto->pr_flags & PR_LISTEN)) {
-		splx(s);
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		goto bad;
 	}
 	if ((so->so_options & SO_ACCEPTCONN) == 0) {
-		splx(s);
-		return (EINVAL);
+		error = EINVAL;
+		goto bad;
 	}
 	if (so->so_nbio && so->so_qlen == 0) {
-		splx(s);
-		return (EWOULDBLOCK);
+		error = EWOULDBLOCK;
+		goto bad;
 	}
 	while (so->so_qlen == 0 && so->so_error == 0) {
 		if (so->so_state & SS_CANTRCVMORE) {
@@ -174,51 +173,43 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 		error = tsleep(&so->so_timeo, PSOCK | PCATCH,
 		    netcon, 0);
 		if (error) {
-			splx(s);
-			return (error);
+			goto bad;
 		}
 	}
 	if (so->so_error) {
 		error = so->so_error;
 		so->so_error = 0;
-		splx(s);
-		return (error);
+		goto bad;
 	}
-	fflag = fp->f_flag;
-	/* falloc() will use the descriptor for us */
-	if ((error = falloc(l, &fp, &fd)) != 0) {
-		splx(s);
-		return (error);
-	}
-	*new_sock = fd;
-
 	/* connection has been removed from the listen queue */
 	KNOTE(&so->so_rcv.sb_sel.sel_klist, 0);
-
-	{ struct socket *aso = TAILQ_FIRST(&so->so_q);
-	  if (soqremque(aso, 1) == 0)
+	so2 = TAILQ_FIRST(&so->so_q);
+	if (soqremque(so2, 1) == 0)
 		panic("accept");
-	  so = aso;
-	}
-	fp->f_type = DTYPE_SOCKET;
-	fp->f_flag = fflag;
-	fp->f_ops = &socketops;
-	fp->f_data = so;
-	nam = m_get(M_WAIT, MT_SONAME);
-	error = soaccept(so, nam);
-
+	fp2->f_type = DTYPE_SOCKET;
+	fp2->f_flag = fp->f_flag;
+	fp2->f_ops = &socketops;
+	fp2->f_data = so2;
+	error = soaccept(so2, nam);
+	splx(s);
 	if (error) {
 		/* an error occurred, free the file descriptor and mbuf */
 		m_freem(nam);
-		fdremove(fdp, fd);
-		closef(fp, l);
+		mutex_enter(&fp2->f_lock);
+		fp2->f_count++;
+		mutex_exit(&fp2->f_lock);
+		closef(fp2);
+		fd_abort(curproc, NULL, fd);
 	} else {
-		FILE_SET_MATURE(fp);
-		FILE_UNUSE(fp, l);
+		fd_affix(curproc, fp2, fd);
 		*name = nam;
 	}
-	splx(s);
 	return (error);
+ bad:
+	splx(s);
+ 	m_freem(nam);
+ 	fd_abort(curproc, fp2, fd);
+ 	return (error);
 }
 
 int
@@ -229,19 +220,21 @@ sys_accept(struct lwp *l, const struct sys_accept_args *uap, register_t *retval)
 		syscallarg(struct sockaddr *)	name;
 		syscallarg(unsigned int *)	anamelen;
 	} */
-	int error;
+	int error, fd;
 	struct mbuf *name;
 
 	error = do_sys_accept(l, SCARG(uap, s), &name, retval);
 	if (error != 0)
 		return error;
-
 	error = copyout_sockname(SCARG(uap, name), SCARG(uap, anamelen),
 	    MSG_LENUSRSPACE, name);
 	if (name != NULL)
 		m_free(name);
-	if (error != 0)
-		fdrelease(l, *retval);
+	if (error != 0) {
+		fd = (int)*retval;
+		if (fd_getfile(fd) != NULL)
+			(void)fd_close(fd);
+	}
 	return error;
 }
 
@@ -265,19 +258,17 @@ sys_connect(struct lwp *l, const struct sys_connect_args *uap, register_t *retva
 }
 
 int
-do_sys_connect(struct lwp *l, int s, struct mbuf *nam)
+do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 {
-	struct file	*fp;
 	struct socket	*so;
 	int		error;
 	int		interrupted = 0;
+	int		s;
 
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0) {
+	if ((error = fd_getsock(fd, &so)) != 0) {
 		m_freem(nam);
 		return (error);
 	}
-	so = fp->f_data;
 	MCLAIM(nam, so->so_mowner);
 	if (so->so_state & SS_ISCONNECTING) {
 		error = EALREADY;
@@ -312,7 +303,7 @@ do_sys_connect(struct lwp *l, int s, struct mbuf *nam)
 	if (error == ERESTART)
 		error = EINTR;
  out:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(fd);
 	m_freem(nam);
 	return (error);
 }
@@ -326,12 +317,12 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap, register_t 
 		syscallarg(int)		protocol;
 		syscallarg(int *)	rsv;
 	} */
-	struct filedesc	*fdp;
-	struct file	*fp1, *fp2;
+	file_t		*fp1, *fp2;
 	struct socket	*so1, *so2;
 	int		fd, error, sv[2];
+	proc_t		*p;
 
-	fdp = l->l_proc->p_fd;
+	p = curproc;
 	error = socreate(SCARG(uap, domain), &so1, SCARG(uap, type),
 	    SCARG(uap, protocol), l);
 	if (error)
@@ -340,15 +331,14 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap, register_t 
 	    SCARG(uap, protocol), l);
 	if (error)
 		goto free1;
-	/* falloc() will use the descriptor for us */
-	if ((error = falloc(l, &fp1, &fd)) != 0)
+	if ((error = fd_allocfile(&fp1, &fd)) != 0)
 		goto free2;
 	sv[0] = fd;
 	fp1->f_flag = FREAD|FWRITE;
 	fp1->f_type = DTYPE_SOCKET;
 	fp1->f_ops = &socketops;
 	fp1->f_data = so1;
-	if ((error = falloc(l, &fp2, &fd)) != 0)
+	if ((error = fd_allocfile(&fp2, &fd)) != 0)
 		goto free3;
 	fp2->f_flag = FREAD|FWRITE;
 	fp2->f_type = DTYPE_SOCKET;
@@ -365,19 +355,13 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap, register_t 
 			goto free4;
 	}
 	error = copyout(sv, SCARG(uap, rsv), 2 * sizeof(int));
-	FILE_SET_MATURE(fp1);
-	FILE_SET_MATURE(fp2);
-	FILE_UNUSE(fp1, l);
-	FILE_UNUSE(fp2, l);
+	fd_affix(p, fp2, sv[1]);
+	fd_affix(p, fp1, sv[0]);
 	return (error);
  free4:
-	FILE_UNUSE(fp2, l);
-	ffree(fp2);
-	fdremove(fdp, sv[1]);
+	fd_abort(p, fp2, sv[1]);
  free3:
-	FILE_UNUSE(fp1, l);
-	ffree(fp1);
-	fdremove(fdp, sv[0]);
+	fd_abort(p, fp1, sv[0]);
  free2:
 	(void)soclose(so2);
  free1:
@@ -433,7 +417,6 @@ int
 do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		register_t *retsize)
 {
-	struct file	*fp;
 	struct uio	auio;
 	int		i, len, error, iovlen;
 	struct mbuf	*to, *control;
@@ -527,10 +510,8 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		memcpy(ktriov, auio.uio_iov, iovlen);
 	}
 
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0)
+	if ((error = fd_getsock(s, &so)) != 0)
 		goto bad;
-	so = (struct socket *)fp->f_data;
 
 	if (mp->msg_name)
 		MCLAIM(to, so->so_mowner);
@@ -544,7 +525,7 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	/* Protocol is responsible for freeing 'control' */
 	control = NULL;
 
-	FILE_UNUSE(fp, l);
+	fd_putfile(s);
 
 	if (error) {
 		if (auio.uio_resid != len && (error == ERESTART ||
@@ -656,7 +637,7 @@ sys_recvmsg(struct lwp *l, const struct sys_recvmsg_args *uap, register_t *retva
  *  m is the mbuf holding the (already externalized) SCM_RIGHTS message.
  */
 static void
-free_rights(struct mbuf *m, struct lwp *l)
+free_rights(struct mbuf *m)
 {
 	int nfd;
 	int i;
@@ -665,8 +646,10 @@ free_rights(struct mbuf *m, struct lwp *l)
 	nfd = m->m_len < CMSG_SPACE(sizeof(int)) ? 0
 	    : (m->m_len - CMSG_SPACE(sizeof(int))) / sizeof(int) + 1;
 	fdv = (int *) CMSG_DATA(mtod(m,struct cmsghdr *));
-	for (i = 0; i < nfd; i++)
-		fdrelease(l, fdv[i]);
+	for (i = 0; i < nfd; i++) {
+		if (fd_getfile(fdv[i]) != NULL)
+			(void)fd_close(fdv[i]);
+	}
 }
 
 void
@@ -682,7 +665,7 @@ free_control_mbuf(struct lwp *l, struct mbuf *control, struct mbuf *uncopied)
 			do_free_rights = true;
 		if (do_free_rights && cmsg->cmsg_level == SOL_SOCKET
 		    && cmsg->cmsg_type == SCM_RIGHTS)
-			free_rights(control, l);
+			free_rights(control);
 		next = control->m_next;
 		m_free(control);
 		control = next;
@@ -744,7 +727,6 @@ int
 do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
     struct mbuf **control, register_t *retsize)
 {
-	struct file	*fp;
 	struct uio	auio;
 	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov;
 	struct iovec	*tiov;
@@ -758,10 +740,8 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 	if (control != NULL)
 		*control = NULL;
 
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0)
+	if ((error = fd_getsock(s, &so)) != 0)
 		return (error);
-	so = (struct socket *)fp->f_data;
 
 	if (mp->msg_flags & MSG_IOVUSRSPACE) {
 		if ((unsigned int)mp->msg_iovlen > UIO_SMALLIOV) {
@@ -845,7 +825,7 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
  out:
 	if (iov != aiov)
 		free(iov, M_TEMP);
-	FILE_UNUSE(fp, l);
+	fd_putfile(s);
 	return (error);
 }
 
@@ -858,16 +838,13 @@ sys_shutdown(struct lwp *l, const struct sys_shutdown_args *uap, register_t *ret
 		syscallarg(int)	s;
 		syscallarg(int)	how;
 	} */
-	struct proc	*p;
-	struct file	*fp;
+	struct socket	*so;
 	int		error;
 
-	p = l->l_proc;
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
-	error = soshutdown((struct socket *)fp->f_data, SCARG(uap, how));
-	FILE_UNUSE(fp, l);
+	error = soshutdown(so, SCARG(uap, how));
+	fd_putfile(SCARG(uap, s));
 	return (error);
 }
 
@@ -883,7 +860,6 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 		syscallarg(unsigned int)	valsize;
 	} */
 	struct proc	*p;
-	struct file	*fp;
 	struct mbuf	*m;
 	struct socket	*so;
 	int		error;
@@ -891,10 +867,8 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 
 	p = l->l_proc;
 	m = NULL;
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
-	so = (struct socket *)fp->f_data;
 	len = SCARG(uap, valsize);
 	if (len > MCLBYTES) {
 		error = EINVAL;
@@ -913,7 +887,7 @@ sys_setsockopt(struct lwp *l, const struct sys_setsockopt_args *uap, register_t 
 	}
 	error = sosetopt(so, SCARG(uap, level), SCARG(uap, name), m);
  out:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, s));
 	return (error);
 }
 
@@ -928,15 +902,14 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 		syscallarg(void *)		val;
 		syscallarg(unsigned int *)	avalsize;
 	} */
-	struct file	*fp;
+	struct socket	*so;
 	struct mbuf	*m;
 	unsigned int	op, i, valsize;
 	int		error;
 	char *val = SCARG(uap, val);
 
 	m = NULL;
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(l->l_proc->p_fd, SCARG(uap, s), &fp)) != 0)
+	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
 	if (val != NULL) {
 		error = copyin(SCARG(uap, avalsize),
@@ -945,9 +918,8 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 			goto out;
 	} else
 		valsize = 0;
-	if ((error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), &m)) == 0 && val != NULL && valsize &&
-	    m != NULL) {
+	error = sogetopt(so, SCARG(uap, level), SCARG(uap, name), &m);
+	if (error == 0 && val != NULL && valsize && m != NULL) {
 		op = 0;
 		while (m && !error && op < valsize) {
 			i = min(m->m_len, (valsize - op));
@@ -964,7 +936,7 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 	if (m != NULL)
 		(void) m_freem(m);
  out:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, s));
 	return (error);
 }
 
@@ -973,12 +945,12 @@ sys_getsockopt(struct lwp *l, const struct sys_getsockopt_args *uap, register_t 
 int
 sys_pipe(struct lwp *l, const void *v, register_t *retval)
 {
-	struct filedesc	*fdp;
-	struct file	*rf, *wf;
+	file_t		*rf, *wf;
 	struct socket	*rso, *wso;
 	int		fd, error;
+	proc_t		*p;
 
-	fdp = l->l_proc->p_fd;
+	p = curproc;
 	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l)) != 0)
 		return (error);
 	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l)) != 0)
@@ -986,15 +958,14 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	/* remember this socket pair implements a pipe */
 	wso->so_state |= SS_ISAPIPE;
 	rso->so_state |= SS_ISAPIPE;
-	/* falloc() will use the descriptor for us */
-	if ((error = falloc(l, &rf, &fd)) != 0)
+	if ((error = fd_allocfile(&rf, &fd)) != 0)
 		goto free2;
 	retval[0] = fd;
 	rf->f_flag = FREAD;
 	rf->f_type = DTYPE_SOCKET;
 	rf->f_ops = &socketops;
 	rf->f_data = rso;
-	if ((error = falloc(l, &wf, &fd)) != 0)
+	if ((error = fd_allocfile(&wf, &fd)) != 0)
 		goto free3;
 	wf->f_flag = FWRITE;
 	wf->f_type = DTYPE_SOCKET;
@@ -1003,19 +974,13 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	retval[1] = fd;
 	if ((error = unp_connect2(wso, rso, PRU_CONNECT2)) != 0)
 		goto free4;
-	FILE_SET_MATURE(rf);
-	FILE_SET_MATURE(wf);
-	FILE_UNUSE(rf, l);
-	FILE_UNUSE(wf, l);
+	fd_affix(p, wf, (int)retval[1]);
+	fd_affix(p, rf, (int)retval[0]);
 	return (0);
  free4:
-	FILE_UNUSE(wf, l);
-	ffree(wf);
-	fdremove(fdp, retval[1]);
+	fd_abort(p, wf, (int)retval[1]);
  free3:
-	FILE_UNUSE(rf, l);
-	ffree(rf);
-	fdremove(fdp, retval[0]);
+	fd_abort(p, rf, (int)retval[0]);
  free2:
 	(void)soclose(wso);
  free1:
@@ -1031,15 +996,12 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 int
 do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 {
-	struct file	*fp;
 	struct socket	*so;
 	struct mbuf	*m;
 	int		error;
 
-	/* getsock() will use the descriptor for us */
-	if ((error = getsock(l->l_proc->p_fd, fd, &fp)) != 0)
+	if ((error = fd_getsock(fd, &so)) != 0)
 		return error;
-	so = (struct socket *)fp->f_data;
 
 	if (which == PRU_PEERADDR
 	    && (so->so_state & (SS_ISCONNECTED | SS_ISCONFIRMING)) == 0) {
@@ -1054,8 +1016,8 @@ do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 	    m, (struct mbuf *)0, (struct lwp *)0);
 	if (error != 0)
 		m_free(m);
-    bad:
-	FILE_UNUSE(fp, l);
+ bad:
+ 	fd_putfile(fd);
 	return error;
 }
 
@@ -1205,17 +1167,15 @@ sockargs(struct mbuf **mp, const void *bf, size_t buflen, int type)
 }
 
 int
-getsock(struct filedesc *fdp, int fdes, struct file **fpp)
+getsock(int fdes, struct file **fpp)
 {
-	struct file	*fp;
+	file_t		*fp;
 
-	if ((fp = fd_getfile(fdp, fdes)) == NULL)
+	if ((fp = fd_getfile(fdes)) == NULL)
 		return (EBADF);
 
-	FILE_USE(fp);
-
 	if (fp->f_type != DTYPE_SOCKET) {
-		FILE_UNUSE(fp, NULL);
+		fd_putfile(fdes);
 		return (ENOTSOCK);
 	}
 	*fpp = fp;

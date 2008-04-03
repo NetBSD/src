@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib_hpet.c,v 1.2 2008/01/07 16:58:09 joerg Exp $ */
+/* $NetBSD: amdpcib_hpet.c,v 1.2.6.1 2008/04/03 12:42:30 mjf Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.2 2008/01/07 16:58:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.2.6.1 2008/04/03 12:42:30 mjf Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -46,34 +46,31 @@ __KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.2 2008/01/07 16:58:09 joerg Exp $
 #include <dev/ic/hpetvar.h>
 
 
-static int	amdpcib_hpet_match(struct device *, struct cfdata *, void *);
-static void	amdpcib_hpet_attach(struct device *, struct device *, void *);
+static int	amdpcib_hpet_match(device_t , cfdata_t , void *);
+static void	amdpcib_hpet_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(amdpcib_hpet, sizeof(struct hpet_softc), amdpcib_hpet_match,
+CFATTACH_DECL_NEW(amdpcib_hpet, sizeof(struct hpet_softc), amdpcib_hpet_match,
     amdpcib_hpet_attach, NULL, NULL);
 
 static int
-amdpcib_hpet_match(struct device *parent, struct cfdata *match, void *aux)
+amdpcib_hpet_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-amdpcib_hpet_attach(struct device *parent, struct device *self, void *aux)
+amdpcib_hpet_attach(device_t parent, device_t self, void *aux)
 {
-	struct hpet_softc *sc;
-	struct pci_attach_args *pa;
+	struct hpet_softc *sc = device_private(self);
+	struct pci_attach_args *pa = aux;
 	pcireg_t conf, addr;
-
-	sc = (struct hpet_softc *)self;
-	pa = (struct pci_attach_args *)aux;
 
 	aprint_naive("\n");
 	aprint_normal(": HPET timer\n");
 
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, 0xa0);
 	if ((conf & 1) == 0) {
-		printf("%s: HPET timer is disabled\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "HPET timer is disabled\n");
 		return;
 	}
 
@@ -82,9 +79,9 @@ amdpcib_hpet_attach(struct device *parent, struct device *self, void *aux)
 	addr = conf & 0xfffffc00;
 	if (bus_space_map(sc->sc_memt, addr, 1024, 0,
 	    &sc->sc_memh)) {
-		printf("%s: failed to map mem\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "failed to map mem\n");
 		return;
 	}
 
-	hpet_attach_subr(sc);
+	hpet_attach_subr(self);
 }

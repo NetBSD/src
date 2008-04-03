@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_vm.c,v 1.58 2007/12/20 23:03:00 dsl Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.58.6.1 2008/04/03 12:42:33 mjf Exp $ */
 
 /*-
- * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.58 2007/12/20 23:03:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.58.6.1 2008/04/03 12:42:33 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -349,8 +349,7 @@ mach_sys_map_fd(struct lwp *l, const struct mach_sys_map_fd_args *uap, register_
 		syscallarg(mach_boolean_t) findspace;
 		syscallarg(mach_vm_size_t) size;
 	} */
-	struct file *fp;
-	struct filedesc *fdp;
+	file_t *fp;
 	struct vnode *vp;
 	struct exec_vmcmd evc;
 	struct vm_map_entry *ret;
@@ -370,13 +369,11 @@ mach_sys_map_fd(struct lwp *l, const struct mach_sys_map_fd_args *uap, register_
 		(void)sys_munmap(l, &cup, &dontcare);
 	}
 
-	fdp = p->p_fd;
-	fp = fd_getfile(fdp, SCARG(uap, fd));
+	fp = fd_getfile(SCARG(uap, fd));
 	if (fp == NULL)
 		return EBADF;
 
-	FILE_USE(fp);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 	vref(vp);
 
 #ifdef DEBUG_MACH_VM
@@ -432,7 +429,7 @@ mach_sys_map_fd(struct lwp *l, const struct mach_sys_map_fd_args *uap, register_
 	}
 
 	vput(vp);
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 #ifdef DEBUG_MACH_VM
 	printf("mach_sys_map_fd: mapping at %p\n", (void *)evc.ev_addr);
 #endif
@@ -448,7 +445,7 @@ bad1:
 	VOP_UNLOCK(vp, 0);
 bad2:
 	vrele(vp);
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 #ifdef DEBUG_MACH_VM
 	printf("mach_sys_map_fd: mapping at %p failed, error = %d\n",
 	    (void *)evc.ev_addr, error);

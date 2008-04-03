@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.10 2006/02/09 03:14:31 gdamore Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.10.68.1 2008/04/03 12:42:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.10 2006/02/09 03:14:31 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.10.68.1 2008/04/03 12:42:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,14 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.10 2006/02/09 03:14:31 gdamore Exp 
 #include <dev/usb/ohcivar.h>
 
 
-static int	ohci_aubus_match(struct device *, struct cfdata *, void *);
-static void	ohci_aubus_attach(struct device *, struct device *, void *);
+static int	ohci_aubus_match(device_t, cfdata_t, void *);
+static void	ohci_aubus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ohci_aubus, sizeof (ohci_softc_t),
+CFATTACH_DECL_NEW(ohci_aubus, sizeof (ohci_softc_t),
     ohci_aubus_match, ohci_aubus_attach, NULL, NULL);
 
 int
-ohci_aubus_match(struct device *parent, struct cfdata *match, void *aux)
+ohci_aubus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
@@ -77,9 +77,9 @@ ohci_aubus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
+ohci_aubus_attach(device_t parent, device_t self, void *aux)
 {
-	ohci_softc_t *sc = (ohci_softc_t *)self;
+	ohci_softc_t *sc = device_private(self);
 	void *ih;
 	usbd_status r;
 	uint32_t x, tmp;
@@ -95,8 +95,7 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus.dmatag = (bus_dma_tag_t)aa->aa_dt;
 
 	if (bus_space_map(sc->iot, usbh_base, sc->sc_size, 0, &sc->ioh)) {
-		printf("%s: Unable to map USBH registers\n",
-			sc->sc_bus.bdev.dv_xname);
+		aprint_error_dev(self, "unable to map USBH registers\n");
 		return;
 	}
 	/*
@@ -141,8 +140,7 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	ih = au_intr_establish(aa->aa_irq[0], 0, IPL_USB, IST_LEVEL_LOW,
 			ohci_intr, sc);
 	if (ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-			sc->sc_bus.bdev.dv_xname);
+		aprint_error_dev(self,"couldn't establish interrupt\n");
 	}
 
 	sc->sc_endian = OHCI_HOST_ENDIAN;
@@ -150,8 +148,7 @@ ohci_aubus_attach(struct device *parent, struct device *self, void *aux)
 	if (x)
 		r = ohci_init(sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n",
-			sc->sc_bus.bdev.dv_xname, r);
+		aprint_error_dev(self, "init failed, error=%d\n", r);
 		au_intr_disestablish(ih);
 		return;
 	}

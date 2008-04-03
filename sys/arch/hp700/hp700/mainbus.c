@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.40 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.40.40.1 2008/04/03 12:42:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.40 2007/03/04 05:59:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.40.40.1 2008/04/03 12:42:16 mjf Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1491,7 +1491,7 @@ mb_module_callback(struct device *self, struct confargs *ca)
 	if (ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	    ca->ca_type.iodc_type == HPPA_TYPE_MEMORY)
 		return;
-	config_found_sm_loc(self, "mainbus", NULL, ca, mbprint, mbsubmatch);
+	config_found_sm_loc(self, "gedoens", NULL, ca, mbprint, mbsubmatch);
 }
 
 static void
@@ -1500,7 +1500,7 @@ mb_cpu_mem_callback(struct device *self, struct confargs *ca)
 	if ((ca->ca_type.iodc_type == HPPA_TYPE_NPROC ||
 	     ca->ca_type.iodc_type == HPPA_TYPE_MEMORY) &&
 	    ca->ca_hpa != pdc_hpa.hpa)
-		config_found_sm_loc(self, "mainbus", NULL, ca, mbprint,
+		config_found_sm_loc(self, "gedoens", NULL, ca, mbprint,
 				    mbsubmatch);
 }
 
@@ -1555,7 +1555,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Scan mainbus for monarch CPU and attach it.
 	 *
-	 * How to do device scaning? Try to use PDC_SYSTEM_MAP.
+	 * How to do device scanning? Try to use PDC_SYSTEM_MAP.
 	 * We are on a "new" system if it succedes, so use PDC_SYSTEM_MAP.
 	 * Otherwise we must be on an "old" system, so use PDC_MEMMAP.
 	 */

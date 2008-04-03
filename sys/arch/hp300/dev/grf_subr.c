@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.15 2007/03/04 11:53:21 tsutsui Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.15.40.1 2008/04/03 12:42:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.15 2007/03/04 11:53:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.15.40.1 2008/04/03 12:42:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,15 +70,13 @@ grfdev_attach(struct grfdev_softc *sc,
 		sc->sc_data = malloc(sizeof(struct grf_data),
 		    M_DEVBUF, M_NOWAIT | M_ZERO);
 		if (sc->sc_data == NULL) {
-			printf("\n%s: can't allocate grf data\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error(": can't allocate grf data\n");
 			return;
 		}
 
 		/* Initialize the framebuffer hardware. */
 		if ((*init)(sc->sc_data, sc->sc_scode, regs) == 0) {
-			printf("\n%s: init failed\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error(": init failed\n");
 			free(sc->sc_data, M_DEVBUF);
 			return;
 		}
@@ -102,7 +100,7 @@ grfdev_attach(struct grfdev_softc *sc,
 	ga.ga_scode = sc->sc_scode;	/* XXX */
 	ga.ga_isconsole = sc->sc_isconsole;
 	ga.ga_data = (void *)sc->sc_data;
-	(void)config_found(&sc->sc_dev, &ga, grfdevprint);
+	(void)config_found(sc->sc_dev, &ga, grfdevprint);
 }
 
 static int

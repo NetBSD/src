@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.32 2007/03/04 06:01:02 christos Exp $ */
+/*	$NetBSD: sbi.c,v 1.32.40.1 2008/04/03 12:42:29 mjf Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.32 2007/03/04 06:01:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.32.40.1 2008/04/03 12:42:29 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,17 +45,17 @@ __KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.32 2007/03/04 06:01:02 christos Exp $");
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/nexus.h>
+#include <machine/mainbus.h>
 
-static	int sbi_print(void *, const char *);
-static	int sbi_match(struct device *, struct cfdata *, void *);
-static	int sbi_match_abus(struct device *, struct cfdata *, void *);
-static	void sbi_attach(struct device *, struct device *, void*);
+static int sbi_print(void *, const char *);
+static int sbi_mainbus_match(device_t, cfdata_t, void *);
+static void sbi_mainbus_attach(device_t, device_t, void*);
 
 int
 sbi_print(void *aux, const char *name)
 {
-	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	int unsupp = 0;
+	struct sbi_attach_args *sa = aux;
+	bool unsupp = false;
 
 	if (name) {
 		switch (sa->sa_type) {
@@ -69,7 +69,7 @@ sbi_print(void *aux, const char *name)
 		default:
 			aprint_normal("unknown device 0x%x at %s",
 			    sa->sa_type, name);
-			unsupp++;
+			unsupp = true;
 		}		
 	}
 	aprint_normal(" tr%d", sa->sa_nexnum);
@@ -77,38 +77,35 @@ sbi_print(void *aux, const char *name)
 }
 
 int
-sbi_match_abus(struct device *parent, struct cfdata *cf, void *aux)
+sbi_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;	/* We've already done the matching... */
-}
+	struct mainbus_attach_args * const ma = aux;
 
-int
-sbi_match(struct device *parent, struct cfdata *cf, void *aux)
-{
-	if (vax_bustype == VAX_SBIBUS)
-		return 1;
-	return 0;
+	return !strcmp("sbi", ma->ma_type);
 }
 
 void
-sbi_attach(struct device *parent, struct device *self, void *aux)
+sbi_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct bp_conf *bp = aux;
-	u_int	nexnum, minnex = 0; /* default only one SBI, as on 780 */
-	struct	sbi_attach_args sa;
+	struct mainbus_attach_args * const ma = aux;
+	struct sbi_attach_args sa;
+	u_int nexnum, minnex = 0;	/* default only one SBI, as on 780 */
 
-	printf("\n");
+	aprint_normal("\n");
+
+	sa.sa_iot = ma->ma_iot;
+	sa.sa_dmat = ma->ma_dmat;
 
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 	if (vax_boardtype == VAX_BTYP_780) {
 		sa.sa_sbinum = 0;
 	}
 	if (vax_boardtype == VAX_BTYP_790) {
-		minnex = bp->num * NNEXSBI;
-		sa.sa_sbinum = bp->num;
+		minnex = ma->ma_num * NNEXSBI;
+		sa.sa_sbinum = ma->ma_num;
 	}
 	for (nexnum = minnex; nexnum < minnex + NNEXSBI; nexnum++) {
-		struct	nexus *nexusP = 0;
+		struct nexus *nexusP = 0;
 		volatile int tmp;
 
 		nexusP = (struct nexus *)vax_map_physmem((paddr_t)NEXA8600 +
@@ -126,8 +123,5 @@ sbi_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-CFATTACH_DECL(sbi_mainbus, sizeof(struct device),
-    sbi_match, sbi_attach, NULL, NULL);
-
-CFATTACH_DECL(sbi_abus, sizeof(struct device),
-    sbi_match_abus, sbi_attach, NULL, NULL);
+CFATTACH_DECL_NEW(sbi_mainbus, 0,
+    sbi_mainbus_match, sbi_mainbus_attach, NULL, NULL);

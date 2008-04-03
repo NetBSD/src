@@ -1,7 +1,7 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.26 2007/11/20 17:24:32 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.26.14.1 2008/04/03 12:42:57 mjf Exp $ */
 
 /*-
- * Copyright (c) 2007 Juan Romero Pardines.
+ * Copyright (c) 2007, 2008 Juan Romero Pardines.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -77,7 +77,7 @@ struct sme_sensor_names {
  * struct used by a sysmon envsys event.
  */
 typedef struct sme_event {
-	struct work 		see_wk;
+	struct work		see_wk;
 	LIST_ENTRY(sme_event) 	see_list;
 	struct sysmon_envsys	*see_sme;	/* device associated */
 	struct penvsys_state	see_pes;	/* our power envsys */
@@ -109,10 +109,7 @@ struct sme_description_table {
 /* 
  * common stuff.
  */
-extern	kmutex_t sme_mtx; 		/* mutex for devices/events */
-extern 	kmutex_t sme_events_mtx;	/* to init/destroy the events layer */
-extern	kmutex_t sme_callout_mtx;	/* for the callouts */
-extern 	kcondvar_t sme_cv;		/* to wait for devices/events working */
+extern	kmutex_t sme_global_mtx; 	/* for the sme linked list and dict */
 
 /* 
  * linked list for the sysmon envsys devices.
@@ -131,8 +128,8 @@ int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
 prop_dictionary_t sme_sensor_dictionary_get(prop_array_t, const char *);
 struct	sysmon_envsys *sysmon_envsys_find(const char *);
-void	sysmon_envsys_acquire(struct sysmon_envsys *);
-void	sysmon_envsys_release(struct sysmon_envsys *);
+void	sysmon_envsys_acquire(struct sysmon_envsys *, bool);
+void	sysmon_envsys_release(struct sysmon_envsys *, bool);
 
 /* 
  * functions to handle sysmon envsys events.
@@ -146,7 +143,7 @@ void	sme_event_drvadd(void *);
 int	sme_events_init(struct sysmon_envsys *);
 void	sme_events_destroy(struct sysmon_envsys *);
 void	sme_events_check(void *);
-void	sme_events_worker(struct work *, void *);
+void 	sme_events_worker(struct work *, void *);
 
 /* 
  * common functions to create/update objects in a dictionary.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.24 2008/01/02 11:48:36 ad Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.24.6.1 2008/04/03 12:42:38 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.24 2008/01/02 11:48:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.24.6.1 2008/04/03 12:42:38 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -73,17 +73,17 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.24 2008/01/02 11:48:36 ad Exp $");
 
 void		ataraidattach(int);
 
-static int	ataraid_match(struct device *, struct cfdata *, void *);
-static void	ataraid_attach(struct device *, struct device *, void *);
+static int	ataraid_match(device_t, cfdata_t, void *);
+static void	ataraid_attach(device_t, device_t, void *);
 static int	ataraid_print(void *, const char *);
 
-static int	ata_raid_finalize(struct device *);
+static int	ata_raid_finalize(device_t );
 
 ataraid_array_info_list_t ataraid_array_info_list =
     TAILQ_HEAD_INITIALIZER(ataraid_array_info_list);
 u_int ataraid_array_info_count;
 
-CFATTACH_DECL(ataraid, sizeof(struct device),
+CFATTACH_DECL_NEW(ataraid, 0,
     ataraid_match, ataraid_attach, NULL, NULL);
 
 /*
@@ -129,7 +129,7 @@ ata_raid_type_name(u_int type)
  *	Autoconfiguration finalizer for ATA RAID.
  */
 static int
-ata_raid_finalize(struct device *self)
+ata_raid_finalize(device_t self)
 {
 	static struct cfdata ataraid_cfdata = {
 		.cf_name = "ataraid",
@@ -174,7 +174,7 @@ ata_raid_finalize(struct device *self)
  *	Autoconfiguration glue: match routine.
  */
 static int
-ataraid_match(struct device *parent, struct cfdata *cf,
+ataraid_match(device_t parent, cfdata_t cf,
     void *aux)
 {
 
@@ -188,7 +188,7 @@ ataraid_match(struct device *parent, struct cfdata *cf,
  *	Autoconfiguration glue: attach routine.  We attach the children.
  */
 static void
-ataraid_attach(struct device *parent, struct device *self,
+ataraid_attach(device_t parent, device_t self,
     void *aux)
 {
 	struct ataraid_array_info *aai;
@@ -234,9 +234,9 @@ ataraid_print(void *aux, const char *pnp)
  *	Called via autoconfiguration callback.
  */
 void
-ata_raid_check_component(struct device *self)
+ata_raid_check_component(device_t self)
 {
-	struct wd_softc *sc = (void *) self;
+	struct wd_softc *sc = device_private(self);
 
 	if (ata_raid_read_config_adaptec(sc) == 0)
 		return;

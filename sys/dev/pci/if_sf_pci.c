@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.13 2007/10/19 12:00:47 ad Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.13.16.1 2008/04/03 12:42:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.13 2007/10/19 12:00:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.13.16.1 2008/04/03 12:42:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ struct sf_pci_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-static int	sf_pci_match(struct device *, struct cfdata *, void *);
-static void	sf_pci_attach(struct device *, struct device *, void *);
+static int	sf_pci_match(device_t, struct cfdata *, void *);
+static void	sf_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(sf_pci, sizeof(struct sf_pci_softc),
     sf_pci_match, sf_pci_attach, NULL, NULL);
@@ -160,8 +160,7 @@ sf_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-sf_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+sf_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -172,9 +171,9 @@ sf_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-sf_pci_attach(struct device *parent, struct device *self, void *aux)
+sf_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct sf_pci_softc *psc = (void *) self;
+	struct sf_pci_softc *psc = device_private(self);
 	struct sf_softc *sc = &psc->sc_starfire;
 	struct pci_attach_args *pa = aux;
 	pci_intr_handle_t ih;
@@ -194,8 +193,8 @@ sf_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf(": %s, rev. %d\n", spp->spp_name, PCI_REVISION(pa->pa_class));
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
-	    NULL)) && error != EOPNOTSUPP) {
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
+	    error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
 		return;

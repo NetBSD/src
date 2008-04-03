@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsunvar.h,v 1.5 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: kbdsunvar.h,v 1.5.70.1 2008/04/03 12:42:56 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@
 
 
 struct kbd_sun_softc {
-	/* upper layer (also inherits struct device) */
+	/* upper layer (also inherits device_t) */
 	struct kbd_softc k_kbd;
 
 	union {

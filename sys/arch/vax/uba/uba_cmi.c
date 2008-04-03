@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_cmi.c,v 1.13 2005/12/11 12:19:36 christos Exp $	   */
+/*	$NetBSD: uba_cmi.c,v 1.13.74.1 2008/04/03 12:42:28 mjf Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_cmi.c,v 1.13 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_cmi.c,v 1.13.74.1 2008/04/03 12:42:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,22 +98,20 @@ __KERNEL_RCSID(0, "$NetBSD: uba_cmi.c,v 1.13 2005/12/11 12:19:36 christos Exp $"
  * and bus status/command registers, the latter are (partly) IPR's
  * on 750.
  */
-static	int	dw750_match(struct device *, struct cfdata *, void *);
-static	void	dw750_attach(struct device *, struct device *, void *);
-static	void	dw750_init(struct uba_softc*);
+static	int	dw750_match(device_t, cfdata_t, void *);
+static	void	dw750_attach(device_t, device_t, void *);
+static	void	dw750_init(struct uba_softc *);
 #ifdef notyet
 static	void	dw750_purge(struct uba_softc *, int);
 #endif
 
-CFATTACH_DECL(uba_cmi, sizeof(struct uba_vsoftc),
+CFATTACH_DECL_NEW(uba_cmi, sizeof(struct uba_vsoftc),
     dw750_match, dw750_attach, NULL, NULL);
 
-extern	struct vax_bus_space vax_mem_bus_space;
-
 int
-dw750_match(struct device *parent, struct cfdata *cf, void *aux)
+dw750_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct sbi_attach_args * const sa = aux;
 
 	if (cf->cf_loc[CMICF_TR] != sa->sa_nexnum &&
 	    cf->cf_loc[CMICF_TR] != CMICF_TR_DEFAULT)
@@ -129,12 +127,15 @@ dw750_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-dw750_attach(struct device *parent, struct device *self, void *aux)
+dw750_attach(device_t parent, device_t self, void *aux)
 {
-	struct uba_vsoftc *sc = (void *)self;
-	struct sbi_attach_args *sa = aux;
+	struct uba_vsoftc * const sc = device_private(self);
+	struct sbi_attach_args * const sa = aux;
 
-	printf(": DW750\n");
+	aprint_normal(": DW750\n");
+
+	sc->uv_sc.uh_dev = self;
+
 	/*
 	 * Fill in bus specific data.
 	 */
@@ -142,7 +143,7 @@ dw750_attach(struct device *parent, struct device *self, void *aux)
 #ifdef notyet
 	sc->uv_sc.uh_ubapurge = dw750_purge;
 #endif
-	sc->uv_sc.uh_iot = &vax_mem_bus_space;
+	sc->uv_sc.uh_iot = sa->sa_iot;
 	sc->uv_sc.uh_dmat = &sc->uv_dmat;
 	sc->uv_sc.uh_type = UBA_UBA;
 	sc->uv_sc.uh_nr = sa->sa_type == NEX_UBA1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.272 2008/02/20 11:48:46 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.272.6.1 2008/04/03 12:43:02 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.272 2008/02/20 11:48:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.272.6.1 2008/04/03 12:43:02 mjf Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -906,7 +906,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	    sigismember(&p->p_sigctx.ps_sigcatch, signo) &&
 	    !sigismember(&l->l_sigmask, signo)) {
 		mutex_exit(&proclist_mutex);
-		p->p_stats->p_ru.ru_nsignals++;
+		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, &l->l_sigmask);
 		mutex_exit(&p->p_smutex);
 		ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
@@ -975,19 +975,23 @@ psignal(struct proc *p, int signo)
 void
 kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 {
+	fdfile_t *ff;
+	file_t *fp;
 
 	KASSERT(mutex_owned(&proclist_mutex));
 
-	/* XXXSMP Why is this here? */
 	if ((p->p_sflag & PS_WEXIT) == 0 && data) {
 		size_t fd;
-		struct filedesc *fdp = p->p_fd;
+		filedesc_t *fdp = p->p_fd;
 
+		/* XXXSMP locking */
 		ksi->ksi_fd = -1;
 		for (fd = 0; fd < fdp->fd_nfiles; fd++) {
-			struct file *fp = fdp->fd_ofiles[fd];
-			/* XXX: lock? */
-			if (fp && fp->f_data == data) {
+			if ((ff = fdp->fd_ofiles[fd]) == NULL)
+				continue;
+			if ((fp = ff->ff_file) == NULL)
+				continue;
+			if (fp->f_data == data) {
 				ksi->ksi_fd = fd;
 				break;
 			}
@@ -1352,23 +1356,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		if ((prop & SA_CONT) != 0 && action == SIG_DFL)
 			goto out;
 
-		if ((prop & SA_STOP) != 0 && action == SIG_DFL) {
-			/*
-			 * If a child holding parent blocked, stopping could
-			 * cause deadlock: discard the signal.
-			 */
-			if ((p->p_sflag & PS_PPWAIT) == 0) {
-				p->p_xstat = signo;
-				proc_stop(p, 1, signo);
-			}
-			goto out;
-		} else {
-			/*
-			 * Stop signals with the default action are handled
-			 * specially in issignal(), and so are not enqueued.
-			 */
-			sigput(&p->p_sigpend, p, kp);
-		}
+		sigput(&p->p_sigpend, p, kp);
 	} else {
 		/*
 		 * Process is stopped or stopping.  If traced, then no
@@ -1819,7 +1807,7 @@ postsig(int signo)
 	 * Commit to taking the signal before releasing the mutex.
 	 */
 	action = SIGACTION_PS(ps, signo).sa_handler;
-	p->p_stats->p_ru.ru_nsignals++;
+	l->l_ru.ru_nsignals++;
 	sigget(l->l_sigpendset, &ksi, signo, NULL);
 
 	if (ktrpoint(KTR_PSIG)) {
@@ -2167,7 +2155,7 @@ filt_sigattach(struct knote *kn)
 {
 	struct proc *p = curproc;
 
-	kn->kn_ptr.p_proc = p;
+	kn->kn_obj = p;
 	kn->kn_flags |= EV_CLEAR;               /* automatically set */
 
 	mutex_enter(&p->p_smutex);
@@ -2180,7 +2168,7 @@ filt_sigattach(struct knote *kn)
 static void
 filt_sigdetach(struct knote *kn)
 {
-	struct proc *p = kn->kn_ptr.p_proc;
+	struct proc *p = kn->kn_obj;
 
 	mutex_enter(&p->p_smutex);
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);

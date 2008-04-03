@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.199 2008/01/30 19:58:20 ad Exp $
+# $NetBSD: GENERIC,v 1.199.6.1 2008/04/03 12:42:11 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.199 $"
+#ident 		"GENERIC-$Revision: 1.199.6.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -278,6 +278,7 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
 aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
+asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
@@ -615,6 +616,7 @@ ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
@@ -982,7 +984,7 @@ btsco* at bthub?
 weasel* at pci?
 
 # Pull in optional local configuration
-include	"arch/amd64/conf/GENERIC.local"
+cinclude "arch/amd64/conf/GENERIC.local"
 
 # Pseudo-Devices
 

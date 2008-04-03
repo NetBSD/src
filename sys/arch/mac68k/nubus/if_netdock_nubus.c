@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.16 2007/10/17 19:55:15 garbled Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.16.16.1 2008/04/03 12:42:20 mjf Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.16 2007/10/17 19:55:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.16.16.1 2008/04/03 12:42:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -357,9 +357,9 @@ netdock_setup(struct netdock_softc *sc, u_int8_t *lladdr)
 
 	memcpy(sc->sc_enaddr, lladdr, ETHER_ADDR_LEN);
 	printf("%s: Ethernet address %s\n",
-	    sc->sc_dev.dv_xname, ether_sprintf(lladdr));
+	    sc->sc_dev->dv_xname, ether_sprintf(lladdr));
 
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev->dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = netdock_ioctl;
 	ifp->if_start = netdock_start;
@@ -450,7 +450,7 @@ netdock_start(struct ifnet *ifp)
 
 		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("%s: netdock_start: no header mbuf",
-				sc->sc_dev.dv_xname);
+				sc->sc_dev->dv_xname);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -573,7 +573,8 @@ netdock_put(struct netdock_softc *sc, struct mbuf *m0)
 		totlen += m->m_len;
 
 	if (totlen >= ETHER_MAX_LEN)
-		panic("%s: netdock_put: packet overflow", sc->sc_dev.dv_xname);
+		panic("%s: netdock_put: packet overflow",
+		    sc->sc_dev->dv_xname);
 
 	totlen += 6;
 	tmplen = totlen;

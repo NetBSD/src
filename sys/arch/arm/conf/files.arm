@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.89 2008/01/26 02:06:04 chris Exp $
+#	$NetBSD: files.arm,v 1.89.6.1 2008/04/03 12:42:12 mjf Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -11,6 +11,7 @@ defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_XSCALE_80200 CPU_XSCALE_80321
 				CPU_XSCALE_PXA250 CPU_XSCALE_PXA270
 				CPU_XSCALE_IXP425
+defflag opt_cputypes.h		FPU_VFP
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
 defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_THROUGH
@@ -34,6 +35,9 @@ defflag				ARMFPE
 file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
 file	arch/arm/fpe-arm/armfpe_init.c		armfpe
 file	arch/arm/fpe-arm/armfpe.S		armfpe
+
+# VFP support
+file	arch/arm/vfp/vfp_init.c			fpu_vfp
 
 # PMAP_DEBUG (heavily abused option)
 defflag				PMAP_DEBUG

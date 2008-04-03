@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.8 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: wax.c,v 1.8.74.1 2008/04/03 12:42:16 mjf Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.8 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.8.74.1 2008/04/03 12:42:16 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,10 +68,7 @@ int	waxmatch(struct device *, struct cfdata *, void *);
 void	waxattach(struct device *, struct device *, void *);
 
 
-CFATTACH_DECL(wax_mainbus, sizeof(struct wax_softc),
-    waxmatch, waxattach, NULL, NULL);
-
-CFATTACH_DECL(wax_phantomas, sizeof(struct wax_softc),
+CFATTACH_DECL(wax, sizeof(struct wax_softc),
     waxmatch, waxattach, NULL, NULL);
 
 static int wax_attached;

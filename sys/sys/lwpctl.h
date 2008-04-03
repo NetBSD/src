@@ -1,7 +1,7 @@
-/*	$NetBSD: lwpctl.h,v 1.1 2007/11/13 00:22:12 ad Exp $	*/
+/*	$NetBSD: lwpctl.h,v 1.1.24.1 2008/04/03 12:43:12 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,19 +51,17 @@
  * It is OK to add fields to this structure, since the kernel allocates
  * the space.  Re-use of fields is more complicated - see the feature
  * word passed to the system call.
- *
- * lc_reserved is just to reduce the size of the bitmap slightly, and
- * can be reused.
  */
 typedef struct lwpctl {
 	volatile int	lc_curcpu;
-	int		lc_reserved;
+	volatile int	lc_pctr;
 } lwpctl_t;
 
 #define	LWPCTL_CPU_NONE		(-1)
 #define	LWPCTL_CPU_EXITED	(-2)
 
 #define	LWPCTL_FEATURE_CURCPU	0x00000001
+#define	LWPCTL_FEATURE_PCTR	0x00000002
 
 #if defined(_KERNEL)
 

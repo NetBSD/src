@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.41 2007/12/09 20:28:24 jmcneill Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.41.10.1 2008/04/03 12:42:57 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.14 1999/11/17 22:33:42 n_hibma Exp $	*/
 
 /*
@@ -130,7 +130,8 @@ struct uhci_vframe {
 };
 
 typedef struct uhci_softc {
-	struct usbd_bus sc_bus;		/* base device */
+	device_t sc_dev;
+	struct usbd_bus sc_bus;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
@@ -189,8 +190,9 @@ usbd_status	uhci_init(uhci_softc_t *);
 int		uhci_intr(void *);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int		uhci_detach(uhci_softc_t *, int);
-int		uhci_activate(device_ptr_t, enum devact);
-bool		uhci_resume(device_t);
-bool		uhci_suspend(device_t);
+void		uhci_childdet(device_t, device_t);
+int		uhci_activate(device_t, enum devact);
+bool		uhci_resume(device_t PMF_FN_PROTO);
+bool		uhci_suspend(device_t PMF_FN_PROTO);
 #endif
 

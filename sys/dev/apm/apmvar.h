@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.5 2007/12/05 07:58:29 ad Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.5.12.1 2008/04/03 12:42:38 mjf Exp $	*/
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@ struct apm_accessops {
 #define APM_NEVENTS 16
 
 struct apm_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct selinfo sc_rsel;
 	struct selinfo sc_xsel;
 	int	sc_flags;
