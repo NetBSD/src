@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_aubus.c,v 1.12 2008/03/31 03:19:20 dogcow Exp $	*/
+/*	$NetBSD: ohci_aubus.c,v 1.13 2008/04/03 15:12:43 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.12 2008/03/31 03:19:20 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_aubus.c,v 1.13 2008/04/03 15:12:43 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,9 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_size = aa->aa_addrs[2];
 	sc->iot = aa->aa_st;
 	sc->sc_bus.dmatag = (bus_dma_tag_t)aa->aa_dt;
+
+	sc->sc_dev = self;
+	sc->sc_bus.hci_private = sc;
 
 	if (bus_space_map(sc->iot, usbh_base, sc->sc_size, 0, &sc->ioh)) {
 		aprint_error_dev(self, "unable to map USBH registers\n");
@@ -154,6 +157,6 @@ ohci_aubus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Attach USB device */
-	sc->sc_child = config_found((void *)sc, &sc->sc_bus, usbctlprint);
+	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 
 }
