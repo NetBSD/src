@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2007/07/24 10:49:27 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.8.12.1 2008/04/03 13:54:12 mjf Exp $
 #
 #	etc.prep/Makefile.inc -- prep-specific etc Makefile targets
 #
@@ -16,4 +16,4 @@ INSTALLATION_DIRS+=	installation/floppy
 MKISOFS_FLAGS+= -prep-boot installation/floppy/sysinst.fs
 
 snap_md_post:
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/floppy '*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*'

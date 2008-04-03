@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2007/07/24 10:49:28 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.18.12.1 2008/04/03 13:54:12 mjf Exp $
 #
 #	etc.x68k/Makefile.inc -- x68k-specific etc Makefile targets
 #
@@ -17,4 +17,4 @@ LOCALTIME=		Japan
 
 snap_md_post:
 	cd ${KERNSRCDIR}/arch/x68k/stand/loadbsd && ${MAKE} release
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/floppy '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*.gz'

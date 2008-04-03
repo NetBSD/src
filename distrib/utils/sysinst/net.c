@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.116 2007/07/29 20:44:26 jmmv Exp $	*/
+/*	$NetBSD: net.c,v 1.116.12.1 2008/04/03 13:54:14 mjf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -601,6 +601,7 @@ again:
 			free(textbuf);
 		}
 
+		net_dhcpconf = 0;
 		/* try a dhcp configuration */
 		dhcp_config = config_dhcp(net_dev);
 		if (dhcp_config) {
