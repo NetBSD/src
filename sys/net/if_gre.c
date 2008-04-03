@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.126 2008/03/27 19:06:52 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.127 2008/04/03 07:12:16 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.126 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.127 2008/04/03 07:12:16 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -245,7 +245,6 @@ greintr(void *arg)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 	struct socket *so = sc->sc_so;
-	lwp_t *l = curlwp;
 	int rc;
 	struct mbuf *m;
 
@@ -255,7 +254,7 @@ greintr(void *arg)
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
 	while ((m = gre_bufq_dequeue(&sc->sc_snd)) != NULL) {
 		/* XXX handle ENOBUFS? */
-		if ((rc = gre_sosend(so, m, l)) != 0) {
+		if ((rc = gre_sosend(so, m, curlwp)) != 0) {
 			GRE_DPRINTF(sc, "%s: gre_sosend failed %d\n", __func__,
 			    rc);
 		}
@@ -457,8 +456,7 @@ gre_upcall_remove(struct socket *so)
 }
 
 static int
-gre_socreate(struct gre_softc *sc, struct lwp *l,
-    struct gre_soparm *sp, int *fdout)
+gre_socreate(struct gre_softc *sc, struct gre_soparm *sp, int *fdout)
 {
 	const struct protosw *pr;
 	int fd, rc;
@@ -470,14 +468,15 @@ gre_socreate(struct gre_softc *sc, struct lwp *l,
 	GRE_DPRINTF(sc, "%s: enter\n", __func__);
 
 	af = sp->sp_src.ss_family;
-	rc = fsocreate(af, &so, sp->sp_type, sp->sp_proto, l, &fd);
+	rc = fsocreate(af, &so, sp->sp_type, sp->sp_proto, curlwp, &fd);
 	if (rc != 0) {
 		GRE_DPRINTF(sc, "%s: fsocreate failed\n", __func__);
 		return rc;
 	}
-	if ((rc = fd_getsock(fd, &so)) == 0) {
+
+	if ((rc = fd_getsock(fd, &so)) == 0)
 		return rc;
-	}
+
 	if ((m = getsombuf(so, MT_SONAME)) == NULL) {
 		rc = ENOBUFS;
 		goto out;
@@ -491,12 +490,12 @@ gre_socreate(struct gre_softc *sc, struct lwp *l,
 	GRE_DPRINTF(sc, "%s: bind 0x%08" PRIx32 " port %d\n", __func__,
 	    sin->sin_addr.s_addr, ntohs(sin->sin_port));
 #endif
-	if ((rc = sobind(so, m, l)) != 0) {
+	if ((rc = sobind(so, m, curlwp)) != 0) {
 		GRE_DPRINTF(sc, "%s: sobind failed\n", __func__);
 		goto out;
 	}
 
-	if ((rc = gre_getsockname(so, m, l)) != 0) {
+	if ((rc = gre_getsockname(so, m, curlwp)) != 0) {
 		GRE_DPRINTF(sc, "%s: gre_getsockname\n", __func__);
 		goto out;
 	}
@@ -505,7 +504,7 @@ gre_socreate(struct gre_softc *sc, struct lwp *l,
 	sockaddr_copy(sa, MIN(MLEN, sizeof(sp->sp_dst)), sstosa(&sp->sp_dst));
 	m->m_len = sp->sp_dst.ss_len;
 
-	if ((rc = soconnect(so, m, l)) != 0) {
+	if ((rc = soconnect(so, m, curlwp)) != 0) {
 		GRE_DPRINTF(sc, "%s: soconnect failed\n", __func__);
 		goto out;
 	}
@@ -610,7 +609,6 @@ gre_sosend(struct socket *so, struct mbuf *top, struct lwp *l)
 static int
 gre_soreceive(struct socket *so, struct mbuf **mp0)
 {
-	struct lwp *l = curlwp;
 	struct mbuf *m, **mp;
 	int flags, len, error, s, type;
 	const struct protosw	*pr;
@@ -628,7 +626,7 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	KASSERT(pr->pr_flags & PR_ATOMIC);
 
 	if (so->so_state & SS_ISCONFIRMING)
-		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, l);
+		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, curlwp);
 
  restart:
 	if ((error = sblock(&so->so_rcv, M_NOWAIT)) != 0)
@@ -661,8 +659,8 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	 * While we process the initial mbufs containing address and control
 	 * info, we save a copy of m->m_nextpkt into nextrecord.
 	 */
-	if (l != NULL)
-		l->l_ru.ru_msgrcv++;
+	if (curlwp != NULL)
+		curlwp->l_ru.ru_msgrcv++;
 	KASSERT(m == so->so_rcv.sb_mb);
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 1");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 1");
@@ -794,7 +792,7 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 4");
 	if (pr->pr_flags & PR_WANTRCVD && so->so_pcb)
 		(*pr->pr_usrreq)(so, PRU_RCVD, NULL,
-		    (struct mbuf *)(long)flags, NULL, l);
+		    (struct mbuf *)(long)flags, NULL, curlwp);
 	if (*mp0 == NULL && (flags & MSG_EOR) == 0 &&
 	    (so->so_state & SS_CANTRCVMORE) == 0) {
 		sbunlock(&so->so_rcv);
@@ -827,7 +825,6 @@ shutdown:
 		fd_getfile(sc->sc_soparm.sp_fd);
 		fd_close(sc->sc_soparm.sp_fd);
 		gre_clearconf(&sc->sc_soparm, false);
-		sc->sc_soparm.sp_fd = -1;
 		so = NULL;
 	}
 
@@ -1087,7 +1084,6 @@ gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 	const struct protosw *pr;
 	file_t *fp;
 	struct gre_softc *sc = ifp->if_softc;
-	struct lwp *l = curlwp;
 	struct proc *kp;
 	struct socket *so;
 	struct sockaddr_storage dst, src;
@@ -1141,7 +1137,7 @@ gre_ssock(struct ifnet *ifp, struct gre_soparm *sp, int fd)
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 
 	/* check address */
-	if ((error = gre_getnames(so, l, &src, &dst)) != 0)
+	if ((error = gre_getnames(so, curlwp, &src, &dst)) != 0)
 		goto release;
 
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
@@ -1241,7 +1237,6 @@ gre_ioctl_unlock(struct gre_softc *sc)
 static int
 gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 {
-	struct lwp *l = curlwp;
 	struct ifreq *ifr;
 	struct if_laddrreq *lifr = (struct if_laddrreq *)data;
 	struct gre_softc *sc = ifp->if_softc;
@@ -1250,7 +1245,6 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	struct gre_soparm sp0;
 
 	ifr = data;
-	fd = 0;
 
 	GRE_DPRINTF(sc, "%s: l.%d, cmd %lu\n", __func__, __LINE__, cmd);
 
@@ -1264,7 +1258,8 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	case GREDSOCK:
 	case SIOCSLIFPHYADDR:
 	case SIOCDIFPHYADDR:
-		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
+		if (kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)
 			return EPERM;
@@ -1435,7 +1430,8 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 			goto sendconf;
 
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
-		error = gre_socreate(sc, l, sp, &fd);
+		fd = 0;
+		error = gre_socreate(sc, sp, &fd);
 		if (error != 0)
 			break;
 
