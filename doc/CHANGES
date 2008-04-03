@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1037 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1038 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -486,3 +486,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	asus(4): Added a driver for ASUS ACPI hotkeys as found in the EeePC.
 		[jmcneill 20080331]
 	zaurus: Add sysinst support. [chris 20080401]
+	finsio(4): Added a driver for the Fintek Super I/O chips, supporting
+		the Hardware Monitor device. Adapted from OpenBSD.
+		[xtraeme 20080403]

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1064 2008/04/02 01:54:34 dyoung Exp $
+# $NetBSD: mi,v 1.1065 2008/04/03 22:46:22 xtraeme Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -877,6 +877,7 @@
 ./usr/share/man/cat4/fast_ipsec.0		man-sys-catman		.cat
 ./usr/share/man/cat4/fd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fea.0			man-sys-catman		.cat
+./usr/share/man/cat4/finsio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fmv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fpa.0			man-sys-catman		.cat
@@ -3422,6 +3423,7 @@
 ./usr/share/man/man4/fast_ipsec.4		man-sys-man		.man
 ./usr/share/man/man4/fd.4			man-sys-man		.man
 ./usr/share/man/man4/fea.4			man-sys-man		.man
+./usr/share/man/man4/finsio.4			man-sys-man		.man
 ./usr/share/man/man4/fms.4			man-sys-man		.man
 ./usr/share/man/man4/fmv.4			man-sys-man		.man
 ./usr/share/man/man4/fpa.4			man-sys-man		.man
