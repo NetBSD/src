@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 2008/03/14 15:39:18 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.218 2008/04/03 10:34:46 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2008/03/14 15:39:18 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2008/04/03 10:34:46 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1969,9 +1969,27 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	ci->ci_want_resched = 1;
 	ci->ci_want_ast = 1;
 
-#if defined(MULTIPROCESSOR)
+#ifdef MULTIPROCESSOR
+	if (ci == curcpu())
+		return;
 	/* Just interrupt the target CPU, so it can notice its AST */
-	if ((flags & RESCHED_IMMED) || ci->ci_index != cpu_number())
+	if ((flags & RESCHED_IMMED) != 0 &&
+	    ci->ci_data.cpu_onproc != ci->ci_data.cpu_idlelwp)
+		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop, 0, 0);
+#endif
+}
+
+/*
+ * Notify an LWP that it has a signal pending, process as soon as possible.
+ */
+void
+cpu_signotify(struct lwp *l)
+{
+	struct cpu_info *ci = l->l_cpu;
+
+	ci->ci_want_ast = 1;
+#ifdef MULTIPROCESSOR
+	if (ci != curcpu())
 		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop, 0, 0);
 #endif
 }
