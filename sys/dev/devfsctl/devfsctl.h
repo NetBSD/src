@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctl.h,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $ */
+/* 	$NetBSD: devfsctl.h,v 1.1.2.1 2008/04/03 11:14:48 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,11 +28,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _DEV_DCTL_DCTL_H_
-#define _DEV_DCTL_DCTL_H_
+#ifndef _DEV_DEVFSCTL_DEVFSCTL_H_
+#define _DEV_DEVFSCTL_DEVFSCTL_H_
 
-int dctl_mount_msg(const char *, int32_t, int);
-int dctl_unmount_msg(int32_t, int);
-int dctl_attr_msg(int32_t, dev_t, mode_t, uid_t, gid_t, int, char *);
+int devfsctl_mount_msg(const char *, int32_t, int);
+int devfsctl_unmount_msg(int32_t, int);
+int devfsctl_attr_msg(int32_t, dev_t, mode_t, uid_t, gid_t, int, char *);
 
-#endif /* _DEV_DCTL_DCTL_H_ */
+#endif /* _DEV_DEVFSCTL_DEVFSCTL_H_ */
