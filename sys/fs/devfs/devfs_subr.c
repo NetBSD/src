@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_subr.c,v 1.1.6.3 2008/03/29 16:17:58 mjf Exp $ */
+/* 	$NetBSD: devfs_subr.c,v 1.1.6.4 2008/04/03 11:37:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.3 2008/03/29 16:17:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.4 2008/04/03 11:37:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1376,10 +1376,10 @@ out:
 int
 devfs_init_nodes(struct devfs_mount *dmp, struct mount *mp, int init)
 {
-	int dctl_major = 182;	/* XXX: This really needs to be fixed */
+	int devfsctl_major = 182;	/* XXX: This really needs to be fixed */
 	int error;
 	char cpath[] = "console";
-	char dpath[] = "dctl";
+	char dpath[] = "devfsctl";
 	dev_t dev;
 	struct vnode *dvp;
 
@@ -1393,8 +1393,8 @@ devfs_init_nodes(struct devfs_mount *dmp, struct mount *mp, int init)
 	if (error != 0)
 		goto out;
 		
-	/* dctl device node */
-	dev = makedev(dctl_major, 0);
+	/* devfsctl device node */
+	dev = makedev(devfsctl_major, 0);
 	error = devfs_new_node(dmp, mp, dvp, dev, dpath, VCHR, S_IFCHR | 0600);
 
 out:

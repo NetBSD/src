@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_vnops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $ */
+/* 	$NetBSD: devfs_vnops.c,v 1.1.14.4 2008/04/03 11:37:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_vnops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_vnops.c,v 1.1.14.4 2008/04/03 11:37:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -164,18 +164,6 @@ devfs_lookup(void *v)
 	dnode = VP_TO_DEVFS_DIR(dvp);
 	*vpp = NULL;
 
-#if 0
-	/* 
-	 * TODO: Need to find some way to attach the visibility
-	 * into the vnode 'dvp'.
-	 */
-	/* First Step: check whether this node is invisible. */
-	if (!DEVFS_VISIBLE_NODE(dnode)) {
-		error = EOPNOTSUPP;
-		goto out;
-	}
-#endif
-
 	/* Check accessibility of requested node. */
 	error = VOP_ACCESS(dvp, VEXEC, cnp->cn_cred);
 	if (error != 0)
@@ -240,6 +228,12 @@ devfs_lookup(void *v)
 			/* The entry was found, so get its associated
 			 * devfs_node. */
 			tnode = de->td_node;
+
+			/* check whether this node is invisible. */
+			if (!DEVFS_VISIBLE_NODE(tnode)) {
+				error = ENOENT;
+				goto out;
+			}
 
 			/* If we are not at the last path component and
 			 * found a non-directory or non-link entry (which
@@ -540,7 +534,7 @@ devfs_read(void *v)
 	KASSERT(VOP_ISLOCKED(vp));
 
 	node = VP_TO_DEVFS_NODE(vp);
-
+	
 	if (vp->v_type != VREG) {
 		error = EISDIR;
 		goto out;
