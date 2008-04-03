@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.80.2.1 2008/03/29 20:47:04 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.80.2.2 2008/04/03 13:03:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -184,7 +184,7 @@ typedef	__pid_t		pid_t;		/* process id */
 #define	pid_t		__pid_t
 #endif
 typedef int32_t		lwpid_t;	/* LWP id */
-typedef quad_t		rlim_t;		/* resource limit */
+typedef u_quad_t	rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 
