@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsctl.c,v 1.1.2.1 2008/04/03 11:14:48 mjf Exp $ */
+/* 	$NetBSD: devfsctl.c,v 1.1.2.2 2008/04/03 11:50:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.1 2008/04/03 11:14:48 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.2 2008/04/03 11:50:31 ad Exp $");
 
 #if defined(DEBUG) && !defined(DEVFSCTLDEBUG)
 #define	DEVFSCTLDEBUG
@@ -168,7 +168,9 @@ static	int devfsctl_initialised = 0;
 int
 devfsctl_mount_msg(const char *path, int32_t cookie, int visibility)
 {
-	return devfsctl_mount_change(path, cookie, DEVFSCTL_NEW_MOUNT, visibility);
+
+	return devfsctl_mount_change(path, cookie, DEVFSCTL_NEW_MOUNT,
+	    visibility);
 }
 
 /*
@@ -177,7 +179,9 @@ devfsctl_mount_msg(const char *path, int32_t cookie, int visibility)
 int
 devfsctl_unmount_msg(int32_t cookie, int visibility)
 {
-	return devfsctl_mount_change(NULL, cookie, DEVFSCTL_UNMOUNT, visibility);
+
+	return devfsctl_mount_change(NULL, cookie, DEVFSCTL_UNMOUNT,
+	    visibility);
 }
 
 /*
@@ -187,7 +191,7 @@ devfsctl_unmount_msg(int32_t cookie, int visibility)
  */
 static int
 devfsctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type,
-	int visibility)
+		      int visibility)
 {
 	int error;
 	struct devfsctl_msg *msg;
@@ -270,7 +274,8 @@ devfsctl_attr_msg(int32_t mount_cookie, dev_t dev_cookie, mode_t nmode,
  * by 'dcookie' to create it for us.
  */
 static int
-devfsctl_push_node(struct devfsctl_node_cookie nc, struct devfsctl_specnode_attr *na)
+devfsctl_push_node(struct devfsctl_node_cookie nc,
+		   struct devfsctl_specnode_attr *na)
 {
 	int error;
 	int32_t mcookie = nc.sc_mount;
@@ -294,7 +299,8 @@ devfsctl_push_node(struct devfsctl_node_cookie nc, struct devfsctl_specnode_attr
  * by 'dcookie' to delete it.
  */
 static int
-devfsctl_delete_node(struct devfsctl_node_cookie nc, struct devfsctl_specnode_attr *na)
+devfsctl_delete_node(struct devfsctl_node_cookie nc,
+		     struct devfsctl_specnode_attr *na)
 {
 	int error;
 	int32_t mcookie = nc.sc_mount;
@@ -322,6 +328,8 @@ devfsctl_record_event(struct devfsctl_msg *msg)
 {
 	struct devfsctl_event_entry *de;
 
+	KASSERT(mutex_owned(&devfsctl_lock));
+
 	if ((de = kmem_zalloc(sizeof(*de), KM_SLEEP)) == NULL) {
 		printf("unable to allocate memory for dev_event\n");
 		return -1;
@@ -332,7 +340,7 @@ devfsctl_record_event(struct devfsctl_msg *msg)
 	SIMPLEQ_INSERT_TAIL(&event_list, de, de_entries);
 	
 	sc->sc_event_count++;
-	selnotify(&sc->sc_rsel, 0);
+	selnotify(&sc->sc_rsel, NOTE_SUBMIT);
 	return 0;
 }
 
@@ -412,6 +420,7 @@ devfsctl_periodic_device_check(void)
 void
 devfsctlattach(int n)
 {
+
 	if (devfsctl_initialised)
 		return;
 	devfsctl_initialised = 1;
@@ -438,14 +447,14 @@ devfsctlattach(int n)
 void
 devfsctl_thread(void *arg)
 {
+
 	/*
 	 * Loop forever, doing a periodic check for DEVFSCTL events.
 	 */
+	DEVFSCTL_LOCK(&devfsctl_lock); 
 	for (;;) {
-		DEVFSCTL_LOCK(&devfsctl_lock); 
 		devfsctl_periodic_device_check();
-		DEVFSCTL_UNLOCK(&devfsctl_lock);
-		(void) tsleep(sc, PWAIT, "devfsctlev",  (8 * hz) / 7);
+		kpause("devfsev", false, (8 * hz) / 7, &devfsctl_lock);
 	}
 }
 
@@ -522,7 +531,8 @@ devfsctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			if (ee->de_msg->d_type == DEVFSCTL_NEW_MOUNT) {
 				/* is it already there? */
 				if (ee->de_on_mount == 0) {
-					SIMPLEQ_INSERT_TAIL(&mount_event_list, ee, dm_entries);
+					SIMPLEQ_INSERT_TAIL(&mount_event_list,
+					    ee, dm_entries);
 					ee->de_on_mount = 1;
 				}
 				sc->sc_event_count--;
@@ -532,8 +542,10 @@ devfsctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				 * Search the list of mount events and remove
 				 * this mount.
 				 */
-				SIMPLEQ_FOREACH(ef, &mount_event_list, dm_entries) {
-					if (ef->de_msg->d_dc == ee->de_msg->d_dc)
+				SIMPLEQ_FOREACH(ef, &mount_event_list,
+				    dm_entries) {
+					if (ef->de_msg->d_dc ==
+					    ee->de_msg->d_dc)
 						break;
 				}
 
@@ -591,15 +603,13 @@ devfsctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		idata = (struct devfsctl_ioctl_data *)data;
 
-		const struct cdevsw *cdev = cdevsw_lookup(idata->d_dev);
-
 		/* Handle disk devices */
 		if (idata->d_type == DEV_DISK) {
 			int partno;			/* partition number */
 			struct disklabel dlabel;
 			struct partition part;
 
-			error = cdev->d_ioctl(idata->d_dev, idata->d_cmd, 
+			error = cdev_ioctl(idata->d_dev, idata->d_cmd, 
 			    &dlabel, 0, curlwp);
 
 			if (error)
@@ -638,6 +648,7 @@ devfsctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	default:
 		error = ENOTTY;
+		break;
 	}
 	DEVFSCTL_UNLOCK(&devfsctl_lock);
 
@@ -675,9 +686,16 @@ static int
 filt_devfsctlread(struct knote *kn, long hint)
 {
 	struct devfsctl_softc *sd = kn->kn_hook;
+	int rv;
 
+	if (hint != NOTE_SUBMIT)
+		DEVFSCTL_LOCK(&devfsctl_lock);
 	kn->kn_data = sd->sc_event_count;
-	return (kn->kn_data > 0);
+	rv = (kn->kn_data > 0);
+	if (hint != NOTE_SUBMIT)
+		DEVFSCTL_UNLOCK(&devfsctl_lock);
+
+	return rv;
 }
 
 static const struct filterops devfsctlread_filtops =
