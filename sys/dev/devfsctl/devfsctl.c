@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsctl.c,v 1.1.2.2 2008/04/03 11:50:31 ad Exp $ */
+/* 	$NetBSD: devfsctl.c,v 1.1.2.3 2008/04/03 11:51:38 ad Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.2 2008/04/03 11:50:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.3 2008/04/03 11:51:38 ad Exp $");
 
 #if defined(DEBUG) && !defined(DEVFSCTLDEBUG)
 #define	DEVFSCTLDEBUG
@@ -435,7 +435,7 @@ devfsctlattach(int n)
 	SIMPLEQ_INIT(&event_list);
 
 	if (kthread_create(PRI_NONE, 0, NULL, devfsctl_thread, NULL,
-	    &devfsctl_thread_handle, "devfsctl_thread") != 0) {
+	    &devfsctl_thread_handle, "devfsctl") != 0) {
 		/*
 		 * We were unable to create the DEVFSCTL thread; bail out.
 		 */
