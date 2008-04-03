@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.61 2008/04/01 12:02:52 martin Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.62 2008/04/03 05:03:23 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.61 2008/04/01 12:02:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.62 2008/04/03 05:03:23 scottr Exp $");
 
 #include "opt_adb.h"
 
@@ -2737,15 +2737,9 @@ adb_read_date_time(unsigned long *curtime)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		for (tmout = 13800; !flag && tmout >= 10; tmout -= 10)
-			delay(10);
-		if (!flag && tmout > 0)
-			delay(tmout);
-
-		if (!flag) {
-			printf("WARNING: ADB command did not complete\n");
+		adb_spin(&flag);	/* wait for result */
+		if (flag == 0)		/* exit it timeout */
 			return -1;
-		}
 
 		*curtime = (long)(*(long *)(output + 1));
 		return 0;
@@ -2762,15 +2756,9 @@ adb_read_date_time(unsigned long *curtime)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		for (tmout = 138000; !flag && tmout >= 10; tmout -= 10)
-			delay(10);
-		if (!flag && tmout > 0)
-			delay(tmout);
-
-		if (!flag) {
-			printf("WARNING: ADB command did not complete\n");
+		adb_spin(&flag);	/* wait for result */
+		if (flag == 0)		/* exit it timeout */
 			return -1;
-		}
 
 		*curtime = (long)(*(long *)(output + 1));
 		return 0;
@@ -2810,8 +2798,9 @@ adb_set_date_time(unsigned long curtime)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		while (0 == flag)	/* wait for send to finish */
-			;
+		adb_spin(&flag);	/* wait for result */
+		if (flag == 0)		/* exit it timeout */
+			return -1;
 
 		return 0;
 
@@ -2831,8 +2820,9 @@ adb_set_date_time(unsigned long curtime)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		while (0 == flag)	/* wait for send to finish */
-			;
+		adb_spin(&flag);	/* wait for result */
+		if (flag == 0)		/* exit it timeout */
+			return -1;
 
 		return 0;
 
@@ -2910,8 +2900,9 @@ adb_prog_switch_enable(void)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		while (0 == flag)	/* wait for send to finish */
-			;
+		adb_spin(&flag);	/* wait for result */
+		if (flag == 0)		/* exit it timeout */
+			return -1;
 
 		return 0;
 
@@ -2945,8 +2936,9 @@ adb_prog_switch_disable(void)
 		if (result != 0)	/* exit if not sent */
 			return -1;
 
-		while (0 == flag)	/* wait for send to finish */
-			;
+		adb_spin(&flag);	/* wait for result */
+		if (flag == 0)		/* exit it timeout */
+			return -1;
 
 		return 0;
 
