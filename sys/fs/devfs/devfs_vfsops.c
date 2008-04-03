@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_vfsops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $ */
+/* 	$NetBSD: devfs_vfsops.c,v 1.1.14.4 2008/04/03 11:37:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.4 2008/04/03 11:37:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.3 2008/03/29 16:17:58 mjf Ex
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 #include <fs/devfs/devfs.h>
-#include <dev/dctl/dctl.h>
+#include <dev/devfsctl/devfsctl.h>
 
 /* --------------------------------------------------------------------- */
 
@@ -217,14 +217,14 @@ devfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vfs_getnewfsid(mp);
 
 	/*
-	 * Create a console device and dctl(4) device special file
+	 * Create a console device and devfsctl(4) device special file
 	 * in this new devfs.
 	 */
 	error = devfs_init_nodes(tmp, mp, tmp->tm_init);
 	if (error != 0)
 		return error;
 
-	error = dctl_mount_msg(path, 
+	error = devfsctl_mount_msg(path, 
 	    mp->mnt_stat.f_fsidx.__fsid_val[0], tmp->tm_visible);
 	if (error != 0)
 		return error;
@@ -275,7 +275,7 @@ devfs_unmount(struct mount *mp, int mntflags)
 			vref(tmp->tm_root->tn_vnode);
 	}
 
-	error = dctl_unmount_msg(mp->mnt_stat.f_fsidx.__fsid_val[0],
+	error = devfsctl_unmount_msg(mp->mnt_stat.f_fsidx.__fsid_val[0],
 	    tmp->tm_visible);
 
 	/* I have no idea what to do here */
@@ -510,7 +510,7 @@ struct vfsops devfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	devfs_snapshot,			/* vfs_snapshot */
 	vfs_stdextattrctl,		/* vfs_extattrctl */
-	(void *)eopnotsupp,		/* vfs_suspendctl */
+	(void *)eopnotsupp,		/* vfs_suspendevfsctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
 	devfs_vnodeopv_descs,
