@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.203 2008/03/31 15:21:01 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.204 2008/04/03 22:51:09 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.203 $"
+#ident 		"GENERIC-$Revision: 1.204 $"
 
 maxusers	64		# estimated number of users
 
@@ -428,6 +428,9 @@ iic*	at ichsmb?
 #adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E            # Tyan S2882-D
+
+# Fintek Super I/O with hardware monitor
+#finsio0 	at isa? port 0x4e
 
 # iTE IT87xxF Super I/O with watchdog and sensors support
 #itesio0 	at isa? port 0x2e

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.886 2008/03/31 15:19:28 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.887 2008/04/03 22:51:09 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.886 $"
+#ident 		"GENERIC-$Revision: 1.887 $"
 
 maxusers	64		# estimated number of users
 
@@ -641,6 +641,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 
 # IBM Thinkpad Active Protection System
 #aps0 	at isa? port 0x1600
+
+# Fintek Super I/O with hardware monitor
+#finsio0 	at isa? port 0x4e
 
 # iTE IT87xxF Super I/O with watchdog and sensors support
 #itesio0 	at isa? port 0x2e
