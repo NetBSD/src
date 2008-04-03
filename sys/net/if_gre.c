@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.128 2008/04/03 07:19:32 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.129 2008/04/03 21:40:59 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.128 2008/04/03 07:19:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.129 2008/04/03 21:40:59 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -824,6 +824,7 @@ shutdown:
 		sc->sc_si = NULL;
 		fd_getfile(sc->sc_soparm.sp_fd);
 		fd_close(sc->sc_soparm.sp_fd);
+badsock:
 		gre_clearconf(&sc->sc_soparm, false);
 		so = NULL;
 	}
@@ -831,13 +832,14 @@ shutdown:
 	if (newsoparm != NULL) {
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		sc->sc_soparm = *newsoparm;
+		newsoparm = NULL;
 	}
 
 	if (sc->sc_soparm.sp_fd != -1) {
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		rc = getsock(sc->sc_soparm.sp_fd, &fp);
 		if (rc != 0)
-			goto shutdown;
+			goto badsock;
 		GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 		so = (struct socket *)fp->f_data;
 		sc->sc_si = softint_establish(SOFTINT_NET, greintr, sc);
