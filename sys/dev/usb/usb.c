@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.110 2008/03/30 15:37:49 ad Exp $	*/
+/*	$NetBSD: usb.c,v 1.111 2008/04/03 14:07:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.110 2008/03/30 15:37:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.111 2008/04/03 14:07:01 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -455,6 +455,8 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	sc = device_lookup_private(&usb_cd, unit);
+	if (!sc)
+		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
