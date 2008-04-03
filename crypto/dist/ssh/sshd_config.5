@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.13 2007/12/18 02:35:33 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.14 2008/04/03 13:09:14 adrianp Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -285,7 +285,9 @@ for more information on patterns.
 .It Cm ForceCommand
 Forces the execution of the command specified by
 .Cm ForceCommand ,
-ignoring any command supplied by the client.
+ignoring any command supplied by the client and
+.Pa ~/.ssh/rc
+if present.
 The command is invoked by using the user's login shell with the -c option.
 This applies to shell, command, or subsystem execution.
 It is most useful inside a
