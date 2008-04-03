@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.933 2008/04/01 23:17:32 cegger Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.934 2008/04/03 20:43:27 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.933 2008/04/01 23:16:16 cegger Exp
+ *	NetBSD: pcidevs,v 1.934 2008/04/03 20:42:15 riz Exp
  */
 
 /*
@@ -6118,6 +6118,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
 	    "Viper/PCI",
+	},
+	{
+	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4,
+	    "Neo 4-port",
+	},
+	{
+	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8,
+	    "Neo 8-port",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL1002,
@@ -14108,4 +14116,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2927;
+const int pci_nproducts = 2929;

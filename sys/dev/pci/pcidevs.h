@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.934 2008/04/01 23:17:32 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.935 2008/04/03 20:43:27 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.933 2008/04/01 23:16:16 cegger Exp
+ *	NetBSD: pcidevs,v 1.934 2008/04/03 20:42:15 riz Exp
  */
 
 /*
@@ -1738,6 +1738,10 @@
 
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
+
+/* Digi International Products */
+#define	PCI_PRODUCT_DIGI_NEO4	0x00b0		/* Neo 4-port */
+#define	PCI_PRODUCT_DIGI_NEO8	0x00b1		/* Neo 8-port */
 
 /* D-Link Systems products */
 #define	PCI_PRODUCT_DLINK_DL1002	0x1002		/* DL-1002 10/100 Ethernet */
