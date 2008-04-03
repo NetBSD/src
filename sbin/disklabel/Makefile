@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2006/12/18 13:39:10 nonaka Exp $
+#	$NetBSD: Makefile,v 1.60.12.1 2008/04/03 13:54:09 mjf Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -25,6 +25,7 @@ CPPFLAGS+= -DSTRICT_CYLINDER_ALIGNMENT
 	|| ${MACHINE} == "evbarm" \
 	|| ${MACHINE} == "hpcarm" \
 	|| ${MACHINE} == "hpcmips" \
+	|| ${MACHINE} == "hpcsh" \
 	|| ${MACHINE} == "i386" \
 	|| ${MACHINE} == "iyonix" \
 	|| ${MACHINE} == "landisk" \

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.33 2007/03/23 02:57:30 jnemeth Exp $
+#	$NetBSD: makesrctars,v 1.33.12.1 2008/04/03 13:54:13 mjf Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -12,6 +12,7 @@ rundir="$(dirname "$0")" # ${0%/*} isn't good enough when there's no "/"
 
 # set defaults
 xsrcdir=
+quiet=false
 
 GZIP=-9
 export GZIP
@@ -19,9 +20,10 @@ export GZIP
 usage()
 {
 	cat 1>&2 <<USAGE
-Usage: ${prog} [-N password/group dir] [-x xsrcdir] srcdir setdir
+Usage: ${prog} [-N password/group dir] [-q] [-x xsrcdir] srcdir setdir
 	-N dir		location which contains master.passwd and group files
 			(defaults to \${srcdir}/etc)
+	-q		quiet operation
 	-x xsrcdir	build xsrc.tgz from xsrcdir
 	srcdir		location of sources
 	setdir		where to write the .tgz files to
@@ -29,9 +31,18 @@ USAGE
 	exit 1
 }
 
+msg()
+{
+	$quiet || echo $*
+}
+
+
 # handle args
-while getopts N:x: ch; do
+while getopts N:qx: ch; do
 	case ${ch} in
+	q)
+		quiet=true
+		;;
 	x)
 		xsrcdir="${OPTARG}"
 		;;
@@ -53,7 +64,7 @@ setdir="$2"
 : ${PASSWD:="${srcdir}/etc"}
 
 if [ ! -d "${setdir}" ]; then
-	echo "${setdir} is not a directory"
+	echo >&2 "${prog}: ${setdir} is not a directory"
 	exit 1
 fi
 
@@ -64,7 +75,7 @@ makeset()
 	dir="$1"
 	shift
 	intmp="/tmp/in$$"
-	echo "Creating ${set}"
+	msg "Creating ${set}"
 	if [ "${dir}" != "." ]; then
 		cd "${dir}"
 		srcprefix="${srcprefix}/${dir}"
@@ -93,7 +104,7 @@ makeset()
 #
 
 if ! cd "${srcdir}"; then
-	echo "Can't chdir to ${srcdir}"
+	echo >&2 "${prog}: can't chdir to ${srcdir}"
 	exit 1
 fi
 
@@ -113,7 +124,7 @@ makeset sharesrc share
 #
 if [ -n "${xsrcdir}" ]; then
 	if ! cd "${xsrcdir}"; then
-		echo "Can't chdir to ${xsrcdir}"
+		echo >&2 "${prog}: can't chdir to ${xsrcdir}"
 		exit 1
 	fi
 	srcprefix=usr/xsrc
@@ -121,7 +132,7 @@ if [ -n "${xsrcdir}" ]; then
 fi
 
 
-echo "Creating checksum files"
+msg "Creating checksum files"
 (cd "${setdir}"
 	${CKSUM} -o1 *.tgz > BSDSUM
 	${CKSUM}     *.tgz > CKSUM

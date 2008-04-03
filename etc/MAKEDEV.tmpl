@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.101 2007/12/31 15:31:40 ad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.101.6.1 2008/04/03 13:54:11 mjf Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -606,7 +606,7 @@ makedir()
 		return
 	fi
 	if $do_specfile; then
-		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
+		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root optional"
 	else
 		nooutput -2 mkdir $1
 		chmod $2 $1
@@ -1789,6 +1789,10 @@ atabus*)
 
 drvctl)
 	mkdev drvctl c %drvctl_chr% 0 644
+	;;
+
+isv)
+	mkdev isv c %isv_chr% 0 644
 	;;
 
 tap*)

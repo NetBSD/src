@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 2007/07/24 10:49:28 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.40.12.1 2008/04/03 13:54:12 mjf Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -32,19 +32,19 @@ INSTALLATION_SYMLINKS=	\
 snap_md_post:
 	# install boot images in netboot directory
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/boot.net \
-	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/bootjs.net \
-	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot
 
 	# install links to boot and installation utilities for various media
 .for linkdst linksrc in ${INSTALLATION_SYMLINKS} 
-	rm -f ${RELEASEDIR}/${MACHINE}/installation/${linkdst}
-	ln -s ${linksrc} ${RELEASEDIR}/${MACHINE}/installation/${linkdst}
+	rm -f ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/${linkdst}
+	ln -s ${linksrc} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/${linkdst}
 .endfor
 
 	# compute checksums
 .for dir in ${MD_INSTALLATION_DIRS}
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/${dir} '*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/${dir} '*'
 .endfor
 
 CDBOOTIMAGEDIR!= cd ${NETBSDSRCDIR}/distrib/sparc/bootfs && ${PRINTOBJDIR}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/02/10 08:21:25 jmmv Exp $
+#	$NetBSD: Makefile,v 1.12.4.1 2008/04/03 13:54:11 mjf Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@
 PROG=	modload
 SRCS=	main.c
 MAN=	modload.8
+LDADD=	-lprop
 
 .else				# LKMS
 

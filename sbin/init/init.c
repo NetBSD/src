@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.94.6.1 2008/03/29 16:17:56 mjf Exp $	*/
+/*	$NetBSD: init.c,v 1.94.6.2 2008/04/03 13:54:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.94.6.1 2008/03/29 16:17:56 mjf Exp $");
+__RCSID("$NetBSD: init.c,v 1.94.6.2 2008/04/03 13:54:11 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -1637,8 +1637,6 @@ mfs_dev(void)
 	/* Mount an mfs over /mnt so we can create a console entry */
 	switch ((pid = fork())) {
 	case 0:
-		if (fs_size == NULL)
-			return(-1);
 		(void)execl(INIT_MOUNT_MFS, "mount_mfs",
 		    "-b", "4096", "-f", "512",
 		    "-s", 64, "-n", 10,
@@ -1659,6 +1657,7 @@ mfs_dev(void)
 	}
 
 	{
+		dev_t dev;
 #ifdef CPU_CONSDEV
 		static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
 		size_t olen;
@@ -1667,13 +1666,13 @@ mfs_dev(void)
 		    NULL, 0) == -1)
 #endif
 			dev = makedev(0, 0);
+
+		/* Make a console for us, so we can see things happening */
+		if (mknod("/mnt/console", 0666 | S_IFCHR, dev) == -1)
+			return(-1);
+		(void)freopen("/mnt/console", "a", stderr);
 	}
 
-	/* Make a console for us, so we can see things happening */
-	if (mknod("/mnt/console", 0666 | S_IFCHR, dev) == -1)
-		return(-1);
-
-	(void)freopen("/mnt/console", "a", stderr);
 #endif
 
 	/* Run the makedev script to create devices */

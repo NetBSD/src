@@ -1,6 +1,15 @@
-# $NetBSD: mi,v 1.740.6.2 2008/04/03 11:37:26 mjf Exp $
+# $NetBSD: mi,v 1.740.6.3 2008/04/03 13:54:13 mjf Exp $
 #
-# Note: don't delete entries from here - mark them as "obsolete" instead.
+# Note:	Don't delete entries from here - mark them as "obsolete" instead,
+#	unless otherwise stated below.
+#
+# Note:	Do not mark "old" major and major.minor shared libraries as
+#	"obsolete"; just remove the entry, as third-party applications
+#	may be linked against the old major shared library, and
+#	that is a symlink to the old major.minor shared library.
+#	e.g., "lib<name>.so.<N>" and "lib<name>.so.<N>.<M>"
+#	Exceptions to this rule may include shared libraries that
+#	are dlopen()ed at run-time, such as extra locales, etc.
 #
 .						base-sys-root
 ./altroot					base-sys-root
@@ -106,11 +115,7 @@
 ./etc/uucp					base-obsolete		obsolete
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
-./lib/libdes.so.6				base-obsolete		obsolete
-./lib/libdes.so.6.0				base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
-./lib/libssp.so.0				base-obsolete		obsolete
-./lib/libssp.so.0.0				base-obsolete		obsolete
 ./libdata					base-sys-root
 ./libdata/firmware				base-sys-root
 ./libdata/firmware/ral				base-sys-root
@@ -482,6 +487,7 @@
 ./usr/bin/error					base-util-bin
 ./usr/bin/ex					base-util-bin
 ./usr/bin/expand				base-util-bin
+./usr/bin/gss					base-krb5-bin		kerberos
 ./usr/bin/false					base-util-bin
 ./usr/bin/fgrep					base-util-bin
 ./usr/bin/file					base-util-bin
@@ -491,6 +497,7 @@
 ./usr/bin/fold					base-util-bin
 ./usr/bin/from					base-mail-bin
 ./usr/bin/fsplit				base-util-bin
+./usr/bin/hxtool				base-krb5-bin		kerberos
 ./usr/bin/fstat					base-util-bin
 ./usr/bin/ftp					base-netutil-bin
 ./usr/bin/gcpp					base-util-bin		gcccmds
@@ -532,6 +539,7 @@
 ./usr/bin/kinit					base-krb5-bin		kerberos
 ./usr/bin/klist					base-krb5-bin		kerberos
 ./usr/bin/kpasswd				base-krb5-bin		use_kerberos
+./usr/bin/krb5-config				base-krb5-bin		kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
 ./usr/bin/lam					base-util-bin
@@ -696,6 +704,7 @@
 ./usr/bin/ul					base-util-bin
 ./usr/bin/uname					base-util-bin
 ./usr/bin/uncompress				base-util-bin
+./usr/bin/verify_krb5_conf			base-krb5-bin		kerberos
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
 ./usr/bin/units					base-util-bin
@@ -875,15 +884,9 @@
 ./usr/lib					base-sys-usr
 ./usr/lib/i18n					base-i18n-root
 ./usr/lib/libntp.so				base-obsolete		obsolete
-./usr/lib/libntp.so.0				base-obsolete		obsolete
-./usr/lib/libntp.so.0.0				base-obsolete		obsolete
 ./usr/lib/libssp.so				base-obsolete		obsolete
-./usr/lib/libssp.so.0				base-obsolete		obsolete
-./usr/lib/libssp.so.0.0				base-obsolete		obsolete
 ./usr/lib/libusb.a				base-obsolete		obsolete
 ./usr/lib/libusb.so				base-obsolete		obsolete
-./usr/lib/libusb.so.0				base-obsolete		obsolete
-./usr/lib/libusb.so.0.1				base-obsolete		obsolete
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
@@ -919,6 +922,8 @@
 ./usr/libdata/debug/bin				base-sys-usr
 ./usr/libdata/debug/libexec			base-sys-usr
 ./usr/libdata/debug/sbin			base-sys-usr
+./usr/libexec/ipropd-master			base-krb5-bin		kerberos
+./usr/libexec/ipropd-slave			base-krb5-bin		kerberos
 ./usr/libdata/debug/usr				base-sys-usr
 ./usr/libdata/debug/usr/X11R6			base-sys-usr
 ./usr/libdata/debug/usr/X11R6/bin		base-sys-usr
@@ -1082,6 +1087,7 @@
 ./usr/sbin/eshconfig				base-sysutil-bin
 ./usr/sbin/etcupdate				base-sysutil-bin
 ./usr/sbin/extattrctl				base-sysutil-bin
+./usr/sbin/iprop-log				base-krb5-bin		kerberos
 ./usr/sbin/faithd				base-router-bin		inet6
 ./usr/sbin/fixmount				base-nfsclient-bin
 ./usr/sbin/flush				base-obsolete		obsolete
@@ -1094,7 +1100,10 @@
 ./usr/sbin/gettable				base-obsolete		obsolete
 ./usr/sbin/gifconfig				base-obsolete		obsolete
 ./usr/sbin/gpioctl				base-sysutil-bin
+./usr/sbin/kcm					base-krb5-bin		kerberos
 ./usr/sbin/greconfig				base-obsolete		obsolete
+./usr/sbin/kdigest				base-krb5-bin		kerberos
+./usr/sbin/kimpersonate				base-krb5-bin		kerberos
 ./usr/sbin/group				base-sysutil-bin
 ./usr/sbin/groupadd				base-sysutil-bin
 ./usr/sbin/groupdel				base-sysutil-bin
