@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.127 2008/04/03 07:12:16 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.128 2008/04/03 07:19:32 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.127 2008/04/03 07:12:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.128 2008/04/03 07:19:32 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -474,7 +474,7 @@ gre_socreate(struct gre_softc *sc, struct gre_soparm *sp, int *fdout)
 		return rc;
 	}
 
-	if ((rc = fd_getsock(fd, &so)) == 0)
+	if ((rc = fd_getsock(fd, &so)) != 0)
 		return rc;
 
 	if ((m = getsombuf(so, MT_SONAME)) == NULL) {
