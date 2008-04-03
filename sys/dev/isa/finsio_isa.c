@@ -1,5 +1,5 @@
 /*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
-/*	$NetBSD: finsio_isa.c,v 1.1 2008/04/03 22:46:22 xtraeme Exp $	*/
+/*	$NetBSD: finsio_isa.c,v 1.2 2008/04/03 23:16:23 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2008 Juan Romero Pardines
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.1 2008/04/03 22:46:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.2 2008/04/03 23:16:23 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,6 @@ struct finsio_softc {
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[FINSIO_MAX_SENSORS];
 	struct finsio_sensor *sc_finsio_sensors;
-
-	bool sc_is_f71882;
 
 	u_int sc_tempsel;
 };
