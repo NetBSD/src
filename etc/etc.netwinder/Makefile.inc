@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2007/07/24 10:49:26 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.8.12.1 2008/04/03 13:54:11 mjf Exp $
 #
 #	etc.netwinder/Makefile.inc -- netwinder-specific etc Makefile targets
 #
@@ -15,5 +15,5 @@ KERNEL_SETS=		GENERIC
 
 # Build the release notes and boot floppies and install them
 snap_md_post:
-#	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/kernel '*.gz'
-#	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*.gz'
+#	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/kernel '*.gz'
+#	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.gz'

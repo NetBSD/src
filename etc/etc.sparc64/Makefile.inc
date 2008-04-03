@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2007/07/24 10:49:28 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.27.12.1 2008/04/03 13:54:12 mjf Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -8,7 +8,7 @@ MK32BITLIBS?=no
 # If you change the list of distributed kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 
-KERNEL_SETS=		GENERIC
+KERNEL_SETS=		GENERIC GENERIC.MP
 
 BUILD_KERNELS+=		INSTALL
 
@@ -58,20 +58,20 @@ snap_md_post:
 	# install boot image and installation scripts in netboot directory
 .for file in ofwboot.net
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
-	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot
 .endfor
 .for file in ofwboot bootblk
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 .endfor
 .for file in installboot
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${DESTDIR}/usr/sbin/${file} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 .endfor
 
 	# compute checksums
 .for dir in ${MD_INSTALLATION_DIRS}
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/${dir} '*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/${dir} '*'
 .endfor
 
 ISOBOOTFILEDIR!=cd ${.CURDIR}/../distrib/${MACHINE}/bootfs && ${PRINTOBJDIR}

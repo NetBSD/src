@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.62 2007/11/12 15:06:45 jmmv Exp $
+# $NetBSD: maketars,v 1.62.8.1 2008/04/03 13:54:13 mjf Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -26,6 +26,7 @@ metalog=
 installdir=
 etcdir=
 setfilesonly=false
+quiet=false
 
 usage()
 {
@@ -38,6 +39,7 @@ Usage: ${prog} [-b] [-x] [-i idir] [-a arch] [-m machine] [-s setsdir] [-S]
 	-i idir		Install sets to idir instead of creating tar files
 	-a arch		Set arch (e.g, m68k, mipseb, mipsel, powerpc) [${MACHINE_ARCH}]
 	-m machine	Set machine (e.g, amiga, i386, macppc) [${MACHINE}]
+	-q		Quiet operation
 	-s setsdir	Directory to find sets [${setsdir}]
 	-S		Exit after creating set files ${dest}/etc/mtree/set.*
 	-M metalog	metalog file
@@ -49,8 +51,13 @@ USAGE
 	exit 1
 }
 
+msg()
+{
+	$quiet || echo $*
+}
+
 # handle args
-while getopts bxi:a:m:s:SM:N:d:t: ch; do
+while getopts bxi:a:m:qs:SM:N:d:t: ch; do
 	case ${ch} in
 	b)
 		lists="${nlists} ${xlists}"
@@ -67,6 +74,9 @@ while getopts bxi:a:m:s:SM:N:d:t: ch; do
 		;;
 	m)
 		MACHINE="${OPTARG}"
+		;;
+	q)
+		quiet=true
 		;;
 	s)
 		setsdir="${OPTARG}"
@@ -111,13 +121,15 @@ fi
 : ${etcdir:="${dest}/etc"}
 
 SDIR="$(${MKTEMP} -d "/tmp/${prog}.XXXXXX")"
+TMPFILES=
 
 setlistdir="${dest}/etc/mtree"
 
 cleanup()
 {
 	es=$?
-	/bin/rm -rf "${SDIR}"
+	/bin/rm -rf "${SDIR}" ${TMPFILES}
+	trap - 0
 	exit ${es}
 }
 trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
@@ -130,7 +142,7 @@ for setname in ${lists}; do
 	${HOST_SH} "${setsdir}/makeflist" -a "${MACHINE_ARCH}" -m "${MACHINE}" \
 	    -s "${setsdir}" "${setname}" > "${SDIR}/flist.${setname}"
 	if [ -n "${metalog}" ]; then
-		${setfilesonly} && echo "Creating ${setlistdir}/set.${setname}"
+		${setfilesonly} && msg "Creating ${setlistdir}/set.${setname}"
 		${AWK} -f "${rundir}/getdirs.awk" "${SDIR}/flist.${setname}" \
 		    | ${SORT} -u > "${SDIR}/flist.${setname}.full"
 		(
@@ -161,18 +173,19 @@ es=0
 for setname in ${lists}; do
 	out="${setname}.tgz"
 	if [ -n "${installdir}" ]; then
-		echo "Copying set ${setname}"
+		msg "Copying set ${setname}"
 		( cd "${dest}"; \
 		    ${PAX} -O -rwpe -d -N"${etcdir}" ${metalog:+-M} \
 			"${installdir}" < "${setlistdir}/set.${setname}" )
 	else
 		if [ -n "${metalog}" -a "${tars}/${out}" -nt "${metalog}" ]
 		then
-			echo "${out} is up to date"
+			msg "${out} is up to date"
 			continue
 		fi
-		echo "Creating ${out}"
+		msg "Creating ${out}"
 		rm -f "${tars}/${out}"
+		TMPFILES="${TMPFILES} ${tars}/${out}.tmp"
 		( cd "${dest}"; \
 		    ${PAX} -O -w -d -z -N"${etcdir}" ${metalog:+-M} \
 			< "${setlistdir}/set.${setname}" ) \

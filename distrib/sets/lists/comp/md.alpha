@@ -1,11 +1,11 @@
-# $NetBSD: md.alpha,v 1.53 2007/02/09 22:22:32 ad Exp $
+# $NetBSD: md.alpha,v 1.53.12.1 2008/04/03 13:54:13 mjf Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
 ./usr/include/alpha/ansi.h			comp-c-include
 ./usr/include/alpha/aout_machdep.h		comp-c-include
 ./usr/include/alpha/asm.h			comp-c-include
-./usr/include/alpha/atomic.h			comp-c-include
+./usr/include/alpha/atomic.h			comp-obsolete		obsolete
 ./usr/include/alpha/autoconf.h			comp-c-include
 ./usr/include/alpha/bswap.h			comp-c-include
 ./usr/include/alpha/bus.h			comp-c-include

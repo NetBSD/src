@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2007/07/24 10:49:25 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.20.12.1 2008/04/03 13:54:11 mjf Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 #
@@ -19,5 +19,5 @@ snap_md_post:
 .endif
 	cd ${KERNSRCDIR}/arch/hp300/stand && \
 	    ${MAKE} depend && ${MAKE} && ${MAKE} release
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/miniroot '*.fs*'
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc 'SYS*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/miniroot '*.fs*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc 'SYS*'

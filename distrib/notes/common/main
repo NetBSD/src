@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.390 2008/02/07 14:36:40 itohy Exp $
+.\"	$NetBSD: main,v 1.390.6.1 2008/04/03 13:54:13 mjf Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .ig
 
-	To "regenate" this file, go up one level to src/distrib/notes
+	To "regenerate" this file, go up one level to src/distrib/notes
 	and type "make".  This will create
 	src/distrib/notes/<arch>/INSTALL.*.
 
@@ -1688,7 +1688,7 @@ below).
 .Pp
 If you'd like to help with this effort, and have an idea as to how
 you could be useful, send us mail or subscribe to:
-.Mt netbsd-help@NetBSD.org .
+.Mt netbsd-users@NetBSD.org .
 .Pp
 As a favor, please avoid mailing huge documents or files to these
 mailing lists.
@@ -1840,7 +1840,6 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Grant Beattie Ta Mt grant@NetBSD.org
 .It Ta Manuel Bouyer Ta Mt bouyer@NetBSD.org
 .It Ta David Brownlee Ta Mt abs@NetBSD.org
-.It Ta Pavel Cahyna Ta Mt pavel@NetBSD.org
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
@@ -2012,6 +2011,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Christian Limpach Ta Mt cl@NetBSD.org
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
 .It Ta Joel Lindholm Ta Mt joel@NetBSD.org
+.It Ta Tonnerre Lombard Ta Mt tonnerre@NetBSD.org
 .It Ta Mike Long Ta Mt mikel@NetBSD.org
 .It Ta Michael Lorenz Ta Mt macallan@NetBSD.org
 .It Ta Warner Losh Ta Mt imp@NetBSD.org

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboothfs.c,v 1.1 2006/09/17 03:56:03 tsutsui Exp $	*/
+/*	$NetBSD: mkboothfs.c,v 1.1.20.1 2008/04/03 13:54:13 mjf Exp $	*/
 
 /*-
  * Copyright (C) 2005, 2006 Izumi Tsutsui
@@ -56,7 +56,7 @@ int
 main(int argc, char **argv)
 {
 	char *boothfs;
-	int ifd, ofd;
+	int ofd;
 	struct apple_drvr_map dm;
 	struct apple_part_map_entry pme;
 	char *buf;

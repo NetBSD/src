@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2007/03/10 00:30:36 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.18.12.1 2008/04/03 13:54:10 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.18 2007/03/10 00:30:36 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.18.12.1 2008/04/03 13:54:10 mjf Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -44,27 +44,37 @@ __RCSID("$NetBSD: main.c,v 1.18 2007/03/10 00:30:36 hubertf Exp $");
 #include <unistd.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <signal.h>
 
 #include "fsutil.h"
 #include "ext.h"
+#include "exitvalues.h"
 
 int alwaysno;		/* assume "no" for all questions */
 int alwaysyes;		/* assume "yes" for all questions */
 int preen;		/* set when preening */
 int rdonly;		/* device is opened read only (supersedes above) */
 
-static void usage(void);
+static void usage(void) __dead;
 
 static void
 usage(void)
 {
-	errexit("usage: fsck_msdos [-fnpy] filesystem ... \n");
+    	(void)fprintf(stderr, "Usage: %s [-fnpy] filesystem ... \n",
+	    getprogname());
+	exit(FSCK_EXIT_USAGE);
+}
+
+static void
+catch(int n)
+{
+	exit(FSCK_EXIT_SIGNALLED);
 }
 
 int
 main(int argc, char **argv)
 {
-	int ret = 0, erg;
+	int ret = FSCK_EXIT_OK, erg;
 	int ch;
 
 	while ((ch = getopt(argc, argv, "pPqynf")) != -1) {
@@ -105,6 +115,11 @@ main(int argc, char **argv)
 
 	if (!argc)
 		usage();
+
+	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
+		(void) signal(SIGINT, catch);
+	if (preen)
+		(void) signal(SIGQUIT, catch);
 
 	while (--argc >= 0) {
 		setcdevname(*argv, preen);

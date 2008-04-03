@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.24 2007/12/22 01:19:52 tsutsui Exp $	*/
+/*	$NetBSD: setup.c,v 1.24.4.1 2008/04/03 13:54:10 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.24 2007/12/22 01:19:52 tsutsui Exp $");
+__RCSID("$NetBSD: setup.c,v 1.24.4.1 2008/04/03 13:54:10 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ __RCSID("$NetBSD: setup.c,v 1.24 2007/12/22 01:19:52 tsutsui Exp $");
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
+#include "exitvalues.h"
 
 void badsb(int, const char *);
 int calcsb(const char *, int, struct m_ext2fs *);
@@ -137,7 +138,7 @@ setup(const char *dev)
 	sblk.b_un.b_buf = malloc(SBSIZE);
 	asblk.b_un.b_buf = malloc(SBSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL)
-		errexit("cannot allocate space for superblock\n");
+		errexit("cannot allocate space for superblock");
 	if ((lp = getdisklabel((char *)NULL, fsreadfd)) != NULL)
 		dev_bsize = secsize = lp->d_secsize;
 	else
@@ -218,7 +219,7 @@ setup(const char *dev)
 
 	sblock.e2fs_gd = malloc(sblock.e2fs_ngdb * sblock.e2fs_bsize);
 	if (sblock.e2fs_gd == NULL)
-		errexit("out of memory\n");
+		errexit("out of memory");
 	asked = 0;
 	for (i = 0; i < sblock.e2fs_ngdb; i++) {
 		if (bread(fsreadfd,
@@ -229,7 +230,7 @@ setup(const char *dev)
 		    sblock.e2fs_bsize) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
 			if (reply("CONTINUE") == 0)
-				errexit("%s\n", "");
+				exit(FSCK_EXIT_CHECK_FAILED);
 			asked++;
 		}
 	}
@@ -514,7 +515,7 @@ getdisklabel(const char *s, int fd)
 		if (s == NULL)
 			return NULL;
 		pwarn("ioctl (GCINFO): %s\n", strerror(errno));
-		errexit("%s: can't read disk label\n", s);
+		errexit("%s: can't read disk label", s);
 	}
 	return &lab;
 }
