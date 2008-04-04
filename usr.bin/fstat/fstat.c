@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.79 2008/03/23 23:01:21 he Exp $	*/
+/*	$NetBSD: fstat.c,v 1.80 2008/04/04 18:27:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.79 2008/03/23 23:01:21 he Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.80 2008/04/04 18:27:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,15 +129,15 @@ static int 	checkfile; /* true if restricting to particular files or filesystems
 static int	nflg;	/* (numerical) display f.s. and rdev as dev_t */
 int	vflg;	/* display errors in locating kernel data objects etc... */
 
-static struct file **ofiles;	/* buffer of pointers to file structures */
+static fdfile_t **ofiles; /* buffer of pointers to file structures */
 static int fstat_maxfiles;
 #define ALLOC_OFILES(d)	\
 	if ((d) > fstat_maxfiles) { \
+		size_t len = (d) * sizeof(fdfile_t *); \
 		free(ofiles); \
-		ofiles = malloc((d) * sizeof(struct file *)); \
+		ofiles = malloc(len); \
 		if (ofiles == NULL) { \
-			err(1, "malloc(%u)", (d) *	\
-					(unsigned int)sizeof(struct file *)); \
+			err(1, "malloc(%zu)", len);	\
 		} \
 		fstat_maxfiles = (d); \
 	}
@@ -161,7 +161,7 @@ static int	ufs_filestat(struct vnode *, struct filestat *);
 static void	usage(void) __dead;
 static const char   *vfilestat(struct vnode *, struct filestat *);
 static void	vtrans(struct vnode *, int, int);
-static void	ftrans(struct file *, int);
+static void	ftrans(fdfile_t *, int);
 static void	ptrans(struct file *, struct pipe *, int);
 
 int
@@ -338,15 +338,18 @@ dofiles(struct kinfo_proc2 *p)
 	 * current working directory vnode
 	 */
 	vtrans(cwdi.cwdi_cdir, CDIR, FREAD);
+#if 0
 	/*
+	 * Disable for now, since p->p_tracep appears to point to a ktr_desc *
 	 * ktrace vnode, if one
 	 */
 	if (p->p_tracep)
 		ftrans((struct file *)(intptr_t)p->p_tracep, TRACE);
+#endif
 	/*
 	 * open files
 	 */
-#define FPSIZE	(sizeof (struct file *))
+#define FPSIZE	(sizeof (fdfile_t *))
 	ALLOC_OFILES(filed.fd_lastfile+1);
 	if (!KVM_READ(filed.fd_ofiles, ofiles,
 	    (filed.fd_lastfile+1) * FPSIZE)) {
@@ -362,13 +365,19 @@ dofiles(struct kinfo_proc2 *p)
 }
 
 static void
-ftrans(struct file *fp, int i)
+ftrans(fdfile_t *fp, int i)
 {
 	struct file file;
+	fdfile_t fdfile;
 
-	if (!KVM_READ(fp, &file, sizeof (struct file))) {
+	if (!KVM_READ(fp, &fdfile, sizeof(fdfile))) {
 		dprintf("can't read file %d at %p for pid %d",
 		    i, fp, Pid);
+		return;
+	}
+	if (!KVM_READ(fdfile.ff_file, &file, sizeof(file))) {
+		dprintf("can't read file %d at %p for pid %d",
+		    i, fdfile.ff_file, Pid);
 		return;
 	}
 	switch (file.f_type) {
