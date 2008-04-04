@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.47 2008/03/30 15:31:07 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.48 2008/04/04 17:07:46 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -732,4 +732,12 @@ sys/netinet/tcp_subr.c				1.225 via patch
 	arithmetics that lead to sending data from an incorrect place in the
 	stream, making it appear as corrupted.
 	[cube, ticket #1109]
+
+src/crypto/dist/ssh/channels.c			1.38 via patch
+src/crypto/dist/ssh/session.c			1.45 via patch
+src/crypto/dist/ssh/sshd_config.5		1.14 via patch
+	Fix two vulnerabilities in OpenSSH:
+	- X11 forwarding information disclosure (CVE-2008-1483)
+	- ForceCommand bypass vulnerability
+	[adrianp, ticket #1113]
 
