@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.94.6.2 2008/04/03 13:54:11 mjf Exp $	*/
+/*	$NetBSD: init.c,v 1.94.6.3 2008/04/04 21:21:10 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.94.6.2 2008/04/03 13:54:11 mjf Exp $");
+__RCSID("$NetBSD: init.c,v 1.94.6.3 2008/04/04 21:21:10 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,12 +267,8 @@ main(int argc, char **argv)
 #endif
 
 #ifdef DEVFS_DEV
-	printf("Trying to mount devfs\n");
-	if (devfs_dev() == -1) {
-		printf("Failed to mount devfs, going single-user\n");
+	if (devfs_dev() == -1)
 		requested_transition = single_user;
-	}
-	printf("Done with devfs code, continuing...\n");
 #endif
 
 #ifndef LETS_GET_SMALL
@@ -1721,9 +1717,7 @@ devfs_dev(void)
 	/* Assume devfs has already been mounted on /dev by the kernel */
 	switch ((pid = fork())) {
 	case 0:
-		printf("Forked: Time to run devfsd\n");
 		(void)execl(INIT_DEVFSD, "devfsd", "-s", "-v", NULL);
-		printf("devfsd finished\n");
 		_exit(9);
 		/*NOTREACHED*/
 
@@ -1731,10 +1725,8 @@ devfs_dev(void)
 		return(-1);
 
 	default:
-		printf("Waiting for devfsd to complete\n");
 		if (waitpid(pid, &status, 0) == -1)
 			return(-1);
-		printf("devfsd done: status=%d\n", status);
 		if (status != 0)
 			return(-1);
 		break;

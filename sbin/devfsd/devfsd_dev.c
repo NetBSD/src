@@ -1,4 +1,4 @@
-/*      $NetBSD: devfsd_dev.c,v 1.1.8.2 2008/03/20 12:26:12 mjf Exp $ */
+/*      $NetBSD: devfsd_dev.c,v 1.1.8.3 2008/04/04 21:21:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -54,16 +54,17 @@ dev_init(void)
 }
 
 struct devfs_dev *
-dev_create(struct dctl_kerndev *kerndev, intptr_t cookie)
+dev_create(struct devfsctl_kerndev *kerndev, intptr_t cookie)
 {
 	struct devfs_dev *ddev;
 
 	if ((ddev = malloc(sizeof(*ddev))) == NULL) {
-		warn("could not alloc memory for dev\n");
+		syslog(LOG_WARNING, "could not alloc memory for dev\n");
 		return NULL;
 	}
 
 	ddev->d_cookie = cookie;
+	ddev->d_char = kerndev->k_char;
 
 	strlcpy(ddev->d_kname, kerndev->k_name, sizeof(ddev->d_kname));
 	ddev->d_type = kerndev->k_type;
@@ -89,6 +90,7 @@ dev_add_node(struct devfs_dev *dev, struct devfs_mount *dmp)
 	dnode->n_attr.d_uid = 0;	/* root */
 	dnode->n_attr.d_gid = 0;	/* wheel */
 	dnode->n_attr.d_flags = dmp->m_visibility;
+	dnode->n_attr.d_char = dev->d_char;
 
 	/*
 	 * By default, we use the driver name for the node
@@ -233,7 +235,7 @@ dev_apply_rule_node(struct devfs_node *node, struct devfs_mount *dmp,
 }
 
 struct devfs_dev *
-dev_lookup(struct dctl_node_cookie c)
+dev_lookup(struct devfsctl_node_cookie c)
 {
 	struct devfs_dev *dev;
 

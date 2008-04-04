@@ -1,4 +1,4 @@
-.\" 	$NetBSD: devfsd.8,v 1.1.6.2 2008/03/21 16:51:00 mjf Exp $
+.\" 	$NetBSD: devfsd.8,v 1.1.6.3 2008/04/04 21:21:09 mjf Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@ file system.
 .Nm
 is started at boot time and monitors device insertion
 and removal via the
-.Xr dctl 4
+.Xr devfsctl 4
 device driver. When a device is attached 
 to the system is it run against rules specifed in the
 config file. If no config file is specified 
@@ -53,7 +53,7 @@ is used. See
 .Xr devfsd.conf 5 . 
 .Nm
 interacts with the kernel via
-.Xr dctl 4
+.Xr devfsctl 4
 in order to create device special files.
 The options are as follows:
 .Bl -tag
@@ -69,7 +69,7 @@ Set the default visibility of device special nodes to visible.
 .Sh FILES
 .Pa /etc/devfsd.conf
 .Sh SEE ALSO
-.Xr dctl 4 ,
+.Xr devfsctl 4 ,
 .Xr devfsd.conf 5
 .Sh HISTORY
 The
