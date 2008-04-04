@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_lebuffer.c,v 1.22 2007/10/19 12:01:11 ad Exp $	*/
+/*	$NetBSD: if_le_lebuffer.c,v 1.23 2008/04/04 12:25:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.22 2007/10/19 12:01:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.23 2008/04/04 12:25:07 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_lebuffer.c,v 1.22 2007/10/19 12:01:11 ad Exp $
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
 
+#include "ioconf.h"
+
 /*
  * LANCE registers.
  */
@@ -87,8 +89,8 @@ struct	le_softc {
 };
 
 
-int	lematch_lebuffer(struct device *, struct cfdata *, void *);
-void	leattach_lebuffer(struct device *, struct device *, void *);
+int	lematch_lebuffer(device_t, cfdata_t, void *);
+void	leattach_lebuffer(device_t, device_t, void *);
 
 /*
  * Media types supported.
@@ -96,24 +98,20 @@ void	leattach_lebuffer(struct device *, struct device *, void *);
 static int lemedia[] = {
 	IFM_ETHER|IFM_10_T,
 };
-#define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
+#define NLEMEDIA	__arraycount(lemedia)
 
-CFATTACH_DECL(le_lebuffer, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le_lebuffer, sizeof(struct le_softc),
     lematch_lebuffer, leattach_lebuffer, NULL, NULL);
-
-extern struct cfdriver le_cd;
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 
-static void lewrcsr(struct lance_softc *, u_int16_t, u_int16_t);
-static u_int16_t lerdcsr(struct lance_softc *, u_int16_t);
+static void lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+static uint16_t lerdcsr(struct lance_softc *, uint16_t);
 
 static void
-lewrcsr(sc, port, val)
-	struct lance_softc *sc;
-	u_int16_t port, val;
+lewrcsr(struct lance_softc *sc, uint16_t port, uint16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t t = lesc->sc_bustag;
@@ -132,10 +130,8 @@ lewrcsr(sc, port, val)
 #endif
 }
 
-static u_int16_t
-lerdcsr(sc, port)
-	struct lance_softc *sc;
-	u_int16_t port;
+static uint16_t
+lerdcsr(struct lance_softc *sc, uint16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	bus_space_tag_t t = lesc->sc_bustag;
@@ -146,10 +142,7 @@ lerdcsr(sc, port)
 }
 
 int
-lematch_lebuffer(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+lematch_lebuffer(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -158,15 +151,14 @@ lematch_lebuffer(parent, cf, aux)
 
 
 void
-leattach_lebuffer(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leattach_lebuffer(device_t parent, device_t self, void *aux)
 {
-	struct sbus_attach_args *sa = aux;
-	struct le_softc *lesc = (struct le_softc *)self;
+	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	struct lebuf_softc *lebuf = (struct lebuf_softc *)parent;
+	struct lebuf_softc *lebuf = device_private(parent);
+	struct sbus_attach_args *sa = aux;
 
+	sc->sc_dev = self;
 	lesc->sc_bustag = sa->sa_bustag;
 	lesc->sc_dmatag = sa->sa_dmatag;
 
@@ -175,7 +167,7 @@ leattach_lebuffer(parent, self, aux)
 			 sa->sa_offset,
 			 sa->sa_size,
 			 0, &lesc->sc_reg)) {
-		printf("%s @ lebuffer: cannot map registers\n", self->dv_xname);
+		aprint_error(": cannot map registers\n");
 		return;
 	}
 
