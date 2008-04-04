@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.12 2008/02/29 06:25:08 dyoung Exp $ */
+/* $NetBSD: piixpcib.c,v 1.13 2008/04/04 22:48:58 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.12 2008/02/29 06:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.13 2008/04/04 22:48:58 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -150,8 +150,7 @@ piixpcibattach(struct device *parent, struct device *self, void *aux)
 	/* Map edge/level control registers */
 	if (bus_space_map(sc->sc_iot, PIIX_REG_ELCR, PIIX_REG_ELCR_SIZE, 0,
 	    &sc->sc_ioh)) {
-		aprint_error("%s: can't map edge/level control registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map edge/level control registers\n");
 		return;
 	}
 
@@ -259,8 +258,8 @@ piixpcib_getset_state(struct piixpcib_softc *sc, int *state, int function)
 #ifdef DIAGNOSTIC
 	if (function != PIIXPCIB_GETSTATE &&
 	    function != PIIXPCIB_SETSTATE) {
-		aprint_error("%s: GSI called with invalid function %d\n",
-		    sc->sc_dev.dv_xname, function);
+		aprint_error_dev(&sc->sc_dev, "GSI called with invalid function %d\n",
+		    function);
 		return EINVAL;
 	}
 #endif
@@ -350,8 +349,7 @@ speedstep_configure(struct piixpcib_softc *sc,
 		sc->sc_smi_cmd = smicmd;
 		sc->sc_smi_data = smidata;
 		if (cmd == 0x80) {
-			aprint_debug("%s: GSIC returned cmd 0x80, should be 0x82\n",
-			    sc->sc_dev.dv_xname);
+			aprint_debug_dev(&sc->sc_dev, "GSIC returned cmd 0x80, should be 0x82\n");
 			cmd = 0x82;
 		}
 		sc->sc_command = (sig & 0xffffff00) | (cmd & 0xff);
@@ -365,8 +363,7 @@ speedstep_configure(struct piixpcib_softc *sc,
 	}
 
 	if (piixpcib_set_ownership(sc) != 0) {
-		aprint_error("%s: unable to claim ownership from the BIOS\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to claim ownership from the BIOS\n");
 		return;		/* If we can't claim ownership from the BIOS, bail */
 	}
 
@@ -386,7 +383,7 @@ speedstep_configure(struct piixpcib_softc *sc,
 	/* XXX save the sc for IO tag/handle */
 	speedstep_cookie = sc;
 
-	aprint_verbose("%s: SpeedStep SMI enabled\n", sc->sc_dev.dv_xname);
+	aprint_verbose_dev(&sc->sc_dev, "SpeedStep SMI enabled\n");
 
 	return;
 

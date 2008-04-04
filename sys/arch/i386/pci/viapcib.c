@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.8 2008/03/09 17:14:51 joerg Exp $ */
+/* $NetBSD: viapcib.c,v 1.9 2008/04/04 22:48:58 cegger Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.8 2008/03/09 17:14:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.9 2008/04/04 22:48:58 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -214,7 +214,7 @@ core_pcib:
 		uint8_t b;
 
 		printf("%s: SMBus found at 0x%x (revision 0x%x)\n",
-		    sc->sc_dev.dv_xname, addr, sc->sc_revision);
+		    device_xname(&sc->sc_dev), addr, sc->sc_revision);
 		
 		/* Disable slave function */
 		b = viapcib_smbus_read(sc, SMBSLVCNT);

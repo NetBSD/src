@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.17 2007/12/17 19:51:09 christos Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.18 2008/04/04 22:39:30 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.17 2007/12/17 19:51:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.18 2008/04/04 22:39:30 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,20 +110,17 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_spic.sc_iot = aa->aa_iot;
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		aprint_error("%s: unable to find io resource\n",
-		    sc->sc_spic.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_spic.sc_dev, "unable to find io resource\n");
 		goto out;
 	}
 	if (bus_space_map(sc->sc_spic.sc_iot, io->ar_base, io->ar_length,
 	    0, &sc->sc_spic.sc_ioh) != 0) {
-		aprint_error("%s: unable to map data register\n",
-		    sc->sc_spic.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_spic.sc_dev, "unable to map data register\n");
 		goto out;
 	}
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		aprint_error("%s: unable to find irq resource\n",
-		    sc->sc_spic.sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_spic.sc_dev, "unable to find irq resource\n");
 		/* XXX unmap */
 		goto out;
 	}
