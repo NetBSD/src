@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.18 2008/01/28 19:58:32 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.19 2008/04/04 17:25:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.18 2008/01/28 19:58:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.19 2008/04/04 17:25:09 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -160,6 +160,7 @@ __strong_alias(rw_tryenter,rw_vector_tryenter);
 
 static void	rw_dump(volatile void *);
 static lwp_t	*rw_owner(wchan_t);
+extern int	mutex_onproc(uintptr_t, struct cpu_info **);	/* XXX */
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
@@ -248,10 +249,13 @@ void
 rw_vector_enter(krwlock_t *rw, const krw_t op)
 {
 	uintptr_t owner, incr, need_wait, set_wait, curthread;
+	struct cpu_info *ci;
 	turnstile_t *ts;
 	int queue;
 	lwp_t *l;
 	LOCKSTAT_TIMER(slptime);
+	LOCKSTAT_TIMER(spintime);
+	LOCKSTAT_COUNTER(spincnt);
 	LOCKSTAT_FLAG(lsflag);
 
 	l = curlwp;
@@ -289,7 +293,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 	LOCKSTAT_ENTER(lsflag);
 
-	for (;;) {
+	for (ci = NULL;;) {
 		/*
 		 * Read the lock owner field.  If the need-to-wait
 		 * indicator is clear, then try to acquire the lock.
@@ -312,6 +316,31 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			return;
 		if (RW_OWNER(rw) == curthread)
 			rw_abort(rw, __func__, "locking against myself");
+
+#ifdef MULTIPROCESSOR
+		/*
+		 * If the lock owner is running on another CPU, and
+		 * there are no existing waiters, then spin.
+		 */
+		if ((owner & (RW_WRITE_LOCKED|RW_HAS_WAITERS)) ==
+		    RW_WRITE_LOCKED && mutex_onproc(owner, &ci)) {
+			LOCKSTAT_START_TIMER(lsflag, spintime);
+			u_int count = SPINLOCK_BACKOFF_MIN;
+			for (;;) {
+				owner = rw->rw_owner;
+				if ((owner & (RW_WRITE_LOCKED|RW_HAS_WAITERS))
+				    != RW_WRITE_LOCKED)
+				    	break;
+				if (!mutex_onproc(owner, &ci))
+					break;
+				SPINLOCK_BACKOFF(count);
+			}
+			LOCKSTAT_STOP_TIMER(lsflag, spintime);
+			LOCKSTAT_COUNT(spincnt, 1);
+			if ((owner & need_wait) == 0)
+				continue;
+		}
+#endif
 
 		/*
 		 * Grab the turnstile chain lock.  Once we have that, we
@@ -343,6 +372,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		break;
 	}
 
+	LOCKSTAT_EVENT(lsflag, rw, LB_RWLOCK | LB_SPIN, spincnt, spintime);
 	LOCKSTAT_EXIT(lsflag);
 
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
