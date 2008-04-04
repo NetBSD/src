@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.80 2008/04/04 18:27:00 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.81 2008/04/04 21:14:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.80 2008/04/04 18:27:00 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.81 2008/04/04 21:14:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,6 +144,10 @@ static int fstat_maxfiles;
 
 kvm_t *kd;
 
+static const char *const dtypes[] = {
+	DTYPE_NAMES
+};
+
 static void	dofiles(struct kinfo_proc2 *);
 static int	ext2fs_filestat(struct vnode *, struct filestat *);
 static int	getfname(const char *);
@@ -156,7 +160,7 @@ static int	nfs_filestat(struct vnode *, struct filestat *);
 static const char *inet6_addrstr(struct in6_addr *);
 #endif
 static void	socktrans(struct socket *, int);
-static void	kqueuetrans(void *, int);
+static void	misctrans(void *, int, const char *);
 static int	ufs_filestat(struct vnode *, struct filestat *);
 static void	usage(void) __dead;
 static const char   *vfilestat(struct vnode *, struct filestat *);
@@ -393,8 +397,11 @@ ftrans(fdfile_t *fp, int i)
 			ptrans(&file, (struct pipe *)file.f_data, i);
 		break;
 	case DTYPE_KQUEUE:
+	case DTYPE_MISC:
+	case DTYPE_CRYPTO:
+	case DTYPE_MQUEUE:
 		if (checkfile == 0)
-			kqueuetrans((void *)file.f_data, i);
+			misctrans((void *)file.f_data, i, dtypes[file.f_type]);
 		break;
 	default:
 		dprintf("unknown file type %d for file %d of pid %d",
@@ -965,11 +972,11 @@ bad:
 }
 
 static void
-kqueuetrans(void *kq, int i)
+misctrans(void *kq, int i, const char *type)
 {
 
 	PREFIX(i);
-	(void)printf("* kqueue %lx", (long)kq);
+	(void)printf("* %s %lx", type, (long)kq);
 	(void)printf("\n");
 }
 
