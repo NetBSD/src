@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.20 2007/03/04 06:00:24 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.21 2008/04/04 16:00:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.20 2007/03/04 06:00:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.21 2008/04/04 16:00:57 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,8 @@ struct si_softc {
 	int	sc_xlen;
 };
 
-static void si_attach(struct device *, struct device *, void *);
-static int  si_match(struct device *, struct cfdata *, void *);
+static int  si_match(device_t, cfdata_t, void *);
+static void si_attach(device_t, device_t, void *);
 int  si_intr(int);
 
 static void si_dma_alloc(struct ncr5380_softc *);
@@ -88,7 +88,7 @@ static void si_dma_poll(struct ncr5380_softc *);
 static void si_dma_eop(struct ncr5380_softc *);
 static void si_dma_stop(struct ncr5380_softc *);
 
-CFATTACH_DECL(si, sizeof(struct si_softc),
+CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
     si_match, si_attach, NULL, NULL);
 
 /*
@@ -106,7 +106,7 @@ int si_options = 0x00;
 
 
 static int
-si_match(struct device *parent, struct cfdata *cf, void *aux)
+si_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 	int addr;
@@ -129,17 +129,18 @@ si_match(struct device *parent, struct cfdata *cf, void *aux)
  */
 
 static void
-si_attach(struct device *parent, struct device *self, void *aux)
+si_attach(device_t parent, device_t self, void *aux)
 {
-	struct si_softc *sc = (struct si_softc *)self;
+	struct si_softc *sc = device_private(self);
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct cfdata *cf = device_cfdata(self);
 	struct hb_attach_args *ha = aux;
 
+	ncr_sc->sc_dev = self;
 	ncr_sc->sc_regt = ha->ha_bust;
 	if (bus_space_map(ncr_sc->sc_regt, (bus_addr_t)ha->ha_address,
 	    ha->ha_size, 0, &ncr_sc->sc_regh) != 0) {
-		printf("can't map device space\n");
+		aprint_error(": can't map device space\n");
 		return;
 	}
 
@@ -149,7 +150,9 @@ si_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->sc_options = si_options;
 
-	printf(": options=0x%x\n", sc->sc_options);
+	if (sc->sc_options != 0)
+		aprint_normal(": options=0x%x", sc->sc_options);
+	aprint_normal("\n");
 
 	ncr_sc->sc_no_disconnect = (sc->sc_options & SI_NO_DISCONNECT);
 	ncr_sc->sc_parity_disable = (sc->sc_options & SI_NO_PARITY_CHK) >> 8;
@@ -200,7 +203,7 @@ si_intr(int unit)
 	if (unit >= si_cd.cd_ndevs)
 		return 0;
 
-	sc = si_cd.cd_devs[unit];
+	sc = device_lookup_private(&si_cd, unit);	/* XXX */
 	(void)ncr5380_intr(&sc->ncr_sc);
 
 	return 0;
@@ -340,14 +343,14 @@ si_dma_stop(struct ncr5380_softc *ncr_sc)
 	/* check DMAC interrupt status */
 	if ((dmac->stat & DC_ST_INT) == 0) {
 #ifdef DEBUG
-		printf("si_dma_stop: no DMA interrupt");
+		printf("%s: no DMA interrupt\n", __func__);
 #endif
 		return; /* XXX */
 	}
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef DEBUG
-		printf("si_dma_stop: dma not running\n");
+		printf("%s: dma not running\n", __func__);
 #endif
 		return;
 	}
@@ -367,8 +370,8 @@ si_dma_stop(struct ncr5380_softc *ncr_sc)
 
 #ifdef DEBUG
 	if (resid)
-		printf("si_dma_stop: datalen = 0x%x, resid = 0x%x\n",
-		    sc->sc_xlen, resid);
+		printf("%s: datalen = 0x%x, resid = 0x%x\n",
+		    __func__, sc->sc_xlen, resid);
 #endif
 
 	ntrans = sc->sc_xlen - resid;
