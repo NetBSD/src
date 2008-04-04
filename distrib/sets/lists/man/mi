@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1057.6.2 2008/04/03 13:54:14 mjf Exp $
+# $NetBSD: mi,v 1.1057.6.3 2008/04/04 10:52:56 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -813,6 +813,7 @@
 ./usr/share/man/cat4/ddc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/de.0			man-sys-catman		.cat
 ./usr/share/man/cat4/depca.0			man-sys-catman		.cat
+./usr/share/man/cat4/devfsctl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dmoverio.0			man-sys-catman		.cat
@@ -3360,6 +3361,7 @@
 ./usr/share/man/man4/ddc.4			man-sys-man		.man
 ./usr/share/man/man4/de.4			man-sys-man		.man
 ./usr/share/man/man4/depca.4			man-sys-man		.man
+./usr/share/man/man4/devfsctl.4			man-sys-man		.man
 ./usr/share/man/man4/dge.4			man-sys-man		.man
 ./usr/share/man/man4/dk.4			man-sys-man		.man
 ./usr/share/man/man4/dmoverio.4			man-sys-man		.man
