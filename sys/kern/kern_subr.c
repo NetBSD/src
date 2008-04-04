@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.183 2008/03/17 08:27:50 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.184 2008/04/04 20:13:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.183 2008/03/17 08:27:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.184 2008/04/04 20:13:18 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -718,7 +718,7 @@ isswap(struct device *dv)
 	vput(vn);
 	if (error) {
 #ifdef DEBUG_WEDGE
-		printf("%s: Get wedge info returned %d\n", dv->dv_xname, error);
+		printf("%s: Get wedge info returned %d\n", device_xname(dv), error);
 #endif
 		return 0;
 	}
@@ -845,7 +845,7 @@ setroot(struct device *bootdv, int bootpartition)
 		for (;;) {
 			printf("root device");
 			if (bootdv != NULL) {
-				printf(" (default %s", bootdv->dv_xname);
+				printf(" (default %s", device_xname(bootdv));
 				if (DEV_USES_PARTITIONS(bootdv))
 					printf("%c", bootpartition + 'a');
 				printf(")");
@@ -853,7 +853,7 @@ setroot(struct device *bootdv, int bootpartition)
 			printf(": ");
 			len = cngetsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
-				strlcpy(buf, bootdv->dv_xname, sizeof(buf));
+				strlcpy(buf, device_xname(bootdv), sizeof(buf));
 				len = strlen(buf);
 			}
 			if (len > 0 && buf[len - 1] == '*') {
@@ -888,7 +888,7 @@ setroot(struct device *bootdv, int bootpartition)
 				/*
 				 * Note, we know it's a disk if we get here.
 				 */
-				printf(" (default %sb)", defdumpdv->dv_xname);
+				printf(" (default %sb)", device_xname(defdumpdv));
 			}
 			printf(": ");
 			len = cngetsn(buf, sizeof(buf));
@@ -971,7 +971,7 @@ setroot(struct device *bootdv, int bootpartition)
 		 */
 		rootdv = bootdv;
 
-		majdev = devsw_name2blk(bootdv->dv_xname, NULL, 0);
+		majdev = devsw_name2blk(device_xname(bootdv), NULL, 0);
 		if (majdev >= 0) {
 			/*
 			 * Root is on a disk.  `bootpartition' is root,
@@ -1002,7 +1002,7 @@ setroot(struct device *bootdv, int bootpartition)
 
 		if (rootdev == NODEV &&
 		    device_class(dv) == DV_DISK && device_is_a(dv, "dk") &&
-		    (majdev = devsw_name2blk(dv->dv_xname, NULL, 0)) >= 0)
+		    (majdev = devsw_name2blk(device_xname(dv), NULL, 0)) >= 0)
 			rootdev = makedev(majdev, device_unit(dv));
 
 		rootdevname = devsw_blk2name(major(rootdev));
@@ -1031,7 +1031,7 @@ setroot(struct device *bootdv, int bootpartition)
 	switch (device_class(rootdv)) {
 	case DV_IFNET:
 	case DV_DISK:
-		aprint_normal("root on %s", rootdv->dv_xname);
+		aprint_normal("root on %s", device_xname(rootdv));
 		if (DEV_USES_PARTITIONS(rootdv))
 			aprint_normal("%c", DISKPART(rootdev) + 'a');
 		break;
@@ -1095,7 +1095,7 @@ setroot(struct device *bootdv, int bootpartition)
 			if (dv == NULL)
 				goto nodumpdev;
 
-			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
+			majdev = devsw_name2blk(device_xname(dv), NULL, 0);
 			if (majdev < 0)
 				goto nodumpdev;
 			dumpdv = dv;
@@ -1108,7 +1108,7 @@ setroot(struct device *bootdv, int bootpartition)
 	}
 
 	dumpcdev = devsw_blk2chr(dumpdev);
-	aprint_normal(" dumps on %s", dumpdv->dv_xname);
+	aprint_normal(" dumps on %s", device_xname(dumpdv));
 	if (DEV_USES_PARTITIONS(dumpdv))
 		aprint_normal("%c", DISKPART(dumpdev) + 'a');
 	aprint_normal("\n");
@@ -1159,12 +1159,12 @@ getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 #endif
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (DEV_USES_PARTITIONS(dv))
-				printf(" %s[a-%c]", dv->dv_xname,
+				printf(" %s[a-%c]", device_xname(dv),
 				    'a' + MAXPARTITIONS - 1);
 			else if (device_class(dv) == DV_DISK)
-				printf(" %s", dv->dv_xname);
+				printf(" %s", device_xname(dv));
 			if (isdump == 0 && device_class(dv) == DV_IFNET)
-				printf(" %s", dv->dv_xname);
+				printf(" %s", device_xname(dv));
 		}
 		dkwedge_print_wnames();
 		if (isdump)
@@ -1237,7 +1237,7 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 	if (dv != NULL) {
 		if (device_class(dv) == DV_DISK) {
  gotdisk:
-			majdev = devsw_name2blk(dv->dv_xname, NULL, 0);
+			majdev = devsw_name2blk(device_xname(dv), NULL, 0);
 			if (majdev < 0)
 				panic("parsedisk");
 			if (DEV_USES_PARTITIONS(dv))
