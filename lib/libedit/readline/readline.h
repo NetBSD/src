@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.21 2007/08/12 07:41:51 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.22 2008/04/04 21:18:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -185,6 +185,7 @@ char 		*rl_filename_completion_function (const char *, int);
 int		 _rl_abort_internal(void);
 int		 _rl_qsort_string_compare(char **, char **);
 char 	       **rl_completion_matches(const char *, rl_compentry_func_t *);
+void		 rl_forced_update_display(void);
 
 /*
  * The following are not implemented
