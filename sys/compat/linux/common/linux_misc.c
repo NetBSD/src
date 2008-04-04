@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.194 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.195 2008/04/04 12:38:53 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.194 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.195 2008/04/04 12:38:53 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -547,25 +547,6 @@ linux_sys_mremap(struct lwp *l, const struct linux_sys_mremap_args *uap, registe
 done:
 	*retval = (error != 0) ? 0 : (register_t)newva;
 	return error;
-}
-
-int
-linux_sys_msync(struct lwp *l, const struct linux_sys_msync_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(void *) addr;
-		syscallarg(int) len;
-		syscallarg(int) fl;
-	} */
-
-	struct sys___msync13_args bma;
-
-	/* flags are ignored */
-	SCARG(&bma, addr) = SCARG(uap, addr);
-	SCARG(&bma, len) = SCARG(uap, len);
-	SCARG(&bma, flags) = SCARG(uap, fl);
-
-	return sys___msync13(l, &bma, retval);
 }
 
 int
