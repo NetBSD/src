@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.14 2008/03/05 15:45:36 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.15 2008/04/04 08:44:22 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.14 2008/03/05 15:45:36 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.15 2008/04/04 08:44:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -203,7 +203,7 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(sc->sc_ec_iot, sc->sc_hwmon_baseaddr, 8, 0,
 	    &sc->sc_ec_ioh)) {
 		aprint_error_dev(self, "cannot map hwmon i/o space\n");
-		return;
+		goto out2;
 	}
 
 	sc->sc_hwmon_mapped = true;
@@ -230,7 +230,7 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
 						&sc->sc_sensor[i])) {
 			sysmon_envsys_destroy(sc->sc_sme);
-			return;
+			goto out;
 		}
 	}
 	/*
@@ -244,19 +244,16 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "unable to register with sysmon (%d)\n", i);
 		sysmon_envsys_destroy(sc->sc_sme);
-		bus_space_unmap(sc->sc_ec_iot, sc->sc_ec_ioh, 8);
-		return;
+		goto out;
 	}
 	sc->sc_hwmon_enabled = true;
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	/* The IT8705 doesn't support a WDT */
-	if (sc->sc_chipid == ITESIO_ID8705) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
-		return;
-	}
+	/* The IT8705 doesn't support the WDT */
+	if (sc->sc_chipid == ITESIO_ID8705)
+		goto out2;
 
 	/*
 	 * Initialize the watchdog timer.
@@ -269,11 +266,16 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 
 	if (sysmon_wdog_register(&sc->sc_smw)) {
 		aprint_error_dev(self, "unable to register watchdog timer\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
-		return;
+		goto out2;
 	}
 	sc->sc_wdt_enabled = true;
 	aprint_normal_dev(self, "Watchdog Timer present\n");
+	return;
+
+out:
+	bus_space_unmap(sc->sc_ec_iot, sc->sc_ec_ioh, 8);
+out2:
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 }
 
 static int
