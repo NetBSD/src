@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.163 2008/04/03 23:11:11 xtraeme Exp $
+# $NetBSD: ALL,v 1.164 2008/04/04 16:21:08 tsutsui Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.163 $"
+#ident 		"ALL-$Revision: 1.164 $"
 
 maxusers	32		# estimated number of users
 
@@ -728,6 +728,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+nca*	at pcmcia? function ?		# NCR53C400 SCSI
 spc* 	at pcmcia? function ?		# Fujitsu MB87030/MB89352 SCSI
 
 # ISA Plug-and-Play SCSI controllers
