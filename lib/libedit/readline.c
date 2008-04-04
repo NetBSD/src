@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.72 2007/08/12 07:41:51 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.73 2008/04/04 21:18:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.72 2007/08/12 07:41:51 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.73 2008/04/04 21:18:34 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1900,6 +1900,14 @@ rl_filename_completion_function (const char *text, int state)
 	return fn_filename_completion_function(text, state);
 }
 
+void
+rl_forced_update_display(void)
+{
+	re_clear_display(e);
+	re_refresh(e);
+	term__flush();
+}
+
 int
 _rl_abort_internal(void)
 {
@@ -1952,4 +1960,3 @@ rl_bind_key_in_map(int key, Function *fun, Keymap k)
 {
 	return 0;
 }
-
