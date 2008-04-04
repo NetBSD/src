@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.142 2008/04/01 10:37:42 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.143 2008/04/04 20:13:18 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.142 2008/04/01 10:37:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.143 2008/04/04 20:13:18 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -991,7 +991,7 @@ config_found_sm_loc(device_t parent,
 	if (print) {
 		if (config_do_twiddle)
 			twiddle();
-		aprint_normal("%s", msgs[(*print)(aux, parent->dv_xname)]);
+		aprint_normal("%s", msgs[(*print)(aux, device_xname(parent))]);
 	}
 
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
@@ -1089,7 +1089,7 @@ config_devlink(device_t dev)
 	/* put this device in the devices array */
 	config_makeroom(dev->dv_unit, cd);
 	if (cd->cd_devs[dev->dv_unit])
-		panic("config_attach: duplicate %s", dev->dv_xname);
+		panic("config_attach: duplicate %s", device_xname(dev));
 	cd->cd_devs[dev->dv_unit] = dev;
 
 	/* It is safe to add a device to the tail of the list while
@@ -1291,11 +1291,11 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	 * but not silent (in which case, we're twiddling, instead).
 	 */
 	if (parent == ROOT) {
-		aprint_naive("%s (root)", dev->dv_xname);
-		aprint_normal("%s (root)", dev->dv_xname);
+		aprint_naive("%s (root)", device_xname(dev));
+		aprint_normal("%s (root)", device_xname(dev));
 	} else {
-		aprint_naive("%s at %s", dev->dv_xname, parent->dv_xname);
-		aprint_normal("%s at %s", dev->dv_xname, parent->dv_xname);
+		aprint_naive("%s at %s", device_xname(dev), device_xname(parent));
+		aprint_normal("%s at %s", device_xname(dev), device_xname(parent));
 		if (print)
 			(void) (*print)(aux, NULL);
 	}
@@ -1452,7 +1452,7 @@ config_detach(device_t dev, int flags)
 			goto out;
 		else
 			panic("config_detach: forced detach of %s failed (%d)",
-			    dev->dv_xname, rv);
+			    device_xname(dev), rv);
 	}
 
 	/*
@@ -1470,7 +1470,7 @@ config_detach(device_t dev, int flags)
 	    d = TAILQ_NEXT(d, dv_list)) {
 		if (d->dv_parent == dev) {
 			printf("config_detach: detached device %s"
-			    " has children %s\n", dev->dv_xname, d->dv_xname);
+			    " has children %s\n", device_xname(dev), device_xname(d));
 			panic("config_detach");
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.129 2008/04/02 10:53:23 xtraeme Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.130 2008/04/04 20:13:18 cegger Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.129 2008/04/02 10:53:23 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.130 2008/04/04 20:13:18 cegger Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2811,7 +2811,7 @@ sysctl_root_device(SYSCTLFN_ARGS)
 
 	node = *rnode;
 	node.sysctl_data = root_device->dv_xname;
-	node.sysctl_size = strlen(root_device->dv_xname) + 1;
+	node.sysctl_size = strlen(device_xname(root_device)) + 1;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
