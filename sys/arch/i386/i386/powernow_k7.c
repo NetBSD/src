@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.28 2007/10/17 19:54:46 garbled Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.29 2008/04/04 22:07:22 cegger Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.28 2007/10/17 19:54:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.29 2008/04/04 22:07:22 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -353,7 +353,7 @@ k7_powernow_init(void)
 	const struct sysctlnode *freqnode, *node, *pnownode;
 	struct powernow_cpu_state *cstate;
 	struct cpu_info *ci;
-	char *cpuname;
+	const char *cpuname;
 	const char *techname;
 	size_t len;
 	int i;
@@ -361,7 +361,7 @@ k7_powernow_init(void)
 	ci = curcpu();
 
 	freq_names_len = 0;
-	cpuname = ci->ci_dev->dv_xname;
+	cpuname = device_xname(ci->ci_dev);
 
 	k7pnow_current_state = NULL;
 
