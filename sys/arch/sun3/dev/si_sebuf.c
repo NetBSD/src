@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.25 2007/03/04 06:00:53 christos Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.26 2008/04/04 16:00:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.25 2007/03/04 06:00:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.26 2008/04/04 16:00:58 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,10 +138,10 @@ static void se_reset(struct ncr5380_softc *);
  * New-style autoconfig attachment
  */
 
-static int	se_match(struct device *, struct cfdata *, void *);
-static void	se_attach(struct device *, struct device *, void *);
+static int	se_match(device_t, cfdata_t, void *);
+static void	se_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(si_sebuf, sizeof(struct se_softc),
+CFATTACH_DECL_NEW(si_sebuf, sizeof(struct se_softc),
     se_match, se_attach, NULL, NULL);
 
 static void	se_minphys(struct buf *);
@@ -155,28 +155,30 @@ int se_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 int se_debug = 0;
 
 static int 
-se_match(struct device *parent, struct cfdata *cf, void *args)
+se_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct sebuf_attach_args *aa = args;
 
 	/* Match by name. */
 	if (strcmp(aa->name, "se"))
-		return (0);
+		return 0;
 
 	/* Anyting else to check? */
 
-	return (1);
+	return 1;
 }
 
 static void 
-se_attach(struct device *parent, struct device *self, void *args)
+se_attach(device_t parent, device_t self, void *args)
 {
-	struct se_softc *sc = (struct se_softc *) self;
+	struct se_softc *sc = device_private(self);
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct cfdata *cf = device_cfdata(self);
 	struct sebuf_attach_args *aa = args;
 	volatile struct se_regs *regs;
 	int i;
+
+	ncr_sc->sc_dev = self;
 
 	/* Get options from config flags if specified. */
 	if (cf->cf_flags)
@@ -184,7 +186,7 @@ se_attach(struct device *parent, struct device *self, void *args)
 	else
 		sc->sc_options = se_options;
 
-	printf(": options=0x%x\n", sc->sc_options);
+	aprint_normal(": options=0x%x\n", sc->sc_options);
 
 	sc->sc_adapter_type = aa->ca.ca_bustype;
 	sc->sc_adapter_iv = aa->ca.ca_intvec;
@@ -210,7 +212,7 @@ se_attach(struct device *parent, struct device *self, void *args)
 
 	/* Attach interrupt handler. */
 	isr_add_vectored(se_intr, (void *)sc,
-		aa->ca.ca_intpri, aa->ca.ca_intvec);
+	    aa->ca.ca_intpri, aa->ca.ca_intvec);
 
 	/* Reset the hardware. */
 	se_reset(ncr_sc);
@@ -223,9 +225,9 @@ se_attach(struct device *parent, struct device *self, void *args)
 	 * Interrupts and DMA are per-controller.
 	 */
 	ncr_sc->sc_no_disconnect =
-		(sc->sc_options & SE_NO_DISCONNECT);
+	    (sc->sc_options & SE_NO_DISCONNECT);
 	ncr_sc->sc_parity_disable = 
-		(sc->sc_options & SE_NO_PARITY_CHK) >> 8;
+	    (sc->sc_options & SE_NO_PARITY_CHK) >> 8;
 	if (sc->sc_options & SE_FORCE_POLLING)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 
@@ -256,8 +258,7 @@ se_attach(struct device *parent, struct device *self, void *args)
 	 * Allocate DMA handles.
 	 */
 	i = SCI_OPENINGS * sizeof(struct se_dma_handle);
-	sc->sc_dma = (struct se_dma_handle *)
-		malloc(i, M_DEVBUF, M_WAITOK);
+	sc->sc_dma = malloc(i, M_DEVBUF, M_WAITOK);
 	if (sc->sc_dma == NULL)
 		panic("se: dma_malloc failed");
 	for (i = 0; i < SCI_OPENINGS; i++)
@@ -280,7 +281,7 @@ se_reset(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (se_debug) {
-		printf("se_reset\n");
+		printf("%s\n", __func__);
 	}
 #endif
 
@@ -363,15 +364,15 @@ se_dma_setup(struct ncr5380_softc *ncr_sc)
 	data_pa = 0; /* XXX se_dma_kvtopa(dh->dh_dma); */
 	data_pa += (ncr_sc->sc_dataptr - dh->dh_addr);
 	if (data_pa & 1)
-		panic("se_dma_start: bad pa=0x%lx", data_pa);
+		panic("%s: bad pa=0x%lx", __func__, data_pa);
 	xlen = ncr_sc->sc_datalen;
 	xlen &= ~1;				/* XXX: necessary? */
 	sc->sc_reqlen = xlen; 	/* XXX: or less? */
 
 #ifdef	DEBUG
 	if (se_debug & 2) {
-		printf("se_dma_setup: dh=%p, pa=0x%lx, xlen=0x%x\n",
-			   dh, data_pa, xlen);
+		printf("%s: dh=%p, pa=0x%lx, xlen=0x%x\n",
+		    __func__, dh, data_pa, xlen);
 	}
 #endif
 
@@ -434,8 +435,8 @@ se_dma_start(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (se_debug & 2) {
-		printf("se_dma_start: started, flags=0x%x\n",
-			   ncr_sc->sc_state);
+		printf("%s: started, flags=0x%x\n",
+		    __func__, ncr_sc->sc_state);
 	}
 #endif
 }
@@ -460,7 +461,7 @@ se_dma_stop(struct ncr5380_softc *ncr_sc)
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
 #ifdef	DEBUG
-		printf("se_dma_stop: DMA not running\n");
+		printf("%s: DMA not running\n", __func__);
 #endif
 		return;
 	}
@@ -489,8 +490,8 @@ se_dma_stop(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (se_debug & 2) {
-		printf("se_dma_stop: resid=0x%x ntrans=0x%x\n",
-		       resid, ntrans);
+		printf("%s: resid=0x%x ntrans=0x%x\n",
+		    __func__, resid, ntrans);
 	}
 #endif
 
@@ -500,7 +501,7 @@ se_dma_stop(struct ncr5380_softc *ncr_sc)
 		goto out;
 	}
 	if (ntrans > ncr_sc->sc_datalen)
-		panic("se_dma_stop: excess transfer");
+		panic("%s: excess transfer", __func__);
 
 	/* Adjust data pointer */
 	ncr_sc->sc_dataptr += ntrans;
@@ -547,14 +548,14 @@ se_intr(void *arg)
 		claimed = ncr5380_intr(&sc->ncr_sc);
 #ifdef	DEBUG
 		if (!claimed) {
-			printf("se_intr: spurious from SBC\n");
+			printf("%s: spurious from SBC\n", __func__);
 		}
 #endif
 		/* Yes, we DID cause this interrupt. */
 		claimed = 1;
 	}
 
-	return (claimed);
+	return claimed;
 }
 
 
@@ -579,21 +580,21 @@ se_dma_alloc(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DIAGNOSTIC
 	if (sr->sr_dma_hand != NULL)
-		panic("se_dma_alloc: already have DMA handle");
+		panic("%s: already have DMA handle", __func__);
 #endif
 
-	addr = (u_long) ncr_sc->sc_dataptr;
+	addr = (u_long)ncr_sc->sc_dataptr;
 	xlen = ncr_sc->sc_datalen;
 
 	/* If the DMA start addr is misaligned then do PIO */
 	if ((addr & 1) || (xlen & 1)) {
-		printf("se_dma_alloc: misaligned.\n");
+		printf("%s: misaligned.\n", __func__);
 		return;
 	}
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("se_dma_alloc: xlen=0x%x", xlen);
+		panic("%s: xlen=0x%x", __func__, xlen);
 
 	/*
 	 * Never attempt single transfers of more than 63k, because
@@ -602,7 +603,7 @@ se_dma_alloc(struct ncr5380_softc *ncr_sc)
 	 * XXX - Should just segment these...
 	 */
 	if (xlen > MAX_DMA_LEN) {
-		printf("se_dma_alloc: excessive xlen=0x%x\n", xlen);
+		printf("%s: excessive xlen=0x%x\n", __func__, xlen);
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
 
@@ -622,22 +623,20 @@ found:
 	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SIDH_OUT;
 
-	dh->dh_addr = (u_char*) addr;
+	dh->dh_addr = (uint8_t *)addr;
 	dh->dh_maplen  = xlen;
 	dh->dh_dma = 0;	/* XXX - Allocate space in DMA buffer. */
 	/* XXX: dh->dh_dma = alloc(xlen) */
 	if (!dh->dh_dma) {
 		/* Can't remap segment */
-		printf("se_dma_alloc: can't remap %p/0x%x\n",
-			dh->dh_addr, dh->dh_maplen);
+		printf("%s: can't remap %p/0x%x\n",
+		    __func__, dh->dh_addr, dh->dh_maplen);
 		dh->dh_flags = 0;
 		return;
 	}
 
 	/* success */
 	sr->sr_dma_hand = dh;
-
-	return;
 }
 
 
@@ -649,11 +648,11 @@ se_dma_free(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DIAGNOSTIC
 	if (dh == NULL)
-		panic("se_dma_free: no DMA handle");
+		panic("%s: no DMA handle", __func__);
 #endif
 
 	if (ncr_sc->sc_state & NCR_DOINGDMA)
-		panic("se_dma_free: free while in progress");
+		panic("%s: free while in progress", __func__);
 
 	if (dh->dh_flags & SIDH_BUSY) {
 		/* XXX: Should separate allocation and mapping. */
@@ -711,7 +710,7 @@ se_dma_poll(struct ncr5380_softc *ncr_sc)
 
 #ifdef	DEBUG
 	if (se_debug & 2) {
-		printf("se_dma_poll: done, csr=0x%x\n", se->se_csr);
+		printf("%s: done, csr=0x%x\n", __func__, se->se_csr);
 	}
 #endif
 }
