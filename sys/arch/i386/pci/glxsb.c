@@ -1,4 +1,4 @@
-/*	$NetBSD: glxsb.c,v 1.4 2008/01/04 21:17:41 ad Exp $	*/
+/*	$NetBSD: glxsb.c,v 1.5 2008/04/04 22:48:58 cegger Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.4 2008/01/04 21:17:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.5 2008/04/04 22:48:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ glxsb_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	wrmsr(SB_GLD_MSR_CTRL, msr);
 
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_RNG, RND_FLAG_NO_ESTIMATE);
 
 	/* Install a periodic collector for the "true" (AMD's word) RNG */
@@ -379,7 +379,7 @@ glxsb_aes(struct glxsb_softc *sc, uint32_t control, uint32_t psrc,
 
 	if (len & 0xF) {
 		printf("%s: len must be a multiple of 16 (not %d)\n",
-		    sc->sc_dev.dv_xname, len);
+		    device_xname(&sc->sc_dev), len);
 		return;
 	}
 
@@ -434,7 +434,7 @@ glxsb_aes(struct glxsb_softc *sc, uint32_t control, uint32_t psrc,
 			return;
 	}
 
-	printf("%s: operation failed to complete\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(&sc->sc_dev, "operation failed to complete\n");
 }
 
 int
@@ -605,8 +605,8 @@ glxsb_dma_alloc(struct glxsb_softc *sc, int size, struct glxsb_dma_map *dma)
 	rc = bus_dmamap_create(sc->sc_dmat, size, dma->dma_nsegs, size,
 	    0, BUS_DMA_NOWAIT, &dma->dma_map);
 	if (rc != 0) {
-		printf("%s: couldn't create DMA map for %d bytes (%d)\n",
-		    sc->sc_dev.dv_xname, size, rc);
+		aprint_error_dev(&sc->sc_dev, "couldn't create DMA map for %d bytes (%d)\n",
+		    size, rc);
 
 		goto fail0;
 	}
@@ -614,8 +614,8 @@ glxsb_dma_alloc(struct glxsb_softc *sc, int size, struct glxsb_dma_map *dma)
 	rc = bus_dmamem_alloc(sc->sc_dmat, size, SB_AES_ALIGN, 0,
 	    &dma->dma_seg, dma->dma_nsegs, &dma->dma_nsegs, BUS_DMA_NOWAIT);
 	if (rc != 0) {
-		printf("%s: couldn't allocate DMA memory of %d bytes (%d)\n",
-		    sc->sc_dev.dv_xname, size, rc);
+		aprint_error_dev(&sc->sc_dev, "couldn't allocate DMA memory of %d bytes (%d)\n",
+		    size, rc);
 
 		goto fail1;
 	}
@@ -623,8 +623,8 @@ glxsb_dma_alloc(struct glxsb_softc *sc, int size, struct glxsb_dma_map *dma)
 	rc = bus_dmamem_map(sc->sc_dmat, &dma->dma_seg, 1, size,
 	    &dma->dma_vaddr, BUS_DMA_NOWAIT);
 	if (rc != 0) {
-		printf("%s: couldn't map DMA memory for %d bytes (%d)\n",
-		    sc->sc_dev.dv_xname, size, rc);
+		aprint_error_dev(&sc->sc_dev, "couldn't map DMA memory for %d bytes (%d)\n",
+		    size, rc);
 
 		goto fail2;
 	}
@@ -632,8 +632,8 @@ glxsb_dma_alloc(struct glxsb_softc *sc, int size, struct glxsb_dma_map *dma)
 	rc = bus_dmamap_load(sc->sc_dmat, dma->dma_map, dma->dma_vaddr,
 	    size, NULL, BUS_DMA_NOWAIT);
 	if (rc != 0) {
-		printf("%s: couldn't load DMA memory for %d bytes (%d)\n",
-		    sc->sc_dev.dv_xname, size, rc);
+		aprint_error_dev(&sc->sc_dev, "couldn't load DMA memory for %d bytes (%d)\n",
+		    size, rc);
 
 		goto fail3;
 	}
