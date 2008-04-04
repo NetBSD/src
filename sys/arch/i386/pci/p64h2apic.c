@@ -1,4 +1,4 @@
-/* $NetBSD: p64h2apic.c,v 1.11 2006/11/16 01:32:39 christos Exp $ */
+/* $NetBSD: p64h2apic.c,v 1.12 2008/04/04 22:48:58 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.11 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.12 2008/04/04 22:48:58 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ p64h2attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("%s: %s (rev. 0x%02x)\n", sc->sc_dev.dv_xname, devinfo,
+	aprint_normal_dev(&sc->sc_dev, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_tag = pa->pa_tag;
