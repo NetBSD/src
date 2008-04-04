@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.27 2008/02/01 10:58:28 jdc Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.28 2008/04/04 16:26:52 martin Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.27 2008/02/01 10:58:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.28 2008/04/04 16:26:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,8 +175,11 @@ gem_attach_pci(parent, self, aux)
 	bus_space_handle_t	romh;
 	u_int8_t		buf[0x0800];
 	int			dataoff, vpdoff, serdes;
+#if GEM_USE_LOCAL_MAC_ADDRESS || defined(GEM_DEBUG)
+	int i;
+#endif
 #ifdef GEM_DEBUG
-	int i, j;
+	int j;
 #endif
 	struct pci_vpd		*vpd;
 	static const u_int8_t promhdr[] = { 0x55, 0xaa };
