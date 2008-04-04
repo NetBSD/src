@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3 2008/01/17 23:42:59 garbled Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4 2008/04/04 16:04:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3 2008/01/17 23:42:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4 2008/04/04 16:04:19 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,24 +56,24 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3 2008/01/17 23:42:59 garbled Exp $");
 #include "isa.h"
 #include "isadma.h"
 
-int	pcibmatch(struct device *, struct cfdata *, void *);
-void	pcibattach(struct device *, struct device *, void *);
+int	pcibmatch(device_t, cfdata_t, void *);
+void	pcibattach(device_t, device_t, void *);
 
 struct pcib_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct powerpc_isa_chipset *sc_chipset;
 };
 
 extern struct powerpc_isa_chipset genppc_ict;
 extern struct genppc_pci_chipset *genppc_pct;
 
-CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
+CFATTACH_DECL_NEW(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
 
-void	pcib_callback(struct device *);
+void	pcib_callback(device_t);
 
 int
-pcibmatch(struct device *parent, struct cfdata *cf, void *aux)
+pcibmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -105,15 +105,18 @@ pcibmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pcibattach(struct device *parent, struct device *self, void *aux)
+pcibattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	struct pcib_softc *sc = device_private(self);
 	char devinfo[256];
 	u_int32_t v;
 	int lvlmask = 0;
 #ifdef prep
 	prop_bool_t rav;
 #endif
+
+	sc->sc_dev = self;
 
 	/*
 	 * Just print out a description and defer configuration
@@ -133,7 +136,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 			    self->dv_xname);
 		} else {
 			int i;
-			aprint_verbose("%s:", self->dv_xname);
+			aprint_verbose("%s:", device_xname(self));
 			for (i = 0; i < 4; i++, v >>= 8) {
 				if ((v & 0x80) == 0 && (v & 0x0f) != 0) {
 					aprint_verbose(" PIRQ[%d]=%d", i,
@@ -191,8 +194,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 		pinsub = prop_number_create_integer(14);
 		prop_dictionary_set(devsub, "pin-A", pinsub);
 		prop_object_release(pinsub);
-		aprint_verbose("%s: setting pciide irq to 14\n",
-		    self->dv_xname);
+		aprint_verbose_dev(self, "setting pciide irq to 14\n");
 		/* irq 14 is level */
 		lvlmask = 0x0040;
 	}
@@ -202,9 +204,9 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-pcib_callback(struct device *self)
+pcib_callback(device_t self)
 {
-	struct pcib_softc *sc = (struct pcib_softc *)self;
+	struct pcib_softc *sc = device_private(self);
 #if NISA > 0
 	struct isabus_attach_args iba;
 
@@ -219,6 +221,6 @@ pcib_callback(struct device *self)
 #if NISADMA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif
-	config_found_ia(&sc->sc_dev, "isabus", &iba, isabusprint);
+	config_found_ia(sc->sc_dev, "isabus", &iba, isabusprint);
 #endif
 }
