@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.h,v 1.1.8.3 2008/03/20 12:26:12 mjf Exp $ */
+/* 	$NetBSD: devfsd.h,v 1.1.8.4 2008/04/04 21:21:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <syslog.h>
 
 #include <prop/proplib.h>
-#include <dev/dctl/dctlio.h>
+#include <dev/devfsctl/devfsctlio.h>
 
 /*       
  * A rule can be broken into two parts:
@@ -104,13 +104,13 @@ SLIST_HEAD(rlist_head, devfs_rule) rule_list;
 
 struct devfs_node {
 	SLIST_ENTRY(devfs_node) n_next;
-	struct dctl_specnode_attr n_attr;
-	struct dctl_node_cookie n_cookie; /* cookie to uniquely identify node */
+	struct devfsctl_specnode_attr n_attr;
+	struct devfsctl_node_cookie n_cookie; /* cookie to uniquely identify node */
 };
 
 /*
  * This structure is our understanding of a device that is connected
- * to the system. Each device has a unique cookie that allows dctl(4)
+ * to the system. Each device has a unique cookie that allows devfsctl(4)
  * to understand what device we're talking about when we request some
  * action for a device.
  *
@@ -122,7 +122,8 @@ struct devfs_node {
 struct devfs_dev {      
 	int32_t			d_cookie;	/* cookie for this device */
 	char			d_kname[16];	/* device driver name */
-	enum devtype 		d_type;		/* dev type, see dctlio.h  */
+	int			d_char;		/* block or char */
+	enum devtype 		d_type;		/* dev type, see devfsctlio.h  */
 	SLIST_ENTRY(devfs_dev) 	d_next;  	/* next device in list */
 	SLIST_HEAD(, devfs_node) d_node_head; 	/* nodes for this device */
 	TAILQ_HEAD(, rule2dev) d_pairing;
@@ -156,12 +157,12 @@ int rule_init(void);
 int rule_rebuild_attr(struct devfs_dev *);
 
 int dev_init(void);
-struct devfs_dev *dev_create(struct dctl_kerndev *, intptr_t);
+struct devfs_dev *dev_create(struct devfsctl_kerndev *, intptr_t);
 void dev_apply_rule(struct devfs_dev *, struct devfs_rule *);
 void dev_apply_rule_node(struct devfs_node *, struct devfs_mount *,
 	struct devfs_rule *);
 void dev_destroy(struct devfs_dev *);
-struct devfs_dev *dev_lookup(struct dctl_node_cookie);
+struct devfs_dev *dev_lookup(struct devfsctl_node_cookie);
 int dev_add_node(struct devfs_dev *, struct devfs_mount *);
 void dev_del_node(struct devfs_dev *, struct devfs_node *);
 

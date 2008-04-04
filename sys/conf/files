@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.892.6.3 2008/04/03 14:32:34 mjf Exp $
+#	$NetBSD: files,v 1.892.6.4 2008/04/04 21:21:10 mjf Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -489,11 +489,12 @@ defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
 				ISP_DISABLE_2100_SUPPORT
 				ISP_DISABLE_2200_SUPPORT
 				ISP_DISABLE_2300_SUPPORT
+				ISP_DISABLE_2322_SUPPORT
 				ISP_DISABLE_2400_SUPPORT
 				ISP_DISABLE_FW
 				ISP_TARGET_MODE
-				ISP_FW_CRASH_DUMP
 defparam opt_isp.h		ISP_LOGDEFAULT
+				ISP_VPORTS
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_library.c		isp
@@ -532,7 +533,7 @@ file	dev/ic/siop_common.c		siop_common
 # Symbios/NCR 53c720/53c8xx SCSI controllers
 #
 device	siop: scsi,siop_common
-file	dev/ic/siop.c			siop
+file	dev/ic/siop.c			siop & (siop_pci | siop_gedoens)
 defflag	opt_siop.h			SIOP_SYMLED
 
 device	esiop: scsi,siop_common
@@ -1044,7 +1045,7 @@ file	dev/ic/igsfb_subr.c		igsfb
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_sgc | sti_phantom)
+file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens)
 
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
@@ -1094,7 +1095,7 @@ file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
-device	slhci: usbus
+device	slhci: usbus, usbroothub
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # USB HID processing (as used by bluetooth and usb code)
@@ -1256,8 +1257,8 @@ defpseudo pud
 file	dev/pud/pud.c			pud
 file	dev/pud/pud_dev.c		pud
 
-defpseudo dctl
-file	dev/dctl/dctl.c			dctl
+defpseudo devfsctl
+file   dev/devfsctl/devfsctl.c         devfsctl
 
 #
 # File systems
@@ -1431,6 +1432,7 @@ file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xcall.c
 file	kern/sys_aio.c
+file	kern/sys_descrip.c
 file	kern/sys_generic.c
 file	kern/sys_module.c
 file	kern/sys_mqueue.c
@@ -1439,6 +1441,7 @@ file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
 file	kern/sys_process.c		ptrace | ktrace
 file	kern/sys_pset.c
+file	kern/sys_select.c
 file	kern/sys_sig.c
 file	kern/sys_sched.c
 file	kern/sys_socket.c
