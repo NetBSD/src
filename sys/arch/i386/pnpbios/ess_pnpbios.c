@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.15 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.16 2008/04/04 22:18:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.15 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.16 2008/04/04 22:18:05 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,10 +129,10 @@ ess_pnpbios_attach(struct device *parent, struct device *self,
 	printf("\n");
 	pnpbios_print_devres(self, aa);
 
-	printf("%s", self->dv_xname);
+	printf("%s", device_xname(self));
 
 	if (!essmatch(sc)) {
-		printf("%s: essmatch failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "essmatch failed\n");
 		pnpbios_io_unmap(aa->pbt, aa->resc, 0, sc->sc_iot, sc->sc_ioh);
 		return;
 	}
