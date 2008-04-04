@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.16 2008/03/17 16:54:51 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.17 2008/04/04 19:16:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.16 2008/03/17 16:54:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.17 2008/04/04 19:16:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -217,7 +217,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	turnstile_t *ots;
 	tschain_t *tc;
 	sleepq_t *sq;
-	pri_t prio;
+	pri_t prio, obase;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
 	l = cur = curlwp;
@@ -261,6 +261,9 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sleepq_enter(sq, l);
 	LOCKDEBUG_BARRIER(&tc->tc_mutex, 1);
 	l->l_kpriority = true;
+	obase = l->l_kpribase;
+	if (obase < PRI_KTHREAD)
+		l->l_kpribase = PRI_KTHREAD;
 	sleepq_enqueue(sq, obj, "tstile", sobj);
 
 	/*
@@ -322,6 +325,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	LOCKDEBUG_BARRIER(cur->l_mutex, 1);
 
 	sleepq_block(0, false);
+	cur->l_kpribase = obase;
 }
 
 /*
