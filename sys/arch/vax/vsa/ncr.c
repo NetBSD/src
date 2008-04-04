@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.44 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.45 2008/04/04 16:00:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.44 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.45 2008/04/04 16:00:58 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ static	void si_dma_eop(struct ncr5380_softc *);
 static	void si_dma_stop(struct ncr5380_softc *);
 static	void si_dma_go(void *);
 
-CFATTACH_DECL(si_vsbus, sizeof(struct si_softc),
+CFATTACH_DECL_NEW(si_vsbus, sizeof(struct si_softc),
     si_vsbus_match, si_vsbus_attach, NULL, NULL);
 
 static int
@@ -145,6 +145,8 @@ si_vsbus_attach(device_t parent, device_t self, void *aux)
 	struct si_softc * const sc = device_private(self);
 	struct ncr5380_softc * const ncr_sc = &sc->ncr_sc;
 	int tweak, target;
+
+	ncr_sc->sc_dev = self;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
 		SCB_ISTACK, &sc->ncr_intrcnt);
