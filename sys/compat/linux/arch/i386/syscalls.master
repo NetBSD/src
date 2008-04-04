@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.89 2008/01/15 22:38:34 njoly Exp $
+	$NetBSD: syscalls.master,v 1.90 2008/04/04 12:38:52 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -261,7 +261,7 @@
 			    fd_set *writefds, fd_set *exceptfds, \
 			    struct timeval *timeout); }
 143	NOARGS		{ int sys_flock(int fd, int how); }
-144	STD		{ int linux_sys_msync(void *addr, int len, int fl); }
+144	NOARGS		{ int sys___msync13(void *addr, size_t len, int flags); }
 145	NOARGS		{ int sys_readv(int fd, struct iovec *iovp, \
 				u_int iovcnt); }
 146	NOARGS		{ int sys_writev(int fd, struct iovec *iovp, \
