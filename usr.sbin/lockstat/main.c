@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2008/01/26 14:29:31 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2008/04/04 17:25:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.11 2008/01/26 14:29:31 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2008/04/04 17:25:09 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -127,6 +127,7 @@ const name_t alltypes[] = {
 	{ "Spin mutex spin", LB_SPIN_MUTEX | LB_SPIN },
 	{ "RW lock sleep (writer)", LB_RWLOCK | LB_SLEEP1 },
 	{ "RW lock sleep (reader)", LB_RWLOCK | LB_SLEEP2 },
+	{ "RW lock spin", LB_RWLOCK | LB_SPIN },
 	{ "Kernel lock spin", LB_KERNEL_LOCK | LB_SPIN },
 	{ NULL, 0 }
 };
