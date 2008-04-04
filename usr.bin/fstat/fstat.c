@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.81 2008/04/04 21:14:08 christos Exp $	*/
+/*	$NetBSD: fstat.c,v 1.82 2008/04/04 21:15:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.81 2008/04/04 21:14:08 christos Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.82 2008/04/04 21:15:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -379,6 +379,8 @@ ftrans(fdfile_t *fp, int i)
 		    i, fp, Pid);
 		return;
 	}
+	if (fdfile.ff_file == NULL)
+		return;
 	if (!KVM_READ(fdfile.ff_file, &file, sizeof(file))) {
 		dprintf("can't read file %d at %p for pid %d",
 		    i, fdfile.ff_file, Pid);
