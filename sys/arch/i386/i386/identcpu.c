@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.88 2008/02/26 18:24:28 xtraeme Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.89 2008/04/04 22:07:22 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.88 2008/02/26 18:24:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.89 2008/04/04 22:07:22 cegger Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -1107,8 +1107,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 	nreg = descs[0];
 	if (nreg >= 0x80860001) {
 		x86_cpuid(0x80860001, descs);
-		aprint_verbose("%s: Processor revision %u.%u.%u.%u\n",
-		    ci->ci_dev->dv_xname,
+		aprint_verbose_dev(ci->ci_dev, "Processor revision %u.%u.%u.%u\n",
 		    (descs[1] >> 24) & 0xff,
 		    (descs[1] >> 16) & 0xff,
 		    (descs[1] >> 8) & 0xff,
@@ -1116,8 +1115,8 @@ transmeta_cpu_info(struct cpu_info *ci)
 	}
 	if (nreg >= 0x80860002) {
 		x86_cpuid(0x80860002, descs);
-		aprint_verbose("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
-		    ci->ci_dev->dv_xname, (descs[1] >> 24) & 0xff,
+		aprint_verbose_dev(ci->ci_dev, "Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
+		    (descs[1] >> 24) & 0xff,
 		    (descs[1] >> 16) & 0xff,
 		    (descs[1] >> 8) & 0xff,
 		    descs[1] & 0xff,
@@ -1134,15 +1133,14 @@ transmeta_cpu_info(struct cpu_info *ci)
 			x86_cpuid(0x80860003 + i, info.descs[i]);
 		}
 		info.text[64] = '\0';
-		aprint_verbose("%s: %s\n", ci->ci_dev->dv_xname, info.text);
+		aprint_verbose_dev(ci->ci_dev, "%s\n", info.text);
 	}
 
 	if (nreg >= 0x80860007) {
 		longrun = tmx86_get_longrun_mode();
 		tmx86_get_longrun_status(&frequency,
 		    &voltage, &percentage);
-		aprint_verbose("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
-		    ci->ci_dev->dv_xname,
+		aprint_verbose_dev(ci->ci_dev, "LongRun mode: %d  <%dMHz %dmV %d%%>\n",
 		    longrun, frequency, voltage, percentage);
 	}
 }
@@ -1165,7 +1163,7 @@ identifycpu(struct cpu_info *ci)
 	int modif, family, model;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
-	char *cpuname = ci->ci_dev->dv_xname;
+	const char *cpuname = device_xname(ci->ci_dev);
 	char *buf;
 	const char *feature_str[3];
 
