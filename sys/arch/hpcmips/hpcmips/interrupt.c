@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11 2007/12/03 15:33:43 ad Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12 2008/04/04 12:36:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2007/12/03 15:33:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2008/04/04 12:36:06 tsutsui Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -73,11 +73,7 @@ intr_init()
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
-	struct cpu_info *ci;
 
-	ci = curcpu();
-	ci->ci_idepth++;
 	(*platform.cpu_intr)(status, cause, pc, ipending);
-	ci->ci_idepth--;
 }
 #endif /* VR41XX && TX39XX */
