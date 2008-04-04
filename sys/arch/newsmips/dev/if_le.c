@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.15 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: if_le.c,v 1.16 2008/04/04 12:25:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.15 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.16 2008/04/04 12:25:06 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -87,10 +87,10 @@ struct	le_softc {
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
 
-static int	le_match(struct device *, struct cfdata *, void *);
-static void	le_attach(struct device *, struct device *, void *);
+static int	le_match(device_t, cfdata_t, void *);
+static void	le_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(le, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le, sizeof(struct le_softc),
     le_match, le_attach, NULL, NULL);
 
 #if defined(_KERNEL_OPT)
@@ -129,7 +129,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 } 
 
 int
-le_match(struct device *parent, struct cfdata *cf, void *aux)
+le_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hb_attach_args *ha = aux;
 
@@ -143,41 +143,42 @@ le_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-le_attach(struct device *parent, struct device *self, void *aux)
+le_attach(device_t parent, device_t self, void *aux)
 {
-	struct le_softc *lesc = (struct le_softc *)self;
+	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct hb_attach_args *ha = aux;
 	int intlevel, intmask;
-	u_char *p;
+	uint8_t *p;
 
+	sc->sc_dev = self;
 	intlevel = ha->ha_level;
 	if (intlevel == -1) {
-		printf(": interrupt level not configured\n");
+		aprint_error(": interrupt level not configured\n");
 		return;
 	}
-	printf(" level %d", intlevel);
+	aprint_normal(" level %d", intlevel);
 
 	switch (ha->ha_addr) {
 
 	case LANCE_PORT:
 		sc->sc_mem = (void *)LANCE_MEMORY;
-		p = (u_char *)(ETHER_ID + 16);
+		p = (uint8_t *)(ETHER_ID + 16);
 		intmask = INTST1_LANCE;
 		break;
 	case LANCE_PORT1:
 		sc->sc_mem = (void *)LANCE_MEMORY1;
-		p = (u_char *)(ETHER_ID1 + 16);
+		p = (uint8_t *)(ETHER_ID1 + 16);
 		intmask = INTST1_SLOT3; /* XXX not tested */
 		break;
 	case LANCE_PORT2:
 		sc->sc_mem = (void *)LANCE_MEMORY2;
-		p = (u_char *)(ETHER_ID2 + 16);
+		p = (uint8_t *)(ETHER_ID2 + 16);
 		intmask = INTST1_SLOT3; /* XXX not tested */
 		break;
 
 	default:
-		printf(": unknown LANCE addr\n");
+		aprint_error(": unknown LANCE addr\n");
 		return;
 	}
 

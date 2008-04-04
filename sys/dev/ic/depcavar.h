@@ -1,4 +1,4 @@
-/*	$NetBSD: depcavar.h,v 1.4 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: depcavar.h,v 1.5 2008/04/04 12:25:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 struct depca_softc {
-	struct device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 
 	bus_space_tag_t sc_iot;
 	bus_space_tag_t sc_memt;

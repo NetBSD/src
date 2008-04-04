@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.49 2005/12/24 20:07:41 perry Exp $	*/
+/*	$NetBSD: if_le.c,v 1.50 2008/04/04 12:25:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.49 2005/12/24 20:07:41 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.50 2008/04/04 12:25:06 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -89,10 +89,10 @@ struct	le_softc {
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
 
-static int	le_match(struct device *, struct cfdata *, void *);
-static void	le_attach(struct device *, struct device *, void *);
+static int	le_match(device_t, cfdata_t, void *);
+static void	le_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(le, sizeof(struct le_softc),
+CFATTACH_DECL_NEW(le, sizeof(struct le_softc),
     le_match, le_attach, NULL, NULL);
 
 #if defined(_KERNEL_OPT)
@@ -131,7 +131,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 } 
 
 int 
-le_match(struct device *parent, struct cfdata *cf, void *aux)
+le_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -147,12 +147,13 @@ le_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void 
-le_attach(struct device *parent, struct device *self, void *aux)
+le_attach(device_t parent, device_t self, void *aux)
 {
-	struct le_softc *lesc = (struct le_softc *)self;
+	struct le_softc *lesc = device_private(self);
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
 	struct confargs *ca = aux;
 
+	sc->sc_dev = self;
 	lesc->sc_r1 = bus_mapin(ca->ca_bustype,
 	    ca->ca_paddr, sizeof(struct lereg1));
 
