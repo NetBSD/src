@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.355.6.2 2008/04/03 12:42:38 mjf Exp $ */
+/*	$NetBSD: wd.c,v 1.355.6.3 2008/04/04 21:21:11 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.355.6.2 2008/04/03 12:42:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.355.6.3 2008/04/04 21:21:11 mjf Exp $");
 
 #include "opt_ata.h"
 
@@ -439,14 +439,14 @@ wdattach(struct device *parent, struct device *self, void *aux)
 
 	for (i = 0; i < np; i++) {
 		device_register_name(
-	    	    MAKEDISKDEV(bmajor, device_unit(&wd->sc_dev), i),
+	    	    MAKEDISKDEV(bmajor, device_unit(wd->sc_dev), i),
 	    	    self, false, DEV_DISK,
-		    "wd%d%c", device_unit(&wd->sc_dev), 'a' + i);
+		    "wd%d%c", device_unit(wd->sc_dev), 'a' + i);
 
 		device_register_name(
-	    	    MAKEDISKDEV(cmajor, device_unit(&wd->sc_dev), i),
+	    	    MAKEDISKDEV(cmajor, device_unit(wd->sc_dev), i),
 	    	    self, true, DEV_DISK,
-		    "rwd%d%c", device_unit(&wd->sc_dev), 'a' + i);
+		    "rwd%d%c", device_unit(wd->sc_dev), 'a' + i);
 	}
 }
 

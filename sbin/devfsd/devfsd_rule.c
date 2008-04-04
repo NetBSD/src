@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd_rule.c,v 1.1.8.2 2008/03/20 12:26:12 mjf Exp $ */
+/* 	$NetBSD: devfsd_rule.c,v 1.1.8.3 2008/04/04 21:21:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ static int handle_attributes(const char *, char *, struct devfs_rule *);
 static int handle_dict(prop_dictionary_t, const char *, struct devfs_rule *);
 static prop_dictionary_t construct_rule(struct devfs_rule *);
 /*static void rule_store_attributes(struct devfs_rule *rule, 
-    struct dctl_specnode_attr *di, struct attrs_handled *ah, int store);*/
+    struct devfsctl_specnode_attr *di, struct attrs_handled *ah, int store);*/
 
 int
 rule_init(void)
@@ -112,19 +112,20 @@ rule_parsefile(const char *filename)
 	dict = prop_dictionary_internalize_from_file(filename);
 
 	if (dict == NULL) {
-		errx(1, "%s: could not internalize dictionary\n", filename);
+		syslog(LOG_ERR, "%s: could not internalize dictionary\n", 
+		    filename);
 		return -1;
 	}
 
 	if ((iter1 = prop_dictionary_iterator(dict)) == NULL) {
 		prop_object_release(dict);
-		errx(1, "could not create iterator");
+		syslog(LOG_ERR, "could not create iterator");
 		return -1;
 	}
 
 	while ((obj1 = prop_object_iterator_next(iter1)) != NULL) {
 		if ((sr = calloc(1, sizeof *sr)) == NULL) {
-			err(1, "malloc");
+			syslog(LOG_ERR, "calloc failed");
 			return -1;
 		}
 
@@ -143,6 +144,7 @@ rule_parsefile(const char *filename)
 
 		if ((iter2 = prop_dictionary_iterator(rule)) == NULL) {
 			prop_object_release(rule);
+			syslog(LOG_ERR, "could not read rule");
 			return -1;
 		}
 
@@ -155,8 +157,10 @@ rule_parsefile(const char *filename)
 
 			error = handle_dict(section_dict, section_string, sr);
 
-			if (error)
+			if (error) {
+				syslog(LOG_ERR, "rule: match/attribute error");
 				return error;
+			}
 		}
 		prop_object_iterator_release(iter2);
 
@@ -183,8 +187,10 @@ handle_dict(prop_dictionary_t d, const char *section, struct devfs_rule *sr)
 	const char *key_string;
 	char *value_string;
 
-	if ((iter = prop_dictionary_iterator(d)) == NULL)
-		return -1;
+	if ((iter = prop_dictionary_iterator(d)) == NULL) {
+		error = -1;
+		goto out;
+	}
 
 	while ((obj = prop_object_iterator_next(iter)) != NULL) {
 		key = prop_dictionary_get_keysym(d, obj);
@@ -197,15 +203,16 @@ handle_dict(prop_dictionary_t d, const char *section, struct devfs_rule *sr)
 		else if (!strncmp(section, "attributes", strlen("attributes")))
 			error = handle_attributes(key_string, value_string, sr);
 		else {
-			errx(1, "invalid rule section\n");
-			return -1;
+			syslog(LOG_ERR, "invalid rule section\n");
+			error = EINVAL;
 		} 
+
+		if (error)
+			goto out;
 	}
 
-	if (error)
-		return error;
-
-	return 0;
+out:
+	return error;
 }
 
 /*
@@ -214,22 +221,24 @@ handle_dict(prop_dictionary_t d, const char *section, struct devfs_rule *sr)
 static int
 handle_match(const char *key, char *value, struct devfs_rule *sr)
 {
-	if (!strncmp(key, "label", strlen("label"))) {
+	int error = 0;
+
+	if (!strncmp(key, "label", strlen("label")))
 		sr->r_label = value;
-	} else if (!strncmp(key, "manufacterer", strlen("manufacturer"))) {
+	else if (!strncmp(key, "manufacterer", strlen("manufacturer")))
 		sr->r_manufacturer = value;
-	} else if (!strncmp(key, "product", strlen("product"))) {
+	else if (!strncmp(key, "product", strlen("product")))
 		sr->r_product = value;
-	} else if (!strncmp(key, "drivername", strlen("drivername"))) {
+	else if (!strncmp(key, "drivername", strlen("drivername")))
 		sr->r_drivername = value;
-	} else if (!strncmp(key, "fstype", strlen("fstype"))) {
+	else if (!strncmp(key, "fstype", strlen("fstype")))
 		sr->r_disk.r_fstype = value;
-	} else {
-		errno = EINVAL;
-		return -1;
+	else {
+		syslog(LOG_ERR, "invalid match rule");
+		error = EINVAL;
 	}
 
-	return 0;
+	return error;
 }
 
 /*
@@ -238,29 +247,30 @@ handle_match(const char *key, char *value, struct devfs_rule *sr)
 static int
 handle_attributes(const char *key, char *value, struct devfs_rule *sr)
 {
-	if (!strncmp(key, "filename", strlen("filename"))) {
+	int error = 0;
+
+	if (!strncmp(key, "filename", strlen("filename")))
 		sr->r_filename = value;
-	} else if (!strncmp(key, "mode", strlen("mode"))) {
+
+	if (!strncmp(key, "mode", strlen("mode")))
 		sr->r_mode = strtoul(value, (char **)NULL, 8);
-	} else if (!strncmp(key, "uid", strlen("uid"))) {
+
+	if (!strncmp(key, "uid", strlen("uid")))
 		sr->r_uid = atoi(value);
-	} else if (!strncmp(key, "gid", strlen("gid"))) {
+
+	if (!strncmp(key, "gid", strlen("gid")))
 		sr->r_gid = atoi(value);
-	} else if (!strncmp(key, "visibility", strlen("visibility"))) {
-		if (!strncmp(value, "visible", strlen("visible"))) {
+
+	if (!strncmp(key, "visibility", strlen("visibility"))) {
+		if (!strncmp(value, "visible", strlen("visible")))
 			sr->r_flags = DEVFS_VISIBLE;
-		} else if (!strncmp(value, "invisible", strlen("invisible"))) {
+		else if (!strncmp(value, "invisible", strlen("invisible")))
 			sr->r_flags = DEVFS_INVISIBLE;
-		} else {
-			errno = EINVAL;
-			return -1;
-		}
-	} else {
-		errno = EINVAL;
-		return -1;
+		else
+			error = EINVAL;
 	}
 
-	return 0;
+	return error;
 }
 
 /*
@@ -437,7 +447,7 @@ rule_rebuild_attr(struct devfs_dev *dev)
 {
 	/*
 	struct devfs_rule *rule, *new_rule;
-	struct dctl_specnode_attr *di = &dev->d_dev;
+	struct devfsctl_specnode_attr *di = &dev->d_dev;
 	struct attrs_handled ah;
 	struct devfs_node *node;
 	struct rule2dev *rd;
@@ -499,8 +509,9 @@ rule_rebuild_attr(struct devfs_dev *dev)
 
 /*
 static void
-rule_store_attributes(struct devfs_rule *rule, struct dctl_specnode_attr *di, 
-    struct attrs_handled *ah, int store)
+rule_store_attributes(struct devfs_rule *rule, 
+    struct devfsctl_specnode_attr *di, struct attrs_handled *ah, int store)
+    
 {
 	int error = 0;
 
@@ -515,7 +526,7 @@ rule_store_attributes(struct devfs_rule *rule, struct dctl_specnode_attr *di,
 
 			if (rule->r_filename == NULL) {
 				error = 1;
-				warn("cannot update filename attribute");
+				syslog(LOG_WARNING, "could not alloc memory");
 			} else {
 				strncpy(rule->r_filename, di->d_filename, len);
 				rule->r_filename[len] = '\0';

@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.c,v 1.1.8.4 2008/03/21 16:51:00 mjf Exp $ */
+/* 	$NetBSD: devfsd.c,v 1.1.8.5 2008/04/04 21:21:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 
-#include <dev/dctl/dctlio.h>
+#include <dev/devfsctl/devfsctlio.h>
 
 #include <err.h>
 #include <errno.h>
@@ -54,7 +54,7 @@ extern struct rlist_head rule_list;
 extern struct dlist_head dev_list;
 
 static int init(void);
-static int update(struct devfs_dev *, struct dctl_msg *);
+static int update(struct devfs_dev *, struct devfsctl_msg *);
 static void device_found(struct devfs_dev *);
 static void device_create_nodes(struct devfs_dev *);
 static void push_nodes(struct devfs_dev *);
@@ -71,9 +71,9 @@ static int default_visibility = DEVFS_VISIBLE;
 /* kqueue stuff */
 static struct kevent *allocevchange(void);
 static int wait_for_events(struct kevent *, size_t, bool);
-static void dispatch_read_dctl(struct kevent *);
+static void dispatch_read_devfsctl(struct kevent *);
 static int fkq;
-static int dctl_fd;
+static int devfsctl_fd;
 
 #define A_CNT(x)        (sizeof((x)) / sizeof((x)[0]))
 
@@ -112,8 +112,8 @@ main(int argc, char **argv)
 	if (rule_parsefile(_PATH_CONFIG) != 0)
 		err(EXIT_FAILURE, "%s", _PATH_CONFIG);
 
-	if ((dctl_fd = open(_PATH_DCTL, O_RDONLY, 0)) < 0)
-		err(EXIT_FAILURE, "%s: could not open", _PATH_DCTL);
+	if ((devfsctl_fd = open(_PATH_DEVFSCTL, O_RDONLY, 0)) < 0)
+		err(EXIT_FAILURE, "%s: could not open", _PATH_DEVFSCTL);
 	
 	if (single_run != true) {
 		/* Don't close stdin/stdout/stderr when we goto bg */
@@ -125,8 +125,8 @@ main(int argc, char **argv)
 		err(EXIT_FAILURE, "cannot create event queue");
 
 	ev = allocevchange();
-	EV_SET(ev, dctl_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
-	    (intptr_t) dispatch_read_dctl);
+	EV_SET(ev, devfsctl_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
+	    (intptr_t) dispatch_read_devfsctl);
 
 	openlog("devfsd", LOG_PID, LOG_DAEMON);
 
@@ -153,23 +153,23 @@ main(int argc, char **argv)
 }
 
 /*      
- * Dispatch routine for reading /dev/dctl
+ * Dispatch routine for reading /dev/devfsctl
  */
 static void
-dispatch_read_dctl(struct kevent *ev)
+dispatch_read_devfsctl(struct kevent *ev)
 {
 	ssize_t rv;
 	int fd = ev->ident;
-	struct dctl_msg msg;
+	struct devfsctl_msg msg;
 	struct devfs_dev *de;
 	struct devfs_mount *dmp;
 
 	memset(&msg, 0, sizeof(msg));
 
-	rv = ioctl(fd, DCTL_IOC_NEXTEVENT, &msg);
+	rv = ioctl(fd, DEVFSCTL_IOC_NEXTEVENT, &msg);
 	if (rv >= 0) {
 		switch(msg.d_type) {
-		case DCTL_NEW_DEVICE:
+		case DEVFSCTL_NEW_DEVICE:
 			de = dev_create(&msg.d_kdev, msg.d_dc);
 			if (de == NULL) {
 				syslog(LOG_ERR, 
@@ -198,7 +198,7 @@ dispatch_read_dctl(struct kevent *ev)
 			 */
 			push_nodes(de);
 			break;
-		case DCTL_UPDATE_NODE_ATTR:
+		case DEVFSCTL_UPDATE_NODE_ATTR:
 			de = dev_lookup(msg.d_sn);
 			if (de == NULL) {
 				syslog(LOG_ERR, 
@@ -210,10 +210,10 @@ dispatch_read_dctl(struct kevent *ev)
 				    "your changes will be lost on reboot\n");
 			break;
 
-		case DCTL_UPDATE_NODE_NAME:
+		case DEVFSCTL_UPDATE_NODE_NAME:
 			break;
 
-		case DCTL_NEW_MOUNT:
+		case DEVFSCTL_NEW_MOUNT:
 			dmp = mount_create(msg.d_mc,
 			    msg.d_mp.m_pathname, msg.d_mp.m_visibility);
 
@@ -225,7 +225,7 @@ dispatch_read_dctl(struct kevent *ev)
 
 			mount_found(dmp);
 			break;
-		case DCTL_UNMOUNT:
+		case DEVFSCTL_UNMOUNT:
 			dmp = mount_lookup(msg.d_mc);
 
 			if (dmp == NULL) {
@@ -237,7 +237,7 @@ dispatch_read_dctl(struct kevent *ev)
 			mount_destroy(dmp);
 
 			break;
-		case DCTL_REMOVED_DEVICE:
+		case DEVFSCTL_REMOVED_DEVICE:
 			de = dev_lookup(msg.d_sn);
 			if (de == NULL) {
 				syslog(LOG_ERR, 
@@ -252,17 +252,17 @@ dispatch_read_dctl(struct kevent *ev)
 		}
 	} else if (rv < 0 && errno != EINTR) {
 		/*      
-		* /dev/dctl has croaked.  Disable the event
+		* /dev/devfsctl has croaked.  Disable the event
 		* so it won't bother us again.
 		*/
 		struct kevent *cev = allocevchange();
 		EV_SET(cev, fd, EVFILT_READ, EV_DISABLE,
-		    0, 0, (intptr_t) dispatch_read_dctl);
+		    0, 0, (intptr_t) dispatch_read_devfsctl);
 	}
 }
 
 /*      
- * Dispatch routine for writing /dev/dctl
+ * Dispatch routine for writing /dev/devfsctl
  *
  * Push all device nodes for device 'dev' into their respective
  * devfs file systems.
@@ -280,13 +280,13 @@ static void
 push_node(struct devfs_node *node)
 {
 	int rv;
-	struct dctl_msg msg;
+	struct devfsctl_msg msg;
 
 	memset(&msg, 0, sizeof(msg));
 
 	msg.d_sn = node->n_cookie;
 	msg.d_attr = node->n_attr;
-	rv = ioctl(dctl_fd, DCTL_IOC_CREATENODE, &msg);
+	rv = ioctl(devfsctl_fd, DEVFSCTL_IOC_CREATENODE, &msg);
 
 	if (rv < 0)
 		syslog(LOG_WARNING, "could not push node into devfs");
@@ -299,13 +299,13 @@ static void
 delete_node(struct devfs_node *node)
 {
 	int rv;
-	struct dctl_msg msg;
+	struct devfsctl_msg msg;
 
 	memset(&msg, 0, sizeof(msg));
 
 	msg.d_sn = node->n_cookie;
 	msg.d_attr = node->n_attr;
-	rv = ioctl(dctl_fd, DCTL_IOC_DELETENODE, &msg);
+	rv = ioctl(devfsctl_fd, DEVFSCTL_IOC_DELETENODE, &msg);
 
 	if (rv < 0)
 		syslog(LOG_WARNING, "could not delete node");
@@ -333,7 +333,7 @@ init(void)
  * pretty much the same, though.
  */
 static int
-update(struct devfs_dev *dev, struct dctl_msg *msg)
+update(struct devfs_dev *dev, struct devfsctl_msg *msg)
 {
 	struct devfs_node *node;
 
@@ -348,8 +348,8 @@ update(struct devfs_dev *dev, struct dctl_msg *msg)
 		return -1;
 	}
 
-	if (msg->d_type != DCTL_UPDATE_NODE_ATTR &&
-	    msg->d_type != DCTL_UPDATE_NODE_NAME) {
+	if (msg->d_type != DEVFSCTL_UPDATE_NODE_ATTR &&
+	    msg->d_type != DEVFSCTL_UPDATE_NODE_NAME) {
 		syslog(LOG_WARNING, "%s: node not being updated\n", 
 		    node->n_attr.d_component.out_pthcmp.d_pthcmp);
 		return -1;
@@ -379,7 +379,7 @@ update(struct devfs_dev *dev, struct dctl_msg *msg)
 }
 
 /*
- * We've learnt about a new device from /dev/dctl so run it against our
+ * We've learnt about a new device from /dev/devfsctl so run it against our
  * list of rules and apply any rules that are found to match. 
  */
 static void
@@ -391,7 +391,7 @@ device_found(struct devfs_dev *dev)
 		if (rule_match(rule, dev)) {
 			/* got a match: apply rule-specific attrs */
 			dev_apply_rule(dev, rule);
-		}
+		}		
 	}
 	SLIST_INSERT_HEAD(&dev_list, dev, d_next);
 }
@@ -480,7 +480,7 @@ mount_disappear(struct devfs_mount *dmp)
  *
  * XXX: Find some way to implement subsystem specific matching functions.
  * 	For example, we should be able to match a network adapter by its
- *	MAC address. This probably needs to be an ioctl for the dctl driver.
+ *	MAC address. This probably needs to be an ioctl for the devfsctl driver.
  */
 static bool
 rule_match(struct devfs_rule *rule, struct devfs_dev *dev)
@@ -496,12 +496,12 @@ rule_match(struct devfs_rule *rule, struct devfs_dev *dev)
 
 	/* Handle disks */
 	if (dev->d_type == DEV_DISK) {
-		struct dctl_ioctl_data idata;
+		struct devfsctl_ioctl_data idata;
 
 		idata.d_dev = dev->d_cookie;
 		idata.d_type = DEV_DISK;
 
-		error = ioctl(dctl_fd, DCTL_IOC_INNERIOCTL, &idata);
+		error = ioctl(devfsctl_fd, DEVFSCTL_IOC_INNERIOCTL, &idata);
 		if (rule->r_disk.r_fstype != NULL) {
 			if (strcmp(rule->r_disk.r_fstype, 
 			    idata.i_args.di.di_fstype))
