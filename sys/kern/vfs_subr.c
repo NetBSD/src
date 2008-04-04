@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.335 2008/02/24 23:16:24 dholland Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.336 2008/04/04 20:13:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335 2008/02/24 23:16:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336 2008/04/04 20:13:18 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1870,7 +1870,7 @@ vfs_mountroot(void)
 
 	default:
 		printf("%s: inappropriate for root file system\n",
-		    root_device->dv_xname);
+		    device_xname(root_device));
 		return (ENODEV);
 	}
 
@@ -1906,7 +1906,7 @@ vfs_mountroot(void)
 	mutex_exit(&vfs_list_lock);
 
 	if (v == NULL) {
-		printf("no file system for %s", root_device->dv_xname);
+		printf("no file system for %s", device_xname(root_device));
 		if (device_class(root_device) == DV_DISK)
 			printf(" (dev 0x%x)", rootdev);
 		printf("\n");

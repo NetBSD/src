@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.3 2008/02/12 17:30:59 joerg Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.4 2008/04/04 20:13:18 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.3 2008/02/12 17:30:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.4 2008/04/04 20:13:18 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -136,7 +136,7 @@ tftproot_dhcpboot(bootdv)
 				break;
 	} else if ((bootdv != NULL && device_class(bootdv) == DV_IFNET)) {
 		IFNET_FOREACH(ifp)
-			if (strcmp(bootdv->dv_xname, ifp->if_xname) == 0)
+			if (strcmp(device_xname(bootdv), ifp->if_xname) == 0)
 				break;
 	}
 
