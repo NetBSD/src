@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.23 2008/03/01 14:16:51 rmind Exp $	*/
+/*	$NetBSD: ustir.c,v 1.24 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.23 2008/03/01 14:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.24 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -946,7 +946,7 @@ ustir_open(void *h, int flag, int mode,
 	sc->sc_refcnt++;
 
 	error = kthread_create(PRI_NONE, 0, NULL, ustir_thread, sc,
-	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname);
+	    &sc->sc_thread, "%s", device_xname(&sc->sc_dev));
 	if (error) {
 		sc->sc_refcnt--;
 		goto bad5;

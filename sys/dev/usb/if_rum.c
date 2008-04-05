@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.19 2007/12/09 20:28:23 jmcneill Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.20 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.19 2007/12/09 20:28:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.20 2008/04/05 16:35:35 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -2171,8 +2171,7 @@ rum_prepare_beacon(struct rum_softc *sc)
 
 	m0 = ieee80211_beacon_alloc(ic, ic->ic_bss, &sc->sc_bo);
 	if (m0 == NULL) {
-		printf("%s: could not allocate beacon frame\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "could not allocate beacon frame\n");
 		return ENOBUFS;
 	}
 

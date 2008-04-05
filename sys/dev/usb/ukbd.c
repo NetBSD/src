@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.97 2008/02/18 05:24:24 dyoung Exp $        */
+/*      $NetBSD: ukbd.c,v 1.98 2008/04/05 16:35:35 cegger Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.97 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.98 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,8 +320,9 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 
 	parseerr = ukbd_parse_desc(sc);
 	if (parseerr != NULL) {
-		printf("\n%s: attach failed, %s\n",
-		       sc->sc_hdev.sc_dev.dv_xname, parseerr);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_hdev.sc_dev, "attach failed, %s\n",
+		       parseerr);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
