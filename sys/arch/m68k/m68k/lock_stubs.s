@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.4 2007/12/02 19:28:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.5 2008/04/05 22:47:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,46 +45,49 @@
 	.file	"lock_stubs.s"
 	.text
 
-#if !defined(__mc68010__)
+#if defined(__mc68010__)
 /*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
- */
-ENTRY(_lock_cas)
-	movl	%sp@(4),%a0		| a0 = val address
-	movl	%sp@(8),%d0		| d0 = old value
-	movl	%sp@(12),%d1		| d1 = new value
-	casl	%d0,%d1,%a0@		| compare old, set new
-	beqb	1f			| matched and set
-	movq	#0,%d0
-	rts
-1:	movq	#1,%d0
-	rts
-#else /* __mc68010__ */
-/*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ * int _atomic_cas_32(volatile uint32_t *val, uint32_t old, uint32_t new);
  *
  * The 68010 does not have a cas instruction, so we implement this as
  * a restartable atomic sequence.  For an example of how this is used,
  * see sun68k/sun68k/isr.c
  */
-ENTRY_NOPROFILE(_lock_cas)
+ENTRY_NOPROFILE(_atomic_cas_32)
 	movl	%sp@(4),%a0
 
-	.globl _C_LABEL(_lock_cas_ras_start)
-_C_LABEL(_lock_cas_ras_start):
+	.globl _C_LABEL(_atomic_cas_ras_start)
+_C_LABEL(_atomic_cas_ras_start):
 	movl	%a0@,%d0
 	cmpl	%sp@(8),%d0
 	jne	1f
 	movl	%sp@(12),%a0@
-	.globl	_C_LABEL(_lock_cas_ras_end)
-_C_LABEL(_lock_cas_ras_end):
+	.globl	_C_LABEL(_atomic_cas_ras_end)
+_C_LABEL(_atomic_cas_ras_end):
 
-	movq	#1,%d0
-	rts
 1:
-	clrl	%d0
+	movl	%d0, %a0	/* pointers return also in %a0 */
 	rts
-#endif /* ! __mc68010__ */
+
+STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_32,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_32,_atomic_cas_32)
+
+STRONG_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
+
+STRONG_ALIAS(atomic_cas_ptr_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_ulong_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
+#endif /* __mc68010__ */
 
 #if !defined(LOCKDEBUG)
 
