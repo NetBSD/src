@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.15 2008/03/09 21:33:17 phx Exp $ */
+/*	$NetBSD: genfb.c,v 1.16 2008/04/05 15:50:49 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.15 2008/03/09 21:33:17 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.16 2008/04/05 15:50:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,13 +151,12 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	/* do not attach when we're not console */
 	if (!console) {
-		aprint_normal("%s: no console, unable to continue\n",
-		    sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "no console, unable to continue\n");
 		return -1;
 	}
 
-	aprint_verbose("%s: framebuffer at %p, size %dx%d, depth %d, "
-	    "stride %d\n", sc->sc_dev.dv_xname, sc->sc_fbaddr,
+	aprint_verbose_dev(&sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
+	    "stride %d\n", sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
 
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
