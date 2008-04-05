@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.426 2008/03/30 05:33:29 joerg Exp $
+# $NetBSD: shl.mi,v 1.427 2008/04/05 23:54:47 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -16,7 +16,7 @@
 ./lib/libc.so.12.159				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
 ./lib/libcrypto.so.3.2				base-crypto-shlib	crypto
-./lib/libedit.so.2.10				base-sys-shlib
+./lib/libedit.so.2.11				base-sys-shlib
 ./lib/libevent.so.1.0				base-sys-shlib
 ./lib/libipsec.so.2.2				base-net-shlib
 ./lib/libkvm.so.5.3				base-sys-shlib
@@ -65,7 +65,7 @@
 ./usr/lib/libcurses.so.6.3			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
 ./usr/lib/libdns.so.0.0				base-bind-shlib
-./usr/lib/libedit.so.2.10			base-sys-shlib
+./usr/lib/libedit.so.2.11			base-sys-shlib
 ./usr/lib/libevent.so.1.0			base-sys-shlib
 ./usr/lib/libform.so.5.0			base-sys-shlib
 ./usr/lib/libg2c.so.2.0				base-sys-shlib		gcc=3
