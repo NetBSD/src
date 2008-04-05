@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.35 2007/10/19 12:01:18 ad Exp $ */
+/*	$NetBSD: cgsix.c,v 1.36 2008/04/05 16:46:15 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.35 2007/10/19 12:01:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.36 2008/04/05 16:46:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,9 +610,9 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	sc->sc_stride = fb->fb_type.fb_width;
 	sc->sc_height = fb->fb_type.fb_height;
 
-	printf("%s: framebuffer size: %d MB\n", sc->sc_dev.dv_xname, 
+	printf("%s: framebuffer size: %d MB\n", device_xname(&sc->sc_dev), 
 	    sc->sc_ramsize >> 20);
-	printf("%s: FBC: %08x\n", sc->sc_dev.dv_xname, fbc->fbc_mode);
+	printf("%s: FBC: %08x\n", device_xname(&sc->sc_dev), fbc->fbc_mode);
 
 #if NWSDISPLAY
 	/* setup rasops and so on for wsdisplay */
