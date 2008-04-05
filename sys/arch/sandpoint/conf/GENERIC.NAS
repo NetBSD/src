@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.NAS,v 1.4 2007/10/27 05:24:29 nisimura Exp $
+# $NetBSD: GENERIC.NAS,v 1.5 2008/04/05 04:13:48 nisimura Exp $
 #
 # machine description file for GENERIC.NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC.NAS-$Revision: 1.4 $"
+#ident 		"GENERIC.NAS-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -60,6 +60,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
@@ -68,6 +69,8 @@ options 	COMPAT_LINUX	# binary compatibility with Linux
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	MSGBUFSIZE=65536
+
+#options 	WAPBL
 
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
