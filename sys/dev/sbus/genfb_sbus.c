@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.3 2007/10/19 12:01:11 ad Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.4 2008/04/05 18:35:32 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -32,7 +32,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.3 2007/10/19 12:01:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.4 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,13 +119,13 @@ genfb_attach_sbus(struct device *parent, struct device *self, void *args)
 	fbva = (uint32_t)prom_getpropint(sa->sa_node, "address", 0);
 	if (fbva == 0)
 		panic("this fb has no address property\n");
-	aprint_normal("%s: %d x %d at %d bit\n", self->dv_xname,
+	aprint_normal_dev(self, "%d x %d at %d bit\n",
 	    sc->sc_gen.sc_width, sc->sc_gen.sc_height, sc->sc_gen.sc_depth);
 
 	pmap_extract(pmap_kernel(), fbva, &fbpa);
 	sc->sc_gen.sc_fboffset = (fbpa & 0x01ffffff) - 
 	    (sc->sc_paddr & 0x01ffffff);
-	aprint_normal("%s: framebuffer at offset 0x%x\n", self->dv_xname,
+	aprint_normal_dev(self, "framebuffer at offset 0x%x\n",
 	    (uint32_t)sc->sc_gen.sc_fboffset);
 
 #if notyet
@@ -147,7 +147,7 @@ genfb_attach_sbus(struct device *parent, struct device *self, void *args)
 			 sa->sa_offset + sc->sc_gen.sc_fboffset,
 			 sc->sc_gen.sc_fbsize,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map framebuffer\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map framebuffer\n");
 		return;
 	}
 	sc->sc_gen.sc_fbaddr = (void *)bus_space_vaddr(sa->sa_bustag, bh);

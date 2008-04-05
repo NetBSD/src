@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.36 2007/12/03 15:34:33 ad Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.37 2008/04/05 18:35:31 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.36 2007/12/03 15:34:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.37 2008/04/05 18:35:31 cegger Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -183,8 +183,8 @@ cs4231_sbus_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		if (sbus_bus_map(sa->sa_bustag,	sa->sa_slot,
 			sa->sa_offset, sa->sa_size, 0, &bh) != 0) {
-			printf("%s @ sbus: cannot map registers\n",
-				self->dv_xname);
+			aprint_error("%s @ sbus: cannot map registers\n",
+				device_xname(self));
 			return;
 		}
 	}
@@ -519,14 +519,14 @@ cs4231_sbus_intr(void *arg)
 #endif
 
 	status = ADREAD(&sc->sc_ad1848, AD1848_STATUS);
-	DPRINTF(("%s: status: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
+	DPRINTF(("%s: status: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
 		bitmask_snprintf(status, AD_R2_BITS, bits, sizeof(bits))));
 	if (status & INTERRUPT_STATUS) {
 #ifdef AUDIO_DEBUG
 		int reason;
 
 		reason = ad_read(&sc->sc_ad1848, CS_IRQ_STATUS);
-		DPRINTF(("%s: i24: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
+		DPRINTF(("%s: i24: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
 		  bitmask_snprintf(reason, CS_I24_BITS, bits, sizeof(bits))));
 #endif
 		/* clear ad1848 interrupt */
@@ -577,7 +577,7 @@ cs4231_sbus_intr(void *arg)
 	/* got an interrupt we don't know how to handle */
 	if (!served) {
 #ifdef DIAGNOSTIC
-		printf("%s: unhandled csr=%s\n", sc->sc_ad1848.sc_dev.dv_xname,
+		printf("%s: unhandled csr=%s\n", device_xname(&sc->sc_ad1848.sc_dev),
 		       bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits)));
 #endif
 		/* evcnt? */

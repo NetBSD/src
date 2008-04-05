@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.36 2007/10/19 12:01:12 ad Exp $ */
+/*	$NetBSD: p9100.c,v 1.37 2008/04/05 18:35:32 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.36 2007/10/19 12:01:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.37 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,8 +322,8 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	node = sa->sa_node;
 	isconsole = fb_is_console(node);
 	if (!isconsole) {
-		printf("\n%s: fatal error: PROM didn't configure device\n",
-		    self->dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(self, "fatal error: PROM didn't configure device\n");
 		return;
 	}
 
@@ -342,7 +342,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 			  */
 			 /*sc->sc_ctl_psize*/ 0x8000,
 			 /*BUS_SPACE_MAP_LINEAR*/0, &sc->sc_ctl_memh) != 0) {
-		printf("%s: cannot map control registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map control registers\n");
 		return;
 	}
 
@@ -355,7 +355,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 				sa->sa_reg[2].oa_base,
 				sc->sc_fb_psize,
 				BUS_SPACE_MAP_LINEAR, &sc->sc_fb_memh) != 0) {
-			printf("%s: cannot map framebuffer\n", self->dv_xname);
+			aprint_error_dev(self, "cannot map framebuffer\n");
 			return;
 		}
 		fb->fb_pixels = (char *)sc->sc_fb_memh;
@@ -422,7 +422,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 
 	if (shutdownhook_establish(p9100_shutdown, sc) == NULL) {
 		panic("%s: could not establish shutdown hook",
-		      sc->sc_dev.dv_xname);
+		      device_xname(&sc->sc_dev));
 	}
 
 	if (isconsole) {
@@ -473,7 +473,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	/* register with power management */
 	sc->sc_video = 1;
 	sc->sc_powerstate = PWR_RESUME;
-	powerhook_establish(sc->sc_dev.dv_xname, p9100_power_hook, sc);
+	powerhook_establish(device_xname(&sc->sc_dev), p9100_power_hook, sc);
 
 #if NTCTRL > 0
 	/* register callback for external monitor status change */
@@ -1560,7 +1560,7 @@ p9100_set_extvga(void *cookie, int status)
 	s = splhigh();
 #endif
 #ifdef DEBUG
-	printf("%s: external VGA %s\n", sc->sc_dev.dv_xname,
+	printf("%s: external VGA %s\n", device_xname(&sc->sc_dev),
 	    status ? "on" : "off");
 #endif
 	sc->sc_last_offset = 0xffffffff;
