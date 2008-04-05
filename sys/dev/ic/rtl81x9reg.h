@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.29 2008/02/06 22:51:02 dyoung Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.30 2008/04/05 18:26:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -88,6 +88,9 @@
 					/* 005F reserved */
 #define RTK_TXSTAT_ALL	0x0060		/* TX status of all descriptors */
 
+#define RTK_CSIDR	0x0064          
+#define RTK_CSIAR	0x0068          
+
 /* Direct PHY access registers only available on 8139 */
 #define RTK_BMCR	0x0062		/* PHY basic mode control */
 #define RTK_BMSR	0x0064		/* PHY basic mode status */
@@ -161,6 +164,7 @@
 #define RTK_HWREV_8168_SPIN2	0x38000000
 #define RTK_HWREV_8168_SPIN3	0x38400000
 #define RTK_HWREV_8100E_SPIN2	0x38800000
+#define RTK_HWREV_8168C		0x3C000000
 #define RTK_HWREV_8139		0x60000000
 #define RTK_HWREV_8139A		0x70000000
 #define RTK_HWREV_8139AG	0x70800000
