@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.10 2007/10/19 11:59:35 ad Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.11 2008/04/05 21:44:50 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.10 2007/10/19 11:59:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.11 2008/04/05 21:44:50 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -133,16 +133,14 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		aprint_error("%s: unable to find i/o register resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to find i/o register resource\n");
 		goto out;
 	}
 
 	/* find our IRQ */
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		aprint_error("%s: unable to find irq resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to find irq resource\n");
 		goto out;
 	}
 	nirq = irq->ar_irq;
@@ -150,8 +148,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our DRQ */
 	drq = acpi_res_drq(&res, 0);
 	if (drq == NULL) {
-		aprint_error("%s: unable to find drq resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to find drq resource\n");
 		goto out;
 	}
 	asc->sc_drq = drq->ar_drq;
@@ -165,8 +162,8 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length, 0,
 		&sc->sc_ioh) != 0) {
-		aprint_error("%s: attempt to map bus space failed, device not "
-			"properly attached.\n", self->dv_xname);
+		aprint_error_dev(self, "attempt to map bus space failed, device not "
+			"properly attached.\n");
 		goto out;
 	}
 
