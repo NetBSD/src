@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.19 2008/01/11 10:21:26 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.20 2008/04/05 22:47:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.19 2008/01/11 10:21:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.20 2008/04/05 22:47:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ isr_autovec(struct clockframe cf)
  out:
 	idepth--;
 
-	LOCK_CAS_CHECK(&cf);
+	ATOMIC_CAS_CHECK(&cf);
 }
 
 /*
@@ -209,7 +209,7 @@ isr_vectored(struct clockframe cf)
 
  out:
 	idepth--;
-	LOCK_CAS_CHECK(&cf);
+	ATOMIC_CAS_CHECK(&cf);
 }
 
 /*
