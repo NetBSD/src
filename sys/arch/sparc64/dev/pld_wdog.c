@@ -1,4 +1,4 @@
-/*	$NetBSD: pld_wdog.c,v 1.4 2005/12/11 12:19:09 christos Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.5 2008/04/05 13:40:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ pldwdog_tickle(struct sysmon_wdog *smw)
 
 #ifdef PLD_WDOG_DEBUG
 	printf("%s: pldwdog_tickle: mode %x, period %d\n",
-	       sc->sc_dev.dv_xname, smw->smw_mode, smw->smw_period);
+	       device_xname(&sc->sc_dev), smw->smw_mode, smw->smw_period);
 /*	pldwdog_regs(sc); */
 #endif
 
@@ -106,7 +106,7 @@ pldwdog_setmode(struct sysmon_wdog *smw)
 	struct pldwdog_softc *sc = smw->smw_cookie;
 
 #ifdef PLD_WDOG_DEBUG
-	printf("%s:pldwdog_setmode: mode %x\n", sc->sc_dev.dv_xname, smw->smw_mode);
+	printf("%s:pldwdog_setmode: mode %x\n", device_xname(&sc->sc_dev), smw->smw_mode);
 #endif
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
@@ -146,24 +146,24 @@ pldwdog_regs(struct pldwdog_softc *sc)
 {
 
 	printf("%s: status 0x%02x, intr mask 0x%02x\n",
-	       sc->sc_dev.dv_xname,
+	       device_xname(&sc->sc_dev),
 	       bus_space_read_1(sc->sc_btag, sc->sc_bh, PLD_WDOG_INTR_MASK),
 	       bus_space_read_1(sc->sc_btag, sc->sc_bh, PLD_WDOG_STATUS));
 
 	printf("%s: wdog1: count 0x%04x, limit 0x%04x, status 0x%02x\n",
-	       sc->sc_dev.dv_xname,
+	       device_xname(&sc->sc_dev),
 	       bus_space_read_2(sc->sc_btag, sc->sc_bh, PLD_WDOG1_COUNTER),
 	       bus_space_read_2(sc->sc_btag, sc->sc_bh, PLD_WDOG1_LIMIT),
 	       bus_space_read_1(sc->sc_btag, sc->sc_bh, PLD_WDOG1_STATUS));
 
 	printf("%s: wdog2: count 0x%04x, limit 0x%04x, status 0x%02x\n",
-	       sc->sc_dev.dv_xname,
+	       device_xname(&sc->sc_dev),
 	       bus_space_read_2(sc->sc_btag, sc->sc_bh, PLD_WDOG2_COUNTER),
 	       bus_space_read_2(sc->sc_btag, sc->sc_bh, PLD_WDOG2_LIMIT),
 	       bus_space_read_1(sc->sc_btag, sc->sc_bh, PLD_WDOG2_STATUS));
 
 	printf("%s: wdog3: count 0x%04x, limit 0x%04x, status 0x%02x\n",
-	       sc->sc_dev.dv_xname,
+	       device_xname(&sc->sc_dev),
 	       bus_space_read_2(sc->sc_btag, sc->sc_bh, PLD_WDOG3_COUNTER),
 	       bus_space_read_2(sc->sc_btag, sc->sc_bh, PLD_WDOG3_LIMIT),
 	       bus_space_read_1(sc->sc_btag, sc->sc_bh, PLD_WDOG3_STATUS));
@@ -195,15 +195,14 @@ pldwdog_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_wdog_period = PLD_WDOG_PERIOD_DEFAULT;
 
-	sc->sc_smw.smw_name = sc->sc_dev.dv_xname;
+	sc->sc_smw.smw_name = device_xname(&sc->sc_dev);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = pldwdog_setmode;
 	sc->sc_smw.smw_tickle = pldwdog_tickle;
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		printf("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to register with sysmon\n");
 
 /*	pldwdog_regs(sc); */
 

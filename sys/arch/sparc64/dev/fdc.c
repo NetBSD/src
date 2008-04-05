@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.20 2008/01/02 11:48:29 ad Exp $	*/
+/*	$NetBSD: fdc.c,v 1.21 2008/04/05 13:40:05 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.20 2008/01/02 11:48:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.21 2008/04/05 13:40:05 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -610,7 +610,7 @@ fdcattach_mainbus(struct device *parent, struct device *self, void *aux)
 			ma->ma_size,
 			BUS_SPACE_MAP_LINEAR,
 			&fdc->sc_handle) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
 
@@ -641,8 +641,7 @@ fdcattach_obio(struct device *parent, struct device *self, void *aux)
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot, sa->sa_offset, sa->sa_size,
 			 BUS_SPACE_MAP_LINEAR, &fdc->sc_handle) != 0) {
-		printf("%s: cannot map control registers\n",
-			self->dv_xname);
+		aprint_error_dev(self, "cannot map control registers\n");
 		return;
 	}
 
@@ -800,8 +799,8 @@ fdcattach(struct fdc_softc *fdc, int pri)
 
 	fdc->sc_sicookie = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
 	if (fdc->sc_sicookie == NULL) {
-		printf("\n%s: cannot register soft interrupt handler\n",
-			fdc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&fdc->sc_dev, "cannot register soft interrupt handler\n");
 		callout_stop(&fdc->sc_timo_ch);
 		callout_stop(&fdc->sc_intr_ch);
 		return -1;
@@ -823,8 +822,8 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
 				fdc_c_hwintr, fdc) == NULL) {
 #endif
-		printf("\n%s: cannot register interrupt handler\n",
-			fdc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&fdc->sc_dev, "cannot register interrupt handler\n");
 		callout_stop(&fdc->sc_timo_ch);
 		callout_stop(&fdc->sc_intr_ch);
 		softint_disestablish(fdc->sc_sicookie);
@@ -832,7 +831,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	}
 
 	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    fdc->sc_dev.dv_xname, "intr");
+	    device_xname(&fdc->sc_dev), "intr");
 
 	/* physical limit: four drives per controller. */
 	drive_attached = 0;
@@ -963,7 +962,7 @@ fdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&fd->sc_dk, fd->sc_dv.dv_xname, &fddkdriver);
+	disk_init(&fd->sc_dk, device_xname(&fd->sc_dv), &fddkdriver);
 	disk_attach(&fd->sc_dk);
 
 	/*
@@ -1389,7 +1388,7 @@ fdcstatus(struct fdc_softc *fdc, const char *s)
 #endif
 
 	printf("%s: %s: state %d",
-		fd ? fd->sc_dv.dv_xname : "fdc", s, fdc->sc_state);
+		fd ? device_xname(&fd->sc_dv) : "fdc", s, fdc->sc_state);
 
 	switch (n) {
 	case 0:
@@ -1428,8 +1427,7 @@ fdctimeout(void *arg)
 	s = splbio();
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
-		printf("%s: timeout but no I/O pending: state %d, istatus=%d\n",
-			fdc->sc_dev.dv_xname,
+		aprint_error_dev(&fdc->sc_dev, "timeout but no I/O pending: state %d, istatus=%d\n",
 			fdc->sc_state, fdc->sc_istatus);
 		fdc->sc_state = DEVIDLE;
 		goto out;
@@ -1717,8 +1715,7 @@ loop:
 			fdc->sc_state = DORECAL;
 
 		if (fdc_diskchange(fdc)) {
-			printf("%s: cannot clear disk change status\n",
-				fdc->sc_dev.dv_xname);
+			aprint_error_dev(&fdc->sc_dev, "cannot clear disk change status\n");
 			fdc->sc_state = DORESET;
 		}
 		goto loop;
@@ -2035,7 +2032,7 @@ fdcretry(struct fdc_softc *fdc)
 		if (fdc->sc_nstat == 7 &&
 		    (fdc->sc_status[0] & 0xd8) == 0x40 &&
 		    (fdc->sc_status[1] & 0x2) == 0x2) {
-			printf("%s: read-only medium\n", fd->sc_dv.dv_xname);
+			aprint_error_dev(&fdc->sc_dev, "read-only medium\n");
 			error = EROFS;
 			goto failsilent;
 		}
@@ -2060,7 +2057,7 @@ fdcretry(struct fdc_softc *fdc)
 			 * are zero.  Assume this condition is the
 			 * result of no disk loaded into the drive.
 			 */
-			printf("%s: no medium?\n", fd->sc_dv.dv_xname);
+			aprint_error_dev(&fdc->sc_dev, "no medium?\n");
 			error = ENODEV;
 			goto failsilent;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.72 2008/03/17 04:04:00 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.73 2008/04/05 13:40:05 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2008/03/17 04:04:00 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2008/04/05 13:40:05 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -242,10 +242,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	}
 	for (i = 0; i < IPI_EVCNT_NUM; ++i)
 		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_INTR,
-				     NULL, dev->dv_xname, ipi_evcnt_names[i]);
+				     NULL, device_xname(dev), ipi_evcnt_names[i]);
 #endif
 	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
-			     dev->dv_xname, "timer");
+			     device_xname(dev), "timer");
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
@@ -265,7 +265,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	snprintf(cpu_model, sizeof cpu_model, "%s (%s)", machine_model, buf);
 
 	printf(": %s, UPA id %d\n", buf, ci->ci_cpuid);
-	printf("%s:", dev->dv_xname);
+	printf("%s:", device_xname(dev));
 
 	bigcache = 0;
 
