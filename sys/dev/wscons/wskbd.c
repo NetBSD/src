@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.115 2008/03/25 00:49:20 cube Exp $ */
+/* $NetBSD: wskbd.c,v 1.116 2008/04/05 15:51:45 cegger Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.115 2008/03/25 00:49:20 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.116 2008/04/05 15:51:45 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -452,7 +452,7 @@ wskbd_attach(device_t parent, device_t self, void *aux)
 		wsdisplay_set_console_kbd(&sc->sc_base); /* sets me_dispv */
 		if (sc->sc_base.me_dispdv != NULL)
 			aprint_normal(", using %s",
-			    sc->sc_base.me_dispdv->dv_xname);
+			    device_xname(sc->sc_base.me_dispdv));
 #endif
 	}
 	aprint_naive("\n");
