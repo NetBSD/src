@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.41 2008/03/14 15:09:11 cube Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.42 2008/04/05 21:31:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.41 2008/03/14 15:09:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.42 2008/04/05 21:31:23 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -226,14 +226,12 @@ mhzc_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	if (cfe == NULL) {
-		aprint_error("%s: unable to find suitable config table entry\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "unable to find suitable config table entry\n");
 		goto fail;
 	}
 
 	if (mhzc_alloc_ethernet(sc, cfe) == 0) {
-		aprint_error("%s: unable to allocate space for Ethernet portion\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "unable to allocate space for Ethernet portion\n");
 		goto fail;
 	}
 
@@ -242,16 +240,14 @@ mhzc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_IO8, &sc->sc_modem_pcioh,
 	    &sc->sc_modem_io_window)) {
-		aprint_error("%s: unable to map I/O space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map I/O space\n");
 		goto fail;
 	}
 	sc->sc_flags |= MHZC_MODEM_MAPPED;
 
 	if (pcmcia_io_map(sc->sc_pf, PCMCIA_WIDTH_AUTO, &sc->sc_ethernet_pcioh,
 	    &sc->sc_ethernet_io_window)) {
-		aprint_error("%s: unable to map I/O space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map I/O space\n");
 		goto fail;
 	}
 	sc->sc_flags |= MHZC_ETHERNET_MAPPED;
@@ -442,7 +438,7 @@ mhzc_enable(sc, flag)
 	int error;
 
 	if ((sc->sc_flags & flag) == flag) {
-		printf("%s: already enabled\n", sc->sc_dev.dv_xname);
+		printf("%s: already enabled\n", device_xname(&sc->sc_dev));
 		return (0);
 	}
 
@@ -494,7 +490,7 @@ mhzc_disable(sc, flag)
 {
 
 	if ((sc->sc_flags & flag) == 0) {
-		printf("%s: already disabled\n", sc->sc_dev.dv_xname);
+		printf("%s: already disabled\n", device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -524,7 +520,7 @@ mhzc_em3336_enaddr(sc, myla)
 	if (pcmcia_scan_cis(device_parent(&sc->sc_dev),
 	    mhzc_em3336_lannid_ciscallback, myla) != 1) {
 		printf("%s: unable to get Ethernet address from CIS\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return (0);
 	}
 
@@ -547,15 +543,13 @@ mhzc_em3336_enable(sc)
 
 	/* Map the ISRPOWEREG. */
 	if (pcmcia_mem_alloc(sc->sc_pf, 0x1000, &memh) != 0) {
-		printf("%s: unable to allocate memory space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to allocate memory space\n");
 		return (1);
 	}
 
 	if (pcmcia_mem_map(sc->sc_pf, PCMCIA_MEM_ATTR, 0, 0x1000,
 	    &memh, &memoff, &memwin)) {
-		printf("%s: unable to map memory space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map memory space\n");
 		pcmcia_mem_free(sc->sc_pf, &memh);
 		return (1);
 	}

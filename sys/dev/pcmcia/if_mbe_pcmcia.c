@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.42 2007/10/19 12:01:04 ad Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.43 2008/04/05 21:31:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.42 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.43 2008/04/05 21:31:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ mbe_pcmcia_attach(struct device *parent, struct device *self,
 
 	error = pcmcia_function_configure(pa->pf, mbe_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -200,22 +200,20 @@ mbe_pcmcia_attach(struct device *parent, struct device *self,
 	if (mpp->mpp_enet_maddr >= 0) {
 		pgea.maddr = mpp->mpp_enet_maddr;
 		if (mbe_pcmcia_get_enaddr_from_mem(psc, &pgea) != 0) {
-			printf("%s: couldn't get ethernet address "
-			    "from memory\n", self->dv_xname);
+			aprint_error_dev(self, "couldn't get ethernet address "
+			    "from memory\n");
 			goto fail;
 		}
 	} else if (mpp->mpp_flags & MBH10302) {
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, FE_MBH0 ,
 				  FE_MBH0_MASK | FE_MBH0_INTR_ENABLE);
 		if (mbe_pcmcia_get_enaddr_from_io(psc, &pgea) != 0) {
-			printf("%s: couldn't get ethernet address from i/o\n",
-			    self->dv_xname);
+			aprint_error_dev(self, "couldn't get ethernet address from i/o\n");
 			goto fail;
 		}
 	} else {
 		if (pa->pf->pf_funce_lan_nidlen != ETHER_ADDR_LEN) {
-			printf("%s: couldn't get ethernet address from CIS\n",
-			    self->dv_xname);
+			aprint_error_dev(self, "couldn't get ethernet address from CIS\n");
 			goto fail;
 		}
 		memcpy(pgea.enaddr, pa->pf->pf_funce_lan_nid, ETHER_ADDR_LEN);
@@ -322,15 +320,13 @@ mbe_pcmcia_get_enaddr_from_mem(psc, ea)
 		goto bad_memaddr;
 
 	if (pcmcia_mem_alloc(psc->sc_pf, ETHER_ADDR_LEN * 2, &pcmh)) {
-		printf("%s: can't alloc mem for enet addr\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't alloc mem for enet addr\n");
 		goto memalloc_failed;
 	}
 
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR, ea->maddr,
 	    ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
-		printf("%s: can't map mem for enet addr\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map mem for enet addr\n");
 		goto memmap_failed;
 	}
 

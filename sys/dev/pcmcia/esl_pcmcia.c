@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.18 2007/10/19 12:01:04 ad Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.19 2008/04/05 21:31:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.18 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.19 2008/04/05 21:31:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ esl_pcmcia_attach(struct device *parent, struct device *self,
 
 	error = pcmcia_function_configure(pf, esl_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -131,7 +131,7 @@ esl_pcmcia_attach(struct device *parent, struct device *self,
 	esc->sc_disable = esl_pcmcia_disable;
 
 	if (!esl_init(esc))
-		aprint_error("%s: initialization failed\n", self->dv_xname);
+		aprint_error_dev(self, "initialization failed\n");
 
 	esl_pcmcia_disable(esc);
 	esc->sc_state = ESL_PCMCIA_ATTACHED;

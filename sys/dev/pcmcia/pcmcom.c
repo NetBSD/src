@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.32 2008/03/14 15:09:11 cube Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.33 2008/04/05 21:31:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.32 2008/03/14 15:09:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.33 2008/04/05 21:31:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ pcmcom_attach(struct device *parent, struct device *self, void *aux)
 
 	error = pcmcia_function_configure(pa->pf, pcmcom_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -174,7 +174,7 @@ pcmcom_attach(struct device *parent, struct device *self, void *aux)
 	for (slave = 0; slave < sc->sc_nslaves; slave++) {
 		struct pcmcom_attach_args pca;
 
-		printf("%s: slave %d\n", self->dv_xname, slave);
+		printf("%s: slave %d\n", device_xname(self), slave);
 
 		pca.pca_iot = cfe->iospace[slave].handle.iot;
 		pca.pca_ioh = cfe->iospace[slave].handle.ioh;
