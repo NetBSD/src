@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.78.6.1 2008/04/03 12:42:57 mjf Exp $	*/
+/*	$NetBSD: uhid.c,v 1.78.6.2 2008/04/05 23:33:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.78.6.1 2008/04/03 12:42:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.78.6.2 2008/04/05 23:33:23 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -149,6 +149,7 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	int size, repid;
 	void *desc;
+	int maj;
 
 	selinit(&sc->sc_rsel);
 	sc->sc_hdev.sc_intr = uhid_intr;
@@ -166,6 +167,10 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	maj = cdevsw_lookup_major(&uhid_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -194,6 +199,8 @@ uhid_detach(struct device *self, int flags)
 	int maj, mn;
 
 	DPRINTF(("uhid_detach: sc=%p flags=%d\n", sc, flags));
+
+	device_unregister_all(self);
 
 	sc->sc_dying = 1;
 

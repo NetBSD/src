@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.84 2007/10/19 12:00:56 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.84.16.1 2008/04/05 23:33:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.84 2007/10/19 12:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.84.16.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,10 +129,19 @@ static int	twe_init_connection(struct twe_softc *);
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void twe_outl(struct twe_softc *, int, u_int32_t);
 
+static int	tweopen(dev_t, int, int, struct lwp *);
+static int	tweclose(dev_t, int, int, struct lwp *);
+static int	tweioctl(dev_t, u_long, void *, int, struct lwp *);
+
 extern struct	cfdriver twe_cd;
 
 CFATTACH_DECL(twe, sizeof(struct twe_softc),
     twe_match, twe_attach, NULL, NULL);
+
+const struct cdevsw twe_cdevsw = {
+	tweopen, tweclose, noread, nowrite, tweioctl,
+	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+};
 
 /* FreeBSD driver revision for sysctl expected by the 3ware cli */
 const char twever[] = "1.50.01.002";
@@ -329,6 +338,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
         const struct sysctlnode *node;
 	struct twe_cmd *tc;
 	struct twe_ccb *ccb;
+	int maj;
 
 	sc = (struct twe_softc *)self;
 	pa = aux;
@@ -504,6 +514,10 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_dv.dv_xname);
 		return;
 	}
+
+	maj = cdevsw_lookup_major(&twe_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 void
@@ -1914,11 +1928,6 @@ done:
 		free(pdata, M_DEVBUF);
 	return error;
 }
-
-const struct cdevsw twe_cdevsw = {
-	tweopen, tweclose, noread, nowrite, tweioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
-};
 
 /*
  * Print some information about the controller

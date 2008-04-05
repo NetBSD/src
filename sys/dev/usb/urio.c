@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.28 2007/03/13 13:51:56 drochner Exp $	*/
+/*	$NetBSD: urio.c,v 1.28.32.1 2008/04/05 23:33:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.28 2007/03/13 13:51:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.28.32.1 2008/04/05 23:33:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ USB_ATTACH(urio)
 	usbd_status		err;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t		epcount;
-	int			i;
+	int			i, maj;
 
 	DPRINTFN(10,("urio_attach: sc=%p\n", sc));
 
@@ -231,6 +231,10 @@ USB_ATTACH(urio)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
+	maj = cdevsw_lookup_major(&urio_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -245,6 +249,8 @@ USB_DETACH(urio)
 #elif defined(__FreeBSD__)
 	DPRINTF(("urio_detach: sc=%p\n", sc));
 #endif
+
+	device_unregister_all(self);
 
 	sc->sc_dying = 1;
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */

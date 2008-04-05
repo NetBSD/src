@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.43.12.1 2008/04/03 12:42:37 mjf Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.43.12.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.43.12.1 2008/04/03 12:42:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.43.12.2 2008/04/05 23:33:21 mjf Exp $");
 
 #include "sequencer.h"
 
@@ -145,12 +145,19 @@ void
 sequencerattach(int n)
 {
 	struct sequencer_softc *sc;
+	int maj;
 
 	for (n = 0; n < NSEQUENCER; n++) {
 		sc = &seqdevs[n];
 		callout_init(&sc->sc_callout, 0);
 		sc->sih = softint_establish(SOFTINT_SERIAL, seq_softintr, sc);
 	}
+
+	maj = cdevsw_lookup_major(&sequencer_cdevsw);
+	device_register_name(makedev(maj, SEQUENCERUNIT(0)), NULL, true,
+    	    DEV_AUDIO, "sequencer");
+	device_register_name(makedev(maj, 0), NULL, true,
+	    DEV_AUDIO, "music");
 }
 
 static int

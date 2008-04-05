@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35 2008/02/20 02:30:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35.6.1 2008/04/05 23:33:23 mjf Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -301,20 +301,7 @@ findsym(const char *name, struct symtab *table)
 	return NULL;
 }
 
-/*
- * The "attach" is in reality done in ksyms_init().
- */
 void ksymsattach(int);
-void
-ksymsattach(int arg)
-{
-
-#ifdef USE_PTREE
-	if (baseidx == 0)
-		ptree_gen(0, &kernel_symtab);
-#endif
-
-}
 
 /*
  * Add a symbol table.
@@ -1292,4 +1279,21 @@ const struct cdevsw ksyms_cdevsw = {
 	ksymsopen, ksymsclose, ksymsread, ksymswrite, ksymsioctl,
 	    nullstop, notty, nopoll, nommap, nullkqfilter, DV_DULL
 };
+
+/*
+ * The "attach" is in reality done in ksyms_init().
+ */
+void
+ksymsattach(int arg)
+{
+	int maj = cdevsw_lookup_major(&ksyms_cdevsw);
+
+	device_register_name(makedev(maj, 0), NULL, true, DEV_OTHER, "ksyms");
+
+#ifdef USE_PTREE
+	if (baseidx == 0)
+		ptree_gen(0, &kernel_symtab);
+#endif
+
+}
 #endif /* NKSYMS */

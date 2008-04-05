@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.39.36.1 2008/04/03 12:42:43 mjf Exp $	*/
+/*	$NetBSD: irframe.c,v 1.39.36.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.39.36.1 2008/04/03 12:42:43 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.39.36.2 2008/04/05 23:33:21 mjf Exp $");
 
 #include "irframe.h"
 
@@ -111,6 +111,7 @@ irframe_attach(device_t parent, device_t self, void *aux)
 	struct ir_attach_args *ia = aux;
 	const char *delim;
 	int speeds = 0;
+	int maj;
 
 	sc->sc_dev = self;
 	sc->sc_methods = ia->ia_methods;
@@ -147,6 +148,10 @@ irframe_attach(device_t parent, device_t self, void *aux)
 		delim = ",";
 	}
 	printf("\n");
+
+	maj = cdevsw_lookup_major(&irframe_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 int
@@ -169,6 +174,8 @@ irframe_detach(device_t self, int flags)
 {
 	/*struct irframe_softc *sc = device_private(self);*/
 	int maj, mn;
+
+	device_unregister_all(self);
 
 	/* XXX needs reference count */
 

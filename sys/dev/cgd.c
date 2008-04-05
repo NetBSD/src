@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.50.6.1 2008/04/03 12:42:36 mjf Exp $ */
+/* $NetBSD: cgd.c,v 1.50.6.2 2008/04/05 23:33:20 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.50.6.1 2008/04/03 12:42:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.50.6.2 2008/04/05 23:33:20 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -182,7 +182,7 @@ cgdsoftc_init(struct cgd_softc *cs, int num)
 void
 cgdattach(int num)
 {
-	int	i;
+	int	i, j, bmaj, cmaj;
 
 	DPRINTF_FOLLOW(("cgdattach(%d)\n", num));
 	if (num <= 0) {
@@ -197,9 +197,19 @@ cgdattach(int num)
 		return;
 	}
 
+	bmaj = bdevsw_lookup_major(&cgd_bdevsw);
+	cmaj = cdevsw_lookup_major(&cgd_cdevsw);
+
 	numcgd = num;
-	for (i=0; i<num; i++)
+	for (i=0; i<num; i++) {
 		cgdsoftc_init(&cgd_softc[i], i);
+		for (j = 0; j < MAXPARTITIONS; j++) {
+			device_register_name(MAKEDISKDEV(bmaj, i, j), NULL,
+			    false, DEV_DISK, "cgd%d%c", i, 'a' + j);
+			device_register_name(MAKEDISKDEV(cmaj, i, j), NULL,
+			    true, DEV_DISK, "rcgd%d%c", i, 'a' + j);
+		}
+	}
 }
 
 static int

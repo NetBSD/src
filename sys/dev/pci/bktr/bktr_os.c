@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.49.6.1 2008/04/03 12:42:54 mjf Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.49.6.2 2008/04/05 23:33:22 mjf Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.49.6.1 2008/04/03 12:42:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.49.6.2 2008/04/05 23:33:22 mjf Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1539,6 +1539,17 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	if (bktr->card.tuner->pllControl[3] != 0x00)
 		radio_attach_mi(&bktr_hw_if, bktr, &bktr->bktr_dev);
 #endif
+
+#if defined(__NetBSD__)
+	int maj = cdevsw_lookup_major(&bktr_cdevsw);
+
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_VIDEO, "bktr%d", device_unit(self));
+	device_register_name(makedev(maj, device_unit(self) + 16), self, true,
+	    DEV_VIDEO, "tuner%d", device_unit(self));
+	device_register_name(makedev(maj, device_unit(self) + 32), self, true,
+	    DEV_VIDEO, "vbi%d", device_unit(self));
+#endif	/* __NetBSD__ */
 }
 
 

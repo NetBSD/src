@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.35.12.1 2008/04/03 12:42:44 mjf Exp $	*/
+/*	$NetBSD: satlink.c,v 1.35.12.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.35.12.1 2008/04/03 12:42:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.35.12.2 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,7 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	bus_addr_t ringaddr;
+	int maj;
 
 	printf("\n");
 
@@ -249,6 +250,11 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_bufsize);
 		return;
 	}
+
+	maj = cdevsw_lookup_major(&satlink_cdevsw);
+
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 int

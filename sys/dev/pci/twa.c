@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.18 2007/10/19 12:00:55 ad Exp $ */
+/*	$NetBSD: twa.c,v 1.18.16.1 2008/04/05 23:33:22 mjf Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.18 2007/10/19 12:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.18.16.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,12 +149,21 @@ static int	twa_flash_firmware(struct twa_softc *sc);
 static int	twa_hard_reset(struct twa_softc *sc);
 #endif
 
+static int	twaopen(dev_t, int, int, struct lwp *);
+static int	twaclose(dev_t, int, int, struct lwp *);
+static int	twaioctl(dev_t, u_long, void *, int, struct lwp *);
+
 extern struct	cfdriver twa_cd;
 extern uint32_t twa_fw_img_size;
 extern uint8_t	twa_fw_img[];
 
 CFATTACH_DECL(twa, sizeof(struct twa_softc),
     twa_match, twa_attach, NULL, NULL);
+
+const struct cdevsw twa_cdevsw = {
+	twaopen, twaclose, noread, nowrite, twaioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+};
 
 /* FreeBSD driver revision for sysctl expected by the 3ware cli */
 const char twaver[] = "1.50.01.002";
@@ -1537,7 +1546,7 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	struct ctlname ctlnames[] = CTL_NAMES;
 	const struct sysctlnode *node; 
-	int i;
+	int i, maj;
 
 	sc = (struct twa_softc *)self;
 
@@ -1631,6 +1640,10 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 			sc->twa_dv.dv_xname);
 		return;
 	}
+
+	maj = cdevsw_lookup_major(&twa_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 
 	return;
 }
@@ -2469,11 +2482,6 @@ fw_passthru_done:
 
 	return(error);
 }
-
-const struct cdevsw twa_cdevsw = {
-	twaopen, twaclose, noread, nowrite, twaioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
-};
 
 /*
  * Function name:	twa_get_param

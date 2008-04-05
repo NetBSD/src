@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.38 2007/03/04 06:02:44 christos Exp $ */
+/*	$NetBSD: ses.c,v 1.38.36.1 2008/04/05 23:33:22 mjf Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.38 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.38.36.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include "opt_scsi.h"
 
@@ -219,6 +219,7 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 	struct ses_softc *softc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
+	int maj;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach: "));
 	softc->sc_periph = periph;
@@ -275,6 +276,10 @@ ses_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 	printf("\n%s: %s\n", softc->sc_device.dv_xname, tname);
+
+	maj = cdevsw_lookup_major(&ses_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 
