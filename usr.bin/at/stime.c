@@ -1,4 +1,4 @@
-/*	$NetBSD: stime.c,v 1.5 2005/11/26 13:57:27 tsutsui Exp $	*/
+/*	$NetBSD: stime.c,v 1.6 2008/04/05 16:26:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -39,11 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: stime.c,v 1.5 2005/11/26 13:57:27 tsutsui Exp $");
+__RCSID("$NetBSD: stime.c,v 1.6 2008/04/05 16:26:57 christos Exp $");
 #endif /* not lint */
 
-
 #include <err.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <tzfile.h>
@@ -61,10 +61,10 @@ stime(char *arg)
 	char *p;
 					/* Start with the current time. */
 	if (time(&tmptime) == (time_t)-1)
-		err(1, "time");
+		err(EXIT_FAILURE, "time");
 
 	if ((t = localtime(&tmptime)) == NULL)
-		err(1, "localtime");
+		err(EXIT_FAILURE, "localtime");
 					/* [[CC]YY]MMDDhhmm[.SS] */
 	if ((p = strchr(arg, '.')) == NULL)
 		t->tm_sec = 0;		/* Seconds defaults to 0. */
@@ -74,7 +74,7 @@ stime(char *arg)
 		*p++ = '\0';
 		t->tm_sec = ATOI2(p);
 	}
-		
+
 	yearset = 0;
 	switch (strlen(arg)) {
 	case 12:			/* CCYYMMDDhhmm */
@@ -86,10 +86,7 @@ stime(char *arg)
 			t->tm_year += ATOI2(arg);
 		} else {
 			yearset = ATOI2(arg);
-			if (yearset < 69)
-				t->tm_year = yearset + 2000 - TM_YEAR_BASE;
-			else
-				t->tm_year = yearset + 1900 - TM_YEAR_BASE;
+			t->tm_year = conv_2dig_year(yearset) - TM_YEAR_BASE;
 		}
 		/* FALLTHROUGH */
 	case 8:				/* MMDDhhmm */
@@ -111,9 +108,9 @@ stime(char *arg)
 
 	t->tm_isdst = -1;		/* Figure out DST. */
 	tmptime = mktime(t);
-	if (tmptime == (time_t)-1)
-terr:		errx(1,
-	"out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
-
-	return (tmptime);
+	if (tmptime == (time_t)-1) {
+ terr:		errx(EXIT_FAILURE,
+     "out of range or illegal time specification: [[CC]YY]MMDDhhmm[.SS]");
+	}
+	return tmptime;
 }

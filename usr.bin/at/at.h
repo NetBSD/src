@@ -1,4 +1,4 @@
-/*	$NetBSD: at.h,v 1.4 2007/07/18 01:06:08 lukem Exp $	*/
+/*	$NetBSD: at.h,v 1.5 2008/04/05 16:26:57 christos Exp $	*/
 
 /*
  *  at.h -  header for at(1)
@@ -27,7 +27,10 @@
  * From: $OpenBSD: at.h,v 1.3 1997/03/01 23:40:09 millert Exp $
  */
 
-extern int fcreated;
+#ifndef _AT_H_
+#define _AT_H_
+
+extern bool fcreated;
 extern char atfile[];
 extern char atverify;
 
@@ -36,3 +39,5 @@ extern char atverify;
 
 #define DEFAULT_BATCH_QUEUE	'E'
 #define DEFAULT_AT_QUEUE	'c'
+
+#endif /* _AT_H_ */
