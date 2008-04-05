@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.24 2008/03/11 05:34:02 matt Exp $ */
+/*	$NetBSD: ts.c,v 1.25 2008/04/05 19:16:49 cegger Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.24 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.25 2008/04/05 19:16:49 cegger Exp $");
 
 #undef	TSDEBUG
 
@@ -136,8 +136,6 @@ struct ts_softc {
 	short	sc_liowf;		/* last operation was write */
 	struct buf ts_cbuf;		/* internal cmd buffer (for ioctls) */
 };
-
-#define	XNAME	sc->sc_dev->dv_xname
 
 #define	TS_WCSR(csr, val) \
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, csr, val)
@@ -210,7 +208,7 @@ tsmatch(device_t parent, cfdata_t match, void *aux)
 	sc->sc_mapped = 0;
 	sc->sc_dev = &tsdev;
 	sc->sc_uh = device_private(parent);
-	strcpy(XNAME, "ts");
+	strcpy(sc->sc_dev->dv_xname, "ts");
 
 	/* Try to reset the device */
 	for (i = 0; i < 3; i++) {
