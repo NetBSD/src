@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.33 2007/10/19 12:01:22 ad Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.34 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.33 2007/10/19 12:01:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.34 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,8 +314,8 @@ usb_reserve_allocm(struct usb_dma_reserve *rs, usb_dma_t *dma, u_int32_t size)
 	    EX_NOWAIT, &start);
 
 	if (error != 0) {
-		printf("%s: usb_reserve_allocm of size %u failed (error %d)\n",
-		    ((struct device *)rs->softc)->dv_xname, size, error);
+		aprint_error_dev((struct device *)rs->softc, "usb_reserve_allocm of size %u failed (error %d)\n",
+		    size, error);
 		return USBD_NOMEM;
 	}
 
@@ -377,7 +377,7 @@ usb_setup_reserve(void *softc, struct usb_dma_reserve *rs, bus_dma_tag_t dtag,
 		goto destroy;
 
 	rs->paddr = rs->map->dm_segs[0].ds_addr;
-	rs->extent = extent_create(dv->dv_xname, (u_long)rs->paddr,
+	rs->extent = extent_create(device_xname(dv), (u_long)rs->paddr,
 	    (u_long)(rs->paddr + USB_MEM_RESERVE),
 	    M_USB, 0, 0, 0);
 	if (rs->extent == NULL) {

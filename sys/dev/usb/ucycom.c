@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.20 2007/12/11 12:16:34 lukem Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.21 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.20 2007/12/11 12:16:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.21 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -907,7 +907,7 @@ ucycom_intr(struct uhidev *addr, void *ibuf, u_int len)
 		DPRINTFN(7,("ucycom_intr: char=0x%02x\n", *cp));
 		if ((*rint)(*cp++, tp) == -1) {
 			/* XXX what should we do? */
-			printf("%s: lost a character\n", USBDEVNAME(sc->sc_hdev.sc_dev));
+			aprint_error_dev(&sc->sc_hdev.sc_dev, "lost a character\n");
 			break;
 		}
 	}

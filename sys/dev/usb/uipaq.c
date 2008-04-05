@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.9 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.10 2008/04/05 16:35:35 cegger Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.9 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.10 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ USB_ATTACH(uipaq)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	int i;
 	usbd_status err;
 	struct ucom_attach_args uca;

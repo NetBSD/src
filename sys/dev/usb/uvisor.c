@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.37 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.38 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.37 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.38 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ USB_ATTACH(uvisor)
 	struct uvisor_palm_connection_info palmconinfo;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	int i, j, hasin, hasout, port;
 	usbd_status err;
 	struct ucom_attach_args uca;
