@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.87 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.88 2008/04/05 15:47:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.87 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.88 2008/04/05 15:47:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,8 @@ scsi_print_addr(struct scsipi_periph *periph)
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
 	printf("%s(%s:%d:%d:%d): ", periph->periph_dev != NULL ?
-	    periph->periph_dev->dv_xname : "probe",
-	    adapt->adapt_dev->dv_xname,
+	    device_xname(periph->periph_dev) : "probe",
+	    device_xname(adapt->adapt_dev),
 	    chan->chan_channel, periph->periph_target,
 	    periph->periph_lun);
 }

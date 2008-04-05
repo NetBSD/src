@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.26 2005/12/11 12:23:50 christos Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.27 2008/04/05 15:47:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.26 2005/12/11 12:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.27 2008/04/05 15:47:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +201,8 @@ atapi_print_addr(struct scsipi_periph *periph)
 	struct scsipi_adapter *adapt = chan->chan_adapter;
 
 	printf("%s(%s:%d:%d): ", periph->periph_dev != NULL ?
-	    periph->periph_dev->dv_xname : "probe",
-	    adapt->adapt_dev->dv_xname,
+	    device_xname(periph->periph_dev) : "probe",
+	    device_xname(adapt->adapt_dev),
 	    chan->chan_channel, periph->periph_target);
 }
 

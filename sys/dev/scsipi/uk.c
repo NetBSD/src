@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.52 2007/03/04 06:02:44 christos Exp $	*/
+/*	$NetBSD: uk.c,v 1.53 2008/04/05 15:47:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.52 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.53 2008/04/05 15:47:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ ukopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	 * Only allow one at a time
 	 */
 	if (periph->periph_flags & PERIPH_OPEN) {
-		printf("%s: already open\n", uk->sc_dev.dv_xname);
+		aprint_error_dev(&uk->sc_dev, "already open\n");
 		return (EBUSY);
 	}
 
