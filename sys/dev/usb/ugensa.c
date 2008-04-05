@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.17 2008/03/17 02:43:56 elric Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.18 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.17 2008/03/17 02:43:56 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.18 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ USB_ATTACH(ugensa)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	struct ucom_attach_args uca;
 	int i;

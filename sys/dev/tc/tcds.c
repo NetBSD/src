@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.20 2007/10/19 12:01:20 ad Exp $ */
+/* $NetBSD: tcds.c,v 1.21 2008/04/05 16:44:41 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.20 2007/10/19 12:01:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.21 2008/04/05 16:44:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -183,7 +183,7 @@ tcdsattach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_space_map(sc->sc_bst, ta->ta_addr,
 	    (TCDS_SCSI1_OFFSET + 0x100), 0, &sc->sc_bsh)) {
-		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "unable to map device\n");
 		return;
 	}
 
@@ -194,8 +194,7 @@ tcdsattach(struct device *parent, struct device *self, void *aux)
 	    0x100, &sbsh[0]) ||
 	    bus_space_subregion(sc->sc_bst, sc->sc_bsh, TCDS_SCSI1_OFFSET,
 	    0x100, &sbsh[1])) {
-		printf("%s: unable to subregion SCSI chip space\n",
-		    sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "unable to subregion SCSI chip space\n");
 		return;
 	}
 
@@ -233,7 +232,7 @@ tcdsattach(struct device *parent, struct device *self, void *aux)
 		cp = slotc->sc_name;
 		snprintf(cp, sizeof(slotc->sc_name), "chip %d", i);
 		evcnt_attach_dynamic(&slotc->sc_evcnt, EVCNT_TYPE_INTR,
-		    pevcnt, sc->sc_dv.dv_xname, cp);
+		    pevcnt, device_xname(&sc->sc_dv), cp);
 
 		slotc->sc_slot = i;
 		slotc->sc_bst = sc->sc_bst;
@@ -484,7 +483,7 @@ tcds_intr(void *arg)
 	 */
 #define	PRINTINTR(msg, bits)						\
 	if (ir & bits)							\
-		printf("%s: %s", sc->sc_dv.dv_xname, msg);
+		printf("%s: %s", device_xname(&sc->sc_dv), msg);
 	PRINTINTR("SCSI0 DREQ interrupt.\n", TCDS_CIR_SCSI0_DREQ);
 	PRINTINTR("SCSI1 DREQ interrupt.\n", TCDS_CIR_SCSI1_DREQ);
 	PRINTINTR("SCSI0 prefetch interrupt.\n", TCDS_CIR_SCSI0_PREFETCH);
@@ -542,13 +541,13 @@ tcds_params(struct tcds_softc *sc, int chip, int *idp, int *fastp)
 
 	if (id < 0 || id > 7) {
 		printf("%s: WARNING: bad SCSI ID %d for chip %d, using 7\n",
-		    sc->sc_dv.dv_xname, id, chip);
+		    device_xname(&sc->sc_dv), id, chip);
 		id = 7;
 	}
 
 	if (fast)
 		printf("%s: fast mode set for chip %d\n",
-		    sc->sc_dv.dv_xname, chip);
+		    device_xname(&sc->sc_dv), chip);
 
 	*idp = id;
 	*fastp = fast;

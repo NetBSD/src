@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.23 2008/02/07 01:21:58 dyoung Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.24 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.23 2008/02/07 01:21:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.24 2008/04/05 16:35:35 cegger Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -413,7 +413,7 @@ USB_ATTACH(axe)
 	struct mii_data	*mii;
 	u_char eaddr[ETHER_ADDR_LEN];
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->axe_dev);
+	const char *devname = USBDEVNAME(sc->axe_dev);
 	struct ifnet *ifp;
 	int i, s;
 

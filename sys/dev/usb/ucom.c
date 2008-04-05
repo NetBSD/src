@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.74 2007/12/30 21:49:47 smb Exp $	*/
+/*	$NetBSD: ucom.c,v 1.75 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.74 2007/12/30 21:49:47 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.75 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1084,7 +1084,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 		DPRINTFN(7,("ucomreadcb: char=0x%02x\n", *cp));
 		if ((*rint)(*cp++, tp) == -1) {
 			/* XXX what should we do? */
-			printf("%s: lost %d chars\n", USBDEVNAME(sc->sc_dev),
+			aprint_error_dev(&sc->sc_dev, "lost %d chars\n",
 			       cc);
 			break;
 		}
@@ -1093,7 +1093,7 @@ ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 
 	err = ucomstartread(sc);
 	if (err) {
-		printf("%s: read start failed\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(&sc->sc_dev, "read start failed\n");
 		/* XXX what should we dow now? */
 	}
 }

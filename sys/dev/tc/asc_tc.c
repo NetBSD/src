@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.31 2007/10/19 12:01:19 ad Exp $ */
+/* $NetBSD: asc_tc.c,v 1.32 2008/04/05 16:44:41 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.31 2007/10/19 12:01:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.32 2008/04/05 16:44:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ asc_tc_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_dmat = ta->ta_dmat;
 	if (bus_space_map(asc->sc_bst, ta->ta_addr,
 		PMAZ_OFFSET_RAM + PMAZ_RAM_SIZE, 0, &asc->sc_bsh)) {
-		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device\n");
 		return;
 	}
 	asc->sc_base = (void *)ta->ta_addr;	/* XXX XXX XXX */

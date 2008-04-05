@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.23 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: umct.c,v 1.24 2008/04/05 16:35:35 cegger Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.23 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.24 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ USB_ATTACH(umct)
 	usb_endpoint_descriptor_t *ed;
 
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;

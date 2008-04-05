@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.22 2008/02/19 10:52:44 drochner Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.23 2008/04/05 16:35:35 cegger Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.22 2008/02/19 10:52:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.23 2008/04/05 16:35:35 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -182,7 +182,7 @@ USB_ATTACH(udav)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	struct ifnet *ifp;
 	struct mii_data *mii;
 	u_char eaddr[ETHER_ADDR_LEN];

@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.6 2007/07/29 12:15:44 ad Exp $ */
+/* $NetBSD: spiflash.c,v 1.7 2008/04/05 16:41:24 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.6 2007/07/29 12:15:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.7 2008/04/05 16:41:24 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -221,8 +221,8 @@ spiflash_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": SPI flash\n");
 	aprint_normal(": %s SPI flash\n", sc->sc_name);
 	/* XXX: note that this has to change for boot-sectored flash */
-	aprint_normal("%s: %d KB, %d sectors of %d KB each\n",
-	    sc->sc_dev.dv_xname, sc->sc_device_size / 1024,
+	aprint_normal_dev(&sc->sc_dev, "%d KB, %d sectors of %d KB each\n",
+	    sc->sc_device_size / 1024,
 	    sc->sc_device_size / sc->sc_erase_size,
 	    sc->sc_erase_size / 1024);
 
@@ -232,7 +232,7 @@ spiflash_attach(struct device *parent, struct device *self, void *aux)
 	bufq_alloc(&sc->sc_doneq, "fcfs", BUFQ_SORT_RAWBLOCK);
 
 	sc->sc_dk.dk_driver = &spiflash_dkdriver;
-	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
+	sc->sc_dk.dk_name = device_xname(&sc->sc_dev);
 
 	disk_attach(&sc->sc_dk);
 

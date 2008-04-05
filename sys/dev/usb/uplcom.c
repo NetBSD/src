@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.62 2008/02/21 04:38:43 rafal Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.63 2008/04/05 16:35:35 cegger Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.62 2008/02/21 04:38:43 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.63 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ USB_ATTACH(uplcom)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
 	int i;
 	struct ucom_attach_args uca;

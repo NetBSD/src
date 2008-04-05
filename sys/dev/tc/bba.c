@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.32 2007/10/19 12:01:19 ad Exp $ */
+/* $NetBSD: bba.c,v 1.33 2008/04/05 16:44:41 cegger Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.32 2007/10/19 12:01:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.33 2008/04/05 16:44:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ bba_attach(struct device *parent, struct device *self, void *aux)
 	/* get the bus space handle for codec */
 	if (bus_space_subregion(sc->sc_bst, sc->sc_bsh,
 	    ia->iada_offset, 0, &sc->sc_codec_bsh)) {
-		printf("%s: unable to map device\n", asc->sc_dev.dv_xname);
+		aprint_error_dev(&asc->sc_dev, "unable to map device\n");
 		return;
 	}
 
@@ -314,15 +314,14 @@ bba_allocm(void *addr, int direction, size_t size,
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, BBA_DMABUF_ALIGN,
 	    BBA_DMABUF_BOUNDARY, &seg, 1, &rseg, w)) {
-		printf("%s: can't allocate DMA buffer\n",
-		    asc->sc_dev.dv_xname);
+		aprint_error_dev(&asc->sc_dev, "can't allocate DMA buffer\n");
 		goto bad;
 	}
 	state |= 1;
 
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
 	    &kva, w | BUS_DMA_COHERENT)) {
-		printf("%s: can't map DMA buffer\n", asc->sc_dev.dv_xname);
+		aprint_error_dev(&asc->sc_dev, "can't map DMA buffer\n");
 		goto bad;
 	}
 	state |= 2;

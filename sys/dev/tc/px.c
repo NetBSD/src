@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.31 2007/10/19 12:01:19 ad Exp $	*/
+/* 	$NetBSD: px.c,v 1.32 2008/04/05 16:44:41 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.31 2007/10/19 12:01:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.32 2008/04/05 16:44:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ px_intr(void *cookie)
 	 * Simply clear the flag and report the error.
 	 */
 	if ((state & STIC_INT_E) != 0) {
-		printf("%s: error intr, %x %x %x %x %x", px->px_dv.dv_xname,
+		aprint_error_dev(&px->px_dv, "error intr, %x %x %x %x %x",
 		    sr->sr_ipdvint, sr->sr_sticsr, sr->sr_buscsr,
 		    sr->sr_busadr, sr->sr_busdat);
 		sr->sr_ipdvint = STIC_INT_E_WE | STIC_INT_E_EN;

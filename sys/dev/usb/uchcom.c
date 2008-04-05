@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.2 2008/02/18 05:31:24 dyoung Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.3 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.2 2008/02/18 05:31:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.3 2008/04/05 16:35:35 cegger Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -246,7 +246,7 @@ USB_ATTACH(uchcom)
 	USB_ATTACH_START(uchcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	struct uchcom_endpoints endpoints;
 	struct ucom_attach_args uca;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.30 2008/01/19 22:10:21 dyoung Exp $	*/
+/*	$NetBSD: if_url.c,v 1.31 2008/04/05 16:35:35 cegger Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.30 2008/01/19 22:10:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.31 2008/04/05 16:35:35 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -183,7 +183,7 @@ USB_ATTACH(url)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = USBDEVNAME(sc->sc_dev);
 	struct ifnet *ifp;
 	struct mii_data *mii;
 	u_char eaddr[ETHER_ADDR_LEN];

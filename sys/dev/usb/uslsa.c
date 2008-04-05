@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.5 2008/02/18 05:24:24 dyoung Exp $ */
+/* $NetBSD: uslsa.c,v 1.6 2008/04/05 16:35:35 cegger Exp $ */
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.5 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.6 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ USB_ATTACH(uslsa)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	char *devname;
+	const char *devname;
 	usbd_status err;
 	struct ucom_attach_args uca;
 	int i;

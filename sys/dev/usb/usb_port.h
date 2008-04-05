@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.80 2008/03/28 17:10:30 drochner Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.81 2008/04/05 16:35:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,9 +102,9 @@ typedef struct proc *usb_proc_ptr;
 typedef struct device *device_ptr_t;
 #define USBBASEDEVICE struct device
 #define USBDEV(bdev) (&(bdev))
-#define USBDEVNAME(bdev) ((bdev).dv_xname)
+#define USBDEVNAME(bdev) (device_xname(&(bdev)))
 #define USBDEVUNIT(bdev) device_unit(&(bdev))
-#define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
+#define USBDEVPTRNAME(bdevptr) (device_xname(bdevptr))
 #define USBGETSOFTC(d) ((void *)(d))
 
 #define DECLARE_USB_DMA_T \
