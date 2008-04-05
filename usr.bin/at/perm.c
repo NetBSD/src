@@ -1,6 +1,6 @@
-/*	$NetBSD: perm.c,v 1.2 2000/10/04 19:24:59 mjl Exp $	*/
+/*	$NetBSD: perm.c,v 1.3 2008/04/05 16:26:57 christos Exp $	*/
 
-/* 
+/*
  * perm.c - check user permission for at(1)
  * Copyright (C) 1994  Thomas Koenig
  *
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <pwd.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,73 +51,68 @@
 #if 0
 static char rcsid[] = "$OpenBSD: perm.c,v 1.1 1997/03/01 23:40:12 millert Exp $";
 #else
-__RCSID("$NetBSD: perm.c,v 1.2 2000/10/04 19:24:59 mjl Exp $");
+__RCSID("$NetBSD: perm.c,v 1.3 2008/04/05 16:26:57 christos Exp $");
 #endif
 #endif
-
-/* Function declarations */
-
-static int check_for_user (FILE *, const char *);
 
 /* Local functions */
 
-static int
+static bool
 check_for_user(FILE *fp, const char *name)
 {
 	char *buffer;
 	size_t len;
-	int found = 0;
+	bool found = false;
 
 	len = strlen(name);
 	if ((buffer = malloc(len + 2)) == NULL)
 		panic("Insufficient virtual memory");
 
-	while (fgets(buffer, len + 2, fp) != NULL) {
+	while (fgets(buffer, (int)len + 2, fp) != NULL) {
 		if (strncmp(name, buffer, len) == 0 && buffer[len] == '\n') {
-			found = 1;
+			found = true;
 			break;
 		}
 	}
 	(void)fclose(fp);
 	free(buffer);
-	return (found);
+	return found;
 }
-
 
 /* Global functions */
 
-int
+bool
 check_permission(void)
 {
 	FILE *fp;
 	uid_t uid = geteuid();
 	struct passwd *pentry;
 
-	if (uid==0)
-		return 1;
+	if (uid == 0)
+		return true;
 
 	if ((pentry = getpwuid(uid)) == NULL) {
 		perror("Cannot access user database");
 		exit(EXIT_FAILURE);
 	}
 
-	PRIV_START
+	PRIV_START;
 
 	fp = fopen(_PATH_AT_ALLOW, "r");
 
-	PRIV_END
+	PRIV_END;
 
 	if (fp != NULL) {
-		return (check_for_user(fp, pentry->pw_name));
+		return check_for_user(fp, pentry->pw_name);
 	} else {
-		PRIV_START
+		PRIV_START;
 
 		fp = fopen(_PATH_AT_DENY, "r");
 
-		PRIV_END
+		PRIV_END;
 
 		if (fp != NULL)
-			return (!check_for_user(fp, pentry->pw_name));
+			return !check_for_user(fp, pentry->pw_name);
 	}
-	return (0);
+	return false;
 }

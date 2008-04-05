@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.h,v 1.4 2000/10/04 19:24:59 mjl Exp $	*/
+/*	$NetBSD: panic.h,v 1.5 2008/04/05 16:26:57 christos Exp $	*/
 
 /*
  *  panic.h -  header for at(1)
@@ -27,7 +27,11 @@
  * From: $OpenBSD: panic.h,v 1.3 1997/03/01 23:40:10 millert Exp $
  */
 
-void panic	(char *);
-void perr	(char *);
-void perr2	(char *, char *);
-void usage	(void);
+#ifndef _PANIC_H_
+#define _PANIC_H_
+
+void panic(const char *) __dead;
+void perr(const char *) __dead;
+void usage(void) __dead;
+
+#endif /* _PANIC_H_ */

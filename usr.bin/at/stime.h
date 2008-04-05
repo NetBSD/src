@@ -1,4 +1,4 @@
-/*	$NetBSD: stime.h,v 1.3 2005/02/17 16:56:10 xtraeme Exp $	*/
+/*	$NetBSD: stime.h,v 1.4 2008/04/05 16:26:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -29,4 +29,25 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _STIME_H_
+#define _STIME_H_
+
+/*
+ * Convert a 2-digit year to a valid year as:
+ *   00-68 <-> 2000-2068
+ *   69-99 <-> 1969-1999
+ *
+ * Note: We choose the earliest year as 1969 rather than 1970 so that
+ * dates near the Epoch (Jan 1, 1970 00:00:00 UTC) can be represented
+ * with 2-digit years in all time zones.  This is the convention used
+ * in parsedate(3), though it is not consistently applied in the
+ * source tree.
+ *
+ * XXX - move this (or something like it) to time.h and use it
+ *       consistently in the tree.
+ */
+#define conv_2dig_year(y) ((y) < 69 ? (y) + 2000 : (y) + 1900)
+
 time_t	stime(char *);
+
+#endif /* _STIME_H_ */

@@ -1,7 +1,7 @@
-/*	$NetBSD: privs.h,v 1.7 2003/10/21 09:03:25 wiz Exp $	*/
+/*	$NetBSD: privs.h,v 1.8 2008/04/05 16:26:57 christos Exp $	*/
 
-/* 
- *  privs.h - header for privileged operations 
+/*
+ *  privs.h - header for privileged operations
  *  Copyright (C) 1993  Thomas Koenig
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@
  * From: OpenBSD: privs.h,v 1.4 1997/03/01 23:40:12 millert Exp
  */
 
-#ifndef _PRIVS_H
-#define _PRIVS_H
+#ifndef _PRIVS_H_
+#define _PRIVS_H_
 
 #include <unistd.h>
 
@@ -62,39 +62,39 @@ extern
 #endif
 uid_t real_uid, effective_uid;
 
-#ifndef MAIN 
+#ifndef MAIN
 extern
 #endif
 gid_t real_gid, effective_gid;
 
-#define RELINQUISH_PRIVS { \
+#define RELINQUISH_PRIVS do { \
       real_uid = getuid(); \
       effective_uid = geteuid(); \
       real_gid = getgid(); \
       effective_gid = getegid(); \
-      PRIV_END \
-}
+      PRIV_END; \
+} while (/*CONSTCOND*/ 0)
 
-#define RELINQUISH_PRIVS_ROOT(a, b) { \
+#define RELINQUISH_PRIVS_ROOT(a, b) do { \
 	real_uid = (a); \
 	effective_uid = geteuid(); \
 	real_gid = (b); \
 	effective_gid = getegid(); \
-	PRIV_END \
-}
+	PRIV_END; \
+} while (/*CONSTCOND*/ 0)
 
-#define PRIV_START { \
+#define PRIV_START do { \
 	if (seteuid(effective_uid) == -1) \
 		perr("Cannot get user privs"); \
 	if (setegid(effective_gid) == -1) \
 		perr("Cannot get group privs"); \
-}
+} while (/*CONSTCOND*/ 0)
 
-#define PRIV_END { \
+#define PRIV_END do { \
 	if (setegid(real_gid) == -1) \
 		perr("Cannot relinguish group privs"); \
 	if (seteuid(real_uid) == -1) \
 		perr("Cannot relinguish user privs"); \
-}
+} while (/*CONSTCOND*/ 0)
 
-#endif
+#endif /* _PRIV_H_ */
