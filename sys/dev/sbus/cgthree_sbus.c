@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.19 2007/10/19 12:01:10 ad Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.20 2008/04/05 18:35:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.19 2007/10/19 12:01:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.20 2008/04/05 18:35:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ cgthreeattach_sbus(parent, self, args)
 			 sa->sa_offset + CG3REG_REG,
 			 sizeof(struct fbcontrol),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map control registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map control registers\n");
 		return;
 	}
 	sc->sc_fbc = (struct fbcontrol *)bus_space_vaddr(sa->sa_bustag, bh);
@@ -196,7 +196,7 @@ cgthreeattach_sbus(parent, self, args)
 				 sa->sa_offset + CG3REG_MEM,
 				 ramsize,
 				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-			printf("%s: cannot map pixels\n", self->dv_xname);
+			aprint_error_dev(self, "cannot map pixels\n");
 			return;
 		}
 		fb->fb_pixels = (char *)bus_space_vaddr(sa->sa_bustag, bh);

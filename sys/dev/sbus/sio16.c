@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.15 2005/12/11 12:23:44 christos Exp $	*/
+/*	$NetBSD: sio16.c,v 1.16 2008/04/05 18:35:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.15 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.16 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -156,7 +156,7 @@ sio16_attach(parent, self, aux)
 			 sa->sa_reg[0].oa_size,
 			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 0\n",
-		    self->dv_xname);
+		    device_xname(self));
 		return;
 	}
 	sc->sc_configreg = h;
@@ -166,7 +166,7 @@ sio16_attach(parent, self, aux)
 			 sa->sa_reg[1].sbr_size,
 			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 1\n",
-		    self->dv_xname);
+		    device_xname(self));
 		return;
 	}
 	sc->sc_reg[0] = h;
@@ -176,7 +176,7 @@ sio16_attach(parent, self, aux)
 			 sa->sa_reg[2].sbr_size,
 			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 2\n",
-		    self->dv_xname);
+		    device_xname(self));
 		return;
 	}
 	sc->sc_reg[1] = h;
@@ -186,7 +186,7 @@ sio16_attach(parent, self, aux)
 			 sa->sa_reg[3].sbr_size,
 			 0, &h) != 0) {
 		printf("%s at sbus: can not map registers 3\n",
-		    self->dv_xname);
+		    device_xname(self));
 		return;
 	}
 	sc->sc_ack = h;
@@ -268,7 +268,7 @@ sio16_ackfunc(v, who)
 		break;
 	default:
 		panic("%s: sio16_ackfunc: unknown ackfunc %d",
-		    sc->sc_dev.dv_xname, who);
+		    device_xname(&sc->sc_dev), who);
 	}
 	return (bus_space_read_1(sc->sc_tag, sc->sc_ack, addr));
 }

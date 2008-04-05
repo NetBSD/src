@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.37 2007/10/19 12:01:12 ad Exp $ */
+/*	$NetBSD: qec.c,v 1.38 2008/04/05 18:35:32 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.37 2007/10/19 12:01:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.38 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ qecattach(parent, self, aux)
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+			device_xname(self), sa->sa_nreg);
 		return;
 	}
 
@@ -134,7 +134,7 @@ qecattach(parent, self, aux)
 			 sa->sa_reg[0].oa_base,
 			 sa->sa_reg[0].oa_size,
 			 0, &sc->sc_regs) != 0) {
-		printf("%s: attach: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "attach: cannot map registers\n");
 		return;
 	}
 
@@ -148,7 +148,7 @@ qecattach(parent, self, aux)
 			 sa->sa_reg[1].oa_base,
 			 sa->sa_reg[1].oa_size,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: attach: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "attach: cannot map registers\n");
 		return;
 	}
 	sc->sc_buffer = (void *)bus_space_vaddr(sa->sa_bustag, bh);
@@ -181,7 +181,7 @@ qecattach(parent, self, aux)
 	/* Allocate a bus tag */
 	sbt = bus_space_tag_alloc(sc->sc_bustag, sc);
 	if (sbt == NULL) {
-		printf("%s: attach: out of memory\n", self->dv_xname);
+		aprint_error_dev(self, "attach: out of memory\n");
 		return;
 	}
 
@@ -198,7 +198,7 @@ qecattach(parent, self, aux)
 		break;
 	case ENOENT:
 	default:
-		panic("%s: error getting ranges property", self->dv_xname);
+		panic("%s: error getting ranges property", device_xname(self));
 	}
 
 	/*
@@ -262,7 +262,7 @@ qec_intr_establish(t, pri, level, handler, arg, fastvec)
 		 */
 		if (sc->sc_intr == NULL) {
 			printf("%s: warning: no interrupts\n",
-				sc->sc_dev.dv_xname);
+				device_xname(&sc->sc_dev));
 			return (NULL);
 		}
 		pri = sc->sc_intr->oi_pri;

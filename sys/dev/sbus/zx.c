@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.20 2007/10/19 12:01:13 ad Exp $	*/
+/*	$NetBSD: zx.c,v 1.21 2008/04/05 18:35:32 cegger Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.20 2007/10/19 12:01:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.21 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_SS0,
 	    0x800000, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: can't map bits\n", self->dv_xname);
+		aprint_error_dev(self, "can't map bits\n");
 		return;
 	}
 	fb->fb_pixels = (void *)bus_space_vaddr(bt, bh);
@@ -189,21 +189,21 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LC_SS0_USR,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: can't map zc\n", self->dv_xname);
+		aprint_error_dev(self, "can't map zc\n");
 		return;
 	}
 	sc->sc_zc = (struct zx_command *)bus_space_vaddr(bt, bh);
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LD_SS0,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: can't map ld/ss0\n", self->dv_xname);
+		aprint_error_dev(self, "can't map ld/ss0\n");
 		return;
 	}
 	sc->sc_zd_ss0 = (struct zx_draw *)bus_space_vaddr(bt, bh);
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LD_SS1,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: can't map ld/ss1\n", self->dv_xname);
+		aprint_error_dev(self, "can't map ld/ss1\n");
 		return;
 	}
 	sc->sc_zd_ss1 =
@@ -211,14 +211,14 @@ zx_attach(struct device *parent, struct device *self, void *args)
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LX_CROSS,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: can't map zx\n", self->dv_xname);
+		aprint_error_dev(self, "can't map zx\n");
 		return;
 	}
 	sc->sc_zx = (struct zx_cross *)bus_space_vaddr(bt, bh);
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset + ZX_OFF_LX_CURSOR,
 	    PAGE_SIZE, BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: can't map zcu\n", self->dv_xname);
+		aprint_error_dev(self, "can't map zcu\n");
 		return;
 	}
 	sc->sc_zcu = (struct zx_cursor *)bus_space_vaddr(bt, bh);

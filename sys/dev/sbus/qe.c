@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.43 2007/10/19 12:01:12 ad Exp $	*/
+/*	$NetBSD: qe.c,v 1.44 2008/04/05 18:35:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.43 2007/10/19 12:01:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.44 2008/04/05 18:35:32 cegger Exp $");
 
 #define QEDEBUG
 
@@ -211,7 +211,7 @@ qeattach(parent, self, aux)
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+			device_xname(self), sa->sa_nreg);
 		return;
 	}
 
@@ -221,7 +221,7 @@ qeattach(parent, self, aux)
 				sa->sa_reg[0].oa_base),
 			  (bus_size_t)sa->sa_reg[0].oa_size,
 			  0, &sc->sc_cr) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
 
@@ -231,7 +231,7 @@ qeattach(parent, self, aux)
 				sa->sa_reg[1].oa_base),
 			  (bus_size_t)sa->sa_reg[1].oa_size,
 			  0, &sc->sc_mr) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
 
@@ -268,15 +268,16 @@ qeattach(parent, self, aux)
 	/* Get a DMA handle */
 	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
 				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
-		printf("%s: DMA map create error %d\n", self->dv_xname, error);
+		aprint_error_dev(self, "DMA map create error %d\n",
+			error);
 		return;
 	}
 
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(dmatag, size, 0, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer alloc error %d\n",
-			self->dv_xname, error);
+		aprint_error_dev(self, "DMA buffer alloc error %d\n",
+			error);
 		return;
 	}
 
@@ -284,8 +285,8 @@ qeattach(parent, self, aux)
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
 			            &sc->sc_rb.rb_membase,
 			            BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf("%s: DMA buffer map error %d\n",
-			self->dv_xname, error);
+		aprint_error_dev(self, "DMA buffer map error %d\n",
+			error);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
@@ -294,8 +295,8 @@ qeattach(parent, self, aux)
 	if ((error = bus_dmamap_load(dmatag, sc->sc_dmamap,
 				     sc->sc_rb.rb_membase, size, NULL,
 				     BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: DMA buffer map load error %d\n",
-			self->dv_xname, error);
+		aprint_error_dev(self, "DMA buffer map load error %d\n",
+			error);
 		bus_dmamem_unmap(dmatag, sc->sc_rb.rb_membase, size);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
@@ -315,7 +316,7 @@ qeattach(parent, self, aux)
 		    0, NULL);
 	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = qestart;
 	ifp->if_ioctl = qeioctl;
@@ -574,7 +575,7 @@ qewatchdog(ifp)
 {
 	struct qe_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	ifp->if_oerrors++;
 
 	qereset(sc);
@@ -733,7 +734,7 @@ qe_rint(sc)
 #ifdef QEDEBUG
 	if (npackets == 0 && sc->sc_debug)
 		printf("%s: rint: no packets; rb index %d; status 0x%x\n",
-			sc->sc_dev.dv_xname, bix, len);
+			device_xname(&sc->sc_dev), bix, len);
 #endif
 
 	sc->sc_rb.rb_rdtail = bix;
@@ -753,19 +754,19 @@ qe_eint(sc, why)
 	int r = 0, rst = 0;
 
 	if (why & QE_CR_STAT_EDEFER) {
-		printf("%s: excessive tx defers.\n", sc->sc_dev.dv_xname);
+		printf("%s: excessive tx defers.\n", device_xname(&sc->sc_dev));
 		r |= 1;
 		ifp->if_oerrors++;
 	}
 
 	if (why & QE_CR_STAT_CLOSS) {
-		printf("%s: no carrier, link down?\n", sc->sc_dev.dv_xname);
+		printf("%s: no carrier, link down?\n", device_xname(&sc->sc_dev));
 		ifp->if_oerrors++;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_ERETRIES) {
-		printf("%s: excessive tx retries\n", sc->sc_dev.dv_xname);
+		printf("%s: excessive tx retries\n", device_xname(&sc->sc_dev));
 		ifp->if_oerrors++;
 		r |= 1;
 		rst = 1;
@@ -773,26 +774,26 @@ qe_eint(sc, why)
 
 
 	if (why & QE_CR_STAT_LCOLL) {
-		printf("%s: late tx transmission\n", sc->sc_dev.dv_xname);
+		printf("%s: late tx transmission\n", device_xname(&sc->sc_dev));
 		ifp->if_oerrors++;
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_FUFLOW) {
-		printf("%s: tx fifo underflow\n", sc->sc_dev.dv_xname);
+		printf("%s: tx fifo underflow\n", device_xname(&sc->sc_dev));
 		ifp->if_oerrors++;
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_JERROR) {
-		printf("%s: jabber seen\n", sc->sc_dev.dv_xname);
+		printf("%s: jabber seen\n", device_xname(&sc->sc_dev));
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_BERROR) {
-		printf("%s: babble seen\n", sc->sc_dev.dv_xname);
+		printf("%s: babble seen\n", device_xname(&sc->sc_dev));
 		r |= 1;
 	}
 
@@ -803,27 +804,27 @@ qe_eint(sc, why)
 	}
 
 	if (why & QE_CR_STAT_TXDERROR) {
-		printf("%s: tx descriptor is bad\n", sc->sc_dev.dv_xname);
+		printf("%s: tx descriptor is bad\n", device_xname(&sc->sc_dev));
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_TXLERR) {
-		printf("%s: tx late error\n", sc->sc_dev.dv_xname);
+		printf("%s: tx late error\n", device_xname(&sc->sc_dev));
 		ifp->if_oerrors++;
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_TXPERR) {
-		printf("%s: tx DMA parity error\n", sc->sc_dev.dv_xname);
+		printf("%s: tx DMA parity error\n", device_xname(&sc->sc_dev));
 		ifp->if_oerrors++;
 		rst = 1;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_TXSERR) {
-		printf("%s: tx DMA sbus error ack\n", sc->sc_dev.dv_xname);
+		printf("%s: tx DMA sbus error ack\n", device_xname(&sc->sc_dev));
 		ifp->if_oerrors++;
 		rst = 1;
 		r |= 1;
@@ -846,13 +847,13 @@ qe_eint(sc, why)
 	}
 
 	if (why & QE_CR_STAT_RXFOFLOW) {
-		printf("%s: rx fifo overflow\n", sc->sc_dev.dv_xname);
+		printf("%s: rx fifo overflow\n", device_xname(&sc->sc_dev));
 		ifp->if_ierrors++;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RLCOLL) {
-		printf("%s: rx late collision\n", sc->sc_dev.dv_xname);
+		printf("%s: rx late collision\n", device_xname(&sc->sc_dev));
 		ifp->if_ierrors++;
 		ifp->if_collisions++;
 		r |= 1;
@@ -869,45 +870,45 @@ qe_eint(sc, why)
 	}
 
 	if (why & QE_CR_STAT_RXDROP) {
-		printf("%s: rx packet dropped\n", sc->sc_dev.dv_xname);
+		printf("%s: rx packet dropped\n", device_xname(&sc->sc_dev));
 		ifp->if_ierrors++;
 		r |= 1;
 	}
 
 	if (why & QE_CR_STAT_RXSMALL) {
-		printf("%s: rx buffer too small\n", sc->sc_dev.dv_xname);
+		printf("%s: rx buffer too small\n", device_xname(&sc->sc_dev));
 		ifp->if_ierrors++;
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXLERR) {
-		printf("%s: rx late error\n", sc->sc_dev.dv_xname);
+		printf("%s: rx late error\n", device_xname(&sc->sc_dev));
 		ifp->if_ierrors++;
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXPERR) {
-		printf("%s: rx DMA parity error\n", sc->sc_dev.dv_xname);
+		printf("%s: rx DMA parity error\n", device_xname(&sc->sc_dev));
 		ifp->if_ierrors++;
 		r |= 1;
 		rst = 1;
 	}
 
 	if (why & QE_CR_STAT_RXSERR) {
-		printf("%s: rx DMA sbus error ack\n", sc->sc_dev.dv_xname);
+		printf("%s: rx DMA sbus error ack\n", device_xname(&sc->sc_dev));
 		ifp->if_ierrors++;
 		r |= 1;
 		rst = 1;
 	}
 
 	if (r == 0)
-		printf("%s: unexpected interrupt error: %08x\n",
-			sc->sc_dev.dv_xname, why);
+		aprint_error_dev(&sc->sc_dev, "unexpected interrupt error: %08x\n",
+			why);
 
 	if (rst) {
-		printf("%s: resetting...\n", sc->sc_dev.dv_xname);
+		printf("%s: resetting...\n", device_xname(&sc->sc_dev));
 		qereset(sc);
 		return (-1);
 	}

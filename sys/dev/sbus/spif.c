@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.14 2007/11/19 18:51:50 ad Exp $	*/
+/*	$NetBSD: spif.c,v 1.15 2008/04/05 18:35:32 cegger Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.14 2007/11/19 18:51:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.15 2008/04/05 18:35:32 cegger Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -976,7 +976,7 @@ spif_softintr(vsc)
 
 			if (ISSET(flags, STTYF_RING_OVERFLOW)) {
 				log(LOG_WARNING, "%s-%x: ring overflow\n",
-					stc->sc_dev.dv_xname, i);
+					device_xname(&stc->sc_dev), i);
 				r = 1;
 			}
 
@@ -1001,7 +1001,7 @@ stty_write_ccr(sc, val)
 	while (STC_READ(sc, STC_CCR) && tries--)
 		/*EMPTY*/;
 	if (tries == 0)
-		printf("%s: ccr timeout\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "ccr timeout\n");
 	STC_WRITE(sc, STC_CCR, val);
 }
 

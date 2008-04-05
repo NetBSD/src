@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.3 2008/03/22 23:37:32 jdc Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.4 2008/04/05 18:35:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.3 2008/03/22 23:37:32 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.4 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+			device_xname(self), sa->sa_nreg);
 		return;
 	}
 
@@ -121,7 +121,7 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 			 sa->sa_reg[0].oa_base,
 			 (bus_size_t)sa->sa_reg[0].oa_size,
 			 0, &sc->sc_h2) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
 	if (sbus_bus_map(sa->sa_bustag,
@@ -129,7 +129,7 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 			 sa->sa_reg[1].oa_base,
 			 (bus_size_t)sa->sa_reg[1].oa_size,
 			 0, &sc->sc_h1) != 0) {
-		printf("%s: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
 	sbus_establish(&gsc->gsc_sd, self);

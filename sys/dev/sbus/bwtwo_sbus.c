@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.19 2007/03/04 06:02:40 christos Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.20 2008/04/05 18:35:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.19 2007/03/04 06:02:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.20 2008/04/05 18:35:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ bwtwoattach_sbus(parent, self, args)
 			 sa->sa_offset + BWREG_REG,
 			 sizeof(struct fbcontrol),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map control registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map control registers\n");
 		return;
 	}
 	sc->sc_reg = (struct fbcontrol *)bus_space_vaddr(sa->sa_bustag, bh);
@@ -200,7 +200,7 @@ bwtwoattach_sbus(parent, self, args)
 				 sa->sa_offset + sc->sc_pixeloffset,
 				 ramsize,
 				 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-			printf("%s: cannot map pixels\n", self->dv_xname);
+			aprint_error_dev(self, "cannot map pixels\n");
 			return;
 		}
 		sc->sc_fb.fb_pixels = (char *)bus_space_vaddr(sa->sa_bustag, bh);

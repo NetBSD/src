@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.71 2008/03/11 05:33:31 mjacob Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.72 2008/04/05 18:35:32 cegger Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.71 2008/03/11 05:33:31 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.72 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		if (sbus_bus_map(sa->sa_bustag,	sa->sa_slot, sa->sa_offset,
 			sa->sa_size, 0, &sbc->sbus_reg) != 0) {
-			printf("%s: cannot map registers\n", self->dv_xname);
+			aprint_error_dev(self, "cannot map registers\n");
 			return;
 		}
 	}
