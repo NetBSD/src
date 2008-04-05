@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.96.6.1 2008/04/03 12:42:38 mjf Exp $	*/
+/*	$NetBSD: ata.c,v 1.96.6.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.96.6.1 2008/04/03 12:42:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.96.6.2 2008/04/05 23:33:21 mjf Exp $");
 
 #include "opt_ata.h"
 
@@ -399,7 +399,7 @@ atabus_attach(device_t parent, device_t self, void *aux)
 	struct atabus_softc *sc = device_private(self);
 	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
-	int error;
+	int error, unit, major;
 
 	sc->sc_chan = chp;
 
@@ -423,6 +423,14 @@ atabus_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, atabus_suspend, atabus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	if (error == 0) {
+		major = cdevsw_lookup_major(&atabus_cdevsw);
+		unit = device_unit(self);
+
+		device_register_name(makedev(major, unit), self, true, 
+		    DEV_OTHER, device_xname(self));
+	}
 }
 
 /*
@@ -495,6 +503,8 @@ atabus_detach(device_t self, int flags)
 	struct ata_channel *chp = sc->sc_chan;
 	device_t dev = NULL;
 	int s, i, error = 0;
+
+	device_unregister_all(self);
 
 	/* Shutdown the channel. */
 	s = splbio();		/* XXX ALSO NEED AN INTERLOCK HERE. */

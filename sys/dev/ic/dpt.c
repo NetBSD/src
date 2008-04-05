@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.58 2007/10/19 11:59:51 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.58.16.1 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.58 2007/10/19 11:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.58.16.1 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,6 +334,8 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	struct dpt_ccb *ccb;
 	char model[__arraycount(ei->ei_model) + __arraycount(ei->ei_suffix) + 1];
 	char vendor[__arraycount(ei->ei_vendor) + 1];
+	device_t dev = &sc->sc_dv;
+	int major;
 
 	ec = &sc->sc_ec;
 	snprintf(dpt_sig.dsDescription, sizeof(dpt_sig.dsDescription),
@@ -494,6 +496,10 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 		chan->chan_id = sc->sc_hbaid[i];
 		config_found(&sc->sc_dv, chan, scsiprint);
 	}
+
+	major = cdevsw_lookup_major(&dpt_cdevsw);
+	device_register_name(makedev(major, device_unit(dev)), dev, true,
+	    DEV_OTHER, device_xname(dev));
 }
 
 /*

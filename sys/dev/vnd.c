@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.175.6.1 2008/04/03 12:42:37 mjf Exp $	*/
+/*	$NetBSD: vnd.c,v 1.175.6.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.1 2008/04/03 12:42:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.2 2008/04/05 23:33:21 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -282,6 +282,7 @@ static void
 vnd_attach(device_t parent, device_t self, void *aux)
 {
 	struct vnd_softc *sc = device_private(self);
+	int i, unit, cmaj, bmaj;
 
 	sc->sc_dev = self;
 	sc->sc_comp_offsets = NULL;
@@ -291,6 +292,17 @@ vnd_attach(device_t parent, device_t self, void *aux)
 	disk_init(&sc->sc_dkdev, self->dv_xname, NULL);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	cmaj = cdevsw_lookup_major(&vnd_cdevsw);
+	bmaj = bdevsw_lookup_major(&vnd_bdevsw);
+	unit = device_unit(self);
+
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		device_register_name(MAKEDISKDEV(bmaj, unit, i), self, false,
+		    DEV_DISK, "vnd%d%c", unit, 'a' + i);
+		device_register_name(MAKEDISKDEV(cmaj, unit, i), self, true,
+		    DEV_DISK, "rvnd%d%c", unit, 'a' + i);
+	}
 }
 
 static int
@@ -300,6 +312,7 @@ vnd_detach(device_t self, int flags)
 	if (sc->sc_flags & VNF_INITED)
 		return EBUSY;
 
+	device_unregister_all(self);
 	pmf_device_deregister(self);
 	bufq_free(sc->sc_tab);
 	disk_destroy(&sc->sc_dkdev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.72.16.1 2008/04/03 12:42:41 mjf Exp $	*/
+/*	$NetBSD: lpt.c,v 1.72.16.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.72.16.1 2008/04/03 12:42:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.72.16.2 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,8 @@ const struct cdevsw lpt_cdevsw = {
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
 #define	LPTFLAGS(s)	(minor(s) & 0xe0)
+#define	LPA(unit)	(unit + 128)	
+#define	LPTCTL(unit)	(unit + 256)
 
 static void	lptsoftintr(void *);
 
@@ -110,6 +112,7 @@ void
 lpt_attach_subr(sc)
 	struct lpt_softc *sc;
 {
+	int maj, unit;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
@@ -124,6 +127,16 @@ lpt_attach_subr(sc)
 	sc->sc_sih = softint_establish(SOFTINT_SERIAL, lptsoftintr, sc);
 
 	sc->sc_dev_ok = 1;
+
+	maj = cdevsw_lookup_major(&lpt_cdevsw);
+	unit = device_unit(sc->sc_dev);
+
+	device_register_name(makedev(maj, unit), sc->sc_dev, true, 
+	    DEV_OTHER, "lpt%d", unit);
+	device_register_name(makedev(maj, LPA(unit)), sc->sc_dev, true,
+	    DEV_OTHER, "lpa%d", unit);
+	device_register_name(makedev(maj, LPTCTL(unit)), sc->sc_dev, true,
+	    DEV_OTHER, "lpt%dctl", unit);
 }
 
 int
@@ -131,6 +144,7 @@ lpt_detach_subr(device_t self, int flags)
 {
 	struct lpt_softc *sc = device_private(self);
 
+	device_unregister_all(self);
 	sc->sc_dev_ok = 0;
 	softint_disestablish(sc->sc_sih);
 	callout_destroy(&sc->sc_wakeup_ch);

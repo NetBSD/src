@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.72 2007/07/29 12:50:23 ad Exp $	*/
+/*	$NetBSD: ss.c,v 1.72.26.1 2008/04/05 23:33:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72 2007/07/29 12:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,6 +147,7 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	struct ss_softc *ss = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
+	int maj, unit;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach: "));
 
@@ -183,6 +184,16 @@ ssattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ss->flags &= ~SSF_AUTOCONF;
+
+	maj = cdevsw_lookup_major(&ss_cdevsw);
+	unit = SSUNIT(device_unit(self));
+
+	device_register_name(makedev(maj, unit + MODE_REWIND), self, true,
+	    DEV_OTHER, "ss%d", device_unit(self));
+	device_register_name(makedev(maj, unit + MODE_NONREWIND), self, true,
+	    DEV_OTHER, "nss%d", device_unit(self));
+	device_register_name(makedev(maj, unit + MODE_CONTROL), self, true,
+	    DEV_OTHER, "enss%d", device_unit(self));
 }
 
 static int
@@ -190,6 +201,8 @@ ssdetach(struct device *self, int flags)
 {
 	struct ss_softc *ss = device_private(self);
 	int s, cmaj, mn;
+
+	device_unregister_all(self);
 
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&ss_cdevsw);

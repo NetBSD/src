@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.16.14.1 2008/04/03 12:42:41 mjf Exp $	*/
+/*	$NetBSD: joy.c,v 1.16.14.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.16.14.1 2008/04/03 12:42:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.16.14.2 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,18 +80,27 @@ const struct cdevsw joy_cdevsw = {
 void
 joyattach(struct joy_softc *sc)
 {
+	int maj;
+	device_t dev = sc->sc_dev;
+
 	sc->timeout[0] = sc->timeout[1] = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0xff);
 	DELAY(10000);		/* 10 ms delay */
 	aprint_normal_dev(sc->sc_dev, "joystick %sconnected\n",
 	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0) & 0x0f) == 0x0f ?
 	    "not " : "");
+
+	maj = cdevsw_lookup_major(&joy_cdevsw);
+	device_register_name(makedev(maj, device_unit(dev)), dev, true,
+	    DEV_OTHER, device_xname(dev));
 }
 
 int
 joydetach(struct joy_softc *sc, int flags)
 {
 	int maj, mn;
+
+	device_unregister_all(sc->sc_dev);
 
 	maj = cdevsw_lookup_major(&joy_cdevsw);
 	mn = device_unit(sc->sc_dev) << 1;

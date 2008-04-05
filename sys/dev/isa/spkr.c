@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.27.6.1 2008/04/03 12:42:45 mjf Exp $	*/
+/*	$NetBSD: spkr.c,v 1.27.6.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.27.6.1 2008/04/03 12:42:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.27.6.2 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,6 +411,8 @@ spkrprobe(device_t parent, cfdata_t match, void *aux)
 void
 spkrattach(device_t parent, device_t self, void *aux)
 {
+	int maj;
+
 	printf("\n");
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
 	spkr_attached = 1;
@@ -419,6 +421,11 @@ spkrattach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "couldn't establish power handler\n"); 
 
+	maj = cdevsw_lookup_major(&spkr_cdevsw);
+
+	/* XXX: Can there ever be more than one speaker device? */
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_AUDIO, "speaker");
 }
 
 int

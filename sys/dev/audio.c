@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.234.6.1 2008/04/03 12:42:36 mjf Exp $	*/
+/*	$NetBSD: audio.c,v 1.234.6.2 2008/04/05 23:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.234.6.1 2008/04/03 12:42:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.234.6.2 2008/04/05 23:33:20 mjf Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -289,6 +289,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	mixer_devinfo_t mi;
 	int iclass, mclass, oclass, rclass, props;
 	int record_master_found, record_source_found;
+	int unit, major;
 
 	sc = device_private(self);
 	sc->dev = self;
@@ -518,6 +519,18 @@ audioattach(device_t parent, device_t self, void *aux)
 #ifdef AUDIO_PM_IDLE
 	callout_schedule(&sc->sc_idle_counter, audio_idle_timeout * hz);
 #endif
+
+	major = cdevsw_lookup_major(&audio_cdevsw);
+	unit = device_unit(self);
+
+	device_register_name(makedev(major, unit | SOUND_DEVICE), self, 
+	    true, DEV_AUDIO, "sound%d", unit);
+	device_register_name(makedev(major, unit | AUDIO_DEVICE), self,
+	    true, DEV_AUDIO, "audio%d", unit);
+	device_register_name(makedev(major, unit | AUDIOCTL_DEVICE), self,
+	    true, DEV_AUDIO, "audioctl%d", unit);
+	device_register_name(makedev(major, unit | MIXER_DEVICE), self,
+	    true, DEV_AUDIO, "mixer%d", unit);
 }
 
 int
@@ -585,6 +598,7 @@ audiodetach(device_t self, int flags)
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = device_unit(self);
+	device_unregister_all(self);
 	vdevgone(maj, mn | SOUND_DEVICE,    mn | SOUND_DEVICE, VCHR);
 	vdevgone(maj, mn | AUDIO_DEVICE,    mn | AUDIO_DEVICE, VCHR);
 	vdevgone(maj, mn | AUDIOCTL_DEVICE, mn | AUDIOCTL_DEVICE, VCHR);

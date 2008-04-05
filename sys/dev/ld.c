@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.54.6.1 2008/04/03 12:42:36 mjf Exp $	*/
+/*	$NetBSD: ld.c,v 1.54.6.2 2008/04/05 23:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54.6.1 2008/04/03 12:42:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54.6.2 2008/04/05 23:33:20 mjf Exp $");
 
 #include "rnd.h"
 
@@ -105,6 +105,7 @@ void
 ldattach(struct ld_softc *sc)
 {
 	char tbuf[9];
+	int i, unit, cmaj, bmaj;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 
@@ -167,6 +168,18 @@ ldattach(struct ld_softc *sc)
 
 	/* Discover wedges on this disk. */
 	config_interrupts(&sc->sc_dv, ld_config_interrupts);
+
+	cmaj = cdevsw_lookup_major(&ld_cdevsw);
+	bmaj = bdevsw_lookup_major(&ld_bdevsw);
+	unit = device_unit(&sc->sc_dv);
+
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		device_register_name(MAKEDISKDEV(cmaj, unit, i), &sc->sc_dv,
+		    true, DEV_DISK, "rld%d%c", unit, 'a' + i);
+		device_register_name(MAKEDISKDEV(bmaj, unit, i), &sc->sc_dv,
+		    false, DEV_DISK, "ld%d%c", unit, 'a' + i);
+	}
+		
 }
 
 int
@@ -218,6 +231,8 @@ ldenddetach(struct ld_softc *sc)
 	if (sc->sc_queuecnt != 0)
 		if (tsleep(&sc->sc_queuecnt, PRIBIO, "lddtch", 30 * hz))
 			printf("%s: not drained\n", sc->sc_dv.dv_xname);
+
+	device_unregister_all(&sc->sc_dv);
 
 	/* Locate the major numbers. */
 	bmaj = bdevsw_lookup_major(&ld_bdevsw);

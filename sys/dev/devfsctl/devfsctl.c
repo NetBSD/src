@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsctl.c,v 1.1.2.4 2008/04/04 21:21:11 mjf Exp $ */
+/* 	$NetBSD: devfsctl.c,v 1.1.2.5 2008/04/05 23:33:21 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.4 2008/04/04 21:21:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.5 2008/04/05 23:33:21 mjf Exp $");
 
 #if defined(DEBUG) && !defined(DEVFSCTLDEBUG)
 #define	DEVFSCTLDEBUG
@@ -288,6 +288,10 @@ devfsctl_push_node(struct devfsctl_node_cookie nc,
 	if (dn == NULL)
 		return EINVAL;
 
+	/* If this device is in the process of being removed, just return */
+	if (dn->d_gone == true)
+		return 0;
+
 	error = devfs_create_node(mcookie, path, dcookie, na->d_uid, 
 	    na->d_gid, na->d_mode, na->d_flags, na->d_char);
 	    
@@ -409,9 +413,8 @@ devfsctl_periodic_device_check(void)
 				kmem_free(msg, sizeof(*msg));
 				return;
 			}
-#if 0
+			kmem_free(dn->d_name, strlen(dn->d_name) + 1);
 			kmem_free(dn, sizeof(*dn));
-#endif
 		}
 	}
 	mutex_exit(&dname_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.59.12.1 2008/04/03 12:42:58 mjf Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.59.12.2 2008/04/05 23:33:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.59.12.1 2008/04/03 12:42:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.59.12.2 2008/04/05 23:33:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ USB_ATTACH(uscanner)
 	usb_interface_descriptor_t *id = 0;
 	usb_endpoint_descriptor_t *ed, *ed_bulkin = NULL, *ed_bulkout = NULL;
 	char *devinfop;
-	int i;
+	int i, maj;
 	usbd_status err;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
@@ -391,6 +391,10 @@ USB_ATTACH(uscanner)
 	selinit(&sc->sc_selq);
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	maj = cdevsw_lookup_major(&uscanner_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -657,6 +661,8 @@ USB_DETACH(uscanner)
 #elif defined(__FreeBSD__)
 	DPRINTF(("uscanner_detach: sc=%p\n", sc));
 #endif
+
+	device_unregister_all(self);
 
 	sc->sc_dying = 1;
 	sc->sc_dev_flags = 0;	/* make close really close device */

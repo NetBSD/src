@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.14.6.1 2008/04/03 12:42:39 mjf Exp $ */
+/* $NetBSD: gpio.c,v 1.14.6.2 2008/04/05 23:33:21 mjf Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.14.6.1 2008/04/03 12:42:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.14.6.2 2008/04/05 23:33:21 mjf Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -92,6 +92,7 @@ gpio_resume(device_t self PMF_FN_ARGS)
 void
 gpio_attach(device_t parent, device_t self, void *aux)
 {
+	int maj;
 	struct gpio_softc *sc = device_private(self);
 	struct gpiobus_attach_args *gba = aux;
 
@@ -109,6 +110,10 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	 * described in the kernel configuration file.
 	 */
 	config_search_ia(gpio_search, self, "gpio", sc);
+
+	maj = cdevsw_lookup_major(&gpio_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 int
@@ -126,7 +131,7 @@ gpio_detach(device_t self, int flags)
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 #endif
-
+	device_unregister_all(self);
 	return (0);
 }
 

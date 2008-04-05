@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.202 2007/10/11 16:42:52 christos Exp $ */
+/*	$NetBSD: st.c,v 1.202.18.1 2008/04/05 23:33:22 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.202 2007/10/11 16:42:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.202.18.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include "opt_scsi.h"
 
@@ -361,6 +361,8 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
+	int cmaj, bmaj, unit;
+	device_t self = &st->sc_dev;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("stattach: "));
 
@@ -415,6 +417,30 @@ stattach(struct device *parent, struct st_softc *st, void *aux)
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
 			  RND_TYPE_TAPE, 0);
 #endif
+
+	cmaj = cdevsw_lookup_major(&st_cdevsw);
+	bmaj = bdevsw_lookup_major(&st_bdevsw);
+	unit = device_unit(self) * 16;
+
+	/* raw device files */
+	device_register_name(makedev(cmaj, unit), self, true,
+	    DEV_OTHER, "rst%d", device_unit(self));
+	device_register_name(makedev(cmaj, unit + 1), self, true,
+	    DEV_OTHER, "nrst%d", device_unit(self));
+	device_register_name(makedev(cmaj, unit + 2), self, true,
+	    DEV_OTHER, "erst%d", device_unit(self));
+	device_register_name(makedev(cmaj, unit + 3), self, true,
+	    DEV_OTHER, "enrst%d", device_unit(self));
+
+	/* block devices */
+	device_register_name(makedev(bmaj, unit), self, false,
+	    DEV_OTHER, "st%d", device_unit(self));
+	device_register_name(makedev(bmaj, unit + 1), self, false,
+	    DEV_OTHER, "nst%d", device_unit(self));
+	device_register_name(makedev(bmaj, unit + 2), self, false,
+	    DEV_OTHER, "est%d", device_unit(self));
+	device_register_name(makedev(bmaj, unit + 3), self, false,
+	    DEV_OTHER, "enst%d", device_unit(self));
 }
 
 int

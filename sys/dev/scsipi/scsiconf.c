@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.245 2008/01/04 21:18:05 ad Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.245.6.1 2008/04/05 23:33:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245 2008/01/04 21:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245.6.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,6 +165,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = aux;
 	struct scsi_initq *scsi_initq;
+	int maj = cdevsw_lookup_major(&scsibus_cdevsw);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -195,6 +196,9 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 static void
@@ -288,6 +292,7 @@ scsibusdetach(struct device *self, int flags)
 	struct scsipi_xfer *xs;
 	int error;
 
+	device_unregister_all(self);
 	pmf_device_deregister(self);
 
 	/*

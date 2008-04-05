@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.14 2007/03/04 06:02:52 christos Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.14.36.1 2008/04/05 23:33:23 mjf Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.14 2007/03/04 06:02:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.14.36.1 2008/04/05 23:33:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,13 +41,25 @@ __KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.14 2007/03/04 06:02:52 christos Exp 
 
 void wsfontattach(int);
 
+static int wsfontopen(dev_t, int, int, struct lwp *);
+static int wsfontclose(dev_t, int, int, struct lwp *);
+static int wsfontioctl(dev_t, u_long, void *, int, struct lwp *);
+
+const struct cdevsw wsfont_cdevsw = {
+	wsfontopen, wsfontclose, noread, nowrite, wsfontioctl,
+	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
+};
+
 static int wsfont_isopen;
 
 void
 wsfontattach(int n)
 {
+	int maj = cdevsw_lookup_major(&wsfont_cdevsw);;
 
 	wsfont_init();
+
+	device_register_name(makedev(maj, 0), NULL, true, DEV_OTHER, "wsfont");
 }
 
 static int
@@ -105,8 +117,3 @@ wsfontioctl(dev_t dev, u_long cmd, void *data, int flag,
 		return (EINVAL);
 	}
 }
-
-const struct cdevsw wsfont_cdevsw = {
-	wsfontopen, wsfontclose, noread, nowrite, wsfontioctl,
-	    nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
-};

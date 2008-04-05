@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.68 2007/12/05 07:06:51 ad Exp $	*/
+/*	$NetBSD: iop.c,v 1.68.12.1 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.68 2007/12/05 07:06:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.68.12.1 2008/04/05 23:33:21 mjf Exp $");
 
 #include "iop.h"
 
@@ -282,9 +282,10 @@ void
 iop_init(struct iop_softc *sc, const char *intrstr)
 {
 	struct iop_msg *im;
-	int rv, i, j, state, nsegs;
+	int rv, i, j, state, nsegs, maj;
 	u_int32_t mask;
 	char ident[64];
+	device_t dev = &sc->sc_dv;
 
 	state = 0;
 
@@ -447,6 +448,10 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	    le32toh(sc->sc_status.maxinboundmframes),
 	    sc->sc_maxob, le32toh(sc->sc_status.maxoutboundmframes));
 #endif
+
+	maj = cdevsw_lookup_major(&iop_cdevsw);
+	device_register_name(makedev(maj, device_unit(dev)), dev, true,
+	     DEV_OTHER, device_xname(dev));
 
 	return;
 

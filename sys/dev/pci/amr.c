@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.46 2007/10/19 12:00:39 ad Exp $	*/
+/*	$NetBSD: amr.c,v 1.46.16.1 2008/04/05 23:33:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.46 2007/10/19 12:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.46.16.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,6 +276,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	int rseg, i, j, size, rv, memreg, ioreg;
 	struct amr_ccb *ac;
 	int locs[AMRCF_NLOCS];
+	int unit, major;
 
 	aprint_naive(": RAID controller\n");
 
@@ -499,6 +500,11 @@ amr_attach(struct device *parent, struct device *self, void *aux)
  		else
  			amr->amr_flags |= AMRF_THREAD;
 	}
+
+	major = cdevsw_lookup_major(&amr_cdevsw);
+	unit = device_unit(self);
+	device_register_name(makedev(major, unit), self, true, 
+	    DEV_DISK, device_xname(self));
 }
 
 /*

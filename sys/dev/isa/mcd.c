@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.103 2007/12/05 07:58:30 ad Exp $	*/
+/*	$NetBSD: mcd.c,v 1.103.12.1 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.103 2007/12/05 07:58:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.103.12.1 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,6 +242,7 @@ mcdattach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	struct mcd_mbox mbx;
+	int cmaj, bmaj, unit;
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, MCD_NPORT, 0, &ioh)) {
@@ -286,6 +287,22 @@ mcdattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, mcdintr, sc);
+	
+	cmaj = cdevsw_lookup_major(&mcd_cdevsw);
+	bmaj = bdevsw_lookup_major(&mcd_bdevsw);
+	unit = device_unit(self);
+
+	/* raw devices */
+	device_register_name(MAKEDISKDEV(cmaj, unit, 0), self, true,
+	    DEV_DISK, "r%sa", device_xname(self));
+	device_register_name(MAKEDISKDEV(cmaj, unit, 3), self, true,
+	    DEV_DISK, "r%sd", device_xname(self));
+
+	/* block devices */
+	device_register_name(MAKEDISKDEV(bmaj, unit, 0), self, false,
+	    DEV_DISK, "%sa", device_xname(self));
+	device_register_name(MAKEDISKDEV(bmaj, unit, 3), self, false,
+	    DEV_DISK, "%sd", device_xname(self));
 }
 
 int

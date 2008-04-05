@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.127.6.1 2008/04/03 12:42:36 mjf Exp $	*/
+/*	$NetBSD: ccd.c,v 1.127.6.2 2008/04/05 23:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.127.6.1 2008/04/03 12:42:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.127.6.2 2008/04/05 23:33:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ void
 ccdattach(int num)
 {
 	struct ccd_softc *cs;
-	int i;
+	int i, j, cmaj, bmaj;
 
 	if (num <= 0) {
 #ifdef DIAGNOSTIC
@@ -257,13 +257,23 @@ ccdattach(int num)
 	pool_init(&ccd_cbufpool, sizeof(struct ccdbuf), 0,
 	    0, 0, "ccdpl", NULL, IPL_BIO);
 
+	bmaj = bdevsw_lookup_major(&ccd_bdevsw);
+	cmaj = cdevsw_lookup_major(&ccd_cdevsw);
+
 	/* Initialize per-softc structures. */
 	for (i = 0; i < num; i++) {
 		cs = &ccd_softc[i];
 		snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d", i);
 		mutex_init(&cs->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 		disk_init(&cs->sc_dkdev, cs->sc_xname, NULL); /* XXX */
+		for (j = 0; j < MAXPARTITIONS; j++) {
+			device_register_name(MAKEDISKDEV(bmaj, i, j),
+			    NULL, false, DEV_DISK, "ccd%d%c", i, 'a' + j);
+			device_register_name(MAKEDISKDEV(cmaj, i, j),
+			    NULL, false, DEV_DISK, "rccd%d%c", i, 'a' + j);
+		}
 	}
+
 }
 
 static int

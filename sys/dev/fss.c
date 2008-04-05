@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.43.6.1 2008/04/03 12:42:36 mjf Exp $	*/
+/*	$NetBSD: fss.c,v 1.43.6.2 2008/04/05 23:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.1 2008/04/03 12:42:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.2 2008/04/05 23:33:20 mjf Exp $");
 
 #include "fss.h"
 
@@ -156,8 +156,11 @@ const struct cdevsw fss_cdevsw = {
 void
 fssattach(int num)
 {
-	int i;
+	int i, cmaj, bmaj;
 	struct fss_softc *sc;
+
+	bmaj = bdevsw_lookup_major(&fss_bdevsw);
+	cmaj = cdevsw_lookup_major(&fss_cdevsw);
 
 	for (i = 0; i < NFSS; i++) {
 		sc = &fss_softc[i];
@@ -166,6 +169,11 @@ fssattach(int num)
 		simple_lock_init(&sc->sc_slock);
 		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
+
+		device_register_name(makedev(cmaj, i), NULL, true,
+		    DEV_OTHER, "rfss%d", i);
+		device_register_name(makedev(bmaj, i), NULL, false,
+		    DEV_OTHER, "fss%d", i);
 	}
 }
 

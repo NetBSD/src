@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.34.6.1 2008/04/03 12:43:10 mjf Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.34.6.2 2008/04/05 23:33:23 mjf Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.34.6.1 2008/04/03 12:43:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.34.6.2 2008/04/05 23:33:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -883,6 +883,8 @@ void	cryptoattach(int);
 void
 cryptoattach(int num)
 {
+	int maj = cdevsw_lookup_major(&crypto_cdevsw);
+
 	pool_init(&fcrpl, sizeof(struct fcrypt), 0, 0, 0, "fcrpl",
 		  NULL, IPL_NET);	/* XXX IPL_NET ("splcrypto") */
 	pool_init(&csepl, sizeof(struct csession), 0, 0, 0, "csepl",
@@ -897,4 +899,6 @@ cryptoattach(int num)
 	 */
 	pool_prime(&fcrpl, 64);
 	pool_prime(&csepl, 64 * 5);
+
+	device_register_name(makedev(maj, 0), NULL, true, DEV_OTHER, "crypto");
 }

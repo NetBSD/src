@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.38.6.1 2008/04/03 12:43:07 mjf Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.38.6.2 2008/04/05 23:33:23 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.1 2008/04/03 12:43:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.2 2008/04/05 23:33:23 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -252,7 +252,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	char enaddrstr[3 * ETHER_ADDR_LEN];
 	struct timeval tv;
 	uint32_t ui;
-	int error;
+	int error, maj;
 
 	sc->sc_dev = self;
 
@@ -348,6 +348,10 @@ tap_attach(device_t parent, device_t self, void *aux)
 	 */
 	mutex_init(&sc->sc_rdlock, MUTEX_DEFAULT, IPL_NONE);
 	simple_lock_init(&sc->sc_kqlock);
+
+	maj = cdevsw_lookup_major(&tap_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 /*
@@ -360,6 +364,8 @@ tap_detach(device_t self, int flags)
 	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int error, s;
+
+	device_unregister_all(self);
 
 	sc->sc_flags |= TAP_GOING;
 	s = splnet();

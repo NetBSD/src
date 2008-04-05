@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.14.6.1 2008/04/03 12:43:01 mjf Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.14.6.2 2008/04/05 23:33:23 mjf Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.14.6.1 2008/04/03 12:43:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.14.6.2 2008/04/05 23:33:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,6 +236,8 @@ drvctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *p)
 void
 drvctlattach(int arg)
 {
+	int maj = cdevsw_lookup_major(&drvctl_cdevsw);
+	device_register_name(makedev(maj, 0), NULL, true, DEV_OTHER, "drvctl");
 }
 
 /*****************************************************************************

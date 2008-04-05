@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.25.6.1 2008/04/03 12:42:36 mjf Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.25.6.2 2008/04/05 23:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.25.6.1 2008/04/03 12:42:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.25.6.2 2008/04/05 23:33:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,7 +82,8 @@ const struct cdevsw kttcp_cdevsw = {
 void
 kttcpattach(int count)
 {
-	/* Do nothing. */
+	int maj = cdevsw_lookup_major(&kttcp_cdevsw);
+	device_register_name(makedev(maj, 0), NULL, true, DEV_OTHER, "kttcp");
 }
 
 int

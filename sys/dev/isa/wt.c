@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.78 2007/10/19 12:00:24 ad Exp $	*/
+/*	$NetBSD: wt.c,v 1.78.16.1 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.78 2007/10/19 12:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.78.16.1 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,7 @@ wtattach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	bus_size_t maxsize;
+	int cmaj, bmaj;
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AV_NPORT, 0, &ioh)) {
@@ -327,6 +328,37 @@ ok:
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, wtintr, sc);
+
+	bmaj = bdevsw_lookup_major(&wt_bdevsw);
+	cmaj = cdevsw_lookup_major(&wt_cdevsw);
+
+	/* raw devices */
+	device_register_name(makedev(cmaj, 0), self, true,
+	    DEV_OTHER, "rwt0");
+	device_register_name(makedev(cmaj, 4), self, true,
+	    DEV_OTHER, "nrwt0");
+	device_register_name(makedev(cmaj, 8), self, true,
+	    DEV_OTHER, "rwt8");
+	device_register_name(makedev(cmaj, 12), self, true,
+	    DEV_OTHER, "nrwt8");
+	device_register_name(makedev(cmaj, 16), self, true,
+	    DEV_OTHER, "rwt16");
+	device_register_name(makedev(cmaj, 20), self, true,
+	    DEV_OTHER, "nrwt16");
+
+	/* block devices */
+	device_register_name(makedev(bmaj, 0), self, false,
+	    DEV_OTHER, "wt0");
+	device_register_name(makedev(bmaj, 4), self, false,
+	    DEV_OTHER, "nwt0");
+	device_register_name(makedev(bmaj, 8), self, false,
+	    DEV_OTHER, "wt8");
+	device_register_name(makedev(bmaj, 12), self, false,
+	    DEV_OTHER, "nwt8");
+	device_register_name(makedev(bmaj, 16), self, false,
+	    DEV_OTHER, "wt16");
+	device_register_name(makedev(bmaj, 20), self, false,
+	    DEV_OTHER, "nwt16");
 }
 
 static int

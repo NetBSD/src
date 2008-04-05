@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.20.16.1 2008/04/03 12:42:54 mjf Exp $ */
+/* $NetBSD: lpt.c,v 1.20.16.2 2008/04/05 23:33:22 mjf Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.20.16.1 2008/04/03 12:42:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.20.16.2 2008/04/05 23:33:22 mjf Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -139,6 +139,7 @@ lpt_attach(device_t parent, device_t self, void *aux)
 	struct ppbus_attach_args * args = aux;
 	char buf[64];
 	int error;
+	int maj;
 
 	error = lpt_request_ppbus(sc, 0);
 	if(error) {
@@ -184,6 +185,10 @@ lpt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_flags = LPT_PRIME;
 
 	lpt_release_ppbus(sc, 0);
+
+	maj = cdevsw_lookup_major(&lpt_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));	
 }
 
 static int

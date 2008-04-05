@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.13 2008/01/04 21:17:48 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.13.6.1 2008/04/05 23:33:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.13 2008/01/04 21:17:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.13.6.1 2008/04/05 23:33:20 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -128,10 +128,13 @@ const struct cdevsw lockstat_cdevsw = {
 void
 lockstatattach(int nunits)
 {
+	int maj = cdevsw_lookup_major(&lockstat_cdevsw);
 
 	(void)nunits;
 
 	__cpu_simple_lock_init(&lockstat_lock);
+
+	device_register_name(makedev(maj, 0), NULL, true, DEV_OTHER, "lockstat");
 }
 
 /*

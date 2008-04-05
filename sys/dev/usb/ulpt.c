@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.79 2008/01/08 00:58:09 gdt Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.79.6.1 2008/04/05 23:33:23 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.79 2008/01/08 00:58:09 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.79.6.1 2008/04/05 23:33:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,7 @@ void ieee1284_print_id(char *);
 
 #define	ULPTUNIT(s)	(minor(s) & 0x1f)
 #define	ULPTFLAGS(s)	(minor(s) & 0xe0)
+#define ULPTRESET(s)	((s) + 64)
 
 
 USB_DECLARE_DRIVER(ulpt);
@@ -231,7 +232,7 @@ USB_ATTACH(ulpt)
 	char *devinfop;
 	usb_endpoint_descriptor_t *ed;
 	u_int8_t epcount;
-	int i, altno;
+	int i, altno, maj;
 	usbd_desc_iter_t iter;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
@@ -359,6 +360,12 @@ USB_ATTACH(ulpt)
 	DPRINTFN(1, ("ulpt_attach: sc=%p in=%d out=%d\n",
 		     sc, sc->sc_out, sc->sc_in));
 
+	maj = cdevsw_lookup_major(&ulpt_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, "ulpt%d", device_unit(self));
+	device_register_name(makedev(maj, ULPTRESET(device_unit(self))),
+	    self, true, DEV_OTHER, "ulpn%d", device_unit(self));
+
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -391,6 +398,8 @@ USB_DETACH(ulpt)
 #endif
 
 	DPRINTFN(1, ("ulpt_detach: sc=%p\n", sc));
+
+	device_unregister_all(self);
 
 	sc->sc_dying = 1;
 	if (sc->sc_out_pipe != NULL)
