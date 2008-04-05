@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.33 2007/10/19 12:01:04 ad Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.34 2008/04/05 21:31:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.33 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.34 2008/04/05 21:31:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ esp_pcmcia_attach(struct device *parent, struct device *self,
 
 	error = pcmcia_function_configure(pf, esp_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -180,7 +180,7 @@ esp_pcmcia_attach(struct device *parent, struct device *self,
 	esc->sc_ioh = cfe->iospace[0].handle.ioh;
 	esp_pcmcia_init(esc);
 
-	printf("%s", self->dv_xname);
+	printf("%s", device_xname(self));
 
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
@@ -351,7 +351,7 @@ esp_pcmcia_dma_intr(sc)
 	int	cnt;
 
 	if (esc->sc_active == 0) {
-		printf("%s: dma_intr--inactive DMA\n", sc->sc_dev.dv_xname);
+		printf("%s: dma_intr--inactive DMA\n", device_xname(&sc->sc_dev));
 		return -1;
 	}
 
@@ -363,7 +363,7 @@ esp_pcmcia_dma_intr(sc)
 	cnt = *esc->sc_pdmalen;
 	if (*esc->sc_pdmalen == 0) {
 		printf("%s: data interrupt, but no count left\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 	}
 
 	p = *esc->sc_dmaaddr;

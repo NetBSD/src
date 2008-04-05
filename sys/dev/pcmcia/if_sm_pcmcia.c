@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.49 2007/10/19 12:01:05 ad Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.50 2008/04/05 21:31:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.49 2007/10/19 12:01:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.50 2008/04/05 21:31:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ sm_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	error = pcmcia_function_configure(pa->pf, sm_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -178,8 +178,7 @@ sm_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		if (!sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[3], enaddr) &&
 		    !sm_pcmcia_ascii_enaddr(pa->pf->sc->card.cis1_info[2], enaddr))
-			aprint_error("%s: unable to get Ethernet address\n",
-			    self->dv_xname);
+			aprint_error_dev(self, "unable to get Ethernet address\n");
 	}
 
 	/* Perform generic intialization. */
