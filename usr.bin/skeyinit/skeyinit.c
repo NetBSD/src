@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.27 2005/09/20 15:48:17 he Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.28 2008/04/05 04:02:06 lukem Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -17,7 +17,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: skeyinit.c,v 1.27 2005/09/20 15:48:17 he Exp $");
+__RCSID("$NetBSD: skeyinit.c,v 1.28 2008/04/05 04:02:06 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -208,8 +208,8 @@ int main(int argc, char **argv)
 		break;
 	}
 	
-	if(n==0)
-		n = 99;
+	if (n==0)
+		n = 100;
 
 	/* Set hash type if asked to */
 	if (ht) {
