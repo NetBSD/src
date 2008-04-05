@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.25 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.26 2008/04/05 22:04:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.25 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.26 2008/04/05 22:04:36 cegger Exp $");
 
 #include "rnd.h"
 
@@ -182,8 +182,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 	    ata_raid_type_name(aai->aai_type), level);
 
 	if (ld->sc_start == NULL) {
-		aprint_error("%s: unsupported array type\n",
-		    ld->sc_dv.dv_xname);
+		aprint_error_dev(&ld->sc_dv, "unsupported array type\n");
 		return;
 	}
 
@@ -202,7 +201,7 @@ ld_ataraid_attach(struct device *parent, struct device *self,
 		int bmajor, error;
 		dev_t dev;
 
-		bmajor = devsw_name2blk(adi->adi_dev->dv_xname, NULL, 0);
+		bmajor = devsw_name2blk(device_xname(adi->adi_dev), NULL, 0);
 		dev = MAKEDISKDEV(bmajor, device_unit(adi->adi_dev), RAW_PART);
 		error = bdevvp(dev, &vp);
 		if (error)
@@ -475,8 +474,8 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		adi->adi_status &= ~ADI_S_ONLINE;
 
 		printf("%s: error %d on component %d (%s)\n",
-		    sc->sc_ld.sc_dv.dv_xname, bp->b_error, cbp->cb_comp,
-		    adi->adi_dev->dv_xname);
+		    device_xname(&sc->sc_ld.sc_dv), bp->b_error, cbp->cb_comp,
+		    device_xname(adi->adi_dev));
 
 		/*
 		 * If we didn't see an error yet and we are reading
