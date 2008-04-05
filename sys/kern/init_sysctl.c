@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.130 2008/04/04 20:13:18 cegger Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.131 2008/04/05 14:03:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.130 2008/04/04 20:13:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.131 2008/04/05 14:03:16 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2987,7 +2987,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 		ki->p_holdcnt = l->l_holdcnt;
 		ki->p_priority = lwp_eprio(l);
 		ki->p_usrpri = l->l_priority;
-		if (l->l_wmesg)
+		if (l->l_wchan)
 			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
 		ki->p_wchan = PTRTOUINT64(l->l_wchan);
 		lwp_unlock(l);
@@ -3057,6 +3057,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	struct proc *p = l->l_proc;
 	struct timeval tv;
 
+	KASSERT(lwp_locked(l, NULL));
+
 	kl->l_forw = 0;
 	kl->l_back = 0;
 	kl->l_laddr = PTRTOUINT64(l);
@@ -3074,7 +3076,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_holdcnt = l->l_holdcnt;
 	kl->l_priority = lwp_eprio(l);
 	kl->l_usrpri = l->l_priority;
-	if (l->l_wmesg)
+	if (l->l_wchan)
 		strncpy(kl->l_wmesg, l->l_wmesg, sizeof(kl->l_wmesg));
 	kl->l_wchan = PTRTOUINT64(l->l_wchan);
 	kl->l_cpuid = l->l_cpu->ci_cpuid;
@@ -3124,7 +3126,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 		mutex_enter(&p->p_smutex);
 		l = proc_representative_lwp(p, NULL, 1);
 		lwp_lock(l);
-		if (l->l_wmesg)
+		if (l->l_wchan)
 			strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
 		lwp_unlock(l);
 		mutex_exit(&p->p_smutex);

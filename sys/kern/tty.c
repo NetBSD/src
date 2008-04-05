@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.213 2008/03/01 14:16:51 rmind Exp $	*/
+/*	$NetBSD: tty.c,v 1.214 2008/04/05 14:03:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.213 2008/03/01 14:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.214 2008/04/05 14:03:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2342,12 +2342,17 @@ ttyinfo(struct tty *tp, int fromsig)
 
 	ttyprintf_nolock(tp, " cmd: %s %d [", pick->p_comm, pick->p_pid);
 	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
-	    ttyprintf_nolock(tp, "%s%s",
-	    l->l_stat == LSONPROC ? "running" :
-	    l->l_stat == LSRUN ? "runnable" :
-	    l->l_wmesg ? l->l_wmesg : "iowait",
-		(LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
-	    pctcpu += l->l_pctcpu;
+		char lmsg[16];
+
+		lwp_lock(l);
+		snprintf(lmsg, sizeof(lmsg), "%s%s",
+		    l->l_stat == LSONPROC ? "running" :
+		    l->l_stat == LSRUN ? "runnable" :
+		    l->l_wchan ? l->l_wmesg : "iowait",
+		    (LIST_NEXT(l, l_sibling) != NULL) ? " " : "] ");
+		lwp_unlock(l);
+		ttyprintf_nolock(tp, "%s", lmsg);
+		pctcpu += l->l_pctcpu;
 	}
 	pctcpu += pick->p_pctcpu;
 
