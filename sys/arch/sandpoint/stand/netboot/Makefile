@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.6 2007/12/12 04:17:49 nisimura Exp $
+#	$NetBSD: Makefile,v 1.7 2008/04/05 07:33:00 tsutsui Exp $
 
 S=		${.CURDIR}/../../../..
 
 PROG=		netboot
 SRCS=		entry.S main.c pci.c devopen.c dev_net.c nif.c \
 		fxp.c tlp.c pcn.c sip.c nvt.c rge.c vge.c wm.c printf.c
-CLEANFILES+=	vers.c ${PROG} ${PROG}.bin
+CLEANFILES+=	vers.c vers.o ${PROG} ${PROG}.bin
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DCONSNAME=\"com\" -DCONSPORT=0x3f8 -DCONSSPEED=115200
 #CPPFLAGS+=	-DCONSNAME=\"eumb\" -DCONSPORT=0x4500 -DCONSSPEED=115200
 #CPPFLAGS+=	-DSTART_DDB_SESSION
-CPPFLAGS+=	-Wall -nostdinc -I. -I${S}
+CPPFLAGS+=	-Wall -nostdinc -I. -I${.OBJDIR} -I${S}
 DBG=		-Os
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
@@ -27,10 +27,13 @@ BINMODE=	444
 RELOC=		1000000
 ENTRY=		_start
 
+
+.if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
-	@[ -h machine ] || ln -s ../../../${MACHINE}/include machine
-	@[ -h powerpc ] || ln -s ../../../powerpc/include powerpc
-.NOPATH: machine arm
+	@[ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine
+	@[ -h powerpc ] || ln -s ${S}/arch/powerpc/include powerpc
+.NOPATH: machine powerpc
+.endif
 CLEANFILES+= machine powerpc
 
 ### find out what to use for libkern
@@ -50,10 +53,15 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 LIBSA=		${SALIB}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${HOST_SH} ./newvers.sh ${.CURDIR}/version
+	${HOST_SH} ${.CURDIR}/newvers.sh ${.CURDIR}/version
 	${CC} -c vers.c
 	${LD} -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG} \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBKERN}
 	${OBJCOPY} -S -O binary ${.TARGET} ${.TARGET}.bin
 
 .include <bsd.prog.mk>
+
+cleandir distclean: cleanlibdir
+
+cleanlibdir:
+	-rm -rf lib
