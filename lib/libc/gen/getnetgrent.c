@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.39 2007/02/07 19:12:44 oster Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.40 2008/04/05 08:01:54 rtr Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.39 2007/02/07 19:12:44 oster Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.40 2008/04/05 08:01:54 rtr Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -900,7 +900,7 @@ setnetgrent(const char *ng)
 		NS_NULL_CB
 	};
 
-	(void ) nsdispatch(NULL, dtab, NSDB_NETGROUP, "setnetgrent",
+	(void) nsdispatch(NULL, dtab, NSDB_NETGROUP, "setnetgrent",
 			   __nsdefaultnis, ng);
 }
 #else
