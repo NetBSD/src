@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.245 2008/01/04 21:18:05 ad Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.246 2008/04/05 15:47:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245 2008/01/04 21:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.246 2008/04/05 15:47:01 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_channel = chan;
-	chan->chan_name = sc->sc_dev.dv_xname;
+	chan->chan_name = device_xname(&sc->sc_dev);
 
 	aprint_naive(": SCSI bus\n");
 	aprint_normal(": %d target%s, %d lun%s per target\n",
@@ -191,8 +191,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	TAILQ_INSERT_TAIL(&scsi_initq_head, scsi_initq, scsi_initq);
         config_pending_incr();
 	if (scsipi_channel_init(chan)) {
-		aprint_error("%s: failed to init channel\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to init channel\n");
 		return;
 	}
 }
@@ -208,9 +207,9 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 #endif
 	if ((chan->chan_flags & SCSIPI_CHAN_NOSETTLE) == 0 &&
 	    SCSI_DELAY > 0) {
-		aprint_normal(
-		    "%s: waiting %d seconds for devices to settle...\n",
-		    sc->sc_dev.dv_xname, SCSI_DELAY);
+		aprint_normal_dev(&sc->sc_dev,
+		    "waiting %d seconds for devices to settle...\n",
+		    SCSI_DELAY);
 		/* ...an identifier we know no one will use... */
 		(void) tsleep(scsibus_config, PRIBIO,
 		    "scsidly", SCSI_DELAY * hz);
@@ -751,9 +750,9 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	periph = scsipi_alloc_periph(M_NOWAIT);
 	if (periph == NULL) {
 #ifdef	DIAGNOSTIC
-		aprint_error(
-		    "%s: cannot allocate periph for target %d lun %d\n",
-		    sc->sc_dev.dv_xname, target, lun);
+		aprint_error_dev(&sc->sc_dev,
+		    "cannot allocate periph for target %d lun %d\n",
+		    target, lun);
 #endif
 		return (ENOMEM);
 	}
@@ -961,7 +960,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		chld = config_attach_loc(&sc->sc_dev, cf, locs, &sa,
 					 scsibusprint);
 	} else {
-		scsibusprint(&sa, sc->sc_dev.dv_xname);
+		scsibusprint(&sa, device_xname(&sc->sc_dev));
 		aprint_normal(" not configured\n");
 		goto bad;
 	}
