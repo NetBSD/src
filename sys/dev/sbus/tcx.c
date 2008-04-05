@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.22 2007/10/19 12:01:12 ad Exp $ */
+/*	$NetBSD: tcx.c,v 1.23 2008/04/05 18:35:32 cegger Exp $ */
 
 /*
  *  Copyright (c) 1996,1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.22 2007/10/19 12:01:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.23 2008/04/05 18:35:32 cegger Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -262,7 +262,7 @@ tcxattach(parent, self, args)
 
 	if (sa->sa_nreg != TCX_NREG) {
 		printf("%s: only %d register sets\n",
-			self->dv_xname, sa->sa_nreg);
+			device_xname(self), sa->sa_nreg);
 		return;
 	}
 	bcopy(sa->sa_reg, sc->sc_physadr,
