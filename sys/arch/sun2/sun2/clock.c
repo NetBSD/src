@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2008/01/26 14:02:54 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2008/04/05 22:47:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13 2008/01/26 14:02:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.14 2008/04/05 22:47:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,5 +313,5 @@ clock_intr(struct clockframe cf)
 
 	idepth--;
 
-	LOCK_CAS_CHECK(&cf);
+	ATOMIC_CAS_CHECK(&cf);
 }
