@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.73 2008/04/04 21:18:34 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.74 2008/04/05 15:53:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.73 2008/04/04 21:18:34 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.74 2008/04/05 15:53:28 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1903,9 +1903,7 @@ rl_filename_completion_function (const char *text, int state)
 void
 rl_forced_update_display(void)
 {
-	re_clear_display(e);
-	re_refresh(e);
-	term__flush();
+	el_set(e, EL_REFRESH);
 }
 
 int
