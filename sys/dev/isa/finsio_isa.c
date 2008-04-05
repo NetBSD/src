@@ -1,5 +1,5 @@
 /*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
-/*	$NetBSD: finsio_isa.c,v 1.2 2008/04/03 23:16:23 xtraeme Exp $	*/
+/*	$NetBSD: finsio_isa.c,v 1.3 2008/04/05 18:32:14 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2008 Juan Romero Pardines
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.2 2008/04/03 23:16:23 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.3 2008/04/05 18:32:14 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,7 @@ struct finsio_sensor {
 
 static int 	finsio_isa_match(device_t, cfdata_t, void *);
 static void 	finsio_isa_attach(device_t, device_t, void *);
+static int 	finsio_isa_detach(device_t, int);
 
 static void	finsio_enter(bus_space_tag_t, bus_space_handle_t);
 static void 	finsio_exit(bus_space_tag_t, bus_space_handle_t);
@@ -134,7 +135,7 @@ static void 	finsio_refresh_temp(struct finsio_softc *, envsys_data_t *);
 static void 	finsio_refresh_fanrpm(struct finsio_softc *, envsys_data_t *);
 
 CFATTACH_DECL_NEW(finsio, sizeof(struct finsio_softc),
-    finsio_isa_match, finsio_isa_attach, NULL, NULL);
+    finsio_isa_match, finsio_isa_attach, finsio_isa_detach, NULL);
 
 /* Sensors available in F71805/F71806 */
 static struct finsio_sensor f71805_sensors[] = {
@@ -564,6 +565,16 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 fail:
 	sysmon_envsys_destroy(sc->sc_sme);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+}
+
+static int
+finsio_isa_detach(device_t self, int flags)
+{
+	struct finsio_softc *sc = device_private(self);
+
+	sysmon_envsys_unregister(sc->sc_sme);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
+	return 0;
 }
 
 /* Enter Super I/O configuration mode */
