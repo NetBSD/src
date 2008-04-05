@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.151 2008/03/28 17:14:46 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.152 2008/04/05 16:35:35 cegger Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.151 2008/03/28 17:14:46 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.152 2008/04/05 16:35:35 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1488,7 +1488,7 @@ void
 usb_disconnect_port(struct usbd_port *up, device_ptr_t parent)
 {
 	usbd_device_handle dev = up->device;
-	char *hubname = USBDEVPTRNAME(parent);
+	const char *hubname = USBDEVPTRNAME(parent);
 	int i;
 
 	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n",

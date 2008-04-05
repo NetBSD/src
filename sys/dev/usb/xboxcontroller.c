@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.7 2008/02/18 05:24:24 dyoung Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.8 2008/04/05 16:35:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.7 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.8 2008/04/05 16:35:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ USB_ATTACH(xboxcontroller)
 
 	ed = usbd_interface2endpoint_descriptor(sc->sc_iface, 0);
 	if (ed == NULL) {
-		aprint_error("%s: couldn't get ep 0\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(&sc->sc_dev, "couldn't get ep 0\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
