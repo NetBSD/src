@@ -1,4 +1,4 @@
-/* $NetBSD: kern_cctr.c,v 1.4 2008/03/10 22:20:14 martin Exp $ */
+/* $NetBSD: kern_cctr.c,v 1.5 2008/04/05 18:17:36 tsutsui Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.4 2008/03/10 22:20:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.5 2008/04/05 18:17:36 tsutsui Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.4 2008/03/10 22:20:14 martin Exp $")
 
 /* XXX make cc_timecounter.tc_frequency settable by sysctl() */
 
-static timecounter_get_t cc_get_timecount;
 static timecounter_pps_t cc_calibrate;
 
 void cc_calibrate_cpu(struct cpu_info *);
@@ -126,8 +125,11 @@ static struct timecounter cc_timecounter = {
  * initialize cycle counter based timecounter
  */
 struct timecounter *
-cc_init(uint64_t freq, const char *name, int quality)
+cc_init(timecounter_get_t getcc, uint64_t freq, const char *name, int quality)
 {
+
+	if (getcc != NULL)
+		cc_timecounter.tc_get_timecount = getcc;
 
 	cc_timecounter.tc_frequency = freq;
 	cc_timecounter.tc_name = name;
@@ -140,7 +142,7 @@ cc_init(uint64_t freq, const char *name, int quality)
 /*
  * pick up tick count scaled to reference tick count
  */
-static u_int
+u_int
 cc_get_timecount(struct timecounter *tc)
 {
 	struct cpu_info *ci = curcpu();
