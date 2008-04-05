@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.39 2007/11/19 18:51:49 ad Exp $	*/
+/*	$NetBSD: dl.c,v 1.40 2008/04/05 19:16:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.39 2007/11/19 18:51:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.40 2008/04/05 19:16:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,9 +260,9 @@ dl_attach (struct device *parent, struct device *self, void *aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4,
 		dlrint, sc, &sc->sc_rintrcnt);
 	evcnt_attach_dynamic(&sc->sc_rintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
-		sc->sc_dev.dv_xname, "rintr");
+		device_xname(&sc->sc_dev), "rintr");
 	evcnt_attach_dynamic(&sc->sc_tintrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
-		sc->sc_dev.dv_xname, "tintr");
+		device_xname(&sc->sc_dev), "tintr");
 
 	printf("\n");
 }
@@ -293,7 +293,7 @@ dlrint(void *arg)
 			 * else where we can afford the time.
 			 */
 			log(LOG_WARNING, "%s: rx overrun\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 		}
 		if (c & DL_RBUF_FRAMING_ERR)
 			cc |= TTY_FE;
@@ -304,7 +304,7 @@ dlrint(void *arg)
 #if defined(DIAGNOSTIC)
 	} else {
 		log(LOG_WARNING, "%s: stray rx interrupt\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #endif
 	}
 }
