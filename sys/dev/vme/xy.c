@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.79 2008/04/05 16:06:12 cegger Exp $	*/
+/*	$NetBSD: xy.c,v 1.80 2008/04/05 18:16:56 cegger Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.79 2008/04/05 16:06:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.80 2008/04/05 18:16:56 cegger Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -726,7 +726,8 @@ xyattach(parent, self, aux)
 	}
 
 	if (error != XY_ERR_AOK) {
-		aprint_error_dev(&xy->sc_dev, "\n%s: reading disk label failed: %s\n",
+		aprint_normal("\n");
+		aprint_error_dev(&xy->sc_dev, "reading disk label failed: %s\n",
 			xyc_e2str(error));
 		goto done;
 	}
@@ -1515,7 +1516,7 @@ xyc_startbuf(xycsc, xysc, bp)
 	error = bus_dmamap_load(xycsc->dmatag, iorq->dmamap,
 			bp->b_data, bp->b_bcount, 0, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(&sycsc->sc_dev, "warning: cannot load DMA map\n");
+		aprint_error_dev(&xycsc->sc_dev, "warning: cannot load DMA map\n");
 		return (XY_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
 	}
