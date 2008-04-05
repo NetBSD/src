@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.66 2007/10/17 21:05:39 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.67 2008/04/05 15:59:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.66 2007/10/17 21:05:39 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.67 2008/04/05 15:59:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ main(int argc, char **argv)
 	char *gname;
 #endif
 
+	(void)setprogname(argv[0]);
 	asme = asthem = fastlogin = 0;
 	gohome = 1;
 	shell = class = NULL;
