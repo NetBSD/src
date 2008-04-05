@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.56 2008/01/07 16:12:52 ad Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.57 2008/04/05 14:03:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.56 2008/01/07 16:12:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.57 2008/04/05 14:03:16 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -823,7 +823,7 @@ darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 		/* de->e_tpgid */
 		/* (ptr) de->e_tsess */
 	}
-	if (l->l_wmesg)
+	if (l->l_wchan && l->l_wmesg)
 		strlcpy(de->e_wmesg, l->l_wmesg, DARWIN_WMESGLEN);
 	de->e_xsize = 0;
 	de->e_xrssize = 0;
