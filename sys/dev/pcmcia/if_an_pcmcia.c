@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.33 2007/12/09 20:28:14 jmcneill Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.34 2008/04/05 21:31:23 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.33 2007/12/09 20:28:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.34 2008/04/05 21:31:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ an_pcmcia_attach(struct device  *parent, struct device *self,
 
 	error = pcmcia_function_configure(pa->pf, an_pcmcia_validate_config);
 	if (error) {
-		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		aprint_error_dev(self, "configure failed, error=%d\n",
 		    error);
 		return;
 	}
@@ -158,8 +158,7 @@ an_pcmcia_attach(struct device  *parent, struct device *self,
 
 	error = an_attach(sc);
 	if (error) {
-		aprint_error("%s: failed to attach controller\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "failed to attach controller\n");
 		goto fail2;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.153 2008/03/28 01:37:25 uwe Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.154 2008/04/05 21:31:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.153 2008/03/28 01:37:25 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.154 2008/04/05 21:31:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,7 +729,7 @@ found:
 	if (ne2000_attach(nsc, enaddr))
 		goto fail2;
 
-	psc->sc_powerhook = powerhook_establish(self->dv_xname,
+	psc->sc_powerhook = powerhook_establish(device_xname(self),
 	    ne2000_power, nsc);
 	if (psc->sc_powerhook == NULL)
 		aprint_error_dev(self,
