@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.15 2007/03/04 06:02:44 christos Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.16 2008/04/05 16:46:15 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.15 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.16 2008/04/05 16:46:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ bwtwoattach(sc, name, isconsole)
 			ovnam = "unknown";
 			break;
 		}
-		printf("%s: %s overlay plane\n", sc->sc_dev.dv_xname, ovnam);
+		printf("%s: %s overlay plane\n", device_xname(&sc->sc_dev), ovnam);
 	}
 
 	/*
