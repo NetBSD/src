@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.69 2007/08/31 22:02:58 dyoung Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.70 2008/04/05 13:49:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.69 2007/08/31 22:02:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.70 2008/04/05 13:49:36 cegger Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -119,10 +119,10 @@ nfs_boot_init(nd, lwp)
 	/*
 	 * Find the network interface.
 	 */
-	ifp = ifunit(root_device->dv_xname);
+	ifp = ifunit(device_xname(root_device));
 	if (ifp == NULL) {
 		printf("nfs_boot: '%s' not found\n",
-		       root_device->dv_xname);
+		       device_xname(root_device));
 		return (ENXIO);
 	}
 	nd->nd_ifp = ifp;
