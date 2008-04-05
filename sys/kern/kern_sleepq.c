@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.23 2008/03/28 20:48:36 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.24 2008/04/05 13:58:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.23 2008/03/28 20:48:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.24 2008/04/05 13:58:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -220,7 +220,7 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 {
 	lwp_t *l = curlwp;
 
-	KASSERT(mutex_owned(sq->sq_mutex));
+	KASSERT(lwp_locked(l, sq->sq_mutex));
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(l->l_wchan == NULL && l->l_sleepq == NULL);
 
@@ -320,6 +320,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 
 	for (l = TAILQ_FIRST(&sq->sq_queue); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
+		KASSERT(l->l_mutex == sq->sq_mutex);
 		next = TAILQ_NEXT(l, l_sleepchain);
 		if (l->l_wchan != wchan)
 			continue;
@@ -353,9 +354,8 @@ sleepq_unsleep(lwp_t *l, bool cleanup)
 	sleepq_t *sq = l->l_sleepq;
 	int swapin;
 
-	KASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, sq->sq_mutex));
 	KASSERT(l->l_wchan != NULL);
-	KASSERT(l->l_mutex == sq->sq_mutex);
 
 	swapin = sleepq_remove(sq, l);
 
