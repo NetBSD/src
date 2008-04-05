@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.11 2007/11/29 04:00:18 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.12 2008/04/05 06:46:39 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -185,9 +185,9 @@ tlp_init(unsigned tag, void *data)
 	txd->xd1 = htole32(T1_SET | T1_TER | sizeof(l->txstore));
 	txd->xd0 = htole32(T0_OWN);
 	p = (uint32_t *)l->txstore;
-	p[0] = en[1] << 8 | en[0];
-	p[1] = en[3] << 8 | en[2];
-	p[2] = en[5] << 8 | en[4];
+	p[0] = htole32(en[1] << 8 | en[0]);
+	p[1] = htole32(en[3] << 8 | en[2]);
+	p[2] = htole32(en[5] << 8 | en[4]);
 	for (i = 1; i < 16; i++)
 		memcpy(&p[3 * i], &p[0], 3 * sizeof(p[0]));
 
