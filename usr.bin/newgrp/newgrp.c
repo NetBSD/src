@@ -37,7 +37,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: newgrp.c,v 1.4 2007/10/17 21:07:49 christos Exp $");
+__RCSID("$NetBSD: newgrp.c,v 1.5 2008/04/05 15:59:39 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,6 +89,7 @@ main(int argc, char *argv[])
 		errx(EXIT_FAILURE, "%s: unknown login class", pwd->pw_class);
 #endif
 
+	(void)setprogname(argv[0]);
 	lflag = 0;
 	while ((c = getopt(argc, argv, "-l")) != -1) {
 		switch (c) {
