@@ -1,6 +1,6 @@
-/*	$NetBSD: perm.h,v 1.2 2000/10/04 19:24:59 mjl Exp $	*/
+/*	$NetBSD: perm.h,v 1.3 2008/04/05 16:26:57 christos Exp $	*/
 
-/* 
+/*
  *  perm.h -  header for at(1)
  *  Copyright (C) 1994  Thomas Koenig
  *
@@ -25,4 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int check_permission (void);
+#ifndef _PERM_H_
+#define _PERM_H_
+
+bool check_permission(void);
+
+#endif /* _PERM_H_ */
