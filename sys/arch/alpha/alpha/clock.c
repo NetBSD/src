@@ -1,4 +1,4 @@
-/* $NetBSD: clock.c,v 1.38 2007/10/17 19:52:54 garbled Exp $ */
+/* $NetBSD: clock.c,v 1.39 2008/04/05 18:17:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2007/10/17 19:52:54 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2008/04/05 18:17:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -140,7 +140,7 @@ cpu_initclocks(void)
 	 * Initialize PCC timecounter.
 	 */
         pcc_freq = cpu_frequency(curcpu());
-        cc_init(pcc_freq, "PCC", PCC_QUAL);
+        cc_init(NULL, pcc_freq, "PCC", PCC_QUAL);
 
 	/*
 	 * Get the clock started.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cctr.h,v 1.1 2007/07/21 11:47:08 tsutsui Exp $	*/
+/*	$NetBSD: cctr.h,v 1.2 2008/04/05 18:17:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #ifndef _SYS_CCTR_H_
 #define	_SYS_CCTR_H_
 
+#include <sys/timetc.h>
+
 /*
  * Variables used by cycle counter in kern_cctr.c.
  */
@@ -52,6 +54,7 @@ struct cctr_state {
 struct cpu_info;
 
 void cc_calibrate_cpu(struct cpu_info *);
-struct timecounter *cc_init(uint64_t, const char *, int);
+struct timecounter *cc_init(timecounter_get_t, uint64_t, const char *, int);
+u_int cc_get_timecount(struct timecounter *);
 
 #endif /* _SYS_CCTR_H_ */
