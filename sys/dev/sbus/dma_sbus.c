@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.29 2007/10/19 12:01:10 ad Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.30 2008/04/05 18:35:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.29 2007/10/19 12:01:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.30 2008/04/05 18:35:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ dmaattach_sbus(parent, self, aux)
 		if (sbus_bus_map(sa->sa_bustag,
 			sa->sa_slot, sa->sa_offset, sa->sa_size,
 			0, &sc->sc_regs) != 0) {
-			printf("%s: cannot map registers\n", self->dv_xname);
+			aprint_error_dev(self, "cannot map registers\n");
 			return;
 		}
 	}
@@ -213,7 +213,7 @@ dmaattach_sbus(parent, self, aux)
 
 	sbus_establish(&dsc->sc_sd, &sc->sc_dev);
 	if ((sbt = bus_space_tag_alloc(sc->sc_bustag, dsc)) == NULL) {
-		printf("%s: attach: out of memory\n", self->dv_xname);
+		aprint_error_dev(self, "attach: out of memory\n");
 		return;
 	}
 	sbt->sparc_intr_establish = dmabus_intr_establish;

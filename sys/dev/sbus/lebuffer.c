@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.26 2007/10/19 12:01:11 ad Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.27 2008/04/05 18:35:32 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.26 2007/10/19 12:01:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.27 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ lebufattach(parent, self, aux)
 
 	if (sbus_bus_map(bt, sa->sa_slot, sa->sa_offset, sa->sa_size,
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: attach: cannot map registers\n", self->dv_xname);
+		aprint_error_dev(self, "attach: cannot map registers\n");
 		return;
 	}
 

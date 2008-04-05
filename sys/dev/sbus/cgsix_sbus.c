@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.22 2007/10/19 12:01:10 ad Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.23 2008/04/05 18:35:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.22 2007/10/19 12:01:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.23 2008/04/05 18:35:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ cgsixattach(parent, self, aux)
 			 sa->sa_offset + CGSIX_BT_OFFSET,
 			 sizeof(*sc->sc_bt),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map brooktree registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map brooktree registers\n");
 		return;
 	}
 	sc->sc_bt = (struct bt_regs *)bus_space_vaddr(sa->sa_bustag, bh);
@@ -147,7 +147,7 @@ cgsixattach(parent, self, aux)
 			 sa->sa_offset + CGSIX_FHC_OFFSET,
 			 sizeof(*sc->sc_fhc),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map FHC registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map FHC registers\n");
 		return;
 	}
 	sc->sc_fhc = (int *)bus_space_vaddr(sa->sa_bustag, bh);
@@ -157,7 +157,7 @@ cgsixattach(parent, self, aux)
 			 sa->sa_offset + CGSIX_THC_OFFSET,
 			 sizeof(*sc->sc_thc),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map THC registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map THC registers\n");
 		return;
 	}
 	sc->sc_thc = (struct cg6_thc *)bus_space_vaddr(sa->sa_bustag, bh);
@@ -167,7 +167,7 @@ cgsixattach(parent, self, aux)
 			 sa->sa_offset + CGSIX_TEC_OFFSET,
 			 sizeof(*sc->sc_tec),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map TEC registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map TEC registers\n");
 		return;
 	}
 	sc->sc_tec = (struct cg6_tec_xxx *)bus_space_vaddr(sa->sa_bustag, bh);
@@ -177,7 +177,7 @@ cgsixattach(parent, self, aux)
 			 sa->sa_offset + CGSIX_FBC_OFFSET,
 			 sizeof(*sc->sc_fbc),
 			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map FBC registers\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map FBC registers\n");
 		return;
 	}
 	sc->sc_fbc = (struct cg6_fbc *)bus_space_vaddr(sa->sa_bustag, bh);
@@ -197,7 +197,7 @@ cgsixattach(parent, self, aux)
 			sa->sa_offset + CGSIX_RAM_OFFSET,
 			sc->sc_ramsize,
 			BUS_SPACE_MAP_LINEAR, &bh) != 0) {
-		printf("%s: cannot map pixels\n", self->dv_xname);
+		aprint_error_dev(self, "cannot map pixels\n");
 		return;
 	}
 	sc->sc_fb.fb_pixels = (void *)bus_space_vaddr(sa->sa_bustag, bh);

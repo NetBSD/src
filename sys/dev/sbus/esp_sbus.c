@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.42 2008/03/08 04:25:30 mjacob Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.43 2008/04/05 18:35:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.42 2008/03/08 04:25:30 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.43 2008/04/05 18:35:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ espattach_sbus(parent, self, aux)
 
 #ifdef ESP_SBUS_DEBUG
 	printf("%s: espattach_sbus: sc_id %d, freq %d\n",
-	       self->dv_xname, sc->sc_id, sc->sc_freq);
+	       device_xname(self), sc->sc_id, sc->sc_freq);
 #endif
 
 	if (strcmp("SUNW,fas", sa->sa_name) == 0) {
@@ -192,7 +192,7 @@ espattach_sbus(parent, self, aux)
 		 * fas has 2 register spaces: dma(lsi64854) and SCSI core (ncr53c9x)
 		 */
 		if (sa->sa_nreg != 2) {
-			printf("%s: %d register spaces\n", self->dv_xname, sa->sa_nreg);
+			printf("%s: %d register spaces\n", device_xname(self), sa->sa_nreg);
 			return;
 		}
 
@@ -203,8 +203,7 @@ espattach_sbus(parent, self, aux)
 		lsc = malloc(sizeof (struct lsi64854_softc), M_DEVBUF, M_NOWAIT);
 
 		if (lsc == NULL) {
-			printf("%s: out of memory (lsi64854_softc)\n",
-			       self->dv_xname);
+			aprint_error_dev(self, "out of memory (lsi64854_softc)\n");
 			return;
 		}
 		esc->sc_dma = lsc;
@@ -212,7 +211,7 @@ espattach_sbus(parent, self, aux)
 		lsc->sc_bustag = sa->sa_bustag;
 		lsc->sc_dmatag = sa->sa_dmatag;
 
-		bcopy(sc->sc_dev.dv_xname, lsc->sc_dev.dv_xname,
+		memcpy(lsc->sc_dev.dv_xname, device_xname(&sc->sc_dev),
 		      sizeof (lsc->sc_dev.dv_xname));
 
 		/* Map dma registers */
@@ -225,8 +224,7 @@ espattach_sbus(parent, self, aux)
 				sa->sa_reg[0].oa_base,
 				sa->sa_reg[0].oa_size,
 				0, &lsc->sc_regs) != 0) {
-				printf("%s: cannot map dma registers\n",
-					self->dv_xname);
+				aprint_error_dev(self, "cannot map dma registers\n");
 				return;
 			}
 		}
@@ -277,13 +275,14 @@ espattach_sbus(parent, self, aux)
 				0, &esc->sc_reg) != 0) {
 				printf("%s @ sbus: "
 					"cannot map scsi core registers\n",
-					self->dv_xname);
+					device_xname(self));
 				return;
 			}
 		}
 
 		if (sa->sa_nintr == 0) {
-			printf("\n%s: no interrupt property\n", self->dv_xname);
+			aprint_normal("\n");
+			aprint_error_dev(self, "no interrupt property\n");
 			return;
 		}
 
@@ -335,7 +334,7 @@ espattach_sbus(parent, self, aux)
 			sa->sa_slot, sa->sa_offset, sa->sa_size,
 			0, &esc->sc_reg) != 0) {
 			printf("%s @ sbus: cannot map registers\n",
-				self->dv_xname);
+				device_xname(self));
 			return;
 		}
 	}
@@ -345,7 +344,8 @@ espattach_sbus(parent, self, aux)
 		 * No interrupt properties: we quit; this might
 		 * happen on e.g. a Sparc X terminal.
 		 */
-		printf("\n%s: no interrupt property\n", self->dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(self, "no interrupt property\n");
 		return;
 	}
 
@@ -396,7 +396,7 @@ espattach_dma(parent, self, aux)
 			sa->sa_slot, sa->sa_offset, sa->sa_size,
 			0, &esc->sc_reg) != 0) {
 			printf("%s @ dma: cannot map registers\n",
-				self->dv_xname);
+				device_xname(self));
 			return;
 		}
 	}
@@ -406,7 +406,8 @@ espattach_dma(parent, self, aux)
 		 * No interrupt properties: we quit; this might
 		 * happen on e.g. a Sparc X terminal.
 		 */
-		printf("\n%s: no interrupt property\n", self->dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(self, "no interrupt property\n");
 		return;
 	}
 
@@ -534,7 +535,7 @@ espattach(esc, gluep)
 
 	/* register interrupt stats */
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "intr");
+	    device_xname(&sc->sc_dev), "intr");
 
 	/* Turn on target selection using the `dma' method */
 	if (sc->sc_rev != NCR_VARIANT_FAS366)
