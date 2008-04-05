@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.11 2007/06/26 15:22:24 cube Exp $ */
+/* $NetBSD: dkvar.h,v 1.12 2008/04/05 00:02:55 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ struct dk_intf {
  * Functions that are exported to the pseudo disk implementations:
  */
 
-void	dk_sc_init(struct dk_softc *, void *, char *);
+void	dk_sc_init(struct dk_softc *, void *, const char *);
 
 int	dk_open(struct dk_intf *, struct dk_softc *, dev_t,
 		int, int, struct lwp *);

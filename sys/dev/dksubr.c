@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.35 2008/03/21 21:54:59 ad Exp $ */
+/* $NetBSD: dksubr.c,v 1.36 2008/04/05 00:02:55 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.35 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.36 2008/04/05 00:02:55 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ int	dkdebug = 0;
 static void	dk_makedisklabel(struct dk_intf *, struct dk_softc *);
 
 void
-dk_sc_init(struct dk_softc *dksc, void *osc, char *xname)
+dk_sc_init(struct dk_softc *dksc, void *osc, const char *xname)
 {
 
 	memset(dksc, 0x0, sizeof(*dksc));
