@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.26 2008/03/26 18:09:17 matt Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.27 2008/04/05 22:04:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.26 2008/03/26 18:09:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.27 2008/04/05 22:04:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -198,8 +198,8 @@ ataraid_attach(device_t parent, device_t self,
 	 * We're a pseudo-device, so we get to announce our own
 	 * presence.
 	 */
-	aprint_normal("%s: found %u RAID volume%s\n",
-	    self->dv_xname, ataraid_array_info_count,
+	aprint_normal_dev(self, "found %u RAID volume%s\n",
+	    ataraid_array_info_count,
 	    ataraid_array_info_count == 1 ? "" : "s");
 
 	TAILQ_FOREACH(aai, &ataraid_array_info_list, aai_list) {
