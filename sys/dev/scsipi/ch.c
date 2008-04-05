@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.78.12.1 2008/04/03 12:42:56 mjf Exp $	*/
+/*	$NetBSD: ch.c,v 1.78.12.2 2008/04/05 23:33:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.78.12.1 2008/04/03 12:42:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.78.12.2 2008/04/05 23:33:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,7 @@ chattach(struct device *parent, struct device *self, void *aux)
 	struct ch_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
+	int maj;
 
 	selinit(&sc->sc_selq);
 
@@ -253,6 +254,10 @@ chattach(struct device *parent, struct device *self, void *aux)
 
 	/* Default the current picker. */
 	sc->sc_picker = sc->sc_firsts[CHET_MT];
+
+	maj = cdevsw_lookup_major(&ch_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 static int

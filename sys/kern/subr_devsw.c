@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.15.6.3 2008/04/03 12:43:03 mjf Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.15.6.4 2008/04/05 23:33:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.3 2008/04/03 12:43:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.4 2008/04/05 23:33:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1005,7 +1005,7 @@ device_unregister_name(dev_t dev, const char *fmt, ...)
 
 	mutex_enter(&dname_lock);
 	TAILQ_FOREACH(dn, &device_names, d_next) {
-		if (strcmp(dn->d_name, name) == 0)
+		if ((strcmp(dn->d_name, name) == 0) && (dn->d_gone == false))
 			break;
 	}
 
@@ -1016,6 +1016,23 @@ device_unregister_name(dev_t dev, const char *fmt, ...)
 
 	mutex_exit(&dname_lock);
 	return error;
+}
+
+/*
+ * Remove all device names for this device_t.
+ */
+int
+device_unregister_all(device_t dev)
+{
+	struct device_name *dn;
+
+	mutex_enter(&dname_lock);
+	TAILQ_FOREACH(dn, &device_names, d_next) {
+		if ((dn->d_devp == dev) && (dn->d_gone == false))
+			dn->d_gone = true;
+	}
+	mutex_exit(&dname_lock);
+	return 0;
 }
 
 struct device_name *

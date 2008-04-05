@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.17.36.1 2008/04/03 12:42:43 mjf Exp $	*/
+/*	$NetBSD: cir.c,v 1.17.36.2 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.1 2008/04/03 12:42:43 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.2 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,10 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 	printf("\n");
+
+	maj = cdevsw_lookup_major(&cir_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 int
@@ -127,6 +131,8 @@ cir_detach(struct device *self, int flags)
 {
 	struct cir_softc *sc = device_private(self);
 	int maj, mn;
+
+	device_unregister_all(self);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&cir_cdevsw);

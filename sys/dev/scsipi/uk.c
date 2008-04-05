@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.52 2007/03/04 06:02:44 christos Exp $	*/
+/*	$NetBSD: uk.c,v 1.52.36.1 2008/04/05 23:33:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.52 2007/03/04 06:02:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.52.36.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ ukattach(struct device *parent, struct device *self, void *aux)
 	struct uk_softc *uk = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
+	int maj;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ukattach: "));
 
@@ -113,6 +114,10 @@ ukattach(struct device *parent, struct device *self, void *aux)
 	periph->periph_dev = &uk->sc_dev;
 
 	printf("\n");
+
+	maj = cdevsw_lookup_major(&uk_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 static int
@@ -139,6 +144,8 @@ ukdetach(struct device *self, int flags)
 {
 	/*struct uk_softc *uk = device_private(self);*/
 	int cmaj, mn;
+
+	device_unregister_all(self);
 
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&uk_cdevsw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.96.6.1 2008/04/03 12:42:57 mjf Exp $	*/
+/*	$NetBSD: ugen.c,v 1.96.6.2 2008/04/05 23:33:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.96.6.1 2008/04/03 12:42:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.96.6.2 2008/04/05 23:33:23 mjf Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -230,7 +230,7 @@ USB_ATTACH(ugen)
 	usbd_device_handle udev;
 	char *devinfop;
 	usbd_status err;
-	int i, dir, conf;
+	int i, dir, conf, maj;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
@@ -281,6 +281,12 @@ USB_ATTACH(ugen)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	maj = cdevsw_lookup_major(&ugen_cdevsw);
+	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+		device_register_name(makedev(maj, device_unit(self)), self,
+	    	    true, DEV_OTHER, "%s.%2d", device_xname(self), i);
+	}
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -1017,6 +1023,8 @@ USB_DETACH(ugen)
 #elif defined(__FreeBSD__)
 	DPRINTF(("ugen_detach: sc=%p\n", sc));
 #endif
+
+	device_unregister_all(self);
 
 	sc->sc_dying = 1;
 	pmf_device_deregister(self);

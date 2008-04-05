@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.36 2007/10/19 12:00:52 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.36.16.1 2008/04/05 23:33:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.36 2007/10/19 12:00:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.36.16.1 2008/04/05 23:33:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,6 +290,7 @@ mly_attach(struct device *parent, struct device *self, void *aux)
 	int ior, memr, i, rv, state;
 	struct scsipi_adapter *adapt;
 	struct scsipi_channel *chan;
+	int maj;
 
 	mly = (struct mly_softc *)self;
 	pa = aux;
@@ -555,6 +556,10 @@ mly_attach(struct device *parent, struct device *self, void *aux)
  	if (rv != 0)
 		printf("%s: unable to create thread (%d)\n",
 		    mly->mly_dv.dv_xname, rv);
+	maj = cdevsw_lookup_major(&mly_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
+
 	return;
 
  bad:

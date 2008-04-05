@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.9 2007/08/04 11:03:00 ad Exp $
+# $NetBSD: std,v 1.9.22.1 2008/04/05 23:33:20 mjf Exp $
 #
 # standard MI 'options'
 #
@@ -24,4 +24,8 @@ options secmodel_bsd44	# Traditional 4.4BSD security model
 #
 options	SCHED_4BSD
 
+# device file system
+file-system	DEVFS
+
 pseudo-device	cpuctl
+pseudo-device	devfsctl

@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.23 2007/11/25 00:35:27 elad Exp $ */
+/*      $NetBSD: clockctl.c,v 1.23.14.1 2008/04/05 23:33:20 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.23 2007/11/25 00:35:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.23.14.1 2008/04/05 23:33:20 mjf Exp $");
 
 #include "opt_ntp.h"
 
@@ -64,7 +64,12 @@ const struct cdevsw clockctl_cdevsw = {
 void
 clockctlattach(int num)
 {
-	/* Nothing to set up before open is called */
+	int maj = cdevsw_lookup_major(&clockctl_cdevsw);
+
+	/* XXX: Would we ever require more than one clockctl? */
+	device_register_name(makedev(maj, 0), NULL, true,
+	    DEV_OTHER, "clockctl");
+
 	return;
 }
 

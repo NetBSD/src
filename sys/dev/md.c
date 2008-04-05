@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.51 2007/10/08 16:41:10 ad Exp $	*/
+/*	$NetBSD: md.c,v 1.51.18.1 2008/04/05 23:33:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.51 2007/10/08 16:41:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.51.18.1 2008/04/05 23:33:20 mjf Exp $");
 
 #include "opt_md.h"
 
@@ -163,6 +163,7 @@ md_attach(struct device *parent, struct device *self,
     void *aux)
 {
 	struct md_softc *sc = (struct md_softc *)self;
+	int bmaj, cmaj, unit;
 
 	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
 
@@ -181,6 +182,20 @@ md_attach(struct device *parent, struct device *self,
 	 */
 	disk_init(&sc->sc_dkdev, sc->sc_dev.dv_xname, &mddkdriver);
 	disk_attach(&sc->sc_dkdev);
+
+	cmaj = cdevsw_lookup_major(&md_cdevsw);
+	bmaj = bdevsw_lookup_major(&md_bdevsw);
+	unit = device_unit(&sc->sc_dev);
+
+	device_register_name(MAKEDISKDEV(cmaj, unit, 0), &sc->sc_dev, true,
+	    DEV_DISK, "r%sa", device_xname(&sc->sc_dev));
+	device_register_name(MAKEDISKDEV(cmaj, unit, 3), &sc->sc_dev, true,
+	    DEV_DISK, "r%sd", device_xname(&sc->sc_dev));
+
+	device_register_name(MAKEDISKDEV(bmaj, unit, 0), &sc->sc_dev, false,
+	    DEV_DISK, "%sa", device_xname(&sc->sc_dev));
+	device_register_name(MAKEDISKDEV(bmaj, unit, 3), &sc->sc_dev, false,
+	    DEV_DISK, "%sd", device_xname(&sc->sc_dev));
 }
 
 /*

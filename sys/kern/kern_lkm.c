@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.98 2007/12/20 23:03:08 dsl Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.98.6.1 2008/04/05 23:33:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.98 2007/12/20 23:03:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.98.6.1 2008/04/05 23:33:23 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -136,12 +136,16 @@ static ONCE_DECL(lkm_init_once);
 static int
 lkm_init(void)
 {
+	int maj = cdevsw_lookup_major(&lkm_cdevsw);
+
 	/*
 	 * If machine-dependent code hasn't initialized the lkm_map
 	 * then just use kernel_map.
 	 */
 	if (lkm_map == NULL)
 		lkm_map = kernel_map;
+
+	device_register_name(makedev(maj, 0), NULL, true, DEV_OTHER, "lkm");
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.20 2007/03/04 06:01:43 christos Exp $ */
+/* $NetBSD: radio.c,v 1.20.36.1 2008/04/05 23:33:21 mjf Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20 2007/03/04 06:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20.36.1 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,11 +79,17 @@ radioattach(struct device *parent, struct device *self, void *aux)
 	struct radio_attach_args *sa = aux;
 	const struct radio_hw_if *hwp = sa->hwif;
 	void  *hdlp = sa->hdl;
+	int maj;
 
 	printf("\n");
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
+
+	maj = cdevsw_lookup_major(&radio_cdevsw);
+
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_AUDIO, device_xname(self));
 }
 
 int
@@ -180,6 +186,8 @@ radiodetach(struct device *self, int flags)
 {
 	/*struct radio_softc *sc = (struct radio_softc *)self;*/
 	int maj, mn;
+
+	device_unregister_all(self);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&radio_cdevsw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.106.6.1 2008/04/03 12:42:57 mjf Exp $	*/
+/*	$NetBSD: usb.c,v 1.106.6.2 2008/04/05 23:33:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.106.6.1 2008/04/03 12:42:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.106.6.2 2008/04/05 23:33:23 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -180,7 +180,7 @@ USB_MATCH(usb)
 USB_ATTACH(usb)
 {
 	struct usb_softc *sc = device_private(self);
-	int usbrev;
+	int usbrev, maj;
 
 	sc->sc_bus = aux;
 	usbrev = sc->sc_bus->usbrev;
@@ -200,6 +200,10 @@ USB_ATTACH(usb)
 	aprint_normal("\n");
 
 	config_interrupts(self, usb_doattach);
+
+	maj = cdevsw_lookup_major(&usb_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 static void
@@ -969,6 +973,7 @@ usb_detach(device_t self, int flags)
 
 	DPRINTF(("usb_detach: start\n"));
 
+	device_unregister_all(self);
 	pmf_device_deregister(self);
 	/* Kill off event thread. */
 	while (sc->sc_event_thread != NULL) {

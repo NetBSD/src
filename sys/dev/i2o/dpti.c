@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.35 2007/10/19 11:59:43 ad Exp $	*/
+/*	$NetBSD: dpti.c,v 1.35.16.1 2008/04/05 23:33:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.35 2007/10/19 11:59:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.35.16.1 2008/04/05 23:33:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 		struct	i2o_param_read_results prr;
 		struct	i2o_dpt_param_exec_iop_buffers dib;
 	} __attribute__ ((__packed__)) param;
-	int rv;
+	int rv, maj;
 
 	sc = device_private(self);
 	iop = device_private(parent);
@@ -202,6 +202,10 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	sc->sc_blinkled = le32toh(param.dib.serialoutputoff) + 8;
+
+	maj = cdevsw_lookup_major(&dpti_cdevsw);
+	device_register_name(makedev(maj, device_unit(self)), self, true,
+	    DEV_OTHER, device_xname(self));
 }
 
 int
