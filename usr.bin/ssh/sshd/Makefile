@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2008/04/06 09:54:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.30 2008/04/06 23:39:35 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	auth-skey.c auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
 	monitor_mm.c monitor.c monitor_wrap.c \
-	kexdhs.c kexgexs.c
+	kexdhs.c kexgexs.c sftp-server.c sftp-common.c
 
 .if (${USE_PAM} != "no")
 SRCS+= auth-pam.c
