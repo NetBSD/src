@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.114 2007/11/09 23:42:56 dyoung Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.115 2008/04/06 19:04:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.114 2007/11/09 23:42:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.115 2008/04/06 19:04:50 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -153,7 +153,7 @@ int	icmpprintfs = 0;
 #endif
 int	icmpreturndatabytes = 8;
 
-struct icmpstat	icmpstat;
+uint64_t	icmpstat[ICMP_NSTATS];
 
 /*
  * List of callbacks to notify when Path MTU changes are made.
@@ -240,7 +240,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		printf("icmp_error(%p, type:%d, code:%d)\n", oip, type, code);
 #endif
 	if (type != ICMP_REDIRECT)
-		icmpstat.icps_error++;
+		icmpstat[ICMP_STAT_ERROR]++;
 	/*
 	 * Don't send error if the original packet was encrypted.
 	 * Don't send error if not the first fragment of message.
@@ -254,7 +254,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
 	  n->m_len >= oiplen + ICMP_MINLEN &&
 	  !ICMP_INFOTYPE(((struct icmp *)((char *)oip + oiplen))->icmp_type)) {
-		icmpstat.icps_oldicmp++;
+		icmpstat[ICMP_STAT_OLDICMP]++;
 		goto freeit;
 	}
 	/* Don't send error in response to a multicast or broadcast packet */
@@ -313,7 +313,7 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
-	icmpstat.icps_outhist[type]++;
+	icmpstat[ICMP_STAT_OUTHIST + type]++;
 	icp->icmp_type = type;
 	if (type == ICMP_REDIRECT)
 		icp->icmp_gwaddr.s_addr = dest;
@@ -419,12 +419,12 @@ icmp_input(struct mbuf *m, ...)
 	}
 #endif
 	if (icmplen < ICMP_MINLEN) {
-		icmpstat.icps_tooshort++;
+		icmpstat[ICMP_STAT_TOOSHORT]++;
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
 	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == 0) {
-		icmpstat.icps_tooshort++;
+		icmpstat[ICMP_STAT_TOOSHORT]++;
 		return;
 	}
 	ip = mtod(m, struct ip *);
@@ -433,7 +433,7 @@ icmp_input(struct mbuf *m, ...)
 	icp = mtod(m, struct icmp *);
 	/* Don't need to assert alignment, here. */
 	if (in_cksum(m, icmplen)) {
-		icmpstat.icps_checksum++;
+		icmpstat[ICMP_STAT_CHECKSUM]++;
 		goto freeit;
 	}
 	m->m_len += hlen;
@@ -449,7 +449,7 @@ icmp_input(struct mbuf *m, ...)
 #endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
 		goto raw;
-	icmpstat.icps_inhist[icp->icmp_type]++;
+	icmpstat[ICMP_STAT_INHIST + icp->icmp_type]++;
 	code = icp->icmp_code;
 	switch (icp->icmp_type) {
 
@@ -521,7 +521,7 @@ icmp_input(struct mbuf *m, ...)
 		 */
 		if (icmplen < ICMP_ADVLENMIN || icmplen < ICMP_ADVLEN(icp) ||
 		    icp->icmp_ip.ip_hl < (sizeof(struct ip) >> 2)) {
-			icmpstat.icps_badlen++;
+			icmpstat[ICMP_STAT_BADLEN]++;
 			goto freeit;
 		}
 		if (IN_MULTICAST(icp->icmp_ip.ip_dst.s_addr))
@@ -538,7 +538,7 @@ icmp_input(struct mbuf *m, ...)
 		break;
 
 	badcode:
-		icmpstat.icps_badcode++;
+		icmpstat[ICMP_STAT_BADCODE]++;
 		break;
 
 	case ICMP_ECHO:
@@ -547,7 +547,7 @@ icmp_input(struct mbuf *m, ...)
 
 	case ICMP_TSTAMP:
 		if (icmplen < ICMP_TSLEN) {
-			icmpstat.icps_badlen++;
+			icmpstat[ICMP_STAT_BADLEN]++;
 			break;
 		}
 		icp->icmp_type = ICMP_TSTAMPREPLY;
@@ -563,7 +563,7 @@ icmp_input(struct mbuf *m, ...)
 		 * unless we receive it over a point-to-point interface.
 		 */
 		if (icmplen < ICMP_MASKLEN) {
-			icmpstat.icps_badlen++;
+			icmpstat[ICMP_STAT_BADLEN]++;
 			break;
 		}
 		if (ip->ip_dst.s_addr == INADDR_BROADCAST ||
@@ -584,8 +584,8 @@ icmp_input(struct mbuf *m, ...)
 				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
-		icmpstat.icps_reflect++;
-		icmpstat.icps_outhist[icp->icmp_type]++;
+		icmpstat[ICMP_STAT_REFLECT]++;
+		icmpstat[ICMP_STAT_OUTHIST + icp->icmp_type]++;
 		icmp_reflect(m);
 		return;
 
@@ -596,7 +596,7 @@ reflect:
 			goto freeit;
 		if (icmplen < ICMP_ADVLENMIN || icmplen < ICMP_ADVLEN(icp) ||
 		    icp->icmp_ip.ip_hl < (sizeof(struct ip) >> 2)) {
-			icmpstat.icps_badlen++;
+			icmpstat[ICMP_STAT_BADLEN]++;
 			break;
 		}
 		/*
@@ -1040,7 +1040,7 @@ SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("ICMP statistics"), 
-		       NULL, 0, &icmpstat, sizeof(icmpstat),
+		       NULL, 0, icmpstat, sizeof(icmpstat),
 		       CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS,
 		       CTL_EOL);
 }
@@ -1127,7 +1127,7 @@ icmp_mtudisc(struct icmp *icp, struct in_addr faddr)
 			rt->rt_rmx.rmx_locks |= RTV_MTU;
 		else if (rt->rt_rmx.rmx_mtu > mtu ||
 			 rt->rt_rmx.rmx_mtu == 0) {
-			icmpstat.icps_pmtuchg++;
+			icmpstat[ICMP_STAT_PMTUCHG]++;
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
 	}

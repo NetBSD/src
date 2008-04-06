@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.78 2007/07/10 21:12:33 ad Exp $	*/
+/*	$NetBSD: inet.c,v 1.79 2008/04/06 19:04:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.78 2007/07/10 21:12:33 ad Exp $");
+__RCSID("$NetBSD: inet.c,v 1.79 2008/04/06 19:04:50 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -524,7 +524,7 @@ ip_stats(off, name)
 #undef p
 }
 
-static	char *icmpnames[] = {
+static	const char *icmpnames[] = {
 	"echo reply",
 	"#1",
 	"#2",
@@ -550,57 +550,55 @@ static	char *icmpnames[] = {
  * Dump ICMP statistics.
  */
 void
-icmp_stats(off, name)
-	u_long off;
-	char *name;
+icmp_stats(u_long off, char *name)
 {
-	struct icmpstat icmpstat;
+	uint64_t icmpstat[ICMP_NSTATS];
 	int i, first;
 
 	if (use_sysctl) {
 		size_t size = sizeof(icmpstat);
 
-		if (sysctlbyname("net.inet.icmp.stats", &icmpstat, &size,
+		if (sysctlbyname("net.inet.icmp.stats", icmpstat, &size,
 				 NULL, 0) == -1)
 			err(1, "net.inet.icmp.stats");
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&icmpstat, sizeof (icmpstat));
+		kread(off, (char *)icmpstat, sizeof (icmpstat));
 	}
 
 	printf("%s:\n", name);
 
-#define	p(f, m) if (icmpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)icmpstat.f, plural(icmpstat.f))
+#define	p(f, m) if (icmpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)icmpstat.f, plural(icmpstat[f]))
 
-	p(icps_error, "\t%llu call%s to icmp_error\n");
-	p(icps_oldicmp,
+	p(ICMP_STAT_ERROR, "\t%llu call%s to icmp_error\n");
+	p(ICMP_STAT_OLDICMP,
 	    "\t%llu error%s not generated because old message was icmp\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
-		if (icmpstat.icps_outhist[i] != 0) {
+		if (icmpstat[ICMP_STAT_OUTHIST + i] != 0) {
 			if (first) {
 				printf("\tOutput histogram:\n");
 				first = 0;
 			}
 			printf("\t\t%s: %llu\n", icmpnames[i],
-				(unsigned long long)icmpstat.icps_outhist[i]);
+			   (unsigned long long)icmpstat[ICMP_STAT_OUTHIST + i]);
 		}
-	p(icps_badcode, "\t%llu message%s with bad code fields\n");
-	p(icps_tooshort, "\t%llu message%s < minimum length\n");
-	p(icps_checksum, "\t%llu bad checksum%s\n");
-	p(icps_badlen, "\t%llu message%s with bad length\n");
+	p(ICMP_STAT_BADCODE, "\t%llu message%s with bad code fields\n");
+	p(ICMP_STAT_TOOSHORT, "\t%llu message%s < minimum length\n");
+	p(ICMP_STAT_CHECKSUM, "\t%llu bad checksum%s\n");
+	p(ICMP_STAT_BADLEN, "\t%llu message%s with bad length\n");
 	for (first = 1, i = 0; i < ICMP_MAXTYPE + 1; i++)
-		if (icmpstat.icps_inhist[i] != 0) {
+		if (icmpstat[ICMP_STAT_INHIST + i] != 0) {
 			if (first) {
 				printf("\tInput histogram:\n");
 				first = 0;
 			}
 			printf("\t\t%s: %llu\n", icmpnames[i],
-				(unsigned long long)icmpstat.icps_inhist[i]);
+			    (unsigned long long)icmpstat[ICMP_STAT_INHIST + i]);
 		}
-	p(icps_reflect, "\t%llu message response%s generated\n");
-	p(icps_pmtuchg, "\t%llu path MTU change%s\n");
+	p(ICMP_STAT_REFLECT, "\t%llu message response%s generated\n");
+	p(ICMP_STAT_PMTUCHG, "\t%llu path MTU change%s\n");
 #undef p
 }
 
