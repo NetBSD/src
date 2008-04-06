@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.2 2008/03/31 14:30:58 mjf Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.3 2008/04/06 23:21:01 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.2 2008/03/31 14:30:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.3 2008/04/06 23:21:01 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -830,7 +830,7 @@ lii_tx_put(struct lii_softc *sc, struct mbuf *m)
 	}
 
 	/* Round to a 32-bit boundary */
-	sc->sc_txd_cur = (sc->sc_txd_cur + 3) & ~3;
+	sc->sc_txd_cur = ((sc->sc_txd_cur + 3) & ~3) % AT_TXD_BUFFER_SIZE;
 	if (sc->sc_txd_cur == sc->sc_txd_ack)
 		sc->sc_free_tx_slots = false;
 }
