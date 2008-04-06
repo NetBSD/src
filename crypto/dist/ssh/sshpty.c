@@ -1,5 +1,5 @@
-/*	$NetBSD: sshpty.c,v 1.12 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: sshpty.c,v 1.26 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sshpty.c,v 1.13 2008/04/06 23:38:20 christos Exp $	*/
+/* $OpenBSD: sshpty.c,v 1.28 2007/09/11 23:49:09 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,28 +14,24 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshpty.c,v 1.12 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sshpty.c,v 1.13 2008/04/06 23:38:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+
 #include <errno.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <paths.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
 #include <util.h>
-#include <stdarg.h>
 
 #include "sshpty.h"
 #include "log.h"
-
-/* Pty allocated with _getpty gets broken if we do I_PUSH:es to it. */
-#if defined(HAVE__GETPTY) || defined(HAVE_OPENPTY)
-#undef HAVE_DEV_PTMX
-#endif
 
 #ifndef O_NOCTTY
 #define O_NOCTTY 0

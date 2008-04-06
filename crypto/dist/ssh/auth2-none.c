@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-none.c,v 1.7 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: auth2-none.c,v 1.13 2006/08/05 07:52:52 dtucker Exp $ */
+/*	$NetBSD: auth2-none.c,v 1.8 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: auth2-none.c,v 1.14 2007/08/23 03:22:16 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,13 +25,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-none.c,v 1.7 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: auth2-none.c,v 1.8 2008/04/06 23:38:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "xmalloc.h"
 #include "key.h"
@@ -106,7 +107,9 @@ userauth_banner(void)
 {
 	char *banner = NULL;
 
-	if (options.banner == NULL || (datafellows & SSH_BUG_BANNER))
+	if (options.banner == NULL ||
+	    strcasecmp(options.banner, "none") == 0 ||
+	    (datafellows & SSH_BUG_BANNER) != 0)
 		return;
 
 	if ((banner = PRIVSEP(auth2_read_banner())) == NULL)
