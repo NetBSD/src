@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.80 2008/04/06 20:17:27 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.81 2008/04/06 21:53:25 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.80 2008/04/06 20:17:27 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.81 2008/04/06 21:53:25 jnemeth Exp $");
 #endif
 #endif /* not lint */
 
@@ -569,7 +569,7 @@ icmp_stats(u_long off, char *name)
 	printf("%s:\n", name);
 
 #define	p(f, m) if (icmpstat[f] || sflag <= 1) \
-    printf(m, (unsigned long long)icmpstat.f, plural(icmpstat[f]))
+    printf(m, (unsigned long long)icmpstat[f], plural(icmpstat[f]))
 
 	p(ICMP_STAT_ERROR, "\t%llu call%s to icmp_error\n");
 	p(ICMP_STAT_OLDICMP,
