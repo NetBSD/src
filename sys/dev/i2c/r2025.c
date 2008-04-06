@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.3 2006/09/04 23:45:30 gdamore Exp $ */
+/* $NetBSD: r2025.c,v 1.4 2008/04/06 20:25:59 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.3 2006/09/04 23:45:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.4 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,15 +114,13 @@ r2025rtc_gettime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 	memset(&dt, 0, sizeof(dt));
 
 	if (r2025rtc_reg_read(sc, R2025_REG_CTRL1, &rctrl, 1) != 0) {
-		printf("%s: r2025rtc_gettime: failed to read registers.\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "r2025rtc_gettime: failed to read registers.\n");
 		return -1;
 	}
 
 	if (r2025rtc_reg_read(sc, R2025_REG_SEC, &bcd[0], R2025_CLK_SIZE)
 		!= 0) {
-		printf("%s: r2025rtc_gettime: failed to read registers.\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "r2025rtc_gettime: failed to read registers.\n");
 		return -1;
 	}
 
@@ -166,15 +164,13 @@ r2025rtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 
 	/* Y3K problem */
 	if (dt.dt_year >= 3000) {
-		printf("%s: r2025rtc_settime: "
-			"RTC does not support year 3000 or over.\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "r2025rtc_settime: "
+			"RTC does not support year 3000 or over.\n");
 		return -1;
 	}
 
 	if (r2025rtc_reg_read(sc, R2025_REG_CTRL1, &rctrl, 1) != 0) {
-		printf("%s: r2025rtc_settime: failed to read register.\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "r2025rtc_settime: failed to read register.\n");
 		return -1;
 	}
 	rctrl |= R2025_REG_CTRL1_H1224;
@@ -191,13 +187,11 @@ r2025rtc_settime(struct todr_chip_handle *ch, volatile struct timeval *tv)
 
 	/* Write RTC register */
 	if (r2025rtc_reg_write(sc, R2025_REG_CTRL1, &rctrl, 1) != 0) {
-		printf("%s: r2025rtc_settime: failed to write registers.\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "r2025rtc_settime: failed to write registers.\n");
 		return -1;
 	}
 	if (r2025rtc_reg_write(sc, R2025_REG_SEC, bcd, R2025_CLK_SIZE) != 0) {
-		printf("%s: r2025rtc_settime: failed to write registers.\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "r2025rtc_settime: failed to write registers.\n");
 		return -1;
 	}
 
@@ -212,8 +206,7 @@ r2025rtc_reg_write(struct r2025rtc_softc *sc, int reg, uint8_t *val, int len)
 	uint8_t cmdbuf[1];
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: r2025rtc_clock_write: failed to acquire I2C bus\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "r2025rtc_clock_write: failed to acquire I2C bus\n");
 		return -1;
 	}
 
@@ -223,9 +216,8 @@ r2025rtc_reg_write(struct r2025rtc_softc *sc, int reg, uint8_t *val, int len)
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
 				cmdbuf, 1, buf, 1, I2C_F_POLL)) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			printf("%s: r2025rtc_reg_write: "
-				"failed to write registers\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "r2025rtc_reg_write: "
+				"failed to write registers\n");
 			return -1;
 		}
 	}
@@ -243,8 +235,7 @@ r2025rtc_reg_read(struct r2025rtc_softc *sc, int reg, uint8_t *val, int len)
 	uint8_t cmdbuf[1];
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: r2025rtc_clock_read: failed to acquire I2C bus\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "r2025rtc_clock_read: failed to acquire I2C bus\n");
 		return -1;
 	}
 
@@ -254,9 +245,8 @@ r2025rtc_reg_read(struct r2025rtc_softc *sc, int reg, uint8_t *val, int len)
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
 				cmdbuf, 1, buf, 1, I2C_F_POLL)) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			printf("%s: r2025rtc_reg_read: "
-				"failed to write registers\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "r2025rtc_reg_read: "
+				"failed to write registers\n");
 			return -1;
 		}
 

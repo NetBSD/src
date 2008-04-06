@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.7 2007/12/11 12:09:23 lukem Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.8 2008/04/06 20:25:59 cegger Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.7 2007/12/11 12:09:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.8 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,8 +132,7 @@ rs5c372rtc_reg_write(struct rs5c372rtc_softc *sc, int reg, uint8_t val)
 	uint8_t cmdbuf[2];
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: rs5c372rtc_reg_write: failed to acquire I2C bus\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "rs5c372rtc_reg_write: failed to acquire I2C bus\n");
 		return;
 	}
 
@@ -143,8 +142,7 @@ rs5c372rtc_reg_write(struct rs5c372rtc_softc *sc, int reg, uint8_t val)
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
 	             cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		printf("%s: rs5c372rtc_reg_write: failed to write reg%d\n",
-		    sc->sc_dev.dv_xname, reg);
+		aprint_error_dev(&sc->sc_dev, "rs5c372rtc_reg_write: failed to write reg%d\n", reg);
 		return;
 	}
 
@@ -158,8 +156,7 @@ rs5c372rtc_clock_read(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	uint8_t cmdbuf[1];
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: rs5c372rtc_clock_read: failed to acquire I2C bus\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "rs5c372rtc_clock_read: failed to acquire I2C bus\n");
 		return (0);
 	}
 
@@ -167,8 +164,7 @@ rs5c372rtc_clock_read(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
 	             cmdbuf, 1, bcd, RS5C372_NRTC_REGS, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		printf("%s: rs5c372rtc_clock_read: failed to read rtc\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "rs5c372rtc_clock_read: failed to read rtc\n");
 		return (0);
 	}
 
@@ -206,8 +202,8 @@ rs5c372rtc_clock_write(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[RS5C372_YEAR] = TOBCD(dt->dt_year % 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: rs5c372rtc_clock_write: failed to "
-		    "acquire I2C bus\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "rs5c372rtc_clock_write: failed to "
+		    "acquire I2C bus\n");
 		return (0);
 	}
 
@@ -215,8 +211,7 @@ rs5c372rtc_clock_write(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
 	             cmdbuf, 1, bcd, RS5C372_NRTC_REGS, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		printf("%s: rs5c372rtc_clock_write: failed to write rtc\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "rs5c372rtc_clock_write: failed to write rtc\n");
 		return (0);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.18 2008/04/04 10:11:01 xtraeme Exp $	*/
+/*	$NetBSD: lm75.c,v 1.19 2008/04/06 20:25:59 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.18 2008/04/04 10:11:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.19 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,8 +202,8 @@ lmtemp_refresh_sensor_data(struct lmtemp_softc *sc)
 	error = lmtemp_temp_read(sc, LM75_REG_TEMP, &val);
 	if (error) {
 #if 0
-		printf("%s: unable to read temperature, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to read temperature, error = %d\n",
+		    error);
 #endif
 		sc->sc_sensor.state = ENVSYS_SINVALID;
 		return;
