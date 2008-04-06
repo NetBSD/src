@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1039 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1040 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -493,3 +493,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		early HP 9000s for the attachment of an Fast-Wide (16-bit)
 		SCSI-2 bus, utilizing HVD signalling via the siop(4)
 		driver. [skrll 20080405]
+	openssh: Import 5.0. [christos 20080406]
