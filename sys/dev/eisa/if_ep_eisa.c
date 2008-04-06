@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.36 2007/10/19 11:59:41 ad Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.37 2008/04/06 08:54:43 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.36 2007/10/19 11:59:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_eisa.c,v 1.37 2008/04/06 08:54:43 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -262,23 +262,22 @@ ep_eisa_attach(struct device *parent, struct device *self, void *aux)
 	sc->ep_flags = eep->eep_flags;
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("%s: couldn't map interrupt (%u)\n",
-		    sc->sc_dev.dv_xname, irq);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt (%u)\n",
+		    irq);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih);
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_EDGE, IPL_NET,
 	    epintr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+		printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev),
 		    intrstr);
 
 	epconfig(sc, eep->eep_chipset, NULL);
