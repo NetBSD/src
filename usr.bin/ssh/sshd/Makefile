@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2006/03/20 04:03:23 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2008/04/06 09:54:37 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,14 @@ LDADD+= -lrpcsvc
 DPADD+= ${LIBRPCSVC}
 .endif
 
+.else	# USE_PAM == no
+
+.if (${USE_SKEY} != "no")
+LDADD+=	-lskey
+DPADD+=	${LIBSKEY}
 .endif
+
+.endif	# USE_PAM == no
 
 .if (${USE_KERBEROS} != "no")
 
@@ -52,8 +59,3 @@ DPADD+=	${LIBCRYPT} ${LIBUTIL}
 
 LDADD+=	-lwrap
 DPADD+=	${LIBWRAP}
-
-.if (${USE_SKEY} != "no")
-LDADD+=	-lskey
-DPADD+=	${LIBSKEY}
-.endif
