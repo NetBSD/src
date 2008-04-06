@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.33 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.34 2008/04/06 20:17:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,19 +51,21 @@ struct	udpiphdr {
 #define	ui_ulen		ui_u.uh_ulen
 #define	ui_sum		ui_u.uh_sum
 
-struct	udpstat {
-					/* input statistics: */
-	u_quad_t udps_ipackets;		/* total input packets */
-	u_quad_t udps_hdrops;		/* packet shorter than header */
-	u_quad_t udps_badsum;		/* checksum error */
-	u_quad_t udps_badlen;		/* data length larger than packet */
-	u_quad_t udps_noport;		/* no socket on port */
-	u_quad_t udps_noportbcast;	/* of above, arrived as broadcast */
-	u_quad_t udps_fullsock;		/* not delivered, input socket full */
-	u_quad_t udps_pcbhashmiss;	/* input packets missing pcb hash */
-					/* output statistics: */
-	u_quad_t udps_opackets;		/* total output packets */
-};
+/*
+ * UDP statistics.
+ * Each counter is an unsigned 64-bit value.
+ */
+#define	UDP_STAT_IPACKETS	0	/* total input packets */
+#define	UDP_STAT_HDROPS		1	/* packet shorter than header */
+#define	UDP_STAT_BADSUM		2	/* checksum error */
+#define	UDP_STAT_BADLEN		3	/* data length larger than packet */
+#define	UDP_STAT_NOPORT		4	/* no socket on port */
+#define	UDP_STAT_NOPORTBCAST	5	/* of above, arrived as broadcast */
+#define	UDP_STAT_FULLSOCK	6	/* not delivered, input socket full */
+#define	UDP_STAT_PCBHASHMISS	7	/* input packets missing PCB hash */
+#define	UDP_STAT_OPACKETS	8	/* total output packets */
+
+#define	UDP_NSTATS		9
 
 /*
  * Names for UDP sysctl objects
@@ -86,7 +88,7 @@ struct	udpstat {
 
 #ifdef _KERNEL
 extern	struct	inpcbtable udbtable;
-extern	struct	udpstat udpstat;
+extern	uint64_t udpstat[UDP_NSTATS];
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	UDP_HDR_ALIGNED_P(uh)	1
