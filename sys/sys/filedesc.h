@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.46 2008/03/21 21:53:35 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.47 2008/04/06 11:26:36 apb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 #define	_SYS_FILEDESC_H_
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/condvar.h>
