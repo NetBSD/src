@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.79.6.1 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.79.6.2 2008/04/06 09:58:51 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.79.6.1 2008/04/05 23:33:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.79.6.2 2008/04/06 09:58:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ USB_DETACH(ulpt)
 
 	DPRINTFN(1, ("ulpt_detach: sc=%p\n", sc));
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	sc->sc_dying = 1;
 	if (sc->sc_out_pipe != NULL)

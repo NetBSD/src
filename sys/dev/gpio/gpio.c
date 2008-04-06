@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.14.6.2 2008/04/05 23:33:21 mjf Exp $ */
+/* $NetBSD: gpio.c,v 1.14.6.3 2008/04/06 09:58:50 mjf Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.14.6.2 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.14.6.3 2008/04/06 09:58:50 mjf Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -131,7 +131,7 @@ gpio_detach(device_t self, int flags)
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 #endif
-	device_unregister_all(self);
+	device_deregister_all(self);
 	return (0);
 }
 

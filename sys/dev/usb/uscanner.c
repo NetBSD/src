@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.59.12.2 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.59.12.3 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.59.12.2 2008/04/05 23:33:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.59.12.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -662,7 +662,7 @@ USB_DETACH(uscanner)
 	DPRINTF(("uscanner_detach: sc=%p\n", sc));
 #endif
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	sc->sc_dying = 1;
 	sc->sc_dev_flags = 0;	/* make close really close device */

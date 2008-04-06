@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.117.6.2 2008/04/03 12:42:58 mjf Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.117.6.3 2008/04/06 09:58:51 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.117.6.2 2008/04/03 12:42:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.117.6.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -469,15 +469,13 @@ wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 	struct wsscreen *scr;
 	int s;
 	void *cookie;
-	int maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
 	if (idx < 0 || idx >= WSDISPLAY_MAXSCREEN)
 		return (EINVAL);
 	if ((scr = sc->sc_scr[idx]) == NULL)
 		return (ENXIO);
 
-	device_unregister_name(makedev(maj, device_unit(sc->sc_dev)),
-	    "ttyE%d", idx - 1);
+	device_deregister_all(sc->sc_dev);
 
 	if (scr->scr_dconf == &wsdisplay_console_conf ||
 	    scr->scr_syncops ||

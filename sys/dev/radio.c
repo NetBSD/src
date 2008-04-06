@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.20.36.1 2008/04/05 23:33:21 mjf Exp $ */
+/* $NetBSD: radio.c,v 1.20.36.2 2008/04/06 09:58:50 mjf Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20.36.1 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20.36.2 2008/04/06 09:58:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ radiodetach(struct device *self, int flags)
 	/*struct radio_softc *sc = (struct radio_softc *)self;*/
 	int maj, mn;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&radio_cdevsw);

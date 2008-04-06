@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.55.10.2 2008/04/03 12:42:59 mjf Exp $ */
+/* $NetBSD: wsmouse.c,v 1.55.10.3 2008/04/06 09:58:52 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.55.10.2 2008/04/03 12:42:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.55.10.3 2008/04/06 09:58:52 mjf Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -340,14 +340,14 @@ wsmouse_detach(device_t self, int flags)
 		splx(s);
 	}
 
+	device_deregister_all(self);
+
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&wsmouse_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
-
-	device_unregister_name(makedev(maj, mn), device_xname(self));
 
 	return (0);
 }

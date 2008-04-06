@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.245.6.1 2008/04/05 23:33:22 mjf Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.245.6.2 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245.6.1 2008/04/05 23:33:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.245.6.2 2008/04/06 09:58:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ scsibusdetach(struct device *self, int flags)
 	struct scsipi_xfer *xs;
 	int error;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 	pmf_device_deregister(self);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.129.14.5 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: conf.h,v 1.129.14.6 2008/04/06 09:58:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -264,8 +264,8 @@ dev_t devsw_chr2blk(dev_t);
 dev_t devsw_blk2chr(dev_t);
 int device_register_name(dev_t, device_t, boolean_t, enum devtype, 
     const char *, ...);
-int device_unregister_name(dev_t, const char *, ...);
-int device_unregister_all(device_t);
+int device_deregister_name(dev_t, const char *, ...);
+int device_deregister_all(device_t);
 struct device_name *device_lookup_info(dev_t, int);
 kmutex_t dname_lock;
 void bpf_init(void);
