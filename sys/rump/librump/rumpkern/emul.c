@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.36 2008/03/25 23:21:42 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.37 2008/04/06 05:17:54 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -550,4 +550,10 @@ selnotify(struct selinfo *sip, int events, long knhint)
 void
 seldestroy(struct selinfo *sip)
 {
+}
+
+const char *
+device_xname(device_t dv)
+{
+	return "bogus0";
 }
