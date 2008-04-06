@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.33 2008/03/13 22:04:57 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.34 2008/04/06 07:24:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.33 2008/03/13 22:04:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.34 2008/04/06 07:24:20 cegger Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -530,7 +530,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 			snprintf(evts->ev_evname, sizeof(evts->ev_evname),
 			    "evt%d", evtch);
 		evcnt_attach_dynamic(&evts->ev_evcnt, EVCNT_TYPE_INTR, NULL,
-		    ci->ci_dev->dv_xname, evts->ev_evname);
+		    device_xname(ci->ci_dev), evts->ev_evname);
 	} else {
 		evts = evtsource[evtch];
 		/* sort by IPL order, higher first */

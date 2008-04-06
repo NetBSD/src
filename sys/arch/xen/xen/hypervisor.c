@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.33 2008/01/11 20:00:54 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.34 2008/04/06 07:24:20 cegger Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.33 2008/01/11 20:00:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.34 2008/04/06 07:24:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,8 +382,7 @@ hypervisor_attach(parent, self, aux)
 #ifndef XEN3
 	if (sysmon_pswitch_register(&hysw_reboot) != 0 ||
 	    sysmon_pswitch_register(&hysw_shutdown) != 0)
-		printf("%s: unable to register with sysmon\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "unable to register with sysmon\n");
 	else
 		ctrl_if_register_receiver(CMSG_SHUTDOWN,
 		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);

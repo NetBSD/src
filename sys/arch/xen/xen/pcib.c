@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.3 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: pcib.c,v 1.4 2008/04/06 07:24:20 cegger Exp $	*/
 /*	NetBSD pcib.c,v 1.35 2005/02/03 21:35:44 perry Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.3 2005/12/11 12:19:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4 2008/04/06 07:24:20 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -180,7 +180,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	printf("%s: %s (rev. 0x%02x)\n", device_xname(self), devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	config_defer(self, pcib_callback);
