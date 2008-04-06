@@ -1,5 +1,5 @@
-/*	$NetBSD: sshlogin.c,v 1.17 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.25 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sshlogin.c,v 1.18 2008/04/06 23:38:20 christos Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.26 2007/09/11 15:47:17 gilles Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.17 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.18 2008/04/06 23:38:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,8 +146,7 @@ store_lastlog_message(const char *user, uid_t uid)
 
 	if (last_login_time != 0) {
 		time_string = ctime(&last_login_time);
-		if (strchr(time_string, '\n'))
-		    *strchr(time_string, '\n') = '\0';
+		time_string[strcspn(time_string, "\n")] = '\0';
 		if (strcmp(hostname, "") == 0)
 			snprintf(buf, sizeof(buf), "Last login: %s\r\n",
 			    time_string);

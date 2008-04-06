@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.19 2007/12/18 02:35:28 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.57 2007/06/07 19:37:34 pvalchev Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.20 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.60 2007/10/29 04:08:08 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.19 2007/12/18 02:35:28 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.20 2008/04/06 23:38:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -219,8 +219,8 @@ mm_getpwnamallow(const char *username)
 	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PWNAM, &m);
 
 	if (buffer_get_char(&m) == 0) {
-		buffer_free(&m);
-		return (NULL);
+		pw = NULL;
+		goto out;
 	}
 	pw = buffer_get_string(&m, &len);
 	if (len != sizeof(struct passwd))
@@ -232,6 +232,7 @@ mm_getpwnamallow(const char *username)
 	pw->pw_dir = buffer_get_string(&m, NULL);
 	pw->pw_shell = buffer_get_string(&m, NULL);
 
+out:
 	/* copy options block as a Match directive may have changed some */
 	newopts = buffer_get_string(&m, &len);
 	if (len != sizeof(*newopts))
@@ -683,8 +684,9 @@ mm_pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, size_t namebuflen)
 	buffer_append(&loginmsg, msg, strlen(msg));
 	xfree(msg);
 
-	*ptyfd = mm_receive_fd(pmonitor->m_recvfd);
-	*ttyfd = mm_receive_fd(pmonitor->m_recvfd);
+	if ((*ptyfd = mm_receive_fd(pmonitor->m_recvfd)) == -1 ||
+	    (*ttyfd = mm_receive_fd(pmonitor->m_recvfd)) == -1)
+		fatal("%s: receive fds failed", __func__);
 
 	/* Success */
 	return (1);
@@ -886,6 +888,7 @@ mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
 	(*echo_on)[0] = 0;
 }
 
+#ifdef BSD_AUTH
 int
 mm_bsdauth_query(void *ctx, char **name, char **infotxt,
    u_int *numprompts, char ***prompts, u_int **echo_on)
@@ -942,6 +945,7 @@ mm_bsdauth_respond(void *ctx, u_int numresponses, char **responses)
 
 	return ((authok == 0) ? -1 : 0);
 }
+#endif
 
 #ifdef SKEY
 int

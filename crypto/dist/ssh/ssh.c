@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.c,v 1.40 2007/12/18 09:00:30 dogcow Exp $	*/
-/* $OpenBSD: ssh.c,v 1.301 2007/08/07 07:32:53 djm Exp $ */
+/*	$NetBSD: ssh.c,v 1.41 2008/04/06 23:38:20 christos Exp $	*/
+/* $OpenBSD: ssh.c,v 1.309 2008/01/19 20:51:26 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.40 2007/12/18 09:00:30 dogcow Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.41 2008/04/06 23:38:20 christos Exp $");
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -205,7 +205,7 @@ main(int ac, char **av)
 	char *p, *cp, *line, buf[256];
 	struct stat st;
 	struct passwd *pw;
-	int dummy;
+	int dummy, timeout_ms;
 	extern int optind, optreset;
 	extern char *optarg;
 	struct servent *sp;
@@ -646,11 +646,15 @@ main(int ac, char **av)
 	}
 
 	if (options.proxy_command != NULL &&
-	    strcmp(options.proxy_command, "none") == 0)
+	    strcmp(options.proxy_command, "none") == 0) {
+		xfree(options.proxy_command);
 		options.proxy_command = NULL;
+	}
 	if (options.control_path != NULL &&
-	    strcmp(options.control_path, "none") == 0)
+	    strcmp(options.control_path, "none") == 0) {
+		xfree(options.control_path);
 		options.control_path = NULL;
+	}
 
 	if (options.control_path != NULL) {
 		char thishost[NI_MAXHOST];
@@ -660,6 +664,7 @@ main(int ac, char **av)
 		snprintf(buf, sizeof(buf), "%d", options.port);
 		cp = tilde_expand_filename(options.control_path,
 		    original_real_uid);
+		xfree(options.control_path);
 		options.control_path = percent_expand(cp, "p", buf, "h", host,
 		    "r", options.user, "l", thishost, (char *)NULL);
 		xfree(cp);
@@ -669,12 +674,18 @@ main(int ac, char **av)
 	if (options.control_path != NULL)
 		control_client(options.control_path);
 
+	timeout_ms = options.connection_timeout * 1000;
+
 	/* Open a connection to the remote host. */
 	if (ssh_connect(host, &hostaddr, options.port,
-	    options.address_family, options.connection_attempts,
+	    options.address_family, options.connection_attempts, &timeout_ms,
+	    options.tcp_keep_alive, 
 	    original_effective_uid == 0 && options.use_privileged_port,
 	    options.proxy_command) != 0)
 		exit(255);
+
+	if (timeout_ms > 0)
+		debug3("timeout: %d ms remain after connect", timeout_ms);
 
 	/*
 	 * If we successfully made the connection, load the host private key
@@ -751,7 +762,8 @@ main(int ac, char **av)
 	signal(SIGPIPE, SIG_IGN); /* ignore SIGPIPE early */
 
 	/* Log into the remote system.  This never returns if the login fails. */
-	ssh_login(&sensitive_data, host, (struct sockaddr *)&hostaddr, pw);
+	ssh_login(&sensitive_data, host, (struct sockaddr *)&hostaddr,
+	    pw, timeout_ms);
 
 	/* We no longer need the private host keys.  Clear them now. */
 	if (sensitive_data.nkeys != 0) {
@@ -973,6 +985,11 @@ ssh_session(void)
 
 	/* Initiate port forwardings. */
 	ssh_init_forwarding();
+
+	/* Execute a local command */
+	if (options.local_command != NULL &&
+	    options.permit_local_command)
+		ssh_local_cmd(options.local_command);
 
 	/* If requested, let ssh continue in the background. */
 	if (fork_after_authentication_flag)
@@ -1197,6 +1214,7 @@ static void
 load_public_identity_files(void)
 {
 	char *filename, *cp, thishost[NI_MAXHOST];
+	char *pwdir = NULL, *pwname = NULL;
 	int i = 0;
 	Key *public;
 	struct passwd *pw;
@@ -1225,14 +1243,16 @@ load_public_identity_files(void)
 #endif /* SMARTCARD */
 	if ((pw = getpwuid(original_real_uid)) == NULL)
 		fatal("load_public_identity_files: getpwuid failed");
+	pwname = xstrdup(pw->pw_name);
+	pwdir = xstrdup(pw->pw_dir);
 	if (gethostname(thishost, sizeof(thishost)) == -1)
 		fatal("load_public_identity_files: gethostname: %s",
 		    strerror(errno));
 	for (; i < options.num_identity_files; i++) {
 		cp = tilde_expand_filename(options.identity_files[i],
 		    original_real_uid);
-		filename = percent_expand(cp, "d", pw->pw_dir,
-		    "u", pw->pw_name, "l", thishost, "h", host,
+		filename = percent_expand(cp, "d", pwdir,
+		    "u", pwname, "l", thishost, "h", host,
 		    "r", options.user, (char *)NULL);
 		xfree(cp);
 		public = key_load_public(filename, NULL);
@@ -1242,6 +1262,10 @@ load_public_identity_files(void)
 		options.identity_files[i] = filename;
 		options.identity_keys[i] = public;
 	}
+	bzero(pwname, strlen(pwname));
+	xfree(pwname);
+	bzero(pwdir, strlen(pwdir));
+	xfree(pwdir);
 }
 
 static void
@@ -1253,8 +1277,12 @@ control_client_sighandler(int signo)
 static void
 control_client_sigrelay(int signo)
 {
+	int save_errno = errno;
+
 	if (control_server_pid > 1)
 		kill(control_server_pid, signo);
+
+	errno = save_errno;
 }
 
 static int
@@ -1348,6 +1376,8 @@ control_client(const char *path)
 	if (options.forward_agent)
 		flags |= SSHMUX_FLAG_AGENT_FWD;
 
+	signal(SIGPIPE, SIG_IGN);
+
 	buffer_init(&m);
 
 	/* Send our command to server */
@@ -1409,9 +1439,10 @@ control_client(const char *path)
 	if (ssh_msg_send(sock, SSHMUX_VER, &m) == -1)
 		fatal("%s: msg_send", __func__);
 
-	mm_send_fd(sock, STDIN_FILENO);
-	mm_send_fd(sock, STDOUT_FILENO);
-	mm_send_fd(sock, STDERR_FILENO);
+	if (mm_send_fd(sock, STDIN_FILENO) == -1 ||
+	    mm_send_fd(sock, STDOUT_FILENO) == -1 ||
+	    mm_send_fd(sock, STDERR_FILENO) == -1)
+		fatal("%s: send fds failed", __func__);
 
 	/* Wait for reply, so master has a chance to gather ttymodes */
 	buffer_clear(&m);

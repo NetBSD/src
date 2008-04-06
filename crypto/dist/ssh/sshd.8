@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.39 2008/04/05 17:20:53 adrianp Exp $
+.\"	$NetBSD: sshd.8,v 1.40 2008/04/06 23:38:20 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd.8,v 1.237 2007/06/07 19:37:34 pvalchev Exp $
-.Dd $Mdocdate: June 7 2007 $
+.\" $OpenBSD: sshd.8,v 1.241 2008/03/27 22:37:57 jmc Exp $
+.Dd $Mdocdate: March 27 2008 $
 .Dt SSHD 8
 .Os
 .Sh NAME
@@ -658,6 +658,13 @@ This file is used in exactly the same way as
 .Pa .rhosts ,
 but allows host-based authentication without permitting login with
 rlogin/rsh.
+.Pp
+.It ~/.ssh/
+This directory is the default location for all user-specific configuration
+and authentication information.
+There is no general requirement to keep the entire contents of this directory
+secret, but the recommended permissions are read/write/execute for the user,
+and not accessible by others.
 .Pp
 .It ~/.ssh/authorized_keys
 Lists the public keys (RSA/DSA) that can be used for logging in as this user.

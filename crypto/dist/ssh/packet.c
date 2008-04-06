@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.28 2007/12/18 02:35:29 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.148 2007/06/07 19:37:34 pvalchev Exp $ */
+/*	$NetBSD: packet.c,v 1.29 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.151 2008/02/22 20:44:02 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.28 2007/12/18 02:35:29 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.29 2008/04/06 23:38:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -135,6 +135,8 @@ static int server_side = 0;
 
 /* Set to true if we are authenticated. */
 static int after_authentication = 0;
+
+int keep_alive_timeouts = 0;
 
 /* Session key information for Encryption and MAC */
 Newkeys *newkeys[MODE_MAX];
@@ -1187,10 +1189,12 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 	for (;;) {
 		if (compat20) {
 			type = packet_read_poll2(seqnr_p);
+			keep_alive_timeouts = 0;
 			if (type)
 				DBG(debug("received packet type %d", type));
 			switch (type) {
 			case SSH2_MSG_IGNORE:
+				debug3("Received SSH2_MSG_IGNORE");
 				break;
 			case SSH2_MSG_DEBUG:
 				packet_get_char();

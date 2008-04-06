@@ -1,5 +1,5 @@
-/*	$NetBSD: auth1.c,v 1.31 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: auth1.c,v 1.70 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth1.c,v 1.32 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: auth1.c,v 1.71 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth1.c,v 1.31 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: auth1.c,v 1.32 2008/04/06 23:38:19 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>

@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.8 2008/04/05 17:20:53 adrianp Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.40 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth-options.c,v 1.9 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.41 2008/03/26 21:28:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.8 2008/04/05 17:20:53 adrianp Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.9 2008/04/06 23:38:19 christos Exp $");
 #include <sys/types.h>
 
 #include <netdb.h>
