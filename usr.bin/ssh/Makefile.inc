@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2007/05/28 12:06:31 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2008/04/06 09:54:37 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -14,21 +14,19 @@ DPADD+=	${LIBSSH} ${LIBCRYPTO} ${LIBCRYPT} ${LIBZ}
 
 .if (${USE_PAM} != "no")
 CPPFLAGS+=-DUSE_PAM
+.else	# USE_PAM == no
+.if (${USE_SKEY} != "no")
+CPPFLAGS+=-DSKEY
 .endif
+.endif	# USE_PAM == no
 
 .if (${USE_KERBEROS} != "no")
-
 CPPFLAGS+=-DGSSAPI -I${DESTDIR}/usr/include/gssapi
 CPPFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/krb5 -DHEIMDAL
-
 .endif
 
 CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 CPPFLAGS+=-DLIBWRAP
-
-.if (${USE_SKEY} != "no")
-CPPFLAGS+=-DSKEY
-.endif
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
