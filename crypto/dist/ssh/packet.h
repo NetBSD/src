@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.6 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: packet.h,v 1.45 2006/03/25 22:22:43 djm Exp $ */
+/*	$NetBSD: packet.h,v 1.7 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: packet.h,v 1.46 2008/02/22 20:44:02 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -87,6 +87,7 @@ void	 tty_make_modes(int, struct termios *);
 void	 tty_parse_modes(int, int *);
 
 extern u_int max_packet_size;
+extern int keep_alive_timeouts;
 int	 packet_set_maxsize(u_int);
 #define  packet_get_maxsize() max_packet_size
 

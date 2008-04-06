@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-add.c,v 1.24 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: ssh-add.c,v 1.89 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: ssh-add.c,v 1.25 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: ssh-add.c,v 1.90 2007/09/09 11:38:01 sobrado Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-add.c,v 1.24 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: ssh-add.c,v 1.25 2008/04/06 23:38:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -309,7 +309,7 @@ do_file(AuthenticationConnection *ac, int deleting, char *file)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [options] [file ...]\n", __progname);
+	fprintf(stderr, "usage: %s [options] [file ...]\n", __progname);
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -l          List fingerprints of all identities.\n");
 	fprintf(stderr, "  -L          List public key parameters of all identities.\n");
