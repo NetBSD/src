@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.24 2008/03/13 22:19:39 bouyer Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.25 2008/04/06 07:24:20 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.24 2008/03/13 22:19:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.25 2008/04/06 07:24:20 cegger Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -206,8 +206,7 @@ xbd_xenbus_attach(struct device *parent, struct device *self, void *aux)
 	snprintf(id_str, sizeof(id_str), "%d", xa->xa_id);
 	err = xenbus_directory(NULL, "device/vbd", id_str, &dir_n, &dir);
 	if (err) {
-		printf("%s: xenbus_directory err %d\n",
-		    sc->sc_dev.dv_xname, err);
+		aprint_error_dev(&sc->sc_dev, "xenbus_directory err %d\n", err);
 	} else {
 		printf("%s/\n", xa->xa_xbusd->xbusd_path);
 		for (i = 0; i < dir_n; i++) {
@@ -215,8 +214,7 @@ xbd_xenbus_attach(struct device *parent, struct device *self, void *aux)
 			err = xenbus_read(NULL, xa->xa_xbusd->xbusd_path, dir[i],
 			    NULL, &val);
 			if (err) {
-				printf("%s: xenbus_read err %d\n",
-		    		sc->sc_dev.dv_xname, err);
+				aprint_error_dev(&sc->sc_dev, "xenbus_read err %d\n", err);
 			} else {
 				printf(" = %s\n", val);
 				free(val, M_DEVBUF);
@@ -227,8 +225,8 @@ xbd_xenbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_xbusd = xa->xa_xbusd;
 	sc->sc_xbusd->xbusd_otherend_changed = xbd_backend_changed;
 
-	dk_sc_init(&sc->sc_dksc, sc, sc->sc_dev.dv_xname);
-	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dev.dv_xname, &xbddkdriver);
+	dk_sc_init(&sc->sc_dksc, sc, device_xname(&sc->sc_dev));
+	disk_init(&sc->sc_dksc.sc_dkdev, device_xname(&sc->sc_dev), &xbddkdriver);
 	sc->sc_di = &dkintf_esdi;
 	/* initialize free requests list */
 	SLIST_INIT(&sc->sc_xbdreq_head);
@@ -250,7 +248,7 @@ xbd_xenbus_detach(struct device *dev, int flags)
 	struct xbd_xenbus_softc *sc = (void *)dev;
 	int s, bmaj, cmaj, i, mn;
 	s = splbio();
-	DPRINTF(("%s: xbd_detach\n", dev->dv_xname));
+	DPRINTF(("%s: xbd_detach\n", device_xname(dev)));
 	if (sc->sc_shutdown == 0) {
 		sc->sc_shutdown = 1;
 		/* wait for requests to complete */
@@ -323,10 +321,10 @@ xbd_xenbus_resume(void *p)
 	error = xenbus_alloc_evtchn(sc->sc_xbusd, &sc->sc_evtchn);
 	if (error)
 		return error;
-	aprint_verbose("%s: using event channel %d\n",
-	    sc->sc_dev.dv_xname, sc->sc_evtchn);
+	aprint_verbose_dev(&sc->sc_dev, "using event channel %d\n",
+	    sc->sc_evtchn);
 	event_set_handler(sc->sc_evtchn, &xbd_handler, sc,
-	    IPL_BIO, sc->sc_dev.dv_xname);
+	    IPL_BIO, device_xname(&sc->sc_dev));
 
 again:
 	xbt = xenbus_transaction_start();
@@ -370,7 +368,7 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 	struct dk_geom *pdg;
 	char buf[9];
 	int s;
-	DPRINTF(("%s: new backend state %d\n", sc->sc_dev.dv_xname, new_state));
+	DPRINTF(("%s: new backend state %d\n", device_xname(&sc->sc_dev), new_state));
 
 	switch (new_state) {
 	case XenbusStateUnknown:
@@ -422,7 +420,7 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		dk_getdisklabel(sc->sc_di, &sc->sc_dksc, 0 /* XXX ? */);
 		format_bytes(buf, sizeof(buf), sc->sc_sectors * sc->sc_secsize);
 		printf("%s: %s, %d bytes/sect x %" PRIu64 " sectors\n",
-		    sc->sc_dev.dv_xname, buf, (int)pdg->pdg_secsize,
+		    device_xname(&sc->sc_dev), buf, (int)pdg->pdg_secsize,
 		    sc->sc_xbdsize);
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
@@ -445,24 +443,24 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
 	if (err)
 		panic("%s: can't read number from %s/virtual-device\n", 
-		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
+		    device_xname(&sc->sc_dev), sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ull(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "sectors", &sectors, 10);
 	if (err)
 		panic("%s: can't read number from %s/sectors\n", 
-		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
+		    device_xname(&sc->sc_dev), sc->sc_xbusd->xbusd_otherend);
 	sc->sc_sectors = sectors;
 
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "info", &sc->sc_info, 10);
 	if (err)
 		panic("%s: can't read number from %s/info\n", 
-		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
+		    device_xname(&sc->sc_dev), sc->sc_xbusd->xbusd_otherend);
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_otherend, "sector-size", &sc->sc_secsize, 10);
 	if (err)
 		panic("%s: can't read number from %s/sector-size\n", 
-		    sc->sc_dev.dv_xname, sc->sc_xbusd->xbusd_otherend);
+		    device_xname(&sc->sc_dev), sc->sc_xbusd->xbusd_otherend);
 
 	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
 }
@@ -476,7 +474,7 @@ xbd_handler(void *arg)
 	int more_to_do;
 	int seg;
 
-	DPRINTF(("xbd_handler(%s)\n", sc->sc_dev.dv_xname));
+	DPRINTF(("xbd_handler(%s)\n", device_xname(&sc->sc_dev)));
 
 	if (__predict_false(sc->sc_backend_status != BLKIF_STATE_CONNECTED))
 		return 0;
@@ -493,7 +491,7 @@ again:
 			if (__predict_false(
 			    xengnt_status(xbdreq->req_gntref[seg]))) {
 				printf("%s: grant still used by backend\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 				sc->sc_ring.rsp_cons = i;
 				xbdreq->req_nr_segments = seg + 1;
 				goto done;
@@ -505,7 +503,7 @@ again:
 		if (rep->operation != BLKIF_OP_READ &&
 		    rep->operation != BLKIF_OP_WRITE) {
 			printf("%s: bad operation %d from backend\n",
-			     sc->sc_dev.dv_xname, rep->operation);
+			     device_xname(&sc->sc_dev), rep->operation);
 				bp->b_error = EIO;
 				bp->b_resid = bp->b_bcount;
 				goto next;
