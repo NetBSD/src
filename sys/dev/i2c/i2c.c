@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.18 2007/12/11 12:09:21 lukem Exp $	*/
+/*	$NetBSD: i2c.c,v 1.19 2008/04/06 20:25:59 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.18 2007/12/11 12:09:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.19 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = iba->iba_tag;
 	sc->sc_type = iba->iba_type;
 	ic = sc->sc_tag;
-	ic->ic_devname = self->dv_xname;
+	ic->ic_devname = device_xname(self);
 
 	LIST_INIT(&(sc->sc_tag->ic_list));
 	LIST_INIT(&(sc->sc_tag->ic_proc_list));

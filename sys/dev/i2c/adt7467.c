@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.10 2007/11/17 08:30:35 kefren Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.11 2008/04/06 20:25:59 cegger Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -37,7 +37,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.10 2007/11/17 08:30:35 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.11 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ adt7467c_setup(struct adt7467c_softc *sc)
 	    
 	ret = sysctl_createv(NULL, 0, NULL, &me,
 	       CTLFLAG_READWRITE,
-	       CTLTYPE_NODE, sc->sc_dev.dv_xname, NULL,
+	       CTLTYPE_NODE, device_xname(&sc->sc_dev), NULL,
 	       NULL, 0, NULL, 0,
 	       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
@@ -238,13 +238,12 @@ adt7467c_setup(struct adt7467c_softc *sc)
 	stuff = adt7467c_readreg(sc, 0x40);
 	adt7467c_writereg(sc, 0x40, stuff);
 
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = adt7467c_refresh;
 
 	if ((error = sysmon_envsys_register(sc->sc_sme)) != 0) {
-		aprint_error("%s: unable to register with sysmon (%d)\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to register with sysmon (%d)\n", error);
 		goto out;
 	}
 	

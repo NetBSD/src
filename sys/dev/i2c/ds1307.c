@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.9 2007/12/11 12:09:21 lukem Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.10 2008/04/06 20:25:59 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.9 2007/12/11 12:09:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.10 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,8 +170,7 @@ dsrtc_read(dev_t dev, struct uio *uio, int flags)
 				      sc->sc_address, cmdbuf, 1,
 				      &ch, 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
-			printf("%s: dsrtc_read: read failed at 0x%x\n",
-			    sc->sc_dev.dv_xname, a);
+			aprint_error_dev(&sc->sc_dev, "dsrtc_read: read failed at 0x%x\n", a);
 			return (error);
 		}
 		if ((error = uiomove(&ch, 1, uio)) != 0) {
@@ -211,8 +210,7 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 		if ((error = iic_exec(sc->sc_tag,
 		    uio->uio_resid ? I2C_OP_WRITE : I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
-			printf("%s: dsrtc_write: write failed at 0x%x\n",
-			    sc->sc_dev.dv_xname, a);
+			aprint_error_dev(&sc->sc_dev, "dsrtc_write: write failed at 0x%x\n", a);
 			break;
 		}
 	}
@@ -263,8 +261,7 @@ dsrtc_clock_read(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	int i;
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: dsrtc_clock_read: failed to acquire I2C bus\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "dsrtc_clock_read: failed to acquire I2C bus\n");
 		return (0);
 	}
 
@@ -276,8 +273,8 @@ dsrtc_clock_read(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 			     sc->sc_address, cmdbuf, 1,
 			     &bcd[i], 1, I2C_F_POLL)) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			printf("%s: dsrtc_clock_read: failed to read rtc "
-			    "at 0x%x\n", sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev, "dsrtc_clock_read: failed to read rtc "
+			    "at 0x%x\n", i);
 			return (0);
 		}
 	}
@@ -329,8 +326,7 @@ dsrtc_clock_write(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[DS1307_YEAR] = TOBCD((dt->dt_year - POSIX_BASE_YEAR) % 100);
 
 	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
-		printf("%s: dsrtc_clock_write: failed to acquire I2C bus\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "dsrtc_clock_write: failed to acquire I2C bus\n");
 		return (0);
 	}
 
@@ -341,8 +337,7 @@ dsrtc_clock_write(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
 		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
-		printf("%s: dsrtc_clock_write: failed to Hold Clock\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "dsrtc_clock_write: failed to Hold Clock\n");
 		return (0);
 	}
 
@@ -357,8 +352,8 @@ dsrtc_clock_write(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 			     sc->sc_address, cmdbuf, 1, &bcd[i], 1,
 			     I2C_F_POLL)) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			printf("%s: dsrtc_clock_write: failed to write rtc "
-			    " at 0x%x\n", sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev, "dsrtc_clock_write: failed to write rtc "
+			    " at 0x%x\n", i);
 			/* XXX: Clock Hold is likely still asserted! */
 			return (0);
 		}

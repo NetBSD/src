@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.26 2007/10/19 11:59:44 ad Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.27 2008/04/06 20:26:21 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.26 2007/10/19 11:59:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.27 2008/04/06 20:26:21 cegger Exp $");
 
 #include "rnd.h"
 
@@ -171,7 +171,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	    I2O_EVENT_GEN_STATE_CHANGE |
 	    I2O_EVENT_GEN_GENERAL_WARNING);
 	if (rv != 0) {
-		printf("%s: unable to register for events", self->dv_xname);
+		aprint_error_dev(self, "unable to register for events");
 		goto bad;
 	}
 	evreg = 1;
@@ -280,7 +280,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 	if (enable)
 		ld->sc_flags |= LDF_ENABLED;
 	else
-		printf("%s: device not yet supported\n", self->dv_xname);
+		aprint_error_dev(self, "device not yet supported\n");
 
 	ldattach(ld);
 	return;
@@ -500,7 +500,7 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 			errstr = "<unknown>";
 		else
 			errstr = ld_iop_errors[detail];
-		printf("%s: error 0x%04x: %s\n", dv->dv_xname, detail, errstr);
+		aprint_error_dev(dv, "error 0x%04x: %s\n", detail, errstr);
 		err = 1;
 	}
 
@@ -540,7 +540,7 @@ ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 		return;
 	}
 
-	printf("%s: event 0x%08x received\n", dv->dv_xname, event);
+	printf("%s: event 0x%08x received\n", device_xname(dv), event);
 }
 
 static void

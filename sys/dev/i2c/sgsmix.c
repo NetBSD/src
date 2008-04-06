@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmix.c,v 1.2 2007/09/02 01:41:29 macallan Exp $	*/
+/*	$NetBSD: sgsmix.c,v 1.3 2008/04/06 20:25:59 cegger Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.2 2007/09/02 01:41:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.3 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ sgsmix_set_speaker_vol(void *cookie, int left, int right)
 {
 	struct sgsmix_softc *sc = cookie;
 
-	DPRINTF("%s: speaker %d %d\n", sc->sc_dev.dv_xname, left, right);
+	DPRINTF("%s: speaker %d %d\n", device_xname(&sc->sc_dev), left, right);
 	if (left == 0) {
 		sgsmix_writereg(sc, SGSREG_SPEAKER_L, 0x20);
 	} else {
@@ -178,7 +178,7 @@ sgsmix_set_headphone_vol(void *cookie, int left, int right)
 {
 	struct sgsmix_softc *sc = cookie;
 
-	DPRINTF("%s: headphones %d %d\n", sc->sc_dev.dv_xname, left, right);
+	DPRINTF("%s: headphones %d %d\n", device_xname(&sc->sc_dev), left, right);
 	if (left == 0) {
 		sgsmix_writereg(sc, SGSREG_HEADPHONES_L, 0x20);
 	} else {
@@ -206,6 +206,6 @@ sgsmix_set_bass_treble(void *cookie, int bass, int treble)
 	b = bass & 0xf0;
 	if (b & 0x80)
 		b ^= 0x70;
-	DPRINTF("%s: bass/treble %02x %02x\n", sc->sc_dev.dv_xname, b, t);
+	DPRINTF("%s: bass/treble %02x %02x\n", device_xname(&sc->sc_dev), b, t);
 	sgsmix_writereg(sc, SGSREG_BASS_TREBLE, b | t);
 }
