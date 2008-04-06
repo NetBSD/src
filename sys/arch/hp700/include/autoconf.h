@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 2008/03/29 15:59:26 skrll Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.9 2008/04/06 08:03:36 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -70,16 +70,18 @@ struct hppa_mod_info {
 
 struct device;
 
-const char *hppa_mod_info __P((int, int));
-void pdc_scanbus_memory_map __P((struct device *, struct confargs *, 
-    void (*)(struct device *, struct confargs *)));
-void pdc_scanbus_system_map __P((struct device *, struct confargs *, 
-    void (*)(struct device *, struct confargs *)));
-void	(*pdc_scanbus) __P((struct device *, struct confargs *,
-    void (*)(struct device *, struct confargs *)));
-int	mbprint __P((void *, const char *));
-int	mbsubmatch __P((struct device *, struct cfdata *,
-			const int *, void *));
-int	clock_intr __P((void *));
+const char *hppa_mod_info(int, int);
 
-void	dumpconf	__P((void));
+void	pdc_scanbus_memory_map(struct device *, struct confargs *, 
+    void (*)(struct device *, struct confargs *));
+void	pdc_scanbus_system_map(struct device *, struct confargs *, 
+    void (*)(struct device *, struct confargs *));
+void	(*pdc_scanbus)(struct device *, struct confargs *,
+    void (*)(struct device *, struct confargs *));
+
+int	mbprint(void *, const char *);
+int	mbsubmatch(struct device *, struct cfdata *,
+			const int *, void *);
+int	clock_intr(void *);
+
+void	dumpconf(void);
