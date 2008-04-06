@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.9 2007/12/11 05:38:12 lukem Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.10 2008/04/06 20:25:59 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.9 2007/12/11 05:38:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.10 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,8 +167,8 @@ seeprom_attach(struct device *parent, struct device *self, void *aux)
 		 * Obviously this will not work for 4KB or 8KB
 		 * EEPROMs, but them's the breaks.
 		 */
-		aprint_error("%s: invalid size specified; "
-		    "assuming 2KB (16Kb)\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "invalid size specified; "
+		    "assuming 2KB (16Kb)\n");
 		sc->sc_size = 2048;
 		sc->sc_cmdlen = 1;
 	}
@@ -246,8 +246,7 @@ seeprom_read(dev_t dev, struct uio *uio, int flags)
 				      addr, cmdbuf, sc->sc_cmdlen,
 				      &ch, 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
-			printf("%s: seeprom_read: byte read failed at 0x%x\n",
-			    sc->sc_dev.dv_xname, a);
+			aprint_error_dev(&sc->sc_dev, "seeprom_read: byte read failed at 0x%x\n", a);
 			return (error);
 		}
 		if ((error = uiomove(&ch, 1, uio)) != 0) {
@@ -302,8 +301,7 @@ seeprom_write(dev_t dev, struct uio *uio, int flags)
 				      addr, cmdbuf, sc->sc_cmdlen,
 				      &ch, 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
-			printf("%s: seeprom_write: byte write failed at 0x%x\n",
-			    sc->sc_dev.dv_xname, a);
+			aprint_error_dev(&sc->sc_dev, "seeprom_write: byte write failed at 0x%x\n", a);
 			return (error);
 		}
 
