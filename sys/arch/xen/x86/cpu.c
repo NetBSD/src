@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2008/01/16 02:08:49 dogcow Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2008/04/06 07:24:20 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2008/01/16 02:08:49 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2008/04/06 07:24:20 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -346,7 +346,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	if (ncolors <= uvmexp.ncolors)
 		return;
-	printf("%s: %d page colors\n", ci->ci_dev->dv_xname, ncolors);
+	printf("%s: %d page colors\n", device_xname(ci->ci_dev), ncolors);
 	uvm_page_recolor(ncolors);
 }
 
@@ -383,7 +383,7 @@ cpu_attach_common(parent, self, aux)
 		if (cpunum != lapic_cpu_number()) {
 			panic("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
-			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
+			    device_xname(sc->sc_dev), lapic_cpu_number(), cpunum);
 		}
 #endif
 	}
@@ -408,8 +408,8 @@ cpu_attach_common(parent, self, aux)
 		error = mi_cpu_attach(ci);
 		if (error != 0) {
 			aprint_normal("\n");
-			aprint_error("%s: mi_cpu_attach failed with %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "mi_cpu_attach failed with %d\n",
+			    error);
 			return;
 		}
 #endif
@@ -461,7 +461,7 @@ cpu_attach_common(parent, self, aux)
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		printf("%s: not started\n", sc->sc_dev.dv_xname);
+		printf("%s: not started\n", device_xname(&sc->sc_dev));
 #endif
 		break;
 
@@ -476,8 +476,8 @@ cpu_attach_common(parent, self, aux)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 
-		aprint_verbose("%s: idle lwp at %p, idle sp at 0x%x\n",
-		    sc->sc_dev.dv_xname, l, l->l_addr->u_pcb.pcb_esp);
+		aprint_verbose_dev(&sc->sc_dev, "idle lwp at %p, idle sp at 0x%x\n",
+		    l, l->l_addr->u_pcb.pcb_esp);
 	}
 #endif
 }
@@ -591,7 +591,7 @@ cpu_start_secondary (ci)
 
 	ci->ci_flags |= CPUF_AP;
 
-	printf("%s: starting\n", ci->ci_dev->dv_xname);
+	printf("%s: starting\n", device_xname(ci->ci_dev));
 
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	CPU_STARTUP(ci);
@@ -603,7 +603,7 @@ cpu_start_secondary (ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_PRESENT)) {
-		printf("%s: failed to become ready\n", ci->ci_dev->dv_xname);
+		aprint_error_dev(ci->ci_dev, "failed to become ready\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -657,7 +657,7 @@ cpu_hatch(void *v)
 
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_PRESENT)
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
+		panic("%s: already running!?", device_xname(ci->ci_dev));
 #endif
 
 	ci->ci_flags |= CPUF_PRESENT;
@@ -669,7 +669,7 @@ cpu_hatch(void *v)
 		delay(10);
 #ifdef DEBUG
 	if (ci->ci_flags & CPUF_RUNNING)
-		panic("%s: already running!?", ci->ci_dev->dv_xname);
+		panic("%s: already running!?", device_xname(ci->ci_dev));
 #endif
 
 	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
@@ -686,7 +686,7 @@ cpu_hatch(void *v)
 	lapic_tpr = 0;
 	enable_intr();
 
-	printf("%s: CPU %ld running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
+	printf("%s: CPU %ld running\n", device_xname(ci->ci_dev), ci->ci_cpuid);
 	if (ci->ci_feature_flags & CPUID_TSC)
 		cc_microset(ci);
 	splx(s);
@@ -710,7 +710,7 @@ cpu_debug_dump(void)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
-		    ci->ci_dev == NULL ? "BOOT" : ci->ci_dev->dv_xname,
+		    ci->ci_dev == NULL ? "BOOT" : device_xname(ci->ci_dev),
 		    ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
 		    ci->ci_curlwp,

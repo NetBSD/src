@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.12 2008/03/11 05:34:01 matt Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.13 2008/04/06 07:23:57 cegger Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.12 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.13 2008/04/06 07:23:57 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -167,7 +167,7 @@ uba_bi_attach(device_t parent, device_t self, void *aux)
 	timo = 1000;
 	while (BUA(sc->uh_uba)->bn_biic.bi_csr & BICSR_BROKE)
 		if (timo == 0) {
-			printf("%s: BROKE bit set\n", self->dv_xname);
+			aprint_error_dev(self, "BROKE bit set\n");
 			return;
 		}
 

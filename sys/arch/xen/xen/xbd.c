@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.42 2008/01/05 00:31:56 ad Exp $ */
+/* $NetBSD: xbd.c,v 1.43 2008/04/06 07:24:20 cegger Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.42 2008/01/05 00:31:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.43 2008/04/06 07:24:20 cegger Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1147,12 +1147,12 @@ xbd_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": Xen Virtual Block Device");
 
 	simple_lock_init(&xs->sc_slock);
-	dk_sc_init(&xs->sc_dksc, xs, xs->sc_dev.dv_xname);
-	disk_init(&xs->sc_dksc.sc_dkdev, xs->sc_dev.dv_xname, &xbddkdriver);
+	dk_sc_init(&xs->sc_dksc, xs, device_xname(&xs->sc_dev));
+	disk_init(&xs->sc_dksc.sc_dkdev, device_xname(&xs->sc_dev), &xbddkdriver);
 	xbdinit(xs, xbda->xa_xd, xbda->xa_dkintf);
 
 #if NRND > 0
-	rnd_attach_source(&xs->sc_rnd_source, xs->sc_dev.dv_xname,
+	rnd_attach_source(&xs->sc_rnd_source, device_xname(&xs->sc_dev),
 	    RND_TYPE_DISK, 0);
 #endif
 }
