@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.1.1.22 2007/12/17 20:15:27 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.155 2007/03/19 12:16:42 dtucker Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.1.1.23 2008/04/06 21:18:30 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.157 2007/09/25 23:48:57 canacar Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -445,6 +445,7 @@ static void
 process_add_identity(SocketEntry *e, int version)
 {
 	Idtab *tab = idtab_lookup(version);
+	Identity *id;
 	int type, success = 0, death = 0, confirm = 0;
 	char *type_name, *comment;
 	Key *k = NULL;
@@ -527,19 +528,19 @@ process_add_identity(SocketEntry *e, int version)
 	}
 	if (lifetime && !death)
 		death = time(NULL) + lifetime;
-	if (lookup_identity(k, version) == NULL) {
-		Identity *id = xmalloc(sizeof(Identity));
+	if ((id = lookup_identity(k, version)) == NULL) {
+		id = xmalloc(sizeof(Identity));
 		id->key = k;
-		id->comment = comment;
-		id->death = death;
-		id->confirm = confirm;
 		TAILQ_INSERT_TAIL(&tab->idlist, id, next);
 		/* Increment the number of identities. */
 		tab->nentries++;
 	} else {
 		key_free(k);
-		xfree(comment);
+		xfree(id->comment);
 	}
+	id->comment = comment;
+	id->death = death;
+	id->confirm = confirm;
 send:
 	buffer_put_int(&e->output, 1);
 	buffer_put_char(&e->output,
@@ -1004,7 +1005,7 @@ check_parent_exists(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [options] [command [args ...]]\n",
+	fprintf(stderr, "usage: %s [options] [command [arg ...]]\n",
 	    __progname);
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "  -c          Generate C-shell commands on stdout.\n");

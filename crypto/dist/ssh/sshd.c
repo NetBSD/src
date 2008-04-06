@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.1.1.26 2007/12/17 20:15:36 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.351 2007/05/22 10:18:52 djm Exp $ */
+/*	$NetBSD: sshd.c,v 1.1.1.27 2008/04/06 21:18:37 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.355 2008/02/14 13:10:31 mbalmer Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -567,11 +567,12 @@ privsep_preauth_child(void)
 	u_int32_t rnd[256];
 	gid_t gidset[1];
 	struct passwd *pw;
-	int i;
+	u_int i;
 
 	/* Enable challenge-response authentication for privilege separation */
 	privsep_challenge_enable();
 
+	arc4random_stir();
 	for (i = 0; i < 256; i++)
 		rnd[i] = arc4random();
 	RAND_seed(rnd, sizeof(rnd));
@@ -652,6 +653,9 @@ privsep_preauth(Authctxt *authctxt)
 static void
 privsep_postauth(Authctxt *authctxt)
 {
+	u_int32_t rnd[256];
+	u_int i;
+
 	if (authctxt->pw->pw_uid == 0 || options.use_login) {
 		/* File descriptor passing is broken or root login */
 		use_privsep = 0;
@@ -678,6 +682,11 @@ privsep_postauth(Authctxt *authctxt)
 
 	/* Demote the private keys to public keys. */
 	demote_sensitive_data();
+
+	arc4random_stir();
+	for (i = 0; i < 256; i++)
+		rnd[i] = arc4random();
+	RAND_seed(rnd, sizeof(rnd));
 
 	/* Drop privileges */
 	do_setusercontext(authctxt->pw);
@@ -929,8 +938,7 @@ server_listen(void)
 		    ntop, sizeof(ntop), strport, sizeof(strport),
 		    NI_NUMERICHOST|NI_NUMERICSERV)) != 0) {
 			error("getnameinfo failed: %.100s",
-			    (ret != EAI_SYSTEM) ? gai_strerror(ret) :
-			    strerror(errno));
+			    ssh_gai_strerror(ret));
 			continue;
 		}
 		/* Create socket for listening. */
@@ -1321,7 +1329,7 @@ main(int ac, char **av)
 	}
 	if (rexeced_flag || inetd_flag)
 		rexec_flag = 0;
-	if (rexec_flag && (av[0] == NULL || *av[0] != '/'))
+	if (!test_flag && (rexec_flag && (av[0] == NULL || *av[0] != '/')))
 		fatal("sshd re-exec requires execution with an absolute path");
 	if (rexeced_flag)
 		closefrom(REEXEC_MIN_FREE_FD);
@@ -1508,10 +1516,6 @@ main(int ac, char **av)
 	/* Get a connection, either from inetd or a listening TCP socket */
 	if (inetd_flag) {
 		server_accept_inetd(&sock_in, &sock_out);
-
-		if ((options.protocol & SSH_PROTO_1) &&
-		    sensitive_data.server_key == NULL)
-			generate_ephemeral_server_key();
 	} else {
 		server_listen();
 
@@ -1669,6 +1673,10 @@ main(int ac, char **av)
 		alarm(options.login_grace_time);
 
 	sshd_exchange_identification(sock_in, sock_out);
+
+	/* In inetd mode, generate ephemeral key only for proto 1 connections */
+	if (!compat20 && inetd_flag && sensitive_data.server_key == NULL)
+		generate_ephemeral_server_key();
 
 	packet_set_nonblocking();
 
