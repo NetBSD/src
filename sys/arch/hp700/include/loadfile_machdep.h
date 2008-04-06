@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.2 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.3 2008/04/06 08:03:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,9 +74,9 @@
 #define	ALLOC(a)		malloc(a)
 #define	DEALLOC(a, b)		free(a)
 
-ssize_t vread __P((int, u_long, u_long *, size_t));
-void vcopy __P((u_long, u_long, u_long *, size_t));
-void vzero __P((u_long, u_long *, size_t));
+ssize_t vread(int, u_long, u_long *, size_t);
+void vcopy(u_long, u_long, u_long *, size_t);
+void vzero(u_long, u_long *, size_t);
 
 #endif
 #endif /* ! _HP700_LOADFILE_MACHDEP_H_ */
