@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.h,v 1.1.1.11 2006/09/28 21:15:30 christos Exp $	*/
-/* $OpenBSD: sshconnect.h,v 1.23 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sshconnect.h,v 1.1.1.12 2008/04/06 21:18:35 christos Exp $	*/
+/* $OpenBSD: sshconnect.h,v 1.24 2007/09/04 11:15:56 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -34,10 +34,10 @@ struct Sensitive {
 
 int
 ssh_connect(const char *, struct sockaddr_storage *, u_short, int, int,
-    int, const char *);
+    int *, int, int, const char *);
 
 void
-ssh_login(Sensitive *, const char *, struct sockaddr *, struct passwd *);
+ssh_login(Sensitive *, const char *, struct sockaddr *, struct passwd *, int);
 
 int	 verify_host_key(char *, struct sockaddr *, Key *);
 

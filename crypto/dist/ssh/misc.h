@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.1.1.12 2006/09/28 21:15:10 christos Exp $	*/
-/* $OpenBSD: misc.h,v 1.36 2006/08/18 10:27:16 djm Exp $ */
+/*	$NetBSD: misc.h,v 1.1.1.13 2008/04/06 21:18:17 christos Exp $	*/
+/* $OpenBSD: misc.h,v 1.37 2007/12/27 14:22:08 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -36,6 +36,7 @@ char	*tohex(const void *, size_t);
 void	 sanitise_stdfd(void);
 
 struct passwd *pwcopy(struct passwd *);
+const char *ssh_gai_strerror(int);
 
 typedef struct arglist arglist;
 struct arglist {

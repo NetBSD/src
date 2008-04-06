@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.c,v 1.1.1.1 2007/12/17 20:15:38 christos Exp $	*/
-/* $OpenBSD: umac.c,v 1.1 2007/06/07 19:37:34 pvalchev Exp $ */
+/*	$NetBSD: umac.c,v 1.1.1.2 2008/04/06 21:18:39 christos Exp $	*/
+/* $OpenBSD: umac.c,v 1.2 2007/09/12 19:39:19 stevesk Exp $ */
 /* -----------------------------------------------------------------------
  * 
  * umac.c -- C Implementation UMAC Message Authentication
@@ -67,6 +67,7 @@
 #include <sys/types.h>
 #include <sys/endian.h>
 
+#include "xmalloc.h"
 #include "umac.h"
 #include <string.h>
 #include <stdlib.h>
@@ -1195,7 +1196,7 @@ int umac_delete(struct umac_ctx *ctx)
     if (ctx) {
         if (ALLOC_BOUNDARY)
             ctx = (struct umac_ctx *)ctx->free_ptr;
-        free(ctx);
+        xfree(ctx);
     }
     return (1);
 }
@@ -1211,7 +1212,7 @@ struct umac_ctx *umac_new(u_char key[])
     size_t bytes_to_add;
     aes_int_key prf_key;
     
-    octx = ctx = malloc(sizeof(*ctx) + ALLOC_BOUNDARY);
+    octx = ctx = xmalloc(sizeof(*ctx) + ALLOC_BOUNDARY);
     if (ctx) {
         if (ALLOC_BOUNDARY) {
             bytes_to_add = ALLOC_BOUNDARY -

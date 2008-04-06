@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.1.1.17 2006/09/28 21:14:59 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.58 2006/08/18 09:15:20 markus Exp $ */
+/*	$NetBSD: auth.h,v 1.1.1.18 2008/04/06 21:18:06 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.60 2007/09/21 08:15:29 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -33,12 +33,7 @@
 
 #include <openssl/rsa.h>
 
-#ifdef HAVE_LOGIN_CAP
-#include <login_cap.h>
-#endif
-#ifdef BSD_AUTH
 #include <bsd_auth.h>
-#endif
 #ifdef KRB5
 #include <krb5.h>
 #endif
@@ -60,9 +55,7 @@ struct Authctxt {
 	struct passwd	*pw;		/* set if 'valid' */
 	char		*style;
 	void		*kbdintctxt;
-#ifdef BSD_AUTH
 	auth_session_t	*as;
-#endif
 #ifdef KRB5
 	krb5_context	 krb5_ctx;
 	krb5_ccache	 krb5_fwd_ccache;

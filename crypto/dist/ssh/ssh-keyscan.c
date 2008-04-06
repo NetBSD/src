@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.1.1.19 2007/03/10 22:35:51 christos Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.74 2006/10/06 02:29:19 djm Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.1.1.20 2008/04/06 21:18:32 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.75 2007/12/27 14:22:08 dtucker Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -396,7 +396,7 @@ tcpconnect(char *host)
 	hints.ai_family = IPv4or6;
 	hints.ai_socktype = SOCK_STREAM;
 	if ((gaierr = getaddrinfo(host, strport, &hints, &aitop)) != 0)
-		fatal("getaddrinfo %s: %s", host, gai_strerror(gaierr));
+		fatal("getaddrinfo %s: %s", host, ssh_gai_strerror(gaierr));
 	for (ai = aitop; ai; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s < 0) {

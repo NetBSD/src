@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.1.1.10 2007/12/17 20:15:18 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.57 2007/06/07 19:37:34 pvalchev Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.1.1.11 2008/04/06 21:18:22 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.60 2007/10/29 04:08:08 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -213,8 +213,8 @@ mm_getpwnamallow(const char *username)
 	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_PWNAM, &m);
 
 	if (buffer_get_char(&m) == 0) {
-		buffer_free(&m);
-		return (NULL);
+		pw = NULL;
+		goto out;
 	}
 	pw = buffer_get_string(&m, &len);
 	if (len != sizeof(struct passwd))
@@ -226,6 +226,7 @@ mm_getpwnamallow(const char *username)
 	pw->pw_dir = buffer_get_string(&m, NULL);
 	pw->pw_shell = buffer_get_string(&m, NULL);
 
+out:
 	/* copy options block as a Match directive may have changed some */
 	newopts = buffer_get_string(&m, &len);
 	if (len != sizeof(*newopts))
@@ -677,8 +678,9 @@ mm_pty_allocate(int *ptyfd, int *ttyfd, char *namebuf, size_t namebuflen)
 	buffer_append(&loginmsg, msg, strlen(msg));
 	xfree(msg);
 
-	*ptyfd = mm_receive_fd(pmonitor->m_recvfd);
-	*ttyfd = mm_receive_fd(pmonitor->m_recvfd);
+	if ((*ptyfd = mm_receive_fd(pmonitor->m_recvfd)) == -1 ||
+	    (*ttyfd = mm_receive_fd(pmonitor->m_recvfd)) == -1)
+		fatal("%s: receive fds failed", __func__);
 
 	/* Success */
 	return (1);
@@ -805,66 +807,6 @@ mm_bsdauth_respond(void *ctx, u_int numresponses, char **responses)
 	return ((authok == 0) ? -1 : 0);
 }
 
-#ifdef SKEY
-int
-mm_skey_query(void *ctx, char **name, char **infotxt,
-   u_int *numprompts, char ***prompts, u_int **echo_on)
-{
-	Buffer m;
-	u_int success;
-	char *challenge;
-
-	debug3("%s: entering", __func__);
-
-	buffer_init(&m);
-	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_SKEYQUERY, &m);
-
-	mm_request_receive_expect(pmonitor->m_recvfd, MONITOR_ANS_SKEYQUERY,
-	    &m);
-	success = buffer_get_int(&m);
-	if (success == 0) {
-		debug3("%s: no challenge", __func__);
-		buffer_free(&m);
-		return (-1);
-	}
-
-	/* Get the challenge, and format the response */
-	challenge  = buffer_get_string(&m, NULL);
-	buffer_free(&m);
-
-	debug3("%s: received challenge: %s", __func__, challenge);
-
-	mm_chall_setup(name, infotxt, numprompts, prompts, echo_on);
-
-	xasprintf(*prompts, "%s%s", challenge, SKEY_PROMPT);
-	xfree(challenge);
-
-	return (0);
-}
-
-int
-mm_skey_respond(void *ctx, u_int numresponses, char **responses)
-{
-	Buffer m;
-	int authok;
-
-	debug3("%s: entering", __func__);
-	if (numresponses != 1)
-		return (-1);
-
-	buffer_init(&m);
-	buffer_put_cstring(&m, responses[0]);
-	mm_request_send(pmonitor->m_recvfd, MONITOR_REQ_SKEYRESPOND, &m);
-
-	mm_request_receive_expect(pmonitor->m_recvfd,
-	    MONITOR_ANS_SKEYRESPOND, &m);
-
-	authok = buffer_get_int(&m);
-	buffer_free(&m);
-
-	return ((authok == 0) ? -1 : 0);
-}
-#endif /* SKEY */
 
 void
 mm_ssh1_session_id(u_char session_id[16])
