@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.8 2007/12/11 12:09:23 lukem Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.9 2008/04/06 20:25:59 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.8 2007/12/11 12:09:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.9 2008/04/06 20:25:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,10 +119,10 @@ pcfrtc_attach(struct device *parent, struct device *self, void *aux)
 	cmdbuf[0] = PCF8583_REG_CSR;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
 	    cmdbuf, 1, &csr, 1, 0) != 0) {
-		aprint_error("%s: unable to read CSR\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to read CSR\n");
 		return;
 	}
-	aprint_normal("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal_dev(&sc->sc_dev, "");
 	switch (csr & PCF8583_CSR_FN_MASK) {
 	case PCF8583_CSR_FN_32768HZ:
 		aprint_normal(" 32.768 kHz clock");
@@ -211,8 +211,7 @@ pcfrtc_read(dev_t dev, struct uio *uio, int flags)
 				      sc->sc_address, cmdbuf, 1,
 				      &ch, 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
-			printf("%s: pcfrtc_read: read failed at 0x%x\n",
-			    sc->sc_dev.dv_xname, a);
+			aprint_error_dev(&sc->sc_dev, "pcfrtc_read: read failed at 0x%x\n", a);
 			return (error);
 		}
 		if ((error = uiomove(&ch, 1, uio)) != 0) {
@@ -252,8 +251,7 @@ pcfrtc_write(dev_t dev, struct uio *uio, int flags)
 		if ((error = iic_exec(sc->sc_tag,
 		    uio->uio_resid ? I2C_OP_WRITE : I2C_OP_WRITE_WITH_STOP,
 		    sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
-			printf("%s: pcfrtc_write: write failed at 0x%x\n",
-			    sc->sc_dev.dv_xname, a);
+			aprint_error_dev(&sc->sc_dev, "pcfrtc_write: write failed at 0x%x\n", a);
 			return (error);
 		}
 	}
@@ -316,8 +314,7 @@ pcfrtc_clock_read(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 	int i, err;
 
 	if ((err = iic_acquire_bus(sc->sc_tag, I2C_F_POLL))) {
-		printf("%s: pcfrtc_clock_read: failed to acquire I2C bus\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "pcfrtc_clock_read: failed to acquire I2C bus\n");
 		return err;
 	}
 
@@ -329,8 +326,8 @@ pcfrtc_clock_read(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 			     sc->sc_address, cmdbuf, 1,
 			     &bcd[i], 1, I2C_F_POLL))) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			printf("%s: pcfrtc_clock_read: failed to read rtc "
-			    "at 0x%x\n", sc->sc_dev.dv_xname,
+			aprint_error_dev(&sc->sc_dev, "pcfrtc_clock_read: failed to read rtc "
+			    "at 0x%x\n",
 			    pcf8583_rtc_offset[i]);
 			return err;
 		}
@@ -358,8 +355,7 @@ pcfrtc_clock_read(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 	dt->dt_year = bcd[8] + (bcd[9] * 100);
 	/* Try to notice if the year's rolled over. */
 	if (bcd[PCF8583_REG_CSR] & PCF8583_CSR_MASK)
-		printf("%s: cannot check year in mask mode\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "cannot check year in mask mode\n");
 	else {
 		while (dt->dt_year % 4 !=
 		       (bcd[PCF8583_REG_YEARDATE] &
@@ -393,8 +389,7 @@ pcfrtc_clock_write(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 	bcd[9]                    = dt->dt_year / 100;
 
 	if ((err = iic_acquire_bus(sc->sc_tag, I2C_F_POLL))) {
-		printf("%s: pcfrtc_clock_write: failed to acquire I2C bus\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "pcfrtc_clock_write: failed to acquire I2C bus\n");
 		return err;
 	}
 
@@ -405,8 +400,8 @@ pcfrtc_clock_write(struct pcfrtc_softc *sc, struct clock_ymdhms *dt,
 			     sc->sc_address, cmdbuf, 1,
 			     &bcd[i], 1, I2C_F_POLL))) {
 			iic_release_bus(sc->sc_tag, I2C_F_POLL);
-			printf("%s: pcfrtc_clock_write: failed to write rtc "
-			    " at 0x%x\n", sc->sc_dev.dv_xname,
+			aprint_error_dev(&sc->sc_dev, "pcfrtc_clock_write: failed to write rtc "
+			    " at 0x%x\n",
 			    pcf8583_rtc_offset[i]);
 			return err;
 		}
