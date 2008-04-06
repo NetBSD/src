@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.41 2007/12/09 20:27:56 jmcneill Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.42 2008/04/06 07:54:17 cegger Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.41 2007/12/09 20:27:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.42 2008/04/06 07:54:17 cegger Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -273,8 +273,8 @@ ex_cardbus_attach(struct device *parent, struct device *self,
 					adr1 | CARDBUS_MAPREG_TYPE_MEM;
 
 			} else {
-				printf("%s: unable to map function "
-					"status window\n", self->dv_xname);
+				aprint_error_dev(self, "unable to map function "
+					"status window\n");
 				return;
 			}
 
@@ -327,7 +327,7 @@ ex_cardbus_detach(struct device *self, int arg)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL) {
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
 	}
 #endif
 
@@ -364,11 +364,10 @@ ex_cardbus_enable(sc)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
 	    IPL_NET, ex_intr, sc);
 	if (NULL == sc->sc_ih) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return (1);
 	}
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
 		csc->sc_intrline);
 
 	return (0);

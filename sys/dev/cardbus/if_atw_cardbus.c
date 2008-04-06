@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.20 2008/03/07 22:04:00 dyoung Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.21 2008/04/06 07:54:17 cegger Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.20 2008/03/07 22:04:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.21 2008/04/06 07:54:17 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -209,7 +209,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 #if 0
-	printf("%s: signature %08x\n", sc->sc_dev.dv_xname,
+	printf("%s: signature %08x\n", device_xname(&sc->sc_dev),
 	    (rev >> 4) & 0xf, rev & 0xf,
 	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80));
 #endif
@@ -223,7 +223,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	    &csc->sc_mapsize) == 0) {
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes mem space\n",
-		    sc->sc_dev.dv_xname, csc->sc_mapsize);
+		    device_xname(&sc->sc_dev), csc->sc_mapsize);
 #endif
 #if rbus
 #else
@@ -238,7 +238,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	    &csc->sc_mapsize) == 0) {
 #if 0
 		printf("%s: atw_cardbus_attach mapped %d bytes I/O space\n",
-		    sc->sc_dev.dv_xname, csc->sc_mapsize);
+		    device_xname(&sc->sc_dev), csc->sc_mapsize);
 #endif
 #if rbus
 #else
@@ -249,8 +249,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 		csc->sc_bar_reg = ATW_PCI_IOBA;
 		csc->sc_bar_val = adr | CARDBUS_MAPREG_TYPE_IO;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
@@ -263,7 +262,7 @@ atw_cardbus_attach(struct device *parent, struct device *self,
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
 	    csc->sc_intrline);
 #if 0
 	/*
@@ -303,7 +302,7 @@ atw_cardbus_detach(struct device *self, int flags)
 
 #if defined(DIAGNOSTIC)
 	if (ct == NULL)
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
 #endif
 
 	rv = atw_detach(sc);
@@ -350,8 +349,8 @@ atw_cardbus_enable(struct atw_softc *sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    atw_intr, sc);
 	if (csc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-		    sc->sc_dev.dv_xname, csc->sc_intrline);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %d\n",
+		    csc->sc_intrline);
 		Cardbus_function_disable(csc->sc_ct);
 		return (1);
 	}

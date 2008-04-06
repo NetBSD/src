@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.34 2007/12/09 20:27:56 jmcneill Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.35 2008/04/06 07:54:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.34 2007/12/09 20:27:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.35 2008/04/06 07:54:17 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -237,8 +237,7 @@ rtk_cardbus_attach(struct device *parent, struct device *self,
 	}
 #endif
 	else {
-		printf("%s: unable to map deviceregisters\n",
-			 sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, " unable to map deviceregisters\n");
 		return;
 	}
 	/*
@@ -270,7 +269,7 @@ rtk_cardbus_detach(struct device *self, int flags)
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
 #endif
 	rv = rtk_detach(sc);
 	if (rv)
@@ -322,7 +321,7 @@ rtk_cardbus_setup(csc)
 
 			/* Reset the power state. */
 			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n", sc->sc_dev.dv_xname,
+			    "-- setting to D0\n", device_xname(&sc->sc_dev),
 			    command & PCI_PMCSR_STATE_MASK);
 			command &= ~PCI_PMCSR_STATE_MASK;
 			cardbus_conf_write(cc, cf, csc->sc_tag,
@@ -391,12 +390,12 @@ rtk_cardbus_enable(sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
 		IPL_NET, rtk_intr, sc);
 	if (csc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt at %d\n",
-			sc->sc_dev.dv_xname, csc->sc_intrline);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %d\n",
+			csc->sc_intrline);
 		Cardbus_function_disable(csc->sc_ct);
 		return (1);
 	}
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
 		csc->sc_intrline);
 	return (0);
 }
