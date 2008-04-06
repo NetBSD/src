@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.175.6.2 2008/04/05 23:33:21 mjf Exp $	*/
+/*	$NetBSD: vnd.c,v 1.175.6.3 2008/04/06 09:58:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.2 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.3 2008/04/06 09:58:50 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -312,7 +312,7 @@ vnd_detach(device_t self, int flags)
 	if (sc->sc_flags & VNF_INITED)
 		return EBUSY;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 	pmf_device_deregister(self);
 	bufq_free(sc->sc_tab);
 	disk_destroy(&sc->sc_dkdev);

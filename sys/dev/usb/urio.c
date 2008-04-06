@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.28.32.1 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: urio.c,v 1.28.32.2 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.28.32.1 2008/04/05 23:33:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.28.32.2 2008/04/06 09:58:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ USB_DETACH(urio)
 	DPRINTF(("urio_detach: sc=%p\n", sc));
 #endif
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	sc->sc_dying = 1;
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */

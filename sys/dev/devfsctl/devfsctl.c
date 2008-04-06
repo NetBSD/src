@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsctl.c,v 1.1.2.5 2008/04/05 23:33:21 mjf Exp $ */
+/* 	$NetBSD: devfsctl.c,v 1.1.2.6 2008/04/06 09:58:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.5 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.6 2008/04/06 09:58:50 mjf Exp $");
 
 #if defined(DEBUG) && !defined(DEVFSCTLDEBUG)
 #define	DEVFSCTLDEBUG
@@ -478,11 +478,10 @@ devfsctlopen(dev_t dev, int flag, int mode, struct lwp *l)
 		SIMPLEQ_INSERT_TAIL(&event_list, ee, de_entries);
 		sc->sc_event_count++;
 	}
+	DEVFSCTL_UNLOCK(&devfsctl_lock);
 
 	if (!SIMPLEQ_EMPTY(&mount_event_list))
 		selnotify(&sc->sc_rsel, 0, 0);
-
-	DEVFSCTL_UNLOCK(&devfsctl_lock);
 
 	return error;
 }

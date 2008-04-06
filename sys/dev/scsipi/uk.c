@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.52.36.1 2008/04/05 23:33:22 mjf Exp $	*/
+/*	$NetBSD: uk.c,v 1.52.36.2 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.52.36.1 2008/04/05 23:33:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.52.36.2 2008/04/06 09:58:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ ukdetach(struct device *self, int flags)
 	/*struct uk_softc *uk = device_private(self);*/
 	int cmaj, mn;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&uk_cdevsw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.78.6.2 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: uhid.c,v 1.78.6.3 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.78.6.2 2008/04/05 23:33:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.78.6.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -200,7 +200,7 @@ uhid_detach(struct device *self, int flags)
 
 	DPRINTF(("uhid_detach: sc=%p flags=%d\n", sc, flags));
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	sc->sc_dying = 1;
 

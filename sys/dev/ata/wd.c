@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.355.6.3 2008/04/04 21:21:11 mjf Exp $ */
+/*	$NetBSD: wd.c,v 1.355.6.4 2008/04/06 09:58:50 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.355.6.3 2008/04/04 21:21:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.355.6.4 2008/04/06 09:58:50 mjf Exp $");
 
 #include "opt_ata.h"
 
@@ -485,6 +485,8 @@ wddetach(struct device *self, int flags)
 	struct wd_softc *sc = device_private(self);
 	int s, bmaj, cmaj, i, mn, unit;
 
+	device_deregister_all(self);
+
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&wd_bdevsw);
 	cmaj = cdevsw_lookup_major(&wd_cdevsw);
@@ -495,11 +497,6 @@ wddetach(struct device *self, int flags)
 		mn = WDMINOR(unit, i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
-
-		device_unregister_name(makedev(bmaj, mn), 
-		    "wd%d%c", unit, 'a' + i);
-		device_unregister_name(makedev(cmaj, mn),
-		    "rwd%d%c", unit, 'a' + i);
 	}
 
 	/* Delete all of our wedges. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.272.6.2 2008/04/03 12:42:56 mjf Exp $	*/
+/*	$NetBSD: cd.c,v 1.272.6.3 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.272.6.2 2008/04/03 12:42:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.272.6.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include "rnd.h"
 
@@ -333,6 +333,8 @@ cddetach(device_t self, int flags)
 	struct cd_softc *cd = device_private(self);
 	int s, bmaj, cmaj, i, mn, unit;
 
+	device_deregister_all(self);
+
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&cd_bdevsw);
 	cmaj = cdevsw_lookup_major(&cd_cdevsw);
@@ -342,11 +344,6 @@ cddetach(device_t self, int flags)
 		mn = CDMINOR(unit, i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
-
-		device_unregister_name(makedev(bmaj, mn), "cd%d%c", 
-		    unit, 'a' + i);
-		device_unregister_name(makedev(cmaj, mn), "rcd%d%c", 
-		    unit, 'a' + i);
 	}
 
 	/* kill any pending restart */

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.15.6.4 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.15.6.5 2008/04/06 09:58:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.4 2008/04/05 23:33:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.5 2008/04/06 09:58:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -992,7 +992,7 @@ device_register_name(dev_t dev, device_t devp, boolean_t cdev,
  *    and a name for a block device.
  */
 int
-device_unregister_name(dev_t dev, const char *fmt, ...)
+device_deregister_name(dev_t dev, const char *fmt, ...)
 {
 	int error = 0;
 	struct device_name *dn;
@@ -1022,7 +1022,7 @@ device_unregister_name(dev_t dev, const char *fmt, ...)
  * Remove all device names for this device_t.
  */
 int
-device_unregister_all(device_t dev)
+device_deregister_all(device_t dev)
 {
 	struct device_name *dn;
 

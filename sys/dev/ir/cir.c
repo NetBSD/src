@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.17.36.2 2008/04/05 23:33:21 mjf Exp $	*/
+/*	$NetBSD: cir.c,v 1.17.36.3 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.2 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17.36.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ cir_detach(struct device *self, int flags)
 	struct cir_softc *sc = device_private(self);
 	int maj, mn;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&cir_cdevsw);

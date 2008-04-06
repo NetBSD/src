@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.96.6.2 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: ugen.c,v 1.96.6.3 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.96.6.2 2008/04/05 23:33:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.96.6.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -1024,7 +1024,7 @@ USB_DETACH(ugen)
 	DPRINTF(("ugen_detach: sc=%p\n", sc));
 #endif
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	sc->sc_dying = 1;
 	pmf_device_deregister(self);

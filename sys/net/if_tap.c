@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.38.6.2 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.38.6.3 2008/04/06 09:58:52 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.2 2008/04/05 23:33:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.3 2008/04/06 09:58:52 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -365,7 +365,7 @@ tap_detach(device_t self, int flags)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int error, s;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	sc->sc_flags |= TAP_GOING;
 	s = splnet();

@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.16.14.2 2008/04/05 23:33:21 mjf Exp $	*/
+/*	$NetBSD: joy.c,v 1.16.14.3 2008/04/06 09:58:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.16.14.2 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.16.14.3 2008/04/06 09:58:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ joydetach(struct joy_softc *sc, int flags)
 {
 	int maj, mn;
 
-	device_unregister_all(sc->sc_dev);
+	device_deregister_all(sc->sc_dev);
 
 	maj = cdevsw_lookup_major(&joy_cdevsw);
 	mn = device_unit(sc->sc_dev) << 1;

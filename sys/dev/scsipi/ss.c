@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.72.26.1 2008/04/05 23:33:22 mjf Exp $	*/
+/*	$NetBSD: ss.c,v 1.72.26.2 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.1 2008/04/05 23:33:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.72.26.2 2008/04/06 09:58:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ ssdetach(struct device *self, int flags)
 	struct ss_softc *ss = device_private(self);
 	int s, cmaj, mn;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	/* locate the major number */
 	cmaj = cdevsw_lookup_major(&ss_cdevsw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.39.36.2 2008/04/05 23:33:21 mjf Exp $	*/
+/*	$NetBSD: irframe.c,v 1.39.36.3 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.39.36.2 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.39.36.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include "irframe.h"
 
@@ -175,7 +175,7 @@ irframe_detach(device_t self, int flags)
 	/*struct irframe_softc *sc = device_private(self);*/
 	int maj, mn;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	/* XXX needs reference count */
 
