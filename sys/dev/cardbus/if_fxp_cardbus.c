@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.29 2007/12/09 23:58:40 jmcneill Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.30 2008/04/06 07:54:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.29 2007/12/09 23:58:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30 2008/04/06 07:54:17 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -240,12 +240,11 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline, IPL_NET,
 	    fxp_intr, sc);
 	if (NULL == sc->sc_ih) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return 1;
 	}
 
-	printf("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
 	    psc->sc_intrline);
 
 	return 0;
@@ -275,7 +274,7 @@ fxp_cardbus_detach(struct device *self, int flags)
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks", sc->sc_dev.dv_xname);
+		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
 #endif
 
 	rv = fxp_detach(sc);

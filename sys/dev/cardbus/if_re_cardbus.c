@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.15 2007/12/09 20:27:56 jmcneill Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.16 2008/04/06 07:54:17 cegger Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.15 2007/12/09 20:27:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.16 2008/04/06 07:54:17 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -218,8 +218,7 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 	else {
-		aprint_error("%s: unable to map deviceregisters\n",
-			 sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map deviceregisters\n");
 		return;
 	}
 	/*
@@ -253,7 +252,7 @@ re_cardbus_detach(struct device *self, int flags)
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
 		panic("%s: cardbus softc, cardbus_devfunc NULL",
-		      sc->sc_dev.dv_xname);
+		      device_xname(&sc->sc_dev));
 #endif
 
 	rv = re_detach(sc);
@@ -307,8 +306,8 @@ re_cardbus_setup(struct re_cardbus_softc *csc)
 			    CARDBUS_INTERRUPT_REG);
 
 			/* Reset the power state. */
-			aprint_normal("%s: chip is in D%d power mode "
-			    "-- setting to D0\n", sc->sc_dev.dv_xname,
+			aprint_normal_dev(&sc->sc_dev, "chip is in D%d power mode "
+			    "-- setting to D0\n",
 			    command & PCI_PMCSR_STATE_MASK);
 			command &= ~PCI_PMCSR_STATE_MASK;
 			cardbus_conf_write(cc, cf, csc->sc_tag,
@@ -376,12 +375,12 @@ re_cardbus_enable(struct rtk_softc *sc)
 	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
 		IPL_NET, re_intr, sc);
 	if (csc->sc_ih == NULL) {
-		aprint_error("%s: unable to establish interrupt at %d\n",
-			sc->sc_dev.dv_xname, csc->sc_intrline);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %d\n",
+			csc->sc_intrline);
 		Cardbus_function_disable(csc->sc_ct);
 		return 1;
 	}
-	aprint_normal("%s: interrupting at %d\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %d\n",
 		csc->sc_intrline);
 	return 0;
 }
