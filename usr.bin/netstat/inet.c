@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.79 2008/04/06 19:04:50 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.80 2008/04/06 20:17:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.79 2008/04/06 19:04:50 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.80 2008/04/06 20:17:27 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -407,52 +407,51 @@ tcp_stats(off, name)
  * Dump UDP statistics structure.
  */
 void
-udp_stats(off, name)
-	u_long off;
-	char *name;
+udp_stats(u_long off, char *name)
 {
-	struct udpstat udpstat;
+	uint64_t udpstat[UDP_NSTATS];
 	u_quad_t delivered;
 
 	if (use_sysctl) {
 		size_t size = sizeof(udpstat);
 
-		if (sysctlbyname("net.inet.udp.stats", &udpstat, &size,
+		if (sysctlbyname("net.inet.udp.stats", udpstat, &size,
 				 NULL, 0) == -1)
 			err(1, "net.inet.udp.stats");
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&udpstat, sizeof (udpstat));
+		kread(off, (char *)udpstat, sizeof (udpstat));
 	}
 
 	printf ("%s:\n", name);
 
-#define	ps(f, m) if (udpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)udpstat.f)
-#define	p(f, m) if (udpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)udpstat.f, plural(udpstat.f))
-#define	p3(f, m) if (udpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)udpstat.f, plurales(udpstat.f))
+#define	ps(f, m) if (udpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)udpstat[f])
+#define	p(f, m) if (udpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)udpstat[f], plural(udpstat[f]))
+#define	p3(f, m) if (udpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)udpstat[f], plurales(udpstat[f]))
 
-	p(udps_ipackets, "\t%llu datagram%s received\n");
-	ps(udps_hdrops, "\t%llu with incomplete header\n");
-	ps(udps_badlen, "\t%llu with bad data length field\n");
-	ps(udps_badsum, "\t%llu with bad checksum\n");
-	ps(udps_noport, "\t%llu dropped due to no socket\n");
-	p(udps_noportbcast, "\t%llu broadcast/multicast datagram%s dropped due to no socket\n");
-	ps(udps_fullsock, "\t%llu dropped due to full socket buffers\n");
-	delivered = udpstat.udps_ipackets -
-		    udpstat.udps_hdrops -
-		    udpstat.udps_badlen -
-		    udpstat.udps_badsum -
-		    udpstat.udps_noport -
-		    udpstat.udps_noportbcast -
-		    udpstat.udps_fullsock;
+	p(UDP_STAT_IPACKETS, "\t%llu datagram%s received\n");
+	ps(UDP_STAT_HDROPS, "\t%llu with incomplete header\n");
+	ps(UDP_STAT_BADLEN, "\t%llu with bad data length field\n");
+	ps(UDP_STAT_BADSUM, "\t%llu with bad checksum\n");
+	ps(UDP_STAT_NOPORT, "\t%llu dropped due to no socket\n");
+	p(UDP_STAT_NOPORTBCAST,
+	  "\t%llu broadcast/multicast datagram%s dropped due to no socket\n");
+	ps(UDP_STAT_FULLSOCK, "\t%llu dropped due to full socket buffers\n");
+	delivered = udpstat[UDP_STAT_IPACKETS] -
+		    udpstat[UDP_STAT_HDROPS] -
+		    udpstat[UDP_STAT_BADLEN] -
+		    udpstat[UDP_STAT_BADSUM] -
+		    udpstat[UDP_STAT_NOPORT] -
+		    udpstat[UDP_STAT_NOPORTBCAST] -
+		    udpstat[UDP_STAT_FULLSOCK];
 	if (delivered || sflag <= 1)
 		printf("\t%llu delivered\n", (unsigned long long)delivered);
-	p3(udps_pcbhashmiss, "\t%llu PCB hash miss%s\n");
-	p(udps_opackets, "\t%llu datagram%s output\n");
+	p3(UDP_STAT_PCBHASHMISS, "\t%llu PCB hash miss%s\n");
+	p(UDP_STAT_OPACKETS, "\t%llu datagram%s output\n");
 
 #undef ps
 #undef p
