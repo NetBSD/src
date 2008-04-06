@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.35 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: dk.c,v 1.36 2008/04/06 08:33:31 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.35 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.36 2008/04/06 08:33:31 cegger Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -404,24 +404,25 @@ dkwedge_add(struct dkwedge_info *dkw)
 	}
 
 	/* Return the devname to the caller. */
-	strcpy(dkw->dkw_devname, sc->sc_dev->dv_xname);
+	strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
+		sizeof(dkw->dkw_devname));
 
 	/*
 	 * XXX Really ought to make the disk_attach() and the changing
 	 * of state to RUNNING atomic.
 	 */
 
-	disk_init(&sc->sc_dk, sc->sc_dev->dv_xname, NULL);
+	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
 	disk_attach(&sc->sc_dk);
 
 	/* Disk wedge is ready for use! */
 	sc->sc_state = DKW_STATE_RUNNING;
 
 	/* Announce our arrival. */
-	aprint_normal("%s at %s: %s\n", sc->sc_dev->dv_xname, pdk->dk_name,
+	aprint_normal("%s at %s: %s\n", device_xname(sc->sc_dev), pdk->dk_name,
 	    sc->sc_wname);	/* XXX Unicode */
 	aprint_normal("%s: %"PRIu64" blocks at %"PRId64", type: %s\n",
-	    sc->sc_dev->dv_xname, sc->sc_size, sc->sc_offset, sc->sc_ptype);
+	    device_xname(sc->sc_dev), sc->sc_size, sc->sc_offset, sc->sc_ptype);
 
 	return (0);
 }
@@ -445,7 +446,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 	rw_enter(&dkwedges_lock, RW_WRITER);
 	for (unit = 0; unit < ndkwedges; unit++) {
 		if ((sc = dkwedges[unit]) != NULL &&
-		    strcmp(sc->sc_dev->dv_xname, dkw->dkw_devname) == 0 &&
+		    strcmp(device_xname(sc->sc_dev), dkw->dkw_devname) == 0 &&
 		    strcmp(sc->sc_parent->dk_name, dkw->dkw_parent) == 0) {
 			/* Mark the wedge as dying. */
 			sc->sc_state = DKW_STATE_DYING;
@@ -495,7 +496,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	/* Announce our departure. */
-	aprint_normal("%s at %s (%s) deleted\n", sc->sc_dev->dv_xname,
+	aprint_normal("%s at %s (%s) deleted\n", device_xname(sc->sc_dev),
 	    sc->sc_parent->dk_name,
 	    sc->sc_wname);	/* XXX Unicode */
 
@@ -544,7 +545,8 @@ dkwedge_delall(struct disk *pdk)
 			return;
 		}
 		strcpy(dkw.dkw_parent, pdk->dk_name);
-		strcpy(dkw.dkw_devname, sc->sc_dev->dv_xname);
+		strlcpy(dkw.dkw_devname, device_xname(sc->sc_dev),
+			sizeof(dkw.dkw_devname));
 		mutex_exit(&pdk->dk_openlock);
 		(void) dkwedge_del(&dkw);
 	}
@@ -595,7 +597,8 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 		if (sc->sc_state != DKW_STATE_RUNNING)
 			continue;
 
-		strcpy(dkw.dkw_devname, sc->sc_dev->dv_xname);
+		strlcpy(dkw.dkw_devname, device_xname(sc->sc_dev),
+			sizeof(dkw.dkw_devname));
 		memcpy(dkw.dkw_wname, sc->sc_wname, sizeof(dkw.dkw_wname));
 		dkw.dkw_wname[sizeof(dkw.dkw_wname) - 1] = '\0';
 		strcpy(dkw.dkw_parent, sc->sc_parent->dk_name);
@@ -675,14 +678,14 @@ dkwedge_set_bootwedge(struct device *parent, daddr_t startblk, uint64_t nblks)
 	for (i = 0; i < ndkwedges; i++) {
 		if ((sc = dkwedges[i]) == NULL)
 			continue;
-		if (strcmp(sc->sc_parent->dk_name, parent->dv_xname) == 0 &&
+		if (strcmp(sc->sc_parent->dk_name, device_xname(parent)) == 0 &&
 		    sc->sc_offset == startblk &&
 		    sc->sc_size == nblks) {
 			if (booted_wedge) {
 				printf("WARNING: double match for boot wedge "
 				    "(%s, %s)\n",
-				    booted_wedge->dv_xname,
-				    sc->sc_dev->dv_xname);
+				    device_xname(booted_wedge),
+				    device_xname(sc->sc_dev));
 				continue;
 			}
 			booted_device = parent;
@@ -1208,7 +1211,8 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	    {
 	    	struct dkwedge_info *dkw = (void *) data;
 
-		strcpy(dkw->dkw_devname, sc->sc_dev->dv_xname);
+		strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
+			sizeof(dkw->dkw_devname));
 	    	memcpy(dkw->dkw_wname, sc->sc_wname, sizeof(dkw->dkw_wname));
 		dkw->dkw_wname[sizeof(dkw->dkw_wname) - 1] = '\0';
 		strcpy(dkw->dkw_parent, sc->sc_parent->dk_name);
