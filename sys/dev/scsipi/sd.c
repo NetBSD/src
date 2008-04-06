@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.269.6.2 2008/04/03 12:42:56 mjf Exp $	*/
+/*	$NetBSD: sd.c,v 1.269.6.3 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.2 2008/04/03 12:42:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.269.6.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -381,7 +381,8 @@ sddetach(struct device *self, int flags)
 {
 	struct sd_softc *sd = device_private(self);
 	int s, bmaj, cmaj, i, mn;
-	int error;
+
+	device_deregister_all(self);
 
 	/* locate the major number */
 	bmaj = bdevsw_lookup_major(&sd_bdevsw);
@@ -395,19 +396,6 @@ sddetach(struct device *self, int flags)
 		mn = SDMINOR(device_unit(self), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		vdevgone(cmaj, mn, mn, VCHR);
-
-		error = device_unregister_name(makedev(bmaj, mn), 
-		    "sd%d%c", device_unit(self), 'a' + i);
-#ifdef DIAGNOSTIC
-		if (error != 0)
-			panic("could not unregister block device name");
-#endif
-		error = device_unregister_name(makedev(cmaj, mn), 
-		    "rsd%d%c", device_unit(self), 'a' + i);
-#ifdef DIAGNOSTIC
-		if (error != 0)
-			panic("could not unregister char device name");
-#endif
 	}
 
 	/* kill any pending restart */

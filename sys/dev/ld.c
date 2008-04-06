@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.54.6.2 2008/04/05 23:33:20 mjf Exp $	*/
+/*	$NetBSD: ld.c,v 1.54.6.3 2008/04/06 09:58:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54.6.2 2008/04/05 23:33:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.54.6.3 2008/04/06 09:58:49 mjf Exp $");
 
 #include "rnd.h"
 
@@ -232,7 +232,7 @@ ldenddetach(struct ld_softc *sc)
 		if (tsleep(&sc->sc_queuecnt, PRIBIO, "lddtch", 30 * hz))
 			printf("%s: not drained\n", sc->sc_dv.dv_xname);
 
-	device_unregister_all(&sc->sc_dv);
+	device_deregister_all(&sc->sc_dv);
 
 	/* Locate the major numbers. */
 	bmaj = bdevsw_lookup_major(&ld_bdevsw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.106.6.2 2008/04/05 23:33:23 mjf Exp $	*/
+/*	$NetBSD: usb.c,v 1.106.6.3 2008/04/06 09:58:51 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.106.6.2 2008/04/05 23:33:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.106.6.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -973,7 +973,7 @@ usb_detach(device_t self, int flags)
 
 	DPRINTF(("usb_detach: start\n"));
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 	pmf_device_deregister(self);
 	/* Kill off event thread. */
 	while (sc->sc_event_thread != NULL) {

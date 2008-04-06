@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.96.6.2 2008/04/05 23:33:21 mjf Exp $	*/
+/*	$NetBSD: ata.c,v 1.96.6.3 2008/04/06 09:58:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.96.6.2 2008/04/05 23:33:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.96.6.3 2008/04/06 09:58:50 mjf Exp $");
 
 #include "opt_ata.h"
 
@@ -504,7 +504,7 @@ atabus_detach(device_t self, int flags)
 	device_t dev = NULL;
 	int s, i, error = 0;
 
-	device_unregister_all(self);
+	device_deregister_all(self);
 
 	/* Shutdown the channel. */
 	s = splbio();		/* XXX ALSO NEED AN INTERLOCK HERE. */

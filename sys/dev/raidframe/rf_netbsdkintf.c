@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.243.6.2 2008/04/03 12:42:55 mjf Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.243.6.3 2008/04/06 09:58:51 mjf Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243.6.2 2008/04/03 12:42:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243.6.3 2008/04/06 09:58:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -3624,26 +3624,12 @@ raid_attach(struct device *parent, struct device *self,
 static int
 raid_detach(struct device *self, int flags)
 {
-	int i, unit;
-	int bmaj = bdevsw_lookup_major(&raid_bdevsw);
-	int cmaj = cdevsw_lookup_major(&raid_cdevsw);
-
 	struct raid_softc *rs = (struct raid_softc *)self;
 
 	if (rs->sc_flags & RAIDF_INITED)
 		return EBUSY;
 
-	unit = device_unit(self);
-
-	/* unregister device nodes */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		/* block devices */
-		device_unregister_name(MAKEDISKDEV(bmaj, unit, i), 
-		    "raid%d%c", unit, 'a' + i);
-		/* char devices */
-		device_unregister_name(MAKEDISKDEV(cmaj, unit, i), 
-		    "rraid%d%c", unit, 'a' + i);
-	}
+	device_deregister_all(self);
 
 	return 0;
 }
