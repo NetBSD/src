@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.8 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: auth-bsdauth.c,v 1.10 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth-bsdauth.c,v 1.9 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: auth-bsdauth.c,v 1.11 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: auth-bsdauth.c,v 1.8 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: auth-bsdauth.c,v 1.9 2008/04/06 23:38:19 christos Exp $");
 
 #include <sys/types.h>
 

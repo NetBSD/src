@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.26 2007/07/10 15:48:56 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.75 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth.c,v 1.27 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.78 2007/09/21 08:15:29 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,13 +25,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.26 2007/07/10 15:48:56 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.27 2008/04/06 23:38:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
 
 #include <errno.h>
 #include <libgen.h>
+#include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdarg.h>
@@ -512,9 +513,9 @@ struct passwd *
 getpwnamallow(const char *user)
 {
 #ifdef HAVE_LOGIN_CAP
-	extern login_cap_t *lc;
+ 	extern login_cap_t *lc;
 #ifdef BSD_AUTH
-	auth_session_t *as;
+ 	auth_session_t *as;
 #endif
 #endif
 	struct passwd *pw;

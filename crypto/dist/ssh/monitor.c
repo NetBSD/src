@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.26 2007/12/18 02:35:28 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.91 2007/05/17 20:52:13 djm Exp $ */
+/*	$NetBSD: monitor.c,v 1.27 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: monitor.c,v 1.94 2007/10/29 04:08:08 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.26 2007/12/18 02:35:28 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.27 2008/04/06 23:38:19 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -630,11 +630,11 @@ mm_answer_pwnamallow(int sock, Buffer *m)
 	buffer_put_cstring(m, pwent->pw_class);
 	buffer_put_cstring(m, pwent->pw_dir);
 	buffer_put_cstring(m, pwent->pw_shell);
+
+ out:
 	buffer_put_string(m, &options, sizeof(options));
 	if (options.banner != NULL)
 		buffer_put_cstring(m, options.banner);
-
- out:
 	debug3("%s: sending MONITOR_ANS_PWNAM: %d", __func__, allowed);
 	mm_request_send(sock, MONITOR_ANS_PWNAM, m);
 
@@ -1301,8 +1301,9 @@ mm_answer_pty(int sock, Buffer *m)
 
 	mm_request_send(sock, MONITOR_ANS_PTY, m);
 
-	mm_send_fd(sock, s->ptyfd);
-	mm_send_fd(sock, s->ttyfd);
+	if (mm_send_fd(sock, s->ptyfd) == -1 ||
+	    mm_send_fd(sock, s->ttyfd) == -1)
+		fatal("%s: send fds failed", __func__);
 
 	/* make sure nothing uses fd 0 */
 	if ((fd0 = open(_PATH_DEVNULL, O_RDONLY)) < 0)

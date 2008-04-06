@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.c,v 1.38 2008/04/03 13:09:14 adrianp Exp $	*/
-/* $OpenBSD: channels.c,v 1.270 2007/06/25 08:20:03 dtucker Exp $ */
+/*	$NetBSD: channels.c,v 1.39 2008/04/06 23:38:19 christos Exp $	*/
+/* $OpenBSD: channels.c,v 1.273 2008/04/02 21:36:51 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.38 2008/04/03 13:09:14 adrianp Exp $");
+__RCSID("$NetBSD: channels.c,v 1.39 2008/04/06 23:38:19 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -2372,7 +2372,7 @@ channel_setup_fwd_listener(int type, const char *listen_addr, u_short listen_por
 			wildcard = 1;
 	} else if (gateway_ports || is_client) {
 		if (((datafellows & SSH_OLD_FORWARD_ADDR) &&
-		    strcmp(listen_addr, "0.0.0.0") == 0) ||
+		    strcmp(listen_addr, "0.0.0.0") == 0 && is_client == 0) ||
 		    *listen_addr == '\0' || strcmp(listen_addr, "*") == 0 ||
 		    (!is_client && gateway_ports == 1))
 			wildcard = 1;
@@ -2396,10 +2396,11 @@ channel_setup_fwd_listener(int type, const char *listen_addr, u_short listen_por
 		if (addr == NULL) {
 			/* This really shouldn't happen */
 			packet_disconnect("getaddrinfo: fatal error: %s",
-			    gai_strerror(r));
+			    ssh_gai_strerror(r));
 		} else {
 			error("channel_setup_fwd_listener: "
-			    "getaddrinfo(%.64s): %s", addr, gai_strerror(r));
+			    "getaddrinfo(%.64s): %s", addr,
+			    ssh_gai_strerror(r));
 		}
 		return 0;
 	}
@@ -2713,7 +2714,7 @@ connect_to(const char *host, u_short port)
 	snprintf(strport, sizeof strport, "%d", port);
 	if ((gaierr = getaddrinfo(host, strport, &hints, &aitop)) != 0) {
 		error("connect_to %.100s: unknown host (%s)", host,
-		    gai_strerror(gaierr));
+		    ssh_gai_strerror(gaierr));
 		return -1;
 	}
 	for (ai = aitop; ai; ai = ai->ai_next) {
@@ -2855,7 +2856,7 @@ x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
 		hints.ai_socktype = SOCK_STREAM;
 		snprintf(strport, sizeof strport, "%d", port);
 		if ((gaierr = getaddrinfo(NULL, strport, &hints, &aitop)) != 0) {
-			error("getaddrinfo: %.100s", gai_strerror(gaierr));
+			error("getaddrinfo: %.100s", ssh_gai_strerror(gaierr));
 			return -1;
 		}
 		for (ai = aitop; ai; ai = ai->ai_next) {
@@ -3003,7 +3004,8 @@ x11_connect_display(void)
 	hints.ai_socktype = SOCK_STREAM;
 	snprintf(strport, sizeof strport, "%u", 6000 + display_number);
 	if ((gaierr = getaddrinfo(buf, strport, &hints, &aitop)) != 0) {
-		error("%.100s: unknown host. (%s)", buf, gai_strerror(gaierr));
+		error("%.100s: unknown host. (%s)", buf,
+		ssh_gai_strerror(gaierr));
 		return -1;
 	}
 	for (ai = aitop; ai; ai = ai->ai_next) {

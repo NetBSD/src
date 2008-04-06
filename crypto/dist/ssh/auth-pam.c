@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.11 2007/12/21 20:42:03 jnemeth Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.12 2008/04/06 23:38:19 christos Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
 #define HAVE_PAM_GETENVLIST
@@ -615,15 +615,17 @@ static struct pam_conv store_conv = { sshpam_store_conv, NULL };
 void
 sshpam_cleanup(void)
 {
-	debug("PAM: cleanup");
-	if (sshpam_handle == NULL)
+	if (sshpam_handle == NULL || (use_privsep && !mm_is_monitor()))
 		return;
+	debug("PAM: cleanup");
 	pam_set_item(sshpam_handle, PAM_CONV, (const void *)&null_conv);
 	if (sshpam_cred_established) {
+		debug("PAM: deleting credentials");
 		pam_setcred(sshpam_handle, PAM_DELETE_CRED);
 		sshpam_cred_established = 0;
 	}
 	if (sshpam_session_open) {
+		debug("PAM: closing session");
 		pam_close_session(sshpam_handle, PAM_SILENT);
 		sshpam_session_open = 0;
 	}
@@ -795,7 +797,6 @@ sshpam_query(void *ctx, char **name, char **info,
 			}
 			if (type == PAM_SUCCESS) {
 				if (!sshpam_authctxt->valid ||
-/*###797 [cc] error: dereferencing pointer to incomplete type%%%*/
 				    (sshpam_authctxt->pw->pw_uid == 0 &&
 				    options.permit_root_login != PERMIT_YES))
 					fatal("Internal error: PAM auth "
@@ -847,7 +848,6 @@ sshpam_respond(void *ctx, u_int num, char **resp)
 	}
 	buffer_init(&buffer);
 	if (sshpam_authctxt->valid &&
-/*###848 [cc] error: dereferencing pointer to incomplete type%%%*/
 	    (sshpam_authctxt->pw->pw_uid != 0 ||
 	    options.permit_root_login == PERMIT_YES))
 		buffer_put_cstring(&buffer, *resp);
@@ -1211,7 +1211,6 @@ sshpam_auth_passwd(Authctxt *authctxt, const char *password)
 	 * by PermitRootLogin, use an invalid password to prevent leaking
 	 * information via timing (eg if the PAM config has a delay on fail).
 	 */
-/*###1211 [cc] error: dereferencing pointer to incomplete type%%%*/
 	if (!authctxt->valid || (authctxt->pw->pw_uid == 0 &&
 	    options.permit_root_login != PERMIT_YES))
 		sshpam_password = badpw;
