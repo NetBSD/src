@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.45 2008/04/06 19:04:48 thorpej Exp $	*/
+/*	$NetBSD: pf.c,v 1.46 2008/04/06 20:17:27 thorpej Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.45 2008/04/06 19:04:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.46 2008/04/06 20:17:27 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -5832,7 +5832,7 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 			tcpstat.tcps_rcvbadsum++;
 			break;
 		case IPPROTO_UDP:
-			udpstat.udps_badsum++;
+			udpstat[UDP_STAT_BADSUM]++;
 			break;
 		case IPPROTO_ICMP:
 			icmpstat[ICMP_STAT_CHECKSUM]++;
