@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.25 2007/11/22 16:17:09 bouyer Exp $	*/
+/*	$NetBSD: xencons.c,v 1.26 2008/04/06 07:24:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.25 2007/11/22 16:17:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.26 2008/04/06 07:24:20 cegger Exp $");
 
 #include "opt_xen.h"
 
@@ -200,8 +200,8 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		/* There can be only one, but it can have any unit number. */
 		cn_tab->cn_dev = makedev(maj, device_unit(&sc->sc_dev));
 
-		aprint_verbose("%s: console major %d, unit %d\n",
-		    sc->sc_dev.dv_xname, maj, device_unit(&sc->sc_dev));
+		aprint_verbose_dev(&sc->sc_dev, "console major %d, unit %d\n",
+		    maj, device_unit(&sc->sc_dev));
 
 		sc->sc_tty->t_dev = cn_tab->cn_dev;
 
@@ -212,8 +212,8 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 
 		if (xen_start_info.flags & SIF_INITDOMAIN) {
 			int evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
-			aprint_verbose("%s: using event channel %d\n",
-			    sc->sc_dev.dv_xname, evtch);
+			aprint_verbose_dev(&sc->sc_dev, "using event channel %d\n",
+			    evtch);
 			if (event_set_handler(evtch, xencons_intr, sc,
 			    IPL_TTY, "xencons") != 0)
 				printf("console: "
@@ -222,7 +222,7 @@ xencons_attach(struct device *parent, struct device *self, void *aux)
 		} else {
 #ifdef XEN3
 			printf("%s: using event channel %d\n",
-			    sc->sc_dev.dv_xname, xen_start_info.console_evtchn);
+			    device_xname(&sc->sc_dev), xen_start_info.console_evtchn);
 			event_set_handler(xen_start_info.console_evtchn,
 			    xencons_handler, sc, IPL_TTY, "xencons");
 			hypervisor_enable_event(xen_start_info.console_evtchn);

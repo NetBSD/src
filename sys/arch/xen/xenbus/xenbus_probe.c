@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.18 2007/12/15 00:39:24 perry Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.19 2008/04/06 07:24:20 cegger Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.18 2007/12/15 00:39:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.19 2008/04/06 07:24:20 cegger Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -228,7 +228,7 @@ otherend_changed(struct xenbus_watch *watch,
 			    DETACH_FORCE);
 			if (error) {
 				printf("could not detach %s: %d\n",
-				    xdev->xbusd_u.f.f_dev->dv_xname, error);
+				    device_xname(xdev->xbusd_u.f.f_dev), error);
 				return;
 			}
 		}

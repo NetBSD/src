@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.55 2007/12/03 15:34:30 ad Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.56 2008/04/06 07:24:20 cegger Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.55 2007/12/03 15:34:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.56 2008/04/06 07:24:20 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -292,7 +292,7 @@ xennet_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ifno = xneta->xa_handle;
 
 	/* Initialize ifnet structure. */
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = xennet_start;
 	ifp->if_ioctl = xennet_ioctl;
@@ -562,18 +562,18 @@ xennet_interface_status_change(netif_fe_interface_status_t *status)
 			panic(" xennet: can't establish soft interrupt");
 
 		sc->sc_evtchn = status->evtchn;
-		aprint_verbose("%s: using event channel %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_evtchn);
+		aprint_verbose_dev(&sc->sc_dev, "using event channel %d\n",
+		    sc->sc_evtchn);
 		event_set_handler(sc->sc_evtchn,
-		    &xen_network_handler, sc, IPL_NET, sc->sc_dev.dv_xname);
+		    &xen_network_handler, sc, IPL_NET, device_xname(&sc->sc_dev));
 		hypervisor_enable_event(sc->sc_evtchn);
 		xennet_driver_count_connected();
 
-		aprint_normal("%s: MAC address %s\n", sc->sc_dev.dv_xname,
+		aprint_normal_dev(&sc->sc_dev, "MAC address %s\n",
 		    ether_sprintf(sc->sc_enaddr));
 
 #if NRND > 0
-		rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+		rnd_attach_source(&sc->sc_rnd_source, device_xname(&sc->sc_dev),
 		    RND_TYPE_NET, 0);
 #endif
 		if (in_autoconf) {
@@ -1010,7 +1010,7 @@ xennet_start(struct ifnet *ifp)
 {
 	struct xennet_softc *sc = ifp->if_softc;
 
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start()\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start()\n", device_xname(&sc->sc_dev)));
 
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, sc->sc_tx->req_prod);
@@ -1174,7 +1174,7 @@ xennet_softstart(void *arg)
 	splx(s);
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_start() done\n",
-	    sc->sc_dev.dv_xname));
+	    device_xname(&sc->sc_dev)));
 }
 
 int
@@ -1190,14 +1190,14 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl()\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl()\n", device_xname(&sc->sc_dev)));
 	error = ether_ioctl(ifp, cmd, data);
 	if (error == ENETRESET)
 		error = 0;
 	splx(s);
 
 	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_ioctl() returning %d\n",
-	    sc->sc_dev.dv_xname, error));
+	    device_xname(&sc->sc_dev), error));
 
 	return error;
 }
@@ -1207,7 +1207,7 @@ xennet_watchdog(struct ifnet *ifp)
 {
 	struct xennet_softc *sc = ifp->if_softc;
 
-	printf("%s: xennet_watchdog\n", sc->sc_dev.dv_xname);
+	printf("%s: xennet_watchdog\n", device_xname(&sc->sc_dev));
 }
 
 int
@@ -1216,7 +1216,7 @@ xennet_init(struct ifnet *ifp)
 	struct xennet_softc *sc = ifp->if_softc;
 	int s = splnet();
 
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_init()\n", device_xname(&sc->sc_dev)));
 
 	if (ifp->if_flags & IFF_UP) {
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -1243,7 +1243,7 @@ void
 xennet_reset(struct xennet_softc *sc)
 {
 
-	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n", sc->sc_dev.dv_xname));
+	DPRINTFN(XEDB_FOLLOW, ("%s: xennet_reset()\n", device_xname(&sc->sc_dev)));
 }
 
 #ifdef mediacode
