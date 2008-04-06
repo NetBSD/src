@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.163 2007/11/27 22:45:30 christos Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.164 2008/04/06 20:17:27 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.163 2007/11/27 22:45:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.164 2008/04/06 20:17:27 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -143,7 +143,8 @@ int	udpcksum = 1;
 int	udp_do_loopback_cksum = 0;
 
 struct	inpcbtable udbtable;
-struct	udpstat udpstat;
+
+uint64_t	udpstat[UDP_NSTATS];
 
 #ifdef INET
 #ifdef IPSEC_NAT_T
@@ -324,7 +325,7 @@ udp4_input_checksum(struct mbuf *m, const struct udphdr *uh,
 	return 0;
 
 badcsum:
-	udpstat.udps_badsum++;
+	udpstat[UDP_STAT_BADSUM]++;
 	return -1;
 }
 
@@ -346,7 +347,7 @@ udp_input(struct mbuf *m, ...)
 	va_end(ap);
 
 	MCLAIM(m, &udp_rx_mowner);
-	udpstat.udps_ipackets++;
+	udpstat[UDP_STAT_IPACKETS]++;
 
 	/*
 	 * Get IP and UDP header together in first mbuf.
@@ -354,7 +355,7 @@ udp_input(struct mbuf *m, ...)
 	ip = mtod(m, struct ip *);
 	IP6_EXTHDR_GET(uh, struct udphdr *, m, iphlen, sizeof(struct udphdr));
 	if (uh == NULL) {
-		udpstat.udps_hdrops++;
+		udpstat[UDP_STAT_HDROPS]++;
 		return;
 	}
 	KASSERT(UDP_HDR_ALIGNED_P(uh));
@@ -371,7 +372,7 @@ udp_input(struct mbuf *m, ...)
 	len = ntohs((u_int16_t)uh->uh_ulen);
 	if (ip_len != iphlen + len) {
 		if (ip_len < iphlen + len || len < sizeof(struct udphdr)) {
-			udpstat.udps_badlen++;
+			udpstat[UDP_STAT_BADLEN]++;
 			goto bad;
 		}
 		m_adj(m, iphlen + len - ip_len);
@@ -388,7 +389,7 @@ udp_input(struct mbuf *m, ...)
 	sockaddr_in_init(&dst, &ip->ip_dst, uh->uh_dport);
 
 	if ((n = udp4_realinput(&src, &dst, &m, iphlen)) == -1) {
-		udpstat.udps_hdrops++;
+		udpstat[UDP_STAT_HDROPS]++;
 		return;
 	}
 #ifdef INET6
@@ -416,10 +417,10 @@ udp_input(struct mbuf *m, ...)
 
 	if (n == 0) {
 		if (m->m_flags & (M_BCAST | M_MCAST)) {
-			udpstat.udps_noportbcast++;
+			udpstat[UDP_STAT_NOPORTBCAST]++;
 			goto bad;
 		}
-		udpstat.udps_noport++;
+		udpstat[UDP_STAT_NOPORT]++;
 #ifdef IPKDB
 		if (checkipkdb(&ip->ip_src, uh->uh_sport, uh->uh_dport,
 				m, iphlen + sizeof(struct udphdr),
@@ -638,7 +639,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 			if (opts)
 				m_freem(opts);
 			so->so_rcv.sb_overflowed++;
-			udpstat.udps_fullsock++;
+			udpstat[UDP_STAT_FULLSOCK]++;
 		} else
 			sorwakeup(so);
 	}
@@ -778,7 +779,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 		 */
 		inp = in_pcblookup_connect(&udbtable, *src4, *sport, *dst4, *dport);
 		if (inp == 0) {
-			++udpstat.udps_pcbhashmiss;
+			udpstat[UDP_STAT_PCBHASHMISS]++;
 			inp = in_pcblookup_bind(&udbtable, *dst4, *dport);
 			if (inp == 0)
 				return rcvcnt;
@@ -926,7 +927,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 		in6p = in6_pcblookup_connect(&udbtable, &src6, sport, dst6,
 		    dport, 0);
 		if (in6p == 0) {
-			++udpstat.udps_pcbhashmiss;
+			udpstat[UDP_STAT_PCBHASHMISS]++;
 			in6p = in6_pcblookup_bind(&udbtable, dst6, dport, 0);
 			if (in6p == 0)
 				return rcvcnt;
@@ -1142,7 +1143,7 @@ udp_output(struct mbuf *m, ...)
 	((struct ip *)ui)->ip_len = htons(sizeof (struct udpiphdr) + len);
 	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
 	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
-	udpstat.udps_opackets++;
+	udpstat[UDP_STAT_OPACKETS]++;
 
 	return (ip_output(m, inp->inp_options, ro,
 	    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
@@ -1391,7 +1392,7 @@ SYSCTL_SETUP(sysctl_net_inet_udp_setup, "sysctl net.inet.udp subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("UDP statistics"),
-		       NULL, 0, &udpstat, sizeof(udpstat),
+		       NULL, 0, udpstat, sizeof(udpstat),
 		       CTL_NET, PF_INET, IPPROTO_UDP, UDPCTL_STATS,
 		       CTL_EOL);
 }
