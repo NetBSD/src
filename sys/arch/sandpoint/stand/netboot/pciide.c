@@ -1,4 +1,4 @@
-/* $Id: pciide.c,v 1.1 2008/04/07 11:13:14 nisimura Exp $ */
+/* $NetBSD: pciide.c,v 1.2 2008/04/07 12:33:57 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>

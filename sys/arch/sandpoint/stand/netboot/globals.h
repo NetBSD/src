@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.3 2007/10/30 00:30:13 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.4 2008/04/07 12:33:57 nisimura Exp $ */
 
 /* clock feed */
 #define TICKS_PER_SEC   (100000000 / 4)          /* 100MHz front bus */
@@ -34,6 +34,7 @@ void  pcicfgwrite(unsigned, int, unsigned);
 #define  PCI_VENDOR(id)			((id) & 0xffff)
 #define  PCI_PRODUCT(id)		(((id) >> 16) & 0xffff)
 #define  PCI_VENDOR_INVALID		0xffff
+#define  PCI_DEVICE(v,p)		((v) | ((p) << 16))
 #define PCI_CLASS_REG			0x08
 #define  PCI_CLASS_PPB			0x0604
 #define  PCI_CLASS_ETH			0x0200
@@ -49,3 +50,51 @@ void _inv(uint32_t, uint32_t);
 
 /* NIF */
 int netif_init(unsigned);
+
+#ifdef LABELSECTOR
+/* IDE/SATA and disk */
+struct atac_channel {
+	volatile uint8_t *c_cmdbase;
+	volatile uint8_t *c_ctlbase;
+	volatile uint8_t *c_cmdreg[8 + 2];
+	volatile uint16_t *c_data;
+	int compatchan;
+#define WDC_READ_CMD(chp, reg)		*(chp)->c_cmdreg[(reg)]
+#define WDC_WRITE_CMD(chp, reg, val)	*(chp)->c_cmdreg[(reg)] = (val)
+#define WDC_READ_CTL(chp, reg)		(chp)->c_ctlbase[(reg)]
+#define WDC_WRITE_CTL(chp, reg, val)	(chp)->c_ctlbase[(reg)] = (val)
+#define WDC_READ_DATA(chp)		*(chp)->c_data
+};
+
+struct atac_command {
+	uint8_t drive;		/* drive id */
+	uint8_t r_command;	/* Parameters to upload to registers */
+	uint8_t r_head;
+	uint16_t r_cyl;
+	uint8_t r_sector;
+	uint8_t r_count;
+	uint8_t r_precomp;
+	uint16_t bcount;
+	void *data;
+	uint64_t r_blkno;
+};
+
+struct atac_softc {
+	unsigned tag;
+	unsigned chvalid;
+	struct atac_channel channel[4];
+};
+
+struct wd_softc {
+#define WDF_LBA		0x0001
+#define WDF_LBA48	0x0002
+	int sc_flags;
+	int sc_unit, sc_part;
+	uint64_t sc_capacity;
+	struct atac_channel *sc_channel;
+	struct atac_command sc_command;
+	struct ataparams sc_params;
+	struct disklabel sc_label;
+	uint8_t sc_buf[DEV_BSIZE];
+};
+#endif
