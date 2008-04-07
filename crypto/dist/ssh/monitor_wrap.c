@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.20 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.21 2008/04/07 07:37:07 jnemeth Exp $	*/
 /* $OpenBSD: monitor_wrap.c,v 1.60 2007/10/29 04:08:08 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.20 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.21 2008/04/07 07:37:07 jnemeth Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -876,6 +876,7 @@ mm_ssh1_session_key(BIGNUM *num)
 	return (rsafail);
 }
 
+#if defined(BSD_AUTH) || defined(SKEY)
 static void
 mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
     char ***prompts, u_int **echo_on)
@@ -887,6 +888,7 @@ mm_chall_setup(char **name, char **infotxt, u_int *numprompts,
 	*echo_on = xcalloc(*numprompts, sizeof(u_int));
 	(*echo_on)[0] = 0;
 }
+#endif
 
 #ifdef BSD_AUTH
 int
