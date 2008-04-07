@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.13 2006/10/22 16:43:24 christos Exp $	*/
+/*	$NetBSD: ip.c,v 1.14 2008/04/07 05:18:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.13 2006/10/22 16:43:24 christos Exp $");
+__RCSID("$NetBSD: ip.c,v 1.14 2008/04/07 05:18:25 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: ip.c,v 1.13 2006/10/22 16:43:24 christos Exp $");
 
 struct mystat {
 	struct ipstat i;
-	struct udpstat u;
+	uint64_t u[UDP_NSTATS];
 };
 
 enum update {
@@ -161,7 +161,7 @@ showip(void)
 	SHOW(i.ips_cantfrag, 4, 35);
 	SHOW(i.ips_noroute, 5, 35);
 	SHOW(i.ips_rawout, 6, 35);
-	SHOW(u.udps_opackets, 7, 35);
+	SHOW(u[UDP_STAT_OPACKETS], 7, 35);
 	
 	SHOW(i.ips_fragments, 10, 0);
 	SHOW(i.ips_fragdropped, 11, 0);
@@ -173,13 +173,13 @@ showip(void)
 	SHOW(i.ips_cantforward, 17, 0);
 	SHOW(i.ips_redirectsent, 18, 0);
 
-	SHOW(u.udps_ipackets, 9, 35);
-	SHOW(u.udps_hdrops, 10, 35);
-	SHOW(u.udps_badsum, 11, 35);
-	SHOW(u.udps_badlen, 12, 35);
-	SHOW(u.udps_noport, 13, 35);
-	SHOW(u.udps_noportbcast, 14, 35);
-	SHOW(u.udps_fullsock, 15, 35);
+	SHOW(u[UDP_STAT_IPACKETS], 9, 35);
+	SHOW(u[UDP_STAT_HDROPS], 10, 35);
+	SHOW(u[UDP_STAT_BADSUM], 11, 35);
+	SHOW(u[UDP_STAT_BADLEN], 12, 35);
+	SHOW(u[UDP_STAT_NOPORT], 13, 35);
+	SHOW(u[UDP_STAT_NOPORTBCAST], 14, 35);
+	SHOW(u[UDP_STAT_FULLSOCK], 15, 35);
 }
 
 int
@@ -205,7 +205,7 @@ fetchip(void)
 
 	KREAD((void *)namelist[0].n_value, &newstat.i, 
 	    sizeof(newstat.i));
-	KREAD((void *)namelist[1].n_value, &newstat.u, 
+	KREAD((void *)namelist[1].n_value, newstat.u, 
 	    sizeof(newstat.u));
 
 	ADJINETCTR(curstat, oldstat, newstat, i.ips_total);
@@ -232,14 +232,14 @@ fetchip(void)
 	ADJINETCTR(curstat, oldstat, newstat, i.ips_fastforward);
 	ADJINETCTR(curstat, oldstat, newstat, i.ips_cantforward);
 	ADJINETCTR(curstat, oldstat, newstat, i.ips_redirectsent);
-	ADJINETCTR(curstat, oldstat, newstat, u.udps_opackets);
-	ADJINETCTR(curstat, oldstat, newstat, u.udps_ipackets);
-	ADJINETCTR(curstat, oldstat, newstat, u.udps_hdrops);
-	ADJINETCTR(curstat, oldstat, newstat, u.udps_badsum);
-	ADJINETCTR(curstat, oldstat, newstat, u.udps_badlen);
-	ADJINETCTR(curstat, oldstat, newstat, u.udps_noport);
-	ADJINETCTR(curstat, oldstat, newstat, u.udps_noportbcast);
-	ADJINETCTR(curstat, oldstat, newstat, u.udps_fullsock);
+	ADJINETCTR(curstat, oldstat, newstat, u[UDP_STAT_OPACKETS]);
+	ADJINETCTR(curstat, oldstat, newstat, u[UDP_STAT_IPACKETS]);
+	ADJINETCTR(curstat, oldstat, newstat, u[UDP_STAT_HDROPS]);
+	ADJINETCTR(curstat, oldstat, newstat, u[UDP_STAT_BADSUM]);
+	ADJINETCTR(curstat, oldstat, newstat, u[UDP_STAT_BADLEN]);
+	ADJINETCTR(curstat, oldstat, newstat, u[UDP_STAT_NOPORT]);
+	ADJINETCTR(curstat, oldstat, newstat, u[UDP_STAT_NOPORTBCAST]);
+	ADJINETCTR(curstat, oldstat, newstat, u[UDP_STAT_FULLSOCK]);
 
 	if (update == UPDATE_TIME)
 		memcpy(&oldstat, &newstat, sizeof(oldstat));
