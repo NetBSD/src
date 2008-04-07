@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/04/07 14:55:24 nisimura Exp $
+#	$NetBSD: Makefile,v 1.11 2008/04/07 15:46:25 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -11,6 +11,7 @@ CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
 CPPFLAGS+=	-DCONSNAME=\"com\" -DCONSPORT=0x3f8 -DCONSSPEED=115200
 #CPPFLAGS+=	-DCONSNAME=\"eumb\" -DCONSPORT=0x4600 -DCONSSPEED=57600
+#CPPFLAGS+=	-DTICKS_PER_SEC=(133333333/4)
 #CPPFLAGS+=	-DSTART_DDB_SESSION
 CPPFLAGS+=	-Wall -nostdinc -I. -I${.OBJDIR} -I${S}
 DBG=		-Os
