@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.28 2008/03/26 16:45:32 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.29 2008/04/07 03:57:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.28 2008/03/26 16:45:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.29 2008/04/07 03:57:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.28 2008/03/26 16:45:32 dyoung Exp $");
 #define	PG0_PROT_SIZE	PAGE_SIZE
 
 struct elansc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	device_t sc_par;
 	device_t sc_pex;
 
@@ -248,7 +248,7 @@ elansc_wdog_setmode(struct sysmon_wdog *smw)
 
 	mutex_enter(&sc->sc_mtx);
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		rc = EBUSY;
 	else if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		elansc_wdogctl_write(sc,
@@ -1135,6 +1135,9 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	int pin, reg, shift;
 	uint16_t data;
 #endif
+
+	sc->sc_dev = self;
+
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
@@ -1144,7 +1147,7 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, PAGE_SIZE, 0,
 	    &sc->sc_memh) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
+		aprint_error_dev(sc->sc_dev, "unable to map registers\n");
 		return;
 	}
 
@@ -1153,7 +1156,7 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	rev = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_REVID);
 	cpuctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_CPUCTL);
 
-	aprint_normal_dev(&sc->sc_dev,
+	aprint_normal_dev(sc->sc_dev,
 	    "product %d stepping %d.%d, CPU clock %s\n",
 	    (rev & REVID_PRODID) >> REVID_PRODID_SHIFT,
 	    (rev & REVID_MAJSTEP) >> REVID_MAJSTEP_SHIFT,
@@ -1183,7 +1186,7 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	 */
 	ressta = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA);
 	if (ressta & RESSTA_WDT_RST_DET)
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n");
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA, ressta);
 
@@ -1252,22 +1255,22 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = ELANSC_PIO_NPINS;
 
-	sc->sc_par = config_found_ia(&sc->sc_dev, "elanparbus", NULL, NULL);
-	sc->sc_pex = config_found_ia(&sc->sc_dev, "elanpexbus", NULL, NULL);
+	sc->sc_par = config_found_ia(sc->sc_dev, "elanparbus", NULL, NULL);
+	sc->sc_pex = config_found_ia(sc->sc_dev, "elanpexbus", NULL, NULL);
 	/* Attach GPIO framework */
-	config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+	config_found_ia(sc->sc_dev, "gpiobus", &gba, gpiobus_print);
 #endif /* NGPIO */
 
 	/*
 	 * Hook up the watchdog timer.
 	 */
-	sc->sc_smw.smw_name = device_xname(&sc->sc_dev);
+	sc->sc_smw.smw_name = device_xname(sc->sc_dev);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = elansc_wdog_setmode;
 	sc->sc_smw.smw_tickle = elansc_wdog_tickle;
 	sc->sc_smw.smw_period = 32;	/* actually 32.54 */
 	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "unable to register watchdog with sysmon\n");
 	}
 }
@@ -1294,7 +1297,7 @@ CFATTACH_DECL_NEW(elanpar, sizeof(struct device),
 CFATTACH_DECL_NEW(elanpex, sizeof(struct device),
     elanpex_match, elanpex_attach, elanpex_detach, NULL);
 
-CFATTACH_DECL2(elansc, sizeof(struct elansc_softc),
+CFATTACH_DECL2_NEW(elansc, sizeof(struct elansc_softc),
     elansc_match, elansc_attach, elansc_detach, NULL, NULL,
     elansc_childdetached);
 
