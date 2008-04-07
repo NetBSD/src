@@ -1,4 +1,4 @@
-/* $Id: atawd.c,v 1.1 2008/04/07 11:13:14 nisimura Exp $ */
+/* $NetBSD: atawd.c,v 1.2 2008/04/07 13:25:31 nisimura Exp $ */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -32,9 +32,11 @@ struct atacdv {
     void * xxx ## _init(unsigned, unsigned)
 
 ATAC_DECL(pciide);
+ATAC_DECL(siisata);
 
 static struct atacdv vatacdv[] = {
 	{ pciide_init, 01 },
+	{ siisata_init, 0xf },
 };
 static int natacdv = sizeof(vatacdv)/sizeof(vatacdv[0]);
 struct atacdv *atac;
@@ -170,13 +172,13 @@ atatc_probe(void *atac)
 			memset(wd, 0, sizeof(struct wd_softc));
 			wd->sc_unit = ndisk;
 			wd->sc_channel = &l->channel[i];
+			disk[ndisk] = (void *)wd;
 			error = wd_get_params(wd);
 			if (error != 0)
 				continue;
 			error = wdgetdisklabel(wd);
 			if (error != 0)
 				continue;
-			disk[ndisk] = (void *)wd;
 			ndisk += 1;
 		}
 	}
@@ -323,7 +325,7 @@ atac_wait_for_ready(struct atac_channel *chp)
 	}	
 	return ENXIO;
 }
-		
+
 static int
 atac_read_block(struct wd_softc *wd, struct atac_command *cmd)
 {
