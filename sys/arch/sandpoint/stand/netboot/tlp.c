@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.12 2008/04/05 06:46:39 tsutsui Exp $ */
+/* $NetBSD: tlp.c,v 1.13 2008/04/07 02:02:39 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -120,11 +120,10 @@ struct local {
 
 static void size_srom(struct local *);
 static int read_srom(struct local *, int);
-#if 0
-static unsigned tlp_mii_read(struct local *, int, int);
-static void tlp_mii_write(struct local *, int, int, int);
+static unsigned mii_read(struct local *, int, int);
+static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
-#endif
+static void mii_dealan(struct local *, unsigned);
 
 void *
 tlp_init(unsigned tag, void *data)
@@ -166,6 +165,9 @@ tlp_init(unsigned tag, void *data)
 		en[0], en[1], en[2], en[3], en[4], en[5]);
 #endif
 
+	mii_initphy(l);
+	mii_dealan(l, 5);
+
 	txd = &l->txd;
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole32(R0_OWN);
@@ -201,6 +203,7 @@ tlp_init(unsigned tag, void *data)
 	l->omr |= OMR_FD | OMR_TEN | OMR_REN;
 	CSR_WRITE(l, TLP_OMR, l->omr);
 	CSR_WRITE(l, TLP_TPD, 01);
+	/* could wait for "setup frame" completion */
 	CSR_WRITE(l, TLP_RPD, 01);
 
 	return l;
@@ -288,7 +291,8 @@ size_srom(struct local *l)
 /*
  * bare SEEPROM access with bitbang'ing
  */
-#define R110	6		/* SEEPROM read op */
+#define R110	6		/* SEEPROM/MDIO read op */
+#define W101	5		/* SEEPROM/MDIO write op */
 #define CS  	(1U << 0)	/* hold chip select */
 #define CLK	(1U << 1)	/* clk bit */
 #define D1	(1U << 2)	/* bit existence */
@@ -335,27 +339,100 @@ read_srom(struct local *l, int off)
 	return data;
 }
 
-#if 0
+/*
+ * bare MII access with bitbang'ing
+ */
+#define MDI	(1U << 19)	/* taken 0/1 from MDIO */
+#define MII	(1U << 18)	/* read operation */
+#define MDO	(1U << 17)	/* bit existence */
+#define MDC	(1U << 16)	/* clock bit */
 
 static unsigned
-tlp_mii_read(struct local *l, int phy, int reg)
+mii_read(struct local *l, int phy, int reg)
 {
-	/* later ... */
-	return 0;
+	unsigned data, v, i;
+
+	data = (R110 << 10) | (phy << 5) | reg;
+	CSR_WRITE(l, TLP_APROM, MDO);
+	for (i = 0; i < 32; i++) {
+		CSR_WRITE(l, TLP_APROM, MDO | MDC);
+		DELAY(1);
+		CSR_WRITE(l, TLP_APROM, MDO);
+		DELAY(1);
+	}
+	CSR_WRITE(l, TLP_APROM, 0);
+	v = 0; /* 4OP + 5ADDR + 5REG */
+	for (i = (1 << 13); i != 0; i >>= 1) {
+		if (data & i)
+			v |= MDO;
+		else
+			v &= ~MDO;
+		CSR_WRITE(l, TLP_APROM, v);
+		DELAY(1);
+		CSR_WRITE(l, TLP_APROM, v | MDC);
+		DELAY(1);
+		CSR_WRITE(l, TLP_APROM, v);
+		DELAY(1);
+	}
+	data = 0; /* 2TA + 16MDI */
+	for (i = 0; i < 18; i++) {
+		CSR_WRITE(l, TLP_APROM, MII);
+		DELAY(1);
+		data = (data << 1) | !!(CSR_READ(l, TLP_APROM) & MDI);
+		CSR_WRITE(l, TLP_APROM, MII | MDC);
+		DELAY(1);
+	}
+	CSR_WRITE(l, TLP_APROM, 0);
+	return data & 0xffff;
 }
 
 static void
-tlp_mii_write(struct local *l, int phy, int reg, int val)
+mii_write(struct local *l, int phy, int reg, int val)
 {
-	/* later ... */
+	unsigned data, v, i;
+
+	data = (W101 << 28) | (phy << 23) | (reg << 18) | (02 << 16);
+	data |= val & 0xffff;
+	CSR_WRITE(l, TLP_APROM, MDO);
+	for (i = 0; i < 32; i++) {
+		CSR_WRITE(l, TLP_APROM, MDO | MDC);
+		DELAY(1);
+		CSR_WRITE(l, TLP_APROM, MDO);
+		DELAY(1);
+	}
+	CSR_WRITE(l, TLP_APROM, 0);
+	v = 0; /* 4OP + 5ADDR + 5REG + 2TA + 16DATA */
+	for (i = (1 << 31); i != 0; i >>= 1) {
+		if (data & i)
+			v |= MDO;
+		else
+			v &= ~MDO;
+		CSR_WRITE(l, TLP_APROM, v);
+		DELAY(1);
+		CSR_WRITE(l, TLP_APROM, v | MDC);
+		DELAY(1);
+		CSR_WRITE(l, TLP_APROM, v);
+		DELAY(1);
+	}
+	CSR_WRITE(l, TLP_APROM, 0);
 }
 
-#define MII_BMCR	0x00 	/* Basic mode control register (rw) */
+#define MII_BMCR	0x00	/* Basic mode control register (rw) */
 #define  BMCR_RESET	0x8000	/* reset */
 #define  BMCR_AUTOEN	0x1000	/* autonegotiation enable */
 #define  BMCR_ISO	0x0400	/* isolate */
 #define  BMCR_STARTNEG	0x0200	/* restart autonegotiation */
 #define MII_BMSR	0x01	/* Basic mode status register (ro) */
+#define  BMSR_ACOMP	0x0020	/* Autonegotiation complete */
+#define  BMSR_LINK	0x0004	/* Link status */
+#define MII_ANAR	0x04	/* Autonegotiation advertisement (rw) */
+#define  ANAR_FC	0x0400	/* local device supports PAUSE */
+#define  ANAR_TX_FD	0x0100	/* local device supports 100bTx FD */
+#define  ANAR_TX	0x0080	/* local device supports 100bTx */
+#define  ANAR_10_FD	0x0040	/* local device supports 10bT FD */
+#define  ANAR_10	0x0020	/* local device supports 10bT */
+#define  ANAR_CSMA	0x0001	/* protocol selector CSMA/CD */
+#define MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
 
 static void
 mii_initphy(struct local *l)
@@ -363,20 +440,20 @@ mii_initphy(struct local *l)
 	int phy, ctl, sts, bound;
 
 	for (phy = 0; phy < 32; phy++) {
-		ctl = tlp_mii_read(l, phy, MII_BMCR);
-		sts = tlp_mii_read(l, phy, MII_BMSR);
+		ctl = mii_read(l, phy, MII_BMCR);
+		sts = mii_read(l, phy, MII_BMSR);
 		if (ctl != 0xffff && sts != 0xffff)
 			goto found;
 	}
 	printf("MII: no PHY found\n");
 	return;
   found:
-	ctl = tlp_mii_read(l, phy, MII_BMCR);
-	tlp_mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
+	ctl = mii_read(l, phy, MII_BMCR);
+	mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
 	bound = 100;
 	do {
 		DELAY(10);
-		ctl = tlp_mii_read(l, phy, MII_BMCR);
+		ctl = mii_read(l, phy, MII_BMCR);
 		if (ctl == 0xffff) {
 			printf("MII: PHY %d has died after reset\n", phy);
 			return;
@@ -386,32 +463,31 @@ mii_initphy(struct local *l)
 		printf("PHY %d reset failed\n", phy);
 	}
 	ctl &= ~BMCR_ISO;
-	tlp_mii_write(l, phy, MII_BMCR, ctl);
-	sts = tlp_mii_read(l, phy, MII_BMSR) |
-	    tlp_mii_read(l, phy, MII_BMSR); /* read twice */
+	mii_write(l, phy, MII_BMCR, ctl);
+	sts = mii_read(l, phy, MII_BMSR) |
+	    mii_read(l, phy, MII_BMSR); /* read twice */
 	l->phy = phy;
 	l->bmsr = sts;
 }
 
 static void
-mii_dealan(struct local *, unsigned timo)
+mii_dealan(struct local *l, unsigned timo)
 {
 	unsigned anar, bound;
 
 	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA;
-	tlp_mii_write(l, l->phy, MII_ANAR, anar);
-	tlp_mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	mii_write(l, l->phy, MII_ANAR, anar);
+	mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	l->anlpar = 0;
 	bound = getsecs() + timo;
 	do {
-		l->bmsr = tlp_mii_read(l, l->phy, MII_BMSR) |
-		   tlp_mii_read(l, l->phy, MII_BMSR); /* read twice */
+		l->bmsr = mii_read(l, l->phy, MII_BMSR) |
+		   mii_read(l, l->phy, MII_BMSR); /* read twice */
 		if ((l->bmsr & BMSR_LINK) && (l->bmsr & BMSR_ACOMP)) {
-			l->anlpar = tlp_mii_read(l, l->phy, MII_ANLPAR);
+			l->anlpar = mii_read(l, l->phy, MII_ANLPAR);
 			break;
 		}
 		DELAY(10 * 1000);
 	} while (getsecs() < bound);
 	return;
 }
-#endif
