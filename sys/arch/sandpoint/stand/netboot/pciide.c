@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.2 2008/04/07 12:33:57 nisimura Exp $ */
+/* $NetBSD: pciide.c,v 1.3 2008/04/07 13:25:31 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -8,6 +8,11 @@
 
 #include <lib/libsa/stand.h>
 #include "globals.h"
+
+/*
+ * - no vtophys() translation, vaddr_t == paddr_t. 
+ */
+#define DEVTOV(pa) 		(uint32_t)(pa)
 
 /*
  * cmdide
@@ -48,10 +53,10 @@ pciide_init(unsigned tag, unsigned data)
 	for (ch = 0; ch < 2; ch += 1) {
 		cp = &l->channel[ch];
 		if (PCIIDE_INTERFACE_PCI(ch) & val) {
-			cp->c_cmdbase = (void *)pcicfgread(tag,
-			    PCIIDE_REG_CMD_BASE(ch));
-			cp->c_ctlbase = (void *)pcicfgread(tag,
-			    PCIIDE_REG_CTL_BASE(ch));
+			cp->c_cmdbase = (void *)DEVTOV(pcicfgread(tag,
+			    PCIIDE_REG_CMD_BASE(ch)));
+			cp->c_ctlbase = (void *)DEVTOV(pcicfgread(tag,
+			    PCIIDE_REG_CTL_BASE(ch)));
 			cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 			for (i = 0; i < 8; i++)
 				cp->c_cmdreg[i] = cp->c_cmdbase + i;
@@ -60,10 +65,10 @@ pciide_init(unsigned tag, unsigned data)
 		}
 		else {
 			tag = 0; /* !!! */
-			cp->c_cmdbase = (void *)(pcicfgread(tag, 0x10) +
-			    PCIIDE_COMPAT_CMD_BASE(ch));
-			cp->c_ctlbase = (void *)(pcicfgread(tag, 0x10) +
-			    PCIIDE_COMPAT_CTL_BASE(ch));
+			cp->c_cmdbase = (void *)DEVTOV(pcicfgread(tag, 0x10)
+			    + PCIIDE_COMPAT_CMD_BASE(ch));
+			cp->c_ctlbase = (void *)DEVTOV(pcicfgread(tag, 0x10)
+			    + PCIIDE_COMPAT_CTL_BASE(ch));
 			cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 			for (i = 0; i < 8; i++)
 				cp->c_cmdreg[i] = cp->c_cmdbase + i;
