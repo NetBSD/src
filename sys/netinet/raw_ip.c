@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.103 2008/02/06 03:20:52 matt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.104 2008/04/07 06:31:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.103 2008/02/06 03:20:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.104 2008/04/07 06:31:28 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -215,7 +215,7 @@ rip_input(struct mbuf *m, ...)
 	if (last != NULL && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);
 		ipsecstat.in_polvio++;
-		ipstat.ips_delivered--;
+		ipstat[IP_STAT_DELIVERED]--;
 		/* do not inject data to pcb */
 	} else
 #endif /*IPSEC*/
@@ -224,8 +224,8 @@ rip_input(struct mbuf *m, ...)
 	else if (inetsw[ip_protox[ip->ip_p]].pr_input == rip_input) {
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PROTOCOL,
 		    0, 0);
-		ipstat.ips_noproto++;
-		ipstat.ips_delivered--;
+		ipstat[IP_STAT_NOPROTO]++;
+		ipstat[IP_STAT_DELIVERED]--;
 	} else
 		m_freem(m);
 	return;
@@ -363,7 +363,7 @@ rip_output(struct mbuf *m, ...)
 		opts = NULL;
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;
-		ipstat.ips_rawout++;
+		ipstat[IP_STAT_RAWOUT]++;
 	}
 	return (ip_output(m, opts, &inp->inp_route, flags, inp->inp_moptions,
 	     inp->inp_socket, &inp->inp_errormtu));
