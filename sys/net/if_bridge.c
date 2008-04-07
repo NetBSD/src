@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.56 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.57 2008/04/07 06:31:27 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.56 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.57 2008/04/07 06:31:27 thorpej Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -2078,12 +2078,12 @@ bridge_ip_checkbasic(struct mbuf **mp)
 		if ((m = m_copyup(m, sizeof(struct ip),
 			(max_linkhdr + 3) & ~3)) == NULL) {
 			/* XXXJRT new stat, please */
-			ipstat.ips_toosmall++;
+			ipstat[IP_STAT_TOOSMALL]++;
 			goto bad;
 		}
 	} else if (__predict_false(m->m_len < sizeof (struct ip))) {
 		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
-			ipstat.ips_toosmall++;
+			ipstat[IP_STAT_TOOSMALL]++;
 			goto bad;
 		}
 	}
@@ -2091,17 +2091,17 @@ bridge_ip_checkbasic(struct mbuf **mp)
 	if (ip == NULL) goto bad;
 
 	if (ip->ip_v != IPVERSION) {
-		ipstat.ips_badvers++;
+		ipstat[IP_STAT_BADVERS]++;
 		goto bad;
 	}
 	hlen = ip->ip_hl << 2;
 	if (hlen < sizeof(struct ip)) { /* minimum header length */
-		ipstat.ips_badhlen++;
+		ipstat[IP_STAT_BADHLEN]++;
 		goto bad;
 	}
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == 0) {
-			ipstat.ips_badhlen++;
+			ipstat[IP_STAT_BADHLEN]++;
 			goto bad;
 		}
 		ip = mtod(m, struct ip *);
@@ -2135,7 +2135,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
          * Check for additional length bogosity
          */
         if (len < hlen) {
-                ipstat.ips_badlen++;
+		ipstat[IP_STAT_BADLEN]++;
                 goto bad;
         }
 
@@ -2145,7 +2145,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
          * Drop packet if shorter than we expect.
          */
         if (m->m_pkthdr.len < len) {
-                ipstat.ips_tooshort++;
+		ipstat[IP_STAT_TOOSHORT]++;
                 goto bad;
         }
 
