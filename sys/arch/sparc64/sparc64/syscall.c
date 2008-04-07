@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.26 2008/03/25 16:42:07 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.27 2008/04/07 14:18:11 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.26 2008/03/25 16:42:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2008/04/07 14:18:11 nakayama Exp $");
 
 #define NEW_FPSTATE
 
@@ -210,9 +210,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 		if (__predict_false(i > nap)) {	/* usually false */
 			void *pos = (char *)(u_long)tf->tf_out[6] + BIAS +
 			   offsetof(struct frame64, fr_argx);
-#ifdef DIAGNOSTIC
 			KASSERT(i <= MAXARGS);
-#endif
 			/* Read the whole block in */
 			error = copyin(pos, &args->l[nap],
 			    (i - nap) * sizeof(*argp));
@@ -229,9 +227,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 		if (__predict_false(i > nap)) {	/* usually false */
 			void *pos = (char *)(u_long)tf->tf_out[6] +
 			    offsetof(struct frame32, fr_argx);
-#ifdef DIAGNOSTIC
 			KASSERT(i <= MAXARGS);
-#endif
 			/* Read the whole block in */
 			error = copyin(pos, &args->i[nap],
 			    (i - nap) * sizeof(*argp));
