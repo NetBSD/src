@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.29 2008/04/07 03:57:51 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.30 2008/04/07 03:59:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.29 2008/04/07 03:57:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.30 2008/04/07 03:59:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1059,6 +1059,14 @@ elanpar_shutdown(device_t self, int flags)
 }
 
 static void
+elanpar_deferred_attach(device_t self)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	elansc_protect_text(self, sc);
+}
+
+static void
 elanpar_attach(device_t parent, device_t self, void *aux)
 {
 	struct elansc_softc *sc = device_private(parent);
@@ -1070,7 +1078,10 @@ elanpar_attach(device_t parent, device_t self, void *aux)
 	elansc_print_all_par(self, sc->sc_memt, sc->sc_memh);
 
 	sc->sc_pg0par = elansc_protect_pg0(self, sc);
-	elansc_protect_text(self, sc);
+	/* XXX grotty hack to avoid trapping writes by x86_patch()
+	 * to the kernel text on a MULTIPROCESSOR kernel.
+	 */
+	config_interrupts(self, elanpar_deferred_attach);
 
 	elansc_print_all_par(self, sc->sc_memt, sc->sc_memh);
 
