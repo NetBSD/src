@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.2 2008/04/07 13:25:31 nisimura Exp $ */
+/* $NetBSD: siisata.c,v 1.3 2008/04/07 15:20:19 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -27,7 +27,6 @@ siisata_init(unsigned tag, unsigned data)
 {
 	unsigned val, chvalid;
 	struct atac_softc *l;
-	struct atac_channel *cp;
 
 	val = pcicfgread(tag, PCI_ID_REG);
 	switch (val) {
@@ -54,11 +53,8 @@ siisata_init(unsigned tag, unsigned data)
 		map3114chan(tag, 2, &l->channel[2]);
 		map3114chan(tag, 3, &l->channel[3]);
 	}
-
-	cp = &l->channel[1];
 	l->chvalid = chvalid & data;
 	l->tag = tag;
-
 	return l;
 }
 
