@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.11 2008/04/07 12:33:57 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.12 2008/04/07 15:20:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -199,7 +199,7 @@ unsigned uartbase;
 void
 brdsetup()
 {
-	unsigned pchb, pcib;
+	unsigned pchb, pcib, div;
 
 	/* BAT to arrange address space */
 
@@ -222,11 +222,12 @@ brdsetup()
 		uartbase = 0xfe000000 + CONSPORT; /* 0x3f8, 0x2f8 */
 	else {
 		uartbase = 0xfc000000 + CONSPORT; /* 0x4500, 0x4600 */
+		div = (TICKS_PER_SEC * 4) / CONSSPEED / 16;
 		UART_WRITE(DCR, 0x01);	/* 2 independent UART */
 		UART_WRITE(LCR, 0x80);	/* turn on DLAB bit */
 		UART_WRITE(FCR, 0x00);
-		UART_WRITE(DMB, 0x00);
-		UART_WRITE(DLB, 0x36);	/* 115200bps @ 100MHz, DINK32 sez */
+		UART_WRITE(DMB, div >> 8);
+		UART_WRITE(DLB, div & 0xff); /* 0x36 when 115200bps@100MHz */
 		UART_WRITE(LCR, 0x03);	/* 8 N 1 */
 		UART_WRITE(MCR, 0x03);	/* RTS DTR */
 		UART_WRITE(FCR, 0x07);	/* FIFO_EN | RXSR | TXSR */
