@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.43.6.1 2008/04/04 17:06:02 jdc Exp $	*/
+/*	$NetBSD: session.c,v 1.43.6.2 2008/04/07 13:11:28 jdc Exp $	*/
 /* $OpenBSD: session.c,v 1.219 2006/08/29 10:40:19 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.43.6.1 2008/04/04 17:06:02 jdc Exp $");
+__RCSID("$NetBSD: session.c,v 1.43.6.2 2008/04/07 13:11:28 jdc Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1075,7 +1075,7 @@ do_rc_files(Session *s, const char *shell)
 
 	/* ignore _PATH_SSH_USER_RC for subsystems and admin forced commands */
 	if (!s->is_subsystem && options.adm_forced_command == NULL &&
-	    (stat(_PATH_SSH_USER_RC, &st) >= 0)) {
+	    !no_user_rc && (stat(_PATH_SSH_USER_RC, &st) >= 0)) {
 		snprintf(cmd, sizeof cmd, "%s -c '%s %s'",
 		    shell, _PATH_BSHELL, _PATH_SSH_USER_RC);
 		if (debug_flag)
