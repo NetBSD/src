@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2008/04/07 11:13:14 nisimura Exp $
+#	$NetBSD: Makefile,v 1.9 2008/04/07 13:25:31 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 
 PROG=		netboot
 SRCS=		entry.S main.c pci.c devopen.c dev_net.c nif.c \
 		fxp.c tlp.c pcn.c sip.c nvt.c rge.c vge.c wm.c \
-		atawd.c pciide.c printf.c
+		atawd.c pciide.c siisata.c printf.c
 CLEANFILES+=	vers.c vers.o ${PROG} ${PROG}.bin
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP

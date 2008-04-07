@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.1 2008/04/07 12:33:57 nisimura Exp $ */
+/* $NetBSD: siisata.c,v 1.2 2008/04/07 13:25:31 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -8,6 +8,11 @@
 
 #include <lib/libsa/stand.h>
 #include "globals.h"
+
+/*
+ * - no vtophys() translation, vaddr_t == paddr_t. 
+ */
+#define DEVTOV(pa) 		(uint32_t)(pa)
 
 void *siisata_init(unsigned, unsigned);
 
@@ -62,8 +67,8 @@ map3112chan(unsigned tag, int ch, struct atac_channel *cp)
 {
 	int i;
 
-	cp->c_cmdbase = (void *)pcicfgread(tag, PCIIDE_REG_CMD_BASE(ch));
-	cp->c_ctlbase = (void *)pcicfgread(tag, PCIIDE_REG_CTL_BASE(ch));
+	cp->c_cmdbase = (void*)DEVTOV(pcicfgread(tag, PCIIDE_REG_CMD_BASE(ch)));
+	cp->c_ctlbase = (void*)DEVTOV(pcicfgread(tag, PCIIDE_REG_CTL_BASE(ch)));
 	cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 	for (i = 0; i < 8; i++)
 		cp->c_cmdreg[i] = cp->c_cmdbase + i;
@@ -86,7 +91,7 @@ map3114chan(unsigned tag, int ch, struct atac_channel *cp)
 	int i;
 	uint8_t *ba5;
 
-	ba5 = (uint8_t *)pcicfgread(tag, 0x24); /* PCI_BAR5 */
+	ba5 = (uint8_t *)DEVTOV(pcicfgread(tag, 0x24)); /* PCI_BAR5 */
 	cp->c_cmdbase = ba5 + regmap[ch].IDE_TF0;
 	cp->c_ctlbase = ba5 + regmap[ch].IDE_TF8;
 	cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);

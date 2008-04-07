@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.10 2007/12/09 09:55:58 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.11 2008/04/07 13:25:31 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -320,10 +320,10 @@ vge_send(void *dev, char *buf, unsigned len)
 	struct tdesc *txd;
 	unsigned loop;
 	
-	wbinv(buf, len);
 	len = (len & T_FLMASK);
 	if (len < 60)
 		len = 60; /* needs to stretch to ETHER_MIN_LEN - 4 */
+	wbinv(buf, len);
 	txd = &l->txd;
 	txd->tf[0].lo = htole32(VTOPHYS(buf));
 	txd->tf[0].hi = htole32(len << 16);
