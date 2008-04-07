@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.h,v 1.3 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: auth-options.h,v 1.3.12.1 2008/04/07 13:11:28 jdc Exp $	*/
 /* $OpenBSD: auth-options.h,v 1.16 2006/08/03 03:34:41 deraadt Exp $ */
 
 /*
@@ -27,6 +27,7 @@ extern int no_port_forwarding_flag;
 extern int no_agent_forwarding_flag;
 extern int no_x11_forwarding_flag;
 extern int no_pty_flag;
+extern int no_user_rc;
 extern char *forced_command;
 extern struct envstring *custom_environment;
 extern int forced_tun_device;
