@@ -1,4 +1,4 @@
-.\"	$NetBSD: nsdispatch.3,v 1.24 2008/04/07 13:20:44 lukem Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.25 2008/04/07 13:25:42 lukem Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2004, 2005, 2008
 .\" The NetBSD Foundation, Inc.
@@ -325,9 +325,13 @@ as the name of the database,
 .Fa name
 as the name of the method,
 .Fa method
-as the callback that implements the method, and
+as the
+.Ft nss_method
+callback that implements the method, and
 .Fa mdata
-as a pointer to arbitrary data to be passed to the callback.
+as a pointer to arbitrary data to be passed to the callback as its
+.Fa cbdata
+argument.
 .Ed
 .\"
 .Ss Valid source types
