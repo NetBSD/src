@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.38 2007/12/31 00:22:13 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.39 2008/04/07 05:18:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,6 +36,7 @@
 #include <kvm.h>
 
 #define ADJINETCTR(c, o, n, e)	(c.e = n.e - o.e)
+#define xADJINETCTR(c, o, n, e)	(c[e] = n[e] - o[e])
 
 extern struct	command global_commands[];
 extern struct	mode *curmode;
