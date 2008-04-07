@@ -1,7 +1,9 @@
-/* $NetBSD: globals.h,v 1.4 2008/04/07 12:33:57 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.5 2008/04/07 15:46:25 nisimura Exp $ */
 
 /* clock feed */
+#ifndef TICKS_PER_SEC
 #define TICKS_PER_SEC   (100000000 / 4)          /* 100MHz front bus */
+#endif
 #define NS_PER_TICK     (1000000000 / TICKS_PER_SEC)
 
 /* PPC processor ctl */
