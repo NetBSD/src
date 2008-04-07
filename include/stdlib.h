@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.83 2008/04/01 19:23:28 drochner Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.84 2008/04/07 12:24:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -177,7 +177,7 @@ long	 random(void);
 char	*setstate(char *);
 void	 srandom(unsigned long);
 #ifdef _NETBSD_SOURCE
-#define	RANDOM_MAX	(((long)1 << 31) - 1)
+#define	RANDOM_MAX	0x7fffffff	/* (((long)1 << 31) - 1) */
 #endif
 
 char	*mkdtemp(char *);
