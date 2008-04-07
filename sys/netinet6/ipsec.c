@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.124 2008/02/06 07:42:43 bjs Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.125 2008/04/07 06:31:28 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.124 2008/02/06 07:42:43 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.125 2008/04/07 06:31:28 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2641,7 +2641,7 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
 			sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 			if ((rt = rtcache_lookup(state->ro, &u.dst)) == NULL) {
 				rtcache_free(state->ro);
-				ipstat.ips_noroute++;
+				ipstat[IP_STAT_NOROUTE]++;
 				error = EHOSTUNREACH;
 				goto bad;
 			}

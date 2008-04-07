@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.192 2008/02/06 03:20:51 matt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.193 2008/04/07 06:31:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.192 2008/02/06 03:20:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.193 2008/04/07 06:31:28 thorpej Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -262,7 +262,7 @@ ip_output(struct mbuf *m0, ...)
 		ip->ip_off = htons(0);
 		/* ip->ip_id filled in after we find out source ia */
 		ip->ip_hl = hlen >> 2;
-		ipstat.ips_localout++;
+		ipstat[IP_STAT_LOCALOUT]++;
 	} else {
 		hlen = ip->ip_hl << 2;
 	}
@@ -298,7 +298,7 @@ ip_output(struct mbuf *m0, ...)
 	 */
 	if (flags & IP_ROUTETOIF) {
 		if ((ia = ifatoia(ifa_ifwithladdr(sintocsa(dst)))) == NULL) {
-			ipstat.ips_noroute++;
+			ipstat[IP_STAT_NOROUTE]++;
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -315,7 +315,7 @@ ip_output(struct mbuf *m0, ...)
 		if (rt == NULL)
 			rt = rtcache_init(ro);
 		if (rt == NULL) {
-			ipstat.ips_noroute++;
+			ipstat[IP_STAT_NOROUTE]++;
 			error = EHOSTUNREACH;
 			goto bad;
 		}
@@ -346,7 +346,7 @@ ip_output(struct mbuf *m0, ...)
 		 * output
 		 */
 		if (!ifp) {
-			ipstat.ips_noroute++;
+			ipstat[IP_STAT_NOROUTE]++;
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -359,7 +359,7 @@ ip_output(struct mbuf *m0, ...)
 		     (ifp->if_flags & IFF_MULTICAST) == 0) ||
 		    ((m->m_flags & M_BCAST) &&
 		     (ifp->if_flags & (IFF_BROADCAST|IFF_POINTOPOINT)) == 0))  {
-			ipstat.ips_noroute++;
+			ipstat[IP_STAT_NOROUTE]++;
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -447,7 +447,7 @@ ip_output(struct mbuf *m0, ...)
 	 * RFC 1112
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
-		ipstat.ips_odropped++;
+		ipstat[IP_STAT_ODROPPED]++;
 		error = EADDRNOTAVAIL;
 		goto bad;
 	}
@@ -867,7 +867,7 @@ spd_done:
 		if (flags & IP_RETURNMTU)
 			*mtu_p = mtu;
 		error = EMSGSIZE;
-		ipstat.ips_cantfrag++;
+		ipstat[IP_STAT_CANTFRAG]++;
 		goto bad;
 	}
 
@@ -916,7 +916,7 @@ spd_done:
 	}
 
 	if (error == 0)
-		ipstat.ips_fragmented++;
+		ipstat[IP_STAT_FRAGMENTED]++;
 done:
 	rtcache_free(&iproute);
 
@@ -975,7 +975,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == 0) {
 			error = ENOBUFS;
-			ipstat.ips_odropped++;
+			ipstat[IP_STAT_ODROPPED]++;
 			goto sendorfree;
 		}
 		MCLAIM(m, m0->m_owner);
@@ -1004,7 +1004,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_next = m_copym(m0, off, len, M_DONTWAIT);
 		if (m->m_next == 0) {
 			error = ENOBUFS;	/* ??? */
-			ipstat.ips_odropped++;
+			ipstat[IP_STAT_ODROPPED]++;
 			goto sendorfree;
 		}
 		m->m_pkthdr.len = mhlen + len;
@@ -1017,7 +1017,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			m->m_pkthdr.csum_data |= mhlen << 16;
 		}
-		ipstat.ips_ofragments++;
+		ipstat[IP_STAT_OFRAGMENTS]++;
 		fragments++;
 	}
 	/*
@@ -1048,7 +1048,7 @@ sendorfree:
 		if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
 		    error == 0) {
 			error = ENOBUFS;
-			ipstat.ips_odropped++;
+			ipstat[IP_STAT_ODROPPED]++;
 			IFQ_INC_DROPS(&ifp->if_snd);
 		}
 		splx(s);

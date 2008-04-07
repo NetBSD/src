@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.51 2008/01/04 23:28:07 dyoung Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.52 2008/04/07 06:31:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.51 2008/01/04 23:28:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.52 2008/04/07 06:31:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,10 +299,10 @@ ipflow_addstats(struct ipflow *ipf)
 
 	if ((rt = rtcache_validate(&ipf->ipf_ro)) != NULL)
 		rt->rt_use += ipf->ipf_uses;
-	ipstat.ips_cantforward += ipf->ipf_errors + ipf->ipf_dropped;
-	ipstat.ips_total += ipf->ipf_uses;
-	ipstat.ips_forward += ipf->ipf_uses;
-	ipstat.ips_fastforward += ipf->ipf_uses;
+	ipstat[IP_STAT_CANTFORWARD] += ipf->ipf_errors + ipf->ipf_dropped;
+	ipstat[IP_STAT_TOTAL] += ipf->ipf_uses;
+	ipstat[IP_STAT_FORWARD] += ipf->ipf_uses;
+	ipstat[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
 }
 
 static void
@@ -386,9 +386,9 @@ ipflow_slowtimo(void)
 		} else {
 			ipf->ipf_last_uses = ipf->ipf_uses;
 			rt->rt_use += ipf->ipf_uses;
-			ipstat.ips_total += ipf->ipf_uses;
-			ipstat.ips_forward += ipf->ipf_uses;
-			ipstat.ips_fastforward += ipf->ipf_uses;
+			ipstat[IP_STAT_TOTAL] += ipf->ipf_uses;
+			ipstat[IP_STAT_FORWARD] += ipf->ipf_uses;
+			ipstat[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
 			ipf->ipf_uses = 0;
 		}
 	}
