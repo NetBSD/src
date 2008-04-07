@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.25 2008/04/05 21:44:50 cegger Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.26 2008/04/07 10:16:59 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.25 2008/04/05 21:44:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.26 2008/04/07 10:16:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ acpi_resource_print(struct device *dev, struct acpi_resources *res)
 	    SIMPLEQ_EMPTY(&res->ar_drq))
 		return;
 
-	aprint_normal_dev(dev, "");
+	aprint_normal("%s:", device_xname(dev));
 
 	if (SIMPLEQ_EMPTY(&res->ar_io) == 0) {
 		struct acpi_io *ar;
