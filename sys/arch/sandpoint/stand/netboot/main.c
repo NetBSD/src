@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.10 2007/12/12 04:17:49 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.11 2008/04/07 12:33:57 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ main()
 	struct btinfo_clock bi_clk;
 	struct btinfo_bootpath bi_path;
 	struct btinfo_rootdevice bi_rdev;
-	unsigned lnif[1][2];
+	unsigned lnif[1][2], lata[1][2];
 
 	/* determine SDRAM size */
 	memsize = mpc107memsize();
@@ -105,6 +105,18 @@ main()
 		printf("Encore PP1"); break;
 	}
 	printf(", %dMB SDRAM, ", memsize >> 20);
+
+	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
+	if (n == 0)
+		printf("no IDE found, ");
+	else {
+		tag = lata[0][1];
+		pcidecomposetag(tag, &b, &d, &f);
+		printf("%04x.%04x IDE %02d:%02d:%02d\n",
+		    PCI_VENDOR(lata[0][0]), PCI_PRODUCT(lata[0][0]),
+		    b, d, f);
+	}
+
 	n = pcilookup(PCI_CLASS_ETH, lnif, sizeof(lnif)/sizeof(lnif[0]));
 	if (n == 0) {
 		tag = ~0;
