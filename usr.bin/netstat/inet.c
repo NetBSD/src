@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.81 2008/04/06 21:53:25 jnemeth Exp $	*/
+/*	$NetBSD: inet.c,v 1.82 2008/04/07 06:31:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.81 2008/04/06 21:53:25 jnemeth Exp $");
+__RCSID("$NetBSD: inet.c,v 1.82 2008/04/07 06:31:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -462,63 +462,61 @@ udp_stats(u_long off, char *name)
  * Dump IP statistics structure.
  */
 void
-ip_stats(off, name)
-	u_long off;
-	char *name;
+ip_stats(u_long off, char *name)
 {
-	struct ipstat ipstat;
+	uint64_t ipstat[IP_NSTATS];
 
 	if (use_sysctl) {
 		size_t size = sizeof(ipstat);
 
-		if (sysctlbyname("net.inet.ip.stats", &ipstat, &size,
+		if (sysctlbyname("net.inet.ip.stats", ipstat, &size,
 				 NULL, 0) == -1)
 			err(1, "net.inet.ip.stats");
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&ipstat, sizeof (ipstat));
+		kread(off, (char *)ipstat, sizeof (ipstat));
 	}
 
 	printf("%s:\n", name);
 
-#define	ps(f, m) if (ipstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ipstat.f)
-#define	p(f, m) if (ipstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ipstat.f, plural(ipstat.f))
+#define	ps(f, m) if (ipstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)ipstat[f])
+#define	p(f, m) if (ipstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)ipstat[f], plural(ipstat[f]))
 
-	p(ips_total, "\t%llu total packet%s received\n");
-	p(ips_badsum, "\t%llu bad header checksum%s\n");
-	ps(ips_toosmall, "\t%llu with size smaller than minimum\n");
-	ps(ips_tooshort, "\t%llu with data size < data length\n");
-	ps(ips_toolong, "\t%llu with length > max ip packet size\n");
-	ps(ips_badhlen, "\t%llu with header length < data size\n");
-	ps(ips_badlen, "\t%llu with data length < header length\n");
-	ps(ips_badoptions, "\t%llu with bad options\n");
-	ps(ips_badvers, "\t%llu with incorrect version number\n");
-	p(ips_fragments, "\t%llu fragment%s received\n");
-	p(ips_fragdropped, "\t%llu fragment%s dropped (dup or out of space)\n");
-	p(ips_rcvmemdrop, "\t%llu fragment%s dropped (out of ipqent)\n");
-	p(ips_badfrags, "\t%llu malformed fragment%s dropped\n");
-	p(ips_fragtimeout, "\t%llu fragment%s dropped after timeout\n");
-	p(ips_reassembled, "\t%llu packet%s reassembled ok\n");
-	p(ips_delivered, "\t%llu packet%s for this host\n");
-	p(ips_noproto, "\t%llu packet%s for unknown/unsupported protocol\n");
-	p(ips_forward, "\t%llu packet%s forwarded");
-	p(ips_fastforward, " (%llu packet%s fast forwarded)");
-	if (ipstat.ips_forward || sflag <= 1)
+	p(IP_STAT_TOTAL, "\t%llu total packet%s received\n");
+	p(IP_STAT_BADSUM, "\t%llu bad header checksum%s\n");
+	ps(IP_STAT_TOOSMALL, "\t%llu with size smaller than minimum\n");
+	ps(IP_STAT_TOOSHORT, "\t%llu with data size < data length\n");
+	ps(IP_STAT_TOOLONG, "\t%llu with length > max ip packet size\n");
+	ps(IP_STAT_BADHLEN, "\t%llu with header length < data size\n");
+	ps(IP_STAT_BADLEN, "\t%llu with data length < header length\n");
+	ps(IP_STAT_BADOPTIONS, "\t%llu with bad options\n");
+	ps(IP_STAT_BADVERS, "\t%llu with incorrect version number\n");
+	p(IP_STAT_FRAGMENTS, "\t%llu fragment%s received\n");
+	p(IP_STAT_FRAGDROPPED, "\t%llu fragment%s dropped (dup or out of space)\n");
+	p(IP_STAT_RCVMEMDROP, "\t%llu fragment%s dropped (out of ipqent)\n");
+	p(IP_STAT_BADFRAGS, "\t%llu malformed fragment%s dropped\n");
+	p(IP_STAT_FRAGTIMEOUT, "\t%llu fragment%s dropped after timeout\n");
+	p(IP_STAT_REASSEMBLED, "\t%llu packet%s reassembled ok\n");
+	p(IP_STAT_DELIVERED, "\t%llu packet%s for this host\n");
+	p(IP_STAT_NOPROTO, "\t%llu packet%s for unknown/unsupported protocol\n");
+	p(IP_STAT_FORWARD, "\t%llu packet%s forwarded");
+	p(IP_STAT_FASTFORWARD, " (%llu packet%s fast forwarded)");
+	if (ipstat[IP_STAT_FORWARD] || sflag <= 1)
 		putchar('\n');
-	p(ips_cantforward, "\t%llu packet%s not forwardable\n");
-	p(ips_redirectsent, "\t%llu redirect%s sent\n");
-	p(ips_nogif, "\t%llu packet%s no matching gif found\n");
-	p(ips_localout, "\t%llu packet%s sent from this host\n");
-	p(ips_rawout, "\t%llu packet%s sent with fabricated ip header\n");
-	p(ips_odropped, "\t%llu output packet%s dropped due to no bufs, etc.\n");
-	p(ips_noroute, "\t%llu output packet%s discarded due to no route\n");
-	p(ips_fragmented, "\t%llu output datagram%s fragmented\n");
-	p(ips_ofragments, "\t%llu fragment%s created\n");
-	p(ips_cantfrag, "\t%llu datagram%s that can't be fragmented\n");
-	p(ips_badaddr, "\t%llu datagram%s with bad address in header\n");
+	p(IP_STAT_CANTFORWARD, "\t%llu packet%s not forwardable\n");
+	p(IP_STAT_REDIRECTSENT, "\t%llu redirect%s sent\n");
+	p(IP_STAT_NOGIF, "\t%llu packet%s no matching gif found\n");
+	p(IP_STAT_LOCALOUT, "\t%llu packet%s sent from this host\n");
+	p(IP_STAT_RAWOUT, "\t%llu packet%s sent with fabricated ip header\n");
+	p(IP_STAT_ODROPPED, "\t%llu output packet%s dropped due to no bufs, etc.\n");
+	p(IP_STAT_NOROUTE, "\t%llu output packet%s discarded due to no route\n");
+	p(IP_STAT_FRAGMENTED, "\t%llu output datagram%s fragmented\n");
+	p(IP_STAT_OFRAGMENTS, "\t%llu fragment%s created\n");
+	p(IP_STAT_CANTFRAG, "\t%llu datagram%s that can't be fragmented\n");
+	p(IP_STAT_BADADDR, "\t%llu datagram%s with bad address in header\n");
 #undef ps
 #undef p
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.46 2008/04/06 20:17:27 thorpej Exp $	*/
+/*	$NetBSD: pf.c,v 1.47 2008/04/07 06:31:27 thorpej Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.46 2008/04/06 20:17:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.47 2008/04/07 06:31:27 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -5442,7 +5442,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		rt = rtcache_init(ro);
 
 		if (rt == NULL) {
-			ipstat.ips_noroute++;
+			ipstat[IP_STAT_NOROUTE]++;
 			goto bad;
 		}
 
@@ -5555,7 +5555,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
 	if (ip->ip_off & htons(IP_DF)) {
-		ipstat.ips_cantfrag++;
+		ipstat[IP_STAT_CANTFRAG]++;
 		if (r->rt != PF_DUPTO) {
 			icmp_error(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
 			    ifp->if_mtu);
@@ -5585,7 +5585,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	if (error == 0)
-		ipstat.ips_fragmented++;
+		ipstat[IP_STAT_FRAGMENTED]++;
 
 done:
 	if (r->rt != PF_DUPTO)
