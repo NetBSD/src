@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.48 2008/04/04 17:07:46 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.49 2008/04/07 13:18:41 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -740,4 +740,19 @@ src/crypto/dist/ssh/sshd_config.5		1.14 via patch
 	- X11 forwarding information disclosure (CVE-2008-1483)
 	- ForceCommand bypass vulnerability
 	[adrianp, ticket #1113]
+
+src/crypto/dist/ssh/auth-options.c		1.8 via patch
+src/crypto/dist/ssh/auth-options.h		1.4 via patch
+src/crypto/dist/ssh/session.c			1.46 via patch
+src/crypto/dist/ssh/sshd.8			1.39 via patch
+	Add no-user-rc option which disables execution of ~/.ssh/rc
+	(backport from OpenSSH 4.9)
+	[adrianp, ticket #1114]
+
+lib/libc/stdlib/strfmon.c			1.6
+	Fix another integer overflow issue discovered by Maksymilian
+	Arciemowicz.  On top of this, limit the range of getnumber to
+	0x00ffffff to make sure that adding two of them does not cause
+	an integer overflow.
+	[mjf, ticket #1115]
 
