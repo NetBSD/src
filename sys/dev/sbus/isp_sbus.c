@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.72 2008/04/05 18:35:32 cegger Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.73 2008/04/07 19:21:55 cegger Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.72 2008/04/05 18:35:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73 2008/04/07 19:21:55 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,7 @@ isp_sbus_dmasetup(ispsoftc_t *isp, XS_T *xs, ispreq_t *rq,
 
 	dmap = sbc->sbus_dmamap[isp_handle_index(rq->req_handle)];
 	if (dmap->dm_nsegs != 0) {
-		panic("%s: DMA map already allocated", isp->isp_name);
+		panic("%s: DMA map already allocated", device_xname(&isp->isp_osinfo.dev));
 		/* NOTREACHED */
 	}
 	error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
@@ -566,7 +566,7 @@ isp_sbus_dmateardown(ispsoftc_t *isp, XS_T *xs, uint32_t handle)
 	dmap = sbc->sbus_dmamap[isp_handle_index(handle)];
 
 	if (dmap->dm_nsegs == 0) {
-		panic("%s: DMA map not already allocated", isp->isp_name);
+		panic("%s: DMA map not already allocated", device_xname(&isp->isp_osinfo.dev));
 		/* NOTREACHED */
 	}
 	bus_dmamap_sync(isp->isp_dmatag, dmap, 0,
