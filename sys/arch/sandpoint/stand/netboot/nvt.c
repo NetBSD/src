@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.9 2007/12/09 09:55:58 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.10 2008/04/07 13:25:31 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -218,11 +218,11 @@ nvt_init(unsigned tag, void *data)
 	rxd[0].xd0 = htole32(R0_OWN);
 	rxd[0].xd1 = htole32(FRAMESIZE << 16);
 	rxd[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
-	rxd[0].xd3 = htole32(&rxd[1]);
+	rxd[0].xd3 = htole32(VTOPHYS(&rxd[1]));
 	rxd[1].xd0 = htole32(R0_OWN);
 	rxd[1].xd1 = htole32(VTOPHYS(l->rxstore[1]));
 	rxd[1].xd2 = htole32(FRAMESIZE << 16);
-	rxd[1].xd3 = htole32(&rxd[0]);
+	rxd[1].xd3 = htole32(VTOPHYS(&rxd[0]));
 	wbinv(l, sizeof(struct local));
 	l->rx = 0;
 
@@ -249,6 +249,9 @@ nvt_send(void *dev, char *buf, unsigned len)
 	struct desc *txd;
 	unsigned loop;
 	
+	len = (len & T_FLMASK);
+	if (len < 60)
+		len = 60; /* needs to stretch to ETHER_MIN_LEN - 4 */
 	wbinv(buf, len);
 	txd = &l->txd;
 	txd->xd3 = htole32(txd);
