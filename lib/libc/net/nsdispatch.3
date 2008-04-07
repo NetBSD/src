@@ -1,6 +1,7 @@
-.\"	$NetBSD: nsdispatch.3,v 1.23 2005/12/26 19:40:15 perry Exp $
+.\"	$NetBSD: nsdispatch.3,v 1.24 2008/04/07 13:20:44 lukem Exp $
 .\"
-.\" Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997, 1998, 1999, 2004, 2005, 2008
+.\" The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +35,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 28, 2004
+.Dd April 7, 2008
 .Dt NSDISPATCH 3
 .Os
 .Sh NAME
@@ -57,30 +58,24 @@
 The
 .Fn nsdispatch
 function invokes the callback functions specified in
-.Va dtab
+.Fa dtab
 in the order given in
 .Pa /etc/nsswitch.conf
 for the database
-.Va database
+.Fa database
 until the action criteria for a source of that database is fulfilled.
 .Pp
-.Va retval
+.Fa retval
 is passed to each callback function to modify as necessary
 (to pass back to the caller of
 .Fn nsdispatch ) .
 .Pp
-Each callback has the function signature described by the typedef:
-.Pp
-.Bd -ragged -offset indent
-.Ft typedef int
-.Fn \*(lp*nss_method\*(rp "void *retval" "void *cb_data" "va_list ap" ;
-.Ed
-.Pp
-.Va dtab
+.Fa dtab
 is an array of
-.Va ns_dtab
+.Fa ns_dtab
 structures, which have the following format:
-.Bd -literal -offset indent
+.Bd -ragged -offset indent
+.Bd -literal
 typedef struct {
 	const char *src;
 	nss_method cb;
@@ -88,67 +83,96 @@ typedef struct {
 } ns_dtab;
 .Ed
 .Pp
-.Bd -ragged -offset indent
 The
-.Va dtab
+.Fa dtab
 array should consist of one entry for each source type that has a
 static implementation,
 with
-.Va src
+.Fa src
 as the name of the source,
-.Va cb
+.Fa cb
 as a function which handles that source, and
-.Va cb_data
+.Fa cb_data
 as a pointer to arbitrary data to be passed to the callback.
 The last entry in
-.Va dtab
+.Fa dtab
 should contain
 .Dv NULL
 values for
-.Va src ,
-.Va cb ,
+.Fa src ,
+.Fa cb ,
 and
-.Va cb_data .
+.Fa cb_data .
+.Ed
+.Pp
+Each callback has the function signature described by the typedef:
+.Pp
+.Bd -ragged -offset indent
+.Ft typedef int
+.Fn \*(lp*nss_method\*(rp "void *cbrv" "void *cbdata" "va_list ap" ;
+.Pp
+.Bl -tag -width cbdata
+.It Fa cbrv
+The
+.Fa retval
+that
+.Fn nsdispatch
+was invoked with.
+.It Fa cbdata
+The
+.Fa cb_data
+member of the array entry for the source that this callback implements in the
+.Fa dtab
+argument of
+.Fn nsdispatch .
+.It Fa ap
+The
+.Sq Fa "..."
+arguments to
+.Fn nsdispatch ,
+converted to a
+.Ft va_list .
+.El
 .Ed
 .Pp
 Callbacks may also be provided by dynamically-loaded modules, in which
 case they are selected using the
-.Va database
+.Fa database
 and
-.Va method
+.Fa method
 arguments in addition to the configured source.
-.Va method
+.Fa method
 is usually the name of the function calling
 .Fn nsdispatch .
 Note that the callbacks provided by
-.Va dtab
+.Fa dtab
 take priority over those implemented in dynamically-loaded modules in the
 event of a conflict.
 .Pp
-.Va defaults
+.Fa defaults
 contains a list of default sources to try in the case of
 a missing or corrupt
 .Xr nsswitch.conf 5 ,
 or if there isn't a relevant entry for
-.Va database .
+.Fa database .
 It is an array of
-.Va ns_src
+.Fa ns_src
 structures, which have the following format:
-.Bd -literal -offset indent
+.Bd -ragged -offset indent
+.Bd -literal
 typedef struct {
 	const char *src;
 	uint32_t flags;
 } ns_src;
 .Ed
 .Pp
-.Bd -ragged -offset indent
 The
-.Va defaults
+.Fa defaults
 array should consist of one entry for each source to consult by default
 indicated by
-.Va src ,
+.Fa src ,
 and
-.Va flags
+.Fa flags
 set to the desired behavior
 (usually
 .Dv NS_SUCCESS ;
@@ -156,13 +180,13 @@ refer to
 .Sx Callback return values
 for more information).
 The last entry in
-.Va defaults
+.Fa defaults
 should have
-.Va src
+.Fa src
 set to
 .Dv NULL
 and
-.Va flags
+.Fa flags
 set to 0.
 .Pp
 Some invokers of
@@ -175,7 +199,7 @@ irrespective of the action criteria listed in
 This can be achieved by adding
 .Dv NS_FORCEALL
 to
-.Va defaults[0].flags
+.Fa defaults[0].flags
 before invoking
 .Fn nsdispatch .
 The return value of
@@ -189,20 +213,22 @@ exists which contains a single default entry for
 for use by callers which don't require complicated default rules.
 .Ed
 .Pp
-.Sq Va ...
+.Sq Fa ...
 are optional extra arguments, which
 are passed to the appropriate callback function as a variable argument
 list of the type
-.Va va_list .
+.Fa va_list .
+.\"
 .Ss Dynamically-loaded module interface
 The
 .Fn nsdispatch
 function loads callback modules from the run-time link-editor's search
 path using the following naming convention:
-.Bd -literal -offset indent
+.Bd -ragged -offset indent
+.Bd -literal
 nss_\*[Lt]source\*[Gt].so.\*[Lt]version\*[Gt]
 .Ed
-.Bl -tag -width XversionX -offset indent
+.Bl -tag -width XversionX
 .It Aq source
 The source that the module implements.
 .It Aq version
@@ -212,6 +238,7 @@ module interface version, which is defined by the integer
 .Dv NSS_MODULE_INTERFACE_VERSION ,
 which has the value 0.
 .El
+.Ed
 .Pp
 When a module is loaded,
 .Fn nsdispatch
@@ -219,41 +246,68 @@ looks for and calls the following function in the module:
 .Pp
 .Bd -ragged -offset indent
 .Ft ns_mtab *
-.Fn nss_module_register "const char *source" "u_int *nelems" \
-    "nss_module_unregister_fn *unreg" ;
-.Ed
+.Fo nss_module_register
+.Fa "const char *source"
+.Fa "u_int *nelems"
+.Fa "nss_module_unregister_fn *unreg"
+.Fc
 .Pp
 .Bl -tag -width source
-.It Va source
+.It Fa source
 The name of the source that the module implements, as used by
 .Fn nsdispatch
 to construct the module's name.
-.It Va nelems
+.It Fa nelems
 A pointer to an unsigned integer that
 .Fn nss_module_register
 should set to the number of elements in the
-.Va ns_mtab
+.Ft ns_mtab
 array returned by
-.Fn nss_module_register .
-.It Va unreg
+.Fn nss_module_register ,
+or
+.Dv 0
+if there was a failure.
+.It Fa unreg
 A pointer to a function pointer that
-.Fn nss_module_resgister
+.Fn nss_module_register
 can optionally set to a function to be invoked when the module is
-unloaded.
+unloaded, or
+.Dv NULL
+if there isn't one.
 .El
+.Ed
 .Pp
 The unregister function signature is described by the typedef:
 .Pp
 .Bd -ragged -offset indent
 .Ft typedef void
-.Fn \*(lp*nss_module_unregister_fn\*(rp "ns_mtab *mtab" "u_int nelems" ;
+.Fo \*(lp*nss_module_unregister_fn\*(rp
+.Fa "ns_mtab *mtab"
+.Fa "u_int nelems"
+.Fc
+.Pp
+.Bl -tag -width nelems
+.It Fa mtab
+The array of
+.Ft ns_mtab
+structures returned by
+.Fn nss_module_register .
+.It Fa nelems
+The
+.Fa nelems
+value set by
+.Fn nss_module_register .
+.El
 .Ed
 .Pp
 .Fn nss_module_register
-returns an array of
-.Va ns_mtab
+returns
+.Dv NULL
+on failure, or an array of
+.Ft ns_mtab
 structures, which have the following format:
-.Bd -literal -offset indent
+.Bd -ragged -offset indent
+.Bd -literal
 typedef struct {
 	const char *database;
 	const char *name;
@@ -262,20 +316,20 @@ typedef struct {
 } ns_mtab;
 .Ed
 .Pp
-.Bd -ragged -offset indent
 The
-.Va mtab
+.Fa mtab
 array should consist of one entry for each method that is implemented,
 with
-.Va database
+.Fa database
 as the name of the database,
-.Va name
+.Fa name
 as the name of the method,
-.Va method
+.Fa method
 as the callback that implements the method, and
-.Va mdata
+.Fa mdata
 as a pointer to arbitrary data to be passed to the callback.
 .Ed
+.\"
 .Ss Valid source types
 While there is support for arbitrary sources, the following
 #defines for commonly implemented sources are provided:
@@ -290,6 +344,7 @@ While there is support for arbitrary sources, the following
 Refer to
 .Xr nsswitch.conf 5
 for a complete description of what each source type is.
+.\"
 .Ss Valid database types
 While there is support for arbitrary databases, the following
 #defines for currently implemented system databases are provided:
@@ -326,6 +381,7 @@ returns the value of the callback that caused the dispatcher to finish,
 or
 .Dv NS_NOTFOUND
 otherwise.
+.\"
 .Sh SEE ALSO
 .Xr ld.elf_so 1 ,
 .Xr hesiod 3 ,
