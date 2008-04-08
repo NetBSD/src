@@ -1,4 +1,4 @@
-.\"	$NetBSD: elansc.4,v 1.9 2008/01/21 22:00:37 dyoung Exp $
+.\"	$NetBSD: elansc.4,v 1.10 2008/04/08 20:30:16 dyoung Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,9 @@
 .Nm elansc
 .Nd AMD Elan SC520 System Controller driver
 .Sh SYNOPSIS
-.Cd "elansc* at pci? dev ? function ?"
+.Cd "elansc* at mainbus? bus ?"
 .Cd "gpio* at elansc?"
+.Cd "pci* at elansc?"
 .Cd "elanpar* at elansc?"
 .Cd "elanpex* at elansc?"
 .Sh DESCRIPTION
@@ -91,6 +92,11 @@ framework.
 The
 .Xr gpioctl 8
 program allows easy manipulation of pins from userland.
+.It
+PCI host-bridge optimization.
+.Nm
+takes advantage of a suspend/resume cycle to tune the PCI host-bridge
+for higher performance.
 .El
 .Sh SEE ALSO
 .Xr elanpar 4 ,
