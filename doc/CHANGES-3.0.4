@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.21 2008/03/26 19:03:46 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.22 2008/04/08 21:51:29 jdc Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -261,4 +261,23 @@ lib/libbz2/shlib_version:			patch
 
 	Upgrade bzip2 to 1.0.5, fixing CVE-2008-1372 and CVE-2005-0953
 	[adrianp, ticket #1917]
+
+sys/dev/ata/wd.c				1.359
+
+	The Hitachi HDP725025GLA380 returns "aborted command" instead of
+	"id not found" when hitting the LBA48 bug, so also install the
+	LBA48 bug workaround on "aborted command" errors.
+	[bouyer, ticket #1910]
+
+src/crypto/dist/ssh/channels.c			1.38
+src/crypto/dist/ssh/auth-options.c		1.8
+src/crypto/dist/ssh/auth-options.h		1.4
+src/crypto/dist/ssh/session.c			1.46
+src/crypto/dist/ssh/sshd.8			1.39
+
+	Fix X11 forwarding information disclosure vulnerability in
+	OpenSSH (CVE-2008-1483).
+	Add no-user-rc option which disables execution of ~/.ssh/rc
+	(backport from OpenSSH 4.9)
+	[adrianp, ticket #1921]
 
