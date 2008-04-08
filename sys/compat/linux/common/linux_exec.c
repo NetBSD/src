@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.100 2007/12/08 18:36:06 dsl Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.101 2008/04/08 20:25:00 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.100 2007/12/08 18:36:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.101 2008/04/08 20:25:00 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,11 +372,7 @@ linux_nptl_proc_fork(p, parent, luserret)
 	struct proc *parent;
 	void (*luserret)(void);
 {
-#ifdef LINUX_NPTL
-	struct linux_emuldata *e;
-#endif
-
-	e = p->p_emuldata;
+	struct linux_emuldata *e = p->p_emuldata;
 
 	/* LINUX_CLONE_CHILD_CLEARTID: clear TID in child's memory on exit() */
 	if (e->clone_flags & LINUX_CLONE_CHILD_CLEARTID)
@@ -420,6 +416,4 @@ linux_nptl_proc_init(struct proc *p, struct proc *parent)
 
 	return;
 }
-
-
 #endif /* LINUX_NPTL */
