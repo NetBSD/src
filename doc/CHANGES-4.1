@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.49 2008/04/07 13:18:41 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.50 2008/04/08 21:01:36 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -755,4 +755,83 @@ lib/libc/stdlib/strfmon.c			1.6
 	0x00ffffff to make sure that adding two of them does not cause
 	an integer overflow.
 	[mjf, ticket #1115]
+
+sys/dev/vnd.c					1.174
+	Add disk-info properties to vnd(4), for use by userland tools
+	such as gpt(8).
+	[riz, ticket #1116]
+
+src/sbin/gpt/add.c				1.5
+src/sbin/gpt/create.c				1.3
+src/sbin/gpt/destroy.c				1.3
+src/sbin/gpt/gpt.c				1.4-1.6
+src/sbin/gpt/label.c				1.5-1.6
+src/sbin/gpt/migrate.c				1.4
+src/sbin/gpt/recover.c				1.3
+src/sbin/gpt/remove.c				1.4
+src/sbin/gpt/show.c				1.3
+	Improve gpt(8) error and usage messages.
+	[riz, ticket #1117]
+
+src/etc/MAKEDEV.tmpl				1.100 via patch
+	Create drvctl as part of 'all'.
+	[riz, ticket #1118]
+
+src/sbin/gpt/add.c				1.6
+src/sbin/gpt/gpt.c				1.7
+src/sbin/gpt/show.c				1.4
+src/sys/dev/dkwedge/dkwedge_gpt.c		1.7
+src/sys/sys/disk.h				1.47
+src/sys/sys/disklabel_gpt.h			1.4
+	Add NetBSD GPT partition types for swap, ffs, lfs, raidframe,
+	and cgd.  gpt(8) now defaults to NetBSD ffs if no type is
+	given, but previous FreeBSD types are still recognized in
+	the DKWEDGE_AUTODISCOVER code.
+	[riz, ticket #1119]
+
+src/lib/libc/gdtoa/dmisc.c		1.4
+src/lib/libc/gdtoa/gdtoa.c		1.4
+src/lib/libc/gdtoa/gethex.c		1.4
+src/lib/libc/gdtoa/misc.c		1.4
+src/lib/libc/gdtoa/strtof_vaxf.c	1.4-1.5
+src/lib/libc/gdtoa/strtopQ.c		1.4
+src/lib/libc/gdtoa/strtopx.c		1.4
+src/lib/libc/gdtoa/strtopxL.c		1.4
+src/lib/libc/gdtoa/strtord.c		1.4
+src/lib/libc/gdtoa/dtoa.c		1.5
+src/lib/libc/gdtoa/strtod.c		1.5
+src/lib/libc/gdtoa/g_Qfmt.c		1.3
+src/lib/libc/gdtoa/g_xLfmt.c		1.3
+src/lib/libc/gdtoa/g_xfmt.c		1.3
+src/lib/libc/gdtoa/smisc.c		1.3
+src/lib/libc/gdtoa/strtof.c		1.3
+src/lib/libc/gdtoa/strtorQ.c		1.3
+src/lib/libc/gdtoa/strtorx.c		1.3
+src/lib/libc/gdtoa/strtorxL.c		1.3
+src/lib/libc/gdtoa/g_ddfmt.c		1.2
+src/lib/libc/gdtoa/g_dfmt.c		1.2
+src/lib/libc/gdtoa/g_ffmt.c		1.2
+src/lib/libc/gdtoa/strtoIQ.c		1.2
+src/lib/libc/gdtoa/strtoId.c		1.2
+src/lib/libc/gdtoa/strtoIdd.c		1.2
+src/lib/libc/gdtoa/strtoIf.c		1.2
+src/lib/libc/gdtoa/strtoIg.c		1.2
+src/lib/libc/gdtoa/strtoIx.c		1.2
+src/lib/libc/gdtoa/strtoIxL.c		1.2
+src/lib/libc/gdtoa/strtodI.c		1.2
+src/lib/libc/gdtoa/strtodnrp.c		1.2
+src/lib/libc/gdtoa/strtopd.c		1.2
+src/lib/libc/gdtoa/strtopdd.c		1.2
+src/lib/libc/gdtoa/strtopf.c		1.2
+src/lib/libc/gdtoa/strtordd.c		1.2
+src/lib/libc/gdtoa/strtorf.c		1.2
+src/lib/libc/gdtoa/sum.c		1.2
+src/lib/libc/gdtoa/gdtoa.h		1.8
+src/lib/libc/gdtoa/hdtoa.c		1.6
+src/lib/libc/gdtoa/strtodg.c		1.6
+src/lib/libc/stdio/vfwprintf.c		1.12
+	Don't coredump on out of memory conditions. This solution leaks,
+	but gdtoa is too complicated to fix.
+	Try printf %99999999999.9999999999f 2
+	[mjf, ticket #1120]
 
