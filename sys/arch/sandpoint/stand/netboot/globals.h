@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.5 2008/04/07 15:46:25 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.6 2008/04/08 23:59:03 nisimura Exp $ */
 
 /* clock feed */
 #ifndef TICKS_PER_SEC
@@ -41,6 +41,8 @@ void  pcicfgwrite(unsigned, int, unsigned);
 #define  PCI_CLASS_PPB			0x0604
 #define  PCI_CLASS_ETH			0x0200
 #define  PCI_CLASS_IDE			0x0101
+#define  PCI_CLASS_RAID			0x0104
+#define  PCI_CLASS_SATA			0x0106
 #define PCI_BHLC_REG			0x0c
 #define  PCI_HDRTYPE_TYPE(r)		(((r) >> 16) & 0x7f)
 #define  PCI_HDRTYPE_MULTIFN(r)		((r) & (0x80 << 16))

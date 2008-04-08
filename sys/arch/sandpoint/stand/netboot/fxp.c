@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.6 2007/11/29 04:00:17 nisimura Exp $ */
+/* $NetBSD: fxp.c,v 1.7 2008/04/08 23:59:03 nisimura Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -190,11 +190,11 @@ fxp_init(unsigned tag, void *data)
 	unsigned v, i;
 
 	v = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(v) != 0x8086 ||
-		    (PCI_PRODUCT(v) != 0x1209 && PCI_PRODUCT(v) != 0x1229))
+	if (PCI_DEVICE(0x8086, 0x1209) != v
+	    && PCI_DEVICE(0x8086, 0x1229) != v)
 		return NULL;
 
-	sc = ALLOC(struct local, sizeof(struct txdesc));
+	sc = ALLOC(struct local, sizeof(struct txdesc)); /* desc alignment */
 	memset(sc, 0, sizeof(struct local));
 	sc->iobase = DEVTOV(pcicfgread(tag, 0x10)); /* use mem space */
 

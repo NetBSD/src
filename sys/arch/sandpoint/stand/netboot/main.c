@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.12 2008/04/07 15:20:19 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.13 2008/04/08 23:59:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -104,11 +104,11 @@ main()
 	case BRD_ENCOREPP1:
 		printf("Encore PP1"); break;
 	}
-	printf(", %dMB SDRAM, ", memsize >> 20);
+	printf(", %dMB SDRAM\n", memsize >> 20);
 
 	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
 	if (n == 0)
-		printf("no IDE found, ");
+		printf("no IDE found\n");
 	else {
 		tag = lata[0][1];
 		pcidecomposetag(tag, &b, &d, &f);
@@ -679,14 +679,23 @@ pcifixup()
 		val |= (0x8a << 8);
 		pcicfgwrite(ide, 0x08, val);
 
-		/* ide: 0x10-20 - in this mode HW ignores these addresses */
+		/* ide: 0x10-20 */
+		experiment shows writing ide: 0x09 changes these
+		register behaviour. The pcicfgwrite() above writes
+		0x8a at ide: 0x09 to make sure legacy IDE.  Then
+		reading BAR0-3 is to return value 0s even though
+		pcisetup() has written range assignments.  Value
+		overwrite makes no effect. Having 0x8f for native
+		PCIIDE doesn't change register values and brings no
+		weirdness.
+		 */
 
 		/* ide: 0x40 - use primary only */
 		val = pcicfgread(ide, 0x40) &~ 03;
 		val |= 02;
 		pcicfgwrite(ide, 0x40, val);
 
-		/* ide: 0x3d/3c - turn off PCI pin */
+			/* ide: 0x3d/3c - turn off PCI pin */
 		val = pcicfgread(ide, 0x3c) & 0xffff00ff;
 		pcicfgwrite(ide, 0x3c, val);
 #endif

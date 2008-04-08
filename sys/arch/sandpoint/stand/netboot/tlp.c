@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.13 2008/04/07 02:02:39 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.14 2008/04/08 23:59:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -136,10 +136,10 @@ tlp_init(unsigned tag, void *data)
 
 	val = pcicfgread(tag, PCI_ID_REG);
 	/* genuine DE500 */
-	if (PCI_VENDOR(val) != 0x1011 && PCI_PRODUCT(val) != 0x0009)
+	if (PCI_DEVICE(0x1011, 0x0009) != val)
 		return NULL;
 	
-	l = ALLOC(struct local, sizeof(struct desc));
+	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.10 2007/12/09 09:55:59 nisimura Exp $ */
+/* $NetBSD: sip.c,v 1.11 2008/04/08 23:59:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -138,10 +138,10 @@ sip_init(unsigned tag, void *data)
 	uint8_t *en;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x100b && PCI_PRODUCT(val) != 0x0020)
+	if (PCI_DEVICE(0x100b, 0x0020) != val)
 		return NULL;
 
-	l = ALLOC(struct local, sizeof(struct desc));
+	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
