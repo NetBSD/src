@@ -1,4 +1,4 @@
-/* $NetBSD: g_ddfmt.c,v 1.1.1.1 2006/01/25 15:18:44 kleink Exp $ */
+/* $NetBSD: g_ddfmt.c,v 1.1.1.1.14.1 2008/04/08 21:10:55 jdc Exp $ */
 
 /****************************************************************
 
@@ -92,25 +92,38 @@ g_ddfmt(char *buf, double *dd, int ndig, unsigned bufsize)
 		L = (ULong*)dd;
 		}
 	z = d2b(dd[0], &ex, &bx);
+	if (z == NULL)
+		return NULL;
 	if (dd[1] == 0.)
 		goto no_y;
 	x = z;
 	y = d2b(dd[1], &ey, &by);
+	if (y == NULL)
+		return NULL;
 	if ( (i = ex - ey) !=0) {
 		if (i > 0) {
 			x = lshift(x, i);
+			if (x == NULL)
+				return NULL;
 			ex = ey;
 			}
-		else
+		else {
 			y = lshift(y, -i);
+			if (y == NULL)
+				return NULL;
+			}
 		}
 	if ((L[_0] ^ L[2+_0]) & 0x80000000L) {
 		z = diff(x, y);
+		if (z == NULL)
+			return NULL;
 		if (L[_0] & 0x80000000L)
 			z->sign = 1 - z->sign;
 		}
 	else {
 		z = sum(x, y);
+		if (z == NULL)
+			return NULL;
 		if (L[_0] & 0x80000000L)
 			z->sign = 1;
 		}
@@ -150,7 +163,11 @@ g_ddfmt(char *buf, double *dd, int ndig, unsigned bufsize)
 	fpi.sudden_underflow = 0;
 	i = STRTOG_Normal;
 	s = gdtoa(&fpi, ex, bits, &i, mode, ndig, &decpt, &se);
+	if (s == NULL)
+		return NULL;
 	b = g__fmt(buf, s, se, decpt, z->sign);
+	if (b == NULL)
+		return NULL;
 	Bfree(z);
 	return b;
 	}

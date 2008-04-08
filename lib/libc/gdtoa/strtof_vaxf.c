@@ -1,4 +1,4 @@
-/* $NetBSD: strtof_vaxf.c,v 1.3 2006/03/24 16:04:32 kleink Exp $ */
+/* $NetBSD: strtof_vaxf.c,v 1.3.14.1 2008/04/08 21:10:55 jdc Exp $ */
 
 /****************************************************************
 
@@ -54,6 +54,12 @@ strtof(CONST char *s, char **sp)
 	union { ULong L[1]; float f; } u;
 
 	k = strtodg(s, sp, &fpi, &expt, bits);
+	if (k == STRTOG_NoMemory) {
+		errno = ERANGE;
+		u.L[0] = Big0;
+		u.L[1] = Big1;
+		return u.f;
+	}
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:

@@ -1,4 +1,4 @@
-/* $NetBSD: strtorf.c,v 1.1.1.1 2006/01/25 15:18:55 kleink Exp $ */
+/* $NetBSD: strtorf.c,v 1.1.1.1.14.1 2008/04/08 21:10:55 jdc Exp $ */
 
 /****************************************************************
 
@@ -86,6 +86,8 @@ strtorf(CONST char *s, char **sp, int rounding, float *f)
 		fpi = &fpi1;
 		}
 	k = strtodg(s, sp, fpi, &exp, bits);
+	if (k == STRTOG_NoMemory)
+		return k;
 	ULtof((ULong*)f, bits, exp, k);
 	return k;
 	}
