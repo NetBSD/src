@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.11 2007/10/19 12:00:36 ad Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.12 2008/04/08 20:42:22 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.11 2007/10/19 12:00:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.12 2008/04/08 20:42:22 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,12 +293,12 @@ ie_pcctwo_attach(parent, self, args)
 	if (bus_dmamem_alloc(pa->pa_dmat, ether_data_buff_size, PAGE_SIZE, 0,
 		&seg, 1, &rseg,
 		BUS_DMA_NOWAIT | BUS_DMA_ONBOARD_RAM | BUS_DMA_24BIT) != 0) {
-		printf("%s: Failed to allocate ether buffer\n", self->dv_xname);
+		aprint_error_dev(self, "Failed to allocate ether buffer\n");
 		return;
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
 	    (void **) & sc->sc_maddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
-		printf("%s: Failed to map ether buffer\n", self->dv_xname);
+		aprint_error_dev(self, "Failed to map ether buffer\n");
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
 		return;
 	}
@@ -346,7 +346,7 @@ ie_pcctwo_attach(parent, self, args)
 
 	/* Register the event counter */
 	evcnt_attach_dynamic(&ps->ps_evcnt, EVCNT_TYPE_INTR,
-	    pcctwointr_evcnt(pa->pa_ipl), "ether", sc->sc_dev.dv_xname);
+	    pcctwointr_evcnt(pa->pa_ipl), "ether", device_xname(&sc->sc_dev));
 
 	/* Finally, hook the hardware interrupt */
 	pcctwointr_establish(PCCTWOV_LANC_IRQ, i82586_intr, pa->pa_ipl, sc,

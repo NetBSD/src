@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.24 2007/10/19 12:00:35 ad Exp $	*/
+/*	$NetBSD: mca.c,v 1.25 2008/04/08 20:41:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.24 2007/10/19 12:00:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.25 2008/04/08 20:41:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ mca_attach(parent, self, aux)
 			config_found_sm_loc(self, "mca", locs, &ma,
 					    mca_print, config_stdsubmatch);
 		else {
-			mca_print(&ma, self->dv_xname);
+			mca_print(&ma, device_xname(self));
 			printf(" disabled\n");
 		}
 	}
