@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.8 2007/12/09 09:55:58 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.9 2008/04/08 23:59:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ rge_init(unsigned tag, void *data)
 	uint8_t *en = data;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x10ec && PCI_PRODUCT(val) != 0x8169)
+	if (PCI_DEVICE(0x10ec, 0x8169) != val)
 		return NULL;
 
 	l = ALLOC(struct local, 256);	/* desc alignment */
