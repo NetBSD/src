@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.19 2008/02/22 19:06:28 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.20 2008/04/08 22:16:09 jdc Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -193,4 +193,23 @@ etc/namedb/root.cache				1.12, 1.13
 
 	Update to 2008020400 version
 	[ghen, ticket #1900]
+
+sys/dev/ata/wd.c				1.359
+
+	The Hitachi HDP725025GLA380 returns "aborted command" instead of
+	"id not found" when hitting the LBA48 bug, so also install the
+	LBA48 bug workaround on "aborted command" errors.
+	[bouyer, ticket #1910]
+
+src/crypto/dist/ssh/channels.c			1.38 via patch
+src/crypto/dist/ssh/auth-options.c		1.8 via patch
+src/crypto/dist/ssh/auth-options.h		1.4 via patch
+src/crypto/dist/ssh/session.c			1.46 via patch
+src/crypto/dist/ssh/sshd.8			1.39 via patch
+
+	Fix X11 forwarding information disclosure vulnerability in
+	OpenSSH (CVE-2008-1483).
+	Add no-user-rc option which disables execution of ~/.ssh/rc
+	(backport from OpenSSH 4.9)
+	[adrianp, ticket #1921]
 
