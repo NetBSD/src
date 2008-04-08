@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.20 2007/12/09 20:28:02 jmcneill Exp $	*/
+/*	$NetBSD: acphy.c,v 1.21 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.20 2007/12/09 20:28:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.21 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ acphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 	if (sc->mii_flags & MIIF_HAVEFIBER) {

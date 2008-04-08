@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.32 2007/12/29 19:34:56 dyoung Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.33 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.32 2007/12/29 19:34:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.33 2008/04/08 20:10:20 cegger Exp $");
 
 #include "opt_mii.h"
 
@@ -142,13 +142,13 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 		    mii_knowndevs[i].model == model)
 			break;
 	if (mii_knowndevs[i].descr != NULL)
-		aprint_normal("%s: %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
-		       sc->mii_dev.dv_xname, mii_knowndevs[i].descr,
+		aprint_normal_dev(&sc->mii_dev, "%s (OUI 0x%06x, model 0x%04x), rev. %d\n",
+		       mii_knowndevs[i].descr,
 		       oui, model, rev);
 	else
 #endif
-		aprint_normal("%s: OUI 0x%06x, model 0x%04x, rev. %d\n",
-		       sc->mii_dev.dv_xname, oui, model, rev);
+		aprint_normal_dev(&sc->mii_dev, "OUI 0x%06x, model 0x%04x, rev. %d\n",
+		       oui, model, rev);
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -168,7 +168,7 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");

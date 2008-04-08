@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.16 2007/10/19 12:00:31 ad Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.17 2008/04/08 20:09:27 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.16 2007/10/19 12:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.17 2008/04/08 20:09:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,11 +98,11 @@ tr_isapnp_attach(struct device *parent, struct device *self,
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
-	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	printf("%s: %s %s\n", device_xname(&sc->sc_dev), ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	sc->sc_piot = ipa->ipa_iot;

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.6 2007/10/19 12:00:37 ad Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.7 2008/04/08 20:11:36 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.6 2007/10/19 12:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.7 2008/04/08 20:11:36 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -120,8 +120,7 @@ atppc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	n = lpt_ofisa_md_reg_fixup(parent, self, aux, &reg, 1, n);
 #endif
 	if (n != 1) {
-		printf("%s: unable to find i/o register resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to find i/o register resource\n");
 		return;
 	}
 
@@ -131,15 +130,13 @@ atppc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	n = lpt_ofisa_md_intr_fixup(parent, self, aux, &intr, 1, n);
 #endif
 	if (n != 1) {
-		printf("%s: unable to find irq resource\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to find irq resource\n");
 		return;
 	}
 
 	/* find our DRQ */
 	if (ofisa_dma_get(aa->oba.oba_phandle, &dma, 1) != 1) {
-		printf("%s: unable to find DMA data\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to find DMA data\n");
 		return;
 	}
 	asc->sc_drq = dma.drq;
@@ -153,8 +150,8 @@ atppc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, reg.addr, reg.len, 0,
 		&sc->sc_ioh) != 0) {
-		printf("%s: attempt to map bus space failed, device not "
-			"properly attached.\n", self->dv_xname);
+		aprint_error_dev(self, "attempt to map bus space failed, device not "
+			"properly attached.\n");
 		return;
 	}
 

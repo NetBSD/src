@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.33 2007/12/29 19:34:56 dyoung Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.34 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.33 2007/12/29 19:34:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.34 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ tqphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
 	else

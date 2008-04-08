@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.33 2008/04/01 20:44:29 xtraeme Exp $	*/
+/*	$NetBSD: ym.c,v 1.34 2008/04/08 20:08:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.33 2008/04/01 20:44:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.34 2008/04/08 20:08:50 cegger Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -145,7 +145,7 @@ int	ymdebug = 0;
 #else
 #define DPRINTF(x)
 #endif
-#define DVNAME(softc)	((softc)->sc_ad1848.sc_ad1848.sc_dev.dv_xname)
+#define DVNAME(softc)	(device_xname(&(softc)->sc_ad1848.sc_ad1848.sc_dev))
 
 int	ym_getdev(void *, struct audio_device *);
 int	ym_mixer_set_port(void *, mixer_ctrl_t *);

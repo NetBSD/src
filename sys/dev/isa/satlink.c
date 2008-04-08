@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.36 2008/03/01 14:16:50 rmind Exp $	*/
+/*	$NetBSD: satlink.c,v 1.37 2008/04/08 20:08:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.36 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.37 2008/04/08 20:08:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 
 	/* Map the card. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SATLINK_IOSIZE, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -205,7 +205,7 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 	    (bus_space_read_1(iot, ioh, SATLINK_SER_H) << 24);
 
 	printf("%s: mfrid 0x%x, grpid 0x%x, userid 0x%x, serial %d\n",
-	    sc->sc_dev.dv_xname, sc->sc_id.sid_mfrid,
+	    device_xname(&sc->sc_dev), sc->sc_id.sid_mfrid,
 	    sc->sc_id.sid_grpid, sc->sc_id.sid_userid,
 	    sc->sc_id.sid_serial);
 
@@ -217,21 +217,20 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 	/* Allocate and map the ring buffer. */
 	if (isa_dmamem_alloc(sc->sc_ic, sc->sc_drq, sc->sc_bufsize,
 	    &ringaddr, BUS_DMA_NOWAIT)) {
-		printf("%s: can't allocate ring buffer\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't allocate ring buffer\n");
 		return;
 	}
 	if (isa_dmamem_map(sc->sc_ic, sc->sc_drq, ringaddr, sc->sc_bufsize,
 	    &sc->sc_buf, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		printf("%s: can't map ring buffer\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map ring buffer\n");
 		isa_dmamem_free(sc->sc_ic, sc->sc_drq, ringaddr,
 		    sc->sc_bufsize);
 		return;
 	}
 
 	if (isa_drq_alloc(sc->sc_ic, sc->sc_drq) != 0) {
-		printf("%s: can't reserve drq %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_drq);
+		aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
+		    sc->sc_drq);
 		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_buf,
 		    sc->sc_bufsize);
 		isa_dmamem_free(sc->sc_ic, sc->sc_drq, ringaddr,
@@ -242,7 +241,7 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 	/* Create the DMA map. */
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq, sc->sc_bufsize,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-		printf("%s: can't create DMA map\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't create DMA map\n");
 		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_buf,
 		    sc->sc_bufsize);
 		isa_dmamem_free(sc->sc_ic, sc->sc_drq, ringaddr,

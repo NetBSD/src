@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.18 2007/10/19 12:00:37 ad Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.19 2008/04/08 20:11:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.18 2007/10/19 12:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.19 2008/04/08 20:11:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ ess_ofisa_attach(parent, self, aux)
 	if (n > 0) {
 		model = alloca(n);
 		if (OF_getprop(aa->oba.oba_phandle, "model", model, n) == n)
-			printf(": %s\n%s", model, sc->sc_dev.dv_xname);
+			printf(": %s\n%s", model, device_xname(&sc->sc_dev));
 	}
 
 	essattach(sc, 0);

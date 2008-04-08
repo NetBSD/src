@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.33 2007/10/19 12:00:16 ad Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.34 2008/04/08 20:08:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.33 2007/10/19 12:00:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.34 2008/04/08 20:08:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ esp_isa_init(esc, epd)
 	{
 #ifdef DIAGNOSTIC
 		printf("%s: sync requested, but not supported; will do async\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #endif
 		epd->sc_sync = 0;
 	}
@@ -389,19 +389,19 @@ esp_isa_attach(parent, self, aux)
 	ESP_TRACE(("[esp_isa_attach] "));
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ESP_ISA_IOSIZE, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
 	if (!esp_isa_find(iot, ioh, &epd)) {
-		printf("%s: esp_isa_find failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "esp_isa_find failed\n");
 		return;
 	}
 
 	if (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ) {
 		if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
-			printf("%s: unable to cascade DRQ, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to cascade DRQ, error = %d\n",
+			    error);
 			return;
 		}
 	}
@@ -409,8 +409,7 @@ esp_isa_attach(parent, self, aux)
 	esc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq, IST_EDGE,
 	    IPL_BIO, ncr53c9x_intr, esc);
 	if (esc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 
@@ -418,9 +417,9 @@ esp_isa_attach(parent, self, aux)
 	esc->sc_iot = iot;
 	esp_isa_init(esc, &epd);
 
-	printf("%s:%ssync,%sparity\n", sc->sc_dev.dv_xname,
+	printf("%s:%ssync,%sparity\n", device_xname(&sc->sc_dev),
 	    epd.sc_sync ? " " : " no ", epd.sc_parity ? " " : " no ");
-	printf("%s", sc->sc_dev.dv_xname);
+	printf("%s", device_xname(&sc->sc_dev));
 
 	/*
 	 * Now try to attach all the sub-devices
@@ -503,7 +502,7 @@ esp_isa_dma_intr(sc)
 	ESP_TRACE(("[esp_isa_dma_intr] "));
 
 	if (esc->sc_active == 0) {
-		printf("%s: dma_intr--inactive DMA\n", sc->sc_dev.dv_xname);
+		printf("%s: dma_intr--inactive DMA\n", device_xname(&sc->sc_dev));
 		return -1;
 	}
 
@@ -515,7 +514,7 @@ esp_isa_dma_intr(sc)
 	cnt = *esc->sc_pdmalen;
 	if (*esc->sc_pdmalen == 0) {
 		printf("%s: data interrupt, but no count left\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 	}
 
 	p = *esc->sc_dmaaddr;

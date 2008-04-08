@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.28 2008/01/20 07:58:19 msaitoh Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.29 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.28 2008/01/20 07:58:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.29 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ nsphyterattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
 	else

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.11 2007/10/19 12:00:14 ad Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.12 2008/04/08 20:08:49 cegger Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.11 2007/10/19 12:00:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.12 2008/04/08 20:08:49 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -146,8 +146,8 @@ atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(lsc->sc_iot, sc->sc_iobase, IO_LPTSIZE, 0,
 		&lsc->sc_ioh) != 0) {
-		printf("%s: attempt to map bus space failed, device not "
-			"properly attached.\n", self->dv_xname);
+		aprint_error_dev(self, "attempt to map bus space failed, device not "
+			"properly attached.\n");
 		lsc->sc_dev_ok = ATPPC_NOATTACH;
 		return;
 	}

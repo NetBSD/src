@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isapnp.c,v 1.15 2007/10/19 12:00:30 ad Exp $	*/
+/*	$NetBSD: aic_isapnp.c,v 1.16 2008/04/08 20:09:27 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.15 2007/10/19 12:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isapnp.c,v 1.16 2008/04/08 20:09:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,7 @@ aic_isapnp_attach(struct device *parent, struct device *self,
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
@@ -102,7 +101,7 @@ aic_isapnp_attach(struct device *parent, struct device *self,
 	sc->sc_ioh = ipa->ipa_io[0].h;
 
 	if (!aic_find(sc->sc_iot, sc->sc_ioh)) {
-		printf("%s: couldn't find device\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't find device\n");
 		return;
 	}
 
@@ -112,6 +111,5 @@ aic_isapnp_attach(struct device *parent, struct device *self,
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_BIO, aicintr, sc);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 }

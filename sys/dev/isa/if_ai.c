@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.26 2007/10/19 12:00:17 ad Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.27 2008/04/08 20:08:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.26 2007/10/19 12:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.27 2008/04/08 20:08:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ ai_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
 			  ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
-			 sc->sc_dev.dv_xname,
+			 device_xname(&sc->sc_dev),
 		         ia->ia_io[0].ir_addr, ia->ia_io[0].ir_addr +
 		         ia->ia_io[0].ir_size - 1));
 		return;
@@ -349,7 +349,7 @@ ai_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
 			  ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
-			 sc->sc_dev.dv_xname,
+			 device_xname(&sc->sc_dev),
 			 ia->ia_iomem[0].ir_addr, ia->ia_iomem[0].ir_addr +
 			 ia->ia_iomem[0].ir_size - 1));
 		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
@@ -410,7 +410,7 @@ ai_attach(struct device *parent, struct device *self, void *aux)
 			  BUS_SPACE_BARRIER_WRITE);
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: can't talk to i82586!\n",
-			sc->sc_dev.dv_xname));
+			device_xname(&sc->sc_dev)));
 		bus_space_unmap(ia->ia_iot, ioh, ia->ia_io[0].ir_size);
 		bus_space_unmap(ia->ia_memt, memh, ia->ia_iomem[0].ir_size);
 		return;
@@ -428,7 +428,7 @@ ai_attach(struct device *parent, struct device *self, void *aux)
 	    IST_EDGE, IPL_NET, i82586_intr, sc);
 	if (asc->sc_ih == NULL) {
 		DPRINTF(("\n%s: can't establish interrupt\n",
-			sc->sc_dev.dv_xname));
+			device_xname(&sc->sc_dev)));
 	}
 }
 

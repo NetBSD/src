@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.27 2007/10/19 12:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.28 2008/04/08 20:09:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -187,7 +187,7 @@ isic_isapnp_probe(struct device *parent,
 #define	TERMFMT	" "
 #else
 #define	ISIC_FMT	"%s: "
-#define	ISIC_PARM	sc->sc_dev.dv_xname
+#define	ISIC_PARM	device_xname(&sc->sc_dev)
 #define	TERMFMT	"\n"
 #endif
 
@@ -219,8 +219,7 @@ isic_isapnp_attach(struct device *parent,
 	int i;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
@@ -241,8 +240,7 @@ isic_isapnp_attach(struct device *parent,
 	/* establish interrupt handler */
 	if (isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num, ipa->ipa_irq[0].type,
 		IPL_NET, isicintr, sc) == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 
 	/* init card */
 	desc->attach(sc);

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isapnp.c,v 1.7 2007/10/19 12:00:30 ad Exp $ */
+/* $NetBSD: atppc_isapnp.c,v 1.8 2008/04/08 20:09:27 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.7 2007/10/19 12:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.8 2008/04/08 20:09:27 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -109,8 +109,7 @@ atppc_isapnp_attach(struct device *parent, struct device *self, void *aux)
 	printf(": AT Parallel Port\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.10 2007/10/19 12:00:17 ad Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.11 2008/04/08 20:08:50 cegger Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.10 2007/10/19 12:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.11 2008/04/08 20:08:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,7 @@ fmv_isa_attach(struct device *parent, struct device *self,
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, FMV_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -285,6 +285,5 @@ fmv_isa_attach(struct device *parent, struct device *self,
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, mb86960_intr, sc);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 }

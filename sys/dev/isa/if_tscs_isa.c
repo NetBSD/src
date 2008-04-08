@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tscs_isa.c,v 1.5 2007/10/19 12:00:18 ad Exp $	*/
+/*	$NetBSD: if_tscs_isa.c,v 1.6 2008/04/08 20:08:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.5 2007/10/19 12:00:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tscs_isa.c,v 1.6 2008/04/08 20:08:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,15 +200,14 @@ tscs_isa_attach(parent, self, aux)
 	 */
 	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, CS8900_IOSIZE,
 	    0, &sc->sc_ioh)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map i/o space\n");
 		return;
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_NET, cs_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt\n");
 		return;
 	}
 

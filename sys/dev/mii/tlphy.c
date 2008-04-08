@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.53 2007/12/29 19:34:56 dyoung Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.54 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.53 2007/12/29 19:34:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.54 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 #define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
-	aprint_normal("%s: ", sc->sc_mii.mii_dev.dv_xname);
+	aprint_normal_dev(&sc->sc_mii.mii_dev, "");
 	if (sc->sc_tlphycap) {
 		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
@@ -328,7 +328,7 @@ tlphy_status(struct mii_softc *physc)
 			mii->mii_media_active |= IFM_10_5;
 		else
 			printf("%s: AUI selected with no matching media !\n",
-			    sc->sc_mii.mii_dev.dv_xname);
+			    device_xname(&sc->sc_mii.mii_dev));
 		mii->mii_media_status |= IFM_ACTIVE;
 		return;
 	}

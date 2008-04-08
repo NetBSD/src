@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.5 2007/12/29 19:34:55 dyoung Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.6 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -64,7 +64,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.5 2007/12/29 19:34:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.6 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ ikphyattach(struct device *parent, struct device *self, void *aux)
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 	    sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");

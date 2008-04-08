@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.7 2007/09/05 15:24:07 xtraeme Exp $ */
+/* $NetBSD: onewire.c,v 1.8 2008/04/08 20:14:02 cegger Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.7 2007/09/05 15:24:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.8 2008/04/08 20:14:02 cegger Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -105,9 +105,8 @@ onewire_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	if (kthread_create(PRI_NONE, 0, NULL, onewire_thread, sc,
-	    &sc->sc_thread, "%s", sc->sc_dev.dv_xname) != 0)
-		aprint_error("%s: can't create kernel thread\n",
-		    sc->sc_dev.dv_xname);
+	    &sc->sc_thread, "%s", device_xname(&sc->sc_dev)) != 0)
+		aprint_error_dev(&sc->sc_dev, "can't create kernel thread\n");
 }
 
 int
@@ -343,7 +342,7 @@ onewire_scan(struct onewire_softc *sc)
 		onewire_lock(sc);
 		if (onewire_reset(sc) != 0) {
 			DPRINTF(("%s: scan: no presence pulse\n",
-			    sc->sc_dev.dv_xname));
+			    device_xname(&sc->sc_dev)));
 			onewire_unlock(sc);
 			break;
 		}
@@ -383,7 +382,7 @@ onewire_scan(struct onewire_softc *sc)
 			default:
 				DPRINTF(("%s: scan: triplet error 0x%x, "
 				    "step %d\n",
-				    sc->sc_dev.dv_xname, rv, i));
+				    device_xname(&sc->sc_dev), rv, i));
 				onewire_unlock(sc);
 				return;
 			}
