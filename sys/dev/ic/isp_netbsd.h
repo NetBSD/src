@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.64 2008/03/11 05:33:30 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.65 2008/04/08 12:07:26 cegger Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -324,7 +324,6 @@ default:							\
 /*
  * isp_osinfo definitions, extensions and shorthand.
  */
-#define	isp_name	isp_osinfo.dev.dv_xname
 #define	isp_unit	isp_osinfo.dev.dv_unit
 
 

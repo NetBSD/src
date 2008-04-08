@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.3 2008/03/26 19:14:24 tnn Exp $ */
+/*	$NetBSD: pcf8584.c,v 1.4 2008/04/08 12:07:27 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8584.c,v 1.3 2008/03/26 19:14:24 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8584.c,v 1.4 2008/04/08 12:07:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -173,7 +173,7 @@ pcf8584_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	CSR_W(PCF8584_CMD_START);
 	pcf8584_wait(ha, flags);
 	if (!PENDING()) {
-		printf("%s: no intr after i2c sla\n", ha->ha_parent->dv_xname);
+		printf("%s: no intr after i2c sla\n", device_xname(ha->ha_parent));
 	}
 	if (NAK())
 		goto fail;

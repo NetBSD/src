@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.15 2007/10/19 11:59:55 ad Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.16 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.15 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.16 2008/04/08 12:07:26 cegger Exp $");
 
 #include "rnd.h"
 
@@ -242,10 +242,10 @@ ld_mlx_handler(struct mlx_ccb *mc)
 
 		if (mc->mc_status == MLX_STATUS_RDWROFFLINE)
 			printf("%s: drive offline\n",
-			    sc->sc_ld.sc_dv.dv_xname);
+			    device_xname(&sc->sc_ld.sc_dv));
 		else
 			printf("%s: I/O error - %s\n",
-			    sc->sc_ld.sc_dv.dv_xname,
+			    device_xname(&sc->sc_ld.sc_dv),
 			    mlx_ccb_diagnose(mc));
 	} else
 		bp->b_resid = 0;

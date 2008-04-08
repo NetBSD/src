@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.36 2007/10/19 11:59:53 ad Exp $ */
+/*	$NetBSD: iha.c,v 1.37 2008/04/08 12:07:26 cegger Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.36 2007/10/19 11:59:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.37 2008/04/08 12:07:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -717,8 +717,8 @@ iha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 
 			if (error) {
-				printf("%s: error %d loading DMA map\n",
-				    sc->sc_dev.dv_xname, error);
+				aprint_error_dev(&sc->sc_dev, "error %d loading DMA map\n",
+				    error);
 				iha_append_free_scb(sc, scb);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
@@ -1241,8 +1241,7 @@ iha_done_scb(struct iha_softc *sc, struct iha_scb *scb)
 				if ((scb->flags & FLAG_RSENS) != 0 ||
 				    iha_push_sense_request(sc, scb) != 0) {
 					scb->flags &= ~FLAG_RSENS;
-					printf("%s: request sense failed\n",
-					    sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "request sense failed\n");
 					xs->error = XS_DRIVER_STUFFUP;
 					break;
 				}
@@ -1267,7 +1266,7 @@ iha_done_scb(struct iha_softc *sc, struct iha_scb *scb)
 
 		case HOST_SPERR:
 			printf("%s: SCSI Parity error detected\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
@@ -2622,7 +2621,7 @@ iha_read_eeprom(struct iha_softc *sc, struct iha_eeprom *eeprom)
 
 	/* Read EEProm */
 	if (iha_se2_rd_all(sc, tbuf) == 0)
-		panic("%s: cannot read EEPROM", sc->sc_dev.dv_xname);
+		panic("%s: cannot read EEPROM", device_xname(&sc->sc_dev));
 
 	/* Disable EEProm programming */
 	gctrl = bus_space_read_1(iot, ioh, TUL_GCTRL0) & ~EEPRG;

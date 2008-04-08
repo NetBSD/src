@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.77 2007/10/19 11:59:48 ad Exp $	*/
+/*	$NetBSD: awi.c,v 1.78 2008/04/08 12:07:25 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.77 2007/10/19 11:59:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.78 2008/04/08 12:07:25 cegger Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/awi/awi.c,v 1.30 2004/01/15 13:30:06 onoe Exp $");
@@ -287,7 +287,7 @@ awi_attach(struct awi_softc *sc)
 	ifp->if_init = awi_init;
 	ifp->if_stop = awi_stop;
 	IFQ_SET_READY(&ifp->if_snd);
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 #endif
 #ifdef __FreeBSD__
 	ifp->if_init = awi_init0;

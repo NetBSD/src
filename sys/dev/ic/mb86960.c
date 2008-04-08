@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.68 2007/10/19 11:59:56 ad Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.69 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.68 2007/10/19 11:59:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.69 2008/04/08 12:07:26 cegger Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -167,7 +167,7 @@ mb86960_attach(struct mb86960_softc *sc, uint8_t *myea)
 #ifdef DIAGNOSTIC
 	if (myea == NULL) {
 		printf("%s: ethernet address shouldn't be NULL\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		panic("NULL ethernet address");
 	}
 #endif
@@ -192,7 +192,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 	mb86960_stop(sc);
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = mb86960_start;
 	ifp->if_ioctl = mb86960_ioctl;
@@ -202,7 +202,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 	IFQ_SET_READY(&ifp->if_snd);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: mb86960_config()\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: mb86960_config()\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -231,7 +231,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 		/* Oops, we can't work with single buffer configuration. */
 #if FE_DEBUG >= 2
 		log(LOG_WARNING, "%s: strange TXBSIZ config; fixing\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #endif
 		sc->proto_dlcr6 &= ~FE_D6_TXBSIZ;
 		sc->proto_dlcr6 |=  FE_D6_TXBSIZ_2x2KB;
@@ -256,11 +256,11 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
 	/* Print additional info when attached. */
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
 	    ether_sprintf(sc->sc_enaddr));
 
 #if FE_DEBUG >= 3
@@ -318,7 +318,7 @@ mb86960_config(struct mb86960_softc *sc, int *media, int nmedia, int defmedia)
 			break;
 		}
 		printf("%s: SRAM %dKB %dbit %dns, TXB %dKBx2, %dbit I/O\n",
-		    sc->sc_dev.dv_xname, buf, bbw, ram, txb, sbw);
+		    device_xname(&sc->sc_dev), buf, bbw, ram, txb, sbw);
 	}
 #endif
 
@@ -384,7 +384,7 @@ mb86960_stop(struct mb86960_softc *sc)
 	bus_space_handle_t bsh = sc->sc_bsh;
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: top of mb86960_stop()\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: top of mb86960_stop()\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -416,7 +416,7 @@ mb86960_stop(struct mb86960_softc *sc)
 		(*sc->stop_card)(sc);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: end of mb86960_stop()\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: end of mb86960_stop()\n", sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 }
@@ -430,7 +430,7 @@ mb86960_watchdog(struct ifnet *ifp)
 {
 	struct mb86960_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 #if FE_DEBUG >= 3
 	mb86960_dump(LOG_INFO, sc);
 #endif
@@ -465,7 +465,7 @@ mb86960_init(struct mb86960_softc *sc)
 	int i;
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: top of mb86960_init()\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: top of mb86960_init()\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -482,7 +482,7 @@ mb86960_init(struct mb86960_softc *sc)
 		(*sc->init_card)(sc);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: after init hook\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: after init hook\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -523,7 +523,7 @@ mb86960_init(struct mb86960_softc *sc)
 	bus_space_write_1(bst, bsh, FE_BMPR15, 0x00);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: just before enabling DLC\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: just before enabling DLC\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -538,7 +538,7 @@ mb86960_init(struct mb86960_softc *sc)
 	delay(200);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: just after enabling DLC\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: just after enabling DLC\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -563,16 +563,16 @@ mb86960_init(struct mb86960_softc *sc)
 #if FE_DEBUG >= 1
 	if (i >= FE_MAX_RECV_COUNT)
 		log(LOG_ERR, "%s: cannot empty receive buffer\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #endif
 #if FE_DEBUG >= 3
 	if (i < FE_MAX_RECV_COUNT)
 		log(LOG_INFO, "%s: receive buffer emptied (%d)\n",
-		    sc->sc_dev.dv_xname, i);
+		    device_xname(&sc->sc_dev), i);
 #endif
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: after ERB loop\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: after ERB loop\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -581,7 +581,7 @@ mb86960_init(struct mb86960_softc *sc)
 	bus_space_write_1(bst, bsh, FE_DLCR1, 0xFF);	/* ditto. */
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: after FIXME\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: after FIXME\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -598,7 +598,7 @@ mb86960_init(struct mb86960_softc *sc)
 	mb86960_setmode(sc);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: after setmode\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: after setmode\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -606,7 +606,7 @@ mb86960_init(struct mb86960_softc *sc)
 	mb86960_start(ifp);
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: end of mb86960_init()\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: end of mb86960_init()\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 }
@@ -668,7 +668,7 @@ mb86960_start(struct ifnet *ifp)
 		 * as txb_size (which represents whole buffer.)
 		 */
 		log(LOG_ERR, "%s: inconsistent txb variables (%d, %d)\n",
-		    sc->sc_dev.dv_xname, sc->txb_count, sc->txb_free);
+		    device_xname(&sc->sc_dev), sc->txb_count, sc->txb_free);
 		/*
 		 * So, what should I do, then?
 		 *
@@ -695,7 +695,7 @@ mb86960_start(struct ifnet *ifp)
 	 */
 	if ((sc->txb_count > 0) && (sc->txb_sched == 0)) {
 		log(LOG_ERR, "%s: transmitter idle with %d buffered packets\n",
-		    sc->sc_dev.dv_xname, sc->txb_count);
+		    device_xname(&sc->sc_dev), sc->txb_count);
 		mb86960_xmit(sc);
 	}
 #endif
@@ -819,7 +819,7 @@ mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 
 #if FE_DEBUG >= 2
 		log(LOG_WARNING, "%s: excessive collision (%d/%d)\n",
-		    sc->sc_dev.dv_xname, left, sc->txb_sched);
+		    device_xname(&sc->sc_dev), left, sc->txb_sched);
 #endif
 #if FE_DEBUG >= 3
 		mb86960_dump(LOG_INFO, sc);
@@ -902,7 +902,7 @@ mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 			ifp->if_collisions += col;
 #if FE_DEBUG >= 4
 			log(LOG_WARNING, "%s: %d collision%s (%d)\n",
-			    sc->sc_dev.dv_xname, col, col == 1 ? "" : "s",
+			    device_xname(&sc->sc_dev), col, col == 1 ? "" : "s",
 			    sc->txb_sched);
 #endif
 		}
@@ -956,7 +956,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 
 		bitmask_snprintf(rstat, FE_D1_ERRBITS, sbuf, sizeof(sbuf));
 		log(LOG_WARNING, "%s: receive error: %s\n",
-		    sc->sc_dev.dv_xname, sbuf);
+		    device_xname(&sc->sc_dev), sbuf);
 #endif
 		ifp->if_ierrors++;
 	}
@@ -988,7 +988,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 
 #if FE_DEBUG >= 4
 		log(LOG_INFO, "%s: receive status = %02x\n",
-		    sc->sc_dev.dv_xname, status);
+		    device_xname(&sc->sc_dev), status);
 #endif
 
 		/*
@@ -1029,7 +1029,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 #if FE_DEBUG >= 2
 			log(LOG_WARNING,
 			    "%s: received a %s packet? (%u bytes)\n",
-			    sc->sc_dev.dv_xname,
+			    device_xname(&sc->sc_dev),
 			    len < ETHER_HDR_LEN ? "partial" : "big", len);
 #endif
 			ifp->if_ierrors++;
@@ -1047,7 +1047,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN)) {
 			log(LOG_WARNING,
 			    "%s: received a short packet? (%u bytes)\n",
-			    sc->sc_dev.dv_xname, len);
+			    device_xname(&sc->sc_dev), len);
 		}
 #endif
 
@@ -1059,7 +1059,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 #if FE_DEBUG >= 2
 			log(LOG_WARNING,
 			    "%s: out of mbufs; dropping packet (%u bytes)\n",
-			    sc->sc_dev.dv_xname, len);
+			    device_xname(&sc->sc_dev), len);
 #endif
 			ifp->if_ierrors++;
 			mb86960_droppacket(sc);
@@ -1094,7 +1094,7 @@ mb86960_intr(void *arg)
 		return (0);
 
 #if FE_DEBUG >= 4
-	log(LOG_INFO, "%s: mb86960_intr()\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: mb86960_intr()\n", device_xname(&sc->sc_dev));
 	mb86960_dump(LOG_INFO, sc);
 #endif
 
@@ -1179,7 +1179,7 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error = 0;
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: ioctl(%lx)\n", sc->sc_dev.dv_xname, cmd);
+	log(LOG_INFO, "%s: ioctl(%lx)\n", device_xname(&sc->sc_dev), cmd);
 #endif
 
 	s = splnet();
@@ -1233,7 +1233,7 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		/* "ifconfig fe0 debug" to print register dump. */
 		if (ifp->if_flags & IFF_DEBUG) {
 			log(LOG_INFO, "%s: SIOCSIFFLAGS(DEBUG)\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			mb86960_dump(LOG_DEBUG, sc);
 		}
 #endif
@@ -1398,7 +1398,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 	/* Check if this matches the one in the packet header. */
 	if (totlen != m->m_pkthdr.len)
 		log(LOG_WARNING, "%s: packet length mismatch? (%d/%d)\n",
-		    sc->sc_dev.dv_xname, totlen, m->m_pkthdr.len);
+		    device_xname(&sc->sc_dev), totlen, m->m_pkthdr.len);
 #else
 	/* Just use the length value in the packet header. */
 	totlen = m->m_pkthdr.len;
@@ -1413,7 +1413,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 	if (totlen > (ETHER_MAX_LEN - ETHER_CRC_LEN) ||
 	    totlen < ETHER_HDR_LEN) {
 		log(LOG_ERR, "%s: got a %s packet (%u bytes) to send\n",
-		    sc->sc_dev.dv_xname,
+		    device_xname(&sc->sc_dev),
 		    totlen < ETHER_HDR_LEN ? "partial" : "big", totlen);
 		sc->sc_ec.ec_if.if_oerrors++;
 		return;
@@ -1646,7 +1646,7 @@ mb86960_setmode(struct mb86960_softc *sc)
 		sc->filter_change = 0;
 
 #if FE_DEBUG >= 3
-		log(LOG_INFO, "%s: promiscuous mode\n", sc->sc_dev.dv_xname);
+		log(LOG_INFO, "%s: promiscuous mode\n", device_xname(&sc->sc_dev));
 #endif
 		return;
 	}
@@ -1665,7 +1665,7 @@ mb86960_setmode(struct mb86960_softc *sc)
 #if FE_DEBUG >= 3
 	log(LOG_INFO,
 	    "%s: address filter: [%02x %02x %02x %02x %02x %02x %02x %02x]\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(&sc->sc_dev),
 	    sc->filter[0], sc->filter[1], sc->filter[2], sc->filter[3],
 	    sc->filter[4], sc->filter[5], sc->filter[6], sc->filter[7]);
 #endif
@@ -1699,7 +1699,7 @@ mb86960_setmode(struct mb86960_softc *sc)
 		 */
 #if FE_DEBUG >= 4
 		log(LOG_INFO, "%s: filter change delayed\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #endif
 	}
 }
@@ -1741,7 +1741,7 @@ mb86960_loadmar(struct mb86960_softc *sc)
 	sc->filter_change = 0;
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: address filter changed\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: address filter changed\n", device_xname(&sc->sc_dev));
 #endif
 }
 
@@ -1753,13 +1753,12 @@ mb86960_enable(struct mb86960_softc *sc)
 {
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: mb86960_enable()\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: mb86960_enable()\n", device_xname(&sc->sc_dev));
 #endif
 
 	if ((sc->sc_stat & FE_STAT_ENABLED) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
-			printf("%s: device enable failed\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "device enable failed\n");
 			return (EIO);
 		}
 	}
@@ -1776,7 +1775,7 @@ mb86960_disable(struct mb86960_softc *sc)
 {
 
 #if FE_DEBUG >= 3
-	log(LOG_INFO, "%s: mb86960_disable()\n", sc->sc_dev.dv_xname);
+	log(LOG_INFO, "%s: mb86960_disable()\n", device_xname(&sc->sc_dev));
 #endif
 
 	if ((sc->sc_stat & FE_STAT_ENABLED) != 0 && sc->sc_disable != NULL) {
