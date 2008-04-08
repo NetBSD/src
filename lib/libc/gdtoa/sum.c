@@ -1,4 +1,4 @@
-/* $NetBSD: sum.c,v 1.1.1.1 2006/01/25 15:18:55 kleink Exp $ */
+/* $NetBSD: sum.c,v 1.1.1.1.14.1 2008/04/08 21:10:55 jdc Exp $ */
 
 /****************************************************************
 
@@ -50,6 +50,8 @@ sum(Bigint *a, Bigint *b)
 		c = b; b = a; a = c;
 		}
 	c = Balloc(a->k);
+	if (c == NULL)
+		return NULL;
 	c->wds = a->wds;
 	carry = 0;
 	xa = a->x;
@@ -90,6 +92,8 @@ sum(Bigint *a, Bigint *b)
 	if (carry) {
 		if (c->wds == c->maxwds) {
 			b = Balloc(c->k + 1);
+			if (b == NULL)
+				return NULL;
 			Bcopy(b, c);
 			Bfree(c);
 			c = b;
