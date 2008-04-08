@@ -1,4 +1,4 @@
-/* $NetBSD: strtord.c,v 1.3 2006/03/11 18:38:14 kleink Exp $ */
+/* $NetBSD: strtord.c,v 1.3.4.1 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -93,6 +93,8 @@ strtord(CONST char *s, char **sp, int rounding, double *d)
 		fpi = &fpi1;
 		}
 	k = strtodg(s, sp, fpi, &expt, bits);
+	if (k == STRTOG_NoMemory)
+		return k; 
 	ULtod((/* LINTED */(U*)d)->L, bits, expt, k);
 	return k;
 	}

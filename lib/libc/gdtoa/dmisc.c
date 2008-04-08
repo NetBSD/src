@@ -1,4 +1,4 @@
-/* $NetBSD: dmisc.c,v 1.2.4.1 2007/05/07 19:49:07 pavel Exp $ */
+/* $NetBSD: dmisc.c,v 1.2.4.2 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -53,6 +53,8 @@ rv_alloc(size_t i)
 		j <<= 1)
 			k++;
 	r = (int*)(void*)Balloc(k);
+	if (r == NULL)
+		return NULL;
 	*r = k;
 	return
 #ifndef MULTIPLE_THREADS
@@ -71,6 +73,8 @@ nrv_alloc(CONST char *s, char **rve, size_t n)
 	char *rv, *t;
 
 	t = rv = rv_alloc(n);
+	if (t == NULL)
+		return NULL;
 	while((*t = *s++) !=0)
 		t++;
 	if (rve)
