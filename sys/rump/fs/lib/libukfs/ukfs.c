@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.24 2008/03/13 14:24:30 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.25 2008/04/08 08:25:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -274,7 +274,7 @@ ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
 	int fd, rv = 0, dummy;
-	ssize_t xfer;
+	ssize_t xfer = -1; /* XXXgcc */
 
 	precall(ukfs);
 	fd = rump_sys_open(filename, O_RDONLY, 0, &rv);
@@ -298,7 +298,7 @@ ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
 	int fd, rv = 0, dummy;
-	ssize_t xfer;
+	ssize_t xfer = -1; /* XXXgcc */
 
 	precall(ukfs);
 	fd = rump_sys_open(filename, O_WRONLY, 0, &rv);
