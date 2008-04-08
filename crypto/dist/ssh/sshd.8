@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.34 2005/02/13 05:57:27 christos Exp $
+.\"	$NetBSD: sshd.8,v 1.34.4.1 2008/04/08 21:48:26 jdc Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -486,6 +486,9 @@ Forbids authentication agent forwarding when this key is used for
 authentication.
 .It Cm no-pty
 Prevents tty allocation (a request to allocate a pty will fail).
+.It Cm no-user-rc
+Disables execution of
+.Pa ~/.ssh/rc .
 .It Cm permitopen="host:port"
 Limit local
 .Li ``ssh -L''
