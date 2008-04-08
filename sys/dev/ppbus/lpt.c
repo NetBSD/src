@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.22 2008/02/27 12:52:36 tsutsui Exp $ */
+/* $NetBSD: lpt.c,v 1.23 2008/04/08 07:35:35 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.22 2008/02/27 12:52:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.23 2008/04/08 07:35:35 cegger Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -143,8 +143,8 @@ lpt_attach(device_t parent, device_t self, void *aux)
 	error = lpt_request_ppbus(sc, 0);
 	if(error) {
 		printf("%s(%s): error (%d) requesting bus(%s). Device not "
-			"properly attached.\n", __func__, self->dv_xname,
-			error, parent->dv_xname);
+			"properly attached.\n", __func__, device_xname(self),
+			error, device_xname(parent));
 		return;
 	}
 
@@ -197,7 +197,7 @@ lpt_detach(device_t self, int flags)
 		err = lpt_release_ppbus(lpt, 0);
 		if(err) {
 			printf("%s error (%d) while releasing bus",
-				self->dv_xname, err);
+				device_xname(self), err);
 			if(flags & DETACH_FORCE) {
 				printf(", continuing (DETACH_FORCE)!\n");
 			}
@@ -238,7 +238,7 @@ lpt_request_ppbus(struct lpt_softc * lpt, int how)
 	}
 	else {
 		LPT_DPRINTF(("%s(%s): error %d requesting bus.\n", __func__,
-			dev->dv_xname, error));
+			device_xname(dev), error));
 	}
 
 	return error;
@@ -257,12 +257,12 @@ lpt_release_ppbus(struct lpt_softc * lpt, int how)
 			lpt->sc_state &= ~HAVEBUS;
 		else
 			LPT_DPRINTF(("%s(%s): error releasing bus.\n", __func__,
-				dev->dv_xname));
+				device_xname(dev)));
 	}
 	else {
 		error = EINVAL;
 		LPT_DPRINTF(("%s(%s): device does not own bus.\n", __func__,
-			dev->dv_xname));
+			device_xname(dev)));
 	}
 
 	return error;
@@ -344,7 +344,7 @@ lpt_detect(device_t dev)
 			status = 0;
 			LPT_DPRINTF(("%s(%s): byte value %x cannot be written "
 				"and read from data port (got %x instead).\n",
-				__func__, dev->dv_xname, testbyte[i], var));
+				__func__, device_xname(dev), testbyte[i], var));
 			goto end;
 		}
 	}
@@ -358,7 +358,7 @@ lpt_detect(device_t dev)
 			LPT_DPRINTF(("%s(%s): byte value %x (unmasked value "
 				"%x) cannot be written and read from control "
 				"port (got %x instead).\n", __func__,
-				dev->dv_xname, (testbyte[i] & 0x14),
+				device_xname(dev), (testbyte[i] & 0x14),
 				testbyte[i], (var & 0x14)));
 			break;
 		}
@@ -381,20 +381,20 @@ lpt_logstatus(const device_t dev, const unsigned char status)
 
 	err = EIO;
 	if(!(status & LPS_SEL)) {
-		log(LOG_ERR, "%s: offline.", dev->dv_xname);
+		log(LOG_ERR, "%s: offline.", device_xname(dev));
 	}
 	else if(!(status & LPS_NBSY)) {
-		log(LOG_ERR, "%s: busy.", dev->dv_xname);
+		log(LOG_ERR, "%s: busy.", device_xname(dev));
 	}
 	else if(status & LPS_OUT) {
-		log(LOG_ERR, "%s: out of paper.", dev->dv_xname);
+		log(LOG_ERR, "%s: out of paper.", device_xname(dev));
 		err = EAGAIN;
 	}
 	else if(!(status & LPS_NERR)) {
-		log(LOG_ERR, "%s: output error.", dev->dv_xname);
+		log(LOG_ERR, "%s: output error.", device_xname(dev));
 	}
 	else {
-		log(LOG_ERR, "%s: no error indication.", dev->dv_xname);
+		log(LOG_ERR, "%s: no error indication.", device_xname(dev));
 		err = 0;
 	}
 
@@ -429,7 +429,7 @@ lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 	err = lpt_request_ppbus(lpt, PPBUS_WAIT|PPBUS_INTR);
 	if(err) {
 		LPT_DPRINTF(("%s(%s): error (%d) while requesting bus.\n",
-			__func__, dev->dv_xname, err));
+			__func__, device_xname(dev), err));
 		return (err);
 	}
 
@@ -439,7 +439,7 @@ lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 	/* init printer */
 	if ((lpt->sc_flags & LPT_PRIME) && !LPTCTL(dev_id)) {
 		LPT_VPRINTF(("%s(%s): initializing printer.\n", __func__,
-			dev->dv_xname));
+			device_xname(dev)));
 		lpt->sc_state |= LPTINIT;
 		ppbus_wctr(ppbus, LPC_SEL | LPC_NINIT);
 
@@ -459,7 +459,7 @@ lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 					lpt->sc_state &= ~LPTINIT;
 					LPT_DPRINTF(("%s(%s): interrupted "
 					"during initialization.\n", __func__,
-					dev->dv_xname));
+					device_xname(dev)));
 					lpt_release_ppbus(lpt, PPBUS_WAIT);
 					return (err);
 				}
@@ -470,14 +470,14 @@ lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 		if(trys >= LPT_TIMEOUT) {
 			LPT_DPRINTF(("%s(%s): timed out while initializing "
 				"printer. [status %x]\n", __func__,
-				dev->dv_xname, status));
+				device_xname(dev), status));
 			err = lpt_logstatus(dev, status);
 			lpt_release_ppbus(lpt, PPBUS_WAIT);
 			return (err);
 		}
 		else
 			LPT_VPRINTF(("%s(%s): printer ready.\n", __func__,
-				dev->dv_xname));
+				device_xname(dev)));
 	}
 
 	/* Set autolinefeed if requested */
@@ -507,7 +507,7 @@ lptclose(dev_t dev_id, int flags, int fmt, struct lwp *l)
 	err = lpt_release_ppbus(sc, PPBUS_WAIT|PPBUS_INTR);
 	if(err) {
 		LPT_DPRINTF(("%s(%s): error (%d) while releasing ppbus.\n",
-			__func__, dev->dv_xname, err));
+			__func__, device_xname(dev), err));
 	}
 
 	sc->sc_state = 0;
@@ -528,8 +528,8 @@ lptread(dev_t dev_id, struct uio *uio, int ioflag)
 
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to read using device which does "
-			"not own the bus(%s).\n", __func__, dev->dv_xname,
-			device_parent(dev)->dv_xname));
+			"not own the bus(%s).\n", __func__, device_xname(dev),
+			device_xname(device_parent(dev))));
 		return (ENODEV);
 	}
 
@@ -571,13 +571,13 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 	/* Check state and flags */
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to write using device which does "
-			"not own the bus(%s).\n", __func__, dev->dv_xname,
-			device_parent(dev)->dv_xname));
+			"not own the bus(%s).\n", __func__, device_xname(dev),
+			device_xname(device_parent(dev))));
 		return EINVAL;
 	}
 
 	LPT_VPRINTF(("%s(%s): writing %d bytes\n", __func__,
-	    dev->dv_xname, uio->uio_resid));
+	    device_xname(dev), uio->uio_resid));
 
 	/* Write the data */
 	sc->sc_state &= ~INTERRUPTED;
@@ -597,7 +597,7 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 	}
 
 	LPT_VPRINTF(("%s(%s): transfer finished, error %d.\n", __func__,
-	    dev->dv_xname, error));
+	    device_xname(dev), error));
 
 	return error;
 }
@@ -613,8 +613,8 @@ lptioctl(dev_t dev_id, u_long cmd, void *data, int flags, struct lwp *l)
 
 	if(!(sc->sc_state & HAVEBUS)) {
 		LPT_DPRINTF(("%s(%s): attempt to perform ioctl on device which "
-			"does not own the bus(%s).\n", __func__, dev->dv_xname,
-			device_parent(dev)->dv_xname));
+			"does not own the bus(%s).\n", __func__, device_xname(dev),
+			device_xname(device_parent(dev))));
 		return EBUSY;
 	}
 

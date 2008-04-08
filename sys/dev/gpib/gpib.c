@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.10 2007/03/04 06:01:46 christos Exp $	*/
+/*	$NetBSD: gpib.c,v 1.11 2008/04/08 07:38:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.10 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.11 2008/04/08 07:38:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ _gpibswait(sc, slave)
 	pptest = sc->sc_ic->pptest;
 	while ((*pptest)(sc->sc_ic->cookie, slave) == 0) {
 		if (--timo == 0) {
-			printf("%s: swait timeout\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "swait timeout\n");
 			return(-1);
 		}
 	}
@@ -452,7 +452,7 @@ senderror:
 	(*sc->sc_ic->ifc)(sc->sc_ic->cookie);
 	DPRINTF(DBG_FAIL,
 	    ("%s: _gpibsend failed: slave %d, sec %x, sent %d of %d bytes\n",
-	    sc->sc_dev.dv_xname, slave, sec, cnt, origcnt));
+	    device_xname(&sc->sc_dev), slave, sec, cnt, origcnt));
 	return (cnt);
 }
 

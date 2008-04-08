@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.20 2008/03/29 15:59:03 tsutsui Exp $ */
+/* $NetBSD: mcclock.c,v 1.21 2008/04/08 07:39:11 cegger Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.20 2008/03/29 15:59:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21 2008/04/08 07:39:11 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -129,7 +129,7 @@ again:
 		break;
 	default:
 		printf("%s: Cannot get %d Hz clock; using %d Hz\n",
-		    sc->sc_dev.dv_xname, hz, MC_DEFAULTHZ);
+		    device_xname(&sc->sc_dev), hz, MC_DEFAULTHZ);
 		hz = MC_DEFAULTHZ;
 		goto again;
 	}

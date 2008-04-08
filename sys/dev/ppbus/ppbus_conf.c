@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.12 2007/12/05 07:58:31 ad Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.13 2008/04/08 07:35:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.12 2007/12/05 07:58:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.13 2008/04/08 07:35:35 cegger Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -92,7 +92,7 @@ ppbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 
 #ifdef PPBUS_DEBUG
 		printf("%s(%s): parport_adaptor is incomplete. Child device "
-			"probe failed.\n", __func__, parent->dv_xname);
+			"probe failed.\n", __func__, device_xname(parent));
 #endif
 		return 0;
 	} else {
@@ -146,9 +146,9 @@ ppbus_attach(struct device *parent, struct device *self, void *aux)
 #ifndef DONTPROBE_1284
 	/* detect IEEE1284 compliant devices */
 	if (ppbus_scan_bus(self)) {
-		printf("%s: No IEEE1284 device found.\n", self->dv_xname);
+		printf("%s: No IEEE1284 device found.\n", device_xname(self));
 	} else {
-		printf("%s: IEEE1284 device found.\n", self->dv_xname);
+		printf("%s: IEEE1284 device found.\n", device_xname(self));
 		/*
 		 * Detect device ID (interrupts must be disabled because we
 		 * cannot do a ltsleep() to wait for it - no context)
@@ -181,12 +181,12 @@ ppbus_detach(struct device *self, int flag)
 	if (ppbus->sc_dev_ok != PPBUS_OK) {
 		if (!(flag & DETACH_QUIET))
 			printf("%s: detach called on unattached device.\n",
-				ppbus->sc_dev.dv_xname);
+				device_xname(&ppbus->sc_dev));
 		if (!(flag & DETACH_FORCE))
 			return 0;
 		if (!(flag & DETACH_QUIET))
 			printf("%s: continuing detach (DETACH_FORCE).\n",
-				ppbus->sc_dev.dv_xname);
+				device_xname(&ppbus->sc_dev));
 	}
 
 	mutex_destroy(&(ppbus->sc_lock));
@@ -197,20 +197,19 @@ ppbus_detach(struct device *self, int flag)
 		config_deactivate((struct device *)child);
 		if (config_detach((struct device *)child, flag)) {
 			if(!(flag & DETACH_QUIET))
-				printf("%s: error detaching %s.",
-					ppbus->sc_dev.dv_xname,
-					child->sc_dev.dv_xname);
+				aprint_error_dev(&ppbus->sc_dev, "error detaching %s.",
+					device_xname(&child->sc_dev));
 			if(!(flag & DETACH_FORCE))
 				return 0;
 			if(!(flag & DETACH_QUIET))
 				printf("%s: continuing (DETACH_FORCE).\n",
-					ppbus->sc_dev.dv_xname);
+					device_xname(&ppbus->sc_dev));
 		}
 		SLIST_REMOVE_HEAD(&(ppbus->sc_childlist_head), entries);
 	}
 
 	if (!(flag & DETACH_QUIET))
-		printf("%s: detached.\n", ppbus->sc_dev.dv_xname);
+		printf("%s: detached.\n", device_xname(&ppbus->sc_dev));
 
 	return 1;
 }

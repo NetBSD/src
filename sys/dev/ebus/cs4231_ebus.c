@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.24 2007/12/03 15:34:32 ad Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.25 2008/04/08 07:39:11 cegger Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.24 2007/12/03 15:34:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.25 2008/04/08 07:39:11 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,7 +511,7 @@ cs4231_ebus_intr(void *arg)
 	if (cs4231_ebus_debug > 1)
 		cs4231_ebus_regdump("audiointr", ebsc);
 
-	DPRINTF(("%s: status: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
+	DPRINTF(("%s: status: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
 		 bitmask_snprintf(status, AD_R2_BITS, bits, sizeof(bits))));
 #endif
 
@@ -520,7 +520,7 @@ cs4231_ebus_intr(void *arg)
 		int reason;
 
 		reason = ad_read(&sc->sc_ad1848, CS_IRQ_STATUS);
-		DPRINTF(("%s: i24: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
+		DPRINTF(("%s: i24: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
 		  bitmask_snprintf(reason, CS_I24_BITS, bits, sizeof(bits))));
 #endif
 		/* clear interrupt from ad1848 */
