@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.19 2008/04/05 07:52:08 tsutsui Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.20 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.19 2008/04/05 07:52:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.20 2008/04/08 20:10:20 cegger Exp $");
 
 
 /*
@@ -149,7 +149,7 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 	 * FreeBSD does not check EXSTAT, but instead adds gigabit
 	 * media explicitly. Why?
 	 */
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if (sc->mii_capabilities & BMSR_EXTSTAT) {
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 	}

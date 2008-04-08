@@ -1,4 +1,4 @@
-/*	$NetBSD: pnaphy.c,v 1.17 2007/12/09 20:28:04 jmcneill Exp $	*/
+/*	$NetBSD: pnaphy.c,v 1.18 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.17 2007/12/09 20:28:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnaphy.c,v 1.18 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ pnaphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
 	else

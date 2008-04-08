@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.12 2007/11/16 08:00:15 xtraeme Exp $ */
+/*	$NetBSD: owtemp.c,v 1.13 2008/04/08 20:14:02 cegger Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.12 2007/11/16 08:00:15 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.13 2008/04/08 20:14:02 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,20 +107,19 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize sensor */
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	(void)strlcpy(sc->sc_sensor.desc,
-	    sc->sc_dev.dv_xname, sizeof(sc->sc_sensor.desc));
+	    device_xname(&sc->sc_dev), sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
 
 	/* Hook into system monitor. */
-	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = owtemp_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}

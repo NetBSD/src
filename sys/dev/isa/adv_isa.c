@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.14 2007/10/19 12:00:14 ad Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.15 2008/04/08 20:08:49 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.14 2007/10/19 12:00:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.15 2008/04/08 20:08:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ adv_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = 0x0;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ASC_IOADR_GAP, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -240,21 +240,19 @@ adv_isa_attach(struct device *parent, struct device *self, void *aux)
 	 * Initialize the board
 	 */
 	if (adv_init(sc)) {
-		printf("%s: adv_init failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "adv_init failed\n");
 		return;
 	}
 
 	if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
-		printf("%s: unable to cascade DRQ, error = %d\n",
-				sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to cascade DRQ, error = %d\n", error);
 		return;
 	}
 
 	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq[0].ir_irq, IST_EDGE,
 	    IPL_BIO, adv_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 

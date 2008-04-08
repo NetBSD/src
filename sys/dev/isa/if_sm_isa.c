@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.18 2007/10/19 12:00:18 ad Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.19 2008/04/08 20:08:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.18 2007/10/19 12:00:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_isa.c,v 1.19 2008/04/08 20:08:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,6 +188,5 @@ sm_isa_attach(struct device *parent, struct device *self, void *aux)
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, smc91cxx_intr, sc);
 	if (isc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 }
