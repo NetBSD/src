@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.19 2008/01/04 21:17:57 ad Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.20 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.19 2008/01/04 21:17:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.20 2008/04/08 12:07:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,7 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 #if defined(ICP_DEBUG) || defined(SCSIDEBUG)
 		if (xs->cmdlen > sizeof(rc->rc_cdb))
-			panic("%s: CDB too large", sc->sc_dv.dv_xname);
+			panic("%s: CDB too large", device_xname(&sc->sc_dv));
 #endif
 
 		/*
@@ -307,7 +307,7 @@ icpsp_intr(struct icp_ccb *ic)
 		case SCSI_OK:
 #ifdef DIAGNOSTIC
 			printf("%s: error return (%d), but SCSI_OK?\n",
-			    sc->sc_dv.dv_xname, icp->icp_info);
+			    device_xname(&sc->sc_dv), icp->icp_info);
 #endif
 			xs->resid = 0;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.10 2007/12/15 00:39:27 perry Exp $	*/
+/*	$NetBSD: ciss.c,v 1.11 2008/04/08 12:07:25 cegger Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.10 2007/12/15 00:39:27 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.11 2008/04/08 12:07:25 cegger Exp $");
 
 /* #define CISS_DEBUG */
 
@@ -318,7 +318,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	/* map LDs */
 	if (ciss_ldmap(sc)) {
-		printf("%s: adapter LD map failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "adapter LD map failed\n");
 		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
 		return -1;
@@ -336,7 +336,7 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 #if 0
-	if (kthread_create(ciss_kthread, sc, NULL, "%s", sc->sc_dev.dv_xname)) {
+	if (kthread_create(ciss_kthread, sc, NULL, "%s", device_xname(&sc->sc_dev))) {
 		printf(": unable to create kernel thread\n");
 		shutdownhook_disestablish(sc->sc_sh);
 		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
@@ -374,8 +374,7 @@ ciss_attach(struct ciss_softc *sc)
 
 #if NBIO1 > 0
 	if (bio_register(&sc->sc_dev, ciss_ioctl) != 0)
-		printf("%s: controller registration failed",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "controller registration failed");
 #endif
 
 	return 0;
@@ -419,7 +418,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 	int i, tohz, error = 0;
 
 	if (ccb->ccb_state != CISS_CCB_READY) {
-		printf("%s: ccb %d not ready state=0x%x\n", sc->sc_dev.dv_xname,
+		printf("%s: ccb %d not ready state=0x%x\n", device_xname(&sc->sc_dev),
 		    cmd->id, ccb->ccb_state);
 		return (EINVAL);
 	}
@@ -555,7 +554,7 @@ ciss_done(struct ciss_ccb *ccb)
 
 	if (ccb->ccb_state != CISS_CCB_ONQ) {
 		printf("%s: unqueued ccb %p ready, state=0x%x\n",
-		    sc->sc_dev.dv_xname, ccb, ccb->ccb_state);
+		    device_xname(&sc->sc_dev), ccb, ccb->ccb_state);
 		return 1;
 	}
 
@@ -602,7 +601,7 @@ ciss_error(struct ciss_ccb *ccb)
 
 	case CISS_ERR_INVCMD:
 		printf("%s: invalid cmd 0x%x: 0x%x is not valid @ 0x%x[%d]\n",
-		    sc->sc_dev.dv_xname, ccb->ccb_cmd.id,
+		    device_xname(&sc->sc_dev), ccb->ccb_cmd.id,
 		    err->err_info, err->err_type[3], err->err_type[2]);
 		if (xs) {
 			bzero(&xs->sense, sizeof(xs->sense));
@@ -644,7 +643,7 @@ ciss_error(struct ciss_ccb *ccb)
 			default:
 				CISS_DPRINTF(CISS_D_ERR, ("%s: "
 				    "cmd_stat=%x scsi_stat=0x%x resid=0x%x\n",
-				    sc->sc_dev.dv_xname, rv, err->scsi_stat,
+				    device_xname(&sc->sc_dev), rv, err->scsi_stat,
 				    le32toh(err->resid)));
 				printf("ciss driver stuffup in %s:%d: %s()\n",
 				       __FILE__, __LINE__, __func__);
@@ -983,7 +982,7 @@ ciss_kthread(void *v)
 	ciss_lock_t lock;
 
 	for (;;) {
-		tsleep(sc, PRIBIO, sc->sc_dev.dv_xname, 0);
+		tsleep(sc, PRIBIO, device_xname(&sc->sc_dev), 0);
 
 		lock = CISS_LOCK(sc);
 
@@ -1023,7 +1022,7 @@ ciss_ioctl(struct device *dev, u_long cmd, void *addr)	/* TODO */
 	case BIOCSETSTATE:
 	default:
 		CISS_DPRINTF(CISS_D_IOCTL, ("%s: invalid ioctl\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(&sc->sc_dev)));
 		error = ENOTTY;
 	}
 	CISS_UNLOCK(sc, lock);

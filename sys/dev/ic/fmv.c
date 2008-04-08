@@ -1,4 +1,4 @@
-/*	$NetBSD: fmv.c,v 1.8 2007/10/19 11:59:51 ad Exp $	*/
+/*	$NetBSD: fmv.c,v 1.9 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.8 2007/10/19 11:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fmv.c,v 1.9 2008/04/08 12:07:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,7 @@ fmv_attach(struct mb86960_softc *sc)
 		break;
 	default:
 	  	/* Unknown card type: maybe a new model, but... */
-		panic("\n%s: unknown FMV-18x card", sc->sc_dev.dv_xname);
+		panic("\n%s: unknown FMV-18x card", device_xname(&sc->sc_dev));
 	}
 
 	printf(": %s Ethernet\n", typestr);

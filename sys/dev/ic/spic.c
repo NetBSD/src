@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.12 2008/02/29 06:17:36 dyoung Exp $	*/
+/*	$NetBSD: spic.c,v 1.13 2008/04/08 12:07:27 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.12 2008/02/29 06:17:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.13 2008/04/08 12:07:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,7 @@ spic_intr(void *v) {
 			goto skip;
 			break;
 		default:
-			aprint_debug("%s: unknown lid event 0x%02x\n",
-			    sc->sc_dev.dv_xname, v1);
+			aprint_debug_dev(&sc->sc_dev, "unknown lid event 0x%02x\n", v1);
 			goto skip;
 			break;
 		}
@@ -288,8 +287,7 @@ spic_attach(struct spic_softc *sc)
 	for (i = 0; i < SPIC_NPSWITCH; i++) {
 		rv = sysmon_pswitch_register(&sc->sc_smpsw[i]);
 		if (rv != 0)
-			aprint_error("%s: unable to register %s with sysmon\n",
-			    sc->sc_dev.dv_xname,
+			aprint_error_dev(&sc->sc_dev, "unable to register %s with sysmon\n",
 			    sc->sc_smpsw[i].smpsw_name);
 	}
 

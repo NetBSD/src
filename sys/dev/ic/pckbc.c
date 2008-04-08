@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.42 2008/03/15 13:23:24 cube Exp $ */
+/* $NetBSD: pckbc.c,v 1.43 2008/04/08 12:07:27 cegger Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.42 2008/03/15 13:23:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.43 2008/04/08 12:07:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ pckbc_attach_slot(sc, slot)
 #if NRND > 0
 	if (child != NULL && t->t_slotdata[slot] != NULL)
 		rnd_attach_source(&t->t_slotdata[slot]->rnd_source,
-		    child->dv_xname, RND_TYPE_TTY, 0);
+		    device_xname(child), RND_TYPE_TTY, 0);
 #endif
 	return child != NULL;
 }
