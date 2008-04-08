@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.702.2.46 2007/11/19 21:25:11 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.702.2.47 2008/04/08 21:32:44 jdc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701.2.48 2007/11/19 21:24:24 bouyer Exp
+ *	NetBSD: pcidevs,v 1.701.2.49 2008/04/08 21:29:46 jdc Exp
  */
 
 /*
@@ -1994,6 +1994,7 @@
 #define	PCI_PRODUCT_INTEL_6300ESB_EHCI	0x25ad		/* 6300ESB USB EHCI Controller */
 #define	PCI_PRODUCT_INTEL_6300ESB_PCIX	0x25ae		/* 6300ESB PCI-X Bridge */
 #define	PCI_PRODUCT_INTEL_6300ESB_RAID	0x25b0		/* 6300ESB SATA RAID Controller */
+#define	PCI_PRODUCT_INTEL_5000X_MCH	0x25c0		/* 5000X Memory Controller Hub */
 #define	PCI_PRODUCT_INTEL_82801FB_LPC	0x2640		/* 82801FB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_82801FB_SATA	0x2651		/* 82801FB Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82801FR_SATA	0x2652		/* 82801FR Serial ATA Controller */
@@ -2010,6 +2011,21 @@
 #define	PCI_PRODUCT_INTEL_82801FB_ACM	0x266d		/* 82801FB/FR AC'97 Modem Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_AC	0x266e		/* 82801FB/FR AC'97 Audio Controller */
 #define	PCI_PRODUCT_INTEL_82801FB_IDE	0x266f		/* 82801FB/FR IDE Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_LPC	0x2670		/* 63xxESB LPC Interface Bridge */
+#define	PCI_PRODUCT_INTEL_63XXESB_SATA	0x2680		/* 63xxESB Serial ATA Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_SATA_AHCI	0x2681		/* 63xxESB AHCI Serial ATA Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_USB_0	0x2688		/* 63xxESB USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_USB_1	0x2689		/* 63xxESB USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_USB_2	0x268a		/* 63xxESB USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_USB_3	0x268b		/* 63xxESB USB UHCI Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_EHCI	0x268c		/* 63xxESB USB EHCI Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_EXP_1	0x2690		/* 63xxESB PCI Express Port #1 */
+#define	PCI_PRODUCT_INTEL_63XXESB_EXP_2	0x2692		/* 63xxESB PCI Express Port #2 */
+#define	PCI_PRODUCT_INTEL_63XXESB_EXP_3	0x2694		/* 63xxESB PCI Express Port #3 */
+#define	PCI_PRODUCT_INTEL_63XXESB_EXP_4	0x2696		/* 63xxESB PCI Express Port #4 */
+#define	PCI_PRODUCT_INTEL_63XXESB_HDA	0x269a		/* 63xxESB High Definition Audio Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_SMB	0x269b		/* 63xxESB SMBus Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_IDE	0x269e		/* 63xxESB IDE Controller */
 #define	PCI_PRODUCT_INTEL_82945P_MCH	0x2770		/* 82945G/P Memory Controller Hub */
 #define	PCI_PRODUCT_INTEL_82945P_EXP	0x2771		/* 82945G/P PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82955X_HB	0x2774		/* 82955X Host */
@@ -2042,6 +2058,11 @@
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82855PM_PM	0x3342		/* 82855PM Power Management Controller */
+#define	PCI_PRODUCT_INTEL_63XXESB_EXP_UP	0x3500		/* 63xxESB PCI Express Upstream Port */
+#define	PCI_PRODUCT_INTEL_63XXESB_PCIX	0x350c		/* 63xxESB PCI Express to PCI-X Bridge */
+#define	PCI_PRODUCT_INTEL_63XXESB_EXP_DN_1	0x3510		/* 63xxESB PCI Express Downstream Port #1 */
+#define	PCI_PRODUCT_INTEL_63XXESB_EXP_DN_2	0x3514		/* 63xxESB PCI Express Downstream Port #2 */
+#define	PCI_PRODUCT_INTEL_63XXESB_EXP_DN_3	0x3518		/* 63xxESB PCI Express Downstream Port #3 */
 #define	PCI_PRODUCT_INTEL_82855GM_MCH	0x3580		/* 82855GM Host-Hub Controller */
 #define	PCI_PRODUCT_INTEL_82855GM_IGD	0x3582		/* 82855GM GMCH Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82855GM_MC	0x3584		/* 82855GM GMCH Memory Controller */
