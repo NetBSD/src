@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.39.4.1 2006/10/26 09:39:38 ghen Exp $	*/
+/*	$NetBSD: session.c,v 1.39.4.2 2008/04/08 21:48:26 jdc Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -35,7 +35,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: session.c,v 1.180 2004/07/28 09:40:29 markus Exp $");
-__RCSID("$NetBSD: session.c,v 1.39.4.1 2006/10/26 09:39:38 ghen Exp $");
+__RCSID("$NetBSD: session.c,v 1.39.4.2 2008/04/08 21:48:26 jdc Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -1102,7 +1102,8 @@ do_rc_files(Session *s, const char *shell)
 	    s->display != NULL && s->auth_proto != NULL && s->auth_data != NULL;
 
 	/* ignore _PATH_SSH_USER_RC for subsystems */
-	if (!s->is_subsystem && (stat(_PATH_SSH_USER_RC, &st) >= 0)) {
+	if (!s->is_subsystem && !no_user_rc &&
+	    (stat(_PATH_SSH_USER_RC, &st) >= 0)) {
 		snprintf(cmd, sizeof cmd, "%s -c '%s %s'",
 		    shell, _PATH_BSHELL, _PATH_SSH_USER_RC);
 		if (debug_flag)

@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.31 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: channels.c,v 1.31.4.1 2008/04/08 21:48:26 jdc Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -41,7 +41,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: channels.c,v 1.209 2004/08/11 21:43:04 avsm Exp $");
-__RCSID("$NetBSD: channels.c,v 1.31 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: channels.c,v 1.31.4.1 2008/04/08 21:48:26 jdc Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -2625,9 +2625,6 @@ x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
 			if (bind(sock, ai->ai_addr, ai->ai_addrlen) < 0) {
 				debug2("bind port %d: %.100s", port, strerror(errno));
 				close(sock);
-
-				if (ai->ai_next)
-					continue;
 
 				for (n = 0; n < num_socks; n++) {
 					close(socks[n]);
