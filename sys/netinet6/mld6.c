@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.42 2008/02/27 19:40:56 matt Exp $	*/
+/*	$NetBSD: mld6.c,v 1.43 2008/04/08 15:04:35 thorpej Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.42 2008/02/27 19:40:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.43 2008/04/08 15:04:35 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -329,7 +329,7 @@ mld_input(struct mbuf *m, int off)
 
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		icmp6stat[ICMP6_STAT_TOOSHORT]++;
 		return;
 	}
 
@@ -536,7 +536,7 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 	im6o.im6o_multicast_loop = (ip6_mrouter != NULL);
 
 	/* increment output statictics */
-	icmp6stat.icp6s_outhist[type]++;
+	icmp6stat[ICMP6_STAT_OUTHIST + type]++;
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	switch (type) {
 	case MLD_LISTENER_QUERY:
