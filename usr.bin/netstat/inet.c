@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.82 2008/04/07 06:31:28 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.83 2008/04/08 01:03:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.82 2008/04/07 06:31:28 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.83 2008/04/08 01:03:58 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 	 struct in_addr *faddr, u_int16_t fport,
 	 short t_state, char *name)
 {
-	static char *shorttcpstates[] = {
+	static const char *shorttcpstates[] = {
 		"CLOSED",	"LISTEN",	"SYNSEN",	"SYSRCV",
 		"ESTABL",	"CLWAIT",	"FWAIT1",	"CLOSNG",
 		"LASTAK",	"FWAIT2",	"TMWAIT",
@@ -279,123 +279,121 @@ protopr(off, name)
  * Dump TCP statistics structure.
  */
 void
-tcp_stats(off, name)
-	u_long off;
-	char *name;
+tcp_stats(u_long off, char *name)
 {
-	struct tcpstat tcpstat;
+	uint64_t tcpstat[TCP_NSTATS];
 
 	if (use_sysctl) {
 		size_t size = sizeof(tcpstat);
 
-		if (sysctlbyname("net.inet.tcp.stats", &tcpstat, &size,
+		if (sysctlbyname("net.inet.tcp.stats", tcpstat, &size,
 				 NULL, 0) == -1)
 			err(1, "net.inet.tcp.stats");
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&tcpstat, sizeof (tcpstat));
+		kread(off, (char *)tcpstat, sizeof (tcpstat));
 	}
 
 	printf ("%s:\n", name);
 
-#define	ps(f, m) if (tcpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)tcpstat.f)
-#define	p(f, m) if (tcpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)tcpstat.f, plural(tcpstat.f))
-#define	p2(f1, f2, m) if (tcpstat.f1 || tcpstat.f2 || sflag <= 1) \
-    printf(m, (unsigned long long)tcpstat.f1, plural(tcpstat.f1), \
-    (unsigned long long)tcpstat.f2, plural(tcpstat.f2))
-#define	p2s(f1, f2, m) if (tcpstat.f1 || tcpstat.f2 || sflag <= 1) \
-    printf(m, (unsigned long long)tcpstat.f1, plural(tcpstat.f1), \
-    (unsigned long long)tcpstat.f2)
-#define	p3(f, m) if (tcpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)tcpstat.f, plurales(tcpstat.f))
+#define	ps(f, m) if (tcpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)tcpstat[f])
+#define	p(f, m) if (tcpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)tcpstat[f], plural(tcpstat[f]))
+#define	p2(f1, f2, m) if (tcpstat[f1] || tcpstat[f2] || sflag <= 1) \
+    printf(m, (unsigned long long)tcpstat[f1], plural(tcpstat[f1]), \
+    (unsigned long long)tcpstat[f2], plural(tcpstat[f2]))
+#define	p2s(f1, f2, m) if (tcpstat[f1] || tcpstat[f2] || sflag <= 1) \
+    printf(m, (unsigned long long)tcpstat[f1], plural(tcpstat[f1]), \
+    (unsigned long long)tcpstat[f2])
+#define	p3(f, m) if (tcpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)tcpstat[f], plurales(tcpstat[f]))
 
-	p(tcps_sndtotal, "\t%llu packet%s sent\n");
-	p2(tcps_sndpack,tcps_sndbyte,
+	p(TCP_STAT_SNDTOTAL, "\t%llu packet%s sent\n");
+	p2(TCP_STAT_SNDPACK,TCP_STAT_SNDBYTE,
 		"\t\t%llu data packet%s (%llu byte%s)\n");
-	p2(tcps_sndrexmitpack, tcps_sndrexmitbyte,
+	p2(TCP_STAT_SNDREXMITPACK, TCP_STAT_SNDREXMITBYTE,
 		"\t\t%llu data packet%s (%llu byte%s) retransmitted\n");
-	p2s(tcps_sndacks, tcps_delack,
+	p2s(TCP_STAT_SNDACKS, TCP_STAT_DELACK,
 		"\t\t%llu ack-only packet%s (%llu delayed)\n");
-	p(tcps_sndurg, "\t\t%llu URG only packet%s\n");
-	p(tcps_sndprobe, "\t\t%llu window probe packet%s\n");
-	p(tcps_sndwinup, "\t\t%llu window update packet%s\n");
-	p(tcps_sndctrl, "\t\t%llu control packet%s\n");
-	p(tcps_selfquench,
+	p(TCP_STAT_SNDURG, "\t\t%llu URG only packet%s\n");
+	p(TCP_STAT_SNDPROBE, "\t\t%llu window probe packet%s\n");
+	p(TCP_STAT_SNDWINUP, "\t\t%llu window update packet%s\n");
+	p(TCP_STAT_SNDCTRL, "\t\t%llu control packet%s\n");
+	p(TCP_STAT_SELFQUENCH,
 	    "\t\t%llu send attempt%s resulted in self-quench\n");
-	p(tcps_rcvtotal, "\t%llu packet%s received\n");
-	p2(tcps_rcvackpack, tcps_rcvackbyte,
+	p(TCP_STAT_RCVTOTAL, "\t%llu packet%s received\n");
+	p2(TCP_STAT_RCVACKPACK, TCP_STAT_RCVACKBYTE,
 		"\t\t%llu ack%s (for %llu byte%s)\n");
-	p(tcps_rcvdupack, "\t\t%llu duplicate ack%s\n");
-	p(tcps_rcvacktoomuch, "\t\t%llu ack%s for unsent data\n");
-	p2(tcps_rcvpack, tcps_rcvbyte,
+	p(TCP_STAT_RCVDUPACK, "\t\t%llu duplicate ack%s\n");
+	p(TCP_STAT_RCVACKTOOMUCH, "\t\t%llu ack%s for unsent data\n");
+	p2(TCP_STAT_RCVPACK, TCP_STAT_RCVBYTE,
 		"\t\t%llu packet%s (%llu byte%s) received in-sequence\n");
-	p2(tcps_rcvduppack, tcps_rcvdupbyte,
+	p2(TCP_STAT_RCVDUPPACK, TCP_STAT_RCVDUPBYTE,
 		"\t\t%llu completely duplicate packet%s (%llu byte%s)\n");
-	p(tcps_pawsdrop, "\t\t%llu old duplicate packet%s\n");
-	p2(tcps_rcvpartduppack, tcps_rcvpartdupbyte,
+	p(TCP_STAT_PAWSDROP, "\t\t%llu old duplicate packet%s\n");
+	p2(TCP_STAT_RCVPARTDUPPACK, TCP_STAT_RCVPARTDUPBYTE,
 		"\t\t%llu packet%s with some dup. data (%llu byte%s duped)\n");
-	p2(tcps_rcvoopack, tcps_rcvoobyte,
+	p2(TCP_STAT_RCVOOPACK, TCP_STAT_RCVOOBYTE,
 		"\t\t%llu out-of-order packet%s (%llu byte%s)\n");
-	p2(tcps_rcvpackafterwin, tcps_rcvbyteafterwin,
+	p2(TCP_STAT_RCVPACKAFTERWIN, TCP_STAT_RCVBYTEAFTERWIN,
 		"\t\t%llu packet%s (%llu byte%s) of data after window\n");
-	p(tcps_rcvwinprobe, "\t\t%llu window probe%s\n");
-	p(tcps_rcvwinupd, "\t\t%llu window update packet%s\n");
-	p(tcps_rcvafterclose, "\t\t%llu packet%s received after close\n");
-	p(tcps_rcvbadsum, "\t\t%llu discarded for bad checksum%s\n");
-	p(tcps_rcvbadoff, "\t\t%llu discarded for bad header offset field%s\n");
-	ps(tcps_rcvshort, "\t\t%llu discarded because packet too short\n");
-	p(tcps_connattempt, "\t%llu connection request%s\n");
-	p(tcps_accepts, "\t%llu connection accept%s\n");
-	p(tcps_connects,
+	p(TCP_STAT_RCVWINPROBE, "\t\t%llu window probe%s\n");
+	p(TCP_STAT_RCVWINUPD, "\t\t%llu window update packet%s\n");
+	p(TCP_STAT_RCVAFTERCLOSE, "\t\t%llu packet%s received after close\n");
+	p(TCP_STAT_RCVBADSUM, "\t\t%llu discarded for bad checksum%s\n");
+	p(TCP_STAT_RCVBADOFF, "\t\t%llu discarded for bad header offset field%s\n");
+	ps(TCP_STAT_RCVSHORT, "\t\t%llu discarded because packet too short\n");
+	p(TCP_STAT_CONNATTEMPT, "\t%llu connection request%s\n");
+	p(TCP_STAT_ACCEPTS, "\t%llu connection accept%s\n");
+	p(TCP_STAT_CONNECTS,
 		"\t%llu connection%s established (including accepts)\n");
-	p2(tcps_closed, tcps_drops,
+	p2(TCP_STAT_CLOSED, TCP_STAT_DROPS,
 		"\t%llu connection%s closed (including %llu drop%s)\n");
-	p(tcps_conndrops, "\t%llu embryonic connection%s dropped\n");
-	p(tcps_delayed_free, "\t%llu delayed free%s of tcpcb\n");
-	p2(tcps_rttupdated, tcps_segstimed,
+	p(TCP_STAT_CONNDROPS, "\t%llu embryonic connection%s dropped\n");
+	p(TCP_STAT_DELAYED_FREE, "\t%llu delayed free%s of tcpcb\n");
+	p2(TCP_STAT_RTTUPDATED, TCP_STAT_SEGSTIMED,
 		"\t%llu segment%s updated rtt (of %llu attempt%s)\n");
-	p(tcps_rexmttimeo, "\t%llu retransmit timeout%s\n");
-	p(tcps_timeoutdrop,
+	p(TCP_STAT_REXMTTIMEO, "\t%llu retransmit timeout%s\n");
+	p(TCP_STAT_TIMEOUTDROP,
 		"\t\t%llu connection%s dropped by rexmit timeout\n");
-	p2(tcps_persisttimeo, tcps_persistdrops,
+	p2(TCP_STAT_PERSISTTIMEO, TCP_STAT_PERSISTDROPS,
 	   "\t%llu persist timeout%s (resulting in %llu dropped "
 		"connection%s)\n");
-	p(tcps_keeptimeo, "\t%llu keepalive timeout%s\n");
-	p(tcps_keepprobe, "\t\t%llu keepalive probe%s sent\n");
-	p(tcps_keepdrops, "\t\t%llu connection%s dropped by keepalive\n");
-	p(tcps_predack, "\t%llu correct ACK header prediction%s\n");
-	p(tcps_preddat, "\t%llu correct data packet header prediction%s\n");
-	p3(tcps_pcbhashmiss, "\t%llu PCB hash miss%s\n");
-	ps(tcps_noport, "\t%llu dropped due to no socket\n");
-	p(tcps_connsdrained, "\t%llu connection%s drained due to memory "
+	p(TCP_STAT_KEEPTIMEO, "\t%llu keepalive timeout%s\n");
+	p(TCP_STAT_KEEPPROBE, "\t\t%llu keepalive probe%s sent\n");
+	p(TCP_STAT_KEEPDROPS, "\t\t%llu connection%s dropped by keepalive\n");
+	p(TCP_STAT_PREDACK, "\t%llu correct ACK header prediction%s\n");
+	p(TCP_STAT_PREDDAT, "\t%llu correct data packet header prediction%s\n");
+	p3(TCP_STAT_PCBHASHMISS, "\t%llu PCB hash miss%s\n");
+	ps(TCP_STAT_NOPORT, "\t%llu dropped due to no socket\n");
+	p(TCP_STAT_CONNSDRAINED, "\t%llu connection%s drained due to memory "
 		"shortage\n");
-	p(tcps_pmtublackhole, "\t%llu PMTUD blackhole%s detected\n");
+	p(TCP_STAT_PMTUBLACKHOLE, "\t%llu PMTUD blackhole%s detected\n");
 
-	p(tcps_badsyn, "\t%llu bad connection attempt%s\n");
-	ps(tcps_sc_added, "\t%llu SYN cache entries added\n");
-	p(tcps_sc_collisions, "\t\t%llu hash collision%s\n");
-	ps(tcps_sc_completed, "\t\t%llu completed\n");
-	ps(tcps_sc_aborted, "\t\t%llu aborted (no space to build PCB)\n");
-	ps(tcps_sc_timed_out, "\t\t%llu timed out\n");
-	ps(tcps_sc_overflowed, "\t\t%llu dropped due to overflow\n");
-	ps(tcps_sc_bucketoverflow, "\t\t%llu dropped due to bucket overflow\n");
-	ps(tcps_sc_reset, "\t\t%llu dropped due to RST\n");
-	ps(tcps_sc_unreach, "\t\t%llu dropped due to ICMP unreachable\n");
-	ps(tcps_sc_delayed_free, "\t\t%llu delayed free of SYN cache "
+	p(TCP_STAT_BADSYN, "\t%llu bad connection attempt%s\n");
+	ps(TCP_STAT_SC_ADDED, "\t%llu SYN cache entries added\n");
+	p(TCP_STAT_SC_COLLISIONS, "\t\t%llu hash collision%s\n");
+	ps(TCP_STAT_SC_COMPLETED, "\t\t%llu completed\n");
+	ps(TCP_STAT_SC_ABORTED, "\t\t%llu aborted (no space to build PCB)\n");
+	ps(TCP_STAT_SC_TIMED_OUT, "\t\t%llu timed out\n");
+	ps(TCP_STAT_SC_OVERFLOWED, "\t\t%llu dropped due to overflow\n");
+	ps(TCP_STAT_SC_BUCKETOVERFLOW, "\t\t%llu dropped due to bucket overflow\n");
+	ps(TCP_STAT_SC_RESET, "\t\t%llu dropped due to RST\n");
+	ps(TCP_STAT_SC_UNREACH, "\t\t%llu dropped due to ICMP unreachable\n");
+	ps(TCP_STAT_SC_DELAYED_FREE, "\t\t%llu delayed free of SYN cache "
 		"entries\n");
-	p(tcps_sc_retransmitted, "\t%llu SYN,ACK%s retransmitted\n");
-	p(tcps_sc_dupesyn, "\t%llu duplicate SYN%s received for entries "
+	p(TCP_STAT_SC_RETRANSMITTED, "\t%llu SYN,ACK%s retransmitted\n");
+	p(TCP_STAT_SC_DUPESYN, "\t%llu duplicate SYN%s received for entries "
 		"already in the cache\n");
-	p(tcps_sc_dropped, "\t%llu SYN%s dropped (no route or no space)\n");
-	p(tcps_badsig, "\t%llu packet%s with bad signature\n");
-	p(tcps_goodsig, "\t%llu packet%s with good signature\n");
+	p(TCP_STAT_SC_DROPPED, "\t%llu SYN%s dropped (no route or no space)\n");
+	p(TCP_STAT_BADSIG, "\t%llu packet%s with bad signature\n");
+	p(TCP_STAT_GOODSIG, "\t%llu packet%s with good signature\n");
 
-	p(tcps_ecn_shs, "\t%llu sucessful ECN handshake%s\n");
-	p(tcps_ecn_ce, "\t%llu packet%s with ECN CE bit\n");
-	p(tcps_ecn_ect, "\t%llu packet%s ECN ECT(0) bit\n");
+	p(TCP_STAT_ECN_SHS, "\t%llu sucessful ECN handshake%s\n");
+	p(TCP_STAT_ECN_CE, "\t%llu packet%s with ECN CE bit\n");
+	p(TCP_STAT_ECN_ECT, "\t%llu packet%s ECN ECT(0) bit\n");
 #undef p
 #undef ps
 #undef p2
