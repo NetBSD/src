@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.298.2.14 2007/10/15 21:53:53 riz Exp $ */
+/*	$NetBSD: wd.c,v 1.298.2.15 2008/04/08 21:35:51 jdc Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.298.2.14 2007/10/15 21:53:53 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.298.2.15 2008/04/08 21:35:51 jdc Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -780,7 +780,7 @@ wddone(void *v)
 			goto noerror;
 		errmsg = "error";
 		do_perror = 1;
-		if (wd->sc_wdc_bio.r_error & WDCE_IDNF &&
+		if ((wd->sc_wdc_bio.r_error & (WDCE_IDNF | WDCE_ABRT)) &&
 		    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) == 0) {
 			nblks = wd->sc_wdc_bio.bcount /
 			    wd->sc_dk.dk_label->d_secsize;
