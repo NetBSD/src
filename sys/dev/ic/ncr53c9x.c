@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.131 2007/10/01 12:54:39 martin Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.132 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.131 2007/10/01 12:54:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.132 2008/04/08 12:07:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,8 +208,8 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 	 * Note, the front-end has set us up to print the chip variation.
 	 */
 	if (sc->sc_rev >= NCR_VARIANT_MAX) {
-		printf("\n%s: unknown variant %d, devices not attached\n",
-		    sc->sc_dev.dv_xname, sc->sc_rev);
+		aprint_error_dev(&sc->sc_dev, "unknown variant %d, devices not attached\n",
+		    sc->sc_rev);
 		return;
 	}
 
@@ -295,8 +295,7 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 	 * config_found() to make sure the adatper is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
-		printf("%s: unable to enable controller\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to enable controller\n");
 		return;
 	}
 
@@ -409,8 +408,7 @@ ncr53c9x_reset(struct ncr53c9x_softc *sc)
 		break;
 
 	default:
-		printf("%s: unknown revision code, assuming ESP100\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unknown revision code, assuming ESP100\n");
 		NCR_WRITE_REG(sc, NCR_CFG1, sc->sc_cfg1);
 		NCR_WRITE_REG(sc, NCR_CCF, sc->sc_ccf);
 		NCR_WRITE_REG(sc, NCR_SYNCOFF, 0);
@@ -422,10 +420,10 @@ ncr53c9x_reset(struct ncr53c9x_softc *sc)
 
 #if 0
 	printf("%s: ncr53c9x_reset: revision %d\n",
-	       sc->sc_dev.dv_xname, sc->sc_rev);
+	       device_xname(&sc->sc_dev), sc->sc_rev);
 	printf("%s: ncr53c9x_reset: cfg1 0x%x, cfg2 0x%x, cfg3 0x%x, "
 	    "ccf 0x%x, timeout 0x%x\n",
-	    sc->sc_dev.dv_xname, sc->sc_cfg1, sc->sc_cfg2, sc->sc_cfg3,
+	    device_xname(&sc->sc_dev), sc->sc_cfg1, sc->sc_cfg2, sc->sc_cfg3,
 	    sc->sc_ccf, sc->sc_timeout);
 #endif
 }
@@ -439,7 +437,7 @@ ncr53c9x_scsi_reset(struct ncr53c9x_softc *sc)
 
 	(*sc->sc_glue->gl_dma_stop)(sc);
 
-	printf("%s: resetting SCSI bus\n", sc->sc_dev.dv_xname);
+	printf("%s: resetting SCSI bus\n", device_xname(&sc->sc_dev));
 	NCRCMD(sc, NCRCMD_RSTSCSI);
 }
 
@@ -939,14 +937,14 @@ ncr53c9x_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if ((sc->sc_cfflags & (1 << ((xm->xm_target & 7) + 16))) == 0 &&
 		    (xm->xm_mode & PERIPH_CAP_TQING)) {
 			NCR_MISC(("%s: target %d: tagged queuing\n",
-			    sc->sc_dev.dv_xname, xm->xm_target));
+			    device_xname(&sc->sc_dev), xm->xm_target));
 			ti->flags |= T_TAG;
 		} else
 			ti->flags &= ~T_TAG;
 
 		if ((xm->xm_mode & PERIPH_CAP_WIDE16) != 0) {
 			NCR_MISC(("%s: target %d: wide scsi negotiation\n",
-			    sc->sc_dev.dv_xname, xm->xm_target));
+			    device_xname(&sc->sc_dev), xm->xm_target));
 			if (sc->sc_rev == NCR_VARIANT_FAS366) {
 				ti->flags |= T_WIDE;
 				ti->width = 1;
@@ -956,7 +954,7 @@ ncr53c9x_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		if ((xm->xm_mode & PERIPH_CAP_SYNC) != 0 &&
 		    (ti->flags & T_SYNCHOFF) == 0 && sc->sc_minsync != 0) {
 			NCR_MISC(("%s: target %d: sync negotiation\n",
-			    sc->sc_dev.dv_xname, xm->xm_target));
+			    device_xname(&sc->sc_dev), xm->xm_target));
 			ti->flags |= T_NEGOTIATE;
 			ti->period = sc->sc_minsync;
 		}
@@ -1457,7 +1455,7 @@ ncr53c9x_reselect(struct ncr53c9x_softc *sc, int message, int tagtype,
 		if (selid & (selid - 1)) {
 			printf("%s: reselect with invalid selid %02x;"
 			    " sending DEVICE RESET\n",
-			    sc->sc_dev.dv_xname, selid);
+			    device_xname(&sc->sc_dev), selid);
 			goto reset;
 		}
 
@@ -1493,7 +1491,7 @@ ncr53c9x_reselect(struct ncr53c9x_softc *sc, int message, int tagtype,
 	if (ecb == NULL) {
 		printf("%s: reselect from target %d lun %d tag %x:%x "
 		    "with no nexus; sending ABORT\n",
-		    sc->sc_dev.dv_xname, target, lun, tagtype, tagid);
+		    device_xname(&sc->sc_dev), target, lun, tagtype, tagid);
 		goto abort;
 	}
 
@@ -1551,7 +1549,7 @@ ncr53c9x_msgin(struct ncr53c9x_softc *sc)
 
 	if (sc->sc_imlen == 0) {
 		printf("%s: msgin: no msg byte available\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		return;
 	}
 
@@ -1565,7 +1563,7 @@ ncr53c9x_msgin(struct ncr53c9x_softc *sc)
 	    sc->sc_state != NCR_RESELECTED) {
 		printf("%s: phase change, dropping message, "
 		    "prev %d, state %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_prevphase, sc->sc_state);
+		    device_xname(&sc->sc_dev), sc->sc_prevphase, sc->sc_state);
 		sc->sc_flags &= ~NCR_DROP_MSGI;
 		sc->sc_imlen = 0;
 	}
@@ -1659,7 +1657,7 @@ gotit:
 				 */
 				printf("%s: tagged queuing rejected: "
 				    "target %d\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    ecb->xs->xs_periph->periph_target);
 
 				NCR_MSGS(("(rejected sent tag)"));
@@ -1681,7 +1679,7 @@ gotit:
 			case SEND_SDTR:
 				printf("%s: sync transfer rejected: "
 				    "target %d\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    ecb->xs->xs_periph->periph_target);
 
 				sc->sc_flags &= ~NCR_SYNCHNEGO;
@@ -1694,7 +1692,7 @@ gotit:
 			case SEND_WDTR:
 				printf("%s: wide transfer rejected: "
 				    "target %d\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    ecb->xs->xs_periph->periph_target);
 				ti->flags &= ~(T_WIDE | T_WDTRSENT);
 				ti->width = 0;
@@ -1805,7 +1803,7 @@ gotit:
 			case MSG_EXT_WDTR:
 #ifdef NCR53C9X_DEBUG
 				printf("%s: wide mode %d\n",
-				    sc->sc_dev.dv_xname, sc->sc_imess[3]);
+				    device_xname(&sc->sc_dev), sc->sc_imess[3]);
 #endif
 				if (sc->sc_imess[3] == 1) {
 					ti->cfg3 |= NCRFASCFG3_EWIDE;
@@ -1846,7 +1844,7 @@ gotit:
 			printf("%s: TAG reselect without IDENTIFY;"
 			    " MSG %x;"
 			    " sending DEVICE RESET\n",
-			    sc->sc_dev.dv_xname,
+			    device_xname(&sc->sc_dev),
 			    sc->sc_imess[0]);
 			goto reset;
 		}
@@ -1861,7 +1859,7 @@ gotit:
 			printf("%s: reselect without IDENTIFY;"
 			    " MSG %x;"
 			    " sending DEVICE RESET\n",
-			    sc->sc_dev.dv_xname,
+			    device_xname(&sc->sc_dev),
 			    sc->sc_imess[1]);
 			goto reset;
 		}
@@ -1870,7 +1868,7 @@ gotit:
 
 	default:
 		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 	reset:
 		ncr53c9x_sched_msgout(SEND_DEV_RESET);
 		break;
@@ -1929,7 +1927,7 @@ ncr53c9x_msgout(struct ncr53c9x_softc *sc)
 			goto new;
 		} else {
 			printf("%s at line %d: unexpected MESSAGE OUT phase\n",
-			    sc->sc_dev.dv_xname, __LINE__);
+			    device_xname(&sc->sc_dev), __LINE__);
 		}
 	}
 
@@ -1966,7 +1964,7 @@ ncr53c9x_msgout(struct ncr53c9x_softc *sc)
 		case SEND_IDENTIFY:
 			if (sc->sc_state != NCR_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
-				    sc->sc_dev.dv_xname, __LINE__);
+				    device_xname(&sc->sc_dev), __LINE__);
 			}
 			ecb = sc->sc_nexus;
 			sc->sc_omess[0] =
@@ -1975,7 +1973,7 @@ ncr53c9x_msgout(struct ncr53c9x_softc *sc)
 		case SEND_TAG:
 			if (sc->sc_state != NCR_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
-				    sc->sc_dev.dv_xname, __LINE__);
+				    device_xname(&sc->sc_dev), __LINE__);
 			}
 			ecb = sc->sc_nexus;
 			sc->sc_omess[0] = ecb->tag[0];
@@ -2114,7 +2112,7 @@ again:
 			DELAY(1);
 		}
 		if (sc->sc_state != NCR_SBR) {
-			printf("%s: SCSI bus reset\n", sc->sc_dev.dv_xname);
+			printf("%s: SCSI bus reset\n", device_xname(&sc->sc_dev));
 			ncr53c9x_init(sc, 0); /* Restart everything */
 			goto out;
 		}
@@ -2125,7 +2123,7 @@ again:
 #endif
 		if (sc->sc_nexus != NULL)
 			panic("%s: nexus in reset state",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 		goto sched;
 	}
 
@@ -2159,15 +2157,15 @@ again:
 				 */
 #ifdef DEBUG
 				printf("%s: ESP100 work-around activated\n",
-					sc->sc_dev.dv_xname);
+					device_xname(&sc->sc_dev));
 #endif
 				sc->sc_flags &= ~NCR_EXPECT_ILLCMD;
 				goto out;
 			}
 			/* illegal command, out of sync ? */
-			printf("%s: illegal command: 0x%x "
+			aprint_error_dev(&sc->sc_dev, "illegal command: 0x%x "
 			    "(state %d, phase %x, prevphase %x)\n",
-			    sc->sc_dev.dv_xname, sc->sc_lastcmd,
+			    sc->sc_lastcmd,
 			    sc->sc_state, sc->sc_phase, sc->sc_prevphase);
 			if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
 				NCRCMD(sc, NCRCMD_FLUSH);
@@ -2190,7 +2188,7 @@ again:
 		int r = NCRDMA_INTR(sc);
 		if (r == -1) {
 			printf("%s: DMA error; resetting\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			ncr53c9x_init(sc, 1);
 			goto out;
 		}
@@ -2221,7 +2219,7 @@ again:
 					printf("%s: !TC on MSG OUT"
 					    " [intr %x, stat %x, step %d]"
 					    " prevphase %x, resid %lx\n",
-					    sc->sc_dev.dv_xname,
+					    device_xname(&sc->sc_dev),
 					    sc->sc_espintr,
 					    sc->sc_espstat,
 					    sc->sc_espstep,
@@ -2237,7 +2235,7 @@ again:
 				printf("%s: !TC on DATA XFER"
 				    " [intr %x, stat %x, step %d]"
 				    " prevphase %x, resid %x\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    sc->sc_espintr,
 				    sc->sc_espstat,
 				    sc->sc_espstep,
@@ -2251,7 +2249,7 @@ again:
 	 * Check for less serious errors.
 	 */
 	if ((sc->sc_espstat & NCRSTAT_PE) != 0) {
-		printf("%s: SCSI bus parity error\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "SCSI bus parity error\n");
 		if (sc->sc_prevphase == MESSAGE_IN_PHASE)
 			ncr53c9x_sched_msgout(SEND_PARITY_ERROR);
 		else
@@ -2330,7 +2328,7 @@ again:
 				 */
 				printf("%s: unexpected disconnect "
 			"[state %d, intr %x, stat %x, phase(c %x, p %x)]; ",
-					sc->sc_dev.dv_xname, sc->sc_state,
+					device_xname(&sc->sc_dev), sc->sc_state,
 					sc->sc_espintr, sc->sc_espstat,
 					sc->sc_phase, sc->sc_prevphase);
 
@@ -2360,7 +2358,7 @@ again:
 
 	case NCR_SBR:
 		printf("%s: waiting for SCSI Bus Reset to happen\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		goto out;
 
 	case NCR_RESELECTED:
@@ -2369,7 +2367,7 @@ again:
 		 */
 		printf("%s: unhandled reselect continuation, "
 		    "state %d, intr %02x\n",
-		    sc->sc_dev.dv_xname, sc->sc_state, sc->sc_espintr);
+		    device_xname(&sc->sc_dev), sc->sc_state, sc->sc_espintr);
 		ncr53c9x_init(sc, 1);
 		goto out;
 
@@ -2381,8 +2379,7 @@ again:
 			 * Things are seriously screwed up.
 			 * Pull the brakes, i.e. reset
 			 */
-			printf("%s: target didn't send tag: %d bytes in fifo\n",
-			    sc->sc_dev.dv_xname, i);
+			aprint_error_dev(&sc->sc_dev, "target didn't send tag: %d bytes in fifo\n", i);
 			/* Drain and display fifo */
 			while (i-- > 0)
 				printf("[%d] ", NCR_READ_REG(sc, NCR_FIFO));
@@ -2417,8 +2414,7 @@ again:
 				 * Things are seriously screwed up.
 				 * Pull the brakes, i.e. reset
 				 */
-				printf("%s: target didn't identify\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "target didn't identify\n");
 				ncr53c9x_init(sc, 1);
 				goto out;
 			}
@@ -2457,7 +2453,7 @@ again:
 				printf("%s: RESELECT: %d bytes in FIFO! "
 				    "[intr %x, stat %x, step %d, "
 				    "prevphase %x]\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    nfifo,
 				    sc->sc_espintr,
 				    sc->sc_espstat,
@@ -2475,10 +2471,9 @@ again:
 			if (sc->sc_state != NCR_CONNECTED &&
 			    sc->sc_state != NCR_IDENTIFIED) {
 				/* IDENTIFY fail?! */
-				printf("%s: identify failed, "
+				aprint_error_dev(&sc->sc_dev, "identify failed, "
 				    "state %d, intr %02x\n",
-				    sc->sc_dev.dv_xname, sc->sc_state,
-				    sc->sc_espintr);
+				    sc->sc_state, sc->sc_espintr);
 				ncr53c9x_init(sc, 1);
 				goto out;
 			}
@@ -2515,12 +2510,12 @@ again:
 				if ((ti->flags & T_NEGOTIATE) == 0 &&
 				    ecb->tag[0] == 0) {
 					printf("%s: step 1 & !NEG\n",
-					    sc->sc_dev.dv_xname);
+					    device_xname(&sc->sc_dev));
 					goto reset;
 				}
 				if (sc->sc_phase != MESSAGE_OUT_PHASE) {
 					printf("%s: !MSGOUT\n",
-					    sc->sc_dev.dv_xname);
+					    device_xname(&sc->sc_dev));
 					goto reset;
 				}
 				if (ti->flags & T_WIDE) {
@@ -2565,7 +2560,7 @@ again:
 				printf("(%s:%d:%d): selection failed;"
 				    " %d left in FIFO "
 				    "[intr %x, stat %x, step %d]\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    periph->periph_target,
 				    periph->periph_lun,
 				    NCR_READ_REG(sc, NCR_FFLAG)
@@ -2585,7 +2580,7 @@ again:
 					printf("(%s:%d:%d): select; "
 					    "%lu left in DMA buffer "
 					    "[intr %x, stat %x, step %d]\n",
-					    sc->sc_dev.dv_xname,
+					    device_xname(&sc->sc_dev),
 					    periph->periph_target,
 					    periph->periph_lun,
 					    (u_long)sc->sc_cmdlen,
@@ -2605,16 +2600,15 @@ again:
 
 		} else {
 
-			printf("%s: unexpected status after select"
+			aprint_error_dev(&sc->sc_dev, "unexpected status after select"
 			    ": [intr %x, stat %x, step %x]\n",
-			    sc->sc_dev.dv_xname,
 			    sc->sc_espintr, sc->sc_espstat, sc->sc_espstep);
 			NCRCMD(sc, NCRCMD_FLUSH);
 			DELAY(1);
 			goto reset;
 		}
 		if (sc->sc_state == NCR_IDLE) {
-			printf("%s: stray interrupt\n", sc->sc_dev.dv_xname);
+			printf("%s: stray interrupt\n", device_xname(&sc->sc_dev));
 			simple_unlock(&sc->sc_lock);
 			return 0;
 		}
@@ -2630,14 +2624,14 @@ again:
 			if (!(sc->sc_espintr & NCRINTR_DONE)) {
 				printf("%s: ICCS: "
 				    ": [intr %x, stat %x, step %x]\n",
-				    sc->sc_dev.dv_xname,
+				    device_xname(&sc->sc_dev),
 				    sc->sc_espintr, sc->sc_espstat,
 				    sc->sc_espstep);
 			}
 			ncr53c9x_rdfifo(sc, NCR_RDFIFO_START);
 			if (sc->sc_imlen < 2)
-				printf("%s: can't get status, only %d bytes\n",
-				    sc->sc_dev.dv_xname, (int)sc->sc_imlen);
+				aprint_error_dev(&sc->sc_dev, "can't get status, only %d bytes\n",
+				    (int)sc->sc_imlen);
 			ecb->stat = sc->sc_imess[sc->sc_imlen - 2];
 			msg = sc->sc_imess[sc->sc_imlen - 1];
 			NCR_PHASE(("<stat:(%x,%x)>", ecb->stat, msg));
@@ -2649,7 +2643,7 @@ again:
 				sc->sc_state = NCR_CMDCOMPLETE;
 			} else
 				printf("%s: STATUS_PHASE: msg %d\n",
-				    sc->sc_dev.dv_xname, msg);
+				    device_xname(&sc->sc_dev), msg);
 			sc->sc_imlen = 0;
 			NCRCMD(sc, NCRCMD_MSGOK);
 			goto shortcut; /* ie. wait for disconnect */
@@ -2657,8 +2651,8 @@ again:
 		break;
 
 	default:
-		printf("%s: invalid state: %d [intr %x, phase(c %x, p %x)]\n",
-			sc->sc_dev.dv_xname, sc->sc_state,
+		aprint_error_dev(&sc->sc_dev, "invalid state: %d [intr %x, phase(c %x, p %x)]\n",
+			sc->sc_state,
 			sc->sc_espintr, sc->sc_phase, sc->sc_prevphase);
 		goto reset;
 	}
@@ -2690,9 +2684,8 @@ msgin:
 			NCRCMD(sc, NCRCMD_TRANS);
 		} else if ((sc->sc_espintr & NCRINTR_FC) != 0) {
 			if ((sc->sc_flags & NCR_WAITI) == 0) {
-				printf("%s: MSGIN: unexpected FC bit: "
+				aprint_error_dev(&sc->sc_dev, "MSGIN: unexpected FC bit: "
 				    "[intr %x, stat %x, step %x]\n",
-				    sc->sc_dev.dv_xname,
 				    sc->sc_espintr, sc->sc_espstat,
 				    sc->sc_espstep);
 			}
@@ -2704,7 +2697,7 @@ msgin:
 		} else {
 			printf("%s: MSGIN: weird bits: "
 			    "[intr %x, stat %x, step %x]\n",
-			    sc->sc_dev.dv_xname,
+			    device_xname(&sc->sc_dev),
 			    sc->sc_espintr, sc->sc_espstat, sc->sc_espstep);
 		}
 		sc->sc_prevphase = MESSAGE_IN_PHASE;
@@ -2799,7 +2792,7 @@ msgin:
 
 	default:
 		printf("%s: unexpected bus phase; resetting\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 		goto reset;
 	}
 
@@ -2896,7 +2889,7 @@ ncr53c9x_timeout(void *arg)
 	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
 	    "<state %d, nexus %p, phase(l %x, c %x, p %x), resid %lx, "
 	    "msg(q %x,o %x) %s>",
-	    sc->sc_dev.dv_xname,
+	    device_xname(&sc->sc_dev),
 	    ecb, ecb->flags, ecb->dleft, ecb->stat,
 	    sc->sc_state, sc->sc_nexus,
 	    NCR_READ_REG(sc, NCR_STAT),

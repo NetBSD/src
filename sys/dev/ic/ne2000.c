@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.57 2008/03/12 14:31:11 cube Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.58 2008/04/08 12:07:27 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.57 2008/03/12 14:31:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.58 2008/04/08 12:07:27 cegger Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -224,8 +224,7 @@ ne2000_attach(nsc, myea)
 		}
 
 		if (mstart == 0) {
-			printf("%s: cannot find start of RAM\n",
-			    dsc->sc_dev.dv_xname);
+			aprint_error_dev(&dsc->sc_dev, "cannot find start of RAM\n");
 			return (1);
 		}
 
@@ -253,7 +252,7 @@ ne2000_attach(nsc, myea)
 		}
 
 		printf("%s: RAM start 0x%x, size %d\n",
-		    dsc->sc_dev.dv_xname, mstart, memsize);
+		    device_xname(&dsc->sc_dev), mstart, memsize);
 
 		dsc->mem_start = mstart;
 	}
