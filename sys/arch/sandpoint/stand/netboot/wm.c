@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.2 2007/12/09 09:55:58 nisimura Exp $ */
+/* $NetBSD: wm.c,v 1.3 2008/04/08 23:59:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -141,11 +141,10 @@ wm_init(unsigned tag, void *data)
 	uint8_t *en;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x8086
-		    && PCI_PRODUCT(val) != 0x107c)
+	if (PCI_DEVICE(0x8086, 0x107c) != val)
 		return NULL;
 
-	l = ALLOC(struct local, 16);
+	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = pcicfgread(tag, 0x10); /* use mem space */
 

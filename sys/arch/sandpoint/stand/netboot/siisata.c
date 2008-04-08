@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.3 2008/04/07 15:20:19 nisimura Exp $ */
+/* $NetBSD: siisata.c,v 1.4 2008/04/08 23:59:03 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -36,6 +36,7 @@ siisata_init(unsigned tag, unsigned data)
 		break;
 	case PCI_DEVICE(0x1095, 0x3114): /* SiI 3114 SATALink */
 		chvalid = 0xf;
+		break;
 	default:
 		return NULL;
 	}
