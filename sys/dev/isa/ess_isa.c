@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.19 2007/10/19 12:00:16 ad Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.20 2008/04/08 20:08:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.19 2007/10/19 12:00:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.20 2008/04/08 20:08:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ ess_isa_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	printf("%s", sc->sc_dev.dv_xname);
+	printf("%s", device_xname(&sc->sc_dev));
 
 	essattach(sc, enablejoy);
 }

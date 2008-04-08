@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.30 2007/10/19 12:00:15 ad Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.31 2008/04/08 20:08:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.30 2007/10/19 12:00:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.31 2008/04/08 20:08:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ bha_isa_attach(struct device *parent, struct device *self,
 	printf("\n");
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, BHA_ISA_IOSIZE, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -147,15 +147,14 @@ bha_isa_attach(struct device *parent, struct device *self,
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
 	if (!bha_probe_inquiry(iot, ioh, &bpd)) {
-		printf("%s: bha_isa_attach failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "bha_isa_attach failed\n");
 		return;
 	}
 
 	sc->sc_dmaflags = 0;
 	if (bpd.sc_drq != -1) {
 		if ((error = isa_dmacascade(ic, bpd.sc_drq)) != 0) {
-			printf("%s: unable to cascade DRQ, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, " unable to cascade DRQ, error = %d\n", error);
 			return;
 		}
 	} else {
@@ -168,7 +167,7 @@ bha_isa_attach(struct device *parent, struct device *self,
 		(void) bha_info(sc);
 		if (strcmp(sc->sc_firmware, "3.37") < 0)
 		    printf("%s: buggy VLB controller, disabling 32-bit DMA\n",
-		        sc->sc_dev.dv_xname);
+		        device_xname(&sc->sc_dev));
 		else
 			sc->sc_dmaflags = ISABUS_DMA_32BIT;
 	}
@@ -176,8 +175,7 @@ bha_isa_attach(struct device *parent, struct device *self,
 	sc->sc_ih = isa_intr_establish(ic, bpd.sc_irq, IST_EDGE, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 

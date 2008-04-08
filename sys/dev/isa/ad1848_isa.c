@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.33 2007/10/19 12:00:14 ad Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.34 2008/04/08 20:08:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.33 2007/10/19 12:00:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.34 2008/04/08 20:08:49 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,8 +458,8 @@ ad1848_isa_attach(struct ad1848_isa_softc *isc)
 		error = isa_dmamap_create(isc->sc_ic, isc->sc_playdrq,
 		    isc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 		if (error) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, isc->sc_playdrq);
+			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
+			    isc->sc_playdrq);
 			return;
 		}
 	}
@@ -469,8 +469,8 @@ ad1848_isa_attach(struct ad1848_isa_softc *isc)
 		error = isa_dmamap_create(isc->sc_ic, isc->sc_recdrq,
 		    isc->sc_rec_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW);
 		if (error) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, isc->sc_recdrq);
+			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
+			    isc->sc_recdrq);
 			isa_dmamap_destroy(isc->sc_ic, isc->sc_playdrq);
 			return;
 		}

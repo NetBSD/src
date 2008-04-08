@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.16 2007/10/19 12:00:37 ad Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.17 2008/04/08 20:11:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.16 2007/10/19 12:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.17 2008/04/08 20:11:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,19 +244,17 @@ cs_ofisa_attach(parent, self, aux)
 		printf("\n");
 
 	if (message != NULL)
-		printf("%s: %s\n", sc->sc_dev.dv_xname, message);
+		printf("%s: %s\n", device_xname(&sc->sc_dev), message);
 
 	if (defmedia == -1) {
-		printf("%s: unable to get default media\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to get default media\n");
 		defmedia = media[0];	/* XXX What to do? */
 	}
 
 	sc->sc_ih = isa_intr_establish(isc->sc_ic, sc->sc_irq, intr.share,
 	    IPL_NET, cs_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt\n");
 		return;
 	}
 

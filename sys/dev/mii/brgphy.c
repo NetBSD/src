@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.36 2008/02/20 11:26:03 markd Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.37 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.36 2008/02/20 11:26:03 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,37 +235,32 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	switch (MII_MODEL(ma->mii_id2)) {
 	case MII_MODEL_BROADCOM_BCM5400:
 		sc->mii_funcs = &brgphy_5401_funcs;
-		aprint_normal("%s: using BCM5401 DSP patch\n",
-		    sc->mii_dev.dv_xname);
+		aprint_normal_dev(&sc->mii_dev, "using BCM5401 DSP patch\n");
 		break;
 
 	case MII_MODEL_BROADCOM_BCM5401:
 		if (MII_REV(ma->mii_id2) == 1 || MII_REV(ma->mii_id2) == 3) {
 			sc->mii_funcs = &brgphy_5401_funcs;
-			aprint_normal("%s: using BCM5401 DSP patch\n",
-			    sc->mii_dev.dv_xname);
+			aprint_normal_dev(&sc->mii_dev, "using BCM5401 DSP patch\n");
 		} else
 			sc->mii_funcs = &brgphy_funcs;
 		break;
 
 	case MII_MODEL_BROADCOM_BCM5411:
 		sc->mii_funcs = &brgphy_5411_funcs;
-		aprint_normal("%s: using BCM5411 DSP patch\n",
-		    sc->mii_dev.dv_xname);
+		aprint_normal_dev(&sc->mii_dev, "using BCM5411 DSP patch\n");
 		break;
 
 #ifdef notyet /* unverified, untested */
 	case MII_MODEL_BROADCOM_BCM5703:
 		sc->mii_funcs = &brgphy_5703_funcs;
-		aprint_normal("%s: using BCM5703 DSP patch\n",
-		    sc->mii_dev.dv_xname);
+		aprint_normal_dev(&sc->mii_dev, "using BCM5703 DSP patch\n");
 		break;
 #endif
 
 	case MII_MODEL_BROADCOM_BCM5704:
 		sc->mii_funcs = &brgphy_5704_funcs;
-		aprint_normal("%s: using BCM5704 DSP patch\n",
-		    sc->mii_dev.dv_xname);
+		aprint_normal_dev(&sc->mii_dev, "using BCM5704 DSP patch\n");
 		break;
 
 	case MII_MODEL_BROADCOM_BCM5705:
@@ -297,7 +292,7 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");

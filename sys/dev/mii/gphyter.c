@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.21 2008/01/20 07:58:19 msaitoh Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.22 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.21 2008/01/20 07:58:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.22 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ gphyterattach(struct device *parent, struct device *self, void *aux)
 	if (anar & ANAR_10_FD)
 		sc->mii_capabilities |= (BMSR_10TFDX & ma->mii_capmask);
 
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -179,7 +179,7 @@ gphyterattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	strap = PHY_READ(sc, MII_GPHYTER_STRAP);
-	aprint_normal("%s: strapped to %s mode", sc->mii_dev.dv_xname,
+	aprint_normal_dev(&sc->mii_dev, "strapped to %s mode",
 	    (strap & STRAP_MS_VAL) ? "master" : "slave");
 	if (strap & STRAP_NC_MODE)
 		aprint_normal(", pre-C5 BCM5400 compat enabled");

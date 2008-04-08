@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.29 2007/10/19 12:00:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa.c,v 1.30 2008/04/08 20:08:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -94,7 +94,7 @@ CFATTACH_DECL(isic_isa, sizeof(struct isic_softc),
     isic_isa_probe, isic_isa_attach, NULL, NULL);
 
 #define	ISIC_FMT	"%s: "
-#define	ISIC_PARM	sc->sc_dev.dv_xname
+#define	ISIC_PARM	device_xname(&sc->sc_dev)
 #define	TERMFMT	"\n"
 
 /*
@@ -543,8 +543,7 @@ isicattach(int flags, struct isic_softc *sc)
 				break;
 
 			default:
-				printf("%s: Error, IPAC version %d unknown!\n",
-					sc->sc_dev.dv_xname, ret);
+				aprint_error_dev(&sc->sc_dev, "Error, IPAC version %d unknown!\n", ret);
 				return(0);
 				break;
 		}

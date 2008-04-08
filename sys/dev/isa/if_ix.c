@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.27 2007/10/19 12:00:18 ad Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.28 2008/04/08 20:08:50 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.27 2007/10/19 12:00:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.28 2008/04/08 20:08:50 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,7 +744,7 @@ ix_attach(struct device *parent, struct device *self, void *aux)
 			  ia->ia_io[0].ir_size, 0, &ioh) != 0) {
 
 		DPRINTF(("\n%s: can't map i/o space 0x%x-0x%x\n",
-			  sc->sc_dev.dv_xname, ia->ia_[0].ir_addr,
+			  device_xname(&sc->sc_dev), ia->ia_[0].ir_addr,
 			  ia->ia_io[0].ir_addr + ia->ia_io[0].ir_size - 1));
 		return;
 	}
@@ -754,7 +754,7 @@ ix_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr,
 			  ia->ia_iomem[0].ir_size, 0, &memh) != 0) {
 		DPRINTF(("\n%s: can't map iomem space 0x%x-0x%x\n",
-			sc->sc_dev.dv_xname, ia->ia_iomem[0].ir_addr,
+			device_xname(&sc->sc_dev), ia->ia_iomem[0].ir_addr,
 			ia->ia_iomem[0].ir_addr + ia->ia_iomem[0].ir_size - 1));
 		bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 		return;
@@ -892,7 +892,7 @@ ix_attach(struct device *parent, struct device *self, void *aux)
 		/* Memory tests failed, punt... */
 		if (memsize == 0)  {
 			DPRINTF(("\n%s: can't determine size of on-card RAM\n",
-				sc->sc_dev.dv_xname));
+				device_xname(&sc->sc_dev)));
 			bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 			return;
 		}
@@ -956,7 +956,7 @@ ix_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!i82586_proberam(sc)) {
 		DPRINTF(("\n%s: Can't talk to i82586!\n",
-			sc->sc_dev.dv_xname));
+			device_xname(&sc->sc_dev)));
 		bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 
 		if (ia->ia_iomem[0].ir_size)
@@ -1000,13 +1000,13 @@ ix_attach(struct device *parent, struct device *self, void *aux)
 		      ix_media, NIX_MEDIA, media);
 
 	if (isc->use_pio)
-		printf("%s: unsupported memory config, using PIO to access %d bytes of memory\n", sc->sc_dev.dv_xname, sc->sc_msize);
+		aprint_error_dev(&sc->sc_dev, "unsupported memory config, using PIO to access %d bytes of memory\n", sc->sc_msize);
 
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, i82586_intr, sc);
 	if (isc->sc_ih == NULL) {
 		DPRINTF(("\n%s: can't establish interrupt\n",
-			sc->sc_dev.dv_xname));
+			device_xname(&sc->sc_dev)));
 	}
 }
 
