@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.21 2007/10/29 16:54:43 dyoung Exp $	*/
+/*	$NetBSD: route6.c,v 1.22 2008/04/08 23:37:43 thorpej Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.21 2007/10/29 16:54:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.22 2008/04/08 23:37:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -64,7 +64,7 @@ route6_input(struct mbuf **mp, int *offp, int proto)
 	ip6 = mtod(m, struct ip6_hdr *);
 	IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, sizeof(*rh));
 	if (rh == NULL) {
-		ip6stat.ip6s_tooshort++;
+		ip6stat[IP6_STAT_TOOSHORT]++;
 		return IPPROTO_DONE;
 	}
 
@@ -97,7 +97,7 @@ route6_input(struct mbuf **mp, int *offp, int proto)
 		 */
 		IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, rhlen);
 		if (rh == NULL) {
-			ip6stat.ip6s_tooshort++;
+			ip6stat[IP6_STAT_TOOSHORT]++;
 			return IPPROTO_DONE;
 		}
 		if (ip6_rthdr0(m, ip6, (struct ip6_rthdr0 *)rh))
@@ -110,7 +110,7 @@ route6_input(struct mbuf **mp, int *offp, int proto)
 			rhlen = (rh->ip6r_len + 1) << 3;
 			break;	/* Final dst. Just ignore the header. */
 		}
-		ip6stat.ip6s_badoptions++;
+		ip6stat[IP6_STAT_BADOPTIONS]++;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    (char *)&rh->ip6r_type - (char *)ip6);
 		return (IPPROTO_DONE);
@@ -148,14 +148,14 @@ ip6_rthdr0(struct mbuf *m, struct ip6_hdr *ip6,
 		 * RFC 2462: this limitation was removed since strict/loose
 		 * bitmap field was deleted.
 		 */
-		ip6stat.ip6s_badoptions++;
+		ip6stat[IP6_STAT_BADOPTIONS]++;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    (char *)&rh0->ip6r0_len - (char *)ip6);
 		return (-1);
 	}
 
 	if ((addrs = rh0->ip6r0_len / 2) < rh0->ip6r0_segleft) {
-		ip6stat.ip6s_badoptions++;
+		ip6stat[IP6_STAT_BADOPTIONS]++;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
 			    (char *)&rh0->ip6r0_segleft - (char *)ip6);
 		return (-1);
@@ -174,14 +174,14 @@ ip6_rthdr0(struct mbuf *m, struct ip6_hdr *ip6,
 	    IN6_IS_ADDR_UNSPECIFIED(nextaddr) ||
 	    IN6_IS_ADDR_V4MAPPED(nextaddr) ||
 	    IN6_IS_ADDR_V4COMPAT(nextaddr)) {
-		ip6stat.ip6s_badoptions++;
+		p6stat[IP6_STAT_BADOPTIONS]++;
 		goto bad;
 	}
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
-		ip6stat.ip6s_badoptions++;
+		ip6stat[IP6_STAT_BADOPTIONS]++;
 		goto bad;
 	}
 
@@ -193,7 +193,7 @@ ip6_rthdr0(struct mbuf *m, struct ip6_hdr *ip6,
 	if ((ip6a = ip6_getdstifaddr(m)) == NULL)
 		goto bad;
 	if (in6_setzoneid(nextaddr, ip6a->ip6a_scope_id) != 0) {
-		ip6stat.ip6s_badscope++;
+		ip6stat[IP6_STAT_BADSCOPE]++;
 		goto bad;
 	}
 

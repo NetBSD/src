@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.87 2008/02/27 19:40:56 matt Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.88 2008/04/08 23:37:43 thorpej Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.87 2008/02/27 19:40:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.88 2008/04/08 23:37:43 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1057,7 +1057,7 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 	 * (although such packets must normally set the hop limit field to 1).
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
-		ip6stat.ip6s_cantforward++;
+		ip6stat[IP6_STAT_CANTFORWARD]++;
 		if (ip6_log_time + ip6_log_interval < time_second) {
 			ip6_log_time = time_second;
 			log(LOG_DEBUG,
@@ -1475,7 +1475,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 	dst0 = ip6->ip6_dst;
 	if ((error = in6_setscope(&src0, ifp, &iszone)) != 0 ||
 	    (error = in6_setscope(&dst0, ifp, &idzone)) != 0) {
-		ip6stat.ip6s_badscope++;
+		ip6stat[IP6_STAT_BADSCOPE]++;
 		return (error);
 	}
 	for (mifp = mif6table, mifi = 0; mifi < nummifs; mifp++, mifi++)
@@ -1496,7 +1496,7 @@ ip6_mdq(struct mbuf *m, struct ifnet *ifp, struct mf6c *rt)
 				    in6_setscope(&dst0, mif6table[mifi].m6_ifp,
 				    &odzone) ||
 				    iszone != oszone || idzone != odzone) {
-					ip6stat.ip6s_badscope++;
+					ip6stat[IP6_STAT_BADSCOPE]++;
 					continue;
 				}
 			}

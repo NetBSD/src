@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.44 2008/04/08 15:04:35 thorpej Exp $	*/
+/*	$NetBSD: inet6.c,v 1.45 2008/04/08 23:37:43 thorpej Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.44 2008/04/08 15:04:35 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.45 2008/04/08 23:37:43 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -476,7 +476,7 @@ udp6_stats(off, name)
 #undef p1
 }
 
-static	char *ip6nh[] = {
+static	const char *ip6nh[] = {
 /*0*/	"hop by hop",
 	"ICMP",
 	"IGMP",
@@ -575,11 +575,9 @@ static	char *ip6nh[] = {
  * Dump IP6 statistics structure.
  */
 void
-ip6_stats(off, name)
-	u_long off;
-	char *name;
+ip6_stats(u_long off, char *name)
 {
-	struct ip6stat ip6stat;
+	uint64_t ip6stat[IP6_NSTATS];
 	int first, i;
 	struct protoent *ep;
 	const char *n;
@@ -587,50 +585,50 @@ ip6_stats(off, name)
 	if (use_sysctl) {
 		size_t size = sizeof(ip6stat);
 
-		if (sysctlbyname("net.inet6.ip6.stats", &ip6stat, &size,
+		if (sysctlbyname("net.inet6.ip6.stats", ip6stat, &size,
 		    NULL, 0) == -1)
 			err(1, "net.inet6.ip6.stats");
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&ip6stat, sizeof (ip6stat));
+		kread(off, (char *)ip6stat, sizeof (ip6stat));
 	}
 	printf("%s:\n", name);
 
-#define	p(f, m) if (ip6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ip6stat.f, plural(ip6stat.f))
-#define	p1(f, m) if (ip6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ip6stat.f)
+#define	p(f, m) if (ip6stat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)ip6stat[f], plural(ip6stat[f]))
+#define	p1(f, m) if (ip6stat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)ip6stat[f])
 
-	p(ip6s_total, "\t%llu total packet%s received\n");
-	p1(ip6s_toosmall, "\t%llu with size smaller than minimum\n");
-	p1(ip6s_tooshort, "\t%llu with data size < data length\n");
-	p1(ip6s_badoptions, "\t%llu with bad options\n");
-	p1(ip6s_badvers, "\t%llu with incorrect version number\n");
-	p(ip6s_fragments, "\t%llu fragment%s received\n");
-	p(ip6s_fragdropped,
+	p(IP6_STAT_TOTAL, "\t%llu total packet%s received\n");
+	p1(IP6_STAT_TOOSMALL, "\t%llu with size smaller than minimum\n");
+	p1(IP6_STAT_TOOSHORT, "\t%llu with data size < data length\n");
+	p1(IP6_STAT_BADOPTIONS, "\t%llu with bad options\n");
+	p1(IP6_STAT_BADVERS, "\t%llu with incorrect version number\n");
+	p(IP6_STAT_FRAGMENTS, "\t%llu fragment%s received\n");
+	p(IP6_STAT_FRAGDROPPED,
 	    "\t%llu fragment%s dropped (dup or out of space)\n");
-	p(ip6s_fragtimeout, "\t%llu fragment%s dropped after timeout\n");
-	p(ip6s_fragoverflow, "\t%llu fragment%s that exceeded limit\n");
-	p(ip6s_reassembled, "\t%llu packet%s reassembled ok\n");
-	p(ip6s_delivered, "\t%llu packet%s for this host\n");
-	p(ip6s_forward, "\t%llu packet%s forwarded\n");
-	p(ip6s_fastforward, "\t%llu packet%s fast forwarded\n");
-	p1(ip6s_fastforwardflows, "\t%llu fast forward flows\n");	
-	p(ip6s_cantforward, "\t%llu packet%s not forwardable\n");
-	p(ip6s_redirectsent, "\t%llu redirect%s sent\n");
-	p(ip6s_localout, "\t%llu packet%s sent from this host\n");
-	p(ip6s_rawout, "\t%llu packet%s sent with fabricated ip header\n");
-	p(ip6s_odropped,
+	p(IP6_STAT_FRAGTIMEOUT, "\t%llu fragment%s dropped after timeout\n");
+	p(IP6_STAT_FRAGOVERFLOW, "\t%llu fragment%s that exceeded limit\n");
+	p(IP6_STAT_REASSEMBLED, "\t%llu packet%s reassembled ok\n");
+	p(IP6_STAT_DELIVERED, "\t%llu packet%s for this host\n");
+	p(IP6_STAT_FORWARD, "\t%llu packet%s forwarded\n");
+	p(IP6_STAT_FASTFORWARD, "\t%llu packet%s fast forwarded\n");
+	p1(IP6_STAT_FASTFORWARDFLOWS, "\t%llu fast forward flows\n");	
+	p(IP6_STAT_CANTFORWARD, "\t%llu packet%s not forwardable\n");
+	p(IP6_STAT_REDIRECTSENT, "\t%llu redirect%s sent\n");
+	p(IP6_STAT_LOCALOUT, "\t%llu packet%s sent from this host\n");
+	p(IP6_STAT_RAWOUT, "\t%llu packet%s sent with fabricated ip header\n");
+	p(IP6_STAT_ODROPPED,
 	    "\t%llu output packet%s dropped due to no bufs, etc.\n");
-	p(ip6s_noroute, "\t%llu output packet%s discarded due to no route\n");
-	p(ip6s_fragmented, "\t%llu output datagram%s fragmented\n");
-	p(ip6s_ofragments, "\t%llu fragment%s created\n");
-	p(ip6s_cantfrag, "\t%llu datagram%s that can't be fragmented\n");
-	p(ip6s_badscope, "\t%llu packet%s that violated scope rules\n");
-	p(ip6s_notmember, "\t%llu multicast packet%s which we don't join\n");
+	p(IP6_STAT_NOROUTE, "\t%llu output packet%s discarded due to no route\n");
+	p(IP6_STAT_FRAGMENTED, "\t%llu output datagram%s fragmented\n");
+	p(IP6_STAT_OFRAGMENTS, "\t%llu fragment%s created\n");
+	p(IP6_STAT_CANTFRAG, "\t%llu datagram%s that can't be fragmented\n");
+	p(IP6_STAT_BADSCOPE, "\t%llu packet%s that violated scope rules\n");
+	p(IP6_STAT_NOTMEMBER, "\t%llu multicast packet%s which we don't join\n");
 	for (first = 1, i = 0; i < 256; i++)
-		if (ip6stat.ip6s_nxthist[i] != 0) {
+		if (ip6stat[IP6_STAT_NXTHIST + i] != 0) {
 			if (first) {
 				printf("\tInput packet histogram:\n");
 				first = 0;
@@ -642,31 +640,31 @@ ip6_stats(off, name)
 				n = ep->p_name;
 			if (n)
 				printf("\t\t%s: %llu\n", n,
-				    (unsigned long long)ip6stat.ip6s_nxthist[i]);
+				    (unsigned long long)ip6stat[IP6_STAT_NXTHIST + i]);
 			else
 				printf("\t\t#%d: %llu\n", i,
-				    (unsigned long long)ip6stat.ip6s_nxthist[i]);
+				    (unsigned long long)ip6stat[IP6_STAT_NXTHIST + i]);
 		}
 	printf("\tMbuf statistics:\n");
-	p(ip6s_m1, "\t\t%llu one mbuf%s\n");
+	p(IP6_STAT_M1, "\t\t%llu one mbuf%s\n");
 	for (first = 1, i = 0; i < 32; i++) {
 		char ifbuf[IFNAMSIZ];
-		if (ip6stat.ip6s_m2m[i] != 0) {		
+		if (ip6stat[IP6_STAT_M2M + i] != 0) {		
 			if (first) {
 				printf("\t\ttwo or more mbuf:\n");
 				first = 0;
 			}
 			printf("\t\t\t%s = %llu\n",
 			       if_indextoname(i, ifbuf),
-			       (unsigned long long)ip6stat.ip6s_m2m[i]);
+			       (unsigned long long)ip6stat[IP6_STAT_M2M + i]);
 		}
 	}
-	p(ip6s_mext1, "\t\t%llu one ext mbuf%s\n");
-	p(ip6s_mext2m, "\t\t%llu two or more ext mbuf%s\n");
-	p(ip6s_exthdrtoolong,
+	p(IP6_STAT_MEXT1, "\t\t%llu one ext mbuf%s\n");
+	p(IP6_STAT_MEXT2M, "\t\t%llu two or more ext mbuf%s\n");
+	p(IP6_STAT_EXTHDRTOOLONG,
 	    "\t%llu packet%s whose headers are not continuous\n");
-	p(ip6s_nogif, "\t%llu tunneling packet%s that can't find gif\n");
-	p(ip6s_toomanyhdr,
+	p(IP6_STAT_NOGIF, "\t%llu tunneling packet%s that can't find gif\n");
+	p(IP6_STAT_TOOMANYHDR,
 	    "\t%llu packet%s discarded due to too many headers\n");
 
 	/* for debugging source address selection */
@@ -686,60 +684,60 @@ ip6_stats(off, name)
 			break;\
 		default:\
 			printf("\t\t%llu addresses scope=%x\n",\
-			       (unsigned long long)ip6stat.s, i);\
+			       (unsigned long long)ip6stat[s], i);\
 		}\
-	} while(0);
+	} while(/*CONSTCOND*/0);
 
-	p(ip6s_sources_none,
+	p(IP6_STAT_SOURCES_NONE,
 	  "\t%llu failure%s of source address selection\n");
 	for (first = 1, i = 0; i < 16; i++) {
-		if (ip6stat.ip6s_sources_sameif[i]) {
+		if (ip6stat[IP6_STAT_SOURCES_SAMEIF + i]) {
 			if (first) {
 				printf("\tsource addresses on an outgoing I/F\n");
 				first = 0;
 			}
-			PRINT_SCOPESTAT(ip6s_sources_sameif[i], i);
+			PRINT_SCOPESTAT(IP6_STAT_SOURCES_SAMEIF + i, i);
 		}
 	}
 	for (first = 1, i = 0; i < 16; i++) {
-		if (ip6stat.ip6s_sources_otherif[i]) {
+		if (ip6stat[IP6_STAT_SOURCES_OTHERIF + i]) {
 			if (first) {
 				printf("\tsource addresses on a non-outgoing I/F\n");
 				first = 0;
 			}
-			PRINT_SCOPESTAT(ip6s_sources_otherif[i], i);
+			PRINT_SCOPESTAT(IP6_STAT_SOURCES_OTHERIF + i, i);
 		}
 	}
 	for (first = 1, i = 0; i < 16; i++) {
-		if (ip6stat.ip6s_sources_samescope[i]) {
+		if (ip6stat[IP6_STAT_SOURCES_SAMESCOPE + i]) {
 			if (first) {
 				printf("\tsource addresses of same scope\n");
 				first = 0;
 			}
-			PRINT_SCOPESTAT(ip6s_sources_samescope[i], i);
+			PRINT_SCOPESTAT(IP6_STAT_SOURCES_SAMESCOPE + i, i);
 		}
 	}
 	for (first = 1, i = 0; i < 16; i++) {
-		if (ip6stat.ip6s_sources_otherscope[i]) {
+		if (ip6stat[IP6_STAT_SOURCES_OTHERSCOPE + i]) {
 			if (first) {
 				printf("\tsource addresses of a different scope\n");
 				first = 0;
 			}
-			PRINT_SCOPESTAT(ip6s_sources_otherscope[i], i);
+			PRINT_SCOPESTAT(IP6_STAT_SOURCES_OTHERSCOPE + i, i);
 		}
 	}
 	for (first = 1, i = 0; i < 16; i++) {
-		if (ip6stat.ip6s_sources_deprecated[i]) {
+		if (ip6stat[IP6_STAT_SOURCES_DEPRECATED + i]) {
 			if (first) {
 				printf("\tdeprecated source addresses\n");
 				first = 0;
 			}
-			PRINT_SCOPESTAT(ip6s_sources_deprecated[i], i);
+			PRINT_SCOPESTAT(IP6_STAT_SOURCES_DEPRECATED + i, i);
 		}
 	}
 
-	p1(ip6s_forward_cachehit, "\t%llu forward cache hit\n");
-	p1(ip6s_forward_cachemiss, "\t%llu forward cache miss\n");
+	p1(IP6_STAT_FORWARD_CACHEHIT, "\t%llu forward cache hit\n");
+	p1(IP6_STAT_FORWARD_CACHEMISS, "\t%llu forward cache miss\n");
 #undef p
 #undef p1
 }
