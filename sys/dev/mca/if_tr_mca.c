@@ -1,4 +1,4 @@
-/* $NetBSD: if_tr_mca.c,v 1.16 2006/11/16 01:33:05 christos Exp $ */
+/* $NetBSD: if_tr_mca.c,v 1.17 2008/04/08 20:41:00 cegger Exp $ */
 
 /*_
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.16 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_mca.c,v 1.17 2008/04/08 20:41:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,19 +176,19 @@ tr_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, TR_PIOSIZE, 0, &pioh)) {
-		printf("%s: unable to map PIO space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map PIO space\n");
 		return;
 	}
 
 	/* map the mmio registers */
 	if (bus_space_map(ma->ma_memt, rom_addr, TR_MMIOSIZE, 0, &mmioh)) {
-		printf("%s: unable to map MMIO space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map MMIO space\n");
 		return;
 	}
 
 	/* map the sram space */
 	if (bus_space_map(ma->ma_memt, sram_addr, sram_size, 0, &sramh)) {
-		printf("%s: unable to map SRAM space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map SRAM space\n");
 		return;
 	}
 
@@ -224,8 +224,7 @@ tr_mca_attach(struct device *parent, struct device *self, void *aux)
 	/* establish interrupt handler */
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, tr_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 		return;
 	}
 

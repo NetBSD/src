@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.18 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.19 2008/04/08 20:41:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.18 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.19 2008/04/08 20:41:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,8 @@ ate_mca_attach(struct device *parent, struct device *self,
 	atp = ate_mca_lookup(ma->ma_id);
 #ifdef DIAGNOSTIC
 	if (atp == NULL) {
-		printf("\n%s: where did the card go?\n", sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "where did the card go?\n");
 		return;
 	}
 #endif
@@ -183,7 +184,7 @@ ate_mca_attach(struct device *parent, struct device *self,
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, iobase, ATE_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -207,8 +208,7 @@ ate_mca_attach(struct device *parent, struct device *self,
 	isc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET,
 			mb86960_intr, sc);
 	if (isc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 		return;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.15 2007/12/03 15:34:32 ad Exp $	*/
+/*	$NetBSD: gt.c,v 1.16 2008/04/08 20:40:42 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.15 2007/12/03 15:34:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.16 2008/04/08 20:40:42 cegger Exp $");
 
 #include "opt_marvell.h"
 #include "locators.h"
@@ -174,50 +174,50 @@ gt_attach_common(struct gt_softc *gt)
 #if DEBUG
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_SCS0_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_SCS0_High_Decode));
-	aprint_normal("%s:      scs[0]=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "     scs[0]=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_SCS1_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_SCS1_High_Decode));
-	aprint_normal("%s:      scs[1]=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "     scs[1]=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_SCS2_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_SCS2_High_Decode));
-	aprint_normal("%s:      scs[2]=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "     scs[2]=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_SCS3_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_SCS3_High_Decode));
-	aprint_normal("%s:      scs[3]=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "     scs[3]=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_CS0_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_CS0_High_Decode));
-	aprint_normal("%s:       cs[0]=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      cs[0]=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_CS1_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_CS1_High_Decode));
-	aprint_normal("%s:       cs[1]=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      cs[1]=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_CS2_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_CS2_High_Decode));
-	aprint_normal("%s:       cs[2]=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      cs[2]=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_CS3_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_CS3_High_Decode));
-	aprint_normal("%s:       cs[3]=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      cs[3]=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_BootCS_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_BootCS_High_Decode));
-	aprint_normal("%s:      bootcs=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      bootcs=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI0_IO_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI0_IO_High_Decode));
-	aprint_normal("%s:      pci0io=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci0io=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI0_IO_Remap);
 	aprint_normal("remap=%#010x\n", loaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI0_Mem0_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI0_Mem0_High_Decode));
-	aprint_normal("%s:  pci0mem[0]=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci0mem[0]=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI0_Mem0_Remap_Low);
 	hiaddr = gt_read(gt, GT_PCI0_Mem0_Remap_High);
@@ -225,7 +225,7 @@ gt_attach_common(struct gt_softc *gt)
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI0_Mem1_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI0_Mem1_High_Decode));
-	aprint_normal("%s:  pci0mem[1]=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci0mem[1]=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI0_Mem1_Remap_Low);
 	hiaddr = gt_read(gt, GT_PCI0_Mem1_Remap_High);
@@ -233,7 +233,7 @@ gt_attach_common(struct gt_softc *gt)
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI0_Mem2_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI0_Mem2_High_Decode));
-	aprint_normal("%s:  pci0mem[2]=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci0mem[2]=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI0_Mem2_Remap_Low);
 	hiaddr = gt_read(gt, GT_PCI0_Mem2_Remap_High);
@@ -241,7 +241,7 @@ gt_attach_common(struct gt_softc *gt)
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI0_Mem3_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI0_Mem3_High_Decode));
-	aprint_normal("%s:  pci0mem[3]=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci0mem[3]=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI0_Mem3_Remap_Low);
 	hiaddr = gt_read(gt, GT_PCI0_Mem3_Remap_High);
@@ -249,14 +249,14 @@ gt_attach_common(struct gt_softc *gt)
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI1_IO_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI1_IO_High_Decode));
-	aprint_normal("%s:      pci1io=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci1io=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI1_IO_Remap);
 	aprint_normal("remap=%#010x\n", loaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI1_Mem0_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI1_Mem0_High_Decode));
-	aprint_normal("%s:  pci1mem[0]=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci1mem[0]=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI1_Mem0_Remap_Low);
 	hiaddr = gt_read(gt, GT_PCI1_Mem0_Remap_High);
@@ -264,7 +264,7 @@ gt_attach_common(struct gt_softc *gt)
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI1_Mem1_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI1_Mem1_High_Decode));
-	aprint_normal("%s:  pci1mem[1]=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci1mem[1]=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI1_Mem1_Remap_Low);
 	hiaddr = gt_read(gt, GT_PCI1_Mem1_Remap_High);
@@ -272,7 +272,7 @@ gt_attach_common(struct gt_softc *gt)
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI1_Mem2_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI1_Mem2_High_Decode));
-	aprint_normal("%s:  pci1mem[2]=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci1mem[2]=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI1_Mem2_Remap_Low);
 	hiaddr = gt_read(gt, GT_PCI1_Mem2_Remap_High);
@@ -280,26 +280,26 @@ gt_attach_common(struct gt_softc *gt)
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_PCI1_Mem3_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_PCI1_Mem3_High_Decode));
-	aprint_normal("%s:  pci1mem[3]=%#10x-%#10x  ", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      pci1mem[3]=%#10x-%#10x  ", loaddr, hiaddr);
 
 	loaddr = gt_read(gt, GT_PCI1_Mem3_Remap_Low);
 	hiaddr = gt_read(gt, GT_PCI1_Mem3_Remap_High);
 	aprint_normal("remap=%#010x.%#010x\n", hiaddr, loaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_Internal_Decode));
-	aprint_normal("%s:    internal=%#10x-%#10x\n", gt->gt_dev.dv_xname,
+	aprint_normal_dev(&gt->gt_dev, "      internal=%#10x-%#10x\n",
 		loaddr, loaddr+256*1024);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_CPU0_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_CPU0_High_Decode));
-	aprint_normal("%s:        cpu0=%#10x-%#10x\n", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "      cpu0=%#10x-%#10x\n", loaddr, hiaddr);
 
 	loaddr = GT_LowAddr_GET(gt_read(gt, GT_CPU1_Low_Decode));
 	hiaddr = GT_HighAddr_GET(gt_read(gt, GT_CPU1_High_Decode));
-	aprint_normal("%s:        cpu1=%#10x-%#10x", gt->gt_dev.dv_xname, loaddr, hiaddr);
+	aprint_normal_dev(&gt->gt_dev, "       cpu1=%#10x-%#10x", loaddr, hiaddr);
 #endif
 
-	aprint_normal("%s:", gt->gt_dev.dv_xname);
+	aprint_normal_dev(&gt->gt_dev, "");
 
 	cpucfg = gt_read(gt, GT_CPU_Cfg);
 	cpucfg |= GT_CPUCfg_ConfSBDis;		/* per errata #46 */
@@ -364,7 +364,7 @@ gt_init_interrupt(struct gt_softc *gt)
 	 * - set the configured GPP pins to input, active low, interrupt enbl
 	 */
 #ifdef DEBUG
-	printf("%s: mpp cfg ", gt->gt_dev.dv_xname);
+	printf("%s: mpp cfg ", device_xname(&gt->gt_dev));
 	for (regoff = GT_MPP_Control0; regoff <= GT_MPP_Control3; regoff += 4)
 		printf("%#x ", gt_read(gt, regoff));
 	printf(", mppirpts 0x%x\n", mppirpts);
@@ -525,7 +525,7 @@ gt_comm_intr(void *arg)
 	addr = gt_read(gt, GT_CommUnitIntr_ErrAddr);
 
 	printf("%s: Comm Unit irpt, cause %#x addr %#x\n",
-		gt->gt_dev.dv_xname, cause, addr);
+		device_xname(&gt->gt_dev), cause, addr);
 
 	cause &= GT_CommUnitIntr_DFLT;
 	if (cause == 0)
@@ -534,7 +534,7 @@ gt_comm_intr(void *arg)
 	mask = 0x7;
 	for (i=0; i<7; i++) {
 		if (cause & mask) {
-			printf("%s: Comm Unit %s:", gt->gt_dev.dv_xname,
+			printf("%s: Comm Unit %s:", device_xname(&gt->gt_dev),
 				gt_comm_subunit_name[i]);
 			if (cause & 1)
 				printf(" AddrMiss");
@@ -564,7 +564,7 @@ gt_comm_intr_enb(struct gt_softc *gt)
 	(void)gt_read(gt, GT_CommUnitIntr_ErrAddr);
 
 	intr_establish(IRQ_COMM, IST_LEVEL, IPL_VM, gt_comm_intr, gt);
-	printf("%s: Comm Unit irpt at %d\n", gt->gt_dev.dv_xname, IRQ_COMM);
+	printf("%s: Comm Unit irpt at %d\n", device_xname(&gt->gt_dev), IRQ_COMM);
 }
 
 #ifdef GT_ECC
@@ -599,7 +599,7 @@ gt_ecc_intr(void *arg)
 
 	printf("%s: ECC error: %s: "
 		"addr %#x data %#x.%#x rec %#x calc %#x cnt %#x\n",
-		gt->gt_dev.dv_xname, gt_ecc_intr_str[err],
+		device_xname(&gt->gt_dev), gt_ecc_intr_str[err],
 		addr, dhi, dlo, rec, calc, count);
 
 	if (err == 2)
@@ -627,7 +627,7 @@ gt_ecc_intr_enb(struct gt_softc *gt)
 	gt_write(gt, GT_ECC_Addr, 0);		/* clear irpt */
 
 	intr_establish(IRQ_ECC, IST_LEVEL, IPL_VM, gt_ecc_intr, gt);
-	printf("%s: ECC irpt at %d\n", gt->gt_dev.dv_xname, IRQ_ECC);
+	printf("%s: ECC irpt at %d\n", device_xname(&gt->gt_dev), IRQ_ECC);
 }
 #endif	/* GT_ECC */
 
@@ -641,7 +641,7 @@ gt_watchdog_init(struct gt_softc *gt)
 
 	omsr = extintr_disable();
 
-	printf("%s: watchdog", gt->gt_dev.dv_xname);
+	printf("%s: watchdog", device_xname(&gt->gt_dev));
 
 	/*
 	 * handle case where firmware started watchdog
@@ -675,7 +675,7 @@ gt_watchdog_init(struct gt_softc *gt)
 	u_int32_t regoff;
 	unsigned int omsr;
 
-	printf("%s: watchdog", gt->gt_dev.dv_xname);
+	printf("%s: watchdog", device_xname(&gt->gt_dev));
 
 	if (mpp_watchdog == 0) {
 		printf(" not configured\n");
@@ -896,14 +896,14 @@ gt_devbus_intr(void *arg)
 
 	if (cause & GT_DEVBUS_DBurstErr) {
 		printf("%s: Device Bus error: burst violation",
-			gt->gt_dev.dv_xname);
+			device_xname(&gt->gt_dev));
 		if ((cause & GT_DEVBUS_Sel) == 0)
 			printf(", addr %#x", addr);
 		printf("\n");
 	}
 	if (cause & GT_DEVBUS_DRdyErr) {
 		printf("%s: Device Bus error: ready timer expired",
-			gt->gt_dev.dv_xname);
+			device_xname(&gt->gt_dev));
 		if ((cause & GT_DEVBUS_Sel) != 0)
 			printf(", addr %#x\n", addr);
 		printf("\n");
@@ -925,7 +925,7 @@ gt_devbus_intr_enb(struct gt_softc *gt)
 
 	intr_establish(IRQ_DEV, IST_LEVEL, IPL_VM, gt_devbus_intr, gt);
 	printf("%s: Device Bus Error irpt at %d\n",
-		gt->gt_dev.dv_xname, IRQ_DEV);
+		device_xname(&gt->gt_dev), IRQ_DEV);
 }
 
 
@@ -947,7 +947,7 @@ gt_mii_read(
 
 	if (count == 0) {
 		printf("%s: mii read for phy %d reg %d busied out\n",
-			child->dv_xname, phy, reg);
+			device_xname(child), phy, reg);
 		return ETH_ESMIR_Value_GET(data);
 	}
 
@@ -961,10 +961,10 @@ gt_mii_read(
 
 	if (count == 0)
 		printf("%s: mii read for phy %d reg %d timed out\n",
-			child->dv_xname, phy, reg);
+			device_xname(child), phy, reg);
 #if defined(GTMIIDEBUG)
 	printf("%s: mii_read(%d, %d): %#x data %#x\n",
-		child->dv_xname, phy, reg,
+		device_xname(child), phy, reg,
 		data, ETH_ESMIR_Value_GET(data));
 #endif
 	return ETH_ESMIR_Value_GET(data);
@@ -988,7 +988,7 @@ gt_mii_write (
 
 	if (count == 0) {
 		printf("%s: mii write for phy %d reg %d busied out (busy)\n",
-			child->dv_xname, phy, reg);
+			device_xname(child), phy, reg);
 		return;
 	}
 
@@ -1003,10 +1003,10 @@ gt_mii_write (
 
 	if (count == 0)
 		printf("%s: mii write for phy %d reg %d timed out\n",
-			child->dv_xname, phy, reg);
+			device_xname(child), phy, reg);
 #if defined(GTMIIDEBUG)
 	printf("%s: mii_write(%d, %d, %#x)\n",
-		child->dv_xname, phy, reg, value);
+		device_xname(child), phy, reg, value);
 #endif
 }
 

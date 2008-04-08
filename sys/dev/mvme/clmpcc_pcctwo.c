@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.13 2007/10/19 12:00:36 ad Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.14 2008/04/08 20:42:21 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.13 2007/10/19 12:00:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.14 2008/04/08 20:42:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ clmpcc_pcctwo_iackhook(sc, which)
 	default:
 #ifdef DEBUG
 		printf("%s: Invalid IACK number '%d'\n",
-		    sc->sc_dev.dv_xname, which);
+		    device_xname(&sc->sc_dev), which);
 #endif
 		panic("clmpcc_pcctwo_iackhook %d", which);
 	}
@@ -211,7 +211,7 @@ clmpcc_pcctwo_consiackhook(sc, which)
 	default:
 #ifdef DEBUG
 		printf("%s: Invalid IACK number '%d'\n",
-		    sc->sc_dev.dv_xname, which);
+		    device_xname(&sc->sc_dev), which);
 		panic("clmpcc_pcctwo_consiackhook");
 #endif
 		panic("clmpcc_pcctwo_iackhook %d", which);

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_mca.c,v 1.17 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: aha_mca.c,v 1.18 2008/04/08 20:41:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.17 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_mca.c,v 1.18 2008/04/08 20:41:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ aha_mca_attach(struct device *parent, struct device *self, void *aux)
 		 ((ma->ma_pos[3] & 0x40) >> 4);
 
 	if (bus_space_map(iot, iobase, AHA_ISA_IOSIZE, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -166,8 +166,7 @@ aha_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ih = mca_intr_establish(mc, apd.sc_irq, IPL_BIO, aha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 

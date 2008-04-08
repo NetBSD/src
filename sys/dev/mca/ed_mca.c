@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.39 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.40 2008/04/08 20:41:00 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.39 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.40 2008/04/08 20:41:00 cegger Exp $");
 
 #include "rnd.h"
 
@@ -169,7 +169,7 @@ ed_mca_attach(parent, self, aux)
 		ed->sc_capacity);
 
 	printf("%s: %u spares/cyl, %s, %s, %s, %s, %s\n",
-		ed->sc_dev.dv_xname, ed->spares,
+		device_xname(&ed->sc_dev), ed->spares,
 		(drv_flags & (1 << 0)) ? "NoRetries" : "Retries",
 		(drv_flags & (1 << 1)) ? "Removable" : "Fixed",
 		(drv_flags & (1 << 2)) ? "SkewedFormat" : "NoSkew",
@@ -180,10 +180,10 @@ ed_mca_attach(parent, self, aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&ed->sc_dk, ed->sc_dev.dv_xname, &eddkdriver);
+	disk_init(&ed->sc_dk, device_xname(&ed->sc_dev), &eddkdriver);
 	disk_attach(&ed->sc_dk);
 #if NRND > 0
-	rnd_attach_source(&ed->rnd_source, ed->sc_dev.dv_xname,
+	rnd_attach_source(&ed->rnd_source, device_xname(&ed->sc_dev),
 			  RND_TYPE_DISK, 0);
 #endif
 
@@ -208,7 +208,7 @@ edmcastrategy(bp)
 	struct disklabel *lp = ed->sc_dk.dk_label;
 	daddr_t blkno;
 
-	ATADEBUG_PRINT(("edmcastrategy (%s)\n", ed->sc_dev.dv_xname),
+	ATADEBUG_PRINT(("edmcastrategy (%s)\n", device_xname(&ed->sc_dev)),
 	    DEBUG_XFERS);
 
 	/* Valid request?  */
@@ -460,7 +460,7 @@ edgetdisklabel(dev, ed)
 			edmcastrategy, lp, ed->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
-		printf("%s: %s\n", ed->sc_dev.dv_xname, errstring);
+		printf("%s: %s\n", device_xname(&ed->sc_dev), errstring);
 		return;
 	}
 }
@@ -580,7 +580,8 @@ edmcaioctl(dev, xfer, addr, flag, l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, ed->sc_dev.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&ed->sc_dev),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
 
@@ -592,7 +593,8 @@ edmcaioctl(dev, xfer, addr, flag, l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, ed->sc_dev.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&ed->sc_dev),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }
 

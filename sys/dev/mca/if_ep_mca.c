@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.18 2007/10/19 12:00:35 ad Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.19 2008/04/08 20:41:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.18 2007/10/19 12:00:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.19 2008/04/08 20:41:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ ep_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, MCA_IOSZ, 0, &ioh)) {
-		printf("%s: unable to map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map i/o space\n");
 		return;
 	}
 
@@ -225,8 +225,7 @@ ep_mca_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 		return;
 	}
 
@@ -251,8 +250,7 @@ ep_mca_attach(struct device *parent, struct device *self, void *aux)
 		media = IFM_10_2;
 		break;
 	default:
-		printf("%s: cannot determine media\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, " cannot determine media\n");
 		return;
 	}
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|media);

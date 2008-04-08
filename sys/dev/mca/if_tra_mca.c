@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.8 2007/10/19 12:00:35 ad Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.9 2008/04/08 20:41:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.8 2007/10/19 12:00:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.9 2008/04/08 20:41:00 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,8 +194,7 @@ tiara_mca_attach(struct device *parent, struct device *self, void *aux)
 		if ((pos2 & 0x80) != 0)
 			irq = smc_irq[((pos2 & 0x70) >> 4)];
 		else {
-			printf("%s: unsupported irq selected\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unsupported irq selected\n");
 			return;
 		}
 
@@ -212,7 +211,8 @@ tiara_mca_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DIAGNOSTIC
 	tra_p = tiara_mca_lookup(ma->ma_id);
 	if (tra_p == NULL) {
-		printf("\n%s: where did the card go?\n", sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "where did the card go?\n");
 		return;
 	}
 #endif
@@ -221,7 +221,7 @@ tiara_mca_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, iobase, TIARA_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -248,8 +248,7 @@ tiara_mca_attach(struct device *parent, struct device *self, void *aux)
 	isc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET,
 			mb86950_intr, sc);
 	if (isc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
 		return;
 	}
 }

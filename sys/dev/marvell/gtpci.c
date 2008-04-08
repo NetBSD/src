@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.17 2007/12/03 15:34:32 ad Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.18 2008/04/08 20:40:42 cegger Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.17 2007/12/03 15:34:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.18 2008/04/08 20:40:42 cegger Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -292,8 +292,8 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 		    IPL_VM, gtpci_error_intr, pc);
 		intr_establish(pci_irqs[gtpc->gtpc_busno][2], IST_LEVEL,
 		    IPL_VM, gtpci_error_intr, pc);
-		aprint_normal("%s: %s%d error interrupts at irqs %s, %s, %s\n",
-		    pc->pc_parent->dv_xname, "pci", busno,
+		aprint_normal_dev(pc->pc_parent, "%d error interrupts at irqs %s, %s, %s\n",
+		    "pci", busno,
 		    intr_string(pci_irqs[gtpc->gtpc_busno][0]),
 		    intr_string(pci_irqs[gtpc->gtpc_busno][1]),
 		    intr_string(pci_irqs[gtpc->gtpc_busno][2]));
@@ -491,7 +491,8 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 
 	data = gtpci_read(gtpc, PCI_COMMAND(gtpc->gtpc_busno));
 	if (data & (PCI_CMD_MSwapEn|PCI_CMD_SSwapEn)) {
-		aprint_normal("\n%s: ", self->dv_xname);
+		aprint_normal("\n");
+		aprint_normal_dev(self, "");
 		if (data & PCI_CMD_MSwapEn) {
 			switch (data & (PCI_CMD_MWordSwap|PCI_CMD_MByteSwap)) {
 			case PCI_CMD_MWordSwap:
@@ -524,9 +525,11 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 		return;
 
 	data = gtpci_read(gtpc, PCI_BASE_ADDR_REGISTERS_ENABLE(gtpc->gtpc_busno));
-	aprint_normal("\n%s: BARs enabled: %#x", self->dv_xname, data);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "BARs enabled: %#x", data);
 
-	aprint_normal("\n%s: 0:0:0\n", self->dv_xname);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "0:0:0\n");
 	aprint_normal("   %sSCS0=%#010x",
 		(data & 1) ? "-" : "+",
 		gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self, 0x10));
@@ -646,7 +649,8 @@ gtpci_bus_attach_hook(struct device *parent, struct device *self,
 		gtpci_read(gtpc, PCI_CPU_BASE_ADDR_REMAP(gtpc->gtpc_busno)));
 
 	for (i = 0; i < 8; i++) {
-		aprint_normal("\n%s: Access Control %d: ", self->dv_xname, i);
+		aprint_normal("\n");
+		aprint_normal_dev("Access Control %d: ", device_xname(self), i);
 		data = gtpci_read(gtpc,
 		    PCI_ACCESS_CONTROL_BASE_HIGH(gtpc->gtpc_busno, i));
 		if (data)
@@ -679,7 +683,7 @@ gtpci_error_intr(void *arg)
 	cause &= errmask | 0xf8000000;
 	gtpci_write(gtpc, PCI_ERROR_CAUSE(gtpc->gtpc_busno), ~cause);
 	printf("%s: pci%d error: cause=%#x mask=%#x",
-		pc->pc_parent->dv_xname, gtpc->gtpc_busno, cause, errmask);
+		device_xname(pc->pc_parent), gtpc->gtpc_busno, cause, errmask);
 	if ((cause & 0xf8000000) == 0) {
 		printf(" ?\n");
 		return 0;
@@ -701,7 +705,7 @@ gtpci_error_intr(void *arg)
 	ahi = gtpci_read(gtpc, PCI_ERROR_ADDRESS_HIGH(gtpc->gtpc_busno));
 	alo = gtpci_read(gtpc, PCI_ERROR_ADDRESS_LOW(gtpc->gtpc_busno));
 	printf("\n%s: pci%d error: %s cmd=%#x",
-		pc->pc_parent->dv_xname, gtpc->gtpc_busno,
+		device_xname(pc->pc_parent), gtpc->gtpc_busno,
 		gtpci_error_strings[PCI_IC_SEL_GET(cause)], cmd);
 	if (dhi == 0)
 		printf(" data=%08x", dlo);

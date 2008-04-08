@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.16 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.17 2008/04/08 20:41:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.16 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.17 2008/04/08 20:41:00 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,7 +202,7 @@ esp_mca_attach(
 
 	/* Map the 86C01 registers */
 	if (bus_space_map(ma->ma_iot, iobase, ESP_MCA_IOSIZE, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -212,7 +212,7 @@ esp_mca_attach(
 	/* Submap the 'esp' registers */
 	if (bus_space_subregion(ma->ma_iot, ioh, ESP_REG_OFFSET,
 	    ESP_MCA_IOSIZE-ESP_REG_OFFSET, &esc->sc_esp_ioh)) {
-		printf("%s: can't subregion i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't subregion i/o space\n");
 		return;
 	}
 
@@ -221,8 +221,7 @@ esp_mca_attach(
 	if ((error = mca_dmamap_create(esc->sc_dmat, MAXPHYS,
             BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | MCABUS_DMA_IOPORT,
 	    &esc->sc_xfer, drq)) != 0){
-                printf("%s: couldn't create DMA map - error %d\n",
-                        sc->sc_dev.dv_xname, error);
+                aprint_error_dev(&sc->sc_dev, "couldn't create DMA map - error %d\n", error);
                 return;
         }
 
@@ -245,8 +244,7 @@ esp_mca_attach(
 	esc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_BIO, ncr53c9x_intr,
 			esc);
 	if (esc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 
@@ -267,7 +265,7 @@ esp_mca_attach(
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 
 	/* Do the common parts of attachment. */
-	printf("%s", sc->sc_dev.dv_xname);
+	printf("%s", device_xname(&sc->sc_dev));
 	ncr53c9x_attach(sc);
 }
 
@@ -334,7 +332,7 @@ esp_dma_intr(sc)
 	DPRINTF(("[esp_dma_intr] "));
 
 	if ((esc->sc_flags & ESP_XFER_ACTIVE) == 0) {
-		printf("%s: dma_intr--inactive DMA\n", sc->sc_dev.dv_xname);
+		printf("%s: dma_intr--inactive DMA\n", device_xname(&sc->sc_dev));
 		return (-1);
 	}
 
@@ -347,7 +345,7 @@ esp_dma_intr(sc)
 	sc->sc_espstat |= NCRSTAT_TC;	/* XXX */
 
 	if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
-		printf("%s: DMA not complete?\n", sc->sc_dev.dv_xname);
+		printf("%s: DMA not complete?\n", device_xname(&sc->sc_dev));
 		return (1);
 	}
 
@@ -387,8 +385,7 @@ esp_dma_setup(
 	DPRINTF(("[esp_dma_setup] "));
 
 	if (esc->sc_flags & ESP_XFER_LOADED) {
-		printf("%s: esp_dma_setup: unloading leaked xfer\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "esp_dma_setup: unloading leaked xfer\n");
 		bus_dmamap_unload(esc->sc_dmat, esc->sc_xfer);
 		esc->sc_flags &= ~ESP_XFER_LOADED;
 	}
@@ -398,8 +395,7 @@ esp_dma_setup(
 
 	if ((error = bus_dmamap_load(esc->sc_dmat, esc->sc_xfer, *addr,
 	    *len, NULL, BUS_DMA_STREAMING|fl))) {
-		printf("%s: esp_dma_setup: unable to load DMA buffer - error %d\n",
-			sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "esp_dma_setup: unable to load DMA buffer - error %d\n", error);
 		return (error);
 	}
 
@@ -430,7 +426,7 @@ esp_dma_stop(sc)
 {
 	DPRINTF(("[esp_dma_stop] "));
 
-	panic("%s: stop not yet implemented", sc->sc_dev.dv_xname);
+	panic("%s: stop not yet implemented", device_xname(&sc->sc_dev));
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.18 2008/03/01 14:16:50 rmind Exp $	*/
+/*	$NetBSD: cir.c,v 1.19 2008/04/08 20:42:51 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.18 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.19 2008/04/08 20:42:51 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_methods->im_read == NULL ||
 	    sc->sc_methods->im_write == NULL ||
 	    sc->sc_methods->im_setparams == NULL)
-		panic("%s: missing methods", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", device_xname(&sc->sc_dev));
 #endif
 	printf("\n");
 }
