@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.12 2008/02/14 19:41:54 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.13 2008/04/08 02:33:03 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.12 2008/02/14 19:41:54 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.13 2008/04/08 02:33:03 garbled Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -136,11 +136,19 @@ static int save_ofmap(struct ofw_translations *, int);
 static void restore_ofmap(struct ofw_translations *, int);
 static void set_timebase(void);
 
+extern void cpu_spinstart(u_int);
+volatile u_int cpu_spinstart_ack, cpu_spinstart_cpunum;
+
 void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 {
 	int ofmaplen, node, l;
 	register_t scratch;
+
+#if defined(MULTIPROCESSOR) && defined(ofppc)
+	char cpupath[32];
+	int i;
+#endif
 
 	/* initialze bats */
 	if ((oeacpufeat & OEACPU_NOBAT) == 0)
@@ -167,6 +175,24 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	}
 
 	ofwoea_consinit();
+
+#if defined(MULTIPROCESSOR) && defined(ofppc)
+	for (i=1; i < CPU_MAXNUM; i++) {
+		sprintf(cpupath, "/cpus/@%x", i);
+		node = OF_finddevice(cpupath);
+		if (node <= 0)
+			continue;
+		aprint_verbose("Starting up CPU %d %s\n", i, cpupath);
+		OF_start_cpu(node, (u_int)cpu_spinstart, i);
+		for (l=0; l < 100000000; l++) {
+			if (cpu_spinstart_ack == i) {
+				aprint_verbose("CPU %d spun up.\n", i);
+				break;
+			}
+			__asm volatile ("sync");
+		}
+	}
+#endif
 
 	oea_init(pic_ext_intr);
 
@@ -198,6 +224,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 #endif
 	pmap_bootstrap(startkernel, endkernel);
 
+/* as far as I can tell, the pmap_setup_seg0 stuff is horribly broken */
 #if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #if defined (PMAC_G5)
 	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
@@ -284,6 +311,10 @@ save_ofmap(struct ofw_translations *map, int maxlen)
 	return len;
 }
 
+
+/* The PMAC_G5 code here needs to be replaced by code that looks for the
+   size_cells and does the right thing automatically.
+*/
 void
 restore_ofmap(struct ofw_translations *map, int len)
 {
@@ -292,10 +323,6 @@ restore_ofmap(struct ofw_translations *map, int len)
 
 	pmap_pinit(&ofw_pmap);
 
-#if defined(PPC_OEA64_BRIDGE)
-	if (oeacpufeat & OEACPU_64_BRIDGE)
-		ofw_pmap.pm_sr[0x0] = KERNELN_SEGMENT(0);
-#endif
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
 
 #ifdef KERNEL2_SR

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 2008/02/13 21:12:32 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22 2008/04/08 02:33:03 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2008/02/13 21:12:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2008/04/08 02:33:03 garbled Exp $");
 
 #include "opt_interrupt.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,12 +50,14 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2008/02/13 21:12:32 garbled Exp $")
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 #include <arch/powerpc/pic/picvar.h>
+#ifdef MULTIPROCESSOR
+#include <arch/powerpc/pic/ipivar.h>
+#endif
 #include <machine/pci_machdep.h>
 #include <machine/autoconf.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -133,6 +136,15 @@ init_openpic(int node)
 			aprint_normal("Found openpic at %08x\n",
 			    rp->host | aadr.phys_lo);
 			setup_openpic(baseaddr, 0);
+#ifdef MULTIPROCESSOR
+			setup_openpic_ipi();
+			ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
+			for (i=1; i < ncpu; i++) {
+				aprint_verbose("Enabling interrupts "
+				    "for cpu%d\n", i);
+				openpic_set_priority(i, 0);
+			}
+#endif
 			return TRUE;
 		}
 		rp++;
@@ -152,6 +164,14 @@ init_openpic(int node)
 		aprint_verbose("Found openpic at %08x\n", reg[0]);
 #ifdef PIC_OPENPIC
 		(void)setup_openpic(baseaddr, 0);
+#ifdef MULTIPROCESSOR
+		setup_openpic_ipi();
+		ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
+		for (i=1; i < ncpu; i++) {
+			aprint_verbose("Enabling interrupts for cpu%d\n", i);
+			openpic_set_priority(i, 0);
+		}
+#endif
 		return TRUE;
 #else
 		aprint_error("No openpic support compiled into kernel!");
@@ -176,6 +196,14 @@ init_openpic(int node)
 		isumap[j] = reg[(j+1)*2+1];
 	}
 	(void)setup_distributed_openpic(baseaddr, i, (void **)isu, isumap);
+#ifdef MULTIPROCESSOR
+	setup_openpic_ipi();
+	ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
+	for (i=1; i < ncpu; i++) {
+		aprint_verbose("Enabling interrupts for cpu%d\n", i);
+		openpic_set_priority(i, 0);
+	}
+#endif
 	return TRUE;
 #endif
 	aprint_error("PIC support not present or PIC error\n");
@@ -202,7 +230,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ofbus_attach_args oba;
 	struct confargs ca;
-	int node, i;
+	int node, rtnode, i;
 	u_int32_t reg[4];
 	char name[32];
 
@@ -210,6 +238,21 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 
+	/* Find rtas first */
+	rtnode = OF_finddevice("/rtas");
+	if (rtnode) {
+		memset(name, 0, sizeof(name));
+		if (OF_getprop(rtnode, "name", name, sizeof(name)) != -1) {
+			ca.ca_name = name;
+			ca.ca_node = rtnode;
+			ca.ca_nreg = OF_getprop(rtnode, "reg", reg,
+			    sizeof(reg));
+			ca.ca_reg  = reg;
+			config_found(self, &ca, NULL);
+		}
+	}
+
+	/* Now find CPU's */
 	for (i = 0; i < CPU_MAXNUM; i++) {
 		ca.ca_name = "cpu";
 		ca.ca_reg = reg;
@@ -229,13 +272,18 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		memset(name, 0, sizeof(name));
 		if (OF_getprop(node, "name", name, sizeof(name)) == -1)
 			continue;
+		/* skip rtas */
+		if (node == rtnode)
+			continue;
 
 		ca.ca_name = name;
 		ca.ca_node = node;
 		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
 		ca.ca_reg  = reg;
 		config_found(self, &ca, NULL);
+
 	}
+	pic_finish_setup();
 }
 
 void
