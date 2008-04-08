@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.140 2007/12/16 14:12:35 elad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.141 2008/04/08 01:03:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.140 2007/12/16 14:12:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.141 2008/04/08 01:03:58 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -436,7 +436,7 @@ tcp_usrreq(struct socket *so, int req,
 		    (TCP_MAXWIN << tp->request_r_scale) < sb_max)
 			tp->request_r_scale++;
 		soisconnecting(so);
-		tcpstat.tcps_connattempt++;
+		tcpstat[TCP_STAT_CONNATTEMPT]++;
 		tp->t_state = TCPS_SYN_SENT;
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
 		tp->iss = tcp_new_iss(tp, 0);
@@ -1959,7 +1959,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("TCP statistics"),
-		       NULL, 0, &tcpstat, sizeof(tcpstat),
+		       NULL, 0, tcpstat, sizeof(tcpstat),
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_STATS,
 		       CTL_EOL);
 #ifdef TCP_DEBUG
