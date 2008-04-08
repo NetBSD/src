@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.225 2008/03/27 00:18:56 cube Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.226 2008/04/08 01:03:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.225 2008/03/27 00:18:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.226 2008/04/08 01:03:58 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -170,7 +170,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.225 2008/03/27 00:18:56 cube Exp $");
 
 
 struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
-struct	tcpstat tcpstat;	/* tcp statistics */
+uint64_t tcpstat[TCP_NSTATS];	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 
 /* patchable/settable parameters for tcp */
@@ -1094,9 +1094,9 @@ tcp_drop(struct tcpcb *tp, int errno)
 	if (TCPS_HAVERCVDSYN(tp->t_state)) {
 		tp->t_state = TCPS_CLOSED;
 		(void) tcp_output(tp);
-		tcpstat.tcps_drops++;
+		tcpstat[TCP_STAT_DROPS]++;
 	} else
-		tcpstat.tcps_conndrops++;
+		tcpstat[TCP_STAT_CONNDROPS]++;
 	if (errno == ETIMEDOUT && tp->t_softerror)
 		errno = tp->t_softerror;
 	so->so_error = errno;
@@ -1122,7 +1122,7 @@ tcp_isdead(struct tcpcb *tp)
 		if (tcp_timers_invoking(tp) > 0)
 				/* not quite there yet -- count separately? */
 			return dead;
-		tcpstat.tcps_delayed_free++;
+		tcpstat[TCP_STAT_DELAYED_FREE]++;
 		for (i = 0; i < TCPT_NTIMERS; i++)
 			callout_destroy(&tp->t_timer[i]);
 		callout_destroy(&tp->t_delack_ch);
@@ -1275,7 +1275,7 @@ tcp_close(struct tcpcb *tp)
 		in6_pcbdetach(in6p);
 	}
 #endif
-	tcpstat.tcps_closed++;
+	tcpstat[TCP_STAT_CLOSED]++;
 	return ((struct tcpcb *)0);
 }
 
@@ -1342,7 +1342,7 @@ tcp_drain(void)
 			if (tcp_reass_lock_try(tp) == 0)
 				continue;
 			if (tcp_freeq(tp))
-				tcpstat.tcps_connsdrained++;
+				tcpstat[TCP_STAT_CONNSDRAINED]++;
 			TCP_REASS_UNLOCK(tp);
 		}
 	}

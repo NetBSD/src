@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.164 2008/01/14 04:19:10 dyoung Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.165 2008/04/08 01:03:58 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.164 2008/01/14 04:19:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.165 2008/04/08 01:03:58 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -446,13 +446,13 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	struct mbuf *m, *m0;
 
 	if (tp->t_force && len == 1)
-		tcpstat.tcps_sndprobe++;
+		tcpstat[TCP_STAT_SNDPROBE]++;
 	else if (SEQ_LT(tp->snd_nxt, tp->snd_max)) {
-		tcpstat.tcps_sndrexmitpack++;
-		tcpstat.tcps_sndrexmitbyte += len;
+		tcpstat[TCP_STAT_SNDREXMITPACK]++;
+		tcpstat[TCP_STAT_SNDREXMITBYTE] += len;
 	} else {
-		tcpstat.tcps_sndpack++;
-		tcpstat.tcps_sndbyte += len;
+		tcpstat[TCP_STAT_SNDPACK]++;
+		tcpstat[TCP_STAT_SNDBYTE] += len;
 	}
 #ifdef notyet
 	if ((m = m_copypack(so->so_snd.sb_mb, off,
@@ -1264,13 +1264,13 @@ send:
 			flags |= TH_PUSH;
 	} else {
 		if (tp->t_flags & TF_ACKNOW)
-			tcpstat.tcps_sndacks++;
+			tcpstat[TCP_STAT_SNDACKS]++;
 		else if (flags & (TH_SYN|TH_FIN|TH_RST))
-			tcpstat.tcps_sndctrl++;
+			tcpstat[TCP_STAT_SNDCTRL]++;
 		else if (SEQ_GT(tp->snd_up, tp->snd_una))
-			tcpstat.tcps_sndurg++;
+			tcpstat[TCP_STAT_SNDURG]++;
 		else
-			tcpstat.tcps_sndwinup++;
+			tcpstat[TCP_STAT_SNDWINUP]++;
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m != NULL && max_linkhdr + hdrlen > MHLEN) {
@@ -1356,7 +1356,7 @@ send:
 				break;
 #endif
 			}
-			tcpstat.tcps_ecn_ect++;
+			tcpstat[TCP_STAT_ECN_ECT]++;
 		}
 
 		/*
@@ -1520,7 +1520,7 @@ send:
 			if (tp->t_rtttime == 0) {
 				tp->t_rtttime = tcp_now;
 				tp->t_rtseq = startseq;
-				tcpstat.tcps_segstimed++;
+				tcpstat[TCP_STAT_SEGSTIMED]++;
 			}
 		}
 
@@ -1641,7 +1641,7 @@ timer:
 	if (error) {
 out:
 		if (error == ENOBUFS) {
-			tcpstat.tcps_selfquench++;
+			tcpstat[TCP_STAT_SELFQUENCH]++;
 #ifdef INET
 			if (tp->t_inpcb)
 				tcp_quench(tp->t_inpcb, 0);
@@ -1671,9 +1671,9 @@ out:
 	if (packetlen > tp->t_pmtud_mtu_sent)
 		tp->t_pmtud_mtu_sent = packetlen;
 	
-	tcpstat.tcps_sndtotal++;
+	tcpstat[TCP_STAT_SNDTOTAL]++;
 	if (tp->t_flags & TF_DELACK)
-		tcpstat.tcps_delack++;
+		tcpstat[TCP_STAT_DELACK]++;
 
 	/*
 	 * Data sent (as far as we can tell).

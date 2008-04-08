@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.12 2006/10/22 16:43:24 christos Exp $	*/
+/*	$NetBSD: tcp.c,v 1.13 2008/04/08 01:03:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tcp.c,v 1.12 2006/10/22 16:43:24 christos Exp $");
+__RCSID("$NetBSD: tcp.c,v 1.13 2008/04/08 01:03:58 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: tcp.c,v 1.12 2006/10/22 16:43:24 christos Exp $");
 #define LHD(row, str)		mvwprintw(wnd, row, 10, str)
 #define RHD(row, str)		mvwprintw(wnd, row, 45, str)
 #define SHOW(row, col, stat) \
-    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.stat)
+    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat[stat])
 
 enum update {
 	UPDATE_TIME,
@@ -60,9 +60,9 @@ enum update {
 };
 
 static enum update update = UPDATE_TIME;
-static struct tcpstat curstat;
-static struct tcpstat newstat;
-static struct tcpstat oldstat;
+static uint64_t curstat[TCP_NSTATS];
+static uint64_t newstat[TCP_NSTATS];
+static uint64_t oldstat[TCP_NSTATS];
 
 static struct nlist namelist[] = {
 	{ .n_name = "_tcpstat" },
@@ -135,18 +135,18 @@ void
 showtcpsyn(void)
 {
 	
-	SHOW(0, 0, tcps_sc_added);
-	SHOW(1, 0, tcps_sc_completed);
-	SHOW(2, 0, tcps_sc_timed_out);
-	SHOW(3, 0, tcps_sc_dupesyn);
-	SHOW(4, 0, tcps_sc_collisions);
-	SHOW(5, 0, tcps_sc_retransmitted);
-	SHOW(6, 0, tcps_sc_aborted);
-	SHOW(7, 0, tcps_sc_overflowed);
-	SHOW(8, 0, tcps_sc_reset);
-	SHOW(9, 0, tcps_sc_unreach);
-	SHOW(10, 0, tcps_sc_bucketoverflow);
-	SHOW(11, 0, tcps_sc_dropped);
+	SHOW(0, 0, TCP_STAT_SC_ADDED);
+	SHOW(1, 0, TCP_STAT_SC_COMPLETED);
+	SHOW(2, 0, TCP_STAT_SC_TIMED_OUT);
+	SHOW(3, 0, TCP_STAT_SC_DUPESYN);
+	SHOW(4, 0, TCP_STAT_SC_COLLISIONS);
+	SHOW(5, 0, TCP_STAT_SC_RETRANSMITTED);
+	SHOW(6, 0, TCP_STAT_SC_ABORTED);
+	SHOW(7, 0, TCP_STAT_SC_OVERFLOWED);
+	SHOW(8, 0, TCP_STAT_SC_RESET);
+	SHOW(9, 0, TCP_STAT_SC_UNREACH);
+	SHOW(10, 0, TCP_STAT_SC_BUCKETOVERFLOW);
+	SHOW(11, 0, TCP_STAT_SC_DROPPED);
 }
 
 void
@@ -172,43 +172,43 @@ void
 showtcp(void)
 {
 	
-	SHOW(0, 0, tcps_connattempt);		
-	SHOW(1, 0, tcps_accepts);		
-	SHOW(2, 0, tcps_connects);		
+	SHOW(0, 0, TCP_STAT_CONNATTEMPT);		
+	SHOW(1, 0, TCP_STAT_ACCEPTS);		
+	SHOW(2, 0, TCP_STAT_CONNECTS);		
 
-	SHOW(4, 0, tcps_drops);	
-	SHOW(5, 0, tcps_conndrops);
-	SHOW(6, 0, tcps_timeoutdrop);
-	SHOW(7, 0, tcps_keepdrops);
-	SHOW(8, 0, tcps_persistdrops);
+	SHOW(4, 0, TCP_STAT_DROPS);	
+	SHOW(5, 0, TCP_STAT_CONNDROPS);
+	SHOW(6, 0, TCP_STAT_TIMEOUTDROP);
+	SHOW(7, 0, TCP_STAT_KEEPDROPS);
+	SHOW(8, 0, TCP_STAT_PERSISTDROPS);
 
-	SHOW(10, 0, tcps_segstimed);
-	SHOW(11, 0, tcps_rttupdated);
-	SHOW(12, 0, tcps_delack);
-	SHOW(13, 0, tcps_rexmttimeo);
-	SHOW(14, 0, tcps_persisttimeo);
-	SHOW(15, 0, tcps_keepprobe);
-	SHOW(16, 0, tcps_keeptimeo);
+	SHOW(10, 0, TCP_STAT_SEGSTIMED);
+	SHOW(11, 0, TCP_STAT_RTTUPDATED);
+	SHOW(12, 0, TCP_STAT_DELACK);
+	SHOW(13, 0, TCP_STAT_REXMTTIMEO);
+	SHOW(14, 0, TCP_STAT_PERSISTTIMEO);
+	SHOW(15, 0, TCP_STAT_KEEPPROBE);
+	SHOW(16, 0, TCP_STAT_KEEPTIMEO);
 
-	SHOW(0, 35, tcps_sndtotal);
-	SHOW(1, 35, tcps_sndpack);
-	SHOW(2, 35, tcps_sndrexmitpack);
+	SHOW(0, 35, TCP_STAT_SNDTOTAL);
+	SHOW(1, 35, TCP_STAT_SNDPACK);
+	SHOW(2, 35, TCP_STAT_SNDREXMITPACK);
 
-	SHOW(3, 35, tcps_sndacks);
-	SHOW(4, 35, tcps_sndprobe);
-	SHOW(5, 35, tcps_sndwinup);
-	SHOW(6, 35, tcps_sndurg);
-	SHOW(7, 35, tcps_sndctrl);
+	SHOW(3, 35, TCP_STAT_SNDACKS);
+	SHOW(4, 35, TCP_STAT_SNDPROBE);
+	SHOW(5, 35, TCP_STAT_SNDWINUP);
+	SHOW(6, 35, TCP_STAT_SNDURG);
+	SHOW(7, 35, TCP_STAT_SNDCTRL);
 
-	SHOW(9, 35, tcps_rcvtotal);
-	SHOW(10, 35, tcps_rcvpack);
-	SHOW(11, 35, tcps_rcvduppack);
-	SHOW(12, 35, tcps_rcvpartduppack);
-	SHOW(13, 35, tcps_rcvoopack);
-	SHOW(14, 35, tcps_rcvdupack);
-	SHOW(15, 35, tcps_rcvackpack);
-	SHOW(16, 35, tcps_rcvwinprobe);
-	SHOW(17, 35, tcps_rcvwinupd);
+	SHOW(9, 35, TCP_STAT_RCVTOTAL);
+	SHOW(10, 35, TCP_STAT_RCVPACK);
+	SHOW(11, 35, TCP_STAT_RCVDUPPACK);
+	SHOW(12, 35, TCP_STAT_RCVPARTDUPPACK);
+	SHOW(13, 35, TCP_STAT_RCVOOPACK);
+	SHOW(14, 35, TCP_STAT_RCVDUPACK);
+	SHOW(15, 35, TCP_STAT_RCVACKPACK);
+	SHOW(16, 35, TCP_STAT_RCVWINPROBE);
+	SHOW(17, 35, TCP_STAT_RCVWINUPD);
 }
 
 int
@@ -231,51 +231,22 @@ inittcp(void)
 void
 fetchtcp(void)
 {
+	int i;
 
-	KREAD((void *)namelist[0].n_value, &newstat, sizeof(newstat));
+	KREAD((void *)namelist[0].n_value, newstat, sizeof(newstat));
 
-	ADJINETCTR(curstat, oldstat, newstat, tcps_connattempt);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_accepts);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_connects);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_drops);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_conndrops);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_timeoutdrop);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_keepdrops);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_persistdrops);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_segstimed);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rttupdated);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_delack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rexmttimeo);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_persisttimeo);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_keepprobe);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_keeptimeo);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_sndtotal);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_sndpack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_sndrexmitpack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_sndacks);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_sndprobe);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_sndwinup);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_sndurg);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_sndctrl);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvtotal);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvpack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvduppack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvpartduppack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvoopack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvdupack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvackpack);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvwinprobe);
-	ADJINETCTR(curstat, oldstat, newstat, tcps_rcvwinupd);
+	for (i = 0; i < TCP_NSTATS; i++)
+		xADJINETCTR(curstat, oldstat, newstat, i);
 
 	if (update == UPDATE_TIME)
-		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		memcpy(oldstat, newstat, sizeof(oldstat));
 }
 
 void
 tcp_boot(char *args)
 {
 
-	memset(&oldstat, 0, sizeof(oldstat));
+	memset(oldstat, 0, sizeof(oldstat));
 	update = UPDATE_BOOT;
 }
 
@@ -284,7 +255,7 @@ tcp_run(char *args)
 {
 
 	if (update != UPDATE_RUN) {
-		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		memcpy(oldstat, newstat, sizeof(oldstat));
 		update = UPDATE_RUN;
 	}
 }
@@ -294,7 +265,7 @@ tcp_time(char *args)
 {
 
 	if (update != UPDATE_TIME) {
-		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		memcpy(oldstat, newstat, sizeof(oldstat));
 		update = UPDATE_TIME;
 	}
 }
@@ -304,5 +275,5 @@ tcp_zero(char *args)
 {
 
 	if (update == UPDATE_RUN)
-		memcpy(&oldstat, &newstat, sizeof(oldstat));
+		memcpy(oldstat, newstat, sizeof(oldstat));
 }
