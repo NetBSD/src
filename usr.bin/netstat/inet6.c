@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.43 2008/02/16 07:16:01 matt Exp $	*/
+/*	$NetBSD: inet6.c,v 1.44 2008/04/08 15:04:35 thorpej Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.43 2008/02/16 07:16:01 matt Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.44 2008/04/08 15:04:35 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -802,7 +802,7 @@ ip6_ifstats(ifname)
 #undef p_5
 }
 
-static	char *icmp6names[] = {
+static	const char *icmp6names[] = {
 	"#0",
 	"unreach",
 	"packet too big",
@@ -1065,85 +1065,83 @@ static	char *icmp6names[] = {
  * Dump ICMPv6 statistics.
  */
 void
-icmp6_stats(off, name)
-	u_long off;
-	char *name;
+icmp6_stats(u_long off, char *name)
 {
-	struct icmp6stat icmp6stat;
+	uint64_t icmp6stat[ICMP6_NSTATS];
 	register int i, first;
 
 	if (use_sysctl) {
 		size_t size = sizeof(icmp6stat);
 
-		if (sysctlbyname("net.inet6.icmp6.stats", &icmp6stat, &size,
+		if (sysctlbyname("net.inet6.icmp6.stats", icmp6stat, &size,
 		    NULL, 0) == -1)
 			err(1, "net.inet6.icmp6.stats");
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&icmp6stat, sizeof (icmp6stat));
+		kread(off, (char *)icmp6stat, sizeof (icmp6stat));
 	}
 	
 	printf("%s:\n", name);
 
-#define	p(f, m) if (icmp6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)icmp6stat.f, plural(icmp6stat.f))
-#define p_5(f, m) if (icmp6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)icmp6stat.f)
+#define	p(f, m) if (icmp6stat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)icmp6stat[f], plural(icmp6stat[f]))
+#define p_oerr(f, m) if (icmp6stat[ICMP6_STAT_OUTERRHIST + f] || sflag <= 1) \
+    printf(m, (unsigned long long)icmp6stat[ICMP6_STAT_OUTERRHIST + f])
 
-	p(icp6s_error, "\t%llu call%s to icmp6_error\n");
-	p(icp6s_canterror,
+	p(ICMP6_STAT_ERROR, "\t%llu call%s to icmp6_error\n");
+	p(ICMP6_STAT_CANTERROR,
 	    "\t%llu error%s not generated because old message was icmp6 or so\n");
-	p(icp6s_toofreq,
+	p(ICMP6_STAT_TOOFREQ,
 	    "\t%llu error%s not generated because of rate limitation\n");
 	for (first = 1, i = 0; i < 256; i++)
-		if (icmp6stat.icp6s_outhist[i] != 0) {
+		if (icmp6stat[ICMP6_STAT_OUTHIST + i] != 0) {
 			if (first) {
 				printf("\tOutput packet histogram:\n");
 				first = 0;
 			}
 			printf("\t\t%s: %llu\n", icmp6names[i],
-				(unsigned long long)icmp6stat.icp6s_outhist[i]);
+			 (unsigned long long)icmp6stat[ICMP6_STAT_OUTHIST + i]);
 		}
-	p(icp6s_badcode, "\t%llu message%s with bad code fields\n");
-	p(icp6s_tooshort, "\t%llu message%s < minimum length\n");
-	p(icp6s_checksum, "\t%llu bad checksum%s\n");
-	p(icp6s_badlen, "\t%llu message%s with bad length\n");
+	p(ICMP6_STAT_BADCODE, "\t%llu message%s with bad code fields\n");
+	p(ICMP6_STAT_TOOSHORT, "\t%llu message%s < minimum length\n");
+	p(ICMP6_STAT_CHECKSUM, "\t%llu bad checksum%s\n");
+	p(ICMP6_STAT_BADLEN, "\t%llu message%s with bad length\n");
 	for (first = 1, i = 0; i < ICMP6_MAXTYPE; i++)
-		if (icmp6stat.icp6s_inhist[i] != 0) {
+		if (icmp6stat[ICMP6_STAT_INHIST + i] != 0) {
 			if (first) {
 				printf("\tInput packet histogram:\n");
 				first = 0;
 			}
 			printf("\t\t%s: %llu\n", icmp6names[i],
-				(unsigned long long)icmp6stat.icp6s_inhist[i]);
+			  (unsigned long long)icmp6stat[ICMP6_STAT_INHIST + i]);
 		}
 	printf("\tHistogram of error messages to be generated:\n");
-	p_5(icp6s_odst_unreach_noroute, "\t\t%llu no route\n");
-	p_5(icp6s_odst_unreach_admin, "\t\t%llu administratively prohibited\n");
-	p_5(icp6s_odst_unreach_beyondscope, "\t\t%llu beyond scope\n");
-	p_5(icp6s_odst_unreach_addr, "\t\t%llu address unreachable\n");
-	p_5(icp6s_odst_unreach_noport, "\t\t%llu port unreachable\n");
-	p_5(icp6s_opacket_too_big, "\t\t%llu packet too big\n");
-	p_5(icp6s_otime_exceed_transit, "\t\t%llu time exceed transit\n");
-	p_5(icp6s_otime_exceed_reassembly, "\t\t%llu time exceed reassembly\n");
-	p_5(icp6s_oparamprob_header, "\t\t%llu erroneous header field\n");
-	p_5(icp6s_oparamprob_nextheader, "\t\t%llu unrecognized next header\n");
-	p_5(icp6s_oparamprob_option, "\t\t%llu unrecognized option\n");
-	p_5(icp6s_oredirect, "\t\t%llu redirect\n");
-	p_5(icp6s_ounknown, "\t\t%llu unknown\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_NOROUTE, "\t\t%llu no route\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_ADMIN, "\t\t%llu administratively prohibited\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_BEYONDSCOPE, "\t\t%llu beyond scope\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_ADDR, "\t\t%llu address unreachable\n");
+	p_oerr(ICMP6_ERRSTAT_DST_UNREACH_NOPORT, "\t\t%llu port unreachable\n");
+	p_oerr(ICMP6_ERRSTAT_PACKET_TOO_BIG, "\t\t%llu packet too big\n");
+	p_oerr(ICMP6_ERRSTAT_TIME_EXCEED_TRANSIT, "\t\t%llu time exceed transit\n");
+	p_oerr(ICMP6_ERRSTAT_TIME_EXCEED_REASSEMBLY, "\t\t%llu time exceed reassembly\n");
+	p_oerr(ICMP6_ERRSTAT_PARAMPROB_HEADER, "\t\t%llu erroneous header field\n");
+	p_oerr(ICMP6_ERRSTAT_PARAMPROB_NEXTHEADER, "\t\t%llu unrecognized next header\n");
+	p_oerr(ICMP6_ERRSTAT_PARAMPROB_OPTION, "\t\t%llu unrecognized option\n");
+	p_oerr(ICMP6_ERRSTAT_REDIRECT, "\t\t%llu redirect\n");
+	p_oerr(ICMP6_ERRSTAT_UNKNOWN, "\t\t%llu unknown\n");
 
-	p(icp6s_reflect, "\t%llu message response%s generated\n");
-	p(icp6s_nd_toomanyopt, "\t%llu message%s with too many ND options\n");
-	p(icp6s_nd_badopt, "\t%llu message%s with bad ND options\n");
-	p(icp6s_badns, "\t%llu bad neighbor solicitation message%s\n");
-	p(icp6s_badna, "\t%llu bad neighbor advertisement message%s\n");
-	p(icp6s_badrs, "\t%llu bad router solicitation message%s\n");
-	p(icp6s_badra, "\t%llu bad router advertisement message%s\n");
-	p(icp6s_badredirect, "\t%llu bad redirect message%s\n");
-	p(icp6s_pmtuchg, "\t%llu path MTU change%s\n");
+	p(ICMP6_STAT_REFLECT, "\t%llu message response%s generated\n");
+	p(ICMP6_STAT_ND_TOOMANYOPT, "\t%llu message%s with too many ND options\n");
+	p(ICMP6_STAT_ND_BADOPT, "\t%llu message%s with bad ND options\n");
+	p(ICMP6_STAT_BADNS, "\t%llu bad neighbor solicitation message%s\n");
+	p(ICMP6_STAT_BADNA, "\t%llu bad neighbor advertisement message%s\n");
+	p(ICMP6_STAT_BADRS, "\t%llu bad router solicitation message%s\n");
+	p(ICMP6_STAT_BADRA, "\t%llu bad router advertisement message%s\n");
+	p(ICMP6_STAT_BADREDIRECT, "\t%llu bad redirect message%s\n");
+	p(ICMP6_STAT_PMTUCHG, "\t%llu path MTU change%s\n");
 #undef p
-#undef p_5
+#undef p_oerr
 }
 
 /*
