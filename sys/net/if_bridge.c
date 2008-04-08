@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.57 2008/04/07 06:31:27 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.58 2008/04/08 23:37:43 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.57 2008/04/07 06:31:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.58 2008/04/08 23:37:43 thorpej Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -2181,14 +2181,14 @@ bridge_ip6_checkbasic(struct mbuf **mp)
                 if ((m = m_copyup(m, sizeof(struct ip6_hdr),
                                   (max_linkhdr + 3) & ~3)) == NULL) {
                         /* XXXJRT new stat, please */
-                        ip6stat.ip6s_toosmall++;
+			ip6stat[IP6_STAT_TOOSMALL]++;
                         in6_ifstat_inc(inifp, ifs6_in_hdrerr);
                         goto bad;
                 }
         } else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
                 struct ifnet *inifp = m->m_pkthdr.rcvif;
                 if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-                        ip6stat.ip6s_toosmall++;
+			ip6stat[IP6_STAT_TOOSMALL]++;
                         in6_ifstat_inc(inifp, ifs6_in_hdrerr);
                         goto bad;
                 }
@@ -2197,7 +2197,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
         ip6 = mtod(m, struct ip6_hdr *);
 
         if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
-                ip6stat.ip6s_badvers++;
+		ip6stat[IP6_STAT_BADVERS]++;
                 in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
                 goto bad;
         }

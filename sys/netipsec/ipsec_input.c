@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.17 2007/06/27 20:38:33 degroote Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.18 2008/04/08 23:37:43 thorpej Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.17 2007/06/27 20:38:33 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.18 2008/04/08 23:37:43 thorpej Exp $");
 
 /*
  * IPsec input processing.
@@ -759,7 +759,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 	nxt = nxt8;
 	while (nxt != IPPROTO_DONE) {
 		if (ip6_hdrnestlimit && (++nest > ip6_hdrnestlimit)) {
-			ip6stat.ip6s_toomanyhdr++;
+			ip6stat[IP6_STAT_TOOMANYHDR]++;
 			error = EINVAL;
 			goto bad;
 		}
@@ -769,7 +769,7 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		 * more sanity checks in header chain processing.
 		 */
 		if (m->m_pkthdr.len < skip) {
-			ip6stat.ip6s_tooshort++;
+			ip6stat[IP6_STAT_TOOSHORT]++;
 			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
 			error = EINVAL;
 			goto bad;

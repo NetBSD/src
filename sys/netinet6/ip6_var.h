@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.47 2008/03/19 08:10:18 dyoung Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.48 2008/04/08 23:37:43 thorpej Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -155,69 +155,73 @@ struct	ip6_pktopts {
 #define IP6PO_DONTFRAG	0x04	/* disable fragmentation (IPV6_DONTFRAG) */
 };
 
-struct	ip6stat {
-	u_quad_t ip6s_total;		/* total packets received */
-	u_quad_t ip6s_tooshort;		/* packet too short */
-	u_quad_t ip6s_toosmall;		/* not enough data */
-	u_quad_t ip6s_fragments;	/* fragments received */
-	u_quad_t ip6s_fragdropped;	/* frags dropped(dups, out of space) */
-	u_quad_t ip6s_fragtimeout;	/* fragments timed out */
-	u_quad_t ip6s_fragoverflow;	/* fragments that exceeded limit */
-	u_quad_t ip6s_forward;		/* packets forwarded */
-	u_quad_t ip6s_cantforward;	/* packets rcvd for unreachable dest */
-	u_quad_t ip6s_redirectsent;	/* packets forwarded on same net */
-	u_quad_t ip6s_delivered;	/* datagrams delivered to upper level*/
-	u_quad_t ip6s_localout;		/* total ip packets generated here */
-	u_quad_t ip6s_odropped;		/* lost packets due to nobufs, etc. */
-	u_quad_t ip6s_reassembled;	/* total packets reassembled ok */
-	u_quad_t ip6s_fragmented;	/* datagrams successfully fragmented */
-	u_quad_t ip6s_ofragments;	/* output fragments created */
-	u_quad_t ip6s_cantfrag;		/* don't fragment flag was set, etc. */
-	u_quad_t ip6s_badoptions;	/* error in option processing */
-	u_quad_t ip6s_noroute;		/* packets discarded due to no route */
-	u_quad_t ip6s_badvers;		/* ip6 version != 6 */
-	u_quad_t ip6s_rawout;		/* total raw ip packets generated */
-	u_quad_t ip6s_badscope;		/* scope error */
-	u_quad_t ip6s_notmember;	/* don't join this multicast group */
-	u_quad_t ip6s_nxthist[256];	/* next header history */
-	u_quad_t ip6s_m1;		/* one mbuf */
-	u_quad_t ip6s_m2m[32];		/* two or more mbuf */
-	u_quad_t ip6s_mext1;		/* one ext mbuf */
-	u_quad_t ip6s_mext2m;		/* two or more ext mbuf */
-	u_quad_t ip6s_exthdrtoolong;	/* ext hdr are not continuous */
-	u_quad_t ip6s_nogif;		/* no match gif found */
-	u_quad_t ip6s_toomanyhdr;	/* discarded due to too many headers */
-
+/*
+ * IPv6 statistics.
+ * Each counter is an unsigned 64-bit value.
+ */
+#define	IP6_STAT_TOTAL		0	/* total packets received */
+#define	IP6_STAT_TOOSHORT	1	/* packet too short */
+#define	IP6_STAT_TOOSMALL	2	/* not enough data */
+#define	IP6_STAT_FRAGMENTS	3	/* fragments received */
+#define	IP6_STAT_FRAGDROPPED	4	/* frags dropped (dups, out of space) */
+#define	IP6_STAT_FRAGTIMEOUT	5	/* fragments timed out */
+#define	IP6_STAT_FRAGOVERFLOW	6	/* fragments that exceed limit */
+#define IP6_STAT_FORWARD	7	/* packets forwarded */
+#define	IP6_STAT_CANTFORWARD	8	/* packets rcvd for uncreachable dst */
+#define	IP6_STAT_REDIRECTSENT	9	/* packets forwarded on same net */
+#define	IP6_STAT_DELIVERED	10	/* datagrams delivered to upper level */
+#define	IP6_STAT_LOCALOUT	11	/* total IP packets generated here */
+#define	IP6_STAT_ODROPPED	12	/* lost packets due to nobufs, etc. */
+#define	IP6_STAT_REASSEMBLED	13	/* total packets reassembled ok */
+#define	IP6_STAT_FRAGMENTED	14	/* datagrams successfully fragmented */
+#define	IP6_STAT_OFRAGMENTS	15	/* output fragments created */
+#define	IP6_STAT_CANTFRAG	16	/* don't fragment flag was set, etc. */
+#define	IP6_STAT_BADOPTIONS	17	/* error in option processing */
+#define	IP6_STAT_NOROUTE	18	/* packets discarded due to no route */
+#define	IP6_STAT_BADVERS	19	/* ip6 version != 6 */
+#define	IP6_STAT_RAWOUT		20	/* total raw ip packets generated */
+#define	IP6_STAT_BADSCOPE	21	/* scope error */
+#define	IP6_STAT_NOTMEMBER	22	/* don't join this multicast group */
+#define	IP6_STAT_NXTHIST	23	/* next header histogram */
+		/* space for 256 counters */
+#define	IP6_STAT_M1		279	/* one mbuf */
+#define	IP6_STAT_M2M		280	/* two or more mbuf */
+		/* space for 32 counters */
+#define	IP6_STAT_MEXT1		312	/* one ext mbuf */
+#define	IP6_STAT_MEXT2M		313	/* two or more ext mbuf */
+#define	IP6_STAT_EXTHDRTOOLONG	314	/* ext hdr are not contiguous */
+#define	IP6_STAT_NOGIF		315	/* no match gif found */
+#define	IP6_STAT_TOOMANYHDR	316	/* discarded due to too many headers */
 	/*
 	 * statistics for improvement of the source address selection
 	 * algorithm:
 	 * XXX: hardcoded 16 = # of ip6 multicast scope types + 1
 	 */
-	/* number of times that address selection fails */
-	u_quad_t ip6s_sources_none;
-	/* number of times that an address on the outgoing I/F is chosen */
-	u_quad_t ip6s_sources_sameif[16];
-	/* number of times that an address on a non-outgoing I/F is chosen */
-	u_quad_t ip6s_sources_otherif[16];
-	/*
-	 * number of times that an address that has the same scope
-	 * from the destination is chosen.
-	 */
-	u_quad_t ip6s_sources_samescope[16];
-	/*
-	 * number of times that an address that has a different scope
-	 * from the destination is chosen.
-	 */
-	u_quad_t ip6s_sources_otherscope[16];
-	/* number of times that an deprecated address is chosen */
-	u_quad_t ip6s_sources_deprecated[16];
+#define	IP6_STAT_SOURCES_NONE	317	/* number of times that address
+					   selection fails */
+#define	IP6_STAT_SOURCES_SAMEIF	318	/* number of times that an address
+					   on the outgoing I/F is chosen */
+		/* space for 16 counters */
+#define	IP6_STAT_SOURCES_OTHERIF 334	/* number of times that an address on
+					   a non-outgoing I/F is chosen */
+		/* space for 16 counters */
+#define	IP6_STAT_SOURCES_SAMESCOPE 350	/* number of times that an address that
+					   has the same scope from the dest.
+					   is chosen */
+		/* space for 16 counters */
+#define	IP6_STAT_SOURCES_OTHERSCOPE 366	/* number of times that an address that
+					   has a different scope from the dest.
+					   is chosen */
+		/* space for 16 counters */
+#define	IP6_STAT_SOURCES_DEPRECATED 382	/* number of times that a deprecated
+					   address is chosen */
+		/* space for 16 counters */
+#define	IP6_STAT_FORWARD_CACHEHIT 398
+#define	IP6_STAT_FORWARD_CACHEMISS 399
+#define	IP6_STAT_FASTFORWARD	400	/* packets fast forwarded */
+#define	IP6_STAT_FASTFORWARDFLOWS 401	/* number of fast forward flows */
 
-	u_quad_t ip6s_forward_cachehit;
-	u_quad_t ip6s_forward_cachemiss;
-
-	u_quad_t ip6s_fastforward;      /* packets fast forwarded */ 
-	u_quad_t ip6s_fastforwardflows; /* number of fast forward flows*/
-};
+#define	IP6_NSTATS		402
 
 #define IP6FLOW_HASHBITS         6 /* should not be a multiple of 8 */
 
@@ -263,7 +267,7 @@ struct ip6aux {
 #define	IP6_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
 #endif
 
-extern struct	ip6stat ip6stat;	/* statistics */
+extern uint64_t	ip6stat[IP6_NSTATS];	/* statistics */
 extern u_int32_t ip6_id;		/* fragment identifier */
 extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
