@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.c,v 1.1.1.1.4.1 2007/05/07 19:49:06 pavel Exp $ */
+/* $NetBSD: gdtoa.c,v 1.1.1.1.4.2 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -55,6 +55,8 @@ bitstob(ULong *bits, int nbits, int *bbits)
 		k = 1;
 #endif
 	b = Balloc(k);
+	if (b == NULL)
+		return NULL;
 	be = bits + (((unsigned int)nbits - 1) >> kshift);
 	x = x0 = b->x;
 	do {
@@ -169,6 +171,8 @@ gdtoa
 		}
 #endif
 	inex = 0;
+	if (*kindp & STRTOG_NoMemory)
+		return NULL;
 	kind = *kindp &= ~STRTOG_Inexact;
 	switch(kind & STRTOG_Retmask) {
 	  case STRTOG_Zero:
@@ -186,6 +190,8 @@ gdtoa
 		return 0;
 	  }
 	b = bitstob(bits, nbits = fpi->nbits, &bbits);
+	if (b == NULL)
+		return NULL;
 	be0 = be;
 	if ( (i = trailz(b)) !=0) {
 		rshift(b, i);
@@ -311,6 +317,8 @@ gdtoa
 				i = 1;
 		}
 	s = s0 = rv_alloc((size_t)i);
+	if (s == NULL)
+		return NULL;
 
 	if ( (rdir = fpi->rounding - 1) !=0) {
 		if (rdir < 0)
@@ -527,19 +535,34 @@ gdtoa
 		if (leftright) {
 			if (m5 > 0) {
 				mhi = pow5mult(mhi, m5);
+				if (mhi == NULL)
+					return NULL;
 				b1 = mult(mhi, b);
+				if (b1 == NULL)
+					return NULL;
 				Bfree(b);
 				b = b1;
 				}
-			if ( (j = b5 - m5) !=0)
+			if ( (j = b5 - m5) !=0) {
 				b = pow5mult(b, j);
+				if (b == NULL)
+					return NULL;
+				}
 			}
-		else
+		else {
 			b = pow5mult(b, b5);
+			if (b == NULL)
+				return NULL;
+			}
 		}
 	S = i2b(1);
-	if (s5 > 0)
+	if (S == NULL)
+		return NULL;
+	if (s5 > 0) {
 		S = pow5mult(S, s5);
+		if (S == NULL)
+			return NULL;
+		}
 
 	/* Check for special case that d is a normalized power of 2. */
 
@@ -587,8 +610,13 @@ gdtoa
 		if (cmp(b,S) < 0) {
 			k--;
 			b = multadd(b, 10, 0);	/* we botched the k estimate */
-			if (leftright)
+			if (b == NULL)
+				return NULL;
+			if (leftright) {
 				mhi = multadd(mhi, 10, 0);
+				if (mhi == NULL)
+					return NULL;
+				}
 			ilim = ilim1;
 			}
 		}
@@ -607,8 +635,11 @@ gdtoa
 		goto ret;
 		}
 	if (leftright) {
-		if (m2 > 0)
+		if (m2 > 0) {
 			mhi = lshift(mhi, m2);
+			if (mhi == NULL)
+				return NULL;
+			}
 
 		/* Compute mlo -- check for special case
 		 * that d is a normalized power of 2.
@@ -617,8 +648,12 @@ gdtoa
 		mlo = mhi;
 		if (spec_case) {
 			mhi = Balloc(mhi->k);
+			if (mhi == NULL)
+				return NULL;
 			Bcopy(mhi, mlo);
 			mhi = lshift(mhi, 1);
+			if (mhi == NULL)
+				return NULL;
 			}
 
 		for(i = 1;;i++) {
@@ -628,6 +663,8 @@ gdtoa
 			 */
 			j = cmp(b, mlo);
 			delta = diff(S, mhi);
+			if (delta == NULL)
+				return NULL;
 			jj1 = delta->sign ? 1 : cmp(b, delta);
 			Bfree(delta);
 #ifndef ROUND_BIASED
@@ -659,10 +696,14 @@ gdtoa
 					while (cmp(S,mhi) > 0) {
 						*s++ = dig;
 						mhi1 = multadd(mhi, 10, 0);
+						if (mhi1 == NULL)
+							return NULL;
 						if (mlo == mhi)
 							mlo = mhi1;
 						mhi = mhi1;
 						b = multadd(b, 10, 0);
+						if (b == NULL)
+							return NULL;
 						dig = quorem(b,S) + '0';
 						}
 					if (dig++ == '9')
@@ -672,6 +713,8 @@ gdtoa
 					}
 				if (jj1 > 0) {
 					b = lshift(b, 1);
+					if (b == NULL)
+						return NULL;
 					jj1 = cmp(b, S);
 					if ((jj1 > 0 || (jj1 == 0 && dig & 1))
 					&& dig++ == '9')
@@ -699,11 +742,20 @@ gdtoa
 			if (i == ilim)
 				break;
 			b = multadd(b, 10, 0);
-			if (mlo == mhi)
+			if (b == NULL)
+				return NULL;
+			if (mlo == mhi) {
 				mlo = mhi = multadd(mhi, 10, 0);
+				if (mlo == NULL)
+					return NULL;
+				}
 			else {
 				mlo = multadd(mlo, 10, 0);
+				if (mlo == NULL)
+					return NULL;
 				mhi = multadd(mhi, 10, 0);
+				if (mhi == NULL)
+					return NULL;
 				}
 			}
 		}
@@ -713,6 +765,8 @@ gdtoa
 			if (i >= ilim)
 				break;
 			b = multadd(b, 10, 0);
+			if (b == NULL)
+				return NULL;
 			}
 
 	/* Round off last digit */
@@ -723,6 +777,8 @@ gdtoa
 		goto roundoff;
 		}
 	b = lshift(b, 1);
+	if (b == NULL)
+		return NULL;
 	j = cmp(b, S);
 	if (j > 0 || (j == 0 && dig & 1)) {
  roundoff:

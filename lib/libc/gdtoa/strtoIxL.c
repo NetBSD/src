@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIxL.c,v 1.1.1.1 2006/01/25 15:18:50 kleink Exp $ */
+/* $NetBSD: strtoIxL.c,v 1.1.1.1.4.1 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -47,8 +47,12 @@ strtoIxL(CONST char *s, char **sp, void *a, void *b)
 	ULong *L = (ULong *)a, *M = (ULong *)b;
 
 	B[0] = Balloc(1);
+	if (B[0] == NULL)
+		return STRTOG_NoMemory;
 	B[0]->wds = 2;
 	k = strtoIg(s, sp, &fpi, exp, B, rv);
+	if (k == STRTOG_NoMemory)
+		return k;
 	ULtoxL(L, B[0]->x, exp[0], rv[0]);
 	Bfree(B[0]);
 	if (B[1]) {

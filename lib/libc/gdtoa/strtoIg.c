@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIg.c,v 1.1.1.1 2006/01/25 15:18:50 kleink Exp $ */
+/* $NetBSD: strtoIg.c,v 1.1.1.1.4.1 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -47,6 +47,8 @@ strtoIg(CONST char *s00, char **se, FPI *fpi, Long *exp, Bigint **B, int *rvp)
 
 	b = *B;
 	rv = strtodg(s00, se, fpi, exp, b->x);
+	if (rv == STRTOG_NoMemory)
+		return rv;
 	if (!(rv & STRTOG_Inexact)) {
 		B[1] = 0;
 		return *rvp = rv;
@@ -54,6 +56,8 @@ strtoIg(CONST char *s00, char **se, FPI *fpi, Long *exp, Bigint **B, int *rvp)
 	e1 = exp[0];
 	rv1 = rv ^ STRTOG_Inexact;
 	b1 = Balloc(b->k);
+	if (b1 == NULL)
+		return STRTOG_NoMemory;
 	Bcopy(b1, b);
 	nb = fpi->nbits;
 	nb1 = nb & 31;

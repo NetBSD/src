@@ -1,4 +1,4 @@
-/* $NetBSD: strtoIdd.c,v 1.1.1.1 2006/01/25 15:18:49 kleink Exp $ */
+/* $NetBSD: strtoIdd.c,v 1.1.1.1.4.1 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -50,8 +50,12 @@ strtoIdd(CONST char *s, char **sp, double *f0, double *f1)
 	int k, rv[2];
 
 	B[0] = Balloc(2);
+	if (B[0] == NULL)
+		return STRTOG_NoMemory;
 	B[0]->wds = 4;
 	k = strtoIg(s, sp, &fpi, exp, B, rv);
+	if (k == STRTOG_NoMemory)
+		return k;
 	ULtodd((ULong*)f0, B[0]->x, exp[0], rv[0]);
 	Bfree(B[0]);
 	if (B[1]) {

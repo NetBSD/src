@@ -1,4 +1,4 @@
-/* $NetBSD: strtorx.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: strtorx.c,v 1.2.4.1 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -116,6 +116,8 @@ strtorx(CONST char *s, char **sp, int rounding, void *L)
 		fpi = &fpi1;
 		}
 	k = strtodg(s, sp, fpi, &exp, bits);
+	if (k == STRTOG_NoMemory)
+		return k;
 	ULtox((UShort*)L, bits, exp, k);
 	return k;
 	}
