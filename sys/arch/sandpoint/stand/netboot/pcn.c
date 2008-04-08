@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.9 2007/11/12 14:03:35 nisimura Exp $ */
+/* $NetBSD: pcn.c,v 1.10 2008/04/08 23:59:03 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -153,10 +153,10 @@ pcn_init(unsigned tag, void *data)
 	struct pcninit initblock, *ib;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_VENDOR(val) != 0x1022 && PCI_PRODUCT(val) != 0x2000)
+	if (PCI_DEVICE(0x1022, 0x2000) != val)
 		return NULL;
 
-	l = ALLOC(struct local, sizeof(struct desc));
+	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
