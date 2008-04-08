@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.16 2008/02/07 01:21:58 dyoung Exp $ */
+/* $NetBSD: if_plip.c,v 1.17 2008/04/08 07:35:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.16 2008/02/07 01:21:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.17 2008/04/08 07:35:35 cegger Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -212,7 +212,7 @@ lp_probe(struct device * parent, struct cfdata * match, void *aux)
 		return 1;
 
 	printf("%s(%s): not an interrupt-driven port.\n", __func__,
-		parent->dv_xname);
+		device_xname(parent));
 	return 0;
 }
 
@@ -228,8 +228,7 @@ lp_attach(struct device * parent, struct device * self, void *aux)
 	lp->sc_xmit_rtry = 0;
 
 	ifp->if_softc = lp;
-	strncpy(ifp->if_xname, self->dv_xname, IFNAMSIZ);
-	ifp->if_xname[IFNAMSIZ - 1] = '\0';
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_mtu = LPMTU;
 	ifp->if_flags = IFF_SIMPLEX | IFF_POINTOPOINT | IFF_MULTICAST;
 	ifp->if_ioctl = lpioctl;
@@ -264,7 +263,7 @@ lp_detach(struct device * self, int flags)
 		if(!(flags & DETACH_QUIET))
 			LP_PRINTF("%s(%s): device not properly attached! "
 				"Skipping detach....\n", __func__,
-				self->dv_xname);
+				device_xname(self));
 		return error;
 	}
 
@@ -277,7 +276,7 @@ lp_detach(struct device * self, int flags)
 			if(!(flags & DETACH_QUIET))
 				LP_PRINTF("%s(%s): unable to remove interrupt "
 					"callback.\n", __func__,
-					self->dv_xname);
+					device_xname(self));
 			if(!(flags & DETACH_FORCE))
 				return error;
 		}
@@ -285,8 +284,8 @@ lp_detach(struct device * self, int flags)
 		if(error) {
 			if(!(flags & DETACH_QUIET))
 				LP_PRINTF("%s(%s): error releasing bus %s.\n",
-					__func__, self->dv_xname,
-					ppbus->dv_xname);
+					__func__, device_xname(self),
+					device_xname(ppbus));
 			if(!(flags & DETACH_FORCE))
 				return error;
 		}
@@ -360,7 +359,7 @@ lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 
 	if(sc->sc_dev_ok) {
 		LP_PRINTF("%s(%s): device not properly attached!", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 		error = ENODEV;
 		goto end;
 	}
@@ -391,7 +390,7 @@ lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 			if(error) {
 				LP_PRINTF("%s(%s): unable to register interrupt"
 					" callback.\n", __func__,
-					dev->dv_xname);
+					device_xname(dev));
 				ppbus_release_bus(ppbus, dev, 0, 0);
 				break;
 			}
@@ -551,7 +550,7 @@ lp_intr (void *arg)
 	/* Do nothing if device not properly attached */
 	if(sc->sc_dev_ok) {
 		LP_PRINTF("%s(%s): device not properly attached!", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 		goto done;
 	}
 
@@ -668,8 +667,7 @@ err:
 	LP_PRINTF("R");
 	/* Disable interface if there are too many errors */
 	if(sc->sc_iferrs > LPMAXERRS) {
-		printf("%s: Too many consecutive errors, going off-line.\n",
-			dev->dv_xname);
+		aprint_error_dev(dev, "Too many consecutive errors, going off-line.\n");
 		ppbus_wctr(ppbus, ~IRQENABLE);
 		if_down(ifp);
 		sc->sc_iferrs = 0;
@@ -719,7 +717,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	if(sc->sc_dev_ok) {
 		LP_PRINTF("%s(%s): device not properly attached!", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 		err = ENODEV;
 		goto endoutput;
 	}
@@ -751,8 +749,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 		/* Disable interface if there are too many errors */
 		if(sc->sc_iferrs > LPMAXERRS) {
-			printf("%s: Too many errors, going off-line.\n",
-				dev->dv_xname);
+			aprint_error_dev(dev, "Too many errors, going off-line.\n");
 			ppbus_wctr(ppbus, ~IRQENABLE);
 			if_down(ifp);
 			sc->sc_iferrs = 0;
@@ -781,7 +778,7 @@ lpstart(struct ifnet * ifp)
 
 	if(lp->sc_dev_ok) {
 		LP_PRINTF("%s(%s): device not properly attached!", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 		return;
 	}
 
@@ -811,9 +808,8 @@ lpstart(struct ifnet * ifp)
 			((ifp->if_flags & IFF_LINK0) && !(str & CLPIP_SHAKE))) {
 			LP_PRINTF("&");
 			if(++lp->sc_xmit_rtry > LPMAXRTRY) {
-				printf("%s: Too many retries while channel "
-					"busy, going off-line.\n",
-					dev->dv_xname);
+				aprint_error_dev(dev, "Too many retries while channel "
+					"busy, going off-line.\n");
 				ppbus_wctr(ppbus, ~IRQENABLE);
 				if_down(ifp);
 				lp->sc_xmit_rtry = 0;
@@ -926,8 +922,7 @@ nend:
 
 			/* Disable interface if there are too many errors */
 			if(lp->sc_iferrs > LPMAXERRS) {
-				printf("%s: Too many errors, going off-line.\n",
-					dev->dv_xname);
+				aprint_error_dev(dev, "Too many errors, going off-line.\n");
 				ppbus_wctr(ppbus, ~IRQENABLE);
 				if_down(ifp);
 				lp->sc_iferrs = 0;

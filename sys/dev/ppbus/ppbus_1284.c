@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.9 2007/12/15 00:39:35 perry Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.10 2008/04/08 07:35:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.9 2007/12/15 00:39:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.10 2008/04/08 07:35:35 cegger Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -113,7 +113,7 @@ ppbus_1284_set_error(struct ppbus_softc * bus, int error, int event)
 
 #ifdef DEBUG_1284
 	printf("%s<1284>: error=%d status=0x%x event=%d\n",
-		bus->sc_dev.dv_xname, error, ppbus_rstr((struct device *)bus),
+		device_xname(&bus->sc_dev), error, ppbus_rstr((struct device *)bus),
 		event);
 
 #endif
@@ -413,14 +413,14 @@ ppbus_1284_read_id(struct device * dev, int mode, char ** buffer,
 	error = ppbus_read_ivar(dev, PPBUS_IVAR_IEEE, &old_ivar);
 	if(error) {
 		printf("%s(%s): error reading PPBUS_IVAR_IEEE.\n", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 		return error;
 	}
 	if(old_ivar == 0) {
 		error = ppbus_write_ivar(dev, PPBUS_IVAR_IEEE, &new_ivar);
 		if(error) {
 			printf("%s(%s): error enabling IEEE usage.\n", __func__,
-				dev->dv_xname);
+				device_xname(dev));
 			return error;
 		}
 	}
@@ -432,14 +432,14 @@ ppbus_1284_read_id(struct device * dev, int mode, char ** buffer,
 	case PPBUS_BYTE:
 		error = ppbus_set_mode(dev, mode, PPBUS_REQUEST_ID);
 		if(error) {
-			goto end_read_id;
 			printf("%s(%s): error setting bus mode.\n", __func__,
-				dev->dv_xname);
+				device_xname(dev));
+			goto end_read_id;
 		}
 		break;
 	default:
 		printf("%s(%s): mode does not support returning device ID.\n",
-			__func__, dev->dv_xname);
+			__func__, device_xname(dev));
 		error = ENODEV;
 		goto end_read_id;
 	}
@@ -447,14 +447,14 @@ ppbus_1284_read_id(struct device * dev, int mode, char ** buffer,
 	error = ppbus_read(dev, &length_field, 1, 0, read);
 	if(error) {
 		printf("%s(%s): error reading first byte.\n", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 		goto end_read_id;
 	}
 	msg_sz = length_field;
 	error = ppbus_read(dev, &length_field, 1, 0, read);
 	if(error) {
 		printf("%s(%s): error reading second byte.\n",
-			__func__, dev->dv_xname);
+			__func__, device_xname(dev));
 		goto end_read_id;
 	}
 	msg_sz <<= 8;
@@ -462,7 +462,7 @@ ppbus_1284_read_id(struct device * dev, int mode, char ** buffer,
 	msg_sz -= 2;
 	if(msg_sz <= 0) {
 		printf("%s(%s): device ID length <= 0.\n", __func__,
-			dev->dv_xname);
+			device_xname(dev));
 		goto end_read_id;
 	}
 	*buffer = malloc(msg_sz, M_DEVBUF, M_WAITOK);
@@ -474,7 +474,7 @@ end_read_id:
 	if(old_ivar == 0) {
 		if(ppbus_write_ivar(dev, PPBUS_IVAR_IEEE, &old_ivar)) {
 			printf("%s(%s): error restoring PPBUS_IVAR_IEEE.\n",
-				__func__, dev->dv_xname);
+				__func__, device_xname(dev));
 		}
 	}
 	return (error);

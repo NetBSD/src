@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.15 2008/01/04 21:18:04 ad Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.16 2008/04/08 07:35:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.15 2008/01/04 21:18:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.16 2008/04/08 07:35:35 cegger Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -228,7 +228,7 @@ ppbus_write(struct device * dev, char * buf, int len, int how, size_t * cnt)
 	if(bus->sc_use_ieee == PPBUS_ENABLE_IEEE) {
 		if(bus->sc_1284_state != PPBUS_FORWARD_IDLE) {
 			printf("%s(%s): bus not in forward idle mode.\n",
-				__func__, dev->dv_xname);
+				__func__, device_xname(dev));
 			return ENODEV;
 		}
 	}
@@ -245,7 +245,7 @@ ppbus_read(struct device * dev, char * buf, int len, int how, size_t * cnt)
 	if(bus->sc_use_ieee == PPBUS_ENABLE_IEEE) {
 		if(bus->sc_1284_state != PPBUS_REVERSE_IDLE) {
 			printf("%s(%s): bus not in reverse idle mode.\n",
-				__func__, dev->dv_xname);
+				__func__, device_xname(dev));
 			return ENODEV;
 		}
 	}
@@ -526,24 +526,24 @@ ppbus_pnp_detect(struct device * dev)
 	char * token;
 
 #ifdef PPBUS_VERBOSE
-	printf("%s: Probing for PnP devices.\n", dev->dv_xname);
+	printf("%s: Probing for PnP devices.\n", device_xname(dev));
 #endif
 
 	error = ppbus_1284_read_id(dev, PPBUS_NIBBLE, &str, &str_sz, &len);
 	if(str_sz != len) {
 #ifdef DEBUG_1284
 		printf("%s(%s): device returned less characters than expected "
-			"in device ID.\n", __func__, dev->dv_xname);
+			"in device ID.\n", __func__, device_xname(dev));
 #endif
 	}
 	if(error) {
 		printf("%s: Error getting device ID (errno = %d)\n",
-			dev->dv_xname, error);
+			device_xname(dev), error);
 		goto end_detect;
 	}
 
 #ifdef DEBUG_1284
-	printf("%s: <PnP> %d characters: ", dev->dv_xname, len);
+	printf("%s: <PnP> %d characters: ", device_xname(dev), len);
 	for (i = 0; i < len; i++)
 		printf("%c(0x%x) ", str[i], str[i]);
 	printf("\n");
@@ -556,10 +556,10 @@ ppbus_pnp_detect(struct device * dev)
 
 	if ((token = search_token(str, len, "MFG")) != NULL ||
 		(token = search_token(str, len, "MANUFACTURER")) != NULL)
-		printf("%s: <%s", dev->dv_xname,
+		printf("%s: <%s", device_xname(dev),
 			search_token(token, UNKNOWN_LENGTH, ":") + 1);
 	else
-		printf("%s: <unknown", dev->dv_xname);
+		printf("%s: <unknown", device_xname(dev));
 
 	if ((token = search_token(str, len, "MDL")) != NULL ||
 		(token = search_token(str, len, "MODEL")) != NULL)
@@ -619,7 +619,7 @@ ppbus_scan_bus(struct device * dev)
 #if defined(PPBUS_VERBOSE) || defined(PPBUS_DEBUG)
 	/* IEEE1284 supported, print info */
 	printf("%s: IEEE1284 negotiation: modes %s",
-	    dev->dv_xname, "NIBBLE");
+	    device_xname(dev), "NIBBLE");
 
 	error = ppbus_1284_negotiate(dev, PPBUS_PS2, 0);
 	if (!error)
