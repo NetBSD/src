@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.18 2007/10/19 11:59:55 ad Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.19 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.18 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.19 2008/04/08 12:07:26 cegger Exp $");
 
 #include "rnd.h"
 
@@ -314,8 +314,8 @@ ld_icp_intr(struct icp_ccb *ic)
 	icp = (struct icp_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	if (ic->ic_status != ICP_S_OK) {
-		printf("%s: request failed; status=0x%04x\n",
-		    ic->ic_dv->dv_xname, ic->ic_status);
+		aprint_error_dev(ic->ic_dv, "request failed; status=0x%04x\n",
+		    ic->ic_status);
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 

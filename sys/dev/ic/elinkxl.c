@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.100 2008/02/07 01:21:52 dyoung Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.101 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.100 2008/02/07 01:21:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.101 2008/04/08 12:07:26 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -206,7 +206,7 @@ ex_config(sc)
 	macaddr[4] = val >> 8;
 	macaddr[5] = val & 0xff;
 
-	aprint_normal("%s: MAC address %s\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev, "MAC address %s\n",
 	    ether_sprintf(macaddr));
 
 	if (sc->ex_conf & (EX_CONF_INV_LED_POLARITY|EX_CONF_PHY_POWER)) {
@@ -233,9 +233,9 @@ ex_config(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    EX_NUPD * sizeof (struct ex_upd), PAGE_SIZE, 0, &sc->sc_useg, 1,
             &sc->sc_urseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: can't allocate upload descriptors, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't allocate upload descriptors, error = %d\n",
+		    error);
 		goto fail;
 	}
 
@@ -244,8 +244,7 @@ ex_config(sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_useg, sc->sc_urseg,
 	    EX_NUPD * sizeof (struct ex_upd), (void **)&sc->sc_upd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error("%s: can't map upload descriptors, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "can't map upload descriptors, error = %d\n", error);
 		goto fail;
 	}
 
@@ -255,9 +254,9 @@ ex_config(sc)
 	    EX_NUPD * sizeof (struct ex_upd), 1,
 	    EX_NUPD * sizeof (struct ex_upd), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_upd_dmamap)) != 0) {
-		aprint_error(
-		    "%s: can't create upload desc. DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't create upload desc. DMA map, error = %d\n",
+		    error);
 		goto fail;
 	}
 
@@ -266,9 +265,9 @@ ex_config(sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_upd_dmamap,
 	    sc->sc_upd, EX_NUPD * sizeof (struct ex_upd), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: can't load upload desc. DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't load upload desc. DMA map, error = %d\n",
+		    error);
 		goto fail;
 	}
 
@@ -281,9 +280,9 @@ ex_config(sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, PAGE_SIZE, 0, &sc->sc_dseg, 1,
 	    &sc->sc_drseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: can't allocate download descriptors, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't allocate download descriptors, error = %d\n",
+		    error);
 		goto fail;
 	}
 
@@ -292,8 +291,8 @@ ex_config(sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_drseg,
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, (void **)&sc->sc_dpd,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error("%s: can't map download descriptors, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "can't map download descriptors, error = %d\n",
+		    error);
 		goto fail;
 	}
 	memset(sc->sc_dpd, 0, DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN);
@@ -304,9 +303,9 @@ ex_config(sc)
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, 1,
 	    DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, 0, BUS_DMA_NOWAIT,
 	    &sc->sc_dpd_dmamap)) != 0) {
-		aprint_error(
-		    "%s: can't create download desc. DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't create download desc. DMA map, error = %d\n",
+		    error);
 		goto fail;
 	}
 
@@ -315,9 +314,9 @@ ex_config(sc)
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dpd_dmamap,
 	    sc->sc_dpd, DPDMEM_SIZE + EX_IP4CSUMTX_PADLEN, NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error(
-		    "%s: can't load download desc. DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev,
+		    "can't load download desc. DMA map, error = %d\n",
+		    error);
 		goto fail;
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dpd_dmamap,
@@ -333,9 +332,9 @@ ex_config(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EX_NTFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_tx_dmamaps[i])) != 0) {
-			aprint_error(
-			    "%s: can't create tx DMA map %d, error = %d\n",
-			    sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't create tx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail;
 		}
 	}
@@ -349,9 +348,9 @@ ex_config(sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EX_NRFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_rx_dmamaps[i])) != 0) {
-			aprint_error(
-			    "%s: can't create rx DMA map %d, error = %d\n",
-			    sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev,
+			    "can't create rx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail;
 		}
 	}
@@ -369,8 +368,7 @@ ex_config(sc)
 		sc->sc_upd[i].upd_frags[0].fr_len =
 		    htole32((MCLBYTES - 2) | EX_FR_LAST);
 		if (ex_add_rxbuf(sc, &sc->sc_rxdescs[i]) != 0) {
-			aprint_error("%s: can't allocate or map rx buffers\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "can't allocate or map rx buffers\n");
 			goto fail;
 		}
 	}
@@ -421,7 +419,7 @@ ex_config(sc)
 	} else
 		ex_probemedia(sc);
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ex_start;
 	ifp->if_ioctl = ex_ioctl;
@@ -458,22 +456,20 @@ ex_config(sc)
 	/* TODO: set queues to 0 */
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 			  RND_TYPE_NET, 0);
 #endif
 
 	/*  Establish callback to reset card when we reboot. */
 	sc->sc_sdhook = shutdownhook_establish(ex_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish shutdown hook\n");
 
 	/* Add a suspend hook to make sure we come back up after a resume. */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
+	sc->sc_powerhook = powerhook_establish(device_xname(&sc->sc_dev),
 	    ex_power, sc);
 	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish power hook\n");
 
 	/* The attach is successful. */
 	sc->ex_flags |= EX_FLAGS_ATTACHED;
@@ -567,7 +563,7 @@ ex_probemedia(sc)
 
 	default_media = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
 
-	aprint_normal("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal_dev(&sc->sc_dev, "");
 
 	/* Sanity check that there are any media! */
 	if ((reset_options & ELINK_PCI_MEDIAMASK) == 0) {
@@ -728,7 +724,7 @@ ex_init(ifp)
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ifp->if_timer = 0;
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "interface not running\n");
 	}
 	return (error);
 }
@@ -842,7 +838,7 @@ ex_txstat(sc)
 
 		ifp->if_flags &= ~IFF_OACTIVE;
 		++sc->sc_ethercom.ec_if.if_oerrors;
-		printf("%s:%s%s%s", sc->sc_dev.dv_xname,
+		printf("%s:%s%s%s", device_xname(&sc->sc_dev),
 		    (err & TXS_UNDERRUN) ? " transmit underrun" : "",
 		    (err & TXS_JABBER) ? " jabber" : "",
 		    (err & TXS_RECLAIM) ? " reclaim" : "");
@@ -1110,7 +1106,7 @@ ex_start(ifp)
 			 * mbuf chain first.  Bail out if we can't get the
 			 * new buffers.
 			 */
-			printf("%s: too many segments, ", sc->sc_dev.dv_xname);
+			printf("%s: too many segments, ", device_xname(&sc->sc_dev));
 
 			MGETHDR(mn, M_DONTWAIT, MT_DATA);
 			if (mn == NULL) {
@@ -1140,8 +1136,8 @@ ex_start(ifp)
 			/*
 			 * Some other problem; report it.
 			 */
-			printf("%s: can't load mbuf chain, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "can't load mbuf chain, error = %d\n",
+			    error);
 			m_freem(mb_head);
 			goto out;
 		}
@@ -1282,7 +1278,7 @@ ex_intr(arg)
 			if ((stat & INTR_LATCH) == 0) {
 #if 0
 				printf("%s: intr latch cleared\n",
-				       sc->sc_dev.dv_xname);
+				       device_xname(&sc->sc_dev));
 #endif
 				break;
 			}
@@ -1299,8 +1295,8 @@ ex_intr(arg)
 			(*sc->intr_ack)(sc);
 
 		if (stat & HOST_ERROR) {
-			printf("%s: adapter failure (%x)\n",
-			    sc->sc_dev.dv_xname, stat);
+			aprint_error_dev(&sc->sc_dev, "adapter failure (%x)\n",
+			    stat);
 			ex_reset(sc);
 			ex_init(ifp);
 			return 1;
@@ -1313,7 +1309,7 @@ ex_intr(arg)
 #if 0
 			if (stat & DN_COMPLETE)
 				printf("%s: Ignoring Dn interrupt (%x)\n",
-				    sc->sc_dev.dv_xname, stat);
+				    device_xname(&sc->sc_dev), stat);
 #endif
 			/*
 			 * In some rare cases, both Tx Complete and
@@ -1452,12 +1448,12 @@ ex_intr(arg)
 			 */
 			if (bus_space_read_4(iot, ioh, ELINK_UPLISTPTR) == 0) {
 				printf("%s: uplistptr was 0\n",
-				       sc->sc_dev.dv_xname);
+				       device_xname(&sc->sc_dev));
 				ex_init(ifp);
 			} else if (bus_space_read_4(iot, ioh, ELINK_UPPKTSTATUS)
 				   & 0x2000) {
 				printf("%s: receive stalled\n",
-				       sc->sc_dev.dv_xname);
+				       device_xname(&sc->sc_dev));
 				bus_space_write_2(iot, ioh, ELINK_COMMAND,
 						  ELINK_UPUNSTALL);
 			}
@@ -1640,7 +1636,7 @@ ex_watchdog(ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 
-	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
+	log(LOG_ERR, "%s: device timeout\n", device_xname(&sc->sc_dev));
 	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	ex_reset(sc);
@@ -1866,7 +1862,7 @@ ex_eeprom_busy(sc)
 			return 0;
 		delay(100);
 	}
-	printf("\n%s: eeprom stays busy.\n", sc->sc_dev.dv_xname);
+	printf("\n%s: eeprom stays busy.\n", device_xname(&sc->sc_dev));
 	return (1);
 }
 
@@ -1914,8 +1910,8 @@ ex_add_rxbuf(sc, rxd)
 		    m->m_ext.ext_buf, MCLBYTES, NULL,
 		    BUS_DMA_READ|BUS_DMA_NOWAIT);
 		if (error) {
-			printf("%s: can't load rx buffer, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "can't load rx buffer, error = %d\n",
+			    error);
 			panic("ex_add_rxbuf");	/* XXX */
 		}
 	}
@@ -2037,8 +2033,7 @@ ex_enable(sc)
 {
 	if (sc->enabled == 0 && sc->enable != NULL) {
 		if ((*sc->enable)(sc) != 0) {
-			printf("%s: de/vice enable failed\n",
-				sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "de/vice enable failed\n");
 			return (EIO);
 		}
 		sc->enabled = 1;

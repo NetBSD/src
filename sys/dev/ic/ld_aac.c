@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.17 2007/10/19 11:59:55 ad Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.18 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.17 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.18 2008/04/08 12:07:26 cegger Exp $");
 
 #include "rnd.h"
 
@@ -278,8 +278,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 			}
 
 			if (status != ST_OK) {
-				printf("%s: I/O error: %s\n",
-				    sc->sc_ld.sc_dv.dv_xname,
+				aprint_error_dev(&sc->sc_ld.sc_dv, "I/O error: %s\n",
 				    aac_describe_code(aac_command_status_table,
 				    status));
 				rv = EIO;
@@ -333,7 +332,7 @@ ld_aac_intr(struct aac_ccb *ac)
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 
-		printf("%s: I/O error: %s\n", sc->sc_ld.sc_dv.dv_xname,
+		aprint_error_dev(&sc->sc_ld.sc_dv, "I/O error: %s\n",
 		    aac_describe_code(aac_command_status_table, status));
 	} else
 		bp->b_resid = 0;

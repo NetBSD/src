@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.20 2007/12/11 00:21:51 martin Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.21 2008/04/08 12:07:25 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.20 2007/12/11 00:21:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21 2008/04/08 12:07:25 cegger Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -129,23 +129,23 @@ cs4231_common_attach(struct cs4231_softc *sc, bus_space_handle_t ioh)
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR,
 			     NULL,
-			     sc->sc_ad1848.sc_dev.dv_xname, "total");
+			     device_xname(&sc->sc_ad1848.sc_dev), "total");
 
 	evcnt_attach_dynamic(&sc->sc_playback.t_intrcnt, EVCNT_TYPE_INTR,
 			     &sc->sc_intrcnt,
-			     sc->sc_ad1848.sc_dev.dv_xname, "playback");
+			     device_xname(&sc->sc_ad1848.sc_dev), "playback");
 
 	evcnt_attach_dynamic(&sc->sc_playback.t_ierrcnt, EVCNT_TYPE_INTR,
 			     &sc->sc_intrcnt,
-			     sc->sc_ad1848.sc_dev.dv_xname, "perrors");
+			     device_xname(&sc->sc_ad1848.sc_dev), "perrors");
 
 	evcnt_attach_dynamic(&sc->sc_capture.t_intrcnt, EVCNT_TYPE_INTR,
 			     &sc->sc_intrcnt,
-			     sc->sc_ad1848.sc_dev.dv_xname, "capture");
+			     device_xname(&sc->sc_ad1848.sc_dev), "capture");
 
 	evcnt_attach_dynamic(&sc->sc_capture.t_ierrcnt, EVCNT_TYPE_INTR,
 			     &sc->sc_intrcnt,
-			     sc->sc_ad1848.sc_dev.dv_xname, "cerrors");
+			     device_xname(&sc->sc_ad1848.sc_dev), "cerrors");
 
 	/* put chip in native mode to access (extended) ID register */
 	reg = ad_read(&sc->sc_ad1848, SP_MISC_INFO);
@@ -270,7 +270,7 @@ cs4231_transfer_init(
 
 	if (t->t_active) {
 		printf("%s: %s already running\n",
-		       sc->sc_ad1848.sc_dev.dv_xname, t->t_name);
+		       device_xname(&sc->sc_ad1848.sc_dev), t->t_name);
 		return EINVAL;
 	}
 
@@ -281,7 +281,7 @@ cs4231_transfer_init(
 		continue;
 	if (p == NULL) {
 		printf("%s: bad %s addr %p\n",
-		       sc->sc_ad1848.sc_dev.dv_xname, t->t_name, start);
+		       device_xname(&sc->sc_ad1848.sc_dev), t->t_name, start);
 		return EINVAL;
 	}
 
@@ -302,7 +302,7 @@ cs4231_transfer_init(
 
 	DPRINTF(("%s: init %s: [%p..%p] %lu bytes %lu blocks;"
 		 " DMA at 0x%lx count %lu\n",
-		 sc->sc_ad1848.sc_dev.dv_xname, t->t_name,
+		 device_xname(&sc->sc_ad1848.sc_dev), t->t_name,
 		 start, end, (u_long)t->t_segsz, (u_long)t->t_blksz,
 		 (u_long)*paddr, (u_long)*psize));
 

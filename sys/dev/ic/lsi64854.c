@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.30 2007/10/19 11:59:55 ad Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.31 2008/04/08 12:07:26 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.30 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.31 2008/04/08 12:07:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,14 +110,14 @@ lsi64854_attach(sc)
 		sc->setup = lsi64854_setup_pp;
 		break;
 	default:
-		printf("%s: unknown channel\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unknown channel\n");
 	}
 	sc->reset = lsi64854_reset;
 
 	/* Allocate a dmamap */
 	if (bus_dmamap_create(sc->sc_dmatag, MAX_DMA_SZ, 1, MAX_DMA_SZ,
 			      0, BUS_DMA_WAITOK, &sc->sc_dmamap) != 0) {
-		printf("%s: DMA map create failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "DMA map create failed\n");
 		return;
 	}
 
@@ -337,7 +337,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 				NULL /* kernel address */,
 		                BUS_DMA_NOWAIT | BUS_DMA_STREAMING))
 			panic("%s: cannot allocate DVMA address",
-			      sc->sc_dev.dv_xname);
+			      device_xname(&sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap, 0, sc->sc_dmasize,
 				datain
 					? BUS_DMASYNC_PREREAD
@@ -393,12 +393,12 @@ lsi64854_scsi_intr(arg)
 
 	csr = L64854_GCSR(sc);
 
-	DPRINTF(LDB_SCSI, ("%s: dmaintr: addr 0x%x, csr %s\n", sc->sc_dev.dv_xname,
+	DPRINTF(LDB_SCSI, ("%s: dmaintr: addr 0x%x, csr %s\n", device_xname(&sc->sc_dev),
 		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
 		 bitmask_snprintf(csr, DDMACSR_BITS, bits, sizeof(bits))));
 
 	if (csr & (D_ERR_PEND|D_SLAVE_ERR)) {
-		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+		printf("%s: error: csr=%s\n", device_xname(&sc->sc_dev),
 			bitmask_snprintf(csr, DDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~D_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
@@ -469,7 +469,7 @@ lsi64854_scsi_intr(arg)
 		 * another target.  As such, don't print the warning.
 		 */
 		printf("%s: xfer (%d) > req (%d)\n",
-		    sc->sc_dev.dv_xname, trans, sc->sc_dmasize);
+		    device_xname(&sc->sc_dev), trans, sc->sc_dmasize);
 #endif
 		trans = sc->sc_dmasize;
 	}
@@ -523,7 +523,7 @@ lsi64854_enet_intr(arg)
 	rv = ((csr & E_INT_PEND) != 0) ? 1 : 0;
 
 	if (csr & (E_ERR_PEND|E_SLAVE_ERR)) {
-		printf("%s: error: csr=%s\n", sc->sc_dev.dv_xname,
+		printf("%s: error: csr=%s\n", device_xname(&sc->sc_dev),
 			bitmask_snprintf(csr, EDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~L64854_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
@@ -563,7 +563,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	DPRINTF(LDB_PP, ("%s: pp start %ld@%p,%d\n", sc->sc_dev.dv_xname,
+	DPRINTF(LDB_PP, ("%s: pp start %ld@%p,%d\n", device_xname(&sc->sc_dev),
 		(long)*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
@@ -584,7 +584,7 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 				NULL /* kernel address */,
 				    BUS_DMA_NOWAIT/*|BUS_DMA_COHERENT*/))
 			panic("%s: pp cannot allocate DVMA address",
-			      sc->sc_dev.dv_xname);
+			      device_xname(&sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap, 0, sc->sc_dmasize,
 				datain
 					? BUS_DMASYNC_PREREAD
@@ -632,14 +632,14 @@ lsi64854_pp_intr(arg)
 
 	csr = L64854_GCSR(sc);
 
-	DPRINTF(LDB_PP, ("%s: pp intr: addr 0x%x, csr %s\n", sc->sc_dev.dv_xname,
+	DPRINTF(LDB_PP, ("%s: pp intr: addr 0x%x, csr %s\n", device_xname(&sc->sc_dev),
 		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
 		 bitmask_snprintf(csr, PDMACSR_BITS, bits, sizeof(bits))));
 
 	if (csr & (P_ERR_PEND|P_SLAVE_ERR)) {
 		resid = bus_space_read_4(sc->sc_bustag, sc->sc_regs,
 					 L64854_REG_CNT);
-		printf("%s: pp error: resid %d csr=%s\n", sc->sc_dev.dv_xname,
+		printf("%s: pp error: resid %d csr=%s\n", device_xname(&sc->sc_dev),
 		       resid,
 		       bitmask_snprintf(csr, PDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~P_EN_DMA;	/* Stop DMA */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.19 2007/10/19 12:00:03 ad Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.20 2008/04/08 12:07:27 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.19 2007/10/19 12:00:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.20 2008/04/08 12:07:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +342,7 @@ tav_getdev(void *hdl, struct audio_device *ret)
 	/* guaranteed to be <= 4 in length */
 	snprintf(ret->version, sizeof(ret->version), "%u",
 	    tav_read_byte(iot, ioh, TAV_VERSION));
-	strlcpy(ret->config, sc->sc_dev.dv_xname, sizeof(ret->config));
+	strlcpy(ret->config, device_xname(&sc->sc_dev), sizeof(ret->config));
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.31 2007/10/19 11:59:54 ad Exp $	*/
+/*	$NetBSD: interwave.c,v 1.32 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.31 2007/10/19 11:59:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.32 2008/04/08 12:07:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ iwattach(struct iw_softc *sc)
 	iw_set_format(sc, AUDIO_ENCODING_ULAW, 0);
 	iw_set_format(sc, AUDIO_ENCODING_ULAW, 1);
 	printf("%s: interwave version %s\n",
-	    sc->sc_dev.dv_xname, iw_device.version);
+	    device_xname(&sc->sc_dev), iw_device.version);
 	audio_attach_mi(sc->iw_hw_if, sc, &sc->sc_dev);
 }
 
@@ -306,7 +306,7 @@ iw_meminit(struct iw_softc *sc)
 		addr += RAM_STEP;
 	}
 
-	printf("%s:", sc->sc_dev.dv_xname);
+	printf("%s:", device_xname(&sc->sc_dev));
 
 	for (i = 0; i < 4; i++) {
 		iw_mempoke(sc, base, 0xAA);	/* mark start of bank */

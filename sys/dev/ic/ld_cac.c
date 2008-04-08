@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.19 2007/10/19 11:59:55 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.20 2008/04/08 12:07:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.19 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.20 2008/04/08 12:07:26 cegger Exp $");
 
 #include "rnd.h"
 
@@ -199,23 +199,23 @@ ld_cac_done(struct device *dv, void *context, int error)
 	sc = device_private(dv);
 
 	if ((error & CAC_RET_CMD_REJECTED) == CAC_RET_CMD_REJECTED) {
-		printf("%s: command rejected\n", dv->dv_xname);
+		aprint_error_dev(dv, "command rejected\n");
 		rv = EIO;
 	}
 	if (rv == 0 && (error & CAC_RET_INVAL_BLOCK) != 0) {
-		printf("%s: invalid request block\n", dv->dv_xname);
+		aprint_error_dev(dv, "invalid request block\n");
 		rv = EIO;
 	}
 	if (rv == 0 && (error & CAC_RET_HARD_ERROR) != 0) {
-		printf("%s: hard error\n", dv->dv_xname);
+		aprint_error_dev(dv, "hard error\n");
 		rv = EIO;
 	}
 	if (rv == 0 && (error & CAC_RET_SOFT_ERROR) != 0) {
 		sc->sc_serrcnt++;
 		if (ratecheck(&sc->sc_serrtm, &ld_cac_serrintvl)) {
 			sc->sc_serrcnt = 0;
-			printf("%s: %d soft errors; array may be degraded\n",
-			    dv->dv_xname, sc->sc_serrcnt);
+			aprint_error_dev(dv, "%d soft errors; array may be degraded\n",
+			    sc->sc_serrcnt);
 		}
 	}
 
