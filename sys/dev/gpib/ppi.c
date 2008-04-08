@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.10 2007/07/09 21:00:32 ad Exp $	*/
+/*	$NetBSD: ppi.c,v 1.11 2008/04/08 07:38:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.10 2007/07/09 21:00:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.11 2008/04/08 07:38:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,7 @@ ppiattach(parent, self, aux)
 
 	if (gpibregister(sc->sc_ic, sc->sc_address, ppicallback, sc,
 	    &sc->sc_hdl)) {
-		printf("%s: can't register callback\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't register callback\n");
 		return;
 	}
 
