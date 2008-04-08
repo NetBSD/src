@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.2.2.1 2007/02/20 15:14:00 tron Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.2.2.2 2008/04/08 20:32:38 jdc Exp $");
 #endif
 
 #include <sys/param.h>
@@ -456,8 +456,10 @@ drvctl(const char *name, u_int *sector_size, off_t *media_size)
 	int dfd, res;
 	char *dname, *p;
 
-	if ((dfd = open("/dev/drvctl", O_RDONLY)) == -1)
+	if ((dfd = open("/dev/drvctl", O_RDONLY)) == -1) {
+		warn("%s: /dev/drvctl", __func__);
 		return -1;
+	}
 
 	command_dict = prop_dictionary_create();
 	args_dict = prop_dictionary_create();
@@ -488,6 +490,7 @@ drvctl(const char *name, u_int *sector_size, off_t *media_size)
 	(void)close(dfd);
 	prop_object_release(command_dict);
 	if (res) {
+		warn("%s: prop_dictionary_sendrecv_ioctl", __func__);
 		errno = res;
 		return -1;
 	}
@@ -731,10 +734,34 @@ static struct {
 static void
 usage(void)
 {
+	extern const char addmsg[], createmsg[], destroymsg[];
+	extern const char labelmsg1[], labelmsg2[], labelmsg3[];
+	extern const char migratemsg[], recovermsg[], removemsg1[];
+	extern const char removemsg2[], showmsg[];
 
 	fprintf(stderr,
-	    "usage: %s [-rv] [-p nparts] command [options] device ...\n",
-	    getprogname());
+	    "usage: %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %*s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n"
+	    "       %s %s\n",
+	    getprogname(), addmsg,
+	    getprogname(), createmsg,
+	    getprogname(), destroymsg,
+	    getprogname(), labelmsg1,
+	    getprogname(), labelmsg2,
+	    (int)strlen(getprogname()), "", labelmsg3,
+	    getprogname(), migratemsg,
+	    getprogname(), recovermsg,
+	    getprogname(), removemsg1,
+	    getprogname(), removemsg2,
+	    getprogname(), showmsg);
 	exit(1);
 }
 
