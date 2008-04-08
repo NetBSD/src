@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic_common.c,v 1.1 2008/01/17 23:42:59 garbled Exp $ */
+/*	$NetBSD: openpic_common.c,v 1.2 2008/04/08 02:33:03 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.1 2008/01/17 23:42:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openpic_common.c,v 1.2 2008/04/08 02:33:03 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -80,12 +80,12 @@ int
 opic_get_irq(struct pic_ops *pic, int mode)
 {
 
-	return openpic_read_irq(cpu_number());
+	return openpic_read_irq(curcpu()->ci_index);
 }
 
 void
 opic_ack_irq(struct pic_ops *pic, int irq)
 {
 
-	openpic_eoi(cpu_number());
+	openpic_eoi(curcpu()->ci_index);
 }

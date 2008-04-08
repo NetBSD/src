@@ -1,4 +1,4 @@
-/* $NetBSD: ipi_openpic.c,v 1.2 2007/10/17 19:56:45 garbled Exp $ */
+/* $NetBSD: ipi_openpic.c,v 1.3 2008/04/08 02:33:03 garbled Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.2 2007/10/17 19:56:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi_openpic.c,v 1.3 2008/04/08 02:33:03 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 #include <sys/param.h>
@@ -68,7 +68,13 @@ setup_openpic_ipi(void)
 	ipiops.ppc_establish_ipi = openpic_establish_ipi;
 	ipiops.ppc_ipi_vector = IPI_VECTOR;
 
-	x = openpic_read(OPENPIC_IPI_VECTOR(1));
+	/* Some (broken) openpic's byteswap on read, but not write. */
+	openpic_write(OPENPIC_IPI_VECTOR(0), OPENPIC_IMASK);
+	x = openpic_read(OPENPIC_IPI_VECTOR(0));
+	if (x != OPENPIC_IMASK)
+		x = bswap32(openpic_read(OPENPIC_IPI_VECTOR(1)));
+	else
+		x = openpic_read(OPENPIC_IPI_VECTOR(1));
 	x &= ~(OPENPIC_IMASK | OPENPIC_PRIORITY_MASK | OPENPIC_VECTOR_MASK);
 	x |= (15 << OPENPIC_PRIORITY_SHIFT) | ipiops.ppc_ipi_vector;
 	openpic_write(OPENPIC_IPI_VECTOR(1), x);
@@ -88,7 +94,7 @@ openpic_send_ipi(int target, u_long mesg)
 			break;
 		case IPI_T_NOTME:
 			for (i = 0; i < ncpu; i++) {
-				if (i != cpu_number())
+				if (i != curcpu()->ci_index)
 					cpumask |= 1 << i;
 				atomic_setbits_ulong(&IPI[i], mesg);
 			}
@@ -97,7 +103,7 @@ openpic_send_ipi(int target, u_long mesg)
 			cpumask = 1 << target;
 			atomic_setbits_ulong(&IPI[target], mesg);
 	}
-	openpic_write(OPENPIC_IPI(cpu_number(), 1), cpumask);
+	openpic_write(OPENPIC_IPI(curcpu()->ci_index, 1), cpumask);
 }
 
 static void
