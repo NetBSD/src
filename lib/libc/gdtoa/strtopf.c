@@ -1,4 +1,4 @@
-/* $NetBSD: strtopf.c,v 1.1.1.1 2006/01/25 15:18:54 kleink Exp $ */
+/* $NetBSD: strtopf.c,v 1.1.1.1.4.1 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -46,6 +46,8 @@ strtopf(CONST char *s, char **sp, float *f)
 	int k;
 
 	k = strtodg(s, sp, &fpi, &exp, bits);
+	if (k == STRTOG_NoMemory)
+		return k;
 	L = (ULong*)f;
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:

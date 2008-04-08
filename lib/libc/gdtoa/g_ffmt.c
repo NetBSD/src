@@ -1,4 +1,4 @@
-/* $NetBSD: g_ffmt.c,v 1.1.1.1 2006/01/25 15:18:44 kleink Exp $ */
+/* $NetBSD: g_ffmt.c,v 1.1.1.1.4.1 2008/04/08 21:00:08 jdc Exp $ */
 
 /****************************************************************
 
@@ -86,5 +86,7 @@ g_ffmt(char *buf, float *f, int ndig, unsigned bufsize)
 		}
 	i = STRTOG_Normal;
 	s = gdtoa(&fpi, ex, bits, &i, mode, ndig, &decpt, &se);
+	if (s == NULL)
+		return NULL;
 	return g__fmt(buf, s, se, decpt, sign);
 	}
