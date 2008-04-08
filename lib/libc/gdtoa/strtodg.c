@@ -1,4 +1,4 @@
-/* $NetBSD: strtodg.c,v 1.5 2006/06/02 19:46:56 mrg Exp $ */
+/* $NetBSD: strtodg.c,v 1.5.14.1 2008/04/08 21:10:55 jdc Exp $ */
 
 /****************************************************************
 
@@ -82,6 +82,8 @@ increment(Bigint *b)
 	{
 		if (b->wds >= b->maxwds) {
 			b1 = Balloc(b->k+1);
+			if (b1 == NULL)
+				return NULL;
 			Bcopy(b1,b);
 			Bfree(b);
 			b = b1;
@@ -157,6 +159,8 @@ set_ones(Bigint *b, int n)
 	if (b->k < k) {
 		Bfree(b);
 		b = Balloc(k);
+		if (b == NULL)
+			return NULL;
 		}
 	k = (unsigned int)n >> kshift;
 	if (n &= kmask)
@@ -647,6 +651,8 @@ strtodg
 	e2 <<= 2;
 #endif
 	rvb = d2b(dval(rv), &rve, &rvbits);	/* rv = rvb * 2^rve */
+	if (rvb == NULL)
+		return STRTOG_NoMemory;
 	rve += e2;
 	if ((j = rvbits - nbits) > 0) {
 		rshift(rvb, j);
@@ -694,12 +700,18 @@ strtodg
 
 	for(;;) {
 		bd = Balloc(bd0->k);
+		if (bd == NULL)
+			return STRTOG_NoMemory;
 		Bcopy(bd, bd0);
 		bb = Balloc(rvb->k);
+		if (bb == NULL)
+			return STRTOG_NoMemory;
 		Bcopy(bb, rvb);
 		bbbits = rvbits - bb0;
 		bbe = rve + bb0;
 		bs = i2b(1);
+		if (bs == NULL)
+			return STRTOG_NoMemory;
 
 		if (e >= 0) {
 			bb2 = bb5 = 0;
@@ -730,24 +742,42 @@ strtodg
 			}
 		if (bb5 > 0) {
 			bs = pow5mult(bs, bb5);
+			if (bs == NULL)
+				return STRTOG_NoMemory;
 			bb1 = mult(bs, bb);
+			if (bb1 == NULL)
+				return STRTOG_NoMemory;
 			Bfree(bb);
 			bb = bb1;
 			}
 		bb2 -= bb0;
-		if (bb2 > 0)
+		if (bb2 > 0) {
 			bb = lshift(bb, bb2);
+			if (bb == NULL)
+				return STRTOG_NoMemory;
+			}
 		else if (bb2 < 0)
 			rshift(bb, -bb2);
-		if (bd5 > 0)
+		if (bd5 > 0) {
 			bd = pow5mult(bd, bd5);
-		if (bd2 > 0)
+			if (bd == NULL)
+				return STRTOG_NoMemory;
+			}
+		if (bd2 > 0) {
 			bd = lshift(bd, bd2);
-		if (bs2 > 0)
+			if (bd == NULL)
+				return STRTOG_NoMemory;
+			}
+		if (bs2 > 0) {
 			bs = lshift(bs, bs2);
+			if (bs == NULL)
+				return STRTOG_NoMemory;
+			}
 		asub = 1;
 		inex = STRTOG_Inexhi;
 		delta = diff(bb, bd);
+		if (delta == NULL)
+			return STRTOG_NoMemory;
 		if (delta->wds <= 1 && !delta->x[0])
 			break;
 		dsign = delta->sign;
@@ -773,6 +803,8 @@ strtodg
 					goto adj1;
 				rve = rve1 - 1;
 				rvb = set_ones(rvb, rvbits = nbits);
+				if (rvb == NULL)
+					return STRTOG_NoMemory;
 				break;
 				}
 			irv |= dsign ? STRTOG_Inexlo : STRTOG_Inexhi;
@@ -788,6 +820,8 @@ strtodg
 			if (dsign || bbbits > 1 || denorm || rve1 == emin)
 				break;
 			delta = lshift(delta,1);
+			if (delta == NULL)
+				return STRTOG_NoMemory;
 			if (cmp(delta, bs) > 0) {
 				irv = STRTOG_Normal | STRTOG_Inexlo;
 				goto drop_down;
@@ -820,6 +854,8 @@ strtodg
 					}
 				rve -= nbits;
 				rvb = set_ones(rvb, rvbits = nbits);
+				if (rvb == NULL)
+					return STRTOG_NoMemory;
 				break;
 				}
 			else
@@ -828,6 +864,8 @@ strtodg
 				break;
 			if (dsign) {
 				rvb = increment(rvb);
+				if (rvb == NULL)
+					return STRTOG_NoMemory;
 				if ( (j = rvbits & kmask) !=0)
 					j = ULbits - j;
 				if (hi0bits(rvb->x[(unsigned int)(rvb->wds - 1)
@@ -895,10 +933,14 @@ strtodg
 
 		if (!denorm && rvbits < nbits) {
 			rvb = lshift(rvb, j = nbits - rvbits);
+			if (rvb == NULL)
+				return STRTOG_NoMemory;
 			rve -= j;
 			rvbits = nbits;
 			}
 		ab = d2b(dval(adj), &abe, &abits);
+		if (ab == NULL)
+			return STRTOG_NoMemory;
 		if (abe < 0)
 			rshift(ab, -abe);
 		else if (abe > 0)
@@ -908,6 +950,8 @@ strtodg
 			/* rv -= adj; */
 			j = hi0bits(rvb->x[rvb->wds-1]);
 			rvb = diff(rvb, ab);
+			if (rvb == NULL)
+				return STRTOG_NoMemory;
 			k = rvb0->wds - 1;
 			if (denorm)
 				/* do nothing */;
@@ -921,6 +965,8 @@ strtodg
 					}
 				else {
 					rvb = lshift(rvb, 1);
+					if (rvb == NULL)
+						return STRTOG_NoMemory;
 					--rve;
 					--rve1;
 					L = finished = 0;
@@ -929,6 +975,8 @@ strtodg
 			}
 		else {
 			rvb = sum(rvb, ab);
+			if (rvb == NULL)
+				return STRTOG_NoMemory;
 			k = rvb->wds - 1;
 			if (k >= rvb0->wds
 			 || hi0bits(rvb->x[k]) < hi0bits(rvb0->x[k])) {

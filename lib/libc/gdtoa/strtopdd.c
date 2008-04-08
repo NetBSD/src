@@ -1,4 +1,4 @@
-/* $NetBSD: strtopdd.c,v 1.1.1.1 2006/01/25 15:18:53 kleink Exp $ */
+/* $NetBSD: strtopdd.c,v 1.1.1.1.14.1 2008/04/08 21:10:55 jdc Exp $ */
 
 /****************************************************************
 
@@ -55,6 +55,8 @@ strtopdd(CONST char *s, char **sp, double *dd)
 	U *u;
 
 	rv = strtodg(s, sp, &fpi, &exp, bits);
+	if (rv == STRTOG_NoMemory)
+		return rv;
 	u = (U*)dd;
 	switch(rv & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:

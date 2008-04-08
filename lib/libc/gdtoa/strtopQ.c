@@ -1,4 +1,4 @@
-/* $NetBSD: strtopQ.c,v 1.3 2006/03/15 17:35:18 kleink Exp $ */
+/* $NetBSD: strtopQ.c,v 1.3.14.1 2008/04/08 21:10:55 jdc Exp $ */
 
 /****************************************************************
 
@@ -65,6 +65,8 @@ strtopQ(CONST char *s, char **sp, void *V)
 	ULong *L = (ULong*)V;
 
 	k = strtodg(s, sp, &fpi, &expt, bits);
+	if (k == STRTOG_NoMemory)
+		return k;
 	switch(k & STRTOG_Retmask) {
 	  case STRTOG_NoNumber:
 	  case STRTOG_Zero:
