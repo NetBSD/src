@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.48 2008/04/08 01:03:58 thorpej Exp $	*/
+/*	$NetBSD: pf.c,v 1.49 2008/04/08 15:04:35 thorpej Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.48 2008/04/08 01:03:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.49 2008/04/08 15:04:35 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -5839,7 +5839,7 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 			break;
 #ifdef INET6
 		case IPPROTO_ICMPV6:
-			icmp6stat.icp6s_checksum++;
+			icmp6stat[ICMP6_STAT_CHECKSUM]++;
 			break;
 #endif /* INET6 */
 		}
