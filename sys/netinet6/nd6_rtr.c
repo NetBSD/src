@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.73 2008/02/27 19:40:56 matt Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.74 2008/04/08 15:04:35 thorpej Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.73 2008/02/27 19:40:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.74 2008/04/08 15:04:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_rs, struct nd_router_solicit *, m, off, icmp6len);
 	if (nd_rs == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		icmp6stat[ICMP6_STAT_TOOSHORT]++;
 		return;
 	}
 
@@ -174,7 +174,7 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	icmp6stat.icp6s_badrs++;
+	icmp6stat[ICMP6_STAT_BADRS]++;
 	m_freem(m);
 }
 
@@ -230,7 +230,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off, icmp6len);
 	if (nd_ra == NULL) {
-		icmp6stat.icp6s_tooshort++;
+		icmp6stat[ICMP6_STAT_TOOSHORT]++;
 		return;
 	}
 
@@ -403,7 +403,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	icmp6stat.icp6s_badra++;
+	icmp6stat[ICMP6_STAT_BADRA]++;
 	m_freem(m);
 }
 
