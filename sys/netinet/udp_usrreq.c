@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.164 2008/04/06 20:17:27 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.165 2008/04/08 23:37:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.164 2008/04/06 20:17:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.165 2008/04/08 23:37:43 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -525,7 +525,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	plen = m->m_pkthdr.len - off;
 	IP6_EXTHDR_GET(uh, struct udphdr *, m, off, sizeof(struct udphdr));
 	if (uh == NULL) {
-		ip6stat.ip6s_tooshort++;
+		ip6stat[IP6_STAT_TOOSHORT]++;
 		return IPPROTO_DONE;
 	}
 	KASSERT(UDP_HDR_ALIGNED_P(uh));

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.143 2008/04/08 15:04:35 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.144 2008/04/08 23:37:43 thorpej Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.143 2008/04/08 15:04:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.144 2008/04/08 23:37:43 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1898,7 +1898,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 			sorwakeup(last->in6p_socket);
 	} else {
 		m_freem(m);
-		ip6stat.ip6s_delivered--;
+		ip6stat[IP6_STAT_DELIVERED]--;
 	}
 	return IPPROTO_DONE;
 }
