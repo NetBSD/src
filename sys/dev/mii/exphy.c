@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.46 2007/12/29 19:34:55 dyoung Exp $	*/
+/*	$NetBSD: exphy.c,v 1.47 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.46 2007/12/29 19:34:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.47 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,8 +142,7 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	 * instances!
 	 */
 	if (mii->mii_instance != 0) {
-		aprint_error("%s: ignoring this PHY, non-zero instance\n",
-		    sc->mii_dev.dv_xname);
+		aprint_error_dev(&sc->mii_dev, "ignoring this PHY, non-zero instance\n");
 		return;
 	}
 	sc->mii_flags |= MIIF_NOISOLATE;
@@ -152,7 +151,7 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.5 2007/12/29 19:34:55 dyoung Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.6 2008/04/08 20:10:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.5 2007/12/29 19:34:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.6 2008/04/08 20:10:20 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ mvphyattach(struct device *parent, struct device *self, void *aux)
 	PHY_RESET(sc);
 
 	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal("%s: ", sc->mii_dev.dv_xname);
+	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
 	else
@@ -349,5 +349,5 @@ mvphy_flushatu(struct mii_softc *sc)
 		    MV_ATU_OP_FLUSH_ALL | MV_ATU_BUSY);
 	} /*else
 		printf("%s: timeout waiting for ATU flush\n",
-		    sc->mii_dev.dv_xname);*/
+		    device_xname(&sc->mii_dev));*/
 }

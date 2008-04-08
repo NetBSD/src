@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isapnp.c,v 1.13 2007/10/19 12:00:30 ad Exp $	*/
+/*	$NetBSD: aha_isapnp.c,v 1.14 2008/04/08 20:09:27 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.13 2007/10/19 12:00:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.14 2008/04/08 20:09:27 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,7 @@ aha_isapnp_attach(struct device *parent, struct device *self,
 	printf("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
@@ -99,32 +98,32 @@ aha_isapnp_attach(struct device *parent, struct device *self,
 	sc->sc_dmat = ipa->ipa_dmat;
 
 	if (!aha_find(sc->sc_iot, sc->sc_ioh, &apd)) {
-		printf("%s: aha_find failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "aha_find failed\n");
 		return;
 	}
 
 	if (ipa->ipa_ndrq == 0) {
 		if (apd.sc_drq != -1) {
 			printf("%s: no PnP drq, but card has one\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			return;
 		}
 	} else if (apd.sc_drq != ipa->ipa_drq[0].num) {
 		printf("%s: card drq # (%d) != PnP # (%d)\n",
-		    sc->sc_dev.dv_xname, apd.sc_drq, ipa->ipa_drq[0].num);
+		    device_xname(&sc->sc_dev), apd.sc_drq, ipa->ipa_drq[0].num);
 		return;
 	} else {
 		int error = isa_dmacascade(ipa->ipa_ic, ipa->ipa_drq[0].num);
 		if (error) {
-			printf("%s: unable to cascade DRQ, error = %d\n",
-			    sc->sc_dev.dv_xname, error);
+			aprint_error_dev(&sc->sc_dev, "unable to cascade DRQ, error = %d\n",
+			    error);
 			return;
 		}
 	}
 
 	if (apd.sc_irq != ipa->ipa_irq[0].num) {
 		printf("%s: card irq # (%d) != PnP # (%d)\n",
-		    sc->sc_dev.dv_xname, apd.sc_irq, ipa->ipa_irq[0].num);
+		    device_xname(&sc->sc_dev), apd.sc_irq, ipa->ipa_irq[0].num);
 		return;
 	}
 
@@ -133,8 +132,7 @@ aha_isapnp_attach(struct device *parent, struct device *self,
 	    ipa->ipa_irq[0].type, IPL_BIO, aha_intr, sc);
 
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return;
 	}
 

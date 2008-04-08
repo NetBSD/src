@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.31 2007/10/19 12:00:31 ad Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.32 2008/04/08 20:09:27 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.31 2007/10/19 12:00:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.32 2008/04/08 20:09:27 cegger Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -157,8 +157,7 @@ gus_isapnp_attach(struct device *parent, struct device *self,
 	gus_0 = 0;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
@@ -188,14 +187,14 @@ gus_isapnp_attach(struct device *parent, struct device *self,
 		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_playdrq);
 		if (isa_drq_alloc(sc->sc_ic, sc->sc_playdrq) != 0) {
-			printf("%s: can't reserve drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_playdrq);
+			aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
+			    sc->sc_playdrq);
 			return;
 		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
 		    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_playdrq);
+			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
+			    sc->sc_playdrq);
 			return;
 		}
 	}
@@ -203,14 +202,14 @@ gus_isapnp_attach(struct device *parent, struct device *self,
 		sc->sc_rec_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_recdrq);
 		if (isa_drq_alloc(sc->sc_ic, sc->sc_recdrq) != 0) {
-			printf("%s: can't reserve drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_recdrq);
+			aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
+			    sc->sc_recdrq);
 			return;
 		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 		    sc->sc_rec_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_recdrq);
+			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
+			    sc->sc_recdrq);
 			return;
 		}
 	}
@@ -222,7 +221,7 @@ gus_isapnp_attach(struct device *parent, struct device *self,
 	sc->iw_cd = &guspnp_cd;
 	sc->iw_hw_if = &guspnp_hw_if;
 
-	printf("%s: %s %s", sc->sc_dev.dv_xname, ipa->ipa_devident,
+	printf("%s: %s %s", device_xname(&sc->sc_dev), ipa->ipa_devident,
 	       ipa->ipa_devclass);
 
 	iwattach(sc);
