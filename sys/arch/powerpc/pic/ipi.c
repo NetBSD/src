@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.2 2007/10/17 19:56:45 garbled Exp $ */
+/* $NetBSD: ipi.c,v 1.3 2008/04/08 02:33:03 garbled Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.2 2007/10/17 19:56:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.3 2008/04/08 02:33:03 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
@@ -65,7 +65,7 @@ volatile u_long IPI[CPU_MAXNUM];
 int
 ppcipi_intr(void *v)
 {
-	int cpu_id = cpu_number();
+	int cpu_id = curcpu()->ci_index;
 	int msr;
 	u_long ipi;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 2007/12/11 18:04:19 garbled Exp $ */
+/*	$NetBSD: intr.c,v 1.5 2008/04/08 02:33:03 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2007/12/11 18:04:19 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2008/04/08 02:33:03 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -600,7 +600,7 @@ start:
 	while (realirq == ipiops.ppc_ipi_vector) {
 		ppcipi_intr(NULL);
 		pic->pic_ack_irq(pic, realirq);
-		realirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
+		realirq = pic->pic_get_irq(pic, PIC_GET_RECHECK);
 	}
 	if (realirq == 255) {
 		return 0;

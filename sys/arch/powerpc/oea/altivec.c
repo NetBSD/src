@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.13 2007/10/17 19:56:42 garbled Exp $	*/
+/*	$NetBSD: altivec.c,v 1.14 2008/04/08 02:33:03 garbled Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.13 2007/10/17 19:56:42 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.14 2008/04/08 02:33:03 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -217,7 +217,7 @@ mp_save_vec_lwp(struct lwp *l)
 	if (veccpu == NULL)
 		return;
 
-	ppc_send_ipi(veccpu->ci_cpuid, PPC_IPI_FLUSH_VEC);
+	ppc_send_ipi(veccpu->ci_index, PPC_IPI_FLUSH_VEC);
 
 	/* Wait for flush. */
 	for (i = 0; i < 0x3fffffff; i++)

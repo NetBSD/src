@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.6 2008/02/11 17:32:18 garbled Exp $ */
+/* $NetBSD: ofwpci.c,v 1.7 2008/04/08 02:33:03 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.6 2008/02/11 17:32:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.7 2008/04/08 02:33:03 garbled Exp $");
 
 #include "opt_pci.h"
 
@@ -203,7 +203,6 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INSERT_TAIL(&pc->pc_pbi, pbi, next);
 
 	genofw_setup_pciintr_map((void *)pc, pbi, pc->pc_node);
-
 #ifdef PCI_NETBSD_CONFIGURE
 	ioext  = extent_create("pciio",
 	    modeldata.pciiodata[device_unit(self)].start,
@@ -218,7 +217,6 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	extent_destroy(ioext);
 	extent_destroy(memext);
 #endif /* PCI_NETBSD_CONFIGURE */
-	
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = pc->pc_memt;
 	pba.pba_iot = pc->pc_iot;
@@ -228,6 +226,5 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_pc = pc;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

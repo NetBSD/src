@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.45 2008/02/23 19:37:07 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.46 2008/04/08 02:33:03 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.45 2008/02/23 19:37:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.46 2008/04/08 02:33:03 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -443,6 +443,8 @@ cpu_setup(self, ci)
 	aprint_normal(": %s, ID %d%s\n", model,  cpu_number(),
 	    cpu_number() == 0 ? " (primary)" : "");
 
+	/* set the cpu number */
+	ci->ci_cpuid = cpu_number();
 	hid0_save = hid0 = mfspr(SPR_HID0);
 
 	cpu_probe_cache();
@@ -1055,13 +1057,15 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 #endif /* NSYSMON_ENVSYS > 0 */
 
 #ifdef MULTIPROCESSOR
+extern volatile u_int cpu_spinstart_ack;
+
 int
 cpu_spinup(struct device *self, struct cpu_info *ci)
 {
 	volatile struct cpu_hatch_data hatch_data, *h = &hatch_data;
 	struct pglist mlist;
 	int i, error, pvr, vers;
-	char *cp;
+	char *cp, *hp;
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
@@ -1070,8 +1074,10 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	/*
 	 * Allocate some contiguous pages for the intteup PCB and stack
 	 * from the lowest 256MB (because bat0 always maps it va == pa).
+	 * Must be 16 byte aligned.
 	 */
-	error = uvm_pglistalloc(INTSTK, 0x0, 0x10000000, 0, 0, &mlist, 1, 1);
+	error = uvm_pglistalloc(INTSTK, 0x10000, 0x10000000, 16, 0,
+	    &mlist, 1, 1);
 	if (error) {
 		aprint_error(": unable to allocate idle stack\n");
 		return -1;
@@ -1084,6 +1090,17 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 
 	ci->ci_intstk = cp;
 
+	/* Now allocate a hatch stack */
+	error = uvm_pglistalloc(0x1000, 0x10000, 0x10000000, 16, 0,
+	    &mlist, 1, 1);
+	if (error) {
+		aprint_error(": unable to allocate hatch stack\n");
+		return -1;
+	}
+
+	hp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
+	memset(hp, 0, 0x1000);
+
 	/* Initialize secondary cpu's initial lwp to its idlelwp. */
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	ci->ci_curpcb = &ci->ci_curlwp->l_addr->u_pcb;
@@ -1094,15 +1111,24 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	h->self = self;
 	h->ci = ci;
 	h->pir = ci->ci_cpuid;
-	cpu_hatch_stack = (uint32_t)cp + INTSTK - sizeof(struct trapframe);
+
+	cpu_hatch_stack = (uint32_t)hp;
 	ci->ci_lasttb = cpu_info[0].ci_lasttb;
 
 	/* copy special registers */
+
 	h->hid0 = mfspr(SPR_HID0);
+	
 	__asm volatile ("mfsdr1 %0" : "=r"(h->sdr1));
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < 16; i++) {
 		__asm ("mfsrin %0,%1" : "=r"(h->sr[i]) :
 		       "r"(i << ADDR_SR_SHFT));
+	}
+	if (oeacpufeat & OEACPU_64)
+		h->asr = mfspr(SPR_ASR);
+	else
+		h->asr = 0;
+
 	/* copy the bat regs */
 	__asm volatile ("mfibatu %0,0" : "=r"(h->batu[0]));
 	__asm volatile ("mfibatl %0,0" : "=r"(h->batl[0]));
@@ -1120,23 +1146,28 @@ cpu_spinup(struct device *self, struct cpu_info *ci)
 	md_start_timebase(h);
 
 	/* wait for secondary printf */
+
 	delay(200000);
 
-	if (h->running == 0) {
-		aprint_error(":CPU %d didn't start\n", ci->ci_cpuid);
+	if (h->running < 1) {
+		aprint_error("%d:CPU %d didn't start %d\n", cpu_spinstart_ack,
+		    ci->ci_cpuid, cpu_spinstart_ack);
+		Debugger();
 		return -1;
 	}
 
 	/* Register IPI Interrupt */
-	ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
+	if (ipiops.ppc_establish_ipi)
+		ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
 
 	return 0;
 }
 
 static volatile int start_secondary_cpu;
+extern void tlbia(void);
 
-void
-cpu_hatch()
+register_t
+cpu_hatch(void)
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
 	struct cpu_info * const ci = h->ci;
@@ -1146,9 +1177,19 @@ cpu_hatch()
 	/* Initialize timebase. */
 	__asm ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
 
-	/* Set PIR (Processor Identification Register).  i.e. whoami */
-	mtspr(SPR_PIR, h->pir);
+	/*
+	 * Set PIR (Processor Identification Register).  i.e. whoami
+	 * Note that PIR is read-only on some CPU's.  Try to work around
+	 * that as best as possible.  Assume that if it is 0, it is meant
+	 * to be setup by us.
+	 */
+
+	msr = mfspr(SPR_PIR);
+	if (msr == 0)
+		mtspr(SPR_PIR, h->pir);
+	
 	__asm volatile ("mtsprg 0,%0" :: "r"(ci));
+	cpu_spinstart_ack = 0;
 
 	/* Initialize MMU. */
 	__asm ("mtibatu 0,%0" :: "r"(h->batu[0]));
@@ -1165,17 +1206,30 @@ cpu_hatch()
 	__asm ("mtibatl 0,%0; mtibatu 0,%1; mtdbatl 0,%0; mtdbatu 0,%1;"
 	    :: "r"(battable[0].batl), "r"(battable[0].batu));
 
+	__asm volatile ("sync");
 	for (i = 0; i < 16; i++)
 		__asm ("mtsrin %0,%1" :: "r"(h->sr[i]), "r"(i << ADDR_SR_SHFT));
+	__asm volatile ("sync; isync");
 
+	if (oeacpufeat & OEACPU_64)
+		mtspr(SPR_ASR, h->asr);
+
+	cpu_spinstart_ack = 1;
+	__asm ("ptesync");
 	__asm ("mtsdr1 %0" :: "r"(h->sdr1));
-	__asm volatile ("isync");
+	__asm volatile ("sync; isync");
+
+	cpu_spinstart_ack = 5;
+	for (i = 0; i < 16; i++)
+		__asm ("mfsrin %0,%1" : "=r"(h->sr[i]) :
+		       "r"(i << ADDR_SR_SHFT));
 
 	/* Enable I/D address translations. */
-	__asm volatile ("mfmsr %0" : "=r"(msr));
+	msr = mfmsr();
 	msr |= PSL_IR|PSL_DR|PSL_ME|PSL_RI;
-	__asm volatile ("mtmsr %0" :: "r"(msr));
+	mtmsr(msr);
 	__asm volatile ("sync; isync");
+	cpu_spinstart_ack = 2;
 
 	md_sync_timebase(h);
 
@@ -1189,7 +1243,7 @@ cpu_hatch()
 
 	__asm volatile ("sync; isync");
 
-	aprint_normal("cpu%d: started\n", cpu_number());
+	aprint_normal("cpu%d started\n", curcpu()->ci_index);
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 
 	md_setup_interrupts();
@@ -1198,6 +1252,7 @@ cpu_hatch()
 	ci->ci_cpl = 0;
 
 	mtmsr(mfmsr() | PSL_EE);
+	return ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_sp;
 }
 
 void
