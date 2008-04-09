@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_ap.c,v 1.8 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: kb_ap.c,v 1.9 2008/04/09 15:40:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.8 2007/03/04 06:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.9 2008/04/09 15:40:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,36 +41,36 @@ __KERNEL_RCSID(0, "$NetBSD: kb_ap.c,v 1.8 2007/03/04 06:00:26 christos Exp $");
 #include <newsmips/apbus/apbusvar.h>
 
 struct kbreg {
-	u_int kb_rx_data;
-	u_int kb_rx_stat;
-	u_int kb_rx_intr_en;
-	u_int kb_rx_reset;
-	u_int kb_rx_speed;
+	volatile uint32_t kb_rx_data;
+	volatile uint32_t kb_rx_stat;
+	volatile uint32_t kb_rx_intr_en;
+	volatile uint32_t kb_rx_reset;
+	volatile uint32_t kb_rx_speed;
 
-	u_int ms_rx_data;
-	u_int ms_rx_stat;
-	u_int ms_rx_intr_en;
-	u_int ms_rx_reset;
-	u_int ms_rx_speed;
+	volatile uint32_t ms_rx_data;
+	volatile uint32_t ms_rx_stat;
+	volatile uint32_t ms_rx_intr_en;
+	volatile uint32_t ms_rx_reset;
+	volatile uint32_t ms_rx_speed;
 
-	u_int kb_buzzf;
-	u_int kb_buzz;
+	volatile uint32_t kb_buzzf;
+	volatile uint32_t kb_buzz;
 
-	u_int kb_tx_data;
-	u_int kb_tx_stat;
-	u_int kb_tx_intr_en;
-	u_int kb_tx_reset;
-	u_int kb_tx_speed;
+	volatile uint32_t kb_tx_data;
+	volatile uint32_t kb_tx_stat;
+	volatile uint32_t kb_tx_intr_en;
+	volatile uint32_t kb_tx_reset;
+	volatile uint32_t kb_tx_speed;
 };
 
 struct kb_ap_softc {
-	struct device sc_dev;
-	volatile struct kbreg *sc_reg;
+	device_t sc_dev;
+	struct kbreg *sc_reg;
 	struct device *sc_wskbddev;
 };
 
-int kb_ap_match(struct device *, struct cfdata *, void *);
-void kb_ap_attach(struct device *, struct device *, void *);
+int kb_ap_match(device_t, cfdata_t, void *);
+void kb_ap_attach(device_t, device_t, void *);
 int kb_ap_intr(void *);
 
 void kb_ap_cnattach(void);
@@ -83,7 +83,7 @@ int kb_ap_ioctl(void *, u_long, void *, int, struct lwp *);
 
 extern struct wscons_keydesc newskb_keydesctab[];
 
-CFATTACH_DECL(kb_ap, sizeof(struct kb_ap_softc),
+CFATTACH_DECL_NEW(kb_ap, sizeof(struct kb_ap_softc),
     kb_ap_match, kb_ap_attach, NULL, NULL);
 
 struct wskbd_accessops kb_ap_accessops = {
@@ -103,7 +103,7 @@ struct wskbd_mapdata kb_ap_keymapdata = {
 };
 
 int
-kb_ap_match(struct device *parent, struct cfdata *cf, void *aux)
+kb_ap_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -114,24 +114,25 @@ kb_ap_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-kb_ap_attach(struct device *parent, struct device *self, void *aux)
+kb_ap_attach(device_t parent, device_t self, void *aux)
 {
-	struct kb_ap_softc *sc = (void *)self;
+	struct kb_ap_softc *sc = device_private(self);
 	struct apbus_attach_args *apa = aux;
-	volatile struct kbreg *reg = (void *)apa->apa_hwbase;
-	volatile int *dipsw = (void *)NEWS5000_DIP_SWITCH;
+	struct kbreg *reg = (void *)apa->apa_hwbase;
+	volatile uint32_t *dipsw = (void *)NEWS5000_DIP_SWITCH;
 	struct wskbddev_attach_args waa;
 	int cons = 0;
 
-	printf(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
+	sc->sc_dev = self;
+	aprint_normal(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
 
 	sc->sc_reg = reg;
 
 	if (*dipsw & 7) {
-		printf(" (console)");
+		aprint_normal(" (console)");
 		cons = 1;
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	reg->kb_rx_reset = 0x03;
 	reg->kb_tx_reset = 0x03;
@@ -157,7 +158,7 @@ int
 kb_ap_intr(void *v)
 {
 	struct kb_ap_softc *sc = v;
-	volatile struct kbreg *reg = sc->sc_reg;
+	struct kbreg *reg = sc->sc_reg;
 	int key, val, type, release;
 	int rv = 0;
 
@@ -186,7 +187,7 @@ kb_ap_cnattach(void)
 void
 kb_ap_cngetc(void *v, u_int *type, int *data)
 {
-	volatile struct kbreg *reg = v;
+	struct kbreg *reg = v;
 	int key, release, ointr;
 
 	/* Disable keyboard interrupt. */
@@ -194,7 +195,8 @@ kb_ap_cngetc(void *v, u_int *type, int *data)
 	reg->kb_rx_intr_en = 0;
 
 	/* Wait for key data. */
-	while ((reg->kb_rx_stat & RX_KBRDY) == 0);
+	while ((reg->kb_rx_stat & RX_KBRDY) == 0)
+		;
 
 	key = reg->kb_rx_data;
 	release = key & 0x80;
