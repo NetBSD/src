@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3reg.h,v 1.2 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: dmac3reg.h,v 1.3 2008/04/09 15:43:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -75,10 +75,3 @@ struct dma_pte {
 	      pad2:10,		/* ? */
 	      pfnum:20;
 };
-
-struct dmac3_softc;
-struct dmac3_softc *dmac3_link(int);
-void dmac3_reset(struct dmac3_softc *);
-void dmac3_start(struct dmac3_softc *, vaddr_t, int, int);
-int dmac3_intr(void *);
-void dmac3_misc(struct dmac3_softc *, int);
