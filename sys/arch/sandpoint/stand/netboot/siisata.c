@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.5 2008/04/09 01:08:39 nisimura Exp $ */
+/* $NetBSD: siisata.c,v 1.6 2008/04/09 16:26:29 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -69,8 +69,8 @@ map3112chan(unsigned tag, int ch, struct atac_channel *cp)
 {
 	int i;
 
-	cp->c_cmdbase = (void *)DEVTOV(pcicfgread(tag, regstd[ch].cmd));
-	cp->c_ctlbase = (void *)DEVTOV(pcicfgread(tag, regstd[ch].ctl));
+	cp->c_cmdbase = (void *)DEVTOV(~07 & pcicfgread(tag, regstd[ch].cmd));
+	cp->c_ctlbase = (void *)DEVTOV(~03 & pcicfgread(tag, regstd[ch].ctl));
 	cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 	for (i = 0; i < 8; i++)
 		cp->c_cmdreg[i] = cp->c_cmdbase + i;
