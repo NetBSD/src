@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac_0448.h,v 1.5 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: dmac_0448.h,v 1.6 2008/04/09 15:40:30 tsutsui Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -63,56 +63,42 @@
 #define DMAC_CMAPH		(DMAC_BASE + 0xc)
 #define DMAC_CMAPL		(DMAC_BASE + 0xd)
 
-#ifdef __mips__
-#define	VOLATILE	volatile
-#else
-#define	VOLATILE
-#endif
+#define dmac_gstat		(*(volatile uint8_t *)DMAC_GSTAT)
+#define dmac_gsel		(*(volatile uint8_t *)DMAC_GSEL)
 
-#ifndef U_CHAR
-#define U_CHAR	unsigned VOLATILE char
-#endif
-
-#ifndef U_SHORT
-#define U_SHORT	unsigned VOLATILE short
-#endif
-
-#define dmac_gstat		*(U_CHAR *)DMAC_GSTAT
-#define dmac_gsel		*(U_CHAR *)DMAC_GSEL
-
-#define dmac_cstat		*(U_CHAR *)DMAC_CSTAT
-#define dmac_cctl		*(U_CHAR *)DMAC_CCTL
-#define dmac_ctrcl		*(U_CHAR *)DMAC_CTRCL
-#define dmac_ctrcm		*(U_CHAR *)DMAC_CTRCM
-#define dmac_ctrch		*(U_CHAR *)DMAC_CTRCH
-#define dmac_ctag		*(U_CHAR *)DMAC_CTAG
-#define dmac_cwid		*(U_CHAR *)DMAC_CWID
-#define dmac_cofsl		*(U_CHAR *)DMAC_COFSL
-#define dmac_cofsh		*(U_CHAR *)DMAC_COFSH
-#define dmac_cmap		*(U_SHORT *)DMAC_CMAP
-#define dmac_cmaph		*(U_CHAR *)DMAC_CMAPH
-#define dmac_cmapl		*(U_CHAR *)DMAC_CMAPL
+#define dmac_cstat		(*(volatile uint8_t *)DMAC_CSTAT)
+#define dmac_cctl		(*(volatile uint8_t *)DMAC_CCTL)
+#define dmac_ctrcl		(*(volatile uint8_t *)DMAC_CTRCL)
+#define dmac_ctrcm		(*(volatile uint8_t *)DMAC_CTRCM)
+#define dmac_ctrch		(*(volatile uint8_t *)DMAC_CTRCH)
+#define dmac_ctag		(*(volatile uint8_t *)DMAC_CTAG)
+#define dmac_cwid		(*(volatile uint8_t *)DMAC_CWID)
+#define dmac_cofsl		(*(volatile uint8_t *)DMAC_COFSL)
+#define dmac_cofsh		(*(volatile uint8_t *)DMAC_COFSH)
+#define dmac_cmap		(*(volatile uint16_t *)DMAC_CMAP)
+#define dmac_cmaph		(*(volatile uint8_t *)DMAC_CMAPH)
+#define dmac_cmapl		(*(volatile uint8_t *)DMAC_CMAPL)
 
 /*	status/control bit definition	*/
 #define	DM_TCZ			0x80
 #define	DM_A28			0x40
 #define	DM_AFIX			0x20
 #define	DM_APAD			0x10
-#define	DM_ZINTEN		0x8
-#define	DM_RST			0x4
-#define	DM_MODE			0x2
-#define DM_ENABLE		1
+#define	DM_ZINTEN		0x08
+#define	DM_RST			0x04
+#define	DM_MODE			0x02
+#define DM_ENABLE		0x01
 
 /*	general status bit definition	*/
-#define CH_INT(x)		(u_char)(1 << (2 * x))
-#define CH0_INT			1
-#define CH1_INT			4
+#define CH_INT(x)		(uint8_t)(1 << (2 * x))
+#define CH0_INT			0x01
+#define CH1_INT			0x04
 #define CH2_INT			0x10
 #define CH3_INT			0x40
 
-#define CH_MRQ(x)		(u_char)(1 << (2 * x + 1))
-#define CH0_MRQ			2
-#define CH1_MRQ			8
+#define CH_MRQ(x)		(uint8_t)(1 << (2 * x + 1))
+#define CH0_MRQ			0x02
+#define CH1_MRQ			0x08
 #define CH2_MRQ			0x20
 #define CH3_MRQ			0x80
 
@@ -124,15 +110,15 @@
 
 /*	dma status		*/
 
-	struct	dm_stat {
-		unsigned int dm_gstat;
-		unsigned int dm_cstat;
-		unsigned int dm_cctl;
-		unsigned int dm_tcnt;
-		unsigned int dm_offset;
-		unsigned int dm_tag;
-		unsigned int dm_width;
-	} ;
+struct	dm_stat {
+	unsigned int dm_gstat;
+	unsigned int dm_cstat;
+	unsigned int dm_cctl;
+	unsigned int dm_tcnt;
+	unsigned int dm_offset;
+	unsigned int dm_tag;
+	unsigned int dm_width;
+};
 
 #define	DMAC_WAIT	nops(10)
 

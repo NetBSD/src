@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.29 2008/01/01 01:04:20 he Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.30 2008/04/09 15:40:30 tsutsui Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.29 2008/01/01 01:04:20 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.30 2008/04/09 15:40:30 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -110,13 +110,13 @@ int
 snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 {
 	struct ifnet *ifp = &sc->sc_if;
-	u_char	*p;
-	u_char	*pp;
+	uint8_t	*p;
+	uint8_t	*pp;
 	int	i;
 
 	if (sc->space == NULL) {
-		printf ("%s: memory allocation for descriptors failed\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "memory allocation for descriptors failed\n");
 		return 1;
 	}
 
@@ -139,7 +139,7 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	 * around problems near the end of 64k !!
 	 */
 	p = sc->space;
-	pp = (u_char *)roundup((int)p, PAGE_SIZE);
+	pp = (uint8_t *)roundup((int)p, PAGE_SIZE);
 	p = pp;
 
 	for (i = 0; i < NRRA; i++) {
@@ -149,13 +149,13 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 	}
 	sc->v_rea = SONIC_GETDMA(p);
 
-	p = (u_char *)SOALIGN(sc, p);
+	p = (uint8_t *)SOALIGN(sc, p);
 
 	sc->p_cda = (void *)(p);
 	sc->v_cda = SONIC_GETDMA(p);
 	p += CDA_SIZE(sc);
 
-	p = (u_char *)SOALIGN(sc, p);
+	p = (uint8_t *)SOALIGN(sc, p);
 
 	for (i = 0; i < NTDA; i++) {
 		struct mtd *mtdp = &sc->mtda[i];
@@ -164,12 +164,11 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 		p += TXP_SIZE(sc);
 	}
 
-	p = (u_char *)SOALIGN(sc, p);
+	p = (uint8_t *)SOALIGN(sc, p);
 
 	if ((p - pp) > PAGE_SIZE) {
-		printf ("%s: sizeof RRA (%ld) + CDA (%ld) +"
+		aprint_error_dev(sc->sc_dev, "sizeof RRA (%ld) + CDA (%ld) +"
 		    "TDA (%ld) > PAGE_SIZE (%d). Punt!\n",
-		    sc->sc_dev.dv_xname,
 		    (ulong)sc->p_cda - (ulong)sc->p_rra[0],
 		    (ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_cda,
 		    (ulong)p - (ulong)sc->mtda[0].mtd_txp,
@@ -203,16 +202,16 @@ snsetup(struct sn_softc	*sc, uint8_t *lladdr)
 #ifdef SNDEBUG
 	camdump(sc);
 #endif
-	printf("%s: Ethernet address %s\n",
-	    sc->sc_dev.dv_xname, ether_sprintf(lladdr));
+	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
+	    ether_sprintf(lladdr));
 
 #ifdef SNDEBUG
-	printf("%s: buffers: rra=%p cda=%p rda=%p tda=%p\n",
+	aprint_debug_dev(sc->sc_dev, "buffers: rra=%p cda=%p rda=%p tda=%p\n",
 	    sc->sc_dev.dv_xname, sc->p_rra[0], sc->p_cda,
 	    sc->p_rda, sc->mtda[0].mtd_txp);
 #endif
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(sc->sc_dev));
 	ifp->if_softc = sc;
 	ifp->if_ioctl = snioctl;
 	ifp->if_start = snstart;
@@ -330,7 +329,7 @@ outloop:
 
 	/* We need the header for m_pkthdr.len. */
 	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("%s: snstart: no header mbuf", sc->sc_dev.dv_xname);
+		panic("%s: snstart: no header mbuf", device_xname(sc->sc_dev));
 
 #if NBPFILTER > 0
 	/*
@@ -494,10 +493,10 @@ snwatchdog(struct ifnet *ifp)
 		mtd = &sc->mtda[sc->mtd_hw];
 		if (SRO(sc->bitmode, mtd->mtd_txp, TXP_STATUS) == 0)
 			log(LOG_ERR, "%s: Tx - timeout\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		else
 			log(LOG_ERR, "%s: Tx - lost interrupt\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		temp = ifp->if_flags & IFF_UP;
 		snreset(sc);
 		ifp->if_flags |= temp;
@@ -548,7 +547,8 @@ sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 		buff += len;
 	}
 	if (totlen >= TXBSIZE) {
-		panic("%s: sonicput: packet overflow", sc->sc_dev.dv_xname);
+		panic("%s: sonicput: packet overflow",
+		    device_xname(sc->sc_dev));
 	}
 
 	SWO(sc->bitmode, txp, TXP_FRAGOFF + (0 * TXP_FRAGSIZE) + TXP_FPTRLO,
@@ -684,7 +684,8 @@ camprogram(struct sn_softc *sc)
 		delay(10);
 	if (timeout == 0) {
 		/* XXX */
-		panic("%s: CAM initialisation failed", sc->sc_dev.dv_xname);
+		panic("%s: CAM initialisation failed",
+		    device_xname(sc->sc_dev));
 	}
 	timeout = 10000;
 	while (((NIC_GET(sc, SNR_ISR) & ISR_LCD) == 0) && timeout--)
@@ -694,7 +695,7 @@ camprogram(struct sn_softc *sc)
 		NIC_PUT(sc, SNR_ISR, ISR_LCD);
 	else
 		printf("%s: CAM initialisation without interrupt\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 }
 
 #ifdef SNDEBUG
@@ -819,7 +820,7 @@ snintr(void *arg)
 
 		if (isr & (ISR_BR | ISR_LCD | ISR_TC))
 			printf("%s: unexpected interrupt status 0x%x\n",
-			    sc->sc_dev.dv_xname, isr);
+			    device_xname(sc->sc_dev), isr);
 
 		if (isr & (ISR_TXDN | ISR_TXER | ISR_PINT))
 			sonictxint(sc);
@@ -840,16 +841,16 @@ snintr(void *arg)
 				;
 			if (isr & ISR_RDE)
 				printf("%s: receive descriptors exhausted\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 			if (isr & ISR_RBE)
 				printf("%s: receive buffers exhausted\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 			if (isr & ISR_RBAE)
 				printf("%s: receive buffer area exhausted\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 			if (isr & ISR_RFO)
 				printf("%s: receive FIFO overrun\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 		}
 		if (isr & (ISR_CRC | ISR_FAE | ISR_MP)) {
 #ifdef notdef
@@ -898,7 +899,7 @@ sonictxint(struct sn_softc *sc)
 
 			eh = (struct ether_header *) mtd->mtd_buf;
 			printf("%s: xmit status=0x%x len=%d type=0x%x from %s",
-			    sc->sc_dev.dv_xname,
+			    device_xname(sc->sc_dev),
 			    SRO(sc->bitmode, txp, TXP_STATUS),
 			    SRO(sc->bitmode, txp, TXP_PKTSIZE),
 			    htons(eh->ether_type),
@@ -923,7 +924,7 @@ sonictxint(struct sn_softc *sc)
 		if ((txp_status & TCR_PTX) == 0) {
 			ifp->if_oerrors++;
 			printf("%s: Tx packet status=0x%x\n",
-			    sc->sc_dev.dv_xname, txp_status);
+			    device_xname(sc->sc_dev), txp_status);
 
 			/* XXX - DG This looks bogus */
 			if (mtd_hw != sc->mtd_free) {
@@ -1044,7 +1045,7 @@ sonic_read(struct sn_softc *sc, void *pkt, int len)
 #ifdef SNDEBUG
 	{
 		printf("%s: rcvd %p len=%d type=0x%x from %s",
-		    sc->sc_dev.dv_xname, et, len, htons(et->ether_type),
+		    devoce_xname(sc->sc_dev), et, len, htons(et->ether_type),
 		    ether_sprintf(et->ether_shost));
 		printf(" (to %s)\n", ether_sprintf(et->ether_dhost));
 	}
@@ -1053,7 +1054,7 @@ sonic_read(struct sn_softc *sc, void *pkt, int len)
 	if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN) ||
 	    len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: invalid packet length %d bytes\n",
-		    sc->sc_dev.dv_xname, len);
+		    device_xname(sc->sc_dev), len);
 		return 0;
 	}
 

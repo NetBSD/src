@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_ap.c,v 1.9 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: ms_ap.c,v 1.10 2008/04/09 15:40:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.9 2007/03/04 06:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.10 2008/04/09 15:40:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,30 +40,30 @@ __KERNEL_RCSID(0, "$NetBSD: ms_ap.c,v 1.9 2007/03/04 06:00:26 christos Exp $");
 #include <newsmips/apbus/apbusvar.h>
 
 struct msreg {
-	u_int ms_data;
-	u_int ms_stat;
-	u_int ms_intr_en;
-	u_int ms_reset;
-	u_int ms_speed;
+	volatile uint32_t ms_data;
+	volatile uint32_t ms_stat;
+	volatile uint32_t ms_intr_en;
+	volatile uint32_t ms_reset;
+	volatile uint32_t ms_speed;
 };
 
 struct ms_ap_softc {
-	struct device sc_dev;
-	volatile struct msreg *sc_reg;
+	device_t sc_dev;
+	struct msreg *sc_reg;
 	struct device *sc_wsmousedev;
 	int sc_ndata;
-	u_char sc_buf[3];
+	uint8_t sc_buf[3];
 };
 
-int ms_ap_match(struct device *, struct cfdata *, void *);
-void ms_ap_attach(struct device *, struct device *, void *);
+int ms_ap_match(device_t, cfdata_t, void *);
+void ms_ap_attach(device_t, device_t, void *);
 int ms_ap_intr(void *);
 
 int ms_ap_enable(void *);
 int ms_ap_ioctl(void *, u_long, void *, int, struct lwp *);
 void ms_ap_disable(void *);
 
-CFATTACH_DECL(ms_ap, sizeof(struct ms_ap_softc),
+CFATTACH_DECL_NEW(ms_ap, sizeof(struct ms_ap_softc),
     ms_ap_match, ms_ap_attach, NULL, NULL);
 
 struct wsmouse_accessops ms_ap_accessops = {
@@ -73,7 +73,7 @@ struct wsmouse_accessops ms_ap_accessops = {
 };
 
 int
-ms_ap_match(struct device *parent, struct cfdata *cf, void *aux)
+ms_ap_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -84,14 +84,15 @@ ms_ap_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-ms_ap_attach(struct device *parent, struct device *self, void *aux)
+ms_ap_attach(device_t parent, device_t self, void *aux)
 {
-	struct ms_ap_softc *sc = (void *)self;
+	struct ms_ap_softc *sc = device_private(self);
 	struct apbus_attach_args *apa = aux;
-	volatile struct msreg *reg = (void *)apa->apa_hwbase;
+	struct msreg *reg = (void *)apa->apa_hwbase;
 	struct wsmousedev_attach_args aa;
 
-	printf(" slot%d addr 0x%lx\n", apa->apa_slotno, apa->apa_hwbase);
+	sc->sc_dev = self;
+	aprint_normal(" slot%d addr 0x%lx\n", apa->apa_slotno, apa->apa_hwbase);
 
 	sc->sc_reg = reg;
 
@@ -111,7 +112,7 @@ int
 ms_ap_intr(void *v)
 {
 	struct ms_ap_softc *sc = v;
-	volatile struct msreg *reg = sc->sc_reg;
+	struct msreg *reg = sc->sc_reg;
 	int code, index, byte0, byte1, byte2;
 	int button, dx, dy;
 	int rv = 0;
@@ -178,7 +179,7 @@ int
 ms_ap_enable(void *v)
 {
 	struct ms_ap_softc *sc = v;
-	volatile struct msreg *reg = sc->sc_reg;
+	struct msreg *reg = sc->sc_reg;
 
 	reg->ms_intr_en = 1;
 	return 0;
@@ -188,7 +189,7 @@ void
 ms_ap_disable(void *v)
 {
 	struct ms_ap_softc *sc = v;
-	volatile struct msreg *reg = sc->sc_reg;
+	struct msreg *reg = sc->sc_reg;
 
 	reg->ms_intr_en = 0;
 }

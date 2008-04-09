@@ -1,4 +1,4 @@
-/*	$NetBSD: screg_1185.h,v 1.6 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: screg_1185.h,v 1.7 2008/04/09 15:40:30 tsutsui Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,33 +53,25 @@
 # define	SCSI_BASE	0xe1900000
 #endif
 
-#ifndef U_CHAR
-#ifdef __mips__
-#define U_CHAR volatile u_char
-#else
-#define U_CHAR u_char
-#endif
-#endif
-
-#define	sc_statr	*( (U_CHAR *)(SCSI_BASE + 0x0) )
-#define	sc_comr		*( (U_CHAR *)(SCSI_BASE + 0x0) )
-#define	sc_datr		*( (U_CHAR *)(SCSI_BASE + 0x1) )
-#define	sc_intrq1	*( (U_CHAR *)(SCSI_BASE + 0x2) )
-#define	sc_intrq2	*( (U_CHAR *)(SCSI_BASE + 0x3) )
-#define	sc_envir	*( (U_CHAR *)(SCSI_BASE + 0x3) )
-#define	sc_cmonr	*( (U_CHAR *)(SCSI_BASE + 0x4) )
-#define	sc_timer	*( (U_CHAR *)(SCSI_BASE + 0x4) )
-#define	sc_ffstr	*( (U_CHAR *)(SCSI_BASE + 0x5) )
-#define	sc_idenr	*( (U_CHAR *)(SCSI_BASE + 0x6) )
-#define	sc_tclow	*( (U_CHAR *)(SCSI_BASE + 0x7) )
-#define	sc_tcmid	*( (U_CHAR *)(SCSI_BASE + 0x8) )
-#define	sc_tchi		*( (U_CHAR *)(SCSI_BASE + 0x9) )
-#define	sc_intok1	*( (U_CHAR *)(SCSI_BASE + 0xa) )
-#define	sc_intok2	*( (U_CHAR *)(SCSI_BASE + 0xb) )
-#define	sc_moder	*( (U_CHAR *)(SCSI_BASE + 0xc) )
-#define	sc_syncr	*( (U_CHAR *)(SCSI_BASE + 0xd) )
-#define	sc_busconr	*( (U_CHAR *)(SCSI_BASE + 0xe) )
-#define	sc_ioptr	*( (U_CHAR *)(SCSI_BASE + 0xf) )
+#define	sc_statr	*((volatile uint8_t *)(SCSI_BASE + 0x0))
+#define	sc_comr		*((volatile uint8_t *)(SCSI_BASE + 0x0))
+#define	sc_datr		*((volatile uint8_t *)(SCSI_BASE + 0x1))
+#define	sc_intrq1	*((volatile uint8_t *)(SCSI_BASE + 0x2))
+#define	sc_intrq2	*((volatile uint8_t *)(SCSI_BASE + 0x3))
+#define	sc_envir	*((volatile uint8_t *)(SCSI_BASE + 0x3))
+#define	sc_cmonr	*((volatile uint8_t *)(SCSI_BASE + 0x4))
+#define	sc_timer	*((volatile uint8_t *)(SCSI_BASE + 0x4))
+#define	sc_ffstr	*((volatile uint8_t *)(SCSI_BASE + 0x5))
+#define	sc_idenr	*((volatile uint8_t *)(SCSI_BASE + 0x6))
+#define	sc_tclow	*((volatile uint8_t *)(SCSI_BASE + 0x7))
+#define	sc_tcmid	*((volatile uint8_t *)(SCSI_BASE + 0x8))
+#define	sc_tchi		*((volatile uint8_t *)(SCSI_BASE + 0x9))
+#define	sc_intok1	*((volatile uint8_t *)(SCSI_BASE + 0xa))
+#define	sc_intok2	*((volatile uint8_t *)(SCSI_BASE + 0xb))
+#define	sc_moder	*((volatile uint8_t *)(SCSI_BASE + 0xc))
+#define	sc_syncr	*((volatile uint8_t *)(SCSI_BASE + 0xd))
+#define	sc_busconr	*((volatile uint8_t *)(SCSI_BASE + 0xe))
+#define	sc_ioptr	*((volatile uint8_t *)(SCSI_BASE + 0xf))
 
 /*
  *		CXD1185Q Register bit assignment

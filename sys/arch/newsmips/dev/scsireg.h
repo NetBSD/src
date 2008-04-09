@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.11 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.12 2008/04/09 15:40:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -203,21 +203,21 @@
 #endif
 
 struct sc_map {
-	u_int	mp_offset;
-	u_int	mp_pages;
-	u_int	mp_addr[NSCMAP];	/* page number */
+	volatile uint32_t	mp_offset;
+	volatile uint32_t	mp_pages;
+	volatile uint32_t	mp_addr[NSCMAP];	/* page number */
 };
 
 struct sc_chan_stat {
 	struct sc_chan_stat *wb_next;	/* wait bus channel queue */
 	struct sc_scb	*scb;		/* scsi struct address */
 	u_int		stcnt;		/* save transfer count */
-	u_char		*spoint;	/* save transfer point */
+	uint8_t		*spoint;	/* save transfer point */
 	u_int		stag;		/* save tag register */
 	u_int		soffset;	/* save offset register */
 	int		chan_num;	/* channel NO. */
-	u_char		comflg;		/* flag for save comand pointer */
-	u_char		intr_flg;	/* interrupt flag. SCSI_INTEN/INTDIS */
+	uint8_t		comflg;		/* flag for save comand pointer */
+	uint8_t		intr_flg;	/* interrupt flag. SCSI_INTEN/INTDIS */
 };
 
 struct sc_scb {
@@ -227,27 +227,27 @@ struct sc_scb {
 
 	struct sc_softc *scb_softc;
 	struct sc_map *sc_map;
-	u_char	*sc_cpoint;		/* pointer to buffer address */
+	uint8_t	*sc_cpoint;		/* pointer to buffer address */
 	u_int	sc_ctrnscnt;		/* transfer count */
 	u_int	sc_ctag;
 	u_int	sc_coffset;
 
-	u_char	istatus;
-	u_char	tstatus;
-	u_char	identify;
-	u_char	message;
-	u_char	msgbuf[20];
+	uint8_t	istatus;
+	uint8_t	tstatus;
+	uint8_t	identify;
+	uint8_t	message;
+	uint8_t	msgbuf[20];
 };
 
 #define	NTARGET 8
 
 struct sc_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct scsipi_channel sc_channel;
 	struct scsipi_adapter sc_adapter;
 
 	TAILQ_HEAD(scb_list, sc_scb) ready_list, free_list;
-	struct sc_scb sc_scb[3*NTARGET];
+	struct sc_scb sc_scb[3 * NTARGET];
 
 	int inuse[NTARGET];
 	struct sc_map sc_map[NTARGET];
@@ -269,15 +269,15 @@ struct sc_softc {
 	struct sc_chan_stat *wbq_actf;		/* forword active pointer */
 	struct sc_chan_stat *wbq_actl;		/* last active pointer */
 
-	u_char	*act_cmd_pointer;
-	u_char	*min_point[NTARGET];
+	uint8_t	*act_cmd_pointer;
+	uint8_t	*min_point[NTARGET];
 	int pad_cnt[NTARGET];
-	char min_cnt[NTARGET];
-	char sync_tr[NTARGET];			/* sync/async flag */
-	char mout_flag[NTARGET];
-	char perr_flag[NTARGET];
-	int int_stat1;
-	int int_stat2;
+	int8_t min_cnt[NTARGET];
+	uint8_t sync_tr[NTARGET];			/* sync/async flag */
+	uint8_t mout_flag[NTARGET];
+	uint8_t perr_flag[NTARGET];
+	uint8_t int_stat1;
+	uint8_t int_stat2;
 	int min_flag;
 	int lastcmd;
 };
