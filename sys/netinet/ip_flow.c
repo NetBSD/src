@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.52 2008/04/07 06:31:28 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.53 2008/04/09 05:14:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.52 2008/04/07 06:31:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.53 2008/04/09 05:14:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,23 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.52 2008/04/07 06:31:28 thorpej Exp $")
 /*
  * Similar code is very well commented in netinet6/ip6_flow.c
  */ 
+
+struct ipflow {
+	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
+	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
+	struct in_addr ipf_dst;		/* destination address */
+	struct in_addr ipf_src;		/* source address */
+	uint8_t ipf_tos;		/* type-of-service */
+	struct route ipf_ro;		/* associated route entry */
+	u_long ipf_uses;		/* number of uses in this period */
+	u_long ipf_last_uses;		/* number of uses in last period */
+	u_long ipf_dropped;		/* ENOBUFS retured by if_output */
+	u_long ipf_errors;		/* other errors returned by if_output */
+	u_int ipf_timer;		/* lifetime timer */
+	time_t ipf_start;		/* creation time */
+};
+
+#define	IPFLOW_HASHBITS		6	/* should not be a multiple of 8 */
 
 POOL_INIT(ipflow_pool, sizeof(struct ipflow), 0, 0, 0, "ipflowpl", NULL,
     IPL_NET);
@@ -325,8 +342,8 @@ ipflow_free(struct ipflow *ipf)
 	splx(s);
 }
 
-struct ipflow *
-ipflow_reap(int just_one)
+static struct ipflow *
+ipflow_reap(bool just_one)
 {
 	while (just_one || ipflow_inuse > ip_maxflows) {
 		struct ipflow *ipf, *maybe_ipf = NULL;
@@ -373,6 +390,13 @@ ipflow_reap(int just_one)
 }
 
 void
+ipflow_prune(void)
+{
+
+	(void) ipflow_reap(false);
+}
+
+void
 ipflow_slowtimo(void)
 {
 	struct rtentry *rt;
@@ -415,7 +439,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	ipf = ipflow_lookup(ip);
 	if (ipf == NULL) {
 		if (ipflow_inuse >= ip_maxflows) {
-			ipf = ipflow_reap(1);
+			ipf = ipflow_reap(true);
 		} else {
 			s = splnet();
 			ipf = pool_get(&ipflow_pool, PR_NOWAIT);
