@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.4 2008/04/09 01:08:39 nisimura Exp $ */
+/* $NetBSD: pciide.c,v 1.5 2008/04/09 16:26:29 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -65,9 +65,9 @@ pciide_init(unsigned tag, unsigned data)
 		cp = &l->channel[ch];
 		if (PCIIDE_INTERFACE_PCI(ch) & val) {
 			cp->c_cmdbase =
-			    (void *)DEVTOV(pcicfgread(tag, pcibar[ch].cmd));
+			  (void *)DEVTOV(~03 & pcicfgread(tag, pcibar[ch].cmd));
 			cp->c_ctlbase =
-			    (void *)DEVTOV(pcicfgread(tag, pcibar[ch].ctl));
+			  (void *)DEVTOV(~03 & pcicfgread(tag, pcibar[ch].ctl));
 			cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 			for (i = 0; i < 8; i++)
 				cp->c_cmdreg[i] = cp->c_cmdbase + i;

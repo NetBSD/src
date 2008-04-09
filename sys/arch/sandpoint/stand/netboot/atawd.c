@@ -1,4 +1,4 @@
-/* $NetBSD: atawd.c,v 1.4 2008/04/09 06:07:57 nisimura Exp $ */
+/* $NetBSD: atawd.c,v 1.5 2008/04/09 16:26:29 nisimura Exp $ */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -256,7 +256,7 @@ wdgetdisklabel(struct wd_softc *wd)
 			lp->d_secperunit = UINT32_MAX;
 		else
 			lp->d_secperunit = wd->sc_capacity;
-			lp->d_rpm = 3600;
+		lp->d_rpm = 3600;
 		lp->d_interleave = 1;
 		lp->d_flags = 0;
 		lp->d_partitions[RAW_PART].p_offset = 0;
@@ -268,7 +268,7 @@ wdgetdisklabel(struct wd_softc *wd)
 		lp->d_checksum = dkcksum(lp);
 
 		dp = (struct mbr_partition *)(buf + MBR_PART_OFFSET);
-		n = RAW_PART + 1;
+		n = 'e' - 'a';
 		for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
 			if (dp->mbrp_type == MBR_PTYPE_UNUSED)
 				continue;

@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.14 2008/04/09 00:20:35 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.15 2008/04/09 16:26:29 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -726,3 +726,52 @@ pcifixup()
 		break;
 	}
 }
+
+#if 0
+static const char *cmdln[] = {
+	"console=ttyS0,115200 root=/dev/sda1 rw initrd=0x200000,2M",
+	"console=ttyS0,115200 root=/dev/nfs ip=dhcp"
+};
+
+void
+mkatagparams(addr, kcmd)
+	unsigned addr;
+	char *kcmd;
+{
+	struct tag {
+		unsigned siz;
+		unsigned tag;
+		unsigned val[1];
+	};
+	struct tag *p;
+#define ATAG_CORE 	0x54410001
+#define ATAG_MEM	0x54410002
+#define ATAG_INITRD	0x54410005
+#define ATAG_CMDLINE	0x54410009
+#define ATAG_NONE	0x00000000
+#define tagnext(p) (struct tag *)((unsigned *)(p) + (p)->siz)
+#define tagsize(n) (2 + (n))
+
+	p = (struct tag *)addr;
+	p->tag = ATAG_CORE;
+	p->siz = tagsize(3);
+	p->val[0] = 0;		/* flags */
+	p->val[1] = 0;		/* pagesize */
+	p->val[2] = 0;		/* rootdev */
+	p = tagnext(p);
+	p->tag = ATAG_MEM;
+	p->siz = tagsize(2);
+	p->val[0] = 64 * 1024 * 1024;
+	p->val[1] = 0;		/* start */
+	p = tagnext(p);
+	if (kcmd != NULL) {
+		p = tagnext(p);
+		p->tag = ATAG_CMDLINE;
+		p->siz = tagsize((strlen(kcmd) + 1 + 3) >> 2);
+		strcpy((void *)p->val, kcmd);
+	}
+	p = tagnext(p);
+	p->tag = ATAG_NONE;
+	p->siz = 0;
+}
+#endif
