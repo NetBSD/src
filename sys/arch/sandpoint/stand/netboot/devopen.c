@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.5 2007/11/29 04:00:17 nisimura Exp $ */
+/* $NetBSD: devopen.c,v 1.6 2008/04/09 06:07:57 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,22 +38,38 @@
 
 #include <sys/param.h>
 
+#include <sys/disklabel.h>
 #include <netinet/in.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/nfs.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/ext2fs.h>
+#include <lib/libsa/dosfs.h>
 #include <lib/libkern/libkern.h>
 
 int net_open(struct open_file *, ...);
 int net_close(struct open_file *);
 int net_strategy(void *, int, daddr_t, size_t, void *, size_t *);
+int wdopen(struct open_file *, ...);
+int wdclose(struct open_file *);
+int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+
+int parsefstype(void *);
+static void parseunit(const char *, int *, int *, char **);
 
 struct devsw devsw[] = {
 	{ "net", net_strategy, net_open, net_close, noioctl },
+	{ "dsk", wdstrategy, wdopen, wdclose, noioctl },
 };
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);
 
-struct fs_ops ops_nfs = FS_OPS(nfs);
+struct fs_ops fssw[] = {
+	FS_OPS(nfs),
+	FS_OPS(ffsv1),
+	FS_OPS(ext2fs),
+	FS_OPS(dosfs),
+};
 struct fs_ops file_system[1];
 int nfsys = 1;
 
@@ -63,7 +79,7 @@ devopen(of, name, file)
 	const char *name;
 	char **file;
 {
-	int error;
+	int error, unit, part;
 	extern char bootfile[]; /* handed by DHCP */
 
 	if (of->f_flags != F_READ)
@@ -73,9 +89,25 @@ devopen(of, name, file)
 		of->f_dev = &devsw[0];
 		if ((error = net_open(of, name)) != 0)
 			return error;
-		file_system[0] = ops_nfs;
+		file_system[0] = fssw[0];
 		*file = bootfile;	/* resolved fname */
 		return 0;		/* NFS */
+	}
+	if (name[0] == 'w' && name[1] == 'd') {
+		parseunit(&name[2], &unit, &part, file);
+		of->f_dev = &devsw[1];
+		if ((error = wdopen(of, unit, part)) != 0)
+			return error;
+		switch (parsefstype(of->f_devdata)) {
+		default:
+		case FS_BSDFFS:
+			file_system[0] = fssw[1]; break;
+		case FS_EX2FS:
+			file_system[0] = fssw[2]; break;
+		case FS_MSDOS:
+			file_system[0] = fssw[3]; break;
+		}
+		return 0;
 	}
 	return ENOENT;
 }
@@ -89,4 +121,23 @@ noioctl(f, cmd, data)
 {
 
 	return EINVAL;
+}
+
+static void
+parseunit(const char *name, int *unitp, int *partp, char **pathp)
+{
+	const char *p = name;
+	int unit, part;
+
+	unit = part = -1;
+	while (*p != ':' && *p != '\0') {
+		if (unit == -1 && *p >= '0' && *p <= '9')
+			unit = *p - '0';
+		if (part == -1 && *p >= 'a' && *p < 'a' + 16)
+			part = *p - 'a';
+		p += 1;
+	}
+	*unitp = (unit == -1) ? 0 : unit;
+	*partp = (part == -1) ? 0 : part;
+	*pathp = (*p == ':') ? (char *)p + 1 : NULL;
 }

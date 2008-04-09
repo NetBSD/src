@@ -1,4 +1,4 @@
-/* $NetBSD: atawd.c,v 1.3 2008/04/09 00:20:35 nisimura Exp $ */
+/* $NetBSD: atawd.c,v 1.4 2008/04/09 06:07:57 nisimura Exp $ */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@ int ndisk;
 int wdopen(struct open_file *, ...);
 int wdclose(struct open_file *);
 int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int parsefstype(void *);
 
 static int  wd_get_params(struct wd_softc *);
 static int  wdgetdisklabel(struct wd_softc *);
@@ -87,13 +88,15 @@ wdopen(struct open_file *f, ...)
 	if (pp->p_size == 0 || pp->p_fstype == FS_UNUSED)
 		return ENXIO;
 	wd->sc_part = part;
+	f->f_devdata = wd;
 	return 0;
 }
 
 int	
 wdclose(struct open_file *f)
 {
-		
+
+	f->f_devdata = NULL;
 	return 0;
 }	
 
@@ -310,6 +313,16 @@ wdgetdisklabel(struct wd_softc *wd)
 	    wd->sc_label.d_secpercyl));
 
 	return 0;
+}
+
+int
+parsefstype(void *data)
+{
+	struct wd_softc *wd = data;
+	struct disklabel *lp = &wd->sc_label;
+	struct partition *pp = &lp->d_partitions[wd->sc_part];
+
+	return pp->p_fstype;
 }
 
 static int
