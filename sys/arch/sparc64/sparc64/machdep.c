@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218 2008/04/03 10:34:46 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.219 2008/04/09 15:21:02 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2008/04/03 10:34:46 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2008/04/09 15:21:02 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1925,10 +1925,8 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			KERNEL_LOCK(1, l);
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
 			l->l_md.md_fpstate = fsp;
-			KERNEL_UNLOCK_ONE(l);
 		} else {
 			/* Drop the live context on the floor. */
 			fpusave_lwp(l, false);

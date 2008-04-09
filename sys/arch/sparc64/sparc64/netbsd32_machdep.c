@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.77 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.78 2008/04/09 15:21:02 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.77 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.78 2008/04/09 15:21:02 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -889,10 +889,8 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
 		 * XXX immediately or just fault it in later?
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			KERNEL_LOCK(1, l);
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
 			l->l_md.md_fpstate = fsp;
-			KERNEL_UNLOCK_ONE(l);
 		} else {
 			/* Drop the live context on the floor. */
 			fpusave_lwp(l, false);
@@ -1207,10 +1205,8 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			KERNEL_LOCK(1, l);
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
 			l->l_md.md_fpstate = fsp;
-			KERNEL_UNLOCK_ONE(l);
 		} else {
 			/* Drop the live context on the floor. */
 			fpusave_lwp(l, false);
