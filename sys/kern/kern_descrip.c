@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.174 2008/03/27 18:33:39 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.175 2008/04/09 19:36:59 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.174 2008/03/27 18:33:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.175 2008/04/09 19:36:59 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1475,7 +1475,7 @@ fd_free(void)
 	/*
 	 * Close any files that the process holds open.
 	 */
-	for (fd = 0, lastfd = fdp->fd_lastfile; fd <= lastfd; fd++) {
+	for (fd = 0, lastfd = fdp->fd_nfiles - 1; fd <= lastfd; fd++) {
 		ff = fdp->fd_ofiles[fd];
 		KASSERT(fd >= NDFDFILE ||
 		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
