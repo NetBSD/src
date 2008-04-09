@@ -1,4 +1,4 @@
-/* $NetBSD: atawd.c,v 1.2 2008/04/07 13:25:31 nisimura Exp $ */
+/* $NetBSD: atawd.c,v 1.3 2008/04/09 00:20:35 nisimura Exp $ */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -228,7 +228,7 @@ wdgetdisklabel(struct wd_softc *wd)
 	if (wdstrategy(wd, F_READ, MBR_BBSECTOR, DEV_BSIZE, buf, &rsize))
 		return EOFFSET;
 
-	dp = (struct mbr_partition *)&buf[MBR_MAGIC_OFFSET];
+	dp = (struct mbr_partition *)(buf + MBR_PART_OFFSET);
 	bsdp = NULL;
 	for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
 		if (dp->mbrp_type == MBR_PTYPE_NETBSD) {
@@ -236,7 +236,6 @@ wdgetdisklabel(struct wd_softc *wd)
 			break;
 		}
 	}
-
 	if (!bsdp) {
 		/* generate fake disklabel */
 		lp->d_secsize = DEV_BSIZE;
@@ -268,7 +267,7 @@ wdgetdisklabel(struct wd_softc *wd)
 		dp = (struct mbr_partition *)(buf + MBR_PART_OFFSET);
 		n = RAW_PART + 1;
 		for (i = 0; i < MBR_PART_COUNT; i++, dp++) {
-			if (!dp->mbrp_type)
+			if (dp->mbrp_type == MBR_PTYPE_UNUSED)
 				continue;
 			lp->d_partitions[n].p_offset = bswap32(dp->mbrp_start);
 			lp->d_partitions[n].p_size = bswap32(dp->mbrp_size);

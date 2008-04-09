@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.13 2008/04/08 23:59:03 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.14 2008/04/09 00:20:35 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -680,6 +680,7 @@ pcifixup()
 		pcicfgwrite(ide, 0x08, val);
 
 		/* ide: 0x10-20 */
+		/*
 		experiment shows writing ide: 0x09 changes these
 		register behaviour. The pcicfgwrite() above writes
 		0x8a at ide: 0x09 to make sure legacy IDE.  Then

@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.3 2008/04/08 23:59:03 nisimura Exp $ */
+/* $NetBSD: wm.c,v 1.4 2008/04/09 00:20:35 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ wm_init(unsigned tag, void *data)
 	if (PCI_DEVICE(0x8086, 0x107c) != val)
 		return NULL;
 
-	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
+	l = ALLOC(struct local, sizeof(struct tdesc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = pcicfgread(tag, 0x10); /* use mem space */
 
