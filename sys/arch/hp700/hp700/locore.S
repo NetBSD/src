@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28 2008/02/03 12:09:40 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.29 2008/04/09 19:11:35 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
 /*
@@ -198,7 +198,7 @@ ENTRY_NOPROFILE(start,0)
 	comiclr,< 2, %arg0, %r0
 	copy	%r0, %arg1
 
-	/* Align arg3, which is the :qstart of available memory */
+	/* Align arg3, which is the start of available memory */
 	ldo	NBPG-1(%arg3), %arg3
 	dep	%r0, 31, PGSHIFT, %arg3
 
