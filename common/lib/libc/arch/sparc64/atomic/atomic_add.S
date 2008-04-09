@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.3 2007/12/22 23:19:40 mrg Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.4 2008/04/09 12:49:05 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ ENTRY_NOPROFILE(_atomic_add_64)
 1:	add	%o1, %o2, %o3
 	casx	[%o0], %o2, %o3
 	cmp	%o2, %o3
-	bne,a,pn %icc, 1b
+	bne,a,pn %xcc, 1b
 	 mov	%o3, %o2
 	retl
 	 add	%o1, %o2, %o0
