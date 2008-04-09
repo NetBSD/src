@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.85 2008/04/07 06:31:28 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.86 2008/04/09 05:14:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -160,22 +160,6 @@ struct ip_moptions {
 
 #define	IP_NSTATS		30
 
-#define	IPFLOW_HASHBITS			6 /* should not be a multiple of 8 */
-struct ipflow {
-	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
-	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
-	struct in_addr ipf_dst;		/* destination address */
-	struct in_addr ipf_src;		/* source address */
-	u_int8_t ipf_tos;		/* type-of-service */
-	struct route ipf_ro;		/* associated route entry */
-	u_long ipf_uses;		/* number of uses in this period */
-	u_long ipf_last_uses;		/* number of uses in last period */
-	u_long ipf_dropped;		/* ENOBUFS returned by if_output */
-	u_long ipf_errors;		/* other errors returned by if_output */
-	u_int ipf_timer;		/* lifetime timer */
-	time_t ipf_start;		/* creation time */
-};
-
 #ifdef _KERNEL
 
 #ifdef _KERNEL_OPT
@@ -257,7 +241,7 @@ int	 rip_output(struct mbuf *, ...);
 int	 rip_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
 int	ipflow_init(int);
-struct	ipflow *ipflow_reap(int);
+void	ipflow_prune(void);
 void	ipflow_create(const struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
 int	ipflow_invalidate_all(int);
