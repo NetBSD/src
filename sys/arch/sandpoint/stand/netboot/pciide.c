@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.3 2008/04/07 13:25:31 nisimura Exp $ */
+/* $NetBSD: pciide.c,v 1.4 2008/04/09 01:08:39 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -24,10 +24,21 @@
 void *pciide_init(unsigned, unsigned);
 
 #define PCIIDE_INTERFACE_PCI(chan)	(0x01 << (2 * (chan)))
-#define PCIIDE_REG_CMD_BASE(chan)	(0x10 + (8 * (chan)))
-#define PCIIDE_REG_CTL_BASE(chan)	(0x14 + (8 * (chan)))
-#define PCIIDE_COMPAT_CMD_BASE(ch)	(((ch)==0) ? 0x1f0 : 0x170)
-#define PCIIDE_COMPAT_CTL_BASE(ch)	(((ch)==0) ? 0x3f6 : 0x376)
+
+/* native: PCI BAR0-3 */
+static const struct {
+	int cmd, ctl;
+} pcibar[2] = {
+	{ 0x10, 0x14 },
+	{ 0x18, 0x1c },
+};
+/* legacy: ISA/PCI IO space */
+static const struct {
+	int cmd, ctl;
+} compat[2] = {
+	{ 0x1f0, 0x3f6 },
+	{ 0x170, 0x376 },
+};
 
 void *
 pciide_init(unsigned tag, unsigned data)
@@ -53,10 +64,10 @@ pciide_init(unsigned tag, unsigned data)
 	for (ch = 0; ch < 2; ch += 1) {
 		cp = &l->channel[ch];
 		if (PCIIDE_INTERFACE_PCI(ch) & val) {
-			cp->c_cmdbase = (void *)DEVTOV(pcicfgread(tag,
-			    PCIIDE_REG_CMD_BASE(ch)));
-			cp->c_ctlbase = (void *)DEVTOV(pcicfgread(tag,
-			    PCIIDE_REG_CTL_BASE(ch)));
+			cp->c_cmdbase =
+			    (void *)DEVTOV(pcicfgread(tag, pcibar[ch].cmd));
+			cp->c_ctlbase =
+			    (void *)DEVTOV(pcicfgread(tag, pcibar[ch].ctl));
 			cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 			for (i = 0; i < 8; i++)
 				cp->c_cmdreg[i] = cp->c_cmdbase + i;
@@ -64,11 +75,11 @@ pciide_init(unsigned tag, unsigned data)
 			cp->c_cmdreg[wd_features] = cp->c_cmdreg[wd_precomp];
 		}
 		else {
-			tag = 0; /* !!! */
-			cp->c_cmdbase = (void *)DEVTOV(pcicfgread(tag, 0x10)
-			    + PCIIDE_COMPAT_CMD_BASE(ch));
-			cp->c_ctlbase = (void *)DEVTOV(pcicfgread(tag, 0x10)
-			    + PCIIDE_COMPAT_CTL_BASE(ch));
+			uint32_t pciiobase = 0xfe000000; /* !!! */
+			cp->c_cmdbase =
+			    (void *)DEVTOV(pciiobase + compat[ch].cmd);
+			cp->c_ctlbase =
+			    (void *)DEVTOV(pciiobase + compat[ch].ctl);
 			cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 			for (i = 0; i < 8; i++)
 				cp->c_cmdreg[i] = cp->c_cmdbase + i;
