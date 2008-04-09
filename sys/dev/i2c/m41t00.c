@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.12 2008/04/09 05:57:00 dogcow Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.13 2008/04/09 06:13:26 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.12 2008/04/09 05:57:00 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.13 2008/04/09 06:13:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,9 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 		iic_release_bus(sc->sc_tag, I2C_F_POLL);
 		aprint_error_dev(&sc->sc_dev, "m41t00_clock_write: failed to read "
 		    "FINAL SECONDS\n");
+		return 0;
 	}
+	final_seconds = FROMBCD(final_seconds & M41T00_SEC_MASK);
 
 	if ((init_seconds != final_seconds) &&
 	    (((init_seconds + 1) % 60) != final_seconds)) {
