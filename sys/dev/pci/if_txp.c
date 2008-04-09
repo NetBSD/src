@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.24 2008/04/09 17:27:14 dyoung Exp $ */
+/* $NetBSD: if_txp.c,v 1.25 2008/04/09 17:32:01 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.24 2008/04/09 17:27:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.25 2008/04/09 17:32:01 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -87,8 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.24 2008/04/09 17:27:14 dyoung Exp $");
 #undef	TRY_TX_UDP_CSUM
 #undef	TRY_TX_TCP_CSUM
 
-int txp_probe(struct device *, struct cfdata *, void *);
-void txp_attach(struct device *, struct device *, void *);
+int txp_probe(device_t, cfdata_t, void *);
+void txp_attach(device_t, device_t, void *);
 int txp_intr(void *);
 void txp_tick(void *);
 void txp_shutdown(void *);
@@ -163,21 +163,19 @@ static const struct {
 };
 
 static const struct txp_pci_match *
-txp_pcilookup(id)
-	pcireg_t id;
+txp_pcilookup(pcireg_t id)
 {
 	int i;
 
-	for (i = 0; i < sizeof(txp_devices) / sizeof(txp_devices[0]); i++)
-		if ((PCI_VENDOR(id) == txp_devices[i].vid) &&
-		    (PCI_PRODUCT(id) == txp_devices[i].did))
-			return (&txp_devices[i]);
+	for (i = 0; i < __arraycount(txp_devices); i++)
+		if (PCI_VENDOR(id) == txp_devices[i].vid &&
+		    PCI_PRODUCT(id) == txp_devices[i].did)
+			return &txp_devices[i];
 	return (0);
 }
 
 int
-txp_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+txp_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -187,9 +185,9 @@ txp_probe(struct device *parent, struct cfdata *match,
 }
 
 void
-txp_attach(struct device *parent, struct device *self, void *aux)
+txp_attach(device_t parent, device_t self, void *aux)
 {
-	struct txp_softc *sc = (struct txp_softc *)self;
+	struct txp_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
