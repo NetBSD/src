@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3reg.h,v 1.2 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: dmac3var.h,v 1.1 2008/04/09 15:40:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -26,57 +26,15 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct dmac3reg {
-	volatile uint32_t csr;
-	volatile uint32_t intr;
-	volatile uint32_t len;
-	volatile uint32_t addr;
-	volatile uint32_t conf;
+struct dmac3_softc {
+	device_t sc_dev;
+	struct dmac3reg *sc_reg;
+	vaddr_t sc_dmaaddr;
+	volatile uint32_t *sc_dmamap;
+	int sc_conf;
+	int sc_ctlnum;
 };
 
-#define DMAC3_CSR_DBURST	0x0020
-#define DMAC3_CSR_MBURST	0x0010
-#define DMAC3_CSR_APAD		0x0008
-#define DMAC3_CSR_RESET		0x0004
-#define DMAC3_CSR_RECV		0x0002
-#define DMAC3_CSR_SEND		0x0000
-#define DMAC3_CSR_ENABLE	0x0001
-
-#define DMAC3_INTR_PERR		0x8000
-#define DMAC3_INTR_DRQI		0x4000
-#define DMAC3_INTR_DRQIE	0x2000
-#define DMAC3_INTR_DREQ		0x1000
-#define DMAC3_INTR_EOPI		0x0400
-#define DMAC3_INTR_EOPIE	0x0200
-#define DMAC3_INTR_EOP		0x0100
-#define DMAC3_INTR_TCI		0x0040
-#define DMAC3_INTR_TCIE		0x0020
-#define DMAC3_INTR_INTEN	0x0002
-#define DMAC3_INTR_INT		0x0001
-
-#define DMAC3_CONF_IPER		0x8000
-#define DMAC3_CONF_MPER		0x4000
-#define DMAC3_CONF_PCEN		0x2000
-#define DMAC3_CONF_DERR		0x1000
-#define DMAC3_CONF_DCEN		0x0800
-#define DMAC3_CONF_ODDP		0x0200
-#define DMAC3_CONF_WIDTH	0x00ff
-#define DMAC3_CONF_SLOWACCESS	0x0020
-#define DMAC3_CONF_FASTACCESS	0x0001
-
-
-#define DMAC3_PAGEMAP	0xb4c20000
-#define DMAC3_MAPSIZE	0x20000
-
-struct dma_pte {
-	uint32_t pad1;
-	uint32_t valid:1,
-	      coherent:1,	/* ? */
-	      pad2:10,		/* ? */
-	      pfnum:20;
-};
-
-struct dmac3_softc;
 struct dmac3_softc *dmac3_link(int);
 void dmac3_reset(struct dmac3_softc *);
 void dmac3_start(struct dmac3_softc *, vaddr_t, int, int);
