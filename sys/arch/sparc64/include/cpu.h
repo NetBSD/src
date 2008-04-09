@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2008/04/03 10:34:45 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.79 2008/04/09 14:58:23 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,6 @@ struct cpu_info {
 	/* Interrupts */
 	struct intrhand		*ci_intrpending[16];
 	struct intrhand		*ci_tick_ih;
-	struct intrhand		*ci_sched_ih;
 
 	/* Event counters */
 	struct evcnt		ci_tick_evcnt;
