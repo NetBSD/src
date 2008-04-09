@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.125 2008/03/24 12:24:37 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.126 2008/04/09 05:11:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.125 2008/03/24 12:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.126 2008/04/09 05:11:20 thorpej Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1657,8 +1657,9 @@ mbstat_type_add(int type, int diff)
 	int s;
 
 	s = splvm();
-	mb = percpu_getptr(mbstat_percpu);
+	mb = percpu_getref(mbstat_percpu);
 	mb->m_mtypes[type] += diff;
+	percpu_putref(mbstat_percpu);
 	splx(s);
 }
 
@@ -1687,13 +1688,6 @@ mowner_detach(struct mowner *mo)
 	mo->mo_counters = NULL;
 }
 
-static struct mowner_counter *
-mowner_counter(struct mowner *mo)
-{
-
-	return percpu_getptr(mo->mo_counters);
-}
-
 void
 mowner_init(struct mbuf *m, int type)
 {
@@ -1703,8 +1697,9 @@ mowner_init(struct mbuf *m, int type)
 
 	m->m_owner = mo = &unknown_mowners[type];
 	s = splvm();
-	mc = mowner_counter(mo);
+	mc = percpu_getref(mo->mo_counters);
 	mc->mc_counter[MOWNER_COUNTER_CLAIMS]++;
+	percpu_putref(mo->mo_counters);
 	splx(s);
 }
 
@@ -1716,11 +1711,12 @@ mowner_ref(struct mbuf *m, int flags)
 	int s;
 
 	s = splvm();
-	mc = mowner_counter(mo);
+	mc = percpu_getref(mo->mo_counters);
 	if ((flags & M_EXT) != 0)
 		mc->mc_counter[MOWNER_COUNTER_EXT_CLAIMS]++;
 	if ((flags & M_CLUSTER) != 0)
 		mc->mc_counter[MOWNER_COUNTER_CLUSTER_CLAIMS]++;
+	percpu_putref(mo->mo_counters);
 	splx(s);
 }
 
@@ -1732,13 +1728,14 @@ mowner_revoke(struct mbuf *m, bool all, int flags)
 	int s;
 
 	s = splvm();
-	mc = mowner_counter(mo);
+	mc = percpu_getref(mo->mo_counters);
 	if ((flags & M_EXT) != 0)
 		mc->mc_counter[MOWNER_COUNTER_EXT_RELEASES]++;
 	if ((flags & M_CLUSTER) != 0)
 		mc->mc_counter[MOWNER_COUNTER_CLUSTER_RELEASES]++;
 	if (all)
 		mc->mc_counter[MOWNER_COUNTER_RELEASES]++;
+	percpu_putref(mo->mo_counters);
 	splx(s);
 	if (all)
 		m->m_owner = &revoked_mowner;
@@ -1752,12 +1749,13 @@ mowner_claim(struct mbuf *m, struct mowner *mo)
 	int s;
 
 	s = splvm();
-	mc = mowner_counter(mo);
+	mc = percpu_getref(mo->mo_counters);
 	mc->mc_counter[MOWNER_COUNTER_CLAIMS]++;
 	if ((flags & M_EXT) != 0)
 		mc->mc_counter[MOWNER_COUNTER_EXT_CLAIMS]++;
 	if ((flags & M_CLUSTER) != 0)
 		mc->mc_counter[MOWNER_COUNTER_CLUSTER_CLAIMS]++;
+	percpu_putref(mo->mo_counters);
 	splx(s);
 	m->m_owner = mo;
 }
