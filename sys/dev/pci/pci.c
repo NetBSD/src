@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.115 2008/03/23 16:40:12 cube Exp $	*/
+/*	$NetBSD: pci.c,v 1.116 2008/04/09 17:01:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.115 2008/03/23 16:40:12 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116 2008/04/09 17:01:53 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -98,7 +98,7 @@ int pci_enumerate_bus(struct pci_softc *, const int *,
  * We use the generic config_defer() facility to achieve this.
  */
 
-static int
+int
 pcirescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct pci_softc *sc = device_private(self);
@@ -110,7 +110,7 @@ pcirescan(device_t self, const char *ifattr, const int *locators)
 	return 0;
 }
 
-static int
+int
 pcimatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
@@ -131,7 +131,7 @@ pcimatch(device_t parent, cfdata_t cf, void *aux)
 	return (1);
 }
 
-static void
+void
 pciattach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
@@ -209,7 +209,7 @@ fail:
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-static int
+int
 pcidetach(device_t self, int flags)
 {
 	int rc;
@@ -372,7 +372,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	return (ret);
 }
 
-static void
+void
 pcidevdetached(device_t self, device_t child)
 {
 	struct pci_softc *psc = device_private(self);
