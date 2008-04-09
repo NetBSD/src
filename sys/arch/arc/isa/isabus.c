@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.42 2008/03/14 16:43:27 tsutsui Exp $	*/
+/*	$NetBSD: isabus.c,v 1.43 2008/04/09 17:08:22 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.42 2008/03/14 16:43:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.43 2008/04/09 17:08:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -409,7 +409,7 @@ isabr_iointr(uint32_t mask, struct clockframe *cf)
 
 	isa_vector = (*isabr_conf->ic_intr_status)();
 	if (isa_vector < 0)
-		return (~0);
+		return 0;
 
 	o_imen = imen;
 	imen |= 1 << (isa_vector & (ICU_LEN - 1));
