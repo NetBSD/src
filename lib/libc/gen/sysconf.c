@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.28 2008/03/08 13:34:40 yamt Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.29 2008/04/09 18:37:04 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.28 2008/03/08 13:34:40 yamt Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.29 2008/04/09 18:37:04 njoly Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -310,13 +310,13 @@ sysconf(int name)
 			return -1;
 		goto yesno;
 	case _SC_MQ_OPEN_MAX:
-		if (sysctlgetmibinfo("kern.mq_open_max", &mib[0], &mib_len,
-		    NULL, NULL, NULL, SYSCTL_VERSION))
+		if (sysctlgetmibinfo("kern.mqueue.mq_open_max", &mib[0],
+		    &mib_len, NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
 		break; 
 	case _SC_MQ_PRIO_MAX:
-		if (sysctlgetmibinfo("kern.mq_prio_max", &mib[0], &mib_len,
-		    NULL, NULL, NULL, SYSCTL_VERSION))
+		if (sysctlgetmibinfo("kern.mqueue.mq_prio_max", &mib[0],
+		    &mib_len, NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
 		break; 
 	case _SC_PRIORITY_SCHEDULING:
