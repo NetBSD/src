@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.264 2008/04/07 06:31:28 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.265 2008/04/09 05:14:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.264 2008/04/07 06:31:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.265 2008/04/09 05:14:20 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2151,7 +2151,7 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 		return (s);
 
 	s = splsoftnet();
-	ipflow_reap(0);
+	ipflow_prune();
 	splx(s);
 
 	return (0);
