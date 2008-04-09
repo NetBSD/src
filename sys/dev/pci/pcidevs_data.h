@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.934 2008/04/03 20:43:27 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.935 2008/04/09 14:15:12 joerg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.934 2008/04/03 20:42:15 riz Exp
+ *	NetBSD: pcidevs,v 1.935 2008/04/09 14:14:40 joerg Exp
  */
 
 /*
@@ -2682,6 +2682,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9550,
 	    "9550-series RAID",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9650,
+	    "9650-series RAID",
 	},
 	{
 	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
@@ -14116,4 +14120,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2929;
+const int pci_nproducts = 2930;
