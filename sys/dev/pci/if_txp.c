@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.23 2008/02/07 01:21:57 dyoung Exp $ */
+/* $NetBSD: if_txp.c,v 1.24 2008/04/09 17:27:14 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.23 2008/02/07 01:21:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.24 2008/04/09 17:27:14 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -199,16 +199,16 @@ txp_attach(struct device *parent, struct device *self, void *aux)
 	u_int16_t p1;
 	u_int32_t p2;
 	u_char enaddr[6];
-	const struct txp_pci_match *pcimatch;
+	const struct txp_pci_match *match;
 	u_int16_t subsys;
 	int i, flags;
 	char devinfo[256];
 
 	sc->sc_cold = 1;
 
-	pcimatch = txp_pcilookup(pa->pa_id);
-	flags = pcimatch->flags;
-	if (pcimatch->flags & TXP_USESUBSYSTEM) {
+	match = txp_pcilookup(pa->pa_id);
+	flags = match->flags;
+	if (match->flags & TXP_USESUBSYSTEM) {
 		subsys = PCI_PRODUCT(pci_conf_read(pc, pa->pa_tag,
 						   PCI_SUBSYS_ID_REG));
 		for (i = 0;
