@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.146 2008/03/14 15:39:18 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.147 2008/04/09 15:21:02 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2008/03/14 15:39:18 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2008/04/09 15:21:02 nakayama Exp $");
 
 #define NEW_FPSTATE
 
@@ -680,13 +680,11 @@ badtrap:
 		struct fpstate64 *fs = l->l_md.md_fpstate;
 
 		if (fs == NULL) {
-			KERNEL_LOCK(1, l);
 			/* NOTE: fpstate must be 64-bit aligned */
 			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
 			fs->fs_qsize = 0;
 			l->l_md.md_fpstate = fs;
-			KERNEL_UNLOCK_ONE(l);
 		}
 		/*
 		 * We may have more FPEs stored up and/or ops queued.
@@ -877,10 +875,8 @@ badtrap:
 		break;
 	}
 	if (sig != 0) {
-		KERNEL_LOCK(1, l);
 		ksi.ksi_signo = sig;
 		trapsignal(l, &ksi);
-		KERNEL_UNLOCK_LAST(l);
 	}
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
