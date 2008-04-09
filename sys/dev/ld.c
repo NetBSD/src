@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.56 2008/03/09 19:18:25 jmcneill Exp $	*/
+/*	$NetBSD: ld.c,v 1.57 2008/04/09 05:47:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.56 2008/03/09 19:18:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.57 2008/04/09 05:47:19 cegger Exp $");
 
 #include "rnd.h"
 
@@ -109,12 +109,12 @@ ldattach(struct ld_softc *sc)
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
-		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);
+		aprint_normal_dev(&sc->sc_dv, "disabled\n");
 		return;
 	}
 
 	/* Initialise and attach the disk structure. */
-	disk_init(&sc->sc_dk, sc->sc_dv.dv_xname, &lddkdriver);
+	disk_init(&sc->sc_dk, device_xname(&sc->sc_dv), &lddkdriver);
 	disk_attach(&sc->sc_dk);
 
 	if (sc->sc_maxxfer > MAXPHYS)
@@ -146,15 +146,15 @@ ldattach(struct ld_softc *sc)
 
 	format_bytes(tbuf, sizeof(tbuf), sc->sc_secperunit *
 	    sc->sc_secsize);
-	aprint_normal("%s: %s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
-	    sc->sc_dv.dv_xname, tbuf, sc->sc_ncylinders, sc->sc_nheads,
+	aprint_normal_dev(&sc->sc_dv, "%s, %d cyl, %d head, %d sec, %d bytes/sect x %"PRIu64" sectors\n",
+	    tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 
 	ld_set_properties(sc);
 
 #if NRND > 0
 	/* Attach the device into the rnd source list. */
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dv.dv_xname,
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(&sc->sc_dv),
 	    RND_TYPE_DISK, 0);
 #endif
 
@@ -217,7 +217,7 @@ ldenddetach(struct ld_softc *sc)
 	/* Wait for commands queued with the hardware to complete. */
 	if (sc->sc_queuecnt != 0)
 		if (tsleep(&sc->sc_queuecnt, PRIBIO, "lddtch", 30 * hz))
-			printf("%s: not drained\n", sc->sc_dv.dv_xname);
+			printf("%s: not drained\n", device_xname(&sc->sc_dv));
 
 	/* Locate the major numbers. */
 	bmaj = bdevsw_lookup_major(&ld_bdevsw);
@@ -261,8 +261,7 @@ ldenddetach(struct ld_softc *sc)
 	/* Flush the device's cache. */
 	if (sc->sc_flush != NULL)
 		if ((*sc->sc_flush)(sc) != 0)
-			printf("%s: unable to flush cache\n",
-			    sc->sc_dv.dv_xname);
+			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
 #endif
 }
 
@@ -353,8 +352,7 @@ ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	if (sc->sc_dk.dk_openmask == 0) {
 		if (sc->sc_flush != NULL && (*sc->sc_flush)(sc) != 0)
-			printf("%s: unable to flush cache\n",
-			    sc->sc_dv.dv_xname);
+			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
 		if ((sc->sc_flags & LDF_KLABEL) == 0)
 			sc->sc_flags &= ~LDF_VLABEL;
 	}
@@ -508,7 +506,8 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, sc->sc_dv.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&sc->sc_dv),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_add(dkw));
 	    }
 
@@ -520,7 +519,8 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, sc->sc_dv.dv_xname);
+		strlcpy(dkw->dkw_parent, device_xname(&sc->sc_dv),
+			sizeof(dkw->dkw_parent));
 		return (dkwedge_del(dkw));
 	    }
 
@@ -764,7 +764,7 @@ ldgetdisklabel(struct ld_softc *sc)
 	errstring = readdisklabel(MAKEDISKDEV(0, device_unit(&sc->sc_dv),
 	    RAW_PART), ldstrategy, sc->sc_dk.dk_label, sc->sc_dk.dk_cpulabel);
 	if (errstring != NULL)
-		printf("%s: %s\n", sc->sc_dv.dv_xname, errstring);
+		printf("%s: %s\n", device_xname(&sc->sc_dv), errstring);
 
 	/* In-core label now valid. */
 	sc->sc_flags |= LDF_VLABEL;
