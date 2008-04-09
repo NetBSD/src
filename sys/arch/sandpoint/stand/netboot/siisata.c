@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.4 2008/04/08 23:59:03 nisimura Exp $ */
+/* $NetBSD: siisata.c,v 1.5 2008/04/09 01:08:39 nisimura Exp $ */
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -15,9 +15,6 @@
 #define DEVTOV(pa) 		(uint32_t)(pa)
 
 void *siisata_init(unsigned, unsigned);
-
-#define PCIIDE_REG_CMD_BASE(chan)	(0x10 + (8 * (chan)))
-#define PCIIDE_REG_CTL_BASE(chan)	(0x14 + (8 * (chan)))
 
 static void map3112chan(unsigned, int, struct atac_channel *);
 static void map3114chan(unsigned, int, struct atac_channel *);
@@ -59,13 +56,21 @@ siisata_init(unsigned tag, unsigned data)
 	return l;
 }
 
+/* BAR0-3 */
+static const struct {
+	int cmd, ctl;
+} regstd[2] = {
+	{ 0x10, 0x14 },
+	{ 0x18, 0x1c },
+};
+
 static void
 map3112chan(unsigned tag, int ch, struct atac_channel *cp)
 {
 	int i;
 
-	cp->c_cmdbase = (void*)DEVTOV(pcicfgread(tag, PCIIDE_REG_CMD_BASE(ch)));
-	cp->c_ctlbase = (void*)DEVTOV(pcicfgread(tag, PCIIDE_REG_CTL_BASE(ch)));
+	cp->c_cmdbase = (void *)DEVTOV(pcicfgread(tag, regstd[ch].cmd));
+	cp->c_ctlbase = (void *)DEVTOV(pcicfgread(tag, regstd[ch].ctl));
 	cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 	for (i = 0; i < 8; i++)
 		cp->c_cmdreg[i] = cp->c_cmdbase + i;
@@ -73,9 +78,10 @@ map3112chan(unsigned tag, int ch, struct atac_channel *cp)
 	cp->c_cmdreg[wd_features] = cp->c_cmdreg[wd_precomp];
 }
 
+/* offset to BAR5 */
 static const struct {
 	int IDE_TF0, IDE_TF8;
-} regmap[4] = {
+} reg3114[4] = {
 	{ 0x080, 0x091 },
 	{ 0x0c0, 0x0d1 },
 	{ 0x280, 0x291 },
@@ -89,8 +95,8 @@ map3114chan(unsigned tag, int ch, struct atac_channel *cp)
 	uint8_t *ba5;
 
 	ba5 = (uint8_t *)DEVTOV(pcicfgread(tag, 0x24)); /* PCI_BAR5 */
-	cp->c_cmdbase = ba5 + regmap[ch].IDE_TF0;
-	cp->c_ctlbase = ba5 + regmap[ch].IDE_TF8;
+	cp->c_cmdbase = ba5 + reg3114[ch].IDE_TF0;
+	cp->c_ctlbase = ba5 + reg3114[ch].IDE_TF8;
 	cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
 	for (i = 0; i < 8; i++)
 		cp->c_cmdreg[i] = cp->c_cmdbase + i;
