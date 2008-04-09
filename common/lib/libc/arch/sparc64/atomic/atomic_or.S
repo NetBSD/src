@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.4 2008/02/12 18:35:38 ad Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.5 2008/04/09 12:49:05 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ ENTRY_NOPROFILE(_atomic_or_64)
 1:	or	%o1, %o2, %o3
 	casx	[%o0], %o2, %o3
 	cmp	%o2, %o3
-	bne,a,pn %icc, 1b
+	bne,a,pn %xcc, 1b
 	 mov	%o3, %o2
 	retl
 	 or	%o1, %o2, %o0
