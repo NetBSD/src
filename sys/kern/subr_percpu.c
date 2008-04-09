@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.3 2008/03/17 08:27:50 yamt Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.4 2008/04/09 05:11:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.3 2008/03/17 08:27:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.4 2008/04/09 05:11:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -269,17 +269,32 @@ percpu_free(percpu_t *pc, size_t size)
 }
 
 /*
- * percpu_getptr:
+ * percpu_getref:
  *
- * => called with preemption disabled
  * => safe to be used in either thread or interrupt context
+ * => disables preemption; must be bracketed with a percpu_putref()
  */
 
 void *
-percpu_getptr(percpu_t *pc)
+percpu_getref(percpu_t *pc)
 {
 
+	crit_enter();
 	return percpu_getptr_remote(pc, curcpu());
+}
+
+/*
+ * percpu_putref:
+ *
+ * => drops the preemption-disabled count after caller is done with per-cpu
+ *    data
+ */
+
+void
+percpu_putref(percpu_t *pc)
+{
+
+	crit_exit();
 }
 
 /*
