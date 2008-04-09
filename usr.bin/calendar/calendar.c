@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.44 2008/03/07 19:22:22 christos Exp $	*/
+/*	$NetBSD: calendar.c,v 1.45 2008/04/09 17:47:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.44 2008/03/07 19:22:22 christos Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.45 2008/04/09 17:47:53 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -262,14 +262,14 @@ isnow(char *endp)
 		/* found a day */
 		day = v1;
 		/* if no recognizable month, assume wildcard ('*') month */
-		if ((month = getfield(endp, &endp, &flags)) != 0) {
+		if ((month = getfield(endp, &endp, &flags)) == 0) {
 			flags |= F_ISMONTH | F_WILDMONTH;
 			month = tp->tm_mon + 1;
 		}
 	} else if (flags & F_ISMONTH) {
 		month = v1;
 		/* if no recognizable day, assume the first */
-		if ((day = getfield(endp, &endp, &flags)) != 0)
+		if ((day = getfield(endp, &endp, &flags)) == 0)
 			day = 1;
 	} else {
 		v2 = getfield(endp, &endp, &flags);
