@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.73 2008/04/05 13:40:05 cegger Exp $ */
+/*	$NetBSD: cpu.c,v 1.74 2008/04/09 14:58:23 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74 2008/04/09 14:58:23 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -421,8 +421,7 @@ cpu_hatch()
 	cpu_reset_fpustate();
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
-	curcpu()->ci_sched_ih = init_softint(PIL_SCHED, schedintr);
-	tickintr_establish(PIL_STATCLOCK, statintr);
+	tickintr_establish(PIL_CLOCK, tickintr);
 	spl0();
 }
 #endif /* MULTIPROCESSOR */
