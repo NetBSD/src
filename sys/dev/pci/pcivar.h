@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.79 2008/03/23 16:40:12 cube Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.80 2008/04/09 17:01:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -247,6 +247,13 @@ int	pci_activate(pci_chipset_tag_t, pcitag_t, device_t,
     int (*)(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t));
 int	pci_activate_null(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t);
 void	pci_disable_retry(pci_chipset_tag_t, pcitag_t);
+
+/* Device abstraction for inheritance by elanpci(4), for example. */
+int pcimatch(device_t, cfdata_t, void *);
+void pciattach(device_t, device_t, void *);
+int pcidetach(device_t, int);
+void pcidevdetached(device_t, device_t);
+int pcirescan(device_t, const char *, const int *);
 
 #endif /* _KERNEL */
 
