@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.8 2008/03/28 17:14:45 drochner Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.9 2008/04/09 11:32:26 skd Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.8 2008/03/28 17:14:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.9 2008/04/09 11:32:26 skd Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -116,7 +116,7 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	usbd_status r;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, CARDBUS_REVISION(ca->ca_class));
