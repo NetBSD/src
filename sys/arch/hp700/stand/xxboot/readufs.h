@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.h,v 1.3 2005/12/11 12:17:25 christos Exp $	*/
+/*	$NetBSD: readufs.h,v 1.4 2008/04/09 19:18:25 skrll Exp $	*/
 /*	from Id: readufs.h,v 1.10 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -72,7 +72,7 @@ struct ufs_info {
 	} ufstype;
 #endif
 #if 0
-	int (*get_inode) __P((ino32_t ino, union ufs_dinode *dibuf));
+	int (*get_inode)(ino32_t ino, union ufs_dinode *dibuf);
 #endif
 
 	/* superblock information */
@@ -109,8 +109,8 @@ struct ufs_info {
 
 extern struct ufs_info	ufs_info;
 
-int get_ffs_inode __P((ino32_t ino, union ufs_dinode *dibuf));
-int get_lfs_inode __P((ino32_t ino, union ufs_dinode *dibuf));
+int get_ffs_inode(ino32_t ino, union ufs_dinode *dibuf);
+int get_lfs_inode(ino32_t ino, union ufs_dinode *dibuf);
 #if defined(USE_FFS) && defined(USE_LFS)
 #define ufs_get_inode(ino, di)  ((ufs_info.fstype == UFSTYPE_FFS) ? \
 	get_ffs_inode((ino), (di)) : get_lfs_inode((ino), (di)))
@@ -123,21 +123,21 @@ int get_lfs_inode __P((ino32_t ino, union ufs_dinode *dibuf));
 # endif
 #endif
 
-void RAW_READ __P((void *buf, daddr_t blkpos, size_t bytelen));
+void RAW_READ(void *buf, daddr_t blkpos, size_t bytelen);
 
-size_t ufs_read __P((union ufs_dinode *di, void *buf, unsigned off,
-    size_t count));
-ino32_t ufs_lookup __P((ino32_t dirino, const char *fn));
-ino32_t ufs_lookup_path __P((const char *path));
-size_t ufs_load_file __P((void *buf, ino32_t dirino, const char *fn));
-int ufs_init __P((void));
+size_t ufs_read(union ufs_dinode *di, void *buf, unsigned off,
+    size_t count);
+ino32_t ufs_lookup(ino32_t dirino, const char *fn);
+ino32_t ufs_lookup_path(const char *path);
+size_t ufs_load_file(void *buf, ino32_t dirino, const char *fn);
+int ufs_init(void);
 
 #ifdef USE_FFS
-int try_ffs __P((void));
+int try_ffs(void);
 #endif
 
 #ifdef USE_LFS
-int try_lfs __P((void));
+int try_lfs(void);
 #endif
 
 #ifdef DEBUG_WITH_STDIO
