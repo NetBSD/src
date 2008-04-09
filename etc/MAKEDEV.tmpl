@@ -1,7 +1,7 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.103 2008/04/02 01:34:36 dyoung Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.104 2008/04/09 20:19:15 apb Exp $
 #
-# Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -304,13 +304,14 @@
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${0##*/} [-fMs] [-m mknod] [-p pax] special [...]
+Usage: ${0##*/} [-fMs] [-m mknod] [-p pax] [-t mtree] special [...]
 	Create listed special devices.  Options:
 	-f		Force permissions to be updated on existing devices.
 	-M		Create memory file system.
 	-m mknod	Name of mknod(8) program.  [\$TOOL_MKNOD or mknod]
-	-p pax  	Name of pax(2) program.  [\$TOOL_PAX or pax]
+	-p pax  	Name of pax(1) program.  [\$TOOL_PAX or pax]
 	-s		Generate mtree(8) specfile instead of creating devices.
+	-t mtree	Name of mtree(8) program.  [\$TOOL_MTREE or mtree]
 
 _USAGE_
 	exit 1
@@ -328,7 +329,7 @@ zeropad()
 	2)	echo 00$2;;
 	1)	echo 0$2;;
 	0)	echo $2;;
-	*)	echo "$0: bad padding" 1>&2; exit 1;;
+	*)	die "bad padding" ;;
 	esac
 }
 
@@ -376,13 +377,23 @@ nooutput()
 }
 
 # check_pax path_to_pax
-#	Check whether pax supports the command line options we
-#	will want to use.
+#	Check whether pax exists and supports the command line options
+#	and input format that we will want to use.
 #
 check_pax()
 {
 	local pax="$1"
 	echo ". type=dir optional" | nooutput -12 "${pax}" -r -w -M -pe .
+}
+
+# check_mtree path_to_mtree
+#	Check whether mtree exists and supports the command line options
+#	and input format that we will want to use.
+#
+check_mtree()
+{
+	local mtree="$1"
+	echo ". type=dir optional" | nooutput -12 "${mtree}" -e -U
 }
 
 # setup args...
@@ -393,16 +404,20 @@ setup()
 {
 	PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
 
+	: ${TOOL_MKNOD:=mknod}
+	: ${TOOL_MTREE:=mtree}
+	: ${TOOL_PAX:=pax}
 	do_create_mfs=false
 	do_force=false
 	do_mknod=false
 	do_pax=false
+	do_mtree=false
 	do_redirect=false
 	do_specfile=false
 	opts=
-	while getopts Mfm:p:s ch; do
-		# Options that should not be passed through to
-		# MAKEDEV.local are not added to $opts.
+	while getopts Mfm:p:st: ch; do
+		# Note that $opts is only for options pased through to
+		# MAKEDEV.local, not for all options.
 		case ${ch} in
 		M)
 			# "-M" sets do_create_mfs;
@@ -430,6 +445,17 @@ setup()
 			;;
 		s)	do_specfile=true
 			opts="${opts} -s"
+			;;
+		t)	TOOL_MTREE="${OPTARG}"
+			if check_mtree "${TOOL_MTREE}"; then
+				do_mtree=true
+				# do not add this to $opts; we will later
+				# add "-s" instead.
+			else
+				warn "Ignored -t option:" \
+					"${TOOL_MTREE} is missing or broken"
+				do_mknod=true
+			fi
 			;;
 		*)	usage ;;
 		esac
@@ -463,34 +489,44 @@ setup()
 
 	# do_force requires mknod
 	if $do_force; then
-		if $do_pax || $do_specfile; then
-			warn "-f option works only with mknod"
-			exit 1
+		if $do_mtree || $do_pax || $do_specfile; then
+			die "-f option works only with mknod"
 		fi
 		do_mknod=true
 	fi
 
-	# If no other options take precedence, then default to
-	# using pax, if it appears to work.
-	if ! $do_mknod && ! $do_specfile && ! $do_pax; then
-		: ${TOOL_PAX:=pax}
-		if check_pax "${TOOL_PAX}"; then
+	# If no explicit method was specified on the command line or
+	# forced above, then use one of mtree, pax, or mknod, in that
+	# order of preference.
+	#
+	# mtree is preferred because it's fast and designed for the
+	# purpose.  However, it's unlikely to be available early in the
+	# boot sequence, when init(8) may invoke MAKEDEV(8).
+	#
+	# pax is usually acceptable, and it's likely to be available
+	# early in the boot sequence.  However, it's much slower than mtree.
+	#
+	# mknod is just very slow, because the shell has to fork for
+	# each device node.
+	#
+	if ! ( $do_mtree || $do_pax || $do_mknod || $do_specfile ); then
+		if check_mtree "${TOOL_MTREE}"; then
+			do_mtree=true
+		elif check_pax "${TOOL_PAX}"; then
 			do_pax=true
 		else
 			do_mknod=true
 		fi
 	fi
 
-	# Now we need exactly one of do_pax, do_mknod, or do_specfile.
-	case $(( $($do_pax && echo 1 || echo 0) + \
+	# Now we need exactly one node-creation method.
+	case $(( $($do_mtree && echo 1 || echo 0) + \
+		$($do_pax && echo 1 || echo 0) + \
 		$($do_mknod && echo 1 || echo 0) + \
 		$($do_specfile && echo 1 || echo 0) ))
 	in
 	1)	: OK ;;
-	*)	
-		warn "-m, -p, and -s options are mutually exclusive"
-		exit 1
-		;;
+	*)	die "-m, -p, -s, and -t options are mutually exclusive" ;;
 	esac
 
 	# If we are using mknod, then decide what options to pass it.
@@ -503,9 +539,9 @@ setup()
 		fi
 	fi
 
-	# do_pax internally implies do_specfile.  This happens after
-	# checking for mutually-exclusive options.
-	if $do_pax && ! $do_specfile; then
+	# do_mtree or do_pax internally implies do_specfile.
+	# This happens after checking for mutually-exclusive options.
+	if ($do_mtree || $do_pax) && ! $do_specfile; then
 		do_specfile=true
 		opts="${opts} -s"
 	fi
@@ -518,15 +554,18 @@ setup()
 wrap_makedev()
 {
 	if $do_specfile; then
-		# "optional" tells pax(1) not to create the directory itself.
+		# "." must appear as the first line of the specfile.
+		# "optional" means do not create the directory itself.
 		echo ". type=dir optional"
 	fi
 	"$@"
 }
 
 # makedev_main makedev_name args...
-#	Perform most of the work of the main program.  makedev_name is
-#	the name of a makedev-like function, and the other args are
+#	Perform most of the work of the main program.  makedev_name
+#	is typically "makedev", but may be the name of some other
+#	makedev-like function (if we are invoked from MAKEDEV.local or
+#	some other script).  The other args to this function are the
 #	command line args with which the MAKEDEV (or MAKEDEV.local)
 #	script was invoked.
 #
@@ -547,10 +586,30 @@ makedev_main()
 		unset count_nodes
 	fi
 
-	if $do_pax ; then
-		# wrap_makedev will print an mtree specification because
-		# do_pax implies do_specfile.  pax will create device nodes.
-		wrap_makedev $makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M -pe .
+	# If using mtree or pax, then wrap_makedev should print an mtree
+	# specification, which we postprocess to create the device nodes.
+	# Otherwise, wrap_makedev should do all the work itself.
+	if $do_mtree ; then
+		wrap_makedev $makedev ${1+"$@"} \
+		| nooutput -1 "${TOOL_MTREE}" -e -U
+	elif $do_pax ; then
+		wrap_makedev $makedev ${1+"$@"} \
+		| (
+		    # Run pax in an empty directory, so it pays
+		    # attention only to the specfile, without being
+		    # confused by the existing contents of the target
+		    # directory.  Without this, pax would complain "file
+		    # would overwrite itself" for already-existing
+		    # device nodes.
+		    tmpdir=./tmp.$$
+		    mkdir "${tmpdir}" || die "can't create temporary directory"
+		    cd "${tmpdir}" || die "can't cd to temporary directory"
+		    "${TOOL_PAX}" -r -w -M -pe ..
+		    status=$?
+		    cd .. # back to where we started
+		    rmdir "${tmpdir}"
+		    exit $status
+		)
 	else
 		wrap_makedev $makedev ${1+"$@"}
 	fi
@@ -606,7 +665,7 @@ makedir()
 		return
 	fi
 	if $do_specfile; then
-		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root optional"
+		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
 	else
 		nooutput -2 mkdir $1
 		chmod $2 $1
@@ -616,6 +675,12 @@ makedir()
 warn()
 {
 	echo 1>&2 "$0: $*"
+}
+
+die()
+{
+	echo 1>&2 "$0: $*"
+	exit 1
 }
 
 # makedev special [...]
@@ -705,15 +770,15 @@ isdns)
 	;;
 
 std)
-	mkdev		console	c %cons_chr% 0	600
-	mkdev		constty	c %cons_chr% 1	600
+	mkdev		console c %cons_chr% 0	600
+	mkdev		constty c %cons_chr% 1	600
 	mkdev		drum	c %swap_chr% 0	640 $g_kmem
 	mkdev		kmem	c %mem_chr% 1	640 $g_kmem
 	mkdev		mem	c %mem_chr% 0	640 $g_kmem
 	mkdev		null	c %mem_chr% 2	666
 	mkdev		zero	c %mem_chr% 12	666
 	mkdev		klog	c %log_chr% 0	600
-	mkdev		ksyms	c %ksyms_chr% 0	444
+	mkdev		ksyms	c %ksyms_chr% 0 444
 	if $nofdesc; then
 		mkdev	tty	c %ctty_chr% 0		666
 		mkdev	stdin	c %filedesc_chr% 0	666
@@ -767,7 +832,7 @@ ttyY*)
 
 ttyU*)
 	unit=${i#ttyU}
-	mkdev ttyU$unit c %ucom_chr% $(($unit + $dialin  )) "" "" $u_uucp
+	mkdev ttyU$unit c %ucom_chr% $(($unit + $dialin	 )) "" "" $u_uucp
 	mkdev dtyU$unit c %ucom_chr% $(($unit + $dialout )) "" "" $u_uucp
 	mkdev ctyU$unit c %ucom_chr% $(($unit + $callunit)) "" "" $u_uucp
 	;;
@@ -1128,8 +1193,8 @@ gdrom*)
 
 lpt*|lpa*)
 	case $i in
-	lpt*) name=lpt;	unit=${i#lpt};	chr=%lpt_chr%;	flags=0;;
-	lpa*) name=lpa;	unit=${i#lpa};	chr=%lpt_chr%;	flags=128;;
+	lpt*) name=lpt; unit=${i#lpt};	chr=%lpt_chr%;	flags=0;;
+	lpa*) name=lpa; unit=${i#lpa};	chr=%lpt_chr%;	flags=128;;
 	esac
 	mkdev $name$unit c $chr $(($unit + $flags))
 	mkdev lpt${unit}ctl c $chr $(($unit + 256))
@@ -1199,9 +1264,9 @@ audio*)
 	mixer=mixer$unit
 	audioctl=audioctl$unit
 	: ${unit:-0}
-	mkdev $sound    c %audio_chr% $(($unit + 0))	666
-	mkdev $audio    c %audio_chr% $(($unit + 128))	666
-	mkdev $mixer    c %audio_chr% $(($unit + 16))	666
+	mkdev $sound	c %audio_chr% $(($unit + 0))	666
+	mkdev $audio	c %audio_chr% $(($unit + 128))	666
+	mkdev $mixer	c %audio_chr% $(($unit + 16))	666
 	mkdev $audioctl c %audio_chr% $(($unit + 192))	666
 	;;
 
@@ -1219,7 +1284,7 @@ music*)
 	unit=${i#music}
 	: ${unit:-0}
 	mkdev music$unit     c %sequencer_chr% $(($unit + 0))	666
-	mkdev sequencer$unit c %sequencer_chr% $(($unit + 128))	666
+	mkdev sequencer$unit c %sequencer_chr% $(($unit + 128)) 666
 	;;
 
 radio*)
@@ -1486,7 +1551,7 @@ ite*|ttye*)
 	ite*)	unit=${i#ite};;
 	ttye*)	unit=${i#ttye};;
 	esac
-	mkdev ttye$unit	c %ite_chr% $unit
+	mkdev ttye$unit c %ite_chr% $unit
 	;;
 
 pms*)
@@ -1532,7 +1597,7 @@ vidcconsole0)
 
 view*)
 	unit=${i#view}
-	mkdev view$unit	c %view_chr% $unit 666
+	mkdev view$unit c %view_chr% $unit 666
 	;;
 
 mouse*)
@@ -1820,7 +1885,7 @@ fw*)
 putter)
 	mkdev putter c %putter_chr% 0 600
 	mkdev pud c %putter_chr% 1 600
-	lndev putter puffs 
+	lndev putter puffs
 	;;
 
 midevend)
@@ -1927,8 +1992,8 @@ makedisk_p16high()
 	mkdev ${name}${unit}f	b $blk $(($unit * 8 + 5))	640 $g_operator
 	mkdev ${name}${unit}g	b $blk $(($unit * 8 + 6))	640 $g_operator
 	mkdev ${name}${unit}h	b $blk $(($unit * 8 + 7))	640 $g_operator
-	mkdev ${name}${unit}i	b $blk $(($unit * 8 + $ho + 8))	640 $g_operator
-	mkdev ${name}${unit}j	b $blk $(($unit * 8 + $ho + 9))	640 $g_operator
+	mkdev ${name}${unit}i	b $blk $(($unit * 8 + $ho + 8)) 640 $g_operator
+	mkdev ${name}${unit}j	b $blk $(($unit * 8 + $ho + 9)) 640 $g_operator
 	mkdev ${name}${unit}k	b $blk $(($unit * 8 + $ho + 10)) 640 $g_operator
 	mkdev ${name}${unit}l	b $blk $(($unit * 8 + $ho + 11)) 640 $g_operator
 	mkdev ${name}${unit}m	b $blk $(($unit * 8 + $ho + 12)) 640 $g_operator
@@ -1943,8 +2008,8 @@ makedisk_p16high()
 	mkdev r${name}${unit}f	c $chr $(($unit * 8 + 5))	640 $g_operator
 	mkdev r${name}${unit}g	c $chr $(($unit * 8 + 6))	640 $g_operator
 	mkdev r${name}${unit}h	c $chr $(($unit * 8 + 7))	640 $g_operator
-	mkdev r${name}${unit}i	c $chr $(($unit * 8 + $ho + 8))	640 $g_operator
-	mkdev r${name}${unit}j	c $chr $(($unit * 8 + $ho + 9))	640 $g_operator
+	mkdev r${name}${unit}i	c $chr $(($unit * 8 + $ho + 8)) 640 $g_operator
+	mkdev r${name}${unit}j	c $chr $(($unit * 8 + $ho + 9)) 640 $g_operator
 	mkdev r${name}${unit}k	c $chr $(($unit * 8 + $ho + 10)) 640 $g_operator
 	mkdev r${name}${unit}l	c $chr $(($unit * 8 + $ho + 11)) 640 $g_operator
 	mkdev r${name}${unit}m	c $chr $(($unit * 8 + $ho + 12)) 640 $g_operator
@@ -1963,17 +2028,17 @@ makedisk_minimal()
 	rn=%RAWDISK_NAME%
 
 	mkdev ${name}${unit}a	b $blk $(($unit * $doff + 0))	640 $g_operator
-	mkdev ${name}${unit}$rn	b $blk $(($unit * $doff + $ro))	640 $g_operator
+	mkdev ${name}${unit}$rn b $blk $(($unit * $doff + $ro)) 640 $g_operator
 	mkdev r${name}${unit}a	c $chr $(($unit * $doff + 0))	640 $g_operator
 	mkdev r${name}${unit}$rn c $chr $(($unit * $doff + $ro)) 640 $g_operator
 }
 
 # create_mfs_dev nodes
-#       Create a memory file system for a given number of device nodes,
-#       and mount it.  Attempts to use mount_tmpfs, or falls back to
-#       mount_mfs.
+#	Create a memory file system for a given number of device nodes,
+#	and mount it.  Attempts to use mount_tmpfs, or falls back to
+#	mount_mfs.
 #
-#       If do_redirect, then also redirect output to the console.
+#	If do_redirect, then also redirect output to the console.
 #
 create_mfs_dev()
 {
@@ -2004,8 +2069,7 @@ create_mfs_dev()
 	then
 	    fstype=mfs
 	else
-	    warn "Failed to create memory file system"
-	    exit 1
+	    die "Failed to create memory file system"
 	fi
 
 	# Our current directory was in the lower file system; change it to
