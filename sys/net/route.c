@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.106 2008/03/26 14:54:19 ad Exp $	*/
+/*	$NetBSD: route.c,v 1.107 2008/04/10 18:12:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.106 2008/03/26 14:54:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.107 2008/04/10 18:12:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -1260,6 +1260,7 @@ rtcache_free(struct route *ro)
 	if (ro->ro_sa != NULL) {
 		sockaddr_free(ro->ro_sa);
 		ro->ro_sa = NULL;
+		KASSERT(ro->_ro_rt == NULL);
 	}
 }
 
@@ -1276,8 +1277,11 @@ rtcache_setdst(struct route *ro, const struct sockaddr *sa)
 	} else if (ro->ro_sa != NULL)
 		rtcache_free(ro);	/* free ro_sa, wrong family */
 
-	if ((ro->ro_sa = sockaddr_dup(sa, M_NOWAIT)) == NULL)
+	KASSERT(ro->_ro_rt == NULL);
+
+	if ((ro->ro_sa = sockaddr_dup(sa, M_NOWAIT)) == NULL) {
 		return ENOMEM;
+	}
 	return 0;
 }
 
