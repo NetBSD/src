@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.36 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.37 2008/04/10 23:29:01 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -204,6 +204,9 @@ switchto_restore:
 
 	GET_CPUINFO(%r7)
 	stptr	%r31,CI_CURLWP(%r7)
+#ifdef MULTIPROCESSOR
+	stptr	%r7,L_CPU(%r31)		/* update cpu pointer */
+#endif
 	ldptr	%r4,L_ADDR(%r31)	/* put PCB addr in r4 */
 	stptr	%r4,CI_CURPCB(%r7)	/* using a new pcb */
 	ldptr	%r3,PCB_PM(%r4)
