@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.26 2007/10/19 12:00:41 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.27 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.26 2007/10/19 12:00:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.27 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,7 @@ cac_pci_attach(struct device *parent, struct device *self, void *aux)
 		    &sc->sc_iot, &sc->sc_ioh, NULL, NULL))
 		    	ior = -1;
 	if (memr == -1 && ior == -1) {
-		aprint_error("%s: can't map i/o or memory space\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "can't map i/o or memory space\n");
 		return;
 	}
 
@@ -253,7 +252,7 @@ cac_pci_l0_completed(struct cac_softc *sc)
 
 	if ((off & 3) != 0)
 		printf("%s: failed command list returned: %lx\n",
-		    sc->sc_dv.dv_xname, (long)off);
+		    device_xname(&sc->sc_dv), (long)off);
 
 	off = (off & ~3) - sc->sc_ccbs_paddr;
 	ccb = (struct cac_ccb *)((char *)sc->sc_ccbs + off);

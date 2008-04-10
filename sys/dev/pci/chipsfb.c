@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.13 2008/02/27 23:59:37 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.14 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.13 2008/02/27 23:59:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.14 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,14 +305,12 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR,
 	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error("%s: failed to map the frame buffer.\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map the frame buffer.\n");
 	}
 
 	/* IO-mapped registers */
 	if (bus_space_map(sc->sc_iot, 0x0, 0x400, 0, &sc->sc_ioregh) != 0) {
-		aprint_error("%s: failed to map IO registers.\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map IO registers.\n");
 	}
 
 	sc->memsize = chipsfb_probe_vram(sc);
@@ -376,8 +374,8 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bg = ri->ri_devcmap[bg];
 	chipsfb_clearscreen(sc);
 
-	aprint_normal("%s: %d MB aperture, %d MB VRAM at 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int)(sc->sc_fbsize >> 20),
+	aprint_normal_dev(&sc->sc_dev, "%d MB aperture, %d MB VRAM at 0x%08x\n",
+	    (u_int)(sc->sc_fbsize >> 20),
 	    sc->memsize >> 20, (u_int)sc->sc_fb);
 #ifdef CHIPSFB_DEBUG
 	aprint_debug("fb: %08lx\n", (ulong)ri->ri_bits);
@@ -887,7 +885,7 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (me != NULL) {
 		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
 		    NULL) != 0) {
-			aprint_normal("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			aprint_normal_dev(&sc->sc_dev, "mmap() rejected.\n");
 			return -1;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.37 2008/04/01 13:35:39 xtraeme Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.38 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.37 2008/04/01 13:35:39 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.38 2008/04/10 19:13:36 cegger Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -411,28 +411,25 @@ cmpci_attach(struct device *parent, struct device *self, void *aux)
 	/* map I/O space */
 	if (pci_mapreg_map(pa, CMPCI_PCI_IOBASEREG, PCI_MAPREG_TYPE_IO, 0,
 		&sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
-		aprint_error("%s: failed to map I/O space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map I/O space\n");
 		return;
 	}
 
 	/* interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: failed to map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to map interrupt\n");
 		return;
 	}
 	strintr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih=pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, cmpci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: failed to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "failed to establish interrupt");
 		if (strintr != NULL)
 			aprint_normal(" at %s", strintr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, strintr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", strintr);
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -671,7 +668,7 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 		md_divide = cmpci_index_to_divider(md_index);
 		p->sample_rate = cmpci_index_to_rate(md_index);
 		DPRINTF(("%s: sample:%u, divider=%d\n",
-			 sc->sc_dev.dv_xname, p->sample_rate, md_divide));
+			 device_xname(&sc->sc_dev), p->sample_rate, md_divide));
 
 		ind = auconv_set_converter(cmpci_formats, CMPCI_NFORMATS,
 					   mode, p, FALSE, fil);

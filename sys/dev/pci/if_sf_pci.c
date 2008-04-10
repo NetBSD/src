@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.14 2008/03/21 07:47:43 dyoung Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.15 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.14 2008/03/21 07:47:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.15 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ sf_pci_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
 	    error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
 		    error);
 		return;
 	}
@@ -229,8 +229,7 @@ sf_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sh = ioh;
 		sc->sc_iomapped = 1;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
@@ -245,20 +244,19 @@ sf_pci_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, sf_intr, sc);
 	if (psc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	/*
 	 * Finish off the attach.

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.28 2007/10/19 12:00:39 ad Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.29 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.28 2007/10/19 12:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.29 2008/04/10 19:13:36 cegger Exp $");
 
 #include "opt_amdpm.h"
 
@@ -116,7 +116,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pa = pa;
 
 #if 0
-	aprint_normal("%s: ", sc->sc_dev.dv_xname);
+	aprint_normal_dev(&sc->sc_dev, "");
 	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
 #endif
 
@@ -132,27 +132,24 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	confreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
 
 	if ((confreg & AMDPM_PMIOEN) == 0) {
-		aprint_error("%s: PMxx space isn't enabled\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "PMxx space isn't enabled\n");
 		return;
 	}
 
 	if (sc->sc_nforce) {
 		pmptrreg = pci_conf_read(pa->pa_pc, pa->pa_tag, NFORCE_PMPTR);
-		aprint_normal("%s: power management at 0x%04x\n",
-		    sc->sc_dev.dv_xname, NFORCE_PMBASE(pmptrreg));
+		aprint_normal_dev(&sc->sc_dev, "power management at 0x%04x\n",
+		    NFORCE_PMBASE(pmptrreg));
 		if (bus_space_map(sc->sc_iot, NFORCE_PMBASE(pmptrreg),
 		    AMDPM_PMSIZE, 0, &sc->sc_ioh)) {
-			aprint_error("%s: failed to map PMxx space\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "failed to map PMxx space\n");
 			return;
 		}
 	} else {
 		pmptrreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
 		if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(pmptrreg),
 		    AMDPM_PMSIZE, 0, &sc->sc_ioh)) {
-			aprint_error("%s: failed to map PMxx space\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "failed to map PMxx space\n");
 			return;
 		}
 	}
@@ -182,12 +179,12 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 			delay(1);
 		}
 		if ((pmreg & AMDPM_RNGDONE) != 0) {
-			aprint_normal("%s: "
+			aprint_normal_dev(&sc->sc_dev, ""
 			    "random number generator enabled (apprx. %dms)\n",
-			    sc->sc_dev.dv_xname, i);
+			    i);
 			callout_init(&sc->sc_rnd_ch, 0);
 			rnd_attach_source(&sc->sc_rnd_source,
-			    sc->sc_dev.dv_xname, RND_TYPE_RNG,
+			    device_xname(&sc->sc_dev), RND_TYPE_RNG,
 			    /*
 			     * XXX Careful!  The use of RND_FLAG_NO_ESTIMATE
 			     * XXX here is unobvious: we later feed raw bits
@@ -202,12 +199,12 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 			    RND_FLAG_NO_ESTIMATE);
 #ifdef AMDPM_RND_COUNTERS
 			evcnt_attach_dynamic(&sc->sc_rnd_hits, EVCNT_TYPE_MISC,
-			    NULL, sc->sc_dev.dv_xname, "rnd hits");
+			    NULL, device_xname(&sc->sc_dev), "rnd hits");
 			evcnt_attach_dynamic(&sc->sc_rnd_miss, EVCNT_TYPE_MISC,
-			    NULL, sc->sc_dev.dv_xname, "rnd miss");
+			    NULL, device_xname(&sc->sc_dev), "rnd miss");
 			for (i = 0; i < 256; i++) {
 				evcnt_attach_dynamic(&sc->sc_rnd_data[i],
-				    EVCNT_TYPE_MISC, NULL, sc->sc_dev.dv_xname,
+				    EVCNT_TYPE_MISC, NULL, device_xname(&sc->sc_dev),
 				    "rnd data");
 			}
 #endif

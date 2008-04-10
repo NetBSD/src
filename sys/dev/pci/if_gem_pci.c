@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.28 2008/04/04 16:26:52 martin Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.29 2008/04/10 19:13:37 cegger Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.28 2008/04/04 16:26:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.29 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ gem_attach_pci(parent, self, aux)
 	}
 
 	if (sc->sc_variant == GEM_UNKNOWN) {
-		aprint_error("%s: unknown adaptor\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unknown adaptor\n");
 		return;
 	}
 
@@ -241,14 +241,12 @@ gem_attach_pci(parent, self, aux)
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->sc_bustag, &sc->sc_h1, NULL, NULL) != 0)
 	{
-		aprint_error("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 	if (bus_space_subregion(sc->sc_bustag, sc->sc_h1,
 	    GEM_PCI_BANK2_OFFSET, GEM_PCI_BANK2_SIZE, &sc->sc_h2)) {
-		aprint_error("%s: unable to create bank 2 subregion\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to create bank 2 subregion\n");
 		return;
 	}
 
@@ -291,7 +289,7 @@ gem_attach_pci(parent, self, aux)
 		}
 #ifdef GEM_DEBUG
 		/* PROM dump */
-		printf("%s: PROM dump (0x0000 to %04lx)\n", sc->sc_dev.dv_xname,
+		printf("%s: PROM dump (0x0000 to %04lx)\n", device_xname(&sc->sc_dev),
 		    (sizeof buf) - 1);
 		i = 0;
 		j = 0;
@@ -374,8 +372,7 @@ gem_attach_pci(parent, self, aux)
 
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 		if (node == 0) {
-			aprint_error("%s: unable to locate OpenFirmware node\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unable to locate OpenFirmware node\n");
 			return;
 		}
 
@@ -385,26 +382,24 @@ gem_attach_pci(parent, self, aux)
 		OF_getprop(node, "local-mac-address", enaddr, sizeof(enaddr));
 	}
 #else
-		printf("%s: no Ethernet address found\n", sc->sc_dev.dv_xname);
+		printf("%s: no Ethernet address found\n", device_xname(&sc->sc_dev));
 #endif /* macppc */
 #endif /* __sparc__ */
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		aprint_error("%s: unable to map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	gsc->gsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, gem_intr, sc);
 	if (gsc->gsc_ih == NULL) {
-		aprint_error("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* Finish off the attach. */
 	gem_attach(sc, enaddr);

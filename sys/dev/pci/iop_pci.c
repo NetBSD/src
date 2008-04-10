@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.21 2007/10/19 12:00:50 ad Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.22 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.21 2007/10/19 12:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop_pci.c,v 1.22 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map the register window. */
 	if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_MEM, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, NULL)) {
-		printf("%s: can't map register window\n", sc->sc_dv.dv_xname);
+		aprint_error_dev(&sc->sc_dv, "can't map register window\n");
 		return;
 	}
 
@@ -167,8 +167,7 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_MEM, 0,
 		    &sc->sc_msg_iot, &sc->sc_msg_ioh, NULL, NULL)) {
-			printf("%s: can't map 2nd register window\n",
-			    sc->sc_dv.dv_xname);
+			aprint_error_dev(&sc->sc_dv, "can't map 2nd register window\n");
 			return;
 		}
 	} else {

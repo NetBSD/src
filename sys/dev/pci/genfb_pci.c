@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.8 2008/04/01 01:11:55 mrg Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.9 2008/04/10 19:13:36 cegger Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.8 2008/04/01 01:11:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.9 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,8 +134,7 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_memt, sc->sc_gen.sc_fboffset,
 	    sc->sc_gen.sc_fbsize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh) != 0) {
 
-		aprint_error("%s: unable to map the framebuffer\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "unable to map the framebuffer\n");
 		return;
 	}
 	sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
@@ -247,8 +246,7 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (me != NULL) {
 		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
 		    NULL) != 0) {
-			aprint_normal("%s: mmap() rejected.\n",
-			    sc->sc_gen.sc_dev.dv_xname);
+			aprint_normal_dev(&sc->sc_gen.sc_dev, "mmap() rejected.\n");
 			return -1;
 		}
 	}
