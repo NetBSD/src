@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.36 2008/04/06 08:33:31 cegger Exp $	*/
+/*	$NetBSD: dk.c,v 1.37 2008/04/10 09:31:51 agc Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.36 2008/04/06 08:33:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.37 2008/04/10 09:31:51 agc Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -850,7 +850,7 @@ dkwedge_discover(struct disk *pdk)
 /*
  * dkwedge_read:
  *
- *	Read the some data from the specified disk, used for
+ *	Read some data from the specified disk, used for
  *	partition discovery.
  */
 int
