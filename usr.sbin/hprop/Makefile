@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2007/05/28 12:06:34 tls Exp $
+# $NetBSD: Makefile,v 1.15 2008/04/10 15:42:06 tsutsui Exp $
 
 NOLINT= # defined
 
@@ -36,10 +36,10 @@ COPTS.mit_dump.c+=	-Wno-pointer-sign
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+=	-lhdb -lkrb5 -lcrypto -lasn1 \
-	-lcom_err -L${VERS} -lvers -lroken -lcrypt
-DPADD+=	${LIBHDB} ${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} \
-	${LIBCOM_ERR} ${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
+LDADD+=	-lhdb -lkrb5 -lhx509 -lcrypto -lasn1 \
+	-lcom_err -L${VERS} -lvers -lroken -lcrypt -lutil
+DPADD+=	${LIBHDB} ${LIBKRB5} ${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
+	${LIBCOM_ERR} ${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT} ${LIBUTIL}
 
 MAN=	hprop.8
 
