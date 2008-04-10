@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2008/03/22 08:37:27 mlelstv Exp $
+# $NetBSD: Makefile,v 1.18 2008/04/10 15:42:06 tsutsui Exp $
 
 NOLINT= # defined
 
@@ -49,12 +49,12 @@ CPPFLAGS+=-DHAVE_IPV6
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+=	-lkadm5srv -lhdb -lkrb5 -lcrypto -lasn1  \
-	-lcom_err -lsl -ledit -ltermcap -L${VERS} -lvers \
-	-lroken -lcrypt
-DPADD+=	${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} \
-	${LIBCOM_ERR} ${LIBSL} ${LIBEDIT} ${LIBTERMCAP} ${VERS}/libvers.a \
-	${LIBROKEN} ${LIBCRYPT}
+LDADD+=	-lkadm5srv -lhdb -lkrb5 -lhx509 -lcrypto \
+	-lasn1 -lcom_err -lsl -ledit -ltermcap \
+	-L${VERS} -lvers -lroken -lcrypt -lutil
+DPADD+=	${LIBKADM5SRV} ${LIBHDB} ${LIBKRB5} ${LIBHX509} ${LIBCRYPTO} \
+	${LIBASN1} ${LIBCOM_ERR} ${LIBSL} ${LIBEDIT} ${LIBTERMCAP} \
+	${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT} ${LIBUTIL}
 
 MAN=	kadmin.8
 

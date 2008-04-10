@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2008/03/28 21:17:37 christos Exp $
+# $NetBSD: Makefile,v 1.21 2008/04/10 15:42:06 tsutsui Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -46,8 +46,10 @@ DPADD+=	${LIBPAM} ${PAM_STATIC_DPADD}
 .endif
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DHAVE_GSSAPI
-LDADD+= -lgssapi -lkrb5 -lcom_err -lroken -lasn1
-DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1}
+LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lcom_err \
+	-lroken -lasn1
+DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBCOM_ERR} \
+	${LIBROKEN} ${LIBASN1}
 .endif
 .if (${MKCRYPTO_IDEA} != "no")
 CPPFLAGS+=-DHAVE_OPENSSL_IDEA_H
