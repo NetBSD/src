@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/08/31 22:31:45 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.4 2008/04/10 13:49:53 tsutsui Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -21,17 +21,39 @@ SRCS=	add.c admin.c annotate.c buffer.c checkin.c checkout.c classify.c \
 	scramble.c server.c stack.c status.c subr.c tag.c update.c vers_ts.c \
 	version.c watch.c wrapper.c zlib.c
 
-DPADD+= ${LIBDIFF} ${LIBCVS} ${LIBCRYPT} ${LIBZ}
-LDADD+= ${LIBDIFF} ${LIBCVS} -lcrypt -lz
+DPADD+= ${LIBDIFF} ${LIBCVS}
+LDADD+= ${LIBDIFF} ${LIBCVS}
 
 .if defined(USE_KERBEROS) && (${USE_KERBEROS} != "no")
 CPPFLAGS+= -DHAVE_GSSAPI -I${DESTDIR}/usr/include/krb5
-DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBASN1} ${LIBCRYPTO} ${LIBCRYPT}
-LDADD+= -lgssapi -lkrb5 -lasn1 -lcrypto -lcrypt
+DPADD+= ${LIBGSSAPI} ${LIBKRB5}
+LDADD+= -lgssapi -lkrb5
 
+# libheimntlm is required by libgssapi
+DPADD+= ${LIBHEIMNTLM}
+LDADD+= -lheimntlm
+
+# libhx509 is required by libkrb5
+DPADD+= ${LIBHX509}
+LDADD+= -lhx509
+
+# libasn1 is required by all the above libs
+DPADD+= ${LIBASN1}
+LDADD+= -lasn1
+
+# libcom_err is required by libasn1
+# libroken is required by libgssapi, libkrb5, libheimntlm, and libhx509
+# libcrypto is required by libgssapi, libkrb5, and libhx509
 CPPFLAGS+= -DENCRYPTION
-DPADD+= ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}
-LDADD+= -lcom_err -lroken -lcrypt
+DPADD+= ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPTO}
+LDADD+= -lcom_err -lroken -lcrypto
+
+# libutil is required by libroken
+DPADD+= ${LIBUTIL}
+LDADD+= -lutil
 .endif
+
+DPADD+= ${LIBCRYPT} ${LIBZ}
+LDADD+= -lcrypt -lz
 
 .include <bsd.prog.mk>
