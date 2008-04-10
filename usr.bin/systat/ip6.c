@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.c,v 1.13 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: ip6.c,v 1.14 2008/04/10 17:14:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip6.c,v 1.13 2008/04/08 23:37:43 thorpej Exp $");
+__RCSID("$NetBSD: ip6.c,v 1.14 2008/04/10 17:14:25 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -204,7 +204,15 @@ fetchip6(void)
 {
 	int i;
 
-	KREAD((void *)namelist[0].n_value, newstat, sizeof(newstat));
+	if (use_sysctl) {
+		size_t size = sizeof(newstat);
+
+		if (sysctlbyname("net.inet6.ip6.stats", newstat, &size,
+				 NULL, 0) == -1)
+			return;
+	} else {
+		KREAD((void *)namelist[0].n_value, newstat, sizeof(newstat));
+	}
 
 	for (i = 0; i < IP6_NSTATS; i++)
 		xADJINETCTR(curstat, oldstat, newstat, i);

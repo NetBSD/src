@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp.c,v 1.10 2008/04/07 05:18:25 thorpej Exp $	*/
+/*	$NetBSD: icmp.c,v 1.11 2008/04/10 17:14:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,10 +29,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: icmp.c,v 1.10 2008/04/07 05:18:25 thorpej Exp $");
+__RCSID("$NetBSD: icmp.c,v 1.11 2008/04/10 17:14:25 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -178,7 +179,15 @@ fetchicmp(void)
 {
 	int i;
 
-	KREAD((void *)namelist[0].n_value, newstat, sizeof(newstat));
+	if (use_sysctl) {
+		size_t size = sizeof(newstat);
+
+		if (sysctlbyname("net.inet.icmp.stats", newstat, &size,
+				 NULL, 0) == -1)
+			return;
+	} else {
+		KREAD((void *)namelist[0].n_value, newstat, sizeof(newstat));
+	}
 
 	xADJINETCTR(curstat, oldstat, newstat, ICMP_STAT_BADCODE);
 	xADJINETCTR(curstat, oldstat, newstat, ICMP_STAT_BADLEN);

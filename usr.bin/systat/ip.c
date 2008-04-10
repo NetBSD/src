@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.15 2008/04/07 06:31:28 thorpej Exp $	*/
+/*	$NetBSD: ip.c,v 1.16 2008/04/10 17:14:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.15 2008/04/07 06:31:28 thorpej Exp $");
+__RCSID("$NetBSD: ip.c,v 1.16 2008/04/10 17:14:25 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -203,10 +203,23 @@ void
 fetchip(void)
 {
 
-	KREAD((void *)namelist[0].n_value, newstat.i, 
-	    sizeof(newstat.i));
-	KREAD((void *)namelist[1].n_value, newstat.u, 
-	    sizeof(newstat.u));
+	if (use_sysctl) {
+		size_t size;
+
+		size = sizeof(newstat.i);
+		if (sysctlbyname("net.inet.ip.stats", newstat.i, &size,
+				 NULL, 0) == -1)
+			return;
+		size = sizeof(newstat.u);
+		if (sysctlbyname("net.inet.udp.stats", newstat.u, &size,
+				 NULL, 0) == -1)
+			return;
+	} else {
+		KREAD((void *)namelist[0].n_value, newstat.i, 
+		    sizeof(newstat.i));
+		KREAD((void *)namelist[1].n_value, newstat.u, 
+		    sizeof(newstat.u));
+	}
 
 	ADJINETCTR(curstat, oldstat, newstat, i[IP_STAT_TOTAL]);
 	ADJINETCTR(curstat, oldstat, newstat, i[IP_STAT_DELIVERED]);
