@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.168 2008/03/28 14:29:57 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.169 2008/04/10 12:32:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.168 2008/03/28 14:29:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.169 2008/04/10 12:32:37 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -560,12 +560,9 @@ nfs_send(so, nam, top, rep, l)
  * For SOCK_STREAM we must be very careful to read an entire record once
  * we have read any of it, even if the system call has been interrupted.
  */
-int
-nfs_receive(rep, aname, mp, l)
-	struct nfsreq *rep;
-	struct mbuf **aname;
-	struct mbuf **mp;
-	struct lwp *l;
+static int
+nfs_receive(struct nfsreq *rep, struct mbuf **aname, struct mbuf **mp,
+    struct lwp *l)
 {
 	struct socket *so;
 	struct uio auio;
@@ -786,10 +783,8 @@ errout:
  * with outstanding requests using the xid, until ours is found.
  */
 /* ARGSUSED */
-int
-nfs_reply(myrep, lwp)
-	struct nfsreq *myrep;
-	struct lwp *lwp;
+static int
+nfs_reply(struct nfsreq *myrep, struct lwp *lwp)
 {
 	struct nfsreq *rep;
 	struct nfsmount *nmp = myrep->r_nmp;
