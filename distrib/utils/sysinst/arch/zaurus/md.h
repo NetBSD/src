@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2008/03/31 23:55:29 chris Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2008/04/10 15:45:29 nonaka Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,15 @@
 
 /* md.h -- Machine specific definitions for the zaurus */
 
+#include "mbr.h"
+
 /* Constants and defines */
+#define	PART_ROOT	PART_A
+#define	PART_SWAP	PART_B
+#define	PART_BSD	PART_C
+#define	PART_RAW	PART_D
+#define	PART_USR	PART_E	/* Can be after PART_FIRST_FREE */
+#define	PART_FIRST_FREE PART_F
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 60
