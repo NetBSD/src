@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.27 2008/04/07 14:18:11 nakayama Exp $ */
+/*	$NetBSD: syscall.c,v 1.28 2008/04/10 14:28:28 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.27 2008/04/07 14:18:11 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2008/04/10 14:28:28 nakayama Exp $");
 
 #define NEW_FPSTATE
 
@@ -505,6 +505,5 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }
