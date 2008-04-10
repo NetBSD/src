@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.123 2008/02/06 03:20:50 matt Exp $	*/
+/*	$NetBSD: in.c,v 1.124 2008/04/10 18:09:14 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.123 2008/02/06 03:20:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.124 2008/04/10 18:09:14 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -288,12 +288,12 @@ in_mask2len(struct in_addr *mask)
 	}
 	y = 0;
 	if (x < sizeof(*mask)) {
-		for (y = 0; y < 8; y++) {
+		for (y = 0; y < NBBY; y++) {
 			if ((p[x] & (0x80 >> y)) == 0)
 				break;
 		}
 	}
-	return x * 8 + y;
+	return x * NBBY + y;
 }
 
 static void
@@ -304,10 +304,10 @@ in_len2mask(struct in_addr *mask, u_int len)
 
 	p = (u_char *)mask;
 	bzero(mask, sizeof(*mask));
-	for (i = 0; i < len / 8; i++)
+	for (i = 0; i < len / NBBY; i++)
 		p[i] = 0xff;
-	if (len % 8)
-		p[i] = (0xff00 >> (len % 8)) & 0xff;
+	if (len % NBBY)
+		p[i] = (0xff00 >> (len % NBBY)) & 0xff;
 }
 
 /*
@@ -678,7 +678,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		return EOPNOTSUPP;
 #endif
 	}
-	if (sizeof(struct in_addr) * 8 < iflr->prefixlen)
+	if (sizeof(struct in_addr) * NBBY < iflr->prefixlen)
 		return EINVAL;
 
 	switch (cmd) {
