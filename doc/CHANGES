@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1040 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1041 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -494,3 +494,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		SCSI-2 bus, utilizing HVD signalling via the siop(4)
 		driver. [skrll 20080405]
 	openssh: Import 5.0. [christos 20080406]
+	opencrypto: Improve performance to 84,000 short modular math ops/sec
+		    by adding asynchronous operation and batched submit/
+		    retrieve of requests/results.  Rewrite manual page to
+		    make it easier to write new code to the API.  Donated
+		    by Coyote Point Systems, Inc. [tls 20080410]
