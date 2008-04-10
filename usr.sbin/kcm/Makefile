@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/03/22 09:29:56 mlelstv Exp $
+# $NetBSD: Makefile,v 1.2 2008/04/10 15:42:06 tsutsui Exp $
 
 NOLINT= # defined
 
@@ -44,9 +44,9 @@ CPPFLAGS+=-DHAVE_IPV6
 
 VERS!=  cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+=	-lkafs -lkrb5 -lcrypto -lasn1 -lcom_err \
-	-L${VERS} -lvers -lroken -lcrypt
-DPADD+=	${LIBKAFS} ${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} \
-	${LIBCOM_ERR} ${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
+LDADD+=	-lkafs -lkrb5 -lhx509 -lcrypto -lasn1 -lcom_err \
+	-L${VERS} -lvers -lroken -lcrypt -lutil
+DPADD+=	${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
+	${LIBCOM_ERR} ${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT} ${LIBUTIL}
 
 .include <bsd.prog.mk>
