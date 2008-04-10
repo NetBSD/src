@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2008/04/06 23:39:35 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2008/04/10 15:05:24 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -38,8 +38,8 @@ DPADD+=	${LIBSKEY}
 .if (${USE_KERBEROS} != "no")
 
 SRCS +=	gss-genr.c auth2-gss.c gss-serv.c gss-serv-krb5.c
-LDADD+=	-lgssapi
-DPADD+=	${LIBGSSAPI}
+LDADD+=	-lgssapi -lheimntlm
+DPADD+=	${LIBGSSAPI} ${LIBHEIMNTLM}
 
 LDADD+=	-lkafs
 DPADD+= ${LIBKAFS}
