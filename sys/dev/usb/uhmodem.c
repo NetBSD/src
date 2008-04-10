@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.4 2008/03/27 04:13:23 ichiro Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.5 2008/04/10 19:49:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.4 2008/03/27 04:13:23 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.5 2008/04/10 19:49:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,16 +332,17 @@ USB_ATTACH(uhmodem)
 
 		switch (i) {
 		case 0:
-			sprintf(comname, "modem");
+			snprintf(comname, sizeof(comname), "modem");
 			break;
 		case 1:
-			sprintf(comname, "alt#1");
+			snprintf(comname, sizeof(comname), "alt#1");
 			break;
 		case 2:
-			sprintf(comname, "alt#2");
+			snprintf(comname, sizeof(comname), "alt#2");
 			break;
 		default:
-			sprintf(comname, "int#%d", i);
+			snprintf(comname, sizeof(comname), "int#%d", i);
+			break;
 		}
 
 		uca.portno = i;
