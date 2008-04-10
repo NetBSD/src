@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2006/11/24 22:04:25 wiz Exp $
+#	$NetBSD: Makefile,v 1.28 2008/04/10 15:05:24 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -19,14 +19,14 @@ MLINKS=	ssh.1 slogin.1
 
 # this is not entirely true, libgssapi might be independent of krb5
 SRCS +=	gss-genr.c
-LDADD+=	-lgssapi
-DPADD+=	${LIBGSSAPI}
+LDADD+=	-lgssapi -lheimntlm
+DPADD+=	${LIBGSSAPI} ${LIBHEIMNTLM}
 
-LDADD+=	-lkrb5 -lkafs -lasn1 -lcrypt
-DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
+LDADD+=	-lkrb5 -lhx509 -lkafs -lasn1 -lcrypt
+DPADD+=	${LIBKRB5} ${LIBHX509} ${LIBKAFS} ${LIBASN1} ${LIBCRYPT}
 
-LDADD+=	-lcom_err -lroken
-DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
+LDADD+=	-lcom_err -lroken -lutil
+DPADD+=	${LIBCOM_ERR} ${LIBROKEN} ${LIBUTIL}
 .endif
 
 .include <bsd.prog.mk>
