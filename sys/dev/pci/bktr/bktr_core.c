@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.47 2008/03/01 14:16:50 rmind Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.48 2008/04/10 19:13:38 cegger Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.47 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.48 2008/04/10 19:13:38 cegger Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -218,7 +218,7 @@ static int bt848_format = -1;
 const char *
 bktr_name(bktr_ptr_t bktr)
 {
-        return (bktr->bktr_dev.dv_xname);
+        return device_xname(&bktr->bktr_dev);
 }
 
 #define		PROC_LOCK(p)

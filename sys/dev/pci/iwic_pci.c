@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.11 2007/10/19 12:00:51 ad Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.11 2007/10/19 12:00:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -241,24 +241,24 @@ iwic_pci_attach(struct device * parent, struct device * dev, void *aux)
 
 	if (pci_mapreg_map(pa, IWIC_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_io_bt, &sc->sc_io_bh, &sc->sc_iobase, &sc->sc_iosize)) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
 		return;
 	}
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, iwic_pci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 	sc->sc_pc = pc;
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	/* disable interrupts */
 	IWIC_WRITE(sc, IWIC_IMASK, 0xff);
@@ -360,7 +360,7 @@ iwic_attach_bri(struct iwic_softc * sc)
 {
 	struct isdn_l3_driver *drv;
 
-	drv = isdn_attach_isdnif(sc->sc_dev.dv_xname, sc->sc_cardname,
+	drv = isdn_attach_isdnif(device_xname(&sc->sc_dev), sc->sc_cardname,
 	    &sc->sc_l2, &iwic_l3_driver, NBCH_BRI);
 
 	sc->sc_l3token = drv;

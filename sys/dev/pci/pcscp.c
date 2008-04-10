@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.40 2007/10/19 12:00:54 ad Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.41 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.40 2007/10/19 12:00:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.41 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s\n", devinfo);
-	printf("%s", sc->sc_dev.dv_xname);
+	printf("%s", device_xname(&sc->sc_dev));
 
 	if (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL)) {
@@ -298,7 +298,7 @@ pcscp_attach(struct device *parent, struct device *self, void *aux)
 		printf(": interrupting at %s\n", intrstr);
 
 	/* Do the common parts of attachment. */
-	printf("%s", sc->sc_dev.dv_xname);
+	printf("%s", device_xname(&sc->sc_dev));
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
@@ -379,15 +379,14 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 		WRITE_DMAREG(esc, DMA_CMD,
 		    DMACMD_ABORT | (datain ? DMACMD_DIR : 0));
 
-		printf("%s: error: DMA error detected; Aborting.\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error: DMA error detected; Aborting.\n");
 		bus_dmamap_unload(esc->sc_dmat, dmap);
 		return -1;
 	}
 
 	if (dmastat & DMASTAT_ABT) {
 		/* XXX What should be done? */
-		printf("%s: dma_intr: DMA aborted.\n", sc->sc_dev.dv_xname);
+		printf("%s: dma_intr: DMA aborted.\n", device_xname(&sc->sc_dev));
 		WRITE_DMAREG(esc, DMA_CMD,
 		    DMACMD_IDLE | (datain ? DMACMD_DIR : 0));
 		esc->sc_active = 0;
@@ -491,7 +490,7 @@ pcscp_dma_intr(struct ncr53c9x_softc *sc)
 		 * another target.  As such, don't print the warning.
 		 */
 		printf("%s: xfer (%d) > req (%d)\n",
-		    sc->sc_dev.dv_xname, trans, esc->sc_dmasize);
+		    device_xname(&sc->sc_dev), trans, esc->sc_dmasize);
 #endif
 		trans = esc->sc_dmasize;
 	}
@@ -544,8 +543,7 @@ pcscp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	    ((sc->sc_nexus->xs->xs_control & XS_CTL_DATA_IN) ?
 	     BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
-		printf("%s: unable to load dmamap, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to load dmamap, error = %d\n", error);
 		return error;
 	}
 

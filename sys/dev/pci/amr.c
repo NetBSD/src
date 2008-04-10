@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.46 2007/10/19 12:00:39 ad Exp $	*/
+/*	$NetBSD: amr.c,v 1.47 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.46 2007/10/19 12:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.47 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,8 +358,8 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((rv = bus_dmamem_alloc(amr->amr_dmat, size, PAGE_SIZE, 0,
 	    &amr->amr_dmaseg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: unable to allocate buffer, rv = %d\n",
-		    amr->amr_dv.dv_xname, rv);
+		aprint_error_dev(&amr->amr_dv, "unable to allocate buffer, rv = %d\n",
+		    rv);
 		amr_teardown(amr);
 		return;
 	}
@@ -368,8 +368,8 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	if ((rv = bus_dmamem_map(amr->amr_dmat, &amr->amr_dmaseg, rseg, size,
 	    (void **)&amr->amr_mbox,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		aprint_error("%s: unable to map buffer, rv = %d\n",
-		    amr->amr_dv.dv_xname, rv);
+		aprint_error_dev(&amr->amr_dv, "unable to map buffer, rv = %d\n",
+		    rv);
 		amr_teardown(amr);
 		return;
 	}
@@ -377,8 +377,8 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((rv = bus_dmamap_create(amr->amr_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &amr->amr_dmamap)) != 0) {
-		aprint_error("%s: unable to create buffer DMA map, rv = %d\n",
-		    amr->amr_dv.dv_xname, rv);
+		aprint_error_dev(&amr->amr_dv, "unable to create buffer DMA map, rv = %d\n",
+		    rv);
 		amr_teardown(amr);
 		return;
 	}
@@ -386,8 +386,8 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((rv = bus_dmamap_load(amr->amr_dmat, amr->amr_dmamap,
 	    amr->amr_mbox, size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: unable to load buffer DMA map, rv = %d\n",
-		    amr->amr_dv.dv_xname, rv);
+		aprint_error_dev(&amr->amr_dv, "unable to load buffer DMA map, rv = %d\n",
+		    rv);
 		amr_teardown(amr);
 		return;
 	}
@@ -425,7 +425,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		amr_ccb_free(amr, ac);
 	}
 	if (i != AMR_MAX_CMDS) {
-		aprint_error("%s: memory exhausted\n", amr->amr_dv.dv_xname);
+		aprint_error_dev(&amr->amr_dv, "memory exhausted\n");
 		amr_teardown(amr);
 		return;
 	}
@@ -492,10 +492,10 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX This doesn't work for newer boards yet. */
 	if ((apt->apt_flags & AT_QUARTZ) == 0) {
 		rv = kthread_create(PRI_NONE, 0, NULL, amr_thread, amr,
-		    &amr->amr_thread, "%s", amr->amr_dv.dv_xname);
+		    &amr->amr_thread, "%s", device_xname(&amr->amr_dv));
  		if (rv != 0)
-			aprint_error("%s: unable to create thread (%d)",
- 			    amr->amr_dv.dv_xname, rv);
+			aprint_error_dev(&amr->amr_dv, "unable to create thread (%d)",
+ 			    rv);
  		else
  			amr->amr_flags |= AMRF_THREAD;
 	}
@@ -581,10 +581,10 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	if (ap != NULL) {
 		aprint_normal("<%.80s>\n", ap->ap_product);
 		if (intrstr != NULL)
-			aprint_normal("%s: interrupting at %s\n",
-			    amr->amr_dv.dv_xname, intrstr);
-		aprint_normal("%s: firmware %.16s, BIOS %.16s, %dMB RAM\n",
-		    amr->amr_dv.dv_xname, ap->ap_firmware, ap->ap_bios,
+			aprint_normal_dev(&amr->amr_dv, "interrupting at %s\n",
+			    intrstr);
+		aprint_normal_dev(&amr->amr_dv, "firmware %.16s, BIOS %.16s, %dMB RAM\n",
+		    ap->ap_firmware, ap->ap_bios,
 		    le16toh(ap->ap_memsize));
 
 		amr->amr_maxqueuecnt = ap->ap_maxio;
@@ -595,22 +595,21 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 		aex = amr_enquire(amr, AMR_CMD_CONFIG, AMR_CONFIG_ENQ3,
 		    AMR_CONFIG_ENQ3_SOLICITED_FULL, amr->amr_enqbuf);
 		if (aex == NULL) {
-			aprint_error("%s ENQUIRY3 failed\n",
-			    amr->amr_dv.dv_xname);
+			aprint_error_dev(&amr->amr_dv, "ENQUIRY3 failed\n");
 			return (-1);
 		}
 
 		if (aex->ae_numldrives > __arraycount(aex->ae_drivestate)) {
-			aprint_error("%s: Inquiry returned more drives (%d)"
+			aprint_error_dev(&amr->amr_dv, "Inquiry returned more drives (%d)"
 			   " than the array can handle (%zu)\n",
-			   amr->amr_dv.dv_xname, aex->ae_numldrives,
+			   aex->ae_numldrives,
 			   __arraycount(aex->ae_drivestate));
 			aex->ae_numldrives = __arraycount(aex->ae_drivestate);
 		}
 		if (aex->ae_numldrives > AMR_MAX_UNITS) {
-			aprint_error(
-			    "%s: adjust AMR_MAX_UNITS to %d (currently %d)"
-			    "\n", amr->amr_dv.dv_xname, AMR_MAX_UNITS,
+			aprint_error_dev(&amr->amr_dv,
+			    "adjust AMR_MAX_UNITS to %d (currently %d)"
+			    "\n", AMR_MAX_UNITS,
 			    amr->amr_numdrives);
 			amr->amr_numdrives = AMR_MAX_UNITS;
 		} else
@@ -649,8 +648,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	} else {
 		ae = amr_enquire(amr, AMR_CMD_ENQUIRY, 0, 0, amr->amr_enqbuf);
 		if (ae == NULL) {
-			aprint_error("%s: unsupported controller\n",
-			    amr->amr_dv.dv_xname);
+			aprint_error_dev(&amr->amr_dv, "unsupported controller\n");
 			return (-1);
 		}
 
@@ -691,17 +689,17 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 
 	aprint_normal("<%s>\n", prodstr);
 	if (intrstr != NULL)
-		aprint_normal("%s: interrupting at %s\n", amr->amr_dv.dv_xname,
+		aprint_normal_dev(&amr->amr_dv, "interrupting at %s\n",
 		    intrstr);
 
 	if (ishp)
-		aprint_normal("%s: firmware <%c.%02d.%02d>, BIOS <%c.%02d.%02d>"
-		    ", %dMB RAM\n", amr->amr_dv.dv_xname, aa->aa_firmware[2],
+		aprint_normal_dev(&amr->amr_dv, "firmware <%c.%02d.%02d>, BIOS <%c.%02d.%02d>"
+		    ", %dMB RAM\n", aa->aa_firmware[2],
 		     aa->aa_firmware[1], aa->aa_firmware[0], aa->aa_bios[2],
 		     aa->aa_bios[1], aa->aa_bios[0], aa->aa_memorysize);
 	else
-		aprint_normal("%s: firmware <%.4s>, BIOS <%.4s>, %dMB RAM\n",
-		    amr->amr_dv.dv_xname, aa->aa_firmware, aa->aa_bios,
+		aprint_normal_dev(&amr->amr_dv, "firmware <%.4s>, BIOS <%.4s>, %dMB RAM\n",
+		    aa->aa_firmware, aa->aa_bios,
 		    aa->aa_memorysize);
 
 	amr->amr_maxqueuecnt = aa->aa_maxio;
@@ -710,15 +708,15 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	 * Record state of logical drives.
 	 */
 	if (ae->ae_ldrv.al_numdrives > __arraycount(ae->ae_ldrv.al_size)) {
-		aprint_error("%s: Inquiry returned more drives (%d)"
+		aprint_error_dev(&amr->amr_dv, "Inquiry returned more drives (%d)"
 		   " than the array can handle (%zu)\n",
-		   amr->amr_dv.dv_xname, ae->ae_ldrv.al_numdrives,
+		   ae->ae_ldrv.al_numdrives,
 		   __arraycount(ae->ae_ldrv.al_size));
 		ae->ae_ldrv.al_numdrives = __arraycount(ae->ae_ldrv.al_size);
 	}
 	if (ae->ae_ldrv.al_numdrives > AMR_MAX_UNITS) {
-		aprint_error("%s: adjust AMR_MAX_UNITS to %d (currently %d)\n",
-		    amr->amr_dv.dv_xname, ae->ae_ldrv.al_numdrives,
+		aprint_error_dev(&amr->amr_dv, "adjust AMR_MAX_UNITS to %d (currently %d)\n",
+		    ae->ae_ldrv.al_numdrives,
 		    AMR_MAX_UNITS);
 		amr->amr_numdrives = AMR_MAX_UNITS;
 	} else
@@ -757,8 +755,7 @@ amr_shutdown(void *cookie)
 			amr_ccb_free(amr, ac);
 		}
 		if (rv != 0)
-			printf("%s: unable to flush cache (%d)\n",
-			    amr->amr_dv.dv_xname, rv);
+			aprint_error_dev(&amr->amr_dv, "unable to flush cache (%d)\n", rv);
 	}
 }
 
@@ -784,13 +781,13 @@ amr_intr(void *cookie)
 
 			if (idx >= amr->amr_maxqueuecnt) {
 				printf("%s: bad status (bogus ID: %u=%u)\n",
-				    amr->amr_dv.dv_xname, i, idx);
+				    device_xname(&amr->amr_dv), i, idx);
 				continue;
 			}
 
 			if ((ac->ac_flags & AC_ACTIVE) == 0) {
 				printf("%s: bad status (not active; 0x04%x)\n",
-				    amr->amr_dv.dv_xname, ac->ac_flags);
+				    device_xname(&amr->amr_dv), ac->ac_flags);
 				continue;
 			}
 
@@ -801,7 +798,7 @@ amr_intr(void *cookie)
 
 			if ((ac->ac_flags & AC_MOAN) != 0)
 				printf("%s: ccb %d completed\n",
-				    amr->amr_dv.dv_xname, ac->ac_ident);
+				    device_xname(&amr->amr_dv), ac->ac_ident);
 
 			/* Pass notification to upper layers. */
 			if (ac->ac_handler != NULL)
@@ -850,7 +847,7 @@ amr_thread(void *cookie)
 				break;
 			if ((ac->ac_flags & AC_MOAN) == 0) {
 				printf("%s: ccb %d timed out; mailbox:\n",
-				    amr->amr_dv.dv_xname, ac->ac_ident);
+				    device_xname(&amr->amr_dv), ac->ac_ident);
 				amr_ccb_dump(amr, ac);
 				ac->ac_flags |= AC_MOAN;
 			}
@@ -860,7 +857,7 @@ amr_thread(void *cookie)
 
 		if ((rv = amr_ccb_alloc(amr, &ac)) != 0) {
 			printf("%s: ccb_alloc failed (%d)\n",
- 			    amr->amr_dv.dv_xname, rv);
+ 			    device_xname(&amr->amr_dv), rv);
 			continue;
 		}
 
@@ -869,8 +866,8 @@ amr_thread(void *cookie)
 		rv = amr_ccb_map(amr, ac, amr->amr_enqbuf,
 		    AMR_ENQUIRY_BUFSIZE, AC_XFER_IN);
 		if (rv != 0) {
-			printf("%s: ccb_map failed (%d)\n",
- 			    amr->amr_dv.dv_xname, rv);
+			aprint_error_dev(&amr->amr_dv, "ccb_map failed (%d)\n",
+ 			    rv);
 			amr_ccb_free(amr, ac);
 			continue;
 		}
@@ -878,8 +875,8 @@ amr_thread(void *cookie)
 		rv = amr_ccb_wait(amr, ac);
 		amr_ccb_unmap(amr, ac);
 		if (rv != 0) {
-			printf("%s: enquiry failed (st=%d)\n",
- 			    amr->amr_dv.dv_xname, ac->ac_status);
+			aprint_error_dev(&amr->amr_dv, "enquiry failed (st=%d)\n",
+ 			    ac->ac_status);
 			continue;
 		}
 		amr_ccb_free(amr, ac);
@@ -892,7 +889,7 @@ amr_thread(void *cookie)
 				continue;
 
 			printf("%s: state changed: %s -> %s\n",
-			    al->al_dv->dv_xname,
+			    device_xname(al->al_dv),
 			    amr_drive_state(al->al_state, NULL),
 			    amr_drive_state(ae->ae_ldrv.al_state[i], NULL));
 
@@ -1153,7 +1150,7 @@ amr_mbox_wait(struct amr_softc *amr)
 	}
 
 	if (timo == 0)
-		printf("%s: controller wedged\n", amr->amr_dv.dv_xname);
+		printf("%s: controller wedged\n", device_xname(&amr->amr_dv));
 
 	return (timo != 0 ? 0 : EAGAIN);
 }
@@ -1305,7 +1302,7 @@ amr_ccb_dump(struct amr_softc *amr, struct amr_ccb *ac)
 {
 	int i;
 
-	printf("%s: ", amr->amr_dv.dv_xname);
+	printf("%s: ", device_xname(&amr->amr_dv));
 	for (i = 0; i < 4; i++)
 		printf("%08x ", ((u_int32_t *)&ac->ac_cmd)[i]);
 	printf("\n");

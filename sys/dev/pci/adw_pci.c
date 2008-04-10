@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.20 2007/10/19 12:00:38 ad Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.21 2008/04/10 19:13:36 cegger Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.20 2007/10/19 12:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.21 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,8 +156,7 @@ adw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, PCI_BASEADR_IO, PCI_MAPREG_TYPE_IO, 0,
 			   &iot, &ioh, NULL, NULL)) {
-		aprint_error("%s: unable to map device registers\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 	sc->sc_iot = iot;
@@ -168,7 +167,7 @@ adw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Initialize the board
 	 */
 	if (adw_init(sc)) {
-		aprint_error("%s: adw_init failed", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "adw_init failed");
 		return;
 	}
 
@@ -176,8 +175,7 @@ adw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map Interrupt line
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -187,14 +185,13 @@ adw_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, adw_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Attach all the sub-devices we can find

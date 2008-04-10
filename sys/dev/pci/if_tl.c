@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.85 2008/01/19 22:10:19 dyoung Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.86 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.85 2008/01/19 22:10:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.86 2008/04/10 19:13:37 cegger Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -358,8 +358,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->tl_bustag = memt;
 		sc->tl_bushandle = memh;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 	sc->tl_dmatag = pa->pa_dmat;
@@ -369,7 +368,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
-	printf("%s: %s\n", sc->sc_dev.dv_xname, tp->tp_desc);
+	printf("%s: %s\n", device_xname(&sc->sc_dev), tp->tp_desc);
 
 	tl_reset(sc);
 
@@ -391,16 +390,15 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* read mac addr */
 	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x83, 512/*?*/,
 				   sc->tl_enaddr, ETHER_ADDR_LEN)) {
-		printf("%s: error reading Ethernet address\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "error reading Ethernet address\n");
 			return;
 	}
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
 	    ether_sprintf(sc->tl_enaddr));
 
 	/* Map and establish interrupts */
 	if (pci_intr_map(pa, &intrhandle)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
@@ -408,14 +406,13 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    tl_intr, sc);
 	if (sc->tl_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	/* init these pointers, so that tl_shutdown won't try to read them */
 	sc->Rx_list = NULL;
@@ -428,8 +425,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	    bus_dmamem_map(sc->tl_dmatag, &sc->ctrl_segs,
 		sc->ctrl_nsegs, PAGE_SIZE, (void **)&sc->ctrl,
 		BUS_DMA_NOWAIT | BUS_DMA_COHERENT) != 0) {
-			printf("%s: can't allocate DMA memory for lists\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "can't allocate DMA memory for lists\n");
 			return;
 	}
 	/*
@@ -468,7 +464,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->tl_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_ioctl = tl_ifioctl;
 	ifp->if_start = tl_ifstart;
@@ -481,7 +477,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(&(sc)->tl_if, (sc)->tl_enaddr);
 
 #if NRND > 0
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
 }
@@ -768,7 +764,7 @@ static int tl_init(ifp)
 	sc->tl_if.if_flags &= ~IFF_OACTIVE;
 	return 0;
 bad:
-	printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
+	printf("%s: %s\n", device_xname(&sc->sc_dev), errstring);
 	splx(s);
 	return error;
 }
@@ -1037,7 +1033,7 @@ tl_intr(v)
 	if (int_type == 0)
 		return 0;
 #if defined(TLDEBUG_RX) || defined(TLDEBUG_TX)
-	printf("%s: interrupt type %x, intr_reg %x\n", sc->sc_dev.dv_xname,
+	printf("%s: interrupt type %x, intr_reg %x\n", device_xname(&sc->sc_dev),
 	    int_type, int_reg);
 #endif
 	/* disable interrupts */
@@ -1074,7 +1070,7 @@ tl_intr(v)
 #endif
 #ifdef TLDEBUG
 				printf("%s: out of mbuf, lost input packet\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 #endif
 			}
 			Rx->next = NULL;
@@ -1112,7 +1108,7 @@ tl_intr(v)
 #else
 		if (ack == 0) {
 			printf("%s: EOF intr without anything to read !\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			tl_reset(sc);
 			/* schedule reinit of the board */
 			callout_reset(&sc->tl_restart_ch, 1, tl_restart, ifp);
@@ -1131,7 +1127,7 @@ tl_intr(v)
 #ifdef DIAGNOSTIC
 		if (le32toh(sc->active_Rx->hw_list->stat) & TL_RX_CSTAT_CPLT) {
 			printf("%s: Rx EOC interrupt and active Tx list not "
-			    "cleared\n", sc->sc_dev.dv_xname);
+			    "cleared\n", device_xname(&sc->sc_dev));
 			return 0;
 		} else
 #endif
@@ -1215,7 +1211,7 @@ tl_intr(v)
 		if (int_reg & TL_INTVec_MASK) {
 			/* adapter check conditions */
 			printf("%s: check condition, intvect=0x%x, "
-			    "ch_param=0x%x\n", sc->sc_dev.dv_xname,
+			    "ch_param=0x%x\n", device_xname(&sc->sc_dev),
 			    int_reg & TL_INTVec_MASK,
 			    TL_HR_READ(sc, TL_HOST_CH_PARM));
 			tl_reset(sc);
@@ -1228,7 +1224,7 @@ tl_intr(v)
 			netstat =
 			    tl_intreg_read_byte(sc, TL_INT_NET+TL_INT_NetSts);
 			printf("%s: network status, NetSts=%x\n",
-			    sc->sc_dev.dv_xname, netstat);
+			    device_xname(&sc->sc_dev), netstat);
 			/* Ack interrupts */
 			tl_intreg_write_byte(sc, TL_INT_NET+TL_INT_NetSts,
 			    netstat);
@@ -1237,7 +1233,7 @@ tl_intr(v)
 		break;
 	default:
 		printf("%s: unhandled interrupt code %x!\n",
-		    sc->sc_dev.dv_xname, int_type);
+		    device_xname(&sc->sc_dev), int_type);
 		ack++;
 	}
 
@@ -1393,7 +1389,7 @@ tbdinit:
 	    htole32(TL_LAST_SEG);
 	Tx->hw_list->stat = htole32((size << 16) | 0x3000);
 #ifdef TLDEBUG_TX
-	printf("%s: sending, Tx : stat = 0x%x\n", sc->sc_dev.dv_xname,
+	printf("%s: sending, Tx : stat = 0x%x\n", device_xname(&sc->sc_dev),
 	    le32toh(Tx->hw_list->stat));
 #if 0
 	for(segment = 0; segment < TL_NSEG; segment++) {
@@ -1407,7 +1403,7 @@ tbdinit:
 	if (sc->active_Tx == NULL) {
 		sc->active_Tx = sc->last_Tx = Tx;
 #ifdef TLDEBUG_TX
-		printf("%s: Tx GO, addr=0x%ux\n", sc->sc_dev.dv_xname,
+		printf("%s: Tx GO, addr=0x%ux\n", device_xname(&sc->sc_dev),
 		    (int)Tx->hw_listaddr);
 #endif
 		bus_dmamap_sync(sc->tl_dmatag, sc->Tx_dmamap, 0,
@@ -1417,7 +1413,7 @@ tbdinit:
 		TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 	} else {
 #ifdef TLDEBUG_TX
-		printf("%s: Tx addr=0x%ux queued\n", sc->sc_dev.dv_xname,
+		printf("%s: Tx addr=0x%ux queued\n", device_xname(&sc->sc_dev),
 		    (int)Tx->hw_listaddr);
 #endif
 		sc->last_Tx->hw_list->fwd = htole32(Tx->hw_listaddr);
@@ -1430,7 +1426,7 @@ tbdinit:
 		if (sc->last_Tx->hw_list->fwd & 0x7)
 			printf("%s: physical addr 0x%x of list not properly "
 			   "aligned\n",
-			   sc->sc_dev.dv_xname, sc->last_Rx->hw_list->fwd);
+			   device_xname(&sc->sc_dev), sc->last_Rx->hw_list->fwd);
 #endif
 	}
 #if NBPFILTER > 0
@@ -1460,7 +1456,7 @@ tl_ifwatchdog(ifp)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: device timeout\n", device_xname(&sc->sc_dev));
 	ifp->if_oerrors++;
 	tl_init(ifp);
 }
@@ -1505,8 +1501,8 @@ static int tl_add_RxBuff(sc, Rx, oldm)
 	Rx->m = m;
 	if ((error = bus_dmamap_load(sc->tl_dmatag, Rx->m_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: bus_dmamap_load() failed (error %d) for "
-		    "tl_add_RxBuff\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "bus_dmamap_load() failed (error %d) for "
+		    "tl_add_RxBuff\n", error);
 		printf("size %d (%d)\n", m->m_pkthdr.len, MCLBYTES);
 		m_freem(m);
 		Rx->m = NULL;
@@ -1590,10 +1586,10 @@ tl_read_stats(sc)
 
 	if (ierr_overr)
 		printf("%s: receiver ring buffer overrun\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 	if (oerr_underr)
 		printf("%s: transmit buffer underrun\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 #ifdef TL_PRIV_STATS
 	sc->ierr_overr		+= ierr_overr;
 	sc->ierr_code		+= ierr_code;
