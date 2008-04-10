@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.26 2008/03/12 18:11:38 phx Exp $ */
+/* $NetBSD: radeonfb.c,v 1.27 2008/04/10 19:13:37 cegger Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.26 2008/03/12 18:11:38 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27 2008/04/10 19:13:37 cegger Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -1089,7 +1089,7 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (me != NULL) {
 		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
 		    NULL) != 0) {
-			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
 			return -1;
 		}
 	}
@@ -1589,8 +1589,7 @@ nobios:
 		if ((edid_data = prop_dictionary_get(device_properties(
 		    &sc->sc_dev), "EDID")) != NULL) {
 
-			aprint_normal("%s: using static EDID\n",
-			    sc->sc_dev.dv_xname);
+			aprint_normal_dev(&sc->sc_dev, "using static EDID\n");
 			memcpy(edid, prop_data_data_nocopy(edid_data), 128);
 			if (edid_parse(edid, eip) == 0) {
 

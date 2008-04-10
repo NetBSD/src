@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.17 2007/10/19 12:00:40 ad Exp $ */
+/* $NetBSD: btvmei.c,v 1.18 2008/04/10 19:13:36 cegger Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.17 2007/10/19 12:00:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.18 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,29 +120,28 @@ b3_617_attach(parent, self, aux)
 	    pci_mapreg_map(pa, 0x10,
 			   PCI_MAPREG_TYPE_IO,
 			   0, &sc->csrt, &sc->csrh, NULL, NULL)) {
-		aprint_error("%s: can't map CSR space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map CSR space\n");
 		return;
 	}
 
 	if (pci_mapreg_map(pa, 0x18,
 			   PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 			   0, &sc->mapt, &sc->maph, NULL, NULL)) {
-		aprint_error("%s: can't map map space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map map space\n");
 		return;
 	}
 
 	if (pci_mapreg_info(pc, pa->pa_tag, 0x1c,
 			    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 			    &sc->vmepbase, 0, 0)) {
-		aprint_error("%s: can't get VME range\n", self->dv_xname);
+		aprint_error_dev(self, "can't get VME range\n");
 		return;
 	}
 	sc->sc_vmet = pa->pa_memt; /* XXX needed for VME mappings */
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -152,14 +151,13 @@ b3_617_attach(parent, self, aux)
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, b3_617_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	if (b3_617_init(sc))
 		return;
@@ -232,7 +230,7 @@ b3_617_slaveconfig(dev, va)
 				      va->r[i].size, va->r[i].am);
 		if (res)
 			panic("%s: can't alloc slave window %x/%x/%x",
-			       dev->dv_xname, va->r[i].offset,
+			       device_xname(dev), va->r[i].offset,
 			       va->r[i].size, va->r[i].am);
 
 		switch (va->r[i].am & VME_AM_ADRSIZEMASK) {
@@ -250,7 +248,7 @@ b3_617_slaveconfig(dev, va)
 			name = "A32 DMA";
 			break;
 		}
-		printf("%s: %s window: %x-%x\n", dev->dv_xname,
+		printf("%s: %s window: %x-%x\n", device_xname(dev),
 		       name, va->r[i].offset,
 		       va->r[i].offset + va->r[i].size - 1);
 	}
@@ -277,7 +275,7 @@ b3_617_reset(sc)
 	/* reset sequence, ch 5.2 */
 	status = read_csr_byte(sc, LOC_STATUS);
 	if (status & LSR_NO_CONNECT) {
-		printf("%s: not connected\n", sc->sc_dev.dv_xname);
+		printf("%s: not connected\n", device_xname(&sc->sc_dev));
 		return (-1);
 	}
 	status = read_csr_byte(sc, REM_STATUS); /* discard */
@@ -287,7 +285,7 @@ b3_617_reset(sc)
 		char sbuf[sizeof(BIT3_LSR_BITS) + 64];
 
 		bitmask_snprintf(status, BIT3_LSR_BITS, sbuf, sizeof(sbuf));
-		printf("%s: interface error, lsr=%s\n", sc->sc_dev.dv_xname,
+		printf("%s: interface error, lsr=%s\n", device_xname(&sc->sc_dev),
 		       sbuf);
 		return (-1);
 	}
@@ -572,7 +570,7 @@ b3_617_map_vmeint(vsc, level, vector, handlep)
 {
 	if (!sc->sc_ih) {
 		printf("%s: b3_617_map_vmeint: no IRQ\n",
-		       sc->sc_dev.dv_xname);
+		       device_xname(&sc->sc_dev));
 		return (ENXIO);
 	}
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.17 2007/10/19 12:00:52 ad Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.18 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.17 2007/10/19 12:00:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.18 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 		mlx->mlx_iot = iot;
 		mlx->mlx_ioh = ioh;
 	} else {
-		printf("%s: can't map i/o or memory space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map i/o or memory space\n");
 		return;
 	}
 
@@ -264,13 +264,13 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: can't map interrupt\n", self->dv_xname);
+		aprint_error_dev(self, "can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	mlx->mlx_ih = pci_intr_establish(pc, ih, IPL_BIO, mlx_intr, mlx);
 	if (mlx->mlx_ih == NULL) {
-		printf("%s: can't establish interrupt", self->dv_xname);
+		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwlynx_pci.c,v 1.12 2007/10/19 12:00:43 ad Exp $	*/
+/*	$NetBSD: fwlynx_pci.c,v 1.13 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.12 2007/10/19 12:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.13 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ fwlynx_pci_attach(struct device *parent, struct device *self, void *aux)
         if (pci_mapreg_map(pa, PCI_LYNX_MAP_REGISTER, PCI_MAPREG_TYPE_MEM, 0,
                            &psc->psc_sc.sc_memt, &psc->psc_sc.sc_memh,
 			   NULL, &psc->psc_sc.sc_memsize)) {
-                aprint_error("%s: can't map register space\n", self->dv_xname);
+                aprint_error_dev(self, "can't map register space\n");
                 return;
         }
 
@@ -117,21 +117,20 @@ fwlynx_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-        	aprint_error("%s: couldn't map interrupt\n", self->dv_xname);
+        	aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 	    fwlynx_intr, &psc->psc_sc);
 	if (psc->psc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt",
-		    self->dv_xname);
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	if (fwlynx_init(&psc->psc_sc, pci_intr_evcnt(pa->pa_pc, ih)) != 0) {
 		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);

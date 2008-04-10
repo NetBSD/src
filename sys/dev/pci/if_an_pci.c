@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.24 2007/12/09 20:28:08 jmcneill Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.25 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.24 2007/12/09 20:28:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.25 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
         /* Map I/O registers */
         if (pci_mapreg_map(pa, AN_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize) != 0) {
-                aprint_error("%s: unable to map registers\n", self->dv_xname);
+                aprint_error_dev(self, "unable to map registers\n");
                 return;
         }
 
@@ -154,25 +154,23 @@ an_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-        	aprint_error("%s: unable to map interrupt\n", self->dv_xname);
+        	aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, an_intr, sc);
 	if (psc->sc_ih == NULL) {
-		aprint_error("%s: unable to establish interrupt",
-		    self->dv_xname);
+		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	sc->sc_enabled = 1;
 
 	if (an_attach(sc) != 0) {
-		aprint_error("%s: failed to attach controller\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "failed to attach controller\n");
 		pci_intr_disestablish(pa->pa_pc, psc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 	}

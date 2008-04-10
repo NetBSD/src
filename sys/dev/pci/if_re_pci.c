@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.32 2007/12/11 11:25:52 lukem Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.33 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.32 2007/12/11 11:25:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.33 2008/04/10 19:13:37 cegger Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -221,7 +221,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->rtk_bhandle = memh;
 		bsize = memsize;
 	} else {
-		aprint_error("%s: can't map registers\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map registers\n");
 		return;
 	}
 
@@ -257,21 +257,19 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc);
 	if (psc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	re_attach(sc);
 
@@ -283,9 +281,8 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (hwrev == RTK_HWREV_8169) {
 		error = re_diag(sc);
 		if (error) {
-			aprint_error(
-			    "%s: attach aborted due to hardware diag failure\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "attach aborted due to hardware diag failure\n");
 
 			re_detach(sc);
 

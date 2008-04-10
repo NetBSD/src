@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.43 2007/12/09 20:28:10 jmcneill Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.44 2008/04/10 19:13:37 cegger Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.43 2007/12/09 20:28:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.44 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,8 +143,7 @@ wi_pci_enable(struct wi_softc *sc)
 	sc->sc_ih = pci_intr_establish(psc->psc_pc,
 					psc->psc_ih, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
 		return (EIO);
 	}
 
@@ -183,14 +182,14 @@ wi_pci_reset(struct wi_softc *sc)
 			break;
 
 	if (i < 0) {
-		printf("%s: PCI reset timed out\n", sc->sc_dev.dv_xname);
+		printf("%s: PCI reset timed out\n", device_xname(&sc->sc_dev));
 	} else if (sc->sc_if.if_flags & IFF_DEBUG) {
 		usecs = (200000 - i) * 10;
 		secs = usecs / 1000000;
 		usecs %= 1000000;
 
 		printf("%s: PCI reset in %d.%06d seconds\n",
-                       sc->sc_dev.dv_xname, secs, usecs);
+                       device_xname(&sc->sc_dev), secs, usecs);
 	}
 
 	return;
@@ -332,7 +331,7 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", self->dv_xname);
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -340,14 +339,14 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	psc->psc_ih = ih;
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", self->dv_xname);
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
 
 	switch (wpp->wpp_chip) {
 	case CHIP_PLX_OTHER:
@@ -371,10 +370,10 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	printf("%s:", self->dv_xname);
+	printf("%s:", device_xname(self));
 
 	if (wi_attach(sc, 0) != 0) {
-		printf("%s: failed to attach controller\n", self->dv_xname);
+		aprint_error_dev(self, "failed to attach controller\n");
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		return;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_puc.c,v 1.6 2007/10/19 12:00:40 ad Exp $ */
+/* $NetBSD: atppc_puc.c,v 1.7 2008/04/10 19:13:36 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_atppc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.6 2007/10/19 12:00:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.7 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,14 +120,13 @@ atppc_puc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ieh = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
 	    atppcintr, sc);
 	if (sc->sc_ieh == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 	sc->sc_has |= ATPPC_HAS_INTR;
 
 	/* setup DMA hooks */

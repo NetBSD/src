@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.23 2008/03/26 11:14:33 jmcneill Exp $ */
+/* $NetBSD: piixpm.c,v 1.24 2008/04/10 19:13:37 cegger Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.23 2008/03/26 11:14:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.24 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
-	DPRINTF(("%s: conf 0x%x\n", sc->sc_dev.dv_xname, conf));
+	DPRINTF(("%s: conf 0x%x\n", device_xname(&sc->sc_dev), conf));
 
 	if ((PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL) ||
 	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_PMC))
@@ -174,8 +174,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE);
 	if (bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_PM_SIZE, 0, &sc->sc_pm_ioh)) {
-		aprint_error("%s: can't map power management I/O space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map power management I/O space\n");
 		goto nopowermanagement;
 	}
 
@@ -190,7 +189,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 
 nopowermanagement:
 	if ((conf & PIIX_SMB_HOSTC_HSTEN) == 0) {
-		aprint_normal("%s: SMBus disabled\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "SMBus disabled\n");
 		return;
 	}
 
@@ -199,15 +198,14 @@ nopowermanagement:
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE) & 0xffff;
 	if (bus_space_map(sc->sc_smb_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
-		aprint_error("%s: can't map smbus I/O space\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map smbus I/O space\n");
 		return;
 	}
 
 	sc->sc_poll = 1;
 	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
 		/* No PCI IRQ */
-		aprint_normal("%s: interrupting at SMI", sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "interrupting at SMI");
 	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
@@ -215,13 +213,13 @@ nopowermanagement:
 			sc->sc_smb_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 			    piixpm_intr, sc);
 			if (sc->sc_smb_ih != NULL) {
-				aprint_normal("%s: interrupting at %s",
-				    sc->sc_dev.dv_xname, intrstr);
+				aprint_normal_dev(&sc->sc_dev, "interrupting at %s",
+				    intrstr);
 				sc->sc_poll = 0;
 			}
 		}
 		if (sc->sc_poll)
-			aprint_normal("%s: polling", sc->sc_dev.dv_xname);
+			aprint_normal_dev(&sc->sc_dev, "polling");
 	}
 
 	aprint_normal("\n");
@@ -299,7 +297,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	int retries;
 
 	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
-	    sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags));
+	    device_xname(&sc->sc_dev), op, addr, cmdlen, len, flags));
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
@@ -309,7 +307,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 			break;
 		DELAY(PIIXPM_DELAY);
 	}
-	DPRINTF(("%s: exec: st 0x%d\n", sc->sc_dev.dv_xname, st & 0xff));
+	DPRINTF(("%s: exec: st 0x%d\n", device_xname(&sc->sc_dev), st & 0xff));
 	if (st & PIIX_SMB_HS_BUSY)
 		return (1);
 
@@ -391,14 +389,13 @@ timeout:
 	/*
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
-	aprint_error("%s: timeout, status 0x%x\n", sc->sc_dev.dv_xname, st);
+	aprint_error_dev(&sc->sc_dev, "timeout, status 0x%x\n", st);
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HC,
 	    PIIX_SMB_HC_KILL);
 	DELAY(PIIXPM_DELAY);
 	st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS);
 	if ((st & PIIX_SMB_HS_FAILED) == 0)
-		aprint_error("%s: transaction abort failed, status 0x%x\n",
-		    sc->sc_dev.dv_xname, st);
+		aprint_error_dev(&sc->sc_dev, "transaction abort failed, status 0x%x\n", st);
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
 	return (1);
 }
@@ -419,7 +416,7 @@ piixpm_intr(void *arg)
 		/* Interrupt was not for us */
 		return (0);
 
-	DPRINTF(("%s: intr st 0x%d\n", sc->sc_dev.dv_xname, st & 0xff));
+	DPRINTF(("%s: intr st 0x%d\n", device_xname(&sc->sc_dev), st & 0xff));
 
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
