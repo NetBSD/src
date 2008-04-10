@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.5 2008/01/04 21:18:06 ad Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.6 2008/04/10 19:49:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.5 2008/01/04 21:18:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.6 2008/04/10 19:49:14 cegger Exp $");
 
 #include <sys/param.h>
 
@@ -166,7 +166,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 		USB_IRDA_DESCRIPTOR_SIZE, &sc->sc_irdadesc);
 	printf("error %d reading class desc\n", rc);
 
-	sprintf(fwname, "4210%02x%02x.sb",
+	snprintf(fwname, sizeof(fwname), "4210%02x%02x.sb",
 		usbddsc.bcdDevice[1],
 		usbddsc.bcdDevice[0]);
 
