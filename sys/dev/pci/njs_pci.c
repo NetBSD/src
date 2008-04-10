@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.6 2007/10/19 12:00:53 ad Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.7 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.6 2007/10/19 12:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.7 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 			goto try_io;
 		}
 #ifdef NJSC32_DEBUG
-		printf("%s: memory space mapped\n", sc->sc_dev.dv_xname);
+		printf("%s: memory space mapped\n", device_xname(&sc->sc_dev));
 #endif
 		sc->sc_flags = NJSC32_MEM_MAPPED;
 	} else {
@@ -174,12 +174,11 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 		    PCI_MAPREG_TYPE_IO, 0, &sc->sc_regt, &sc->sc_regh,
 		    NULL, &psc->sc_regmap_size) == 0) {
 #ifdef NJSC32_DEBUG
-			printf("%s: io space mapped\n", sc->sc_dev.dv_xname);
+			printf("%s: io space mapped\n", device_xname(&sc->sc_dev));
 #endif
 			sc->sc_flags = NJSC32_IO_MAPPED;
 		} else {
-			aprint_error("%s: unable to map device registers\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 			return;
 		}
 	}
@@ -188,8 +187,7 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 
@@ -201,12 +199,12 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* setup interrupt handler */
 	if ((sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, njsc32_intr, sc))
 	    == NULL) {
-		printf("%s: unable to establish interrupt%s%s\n",
-		    sc->sc_dev.dv_xname, str_at, str_intr);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt%s%s\n",
+		    str_at, str_intr);
 		return;
 	}
 	printf("%s: interrupting%s%s\n",
-		sc->sc_dev.dv_xname, str_at, str_intr);
+		device_xname(&sc->sc_dev), str_at, str_intr);
 
 	/* attach */
 	njsc32_attach(sc);

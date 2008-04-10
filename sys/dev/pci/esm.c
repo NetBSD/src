@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.46 2008/03/21 07:47:43 dyoung Exp $      */
+/*      $NetBSD: esm.c,v 1.47 2008/04/10 19:13:36 cegger Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.46 2008/03/21 07:47:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,7 @@ esm_dump_regs(struct esm_softc *ess)
 {
 	int i;
 
-	printf("%s registers:", ess->sc_dev.dv_xname);
+	printf("%s registers:", device_xname(&ess->sc_dev));
 	for (i = 0; i < (sizeof dump_regs / sizeof dump_regs[0]); i++) {
 		if (i % 5 == 0)
 			printf("\n");
@@ -336,7 +336,7 @@ esm_read_codec(void *sc, uint8_t regno, uint16_t *result)
 	}
 	if (t == 20)
 		printf("%s: esm_read_codec() PROGLESS timed out.\n",
-		    ess->sc_dev.dv_xname);
+		    device_xname(&ess->sc_dev));
 
 	bus_space_write_1(ess->st, ess->sh, PORT_CODEC_CMD,
 	    CODEC_CMD_READ | regno);
@@ -352,7 +352,7 @@ esm_read_codec(void *sc, uint8_t regno, uint16_t *result)
 	if (t == 20)
 		/* Timed out, but perform dummy read. */
 		printf("%s: esm_read_codec() RW_DONE timed out.\n",
-		    ess->sc_dev.dv_xname);
+		    device_xname(&ess->sc_dev));
 
 	*result = bus_space_read_2(ess->st, ess->sh, PORT_CODEC_REG);
 
@@ -376,7 +376,7 @@ esm_write_codec(void *sc, uint8_t regno, uint16_t data)
 	if (t == 20) {
 		/* Timed out. Abort writing. */
 		printf("%s: esm_write_codec() PROGLESS timed out.\n",
-		    ess->sc_dev.dv_xname);
+		    device_xname(&ess->sc_dev));
 		return -1;
 	}
 
@@ -431,7 +431,7 @@ apu_setindex(struct esm_softc *ess, uint16_t reg)
 		bus_space_write_2(ess->st, ess->sh, PORT_DSP_DATA, reg);
 	}
 	if (t == 1000)
-		printf("%s: apu_setindex() timed out.\n", ess->sc_dev.dv_xname);
+		printf("%s: apu_setindex() timed out.\n", device_xname(&ess->sc_dev));
 }
 
 static inline uint16_t
@@ -461,7 +461,7 @@ wp_wrapu(struct esm_softc *ess, int ch, uint16_t reg, uint16_t data)
 		bus_space_write_2(ess->st, ess->sh, PORT_DSP_DATA, data);
 	}
 	if (t == 1000)
-		printf("%s: wp_wrapu() timed out.\n", ess->sc_dev.dv_xname);
+		printf("%s: wp_wrapu() timed out.\n", device_xname(&ess->sc_dev));
 }
 
 static inline void
@@ -599,7 +599,7 @@ esm_initcodec(struct esm_softc *ess)
 		delay(21);
 
 		/* Try cold reset. */
-		printf("%s: will perform cold reset.\n", ess->sc_dev.dv_xname);
+		printf("%s: will perform cold reset.\n", device_xname(&ess->sc_dev));
 		data = bus_space_read_2(ess->st, ess->sh, PORT_GPIO_DIR);
 		if (pci_conf_read(ess->pc, ess->tag, 0x58) & 1)
 			data |= 0x10;
@@ -697,14 +697,14 @@ esm_init_output (void *sc, void *start, int size)
 	p = &ess->sc_dma;
 	if ((char *)start != (char *)p->addr + MAESTRO_PLAYBUF_OFF) {
 		printf("%s: esm_init_output: bad addr %p\n",
-		    ess->sc_dev.dv_xname, start);
+		    device_xname(&ess->sc_dev), start);
 		return EINVAL;
 	}
 
 	ess->pch.base = DMAADDR(p) + MAESTRO_PLAYBUF_OFF;
 
 	DPRINTF(ESM_DEBUG_DMA, ("%s: pch.base = 0x%x\n",
-		ess->sc_dev.dv_xname, ess->pch.base));
+		device_xname(&ess->sc_dev), ess->pch.base));
 
 	return 0;
 }
@@ -719,7 +719,7 @@ esm_init_input (void *sc, void *start, int size)
 	p = &ess->sc_dma;
 	if ((char *)start != (char *)p->addr + MAESTRO_RECBUF_OFF) {
 		printf("%s: esm_init_input: bad addr %p\n",
-		    ess->sc_dev.dv_xname, start);
+		    device_xname(&ess->sc_dev), start);
 		return EINVAL;
 	}
 
@@ -733,7 +733,7 @@ esm_init_input (void *sc, void *start, int size)
 	}
 
 	DPRINTF(ESM_DEBUG_DMA, ("%s: rch.base = 0x%x\n",
-		ess->sc_dev.dv_xname, ess->rch.base));
+		device_xname(&ess->sc_dev), ess->rch.base));
 
 	return 0;
 }
@@ -764,7 +764,7 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 #ifdef DIAGNOSTIC
 	if (ess->pactive) {
 		printf("%s: esm_trigger_output: already running",
-		    ess->sc_dev.dv_xname);
+		    device_xname(&ess->sc_dev));
 		return EINVAL;
 	}
 #endif
@@ -774,7 +774,7 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 	p = &ess->sc_dma;
 	if ((char *)start != (char *)p->addr + MAESTRO_PLAYBUF_OFF) {
 		printf("%s: esm_trigger_output: bad addr %p\n",
-		    ess->sc_dev.dv_xname, start);
+		    device_xname(&ess->sc_dev), start);
 		return EINVAL;
 	}
 
@@ -880,7 +880,7 @@ esm_trigger_input(void *sc, void *start, void *end, int blksize,
 #ifdef DIAGNOSTIC
 	if (ess->ractive) {
 		printf("%s: esm_trigger_input: already running",
-		    ess->sc_dev.dv_xname);
+		    device_xname(&ess->sc_dev));
 		return EINVAL;
 	}
 #endif
@@ -890,7 +890,7 @@ esm_trigger_input(void *sc, void *start, void *end, int blksize,
 	p = &ess->sc_dma;
 	if ((char *)start != (char *)p->addr + MAESTRO_RECBUF_OFF) {
 		printf("%s: esm_trigger_input: bad addr %p\n",
-		    ess->sc_dev.dv_xname, start);
+		    device_xname(&ess->sc_dev), start);
 		return EINVAL;
 	}
 
@@ -1619,7 +1619,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &ess->st, &ess->sh, NULL, &ess->sz)) {
-		aprint_error("%s: can't map i/o space\n", ess->sc_dev.dv_xname);
+		aprint_error_dev(&ess->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -1633,26 +1633,25 @@ esm_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTF(ESM_DEBUG_PCI,
 	    ("%s: sub-system vendor 0x%4.4x, product 0x%4.4x\n",
-	    ess->sc_dev.dv_xname,
+	    device_xname(&ess->sc_dev),
 	    PCI_VENDOR(ess->subid), PCI_PRODUCT(ess->subid)));
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: can't map interrupt\n", ess->sc_dev.dv_xname);
+		aprint_error_dev(&ess->sc_dev, "can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	ess->ih = pci_intr_establish(pc, ih, IPL_AUDIO, esm_intr, self);
 	if (ess->ih == NULL) {
-		aprint_error("%s: can't establish interrupt",
-		    ess->sc_dev.dv_xname);
+		aprint_error_dev(&ess->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n",
-	    ess->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&ess->sc_dev, "interrupting at %s\n",
+	    intrstr);
 
 	/*
 	 * Setup PCI config registers
@@ -1661,7 +1660,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", ess->sc_dev.dv_xname,
+		aprint_error_dev(&ess->sc_dev, "cannot activate %d\n",
 		    error);
 		return;
 	}
@@ -1685,8 +1684,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 
 	esm_read_codec(ess, 0, &codec_data);
 	if (codec_data == 0x80) {
-		aprint_error("%s: PT101 codec detected!\n",
-		    ess->sc_dev.dv_xname);
+		aprint_error_dev(&ess->sc_dev, "PT101 codec detected!\n");
 		return;
 	}
 
@@ -1715,8 +1713,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	/* allocate our DMA region */
 	if (esm_allocmem(ess, MAESTRO_DMA_SZ, MAESTRO_DMA_ALIGN,
 		&ess->sc_dma)) {
-		aprint_error("%s: couldn't allocate memory!\n",
-		    ess->sc_dev.dv_xname);
+		aprint_error_dev(&ess->sc_dev, "couldn't allocate memory!\n");
 		return;
 	}
 	ess->rings_alloced = 0;
@@ -1809,7 +1806,7 @@ esm_resume(device_t dv PMF_FN_ARGS)
 #if 0
 	if (mixer_reinit(dev)) {
 		printf("%s: unable to reinitialize the mixer\n",
-		    ess->sc_dev.dv_xname);
+		    device_xname(&ess->sc_dev));
 		return ENXIO;
 	}
 #endif

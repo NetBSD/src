@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_pci.c,v 1.21 2007/10/19 12:00:38 ad Exp $	*/
+/*	$NetBSD: adv_pci.c,v 1.22 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.21 2007/10/19 12:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_pci.c,v 1.22 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,8 +198,7 @@ adv_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, PCI_BASEADR_IO, PCI_MAPREG_TYPE_IO, 0,
 			&iot, &ioh, NULL, NULL)) {
-		aprint_error("%s: unable to map device registers\n",
-		       sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
@@ -223,8 +222,7 @@ adv_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map Interrupt line
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -234,14 +232,13 @@ adv_pci_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, adv_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Attach all the sub-devices we can find

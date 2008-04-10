@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.8 2008/02/07 01:21:58 dyoung Exp $ */
+/*      $NetBSD: if_xge.c,v 1.9 2008/04/10 19:13:37 cegger Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.8 2008/02/07 01:21:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.9 2008/04/10 19:13:37 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -253,7 +253,7 @@ pif_wkey(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 CFATTACH_DECL(xge, sizeof(struct xge_softc),
     xge_match, xge_attach, NULL, NULL);
 
-#define XNAME sc->sc_dev.dv_xname
+#define XNAME device_xname(&sc->sc_dev)
 
 #define XGE_RXSYNC(desc, what) \
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxmap, \
@@ -523,7 +523,7 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	    ether_sprintf(enaddr));
 
 	ifp = &sc->sc_ethercom.ec_if;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_baudrate = 10000000000LL;
 	ifp->if_init = xge_init;
 	ifp->if_stop = xge_stop;
@@ -554,14 +554,13 @@ xge_attach(struct device *parent, struct device *self, void *aux)
 	 * Setup interrupt vector before initializing.
 	 */
 	if (pci_intr_map(pa, &ih))
-		return aprint_error("%s: unable to map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		return aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
 	intrstr = pci_intr_string(pc, ih);
 	if ((sc->sc_ih =
 	    pci_intr_establish(pc, ih, IPL_NET, xge_intr, sc)) == NULL)
-		return aprint_error("%s: unable to establish interrupt at %s\n",
-		    sc->sc_dev.dv_xname, intrstr ? intrstr : "<unknown>");
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+		return aprint_error_dev(&sc->sc_dev, "unable to establish interrupt at %s\n",
+		    intrstr ? intrstr : "<unknown>");
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 #ifdef XGE_EVENT_COUNTERS
 	evcnt_attach_dynamic(&sc->sc_intr, EVCNT_TYPE_MISC,

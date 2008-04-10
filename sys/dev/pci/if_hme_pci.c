@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.23 2007/10/19 12:00:45 ad Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.24 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.23 2007/10/19 12:00:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.24 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,33 +197,28 @@ hmeattach_pci(struct device *parent, struct device *self, void *aux)
 	if (pci_mapreg_map(pa, PCI_HME_BASEADDR, type, 0,
 	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, NULL) != 0)
 	{
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 	sc->sc_seb = hsc->hsc_memh;
 	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x2000,
 	    0x1000, &sc->sc_etx)) {
-		printf("%s: unable to subregion ETX registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to subregion ETX registers\n");
 		return;
 	}
 	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x4000,
 	    0x1000, &sc->sc_erx)) {
-		printf("%s: unable to subregion ERX registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to subregion ERX registers\n");
 		return;
 	}
 	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x6000,
 	    0x1000, &sc->sc_mac)) {
-		printf("%s: unable to subregion MAC registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to subregion MAC registers\n");
 		return;
 	}
 	if (bus_space_subregion(hsc->hsc_memt, hsc->hsc_memh, 0x7000,
 	    0x1000, &sc->sc_mif)) {
-		printf("%s: unable to subregion MIF registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to subregion MIF registers\n");
 		return;
 	}
 
@@ -305,27 +300,26 @@ hmeattach_pci(struct device *parent, struct device *self, void *aux)
 #ifdef __sparc__
 		prom_getether(PCITAG_NODE(pa->pa_tag), sc->sc_enaddr);
 #else
-		printf("%s: no Ethernet address found\n", sc->sc_dev.dv_xname);
+		printf("%s: no Ethernet address found\n", device_xname(&sc->sc_dev));
 #endif
 
 	/*
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	hsc->hsc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_NET, hme_intr, sc);
 	if (hsc->hsc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	sc->sc_burst = 16;	/* XXX */
 

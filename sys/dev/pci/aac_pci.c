@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.22 2007/10/19 12:00:38 ad Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.23 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.22 2007/10/19 12:00:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.23 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -526,8 +526,8 @@ aac_pci_attach(struct device *parent, struct device *self, void *aux)
 	m = aac_find_ident(pa);
 	aprint_normal("%s\n", m->prodstr);
 	if (intrstr != NULL)
-		aprint_normal("%s: interrupting at %s\n",
-		    sc->sc_dv.dv_xname, intrstr);
+		aprint_normal_dev(&sc->sc_dv, "interrupting at %s\n",
+		    intrstr);
 
 	sc->sc_hwif = m->hwif;
 	sc->sc_quirks = m->quirks;

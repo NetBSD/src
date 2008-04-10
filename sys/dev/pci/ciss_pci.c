@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.4 2007/10/19 12:00:41 ad Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.5 2008/04/10 19:13:36 cegger Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.4 2007/10/19 12:00:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.5 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ ciss_pci_attach(struct device *parent, struct device *self, void *aux)
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ciss_intr, sc);
 	if (!sc->sc_ih) {
-		printf("%s: can't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
 		if (intrstr)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -334,8 +334,8 @@ ciss_pci_attach(struct device *parent, struct device *self, void *aux)
 			bus_space_unmap(sc->sc_iot, sc->cfg_ioh, cfgsz);
 	}
 
-	printf("%s: interrupting at %s\n%s", sc->sc_dev.dv_xname, intrstr,
-	       sc->sc_dev.dv_xname);
+	printf("%s: interrupting at %s\n%s", device_xname(&sc->sc_dev), intrstr,
+	       device_xname(&sc->sc_dev));
 
 	if (ciss_attach(sc)) {
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);

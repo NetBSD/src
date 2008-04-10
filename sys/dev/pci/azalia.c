@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.53 2008/02/23 01:11:12 dyoung Exp $	*/
+/*	$NetBSD: azalia.c,v 1.54 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.53 2008/02/23 01:11:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.54 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,7 +146,7 @@ typedef struct azalia_t {
 
 	int mode_cap;
 } azalia_t;
-#define XNAME(sc)		((sc)->dev.dv_xname)
+#define XNAME(sc)		device_xname(&((sc)->dev))
 #define AZ_READ_1(z, r)		bus_space_read_1((z)->iot, (z)->ioh, HDA_##r)
 #define AZ_READ_2(z, r)		bus_space_read_2((z)->iot, (z)->ioh, HDA_##r)
 #define AZ_READ_4(z, r)		bus_space_read_4((z)->iot, (z)->ioh, HDA_##r)
@@ -856,7 +856,7 @@ azalia_set_command(const azalia_t *az, int caddr, nid_t nid, uint32_t control,
 
 #ifdef DIAGNOSTIC
 	if ((AZ_READ_1(az, CORBCTL) & HDA_CORBCTL_CORBRUN) == 0) {
-		aprint_error("%s: CORB is not running.\n", XNAME(az));
+		aprint_error("%s: CORB is not running.\n", az->dev.dv_xname);
 		return -1;
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_pci.c,v 1.10 2007/10/19 12:00:56 ad Exp $	*/
+/*	$NetBSD: weasel_pci.c,v 1.11 2008/04/10 19:13:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.10 2007/10/19 12:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_pci.c,v 1.11 2008/04/10 19:13:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,44 +120,38 @@ weasel_pci_attach(struct device *parent, struct device *self,
 	if (pci_mapreg_map(pa, PCI_MAPREG_START,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, NULL) != 0) {
-		printf("%s: unable to map device registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
 		return;
 	}
 
 	/* Ping the Weasel to see if it's alive. */
 	if (weasel_issue_command(sc, OS_CMD_PING)) {
-		printf("%s: Weasel didn't respond to PING\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "Weasel didn't respond to PING\n");
 		return;
 	}
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 	if ((v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD)) !=
 	    OS_RET_PONG) {
-		printf("%s: unexpected PING response from Weasel: 0x%02x\n",
-		    sc->sc_dev.dv_xname, v);
+		aprint_error_dev(&sc->sc_dev, "unexpected PING response from Weasel: 0x%02x\n", v);
 		return;
 	}
 
 	/* Read the config block. */
 	if (weasel_issue_command(sc, OS_CMD_SHOW_CONFIG)) {
-		printf("%s: Weasel didn't respond to SHOW_CONFIG\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "Weasel didn't respond to SHOW_CONFIG\n");
 		return;
 	}
 	cfg_size = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 
 	if (++cfg_size != sizeof(cfg)) {
-		printf("%s: weird config block size from Weasel: 0x%03x\n",
-		    sc->sc_dev.dv_xname, cfg_size);
+		aprint_error_dev(&sc->sc_dev, "weird config block size from Weasel: 0x%03x\n", cfg_size);
 		return;
 	}
 
 	for (cp = (uint8_t *) &cfg; cfg_size != 0; cfg_size--) {
 		if (weasel_wait_response(sc)) {
-			printf("%s: Weasel stopped providing config block(%d)\n",
-			    sc->sc_dev.dv_xname, cfg_size);
+			aprint_error_dev(&sc->sc_dev, "Weasel stopped providing config block(%d)\n", cfg_size);
 			return;
 		}
 		*cp++ = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
@@ -187,42 +181,41 @@ weasel_pci_attach(struct device *parent, struct device *self,
 	}
 
 	if (vers != NULL)
-		printf("%s: %s mode\n", sc->sc_dev.dv_xname,
+		printf("%s: %s mode\n", device_xname(&sc->sc_dev),
 		    mode);
 	else
-		printf("%s: unknown config version 0x%02x\n", sc->sc_dev.dv_xname,
+		printf("%s: unknown config version 0x%02x\n", device_xname(&sc->sc_dev),
 		    cfg.cfg_version);
 
 	/*
 	 * Fetch sw version.
 	 */
 	if (weasel_issue_command(sc, OS_CMD_QUERY_SW_VER)) {
-		printf("%s: didn't reply to software version query.\n",
-			sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "didn't reply to software version query.\n");
 	}
 	else {
 		v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 		bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 		if (v>7)
 			printf("%s: weird length for version string(%d).\n",
-					sc->sc_dev.dv_xname, v);
+					device_xname(&sc->sc_dev), v);
 		bzero(buf, sizeof(buf));
 		for (cp = buf; v != 0; v--) {
 			if (weasel_wait_response(sc)) {
 				printf("%s: Weasel stopped providing version\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 			}
 			*cp++ = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 			bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 		}
-		printf("%s: sw: %s", sc->sc_dev.dv_xname, buf);
+		printf("%s: sw: %s", device_xname(&sc->sc_dev), buf);
 	}
 	/*
 	 * Fetch logic version.
 	 */
 	if (weasel_issue_command(sc, OS_CMD_QUERY_L_VER)) {
-		printf("\n%s: didn't reply to logic version query.\n",
-			sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "didn't reply to logic version query.\n");
 	}
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 	v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
@@ -231,8 +224,8 @@ weasel_pci_attach(struct device *parent, struct device *self,
 	 * Fetch vga bios version.
 	 */
 	if (weasel_issue_command(sc, OS_CMD_QUERY_VB_VER)) {
-		printf("\n%s: didn't reply to vga bios version query.\n",
-			sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "didn't reply to vga bios version query.\n");
 	}
 	v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
@@ -241,14 +234,14 @@ weasel_pci_attach(struct device *parent, struct device *self,
 	 * Fetch hw version.
 	 */
 	if (weasel_issue_command(sc, OS_CMD_QUERY_HW_VER)) {
-		printf("\n%s: didn't reply to hardware version query.\n",
-			sc->sc_dev.dv_xname);
+		aprint_normal("\n");
+		aprint_error_dev(&sc->sc_dev, "didn't reply to hardware version query.\n");
 	}
 	v = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
 	bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 	printf(" hw: %d.%d", (v>>4), (v&0x0f));
 
-	printf("\n%s: break passthrough %s", sc->sc_dev.dv_xname,
+	printf("\n%s: break passthrough %s", device_xname(&sc->sc_dev),
 	    cfg.break_passthru ? "enabled" : "disabled");
 
 	if ((sc->sc_wdog_armed = weasel_pci_wdog_query_state(sc)) == -1)
@@ -265,8 +258,8 @@ weasel_pci_attach(struct device *parent, struct device *self,
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		printf("%s: unable to register PC-Weasel watchdog "
-		    "with sysmon\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to register PC-Weasel watchdog "
+		    "with sysmon\n");
 }
 
 CFATTACH_DECL(weasel_pci, sizeof(struct weasel_softc),
@@ -346,7 +339,7 @@ weasel_pci_wdog_tickle(struct sysmon_wdog *smw)
 		error = 0;
 	} else {
 		printf("%s: Watchdog timer disabled on PC/Weasel! Disarming wdog.\n",
-			sc->sc_dev.dv_xname);
+			device_xname(&sc->sc_dev));
 		sc->sc_wdog_armed = 0;
 		sysmon_wdog_setmode(smw, WDOG_MODE_DISARMED, 0);
 		error = 1;
@@ -367,7 +360,7 @@ weasel_pci_wdog_arm(struct weasel_softc *sc)
 	s = splhigh();
 	if (weasel_issue_command(sc, OS_CMD_WDT_ENABLE)) {
 		printf("%s: no reply to watchdog enable. Check Weasel \"Allow Watchdog\" setting.\n",
-			sc->sc_dev.dv_xname);
+			device_xname(&sc->sc_dev));
 		error = EIO;
 	}
 	reg = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
@@ -409,7 +402,7 @@ weasel_pci_wdog_disarm(struct weasel_softc *sc)
 
 	if (weasel_issue_command(sc, OS_CMD_WDT_DISABLE)) {
 		printf("%s: didn't reply to watchdog disable.\n",
-			sc->sc_dev.dv_xname);
+			device_xname(&sc->sc_dev));
 		error = EIO;
 	}
 	reg = bus_space_read_1(sc->sc_st, sc->sc_sh, WEASEL_DATA_RD);
@@ -446,7 +439,7 @@ weasel_pci_wdog_query_state(struct weasel_softc *sc)
 
 	if (weasel_issue_command(sc, OS_CMD_WDT_QUERY)) {
 		printf("%s: didn't reply to watchdog state query.\n",
-			sc->sc_dev.dv_xname);
+			device_xname(&sc->sc_dev));
 		bus_space_write_1(sc->sc_st, sc->sc_sh, WEASEL_STATUS, 0);
 		return(-1);
 	}

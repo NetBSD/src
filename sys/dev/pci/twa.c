@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.18 2007/10/19 12:00:55 ad Exp $ */
+/*	$NetBSD: twa.c,v 1.19 2008/04/10 19:13:38 cegger Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.18 2007/10/19 12:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.19 2008/04/10 19:13:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,7 +732,7 @@ static int
 twa_print_inquiry_data(struct twa_softc *sc, struct scsipi_inquiry_data *scsipi)
 {
 
-    printf("%s: %s\n", sc->twa_dv.dv_xname, scsipi->vendor);
+    printf("%s: %s\n", device_xname(&sc->twa_dv), scsipi->vendor);
 
     return (1);
 }
@@ -839,39 +839,36 @@ twa_alloc_req_pkts(struct twa_softc *sc, int num_reqs)
 	if ((rv = bus_dmamem_alloc(sc->twa_dma_tag,
 		size, PAGE_SIZE, 0, &seg,
 		1, &rseg, BUS_DMA_NOWAIT)) != 0){
-			aprint_error("%s: unable to allocate "
-				"command packets, rv = %d\n",
-				sc->twa_dv.dv_xname, rv);
+			aprint_error_dev(&sc->twa_dv, "unable to allocate "
+				"command packets, rv = %d\n", rv);
 			return (ENOMEM);
 	}
 
 	if ((rv = bus_dmamem_map(sc->twa_dma_tag,
 		&seg, rseg, size, (void **)&sc->twa_cmds,
 		BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-			aprint_error("%s: unable to map commands, rv = %d\n",
-				sc->twa_dv.dv_xname, rv);
+			aprint_error_dev(&sc->twa_dv, "unable to map commands, rv = %d\n", rv);
 			return (1);
 	}
 
 	if ((rv = bus_dmamap_create(sc->twa_dma_tag,
 		size, num_reqs, size,
 		0, BUS_DMA_NOWAIT, &sc->twa_cmd_map)) != 0) {
-			aprint_error("%s: unable to create command DMA map, "
-				"rv = %d\n", sc->twa_dv.dv_xname, rv);
+			aprint_error_dev(&sc->twa_dv, "unable to create command DMA map, "
+				"rv = %d\n", rv);
 			return (ENOMEM);
 	}
 
 	if ((rv = bus_dmamap_load(sc->twa_dma_tag, sc->twa_cmd_map,
 		sc->twa_cmds, size, NULL,
 		BUS_DMA_NOWAIT)) != 0) {
-			aprint_error("%s: unable to load command DMA map, "
-				"rv = %d\n", sc->twa_dv.dv_xname, rv);
+			aprint_error_dev(&sc->twa_dv, "unable to load command DMA map, "
+				"rv = %d\n", rv);
 			return (1);
 	}
 
 	if ((uintptr_t)sc->twa_cmds % TWA_ALIGNMENT) {
-		aprint_error("%s: DMA map memory not aligned on %d boundary\n",
-			sc->twa_dv.dv_xname, TWA_ALIGNMENT);
+		aprint_error_dev(&sc->twa_dv, "DMA map memory not aligned on %d boundary\n", TWA_ALIGNMENT);
 
 		return (1);
 	}
@@ -904,9 +901,8 @@ twa_alloc_req_pkts(struct twa_softc *sc, int num_reqs)
 		if ((rv = bus_dmamap_create(sc->twa_dma_tag,
 			max_xfer, max_segs, 1, 0, BUS_DMA_NOWAIT,
 			&tr->tr_dma_map)) != 0) {
-				aprint_error("%s: unable to create command "
-					"DMA map, rv = %d\n",
-					sc->twa_dv.dv_xname, rv);
+				aprint_error_dev(&sc->twa_dv, "unable to create command "
+					"DMA map, rv = %d\n", rv);
 				return (ENOMEM);
 		}
 		/* Insert request into the free queue. */
@@ -936,7 +932,7 @@ twa_recompute_openings(struct twa_softc *sc)
 
 #ifdef TWA_DEBUG
 	printf("%s: %d array%s, %d openings per array\n",
-	    sc->twa_dv.dv_xname, sc->sc_nunits,
+	    device_xname(&sc->twa_dv), sc->sc_nunits,
 	    sc->sc_nunits == 1 ? "" : "s", sc->sc_openings);
 #endif
 	for (unit = 0; unit < TWA_MAX_UNITS; unit++) {
@@ -1368,16 +1364,16 @@ twa_init_ctlr(struct twa_softc *sc)
 		 * on the controller recommends a flash.  So, flash!
 		 */
 		printf("%s: flashing bundled firmware...\n",
-		    sc->twa_dv.dv_xname);
+		    device_xname(&sc->twa_dv));
 
 		if ((error = twa_flash_firmware(sc))) {
 			fw_flash_failed = TRUE;
 
 			printf("%s: unable to flash bundled firmware.\n",
-			    sc->twa_dv.dv_xname);
+			    device_xname(&sc->twa_dv));
 		} else {
 			printf("%s: successfully flashed bundled firmware.\n",
-				 sc->twa_dv.dv_xname);
+				 device_xname(&sc->twa_dv));
 			fw_flashed = TRUE;
 		}
 	}
@@ -1414,7 +1410,7 @@ twa_init_ctlr(struct twa_softc *sc)
 			 * if firmware has just been flashed.
 			 */
 			printf("%s: Driver/Firmware mismatch.  Negotiating "
-			    "for base level.\n", sc->twa_dv.dv_xname);
+			    "for base level.\n", device_xname(&sc->twa_dv));
 			if ((error = twa_init_connection(sc,
 			    TWA_INIT_MESSAGE_CREDITS,
 			    TWA_EXTENDED_INIT_CONNECT, TWA_BASE_FW_SRL,
@@ -1423,7 +1419,7 @@ twa_init_ctlr(struct twa_softc *sc)
 			    &fw_on_ctlr_arch_id, &fw_on_ctlr_branch,
 			    &fw_on_ctlr_build, &init_connect_result))) {
 				printf("%s: can't initialize connection in "
-				    "base mode.\n", sc->twa_dv.dv_xname);
+				    "base mode.\n", device_xname(&sc->twa_dv));
 				return(error);
 			}
 			if (!(init_connect_result & TWA_CTLR_FW_COMPATIBLE)) {
@@ -1506,7 +1502,7 @@ twa_setup(struct twa_softc *sc)
 		/* Soft reset the controller, and try one more time. */
 
 		printf("%s: controller initialization failed. "
-		    "Retrying initialization\n", sc->twa_dv.dv_xname);
+		    "Retrying initialization\n", device_xname(&sc->twa_dv));
 
 		if ((error = twa_soft_reset(sc)) == 0)
 			error = twa_init_ctlr(sc);
@@ -1553,21 +1549,19 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9000) {
 		if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
 	    	    &sc->twa_bus_iot, &sc->twa_bus_ioh, NULL, NULL)) {
-			aprint_error("%s: can't map i/o space\n", 
-			    sc->twa_dv.dv_xname);
+			aprint_error_dev(&sc->twa_dv, "can't map i/o space\n");
 			return;
 		}
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9550) {
 		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08, 
 	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot, 
 		    &sc->twa_bus_ioh, NULL, NULL)) {
-			aprint_error("%s: can't map mem space\n", 
-			    sc->twa_dv.dv_xname);
+			aprint_error_dev(&sc->twa_dv, "can't map mem space\n");
 			return;
 		}
 	} else {
-		aprint_error("%s: product id 0x%02x not recognized\n", 
-		    sc->twa_dv.dv_xname, PCI_PRODUCT(pa->pa_id));
+		aprint_error_dev(&sc->twa_dv, "product id 0x%02x not recognized\n", 
+		    PCI_PRODUCT(pa->pa_id));
 		return;
 	}
 	/* Enable the device. */
@@ -1578,23 +1572,22 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: can't map interrupt\n", sc->twa_dv.dv_xname);
+		aprint_error_dev(&sc->twa_dv, "can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 
 	sc->twa_ih = pci_intr_establish(pc, ih, IPL_BIO, twa_intr, sc);
 	if (sc->twa_ih == NULL) {
-		aprint_error("%s: can't establish interrupt%s%s\n",
-			sc->twa_dv.dv_xname,
+		aprint_error_dev(&sc->twa_dv, "can't establish interrupt%s%s\n",
 			(intrstr) ? " at " : "",
 			(intrstr) ? intrstr : "");
 		return;
 	}
 
 	if (intrstr != NULL)
-		aprint_normal("%s: interrupting at %s\n",
-			sc->twa_dv.dv_xname, intrstr);
+		aprint_normal_dev(&sc->twa_dv, "interrupting at %s\n",
+			intrstr);
 
 	twa_setup(sc);
 
@@ -1606,18 +1599,18 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 				CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
 				NULL, NULL, 0, NULL, 0,
 				CTL_HW, CTL_EOL) != 0) {
-		printf("%s: could not create %s sysctl node\n",
-			sc->twa_dv.dv_xname, ctlnames[CTL_HW].ctl_name);
+		aprint_error_dev(&sc->twa_dv, "could not create %s sysctl node\n",
+			ctlnames[CTL_HW].ctl_name);
 		return;
 	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
-        			0, CTLTYPE_NODE, sc->twa_dv.dv_xname,
+        			0, CTLTYPE_NODE, device_xname(&sc->twa_dv),
         			SYSCTL_DESCR("twa driver information"),
         			NULL, 0, NULL, 0,
 				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
-                printf("%s: could not create %s.%s sysctl node\n",
-			sc->twa_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
-			sc->twa_dv.dv_xname);
+                aprint_error_dev(&sc->twa_dv, "could not create %s.%s sysctl node\n",
+			ctlnames[CTL_HW].ctl_name,
+			device_xname(&sc->twa_dv));
 		return;
 	}
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
@@ -1626,9 +1619,9 @@ twa_attach(struct device *parent, struct device *self, void *aux)
         			NULL, 0, &twaver, 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
-                printf("%s: could not create %s.%s.driver_version sysctl\n",
-			sc->twa_dv.dv_xname, ctlnames[CTL_HW].ctl_name,
-			sc->twa_dv.dv_xname);
+                aprint_error_dev(&sc->twa_dv, "could not create %s.%s.driver_version sysctl\n",
+			ctlnames[CTL_HW].ctl_name,
+			device_xname(&sc->twa_dv));
 		return;
 	}
 
@@ -1978,9 +1971,8 @@ twa_flash_firmware(struct twa_softc *sc)
 			}
 		} else	 /* last chunk */
 			if (error) {
-				printf("%s: firmware flash request failed. "
-				    "error = 0x%x\n", sc->twa_dv.dv_xname,
-				    error);
+				aprint_error_dev(&sc->twa_dv, "firmware flash request failed. "
+				    "error = 0x%x\n", error);
 				twa_hard_reset(sc);
 			}
 	}
@@ -2034,15 +2026,15 @@ twa_hard_reset(struct twa_softc *sc)
 	error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
 	if (error) {
 		printf("%s: hard reset request could not be posted. "
-		    "error = 0x%x\n", sc->twa_dv.dv_xname, error);
+		    "error = 0x%x\n", device_xname(&sc->twa_dv), error);
 		if (error == ETIMEDOUT)
 			/* clean-up done by twa_immediate_request */
 			return(error);
 		goto out;
 	}
 	if ((error = cmd->status)) {
-		printf("%s: hard reset request failed. error = 0x%x\n",
-			sc->twa_dv.dv_xname, error);
+		aprint_error_dev(&sc->twa_dv, "hard reset request failed. error = 0x%x\n",
+			error);
 	}
 
 out:
@@ -2090,7 +2082,7 @@ twa_intr(void *arg)
 #ifdef DIAGNOSTIC
 		if (rv != 0)
 			printf("%s: unable to retrieve AEN (%d)\n",
-				sc->twa_dv.dv_xname, rv);
+				device_xname(&sc->twa_dv), rv);
 #endif
 		caught = 1;
 	}
@@ -2379,8 +2371,8 @@ fw_passthru_done:
 		}
 		if ((error = copyout(sc->twa_aen_queue [event_index],
 		    user_buf->pdata, sizeof(struct tw_cl_event_packet))) != 0)
-			aprint_error("%s: get_previous: Could not copyout to "
-			    "event_buf. error = %x\n", sc->twa_dv.dv_xname,
+			aprint_error_dev(&sc->twa_dv, "get_previous: Could not copyout to "
+			    "event_buf. error = %x\n",
 			    error);
 		(sc->twa_aen_queue[event_index])->retrieved = TWA_AEN_RETRIEVED;
 		break;
@@ -2457,7 +2449,7 @@ fw_passthru_done:
 		if (tdr->td_dev == NULL)
 			tn->tn_name[0] = '\0';
 		else
-			strlcpy(tn->tn_name, tdr->td_dev->dv_xname,
+			strlcpy(tn->tn_name, device_xname(tdr->td_dev),
 			    sizeof(tn->tn_name));
 		return (0);
 	}
@@ -2810,33 +2802,28 @@ twa_soft_reset(struct twa_softc *sc)
 
 	if (twa_wait_status(sc, TWA_STATUS_MICROCONTROLLER_READY |
 				TWA_STATUS_ATTENTION_INTERRUPT, 30)) {
-		aprint_error("%s: no attention interrupt after reset.\n",
-			sc->twa_dv.dv_xname);
+		aprint_error_dev(&sc->twa_dv, "no attention interrupt after reset.\n");
 		return(1);
 	}
 	twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
 		TWA_CONTROL_CLEAR_ATTENTION_INTERRUPT);
 
 	if (twa_drain_response_queue(sc)) {
-		aprint_error("%s: cannot drain response queue.\n",
-		    sc->twa_dv.dv_xname);
+		aprint_error_dev(&sc->twa_dv, "cannot drain response queue.\n");
 		return(1);
 	}
 	if (twa_drain_aen_queue(sc)) {
-		aprint_error("%s: cannot drain AEN queue.\n",
-		    sc->twa_dv.dv_xname);
+		aprint_error_dev(&sc->twa_dv, "cannot drain AEN queue.\n");
 		return(1);
 	}
 	if (twa_find_aen(sc, TWA_AEN_SOFT_RESET)) {
-		aprint_error("%s: reset not reported by controller.\n",
-			 sc->twa_dv.dv_xname);
+		aprint_error_dev(&sc->twa_dv, "reset not reported by controller.\n");
 		return(1);
 	}
 	status_reg = twa_inl(sc, TWA_STATUS_REGISTER_OFFSET);
 	if (TWA_STATUS_ERRORS(status_reg) ||
 	    twa_check_ctlr_state(sc, status_reg)) {
-		aprint_error("%s: controller errors detected.\n",
-		    sc->twa_dv.dv_xname);
+		aprint_error_dev(&sc->twa_dv, "controller errors detected.\n");
 		return(1);
 	}
 	return(0);
@@ -2966,8 +2953,7 @@ twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 				&sync_time, twa_aen_callback);
 #ifdef DIAGNOSTIC
 		if (rv != 0)
-			printf("%s: unable to sync time with ctlr\n",
-				sc->twa_dv.dv_xname);
+			aprint_error_dev(&sc->twa_dv, "unable to sync time with ctlr\n");
 #endif
 		break;
 
@@ -2992,7 +2978,7 @@ twa_enqueue_aen(struct twa_softc *sc, struct twa_command_header *cmd_hdr)
 
 		if (event->severity < TWA_AEN_SEVERITY_DEBUG) {
 			printf("%s: AEN 0x%04X: %s: %s: %s\n",
-				sc->twa_dv.dv_xname,
+				device_xname(&sc->twa_dv),
 				aen_code,
 				twa_aen_severity_table[event->severity],
 				twa_find_msg_string(twa_aen_table, aen_code),
@@ -3162,19 +3148,16 @@ twa_describe_controller(struct twa_softc *sc)
 
 	if (rv) {
 		/* some error occurred */
-		aprint_error("%s: failed to fetch version information\n",
-			sc->twa_dv.dv_xname);
+		aprint_error_dev(&sc->twa_dv, "failed to fetch version information\n");
 		goto bail;
 	}
 
 	ports = *(uint8_t *)(p[0]->data);
 
-	aprint_normal("%s: %d ports, Firmware %.16s, BIOS %.16s\n",
-		sc->twa_dv.dv_xname, ports,
-		p[1]->data, p[2]->data);
+	aprint_normal_dev(&sc->twa_dv, "%d ports, Firmware %.16s, BIOS %.16s\n",
+		ports, p[1]->data, p[2]->data);
 
-	aprint_verbose("%s: Monitor %.16s, PCB %.8s, Achip %.8s, Pchip %.8s\n",
-		sc->twa_dv.dv_xname,
+	aprint_verbose_dev(&sc->twa_dv, "Monitor %.16s, PCB %.8s, Achip %.8s, Pchip %.8s\n",
 		p[3]->data, p[4]->data,
 		p[5]->data, p[6]->data);
 
@@ -3188,8 +3171,8 @@ twa_describe_controller(struct twa_softc *sc)
 			TWA_PARAM_DRIVEMODEL_LENGTH, NULL, &p[8]);
 
 		if (rv != 0) {
-			aprint_error("%s: unable to get drive model for port"
-				" %d\n", sc->twa_dv.dv_xname, i);
+			aprint_error_dev(&sc->twa_dv, "unable to get drive model for port"
+				" %d\n", i);
 			continue;
 		}
 
@@ -3198,17 +3181,16 @@ twa_describe_controller(struct twa_softc *sc)
 			TWA_PARAM_DRIVESIZE_LENGTH, NULL, &p[9]);
 
 		if (rv != 0) {
-			aprint_error("%s: unable to get drive size"
-				" for port %d\n", sc->twa_dv.dv_xname,
-					i);
+			aprint_error_dev(&sc->twa_dv, "unable to get drive size"
+				" for port %d\n", i);
 			free(p[8], M_DEVBUF);
 			continue;
 		}
 
 		dsize = *(uint32_t *)(p[9]->data);
 
-		aprint_verbose("%s: port %d: %.40s %d MB\n",
-		    sc->twa_dv.dv_xname, i, p[8]->data, dsize / 2048);
+		aprint_verbose_dev(&sc->twa_dv, "port %d: %.40s %d MB\n",
+		    i, p[8]->data, dsize / 2048);
 
 		if (p[8])
 			free(p[8], M_DEVBUF);
@@ -3275,9 +3257,8 @@ twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 			last_warning[1] = t1.tv_usec;
 		}
 		if (status_reg & TWA_STATUS_PCI_PARITY_ERROR_INTERRUPT) {
-			aprint_error("%s: clearing PCI parity error "
-				"re-seat/move/replace card.\n",
-				 sc->twa_dv.dv_xname);
+			aprint_error_dev(&sc->twa_dv, "clearing PCI parity error "
+				"re-seat/move/replace card.\n");
 			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
 				TWA_CONTROL_CLEAR_PARITY_ERROR);
 			pci_conf_write(sc->pc, sc->tag,
@@ -3286,8 +3267,7 @@ twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 			result = 1;
 		}
 		if (status_reg & TWA_STATUS_PCI_ABORT_INTERRUPT) {
-			aprint_error("%s: clearing PCI abort\n",
-				sc->twa_dv.dv_xname);
+			aprint_error_dev(&sc->twa_dv, "clearing PCI abort\n");
 			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
 				TWA_CONTROL_CLEAR_PCI_ABORT);
 			pci_conf_write(sc->pc, sc->tag,
@@ -3296,22 +3276,19 @@ twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 			result = 1;
 		}
 		if (status_reg & TWA_STATUS_QUEUE_ERROR_INTERRUPT) {
-			aprint_error("%s: clearing controller queue error\n",
-				sc->twa_dv.dv_xname);
+			aprint_error_dev(&sc->twa_dv, "clearing controller queue error\n");
 			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
 				TWA_CONTROL_CLEAR_PCI_ABORT);
 			result = 1;
 		}
 		if (status_reg & TWA_STATUS_SBUF_WRITE_ERROR) {
-			aprint_error("%s: clearing SBUF write error\n",
-				sc->twa_dv.dv_xname);
+			aprint_error_dev(&sc->twa_dv, "clearing SBUF write error\n");
 			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
 				TWA_CONTROL_CLEAR_SBUF_WRITE_ERROR);
 			result = 1;
 		}
 		if (status_reg & TWA_STATUS_MICROCONTROLLER_ERROR) {
-			aprint_error("%s: micro-controller error\n",
-				sc->twa_dv.dv_xname);
+			aprint_error_dev(&sc->twa_dv, "micro-controller error\n");
 			result = 1;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.45 2008/03/21 07:47:43 dyoung Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.46 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.45 2008/03/21 07:47:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.46 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,9 +263,8 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 		/* Map PCI function status window. */
 		if (pci_mapreg_map(pa, PCI_FUNCMEM, PCI_MAPREG_TYPE_MEM, 0,
 		    &psc->sc_funct, &psc->sc_funch, NULL, NULL)) {
-			aprint_error(
-			    "%s: unable to map function status window\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "unable to map function status window\n");
 			return;
 		}
 		sc->intr_ack = ex_pci_intr_ack;
@@ -286,7 +285,7 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 		sc->disable = ex_pci_disable;
 		break;
 	default:
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
+		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
 		    error);
 		return;
 	}
@@ -294,22 +293,20 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ex_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	ex_config(sc);
 
@@ -355,8 +352,8 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 	if (state != PCI_PMCSR_STATE_D3)
 		return 0;
 
-	aprint_normal("%s: found in power state D%d, "
-	    "attempting to recover.\n", sc->sc_dev.dv_xname, state);
+	aprint_normal_dev(&sc->sc_dev, "found in power state D%d, "
+	    "attempting to recover.\n", state);
 	pci_command = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	base0 = pci_conf_read(pc, tag, PCI_BAR0);
 	base1 = pci_conf_read(pc, tag, PCI_BAR1);
@@ -372,8 +369,7 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 	pci_conf_write(pc, tag, PCI_CACHE_LAT_BIST, pci_cache_lat);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 	    (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE));
-	aprint_normal("%s: changed power state to D0.\n",
-	    sc->sc_dev.dv_xname);
+	aprint_normal_dev(&sc->sc_dev, "changed power state to D0.\n");
 	return 0;
 }
 
@@ -406,7 +402,7 @@ ex_pci_enable(struct ex_softc *sc)
 	struct ex_pci_softc *psc = (void *) sc;
 
 #if 0
-	printf("%s: going to power state D0\n", sc->sc_dev.dv_xname);
+	printf("%s: going to power state D0\n", device_xname(&sc->sc_dev));
 #endif
 
 	/* Bring the device into D0 power state. */
@@ -425,7 +421,7 @@ ex_pci_disable(struct ex_softc *sc)
 	struct ex_pci_softc *psc = (void *) sc;
 
 #if 0
-	printf("%s: going to power state D3\n", sc->sc_dev.dv_xname);
+	printf("%s: going to power state D3\n", device_xname(&sc->sc_dev));
 #endif
 
 	/* Put the device into D3 state. */

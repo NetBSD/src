@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.14 2007/10/19 12:00:51 ad Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.15 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.14 2007/10/19 12:00:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.15 2008/04/10 19:13:37 cegger Exp $");
 
 #include "rnd.h"
 
@@ -200,7 +200,7 @@ ld_amr_handler(struct amr_ccb *ac)
 	amr = (struct amr_softc *)device_parent(&sc->sc_ld.sc_dv);
 
 	if (ac->ac_status != AMR_STATUS_SUCCESS) {
-		printf("%s: cmd status 0x%02x\n", sc->sc_ld.sc_dv.dv_xname,
+		printf("%s: cmd status 0x%02x\n", device_xname(&sc->sc_ld.sc_dv),
 		    ac->ac_status);
 
 		bp->b_error = EIO;

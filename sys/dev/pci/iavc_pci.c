@@ -1,4 +1,4 @@
-/*	$NetBSD: iavc_pci.c,v 1.7 2007/10/19 12:00:44 ad Exp $	*/
+/*	$NetBSD: iavc_pci.c,v 1.8 2008/04/10 19:13:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.7 2007/10/19 12:00:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iavc_pci.c,v 1.8 2008/04/10 19:13:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -156,8 +156,7 @@ iavc_pci_attach(struct device * parent,
 	aprint_normal(": %s\n", pp->name);
 
 	if (pp->npp_product == PCI_PRODUCT_AVM_T1) {
-		aprint_error("%s: sorry, PRI not yet supported\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "sorry, PRI not yet supported\n");
 		return;
 
 #if 0
@@ -166,11 +165,9 @@ iavc_pci_attach(struct device * parent,
 		ret = iavc_t1_detect(sc);
 		if (ret) {
 			if (ret < 6) {
-				aprint_error("%s: no card detected?\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "no card detected?\n");
 			} else {
-				aprint_error("%s: black box not on\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "black box not on\n");
 			}
 			return;
 		} else {
@@ -186,8 +183,7 @@ iavc_pci_attach(struct device * parent,
 		if (ret) {
 			ret = iavc_b1_detect(sc);
 			if (ret) {
-				aprint_error("%s: no card detected?\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev, "no card detected?\n");
 				return;
 			}
 		} else {
@@ -208,23 +204,21 @@ iavc_pci_attach(struct device * parent,
 #endif
 
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: couldn't map interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, iavc_pci_intr, psc);
 	if (psc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
 	psc->sc_pc = pc;
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	memset(&sc->sc_txq, 0, sizeof(struct ifqueue));
 	sc->sc_txq.ifq_maxlen = sc->sc_capi.sc_nbch * 4;
@@ -243,64 +237,64 @@ iavc_pci_attach(struct device * parent,
 	/* lock & load DMA for TX */
 	if ((ret = bus_dmamem_alloc(sc->dmat, IAVC_DMA_SIZE, PAGE_SIZE, 0,
 	    &sc->txseg, 1, &sc->ntxsegs, BUS_DMA_ALLOCNOW)) != 0) {
-		aprint_error("%s: can't allocate tx DMA memory, error = %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		aprint_error_dev(&sc->sc_dev, "can't allocate tx DMA memory, error = %d\n",
+		    ret);
 		goto fail1;
 	}
 
 	if ((ret = bus_dmamem_map(sc->dmat, &sc->txseg, sc->ntxsegs,
 	    IAVC_DMA_SIZE, &sc->sc_sendbuf, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: can't map tx DMA memory, error = %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		aprint_error_dev(&sc->sc_dev, "can't map tx DMA memory, error = %d\n",
+		    ret);
 		goto fail2;
 	}
 
 	if ((ret = bus_dmamap_create(sc->dmat, IAVC_DMA_SIZE, 1,
 	    IAVC_DMA_SIZE, 0, BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT,
 	    &sc->tx_map)) != 0) {
-		aprint_error("%s: can't create tx DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		aprint_error_dev(&sc->sc_dev, "can't create tx DMA map, error = %d\n",
+		    ret);
 		goto fail3;
 	}
 
 	if ((ret = bus_dmamap_load(sc->dmat, sc->tx_map, sc->sc_sendbuf,
 	    IAVC_DMA_SIZE, NULL, BUS_DMA_WRITE | BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: can't load tx DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		aprint_error_dev(&sc->sc_dev, "can't load tx DMA map, error = %d\n",
+		    ret);
 		goto fail4;
 	}
 
 	/* do the same for RX */
 	if ((ret = bus_dmamem_alloc(sc->dmat, IAVC_DMA_SIZE, PAGE_SIZE, 0,
 	    &sc->rxseg, 1, &sc->nrxsegs, BUS_DMA_ALLOCNOW)) != 0) {
-		aprint_error("%s: can't allocate rx DMA memory, error = %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		aprint_error_dev(&sc->sc_dev, "can't allocate rx DMA memory, error = %d\n",
+		    ret);
 		goto fail5;
 	}
 
 	if ((ret = bus_dmamem_map(sc->dmat, &sc->rxseg, sc->nrxsegs,
 	    IAVC_DMA_SIZE, &sc->sc_recvbuf, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: can't map rx DMA memory, error = %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		aprint_error_dev(&sc->sc_dev, "can't map rx DMA memory, error = %d\n",
+		    ret);
 		goto fail6;
 	}
 
 	if ((ret = bus_dmamap_create(sc->dmat, IAVC_DMA_SIZE, 1, IAVC_DMA_SIZE,
 	    0, BUS_DMA_ALLOCNOW | BUS_DMA_NOWAIT, &sc->rx_map)) != 0) {
-		aprint_error("%s: can't create rx DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		aprint_error_dev(&sc->sc_dev, "can't create rx DMA map, error = %d\n",
+		    ret);
 		goto fail7;
 	}
 
 	if ((ret = bus_dmamap_load(sc->dmat, sc->rx_map, sc->sc_recvbuf,
 	    IAVC_DMA_SIZE, NULL, BUS_DMA_READ | BUS_DMA_NOWAIT)) != 0) {
-		aprint_error("%s: can't load rx DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, ret);
+		aprint_error_dev(&sc->sc_dev, "can't load rx DMA map, error = %d\n",
+		    ret);
 		goto fail8;
 	}
 
-	if (capi_ll_attach(&sc->sc_capi, sc->sc_dev.dv_xname, pp->name)) {
-		aprint_error("%s: capi attach failed\n", sc->sc_dev.dv_xname);
+	if (capi_ll_attach(&sc->sc_capi, device_xname(&sc->sc_dev), pp->name)) {
+		aprint_error_dev(&sc->sc_dev, "capi attach failed\n");
 		goto fail9;
 	}
 	return;

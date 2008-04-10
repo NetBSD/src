@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.11 2008/03/12 18:26:58 dyoung Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.11 2008/03/12 18:26:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.12 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,8 +122,7 @@ mtd_pci_attach(device_t parent, device_t self, void *aux)
 		sc->bus_tag = iot;
 		sc->bus_handle = ioh;
 	} else {
-		printf("%s: could not map memory or i/o space\n",
-			sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "could not map memory or i/o space\n");
 		return;
 	}
 	sc->dma_tag = pa->pa_dmat;
@@ -132,20 +131,20 @@ mtd_pci_attach(device_t parent, device_t self, void *aux)
 	mtd_config(sc);
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: could not map interrupt\n", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "could not map interrupt\n");
 		return;
 	}
 	intrstring = pci_intr_string(pa->pa_pc, ih);
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_NET, mtd_irq_h, sc) == NULL) {
-		printf("%s: could not establish interrupt", sc->dev.dv_xname);
+		aprint_error_dev(&sc->dev, "could not establish interrupt");
 		if (intrstring != NULL)
 			printf(" at %s", intrstring);
 		printf("\n");
 		return;
 	} else {
 		printf("%s: using %s for interrupt\n",
-			sc->dev.dv_xname,
+			device_xname(&sc->dev),
 			intrstring ? intrstring : "unknown interrupt");
 	}
 }

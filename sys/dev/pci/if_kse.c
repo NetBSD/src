@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.13 2008/03/11 23:58:06 dyoung Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.14 2008/04/10 19:13:37 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.13 2008/03/11 23:58:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.14 2008/04/10 19:13:37 cegger Exp $");
 
 #include "bpfilter.h"
 
@@ -381,12 +381,12 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 			 * this state, so punt.
 			 */
 			printf("%s: unable to wake from power state D3\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			return;
 		}
 		if (pmode != PCI_PMCSR_STATE_D0) {
 			printf("%s: waking up from power date D%d\n",
-			    sc->sc_dev.dv_xname, pmode);
+			    device_xname(&sc->sc_dev), pmode);
 			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    PCI_PMCSR_STATE_D0);
 		}
@@ -406,7 +406,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 	i = CSR_READ_2(sc, MARH);
 	enaddr[1] = i; enaddr[0] = i >> 8;
 	printf("%s: Ethernet address: %s\n",
-		sc->sc_dev.dv_xname, ether_sprintf(enaddr));
+		device_xname(&sc->sc_dev), ether_sprintf(enaddr));
 
 	/*
 	 * Enable chip function.
@@ -417,20 +417,19 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: unable to map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, kse_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -439,47 +438,45 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 	error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct kse_control_data), PAGE_SIZE, 0, &seg, 1, &nseg, 0);
 	if (error != 0) {
-		printf("%s: unable to allocate control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
 	    sizeof(struct kse_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT);
 	if (error != 0) {
-		printf("%s: unable to map control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 	error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct kse_control_data), 1,
 	    sizeof(struct kse_control_data), 0, 0, &sc->sc_cddmamap);
 	if (error != 0) {
-		printf("%s: unable to create control data DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to create control data DMA map, "
+		    "error = %d\n", error);
 		goto fail_2;
 	}
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct kse_control_data), NULL, 0);
 	if (error != 0) {
-		printf("%s: unable to load control data DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(&sc->sc_dev, "unable to load control data DMA map, error = %d\n",
+		    error);
 		goto fail_3;
 	}
 	for (i = 0; i < KSE_TXQUEUELEN; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    KSE_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			printf("%s: unable to create tx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create tx DMA map %d, "
+			    "error = %d\n", i, error);
 			goto fail_4;
 		}
 	}
 	for (i = 0; i < KSE_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			printf("%s: unable to create rx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(&sc->sc_dev, "unable to create rx DMA map %d, "
+			    "error = %d\n", i, error);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -505,10 +502,10 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("%s: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto\n",
-	    sc->sc_dev.dv_xname);
+	    device_xname(&sc->sc_dev));
 
 	ifp = &sc->sc_ethercom.ec_if;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = kse_ioctl;
@@ -535,7 +532,7 @@ kse_attach(struct device *parent, struct device *self, void *aux)
 #ifdef KSE_EVENT_COUNTERS
 	for (i = 0; i < p; i++) {
 		struct ksext *ee = &sc->sc_ext;
-		sprintf(ee->evcntname[i], "%s.%d", sc->sc_dev.dv_xname, i+1);
+		sprintf(ee->evcntname[i], "%s.%d", device_xname(&sc->sc_dev), i+1);
 		evcnt_attach_dynamic(&ee->pev[i][0], EVCNT_TYPE_MISC,
 		    NULL, ee->evcntname[i], "RxLoPriotyByte");
 		evcnt_attach_dynamic(&ee->pev[i][1], EVCNT_TYPE_MISC,
@@ -716,7 +713,7 @@ kse_init(struct ifnet *ifp)
 			if ((error = add_rxbuf(sc, i)) != 0) {
 				printf("%s: unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
-				     sc->sc_dev.dv_xname, i, error);
+				     device_xname(&sc->sc_dev), i, error);
 				rxdrain(sc);
 				goto out;
 			}
@@ -799,7 +796,7 @@ kse_init(struct ifnet *ifp)
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ifp->if_timer = 0;
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		printf("%s: interface not running\n", device_xname(&sc->sc_dev));
 	}
 	return error;
 }
@@ -860,7 +857,7 @@ kse_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_txfree != KSE_NTXDESC) {
 		printf("%s: device timeout (txfree %d txsfree %d txnext %d)\n",
-		    sc->sc_dev.dv_xname, sc->sc_txfree, sc->sc_txsfree,
+		    device_xname(&sc->sc_dev), sc->sc_txfree, sc->sc_txsfree,
 		    sc->sc_txnext);
 		ifp->if_oerrors++;
 
@@ -869,7 +866,7 @@ kse_watchdog(struct ifnet *ifp)
 	}
 	else if (ifp->if_flags & IFF_DEBUG)
 		printf("%s: recovered from device timeout\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(&sc->sc_dev));
 
 	/* Try to get more packets going. */
 	kse_start(ifp);
@@ -917,7 +914,7 @@ kse_start(struct ifnet *ifp)
 			if (error == EFBIG) {
 				printf("%s: Tx packet consumes too many "
 				    "DMA segments, dropping...\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(&sc->sc_dev));
 				    IFQ_DEQUEUE(&ifp->if_snd, m0);
 				    m_freem(m0);
 				    continue;
@@ -1089,7 +1086,7 @@ add_rxbuf(struct kse_softc *sc, int idx)
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, idx, error);
+		    device_xname(&sc->sc_dev), idx, error);
 		panic("kse_add_rxbuf");
 	}
 
@@ -1133,7 +1130,7 @@ kse_intr(void *arg)
 	if (isr & INT_DMLCS)
 		lnkchg(sc);
 	if (isr & INT_DMRBUS)
-		printf("%s: Rx descriptor full\n", sc->sc_dev.dv_xname);
+		printf("%s: Rx descriptor full\n", device_xname(&sc->sc_dev));
 
 	CSR_WRITE_4(sc, INTST, isr);
 	return 1;
@@ -1166,7 +1163,7 @@ rxintr(struct kse_softc *sc)
 #define PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
-				    sc->sc_dev.dv_xname, str)
+				    device_xname(&sc->sc_dev), str)
 			PRINTERR(R0_TL, "frame too long");
 			PRINTERR(R0_RF, "runt frame");
 			PRINTERR(R0_CE, "bad FCS");
@@ -1264,7 +1261,7 @@ lnkchg(struct kse_softc *sc)
 	struct ifmediareq ifmr;
 
 #if 0 /* rambling link status */
-	printf("%s: link %s\n", sc->sc_dev.dv_xname,
+	printf("%s: link %s\n", device_xname(&sc->sc_dev),
 	    (CSR_READ_2(sc, P1SR) & (1U << 5)) ? "up" : "down");
 #endif
 	ifmedia_sts(&sc->sc_ethercom.ec_if, &ifmr);

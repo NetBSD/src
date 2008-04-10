@@ -1,4 +1,4 @@
-/*	$NetBSD: iha_pci.c,v 1.13 2006/11/16 01:33:09 christos Exp $ */
+/*	$NetBSD: iha_pci.c,v 1.14 2008/04/10 19:13:37 cegger Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.13 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.14 2008/04/10 19:13:37 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ iha_pci_attach(struct device *parent, struct device *self, void *aux)
 	    &iot, &ioh, NULL, NULL);
 
 	if (ioh_valid != 0) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
 		return;
 	}
 
@@ -118,7 +118,7 @@ iha_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -126,13 +126,13 @@ iha_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, iha_intr, sc);
 
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
 
 	iha_attach(sc);
 }

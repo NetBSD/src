@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.27 2007/10/19 12:00:55 ad Exp $	*/
+/*	$NetBSD: trm.c,v 1.28 2008/04/10 19:13:38 cegger Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.27 2007/10/19 12:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.28 2008/04/10 19:13:38 cegger Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -410,7 +410,7 @@ trm_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL)) {
-		printf("%s: unable to map registers\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
 		return;
 	}
 	/*
@@ -442,13 +442,13 @@ trm_attach(struct device *parent, struct device *self, void *aux)
 	 * map and establish interrupt
 	 */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 
 	if (pci_intr_establish(pa->pa_pc, ih, IPL_BIO, trm_intr, sc) == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -456,7 +456,7 @@ trm_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n",
-		    sc->sc_dev.dv_xname, intrstr);
+		    device_xname(&sc->sc_dev), intrstr);
 
 	sc->sc_adapter.adapt_dev = &sc->sc_dev;
 	sc->sc_adapter.adapt_nchannels = 1;
@@ -680,7 +680,7 @@ trm_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			return;
 		}
 		if (xs->xs_status & XS_STS_DONE) {
-			printf("%s: Is it done?\n", sc->sc_dev.dv_xname);
+			printf("%s: Is it done?\n", device_xname(&sc->sc_dev));
 			xs->xs_status &= ~XS_STS_DONE;
 		}
 
@@ -709,8 +709,8 @@ trm_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			    BUS_DMA_STREAMING |
 			    ((xs->xs_control & XS_CTL_DATA_IN) ?
 			    BUS_DMA_READ : BUS_DMA_WRITE))) != 0) {
-				printf("%s: DMA transfer map unable to load, "
-				    "error = %d\n", sc->sc_dev.dv_xname, error);
+				aprint_error_dev(&sc->sc_dev, "DMA transfer map unable to load, "
+				    "error = %d\n", error);
 				xs->error = XS_DRIVER_STUFFUP;
 				/*
 				 * free SRB
@@ -1175,8 +1175,7 @@ trm_intr(void *arg)
 		case PH_BUS_FREE:
 			break;
 		default:
-			printf("%s: unexpected phase in trm_intr() phase0\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unexpected phase in trm_intr() phase0\n");
 			break;
 		}
 
@@ -1204,8 +1203,7 @@ trm_intr(void *arg)
 		case PH_BUS_FREE:
 			break;
 		default:
-			printf("%s: unexpected phase in trm_intr() phase1\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "unexpected phase in trm_intr() phase1\n");
 			break;
 		}
 
@@ -1784,8 +1782,7 @@ trm_msgin_phase0(struct trm_softc *sc)
 					sc->sc_state = TRM_DATA_XFER;
 					break;
 				} else {
-					printf("%s: invalid tag id\n",
-					   sc->sc_dev.dv_xname);
+					aprint_error_dev(&sc->sc_dev, "invalid tag id\n");
 				}
 
 				sc->sc_state = TRM_UNEXPECT_RESEL;
@@ -2097,7 +2094,7 @@ trm_reselect(struct trm_softc *sc)
 		    sc->sc_actsrb == NULL) {
 			printf("%s: reselect from target %d lun %d "
 			    "without nexus; sending abort\n",
-			    sc->sc_dev.dv_xname, target, lun);
+			    device_xname(&sc->sc_dev), target, lun);
 			sc->sc_state = TRM_UNEXPECT_RESEL;
 			sc->sc_msgbuf[0] = MSG_ABORT_TAG;
 			sc->sc_msgcnt = 1;
@@ -2172,13 +2169,12 @@ trm_done(struct trm_softc *sc, struct trm_srb *srb)
 		 */
 		if ((srb->hastat & H_OVER_UNDER_RUN) != 0) {
 			printf("%s: over/under run error\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(&sc->sc_dev));
 			srb->tastat = 0;
 			/* Illegal length (over/under run) */
 			xs->error = XS_DRIVER_STUFFUP;
 		} else if ((srb->flag & PARITY_ERROR) != 0) {
-			printf("%s: parity error\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "parity error\n");
 			/* Driver failed to perform operation */
 			xs->error = XS_DRIVER_STUFFUP; /* XXX */
 		} else if ((srb->flag & SRB_TIMEOUT) != 0) {
@@ -2201,8 +2197,7 @@ trm_done(struct trm_softc *sc, struct trm_srb *srb)
 	case SCSI_CHECK:
 		if ((srb->flag & AUTO_REQSENSE) != 0 ||
 		    trm_request_sense(sc, srb) != 0) {
-			printf("%s: request sense failed\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "request sense failed\n");
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 		}
@@ -2221,7 +2216,7 @@ trm_done(struct trm_softc *sc, struct trm_srb *srb)
 		break;
 
 	case SCSI_RESV_CONFLICT:
-		DPRINTF(("%s: target reserved at ", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: target reserved at ", device_xname(&sc->sc_dev)));
 		DPRINTF(("%s %d\n", __FILE__, __LINE__));
 		xs->error = XS_BUSY;
 		break;
@@ -2229,7 +2224,7 @@ trm_done(struct trm_softc *sc, struct trm_srb *srb)
 	default:
 		srb->hastat = 0;
 		printf("%s: trm_done(): unknown status = %02x\n",
-		    sc->sc_dev.dv_xname, xs->status);
+		    device_xname(&sc->sc_dev), xs->status);
 		xs->error = XS_DRIVER_STUFFUP;
 		break;
 	}
