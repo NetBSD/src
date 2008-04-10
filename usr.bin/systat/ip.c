@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.16 2008/04/10 17:14:25 thorpej Exp $	*/
+/*	$NetBSD: ip.c,v 1.17 2008/04/10 17:16:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.16 2008/04/10 17:14:25 thorpej Exp $");
+__RCSID("$NetBSD: ip.c,v 1.17 2008/04/10 17:16:39 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -186,14 +186,16 @@ int
 initip(void)
 {
 
-	if (namelist[0].n_type == 0) {
-		if (kvm_nlist(kd, namelist)) {
-			nlisterr(namelist);
-			return(0);
-		}
-		if ((namelist[0].n_type | namelist[1].n_type) == 0) {
-			error("No namelist");
-			return(0);
+	if (! use_sysctl) {
+		if (namelist[0].n_type == 0) {
+			if (kvm_nlist(kd, namelist)) {
+				nlisterr(namelist);
+				return(0);
+			}
+			if ((namelist[0].n_type | namelist[1].n_type) == 0) {
+				error("No namelist");
+				return(0);
+			}
 		}
 	}
 	return 1;
