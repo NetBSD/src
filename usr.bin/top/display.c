@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.17 2007/08/17 21:49:26 oster Exp $	*/
+/*	$NetBSD: display.c,v 1.18 2008/04/10 20:41:42 oster Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -47,7 +47,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.17 2007/08/17 21:49:26 oster Exp $");
+__RCSID("$NetBSD: display.c,v 1.18 2008/04/10 20:41:42 oster Exp $");
 #endif
 
 #include "os.h"
@@ -206,7 +206,6 @@ int mpid;
 double *avenrun;
 
 {
-    register int i;
 
     /* i_loadave also clears the screen, since it is first */
     clear();
@@ -217,14 +216,8 @@ double *avenrun;
 	printf("last pid: %5d;  ", mpid);
     }
 
-    printf("load averages");
-
-    for (i = 0; i < 3; i++)
-    {
-	printf("%c %5.2f",
-	    i == 0 ? ':' : ',',
-	    avenrun[i]);
-    }
+    printf("load averages: %5.2f, %5.2f, %5.2f      ",
+	avenrun[0], avenrun[1], avenrun[2]);
     lmpid = mpid;
 }
 
@@ -260,12 +253,8 @@ double *avenrun;
 
     /* display new load averages */
     /* we should optimize this and only display changes */
-    for (i = 0; i < 3; i++)
-    {
-	printf("%s%5.2f",
-	    i == 0 ? "" : ", ",
-	    avenrun[i]);
-    }
+    printf("%5.2f, %5.2f, %5.2f      ", 
+	avenrun[0], avenrun[1], avenrun[2]);
 }
 
 void
