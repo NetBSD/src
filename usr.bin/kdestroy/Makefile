@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2007/05/28 12:06:27 tls Exp $
+# $NetBSD: Makefile,v 1.19 2008/04/10 15:05:23 tsutsui Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -27,9 +27,9 @@ CPPFLAGS+=-DHAVE_IPV6
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
-LDADD+= -lkafs -lkrb5 -lcrypto -lasn1 -lcom_err \
-	-L${VERS} -lvers -lroken -lcrypt
-DPADD+=	${LIBKAFS} ${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} \
-	${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
+LDADD+= -lkafs -lkrb5 -lhx509 -lcrypto -lasn1 \
+	-lcom_err -L${VERS} -lvers -lroken -lcrypt
+DPADD+=	${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
+	${LIBCOM_ERR} ${VERS}/libvers.a ${LIBROKEN} ${LIBCRYPT}
 
 .include <bsd.prog.mk>
