@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.4 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.5 2008/04/11 00:56:11 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.4 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.5 2008/04/11 00:56:11 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -103,7 +103,7 @@ setnsellength(const char *val, int d)
 static void
 fixnsel(struct sockaddr_iso *siso)
 {
-	if (siso->siso_family == 0)
+	if (siso->siso_family == AF_UNSPEC)
 		return;
 	siso->siso_tlen = nsellength;
 }
