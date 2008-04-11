@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.37 2008/04/11 06:25:35 dogcow Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.38 2008/04/11 10:28:10 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.37 2008/04/11 06:25:35 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.38 2008/04/11 10:28:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,8 @@ struct fcrypt {
 };
 
 /* For our fixed-size allocations */
-struct pool fcrpl;
-struct pool csepl;
+static struct pool fcrpl;
+static struct pool csepl;
 
 /* Declaration of master device (fd-cloning/ctxt-allocating) entrypoints */
 static int	cryptoopen(dev_t dev, int flag, int mode, struct lwp *l);
@@ -171,7 +171,6 @@ static int	cryptodev_mop(struct fcrypt *, struct crypt_n_op *, int, struct
 			      lwp *);
 static int	cryptodev_key(struct crypt_kop *);
 static int	cryptodev_mkey(struct fcrypt *, struct crypt_n_kop *, int);
-int	cryptodev_dokey(struct crypt_kop *kop, struct crparam kvp[]);
 static int	cryptodev_session(struct fcrypt *, struct session_op *);
 static int	cryptodev_msession(struct fcrypt *, struct session_n_op *,
 				       int);
@@ -643,8 +642,8 @@ cryptodev_mcb(void *op)
 	}
 
 	TAILQ_INSERT_TAIL(&crp->fcrp->crp_ret_mq, crp, crp_next);
-	mutex_spin_exit(&crypto_mtx);
 	selnotify(&crp->fcrp->sinfo, 0, 0);
+	mutex_spin_exit(&crypto_mtx);
 	return (0);
 }
 
@@ -667,8 +666,8 @@ cryptodevkey_mcb(void *op)
 	mutex_spin_enter(&crypto_mtx);
 	cv_signal(&krp->krp_cv);
 	TAILQ_INSERT_TAIL(&krp->fcrp->crp_ret_mkq, krp, krp_next);
-	mutex_spin_exit(&crypto_mtx);
 	selnotify(&krp->fcrp->sinfo, 0, 0);
+	mutex_spin_exit(&crypto_mtx);
 	return (0);
 }
 
@@ -823,11 +822,10 @@ cryptof_close(struct file *fp)
 		(void)csefree(cse);
 	}
 	seldestroy(&fcr->sinfo);
-	pool_put(&fcrpl, fcr);
-
 	fp->f_data = NULL;
 	mutex_spin_exit(&crypto_mtx);
 
+	pool_put(&fcrpl, fcr);
 	return 0;
 }
 
@@ -1775,21 +1773,24 @@ static int
 cryptof_poll(struct file *fp, int events)
 {
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
+	int revents = 0;
 
 	if (!(events & (POLLIN | POLLRDNORM))) {
 		/* only support read and POLLIN */
 		return 0;
 	}
 
+	mutex_spin_enter(&crypto_mtx);
 	if (TAILQ_EMPTY(&fcr->crp_ret_mq) && TAILQ_EMPTY(&fcr->crp_ret_mkq)) {
-		/* no completed requests pending,
-		 * save the poll for later (for selnotify()). */
+		/* no completed requests pending, save the poll for later */
 		selrecord(curlwp, &fcr->sinfo);
-		return 0;
 	} else {
 		/* let the app(s) know that there are completed requests */
-		return events & (POLLIN | POLLRDNORM);
+		revents = events & (POLLIN | POLLRDNORM);
 	}
+	mutex_spin_exit(&crypto_mtx);
+
+	return revents;
 }
 
 /*
