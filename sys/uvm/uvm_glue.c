@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.123 2008/04/11 15:31:37 christos Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.124 2008/04/11 15:47:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.123 2008/04/11 15:31:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.124 2008/04/11 15:47:15 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -594,7 +594,7 @@ uvm_scheduler(void)
 #ifdef DEBUG
 			if (swapdebug & SDB_FOLLOW)
 				printf("%s: no room for pid %d(%s),"
-				    " free %d\n", l->l_proc->p_pid, __func__,
+				    " free %d\n", __func__, l->l_proc->p_pid,
 				    l->l_proc->p_comm, uvmexp.free);
 #endif
 			uvm_wait("schedpwait");
