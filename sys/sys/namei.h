@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.59 2008/04/11 15:25:41 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.60 2008/04/11 15:51:38 ad Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
  *   by:   NetBSD: gennameih.awk,v 1.1 2007/08/15 14:08:11 pooka Exp 
- *   from: NetBSD: namei.src,v 1.7 2008/04/11 15:25:24 ad Exp 
+ *   from: NetBSD: namei.src,v 1.8 2008/04/11 15:51:25 ad Exp 
  */
 
 /*
@@ -43,9 +43,10 @@
 
 #include <sys/queue.h>
 #include <sys/mutex.h>
-#include <sys/kauth.h>
 
 #ifdef _KERNEL
+#include <sys/kauth.h>
+
 /*
  * Encapsulation of namei parameters.
  */
