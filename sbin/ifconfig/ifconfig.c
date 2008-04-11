@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.181 2007/12/16 13:49:22 degroote Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.182 2008/04/11 01:14:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.181 2007/12/16 13:49:22 degroote Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.182 2008/04/11 01:14:28 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,8 +336,8 @@ const struct cmd {
 	{ "-tso6",	-IFCAP_TSOv6,	0,		setifcaps },
 	{ "agrport",	NEXTARG,	0,		agraddport } ,
 	{ "-agrport",	NEXTARG,	0,		agrremport } ,
-	{ 0,		0,		0,		setifaddr },
-	{ 0,		0,		0,		setifdstaddr },
+	{ NULL,		0,		0,		setifaddr },
+	{ NULL,		0,		0,		setifdstaddr },
 };
 
 int	getinfo(struct ifreq *);
@@ -552,41 +552,39 @@ main(int argc, char *argv[])
 #endif
 
 	/* Process commands. */
-	while (argc > 0) {
+	for (; argc > 0; argc--, argv++) {
 		const struct cmd *p;
 
-		for (p = cmds; p->c_name; p++)
+		for (p = cmds; p->c_name != NULL; p++) {
 			if (strcmp(argv[0], p->c_name) == 0)
 				break;
-		if (p->c_name == 0 && setaddr) {
+		}
+		if (p->c_name == NULL && setaddr) {
 			if ((flags & IFF_POINTOPOINT) == 0) {
 				errx(EXIT_FAILURE,
 				    "can't set destination address %s",
-				     "on non-point-to-point link");
+				    "on non-point-to-point link");
 			}
 			p++;	/* got src, do dst */
 		}
-		if (p->c_func != NULL) {
-			if (p->c_parameter == NEXTARG) {
-				if (argc < 2)
-					errx(EXIT_FAILURE,
-					    "'%s' requires argument",
-					    p->c_name);
-				(*p->c_func)(argv[1], 0);
-				argc--, argv++;
-			} else if (p->c_parameter == NEXTARG2) {
-				if (argc < 3)
-					errx(EXIT_FAILURE,
-					    "'%s' requires 2 arguments",
-					    p->c_name);
-				((void (*)(const char *, const char *))
-				    *p->c_func)(argv[1], argv[2]);
-				argc -= 2, argv += 2;
-			} else
-				(*p->c_func)(argv[0], p->c_parameter);
-			actions |= p->c_action;
-		}
-		argc--, argv++;
+		if (p->c_func == NULL)
+			continue;
+		if (p->c_parameter == NEXTARG) {
+			if (argc < 2)
+				errx(EXIT_FAILURE, "'%s' requires argument",
+				    p->c_name);
+			(*p->c_func)(argv[1], 0);
+			argc--, argv++;
+		} else if (p->c_parameter == NEXTARG2) {
+			if (argc < 3)
+				errx(EXIT_FAILURE, "'%s' requires 2 arguments",
+				    p->c_name);
+			((void (*)(const char *, const char *))
+			    *p->c_func)(argv[1], argv[2]);
+			argc -= 2, argv += 2;
+		} else
+			(*p->c_func)(argv[0], p->c_parameter);
+		actions |= p->c_action;
 	}
 
 	/* 
