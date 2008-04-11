@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.108 2008/02/20 17:13:29 matt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.109 2008/04/11 16:25:38 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.108 2008/02/20 17:13:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.109 2008/04/11 16:25:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2899,8 +2899,9 @@ newdirrem(bp, dp, ip, isrmdir, prevdirremp)
 	 */
 	mutex_enter(&bufcache_lock);
 	num_dirrem += 1;
-	if (num_dirrem > max_softdeps / 2 && speedup_syncer() == 0) {
-		(void) request_cleanup(FLUSH_REMOVE);
+	if (num_dirrem > max_softdeps / 3 && speedup_syncer() == 0) {
+		if (num_dirrem > (max_softdeps / 3) * 2)
+			(void) request_cleanup(FLUSH_REMOVE);
 	}
 	lbn = lblkno(dp->i_fs, dp->i_offset);
 	offset = blkoff(dp->i_fs, dp->i_offset);
