@@ -1,4 +1,4 @@
-/* $NetBSD: storage.c,v 1.10 2007/12/18 20:31:50 agc Exp $ */
+/* $NetBSD: storage.c,v 1.11 2008/04/11 08:22:37 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -197,7 +197,7 @@ do_device(conffile_t *cf, devv_t *devvp, extv_t *evp, ent_t *ep)
 				(void) fprintf(stderr, "Error: extent `%s' has already been used\n", ep->sv.v[devvp->v[devvp->c].c + 2]);
 				return 0;
 			}
-			if (devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len != devvp->v[devvp->c].len) {
+			if (devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len != devvp->v[devvp->c].len && devvp->v[devvp->c].raid != 0) {
 				(void) fprintf(stderr, "%s:%d: ", conffile_get_name(cf), conffile_get_lineno(cf));
 				(void) fprintf(stderr, "Error: extent `%s' has size %" PRIu64 ", not %" PRIu64"\n", ep->sv.v[devvp->v[devvp->c].c + 2], devvp->v[devvp->c].xv[devvp->v[devvp->c].c].u.xp->len, devvp->v[devvp->c].len);
 				return 0;
