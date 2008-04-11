@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.36 2008/04/10 22:48:42 tls Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.37 2008/04/11 06:25:35 dogcow Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.36 2008/04/10 22:48:42 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.37 2008/04/11 06:25:35 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.36 2008/04/10 22:48:42 tls Exp $");
 #include <sys/kauth.h>
 #include <sys/select.h>
 #include <sys/poll.h>
+#include <sys/atomic.h>
 
 #include "opt_ocf.h"
 #include <opencrypto/cryptodev.h>
@@ -388,8 +389,8 @@ mbail:
 					crypt_ret->count);
 		/* sanity check count */
 		if (crypt_ret->count > count) {
-			printf("%s.%d: error returned count %d > original "
-			       " count %d\n",
+			printf("%s.%d: error returned count %zd > original "
+			       " count %zd\n",
 				__FILE__, __LINE__, crypt_ret->count, count);
 			crypt_ret->count = count;
 
