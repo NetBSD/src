@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2008/03/29 23:26:15 macallan Exp $
+#	$NetBSD: Makefile,v 1.17 2008/04/11 15:14:08 phx Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -34,7 +34,7 @@ CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT -DWSCONS_SUPPORT \
 SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC \
-			-DUSE_PPC_MMAP -DPCI_VIA_TTYE0
+			-DUSE_PPC_MMAP
 .endfor
 .endif
 
@@ -89,6 +89,11 @@ SRCS.bus+=	ix86Pci.c
 SRCS.bus+=	netbsdPci.c
 .endif
 
+.if ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
+.for _FN in ${SRCS.bus}
+CPPFLAGS.${_FN}=	-DPCI_VIA_TTYE0
+.endfor
+.endif
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/misc
 SRCS.misc=	xf86_Util.c Delay.c xf86_IlHack.c
