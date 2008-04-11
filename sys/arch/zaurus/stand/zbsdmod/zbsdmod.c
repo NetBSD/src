@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.1 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.2 2008/04/11 16:43:49 nonaka Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -76,8 +76,8 @@ static Elf_Shdr *shp;
 static Elf_Off off;
 static int havesyms;
 
-/* The maximum size of a kernel image is restricted to 5MB. */
-static u_int bsdimage[1310720];	/* XXX use kmalloc() */
+/* The maximum size of a kernel image is restricted to 10MB. */
+static u_int bsdimage[10485760/sizeof(u_int)];	/* XXX use kmalloc() */
 static char bootargs[BOOTARGS_BUFSIZ];
 
 /*
