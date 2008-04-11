@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.122 2008/03/29 20:40:52 christos Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.123 2008/04/11 15:31:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.122 2008/03/29 20:40:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.123 2008/04/11 15:31:37 christos Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.122 2008/03/29 20:40:52 christos Exp 
  */
 
 static void uvm_swapout(struct lwp *);
+static int uarea_swapin(vaddr_t);
 
 #define UVM_NUAREA_HIWAT	20
 #define	UVM_NUAREA_LOWAT	16
@@ -154,7 +155,7 @@ uvm_chgkprot(void *addr, size_t len, int rw)
 		 * Extract physical address for the page.
 		 */
 		if (pmap_extract(pmap_kernel(), sva, &pa) == false)
-			panic("chgkprot: invalid page");
+			panic("%s: invalid page", __func__);
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
 	pmap_update(pmap_kernel());
@@ -249,10 +250,8 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if ((l2->l_flag & LW_INMEM) == 0) {
 		vaddr_t uarea = USER_TO_UAREA(l2->l_addr);
 
-		error = uvm_fault_wire(kernel_map, uarea,
-		    uarea + USPACE, VM_PROT_READ | VM_PROT_WRITE, 0);
-		if (error)
-			panic("uvm_lwp_fork: uvm_fault_wire failed: %d", error);
+		if ((error = uarea_swapin(uarea)) != 0)
+			panic("%s: uvm_fault_wire failed: %d", __func__, error);
 #ifdef PMAP_UAREA
 		/* Tell the pmap this is a u-area mapping */
 		PMAP_UAREA(uarea);
@@ -468,7 +467,7 @@ uvm_swapin(struct lwp *l)
 
 	error = uarea_swapin(USER_TO_UAREA(l->l_addr));
 	if (error) {
-		panic("uvm_swapin: rewiring stack failed: %d", error);
+		panic("%s: rewiring stack failed: %d", __func__, error);
 	}
 
 	/*
@@ -549,7 +548,7 @@ uvm_scheduler(void)
 		}
 #ifdef DEBUG
 		if (swapdebug & SDB_FOLLOW)
-			printf("scheduler: running, procp %p pri %d\n", ll,
+			printf("%s: running, procp %p pri %d\n", __func__, ll,
 			    ppri);
 #endif
 		/*
@@ -594,14 +593,14 @@ uvm_scheduler(void)
 			mutex_exit(&proclist_lock);
 #ifdef DEBUG
 			if (swapdebug & SDB_FOLLOW)
-				printf("scheduler: no room for pid %d(%s),"
-				    " free %d\n", l->l_proc->p_pid,
+				printf("%s: no room for pid %d(%s),"
+				    " free %d\n", l->l_proc->p_pid, __func__,
 				    l->l_proc->p_comm, uvmexp.free);
 #endif
 			uvm_wait("schedpwait");
 #ifdef DEBUG
 			if (swapdebug & SDB_FOLLOW)
-				printf("scheduler: room again, free %d\n",
+				printf("%s: room again, free %d\n", __func__,
 				    uvmexp.free);
 #endif
 		}
@@ -716,7 +715,7 @@ uvm_swapout_threads(void)
 			l = outl2;
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			printf("swapout_threads: no duds, try procp %p\n", l);
+			printf("%s: no duds, try procp %p\n", __func__, l);
 #endif
 		if (l) {
 			mutex_enter(&l->l_swaplock);
@@ -747,9 +746,9 @@ uvm_swapout(struct lwp *l)
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
-		printf("swapout: lid %d.%d(%s)@%p, stat %x pri %d free %d\n",
-		   l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, l->l_addr,
-		   l->l_stat, l->l_slptime, uvmexp.free);
+		printf("%s: lid %d.%d(%s)@%p, stat %x pri %d free %d\n",
+		   __func__, l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm,
+		   l->l_addr, l->l_stat, l->l_slptime, uvmexp.free);
 #endif
 
 	/*
