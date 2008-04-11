@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.33 2008/03/28 22:19:39 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.34 2008/04/11 15:28:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.33 2008/03/28 22:19:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.34 2008/04/11 15:28:34 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -533,8 +533,7 @@ mutex_vector_enter(kmutex_t *mtx)
 	 * determine that the owner is not running on a processor,
 	 * then we stop spinning, and sleep instead.
 	 */
-	for (;;) {
-		owner = mtx->mtx_owner;
+	for (owner = mtx->mtx_owner;;) {
 		if (!MUTEX_OWNED(owner)) {
 			/*
 			 * Mutex owner clear could mean two things:
@@ -547,6 +546,7 @@ mutex_vector_enter(kmutex_t *mtx)
 			 */
 			if (MUTEX_ACQUIRE(mtx, curthread))
 				break;
+			owner = mtx->mtx_owner;
 			continue;
 		}
 
@@ -565,10 +565,10 @@ mutex_vector_enter(kmutex_t *mtx)
 			LOCKSTAT_START_TIMER(lsflag, spintime);
 			count = SPINLOCK_BACKOFF_MIN;
 			for (;;) {
+				SPINLOCK_BACKOFF(count);
 				owner = mtx->mtx_owner;
 				if (!mutex_onproc(owner, &ci))
 					break;
-				SPINLOCK_BACKOFF(count);
 			}
 			LOCKSTAT_STOP_TIMER(lsflag, spintime);
 			LOCKSTAT_COUNT(spincnt, 1);
@@ -586,6 +586,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 */
 		if (!MUTEX_SET_WAITERS(mtx, owner)) {
 			turnstile_exit(mtx);
+			owner = mtx->mtx_owner;
 			continue;
 		}
 
@@ -686,6 +687,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		if ((membar_consumer(), mutex_onproc(owner, &ci)) ||
 		    (membar_consumer(), !MUTEX_HAS_WAITERS(mtx))) {
 			turnstile_exit(mtx);
+			owner = mtx->mtx_owner;
 			continue;
 		}
 #endif	/* MULTIPROCESSOR */
@@ -696,6 +698,8 @@ mutex_vector_enter(kmutex_t *mtx)
 
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
+
+		owner = mtx->mtx_owner;
 	}
 
 	LOCKSTAT_EVENT(lsflag, mtx, LB_ADAPTIVE_MUTEX | LB_SLEEP1,
