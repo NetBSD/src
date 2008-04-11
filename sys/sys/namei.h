@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.58 2007/12/08 19:30:19 pooka Exp $	*/
+/*	$NetBSD: namei.h,v 1.59 2008/04/11 15:25:41 ad Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
  *   by:   NetBSD: gennameih.awk,v 1.1 2007/08/15 14:08:11 pooka Exp 
- *   from: NetBSD: namei.src,v 1.6 2007/12/08 19:29:52 pooka Exp 
+ *   from: NetBSD: namei.src,v 1.7 2008/04/11 15:25:24 ad Exp 
  */
 
 /*
@@ -42,6 +42,9 @@
 #define	_SYS_NAMEI_H_
 
 #include <sys/queue.h>
+#include <sys/mutex.h>
+#include <sys/kauth.h>
+
 #ifdef _KERNEL
 /*
  * Encapsulation of namei parameters.
@@ -139,11 +142,10 @@ struct nameidata {
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
 #define	PARAMASK	0x02fff00	/* mask of parameter descriptors */
+
 /*
  * Initialization of an nameidata structure.
  */
-#include <sys/kauth.h>
-
 #define NDINIT(ndp, op, flags, segflg, namep) { \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
@@ -162,17 +164,26 @@ struct nameidata {
 
 #define	NCHNAMLEN	31	/* maximum name segment length we bother with */
 
+/*
+ * Namecache entry.  This structure is arranged so that frequently
+ * accessed and mostly read-only data is toward the front, with
+ * infrequently accessed data and the lock towards the rear.  The
+ * lock is then more likely to be in a seperate cache line.
+ */
 struct	namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* hash chain */
-	TAILQ_ENTRY(namecache) nc_lru;	/* LRU chain */
 	LIST_ENTRY(namecache) nc_vhash;	/* directory hash chain */
-	LIST_ENTRY(namecache) nc_dvlist;
 	struct	vnode *nc_dvp;		/* vnode of parent of name */
-	LIST_ENTRY(namecache) nc_vlist;
 	struct	vnode *nc_vp;		/* vnode the name refers to */
 	int	nc_flags;		/* copy of componentname's ISWHITEOUT */
 	char	nc_nlen;		/* length of name */
 	char	nc_name[NCHNAMLEN];	/* segment name */
+	void	*nc_gcqueue;		/* queue for garbage collection */
+	TAILQ_ENTRY(namecache) nc_lru;	/* psuedo-lru chain */
+	LIST_ENTRY(namecache) nc_dvlist;
+	LIST_ENTRY(namecache) nc_vlist;
+	kmutex_t nc_lock;		/* lock on this entry */
+	int	nc_hittime;		/* last time scored a hit */
 };
 
 #ifdef _KERNEL
@@ -180,6 +191,7 @@ struct	namecache {
 #include <sys/pool.h>
 
 struct mount;
+struct cpu_info;
 
 extern pool_cache_t pnbuf_cache;	/* pathname buffer cache */
 
@@ -201,6 +213,7 @@ int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
 void	cache_enter(struct vnode *, struct vnode *, struct componentname *);
 void	nchinit(void);
 void	nchreinit(void);
+void	cache_cpu_init(struct cpu_info *);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...));
 
