@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.83 2008/03/29 09:01:35 mlelstv Exp $	*/
+/*	$NetBSD: fd.c,v 1.84 2008/04/11 19:16:44 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.83 2008/03/29 09:01:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84 2008/04/11 19:16:44 cegger Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1211,7 +1211,7 @@ loop:
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 ||
 		    cyl != bp->b_cylinder * fd->sc_type->step) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 2, "seek failed");
+			fdcstatus(fd->sc_dev, 2, "seek failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
@@ -1236,7 +1236,7 @@ loop:
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
 			isa_dmaabort(fdc->sc_ic, fdc->sc_drq);
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
+			fdcstatus(fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
 			printf("blkno %llu nblks %d\n",
 			    (unsigned long long)fd->sc_blkno, fd->sc_nblks);
@@ -1297,7 +1297,7 @@ loop:
 		out_fdc(iot, ioh, NE7CMD_SENSEI);
 		if (fdcresult(fdc) != 2 || (st0 & 0xf8) != 0x20 || cyl != 0) {
 #ifdef FD_DEBUG
-			fdcstatus(&fd->sc_dev, 2, "recalibrate failed");
+			fdcstatus(fd->sc_dev, 2, "recalibrate failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
