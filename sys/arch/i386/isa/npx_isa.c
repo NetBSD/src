@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.18 2008/03/04 14:53:38 cube Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.19 2008/04/11 20:42:34 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.18 2008/03/04 14:53:38 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.19 2008/04/11 20:42:34 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ npx_isa_attach(device_t parent, device_t self, void *aux)
 		/*FALLTHROUGH*/
 	case NPX_CPUID:
 		aprint_verbose_dev(sc->sc_dev, "%s using exception 16\n",
-		    sc->sc_type == NPX_CPUID ? " reported by CPUID;" : "");
+		    sc->sc_type == NPX_CPUID ? "reported by CPUID;" : "");
 		sc->sc_type = NPX_EXCEPTION;
 		break;
 	case NPX_BROKEN:
