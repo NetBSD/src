@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.41 2008/04/10 23:22:30 dyoung Exp $	*/
+/*	$NetBSD: intr.c,v 1.42 2008/04/11 16:44:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.41 2008/04/10 23:22:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.42 2008/04/11 16:44:45 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -990,7 +990,6 @@ cpu_intr_init(struct cpu_info *ci)
 	 */
 	ci->ci_intrstack = (char *)istack + redzone_const_or_zero(PAGE_SIZE) +
 	    INTRSTACKSIZE - 33 * sizeof(register_t);
-	printf("%s: ci->ci_intrstack %p\n", __func__, (void *)ci->ci_intrstack);
 #if defined(__x86_64__)
 	ci->ci_tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
 #endif /* defined(__x86_64__) */
