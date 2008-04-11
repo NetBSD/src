@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.4 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.5 2008/04/11 00:55:41 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.4 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.5 2008/04/11 00:55:41 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -109,14 +109,12 @@ checkatrange(struct sockaddr *sa)
 		at_nr.nr_firstnet =	/* Default range of one */
 		at_nr.nr_lastnet = sat->sat_addr.s_net;
 	printf("\tatalk %d.%d range %d-%d phase %d\n",
-	ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
-	ntohs(at_nr.nr_firstnet), ntohs(at_nr.nr_lastnet), at_nr.nr_phase);
-	if ((u_short) ntohs(at_nr.nr_firstnet) >
-			(u_short) ntohs(sat->sat_addr.s_net)
-		    || (u_short) ntohs(at_nr.nr_lastnet) <
-			(u_short) ntohs(sat->sat_addr.s_net))
+	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
+	    ntohs(at_nr.nr_firstnet), ntohs(at_nr.nr_lastnet), at_nr.nr_phase);
+	if (ntohs(at_nr.nr_firstnet) > ntohs(sat->sat_addr.s_net) ||
+	    ntohs(at_nr.nr_lastnet) < ntohs(sat->sat_addr.s_net))
 		errx(EXIT_FAILURE, "AppleTalk address is not in range");
-	*((struct netrange *) &sat->sat_zero) = at_nr;
+	*((struct netrange *)&sat->sat_zero) = at_nr;
 }
 
 void
