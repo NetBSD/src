@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.18 2008/04/08 20:40:42 cegger Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.19 2008/04/11 06:25:25 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.18 2008/04/08 20:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.19 2008/04/11 06:25:25 he Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -292,7 +292,7 @@ gtpci_attach(struct device *parent, struct device *self, void *aux)
 		    IPL_VM, gtpci_error_intr, pc);
 		intr_establish(pci_irqs[gtpc->gtpc_busno][2], IST_LEVEL,
 		    IPL_VM, gtpci_error_intr, pc);
-		aprint_normal_dev(pc->pc_parent, "%d error interrupts at irqs %s, %s, %s\n",
+		aprint_normal_dev(pc->pc_parent, "%s%d error interrupts at irqs %s, %s, %s\n",
 		    "pci", busno,
 		    intr_string(pci_irqs[gtpc->gtpc_busno][0]),
 		    intr_string(pci_irqs[gtpc->gtpc_busno][1]),
