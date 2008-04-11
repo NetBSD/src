@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.277 2008/03/14 22:47:06 cube Exp $	*/
+/*	$NetBSD: com.c,v 1.278 2008/04/11 12:45:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.277 2008/03/14 22:47:06 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.278 2008/04/11 12:45:08 tsutsui Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1332,10 +1332,14 @@ comparam(struct tty *tp, struct termios *t)
 	 */
 	if (sc->sc_type == COM_TYPE_HAYESP)
 		sc->sc_fifo = FIFO_DMA_MODE | FIFO_ENABLE | FIFO_TRIGGER_8;
-	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
-		sc->sc_fifo = FIFO_ENABLE |
-		    (t->c_ospeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8);
-	else
+	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+		if (t->c_ospeed <= 1200)
+			sc->sc_fifo = FIFO_ENABLE | FIFO_TRIGGER_1;
+		else if (t->c_ospeed <= 38400)
+			sc->sc_fifo = FIFO_ENABLE | FIFO_TRIGGER_8;
+		else
+			sc->sc_fifo = FIFO_ENABLE | FIFO_TRIGGER_4;
+	} else
 		sc->sc_fifo = 0;
 
 	/* And copy to tty. */
