@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.7 2008/02/27 17:02:56 ad Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.8 2008/04/11 15:24:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,7 @@
 #include <sys/systm.h>
 #include <sys/module.h>
 #include <sys/cpu.h>
+#include <sys/evcnt.h>
 
 #ifdef __sparc__
  /* 
@@ -119,4 +120,11 @@ cpu_lookup_byindex(u_int index)
 	extern struct cpu_info rump_cpu;
 
 	return &rump_cpu;
+}
+
+void
+evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
+    const char *group, const char *name)
+{
+
 }
