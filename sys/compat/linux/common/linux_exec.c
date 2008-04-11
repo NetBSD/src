@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.101 2008/04/08 20:25:00 njoly Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.102 2008/04/11 16:47:50 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.101 2008/04/08 20:25:00 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.102 2008/04/11 16:47:50 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,8 @@ linux_nptl_proc_exit(struct proc *p)
 	printf("%s:%d e->s->group_pid = %d, p->p_pid = %d, flags = 0x%x\n", 
 	    __func__, __LINE__, e->s->group_pid, p->p_pid, e->s->flags);
 #endif
-	if (e->s->group_pid != p->p_pid) {
+	if ((e->s->group_pid != p->p_pid) &&
+	    (e->clone_flags & LINUX_CLONE_THREAD)) {
 		proc_reparent(p, initproc);	
 		cv_broadcast(&initproc->p_waitcv);
 	}
