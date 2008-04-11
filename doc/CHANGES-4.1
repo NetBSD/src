@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.50 2008/04/08 21:01:36 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.51 2008/04/11 06:36:32 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -834,4 +834,13 @@ src/lib/libc/stdio/vfwprintf.c		1.12
 	but gdtoa is too complicated to fix.
 	Try printf %99999999999.9999999999f 2
 	[mjf, ticket #1120]
+
+src/sys/kern/kern_ktrace.c			1.112.4.1
+src/sys/kern/kern_sa.c				1.87.4.9
+src/sys/sys/ktrace.h				1.45.4.1
+	Pass an array of pointers in kernel VM space to ktrsaupcall for it
+	to create the ktrace record instead of trying to access a pointer
+	in userland.
+	Fixes PR#37534
+	[skrll, ticket #1121]
 
