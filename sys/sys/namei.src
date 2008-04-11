@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.7 2008/04/11 15:25:24 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.8 2008/04/11 15:51:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -36,9 +36,10 @@
 
 #include <sys/queue.h>
 #include <sys/mutex.h>
-#include <sys/kauth.h>
 
 #ifdef _KERNEL
+#include <sys/kauth.h>
+
 /*
  * Encapsulation of namei parameters.
  */
