@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.20 2008/04/11 15:25:24 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.21 2008/04/11 15:31:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct lwp;
 #include <sys/sched.h>	/* for schedstate_percpu */
 #include <sys/condvar.h>
 #include <sys/percpu_types.h>
+#include <sys/queue.h>
 
 /*
  * MI per-cpu data
@@ -73,6 +74,7 @@ struct cpu_data {
 	kcondvar_t	cpu_xcall;		/* cross-call support */
 	int		cpu_xcall_pending;	/* cross-call support */
 	lwp_t		*cpu_onproc;		/* bottom level LWP */
+	CIRCLEQ_ENTRY(cpu_info) cpu_qchain;	/* circleq of all CPUs */
 	
 	/*
 	 * This section is mostly CPU-private.

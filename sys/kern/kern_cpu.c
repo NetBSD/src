@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.23 2008/04/11 15:25:24 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.24 2008/04/11 15:31:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.23 2008/04/11 15:25:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.24 2008/04/11 15:31:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ kmutex_t cpu_lock;
 int	ncpu;
 int	ncpuonline;
 bool	mp_online;
+struct	cpuqueue cpu_queue = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
 
 static struct cpu_info *cpu_infos[MAXCPUS];
 
@@ -113,6 +114,8 @@ mi_cpu_attach(struct cpu_info *ci)
 	int error;
 
 	ci->ci_index = ncpu;
+	cpu_infos[cpu_index(ci)] = ci;
+	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 
 	KASSERT(sizeof(kmutex_t) <= CACHE_LINE_SIZE);
 	spc->spc_lwplock = kmem_alloc(CACHE_LINE_SIZE, KM_SLEEP);
@@ -140,7 +143,6 @@ mi_cpu_attach(struct cpu_info *ci)
 	TAILQ_INIT(&ci->ci_data.cpu_biodone);
 	ncpu++;
 	ncpuonline++;
-	cpu_infos[cpu_index(ci)] = ci;
 
 	return 0;
 }
