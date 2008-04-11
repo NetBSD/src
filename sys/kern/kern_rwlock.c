@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.19 2008/04/04 17:25:09 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.20 2008/04/11 14:55:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.19 2008/04/04 17:25:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.20 2008/04/11 14:55:51 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -112,12 +112,6 @@ do {									\
 
 #endif	/* DIAGNOSTIC */
 
-/*
- * For platforms that use 'simple' RW locks.
- */
-#ifdef __HAVE_SIMPLE_RW_LOCKS
-#define	RW_ACQUIRE(rw, old, new)	RW_CAS1(&(rw)->rw_owner, old, new)
-#define	RW_RELEASE(rw, old, new)	RW_CAS1(&(rw)->rw_owner, old, new)
 #define	RW_SETDEBUG(rw, on)		((rw)->rw_owner |= (on) ? RW_DEBUG : 0)
 #define	RW_DEBUG_P(rw)			(((rw)->rw_owner & RW_DEBUG) != 0)
 #if defined(LOCKDEBUG)
@@ -126,24 +120,28 @@ do {									\
 #define	RW_INHERITDEBUG(new, old)	/* nothing */
 #endif /* defined(LOCKDEBUG) */
 
-static inline int
-RW_CAS1(volatile uintptr_t *ptr, uintptr_t old, uintptr_t new)
+static void	rw_abort(krwlock_t *, const char *, const char *);
+static void	rw_dump(volatile void *);
+static lwp_t	*rw_owner(wchan_t);
+
+static inline uintptr_t
+rw_cas(krwlock_t *rw, uintptr_t o, uintptr_t n)
 {
 
-	RW_INHERITDEBUG(new, old);
-	return RW_CAS(ptr, old, new);
+	RW_INHERITDEBUG(n, o);
+	return (uintptr_t)atomic_cas_ptr((volatile void *)&rw->rw_owner,
+	    (void *)o, (void *)n);
 }
 
-static inline int
-RW_SET_WAITERS(krwlock_t *rw, uintptr_t need, uintptr_t set)
+static inline void
+rw_swap(krwlock_t *rw, uintptr_t o, uintptr_t n)
 {
-	uintptr_t old;
 
-	if (((old = rw->rw_owner) & need) == 0)
-		return 0;
-	return RW_CAS(&rw->rw_owner, old, old | set);
+	RW_INHERITDEBUG(n, o);
+	n = (uintptr_t)atomic_swap_ptr((volatile void *)&rw->rw_owner,
+	    (void *)n);
+	RW_DASSERT(rw, n == o);
 }
-#endif	/* __HAVE_SIMPLE_RW_LOCKS */
 
 /*
  * For platforms that do not provide stubs, or for the LOCKDEBUG case.
@@ -157,10 +155,6 @@ __strong_alias(rw_enter,rw_vector_enter);
 __strong_alias(rw_exit,rw_vector_exit);
 __strong_alias(rw_tryenter,rw_vector_tryenter);
 #endif
-
-static void	rw_dump(volatile void *);
-static lwp_t	*rw_owner(wchan_t);
-extern int	mutex_onproc(uintptr_t, struct cpu_info **);	/* XXX */
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
@@ -241,6 +235,49 @@ rw_destroy(krwlock_t *rw)
 }
 
 /*
+ * rw_onproc:
+ *
+ *	Return true if an rwlock owner is running on a CPU in the system.
+ *	If the target is waiting on the kernel big lock, then we must
+ *	release it.  This is necessary to avoid deadlock.
+ *
+ *	Note that we can't use the rwlock owner field as an LWP pointer.  We
+ *	don't have full control over the timing of our execution, and so the
+ *	pointer could be completely invalid by the time we dereference it.
+ */
+static int
+rw_onproc(uintptr_t owner, struct cpu_info **cip)
+{
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	lwp_t *l;
+
+	if ((owner & (RW_WRITE_LOCKED|RW_HAS_WAITERS)) != RW_WRITE_LOCKED)
+		return 0;
+	l = (lwp_t *)(owner & RW_THREAD);
+
+	/* See if the target is running on a CPU somewhere. */
+	if ((ci = *cip) != NULL && ci->ci_curlwp == l)
+		goto run;
+	for (CPU_INFO_FOREACH(cii, ci))
+		if (ci->ci_curlwp == l)
+			goto run;
+
+	/* No: it may be safe to block now. */
+	*cip = NULL;
+	return 0;
+
+ run:
+ 	/* Target is running; do we need to block? */
+ 	*cip = ci;
+	return ci->ci_biglock_wanted != l;
+#else
+	return 0;
+#endif	/* MULTIPROCESSOR */
+}
+
+/*
  * rw_vector_enter:
  *
  *	Acquire a rwlock.
@@ -248,12 +285,13 @@ rw_destroy(krwlock_t *rw)
 void
 rw_vector_enter(krwlock_t *rw, const krw_t op)
 {
-	uintptr_t owner, incr, need_wait, set_wait, curthread;
+	uintptr_t owner, incr, need_wait, set_wait, curthread, next;
 	struct cpu_info *ci;
 	turnstile_t *ts;
 	int queue;
 	lwp_t *l;
 	LOCKSTAT_TIMER(slptime);
+	LOCKSTAT_TIMER(slpcnt);
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_COUNTER(spincnt);
 	LOCKSTAT_FLAG(lsflag);
@@ -293,15 +331,19 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 	LOCKSTAT_ENTER(lsflag);
 
-	for (ci = NULL;;) {
+	for (ci = NULL, owner = rw->rw_owner;;) {
 		/*
 		 * Read the lock owner field.  If the need-to-wait
 		 * indicator is clear, then try to acquire the lock.
 		 */
-		owner = rw->rw_owner;
 		if ((owner & need_wait) == 0) {
-			if (RW_ACQUIRE(rw, owner, owner + incr)) {
+			next = rw_cas(rw, owner, (owner + incr) &
+			    ~RW_WRITE_WANTED);
+			if (__predict_true(next == owner)) {
 				/* Got it! */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+				membar_enter();
+#endif
 				break;
 			}
 
@@ -309,38 +351,31 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			 * Didn't get it -- spin around again (we'll
 			 * probably sleep on the next iteration).
 			 */
+			owner = next;
 			continue;
 		}
 
-		if (panicstr != NULL)
+		if (__predict_false(panicstr != NULL))
 			return;
-		if (RW_OWNER(rw) == curthread)
+		if (__predict_false(RW_OWNER(rw) == curthread))
 			rw_abort(rw, __func__, "locking against myself");
 
-#ifdef MULTIPROCESSOR
 		/*
 		 * If the lock owner is running on another CPU, and
 		 * there are no existing waiters, then spin.
 		 */
-		if ((owner & (RW_WRITE_LOCKED|RW_HAS_WAITERS)) ==
-		    RW_WRITE_LOCKED && mutex_onproc(owner, &ci)) {
+		if (rw_onproc(owner, &ci)) {
 			LOCKSTAT_START_TIMER(lsflag, spintime);
 			u_int count = SPINLOCK_BACKOFF_MIN;
-			for (;;) {
-				owner = rw->rw_owner;
-				if ((owner & (RW_WRITE_LOCKED|RW_HAS_WAITERS))
-				    != RW_WRITE_LOCKED)
-				    	break;
-				if (!mutex_onproc(owner, &ci))
-					break;
+			do {
 				SPINLOCK_BACKOFF(count);
-			}
+				owner = rw->rw_owner;
+			} while (rw_onproc(owner, &ci));
 			LOCKSTAT_STOP_TIMER(lsflag, spintime);
 			LOCKSTAT_COUNT(spincnt, 1);
 			if ((owner & need_wait) == 0)
 				continue;
 		}
-#endif
 
 		/*
 		 * Grab the turnstile chain lock.  Once we have that, we
@@ -351,27 +386,36 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		/*
 		 * Mark the rwlock as having waiters.  If the set fails,
 		 * then we may not need to sleep and should spin again.
+		 * Reload rw_owner because turnstile_lookup() may have
+		 * spun on the turnstile chain lock.
 		 */
-		if (!RW_SET_WAITERS(rw, need_wait, set_wait)) {
+		owner = rw->rw_owner;
+		if ((owner & need_wait) == 0 || rw_onproc(owner, &ci)) {
 			turnstile_exit(rw);
+			continue;
+		}
+		next = rw_cas(rw, owner, owner | set_wait);
+		if (__predict_false(next != owner)) {
+			turnstile_exit(rw);
+			owner = next;
 			continue;
 		}
 
 		LOCKSTAT_START_TIMER(lsflag, slptime);
-
 		turnstile_block(ts, queue, rw, &rw_syncobj);
-
-		/* If we wake up and arrive here, we've been handed the lock. */
-		RW_RECEIVE(rw);
-
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
-		LOCKSTAT_EVENT(lsflag, rw,
-		    LB_RWLOCK | (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2),
-		    1, slptime);
+		LOCKSTAT_COUNT(slpcnt, 1);
 
-		break;
+		/*
+		 * No need for a memory barrier because of context switch.
+		 * If not handed the lock, then spin again.
+		 */
+		if (op == RW_READER || (rw->rw_owner & RW_THREAD) == curthread)
+			break;
 	}
 
+	LOCKSTAT_EVENT(lsflag, rw, LB_RWLOCK |
+	    (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2), slpcnt, slptime);
 	LOCKSTAT_EVENT(lsflag, rw, LB_RWLOCK | LB_SPIN, spincnt, spintime);
 	LOCKSTAT_EXIT(lsflag);
 
@@ -388,7 +432,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 void
 rw_vector_exit(krwlock_t *rw)
 {
-	uintptr_t curthread, owner, decr, new;
+	uintptr_t curthread, owner, decr, new, next;
 	turnstile_t *ts;
 	int rcnt, wcnt;
 	lwp_t *l;
@@ -396,7 +440,7 @@ rw_vector_exit(krwlock_t *rw)
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
 
-	if (panicstr != NULL)
+	if (__predict_false(panicstr != NULL))
 		return;
 
 	/*
@@ -408,12 +452,10 @@ rw_vector_exit(krwlock_t *rw)
 	owner = rw->rw_owner;
 	if (__predict_false((owner & RW_WRITE_LOCKED) != 0)) {
 		RW_UNLOCKED(rw, RW_WRITER);
-		RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
 		RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 		decr = curthread | RW_WRITE_LOCKED;
 	} else {
 		RW_UNLOCKED(rw, RW_READER);
-		RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
 		RW_ASSERT(rw, RW_COUNT(rw) != 0);
 		decr = RW_READ_INCR;
 	}
@@ -423,84 +465,75 @@ rw_vector_exit(krwlock_t *rw)
 	 * proceed to do direct handoff if there are waiters, and if the
 	 * lock would become unowned.
 	 */
-	for (;; owner = rw->rw_owner) {
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
+	for (;;) {
 		new = (owner - decr);
 		if ((new & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
 			break;
-		if (RW_RELEASE(rw, owner, new))
+		next = rw_cas(rw, owner, new);
+		if (__predict_true(next == owner))
 			return;
+		owner = next;
 	}
 
-	for (;;) {
-		/*
-		 * Grab the turnstile chain lock.  This gets the interlock
-		 * on the sleep queue.  Once we have that, we can adjust the
-		 * waiter bits.
-		 */
-		ts = turnstile_lookup(rw);
-		RW_DASSERT(rw, ts != NULL);
-		RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
+	/*
+	 * Grab the turnstile chain lock.  This gets the interlock
+	 * on the sleep queue.  Once we have that, we can adjust the
+	 * waiter bits.
+	 */
+	ts = turnstile_lookup(rw);
+	owner = rw->rw_owner;
+	RW_DASSERT(rw, ts != NULL);
+	RW_DASSERT(rw, (owner & RW_HAS_WAITERS) != 0);
 
-		owner = rw->rw_owner;
-		wcnt = TS_WAITERS(ts, TS_WRITER_Q);
-		rcnt = TS_WAITERS(ts, TS_READER_Q);
+	wcnt = TS_WAITERS(ts, TS_WRITER_Q);
+	rcnt = TS_WAITERS(ts, TS_READER_Q);
 
-		/*
-		 * Give the lock away.
-		 *
-		 * If we are releasing a write lock, then wake all
-		 * outstanding readers.  If we are releasing a read
-		 * lock, then wake one writer.
-		 */
-		if (rcnt == 0 || (decr == RW_READ_INCR && wcnt != 0)) {
-			RW_DASSERT(rw, wcnt != 0);
-			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_WANTED) != 0);
+	/*
+	 * Give the lock away.
+	 *
+	 * If we are releasing a write lock, then prefer to wake all
+	 * outstanding readers.  Otherwise, wake one writer if there
+	 * are outstanding readers, or all writers if there are no
+	 * pending readers.  If waking one specific writer, the writer
+	 * is handed the lock here.  If waking multiple writers, we
+	 * set WRITE_WANTED to block out new readers, and let them
+	 * do the work of acquring the lock in rw_vector_enter().
+	 */
+	if (rcnt == 0 || (decr == RW_READ_INCR && wcnt != 0)) {
+		RW_DASSERT(rw, wcnt != 0);
+		RW_DASSERT(rw, (owner & RW_WRITE_WANTED) != 0);
 
-			/*
-			 * Give the lock to the longest waiting
-			 * writer.
-			 */
+		if (rcnt != 0) {
+			/* Give the lock to the longest waiting writer. */
 			l = TS_FIRST(ts, TS_WRITER_Q);
-			new = (uintptr_t)l | RW_WRITE_LOCKED;
-
-			if (wcnt > 1)
-				new |= RW_HAS_WAITERS | RW_WRITE_WANTED;
-			else if (rcnt != 0)
-				new |= RW_HAS_WAITERS;
-
-			RW_GIVE(rw);
-			if (!RW_RELEASE(rw, owner, new)) {
-				/* Oops, try again. */
-				turnstile_exit(rw);
-				continue;
-			}
-
-			/* Wake the writer. */
+			new = (uintptr_t)l | RW_WRITE_LOCKED | RW_HAS_WAITERS;
+			if (wcnt != 0)
+				new |= RW_WRITE_WANTED;
+			rw_swap(rw, owner, new);
 			turnstile_wakeup(ts, TS_WRITER_Q, 1, l);
 		} else {
-			RW_DASSERT(rw, rcnt != 0);
-
-			/*
-			 * Give the lock to all blocked readers.  If there
-			 * is a writer waiting, new readers that arrive
-			 * after the release will be blocked out.
-			 */
-			new = rcnt << RW_READ_COUNT_SHIFT;
-			if (wcnt != 0)
-				new |= RW_HAS_WAITERS | RW_WRITE_WANTED;
-			
-			RW_GIVE(rw);
-			if (!RW_RELEASE(rw, owner, new)) {
-				/* Oops, try again. */
-				turnstile_exit(rw);
-				continue;
-			}
-
-			/* Wake up all sleeping readers. */
-			turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
+			/* Wake all writers and let them fight it out. */
+			rw_swap(rw, owner, RW_WRITE_WANTED);
+			turnstile_wakeup(ts, TS_WRITER_Q, wcnt, NULL);
 		}
+	} else {
+		RW_DASSERT(rw, rcnt != 0);
 
-		break;
+		/*
+		 * Give the lock to all blocked readers.  If there
+		 * is a writer waiting, new readers that arrive
+		 * after the release will be blocked out.
+		 */
+		new = rcnt << RW_READ_COUNT_SHIFT;
+		if (wcnt != 0)
+			new |= RW_HAS_WAITERS | RW_WRITE_WANTED;
+			
+		/* Wake up all sleeping readers. */
+		rw_swap(rw, owner, new);
+		turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
 	}
 }
 
@@ -512,7 +545,7 @@ rw_vector_exit(krwlock_t *rw)
 int
 rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 {
-	uintptr_t curthread, owner, incr, need_wait;
+	uintptr_t curthread, owner, incr, need_wait, next;
 
 	curthread = (uintptr_t)curlwp;
 
@@ -527,18 +560,20 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 		need_wait = RW_WRITE_LOCKED | RW_THREAD;
 	}
 
-	for (;;) {
+	for (owner = rw->rw_owner;; owner = next) {
 		owner = rw->rw_owner;
-		if ((owner & need_wait) == 0) {
-			if (RW_ACQUIRE(rw, owner, owner + incr)) {
-				/* Got it! */
-				break;
-			}
-			continue;
+		if (__predict_false((owner & need_wait) != 0))
+			return 0;
+		next = rw_cas(rw, owner, owner + incr);
+		if (__predict_true(next == owner)) {
+			/* Got it! */
+			break;
 		}
-		return 0;
 	}
 
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
 	RW_WANTLOCK(rw, op);
 	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
@@ -555,7 +590,7 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 void
 rw_downgrade(krwlock_t *rw)
 {
-	uintptr_t owner, curthread, new;
+	uintptr_t owner, curthread, new, next;
 	turnstile_t *ts;
 	int rcnt, wcnt;
 
@@ -565,6 +600,10 @@ rw_downgrade(krwlock_t *rw)
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 	RW_UNLOCKED(rw, RW_WRITER);
 
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_producer();
+#endif
+
 	owner = rw->rw_owner;
 	if ((owner & RW_HAS_WAITERS) == 0) {
 		/*
@@ -573,12 +612,14 @@ rw_downgrade(krwlock_t *rw)
 		 * lock condition has changed and we most likely now have
 		 * waiters.
 		 */
-		if (RW_RELEASE(rw, owner, RW_READ_INCR)) {
+		next = rw_cas(rw, owner, RW_READ_INCR);
+		if (__predict_true(next == owner)) {
 			RW_LOCKED(rw, RW_READER);
 			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
 			RW_DASSERT(rw, RW_COUNT(rw) != 0);
 			return;
 		}
+		owner = next;
 	}
 
 	/*
@@ -586,11 +627,10 @@ rw_downgrade(krwlock_t *rw)
 	 * on the sleep queue.  Once we have that, we can adjust the
 	 * waiter bits.
 	 */
-	for (;;) {
+	for (;; owner = next) {
 		ts = turnstile_lookup(rw);
 		RW_DASSERT(rw, ts != NULL);
 
-		owner = rw->rw_owner;
 		rcnt = TS_WAITERS(ts, TS_READER_Q);
 		wcnt = TS_WAITERS(ts, TS_WRITER_Q);
 
@@ -604,34 +644,29 @@ rw_downgrade(krwlock_t *rw)
 			RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 
 			new = RW_READ_INCR | RW_HAS_WAITERS | RW_WRITE_WANTED;
-			if (!RW_RELEASE(rw, owner, new)) {
-				/* Oops, try again. */
-				turnstile_exit(ts);
-				continue;
+			next = rw_cas(rw, owner, new);
+			turnstile_exit(ts);
+			if (__predict_true(next == owner))
+				break;
+		} else {
+			/*
+			 * Give the lock to all blocked readers.  We may
+			 * retain one read hold if downgrading.  If there
+			 * is a writer waiting, new readers will be blocked
+			 * out.
+			 */
+			new = (rcnt << RW_READ_COUNT_SHIFT) + RW_READ_INCR;
+			if (wcnt != 0)
+				new |= RW_HAS_WAITERS | RW_WRITE_WANTED;
+
+			next = rw_cas(rw, owner, new);
+			if (__predict_true(next == owner)) {
+				/* Wake up all sleeping readers. */
+				turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
+				break;
 			}
-			break;
+			turnstile_exit(ts);
 		}
-				
-		/*
-		 * Give the lock to all blocked readers.  We may
-		 * retain one read hold if downgrading.  If there
-		 * is a writer waiting, new readers will be blocked
-		 * out.
-		 */
-		new = (rcnt << RW_READ_COUNT_SHIFT) + RW_READ_INCR;
-		if (wcnt != 0)
-			new |= RW_HAS_WAITERS | RW_WRITE_WANTED;
-
-		RW_GIVE(rw);
-		if (!RW_RELEASE(rw, owner, new)) {
-			/* Oops, try again. */
-			turnstile_exit(rw);
-			continue;
-		}
-
-		/* Wake up all sleeping readers. */
-		turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
-		break;
 	}
 
 	RW_LOCKED(rw, RW_READER);
@@ -648,21 +683,21 @@ rw_downgrade(krwlock_t *rw)
 int
 rw_tryupgrade(krwlock_t *rw)
 {
-	uintptr_t owner, curthread, new;
+	uintptr_t owner, curthread, new, next;
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
 	RW_WANTLOCK(rw, RW_WRITER);
 
-	for (;;) {
-		owner = rw->rw_owner;
+	for (owner = rw->rw_owner;; owner = next) {
 		RW_ASSERT(rw, (owner & RW_WRITE_LOCKED) == 0);
-		if ((owner & RW_THREAD) != RW_READ_INCR) {
+		if (__predict_false((owner & RW_THREAD) != RW_READ_INCR)) {
 			RW_ASSERT(rw, (owner & RW_THREAD) != 0);
 			return 0;
 		}
 		new = curthread | RW_WRITE_LOCKED | (owner & ~RW_THREAD);
-		if (RW_ACQUIRE(rw, owner, new))
+		next = rw_cas(rw, owner, new);
+		if (__predict_true(next == owner))
 			break;
 	}
 
@@ -670,6 +705,10 @@ rw_tryupgrade(krwlock_t *rw)
 	RW_LOCKED(rw, RW_WRITER);
 	RW_DASSERT(rw, rw->rw_owner & RW_WRITE_LOCKED);
 	RW_DASSERT(rw, RW_OWNER(rw) == curthread);
+
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_producer();
+#endif
 
 	return 1;
 }
