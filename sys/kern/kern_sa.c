@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.2.1 2008/04/11 06:35:02 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.2.1 2008/04/11 06:35:02 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1389,6 +1389,9 @@ sa_makeupcalls(struct lwp *l)
 	uintptr_t sapp, sap;
 	struct sa_t self_sa;
 	struct sa_t *sas[3];
+#ifdef KTRACE
+	struct sa_t **ksapp = NULL;
+#endif
 	struct sadata_upcall *sau;
 	void *stack, *ap;
 	union sau_state *e_ss;
@@ -1503,6 +1506,11 @@ sa_makeupcalls(struct lwp *l)
 	sapp += sz;
 	stack = STACK_GROW(stack, sz);
 
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SAUPCALL))
+		ksapp = kmem_alloc(sizeof(struct sa_t *) * (nevents + nint + 1),
+		    KM_SLEEP);
+#endif
 	KDASSERT(nint <= 1);
 	e_ss = NULL;
 	for (i = nevents + nint; i >= 0; i--) {
@@ -1549,9 +1557,13 @@ sa_makeupcalls(struct lwp *l)
 			if (e_ss != NULL) {
 				kmem_free(e_ss, sizeof(*e_ss));
 			}
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
+			goto fail;
 		}
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_SAUPCALL))
+			ksapp[i] = sasp;
+#endif
+
 	}
 	if (e_ss != NULL) {
 		kmem_free(e_ss, sizeof(*e_ss));
@@ -1574,8 +1586,7 @@ sa_makeupcalls(struct lwp *l)
 			    p->p_pid, l->l_lid,
 			    sau->sau_arg, (long) sau->sau_argsize, ap);
 #endif
-			sigexit(l, SIGILL);
-			/* NOTREACHED */
+			goto fail;
 		}
 	} else {
 		ap = NULL;
@@ -1591,13 +1602,24 @@ sa_makeupcalls(struct lwp *l)
 	    l->l_lid, type));
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SAUPCALL))
-		ktrsaupcall(l, type, nevents, nint, (void *)sapp, ap);
+	if (KTRPOINT(p, KTR_SAUPCALL)) {
+		ktrsaupcall(l, type, nevents, nint, (void *)sapp, ap, ksapp);
+		kmem_free(ksapp, sizeof(struct sa_t *) * (nevents + nint + 1));
+	}
 #endif
 	(*sae->sae_upcall)(l, type, nevents, nint, (void *)sapp, ap, stack,
 	    sa->sa_upcall);
 
 	l->l_flag &= ~L_SA_YIELD;
+	return;
+
+fail:
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SAUPCALL))
+		kmem_free(ksapp, sizeof(struct sa_t) * (nevents + nint + 1));
+#endif
+	sigexit(l, SIGILL);
+	/* NOTREACHED */
 }
 
 static void
