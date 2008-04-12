@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.37 2008/04/08 12:07:26 cegger Exp $ */
+/*	$NetBSD: iha.c,v 1.38 2008/04/12 08:21:19 tsutsui Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.37 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.38 2008/04/12 08:21:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -498,14 +498,14 @@ iha_attach(struct iha_softc *sc)
 	TAILQ_INIT(&sc->sc_donescb);
 	error = iha_alloc_sglist(sc);
 	if (error != 0) {
-		printf(": cannot allocate sglist\n");
+		aprint_error_dev(sc->sc_dev, "cannot allocate sglist\n");
 		return;
 	}
 
 	sc->sc_scb = malloc(sizeof(struct iha_scb) * IHA_MAX_SCB,
 	    M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc->sc_scb == NULL) {
-		printf(": cannot allocate SCB\n");
+		aprint_error_dev(sc->sc_dev, "cannot allocate SCB\n");
 		return;
 	}
 
@@ -521,7 +521,8 @@ iha_attach(struct iha_softc *sc)
 		    BUS_DMA_NOWAIT, &scb->dmap);
 
 		if (error != 0) {
-			printf(": couldn't create SCB DMA map, error = %d\n",
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't create SCB DMA map, error = %d\n",
 			    error);
 			return;
 		}
@@ -577,7 +578,7 @@ iha_attach(struct iha_softc *sc)
 	/*
 	 * fill in the adapter.
 	 */
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_dev = sc->sc_dev;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = IHA_MAX_SCB;
 	sc->sc_adapter.adapt_max_periph = IHA_MAX_SCB;
@@ -598,7 +599,7 @@ iha_attach(struct iha_softc *sc)
 	/*
 	 * Now try to attach all the sub devices.
 	 */
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 }
 
 /*
@@ -658,7 +659,7 @@ iha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	struct iha_softc *sc;
 	int error, s;
 
-	sc = (struct iha_softc *)chan->chan_adapter->adapt_dev;
+	sc = device_private(chan->chan_adapter->adapt_dev);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -717,8 +718,8 @@ iha_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 
 			if (error) {
-				aprint_error_dev(&sc->sc_dev, "error %d loading DMA map\n",
-				    error);
+				printf("%s: error %d loading DMA map\n",
+				    device_xname(sc->sc_dev), error);
 				iha_append_free_scb(sc, scb);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
@@ -1241,7 +1242,8 @@ iha_done_scb(struct iha_softc *sc, struct iha_scb *scb)
 				if ((scb->flags & FLAG_RSENS) != 0 ||
 				    iha_push_sense_request(sc, scb) != 0) {
 					scb->flags &= ~FLAG_RSENS;
-					aprint_error_dev(&sc->sc_dev, "request sense failed\n");
+					printf("%s: request sense failed\n",
+					    device_xname(sc->sc_dev));
 					xs->error = XS_DRIVER_STUFFUP;
 					break;
 				}
@@ -1266,7 +1268,7 @@ iha_done_scb(struct iha_softc *sc, struct iha_scb *scb)
 
 		case HOST_SPERR:
 			printf("%s: SCSI Parity error detected\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
@@ -1348,7 +1350,7 @@ iha_timeout(void *arg)
 
 	periph = xs->xs_periph;
 
-	sc = (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	sc = device_private(periph->periph_channel->chan_adapter->adapt_dev);
 
 	scsipi_printaddr(periph);
 	printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
@@ -2621,7 +2623,7 @@ iha_read_eeprom(struct iha_softc *sc, struct iha_eeprom *eeprom)
 
 	/* Read EEProm */
 	if (iha_se2_rd_all(sc, tbuf) == 0)
-		panic("%s: cannot read EEPROM", device_xname(&sc->sc_dev));
+		panic("%s: cannot read EEPROM", device_xname(sc->sc_dev));
 
 	/* Disable EEProm programming */
 	gctrl = bus_space_read_1(iot, ioh, TUL_GCTRL0) & ~EEPRG;

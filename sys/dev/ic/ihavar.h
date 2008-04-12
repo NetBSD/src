@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.10 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: ihavar.h,v 1.11 2008/04/12 08:21:19 tsutsui Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -138,7 +138,7 @@ struct tcs {
 };
 
 struct iha_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
