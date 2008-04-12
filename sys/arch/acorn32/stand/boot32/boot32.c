@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.33 2008/02/03 14:59:16 chris Exp $	*/
+/*	$NetBSD: boot32.c,v 1.34 2008/04/12 16:10:46 chris Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -970,9 +970,6 @@ get_relocated_page(u_long destination, int size)
 
 	if (destination & 0x3)
 		panic("\n\ndestination address is not aligned!");
-
-	if (size & 0x3)
-		panic("\n\nsize is not aligned!");
 
 	*reloc_pos++ = free_relocation_page->physical;
 	*reloc_pos++ = destination;
