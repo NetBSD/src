@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.13 2008/03/20 19:12:23 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.14 2008/04/12 17:17:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.13 2008/03/20 19:12:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.14 2008/04/12 17:17:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -676,7 +676,7 @@ void
 softint_overlay(void)
 {
 	struct cpu_info *ci;
-	u_int softints;
+	u_int softints, oflag;
 	softint_t *si;
 	pri_t obase;
 	lwp_t *l;
@@ -689,10 +689,11 @@ softint_overlay(void)
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 
 	/* Arrange to elevate priority if the LWP blocks. */
+	s = splhigh();
 	obase = l->l_kpribase;
 	l->l_kpribase = PRI_KERNEL_RT;
-	l->l_pflag |= LP_INTR;
-	s = splhigh();
+	oflag = l->l_pflag;
+	l->l_pflag = oflag | LP_INTR | LP_BOUND;
 	while ((softints = ci->ci_data.cpu_softints) != 0) {
 		if ((softints & (1 << SOFTINT_SERIAL)) != 0) {
 			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_SERIAL);
@@ -715,9 +716,9 @@ softint_overlay(void)
 			continue;
 		}
 	}
-	splx(s);
-	l->l_pflag &= ~LP_INTR;
+	l->l_pflag = opflag;
 	l->l_kpribase = obase;
+	splx(s);
 }
 
 #else	/*  !__HAVE_FAST_SOFTINTS */
