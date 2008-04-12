@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.283 2008/04/08 01:03:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.284 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.283 2008/04/08 01:03:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.284 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -214,6 +214,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.283 2008/04/08 01:03:58 thorpej Exp 
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_private.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcp_debug.h>
@@ -447,6 +448,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 #ifdef TCP_REASS_COUNTERS
 	u_int count = 0;
 #endif
+	uint64_t *tcps;
 
 	if (tp->t_inpcb)
 		so = tp->t_inpcb->inp_socket;
@@ -579,8 +581,10 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 		 */
 		if (SEQ_LEQ(q->ipqe_seq, pkt_seq) &&
 		    SEQ_GEQ(q->ipqe_seq + q->ipqe_len, pkt_seq + pkt_len)) {
-			tcpstat[TCP_STAT_RCVDUPPACK]++;
-			tcpstat[TCP_STAT_RCVDUPBYTE] += pkt_len;
+			tcps = TCP_STAT_GETREF();
+			tcps[TCP_STAT_RCVDUPPACK]++;
+			tcps[TCP_STAT_RCVDUPBYTE] += pkt_len;
+			TCP_STAT_PUTREF();
 			tcp_new_dsack(tp, pkt_seq, pkt_len);
 			m_freem(m);
 			if (tiqe != NULL) {
@@ -723,7 +727,7 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 	if (tiqe == NULL) {
 		tiqe = tcpipqent_alloc();
 		if (tiqe == NULL) {
-			tcpstat[TCP_STAT_RCVMEMDROP]++;
+			TCP_STATINC(TCP_STAT_RCVMEMDROP);
 			m_freem(m);
 			return (0);
 		}
@@ -732,12 +736,14 @@ tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 	/*
 	 * Update the counters.
 	 */
-	tcpstat[TCP_STAT_RCVOOPACK]++;
-	tcpstat[TCP_STAT_RCVOOBYTE] += rcvoobyte;
+	tcps = TCP_STAT_GETREF();
+	tcps[TCP_STAT_RCVOOPACK]++;
+	tcps[TCP_STAT_RCVOOBYTE] += rcvoobyte;
 	if (rcvpartdupbyte) {
-	    tcpstat[TCP_STAT_RCVPARTDUPPACK]++;
-	    tcpstat[TCP_STAT_RCVPARTDUPBYTE] += rcvpartdupbyte;
+	    tcps[TCP_STAT_RCVPARTDUPPACK]++;
+	    tcps[TCP_STAT_RCVPARTDUPBYTE] += rcvpartdupbyte;
 	}
+	TCP_STAT_PUTREF();
 
 	/*
 	 * Insert the new fragment queue entry into both queues.
@@ -814,7 +820,7 @@ tcp6_input(struct mbuf **mp, int *offp, int proto)
 		struct ip6_hdr *ip6;
 		if (m->m_len < sizeof(struct ip6_hdr)) {
 			if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-				tcpstat[TCP_STAT_RCVSHORT]++;
+				TCP_STATINC(TCP_STAT_RCVSHORT);
 				return IPPROTO_DONE;
 			}
 		}
@@ -974,7 +980,7 @@ tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th,
 	return 0;
 
 badcsum:
-	tcpstat[TCP_STAT_RCVBADSUM]++;
+	TCP_STATINC(TCP_STAT_RCVBADSUM);
 	return -1;
 }
 
@@ -1009,6 +1015,7 @@ tcp_input(struct mbuf *m, ...)
 	struct mbuf *tcp_saveti = NULL;
 	uint32_t ts_rtt;
 	uint8_t iptos;
+	uint64_t *tcps;
 
 	MCLAIM(m, &tcp_rx_mowner);
 	va_start(ap, m);
@@ -1016,7 +1023,7 @@ tcp_input(struct mbuf *m, ...)
 	(void)va_arg(ap, int);		/* ignore value, advance ap */
 	va_end(ap);
 
-	tcpstat[TCP_STAT_RCVTOTAL]++;
+	TCP_STATINC(TCP_STAT_RCVTOTAL);
 
 	bzero(&opti, sizeof(opti));
 	opti.ts_present = 0;
@@ -1059,7 +1066,7 @@ tcp_input(struct mbuf *m, ...)
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
 			sizeof(struct tcphdr));
 		if (th == NULL) {
-			tcpstat[TCP_STAT_RCVSHORT]++;
+			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
 		}
 		/* We do the checksum after PCB lookup... */
@@ -1077,7 +1084,7 @@ tcp_input(struct mbuf *m, ...)
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff,
 			sizeof(struct tcphdr));
 		if (th == NULL) {
-			tcpstat[TCP_STAT_RCVSHORT]++;
+			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
 		}
 
@@ -1129,7 +1136,7 @@ tcp_input(struct mbuf *m, ...)
 	 */
 	off = th->th_off << 2;
 	if (off < sizeof (struct tcphdr) || off > tlen) {
-		tcpstat[TCP_STAT_RCVBADOFF]++;
+		TCP_STATINC(TCP_STAT_RCVBADOFF);
 		goto drop;
 	}
 	tlen -= off;
@@ -1144,7 +1151,7 @@ tcp_input(struct mbuf *m, ...)
 	if (off > sizeof (struct tcphdr)) {
 		IP6_EXTHDR_GET(th, struct tcphdr *, m, toff, off);
 		if (th == NULL) {
-			tcpstat[TCP_STAT_RCVSHORT]++;
+			TCP_STATINC(TCP_STAT_RCVSHORT);
 			return;
 		}
 		/*
@@ -1188,7 +1195,7 @@ findpcb:
 		inp = in_pcblookup_connect(&tcbtable, ip->ip_src, th->th_sport,
 		    ip->ip_dst, th->th_dport);
 		if (inp == 0) {
-			tcpstat[TCP_STAT_PCBHASHMISS]++;
+			TCP_STATINC(TCP_STAT_PCBHASHMISS);
 			inp = in_pcblookup_bind(&tcbtable, ip->ip_dst, th->th_dport);
 		}
 #ifdef INET6
@@ -1205,7 +1212,7 @@ findpcb:
 			in6p = in6_pcblookup_connect(&tcbtable, &s,
 			    th->th_sport, &d, th->th_dport, 0);
 			if (in6p == 0) {
-				tcpstat[TCP_STAT_PCBHASHMISS]++;
+				TCP_STATINC(TCP_STAT_PCBHASHMISS);
 				in6p = in6_pcblookup_bind(&tcbtable, &d,
 				    th->th_dport, 0);
 			}
@@ -1217,7 +1224,7 @@ findpcb:
 		if (inp == 0 && in6p == 0)
 #endif
 		{
-			tcpstat[TCP_STAT_NOPORT]++;
+			TCP_STATINC(TCP_STAT_NOPORT);
 			if (tcp_log_refused &&
 			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				tcp4_log_refused(ip, th);
@@ -1255,12 +1262,12 @@ findpcb:
 		in6p = in6_pcblookup_connect(&tcbtable, &ip6->ip6_src,
 		    th->th_sport, &ip6->ip6_dst, th->th_dport, faith);
 		if (in6p == NULL) {
-			tcpstat[TCP_STAT_PCBHASHMISS]++;
+			TCP_STATINC(TCP_STAT_PCBHASHMISS);
 			in6p = in6_pcblookup_bind(&tcbtable, &ip6->ip6_dst,
 				th->th_dport, faith);
 		}
 		if (in6p == NULL) {
-			tcpstat[TCP_STAT_NOPORT]++;
+			TCP_STATINC(TCP_STAT_NOPORT);
 			if (tcp_log_refused &&
 			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				tcp6_log_refused(ip6, th);
@@ -1588,7 +1595,7 @@ findpcb:
 						i = 1;
 					}
 					if (i) {
-						tcpstat[TCP_STAT_BADSYN]++;
+						TCP_STATINC(TCP_STAT_BADSYN);
 						goto drop;
 					}
 				}
@@ -1643,10 +1650,10 @@ after_listen:
 		switch (iptos & IPTOS_ECN_MASK) {
 		case IPTOS_ECN_CE:
 			tp->t_flags |= TF_ECN_SND_ECE;
-			tcpstat[TCP_STAT_ECN_CE]++;
+			TCP_STATINC(TCP_STAT_ECN_CE);
 			break;
 		case IPTOS_ECN_ECT0:
-			tcpstat[TCP_STAT_ECN_ECT]++;
+			TCP_STATINC(TCP_STAT_ECN_ECT);
 			break;
 		case IPTOS_ECN_ECT1:
 			/* XXX: ignore for now -- rpaulo */
@@ -1725,7 +1732,6 @@ after_listen:
 				/*
 				 * this is a pure ack for outstanding data.
 				 */
-				tcpstat[TCP_STAT_PREDACK]++;
 				if (ts_rtt)
 					tcp_xmit_timer(tp, ts_rtt);
 				else if (tp->t_rtttime &&
@@ -1733,8 +1739,11 @@ after_listen:
 					tcp_xmit_timer(tp,
 					  tcp_now - tp->t_rtttime);
 				acked = th->th_ack - tp->snd_una;
-				tcpstat[TCP_STAT_RCVACKPACK]++;
-				tcpstat[TCP_STAT_RCVACKBYTE] += acked;
+				tcps = TCP_STAT_GETREF();
+				tcps[TCP_STAT_PREDACK]++;
+				tcps[TCP_STAT_RCVACKPACK]++;
+				tcps[TCP_STAT_RCVACKBYTE] += acked;
+				TCP_STAT_PUTREF();
 				nd6_hint(tp);
 
 				if (acked > (tp->t_lastoff - tp->t_inoff))
@@ -1783,10 +1792,12 @@ after_listen:
 			 * with nothing on the reassembly queue and
 			 * we have enough buffer space to take it.
 			 */
-			tcpstat[TCP_STAT_PREDDAT]++;
 			tp->rcv_nxt += tlen;
-			tcpstat[TCP_STAT_RCVPACK]++;
-			tcpstat[TCP_STAT_RCVBYTE] += tlen;
+			tcps = TCP_STAT_GETREF();
+			tcps[TCP_STAT_PREDDAT]++;
+			tcps[TCP_STAT_RCVPACK]++;
+			tcps[TCP_STAT_RCVBYTE] += tlen;
+			TCP_STAT_PUTREF();
 			nd6_hint(tp);
 
 		/*
@@ -1929,7 +1940,7 @@ after_listen:
 
 			if ((tiflags & TH_ECE) && tcp_do_ecn) {
 				tp->t_flags |= TF_ECN_PERMIT;
-				tcpstat[TCP_STAT_ECN_SHS]++;
+				TCP_STATINC(TCP_STAT_ECN_SHS);
 			}
 
 		}
@@ -1960,7 +1971,7 @@ after_listen:
 
 		tcp_rmx_rtt(tp);
 		if (tiflags & TH_ACK) {
-			tcpstat[TCP_STAT_CONNECTS]++;
+			TCP_STATINC(TCP_STAT_CONNECTS);
 			soisconnected(so);
 			tcp_established(tp);
 			/* Do window scaling on this connection? */
@@ -1992,8 +2003,10 @@ after_listen:
 			m_adj(m, -todrop);
 			tlen = tp->rcv_wnd;
 			tiflags &= ~TH_FIN;
-			tcpstat[TCP_STAT_RCVPACKAFTERWIN]++;
-			tcpstat[TCP_STAT_RCVBYTEAFTERWIN] += todrop;
+			tcps = TCP_STAT_GETREF();
+			tcps[TCP_STAT_RCVPACKAFTERWIN]++;
+			tcps[TCP_STAT_RCVBYTEAFTERWIN] += todrop;
+			TCP_STAT_PUTREF();
 		}
 		tp->snd_wl1 = th->th_seq - 1;
 		tp->rcv_up = th->th_seq;
@@ -2040,9 +2053,11 @@ after_listen:
 			 */
 			tp->ts_recent = 0;
 		} else {
-			tcpstat[TCP_STAT_RCVDUPPACK]++;
-			tcpstat[TCP_STAT_RCVDUPBYTE] += tlen;
-			tcpstat[TCP_STAT_PAWSDROP]++;
+			tcps = TCP_STAT_GETREF();
+			tcps[TCP_STAT_RCVDUPPACK]++;
+			tcps[TCP_STAT_RCVDUPBYTE] += tlen;
+			tcps[TCP_STAT_PAWSDROP]++;
+			TCP_STAT_PUTREF();
 			tcp_new_dsack(tp, th->th_seq, tlen);
 			goto dropafterack;
 		}
@@ -2079,8 +2094,10 @@ after_listen:
 			tp->t_flags |= TF_ACKNOW;
 			todrop = tlen;
 			dupseg = true;
-			tcpstat[TCP_STAT_RCVDUPPACK]++;
-			tcpstat[TCP_STAT_RCVDUPBYTE] += todrop;
+			tcps = TCP_STAT_GETREF();
+			tcps[TCP_STAT_RCVDUPPACK]++;
+			tcps[TCP_STAT_RCVDUPBYTE] += todrop;
+			TCP_STAT_PUTREF();
 		} else if ((tiflags & TH_RST) &&
 			   th->th_seq != tp->last_ack_sent) {
 			/*
@@ -2089,8 +2106,10 @@ after_listen:
 			 */
 			goto dropafterack_ratelim;
 		} else {
-			tcpstat[TCP_STAT_RCVPARTDUPPACK]++;
-			tcpstat[TCP_STAT_RCVPARTDUPBYTE] += todrop;
+			tcps = TCP_STAT_GETREF();
+			tcps[TCP_STAT_RCVPARTDUPPACK]++;
+			tcps[TCP_STAT_RCVPARTDUPBYTE] += todrop;
+			TCP_STAT_PUTREF();
 		}
 		tcp_new_dsack(tp, th->th_seq, todrop);
 		hdroptlen += todrop;	/*drop from head afterwards*/
@@ -2111,7 +2130,7 @@ after_listen:
 	if ((so->so_state & SS_NOFDREF) &&
 	    tp->t_state > TCPS_CLOSE_WAIT && tlen) {
 		tp = tcp_close(tp);
-		tcpstat[TCP_STAT_RCVAFTERCLOSE]++;
+		TCP_STATINC(TCP_STAT_RCVAFTERCLOSE);
 		goto dropwithreset;
 	}
 
@@ -2121,7 +2140,7 @@ after_listen:
 	 */
 	todrop = (th->th_seq + tlen) - (tp->rcv_nxt+tp->rcv_wnd);
 	if (todrop > 0) {
-		tcpstat[TCP_STAT_RCVPACKAFTERWIN]++;
+		TCP_STATINC(TCP_STAT_RCVPACKAFTERWIN);
 		if (todrop >= tlen) {
 			/*
 			 * The segment actually starts after the window.
@@ -2129,7 +2148,7 @@ after_listen:
 			 * th->th_seq - tp->rcv_nxt - tp->rcv_wnd >= 0
 			 * th->th_seq >= tp->rcv_nxt + tp->rcv_wnd
 			 */
-			tcpstat[TCP_STAT_RCVBYTEAFTERWIN] += tlen;
+			TCP_STATADD(TCP_STAT_RCVBYTEAFTERWIN, tlen);
 			/*
 			 * If a new connection request is received
 			 * while in TIME_WAIT, drop the old connection
@@ -2159,11 +2178,11 @@ after_listen:
 			 */
 			if (tp->rcv_wnd == 0 && th->th_seq == tp->rcv_nxt) {
 				tp->t_flags |= TF_ACKNOW;
-				tcpstat[TCP_STAT_RCVWINPROBE]++;
+				TCP_STATINC(TCP_STAT_RCVWINPROBE);
 			} else
 				goto dropafterack;
 		} else
-			tcpstat[TCP_STAT_RCVBYTEAFTERWIN] += todrop;
+			TCP_STATADD(TCP_STAT_RCVBYTEAFTERWIN, todrop);
 		m_adj(m, -todrop);
 		tlen -= todrop;
 		tiflags &= ~(TH_PUSH|TH_FIN);
@@ -2221,7 +2240,7 @@ after_listen:
 			so->so_error = ECONNRESET;
 		close:
 			tp->t_state = TCPS_CLOSED;
-			tcpstat[TCP_STAT_DROPS]++;
+			TCP_STATINC(TCP_STAT_DROPS);
 			tp = tcp_close(tp);
 			goto drop;
 
@@ -2277,7 +2296,7 @@ after_listen:
 		if (SEQ_GT(tp->snd_una, th->th_ack) ||
 		    SEQ_GT(th->th_ack, tp->snd_max))
 			goto dropwithreset;
-		tcpstat[TCP_STAT_CONNECTS]++;
+		TCP_STATINC(TCP_STAT_CONNECTS);
 		soisconnected(so);
 		tcp_established(tp);
 		/* Do window scaling? */
@@ -2310,7 +2329,7 @@ after_listen:
 
 		if (SEQ_LEQ(th->th_ack, tp->snd_una)) {
 			if (tlen == 0 && !dupseg && tiwin == tp->snd_wnd) {
-				tcpstat[TCP_STAT_RCVDUPPACK]++;
+				TCP_STATINC(TCP_STAT_RCVDUPPACK);
 				/*
 				 * If we have outstanding data (other than
 				 * a window probe), this is a completely
@@ -2370,12 +2389,14 @@ after_listen:
 		else
 			tp->t_congctl->fast_retransmit_newack(tp, th);
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
-			tcpstat[TCP_STAT_RCVACKTOOMUCH]++;
+			TCP_STATINC(TCP_STAT_RCVACKTOOMUCH);
 			goto dropafterack;
 		}
 		acked = th->th_ack - tp->snd_una;
-		tcpstat[TCP_STAT_RCVACKPACK]++;
-		tcpstat[TCP_STAT_RCVACKBYTE] += acked;
+		tcps = TCP_STAT_GETREF();
+		tcps[TCP_STAT_RCVACKPACK]++;
+		tcps[TCP_STAT_RCVACKBYTE] += acked;
+		TCP_STAT_PUTREF();
 
 		/*
 		 * If we have a timestamp reply, update smoothed
@@ -2509,7 +2530,7 @@ step6:
 		/* keep track of pure window updates */
 		if (tlen == 0 &&
 		    tp->snd_wl2 == th->th_ack && tiwin > tp->snd_wnd)
-			tcpstat[TCP_STAT_RCVWINUPD]++;
+			TCP_STATINC(TCP_STAT_RCVWINUPD);
 		tp->snd_wnd = tiwin;
 		tp->snd_wl1 = th->th_seq;
 		tp->snd_wl2 = th->th_ack;
@@ -2609,8 +2630,10 @@ dodata:							/* XXX */
 			tcp_setup_ack(tp, th);
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
-			tcpstat[TCP_STAT_RCVPACK]++;
-			tcpstat[TCP_STAT_RCVBYTE] += tlen;
+			tcps = TCP_STAT_GETREF();
+			tcps[TCP_STAT_RCVPACK]++;
+			tcps[TCP_STAT_RCVBYTE] += tlen;
+			TCP_STAT_PUTREF();
 			nd6_hint(tp);
 			if (so->so_state & SS_CANTRCVMORE)
 				m_freem(m);
@@ -2705,7 +2728,7 @@ badsyn:
 	/*
 	 * Received a bad SYN.  Increment counters and dropwithreset.
 	 */
-	tcpstat[TCP_STAT_BADSYN]++;
+	TCP_STATINC(TCP_STAT_BADSYN);
 	tp = NULL;
 	goto dropwithreset;
 
@@ -3112,7 +3135,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 		tcp_fields_to_host(th);
 
 		if (bcmp(sig, sigp, TCP_SIGLEN)) {
-			tcpstat[TCP_STAT_BADSIG]++;
+			TCP_STATINC(TCP_STAT_BADSIG);
 			if (sav == NULL)
 				return (-1);
 #ifdef FAST_IPSEC
@@ -3122,7 +3145,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 #endif
 			return (-1);
 		} else
-			tcpstat[TCP_STAT_GOODSIG]++;
+			TCP_STATINC(TCP_STAT_GOODSIG);
 
 		key_sa_recordxfer(sav, m);
 #ifdef FAST_IPSEC
@@ -3176,7 +3199,7 @@ tcp_xmit_timer(struct tcpcb *tp, uint32_t rtt)
 {
 	int32_t delta;
 
-	tcpstat[TCP_STAT_RTTUPDATED]++;
+	TCP_STATINC(TCP_STAT_RTTUPDATED);
 	if (tp->t_srtt != 0) {
 		/*
 		 * srtt is stored as fixed point with 3 bits after the
@@ -3363,7 +3386,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	 */
 	s = splsoftnet();
 	if (scp->sch_length >= tcp_syn_bucket_limit) {
-		tcpstat[TCP_STAT_SC_BUCKETOVERFLOW]++;
+		TCP_STATINC(TCP_STAT_SC_BUCKETOVERFLOW);
 		/*
 		 * The bucket is full.  Toss the oldest element in the
 		 * bucket.  This will be the first entry in the bucket.
@@ -3382,7 +3405,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	} else if (syn_cache_count >= tcp_syn_cache_limit) {
 		struct syn_cache_head *scp2, *sce;
 
-		tcpstat[TCP_STAT_SC_OVERFLOWED]++;
+		TCP_STATINC(TCP_STAT_SC_OVERFLOWED);
 		/*
 		 * The cache is full.  Toss the oldest entry in the
 		 * first non-empty bucket we can find.
@@ -3430,7 +3453,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	scp->sch_length++;
 	syn_cache_count++;
 
-	tcpstat[TCP_STAT_SC_ADDED]++;
+	TCP_STATINC(TCP_STAT_SC_ADDED);
 	splx(s);
 }
 
@@ -3449,7 +3472,7 @@ syn_cache_timer(void *arg)
 	callout_ack(&sc->sc_timer);
 
 	if (__predict_false(sc->sc_flags & SCF_DEAD)) {
-		tcpstat[TCP_STAT_SC_DELAYED_FREE]++;
+		TCP_STATINC(TCP_STAT_SC_DELAYED_FREE);
 		callout_destroy(&sc->sc_timer);
 		pool_put(&syn_cache_pool, sc);
 		splx(s);
@@ -3470,7 +3493,7 @@ syn_cache_timer(void *arg)
 	if (sc->sc_rxttot >= tcp_keepinit)
 		goto dropit;
 
-	tcpstat[TCP_STAT_SC_RETRANSMITTED]++;
+	TCP_STATINC(TCP_STAT_SC_RETRANSMITTED);
 	(void) syn_cache_respond(sc, NULL);
 
 	/* Advance the timer back-off. */
@@ -3481,7 +3504,7 @@ syn_cache_timer(void *arg)
 	return;
 
  dropit:
-	tcpstat[TCP_STAT_SC_TIMED_OUT]++;
+	TCP_STATINC(TCP_STAT_SC_TIMED_OUT);
 	syn_cache_rm(sc);
 	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
@@ -3804,7 +3827,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	tcp_rcvseqinit(tp);
 	tp->t_state = TCPS_SYN_RECEIVED;
 	TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
-	tcpstat[TCP_STAT_ACCEPTS]++;
+	TCP_STATINC(TCP_STAT_ACCEPTS);
 
 	if ((sc->sc_flags & SCF_SACK_PERMIT) && tcp_do_sack)
 		tp->t_flags |= TF_WILL_SACK;
@@ -3858,7 +3881,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	tp->t_partialacks = -1;
 	tp->t_dupacks = 0;
 
-	tcpstat[TCP_STAT_SC_COMPLETED]++;
+	TCP_STATINC(TCP_STAT_SC_COMPLETED);
 	s = splsoftnet();
 	syn_cache_put(sc);
 	splx(s);
@@ -3872,7 +3895,7 @@ abort:
 	s = splsoftnet();
 	syn_cache_put(sc);
 	splx(s);
-	tcpstat[TCP_STAT_SC_ABORTED]++;
+	TCP_STATINC(TCP_STAT_SC_ABORTED);
 	return ((struct socket *)(-1));
 }
 
@@ -3899,7 +3922,7 @@ syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th)
 		return;
 	}
 	syn_cache_rm(sc);
-	tcpstat[TCP_STAT_SC_RESET]++;
+	TCP_STATINC(TCP_STAT_SC_RESET);
 	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
 }
@@ -3938,7 +3961,7 @@ syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
 	}
 
 	syn_cache_rm(sc);
-	tcpstat[TCP_STAT_SC_UNREACH]++;
+	TCP_STATINC(TCP_STAT_SC_UNREACH);
 	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
 }
@@ -4023,7 +4046,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * as a retransmission (XXX though maybe we should).
 	 */
 	if ((sc = syn_cache_lookup(src, dst, &scp)) != NULL) {
-		tcpstat[TCP_STAT_SC_DUPESYN]++;
+		TCP_STATINC(TCP_STAT_SC_DUPESYN);
 		if (ipopts) {
 			/*
 			 * If we were remembering a previous source route,
@@ -4035,8 +4058,10 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		}
 		sc->sc_timestamp = tb.ts_recent;
 		if (syn_cache_respond(sc, m) == 0) {
-			tcpstat[TCP_STAT_SNDACKS]++;
-			tcpstat[TCP_STAT_SNDTOTAL]++;
+			uint64_t *tcps = TCP_STAT_GETREF();
+			tcps[TCP_STAT_SNDACKS]++;
+			tcps[TCP_STAT_SNDTOTAL]++;
+			TCP_STAT_PUTREF();
 		}
 		return (1);
 	}
@@ -4143,14 +4168,16 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 #endif
 	sc->sc_tp = tp;
 	if (syn_cache_respond(sc, m) == 0) {
+		uint64_t *tcps = TCP_STAT_GETREF();
+		tcps[TCP_STAT_SNDACKS]++;
+		tcps[TCP_STAT_SNDTOTAL]++;
+		TCP_STAT_PUTREF();
 		syn_cache_insert(sc, tp);
-		tcpstat[TCP_STAT_SNDACKS]++;
-		tcpstat[TCP_STAT_SNDTOTAL]++;
 	} else {
 		s = splsoftnet();
 		syn_cache_put(sc);
 		splx(s);
-		tcpstat[TCP_STAT_SC_DROPPED]++;
+		TCP_STATINC(TCP_STAT_SC_DROPPED);
 	}
 	return (1);
 }
@@ -4318,7 +4345,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 	if ((sc->sc_flags & SCF_ECN_PERMIT) && tp &&
 	    SEQ_GEQ(tp->snd_nxt, tp->snd_max)) {
 		th->th_flags |= TH_ECE;
-		tcpstat[TCP_STAT_ECN_SHS]++;
+		TCP_STATINC(TCP_STAT_ECN_SHS);
 
 		/*
 		 * draft-ietf-tcpm-ecnsyn-00.txt
@@ -4355,7 +4382,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 			break;
 #endif
 		}
-		tcpstat[TCP_STAT_ECN_ECT]++;
+		TCP_STATINC(TCP_STAT_ECN_ECT);
 	}
 
 #ifdef TCP_SIGNATURE
