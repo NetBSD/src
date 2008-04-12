@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.43 2008/04/05 21:31:23 cegger Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.44 2008/04/12 06:27:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.43 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.44 2008/04/12 06:27:01 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.43 2008/04/05 21:31:23 cegger Ex
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
-int	mbe_pcmcia_match(struct device *, struct cfdata *, void *);
+int	mbe_pcmcia_match(device_t, cfdata_t, void *);
 int	mbe_pcmcia_validate_config(struct pcmcia_config_entry *);
-void	mbe_pcmcia_attach(struct device *, struct device *, void *);
-int	mbe_pcmcia_detach(struct device *, int);
+void	mbe_pcmcia_attach(device_t, device_t, void *);
+int	mbe_pcmcia_detach(device_t, int);
 
 struct mbe_pcmcia_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb" softc */
@@ -73,14 +73,14 @@ struct mbe_pcmcia_softc {
 #define	MBE_PCMCIA_ATTACHED	3
 };
 
-CFATTACH_DECL(mbe_pcmcia, sizeof(struct mbe_pcmcia_softc),
+CFATTACH_DECL_NEW(mbe_pcmcia, sizeof(struct mbe_pcmcia_softc),
     mbe_pcmcia_match, mbe_pcmcia_attach, mbe_pcmcia_detach, mb86960_activate);
 
 int	mbe_pcmcia_enable(struct mb86960_softc *);
 void	mbe_pcmcia_disable(struct mb86960_softc *);
 
 struct mbe_pcmcia_get_enaddr_args {
-	u_int8_t enaddr[ETHER_ADDR_LEN];
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	int maddr;
 };
 int	mbe_pcmcia_get_enaddr_from_cis(struct pcmcia_tuple *, void *);
@@ -141,36 +141,33 @@ static const struct mbe_pcmcia_product {
 	    PCMCIA_CIS_RATOC_REX_R280 },
 	  0x1fc, 0 },
 };
-static const size_t mbe_pcmcia_nproducts =
-    sizeof(mbe_pcmcia_products) / sizeof(mbe_pcmcia_products[0]);
+static const size_t mbe_pcmcia_nproducts = __arraycount(mbe_pcmcia_products);
 
 int
-mbe_pcmcia_match(struct device *parent, struct cfdata *match,
-    void *aux)
+mbe_pcmcia_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
 	if (pcmcia_product_lookup(pa, mbe_pcmcia_products, mbe_pcmcia_nproducts,
 	    sizeof(mbe_pcmcia_products[0]), NULL))
-		return (1);
-	return (0);
+		return 1;
+	return 0;
 }
 
 int
-mbe_pcmcia_validate_config(cfe)
-	struct pcmcia_config_entry *cfe;
+mbe_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
+
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_iospace < 1)
-		return (EINVAL);
-	return (0);
+		return EINVAL;
+	return 0;
 }
 
 void
-mbe_pcmcia_attach(struct device *parent, struct device *self,
-    void *aux)
+mbe_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
-	struct mbe_pcmcia_softc *psc = (void *)self;
+	struct mbe_pcmcia_softc *psc = device_private(self);
 	struct mb86960_softc *sc = &psc->sc_mb86960;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
@@ -178,6 +175,7 @@ mbe_pcmcia_attach(struct device *parent, struct device *self,
 	const struct mbe_pcmcia_product *mpp;
 	int error;
 
+	sc->sc_dev = self;
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, mbe_pcmcia_validate_config);
@@ -194,7 +192,7 @@ mbe_pcmcia_attach(struct device *parent, struct device *self,
 	mpp = pcmcia_product_lookup(pa, mbe_pcmcia_products,
 	    mbe_pcmcia_nproducts, sizeof(mbe_pcmcia_products[0]), NULL);
 	if (!mpp)
-		panic("mbe_pcmcia_attach: impossible");
+		panic("%s: impossible", __func__);
 
 	/* Read station address from io/mem or CIS. */
 	if (mpp->mpp_enet_maddr >= 0) {
@@ -208,12 +206,14 @@ mbe_pcmcia_attach(struct device *parent, struct device *self,
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, FE_MBH0 ,
 				  FE_MBH0_MASK | FE_MBH0_INTR_ENABLE);
 		if (mbe_pcmcia_get_enaddr_from_io(psc, &pgea) != 0) {
-			aprint_error_dev(self, "couldn't get ethernet address from i/o\n");
+			aprint_error_dev(self,
+			    "couldn't get ethernet address from i/o\n");
 			goto fail;
 		}
 	} else {
 		if (pa->pf->pf_funce_lan_nidlen != ETHER_ADDR_LEN) {
-			aprint_error_dev(self, "couldn't get ethernet address from CIS\n");
+			aprint_error_dev(self,
+			    "couldn't get ethernet address from CIS\n");
 			goto fail;
 		}
 		memcpy(pgea.enaddr, pa->pf->pf_funce_lan_nid, ETHER_ADDR_LEN);
@@ -244,33 +244,32 @@ fail:
 int
 mbe_pcmcia_detach(struct device *self, int flags)
 {
-	struct mbe_pcmcia_softc *psc = (void *)self;
+	struct mbe_pcmcia_softc *psc = device_private(self);
 	int error;
 
 	if (psc->sc_state != MBE_PCMCIA_ATTACHED)
-		return (0);
+		return 0;
 
 	error = mb86960_detach(&psc->sc_mb86960);
 	if (error)
-		return (error);
+		return error;
 
 	pcmcia_function_unconfigure(psc->sc_pf);
 
-	return (0);
+	return 0;
 }
 
 int
-mbe_pcmcia_enable(sc)
-	struct mb86960_softc *sc;
+mbe_pcmcia_enable(struct mb86960_softc *sc)
 {
-	struct mbe_pcmcia_softc *psc = (void *)sc;
+	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)sc;
 	int error;
 
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, mb86960_intr,
 	    sc);
 	if (!psc->sc_ih)
-		return (EIO);
+		return EIO;
 
 	error = pcmcia_function_enable(psc->sc_pf);
 	if (error) {
@@ -278,14 +277,13 @@ mbe_pcmcia_enable(sc)
 		psc->sc_ih = 0;
 	}
 
-	return (error);
+	return error;
 }
 
 void
-mbe_pcmcia_disable(sc)
-	struct mb86960_softc *sc;
+mbe_pcmcia_disable(struct mb86960_softc *sc)
 {
-	struct mbe_pcmcia_softc *psc = (void *)sc;
+	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)sc;
 
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
@@ -293,9 +291,8 @@ mbe_pcmcia_disable(sc)
 }
 
 int
-mbe_pcmcia_get_enaddr_from_io(psc, ea)
-	struct mbe_pcmcia_softc *psc;
-	struct mbe_pcmcia_get_enaddr_args *ea;
+mbe_pcmcia_get_enaddr_from_io(struct mbe_pcmcia_softc *psc,
+    struct mbe_pcmcia_get_enaddr_args *ea)
 {
 	struct mb86960_softc *sc = &psc->sc_mb86960;
 	int i;
@@ -303,13 +300,12 @@ mbe_pcmcia_get_enaddr_from_io(psc, ea)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		ea->enaddr[i] = bus_space_read_1(sc->sc_bst, sc->sc_bsh,
 		    FE_MBH_ENADDR + i);
-	return (0);
+	return 0;
 }
 
 int
-mbe_pcmcia_get_enaddr_from_mem(psc, ea)
-	struct mbe_pcmcia_softc *psc;
-	struct mbe_pcmcia_get_enaddr_args *ea;
+mbe_pcmcia_get_enaddr_from_mem(struct mbe_pcmcia_softc *psc,
+    struct mbe_pcmcia_get_enaddr_args *ea)
 {
 	struct mb86960_softc *sc = &psc->sc_mb86960;
 	struct pcmcia_mem_handle pcmh;
@@ -320,13 +316,13 @@ mbe_pcmcia_get_enaddr_from_mem(psc, ea)
 		goto bad_memaddr;
 
 	if (pcmcia_mem_alloc(psc->sc_pf, ETHER_ADDR_LEN * 2, &pcmh)) {
-		aprint_error_dev(&sc->sc_dev, "can't alloc mem for enet addr\n");
+		aprint_error_dev(sc->sc_dev, "can't alloc mem for enet addr\n");
 		goto memalloc_failed;
 	}
 
 	if (pcmcia_mem_map(psc->sc_pf, PCMCIA_MEM_ATTR, ea->maddr,
 	    ETHER_ADDR_LEN * 2, &pcmh, &offset, &mwindow)) {
-		aprint_error_dev(&sc->sc_dev, "can't map mem for enet addr\n");
+		aprint_error_dev(sc->sc_dev, "can't map mem for enet addr\n");
 		goto memmap_failed;
 	}
 
@@ -341,5 +337,5 @@ memmap_failed:
 memalloc_failed:
 bad_memaddr:
 
-	return (rv);
+	return rv;
 }
