@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acmacros.h - C macros for the entire subsystem.
- *       $Revision: 1.3 $
+ *       $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -169,7 +169,7 @@
 #define ACPI_PTR_TO_PHYSADDR(i)         ACPI_TO_INTEGER(i)
 
 #ifndef ACPI_MISALIGNMENT_NOT_SUPPORTED
-#define ACPI_COMPARE_NAME(a,b)          (*ACPI_CAST_PTR (UINT32,(a)) == *ACPI_CAST_PTR (UINT32,(b)))
+#define ACPI_COMPARE_NAME(a,b)          (*ACPI_CAST_CONST_PTR (UINT32,(a)) == *ACPI_CAST_CONST_PTR (UINT32,(b)))
 #else
 #define ACPI_COMPARE_NAME(a,b)          (!ACPI_STRNCMP (ACPI_CAST_PTR (char,(a)), ACPI_CAST_PTR (char,(b)), ACPI_NAME_SIZE))
 #endif
@@ -574,11 +574,11 @@ typedef struct acpi_integer_overlay
 #define ACPI_FUNCTION_TRACE(a)          ACPI_FUNCTION_NAME(a) \
                                             AcpiUtTrace(ACPI_DEBUG_PARAMETERS)
 #define ACPI_FUNCTION_TRACE_PTR(a,b)    ACPI_FUNCTION_NAME(a) \
-                                            AcpiUtTracePtr(ACPI_DEBUG_PARAMETERS,(void *)b)
+                                            AcpiUtTracePtr(ACPI_DEBUG_PARAMETERS,(const void *)b)
 #define ACPI_FUNCTION_TRACE_U32(a,b)    ACPI_FUNCTION_NAME(a) \
                                             AcpiUtTraceU32(ACPI_DEBUG_PARAMETERS,(UINT32)b)
 #define ACPI_FUNCTION_TRACE_STR(a,b)    ACPI_FUNCTION_NAME(a) \
-                                            AcpiUtTraceStr(ACPI_DEBUG_PARAMETERS,(char *)b)
+                                            AcpiUtTraceStr(ACPI_DEBUG_PARAMETERS,(const char *)b)
 
 #define ACPI_FUNCTION_ENTRY()           AcpiUtTrackStackPtr()
 

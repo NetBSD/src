@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              $Revision: 1.6 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -158,7 +158,7 @@ AcpiNsDumpOneDevice (
 void
 AcpiNsPrintPathname (
     UINT32                  NumSegments,
-    char                    *Pathname)
+    const char              *Pathname)
 {
     ACPI_NATIVE_UINT        i;
 
@@ -215,7 +215,7 @@ AcpiNsPrintPathname (
 void
 AcpiNsDumpPathname (
     ACPI_HANDLE             Handle,
-    char                    *Msg,
+    const char              *Msg,
     UINT32                  Level,
     UINT32                  Component)
 {

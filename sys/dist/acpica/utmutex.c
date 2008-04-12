@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utmutex - local mutex support
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -357,15 +357,15 @@ AcpiUtAcquireMutex (
 #endif
 
     ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX,
-        "Thread %X attempting to acquire Mutex [%s]\n",
-        ThisThreadId, AcpiUtGetMutexName (MutexId)));
+        "Thread %lX attempting to acquire Mutex [%s]\n",
+        (unsigned long)ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
     Status = AcpiOsAcquireMutex (AcpiGbl_MutexInfo[MutexId].Mutex,
                 ACPI_WAIT_FOREVER);
     if (ACPI_SUCCESS (Status))
     {
-        ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %X acquired Mutex [%s]\n",
-            ThisThreadId, AcpiUtGetMutexName (MutexId)));
+        ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %lX acquired Mutex [%s]\n",
+            (unsigned long)ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
         AcpiGbl_MutexInfo[MutexId].UseCount++;
         AcpiGbl_MutexInfo[MutexId].ThreadId = ThisThreadId;
@@ -373,7 +373,8 @@ AcpiUtAcquireMutex (
     else
     {
         ACPI_EXCEPTION ((AE_INFO, Status,
-            "Thread %X could not acquire Mutex [%X]", (UINT32)ThisThreadId, MutexId));
+            "Thread %lX could not acquire Mutex [%X]",
+	    (unsigned long)ThisThreadId, MutexId));
     }
 
     return (Status);
@@ -404,7 +405,7 @@ AcpiUtReleaseMutex (
 
     ThisThreadId = AcpiOsGetThreadId ();
     ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX,
-        "Thread %X releasing Mutex [%s]\n", ThisThreadId,
+        "Thread %lX releasing Mutex [%s]\n", (unsigned long)ThisThreadId,
         AcpiUtGetMutexName (MutexId)));
 
     if (MutexId > ACPI_MAX_MUTEX)

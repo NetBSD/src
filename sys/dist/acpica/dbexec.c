@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbexec - debugger control method execution
- *              $Revision: 1.6 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -205,7 +205,7 @@ AcpiDbExecuteMethod (
 
         Params[1].Type           = ACPI_TYPE_STRING;
         Params[1].String.Length  = 12;
-        Params[1].String.Pointer = "AML Debugger";
+        Params[1].String.Pointer = __UNCONST("AML Debugger");
 
         ParamObjects.Pointer     = Params;
         ParamObjects.Count       = 2;
