@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmopcode - AML disassembler, specific AML opcodes
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -344,7 +344,7 @@ AcpiDmMatchKeyword (
     }
     else
     {
-        AcpiOsPrintf ("%s", ACPI_CAST_PTR (char,
+        AcpiOsPrintf ("%s", ACPI_CAST_CONST_PTR (char,
             AcpiGbl_MatchOps[(ACPI_SIZE) Op->Common.Value.Integer]));
     }
 }

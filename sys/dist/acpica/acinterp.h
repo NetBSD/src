@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acinterp.h - Interpreter subcomponent prototypes and defines
- *       $Revision: 1.3 $
+ *       $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -142,7 +142,7 @@ typedef const struct acpi_exdump_info
 {
     UINT8                   Opcode;
     UINT8                   Offset;
-    char                    *Name;
+    const char              *Name;
 
 } ACPI_EXDUMP_INFO;
 
@@ -565,10 +565,10 @@ void
 AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
     ACPI_INTERPRETER_MODE   InterpreterMode,
-    char                    *Ident,
+    const char              *Ident,
     UINT32                  NumLevels,
-    char                    *Note,
-    char                    *ModuleName,
+    const char              *Note,
+    const char              *ModuleName,
     UINT32                  LineNumber);
 
 void

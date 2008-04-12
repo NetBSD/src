@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: uteval - Object evaluation
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -854,7 +854,7 @@ AcpiUtExecute_Sxds (
             {
                 ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
                     "%s on Device %4.4s, %s\n",
-                    ACPI_CAST_PTR (char, AcpiGbl_HighestDstateNames[i]),
+                    ACPI_CAST_CONST_PTR (char, AcpiGbl_HighestDstateNames[i]),
                     AcpiUtGetNodeName (DeviceNode),
                     AcpiFormatException (Status)));
 

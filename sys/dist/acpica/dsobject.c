@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsobject - Dispatcher object management routines
- *              $Revision: 1.6 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -597,7 +597,7 @@ AcpiDsBuildInternalPackageObj (
          */
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
             "Package List length (%X) smaller than NumElements count (%X), padded with null elements\n",
-            i, ElementCount));
+            (UINT32) i, ElementCount));
     }
 
     ObjDesc->Package.Flags |= AOPOBJ_DATA_VALID;

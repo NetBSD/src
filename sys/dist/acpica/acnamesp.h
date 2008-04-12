@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnamesp.h - Namespace subcomponent prototypes and defines
- *       $Revision: 1.3 $
+ *       $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -275,14 +275,14 @@ AcpiNsDumpEntry (
 void
 AcpiNsDumpPathname (
     ACPI_HANDLE             Handle,
-    char                    *Msg,
+    const char              *Msg,
     UINT32                  Level,
     UINT32                  Component);
 
 void
 AcpiNsPrintPathname (
     UINT32                  NumSegments,
-    char                    *Pathname);
+    const char              *Pathname);
 
 ACPI_STATUS
 AcpiNsDumpOneObject (

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -138,7 +138,7 @@ AcpiDbDumpBuffer (
     UINT32                  Address);
 #endif
 
-static char                 *Converter = "0123456789ABCDEF";
+static const char           *Converter = "0123456789ABCDEF";
 
 
 /*******************************************************************************
@@ -156,7 +156,7 @@ static char                 *Converter = "0123456789ABCDEF";
 
 ACPI_OBJECT_TYPE
 AcpiDbMatchArgument (
-    char                    *UserArgument,
+    const char              *UserArgument,
     ARGUMENT_INFO           *Arguments)
 {
     UINT32                  i;

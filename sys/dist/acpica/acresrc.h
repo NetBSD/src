@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acresrc.h - Resource Manager function prototypes
- *       $Revision: 1.3 $
+ *       $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -187,8 +187,8 @@ typedef const struct acpi_rsdump_info
 {
     UINT8                   Opcode;
     UINT8                   Offset;
-    char                    *Name;
-    const char              **Pointer;
+    const char              *Name;
+    const char * const      *Pointer;
 
 } ACPI_RSDUMP_INFO;
 

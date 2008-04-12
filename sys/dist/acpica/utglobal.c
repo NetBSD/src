@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utglobal - Global variables for the ACPI subsystem
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -678,7 +678,7 @@ AcpiUtGetDescriptorName (
  *
  ******************************************************************************/
 
-char *
+const char *
 AcpiUtGetMutexName (
     UINT32                  MutexId)
 {
