@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.21 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.22 2008/04/12 17:16:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.21 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.22 2008/04/12 17:16:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 			lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
 			lwp_lock(l);
 		}
-		l->l_flag |= LW_BOUND;
+		l->l_pflag |= LP_BOUND;
 		l->l_cpu = ci;
 	}
 	if ((flag & KTHREAD_INTR) != 0)

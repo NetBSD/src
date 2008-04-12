@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.116 2008/02/19 07:46:51 dogcow Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.117 2008/04/12 17:16:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.116 2008/02/19 07:46:51 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.117 2008/04/12 17:16:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -201,7 +201,7 @@ panic(const char *fmt, ...)
 	 * CPUs from scheduling unbound jobs.  Do so without taking any
 	 * locks.
 	 */
-	curlwp->l_flag |= LW_BOUND;
+	curlwp->l_pflag |= LP_BOUND;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_flags |= SPCF_OFFLINE;
 	}

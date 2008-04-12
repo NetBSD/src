@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.25 2008/04/12 17:02:08 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.26 2008/04/12 17:16:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.25 2008/04/12 17:02:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.26 2008/04/12 17:16:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ cpu_xc_offline(struct cpu_info *ci)
 
 	/* Handle LSRUN and LSIDL cases */
 	LIST_FOREACH(l, &alllwp, l_list) {
-		if (l->l_cpu != ci || (l->l_flag & LW_BOUND))
+		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND))
 			continue;
 		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
 			sched_dequeue(l);

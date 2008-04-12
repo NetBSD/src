@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.223 2008/04/12 17:02:08 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.224 2008/04/12 17:16:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.223 2008/04/12 17:02:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.224 2008/04/12 17:16:09 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -1214,7 +1214,7 @@ sched_enqueue(struct lwp *l, bool swtch)
 	}
 	TAILQ_INSERT_TAIL(q_head, l, l_runq);
 	ci_rq->r_count++;
-	if ((l->l_flag & LW_BOUND) == 0)
+	if ((l->l_pflag & LP_BOUND) == 0)
 		ci_rq->r_mcount++;
 
 	/*
@@ -1254,7 +1254,7 @@ sched_dequeue(struct lwp *l)
 	KASSERT(ci_rq->r_count > 0);
 
 	ci_rq->r_count--;
-	if ((l->l_flag & LW_BOUND) == 0)
+	if ((l->l_pflag & LP_BOUND) == 0)
 		ci_rq->r_mcount--;
 
 	q_head = sched_getrq(ci_rq, eprio);
@@ -1344,7 +1344,7 @@ sched_takecpu(struct lwp *l)
 	ci_rq = spc->spc_sched_info;
 
 	/* If thread is strictly bound, do not estimate other CPUs */
-	if (l->l_flag & LW_BOUND)
+	if (l->l_pflag & LP_BOUND)
 		return ci;
 
 	/* CPU of this thread is idling - run there */
@@ -1450,7 +1450,7 @@ sched_catchlwp(void)
 		KASSERT(l->l_flag & LW_INMEM);
 
 		/* Look for threads, whose are allowed to migrate */
-		if ((l->l_flag & LW_BOUND) || lwp_cache_hot(l) ||
+		if ((l->l_pflag & LP_BOUND) || lwp_cache_hot(l) ||
 		    !sched_migratable(l, curci)) {
 			l = TAILQ_NEXT(l, l_runq);
 			continue;
