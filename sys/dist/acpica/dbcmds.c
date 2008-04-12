@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbcmds - debug commands and output routines
- *              $Revision: 1.6 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -176,7 +176,7 @@ AcpiDmCompareAmlResources (
 static ACPI_STATUS
 AcpiDmTestResourceConversion (
     ACPI_NAMESPACE_NODE     *Node,
-    char                    *Name);
+    const char              *Name);
 
 
 /*
@@ -1044,7 +1044,7 @@ AcpiDbWalkForSpecificObjects (
 
 ACPI_STATUS
 AcpiDbDisplayObjects (
-    char                    *ObjTypeArg,
+    const char              *ObjTypeArg,
     char                    *DisplayCountArg)
 {
     ACPI_WALK_INFO          Info;
@@ -1361,7 +1361,7 @@ AcpiDmCompareAmlResources (
 static ACPI_STATUS
 AcpiDmTestResourceConversion (
     ACPI_NAMESPACE_NODE     *Node,
-    char                    *Name)
+    const char              *Name)
 {
     ACPI_STATUS             Status;
     ACPI_BUFFER             ReturnObj;

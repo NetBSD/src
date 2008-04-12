@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utdebug - Debug print routines
- *              $Revision: 1.6 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -125,8 +125,8 @@
 #ifdef ACPI_DEBUG_OUTPUT
 
 static ACPI_THREAD_ID       AcpiGbl_PrevThreadId = 0xFFFFFFFF;
-static char                 *AcpiGbl_FnEntryStr = "----Entry";
-static char                 *AcpiGbl_FnExitStr  = "----Exit-";
+static const char           *AcpiGbl_FnEntryStr = "----Entry";
+static const char           *AcpiGbl_FnExitStr  = "----Exit-";
 
 /* Local prototypes */
 
@@ -210,14 +210,14 @@ AcpiUtTrimFunctionName (
 
     /* All Function names are longer than 4 chars, check is safe */
 
-    if (*(ACPI_CAST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_MIXED)
+    if (*(ACPI_CAST_CONST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_MIXED)
     {
         /* This is the case where the original source has not been modified */
 
         return (FunctionName + 4);
     }
 
-    if (*(ACPI_CAST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_LOWER)
+    if (*(ACPI_CAST_CONST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_LOWER)
     {
         /* This is the case where the source has been 'linuxized' */
 
@@ -252,9 +252,9 @@ AcpiUtDebugPrint (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
-    char                    *Format,
+    const char              *Format,
     ...)
 {
     ACPI_THREAD_ID          ThreadId;
@@ -332,9 +332,9 @@ AcpiUtDebugPrintRaw (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
-    char                    *Format,
+    const char              *Format,
     ...)
 {
     va_list                 args;
@@ -374,7 +374,7 @@ void
 AcpiUtTrace (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId)
 {
 
@@ -410,9 +410,9 @@ void
 AcpiUtTracePtr (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
-    void                    *Pointer)
+    const void              *Pointer)
 {
     AcpiGbl_NestingLevel++;
     AcpiUtTrackStackPtr ();
@@ -444,9 +444,9 @@ void
 AcpiUtTraceStr (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
-    char                    *String)
+    const char              *String)
 {
 
     AcpiGbl_NestingLevel++;
@@ -479,7 +479,7 @@ void
 AcpiUtTraceU32 (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
     UINT32                  Integer)
 {
@@ -513,7 +513,7 @@ void
 AcpiUtExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId)
 {
 
@@ -548,7 +548,7 @@ void
 AcpiUtStatusExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
     ACPI_STATUS             Status)
 {
@@ -595,7 +595,7 @@ void
 AcpiUtValueExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
     ACPI_INTEGER            Value)
 {
@@ -632,7 +632,7 @@ void
 AcpiUtPtrExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    char                    *ModuleName,
+    const char              *ModuleName,
     UINT32                  ComponentId,
     UINT8                   *Ptr)
 {
