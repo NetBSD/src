@@ -1,9 +1,7 @@
-/*	$NetBSD: exdump.c,v 1.5 2007/12/11 13:16:07 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              $Revision: 1.5 $
+ *              $Revision: 1.6 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,16 +114,13 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.5 2007/12/11 13:16:07 lukem Exp $");
-
 #define __EXDUMP_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acparser.h>
+#include "acpi.h"
+#include "acinterp.h"
+#include "amlcode.h"
+#include "acnamesp.h"
+#include "acparser.h"
 
 #define _COMPONENT          ACPI_EXECUTER
         ACPI_MODULE_NAME    ("exdump")
@@ -139,12 +134,12 @@ __KERNEL_RCSID(0, "$NetBSD: exdump.c,v 1.5 2007/12/11 13:16:07 lukem Exp $");
 
 static void
 AcpiExOutString (
-    const char              *Title,
-    const char              *Value);
+    char                    *Title,
+    char                    *Value);
 
 static void
 AcpiExOutPointer (
-    const char              *Title,
+    char                    *Title,
     void                    *Value);
 
 static void
@@ -427,7 +422,7 @@ AcpiExDumpObject (
     ACPI_EXDUMP_INFO        *Info)
 {
     UINT8                   *Target;
-    const char              *Name;
+    char                    *Name;
     UINT8                   Count;
 
 
@@ -613,10 +608,18 @@ AcpiExDumpOperand (
             break;
 
 
+        case AML_LOAD_OP:
+
+            AcpiOsPrintf ("Reference: [DdbHandle] TableIndex %p\n",
+                ObjDesc->Reference.Object);
+            break;
+
+
         case AML_REF_OF_OP:
 
-            AcpiOsPrintf ("Reference: (RefOf) %p\n",
-                ObjDesc->Reference.Object);
+            AcpiOsPrintf ("Reference: (RefOf) %p [%s]\n",
+                ObjDesc->Reference.Object,
+                AcpiUtGetTypeName (((ACPI_OPERAND_OBJECT *) ObjDesc->Reference.Object)->Common.Type));
             break;
 
 
@@ -657,8 +660,9 @@ AcpiExDumpOperand (
 
         case AML_INT_NAMEPATH_OP:
 
-            AcpiOsPrintf ("Reference.Node->Name %X\n",
-                ObjDesc->Reference.Node->Name.Integer);
+            AcpiOsPrintf ("Reference: Namepath %X [%4.4s]\n",
+                ObjDesc->Reference.Node->Name.Integer,
+                ObjDesc->Reference.Node->Name.Ascii);
             break;
 
 
@@ -745,7 +749,7 @@ AcpiExDumpOperand (
         else
         {
             AcpiOsPrintf (" base %8.8X%8.8X Length %X\n",
-                ACPI_FORMAT_UINT64 (ObjDesc->Region.Address),
+                ACPI_FORMAT_NATIVE_UINT (ObjDesc->Region.Address),
                 ObjDesc->Region.Length);
         }
         break;
@@ -889,10 +893,10 @@ void
 AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
     ACPI_INTERPRETER_MODE   InterpreterMode,
-    const char              *Ident,
+    char                    *Ident,
     UINT32                  NumLevels,
-    const char              *Note,
-    const char              *ModuleName,
+    char                    *Note,
+    char                    *ModuleName,
     UINT32                  LineNumber)
 {
     ACPI_NATIVE_UINT        i;
@@ -949,15 +953,15 @@ AcpiExDumpOperands (
 
 static void
 AcpiExOutString (
-    const char              *Title,
-    const char              *Value)
+    char                    *Title,
+    char                    *Value)
 {
     AcpiOsPrintf ("%20s : %s\n", Title, Value);
 }
 
 static void
 AcpiExOutPointer (
-    const char              *Title,
+    char                    *Title,
     void                    *Value)
 {
     AcpiOsPrintf ("%20s : %p\n", Title, Value);
@@ -1024,12 +1028,12 @@ AcpiExDumpReferenceObj (
 
     if (ObjDesc->Reference.Opcode == AML_INT_NAMEPATH_OP)
     {
-        AcpiOsPrintf ("Named Object %p ", ObjDesc->Reference.Node);
+        AcpiOsPrintf (" Named Object %p ", ObjDesc->Reference.Node);
 
         Status = AcpiNsHandleToPathname (ObjDesc->Reference.Node, &RetBuf);
         if (ACPI_FAILURE (Status))
         {
-            AcpiOsPrintf ("Could not convert name to pathname\n");
+            AcpiOsPrintf (" Could not convert name to pathname\n");
         }
         else
         {
@@ -1039,7 +1043,29 @@ AcpiExDumpReferenceObj (
     }
     else if (ObjDesc->Reference.Object)
     {
-        AcpiOsPrintf ("\nReferenced Object: %p\n", ObjDesc->Reference.Object);
+        if (ACPI_GET_DESCRIPTOR_TYPE (ObjDesc) == ACPI_DESC_TYPE_OPERAND)
+        {
+            AcpiOsPrintf (" Target: %p", ObjDesc->Reference.Object);
+            if (ObjDesc->Reference.Opcode == AML_LOAD_OP)
+            {
+                /*
+                 * For DDBHandle reference,
+                 * ObjDesc->Reference.Object is the table index
+                 */
+                AcpiOsPrintf (" [DDBHandle]\n");
+            }
+            else
+            {
+                AcpiOsPrintf (" [%s]\n",
+                    AcpiUtGetTypeName (((ACPI_OPERAND_OBJECT *)
+                        ObjDesc->Reference.Object)->Common.Type));
+            }
+        }
+        else
+        {
+            AcpiOsPrintf (" Target: %p\n",
+                ObjDesc->Reference.Object);
+        }
     }
 }
 
@@ -1138,7 +1164,8 @@ AcpiExDumpPackageObj (
 
     case ACPI_TYPE_LOCAL_REFERENCE:
 
-        AcpiOsPrintf ("[Object Reference] ");
+        AcpiOsPrintf ("[Object Reference] %s",
+            (AcpiPsGetOpcodeInfo (ObjDesc->Reference.Opcode))->Name);
         AcpiExDumpReferenceObj (ObjDesc);
         break;
 

@@ -1,9 +1,7 @@
-/*	$NetBSD: psparse.c,v 1.3 2007/12/11 13:16:14 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -126,15 +124,12 @@
  * templates in AmlOpInfo[]
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.3 2007/12/11 13:16:14 lukem Exp $");
-
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acinterp.h>
+#include "acpi.h"
+#include "acparser.h"
+#include "acdispat.h"
+#include "amlcode.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psparse")
@@ -293,6 +288,7 @@ AcpiPsCompleteThisOp (
                 (Op->Common.Parent->Common.AmlOpcode == AML_DATA_REGION_OP)  ||
                 (Op->Common.Parent->Common.AmlOpcode == AML_BUFFER_OP)       ||
                 (Op->Common.Parent->Common.AmlOpcode == AML_PACKAGE_OP)      ||
+                (Op->Common.Parent->Common.AmlOpcode == AML_BANK_FIELD_OP)   ||
                 (Op->Common.Parent->Common.AmlOpcode == AML_VAR_PACKAGE_OP))
             {
                 ReplacementOp = AcpiPsAllocOp (AML_INT_RETURN_VALUE_OP);
@@ -635,7 +631,8 @@ AcpiPsParseAml (
             if ((Status == AE_ALREADY_EXISTS) &&
                 (!WalkState->MethodDesc->Method.Mutex))
             {
-                ACPI_INFO ((AE_INFO, "Marking method %4.4s as Serialized",
+                ACPI_INFO ((AE_INFO,
+                    "Marking method %4.4s as Serialized because of AE_ALREADY_EXISTS error",
                     WalkState->MethodNode->Name.Ascii));
 
                 /*
@@ -694,6 +691,25 @@ AcpiPsParseAml (
                  */
                 if (!PreviousWalkState->ReturnDesc)
                 {
+                    /*
+                     * In slack mode execution, if there is no return value
+                     * we should implicitly return zero (0) as a default value.
+                     */
+                    if (AcpiGbl_EnableInterpreterSlack &&
+                        !PreviousWalkState->ImplicitReturnObj)
+                    {
+                        PreviousWalkState->ImplicitReturnObj =
+                            AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
+                        if (!PreviousWalkState->ImplicitReturnObj)
+                        {
+                            return_ACPI_STATUS (AE_NO_MEMORY);
+                        }
+
+                        PreviousWalkState->ImplicitReturnObj->Integer.Value = 0;
+                    }
+
+                    /* Restart the calling control method */
+
                     Status = AcpiDsRestartControlMethod (WalkState,
                                 PreviousWalkState->ImplicitReturnObj);
                 }

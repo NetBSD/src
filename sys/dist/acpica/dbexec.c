@@ -1,9 +1,7 @@
-/*	$NetBSD: dbexec.c,v 1.5 2007/12/11 13:16:00 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: dbexec - debugger control method execution
- *              $Revision: 1.5 $
+ *              $Revision: 1.6 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,12 +114,10 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.5 2007/12/11 13:16:00 lukem Exp $");
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acdebug.h>
-#include <dist/acpica/acnamesp.h>
+#include "acpi.h"
+#include "acdebug.h"
+#include "acnamesp.h"
 
 #ifdef ACPI_DEBUGGER
 
@@ -209,7 +205,7 @@ AcpiDbExecuteMethod (
 
         Params[1].Type           = ACPI_TYPE_STRING;
         Params[1].String.Length  = 12;
-        Params[1].String.Pointer = __UNCONST("AML Debugger"); /* XXX */
+        Params[1].String.Pointer = "AML Debugger";
 
         ParamObjects.Pointer     = Params;
         ParamObjects.Count       = 2;
@@ -555,7 +551,7 @@ AcpiDbMethodThread (
     /* Signal our completion */
 
     Allow = 0;
-    AcpiOsWaitSemaphore (Info->ThreadCompleteGate, 1, ACPI_WAIT_FOREVER);
+    (void) AcpiOsWaitSemaphore (Info->ThreadCompleteGate, 1, ACPI_WAIT_FOREVER);
     Info->NumCompleted++;
 
     if (Info->NumCompleted == Info->NumThreads)
@@ -564,7 +560,7 @@ AcpiDbMethodThread (
         Allow = 1;
     }
 
-    AcpiOsSignalSemaphore (Info->ThreadCompleteGate, 1);
+    (void) AcpiOsSignalSemaphore (Info->ThreadCompleteGate, 1);
 
     if (Allow)
     {
@@ -696,7 +692,7 @@ AcpiDbCreateExecutionThreads (
 
     /* Wait for all threads to complete */
 
-    AcpiOsWaitSemaphore (MainThreadGate, 1, ACPI_WAIT_FOREVER);
+    (void) AcpiOsWaitSemaphore (MainThreadGate, 1, ACPI_WAIT_FOREVER);
 
     AcpiDbSetOutputDestination (ACPI_DB_DUPLICATE_OUTPUT);
     AcpiOsPrintf ("All threads (%X) have completed\n", NumThreads);

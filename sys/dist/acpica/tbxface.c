@@ -1,10 +1,8 @@
-/*	$NetBSD: tbxface.c,v 1.3 2007/12/11 13:16:17 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: tbxface - Public interfaces to the ACPI subsystem
  *                         ACPI table oriented interfaces
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -12,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,14 +115,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxface.c,v 1.3 2007/12/11 13:16:17 lukem Exp $");
-
 #define __TBXFACE_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/actables.h>
+#include "acpi.h"
+#include "acnamesp.h"
+#include "actables.h"
 
 #define _COMPONENT          ACPI_TABLES
         ACPI_MODULE_NAME    ("tbxface")
@@ -434,9 +429,9 @@ AcpiGetTable (
      */
     for (i = 0, j = 0; i < AcpiGbl_RootTableList.Count; i++)
     {
-        if (ACPI_STRNCMP (
-		(const char *)&(AcpiGbl_RootTableList.Tables[i].Signature),
-                Signature, 4))
+        if (ACPI_STRNCMP(
+                    (const char *)&(AcpiGbl_RootTableList.Tables[i].Signature),
+                    Signature, 4))
         {
             continue;
         }
@@ -542,7 +537,6 @@ AcpiTbLoadNamespace (
     ACPI_STATUS             Status;
     ACPI_TABLE_HEADER       *Table;
     ACPI_NATIVE_UINT        i;
-    BOOLEAN                 DsdtOverriden;
 
 
     ACPI_FUNCTION_TRACE (TbLoadNamespace);
@@ -566,7 +560,6 @@ AcpiTbLoadNamespace (
     /*
      * Find DSDT table
      */
-    DsdtOverriden = FALSE;
     Status = AcpiOsTableOverride (
                 AcpiGbl_RootTableList.Tables[ACPI_TABLE_INDEX_DSDT].Pointer, &Table);
     if (ACPI_SUCCESS (Status) && Table)
@@ -578,7 +571,6 @@ AcpiTbLoadNamespace (
         AcpiGbl_RootTableList.Tables[ACPI_TABLE_INDEX_DSDT].Pointer = Table;
         AcpiGbl_RootTableList.Tables[ACPI_TABLE_INDEX_DSDT].Length = Table->Length;
         AcpiGbl_RootTableList.Tables[ACPI_TABLE_INDEX_DSDT].Flags = ACPI_TABLE_ORIGIN_UNKNOWN;
-        DsdtOverriden = TRUE;
 
         ACPI_INFO ((AE_INFO, "Table DSDT replaced by host OS"));
         AcpiTbPrintTableHeader (0, Table);
@@ -608,23 +600,14 @@ AcpiTbLoadNamespace (
      * Load any SSDT or PSDT tables. Note: Loop leaves tables locked
      */
     (void) AcpiUtAcquireMutex (ACPI_MTX_TABLES);
-    for (i = 2; i < AcpiGbl_RootTableList.Count; ++i)
+    for (i = 0; i < AcpiGbl_RootTableList.Count; ++i)
     {
         if ((ACPI_STRNCMP ((const char *)&(AcpiGbl_RootTableList.Tables[i].Signature),
-                    ACPI_SIG_SSDT, 4) &&
+                     ACPI_SIG_SSDT, 4) &&
              ACPI_STRNCMP ((const char *)&(AcpiGbl_RootTableList.Tables[i].Signature),
-                    ACPI_SIG_PSDT, 4)) ||
+                     ACPI_SIG_PSDT, 4)) ||
              ACPI_FAILURE (AcpiTbVerifyTable (&AcpiGbl_RootTableList.Tables[i])))
         {
-            continue;
-        }
-
-        /* Delete SSDT when DSDT is overriden */
-
-        if (!ACPI_STRNCMP ((const char *)&(AcpiGbl_RootTableList.Tables[i].Signature),
-                    ACPI_SIG_SSDT, 4) && DsdtOverriden)
-        {
-            AcpiTbDeleteTable (&AcpiGbl_RootTableList.Tables[i]);
             continue;
         }
 
@@ -678,4 +661,110 @@ AcpiLoadTables (
 }
 
 ACPI_EXPORT_SYMBOL (AcpiLoadTables)
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiInstallTableHandler
+ *
+ * PARAMETERS:  Handler         - Table event handler
+ *              Context         - Value passed to the handler on each event
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Install table event handler
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiInstallTableHandler (
+    ACPI_TABLE_HANDLER      Handler,
+    void                    *Context)
+{
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE (AcpiInstallTableHandler);
+
+
+    if (!Handler)
+    {
+        return_ACPI_STATUS (AE_BAD_PARAMETER);
+    }
+
+    Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
+    /* Don't allow more than one handler */
+
+    if (AcpiGbl_TableHandler)
+    {
+        Status = AE_ALREADY_EXISTS;
+        goto Cleanup;
+    }
+
+    /* Install the handler */
+
+    AcpiGbl_TableHandler = Handler;
+    AcpiGbl_TableHandlerContext = Context;
+
+Cleanup:
+    (void) AcpiUtReleaseMutex (ACPI_MTX_EVENTS);
+    return_ACPI_STATUS (Status);
+}
+
+ACPI_EXPORT_SYMBOL (AcpiInstallTableHandler)
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiRemoveTableHandler
+ *
+ * PARAMETERS:  Handler         - Table event handler that was installed
+ *                                previously.
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Remove table event handler
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiRemoveTableHandler (
+    ACPI_TABLE_HANDLER      Handler)
+{
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE (AcpiRemoveTableHandler);
+
+
+    Status = AcpiUtAcquireMutex (ACPI_MTX_EVENTS);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
+    /* Make sure that the installed handler is the same */
+
+    if (!Handler ||
+        Handler != AcpiGbl_TableHandler)
+    {
+        Status = AE_BAD_PARAMETER;
+        goto Cleanup;
+    }
+
+    /* Remove the handler */
+
+    AcpiGbl_TableHandler = NULL;
+
+Cleanup:
+    (void) AcpiUtReleaseMutex (ACPI_MTX_EVENTS);
+    return_ACPI_STATUS (Status);
+}
+
+ACPI_EXPORT_SYMBOL (AcpiRemoveTableHandler)
 

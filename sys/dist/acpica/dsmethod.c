@@ -1,9 +1,7 @@
-/*	$NetBSD: dsmethod.c,v 1.5 2007/12/11 13:16:03 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: dsmethod - Parser/Interpreter interface - control method parsing
- *              $Revision: 1.5 $
+ *              $Revision: 1.6 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,18 +114,14 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.5 2007/12/11 13:16:03 lukem Exp $");
-
 #define __DSMETHOD_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acdisasm.h>
+#include "acpi.h"
+#include "amlcode.h"
+#include "acdispat.h"
+#include "acinterp.h"
+#include "acnamesp.h"
+#include "acdisasm.h"
 
 
 #define _COMPONENT          ACPI_DISPATCHER
@@ -188,8 +182,10 @@ AcpiDsMethodError (
                     WalkState->MethodNode ?
                         WalkState->MethodNode->Name.Integer : 0,
                     WalkState->Opcode, WalkState->AmlOffset, NULL);
-        (void) AcpiExEnterInterpreter ();
+        AcpiExEnterInterpreter ();
     }
+
+    AcpiDsClearImplicitReturn (WalkState);
 
 #ifdef ACPI_DISASSEMBLER
     if (ACPI_FAILURE (Status))
@@ -389,6 +385,7 @@ AcpiDsBeginMethodExecution (
      * reentered one more time (even if it is the same thread)
      */
     ObjDesc->Method.ThreadCount++;
+    AcpiMethodCount++;
     return_ACPI_STATUS (Status);
 
 
@@ -656,8 +653,6 @@ AcpiDsTerminateControlMethod (
     ACPI_OPERAND_OBJECT     *MethodDesc,
     ACPI_WALK_STATE         *WalkState)
 {
-    ACPI_STATUS             Status;
-
 
     ACPI_FUNCTION_TRACE_PTR (DsTerminateControlMethod, WalkState);
 
@@ -674,29 +669,26 @@ AcpiDsTerminateControlMethod (
         /* Delete all arguments and locals */
 
         AcpiDsMethodDataDeleteAll (WalkState);
-    }
 
-    /*
-     * If method is serialized, release the mutex and restore the
-     * current sync level for this thread
-     */
-    if (MethodDesc->Method.Mutex)
-    {
-        /* Acquisition Depth handles recursive calls */
-
-        MethodDesc->Method.Mutex->Mutex.AcquisitionDepth--;
-        if (!MethodDesc->Method.Mutex->Mutex.AcquisitionDepth)
+        /*
+         * If method is serialized, release the mutex and restore the
+         * current sync level for this thread
+         */
+        if (MethodDesc->Method.Mutex)
         {
-            WalkState->Thread->CurrentSyncLevel =
-                MethodDesc->Method.Mutex->Mutex.OriginalSyncLevel;
+            /* Acquisition Depth handles recursive calls */
 
-            AcpiOsReleaseMutex (MethodDesc->Method.Mutex->Mutex.OsMutex);
-            MethodDesc->Method.Mutex->Mutex.ThreadId = 0;
+            MethodDesc->Method.Mutex->Mutex.AcquisitionDepth--;
+            if (!MethodDesc->Method.Mutex->Mutex.AcquisitionDepth)
+            {
+                WalkState->Thread->CurrentSyncLevel =
+                    MethodDesc->Method.Mutex->Mutex.OriginalSyncLevel;
+
+                AcpiOsReleaseMutex (MethodDesc->Method.Mutex->Mutex.OsMutex);
+                MethodDesc->Method.Mutex->Mutex.ThreadId = 0;
+            }
         }
-    }
 
-    if (WalkState)
-    {
         /*
          * Delete any namespace objects created anywhere within
          * the namespace by the execution of this method
@@ -745,7 +737,7 @@ AcpiDsTerminateControlMethod (
         if ((MethodDesc->Method.MethodFlags & AML_METHOD_SERIALIZED) &&
             (!MethodDesc->Method.Mutex))
         {
-            Status = AcpiDsCreateMethodMutex (MethodDesc);
+            (void) AcpiDsCreateMethodMutex (MethodDesc);
         }
 
         /* No more threads, we can free the OwnerId */

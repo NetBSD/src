@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acutils.h -- prototypes for the common (subsystem-wide) procedures
- *       $Revision: 1.2 $
+ *       $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -196,9 +196,13 @@ AcpiUtInitGlobals (
 
 #if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 
-const char *
+char *
 AcpiUtGetMutexName (
     UINT32                  MutexId);
+
+const char *
+AcpiUtGetNotifyName (
+    UINT32                  NotifyValue);
 
 #endif
 
@@ -422,7 +426,7 @@ AcpiUtTracePtr (
     const char              *FunctionName,
     const char              *ModuleName,
     UINT32                  ComponentId,
-    const void              *Pointer);
+    void                    *Pointer);
 
 void
 AcpiUtTraceU32 (
@@ -438,7 +442,7 @@ AcpiUtTraceStr (
     const char              *FunctionName,
     const char              *ModuleName,
     UINT32                  ComponentId,
-    const char              *String);
+    char                    *String);
 
 void
 AcpiUtExit (
@@ -649,6 +653,10 @@ AcpiUtValidInternalObject (
     void                    *Object);
 
 ACPI_OPERAND_OBJECT *
+AcpiUtCreatePackageObject (
+    UINT32                  Count);
+
+ACPI_OPERAND_OBJECT *
 AcpiUtCreateBufferObject (
     ACPI_SIZE               BufferSize);
 
@@ -804,7 +812,7 @@ void
 AcpiUtDisplayInitPathname (
     UINT8                   Type,
     ACPI_NAMESPACE_NODE     *ObjHandle,
-    const char              *Path);
+    char                    *Path);
 #endif
 
 
@@ -928,7 +936,7 @@ AcpiUtDumpAllocationInfo (
 void
 AcpiUtDumpAllocations (
     UINT32                  Component,
-    char                    *Module);
+    const char              *Module);
 
 ACPI_STATUS
 AcpiUtCreateList (

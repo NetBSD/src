@@ -1,9 +1,7 @@
-/*	$NetBSD: utdelete.c,v 1.3 2007/12/11 13:16:17 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,16 +114,13 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.3 2007/12/11 13:16:17 lukem Exp $");
-
 #define __UTDELETE_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acevents.h>
-#include <dist/acpica/amlcode.h>
+#include "acpi.h"
+#include "acinterp.h"
+#include "acnamesp.h"
+#include "acevents.h"
+#include "amlcode.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utdelete")
@@ -341,6 +336,19 @@ AcpiUtDeleteInternalObj (
 
         ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS,
             "***** Buffer Field %p\n", Object));
+
+        SecondDesc = AcpiNsGetSecondaryObject (Object);
+        if (SecondDesc)
+        {
+            AcpiUtDeleteObjectDesc (SecondDesc);
+        }
+        break;
+
+
+    case ACPI_TYPE_LOCAL_BANK_FIELD:
+
+        ACPI_DEBUG_PRINT ((ACPI_DB_ALLOCATIONS,
+            "***** Bank Field %p\n", Object));
 
         SecondDesc = AcpiNsGetSecondaryObject (Object);
         if (SecondDesc)
@@ -638,10 +646,12 @@ AcpiUtUpdateObjectReference (
 
         case ACPI_TYPE_LOCAL_REFERENCE:
             /*
-             * The target of an Index (a package, string, or buffer) must track
-             * changes to the ref count of the index.
+             * The target of an Index (a package, string, or buffer) or a named
+             * reference must track changes to the ref count of the index or
+             * target object.
              */
-            if (Object->Reference.Opcode == AML_INDEX_OP)
+            if ((Object->Reference.Opcode == AML_INDEX_OP) ||
+                (Object->Reference.Opcode == AML_INT_NAMEPATH_OP))
             {
                 NextObject = Object->Reference.Object;
             }

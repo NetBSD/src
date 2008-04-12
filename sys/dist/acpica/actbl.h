@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: actbl.h - Basic ACPI Table Definitions
- *       $Revision: 1.2 $
+ *       $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -386,7 +386,7 @@ enum AcpiPreferedPmProfiles
 /*
  * Get the remaining ACPI tables
  */
-#include <dist/acpica/actbl1.h>
+#include "actbl1.h"
 
 /* Macros used to generate offsets to specific table fields */
 

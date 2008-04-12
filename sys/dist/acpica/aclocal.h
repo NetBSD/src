@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: aclocal.h - Internal data types used across the ACPI subsystem
- *       $Revision: 1.3 $
+ *       $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -172,7 +172,7 @@ union acpi_parse_object;
 
 /* Debug names for the mutexes above */
 
-static const char                 *AcpiGbl_MutexNames[ACPI_NUM_MUTEX] =
+static char                 *AcpiGbl_MutexNames[ACPI_NUM_MUTEX] =
 {
     "ACPI_MTX_Interpreter",
     "ACPI_MTX_Tables",
@@ -761,7 +761,7 @@ ACPI_STATUS (*ACPI_EXECUTE_OP) (
 typedef struct acpi_opcode_info
 {
 #if defined(ACPI_DISASSEMBLER) || defined(ACPI_DEBUG_OUTPUT)
-    const char                      *Name;          /* Opcode name (disassembler/debug only) */
+    char                            *Name;          /* Opcode name (disassembler/debug only) */
 #endif
     UINT32                          ParseArgs;      /* Grammar/Parse time arguments */
     UINT32                          RuntimeArgs;    /* Interpret time arguments */

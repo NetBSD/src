@@ -1,9 +1,7 @@
-/*	$NetBSD: utdebug.c,v 1.5 2007/12/11 13:16:17 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: utdebug - Debug print routines
- *              $Revision: 1.5 $
+ *              $Revision: 1.6 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,12 +114,9 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.5 2007/12/11 13:16:17 lukem Exp $");
-
 #define __UTDEBUG_C__
 
-#include <dist/acpica/acpi.h>
+#include "acpi.h"
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utdebug")
@@ -129,9 +124,9 @@ __KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.5 2007/12/11 13:16:17 lukem Exp $");
 
 #ifdef ACPI_DEBUG_OUTPUT
 
-static UINT32   AcpiGbl_PrevThreadId = 0xFFFFFFFF;
-static const char     *AcpiGbl_FnEntryStr = "----Entry";
-static const char     *AcpiGbl_FnExitStr  = "----Exit-";
+static ACPI_THREAD_ID       AcpiGbl_PrevThreadId = 0xFFFFFFFF;
+static char                 *AcpiGbl_FnEntryStr = "----Entry";
+static char                 *AcpiGbl_FnExitStr  = "----Exit-";
 
 /* Local prototypes */
 
@@ -156,10 +151,10 @@ void
 AcpiUtInitStackPtrTrace (
     void)
 {
-    UINT32                  CurrentSp;
+    ACPI_SIZE               CurrentSp;
 
 
-    AcpiGbl_EntryStackPointer = ACPI_PTR_DIFF (&CurrentSp, NULL);
+    AcpiGbl_EntryStackPointer = &CurrentSp;
 }
 
 
@@ -182,11 +177,9 @@ AcpiUtTrackStackPtr (
     ACPI_SIZE               CurrentSp;
 
 
-    CurrentSp = ACPI_PTR_DIFF (&CurrentSp, NULL);
-
-    if (CurrentSp < AcpiGbl_LowestStackPointer)
+    if (&CurrentSp < AcpiGbl_LowestStackPointer)
     {
-        AcpiGbl_LowestStackPointer = CurrentSp;
+        AcpiGbl_LowestStackPointer = &CurrentSp;
     }
 
     if (AcpiGbl_NestingLevel > AcpiGbl_DeepestNesting)
@@ -217,14 +210,14 @@ AcpiUtTrimFunctionName (
 
     /* All Function names are longer than 4 chars, check is safe */
 
-    if (*(ACPI_CAST_CONST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_MIXED)
+    if (*(ACPI_CAST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_MIXED)
     {
         /* This is the case where the original source has not been modified */
 
         return (FunctionName + 4);
     }
 
-    if (*(ACPI_CAST_CONST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_LOWER)
+    if (*(ACPI_CAST_PTR (UINT32, FunctionName)) == ACPI_PREFIX_LOWER)
     {
         /* This is the case where the source has been 'linuxized' */
 
@@ -259,9 +252,9 @@ AcpiUtDebugPrint (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId,
-    const char              *Format,
+    char                    *Format,
     ...)
 {
     ACPI_THREAD_ID          ThreadId;
@@ -309,6 +302,7 @@ AcpiUtDebugPrint (
 
     va_start (args, Format);
     AcpiOsVprintf (Format, args);
+    va_end (args);
 }
 
 ACPI_EXPORT_SYMBOL (AcpiUtDebugPrint)
@@ -338,9 +332,9 @@ AcpiUtDebugPrintRaw (
     UINT32                  RequestedDebugLevel,
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId,
-    const char              *Format,
+    char                    *Format,
     ...)
 {
     va_list                 args;
@@ -354,6 +348,7 @@ AcpiUtDebugPrintRaw (
 
     va_start (args, Format);
     AcpiOsVprintf (Format, args);
+    va_end (args);
 }
 
 ACPI_EXPORT_SYMBOL (AcpiUtDebugPrintRaw)
@@ -379,7 +374,7 @@ void
 AcpiUtTrace (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId)
 {
 
@@ -415,9 +410,9 @@ void
 AcpiUtTracePtr (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId,
-    const void              *Pointer)
+    void                    *Pointer)
 {
     AcpiGbl_NestingLevel++;
     AcpiUtTrackStackPtr ();
@@ -449,9 +444,9 @@ void
 AcpiUtTraceStr (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId,
-    const char              *String)
+    char                    *String)
 {
 
     AcpiGbl_NestingLevel++;
@@ -484,7 +479,7 @@ void
 AcpiUtTraceU32 (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId,
     UINT32                  Integer)
 {
@@ -518,7 +513,7 @@ void
 AcpiUtExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId)
 {
 
@@ -553,7 +548,7 @@ void
 AcpiUtStatusExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId,
     ACPI_STATUS             Status)
 {
@@ -600,7 +595,7 @@ void
 AcpiUtValueExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId,
     ACPI_INTEGER            Value)
 {
@@ -637,7 +632,7 @@ void
 AcpiUtPtrExit (
     UINT32                  LineNumber,
     const char              *FunctionName,
-    const char              *ModuleName,
+    char                    *ModuleName,
     UINT32                  ComponentId,
     UINT8                   *Ptr)
 {
@@ -678,6 +673,12 @@ AcpiUtDumpBuffer2 (
     UINT32                  Temp32;
     UINT8                   BufChar;
 
+
+    if (!Buffer)
+    {
+        AcpiOsPrintf ("Null Buffer Pointer in DumpBuffer!\n");
+        return;
+    }
 
     if ((Count < 4) || (Count & 0x01))
     {

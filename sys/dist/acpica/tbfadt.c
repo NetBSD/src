@@ -1,9 +1,7 @@
-/*	$NetBSD: tbfadt.c,v 1.3 2007/12/11 13:16:16 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: tbfadt   - FADT table utilities
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,20 +114,17 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbfadt.c,v 1.3 2007/12/11 13:16:16 lukem Exp $");
-
 #define __TBFADT_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/actables.h>
+#include "acpi.h"
+#include "actables.h"
 
 #define _COMPONENT          ACPI_TABLES
         ACPI_MODULE_NAME    ("tbfadt")
 
 /* Local prototypes */
 
-static void
+static inline void
 AcpiTbInitGenericAddress (
     ACPI_GENERIC_ADDRESS    *GenericAddress,
     UINT8                   BitWidth,
@@ -213,7 +208,7 @@ static ACPI_FADT_INFO     FadtInfoTable[] =
  *
  ******************************************************************************/
 
-static void
+static inline void
 AcpiTbInitGenericAddress (
     ACPI_GENERIC_ADDRESS    *GenericAddress,
     UINT8                   BitWidth,
@@ -310,6 +305,8 @@ AcpiTbParseFadt (
  * DESCRIPTION: Get a local copy of the FADT and convert it to a common format.
  *              Performs validation on some important FADT fields.
  *
+ * NOTE:        We create a local copy of the FADT regardless of the version.
+ *
  ******************************************************************************/
 
 void
@@ -319,19 +316,22 @@ AcpiTbCreateLocalFadt (
 {
 
     /*
-     * Check if the FADT is larger than what we know about (ACPI 2.0 version).
-     * Truncate the table, but make some noise.
+     * Check if the FADT is larger than the largest table that we expect
+     * (the ACPI 2.0/3.0 version). If so, truncate the table, and issue
+     * a warning.
      */
     if (Length > sizeof (ACPI_TABLE_FADT))
     {
         ACPI_WARNING ((AE_INFO,
-            "FADT (revision %u) is longer than ACPI 2.0 version, truncating length 0x%X to 0x%zX",
-            Table->Revision, Length, sizeof (ACPI_TABLE_FADT)));
+            "FADT (revision %u) is longer than ACPI 2.0 version, truncating length 0x%X to 0x%X",
+            Table->Revision, Length, (UINT32)sizeof (ACPI_TABLE_FADT)));
     }
 
-    /* Copy the entire FADT locally. Zero first for TbConvertFadt */
+    /* Clear the entire local FADT */
 
     ACPI_MEMSET (&AcpiGbl_FADT, 0, sizeof (ACPI_TABLE_FADT));
+
+    /* Copy the original FADT, up to sizeof (ACPI_TABLE_FADT) */
 
     ACPI_MEMCPY (&AcpiGbl_FADT, Table,
         ACPI_MIN (Length, sizeof (ACPI_TABLE_FADT)));
@@ -354,7 +354,7 @@ AcpiTbCreateLocalFadt (
  * RETURN:      None
  *
  * DESCRIPTION: Converts all versions of the FADT to a common internal format.
- *              -> Expand all 32-bit addresses to 64-bit.
+ *              Expand all 32-bit addresses to 64-bit.
  *
  * NOTE:        AcpiGbl_FADT must be of size (ACPI_TABLE_FADT),
  *              and must contain a copy of the actual FADT.
@@ -400,8 +400,24 @@ AcpiTbConvertFadt (
     }
 
     /*
-     * Expand the 32-bit V1.0 addresses to the 64-bit "X" generic address
-     * structures as necessary.
+     * For ACPI 1.0 FADTs (revision 1 or 2), ensure that reserved fields which
+     * should be zero are indeed zero. This will workaround BIOSs that
+     * inadvertently place values in these fields.
+     *
+     * The ACPI 1.0 reserved fields that will be zeroed are the bytes located at
+     * offset 45, 55, 95, and the word located at offset 109, 110.
+     */
+    if (AcpiGbl_FADT.Header.Revision < 3)
+    {
+        AcpiGbl_FADT.PreferredProfile = 0;
+        AcpiGbl_FADT.PstateControl = 0;
+        AcpiGbl_FADT.CstControl = 0;
+        AcpiGbl_FADT.BootFlags = 0;
+    }
+
+    /*
+     * Expand the ACPI 1.0 32-bit V1.0 addresses to the ACPI 2.0 64-bit "X"
+     * generic address structures as necessary.
      */
     for (i = 0; i < ACPI_FADT_INFO_ENTRIES; i++)
     {

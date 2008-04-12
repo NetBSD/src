@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acresrc.h - Resource Manager function prototypes
- *       $Revision: 1.2 $
+ *       $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -120,7 +120,7 @@
 
 /* Need the AML resource descriptor structs */
 
-#include <dist/acpica/amlresrc.h>
+#include "amlresrc.h"
 
 
 /*
@@ -170,6 +170,7 @@ typedef const struct acpi_rsconvert_info
 #define ACPI_RSC_BITMASK16              18
 #define ACPI_RSC_EXIT_NE                19
 #define ACPI_RSC_EXIT_LE                20
+#define ACPI_RSC_EXIT_EQ                21
 
 /* Resource Conversion sub-opcodes */
 
@@ -186,7 +187,7 @@ typedef const struct acpi_rsdump_info
 {
     UINT8                   Opcode;
     UINT8                   Offset;
-    const char              *Name;
+    char                    *Name;
     const char              **Pointer;
 
 } ACPI_RSDUMP_INFO;

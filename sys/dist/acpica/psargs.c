@@ -1,9 +1,7 @@
-/*	$NetBSD: psargs.c,v 1.3 2007/12/11 13:16:14 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: psargs - Parse AML opcode arguments
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,16 +114,13 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.3 2007/12/11 13:16:14 lukem Exp $");
-
 #define __PSARGS_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acdispat.h>
+#include "acpi.h"
+#include "acparser.h"
+#include "amlcode.h"
+#include "acnamesp.h"
+#include "acdispat.h"
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psargs")
@@ -334,12 +329,12 @@ AcpiPsGetNextNamepath (
     ACPI_PARSE_OBJECT       *Arg,
     BOOLEAN                 PossibleMethodCall)
 {
+    ACPI_STATUS             Status;
     char                    *Path;
     ACPI_PARSE_OBJECT       *NameOp;
-    ACPI_STATUS             Status;
     ACPI_OPERAND_OBJECT     *MethodDesc;
     ACPI_NAMESPACE_NODE     *Node;
-    ACPI_GENERIC_STATE      ScopeInfo;
+    UINT8                   *Start = ParserState->Aml;
 
 
     ACPI_FUNCTION_TRACE (PsGetNextNamepath);
@@ -356,23 +351,16 @@ AcpiPsGetNextNamepath (
         return_ACPI_STATUS (AE_OK);
     }
 
-    /* Setup search scope info */
-
-    ScopeInfo.Scope.Node = NULL;
-    Node = ParserState->StartNode;
-    if (Node)
-    {
-        ScopeInfo.Scope.Node = Node;
-    }
-
     /*
-     * Lookup the name in the internal namespace. We don't want to add
-     * anything new to the namespace here, however, so we use MODE_EXECUTE.
+     * Lookup the name in the internal namespace, starting with the current
+     * scope. We don't want to add anything new to the namespace here,
+     * however, so we use MODE_EXECUTE.
      * Allow searching of the parent tree, but don't open a new scope -
      * we just want to lookup the object (must be mode EXECUTE to perform
      * the upsearch)
      */
-    Status = AcpiNsLookup (&ScopeInfo, Path, ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
+    Status = AcpiNsLookup (WalkState->ScopeInfo, Path,
+                ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE,
                 ACPI_NS_SEARCH_PARENT | ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
 
     /*
@@ -383,6 +371,18 @@ AcpiPsGetNextNamepath (
         PossibleMethodCall &&
         (Node->Type == ACPI_TYPE_METHOD))
     {
+        if (WalkState->Op->Common.AmlOpcode == AML_UNLOAD_OP)
+        {
+            /*
+             * AcpiPsGetNextNamestring has increased the AML pointer,
+             * so we need to restore the saved AML pointer for method call.
+             */
+            WalkState->ParserState.Aml = Start;
+            WalkState->ArgCount = 1;
+            AcpiPsInitOp (Arg, AML_INT_METHODCALL_OP);
+            return_ACPI_STATUS (AE_OK);
+        }
+
         /* This name is actually a control method invocation */
 
         MethodDesc = AcpiNsGetAttachedObject (Node);
@@ -829,7 +829,26 @@ AcpiPsGetNextArg (
                 return_ACPI_STATUS (AE_NO_MEMORY);
             }
 
-            Status = AcpiPsGetNextNamepath (WalkState, ParserState, Arg, 0);
+            /* To support SuperName arg of Unload */
+
+            if (WalkState->Op->Common.AmlOpcode == AML_UNLOAD_OP)
+            {
+                Status = AcpiPsGetNextNamepath (WalkState, ParserState, Arg, 1);
+
+                /*
+                 * If the SuperName arg of Unload is a method call,
+                 * we have restored the AML pointer, just free this Arg
+                 */
+                if (Arg->Common.AmlOpcode == AML_INT_METHODCALL_OP)
+                {
+                    AcpiPsFreeOp (Arg);
+                    Arg = NULL;
+                }
+            }
+            else
+            {
+                Status = AcpiPsGetNextNamepath (WalkState, ParserState, Arg, 0);
+            }
         }
         else
         {

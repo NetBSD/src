@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acinterp.h - Interpreter subcomponent prototypes and defines
- *       $Revision: 1.2 $
+ *       $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -142,7 +142,7 @@ typedef const struct acpi_exdump_info
 {
     UINT8                   Opcode;
     UINT8                   Offset;
-    const char              *Name;
+    char                    *Name;
 
 } ACPI_EXDUMP_INFO;
 
@@ -331,10 +331,6 @@ AcpiExCreateRegion (
     UINT8                   *AmlStart,
     UINT32                  AmlLength,
     UINT8                   RegionSpace,
-    ACPI_WALK_STATE         *WalkState);
-
-ACPI_STATUS
-AcpiExCreateTableRegion (
     ACPI_WALK_STATE         *WalkState);
 
 ACPI_STATUS
@@ -569,10 +565,10 @@ void
 AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
     ACPI_INTERPRETER_MODE   InterpreterMode,
-    const char              *Ident,
+    char                    *Ident,
     UINT32                  NumLevels,
-    const char              *Note,
-    const char              *ModuleName,
+    char                    *Note,
+    char                    *ModuleName,
     UINT32                  LineNumber);
 
 void

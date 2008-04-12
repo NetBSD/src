@@ -1,9 +1,7 @@
-/*	$NetBSD: evmisc.c,v 1.5 2007/12/11 13:16:06 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: evmisc - Miscellaneous event manager support functions
- *              $Revision: 1.5 $
+ *              $Revision: 1.6 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,33 +114,14 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evmisc.c,v 1.5 2007/12/11 13:16:06 lukem Exp $");
-
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acevents.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acinterp.h>
+#include "acpi.h"
+#include "acevents.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evmisc")
 
-
-/* Names for Notify() values, used for debug output */
-
-#ifdef ACPI_DEBUG_OUTPUT
-static const char        *AcpiNotifyValueNames[] =
-{
-    "Bus Check",
-    "Device Check",
-    "Device Wake",
-    "Eject Request",
-    "Device Check Light",
-    "Frequency Mismatch",
-    "Bus Mode Mismatch",
-    "Power Fault"
-};
-#endif
 
 /* Pointer to FACS needed for the Global Lock */
 
@@ -185,7 +164,6 @@ AcpiEvIsNotifyObject (
     {
     case ACPI_TYPE_DEVICE:
     case ACPI_TYPE_PROCESSOR:
-    case ACPI_TYPE_POWER:
     case ACPI_TYPE_THERMAL:
         /*
          * These are the ONLY objects that can receive ACPI notifications
@@ -234,19 +212,9 @@ AcpiEvQueueNotifyRequest (
      *   initiate soft-off or sleep operation?
      */
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-        "Dispatching Notify(%X) on node %p\n", NotifyValue, Node));
-
-    if (NotifyValue <= 7)
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "Notify value: %s\n",
-            AcpiNotifyValueNames[NotifyValue]));
-    }
-    else
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "Notify value: 0x%2.2X **Device Specific**\n",
-            NotifyValue));
-    }
+        "Dispatching Notify on [%4.4s] Node %p Value 0x%2.2X (%s)\n",
+        AcpiUtGetNodeName (Node), Node, NotifyValue,
+        AcpiUtGetNotifyName (NotifyValue)));
 
     /* Get the notify object attached to the NS Node */
 
@@ -257,10 +225,11 @@ AcpiEvQueueNotifyRequest (
 
         switch (Node->Type)
         {
+        /* Notify allowed only on these types */
+
         case ACPI_TYPE_DEVICE:
         case ACPI_TYPE_THERMAL:
         case ACPI_TYPE_PROCESSOR:
-        case ACPI_TYPE_POWER:
 
             if (NotifyValue <= ACPI_MAX_SYS_NOTIFY)
             {
@@ -278,8 +247,13 @@ AcpiEvQueueNotifyRequest (
         }
     }
 
-    /* If there is any handler to run, schedule the dispatcher */
-
+    /*
+     * If there is any handler to run, schedule the dispatcher.
+     * Check for:
+     * 1) Global system notify handler
+     * 2) Global device notify handler
+     * 3) Per-device notify handler
+     */
     if ((AcpiGbl_SystemNotify.Handler && (NotifyValue <= ACPI_MAX_SYS_NOTIFY)) ||
         (AcpiGbl_DeviceNotify.Handler && (NotifyValue > ACPI_MAX_SYS_NOTIFY))  ||
         HandlerObj)
@@ -288,6 +262,13 @@ AcpiEvQueueNotifyRequest (
         if (!NotifyInfo)
         {
             return (AE_NO_MEMORY);
+        }
+
+        if (!HandlerObj)
+        {
+            ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
+                "Executing system notify handler for Notify (%4.4s, %X) node %p\n",
+                AcpiUtGetNodeName (Node), NotifyValue, Node));
         }
 
         NotifyInfo->Common.DescriptorType = ACPI_DESC_TYPE_STATE_NOTIFY;
@@ -302,15 +283,13 @@ AcpiEvQueueNotifyRequest (
             AcpiUtDeleteGenericState (NotifyInfo);
         }
     }
-
-    if (!HandlerObj)
+    else
     {
         /*
-         * There is no per-device notify handler for this device.
-         * This may or may not be a problem.
+         * There is no notify handler (per-device or system) for this device.
          */
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
-            "No notify handler for Notify(%4.4s, %X) node %p\n",
+            "No notify handler for Notify (%4.4s, %X) node %p\n",
             AcpiUtGetNodeName (Node), NotifyValue, Node));
     }
 
@@ -469,7 +448,7 @@ AcpiEvInitGlobalLockHandler (
 
 
     Status = AcpiGetTableByIndex (ACPI_TABLE_INDEX_FACS,
-        ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
+                ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
