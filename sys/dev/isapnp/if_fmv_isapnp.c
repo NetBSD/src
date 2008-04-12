@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isapnp.c,v 1.10 2008/04/08 20:09:27 cegger Exp $	*/
+/*	$NetBSD: if_fmv_isapnp.c,v 1.11 2008/04/12 06:27:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.10 2008/04/08 20:09:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.11 2008/04/12 06:27:01 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fmv_isapnp.c,v 1.10 2008/04/08 20:09:27 cegger Ex
 #include <dev/isapnp/isapnpvar.h>
 #include <dev/isapnp/isapnpdevs.h>
 
-int	fmv_isapnp_match(struct device *, struct cfdata *, void *);
-void	fmv_isapnp_attach(struct device *, struct device *, void *);
+int	fmv_isapnp_match(device_t, cfdata_t, void *);
+void	fmv_isapnp_attach(device_t, device_t, void *);
 
 struct fmv_isapnp_softc {
 	struct	mb86960_softc sc_mb86960;	/* real "mb86960" softc */
@@ -72,12 +72,11 @@ struct fmv_isapnp_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-CFATTACH_DECL(fmv_isapnp, sizeof(struct fmv_isapnp_softc),
+CFATTACH_DECL_NEW(fmv_isapnp, sizeof(struct fmv_isapnp_softc),
     fmv_isapnp_match, fmv_isapnp_attach, NULL, NULL);
 
 int
-fmv_isapnp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+fmv_isapnp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	int pri, variant;
 
@@ -88,15 +87,16 @@ fmv_isapnp_match(struct device *parent, struct cfdata *match,
 }
 
 void
-fmv_isapnp_attach(struct device *parent, struct device *self,
-    void *aux)
+fmv_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct fmv_isapnp_softc *isc = device_private(self);
 	struct mb86960_softc *sc = &isc->sc_mb86960;
 	struct isapnp_attach_args * const ipa = aux;
 
+	sc->sc_dev = self;
+
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf(": can't configure isapnp resources\n");
+		aprint_error(": can't configure isapnp resources\n");
 		return;
 	}
 
@@ -109,5 +109,6 @@ fmv_isapnp_attach(struct device *parent, struct device *self,
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, mb86960_intr, sc);
 	if (isc->sc_ih == NULL)
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt handler\n");
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish interrupt handler\n");
 }
