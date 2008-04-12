@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.85 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.86 2008/04/12 17:02:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@ struct lwp {
 	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
 	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
+	u_int		l_rticks;	/* l: Saved start time of run */
+	u_int		l_rticksum;	/* l: Sum of ticks spent running */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
@@ -395,9 +397,7 @@ spc_dlock(struct cpu_info *ci1, struct cpu_info *ci2)
 	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
 
 	KASSERT(ci1 != ci2);
-	if (spc1->spc_mutex == spc2->spc_mutex) {
-		mutex_spin_enter(spc1->spc_mutex);
-	} else if (ci1 < ci2) {
+	if (ci1 < ci2) {
 		mutex_spin_enter(spc1->spc_mutex);
 		mutex_spin_enter(spc2->spc_mutex);
 	} else {
@@ -413,12 +413,8 @@ spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
 	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
 
 	KASSERT(ci1 != ci2);
-	if (spc1->spc_mutex == spc2->spc_mutex) {
-		mutex_spin_exit(spc1->spc_mutex);
-	} else {
-		mutex_spin_exit(spc1->spc_mutex);
-		mutex_spin_exit(spc2->spc_mutex);
-	}
+	mutex_spin_exit(spc1->spc_mutex);
+	mutex_spin_exit(spc2->spc_mutex);
 }
 
 #endif /* _KERNEL */
