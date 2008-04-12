@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.14 2008/04/12 17:17:28 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.15 2008/04/12 18:22:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.14 2008/04/12 17:17:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.15 2008/04/12 18:22:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -716,7 +716,7 @@ softint_overlay(void)
 			continue;
 		}
 	}
-	l->l_pflag = opflag;
+	l->l_pflag = oflag;
 	l->l_kpribase = obase;
 	splx(s);
 }
