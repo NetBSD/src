@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.73 2008/04/11 15:25:24 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.74 2008/04/12 17:34:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.73 2008/04/11 15:25:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.74 2008/04/12 17:34:26 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -597,9 +597,14 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	 * Flush updates before making visible in table.  No need for a
 	 * memory barrier on the other side: to see modifications the
 	 * list must be followed, meaning a dependent pointer load.
+	 * The below is LIST_INSERT_HEAD() inlined, with the memory
+	 * barrier included in the correct place.
 	 */
+	if ((ncp->nc_hash.le_next = ncpp->lh_first) != NULL)
+		ncpp->lh_first->nc_hash.le_prev = &ncp->nc_hash.le_next;
+	ncp->nc_hash.le_prev = &ncpp->lh_first;
 	membar_producer();
-	LIST_INSERT_HEAD(ncpp, ncp, nc_hash);
+	ncpp->lh_first = ncp;
 
 	ncp->nc_vhash.le_prev = NULL;
 	ncp->nc_vhash.le_next = NULL;
