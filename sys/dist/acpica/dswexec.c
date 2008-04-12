@@ -1,10 +1,8 @@
-/*	$NetBSD: dswexec.c,v 1.3 2007/12/11 13:16:04 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: dswexec - Dispatcher method execution callbacks;
  *                        dispatch to interpreter.
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -12,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,18 +115,15 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswexec.c,v 1.3 2007/12/11 13:16:04 lukem Exp $");
-
 #define __DSWEXEC_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acdebug.h>
+#include "acpi.h"
+#include "acparser.h"
+#include "amlcode.h"
+#include "acdispat.h"
+#include "acinterp.h"
+#include "acnamesp.h"
+#include "acdebug.h"
 
 
 #define _COMPONENT          ACPI_DISPATCHER
@@ -605,7 +600,7 @@ AcpiDsExecEndOp (
                 ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
                     "Method Reference in a Package, Op=%p\n", Op));
 
-                Op->Common.Node = (ACPI_NAMESPACE_NODE *) Op->Asl.Value.Arg->Asl.Node->Object;
+                Op->Common.Node = (ACPI_NAMESPACE_NODE *) Op->Asl.Value.Arg->Asl.Node;
                 AcpiUtAddReference (Op->Asl.Value.Arg->Asl.Node->Object);
                 return_ACPI_STATUS (AE_OK);
             }
@@ -742,6 +737,28 @@ AcpiDsExecEndOp (
                     "Executing OpRegion Address/Length Op=%p\n", Op));
 
                 Status = AcpiDsEvalRegionOperands (WalkState, Op);
+                if (ACPI_FAILURE (Status))
+                {
+                    break;
+                }
+            }
+            else if (Op->Common.AmlOpcode == AML_DATA_REGION_OP)
+            {
+                ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+                    "Executing DataTableRegion Strings Op=%p\n", Op));
+
+                Status = AcpiDsEvalTableRegionOperands (WalkState, Op);
+                if (ACPI_FAILURE (Status))
+                {
+                    break;
+                }
+            }
+            else if (Op->Common.AmlOpcode == AML_BANK_FIELD_OP)
+            {
+                ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
+                    "Executing BankField Op=%p\n", Op));
+
+                Status = AcpiDsEvalBankFieldOperands (WalkState, Op);
                 if (ACPI_FAILURE (Status))
                 {
                     break;

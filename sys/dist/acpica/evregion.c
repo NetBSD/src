@@ -1,9 +1,7 @@
-/*	$NetBSD: evregion.c,v 1.5 2007/12/11 13:16:06 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: evregion - ACPI AddressSpace (OpRegion) handler dispatch
- *              $Revision: 1.5 $
+ *              $Revision: 1.6 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,15 +114,13 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evregion.c,v 1.5 2007/12/11 13:16:06 lukem Exp $");
 
 #define __EVREGION_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acevents.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acinterp.h>
+#include "acpi.h"
+#include "acevents.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
 #define _COMPONENT          ACPI_EVENTS
         ACPI_MODULE_NAME    ("evregion")
@@ -458,14 +454,14 @@ AcpiEvAddressSpaceDispatch (
          * setup will potentially execute control methods
          * (e.g., _REG method for this region)
          */
-        AcpiExRelinquishInterpreter ();
+        AcpiExExitInterpreter ();
 
         Status = RegionSetup (RegionObj, ACPI_REGION_ACTIVATE,
                     HandlerDesc->AddressSpace.Context, &RegionContext);
 
         /* Re-enter the interpreter */
 
-        AcpiExReacquireInterpreter ();
+        AcpiExEnterInterpreter ();
 
         /* Check for failure of the Region Setup */
 
@@ -508,7 +504,7 @@ AcpiEvAddressSpaceDispatch (
     ACPI_DEBUG_PRINT ((ACPI_DB_OPREGION,
         "Handler %p (@%p) Address %8.8X%8.8X [%s]\n",
         &RegionObj->Region.Handler->AddressSpace, Handler,
-        ACPI_FORMAT_UINT64 (Address),
+        ACPI_FORMAT_NATIVE_UINT (Address),
         AcpiUtGetRegionName (RegionObj->Region.SpaceId)));
 
     if (!(HandlerDesc->AddressSpace.HandlerFlags &
@@ -519,7 +515,7 @@ AcpiEvAddressSpaceDispatch (
          * exit the interpreter because the handler *might* block -- we don't
          * know what it will do, so we can't hold the lock on the intepreter.
          */
-        AcpiExRelinquishInterpreter();
+        AcpiExExitInterpreter();
     }
 
     /* Call the handler */
@@ -540,7 +536,7 @@ AcpiEvAddressSpaceDispatch (
          * We just returned from a non-default handler, we must re-enter the
          * interpreter
          */
-       AcpiExReacquireInterpreter ();
+       AcpiExEnterInterpreter ();
     }
 
     return_ACPI_STATUS (Status);

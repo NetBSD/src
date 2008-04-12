@@ -1,9 +1,7 @@
-/*	$NetBSD: dmobject.c,v 1.3 2007/12/11 13:16:02 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: dmobject - ACPI object decode and display
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,14 +114,12 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmobject.c,v 1.3 2007/12/11 13:16:02 lukem Exp $");
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acdisasm.h>
-#include <dist/acpica/acparser.h>
+#include "acpi.h"
+#include "amlcode.h"
+#include "acnamesp.h"
+#include "acdisasm.h"
+#include "acparser.h"
 
 
 #ifdef ACPI_DISASSEMBLER
@@ -356,7 +352,22 @@ AcpiDmDecodeNode (
         AcpiOsPrintf (" [Method Local]");
     }
 
-    AcpiDmDecodeInternalObject (AcpiNsGetAttachedObject (Node));
+    switch (Node->Type)
+    {
+    /* These types have no attached object */
+
+    case ACPI_TYPE_DEVICE:
+        AcpiOsPrintf (" Device");
+        break;
+
+    case ACPI_TYPE_THERMAL:
+        AcpiOsPrintf (" Thermal Zone");
+        break;
+
+    default:
+        AcpiDmDecodeInternalObject (AcpiNsGetAttachedObject (Node));
+        break;
+    }
 }
 
 
