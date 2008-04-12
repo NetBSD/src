@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.8 2008/04/07 06:31:28 thorpej Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.9 2008/04/12 05:58:22 thorpej Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.8 2008/04/07 06:31:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -193,7 +193,7 @@ ip_etherip_input(struct mbuf *m, ...)
 
 	if (proto != IPPROTO_ETHERIP) {
 		m_freem(m);
-		ipstat[IP_STAT_NOPROTO]++;
+		ip_statinc(IP_STAT_NOPROTO);
 		return;
 	}
 
@@ -222,7 +222,7 @@ ip_etherip_input(struct mbuf *m, ...)
 	/* no matching device found */
 	if (!ifp) {
 		m_freem(m);
-		ipstat[IP_STAT_ODROPPED]++;
+		ip_statinc(IP_STAT_ODROPPED);
 		return;
 	}
 

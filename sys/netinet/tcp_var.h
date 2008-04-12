@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.154 2008/04/08 01:03:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.155 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -734,7 +734,6 @@ struct syn_cache_head {
 
 #ifdef _KERNEL
 extern	struct inpcbtable tcbtable;	/* head of queue of active tcpcb's */
-extern	uint64_t tcpstat[TCP_NSTATS];	/* tcp statistics */
 extern	u_int32_t tcp_now;	/* for RFC 1323 timestamps */
 extern	int tcp_do_rfc1323;	/* enabled/disabled? */
 extern	int tcp_do_sack;	/* SACK enabled/disabled? */
@@ -818,12 +817,6 @@ extern int tcp_autosndbuf_max;
 	{ 1, 0, &tcp_init_win_local },		\
 	{ 1, 0, &tcp_ackdrop_ppslim },		\
 }
-
-#ifdef __NO_STRICT_ALIGNMENT
-#define	TCP_HDR_ALIGNED_P(th)	1
-#else
-#define	TCP_HDR_ALIGNED_P(th)	((((vaddr_t)(th)) & 3) == 0)
-#endif
 
 struct secasvar;
 
@@ -909,6 +902,9 @@ struct sackhole *tcp_sack_output(struct tcpcb *tp, int *sack_bytes_rexmt);
 void	 tcp_sack_newack(struct tcpcb *, const struct tcphdr *);
 int	 tcp_sack_numblks(const struct tcpcb *);
 #define	TCP_SACK_OPTLEN(nblks)	((nblks) * 8 + 2 + 2)
+
+void	 tcp_statinc(u_int);
+void	 tcp_statadd(u_int, uint64_t);
 
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, struct socket *,

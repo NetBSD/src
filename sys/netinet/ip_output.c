@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.193 2008/04/07 06:31:28 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.194 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.193 2008/04/07 06:31:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.194 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.193 2008/04/07 06:31:28 thorpej Exp 
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_private.h>
 #include <netinet/in_offload.h>
 
 #ifdef MROUTING
@@ -262,7 +263,7 @@ ip_output(struct mbuf *m0, ...)
 		ip->ip_off = htons(0);
 		/* ip->ip_id filled in after we find out source ia */
 		ip->ip_hl = hlen >> 2;
-		ipstat[IP_STAT_LOCALOUT]++;
+		IP_STATINC(IP_STAT_LOCALOUT);
 	} else {
 		hlen = ip->ip_hl << 2;
 	}
@@ -298,7 +299,7 @@ ip_output(struct mbuf *m0, ...)
 	 */
 	if (flags & IP_ROUTETOIF) {
 		if ((ia = ifatoia(ifa_ifwithladdr(sintocsa(dst)))) == NULL) {
-			ipstat[IP_STAT_NOROUTE]++;
+			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -315,7 +316,7 @@ ip_output(struct mbuf *m0, ...)
 		if (rt == NULL)
 			rt = rtcache_init(ro);
 		if (rt == NULL) {
-			ipstat[IP_STAT_NOROUTE]++;
+			IP_STATINC(IP_STAT_NOROUTE);
 			error = EHOSTUNREACH;
 			goto bad;
 		}
@@ -346,7 +347,7 @@ ip_output(struct mbuf *m0, ...)
 		 * output
 		 */
 		if (!ifp) {
-			ipstat[IP_STAT_NOROUTE]++;
+			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -359,7 +360,7 @@ ip_output(struct mbuf *m0, ...)
 		     (ifp->if_flags & IFF_MULTICAST) == 0) ||
 		    ((m->m_flags & M_BCAST) &&
 		     (ifp->if_flags & (IFF_BROADCAST|IFF_POINTOPOINT)) == 0))  {
-			ipstat[IP_STAT_NOROUTE]++;
+			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
 			goto bad;
 		}
@@ -447,7 +448,7 @@ ip_output(struct mbuf *m0, ...)
 	 * RFC 1112
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
-		ipstat[IP_STAT_ODROPPED]++;
+		IP_STATINC(IP_STAT_ODROPPED);
 		error = EADDRNOTAVAIL;
 		goto bad;
 	}
@@ -867,7 +868,7 @@ spd_done:
 		if (flags & IP_RETURNMTU)
 			*mtu_p = mtu;
 		error = EMSGSIZE;
-		ipstat[IP_STAT_CANTFRAG]++;
+		IP_STATINC(IP_STAT_CANTFRAG);
 		goto bad;
 	}
 
@@ -916,7 +917,7 @@ spd_done:
 	}
 
 	if (error == 0)
-		ipstat[IP_STAT_FRAGMENTED]++;
+		IP_STATINC(IP_STAT_FRAGMENTED);
 done:
 	rtcache_free(&iproute);
 
@@ -975,7 +976,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == 0) {
 			error = ENOBUFS;
-			ipstat[IP_STAT_ODROPPED]++;
+			IP_STATINC(IP_STAT_ODROPPED);
 			goto sendorfree;
 		}
 		MCLAIM(m, m0->m_owner);
@@ -1004,7 +1005,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_next = m_copym(m0, off, len, M_DONTWAIT);
 		if (m->m_next == 0) {
 			error = ENOBUFS;	/* ??? */
-			ipstat[IP_STAT_ODROPPED]++;
+			IP_STATINC(IP_STAT_ODROPPED);
 			goto sendorfree;
 		}
 		m->m_pkthdr.len = mhlen + len;
@@ -1017,7 +1018,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 			m->m_pkthdr.csum_data |= mhlen << 16;
 		}
-		ipstat[IP_STAT_OFRAGMENTS]++;
+		IP_STATINC(IP_STAT_OFRAGMENTS);
 		fragments++;
 	}
 	/*
@@ -1048,7 +1049,7 @@ sendorfree:
 		if (ifp->if_snd.ifq_maxlen - ifp->if_snd.ifq_len < fragments &&
 		    error == 0) {
 			error = ENOBUFS;
-			ipstat[IP_STAT_ODROPPED]++;
+			IP_STATINC(IP_STAT_ODROPPED);
 			IFQ_INC_DROPS(&ifp->if_snd);
 		}
 		splx(s);

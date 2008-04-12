@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.141 2008/04/08 01:03:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.142 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.141 2008/04/08 01:03:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.142 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -151,6 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.141 2008/04/08 01:03:58 thorpej Exp
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
@@ -436,7 +437,7 @@ tcp_usrreq(struct socket *so, int req,
 		    (TCP_MAXWIN << tp->request_r_scale) < sb_max)
 			tp->request_r_scale++;
 		soisconnecting(so);
-		tcpstat[TCP_STAT_CONNATTEMPT]++;
+		TCP_STATINC(TCP_STAT_CONNATTEMPT);
 		tp->t_state = TCPS_SYN_SENT;
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tp->t_keepinit);
 		tp->iss = tcp_new_iss(tp, 0);
@@ -1612,6 +1613,37 @@ sysctl_tcp_keep(SYSCTLFN_ARGS)
 	return 0;
 }
 
+static void
+tcpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+{
+	uint64_t *tcpsc = v1;
+	uint64_t *tcps = v2;
+	u_int i;
+
+	for (i = 0; i < TCP_NSTATS; i++)
+		tcps[i] += tcpsc[i];
+}
+
+static void
+tcpstat_convert_to_user(uint64_t *tcps)
+{
+
+	memset(tcps, 0, sizeof(uint64_t) * TCP_NSTATS);
+	percpu_foreach(tcpstat_percpu, tcpstat_convert_to_user_cb, tcps);
+}
+
+static int
+sysctl_net_inet_tcp_stats(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	uint64_t tcps[TCP_NSTATS];
+
+	tcpstat_convert_to_user(tcps);
+	node = *rnode;
+	node.sysctl_data = tcps;
+	node.sysctl_size = sizeof(tcps);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 
 /*
  * this (second stage) setup routine is a replacement for tcp_sysctl()
@@ -1959,7 +1991,7 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("TCP statistics"),
-		       NULL, 0, tcpstat, sizeof(tcpstat),
+		       sysctl_net_inet_tcp_stats, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_STATS,
 		       CTL_EOL);
 #ifdef TCP_DEBUG

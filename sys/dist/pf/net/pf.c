@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.49 2008/04/08 15:04:35 thorpej Exp $	*/
+/*	$NetBSD: pf.c,v 1.50 2008/04/12 05:58:22 thorpej Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.49 2008/04/08 15:04:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.50 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -5442,7 +5442,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		rt = rtcache_init(ro);
 
 		if (rt == NULL) {
-			ipstat[IP_STAT_NOROUTE]++;
+			ip_statinc(IP_STAT_NOROUTE);
 			goto bad;
 		}
 
@@ -5555,7 +5555,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
 	if (ip->ip_off & htons(IP_DF)) {
-		ipstat[IP_STAT_CANTFRAG]++;
+		ip_statinc(IP_STAT_CANTFRAG);
 		if (r->rt != PF_DUPTO) {
 			icmp_error(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
 			    ifp->if_mtu);
@@ -5585,7 +5585,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	}
 
 	if (error == 0)
-		ipstat[IP_STAT_FRAGMENTED]++;
+		ip_statinc(IP_STAT_FRAGMENTED);
 
 done:
 	if (r->rt != PF_DUPTO)
@@ -5829,13 +5829,13 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 #endif
 		switch (p) {
 		case IPPROTO_TCP:
-			tcpstat[TCP_STAT_RCVBADSUM]++;
+			tcp_statinc(TCP_STAT_RCVBADSUM);
 			break;
 		case IPPROTO_UDP:
-			udpstat[UDP_STAT_BADSUM]++;
+			udp_statinc(UDP_STAT_BADSUM);
 			break;
 		case IPPROTO_ICMP:
-			icmpstat[ICMP_STAT_CHECKSUM]++;
+			icmp_statinc(ICMP_STAT_CHECKSUM);
 			break;
 #ifdef INET6
 		case IPPROTO_ICMPV6:
