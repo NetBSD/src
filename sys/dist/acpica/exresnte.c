@@ -1,9 +1,8 @@
-/*	$NetBSD: exresnte.c,v 1.3 2007/12/11 13:16:09 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exresnte - AML Interpreter object resolution
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -11,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,17 +115,14 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresnte.c,v 1.3 2007/12/11 13:16:09 lukem Exp $");
-
 #define __EXRESNTE_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/acinterp.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/amlcode.h>
+#include "acpi.h"
+#include "acdispat.h"
+#include "acinterp.h"
+#include "acnamesp.h"
+#include "acparser.h"
+#include "amlcode.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -201,9 +197,11 @@ AcpiExResolveNodeToValue (
      * Several object types require no further processing:
      * 1) Device/Thermal objects don't have a "real" subobject, return the Node
      * 2) Method locals and arguments have a pseudo-Node
+     * 3) 10/2007: Added method type to assist with Package construction.
      */
     if ((EntryType == ACPI_TYPE_DEVICE)  ||
         (EntryType == ACPI_TYPE_THERMAL) ||
+        (EntryType == ACPI_TYPE_METHOD)  ||
         (Node->Flags & (ANOBJ_METHOD_ARG | ANOBJ_METHOD_LOCAL)))
     {
         return_ACPI_STATUS (AE_OK);
@@ -309,7 +307,6 @@ AcpiExResolveNodeToValue (
     /* For these objects, just return the object attached to the Node */
 
     case ACPI_TYPE_MUTEX:
-    case ACPI_TYPE_METHOD:
     case ACPI_TYPE_POWER:
     case ACPI_TYPE_PROCESSOR:
     case ACPI_TYPE_EVENT:
@@ -335,12 +332,11 @@ AcpiExResolveNodeToValue (
 
         switch (SourceDesc->Reference.Opcode)
         {
-        case AML_LOAD_OP:
-
-            /* This is a DdbHandle */
-            /* Return an additional reference to the object */
-
+        case AML_LOAD_OP:   /* This is a DdbHandle */
         case AML_REF_OF_OP:
+        case AML_INDEX_OP:
+
+            /* Return an additional reference to the object */
 
             ObjDesc = SourceDesc;
             AcpiUtAddReference (ObjDesc);

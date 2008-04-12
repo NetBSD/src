@@ -1,9 +1,7 @@
-/*	$NetBSD: dmresrc.c,v 1.3 2007/12/11 13:16:02 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: dmresrc.c - Resource Descriptor disassembly
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,12 +114,10 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrc.c,v 1.3 2007/12/11 13:16:02 lukem Exp $");
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/amlcode.h>
-#include <dist/acpica/acdisasm.h>
+#include "acpi.h"
+#include "amlcode.h"
+#include "acdisasm.h"
 
 #ifdef ACPI_DISASSEMBLER
 
@@ -226,7 +222,7 @@ AcpiDmDescriptorName (
 void
 AcpiDmDumpInteger8 (
     UINT8                   Value,
-    const char              *Name)
+    char                    *Name)
 {
     AcpiOsPrintf ("0x%2.2X,               // %s\n", Value, Name);
 }
@@ -234,7 +230,7 @@ AcpiDmDumpInteger8 (
 void
 AcpiDmDumpInteger16 (
     UINT16                  Value,
-    const char              *Name)
+    char                    *Name)
 {
     AcpiOsPrintf ("0x%4.4X,             // %s\n", Value, Name);
 }
@@ -242,7 +238,7 @@ AcpiDmDumpInteger16 (
 void
 AcpiDmDumpInteger32 (
     UINT32                  Value,
-    const char              *Name)
+    char                    *Name)
 {
     AcpiOsPrintf ("0x%8.8X,         // %s\n", Value, Name);
 }
@@ -250,7 +246,7 @@ AcpiDmDumpInteger32 (
 void
 AcpiDmDumpInteger64 (
     UINT64                  Value,
-    const char              *Name)
+    char                    *Name)
 {
     AcpiOsPrintf ("0x%8.8X%8.8X, // %s\n", ACPI_FORMAT_UINT64 (Value), Name);
 }

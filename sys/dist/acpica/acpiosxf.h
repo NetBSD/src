@@ -12,7 +12,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -121,8 +121,8 @@
 #ifndef __ACPIOSXF_H__
 #define __ACPIOSXF_H__
 
-#include <dist/acpica/acenv.h>
-#include <dist/acpica/actypes.h>
+#include "acenv.h"
+#include "actypes.h"
 
 
 /* Types for AcpiOsExecute */

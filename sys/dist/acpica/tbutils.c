@@ -1,9 +1,7 @@
-/*	$NetBSD: tbutils.c,v 1.3 2007/12/11 13:16:16 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: tbutils   - table utilities
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +114,10 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbutils.c,v 1.3 2007/12/11 13:16:16 lukem Exp $");
-
 #define __TBUTILS_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/actables.h>
+#include "acpi.h"
+#include "actables.h"
 
 #define _COMPONENT          ACPI_TABLES
         ACPI_MODULE_NAME    ("tbutils")
@@ -186,7 +181,7 @@ AcpiTbPrintTableHeader (
         /* FACS only has signature and length fields of common table header */
 
         ACPI_INFO ((AE_INFO, "%4.4s @ 0x%p/0x%04X",
-            Header->Signature, ACPI_CAST_PTR (void, Address), Header->Length));
+            Header->Signature, ACPI_CAST_PTR (UINT64, Address), Header->Length));
     }
     else if (!ACPI_STRNCMP (Header->Signature, ACPI_SIG_RSDP, 4))
     {
@@ -244,7 +239,7 @@ AcpiTbVerifyChecksum (
     if (Checksum)
     {
         ACPI_WARNING ((AE_INFO,
-            "Incorrect checksum in table [%4.4s] -  %2.2X, should be %2.2X",
+            "Incorrect checksum in table [%4.4s] - %2.2X, should be %2.2X",
             Table->Signature, Table->Checksum, (UINT8) (Table->Checksum - Checksum)));
 
 #if (ACPI_CHECKSUM_ABORT)
@@ -589,7 +584,7 @@ AcpiTbParseRootTable (
 
         if (!ACPI_STRNCMP(
                 (const char *)&AcpiGbl_RootTableList.Tables[i].Signature,
-		ACPI_SIG_FADT, 4))
+                ACPI_SIG_FADT, 4))
         {
             AcpiTbParseFadt (i, Flags);
         }

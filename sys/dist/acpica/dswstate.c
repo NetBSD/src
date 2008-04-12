@@ -1,9 +1,7 @@
-/*	$NetBSD: dswstate.c,v 1.3 2007/12/11 13:16:05 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: dswstate - Dispatcher parse tree walk management routines
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,15 +114,13 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswstate.c,v 1.3 2007/12/11 13:16:05 lukem Exp $");
 
 #define __DSWSTATE_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acparser.h>
-#include <dist/acpica/acdispat.h>
-#include <dist/acpica/acnamesp.h>
+#include "acpi.h"
+#include "acparser.h"
+#include "acdispat.h"
+#include "acnamesp.h"
 
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dswstate")
@@ -324,7 +320,7 @@ AcpiDsResultStackPush (
 
     /* Check for stack overflow */
 
-    if ((WalkState->ResultSize + ACPI_RESULTS_FRAME_OBJ_NUM) >
+    if (((UINT32) WalkState->ResultSize + ACPI_RESULTS_FRAME_OBJ_NUM) >
         ACPI_RESULTS_OBJ_NUM_MAX)
     {
         ACPI_ERROR ((AE_INFO, "Result stack overflow: State=%p Num=%X",
@@ -521,7 +517,7 @@ AcpiDsObjStackPopAndDelete (
     UINT32                  PopCount,
     ACPI_WALK_STATE         *WalkState)
 {
-    UINT32                  i;
+    ACPI_NATIVE_INT         i;
     ACPI_OPERAND_OBJECT     *ObjDesc;
 
 
@@ -533,7 +529,7 @@ AcpiDsObjStackPopAndDelete (
         return;
     }
 
-    for (i = (PopCount - 1); i != (UINT32)-1; i--)
+    for (i = (ACPI_NATIVE_INT)(PopCount - 1); i >= 0; i--)
     {
         if (WalkState->NumOperands == 0)
         {

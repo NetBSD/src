@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acdebug.h - ACPI/AML debugger
- *       $Revision: 1.2 $
+ *       $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -122,7 +122,7 @@
 
 typedef struct CommandInfo
 {
-    const char              *Name;          /* Command Name */
+    char                    *Name;          /* Command Name */
     UINT8                   MinArgs;        /* Minimum arguments required */
 
 } COMMAND_INFO;
@@ -130,7 +130,7 @@ typedef struct CommandInfo
 
 typedef struct ArgumentInfo
 {
-    const char              *Name;          /* Argument Name */
+    char                    *Name;          /* Argument Name */
 
 } ARGUMENT_INFO;
 
@@ -220,7 +220,7 @@ AcpiDbSetMethodData (
 
 ACPI_STATUS
 AcpiDbDisplayObjects (
-    const char              *ObjTypeArg,
+    char                    *ObjTypeArg,
     char                    *DisplayCountArg);
 
 ACPI_STATUS
@@ -335,7 +335,7 @@ AcpiDbGetCacheInfo (
  */
 ACPI_OBJECT_TYPE
 AcpiDbMatchArgument (
-    const char              *UserArgument,
+    char                    *UserArgument,
     ARGUMENT_INFO           *Arguments);
 
 void

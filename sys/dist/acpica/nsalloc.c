@@ -1,9 +1,7 @@
-/*	$NetBSD: nsalloc.c,v 1.3 2007/12/11 13:16:12 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: nsalloc - Namespace allocation and deletion utilities
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +114,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.3 2007/12/11 13:16:12 lukem Exp $");
 
 #define __NSALLOC_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
+#include "acpi.h"
+#include "acnamesp.h"
 
 
 #define _COMPONENT          ACPI_NAMESPACE
