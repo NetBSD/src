@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.24 2008/04/11 15:31:34 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.25 2008/04/12 17:02:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.24 2008/04/11 15:31:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.25 2008/04/12 17:02:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,16 +110,12 @@ static struct cpu_info *cpu_infos[MAXCPUS];
 int
 mi_cpu_attach(struct cpu_info *ci)
 {
-	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int error;
 
 	ci->ci_index = ncpu;
 	cpu_infos[cpu_index(ci)] = ci;
 	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 
-	KASSERT(sizeof(kmutex_t) <= CACHE_LINE_SIZE);
-	spc->spc_lwplock = kmem_alloc(CACHE_LINE_SIZE, KM_SLEEP);
-	mutex_init(spc->spc_lwplock, MUTEX_DEFAULT, IPL_SCHED);
 	sched_cpuattach(ci);
 	uvm_cpu_attach(ci);
 

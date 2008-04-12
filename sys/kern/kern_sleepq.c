@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.24 2008/04/05 13:58:12 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.25 2008/04/12 17:02:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.24 2008/04/05 13:58:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.25 2008/04/12 17:02:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -107,7 +107,6 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 {
 	struct schedstate_percpu *spc;
 	struct cpu_info *ci;
-	pri_t pri;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
 	KASSERT(sq->sq_waiters > 0);
@@ -169,12 +168,6 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	l->l_slptime = 0;
 	if ((l->l_flag & LW_INMEM) != 0) {
 		sched_enqueue(l, false);
-		pri = lwp_eprio(l);
-		/* XXX This test is not good enough! */
-		if (pri > spc->spc_curpriority) {
-			cpu_need_resched(ci,
-			    (pri >= PRI_KERNEL ? RESCHED_IMMED : 0));
-		}
 		spc_unlock(ci);
 		return 0;
 	}
