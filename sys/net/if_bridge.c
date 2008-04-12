@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.59 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.60 2008/04/12 09:26:45 cegger Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.59 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.60 2008/04/12 09:26:45 cegger Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -115,6 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.59 2008/04/12 05:58:22 thorpej Exp $
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_private.h> /* needed for IP_HDR_ALIGNED_P */
 
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
