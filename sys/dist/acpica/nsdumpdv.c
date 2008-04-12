@@ -1,9 +1,7 @@
-/*	$NetBSD: nsdumpdv.c,v 1.3 2007/12/11 13:16:12 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,12 +115,9 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.3 2007/12/11 13:16:12 lukem Exp $");
-
 #define __NSDUMPDV_C__
 
-#include <dist/acpica/acpi.h>
+#include "acpi.h"
 
 
 /* TBD: This entire module is apparently obsolete and should be removed */
@@ -133,7 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.3 2007/12/11 13:16:12 lukem Exp $");
 #ifdef ACPI_OBSOLETE_FUNCTIONS
 #if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 
-#include <dist/acpica/acnamesp.h>
+#include "acnamesp.h"
 
 /*******************************************************************************
  *

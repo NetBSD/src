@@ -1,9 +1,7 @@
-/*	$NetBSD: rsutils.c,v 1.4 2007/12/11 13:16:16 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: rsutils - Utilities for the resource manager
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,14 +114,12 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsutils.c,v 1.4 2007/12/11 13:16:16 lukem Exp $");
 
 #define __RSUTILS_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
-#include <dist/acpica/acresrc.h>
+#include "acpi.h"
+#include "acnamesp.h"
+#include "acresrc.h"
 
 
 #define _COMPONENT          ACPI_RESOURCES
@@ -191,7 +187,7 @@ AcpiRsEncodeBitmask (
     UINT8                   Count)
 {
     ACPI_NATIVE_UINT        i;
-    UINT16                  Mask;
+    ACPI_NATIVE_UINT        Mask;
 
 
     ACPI_FUNCTION_ENTRY ();
@@ -201,10 +197,10 @@ AcpiRsEncodeBitmask (
 
     for (i = 0, Mask = 0; i < Count; i++)
     {
-        Mask |= (0x0001 << List[i]);
+        Mask |= (0x1 << List[i]);
     }
 
-    return (Mask);
+    return ((UINT16) Mask);
 }
 
 

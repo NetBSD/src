@@ -1,10 +1,8 @@
-/*	$NetBSD: nsxfname.c,v 1.3 2007/12/11 13:16:14 lukem Exp $	*/
-
 /******************************************************************************
  *
  * Module Name: nsxfname - Public interfaces to the ACPI subsystem
  *                         ACPI Namespace oriented interfaces
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -12,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,13 +115,10 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsxfname.c,v 1.3 2007/12/11 13:16:14 lukem Exp $");
-
 #define __NSXFNAME_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acnamesp.h>
+#include "acpi.h"
+#include "acnamesp.h"
 
 
 #define _COMPONENT          ACPI_NAMESPACE

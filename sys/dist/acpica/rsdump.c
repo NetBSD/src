@@ -1,9 +1,7 @@
-/*	$NetBSD: rsdump.c,v 1.3 2007/12/11 13:16:15 lukem Exp $	*/
-
 /*******************************************************************************
  *
  * Module Name: rsdump - Functions to display the resource structures.
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  ******************************************************************************/
 
@@ -11,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +114,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.3 2007/12/11 13:16:15 lukem Exp $");
 
 #define __RSDUMP_C__
 
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/acresrc.h>
+#include "acpi.h"
+#include "acresrc.h"
 
 #define _COMPONENT          ACPI_RESOURCES
         ACPI_MODULE_NAME    ("rsdump")
@@ -134,32 +130,32 @@ __KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.3 2007/12/11 13:16:15 lukem Exp $");
 
 static void
 AcpiRsOutString (
-    const char              *Title,
-    const char              *Value);
+    char                    *Title,
+    char                    *Value);
 
 static void
 AcpiRsOutInteger8 (
-    const char              *Title,
+    char                    *Title,
     UINT8                   Value);
 
 static void
 AcpiRsOutInteger16 (
-    const char              *Title,
+    char                    *Title,
     UINT16                  Value);
 
 static void
 AcpiRsOutInteger32 (
-    const char              *Title,
+    char                    *Title,
     UINT32                  Value);
 
 static void
 AcpiRsOutInteger64 (
-    const char              *Title,
+    char                    *Title,
     UINT64                  Value);
 
 static void
 AcpiRsOutTitle (
-    const char              *Title);
+    char                    *Title);
 
 static void
 AcpiRsDumpByteList (
@@ -204,9 +200,10 @@ AcpiRsDumpDescriptor (
  *
  ******************************************************************************/
 
-ACPI_RSDUMP_INFO        AcpiRsDumpIrq[6] =
+ACPI_RSDUMP_INFO        AcpiRsDumpIrq[7] =
 {
     {ACPI_RSD_TITLE,    ACPI_RSD_TABLE_SIZE (AcpiRsDumpIrq),                "IRQ",                      NULL},
+    {ACPI_RSD_UINT8 ,   ACPI_RSD_OFFSET (Irq.DescriptorLength),             "Descriptor Length",        NULL},
     {ACPI_RSD_1BITFLAG, ACPI_RSD_OFFSET (Irq.Triggering),                   "Triggering",               AcpiGbl_HeDecode},
     {ACPI_RSD_1BITFLAG, ACPI_RSD_OFFSET (Irq.Polarity),                     "Polarity",                 AcpiGbl_LlDecode},
     {ACPI_RSD_1BITFLAG, ACPI_RSD_OFFSET (Irq.Sharable),                     "Sharing",                  AcpiGbl_ShrDecode},
@@ -224,9 +221,10 @@ ACPI_RSDUMP_INFO        AcpiRsDumpDma[6] =
     {ACPI_RSD_SHORTLIST,ACPI_RSD_OFFSET (Dma.Channels[0]),                  "Channel List",             NULL}
 };
 
-ACPI_RSDUMP_INFO        AcpiRsDumpStartDpf[3] =
+ACPI_RSDUMP_INFO        AcpiRsDumpStartDpf[4] =
 {
     {ACPI_RSD_TITLE,    ACPI_RSD_TABLE_SIZE (AcpiRsDumpStartDpf),           "Start-Dependent-Functions",NULL},
+    {ACPI_RSD_UINT8 ,   ACPI_RSD_OFFSET (StartDpf.DescriptorLength),        "Descriptor Length",        NULL},
     {ACPI_RSD_2BITFLAG, ACPI_RSD_OFFSET (StartDpf.CompatibilityPriority),   "Compatibility Priority",   AcpiGbl_ConfigDecode},
     {ACPI_RSD_2BITFLAG, ACPI_RSD_OFFSET (StartDpf.PerformanceRobustness),   "Performance/Robustness",   AcpiGbl_ConfigDecode}
 };
@@ -378,7 +376,7 @@ static ACPI_RSDUMP_INFO AcpiRsDumpGeneralFlags[5] =
 
 static ACPI_RSDUMP_INFO AcpiRsDumpMemoryFlags[5] =
 {
-    {ACPI_RSD_LITERAL,  ACPI_RSD_TABLE_SIZE (AcpiRsDumpMemoryFlags),        "Resource Type",            __UNCONST("Memory Range")},
+    {ACPI_RSD_LITERAL,  ACPI_RSD_TABLE_SIZE (AcpiRsDumpMemoryFlags),        "Resource Type",            (void *) "Memory Range"},
     {ACPI_RSD_1BITFLAG, ACPI_RSD_OFFSET (Address.Info.Mem.WriteProtect),    "Write Protect",            AcpiGbl_RwDecode},
     {ACPI_RSD_2BITFLAG, ACPI_RSD_OFFSET (Address.Info.Mem.Caching),         "Caching",                  AcpiGbl_MemDecode},
     {ACPI_RSD_2BITFLAG, ACPI_RSD_OFFSET (Address.Info.Mem.RangeType),       "Range Type",               AcpiGbl_MtpDecode},
@@ -387,7 +385,7 @@ static ACPI_RSDUMP_INFO AcpiRsDumpMemoryFlags[5] =
 
 static ACPI_RSDUMP_INFO AcpiRsDumpIoFlags[4] =
 {
-    {ACPI_RSD_LITERAL,  ACPI_RSD_TABLE_SIZE (AcpiRsDumpIoFlags),            "Resource Type",            __UNCONST("I/O Range")},
+    {ACPI_RSD_LITERAL,  ACPI_RSD_TABLE_SIZE (AcpiRsDumpIoFlags),            "Resource Type",            (void *) "I/O Range"},
     {ACPI_RSD_2BITFLAG, ACPI_RSD_OFFSET (Address.Info.Io.RangeType),        "Range Type",               AcpiGbl_RngDecode},
     {ACPI_RSD_1BITFLAG, ACPI_RSD_OFFSET (Address.Info.Io.Translation),      "Translation",              AcpiGbl_TtpDecode},
     {ACPI_RSD_1BITFLAG, ACPI_RSD_OFFSET (Address.Info.Io.TranslationType),  "Translation Type",         AcpiGbl_TrsDecode}
@@ -426,8 +424,8 @@ AcpiRsDumpDescriptor (
 {
     UINT8                   *Target = NULL;
     UINT8                   *PreviousTarget;
-    const char              *Name;
-    UINT8                   Count;
+    char                    *Name;
+    UINT8                    Count;
 
 
     /* First table entry must contain the table length (# of table entries) */
@@ -483,12 +481,12 @@ AcpiRsDumpDescriptor (
         /* Flags: 1-bit and 2-bit flags supported */
 
         case ACPI_RSD_1BITFLAG:
-            AcpiRsOutString (Name, ACPI_CAST_CONST_PTR (char,
+            AcpiRsOutString (Name, ACPI_CAST_PTR (char,
                 Table->Pointer [*Target & 0x01]));
             break;
 
         case ACPI_RSD_2BITFLAG:
-            AcpiRsOutString (Name, ACPI_CAST_CONST_PTR (char,
+            AcpiRsOutString (Name, ACPI_CAST_PTR (char,
                 Table->Pointer [*Target & 0x03]));
             break;
 
@@ -760,8 +758,8 @@ AcpiRsDumpIrqList (
 
 static void
 AcpiRsOutString (
-    const char              *Title,
-    const char              *Value)
+    char                    *Title,
+    char                    *Value)
 {
     AcpiOsPrintf ("%27s : %s", Title, Value);
     if (!*Value)
@@ -773,7 +771,7 @@ AcpiRsOutString (
 
 static void
 AcpiRsOutInteger8 (
-    const char              *Title,
+    char                    *Title,
     UINT8                   Value)
 {
     AcpiOsPrintf ("%27s : %2.2X\n", Title, Value);
@@ -781,7 +779,7 @@ AcpiRsOutInteger8 (
 
 static void
 AcpiRsOutInteger16 (
-    const char              *Title,
+    char                    *Title,
     UINT16                  Value)
 {
     AcpiOsPrintf ("%27s : %4.4X\n", Title, Value);
@@ -789,7 +787,7 @@ AcpiRsOutInteger16 (
 
 static void
 AcpiRsOutInteger32 (
-    const char              *Title,
+    char                    *Title,
     UINT32                  Value)
 {
     AcpiOsPrintf ("%27s : %8.8X\n", Title, Value);
@@ -797,7 +795,7 @@ AcpiRsOutInteger32 (
 
 static void
 AcpiRsOutInteger64 (
-    const char              *Title,
+    char                    *Title,
     UINT64                  Value)
 {
     AcpiOsPrintf ("%27s : %8.8X%8.8X\n", Title,
@@ -806,7 +804,7 @@ AcpiRsOutInteger64 (
 
 static void
 AcpiRsOutTitle (
-    const char              *Title)
+    char                    *Title)
 {
     AcpiOsPrintf ("%27s : ", Title);
 }

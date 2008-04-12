@@ -1,9 +1,8 @@
-/*	$NetBSD: hwsleep.c,v 1.3 2007/12/11 13:16:11 lukem Exp $	*/
 
 /******************************************************************************
  *
  * Name: hwsleep.c - ACPI Hardware Sleep/Wake Interface
- *              $Revision: 1.3 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -11,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2008, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,11 +115,7 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.3 2007/12/11 13:16:11 lukem Exp $");
-
-#include <dist/acpica/acpi.h>
-#include <dist/acpica/actables.h>
+#include "acpi.h"
 
 #define _COMPONENT          ACPI_HARDWARE
         ACPI_MODULE_NAME    ("hwsleep")
@@ -152,7 +147,7 @@ AcpiSetFirmwareWakingVector (
     /* Get the FACS */
 
     Status = AcpiGetTableByIndex (ACPI_TABLE_INDEX_FACS,
-        ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
+                ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -215,7 +210,7 @@ AcpiGetFirmwareWakingVector (
     /* Get the FACS */
 
     Status = AcpiGetTableByIndex (ACPI_TABLE_INDEX_FACS,
-        ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
+                ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -364,7 +359,6 @@ AcpiEnterSleepState (
     ACPI_BIT_REGISTER_INFO  *SleepTypeRegInfo;
     ACPI_BIT_REGISTER_INFO  *SleepEnableRegInfo;
     UINT32                  InValue;
-    UINT32                  Retry;
     ACPI_STATUS             Status;
 
 
@@ -518,22 +512,12 @@ AcpiEnterSleepState (
 
     /* Wait until we enter sleep state */
 
-    Retry = 1000;
     do
     {
         Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
-        }
-
-        /*
-         * Some BIOSs don't set WAK_STS at all.  Give up waiting after
-         * 1000 retries if it still isn't set.
-         */
-        if (Retry-- == 0)
-        {
-            break;
         }
 
         /* Spin until we wake */
