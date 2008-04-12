@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.265 2008/04/09 05:14:20 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.266 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.265 2008/04/09 05:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.266 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -135,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.265 2008/04/09 05:14:20 thorpej Exp $
 #include <netinet/in_proto.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_private.h>
 #include <netinet/ip_icmp.h>
 /* just for gif_ttl */
 #include <netinet/in_gif.h>
@@ -230,8 +231,9 @@ u_long	in_multihash;				/* size of hash table - 1 */
 int	in_multientries;			/* total number of addrs */
 struct	in_multihashhead *in_multihashtbl;
 struct	ifqueue ipintrq;
-uint64_t ipstat[IP_NSTATS];
 uint16_t ip_id;
+
+percpu_t *ipstat_percpu;
 
 #ifdef PFIL_HOOKS
 struct pfil_head inet_pfil_hook;
@@ -447,6 +449,8 @@ ip_init(void)
 	MOWNER_ATTACH(&ip_tx_mowner);
 	MOWNER_ATTACH(&ip_rx_mowner);
 #endif /* MBUFTRACE */
+
+	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
 }
 
 struct	sockaddr_in ipaddr = {
@@ -511,7 +515,7 @@ ip_input(struct mbuf *m)
 	 */
 	if (TAILQ_FIRST(&in_ifaddrhead) == 0)
 		goto bad;
-	ipstat[IP_STAT_TOTAL]++;
+	IP_STATINC(IP_STAT_TOTAL);
 	/*
 	 * If the IP header is not aligned, slurp it up into a new
 	 * mbuf with space for link headers, in the event we forward
@@ -522,28 +526,28 @@ ip_input(struct mbuf *m)
 		if ((m = m_copyup(m, sizeof(struct ip),
 				  (max_linkhdr + 3) & ~3)) == NULL) {
 			/* XXXJRT new stat, please */
-			ipstat[IP_STAT_TOOSMALL]++;
+			IP_STATINC(IP_STAT_TOOSMALL);
 			return;
 		}
 	} else if (__predict_false(m->m_len < sizeof (struct ip))) {
 		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
-			ipstat[IP_STAT_TOOSMALL]++;
+			IP_STATINC(IP_STAT_TOOSMALL);
 			return;
 		}
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {
-		ipstat[IP_STAT_BADVERS]++;
+		IP_STATINC(IP_STAT_BADVERS);
 		goto bad;
 	}
 	hlen = ip->ip_hl << 2;
 	if (hlen < sizeof(struct ip)) {	/* minimum header length */
-		ipstat[IP_STAT_BADHLEN]++;
+		IP_STATINC(IP_STAT_BADHLEN);
 		goto bad;
 	}
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == 0) {
-			ipstat[IP_STAT_BADHLEN]++;
+			IP_STATINC(IP_STAT_BADHLEN);
 			return;
 		}
 		ip = mtod(m, struct ip *);
@@ -554,7 +558,7 @@ ip_input(struct mbuf *m)
 	 * not allowed.
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
-		ipstat[IP_STAT_BADADDR]++;
+		IP_STATINC(IP_STAT_BADADDR);
 		goto bad;
 	}
 
@@ -562,7 +566,7 @@ ip_input(struct mbuf *m)
 	if ((ntohl(ip->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
 	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
 		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0) {
-			ipstat[IP_STAT_BADADDR]++;
+			IP_STATINC(IP_STAT_BADADDR);
 			goto bad;
 		}
 	}
@@ -600,7 +604,7 @@ ip_input(struct mbuf *m)
 	 * Check for additional length bogosity
 	 */
 	if (len < hlen) {
-		ipstat[IP_STAT_BADLEN]++;
+		IP_STATINC(IP_STAT_BADLEN);
 		goto bad;
 	}
 
@@ -611,7 +615,7 @@ ip_input(struct mbuf *m)
 	 * Drop packet if shorter than we expect.
 	 */
 	if (m->m_pkthdr.len < len) {
-		ipstat[IP_STAT_TOOSHORT]++;
+		IP_STATINC(IP_STAT_TOOSHORT);
 		goto bad;
 	}
 	if (m->m_pkthdr.len > len) {
@@ -780,7 +784,7 @@ ip_input(struct mbuf *m)
 			 * ip_output().)
 			 */
 			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
-				ipstat[IP_STAT_CANTFORWARD]++;
+				IP_STATINC(IP_STAT_CANTFORWARD);
 				m_freem(m);
 				return;
 			}
@@ -792,7 +796,7 @@ ip_input(struct mbuf *m)
 			 */
 			if (ip->ip_p == IPPROTO_IGMP)
 				goto ours;
-			ipstat[IP_STAT_CANTFORWARD]++;
+			IP_STATINC(IP_STAT_CANTFORWARD);
 		}
 #endif
 		/*
@@ -801,7 +805,7 @@ ip_input(struct mbuf *m)
 		 */
 		IN_LOOKUP_MULTI(ip->ip_dst, m->m_pkthdr.rcvif, inm);
 		if (inm == NULL) {
-			ipstat[IP_STAT_CANTFORWARD]++;
+			IP_STATINC(IP_STAT_CANTFORWARD);
 			m_freem(m);
 			return;
 		}
@@ -815,7 +819,7 @@ ip_input(struct mbuf *m)
 	 * Not for us; forward if possible and desirable.
 	 */
 	if (ipforwarding == 0) {
-		ipstat[IP_STAT_CANTFORWARD]++;
+		IP_STATINC(IP_STAT_CANTFORWARD);
 		m_freem(m);
 	} else {
 		/*
@@ -826,7 +830,7 @@ ip_input(struct mbuf *m)
 		 */
 		if (downmatch) {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, 0, 0);
-			ipstat[IP_STAT_CANTFORWARD]++;
+			IP_STATINC(IP_STAT_CANTFORWARD);
 			return;
 		}
 #ifdef IPSEC
@@ -859,7 +863,7 @@ ip_input(struct mbuf *m)
 		KEY_FREESP(&sp);
 		splx(s);
 		if (error) {
-			ipstat[IP_STAT_CANTFORWARD]++;
+			IP_STATINC(IP_STAT_CANTFORWARD);
 			goto bad;
 		}
 
@@ -906,7 +910,7 @@ ours:
 		 */
 		off = (ntohs(ip->ip_off) & IP_OFFMASK) << 3;
 		if ((off > 0 ? off + hlen : len) < IP_MINFRAGSIZE - 1) {
-			ipstat[IP_STAT_BADFRAGS]++;
+			IP_STATINC(IP_STAT_BADFRAGS);
 			goto bad;
 		}
 		/*
@@ -925,7 +929,7 @@ ours:
 				 * fragments.
 				 */
 				if (ip->ip_tos != fp->ipq_tos) {
-					ipstat[IP_STAT_BADFRAGS]++;
+					IP_STATINC(IP_STAT_BADFRAGS);
 					goto bad;
 				}
 				goto found;
@@ -948,7 +952,7 @@ found:
 		         */
 			if (ntohs(ip->ip_len) == 0 ||
 			    (ntohs(ip->ip_len) & 0x7) != 0) {
-				ipstat[IP_STAT_BADFRAGS]++;
+				IP_STATINC(IP_STAT_BADFRAGS);
 				IPQ_UNLOCK();
 				goto bad;
 			}
@@ -961,12 +965,12 @@ found:
 		 * attempt reassembly; if it succeeds, proceed.
 		 */
 		if (mff || ip->ip_off != htons(0)) {
-			ipstat[IP_STAT_FRAGMENTS]++;
+			IP_STATINC(IP_STAT_FRAGMENTS);
 			s = splvm();
 			ipqe = pool_get(&ipqent_pool, PR_NOWAIT);
 			splx(s);
 			if (ipqe == NULL) {
-				ipstat[IP_STAT_RCVMEMDROP]++;
+				IP_STATINC(IP_STAT_RCVMEMDROP);
 				IPQ_UNLOCK();
 				goto bad;
 			}
@@ -978,7 +982,7 @@ found:
 				IPQ_UNLOCK();
 				return;
 			}
-			ipstat[IP_STAT_REASSEMBLED]++;
+			IP_STATINC(IP_STAT_REASSEMBLED);
 			ip = mtod(m, struct ip *);
 			hlen = ip->ip_hl << 2;
 			ip->ip_len = htons(ntohs(ip->ip_len) + hlen);
@@ -1046,7 +1050,7 @@ DPRINTF(("ip_input: no SP, packet discarded\n"));/*XXX*/
 	if (ia && ip)
 		ia->ia_ifa.ifa_data.ifad_inbytes += ntohs(ip->ip_len);
 #endif
-	ipstat[IP_STAT_DELIVERED]++;
+	IP_STATINC(IP_STAT_DELIVERED);
     {
 	int off = hlen, nh = ip->ip_p;
 
@@ -1058,7 +1062,7 @@ bad:
 	return;
 
 badcsum:
-	ipstat[IP_STAT_BADSUM]++;
+	IP_STATINC(IP_STAT_BADSUM);
 	m_freem(m);
 }
 
@@ -1216,7 +1220,7 @@ insert:
 	q = TAILQ_FIRST(&fp->ipq_fragq);
 	ip = q->ipqe_ip;
 	if ((next + (ip->ip_hl << 2)) > IP_MAXPACKET) {
-		ipstat[IP_STAT_TOOLONG]++;
+		IP_STATINC(IP_STAT_TOOLONG);
 		ip_freef(fp);
 		return (0);
 	}
@@ -1266,7 +1270,7 @@ dropfrag:
 	if (fp != 0)
 		fp->ipq_nfrags--;
 	ip_nfrags--;
-	ipstat[IP_STAT_FRAGDROPPED]++;
+	IP_STATINC(IP_STAT_FRAGDROPPED);
 	m_freem(m);
 	s = splvm();
 	pool_put(&ipqent_pool, ipqe);
@@ -1333,7 +1337,7 @@ ip_reass_ttl_decr(u_int ticks)
 				       0 : fp->ipq_ttl - ticks);
 			nfp = LIST_NEXT(fp, ipq_q);
 			if (fp->ipq_ttl == 0) {
-				ipstat[IP_STAT_FRAGTIMEOUT]++;
+				IP_STATINC(IP_STAT_FRAGTIMEOUT);
 				ip_freef(fp);
 			} else {
 				nfrags += fp->ipq_nfrags;
@@ -1680,7 +1684,7 @@ ip_dooptions(struct mbuf *m)
 	return (0);
 bad:
 	icmp_error(m, type, code, 0, 0);
-	ipstat[IP_STAT_BADOPTIONS]++;
+	IP_STATINC(IP_STAT_BADOPTIONS);
 	return (1);
 }
 
@@ -1853,7 +1857,7 @@ ip_forward(struct mbuf *m, int srcrt)
 	}
 #endif
 	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
-		ipstat[IP_STAT_CANTFORWARD]++;
+		IP_STATINC(IP_STAT_CANTFORWARD);
 		m_freem(m);
 		return;
 	}
@@ -1917,12 +1921,15 @@ ip_forward(struct mbuf *m, int srcrt)
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 
 	if (error)
-		ipstat[IP_STAT_CANTFORWARD]++;
+		IP_STATINC(IP_STAT_CANTFORWARD);
 	else {
-		ipstat[IP_STAT_FORWARD]++;
-		if (type)
-			ipstat[IP_STAT_REDIRECTSENT]++;
-		else {
+		uint64_t *ips = IP_STAT_GETREF();
+		ips[IP_STAT_FORWARD]++;
+		if (type) {
+			ips[IP_STAT_REDIRECTSENT]++;
+			IP_STAT_PUTREF();
+		} else {
+			IP_STAT_PUTREF();
 			if (mcopy) {
 #ifdef GATEWAY
 				if (mcopy->m_flags & M_CANFASTFWD)
@@ -2008,7 +2015,7 @@ ip_forward(struct mbuf *m, int srcrt)
 			}
 #endif /*defined(IPSEC) || defined(FAST_IPSEC)*/
 		}
-		ipstat[IP_STAT_CANTFRAG]++;
+		IP_STATINC(IP_STAT_CANTFRAG);
 		break;
 
 	case ENOBUFS:
@@ -2187,6 +2194,37 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 }
 #endif /* GATEWAY */
 
+static void
+ipstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+{
+	uint64_t *ipsc = v1;
+	uint64_t *ips = v2;
+	u_int i;
+
+	for (i = 0; i < IP_NSTATS; i++)
+		ips[i] += ipsc[i];
+}
+
+static void
+ipstat_convert_to_user(uint64_t *ips)
+{
+
+	memset(ips, 0, sizeof(uint64_t) * IP_NSTATS);
+	percpu_foreach(ipstat_percpu, ipstat_convert_to_user_cb, ips);
+}
+
+static int
+sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	uint64_t ips[IP_NSTATS];
+
+	ipstat_convert_to_user(ips);
+	node = *rnode;
+	node.sysctl_data = ips;
+	node.sysctl_size = sizeof(ips);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
 
 SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 {
@@ -2391,7 +2429,15 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("IP statistics"),
-		       NULL, 0, ipstat, sizeof(ipstat),
+		       sysctl_net_inet_ip_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, IPCTL_STATS,
 		       CTL_EOL);
+}
+
+void
+ip_statinc(u_int stat)
+{
+
+	KASSERT(stat < IP_NSTATS);
+	IP_STATINC(stat);
 }

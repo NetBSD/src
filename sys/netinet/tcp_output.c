@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.165 2008/04/08 01:03:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.166 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.165 2008/04/08 01:03:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.166 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -199,6 +199,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.165 2008/04/08 01:03:58 thorpej Exp
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
@@ -444,16 +445,19 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
     long len, int hdrlen, struct mbuf **mp)
 {
 	struct mbuf *m, *m0;
+	uint64_t *tcps;
 
+	tcps = TCP_STAT_GETREF();
 	if (tp->t_force && len == 1)
-		tcpstat[TCP_STAT_SNDPROBE]++;
+		tcps[TCP_STAT_SNDPROBE]++;
 	else if (SEQ_LT(tp->snd_nxt, tp->snd_max)) {
-		tcpstat[TCP_STAT_SNDREXMITPACK]++;
-		tcpstat[TCP_STAT_SNDREXMITBYTE] += len;
+		tcps[TCP_STAT_SNDREXMITPACK]++;
+		tcps[TCP_STAT_SNDREXMITBYTE] += len;
 	} else {
-		tcpstat[TCP_STAT_SNDPACK]++;
-		tcpstat[TCP_STAT_SNDBYTE] += len;
+		tcps[TCP_STAT_SNDPACK]++;
+		tcps[TCP_STAT_SNDBYTE] += len;
 	}
+	TCP_STAT_PUTREF();
 #ifdef notyet
 	if ((m = m_copypack(so->so_snd.sb_mb, off,
 	    (int)len, max_linkhdr + hdrlen)) == 0)
@@ -580,6 +584,7 @@ tcp_output(struct tcpcb *tp)
 #ifdef TCP_SIGNATURE
 	int sigoff = 0;
 #endif
+	uint64_t *tcps;
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -1263,14 +1268,16 @@ send:
 		if (off + len == so->so_snd.sb_cc)
 			flags |= TH_PUSH;
 	} else {
+		tcps = TCP_STAT_GETREF();
 		if (tp->t_flags & TF_ACKNOW)
-			tcpstat[TCP_STAT_SNDACKS]++;
+			tcps[TCP_STAT_SNDACKS]++;
 		else if (flags & (TH_SYN|TH_FIN|TH_RST))
-			tcpstat[TCP_STAT_SNDCTRL]++;
+			tcps[TCP_STAT_SNDCTRL]++;
 		else if (SEQ_GT(tp->snd_up, tp->snd_una))
-			tcpstat[TCP_STAT_SNDURG]++;
+			tcps[TCP_STAT_SNDURG]++;
 		else
-			tcpstat[TCP_STAT_SNDWINUP]++;
+			tcps[TCP_STAT_SNDWINUP]++;
+		TCP_STAT_PUTREF();
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m != NULL && max_linkhdr + hdrlen > MHLEN) {
@@ -1356,7 +1363,7 @@ send:
 				break;
 #endif
 			}
-			tcpstat[TCP_STAT_ECN_ECT]++;
+			TCP_STATINC(TCP_STAT_ECN_ECT);
 		}
 
 		/*
@@ -1520,7 +1527,7 @@ send:
 			if (tp->t_rtttime == 0) {
 				tp->t_rtttime = tcp_now;
 				tp->t_rtseq = startseq;
-				tcpstat[TCP_STAT_SEGSTIMED]++;
+				TCP_STATINC(TCP_STAT_SEGSTIMED);
 			}
 		}
 
@@ -1641,7 +1648,7 @@ timer:
 	if (error) {
 out:
 		if (error == ENOBUFS) {
-			tcpstat[TCP_STAT_SELFQUENCH]++;
+			TCP_STATINC(TCP_STAT_SELFQUENCH);
 #ifdef INET
 			if (tp->t_inpcb)
 				tcp_quench(tp->t_inpcb, 0);
@@ -1671,9 +1678,11 @@ out:
 	if (packetlen > tp->t_pmtud_mtu_sent)
 		tp->t_pmtud_mtu_sent = packetlen;
 	
-	tcpstat[TCP_STAT_SNDTOTAL]++;
+	tcps = TCP_STAT_GETREF();
+	tcps[TCP_STAT_SNDTOTAL]++;
 	if (tp->t_flags & TF_DELACK)
-		tcpstat[TCP_STAT_DELACK]++;
+		tcps[TCP_STAT_DELACK]++;
+	TCP_STAT_PUTREF();
 
 	/*
 	 * Data sent (as far as we can tell).

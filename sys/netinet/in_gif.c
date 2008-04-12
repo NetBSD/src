@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.58 2008/04/07 06:31:28 thorpej Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.59 2008/04/12 05:58:22 thorpej Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.58 2008/04/07 06:31:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.59 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -221,13 +221,13 @@ in_gif_input(struct mbuf *m, ...)
 
 	if (gifp == NULL || (gifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
-		ipstat[IP_STAT_NOGIF]++;
+		ip_statinc(IP_STAT_NOGIF);
 		return;
 	}
 #ifndef GIF_ENCAPCHECK
 	if (!gif_validate4(ip, (struct gif_softc *)gifp, m->m_pkthdr.rcvif)) {
 		m_freem(m);
-		ipstat[IP_STAT_NOGIF]++;
+		ip_statinc(IP_STAT_NOGIF);
 		return;
 	}
 #endif
@@ -280,7 +280,7 @@ in_gif_input(struct mbuf *m, ...)
 		break;
 #endif
 	default:
-		ipstat[IP_STAT_NOGIF]++;
+		ip_statinc(IP_STAT_NOGIF);
 		m_freem(m);
 		return;
 	}

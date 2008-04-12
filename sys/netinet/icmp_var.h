@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.26 2008/04/06 19:04:50 thorpej Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.27 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -89,13 +89,9 @@
 }
 
 #ifdef _KERNEL
-extern uint64_t	icmpstat[ICMP_NSTATS];
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define	ICMP_HDR_ALIGNED_P(ic)	1
-#else
-#define	ICMP_HDR_ALIGNED_P(ic)	((((vaddr_t) (ic)) & 3) == 0)
-#endif
+void	icmp_statinc(u_int stat);
+
 #endif /* _KERNEL_ */
 
 #endif /* !_NETINET_ICMP_VAR_H_ */

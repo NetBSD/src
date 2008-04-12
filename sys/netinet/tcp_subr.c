@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.226 2008/04/08 01:03:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.227 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.226 2008/04/08 01:03:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.227 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -151,6 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.226 2008/04/08 01:03:58 thorpej Exp $
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 
@@ -170,8 +171,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.226 2008/04/08 01:03:58 thorpej Exp $
 
 
 struct	inpcbtable tcbtable;	/* head of queue of active tcpcb's */
-uint64_t tcpstat[TCP_NSTATS];	/* tcp statistics */
 u_int32_t tcp_now;		/* for RFC 1323 timestamps */
+
+percpu_t *tcpstat_percpu;
 
 /* patchable/settable parameters for tcp */
 int 	tcp_mssdflt = TCP_MSS;
@@ -1094,9 +1096,9 @@ tcp_drop(struct tcpcb *tp, int errno)
 	if (TCPS_HAVERCVDSYN(tp->t_state)) {
 		tp->t_state = TCPS_CLOSED;
 		(void) tcp_output(tp);
-		tcpstat[TCP_STAT_DROPS]++;
+		TCP_STATINC(TCP_STAT_DROPS);
 	} else
-		tcpstat[TCP_STAT_CONNDROPS]++;
+		TCP_STATINC(TCP_STAT_CONNDROPS);
 	if (errno == ETIMEDOUT && tp->t_softerror)
 		errno = tp->t_softerror;
 	so->so_error = errno;
@@ -1122,7 +1124,7 @@ tcp_isdead(struct tcpcb *tp)
 		if (tcp_timers_invoking(tp) > 0)
 				/* not quite there yet -- count separately? */
 			return dead;
-		tcpstat[TCP_STAT_DELAYED_FREE]++;
+		TCP_STATINC(TCP_STAT_DELAYED_FREE);
 		for (i = 0; i < TCPT_NTIMERS; i++)
 			callout_destroy(&tp->t_timer[i]);
 		callout_destroy(&tp->t_delack_ch);
@@ -1275,7 +1277,7 @@ tcp_close(struct tcpcb *tp)
 		in6_pcbdetach(in6p);
 	}
 #endif
-	tcpstat[TCP_STAT_CLOSED]++;
+	TCP_STATINC(TCP_STAT_CLOSED);
 	return ((struct tcpcb *)0);
 }
 
@@ -1342,7 +1344,7 @@ tcp_drain(void)
 			if (tcp_reass_lock_try(tp) == 0)
 				continue;
 			if (tcp_freeq(tp))
-				tcpstat[TCP_STAT_CONNSDRAINED]++;
+				TCP_STATINC(TCP_STAT_CONNSDRAINED);
 			TCP_REASS_UNLOCK(tp);
 		}
 	}
@@ -2359,4 +2361,20 @@ tcp_hdrsz(struct tcpcb *tp)
 		hlen += TCPOLEN_SIGLEN;
 #endif
 	return hlen;
+}
+
+void
+tcp_statinc(u_int stat)
+{
+
+	KASSERT(stat < TCP_NSTATS);
+	TCP_STATINC(stat);
+}
+
+void
+tcp_statadd(u_int stat, uint64_t val)
+{
+
+	KASSERT(stat < TCP_NSTATS);
+	TCP_STATADD(stat, val);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.86 2008/04/09 05:14:20 thorpej Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.87 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -176,15 +176,8 @@ struct ip_moptions {
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define	IP_HDR_ALIGNED_P(ip)	1
-#else
-#define	IP_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
-#endif
-
 extern struct domain inetdomain;
 
-extern uint64_t ipstat[IP_NSTATS];	/* ip statistics */
 extern LIST_HEAD(ipqhead, ipq) ipq[];	/* ip reass. queue */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
@@ -232,6 +225,7 @@ void	 ip_slowtimo(void);
 struct mbuf *
 	 ip_srcroute(void);
 int	 ip_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+void	 ip_statinc(u_int);
 void	 ipintr(void);
 void *	 rip_ctlinput(int, const struct sockaddr *, void *);
 int	 rip_ctloutput(int, struct socket *, int, int, struct mbuf **);

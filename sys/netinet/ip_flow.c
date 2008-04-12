@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.53 2008/04/09 05:14:20 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.54 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.53 2008/04/09 05:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.54 2008/04/12 05:58:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.53 2008/04/09 05:14:20 thorpej Exp $")
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_private.h>
 
 /*
  * Similar code is very well commented in netinet6/ip6_flow.c
@@ -313,13 +314,17 @@ static void
 ipflow_addstats(struct ipflow *ipf)
 {
 	struct rtentry *rt;
+	uint64_t *ips;
 
 	if ((rt = rtcache_validate(&ipf->ipf_ro)) != NULL)
 		rt->rt_use += ipf->ipf_uses;
-	ipstat[IP_STAT_CANTFORWARD] += ipf->ipf_errors + ipf->ipf_dropped;
-	ipstat[IP_STAT_TOTAL] += ipf->ipf_uses;
-	ipstat[IP_STAT_FORWARD] += ipf->ipf_uses;
-	ipstat[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
+	
+	ips = IP_STAT_GETREF();
+	ips[IP_STAT_CANTFORWARD] += ipf->ipf_errors + ipf->ipf_dropped;
+	ips[IP_STAT_TOTAL] += ipf->ipf_uses;
+	ips[IP_STAT_FORWARD] += ipf->ipf_uses;
+	ips[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
+	IP_STAT_PUTREF();
 }
 
 static void
@@ -401,6 +406,7 @@ ipflow_slowtimo(void)
 {
 	struct rtentry *rt;
 	struct ipflow *ipf, *next_ipf;
+	uint64_t *ips;
 
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
@@ -410,9 +416,11 @@ ipflow_slowtimo(void)
 		} else {
 			ipf->ipf_last_uses = ipf->ipf_uses;
 			rt->rt_use += ipf->ipf_uses;
-			ipstat[IP_STAT_TOTAL] += ipf->ipf_uses;
-			ipstat[IP_STAT_FORWARD] += ipf->ipf_uses;
-			ipstat[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
+			ips = IP_STAT_GETREF();
+			ips[IP_STAT_TOTAL] += ipf->ipf_uses;
+			ips[IP_STAT_FORWARD] += ipf->ipf_uses;
+			ips[IP_STAT_FASTFORWARD] += ipf->ipf_uses;
+			IP_STAT_PUTREF();
 			ipf->ipf_uses = 0;
 		}
 	}

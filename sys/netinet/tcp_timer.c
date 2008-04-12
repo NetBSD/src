@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.78 2008/04/08 01:03:58 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.79 2008/04/12 05:58:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.78 2008/04/08 01:03:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.79 2008/04/12 05:58:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -138,6 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.78 2008/04/08 01:03:58 thorpej Exp $
 #include <netinet/tcp_seq.h>
 #include <netinet/tcp_timer.h>
 #include <netinet/tcp_var.h>
+#include <netinet/tcp_private.h>
 #include <netinet/tcp_congctl.h>
 #include <netinet/tcpip.h>
 #ifdef TCP_DEBUG
@@ -349,12 +350,12 @@ tcp_timer_rexmt(void *arg)
 
 	if (++tp->t_rxtshift > TCP_MAXRXTSHIFT) {
 		tp->t_rxtshift = TCP_MAXRXTSHIFT;
-		tcpstat[TCP_STAT_TIMEOUTDROP]++;
+		TCP_STATINC(TCP_STAT_TIMEOUTDROP);
 		tp = tcp_drop(tp, tp->t_softerror ?
 		    tp->t_softerror : ETIMEDOUT);
 		goto out;
 	}
-	tcpstat[TCP_STAT_REXMTTIMEO]++;
+	TCP_STATINC(TCP_STAT_REXMTTIMEO);
 	rto = TCP_REXMTVAL(tp);
 	if (rto < tp->t_rttmin)
 		rto = tp->t_rttmin;
@@ -371,7 +372,7 @@ tcp_timer_rexmt(void *arg)
 	 * value here...
 	 */
 	if (tp->t_mtudisc && tp->t_rxtshift > TCP_MAXRXTSHIFT / 6) {
-		tcpstat[TCP_STAT_PMTUBLACKHOLE]++;
+		TCP_STATINC(TCP_STAT_PMTUBLACKHOLE);
 
 #ifdef INET
 		/* try turning PMTUD off */
@@ -486,11 +487,11 @@ tcp_timer_persist(void *arg)
 	if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
 	    ((tcp_now - tp->t_rcvtime) >= tcp_maxpersistidle ||
 	    (tcp_now - tp->t_rcvtime) >= rto * tcp_totbackoff)) {
-		tcpstat[TCP_STAT_PERSISTDROPS]++;
+		TCP_STATINC(TCP_STAT_PERSISTDROPS);
 		tp = tcp_drop(tp, ETIMEDOUT);
 		goto out;
 	}
-	tcpstat[TCP_STAT_PERSISTTIMEO]++;
+	TCP_STATINC(TCP_STAT_PERSISTTIMEO);
 	tcp_setpersist(tp);
 	tp->t_force = 1;
 	(void) tcp_output(tp);
@@ -531,7 +532,7 @@ tcp_timer_keep(void *arg)
 	 * or drop connection if idle for too long.
 	 */
 
-	tcpstat[TCP_STAT_KEEPTIMEO]++;
+	TCP_STATINC(TCP_STAT_KEEPTIMEO);
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		goto dropit;
 #ifdef INET
@@ -561,7 +562,7 @@ tcp_timer_keep(void *arg)
 		 * by the protocol spec, this requires the
 		 * correspondent TCP to respond.
 		 */
-		tcpstat[TCP_STAT_KEEPPROBE]++;
+		TCP_STATINC(TCP_STAT_KEEPPROBE);
 		if (tcp_compat_42) {
 			/*
 			 * The keepalive packet must have nonzero
@@ -588,7 +589,7 @@ tcp_timer_keep(void *arg)
 	return;
 
  dropit:
-	tcpstat[TCP_STAT_KEEPDROPS]++;
+	TCP_STATINC(TCP_STAT_KEEPDROPS);
 	(void) tcp_drop(tp, ETIMEDOUT);
 	splx(s);
 }
