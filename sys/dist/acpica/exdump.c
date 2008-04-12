@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exdump - Interpreter debug output routines
- *              $Revision: 1.6 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -134,12 +134,12 @@
 
 static void
 AcpiExOutString (
-    char                    *Title,
-    char                    *Value);
+    const char              *Title,
+    const char              *Value);
 
 static void
 AcpiExOutPointer (
-    char                    *Title,
+    const char              *Title,
     void                    *Value);
 
 static void
@@ -422,7 +422,7 @@ AcpiExDumpObject (
     ACPI_EXDUMP_INFO        *Info)
 {
     UINT8                   *Target;
-    char                    *Name;
+    const char              *Name;
     UINT8                   Count;
 
 
@@ -893,10 +893,10 @@ void
 AcpiExDumpOperands (
     ACPI_OPERAND_OBJECT     **Operands,
     ACPI_INTERPRETER_MODE   InterpreterMode,
-    char                    *Ident,
+    const char              *Ident,
     UINT32                  NumLevels,
-    char                    *Note,
-    char                    *ModuleName,
+    const char              *Note,
+    const char              *ModuleName,
     UINT32                  LineNumber)
 {
     ACPI_NATIVE_UINT        i;
@@ -953,15 +953,15 @@ AcpiExDumpOperands (
 
 static void
 AcpiExOutString (
-    char                    *Title,
-    char                    *Value)
+    const char              *Title,
+    const char              *Value)
 {
     AcpiOsPrintf ("%20s : %s\n", Title, Value);
 }
 
 static void
 AcpiExOutPointer (
-    char                    *Title,
+    const char              *Title,
     void                    *Value)
 {
     AcpiOsPrintf ("%20s : %p\n", Title, Value);
