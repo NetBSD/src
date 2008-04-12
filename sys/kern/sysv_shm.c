@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.105 2008/01/30 21:09:41 njoly Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.106 2008/04/12 20:49:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.105 2008/01/30 21:09:41 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.106 2008/04/12 20:49:22 rmind Exp $");
 
 #define SYSVSHM
 
@@ -101,7 +101,8 @@ struct shmmap_entry {
 static kmutex_t		shm_lock;
 static kcondvar_t *	shm_cv;
 static struct pool	shmmap_entry_pool;
-static int		shm_last_free, shm_committed, shm_use_phys;
+static int		shm_last_free, shm_use_phys;
+static size_t		shm_committed;
 
 static kcondvar_t	shm_realloc_cv;
 static bool		shm_realloc_state;

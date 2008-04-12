@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.39 2007/12/15 19:44:51 perry Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.40 2008/04/12 20:49:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/inttypes.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
@@ -276,7 +277,7 @@ static void
 show_shmtotal(struct shminfo *shminfo)
 {
 	(void)printf("shminfo:\n");
-	(void)printf("\tshmmax: %7d\t(max shared memory segment size)\n",
+	(void)printf("\tshmmax: %" PRIu64 "\t(max shared memory segment size)\n",
 	    shminfo->shmmax);
 	(void)printf("\tshmmin: %7d\t(min shared memory segment size)\n",
 	    shminfo->shmmin);
