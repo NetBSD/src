@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.54 2008/03/04 02:34:27 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.55 2008/04/13 02:38:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.54 2008/03/04 02:34:27 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.55 2008/04/13 02:38:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ extern char editedhost[];
 
 struct termios tmode, omode;
 
-int crmod, digit, lower, upper;
+int crmod, digit_or_punc, lower, upper;
 
 char	hostname[MAXHOSTNAMELEN + 1];
 struct	utsname kerninfo;
@@ -366,7 +366,7 @@ main(int argc, char *argv[], char *envp[])
 		if (NN) {
 			name[0] = '\0';
 			lower = 1;
-			upper = digit = 0;
+			upper = digit_or_punc = 0;
 		} else if (AL) {
 			const char *p = AL;
 			char *q = name;
@@ -377,7 +377,7 @@ main(int argc, char *argv[], char *envp[])
 				else if (islower((unsigned char)*p))
 					lower = 1;
 				else if (isdigit((unsigned char)*p))
-					digit++;
+					digit_or_punc = 1;
 				*q++ = *p++;
 			}
 		} else if ((rval = getname()) == 2) {
@@ -397,7 +397,7 @@ main(int argc, char *argv[], char *envp[])
 				xputs("user names may not start with '-'.");
 				continue;
 			}
-			if (!(upper || lower || digit))
+			if (!(upper || lower || digit_or_punc))
 				continue;
 			setflags(2);
 			if (crmod) {
@@ -468,7 +468,7 @@ getname(void)
 		syslog(LOG_ERR, "%s: %m", ttyn);
 		exit(1);
 	}
-	crmod = digit = lower = upper = 0;
+	crmod = digit_or_punc = lower = upper = 0;
 	ppp_state = ppp_connection = 0;
 	np = name;
 	for (;;) {
@@ -538,8 +538,8 @@ getname(void)
 			prompt();
 			np = name;
 			continue;
-		} else if (isdigit(c))
-			digit++;
+		} else if (isdigit(c) || c == '_')
+			digit_or_punc = 1;
 		if (IG && (c <= ' ' || c > 0176))
 			continue;
 		*np++ = c;
