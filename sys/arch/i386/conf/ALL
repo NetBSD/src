@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.165 2008/04/09 17:35:17 dyoung Exp $
+# $NetBSD: ALL,v 1.166 2008/04/13 04:59:45 tsutsui Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.165 $"
+#ident 		"ALL-$Revision: 1.166 $"
 
 maxusers	32		# estimated number of users
 
@@ -745,6 +745,7 @@ bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
 # The "nca" and "dpt" probes might give false hits or hang your machine.
 dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
+esp0	at isa? port 0x230 irq ?	# Emulex ESP406 and Qlogic FAS408 SCSI
 nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
 nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
