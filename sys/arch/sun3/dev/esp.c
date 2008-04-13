@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.26 2007/03/04 06:00:53 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.27 2008/04/13 04:55:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.26 2007/03/04 06:00:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.27 2008/04/13 04:55:53 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,22 +75,22 @@ struct esp_softc {
 	struct dma_softc *sc_dma;		/* pointer to my dma */
 };
 
-static int	espmatch(struct device *, struct cfdata *, void *);
-static void	espattach(struct device *, struct device *, void *);
+static int	espmatch(device_t, cfdata_t, void *);
+static void	espattach(device_t, device_t, void *);
 
-CFATTACH_DECL(esp, sizeof(struct esp_softc),
+CFATTACH_DECL_NEW(esp, sizeof(struct esp_softc),
     espmatch, espattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.
  */
-static u_char	esp_read_reg(struct ncr53c9x_softc *, int);
-static void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
+static uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
+static void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static int	esp_dma_isintr(struct ncr53c9x_softc *);
 static void	esp_dma_reset(struct ncr53c9x_softc *);
 static int	esp_dma_intr(struct ncr53c9x_softc *);
-static int	esp_dma_setup(struct ncr53c9x_softc *, void **, size_t *, int,
-		    size_t *);
+static int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *,
+		    int, size_t *);
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
 static int	esp_dma_isactive(struct ncr53c9x_softc *);
@@ -109,7 +109,7 @@ static struct ncr53c9x_glue esp_glue = {
 };
 
 static int 
-espmatch(struct device *parent, struct cfdata *cf, void *aux)
+espmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -118,25 +118,26 @@ espmatch(struct device *parent, struct cfdata *cf, void *aux)
 	 */
 	if (bus_peek(ca->ca_bustype,
 	    ca->ca_paddr + (NCR_STAT * 4), 1) == -1)
-		return (0);
+		return 0;
 
 	/* If default ipl, fill it in. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 2;
 
-	return (1);
+	return 1;
 }
 
 static void 
-espattach(struct device *parent, struct device *self, void *aux)
+espattach(device_t parent, device_t self, void *aux)
 {
-	struct confargs *ca = aux;
-	struct esp_softc *esc = (void *)self;
+	struct esp_softc *esc = device_private(self);
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+	struct confargs *ca = aux;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
+	sc->sc_dev = self;
 	sc->sc_glue = &esp_glue;
 
 	/*
@@ -145,7 +146,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	esc->sc_bst = ca->ca_bustag;
 	if (bus_space_map(esc->sc_bst, ca->ca_paddr, ESP_REG_SIZE, 0,
 	    &esc->sc_bsh) != 0) {
-		printf(": can't map register\n");
+		aprint_error(": can't map register\n");
 		return;
 	}
 
@@ -156,7 +157,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Hook up the DMA driver.
 	 */
-	esc->sc_dma = espdmafind(device_unit(&sc->sc_dev));
+	esc->sc_dma = espdmafind(device_unit(self));
 	esc->sc_dma->sc_client = sc; /* Point back to us */
 
 	/*
@@ -240,7 +241,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	/* and the interuppts */
 	isr_add_autovect(ncr53c9x_intr, sc, ca->ca_intpri);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    sc->sc_dev.dv_xname, "intr");
+	    device_xname(self), "intr");
 
 	/* Do the common parts of attachment. */
 	sc->sc_adapter.adapt_minphys = minphys;
@@ -256,7 +257,7 @@ espattach(struct device *parent, struct device *self, void *aux)
  * Glue functions.
  */
 
-u_char
+uint8_t
 esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -265,7 +266,7 @@ esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 }
 
 void
-esp_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
+esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
@@ -297,8 +298,8 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int 
-esp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len, int datain,
-    size_t *dmasize)
+esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
+    int datain, size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
