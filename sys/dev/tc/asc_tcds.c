@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.22 2008/02/20 18:15:12 matt Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.23 2008/04/13 04:55:54 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.22 2008/02/20 18:15:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.23 2008/04/13 04:55:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ struct asc_softc {
 	bus_space_handle_t sc_scsi_bsh;		/* ASC register handle */
 	bus_dma_tag_t sc_dmat;			/* bus DMA tag */
 	bus_dmamap_t sc_dmamap;			/* bus dmamap */
-	char **sc_dmaaddr;
+	uint8_t **sc_dmaaddr;
 	size_t *sc_dmalen;
 	size_t sc_dmasize;
 	unsigned sc_flags;
@@ -105,22 +105,22 @@ struct asc_softc {
 	struct tcds_slotconfig *sc_tcds;	/* DMA/slot info lives here */
 };
 
-static int  asc_tcds_match (struct device *, struct cfdata *, void *);
-static void asc_tcds_attach(struct device *, struct device *, void *);
+static int  asc_tcds_match(device_t, cfdata_t, void *);
+static void asc_tcds_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(asc_tcds, sizeof(struct asc_softc),
+CFATTACH_DECL_NEW(asc_tcds, sizeof(struct asc_softc),
     asc_tcds_match, asc_tcds_attach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.
  */
-static u_char	asc_read_reg(struct ncr53c9x_softc *, int);
-static void	asc_write_reg(struct ncr53c9x_softc *, int, u_char);
+static uint8_t	asc_read_reg(struct ncr53c9x_softc *, int);
+static void	asc_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static int	tcds_dma_isintr(struct ncr53c9x_softc *);
 static void	tcds_dma_reset(struct ncr53c9x_softc *);
 static int	tcds_dma_intr(struct ncr53c9x_softc *);
-static int	tcds_dma_setup(struct ncr53c9x_softc *, void **,
-	    size_t *, int, size_t *);
+static int	tcds_dma_setup(struct ncr53c9x_softc *, uint8_t **,
+		    size_t *, int, size_t *);
 static void	tcds_dma_go(struct ncr53c9x_softc *);
 static void	tcds_dma_stop(struct ncr53c9x_softc *);
 static int	tcds_dma_isactive(struct ncr53c9x_softc *);
@@ -140,7 +140,7 @@ static struct ncr53c9x_glue asc_tcds_glue = {
 };
 
 static int
-asc_tcds_match(struct device *parent, struct cfdata *cf, void *aux)
+asc_tcds_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* We always exist. */
@@ -153,16 +153,17 @@ asc_tcds_match(struct device *parent, struct cfdata *cf, void *aux)
  * Attach this instance, and then all the sub-devices
  */
 static void
-asc_tcds_attach(struct device *parent, struct device *self, void *aux)
+asc_tcds_attach(device_t parent, device_t self, void *aux)
 {
-	struct tcdsdev_attach_args *tcdsdev = aux;
 	struct asc_softc *asc = device_private(self);
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
+	struct tcdsdev_attach_args *tcdsdev = aux;
 	int error;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
+	sc->sc_dev = self;
 	sc->sc_glue = &asc_tcds_glue;
 
 	asc->sc_bst = tcdsdev->tcdsda_bst;
@@ -178,7 +179,8 @@ asc_tcds_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_dmat = tcdsdev->tcdsda_dmat;
 	if ((error = bus_dmamap_create(asc->sc_dmat, PAGE_SIZE, 1, PAGE_SIZE,
 	    PAGE_SIZE, BUS_DMA_NOWAIT, &asc->sc_dmamap)) < 0) {
-		printf("failed to create DMA map, error = %d\n", error);
+		aprint_error(": failed to create DMA map, error = %d\n", error);
+		return;
 	}
 
 	sc->sc_id = tcdsdev->tcdsda_id;
@@ -251,24 +253,24 @@ tcds_dma_reset(struct ncr53c9x_softc *sc)
  * start a DMA transfer or keep it going
  */
 int
-tcds_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
+tcds_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
     int ispullup, size_t *dmasize)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	struct tcds_slotconfig *tcds = asc->sc_tcds;
 	size_t size;
-	u_int32_t dic;
+	uint32_t dic;
 
 	NCR_DMA(("tcds_dma %d: start %d@%p,%s\n", tcds->sc_slot,
-		(int)*asc->sc_dmalen, *asc->sc_dmaaddr,
-		(ispullup) ? "IN" : "OUT"));
+	    (int)*asc->sc_dmalen, *asc->sc_dmaaddr,
+	    (ispullup) ? "IN" : "OUT"));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
 	 * of this DMA chip (64k) and we cannot cross a 8k boundary.
 	 */
 	size = min(*dmasize, DMAMAX((size_t)*addr));
-	asc->sc_dmaaddr = (char **)addr;
+	asc->sc_dmaaddr = addr;
 	asc->sc_dmalen = len;
 	asc->sc_flags = (ispullup) ? ASC_ISPULLUP : 0;
 	*dmasize = asc->sc_dmasize = size;
@@ -284,12 +286,12 @@ tcds_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 		 * XXX Should return an error, here, but the upper-layer
 		 * XXX doesn't check the return value!
 		 */
-		panic("tcds_dma_setup: dmamap load failed");
+		panic("%s: dmamap load failed", __func__);
 	}
 
 	/* synchronize dmamap contents with memory image */
 	bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap, 0, size,
-		(ispullup) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	    (ispullup) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* load address, set/clear unaligned transfer and read/write bits. */
 	bus_space_write_4(tcds->sc_bst, tcds->sc_bsh, tcds->sc_sda,
@@ -344,8 +346,8 @@ tcds_dma_intr(struct ncr53c9x_softc *sc)
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	struct tcds_slotconfig *tcds = asc->sc_tcds;
 	int trans, resid;
-	u_int32_t tcl, tcm;
-	u_int32_t dud, dudmask, *addr;
+	uint32_t tcl, tcm;
+	uint32_t dud, dudmask, *addr;
 	bus_addr_t pa;
 
 	NCR_DMA(("tcds_dma %d: intr", tcds->sc_slot));
@@ -355,7 +357,7 @@ tcds_dma_intr(struct ncr53c9x_softc *sc)
 
 	/* This is an "assertion" :) */
 	if ((asc->sc_flags & ASC_DMAACTIVE) == 0)
-		panic("tcds_dma_intr: DMA wasn't active");
+		panic("%s: DMA wasn't active", __func__);
 
 	/* DMA has stopped */
 	tcds_dma_enable(tcds, 0);
@@ -394,10 +396,9 @@ tcds_dma_intr(struct ncr53c9x_softc *sc)
 	*asc->sc_dmaaddr += trans;
 
 	bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
-			0, asc->sc_dmamap->dm_mapsize,
-			(sc->sc_flags & ASC_ISPULLUP)
-				? BUS_DMASYNC_POSTREAD
-				: BUS_DMASYNC_POSTWRITE);
+	    0, asc->sc_dmamap->dm_mapsize,
+	    (sc->sc_flags & ASC_ISPULLUP) ?
+	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	/*
 	 * Clean up unaligned DMAs into main memory.
@@ -407,11 +408,10 @@ tcds_dma_intr(struct ncr53c9x_softc *sc)
 		dud = bus_space_read_4(tcds->sc_bst,
 		    tcds->sc_bsh, tcds->sc_dud0);
 		if ((dud & TCDS_DUD0_VALIDBITS) != 0) {
-			addr = (u_int32_t *)
-			    ((paddr_t)*asc->sc_dmaaddr & ~0x3);
+			addr = (uint32_t *)((paddr_t)*asc->sc_dmaaddr & ~0x3);
 			dudmask = 0;
 			if (dud & TCDS_DUD0_VALID00)
-				panic("tcds_dma: dud0 byte 0 valid");
+				panic("%s: dud0 byte 0 valid", __func__);
 			if (dud & TCDS_DUD0_VALID01)
 				dudmask |= TCDS_DUD_BYTE01;
 			if (dud & TCDS_DUD0_VALID10)
@@ -438,15 +438,15 @@ tcds_dma_intr(struct ncr53c9x_softc *sc)
 				dudmask |= TCDS_DUD_BYTE10;
 #ifdef DIAGNOSTIC
 			if (dud & TCDS_DUD1_VALID11)
-				panic("tcds_dma: dud1 byte 3 valid");
+				panic("%s: dud1 byte 3 valid", __func__);
 #endif
 			NCR_DMA(("dud1 at 0x%lx dudmask 0x%x\n",
 			    pa, dudmask));
 			/* XXX Fix TC_PHYS_TO_UNCACHED() */
 #if defined(__alpha__)
-			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG(pa);
+			addr = (uint32_t *)ALPHA_PHYS_TO_K0SEG(pa);
 #elif defined(__mips__)
-			addr = (u_int32_t *)MIPS_PHYS_TO_KSEG1(pa);
+			addr = (uint32_t *)MIPS_PHYS_TO_KSEG1(pa);
 #elif defined(__vax__)
 			addr = (uint32_t *)VAX_PHYS_TO_S0(pa);
 #else
@@ -466,14 +466,14 @@ tcds_dma_intr(struct ncr53c9x_softc *sc)
 /*
  * Glue functions.
  */
-static u_char
+static uint8_t
 asc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	u_int32_t v;
+	uint32_t v;
 
 	v = bus_space_read_4(asc->sc_bst, asc->sc_scsi_bsh,
-	    reg * sizeof(u_int32_t));
+	    reg * sizeof(uint32_t));
 
 	return v & 0xff;
 }
@@ -484,7 +484,7 @@ asc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
 	bus_space_write_4(asc->sc_bst, asc->sc_scsi_bsh,
-	    reg * sizeof(u_int32_t), val);
+	    reg * sizeof(uint32_t), val);
 }
 
 static int
@@ -504,7 +504,7 @@ tcds_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	return !!(asc->sc_flags & ASC_DMAACTIVE);
+	return (asc->sc_flags & ASC_DMAACTIVE) != 0;
 }
 
 static void

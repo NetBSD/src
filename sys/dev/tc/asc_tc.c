@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.32 2008/04/05 16:44:41 cegger Exp $ */
+/* $NetBSD: asc_tc.c,v 1.33 2008/04/13 04:55:53 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.32 2008/04/05 16:44:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.33 2008/04/13 04:55:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ struct asc_softc {
 	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
-	char **sc_dmaaddr;
+	uint8_t **sc_dmaaddr;
 	size_t	*sc_dmalen;
 	size_t	sc_dmasize;
 	int	sc_active;			/* DMA active ? */
@@ -72,35 +72,34 @@ struct asc_softc {
 	char *sc_base, *sc_bounce, *sc_target;
 };
 
-static int  asc_tc_match(struct device *, struct cfdata *, void *);
-static void asc_tc_attach(struct device *, struct device *, void *);
+static int  asc_tc_match(device_t, cfdata_t, void *);
+static void asc_tc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(asc_tc, sizeof(struct asc_softc),
+CFATTACH_DECL_NEW(asc_tc, sizeof(struct asc_softc),
     asc_tc_match, asc_tc_attach, NULL, NULL);
 
-static u_char	asc_read_reg(struct ncr53c9x_softc *, int);
-static void	asc_write_reg(struct ncr53c9x_softc *, int, u_char);
+static uint8_t	asc_read_reg(struct ncr53c9x_softc *, int);
+static void	asc_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static int	asc_dma_isintr(struct ncr53c9x_softc *);
 static void	asc_tc_reset(struct ncr53c9x_softc *);
 static int	asc_tc_intr(struct ncr53c9x_softc *);
-static int	asc_tc_setup(struct ncr53c9x_softc *, void **,
-						size_t *, int, size_t *);
+static int	asc_tc_setup(struct ncr53c9x_softc *, uint8_t **,
+		    size_t *, int, size_t *);
 static void	asc_tc_go(struct ncr53c9x_softc *);
 static void	asc_tc_stop(struct ncr53c9x_softc *);
 static int	asc_dma_isactive(struct ncr53c9x_softc *);
-static void	asc_clear_latched_intr(struct ncr53c9x_softc *);
 
 static struct ncr53c9x_glue asc_tc_glue = {
-        asc_read_reg,
-        asc_write_reg,
-        asc_dma_isintr,
-        asc_tc_reset,
-        asc_tc_intr,
-        asc_tc_setup,
-        asc_tc_go,
-        asc_tc_stop,
-        asc_dma_isactive,
-        asc_clear_latched_intr,
+	asc_read_reg,
+	asc_write_reg,
+	asc_dma_isintr,
+	asc_tc_reset,
+	asc_tc_intr,
+	asc_tc_setup,
+	asc_tc_go,
+	asc_tc_stop,
+	asc_dma_isactive,
+	NULL,
 };
 
 /*
@@ -112,39 +111,40 @@ static struct ncr53c9x_glue asc_tc_glue = {
 #define PMAZ_OFFSET_ROM		0xc0000		/* diagnostic ROM */
 
 #define PMAZ_RAM_SIZE		0x20000		/* 128k (32k*32) */
-#define PER_TGT_DMA_SIZE	((PMAZ_RAM_SIZE/7) & ~(sizeof(int)-1))
+#define PER_TGT_DMA_SIZE	((PMAZ_RAM_SIZE / 7) & ~(sizeof(int) - 1))
 
 #define PMAZ_DMAR_WRITE		0x80000000	/* DMA direction bit */
 #define PMAZ_DMAR_MASK		0x1ffff		/* 17 bits, 128k */
 #define PMAZ_DMA_ADDR(x)	((unsigned long)(x) & PMAZ_DMAR_MASK)
 
 static int
-asc_tc_match(struct device *parent, struct cfdata *cfdata, void *aux)
+asc_tc_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	struct tc_attach_args *d = aux;
 
 	if (strncmp("PMAZ-AA ", d->ta_modname, TC_ROM_LLEN))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
-asc_tc_attach(struct device *parent, struct device *self, void *aux)
+asc_tc_attach(device_t parent, device_t self, void *aux)
 {
-	struct tc_attach_args *ta = aux;
 	struct asc_softc *asc = device_private(self);
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
+	struct tc_attach_args *ta = aux;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
+	sc->sc_dev = self;
 	sc->sc_glue = &asc_tc_glue;
 	asc->sc_bst = ta->ta_memt;
 	asc->sc_dmat = ta->ta_dmat;
 	if (bus_space_map(asc->sc_bst, ta->ta_addr,
-		PMAZ_OFFSET_RAM + PMAZ_RAM_SIZE, 0, &asc->sc_bsh)) {
-		aprint_error_dev(&sc->sc_dev, "unable to map device\n");
+	    PMAZ_OFFSET_RAM + PMAZ_RAM_SIZE, 0, &asc->sc_bsh)) {
+		aprint_error(": unable to map device\n");
 		return;
 	}
 	asc->sc_base = (void *)ta->ta_addr;	/* XXX XXX XXX */
@@ -228,23 +228,23 @@ asc_tc_intr(struct ncr53c9x_softc *sc)
 	*asc->sc_dmaaddr += trans;
 	asc->sc_active = 0;
 
-	return (0);
+	return 0;
 }
 
 static int
-asc_tc_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
+asc_tc_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
     int datain, size_t *dmasize)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	u_int32_t tc_dmar;
+	uint32_t tc_dmar;
 	size_t size;
 
-	asc->sc_dmaaddr = (char **)addr;
+	asc->sc_dmaaddr = addr;
 	asc->sc_dmalen = len;
 	asc->sc_ispullup = datain;
 
 	NCR_DMA(("asc_tc_setup: start %ld@%p, %s\n", (long)*asc->sc_dmalen,
-		*asc->sc_dmaaddr, datain ? "IN" : "OUT"));
+	    *asc->sc_dmaaddr, datain ? "IN" : "OUT"));
 
 	size = *dmasize;
 	if (size > PER_TGT_DMA_SIZE)
@@ -269,7 +269,7 @@ asc_tc_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, PMAZ_OFFSET_DMAR, tc_dmar);
 	asc->sc_active = 1;
 #endif
-	return (0);
+	return 0;
 }
 
 static void
@@ -277,7 +277,7 @@ asc_tc_go(struct ncr53c9x_softc *sc)
 {
 #if 0
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	u_int32_t tc_dmar;
+	uint32_t tc_dmar;
 
 	if (asc->sc_ispullup)
 		tc_dmar = PMAZ_DMA_ADDR(asc->sc_bounce);
@@ -304,31 +304,29 @@ asc_tc_stop(struct ncr53c9x_softc *sc)
 /*
  * Glue functions.
  */
-static u_char
+static uint8_t
 asc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
-	u_char v;
 
-	v = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
-	    reg * sizeof(u_int32_t)) & 0xff;
-
-	return (v);
+	return bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+	    reg * sizeof(uint32_t)) & 0xff;
 }
 
 static void
-asc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
+asc_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
-	    reg * sizeof(u_int32_t), val);
+	    reg * sizeof(uint32_t), val);
 }
 
 static int
 asc_dma_isintr(struct ncr53c9x_softc *sc)
 {
-	return !!(NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT);
+
+	return (NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT) != 0;
 }
 
 static int
@@ -336,10 +334,5 @@ asc_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
-	return (asc->sc_active);
-}
-
-static void
-asc_clear_latched_intr(struct ncr53c9x_softc *sc)
-{
+	return asc->sc_active;
 }

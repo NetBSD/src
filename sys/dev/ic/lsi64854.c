@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.31 2008/04/08 12:07:26 cegger Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.32 2008/04/13 04:55:53 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.31 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.32 2008/04/13 04:55:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.31 2008/04/08 12:07:26 cegger Exp $")
 #include <dev/ic/ncr53c9xvar.h>
 
 void	lsi64854_reset(struct lsi64854_softc *);
-int	lsi64854_setup(struct lsi64854_softc *, void **, size_t *,
+int	lsi64854_setup(struct lsi64854_softc *, uint8_t **, size_t *,
 			     int, size_t *);
-int	lsi64854_setup_pp(struct lsi64854_softc *, void **, size_t *,
+int	lsi64854_setup_pp(struct lsi64854_softc *, uint8_t **, size_t *,
 			     int, size_t *);
 
 #ifdef DEBUG
@@ -79,7 +79,7 @@ int lsi64854debug = 0;
 #define DPRINTF(a,x)
 #endif
 
-#define MAX_DMA_SZ	(16*1024*1024)
+#define MAX_DMA_SZ	(16 * 1024 * 1024)
 
 /*
  * Finish attaching this DMA device.
@@ -92,10 +92,9 @@ int lsi64854debug = 0;
  *	sc_client (one of SCSI, ENET, PP `soft_c' pointers)
  */
 void
-lsi64854_attach(sc)
-	struct lsi64854_softc *sc;
+lsi64854_attach(struct lsi64854_softc *sc)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	/* Indirect functions */
 	switch (sc->sc_channel) {
@@ -110,14 +109,14 @@ lsi64854_attach(sc)
 		sc->setup = lsi64854_setup_pp;
 		break;
 	default:
-		aprint_error_dev(&sc->sc_dev, "unknown channel\n");
+		aprint_error(": unknown channel");
 	}
 	sc->reset = lsi64854_reset;
 
 	/* Allocate a dmamap */
 	if (bus_dmamap_create(sc->sc_dmatag, MAX_DMA_SZ, 1, MAX_DMA_SZ,
-			      0, BUS_DMA_WAITOK, &sc->sc_dmamap) != 0) {
-		aprint_error_dev(&sc->sc_dev, "DMA map create failed\n");
+	    0, BUS_DMA_WAITOK, &sc->sc_dmamap) != 0) {
+		aprint_error(": DMA map create failed\n");
 		return;
 	}
 
@@ -126,29 +125,29 @@ lsi64854_attach(sc)
 	if (sc->sc_rev == DMAREV_HME) {
 		return;
 	}
-	printf(": DMA rev ");
+	aprint_normal(": DMA rev ");
 	switch (sc->sc_rev) {
 	case DMAREV_0:
-		printf("0");
+		aprint_normal("0");
 		break;
 	case DMAREV_ESC:
-		printf("esc");
+		aprint_normal("esc");
 		break;
 	case DMAREV_1:
-		printf("1");
+		aprint_normal("1");
 		break;
 	case DMAREV_PLUS:
-		printf("1+");
+		aprint_normal("1+");
 		break;
 	case DMAREV_2:
-		printf("2");
+		aprint_normal("2");
 		break;
 	default:
-		printf("unknown (0x%x)", sc->sc_rev);
+		aprint_normal("unknown (0x%x)", sc->sc_rev);
 	}
 
 	DPRINTF(LDB_ANY, (", burst 0x%x, csr 0x%x", sc->sc_burst, csr));
-	printf("\n");
+	aprint_normal("\n");
 }
 
 /*
@@ -165,10 +164,10 @@ lsi64854_attach(sc)
 		else							\
 			panic(MSG);					\
 	}								\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define DMA_DRAIN(sc, dontpanic) do {					\
-	u_int32_t _csr;							\
+	uint32_t _csr;							\
 	/*								\
 	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
 	 *     and "drain" bits while it is still thinking about a	\
@@ -194,10 +193,10 @@ lsi64854_attach(sc)
 	 *  rev0 & rev1 call this PACKCNT				\
 	 */								\
 	DMAWAIT(sc, L64854_GCSR(sc) & L64854_DRAINING, "DRAINING", dontpanic);\
-} while(0)
+} while (/* CONSTCOND */ 0)
 
 #define DMA_FLUSH(sc, dontpanic) do {					\
-	u_int32_t _csr;							\
+	uint32_t _csr;							\
 	/*								\
 	 * DMA rev0 & rev1: we are not allowed to touch the DMA "flush"	\
 	 *     and "drain" bits while it is still thinking about a	\
@@ -206,21 +205,20 @@ lsi64854_attach(sc)
 	 */								\
 	DMAWAIT(sc, L64854_GCSR(sc) & D_ESC_R_PEND, "R_PEND", dontpanic);\
 	_csr = L64854_GCSR(sc);					\
-	_csr &= ~(L64854_WRITE|L64854_EN_DMA); /* no-ops on ENET */	\
+	_csr &= ~(L64854_WRITE | L64854_EN_DMA); /* no-ops on ENET */	\
 	_csr |= L64854_INVALIDATE;	 	/* XXX FAS ? */		\
 	L64854_SCSR(sc,_csr);						\
-} while(0)
+} while (/* CONSTCOND */ 0)
 
 void
-lsi64854_reset(sc)
-	struct lsi64854_softc *sc;
+lsi64854_reset(struct lsi64854_softc *sc)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	DMA_FLUSH(sc, 1);
 	csr = L64854_GCSR(sc);
 
-	DPRINTF(LDB_ANY, ("lsi64854_reset: csr 0x%x\n", csr));
+	DPRINTF(LDB_ANY, ("%s: csr 0x%x\n", __func__, csr));
 
 	/*
 	 * XXX is sync needed?
@@ -277,12 +275,13 @@ lsi64854_reset(sc)
 	L64854_SCSR(sc, csr);
 
 	if (sc->sc_rev == DMAREV_HME) {
-		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR, 0);
+		bus_space_write_4(sc->sc_bustag, sc->sc_regs,
+		    L64854_REG_ADDR, 0);
 		sc->sc_dmactl = csr;
 	}
 	sc->sc_active = 0;
 
-	DPRINTF(LDB_ANY, ("lsi64854_reset: done, csr 0x%x\n", csr));
+	DPRINTF(LDB_ANY, ("%s: done, csr 0x%x\n", __func__, csr));
 }
 
 
@@ -291,14 +290,10 @@ lsi64854_reset(sc)
  * setup a DMA transfer
  */
 int
-lsi64854_setup(sc, addr, len, datain, dmasize)
-	struct lsi64854_softc *sc;
-	void **addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;	/* IN-OUT */
+lsi64854_setup(struct lsi64854_softc *sc, uint8_t **addr, size_t *len,
+    int datain, size_t *dmasize)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	DMA_FLUSH(sc, 0);
 
@@ -314,9 +309,10 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 	 * and we cannot cross a 16Mb boundary.
 	 */
 	*dmasize = sc->sc_dmasize =
-		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
+	    min(*dmasize, DMAMAX((size_t)*sc->sc_dmaaddr));
 
-	DPRINTF(LDB_ANY, ("dma_setup: dmasize = %ld\n", (long)sc->sc_dmasize));
+	DPRINTF(LDB_ANY, ("%s: dmasize = %ld\n",
+	    __func__, (long)sc->sc_dmasize));
 
 	/*
 	 * XXX what length?
@@ -326,34 +322,34 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 		L64854_SCSR(sc, sc->sc_dmactl | L64854_RESET);
 		L64854_SCSR(sc, sc->sc_dmactl);
 
-		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CNT, *dmasize);
+		bus_space_write_4(sc->sc_bustag, sc->sc_regs,
+		    L64854_REG_CNT, *dmasize);
 	}
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
-				*sc->sc_dmaaddr, sc->sc_dmasize,
-				NULL /* kernel address */,
-		                BUS_DMA_NOWAIT | BUS_DMA_STREAMING))
+		    *sc->sc_dmaaddr, sc->sc_dmasize,
+		    NULL /* kernel address */,
+		    BUS_DMA_NOWAIT | BUS_DMA_STREAMING))
 			panic("%s: cannot allocate DVMA address",
-			      device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap, 0, sc->sc_dmasize,
-				datain
-					? BUS_DMASYNC_PREREAD
-					: BUS_DMASYNC_PREWRITE);
+		    datain ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR,
-				  sc->sc_dmamap->dm_segs[0].ds_addr);
+		    sc->sc_dmamap->dm_segs[0].ds_addr);
 	}
 
 	if (sc->sc_rev == DMAREV_ESC) {
 		/* DMA ESC chip bug work-around */
 		long bcnt = sc->sc_dmasize;
 		long eaddr = bcnt + (long)*sc->sc_dmaaddr;
+
 		if ((eaddr & PGOFSET) != 0)
 			bcnt = roundup(bcnt, PAGE_SIZE);
 		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CNT,
-				  bcnt);
+		    bcnt);
 	}
 
 	/* Setup DMA control register */
@@ -371,7 +367,7 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
 
 	L64854_SCSR(sc, csr);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -382,34 +378,34 @@ lsi64854_setup(sc, addr, len, datain, dmasize)
  * return 1 if it was a DMA continue.
  */
 int
-lsi64854_scsi_intr(arg)
-	void *arg;
+lsi64854_scsi_intr(void *arg)
 {
 	struct lsi64854_softc *sc = arg;
 	struct ncr53c9x_softc *nsc = sc->sc_client;
 	char bits[64];
 	int trans, resid;
-	u_int32_t csr;
+	uint32_t csr;
 
 	csr = L64854_GCSR(sc);
 
-	DPRINTF(LDB_SCSI, ("%s: dmaintr: addr 0x%x, csr %s\n", device_xname(&sc->sc_dev),
-		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
-		 bitmask_snprintf(csr, DDMACSR_BITS, bits, sizeof(bits))));
+	DPRINTF(LDB_SCSI, ("%s: %s: addr 0x%x, csr %s\n",
+	    device_xname(sc->sc_dev), __func__,
+	    bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
+	    bitmask_snprintf(csr, DDMACSR_BITS, bits, sizeof(bits))));
 
 	if (csr & (D_ERR_PEND|D_SLAVE_ERR)) {
-		printf("%s: error: csr=%s\n", device_xname(&sc->sc_dev),
-			bitmask_snprintf(csr, DDMACSR_BITS, bits,sizeof(bits)));
+		printf("%s: error: csr=%s\n", device_xname(sc->sc_dev),
+		    bitmask_snprintf(csr, DDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~D_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
 		csr |= D_INVALIDATE|D_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
-		return (-1);
+		return -1;
 	}
 
 	/* This is an "assertion" :) */
 	if (sc->sc_active == 0)
-		panic("dmaintr: DMA wasn't active");
+		panic("%s: DMA wasn't active", __func__);
 
 	DMA_DRAIN(sc, 0);
 
@@ -420,11 +416,12 @@ lsi64854_scsi_intr(arg)
 
 	if (sc->sc_dmasize == 0) {
 		/* A "Transfer Pad" operation completed */
-		DPRINTF(LDB_SCSI, ("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n",
-		        NCR_READ_REG(nsc, NCR_TCL) |
-		                (NCR_READ_REG(nsc, NCR_TCM) << 8),
-		        NCR_READ_REG(nsc, NCR_TCL),
-		        NCR_READ_REG(nsc, NCR_TCM)));
+		DPRINTF(LDB_SCSI, ("%s: discarded %d bytes (tcl=%d, tcm=%d)\n",
+		    __func__,
+		    NCR_READ_REG(nsc, NCR_TCL) |
+		    (NCR_READ_REG(nsc, NCR_TCM) << 8),
+		    NCR_READ_REG(nsc, NCR_TCL),
+		    NCR_READ_REG(nsc, NCR_TCM)));
 		return 0;
 	}
 
@@ -437,7 +434,8 @@ lsi64854_scsi_intr(arg)
 	 */
 	if (!(csr & D_WRITE) &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
-		DPRINTF(LDB_SCSI, ("dmaintr: empty esp FIFO of %d ", resid));
+		DPRINTF(LDB_SCSI, ("%s: empty esp FIFO of %d ",
+		    __func__, resid));
 		if (nsc->sc_rev == NCR_VARIANT_FAS366 &&
 		    (NCR_READ_REG(nsc, NCR_CFG3) & NCRFASCFG3_EWIDE))
 			resid <<= 1;
@@ -450,9 +448,8 @@ lsi64854_scsi_intr(arg)
 		 */
 		resid += (NCR_READ_REG(nsc, NCR_TCL) |
 			  (NCR_READ_REG(nsc, NCR_TCM) << 8) |
-			   ((nsc->sc_cfg2 & NCRCFG2_FE)
-				? (NCR_READ_REG(nsc, NCR_TCH) << 16)
-				: 0));
+			   ((nsc->sc_cfg2 & NCRCFG2_FE) ?
+			    (NCR_READ_REG(nsc, NCR_TCH) << 16) : 0));
 
 		if (resid == 0 && sc->sc_dmasize == 65536 &&
 		    (nsc->sc_cfg2 & NCRCFG2_FE) == 0)
@@ -474,23 +471,23 @@ lsi64854_scsi_intr(arg)
 		trans = sc->sc_dmasize;
 	}
 
-	DPRINTF(LDB_SCSI, ("dmaintr: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
-		NCR_READ_REG(nsc, NCR_TCL),
-		NCR_READ_REG(nsc, NCR_TCM),
-		(nsc->sc_cfg2 & NCRCFG2_FE)
-			? NCR_READ_REG(nsc, NCR_TCH) : 0,
-		trans, resid));
+	DPRINTF(LDB_SCSI, ("%s: tcl=%d, tcm=%d, tch=%d; trans=%d, resid=%d\n",
+	    __func__,
+	    NCR_READ_REG(nsc, NCR_TCL),
+	    NCR_READ_REG(nsc, NCR_TCM),
+	    (nsc->sc_cfg2 & NCRCFG2_FE) ?
+	    NCR_READ_REG(nsc, NCR_TCH) : 0,
+	    trans, resid));
 
 	if (sc->sc_dmamap->dm_nsegs > 0) {
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap, 0, sc->sc_dmasize,
-				(csr & D_WRITE) != 0
-					? BUS_DMASYNC_POSTREAD
-					: BUS_DMASYNC_POSTWRITE);
+		    (csr & D_WRITE) != 0 ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmatag, sc->sc_dmamap);
 	}
 
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
+	*sc->sc_dmaaddr += trans;
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
@@ -508,12 +505,11 @@ lsi64854_scsi_intr(arg)
  * Pseudo (chained) interrupt to le driver to handle DMA errors.
  */
 int
-lsi64854_enet_intr(arg)
-	void	*arg;
+lsi64854_enet_intr(void *arg)
 {
 	struct lsi64854_softc *sc = arg;
 	char bits[64];
-	u_int32_t csr;
+	uint32_t csr;
 	static int dodrain = 0;
 	int rv;
 
@@ -523,15 +519,15 @@ lsi64854_enet_intr(arg)
 	rv = ((csr & E_INT_PEND) != 0) ? 1 : 0;
 
 	if (csr & (E_ERR_PEND|E_SLAVE_ERR)) {
-		printf("%s: error: csr=%s\n", device_xname(&sc->sc_dev),
-			bitmask_snprintf(csr, EDMACSR_BITS, bits,sizeof(bits)));
+		printf("%s: error: csr=%s\n", device_xname(sc->sc_dev),
+		    bitmask_snprintf(csr, EDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~L64854_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
 		csr |= E_INVALIDATE|E_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
 		DMA_RESET(sc);
 		dodrain = 1;
-		return (1);
+		return 1;
 	}
 
 	if (dodrain) {	/* XXX - is this necessary with D_DSBL_WRINVAL on? */
@@ -542,29 +538,25 @@ lsi64854_enet_intr(arg)
 			delay(1);
 	}
 
-	return (rv | (*sc->sc_intrchain)(sc->sc_intrchainarg));
+	return rv | (*sc->sc_intrchain)(sc->sc_intrchainarg);
 }
 
 /*
  * setup a DMA transfer
  */
 int
-lsi64854_setup_pp(sc, addr, len, datain, dmasize)
-	struct lsi64854_softc *sc;
-	void **addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;	/* IN-OUT */
+lsi64854_setup_pp(struct lsi64854_softc *sc, uint8_t **addr, size_t *len,
+    int datain, size_t *dmasize)
 {
-	u_int32_t csr;
+	uint32_t csr;
 
 	DMA_FLUSH(sc, 0);
 
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-	DPRINTF(LDB_PP, ("%s: pp start %ld@%p,%d\n", device_xname(&sc->sc_dev),
-		(long)*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
+	DPRINTF(LDB_PP, ("%s: pp start %ld@%p,%d\n", device_xname(sc->sc_dev),
+	    (long)*sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -572,28 +564,27 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 	 * and we cannot cross a 16Mb boundary.
 	 */
 	*dmasize = sc->sc_dmasize =
-		min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
+	    min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 
-	DPRINTF(LDB_PP, ("dma_setup_pp: dmasize = %ld\n", (long)sc->sc_dmasize));
+	DPRINTF(LDB_PP, ("%s: dmasize = %ld\n",
+	    __func__, (long)sc->sc_dmasize));
 
 	/* Program the DMA address */
 	if (sc->sc_dmasize) {
 		sc->sc_dvmaaddr = *sc->sc_dmaaddr;
 		if (bus_dmamap_load(sc->sc_dmatag, sc->sc_dmamap,
-				*sc->sc_dmaaddr, sc->sc_dmasize,
-				NULL /* kernel address */,
-				    BUS_DMA_NOWAIT/*|BUS_DMA_COHERENT*/))
+		    *sc->sc_dmaaddr, sc->sc_dmasize,
+		    NULL /* kernel address */,
+		    BUS_DMA_NOWAIT/*|BUS_DMA_COHERENT*/))
 			panic("%s: pp cannot allocate DVMA address",
-			      device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap, 0, sc->sc_dmasize,
-				datain
-					? BUS_DMASYNC_PREREAD
-					: BUS_DMASYNC_PREWRITE);
+		    datain ?  BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR,
-				  sc->sc_dmamap->dm_segs[0].ds_addr);
+		    sc->sc_dmamap->dm_segs[0].ds_addr);
 
 		bus_space_write_4(sc->sc_bustag, sc->sc_regs, L64854_REG_CNT,
-				  sc->sc_dmasize);
+		    sc->sc_dmasize);
 	}
 
 	/* Setup DMA control register */
@@ -616,37 +607,37 @@ lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 #endif
 	L64854_SCSR(sc, csr);
 
-	return (0);
+	return 0;
 }
 /*
  * Parallel port DMA interrupt.
  */
 int
-lsi64854_pp_intr(arg)
-	void *arg;
+lsi64854_pp_intr(void *arg)
 {
 	struct lsi64854_softc *sc = arg;
 	char bits[64];
 	int ret, trans, resid = 0;
-	u_int32_t csr;
+	uint32_t csr;
 
 	csr = L64854_GCSR(sc);
 
-	DPRINTF(LDB_PP, ("%s: pp intr: addr 0x%x, csr %s\n", device_xname(&sc->sc_dev),
-		 bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
-		 bitmask_snprintf(csr, PDMACSR_BITS, bits, sizeof(bits))));
+	DPRINTF(LDB_PP, ("%s: pp intr: addr 0x%x, csr %s\n",
+	    device_xname(sc->sc_dev),
+	    bus_space_read_4(sc->sc_bustag, sc->sc_regs, L64854_REG_ADDR),
+	    bitmask_snprintf(csr, PDMACSR_BITS, bits, sizeof(bits))));
 
 	if (csr & (P_ERR_PEND|P_SLAVE_ERR)) {
 		resid = bus_space_read_4(sc->sc_bustag, sc->sc_regs,
-					 L64854_REG_CNT);
-		printf("%s: pp error: resid %d csr=%s\n", device_xname(&sc->sc_dev),
-		       resid,
-		       bitmask_snprintf(csr, PDMACSR_BITS, bits,sizeof(bits)));
+		    L64854_REG_CNT);
+		printf("%s: pp error: resid %d csr=%s\n",
+		    device_xname(sc->sc_dev), resid,
+		    bitmask_snprintf(csr, PDMACSR_BITS, bits,sizeof(bits)));
 		csr &= ~P_EN_DMA;	/* Stop DMA */
 		/* Invalidate the queue; SLAVE_ERR bit is write-to-clear */
 		csr |= P_INVALIDATE|P_SLAVE_ERR;
 		L64854_SCSR(sc, csr);
-		return (1);
+		return 1;
 	}
 
 	ret = (csr & P_INT_PEND) != 0;
@@ -654,7 +645,7 @@ lsi64854_pp_intr(arg)
 	if (sc->sc_active != 0) {
 		DMA_DRAIN(sc, 0);
 		resid = bus_space_read_4(sc->sc_bustag, sc->sc_regs,
-					 L64854_REG_CNT);
+		    L64854_REG_CNT);
 	}
 
 	/* DMA has stopped */
@@ -667,15 +658,14 @@ lsi64854_pp_intr(arg)
 		trans = sc->sc_dmasize;
 	}
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
+	*sc->sc_dmaaddr += trans;
 
 	if (sc->sc_dmamap->dm_nsegs > 0) {
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap, 0, sc->sc_dmasize,
-				(csr & D_WRITE) != 0
-					? BUS_DMASYNC_POSTREAD
-					: BUS_DMASYNC_POSTWRITE);
+		    (csr & D_WRITE) != 0 ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmatag, sc->sc_dmamap);
 	}
 
-	return (ret != 0);
+	return ret != 0;
 }

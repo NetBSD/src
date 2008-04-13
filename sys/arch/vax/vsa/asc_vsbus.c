@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.38 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.39 2008/04/13 04:55:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.38 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.39 2008/04/13 04:55:53 tsutsui Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -83,7 +83,7 @@ struct asc_vsbus_softc {
 	bus_space_handle_t sc_ncrh;		/* ncr bus space handle */
 	bus_dma_tag_t sc_dmat;			/* bus DMA tag */
 	bus_dmamap_t sc_dmamap;
-	void **sc_dmaaddr;
+	uint8_t **sc_dmaaddr;
 	size_t *sc_dmalen;
 	size_t sc_dmasize;
 	unsigned int sc_flags;
@@ -106,18 +106,18 @@ struct asc_vsbus_softc {
 static int asc_vsbus_match(device_t, cfdata_t, void *);
 static void asc_vsbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(asc_vsbus, sizeof(struct asc_vsbus_softc),
+CFATTACH_DECL_NEW(asc_vsbus, sizeof(struct asc_vsbus_softc),
     asc_vsbus_match, asc_vsbus_attach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code
  */
-static u_char	asc_vsbus_read_reg(struct ncr53c9x_softc *, int);
-static void	asc_vsbus_write_reg(struct ncr53c9x_softc *, int, u_char);
+static uint8_t	asc_vsbus_read_reg(struct ncr53c9x_softc *, int);
+static void	asc_vsbus_write_reg(struct ncr53c9x_softc *, int, uint8_t);
 static int	asc_vsbus_dma_isintr(struct ncr53c9x_softc *);
 static void	asc_vsbus_dma_reset(struct ncr53c9x_softc *);
 static int	asc_vsbus_dma_intr(struct ncr53c9x_softc *);
-static int	asc_vsbus_dma_setup(struct ncr53c9x_softc *, void **,
+static int	asc_vsbus_dma_setup(struct ncr53c9x_softc *, uint8_t **,
 		    size_t *, int, size_t *);
 static void	asc_vsbus_dma_go(struct ncr53c9x_softc *);
 static void	asc_vsbus_dma_stop(struct ncr53c9x_softc *);
@@ -138,7 +138,7 @@ static const struct ncr53c9x_glue asc_vsbus_glue = {
 static uint8_t asc_attached;		/* can't have more than one asc */
 
 static int
-asc_vsbus_match( device_t parent, cfdata_t cf, void *aux)
+asc_vsbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vsbus_attach_args * const va = aux;
 	volatile uint8_t *ncr_regs;
@@ -195,6 +195,7 @@ asc_vsbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
+	sc->sc_dev = self;
 	sc->sc_glue = &asc_vsbus_glue;
 
 	asc->sc_bst = va->va_memt;
@@ -209,7 +210,8 @@ asc_vsbus_attach(device_t parent, device_t self, void *aux)
 	error = bus_space_subregion(asc->sc_bst, asc->sc_bsh, ASC_REG_NCR,
 	    ASC_REG_END - ASC_REG_NCR, &asc->sc_ncrh);
 	if (error) {
-		aprint_error(": failed to map ncr registers: error=%d\n", error);
+		aprint_error(": failed to map ncr registers: error=%d\n",
+		    error);
 		return;
 	}
 	if (vax_boardtype == VAX_BTYP_46 || vax_boardtype == VAX_BTYP_48) {
@@ -237,12 +239,15 @@ asc_vsbus_attach(device_t parent, device_t self, void *aux)
 		 * bus_space implementation, we cast to bus_space_handles.
 		 */
 		struct vsbus_softc *vsc = device_private(parent);
-		asc->sc_adrh = (bus_space_handle_t) (vsc->sc_vsregs + ASC_REG_KA49_ADR);
-		asc->sc_dirh = (bus_space_handle_t) (vsc->sc_vsregs + ASC_REG_KA49_DIR);
+		asc->sc_adrh =
+		    (bus_space_handle_t)(vsc->sc_vsregs + ASC_REG_KA49_ADR);
+		asc->sc_dirh =
+		    (bus_space_handle_t)(vsc->sc_vsregs + ASC_REG_KA49_DIR);
 #if 0
 		printf("\n%s: adrh=0x%08lx dirh=0x%08lx", device_xname(self),
-		       asc->sc_adrh, asc->sc_dirh);
-		ncr53c9x_debug = NCR_SHOWDMA|NCR_SHOWINTS|NCR_SHOWCMDS|NCR_SHOWPHASE|NCR_SHOWSTART|NCR_SHOWMSGS;
+		    asc->sc_adrh, asc->sc_dirh);
+		ncr53c9x_debug = NCR_SHOWDMA | NCR_SHOWINTS | NCR_SHOWCMDS |
+		    NCR_SHOWPHASE | NCR_SHOWSTART | NCR_SHOWMSGS;
 #endif
 	}
 	error = bus_dmamap_create(asc->sc_dmat, ASC_MAXXFERSIZE, 1, 
@@ -251,7 +256,7 @@ asc_vsbus_attach(device_t parent, device_t self, void *aux)
 #if defined(VAX46) || defined(VAX48) || defined(VAX49) || defined(VAXANY)
 	if(vax_boardtype != VAX_BTYP_53)
 		/* SCSI ID is store in the clock NVRAM at magic address 0xbc */
-		sc->sc_id = (clk_page[0xbc/2] >> clk_tweak) & 7;
+		sc->sc_id = (clk_page[0xbc / 2] >> clk_tweak) & 7;
 	else
 #endif
 		sc->sc_id = 6; /* XXX need to get this from VMB */
@@ -260,7 +265,7 @@ asc_vsbus_attach(device_t parent, device_t self, void *aux)
 	/* gimme MHz */
 	sc->sc_freq /= 1000000;
 
-	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr53c9x_intr,
+	scb_vecalloc(va->va_cvec, (void (*)(void *))ncr53c9x_intr,
 	    &asc->sc_ncr53c9x, SCB_ISTACK, &asc->sc_intrcnt);
 	evcnt_attach_dynamic(&asc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    device_xname(self), "intr");
@@ -309,7 +314,7 @@ asc_vsbus_attach(device_t parent, device_t self, void *aux)
  * Glue functions.
  */
 
-static u_char
+static uint8_t
 asc_vsbus_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_vsbus_softc * const asc = (struct asc_vsbus_softc *)sc;
@@ -319,7 +324,7 @@ asc_vsbus_read_reg(struct ncr53c9x_softc *sc, int reg)
 }
 
 static void
-asc_vsbus_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
+asc_vsbus_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct asc_vsbus_softc * const asc = (struct asc_vsbus_softc *)sc;
 
@@ -331,6 +336,7 @@ static int
 asc_vsbus_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct asc_vsbus_softc * const asc = (struct asc_vsbus_softc *)sc;
+
 	return bus_space_read_1(asc->sc_bst, asc->sc_ncrh,
 	    NCR_STAT * sizeof(uint32_t)) & NCRSTAT_INT;
 }
@@ -353,7 +359,7 @@ asc_vsbus_dma_intr(struct ncr53c9x_softc *sc)
 	int trans, resid;
 	
 	if ((asc->sc_flags & ASC_DMAACTIVE) == 0)
-		panic("asc_vsbus_dma_intr: DMA wasn't active");
+		panic("%s: DMA wasn't active", __func__);
 
 	asc->sc_flags &= ~ASC_DMAACTIVE;
 
@@ -394,14 +400,14 @@ asc_vsbus_dma_intr(struct ncr53c9x_softc *sc)
 	    tcl, tcm, trans, resid));
 
 	*asc->sc_dmalen -= trans;
-	*asc->sc_dmaaddr = (char *)*asc->sc_dmaaddr + trans;
+	*asc->sc_dmaaddr += trans;
 	
 	asc->sc_xfers++;
 	return 0;
 }
 
 static int
-asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
+asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
 		    int datain, size_t *dmasize)
 {
 	struct asc_vsbus_softc * const asc = (struct asc_vsbus_softc *)sc;
@@ -413,9 +419,9 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	} else {
 		asc->sc_flags |= ASC_FROMMEMORY;
 	}
-	if ((vaddr_t) *asc->sc_dmaaddr < VM_MIN_KERNEL_ADDRESS)
-		panic("asc_vsbus_dma_setup: DMA address (%p) outside of kernel",
-		    *asc->sc_dmaaddr);
+	if ((vaddr_t)*asc->sc_dmaaddr < VM_MIN_KERNEL_ADDRESS)
+		panic("%s: DMA address (%p) outside of kernel",
+		    __func__, *asc->sc_dmaaddr);
 
         NCR_DMA(("%s: start %d@%p,%d\n", device_xname(&sc->sc_dev),
             (int)*asc->sc_dmalen, *asc->sc_dmaaddr,
@@ -428,7 +434,7 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 				NULL /* kernel address */,   
 				BUS_DMA_NOWAIT|VAX_BUS_DMA_SPILLPAGE))
 			panic("%s: cannot load DMA map",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
 				0, asc->sc_dmasize,
 				asc->sc_flags & ASC_FROMMEMORY
@@ -439,7 +445,7 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 		bus_space_write_4(asc->sc_bst, asc->sc_dirh, 0,
 				  asc->sc_flags & ASC_FROMMEMORY);
 		NCR_DMA(("%s: dma-load %lu@0x%08lx\n",
-		    device_xname(&sc->sc_dev),
+		    device_xname(sc->sc_dev),
 		    asc->sc_dmamap->dm_segs[0].ds_len,
 		    asc->sc_dmamap->dm_segs[0].ds_addr));
 		asc->sc_flags |= ASC_MAPLOADED;

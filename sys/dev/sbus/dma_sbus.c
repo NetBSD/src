@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.30 2008/04/05 18:35:31 cegger Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.31 2008/04/13 04:55:53 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.30 2008/04/05 18:35:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_sbus.c,v 1.31 2008/04/13 04:55:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,8 @@ struct dma_softc {
 	struct sbusdev	sc_sd;			/* sbus device */
 };
 
-int	dmamatch_sbus(struct device *, struct cfdata *, void *);
-void	dmaattach_sbus(struct device *, struct device *, void *);
+int	dmamatch_sbus(device_t, cfdata_t, void *);
+void	dmaattach_sbus(device_t, device_t, void *);
 
 int	dmaprint_sbus(void *, const char *);
 
@@ -102,16 +102,14 @@ void	*dmabus_intr_establish(
 		void *,			/*handler arg*/
 		void (*) (void));	/*optional fast trap handler*/
 
-CFATTACH_DECL(dma_sbus, sizeof(struct dma_softc),
+CFATTACH_DECL_NEW(dma_sbus, sizeof(struct dma_softc),
     dmamatch_sbus, dmaattach_sbus, NULL, NULL);
 
-CFATTACH_DECL(ledma, sizeof(struct dma_softc),
+CFATTACH_DECL_NEW(ledma, sizeof(struct dma_softc),
     dmamatch_sbus, dmaattach_sbus, NULL, NULL);
 
 int
-dmaprint_sbus(aux, busname)
-	void *aux;
-	const char *busname;
+dmaprint_sbus(void *aux, const char *busname)
 {
 	struct sbus_attach_args *sa = aux;
 	bus_space_tag_t t = sa->sa_bustag;
@@ -120,47 +118,44 @@ dmaprint_sbus(aux, busname)
 	sa->sa_bustag = sc->sc_lsi64854.sc_bustag;	/* XXX */
 	sbus_print(aux, busname);	/* XXX */
 	sa->sa_bustag = t;		/* XXX */
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
-dmamatch_sbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dmamatch_sbus(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_name, sa->sa_name) == 0 ||
-		strcmp("espdma", sa->sa_name) == 0);
+	return strcmp(cf->cf_name, sa->sa_name) == 0 ||
+	    strcmp("espdma", sa->sa_name) == 0;
 }
 
 void
-dmaattach_sbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dmaattach_sbus(device_t parent, device_t self, void *aux)
 {
-	struct sbus_attach_args *sa = aux;
-	struct dma_softc *dsc = (void *)self;
+	struct dma_softc *dsc = device_private(self);
 	struct lsi64854_softc *sc = &dsc->sc_lsi64854;
+	struct sbus_attach_args *sa = aux;
+	struct sbus_softc *sbsc = device_private(parent);
 	bus_space_tag_t sbt;
 	int sbusburst, burst;
 	int node;
 
 	node = sa->sa_node;
 
+	sc->sc_dev = self;
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
 	/* Map registers */
 	if (sa->sa_npromvaddrs) {
 		sbus_promaddr_to_handle(sa->sa_bustag,
-			sa->sa_promvaddrs[0], &sc->sc_regs);
+		    sa->sa_promvaddrs[0], &sc->sc_regs);
 	} else {
 		if (sbus_bus_map(sa->sa_bustag,
-			sa->sa_slot, sa->sa_offset, sa->sa_size,
-			0, &sc->sc_regs) != 0) {
-			aprint_error_dev(self, "cannot map registers\n");
+		    sa->sa_slot, sa->sa_offset, sa->sa_size,
+		    0, &sc->sc_regs) != 0) {
+			aprint_error(": cannot map registers\n");
 			return;
 		}
 	}
@@ -170,7 +165,7 @@ dmaattach_sbus(parent, self, aux)
 	 * controller registers. This is needed on the Sun4m; do
 	 * others need it too?
 	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
+	sbusburst = sbsc->sc_burst;
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
@@ -184,9 +179,9 @@ dmaattach_sbus(parent, self, aux)
 	sc->sc_burst = (burst & SBUS_BURST_32) ? 32 :
 		       (burst & SBUS_BURST_16) ? 16 : 0;
 
-	if (device_is_a(&sc->sc_dev, "ledma")) {
+	if (device_is_a(self, "ledma")) {
 		char *cabletype;
-		u_int32_t csr;
+		uint32_t csr;
 		/*
 		 * Check to see which cable type is currently active and
 		 * set the appropriate bit in the ledma csr so that it
@@ -211,9 +206,9 @@ dmaattach_sbus(parent, self, aux)
 		sc->sc_channel = L64854_CHANNEL_SCSI;
 	}
 
-	sbus_establish(&dsc->sc_sd, &sc->sc_dev);
+	sbus_establish(&dsc->sc_sd, self);
 	if ((sbt = bus_space_tag_alloc(sc->sc_bustag, dsc)) == NULL) {
-		aprint_error_dev(self, "attach: out of memory\n");
+		aprint_error(": out of memory\n");
 		return;
 	}
 	sbt->sparc_intr_establish = dmabus_intr_establish;
@@ -222,21 +217,15 @@ dmaattach_sbus(parent, self, aux)
 	/* Attach children */
 	for (node = firstchild(sa->sa_node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sax;
-		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       sbt, sc->sc_dmatag, node, &sax);
-		(void) config_found(&sc->sc_dev, (void *)&sax, dmaprint_sbus);
+		sbus_setup_attach_args(sbsc, sbt, sc->sc_dmatag, node, &sax);
+		(void)config_found(self, (void *)&sax, dmaprint_sbus);
 		sbus_destroy_attach_args(&sax);
 	}
 }
 
 void *
-dmabus_intr_establish(t, pri, level, handler, arg, fastvec)
-	bus_space_tag_t t;
-	int pri;
-	int level;
-	int (*handler)(void *);
-	void *arg;
-	void (*fastvec)(void);	/* ignored */
+dmabus_intr_establish(bus_space_tag_t t, int pri, int level,
+    int (*handler)(void *), void *arg, void (*fastvec)(void))
 {
 	struct lsi64854_softc *sc = t->cookie;
 
@@ -247,6 +236,5 @@ dmabus_intr_establish(t, pri, level, handler, arg, fastvec)
 		handler = lsi64854_enet_intr;
 		arg = sc;
 	}
-	return (bus_intr_establish(sc->sc_bustag, pri, level,
-				   handler, arg));
+	return bus_intr_establish(sc->sc_bustag, pri, level, handler, arg);
 }

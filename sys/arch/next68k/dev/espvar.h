@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.17 2007/03/05 15:05:24 tsutsui Exp $	*/
+/*	$NetBSD: espvar.h,v 1.18 2008/04/13 04:55:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ struct esp_softc {
 	bus_space_tag_t	sc_bst;				
 	bus_space_handle_t sc_bsh;	/* the device registers */
 
-	void **sc_dmaaddr;		/* saved argument to esp_dma_setup */
+	uint8_t **sc_dmaaddr;		/* saved argument to esp_dma_setup */
 	size_t *sc_dmalen;		/* saved argument to esp_dma_setup */
 	size_t sc_dmasize;		/* saved argument to esp_dma_setup */
 	int sc_datain;			/* saved argument to esp_dma_setup */
@@ -60,12 +60,12 @@ struct esp_softc {
 	/* To deal with begin alignment problems, we stuff the fifo
 	 * with a begin buffer
 	 */
-	uint8_t *sc_begin;		/* pointer to start io buf, NULL if invalid */
+	uint8_t *sc_begin;	/* pointer to start io buf, NULL if invalid */
 	size_t sc_begin_size;		/*  */
 
 	bus_dmamap_t sc_main_dmamap;	/* I/O DMA map */
-	uint8_t *sc_main;		/* pointer to main io buf, NULL if invalid */
-	size_t sc_main_size;		/* aligned length of main io buf we are using */
+	uint8_t *sc_main;	/* pointer to main io buf, NULL if invalid */
+	size_t sc_main_size;	/* aligned length of main io buf we are using */
 
 	/* To deal with end alignment problems, we copy the end of the DMA
 	 * buffer into a "tail" buffer that we can control more carefully.
