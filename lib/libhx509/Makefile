@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/03/22 09:29:56 mlelstv Exp $
+# $NetBSD: Makefile,v 1.2 2008/04/13 21:25:14 mlelstv Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -152,7 +152,8 @@ ${gen_files_crmf} crmf_asn1.h: crmf_asn1_files
 
 ${SRCS}: ocsp_asn1.h pkcs10_asn1.h crmf_asn1.h hx509_err.h
 
-CLEANFILES=	${gen_files} ${BUILT_SOURCES} \
+CLEANFILES=	${gen_files_ocsp} ${gen_files_pkcs10} ${gen_files_crmf} \
+		${BUILT_SOURCES} \
 		ocsp_asn1_files ocsp_asn1.h \
 		pkcs10_asn1_files pkcs10_asn1.h \
 		crmf_asn1_files crmf_asn1.h \
