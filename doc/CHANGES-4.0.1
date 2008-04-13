@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.27 2008/04/08 21:11:50 jdc Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.28 2008/04/13 11:07:56 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -282,4 +282,13 @@ src/lib/libc/stdio/vfwprintf.c	1.12
 	but gdtoa is too complicated to fix.
 	Try printf %99999999999.9999999999f 2
 	[mjf, ticket #1120]
+
+crypto/dist/openssl/crypto/bn/bn_mont.c		1.2
+
+	Fix for CVE-2007-3108.
+        The BN_from_montgomery function in crypto/bn/bn_mont.c in
+	OpenSSL 0.9.8e and earlier does not properly perform Montgomery
+	multiplication, which might allow local users to conduct
+	a side-channel attack and retrieve RSA private keys.
+	[adrianp, ticket #1123]
 
