@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.133 2008/04/13 04:55:53 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.134 2008/04/13 12:22:13 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.133 2008/04/13 04:55:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.134 2008/04/13 12:22:13 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1298,7 +1298,7 @@ ncr53c9x_dequeue(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if (li == NULL || li->lun != lun)
-		panic("%se: lun " PRIx64 " for ecb %p does not exist",
+		panic("%se: lun %" PRIx64 " for ecb %p does not exist",
 		    __func__, lun, ecb);
 #endif
 	if (li->untagged == ecb) {
@@ -1309,7 +1309,7 @@ ncr53c9x_dequeue(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 #ifdef DIAGNOSTIC
 		if (li->queued[ecb->tag[1]] != NULL &&
 		    (li->queued[ecb->tag[1]] != ecb))
-			panic("%s: slot %d for lun " PRIx64 " has %p "
+			panic("%s: slot %d for lun %" PRIx64 " has %p "
 			    "instead of ecb %p\n", __func__, ecb->tag[1],
 			    lun,
 			    li->queued[ecb->tag[1]], ecb);
