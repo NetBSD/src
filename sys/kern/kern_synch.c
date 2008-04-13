@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.226 2008/04/13 22:53:31 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.227 2008/04/13 22:54:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.226 2008/04/13 22:53:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.227 2008/04/13 22:54:19 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -1583,7 +1583,8 @@ sched_curcpu_runnable_p(void)
 #ifdef DDB
 
 void
-sched_print_runqueue(void (*pr)(const char *, ...))
+sched_print_runqueue(void (*pr)(const char *, ...)
+    __attribute__((__format__(__printf__,1,2))))
 {
 	runqueue_t *ci_rq;
 	struct schedstate_percpu *spc;
