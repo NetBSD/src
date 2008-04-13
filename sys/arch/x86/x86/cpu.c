@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.25 2008/04/02 11:52:54 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.26 2008/04/13 22:23:58 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2008/04/02 11:52:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2008/04/13 22:23:58 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -577,7 +577,7 @@ cpu_start_secondary(struct cpu_info *ci)
 
 	atomic_or_32(&ci->ci_flags, CPUF_AP);
 
-	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
+	aprint_debug_dev(ci->ci_dev, "starting\n");
 
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0)
@@ -586,22 +586,20 @@ cpu_start_secondary(struct cpu_info *ci)
 	/*
 	 * wait for it to become ready
 	 */
-	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i>0;i--) {
+	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i > 0; i--) {
 #ifdef MPDEBUG
 		extern int cpu_trace[3];
 		static int otrace[3];
 		if (memcmp(otrace, cpu_trace, sizeof(otrace)) != 0) {
-			aprint_debug("%s: trace %02x %02x %02x\n",
-			    ci->ci_dev->dv_xname, cpu_trace[0], cpu_trace[1],
-			    cpu_trace[2]);
+			aprint_debug_dev(ci->ci_dev, "trace %02x %02x %02x\n",
+			    cpu_trace[0], cpu_trace[1], cpu_trace[2]);
 			memcpy(otrace, cpu_trace, sizeof(otrace));
 		}
 #endif
 		i8254_delay(10);
 	}
 	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
-		aprint_error("%s: failed to become ready\n",
-		    ci->ci_dev->dv_xname);
+		aprint_error_dev(ci->ci_dev, "failed to become ready\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -617,11 +615,11 @@ cpu_boot_secondary(struct cpu_info *ci)
 	int i;
 
 	atomic_or_32(&ci->ci_flags, CPUF_GO);
-	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
+	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i > 0; i--) {
 		i8254_delay(10);
 	}
 	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
-		aprint_error("%s: failed to start\n", ci->ci_dev->dv_xname);
+		aprint_error_dev(ci->ci_dev, "failed to start\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -656,7 +654,7 @@ cpu_hatch(void *v)
 			x86_pause();
 	}
 
-	/* Beacuse the text may have been patched in x86_patch(). */
+	/* Because the text may have been patched in x86_patch(). */
 	wbinvd();
 	x86_flush();
 
@@ -692,7 +690,7 @@ cpu_hatch(void *v)
 	splx(s);
 	x86_errata();
 
-	aprint_debug("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
+	aprint_debug_dev(ci->ci_dev, "CPU %ld running\n",
 	    (long)ci->ci_cpuid);
 }
 
@@ -742,7 +740,7 @@ cpu_copy_trampoline(void)
 	pmap_update(pmap_kernel());
 	memcpy((void *)mp_trampoline_vaddr,
 	    cpu_spinup_trampoline,
-	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
+	    cpu_spinup_trampoline_end - cpu_spinup_trampoline);
 
 	pmap_kremove(mp_trampoline_vaddr, PAGE_SIZE);
 	pmap_update(pmap_kernel());
@@ -863,23 +861,29 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		if ((error = x86_ipi_init(ci->ci_apicid)) != 0) {
-			aprint_error("mp_cpu_start: IPI not taken (1)\n");
+		error = x86_ipi_init(ci->ci_apicid);
+		if (error != 0) {
+			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (1)\n",
+					__func__);
 			return error;
 		}
 
 		i8254_delay(10000);
 
-		if ((error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
-		    LAPIC_DLMODE_STARTUP)) != 0) {
-			aprint_error("mp_cpu_start: IPI not taken (2)\n");
+		error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+		    LAPIC_DLMODE_STARTUP);
+		if (error != 0) {
+			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (2)\n",
+					__func__);
 			return error;
 		}
 		i8254_delay(200);
 
-		if ((error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
-		    LAPIC_DLMODE_STARTUP)) != 0) {
-			aprint_error("mp_cpu_start: IPI not taken (3)\n");
+		error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+		    LAPIC_DLMODE_STARTUP);
+		if (error != 0) {
+			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (3)\n",
+					__func__);
 			return error;
 		}
 		i8254_delay(200);
