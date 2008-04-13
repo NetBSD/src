@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 2008/04/13 21:59:15 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.11 2008/04/13 22:29:38 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2008/04/13 21:59:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2008/04/13 22:29:38 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -89,10 +89,11 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2008/04/13 21:59:15 cegger Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/pmap.h>
@@ -176,7 +177,11 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 
 static void	cpu_set_tss_gates(struct cpu_info *ci);
 
-u_int32_t cpus_attached = 0;
+uint32_t cpus_attached = 0;
+uint32_t cpus_running = 0;
+
+bool x86_mp_online;
+paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 
 struct cpu_info *phycpu_info[X86_MAXPROCS] = { &cpu_info_primary };
 
@@ -186,8 +191,6 @@ struct cpu_info *phycpu_info[X86_MAXPROCS] = { &cpu_info_primary };
  * curproc, etc. are used early.
  */
 struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary };
-
-u_int32_t cpus_running = 0;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -343,9 +346,7 @@ cpu_vm_init(struct cpu_info *ci)
 }
 
 void
-cpu_attach_common(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach_common(device_t parent, device_t self, void *aux)
 {
 	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
@@ -518,8 +519,8 @@ cpu_init(struct cpu_info *ci)
 	}
 
 #ifdef MULTIPROCESSOR
-	ci->ci_flags |= CPUF_RUNNING;
-	cpus_running |= 1 << ci->ci_cpuid;
+	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
+	atomic_or_32(&cpus_running, ci->ci_cpumask);
 #endif
 }
 
@@ -531,7 +532,7 @@ cpu_boot_secondary_processors(void)
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i=0; i < X86_MAXPROCS; i++) {
+	for (i = 0; i < X86_MAXPROCS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
@@ -543,6 +544,8 @@ cpu_boot_secondary_processors(void)
 			continue;
 		cpu_boot_secondary(ci);
 	}
+
+	x86_mp_online = true;
 }
 
 static void
@@ -577,24 +580,34 @@ cpu_start_secondary(struct cpu_info *ci)
 {
 	int i;
 	struct pmap *kpm = pmap_kernel();
-	extern u_int32_t mp_pdirpa;
+	extern uint32_t mp_pdirpa;
 
 	mp_pdirpa = kpm->pm_pdirpa; /* XXX move elsewhere, not per CPU. */
 
-	ci->ci_flags |= CPUF_AP;
+	atomic_or_32(&ci->ci_flags, CPUF_AP);
 
-	printf("%s: starting\n", device_xname(ci->ci_dev));
+	aprint_debug_dev(ci->ci_dev, "starting\n");
 
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
-	CPU_STARTUP(ci);
+	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0)
+		return;
 
 	/*
 	 * wait for it to become ready
 	 */
-	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i>0;i--) {
+	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i > 0; i--) {
+#ifdef MPDEBUG
+		extern int cpu_trace[3];
+		static int otrace[3];
+		if (memcmp(otrace, cpu_trace, sizeof(otrace)) != 0) {
+			aprint_debug_dev(ci->ci_dev, "trace %02x %02x %02x\n",
+				cpu_trace[0], cpu_trace[1], cpu_trace[2]);
+			memcpy(otrace, cpu_trace, sizeof(otrace));
+		}
+#endif
 		delay(10);
 	}
-	if (! (ci->ci_flags & CPUF_PRESENT)) {
+	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
 		aprint_error_dev(ci->ci_dev, "failed to become ready\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
@@ -610,13 +623,12 @@ cpu_boot_secondary(struct cpu_info *ci)
 {
 	int i;
 
-	ci->ci_flags |= CPUF_GO; /* XXX atomic */
-
-	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i>0;i--) {
+	atomic_or_32(&ci->ci_flags, CPUF_GO);
+	for (i = 100000; (!(ci->ci_flags & CPUF_RUNNING)) && i > 0; i--) {
 		delay(10);
 	}
-	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("CPU failed to start\n");
+	if ((ci->ci_flags & CPUF_RUNNING) == 0) {
+		aprint_error_dev(ci->ci_dev, "CPU failed to start\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -636,51 +648,65 @@ void
 cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
-	int s;
+	int s, i;
+	uint32_t blacklist_features;
+
 #ifdef __x86_64__
-        cpu_init_msrs(ci);
+        cpu_init_msrs(ci, true);
 #endif
 
 	cpu_probe_features(ci);
 	cpu_feature &= ci->ci_feature_flags;
+	cpu_feature2 &= ci->ci_feature2_flags;
+
 	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
+	blacklist_features = ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX); /* XXX add CPUID_SVM */
 
-#ifdef DEBUG
-	if (ci->ci_flags & CPUF_PRESENT)
-		panic("%s: already running!?", device_xname(ci->ci_dev));
-#endif
+	cpu_feature &= blacklist_features;
 
-	ci->ci_flags |= CPUF_PRESENT;
+	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
+	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
+	while ((ci->ci_flags & CPUF_GO) == 0) {
+		/* Don't use delay, boot CPU may be patching the text. */
+		for (i = 10000; i != 0; i--)
+			x86_pause();
+	}
 
-	lapic_enable();
-	lapic_initclocks();
+	/* Because the text may have been patched in x86_patch(). */
+	wbinvd();
+	x86_flush();
 
-	while ((ci->ci_flags & CPUF_GO) == 0)
-		delay(10);
-#ifdef DEBUG
-	if (ci->ci_flags & CPUF_RUNNING)
-		panic("%s: already running!?", device_xname(ci->ci_dev));
-#endif
+	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
 	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
 	cpu_init_idt();
-	lapic_set_lvt();
 	gdt_init_cpu(ci);
+	lapic_enable();
+	lapic_set_lvt();
+	lapic_initclocks();
+
 	npxinit(ci);
 
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
+	/* ltr(ci->ci_tss_sel); */ /* XXX */
 
 	cpu_init(ci);
+	cpu_get_tsc_freq(ci);
 
 	s = splhigh();
+#ifdef i386
 	lapic_tpr = 0;
-	enable_intr();
-
-	printf("%s: CPU %ld running\n", device_xname(ci->ci_dev), ci->ci_cpuid);
-	if (ci->ci_feature_flags & CPUID_TSC)
-		cc_microset(ci);
+#else
+	lcr8(0);
+#endif
+	x86_enable_intr();
 	splx(s);
+#ifdef DOM0OPS
+	x86_errata();
+#endif
+
+	aprint_debug_dev(ci->ci_dev, "CPU %ld running\n",
+		(long)ci->ci_cpuid);
 }
 
 #if defined(DDB)
@@ -718,16 +744,45 @@ cpu_copy_trampoline(void)
 	 */
 	extern u_char cpu_spinup_trampoline[];
 	extern u_char cpu_spinup_trampoline_end[];
-	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
-	    (paddr_t)MP_TRAMPOLINE,	/* physical */
-	    VM_PROT_ALL);		/* protection */
-	memcpy((void *)MP_TRAMPOLINE,
-	    cpu_spinup_trampoline,
-	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
+
+	vaddr_t mp_trampoline_vaddr;
+
+	mp_trampoline_vaddr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		UVM_KMF_VAONLY);
+
+	pmap_kenter_pa(mp_trampoline_vaddr, mp_trampoline_paddr,
+		VM_PROT_READ | VM_PROT_WRITE);
+	pmap_update(pmap_kernel());
+	memcpy((void *)mp_trampoline_vaddr,
+		cpu_spinup_trampoline,
+		cpu_spinup_trampoline_end - cpu_spinup_trampoline);
+
+	pmap_kremove(mp_trampoline_vaddr, PAGE_SIZE);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, mp_trampoline_vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 
 #endif
 
+#ifdef i386
+#if 0
+static void
+tss_init(struct i386tss *tss, void *stack, void *func)
+{
+	memset(tss, 0, sizeof *tss);
+	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	tss->__tss_cs = GSEL(GCODE_SEL, SEL_KPL);
+	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
+	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
+	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
+	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
+	tss->tss_esp = (int)((char *)stack + USPACE - 16);
+	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
+	tss->__tss_eflags = PSL_MBO | PSL_NT;   /* XXX not needed? */
+	tss->__tss_eip = (int)func;
+}
+#endif
 
 /* XXX */
 #define IDTVEC(name)	__CONCAT(X, name)
@@ -741,6 +796,20 @@ extern int ddb_vec;
 static void
 cpu_set_tss_gates(struct cpu_info *ci)
 {
+#if 0
+	struct segment_descriptor sd;
+
+	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	    UVM_KMF_WIRED);
+	tss_init(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
+	    IDTVEC(tss_trap08));
+	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
+	    SDT_SYS386TSS, SEL_KPL, 0, 0);
+	ci->ci_gdt[GTRAPTSS_SEL].sd = sd;
+	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
+	    GSEL(GTRAPTSS_SEL, SEL_KPL));
+#endif
+
 #if defined(DDB) && defined(MULTIPROCESSOR)
 	/*
 	 * Set up separate handler for the DDB IPI, so that it doesn't
@@ -762,6 +831,13 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	    GSEL(GIPITSS_SEL, SEL_KPL));
 #endif
 }
+#else
+static void
+cpu_set_tss_gates(struct cpu_info *ci)
+{
+
+}
+#endif	/* i386 */
 
 int
 mp_cpu_start(struct cpu_info *ci, paddr_t target)
@@ -771,6 +847,12 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	int error;
 #endif
 	unsigned short dwordptr[2];
+
+	/*
+	 * Bootstrap code must be addressable in real mode
+	 * and it must be page aligned.
+	 */
+	KASSERT(target < 0x10000 && target % PAGE_SIZE == 0);
 
 	/*
 	 * "The BSP must initialize CMOS shutdown code to 0Ah ..."
@@ -788,7 +870,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	dwordptr[1] = target >> 4;
 
 	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE);
-	memcpy ((u_int8_t *) 0x467, dwordptr, 4);
+	memcpy ((uint8_t *) 0x467, dwordptr, 4);
 	pmap_kremove (0, PAGE_SIZE);
 
 #if NLAPIC > 0
@@ -803,17 +885,31 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 		delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
-
-			if ((error = x86_ipi(target/PAGE_SIZE,
-					     ci->ci_apicid,
-					     LAPIC_DLMODE_STARTUP)) != 0)
+			error = x86_ipi_init(ci->ci_apicid);
+			if (error != 0) {
+				aprint_error_dev(ci->ci_dev, "%s: IPI not taken (1)\n",
+						__func__);
 				return error;
+			}
+
+			delay(10000);
+
+			error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+					LAPIC_DLMODE_STARTUP);
+			if (error != 0) {
+				aprint_error_dev(ci->ci_dev, "%s: IPI not taken (2)\n",
+						__func__);
+				return error;
+			}
 			delay(200);
 
-			if ((error = x86_ipi(target/PAGE_SIZE,
-					     ci->ci_apicid,
-					     LAPIC_DLMODE_STARTUP)) != 0)
+			error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+					LAPIC_DLMODE_STARTUP);
+			if (error != 0) {
+				aprint_error_dev(ci->ci_dev, "%s: IPI not taken ((3)\n",
+						__func__);
 				return error;
+			}
 			delay(200);
 		}
 	}
@@ -842,11 +938,79 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 {
 	if (full) {
 		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
-		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (u_int64_t) ci);
+		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (uint64_t) ci);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
 	}
 }
 #endif	/* __x86_64__ */
+
+void
+cpu_offline_md(void)
+{
+        int s;
+
+        s = splhigh();
+#ifdef __i386__
+        npxsave_cpu(true);
+#else   
+        fpusave_cpu(true);
+#endif
+        splx(s);
+}
+
+#if 0
+/* XXX joerg restructure and restart CPUs individually */
+static bool
+cpu_suspend(device_t dv PMF_FN_ARGS)
+{
+	struct cpu_softc *sc = device_private(dv);
+	struct cpu_info *ci = sc->sc_info;
+	int err;
+
+	if (ci->ci_flags & CPUF_PRIMARY)
+		return true;
+	if (ci->ci_data.cpu_idlelwp == NULL)
+		return true;
+	if ((ci->ci_flags & CPUF_PRESENT) == 0)
+		return true;
+
+	sc->sc_wasonline = !(ci->ci_schedstate.spc_flags & SPCF_OFFLINE);
+
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, false);
+		mutex_exit(&cpu_lock);
+
+		if (err)
+			return false;
+	}
+
+	return true;
+}
+
+static bool
+cpu_resume(device_t dv PMF_FN_ARGS)
+{
+	struct cpu_softc *sc = device_private(dv);
+	struct cpu_info *ci = sc->sc_info;
+	int err = 0;
+
+	if (ci->ci_flags & CPUF_PRIMARY)
+		return true;
+	if (ci->ci_data.cpu_idlelwp == NULL)
+		return true;
+	if ((ci->ci_flags & CPUF_PRESENT) == 0)
+		return true;
+
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, true);
+		mutex_exit(&cpu_lock);
+	}
+
+	return err == 0;
+}
+#endif
 
 void    
 cpu_get_tsc_freq(struct cpu_info *ci)
@@ -866,18 +1030,4 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	/* XXX this needs to read the shared_info of the CPU being probed.. */
 	ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
 #endif /* XEN3 */
-}
-
-void
-cpu_offline_md(void)
-{
-        int s;
-
-        s = splhigh();
-#ifdef __i386__
-        npxsave_cpu(true);
-#else   
-        fpusave_cpu(true);
-#endif
-        splx(s);
 }
