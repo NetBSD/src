@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.10 2008/03/28 21:18:45 christos Exp $	*/
+/*	$NetBSD: privsep.c,v 1.11 2008/04/13 21:45:19 christos Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -1635,7 +1635,7 @@ send_fd(s, fd)
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_control = cmsbuf;
-	msg.msg_controllen = sizeof(cmsbuf);
+	msg.msg_controllen = CMSG_SPACE(sizeof(fd));
 	msg.msg_flags = 0;
 
 	cmsg = CMSG_FIRSTHDR(&msg);
