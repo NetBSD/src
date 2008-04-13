@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2008/04/06 07:24:20 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 2008/04/13 21:59:15 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2008/04/06 07:24:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2008/04/13 21:59:15 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -122,17 +122,17 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2008/04/06 07:24:20 cegger Exp $");
 #include <dev/ic/mc146818reg.h>
 #include <dev/isa/isareg.h>
 
-int     cpu_match(struct device *, struct cfdata *, void *);
-void    cpu_attach(struct device *, struct device *, void *);
+int     cpu_match(device_t, cfdata_t, void *);
+void    cpu_attach(device_t, device_t, void *);
 #ifdef XEN3
-int     vcpu_match(struct device *, struct cfdata *, void *);
-void    vcpu_attach(struct device *, struct device *, void *);
+int     vcpu_match(device_t, cfdata_t, void *);
+void    vcpu_attach(device_t, device_t, void *);
 #endif
-void    cpu_attach_common(struct device *, struct device *, void *);
+void    cpu_attach_common(device_t, device_t, void *);
 void	cpu_offline_md(void);
 
 struct cpu_softc {
-	struct device sc_dev;		/* device tree glue */
+	device_t sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 };
 
@@ -141,10 +141,10 @@ void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
 
-CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
+CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
 #ifdef XEN3
-CFATTACH_DECL(vcpu, sizeof(struct cpu_softc),
+CFATTACH_DECL_NEW(vcpu, sizeof(struct cpu_softc),
     vcpu_match, vcpu_attach, NULL, NULL);
 #endif
 
@@ -201,7 +201,7 @@ static void	cpu_copy_trampoline(void);
  * Called from lapic_boot_init() (from mpbios_scan()).
  */
 void
-cpu_init_first()
+cpu_init_first(void)
 {
 	int cpunum = lapic_cpu_number();
 
@@ -215,25 +215,22 @@ cpu_init_first()
 #endif
 
 int
-cpu_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
 }
 
 void
-cpu_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+cpu_attach(device_t parent, device_t self, void *aux)
 {
 #ifdef XEN3
-	struct cpu_softc *sc = (void *) self;
+	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	int cpunum = caa->cpu_number;
+
+	sc->sc_dev = self;
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
@@ -292,10 +289,7 @@ cpu_attach(parent, self, aux)
 
 #ifdef XEN3
 int
-vcpu_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vcpu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct vcpu_attach_args *vcaa = aux;
 
@@ -305,9 +299,7 @@ vcpu_match(parent, match, aux)
 }
 
 void
-vcpu_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vcpu_attach(device_t parent, device_t self, void *aux)
 {
 	struct vcpu_attach_args *vcaa = aux;
 
@@ -355,12 +347,14 @@ cpu_attach_common(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cpu_softc *sc = (void *) self;
+	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 #if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
 #endif
+
+	sc->sc_dev = self;
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
@@ -408,7 +402,7 @@ cpu_attach_common(parent, self, aux)
 		error = mi_cpu_attach(ci);
 		if (error != 0) {
 			aprint_normal("\n");
-			aprint_error_dev(&sc->sc_dev, "mi_cpu_attach failed with %d\n",
+			aprint_error_dev(sc->sc_dev, "mi_cpu_attach failed with %d\n",
 			    error);
 			return;
 		}
@@ -461,7 +455,7 @@ cpu_attach_common(parent, self, aux)
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		printf("%s: not started\n", device_xname(&sc->sc_dev));
+		printf("%s: not started\n", device_xname(sc->sc_dev));
 #endif
 		break;
 
@@ -476,7 +470,7 @@ cpu_attach_common(parent, self, aux)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 
-		aprint_verbose_dev(&sc->sc_dev, "idle lwp at %p, idle sp at 0x%x\n",
+		aprint_verbose_dev(sc->sc_dev, "idle lwp at %p, idle sp at 0x%x\n",
 		    l, l->l_addr->u_pcb.pcb_esp);
 	}
 #endif
@@ -487,8 +481,7 @@ cpu_attach_common(parent, self, aux)
  */
 
 void
-cpu_init(ci)
-	struct cpu_info *ci;
+cpu_init(struct cpu_info *ci)
 {
 	/* configure the CPU if needed */
 	if (ci->cpu_setup != NULL)
@@ -533,7 +526,7 @@ cpu_init(ci)
 
 #ifdef MULTIPROCESSOR
 void
-cpu_boot_secondary_processors()
+cpu_boot_secondary_processors(void)
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -562,7 +555,7 @@ cpu_init_idle_lwp(struct cpu_info *ci)
 }
 
 void
-cpu_init_idle_lwps()
+cpu_init_idle_lwps(void)
 {
 	struct cpu_info *ci;
 	u_long i;
@@ -580,8 +573,7 @@ cpu_init_idle_lwps()
 }
 
 void
-cpu_start_secondary (ci)
-	struct cpu_info *ci;
+cpu_start_secondary(struct cpu_info *ci)
 {
 	int i;
 	struct pmap *kpm = pmap_kernel();
@@ -614,8 +606,7 @@ cpu_start_secondary (ci)
 }
 
 void
-cpu_boot_secondary(ci)
-	struct cpu_info *ci;
+cpu_boot_secondary(struct cpu_info *ci)
 {
 	int i;
 
@@ -720,7 +711,7 @@ cpu_debug_dump(void)
 #endif
 
 static void
-cpu_copy_trampoline()
+cpu_copy_trampoline(void)
 {
 	/*
 	 * Copy boot code.
