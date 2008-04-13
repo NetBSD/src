@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.39 2008/03/22 08:37:26 mlelstv Exp $
+# $NetBSD: Makefile,v 1.40 2008/04/13 21:29:15 mlelstv Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -724,9 +724,9 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-CLEANFILES=	${ERR_FILES} krb5_err.h heim_err.h k524_err.h
+CLEANFILES=	${ERR_FILES} krb_err.h krb5_err.h heim_err.h k524_err.h
 
-${SRCS:.c=.o}: krb5_err.h heim_err.h k524_err.h
+${SRCS:.c=.o}: krb_err.h krb5_err.h heim_err.h k524_err.h
 
 TEXINFO=	heimdal.texi
 INFOFLAGS=	-I${DIST}/heimdal/doc
