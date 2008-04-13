@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2008/03/22 08:37:26 mlelstv Exp $
+# $NetBSD: Makefile,v 1.23 2008/04/13 21:26:59 mlelstv Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -9,6 +9,9 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken ${DIST}/heimdal/lib/vers
 
 PROG=		asn1_compile
+
+LDADD+= -lutil
+DPADD+= ${LIBUTIL}
 
 WARNS?=		1
 
