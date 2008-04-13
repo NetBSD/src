@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.216 2008/03/28 18:22:59 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.217 2008/04/13 15:01:55 ad Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2008/03/28 18:22:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217 2008/04/13 15:01:55 ad Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1703,9 +1703,9 @@ pmap_enter(pm, va, pa, prot, flags)
 	pte_t tte;
 	int64_t data;
 	paddr_t opa = 0, ptp; /* XXX: gcc */
-	pv_entry_t pvh, npv = NULL;
+	pv_entry_t pvh, npv = NULL, freepv;
 	struct vm_page *pg, *opg, *ptpg;
-	int s, i, uncached = 0;
+	int s, i, uncached = 0, error = 0;
 	int size = PGSZ_8K; /* PMAP_SZ_TO_TTE(pa); */
 	bool wired = (flags & PMAP_WIRED) != 0;
 	bool wasmapped = FALSE;
@@ -1716,6 +1716,15 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	KASSERT(pm != pmap_kernel() || va < INTSTACK || va > EINTSTACK);
 	KASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
+
+	/* Grab a spare PV. */
+	freepv = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
+	if (__predict_false(freepv == NULL)) {
+		if (flags & PMAP_CANFAIL)
+			return (ENOMEM);
+		panic("pmap_enter: no pv entries available");
+	}
+	freepv->pv_next = NULL;
 
 	/*
 	 * If a mapping at this address already exists, check if we're
@@ -1760,28 +1769,27 @@ pmap_enter(pm, va, pa, prot, flags)
 		 */
 		if (pvh->pv_pmap == NULL || (wasmapped && opa == pa)) {
 			if (npv != NULL) {
-				pool_cache_put(&pmap_pv_cache, npv);	/* XXXAD defer */
+				/* free it */
+				npv->pv_next = freepv;
+				freepv = npv;
 				npv = NULL;
 			}
 			if (wasmapped && opa == pa) {
 				dopv = FALSE;
 			}
 		} else if (npv == NULL) {
-			npv = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);	/* XXXAD defer */
-			if (npv == NULL) {
-				if (flags & PMAP_CANFAIL) {
-					mutex_exit(&pmap_lock);
-					return (ENOMEM);
-				}
-				panic("pmap_enter: no pv entries available");
-			}
+			/* use the pre-allocated pv */
+			npv = freepv;
+			freepv = freepv->pv_next;
 		}
 		ENTER_STAT(managed);
 	} else {
 		ENTER_STAT(unmanaged);
 		dopv = FALSE;
 		if (npv != NULL) {
-			pool_cache_put(&pmap_pv_cache, npv);	/* XXXAD defer */
+			/* free it */
+			npv->pv_next = freepv;
+			freepv = npv;
 			npv = NULL;
 		}
 	}
@@ -1805,7 +1813,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	/* If it needs ref accounting do nothing. */
 	if (!(flags & VM_PROT_READ)) {
 		mutex_exit(&pmap_lock);
-		return 0;
+		goto out;
 	}
 #endif
 	if (flags & VM_PROT_EXECUTE) {
@@ -1848,12 +1856,15 @@ pmap_enter(pm, va, pa, prot, flags)
 		KASSERT((i & 4) == 0);
 		ptp = 0;
 		if (!pmap_get_page(&ptp)) {
+			mutex_exit(&pmap_lock);
 			if (flags & PMAP_CANFAIL) {
-				mutex_exit(&pmap_lock);
 				if (npv != NULL) {
-					pool_cache_put(&pmap_pv_cache, npv);	/* XXXAD defer */
+					/* free it */
+					npv->pv_next = freepv;
+					freepv = npv;
 				}
-				return (ENOMEM);
+				error = ENOMEM;
+				goto out;
 			} else {
 				panic("pmap_enter: no pages");
 			}
@@ -1940,7 +1951,13 @@ pmap_enter(pm, va, pa, prot, flags)
 
 	/* We will let the fast mmu miss interrupt load the new translation */
 	pv_check();
-	return 0;
+ out:
+	/* Catch up on deferred frees. */
+	for (; freepv != NULL; freepv = npv) {
+		npv = freepv->pv_next;
+		pool_cache_put(&pmap_pv_cache, freepv);
+	}
+	return error;
 }
 
 void
@@ -1981,7 +1998,7 @@ pmap_remove(pm, va, endva)
 	int64_t data;
 	paddr_t pa;
 	struct vm_page *pg;
-	pv_entry_t pv;
+	pv_entry_t pv, freepv = NULL;
 	int rv;
 	bool flush = FALSE;
 
@@ -2022,7 +2039,9 @@ pmap_remove(pm, va, endva)
 		if (pg) {
 			pv = pmap_remove_pv(pm, va, pg);
 			if (pv != NULL) {
-				pool_cache_put(&pmap_pv_cache, pv);	/* XXXAD defer */
+				/* free it */
+				pv->pv_next = freepv;
+				freepv = pv;
 			}
 		}
 
@@ -2067,6 +2086,12 @@ pmap_remove(pm, va, endva)
 	DPRINTF(PDB_REMOVE, ("\n"));
 	pv_check();
 	mutex_exit(&pmap_lock);
+
+	/* Catch up on deferred frees. */
+	for (; freepv != NULL; freepv = pv) {
+		pv = freepv->pv_next;
+		pool_cache_put(&pmap_pv_cache, freepv);
+	}
 }
 
 /*
