@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.225 2008/04/13 16:22:14 dogcow Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.226 2008/04/13 22:53:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.225 2008/04/13 16:22:14 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.226 2008/04/13 22:53:31 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -1614,15 +1614,14 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 		} while (i--);
 	}
 
-	(*pr)("   %5s %4s %4s %10s %3s %4s %11s %3s %s\n",
+	(*pr)("   %5s %4s %4s %10s %3s %18s %4s %s\n",
 	    "LID", "PRI", "EPRI", "FL", "ST", "LWP", "CPU", "LRTIME");
 
 	PROCLIST_FOREACH(p, &allproc) {
 		(*pr)(" /- %d (%s)\n", (int)p->p_pid, p->p_comm);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			ci = l->l_cpu;
-			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %4u %11p %3u "
-			    "%u\n",
+			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %18p %4u %u\n",
 			    (int)l->l_lid, l->l_priority, lwp_eprio(l),
 			    l->l_flag, l->l_stat == LSRUN ? "RQ" :
 			    (l->l_stat == LSSLEEP ? "SQ" : "-"),
