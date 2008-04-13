@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.51 2008/04/11 06:36:32 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.52 2008/04/13 11:08:12 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -843,4 +843,13 @@ src/sys/sys/ktrace.h				1.45.4.1
 	in userland.
 	Fixes PR#37534
 	[skrll, ticket #1121]
+
+crypto/dist/openssl/crypto/bn/bn_mont.c		1.2
+
+	Fix for CVE-2007-3108.
+        The BN_from_montgomery function in crypto/bn/bn_mont.c in
+	OpenSSL 0.9.8e and earlier does not properly perform Montgomery
+	multiplication, which might allow local users to conduct
+	a side-channel attack and retrieve RSA private keys.
+	[adrianp, ticket #1123]
 
