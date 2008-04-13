@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.134 2008/04/13 12:22:13 mlelstv Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.135 2008/04/13 12:59:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.134 2008/04/13 12:22:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.135 2008/04/13 12:59:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1298,7 +1298,7 @@ ncr53c9x_dequeue(struct ncr53c9x_softc *sc, struct ncr53c9x_ecb *ecb)
 	li = TINFO_LUN(ti, lun);
 #ifdef DIAGNOSTIC
 	if (li == NULL || li->lun != lun)
-		panic("%se: lun %" PRIx64 " for ecb %p does not exist",
+		panic("%s: lun %" PRIx64 " for ecb %p does not exist",
 		    __func__, lun, ecb);
 #endif
 	if (li->untagged == ecb) {
