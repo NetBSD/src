@@ -1,14 +1,14 @@
-/* $NetBSD: sha384hl.c,v 1.7 2006/10/28 13:05:42 agc Exp $ */
+/* $NetBSD: sha384hl.c,v 1.8 2008/04/13 02:04:32 dholland Exp $ */
 
 /*
- * Derived from code ritten by Jason R. Thorpe <thorpej@NetBSD.org>,
+ * Derived from code written by Jason R. Thorpe <thorpej@NetBSD.org>,
  * April 29, 1997.
  * Public domain.
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha384hl.c,v 1.7 2006/10/28 13:05:42 agc Exp $");
+__RCSID("$NetBSD: sha384hl.c,v 1.8 2008/04/13 02:04:32 dholland Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define	HASH_ALGORITHM	SHA384
