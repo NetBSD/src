@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.224 2008/04/12 17:16:09 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.225 2008/04/13 16:22:14 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.224 2008/04/12 17:16:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.225 2008/04/13 16:22:14 dogcow Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -1600,7 +1600,11 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
 		(*pr)(" pid.lid = %d.%d, threads count = %u, "
 		    "avgcount = %u, highest pri = %d\n",
+#ifdef MULTIPROCESSOR
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
+#else
+		    curlwp->l_proc->p_pid, curlwp->l_lid,
+#endif
 		    ci_rq->r_count, ci_rq->r_avgcount, spc->spc_maxpriority);
 		i = (PRI_COUNT >> BITMAP_SHIFT) - 1;
 		do {
