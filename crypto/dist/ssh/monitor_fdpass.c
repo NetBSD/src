@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_fdpass.c,v 1.6 2008/04/06 23:38:19 christos Exp $	*/
+/*	$NetBSD: monitor_fdpass.c,v 1.7 2008/04/13 21:44:14 christos Exp $	*/
 /* $OpenBSD: monitor_fdpass.c,v 1.17 2008/03/24 16:11:07 deraadt Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_fdpass.c,v 1.6 2008/04/06 23:38:19 christos Exp $");
+__RCSID("$NetBSD: monitor_fdpass.c,v 1.7 2008/04/13 21:44:14 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -44,16 +44,22 @@ mm_send_fd(int sock, int fd)
 	struct msghdr msg;
 	union {
 		struct cmsghdr hdr;
-		char buf[CMSG_SPACE(sizeof(int))];
+		char buf[1024];
 	} cmsgbuf;
 	struct cmsghdr *cmsg;
 	struct iovec vec;
 	char ch = '\0';
 	ssize_t n;
 
+	if (sizeof(cmsgbuf.buf) < CMSG_SPACE(sizeof(int))) {
+		error("%s: %zu < %zu, recompile", __func__, 
+		    sizeof(cmsgbuf.buf), CMSG_SPACE(sizeof(int)));
+		return -1;
+	}
+
 	memset(&msg, 0, sizeof(msg));
-	msg.msg_control = (caddr_t)&cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = CMSG_SPACE(sizeof(int));
 	cmsg = CMSG_FIRSTHDR(&msg);
 	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
 	cmsg->cmsg_level = SOL_SOCKET;
@@ -85,7 +91,7 @@ mm_receive_fd(int sock)
 	struct msghdr msg;
 	union {
 		struct cmsghdr hdr;
-		char buf[CMSG_SPACE(sizeof(int))];
+		char buf[1024];
 	} cmsgbuf;
 	struct cmsghdr *cmsg;
 	struct iovec vec;
@@ -93,13 +99,19 @@ mm_receive_fd(int sock)
 	char ch;
 	int fd;
 
+	if (sizeof(cmsgbuf.buf) < CMSG_SPACE(sizeof(int))) {
+		error("%s: %zu < %zu, recompile", __func__, 
+		    sizeof(cmsgbuf.buf), CMSG_SPACE(sizeof(int)));
+		return -1;
+	}
+
 	memset(&msg, 0, sizeof(msg));
 	vec.iov_base = &ch;
 	vec.iov_len = 1;
 	msg.msg_iov = &vec;
 	msg.msg_iovlen = 1;
 	msg.msg_control = &cmsgbuf.buf;
-	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	msg.msg_controllen = CMSG_SPACE(sizeof(int));
 
 	if ((n = recvmsg(sock, &msg, 0)) == -1) {
 		error("%s: recvmsg: %s", __func__, strerror(errno));
