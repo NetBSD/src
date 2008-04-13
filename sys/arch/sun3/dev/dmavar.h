@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.9 2007/03/04 14:00:24 tsutsui Exp $ */
+/*	$NetBSD: dmavar.h,v 1.10 2008/04/13 04:55:53 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 struct dma_softc {
-	struct device sc_dev;			/* us as a device */
+	device_t sc_dev;			/* us as a device */
 	bus_space_tag_t sc_bst;			/* bus space tag */
 	bus_dma_tag_t sc_dmatag;		/* bus dma tag */
 
@@ -41,12 +41,12 @@ struct dma_softc {
 	u_int	sc_rev;				/* revision */
 	int	sc_burst;			/* DVMA burst size in effect */
 	size_t	sc_dmasize;
-	void 	**sc_dmaaddr;
+	uint8_t	**sc_dmaaddr;
 	size_t  *sc_dmalen;
 #if 0
 	void (*reset)(struct dma_softc *);	/* reset routine */
 	int (*intr)(struct dma_softc *);	/* interrupt ! */
-	int (*setup)(struct dma_softc *, void **, size_t *, int, size_t *);
+	int (*setup)(struct dma_softc *, uint8_t **, size_t *, int, size_t *);
 #endif
 };
 
@@ -92,5 +92,5 @@ struct dma_softc *espdmafind(int);
 int espdmaintr(struct dma_softc *);
 
 void dma_reset(struct dma_softc *);
-int  dma_setup(struct dma_softc *, void **, size_t *, int, size_t *);
+int  dma_setup(struct dma_softc *, uint8_t **, size_t *, int, size_t *);
 
