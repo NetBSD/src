@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.34 2008/04/06 07:24:20 cegger Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.35 2008/04/14 13:38:03 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.34 2008/04/06 07:24:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.35 2008/04/14 13:38:03 cegger Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -100,7 +100,7 @@ static struct simplelock irq_mapping_update_lock = SIMPLELOCK_INITIALIZER;
 struct evtsource *evtsource[NR_EVENT_CHANNELS];
 
 /* Reference counts for bindings to event channels */
-static u_int8_t evtch_bindcount[NR_EVENT_CHANNELS];
+static uint8_t evtch_bindcount[NR_EVENT_CHANNELS];
 
 /* event-channel <-> VIRQ mapping. */
 static int virq_to_evtch[NR_VIRQS];
@@ -110,7 +110,7 @@ static int virq_to_evtch[NR_VIRQS];
 /* event-channel <-> PIRQ mapping */
 static int pirq_to_evtch[NR_PIRQS];
 /* PIRQ needing notify */
-static u_int32_t pirq_needs_unmask_notify[NR_EVENT_CHANNELS / 32];
+static uint32_t pirq_needs_unmask_notify[NR_EVENT_CHANNELS / 32];
 int pirq_interrupt(void *);
 physdev_op_t physdev_op_notify = {
 	.cmd = PHYSDEVOP_IRQ_UNMASK_NOTIFY,
@@ -189,9 +189,9 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	struct intrhand *ih;
 	int	(*ih_fun)(void *, void *);
 	extern struct uvmexp uvmexp;
-	u_int32_t iplmask;
+	uint32_t iplmask;
 	int i;
-	u_int32_t iplbit;
+	uint32_t iplbit;
 
 #ifdef DIAGNOSTIC
 	if (evtch >= NR_EVENT_CHANNELS) {
