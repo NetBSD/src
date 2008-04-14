@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.74 2008/04/09 14:58:23 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.75 2008/04/14 16:19:18 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74 2008/04/09 14:58:23 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2008/04/14 16:19:18 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -399,12 +399,6 @@ cpu_boot_secondary_processors()
 		if (!CPUSET_HAS(cpus_active, ci->ci_index))
 			printf("cpu%d: startup failed\n", ci->ci_cpuid);
 	}
-
-	/*
-	 * Sync %tick register with primary CPU.
-	 * No need this actually since we can use counter-timer as timecounter.
-	 */
-	sparc64_broadcast_ipi(sparc64_ipi_sync_tick, tick() + 100, 0);
 }
 
 void
