@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.234 2008/01/21 07:38:22 dyoung Exp $	*/
+/*	$NetBSD: trap.c,v 1.235 2008/04/14 09:42:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.234 2008/01/21 07:38:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235 2008/04/14 09:42:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -324,6 +324,12 @@ trap(frame)
 	}
 
 	switch (type) {
+
+	case T_ASTFLT:
+		if (KVM86MODE) {
+			break;
+		}
+		/*FALLTHROUGH*/
 
 	default:
 	we_re_toast:
