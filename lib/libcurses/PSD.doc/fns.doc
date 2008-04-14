@@ -653,6 +653,11 @@ will be set to -1.
 Get the tty stats.
 This is normally called by
 .Fn initscr .
+.Ds 
+.Fn getwin "FILE *fp"
+.De
+Creates a window from a file written by
+.Fn putwin .
 .Ds
 .Fn getyx "WINDOW *win" "int y" "int x"
 .De
@@ -1293,6 +1298,10 @@ It is often advisable to use the field width options of
 .Fn printf
 to avoid leaving things on the window from earlier calls.
 \*(Es
+.Ds 
+.Fn putwin "WINDOW *win" "FILE *fp"
+.De
+Writes the window data to a file.
 .Ds
 .Fn qiflush \(dg
 .De
@@ -1498,6 +1507,14 @@ that dimension will be set to
 or
 .Vn "COLS \- begin\*_x" ) (
 respectively.
+.Ds
+.Fn termattrs ""
+.De
+Returns the attributes that can be applied to the screen.
+.Ds
+.Fn term_attrs ""
+.De
+Returns the wide attributes that can be applied to the screen.
 .Ds
 .Fn timeout "int delay" \(dg
 .De
