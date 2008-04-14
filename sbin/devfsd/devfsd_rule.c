@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd_rule.c,v 1.1.8.3 2008/04/04 21:21:10 mjf Exp $ */
+/* 	$NetBSD: devfsd_rule.c,v 1.1.8.4 2008/04/14 16:23:57 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -233,6 +233,8 @@ handle_match(const char *key, char *value, struct devfs_rule *sr)
 		sr->r_drivername = value;
 	else if (!strncmp(key, "fstype", strlen("fstype")))
 		sr->r_disk.r_fstype = value;
+	else if (!strncmp(key, "wedge_name", strlen("wedge_name")))
+		sr->r_disk.r_wident = value;
 	else {
 		syslog(LOG_ERR, "invalid match rule");
 		error = EINVAL;

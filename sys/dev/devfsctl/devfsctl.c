@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsctl.c,v 1.1.2.6 2008/04/06 09:58:50 mjf Exp $ */
+/* 	$NetBSD: devfsctl.c,v 1.1.2.7 2008/04/14 16:23:56 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.6 2008/04/06 09:58:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.7 2008/04/14 16:23:56 mjf Exp $");
 
 #if defined(DEBUG) && !defined(DEVFSCTLDEBUG)
 #define	DEVFSCTLDEBUG
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: devfsctl.c,v 1.1.2.6 2008/04/06 09:58:50 mjf Exp $")
 #include <sys/queue.h>
 #include <sys/conf.h>
 #include <sys/namei.h>
+#include <sys/dirent.h>
 
 #include <dev/devfsctl/devfsctlvar.h>
 #include <dev/devfsctl/devfsctl.h>
@@ -121,9 +122,9 @@ int	devfsctldebug = 0;
  * DEVFSCTL module.  This is both the DEVFSCTL thread itself, as well as
  * user context.
  */
-#define	DEVFSCTL_LOCK(devfsctlsc)						\
+#define	DEVFSCTL_LOCK(devfsctlsc)					\
 	(void) mutex_enter(devfsctlsc)
-#define	DEVFSCTL_UNLOCK(devfsctlsc)						\
+#define	DEVFSCTL_UNLOCK(devfsctlsc)					\
 	(void) mutex_exit(devfsctlsc)
 
 static int	devfsctl_record_event(struct devfsctl_msg *);
@@ -295,6 +296,18 @@ devfsctl_push_node(struct devfsctl_node_cookie nc,
 	error = devfs_create_node(mcookie, path, dcookie, na->d_uid, 
 	    na->d_gid, na->d_mode, na->d_flags, na->d_char);
 	    
+	/* 
+	 * Someone is waiting to found out if we succeeded in
+	 * creating a device file.
+	 */
+	if (cv_is_valid(&dn->d_cv) == true) {
+		mutex_enter(&dn->d_cvmutex);
+		dn->d_busy = false;
+		dn->d_retval = error;
+		cv_signal(&dn->d_cv);
+		mutex_exit(&dn->d_cvmutex);
+	}
+
 	return error;
 }
 
@@ -413,7 +426,7 @@ devfsctl_periodic_device_check(void)
 				kmem_free(msg, sizeof(*msg));
 				return;
 			}
-			kmem_free(dn->d_name, strlen(dn->d_name) + 1);
+			kmem_free(dn->d_name, MAXNAMLEN);
 			kmem_free(dn, sizeof(*dn));
 		}
 	}
@@ -611,10 +624,11 @@ devfsctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			struct disklabel dlabel;
 			struct partition part;
 
-			error = cdev_ioctl(idata->d_dev, idata->d_cmd, 
-			    &dlabel, 0, curlwp);
+			/* Try to get wedge info, if supported */
+			error = bdev_ioctl(idata->d_dev, DIOCGWEDGEINFO,
+			    &idata->i_args.di.di_winfo, 0, curlwp);
 
-			if (error)
+			if (error && (error != ENOTTY))
 				break;
 
 			partno = DISKPART(idata->d_dev);

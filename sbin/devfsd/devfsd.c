@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.c,v 1.1.8.5 2008/04/04 21:21:10 mjf Exp $ */
+/* 	$NetBSD: devfsd.c,v 1.1.8.6 2008/04/14 16:23:57 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -262,8 +262,6 @@ dispatch_read_devfsctl(struct kevent *ev)
 }
 
 /*      
- * Dispatch routine for writing /dev/devfsctl
- *
  * Push all device nodes for device 'dev' into their respective
  * devfs file systems.
  */
@@ -497,6 +495,7 @@ rule_match(struct devfs_rule *rule, struct devfs_dev *dev)
 	/* Handle disks */
 	if (dev->d_type == DEV_DISK) {
 		struct devfsctl_ioctl_data idata;
+		memset(&idata, 0, sizeof(idata));
 
 		idata.d_dev = dev->d_cookie;
 		idata.d_type = DEV_DISK;
@@ -504,11 +503,16 @@ rule_match(struct devfs_rule *rule, struct devfs_dev *dev)
 		error = ioctl(devfsctl_fd, DEVFSCTL_IOC_INNERIOCTL, &idata);
 		if (rule->r_disk.r_fstype != NULL) {
 			if (strcmp(rule->r_disk.r_fstype, 
-			    idata.i_args.di.di_fstype))
+			    idata.i_args.di.di_fstype) == 0)
 				match = true;	
-		} else
-			match = false;
+		}
 
+		/* Handle disks that have wedges */
+		if (rule->r_disk.r_wident != NULL) {
+			if (strcmp(rule->r_disk.r_wident,
+			    (char *)&idata.i_args.di.di_winfo.dkw_wname) == 0)
+				match = true;
+		}
 	}
 	return match;
 }

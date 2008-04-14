@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.15.6.5 2008/04/06 09:58:52 mjf Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.15.6.6 2008/04/14 16:23:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.5 2008/04/06 09:58:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.6 2008/04/14 16:23:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -110,6 +110,9 @@ extern int max_bdevsws, max_cdevsws, max_devsw_convs;
 static int bdevsw_attach(const struct bdevsw *, int *);
 static int cdevsw_attach(const struct cdevsw *, int *);
 static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
+
+static struct device_name *device_name_alloc(dev_t, device_t, bool,
+    enum devtype, const char *, va_list); 
 
 kmutex_t devsw_lock;
 extern kmutex_t dname_lock;
@@ -939,6 +942,32 @@ cdev_type(dev_t dev)
 	return d->d_flag & D_TYPEMASK;
 }
 
+static struct device_name *
+device_name_alloc(dev_t dev, device_t devp, bool cdev,
+	enum devtype dtype, const char *fmt, va_list src)
+{
+	struct device_name *dn;
+	va_list dst;
+
+	/* TODO: Check for aliases */
+
+	dn = kmem_zalloc(sizeof(*dn), KM_NOSLEEP);
+	if (dn == NULL)
+		return NULL;
+
+	dn->d_dev = dev;
+	dn->d_devp = devp;
+	dn->d_char = cdev;
+	dn->d_type = dtype;
+
+	dn->d_name = kmem_zalloc(MAXNAMLEN, KM_NOSLEEP);
+	va_copy(dst, src);
+	vsnprintf(dn->d_name, MAXNAMLEN, fmt, dst);
+	va_end(dst);
+
+	return dn;
+}
+
 /*
  * Register a dev_t and name for a device driver with devfs.
  * We maintain a TAILQ of registered device drivers names and dev_t's.
@@ -955,26 +984,17 @@ cdev_type(dev_t dev)
  *     are a block device.
  */
 int
-device_register_name(dev_t dev, device_t devp, boolean_t cdev,
+device_register_name(dev_t dev, device_t devp, bool cdev,
 	enum devtype dtype, const char *fmt, ...)
 {
 	struct device_name *dn;
 	va_list ap;
 
-	/* TODO: Check for aliases */
+	va_start(ap, fmt);	
 
-	dn = kmem_zalloc(sizeof(*dn), KM_NOSLEEP);
-	if (dn == NULL)
+	if ((dn = device_name_alloc(dev, devp, cdev, dtype, fmt, ap)) == NULL)
 		return ENOMEM;
 
-	dn->d_dev = dev;
-	dn->d_devp = devp;
-	dn->d_char = cdev;
-	dn->d_type = dtype;
-
-	dn->d_name = kmem_zalloc(MAXNAMLEN, KM_NOSLEEP);
-	va_start(ap, fmt);
-	vsnprintf(dn->d_name, MAXNAMLEN, fmt, ap);
 	va_end(ap);
 
 	mutex_enter(&dname_lock);
@@ -1048,4 +1068,56 @@ device_lookup_info(dev_t dev, int is_char)
 	mutex_exit(&dname_lock);
 
 	return dn;
+}
+
+/*
+ * Register a name for a device_t and wait for the device file to be
+ * created in devfs mounts. Normally this operation is asynchronous in
+ * the sense that a device name is registered and at some later time
+ * a device file will appear in a devfs mount.
+ *
+ * cond - A kernel condition variable
+ * ticks - Timeout value in hz
+ *
+ * NOTE: There is no guarantee that a device file will be created,
+ *	 however, the caller will be notified in a synchronous manner
+ *	 whether the creation failed or not.
+ */
+int
+device_register_sync(dev_t dev, device_t devp, bool cdev,
+	enum devtype dtype, kcondvar_t cond, int ticks, const char *fmt, ...)
+{
+	int error = 0;
+	struct device_name *dn;
+	va_list ap;
+
+	va_start(ap, fmt);
+
+	if ((dn = device_name_alloc(dev, devp, cdev, dtype, fmt, ap)) == NULL)
+		return ENOMEM;
+	dn->d_busy = true;
+	dn->d_cv = cond;
+
+	va_end(ap);
+
+	mutex_enter(&dname_lock);
+	TAILQ_INSERT_TAIL(&device_names, dn, d_next);
+	mutex_exit(&dname_lock);
+
+	mutex_init(&dn->d_cvmutex, MUTEX_DEFAULT, IPL_NONE);
+
+	mutex_enter(&dn->d_cvmutex);
+
+	while (dn->d_busy == true) {
+		if (ticks <= 0)
+			error = cv_wait_sig(&dn->d_cv, &dn->d_cvmutex);
+		else
+			error = cv_timedwait_sig(&dn->d_cv, 
+			    &dn->d_cvmutex, ticks);
+			    
+	}
+	error = dn->d_retval;
+	mutex_exit(&dn->d_cvmutex);
+
+	return error;
 }
