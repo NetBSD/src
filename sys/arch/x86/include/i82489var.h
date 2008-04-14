@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489var.h,v 1.10 2007/12/09 20:27:48 jmcneill Exp $	*/
+/*	$NetBSD: i82489var.h,v 1.11 2008/04/14 05:52:34 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,31 +43,28 @@
  * Software definitions belonging to Local APIC driver.
  */
 
-static __inline u_int32_t i82489_readreg(int);
-static __inline void i82489_writereg(int, u_int32_t);
+static __inline uint32_t i82489_readreg(int);
+static __inline void i82489_writereg(int, uint32_t);
 
 #ifdef _KERNEL
-extern volatile u_int32_t local_apic[];
-extern volatile u_int32_t lapic_tpr;
+extern volatile uint32_t local_apic[];
+extern volatile uint32_t lapic_tpr;
 #endif
 
-static __inline u_int32_t
-i82489_readreg(reg)
-	int reg;
+static __inline uint32_t
+i82489_readreg(int reg)
 {
-	return *((volatile u_int32_t *)(((volatile u_int8_t *)local_apic)
+	return *((volatile uint32_t *)(((volatile uint8_t *)local_apic)
 	    + reg));
 }
 
 static __inline void
-i82489_writereg(reg, val)
-	int reg;
-	u_int32_t val;
+i82489_writereg(int reg, uint32_t val)
 {
-	*((volatile u_int32_t *)(((volatile u_int8_t *)local_apic) + reg)) = val;
+	*((volatile uint32_t *)(((volatile uint8_t *)local_apic) + reg)) = val;
 }
 
-#define lapic_cpu_number() 	(i82489_readreg(LAPIC_ID)>>LAPIC_ID_SHIFT)
+#define lapic_cpu_number() 	(i82489_readreg(LAPIC_ID) >> LAPIC_ID_SHIFT)
 
 /*
  * "spurious interrupt vector"; vector used by interrupt which was
