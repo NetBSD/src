@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.17 2007/11/08 06:34:34 jdc Exp $	*/
+/*	$NetBSD: resize.c,v 1.18 2008/04/14 20:33:41 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.17 2007/11/08 06:34:34 jdc Exp $");
+__RCSID("$NetBSD: resize.c,v 1.18 2008/04/14 20:33:41 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -69,8 +69,6 @@ wresize(WINDOW *win, int req_nlines, int req_ncols)
 	__CTRACE(__CTRACE_WINDOW, "wresize: (%p, %d, %d)\n",
 	    win, nlines, ncols);
 #endif
-	nlines = req_nlines;
-	ncols = req_ncols;
 	if (win->orig == NULL) {
 		/* bound "our" windows by the screen size */
 		if (win == curscr || win == __virtscr || win == stdscr) {
@@ -146,12 +144,6 @@ resizeterm(int nlines, int ncols)
 {
 	WINDOW *win;
 	struct __winlist *list;
-
-	  /* don't worry if things have not changed... we would like to
-	     do this but some bastard programs update LINES and COLS before
-	     calling resizeterm thus negating it's effect.
-	if ((nlines == LINES) && (ncols == COLS))
-	return OK;*/
 
 #ifdef	DEBUG
 	__CTRACE(__CTRACE_WINDOW, "resizeterm: (%d, %d)\n", nlines, ncols);
@@ -302,7 +294,8 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	win->cury = win->curx = 0;
 	win->maxy = nlines;
 	win->maxx = ncols;
-	win->scr_b = win->maxy - 1;
+	if (win->scr_b >= win->maxy)
+		win->scr_b = win->maxy - 1;
 	__swflags(win);
 
 	  /*
