@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.16 2008/04/12 17:02:08 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.17 2008/04/14 09:39:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.16 2008/04/12 17:02:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.17 2008/04/14 09:39:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -102,8 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.16 2008/04/12 17:02:08 ad Exp $");
 
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);
-
-fixpt_t decay_cpu(fixpt_t, fixpt_t);
 
 extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
 
@@ -226,7 +224,7 @@ sched_tick(struct cpu_info *ci)
 /* calculations for digital decay to forget 90% of usage in 5*loadav sec */
 #define	loadfactor(loadav)	(2 * (loadav))
 
-fixpt_t
+static fixpt_t
 decay_cpu(fixpt_t loadfac, fixpt_t estcpu)
 {
 
