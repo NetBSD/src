@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.101 2008/01/26 20:45:06 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.102 2008/04/14 17:24:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.101 2008/01/26 20:45:06 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.102 2008/04/14 17:24:50 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -1414,7 +1414,7 @@ ReconReadDoneProc(void *arg, int status)
 	raidPtr = ctrl->reconCtrl->reconDesc->raidPtr;
 
 	if (status) {
-		printf("raid%d: Recon read failed!\n", raidPtr->raidid);
+		printf("raid%d: Recon read failed: %d\n", raidPtr->raidid, status);
 		rf_CauseReconEvent(raidPtr, ctrl->col, NULL, RF_REVENT_READ_FAILED);
 		return(0);
 	}
@@ -1714,8 +1714,9 @@ rf_ForceOrBlockRecon(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		/* if the write is sitting in the disk queue, elevate its
 		 * priority */
 		if (rf_DiskIOPromote(&raidPtr->Queues[fcol], psid, which_ru))
-			printf("raid%d: promoted write to col %d\n",
-			       raidPtr->raidid, fcol);
+			if (rf_reconDebug)
+				printf("raid%d: promoted write to col %d\n",
+				       raidPtr->raidid, fcol);
 	}
 	/* install a callback descriptor to be invoked when recon completes on
 	 * this parity stripe. */
