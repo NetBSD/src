@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.41 2007/12/08 18:38:11 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.42 2008/04/14 20:34:36 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -83,7 +83,7 @@ typedef struct nschar_t {
 #endif /* HAVE_WCHAR */
 
 /*
- * A window an array of __LINE structures pointed to by the 'lines' pointer.
+ * A window is an array of __LINE structures pointed to by the 'lines' pointer.
  * A line is an array of __LDATA structures pointed to by the 'line' pointer.
  *
  * IMPORTANT: the __LDATA structure must NOT induce any padding, so if new
@@ -339,6 +339,7 @@ extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 #define __CTRACE_LINE		0x00000200
 #define __CTRACE_ATTR		0x00000400
 #define __CTRACE_ERASE		0x00000800
+#define __CTRACE_FILEIO		0x00001000
 #define __CTRACE_ALL		0x7fffffff
 void	 __CTRACE_init(void);
 void	 __CTRACE(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
@@ -402,9 +403,6 @@ void	 __unsetattr(int);
 void	 __unset_color(WINDOW *win);
 int	 __waddch(WINDOW *, __LDATA *);
 int	 __wgetnstr(WINDOW *, char *, int);
-#ifdef HAVE_WCHAR
-int  __wgetn_wstr(WINDOW *, wchar_t *, int);
-#endif /* HAVE_WCHAR */
 void	 __winch_signal_handler(int);
 
 /* Private #defines. */
