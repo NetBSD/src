@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.6 2008/03/10 22:20:14 martin Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.7 2008/04/14 00:18:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.6 2008/03/10 22:20:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.7 2008/04/14 00:18:43 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,7 +137,7 @@ xc_init_cpu(struct cpu_info *ci)
 }
 
 /*
- * xc_unicast:
+ * xc_broadcast:
  *
  *	Trigger a call on all CPUs in the system.
  */
@@ -146,7 +146,7 @@ xc_broadcast(u_int flags, xcfunc_t func, void *arg1, void *arg2)
 {
 
 	if ((flags & XC_HIGHPRI) != 0) {
-		panic("xc_unicast: no high priority crosscalls yet");
+		panic("xc_broadcast: no high priority crosscalls yet");
 	} else {
 		return xc_lowpri(flags, func, arg1, arg2, NULL);
 	}
