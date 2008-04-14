@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2008/03/14 15:38:00 nakayama Exp $ */
+/*	$NetBSD: intr.h,v 1.23 2008/04/14 17:54:07 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@ void	sparc64_ipi_init (void);
 int	sparc64_ipi_halt_thiscpu (void *);
 int	sparc64_ipi_pause_thiscpu (void *);
 void	sparc64_do_pause(void);
-void	sparc64_ipi_sync_tick (void *);
 void	sparc64_ipi_drop_fpstate (void *);
 void	sparc64_ipi_save_fpstate (void *);
 void	sparc64_ipi_nop (void *);
