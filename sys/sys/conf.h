@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.129.14.6 2008/04/06 09:58:52 mjf Exp $	*/
+/*	$NetBSD: conf.h,v 1.129.14.7 2008/04/14 16:23:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -250,9 +250,13 @@ struct device_name {
 	char *d_name;
 	enum devtype d_type;
 	device_t d_devp;
-	boolean_t d_found;	/* have we been picked up by dctl(4)? */
-	boolean_t d_gone;	/* has this device disappeared? */
-	boolean_t d_char;	/* are we a char device? */
+	bool d_found;		/* have we been picked up by dctl(4)? */
+	bool d_gone;		/* has this device disappeared? */
+	bool d_char;		/* are we a char device? */
+	kcondvar_t d_cv;	/* synchronous device file creation */
+	kmutex_t d_cvmutex;	/* mutex for d_cv */
+	bool d_busy;
+	int d_retval;		/* return value from creating device file */
 };
 TAILQ_HEAD(dm_list, device_name) device_names;
 
@@ -262,8 +266,10 @@ int devsw_name2blk(const char *, char *, size_t);
 int devsw_name2chr(const char *, char *, size_t);
 dev_t devsw_chr2blk(dev_t);
 dev_t devsw_blk2chr(dev_t);
-int device_register_name(dev_t, device_t, boolean_t, enum devtype, 
+int device_register_name(dev_t, device_t, bool, enum devtype, 
     const char *, ...);
+int device_register_sync(dev_t, device_t, bool, enum devtype, 
+    kcondvar_t, int, const char *, ...);
 int device_deregister_name(dev_t, const char *, ...);
 int device_deregister_all(device_t);
 struct device_name *device_lookup_info(dev_t, int);

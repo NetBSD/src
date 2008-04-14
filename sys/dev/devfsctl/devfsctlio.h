@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsctlio.h,v 1.1.2.1 2008/04/03 11:14:48 mjf Exp $ */
+/* 	$NetBSD: devfsctlio.h,v 1.1.2.2 2008/04/14 16:23:57 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
+#include <sys/disk.h>
 
 enum dmsgtype {
 	DEVFSCTL_NEW_MOUNT,
@@ -129,6 +130,7 @@ struct devfsctl_event_entry {
  */
 struct devfsctl_disk_info {
 	const char *di_fstype;	/* file system type */
+	struct dkwedge_info di_winfo;
 };
 
 /*
@@ -153,6 +155,6 @@ struct devfsctl_ioctl_data {
 /* delete node */
 #define DEVFSCTL_IOC_DELETENODE _IOW('A', 2, struct devfsctl_msg) 
 
-#define DEVFSCTL_IOC_INNERIOCTL _IOR('A', 3, struct devfsctl_ioctl_data)
+#define DEVFSCTL_IOC_INNERIOCTL _IOWR('A', 3, struct devfsctl_ioctl_data)
 
 #endif /* _DEV_DEVFSCTL_DEVFSCTLIO_H_ */
