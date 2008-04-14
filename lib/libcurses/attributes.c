@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.16 2008/03/21 13:41:49 jdc Exp $	*/
+/*	$NetBSD: attributes.c,v 1.17 2008/04/14 19:46:42 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.16 2008/03/21 13:41:49 jdc Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.17 2008/04/14 19:46:42 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -402,17 +402,17 @@ term_attrs(void)
 
 	if (__tc_me != NULL) {
 		if (__tc_mb != NULL)
-			attr |= WA_BLINK;
+			attr |= __BLINK;
 		if (__tc_md != NULL)
-			attr |= WA_BOLD;
+			attr |= __BOLD;
 		if (__tc_mh != NULL)
-			attr |= WA_DIM;
+			attr |= __DIM;
 		if (__tc_mk != NULL)
-			attr |= WA_INVIS;
+			attr |= __BLANK;
 		if (__tc_mp != NULL)
-			attr |= WA_PROTECT;
+			attr |= __PROTECT;
 		if (__tc_mr != NULL)
-			attr |= WA_REVERSE;
+			attr |= __REVERSE;
 #ifdef HAVE_WCHAR
 		if (__tc_Xo != NULL)
 			attr |= WA_LOW;
@@ -429,11 +429,11 @@ term_attrs(void)
 #endif /* HAVE_WCHAR */
 	}
 	if (__tc_so != NULL && __tc_se != NULL)
-		attr |= WA_STANDOUT;
+		attr |= __STANDOUT;
 	if (__tc_us != NULL && __tc_ue != NULL)
-		attr |= WA_UNDERLINE;
+		attr |= __UNDERSCORE;
 	if (__tc_as != NULL && __tc_ae != NULL)
-		attr |= WA_ALTCHARSET;
+		attr |= __ALTCHARSET;
 
 	return attr;
 }
