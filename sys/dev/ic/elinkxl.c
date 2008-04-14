@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.101 2008/04/08 12:07:26 cegger Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.102 2008/04/14 10:54:21 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.101 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.102 2008/04/14 10:54:21 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -94,9 +94,9 @@ void ex_media_stat(struct ifnet *ifp, struct ifmediareq *req);
 void ex_probe_media(struct ex_softc *);
 void ex_set_filter(struct ex_softc *);
 void ex_set_media(struct ex_softc *);
-void ex_set_xcvr(struct ex_softc *, u_int16_t);
+void ex_set_xcvr(struct ex_softc *, uint16_t);
 struct mbuf *ex_get(struct ex_softc *, int);
-u_int16_t ex_read_eeprom(struct ex_softc *, int);
+uint16_t ex_read_eeprom(struct ex_softc *, int);
 int ex_init(struct ifnet *);
 void ex_read(struct ex_softc *);
 void ex_reset(struct ex_softc *);
@@ -163,8 +163,8 @@ struct ex_media ex_native_media[] = {
 /*
  * MII bit-bang glue.
  */
-u_int32_t ex_mii_bitbang_read(struct device *);
-void ex_mii_bitbang_write(struct device *, u_int32_t);
+uint32_t ex_mii_bitbang_read(struct device *);
+void ex_mii_bitbang_write(struct device *, uint32_t);
 
 const struct mii_bitbang_ops ex_mii_bitbang_ops = {
 	ex_mii_bitbang_read,
@@ -182,12 +182,11 @@ const struct mii_bitbang_ops ex_mii_bitbang_ops = {
  * Back-end attach and configure.
  */
 void
-ex_config(sc)
-	struct ex_softc *sc;
+ex_config(struct ex_softc *sc)
 {
 	struct ifnet *ifp;
-	u_int16_t val;
-	u_int8_t macaddr[ETHER_ADDR_LEN] = {0};
+	uint16_t val;
+	uint8_t macaddr[ETHER_ADDR_LEN] = {0};
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, error, attach_stage;
@@ -545,14 +544,13 @@ ex_config(sc)
  * Find the media present on non-MII chips.
  */
 void
-ex_probemedia(sc)
-	struct ex_softc *sc;
+ex_probemedia(struct ex_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifmedia *ifm = &sc->ex_mii.mii_media;
 	struct ex_media *exm;
-	u_int16_t config1, reset_options, default_media;
+	uint16_t config1, reset_options, default_media;
 	int defmedia = 0;
 	const char *sep = "", *defmedianame = NULL;
 
@@ -614,8 +612,7 @@ ex_probemedia(sc)
  * Setup transmitter parameters.
  */
 static void
-ex_setup_tx(sc)
-	struct ex_softc *sc;
+ex_setup_tx(struct ex_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -639,14 +636,13 @@ ex_setup_tx(sc)
  * Bring device up.
  */
 int
-ex_init(ifp)
-	struct ifnet *ifp;
+ex_init(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
-	u_int16_t val;
+	uint16_t val;
 	int error = 0;
 
 	if ((error = ex_enable(sc)) != 0)
@@ -738,15 +734,14 @@ ex_init(ifp)
  * here (XXX).
  */
 void
-ex_set_mc(sc)
-	struct ex_softc *sc;
+ex_set_mc(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ether_multi *enm;
 	struct ether_multistep estep;
 	int i;
-	u_int16_t mask = FIL_INDIVIDUAL | FIL_BRDCST;
+	uint16_t mask = FIL_INDIVIDUAL | FIL_BRDCST;
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		mask |= FIL_PROMISC;
@@ -796,8 +791,7 @@ allmulti:
  * and this is the error handler.
  */
 static void
-ex_txstat(sc)
-	struct ex_softc *sc;
+ex_txstat(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -887,8 +881,7 @@ ex_txstat(sc)
 }
 
 int
-ex_media_chg(ifp)
-	struct ifnet *ifp;
+ex_media_chg(struct ifnet *ifp)
 {
 
 	if (ifp->if_flags & IFF_UP)
@@ -897,13 +890,11 @@ ex_media_chg(ifp)
 }
 
 void
-ex_set_xcvr(sc, media)
-	struct ex_softc *sc;
-	const u_int16_t media;
+ex_set_xcvr(struct ex_softc *sc, const uint16_t media)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t icfg;
+	uint32_t icfg;
 
 	/*
 	 * We're already in Window 3
@@ -921,12 +912,11 @@ ex_set_xcvr(sc, media)
 }
 
 void
-ex_set_media(sc)
-	struct ex_softc *sc;
+ex_set_media(struct ex_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int32_t configreg;
+	uint32_t configreg;
 
 	if (((sc->ex_conf & EX_CONF_MII) &&
 	    (sc->ex_mii.mii_media_active & IFM_FDX))
@@ -943,7 +933,7 @@ ex_set_media(sc)
 	 * PHY which media to use.
 	 */
 	if (sc->ex_conf & EX_CONF_MII) {
-		u_int16_t val;
+		uint16_t val;
 
 		GO_WINDOW(3);
 		val = bus_space_read_2(iot, ioh, ELINK_W3_RESET_OPTIONS);
@@ -1009,12 +999,10 @@ ex_set_media(sc)
  * (if_media callback, may be called before interface is brought up).
  */
 void
-ex_media_stat(ifp, req)
-	struct ifnet *ifp;
-	struct ifmediareq *req;
+ex_media_stat(struct ifnet *ifp, struct ifmediareq *req)
 {
 	struct ex_softc *sc = ifp->if_softc;
-	u_int16_t help;
+	uint16_t help;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING)) {
 		if (sc->ex_conf & EX_CONF_MII) {
@@ -1041,8 +1029,7 @@ ex_media_stat(ifp, req)
  * Start outputting on the interface.
  */
 static void
-ex_start(ifp)
-	struct ifnet *ifp;
+ex_start(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1053,7 +1040,7 @@ ex_start(ifp)
 	struct mbuf *mb_head;
 	bus_dmamap_t dmamap;
 	int m_csumflags, offset, seglen, totlen, segment, error;
-	u_int32_t csum_flags;
+	uint32_t csum_flags;
 
 	if (sc->tx_head || sc->tx_free == NULL)
 		return;
@@ -1257,13 +1244,12 @@ ex_start(ifp)
 
 
 int
-ex_intr(arg)
-	void *arg;
+ex_intr(void *arg)
 {
 	struct ex_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int16_t stat;
+	uint16_t stat;
 	int ret = 0;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1365,7 +1351,7 @@ ex_intr(arg)
 			struct mbuf *m;
 			struct ex_upd *upd;
 			bus_dmamap_t rxmap;
-			u_int32_t pktstat;
+			uint32_t pktstat;
 
  rcvloop:
 			rxd = sc->rx_head;
@@ -1395,7 +1381,7 @@ ex_intr(arg)
 				 * instead.
 				 */
 				if (ex_add_rxbuf(sc, rxd) == 0) {
-					u_int16_t total_len;
+					uint16_t total_len;
 
 					if (pktstat &
 					    ((sc->sc_ethercom.ec_capenable &
@@ -1472,10 +1458,7 @@ ex_intr(arg)
 }
 
 int
-ex_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+ex_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ex_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1528,13 +1511,12 @@ ex_ioctl(ifp, cmd, data)
 }
 
 void
-ex_getstats(sc)
-	struct ex_softc *sc;
+ex_getstats(struct ex_softc *sc)
 {
 	bus_space_handle_t ioh = sc->sc_ioh;
 	bus_space_tag_t iot = sc->sc_iot;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	u_int8_t upperok;
+	uint8_t upperok;
 
 	GO_WINDOW(6);
 	upperok = bus_space_read_1(iot, ioh, UPPER_FRAMES_OK);
@@ -1573,8 +1555,7 @@ ex_getstats(sc)
 }
 
 void
-ex_printstats(sc)
-	struct ex_softc *sc;
+ex_printstats(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
@@ -1589,8 +1570,7 @@ ex_printstats(sc)
 }
 
 void
-ex_tick(arg)
-	void *arg;
+ex_tick(void *arg)
 {
 	struct ex_softc *sc = arg;
 	int s;
@@ -1613,10 +1593,9 @@ ex_tick(arg)
 }
 
 void
-ex_reset(sc)
-	struct ex_softc *sc;
+ex_reset(struct ex_softc *sc)
 {
-	u_int16_t val = GLOBAL_RESET;
+	uint16_t val = GLOBAL_RESET;
 
 	if (sc->ex_conf & EX_CONF_RESETHACK)
 		val |= 0x10;
@@ -1631,8 +1610,7 @@ ex_reset(sc)
 }
 
 void
-ex_watchdog(ifp)
-	struct ifnet *ifp;
+ex_watchdog(struct ifnet *ifp)
 {
 	struct ex_softc *sc = ifp->if_softc;
 
@@ -1644,9 +1622,7 @@ ex_watchdog(ifp)
 }
 
 void
-ex_stop(ifp, disable)
-	struct ifnet *ifp;
-	int disable;
+ex_stop(struct ifnet *ifp, int disable)
 {
 	struct ex_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1700,8 +1676,7 @@ ex_stop(ifp, disable)
 }
 
 static void
-ex_init_txdescs(sc)
-	struct ex_softc *sc;
+ex_init_txdescs(struct ex_softc *sc)
 {
 	int i;
 
@@ -1719,9 +1694,7 @@ ex_init_txdescs(sc)
 
 
 int
-ex_activate(self, act)
-	struct device *self;
-	enum devact act;
+ex_activate(struct device *self, enum devact act)
 {
 	struct ex_softc *sc = (void *) self;
 	int s, error = 0;
@@ -1745,8 +1718,7 @@ ex_activate(self, act)
 }
 
 int
-ex_detach(sc)
-	struct ex_softc *sc;
+ex_detach(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ex_rxdesc *rxd;
@@ -1806,8 +1778,7 @@ ex_detach(sc)
  * Before reboots, reset card completely.
  */
 static void
-ex_shutdown(arg)
-	void *arg;
+ex_shutdown(void *arg)
 {
 	struct ex_softc *sc = arg;
 
@@ -1823,14 +1794,12 @@ ex_shutdown(arg)
  * Read EEPROM data.
  * XXX what to do if EEPROM doesn't unbusy?
  */
-u_int16_t
-ex_read_eeprom(sc, offset)
-	struct ex_softc *sc;
-	int offset;
+uint16_t
+ex_read_eeprom(struct ex_softc *sc, int offset)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	u_int16_t data = 0, cmd = READ_EEPROM;
+	uint16_t data = 0, cmd = READ_EEPROM;
 	int off;
 
 	off = sc->ex_conf & EX_CONF_EEPROM_OFF ? 0x30 : 0;
@@ -1849,8 +1818,7 @@ out:
 }
 
 static int
-ex_eeprom_busy(sc)
-	struct ex_softc *sc;
+ex_eeprom_busy(struct ex_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
@@ -1870,9 +1838,7 @@ ex_eeprom_busy(sc)
  * Create a new rx buffer and add it to the 'soft' rx list.
  */
 static int
-ex_add_rxbuf(sc, rxd)
-	struct ex_softc *sc;
-	struct ex_rxdesc *rxd;
+ex_add_rxbuf(struct ex_softc *sc, struct ex_rxdesc *rxd)
 {
 	struct mbuf *m, *oldm;
 	bus_dmamap_t rxmap;
@@ -1951,9 +1917,8 @@ ex_add_rxbuf(sc, rxd)
 	return (rval);
 }
 
-u_int32_t
-ex_mii_bitbang_read(self)
-	struct device *self;
+uint32_t
+ex_mii_bitbang_read(struct device *self)
 {
 	struct ex_softc *sc = (void *) self;
 
@@ -1962,9 +1927,7 @@ ex_mii_bitbang_read(self)
 }
 
 void
-ex_mii_bitbang_write(self, val)
-	struct device *self;
-	u_int32_t val;
+ex_mii_bitbang_write(struct device *self, uint32_t val)
 {
 	struct ex_softc *sc = (void *) self;
 
@@ -1973,9 +1936,7 @@ ex_mii_bitbang_write(self, val)
 }
 
 int
-ex_mii_readreg(v, phy, reg)
-	struct device *v;
-	int phy, reg;
+ex_mii_readreg(struct device *v, int phy, int reg)
 {
 	struct ex_softc *sc = (struct ex_softc *)v;
 	int val;
@@ -1993,11 +1954,7 @@ ex_mii_readreg(v, phy, reg)
 }
 
 void
-ex_mii_writereg(v, phy, reg, data)
-        struct device *v;
-        int phy;
-        int reg;
-        int data;
+ex_mii_writereg(struct device *v, int phy, int reg, int data)
 {
 	struct ex_softc *sc = (struct ex_softc *)v;
 
@@ -2009,8 +1966,7 @@ ex_mii_writereg(v, phy, reg, data)
 }
 
 void
-ex_mii_statchg(v)
-	struct device *v;
+ex_mii_statchg(struct device *v)
 {
 	struct ex_softc *sc = (struct ex_softc *)v;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -2028,8 +1984,7 @@ ex_mii_statchg(v)
 }
 
 int
-ex_enable(sc)
-	struct ex_softc *sc;
+ex_enable(struct ex_softc *sc)
 {
 	if (sc->enabled == 0 && sc->enable != NULL) {
 		if ((*sc->enable)(sc) != 0) {
@@ -2042,8 +1997,7 @@ ex_enable(sc)
 }
 
 void
-ex_disable(sc)
-	struct ex_softc *sc;
+ex_disable(struct ex_softc *sc)
 {
 	if (sc->enabled == 1 && sc->disable != NULL) {
 		(*sc->disable)(sc);
@@ -2052,9 +2006,7 @@ ex_disable(sc)
 }
 
 void
-ex_power(why, arg)
-	int why;
-	void *arg;
+ex_power(int why, void *arg)
 {
 	struct ex_softc *sc = (void *)arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
