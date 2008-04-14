@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.143 2008/04/04 20:13:18 cegger Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.144 2008/04/14 18:07:51 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.143 2008/04/04 20:13:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.144 2008/04/14 18:07:51 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -405,6 +405,7 @@ config_interrupts_thread(void *cookie)
 void
 configure(void)
 {
+	extern void ssp_init(void);
 	int i;
 
 	/* Initialize data structures. */
@@ -428,6 +429,9 @@ configure(void)
 	 * to be enabled.
 	 */
 	cpu_configure();
+
+	/* Initialize SSP. */
+	ssp_init();
 
 	/* Initialize callouts, part 2. */
 	callout_startup2();
