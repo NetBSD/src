@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.17 2008/04/14 09:39:31 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.18 2008/04/14 09:40:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,13 +75,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.17 2008/04/14 09:39:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.18 2008/04/14 09:40:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_perfctrs.h"
-
-#define	__MUTEX_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
