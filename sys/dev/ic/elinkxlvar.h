@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.18 2007/03/04 06:01:54 christos Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.19 2008/04/14 20:03:13 spz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * Ethernet software status per interface.
  */
 struct ex_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
@@ -126,14 +126,10 @@ struct ex_softc {
 	/* power management hooks */
 	int (*enable)(struct ex_softc *);
 	void (*disable)(struct ex_softc *);
-	void (*power)(struct ex_softc *, int);
 	int enabled;
 
 	/* interrupt acknowledge hook */
 	void (*intr_ack)(struct ex_softc *);
-
-	void *sc_sdhook;
-	void *sc_powerhook;
 
 	bus_dma_segment_t sc_useg, sc_dseg;
 	int sc_urseg, sc_drseg;
@@ -157,7 +153,7 @@ int	ex_intr(void *);
 void	ex_stop(struct ifnet *, int);
 void	ex_watchdog(struct ifnet *);
 int	ex_ioctl(struct ifnet *ifp, u_long, void *);
-int	ex_activate(struct device *, enum devact);
+int	ex_activate(device_t, enum devact);
 int	ex_detach(struct ex_softc *);
 
 int	ex_enable(struct ex_softc *);
