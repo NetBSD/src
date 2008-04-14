@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.158 2008/03/28 12:12:20 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.159 2008/04/14 15:42:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
  */
 
 /*
+ * Copyright (c) 2004 The FreeBSD Foundation
+ * Copyright (c) 2004 Robert Watson
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -68,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.158 2008/03/28 12:12:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.159 2008/04/14 15:42:20 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -971,6 +973,41 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 }
 
 /*
+ * Following replacement or removal of the first mbuf on the first
+ * mbuf chain of a socket buffer, push necessary state changes back
+ * into the socket buffer so that other consumers see the values
+ * consistently.  'nextrecord' is the callers locally stored value of
+ * the original value of sb->sb_mb->m_nextpkt which must be restored
+ * when the lead mbuf changes.  NOTE: 'nextrecord' may be NULL.
+ */
+static void
+sbsync(struct sockbuf *sb, struct mbuf *nextrecord)
+{
+
+	/*
+	 * First, update for the new value of nextrecord.  If necessary,
+	 * make it the first record.
+	 */
+	if (sb->sb_mb != NULL)
+		sb->sb_mb->m_nextpkt = nextrecord;
+	else
+		sb->sb_mb = nextrecord;
+
+        /*
+         * Now update any dependent socket buffer fields to reflect
+         * the new state.  This is an inline of SB_EMPTY_FIXUP, with
+         * the addition of a second clause that takes care of the
+         * case where sb_mb has been updated, but remains the last
+         * record.
+         */
+        if (sb->sb_mb == NULL) {
+                sb->sb_mbtail = NULL;
+                sb->sb_lastrecord = NULL;
+        } else if (sb->sb_mb->m_nextpkt == NULL)
+                sb->sb_lastrecord = sb->sb_mb;
+}
+
+/*
  * Implement receive operations on a socket.
  * We depend on the way that records are added to the sockbuf
  * by sbappend*.  In particular, each record (mbufs linked through m_next)
@@ -1108,8 +1145,19 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
  dontblock:
 	/*
 	 * On entry here, m points to the first record of the socket buffer.
-	 * While we process the initial mbufs containing address and control
-	 * info, we save a copy of m->m_nextpkt into nextrecord.
+	 * From this point onward, we maintain 'nextrecord' as a cache of the
+	 * pointer to the next record in the socket buffer.  We must keep the
+	 * various socket buffer pointers and local stack versions of the
+	 * pointers in sync, pushing out modifications before dropping the
+	 * IPL, and re-reading them when picking it up.
+	 *
+	 * Otherwise, we will race with the network stack appending new data
+	 * or records onto the socket buffer by using inconsistent/stale
+	 * versions of the field, possibly resulting in socket buffer
+	 * corruption.
+	 *
+	 * By holding the high-level sblock(), we prevent simultaneous
+	 * readers from pulling off the front of the socket buffer.
 	 */
 	if (l != NULL)
 		l->l_ru.ru_msgrcv++;
@@ -1139,71 +1187,78 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				MFREE(m, so->so_rcv.sb_mb);
 				m = so->so_rcv.sb_mb;
 			}
+			sbsync(&so->so_rcv, nextrecord);
 		}
 	}
-	while (m != NULL && m->m_type == MT_CONTROL && error == 0) {
-		if (flags & MSG_PEEK) {
-			if (controlp != NULL)
-				*controlp = m_copy(m, 0, m->m_len);
-			m = m->m_next;
-		} else {
-			sbfree(&so->so_rcv, m);
-			mbuf_removed = 1;
-			if (controlp != NULL) {
-				if (dom->dom_externalize && l &&
-				    mtod(m, struct cmsghdr *)->cmsg_type ==
-				    SCM_RIGHTS)
-					error = (*dom->dom_externalize)(m, l);
-				*controlp = m;
+
+	/*
+	 * Process one or more MT_CONTROL mbufs present before any data mbufs
+	 * in the first mbuf chain on the socket buffer.  If MSG_PEEK, we
+	 * just copy the data; if !MSG_PEEK, we call into the protocol to
+	 * perform externalization (or freeing if controlp == NULL).
+	 */
+	if (__predict_false(m != NULL && m->m_type == MT_CONTROL)) {
+		struct mbuf *cm = NULL, *cmn;
+		struct mbuf **cme = &cm;
+
+		do {
+			if (flags & MSG_PEEK) {
+				if (controlp != NULL) {
+					*controlp = m_copy(m, 0, m->m_len);
+					controlp = &(*controlp)->m_next;
+				}
+				m = m->m_next;
+			} else {
+				sbfree(&so->so_rcv, m);
 				so->so_rcv.sb_mb = m->m_next;
 				m->m_next = NULL;
+				*cme = m;
+				cme = &(*cme)->m_next;
 				m = so->so_rcv.sb_mb;
+			}
+		} while (m != NULL && m->m_type == MT_CONTROL);
+		if ((flags & MSG_PEEK) == 0)
+			sbsync(&so->so_rcv, nextrecord);
+		for (; cm != NULL; cm = cmn) {
+			cmn = cm->m_next;
+			cm->m_next = NULL;
+			type = mtod(cm, struct cmsghdr *)->cmsg_type;
+			if (controlp != NULL) {
+				if (dom->dom_externalize != NULL &&
+				    type == SCM_RIGHTS) {
+					splx(s);
+					error = (*dom->dom_externalize)(cm, l);
+					s = splsoftnet();
+				}
+				*controlp = cm;
+				while (*controlp != NULL)
+					controlp = &(*controlp)->m_next;
 			} else {
 				/*
 				 * Dispose of any SCM_RIGHTS message that went
 				 * through the read path rather than recv.
 				 */
-				if (dom->dom_dispose &&
-				    mtod(m, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
-					(*dom->dom_dispose)(m);
-				MFREE(m, so->so_rcv.sb_mb);
-				m = so->so_rcv.sb_mb;
+				if (dom->dom_dispose != NULL &&
+				    type == SCM_RIGHTS) {
+				    	splx(s);
+					(*dom->dom_dispose)(cm);
+					s = splsoftnet();
+				}
+				m_freem(cm);
 			}
 		}
-		if (controlp != NULL) {
-			orig_resid = 0;
-			controlp = &(*controlp)->m_next;
-		}
+		if (m != NULL)
+			nextrecord = so->so_rcv.sb_mb->m_nextpkt;
+		else
+			nextrecord = so->so_rcv.sb_mb;
+		orig_resid = 0;
 	}
 
-	/*
-	 * If m is non-NULL, we have some data to read.  From now on,
-	 * make sure to keep sb_lastrecord consistent when working on
-	 * the last packet on the chain (nextrecord == NULL) and we
-	 * change m->m_nextpkt.
-	 */
-	if (m != NULL) {
-		if ((flags & MSG_PEEK) == 0) {
-			m->m_nextpkt = nextrecord;
-			/*
-			 * If nextrecord == NULL (this is a single chain),
-			 * then sb_lastrecord may not be valid here if m
-			 * was changed earlier.
-			 */
-			if (nextrecord == NULL) {
-				KASSERT(so->so_rcv.sb_mb == m);
-				so->so_rcv.sb_lastrecord = m;
-			}
-		}
+	/* If m is non-NULL, we have some data to read. */
+	if (__predict_true(m != NULL)) {
 		type = m->m_type;
 		if (type == MT_OOBDATA)
 			flags |= MSG_OOB;
-	} else {
-		if ((flags & MSG_PEEK) == 0) {
-			KASSERT(so->so_rcv.sb_mb == m);
-			so->so_rcv.sb_mb = nextrecord;
-			SB_EMPTY_FIXUP(&so->so_rcv);
-		}
 	}
 	SBLASTRECORDCHK(&so->so_rcv, "soreceive 2");
 	SBLASTMBUFCHK(&so->so_rcv, "soreceive 2");
