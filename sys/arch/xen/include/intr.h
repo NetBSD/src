@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2008/02/19 19:50:53 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.24 2008/04/14 13:38:03 cegger Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -57,7 +57,7 @@
 
 struct evtsource {
 	int ev_maxlevel;		/* max. IPL for this source */
-	u_int32_t ev_imask;		/* interrupt mask */
+	uint32_t ev_imask;		/* interrupt mask */
 	struct intrhand *ev_handlers;	/* handler chain */
 	struct evcnt ev_evcnt;		/* interrupt counter */
 	char ev_evname[32];		/* event counter name */

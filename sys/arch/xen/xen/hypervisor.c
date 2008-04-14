@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.34 2008/04/06 07:24:20 cegger Exp $ */
+/* $NetBSD: hypervisor.c,v 1.35 2008/04/14 13:38:03 cegger Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.34 2008/04/06 07:24:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.35 2008/04/14 13:38:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,9 +330,9 @@ hypervisor_attach(parent, self, aux)
 			printf("0x%x ", physdev_op.u.pci_probe_root_buses.busmask[i]);
 		printf("\n");
 #endif
-		memset(pci_bus_attached, 0, sizeof(u_int32_t) * 256 / 32);
+		memset(pci_bus_attached, 0, sizeof(uint32_t) * 256 / 32);
 		for (i = 0, busnum = 0; i < 256/32; i++) {
-			u_int32_t mask = 
+			uint32_t mask = 
 			    physdev_op.u.pci_probe_root_buses.busmask[i];
 			for (j = 0; j < 32; j++, busnum++) {
 				if ((mask & (1 << j)) == 0)

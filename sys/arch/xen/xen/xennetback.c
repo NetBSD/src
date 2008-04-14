@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.31 2008/02/17 14:03:16 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.32 2008/04/14 13:38:03 cegger Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.31 2008/02/17 14:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.32 2008/04/14 13:38:03 cegger Exp $");
 
 #include "opt_xen.h"
 
@@ -127,7 +127,7 @@ struct xnetback_instance {
 	/* network interface stuff */
 	struct ethercom xni_ec;
 	struct callout xni_restart;
-	u_int8_t xni_enaddr[ETHER_ADDR_LEN];
+	uint8_t xni_enaddr[ETHER_ADDR_LEN];
 
 	/* remote domain communication stuff */
 	unsigned int xni_evtchn;

@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.25 2008/03/22 14:28:10 ad Exp $      */
+/*      $NetBSD: xenevt.c,v 1.26 2008/04/14 13:38:03 cegger Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.25 2008/03/22 14:28:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.26 2008/04/14 13:38:03 cegger Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -141,8 +141,8 @@ static void xenevt_record(struct xenevt_d *, evtchn_port_t);
 long xenevt_ev1;
 long xenevt_ev2[NR_EVENT_CHANNELS];
 #else
-u_int32_t xenevt_ev1;
-u_int32_t xenevt_ev2[NR_EVENT_CHANNELS];
+uint32_t xenevt_ev1;
+uint32_t xenevt_ev2[NR_EVENT_CHANNELS];
 #endif
 static int xenevt_processevt(void *);
 
@@ -476,15 +476,15 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
 	struct xenevt_d *d = fp->f_data;
-	u_int16_t *chans;
+	uint16_t *chans;
 	int i, nentries, error;
 
 	if (uio->uio_resid == 0)
 		return (0);
-	nentries = uio->uio_resid / sizeof(u_int16_t);
+	nentries = uio->uio_resid / sizeof(uint16_t);
 	if (nentries > NR_EVENT_CHANNELS)
 		return EMSGSIZE;
-	chans = kmem_alloc(nentries * sizeof(u_int16_t), KM_SLEEP);
+	chans = kmem_alloc(nentries * sizeof(uint16_t), KM_SLEEP);
 	if (chans == NULL)
 		return ENOMEM;
 	error = uiomove(chans, uio->uio_resid, uio);
@@ -497,7 +497,7 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 		}
 	}
 out:
-	kmem_free(chans, nentries * sizeof(u_int16_t));
+	kmem_free(chans, nentries * sizeof(uint16_t));
 	return 0;
 }
 

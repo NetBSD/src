@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.44 2008/01/17 01:56:02 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.45 2008/04/14 13:38:03 cegger Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.44 2008/01/17 01:56:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2008/04/14 13:38:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 }
 
 void
-startrtclock()
+startrtclock(void)
 {
 	static struct todr_chip_handle	tch;
 	tch.todr_gettime = xen_rtc_get;
@@ -355,11 +355,11 @@ xen_delay(unsigned int n)
 		 * precise enouth for short delays. Use the CPU counter
 		 * instead. We assume it's working at this point.
 		 */
-		u_int64_t cc, cc2, when;
+		uint64_t cc, cc2, when;
 		struct cpu_info *ci = curcpu();
 
 		cc = cpu_counter();
-		when = cc + (u_int64_t)n * cpu_frequency(ci) / 1000000LL;
+		when = cc + (uint64_t)n * cpu_frequency(ci) / 1000000LL;
 		if (when < cc) {
 			/* wait for counter to wrap */
 			cc2 = cpu_counter();
@@ -443,7 +443,7 @@ xen_get_timecount(struct timecounter *tc)
 }
 
 void
-xen_initclocks()
+xen_initclocks(void)
 {
 	int evtch;
 

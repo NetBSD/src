@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.6 2008/02/19 19:50:53 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.7 2008/04/14 13:38:03 cegger Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6 2008/02/19 19:50:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.7 2008/04/14 13:38:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6 2008/02/19 19:50:53 bouye
 
 int stipending(void);
 int
-stipending()
+stipending(void)
 {
 	unsigned long l1;
 	unsigned long l2;
@@ -333,7 +333,7 @@ hypervisor_enable_ipl(unsigned int ipl)
 }
 
 void
-hypervisor_set_ipending(u_int32_t iplmask, int l1, int l2)
+hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 {
 	int ipl;
 	struct cpu_info *ci = curcpu();
