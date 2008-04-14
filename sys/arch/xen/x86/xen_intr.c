@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.2 2007/11/22 16:17:05 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.3 2008/04/14 13:38:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.2 2007/11/22 16:17:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.3 2008/04/14 13:38:03 cegger Exp $");
 
 #include <sys/param.h>
 
@@ -68,7 +68,7 @@ void
 spllower(int nlevel)
 {
 	struct cpu_info *ci = curcpu();
-	u_int32_t imask;
+	uint32_t imask;
 	u_long psl;
 
 	__insn_barrier();
