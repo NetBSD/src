@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.348 2008/04/01 10:37:42 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.349 2008/04/14 18:07:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.348 2008/04/01 10:37:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349 2008/04/14 18:07:51 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -251,6 +251,7 @@ volatile int start_init_exec;		/* semaphore for start_init() */
 static void check_console(struct lwp *l);
 static void start_init(void *);
 void main(void);
+void ssp_init(void);
 
 #if defined(__SSP__) || defined(__SSP_ALL__)
 long __stack_chk_guard[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -260,6 +261,40 @@ void
 __stack_chk_fail(void)
 {
 	panic("stack overflow detected; terminated");
+}
+
+void
+ssp_init(void)
+{
+	int s;
+
+#ifdef DIAGNOSTIC
+	printf("Initializing SSP:");
+#endif
+	/*
+	 * We initialize ssp here carefully:
+	 *	1. after we got some entropy
+	 *	2. without calling a function
+	 */
+	size_t i;
+	long guard[__arraycount(__stack_chk_guard)];
+
+	arc4randbytes(guard, sizeof(guard));
+	s = splhigh();
+	for (i = 0; i < __arraycount(guard); i++)
+		__stack_chk_guard[i] = guard[i];
+	splx(s);
+#ifdef DIAGNOSTIC
+	for (i = 0; i < __arraycount(guard); i++)
+		printf("%lx ", guard[i]);
+	printf("\n");
+#endif
+}
+#else
+void
+ssp_init(void)
+{
+
 }
 #endif
 
@@ -464,29 +499,6 @@ main(void)
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
-#if defined(__SSP__) || defined(__SSP_ALL__)
-	{
-#ifdef DIAGNOSTIC
-		printf("Initializing SSP:");
-#endif
-		/*
-		 * We initialize ssp here carefully:
-		 *	1. after we got some entropy
-		 *	2. without calling a function
-		 */
-		size_t i;
-		long guard[__arraycount(__stack_chk_guard)];
-
-		arc4randbytes(guard, sizeof(guard));
-		for (i = 0; i < __arraycount(guard); i++)
-			__stack_chk_guard[i] = guard[i];
-#ifdef DIAGNOSTIC
-		for (i = 0; i < __arraycount(guard); i++)
-			printf("%lx ", guard[i]);
-		printf("\n");
-#endif
-	}
-#endif
 	ubc_init();		/* must be after autoconfig */
 
 #ifdef SYSVSHM
