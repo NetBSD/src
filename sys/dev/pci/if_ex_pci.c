@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.46 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.47 2008/04/14 20:03:13 spz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.46 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.47 2008/04/14 20:03:13 spz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ struct ex_pci_softc {
 #define PCI_INTR		4
 #define PCI_INTRACK		0x00008000
 
-static int	ex_pci_match(struct device *, struct cfdata *, void *);
-static void	ex_pci_attach(struct device *, struct device *, void *);
+static int	ex_pci_match(device_t, cfdata_t, void *);
+static void	ex_pci_attach(device_t, device_t, void *);
 static void	ex_pci_intr_ack(struct ex_softc *);
 
 static int	ex_pci_enable(struct ex_softc *);
@@ -108,7 +108,7 @@ static void	ex_pci_disable(struct ex_softc *);
 static void	ex_pci_confreg_restore(struct ex_pci_softc *);
 static int	ex_d3tod0(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t);
 
-CFATTACH_DECL(ex_pci, sizeof(struct ex_pci_softc),
+CFATTACH_DECL_NEW(ex_pci, sizeof(struct ex_pci_softc),
     ex_pci_match, ex_pci_attach, NULL, NULL);
 
 static const struct ex_pci_product {
@@ -199,7 +199,7 @@ ex_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-ex_pci_match(struct device *parent, struct cfdata *match,
+ex_pci_match(device_t parent, cfdata_t match,
     void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
@@ -224,6 +224,8 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	aprint_naive(": Ethernet controller\n");
+
+	sc->sc_dev = self;
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
@@ -263,7 +265,7 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 		/* Map PCI function status window. */
 		if (pci_mapreg_map(pa, PCI_FUNCMEM, PCI_MAPREG_TYPE_MEM, 0,
 		    &psc->sc_funct, &psc->sc_funch, NULL, NULL)) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(self,
 			    "unable to map function status window\n");
 			return;
 		}
@@ -285,28 +287,27 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 		sc->disable = ex_pci_disable;
 		break;
 	default:
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
-		    error);
+		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;
 	}
 	sc->enabled = 1;
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ex_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	ex_config(sc);
 
@@ -347,12 +348,11 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 	u_int32_t pci_command;
 	u_int32_t pci_int_lat;
 	u_int32_t pci_cache_lat;
-	struct ex_softc *sc = device_private(self);
 
 	if (state != PCI_PMCSR_STATE_D3)
 		return 0;
 
-	aprint_normal_dev(&sc->sc_dev, "found in power state D%d, "
+	aprint_normal_dev(self, "found in power state D%d, "
 	    "attempting to recover.\n", state);
 	pci_command = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	base0 = pci_conf_read(pc, tag, PCI_BAR0);
@@ -369,7 +369,7 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 	pci_conf_write(pc, tag, PCI_CACHE_LAT_BIST, pci_cache_lat);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 	    (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE));
-	aprint_normal_dev(&sc->sc_dev, "changed power state to D0.\n");
+	aprint_normal_dev(self, "changed power state to D0.\n");
 	return 0;
 }
 
@@ -401,9 +401,7 @@ ex_pci_enable(struct ex_softc *sc)
 {
 	struct ex_pci_softc *psc = (void *) sc;
 
-#if 0
-	printf("%s: going to power state D0\n", device_xname(&sc->sc_dev));
-#endif
+	aprint_debug_dev(sc->sc_dev, "going to power state D0\n");
 
 	/* Bring the device into D0 power state. */
 	pci_conf_write(psc->psc_pc, psc->psc_tag,
@@ -420,9 +418,7 @@ ex_pci_disable(struct ex_softc *sc)
 {
 	struct ex_pci_softc *psc = (void *) sc;
 
-#if 0
-	printf("%s: going to power state D3\n", device_xname(&sc->sc_dev));
-#endif
+	aprint_debug_dev(sc->sc_dev, "going to power state D3\n");
 
 	/* Put the device into D3 state. */
 	pci_conf_write(psc->psc_pc, psc->psc_tag,

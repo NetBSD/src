@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.47 2008/04/08 20:10:20 cegger Exp $	*/
+/*	$NetBSD: exphy.c,v 1.48 2008/04/14 20:03:13 spz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.47 2008/04/08 20:10:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.48 2008/04/14 20:03:13 spz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,8 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	 * instances!
 	 */
 	if (mii->mii_instance != 0) {
-		aprint_error_dev(&sc->mii_dev, "ignoring this PHY, non-zero instance\n");
+		aprint_error_dev(self,
+		    "ignoring this PHY, non-zero instance\n");
 		return;
 	}
 	sc->mii_flags |= MIIF_NOISOLATE;
@@ -151,12 +152,13 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal_dev(&sc->mii_dev, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
+		aprint_error_dev(self, "no media present\n");
+	else {
+		aprint_normal_dev(self, "");
 		mii_phy_add_media(sc);
-	aprint_normal("\n");
+		aprint_normal("\n");
+	}
 
 	if (!pmf_device_register(self, NULL, mii_phy_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
