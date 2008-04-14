@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.92 2008/03/24 16:57:28 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.93 2008/04/14 20:40:54 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -649,6 +649,7 @@ int	 getmaxx(WINDOW *);
 int	 getpary(WINDOW *);
 int	 getparx(WINDOW *);
 int	 gettmode(void);
+WINDOW	*getwin(FILE *);
 int	 halfdelay(int);
 bool	 has_colors(void);
 bool	 has_ic(void);
@@ -710,6 +711,7 @@ int	 pnoutrefresh(WINDOW *, int, int, int, int, int, int);
 int	 prefresh(WINDOW *, int, int, int, int, int, int);
 int	 printw(const char *, ...)
 		__attribute__((__format__(__printf__, 1, 2)));
+int	 putwin(WINDOW *, FILE *);
 void	 qiflush(void);
 int	 raw(void);
 int	 redrawwin(WINDOW *);
