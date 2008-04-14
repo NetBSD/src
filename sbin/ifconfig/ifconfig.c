@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.182 2008/04/11 01:14:28 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.183 2008/04/14 15:57:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.182 2008/04/11 01:14:28 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.183 2008/04/14 15:57:15 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,11 +210,6 @@ const struct cmd {
 	{ "alias",	IFF_UP,		0,		notealias },
 	{ "-alias",	-IFF_UP,	0,		notealias },
 	{ "delete",	-IFF_UP,	0,		notealias },
-#ifdef notdef
-#define	EN_SWABIPS	0x1000
-	{ "swabips",	EN_SWABIPS,	0,		setifflags },
-	{ "-swabips",	-EN_SWABIPS,	0,		setifflags },
-#endif
 	{ "netmask",	NEXTARG,	0,		setifnetmask },
 	{ "metric",	NEXTARG,	0,		setifmetric },
 	{ "mtu",	NEXTARG,	0,		setifmtu },
