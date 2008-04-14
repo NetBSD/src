@@ -1,4 +1,4 @@
-/*	$NetBSD: print-isoclns.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $	*/
+/*	$NetBSD: print-isoclns.c,v 1.6.14.1 2008/04/14 21:03:49 jdc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -32,7 +32,7 @@
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-isoclns.c,v 1.106.2.5 2004/03/24 01:45:26 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-isoclns.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $");
+__RCSID("$NetBSD: print-isoclns.c,v 1.6.14.1 2008/04/14 21:03:49 jdc Exp $");
 #endif
 #endif
 
@@ -116,7 +116,9 @@ static struct tok isis_pdu_values[] = {
 #define TLV_LSP                 9   /* iso10589 */
 #define TLV_AUTH                10  /* iso10589, rfc3567 */
 #define TLV_CHECKSUM            12  /* rfc3358 */
+#define TLV_CHECKSUM_MINLEN	2
 #define TLV_LSP_BUFFERSIZE      14  /* iso10589 rev2 */
+#define	TLV_LSP_BUFFERSIZE_MINLEN 2
 #define TLV_EXT_IS_REACH        22  /* draft-ietf-isis-traffic-05 */
 #define TLV_IS_ALIAS_ID         24  /* draft-ietf-isis-ext-lsp-frags-02 */
 #define TLV_DECNET_PHASE4       42
@@ -125,6 +127,7 @@ static struct tok isis_pdu_values[] = {
 #define TLV_PROTOCOLS           129 /* rfc1195 */
 #define TLV_EXT_IP_REACH        130 /* rfc1195, rfc2966 */
 #define TLV_IDRP_INFO           131 /* rfc1195 */
+#define	TLV_IDRP_INFO_MINLEN	1
 #define TLV_IPADDR              132 /* rfc1195 */
 #define TLV_IPAUTH              133 /* rfc1195 */
 #define TLV_TE_ROUTER_ID        134 /* draft-ietf-isis-traffic-05 */
@@ -137,13 +140,16 @@ static struct tok isis_pdu_values[] = {
 #define TLV_RESTART_SIGNALING   211 /* draft-ietf-isis-restart-01 */
 #define TLV_MT_IS_REACH         222 /* draft-ietf-isis-wg-multi-topology-05 */
 #define TLV_MT_SUPPORTED        229 /* draft-ietf-isis-wg-multi-topology-05 */
+#define TLV_MT_SUPPORTED_MINLEN	2
 #define TLV_IP6ADDR             232 /* draft-ietf-isis-ipv6-02 */
 #define TLV_MT_IP_REACH         235 /* draft-ietf-isis-wg-multi-topology-05 */
 #define TLV_IP6_REACH           236 /* draft-ietf-isis-ipv6-02 */
 #define TLV_MT_IP6_REACH        237 /* draft-ietf-isis-wg-multi-topology-05 */
 #define TLV_PTP_ADJ             240 /* rfc3373 */
 #define TLV_IIH_SEQNR           241 /* draft-shen-isis-iih-sequence-00 */
+#define	TLV_IIH_SEQNR_MINLEN	4
 #define TLV_VENDOR_PRIVATE      250 /* draft-ietf-isis-proprietary-tlv-00 */
+#define	TLV_VENDOR_PRIVATE_MINLEN 3
 
 static struct tok isis_tlv_values[] = {
     { TLV_AREA_ADDR,	     "Area address(es)"},
@@ -1513,6 +1519,9 @@ static int isis_print (const u_int8_t *p, u_int length)
                tlv_type,
                tlv_len);
 
+	if (tlv_len == 0) /* something is malformed */
+	    continue;
+
         /* now check if we have a decoder otherwise do a hexdump at the end*/
 	switch (tlv_type) {
 	case TLV_AREA_ADDR:
@@ -1543,9 +1552,13 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
         case TLV_ISNEIGH_VARLEN:
-            if (!TTEST2(*tptr, 1))
+            if (!TTEST2(*tptr, 1) || tmp < 3) /* min. TLV length */
 		goto trunctlv;
 	    lan_alen = *tptr++; /* LAN adress length */
+	    if (lan_alen == 0) {
+		printf("\n\t      LAN address length 0 bytes (invalid)");
+		break;
+	    }
             tmp --;
             printf("\n\t      LAN address length %u bytes ",lan_alen);
 	    while (tmp >= lan_alen) {
@@ -1646,13 +1659,13 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
         case TLV_MT_IP_REACH:
-	    while (tmp>0) {
-                mt_len = isis_print_mtid(tptr, "\n\t      ");
-                if (mt_len == 0) /* did something go wrong ? */
-                    goto trunctlv;
-                tptr+=mt_len;
-                tmp-=mt_len;
+            mt_len = isis_print_mtid(tptr, "\n\t      ");
+            if (mt_len == 0) /* did something go wrong ? */
+                goto trunctlv;
+            tptr+=mt_len;
+            tmp-=mt_len;
 
+	    while (tmp>0) {
                 ext_ip_len = isis_print_extd_ip_reach(tptr, "\n\t      ", IPV4);
                 if (ext_ip_len == 0) /* did something go wrong ? */
                     goto trunctlv;
@@ -1673,13 +1686,13 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
 	case TLV_MT_IP6_REACH:
-	    while (tmp>0) {
-                mt_len = isis_print_mtid(tptr, "\n\t      ");
-                if (mt_len == 0) /* did something go wrong ? */
-                    goto trunctlv;
-                tptr+=mt_len;
-                tmp-=mt_len;
+            mt_len = isis_print_mtid(tptr, "\n\t      ");
+            if (mt_len == 0) /* did something go wrong ? */
+                goto trunctlv;
+            tptr+=mt_len;
+            tmp-=mt_len;
 
+	    while (tmp>0) {
                 ext_ip_len = isis_print_extd_ip_reach(tptr, "\n\t      ", IPV6);
                 if (ext_ip_len == 0) /* did something go wrong ? */
                     goto trunctlv;
@@ -1689,15 +1702,15 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
 	case TLV_IP6ADDR:
-	    while (tmp>0) {
-		if (!TTEST2(*tptr, 16))
+	    while (tmp>=sizeof(struct in6_addr)) {
+		if (!TTEST2(*tptr, sizeof(struct in6_addr)))
 		    goto trunctlv;
 
                 printf("\n\t      IPv6 interface address: %s",
 		       ip6addr_string(tptr));
 
-		tptr += 16;
-		tmp -= 16;
+		tptr += sizeof(struct in6_addr);
+		tmp -= sizeof(struct in6_addr);
 	    }
 	    break;
 #endif
@@ -1793,12 +1806,12 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
 	case TLV_IPADDR:
-	    while (tmp>0) {
-		if (!TTEST2(*tptr, 4))
+	    while (tmp>=sizeof(struct in_addr)) {
+		if (!TTEST2(*tptr, sizeof(struct in_addr)))
 		    goto trunctlv;
 		printf("\n\t      IPv4 interface address: %s", ipaddr_string(tptr));
-		tptr += 4;
-		tmp -= 4;
+		tptr += sizeof(struct in_addr);
+		tmp -= sizeof(struct in_addr);
 	    }
 	    break;
 
@@ -1813,30 +1826,38 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
 	case TLV_SHARED_RISK_GROUP:
+	    if (tmp < NODE_ID_LEN)
+		break;
 	    if (!TTEST2(*tptr, NODE_ID_LEN))
                 goto trunctlv;
 	    printf("\n\t      IS Neighbor: %s", isis_print_id(tptr, NODE_ID_LEN));
 	    tptr+=(NODE_ID_LEN);
 	    tmp-=(NODE_ID_LEN);
 
+	    if (tmp < 1)
+		break;
 	    if (!TTEST2(*tptr, 1))
                 goto trunctlv;
 	    printf(", Flags: [%s]", ISIS_MASK_TLV_SHARED_RISK_GROUP(*tptr++) ? "numbered" : "unnumbered");
 	    tmp--;
 
-	    if (!TTEST2(*tptr,4))
+	    if (tmp < sizeof(struct in_addr))
+		break;
+	    if (!TTEST2(*tptr,sizeof(struct in_addr)))
                 goto trunctlv;
 	    printf("\n\t      IPv4 interface address: %s", ipaddr_string(tptr));
-	    tptr+=4;
-	    tmp-=4;
+	    tptr+=sizeof(struct in_addr);
+	    tmp-=sizeof(struct in_addr);
 
-	    if (!TTEST2(*tptr,4))
+	    if (tmp < sizeof(struct in_addr))
+		break;
+	    if (!TTEST2(*tptr,sizeof(struct in_addr)))
                 goto trunctlv;
 	    printf("\n\t      IPv4 neighbor address: %s", ipaddr_string(tptr));
-	    tptr+=4;
-	    tmp-=4;
+	    tptr+=sizeof(struct in_addr);
+	    tmp-=sizeof(struct in_addr);
 
-	    while (tmp>0) {
+	    while (tmp>=4) {
                 if (!TTEST2(*tptr, 4))
                     goto trunctlv;
                 printf("\n\t      Link-ID: 0x%08x", EXTRACT_32BITS(tptr));
@@ -1847,7 +1868,7 @@ static int isis_print (const u_int8_t *p, u_int length)
 
 	case TLV_LSP:
 	    tlv_lsp = (const struct isis_tlv_lsp *)tptr;
-	    while(tmp>0) {
+	    while(tmp>=sizeof(struct isis_tlv_lsp)) {
 		if (!TTEST((tlv_lsp->lsp_id)[LSP_ID_LEN-1]))
 		    goto trunctlv;
 		printf("\n\t      lsp-id: %s",
@@ -1867,7 +1888,9 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
 	case TLV_CHECKSUM:
-	    if (!TTEST2(*tptr, 2))
+	    if (tmp < TLV_CHECKSUM_MINLEN)
+		break;
+	    if (!TTEST2(*tptr, TLV_CHECKSUM_MINLEN))
 		goto trunctlv;
 	    printf("\n\t      checksum: 0x%04x ", EXTRACT_16BITS(tptr));
             /* do not attempt to verify the checksum if it is zero
@@ -1881,6 +1904,8 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
 	case TLV_MT_SUPPORTED:
+	    if (tmp < TLV_MT_SUPPORTED_MINLEN)
+		break;
 	    while (tmp>1) {
 		/* length can only be a multiple of 2, otherwise there is
 		   something broken -> so decode down until length is 1 */
@@ -1907,7 +1932,9 @@ static int isis_print (const u_int8_t *p, u_int length)
 	    break;
 
         case TLV_IDRP_INFO:
-            if (!TTEST2(*tptr, 1))
+	    if (tmp < TLV_IDRP_INFO_MINLEN)
+		break;
+            if (!TTEST2(*tptr, TLV_IDRP_INFO_MINLEN))
                 goto trunctlv;
             printf("\n\t      Inter-Domain Information Type: %s",
                    tok2str(isis_subtlv_idrp_values,
@@ -1929,7 +1956,9 @@ static int isis_print (const u_int8_t *p, u_int length)
             break;
 
         case TLV_LSP_BUFFERSIZE:
-            if (!TTEST2(*tptr, 2))
+	    if (tmp < TLV_LSP_BUFFERSIZE_MINLEN)
+		break;
+            if (!TTEST2(*tptr, TLV_LSP_BUFFERSIZE_MINLEN))
                 goto trunctlv;
             printf("\n\t      LSP Buffersize: %u",EXTRACT_16BITS(tptr));
             break;
@@ -1945,6 +1974,8 @@ static int isis_print (const u_int8_t *p, u_int length)
             break;
 
         case TLV_PREFIX_NEIGH:
+	    if (tmp < sizeof(struct isis_metric_block))
+		break;
             if (!TTEST2(*tptr, sizeof(struct isis_metric_block)))
                 goto trunctlv;
             printf("\n\t      Metric Block");
@@ -1956,7 +1987,13 @@ static int isis_print (const u_int8_t *p, u_int length)
                 if (!TTEST2(*tptr, 1))
                     goto trunctlv;
                 prefix_len=*tptr++; /* read out prefix length in semioctets*/
+		if (prefix_len < 2) {
+		    printf("\n\t\tAddress: prefix length %u < 2", prefix_len);
+		    break;
+		}
                 tmp--;
+		if (tmp < prefix_len/2)
+		    break;
                 if (!TTEST2(*tptr, prefix_len/2))
                     goto trunctlv;
                 printf("\n\t\tAddress: %s/%u",
@@ -1968,13 +2005,17 @@ static int isis_print (const u_int8_t *p, u_int length)
             break;
 
         case TLV_IIH_SEQNR:
-            if (!TTEST2(*tptr, 4)) /* check if four bytes are on the wire */
+	    if (tmp < TLV_IIH_SEQNR_MINLEN)
+		break;
+            if (!TTEST2(*tptr, TLV_IIH_SEQNR_MINLEN)) /* check if four bytes are on the wire */
                 goto trunctlv;
             printf("\n\t      Sequence number: %u", EXTRACT_32BITS(tptr) );
             break;
 
         case TLV_VENDOR_PRIVATE:
-            if (!TTEST2(*tptr, 3)) /* check if enough byte for a full oui */
+	    if (tmp < TLV_VENDOR_PRIVATE_MINLEN)
+		break;
+            if (!TTEST2(*tptr, TLV_VENDOR_PRIVATE_MINLEN)) /* check if enough byte for a full oui */
                 goto trunctlv;
             printf("\n\t      Vendor OUI Code: 0x%06x", EXTRACT_24BITS(tptr) );
             tptr+=3;
