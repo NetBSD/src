@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.2 2007/05/28 15:01:55 blymn Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.3 2008/04/14 20:33:59 jdc Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,11 +36,16 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.2 2007/05/28 15:01:55 blymn Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.3 2008/04/14 20:33:59 jdc Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
+
+/* prototypes for private functions */
+#ifdef HAVE_WCHAR
+static int __wgetn_wstr(WINDOW *, wchar_t *, int);
+#endif /* HAVE_WCHAR */
 
 /*
  * getn_wstr --
@@ -177,6 +182,7 @@ wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 #endif /* HAVE_WCHAR */
 }
 
+#ifdef HAVE_WCHAR
 /*
  * __wgetn_wstr --
  *	The actual implementation.
@@ -186,9 +192,6 @@ wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 int
 __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	wchar_t *ostr, ec, kc, sc[ 2 ];
 	int oldx, remain;
 	wint_t wc;
@@ -284,5 +287,5 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 	}
 	*wstr = L'\0';
 	return OK;
-#endif /* HAVE_WCHAR */
 }
+#endif /* HAVE_WCHAR */

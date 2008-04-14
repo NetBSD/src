@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.5 2007/12/08 18:38:11 jdc Exp $ */
+/*   $NetBSD: get_wch.c,v 1.6 2008/04/14 20:33:59 jdc Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.5 2007/12/08 18:38:11 jdc Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.6 2008/04/14 20:33:59 jdc Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -47,12 +47,17 @@ __RCSID("$NetBSD: get_wch.c,v 1.5 2007/12/08 18:38:11 jdc Exp $");
 #include "curses_private.h"
 #include "keymap.h"
 
+#ifdef HAVE_WCHAR
 static short   wstate;		  /* state of the wcinkey function */
+#endif /* HAVE_WCHAR */
 extern short state;		/* storage declared in getch.c */
 
 /* prototypes for private functions */
+#ifdef HAVE_WCHAR
 static int inkey(wchar_t *wc, int to, int delay);
+#endif /* HAVE_WCHAR */
 
+#ifdef HAVE_WCHAR
 /*
  * __init_get_wch - initialise all the pointers & structures needed to make
  * get_wch work in keypad mode.
@@ -61,28 +66,22 @@ static int inkey(wchar_t *wc, int to, int delay);
 void
 __init_get_wch(SCREEN *screen)
 {
-#ifndef HAVE_WCHAR
-	return;
-#else
 	wstate = INKEY_NORM;
 	memset( &screen->cbuf, 0, MAX_CBUF_SIZE * sizeof( int ));
 	screen->cbuf_head = screen->cbuf_tail = screen->cbuf_cur = 0;
-#endif /* HAVE_WCHAR */
 }
+#endif /* HAVE_WCHAR */
 
 
+#ifdef HAVE_WCHAR
 /*
  * inkey - do the work to process keyboard input, check for multi-key
  * sequences and return the appropriate symbol if we get a match.
  *
  */
-
-int
+static int
 inkey(wchar_t *wc, int to, int delay)
 {
-#ifndef HAVE_WCHAR
-	return ERR;
-#else
 	wchar_t		 k = 0;
 	int		  c, mapping, ret = 0;
 	size_t	  mlen = 0;
@@ -446,8 +445,8 @@ inkey(wchar_t *wc, int to, int delay)
 			}
 		}
 	}
-#endif /* HAVE_WCHAR */
 }
+#endif /* HAVE_WCHAR */
 
 /*
  * get_wch --
