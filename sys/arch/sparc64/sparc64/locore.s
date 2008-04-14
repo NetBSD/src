@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.276 2008/04/14 16:14:20 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.277 2008/04/14 16:19:18 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3758,22 +3758,6 @@ sparc64_ipi_pause_trap_point:
 #endif
 	ba,a	ret_from_intr_vector
 	 nop
-
-/*
- * IPI handler to sync %tick register.
- * void sparc64_ipi_sync_tick(void *);
- *
- * On entry:
- *	%g2 = %tick of master CPU
- */
-ENTRY(sparc64_ipi_sync_tick)
-	rdpr	%tick, %g3			! read old tick
-	rd	TICK_CMPR, %g5
-	sub	%g2, %g3, %g3			! delta btw old and new
-	add	%g5, %g3, %g5			! add delta to TICK_CMPR
-	wr	%g5, TICK_CMPR
-	ba	ret_from_intr_vector
-	 wrpr	%g2, 0, %tick			! write new tick
 
 /*
  * Increment IPI event counter, defined in machine/{cpu,intr}.h.
