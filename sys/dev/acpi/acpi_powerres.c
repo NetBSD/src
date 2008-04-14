@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.5 2007/12/15 00:39:24 perry Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.6 2008/04/14 00:30:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.5 2007/12/15 00:39:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.6 2008/04/14 00:30:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -492,6 +492,7 @@ acpi_pwr_reference_resource(ACPI_OBJECT *obj, void *arg)
 
 	/* check the object type */
 	switch (obj->Type) {
+	case ACPI_TYPE_LOCAL_REFERENCE:
 	case ACPI_TYPE_ANY:
 		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "building reference from %s to %s\n",
 				     acpi_name(pc->ac_consumer), acpi_name(obj->Reference.Handle)));
