@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.47 2008/04/14 20:03:13 spz Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.48 2008/04/14 21:20:41 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.47 2008/04/14 20:03:13 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.48 2008/04/14 21:20:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ CFATTACH_DECL_NEW(ex_pci, sizeof(struct ex_pci_softc),
     ex_pci_match, ex_pci_attach, NULL, NULL);
 
 static const struct ex_pci_product {
-	u_int32_t	epp_prodid;	/* PCI product ID */
+	uint32_t	epp_prodid;	/* PCI product ID */
 	int		epp_flags;	/* initial softc flags */
 	const char	*epp_name;	/* device name */
 } ex_pci_products[] = {
@@ -342,12 +342,12 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 #define PCI_EXP_ROM_BAR		0x30
 #define PCI_INT_GNT_LAT		0x3c
 
-	u_int32_t base0;
-	u_int32_t base1;
-	u_int32_t romaddr;
-	u_int32_t pci_command;
-	u_int32_t pci_int_lat;
-	u_int32_t pci_cache_lat;
+	uint32_t base0;
+	uint32_t base1;
+	uint32_t romaddr;
+	uint32_t pci_command;
+	uint32_t pci_int_lat;
+	uint32_t pci_cache_lat;
 
 	if (state != PCI_PMCSR_STATE_D3)
 		return 0;

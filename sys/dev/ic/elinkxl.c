@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.103 2008/04/14 20:03:13 spz Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.104 2008/04/14 21:20:41 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.103 2008/04/14 20:03:13 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.104 2008/04/14 21:20:41 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -411,7 +411,7 @@ ex_config(struct ex_softc *sc)
 	} else
 		ex_probemedia(sc);
 
-	strlcpy(ifp->if_xname, device_xname(sc->sc_dev),IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = ex_start;
 	ifp->if_ioctl = ex_ioctl;
