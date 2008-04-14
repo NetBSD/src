@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.275 2008/03/28 23:22:53 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.276 2008/04/14 16:14:20 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -64,6 +64,7 @@
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
 #define	USE_BLOCK_STORE_LOAD	/* enable block load/store ops */
+#define	BB_ERRATA_1		/* writes to TICK_CMPR may fail */
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -10140,8 +10141,13 @@ ENTRY(next_tick)
 	blt,pn	%xcc, 1b	! Yes
 	 nop
 
+#ifdef BB_ERRATA_1
+	ba,a	2f
+	 nop
+#else
 	retl
 	 wr	%o2, TICK_CMPR
+#endif
 
 Ltick_ovflw:
 /*
@@ -10154,8 +10160,18 @@ Ltick_ovflw:
 	btst	%o5, %o1
 	bz,pn	%xcc, 1b
 	 mov	%o4, %o2
+#ifdef BB_ERRATA_1
+	ba,a	2f
+	 nop
+	.align	64
+2:	wr	%o2, TICK_CMPR
+	rd	TICK_CMPR, %g0
+	retl
+	 nop
+#else
 	retl
 	 wr	%o2, TICK_CMPR
+#endif
 
 
 ENTRY(setjmp)
