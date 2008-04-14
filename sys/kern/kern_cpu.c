@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.21.6.1 2008/04/03 12:43:01 mjf Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.21.6.2 2008/04/14 16:23:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.1 2008/04/03 12:43:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21.6.2 2008/04/14 16:23:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,8 @@ mi_cpu_attach(struct cpu_info *ci)
 void
 cpuctlattach(int dummy)
 {
-
+	int maj = cdevsw_lookup_major(&cpuctl_cdevsw);
+	device_register_name(makedev(maj, 0), NULL, true, DEV_OTHER, "cpuctl");
 }
 
 int

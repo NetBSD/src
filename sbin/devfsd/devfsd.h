@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.h,v 1.1.8.4 2008/04/04 21:21:10 mjf Exp $ */
+/* 	$NetBSD: devfsd.h,v 1.1.8.5 2008/04/14 16:23:57 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ struct devfs_rule {
 	 */
 	struct {
 		const char	*r_fstype;		/* file system type */
+		const char 	*r_wident;		/* wedge identifier */
 	} r_disk;
 
         /*
