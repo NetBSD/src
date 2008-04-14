@@ -1,0 +1,262 @@
+# $OpenLDAP: pkg/openldap-guide/admin/backends.sdf,v 1.8.2.5 2008/04/14 19:00:49 quanah Exp $
+# Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
+# COPYING RESTRICTIONS APPLY, see COPYRIGHT.
+
+H1: Backends
+
+
+H2: Berkeley DB Backends
+
+
+H3: Overview
+
+The {{bdb}} backend to {{slapd}}(8) is the recommended primary backend for a 
+normal {{slapd}} database.  It uses the Oracle Berkeley DB ({{TERM:BDB}}) 
+package to store data. It makes extensive use of indexing and caching 
+(see the {{SECT:Tuning}} section) to speed data access.
+
+{{hdb}} is a variant of the {{bdb}} backend that uses a hierarchical database 
+layout which supports subtree renames. It is otherwise identical to the {{bdb}}
+ behavior, and all the same configuration options apply.
+
+Note: An {{hdb}} database needs a large {{idlcachesize}} for good search performance, 
+typically three times the {{cachesize}} (entry cache size) or larger.
+
+H3: back-bdb/back-hdb Configuration
+
+MORE LATER
+
+H3: Further Information
+
+{{slapd-bdb}}(5)
+
+H2: LDAP
+
+
+H3: Overview
+
+The LDAP backend to {{slapd}}(8) is not an actual database; instead it acts 
+as a proxy to forward incoming requests to another LDAP server. While 
+processing requests it will also chase referrals, so that referrals are fully
+processed instead of being returned to the {{slapd}} client.
+
+Sessions that explicitly {{Bind}} to the {{back-ldap}} database always create 
+their own private connection to the remote LDAP server. Anonymous sessions 
+will share a single anonymous connection to the remote server. For sessions 
+bound through other mechanisms, all sessions with the same DN will share the 
+same connection. This connection pooling strategy can enhance the proxy's 
+efficiency by reducing the overhead of repeatedly making/breaking multiple 
+connections.
+
+The ldap database can also act as an information service, i.e. the identity 
+of locally authenticated clients is asserted to the remote server, possibly 
+in some modified form. For this purpose, the proxy binds to the remote server 
+with some administrative identity, and, if required, authorizes the asserted 
+identity. 
+
+H3: back-ldap Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-ldap}}(5)
+
+H2: LDIF
+
+
+H3: Overview
+
+The LDIF backend to {{slapd}}(8) is a basic storage backend that stores 
+entries in text files in LDIF format, and exploits the filesystem to create 
+the tree structure of the database. It is intended as a cheap, low performance 
+easy to use backend.
+
+When using the {{cn=config}} dynamic configuration database with persistent
+storage, the configuration data is stored using this backend. See {{slapd-config}}(5)
+for more information
+
+H3: back-ldif Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-ldif}}(5)
+
+H2: Metadirectory
+
+
+H3: Overview
+
+The meta backend to {{slapd}}(8) performs basic LDAP proxying with respect 
+to a set of remote LDAP servers, called "targets". The information contained 
+in these servers can be presented as belonging to a single Directory Information 
+Tree ({{TERM:DIT}}).
+
+A basic knowledge of the functionality of the {{slapd-ldap}}(5) backend is 
+recommended. This backend has been designed as an enhancement of the ldap 
+backend. The two backends share many features (actually they also share portions
+ of code). While the ldap backend is intended to proxy operations directed 
+ to a single server, the meta backend is mainly intended for proxying of 
+ multiple servers and possibly naming context  masquerading.
+
+These features, although useful in many scenarios, may result in excessive 
+overhead for some applications, so its use should be carefully considered.
+
+
+H3: back-meta Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-meta}}(5)
+
+H2: Monitor
+
+
+H3: Overview
+
+The monitor backend to {{slapd}}(8) is not an actual database; if enabled, 
+it is automatically generated and dynamically maintained by slapd with 
+information about the running status of the daemon.
+
+To inspect all monitor information, issue a subtree search with base {{cn=Monitor}}, 
+requesting that attributes "+" and "*" are returned. The monitor backend produces 
+mostly operational attributes, and LDAP only returns operational attributes 
+that are explicitly requested.  Requesting attribute "+" is an extension which 
+requests all operational attributes.
+
+See the {{SECT:Monitoring}} section.
+
+H3: back-monitor Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-monitor}}(5)
+
+H2: Null
+
+
+H3: Overview
+
+The Null backend to {{slapd}}(8) is surely the most useful part of slapd:
+
+* Searches return success but no entries.
+* Compares return compareFalse.
+* Updates return success (unless readonly is on) but do nothing.
+* Binds other than as the rootdn fail unless the database option "bind on" is given.
+* The slapadd(8) and slapcat(8) tools are equally exciting.
+
+Inspired by the {{F:/dev/null}} device.
+
+H3: back-null Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-null}}(5)
+
+H2: Passwd
+
+
+H3: Overview
+
+The PASSWD backend to {{slapd}}(8) serves up the user account information 
+listed in the system {{passwd}}(5) file.
+
+This backend is provided for demonstration purposes only. The DN of each entry 
+is "uid=<username>,<suffix>".
+
+H3: back-passwd Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-passwd}}(5)
+
+H2: Perl/Shell
+
+H3: Overview
+
+The Perl backend to {{slapd}}(8) works by embedding a {{perl}}(1) interpreter 
+into {{slapd}}(8). Any perl database section of the configuration file 
+{{slapd.conf}}(5) must then specify what Perl module to use. Slapd then creates 
+a new Perl object that handles all the requests for that particular instance of the backend.
+
+The Shell backend to {{slapd}}(8) executes external programs to implement 
+operations, and is designed to make it easy to tie an existing database to the 
+slapd front-end. This backend is is primarily intended to be used in prototypes.
+
+H3: back-perl/back-shell Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-shell}}(5) and {{slapd-perl}}(5)
+
+H2: Relay
+
+
+H3: Overview
+
+The primary purpose of this {{slapd}}(8) backend is to map a naming context 
+defined in a database running in the same {{slapd}}(8) instance into a 
+virtual naming context, with attributeType and objectClass manipulation, if
+required. It requires the rwm overlay.
+
+This backend and the above mentioned overlay are experimental.
+
+H3: back-relay Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-relay}}(5)
+
+H2: SQL
+
+
+H3: Overview
+
+The primary purpose of this {{slapd}}(8) backend is to PRESENT information 
+stored in some RDBMS as an LDAP subtree without any programming (some SQL and 
+maybe stored procedures can’t be considered programming, anyway ;).
+
+That is, for example, when you (some ISP) have account information you use in 
+an RDBMS, and want to use modern solutions that expect such information in LDAP 
+(to authenticate users, make email lookups etc.). Or you want to synchronize or 
+distribute information between different sites/applications that use RDBMSes 
+and/or LDAP. Or whatever else...
+
+It is {{B:NOT}} designed as a general-purpose backend that uses RDBMS instead of 
+BerkeleyDB (as the standard BDB backend does), though it can be used as such with 
+several limitations. Please see {{SECT: LDAP vs RDBMS}} for discussion.
+
+The idea is to use some meta-information to translate LDAP queries to SQL queries, 
+leaving relational schema untouched, so that old applications can continue using 
+it without any modifications. This allows SQL and LDAP applications to interoperate 
+without replication, and exchange data as needed.
+
+The SQL backend is designed to be tunable to virtually any relational schema without 
+having to change source (through that meta-information mentioned). Also, it uses 
+ODBC to connect to RDBMSes, and is highly configurable for SQL dialects RDBMSes 
+may use, so it may be used for integration and distribution of data on different 
+RDBMSes, OSes, hosts etc., in other words, in highly heterogeneous environment.
+
+This backend is experimental.
+
+H3: back-sql Configuration
+
+LATER
+
+H3: Further Information
+
+{{slapd-sql}}(5)
