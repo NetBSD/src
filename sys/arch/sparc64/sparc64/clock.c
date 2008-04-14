@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.94 2008/04/09 14:58:23 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.95 2008/04/14 17:43:02 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.94 2008/04/09 14:58:23 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95 2008/04/14 17:43:02 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -317,21 +317,22 @@ tickintr_establish(int pil, int (*fun)(void *))
 {
 	int s;
 	struct intrhand *ih;
+	struct cpu_info *ci = curcpu();
 
 	ih = init_softint(pil, fun);
 	ih->ih_number = 1;
-	if (CPU_IS_PRIMARY(curcpu()))
+	if (CPU_IS_PRIMARY(ci))
 		intr_establish(pil, ih);
-	curcpu()->ci_tick_ih = ih;
+	ci->ci_tick_ih = ih;
 
 	/* set the next interrupt time */
-	curcpu()->ci_tick_increment = curcpu()->ci_cpu_clockrate[0] / hz;
+	ci->ci_tick_increment = ci->ci_cpu_clockrate[0] / hz;
 #ifdef DEBUG
 	printf("Using %%tick -- intr in %ld cycles\n",
-	    curcpu()->ci_tick_increment);
+	    ci->ci_tick_increment);
 #endif
 	s = intr_disable();
-	next_tick(curcpu()->ci_tick_increment);
+	next_tick(ci->ci_tick_increment);
 	intr_restore(s);
 }
 
