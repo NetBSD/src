@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1042 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1043 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -476,6 +476,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	cobalt: Fix a botched spl(9) bug which could cause network freeze
 		on traffic between two network interfaces. [tsutsui 20080318]
 	bzip2(1): Upgrade to 1.0.5. [christos 20080318]
+	libcurses: Add termattrs() and term_attrs(). [jdc 20080321]
 	kerberos: Upgrade to Heimdal-1.1. [mlelstv 20080322]
 	cobalt: Add kernel support for optional Z85C30 serial on Qube 2700.
 		[tsutsui 20080327]
@@ -500,3 +501,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		    make it easier to write new code to the API.  Donated
 		    by Coyote Point Systems, Inc. [tls 20080410]
 	acpi(4): Updated ACPI-CA to 20080321. [jmcneill 20080412]
+	libcurses: Add getwin() and putwin(). [jdc 20080414]
