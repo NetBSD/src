@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.5 2008/04/11 00:55:41 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.6 2008/04/15 22:14:07 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.5 2008/04/11 00:55:41 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.6 2008/04/15 22:14:07 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -90,9 +90,9 @@ setatrange(const char *range, int d)
 void
 setatphase(const char *phase, int d)
 {
-	if (!strcmp(phase, "1"))
+	if (strcmp(phase, "1") == 0)
 		at_nr.nr_phase = 1;
-	else if (!strcmp(phase, "2"))
+	else if (strcmp(phase, "2") == 0)
 		at_nr.nr_phase = 2;
 	else
 		errx(EXIT_FAILURE, "%s: illegal phase", phase);
