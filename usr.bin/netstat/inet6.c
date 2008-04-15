@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.46 2008/04/15 04:43:25 thorpej Exp $	*/
+/*	$NetBSD: inet6.c,v 1.47 2008/04/15 04:50:05 thorpej Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.46 2008/04/15 04:43:25 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.47 2008/04/15 04:50:05 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,8 +140,8 @@ struct	tcpcb tcpcb;
 #endif
 struct	socket sockb;
 
-char	*inet6name __P((struct in6_addr *));
-void	inet6print __P((struct in6_addr *, int, char *));
+char	*inet6name(struct in6_addr *);
+void	inet6print(struct in6_addr *, int, char *);
 
 /*
  * Print a summary of connections related to an Internet
@@ -215,9 +215,7 @@ ip6protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 
 
 void
-ip6protopr(off, name)
-	u_long off;
-	char *name;
+ip6protopr(u_long off, char *name)
 {
 	struct inpcbtable table;
 	struct in6pcb *head, *prev, *next;
@@ -342,9 +340,7 @@ ip6protopr(off, name)
  * Dump TCP6 statistics structure.
  */
 void
-tcp6_stats(off, name)
-	u_long off;
-	char *name;
+tcp6_stats(u_long off, char *name)
 {
 	struct tcp6stat tcp6stat;
 
@@ -744,8 +740,7 @@ ip6_stats(u_long off, char *name)
  * Dump IPv6 per-interface statistics based on RFC 2465.
  */
 void
-ip6_ifstats(ifname)
-	char *ifname;
+ip6_ifstats(char *ifname)
 {
 	struct in6_ifreq ifr;
 	int s;
@@ -1144,8 +1139,7 @@ icmp6_stats(u_long off, char *name)
  * Dump ICMPv6 per-interface statistics based on RFC 2466.
  */
 void
-icmp6_ifstats(ifname)
-	char *ifname;
+icmp6_ifstats(char *ifname)
 {
 	struct in6_ifreq ifr;
 	int s;
@@ -1211,9 +1205,7 @@ icmp6_ifstats(ifname)
  * Dump PIM statistics structure.
  */
 void
-pim6_stats(off, name)
-	u_long off;
-	char *name;
+pim6_stats(u_long off, char *name)
 {
 	struct pim6stat pim6stat;
 
@@ -1246,9 +1238,7 @@ pim6_stats(off, name)
  * Dump raw ip6 statistics structure.
  */
 void
-rip6_stats(off, name)
-	u_long off;
-	char *name;
+rip6_stats(u_long off, char *name)
 {
 	struct rip6stat rip6stat;
 	u_quad_t delivered;
@@ -1292,10 +1282,7 @@ rip6_stats(off, name)
  * Take numeric_addr and numeric_port into consideration.
  */
 void
-inet6print(in6, port, proto)
-	register struct in6_addr *in6;
-	int port;
-	char *proto;
+inet6print(struct in6_addr *in6, int port, char *proto)
 {
 #define GETSERVBYPORT6(port, proto, ret)\
 do {\
@@ -1336,8 +1323,7 @@ do {\
  */
 
 char *
-inet6name(in6p)
-	struct in6_addr *in6p;
+inet6name(struct in6_addr *in6p)
 {
 	register char *cp;
 	static char line[NI_MAXHOST];
@@ -1397,7 +1383,7 @@ inet6name(in6p)
  * Dump the contents of a TCP6 PCB.
  */
 void
-tcp6_dump(pcbaddr)
+tcp6_dump(u_long pcbaddr)
 	u_long pcbaddr;
 {
 	struct tcp6cb tcp6cb;

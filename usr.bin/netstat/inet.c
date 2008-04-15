@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.83 2008/04/08 01:03:58 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.84 2008/04/15 04:50:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.83 2008/04/08 01:03:58 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.84 2008/04/15 04:50:05 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,8 +91,8 @@ struct	inpcb inpcb;
 struct	tcpcb tcpcb;
 struct	socket sockb;
 
-char	*inetname __P((struct in_addr *));
-void	inetprint __P((struct in_addr *, u_int16_t, const char *, int));
+char	*inetname(struct in_addr *);
+void	inetprint(struct in_addr *, u_int16_t, const char *, int);
 
 /*
  * Print a summary of connections related to an Internet
@@ -160,9 +160,7 @@ protopr0(intptr_t ppcb, u_long rcv_sb_cc, u_long snd_sb_cc,
 }
 
 void
-protopr(off, name)
-	u_long off;
-	char *name;
+protopr(u_long off, char *name)
 {
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
@@ -601,9 +599,7 @@ icmp_stats(u_long off, char *name)
  * Dump IGMP statistics structure.
  */
 void
-igmp_stats(off, name)
-	u_long off;
-	char *name;
+igmp_stats(u_long off, char *name)
 {
 	struct igmpstat igmpstat;
 
@@ -688,9 +684,7 @@ carp_stats(u_long off, char *name)
  * Dump PIM statistics structure.
  */
 void
-pim_stats(off, name)
-	u_long off;
-	char *name;
+pim_stats(u_long off, char *name)
 {
 	struct pimstat pimstat;
 
@@ -724,9 +718,7 @@ pim_stats(off, name)
  * Dump the ARP statistics structure.
  */
 void
-arp_stats(off, name)
-	u_long off;
-	char *name;
+arp_stats(u_long off, char *name)
 {
 	struct arpstat arpstat;
 
@@ -778,11 +770,8 @@ arp_stats(off, name)
  * Take numeric_addr and numeric_port into consideration.
  */
 void
-inetprint(in, port, proto, numeric_port)
-	struct in_addr *in;
-	u_int16_t port;
-	const char *proto;
-	int numeric_port;
+inetprint(struct in_addr *in, uint16_t port, const char *proto,
+	  int numeric_port)
 {
 	struct servent *sp = 0;
 	char line[80], *cp;
@@ -807,8 +796,7 @@ inetprint(in, port, proto, numeric_port)
  * numeric value, otherwise try for symbolic name.
  */
 char *
-inetname(inp)
-	struct in_addr *inp;
+inetname(struct in_addr *inp)
 {
 	char *cp;
 	static char line[50];
@@ -867,8 +855,7 @@ inetname(inp)
  * Dump the contents of a TCP PCB.
  */
 void
-tcp_dump(pcbaddr)
-	u_long pcbaddr;
+tcp_dump(u_long pcbaddr)
 {
 	callout_impl_t *ci;
 	struct tcpcb tcpcb;
