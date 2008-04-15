@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1128 2008/04/02 14:49:31 xtraeme Exp $
+#	$NetBSD: mi,v 1.1129 2008/04/15 00:49:02 dogcow Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4581,6 +4581,7 @@
 ./usr/share/man/cat3/curses_delch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_deleteln.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_echochar.0		comp-c-catman		.cat
+./usr/share/man/cat3/curses_fileio.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_inch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_input.0		comp-c-catman		.cat
 ./usr/share/man/cat3/curses_insdelln.0		comp-c-catman		.cat
@@ -9612,6 +9613,7 @@
 ./usr/share/man/man3/curses_delch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_deleteln.3		comp-c-man		.man
 ./usr/share/man/man3/curses_echochar.3		comp-c-man		.man
+./usr/share/man/man3/curses_fileio.3		comp-c-man		.man
 ./usr/share/man/man3/curses_inch.3		comp-c-man		.man
 ./usr/share/man/man3/curses_input.3		comp-c-man		.man
 ./usr/share/man/man3/curses_insdelln.3		comp-c-man		.man
