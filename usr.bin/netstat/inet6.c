@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.47 2008/04/15 04:50:05 thorpej Exp $	*/
+/*	$NetBSD: inet6.c,v 1.48 2008/04/15 05:13:37 thorpej Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.47 2008/04/15 04:50:05 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.48 2008/04/15 05:13:37 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1240,40 +1240,40 @@ pim6_stats(u_long off, char *name)
 void
 rip6_stats(u_long off, char *name)
 {
-	struct rip6stat rip6stat;
+	uint64_t rip6stat[RIP6_NSTATS];
 	u_quad_t delivered;
 
 	if (use_sysctl) {
 		size_t size = sizeof(rip6stat);
 
-		if (sysctlbyname("net.inet6.raw6.stats", &rip6stat, &size,
+		if (sysctlbyname("net.inet6.raw6.stats", rip6stat, &size,
 		    NULL, 0) == -1)
 			err(1, "net.inet6.raw6.stats");
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&rip6stat, sizeof(rip6stat));
+		kread(off, (char *)rip6stat, sizeof(rip6stat));
 	}
 	printf("%s:\n", name);
 
-#define	p(f, m) if (rip6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)rip6stat.f, plural(rip6stat.f))
-	p(rip6s_ipackets, "\t%llu message%s received\n");
-	p(rip6s_isum, "\t%llu checksum calculation%s on inbound\n");
-	p(rip6s_badsum, "\t%llu message%s with bad checksum\n");
-	p(rip6s_nosock, "\t%llu message%s dropped due to no socket\n");
-	p(rip6s_nosockmcast,
+#define	p(f, m) if (rip6stat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)rip6stat[f], plural(rip6stat[f]))
+	p(RIP6_STAT_IPACKETS, "\t%llu message%s received\n");
+	p(RIP6_STAT_ISUM, "\t%llu checksum calculation%s on inbound\n");
+	p(RIP6_STAT_BADSUM, "\t%llu message%s with bad checksum\n");
+	p(RIP6_STAT_NOSOCK, "\t%llu message%s dropped due to no socket\n");
+	p(RIP6_STAT_NOSOCKMCAST,
 	    "\t%llu multicast message%s dropped due to no socket\n");
-	p(rip6s_fullsock,
+	p(RIP6_STAT_FULLSOCK,
 	    "\t%llu message%s dropped due to full socket buffers\n");
-	delivered = rip6stat.rip6s_ipackets -
-		    rip6stat.rip6s_badsum -
-		    rip6stat.rip6s_nosock -
-		    rip6stat.rip6s_nosockmcast -
-		    rip6stat.rip6s_fullsock;
+	delivered = rip6stat[RIP6_STAT_IPACKETS] -
+		    rip6stat[RIP6_STAT_BADSUM] -
+		    rip6stat[RIP6_STAT_NOSOCK] -
+		    rip6stat[RIP6_STAT_NOSOCKMCAST] -
+		    rip6stat[RIP6_STAT_FULLSOCK];
 	if (delivered || sflag <= 1)
 		printf("\t%llu delivered\n", (unsigned long long)delivered);
-	p(rip6s_opackets, "\t%llu datagram%s output\n");
+	p(RIP6_STAT_OPACKETS, "\t%llu datagram%s output\n");
 #undef p
 }
 
