@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.66 2007/07/14 21:20:31 ad Exp $
+# $NetBSD: Makefile,v 1.67 2008/04/15 11:17:47 plunky Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@
 CONFIGFILES=\
 		DAEMON LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
-		bootconf.sh bootparams btconfig btdevctl bthcid btuartd \
+		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck ftpd \
