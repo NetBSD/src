@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.15 2008/03/02 07:12:15 bjs Exp $ */
+/* $NetBSD: drmP.h,v 1.16 2008/04/15 04:08:58 bjs Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -230,7 +230,7 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_STRUCTPROC		struct proc
 #define DRM_STRUCTCDEVPROC	struct lwp
 #define DRM_SPINTYPE		kmutex_t
-#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DRIVER, IPL_TTY)
+#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_NONE)
 #define DRM_SPINUNINIT(l)	mutex_destroy(l)
 #define DRM_SPINLOCK(l)		mutex_enter(l)
 #define DRM_SPINUNLOCK(u)	mutex_exit(u)
