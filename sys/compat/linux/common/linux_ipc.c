@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.44 2008/01/28 14:31:35 njoly Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.45 2008/04/15 11:08:05 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.44 2008/01/28 14:31:35 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.45 2008/04/15 11:08:05 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -386,12 +386,10 @@ linux_sys_shmat(struct lwp *l, const struct linux_sys_shmat_args *uap, register_
 	if ((error = sys_shmat(l, (const void *)uap, retval)))
 		return error;
 
-#ifndef __amd64__
 	if ((error = copyout(&retval[0], SCARG(uap, raddr), sizeof retval[0])))
 		return error;
 
 	retval[0] = 0;
-#endif
 	return 0;
 }
 #endif /* __amd64__ */
