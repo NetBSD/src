@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.116 2007/12/22 19:04:10 jmcneill Exp $
+#	$NetBSD: special,v 1.117 2008/04/15 11:17:47 plunky Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -28,8 +28,8 @@
 ./etc/amd			type=dir  mode=0755 optional
 ./etc/apm			type=dir  mode=0755 optional
 ./etc/bluetooth			type=dir  mode=0755
+./etc/bluetooth/btattach.conf	type=file mode=0644
 ./etc/bluetooth/btdevctl.conf	type=file mode=0644
-./etc/bluetooth/btuartd.conf	type=file mode=0644
 ./etc/bluetooth/hosts		type=file mode=0644
 ./etc/bluetooth/protocols	type=file mode=0644
 ./etc/bootparams		type=file mode=0644 optional
@@ -181,6 +181,7 @@
 ./etc/rc.d/apmd			type=file mode=0555
 ./etc/rc.d/bootconf.sh		type=file mode=0555
 ./etc/rc.d/bootparams		type=file mode=0555
+./etc/rc.d/btattach		type=file mode=0555
 ./etc/rc.d/btconfig		type=file mode=0555
 ./etc/rc.d/btdevctl		type=file mode=0555
 ./etc/rc.d/bthcid		type=file mode=0555
