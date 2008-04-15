@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1130 2008/04/15 11:17:47 plunky Exp $
+#	$NetBSD: mi,v 1.1131 2008/04/15 18:27:01 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5057,6 +5057,7 @@
 ./usr/share/man/cat3/getwc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getwchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getwd.0			comp-c-catman		.cat
+./usr/share/man/cat3/getwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/getyx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/gid_from_group.0		comp-c-catman		.cat
 ./usr/share/man/cat3/glob.0			comp-c-catman		.cat
@@ -6446,6 +6447,7 @@
 ./usr/share/man/cat3/putw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putwc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/putwchar.0			comp-c-catman		.cat
+./usr/share/man/cat3/putwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_abort.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_copy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pw_edit.0			comp-c-catman		.cat
@@ -10089,6 +10091,7 @@
 ./usr/share/man/man3/getwc.3			comp-c-man		.man
 ./usr/share/man/man3/getwchar.3			comp-c-man		.man
 ./usr/share/man/man3/getwd.3			comp-c-man		.man
+./usr/share/man/man3/getwin.3			comp-c-man		.man
 ./usr/share/man/man3/getyx.3			comp-c-man		.man
 ./usr/share/man/man3/gid_from_group.3		comp-c-man		.man
 ./usr/share/man/man3/glob.3			comp-c-man		.man
@@ -11478,6 +11481,7 @@
 ./usr/share/man/man3/putw.3			comp-c-man		.man
 ./usr/share/man/man3/putwc.3			comp-c-man		.man
 ./usr/share/man/man3/putwchar.3			comp-c-man		.man
+./usr/share/man/man3/putwin.3			comp-c-man		.man
 ./usr/share/man/man3/pw_abort.3			comp-c-man		.man
 ./usr/share/man/man3/pw_copy.3			comp-c-man		.man
 ./usr/share/man/man3/pw_edit.3			comp-c-man		.man
