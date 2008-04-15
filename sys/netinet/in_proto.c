@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.91 2007/10/05 03:28:13 dyoung Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.92 2008/04/15 16:02:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.91 2007/10/05 03:28:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.92 2008/04/15 16:02:03 thorpej Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -310,6 +310,7 @@ const struct protosw inetsw[] = {
 	.pr_usrreq = rip_usrreq,
 	.pr_fasttimo = igmp_fasttimo,
 	.pr_slowtimo = igmp_slowtimo,
+	.pr_init = igmp_init,
 },
 #ifdef PIM
 {	.pr_type = SOCK_RAW,
