@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.86 2008/04/15 15:17:54 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.87 2008/04/15 16:02:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.86 2008/04/15 15:17:54 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.87 2008/04/15 16:02:04 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -601,26 +601,35 @@ icmp_stats(u_long off, char *name)
 void
 igmp_stats(u_long off, char *name)
 {
-	struct igmpstat igmpstat;
+	uint64_t igmpstat[IGMP_NSTATS];
 
-	if (off == 0)
-		return;
-	kread(off, (char *)&igmpstat, sizeof (igmpstat));
+	if (use_sysctl) {
+		size_t size = sizeof(igmpstat);
+
+		if (sysctlbyname("net.inet.igmp.stats", igmpstat, &size,
+				 NULL, 0) == -1)
+			err(1, "net.inet.igmp.stats");
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)igmpstat, sizeof (igmpstat));
+	}
+
 	printf("%s:\n", name);
 
-#define	p(f, m) if (igmpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)igmpstat.f, plural(igmpstat.f))
-#define	py(f, m) if (igmpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)igmpstat.f, igmpstat.f != 1 ? "ies" : "y")
-	p(igps_rcv_total, "\t%llu message%s received\n");
-        p(igps_rcv_tooshort, "\t%llu message%s received with too few bytes\n");
-        p(igps_rcv_badsum, "\t%llu message%s received with bad checksum\n");
-        py(igps_rcv_queries, "\t%llu membership quer%s received\n");
-        py(igps_rcv_badqueries, "\t%llu membership quer%s received with invalid field(s)\n");
-        p(igps_rcv_reports, "\t%llu membership report%s received\n");
-        p(igps_rcv_badreports, "\t%llu membership report%s received with invalid field(s)\n");
-        p(igps_rcv_ourreports, "\t%llu membership report%s received for groups to which we belong\n");
-        p(igps_snd_reports, "\t%llu membership report%s sent\n");
+#define	p(f, m) if (igmpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)igmpstat[f], plural(igmpstat[f]))
+#define	py(f, m) if (igmpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)igmpstat[f], igmpstat[f] != 1 ? "ies" : "y")
+	p(IGMP_STAT_RCV_TOTAL, "\t%llu message%s received\n");
+        p(IGMP_STAT_RCV_TOOSHORT, "\t%llu message%s received with too few bytes\n");
+        p(IGMP_STAT_RCV_BADSUM, "\t%llu message%s received with bad checksum\n");
+        py(IGMP_STAT_RCV_QUERIES, "\t%llu membership quer%s received\n");
+        py(IGMP_STAT_RCV_BADQUERIES, "\t%llu membership quer%s received with invalid field(s)\n");
+        p(IGMP_STAT_RCV_REPORTS, "\t%llu membership report%s received\n");
+        p(IGMP_STAT_RCV_BADREPORTS, "\t%llu membership report%s received with invalid field(s)\n");
+        p(IGMP_STAT_RCV_OURREPORTS, "\t%llu membership report%s received for groups to which we belong\n");
+        p(IGMP_STAT_SND_REPORTS, "\t%llu membership report%s sent\n");
 #undef p
 #undef py
 }
