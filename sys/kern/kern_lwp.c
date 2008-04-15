@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.100 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.101 2008/04/15 18:54:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,29 +56,29 @@
  *	lwp::l_stat.  The states are broken into two sets below.  The first
  *	set is guaranteed to represent the absolute, current state of the
  *	LWP:
- * 
- * 	LSONPROC
- * 
- * 		On processor: the LWP is executing on a CPU, either in the
- * 		kernel or in user space.
- * 
- * 	LSRUN
- * 
- * 		Runnable: the LWP is parked on a run queue, and may soon be
- * 		chosen to run by a idle processor, or by a processor that
- * 		has been asked to preempt a currently runnning but lower
- * 		priority LWP.  If the LWP is not swapped in (L_INMEM == 0)
+ *
+ *	LSONPROC
+ *
+ *		On processor: the LWP is executing on a CPU, either in the
+ *		kernel or in user space.
+ *
+ *	LSRUN
+ *
+ *		Runnable: the LWP is parked on a run queue, and may soon be
+ *		chosen to run by an idle processor, or by a processor that
+ *		has been asked to preempt a currently runnning but lower
+ *		priority LWP.  If the LWP is not swapped in (LW_INMEM == 0)
  *		then the LWP is not on a run queue, but may be soon.
- * 
- * 	LSIDL
- * 
- * 		Idle: the LWP has been created but has not yet executed,
+ *
+ *	LSIDL
+ *
+ *		Idle: the LWP has been created but has not yet executed,
  *		or it has ceased executing a unit of work and is waiting
  *		to be started again.
- * 
- * 	LSSUSPENDED:
- * 
- * 		Suspended: the LWP has had its execution suspended by
+ *
+ *	LSSUSPENDED:
+ *
+ *		Suspended: the LWP has had its execution suspended by
  *		another LWP in the same process using the _lwp_suspend()
  *		system call.  User-level LWPs also enter the suspended
  *		state when the system is shutting down.
@@ -86,36 +86,36 @@
  *	The second set represent a "statement of intent" on behalf of the
  *	LWP.  The LWP may in fact be executing on a processor, may be
  *	sleeping or idle. It is expected to take the necessary action to
- *	stop executing or become "running" again within	a short timeframe.
+ *	stop executing or become "running" again within a short timeframe.
  *	The LW_RUNNING flag in lwp::l_flag indicates that an LWP is running.
- *	Importantly, in indicates that its state is tied to a CPU.
- * 
- * 	LSZOMB:
- * 
- * 		Dead or dying: the LWP has released most of its resources
- *		and is a) about to switch away into oblivion b) has already
+ *	Importantly, it indicates that its state is tied to a CPU.
+ *
+ *	LSZOMB:
+ *
+ *		Dead or dying: the LWP has released most of its resources
+ *		and is: a) about to switch away into oblivion b) has already
  *		switched away.  When it switches away, its few remaining
  *		resources can be collected.
- * 
- * 	LSSLEEP:
- * 
- * 		Sleeping: the LWP has entered itself onto a sleep queue, and
- * 		has switched away or will switch away shortly to allow other
+ *
+ *	LSSLEEP:
+ *
+ *		Sleeping: the LWP has entered itself onto a sleep queue, and
+ *		has switched away or will switch away shortly to allow other
  *		LWPs to run on the CPU.
- * 
- * 	LSSTOP:
- * 
- * 		Stopped: the LWP has been stopped as a result of a job
- * 		control signal, or as a result of the ptrace() interface. 
  *
- * 		Stopped LWPs may run briefly within the kernel to handle
- * 		signals that they receive, but will not return to user space
- * 		until their process' state is changed away from stopped. 
+ *	LSSTOP:
  *
- * 		Single LWPs within a process can not be set stopped
- * 		selectively: all actions that can stop or continue LWPs
- * 		occur at the process level.
- * 
+ *		Stopped: the LWP has been stopped as a result of a job
+ *		control signal, or as a result of the ptrace() interface. 
+ *
+ *		Stopped LWPs may run briefly within the kernel to handle
+ *		signals that they receive, but will not return to user space
+ *		until their process' state is changed away from stopped. 
+ *
+ *		Single LWPs within a process can not be set stopped
+ *		selectively: all actions that can stop or continue LWPs
+ *		occur at the process level.
+ *
  * State transitions
  *
  *	Note that the LSSTOP state may only be set when returning to
@@ -128,8 +128,8 @@
  *	LWPs may transition states in the following ways:
  *
  *	 RUN -------> ONPROC		ONPROC -----> RUN
- *	            > STOPPED			    > SLEEP
- *	            > SUSPENDED			    > STOPPED
+ *		    > STOPPED			    > SLEEP
+ *		    > SUSPENDED			    > STOPPED
  *						    > SUSPENDED
  *						    > ZOMB
  *
@@ -137,8 +137,8 @@
  *	            > SLEEP			    > SLEEP
  *
  *	 SLEEP -----> ONPROC		IDL --------> RUN
- *		    > RUN		            > SUSPENDED
- *		    > STOPPED                       > STOPPED
+ *		    > RUN			    > SUSPENDED
+ *		    > STOPPED			    > STOPPED
  *		    > SUSPENDED
  *
  *	Other state transitions are possible with kernel threads (eg
@@ -152,7 +152,7 @@
  *	each field are documented in sys/lwp.h.
  *
  *	State transitions must be made with the LWP's general lock held,
- * 	and may cause the LWP's lock pointer to change. Manipulation of
+ *	and may cause the LWP's lock pointer to change. Manipulation of
  *	the general lock is not performed directly, but through calls to
  *	lwp_lock(), lwp_relock() and similar.
  *
@@ -166,7 +166,7 @@
  *	LSIDL, LSRUN:
  *
  *		Always covered by spc_mutex, which protects the run queues.
- *		This may be a per-CPU lock, depending on the scheduler.
+ *		This is a per-CPU lock.
  *
  *	LSSLEEP:
  *
@@ -174,7 +174,7 @@
  *		LWP resides on, indirectly referenced by l_sleepq->sq_mutex.
  *
  *	LSSTOP, LSSUSPENDED:
- *	
+ *
  *		If the LWP was previously sleeping (l_wchan != NULL), then
  *		l_mutex references the sleep queue lock.  If the LWP was
  *		runnable or on the CPU when halted, or has been removed from
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.100 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.101 2008/04/15 18:54:30 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1329,7 +1329,7 @@ lwp_userret(struct lwp *l)
 		/*
 		 * Process pending signals first, unless the process
 		 * is dumping core or exiting, where we will instead
-		 * enter the L_WSUSPEND case below.
+		 * enter the LW_WSUSPEND case below.
 		 */
 		if ((l->l_flag & (LW_PENDSIG | LW_WCORE | LW_WEXIT)) ==
 		    LW_PENDSIG) {
