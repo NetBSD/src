@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.25 2008/04/15 19:06:16 cegger Exp $ */
+/* $NetBSD: lpt.c,v 1.26 2008/04/15 22:50:33 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.25 2008/04/15 19:06:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.26 2008/04/15 22:50:33 cegger Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -578,7 +578,7 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 		return EINVAL;
 	}
 
-	LPT_VPRINTF(("%s(%s): writing %d bytes\n", __func__,
+	LPT_VPRINTF(("%s(%s): writing %zu bytes\n", __func__,
 	    device_xname(dev), uio->uio_resid));
 
 	/* Write the data */
