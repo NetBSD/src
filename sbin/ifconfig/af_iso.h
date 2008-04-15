@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.h,v 1.1 2005/03/20 00:02:58 thorpej Exp $	*/
+/*	$NetBSD: af_iso.h,v 1.2 2008/04/15 22:24:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,6 @@ extern struct iso_aliasreq iso_addreq;
 
 void	setsnpaoffset(const char *, int);
 void	setnsellength(const char *, int);
-void	adjust_nsellength(void);
 
 void	iso_status(int);
 void	iso_getaddr(const char *, int);

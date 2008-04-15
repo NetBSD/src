@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.5 2008/04/11 00:56:11 dyoung Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.6 2008/04/15 22:24:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.5 2008/04/11 00:56:11 dyoung Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.6 2008/04/15 22:24:37 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -59,15 +59,20 @@ __RCSID("$NetBSD: af_iso.c,v 1.5 2008/04/11 00:56:11 dyoung Exp $");
 #include "extern.h"
 #include "af_iso.h"
 
-struct	iso_ifreq	iso_ridreq;
-struct	iso_aliasreq	iso_addreq;
+#define	DEFNSELLEN	1
 
-static int nsellength = 1;
+struct	iso_ifreq	iso_ridreq = {.ifr_Addr = {.siso_tlen = DEFNSELLEN}};
+struct	iso_aliasreq	iso_addreq = {.ifra_dstaddr = {.siso_tlen = DEFNSELLEN},
+			              .ifra_addr = {.siso_tlen = DEFNSELLEN}};
+
+static int nsellength = DEFNSELLEN;
 
 #define SISO(x) ((struct sockaddr_iso *) &(x))
 struct sockaddr_iso *sisotab[] = {
     SISO(iso_ridreq.ifr_Addr), SISO(iso_addreq.ifra_addr),
     SISO(iso_addreq.ifra_mask), SISO(iso_addreq.ifra_dstaddr)};
+
+static void adjust_nsellength(void);
 
 void
 iso_getaddr(const char *addr, int which)
@@ -98,17 +103,16 @@ setnsellength(const char *val, int d)
 		errx(EXIT_FAILURE, "Negative NSEL length is absurd");
 	if (afp == 0 || afp->af_af != AF_ISO)
 		errx(EXIT_FAILURE, "Setting NSEL length valid only for iso");
+	adjust_nsellength();
 }
 
 static void
 fixnsel(struct sockaddr_iso *siso)
 {
-	if (siso->siso_family == AF_UNSPEC)
-		return;
 	siso->siso_tlen = nsellength;
 }
 
-void
+static void
 adjust_nsellength(void)
 {
 	fixnsel(sisotab[RIDADDR]);
