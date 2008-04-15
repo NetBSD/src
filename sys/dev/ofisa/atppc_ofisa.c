@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.7 2008/04/08 20:11:36 cegger Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.8 2008/04/15 15:02:28 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.7 2008/04/08 20:11:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.8 2008/04/15 15:02:28 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -69,7 +69,7 @@ struct atppc_ofisa_softc {
 	int sc_drq;
 };
 
-CFATTACH_DECL(atppc_ofisa, sizeof(struct atppc_ofisa_softc), atppc_ofisa_match,
+CFATTACH_DECL_NEW(atppc_ofisa, sizeof(struct atppc_ofisa_softc), atppc_ofisa_match,
     atppc_ofisa_attach, NULL, NULL);
 
 static int atppc_ofisa_dma_start(struct atppc_softc *, void *, u_int,
@@ -120,7 +120,7 @@ atppc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	n = lpt_ofisa_md_reg_fixup(parent, self, aux, &reg, 1, n);
 #endif
 	if (n != 1) {
-		aprint_error_dev(&sc->sc_dev, "unable to find i/o register resource\n");
+		aprint_error_dev(sc->sc_dev, "unable to find i/o register resource\n");
 		return;
 	}
 
@@ -130,13 +130,13 @@ atppc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	n = lpt_ofisa_md_intr_fixup(parent, self, aux, &intr, 1, n);
 #endif
 	if (n != 1) {
-		aprint_error_dev(&sc->sc_dev, "unable to find irq resource\n");
+		aprint_error_dev(sc->sc_dev, "unable to find irq resource\n");
 		return;
 	}
 
 	/* find our DRQ */
 	if (ofisa_dma_get(aa->oba.oba_phandle, &dma, 1) != 1) {
-		aprint_error_dev(&sc->sc_dev, "unable to find DMA data\n");
+		aprint_error_dev(sc->sc_dev, "unable to find DMA data\n");
 		return;
 	}
 	asc->sc_drq = dma.drq;

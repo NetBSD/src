@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.10 2008/04/08 07:35:35 cegger Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.11 2008/04/15 15:02:29 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.10 2008/04/08 07:35:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.11 2008/04/15 15:02:29 cegger Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.10 2008/04/08 07:35:35 cegger Exp $
 static int
 do_1284_wait(struct ppbus_softc * bus, char mask, char status)
 {
-	return (ppbus_poll_bus(&(bus->sc_dev), 4, mask, status,
+	return (ppbus_poll_bus(bus->sc_dev, 4, mask, status,
 		PPBUS_NOINTR | PPBUS_POLL));
 }
 
@@ -59,7 +59,7 @@ do_1284_wait(struct ppbus_softc * bus, char mask, char status)
 static int
 do_peripheral_wait(struct ppbus_softc * bus, char mask, char status)
 {
-	return (ppbus_poll_bus(&(bus->sc_dev), 100, mask, status,
+	return (ppbus_poll_bus(bus->sc_dev, 100, mask, status,
 		PPBUS_NOINTR | PPBUS_POLL));
 }
 
@@ -76,17 +76,19 @@ ppbus_1284_reset_error(struct ppbus_softc * bus, int state)
 
 /* Get IEEE1284 state */
 int
-ppbus_1284_get_state(struct device * dev)
+ppbus_1284_get_state(device_t dev)
 {
-	return (((struct ppbus_softc *)dev)->sc_1284_state);
+	struct ppbus_softc *sc = device_private(dev);
+
+	return sc->sc_1284_state;
 }
 
 
 /* Set IEEE1284 state if no error occurred */
 int
-ppbus_1284_set_state(struct device * dev, int state)
+ppbus_1284_set_state(device_t dev, int state)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 	/* call ppbus_1284_reset_error() if you absolutly want to change
 	 * the state from PPBUS_ERROR to another */
@@ -113,7 +115,7 @@ ppbus_1284_set_error(struct ppbus_softc * bus, int error, int event)
 
 #ifdef DEBUG_1284
 	printf("%s<1284>: error=%d status=0x%x event=%d\n",
-		device_xname(&bus->sc_dev), error, ppbus_rstr((struct device *)bus),
+		device_xname(bus->sc_dev), error, ppbus_rstr((device_t)bus),
 		event);
 
 #endif
@@ -168,9 +170,9 @@ ppbus_request_mode(int mode, int options)
 
 /* Negotiate the peripheral side */
 int
-ppbus_peripheral_negotiate(struct device * dev, int mode, int options)
+ppbus_peripheral_negotiate(device_t dev, int mode, int options)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	int spin, request_mode, error = 0;
 	char r;
 
@@ -247,9 +249,9 @@ error:
 
 /* Terminate peripheral transfer side. Always return 0 in compatible mode */
 int
-ppbus_peripheral_terminate(struct device * dev, int how)
+ppbus_peripheral_terminate(device_t dev, int how)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	int error = 0;
 
 #ifdef DEBUG_1284
@@ -295,9 +297,9 @@ error:
 
 /* Write 1 byte to host in BYTE mode (peripheral side) */
 static int
-byte_peripheral_outbyte(struct device * dev, char *buffer, int last)
+byte_peripheral_outbyte(device_t dev, char *buffer, int last)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	int error = 0;
 
 	/* Event 7 */
@@ -355,7 +357,7 @@ error:
 
 /* Write n bytes to host in BYTE mode (peripheral side) */
 int
-byte_peripheral_write(struct device * dev, char *buffer, int len,
+byte_peripheral_write(device_t dev, char *buffer, int len,
 	int *sent)
 {
 	int error = 0, i;
@@ -400,7 +402,7 @@ error:
 
 /* Read the device ID using the specified mode */
 int
-ppbus_1284_read_id(struct device * dev, int mode, char ** buffer,
+ppbus_1284_read_id(device_t dev, int mode, char ** buffer,
 		size_t * size, size_t * read)
 {
 	u_int16_t msg_sz;
@@ -485,9 +487,9 @@ end_read_id:
  * available for reverse modes.
  */
 int
-ppbus_1284_negotiate(struct device * dev, int mode, int options)
+ppbus_1284_negotiate(device_t dev, int mode, int options)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	int error;
 	int request_mode;
 
@@ -640,9 +642,9 @@ error:
  * is _always_ in compatible mode after ppbus_1284_terminate()
  */
 int
-ppbus_1284_terminate(struct device * dev)
+ppbus_1284_terminate(device_t dev)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 
 #ifdef DEBUG_1284
 	printf("T");
