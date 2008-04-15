@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_puc.c,v 1.7 2008/04/10 19:13:36 cegger Exp $ */
+/* $NetBSD: atppc_puc.c,v 1.8 2008/04/15 15:02:28 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_atppc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.7 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_puc.c,v 1.8 2008/04/15 15:02:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ struct atppc_puc_softc {
 	bus_dmamap_t sc_dmamap;
 };
 
-CFATTACH_DECL(atppc_puc, sizeof(struct atppc_puc_softc), atppc_puc_match,
+CFATTACH_DECL_NEW(atppc_puc, sizeof(struct atppc_puc_softc), atppc_puc_match,
     atppc_puc_attach, NULL, NULL);
 
 static int atppc_puc_dma_setup(struct atppc_puc_softc *);
@@ -120,13 +120,13 @@ atppc_puc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ieh = pci_intr_establish(aa->pc, aa->intrhandle, IPL_TTY,
 	    atppcintr, sc);
 	if (sc->sc_ieh == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	printf("%s: interrupting at %s\n", device_xname(sc->sc_dev), intrstr);
 	sc->sc_has |= ATPPC_HAS_INTR;
 
 	/* setup DMA hooks */

@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.10 2008/01/20 18:09:11 joerg Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.11 2008/04/15 15:02:29 cegger Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.10 2008/01/20 18:09:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.11 2008/04/15 15:02:29 cegger Exp $");
 
 #include "opt_ntp.h"
 
@@ -54,7 +54,7 @@ struct pps_softc {
 
 static int pps_probe(struct device *, struct cfdata *, void *);
 static void pps_attach(struct device *, struct device *, void *);
-CFATTACH_DECL(pps, sizeof(struct pps_softc), pps_probe, pps_attach,
+CFATTACH_DECL_NEW(pps, sizeof(struct pps_softc), pps_probe, pps_attach,
 	NULL, NULL);
 extern struct cfdriver pps_cd;
 
@@ -103,7 +103,7 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc->busy)
 		return (0);
 
-	if (ppbus_request_bus(sc->ppbus, &sc->pps_dev.sc_dev,
+	if (ppbus_request_bus(sc->ppbus, sc->pps_dev.sc_dev,
 			      PPBUS_WAIT|PPBUS_INTR, 0))
 		return (EINTR);
 
@@ -113,7 +113,7 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	/* XXX priority should be set here */
 	res = ppbus_add_handler(sc->ppbus, ppsintr, sc);
 	if (res) {
-		ppbus_release_bus(sc->ppbus, &sc->pps_dev.sc_dev,
+		ppbus_release_bus(sc->ppbus, sc->pps_dev.sc_dev,
 				  PPBUS_WAIT, 0);
 		return (res);
 	}
@@ -143,7 +143,7 @@ ppsclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	ppbus_remove_handler(ppbus, ppsintr);
 	ppbus_set_mode(ppbus, PPBUS_COMPATIBLE, 0);
-	ppbus_release_bus(ppbus, &sc->pps_dev.sc_dev, PPBUS_WAIT, 0);
+	ppbus_release_bus(ppbus, sc->pps_dev.sc_dev, PPBUS_WAIT, 0);
 	return (0);
 }
 

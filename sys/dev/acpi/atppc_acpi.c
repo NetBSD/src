@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.11 2008/04/05 21:44:50 cegger Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.12 2008/04/15 15:02:28 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.11 2008/04/05 21:44:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.12 2008/04/15 15:02:28 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -72,7 +72,7 @@ struct atppc_acpi_softc {
 	int sc_drq;
 };
 
-CFATTACH_DECL(atppc_acpi, sizeof(struct atppc_acpi_softc), atppc_acpi_match,
+CFATTACH_DECL_NEW(atppc_acpi, sizeof(struct atppc_acpi_softc), atppc_acpi_match,
     atppc_acpi_attach, NULL, NULL);
 
 /*
@@ -125,7 +125,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": AT Parallel Port\n");
 
 	/* parse resources */
-	rv = acpi_resource_parse(&sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
+	rv = acpi_resource_parse(sc->sc_dev, aa->aa_node->ad_handle, "_CRS",
 				 &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
@@ -133,14 +133,14 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our i/o registers */
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to find i/o register resource\n");
+		aprint_error_dev(sc->sc_dev, "unable to find i/o register resource\n");
 		goto out;
 	}
 
 	/* find our IRQ */
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to find irq resource\n");
+		aprint_error_dev(sc->sc_dev, "unable to find irq resource\n");
 		goto out;
 	}
 	nirq = irq->ar_irq;
@@ -148,7 +148,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* find our DRQ */
 	drq = acpi_res_drq(&res, 0);
 	if (drq == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to find drq resource\n");
+		aprint_error_dev(sc->sc_dev, "unable to find drq resource\n");
 		goto out;
 	}
 	asc->sc_drq = drq->ar_drq;

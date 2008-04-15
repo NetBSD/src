@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pnpbios.c,v 1.5 2008/04/04 22:18:05 cegger Exp $ */
+/* $NetBSD: atppc_pnpbios.c,v 1.6 2008/04/15 15:08:29 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.5 2008/04/04 22:18:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.6 2008/04/15 15:08:29 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -109,13 +109,13 @@ atppc_pnpbios_attach(struct device *parent, struct device *self, void *aux)
 	printf(": AT Parallel Port\n");
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) { 	
-		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
+		aprint_error_dev(sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
 	/* find our DRQ */
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &asc->sc_drq)) {
-		aprint_error_dev(&sc->sc_de, "unable to get DMA channel\n");
+		aprint_error_dev(sc->sc_dev, "unable to get DMA channel\n");
 		return;
 	}
 

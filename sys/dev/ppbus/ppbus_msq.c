@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.c,v 1.7 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: ppbus_msq.c,v 1.8 2008/04/15 15:02:29 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.7 2005/12/11 12:23:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.8 2008/04/15 15:02:29 cegger Exp $");
 
 #include <machine/stdarg.h>
 
@@ -98,7 +98,7 @@ mode2xfer(struct ppbus_softc * bus, struct ppbus_device_softc * ppbdev,
 		index = PS2_MSQ;
 		break;
 	case PPBUS_EPP:
-		ppbus_read_ivar(&(bus->sc_dev), PPBUS_IVAR_EPP_PROTO, &epp);
+		ppbus_read_ivar(bus->sc_dev, PPBUS_IVAR_EPP_PROTO, &epp);
 		switch (epp) {
 		case PPBUS_EPP_1_7:
 			index = EPP17_MSQ;
@@ -127,10 +127,10 @@ mode2xfer(struct ppbus_softc * bus, struct ppbus_device_softc * ppbdev,
  *
  */
 int
-ppbus_MS_init(struct device * dev, struct device * ppbdev,
+ppbus_MS_init(device_t dev, device_t ppbdev,
 	struct ppbus_microseq * loop, int opcode)
 {
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_softc * bus = device_private(dev);
 	struct ppbus_xfer *xfer = mode2xfer(bus, (struct ppbus_device_softc *)
 		ppbdev, opcode);
 
@@ -146,7 +146,7 @@ ppbus_MS_init(struct device * dev, struct device * ppbdev,
  *
  */
 int
-ppbus_MS_exec(struct device * ppb, struct device * dev,
+ppbus_MS_exec(device_t ppb, device_t dev,
 	int opcode, union ppbus_insarg param1, union ppbus_insarg param2,
 	union ppbus_insarg param3, int * ret)
 {
@@ -173,7 +173,7 @@ ppbus_MS_exec(struct device * ppb, struct device * dev,
  *
  */
 int
-ppbus_MS_loop(struct device * ppb, struct device * dev,
+ppbus_MS_loop(device_t ppb, device_t dev,
 	struct ppbus_microseq * prolog, struct ppbus_microseq * body,
 	struct ppbus_microseq * epilog, int iter, int * ret)
 {
@@ -272,12 +272,11 @@ ppbus_MS_init_msq(struct ppbus_microseq * msq, int nbparam, ...)
  * level to avoid function call overhead between ppbus and the adapter
  */
 int
-ppbus_MS_microseq(struct device * dev, struct device * busdev,
+ppbus_MS_microseq(device_t dev, device_t busdev,
 	struct ppbus_microseq * msq, int * ret)
 {
-	struct ppbus_device_softc * ppbdev = (struct ppbus_device_softc *)
-		busdev;
-	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
+	struct ppbus_device_softc * ppbdev = device_private(busdev);
+	struct ppbus_softc * bus = device_private(dev);
 	struct ppbus_microseq * mi;		/* current microinstruction */
 	size_t cnt;
 	int error;
@@ -311,7 +310,7 @@ again:
 			if (!xfer->loop) {
 				if (mi->opcode == MS_OP_PUT) {
 					if ((error = ppbus_write(
-						&(bus->sc_dev),
+						bus->sc_dev,
 						(char *)mi->arg[0].p,
 						mi->arg[1].i, 0, &cnt))) {
 						goto error;
@@ -360,7 +359,7 @@ again:
 			 */
 			if((error =
 				bus->ppbus_exec_microseq(
-				(struct device *)bus, &mi))) {
+				(device_t)bus, &mi))) {
 
 				goto error;
 			}

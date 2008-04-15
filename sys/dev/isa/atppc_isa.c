@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.12 2008/04/08 20:08:49 cegger Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.13 2008/04/15 15:02:28 cegger Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.12 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.13 2008/04/15 15:02:28 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -88,7 +88,7 @@ static int atppc_isa_dma_malloc(struct device *, void **, bus_addr_t *,
 static void atppc_isa_dma_free(struct device *, void **, bus_addr_t *,
 	bus_size_t);
 
-CFATTACH_DECL(atppc_isa, sizeof(struct atppc_isa_softc), atppc_isa_probe,
+CFATTACH_DECL_NEW(atppc_isa, sizeof(struct atppc_isa_softc), atppc_isa_probe,
 	atppc_isa_attach, NULL, NULL);
 
 /*
@@ -165,7 +165,7 @@ atppc_isa_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_irq > 0) {
 		/* Establish interrupt handler. */
 		lsc->sc_ieh = isa_intr_establish(sc->sc_ic, sc->sc_irq,
-			IST_EDGE, IPL_ATPPC, atppcintr, &lsc->sc_dev);
+			IST_EDGE, IPL_ATPPC, atppcintr, lsc->sc_dev);
 
 		lsc->sc_has |= ATPPC_HAS_INTR;
 	}
