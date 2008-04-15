@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.48 2008/04/15 05:13:37 thorpej Exp $	*/
+/*	$NetBSD: inet6.c,v 1.49 2008/04/15 05:40:15 thorpej Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.48 2008/04/15 05:13:37 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.49 2008/04/15 05:40:15 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1207,30 +1207,30 @@ icmp6_ifstats(char *ifname)
 void
 pim6_stats(u_long off, char *name)
 {
-	struct pim6stat pim6stat;
+	uint64_t pim6stat[PIM6_NSTATS];
 
 	if (use_sysctl) {
 		size_t size = sizeof(pim6stat);
 
-		if (sysctlbyname("net.inet6.pim6.stats", &pim6stat, &size,
+		if (sysctlbyname("net.inet6.pim6.stats", pim6stat, &size,
 		    NULL, 0) == -1)
 			err(1, "net.inet6.pim6.stats");
         } else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&pim6stat, sizeof(pim6stat));
+		kread(off, (char *)pim6stat, sizeof(pim6stat));
 	}
 	printf("%s:\n", name);
 
-#define	p(f, m) if (pim6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)pim6stat.f, plural(pim6stat.f))
-	p(pim6s_rcv_total, "\t%llu message%s received\n");
-	p(pim6s_rcv_tooshort, "\t%llu message%s received with too few bytes\n");
-	p(pim6s_rcv_badsum, "\t%llu message%s received with bad checksum\n");
-	p(pim6s_rcv_badversion, "\t%llu message%s received with bad version\n");
-	p(pim6s_rcv_registers, "\t%llu register%s received\n");
-	p(pim6s_rcv_badregisters, "\t%llu bad register%s received\n");
-	p(pim6s_snd_registers, "\t%llu register%s sent\n");
+#define	p(f, m) if (pim6stat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)pim6stat[f], plural(pim6stat[f]))
+	p(PIM6_STAT_RCV_TOTAL, "\t%llu message%s received\n");
+	p(PIM6_STAT_RCV_TOOSHORT, "\t%llu message%s received with too few bytes\n");
+	p(PIM6_STAT_RCV_BADSUM, "\t%llu message%s received with bad checksum\n");
+	p(PIM6_STAT_RCV_BADVERSION, "\t%llu message%s received with bad version\n");
+	p(PIM6_STAT_RCV_REGISTERS, "\t%llu register%s received\n");
+	p(PIM6_STAT_RCV_BADREGISTERS, "\t%llu bad register%s received\n");
+	p(PIM6_STAT_SND_REGISTERS, "\t%llu register%s sent\n");
 #undef p
 }
 

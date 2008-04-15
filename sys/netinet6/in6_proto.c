@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.79 2007/09/19 04:33:44 dyoung Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.80 2008/04/15 05:40:15 thorpej Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79 2007/09/19 04:33:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.80 2008/04/15 05:40:15 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -337,6 +337,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_output = rip6_output,
 	.pr_ctloutput = rip6_ctloutput,
 	.pr_usrreq = rip6_usrreq,
+	.pr_init = pim6_init,
 },
 /* raw wildcard */
 {	.pr_type = SOCK_RAW,
