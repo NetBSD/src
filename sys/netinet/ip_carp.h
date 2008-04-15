@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.h,v 1.3 2007/02/17 22:34:11 dyoung Exp $	*/
+/*	$NetBSD: ip_carp.h,v 1.4 2008/04/15 06:03:28 thorpej Exp $	*/
 /*	$OpenBSD: ip_carp.h,v 1.18 2005/04/20 23:00:41 mpf Exp $	*/
 
 /*
@@ -92,26 +92,24 @@ struct carp_header {
 /*
  * Statistics.
  */
-struct carpstats {
-	u_int64_t	carps_ipackets;		/* total input packets, IPv4 */
-	u_int64_t	carps_ipackets6;	/* total input packets, IPv6 */
-	u_int64_t	carps_badif;		/* wrong interface */
-	u_int64_t	carps_badttl;		/* TTL is not CARP_DFLTTL */
-	u_int64_t	carps_hdrops;		/* packets shorter than hdr */
-	u_int64_t	carps_badsum;		/* bad checksum */
-	u_int64_t	carps_badver;		/* bad (incl unsupp) version */
-	u_int64_t	carps_badlen;		/* data length does not match */
-	u_int64_t	carps_badauth;		/* bad authentication */
-	u_int64_t	carps_badvhid;		/* bad VHID */
-	u_int64_t	carps_badaddrs;		/* bad address list */
+#define	CARP_STAT_IPACKETS	0	/* total input packets, IPv4 */
+#define	CARP_STAT_IPACKETS6	1	/* total input packets, IPv6 */
+#define	CARP_STAT_BADIF		2	/* wrong interface */
+#define	CARP_STAT_BADTTL	3	/* TTL is not CARP_DFLTTL */
+#define	CARP_STAT_HDROPS	4	/* packets shorter than hdr */
+#define	CARP_STAT_BADSUM	5	/* bad checksum */
+#define	CARP_STAT_BADVER	6	/* bad (incl unsupported) version */
+#define	CARP_STAT_BADLEN	7	/* data length does not match */
+#define	CARP_STAT_BADAUTH	8	/* bad authentication */
+#define	CARP_STAT_BADVHID	9	/* bad VHID */
+#define	CARP_STAT_BADADDRS	10	/* bad address list */
+#define	CARP_STAT_OPACKETS	11	/* total output packets, IPv4 */
+#define	CARP_STAT_OPACKETS6	12	/* total output packets, IPv6 */
+#define	CARP_STAT_ONOMEM	13	/* no memory for an mbuf */
+#define	CARP_STAT_OSTATES	14	/* total state updates sent */
+#define	CARP_STAT_PREEMPT	15	/* in enabled, preemptions */
 
-	u_int64_t	carps_opackets;		/* total output packets, IPv4 */
-	u_int64_t	carps_opackets6;	/* total output packets, IPv6 */
-	u_int64_t	carps_onomem;		/* no memory for an mbuf */
-	u_int64_t	carps_ostates;		/* total state updates sent */
-
-	u_int64_t	carps_preempt;		/* if enabled, preemptions */
-};
+#define	CARP_NSTATS		16
 
 #define CARPDEVNAMSIZ	16
 #ifdef IFNAMSIZ
