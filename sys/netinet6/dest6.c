@@ -1,4 +1,4 @@
-/*	$NetBSD: dest6.c,v 1.16 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: dest6.c,v 1.17 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.16 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.17 2008/04/15 03:57:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: dest6.c,v 1.16 2008/04/08 23:37:43 thorpej Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet/icmp6.h>
 
 /*
@@ -81,7 +82,7 @@ dest6_input(struct mbuf **mp, int *offp, int proto)
 	for (optlen = 0; dstoptlen > 0; dstoptlen -= optlen, opt += optlen) {
 		if (*opt != IP6OPT_PAD1 &&
 		    (dstoptlen < IP6OPT_MINLEN || *(opt + 1) + 2 > dstoptlen)) {
-			ip6stat[IP6_STAT_TOOSMALL]++;
+			IP6_STATINC(IP6_STAT_TOOSMALL);
 			goto bad;
 		}
 

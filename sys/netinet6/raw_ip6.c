@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.93 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.94 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.93 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.94 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -86,8 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.93 2008/04/08 23:37:43 thorpej Exp $")
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet6/ip6_mroute.h>
 #include <netinet/icmp6.h>
+#include <netinet6/icmp6_private.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
@@ -235,7 +237,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	if (last && ipsec6_in_reject(m, last)) {
 		m_freem(m);
 		ipsec6stat.in_polvio++;
-		ip6stat[IP6_STAT_DELIVERED]--;
+		IP6_STATDEC(IP6_STAT_DELIVERED);
 		/* do not inject data into pcb */
 	} else
 #endif /* IPSEC */
@@ -249,7 +251,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		 */
 		if (!last)
 			ipsec6stat.in_polvio++;
-			ip6stat[IP6_STAT_DELIVERED]--;
+			IP6_STATDEC(IP6_STAT_DELIVERED);
 			/* do not inject data into pcb */
 		} else
 #endif /* FAST_IPSEC */
@@ -279,7 +281,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			    ICMP6_PARAMPROB_NEXTHEADER,
 			    prvnxtp - mtod(m, u_int8_t *));
 		}
-		ip6stat[IP6_STAT_DELIVERED]--;
+		IP6_STATDEC(IP6_STAT_DELIVERED);
 	}
 	return IPPROTO_DONE;
 }
@@ -530,7 +532,7 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
 		if (oifp)
 			icmp6_ifoutstat_inc(oifp, type, code);
-		icmp6stat[ICMP6_STAT_OUTHIST + type]++;
+		ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
 	} else
 		rip6stat.rip6s_opackets++;
 

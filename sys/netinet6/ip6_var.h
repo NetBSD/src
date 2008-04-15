@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.48 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.49 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -261,13 +261,6 @@ struct ip6aux {
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
 #define	IPV6_MINMTU		0x04	/* use minimum MTU (IPV6_USE_MIN_MTU) */
 
-#ifdef __NO_STRICT_ALIGNMENT
-#define	IP6_HDR_ALIGNED_P(ip)	1
-#else
-#define	IP6_HDR_ALIGNED_P(ip)	((((vaddr_t) (ip)) & 3) == 0)
-#endif
-
-extern uint64_t	ip6stat[IP6_NSTATS];	/* statistics */
 extern u_int32_t ip6_id;		/* fragment identifier */
 extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
@@ -356,6 +349,8 @@ int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
 void	ip6_clearpktopts(struct ip6_pktopts *, int);
 struct ip6_pktopts *ip6_copypktopts(struct ip6_pktopts *, int);
 int	ip6_optlen(struct in6pcb *);
+
+void	ip6_statinc(u_int);
 
 int	route6_input(struct mbuf **, int *, int);
 

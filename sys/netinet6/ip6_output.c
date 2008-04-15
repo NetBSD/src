@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.127 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.127 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.127 2008/04/08 23:37:43 thorpej Exp
 #include <netinet/in_offload.h>
 #include <netinet6/in6_offload.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6protosw.h>
@@ -552,16 +553,16 @@ skip_ipsec2:;
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) &&
 	    (flags & IPV6_UNSPECSRC) == 0) {
 		error = EOPNOTSUPP;
-		ip6stat[IP6_STAT_BADSCOPE]++;
+		IP6_STATINC(IP6_STAT_BADSCOPE);
 		goto bad;
 	}
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_src)) {
 		error = EOPNOTSUPP;
-		ip6stat[IP6_STAT_BADSCOPE]++;
+		IP6_STATINC(IP6_STAT_BADSCOPE);
 		goto bad;
 	}
 
-	ip6stat[IP6_STAT_LOCALOUT]++;
+	IP6_STATINC(IP6_STAT_LOCALOUT);
 
 	/*
 	 * Route packet.
@@ -759,7 +760,7 @@ skip_ipsec2:;
 		 * Confirm that the outgoing interface supports multicast.
 		 */
 		if (!(ifp->if_flags & IFF_MULTICAST)) {
-			ip6stat[IP6_STAT_NOROUTE]++;
+			IP6_STATINC(IP6_STAT_NOROUTE);
 			in6_ifstat_inc(ifp, ifs6_out_discard);
 			error = ENETUNREACH;
 			goto bad;
@@ -1092,7 +1093,7 @@ skip_ipsec2:;
 			MGETHDR(m, M_DONTWAIT, MT_HEADER);
 			if (!m) {
 				error = ENOBUFS;
-				ip6stat[IP6_STAT_ODROPPED]++;
+				IP6_STATINC(IP6_STAT_ODROPPED);
 				goto sendorfree;
 			}
 			m->m_pkthdr.rcvif = NULL;
@@ -1105,7 +1106,7 @@ skip_ipsec2:;
 			m->m_len = sizeof(*mhip6);
 			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
 			if (error) {
-				ip6stat[IP6_STAT_ODROPPED]++;
+				IP6_STATINC(IP6_STAT_ODROPPED);
 				goto sendorfree;
 			}
 			ip6f->ip6f_offlg = htons((u_int16_t)((off - hlen) & ~7));
@@ -1117,7 +1118,7 @@ skip_ipsec2:;
 			    sizeof(*ip6f) - sizeof(struct ip6_hdr)));
 			if ((m_frgpart = m_copy(m0, off, len)) == 0) {
 				error = ENOBUFS;
-				ip6stat[IP6_STAT_ODROPPED]++;
+				IP6_STATINC(IP6_STAT_ODROPPED);
 				goto sendorfree;
 			}
 			for (mlast = m; mlast->m_next; mlast = mlast->m_next)
@@ -1128,7 +1129,7 @@ skip_ipsec2:;
 			ip6f->ip6f_reserved = 0;
 			ip6f->ip6f_ident = id;
 			ip6f->ip6f_nxt = nextproto;
-			ip6stat[IP6_STAT_OFRAGMENTS]++;
+			IP6_STATINC(IP6_STAT_OFRAGMENTS);
 			in6_ifstat_inc(ifp, ifs6_out_fragcreat);
 		}
 
@@ -1168,7 +1169,7 @@ sendorfree:
 	}
 
 	if (error == 0)
-		ip6stat[IP6_STAT_FRAGMENTED]++;
+		IP6_STATINC(IP6_STAT_FRAGMENTED);
 
 done:
 	rtcache_free(&ip6route);
@@ -1195,7 +1196,7 @@ bad:
 	m_freem(m);
 	goto done;
 badscope:
-	ip6stat[IP6_STAT_BADSCOPE]++;
+	IP6_STATINC(IP6_STAT_BADSCOPE);
 	in6_ifstat_inc(origifp, ifs6_out_discard);
 	if (error == 0)
 		error = EHOSTUNREACH; /* XXX */
