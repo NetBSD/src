@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.14 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.15 2008/04/15 03:57:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.14 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.15 2008/04/15 03:57:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.14 2008/04/08 23:37:43 thorpej Exp $"
 #include <netinet/in_systm.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 
 /*
  * IPv6 Fast Forward caches/hashes flows from one source to destination.
@@ -315,15 +316,18 @@ static void
 ip6flow_addstats(const struct ip6flow *ip6f)
 {
 	struct rtentry *rt;
+	uint64_t *ip6s;
 
 	if ((rt = rtcache_validate(&ip6f->ip6f_ro)) != NULL)
 		rt->rt_use += ip6f->ip6f_uses;
-	ip6stat[IP6_STAT_FASTFORWARDFLOWS] = ip6flow_inuse;
-	ip6stat[IP6_STAT_CANTFORWARD] += ip6f->ip6f_dropped;
-	ip6stat[IP6_STAT_ODROPPED] += ip6f->ip6f_dropped;
-	ip6stat[IP6_STAT_TOTAL] += ip6f->ip6f_uses;
-	ip6stat[IP6_STAT_FORWARD] += ip6f->ip6f_forwarded;
-	ip6stat[IP6_STAT_FASTFORWARD] += ip6f->ip6f_forwarded;
+	ip6s = IP6_STAT_GETREF();
+	ip6s[IP6_STAT_FASTFORWARDFLOWS] = ip6flow_inuse;
+	ip6s[IP6_STAT_CANTFORWARD] += ip6f->ip6f_dropped;
+	ip6s[IP6_STAT_ODROPPED] += ip6f->ip6f_dropped;
+	ip6s[IP6_STAT_TOTAL] += ip6f->ip6f_uses;
+	ip6s[IP6_STAT_FORWARD] += ip6f->ip6f_forwarded;
+	ip6s[IP6_STAT_FASTFORWARD] += ip6f->ip6f_forwarded;
+	IP6_STAT_PUTREF();
 }
 
 /*

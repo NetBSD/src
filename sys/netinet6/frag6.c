@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.43 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: frag6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.43 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.43 2008/04/08 23:37:43 thorpej Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet/icmp6.h>
 
 #include <net/net_osdep.h>
@@ -218,7 +219,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	ip6stat[IP6_STAT_FRAGMENTS]++;
+	IP6_STATINC(IP6_STAT_FRAGMENTS);
 	in6_ifstat_inc(dstifp, ifs6_reass_reqd);
 
 	/* offset now points to data portion */
@@ -552,7 +553,7 @@ insert:
 		m->m_pkthdr.len = plen;
 	}
 
-	ip6stat[IP6_STAT_REASSEMBLED]++;
+	IP6_STATINC(IP6_STAT_REASSEMBLED);
 	in6_ifstat_inc(dstifp, ifs6_reass_ok);
 
 	/*
@@ -567,7 +568,7 @@ insert:
 
  dropfrag:
 	in6_ifstat_inc(dstifp, ifs6_reass_fail);
-	ip6stat[IP6_STAT_FRAGDROPPED]++;
+	IP6_STATINC(IP6_STAT_FRAGDROPPED);
 	m_freem(m);
 	IP6Q_UNLOCK();
 	return IPPROTO_DONE;
@@ -686,7 +687,7 @@ frag6_slowtimo(void)
 			--q6->ip6q_ttl;
 			q6 = q6->ip6q_next;
 			if (q6->ip6q_prev->ip6q_ttl == 0) {
-				ip6stat[IP6_STAT_FRAGTIMEOUT]++;
+				IP6_STATINC(IP6_STAT_FRAGTIMEOUT);
 				/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 				frag6_freef(q6->ip6q_prev);
 			}
@@ -698,7 +699,7 @@ frag6_slowtimo(void)
 	 */
 	while (frag6_nfragpackets > (u_int)ip6_maxfragpackets &&
 	    ip6q.ip6q_prev) {
-		ip6stat[IP6_STAT_FRAGOVERFLOW]++;
+		IP6_STATINC(IP6_STAT_FRAGOVERFLOW);
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(ip6q.ip6q_prev);
 	}
@@ -727,7 +728,7 @@ frag6_drain(void)
 	if (ip6q_lock_try() == 0)
 		return;
 	while (ip6q.ip6q_next != &ip6q) {
-		ip6stat[IP6_STAT_FRAGDROPPED]++;
+		IP6_STATINC(IP6_STAT_FRAGDROPPED);
 		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
 		frag6_freef(ip6q.ip6q_next);
 	}

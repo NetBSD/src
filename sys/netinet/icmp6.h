@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.37 2008/04/08 15:04:35 thorpej Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.38 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -632,6 +632,8 @@ void	icmp6_prepare(struct mbuf *);
 void	icmp6_redirect_input(struct mbuf *, int);
 void	icmp6_redirect_output(struct mbuf *, struct rtentry *);
 int	icmp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+
+void	icmp6_statinc(u_int);
 
 struct	ip6ctlparam;
 void	icmp6_mtudisc_update(struct ip6ctlparam *, int);

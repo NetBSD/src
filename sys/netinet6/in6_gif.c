@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.54 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.55 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.54 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.55 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.54 2008/04/08 23:37:43 thorpej Exp $")
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet6/in6_gif.h>
 #include <netinet6/in6_var.h>
 #endif
@@ -230,13 +231,13 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 
 	if (gifp == NULL || (gifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
-		ip6stat[IP6_STAT_NOGIF]++;
+		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
 	}
 #ifndef GIF_ENCAPCHECK
 	if (!gif_validate6(ip6, (struct gif_softc *)gifp, m->m_pkthdr.rcvif)) {
 		m_freem(m);
-		ip6stat[IP6_STAT_NOGIF]++;
+		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
 	}
 #endif
@@ -289,7 +290,7 @@ int in6_gif_input(struct mbuf **mp, int *offp, int proto)
 		break;
 #endif
 	default:
-		ip6stat[IP6_STAT_NOGIF]++;
+		IP6_STATINC(IP6_STAT_NOGIF);
 		m_freem(m);
 		return IPPROTO_DONE;
 	}

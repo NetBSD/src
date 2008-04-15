@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.42 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.43 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.42 2008/04/08 23:37:43 thorpej Exp $")
 #include <netinet6/in6_pcb.h>
 #endif
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet6/nd6.h>
 #include <netinet6/scope6_var.h>
 
@@ -722,7 +723,7 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		error = EHOSTUNREACH;
 	}
 	if (error == EHOSTUNREACH)
-		ip6stat[IP6_STAT_NOROUTE]++;
+		IP6_STATINC(IP6_STAT_NOROUTE);
 
 	if (retifp != NULL)
 		*retifp = ifp;

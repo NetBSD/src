@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.127 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.127 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.127 2008/04/12 05:58:22 thorpej Exp $");
 #include <netinet/ip6.h>
 #ifdef INET6
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #endif
 #include <netinet/in_pcb.h>
 #ifdef INET6
@@ -3027,7 +3028,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
 			if ((rt = rtcache_lookup(state->ro, &u.dst)) == NULL) {
 				rtcache_free(state->ro);
-				ip6stat[IP6_STAT_NOROUTE]++;
+				IP6_STATINC(IP6_STAT_NOROUTE);
 				ipsec6stat.out_noroute++;
 				error = EHOSTUNREACH;
 				goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.124 2008/04/08 15:04:35 thorpej Exp $	*/
+/*	$NetBSD: nd6.c,v 1.125 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.124 2008/04/08 15:04:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.125 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.124 2008/04/08 15:04:35 thorpej Exp $");
 #include <netinet6/scope6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+#include <netinet6/icmp6_private.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -320,7 +321,7 @@ nd6_options(union nd_opts *ndopts)
 			 * Message validation requires that all included
 			 * options have a length that is greater than zero.
 			 */
-			icmp6stat[ICMP6_STAT_ND_BADOPT]++;
+			ICMP6_STATINC(ICMP6_STAT_ND_BADOPT);
 			bzero(ndopts, sizeof(*ndopts));
 			return -1;
 		}
@@ -364,7 +365,7 @@ nd6_options(union nd_opts *ndopts)
 skip1:
 		i++;
 		if (i > nd6_maxndopt) {
-			icmp6stat[ICMP6_STAT_ND_TOOMANYOPT]++;
+			ICMP6_STATINC(ICMP6_STAT_ND_TOOMANYOPT);
 			nd6log((LOG_INFO, "too many loop in nd opt\n"));
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.144 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.145 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.144 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.145 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -89,7 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.144 2008/04/08 23:37:43 thorpej Exp $");
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet/icmp6.h>
+#include <netinet6/icmp6_private.h>
 #include <netinet6/mld6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
@@ -117,7 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.144 2008/04/08 23:37:43 thorpej Exp $");
 
 extern struct domain inet6domain;
 
-uint64_t icmp6stat[ICMP6_NSTATS];
+percpu_t *icmp6stat_percpu;
 
 extern struct inpcbtable raw6cbtable;
 extern int icmp6errppslim;
@@ -152,7 +154,7 @@ static struct rttimer_queue *icmp6_redirect_timeout_q = NULL;
 static int icmp6_redirect_hiwat = -1;
 static int icmp6_redirect_lowat = -1;
 
-static void icmp6_errcount(uint64_t *, int, int);
+static void icmp6_errcount(u_int, int, int);
 static int icmp6_rip6_input(struct mbuf **, int);
 static int icmp6_ratelimit(const struct in6_addr *, const int, const int);
 static const char *icmp6_redirect_diag(struct in6_addr *,
@@ -176,62 +178,67 @@ icmp6_init(void)
 	mld_init();
 	icmp6_mtudisc_timeout_q = rt_timer_queue_create(pmtu_expire);
 	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
+
+	icmp6stat_percpu = percpu_alloc(sizeof(uint64_t) * ICMP6_NSTATS);
 }
 
 static void
-icmp6_errcount(uint64_t *stat, int type, int code)
+icmp6_errcount(u_int base, int type, int code)
 {
 	switch (type) {
 	case ICMP6_DST_UNREACH:
 		switch (code) {
 		case ICMP6_DST_UNREACH_NOROUTE:
-			stat[ICMP6_ERRSTAT_DST_UNREACH_NOROUTE]++;
+			ICMP6_STATINC(base + ICMP6_ERRSTAT_DST_UNREACH_NOROUTE);
 			return;
 		case ICMP6_DST_UNREACH_ADMIN:
-			stat[ICMP6_ERRSTAT_DST_UNREACH_ADMIN]++;
+			ICMP6_STATINC(base + ICMP6_ERRSTAT_DST_UNREACH_ADMIN);
 			return;
 		case ICMP6_DST_UNREACH_BEYONDSCOPE:
-			stat[ICMP6_ERRSTAT_DST_UNREACH_BEYONDSCOPE]++;
+			ICMP6_STATINC(base +
+				      ICMP6_ERRSTAT_DST_UNREACH_BEYONDSCOPE);
 			return;
 		case ICMP6_DST_UNREACH_ADDR:
-			stat[ICMP6_ERRSTAT_DST_UNREACH_ADDR]++;
+			ICMP6_STATINC(base + ICMP6_ERRSTAT_DST_UNREACH_ADDR);
 			return;
 		case ICMP6_DST_UNREACH_NOPORT:
-			stat[ICMP6_ERRSTAT_DST_UNREACH_NOPORT]++;
+			ICMP6_STATINC(base + ICMP6_ERRSTAT_DST_UNREACH_NOPORT);
 			return;
 		}
 		break;
 	case ICMP6_PACKET_TOO_BIG:
-		stat[ICMP6_ERRSTAT_PACKET_TOO_BIG]++;
+		ICMP6_STATINC(base + ICMP6_ERRSTAT_PACKET_TOO_BIG);
 		return;
 	case ICMP6_TIME_EXCEEDED:
 		switch (code) {
 		case ICMP6_TIME_EXCEED_TRANSIT:
-			stat[ICMP6_ERRSTAT_TIME_EXCEED_TRANSIT]++;
+			ICMP6_STATINC(base + ICMP6_ERRSTAT_TIME_EXCEED_TRANSIT);
 			return;
 		case ICMP6_TIME_EXCEED_REASSEMBLY:
-			stat[ICMP6_ERRSTAT_TIME_EXCEED_REASSEMBLY]++;
+			ICMP6_STATINC(base +
+				      ICMP6_ERRSTAT_TIME_EXCEED_REASSEMBLY);
 			return;
 		}
 		break;
 	case ICMP6_PARAM_PROB:
 		switch (code) {
 		case ICMP6_PARAMPROB_HEADER:
-			stat[ICMP6_ERRSTAT_PARAMPROB_HEADER]++;
+			ICMP6_STATINC(base + ICMP6_ERRSTAT_PARAMPROB_HEADER);
 			return;
 		case ICMP6_PARAMPROB_NEXTHEADER:
-			stat[ICMP6_ERRSTAT_PARAMPROB_NEXTHEADER]++;
+			ICMP6_STATINC(base +
+				      ICMP6_ERRSTAT_PARAMPROB_NEXTHEADER);
 			return;
 		case ICMP6_PARAMPROB_OPTION:
-			stat[ICMP6_ERRSTAT_PARAMPROB_OPTION]++;
+			ICMP6_STATINC(base + ICMP6_ERRSTAT_PARAMPROB_OPTION);
 			return;
 		}
 		break;
 	case ND_REDIRECT:
-		stat[ICMP6_ERRSTAT_REDIRECT]++;
+		ICMP6_STATINC(base + ICMP6_ERRSTAT_REDIRECT);
 		return;
 	}
-	stat[ICMP6_ERRSTAT_UNKNOWN]++;
+	ICMP6_STATINC(base + ICMP6_ERRSTAT_UNKNOWN);
 }
 
 /*
@@ -297,13 +304,13 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 	int off;
 	int nxt;
 
-	icmp6stat[ICMP6_STAT_ERROR]++;
+	ICMP6_STATINC(ICMP6_STAT_ERROR);
 
 	/* count per-type-code statistics */
-	icmp6_errcount(&icmp6stat[ICMP6_STAT_OUTERRHIST], type, code);
+	icmp6_errcount(ICMP6_STAT_OUTERRHIST, type, code);
 
 	if (m->m_flags & M_DECRYPTED) {
-		icmp6stat[ICMP6_STAT_CANTERROR]++;
+		ICMP6_STATINC(ICMP6_STAT_CANTERROR);
 		goto freeit;
 	}
 
@@ -350,7 +357,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 		IP6_EXTHDR_GET(icp, struct icmp6_hdr *, m, off,
 			sizeof(*icp));
 		if (icp == NULL) {
-			icmp6stat[ICMP6_STAT_TOOSHORT]++;
+			ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 			return;
 		}
 		if (icp->icmp6_type < ICMP6_ECHO_REQUEST ||
@@ -360,7 +367,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 			 * Special case: for redirect (which is
 			 * informational) we must not send icmp6 error.
 			 */
-			icmp6stat[ICMP6_STAT_CANTERROR]++;
+			ICMP6_STATINC(ICMP6_STAT_CANTERROR);
 			goto freeit;
 		} else {
 			/* ICMPv6 informational - send the error */
@@ -372,7 +379,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 		 * It could be ICMPv6 error inside ESP.  Take a safer side,
 		 * don't respond.
 		 */
-		icmp6stat[ICMP6_STAT_CANTERROR]++;
+		ICMP6_STATINC(ICMP6_STAT_CANTERROR);
 		goto freeit;
 	}
 #endif
@@ -384,7 +391,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 
 	/* Finally, do rate limitation check. */
 	if (icmp6_ratelimit(&oip6->ip6_src, type, code)) {
-		icmp6stat[ICMP6_STAT_TOOFREQ]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOFREQ);
 		goto freeit;
 	}
 
@@ -425,7 +432,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 	 */
 	m->m_pkthdr.rcvif = NULL;
 
-	icmp6stat[ICMP6_STAT_OUTHIST + type]++;
+	ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
 	icmp6_reflect(m, sizeof(struct ip6_hdr)); /* header order: IPv6 - ICMPv6 */
 
 	return;
@@ -461,7 +468,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 
 	ip6 = mtod(m, struct ip6_hdr *);
 	if (icmp6len < sizeof(struct icmp6_hdr)) {
-		icmp6stat[ICMP6_STAT_TOOSHORT]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		goto freeit;
 	}
@@ -471,7 +478,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	 */
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
 	if (icmp6 == NULL) {
-		icmp6stat[ICMP6_STAT_TOOSHORT]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		/* m is invalid */
 		/*icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);*/
 		return IPPROTO_DONE;
@@ -483,7 +490,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		nd6log((LOG_ERR,
 		    "ICMP6 checksum error(%d|%x) %s\n",
 		    icmp6->icmp6_type, sum, ip6_sprintf(&ip6->ip6_src)));
-		icmp6stat[ICMP6_STAT_CHECKSUM]++;
+		ICMP6_STATINC(ICMP6_STAT_CHECKSUM);
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		goto freeit;
 	}
@@ -506,7 +513,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 #endif
 
-	icmp6stat[ICMP6_STAT_INHIST + icmp6->icmp6_type]++;
+	ICMP6_STATINC(ICMP6_STAT_INHIST + icmp6->icmp6_type);
 
 	switch (icmp6->icmp6_type) {
 	case ICMP6_DST_UNREACH:
@@ -617,8 +624,10 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
 		if (n) {
-			icmp6stat[ICMP6_STAT_REFLECT]++;
-			icmp6stat[ICMP6_STAT_OUTHIST + ICMP6_ECHO_REPLY]++;
+			uint64_t *icmp6s = ICMP6_STAT_GETREF();
+			icmp6s[ICMP6_STAT_REFLECT]++;
+			icmp6s[ICMP6_STAT_OUTHIST + ICMP6_ECHO_REPLY]++;
+			ICMP6_STAT_PUTREF();
 			icmp6_reflect(n, off);
 		}
 		if (!m)
@@ -726,8 +735,10 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		}
 #undef hostnamelen
 		if (n) {
-			icmp6stat[ICMP6_STAT_REFLECT]++;
-			icmp6stat[ICMP6_STAT_OUTHIST + ICMP6_WRUREPLY]++;
+			uint64_t *icmp6s = ICMP6_STAT_GETREF();
+			icmp6s[ICMP6_STAT_REFLECT]++;
+			icmp6s[ICMP6_STAT_OUTHIST + ICMP6_WRUREPLY]++;
+			ICMP6_STAT_PUTREF();
 			icmp6_reflect(n, noff);
 		}
 		break;
@@ -848,11 +859,11 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		break;
 
 	badcode:
-		icmp6stat[ICMP6_STAT_BADCODE]++;
+		ICMP6_STATINC(ICMP6_STAT_BADCODE);
 		break;
 
 	badlen:
-		icmp6stat[ICMP6_STAT_BADLEN]++;
+		ICMP6_STATINC(ICMP6_STAT_BADLEN);
 		break;
 	}
 
@@ -875,13 +886,13 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 	struct sockaddr_in6 icmp6src, icmp6dst;
 
 	if (icmp6len < sizeof(struct icmp6_hdr) + sizeof(struct ip6_hdr)) {
-		icmp6stat[ICMP6_STAT_TOOSHORT]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		goto freeit;
 	}
 	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off,
 		       sizeof(*icmp6) + sizeof(struct ip6_hdr));
 	if (icmp6 == NULL) {
-		icmp6stat[ICMP6_STAT_TOOSHORT]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		return (-1);
 	}
 	eip6 = (struct ip6_hdr *)(icmp6 + 1);
@@ -910,7 +921,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 				IP6_EXTHDR_GET(eh, struct ip6_ext *, m,
 					       eoff, sizeof(*eh));
 				if (eh == NULL) {
-					icmp6stat[ICMP6_STAT_TOOSHORT]++;
+					ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 					return (-1);
 				}
 
@@ -932,7 +943,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 				IP6_EXTHDR_GET(rth, struct ip6_rthdr *, m,
 					       eoff, sizeof(*rth));
 				if (rth == NULL) {
-					icmp6stat[ICMP6_STAT_TOOSHORT]++;
+					ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 					return (-1);
 				}
 				rthlen = (rth->ip6r_len + 1) << 3;
@@ -952,7 +963,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 						       struct ip6_rthdr0 *, m,
 						       eoff, rthlen);
 					if (rth0 == NULL) {
-						icmp6stat[ICMP6_STAT_TOOSHORT]++;
+						ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 						return (-1);
 					}
 					/* just ignore a bogus header */
@@ -967,7 +978,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 				IP6_EXTHDR_GET(fh, struct ip6_frag *, m,
 					       eoff, sizeof(*fh));
 				if (fh == NULL) {
-					icmp6stat[ICMP6_STAT_TOOSHORT]++;
+					ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 					return (-1);
 				}
 				/*
@@ -998,7 +1009,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off,
 			       sizeof(*icmp6) + sizeof(struct ip6_hdr));
 		if (icmp6 == NULL) {
-			icmp6stat[ICMP6_STAT_TOOSHORT]++;
+			ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 			return (-1);
 		}
 
@@ -1095,7 +1106,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
 	    (rt->rt_rmx.rmx_mtu > mtu || rt->rt_rmx.rmx_mtu == 0)) {
 		if (mtu < IN6_LINKMTU(rt->rt_ifp)) {
-			icmp6stat[ICMP6_STAT_PMTUCHG]++;
+			ICMP6_STATINC(ICMP6_STAT_PMTUCHG);
 			rt->rt_rmx.rmx_mtu = mtu;
 		}
 	}
@@ -1898,7 +1909,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 			sorwakeup(last->in6p_socket);
 	} else {
 		m_freem(m);
-		ip6stat[IP6_STAT_DELIVERED]--;
+		IP6_STATDEC(IP6_STAT_DELIVERED);
 	}
 	return IPPROTO_DONE;
 }
@@ -2119,7 +2130,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 
 	IP6_EXTHDR_GET(nd_rd, struct nd_redirect *, m, off, icmp6len);
 	if (nd_rd == NULL) {
-		icmp6stat[ICMP6_STAT_TOOSHORT]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		return;
 	}
 	redtgt6 = nd_rd->nd_rd_target;
@@ -2293,7 +2304,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	return;
 
  bad:
-	icmp6stat[ICMP6_STAT_BADREDIRECT]++;
+	ICMP6_STATINC(ICMP6_STAT_BADREDIRECT);
 	m_freem(m);
 }
 
@@ -2311,7 +2322,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	u_char *p;
 	struct sockaddr_in6 src_sa;
 
-	icmp6_errcount(&icmp6stat[ICMP6_STAT_OUTERRHIST], ND_REDIRECT, 0);
+	icmp6_errcount(ICMP6_STAT_OUTERRHIST, ND_REDIRECT, 0);
 
 	/* if we are not router, we don't send icmp6 redirect */
 	if (!ip6_forwarding)
@@ -2538,7 +2549,7 @@ noredhdropt:
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_redirect);
-	icmp6stat[ICMP6_STAT_OUTHIST + ND_REDIRECT]++;
+	ICMP6_STATINC(ICMP6_STAT_OUTHIST + ND_REDIRECT);
 
 	return;
 
@@ -2734,6 +2745,38 @@ sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 	    __UNCONST(newp), newlen));
 }
 
+static void
+icmp6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+{
+	uint64_t *icmp6sc = v1;
+	uint64_t *icmp6s = v2;
+	u_int i;
+
+	for (i = 0; i < ICMP6_NSTATS; i++)
+		icmp6s[i] += icmp6sc[i];
+}
+
+static void
+icmp6stat_convert_to_user(uint64_t *icmp6s)
+{
+
+	memset(icmp6s, 0, sizeof(uint64_t) * ICMP6_NSTATS);
+	percpu_foreach(icmp6stat_percpu, icmp6stat_convert_to_user_cb, icmp6s);
+}
+
+static int
+sysctl_net_inet6_icmp6_stats(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	uint64_t icmp6s[ICMP6_NSTATS];
+
+	icmp6stat_convert_to_user(icmp6s);
+	node = *rnode;
+	node.sysctl_data = icmp6s;
+	node.sysctl_size = sizeof(icmp6s);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
 SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 	     "sysctl net.inet6.icmp6 subtree setup")
 {
@@ -2760,7 +2803,7 @@ SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("ICMPv6 transmission statistics"),
-		       NULL, 0, icmp6stat, sizeof(icmp6stat),
+		       sysctl_net_inet6_icmp6_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_STATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -2891,4 +2934,12 @@ SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 		       NULL, 1, &nd6_maxqueuelen, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_MAXQLEN, CTL_EOL);
+}
+
+void
+icmp6_statinc(u_int stat)
+{
+
+	KASSERT(stat < ICMP6_NSTATS);
+	ICMP6_STATINC(stat);
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.8 2008/04/08 23:37:43 thorpej Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.9 2008/04/15 03:57:04 thorpej Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.8 2008/04/08 23:37:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.9 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.8 2008/04/08 23:37:43 thorpej Exp 
 #ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_etherip.h>
 #endif
@@ -202,7 +203,7 @@ ip6_etherip_input(struct mbuf *m, ...)
 
 	if (proto != IPPROTO_ETHERIP) {
 		m_freem(m);
-		ip6stat[IP6_STAT_NOGIF]++;
+		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
 	}
 
@@ -230,7 +231,7 @@ ip6_etherip_input(struct mbuf *m, ...)
 	/* no matching device found */
 	if (!ifp) {
 		m_freem(m);
-		ip6stat[IP6_STAT_ODROPPED]++;
+		IP6_STATINC(IP6_STAT_ODROPPED);
 		return IPPROTO_DONE;
 	}
 
