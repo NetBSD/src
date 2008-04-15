@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.84 2008/04/15 04:50:05 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.85 2008/04/15 06:03:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.84 2008/04/15 04:50:05 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.85 2008/04/15 06:03:28 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -631,12 +631,12 @@ igmp_stats(u_long off, char *name)
 void
 carp_stats(u_long off, char *name)
 {
-	struct carpstats carpstat;
+	uint64_t carpstat[CARP_NSTATS];
 
 	if (use_sysctl) {
 		size_t size = sizeof(carpstat);
 
-		if (sysctlbyname("net.inet.carp.stats", &carpstat, &size,
+		if (sysctlbyname("net.inet.carp.stats", carpstat, &size,
 				 NULL, 0) == -1) {
 			/* most likely CARP is not compiled in the kernel */
 			return;
@@ -644,37 +644,37 @@ carp_stats(u_long off, char *name)
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&carpstat, sizeof(carpstat));
+		kread(off, (char *)carpstat, sizeof(carpstat));
 	}
 
 	printf("%s:\n", name);
 
-#define p(f, m) if (carpstat.f || sflag <= 1) \
-	printf(m, carpstat.f, plural(carpstat.f))
-#define p2(f, m) if (carpstat.f || sflag <= 1) \
-	printf(m, carpstat.f)
+#define p(f, m) if (carpstat[f] || sflag <= 1) \
+	printf(m, carpstat[f], plural(carpstat[f]))
+#define p2(f, m) if (carpstat[f] || sflag <= 1) \
+	printf(m, carpstat[f])
 
-	p(carps_ipackets, "\t%" PRIu64 " packet%s received (IPv4)\n");
-	p(carps_ipackets6, "\t%" PRIu64 " packet%s received (IPv6)\n");
-	p(carps_badif,
+	p(CARP_STAT_IPACKETS, "\t%" PRIu64 " packet%s received (IPv4)\n");
+	p(CARP_STAT_IPACKETS6, "\t%" PRIu64 " packet%s received (IPv6)\n");
+	p(CARP_STAT_BADIF,
 	    "\t\t%" PRIu64 " packet%s discarded for bad interface\n");
-	p(carps_badttl,
+	p(CARP_STAT_BADTTL,
 	    "\t\t%" PRIu64 " packet%s discarded for wrong TTL\n");
-	p(carps_hdrops, "\t\t%" PRIu64 " packet%s shorter than header\n");
-	p(carps_badsum, "\t\t%" PRIu64
+	p(CARP_STAT_HDROPS, "\t\t%" PRIu64 " packet%s shorter than header\n");
+	p(CARP_STAT_BADSUM, "\t\t%" PRIu64
 		" packet%s discarded for bad checksum\n");
-	p(carps_badver,
+	p(CARP_STAT_BADVER,
 	    "\t\t%" PRIu64 " packet%s discarded with a bad version\n");
-	p2(carps_badlen,
+	p2(CARP_STAT_BADLEN,
 	    "\t\t%" PRIu64 " discarded because packet was too short\n");
-	p(carps_badauth,
+	p(CARP_STAT_BADAUTH,
 	    "\t\t%" PRIu64 " packet%s discarded for bad authentication\n");
-	p(carps_badvhid, "\t\t%" PRIu64 " packet%s discarded for bad vhid\n");
-	p(carps_badaddrs, "\t\t%" PRIu64
+	p(CARP_STAT_BADVHID, "\t\t%" PRIu64 " packet%s discarded for bad vhid\n");
+	p(CARP_STAT_BADADDRS, "\t\t%" PRIu64
 		" packet%s discarded because of a bad address list\n");
-	p(carps_opackets, "\t%" PRIu64 " packet%s sent (IPv4)\n");
-	p(carps_opackets6, "\t%" PRIu64 " packet%s sent (IPv6)\n");
-	p2(carps_onomem,
+	p(CARP_STAT_OPACKETS, "\t%" PRIu64 " packet%s sent (IPv4)\n");
+	p(CARP_STAT_OPACKETS6, "\t%" PRIu64 " packet%s sent (IPv6)\n");
+	p2(CARP_STAT_ONOMEM,
 	    "\t\t%" PRIu64 " send failed due to mbuf memory error\n");
 #undef p
 #undef p2
