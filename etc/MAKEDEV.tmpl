@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.105 2008/04/15 09:52:41 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.106 2008/04/15 09:53:58 apb Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1185,7 +1185,7 @@ ses*|ch*|uk*)
 	;;
 
 cd*)
-	makedisk_minimal cd ${i#cd} %cd_blk% %cd_chr% %
+	makedisk_minimal cd ${i#cd} %cd_blk% %cd_chr%
 	;;
 
 mcd*)
