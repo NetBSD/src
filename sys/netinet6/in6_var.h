@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.57 2008/04/08 15:04:35 thorpej Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.58 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -473,7 +473,6 @@ MALLOC_DECLARE(M_IP6OPT);
 
 extern struct in6_ifaddr *in6_ifaddr;
 
-extern uint64_t icmp6stat[/* XXX ICMP6_NSTATS */];
 #define in6_ifstat_inc(ifp, tag) \
 do {								\
 	if (ifp)						\

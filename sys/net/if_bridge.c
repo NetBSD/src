@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.60 2008/04/12 09:26:45 cegger Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.61 2008/04/15 03:57:04 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.60 2008/04/12 09:26:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.61 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -115,11 +115,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.60 2008/04/12 09:26:45 cegger Exp $"
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
-#include <netinet/ip_private.h> /* needed for IP_HDR_ALIGNED_P */
+#include <netinet/ip_private.h>		/* XXX */
 
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
+#include <netinet6/ip6_private.h>	/* XXX */
 #endif /* BRIDGE_IPF && PFIL_HOOKS */
 
 /*
@@ -2182,14 +2183,14 @@ bridge_ip6_checkbasic(struct mbuf **mp)
                 if ((m = m_copyup(m, sizeof(struct ip6_hdr),
                                   (max_linkhdr + 3) & ~3)) == NULL) {
                         /* XXXJRT new stat, please */
-			ip6stat[IP6_STAT_TOOSMALL]++;
+			ip6_statinc(IP6_STAT_TOOSMALL);
                         in6_ifstat_inc(inifp, ifs6_in_hdrerr);
                         goto bad;
                 }
         } else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
                 struct ifnet *inifp = m->m_pkthdr.rcvif;
                 if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-			ip6stat[IP6_STAT_TOOSMALL]++;
+			ip6_statinc(IP6_STAT_TOOSMALL);
                         in6_ifstat_inc(inifp, ifs6_in_hdrerr);
                         goto bad;
                 }
@@ -2198,7 +2199,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
         ip6 = mtod(m, struct ip6_hdr *);
 
         if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
-		ip6stat[IP6_STAT_BADVERS]++;
+		ip6_statinc(IP6_STAT_BADVERS);
                 in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
                 goto bad;
         }

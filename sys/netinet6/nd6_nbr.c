@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.84 2008/04/08 15:04:35 thorpej Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.85 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.84 2008/04/08 15:04:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.85 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.84 2008/04/08 15:04:35 thorpej Exp $")
 #include <netinet6/scope6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+#include <netinet6/icmp6_private.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -115,7 +116,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, m, off, icmp6len);
 	if (nd_ns == NULL) {
-		icmp6stat[ICMP6_STAT_TOOSHORT]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		return;
 	}
 	ip6 = mtod(m, struct ip6_hdr *); /* adjust pointer for safety */
@@ -322,7 +323,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	nd6log((LOG_ERR, "nd6_ns_input: src=%s\n", ip6_sprintf(&saddr6)));
 	nd6log((LOG_ERR, "nd6_ns_input: dst=%s\n", ip6_sprintf(&daddr6)));
 	nd6log((LOG_ERR, "nd6_ns_input: tgt=%s\n", ip6_sprintf(&taddr6)));
-	icmp6stat[ICMP6_STAT_BADNS]++;
+	ICMP6_STATINC(ICMP6_STAT_BADNS);
 	m_freem(m);
 }
 
@@ -514,7 +515,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	ip6_output(m, NULL, &ro, dad ? IPV6_UNSPECSRC : 0, &im6o, NULL, NULL);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighborsolicit);
-	icmp6stat[ICMP6_STAT_OUTHIST + ND_NEIGHBOR_SOLICIT]++;
+	ICMP6_STATINC(ICMP6_STAT_OUTHIST + ND_NEIGHBOR_SOLICIT);
 
 	rtcache_free(&ro);
 	return;
@@ -568,7 +569,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, m, off, icmp6len);
 	if (nd_na == NULL) {
-		icmp6stat[ICMP6_STAT_TOOSHORT]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		return;
 	}
 
@@ -805,7 +806,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	return;
 
  bad:
-	icmp6stat[ICMP6_STAT_BADNA]++;
+	ICMP6_STATINC(ICMP6_STAT_BADNA);
 	m_freem(m);
 }
 
@@ -971,7 +972,7 @@ nd6_na_output(
 
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	icmp6_ifstat_inc(ifp, ifs6_out_neighboradvert);
-	icmp6stat[ICMP6_STAT_OUTHIST + ND_NEIGHBOR_ADVERT]++;
+	ICMP6_STATINC(ICMP6_STAT_OUTHIST + ND_NEIGHBOR_ADVERT);
 
 	rtcache_free(&ro);
 	return;

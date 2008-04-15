@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.43 2008/04/08 15:04:35 thorpej Exp $	*/
+/*	$NetBSD: mld6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.43 2008/04/08 15:04:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.43 2008/04/08 15:04:35 thorpej Exp $");
 #include <netinet6/ip6_var.h>
 #include <netinet6/scope6_var.h>
 #include <netinet/icmp6.h>
+#include <netinet6/icmp6_private.h>
 #include <netinet6/mld6_var.h>
 
 #include <net/net_osdep.h>
@@ -329,7 +330,7 @@ mld_input(struct mbuf *m, int off)
 
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
-		icmp6stat[ICMP6_STAT_TOOSHORT]++;
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		return;
 	}
 
@@ -536,7 +537,7 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 	im6o.im6o_multicast_loop = (ip6_mrouter != NULL);
 
 	/* increment output statictics */
-	icmp6stat[ICMP6_STAT_OUTHIST + type]++;
+	ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
 	icmp6_ifstat_inc(ifp, ifs6_out_msg);
 	switch (type) {
 	case MLD_LISTENER_QUERY:
