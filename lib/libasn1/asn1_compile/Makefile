@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2008/04/13 21:26:59 mlelstv Exp $
+# $NetBSD: Makefile,v 1.24 2008/04/15 21:50:22 mlelstv Exp $
 
 NOLINT=		# defined
 NOMAN=		# defined
@@ -10,8 +10,10 @@ DIST=		${NETBSDSRCDIR}/crypto/dist
 
 PROG=		asn1_compile
 
+.if ${USETOOLS} != "yes"
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}
+.endif
 
 WARNS?=		1
 
