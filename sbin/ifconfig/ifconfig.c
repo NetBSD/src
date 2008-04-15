@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.183 2008/04/14 15:57:15 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.184 2008/04/15 22:26:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.183 2008/04/14 15:57:15 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.184 2008/04/15 22:26:58 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -542,10 +542,6 @@ main(int argc, char *argv[])
 		afp = afs;
 	af = ifr.ifr_addr.sa_family = afp->af_af;
 
-#ifdef INET6
-	in6_init();
-#endif
-
 	/* Process commands. */
 	for (; argc > 0; argc--, argv++) {
 		const struct cmd *p;
@@ -605,9 +601,6 @@ main(int argc, char *argv[])
 	}
 
 #ifndef INET_ONLY
-	if (af == AF_ISO)
-		adjust_nsellength();
-
 	if (af == AF_APPLETALK)
 		checkatrange(&addreq.ifra_addr);
 #endif	/* INET_ONLY */
