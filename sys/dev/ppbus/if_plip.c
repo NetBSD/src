@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.17 2008/04/08 07:35:35 cegger Exp $ */
+/* $NetBSD: if_plip.c,v 1.18 2008/04/15 15:02:29 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.17 2008/04/08 07:35:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.18 2008/04/15 15:02:29 cegger Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -174,9 +174,9 @@ static u_char *ctxmith;
 static uint16_t lp_count = 0;
 
 /* Autoconf functions */
-static int lp_probe(struct device *, struct cfdata *, void *);
-static void lp_attach(struct device *, struct device *, void *);
-static int lp_detach(struct device *, int);
+static int lp_probe(device_t, cfdata_t, void *);
+static void lp_attach(device_t, device_t, void *);
+static int lp_detach(device_t, int);
 
 /* Soft config data */
 struct lp_softc {
@@ -189,7 +189,7 @@ struct lp_softc {
 };
 
 /* Autoconf structure */
-CFATTACH_DECL(plip, sizeof(struct lp_softc), lp_probe, lp_attach, lp_detach,
+CFATTACH_DECL_NEW(plip, sizeof(struct lp_softc), lp_probe, lp_attach, lp_detach,
 	NULL);
 
 /* Functions for the lp interface */
@@ -203,7 +203,7 @@ static void lp_intr(void *);
 
 
 static int
-lp_probe(struct device * parent, struct cfdata * match, void *aux)
+lp_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct ppbus_attach_args * args = aux;
 
@@ -217,7 +217,7 @@ lp_probe(struct device * parent, struct cfdata * match, void *aux)
 }
 
 static void
-lp_attach(struct device * parent, struct device * self, void *aux)
+lp_attach(device_t parent, device_t self, void *aux)
 {
 	struct lp_softc * lp = device_private(self);
 	struct ifnet * ifp = &lp->sc_if;
@@ -253,11 +253,11 @@ lp_attach(struct device * parent, struct device * self, void *aux)
 }
 
 static int
-lp_detach(struct device * self, int flags)
+lp_detach(device_t self, int flags)
 {
 	int error = 0;
 	struct lp_softc * lp = device_private(self);
-	struct device * ppbus = device_parent(self);
+	device_t ppbus = device_parent(self);
 
 	if(lp->sc_dev_ok) {
 		if(!(flags & DETACH_QUIET))
@@ -346,9 +346,9 @@ lpfreetables (void)
 static int
 lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct device * dev = ifp->if_softc;
-	struct device * ppbus = device_parent(dev);
-	struct lp_softc * sc = (struct lp_softc *) dev;
+	device_t dev = ifp->if_softc;
+	device_t ppbus = device_parent(dev);
+	struct lp_softc * sc = device_private(dev);
 	struct ifaddr * ifa = (struct ifaddr *)data;
 	struct ifreq * ifr = (struct ifreq *)data;
 	u_char * ptr;
@@ -467,7 +467,7 @@ end:
 }
 
 static inline int
-clpoutbyte (u_char byte, int spin, struct device * ppbus)
+clpoutbyte (u_char byte, int spin, device_t ppbus)
 {
 	int s = spin;
 	ppbus_wdtr(ppbus, ctxmitl[byte]);
@@ -487,7 +487,7 @@ clpoutbyte (u_char byte, int spin, struct device * ppbus)
 }
 
 static inline int
-clpinbyte (int spin, struct device * ppbus)
+clpinbyte (int spin, device_t ppbus)
 {
 	u_char c, cl;
 	int s = spin;
@@ -536,9 +536,9 @@ lptap(struct ifnet *ifp, struct mbuf *m)
 static void
 lp_intr (void *arg)
 {
-	struct device * dev = (struct device *)arg;
-        struct device * ppbus = device_parent(dev);
-	struct lp_softc * sc = (struct lp_softc *)dev;
+	device_t dev = (device_t)arg;
+        device_t ppbus = device_parent(dev);
+	struct lp_softc * sc = device_private(dev);
 	struct ifnet * ifp = &sc->sc_if;
 	struct mbuf *top;
 	int len, s, j;
@@ -684,7 +684,7 @@ done:
 }
 
 static inline int
-lpoutbyte(u_char byte, int spin, struct device * ppbus)
+lpoutbyte(u_char byte, int spin, device_t ppbus)
 {
 	int s = spin;
 	ppbus_wdtr(ppbus, txmith[byte]);
@@ -706,9 +706,9 @@ static int
 lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct rtentry *rt)
 {
-	struct device * dev = ifp->if_softc;
-	struct device * ppbus = device_parent(dev);
-	struct lp_softc * sc = (struct lp_softc *) dev;
+	device_t dev = ifp->if_softc;
+	device_t ppbus = device_parent(dev);
+	struct lp_softc * sc = device_private(dev);
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int err;
 	int s;
@@ -768,8 +768,8 @@ void
 lpstart(struct ifnet * ifp)
 {
 	struct lp_softc * lp = ifp->if_softc;
-	struct device * dev = ifp->if_softc;
-	struct device * ppbus = device_parent(dev);
+	device_t dev = ifp->if_softc;
+	device_t ppbus = device_parent(dev);
 	struct mbuf * mm;
 	struct mbuf * m;
 	u_char * cp;
