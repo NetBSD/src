@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.94 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.95 2008/04/15 05:13:37 thorpej Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.94 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.95 2008/04/15 05:13:37 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -119,7 +119,14 @@ struct	inpcbtable raw6cbtable;
  * Raw interface to IP6 protocol.
  */
 
-struct rip6stat rip6stat;
+static percpu_t *rip6stat_percpu;
+
+#define	RIP6_STATINC(x)							\
+do {									\
+	uint64_t *_rip6s_ = percpu_getref(rip6stat_percpu);		\
+	_rip6s_[x]++;							\
+	percpu_putref(rip6stat_percpu);					\
+} while (/*CONSTCOND*/0)
 
 /*
  * Initialize raw connection block queue.
@@ -129,6 +136,8 @@ rip6_init()
 {
 
 	in6_pcbinit(&raw6cbtable, 1, 1);
+
+	rip6stat_percpu = percpu_alloc(sizeof(uint64_t) * RIP6_NSTATS);
 }
 
 /*
@@ -147,7 +156,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	struct sockaddr_in6 rip6src;
 	struct mbuf *opts = NULL;
 
-	rip6stat.rip6s_ipackets++;
+	RIP6_STATINC(RIP6_STAT_IPACKETS);
 
 #if defined(NFAITH) && 0 < NFAITH
 	if (faithprefix(&ip6->ip6_dst)) {
@@ -186,10 +195,10 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		    !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
 			continue;
 		if (in6p->in6p_cksum != -1) {
-			rip6stat.rip6s_isum++;
+			RIP6_STATINC(RIP6_STAT_ISUM);
 			if (in6_cksum(m, proto, *offp,
 			    m->m_pkthdr.len - *offp)) {
-				rip6stat.rip6s_badsum++;
+				RIP6_STATINC(RIP6_STAT_BADSUM);
 				continue;
 			}
 		}
@@ -222,7 +231,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 					m_freem(n);
 					if (opts)
 						m_freem(opts);
-					rip6stat.rip6s_fullsock++;
+					RIP6_STATINC(RIP6_STAT_FULLSOCK);
 				} else
 					sorwakeup(last->in6p_socket);
 				opts = NULL;
@@ -265,13 +274,13 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			m_freem(m);
 			if (opts)
 				m_freem(opts);
-			rip6stat.rip6s_fullsock++;
+			RIP6_STATINC(RIP6_STAT_FULLSOCK);
 		} else
 			sorwakeup(last->in6p_socket);
 	} else {
-		rip6stat.rip6s_nosock++;
+		RIP6_STATINC(RIP6_STAT_NOSOCK);
 		if (m->m_flags & M_MCAST)
-			rip6stat.rip6s_nosockmcast++;
+			RIP6_STATINC(RIP6_STAT_NOSOCKMCAST);
 		if (proto == IPPROTO_NONE)
 			m_freem(m);
 		else {
@@ -534,7 +543,7 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
 			icmp6_ifoutstat_inc(oifp, type, code);
 		ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
 	} else
-		rip6stat.rip6s_opackets++;
+		RIP6_STATINC(RIP6_STAT_OPACKETS);
 
 	goto freectl;
 
@@ -859,6 +868,38 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	return error;
 }
 
+static void
+rip6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+{
+	uint64_t *rip6sc = v1;
+	uint64_t *rip6s = v2;
+	u_int i;
+
+	for (i = 0; i < RIP6_NSTATS; i++)
+		rip6s[i] += rip6sc[i];
+}
+
+static void
+rip6stat_convert_to_user(uint64_t *rip6s)
+{
+
+	memset(rip6s, 0, sizeof(uint64_t) * RIP6_NSTATS);
+	percpu_foreach(rip6stat_percpu, rip6stat_convert_to_user_cb, rip6s);
+}
+
+static int
+sysctl_net_inet6_raw6_stats(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	uint64_t rip6s[RIP6_NSTATS];
+
+	rip6stat_convert_to_user(rip6s);
+	node = *rnode;
+	node.sysctl_data = rip6s;
+	node.sysctl_size = sizeof(rip6s);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
 SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")
 {
 
@@ -890,7 +931,7 @@ SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("Raw IPv6 statistics"),
-		       NULL, 0, &rip6stat, sizeof(rip6stat),
+		       sysctl_net_inet6_raw6_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_RAW, RAW6CTL_STATS,
 		       CTL_EOL);
 }
