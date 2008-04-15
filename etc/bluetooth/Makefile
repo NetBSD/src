@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.4 2007/02/20 16:56:10 kiyohara Exp $
+# $NetBSD: Makefile,v 1.5 2008/04/15 11:17:47 plunky Exp $
 
-CONFIGFILES=	btdevctl.conf btuartd.conf hosts protocols
+CONFIGFILES=	btattach.conf btdevctl.conf hosts protocols
 FILESDIR=	/etc/bluetooth
 
 .include <bsd.prog.mk>

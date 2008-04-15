@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1065 2008/04/03 22:46:22 xtraeme Exp $
+# $NetBSD: mi,v 1.1066 2008/04/15 11:17:47 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1907,11 +1907,12 @@
 ./usr/share/man/cat8/bootselect.0		man-obsolete		obsolete
 ./usr/share/man/cat8/bounce.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/brconfig.0			man-netutil-catman	.cat
+./usr/share/man/cat8/btattach.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/btconfig.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/btcontrol.0		man-obsolete		obsolete
 ./usr/share/man/cat8/btdevctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bthcid.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/btuartd.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/btuartd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/catman.0			man-man-catman		.cat
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cats/makedev.0		man-obsolete		obsolete
@@ -4452,11 +4453,12 @@
 ./usr/share/man/man8/bootselect.8		man-obsolete		obsolete
 ./usr/share/man/man8/bounce.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/brconfig.8			man-netutil-man		.man
+./usr/share/man/man8/btattach.8			man-sysutil-man		.man
 ./usr/share/man/man8/btconfig.8			man-sysutil-man		.man
 ./usr/share/man/man8/btcontrol.8		man-obsolete		obsolete
 ./usr/share/man/man8/btdevctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/bthcid.8			man-sysutil-man		.man
-./usr/share/man/man8/btuartd.8			man-sysutil-man		.man
+./usr/share/man/man8/btuartd.8			man-obsolete		obsolete
 ./usr/share/man/man8/catman.8			man-man-man		.man
 ./usr/share/man/man8/cats/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cats/makedev.8		man-obsolete		obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1129 2008/04/15 00:49:02 dogcow Exp $
+#	$NetBSD: mi,v 1.1130 2008/04/15 11:17:47 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -190,7 +190,7 @@
 ./usr/include/dev/bluetooth/bthidev.h		comp-c-include
 ./usr/include/dev/bluetooth/bthset.h		comp-obsolete		obsolete
 ./usr/include/dev/bluetooth/btsco.h		comp-c-include
-./usr/include/dev/bluetooth/btuart.h		comp-c-include
+./usr/include/dev/bluetooth/btuart.h		comp-obsolete		obsolete
 ./usr/include/dev/ccdvar.h			comp-c-include
 ./usr/include/dev/cgdvar.h			comp-c-include
 ./usr/include/dev/clock_subr.h			comp-obsolete		obsolete
@@ -2922,11 +2922,12 @@
 ./usr/libdata/debug/usr/sbin/bootpef.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootpgw.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/bootptest.debug	comp-bootserver-debug	debug
+./usr/libdata/debug/usr/sbin/btattach.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btconfig.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/btcontrol.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/btdevctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/bthcid.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/btuartd.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/btuartd.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/chown.debug	comp-sysutil-debug	debug
