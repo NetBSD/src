@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.45 2008/04/08 23:37:43 thorpej Exp $	*/
+/*	$NetBSD: inet6.c,v 1.46 2008/04/15 04:43:25 thorpej Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.45 2008/04/08 23:37:43 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.46 2008/04/15 04:43:25 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,48 +430,46 @@ tcp6_stats(off, name)
  * Dump UDP6 statistics structure.
  */
 void
-udp6_stats(off, name)
-	u_long off;
-	char *name;
+udp6_stats(u_long off, char *name)
 {
-	struct udp6stat udp6stat;
+	uint64_t udp6stat[UDP6_NSTATS];
 	u_quad_t delivered;
 
 	if (use_sysctl) {
 		size_t size = sizeof(udp6stat);
 
-		if (sysctlbyname("net.inet6.udp6.stats", &udp6stat, &size,
+		if (sysctlbyname("net.inet6.udp6.stats", udp6stat, &size,
 		    NULL, 0) == -1)
 			err(1, "net.inet6.udp6.stats");
 	} else {
 		if (off == 0)
 			return;
-		kread(off, (char *)&udp6stat, sizeof (udp6stat));
+		kread(off, (char *)udp6stat, sizeof (udp6stat));
 	}
 	printf("%s:\n", name);
-#define	p(f, m) if (udp6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)udp6stat.f, plural(udp6stat.f))
-#define	p1(f, m) if (udp6stat.f || sflag <= 1) \
-    printf(m, (unsigned long long)udp6stat.f)
-	p(udp6s_ipackets, "\t%llu datagram%s received\n");
-	p1(udp6s_hdrops, "\t%llu with incomplete header\n");
-	p1(udp6s_badlen, "\t%llu with bad data length field\n");
-	p1(udp6s_badsum, "\t%llu with bad checksum\n");
-	p1(udp6s_nosum, "\t%llu with no checksum\n");
-	p1(udp6s_noport, "\t%llu dropped due to no socket\n");
-	p(udp6s_noportmcast,
+#define	p(f, m) if (udp6stat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)udp6stat[f], plural(udp6stat[f]))
+#define	p1(f, m) if (udp6stat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)udp6stat[f])
+	p(UDP6_STAT_IPACKETS, "\t%llu datagram%s received\n");
+	p1(UDP6_STAT_HDROPS, "\t%llu with incomplete header\n");
+	p1(UDP6_STAT_BADLEN, "\t%llu with bad data length field\n");
+	p1(UDP6_STAT_BADSUM, "\t%llu with bad checksum\n");
+	p1(UDP6_STAT_NOSUM, "\t%llu with no checksum\n");
+	p1(UDP6_STAT_NOPORT, "\t%llu dropped due to no socket\n");
+	p(UDP6_STAT_NOPORTMCAST,
 	    "\t%llu multicast datagram%s dropped due to no socket\n");
-	p1(udp6s_fullsock, "\t%llu dropped due to full socket buffers\n");
-	delivered = udp6stat.udp6s_ipackets -
-		    udp6stat.udp6s_hdrops -
-		    udp6stat.udp6s_badlen -
-		    udp6stat.udp6s_badsum -
-		    udp6stat.udp6s_noport -
-		    udp6stat.udp6s_noportmcast -
-		    udp6stat.udp6s_fullsock;
+	p1(UDP6_STAT_FULLSOCK, "\t%llu dropped due to full socket buffers\n");
+	delivered = udp6stat[UDP6_STAT_IPACKETS] -
+		    udp6stat[UDP6_STAT_HDROPS] -
+		    udp6stat[UDP6_STAT_BADLEN] -
+		    udp6stat[UDP6_STAT_BADSUM] -
+		    udp6stat[UDP6_STAT_NOPORT] -
+		    udp6stat[UDP6_STAT_NOPORTMCAST] -
+		    udp6stat[UDP6_STAT_FULLSOCK];
 	if (delivered || sflag <= 1)
 		printf("\t%llu delivered\n", (unsigned long long)delivered);
-	p(udp6s_opackets, "\t%llu datagram%s output\n");
+	p(UDP6_STAT_OPACKETS, "\t%llu datagram%s output\n");
 #undef p
 #undef p1
 }
