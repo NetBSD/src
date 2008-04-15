@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.18 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: if_plip.c,v 1.19 2008/04/15 19:03:26 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.18 2008/04/15 15:02:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.19 2008/04/15 19:03:26 cegger Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -433,7 +433,7 @@ lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 			free(ptr,M_DEVBUF);
 		/*FALLTHROUGH*/
 	case SIOCGIFMTU:
-		if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
 
@@ -737,7 +737,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
-	IFQ_ENQUEUE(&ifp->if_snd, m, dst->sa_family, err);
+	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, err);
 	if(err == 0) {
 		if((ifp->if_flags & IFF_OACTIVE) == 0)
 			lpstart(ifp);
