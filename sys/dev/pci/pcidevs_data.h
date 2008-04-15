@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.935 2008/04/09 14:15:12 joerg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.936 2008/04/15 21:26:08 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.935 2008/04/09 14:14:40 joerg Exp
+ *	NetBSD: pcidevs,v 1.936 2008/04/15 21:24:07 cegger Exp
  */
 
 /*
@@ -5246,6 +5246,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43XG,
 	    "BCM43XG",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4328,
+	    "BCM4328 802.11a/b/g/n",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
@@ -10904,8 +10908,24 @@ static const struct pci_product pci_products[] = {
 	    "nForce MCP61 Gigabit Ethernet Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_8400M_GS,
+	    "GeForce 8400M GS",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
 	    "nForce MCP65 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC1,
+	    "nForce MCP65 PCI-LPC Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC2,
+	    "nForce MCP65 PCI-LPC Bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC3,
+	    "nForce MCP65 PCI-LPC Bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM,
@@ -10918,6 +10938,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SMB,
 	    "nForce MCP65 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SMU,
+	    "nForce MCP65 System Management Unit",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_IDE,
@@ -11718,6 +11742,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C847,
 	    "5C847 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RxDPCC,
+	    "xD-Picture Card Controller",
 	},
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C853,
@@ -14120,4 +14148,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2930;
+const int pci_nproducts = 2937;
