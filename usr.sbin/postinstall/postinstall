@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.58 2008/02/13 12:55:56 tron Exp $
+# $NetBSD: postinstall,v 1.59 2008/04/15 11:17:48 plunky Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -592,7 +592,7 @@ do_bluetooth()
 
 	populate_dir ${op} true \
 		${SRC_DIR}/etc/bluetooth ${DEST_DIR}/etc/bluetooth 644 \
-		hosts protocols btdevctl.conf btuartd.conf
+		hosts protocols btattach.conf btdevctl.conf
 	failed=$(( ${failed} + $? ))
 
 	move_file ${op} ${DEST_DIR}/var/db/btdev.xml \
@@ -877,7 +877,7 @@ do_rc()
 	compare_dir ${op} ${SRC_DIR}/etc/rc.d ${DEST_DIR}/etc/rc.d 555 \
 		DAEMON LOGIN NETWORKING SERVERS \
 		accounting altqd amd apmd \
-		bootconf.sh bootparams btconfig btdevctl bthcid btuartd \
+		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck ftpd \
@@ -902,7 +902,7 @@ do_rc()
 	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.d files
-	for f in NETWORK btcontrol fsck.sh kerberos nfsiod servers \
+	for f in NETWORK btcontrol btuartd fsck.sh kerberos nfsiod servers \
 	    systemfs daemon gated login portmap sunndd xntpd; do
 		fd=/etc/rc.d/${f}
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
