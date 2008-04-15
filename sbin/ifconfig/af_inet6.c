@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.5 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.6 2008/04/15 22:24:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.5 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.6 2008/04/15 22:24:37 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -58,7 +58,16 @@ __RCSID("$NetBSD: af_inet6.c,v 1.5 2006/08/26 18:14:28 christos Exp $");
 static struct in6_ifreq ifr6;
 
 struct in6_ifreq    in6_ridreq;
-struct in6_aliasreq in6_addreq;
+struct in6_aliasreq in6_addreq = {
+	.ifra_prefixmask = {
+		.sin6_addr = {
+			.s6_addr =
+			    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}}},
+	.ifra_lifetime = {
+		  .ia6t_pltime = ND6_INFINITE_LIFETIME
+		, .ia6t_vltime = ND6_INFINITE_LIFETIME
+	}
+};
 
 static char *
 sec2str(time_t total)
@@ -446,12 +455,4 @@ in6_getprefix(const char *plen, int which)
 		*cp++ = 0xff;
 	if (len)
 		*cp = 0xff << (8 - len);
-}
-
-void
-in6_init(void)
-{
-
-	in6_addreq.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
-	in6_addreq.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 }
