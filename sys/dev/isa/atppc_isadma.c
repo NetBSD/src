@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isadma.c,v 1.6 2008/04/08 20:08:49 cegger Exp $ */
+/* $NetBSD: atppc_isadma.c,v 1.7 2008/04/15 15:02:28 cegger Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.6 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isadma.c,v 1.7 2008/04/15 15:02:28 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -61,7 +61,7 @@ atppc_isadma_setup(struct atppc_softc * lsc, isa_chipset_tag_t ic, int drq)
 	/* Reserve DRQ */
 	if (isa_drq_alloc(ic, drq)) {
 		ATPPC_DPRINTF(("%s(%s): cannot reserve DRQ line.\n", __func__,
-			device_xname(&lsc->sc_dev)));
+			device_xname(lsc->sc_dev)));
 		return error;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.23 2008/04/08 07:35:35 cegger Exp $ */
+/* $NetBSD: lpt.c,v 1.24 2008/04/15 15:02:29 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.23 2008/04/08 07:35:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.24 2008/04/15 15:02:29 cegger Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -93,12 +93,12 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.23 2008/04/08 07:35:35 cegger Exp $");
 #include <dev/ppbus/lptio.h>
 
 /* Autoconf functions */
-static int lpt_probe(device_t, struct cfdata *, void *);
+static int lpt_probe(device_t, cfdata_t, void *);
 static void lpt_attach(device_t, device_t, void *);
 static int lpt_detach(device_t, int);
 
 /* Autoconf structure */
-CFATTACH_DECL(lpt_ppbus, sizeof(struct lpt_softc), lpt_probe, lpt_attach,
+CFATTACH_DECL_NEW(lpt_ppbus, sizeof(struct lpt_softc), lpt_probe, lpt_attach,
 	lpt_detach, NULL);
 
 extern struct cfdriver lpt_cd;
@@ -125,7 +125,7 @@ static int lpt_logstatus(const device_t, const unsigned char);
  * lpt_probe()
  */
 static int
-lpt_probe(device_t parent, struct cfdata * match, void *aux)
+lpt_probe(device_t parent, cfdata_t match, void *aux)
 {
 	/* Test ppbus's capability */
 	return lpt_detect(parent);
@@ -229,7 +229,7 @@ lpt_detach(device_t self, int flags)
 static int
 lpt_request_ppbus(struct lpt_softc * lpt, int how)
 {
-	device_t dev = &lpt->ppbus_dev.sc_dev;
+	device_t dev = lpt->ppbus_dev.sc_dev;
 	int error;
 
 	error = ppbus_request_bus(device_parent(dev), dev, how, (hz));
@@ -248,7 +248,7 @@ lpt_request_ppbus(struct lpt_softc * lpt, int how)
 static int
 lpt_release_ppbus(struct lpt_softc * lpt, int how)
 {
-	device_t dev = &lpt->ppbus_dev.sc_dev;
+	device_t dev = lpt->ppbus_dev.sc_dev;
 	int error;
 
 	if(lpt->sc_state & HAVEBUS) {
@@ -420,7 +420,7 @@ lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 		return ENXIO;
 	}
 
-	lpt = (struct lpt_softc *) dev;
+	lpt = device_private(dev);
 
 	ppbus = device_parent(dev);
 	ppbus_dev = &(lpt->ppbus_dev);

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.9 2007/12/05 07:58:31 ad Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.10 2008/04/15 15:02:29 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -42,24 +42,24 @@
 
 
 /* Function pointer types used for interface */
-typedef u_char (*PARPORT_IO_T)(struct device *, int, u_char *, int, u_char);
-typedef int (*PARPORT_EXEC_MICROSEQ_T)(struct device *,
+typedef u_char (*PARPORT_IO_T)(device_t, int, u_char *, int, u_char);
+typedef int (*PARPORT_EXEC_MICROSEQ_T)(device_t,
 	struct ppbus_microseq **);
-typedef void (*PARPORT_RESET_EPP_TIMEOUT_T)(struct device *);
-typedef int (*PARPORT_SETMODE_T)(struct device *, int);
-typedef int (*PARPORT_GETMODE_T)(struct device *);
-typedef void (*PARPORT_ECP_SYNC_T)(struct device *);
-typedef int (*PARPORT_READ_T)(struct device *, char *, int, int, size_t *);
-typedef int (*PARPORT_WRITE_T)(struct device *, char *, int, int, size_t *);
-typedef int (*PARPORT_READ_IVAR_T)(struct device *, int, unsigned int *);
-typedef int (*PARPORT_WRITE_IVAR_T)(struct device *, int, unsigned int *);
-typedef int (*PARPORT_DMA_MALLOC_T)(struct device *, void **, bus_addr_t *,
+typedef void (*PARPORT_RESET_EPP_TIMEOUT_T)(device_t);
+typedef int (*PARPORT_SETMODE_T)(device_t, int);
+typedef int (*PARPORT_GETMODE_T)(device_t);
+typedef void (*PARPORT_ECP_SYNC_T)(device_t);
+typedef int (*PARPORT_READ_T)(device_t, char *, int, int, size_t *);
+typedef int (*PARPORT_WRITE_T)(device_t, char *, int, int, size_t *);
+typedef int (*PARPORT_READ_IVAR_T)(device_t, int, unsigned int *);
+typedef int (*PARPORT_WRITE_IVAR_T)(device_t, int, unsigned int *);
+typedef int (*PARPORT_DMA_MALLOC_T)(device_t, void **, bus_addr_t *,
 	bus_size_t);
-typedef void (*PARPORT_DMA_FREE_T)(struct device *, void **, bus_addr_t *,
+typedef void (*PARPORT_DMA_FREE_T)(device_t, void **, bus_addr_t *,
 	bus_size_t);
-typedef int (*PARPORT_ADD_HANDLER_T)(struct device *, void (*)(void *),
+typedef int (*PARPORT_ADD_HANDLER_T)(device_t, void (*)(void *),
 	void *);
-typedef int (*PARPORT_REMOVE_HANDLER_T)(struct device *, void (*)(void *));
+typedef int (*PARPORT_REMOVE_HANDLER_T)(device_t, void (*)(void *));
 
 /* Adapter structure that each parport device needs to implement ppbus */
 struct parport_adapter {
@@ -84,7 +84,7 @@ struct parport_adapter {
 
 /* Parallel Port Bus configuration structure. */
 struct ppbus_softc {
-	struct device sc_dev;
+        device_t sc_dev;
 
 	/* Lock for critical section when requesting/releasing the bus */
 	kmutex_t sc_lock;
@@ -110,7 +110,7 @@ struct ppbus_softc {
 	u_int32_t sc_mode;		/* IEEE 1284-1994 mode */
 
 	/* ppbus_device which owns the bus */
-	struct device * ppbus_owner;
+	device_t ppbus_owner;
 
 	/* Head of list of child devices */
 	SLIST_HEAD(childlist, ppbus_device_softc) sc_childlist_head;
