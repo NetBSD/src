@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.160 2008/04/14 13:41:43 tsutsui Exp $
+#	$NetBSD: bsd.sys.mk,v 1.161 2008/04/15 00:08:05 tsutsui Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -17,11 +17,7 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
 # Set linker warnings to be fatal
-# XXX no proper way to avoid "FOO is a patented algorithm" warnings
-# XXX on linking static libs
-.if (${MKPIC} != "no" && ${LDSTATIC} != "-static")
 LDFLAGS+=	-Wl,--fatal-warnings
-.endif
 .endif
 .if ${WARNS} > 1
 CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
