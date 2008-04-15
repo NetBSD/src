@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.24 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: lpt.c,v 1.25 2008/04/15 19:06:16 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.24 2008/04/15 15:02:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.25 2008/04/15 19:06:16 cegger Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -255,9 +255,10 @@ lpt_release_ppbus(struct lpt_softc * lpt, int how)
 		error = ppbus_release_bus(device_parent(dev), dev, how, (hz));
 		if(!(error))
 			lpt->sc_state &= ~HAVEBUS;
-		else
+		else {
 			LPT_DPRINTF(("%s(%s): error releasing bus.\n", __func__,
 				device_xname(dev)));
+		}
 	}
 	else {
 		error = EINVAL;
@@ -475,9 +476,10 @@ lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 			lpt_release_ppbus(lpt, PPBUS_WAIT);
 			return (err);
 		}
-		else
+		else {
 			LPT_VPRINTF(("%s(%s): printer ready.\n", __func__,
 				device_xname(dev)));
+		}
 	}
 
 	/* Set autolinefeed if requested */
