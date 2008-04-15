@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.81 2008/02/27 19:54:27 matt Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.82 2008/04/15 04:43:25 thorpej Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.81 2008/02/27 19:54:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.82 2008/04/15 04:43:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.81 2008/02/27 19:54:27 matt Exp $"
 #include <netinet6/in6_pcb.h>
 #include <netinet/icmp6.h>
 #include <netinet6/udp6_var.h>
+#include <netinet6/udp6_private.h>
 #include <netinet6/ip6protosw.h>
 #include <netinet/in_offload.h>
 
@@ -108,7 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.81 2008/02/27 19:54:27 matt Exp $"
  */
 
 extern struct inpcbtable udbtable;
-struct	udp6stat udp6stat;
+
+percpu_t *udp6stat_percpu;
 
 static	void udp6_notify(struct in6pcb *, int);
 
@@ -402,6 +404,38 @@ release:
 	return error;
 }
 
+static void
+udp6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+{
+	uint64_t *udp6sc = v1;
+	uint64_t *udp6s = v2;
+	u_int i;
+
+	for (i = 0; i < UDP6_NSTATS; i++)
+		udp6s[i] += udp6sc[i];
+}
+
+static void
+udp6stat_convert_to_user(uint64_t *udp6s)
+{
+
+	memset(udp6s, 0, sizeof(uint64_t) * UDP6_NSTATS);
+	percpu_foreach(udp6stat_percpu, udp6stat_convert_to_user_cb, udp6s);
+}
+
+static int
+sysctl_net_inet6_udp6_stats(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	uint64_t udp6s[UDP6_NSTATS];
+
+	udp6stat_convert_to_user(udp6s);
+	node = *rnode;
+	node.sysctl_data = udp6s;
+	node.sysctl_size = sizeof(udp6s);
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
 SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
 {
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -453,7 +487,15 @@ SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("UDPv6 statistics"),
-		       NULL, 0, &udp6stat, sizeof(udp6stat),
+		       sysctl_net_inet6_udp6_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_UDP, UDP6CTL_STATS,
 		       CTL_EOL);
+}
+
+void
+udp6_statinc(u_int stat)
+{
+
+	KASSERT(stat < UDP6_NSTATS);
+	UDP6_STATINC(stat);
 }

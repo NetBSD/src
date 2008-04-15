@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.167 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.168 2008/04/15 04:43:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.167 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.168 2008/04/15 04:43:25 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.167 2008/04/15 03:57:04 thorpej Exp
 #include <netinet6/ip6_private.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/udp6_var.h>
+#include <netinet6/udp6_private.h>
 #include <netinet6/scope6_var.h>
 #endif
 
@@ -464,7 +465,7 @@ udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
 		goto good;
 	}
 	if (uh->uh_sum == 0) {
-		udp6stat.udp6s_nosum++;
+		UDP6_STATINC(UDP6_STAT_NOSUM);
 		goto bad;
 	}
 
@@ -473,7 +474,7 @@ udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
 	    M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
 	case M_CSUM_UDPv6|M_CSUM_TCP_UDP_BAD:
 		UDP_CSUM_COUNTER_INCR(&udp6_hwcsum_bad);
-		udp6stat.udp6s_badsum++;
+		UDP6_STATINC(UDP6_STAT_BADSUM);
 		goto bad;
 
 #if 0 /* notyet */
@@ -492,7 +493,7 @@ udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
 		 */
 		UDP_CSUM_COUNTER_INCR(&udp6_swcsum);
 		if (in6_cksum(m, IPPROTO_UDP, off, len) != 0) {
-			udp6stat.udp6s_badsum++;
+			UDP6_STATINC(UDP6_STAT_BADSUM);
 			goto bad;
 		}
 	}
@@ -523,7 +524,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 #endif
 
-	udp6stat.udp6s_ipackets++;
+	UDP6_STATINC(UDP6_STAT_IPACKETS);
 
 	/* check for jumbogram is done in ip6_input.  we can trust pkthdr.len */
 	plen = m->m_pkthdr.len - off;
@@ -542,7 +543,7 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 		ulen = plen;
 
 	if (plen != ulen) {
-		udp6stat.udp6s_badlen++;
+		UDP6_STATINC(UDP6_STAT_BADLEN);
 		goto bad;
 	}
 
@@ -580,10 +581,10 @@ udp6_input(struct mbuf **mp, int *offp, int proto)
 
 	if (udp6_realinput(AF_INET6, &src, &dst, m, off) == 0) {
 		if (m->m_flags & M_MCAST) {
-			udp6stat.udp6s_noportmcast++;
+			UDP6_STATINC(UDP6_STAT_NOPORTMCAST);
 			goto bad;
 		}
-		udp6stat.udp6s_noport++;
+		UDP6_STATINC(UDP6_STAT_NOPORT);
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOPORT, 0);
 		m = NULL;
 	}
@@ -689,7 +690,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 			if (opts)
 				m_freem(opts);
 			so->so_rcv.sb_overflowed++;
-			udp6stat.udp6s_fullsock++;
+			UDP6_STATINC(UDP6_STAT_FULLSOCK);
 		} else
 			sorwakeup(so);
 	}
