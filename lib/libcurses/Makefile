@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2008/04/14 20:41:17 jdc Exp $
+#	$NetBSD: Makefile,v 1.57 2008/04/15 18:27:01 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -85,7 +85,8 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_cursor.3 getmaxy.3 curses_cursor.3 getmaxyx.3 \
 	 curses_input.3 getnstr.3 \
 	 curses_cursor.3 getpary.3 curses_cursor.3 getparx.3 \
-	 curses_cursor.3 getparyx.3 curses_input.3 getstr.3 \
+	 curses_cursor.3 getparyx.3 curses_fileio.3 getwin.3 \
+	 curses_input.3 getstr.3 \
 	 curses_tty.3 gettmode.3 curses_cursor.3 getyx.3 \
 	 curses_color.3 has_colors.3 curses_tty.3 has_ic.3 \
 	 curses_tty.3 halfdelay.3 curses_tty.3 has_il.3 \
@@ -131,7 +132,7 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 	 curses_color.3 pair_content.3 curses_echochar.3 pechochar.3 \
 	 curses_pad.3 pnoutrefresh.3 \
 	 curses_pad.3 prefresh.3 curses_print.3 printw.3 \
-	 curses_tty.3 qiflush.3 \
+	 curses_fileio.3 putwin.3 curses_tty.3 qiflush.3 \
 	 curses_tty.3 raw.3 curses_refresh.3 refresh.3 \
 	 curses_tty.3 reset_prog_mode.3 curses_tty.3 reset_shell_mode.3 \
 	 curses_tty.3 resetty.3 curses_screen.3 resizeterm.3 \
