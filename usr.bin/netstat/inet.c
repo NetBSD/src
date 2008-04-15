@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.85 2008/04/15 06:03:28 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.86 2008/04/15 15:17:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.85 2008/04/15 06:03:28 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.86 2008/04/15 15:17:54 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -720,46 +720,56 @@ pim_stats(u_long off, char *name)
 void
 arp_stats(u_long off, char *name)
 {
-	struct arpstat arpstat;
+	uint64_t arpstat[ARP_NSTATS];
 
-	if (off == 0)
-		return;
-	kread(off, (char *)&arpstat, sizeof (arpstat));
+	if (use_sysctl) {
+		size_t size = sizeof(arpstat);
+
+		if (sysctlbyname("net.inet.arp.stats", arpstat, &size,
+				 NULL, 0) == -1) {
+			return;
+		}
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)arpstat, sizeof(arpstat));
+	}
+
 	printf("%s:\n", name);
 
-#define	ps(f, m) if (arpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)arpstat.f)
-#define	p(f, m) if (arpstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)arpstat.f, plural(arpstat.f))
+#define	ps(f, m) if (arpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)arpstat[f])
+#define	p(f, m) if (arpstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)arpstat[f], plural(arpstat[f]))
 
-	p(as_sndtotal, "\t%llu packet%s sent\n");
-	p(as_sndreply, "\t\t%llu reply packet%s\n");
-	p(as_sndrequest, "\t\t%llu request packet%s\n");
+	p(ARP_STAT_SNDTOTAL, "\t%llu packet%s sent\n");
+	p(ARP_STAT_SNDREPLY, "\t\t%llu reply packet%s\n");
+	p(ARP_STAT_SENDREQUEST, "\t\t%llu request packet%s\n");
 
-	p(as_rcvtotal, "\t%llu packet%s received\n");
-	p(as_rcvreply, "\t\t%llu reply packet%s\n");
-	p(as_rcvrequest, "\t\t%llu valid request packet%s\n");
-	p(as_rcvmcast, "\t\t%llu broadcast/multicast packet%s\n");
-	p(as_rcvbadproto, "\t\t%llu packet%s with unknown protocol type\n");
-	p(as_rcvbadlen, "\t\t%llu packet%s with bad (short) length\n");
-	p(as_rcvzerotpa, "\t\t%llu packet%s with null target IP address\n");
-	p(as_rcvzerospa, "\t\t%llu packet%s with null source IP address\n");
-	ps(as_rcvnoint, "\t\t%llu could not be mapped to an interface\n");
-	p(as_rcvlocalsha, "\t\t%llu packet%s sourced from a local hardware "
+	p(ARP_STAT_RCVTOTAL, "\t%llu packet%s received\n");
+	p(ARP_STAT_RCVREPLY, "\t\t%llu reply packet%s\n");
+	p(ARP_STAT_RCVREQUEST, "\t\t%llu valid request packet%s\n");
+	p(ARP_STAT_RCVMCAST, "\t\t%llu broadcast/multicast packet%s\n");
+	p(ARP_STAT_RCVBADPROTO, "\t\t%llu packet%s with unknown protocol type\n");
+	p(ARP_STAT_RCVBADLEN, "\t\t%llu packet%s with bad (short) length\n");
+	p(ARP_STAT_RCVZEROTPA, "\t\t%llu packet%s with null target IP address\n");
+	p(ARP_STAT_RCVZEROSPA, "\t\t%llu packet%s with null source IP address\n");
+	ps(ARP_STAT_RCVNOINT, "\t\t%llu could not be mapped to an interface\n");
+	p(ARP_STAT_RCVLOCALSHA, "\t\t%llu packet%s sourced from a local hardware "
 	    "address\n");
-	p(as_rcvbcastsha, "\t\t%llu packet%s with a broadcast "
+	p(ARP_STAT_RCVBCASTSHA, "\t\t%llu packet%s with a broadcast "
 	    "source hardware address\n");
-	p(as_rcvlocalspa, "\t\t%llu duplicate%s for a local IP address\n");
-	p(as_rcvoverperm, "\t\t%llu attempt%s to overwrite a static entry\n");
-	p(as_rcvoverint, "\t\t%llu packet%s received on wrong interface\n");
-	p(as_rcvover, "\t\t%llu entry%s overwritten\n");
-	p(as_rcvlenchg, "\t\t%llu change%s in hardware address length\n");
+	p(ARP_STAT_RCVLOCALSPA, "\t\t%llu duplicate%s for a local IP address\n");
+	p(ARP_STAT_RCVOVERPERM, "\t\t%llu attempt%s to overwrite a static entry\n");
+	p(ARP_STAT_RCVOVERINT, "\t\t%llu packet%s received on wrong interface\n");
+	p(ARP_STAT_RCVOVER, "\t\t%llu entry%s overwritten\n");
+	p(ARP_STAT_RCVLENCHG, "\t\t%llu change%s in hardware address length\n");
 
-	p(as_dfrtotal, "\t%llu packet%s deferred pending ARP resolution\n");
-	ps(as_dfrsent, "\t\t%llu sent\n");
-	ps(as_dfrdropped, "\t\t%llu dropped\n");
+	p(ARP_STAT_DFRTOTAL, "\t%llu packet%s deferred pending ARP resolution\n");
+	ps(ARP_STAT_DFRSENT, "\t\t%llu sent\n");
+	ps(ARP_STAT_DFRDROPPED, "\t\t%llu dropped\n");
 
-	p(as_allocfail, "\t%llu failure%s to allocate llinfo\n");
+	p(ARP_STAT_ALLOCFAIL, "\t%llu failure%s to allocate llinfo\n");
 
 #undef ps
 #undef p
