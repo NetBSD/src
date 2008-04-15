@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.h,v 1.6 2008/04/15 19:10:19 njoly Exp $ */
+/*	$NetBSD: linux32_missing.h,v 1.7 2008/04/15 21:10:06 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -82,8 +82,6 @@ SYS_DEF(linux_sys_old_mmap);
 SYS_DEF(linux_sys_ugetrlimit);
 SYS_DEF(linux_sys_fcntl64);
 SYS_DEF(linux_sys_llseek);
-SYS_DEF(linux_sys_setresuid16);
-SYS_DEF(linux_sys_setresgid16);
 SYS_DEF(linux_sys_nice);
 SYS_DEF(linux_sys_getgroups16);
 SYS_DEF(linux_sys_setgroups16);
