@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2 2008/04/15 00:21:49 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2008/04/15 00:21:49 uwe Exp $");
 
 #include "obio.h"
 #include "pci.h"
@@ -48,19 +48,19 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2006/09/01 21:26:18 uwe Exp $");
 
 #include <landisk/dev/obiovar.h>
 
-static int mainbus_match(struct device *, struct cfdata *, void *);
-static void mainbus_attach(struct device *, struct device *, void *);
+static int mainbus_match(device_t, cfdata_t, void *);
+static void mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 static int mainbus_print(void *, const char *);
 
 /* There can be only one. */
-int mainbus_found = 0;
+static int mainbus_found = 0;
 
 static int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (mainbus_found)
@@ -70,7 +70,7 @@ mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	union {
 		struct mainbus_attach_args mba_mba;
@@ -80,7 +80,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	mainbus_found = 1;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* CPU */
 	memset(&mba, 0, sizeof(mba));
