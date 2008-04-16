@@ -1,9 +1,9 @@
 #
-#	$Id: files.imx31,v 1.1.2.1 2007/09/11 02:36:55 matt Exp $
+#	$Id: files.imx31,v 1.1.2.2 2008/04/16 07:13:52 cliff Exp $
 #
 
 # derived from:
-#	$NetBSD: files.imx31,v 1.1.2.1 2007/09/11 02:36:55 matt Exp $
+#	$NetBSD: files.imx31,v 1.1.2.2 2008/04/16 07:13:52 cliff Exp $
 #
 # Freescale iMX31 evaluation board configuration info
 #
@@ -17,7 +17,6 @@ defparam opt_machdep.h				BOOT_ARGS
 include "arch/arm/imx/files.imx"
 
 # PCMCIA controller
-include "dev/pcmcia/files.pcmcia"
 device  imx31lk_pcic: pcmciabus
 attach  imx31lk_pcic at aips
 file    arch/arm/imx/imx_pcic.c              	imx31lk_pcic
