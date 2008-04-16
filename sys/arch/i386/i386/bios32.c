@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.20 2008/01/23 19:46:44 bouyer Exp $	*/
+/*	$NetBSD: bios32.c,v 1.21 2008/04/16 22:15:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.20 2008/01/23 19:46:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.21 2008/04/16 22:15:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ bios32_init()
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
 	    p < (char *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 		struct smbhdr * sh = (struct smbhdr *)p;
-		u_int8_t chksum;
+		uint8_t chksum;
 		vaddr_t eva;
 		paddr_t pa, end;
 
@@ -193,7 +193,7 @@ bios32_init()
 		if (eva == 0)
 			break;
 
-		smbios_entry.addr = (u_int8_t *)(eva +
+		smbios_entry.addr = (uint8_t *)(eva +
 		    (sh->addr & PGOFSET));
 		smbios_entry.len = sh->size;
 		smbios_entry.mjr = sh->majrev;
@@ -271,9 +271,9 @@ bios32_service(service, e, ei)
  * smbios_find_table with the same arguments.
  */
 int
-smbios_find_table(u_int8_t type, struct smbtable *st)
+smbios_find_table(uint8_t type, struct smbtable *st)
 {
-	u_int8_t *va, *end;
+	uint8_t *va, *end;
 	struct smbtblhdr *hdr;
 	int ret = 0, tcount = 1;
 
@@ -288,10 +288,10 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 	 * preceding that referenced by the handle is encoded in bits 15:31.
 	 */
 	if ((st->cookie & 0xfff) == type && st->cookie >> 16) {
-		if ((u_int8_t *)st->hdr >= va && (u_int8_t *)st->hdr < end) {
+		if ((uint8_t *)st->hdr >= va && (uint8_t *)st->hdr < end) {
 			hdr = st->hdr;
 			if (hdr->type == type) {
-				va = (u_int8_t *)hdr + hdr->size;
+				va = (uint8_t *)hdr + hdr->size;
 				for (; va + 1 < end; va++)
 					if (*va == 0 && *(va + 1) == 0)
 						break;
@@ -323,13 +323,13 @@ smbios_find_table(u_int8_t type, struct smbtable *st)
 }
 
 char *
-smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
+smbios_get_string(struct smbtable *st, uint8_t indx, char *dest, size_t len)
 {
-	u_int8_t *va, *end;
+	uint8_t *va, *end;
 	char *ret = NULL;
 	int i;
 
-	va = (u_int8_t *)st->hdr + st->hdr->size;
+	va = (uint8_t *)st->hdr + st->hdr->size;
 	end = smbios_entry.addr + smbios_entry.len;
 	for (i = 1; va < end && i < indx && *va; i++)
 		while (*va++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2008/02/12 17:52:19 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 2008/04/16 21:51:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2008/02/12 17:52:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2008/04/16 21:51:03 cegger Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -243,8 +243,8 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 int	physmem;
-u_int64_t	dumpmem_low;
-u_int64_t	dumpmem_high;
+uint64_t	dumpmem_low;
+uint64_t	dumpmem_high;
 int	cpu_class;
 
 vaddr_t	msgbuf_vaddr;
@@ -537,10 +537,10 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 
-	tf->tf_rip = (u_int64_t)catcher;
+	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_rsp = (u_int64_t)f;
+	tf->tf_rsp = (uint64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
 
@@ -703,7 +703,7 @@ haltsys:
 /*
  * These variables are needed by /sbin/savecore
  */
-u_int32_t	dumpmag = 0x8fca0101;	/* magic number */
+uint32_t	dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 
@@ -997,7 +997,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (u_int64_t)l->l_proc->p_psstr;
+	tf->tf_rbx = (uint64_t)l->l_proc->p_psstr;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
@@ -1025,13 +1025,13 @@ setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int 
 {
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 
-	gd->gd_looffset = (u_int64_t)func & 0xffff;
+	gd->gd_looffset = (uint64_t)func & 0xffff;
 	gd->gd_selector = sel;
 	gd->gd_ist = ist;
 	gd->gd_type = type;
 	gd->gd_dpl = dpl;
 	gd->gd_p = 1;
-	gd->gd_hioffset = (u_int64_t)func >> 16;
+	gd->gd_hioffset = (uint64_t)func >> 16;
 	gd->gd_zero = 0;
 	gd->gd_xx1 = 0;
 	gd->gd_xx2 = 0;
@@ -1051,10 +1051,10 @@ unsetgate( struct gate_descriptor *gd)
 }
 
 void
-setregion(struct region_descriptor *rd, void *base, u_int16_t limit)
+setregion(struct region_descriptor *rd, void *base, uint16_t limit)
 {
 	rd->rd_limit = limit;
-	rd->rd_base = (u_int64_t)base;
+	rd->rd_base = (uint64_t)base;
 }
 
 /*
@@ -1083,13 +1083,13 @@ set_sys_segment(struct sys_segment_descriptor *sd, void *base, size_t limit,
 {
 	memset(sd, 0, sizeof *sd);
 	sd->sd_lolimit = (unsigned)limit;
-	sd->sd_lobase = (u_int64_t)base;
+	sd->sd_lobase = (uint64_t)base;
 	sd->sd_type = type;
 	sd->sd_dpl = dpl;
 	sd->sd_p = 1;
 	sd->sd_hilimit = (unsigned)limit >> 16;
 	sd->sd_gran = gran;
-	sd->sd_hibase = (u_int64_t)base >> 24;
+	sd->sd_hibase = (uint64_t)base >> 24;
 }
 
 void
@@ -1222,11 +1222,11 @@ init_x86_64(paddr_t first_avail)
 #ifndef XEN
 	int first16q, ist;
 	extern struct extent *iomem_ex;
-	u_int64_t seg_start, seg_end;
-	u_int64_t seg_start1, seg_end1;
+	uint64_t seg_start, seg_end;
+	uint64_t seg_start1, seg_end1;
 #if !defined(REALEXTMEM) && !defined(REALBASEMEM)
 	struct btinfo_memmap *bim;
-	u_int64_t addr, size, io_end, new_physmem;
+	uint64_t addr, size, io_end, new_physmem;
 #endif
 #else /* XEN */
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
@@ -1526,7 +1526,7 @@ init_x86_64(paddr_t first_avail)
 		if (seg_start != seg_end) {
 			if (seg_start <= (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
+				uint64_t tmp;
 
 				if (seg_end > (16 * 1024 * 1024))
 					tmp = (16 * 1024 * 1024);
@@ -1561,7 +1561,7 @@ init_x86_64(paddr_t first_avail)
 		if (seg_start1 != seg_end1) {
 			if (seg_start1 <= (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
-				u_int64_t tmp;
+				uint64_t tmp;
 
 				if (seg_end1 > (16 * 1024 * 1024))
 					tmp = (16 * 1024 * 1024);
