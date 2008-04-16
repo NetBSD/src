@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14 2008/01/15 14:50:09 joerg Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.15 2008/04/16 21:51:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2008/01/15 14:50:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2008/04/16 21:51:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,8 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 	if (l->l_md.md_flags & MDP_USEDFPU) {
 		fpusave_lwp(l, true);
 	} else {
-		u_int16_t cw;
-		u_int32_t mxcsr, mxcsr_mask;
+		uint16_t cw;
+		uint32_t mxcsr, mxcsr_mask;
 
 		/*
 		 * Fake a FNINIT.
@@ -199,9 +199,9 @@ process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
 
-	if ((u_int64_t)addr > VM_MAXUSER_ADDRESS)
+	if ((uint64_t)addr > VM_MAXUSER_ADDRESS)
 		return EINVAL;
-	tf->tf_rip = (u_int64_t)addr;
+	tf->tf_rip = (uint64_t)addr;
 
 	return (0);
 }

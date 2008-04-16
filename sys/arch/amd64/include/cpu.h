@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2008/02/27 18:26:15 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 2008/04/16 21:51:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@ struct cpu_info {
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
-	u_int64_t ci_scratch;
+	uint64_t ci_scratch;
 #ifdef XEN
 	struct iplsource *ci_isources[NIPL];
 #else
@@ -112,18 +112,18 @@ struct cpu_info {
 
 	int		ci_idepth;
 	void *		ci_intrstack;
-	u_int32_t	ci_imask[NIPL];
-	u_int32_t	ci_iunmask[NIPL];
+	uint32_t	ci_imask[NIPL];
+	uint32_t	ci_iunmask[NIPL];
 
 	u_int		ci_flags;
-	u_int32_t	ci_ipis;
+	uint32_t	ci_ipis;
 
 	int32_t		ci_cpuid_level;
 	uint32_t	ci_signature;
 	uint32_t	ci_feature_flags;
 	uint32_t	ci_feature2_flags;
 	uint32_t	ci_vendor[4];	 /* vendor string */
-	u_int64_t	ci_tsc_freq;
+	uint64_t	ci_tsc_freq;
 	volatile uint32_t	ci_lapic_counter;
 
 	const struct cpu_functions *ci_func;
@@ -243,7 +243,7 @@ void cpu_init_idle_lwps(void);
 
 #define aston(l)	((l)->l_md.md_astpending = 1)
 
-extern u_int32_t cpus_attached;
+extern uint32_t cpus_attached;
 
 #define curcpu()	x86_curcpu()
 #define curlwp		x86_curlwp()
@@ -385,7 +385,7 @@ struct disklist {
 		int bi_cyl;			   /* cylinders on disk */
 		int bi_head;			   /* heads per track */
 		int bi_sec;			   /* sectors per track */
-		u_int64_t bi_lbasecs;		   /* total sec. (iff ext13) */
+		uint64_t bi_lbasecs;		   /* total sec. (iff ext13) */
 #define BIFLAG_INVALID		0x01
 #define BIFLAG_EXTINT13		0x02
 		int bi_flags;

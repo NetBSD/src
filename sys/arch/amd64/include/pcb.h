@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11 2008/01/05 21:47:19 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.12 2008/04/16 21:51:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,13 +96,13 @@ struct pcb {
 #define PCB_GS64	0x02
 #define PCB_FS64	0x04
 	int	  pcb_cr0;		/* saved image of CR0 */
-	u_int64_t pcb_rsp0;
-	u_int64_t pcb_cr2;		/* page fault address (CR2) */
-	u_int64_t pcb_cr3;
-	u_int64_t pcb_rsp;
-	u_int64_t pcb_rbp;
-	u_int64_t pcb_usersp;
-	u_int64_t pcb_ldt_sel;
+	uint64_t pcb_rsp0;
+	uint64_t pcb_cr2;		/* page fault address (CR2) */
+	uint64_t pcb_cr3;
+	uint64_t pcb_rsp;
+	uint64_t pcb_rbp;
+	uint64_t pcb_usersp;
+	uint64_t pcb_ldt_sel;
 	struct	savefpu pcb_savefpu __aligned(16); /* floating point state */
 	void     *pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
