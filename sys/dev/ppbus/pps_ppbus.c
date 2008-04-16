@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.11 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.12 2008/04/16 09:39:01 cegger Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.11 2008/04/15 15:02:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.12 2008/04/16 09:39:01 cegger Exp $");
 
 #include "opt_ntp.h"
 
@@ -47,13 +47,13 @@ __KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.11 2008/04/15 15:02:29 cegger Exp $"
 
 struct pps_softc {
 	struct ppbus_device_softc pps_dev;
-	struct device *ppbus;
+	device_t ppbus;
 	int busy;
 	struct pps_state pps_state;	/* pps state */
 };
 
-static int pps_probe(struct device *, struct cfdata *, void *);
-static void pps_attach(struct device *, struct device *, void *);
+static int pps_probe(device_t, cfdata_t, void *);
+static void pps_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(pps, sizeof(struct pps_softc), pps_probe, pps_attach,
 	NULL, NULL);
 extern struct cfdriver pps_cd;
@@ -69,7 +69,7 @@ const struct cdevsw pps_cdevsw = {
 static void ppsintr(void *arg);
 
 static int
-pps_probe(struct device *parent, struct cfdata *match, void *aux)
+pps_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct ppbus_attach_args *args = aux;
 
@@ -81,11 +81,12 @@ pps_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pps_attach(struct device *parent, struct device *self, void *aux)
+pps_attach(device_t parent, device_t self, void *aux)
 {
 	struct pps_softc *sc = device_private(self);
 
 	sc->ppbus = parent;
+	sc->pps_dev.sc_dev = self;
 
 	printf("\n");
 }
@@ -133,7 +134,7 @@ static int
 ppsclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct pps_softc *sc = device_lookup(&pps_cd, minor(dev));
-	struct device *ppbus = sc->ppbus;
+	device_t ppbus = sc->ppbus;
 
 	sc->busy = 0;
 	sc->pps_state.ppsparam.mode = 0;
@@ -151,7 +152,7 @@ static void
 ppsintr(void *arg)
 {
 	struct pps_softc *sc = arg;
-	struct device *ppbus = sc->ppbus;
+	device_t ppbus = sc->ppbus;
 
 	pps_capture(&sc->pps_state);
 
