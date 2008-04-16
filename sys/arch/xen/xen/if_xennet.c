@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.57 2008/04/16 18:41:48 cegger Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.58 2008/04/16 20:50:27 cegger Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.57 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.58 2008/04/16 20:50:27 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -330,7 +330,7 @@ find_device(int handle)
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (!device_is_a(dv, "xennet"))
 			continue;
-		xs = (struct xennet_softc *)dv;
+		xs = device_private(dv);
 		if (xs->sc_ifno == handle)
 			break;
 	}
@@ -389,7 +389,7 @@ xennet_driver_count_connected(void)
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
 		if (!device_is_a(dv, "xennet"))
 			continue;
-		xs = (struct xennet_softc *)dv;
+		xs = device_private(dv);
 		netctrl.xc_interfaces++;
 		if (xs->sc_backend_state == BEST_CONNECTED)
 			netctrl.xc_connected++;
@@ -1288,7 +1288,7 @@ int
 xennet_bootstatic_callback(struct nfs_diskless *nd)
 {
 	struct ifnet *ifp = nd->nd_ifp;
-	struct xennet_softc *sc = (struct xennet_softc *)ifp->if_softc;
+	struct xennet_softc *sc = ifp->if_softc;
 	union xen_cmdline_parseinfo xcp;
 	struct sockaddr_in *sin;
 
