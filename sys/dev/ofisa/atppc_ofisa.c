@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_ofisa.c,v 1.8 2008/04/15 15:02:28 cegger Exp $ */
+/* $NetBSD: atppc_ofisa.c,v 1.9 2008/04/16 09:39:01 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.8 2008/04/15 15:02:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.9 2008/04/16 09:39:01 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_ofisa.c,v 1.8 2008/04/15 15:02:28 cegger Exp $
 #include <dev/ic/atppcvar.h>
 #include <dev/isa/atppc_isadma.h>
 
-static int	atppc_ofisa_match(struct device *, struct cfdata *, void *);
-static void	atppc_ofisa_attach(struct device *, struct device *, void *);
+static int	atppc_ofisa_match(device_t, cfdata_t, void *);
+static void	atppc_ofisa_attach(device_t, device_t, void *);
 
 struct atppc_ofisa_softc {
 	struct atppc_softc sc_atppc;
@@ -76,15 +76,15 @@ static int atppc_ofisa_dma_start(struct atppc_softc *, void *, u_int,
 	u_int8_t);
 static int atppc_ofisa_dma_finish(struct atppc_softc *);
 static int atppc_ofisa_dma_abort(struct atppc_softc *);
-static int atppc_ofisa_dma_malloc(struct device *, void **, bus_addr_t *,
+static int atppc_ofisa_dma_malloc(device_t, void **, bus_addr_t *,
 	bus_size_t);
-static void atppc_ofisa_dma_free(struct device *, void **, bus_addr_t *,
+static void atppc_ofisa_dma_free(device_t, void **, bus_addr_t *,
 	bus_size_t);
 /*
  * atppc_ofisa_match: autoconf(9) match routine
  */
 static int
-atppc_ofisa_match(struct device *parent, struct cfdata *match, void *aux)
+atppc_ofisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = { "pnpPNP,401", NULL };
@@ -100,7 +100,7 @@ atppc_ofisa_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-atppc_ofisa_attach(struct device *parent, struct device *self, void *aux)
+atppc_ofisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct atppc_softc *sc = device_private(self);
 	struct atppc_ofisa_softc *asc = device_private(self);
@@ -142,6 +142,7 @@ atppc_ofisa_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_drq = dma.drq;
 
 	/* Attach */
+	sc->sc_dev = self;
 	sc->sc_iot = (reg.type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
 	sc->sc_has = 0;
 	asc->sc_ic = aa->ic;
@@ -203,20 +204,20 @@ atppc_ofisa_dma_abort(struct atppc_softc * lsc)
 
 /* Allocate memory for DMA over ISA bus */
 int
-atppc_ofisa_dma_malloc(struct device * dev, void ** buf, bus_addr_t * bus_addr,
+atppc_ofisa_dma_malloc(device_t dev, void ** buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {
-	struct atppc_ofisa_softc * sc = (struct atppc_ofisa_softc *) dev;
+	struct atppc_ofisa_softc * sc = device_private(dev);
 
 	return atppc_isadma_malloc(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }
 
 /* Free memory allocated by atppc_isa_dma_malloc() */
 void
-atppc_ofisa_dma_free(struct device * dev, void ** buf, bus_addr_t * bus_addr,
+atppc_ofisa_dma_free(device_t dev, void ** buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {
-	struct atppc_ofisa_softc * sc = (struct atppc_ofisa_softc *) dev;
+	struct atppc_ofisa_softc * sc = device_private(dev);
 
 	return atppc_isadma_free(sc->sc_ic, sc->sc_drq, buf, bus_addr, size);
 }
