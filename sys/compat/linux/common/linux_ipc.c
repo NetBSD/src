@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.45 2008/04/15 11:08:05 njoly Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.46 2008/04/16 14:47:31 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.45 2008/04/15 11:08:05 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.46 2008/04/16 14:47:31 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -462,8 +462,7 @@ bsd_to_linux_shmid64_ds(struct shmid_ds *bsp, struct linux_shmid64_ds *lsp)
 }
 
 /*
- * shmctl.SHM_LOCK and SHM_UNLOCK are passed on, but currently not implemented
- * by NetBSD itself.
+ * shmctl.
  *
  * The usual structure conversion and massaging is done.
  */
