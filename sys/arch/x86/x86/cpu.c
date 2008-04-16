@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26 2008/04/13 22:23:58 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.27 2008/04/16 16:06:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2008/04/13 22:23:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2008/04/16 16:06:51 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -258,7 +258,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	if (ncolors <= uvmexp.ncolors)
 		return;
-	aprint_verbose("%s: %d page colors\n", ci->ci_dev->dv_xname, ncolors);
+	aprint_verbose_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
 }
 
@@ -712,7 +712,7 @@ cpu_debug_dump(void)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
-		    ci->ci_dev == NULL ? "BOOT" : ci->ci_dev->dv_xname,
+		    ci->ci_dev == NULL ? "BOOT" : device_xname(ci->ci_dev),
 		    (long)ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
 		    ci->ci_curlwp,
@@ -919,7 +919,7 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 
 	if (full) {
 		wrmsr(MSR_FSBASE, 0);
-		wrmsr(MSR_GSBASE, (u_int64_t)ci);
+		wrmsr(MSR_GSBASE, (uint64_t)ci);
 		wrmsr(MSR_KERNELGSBASE, 0);
 	}
 

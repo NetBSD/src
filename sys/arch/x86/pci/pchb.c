@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.9 2008/03/04 15:33:06 cube Exp $ */
+/*	$NetBSD: pchb.c,v 1.10 2008/04/16 16:06:51 cegger Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.9 2008/03/04 15:33:06 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.10 2008/04/16 16:06:51 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,9 +220,9 @@ pchbattach(device_t parent, device_t self, void *aux)
 				bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 				    I82443BX_SDRAMC_REG);
 				if ((bcreg & 0x03000000) != 0x01000000) {
-					aprint_verbose("%s: fixing "
+					aprint_verbose_dev(self, "fixing "
 					    "Idle/Pipeline DRAM "
-					    "Leadoff Timing\n", self->dv_xname);
+					    "Leadoff Timing\n");
 					bcreg &= ~0x03000000;
 					bcreg |=  0x01000000;
 					pci_conf_write(pa->pa_pc, pa->pa_tag,

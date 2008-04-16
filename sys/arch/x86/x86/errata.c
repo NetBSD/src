@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.13 2007/11/14 17:55:00 ad Exp $	*/
+/*	$NetBSD: errata.c,v 1.14 2008/04/16 16:06:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.13 2007/11/14 17:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.14 2008/04/16 16:06:51 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -258,8 +258,8 @@ x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 	if ((val & e->e_data2) != 0)
 		return FALSE;
 	wrmsr_locked(e->e_data1, OPTERON_MSR_PASSCODE, val | e->e_data2);
-	aprint_debug("%s: erratum %d patched\n",
-	    ci->ci_dev->dv_xname, e->e_num);
+	aprint_debug_dev(ci->ci_dev, "erratum %d patched\n",
+	    e->e_num);
 
 	return FALSE;
 }
@@ -300,24 +300,24 @@ x86_errata(void)
 				continue;
 		}
 
-		aprint_debug("%s: testing for erratum %d\n",
-		    ci->ci_dev->dv_xname, e->e_num);
+		aprint_debug_dev(ci->ci_dev, "testing for erratum %d\n",
+		    e->e_num);
 
 		if (e->e_act == NULL)
 			e->e_reported = TRUE;
 		else if ((*e->e_act)(ci, e) == FALSE)
 			continue;
 
-		aprint_debug("%s: erratum %d present\n",
-		    ci->ci_dev->dv_xname, e->e_num);
+		aprint_debug_dev(ci->ci_dev, "erratum %d present\n",
+		    e->e_num);
 		upgrade = 1;
 	}
 
 	if (upgrade && !again) {
 		again = 1;
-		aprint_normal("%s: WARNING: AMD errata present, BIOS upgrade "
-		    "may be\n", ci->ci_dev->dv_xname);
-		aprint_normal("%s: WARNING: necessary to ensure reliable "
-		    "operation\n", ci->ci_dev->dv_xname);
+		aprint_normal_dev(ci->ci_dev, "WARNING: AMD errata present, BIOS upgrade "
+		    "may be\n");
+		aprint_normal_dev(ci->ci_dev, "WARNING: necessary to ensure reliable "
+		    "operation\n");
 	}
 }

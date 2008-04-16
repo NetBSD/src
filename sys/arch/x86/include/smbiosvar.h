@@ -1,4 +1,4 @@
-/*	$NetBSD: smbiosvar.h,v 1.2 2008/03/30 15:26:20 ad Exp $ */
+/*	$NetBSD: smbiosvar.h,v 1.3 2008/04/16 16:06:51 cegger Exp $ */
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  * Copyright (c) 2005 Jordan Hargrave
@@ -43,40 +43,40 @@
 #define SMBIOS_UUID_REPLEN 37 /* 16 zero padded values, 4 hyphens, 1 null */
 
 struct smbios_entry {
-	u_int8_t	mjr;
-	u_int8_t	min;
-	u_int8_t	*addr;
-	u_int16_t	len;
-	u_int16_t	count;
+	uint8_t	mjr;
+	uint8_t	min;
+	uint8_t	*addr;
+	uint16_t	len;
+	uint16_t	count;
 };
 
 struct smbhdr {
-	u_int32_t	sig;		/* "_SM_" */
-	u_int8_t 	checksum;	/* Entry point checksum */
-	u_int8_t 	len;		/* Entry point structure length */
-	u_int8_t	majrev;		/* Specification major revision */
-	u_int8_t	minrev;		/* Specification minor revision */
-	u_int16_t	mss;		/* Maximum Structure Size */
-	u_int8_t 	epr;		/* Entry Point Revision */
-	u_int8_t 	fa[5];		/* value determined by EPR */
-	u_int8_t	sasig[5];  	/* Secondary Anchor "_DMI_" */
-	u_int8_t	sachecksum;	/* Secondary Checksum */
-	u_int16_t	size;   	/* Length of structure table in bytes */
-	u_int32_t	addr;	  	/* Structure table address */
-	u_int16_t	count;		/* Number of SMBIOS structures */
-	u_int8_t	rev;  		/* BCD revision */
+	uint32_t	sig;		/* "_SM_" */
+	uint8_t 	checksum;	/* Entry point checksum */
+	uint8_t 	len;		/* Entry point structure length */
+	uint8_t	majrev;		/* Specification major revision */
+	uint8_t	minrev;		/* Specification minor revision */
+	uint16_t	mss;		/* Maximum Structure Size */
+	uint8_t 	epr;		/* Entry Point Revision */
+	uint8_t 	fa[5];		/* value determined by EPR */
+	uint8_t	sasig[5];  	/* Secondary Anchor "_DMI_" */
+	uint8_t	sachecksum;	/* Secondary Checksum */
+	uint16_t	size;   	/* Length of structure table in bytes */
+	uint32_t	addr;	  	/* Structure table address */
+	uint16_t	count;		/* Number of SMBIOS structures */
+	uint8_t	rev;  		/* BCD revision */
 } __packed;
 
 struct smbtblhdr {
-	u_int8_t	type;
-	u_int8_t	size;
-	u_int16_t	handle;
+	uint8_t	type;
+	uint8_t	size;
+	uint16_t	handle;
 } __packed;
 
 struct smbtable {
 	struct smbtblhdr *hdr;
 	void		 *tblhdr;
-	u_int32_t	 cookie;
+	uint32_t	 cookie;
 };
 
 #define	SMBIOS_TYPE_BIOS		0
@@ -127,17 +127,17 @@ struct smbtable {
  * DMTF Specification DSP0134 Section: 3.3.1 p.g. 34
  */
 struct smbios_struct_bios {
-	u_int8_t	vendor;		/* string */
-	u_int8_t	version;	/* string */
-	u_int16_t	startaddr;
-	u_int8_t	release;	/* string */
-	u_int8_t	romsize;
-	u_int64_t	characteristics;
-	u_int32_t	charext;
-	u_int8_t	major_rel;
-	u_int8_t	minor_rel;
-	u_int8_t	ecf_mjr_rel;	/* embedded controler firmware */
-	u_int8_t 	ecf_min_rel;	/* embedded controler firmware */
+	uint8_t	vendor;		/* string */
+	uint8_t	version;	/* string */
+	uint16_t	startaddr;
+	uint8_t	release;	/* string */
+	uint8_t	romsize;
+	uint64_t	characteristics;
+	uint32_t	charext;
+	uint8_t	major_rel;
+	uint8_t	minor_rel;
+	uint8_t	ecf_mjr_rel;	/* embedded controler firmware */
+	uint8_t 	ecf_min_rel;	/* embedded controler firmware */
 } __packed;
 
 /*
@@ -147,16 +147,16 @@ struct smbios_struct_bios {
 
 struct smbios_sys {
 /* SMBIOS spec 2.0+ */
-	u_int8_t	vendor;		/* string */
-	u_int8_t	product;	/* string */
-	u_int8_t	version;	/* string */
-	u_int8_t	serial;		/* string */
+	uint8_t	vendor;		/* string */
+	uint8_t	product;	/* string */
+	uint8_t	version;	/* string */
+	uint8_t	serial;		/* string */
 /* SMBIOS spec 2.1+ */
-	u_int8_t	uuid[16];
-	u_int8_t	wakeup;
+	uint8_t	uuid[16];
+	uint8_t	wakeup;
 /* SMBIOS spec 2.4+ */
-	u_int8_t	sku;		/* string */
-	u_int8_t	family;		/* string */
+	uint8_t	sku;		/* string */
+	uint8_t	family;		/* string */
 } __packed;
 
 /*
@@ -164,16 +164,16 @@ struct smbios_sys {
  * DMTF Specification DSP0134 Section 3.3.3 p.g. 37
  */
 struct smbios_board {
-	u_int8_t	vendor;		/* string */
-	u_int8_t	product;	/* string */
-	u_int8_t	version;	/* string */
-	u_int8_t	serial;		/* string */
-	u_int8_t	asset;		/* stirng */
-	u_int8_t	feature;	/* feature flags */
-	u_int8_t	location;	/* location in chassis */
-	u_int16_t	handle;		/* chassis handle */
-	u_int8_t	type;		/* board type */
-	u_int8_t	noc;		/* number of contained objects */
+	uint8_t	vendor;		/* string */
+	uint8_t	product;	/* string */
+	uint8_t	version;	/* string */
+	uint8_t	serial;		/* string */
+	uint8_t	asset;		/* stirng */
+	uint8_t	feature;	/* feature flags */
+	uint8_t	location;	/* location in chassis */
+	uint16_t	handle;		/* chassis handle */
+	uint8_t	type;		/* board type */
+	uint8_t	noc;		/* number of contained objects */
 } __packed;
 
 /*
@@ -197,14 +197,14 @@ struct smbios_slot {
  * DMTF Specification DSP0134 Section 3.3.39 p.g. 91
  */
 struct smbios_ipmi {
-        u_int8_t        smipmi_if_type;         /* IPMI Interface Type */
-        u_int8_t        smipmi_if_rev;          /* BCD IPMI Revision */
-        u_int8_t        smipmi_i2c_address;     /* I2C address of BMC */
-        u_int8_t        smipmi_nvram_address;   /* I2C address of NVRAM
+        uint8_t        smipmi_if_type;         /* IPMI Interface Type */
+        uint8_t        smipmi_if_rev;          /* BCD IPMI Revision */
+        uint8_t        smipmi_i2c_address;     /* I2C address of BMC */
+        uint8_t        smipmi_nvram_address;   /* I2C address of NVRAM
 						 * storage */
-        u_int64_t       smipmi_base_address;    /* Base address of BMC (BAR
+        uint64_t       smipmi_base_address;    /* Base address of BMC (BAR
 						 * format */
-        u_int8_t        smipmi_base_flags;      /* Flags field:
+        uint8_t        smipmi_base_flags;      /* Flags field:
 						 * bit 7:6 : register spacing
 						 *   00 = byte
 						 *   01 = dword
@@ -214,10 +214,10 @@ struct smbios_ipmi {
 						 * bit 2 : N/A
 						 * bit 1 : Interrupt polarity
 						 * bit 0 : Interrupt trigger */
-        u_int8_t        smipmi_irq;             /* IRQ if applicable */
+        uint8_t        smipmi_irq;             /* IRQ if applicable */
 } __packed;
 
-int smbios_find_table(u_int8_t, struct smbtable *);
-char *smbios_get_string(struct smbtable *, u_int8_t, char *, size_t);
+int smbios_find_table(uint8_t, struct smbtable *);
+char *smbios_get_string(struct smbtable *, uint8_t, char *, size_t);
 
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.12 2008/03/10 22:03:40 ad Exp $ */
+/* $NetBSD: tsc.c,v 1.13 2008/04/16 16:06:52 cegger Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.12 2008/03/10 22:03:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.13 2008/04/16 16:06:52 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -138,7 +138,7 @@ static struct timecounter tsc_timecounter = {
 void
 init_TSC(void)
 {
-	u_int64_t tscval[2];
+	uint64_t tscval[2];
 
 	if (cpu_feature & CPUID_TSC)
 		tsc_present = 1;

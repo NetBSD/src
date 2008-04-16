@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.9 2008/03/21 13:25:27 xtraeme Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.10 2008/04/16 16:06:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.9 2008/03/21 13:25:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.10 2008/04/16 16:06:51 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -680,8 +680,7 @@ lpcib_hpet_match(device_t parent, cfdata_t match, void *aux)
 	tag = arg->hpet_mem_t;
 
 	if (bus_space_map(tag, arg->hpet_reg, HPET_WINDOW_SIZE, 0, &handle)) {
-		aprint_verbose("%s: HPET window not mapped, skipping\n",
-		    parent->dv_xname);
+		aprint_verbose_dev(parent, "HPET window not mapped, skipping\n");
 		return 0;
 	}
 	bus_space_unmap(tag, handle, HPET_WINDOW_SIZE);
