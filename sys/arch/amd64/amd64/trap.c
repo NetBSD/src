@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.44 2008/01/16 09:37:08 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.45 2008/04/16 21:51:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.44 2008/01/16 09:37:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 2008/04/16 21:51:03 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -275,7 +275,7 @@ trap(struct trapframe *frame)
 copyefault:
 			error = EFAULT;
 copyfault:
-			frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
+			frame->tf_rip = (uint64_t)pcb->pcb_onfault;
 			frame->tf_rax = error;
 			return;
 		}
@@ -299,7 +299,7 @@ copyfault:
 		 */
 		switch (*(u_char *)frame->tf_rip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)((u_int64_t)&frame->tf_rsp - 44);
+			vframe = (void *)((uint64_t)&frame->tf_rsp - 44);
 			resume = resume_iret;
 			break;
 /*
@@ -310,11 +310,11 @@ copyfault:
  */
 #if 0
 		case 0x1f:	/* popl %ds */
-			vframe = (void *)((u_int64_t)&frame->tf_rsp - 4);
+			vframe = (void *)((uint64_t)&frame->tf_rsp - 4);
 			resume = resume_pop_ds;
 			break;
 		case 0x07:	/* popl %es */
-			vframe = (void *)((u_int64_t)&frame->tf_rsp - 0);
+			vframe = (void *)((uint64_t)&frame->tf_rsp - 0);
 			resume = resume_pop_es;
 			break;
 #endif
@@ -324,7 +324,7 @@ copyfault:
 		if (KERNELMODE(vframe->tf_cs, vframe->tf_rflags))
 			goto we_re_toast;
 
-		frame->tf_rip = (u_int64_t)resume;
+		frame->tf_rip = (uint64_t)resume;
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
