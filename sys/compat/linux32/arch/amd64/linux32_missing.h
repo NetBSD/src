@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.h,v 1.7 2008/04/15 21:10:06 njoly Exp $ */
+/*	$NetBSD: linux32_missing.h,v 1.8 2008/04/16 10:03:31 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -43,10 +43,7 @@
 struct linux_sys_old_mmap_args {
 	syscallarg(struct linux_oldmmap *) lmp;
 };  
-struct linux_sys_ugetrlimit_args {
-	syscallarg(int) which;
-	syscallarg(struct orlimit *) rlp;
-};  
+
 struct linux_sys_fcntl64_args {
 	syscallarg(int) fd;
 	syscallarg(int) cmd;
@@ -58,10 +55,6 @@ struct linux_sys_llseek_args {
         syscallarg(u_int32_t) olow;
         syscallarg(void *) res;
         syscallarg(int) whence;
-};
-
-struct linux_sys_nice_args {
-	syscallarg(int) incr;
 };
 
 struct linux_sys_getgroups16_args {
@@ -79,13 +72,10 @@ __BEGIN_DECLS
 #define SYS_DEF(foo) struct foo##_args; \
 	int foo(lwp_t *, const struct foo##_args *, register_t *)
 SYS_DEF(linux_sys_old_mmap);
-SYS_DEF(linux_sys_ugetrlimit);
 SYS_DEF(linux_sys_fcntl64);
 SYS_DEF(linux_sys_llseek);
-SYS_DEF(linux_sys_nice);
 SYS_DEF(linux_sys_getgroups16);
 SYS_DEF(linux_sys_setgroups16);
-// SYS_DEF(linux_sys_mmap2);
 #undef SYS_DEF
 __END_DECLS
 #endif /* !_KERNEL */
