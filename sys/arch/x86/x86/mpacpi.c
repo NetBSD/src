@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.56 2007/12/12 23:33:22 jmcneill Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.57 2008/04/16 16:06:52 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.56 2007/12/12 23:33:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.57 2008/04/16 16:06:52 cegger Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -977,7 +977,7 @@ mpacpi_print_intr(struct mp_intr_map *mpi)
 		    acpi_pci_link_name(mpi->linkdev), busname);
 	else
 		printf("%s: pin %d attached to %s",
-		    sc ? sc->pic_dev.dv_xname : "local apic",
+		    sc ? device_xname(&sc->pic_dev) : "local apic",
 		    pin, busname);
 
 	if (mpi->bus != NULL) {
@@ -1094,7 +1094,7 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 	mpb->mb_pci_chipset_tag = pba->pba_pc;
 
 	if (mp_verbose)
-		printf("%s: added to list as bus %d\n", parent->dv_xname,
+		printf("%s: added to list as bus %d\n", device_xname(parent),
 		    pba->pba_bus);
 
 

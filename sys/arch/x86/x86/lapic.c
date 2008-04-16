@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.33 2008/01/25 18:56:55 xtraeme Exp $ */
+/* $NetBSD: lapic.c,v 1.34 2008/04/16 16:06:52 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.33 2008/01/25 18:56:55 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.34 2008/04/16 16:06:52 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -152,9 +152,9 @@ lapic_set_lvt(void)
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir (ci->ci_dev->dv_xname, "prelint", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "prelint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (ci->ci_dev->dv_xname, "prelint", 1, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "prelint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
@@ -195,15 +195,15 @@ lapic_set_lvt(void)
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir (ci->ci_dev->dv_xname, "timer", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "timer", 0, 0,
 		    i82489_readreg(LAPIC_LVTT));
-		apic_format_redir (ci->ci_dev->dv_xname, "pcint", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "pcint", 0, 0,
 		    i82489_readreg(LAPIC_PCINT));
-		apic_format_redir (ci->ci_dev->dv_xname, "lint", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "lint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (ci->ci_dev->dv_xname, "lint", 1, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "lint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
-		apic_format_redir (ci->ci_dev->dv_xname, "err", 0, 0,
+		apic_format_redir (device_xname(ci->ci_dev), "err", 0, 0,
 		    i82489_readreg(LAPIC_LVERR));
 	}
 #endif
@@ -433,7 +433,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	int i;
 	char tbuf[9];
 
-	aprint_verbose("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
+	aprint_verbose_dev(ci->ci_dev, "calibrating local timer\n");
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,
@@ -465,8 +465,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 
 	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
 
-	aprint_verbose("%s: apic clock running at %s\n",
-	    ci->ci_dev->dv_xname, tbuf);
+	aprint_verbose_dev(ci->ci_dev, "apic clock running at %s\n", tbuf);
 
 	if (lapic_per_second != 0) {
 		/*
@@ -487,10 +486,10 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		 * in lapic_delay.
 		 */
 
-		tmp = (1000000 * (u_int64_t)1<<32) / lapic_per_second;
+		tmp = (1000000 * (uint64_t)1<<32) / lapic_per_second;
 		lapic_frac_usec_per_cycle = tmp;
 
-		tmp = (lapic_per_second * (u_int64_t)1<<32) / 1000000;
+		tmp = (lapic_per_second * (uint64_t)1<<32) / 1000000;
 
 		lapic_frac_cycle_per_usec = tmp;
 
@@ -637,7 +636,7 @@ static void
 lapic_hwmask(struct pic *pic, int pin)
 {
 	int reg;
-	u_int32_t val;
+	uint32_t val;
 
 	reg = LAPIC_LVTT + (pin << 4);
 	val = i82489_readreg(reg);
@@ -649,7 +648,7 @@ static void
 lapic_hwunmask(struct pic *pic, int pin)
 {
 	int reg;
-	u_int32_t val;
+	uint32_t val;
 
 	reg = LAPIC_LVTT + (pin << 4);
 	val = i82489_readreg(reg);

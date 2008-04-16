@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.c,v 1.15 2008/03/11 22:43:08 joerg Exp $	*/
+/*	$NetBSD: cacheinfo.c,v 1.16 2008/04/16 16:06:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.15 2008/03/11 22:43:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheinfo.c,v 1.16 2008/04/16 16:06:51 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
 		return sep;
 
 	if (sep == NULL)
-		aprint_verbose("%s: ", ci->ci_dev->dv_xname);
+		aprint_verbose_dev(ci->ci_dev, "");
 	else
 		aprint_verbose("%s", sep);
 	if (name != NULL)
@@ -105,7 +105,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 		return sep;
 
 	if (sep == NULL)
-		aprint_verbose("%s: ", ci->ci_dev->dv_xname);
+		aprint_verbose_dev(ci->ci_dev, "");
 	else
 		aprint_verbose("%s", sep);
 	if (name != NULL)
@@ -135,7 +135,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 }
 
 const struct x86_cache_info *
-cache_info_lookup(const struct x86_cache_info *cai, u_int8_t desc)
+cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
 {
 	int i;
 
