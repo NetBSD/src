@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.33 2008/02/12 18:22:39 joerg Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.34 2008/04/16 16:06:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.33 2008/02/12 18:22:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34 2008/04/16 16:06:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,14 +144,14 @@ matchbiosdisks(void)
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, device_cfdata(dv)->cf_name);
+		    device_xname(dv), device_cfdata(dv)->cf_name);
 #endif
 		if (is_valid_disk(dv)) {
 			n++;
 			/* XXXJRT why not just dv_xname?? */
 			snprintf(x86_alldisks->dl_nativedisks[n].ni_devname,
 			    sizeof(x86_alldisks->dl_nativedisks[n].ni_devname),
-			    "%s", dv->dv_xname);
+			    "%s", device_xname(dv));
 
 			if ((tv = opendisk(dv)) == NULL)
 				continue;
@@ -162,7 +162,7 @@ matchbiosdisks(void)
 			if (error) {
 #ifdef GEOM_DEBUG
 				printf("matchbiosdisks: %s: MBR read failure\n",
-				    dv->dv_xname);
+				    device_xname(dv));
 #endif
 				continue;
 			}
@@ -173,7 +173,7 @@ matchbiosdisks(void)
 				be = &big->disk[i];
 #ifdef GEOM_DEBUG
 				printf("match %s with %d "
-				    "dev ck %x bios ck %x\n", dv->dv_xname, i,
+				    "dev ck %x bios ck %x\n", device_xname(dv), i,
 				    ck, be->cksum);
 #endif
 				if (be->flags & BI_GEOM_INVALID)
@@ -184,7 +184,7 @@ matchbiosdisks(void)
 					  sizeof(struct mbr_partition)) == 0) {
 #ifdef GEOM_DEBUG
 					printf("matched BIOS disk %x with %s\n",
-					    be->dev, dv->dv_xname);
+					    be->dev, device_xname(dv));
 #endif
 					x86_alldisks->dl_nativedisks[n].
 					    ni_biosmatches[m++] = i;
@@ -278,7 +278,7 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 		 * or faked one up.
 		 */
 		printf("findroot: can't get label for dev %s (%d)\n",
-		    dv->dv_xname, error);
+		    device_xname(dv), error);
 		goto closeout;
 	}
 
@@ -369,7 +369,8 @@ findroot(void)
 			if (booted_device) {
 				printf("WARNING: double match for boot "
 				    "device (%s, %s)\n",
-				    booted_device->dv_xname, dv->dv_xname);
+				    device_xname(booted_device),
+				    device_xname(dv));
 				continue;
 			}
 			dkwedge_set_bootwedge(dv, biw->startblk, biw->nblks);
@@ -422,7 +423,8 @@ findroot(void)
 			if (booted_device) {
 				printf("WARNING: double match for boot "
 				    "device (%s, %s)\n",
-				    booted_device->dv_xname, dv->dv_xname);
+				    device_xname(booted_device),
+				    device_xname(dv));
 				continue;
 			}
 			handle_wedges(dv, bid->partition);
@@ -443,11 +445,11 @@ cpu_rootconf(void)
 	if (booted_wedge) {
 		KASSERT(booted_device != NULL);
 		printf("boot device: %s (%s)\n",
-		    booted_wedge->dv_xname, booted_device->dv_xname);
+		    device_xname(booted_wedge), device_xname(booted_device));
 		setroot(booted_wedge, 0);
 	} else {
 		printf("boot device: %s\n",
-		    booted_device ? booted_device->dv_xname : "<unknown>");
+		    booted_device ? device_xname(booted_device) : "<unknown>");
 		setroot(booted_device, booted_partition);
 	}
 }
@@ -509,7 +511,7 @@ device_register(struct device *dev, void *aux)
 	if (booted_device) {
 		/* XXX should be a panic() */
 		printf("WARNING: double match for boot device (%s, %s)\n",
-		    booted_device->dv_xname, dev->dv_xname);
+		    device_xname(booted_device), device_xname(dev));
 		return;
 	}
 	booted_device = dev;

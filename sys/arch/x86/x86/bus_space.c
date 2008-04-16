@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.16 2008/04/12 19:49:54 cegger Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.17 2008/04/16 16:06:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.16 2008/04/12 19:49:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.17 2008/04/16 16:06:51 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -512,7 +512,7 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
 
 void
 bus_space_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-		      u_int8_t v, size_t c)
+		      uint8_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
@@ -521,44 +521,44 @@ bus_space_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			outb(addr, v);
 	else
 		while (c--)
-			*(volatile u_int8_t *)(addr) = v;
+			*(volatile uint8_t *)(addr) = v;
 }
 
 void
 bus_space_set_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-		      u_int16_t v, size_t c)
+		      uint16_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
-	BUS_SPACE_ADDRESS_SANITY(addr, u_int16_t, "bus addr");
+	BUS_SPACE_ADDRESS_SANITY(addr, uint16_t, "bus addr");
 
 	if (t == X86_BUS_SPACE_IO)
 		while (c--)
 			outw(addr, v);
 	else
 		while (c--)
-			*(volatile u_int16_t *)(addr) = v;
+			*(volatile uint16_t *)(addr) = v;
 }
 
 void
 bus_space_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-		      u_int32_t v, size_t c)
+		      uint32_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
-	BUS_SPACE_ADDRESS_SANITY(addr, u_int32_t, "bus addr");
+	BUS_SPACE_ADDRESS_SANITY(addr, uint32_t, "bus addr");
 
 	if (t == X86_BUS_SPACE_IO)
 		while (c--)
 			outl(addr, v);
 	else
 		while (c--)
-			*(volatile u_int32_t *)(addr) = v;
+			*(volatile uint32_t *)(addr) = v;
 }
 
 void
 bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-		      u_int8_t v, size_t c)
+		      uint8_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
@@ -567,39 +567,39 @@ bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 			outb(addr, v);
 	else
 		for (; c != 0; c--, addr++)
-			*(volatile u_int8_t *)(addr) = v;
+			*(volatile uint8_t *)(addr) = v;
 }
 
 void
 bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-		       u_int16_t v, size_t c)
+		       uint16_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
-	BUS_SPACE_ADDRESS_SANITY(addr, u_int16_t, "bus addr");
+	BUS_SPACE_ADDRESS_SANITY(addr, uint16_t, "bus addr");
 
 	if (t == X86_BUS_SPACE_IO)
 		for (; c != 0; c--, addr += 2)
 			outw(addr, v);
 	else
 		for (; c != 0; c--, addr += 2)
-			*(volatile u_int16_t *)(addr) = v;
+			*(volatile uint16_t *)(addr) = v;
 }
 
 void
 bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
-		       u_int32_t v, size_t c)
+		       uint32_t v, size_t c)
 {
 	bus_addr_t addr = h + o;
 
-	BUS_SPACE_ADDRESS_SANITY(addr, u_int32_t, "bus addr");
+	BUS_SPACE_ADDRESS_SANITY(addr, uint32_t, "bus addr");
 
 	if (t == X86_BUS_SPACE_IO)
 		for (; c != 0; c--, addr += 4)
 			outl(addr, v);
 	else
 		for (; c != 0; c--, addr += 4)
-			*(volatile u_int32_t *)(addr) = v;
+			*(volatile uint32_t *)(addr) = v;
 }
 
 void
@@ -625,14 +625,14 @@ bus_space_copy_region_1(bus_space_tag_t t, bus_space_handle_t h1,
 		if (addr1 >= addr2) {
 			/* src after dest: copy forward */
 			for (; c != 0; c--, addr1++, addr2++)
-				*(volatile u_int8_t *)(addr2) =
-				    *(volatile u_int8_t *)(addr1);
+				*(volatile uint8_t *)(addr2) =
+				    *(volatile uint8_t *)(addr1);
 		} else {
 			/* dest after src: copy backwards */
 			for (addr1 += (c - 1), addr2 += (c - 1);
 			    c != 0; c--, addr1--, addr2--)
-				*(volatile u_int8_t *)(addr2) =
-				    *(volatile u_int8_t *)(addr1);
+				*(volatile uint8_t *)(addr2) =
+				    *(volatile uint8_t *)(addr1);
 		}
 	}
 }
@@ -645,8 +645,8 @@ bus_space_copy_region_2(bus_space_tag_t t, bus_space_handle_t h1,
 	bus_addr_t addr1 = h1 + o1;
 	bus_addr_t addr2 = h2 + o2;
 
-	BUS_SPACE_ADDRESS_SANITY(addr1, u_int16_t, "bus addr 1");
-	BUS_SPACE_ADDRESS_SANITY(addr2, u_int16_t, "bus addr 2");
+	BUS_SPACE_ADDRESS_SANITY(addr1, uint16_t, "bus addr 1");
+	BUS_SPACE_ADDRESS_SANITY(addr2, uint16_t, "bus addr 2");
 
 	if (t == X86_BUS_SPACE_IO) {
 		if (addr1 >= addr2) {
@@ -663,14 +663,14 @@ bus_space_copy_region_2(bus_space_tag_t t, bus_space_handle_t h1,
 		if (addr1 >= addr2) {
 			/* src after dest: copy forward */
 			for (; c != 0; c--, addr1 += 2, addr2 += 2)
-				*(volatile u_int16_t *)(addr2) =
-				    *(volatile u_int16_t *)(addr1);
+				*(volatile uint16_t *)(addr2) =
+				    *(volatile uint16_t *)(addr1);
 		} else {
 			/* dest after src: copy backwards */
 			for (addr1 += 2 * (c - 1), addr2 += 2 * (c - 1);
 			    c != 0; c--, addr1 -= 2, addr2 -= 2)
-				*(volatile u_int16_t *)(addr2) =
-				    *(volatile u_int16_t *)(addr1);
+				*(volatile uint16_t *)(addr2) =
+				    *(volatile uint16_t *)(addr1);
 		}
 	}
 }
@@ -683,8 +683,8 @@ bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
 	bus_addr_t addr1 = h1 + o1;
 	bus_addr_t addr2 = h2 + o2;
 
-	BUS_SPACE_ADDRESS_SANITY(addr1, u_int32_t, "bus addr 1");
-	BUS_SPACE_ADDRESS_SANITY(addr2, u_int32_t, "bus addr 2");
+	BUS_SPACE_ADDRESS_SANITY(addr1, uint32_t, "bus addr 1");
+	BUS_SPACE_ADDRESS_SANITY(addr2, uint32_t, "bus addr 2");
 
 	if (t == X86_BUS_SPACE_IO) {
 		if (addr1 >= addr2) {
@@ -701,14 +701,14 @@ bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
 		if (addr1 >= addr2) {
 			/* src after dest: copy forward */
 			for (; c != 0; c--, addr1 += 4, addr2 += 4)
-				*(volatile u_int32_t *)(addr2) =
-				    *(volatile u_int32_t *)(addr1);
+				*(volatile uint32_t *)(addr2) =
+				    *(volatile uint32_t *)(addr1);
 		} else {
 			/* dest after src: copy backwards */
 			for (addr1 += 4 * (c - 1), addr2 += 4 * (c - 1);
 			    c != 0; c--, addr1 -= 4, addr2 -= 4)
-				*(volatile u_int32_t *)(addr2) =
-				    *(volatile u_int32_t *)(addr1);
+				*(volatile uint32_t *)(addr2) =
+				    *(volatile uint32_t *)(addr1);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.8 2007/11/28 16:28:44 ad Exp $	*/
+/*	$NetBSD: ipi.c,v 1.9 2008/04/16 16:06:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.8 2007/11/28 16:28:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.9 2008/04/16 16:06:52 cegger Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
@@ -67,15 +67,15 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 	if (ret != 0) {
 		printf("ipi of %x from %s to %s failed\n",
 		    ipimask,
-		    curcpu()->ci_dev->dv_xname,
-		    ci->ci_dev->dv_xname);
+		    device_xname(curcpu()->ci_dev),
+		    device_xname(ci->ci_dev));
 	}
 
 	return ret;
 }
 
 void
-x86_broadcast_ipi (int ipimask)
+x86_broadcast_ipi(int ipimask)
 {
 	struct cpu_info *ci, *self = curcpu();
 	int count = 0;
@@ -116,7 +116,7 @@ void
 x86_ipi_handler(void)
 {
 	struct cpu_info *ci = curcpu();
-	u_int32_t pending;
+	uint32_t pending;
 	int bit;
 
 	pending = atomic_swap_32(&ci->ci_ipis, 0);

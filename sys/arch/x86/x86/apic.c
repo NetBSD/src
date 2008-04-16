@@ -1,4 +1,4 @@
-/* $NetBSD: apic.c,v 1.5 2008/01/04 18:38:32 ad Exp $ */
+/* $NetBSD: apic.c,v 1.6 2008/04/16 16:06:51 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.5 2008/01/04 18:38:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apic.c,v 1.6 2008/04/16 16:06:51 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,12 +64,8 @@ const char redirhifmt[] = "\177\20"
 	"f\30\10target\0";
 
 void
-apic_format_redir(where1, where2, idx, redirhi, redirlo)
-	const char *where1;
-	const char *where2;
-	int idx;
-	u_int32_t redirhi;
-	u_int32_t redirlo;
+apic_format_redir(const char *where1, const char *where2, int idx,
+		uint32_t redirhi, uint32_t redirlo)
 {
 	char buf[256];
 
