@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2008/01/11 20:00:52 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2008/04/16 18:41:48 cegger Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2008/01/11 20:00:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2008/04/16 18:41:48 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,10 @@ int mp_verbose = 0;
 #endif /* defined(XEN3) && NPCI > 0 */
 
 
-int	mainbus_match(struct device *, struct cfdata *, void *);
-void	mainbus_attach(struct device *, struct device *, void *);
+int	mainbus_match(device_t, cfdata_t, void *);
+void	mainbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int	mainbus_print(void *, const char *);
@@ -115,10 +115,7 @@ union mainbus_attach_args {
  * Probe for the mainbus; always succeeds.
  */
 int
-mainbus_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -128,9 +125,7 @@ mainbus_match(parent, match, aux)
  * Attach the mainbus.
  */
 void
-mainbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	union mainbus_attach_args mba;
 #if defined(DOM0OPS) && defined(XEN3)
@@ -143,7 +138,8 @@ mainbus_attach(parent, self, aux)
 #endif
 #endif /* defined(DOM0OPS) && defined(XEN3) */
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 #ifndef XEN3
 	memset(&mba.mba_caa, 0, sizeof(mba.mba_caa));
@@ -162,7 +158,7 @@ mainbus_attach(parent, self, aux)
 		pci_mode = pci_mode_detect();
 #ifdef PCI_BUS_FIXUP
 		pci_maxbus = pci_bus_fixup(NULL, 0);
-		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
+		aprint_debug_dev(self, "PCI bus max, after pci_bus_fixup: %i\n",
 		    pci_maxbus);
 #ifdef PCI_ADDR_FIXUP
 		pciaddr.extent_port = NULL;
@@ -215,9 +211,7 @@ mainbus_attach(parent, self, aux)
 }
 
 int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mainbus_print(void *aux, const char *pnp)
 {
 	union mainbus_attach_args *mba = aux;
 
