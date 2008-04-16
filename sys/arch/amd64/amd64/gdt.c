@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.16 2008/01/05 21:47:18 yamt Exp $	*/
+/*	$NetBSD: gdt.c,v 1.17 2008/04/16 21:51:03 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.16 2008/01/05 21:47:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.17 2008/04/16 21:51:03 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -216,10 +216,10 @@ gdt_init_cpu(struct cpu_info *ci)
 	struct region_descriptor region;
 
 #ifndef XEN
-	setregion(&region, ci->ci_gdt, (u_int16_t)(MAXGDTSIZ - 1));
+	setregion(&region, ci->ci_gdt, (uint16_t)(MAXGDTSIZ - 1));
 #else
 	/* Enter only allocated frames */
-	setregion(&region, ci->ci_gdt, (u_int16_t)(gdt_size - 1));
+	setregion(&region, ci->ci_gdt, (uint16_t)(gdt_size - 1));
 #endif
 	lgdt(&region);
 }

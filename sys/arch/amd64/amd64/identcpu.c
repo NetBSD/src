@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.35 2008/04/04 20:31:50 cegger Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.36 2008/04/16 21:51:03 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.35 2008/04/04 20:31:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.36 2008/04/16 21:51:03 cegger Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -60,9 +60,9 @@ int cpu_vendor;
 void
 identifycpu(struct cpu_info *ci)
 {
-	u_int32_t val;
+	uint32_t val;
 	char buf[512];
-	u_int32_t brand[12], descs[4];
+	uint32_t brand[12], descs[4];
 	const char *feature_str[3];
 
 	x86_cpuid(0, descs);

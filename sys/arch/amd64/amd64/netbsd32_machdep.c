@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.47 2008/01/15 14:50:09 joerg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.48 2008/04/16 21:51:03 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.47 2008/01/15 14:50:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.48 2008/04/16 21:51:03 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -148,7 +148,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
-	tf->tf_rbx = (u_int64_t)p->p_psstr;
+	tf->tf_rbx = (uint64_t)p->p_psstr;
 	tf->tf_rdx = 0;
 	tf->tf_rcx = 0;
 	tf->tf_rax = 0;
@@ -205,7 +205,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 	frame.sf_signum = sig;
 	frame.sf_code = ksi->ksi_trap;
-	frame.sf_scp = (u_int32_t)(u_long)&fp->sf_sc;
+	frame.sf_scp = (uint32_t)(u_long)&fp->sf_sc;
 
 	frame.sf_sc.sc_ds = tf->tf_ds;
 	frame.sf_sc.sc_es = tf->tf_es;
@@ -256,10 +256,10 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
 
-	tf->tf_rip = (u_int64_t)catcher;
+	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_rsp = (u_int64_t)fp;
+	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
 	/* Remember that we're now on the signal stack. */
@@ -341,10 +341,10 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
 
-	tf->tf_rip = (u_int64_t)catcher;
+	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-	tf->tf_rsp = (u_int64_t)fp;
+	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
 	/* Remember that we're now on the signal stack. */
