@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.3 2008/04/16 06:25:23 cegger Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.4 2008/04/16 09:39:01 cegger Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.3 2008/04/16 06:25:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.4 2008/04/16 09:39:01 cegger Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -175,6 +175,7 @@ pi1ppc_attach(device_t parent, device_t self, void *aux)
 	struct hpc_attach_args *haa;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	haa = aux;
 	sc->sc_iot = haa->ha_st;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.26 2008/04/15 22:50:33 cegger Exp $ */
+/* $NetBSD: lpt.c,v 1.27 2008/04/16 09:39:01 cegger Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.26 2008/04/15 22:50:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.27 2008/04/16 09:39:01 cegger Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -139,6 +139,8 @@ lpt_attach(device_t parent, device_t self, void *aux)
 	struct ppbus_attach_args * args = aux;
 	char buf[64];
 	int error;
+
+	ppbdev->sc_dev = self;
 
 	error = lpt_request_ppbus(sc, 0);
 	if(error) {

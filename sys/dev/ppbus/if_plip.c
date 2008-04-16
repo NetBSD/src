@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.19 2008/04/15 19:03:26 cegger Exp $ */
+/* $NetBSD: if_plip.c,v 1.20 2008/04/16 09:39:01 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.19 2008/04/15 19:03:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.20 2008/04/16 09:39:01 cegger Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -222,6 +222,7 @@ lp_attach(device_t parent, device_t self, void *aux)
 	struct lp_softc * lp = device_private(self);
 	struct ifnet * ifp = &lp->sc_if;
 
+	lp->ppbus_dev.sc_dev = self;
 	lp->sc_dev_ok = 0;
 	lp->sc_ifbuf = NULL;
 	lp->sc_iferrs = 0;
