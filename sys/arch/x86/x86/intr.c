@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.42 2008/04/11 16:44:45 dyoung Exp $	*/
+/*	$NetBSD: intr.c,v 1.43 2008/04/16 16:06:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.42 2008/04/11 16:44:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43 2008/04/16 16:06:51 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -509,7 +509,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		snprintf(isp->is_evname, sizeof (isp->is_evname),
 		    "pin %d", pin);
 		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-		    pic->pic_dev.dv_xname, isp->is_evname);
+		    device_xname(&pic->pic_dev), isp->is_evname);
 		ci->ci_isources[slot] = isp;
 	}
 	mutex_exit(&x86_intr_lock);
@@ -559,7 +559,7 @@ intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 			snprintf(isp->is_evname, sizeof (isp->is_evname),
 			    "pin %d", pin);
 			evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR,
-			    NULL, pic->pic_dev.dv_xname, isp->is_evname);
+			    NULL, device_xname(&pic->pic_dev), isp->is_evname);
 			mutex_enter(&x86_intr_lock);
 			ci->ci_isources[slot] = isp;
 			mutex_exit(&x86_intr_lock);
@@ -688,7 +688,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	    &idt_vec);
 	if (error != 0) {
 		printf("failed to allocate interrupt slot for PIC %s pin %d\n",
-		    pic->pic_dev.dv_xname, pin);
+		    device_xname(&pic->pic_dev), pin);
 		return NULL;
 	}
 
@@ -736,7 +736,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	default:
 		mutex_exit(&x86_intr_lock);
 		panic("intr_establish: bad intr type %d for pic %s pin %d\n",
-		    source->is_type, pic->pic_dev.dv_xname, pin);
+		    source->is_type, device_xname(&pic->pic_dev), pin);
 	}
 
 	pic->pic_hwmask(pic, pin);
@@ -836,7 +836,7 @@ intr_disestablish(struct intrhand *ih)
 
 #ifdef INTRDEBUG
 	printf("cpu%u: remove slot %d (pic %s pin %d vec %d)\n",
-	    ci->ci_apicid, ih->ih_slot, pic->pic_dev.dv_xname, ih->ih_pin,
+	    ci->ci_apicid, ih->ih_slot, device_xname(&pic->pic_dev), ih->ih_pin,
 	    idtvec);
 #endif
 
@@ -949,7 +949,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_TIMER] = isp;
 	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "timer");
+	    device_xname(ci->ci_dev), "timer");
 
 #ifdef MULTIPROCESSOR
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
@@ -965,7 +965,7 @@ cpu_intr_init(struct cpu_info *ci)
 
 	for (i = 0; i < X86_NIPI; i++)
 		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_INTR,
-		    NULL, ci->ci_dev->dv_xname, x86_ipi_names[i]);
+		    NULL, device_xname(ci->ci_dev), x86_ipi_names[i]);
 #endif
 #endif
 

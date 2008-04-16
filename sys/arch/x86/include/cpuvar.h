@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.22 2008/01/04 15:55:28 yamt Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.23 2008/04/16 16:06:51 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ struct cpu_attach_args {
 #endif
 
 #ifdef MULTIPROCESSOR
-extern u_int32_t cpus_running;
+extern uint32_t cpus_running;
 #endif
 
 int x86_ipi(int,int,int);

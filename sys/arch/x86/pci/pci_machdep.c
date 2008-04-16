@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32 2008/03/21 00:24:34 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.33 2008/04/16 16:06:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2008/03/21 00:24:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33 2008/04/16 16:06:51 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -161,7 +161,7 @@ do {									\
 #define _qe(bus, dev, fcn, vend, prod) \
 	{_m1tag(bus, dev, fcn), PCI_ID_CODE(vend, prod)}
 struct {
-	u_int32_t tag;
+	uint32_t tag;
 	pcireg_t id;
 } pcim1_quirk_tbl[] = {
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1),
@@ -475,7 +475,7 @@ mode2:
 }
 
 int
-pci_mode_detect()
+pci_mode_detect(void)
 {
 
 #ifdef PCI_CONF_MODE
@@ -485,7 +485,7 @@ pci_mode_detect()
 #error Invalid PCI configuration mode.
 #endif
 #else
-	u_int32_t sav, val;
+	uint32_t sav, val;
 	int i;
 	pcireg_t idreg;
 

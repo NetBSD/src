@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2005/06/20 11:04:15 sekiya Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.7 2008/04/16 16:06:51 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,11 +58,11 @@
  * Mode 2 is historical and deprecated by the Revision 2.0 specification.
  */
 union x86_pci_tag_u {
-	u_int32_t mode1;
+	uint32_t mode1;
 	struct {
-		u_int16_t port;
-		u_int8_t enable;
-		u_int8_t forward;
+		uint16_t port;
+		uint8_t enable;
+		uint8_t forward;
 	} mode2;
 };
 

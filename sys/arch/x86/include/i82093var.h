@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.4 2007/12/09 20:27:48 jmcneill Exp $ */
+/* $NetBSD: i82093var.h,v 1.5 2008/04/16 16:06:51 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@ struct ioapic_softc {
 	int			sc_apic_sz;	/* apic size*/
 	int			sc_flags;
 	paddr_t			sc_pa;		/* PA of ioapic */
-	volatile u_int32_t	*sc_reg;	/* KVA of ioapic addr */
-	volatile u_int32_t	*sc_data;	/* KVA of ioapic data */
+	volatile uint32_t	*sc_reg;	/* KVA of ioapic addr */
+	volatile uint32_t	*sc_data;	/* KVA of ioapic data */
 	struct ioapic_pin	*sc_pins;	/* sc_apic_sz entries */
 };      
 
@@ -89,7 +89,7 @@ void *apic_intr_establish(int, int, int, int (*)(void *), void *);
 void apic_intr_disestablish(void *);
 
 void ioapic_print_redir(struct ioapic_softc *, const char *, int);
-void ioapic_format_redir(char *, const char *, int, u_int32_t, u_int32_t);
+void ioapic_format_redir(char *, const char *, int, uint32_t, uint32_t);
 struct ioapic_softc *ioapic_find(int);
 struct ioapic_softc *ioapic_find_bybase(int);
 

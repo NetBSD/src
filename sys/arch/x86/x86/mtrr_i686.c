@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.14 2008/01/04 18:38:32 ad Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.15 2008/04/16 16:06:52 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.14 2008/01/04 18:38:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.15 2008/04/16 16:06:52 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -439,7 +439,7 @@ i686_mtrr_init_cpu(struct cpu_info *ci)
 {
 	i686_mtrr_reload(0);
 #if 0
-	mtrr_dump(ci->ci_dev->dv_xname);
+	mtrr_dump(device_xname(ci->ci_dev));
 #endif
 }
 

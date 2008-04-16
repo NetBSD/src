@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2008/02/16 22:01:16 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2008/04/16 16:06:52 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2008/02/16 22:01:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2008/04/16 16:06:52 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1616,7 +1616,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 		evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "global", "TLB IPI");
 	evcnt_attach_dynamic(&ci->ci_tlb_evcnt, EVCNT_TYPE_INTR,
-	    NULL, ci->ci_dev->dv_xname, "TLB IPI");
+	    NULL, device_xname(ci->ci_dev), "TLB IPI");
 }
 
 /*

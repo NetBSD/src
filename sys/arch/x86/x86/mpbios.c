@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.40 2007/12/01 16:45:35 ad Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.41 2008/04/16 16:06:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.40 2007/12/01 16:45:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.41 2008/04/16 16:06:52 cegger Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -334,19 +334,18 @@ mpbios_probe(struct device *self)
 
  found:
 	if (mp_verbose)
-		printf("%s: MP floating pointer found in %s at 0x%lx\n",
-		    self->dv_xname, loc_where[scan_loc], mp_fp_map.pa);
+		aprint_verbose_dev(self, "MP floating pointer found in %s at 0x%lx\n",
+		    loc_where[scan_loc], mp_fp_map.pa);
 
 	if (mp_fps->pap == 0) {
 		if (mp_fps->mpfb1 == 0) {
-			printf("%s: MP fps invalid: "
-			    "no default config and no configuration table\n",
-			    self->dv_xname);
+			aprint_error_dev(self, "MP fps invalid: "
+			    "no default config and no configuration table\n");
 
 			goto err;
 		}
-		printf("%s: MP default configuration %d\n",
-		    self->dv_xname, mp_fps->mpfb1);
+		aprint_normal_dev(self, "MP default configuration %d\n",
+		    mp_fps->mpfb1);
 		return 10;
 	}
 
@@ -359,19 +358,17 @@ mpbios_probe(struct device *self)
 	mp_cth = mpbios_map (cthpa, cthlen, &mp_cfg_table_map);
 
 	if (mp_verbose)
-		printf("%s: MP config table at 0x%lx, %d bytes long\n",
-		    self->dv_xname, cthpa, cthlen);
+		aprint_verbose_dev(self, "MP config table at 0x%lx, %d bytes long\n",
+		    cthpa, cthlen);
 
 	if (mp_cth->signature != MP_CT_SIG) {
-		printf("%s: MP signature mismatch (%x vs %x)\n",
-		    self->dv_xname,
+		aprint_error_dev(self, "MP signature mismatch (%x vs %x)\n",
 		    MP_CT_SIG, mp_cth->signature);
 		goto err;
 	}
 
 	if (mpbios_cksum(mp_cth, cthlen)) {
-		printf ("%s: MP Configuration Table checksum mismatch\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "MP Configuration Table checksum mismatch\n");
 		goto err;
 	}
 	return 10;
@@ -426,8 +423,8 @@ mpbios_search(struct device *self, paddr_t start, int count,
 	const uint8_t *base = mpbios_map (start, count, &t);
 
 	if (mp_verbose)
-		printf("%s: scanning 0x%lx to 0x%lx for MP signature\n",
-		    self->dv_xname, start, start+count-sizeof(*m));
+		aprint_verbose_dev(self, "scanning 0x%lx to 0x%lx for MP signature\n",
+		    start, start+count-sizeof(*m));
 
 	for (i = 0; i <= end; i += 4) {
 		m = (const struct mpbios_fps *)&base[i];
@@ -507,7 +504,7 @@ mpbios_scan(struct device *self, int *ncpup, int *napic)
 	const struct mpbios_int *iep;
 	struct mpbios_int ie;
 
-	printf ("%s: Intel MP Specification ", self->dv_xname);
+	aprint_normal_dev(self, "Intel MP Specification ");
 
 	switch (mp_fps->spec_rev) {
 	case 1:
@@ -543,8 +540,9 @@ mpbios_scan(struct device *self, int *ncpup, int *napic)
 	/* check for use of 'default' configuration */
 	if (mp_fps->mpfb1 != 0) {
 
-		printf("\n%s: MP default configuration %d\n",
-		    self->dv_xname, mp_fps->mpfb1);
+		aprint_normal("\n");
+		aprint_normal_dev(self, "MP default configuration %d\n",
+		    mp_fps->mpfb1);
 #if NACPI > 0
 		if (mpacpi_ncpu == 0)
 #endif
@@ -556,8 +554,7 @@ mpbios_scan(struct device *self, int *ncpup, int *napic)
 			mpbios_ioapic((uint8_t *)&default_ioapic, self);
 
 		/* XXX */
-		printf("%s: WARNING: interrupts not configured\n",
-		    self->dv_xname);
+		aprint_verbose_dev(self, "WARNING: interrupts not configured\n");
 
 		/*
 		 * XXX rpaulo: I have a machine that can boot, so I
@@ -591,9 +588,9 @@ mpbios_scan(struct device *self, int *ncpup, int *napic)
 		while ((count--) && (position < end)) {
 			type = *position;
 			if (type >= MPS_MCT_NTYPES) {
-				printf("%s: unknown entry type %x"
+				aprint_error_dev(self, "unknown entry type %x"
 				    " in MP config table\n",
-				    self->dv_xname, type);
+				    type);
 				break;
 			}
 			mp_conf[type].count++;
@@ -676,8 +673,8 @@ mpbios_scan(struct device *self, int *ncpup, int *napic)
 				cur_intr++;
 				break;
 			default:
-				printf("%s: unknown entry type %x in MP config table\n",
-				    self->dv_xname, type);
+				aprint_error_dev(self, "unknown entry type %x in MP config table\n",
+				    type);
 				/* NOTREACHED */
 				return;
 			}
@@ -685,8 +682,7 @@ mpbios_scan(struct device *self, int *ncpup, int *napic)
 			position += mp_conf[type].length;
 		}
 		if (mp_verbose && mp_cth->ext_len)
-			printf("%s: MP WARNING: %d bytes of extended entries not examined\n",
-			    self->dv_xname,
+			aprint_verbose_dev(self, "MP WARNING: %d bytes of extended entries not examined\n",
 			    mp_cth->ext_len);
 	}
 	/* Clean up. */
@@ -1005,7 +1001,7 @@ mpbios_bus(const uint8_t *ent, struct device *self)
 		else
 			mp_isa_bus = bus_id;
 	} else {
-		aprint_error("%s: unsupported bus type %6.6s\n", self->dv_xname,
+		aprint_error_dev(self, "unsupported bus type %6.6s\n",
 		    entry->bus_type);
 	}
 }
@@ -1134,7 +1130,7 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 			if ((altmpi->type != type) ||
 			    (altmpi->flags != flags)) {
 				printf("%s: conflicting map entries for pin %d\n",
-				    sc->sc_pic.pic_dev.dv_xname, pin);
+				    device_xname(&sc->sc_pic.pic_dev), pin);
 			}
 		} else {
 			sc->sc_pins[pin].ip_map = mpi;
@@ -1156,7 +1152,7 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 		char buf[256];
 
 		printf("%s: int%d attached to %s",
-		    sc ? sc->sc_pic.pic_dev.dv_xname : "local apic",
+		    sc ? device_xname(&sc->sc_pic.pic_dev) : "local apic",
 		    pin, mpb->mb_name);
 
 		if (mpb->mb_idx != -1)
@@ -1195,7 +1191,7 @@ mpbios_pci_attach_hook(struct device *parent, struct device *self,
 		mpb->mb_name = "pci";
 
 	if (mp_verbose)
-		printf("%s: added to list as bus %d\n", parent->dv_xname,
+		printf("%s: added to list as bus %d\n", device_xname(parent),
 		    pba->pba_bus);
 
 	mpb->mb_configured = 1;
