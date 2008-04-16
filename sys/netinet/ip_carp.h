@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.h,v 1.4 2008/04/15 06:03:28 thorpej Exp $	*/
+/*	$NetBSD: ip_carp.h,v 1.5 2008/04/16 20:58:35 dyoung Exp $	*/
 /*	$OpenBSD: ip_carp.h,v 1.18 2005/04/20 23:00:41 mpf Exp $	*/
 
 /*
@@ -59,11 +59,11 @@
 
 struct carp_header {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_int8_t	carp_type:4,
+	unsigned int	carp_type:4,
 			carp_version:4;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_int8_t	carp_version:4,
+	unsigned int	carp_version:4,
 			carp_type:4;
 #endif
 	u_int8_t	carp_vhid;	/* virtual host id */
