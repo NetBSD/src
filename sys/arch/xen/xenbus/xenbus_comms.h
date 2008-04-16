@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.h,v 1.3 2006/04/09 21:39:42 bouyer Exp $ */
+/* $NetBSD: xenbus_comms.h,v 1.4 2008/04/16 18:41:48 cegger Exp $ */
 /*
  * Private include for xenbus communications.
  * 
@@ -31,7 +31,7 @@
 
 void xenbus_kernfs_init(void);
 int xs_init(void);
-int xb_init_comms(struct device *dev);
+int xb_init_comms(device_t dev);
 
 /* Low level routines. */
 int xb_write(const void *data, unsigned len);

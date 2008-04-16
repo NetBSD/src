@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.4 2008/04/06 07:24:20 cegger Exp $	*/
+/*	$NetBSD: pcib.c,v 1.5 2008/04/16 18:41:48 cegger Exp $	*/
 /*	NetBSD pcib.c,v 1.35 2005/02/03 21:35:44 perry Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4 2008/04/06 07:24:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.5 2008/04/16 18:41:48 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,16 +56,16 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.4 2008/04/06 07:24:20 cegger Exp $");
 
 #include "isa.h"
 
-int	pcibmatch(struct device *, struct cfdata *, void *);
-void	pcibattach(struct device *, struct device *, void *);
+int	pcibmatch(device_t, cfdata_t, void *);
+void	pcibattach(device_t, device_t, void *);
 
-CFATTACH_DECL(pcib, sizeof(struct device),
+CFATTACH_DECL_NEW(pcib, 0,
     pcibmatch, pcibattach, NULL, NULL);
 
 void	pcib_callback(struct device *);
 
 int
-pcibmatch(struct device *parent, struct cfdata *match, void *aux)
+pcibmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -168,26 +168,26 @@ pcibmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pcibattach(struct device *parent, struct device *self, void *aux)
+pcibattach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Just print out a description and defer configuration
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s (rev. 0x%02x)\n", device_xname(self), devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	config_defer(self, pcib_callback);
 }
 
 void
-pcib_callback(struct device *self)
+pcib_callback(device_t self)
 {
 	struct isabus_attach_args iba;
 

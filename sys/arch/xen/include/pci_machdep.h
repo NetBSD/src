@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.8 2008/04/14 13:38:03 cegger Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9 2008/04/16 18:41:48 cegger Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -109,7 +109,7 @@ typedef struct xen_intr_handle pci_intr_handle_t;
 /* functions provided to MI PCI */
 struct pci_attach_args;
 
-void		pci_attach_hook(struct device *, struct device *,
+void		pci_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);

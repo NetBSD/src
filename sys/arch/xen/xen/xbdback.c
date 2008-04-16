@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.31 2008/03/22 14:21:56 ad Exp $      */
+/*      $NetBSD: xbdback.c,v 1.32 2008/04/16 18:41:48 cegger Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.31 2008/03/22 14:21:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.32 2008/04/16 18:41:48 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -263,7 +263,7 @@ static void xbdback_trampoline(struct xbdback_instance *, void *);
 
 
 void
-xbdback_init()
+xbdback_init(void)
 {
 	ctrl_msg_t cmsg;
 	blkif_be_driver_status_t st;
