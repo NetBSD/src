@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.277 2008/04/14 16:19:18 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.278 2008/04/16 15:31:15 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -58,7 +58,7 @@
 #define	SPITFIRE		/* We don't support Cheetah (USIII) yet */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
-#define	TRAPSTATS		/* Count traps */
+#undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #define	HWREF			/* Track ref/mod bits in trap handlers */
 #undef	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
