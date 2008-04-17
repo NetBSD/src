@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.222 2008/01/30 11:47:04 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.223 2008/04/17 09:52:47 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.222 2008/01/30 11:47:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223 2008/04/17 09:52:47 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -840,6 +840,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump = malloc(sizeof *ump, M_UFSMNT, M_WAITOK);
 	memset(ump, 0, sizeof *ump);
 	mutex_init(&ump->um_lock, MUTEX_DEFAULT, IPL_NONE);
+	error = ffs_snapshot_init(ump);
+	if (error)
+		goto out;
 	ump->um_fs = fs;
 	ump->um_ops = &ffs_ufsops;
 
@@ -1228,6 +1231,7 @@ ffs_unmount(struct mount *mp, int mntflags)
 		free(ump->um_oldfscompat, M_UFSMNT);
 	softdep_unmount(mp);
 	mutex_destroy(&ump->um_lock);
+	ffs_snapshot_fini(ump);
 	free(ump, M_UFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
@@ -1641,7 +1645,6 @@ ffs_init(void)
 	ffs_dinode2_cache = pool_cache_init(sizeof(struct ufs2_dinode), 0, 0, 0,
 	    "ffsdino2", NULL, IPL_NONE, NULL, NULL, NULL);
 	softdep_initialize();
-	ffs_snapshot_init();
 	ufs_init();
 }
 
@@ -1659,7 +1662,6 @@ ffs_done(void)
 		return;
 
 	/* XXX softdep cleanup ? */
-	ffs_snapshot_fini();
 	ufs_done();
 	pool_cache_destroy(ffs_dinode2_cache);
 	pool_cache_destroy(ffs_dinode1_cache);
