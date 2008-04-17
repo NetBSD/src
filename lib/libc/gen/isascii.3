@@ -1,4 +1,4 @@
-.\"	$NetBSD: isascii.3,v 1.16 2007/01/18 08:35:07 rillig Exp $
+.\"	$NetBSD: isascii.3,v 1.17 2008/04/17 16:40:20 apb Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)isascii.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd January 18, 2007
+.Dd April 17, 2008
 .Dt ISASCII 3
 .Os
 .Sh NAME
@@ -46,8 +46,8 @@ The
 .Fn isascii
 function tests for an
 .Tn ASCII
-character, which is any character with a value less than or
-equal to 0177.
+character, which is any character with a value in the
+range from 0 to 127, inclusive.
 .Pp
 The
 .Fn isascii
