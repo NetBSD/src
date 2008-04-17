@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.133 2008/03/22 17:53:34 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.134 2008/04/17 14:14:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.133 2008/03/22 17:53:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.134 2008/04/17 14:14:20 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -718,8 +718,7 @@ proc_free_mem(struct proc *p)
  * of the process.
  * Also mksess should only be set if we are creating a process group
  *
- * Only called from sys_setsid, sys_setpgid/sys_setpgrp and the
- * SYSV setpgrp support for hpux.
+ * Only called from sys_setsid and sys_setpgid.
  */
 int
 enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
