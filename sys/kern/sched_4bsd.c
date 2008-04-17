@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.18 2008/04/14 09:40:43 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.19 2008/04/17 14:03:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.18 2008/04/14 09:40:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.19 2008/04/17 14:03:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -125,7 +125,9 @@ sched_tick(struct cpu_info *ci)
 		cpu_need_resched(ci, 0);
 		return;
 	}
-
+	if (curlwp->l_class == SCHED_FIFO) {
+		return;
+	}
 	if (spc->spc_flags & SPCF_SEENRR) {
 		/*
 		 * The process has already been through a roundrobin
