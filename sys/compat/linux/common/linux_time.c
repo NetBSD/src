@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.22 2007/12/20 23:02:57 dsl Exp $ */
+/*	$NetBSD: linux_time.c,v 1.23 2008/04/17 17:47:23 njoly Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.22 2007/12/20 23:02:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.23 2008/04/17 17:47:23 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -67,8 +67,6 @@ static void native_to_linux_timespec(struct linux_timespec *,
 				     struct timespec *);
 static void linux_to_native_timespec(struct timespec *,
 				     struct linux_timespec *);
-static int linux_to_native_clockid(clockid_t *, clockid_t);
-
 /*
  * This is not implemented for alpha yet
  */
@@ -151,7 +149,7 @@ linux_to_native_timespec(struct timespec *ntp, struct linux_timespec *ltp)
 	ntp->tv_nsec = ltp->tv_nsec;
 }
 
-static int
+int
 linux_to_native_clockid(clockid_t *n, clockid_t l)
 {
 	switch (l) {
