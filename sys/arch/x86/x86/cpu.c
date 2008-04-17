@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.27 2008/04/16 16:06:51 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.28 2008/04/17 09:09:54 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2008/04/16 16:06:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2008/04/17 09:09:54 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -333,8 +333,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		error = mi_cpu_attach(ci);
 		if (error != 0) {
 			aprint_normal("\n");
-			aprint_error("%s: mi_cpu_attach failed with %d\n",
-			    device_xname(sc->sc_dev), error);
+			aprint_error_dev(sc->sc_dev, "mi_cpu_attach failed with %d\n",
+			    error);
 			return;
 		}
 #endif
@@ -404,12 +404,12 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		aprint_normal("%s: not started\n", device_xname(sc->sc_dev));
+		aprint_normal_dev(sc->sc_dev, "not started\n");
 #endif
 		break;
 
 	default:
-		printf("\n");
+		aprint_normal("\n");
 		panic("unknown processor type??\n");
 	}
 	cpu_vm_init(ci);
@@ -423,9 +423,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 
-		aprint_verbose(
-		    "%s: idle lwp at %p, idle sp at %p\n",
-		    device_xname(sc->sc_dev), l,
+		aprint_verbose_dev(sc->sc_dev,
+		    "idle lwp at %p, idle sp at %p\n",
+		    l,
 #ifdef i386
 		    (void *)l->l_addr->u_pcb.pcb_esp
 #else
