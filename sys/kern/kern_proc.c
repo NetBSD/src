@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.134 2008/04/17 14:14:20 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.135 2008/04/17 14:16:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.134 2008/04/17 14:14:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.135 2008/04/17 14:16:22 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1134,9 +1134,8 @@ pidtbl_dump(void)
 			    pgrp->pg_session->s_login);
 			db_printf("\tpgrp %p, pg_id %d, pg_jobc %d, members %p\n",
 			    pgrp, pgrp->pg_id, pgrp->pg_jobc,
-			    pgrp->pg_members.lh_first);
-			for (p = pgrp->pg_members.lh_first; p != 0;
-			    p = p->p_pglist.le_next) {
+			    LIST_FIRST(&pgrp->pg_members));
+			LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 				db_printf("\t\tpid %d addr %p pgrp %p %s\n",
 				    p->p_pid, p, p->p_pgrp, p->p_comm);
 			}
