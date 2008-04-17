@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28 2008/04/17 09:09:54 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.29 2008/04/17 14:01:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2008/04/17 09:09:54 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2008/04/17 14:01:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -708,7 +708,7 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	db_printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
+	db_printf("addr		dev	id	flags	ipis	curlwp 		fpcurlwp\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
