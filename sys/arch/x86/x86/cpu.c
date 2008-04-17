@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29 2008/04/17 14:01:03 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.30 2008/04/17 18:45:08 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2008/04/17 14:01:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2008/04/17 18:45:08 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -333,8 +333,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		error = mi_cpu_attach(ci);
 		if (error != 0) {
 			aprint_normal("\n");
-			aprint_error_dev(sc->sc_dev, "mi_cpu_attach failed with %d\n",
-			    error);
+			aprint_error_dev(sc->sc_dev,
+			    "mi_cpu_attach failed with %d\n", error);
 			return;
 		}
 #endif
