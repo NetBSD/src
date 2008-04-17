@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.17 2008/04/16 16:06:52 cegger Exp $ */
+/*	$NetBSD: ipmi.c,v 1.18 2008/04/17 05:26:11 cegger Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.17 2008/04/16 16:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.18 2008/04/17 05:26:11 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,7 +100,7 @@ int	ipmi_enabled = 0;
 
 #define SMBIOS_TYPE_IPMI	0x26
 
-#define DEVNAME(s)  (device_xname(&((s)->sc_dev))
+#define DEVNAME(s)  (device_xname(&((s)->sc_dev)))
 
 /*
  * Format of SMBIOS IPMI Flags
