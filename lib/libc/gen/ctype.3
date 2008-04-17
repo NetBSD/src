@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.17 2007/01/20 13:11:36 wiz Exp $
+.\"	$NetBSD: ctype.3,v 1.18 2008/04/17 16:24:40 apb Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctype.3	6.5 (Berkeley) 4/19/91
 .\"
-.Dd January 18, 2007
+.Dd April 17, 2008
 .Dt CTYPE 3
 .Os
 .Sh NAME
@@ -73,14 +73,15 @@
 The above functions perform character tests and conversions on the integer
 .Ar c .
 .Pp
-See the specific manual pages for more information.
+See the specific manual pages for information about the
+test or conversion performed by each function.
 .Sh EXAMPLES
 To print an upper-case version of a string on stdout, use the following
 code:
 .Bd -literal
 const char *s = ...;
 while (*s != '\\0') {
-    putchar(toupper((unsigned char)*s));
+    putchar(toupper((int)(unsigned char)*s));
     s++;
 }
 .Ed
@@ -106,12 +107,45 @@ These functions, with the exception of
 conform to
 .St -ansiC .
 .Sh CAVEATS
-The first parameter of these functions is of type int, but only a very
-restricted subset is actually valid as an argument.
+The first argument of these functions is of type
+.Vt int ,
+but only a very restricted subset of values are actually valid.
 The argument must either be the value of the macro
 .Dv EOF
-or representable as an unsigned char.
-Otherwise the behavior is undefined.
-When testing an expression having the type
-.Tn plain char ,
-the argument should be cast to an unsigned char.
+(which has a negative value),
+or must be a non-negative value within the range representable as
+.Vt unsigned char .
+Passing invalid values leads to undefined behavior.
+.Pp
+Values of type
+.Vt int
+that were returned by
+.Xr getc 3 ,
+.Xr fgetc 3 ,
+and similar functions or macros
+are already in the correct range, and may be safely passed to these
+.Nm ctype
+functions without any casts.
+.Pp
+Values of type
+.Vt char
+or
+.Vt signed char
+must first be cast to
+.Vt unsigned char ,
+to ensure that the values are within the correct range.
+The result should then be cast to
+.Vt int
+to avoid warnings from some compilers.
+Casting a negative-valued
+.Vt char
+or
+.Vt signed char
+directly to
+.Vt int
+will produce a negative-valued
+.Vt int ,
+which will be outside the range of allowed values
+(unless it happens to be equal to
+.Dv EOF ,
+but even that would not give the desired result).
