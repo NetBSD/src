@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.59 2008/04/17 20:51:48 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.60 2008/04/17 21:19:12 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.59 2008/04/17 20:51:48 xtraeme Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.60 2008/04/17 21:19:12 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -72,7 +72,6 @@ typedef struct envsys_sensor {
 	bool	invalid;
 	bool	visible;
 	bool	percentage;
-	bool	dvnprinted;
 } *sensor_t;
 
 typedef struct envsys_dvprops {
