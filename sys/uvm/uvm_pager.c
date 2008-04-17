@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.91 2008/02/29 20:35:23 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.92 2008/04/17 05:39:41 simonb Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.91 2008/02/29 20:35:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.92 2008/04/17 05:39:41 simonb Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -301,6 +301,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	int swslot;
 	int i;
 	bool swap;
+	UVMHIST_FUNC("uvm_aio_aiodone_pages"); UVMHIST_CALLED(ubchist);
 
 	swslot = 0;
 	pageout_done = 0;
