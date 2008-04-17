@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.65 2008/01/30 17:20:04 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.66 2008/04/17 09:52:47 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.65 2008/01/30 17:20:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.66 2008/04/17 09:52:47 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,8 +114,6 @@ static int mapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
 static int readvnblk(struct vnode *, void *, ufs2_daddr_t);
 #endif /* !defined(FFS_NO_SNAPSHOT) */
 
-static void si_mount_dtor(void *);
-static struct snap_info *si_mount_init(struct mount *);
 static int ffs_copyonwrite(void *, struct buf *, bool);
 static int readfsblk(struct vnode *, void *, ufs2_daddr_t);
 static int writevnblk(struct vnode *, void *, ufs2_daddr_t);
@@ -137,61 +135,40 @@ struct snap_info {
 #ifdef DEBUG
 static int snapdebug = 0;
 #endif
-static kmutex_t si_mount_init_lock;
-static specificdata_key_t si_mount_data_key;
 
-void
-ffs_snapshot_init(void)
+int
+ffs_snapshot_init(struct ufsmount *ump)
 {
-	int error;
+	struct snap_info *si;
 
-	error = mount_specific_key_create(&si_mount_data_key, si_mount_dtor);
-	KASSERT(error == 0);
-	mutex_init(&si_mount_init_lock, MUTEX_DEFAULT, IPL_NONE);
+	si = ump->um_snapinfo = kmem_alloc(sizeof(*si), KM_SLEEP);
+	if (si == NULL)
+		return ENOMEM;
+
+	TAILQ_INIT(&si->si_snapshots);
+	mutex_init(&si->si_lock, MUTEX_DEFAULT, IPL_NONE);
+	rw_init(&si->si_vnlock.vl_lock);
+	si->si_vnlock.vl_canrecurse = 1;
+	si->si_vnlock.vl_recursecnt = 0;
+	si->si_gen = 0;
+	si->si_snapblklist = NULL;
+
+	return 0;
 }
 
 void
-ffs_snapshot_fini(void)
+ffs_snapshot_fini(struct ufsmount *ump)
 {
-	mount_specific_key_delete(si_mount_data_key);
-	mutex_destroy(&si_mount_init_lock);
-}
+	struct snap_info *si;
 
-static void
-si_mount_dtor(void *arg)
-{
-	struct snap_info *si = arg;
+	si = ump->um_snapinfo;
+	ump->um_snapinfo = NULL;
 
 	KASSERT(TAILQ_EMPTY(&si->si_snapshots));
 	mutex_destroy(&si->si_lock);
 	rw_destroy(&si->si_vnlock.vl_lock);
 	KASSERT(si->si_snapblklist == NULL);
 	kmem_free(si, sizeof(*si));
-}
-
-static struct snap_info *
-si_mount_init(struct mount *mp)
-{
-	struct snap_info *new;
-
-	mutex_enter(&si_mount_init_lock);
-	if ((new = mount_getspecific(mp, si_mount_data_key)) != NULL) {
-		mutex_exit(&si_mount_init_lock);
-		return new;
-	}
-	new = kmem_alloc(sizeof(*new), KM_SLEEP);
-	if (new != NULL) {
-		TAILQ_INIT(&new->si_snapshots);
-		mutex_init(&new->si_lock, MUTEX_DEFAULT, IPL_NONE);
-		rw_init(&new->si_vnlock.vl_lock);
-		new->si_vnlock.vl_canrecurse = 1;
-		new->si_vnlock.vl_recursecnt = 0;
-		new->si_gen = 0;
-		new->si_snapblklist = NULL;
-		mount_setspecific(mp, si_mount_data_key, new);
-	}
-	mutex_exit(&si_mount_init_lock);
-	return new;
 }
 
 /*
@@ -228,11 +205,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	struct snap_info *si;
 
 	ns = UFS_FSNEEDSWAP(fs);
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL) {
-		si = si_mount_init(mp);
-		if (si == NULL)
-			return ENOMEM;
-	}
+	si = VFSTOUFS(mp)->um_snapinfo;
 
 	/*
 	 * Need to serialize access to snapshot code per filesystem.
@@ -1378,8 +1351,8 @@ ffs_snapgone(struct inode *ip)
 	struct snap_info *si;
 	int snaploc;
 
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
-		return;
+	si = VFSTOUFS(mp)->um_snapinfo;
+
 	/*
 	 * Find snapshot in incore list.
 	 */
@@ -1431,8 +1404,7 @@ ffs_snapremove(struct vnode *vp)
 	ufs2_daddr_t numblks, blkno, dblk;
 	int error, ns, loc, last;
 
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
-		return;
+	si = VFSTOUFS(mp)->um_snapinfo;
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
 	 * If active, delete from incore list (this snapshot may
@@ -1545,8 +1517,7 @@ ffs_snapblkfree(struct fs *fs, struct vnode *devvp, ufs2_daddr_t bno,
 	uint32_t gen;
 	int s, indiroff = 0, snapshot_locked = 0, error = 0, claimedblk = 0;
 
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
-		return 0;
+	si = VFSTOUFS(mp)->um_snapinfo;
 	lbn = fragstoblks(fs, bno);
 	mutex_enter(&si->si_lock);
 retry:
@@ -1723,11 +1694,7 @@ ffs_snapshot_mount(struct mount *mp)
 	if (UFS_MPISAPPLEUFS(VFSTOUFS(mp)))
 		return;
 
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL) {
-		si = si_mount_init(mp);
-		if (si == NULL)
-			return;
-	}
+	si = VFSTOUFS(mp)->um_snapinfo;
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
 	 * XXX The following needs to be set before ffs_truncate or
@@ -1845,8 +1812,7 @@ ffs_snapshot_unmount(struct mount *mp)
 	struct vnode *vp = NULL;
 	struct snap_info *si;
 
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
-		return;
+	si = VFSTOUFS(mp)->um_snapinfo;
 	mutex_enter(&si->si_lock);
 	while ((xp = TAILQ_FIRST(&si->si_snapshots)) != 0) {
 		vp = ITOV(xp);
@@ -1890,8 +1856,7 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 	/*
 	 * Check for valid snapshots.
 	 */
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
-		return 0;
+	si = VFSTOUFS(mp)->um_snapinfo;
 	mutex_enter(&si->si_lock);
 	ip = TAILQ_FIRST(&si->si_snapshots);
 	if (ip == NULL) {

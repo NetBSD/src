@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.33 2007/12/08 19:29:57 pooka Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.34 2008/04/17 09:52:47 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -105,6 +105,7 @@ struct ufsmount {
 	int	um_maxsymlinklen;
 	int	um_dirblksiz;
 	u_int64_t um_maxfilesize;
+	void	*um_snapinfo;			/* snapshot private data */
 
 	const struct ufs_ops *um_ops;
 };
