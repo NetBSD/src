@@ -1,5 +1,5 @@
-/*	$NetBSD: if_nfevar.h,v 1.7 2008/03/26 14:46:21 cube Exp $	*/
-/*	$OpenBSD: if_nfevar.h,v 1.11 2006/02/19 13:57:02 damien Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.8 2008/04/17 19:12:26 christos Exp $	*/
+/*	$OpenBSD: if_nfevar.h,v 1.13 2007/12/05 08:30:33 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -38,7 +38,7 @@ struct nfe_tx_ring {
 };
 
 struct nfe_jbuf {
-	void *			buf;
+	void			*buf;
 	bus_addr_t		physaddr;
 	SLIST_ENTRY(nfe_jbuf)	jnext;
 };
@@ -56,7 +56,7 @@ struct nfe_rx_ring {
 	bus_addr_t		physaddr;
 	struct nfe_desc32	*desc32;
 	struct nfe_desc64	*desc64;
-	void *			jpool;
+	void			*jpool;
 	struct nfe_rx_data	data[NFE_RX_RING_COUNT];
 	struct nfe_jbuf		jbuf[NFE_JPOOL_COUNT];
 	int			jbufmap[NFE_RX_RING_COUNT];

@@ -1,5 +1,5 @@
-/*	$NetBSD: if_nfereg.h,v 1.6 2008/01/26 14:13:06 tsutsui Exp $	*/
-/*	$OpenBSD: if_nfereg.h,v 1.16 2006/02/22 19:23:44 damien Exp $	*/
+/*	$NetBSD: if_nfereg.h,v 1.7 2008/04/17 19:12:26 christos Exp $	*/
+/*	$OpenBSD: if_nfereg.h,v 1.22 2007/12/05 08:30:33 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -20,13 +20,17 @@
 #define NFE_PCI_BA		0x10
 
 #define NFE_RX_RING_COUNT	128
-#define NFE_TX_RING_COUNT	64
+#define NFE_TX_RING_COUNT	256
 
 #define NFE_RX_NEXTDESC(x)	(((x) + 1) & (NFE_RX_RING_COUNT - 1))
 #define NFE_TX_NEXTDESC(x)	(((x) + 1) & (NFE_TX_RING_COUNT - 1))
 
 #define	ETHER_ALIGN		2
-#define NFE_JBYTES		(ETHER_MAX_LEN_JUMBO + ETHER_ALIGN)
+
+#define NFE_JUMBO_FRAMELEN	9018
+#define NFE_JUMBO_MTU		(NFE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+#define NFE_JBYTES		(NFE_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define NFE_JPOOL_COUNT		(NFE_RX_RING_COUNT + 64)
 #define NFE_JPOOL_SIZE		(NFE_JPOOL_COUNT * NFE_JBYTES)
 
@@ -94,7 +98,7 @@
 #define NFE_R2_MAGIC		0x16
 #define NFE_R4_MAGIC		0x08
 #define NFE_R6_MAGIC		0x03
-#define NFE_WOL_MAGIC		0x1111
+#define NFE_WOL_ENABLE		0x1111
 #define NFE_RX_START		0x01
 #define NFE_TX_START		0x01
 
@@ -163,6 +167,10 @@ struct nfe_desc32 {
 #define NFE_TX_LASTFRAG_V1	(1 << 0)
 } __packed;
 
+#define NFE_V1_TXERR	"\020"	\
+	"\14TXERROR\13UNDERFLOW\12LATECOLLISION\11LOSTCARRIER\10DEFERRED" \
+	"\08FORCEDINT\03RETRY\00LASTPACKET"
+
 /* V2 Rx/Tx descriptor */
 struct nfe_desc64 {
 	volatile uint32_t	physaddr[2];
@@ -173,18 +181,21 @@ struct nfe_desc64 {
 	volatile uint16_t	flags;
 #define NFE_RX_FIXME_V2		0x4300
 #define NFE_RX_VALID_V2		(1 << 13)
-#define NFE_RX_IP_CSUMOK	(1 << 12)
-#define NFE_RX_UDP_CSUMOK	(1 << 11)
-#define NFE_RX_TCP_CSUMOK	(1 << 10)
 #define NFE_TX_ERROR_V2		0x5c04
 #define NFE_TX_LASTFRAG_V2	(1 << 13)
-#define NFE_TX_IP_CSUM		(1 << 11)
-#define NFE_TX_TCP_UDP_CSUM	(1 << 10)
 } __packed;
 
+#define NFE_V2_TXERR	"\020"	\
+	"\14FORCEDINT\13LASTPACKET\12UNDERFLOW\10LOSTCARRIER\09DEFERRED\02RETRY"
+
 /* flags common to V1/V2 descriptors */
+#define NFE_RX_UDP_CSUMOK	(1 << 10)
+#define NFE_RX_TCP_CSUMOK	(1 << 11)
+#define NFE_RX_IP_CSUMOK	(1 << 12)
 #define NFE_RX_ERROR		(1 << 14)
 #define NFE_RX_READY		(1 << 15)
+#define NFE_TX_TCP_UDP_CSUM	(1 << 10)
+#define NFE_TX_IP_CSUM		(1 << 11)
 #define NFE_TX_VALID		(1 << 15)
 
 #define NFE_READ(sc, reg) \
