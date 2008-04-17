@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2008/04/17 14:01:03 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.14 2008/04/17 21:25:00 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2008/04/17 14:01:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2008/04/17 21:25:00 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -458,10 +458,10 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		lapic_set_lvt();
 		lapic_calibrate_timer(ci);
 #endif
+#if 0
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_number;
 #endif
-#if 0
 		x86_errata();
 #endif
 		break;
