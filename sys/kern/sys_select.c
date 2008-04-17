@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.3 2008/03/29 14:08:35 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.4 2008/04/17 14:02:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.3 2008/03/29 14:08:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.4 2008/04/17 14:02:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,7 +559,7 @@ seltrue(dev_t dev, int events, lwp_t *l)
  * Record a select request.  Concurrency issues:
  *
  * The caller holds the same lock across calls to selrecord() and
- * selwakeup(), so we don't need to consider a concurrent wakeup
+ * selnotify(), so we don't need to consider a concurrent wakeup
  * while in this routine.
  *
  * The only activity we need to guard against is selclear(), called by
