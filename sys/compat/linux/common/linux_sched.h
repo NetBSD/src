@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.5 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.6 2008/04/17 17:47:23 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -87,5 +87,7 @@ struct linux_timespec {
 #define LINUX_CLOCK_THREAD_CPUTIME_ID	3
 #define LINUX_CLOCK_REALTIME_HR		4
 #define LINUX_CLOCK_MONOTONIC_HR	5
+
+int linux_to_native_clockid(clockid_t *, clockid_t);
 
 #endif /* _LINUX_SCHED_H */
