@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.11 2008/04/13 22:29:38 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 2008/04/17 12:24:44 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.11 2008/04/13 22:29:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12 2008/04/17 12:24:44 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -351,6 +351,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
+	uintptr_t ptr;
 #if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
 #endif
@@ -362,7 +363,12 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
+		aprint_naive(": Application Processor\n");
+		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		    M_DEVBUF, M_WAITOK);
+		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
+		    ~(CACHE_LINE_SIZE - 1));
+		memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
@@ -373,6 +379,8 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		    M_DEVBUF, M_WAITOK);
 #endif
 	} else {
+		aprint_naive(": %s Processor\n",
+		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
 		if (cpunum != lapic_cpu_number()) {
@@ -418,37 +426,58 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 
 	/* further PCB init done later. */
 
-	printf(": ");
-
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		printf("(uniprocessor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
+		aprint_normal(": (uniprocessor)\n");
+		atomic_or_32(&ci->ci_flags,
+		     CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
+#if 0
+		x86_errata();
+#endif
 		break;
 
 	case CPU_ROLE_BP:
-		printf("apid %d (boot processor)\n", caa->cpu_number);
-		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
+		aprint_normal("apid %d (boot processor)\n", caa->cpu_number);
+		atomic_or_32(&ci->ci_flags, 
+		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
 		identifycpu(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
+#if NLAPIC > 0
+		/*
+		 * Enable local apic
+		 */
+		lapic_enable();
+		lapic_set_lvt();
+		lapic_calibrate_timer(ci);
+#endif
+#if NIOAPIC > 0
+		ioapic_bsp_id = caa->cpu_number;
+#endif
+#if 0
+		x86_errata();
+#endif
 		break;
 
 	case CPU_ROLE_AP:
 		/*
 		 * report on an AP
 		 */
-		printf("apid %d (application processor)\n", caa->cpu_number);
+		aprint_normal("apid %d (application processor)\n", caa->cpu_number);
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
+		pmap_cpu_init_early(ci);
+		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
 			identifycpu(ci);
@@ -456,23 +485,36 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		printf("%s: not started\n", device_xname(sc->sc_dev));
+		aprint_normal_dev(sc->sc_dev, "not started\n");
 #endif
 		break;
 
 	default:
+		aprint_normal("\n");
 		panic("unknown processor type??\n");
 	}
 	cpu_vm_init(ci);
 
 	cpus_attached |= (1 << ci->ci_cpuid);
 
+#if 0
+	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+#endif
+
 #if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 
-		aprint_verbose_dev(sc->sc_dev, "idle lwp at %p, idle sp at 0x%x\n",
-		    l, l->l_addr->u_pcb.pcb_esp);
+		aprint_verbose_dev(sc->sc_dev, "idle lwp at %p, idle sp at 0x%p\n",
+		    l,
+#ifdef i386
+		    (void *)l->l_addr->u_pcb.pcb_esp
+#else
+		    (void *)l->l_addr->u_pcb.pcb_rsp
+#endif
+		);
+		
 	}
 #endif
 }
@@ -678,6 +720,8 @@ cpu_hatch(void *v)
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
+	lcr3(pmap_kernel()->pm_pdirpa);
+	curlwp->l_addr->u_pcb.pcb_cr3 = pmap_kernel()->pm_pdirpa;
 	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
 	cpu_init_idt();
 	gdt_init_cpu(ci);
@@ -685,10 +729,14 @@ cpu_hatch(void *v)
 	lapic_set_lvt();
 	lapic_initclocks();
 
+#ifdef i386
 	npxinit(ci);
+#else
+	fpuinit(ci);
+#endif
 
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
-	/* ltr(ci->ci_tss_sel); */ /* XXX */
+	ltr(ci->ci_tss_sel);
 
 	cpu_init(ci);
 	cpu_get_tsc_freq(ci);
@@ -701,7 +749,7 @@ cpu_hatch(void *v)
 #endif
 	x86_enable_intr();
 	splx(s);
-#ifdef DOM0OPS
+#if 0
 	x86_errata();
 #endif
 
@@ -728,7 +776,7 @@ cpu_debug_dump(void)
 		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
 		    ci->ci_dev == NULL ? "BOOT" : device_xname(ci->ci_dev),
-		    ci->ci_cpuid,
+		    (long)ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
 		    ci->ci_curlwp,
 		    ci->ci_fpcurlwp);
