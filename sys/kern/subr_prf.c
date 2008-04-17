@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.117 2008/04/12 17:16:09 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.118 2008/04/17 14:07:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.117 2008/04/12 17:16:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.118 2008/04/17 14:07:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -467,12 +467,12 @@ tprintf_open(struct proc *p)
 
 	cookie = NULL;
 
-	/* mutex_enter(&proclist_mutex); XXXSMP */
+	mutex_enter(&proclist_lock);
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		SESSHOLD(p->p_session);
 		cookie = (tpr_t)p->p_session;
 	}
-	/* mutex_exit(&proclist_mutex) XXXSMP */
+	mutex_exit(&proclist_lock);
 
 	return cookie;
 }
@@ -485,8 +485,11 @@ void
 tprintf_close(tpr_t sess)
 {
 
-	if (sess)
+	if (sess) {
+		mutex_enter(&proclist_lock);
 		SESSRELE((struct session *) sess);
+		mutex_exit(&proclist_lock);
+	}
 }
 
 /*
