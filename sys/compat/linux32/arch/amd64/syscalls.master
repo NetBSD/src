@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.32 2008/04/04 12:57:55 njoly Exp $
+	$NetBSD: syscalls.master,v 1.33 2008/04/17 17:47:23 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -418,9 +418,12 @@
 261	UNIMPL	timer_gettime
 262	UNIMPL	timer_getoverrun
 263	UNIMPL	timer_delete
-264	UNIMPL	clock_settime
-265	UNIMPL	clock_gettime
-266	UNIMPL	clock_getres
+264	STD	{ int linux32_sys_clock_settime(clockid_t which, \
+		    linux32_timespecp_t tp); }
+265	STD	{ int linux32_sys_clock_gettime(clockid_t which, \
+		    linux32_timespecp_t tp); }
+266	STD	{ int linux32_sys_clock_getres(clockid_t which, \
+		    linux32_timespecp_t tp); }
 267	UNIMPL	clock_nanosleep
 268	UNIMPL	statfs64
 269	UNIMPL	fstatfs64

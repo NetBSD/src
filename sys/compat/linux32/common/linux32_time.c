@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.17 2008/03/27 19:06:51 ad Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.18 2008/04/17 17:47:23 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.17 2008/03/27 19:06:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.18 2008/04/17 17:47:23 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.17 2008/03/27 19:06:51 ad Exp $")
 #include <sys/ucred.h>
 #include <sys/swap.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/timetc.h>
 
 #include <machine/types.h>
 
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.17 2008/03/27 19:06:51 ad Exp $")
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_sched.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -74,6 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.17 2008/03/27 19:06:51 ad Exp $")
 #include <compat/linux32/linux32_syscallargs.h>
 
 extern struct timezone linux_sys_tz;
+
+static __inline void
+native_to_linux32_timespec(struct linux32_timespec *, struct timespec *);
+static __inline void
+linux32_to_native_timespec(struct timespec *, struct linux32_timespec *);
+
 int
 linux32_sys_gettimeofday(struct lwp *l, const struct linux32_sys_gettimeofday_args *uap, register_t *retval)
 {
@@ -224,4 +232,95 @@ linux32_sys_utime(struct lwp *l, const struct linux32_sys_utime_args *uap, regis
                      
         return do_sys_utimes(l, NULL, SCARG_P32(uap, path), FOLLOW,
 			    tvp, UIO_SYSSPACE);
-} 
+}
+
+static __inline void
+native_to_linux32_timespec(struct linux32_timespec *ltp, struct timespec *ntp)
+{
+	ltp->tv_sec = ntp->tv_sec;
+	ltp->tv_nsec = ntp->tv_nsec;
+}
+
+static __inline void
+linux32_to_native_timespec(struct timespec *ntp, struct linux32_timespec *ltp)
+{
+	ntp->tv_sec = ltp->tv_sec;
+	ntp->tv_nsec = ltp->tv_nsec;
+}
+
+int
+linux32_sys_clock_settime(struct lwp *l,
+    const struct linux32_sys_clock_settime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) which;
+		syscallarg(linux32_timespecp_t) tp;
+	} */
+	int error;
+	struct timespec ts;
+	struct linux32_timespec lts;
+
+	switch (SCARG(uap, which)) {
+	case LINUX_CLOCK_REALTIME:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if ((error = copyin(SCARG_P32(uap, tp), &lts, sizeof lts)))
+		return error;
+
+	linux32_to_native_timespec(&ts, &lts);
+	return settime(l->l_proc, &ts);
+}
+
+int
+linux32_sys_clock_gettime(struct lwp *l,
+    const struct linux32_sys_clock_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) which;
+		syscallarg(linux32_timespecp_t) tp;
+	} */
+	struct timespec ts;
+	struct linux32_timespec lts;
+
+	switch (SCARG(uap, which)) {
+	case LINUX_CLOCK_REALTIME:
+		nanotime(&ts);
+		break;
+	case LINUX_CLOCK_MONOTONIC:
+		nanouptime(&ts);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	native_to_linux32_timespec(&lts, &ts);
+	return copyout(&lts, SCARG_P32(uap, tp), sizeof lts);
+}
+
+int
+linux32_sys_clock_getres(struct lwp *l,
+    const struct linux32_sys_clock_getres_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) which;
+		syscallarg(linux32_timespecp_t) tp;
+	} */
+	int error;
+	clockid_t id;
+	struct timespec ts;
+	struct linux32_timespec lts;
+
+	error = linux_to_native_clockid(&id, SCARG(uap, which));
+	if (error != 0 || SCARG_P32(uap, tp) == NULL)
+		return error;
+
+	ts.tv_sec = 0;
+	ts.tv_nsec = 1000000000 / tc_getfrequency();
+	native_to_linux32_timespec(&lts, &ts);
+	return copyout(&lts, SCARG_P32(uap, tp), sizeof lts);
+
+	return 0;
+}
