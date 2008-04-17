@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs.h,v 1.937 2008/04/15 21:26:08 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.938 2008/04/17 19:12:49 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3174,6 +3174,10 @@
 #define	PCI_PRODUCT_NVIDIA_MCP67_IDE	0x0560		/* nForce MCP67 ATA133 IDE Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP73_IDE	0x056c		/* nForce MCP73 ATA133 IDE Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_IDE	0x0759		/* nForce MCP77 ATA133 IDE Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_LAN1	0x0760		/* nForce MCP77 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_LAN2	0x0761		/* nForce MCP77 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_LAN3	0x0762		/* nForce MCP77 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP77_LAN4	0x0763		/* nForce MCP77 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_HDA_1	0x0774		/* nForce MCP77 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_HDA_2	0x0775		/* nForce MCP77 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_HDA_3	0x0776		/* nForce MCP77 High Definition Audio Controller */
@@ -3197,6 +3201,10 @@
 #define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_12	0x07fb		/* nForce MCP73 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP73_HDA_1	0x07fc		/* nForce MCP73 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP73_HDA_2	0x07fd		/* nForce MCP73 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP79_LAN1	0x0ab0		/* nForce MCP79 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP79_LAN2	0x0ab1		/* nForce MCP79 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP79_LAN3	0x0ab2		/* nForce MCP79 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP79_LAN4	0x0ab3		/* nForce MCP79 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_1	0x0ad0		/* nForce MCP77 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_2	0x0ad1		/* nForce MCP77 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP77_AHCI_3	0x0ad2		/* nForce MCP77 AHCI Controller */
