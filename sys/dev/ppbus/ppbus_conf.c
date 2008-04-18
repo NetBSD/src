@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.14 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.15 2008/04/18 14:56:40 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.14 2008/04/15 15:02:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.15 2008/04/18 14:56:40 cegger Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -195,8 +195,8 @@ ppbus_detach(device_t self, int flag)
 	/* Detach children devices */
 	while (!SLIST_EMPTY(&(ppbus->sc_childlist_head))) {
 		child = SLIST_FIRST(&(ppbus->sc_childlist_head));
-		config_deactivate((device_t)child);
-		if (config_detach((device_t)child, flag)) {
+		config_deactivate(child->sc_dev);
+		if (config_detach(child->sc_dev, flag)) {
 			if(!(flag & DETACH_QUIET))
 				aprint_error_dev(ppbus->sc_dev, "error detaching %s.",
 					device_xname(child->sc_dev));

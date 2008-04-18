@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.4 2008/04/16 09:39:01 cegger Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.5 2008/04/18 14:56:40 cegger Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.4 2008/04/16 09:39:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.5 2008/04/18 14:56:40 cegger Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -332,8 +332,8 @@ pi1ppcintr(void *arg)
 {
 /* NO INTERRUPTS YET */
 #if 0
-	struct pi1ppc_softc *pi1ppc = (struct pi1ppc_softc *)arg;
-	device_t dev = pi1ppc->sc_dev;
+	device_t dev = arg;
+	struct pi1ppc_softc *pi1ppc = device_private(dev);
 	int claim = 1;
 	enum { NONE, READER, WRITER } wake_up = NONE;
 	int s;

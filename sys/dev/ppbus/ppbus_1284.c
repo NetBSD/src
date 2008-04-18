@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.11 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.12 2008/04/18 14:56:40 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.11 2008/04/15 15:02:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.12 2008/04/18 14:56:40 cegger Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -115,7 +115,7 @@ ppbus_1284_set_error(struct ppbus_softc * bus, int error, int event)
 
 #ifdef DEBUG_1284
 	printf("%s<1284>: error=%d status=0x%x event=%d\n",
-		device_xname(bus->sc_dev), error, ppbus_rstr((device_t)bus),
+		device_xname(bus->sc_dev), error, ppbus_rstr(bus->sc_dev),
 		event);
 
 #endif
