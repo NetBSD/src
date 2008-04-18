@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.7 2008/04/18 05:34:04 garbled Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2008/04/18 08:05:05 garbled Exp $
 
 # disable the asm versions of these because they break the explora.
 # the special rules here are to override the suffix rules which seem
-* to prefer .S files over .c
+# to prefer .S files over .c
 .if ${MACHINE} == "evbppc"
 SRCS+=  bzero.S ffs.S strlen.S memcmp.c bcopy.c
 bcopy.o: bcopy.c
