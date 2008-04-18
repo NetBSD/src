@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.26 2008/04/15 15:02:28 cegger Exp $ */
+/* $NetBSD: atppc.c,v 1.27 2008/04/18 14:56:40 cegger Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.26 2008/04/15 15:02:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.27 2008/04/18 14:56:40 cegger Exp $");
 
 #include "opt_atppc.h"
 
@@ -611,8 +611,8 @@ error:
 int
 atppcintr(void *arg)
 {
-	struct atppc_softc *atppc = (struct atppc_softc *)arg;
-	device_t dev = atppc->sc_dev;
+	device_t dev = arg;
+	struct atppc_softc *atppc = device_private(dev);
 	int claim = 1;
 	enum { NONE, READER, WRITER } wake_up = NONE;
 

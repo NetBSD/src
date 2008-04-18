@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.c,v 1.8 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_msq.c,v 1.9 2008/04/18 14:56:40 cegger Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.8 2008/04/15 15:02:29 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_msq.c,v 1.9 2008/04/18 14:56:40 cegger Exp $");
 
 #include <machine/stdarg.h>
 
@@ -359,7 +359,7 @@ again:
 			 */
 			if((error =
 				bus->ppbus_exec_microseq(
-				(device_t)bus, &mi))) {
+				bus->sc_dev, &mi))) {
 
 				goto error;
 			}
