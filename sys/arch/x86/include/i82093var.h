@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.5 2008/04/16 16:06:51 cegger Exp $ */
+/* $NetBSD: i82093var.h,v 1.6 2008/04/18 15:32:46 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -97,7 +97,6 @@ void ioapic_enable(void);
 void ioapic_reenable(void);
 void lapic_vectorset(void); /* XXX */
 
-extern int ioapic_bsp_id;
 extern int nioapics;
 extern struct ioapic_softc *ioapics;
 

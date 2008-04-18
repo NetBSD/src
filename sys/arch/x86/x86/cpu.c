@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.30 2008/04/17 18:45:08 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.31 2008/04/18 15:32:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2008/04/17 18:45:08 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2008/04/18 15:32:46 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -110,10 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2008/04/17 18:45:08 cegger Exp $");
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#endif
-
-#if NIOAPIC > 0
-#include <machine/i82093var.h>
 #endif
 
 #include <dev/ic/mc146818reg.h>
@@ -378,9 +374,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		lapic_enable();
 		lapic_set_lvt();
 		lapic_calibrate_timer(ci);
-#endif
-#if NIOAPIC > 0
-		ioapic_bsp_id = caa->cpu_number;
 #endif
 		x86_errata();
 		break;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.32 2008/04/16 16:06:52 cegger Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.33 2008/04/18 15:32:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.32 2008/04/16 16:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.33 2008/04/18 15:32:46 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -119,8 +119,6 @@ static void ioapic_addroute(struct pic *, struct cpu_info *, int, int, int);
 static void ioapic_delroute(struct pic *, struct cpu_info *, int, int, int);
 
 int apic_verbose = 0;
-
-int ioapic_bsp_id = 0;
 
 struct ioapic_softc *ioapics;	 /* head of linked list */
 int nioapics = 0;	   	 /* number attached */
