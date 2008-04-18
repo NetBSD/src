@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2008/04/16 16:06:52 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 2008/04/18 15:49:39 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2008/04/16 16:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2008/04/18 15:49:39 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1066,10 +1066,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
  */
 
 void
-pmap_kenter_ma(va, ma, prot)
-	vaddr_t va;
-	paddr_t ma;
-	vm_prot_t prot;
+pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot)
 {
 	pt_entry_t *pte, opte, npte;
 
@@ -1088,10 +1085,9 @@ pmap_kenter_ma(va, ma, prot)
 
 	if (pmap_valid_entry(opte)) {
 #if defined(MULTIPROCESSOR)
-		int32_t cpumask = 0;
-
-		pmap_tlb_shootdown(pmap_kernel(), va, opte, &cpumask);
-		pmap_tlb_shootnow(cpumask);
+		crit_enter();
+		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
+		crit_exit();
 #else
 		/* Don't bother deferring in the single CPU case. */
 		pmap_update_pg(va);
