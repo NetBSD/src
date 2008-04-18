@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.14 2008/04/17 21:25:00 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15 2008/04/18 15:32:46 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2008/04/17 21:25:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2008/04/18 15:32:46 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -114,10 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2008/04/17 21:25:00 bouyer Exp $");
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#endif
-
-#if NIOAPIC > 0
-#include <machine/i82093var.h>
 #endif
 
 #include <dev/ic/mc146818reg.h>
@@ -269,9 +265,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	case CPU_ROLE_BP:
 		printf("(boot processor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
-#if NIOAPIC > 0
-		ioapic_bsp_id = caa->cpu_number;
-#endif
 		break;
 
 	case CPU_ROLE_AP:
@@ -459,9 +452,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		lapic_calibrate_timer(ci);
 #endif
 #if 0
-#if NIOAPIC > 0
-		ioapic_bsp_id = caa->cpu_number;
-#endif
 		x86_errata();
 #endif
 		break;
