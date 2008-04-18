@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2005/12/11 12:24:44 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2008/04/18 05:34:04 garbled Exp $
 
 SRCS+=	__main.c __assert.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -13,3 +13,11 @@ SRCS+=	__main.c __assert.c \
 	syncicache.c
 
 SRCS+=	ffs.S memset.S strlen.S
+
+# Disable the asm versions on evbppc because they break the Explora
+.if ${MACHINE} == "evbppc"
+bcopy.o: bcopy.c
+memcpy.o: memcpy.c
+memcmp.o: memcmp.c
+memmove.o: memmove.c
+.endif
