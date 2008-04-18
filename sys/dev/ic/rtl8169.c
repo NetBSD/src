@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.99 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.100 2008/04/18 16:05:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.99 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.100 2008/04/18 16:05:30 joerg Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1315,51 +1315,6 @@ re_tick(void *xsc)
 	callout_reset(&sc->rtk_tick_ch, hz, re_tick, sc);
 }
 
-#ifdef DEVICE_POLLING
-static void
-re_poll(struct ifnet *ifp, enum poll_cmd cmd, int count)
-{
-	struct rtk_softc *sc = ifp->if_softc;
-
-	RTK_LOCK(sc);
-	if ((ifp->if_capenable & IFCAP_POLLING) == 0) {
-		ether_poll_deregister(ifp);
-		cmd = POLL_DEREGISTER;
-	}
-	if (cmd == POLL_DEREGISTER) { /* final call, enable interrupts */
-		CSR_WRITE_2(sc, RTK_IMR, RTK_INTRS_CPLUS);
-		goto done;
-	}
-
-	sc->rxcycles = count;
-	re_rxeof(sc);
-	re_txeof(sc);
-
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-		(*ifp->if_start)(ifp);
-
-	if (cmd == POLL_AND_CHECK_STATUS) { /* also check status register */
-		uint16_t       status;
-
-		status = CSR_READ_2(sc, RTK_ISR);
-		if (status == 0xffff)
-			goto done;
-		if (status)
-			CSR_WRITE_2(sc, RTK_ISR, status);
-
-		/*
-		 * XXX check behaviour on receiver stalls.
-		 */
-
-		if (status & RTK_ISR_SYSTEM_ERR) {
-			re_init(sc);
-		}
-	}
- done:
-	RTK_UNLOCK(sc);
-}
-#endif /* DEVICE_POLLING */
-
 int
 re_intr(void *arg)
 {
@@ -1375,17 +1330,6 @@ re_intr(void *arg)
 
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return 0;
-
-#ifdef DEVICE_POLLING
-	if (ifp->if_flags & IFF_POLLING)
-		goto done;
-	if ((ifp->if_capenable & IFCAP_POLLING) &&
-	    ether_poll_register(re_poll, ifp)) { /* ok, disable interrupts */
-		CSR_WRITE_2(sc, RTK_IMR, 0x0000);
-		re_poll(ifp, 0, 1);
-		goto done;
-	}
-#endif /* DEVICE_POLLING */
 
 	for (;;) {
 
@@ -1420,10 +1364,6 @@ re_intr(void *arg)
 
 	if (handled && !IFQ_IS_EMPTY(&ifp->if_snd))
 		re_start(ifp);
-
-#ifdef DEVICE_POLLING
- done:
-#endif
 
 	return handled;
 }
@@ -1808,14 +1748,6 @@ re_init(struct ifnet *ifp)
 	 */
 	rtk_setmulti(sc);
 
-#ifdef DEVICE_POLLING
-	/*
-	 * Disable interrupts if we are polling.
-	 */
-	if (ifp->if_flags & IFF_POLLING)
-		CSR_WRITE_2(sc, RTK_IMR, 0);
-	else	/* otherwise ... */
-#endif /* DEVICE_POLLING */
 	/*
 	 * Enable interrupts.
 	 */
@@ -1937,10 +1869,6 @@ re_stop(struct ifnet *ifp, int disable)
 	struct rtk_softc *sc = ifp->if_softc;
 
 	callout_stop(&sc->rtk_tick_ch);
-
-#ifdef DEVICE_POLLING
-	ether_poll_deregister(ifp);
-#endif /* DEVICE_POLLING */
 
 	mii_down(&sc->mii);
 
