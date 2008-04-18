@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.20 2008/04/16 09:39:01 cegger Exp $ */
+/* $NetBSD: if_plip.c,v 1.21 2008/04/18 14:56:40 cegger Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.20 2008/04/16 09:39:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21 2008/04/18 14:56:40 cegger Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -347,9 +347,9 @@ lpfreetables (void)
 static int
 lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 {
-	device_t dev = ifp->if_softc;
+	struct lp_softc * sc = ifp->if_softc;
+	device_t dev = sc->ppbus_dev.sc_dev;
 	device_t ppbus = device_parent(dev);
-	struct lp_softc * sc = device_private(dev);
 	struct ifaddr * ifa = (struct ifaddr *)data;
 	struct ifreq * ifr = (struct ifreq *)data;
 	u_char * ptr;
@@ -707,9 +707,9 @@ static int
 lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct rtentry *rt)
 {
-	device_t dev = ifp->if_softc;
+	struct lp_softc * sc = ifp->if_softc;
+	device_t dev = sc->ppbus_dev.sc_dev;
 	device_t ppbus = device_parent(dev);
-	struct lp_softc * sc = device_private(dev);
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int err;
 	int s;
@@ -769,7 +769,7 @@ void
 lpstart(struct ifnet * ifp)
 {
 	struct lp_softc * lp = ifp->if_softc;
-	device_t dev = ifp->if_softc;
+	device_t dev = lp->ppbus_dev.sc_dev;
 	device_t ppbus = device_parent(dev);
 	struct mbuf * mm;
 	struct mbuf * m;
