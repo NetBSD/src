@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.165 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.166 2008/04/19 11:49:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.165 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.166 2008/04/19 11:49:54 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.165 2008/03/21 21:55:00 ad Exp $")
 #include <sys/mman.h>
 #include <sys/file.h>
 #include <sys/kauth.h>
-#include <sys/fstrans.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
