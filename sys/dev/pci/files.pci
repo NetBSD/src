@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.273.2.4 2008/01/11 17:03:16 xtraeme Exp $
+#	$NetBSD: files.pci,v 1.273.2.5 2008/04/19 15:57:56 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -875,3 +875,8 @@ attach	mskc at pci
 device	msk: ether, ifnet, arp, mii
 attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
+
+# Atheros/Attansic L2 Fast-Ethernet     
+device  lii: ether, ifnet, arp, mii     
+attach  lii at pci
+file    dev/pci/if_lii.c                lii

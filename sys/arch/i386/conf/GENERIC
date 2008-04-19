@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.799.2.16 2008/01/11 17:03:17 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.799.2.17 2008/04/19 15:57:56 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.799.2.16 $"
+#ident 		"GENERIC-$Revision: 1.799.2.17 $"
 
 maxusers	32		# estimated number of users
 
@@ -853,6 +853,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
