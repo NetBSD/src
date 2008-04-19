@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.109 2008/03/28 12:14:22 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.110 2008/04/19 22:26:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.109 2008/03/28 12:14:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.110 2008/04/19 22:26:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1351,7 +1351,8 @@ unp_scan(struct mbuf *m0, void (*op)(file_t *), int discard)
 			    m->m_len >= sizeof(*cm)) {
 				cm = mtod(m, struct cmsghdr *);
 				if (cm->cmsg_level != SOL_SOCKET ||
-				    cm->cmsg_type != SCM_RIGHTS)
+				    cm->cmsg_type != SCM_RIGHTS ||
+				    cm->cmsg_len != m->m_len)
 					continue;
 				qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm)))
 				    / sizeof(file_t *);
