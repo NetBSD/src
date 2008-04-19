@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#	@(#)Makefile.dist	8.2 (Berkeley) 9/21/96
+#	@(#)Makefile.dist	8.1 (Berkeley) 11/27/93
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -62,12 +62,8 @@ all: ${ALL}
 praliases: ${BEFORE} ${OBJS}
 	${CC} -o praliases ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
 
-#NROFF=	nroff -h
-NROFF=	groff -Tascii
-MANDOC=	-mandoc
-
 praliases.0: praliases.8
-	${NROFF} ${MANDOC} praliases.8 > praliases.0
+	nroff -h -mandoc praliases.8 > praliases.0
 
 install: install-praliases install-docs
 

@@ -1,0 +1,27 @@
++ = done, - = todo
+
+pf specific TODO:
++ use mbuf tags in pf, don't put everything in mbuf like openbsd does.
++ interfaces must be known when loading rules and pf it not enabled
+  do this in pfi_initialize - requires ifinit() to be setup.
+- create groups like openbsd 3.7 pf (mostly done? -- testing needed)
+- implement if_destroy_groups
+- implement pf_modulate_sack
+- implement bound_iface for NAT rules
+- make LKM load/unload work, fix memory leaks if any
+- ALTQ, make it work
+- anything else?
+
+
+non-pf specific (but needed for pf) TODO:
++ figure out what to do with ip_icmp.c packet tag
+- add gid to uidinfo
+
+
+Touched files outside sys/dist/pf:
+- sys/kern/init_main.c
+- sys/net/files.pf
+- sys/net/if.c
+- sys/net/if.h
+- sys/netinet/ip_icmp.c
+- sys/sys/mbuf.h
