@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.36 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.37 2008/04/19 06:29:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.36 2008/04/16 21:51:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.37 2008/04/19 06:29:23 simonb Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -118,30 +118,30 @@ identifycpu(struct cpu_info *ci)
 	if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[0], buf, sizeof(buf));
-		aprint_verbose_dev(ci->ci_dev, "features: %s\n", buf);
+		aprint_verbose_dev(ci->ci_dev, "features %s\n", buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[1], buf, sizeof(buf));
-		aprint_verbose_dev(ci->ci_dev, "features: %s\n", buf);
+		aprint_verbose_dev(ci->ci_dev, "features %s\n", buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    feature_str[2], buf, sizeof(buf));
-		aprint_verbose_dev(ci->ci_dev, "features: %s\n", buf);
+		aprint_verbose_dev(ci->ci_dev, "features %s\n", buf);
 	}
 
 	if (ci->ci_feature2_flags) {
 		bitmask_snprintf(ci->ci_feature2_flags,
 		    CPUID2_FLAGS, buf, sizeof(buf));
-		aprint_verbose_dev(ci->ci_dev, "features2: %s\n", buf);
+		aprint_verbose_dev(ci->ci_dev, "features2 %s\n", buf);
 	}
 
 	if (cpu_vendor == CPUVENDOR_INTEL &&
 	    (ci->ci_feature_flags & CPUID_MASK4) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    CPUID_FLAGS4, buf, sizeof(buf));
-		aprint_verbose_dev(ci->ci_dev, "features3: %s\n", buf);
+		aprint_verbose_dev(ci->ci_dev, "features3 %s\n", buf);
 	}
 
 	x86_print_cacheinfo(ci);
