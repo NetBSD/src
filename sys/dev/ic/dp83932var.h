@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.7 2007/12/25 18:33:38 perry Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.8 2008/04/19 06:39:43 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ struct sonic_softc {
 
 #define	SONIC_CDCAMADDR(sc)						\
 	((sc)->sc_cddma +						\
-	 ((sc)->sc_32bit ? SONIC_CDCAMOFF32 : SONIC_CDCAMOFF32))
+	 ((sc)->sc_32bit ? SONIC_CDCAMOFF32 : SONIC_CDCAMOFF16))
 
 #define	SONIC_CDTXSYNC16(sc, x, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
