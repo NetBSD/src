@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.56 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: agp.c,v 1.57 2008/04/19 09:26:56 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.56 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.57 2008/04/19 09:26:56 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,11 @@ const struct agp_product {
 	int		(*ap_match)(const struct pci_attach_args *);
 	int		(*ap_attach)(struct device *, struct device *, void *);
 } agp_products[] = {
+#if NAGP_AMD64 > 0
+	{ PCI_VENDOR_ALI,	PCI_PRODUCT_ALI_M1689,
+	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
 #if NAGP_ALI > 0
 	{ PCI_VENDOR_ALI,	-1,
 	  NULL,			agp_ali_attach },
