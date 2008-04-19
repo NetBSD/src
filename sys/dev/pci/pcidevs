@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.20 2008/03/09 11:03:05 bouyer Exp $
+$NetBSD: pcidevs,v 1.855.2.21 2008/04/19 16:16:59 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -600,6 +600,7 @@ vendor ARECA 		0x17d3	Areca
 vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
+vendor ATTANSIC         0x1969  Attansic Technologies
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
@@ -1011,6 +1012,10 @@ product ASIX AX88140A	0x1400	AX88140A 10/100 Ethernet
 
 /* Asustek products */
 product ASUSTEK HFCPCI		0x0675	ISDN
+
+/* Attansic Technology Corp. */
+product ATTANSIC ETHERNET_GIGA  0x1048  L1 Gigabit Ethernet Adapter
+product ATTANSIC ETHERNET_100   0x2048  L2 100 Mbit Ethernet Adapter
 
 /* ATI products */
 product ATI RADEON_RV380_3150	0x3150	Radeon Mobility X600 (M24) 3150
