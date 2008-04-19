@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.113 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.113.2.1 2008/04/19 15:50:54 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.113 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.113.2.1 2008/04/19 15:50:54 bouyer Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -425,10 +425,10 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 		}
 	}
 	printf("\n");
-	printf("raid%d: Total Sectors: %lu (%lu MB)\n",
+	printf("raid%d: Total Sectors: %" PRIu64 " (%" PRIu64 " MB)\n",
 	       raidPtr->raidid,
-	       (unsigned long) raidPtr->totalSectors,
-	       (unsigned long) (raidPtr->totalSectors / 1024 *
+	       raidPtr->totalSectors,
+	       (raidPtr->totalSectors / 1024 *
 				(1 << raidPtr->logBytesPerSector) / 1024));
 
 	return (0);
