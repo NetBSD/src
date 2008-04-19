@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.13 2008/01/07 16:13:49 ad Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.14 2008/04/19 18:21:38 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.13 2008/01/07 16:13:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.14 2008/04/19 18:21:38 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -315,7 +315,7 @@ uuid_dec_be(void const *buf, struct uuid *uuid)
 	int i;
 
 	uuid->time_low = be32dec(p);
-	uuid->time_mid = le16dec(p + 4);
+	uuid->time_mid = be16dec(p + 4);
 	uuid->time_hi_and_version = be16dec(p + 6);
 	uuid->clock_seq_hi_and_reserved = p[8];
 	uuid->clock_seq_low = p[9];
