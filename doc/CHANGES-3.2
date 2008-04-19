@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.129 2008/04/08 22:00:54 jdc Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.130 2008/04/19 15:36:55 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -4039,4 +4039,9 @@ src/crypto/dist/ssh/sshd.8			1.39 via patch
 	Add no-user-rc option which disables execution of ~/.ssh/rc
 	(backport from OpenSSH 4.9)
 	[adrianp, ticket #1921]
+
+sys/dev/raidframe/rf_driver.c			1.117
+
+	Fix display of total number of sectors if > 2^32 on 32-bit machines
+	[sborrill, ticket #1922]
 
