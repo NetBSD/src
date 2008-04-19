@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2006/05/10 22:53:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2008/04/19 16:07:22 bouyer Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -52,7 +52,8 @@ tconfig.h:
 
 # Override the default .c -> .o rule.
 .c.o:
-	${CC} ${CPPFLAGS} ${GCFLAGS} -c ${.IMPSRC} -o ${.TARGET}.o
+	${_MKTARGET_COMPILE}
+	${CC} ${CPPFLAGS} ${GCFLAGS} ${CPUFLAGS} -c ${.IMPSRC} -o ${.TARGET}.o
 	mv ${.TARGET}.o ${.TARGET}
 
 # these aren't necessary but are #include'd
