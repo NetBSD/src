@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.89 2008/04/04 22:07:22 cegger Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.90 2008/04/19 14:33:08 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.89 2008/04/04 22:07:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.90 2008/04/19 14:33:08 simonb Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -573,8 +573,7 @@ disable_tsc(struct cpu_info *ci)
 }
 
 void
-cyrix6x86_cpu_setup(ci)
-	struct cpu_info *ci;
+cyrix6x86_cpu_setup(struct cpu_info *ci)
 {
 	/*
 	 * i8254 latch check routine:
