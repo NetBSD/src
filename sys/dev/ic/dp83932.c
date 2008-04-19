@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.23 2008/04/08 12:07:26 cegger Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.24 2008/04/19 06:59:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.23 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.24 2008/04/19 06:59:08 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -1204,7 +1204,7 @@ sonic_set_filter(struct sonic_softc *sc)
 			goto allmulti;
 		}
 
-		if (entry == 16) {
+		if (entry == SONIC_NCAMENT) {
 			/*
 			 * Out of CAM slots.  Have to enable reception
 			 * of all multicast addresses.
@@ -1229,6 +1229,21 @@ sonic_set_filter(struct sonic_softc *sc)
 	rcr |= RCR_AMC;
 
  setit:
+	/* set mask for the CAM Enable register */
+	if (sc->sc_32bit) {
+		if (entry == SONIC_NCAMENT)
+			sc->sc_cdaenable32 = htosonic32(sc, camvalid);
+		else
+			sc->sc_cda32[entry].cda_entry =
+			    htosonic32(sc, camvalid);
+	} else {
+		if (entry == SONIC_NCAMENT)
+			sc->sc_cdaenable16 = htosonic16(sc, camvalid);
+		else
+			sc->sc_cda16[entry].cda_entry =
+			    htosonic16(sc, camvalid);
+	}
+
 	/* Load the CAM. */
 	SONIC_CDCAMSYNC(sc, BUS_DMASYNC_PREWRITE);
 	CSR_WRITE(sc, SONIC_CDP, SONIC_CDCAMADDR(sc) & 0xffff);
@@ -1242,9 +1257,6 @@ sonic_set_filter(struct sonic_softc *sc)
 	if (CSR_READ(sc, SONIC_CR) & CR_LCAM)
 		aprint_error_dev(&sc->sc_dev, "CAM load failed\n");
 	SONIC_CDCAMSYNC(sc, BUS_DMASYNC_POSTWRITE);
-
-	/* Set the CAM enable resgiter. */
-	CSR_WRITE(sc, SONIC_CER, camvalid);
 
 	/* Set the receive control register. */
 	CSR_WRITE(sc, SONIC_RCR, rcr);
