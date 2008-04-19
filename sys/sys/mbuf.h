@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.140 2008/03/24 12:24:37 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.140.2.1 2008/04/19 08:33:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -871,11 +871,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_VLAN				1  /* VLAN ID */
 #define PACKET_TAG_ENCAP			2  /* encapsulation data */
 #define PACKET_TAG_ESP				3  /* ESP information */
-#define PACKET_TAG_PF_GENERATED			11 /* PF generated, pass always */
-#define PACKET_TAG_PF_ROUTED			12 /* PF routed, no route loops */
-#define PACKET_TAG_PF_FRAGCACHE			13 /* PF fragment cached */
-#define PACKET_TAG_PF_QID			14 /* PF queue id */
-#define PACKET_TAG_PF_TAG			15 /* PF tags */
+#define PACKET_TAG_PF				11 /* packet filter */
 
 #define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		16
 #define PACKET_TAG_IPSEC_IN_DONE		17
@@ -887,7 +883,6 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_IPSEC_SOCKET			22 /* IPSEC socket ref */
 #define	PACKET_TAG_IPSEC_HISTORY		23 /* IPSEC history */
 
-#define	PACKET_TAG_PF_TRANSLATE_LOCALHOST	24 /* translated to localhost */
 #define	PACKET_TAG_IPSEC_NAT_T_PORTS		25 /* two uint16_t */
 
 #define	PACKET_TAG_INET6			26 /* IPv6 info */
