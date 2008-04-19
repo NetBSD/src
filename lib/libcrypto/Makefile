@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46.2.1 2007/08/25 17:53:07 liamjfoy Exp $
+#	$NetBSD: Makefile,v 1.46.2.2 2008/04/19 16:07:23 bouyer Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -120,6 +120,10 @@ SRCS+=rc5_skey.c i_skey.c mdc2dgst.c
 .endif
 
 COPTS.eng_padlock.c = -Wno-stack-protector
+
+.if (${MACHINE_ARCH} == "vax")
+COPTS.sha512.c = -O0
+.endif
 
 INCSDIR=/usr/include/openssl
 

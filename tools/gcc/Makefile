@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2006/08/23 20:45:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2008/04/19 16:07:23 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -17,9 +17,6 @@ BINENV=		/usr/bin/env -i
 .endif
 
 VAX_CONFIGURE_ARGS=
-.if ${MACHINE_ARCH} == "vax"
-VAX_CONFIGURE_ARGS+=--disable-shared
-.endif
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--enable-long-long \
