@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.11 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.11.2.1 2008/04/19 15:49:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.11 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.11.2.1 2008/04/19 15:49:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -169,14 +169,14 @@ static const u_int32_t agp_ali_table[] = {
 	0,			/* 0 - invalid */
 	1,			/* 1 - invalid */
 	2,			/* 2 - invalid */
-	4*M,			/* 3 - invalid */
-	8*M,			/* 4 - invalid */
-	0,			/* 5 - invalid */
-	16*M,			/* 6 - invalid */
-	32*M,			/* 7 - invalid */
-	64*M,			/* 8 - invalid */
-	128*M,			/* 9 - invalid */
-	256*M,			/* 10 - invalid */
+	4*M,			/* 3 */
+	8*M,			/* 4 */
+	0,			/* 5 - Reserved */
+	16*M,			/* 6 */
+	32*M,			/* 7 */
+	64*M,			/* 8 */
+	128*M,			/* 9 */
+	256*M,			/* 10 */
 };
 #define agp_ali_table_size (sizeof(agp_ali_table) / sizeof(agp_ali_table[0]))
 
@@ -200,6 +200,9 @@ agp_ali_set_aperture(struct agp_softc *sc, u_int32_t aperture)
 {
 	int i;
 	pcireg_t reg;
+
+	if (aperture & (aperture - 1) || aperture < 1*M)
+		return EINVAL;
 
 	for (i = 0; i < agp_ali_table_size; i++)
 		if (agp_ali_table[i] == aperture)
