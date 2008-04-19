@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.2.1 2008/04/19 08:33:26 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.2.2 2008/04/19 12:10:18 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.1 2008/04/19 08:33:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.2 2008/04/19 12:10:18 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "bpfilter.h"
@@ -5022,8 +5022,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif)
 	}
 	rtcache_setdst(&ro, &u.dst);
 
-	rtcache_init(&ro);
-	ret = (ro.ro_rt != NULL) ? 1 : 0;
+	ret = rtcache_init(&ro) != NULL ? 1 : 0;
 	rtcache_free(&ro);
 
 	return (ret);
