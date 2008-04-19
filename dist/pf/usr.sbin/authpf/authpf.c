@@ -1,4 +1,4 @@
-/*	$NetBSD: authpf.c,v 1.5.18.1 2008/04/19 09:13:42 yamt Exp $	*/
+/*	$NetBSD: authpf.c,v 1.5.18.2 2008/04/19 12:31:04 yamt Exp $	*/
 /*	$OpenBSD: authpf.c,v 1.104 2007/02/24 17:35:08 beck Exp $	*/
 
 /*
@@ -263,10 +263,18 @@ main(int argc, char *argv[])
 
 	/* revoke privs */
 	uid = getuid();
+#if defined(__OpenBSD__)
 	if (setresuid(uid, uid, uid) == -1) {
 		syslog(LOG_INFO, "setresuid: %s", strerror(errno));
 		do_death(0);
 	}
+#else /* defined(__OpenBSD__) */
+	/* NetBSD */
+	if (setuid(uid) == -1) {
+		syslog(LOG_INFO, "setresuid: %s", strerror(errno));
+		do_death(0);
+	}
+#endif /* defined(__OpenBSD__) */
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(luser)) {
