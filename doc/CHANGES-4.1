@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.53 2008/04/14 21:04:50 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.54 2008/04/19 16:18:13 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -859,4 +859,71 @@ src/dist/tcpdump/print-isoclns.c		patch
 
 	Fix CVE-2007-1218, CVE-2007-3798 and CAN-2005-1278 in base-tcpdump.
 	[tonnerre, ticket #1124]
+
+sys/dev/pci/agp_ali.c				1.14
+
+	Fix infinite loop with AGP on Ali M1689 (from PR/38269 and PR/35416),
+	by disallowing aperture size values below 1MB.
+	[njoly, ticket #1125]
+
+sys/dev/raidframe/rf_driver.c			1.117
+
+	Fix display of total number of sectors if > 2^32 on 32-bit machines
+	[sborrill, ticket #1126]
+
+sys/dev/raidframe/rf_reconstruct.c		1.103
+
+	Fixes the (mostly cosmetic) bug where the reconstruction
+	status values stop updating, and from raidctl it appears that
+	reconstruction has totally stalled (which it actually hasn't).
+	[oster, ticket #1127]
+
+distrib/sets/lists/man/mi			1.1062, 1.1063 via patch
+share/man/man4/Makefile				1.460 via patch
+share/man/man4/lii.4				1.1 via patch
+sys/arch/i386/conf/ALL				1.161 via patch
+sys/arch/i386/conf/GENERIC			1.885 via patch
+sys/arch/i386/conf/INSTALL			1.323 via patch
+sys/arch/i386/conf/XEN2_DOM0			1.43 via patch
+sys/dev/DEVNAMES				1.238 via patch
+sys/dev/pci/files.pci				1.303 via patch
+sys/dev/pci/if_lii.c				1.1, 1.3 via patch
+sys/dev/pci/if_lii.c				1.3 via patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add a driver for the Atheros/Attansic L2 Fast-Ethernet chip found on a
+	series of hardware that includes Asus's famous EeePC.
+	[sborrill, ticket #1128]
+
+gnu/dist/binutils/bfd/elf32-vax.c		1.5.6.1
+gnu/dist/binutils/gas/config/tc-vax.c		1.4.4.1.2.1
+gnu/dist/binutils/gas/config/tc-vax.h		1.1.1.1.18.1
+gnu/dist/gcc4/gcc/config/vax/builtins.md	1.2.10.2
+gnu/dist/gcc4/gcc/config/vax/elf.h		1.1.1.1.6.1
+gnu/dist/gcc4/gcc/config/vax/netbsd-elf.h	1.1.1.1.6.1
+gnu/dist/gcc4/gcc/config/vax/predicates.md	1.3.10.2
+gnu/dist/gcc4/gcc/config/vax/vax-protos.h	1.1.1.1.6.1
+gnu/dist/gcc4/gcc/config/vax/vax.c		1.1.1.1.6.1
+gnu/dist/gcc4/gcc/config/vax/vax.h		1.2.6.1
+gnu/dist/gcc4/gcc/config/vax/vax.md		1.1.1.1.4.1.2.1
+gnu/dist/gcc4/gcc/config/vax/vax.opt		1.1.1.1.6.1
+gnu/lib/crtstuff4/Makefile			1.1.6.1
+gnu/lib/libgcc4/libgcc/Makefile			1.2.6.1
+lib/libcrypto/Makefile				1.46.4.2
+share/mk/bsd.own.mk				1.489.4.3
+sys/arch/vax/boot/Makefile.inc			1.12.16.1
+sys/arch/vax/conf/Makefile.vax			1.77.22.1
+sys/arch/vax/include/macros.h			1.37.14.1
+sys/lib/libkern/libkern.h			1.67.6.1
+tools/gcc/Makefile				1.22.4.1
+
+	Pullup changes to get vax shlibs working from the wrstuden-fixsa branch.
+	[skrll, ticket #1129]
+
+sys/dev/pcmcia/esp_pcmcia.c			1.30
+
+	Fix kernel panics on attach. Fix kern/34537 (and part of kern/26909).
+	[itohy, ticket #1130]
 
