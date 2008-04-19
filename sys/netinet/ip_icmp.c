@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.116 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.116.2.1 2008/04/19 08:33:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.116 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.116.2.1 2008/04/19 08:33:27 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -358,8 +358,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	nip->ip_p = IPPROTO_ICMP;
 	nip->ip_src = oip->ip_src;
 	nip->ip_dst = oip->ip_dst;
-	/* move PF_GENERATED m_tag to new packet, if it exists */
-	mtag = m_tag_find(n, PACKET_TAG_PF_GENERATED, NULL);
+	/* move PF m_tag to new packet, if it exists */
+	mtag = m_tag_find(n, PACKET_TAG_PF, NULL);
 	if (mtag != NULL) {
 		m_tag_unlink(n, mtag);
 		m_tag_prepend(m, mtag);
