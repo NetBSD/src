@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.48 2008/01/11 20:00:16 bouyer Exp $	*/
+/*	$NetBSD: segments.h,v 1.49 2008/04/19 12:10:08 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -198,11 +198,13 @@ void setgdt(int, const void *, size_t, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
 
+#if !defined(XEN)
 void idt_init(void);
 void idt_vec_reserve(int);
 int idt_vec_alloc(int, int);
 void idt_vec_set(int, void (*)(void));
 void idt_vec_free(int);
+#endif
 
 #endif /* _KERNEL */
 
