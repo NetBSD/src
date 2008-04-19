@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2008/04/19 01:22:35 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2008/04/19 02:01:03 nisimura Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2008/04/19 01:22:35 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2008/04/19 02:01:03 nisimura Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -375,9 +375,11 @@ cpu_reboot(int howto, char *what)
 	printf("rebooting...\n\n");
 
 #if 1
-{ extern void sandpoint_reboot(void);
-	sandpoint_reboot();
-}
+    {
+	/* XXX reboot scheme is target dependent XXX */
+	extern void jump_to_ppc_reset_entry(void);
+	jump_to_ppc_reset_entry();
+    }
 #endif
 	while (1);
 }
