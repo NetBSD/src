@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.29 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.29.2.1 2008/04/19 16:13:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.29 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.29.2.1 2008/04/19 16:13:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,22 +180,14 @@ esp_pcmcia_attach(struct device *parent, struct device *self,
 	esc->sc_ioh = cfe->iospace[0].handle.ioh;
 	esp_pcmcia_init(esc);
 
-	error = esp_pcmcia_enable(self, 1);
-	if (error)
-		goto fail;
+	printf("%s", self->dv_xname);
 
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	sc->sc_adapter.adapt_enable = esp_pcmcia_enable;
-	sc->sc_adapter.adapt_refcnt = 1;
 
 	ncr53c9x_attach(sc);
-	scsipi_adapter_delref(&sc->sc_adapter);
 	esc->sc_state = ESP_PCMCIA_ATTACHED;
-	return;
-
-fail:
-	pcmcia_function_unconfigure(pf);
 }
 
 void
