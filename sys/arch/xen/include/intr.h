@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2008/04/14 13:38:03 cegger Exp $	*/
+/*	$NetBSD: intr.h,v 1.25 2008/04/19 13:46:12 cegger Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -105,6 +105,8 @@ struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	int	ih_level;
+	int	(*ih_realfun)(void *);
+	void	*ih_realarg;
 	struct	intrhand *ih_ipl_next;
 	struct	intrhand *ih_evt_next;
 	struct cpu_info *ih_cpu;
@@ -168,6 +170,10 @@ extern void Xsoftintr(void);
 struct cpu_info;
 
 struct pcibus_attach_args;
+
+#ifdef MULTIPROCESSOR
+int intr_biglock_wrapper(void *);
+#endif
 
 void intr_default_setup(void);
 int x86_nmi(void);
