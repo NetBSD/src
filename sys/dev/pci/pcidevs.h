@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.20 2008/03/09 11:05:04 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.21 2008/04/19 16:17:43 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.855.2.21 2008/04/19 16:16:59 bouyer Exp
  */
 
 /*
@@ -607,6 +607,7 @@
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
+#define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_DATUM	0x12e2		/* Datum Inc. Bancomm-Timing Division */
@@ -1018,6 +1019,10 @@
 
 /* Asustek products */
 #define	PCI_PRODUCT_ASUSTEK_HFCPCI	0x0675		/* ISDN */
+
+/* Attansic Technology Corp. */
+#define	PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA	0x1048		/* L1 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
 
 /* ATI products */
 #define	PCI_PRODUCT_ATI_RADEON_RV380_3150	0x3150		/* Radeon Mobility X600 (M24) 3150 */
