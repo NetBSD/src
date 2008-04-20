@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.215 2008/04/20 19:22:45 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.216 2008/04/20 19:30:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.215 2008/04/20 19:22:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.216 2008/04/20 19:30:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.215 2008/04/20 19:22:45 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/poll.h>
@@ -204,9 +204,6 @@ static void *tty_sigsih;
 struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 kmutex_t tty_lock;
-
-POOL_INIT(tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-    &pool_allocator_nointr, IPL_NONE);
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
@@ -2627,8 +2624,7 @@ ttymalloc(void)
 	struct tty	*tp;
 	int i;	
 
-	tp = pool_get(&tty_pool, PR_WAITOK);
-	memset(tp, 0, sizeof(*tp));
+	tp = kmem_zalloc(sizeof(*tp), KM_SLEEP);
 	callout_init(&tp->t_rstrt_ch, 0);
 	callout_setfunc(&tp->t_rstrt_ch, ttrstrt, tp);
 	/* XXX: default to 1024 chars for now */
@@ -2665,15 +2661,15 @@ ttyfree(struct tty *tp)
 	mutex_exit(&tty_lock);
 	mutex_exit(&proclist_lock);
 
-	callout_stop(&tp->t_rstrt_ch);
+	callout_halt(&tp->t_rstrt_ch);
+	callout_destroy(&tp->t_rstrt_ch);
 	ttyldisc_release(tp->t_linesw);
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
-	callout_destroy(&tp->t_rstrt_ch);
 	seldestroy(&tp->t_rsel);
 	seldestroy(&tp->t_wsel);
-	pool_put(&tty_pool, tp);
+	kmem_free(tp, sizeof(*tp));
 }
 
 /*
