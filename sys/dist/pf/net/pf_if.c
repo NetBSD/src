@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.15.8.1 2008/04/19 08:33:27 yamt Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.15.8.2 2008/04/20 21:08:27 peter Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.15.8.1 2008/04/19 08:33:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.15.8.2 2008/04/20 21:08:27 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,6 +85,9 @@ int		 pfi_if_compare(struct pfi_kif *, struct pfi_kif *);
 int		 pfi_skip_if(const char *, struct pfi_kif *);
 int		 pfi_unmask(void *);
 #ifdef __NetBSD__
+void		 pfi_init_groups(struct ifnet *);
+void		 pfi_destroy_groups(struct ifnet *);
+
 int		 pfil_ifnet_wrapper(void *, struct mbuf **, struct ifnet *, int);
 int		 pfil_ifaddr_wrapper(void *, struct mbuf **, struct ifnet *, int);
 #endif
@@ -124,8 +127,7 @@ pfi_initialize(void)
 		struct ifnet *ifp = ifindex2ifnet[i];
 
 		if (ifp != NULL) {
-			if_init_groups(ifp);
-			if_addgroup(ifp, IFG_ALL);
+			pfi_init_groups(ifp);
 
 			pfi_attach_ifnet(ifp);
 		}
@@ -148,10 +150,9 @@ pfi_destroy(void)
 		struct ifnet *ifp = ifindex2ifnet[i];
 
 		if (ifp != NULL) {
-			pfi_detach_ifnet(ifindex2ifnet[i]);
+			pfi_detach_ifnet(ifp);
 
-			if_delgroup(ifp, IFG_ALL);
-			if_destroy_groups(ifp);
+			pfi_destroy_groups(ifp);
 		}
 	}
 
@@ -828,6 +829,41 @@ pfi_unmask(void *addr)
 }
 
 #ifdef __NetBSD__
+static void
+pfi_copy_group(char *dest, const char *src, ssize_t sz)
+{
+	while (sz > 1 && *src && !(*src >= '0' && *src <= '9')) {
+		*dest++ = *src++;
+		sz--;
+	}
+	if (sz > 0)
+		*dest++ = '\0';
+}
+
+void
+pfi_init_groups(struct ifnet *ifp)
+{
+	char group[IFNAMSIZ];
+
+	if_init_groups(ifp);
+	if_addgroup(ifp, IFG_ALL);
+
+	pfi_copy_group(group, ifp->if_xname, sizeof(group));
+	if_addgroup(ifp, group);
+}
+
+void
+pfi_destroy_groups(struct ifnet *ifp)
+{
+	char group[IFNAMSIZ];
+
+	pfi_copy_group(group, ifp->if_xname, sizeof(group));
+	if_delgroup(ifp, group);
+
+	if_delgroup(ifp, IFG_ALL);
+	if_destroy_groups(ifp);
+}
+
 int
 pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
@@ -835,17 +871,14 @@ pfil_ifnet_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 
 	switch (cmd) {
 	case PFIL_IFNET_ATTACH:
-		if_init_groups(ifp);
-		if_addgroup(ifp, IFG_ALL);
-		/* XXXPF if_addgroup(ifp, ifp->if_xname); */
+		pfi_init_groups(ifp);
 
 		pfi_attach_ifnet(ifp);
 		break;
 	case PFIL_IFNET_DETACH:
 		pfi_detach_ifnet(ifp);
 
-		if_delgroup(ifp, IFG_ALL);
-		if_destroy_groups(ifp);
+		pfi_destroy_groups(ifp);
 		break;
 	default:
 		panic("pfil_ifnet_wrapper: unexpected cmd %lu", cmd);
