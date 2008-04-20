@@ -392,6 +392,39 @@ func_extract_archives ()
     done
     func_extract_archives_result="$my_oldobjs"
 }
+
+# Canonicalise the pathname:
+#   - remove foo/../
+#   - replace //
+#   - remove /./
+#   - strip any trailing /
+func_canonicalise_path()
+{
+set -x
+    my_path="$1"
+    tmp=""
+    while test "$my_path" != "$tmp";  do
+      tmp="$my_path"
+      my_path="$( $echo "X$my_path" | $Xsed \
+		$(: "temporarily add / at beginning and end" ) \
+		-e 's%^%/%' -e 's%$%/%' \
+		$(: "change /./ to /" ) \
+		-e 's%/\./%/%g' \
+		$(: "change /foo/../ to /, provided foo != . or .." ) \
+		-e 's%/[^/.][^/]*/\.\./%/%g' \
+		-e 's%/\.[^/.][^/]*/\.\./%/%g' \
+		-e 's%/\.\.[^/][^/]*/\.\./%/%g' \
+		$(: "remove temporary extra / at beginning" ) \
+		-e 's%^/%%' \
+		$(: "change multiple slashes to /" ) \
+		-e 's%//*%/%g' \
+		$(: "remove / from end" ) \
+		-e 's%/$%%g' )"
+    done
+    echo "X$my_path" | $Xsed
+set +x
+}
+
 # End of Shell function definitions
 #####################################
 
@@ -1360,12 +1393,7 @@ EOF
 	    ;;
 	  esac
 	  # Canonicalise the pathname
-	  tmp=""
-	  while test "$arg" != "$tmp"
-          do
-            tmp=$arg
-            arg=`$echo "X$arg" | $Xsed -e 's%[^/.][^/.]*/\.\.%%g' -e 's%/\./%/%g' -e 's%//*%/%g' -e 's%/$%%g'`
-          done
+	  arg="$( func_canonicalise_path "$arg" )"
 	  if test "$prev" = rpath; then
 	    case "$rpath " in
 	    *" $arg "*) ;;
@@ -5548,16 +5576,8 @@ relink_command=\"$relink_command\""
       exit $EXIT_FAILURE
     fi
 
-    # Canonicalise the pathname:
-    #   - remove foo/../
-    #   - replace //
-    #   - remove /./
-    #   - strip any trailing /
-    tmp=""
-    while test "$dest" != "$tmp";  do
-      tmp=$dest
-      dest=`$echo "X$dest" | $Xsed -e 's%[^/.][^/.]*/\.\.%%g' -e 's%/\./%/%g' -e 's%//*%/%g' -e 's%/$%%g'`
-    done
+    # Canonicalise the pathname.
+    dest="$( func_canonicalise_path "$dest" )"
 
     # Check to see that the destination is a directory.
     test -d "$dest" && isdir=yes
