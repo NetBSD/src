@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.16 2007/10/17 19:53:43 garbled Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.17 2008/04/20 16:47:52 rafal Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.16 2007/10/17 19:53:43 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.17 2008/04/20 16:47:52 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,23 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x1_pcic.c,v 1.16 2007/10/17 19:53:43 garbled Exp
 #include "sacpcic.h"
 
 static int	sacpcic_print(void *, const char *);
+
+static void
+sacpcic_config_deferred(struct device *dev)
+{
+	struct sacpcic_softc *sc = (struct sacpcic_softc *)dev;
+	struct sapcic_socket *so;
+	int i;
+
+	for (i = 0; i < 2; i++) {
+		so = &sc->sc_socket[i];
+		sapcic_kthread_create(so);
+
+		sacc_intr_establish((sacc_chipset_tag_t)so->pcictag_cookie,
+		    i ? IRQ_S1_CDVALID : IRQ_S0_CDVALID,
+		    IST_EDGE_RAISE, IPL_BIO, sapcic_intr, so);
+	}
+}
 
 void
 sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
@@ -98,19 +115,9 @@ sacpcic_attach_common(struct sacc_softc *psc, struct sacpcic_softc *sc,
 		sc->sc_socket[i].pcmcia =
 		    config_found_ia(&sc->sc_pc.sc_dev, "pcmciabus", &paa,
 				    sacpcic_print);
-
-		sacc_intr_establish((sacc_chipset_tag_t)psc,
-				    i ? IRQ_S1_CDVALID : IRQ_S0_CDVALID,
-				    IST_EDGE_RAISE, IPL_BIO, sapcic_intr,
-				    &sc->sc_socket[i]);
-
-		/* create kthread */
-		sapcic_kthread_create(&sc->sc_socket[i]);
-#if 0 /* XXX */
-		/* establish_intr should be after creating the kthread */
-		config_interrupt(&sc->sc_socket[i], sapcic_config_intr);
-#endif
 	}
+
+	config_interrupts(&sc->sc_pc.sc_dev, sacpcic_config_deferred);
 }
 
 int
