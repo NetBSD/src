@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.72 2008/01/15 14:26:42 ad Exp $	*/
+/*	$NetBSD: savecore.c,v 1.73 2008/04/20 23:40:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.72 2008/01/15 14:26:42 ad Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.73 2008/04/20 23:40:31 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -652,6 +652,15 @@ err2:			syslog(LOG_WARNING,
 		(void)fclose(fp);
 	else
 		(void)close(ofd);
+
+	/*
+	 * For development systems where the crash occurs during boot
+	 * to multiuser.
+	 */
+	sync();
+	sleep(1);
+	sync();
+	sleep(1);
 }
 
 char *
