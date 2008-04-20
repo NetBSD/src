@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.110 2008/04/19 22:26:52 mjf Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.111 2008/04/20 07:47:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.110 2008/04/19 22:26:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.111 2008/04/20 07:47:18 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,31 +317,31 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		if (control) {
 			KASSERT(l != NULL);
-			if ((error = unp_internalize(&control, l)) != 0)
-				goto die;
+			if ((error = unp_internalize(&control, l)) != 0) {
+				m_freem(control);
+				m_freem(m);
+				break;
+			}
 		}
 		switch (so->so_type) {
 
 		case SOCK_DGRAM: {
 			if (nam) {
-				if ((so->so_state & SS_ISCONNECTED) != 0) {
+				if ((so->so_state & SS_ISCONNECTED) != 0)
 					error = EISCONN;
-					goto die;
-				}
-				KASSERT(l != NULL);
-				error = unp_connect(so, nam, l);
-				if (error) {
-				die:
-					unp_dispose(control);
-					m_freem(control);
-					m_freem(m);
-					break;
+				else {
+					KASSERT(l != NULL);
+					error = unp_connect(so, nam, l);
 				}
 			} else {
-				if ((so->so_state & SS_ISCONNECTED) == 0) {
+				if ((so->so_state & SS_ISCONNECTED) == 0)
 					error = ENOTCONN;
-					goto die;
-				}
+			}
+			if (error) {
+				unp_dispose(control);
+				m_freem(control);
+				m_freem(m);
+				break;
 			}
 			KASSERT(p != NULL);
 			error = unp_output(m, control, unp, l);
@@ -1351,8 +1351,7 @@ unp_scan(struct mbuf *m0, void (*op)(file_t *), int discard)
 			    m->m_len >= sizeof(*cm)) {
 				cm = mtod(m, struct cmsghdr *);
 				if (cm->cmsg_level != SOL_SOCKET ||
-				    cm->cmsg_type != SCM_RIGHTS ||
-				    cm->cmsg_len != m->m_len)
+				    cm->cmsg_type != SCM_RIGHTS)
 					continue;
 				qfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm)))
 				    / sizeof(file_t *);
