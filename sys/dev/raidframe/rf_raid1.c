@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.30 2007/03/04 06:02:39 christos Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.31 2008/04/20 20:42:32 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.30 2007/03/04 06:02:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.31 2008/04/20 20:42:32 oster Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -700,3 +700,10 @@ out:
 #endif
 	return (retcode);
 }
+
+RF_HeadSepLimit_t
+rf_GetDefaultHeadSepLimitRAID1(RF_Raid_t *raidPtr)
+{
+	return (10);
+}
+
