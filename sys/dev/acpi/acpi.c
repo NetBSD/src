@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.113 2008/03/27 02:51:26 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.114 2008/04/20 16:26:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.113 2008/03/27 02:51:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114 2008/04/20 16:26:36 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1195,7 +1195,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	case ACPI_STATE_S4:
 		if (!is_available_state(sc, state)) {
 			aprint_error_dev(sc->sc_dev,
-			    "cannot enter the sleep state (%d)\n", state);
+			    "ACPI S%d not available on this platform\n", state);
 			break;
 		}
 
@@ -1216,7 +1216,11 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		if (state == ACPI_STATE_S1) {
 			/* just enter the state */
 			acpi_md_OsDisableInterrupt();
-			AcpiEnterSleepState((UINT8)state);
+			ret = AcpiEnterSleepState((UINT8)state);
+			if (ACPI_FAILURE(ret))
+				aprint_error_dev(sc->sc_dev,
+				    "failed to enter sleep state S1: %s\n",
+				    AcpiFormatException(ret));
 			AcpiLeaveSleepState((UINT8)state);
 		} else {
 			err = acpi_md_sleep(state);
