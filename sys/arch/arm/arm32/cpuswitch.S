@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.56 2008/03/15 10:19:40 rearnsha Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.57 2008/04/20 15:42:19 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -136,9 +136,8 @@ _C_LABEL(curpcb):
 	.text
 #endif
 
-.Lblock_userspace_access:
-	.word	_C_LABEL(block_userspace_access)
-
+.Lpmap_previous_active_lwp:
+	.word	_C_LABEL(pmap_previous_active_lwp)
 
 /*
  * struct lwp *
@@ -241,15 +240,12 @@ ENTRY(cpu_switchto)
 	/* Restore saved context */
 
 .Ldo_switch:
-	mov	r0, r4
-	mov	r1, r6
-	bl	_C_LABEL(pmap_switch)
-
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
+	ldr	r1, .Lpmap_previous_active_lwp
 	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
 
 	/* Restore all the saved registers */
@@ -264,6 +260,9 @@ ENTRY(cpu_switchto)
 	ldr	r12, [r7, #(PCB_R12)]
 	ldr	r13, [r7, #(PCB_SP)]
 #endif
+
+	/* Record the old lwp for pmap_activate()'s benefit */
+	str	r4, [r1]
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */
