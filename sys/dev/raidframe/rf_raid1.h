@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.h,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_raid1.h,v 1.8 2008/04/20 20:42:32 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -58,5 +58,6 @@ rf_VerifyParityRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t raidAddr,
 int
 rf_SubmitReconBufferRAID1(RF_ReconBuffer_t * rbuf, int keep_int,
     int use_committed);
+RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitRAID1(RF_Raid_t * raidPtr);
 
 #endif				/* !_RF__RF_RAID1_H_ */

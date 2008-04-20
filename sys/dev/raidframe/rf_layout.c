@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.18 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.19 2008/04/20 20:42:32 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.18 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.19 2008/04/20 20:42:32 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -244,7 +244,7 @@ static const RF_LayoutSW_t mapsw[] = {
 		    rf_IdentifyStripeRAID1,
 		    rf_RAID1DagSelect,
 		    rf_MapSIDToPSIDRAID1,
-		    NULL,
+		    rf_GetDefaultHeadSepLimitRAID1,
 		    NULL,
 		    NULL, NULL,
 		    rf_SubmitReconBufferRAID1,
