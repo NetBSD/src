@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1043 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1044 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -502,3 +502,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		    by Coyote Point Systems, Inc. [tls 20080410]
 	acpi(4): Updated ACPI-CA to 20080321. [jmcneill 20080412]
 	libcurses: Add getwin() and putwin(). [jdc 20080414]
+	shark: Support for X on rev. 4 sharks is back [macallan 20080419]
