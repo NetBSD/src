@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.172 2008/03/29 15:52:09 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.173 2008/04/20 15:42:19 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -213,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.172 2008/03/29 15:52:09 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.173 2008/04/20 15:42:19 scw Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -263,6 +263,11 @@ struct pmap     kernel_pmap_store;
  * XXXSCW: Fix for SMP ...
  */
 static pmap_t pmap_recent_user;
+
+/*
+ * Pointer to last active lwp, or NULL if it exited.
+ */
+struct lwp *pmap_previous_active_lwp;
 
 /*
  * Pool and cache that pmap structures are allocated from.
@@ -514,8 +519,6 @@ static void		pmap_page_remove(struct vm_page *);
 
 static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
 static vaddr_t		kernel_pt_lookup(paddr_t);
-
-void pmap_switch(struct lwp *, struct lwp *);
 
 
 /*
@@ -3054,14 +3057,22 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 }
 
 void
-pmap_switch(struct lwp *olwp, struct lwp *nlwp)
+pmap_activate(struct lwp *l)
 {
 	extern int block_userspace_access;
 	pmap_t opm, npm, rpm;
 	uint32_t odacr, ndacr;
 	int oldirqstate;
 
-	npm = nlwp->l_proc->p_vmspace->vm_map.pmap;
+	/*
+	 * If activating a non-current lwp or the current lwp is
+	 * already active, just return.
+	 */
+	if (l != curlwp ||
+	    l->l_proc->p_vmspace->vm_map.pmap->pm_activated == true)
+		return;
+
+	npm = l->l_proc->p_vmspace->vm_map.pmap;
 	ndacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
 	    (DOMAIN_CLIENT << (npm->pm_domain * 2));
 
@@ -3069,8 +3080,8 @@ pmap_switch(struct lwp *olwp, struct lwp *nlwp)
 	 * If TTB and DACR are unchanged, short-circuit all the
 	 * TLB/cache management stuff.
 	 */
-	if (olwp != NULL) {
-		opm = olwp->l_proc->p_vmspace->vm_map.pmap;
+	if (pmap_previous_active_lwp != NULL) {
+		opm = pmap_previous_active_lwp->l_proc->p_vmspace->vm_map.pmap;
 		odacr = (DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL * 2)) |
 		    (DOMAIN_CLIENT << (opm->pm_domain * 2));
 
@@ -3149,15 +3160,6 @@ pmap_switch(struct lwp *olwp, struct lwp *nlwp)
 
 	/* But the new one is */
 	npm->pm_activated = true;
-}
-
-void
-pmap_activate(struct lwp *l)
-{
-
-	if (l == curlwp &&
-	    l->l_proc->p_vmspace->vm_map.pmap->pm_activated == false)
-		pmap_switch(NULL, l);
 }
 
 void
