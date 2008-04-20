@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.4 2007/08/17 17:59:16 pavel Exp $	*/
+/*	$NetBSD: sdp.c,v 1.5 2008/04/20 19:34:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.4 2007/08/17 17:59:16 pavel Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.5 2008/04/20 19:34:23 plunky Exp $");
 
 #include <sys/types.h>
 
@@ -120,8 +120,6 @@ uint32_t hf_attrs[] = {
 			SDP_ATTR_PROTOCOL_DESCRIPTOR_LIST),
 };
 
-#define NUM(v)		(sizeof(v) / sizeof(v[0]))
-
 static struct {
 	const char		*name;
 	int			(*handler)(prop_dictionary_t);
@@ -133,23 +131,23 @@ static struct {
 } cfgtype[] = {
     {
 	"HID",		config_hid,	"Human Interface Device",
-	hid_services,	NUM(hid_services),
-	hid_attrs,	NUM(hid_attrs),
+	hid_services,	__arraycount(hid_services),
+	hid_attrs,	__arraycount(hid_attrs),
     },
     {
 	"HSET",		config_hset,	"Headset",
-	hset_services,	NUM(hset_services),
-	hset_attrs,	NUM(hset_attrs),
+	hset_services,	__arraycount(hset_services),
+	hset_attrs,	__arraycount(hset_attrs),
     },
     {
 	"HF",		config_hf,	"Handsfree",
-	hf_services,	NUM(hf_services),
-	hf_attrs,	NUM(hf_attrs),
+	hf_services,	__arraycount(hf_services),
+	hf_attrs,	__arraycount(hf_attrs),
     },
 };
 
 static sdp_attr_t	values[8];
-static uint8_t		buffer[NUM(values)][512];
+static uint8_t		buffer[__arraycount(values)][512];
 
 prop_dictionary_t
 cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
@@ -162,14 +160,14 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 	if (dict == NULL)
 		return NULL;
 
-	for (i = 0 ; i < NUM(values) ; i++) {
+	for (i = 0; i < __arraycount(values); i++) {
 		values[i].flags = SDP_ATTR_INVALID;
 		values[i].attr = 0;
 		values[i].vlen = sizeof(buffer[i]);
 		values[i].value = buffer[i];
 	}
 
-	for (i = 0 ; i < NUM(cfgtype) ; i++) {
+	for (i = 0; i < __arraycount(cfgtype); i++) {
 		if (strcasecmp(service, cfgtype[i].name) == 0) {
 			ss = sdp_open(laddr, raddr);
 
@@ -179,7 +177,7 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 			rv = sdp_search(ss,
 				cfgtype[i].nservices, cfgtype[i].services,
 				cfgtype[i].nattrs, cfgtype[i].attrs,
-				NUM(values), values);
+				__arraycount(values), values);
 
 			if (rv != 0) {
 				errno = sdp_error(ss);
@@ -196,7 +194,7 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 	}
 
 	printf("Known config types:\n");
-	for (i = 0 ; i < NUM(cfgtype) ; i++)
+	for (i = 0; i < __arraycount(cfgtype); i++)
 		printf("\t%s\t%s\n", cfgtype[i].name, cfgtype[i].description);
 
 	exit(EXIT_FAILURE);
@@ -224,7 +222,7 @@ config_hid(prop_dictionary_t dict)
 	hid_descriptor = NULL;
 	hid_length = -1;
 
-	for (i = 0; i < NUM(values) ; i++) {
+	for (i = 0; i < __arraycount(values); i++) {
 		if (values[i].flags != SDP_ATTR_OK)
 			continue;
 
@@ -319,7 +317,7 @@ config_hset(prop_dictionary_t dict)
 
 	channel = -1;
 
-	for (i = 0; i < NUM(values) ; i++) {
+	for (i = 0; i < __arraycount(values); i++) {
 		if (values[i].flags != SDP_ATTR_OK)
 			continue;
 
@@ -360,7 +358,7 @@ config_hf(prop_dictionary_t dict)
 
 	channel = -1;
 
-	for (i = 0 ; i < NUM(values) ; i++) {
+	for (i = 0; i < __arraycount(values); i++) {
 		if (values[i].flags != SDP_ATTR_OK)
 			continue;
 
