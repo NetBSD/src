@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.153 2008/03/14 15:40:22 nakayama Exp $ */
+/*	$NetBSD: autoconf.c,v 1.154 2008/04/21 21:00:23 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.153 2008/03/14 15:40:22 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154 2008/04/21 21:00:23 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -365,8 +365,14 @@ get_bootpath_from_prom(void)
 		ofbootpartition = cp+1;
 	}
 	cp = strrchr(ofbootpath, '@');
-	if (cp)
-		ofboottarget = cp;
+	if (cp) {
+		for (; cp != ofbootpath; cp--) {
+			if (*cp == '/') {
+				ofboottarget = cp+1;
+				break;
+			}
+		}
+	}
 
 	DPRINTF(ACDB_BOOTDEV, ("bootpath phandle: 0x%x\n", ofbootpackage));
 	DPRINTF(ACDB_BOOTDEV, ("boot target: %s\n",
@@ -727,7 +733,7 @@ dev_path_exact_match(struct device *dev, int ofnode)
 /*
  * Match a struct device against the bootpath, by
  * comparing it's firmware package handle and calculating
- * the target/lun suffix and compmaring that against
+ * the target/lun suffix and comparing that against
  * the bootpath remainder.
  */
 static void
@@ -751,8 +757,9 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
 	if (child == ofbootpackage) {
 		/* boot device is on this controller */
 		DPRINTF(ACDB_BOOTDEV, ("found controller of bootdevice\n"));
-		sprintf(buf, "@%d,%d", target, lun);
-		if (strcmp(buf, ofboottarget) == 0) {
+		sprintf(buf, "%s@%d,%d", prom_getpropstring(child, "name"),
+		    target, lun);
+		if (ofboottarget && strcmp(buf, ofboottarget) == 0) {
 			booted_device = dev;
 			if (ofbootpartition)
 				booted_partition = *ofbootpartition - 'a';
