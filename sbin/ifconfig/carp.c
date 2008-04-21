@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.1 2006/05/18 09:05:50 liamjfoy Exp $ */
+/* $NetBSD: carp.c,v 1.2 2008/04/21 02:08:09 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -199,7 +199,7 @@ setcarp_state(const char *val, int d)
 	struct carpreq carpr;
 	int i;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	memset(&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -222,7 +222,7 @@ setcarpdev(const char *val, int d)
 {
 	struct carpreq carpr;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	memset(&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
@@ -239,13 +239,13 @@ unsetcarpdev(const char *val, int d)
 {
 	struct carpreq carpr;
 
-	bzero((char *)&carpr, sizeof(struct carpreq));
+	memset(&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
-	bzero((char *)&carpr.carpr_carpdev, sizeof(carpr.carpr_carpdev));
+	memset(&carpr.carpr_carpdev, 0, sizeof(carpr.carpr_carpdev));
 
 	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
