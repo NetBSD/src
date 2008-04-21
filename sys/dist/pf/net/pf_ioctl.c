@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.32.10.1 2008/04/19 08:33:27 yamt Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.32.10.2 2008/04/21 20:26:51 peter Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.10.1 2008/04/19 08:33:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.10.2 2008/04/21 20:26:51 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -316,7 +316,7 @@ pfdetach(void)
 		state->sync_flags = PFSTATE_NOSYNC;
 #endif /* NPFSYNC > 0 */
 	}
-	pf_purge_expired_states();
+	pf_purge_expired_states(1);
 #if NPFSYNC > 0
 	pfsync_clear_states(pf_status.hostid, NULL);
 #endif /* NPFSYNC > 0 */
@@ -330,7 +330,7 @@ pfdetach(void)
 		node->expire = 1;
 		node->states = 0;
 	}
-	pf_purge_expired_src_nodes();
+	pf_purge_expired_src_nodes(0);
 
 	/* clear tables */
 	memset(&pt, '\0', sizeof(pt));
