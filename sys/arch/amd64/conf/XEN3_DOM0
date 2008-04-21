@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.14 2008/03/29 01:14:25 cube Exp $
+# $NetBSD: XEN3_DOM0,v 1.15 2008/04/21 20:20:12 cegger Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -215,6 +215,8 @@ acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
 acpiec* 	at acpi?		# ACPI Embedded Controller
 acpilid* 	at acpi?		# ACPI Lid Switch
+acpitz*		at acpi?		# ACPI Thermal Zone
+
 # PCI bus support
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
