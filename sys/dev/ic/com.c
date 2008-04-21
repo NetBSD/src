@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.278 2008/04/11 12:45:08 tsutsui Exp $	*/
+/*	$NetBSD: com.c,v 1.279 2008/04/21 12:56:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.278 2008/04/11 12:45:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279 2008/04/21 12:56:31 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -788,9 +788,11 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_msr = CSR_READ_1(&sc->sc_regs, COM_REG_MSR);
 
 		/* Clear PPS capture state on first open. */
+		mutex_spin_enter(&timecounter_lock);
 		memset(&sc->sc_pps_state, 0, sizeof(sc->sc_pps_state));
 		sc->sc_pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
 		pps_init(&sc->sc_pps_state);
+		mutex_spin_exit(&timecounter_lock);
 
 		mutex_spin_exit(&sc->sc_lock);
 
@@ -1032,10 +1034,13 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef PPS_SYNC
 	case PPS_IOC_KCBIND:
 #endif
+		mutex_spin_enter(&timecounter_lock);
 		error = pps_ioctl(cmd, data, &sc->sc_pps_state);
+		mutex_spin_exit(&timecounter_lock);
 		break;
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
+		mutex_spin_enter(&timecounter_lock);
 #ifndef PPS_TRAILING_EDGE
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->sc_pps_state.ppsinfo.assert_timestamp);
@@ -1043,6 +1048,7 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->sc_pps_state.ppsinfo.clear_timestamp);
 #endif
+		mutex_spin_exit(&timecounter_lock);
 		break;
 
 	default:
@@ -1908,11 +1914,13 @@ again:	do {
 		sc->sc_msr = msr;
 		if ((sc->sc_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) &&
 		    (delta & MSR_DCD)) {
+			mutex_spin_enter(&timecounter_lock);
 			pps_capture(&sc->sc_pps_state);
 			pps_event(&sc->sc_pps_state,
 			    (msr & MSR_DCD) ?
 			    PPS_CAPTUREASSERT :
 			    PPS_CAPTURECLEAR);
+			mutex_spin_exit(&timecounter_lock);
 		}
 
 		/*

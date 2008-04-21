@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.122 2008/03/29 19:15:36 tsutsui Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.123 2008/04/21 12:56:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.122 2008/03/29 19:15:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.123 2008/04/21 12:56:31 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -600,11 +600,13 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 		SET(cs->cs_preg[1], ZSWR1_RIE | ZSWR1_SIE);
 
 		/* Clear PPS capture state on first open. */
+		mutex_spin_enter(&timecounter_lock);
 		zst->zst_ppsmask = 0;
 		memset(&zst->zst_pps_state, 0, sizeof(zst->zst_pps_state));
 		zst->zst_pps_state.ppscap =
 		    PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
 		pps_init(&zst->zst_pps_state);
+		mutex_spin_exit(&timecounter_lock);
 
 		mutex_spin_exit(&cs->cs_lock);
 
@@ -821,11 +823,13 @@ zsioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef PPS_SYNC
 	case PPS_IOC_KCBIND:
 #endif
+		mutex_spin_enter(&timecounter_lock);
 		error = pps_ioctl(cmd, data, &zst->zst_pps_state);
 		if (zst->zst_pps_state.ppsparam.mode & PPS_CAPTUREBOTH)
 			zst->zst_ppsmask = ZSRR0_DCD;
 		else
 			zst->zst_ppsmask = 0;
+		mutex_spin_exit(&timecounter_lock);
 		break;
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
@@ -833,6 +837,7 @@ zsioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 			break;
 		}
+		mutex_spin_enter(&timecounter_lock);
 #ifndef PPS_TRAILING_EDGE
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &zst->zst_pps_state.ppsinfo.assert_timestamp);
@@ -840,6 +845,7 @@ zsioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &zst->zst_pps_state.ppsinfo.clear_timestamp);
 #endif
+		mutex_spin_exit(&timecounter_lock);
 		/*
 		 * Now update interrupts.
 		 */
@@ -1484,11 +1490,13 @@ zstty_stint(struct zs_chanstate *cs, int force)
 		if (ISSET(delta, zst->zst_ppsmask)) {
 			if (zst->zst_pps_state.ppsparam.mode &
 			    PPS_CAPTUREBOTH) {
+				mutex_spin_enter(&timecounter_lock);
 				pps_capture(&zst->zst_pps_state);
 				pps_event(&zst->zst_pps_state,
 				    (ISSET(cs->cs_rr0, zst->zst_ppsmask))
 				    ? PPS_CAPTUREASSERT
 				    : PPS_CAPTURECLEAR);
+				mutex_spin_exit(&timecounter_lock);
 			}
 		}
 
