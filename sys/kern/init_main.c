@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.349 2008/04/14 18:07:51 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.350 2008/04/21 00:13:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349 2008/04/14 18:07:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.350 2008/04/21 00:13:46 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -418,6 +418,9 @@ main(void)
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
+
+	/* Initialize timekeeping, part 2. */
+	time_init2();
 
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to

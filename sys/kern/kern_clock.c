@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.119 2008/03/11 02:26:47 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.120 2008/04/21 00:13:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.119 2008/03/11 02:26:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.120 2008/04/21 00:13:46 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -201,25 +201,12 @@ void
 hardclock(struct clockframe *frame)
 {
 	struct lwp *l;
-	struct proc *p;
-	struct cpu_info *ci = curcpu();
-	struct ptimer *pt;
+	struct cpu_info *ci;
 
+	ci = curcpu();
 	l = ci->ci_data.cpu_onproc;
-	if (!CURCPU_IDLE_P()) {
-		p = l->l_proc;
-		/*
-		 * Run current process's virtual and profile time, as needed.
-		 */
-		if (CLKF_USERMODE(frame) && p->p_timers &&
-		    (pt = LIST_FIRST(&p->p_timers->pts_virtual)) != NULL)
-			if (itimerdecr(pt, tick) == 0)
-				itimerfire(pt);
-		if (p->p_timers &&
-		    (pt = LIST_FIRST(&p->p_timers->pts_prof)) != NULL)
-			if (itimerdecr(pt, tick) == 0)
-				itimerfire(pt);
-	}
+
+	timer_tick(l, CLKF_USERMODE(frame));
 
 	/*
 	 * If no separate statistics clock is available, run it from here.
