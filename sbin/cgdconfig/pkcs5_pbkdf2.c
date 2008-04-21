@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.12 2007/11/06 10:48:39 martin Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.13 2008/04/21 15:23:35 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.12 2007/11/06 10:48:39 martin Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.13 2008/04/21 15:23:35 christos Exp $");
 #endif
 
 #include <sys/resource.h>
@@ -196,32 +196,34 @@ pkcs5_pbkdf2_calibrate(size_t dkLen, int microseconds)
 {
 	size_t	c;
 	int	t = 0;
-	size_t	ret;
+	size_t	ret, i;
 
-	/*
-	 * First we get a meaningfully long time by doubling the
-	 * iteration count until it takes longer than CAL_TIME.  This
-	 * should take approximately 2 * CAL_TIME.
-	 */
-	for (c = 1;; c *= 2) {
-		t = pkcs5_pbkdf2_time(dkLen, c);
-		if (t > CAL_TIME)
-			break;
+	for (i = 0; i < 5; i++) {
+		/*
+		 * First we get a meaningfully long time by doubling the
+		 * iteration count until it takes longer than CAL_TIME.  This
+		 * should take approximately 2 * CAL_TIME.
+		 */
+		for (c = 1;; c *= 2) {
+			t = pkcs5_pbkdf2_time(dkLen, c);
+			if (t > CAL_TIME)
+				break;
+		}
+
+		/* Now that we know that, we scale it. */
+		ret = (size_t) ((u_int64_t) c * microseconds / t);
+
+		/*
+		 * Since it is quite important to not get this wrong,
+		 * we test the result.
+		 */
+
+		t = pkcs5_pbkdf2_time(dkLen, ret);
+
+		/* if we are over 5% off, return an error */
+		if (abs(microseconds - t) > (microseconds / 20))
+			continue;
+		return ret;
 	}
-
-	/* Now that we know that, we scale it. */
-	ret = (size_t) ((u_int64_t) c * microseconds / t);
-
-	/*
-	 * Since it is quite important to not get this wrong,
-	 * we test the result.
-	 */
-
-	t = pkcs5_pbkdf2_time(dkLen, ret);
-
-	/* if we are over 5% off, return an error */
-	if (abs(microseconds - t) > (microseconds / 20))
-		return -1;
-
-	return ret;
+	return -1;
 }
