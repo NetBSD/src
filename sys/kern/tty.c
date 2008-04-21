@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.217 2008/04/21 11:56:01 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.218 2008/04/21 12:49:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.217 2008/04/21 11:56:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.218 2008/04/21 12:49:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2761,7 +2761,7 @@ ttysigintr(void *cookie)
 			if (ISSET(tp->t_state, TS_SIGINFO)) {
 				/* Via ioctl: ignore tty option. */
 				tp->t_state &= ~TS_SIGINFO;
-				lflag &= ~ISIG;
+				lflag |= ISIG;
 			}
 			if (!ISSET(lflag, NOKERNINFO)) {
 				mutex_spin_exit(&tty_lock);
