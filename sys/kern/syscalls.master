@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.196 2008/03/27 17:13:25 ad Exp $
+	$NetBSD: syscalls.master,v 1.197 2008/04/21 00:13:46 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -197,12 +197,12 @@
 			    const gid_t *gidset); }
 81	STD MPSAFE 	{ int sys_getpgrp(void); }
 82	STD MPSAFE	{ int sys_setpgid(int pid, int pgid); }
-83	STD		{ int sys_setitimer(int which, \
+83	STD MPSAFE	{ int sys_setitimer(int which, \
 			    const struct itimerval *itv, \
 			    struct itimerval *oitv); }
 84	COMPAT_43 MPSAFE	{ int sys_wait(void); } owait
 85	COMPAT_12 MPSAFE	{ int sys_swapon(const char *name); } oswapon
-86	STD		{ int sys_getitimer(int which, \
+86	STD MPSAFE	{ int sys_getitimer(int which, \
 			    struct itimerval *itv); }
 87	COMPAT_43 MPSAFE	{ int sys_gethostname(char *hostname, u_int len); } \
 			    ogethostname
@@ -496,15 +496,15 @@
 			    const struct timespec *tp); }
 234	STD MPSAFE	{ int sys_clock_getres(clockid_t clock_id, \
 			    struct timespec *tp); }
-235	STD		{ int sys_timer_create(clockid_t clock_id, \
+235	STD MPSAFE	{ int sys_timer_create(clockid_t clock_id, \
 			    struct sigevent *evp, timer_t *timerid); }
-236	STD		{ int sys_timer_delete(timer_t timerid); }
-237	STD		{ int sys_timer_settime(timer_t timerid, int flags, \
+236	STD MPSAFE	{ int sys_timer_delete(timer_t timerid); }
+237	STD MPSAFE	{ int sys_timer_settime(timer_t timerid, int flags, \
 			    const struct itimerspec *value, \
 			    struct itimerspec *ovalue); }
-238	STD		{ int sys_timer_gettime(timer_t timerid, struct \
+238	STD MPSAFE	{ int sys_timer_gettime(timer_t timerid, struct \
 			    itimerspec *value); }
-239	STD		{ int sys_timer_getoverrun(timer_t timerid); }
+239	STD MPSAFE	{ int sys_timer_getoverrun(timer_t timerid); }
 ;
 ; Syscalls 240-269 are reserved for other IEEE Std1003.1b syscalls
 ;

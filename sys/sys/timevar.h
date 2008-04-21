@@ -1,7 +1,7 @@
-/*	$NetBSD: timevar.h,v 1.20 2008/01/20 18:09:13 joerg Exp $	*/
+/*	$NetBSD: timevar.h,v 1.21 2008/04/21 00:13:46 ad Exp $	*/
 
 /*
- *  Copyright (c) 2005 The NetBSD Foundation.
+ *  Copyright (c) 2005, 2008 The NetBSD Foundation.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,9 @@ struct 	ptimer {
 	int	pt_poverruns;	/* Overruns associated w/ a delivery */
 	int	pt_type;
 	int	pt_entry;
+	int	pt_queued;
 	struct proc *pt_proc;
+	TAILQ_ENTRY(ptimer) pt_chain;
 };
 
 #define pt_ch	pt_data.pt_ch
@@ -155,8 +157,6 @@ int	dotimer_settime(int, struct itimerspec *, struct itimerspec *, int,
 	    struct proc *);
 int	hzto(struct timeval *);
 void	inittimecounter(void);
-int	itimerdecr(struct ptimer *, int);
-void	itimerfire(struct ptimer *);
 int	itimerfix(struct timeval *);
 int	itimespecfix(struct timespec *);
 int	ppsratecheck(struct timeval *, int *, int);
@@ -170,14 +170,16 @@ int	timer_create1(timer_t *, clockid_t, struct sigevent *, copyin_t,
 	    struct lwp *);
 void	timer_gettime(struct ptimer *, struct itimerval *);
 void	timer_settime(struct ptimer *);
-void	timers_alloc(struct proc *);
+struct	ptimers *timers_alloc(struct proc *);
 void	timers_free(struct proc *, int);
+void	timer_tick(struct lwp *, bool);
 int	tstohz(struct timespec *);
 int	tvtohz(struct timeval *);
 int	inittimeleft(struct timeval *, struct timeval *);
 int	gettimeleft(struct timeval *, struct timeval *);
 void	timerupcall(struct lwp *);
 void	time_init(void);
+void	time_init2(void);
 
 extern time_t time_second;	/* current second in the epoch */
 extern time_t time_uptime;	/* system uptime in seconds */
