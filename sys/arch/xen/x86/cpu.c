@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2008/04/18 15:32:46 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2008/04/21 15:15:34 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2008/04/18 15:32:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2008/04/21 15:15:34 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -254,6 +254,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_dev = self;
 	ci->ci_apicid = caa->cpu_number;
 	ci->ci_cpuid = ci->ci_apicid;
+	ci->ci_vcpu = NULL;
 
 	printf(": ");
 	switch (caa->cpu_role) {
@@ -345,9 +346,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	uintptr_t ptr;
-#if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
-#endif
 
 	sc->sc_dev = self;
 
@@ -388,7 +387,11 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
-	ci->ci_apicid = caa->cpu_number;
+	ci->ci_apicid = cpunum;
+
+	KASSERT(HYPERVISOR_shared_info != NULL);
+	ci->ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[cpunum];
+
 #ifdef MULTIPROCESSOR
 	ci->ci_cpuid = ci->ci_apicid;
 #else
@@ -1054,8 +1057,7 @@ void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
 #ifdef XEN3
-	const volatile vcpu_time_info_t *tinfo =
-		   &HYPERVISOR_shared_info->vcpu_info[0].time;
+	const volatile vcpu_time_info_t *tinfo = &ci->ci_vcpu->time;
 	delay(1000000);
 	uint64_t freq = 1000000000ULL << 32;
 	freq = freq / (uint64_t)tinfo->tsc_to_system_mul;
@@ -1065,6 +1067,7 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 		freq = freq >> tinfo->tsc_shift;
 	ci->ci_tsc_freq = freq;
 #else
+	/* Xen2 */
 	/* XXX this needs to read the shared_info of the CPU being probed.. */
 	ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
 #endif /* XEN3 */
