@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.25 2008/01/05 12:40:34 ad Exp $	*/
+/*	$NetBSD: plcom.c,v 1.26 2008/04/21 12:56:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.25 2008/01/05 12:40:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.26 2008/04/21 12:56:30 ad Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -557,8 +557,10 @@ plcom_shutdown(struct plcom_softc *sc)
 	plcom_break(sc, 0);
 
 	/* Turn off PPS capture on last close. */
+	mutex_spin_enter(&timecounter_lock);
 	sc->sc_ppsmask = 0;
 	sc->ppsparam.mode = 0;
+	mutex_spin_exit(&timecounter_lock);
 
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
@@ -659,8 +661,11 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_msr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, plcom_fr);
 
 		/* Clear PPS capture state on first open. */
+
+		mutex_spin_enter(&timecounter_lock);
 		sc->sc_ppsmask = 0;
 		sc->ppsparam.mode = 0;
+		mutex_spin_exit(&timecounter_lock);
 
 		PLCOM_UNLOCK(sc);
 		splx(s2);
@@ -889,7 +894,9 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case PPS_IOC_GETPARAMS: {
 		pps_params_t *pp;
 		pp = (pps_params_t *)data;
+		mutex_spin_enter(&timecounter_lock);
 		*pp = sc->ppsparam;
+		mutex_spin_exit(&timecounter_lock);
 		break;
 	}
 
@@ -897,8 +904,10 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	  	pps_params_t *pp;
 		int mode;
 		pp = (pps_params_t *)data;
+		mutex_spin_enter(&timecounter_lock);
 		if (pp->mode & ~ppscap) {
 			error = EINVAL;
+			mutex_spin_exit(&timecounter_lock);
 			break;
 		}
 		sc->ppsparam = *pp;
@@ -943,6 +952,7 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EINVAL;
 			break;
 		}
+		mutex_spin_exit(&timecounter_lock);
 		break;
 	}
 
@@ -953,7 +963,9 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case PPS_IOC_FETCH: {
 		pps_info_t *pi;
 		pi = (pps_info_t *)data;
+		mutex_spin_enter(&timecounter_lock);
 		*pi = sc->ppsinfo;
+		mutex_spin_exit(&timecounter_lock);
 		break;
 	}
 
@@ -963,6 +975,7 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * rising edge as the on-the-second signal. 
 		 * The old API has no way to specify PPS polarity.
 		 */
+		mutex_spin_enter(&timecounter_lock);
 		sc->sc_ppsmask = MSR_DCD;
 #ifndef PPS_TRAILING_EDGE
 		sc->sc_ppsassert = MSR_DCD;
@@ -975,6 +988,7 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data, 
 		    &sc->ppsinfo.clear_timestamp);
 #endif
+		mutex_spin_exit(&timecounter_lock);
 		break;
 
 	default:
@@ -1813,6 +1827,7 @@ plcomintr(void *arg)
 		 */
 		if (delta & sc->sc_ppsmask) {
 			struct timeval tv;
+			mutex_spin_enter(&timecounter_lock);
 		    	if ((msr & sc->sc_ppsmask) == sc->sc_ppsassert) {
 				/* XXX nanotime() */
 				microtime(&tv);
@@ -1849,6 +1864,7 @@ plcomintr(void *arg)
 				sc->ppsinfo.clear_sequence++;
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;
 			}
+			mutex_spin_exit(&timecounter_lock);
 		}
 
 		/*

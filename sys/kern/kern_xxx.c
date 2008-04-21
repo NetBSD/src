@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.68 2008/01/05 12:30:47 dsl Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.69 2008/04/21 12:56:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.68 2008/01/05 12:30:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.69 2008/04/21 12:56:31 ad Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -74,7 +74,9 @@ sys_reboot(struct lwp *l, const struct sys_reboot_args *uap, register_t *retval)
 	/*
 	 * Not all ports use the bootstr currently.
 	 */
+	KERNEL_LOCK(1, NULL);
 	cpu_reboot(SCARG(uap, opt), bootstr);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 
