@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.48 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.49 2008/04/21 19:06:42 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.48 2008/04/16 21:51:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49 2008/04/21 19:06:42 tls Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -62,7 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.48 2008/04/16 21:51:03 cegger
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
+#ifdef MTRR
 #include <machine/mtrr.h>
+#endif
 #include <machine/netbsd32_machdep.h>
 #include <machine/sysarch.h>
 #include <machine/userret.h>
@@ -80,8 +82,13 @@ const char	machine_arch32[] = "i386";
 
 extern void (osyscall_return)(void);
 
+#ifdef MTRR
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
 static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
+#else
+#define x86_64_get_mtrr32(x, y, z)	ENOSYS
+#define x86_64_set_mtrr32(x, y, z)	ENOSYS
+#endif
 
 static int check_sigcontext32(const struct netbsd32_sigcontext *,
     struct trapframe *);
@@ -611,6 +618,7 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 	return error;
 }
 
+#ifdef MTRR
 static int
 x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 {
@@ -739,6 +747,7 @@ fail:
 	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
 	return error;
 }
+#endif
 
 #if 0
 void
