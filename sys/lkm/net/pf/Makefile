@@ -1,13 +1,15 @@
-#	$NetBSD: Makefile,v 1.6 2005/12/11 12:24:49 christos Exp $
+#	$NetBSD: Makefile,v 1.6.72.1 2008/04/21 20:30:18 peter Exp $
 
 .include "../Makefile.inc"
 
 CPPFLAGS+=	-I$S/dist/pf -I$S -DINET6 -DINET
 KMOD=		pf
-SRCS=		if_pflog.c pf_real.c pf_ioctl.c pf_osfp.c pf_if.c \
-		pf_norm.c pf_table.c pf_lkm.c
+SRCS=		if_compat.c if_pflog.c \
+		pf_real.c pf_if.c pf_mtag.c pf_norm.c pf_osfp.c \
+		pf_ruleset.c pf_table.c pf_lkm.c \
+		tcp_rndiss.c
 
-.PATH:		$S/dist/pf/net
+.PATH:		$S/dist/pf/net $S/dist/pf/netinet
 
 BUILDSYMLINKS+=	$S/dist/pf/net/pf.c pf_real.c
 
