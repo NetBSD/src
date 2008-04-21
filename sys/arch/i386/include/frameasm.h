@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.12 2008/02/29 12:34:23 yamt Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.13 2008/04/21 15:15:34 cegger Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -18,11 +18,11 @@
 #define XEN_UNBLOCK_EVENTS(reg) movb $0,EVTCHN_UPCALL_MASK(reg)
 #define XEN_TEST_PENDING(reg)   testb $0xFF,EVTCHN_UPCALL_PENDING(reg)
 
-#define CLI(reg)        movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+#define CLI(reg)        movl    CPUVAR(VCPU),reg ;  \
                         XEN_BLOCK_EVENTS(reg)
-#define STI(reg)        movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+#define STI(reg)        movl    CPUVAR(VCPU),reg ;  \
 			XEN_UNBLOCK_EVENTS(reg)
-#define STIC(reg)       movl    _C_LABEL(HYPERVISOR_shared_info),reg ;  \
+#define STIC(reg)       movl    CPUVAR(VCPU),reg ;  \
 			XEN_UNBLOCK_EVENTS(reg)  ; \
 			testb $0xff,EVTCHN_UPCALL_PENDING(reg)
 #endif
