@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2008/03/29 19:58:37 mlelstv Exp $
+# $NetBSD: Makefile,v 1.31 2008/04/21 21:30:59 veego Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -535,7 +535,11 @@ ${SRCS}: \
 	kx509_asn1.h
 	
 
-CLEANFILES=	${BUILT_SOURCES} ${gen_files} \
+CLEANFILES=	${BUILT_SOURCES} ${gen_files_k5} \
+	${gen_files_cms} ${gen_files_rfc2459} \
+	${gen_files_pkinit} ${gen_files_pkcs12} \
+	${gen_files_pkcs8} ${gen_files_pkcs9} \
+	${gen_files_digest} ${gen_files_kx509} \
 	krb5_asn1_files krb5_asn1.h \
 	cms_asn1_files cms_asn1.h \
 	rfc2459_asn1_files rfc2459_asn1.h \
