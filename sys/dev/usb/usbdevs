@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.496 2008/03/17 02:37:51 elric Exp $
+$NetBSD: usbdevs,v 1.497 2008/04/21 21:17:51 cegger Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -449,6 +449,7 @@ vendor DICKSMITH	0x1371	Dick Smith Electronics
 vendor BALTECH		0x13ad	Baltech
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
+vendor PHISON		0x13fe	Phison Electronics Corp.
 vendor NOVATEL2		0x1410	Novatel
 vendor WISTRONNEWEB	0x1435	Wistron NeWeb
 vendor HUAWEI3COM	0x1472	Huawei-3Com
