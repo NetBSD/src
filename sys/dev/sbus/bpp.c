@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.35 2008/04/13 04:55:53 tsutsui Exp $ */
+/*	$NetBSD: bpp.c,v 1.36 2008/04/21 00:30:21 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.35 2008/04/13 04:55:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.36 2008/04/21 00:30:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -53,9 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.35 2008/04/13 04:55:53 tsutsui Exp $");
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
 #include <sys/bus.h>
 #include <sys/intr.h>
+
 #include <machine/autoconf.h>
 
 #include <dev/ic/lsi64854reg.h>
@@ -110,6 +110,7 @@ struct bpp_softc {
 	struct selinfo	sc_rsel;
 	struct selinfo	sc_wsel;
 	struct proc	*sc_asyncproc;	/* Process to notify if async */
+	void		*sc_sih;
 
 	/* Hardware state */
 	struct hwstate		sc_hwdefault;
@@ -119,6 +120,7 @@ struct bpp_softc {
 static int	bppmatch(device_t, cfdata_t, void *);
 static void	bppattach(device_t, device_t, void *);
 static int	bppintr(void *);
+static void	bppsoftintr(void *);
 static void	bpp_setparams(struct bpp_softc *, struct hwstate *);
 
 CFATTACH_DECL_NEW(bpp, sizeof(struct bpp_softc),
@@ -161,6 +163,7 @@ bppattach(device_t parent, device_t self, void *aux)
 
 	selinit(&dsc->sc_rsel);
 	selinit(&dsc->sc_wsel);
+	dsc->sc_sih = softint_establish(SOFTINT_CLOCK, bppsoftintr, dsc);
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
@@ -300,7 +303,9 @@ bppclose(dev_t dev, int flags, int mode, struct lwp *l)
 	irq &= ~BPP_ALLEN;
 	bus_space_write_2(lsi->sc_bustag, lsi->sc_regs, L64854_REG_ICR, irq);
 
+	mutex_enter(&proclist_mutex);
 	sc->sc_asyncproc = NULL;
+	mutex_exit(&proclist_mutex);
 	sc->sc_flags = 0;
 	return 0;
 }
@@ -456,6 +461,7 @@ bppioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	case FIOASYNC:
 		s = splbpp();
+		mutex_enter(&proclist_mutex);
 		if (*(int *)data) {
 			if (sc->sc_asyncproc != NULL)
 				error = EBUSY;
@@ -463,6 +469,7 @@ bppioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				sc->sc_asyncproc = p;
 		} else
 			sc->sc_asyncproc = NULL;
+		mutex_exit(&proclist_mutex);
 		splx(s);
 		break;
 	default:
@@ -607,11 +614,19 @@ bppintr(void *arg)
 		wakeup(sc->sc_buf);
 	} else {
 		selnotify(&sc->sc_wsel, 0, 0);
-		if (sc->sc_asyncproc != NULL) {
-			mutex_enter(&proclist_mutex);
-			psignal(sc->sc_asyncproc, SIGIO);
-			mutex_exit(&proclist_mutex);
-		}
+		if (sc->sc_asyncproc != NULL)
+			softint_schedule(sc->sc_sih);
 	}
 	return 1;
+}
+
+static void
+bppsoftintr(void *cookie)
+{
+	struct bpp_softc *sc = cookie;
+
+	mutex_enter(&proclist_mutex);
+	if (sc->sc_asyncproc)
+		psignal(sc->sc_asyncproc, SIGIO);
+	mutex_exit(&proclist_mutex);
 }
