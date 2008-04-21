@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.216 2008/04/20 19:30:13 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.217 2008/04/21 11:56:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.216 2008/04/20 19:30:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.217 2008/04/21 11:56:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2356,6 +2356,8 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	else {
 		/* Pick interesting process. */
 		for (; p != NULL; p = LIST_NEXT(p, p_pglist)) {
+			struct proc *oldpick;
+
 			if (pick == NULL) {
 				pick = p;
 				continue;
@@ -2367,10 +2369,11 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 				mutex_enter(&p->p_smutex);
 				mutex_enter(&pick->p_smutex);
 			}
+			oldpick = pick;
 			if (proc_compare(pick, p))
 				pick = p;
 			mutex_exit(&p->p_smutex);
-			mutex_exit(&pick->p_smutex);
+			mutex_exit(&oldpick->p_smutex);
 		}
 		if (fromsig &&
 		    (SIGACTION_PS(pick->p_sigacts, SIGINFO).sa_flags &
