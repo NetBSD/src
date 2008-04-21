@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.46 2008/04/16 14:47:31 njoly Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.47 2008/04/21 22:38:18 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.46 2008/04/16 14:47:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.47 2008/04/21 22:38:18 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -483,7 +483,7 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 
 	shmid = SCARG(uap, shmid);
 	cmd = SCARG(uap, cmd);
-#ifdef LINUX_SHMCTL_FORCEIPC64
+#ifdef LINUX_IPC_FORCE64
 	if (cmd == LINUX_IPC_STAT || cmd == LINUX_SHM_STAT)
 		cmd |= LINUX_IPC_64;
 #endif
