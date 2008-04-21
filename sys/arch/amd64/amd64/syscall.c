@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.39 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.40 2008/04/21 12:51:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.39 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40 2008/04/21 12:51:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,6 @@ child_return(void *arg)
 
 	tf->tf_rax = 0;
 	tf->tf_rflags &= ~PSL_C;
-
-	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);

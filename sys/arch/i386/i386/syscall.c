@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.52 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.53 2008/04/21 12:51:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.52 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.53 2008/04/21 12:51:37 ad Exp $");
 
 #include "opt_vm86.h"
 
@@ -169,9 +169,7 @@ syscall_vm86(frame)
 
 	l = curlwp;
 	p = l->l_proc;
-	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 #endif
@@ -185,8 +183,6 @@ child_return(arg)
 
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
-
-	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
