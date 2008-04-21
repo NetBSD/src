@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.5 2008/04/21 15:15:34 cegger Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.5 2008/04/21 15:15:34 cegger Exp $");
 
 #include <sys/param.h>
 
@@ -150,7 +150,7 @@ vaddr_t
 rcr2(void)
 {
 #ifdef XEN3
-	return HYPERVISOR_shared_info->vcpu_info[0].arch.cr2; /* XXX curcpu */
+	return curcpu()->ci_vcpu->arch.cr2;
 #else
 	return 0;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.165 2008/02/27 20:18:56 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.166 2008/04/21 15:15:34 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,6 +74,11 @@ struct pmap;
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
+
+#ifdef XEN
+	volatile struct vcpu_info *ci_vcpu;
+#endif
+
 	void	*ci_tlog_base;		/* Trap log base */
 	int32_t ci_tlog_offset;		/* Trap log current offset */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.34 2008/01/11 20:00:14 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.35 2008/04/21 15:15:34 cegger Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.34 2008/01/11 20:00:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.35 2008/04/21 15:15:34 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1293,7 +1293,7 @@ NENTRY(hypervisor_callback)
         movl CPUVAR(ILEVEL),%ebx
         jmp  doreti_checkast
 safesti:
-	movl HYPERVISOR_shared_info,%esi
+	movl CPUVAR(VCPU),%esi
 	XEN_UNBLOCK_EVENTS(%esi)	# reenable event callbacks
 scrit:  /**** START OF CRITICAL REGION ****/
         XEN_TEST_PENDING(%esi)

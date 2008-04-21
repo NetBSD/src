@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.627 2008/02/26 18:24:28 xtraeme Exp $	*/
+/*	$NetBSD: machdep.c,v 1.628 2008/04/21 15:15:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.627 2008/02/26 18:24:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.628 2008/04/21 15:15:33 cegger Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1378,6 +1378,8 @@ init386(paddr_t first_avail)
 #ifdef XEN
 	XENPRINTK(("HYPERVISOR_shared_info %p (%x)\n", HYPERVISOR_shared_info,
 	    xen_start_info.shared_info));
+	KASSERT(HYPERVISOR_shared_info != NULL);
+	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 	cpu_probe_features(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;

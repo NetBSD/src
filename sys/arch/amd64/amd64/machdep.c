@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2008/04/21 15:15:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2008/04/16 21:51:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2008/04/21 15:15:33 cegger Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1229,6 +1229,9 @@ init_x86_64(paddr_t first_avail)
 	uint64_t addr, size, io_end, new_physmem;
 #endif
 #else /* XEN */
+	KASSERT(HYPERVISOR_shared_info != NULL);
+	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
+
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 	first_bt_vaddr = (vaddr_t) (first_avail + KERNBASE + PAGE_SIZE * 2);
 	__PRINTK(("first_bt_vaddr 0x%lx\n", first_bt_vaddr));

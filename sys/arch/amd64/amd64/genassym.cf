@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.26 2008/03/26 12:36:33 ad Exp $
+#	$NetBSD: genassym.cf,v 1.27 2008/04/21 15:15:33 cegger Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -391,6 +391,7 @@ define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
 
 ifdef XEN
+define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)
 define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
 define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)

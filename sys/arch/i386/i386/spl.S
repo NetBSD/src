@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.26 2008/01/11 20:00:14 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.27 2008/04/21 15:15:34 cegger Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.26 2008/01/11 20:00:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.27 2008/04/21 15:15:34 cegger Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -181,7 +181,7 @@ IDTVEC(spllower)
 	testl	$PSL_I,%eax
 	jnz	.Lspllower_panic
 #else
-	movl    _C_LABEL(HYPERVISOR_shared_info),%eax
+	movl    CPUVAR(VCPU),%eax
 	movb	EVTCHN_UPCALL_MASK(%eax), %al
 	andb	%al, %al
 	jz	.Lspllower_panic
@@ -247,7 +247,7 @@ IDTVEC(doreti)
 	testl	$PSL_I,%eax
 	jnz	.Ldoreti_panic
 #else
-	movl    _C_LABEL(HYPERVISOR_shared_info),%eax
+	movl    CPUVAR(VCPU),%eax
 	movb	EVTCHN_UPCALL_MASK(%eax), %al
 	andb	%al, %al
 	jz	.Ldoreti_panic

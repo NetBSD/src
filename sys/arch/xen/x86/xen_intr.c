@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.3 2008/04/14 13:38:03 cegger Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.4 2008/04/21 15:15:34 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.3 2008/04/14 13:38:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.4 2008/04/21 15:15:34 cegger Exp $");
 
 #include <sys/param.h>
 
@@ -119,17 +119,17 @@ u_long
 x86_read_psl(void)
 {
 
-	return (HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask);
+	return (curcpu()->ci_vcpu->evtchn_upcall_mask);
 }
 
 void
 x86_write_psl(u_long psl)
 {
+	struct cpu_info *ci = curcpu();
 
-	HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask = psl;
+	ci->ci_vcpu->evtchn_upcall_mask = psl;
 	x86_lfence();
-	if (HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_pending &&
-	    psl == 0) {
+	if (ci->ci_vcpu->evtchn_upcall_pending && psl == 0) {
 	    	hypervisor_force_callback();
 	}
 }
