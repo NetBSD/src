@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.47 2008/04/21 22:38:18 njoly Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.48 2008/04/21 22:57:06 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.47 2008/04/21 22:38:18 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.48 2008/04/21 22:57:06 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -484,7 +484,8 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 	shmid = SCARG(uap, shmid);
 	cmd = SCARG(uap, cmd);
 #ifdef LINUX_IPC_FORCE64
-	if (cmd == LINUX_IPC_STAT || cmd == LINUX_SHM_STAT)
+	if (cmd == LINUX_IPC_STAT || cmd == LINUX_SHM_STAT ||
+	    cmd == LINUX_IPC_SET)
 		cmd |= LINUX_IPC_64;
 #endif
 
@@ -517,6 +518,12 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 		if ((error = copyin(SCARG(uap, buf), &ls, sizeof ls)))
 			return error;
 		linux_to_bsd_shmid_ds(&ls, &bs);
+		return shmctl1(l, shmid, IPC_SET, &bs);
+
+	case LINUX_IPC_SET | LINUX_IPC_64:
+		if ((error = copyin(SCARG(uap, buf), &ls64, sizeof ls64)))
+			return error;
+		linux_to_bsd_shmid64_ds(&ls64, &bs);
 		return shmctl1(l, shmid, IPC_SET, &bs);
 
 	case LINUX_IPC_RMID:
