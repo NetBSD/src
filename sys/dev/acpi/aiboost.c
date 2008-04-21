@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.23 2008/04/17 19:57:27 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.24 2008/04/21 14:25:48 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.23 2008/04/17 19:57:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.24 2008/04/21 14:25:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,32 +356,35 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 	for (i = 0; i < num; i++) {
 		elem = &o->Package.Elements[i+1];
 		DPRINTF(("elem[%d]->Type = %x\n", i+1, elem->Type));
-		if (elem->Type == ACPI_TYPE_PACKAGE) {
-			int	j;
-
-			j = elem->Package.Elements[0].Integer.Value;
+		if (elem->Type == ACPI_TYPE_PACKAGE &&
+			elem->Package.Elements[0].Type == ACPI_TYPE_INTEGER) {
 			DPRINTF((" subelem->Type = %x, %d\n",
-			    elem->Package.Elements[0].Type, j));
+			    elem->Package.Elements[0].Type,
+			    (int)elem->Package.Elements[0].Integer.Value));
 		}
 	}
 #endif
 	for (i = 0; i < num; i++) {
 		elem = &o->Package.Elements[i+1];
 		if (elem->Type == ACPI_TYPE_PACKAGE) {
+			/* information provided directly in package */
 			subobj = elem;
 			buf2.Pointer = NULL;
 		} else if (elem->Type == ACPI_TYPE_LOCAL_REFERENCE) {
+			/* information provided indirectly.  request package */
 			c->elem[i].h = elem->Reference.Handle;
 			status = acpi_eval_struct(c->elem[i].h, NULL, &buf2);
 			if (ACPI_FAILURE(status)) {
 				DPRINTF(("%s: fetching object in buf2\n",
 				    __func__));
-				if (buf2.Pointer)
-					AcpiOsFree(buf2.Pointer);
-				buf2.Pointer = NULL;
 				goto error;
 			}
 			subobj = buf2.Pointer;
+			if (subobj->Type != ACPI_TYPE_PACKAGE) {
+				DPRINTF(("%s: fetched type cannot processed\n",
+				    __func__));
+				goto error;
+			}
 		} else {
 			DPRINTF(("%s: elem->Type cannot be processed\n",
 			    __func__));
