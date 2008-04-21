@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.198 2008/04/21 11:45:34 ad Exp $
+	$NetBSD: syscalls.master,v 1.199 2008/04/21 12:56:31 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -158,7 +158,7 @@
 			    struct sigaltstack13 *oss); } sigaltstack13
 54	STD MPSAFE	{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
-55	COMPAT_12	{ int sys_reboot(int opt); } oreboot
+55	COMPAT_12 MPSAFE { int sys_reboot(int opt); } oreboot
 56	STD MPSAFE	{ int sys_revoke(const char *path); }
 57	STD MPSAFE RUMP	{ int sys_symlink(const char *path, \
 			    const char *link); }
@@ -283,7 +283,7 @@
 138	STD MPSAFE	{ int sys_utimes(const char *path, \
 			    const struct timeval *tptr); }
 139	OBSOL		4.2 sigreturn
-140	STD		{ int sys_adjtime(const struct timeval *delta, \
+140	STD MPSAFE	{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
 141	COMPAT_43	{ int sys_getpeername(int fdes, void *asa, \
 			    int *alen); } ogetpeername
@@ -328,7 +328,7 @@
 163	COMPAT_09 MPSAFE { int sys_setdomainname(char *domainname, int len); } \
 			    osetdomainname
 164	COMPAT_09 MPSAFE	{ int sys_uname(struct outsname *name); } ouname
-165	STD		{ int sys_sysarch(int op, void *parms); }
+165	STD MPSAFE	{ int sys_sysarch(int op, void *parms); }
 166	UNIMPL
 167	UNIMPL
 168	UNIMPL
@@ -359,9 +359,9 @@
 174	STD MPSAFE	{ ssize_t sys_pwrite(int fd, const void *buf, \
 			    size_t nbyte, int pad, off_t offset); }
 ; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
-175	COMPAT_30	{ int sys_ntp_gettime(struct ntptimeval30 *ntvp); }
+175	COMPAT_30 MPSAFE { int sys_ntp_gettime(struct ntptimeval30 *ntvp); }
 #if defined(NTP) || !defined(_KERNEL)
-176	STD		{ int sys_ntp_adjtime(struct timex *tp); }
+176	STD MPSAFE	{ int sys_ntp_adjtime(struct timex *tp); }
 #else
 176	EXCL		ntp_adjtime
 #endif
@@ -420,7 +420,7 @@
 206	STD MPSAFE	{ int sys_futimes(int fd, \
 			    const struct timeval *tptr); }
 207	STD MPSAFE	{ pid_t sys_getpgid(pid_t pid); }
-208	STD		{ int sys_reboot(int opt, char *bootstr); }
+208	STD MPSAFE	{ int sys_reboot(int opt, char *bootstr); }
 209	STD MPSAFE	{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 ;
@@ -688,8 +688,8 @@
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa, \
 			    const void *tramp, int vers); }
-341	STD		{ int sys_pmc_get_info(int ctr, int op, void *args); }
-342	STD		{ int sys_pmc_control(int ctr, int op, void *args); }
+341	STD MPSAFE	{ int sys_pmc_get_info(int ctr, int op, void *args); }
+342	STD MPSAFE	{ int sys_pmc_control(int ctr, int op, void *args); }
 343	STD MPSAFE	{ int sys_rasctl(void *addr, size_t len, int op); }
 344	STD MPSAFE	{ int sys_kqueue(void); }
 345	STD MPSAFE	{ int sys_kevent(int fd, \
@@ -794,7 +794,7 @@
 391	IGNORED		old posix_fadvise
 392	COMPAT_30 MPSAFE	{ int sys___fhstat30(const struct compat_30_fhandle \
 			    *fhp, struct stat *sb); }
-393	STD		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
+393	STD MPSAFE	{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
 394	STD		{ int sys___socket30(int domain, int type, int protocol); }
 395	STD MPSAFE	{ int sys___getfh30(const char *fname, void *fhp, \
 			    size_t *fh_size); }

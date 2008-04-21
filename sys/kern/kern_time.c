@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.142 2008/04/21 00:13:46 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.143 2008/04/21 12:56:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.142 2008/04/21 00:13:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.143 2008/04/21 12:56:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -79,14 +79,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.142 2008/04/21 00:13:46 ad Exp $");
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/timetc.h>
+#include <sys/timex.h>
 #include <sys/kauth.h>
-
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <sys/cpu.h>
 
 static void	timer_intr(void *);
 static void	itimerfire(struct ptimer *);
@@ -464,8 +463,10 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 	extern int64_t time_adjtime;  /* in kern_ntptime.c */
 
 	if (olddelta) {
+		mutex_spin_enter(&timecounter_lock);
 		atv.tv_sec = time_adjtime / 1000000;
 		atv.tv_usec = time_adjtime % 1000000;
+		mutex_spin_exit(&timecounter_lock);
 		if (atv.tv_usec < 0) {
 			atv.tv_usec += 1000000;
 			atv.tv_sec--;
@@ -480,12 +481,14 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 		if (error)
 			return (error);
 
+		mutex_spin_enter(&timecounter_lock);
 		time_adjtime = (int64_t)atv.tv_sec * 1000000 +
 			atv.tv_usec;
-
-		if (time_adjtime)
+		if (time_adjtime) {
 			/* We need to save the system time during shutdown */
 			time_adjusted |= 1;
+		}
+		mutex_spin_exit(&timecounter_lock);
 	}
 
 	return error;

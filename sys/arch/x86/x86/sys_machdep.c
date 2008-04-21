@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 2008/01/28 19:57:43 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.12 2008/04/21 12:56:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11 2008/01/28 19:57:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.12 2008/04/21 12:56:31 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -585,7 +585,9 @@ x86_get_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
+	KERNEL_LOCK(1, NULL);
 	error = mtrr_get(ua.mtrrp, &n, l->l_proc, MTRR_GETSET_USER);
+	KERNEL_UNLOCK_ONE(NULL);
 
 	copyout(&n, ua.n, sizeof (int));
 
@@ -618,9 +620,11 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
+	KERNEL_LOCK(1, NULL);
 	error = mtrr_set(ua.mtrrp, &n, l->l_proc, MTRR_GETSET_USER);
 	if (n != 0)
 		mtrr_commit();
+	KERNEL_UNLOCK_ONE(NULL);
 
 	copyout(&n, ua.n, sizeof n);
 
@@ -744,15 +748,21 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 
 #ifdef PERFCTRS
 	case X86_PMC_INFO:
+		KERNEL_LOCK(1, NULL);
 		error = pmc_info(l, SCARG(uap, parms), retval);
+		KERNEL_UNLOCK_ONE(NULL);
 		break;
 
 	case X86_PMC_STARTSTOP:
+		KERNEL_LOCK(1, NULL);
 		error = pmc_startstop(l, SCARG(uap, parms), retval);
+		KERNEL_UNLOCK_ONE(NULL);
 		break;
 
 	case X86_PMC_READ:
+		KERNEL_LOCK(1, NULL);
 		error = pmc_read(l, SCARG(uap, parms), retval);
+		KERNEL_UNLOCK_ONE(NULL);
 		break;
 #endif
 
