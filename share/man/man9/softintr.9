@@ -1,6 +1,6 @@
-.\"	$NetBSD: softintr.9,v 1.15 2007/12/06 10:27:20 xtraeme Exp $
+.\"	$NetBSD: softintr.9,v 1.16 2008/04/21 13:00:12 ad Exp $
 .\"
-.\" Copyright (c) 2007 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -80,7 +80,7 @@
 .Ft void *
 .Fn softint_establish "int flags" "void (*func)(void *)" "void *arg"
 .Ft void
-.Fn softint_sisestablish "void *cookie"
+.Fn softint_disestablish "void *cookie"
 .Ft void
 .Fn softint_schedule "void *cookie"
 .Sh DESCRIPTION
