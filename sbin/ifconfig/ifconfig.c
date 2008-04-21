@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.184 2008/04/15 22:26:58 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.185 2008/04/21 05:33:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.184 2008/04/15 22:26:58 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.185 2008/04/21 05:33:55 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.184 2008/04/15 22:26:58 dyoung Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1006,7 +1007,7 @@ const char *
 get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 {
 	int len;
-	int hexstr;
+	bool hexstr;
 	u_int8_t *p;
 
 	len = *lenp;
@@ -1055,16 +1056,16 @@ void
 print_string(const u_int8_t *buf, int len)
 {
 	int i;
-	int hasspc;
+	bool hasspc;
 
 	i = 0;
-	hasspc = 0;
+	hasspc = false;
 	if (len < 2 || buf[0] != '0' || tolower(buf[1]) != 'x') {
 		for (; i < len; i++) {
 			if (!isprint(buf[i]))
 				break;
 			if (isspace(buf[i]))
-				hasspc++;
+				hasspc = true;
 		}
 	}
 	if (i == len) {
