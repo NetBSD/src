@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.2 2008/04/21 02:08:09 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.3 2008/04/21 02:10:45 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -62,9 +62,9 @@ carp_status(void)
 	struct carpreq carpr;
 
 	memset((char *)&carpr, 0, sizeof(struct carpreq));
-	ifr.ifr_data = (caddr_t)&carpr;
+	ifr.ifr_data = &carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		return;
 
 	if (carpr.carpr_vhid > 0) {
@@ -87,15 +87,15 @@ setcarp_passwd(const char *val, int d)
 	struct carpreq carpr;
 
 	memset((char *)&carpr, 0, sizeof(struct carpreq));
-	ifr.ifr_data = (caddr_t)&carpr;
+	ifr.ifr_data = &carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
 	/* XXX Should hash the password into the key here, perhaps? */
 	strlcpy((char *)carpr.carpr_key, val, CARP_KEY_LEN);
 
-	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
 }
 
@@ -119,14 +119,14 @@ setcarp_vhid(const char *val, int d)
 	vhid = (int)tmp;
 
 	memset((char *)&carpr, 0, sizeof(struct carpreq));
-	ifr.ifr_data = (caddr_t)&carpr;
+	ifr.ifr_data = &carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
 	carpr.carpr_vhid = vhid;
 
-	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
 }
 
@@ -150,14 +150,14 @@ setcarp_advskew(const char *val, int d)
 	advskew = (int)tmp;
 
 	memset((char *)&carpr, 0, sizeof(struct carpreq));
-	ifr.ifr_data = (caddr_t)&carpr;
+	ifr.ifr_data = &carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
 	carpr.carpr_advskew = advskew;
 
-	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
 }
 
@@ -181,14 +181,14 @@ setcarp_advbase(const char *val, int d)
 	advbase = (int)tmp;
 
 	memset((char *)&carpr, 0, sizeof(struct carpreq));
-	ifr.ifr_data = (caddr_t)&carpr;
+	ifr.ifr_data = &carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
 	carpr.carpr_advbase = advbase;
 
-	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
 }
 
@@ -200,9 +200,9 @@ setcarp_state(const char *val, int d)
 	int i;
 
 	memset(&carpr, 0, sizeof(carpr));
-	ifr.ifr_data = (caddr_t)&carpr;
+	ifr.ifr_data = &carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
 	for (i = 0; i <= CARP_MAXSTATE; i++) {
@@ -212,7 +212,7 @@ setcarp_state(const char *val, int d)
 		}
 	}
 
-	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
 }
 
@@ -223,14 +223,14 @@ setcarpdev(const char *val, int d)
 	struct carpreq carpr;
 
 	memset(&carpr, 0, sizeof(carpr));
-	ifr.ifr_data = (caddr_t)&carpr;
+	ifr.ifr_data = &carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
 	strlcpy(carpr.carpr_carpdev, val, sizeof(carpr.carpr_carpdev));
 
-	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
 }
 
@@ -240,13 +240,13 @@ unsetcarpdev(const char *val, int d)
 	struct carpreq carpr;
 
 	memset(&carpr, 0, sizeof(carpr));
-	ifr.ifr_data = (caddr_t)&carpr;
+	ifr.ifr_data = &carpr;
 
-	if (ioctl(s, SIOCGVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
 	memset(&carpr.carpr_carpdev, 0, sizeof(carpr.carpr_carpdev));
 
-	if (ioctl(s, SIOCSVH, (caddr_t)&ifr) == -1)
+	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
 }
