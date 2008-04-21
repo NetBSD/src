@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.128 2008/01/30 11:47:04 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.129 2008/04/21 11:45:34 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.128 2008/01/30 11:47:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.129 2008/04/21 11:45:34 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -139,6 +139,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 		return (EINVAL);
 
+	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
@@ -149,6 +150,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 			blkcnt * sizeof(BLOCK_INFO));
     out:
 	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 #else
@@ -182,6 +184,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 		return (EINVAL);
 
+	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	blkiov15 = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO_15), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov15,
@@ -214,6 +217,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
     out:
 	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 	lfs_free(fs, blkiov15, LFS_NB_BLKIOV);
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 #endif
@@ -524,6 +528,7 @@ err2:
 	 */
 
 err3:
+	KERNEL_UNLOCK_ONE(NULL);
 	/*
 	 * XXX should do segwrite here anyway?
 	 */
@@ -580,6 +585,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	blkcnt = SCARG(uap, blkcnt);
 	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
+	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
@@ -590,6 +596,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 			blkcnt * sizeof(BLOCK_INFO));
     out:
 	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 #else
@@ -622,6 +629,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	blkcnt = SCARG(uap, blkcnt);
 	if ((size_t) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
+	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	blkiov15 = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO_15), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov15,
@@ -654,6 +662,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
     out:
 	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 	lfs_free(fs, blkiov15, LFS_NB_BLKIOV);
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 #endif
@@ -861,9 +870,11 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
 		return (error);
 
+	KERNEL_LOCK(1, NULL);
 	lfs_seglock(fs, SEGM_PROT);
 	error = lfs_do_segclean(fs, segnum);
 	lfs_segunlock(fs);
+	KERNEL_UNLOCK_ONE(NULL);
 	vfs_unbusy(mntp, false);
 	return error;
 }
@@ -951,6 +962,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	u_long timeout;
 	int error;
 
+	KERNEL_LOCK(1, NULL);
 	if (fsidp == NULL || (mntp = vfs_getvfs(fsidp)) == NULL)
 		addr = &lfs_allclean_wakeup;
 	else
@@ -961,6 +973,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	 */
 	timeout = tvtohz(tv);
 	error = tsleep(addr, PCATCH | PVFS, "segment", timeout);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error == ERESTART ? EINTR : 0);
 }
 
