@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.36 2008/04/19 13:46:12 cegger Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.37 2008/04/21 15:15:34 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.36 2008/04/19 13:46:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.37 2008/04/21 15:15:34 cegger Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -671,12 +671,10 @@ xen_debug_handler(void *arg)
 	int xci_ilevel = ci->ci_ilevel;
 	int xci_ipending = ci->ci_ipending;
 	int xci_idepth = ci->ci_idepth;
-	u_long upcall_pending =
-	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_pending;
-	u_long upcall_mask =
-	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask;
+	u_long upcall_pending = ci->ci_vcpu->evtchn_upcall_pending;
+	u_long upcall_mask = ci->ci_vcpu->evtchn_upcall_mask;
 #ifdef XEN3
-	u_long pending_sel = HYPERVISOR_shared_info->vcpu_info[0].evtchn_pending_sel;
+	u_long pending_sel = ci->ci_vcpu->evtchn_pending_sel;
 #else
 	u_long pending_sel = HYPERVISOR_shared_info->evtchn_pending_sel;
 #endif

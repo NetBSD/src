@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 2008/04/21 15:15:33 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,6 +63,10 @@ struct pmap;
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
+
+#ifdef XEN
+	volatile struct vcpu_info *ci_vcpu;
+#endif
 
 	/*
 	 * Will be accessed by other CPUs.
