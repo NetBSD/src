@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.38 2008/04/11 10:28:10 rmind Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.39 2008/04/21 19:05:41 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.38 2008/04/11 10:28:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.39 2008/04/21 19:05:41 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,10 +239,6 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		if ((error = fd_allocfile(&criofp, &criofd)) != 0)
 			return error;
 		criofcr = pool_get(&fcrpl, PR_WAITOK);
-		if (criofcr == NULL) {
-			fd_abort(curproc, criofp, criofd);
-			return ENOMEM;
-		}
 		mutex_spin_enter(&crypto_mtx);
 		TAILQ_INIT(&criofcr->csessions);
 		TAILQ_INIT(&criofcr->crp_ret_mq);
@@ -269,10 +265,6 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		sgop = (struct crypt_sgop *)data;
 		snop = kmem_alloc((sgop->count *
 				  sizeof(struct session_n_op)), KM_SLEEP);
-		if (!snop) {
-			error = EINVAL;
-			goto mbail;
-		}
 		error = copyin(sgop->sessions, snop, sgop->count *
 			       sizeof(struct session_n_op));
 		if (error) {
@@ -287,10 +279,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		error = copyout(snop, sgop->sessions, sgop->count *
 					sizeof(struct session_n_op));
 mbail:
-		if(snop) {
-			kmem_free(snop, sgop->count *
-				  sizeof(struct session_n_op));
-		}
+		kmem_free(snop, sgop->count * sizeof(struct session_n_op));
 		break;
 	case CIOCFSESSION:
 		mutex_spin_enter(&crypto_mtx);
@@ -306,8 +295,6 @@ mbail:
 		sfop = (struct crypt_sfop *)data;
 		sesid = kmem_alloc((sfop->count * sizeof(u_int32_t)), 
 				   KM_SLEEP);
-		if (!sesid)
-			return (EINVAL);
 		error = copyin(sfop->sesid, sesid, 
 			    (sfop->count * sizeof(u_int32_t)));
 		if (!error) {
@@ -331,9 +318,6 @@ mbail:
 		mop = (struct crypt_mop *)data;
 		cnop = kmem_alloc((mop->count * sizeof(struct crypt_n_op)),
 				  KM_SLEEP);
-		if(!cnop) {
-			return(EINVAL);
-		}
 		error = copyin(mop->reqs, cnop, 
 			    (mop->count * sizeof(struct crypt_n_op)));
 		if(!error) {
@@ -355,9 +339,6 @@ mbail:
 		mkop = (struct crypt_mkop *)data;
 		knop = kmem_alloc((mkop->count * sizeof(struct crypt_n_kop)),
 				  KM_SLEEP);
-		if (!knop) {
-			return(EINVAL);
-		}
 		error = copyin(mkop->reqs, knop,
 			    (mkop->count * sizeof(struct crypt_n_kop)));
 		if (!error) {
@@ -378,8 +359,6 @@ mbail:
 		crypt_res = kmem_alloc((count * 
 				      sizeof(struct crypt_result)),  
 				      KM_SLEEP);
-		if(!crypt_res)
-			return(EINVAL);
 		error = copyin(crypt_ret->results, crypt_res,
 			    (count * sizeof(struct crypt_result)));
 		if (error)
@@ -734,8 +713,6 @@ cryptodev_key(struct crypt_kop *kop)
 	}
 
 	krp = pool_get(&cryptkop_pool, PR_WAITOK);
-	if (!krp)
-		return (ENOMEM);
 	bzero(krp, sizeof *krp);
 	cv_init(&krp->krp_cv, "crykdev");
 	krp->krp_op = kop->crk_op;
@@ -933,10 +910,6 @@ cryptoopen(dev_t dev, int flag, int mode,
 		return error;
 
 	fcr = pool_get(&fcrpl, PR_WAITOK);
-	if (fcr == NULL) {
-		fd_abort(curproc, fp, fd);
-		return ENOMEM;
-	}
 	mutex_spin_enter(&crypto_mtx);
 	TAILQ_INIT(&fcr->csessions);
 	TAILQ_INIT(&fcr->crp_ret_mq);
@@ -1254,10 +1227,6 @@ cryptodev_mkey(struct fcrypt *fcr, struct crypt_n_kop *kop, int count)
 		}
 
 		krp = pool_get(&cryptkop_pool, PR_WAITOK);
-		if (!krp) {
-			kop[req].crk_status = ENOMEM;
-			goto fail;
-		}
 		bzero(krp, sizeof *krp);
 		cv_init(&krp->krp_cv, "crykdev");
 		krp->krp_op = kop[req].crk_op;
