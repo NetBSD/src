@@ -1,4 +1,4 @@
-/* $NetBSD: pps_ppbus.c,v 1.12 2008/04/16 09:39:01 cegger Exp $ */
+/* $NetBSD: pps_ppbus.c,v 1.13 2008/04/21 12:56:31 ad Exp $ */
 
 /*
  * ported to timecounters by Frank Kardel 2006
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.12 2008/04/16 09:39:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pps_ppbus.c,v 1.13 2008/04/21 12:56:31 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -122,11 +122,14 @@ ppsopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	ppbus_set_mode(sc->ppbus, PPBUS_PS2, 0);
 	ppbus_wctr(sc->ppbus, IRQENABLE | PCD | nINIT | SELECTIN);
 
+	mutex_spin_enter(&timecounter_lock);
 	memset((void *)&sc->pps_state, 0, sizeof(sc->pps_state));
 	sc->pps_state.ppscap = PPS_CAPTUREASSERT;
 	pps_init(&sc->pps_state);
+	mutex_spin_exit(&timecounter_lock);
 
 	sc->busy = 1;
+
 	return (0);
 }
 
@@ -137,7 +140,9 @@ ppsclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	device_t ppbus = sc->ppbus;
 
 	sc->busy = 0;
+	mutex_spin_enter(&timecounter_lock);
 	sc->pps_state.ppsparam.mode = 0;
+	mutex_spin_exit(&timecounter_lock);
 
 	ppbus_wdtr(ppbus, 0);
 	ppbus_wctr(ppbus, 0);
@@ -154,18 +159,18 @@ ppsintr(void *arg)
 	struct pps_softc *sc = arg;
 	device_t ppbus = sc->ppbus;
 
+	mutex_spin_enter(&timecounter_lock);
 	pps_capture(&sc->pps_state);
-
-	if (!(ppbus_rstr(ppbus) & nACK))
+	if (!(ppbus_rstr(ppbus) & nACK)) {
+		mutex_spin_exit(&timecounter_lock);
 		return;
-
+	}
 	if (sc->pps_state.ppsparam.mode & PPS_ECHOASSERT) 
 		ppbus_wctr(ppbus, IRQENABLE | AUTOFEED);
-
 	pps_event(&sc->pps_state, PPS_CAPTUREASSERT);
-
 	if (sc->pps_state.ppsparam.mode & PPS_ECHOASSERT) 
 		ppbus_wctr(ppbus, IRQENABLE);
+	mutex_spin_exit(&timecounter_lock);
 }
 
 static int
@@ -184,7 +189,9 @@ ppsioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 #ifdef PPS_SYNC
 	case PPS_IOC_KCBIND:
 #endif
+		mutex_spin_enter(&timecounter_lock);
 		error = pps_ioctl(cmd, data, &sc->pps_state);
+		mutex_spin_exit(&timecounter_lock);
 		break;
 
 	default:
