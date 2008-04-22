@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.183 2007/12/05 03:46:33 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.184 2008/04/22 12:59:33 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.183 2007/12/05 03:46:33 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.184 2008/04/22 12:59:33 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -426,15 +426,16 @@ parse_url(const char *url, const char *desc, url_t *type,
 	} else
 #endif /* INET6 */
 		if ((cp = strchr(thost, ':')) != NULL)
-			*cp++ =  '\0';
+			*cp++ = '\0';
 	*host = thost;
 
 			/* look for [:port] */
 	if (cp != NULL) {
-		long	nport;
+		unsigned long	nport;
 
-		nport = parseport(cp, -1);
-		if (nport == -1) {
+		nport = strtoul(cp, &ep, 10);
+		if (*cp == '\0' || *ep != '\0' ||
+		    nport < 1 || nport > MAX_IN_PORT_T) {
 			warnx("Unknown port `%s' in %s `%s'",
 			    cp, desc, origurl);
 			goto cleanup_parse_url;
@@ -476,7 +477,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 {
 	struct addrinfo		hints, *res, *res0 = NULL;
 	int			error;
-	char			hbuf[NI_MAXHOST];
 	sigfunc volatile	oldintr;
 	sigfunc volatile	oldintp;
 	int volatile		s;
@@ -612,6 +612,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			url_t purltype;
 			char *phost, *ppath;
 			char *pport, *no_proxy;
+			in_port_t pportnum;
 
 			isproxy = 1;
 
@@ -619,7 +620,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			no_proxy = getoptionvalue("no_proxy");
 			if (! EMPTYSTRING(no_proxy)) {
 				char *np, *np_copy, *np_iter;
-				long np_port;
+				unsigned long np_port;
 				size_t hlen, plen;
 
 				np_iter = np_copy = ftp_strdup(no_proxy);
@@ -628,10 +629,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					if (*cp == '\0')
 						continue;
 					if ((np = strrchr(cp, ':')) != NULL) {
-						*np = '\0';
-						np_port =
-						    strtol(np + 1, &ep, 10);
-						if (*ep != '\0')
+						*np++ =  '\0';
+						np_port = strtoul(np, &ep, 10);
+						if (*np == '\0' || *ep != '\0')
 							continue;
 						if (np_port != portnum)
 							continue;
@@ -659,7 +659,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 					goto cleanup_fetch_url;
 				}
 				if (parse_url(proxyenv, "proxy URL", &purltype,
-				    &puser, &ppass, &phost, &pport, &portnum,
+				    &puser, &ppass, &phost, &pport, &pportnum,
 				    &ppath) == -1)
 					goto cleanup_fetch_url;
 
@@ -701,9 +701,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		hints.ai_family = family;
 		hints.ai_socktype = SOCK_STREAM;
 		hints.ai_protocol = 0;
-		error = getaddrinfo(host, NULL, &hints, &res0);
+		error = getaddrinfo(host, port, &hints, &res0);
 		if (error) {
-			warnx("Can't lookup `%s': %s", host,
+			warnx("Can't lookup `%s:%s': %s", host, port,
 			    (error == EAI_SYSTEM) ? strerror(errno)
 						  : gai_strerror(error));
 			goto cleanup_fetch_url;
@@ -713,23 +713,27 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 		s = -1;
 		for (res = res0; res; res = res->ai_next) {
+			char	hname[NI_MAXHOST], sname[NI_MAXSERV];
+
 			ai_unmapped(res);
 			if (getnameinfo(res->ai_addr, res->ai_addrlen,
-			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
-				strlcpy(hbuf, "?", sizeof(hbuf));
-
-			if (verbose && res0->ai_next) {
-				fprintf(ttyout, "Trying %s...\n", hbuf);
+			    hname, sizeof(hname), sname, sizeof(sname),
+			    NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
+				strlcpy(hname, "?", sizeof(hname));
+				strlcpy(sname, "?", sizeof(sname));
 			}
 
-			((struct sockaddr_in *)res->ai_addr)->sin_port =
-			    htons(portnum);
+			if (verbose && res0->ai_next) {
+				fprintf(ttyout, "Trying %s:%s ...\n",
+				    hname, sname);
+			}
+
 			s = socket(res->ai_family, SOCK_STREAM,
 			    res->ai_protocol);
 			if (s < 0) {
 				warn(
-				  "Can't create socket for connection to `%s'",
-				    hbuf);
+				    "Can't create socket for connection to "
+				    "`%s:%s'", hname, sname);
 				continue;
 			}
 
@@ -744,7 +748,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 
 		if (s < 0) {
-			warnx("Can't connect to `%s'", host);
+			warnx("Can't connect to `%s:%s'", host, port);
 			goto cleanup_fetch_url;
 		}
 
@@ -1296,7 +1300,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	goto cleanup_fetch_url;
 
  improper:
-	warnx("Improper response from `%s'", host);
+	warnx("Improper response from `%s:%s'", host, port);
 
  cleanup_fetch_url:
 	if (oldintr)
@@ -1494,7 +1498,7 @@ fetch_ftp(const char *url)
 	autologin = oautologin;
 	if ((connected == 0) ||
 	    (connected == 1 && !ftp_login(host, user, pass))) {
-		warnx("Can't connect or login to host `%s'", host);
+		warnx("Can't connect or login to host `%s:%s'", host, port);
 		goto cleanup_fetch_ftp;
 	}
 
