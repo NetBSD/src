@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.3 2008/04/21 02:10:45 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.4 2008/04/22 00:14:20 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -61,7 +61,7 @@ carp_status(void)
 	const char *state;
 	struct carpreq carpr;
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	memset(&carpr, 0, sizeof(struct carpreq));
 	ifr.ifr_data = &carpr;
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
@@ -86,7 +86,7 @@ setcarp_passwd(const char *val, int d)
 {
 	struct carpreq carpr;
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	memset(&carpr, 0, sizeof(struct carpreq));
 	ifr.ifr_data = &carpr;
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
@@ -118,7 +118,7 @@ setcarp_vhid(const char *val, int d)
 
 	vhid = (int)tmp;
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	memset(&carpr, 0, sizeof(struct carpreq));
 	ifr.ifr_data = &carpr;
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
@@ -149,7 +149,7 @@ setcarp_advskew(const char *val, int d)
 
 	advskew = (int)tmp;
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	memset(&carpr, 0, sizeof(struct carpreq));
 	ifr.ifr_data = &carpr;
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
@@ -180,7 +180,7 @@ setcarp_advbase(const char *val, int d)
 
 	advbase = (int)tmp;
 
-	memset((char *)&carpr, 0, sizeof(struct carpreq));
+	memset(&carpr, 0, sizeof(struct carpreq));
 	ifr.ifr_data = &carpr;
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
