@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.31 2008/04/18 15:32:46 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.32 2008/04/22 02:23:05 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.31 2008/04/18 15:32:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2008/04/22 02:23:05 tls Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -246,6 +246,23 @@ cpu_vm_init(struct cpu_info *ci)
 			tcolors /= cai->cai_associativity;
 		}
 		ncolors = max(ncolors, tcolors);
+		/*
+		 * If the desired number of colors is not a power of
+		 * two, it won't be good.  Find the greatest power of
+		 * two which is an even divisor of the number of colors,
+		 * to preserve even coloring of pages.
+		 */
+		if (ncolors & (ncolors - 1) ) {
+			int try, picked = 1;
+			for (try = 1; try < ncolors; try *= 2) {
+				if (ncolors % try == 0) picked = try;
+			}
+			if (picked == 1) {
+				panic("desired number of cache colors %d is "
+			      	" > 1, but not even!", ncolors);
+			}
+			ncolors = picked;
+		}
 	}
 
 	/*
