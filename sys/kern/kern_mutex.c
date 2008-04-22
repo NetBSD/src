@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.34 2008/04/11 15:28:34 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.35 2008/04/22 14:46:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.34 2008/04/11 15:28:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.35 2008/04/22 14:46:35 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -816,6 +816,8 @@ int
 mutex_owned(kmutex_t *mtx)
 {
 
+	if (mtx == NULL)
+		return 0;
 	if (MUTEX_ADAPTIVE_P(mtx))
 		return MUTEX_OWNER(mtx->mtx_owner) == (uintptr_t)curlwp;
 #ifdef FULL
