@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.4 2007/12/09 20:27:49 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.5 2008/04/22 22:37:14 cegger Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -30,6 +30,11 @@ file	arch/x86/pci/amdpcib.c			amdpcib
 
 attach  hpet at amdpcib with amdpcib_hpet
 file    arch/x86/pci/amdpcib_hpet.c		amdpcib_hpet
+
+# AMD Processors -- Miscellaneous Control
+device	amdtemp: sysmon_envsys
+attach	amdtemp at pci
+file	arch/x86/pci/amdtemp.c		amdtemp
 
 # PCI-LPC bridges
 define	hpetichbus {}

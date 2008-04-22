@@ -1,0 +1,82 @@
+.\" $NetBSD: amdtemp.4,v 1.1 2008/04/22 22:37:13 cegger Exp $
+.\"-
+.\" Copyright (c) 2008 Christoph Egger
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $FreeBSD: src/share/man/man4/coretemp.4,v 1.4 2007/10/15 20:00:19 netchild Exp $
+.\"
+.Dd April 22, 2008
+.Dt AMDTEMP 4
+.Os
+.Sh NAME
+.Nm amdtemp
+.Nd AMD CPU on-die digital thermal sensor
+.Sh SYNOPSIS
+.Cd "amdtemp* at pci? dev ? function ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the on-die digital thermal sensor present
+on AMD K8, AMD Barcelona, AMD Phenoms and AMD Griffin CPUs.
+.Pp
+These sensors were officially introduced in AMD K8 Revision F processors,
+and provide 0.5 degC accuracy.  Precision was improved in Revision
+G chips, which provide two more bits for 0.25 degC steppings.  Each core
+has two temperature sensors, and there are be up to two cores per CPU socket.
+.Pp
+AMD Barcelona, AMD Phenom and AMD Griffin provide 0.125 degC accuracy
+and provide one temperature sensor for each CPU socket.
+.Pp
+The
+.Nm
+driver reports temperatures through the
+.Xr envsys 4
+API.
+.Bl -column "Sensor    " "Units" "Typical" -offset indent
+.It Sy "Sensor     " Ta Sy "Units" Ta Sy "Typical Use"
+.It Li "CPUN sensor0" Ta "uK" Ta "cpuN temperature"
+.El
+.Sh SEE ALSO
+.Xr envstat 4 ,
+.Xr powerd 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 4.4
+named
+.Xr kate 4 .
+And then was ported to
+.Nx 5.0 .
+The driver has been renamed with support for newer AMD CPUs.
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Constantine A. Murenin <cnst@openbsd.org>
+whilst at the University of Waterloo. It was adapted to
+.Nx
+by
+.An Christoph Egger .

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.204 2008/04/03 22:51:09 xtraeme Exp $
+# $NetBSD: GENERIC,v 1.205 2008/04/22 22:37:13 cegger Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.204 $"
+#ident 		"GENERIC-$Revision: 1.205 $"
 
 maxusers	64		# estimated number of users
 
@@ -398,6 +398,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 
 # Hardware monitors
+
+amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
