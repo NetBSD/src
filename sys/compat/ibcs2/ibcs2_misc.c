@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.100 2008/03/27 19:06:51 ad Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.101 2008/04/22 21:23:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.100 2008/03/27 19:06:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.101 2008/04/22 21:23:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1042,7 +1042,9 @@ ibcs2_sys_pgrpsys(struct lwp *l, const struct ibcs2_sys_pgrpsys_args *uap, regis
 
 	switch (SCARG(uap, type)) {
 	case 0:			/* getpgrp */
+		mutex_enter(&proclist_lock);
 		*retval = p->p_pgrp->pg_id;
+		mutex_exit(&proclist_lock);
 		return 0;
 
 	case 1:			/* setpgrp */
@@ -1052,7 +1054,9 @@ ibcs2_sys_pgrpsys(struct lwp *l, const struct ibcs2_sys_pgrpsys_args *uap, regis
 		SCARG(&sa, pid) = 0;
 		SCARG(&sa, pgid) = 0;
 		sys_setpgid(l, &sa, retval);
+		mutex_enter(&proclist_lock);
 		*retval = p->p_pgrp->pg_id;
+		mutex_exit(&proclist_lock);
 		return 0;
 	    }
 
