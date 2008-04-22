@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1131 2008/04/15 18:27:01 jdc Exp $
+#	$NetBSD: mi,v 1.1132 2008/04/22 10:42:17 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3593,6 +3593,7 @@
 ./usr/share/man/cat2/poll.0			comp-c-catman		.cat
 ./usr/share/man/cat2/pollts.0			comp-c-catman		.cat
 ./usr/share/man/cat2/posix_fadvise.0		comp-c-catman		.cat
+./usr/share/man/cat2/posix_madvise.0		comp-c-catman		.cat
 ./usr/share/man/cat2/pread.0			comp-c-catman		.cat
 ./usr/share/man/cat2/preadv.0			comp-c-catman		.cat
 ./usr/share/man/cat2/profil.0			comp-c-catman		.cat
@@ -8628,6 +8629,7 @@
 ./usr/share/man/man2/poll.2			comp-c-man		.man
 ./usr/share/man/man2/pollts.2			comp-c-man		.man
 ./usr/share/man/man2/posix_fadvise.2		comp-c-man		.man
+./usr/share/man/man2/posix_madvise.2		comp-c-man		.man
 ./usr/share/man/man2/pread.2			comp-c-man		.man
 ./usr/share/man/man2/preadv.2			comp-c-man		.man
 ./usr/share/man/man2/profil.2			comp-c-man		.man
