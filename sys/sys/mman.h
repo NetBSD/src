@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.39 2007/07/17 17:42:07 joerg Exp $	*/
+/*	$NetBSD: mman.h,v 1.40 2008/04/22 10:42:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -151,13 +151,22 @@ typedef	__off_t		off_t;		/* file offset */
 #define	MAP_INHERIT_DEFAULT	MAP_INHERIT_COPY
 #endif
 
+/*
+ * Equivalents of madvise as defined by POSIX.
+ */
+#define	POSIX_MADV_NORMAL	MADV_NORMAL
+#define	POSIX_MADV_RANDOM	MADV_RANDOM
+#define	POSIX_MADV_SEQUENTIAL	MADV_SEQUENTIAL
+#define	POSIX_MADV_WILLNEED	MADV_WILLNEED
+#define	POSIX_MADV_DONTNEED	MADV_DONTNEED
+
 #ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-void   *mmap(void *, size_t, int, int, int, off_t);
-void   *mremap(void *, size_t, void *, size_t, int);
+void *	mmap(void *, size_t, int, int, int, off_t);
+void *	mremap(void *, size_t, void *, size_t, int);
 int	munmap(void *, size_t);
 int	mprotect(void *, size_t, int);
 #ifndef __LIBC12_SOURCE__
@@ -172,6 +181,7 @@ int	madvise(void *, size_t, int);
 int	mincore(void *, size_t, char *);
 int	minherit(void *, size_t, int);
 #endif
+int	posix_madvise(void *, size_t, int);
 __END_DECLS
 
 #endif /* !_KERNEL */
