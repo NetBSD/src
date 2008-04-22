@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.218 2008/04/21 12:49:20 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.219 2008/04/22 12:04:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.218 2008/04/21 12:49:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.219 2008/04/22 12:04:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2664,7 +2664,7 @@ ttyfree(struct tty *tp)
 	mutex_exit(&tty_lock);
 	mutex_exit(&proclist_lock);
 
-	callout_halt(&tp->t_rstrt_ch);
+	callout_halt(&tp->t_rstrt_ch, NULL);
 	callout_destroy(&tp->t_rstrt_ch);
 	ttyldisc_release(tp->t_linesw);
 	clfree(&tp->t_rawq);

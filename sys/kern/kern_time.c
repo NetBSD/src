@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.143 2008/04/21 12:56:31 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.144 2008/04/22 12:04:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.143 2008/04/21 12:56:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.144 2008/04/22 12:04:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1207,14 +1207,11 @@ itimerfree(struct ptimers *pts, int index)
 
 	pt = pts->pts_timers[index];
 	pts->pts_timers[index] = NULL;
-	if (pt->pt_type == CLOCK_REALTIME) {
-		mutex_spin_exit(&timer_lock);
-		callout_halt(&pt->pt_ch);
-	} else if (pt->pt_queued) {
+	if (pt->pt_type == CLOCK_REALTIME)
+		callout_halt(&pt->pt_ch, &timer_lock);
+	else if (pt->pt_queued)
 		TAILQ_REMOVE(&timer_queue, pt, pt_chain);
-		mutex_spin_exit(&timer_lock);
-	} else
-		mutex_spin_exit(&timer_lock);
+	mutex_spin_exit(&timer_lock);
 	callout_destroy(&pt->pt_ch);
 	pool_put(&ptimer_pool, pt);
 }

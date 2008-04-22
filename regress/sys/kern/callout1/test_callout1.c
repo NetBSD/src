@@ -1,4 +1,4 @@
-/*	$NetBSD: test_callout1.c,v 1.1 2008/03/28 20:44:57 ad Exp $	*/
+/*	$NetBSD: test_callout1.c,v 1.2 2008/04/22 12:04:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: test_callout1.c,v 1.1 2008/03/28 20:44:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: test_callout1.c,v 1.2 2008/04/22 12:04:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -79,7 +79,7 @@ test_softint(void *cookie)
 {
 
 	printf("l_ncsw = %d\n", (int)curlwp->l_ncsw);
-	callout_halt(&test_ch);
+	callout_halt(&test_ch, NULL);
 	printf("l_ncsw = %d\n", (int)curlwp->l_ncsw);
 }
 
