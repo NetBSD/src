@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.36 2008/04/22 11:45:28 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.37 2008/04/22 12:04:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.36 2008/04/22 11:45:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.37 2008/04/22 12:04:22 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -457,21 +457,24 @@ callout_stop(callout_t *cs)
  *	Cancel a pending callout.  If in-flight, block until it completes.
  *	May not be called from a hard interrupt handler.  If the callout
  * 	can take locks, the caller of callout_halt() must not hold any of
- *	those locks, otherwise the two could deadlock.
+ *	those locks, otherwise the two could deadlock.  If 'interlock' is
+ *	non-NULL and we must wait for the callout to complete, it will be
+ *	released and re-acquired before returning.
  */
 bool
-callout_halt(callout_t *cs)
+callout_halt(callout_t *cs, kmutex_t *interlock)
 {
 	callout_impl_t *c = (callout_impl_t *)cs;
 	struct callout_cpu *cc;
 	struct lwp *l;
-	kmutex_t *lock;
+	kmutex_t *lock, *relock;
 	bool expired;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
 	KASSERT(!cpu_intr_p());
 
 	lock = callout_lock(c);
+	relock = NULL;
 
 	expired = ((c->c_flags & CALLOUT_FIRED) != 0);
 	if ((c->c_flags & CALLOUT_PENDING) != 0)
@@ -483,18 +486,34 @@ callout_halt(callout_t *cs)
 		cc = c->c_cpu;
 		if (__predict_true(cc->cc_active != c || cc->cc_lwp == l))
 			break;
-		KASSERT(l->l_wchan == NULL);
-		cc->cc_nwait++;
-		cc->cc_ev_block.ev_count++;
-		l->l_kpriority = true;
-		sleepq_enter(&cc->cc_sleepq, l);
-		sleepq_enqueue(&cc->cc_sleepq, cc, "callout", &sleep_syncobj);
-		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-		sleepq_block(0, false);
+		if (interlock != NULL) {
+			/*
+			 * Avoid potential scheduler lock order problems by
+			 * dropping the interlock without the callout lock
+			 * held.
+			 */
+			mutex_spin_exit(lock);
+			mutex_exit(interlock);
+			relock = interlock;
+			interlock = NULL;
+		} else {
+			/* XXX Better to do priority inheritance. */
+			KASSERT(l->l_wchan == NULL);
+			cc->cc_nwait++;
+			cc->cc_ev_block.ev_count++;
+			l->l_kpriority = true;
+			sleepq_enter(&cc->cc_sleepq, l);
+			sleepq_enqueue(&cc->cc_sleepq, cc, "callout",
+			    &sleep_syncobj);
+			KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
+			sleepq_block(0, false);
+		}
 		lock = callout_lock(c);
 	}
 
 	mutex_spin_exit(lock);
+	if (__predict_false(relock != NULL))
+		mutex_enter(relock);
 
 	return expired;
 }

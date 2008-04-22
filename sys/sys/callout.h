@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.28 2008/04/22 11:45:28 ad Exp $	*/
+/*	$NetBSD: callout.h,v 1.29 2008/04/22 12:04:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ typedef struct callout_impl {
 #endif	/* _CALLOUT_PRIVATE */
 
 #ifdef _KERNEL
+#include <sys/mutex.h>
+
 struct cpu_info;
 
 void	callout_startup(void);
@@ -114,7 +116,7 @@ void	callout_setfunc(callout_t *, void (*)(void *), void *);
 void	callout_reset(callout_t *, int, void (*)(void *), void *);
 void	callout_schedule(callout_t *, int);
 bool	callout_stop(callout_t *);
-bool	callout_halt(callout_t *);
+bool	callout_halt(callout_t *, kmutex_t *);
 bool	callout_pending(callout_t *);
 bool	callout_expired(callout_t *);
 bool	callout_active(callout_t *);
