@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.5 2008/04/18 14:56:40 cegger Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.6 2008/04/22 14:02:04 cegger Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.5 2008/04/18 14:56:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.6 2008/04/22 14:02:04 cegger Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -226,7 +226,7 @@ pi1ppc_sc_attach(struct pi1ppc_softc *lsc)
 	lsc->sc_inb_nbytes = lsc->sc_outb_nbytes = 0;
 
 	/* Last configuration step: set mode to standard mode */
-	if (pi1ppc_setmode(&(lsc->sc_dev), PPBUS_COMPATIBLE) != 0) {
+	if (pi1ppc_setmode(lsc->sc_dev, PPBUS_COMPATIBLE) != 0) {
 		PI1PPC_DPRINTF(("%s: unable to initialize mode.\n",
                                 device_xname(lsc->sc_dev)));
 	}
@@ -283,7 +283,7 @@ pi1ppc_sc_attach(struct pi1ppc_softc *lsc)
 	lsc->sc_use = 0;
 
 	/* Configure child of the device. */
-	lsc->child = config_found(&(lsc->sc_dev), &(sc_parport_adapter),
+	lsc->child = config_found(lsc->sc_dev, &(sc_parport_adapter),
 		pi1ppc_print);
 
 	return;
@@ -471,7 +471,7 @@ static int
 pi1ppc_read(device_t dev, char *buf, int len, int ioflag,
 	size_t *cnt)
 {
-	struct pi1ppc_softc *pi1ppc = device_parent(dev);
+	struct pi1ppc_softc *pi1ppc = device_private(dev);
 	int error = 0;
 	int s;
 
@@ -526,7 +526,7 @@ pi1ppc_read(device_t dev, char *buf, int len, int ioflag,
 static int
 pi1ppc_write(device_t dev, char *buf, int len, int ioflag, size_t *cnt)
 {
-	struct pi1ppc_softc * const pi1ppc = device_parent(dev);
+	struct pi1ppc_softc * const pi1ppc = device_private(dev);
 	int error = 0;
 	int s;
 
@@ -588,7 +588,7 @@ pi1ppc_write(device_t dev, char *buf, int len, int ioflag, size_t *cnt)
 static int
 pi1ppc_setmode(device_t dev, int mode)
 {
-	struct pi1ppc_softc *pi1ppc = device_parent(dev);
+	struct pi1ppc_softc *pi1ppc = device_private(dev);
 	u_int8_t ecr;
 	u_int8_t chipset_mode;
 	int s;
