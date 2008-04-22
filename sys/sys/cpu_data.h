@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.21 2008/04/11 15:31:34 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.22 2008/04/22 11:45:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,9 +67,9 @@ struct cpu_data {
 	 * it is cache hot.
 	 */
 	lwp_t		*cpu_biglock_wanted;	/* LWP spinning on biglock */
-	void		*cpu_callout;		/* running callout */
-	void		*cpu_callout_cancel;	/* callout to be cancelled */
-	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
+	void		*cpu_callout;		/* per-CPU callout state */
+	void		*cpu_unused1;		/* unused */
+	u_int		cpu_unused2;		/* unused */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 	kcondvar_t	cpu_xcall;		/* cross-call support */
 	int		cpu_xcall_pending;	/* cross-call support */
