@@ -1,11 +1,8 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.12 2008/01/07 16:12:53 ad Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.13 2008/04/22 21:26:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.12 2008/01/07 16:12:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.13 2008/04/22 21:26:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
