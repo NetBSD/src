@@ -1,4 +1,4 @@
-/* $NetBSD: _resumecontext.S,v 1.2 2004/03/01 20:56:05 drochner Exp $ */
+/* $NetBSD: _resumecontext.S,v 1.3 2008/04/22 04:47:44 dogcow Exp $ */
 	
 /*
  * Copyright (c) 2004
@@ -31,3 +31,5 @@
 LEAF_NOPROFILE(__resumecontext, 0)
 	LDGP(ra)
 	CALL(_resumecontext)
+END(__resumecontext)
+
