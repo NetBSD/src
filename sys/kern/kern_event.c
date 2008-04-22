@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.53 2008/03/26 13:32:32 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.54 2008/04/22 11:44:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.53 2008/03/26 13:32:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.54 2008/04/22 11:44:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,7 @@ filt_timerattach(struct knote *kn)
 		atomic_dec_uint(&kq_ncallouts);
 		return ENOMEM;
 	}
-	callout_init(calloutp, 0);
+	callout_init(calloutp, CALLOUT_MPSAFE);
 
 	kq = kn->kn_kq;
 	mutex_spin_enter(&kq->kq_lock);
@@ -619,7 +619,7 @@ filt_timerdetach(struct knote *kn)
 	callout_t *calloutp;
 
 	calloutp = (callout_t *)kn->kn_hook;
-	callout_stop(calloutp);
+	callout_halt(calloutp);
 	callout_destroy(calloutp);
 	kmem_free(calloutp, sizeof(*calloutp));
 	atomic_dec_uint(&kq_ncallouts);
