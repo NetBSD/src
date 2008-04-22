@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.120 2008/04/21 00:13:46 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.121 2008/04/22 11:45:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.120 2008/04/21 00:13:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.121 2008/04/22 11:45:28 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -227,17 +227,12 @@ hardclock(struct clockframe *frame)
 		sched_tick(ci);
 
 #if defined(MULTIPROCESSOR)
-	/*
-	 * If we are not the primary CPU, we're not allowed to do
-	 * any more work.
-	 */
-	if (CPU_IS_PRIMARY(ci) == 0)
-		return;
+	if (CPU_IS_PRIMARY(ci))
 #endif
-
-	hardclock_ticks++;
-
-	tc_ticktock();
+	{
+		hardclock_ticks++;
+		tc_ticktock();
+	}
 
 	/*
 	 * Update real-time timeout queue.  Callouts are processed at a

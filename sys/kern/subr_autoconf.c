@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.144 2008/04/14 18:07:51 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.145 2008/04/22 11:45:28 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.144 2008/04/14 18:07:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.145 2008/04/22 11:45:28 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -432,9 +432,6 @@ configure(void)
 
 	/* Initialize SSP. */
 	ssp_init();
-
-	/* Initialize callouts, part 2. */
-	callout_startup2();
 
 	/*
 	 * Now that we've found all the hardware, start the real time
