@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.194 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.195 2008/04/22 11:05:06 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.194 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.195 2008/04/22 11:05:06 reinoud Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1923,7 +1923,7 @@ nestiobuf_iodone(buf_t *bp)
 	KASSERT(bp->b_bcount <= bp->b_bufsize);
 	KASSERT(mbp != bp);
 
-	error = 0;
+	error = bp->b_error;
 	if (bp->b_error == 0 &&
 	    (bp->b_bcount < bp->b_bufsize || bp->b_resid > 0)) {
 		/*
@@ -1989,7 +1989,8 @@ nestiobuf_done(buf_t *mbp, int donebytes, int error)
 	mutex_enter(mbp->b_objlock);
 	KASSERT(mbp->b_resid >= donebytes);
 	mbp->b_resid -= donebytes;
-	mbp->b_error = error;
+	if (error)
+		mbp->b_error = error;
 	if (mbp->b_resid == 0) {
 		mutex_exit(mbp->b_objlock);
 		biodone(mbp);
