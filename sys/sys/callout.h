@@ -1,4 +1,4 @@
-/*	$NetBSD: callout.h,v 1.27 2008/03/28 20:44:38 ad Exp $	*/
+/*	$NetBSD: callout.h,v 1.28 2008/04/22 11:45:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@ typedef struct callout {
 } callout_t;
 
 /* Internal flags. */
+#define	CALLOUT_BOUND		0x0001	/* bound to a specific CPU */
 #define	CALLOUT_PENDING		0x0002	/* callout is on the queue */
 #define	CALLOUT_FIRED		0x0004	/* callout has fired */
 #define	CALLOUT_INVOKING	0x0008	/* callout function is being invoked */
@@ -85,15 +86,15 @@ struct callout_circq {
 #define	cq_next_l	cq_next.list
 #define	cq_prev_l	cq_prev.list
 
+struct callout_cpu;
+
 typedef struct callout_impl {
 	struct callout_circq c_list;		/* linkage on queue */
 	void	(*c_func)(void *);		/* function to call */
 	void	*c_arg;				/* function argument */
-	void	*c_oncpu;			/* non-NULL while running */
-	void	*c_onlwp;			/* non-NULL while running */
+	struct callout_cpu * volatile c_cpu;	/* associated CPU */
 	int	c_time;				/* when callout fires */
 	u_int	c_flags;			/* state of this entry */
-	u_int	c_runwait;			/* number of waiters */
 	u_int	c_magic;			/* magic number */
 } callout_impl_t;
 #define	CALLOUT_MAGIC		0x11deeba1
@@ -101,8 +102,10 @@ typedef struct callout_impl {
 #endif	/* _CALLOUT_PRIVATE */
 
 #ifdef _KERNEL
+struct cpu_info;
+
 void	callout_startup(void);
-void	callout_startup2(void);
+void	callout_init_cpu(struct cpu_info *);
 void	callout_hardclock(void);
 
 void	callout_init(callout_t *, u_int);
@@ -117,6 +120,7 @@ bool	callout_expired(callout_t *);
 bool	callout_active(callout_t *);
 bool	callout_invoking(callout_t *);
 void	callout_ack(callout_t *);
+void	callout_bind(callout_t *, struct cpu_info *);
 #endif	/* _KERNEL */
 
 #endif /* !_SYS_CALLOUT_H_ */
