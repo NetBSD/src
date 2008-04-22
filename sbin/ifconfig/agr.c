@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $	*/
+/*	$NetBSD: agr.c,v 1.4 2008/04/22 17:18:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.3 2005/03/19 17:31:48 thorpej Exp $");
+__RCSID("$NetBSD: agr.c,v 1.4 2008/04/22 17:18:11 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -70,39 +70,43 @@ assertifname(const char *ifname)
 void
 agraddport(const char *val, int d)
 {
+	char buf[IFNAMSIZ];
 	struct agrreq ar;
 
 	assertifname(ifr.ifr_name);
 
+	strlcpy(buf, val, sizeof(buf));
+
 	memset(&ar, 0, sizeof(ar));
 	ar.ar_version = AGRREQ_VERSION;
 	ar.ar_cmd = AGRCMD_ADDPORT;
-	ar.ar_buf = __UNCONST(val);
-	ar.ar_buflen = strlen(val);
-	ifr.ifr_data = (void *)&ar;
+	ar.ar_buf = buf;
+	ar.ar_buflen = strlen(buf);
+	ifr.ifr_data = &ar;
 
-	if (ioctl(s, SIOCSETAGR, &ifr) == -1) {
+	if (ioctl(s, SIOCSETAGR, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSETAGR");
-	}
 }
 
 void
 agrremport(const char *val, int d)
 {
+	char buf[IFNAMSIZ];
 	struct agrreq ar;
 
 	assertifname(ifr.ifr_name);
 
+	strlcpy(buf, val, sizeof(buf));
+
 	memset(&ar, 0, sizeof(ar));
 	ar.ar_version = AGRREQ_VERSION;
 	ar.ar_cmd = AGRCMD_REMPORT;
-	ar.ar_buf = __UNCONST(val);
-	ar.ar_buflen = strlen(val);
-	ifr.ifr_data = (void *)&ar;
+	ar.ar_buf = buf;
+	ar.ar_buflen = strlen(buf);
+	ifr.ifr_data = &ar;
 
-	if (ioctl(s, SIOCSETAGR, &ifr) == -1) {
+	if (ioctl(s, SIOCSETAGR, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSETAGR");
-	}
 }
 
 void
