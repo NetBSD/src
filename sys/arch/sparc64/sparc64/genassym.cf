@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.56 2008/03/25 16:01:15 martin Exp $
+#	$NetBSD: genassym.cf,v 1.57 2008/04/22 16:51:30 nakayama Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,10 @@
 #
 #	@(#)genassym.c	8.1 (Berkeley) 6/11/93
 #
+
+if defined(_KERNEL_OPT)
+include "opt_multiprocessor.h"
+endif
 
 include <sys/param.h>
 include <sys/buf.h>
