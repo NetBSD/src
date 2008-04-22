@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp.c,v 1.153 2007/12/05 00:15:25 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.154 2008/04/22 12:59:33 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,7 +99,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.153 2007/12/05 00:15:25 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.154 2008/04/22 12:59:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,9 +164,8 @@ struct sockinet myctladdr, hisctladdr, data_addr;
 char *
 hookup(char *host, char *port)
 {
-	int s = -1, error, portnum;
+	int s = -1, error;
 	struct addrinfo hints, *res, *res0;
-	char hbuf[MAXHOSTNAMELEN];
 	static char hostnamebuf[MAXHOSTNAMELEN];
 	socklen_t len;
 	int on = 1;
@@ -174,14 +173,13 @@ hookup(char *host, char *port)
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset((char *)&myctladdr, 0, sizeof (myctladdr));
 	memset(&hints, 0, sizeof(hints));
-	portnum = parseport(port, FTP_PORT);
 	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = 0;
-	error = getaddrinfo(host, NULL, &hints, &res0);
+	error = getaddrinfo(host, port, &hints, &res0);
 	if (error) {
-		warnx("Can't lookup `%s': %s", host,
+		warnx("Can't lookup `%s:%s': %s", host, port,
 		    (error == EAI_SYSTEM) ? strerror(errno)
 					  : gai_strerror(error));
 		code = -1;
@@ -196,19 +194,23 @@ hookup(char *host, char *port)
 	hostname = hostnamebuf;
 
 	for (res = res0; res; res = res->ai_next) {
+		char hname[NI_MAXHOST], sname[NI_MAXSERV];
+
 		ai_unmapped(res);
 		if (getnameinfo(res->ai_addr, res->ai_addrlen,
-		    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
-			strlcpy(hbuf, "?", sizeof(hbuf));
+		    hname, sizeof(hname), sname, sizeof(sname),
+		    NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
+			strlcpy(hname, "?", sizeof(hname));
+			strlcpy(sname, "?", sizeof(sname));
+		}
 		if (verbose && res0->ai_next) {
 				/* if we have multiple possibilities */
-			fprintf(ttyout, "Trying %s...\n", hbuf);
+			fprintf(ttyout, "Trying %s:%s ...\n", hname, sname);
 		}
-		((struct sockaddr_in *)res->ai_addr)->sin_port = htons(portnum);
 		s = socket(res->ai_family, SOCK_STREAM, res->ai_protocol);
 		if (s < 0) {
-			warn("Can't create socket for connection to `%s'",
-			    hbuf);
+			warn("Can't create socket for connection to `%s:%s'",
+			    hname, sname);
 			continue;
 		}
 		if (ftp_connect(s, res->ai_addr, res->ai_addrlen) < 0) {
@@ -221,7 +223,7 @@ hookup(char *host, char *port)
 		break;
 	}
 	if (s < 0) {
-		warnx("Can't connect to `%s'", host);
+		warnx("Can't connect to `%s:%s'", host, port);
 		code = -1;
 		freeaddrinfo(res0);
 		return 0;
@@ -233,7 +235,8 @@ hookup(char *host, char *port)
 
 	len = hisctladdr.su_len;
 	if (getsockname(s, (struct sockaddr *)&myctladdr.si_su, &len) == -1) {
-		warn("Can't determine my address of connection to `%s'", host);
+		warn("Can't determine my address of connection to `%s:%s'",
+		    host, port);
 		code = -1;
 		goto bad;
 	}

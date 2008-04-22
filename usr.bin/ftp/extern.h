@@ -1,7 +1,7 @@
-/*	$NetBSD: extern.h,v 1.72 2007/05/24 05:05:18 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.73 2008/04/22 12:59:33 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -173,7 +173,6 @@ const char *onoff(int);
 void	opts(int, char **);
 void	newer(int, char **);
 void	page(int, char **);
-int	parseport(const char *, int);
 int	parserate(int, char **, int);
 char   *prompt(void);
 void	proxabort(int);
