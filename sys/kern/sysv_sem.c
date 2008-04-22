@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.79 2008/01/02 11:48:54 ad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.80 2008/04/22 12:14:12 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.79 2008/01/02 11:48:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.80 2008/04/22 12:14:12 njoly Exp $");
 
 #define SYSVSEM
 
@@ -547,6 +547,7 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		KASSERT(sembuf != NULL);
 		memcpy(sembuf, semaptr, sizeof(struct semid_ds));
+		sembuf->sem_perm.mode &= 0777;
 		break;
 
 	case GETNCNT:
