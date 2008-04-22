@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23 2008/04/14 17:54:07 nakayama Exp $ */
+/*	$NetBSD: intr.h,v 1.24 2008/04/22 17:09:25 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,9 +39,14 @@
 #ifndef _SPARC64_INTR_H_
 #define _SPARC64_INTR_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_multiprocessor.h"
+#endif
+
 #ifndef _LOCORE
 #include <machine/cpuset.h>
 #endif
+#include <machine/psl.h>
 
 /* XXX - arbitrary numbers; no interpretation is defined yet */
 #define	IPL_NONE	0		/* nothing */
