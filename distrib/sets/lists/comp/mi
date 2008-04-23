@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1133 2008/04/23 05:21:17 thorpej Exp $
+#	$NetBSD: mi,v 1.1134 2008/04/23 09:57:59 plunky Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1519,7 +1519,7 @@
 ./usr/include/netiso/clnp_stat.h		comp-c-include
 ./usr/include/netiso/cltp_var.h			comp-c-include
 ./usr/include/netiso/cons.h			comp-c-include
-./usr/include/netiso/cons_pcb.h			comp-c-include
+./usr/include/netiso/cons_pcb.h			comp-obsolete		obsolete
 ./usr/include/netiso/eonvar.h			comp-c-include
 ./usr/include/netiso/esis.h			comp-c-include
 ./usr/include/netiso/idrp_var.h			comp-c-include

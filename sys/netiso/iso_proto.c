@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.26 2007/12/07 18:49:35 elad Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.27 2008/04/23 09:57:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.26 2007/12/07 18:49:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.27 2008/04/23 09:57:59 plunky Exp $");
 
 
 #include <sys/param.h>
@@ -223,24 +223,6 @@ const struct protosw  isosw[] = {
 	  .pr_slowtimo = tp_slowtimo,
 	  .pr_drain = tp_drain,
 	},
-
-#ifdef TPCONS
-	/* ISOPROTO_TP */
-	{ .pr_type = SOCK_SEQPACKET,
-	  .pr_domain = &isodomain,
-	  .pr_protocol = ISOPROTO_TP0,
-	  .pr_flags = PR_CONNREQUIRED | PR_WANTRCVD | PR_LISTEN | PR_ABRTACPTDIS,
-	  .pr_input = tpcons_input,
-	  .pr_output = 0,
-	  .pr_ctlinput = 0,
-	  .pr_ctloutput = tp_ctloutput,
-	  .pr_usrreq = tp_usrreq,
-	  .pr_init = cons_init,
-	  .pr_fasttimo = 0,
-	  .pr_slowtimo = 0,
-	  .pr_drain = 0,
-	},
-#endif
 };
 
 extern struct ifqueue clnlintrq;
