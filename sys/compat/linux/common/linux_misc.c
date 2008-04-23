@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.195 2008/04/04 12:38:53 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.196 2008/04/23 13:05:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.195 2008/04/04 12:38:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.196 2008/04/23 13:05:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -231,6 +231,7 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 	int error, status, options, linux_options, was_zombie;
 	struct rusage ru;
 	int pid = SCARG(uap, pid);
+	proc_t *p;
 
 	linux_options = SCARG(uap, options);
 	options = WOPTSCHECKED;
@@ -260,7 +261,10 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 	if (pid == 0)
 		return error;
 
-	sigdelset(&l->l_proc->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
+        p = curproc;
+        mutex_enter(&p->p_smutex);
+	sigdelset(&p->p_sigpend.sp_set, SIGCHLD); /* XXXAD ksiginfo leak */
+        mutex_exit(&p->p_smutex);
 
 	if (SCARG(uap, rusage) != NULL)
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
