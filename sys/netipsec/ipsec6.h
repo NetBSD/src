@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.9 2007/03/04 06:03:28 christos Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.10 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -59,10 +59,6 @@ struct in6pcb;
 /* KAME compatibility shims */
 #define	ipsec6_getpolicybyaddr	ipsec_getpolicybyaddr
 #define	ipsec6_getpolicybysock	ipsec_getpolicybysock
-#define	ipsec6stat		newipsecstat
-#define	out_inval		ips_out_inval
-#define	in_polvio		ips_in_polvio
-#define	out_polvio		ips_out_polvio
 #define	key_freesp(_x)		KEY_FREESP(&_x)
 
 int ipsec6_delete_pcbpolicy (struct in6pcb *);

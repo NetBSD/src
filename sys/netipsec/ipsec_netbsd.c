@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.29 2007/10/19 12:16:46 ad Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.30 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.29 2007/10/19 12:16:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.30 2008/04/23 06:09:05 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.29 2007/10/19 12:16:46 ad Exp $")
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
 #include <netipsec/key.h>
 #include <netipsec/keydb.h>
 #include <netipsec/key_debug.h>
@@ -439,6 +440,66 @@ sysctl_fast_ipsec_test(SYSCTLFN_ARGS)
 }
 #endif
 
+static int
+sysctl_net_inet_fast_ipsec_stats(SYSCTLFN_ARGS)
+{
+	netstat_sysctl_context ctx;
+	uint64_t ipss[IPSEC_NSTATS];
+
+	ctx.ctx_stat = ipsecstat_percpu;
+	ctx.ctx_counters = ipss;
+	ctx.ctx_ncounters = IPSEC_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
+}
+
+static int
+sysctl_net_inet_ah_stats(SYSCTLFN_ARGS)
+{
+	netstat_sysctl_context ctx;
+	uint64_t ipss[AH_NSTATS];
+
+	ctx.ctx_stat = ahstat_percpu;
+	ctx.ctx_counters = ipss;
+	ctx.ctx_ncounters = AH_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
+}
+
+static int
+sysctl_net_inet_esp_stats(SYSCTLFN_ARGS)
+{
+	netstat_sysctl_context ctx;
+	uint64_t ipss[ESP_NSTATS];
+
+	ctx.ctx_stat = espstat_percpu;
+	ctx.ctx_counters = ipss;
+	ctx.ctx_ncounters = ESP_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
+}
+
+static int
+sysctl_net_inet_ipcomp_stats(SYSCTLFN_ARGS)
+{
+	netstat_sysctl_context ctx;
+	uint64_t ipss[IPCOMP_NSTATS];
+
+	ctx.ctx_stat = ipcompstat_percpu;
+	ctx.ctx_counters = ipss;
+	ctx.ctx_ncounters = IPCOMP_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
+}
+
+static int
+sysctl_net_inet_ipip_stats(SYSCTLFN_ARGS)
+{
+	netstat_sysctl_context ctx;
+	uint64_t ipss[IPIP_NSTATS];
+
+	ctx.ctx_stat = ipipstat_percpu;
+	ctx.ctx_counters = ipss;
+	ctx.ctx_ncounters = IPIP_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
+}
+
 /* XXX will need a different oid at parent */
 SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 {
@@ -478,7 +539,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipip_stats", NULL,
-		       NULL, 0, &ipipstat, sizeof(ipipstat),
+		       sysctl_net_inet_ipip_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IPIP,
 		       CTL_CREATE, CTL_EOL);
 
@@ -503,7 +564,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "esp_stats", NULL,
-		       NULL, 0, &espstat, sizeof(espstat),
+		       sysctl_net_inet_esp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ESP,
 		       CTL_CREATE, CTL_EOL);
 
@@ -540,7 +601,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ah_stats", NULL,
-		       NULL, 0, &ahstat, sizeof(ahstat),
+		       sysctl_net_inet_ah_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH,
 		       CTL_CREATE, CTL_EOL);
 
@@ -553,7 +614,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipcomp_stats", NULL,
-		       NULL, 0, &ipcompstat, sizeof(ipcompstat),
+		       sysctl_net_inet_ipcomp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IPCOMP,
 		       CTL_CREATE, CTL_EOL);
 
@@ -628,7 +689,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipsecstats", NULL,
-		       NULL, 0, &ipsecstat, sizeof(ipsecstat),
+		       sysctl_net_inet_fast_ipsec_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
 #ifdef IPSEC_DEBUG
@@ -675,7 +736,7 @@ SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("IPSec statistics and counters"),
-		       NULL, 0, &ipsec6stat, sizeof(ipsec6stat),
+		       sysctl_net_inet_fast_ipsec_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_STATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

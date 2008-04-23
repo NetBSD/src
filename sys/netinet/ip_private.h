@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_private.h,v 1.1 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_private.h,v 1.2 2008/04/23 06:09:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,26 +40,15 @@
 #define _NETINET_IP_PRIVATE_H_
 
 #ifdef _KERNEL
-#include <sys/percpu.h>
+#include <net/net_stats.h>
 
 extern	percpu_t *ipstat_percpu;
 
-#define	IP_STAT_GETREF()	percpu_getref(ipstat_percpu)
-#define	IP_STAT_PUTREF()	percpu_putref(ipstat_percpu)
+#define	IP_STAT_GETREF()	_NET_STAT_GETREF(ipstat_percpu)
+#define	IP_STAT_PUTREF()	_NET_STAT_PUTREF(ipstat_percpu)
 
-#define	IP_STATINC(x)							\
-do {									\
-	uint64_t *_ips_ = IP_STAT_GETREF();				\
-	_ips_[x]++;							\
-	IP_STAT_PUTREF();						\
-} while (/*CONSTCOND*/0)
-
-#define	IP_STATDEC(x)							\
-do {									\
-	uint64_t *_ips_ = IP_STAT_GETREF();				\
-	_ips_[x]--;							\
-	IP_STAT_PUTREF();						\
-} while (/*CONSTCOND*/0)
+#define	IP_STATINC(x)		_NET_STATINC(ipstat_percpu, x)
+#define	IP_STATDEC(x)		_NET_STATDEC(ipstat_percpu, x)
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	IP_HDR_ALIGNED_P(ip)	1

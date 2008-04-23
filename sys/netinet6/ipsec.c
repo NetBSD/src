@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.129 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.129 2008/04/23 06:09:05 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
+#include <sys/once.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -81,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $");
 #endif
 
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netinet6/ah.h>
 #ifdef IPSEC_ESP
 #include <netinet6/esp.h>
@@ -98,7 +100,7 @@ int ipsec_debug = 1;
 int ipsec_debug = 0;
 #endif
 
-struct ipsecstat ipsecstat;
+percpu_t *ipsecstat_percpu;
 int ip4_ah_cleartos = 1;
 int ip4_ah_offsetmask = 0;	/* maybe IP_DF? */
 int ip4_ipsec_dfbit = 2;	/* DF bit on encap. 0: clear 1: set 2: copy */
@@ -110,7 +112,7 @@ struct secpolicy *ip4_def_policy;
 int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
 #ifdef INET6
-struct ipsecstat ipsec6stat;
+percpu_t *ipsec6stat_percpu;
 int ip6_esp_trans_deflev = IPSEC_LEVEL_USE;
 int ip6_esp_net_deflev = IPSEC_LEVEL_USE;
 int ip6_ah_trans_deflev = IPSEC_LEVEL_USE;
@@ -174,6 +176,42 @@ static int ipsec4_checksa __P((struct ipsecrequest *,
 static int ipsec6_checksa __P((struct ipsecrequest *,
 	struct ipsec_output_state *, int));
 #endif
+
+#ifdef INET
+static int
+ipsec4_do_init(void)
+{
+
+	ipsecstat_percpu = percpu_alloc(sizeof(uint64_t) * IPSEC_NSTATS);
+	return (0);
+}
+
+void
+ipsec4_init(void)
+{
+	static ONCE_DECL(ipsec4_init_once);
+
+	RUN_ONCE(&ipsec4_init_once, ipsec4_do_init);
+}
+#endif /* INET */
+
+#ifdef INET6
+static int
+ipsec6_do_init(void)
+{
+
+	ipsec6stat_percpu = percpu_alloc(sizeof(uint64_t) * IPSEC_NSTATS);
+	return (0);
+}
+
+void
+ipsec6_init(void)
+{
+	static ONCE_DECL(ipsec6_init_once);
+
+	RUN_ONCE(&ipsec6_init_once, ipsec6_do_init);
+}
+#endif /* INET6 */
 
 /*
  * try to validate and use cached policy on a pcb.
@@ -414,13 +452,13 @@ ipsec4_getpolicybysock(struct mbuf *m, u_int dir, struct socket *so,
 #endif
 
 	/* if we have a cached entry, and if it is still valid, use it. */
-	ipsecstat.spdcachelookup++;
+	IPSEC_STATINC(IPSEC_STAT_SPDCACHELOOKUP);
 	currsp = ipsec_checkpcbcache(m, pcbsp, dir);
 	if (currsp) {
 		*error = 0;
 		return currsp;
 	}
-	ipsecstat.spdcachemiss++;
+	IPSEC_STATINC(IPSEC_STAT_SPDCACHEMISS);
 
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
@@ -632,13 +670,13 @@ ipsec6_getpolicybysock(struct mbuf *m, u_int dir, struct socket *so,
 #endif
 
 	/* if we have a cached entry, and if it is still valid, use it. */
-	ipsec6stat.spdcachelookup++;
+	IPSEC6_STATINC(IPSEC_STAT_SPDCACHELOOKUP);
 	currsp = ipsec_checkpcbcache(m, pcbsp, dir);
 	if (currsp) {
 		*error = 0;
 		return currsp;
 	}
-	ipsec6stat.spdcachemiss++;
+	IPSEC6_STATINC(IPSEC_STAT_SPDCACHEMISS);
 
 	switch (dir) {
 	case IPSEC_DIR_INBOUND:
@@ -2572,7 +2610,7 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
 			 * this packet because it is responsibility for
 			 * upper layer to retransmit the packet.
 			 */
-			ipsecstat.out_nosa++;
+			IPSEC_STATINC(IPSEC_STAT_OUT_NOSA);
 			goto bad;
 		}
 
@@ -2599,7 +2637,7 @@ ipsec4_output(struct ipsec_output_state *state, struct secpolicy *sp, int flags)
 		 */
 		if (isr->sav->state != SADB_SASTATE_MATURE
 		 && isr->sav->state != SADB_SASTATE_DYING) {
-			ipsecstat.out_nosa++;
+			IPSEC_STATINC(IPSEC_STAT_OUT_NOSA);
 			error = EINVAL;
 			goto bad;
 		}
@@ -2818,7 +2856,7 @@ ipsec6_output_trans(struct ipsec_output_state *state, u_char *nexthdrp,
 			 * this packet because it is responsibility for
 			 * upper layer to retransmit the packet.
 			 */
-			ipsec6stat.out_nosa++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_NOSA);
 
 			/*
 			 * Notify the fact that the packet is discarded
@@ -2856,7 +2894,7 @@ ipsec6_output_trans(struct ipsec_output_state *state, u_char *nexthdrp,
 		 */
 		if (isr->sav->state != SADB_SASTATE_MATURE
 		 && isr->sav->state != SADB_SASTATE_DYING) {
-			ipsec6stat.out_nosa++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_NOSA);
 			error = EINVAL;
 			goto bad;
 		}
@@ -2880,7 +2918,7 @@ ipsec6_output_trans(struct ipsec_output_state *state, u_char *nexthdrp,
 			ipseclog((LOG_ERR, "ipsec6_output_trans: "
 			    "unknown ipsec protocol %d\n", isr->saidx.proto));
 			m_freem(state->m);
-			ipsec6stat.out_inval++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = EINVAL;
 			break;
 		}
@@ -2892,7 +2930,7 @@ ipsec6_output_trans(struct ipsec_output_state *state, u_char *nexthdrp,
 		if (plen > IPV6_MAXPACKET) {
 			ipseclog((LOG_ERR, "ipsec6_output_trans: "
 			    "IPsec with IPv6 jumbogram is not supported\n"));
-			ipsec6stat.out_inval++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = EINVAL;	/* XXX */
 			goto bad;
 		}
@@ -2956,7 +2994,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			 * this packet because it is responsibility for
 			 * upper layer to retransmit the packet.
 			 */
-			ipsec6stat.out_nosa++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = ENOENT;
 			goto bad;
 		}
@@ -2978,7 +3016,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 		 */
 		if (isr->sav->state != SADB_SASTATE_MATURE
 		 && isr->sav->state != SADB_SASTATE_DYING) {
-			ipsec6stat.out_nosa++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_NOSA);
 			error = EINVAL;
 			goto bad;
 		}
@@ -2999,7 +3037,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 				    "family mismatched between inner and outer, spi=%u\n",
 				    (u_int32_t)ntohl(isr->sav->spi)));
 				splx(s);
-				ipsec6stat.out_inval++;
+				IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 				error = EAFNOSUPPORT;
 				goto bad;
 			}
@@ -3007,7 +3045,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			state->m = ipsec6_splithdr(state->m);
 			if (!state->m) {
 				splx(s);
-				ipsec6stat.out_nomem++;
+				IPSEC6_STATINC(IPSEC_STAT_OUT_NOMEM);
 				error = ENOMEM;
 				goto bad;
 			}
@@ -3029,7 +3067,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			if ((rt = rtcache_lookup(state->ro, &u.dst)) == NULL) {
 				rtcache_free(state->ro);
 				IP6_STATINC(IP6_STAT_NOROUTE);
-				ipsec6stat.out_noroute++;
+				IPSEC6_STATINC(IPSEC_STAT_OUT_NOROUTE);
 				error = EHOSTUNREACH;
 				goto bad;
 			}
@@ -3047,7 +3085,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 
 		state->m = ipsec6_splithdr(state->m);
 		if (!state->m) {
-			ipsec6stat.out_nomem++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_NOMEM);
 			error = ENOMEM;
 			goto bad;
 		}
@@ -3073,7 +3111,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 			ipseclog((LOG_ERR, "ipsec6_output_tunnel: "
 			    "unknown ipsec protocol %d\n", isr->saidx.proto));
 			m_freem(state->m);
-			ipsec6stat.out_inval++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = EINVAL;
 			break;
 		}
@@ -3085,7 +3123,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp,
 		if (plen > IPV6_MAXPACKET) {
 			ipseclog((LOG_ERR, "ipsec6_output_tunnel: "
 			    "IPsec with IPv6 jumbogram is not supported\n"));
-			ipsec6stat.out_inval++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = EINVAL;	/* XXX */
 			goto bad;
 		}
@@ -3514,6 +3552,18 @@ sysctl_ipsec(SYSCTLFN_ARGS)
 	return (0);
 }
 
+static int
+sysctl_net_inet_ipsec_stats(SYSCTLFN_ARGS)
+{
+	netstat_sysctl_context ctx;
+	uint64_t ipss[IPSEC_NSTATS];
+
+	ctx.ctx_stat = ipsecstat_percpu;
+	ctx.ctx_counters = ipss;
+	ctx.ctx_ncounters = IPSEC_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
+}
+
 SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 {
 
@@ -3538,7 +3588,7 @@ SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("IPSec statistics and counters"),
-		       NULL, 0, &ipsecstat, sizeof(ipsecstat),
+		       sysctl_net_inet_ipsec_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH,
 		       IPSECCTL_STATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -3659,6 +3709,18 @@ u_char	ipsec6ctlermap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
+static int
+sysctl_net_inet6_ipsec6_stats(SYSCTLFN_ARGS)
+{
+	netstat_sysctl_context ctx;
+	uint64_t ipss[IPSEC_NSTATS];
+
+	ctx.ctx_stat = ipsec6stat_percpu;
+	ctx.ctx_counters = ipss;
+	ctx.ctx_ncounters = IPSEC_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
+}
+
 SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,
 	     "sysctl net.inet6.ipsec6 subtree setup")
 {
@@ -3684,7 +3746,7 @@ SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("IPSec statistics and counters"),
-		       NULL, 0, &ipsec6stat, sizeof(ipsec6stat),
+		       sysctl_net_inet6_ipsec6_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_STATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

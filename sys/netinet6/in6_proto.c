@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.80 2008/04/15 05:40:15 thorpej Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.81 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.80 2008/04/15 05:40:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.81 2008/04/23 06:09:05 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -229,6 +229,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ah6_input,
 	.pr_ctlinput = ah6_ctlinput,
+	.pr_init = ah6_init,
 },
 #ifdef IPSEC_ESP
 {	.pr_type = SOCK_RAW,
@@ -237,6 +238,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = esp6_input,
 	.pr_ctlinput = esp6_ctlinput,
+	.pr_init = esp6_init,
 },
 #endif
 {	.pr_type = SOCK_RAW,
@@ -244,6 +246,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_protocol = IPPROTO_IPCOMP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ipcomp6_input,
+	.pr_init = ipcomp6_init,
 },
 #endif /* IPSEC */
 #ifdef FAST_IPSEC

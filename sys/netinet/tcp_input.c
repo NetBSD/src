@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.284 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.285 2008/04/23 06:09:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.284 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.285 2008/04/23 06:09:05 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -223,6 +223,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.284 2008/04/12 05:58:22 thorpej Exp 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #endif /*IPSEC*/
 #ifdef INET6
@@ -234,7 +235,8 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.284 2008/04/12 05:58:22 thorpej Exp 
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
+#include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
 #include <netipsec/key.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
@@ -1235,14 +1237,14 @@ findpcb:
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		if (inp && (inp->inp_socket->so_options & SO_ACCEPTCONN) == 0 &&
 		    ipsec4_in_reject(m, inp)) {
-			ipsecstat.in_polvio++;
+			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto drop;
 		}
 #ifdef INET6
 		else if (in6p &&
 		    (in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
 		    ipsec6_in_reject_so(m, in6p->in6p_socket)) {
-			ipsecstat.in_polvio++;
+			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto drop;
 		}
 #endif
@@ -1278,7 +1280,7 @@ findpcb:
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		if ((in6p->in6p_socket->so_options & SO_ACCEPTCONN) == 0 &&
 		    ipsec6_in_reject(m, in6p)) {
-			ipsec6stat.in_polvio++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto drop;
 		}
 #endif /*IPSEC*/
@@ -1554,7 +1556,7 @@ findpcb:
 #ifdef INET
 				case AF_INET:
 					if (ipsec4_in_reject_so(m, so)) {
-						ipsecstat.in_polvio++;
+						IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 						tp = NULL;
 						goto dropwithreset;
 					}
@@ -1563,7 +1565,7 @@ findpcb:
 #ifdef INET6
 				case AF_INET6:
 					if (ipsec6_in_reject_so(m, so)) {
-						ipsec6stat.in_polvio++;
+						IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 						tp = NULL;
 						goto dropwithreset;
 					}
