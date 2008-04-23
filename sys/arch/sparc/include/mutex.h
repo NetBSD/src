@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.8 2008/02/14 14:07:35 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.9 2008/04/23 13:14:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifndef _SPARC_MUTEX_H_
 #define	_SPARC_MUTEX_H_
+
+#ifdef __MUTEX_PRIVATE
+#include "psl.h"
+#endif
 
 struct kmutex {
 	union {
