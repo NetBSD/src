@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.145 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.146 2008/04/23 05:26:50 thorpej Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.145 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.146 2008/04/23 05:26:50 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2745,36 +2745,16 @@ sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 	    __UNCONST(newp), newlen));
 }
 
-static void
-icmp6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *icmp6sc = v1;
-	uint64_t *icmp6s = v2;
-	u_int i;
-
-	for (i = 0; i < ICMP6_NSTATS; i++)
-		icmp6s[i] += icmp6sc[i];
-}
-
-static void
-icmp6stat_convert_to_user(uint64_t *icmp6s)
-{
-
-	memset(icmp6s, 0, sizeof(uint64_t) * ICMP6_NSTATS);
-	percpu_foreach(icmp6stat_percpu, icmp6stat_convert_to_user_cb, icmp6s);
-}
-
 static int
 sysctl_net_inet6_icmp6_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
+	netstat_sysctl_context ctx;
 	uint64_t icmp6s[ICMP6_NSTATS];
 
-	icmp6stat_convert_to_user(icmp6s);
-	node = *rnode;
-	node.sysctl_data = icmp6s;
-	node.sysctl_size = sizeof(icmp6s);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	ctx.ctx_stat = icmp6stat_percpu;
+	ctx.ctx_counters = icmp6s;
+	ctx.ctx_ncounters = ICMP6_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
