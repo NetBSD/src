@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.89 2008/03/26 20:08:22 ad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.90 2008/04/23 13:13:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.89 2008/03/26 20:08:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.90 2008/04/23 13:13:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1000,6 +1000,8 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
+	KERNEL_LOCK(1, NULL);
+
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
 		goto out;
@@ -1084,6 +1086,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	}
 
 out:
+	KERNEL_UNLOCK_ONE(NULL);
 	fd_putfile(fd);
 	return error;
 }
