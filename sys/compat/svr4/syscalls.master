@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.56 2007/03/04 06:01:36 christos Exp $
+	$NetBSD: syscalls.master,v 1.57 2008/04/23 14:07:50 ad Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -80,7 +80,7 @@
 			    struct svr4_stat* ub); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
-20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
+20	NOARGS 		{ pid_t sys_getpid(void); }
 21	UNIMPL		old_mount
 22	UNIMPL		System V umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
