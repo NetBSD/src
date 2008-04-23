@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.12 2008/04/23 06:09:04 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.13 2008/04/23 07:29:47 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.33 2003/07/25 09:54:32 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.12 2008/04/23 06:09:04 thorpej Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.13 2008/04/23 07:29:47 thorpej Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -256,64 +256,69 @@ pfkey_msgtype_names(int x)
 void
 pfkey_stats(u_long off, char *name)
 {
-	struct pfkeystat pfkeystat;
+	uint64_t pfkeystat[PFKEY_NSTATS];
 	int first, type;
 
-	if (off == 0)
-		return;
-	printf ("%s:\n", name);
-	kread(off, (char *)&pfkeystat, sizeof(pfkeystat));
+	if (use_sysctl) {
+		size_t size = sizeof(pfkeystat);
 
-#define	p(f, m) if (pfkeystat.f || sflag <= 1) \
-    printf(m, (unsigned long long)pfkeystat.f, plural(pfkeystat.f))
+		if (sysctlbyname("net.key.stats", pfkeystat, &size,
+				 NULL, 0) == -1)
+			return;
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)pfkeystat, sizeof(pfkeystat));
+	}
+
+	printf ("%s:\n", name);
+
+#define	p(f, m) if (pfkeystat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)pfkeystat[f], plural(pfkeystat[f]))
 
 	/* userland -> kernel */
-	p(out_total, "\t%llu request%s sent from userland\n");
-	p(out_bytes, "\t%llu byte%s sent from userland\n");
-	for (first = 1, type = 0;
-	     type < sizeof(pfkeystat.out_msgtype)/sizeof(pfkeystat.out_msgtype[0]);
-	     type++) {
-		if (pfkeystat.out_msgtype[type] <= 0)
+	p(PFKEY_STAT_OUT_TOTAL, "\t%llu request%s sent from userland\n");
+	p(PFKEY_STAT_OUT_BYTES, "\t%llu byte%s sent from userland\n");
+	for (first = 1, type = 0; type < 256; type++) {
+		if (pfkeystat[PFKEY_STAT_OUT_MSGTYPE + type] == 0)
 			continue;
 		if (first) {
 			printf("\thistogram by message type:\n");
 			first = 0;
 		}
 		printf("\t\t%s: %llu\n", pfkey_msgtype_names(type),
-		    (unsigned long long)pfkeystat.out_msgtype[type]);
+		    (unsigned long long)pfkeystat[PFKEY_STAT_OUT_MSGTYPE + type]);
 	}
-	p(out_invlen, "\t%llu message%s with invalid length field\n");
-	p(out_invver, "\t%llu message%s with invalid version field\n");
-	p(out_invmsgtype, "\t%llu message%s with invalid message type field\n");
-	p(out_tooshort, "\t%llu message%s too short\n");
-	p(out_nomem, "\t%llu message%s with memory allocation failure\n");
-	p(out_dupext, "\t%llu message%s with duplicate extension\n");
-	p(out_invexttype, "\t%llu message%s with invalid extension type\n");
-	p(out_invsatype, "\t%llu message%s with invalid sa type\n");
-	p(out_invaddr, "\t%llu message%s with invalid address extension\n");
+	p(PFKEY_STAT_OUT_INVLEN, "\t%llu message%s with invalid length field\n");
+	p(PFKEY_STAT_OUT_INVVER, "\t%llu message%s with invalid version field\n");
+	p(PFKEY_STAT_OUT_INVMSGTYPE, "\t%llu message%s with invalid message type field\n");
+	p(PFKEY_STAT_OUT_TOOSHORT, "\t%llu message%s too short\n");
+	p(PFKEY_STAT_OUT_NOMEM, "\t%llu message%s with memory allocation failure\n");
+	p(PFKEY_STAT_OUT_DUPEXT, "\t%llu message%s with duplicate extension\n");
+	p(PFKEY_STAT_OUT_INVEXTTYPE, "\t%llu message%s with invalid extension type\n");
+	p(PFKEY_STAT_OUT_INVSATYPE, "\t%llu message%s with invalid sa type\n");
+	p(PFKEY_STAT_OUT_INVADDR, "\t%llu message%s with invalid address extension\n");
 
 	/* kernel -> userland */
-	p(in_total, "\t%llu request%s sent to userland\n");
-	p(in_bytes, "\t%llu byte%s sent to userland\n");
-	for (first = 1, type = 0;
-	     type < sizeof(pfkeystat.in_msgtype)/sizeof(pfkeystat.in_msgtype[0]);
-	     type++) {
-		if (pfkeystat.in_msgtype[type] <= 0)
+	p(PFKEY_STAT_IN_TOTAL, "\t%llu request%s sent to userland\n");
+	p(PFKEY_STAT_IN_BYTES, "\t%llu byte%s sent to userland\n");
+	for (first = 1, type = 0; type < 256; type++) {
+		if (pfkeystat[PFKEY_STAT_IN_MSGTYPE + type] == 0)
 			continue;
 		if (first) {
 			printf("\thistogram by message type:\n");
 			first = 0;
 		}
 		printf("\t\t%s: %llu\n", pfkey_msgtype_names(type),
-		    (unsigned long long)pfkeystat.in_msgtype[type]);
+		    (unsigned long long)pfkeystat[PFKEY_STAT_IN_MSGTYPE + type]);
 	}
-	p(in_msgtarget[KEY_SENDUP_ONE],
+	p(PFKEY_STAT_IN_MSGTARGET + KEY_SENDUP_ONE,
 	    "\t%llu message%s toward single socket\n");
-	p(in_msgtarget[KEY_SENDUP_ALL],
+	p(PFKEY_STAT_IN_MSGTARGET + KEY_SENDUP_ALL,
 	    "\t%llu message%s toward all sockets\n");
-	p(in_msgtarget[KEY_SENDUP_REGISTERED],
+	p(PFKEY_STAT_IN_MSGTARGET + KEY_SENDUP_REGISTERED,
 	    "\t%llu message%s toward registered sockets\n");
-	p(in_nomem, "\t%llu message%s with memory allocation failure\n");
+	p(PFKEY_STAT_IN_NOMEM, "\t%llu message%s with memory allocation failure\n");
 #undef p
 }
 #endif /*IPSEC*/
