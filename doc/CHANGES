@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1045 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1046 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -505,3 +505,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	shark: Support for X on rev. 4 sharks is back [macallan 20080419]
 	amdtemp(4): AMD CPU Temperature driver. Adapted from OpenBSD.
 		[cegger 20080423]
+	netiso: Remove obsolete TPCONS support. [plunky 20080423]
