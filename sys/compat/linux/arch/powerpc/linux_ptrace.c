@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.17 2007/12/20 23:02:53 dsl Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.18 2008/04/23 14:18:50 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.17 2007/12/20 23:02:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.18 2008/04/23 14:18:50 ad Exp $");
 
 #include "opt_ptrace.h"
 
@@ -103,6 +103,8 @@ struct linux_user {
 #define LUSR_REG_OFF(member) offsetof(struct linux_pt_regs, member)
 #define ISSET(t, f) ((t) & (f))
 
+int linux_ptrace_disabled = 1;	/* bitrotted */
+
 /* XXX Check me! (From NetBSD/i386) */
 int
 linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, register_t *retval)
@@ -123,6 +125,9 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 	double *linux_fpreg = NULL;  /* it's an array, not a struct */
 	int addr;
 	int i;
+
+	if (linux_ptrace_disabled)
+		return ENOSYS;
 
 	switch (request = SCARG(uap, request)) {
 		case LINUX_PTRACE_PEEKUSR:
