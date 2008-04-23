@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6_private.h,v 1.1 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: icmp6_private.h,v 1.2 2008/04/23 05:26:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,19 +40,14 @@
 #define _NETINET_ICMP6_PRIVATE_H_
 
 #ifdef _KERNEL
-#include <sys/percpu.h>
+#include <net/net_stats.h>
 
 extern percpu_t *icmp6stat_percpu;
 
-#define	ICMP6_STAT_GETREF()	percpu_getref(icmp6stat_percpu)
-#define	ICMP6_STAT_PUTREF()	percpu_putref(icmp6stat_percpu)
+#define	ICMP6_STAT_GETREF()	_NET_STAT_GETREF(icmp6stat_percpu)
+#define	ICMP6_STAT_PUTREF()	_NET_STAT_PUTREF(icmp6stat_percpu)
 
-#define	ICMP6_STATINC(x)						\
-do {									\
-	uint64_t *_icp6s_ = ICMP6_STAT_GETREF();			\
-	_icp6s_[x]++;							\
-	ICMP6_STAT_PUTREF();						\
-} while (/*CONSTCOND*/0)
+#define	ICMP6_STATINC(x)	_NET_STATINC(icmp6stat_percpu, x)
 #endif /* _KERNEL */
 
 #endif /* !_NETINET_ICMP6_PRIVATE_H_ */
