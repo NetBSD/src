@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid.h,v 1.1 2004/09/13 21:44:54 thorpej Exp $	*/
+/*	$NetBSD: uuid.h,v 1.2 2008/04/23 07:52:32 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -42,14 +42,14 @@
 #define	uuid_s_no_memory		3
 
 __BEGIN_DECLS
-int32_t	uuid_compare(uuid_t *, uuid_t *, uint32_t *);
+int32_t	uuid_compare(const uuid_t *, const uuid_t *, uint32_t *);
 void	uuid_create(uuid_t *, uint32_t *);
 void	uuid_create_nil(uuid_t *, uint32_t *);
-int32_t	uuid_equal(uuid_t *, uuid_t *, uint32_t *);
+int32_t	uuid_equal(const uuid_t *, const uuid_t *, uint32_t *);
 void	uuid_from_string(const char *, uuid_t *, uint32_t *);
-uint16_t uuid_hash(uuid_t *, uint32_t *);
-int32_t	uuid_is_nil(uuid_t *, uint32_t *);
-void	uuid_to_string(uuid_t *, char **, uint32_t *);
+uint16_t uuid_hash(const uuid_t *, uint32_t *);
+int32_t	uuid_is_nil(const uuid_t *, uint32_t *);
+void	uuid_to_string(const uuid_t *, char **, uint32_t *);
 
 void	uuid_enc_le(void *, const uuid_t *);
 void	uuid_dec_le(const void *, uuid_t *);
