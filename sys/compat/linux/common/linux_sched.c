@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.50 2008/02/29 14:29:06 elad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.51 2008/04/23 13:08:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.50 2008/02/29 14:29:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.51 2008/04/23 13:08:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -473,6 +473,7 @@ linux_sys_exit_group(struct lwp *l, const struct linux_sys_exit_group_args *uap,
 		 * care of hiding the zombies and reporting the exit code
 		 * properly.
 		 */
+		mutex_enter(&proclist_lock);
 		mutex_enter(&proclist_mutex);
       		LIST_FOREACH(e, &led->s->threads, threads) {
 			if (e->proc == p)
@@ -487,6 +488,7 @@ linux_sys_exit_group(struct lwp *l, const struct linux_sys_exit_group_args *uap,
 		/* Now, kill ourselves */
 		psignal(p, SIGKILL);
 		mutex_exit(&proclist_mutex);
+		mutex_exit(&proclist_lock);
 
 		return 0;
 
@@ -551,13 +553,15 @@ linux_sys_getppid(struct lwp *l, const void *v, register_t *retval)
 	struct proc *glp;
 	struct proc *pp;
 
+	mutex_enter(&proclist_lock);
 	if (led->s->flags & LINUX_LES_USE_NPTL) {
 
 		/* Find the thread group leader's parent */
-		if ((glp = pfind(led->s->group_pid)) == NULL) {
+		if ((glp = p_find(led->s->group_pid, PFIND_LOCKED)) == NULL) {
 			/* Maybe panic... */
 			printf("linux_sys_getppid: missing group leader PID"
 			    " %d\n", led->s->group_pid); 
+			mutex_exit(&proclist_lock);
 			return -1;
 		}
 		pp = glp->p_pptr;
@@ -575,6 +579,7 @@ linux_sys_getppid(struct lwp *l, const void *v, register_t *retval)
 	} else {
 		*retval = p->p_pptr->p_pid;
 	}
+	mutex_exit(&proclist_lock);
 
 	return 0;
 }
