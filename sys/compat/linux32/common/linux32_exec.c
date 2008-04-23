@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.9 2007/12/08 18:36:11 dsl Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.10 2008/04/23 13:30:41 ad Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.9 2007/12/08 18:36:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.10 2008/04/23 13:30:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,11 @@ linux32_e_proc_init(p, parent, forkflags)
 		MALLOC(e, void *, sizeof(struct linux_emuldata),
 			M_EMULDATA, M_WAITOK);
 	} else  {
+		mutex_enter(&proclist_lock);
 		e->s->refs--;
 		if (e->s->refs == 0)
 			FREE(e->s, M_EMULDATA);
+		mutex_exit(&proclist_lock);
 	}
 
 	memset(e, '\0', sizeof(struct linux_emuldata));
@@ -158,6 +160,7 @@ linux32_e_proc_init(p, parent, forkflags)
 			return;
 		}
 #endif
+		mutex_enter(&proclist_lock);
 		s = ep->s;
 		s->refs++;
 	} else {
@@ -192,6 +195,7 @@ linux32_e_proc_init(p, parent, forkflags)
 
 		s->xstat = 0;
 		s->flags = 0;
+		mutex_enter(&proclist_lock);
 	}
 
 	e->s = s;
@@ -200,6 +204,7 @@ linux32_e_proc_init(p, parent, forkflags)
 	 * Add this thread in the group thread list
 	 */
 	LIST_INSERT_HEAD(&s->threads, e, threads);
+	mutex_exit(&proclist_lock);
 
 #ifdef LINUX32_NPTL
 	linux_nptl_proc_init(p, parent);
@@ -233,14 +238,16 @@ linux32_e_proc_exit(struct proc *p)
 #endif /* LINUX32_NPTL */
 
 	/* Remove the thread for the group thread list */
+	mutex_enter(&proclist_lock);
 	LIST_REMOVE(e, threads);
 
 	/* free Linux emuldata and set the pointer to null */
 	e->s->refs--;
 	if (e->s->refs == 0)
 		FREE(e->s, M_EMULDATA);
-	FREE(e, M_EMULDATA);
 	p->p_emuldata = NULL;
+	mutex_exit(&proclist_lock);
+	FREE(e, M_EMULDATA);
 }
 
 /*
