@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.2 2008/03/31 15:29:18 xtraeme Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.3 2008/04/23 11:19:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.2 2008/03/31 15:29:18 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.3 2008/04/23 11:19:09 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ typedef struct asus_softc {
 #define		ASUS_SDSP_ALL	\
 		(ASUS_SDSP_LCD | ASUS_SDSP_CRT | ASUS_SDSP_TV | ASUS_SDSP_DVI)
 
-static int	asus_match(device_t, struct cfdata *, void *);
+static int	asus_match(device_t, cfdata_t, void *);
 static void	asus_attach(device_t, device_t, void *);
 
 static void	asus_notify_handler(ACPI_HANDLE, UINT32, void *);
