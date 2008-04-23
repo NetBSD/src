@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.51 2008/04/23 13:08:47 ad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.52 2008/04/23 13:09:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.51 2008/04/23 13:08:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.52 2008/04/23 13:09:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -465,6 +465,7 @@ linux_sys_exit_group(struct lwp *l, const struct linux_sys_exit_group_args *uap,
 		printf("%s:%d\n", __func__, __LINE__);
 #endif
 
+		mutex_enter(&proclist_lock);
 		led->s->flags |= LINUX_LES_INEXITGROUP;
 		led->s->xstat = W_EXITCODE(SCARG(uap, error_code), 0);
 
@@ -473,7 +474,6 @@ linux_sys_exit_group(struct lwp *l, const struct linux_sys_exit_group_args *uap,
 		 * care of hiding the zombies and reporting the exit code
 		 * properly.
 		 */
-		mutex_enter(&proclist_lock);
 		mutex_enter(&proclist_mutex);
       		LIST_FOREACH(e, &led->s->threads, threads) {
 			if (e->proc == p)
