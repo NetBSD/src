@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2008/04/19 20:53:36 macallan Exp $
+#	$NetBSD: Makefile,v 1.19 2008/04/23 05:13:43 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -69,7 +69,7 @@ CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endif
 
 .if ${MACHINE} == "shark"
-SRCS.bsd+=      ppc_video.c bsdResource.c pm_noop.c agp_noop.c ioperm_noop.c
+SRCS.bsd+=      ppc_video.c bsdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_PPC_MMAP
 .endfor
