@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.32.10.3 2008/04/23 19:25:18 peter Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.32.10.4 2008/04/23 20:41:09 peter Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.10.3 2008/04/23 19:25:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.10.4 2008/04/23 20:41:09 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -325,7 +325,7 @@ pfdetach(void)
 		state->sync_flags = PFSTATE_NOSYNC;
 #endif /* NPFSYNC > 0 */
 	}
-	pf_purge_expired_states(1);
+	pf_purge_expired_states(pf_status.states);
 #if NPFSYNC > 0
 	pfsync_clear_states(pf_status.hostid, NULL);
 #endif /* NPFSYNC > 0 */
