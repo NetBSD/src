@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.35 2007/11/09 21:00:06 plunky Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.36 2008/04/23 09:57:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.35 2007/11/09 21:00:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.36 2008/04/23 09:57:59 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -256,9 +256,6 @@ struct inpcbtable tp_inpcb;
 #ifdef ISO
 struct isopcb   tp_isopcb;
 #endif				/* ISO */
-#ifdef TPCONS
-struct isopcb   tp_isopcb;
-#endif				/* TPCONS */
 
 struct tp_stat tp_stat;
 u_int tp_start_win;
@@ -293,19 +290,7 @@ struct nl_protosw nl_protosw[] = {
 	{ .nlp_afamily = 0, },
 #endif				/* INET */
 	/* ISO_CONS */
-#if defined(ISO) && defined(TPCONS)
-	{AF_ISO, iso_putnetaddr, iso_getnetaddr, iso_cmpnetaddr,
-		iso_putsufx, iso_getsufx,
-		iso_recycle_tsuffix,
-		tpclnp_mtu, iso_pcbbind, tpcons_pcbconnect,
-		iso_pcbdisconnect, iso_pcbdetach,
-		iso_pcballoc,
-		tpcons_output, tpcons_output, iso_nlctloutput,
-		(void *) & tp_isopcb,
-	},
-#else
 	{ .nlp_afamily = 0, },
-#endif				/* ISO_CONS */
 	/* End of protosw marker */
 	{ .nlp_afamily = 0, },
 };

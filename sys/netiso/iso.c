@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.48 2007/12/06 00:28:36 dyoung Exp $	*/
+/*	$NetBSD: iso.c,v 1.49 2008/04/23 09:57:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.48 2007/12/06 00:28:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.49 2008/04/23 09:57:59 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -865,9 +865,6 @@ next:		;
 	return ia_maybe;
 }
 
-#ifdef	TPCONS
-#include <netiso/cons.h>
-#endif	/* TPCONS */
 /*
  * FUNCTION:		iso_nlctloutput
  *
@@ -887,9 +884,6 @@ iso_nlctloutput(
 	void *        pcb,		/* nl pcb */
 	struct mbuf    *m)		/* data for set, buffer for get */
 {
-#ifdef TPCONS
-	struct isopcb  *isop = (struct isopcb *) pcb;
-#endif
 	int             error = 0;	/* return value */
 	void *        data;	/* data for option */
 	int             data_len;	/* data's length */
@@ -915,28 +909,6 @@ iso_nlctloutput(
 #endif
 
 	switch (optname) {
-
-#ifdef	TPCONS
-	case CONSOPT_X25CRUD:
-		if (cmd == PRCO_GETOPT) {
-			error = EOPNOTSUPP;
-			break;
-		}
-		if (data_len > MAXX25CRUDLEN) {
-			error = EINVAL;
-			break;
-		}
-#ifdef ARGO_DEBUG
-		if (argo_debug[D_ISO]) {
-			printf("iso_nlctloutput: setting x25 crud\n");
-		}
-#endif
-
-		bcopy(data, (void *) isop->isop_x25crud, (unsigned) data_len);
-		isop->isop_x25crud_len = data_len;
-		break;
-#endif				/* TPCONS */
-
 	default:
 		error = EOPNOTSUPP;
 	}
