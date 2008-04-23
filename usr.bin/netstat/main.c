@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2008/04/23 07:29:47 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.67 2008/04/23 15:17:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.66 2008/04/23 07:29:47 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.67 2008/04/23 15:17:42 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -390,7 +390,6 @@ prepare(char *nlistf, char *memf, struct protox *tp)
 		   iflag ||
 #ifndef SMALL
 		   gflag ||
-		   (pflag && tp->pr_sindex == N_DDPSTAT) ||
 #ifdef NS
 		   (pflag && tp->pr_sindex == N_IDPSTAT) ||
 		   (pflag && tp->pr_sindex == N_SPPSTAT) ||
