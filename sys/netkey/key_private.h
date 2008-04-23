@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_private.h,v 1.2 2008/04/23 07:29:47 thorpej Exp $	*/
+/*	$NetBSD: key_private.h,v 1.1 2008/04/23 07:29:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,39 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETIPSEC_IPSEC_PRIVATE_H_
-#define _NETIPSEC_IPSEC_PRIVATE_H_
+#ifndef _NETKEY_KEY_PRIVATE_H_
+#define _NETKEY_KEY_PRIVATE_H_
 
 #ifdef _KERNEL
 #include <net/net_stats.h>
 
-extern	percpu_t *ipsecstat_percpu;
-extern	percpu_t *ahstat_percpu;
-extern	percpu_t *espstat_percpu;
-extern	percpu_t *ipcompstat_percpu;
-extern	percpu_t *ipipstat_percpu;
 extern	percpu_t *pfkeystat_percpu;
-
-#define	IPSEC_STAT_GETREF()	_NET_STAT_GETREF(ipsecstat_percpu)
-#define	IPSEC_STAT_PUTREF()	_NET_STAT_PUTREF(ipsecstat_percpu)
-#define	IPSEC_STATINC(x)	_NET_STATINC(ipsecstat_percpu, x)
-#define	IPSEC_STATADD(x, v)	_NET_STATADD(ipsecstat_percpu, x, v)
-
-#define	IPSEC6_STAT_GETREF()	IPSEC_STAT_GETREF()
-#define	IPSEC6_STAT_PUTREF()	IPSEC_STAT_PUTREF()
-#define	IPSEC6_STATINC(x)	IPSEC_STATINC(x)
-
-#define	AH_STATINC(x)		_NET_STATINC(ahstat_percpu, x)
-#define	AH_STATADD(x, v)	_NET_STATADD(ahstat_percpu, x, v)
-
-#define	ESP_STATINC(x)		_NET_STATINC(espstat_percpu, x)
-#define	ESP_STATADD(x, v)	_NET_STATADD(espstat_percpu, x, v)
-
-#define	IPCOMP_STATINC(x)	_NET_STATINC(ipcompstat_percpu, x)
-#define	IPCOMP_STATADD(x, v)	_NET_STATADD(ipcompstat_percpu, x, v)
-
-#define	IPIP_STATINC(x)		_NET_STATINC(ipipstat_percpu, x)
-#define	IPIP_STATADD(x, v)	_NET_STATADD(ipipstat_percpu, x, v)
 
 #define	PFKEY_STAT_GETREF()	_NET_STAT_GETREF(pfkeystat_percpu)
 #define	PFKEY_STAT_PUTREF()	_NET_STAT_PUTREF(pfkeystat_percpu)
@@ -76,4 +50,4 @@ extern	percpu_t *pfkeystat_percpu;
 #define	PFKEY_STATADD(x, v)	_NET_STATADD(pfkeystat_percpu, x, v)
 #endif /* _KERNEL */
 
-#endif /* !_NETIPSEC_IPSEC_PRIVATE_H_ */
+#endif /* !_NETKEY_KEY_PRIVATE_H_ */

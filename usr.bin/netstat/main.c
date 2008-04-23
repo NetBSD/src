@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 2008/04/15 16:06:28 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.66 2008/04/23 07:29:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.65 2008/04/15 16:06:28 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.66 2008/04/23 07:29:47 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -402,13 +402,6 @@ prepare(char *nlistf, char *memf, struct protox *tp)
 		   (pflag && tp->pr_sindex == N_ESISSTAT) ||
 #endif
 		   (pflag && tp->pr_sindex == N_PIMSTAT) ||
-#ifdef IPSEC
-		   (pflag && tp->pr_sindex == N_IPSECSTAT) ||
-		   (pflag && tp->pr_sindex == N_PFKEYSTAT) ||
-#ifdef INET6
-		   (pflag && tp->pr_sindex == N_IPSEC6STAT) ||
-#endif
-#endif
 		   Pflag) {
 		/* These flags are not yet supported via sysctl(3). */
 		use_sysctl = 0;
