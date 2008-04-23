@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.61 2006/08/26 15:33:20 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.62 2008/04/23 15:35:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.61 2006/08/26 15:33:20 matt Exp $");
+__RCSID("$NetBSD: if.c,v 1.62 2008/04/23 15:35:37 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,10 +48,6 @@ __RCSID("$NetBSD: if.c,v 1.61 2006/08/26 15:33:20 matt Exp $");
 #include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#ifdef NS
-#include <netns/ns.h>
-#include <netns/ns_if.h>
-#endif
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
 #include <arpa/inet.h>
@@ -90,9 +86,6 @@ intpr(interval, ifnetaddr, pfunc)
 #ifdef INET6
 		struct in6_ifaddr in6;
 #endif /* INET6 */
-#ifdef NS
-		struct ns_ifaddr ns;
-#endif /* NS */
 		struct iso_ifaddr iso;
 	} ifaddr;
 	u_long ifaddraddr;
@@ -321,24 +314,6 @@ intpr(interval, ifnetaddr, pfunc)
 				       atalk_print(sa,0x10));
 				printf("%-17.17s ", atalk_print(sa,0x0b));
 				break;
-#ifdef NS
-			case AF_NS:
-				{
-				struct sockaddr_ns *sns =
-					(struct sockaddr_ns *)sa;
-				u_long net;
-				char netnum[10];
-
-				*(union ns_net *)&net = sns->sns_addr.x_net;
-				(void)snprintf(netnum, sizeof(netnum), "%xH",
-				    (u_int32_t)ntohl(net));
-				upHex(netnum);
-				printf("ns:%-10s ", netnum);
-				printf("%-17.17s ",
-				    ns_phost((struct sockaddr *)sns));
-				}
-				break;
-#endif
 #endif
 			case AF_LINK:
 				printf("%-13.13s ", "<Link>");
