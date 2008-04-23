@@ -1,4 +1,4 @@
-/*	$NetBSD: ipip_var.h,v 1.3 2005/12/10 23:44:08 elad Exp $	*/
+/*	$NetBSD: ipip_var.h,v 1.4 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipip_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.h,v 1.5 2002/06/09 16:26:10 itojun Exp $ */
 /*
@@ -45,22 +45,20 @@
  * Not quite all the functionality of RFC-1853, but the main idea is there.
  */
 
-struct ipipstat
-{
-    u_int64_t	ipips_ipackets;		/* total input packets */
-    u_int64_t	ipips_opackets;		/* total output packets */
-    u_int64_t	ipips_hdrops;		/* packet shorter than header shows */
-    u_int64_t	ipips_qfull;
-    u_int64_t   ipips_ibytes;
-    u_int64_t   ipips_obytes;
-    u_int64_t	ipips_pdrops;		/* packet dropped due to policy */
-    u_int64_t	ipips_spoof;		/* IP spoofing attempts */
-    u_int64_t   ipips_family;		/* Protocol family mismatch */
-    u_int64_t   ipips_unspec;            /* Missing tunnel endpoint address */
-};
+#define	IPIP_STAT_IPACKETS	0	/* total input packets */
+#define	IPIP_STAT_OPACKETS	1	/* total output packets */
+#define	IPIP_STAT_HDROPS	2	/* packet shorter than header shows */
+#define	IPIP_STAT_QFULL		3
+#define	IPIP_STAT_IBYTES	4
+#define	IPIP_STAT_OBYTES	5
+#define	IPIP_STAT_PDROPS	6	/* packet dropped due to policy */
+#define	IPIP_STAT_SPOOF		7	/* IP spoofing attempts */
+#define	IPIP_STAT_FAMILY	8	/* protocol family mismatch */
+#define	IPIP_STAT_UNSPEC	9	/* missing tunnel endpoint address */
+
+#define	IPIP_NSTATS		10
 
 #ifdef _KERNEL
 extern	int ipip_allow;
-extern	struct ipipstat ipipstat;
 #endif /* _KERNEL */
 #endif /* !_NETINET_IPIP_H_ */

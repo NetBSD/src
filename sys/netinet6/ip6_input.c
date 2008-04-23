@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.116 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.117 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.116 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.117 2008/04/23 06:09:05 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.116 2008/04/15 03:57:04 thorpej Exp 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #endif
 
 #ifdef FAST_IPSEC
@@ -778,7 +779,7 @@ ip6_input(struct mbuf *m)
 		 */
 		if ((inet6sw[ip6_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
 		    ipsec6_in_reject(m, NULL)) {
-			ipsec6stat.in_polvio++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto bad;
 		}
 #endif
@@ -1646,36 +1647,16 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
-static void
-ip6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *ip6sc = v1;
-	uint64_t *ip6s = v2;
-	u_int i;
-
-	for (i = 0; i < IP6_NSTATS; i++)
-		ip6s[i] += ip6sc[i];
-}
-
-static void
-ip6stat_convert_to_user(uint64_t *ip6s)
-{
-
-	memset(ip6s, 0, sizeof(uint64_t) * IP6_NSTATS);
-	percpu_foreach(ip6stat_percpu, ip6stat_convert_to_user_cb, ip6s);
-}
-
 static int
 sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
+	netstat_sysctl_context ctx;
 	uint64_t ip6s[IP6_NSTATS];
 
-	ip6stat_convert_to_user(ip6s);
-	node = *rnode;
-	node.sysctl_data = ip6s;
-	node.sysctl_size = sizeof(ip6s);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	ctx.ctx_stat = ip6stat_percpu;
+	ctx.ctx_counters = ip6s;
+	ctx.ctx_ncounters = IP6_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")

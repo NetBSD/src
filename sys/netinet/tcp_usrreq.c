@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.142 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.143 2008/04/23 06:09:05 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.142 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.143 2008/04/23 06:09:05 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1613,36 +1613,16 @@ sysctl_tcp_keep(SYSCTLFN_ARGS)
 	return 0;
 }
 
-static void
-tcpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *tcpsc = v1;
-	uint64_t *tcps = v2;
-	u_int i;
-
-	for (i = 0; i < TCP_NSTATS; i++)
-		tcps[i] += tcpsc[i];
-}
-
-static void
-tcpstat_convert_to_user(uint64_t *tcps)
-{
-
-	memset(tcps, 0, sizeof(uint64_t) * TCP_NSTATS);
-	percpu_foreach(tcpstat_percpu, tcpstat_convert_to_user_cb, tcps);
-}
-
 static int
 sysctl_net_inet_tcp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
+	netstat_sysctl_context ctx;
 	uint64_t tcps[TCP_NSTATS];
 
-	tcpstat_convert_to_user(tcps);
-	node = *rnode;
-	node.sysctl_data = tcps;
-	node.sysctl_size = sizeof(tcps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	ctx.ctx_stat = tcpstat_percpu;
+	ctx.ctx_counters = tcps;
+	ctx.ctx_ncounters = TCP_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
 }
 
 /*
