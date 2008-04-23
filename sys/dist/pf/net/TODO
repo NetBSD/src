@@ -2,7 +2,6 @@ pf specific:
 
 TODO:
 - create groups like openbsd 3.7 pf (mostly done but needs testing)
-- implement if_destroy_groups
 - implement pf_modulate_sack
 - implement bound_iface for NAT rules
 - make LKM load/unload work, fix memory leaks if any

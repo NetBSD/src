@@ -1,5 +1,5 @@
 /*	$OpenBSD: if.c,v 1.165 2007/07/06 14:00:59 naddy Exp $	*/
-/*	$NetBSD: if_compat.c,v 1.1.2.2 2008/04/23 18:14:49 peter Exp $	*/
+/*	$NetBSD: if_compat.c,v 1.1.2.3 2008/04/23 19:33:56 peter Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_compat.c,v 1.1.2.2 2008/04/23 18:14:49 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_compat.c,v 1.1.2.3 2008/04/23 19:33:56 peter Exp $");
 
 #include "pf.h"
 
@@ -109,8 +109,6 @@ if_destroy_groups(struct ifnet *ifp)
 	struct ifg_list_head *ifgh = if_get_groups(ifp);
 
 	free(ifgh, M_TEMP);
-
-	/* XXXPF incomplete */
 }
 
 struct ifg_list_head *
