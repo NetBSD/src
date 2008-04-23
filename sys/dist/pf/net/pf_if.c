@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.15.8.3 2008/04/21 20:26:51 peter Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.15.8.4 2008/04/23 19:36:53 peter Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.15.8.3 2008/04/21 20:26:51 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.15.8.4 2008/04/23 19:36:53 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -142,6 +142,7 @@ pfi_initialize(void)
 void
 pfi_destroy(void)
 {
+	struct pfi_kif *p;
 	int i;
 
 	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
@@ -155,6 +156,11 @@ pfi_destroy(void)
 
 			pfi_destroy_groups(ifp);
 		}
+	}
+
+	while ((p = RB_MIN(pfi_ifhead, &pfi_ifs))) {
+		RB_REMOVE(pfi_ifhead, &pfi_ifs, p);
+		free(p, PFI_MTYPE);
 	}
 
 	pool_destroy(&pfi_addr_pl);
