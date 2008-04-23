@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.44 2008/04/13 04:55:53 tsutsui Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.45 2008/04/23 13:37:19 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.44 2008/04/13 04:55:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.45 2008/04/23 13:37:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,6 +203,13 @@ espattach_sbus(device_t parent, device_t self, void *aux)
 
 		if (lsc == NULL) {
 			aprint_error(": out of memory (lsi64854_softc)\n");
+			return;
+		}
+		lsc->sc_dev = malloc(sizeof(struct device), M_DEVBUF,
+		    M_NOWAIT | M_ZERO);
+		if (lsc->sc_dev == NULL) {
+			aprint_error(": out of memory (device_t)\n");
+			free(lsc, M_DEVBUF);
 			return;
 		}
 		esc->sc_dma = lsc;
