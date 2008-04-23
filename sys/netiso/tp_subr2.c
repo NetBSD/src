@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.37 2008/01/14 04:17:35 dyoung Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.38 2008/04/23 09:57:59 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.37 2008/01/14 04:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.38 2008/04/23 09:57:59 plunky Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -403,40 +403,7 @@ tp_quench(struct inpcb  *ipcb, int cmd)
 void
 tp_netcmd(struct tp_pcb *tpcb, int cmd)
 {
-#ifdef TPCONS
-	struct isopcb  *isop;
-	struct pklcd   *lcp;
-
-	if (tpcb->tp_netservice != ISO_CONS)
-		return;
-	isop = (struct isopcb *) tpcb->tp_npcb;
-	lcp = (struct pklcd *) isop->isop_chan;
-	switch (cmd) {
-
-	case CONN_CLOSE:
-	case CONN_REFUSE:
-		if (isop->isop_refcnt == 1) {
-			/*
-			 * This is really superfluous, since it would happen
-			 * anyway in iso_pcbdetach, although it is a courtesy
-			 * to free up the x.25 channel before the refwait
-			 * timer expires.
-			 */
-			lcp->lcd_upper = 0;
-			lcp->lcd_upnext = 0;
-			pk_disconnect(lcp);
-			isop->isop_chan = 0;
-			isop->isop_refcnt = 0;
-		}
-		break;
-
-	default:
-		printf("tp_netcmd(%p, %#x) NOT IMPLEMENTED\n", tpcb, cmd);
-		break;
-	}
-#else				/* TPCONS */
 	printf("tp_netcmd(): X25 NOT CONFIGURED!!\n");
-#endif
 }
 
 /*
@@ -646,28 +613,7 @@ tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, void *channel)
 		dump_buf(mtod(m, void *), m->m_len);
 	}
 #endif
-	if (channel) {
-#ifdef TPCONS
-		struct pklcd   *lcp = (struct pklcd *) channel;
-		struct isopcb  *isop = (struct isopcb *) lcp->lcd_upnext,
-		               *isop_new = (struct isopcb *) tpcb->tp_npcb;
-		/*
-		 * The next 2 lines believe that you haven't set any network
-		 * level options or done a pcbconnect and XXXXXXX'edly apply
-		 * to both inpcb's and isopcb's
-		 */
-		iso_remque(isop_new);
-		free(isop_new, M_PCB);
-		tpcb->tp_npcb = (void *) isop;
-		tpcb->tp_netservice = ISO_CONS;
-		tpcb->tp_nlproto = nl_protosw + ISO_CONS;
-		if (isop->isop_refcnt++ == 0) {
-			iso_putsufx(isop, tpcb->tp_lsuffix,
-				    tpcb->tp_lsuffixlen, TP_LOCAL);
-			isop->isop_socket = tpcb->tp_sock;
-		}
-#endif
-	} else {
+	if (channel == NULL) {
 		switch (siso->siso_family) {
 		default:
 			error = EAFNOSUPPORT;
