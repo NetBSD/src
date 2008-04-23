@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuid.3,v 1.5 2006/11/25 16:48:31 christos Exp $
+.\"	$NetBSD: uuid.3,v 1.6 2008/04/23 07:52:32 plunky Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/uuid/uuid.3,v 1.4 2003/08/08 19:12:28 marcel Exp $
 .\"
-.Dd September 12, 2004
+.Dd April 22, 2008
 .Dt UUID 3
 .Os
 .Sh NAME
@@ -74,21 +74,21 @@
 .Sh SYNOPSIS
 .In uuid.h
 .Ft int32_t
-.Fn uuid_compare "uuid_t *uuid1" "uuid_t *uuid2" "uint32_t *status"
+.Fn uuid_compare "const uuid_t *uuid1" "const uuid_t *uuid2" "uint32_t *status"
 .Ft void
 .Fn uuid_create "uuid_t *uuid" "uint32_t *status"
 .Ft void
 .Fn uuid_create_nil "uuid_t *uuid" "uint32_t *status"
 .Ft int32_t
-.Fn uuid_equal "uuid_t *uuid1" "uuid_t *uuid2" "uint32_t *status"
+.Fn uuid_equal "const uuid_t *uuid1" "const uuid_t *uuid2" "uint32_t *status"
 .Ft void
 .Fn uuid_from_string "const char *str" "uuid_t *uuid" "uint32_t *status"
 .Ft uint16_t
-.Fn uuid_hash "uuid_t *uuid" "uint32_t *status"
+.Fn uuid_hash "const uuid_t *uuid" "uint32_t *status"
 .Ft int32_t
-.Fn uuid_is_nil "uuid_t *uuid" "uint32_t *status"
+.Fn uuid_is_nil "const uuid_t *uuid" "uint32_t *status"
 .Ft void
-.Fn uuid_to_string "uuid_t *uuid" "char **str" "uint32_t *status"
+.Fn uuid_to_string "const uuid_t *uuid" "char **str" "uint32_t *status"
 .Ft void
 .Fn uuid_enc_le "void *buf" "const uuid_t *uuid"
 .Ft void
