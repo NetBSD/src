@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 2008/04/21 15:15:33 cegger Exp $	*/
+/*	$NetBSD: cpu.h,v 1.48 2008/04/23 15:57:38 he Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,6 +57,7 @@
 #include <sys/simplelock.h>
 #include <sys/cpu_data.h>
 #include <sys/cc_microtime.h>
+#include <sys/systm.h>
 
 struct pmap;
 
