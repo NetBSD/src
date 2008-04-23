@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.13 2007/12/20 23:02:44 dsl Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.14 2008/04/23 13:40:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.13 2007/12/20 23:02:44 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.14 2008/04/23 13:40:17 ad Exp $");
 
 /*#ifdef COMPAT_12*/
 
@@ -57,7 +57,9 @@ compat_12_sys_reboot(struct lwp *l, const struct compat_12_sys_reboot_args *uap,
 	if ((error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_REBOOT, 0, NULL, NULL, NULL)) != 0)
 		return (error);
+	KERNEL_LOCK(1, NULL);
 	cpu_reboot(SCARG(uap, opt), NULL);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 /*#endif COMPAT_12 */
