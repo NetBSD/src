@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.75 2008/03/21 21:54:59 ad Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.76 2008/04/23 13:58:06 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.75 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.76 2008/04/23 13:58:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1393,6 +1393,8 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return EBADF;
 
+	KERNEL_LOCK(1, NULL);	/* svr4_find_socket */
+
 	if (SCARG_PTR(uap, ctl) != NULL) {
 		if ((error = copyin(SCARG_PTR(uap, ctl),
 				    &ctl, sizeof(ctl))) != 0)
@@ -1497,9 +1499,11 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 
  	switch (st->s_cmd = sc.cmd) {
 	case SVR4_TI_CONNECT_REQUEST:	/* connect 	*/
+	 	KERNEL_UNLOCK_ONE(NULL);
 		return do_sys_connect(l, SCARG(uap, fd), nam);
 
 	case SVR4_TI_SENDTO_REQUEST:	/* sendto 	*/
+	 	KERNEL_UNLOCK_ONE(NULL);
 		msg.msg_name = nam;
 		msg.msg_namelen = sasize;
 		msg.msg_iov = &aiov;
@@ -1522,6 +1526,7 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 	}
 
  out:
+ 	KERNEL_UNLOCK_ONE(NULL);
  	fd_putfile(SCARG(uap, fd));
  	return error;
 }
