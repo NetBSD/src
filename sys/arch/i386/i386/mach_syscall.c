@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.28 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.29 2008/04/23 14:24:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.28 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.29 2008/04/23 14:24:37 ad Exp $");
 
 #include "opt_vm86.h"
 
@@ -138,7 +138,9 @@ mach_syscall_plain(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
+	KERNEL_LOCK(1, NULL);
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_UNLOCK_ONE(NULL);
 	switch (error) {
 	case 0:
 		frame->tf_eax = rval[0];
@@ -228,7 +230,9 @@ mach_syscall_fancy(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
+	KERNEL_LOCK(1, NULL);
 	error = (*callp->sy_call)(l, args, rval);
+	KERNEL_UNLOCK_ONE(NULL);
 out:
 	switch (error) {
 	case 0:
