@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.92 2008/04/15 16:02:03 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.93 2008/04/23 06:09:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.92 2008/04/15 16:02:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.93 2008/04/23 06:09:04 thorpej Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -213,6 +213,7 @@ const struct protosw inetsw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ah4_input,
 	.pr_ctlinput = ah4_ctlinput,
+	.pr_init = ah4_init,
 },
 #ifdef IPSEC_ESP
 {	.pr_type = SOCK_RAW,
@@ -221,6 +222,7 @@ const struct protosw inetsw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = esp4_input,
 	.pr_ctlinput = esp4_ctlinput,
+	.pr_init = esp4_init,
 },
 #endif /* IPSEC_ESP */
 {	.pr_type = SOCK_RAW,
@@ -228,6 +230,7 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_IPCOMP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ipcomp4_input,
+	.pr_init = ipcomp4_init,
 },
 #endif /* IPSEC */
 #ifdef FAST_IPSEC

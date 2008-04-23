@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_private.h,v 1.1 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: udp_private.h,v 1.2 2008/04/23 06:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,19 +40,11 @@
 #define _NETINET_UDP_PRIVATE_H_
 
 #ifdef _KERNEL
-#include <sys/percpu.h>
+#include <net/net_stats.h>
 
 extern	percpu_t *udpstat_percpu;
 
-/*
- * Most UDP statistics are exceptional conditions, so this is good enough.
- */
-#define	UDP_STATINC(x)							\
-do {									\
-	uint64_t *_udps_ = percpu_getref(udpstat_percpu);		\
-	_udps_[x]++;							\
-	percpu_putref(udpstat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	UDP_STATINC(x)		_NET_STATINC(udpstat_percpu, x)
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	UDP_HDR_ALIGNED_P(uh)	1

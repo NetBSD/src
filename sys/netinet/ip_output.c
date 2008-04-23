@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.194 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.195 2008/04/23 06:09:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.194 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.195 2008/04/23 06:09:04 thorpej Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -140,6 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.194 2008/04/12 05:58:22 thorpej Exp 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /*IPSEC*/
@@ -525,7 +526,7 @@ sendit:
 	}
 
 	if (sp == NULL) {
-		ipsecstat.out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto bad;
 	}
 
@@ -537,7 +538,7 @@ sendit:
 		/*
 		 * This packet is just discarded.
 		 */
-		ipsecstat.out_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_POLVIO);
 		goto bad;
 
 	case IPSEC_POLICY_BYPASS:

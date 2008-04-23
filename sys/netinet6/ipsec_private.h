@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_private.h,v 1.2 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipsec_private.h,v 1.1 2008/04/23 06:09:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,25 +36,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETINET_TCP_PRIVATE_H_
-#define _NETINET_TCP_PRIVATE_H_
+#ifndef _NETINET6_IPSEC_PRIVATE_H_
+#define _NETINET6_IPSEC_PRIVATE_H_
 
 #ifdef _KERNEL
 #include <net/net_stats.h>
 
-extern	percpu_t *tcpstat_percpu;
+extern	percpu_t *ipsecstat_percpu;
+extern	percpu_t *ipsec6stat_percpu;
 
-#define	TCP_STAT_GETREF()	_NET_STAT_GETREF(tcpstat_percpu)
-#define	TCP_STAT_PUTREF()	_NET_STAT_PUTREF(tcpstat_percpu)
+#define	IPSEC_STAT_GETREF()	_NET_STAT_GETREF(ipsecstat_percpu)
+#define	IPSEC_STAT_PUTREF()	_NET_STAT_PUTREF(ipsecstat_percpu)
+#define	IPSEC_STATINC(x)	_NET_STATINC(ipsecstat_percpu, x)
 
-#define	TCP_STATINC(x)		_NET_STATINC(tcpstat_percpu, x)
-#define	TCP_STATADD(x, v)	_NET_STATADD(tcpstat_percpu, x, v)
-
-#ifdef __NO_STRICT_ALIGNMENT
-#define	TCP_HDR_ALIGNED_P(th)	1
-#else
-#define	TCP_HDR_ALIGNED_P(th)	((((vaddr_t)(th)) & 3) == 0)
-#endif /* __NO_STRICT_ALIGNMENT */
+#define	IPSEC6_STAT_GETREF()	_NET_STAT_GETREF(ipsec6stat_percpu)
+#define	IPSEC6_STAT_PUTREF()	_NET_STAT_PUTREF(ipsec6stat_percpu)
+#define	IPSEC6_STATINC(x)	_NET_STATINC(ipsec6stat_percpu, x)
 #endif /* _KERNEL */
 
-#endif /* !_NETINET_TCP_PRIVATE_H_ */
+#endif /* !_NETINET6_IPSEC_PRIVATE_H_ */

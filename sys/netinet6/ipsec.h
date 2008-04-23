@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.47 2007/05/02 20:40:27 dyoung Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.48 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -217,38 +217,46 @@ struct ipsecaux {
 				 */
 #define IPSEC_REPLAYWSIZE  32
 
-/* statistics for ipsec processing */
-struct ipsecstat {
-	u_quad_t in_success;  /* succeeded inbound process */
-	u_quad_t in_polvio;
-			/* security policy violation for inbound process */
-	u_quad_t in_nosa;     /* inbound SA is unavailable */
-	u_quad_t in_inval;    /* inbound processing failed due to EINVAL */
-	u_quad_t in_nomem;    /* inbound processing failed due to ENOBUFS */
-	u_quad_t in_badspi;   /* failed getting a SPI */
-	u_quad_t in_ahreplay; /* AH replay check failed */
-	u_quad_t in_espreplay; /* ESP replay check failed */
-	u_quad_t in_ahauthsucc; /* AH authentication success */
-	u_quad_t in_ahauthfail; /* AH authentication failure */
-	u_quad_t in_espauthsucc; /* ESP authentication success */
-	u_quad_t in_espauthfail; /* ESP authentication failure */
-	u_quad_t in_esphist[256];
-	u_quad_t in_ahhist[256];
-	u_quad_t in_comphist[256];
-	u_quad_t out_success; /* succeeded outbound process */
-	u_quad_t out_polvio;
-			/* security policy violation for outbound process */
-	u_quad_t out_nosa;    /* outbound SA is unavailable */
-	u_quad_t out_inval;   /* outbound process failed due to EINVAL */
-	u_quad_t out_nomem;    /* inbound processing failed due to ENOBUFS */
-	u_quad_t out_noroute; /* there is no route */
-	u_quad_t out_esphist[256];
-	u_quad_t out_ahhist[256];
-	u_quad_t out_comphist[256];
+/*
+ * statistics for ipsec processing.
+ * Each counter is an unsigned 64-bit value.
+ */
+#define	IPSEC_STAT_IN_SUCCESS	0	/* succeeded inbound process */
+#define	IPSEC_STAT_IN_POLVIO	1	/* security policy violation for
+					   inbound process */
+#define	IPSEC_STAT_IN_NOSA	2	/* inbound SA is unavailable */
+#define	IPSEC_STAT_IN_INVAL	3	/* inbound processing failed EINVAL */
+#define	IPSEC_STAT_IN_NOMEM	4	/* inbound processing failed ENOBUFS */
+#define	IPSEC_STAT_IN_BADSPI	5	/* failed getting an SPI */
+#define	IPSEC_STAT_IN_AHREPLAY	6	/* AH replay check failed */
+#define	IPSEC_STAT_IN_ESPREPLAY	7	/* ESP replay check failed */
+#define	IPSEC_STAT_IN_AHAUTHSUCC 8	/* AH authentication success */
+#define	IPSEC_STAT_IN_AHAUTHFAIL 9	/* AH authentication failure */
+#define	IPSEC_STAT_IN_ESPAUTHSUCC 10	/* ESP authentication success */
+#define	IPSEC_STAT_IN_ESPAUTHFAIL 11	/* ESP authentication failure */
+#define	IPSEC_STAT_IN_ESPHIST	12
+		/* space for 256 counters */
+#define	IPSEC_STAT_IN_AHHIST	268
+		/* space for 256 counters */
+#define	IPSEC_STAT_IN_COMPHIST	524
+		/* space for 256 counters */
+#define	IPSEC_STAT_OUT_SUCCESS	780	/* succeeded outbound process */
+#define	IPSEC_STAT_OUT_POLVIO	781	/* security policy violation for
+					   outbound process */
+#define	IPSEC_STAT_OUT_NOSA	782	/* outbound SA is unavailable */
+#define	IPSEC_STAT_OUT_INVAL	783	/* outbound processing failed EINVAL */
+#define	IPSEC_STAT_OUT_NOMEM	784	/* outbound processing failed ENOBUFS */
+#define	IPSEC_STAT_OUT_NOROUTE	785	/* no route */
+#define	IPSEC_STAT_OUT_ESPHIST	786
+		/* space for 256 counters */
+#define	IPSEC_STAT_OUT_AHHIST	1042
+		/* space for 256 counters */
+#define	IPSEC_STAT_OUT_COMPHIST	1298
+		/* space for 256 counters */
+#define	IPSEC_STAT_SPDCACHELOOKUP 1554
+#define	IPSEC_STAT_SPDCACHEMISS	1555
 
-	u_quad_t spdcachelookup;
-	u_quad_t spdcachemiss;
-};
+#define	IPSEC_NSTATS		1556
 
 /*
  * Definitions for IPsec & Key sysctl operations.
@@ -320,7 +328,6 @@ struct ipsec_history {
 extern int ipsec_debug;
 
 #ifdef INET
-extern struct ipsecstat ipsecstat;
 extern struct secpolicy *ip4_def_policy;
 extern int ip4_esp_trans_deflev;
 extern int ip4_esp_net_deflev;
@@ -333,7 +340,6 @@ extern int ip4_ipsec_ecn;
 #endif
 
 #ifdef INET6
-extern struct ipsecstat ipsec6stat;
 extern struct secpolicy *ip6_def_policy;
 extern int ip6_esp_trans_deflev;
 extern int ip6_esp_net_deflev;
@@ -393,9 +399,11 @@ struct tcp6cb;
 extern int ipsec_chkreplay __P((u_int32_t, struct secasvar *));
 extern int ipsec_updatereplay __P((u_int32_t, struct secasvar *));
 
+extern void ipsec4_init(void);
 extern size_t ipsec4_hdrsiz __P((struct mbuf *, u_int, struct inpcb *));
 extern size_t ipsec4_hdrsiz_tcp __P((struct tcpcb *));
 #ifdef INET6
+extern void ipsec6_init(void);
 extern size_t ipsec6_hdrsiz __P((struct mbuf *, u_int, struct in6pcb *));
 extern size_t ipsec6_hdrsiz_tcp __P((struct tcpcb *));
 #endif

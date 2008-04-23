@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.9 2006/10/22 16:43:24 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.10 2008/04/23 06:09:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,10 +29,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ipsec.c,v 1.9 2006/10/22 16:43:24 christos Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.10 2008/04/23 06:09:04 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 #include <netinet6/ipsec.h>
@@ -48,9 +49,9 @@ __RCSID("$NetBSD: ipsec.c,v 1.9 2006/10/22 16:43:24 christos Exp $");
     mvwprintw(wnd, row, col, "%9llu", (unsigned long long)curstat.stat)
 
 struct mystat {
-	struct ipsecstat i4;
+	uint64_t i4[IPSEC_NSTATS];
 #ifdef INET6
-	struct ipsecstat i6;
+	uint64_t i6[IPSEC_NSTATS];
 #endif
 };
 
@@ -145,40 +146,40 @@ showipsec(void)
 {
 
 	if (namelist[0].n_type) {
-		SHOW(i4.in_success,	1, 0);
-		SHOW(i4.in_polvio,	2, 0);
-		SHOW(i4.in_nosa,	3, 0);
-		SHOW(i4.in_inval,	4, 0);
-		SHOW(i4.in_badspi,	5, 0);
-		SHOW(i4.in_ahreplay,	6, 0);
-		SHOW(i4.in_espreplay,	7, 0);
-		SHOW(i4.in_ahauthsucc,	8, 0);
-		SHOW(i4.in_ahauthfail,	9, 0);
+		SHOW(i4[IPSEC_STAT_IN_SUCCESS],		1, 0);
+		SHOW(i4[IPSEC_STAT_IN_POLVIO],		2, 0);
+		SHOW(i4[IPSEC_STAT_IN_NOSA],		3, 0);
+		SHOW(i4[IPSEC_STAT_IN_INVAL],		4, 0);
+		SHOW(i4[IPSEC_STAT_IN_BADSPI],		5, 0);
+		SHOW(i4[IPSEC_STAT_IN_AHREPLAY],	6, 0);
+		SHOW(i4[IPSEC_STAT_IN_ESPREPLAY],	7, 0);
+		SHOW(i4[IPSEC_STAT_IN_AHAUTHSUCC],	8, 0);
+		SHOW(i4[IPSEC_STAT_IN_AHAUTHFAIL],	9, 0);
 
-		SHOW(i4.out_success,	12, 0);
-		SHOW(i4.out_polvio,	13, 0);
-		SHOW(i4.out_nosa,	14, 0);
-		SHOW(i4.out_inval,	15, 0);
-		SHOW(i4.out_noroute,	16, 0);
+		SHOW(i4[IPSEC_STAT_OUT_SUCCESS],	12, 0);
+		SHOW(i4[IPSEC_STAT_OUT_POLVIO],		13, 0);
+		SHOW(i4[IPSEC_STAT_OUT_NOSA],		14, 0);
+		SHOW(i4[IPSEC_STAT_OUT_INVAL],		15, 0);
+		SHOW(i4[IPSEC_STAT_OUT_NOROUTE],	16, 0);
 	}
 
 #ifdef INET6
 	if (namelist[1].n_type) {
-		SHOW(i6.in_success,	1, 35);
-		SHOW(i6.in_polvio,	2, 35);
-		SHOW(i6.in_nosa,	3, 35);
-		SHOW(i6.in_inval,	4, 35);
-		SHOW(i6.in_badspi,	5, 35);
-		SHOW(i6.in_ahreplay,	6, 35);
-		SHOW(i6.in_espreplay,	7, 35);
-		SHOW(i6.in_ahauthsucc,	8, 35);
-		SHOW(i6.in_ahauthfail,	9, 35);
+		SHOW(i6[IPSEC_STAT_IN_SUCCESS],		1, 35);
+		SHOW(i6[IPSEC_STAT_IN_POLVIO],		2, 35);
+		SHOW(i6[IPSEC_STAT_IN_NOSA],		3, 35);
+		SHOW(i6[IPSEC_STAT_IN_INVAL],		4, 35);
+		SHOW(i6[IPSEC_STAT_IN_BADSPI],		5, 35);
+		SHOW(i6[IPSEC_STAT_IN_AHREPLAY],	6, 35);
+		SHOW(i6[IPSEC_STAT_IN_ESPREPLAY],	7, 35);
+		SHOW(i6[IPSEC_STAT_IN_AHAUTHSUCC],	8, 35);
+		SHOW(i6[IPSEC_STAT_IN_AHAUTHFAIL],	9, 35);
 
-		SHOW(i6.out_success,	12, 35);
-		SHOW(i6.out_polvio,	13, 35);
-		SHOW(i6.out_nosa,	14, 35);
-		SHOW(i6.out_inval,	15, 35);
-		SHOW(i6.out_noroute,	16, 35);
+		SHOW(i6[IPSEC_STAT_OUT_SUCCESS],	12, 35);
+		SHOW(i6[IPSEC_STAT_OUT_POLVIO],		13, 35);
+		SHOW(i6[IPSEC_STAT_OUT_NOSA],		14, 35);
+		SHOW(i6[IPSEC_STAT_OUT_INVAL],		15, 35);
+		SHOW(i6[IPSEC_STAT_OUT_NOROUTE],	16, 35);
 	}
 #endif
 }
@@ -186,16 +187,20 @@ showipsec(void)
 int
 initipsec(void)
 {
-	int n;
 
-	if (namelist[0].n_type == 0) {
-		n = kvm_nlist(kd, namelist);
-		if (n < 0) {
-			nlisterr(namelist);
-			return(0);
-		} else if (n == sizeof(namelist) / sizeof(namelist[0]) - 1) {
-			error("No namelist");
-			return(0);
+	if (! use_sysctl) {
+		int n;
+
+		if (namelist[0].n_type == 0) {
+			n = kvm_nlist(kd, namelist);
+			if (n < 0) {
+				nlisterr(namelist);
+				return(0);
+			} else if (n == sizeof(namelist) /
+					sizeof(namelist[0]) - 1) {
+				error("No namelist");
+				return(0);
+			}
 		}
 	}
 	return 1;
@@ -204,46 +209,53 @@ initipsec(void)
 void
 fetchipsec(void)
 {
+	bool do_ipsec4 = false;
+#ifdef INET6
+	bool do_ipsec6 = false;
+#endif
+	u_int i;
 
-	if (namelist[0].n_type) {
-		KREAD((void *)namelist[0].n_value, &newstat.i4,
-		    sizeof(newstat.i4));
+	if (use_sysctl) {
+		size_t size = sizeof(newstat.i4);
+		
+		if (sysctlbyname("net.inet.ipsec.stats", newstat.i4, &size,
+				 NULL, 0) == 0) {
+			do_ipsec4 = true;
+		}
+	} else {
+		if (namelist[0].n_type) {
+			KREAD((void *)namelist[0].n_value, &newstat.i4,
+			    sizeof(newstat.i4));
+			do_ipsec4 = true;
+		}
+	}
 
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_success);
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_polvio);
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_nosa);
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_inval);
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_badspi);
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_ahreplay);
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_espreplay);
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_ahauthsucc);
-		ADJINETCTR(curstat, oldstat, newstat, i4.in_ahauthfail);
-		ADJINETCTR(curstat, oldstat, newstat, i4.out_success);
-		ADJINETCTR(curstat, oldstat, newstat, i4.out_polvio);
-		ADJINETCTR(curstat, oldstat, newstat, i4.out_nosa);
-		ADJINETCTR(curstat, oldstat, newstat, i4.out_inval);
-		ADJINETCTR(curstat, oldstat, newstat, i4.out_noroute);
+	if (do_ipsec4) {
+		for (i = 0; i < IPSEC_NSTATS; i++) {
+			ADJINETCTR(curstat, oldstat, newstat, i4[i]);
+		}
 	}
 
 #ifdef INET6
-	if (namelist[1].n_type) {
-		KREAD((void *)namelist[1].n_value, &newstat.i6,
-		    sizeof(newstat.i6));
+	if (use_sysctl) {
+		size_t size = sizeof(newstat.i6);
+		
+		if (sysctlbyname("net.inet6.ipsec6.stats", newstat.i6, &size,
+				 NULL, 0) == 0) {
+			do_ipsec6 = true;
+		}
+	} else {
+		if (namelist[1].n_type) {
+			KREAD((void *)namelist[1].n_value, &newstat.i6,
+			    sizeof(newstat.i6));
+			do_ipsec6 = true;
+		}
+	}
 
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_success);
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_polvio);
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_nosa);
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_inval);
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_badspi);
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_ahreplay);
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_espreplay);
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_ahauthsucc);
-		ADJINETCTR(curstat, oldstat, newstat, i6.in_ahauthfail);
-		ADJINETCTR(curstat, oldstat, newstat, i6.out_success);
-		ADJINETCTR(curstat, oldstat, newstat, i6.out_polvio);
-		ADJINETCTR(curstat, oldstat, newstat, i6.out_nosa);
-		ADJINETCTR(curstat, oldstat, newstat, i6.out_inval);
-		ADJINETCTR(curstat, oldstat, newstat, i6.out_noroute);
+	if (do_ipsec6) {
+		for (i = 0; i < IPSEC_NSTATS; i++) {
+			ADJINETCTR(curstat, oldstat, newstat, i6[i]);
+		}
 	}
 #endif
 

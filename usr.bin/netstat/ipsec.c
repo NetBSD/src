@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.11 2005/08/04 19:41:28 rpaulo Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.12 2008/04/23 06:09:04 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.33 2003/07/25 09:54:32 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.11 2005/08/04 19:41:28 rpaulo Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.12 2008/04/23 06:09:04 thorpej Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: ipsec.c,v 1.11 2005/08/04 19:41:28 rpaulo Exp $");
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in.h>
 
@@ -136,23 +137,19 @@ static const char *pfkey_msgtypenames[] = {
 	"x_spdsetidx", "x_spdexpire", "x_spddelete2"
 };
 
-static struct ipsecstat ipsecstat;
+static uint64_t ipsecstat[IPSEC_NSTATS];
 
-static void print_ipsecstats __P((void));
-static const char *pfkey_msgtype_names __P((int));
-static void ipsec_hist __P((const u_quad_t *, size_t, const struct val2str *,
-	size_t, const char *));
+static void print_ipsecstats(void);
+static const char *pfkey_msgtype_names(int);
+static void ipsec_hist(const u_quad_t *, size_t, const struct val2str *,
+	size_t, const char *);
 
 /*
  * Dump IPSEC statistics structure.
  */
 static void
-ipsec_hist(hist, histmax, name, namemax, title)
-	const u_quad_t *hist;
-	size_t histmax;
-	const struct val2str *name;
-	size_t namemax;
-	const char *title;
+ipsec_hist(const uint64_t *hist, size_t histmax, const struct val2str *name,
+	   size_t namemax, const char *title)
 {
 	int first;
 	size_t proto;
@@ -180,63 +177,71 @@ ipsec_hist(hist, histmax, name, namemax, title)
 }
 
 static void
-print_ipsecstats()
+print_ipsecstats(void)
 {
-#define	p(f, m) if (ipsecstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ipsecstat.f, plural(ipsecstat.f))
-#define	pes(f, m) if (ipsecstat.f || sflag <= 1) \
-    printf(m, (unsigned long long)ipsecstat.f, plurales(ipsecstat.f))
-#define hist(f, n, t) \
-    ipsec_hist((f), sizeof(f)/sizeof(f[0]), (n), sizeof(n)/sizeof(n[0]), (t));
+#define	p(f, m) if (ipsecstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)ipsecstat[f], plural(ipsecstat[f]))
+#define	pes(f, m) if (ipsecstat[f] || sflag <= 1) \
+    printf(m, (unsigned long long)ipsecstat[f], plurales(ipsecstat[f]))
+#define hist(f, c, n, t) \
+    ipsec_hist(&(f), (c), (n), sizeof(n)/sizeof(n[0]), (t));
 
-	p(in_success, "\t%llu inbound packet%s processed successfully\n");
-	p(in_polvio, "\t%llu inbound packet%s violated process security "
+	p(IPSEC_STAT_IN_SUCCESS, "\t%llu inbound packet%s processed successfully\n");
+	p(IPSEC_STAT_IN_POLVIO, "\t%llu inbound packet%s violated process security "
 	    "policy\n");
-	p(in_nosa, "\t%llu inbound packet%s with no SA available\n");
-	p(in_inval, "\t%llu invalid inbound packet%s\n");
-	p(in_nomem, "\t%llu inbound packet%s failed due to insufficient memory\n");
-	p(in_badspi, "\t%llu inbound packet%s failed getting SPI\n");
-	p(in_ahreplay, "\t%llu inbound packet%s failed on AH replay check\n");
-	p(in_espreplay, "\t%llu inbound packet%s failed on ESP replay check\n");
-	p(in_ahauthsucc, "\t%llu inbound packet%s considered authentic\n");
-	p(in_ahauthfail, "\t%llu inbound packet%s failed on authentication\n");
-	hist(ipsecstat.in_ahhist, ipsec_ahnames, "AH input");
-	hist(ipsecstat.in_esphist, ipsec_espnames, "ESP input");
-	hist(ipsecstat.in_comphist, ipsec_compnames, "IPComp input");
+	p(IPSEC_STAT_IN_NOSA, "\t%llu inbound packet%s with no SA available\n");
+	p(IPSEC_STAT_IN_INVAL, "\t%llu invalid inbound packet%s\n");
+	p(IPSEC_STAT_IN_NOMEM, "\t%llu inbound packet%s failed due to insufficient memory\n");
+	p(IPSEC_STAT_IN_BADSPI, "\t%llu inbound packet%s failed getting SPI\n");
+	p(IPSEC_STAT_IN_AHREPLAY, "\t%llu inbound packet%s failed on AH replay check\n");
+	p(IPSEC_STAT_IN_ESPREPLAY, "\t%llu inbound packet%s failed on ESP replay check\n");
+	p(IPSEC_STAT_IN_AHAUTHSUCC, "\t%llu inbound packet%s considered authentic\n");
+	p(IPSEC_STAT_IN_AHAUTHFAIL, "\t%llu inbound packet%s failed on authentication\n");
+	hist(ipsecstat[IPSEC_STAT_IN_AHHIST], 256, ipsec_ahnames, "AH input");
+	hist(ipsecstat[IPSEC_STAT_IN_ESPHIST], 256, ipsec_espnames, "ESP input");
+	hist(ipsecstat[IPSEC_STAT_IN_COMPHIST], 256, ipsec_compnames, "IPComp input");
 
-	p(out_success, "\t%llu outbound packet%s processed successfully\n");
-	p(out_polvio, "\t%llu outbound packet%s violated process security "
+	p(IPSEC_STAT_OUT_SUCCESS, "\t%llu outbound packet%s processed successfully\n");
+	p(IPSEC_STAT_OUT_POLVIO, "\t%llu outbound packet%s violated process security "
 	    "policy\n");
-	p(out_nosa, "\t%llu outbound packet%s with no SA available\n");
-	p(out_inval, "\t%llu invalid outbound packet%s\n");
-	p(out_nomem, "\t%llu outbound packet%s failed due to insufficient memory\n");
-	p(out_noroute, "\t%llu outbound packet%s with no route\n");
-	hist(ipsecstat.out_ahhist, ipsec_ahnames, "AH output");
-	hist(ipsecstat.out_esphist, ipsec_espnames, "ESP output");
-	hist(ipsecstat.out_comphist, ipsec_compnames, "IPComp output");
-	p(spdcachelookup, "\t%llu SPD cache lookup%s\n");
-	pes(spdcachemiss, "\t%llu SPD cache miss%s\n");
+	p(IPSEC_STAT_OUT_NOSA, "\t%llu outbound packet%s with no SA available\n");
+	p(IPSEC_STAT_OUT_INVAL, "\t%llu invalid outbound packet%s\n");
+	p(IPSEC_STAT_OUT_NOMEM, "\t%llu outbound packet%s failed due to insufficient memory\n");
+	p(IPSEC_STAT_OUT_NOROUTE, "\t%llu outbound packet%s with no route\n");
+	hist(ipsecstat[IPSEC_STAT_OUT_AHHIST], 256, ipsec_ahnames, "AH output");
+	hist(ipsecstat[IPSEC_STAT_OUT_ESPHIST], 256, ipsec_espnames, "ESP output");
+	hist(ipsecstat[IPSEC_STAT_OUT_COMPHIST], 256, ipsec_compnames, "IPComp output");
+
+	p(IPSEC_STAT_SPDCACHELOOKUP, "\t%llu SPD cache lookup%s\n");
+	pes(IPSEC_STAT_SPDCACHEMISS, "\t%llu SPD cache miss%s\n");
 #undef p
 #undef pes
 #undef hist
 }
 
 void
-ipsec_stats(off, name)
-	u_long off;
-	char *name;
+ipsec_stats(u_long off, char *name)
 {
-	if (off == 0)
-		return;
+
+	if (use_sysctl) {
+		size_t size = sizeof(ipsecstat);
+
+		if (sysctlbyname("net.inet.ipsec.stats", ipsecstat, &size,
+				 NULL, 0) == -1)
+			return;
+	} else {
+		if (off == 0)
+			return;
+		kread(off, (char *)&ipsecstat, sizeof (ipsecstat));
+	}
+
 	printf ("%s:\n", name);
-	kread(off, (char *)&ipsecstat, sizeof (ipsecstat));
 
 	print_ipsecstats();
 }
 
 static const char *
-pfkey_msgtype_names(x)
-	int x;
+pfkey_msgtype_names(int x)
 {
 	const int max =
 	    sizeof(pfkey_msgtypenames)/sizeof(pfkey_msgtypenames[0]);
@@ -249,9 +254,7 @@ pfkey_msgtype_names(x)
 }
 
 void
-pfkey_stats(off, name)
-	u_long off;
-	char *name;
+pfkey_stats(u_long off, char *name)
 {
 	struct pfkeystat pfkeystat;
 	int first, type;
