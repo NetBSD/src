@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1132 2008/04/22 10:42:17 rmind Exp $
+#	$NetBSD: mi,v 1.1133 2008/04/23 05:21:17 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1379,6 +1379,7 @@
 ./usr/include/net/if_tun.h			comp-c-include
 ./usr/include/net/if_types.h			comp-c-include
 ./usr/include/net/if_vlanvar.h			comp-c-include
+./usr/include/net/net_stats.h			comp-c-include
 ./usr/include/net/netisr.h			comp-c-include
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include
