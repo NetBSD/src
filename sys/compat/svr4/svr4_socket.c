@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_socket.c,v 1.18 2007/12/20 23:03:05 dsl Exp $	*/
+/*	$NetBSD: svr4_socket.c,v 1.19 2008/04/23 13:58:06 ad Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.18 2007/12/20 23:03:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_socket.c,v 1.19 2008/04/23 13:58:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -122,9 +122,12 @@ svr4_delete_socket(struct proc *p, struct file *fp)
 	struct svr4_sockcache_entry *e;
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;
 
+	KERNEL_LOCK(1, NULL);
+
 	if (!initialized) {
 		TAILQ_INIT(&svr4_head);
 		initialized = 1;
+		KERNEL_UNLOCK_ONE(NULL);
 		return;
 	}
 
@@ -134,8 +137,10 @@ svr4_delete_socket(struct proc *p, struct file *fp)
 			DPRINTF(("svr4_delete_socket: %s [%p,%d,%lu]\n",
 				 e->sock.sun_path, p, e->dev, e->ino));
 			free(e, M_TEMP);
-			return;
+			break;
 		}
+
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 
@@ -145,6 +150,8 @@ svr4_add_socket(struct proc *p, const char *path, struct stat *st)
 	struct svr4_sockcache_entry *e;
 	size_t len;
 	int error;
+
+	KERNEL_LOCK(1, NULL);
 
 	if (!initialized) {
 		TAILQ_INIT(&svr4_head);
@@ -161,6 +168,7 @@ svr4_add_socket(struct proc *p, const char *path, struct stat *st)
 	    sizeof(e->sock.sun_path), &len)) != 0) {
 		DPRINTF(("svr4_add_socket: copyinstr failed %d\n", error));
 		free(e, M_TEMP);
+		KERNEL_UNLOCK_ONE(NULL);
 		return error;
 	}
 
@@ -170,6 +178,8 @@ svr4_add_socket(struct proc *p, const char *path, struct stat *st)
 	TAILQ_INSERT_HEAD(&svr4_head, e, entries);
 	DPRINTF(("svr4_add_socket: %s [%p,%d,%lu]\n", e->sock.sun_path,
 		 p, e->dev, e->ino));
+
+	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }
 
