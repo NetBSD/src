@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.25 2007/12/09 18:27:39 degroote Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.26 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$KAME: ipcomp_output.c,v 1.24 2001/07/26 06:53:18 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.25 2007/12/09 18:27:39 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.26 2008/04/23 06:09:05 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipcomp_output.c,v 1.25 2007/12/09 18:27:39 degroote 
 #include <netinet6/ipcomp.h>
 
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 
@@ -115,19 +116,19 @@ ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	size_t compoff;
 	int afnumber;
 	int error = 0;
-	struct ipsecstat *stat;
+	percpu_t *stat;
 
 	switch (af) {
 #ifdef INET
 	case AF_INET:
 		afnumber = 4;
-		stat = &ipsecstat;
+		stat = ipsecstat_percpu;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
 		afnumber = 6;
-		stat = &ipsec6stat;
+		stat = ipsec6stat_percpu;
 		break;
 #endif
 	default:
@@ -138,7 +139,7 @@ ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	/* grab parameters */
 	algo = ipcomp_algorithm_lookup(sav->alg_enc);
 	if ((ntohl(sav->spi) & ~0xffff) != 0 || !algo) {
-		stat->out_inval++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_INVAL);
 		error = EINVAL;
 		goto fail1;
 	}
@@ -182,7 +183,7 @@ ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	if (mprev == NULL || mprev->m_next != md) {
 		ipseclog((LOG_DEBUG, "ipcomp%d_output: md is not in chain\n",
 		    afnumber));
-		stat->out_inval++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_INVAL);
 		error = EINVAL;
 		goto fail3;
 	}
@@ -197,11 +198,11 @@ ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	if ((*algo->compress)(m, md, &plen) || mprev->m_next == NULL) {
 		ipseclog((LOG_ERR, "packet compression failure\n"));
 		m = NULL;
-		stat->out_inval++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_INVAL);
 		error = EINVAL;
 		goto fail3;
 	}
-	stat->out_comphist[sav->alg_enc]++;
+	_NET_STATINC(stat, IPSEC_STAT_OUT_COMPHIST + sav->alg_enc);
 	md = mprev->m_next;
 
 	/*
@@ -289,7 +290,7 @@ ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		else {
 			ipseclog((LOG_ERR,
 			    "IPv4 ESP output: size exceeds limit\n"));
-			ipsecstat.out_inval++;
+			IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = EMSGSIZE;
 			goto fail2;
 		}
@@ -307,9 +308,9 @@ ipcomp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		ipseclog((LOG_DEBUG,
 		    "NULL mbuf after compression in ipcomp%d_output",
 		    afnumber));
-		stat->out_inval++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_INVAL);
 	}
-		stat->out_success++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_SUCCESS);
 
 	/* compute byte lifetime against original packet */
 	key_sa_recordxfer(sav, mcopy);
@@ -337,7 +338,7 @@ ipcomp4_output(struct mbuf *m, struct ipsecrequest *isr)
 	struct ip *ip;
 	if (m->m_len < sizeof(struct ip)) {
 		ipseclog((LOG_DEBUG, "ipcomp4_output: first mbuf too short\n"));
-		ipsecstat.out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		m_freem(m);
 		return EINVAL;
 	}
@@ -354,7 +355,7 @@ ipcomp6_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 {
 	if (m->m_len < sizeof(struct ip6_hdr)) {
 		ipseclog((LOG_DEBUG, "ipcomp6_output: first mbuf too short\n"));
-		ipsec6stat.out_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 		m_freem(m);
 		return EINVAL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.266 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.267 2008/04/23 06:09:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.266 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.267 2008/04/23 06:09:04 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -149,6 +149,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.266 2008/04/12 05:58:22 thorpej Exp $
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #endif
 #ifdef FAST_IPSEC
@@ -835,7 +836,7 @@ ip_input(struct mbuf *m)
 		}
 #ifdef IPSEC
 		if (ipsec4_in_reject(m, NULL)) {
-			ipsecstat.in_polvio++;
+			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto bad;
 		}
 #endif
@@ -1000,7 +1001,7 @@ found:
 	 */
 	if ((inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0 &&
 	    ipsec4_in_reject(m, NULL)) {
-		ipsecstat.in_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		goto bad;
 	}
 #endif
@@ -2194,36 +2195,16 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 }
 #endif /* GATEWAY */
 
-static void
-ipstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *ipsc = v1;
-	uint64_t *ips = v2;
-	u_int i;
-
-	for (i = 0; i < IP_NSTATS; i++)
-		ips[i] += ipsc[i];
-}
-
-static void
-ipstat_convert_to_user(uint64_t *ips)
-{
-
-	memset(ips, 0, sizeof(uint64_t) * IP_NSTATS);
-	percpu_foreach(ipstat_percpu, ipstat_convert_to_user_cb, ips);
-}
-
 static int
 sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
+	netstat_sysctl_context ctx;
 	uint64_t ips[IP_NSTATS];
 
-	ipstat_convert_to_user(ips);
-	node = *rnode;
-	node.sysctl_data = ips;
-	node.sysctl_size = sizeof(ips);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	ctx.ctx_stat = ipstat_percpu;
+	ctx.ctx_counters = ips;
+	ctx.ctx_ncounters = IP_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")

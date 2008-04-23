@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.23 2007/02/17 22:34:12 dyoung Exp $	*/
+/*	$NetBSD: ah.h,v 1.24 2008/04/23 06:09:05 thorpej Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ extern int ah4_output __P((struct mbuf *, struct ipsecrequest *));
 extern int ah4_calccksum __P((struct mbuf *, u_int8_t *, size_t,
 	const struct ah_algorithm *, struct secasvar *));
 
+extern void ah4_init(void);
 extern void *ah4_ctlinput(int, const struct sockaddr *, void *);
 
 #ifdef INET6
@@ -99,6 +100,7 @@ extern int ah6_output(struct mbuf *, u_char *, struct mbuf *,
 extern int ah6_calccksum(struct mbuf *, u_int8_t *, size_t,
 	const struct ah_algorithm *, struct secasvar *);
 
+extern void ah6_init(void);
 extern void ah6_ctlinput(int, const struct sockaddr *, void *);
 #endif /* INET6 */
 
