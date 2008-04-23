@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.898 2008/03/30 12:32:13 skrll Exp $
+#	$NetBSD: files,v 1.899 2008/04/23 05:21:17 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1522,6 +1522,7 @@ file	net/if_pppoe.c			pppoe			needs-flag
 file	net/pfil.c			pfil_hooks | ipfilter | pf
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
+file	net/net_stats.c
 file	net/radix.c
 file	net/raw_cb.c
 file	net/raw_usrreq.c
