@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.116 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.117 2008/04/23 05:26:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.116 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.117 2008/04/23 05:26:50 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -983,36 +983,16 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	return (0);
 }
 
-static void
-icmpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *icpsc = v1;
-	uint64_t *icps = v2;
-	u_int i;
-
-	for (i = 0; i < ICMP_NSTATS; i++)
-		icps[i] += icpsc[i];
-}
-
-static void
-icmpstat_convert_to_user(uint64_t *icps)
-{
-
-	memset(icps, 0, sizeof(uint64_t) * ICMP_NSTATS);
-	percpu_foreach(icmpstat_percpu, icmpstat_convert_to_user_cb, icps);
-}
-
 static int
 sysctl_net_inet_icmp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
+	netstat_sysctl_context ctx;
 	uint64_t icps[ICMP_NSTATS];
 
-	icmpstat_convert_to_user(icps);
-	node = *rnode;
-	node.sysctl_data = icps;
-	node.sysctl_size = sizeof(icps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	ctx.ctx_stat = icmpstat_percpu;
+	ctx.ctx_counters = icps;
+	ctx.ctx_ncounters = ICMP_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.132 2008/04/15 15:17:54 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.133 2008/04/23 05:26:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.132 2008/04/15 15:17:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.133 2008/04/23 05:26:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.132 2008/04/15 15:17:54 thorpej Exp $")
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/sysctl.h>
-#include <sys/percpu.h>
 
 #include <net/ethertypes.h>
 #include <net/if.h>
@@ -109,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.132 2008/04/15 15:17:54 thorpej Exp $")
 #include <net/if_types.h>
 #include <net/if_ether.h>
 #include <net/route.h>
+#include <net/net_stats.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -172,22 +172,11 @@ int	arpinit_done = 0;
 
 static percpu_t *arpstat_percpu;
 
-#define	ARP_STAT_GETREF()	percpu_getref(arpstat_percpu)
-#define	ARP_STAT_PUTREF()	percpu_putref(arpstat_percpu)
+#define	ARP_STAT_GETREF()	_NET_STAT_GETREF(arpstat_percpu)
+#define	ARP_STAT_PUTREF()	_NET_STAT_PUTREF(arpstat_percpu)
 
-#define	ARP_STATINC(x)							\
-do {									\
-	uint64_t *_arps_ = ARP_STAT_GETREF();				\
-	_arps_[x]++;							\
-	ARP_STAT_PUTREF();						\
-} while (/*CONSTCOND*/0)
-
-#define	ARP_STATADD(x, v)						\
-do {									\
-	uint64_t *_arps_ = ARP_STAT_GETREF();				\
-	_arps_[x] += (v);						\
-	ARP_STAT_PUTREF();						\
-} while (/*CONSTCOND*/0)
+#define	ARP_STATINC(x)		_NET_STATINC(arpstat_percpu, x)
+#define	ARP_STATADD(x, v)	_NET_STATADD(arpstat_percpu, x, v)
 
 struct	callout arptimer_ch;
 
@@ -1577,36 +1566,16 @@ db_show_arptab(db_expr_t addr, bool have_addr,
 }
 #endif
 
-static void
-arpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *arpsc = v1;
-	uint64_t *arps = v2;
-	u_int i;
-
-	for (i = 0; i < ARP_NSTATS; i++)
-		arps[i] += arpsc[i];
-}
-
-static void
-arpstat_convert_to_user(uint64_t *arps)
-{
-
-	memset(arps, 0, sizeof(uint64_t) * ARP_NSTATS);
-	percpu_foreach(arpstat_percpu, arpstat_convert_to_user_cb, arps);
-}
-
 static int
 sysctl_net_inet_arp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
+	netstat_sysctl_context ctx;
 	uint64_t arps[ARP_NSTATS];
 
-	arpstat_convert_to_user(arps);
-	node = *rnode;
-	node.sysctl_data = arps;
-	node.sysctl_size = sizeof(arps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	ctx.ctx_stat = arpstat_percpu;
+	ctx.ctx_counters = arps;
+	ctx.ctx_ncounters = ARP_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")

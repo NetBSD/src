@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_private.h,v 1.1 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: icmp_private.h,v 1.2 2008/04/23 05:26:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,19 +45,11 @@
  */
 
 #ifdef _KERNEL
-#include <sys/percpu.h>
+#include <net/net_stats.h>
 
 extern percpu_t *icmpstat_percpu;
 
-/*
- * Most ICMP statistics are exceptional conditions, so this is good enough.
- */
-#define	ICMP_STATINC(x)							\
-do {									\
-	uint64_t *_icps_ = percpu_getref(icmpstat_percpu);		\
-	_icps_[x]++;							\
-	percpu_putref(icmpstat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	ICMP_STATINC(x)		_NET_STATINC(icmpstat_percpu, x)
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	ICMP_HDR_ALIGNED_P(ic)	1

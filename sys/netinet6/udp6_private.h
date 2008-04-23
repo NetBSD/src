@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_private.h,v 1.1 2008/04/15 04:43:25 thorpej Exp $	*/
+/*	$NetBSD: udp6_private.h,v 1.2 2008/04/23 05:26:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,19 +40,11 @@
 #define _NETINET_UDP6_PRIVATE_H_
 
 #ifdef _KERNEL
-#include <sys/percpu.h>
+#include <net/net_stats.h>
 
 extern	percpu_t *udp6stat_percpu;
 
-/*
- * Most UDP6 statistics are exceptional conditions, so this is good enough.
- */
-#define	UDP6_STATINC(x)							\
-do {									\
-	uint64_t *_udp6s_ = percpu_getref(udp6stat_percpu);		\
-	_udp6s_[x]++;							\
-	percpu_putref(udp6stat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	UDP6_STATINC(x)		_NET_STATINC(udp6stat_percpu, x)
 #endif /* _KERNEL */
 
 #endif /* !_NETINET_UDP6_PRIVATE_H_ */

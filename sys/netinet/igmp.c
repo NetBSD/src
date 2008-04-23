@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.46 2008/04/15 16:02:03 thorpej Exp $	*/
+/*	$NetBSD: igmp.c,v 1.47 2008/04/23 05:26:50 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.46 2008/04/15 16:02:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.47 2008/04/23 05:26:50 thorpej Exp $");
 
 #include "opt_mrouting.h"
 
@@ -50,10 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.46 2008/04/15 16:02:03 thorpej Exp $");
 #include <sys/protosw.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/net_stats.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -72,12 +72,7 @@ POOL_INIT(igmp_rti_pool, sizeof(struct router_info), 0, 0, 0, "igmppl", NULL,
 
 static percpu_t *igmpstat_percpu;
 
-#define	IGMP_STATINC(x)							\
-do {									\
-	uint64_t *_igmps_ = percpu_getref(igmpstat_percpu);		\
-	_igmps_[x]++;							\
-	percpu_putref(igmpstat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	IGMP_STATINC(x)		_NET_STATINC(igmpstat_percpu, x)
 
 int igmp_timers_are_running;
 static LIST_HEAD(, router_info) rti_head = LIST_HEAD_INITIALIZER(rti_head);
@@ -600,36 +595,16 @@ igmp_purgeif(struct ifnet *ifp)	/* MUST be called at splsoftnet() */
 	rti_delete(ifp);	/* manipulates pools */
 }
 
-static void
-igmpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *igmpsc = v1;
-	uint64_t *igmps = v2;
-	u_int i;
-
-	for (i = 0; i < IGMP_NSTATS; i++)
-		igmps[i] += igmpsc[i];
-}
-
-static void
-igmpstat_convert_to_user(uint64_t *igmps)
-{
-
-	memset(igmps, 0, sizeof(uint64_t) * IGMP_NSTATS);
-	percpu_foreach(igmpstat_percpu, igmpstat_convert_to_user_cb, igmps);
-}
-
 static int
 sysctl_net_inet_igmp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
+	netstat_sysctl_context ctx;
 	uint64_t igmps[IGMP_NSTATS];
 
-	igmpstat_convert_to_user(igmps);
-	node = *rnode;
-	node.sysctl_data = igmps;
-	node.sysctl_size = sizeof(igmps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	ctx.ctx_stat = igmpstat_percpu;
+	ctx.ctx_counters = igmps;
+	ctx.ctx_ncounters = IGMP_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_igmp_setup, "sysctl net.inet.igmp subtree setup")
