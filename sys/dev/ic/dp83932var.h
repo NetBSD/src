@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.9 2008/04/19 06:59:08 tsutsui Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.10 2008/04/23 13:29:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ struct sonic_descsoft {
  * Software state per device.
  */
 struct sonic_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
