@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.32.10.2 2008/04/21 20:26:51 peter Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.32.10.3 2008/04/23 19:25:18 peter Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.10.2 2008/04/21 20:26:51 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.32.10.3 2008/04/23 19:25:18 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -288,6 +288,8 @@ pfattach(int num)
 void
 pfdetach(void)
 {
+	extern int		 pf_purge_thread_running;
+	extern int		 pf_purge_thread_stop;
 	struct pf_anchor	*anchor;
 	struct pf_state		*state;
 	struct pf_src_node	*node;
@@ -295,6 +297,13 @@ pfdetach(void)
 	u_int32_t		 ticket;
 	int			 i;
 	char			 r = '\0';
+
+	pf_purge_thread_stop = 1;
+	wakeup(pf_purge_thread);
+
+	/* wait until the kthread exits */
+	while (pf_purge_thread_running)
+		tsleep(&pf_purge_thread_running, PWAIT, "pfdown", 0);
 
 	(void)pf_pfil_detach();
 
