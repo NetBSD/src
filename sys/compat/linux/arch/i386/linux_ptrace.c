@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.20 2007/12/20 23:02:52 dsl Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.21 2008/04/23 14:18:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.20 2007/12/20 23:02:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.21 2008/04/23 14:18:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -124,6 +124,8 @@ struct linux_user {
 #define LUSR_OFF(member)	offsetof(struct linux_user, member)
 #define ISSET(t, f)		((t) & (f))
 
+int linux_ptrace_disabled = 1;	/* bitrotted */
+
 int
 linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, register_t *retval)
 {
@@ -142,6 +144,9 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 	struct linux_reg *linux_regs = NULL;
 	struct linux_fpctx *linux_fpregs = NULL;
 	int addr;
+
+	if (linux_ptrace_disabled)
+		return ENOSYS;
 
 	request = SCARG(uap, request);
 
