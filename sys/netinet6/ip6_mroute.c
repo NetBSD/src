@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.90 2008/04/15 05:40:15 thorpej Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.91 2008/04/23 05:26:50 thorpej Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.90 2008/04/15 05:40:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.91 2008/04/23 05:26:50 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -136,11 +136,11 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.90 2008/04/15 05:40:15 thorpej Exp 
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
-#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
+#include <net/net_stats.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -221,12 +221,7 @@ static mifi_t reg_mif_num = (mifi_t)-1;
 
 static percpu_t *pim6stat_percpu;
 
-#define	PIM6_STATINC(x)							\
-do {									\
-	uint64_t *_pim6s_ = percpu_getref(pim6stat_percpu);		\
-	_pim6s_[x]++;							\
-	percpu_putref(pim6stat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	PIM6_STATINC(x)		_NET_STATINC(pim6stat_percpu, x)
 
 static int pim6;
 
@@ -1928,36 +1923,16 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 	return (IPPROTO_DONE);
 }
 
-static void
-pim6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *pim6sc = v1;
-	uint64_t *pim6s = v2;
-	u_int i;
-
-	for (i = 0; i < PIM6_NSTATS; i++)
-		pim6s[i] += pim6sc[i];
-}
-
-static void
-pim6stat_convert_to_user(uint64_t *pim6s)
-{
-
-	memset(pim6s, 0, sizeof(uint64_t) * PIM6_NSTATS);
-	percpu_foreach(pim6stat_percpu, pim6stat_convert_to_user_cb, pim6s);
-}
-
 static int
 sysctl_net_inet6_pim6_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
+	netstat_sysctl_context ctx;
 	uint64_t pim6s[PIM6_NSTATS];
 
-	pim6stat_convert_to_user(pim6s);
-	node = *rnode;
-	node.sysctl_data = pim6s;
-	node.sysctl_size = sizeof(pim6s);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	ctx.ctx_stat = pim6stat_percpu;
+	ctx.ctx_counters = pim6s;
+	ctx.ctx_ncounters = PIM6_NSTATS;
+	return (NETSTAT_SYSCTL(&ctx));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_pim6_setup, "sysctl net.inet6.pim6 subtree setup")
