@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid_to_string.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $	*/
+/*	$NetBSD: uuid_to_string.c,v 1.2 2008/04/23 07:52:32 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: uuid_to_string.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
+__RCSID("$NetBSD: uuid_to_string.c,v 1.2 2008/04/23 07:52:32 plunky Exp $");
 #endif
 
 #include "namespace.h"
@@ -50,9 +50,9 @@ __RCSID("$NetBSD: uuid_to_string.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
  *	 taken from the Hewlett-Packard implementation.
  */
 void
-uuid_to_string(uuid_t *u, char **s, uint32_t *status)
+uuid_to_string(const uuid_t *u, char **s, uint32_t *status)
 {
-	uuid_t nil;
+	static const uuid_t nil = { .time_low = 0 };
 
 	if (status != NULL)
 		*status = uuid_s_ok;
@@ -61,10 +61,8 @@ uuid_to_string(uuid_t *u, char **s, uint32_t *status)
 	if (s == 0)
 		return;
 
-	if (u == NULL) {
+	if (u == NULL)
 		u = &nil;
-		uuid_create_nil(u, NULL);
-	}
 
 	asprintf(s, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
 	    u->time_low, u->time_mid, u->time_hi_and_version,
