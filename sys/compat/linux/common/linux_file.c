@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.93 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.94 2008/04/23 12:55:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.93 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.94 2008/04/23 12:55:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,10 +228,9 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 	file_t *fp;
 	struct vnode *vp;
 	struct vattr va;
-	const struct cdevsw *cdev;
 	long pgid;
 	struct pgrp *pgrp;
-	struct tty *tp, *(*d_tty)(dev_t);
+	struct tty *tp;
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -350,19 +349,16 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		if (error)
 			return error;
 
-		cdev = cdevsw_lookup(va.va_rdev);
-		if (cdev == NULL)
-			return (ENXIO);
-		d_tty = cdev->d_tty;
-		if (!d_tty || (!(tp = (*d_tty)(va.va_rdev))))
+		if ((tp = cdev_tty(va.va_rdev)) == NULL)
 			goto not_tty;
 
 		/* set tty pg_id appropriately */
+		mutex_enter(&proclist_lock);
 		if (cmd == LINUX_F_GETOWN) {
 			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
+			mutex_exit(&proclist_lock);
 			return 0;
 		}
-		mutex_enter(&proclist_lock);
 		if ((long)arg <= 0) {
 			pgid = -(long)arg;
 		} else {
