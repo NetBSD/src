@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_exec.c,v 1.102 2008/04/11 16:47:50 njoly Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.103 2008/04/23 12:50:53 ad Exp $	*/
 
 /*-
- * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.102 2008/04/11 16:47:50 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.103 2008/04/23 12:50:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,9 +148,11 @@ linux_e_proc_init(p, parent, forkflags)
 		MALLOC(e, void *, sizeof(struct linux_emuldata),
 			M_EMULDATA, M_WAITOK);
 	} else  {
+		mutex_enter(&proclist_lock);
 		e->s->refs--;
 		if (e->s->refs == 0)
 			FREE(e->s, M_EMULDATA);
+		mutex_exit(&proclist_lock);
 	}
 
 	memset(e, '\0', sizeof(struct linux_emuldata));
@@ -169,6 +171,7 @@ linux_e_proc_init(p, parent, forkflags)
 		}
 #endif
 		s = ep->s;
+		mutex_enter(&proclist_lock);
 		s->refs++;
 	} else {
 		struct vmspace *vm;
@@ -202,6 +205,7 @@ linux_e_proc_init(p, parent, forkflags)
 
 		s->xstat = 0;
 		s->flags = 0;
+		mutex_enter(&proclist_lock);
 	}
 
 	e->s = s;
@@ -219,6 +223,7 @@ linux_e_proc_init(p, parent, forkflags)
 	}
 #endif /* LINUX_NPTL */
 
+	mutex_exit(&proclist_lock);
 	p->p_emuldata = e;
 }
 
@@ -230,6 +235,7 @@ linux_e_proc_init(p, parent, forkflags)
 static void
 linux_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
+
 	/* exec, use our vmspace */
 	linux_e_proc_init(p, NULL, 0);
 }
@@ -245,15 +251,18 @@ linux_e_proc_exit(struct proc *p)
 #ifdef LINUX_NPTL
 	linux_nptl_proc_exit(p);
 #endif
+
 	/* Remove the thread for the group thread list */
+	mutex_enter(&proclist_lock);
 	LIST_REMOVE(e, threads);
 
 	/* free Linux emuldata and set the pointer to null */
 	e->s->refs--;
 	if (e->s->refs == 0)
 		FREE(e->s, M_EMULDATA);
-	FREE(e, M_EMULDATA);
 	p->p_emuldata = NULL;
+	mutex_exit(&proclist_lock);
+	FREE(e, M_EMULDATA);
 }
 
 /*
@@ -264,6 +273,7 @@ linux_e_proc_fork(p, parent, forkflags)
 	struct proc *p, *parent;
 	int forkflags;
 {
+
 	/*
 	 * The new process might share some vmspace-related stuff
 	 * with parent, depending on fork flags (CLONE_VM et.al).
