@@ -1,5 +1,5 @@
 /*	$OpenBSD: if.c,v 1.165 2007/07/06 14:00:59 naddy Exp $	*/
-/*	$NetBSD: if_compat.c,v 1.1.2.1 2008/04/19 08:33:26 yamt Exp $	*/
+/*	$NetBSD: if_compat.c,v 1.1.2.2 2008/04/23 18:14:49 peter Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -62,11 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_compat.c,v 1.1.2.1 2008/04/19 08:33:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_compat.c,v 1.1.2.2 2008/04/23 18:14:49 peter Exp $");
 
-#ifdef _KERNEL_OPT
 #include "pf.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
