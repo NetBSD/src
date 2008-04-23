@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.10 2006/04/06 18:30:31 rpaulo Exp $	*/
+/*	$NetBSD: atalk.c,v 1.11 2008/04/23 15:17:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.10 2006/04/06 18:30:31 rpaulo Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.11 2008/04/23 15:17:42 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: atalk.c,v 1.10 2006/04/06 18:30:31 rpaulo Exp $");
 #include <sys/socketvar.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
+#include <sys/sysctl.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -65,11 +66,6 @@ struct socket   sockb;
 
 static int first = 1;
 
-static char *at_pr_net __P((struct sockaddr_at *, int));
-static char *at_pr_host __P((struct sockaddr_at *, int));
-static char *at_pr_range __P((struct sockaddr_at *));
-static char *at_pr_port __P((struct sockaddr_at *));
-
 /*
  * Print a summary of connections related to a Network Systems
  * protocol.  For XXX, also give state of connection.
@@ -78,9 +74,7 @@ static char *at_pr_port __P((struct sockaddr_at *));
  */
 
 static char *
-at_pr_net(sat, numeric)
-	struct sockaddr_at *sat;
-	int numeric;
+at_pr_net(struct sockaddr_at *sat, int numeric)
 {
 	static char mybuf[50];
 
@@ -97,9 +91,7 @@ at_pr_net(sat, numeric)
 }
 
 static char *
-at_pr_host(sat, numeric)
-	struct sockaddr_at *sat;
-	int numeric;
+at_pr_host(struct sockaddr_at *sat, int numeric)
 {
 	static char mybuf[50];
 
@@ -117,8 +109,7 @@ at_pr_host(sat, numeric)
 }
 
 static char *
-at_pr_port(sat)
-	struct sockaddr_at *sat;
+at_pr_port(struct sockaddr_at *sat)
 {
 	static char mybuf[50];
 
@@ -135,8 +126,7 @@ at_pr_port(sat)
 }
 
 static char *
-at_pr_range(sat)
-	struct sockaddr_at *sat;
+at_pr_range(struct sockaddr_at *sat)
 {
 	static char mybuf[50];
 
@@ -160,9 +150,7 @@ at_pr_range(sat)
  *	8 for numeric only
  */
 char *
-atalk_print(sa, what)
-	const struct sockaddr *sa;
-	int what;
+atalk_print(const struct sockaddr *sa, int what)
 {
 	struct sockaddr_at *sat = (struct sockaddr_at *) sa;
 	static char mybuf[50];
@@ -197,10 +185,7 @@ atalk_print(sa, what)
 }
 
 char *
-atalk_print2(sa, mask, what)
-	const struct sockaddr *sa;
-	const struct sockaddr *mask;
-	int what;
+atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 {
 	int		n, l;
 	static char     buf[100];
@@ -241,9 +226,7 @@ atalk_print2(sa, mask, what)
 }
 
 void
-atalkprotopr(off, name)
-	u_long off;
-	char  *name;
+atalkprotopr(u_long off, char *name)
 {
 	struct ddpcb    cb;
 	struct ddpcb *prev, *next;
@@ -296,32 +279,40 @@ atalkprotopr(off, name)
 	}
 }
 #define ANY(x,y,z) \
-	((sflag==1 || (x)) ? printf("\t%ld %s%s%s\n",x,y,plural(x),z) : 0)
+	((sflag==1 || (x)) ? printf("\t%llu %s%s%s\n",(unsigned long long)x,y,plural(x),z) : 0)
 
 /*
  * Dump DDP statistics structure.
  */
 void
-ddp_stats(off, name)
-	u_long off;
-	char *name;
+ddp_stats(u_long off, char *name)
 {
-	struct ddpstat  ddpstat;
+	uint64_t ddpstat[DDP_NSTATS];
 
-	if (off == 0)
-		return;
-	if (kread(off, (char *)&ddpstat, sizeof(ddpstat)) < 0)
-		return;
+	if (use_sysctl) {
+		size_t size = sizeof(ddpstat);
+
+		if (sysctlbyname("net.at.ddp.stats", ddpstat, &size,
+				 NULL, 0) == -1)
+			return;
+	} else {
+		if (off == 0)
+			return;
+		if (kread(off, (char *)&ddpstat, sizeof(ddpstat)) < 0)
+			return;
+	}
+
 	printf("%s:\n", name);
-	ANY(ddpstat.ddps_short, "packet", " with short headers ");
-	ANY(ddpstat.ddps_long, "packet", " with long headers ");
-	ANY(ddpstat.ddps_nosum, "packet", " with no checksum ");
-	ANY(ddpstat.ddps_tooshort, "packet", " too short ");
-	ANY(ddpstat.ddps_badsum, "packet", " with bad checksum ");
-	ANY(ddpstat.ddps_toosmall, "packet", " with not enough data ");
-	ANY(ddpstat.ddps_forward, "packet", " forwarded ");
-	ANY(ddpstat.ddps_encap, "packet", " encapsulated ");
-	ANY(ddpstat.ddps_cantforward, "packet", " rcvd for unreachable dest ");
-	ANY(ddpstat.ddps_nosockspace, "packet", " dropped due to no socket space ");
+
+	ANY(ddpstat[DDP_STAT_SHORT], "packet", " with short headers ");
+	ANY(ddpstat[DDP_STAT_LONG], "packet", " with long headers ");
+	ANY(ddpstat[DDP_STAT_NOSUM], "packet", " with no checksum ");
+	ANY(ddpstat[DDP_STAT_TOOSHORT], "packet", " too short ");
+	ANY(ddpstat[DDP_STAT_BADSUM], "packet", " with bad checksum ");
+	ANY(ddpstat[DDP_STAT_TOOSMALL], "packet", " with not enough data ");
+	ANY(ddpstat[DDP_STAT_FORWARD], "packet", " forwarded ");
+	ANY(ddpstat[DDP_STAT_ENCAP], "packet", " encapsulated ");
+	ANY(ddpstat[DDP_STAT_CANTFORWARD], "packet", " rcvd for unreachable dest ");
+	ANY(ddpstat[DDP_STAT_NOSOCKSPACE], "packet", " dropped due to no socket space ");
 }
 #undef ANY
