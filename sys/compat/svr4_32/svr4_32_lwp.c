@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.c,v 1.14 2007/12/20 23:03:06 dsl Exp $	*/
+/*	$NetBSD: svr4_32_lwp.c,v 1.15 2008/04/23 14:01:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.14 2007/12/20 23:03:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_lwp.c,v 1.15 2008/04/23 14:01:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,11 +106,11 @@ svr4_32_sys__lwp_create(struct lwp *l, const struct svr4_32_sys__lwp_create_args
 int
 svr4_32_sys__lwp_kill(struct lwp *l, const struct svr4_32_sys__lwp_kill_args *uap, register_t *retval)
 {
-	struct sys_kill_args ap;
-	SCARG(&ap, pid) = SCARG(uap, lwpid);
-	SCARG(&ap, signum) = SCARG(uap, signum);
+	struct sys__lwp_kill_args ap;
+	SCARG(&ap, target) = SCARG(uap, lwpid);
+	SCARG(&ap, signo) = SCARG(uap, signum);
 
-	return sys_kill(l, &ap, retval);
+	return sys__lwp_kill(l, &ap, retval);
 }
 
 int
