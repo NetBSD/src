@@ -1,4 +1,4 @@
-/* $NetBSD: pic_cpc700.c,v 1.2 2007/10/17 19:54:19 garbled Exp $ */
+/* $NetBSD: pic_cpc700.c,v 1.3 2008/04/24 23:22:24 alc Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_cpc700.c,v 1.2 2007/10/17 19:54:19 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_cpc700.c,v 1.3 2008/04/24 23:22:24 alc Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_cpc700.c,v 1.2 2007/10/17 19:54:19 garbled Exp $
 
 static void cpc700_pic_enable_irq(struct pic_ops *, int, int);
 static void cpc700_pic_disable_irq(struct pic_ops *, int);
-static int  cpc700_get_irq(struct pic_ops *);
+static int  cpc700_get_irq(struct pic_ops *, int);
 static void cpc700_ack_irq(struct pic_ops *, int);
 
 struct cpc700_ops {
@@ -100,7 +100,7 @@ cpc700_pic_disable_irq(struct pic_ops *pic, int irq)
 }
 
 static int
-cpc700_get_irq(struct pic_ops *pic)
+cpc700_get_irq(struct pic_ops *pic, int dummy)
 {
 	int irq;
 
