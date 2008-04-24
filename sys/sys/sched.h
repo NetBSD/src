@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.51 2008/04/12 17:02:09 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.52 2008/04/24 13:56:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ struct schedstate_percpu {
 #define	SPCF_SEENRR		0x0001	/* process has seen roundrobin() */
 #define	SPCF_SHOULDYIELD	0x0002	/* process should yield the CPU */
 #define	SPCF_OFFLINE		0x0004	/* CPU marked offline */
+#define	SPCF_RUNNING		0x0008	/* CPU is running */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.13 2008/04/04 17:21:22 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.14 2008/04/24 13:56:30 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.13 2008/04/04 17:21:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.14 2008/04/24 13:56:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -55,11 +55,16 @@ idle_loop(void *dummy)
 	struct lwp *l = curlwp;
 	unsigned mask = (1 << cpu_index(ci));
 	bool set = false;
+	int s;
 
 	/* Update start time for this thread. */
 	lwp_lock(l);
 	binuptime(&l->l_stime);
 	lwp_unlock(l);
+
+	s = splsched();
+	ci->ci_schedstate.spc_flags |= SPCF_RUNNING;
+	splx(s);
 
 	KERNEL_UNLOCK_ALL(l, NULL);
 	l->l_stat = LSONPROC;
