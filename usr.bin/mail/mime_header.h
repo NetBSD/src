@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_header.h,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_header.h,v 1.4 2008/04/24 01:27:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 typedef void (*hfield_decoder_t)(char *, size_t, const char *);
 
-hfield_decoder_t mime_hfield_decoder(char *);
+hfield_decoder_t mime_hfield_decoder(const char *);
 
 #endif /* __MIME_HEADER_H__ */
 #endif /* MIME_SUPPORT */
