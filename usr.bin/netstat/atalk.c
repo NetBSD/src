@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.11 2008/04/23 15:17:42 thorpej Exp $	*/
+/*	$NetBSD: atalk.c,v 1.12 2008/04/24 04:09:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.11 2008/04/23 15:17:42 thorpej Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.12 2008/04/24 04:09:27 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: atalk.c,v 1.11 2008/04/23 15:17:42 thorpej Exp $");
 #include <netatalk/at.h>
 #include <netatalk/ddp_var.h>
 
+#include <err.h>
 #include <nlist.h>
 #include <kvm.h>
 #include <errno.h>
@@ -296,10 +297,8 @@ ddp_stats(u_long off, char *name)
 				 NULL, 0) == -1)
 			return;
 	} else {
-		if (off == 0)
-			return;
-		if (kread(off, (char *)&ddpstat, sizeof(ddpstat)) < 0)
-			return;
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf("%s:\n", name);

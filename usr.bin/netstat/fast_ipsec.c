@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.10 2008/04/23 06:09:04 thorpej Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.11 2008/04/24 04:09:27 thorpej Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.10 2008/04/23 06:09:04 thorpej Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.11 2008/04/24 04:09:27 thorpej Exp $");
 #endif
 #endif /* not lint*/
 
@@ -166,6 +166,11 @@ fast_ipsec_stats(u_long off, char *name)
 	int status;
 	size_t slen;
 	int i;
+
+	if (! use_sysctl) {
+		warnx("IPsec stats not available via KVM.");
+		return;
+	}
 
 	memset(ipsecstats, 0, sizeof(ipsecstats));
 	memset(ahstats, 0, sizeof(ahstats));
