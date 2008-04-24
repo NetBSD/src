@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.351 2008/04/24 08:51:06 sborrill Exp $	*/
+/*	$NetBSD: init_main.c,v 1.352 2008/04/24 15:35:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.351 2008/04/24 08:51:06 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.352 2008/04/24 15:35:28 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -654,7 +654,7 @@ main(void)
 	 */
 	getmicrotime(&time);
 	boottime = time;
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
 		mutex_enter(&p->p_smutex);
@@ -666,7 +666,7 @@ main(void)
 		}
 		mutex_exit(&p->p_smutex);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	binuptime(&curlwp->l_stime);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {

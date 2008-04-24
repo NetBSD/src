@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.63 2008/03/05 10:48:48 cube Exp $	*/
+/*	$NetBSD: midi.c,v 1.64 2008/04/24 15:35:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.63 2008/03/05 10:48:48 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.64 2008/04/24 15:35:28 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -678,10 +678,10 @@ midi_softintr_rd(void *cookie)
 	struct proc *p;
 
 	if (sc->async != NULL) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		if ((p = sc->async) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 	midi_wakeup(&sc->rchan);
 	selnotify(&sc->rsel, 0, 0); /* filter will spin if locked */
@@ -694,10 +694,10 @@ midi_softintr_wr(void *cookie)
 	struct proc *p;
 
 	if (sc->async != NULL) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		if ((p = sc->async) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 	midi_wakeup(&sc->wchan);
 	selnotify(&sc->wsel, 0, 0); /* filter will spin if locked */

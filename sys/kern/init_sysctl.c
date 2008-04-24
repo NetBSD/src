@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.131 2008/04/05 14:03:16 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.132 2008/04/24 15:35:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.131 2008/04/05 14:03:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.132 2008/04/24 15:35:28 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -1681,13 +1681,13 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 
 	sysctl_unlock();
 	if (pid == -1) {
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		LIST_FOREACH(p, &allproc, p_list) {
 			/* Grab a hold on the process. */
 			if (!rw_tryenter(&p->p_reflock, RW_READER)) {
 				continue;
 			}
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 
 			mutex_enter(&p->p_smutex);
 			LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
@@ -1729,21 +1729,21 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 			mutex_exit(&p->p_smutex);
 
 			/* Drop reference to process. */
-			mutex_enter(&proclist_lock);
+			mutex_enter(proc_lock);
 			rw_exit(&p->p_reflock);
 		}
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	} else {
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		p = p_find(pid, PFIND_LOCKED);
 		if (p == NULL) {
 			error = ESRCH;
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			goto cleanup;
 		}
 		/* Grab a hold on the process. */
 		gotit = rw_tryenter(&p->p_reflock, RW_READER);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		if (!gotit) {
 			error = ESRCH;
 			goto cleanup;
@@ -2010,7 +2010,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			/* -1 means all processes */
 			return (EINVAL);
 		sysctl_unlock();
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		LIST_FOREACH(p, &allproc, p_list) {
 			if (p->p_stat == SIDL) {
 				/* skip embryonic processes */
@@ -2037,7 +2037,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			if (!rw_tryenter(&p->p_reflock, RW_READER)) {
 				continue;
 			}
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 
 			/* XXX Do we need to check permission per file? */
 			fd = p->p_fd;
@@ -2077,10 +2077,10 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			/*
 			 * Release reference to process.
 			 */
-			mutex_enter(&proclist_lock);
+			mutex_enter(proc_lock);
 			rw_exit(&p->p_reflock);
 		}
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		sysctl_relock();
 		break;
 	default:
@@ -2186,7 +2186,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		kproc2 = kmem_alloc(sizeof(*kproc2), KM_SLEEP);
 	}
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		/*
 		 * Skip embryonic processes.
@@ -2283,10 +2283,10 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			if (buflen >= sizeof(struct kinfo_proc)) {
 				fill_eproc(p, eproc);
 				mutex_exit(&p->p_mutex);
-				mutex_exit(&proclist_lock);
+				mutex_exit(proc_lock);
 				error = dcopyout(l, p, &dp->kp_proc,
 				    sizeof(struct proc));
-				mutex_enter(&proclist_lock);
+				mutex_enter(proc_lock);
 				if (error) {
 					rw_exit(&p->p_reflock);
 					goto cleanup;
@@ -2307,14 +2307,14 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			if (buflen >= elem_size && elem_count > 0) {
 				fill_kproc2(p, kproc2);
 				mutex_exit(&p->p_mutex);
-				mutex_exit(&proclist_lock);
+				mutex_exit(proc_lock);
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
 				 */
 				error = dcopyout(l, kproc2, dp2,
 				    min(sizeof(*kproc2), elem_size));
-				mutex_enter(&proclist_lock);
+				mutex_enter(proc_lock);
 				if (error) {
 					rw_exit(&p->p_reflock);
 					goto cleanup;
@@ -2333,7 +2333,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		 */
 		rw_exit(&p->p_reflock);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	if (where != NULL) {
 		if (type == KERN_PROC)
@@ -2355,7 +2355,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	sysctl_relock();
 	return 0;
  cleanup:
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
  out:
 	if (kproc2)
 		kmem_free(kproc2, sizeof(*kproc2));
@@ -2410,7 +2410,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	sysctl_unlock();
 
 	/* check pid */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if ((p = p_find(pid, PFIND_LOCKED)) == NULL) {
 		error = EINVAL;
 		goto out_locked;
@@ -2465,7 +2465,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	vmspace = p->p_vmspace;
 	uvmspace_addref(vmspace);
 	mutex_exit(&p->p_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Allocate a temporary buffer to hold the arguments.
@@ -2611,7 +2611,7 @@ done:
 	return error;
 
 out_locked:
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	sysctl_relock();
 	return error;
 }
@@ -2854,7 +2854,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	sigset_t ss1, ss2;
 	struct rusage ru;
 
-	KASSERT(mutex_owned(&proclist_lock));
+	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(&p->p_mutex));
 
 	memset(ki, 0, sizeof(*ki));
@@ -3101,7 +3101,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	struct tty *tp;
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&proclist_lock));
+	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(&p->p_mutex));
 
 	ep->e_paddr = p;

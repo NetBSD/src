@@ -1,7 +1,7 @@
-/* $NetBSD: wsevent.c,v 1.25 2008/03/01 14:16:51 rmind Exp $ */
+/* $NetBSD: wsevent.c,v 1.26 2008/04/24 15:35:28 ad Exp $ */
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.25 2008/03/01 14:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.26 2008/04/24 15:35:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -142,6 +142,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.25 2008/03/01 14:16:51 rmind Exp $");
 #define	PWSEVENT	23
 #define	splwsevent()	spltty()
 
+static void	wsevent_intr(void *);
+
 /*
  * Initialize a wscons_event queue.
  */
@@ -160,6 +162,8 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 		       M_DEVBUF, M_WAITOK|M_ZERO);
 	selinit(&ev->sel);
 	ev->io = p;
+	ev->sih = softint_establish(SOFTINT_MPSAFE | SOFTINT_CLOCK,
+	    wsevent_intr, ev);
 }
 
 /*
@@ -177,6 +181,7 @@ wsevent_fini(struct wseventvar *ev)
 	seldestroy(&ev->sel);
 	free(ev->q, M_DEVBUF);
 	ev->q = NULL;
+	softint_disestablish(ev->sih);
 }
 
 /*
@@ -328,9 +333,24 @@ wsevent_wakeup(struct wseventvar *ev)
 	}
 
 	if (ev->async) {
-		mutex_enter(&proclist_mutex);
+		softint_schedule(ev->sih);
+	}
+}
+
+/*
+ * Soft interrupt handler: sends signal to async proc.
+ */
+static void
+wsevent_intr(void *cookie)
+{
+	struct wseventvar *ev;
+
+	ev = cookie;
+
+	if (ev->async) {
+		mutex_enter(proc_lock);
 		psignal(ev->io, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 }
 

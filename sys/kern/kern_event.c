@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.55 2008/04/22 12:04:22 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.56 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.55 2008/04/22 12:04:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.56 2008/04/24 15:35:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,10 +429,10 @@ filt_procattach(struct knote *kn)
 	curl = curlwp;
 	curp = curl->l_proc;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	p = p_find(kn->kn_id, PFIND_LOCKED);
 	if (p == NULL) {
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return ESRCH;
 	}
 
@@ -441,7 +441,7 @@ filt_procattach(struct knote *kn)
 	 * setuid/setgid privs (unless you're root).
 	 */
 	mutex_enter(&p->p_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	if (kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_KEVENT_FILTER,
 	    p, NULL, NULL, NULL) != 0) {
 	    	mutex_exit(&p->p_mutex);

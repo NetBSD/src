@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.37 2008/03/17 16:55:27 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.38 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.37 2008/03/17 16:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.38 2008/04/24 15:35:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,14 +372,14 @@ sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap, register_t *r
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 	ksi.ksi_lid = SCARG(uap, target);
 
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	mutex_enter(&p->p_smutex);
 	if ((t = lwp_find(p, ksi.ksi_lid)) == NULL)
 		error = ESRCH;
 	else if (signo != 0)
 		kpsignal2(p, &ksi);
 	mutex_exit(&p->p_smutex);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 
 	return error;
 }

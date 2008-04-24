@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.16 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.17 2008/04/24 15:35:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.17 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -390,9 +390,9 @@ aio_sendsig(struct proc *p, struct sigevent *sig)
 	ksi.ksi_signo = sig->sigev_signo;
 	ksi.ksi_code = SI_ASYNCIO;
 	ksi.ksi_value = sig->sigev_value;
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	kpsignal(p, &ksi, NULL);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 }
 
 /*

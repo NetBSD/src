@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.117 2008/03/23 14:02:49 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.118 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.117 2008/03/23 14:02:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.118 2008/04/24 15:35:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,9 +365,9 @@ dofilewrite(int fd, struct file *fp, const void *buf,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE) {
-			mutex_enter(&proclist_mutex);
+			mutex_enter(proc_lock);
 			psignal(curproc, SIGPIPE);
-			mutex_exit(&proclist_mutex);
+			mutex_exit(proc_lock);
 		}
 	}
 	cnt -= auio.uio_resid;
@@ -492,9 +492,9 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE) {
-			mutex_enter(&proclist_mutex);
+			mutex_enter(proc_lock);
 			psignal(curproc, SIGPIPE);
-			mutex_exit(&proclist_mutex);
+			mutex_exit(proc_lock);
 		}
 	}
 	cnt -= auio.uio_resid;

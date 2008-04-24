@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.45 2008/01/23 15:04:38 elad Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.46 2008/04/24 15:35:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.45 2008/01/23 15:04:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.46 2008/04/24 15:35:27 ad Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -445,8 +445,10 @@ irix_sproc_child(struct irix_sproc_child_args *isc)
 #endif
 				isc->isc_child_done = 1;
 				wakeup(&isc->isc_child_done);
+				mutex_enter(proc_lock);
 				killproc(p2,
 				    "failed to initialize share group VM");
+				mutex_exit(proc_lock);
 			}
 		}
 
@@ -455,7 +457,9 @@ irix_sproc_child(struct irix_sproc_child_args *isc)
 		if (error != 0) {
 			isc->isc_child_done = 1;
 			wakeup(&isc->isc_child_done);
+			mutex_enter(proc_lock);
 			killproc(p2, "failed to initialize the PRDA");
+			mutex_exit(proc_lock);
 		}
 	}
 
@@ -729,8 +733,11 @@ irix_vm_sync(struct proc *p)
 				break;
 		}
 
-		if (error)
+		if (error) {
+			mutex_enter(proc_lock);
 			killproc(pp, "failed to keep share group VM in sync");
+			mutex_exit(proc_lock);
+		}
 	}
 
 	return;

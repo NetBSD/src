@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.27 2008/04/22 11:45:28 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.28 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.27 2008/04/22 11:45:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.28 2008/04/24 15:35:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ cpu_xc_offline(struct cpu_info *ci)
 	 * Please note, that this runs from the xcall thread, thus handling
 	 * of LSONPROC is not needed.
 	 */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 
 	/*
 	 * Note that threads on the runqueue might sleep after this, but
@@ -310,7 +310,7 @@ cpu_xc_offline(struct cpu_info *ci)
 		}
 	}
 	spc_dunlock(ci, mci);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 #ifdef __HAVE_MD_CPU_OFFLINE
 	cpu_offline_md();

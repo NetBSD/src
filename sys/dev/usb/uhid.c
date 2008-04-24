@@ -1,7 +1,7 @@
-/*	$NetBSD: uhid.c,v 1.79 2008/03/01 14:16:51 rmind Exp $	*/
+/*	$NetBSD: uhid.c,v 1.80 2008/04/24 15:35:28 ad Exp $	*/
 
 /*
- * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.79 2008/03/01 14:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.80 2008/04/24 15:35:28 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.79 2008/03/01 14:16:51 rmind Exp $");
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/intr.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -93,6 +94,7 @@ struct uhid_softc {
 	struct clist sc_q;
 	struct selinfo sc_rsel;
 	usb_proc_ptr sc_async;	/* process that wants SIGIO */
+	void *sc_sih;
 	u_char sc_state;	/* driver state */
 #define	UHID_ASLP	0x01	/* waiting for device data */
 #define UHID_IMMED	0x02	/* return read data immediately */
@@ -119,6 +121,7 @@ const struct cdevsw uhid_cdevsw = {
 };
 
 Static void uhid_intr(struct uhidev *, void *, u_int len);
+Static void uhid_softintr(void *);
 
 Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
@@ -154,6 +157,8 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_sih = softint_establish(SOFTINT_MPSAFE | SOFTINT_CLOCK,
+	    uhid_softintr, sc);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
@@ -227,6 +232,7 @@ uhid_detach(struct device *self, int flags)
 			   USBDEV(sc->sc_hdev.sc_dev));
 #endif
 	seldestroy(&sc->sc_rsel);
+	softint_disestablish(sc->sc_sih);
 
 	return (0);
 }
@@ -257,10 +263,21 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 	selnotify(&sc->sc_rsel, 0, 0);
 	if (sc->sc_async != NULL) {
 		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
-		mutex_enter(&proclist_mutex);
-		psignal(sc->sc_async, SIGIO);
-		mutex_exit(&proclist_mutex);
+		softint_schedule(sc->sc_sih);
 	}
+}
+
+void
+uhid_softintr(void *cookie)
+{
+	struct uhid_softc *sc;
+
+	sc = cookie;
+
+	mutex_enter(proc_lock);
+	if (sc->sc_async != NULL)
+		 psignal(sc->sc_async, SIGIO);
+	mutex_exit(proc_lock);
 }
 
 int
@@ -287,7 +304,9 @@ uhidopen(dev_t dev, int flag, int mode,
 	}
 	sc->sc_obuf = malloc(sc->sc_osize, M_USBDEV, M_WAITOK);
 	sc->sc_state &= ~UHID_IMMED;
+	mutex_enter(proc_lock);
 	sc->sc_async = NULL;
+	mutex_exit(proc_lock);
 
 	return (0);
 }
@@ -304,7 +323,9 @@ uhidclose(dev_t dev, int flag, int mode,
 
 	clfree(&sc->sc_q);
 	free(sc->sc_obuf, M_USBDEV);
+	mutex_enter(proc_lock);
 	sc->sc_async = NULL;
+	mutex_exit(proc_lock);
 	uhidev_close(&sc->sc_hdev);
 
 	return (0);
@@ -447,6 +468,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 		break;
 
 	case FIOASYNC:
+		mutex_enter(proc_lock);
 		if (*(int *)addr) {
 			if (sc->sc_async != NULL)
 				return (EBUSY);
@@ -454,22 +476,35 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", l->l_proc));
 		} else
 			sc->sc_async = NULL;
+		mutex_exit(proc_lock);
 		break;
 
 	/* XXX this is not the most general solution. */
 	case TIOCSPGRP:
-		if (sc->sc_async == NULL)
+		mutex_enter(proc_lock);
+		if (sc->sc_async == NULL) {
+			mutex_exit(proc_lock);
 			return (EINVAL);
-		if (*(int *)addr != sc->sc_async->p_pgid)
+		}
+		if (*(int *)addr != sc->sc_async->p_pgid) {
+			mutex_exit(proc_lock);
 			return (EPERM);
+		}
+		mutex_exit(proc_lock);
 		break;
 
 	case FIOSETOWN:
-		if (sc->sc_async == NULL)
+		mutex_enter(proc_lock);
+		if (sc->sc_async == NULL) {
+			mutex_exit(proc_lock);
 			return (EINVAL);
+		}
 		if (-*(int *)addr != sc->sc_async->p_pgid
-		    && *(int *)addr != sc->sc_async->p_pid)
+		    && *(int *)addr != sc->sc_async->p_pid) {
+			mutex_exit(proc_lock);
 			return (EPERM);
+		}
+		mutex_exit(proc_lock);
 		break;
 
 	case USB_GET_REPORT_DESC:

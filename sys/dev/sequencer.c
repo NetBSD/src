@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.46 2008/03/21 19:33:24 plunky Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.47 2008/04/24 15:35:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.46 2008/03/21 19:33:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.47 2008/04/24 15:35:28 ad Exp $");
 
 #include "sequencer.h"
 
@@ -271,10 +271,10 @@ seq_timeout(void *addr)
 		seq_wakeup(&sc->wchan);
 		selnotify(&sc->wsel, 0, 0);
 		if (sc->async != NULL) {
-			mutex_enter(&proclist_mutex);
+			mutex_enter(proc_lock);
 			if ((p = sc->async) != NULL)
 				psignal(p, SIGIO);
-			mutex_exit(&proclist_mutex);
+			mutex_exit(proc_lock);
 		}
 	}
 
@@ -328,10 +328,10 @@ seq_softintr(void *cookie)
 	seq_wakeup(&sc->rchan);
 	selnotify(&sc->rsel, 0, 0);
 	if (sc->async != NULL) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		if ((p = sc->async) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 }
 

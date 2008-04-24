@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.94 2008/04/23 12:55:16 ad Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.95 2008/04/24 15:35:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.94 2008/04/23 12:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.95 2008/04/24 15:35:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,10 +353,10 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 			goto not_tty;
 
 		/* set tty pg_id appropriately */
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		if (cmd == LINUX_F_GETOWN) {
 			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			return 0;
 		}
 		if ((long)arg <= 0) {
@@ -369,11 +369,11 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		}
 		pgrp = pg_find(pgid, PFIND_LOCKED);
 		if (pgrp == NULL || pgrp->pg_session != p->p_session) {
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			return EPERM;
 		}
 		tp->t_pgrp = pgrp;
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return 0;
 
 	default:

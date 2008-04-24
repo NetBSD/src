@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.124 2008/04/11 15:47:15 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.125 2008/04/24 15:35:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.124 2008/04/11 15:47:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.125 2008/04/24 15:35:31 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -534,7 +534,7 @@ uvm_scheduler(void)
 		ll = NULL;		/* process to choose */
 		ppri = INT_MIN;		/* its priority */
 
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		LIST_FOREACH(l, &alllwp, l_list) {
 			/* is it a runnable swapped out process? */
 			if (l->l_stat == LSRUN && !(l->l_flag & LW_INMEM)) {
@@ -555,7 +555,7 @@ uvm_scheduler(void)
 		 * Nothing to do, back to sleep
 		 */
 		if ((l = ll) == NULL) {
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			mutex_enter(&uvm_scheduler_mutex);
 			if (uvm.scheduler_kicked == false)
 				cv_wait(&uvm.scheduler_cv,
@@ -581,7 +581,7 @@ uvm_scheduler(void)
 				    uvmexp.free);
 #endif
 			mutex_enter(&l->l_swaplock);
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			uvm_swapin(l);
 			mutex_exit(&l->l_swaplock);
 			continue;
@@ -590,7 +590,7 @@ uvm_scheduler(void)
 			 * not enough memory, jab the pageout daemon and
 			 * wait til the coast is clear
 			 */
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 #ifdef DEBUG
 			if (swapdebug & SDB_FOLLOW)
 				printf("%s: no room for pid %d(%s),"
@@ -660,7 +660,7 @@ uvm_swapout_threads(void)
 	outpri = outpri2 = 0;
 
  restart:
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		KASSERT(l->l_proc != NULL);
 		if (!mutex_tryenter(&l->l_swaplock))
@@ -683,13 +683,13 @@ uvm_swapout_threads(void)
 		case LSSLEEP:
 		case LSSTOP:
 			if (l->l_slptime >= maxslp) {
-				mutex_exit(&proclist_lock);
+				mutex_exit(proc_lock);
 				uvm_swapout(l);
 				/*
 				 * Locking in the wrong direction -
 				 * try to prevent the LWP from exiting.
 				 */
-				gotit = mutex_tryenter(&proclist_lock);
+				gotit = mutex_tryenter(proc_lock);
 				mutex_exit(&l->l_swaplock);
 				didswap++;
 				if (!gotit)
@@ -719,7 +719,7 @@ uvm_swapout_threads(void)
 #endif
 		if (l) {
 			mutex_enter(&l->l_swaplock);
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			if (swappable(l))
 				uvm_swapout(l);
 			mutex_exit(&l->l_swaplock);
@@ -727,7 +727,7 @@ uvm_swapout_threads(void)
 		}
 	}
 
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 }
 
 /*

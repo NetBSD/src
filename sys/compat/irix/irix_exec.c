@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.49 2007/12/08 18:36:02 dsl Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.50 2008/04/24 15:35:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.49 2007/12/08 18:36:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.50 2008/04/24 15:35:27 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -192,7 +192,7 @@ irix_e_proc_exit(struct proc *p)
 	/*
 	 * Send SIGHUP to child process as requested using prctl(2)
 	 */
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(pp, &allproc) {
 		/* Select IRIX processes */
 		if (irix_check_exec(pp) == 0)
@@ -202,7 +202,7 @@ irix_e_proc_exit(struct proc *p)
 		if (ied->ied_termchild && pp->p_pptr == p)
 			psignal(pp, native_to_svr4_signo[SIGHUP]);
 	}
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Remove the process from share group processes list, if relevant.

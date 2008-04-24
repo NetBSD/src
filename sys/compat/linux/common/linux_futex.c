@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.11 2008/04/23 13:02:32 ad Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.12 2008/04/24 15:35:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.11 2008/04/23 13:02:32 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.12 2008/04/24 15:35:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -106,13 +106,13 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 	/* First time use */
 	if (__predict_false(futex_lock == NULL)) {
 		lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		if (futex_lock == NULL) {
 			futex_lock = lock;
 			lock = NULL;
 			LIST_INIT(&futex_list);
 		}
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		if (lock != NULL)
 			mutex_obj_free(lock);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.275 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.276 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.275 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.276 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -796,7 +796,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 	pc = l->l_cred;
 	nfound = 0;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if (all) {
 		/*
 		 * broadcast
@@ -810,11 +810,9 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			    NULL) == 0) {
 				nfound++;
 				if (signo) {
-					mutex_enter(&proclist_mutex);
 					mutex_enter(&p->p_smutex);
 					kpsignal2(p, ksi);
 					mutex_exit(&p->p_smutex);
-					mutex_exit(&proclist_mutex);
 				}
 			}
 			mutex_exit(&p->p_mutex);
@@ -838,19 +836,17 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			    p, KAUTH_ARG(signo), NULL, NULL) == 0) {
 				nfound++;
 				if (signo) {
-					mutex_enter(&proclist_mutex);
 					mutex_enter(&p->p_smutex);
 					if (P_ZOMBIE(p) == 0)
 						kpsignal2(p, ksi);
 					mutex_exit(&p->p_smutex);
-					mutex_exit(&proclist_mutex);
 				}
 			}
 			mutex_exit(&p->p_mutex);
 		}
 	}
   out:
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	return (nfound ? 0 : ESRCH);
 }
 
@@ -863,7 +859,8 @@ pgsignal(struct pgrp *pgrp, int sig, int checkctty)
 {
 	ksiginfo_t ksi;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 
 	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = sig;
@@ -875,7 +872,8 @@ kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
 {
 	struct proc *p;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 
 	if (pgrp)
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist)
@@ -899,13 +897,14 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	ksi->ksi_lid = l->l_lid;
 	p = l->l_proc;
 
-	mutex_enter(&proclist_mutex);
+	KASSERT(!cpu_intr_p());
+	mutex_enter(proc_lock);
 	mutex_enter(&p->p_smutex);
 	ps = p->p_sigacts;
 	if ((p->p_slflag & PSL_TRACED) == 0 &&
 	    sigismember(&p->p_sigctx.ps_sigcatch, signo) &&
 	    !sigismember(&l->l_sigmask, signo)) {
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		l->l_ru.ru_nsignals++;
 		kpsendsig(l, ksi, &l->l_sigmask);
 		mutex_exit(&p->p_smutex);
@@ -917,8 +916,8 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		p->p_sigctx.ps_signo = ksi->ksi_signo;
 		p->p_sigctx.ps_code = ksi->ksi_trap;
 		kpsignal2(p, ksi);
-		mutex_exit(&proclist_mutex);
 		mutex_exit(&p->p_smutex);
+		mutex_exit(proc_lock);
 	}
 }
 
@@ -932,7 +931,7 @@ child_psignal(struct proc *p, int mask)
 	struct proc *q;
 	int xstat;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(&p->p_smutex));
 
 	xstat = p->p_xstat;
@@ -963,7 +962,8 @@ psignal(struct proc *p, int signo)
 {
 	ksiginfo_t ksi;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 
 	KSI_INIT_EMPTY(&ksi);
 	ksi.ksi_signo = signo;
@@ -978,7 +978,8 @@ kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 	fdfile_t *ff;
 	file_t *fp;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 
 	if ((p->p_sflag & PS_WEXIT) == 0 && data) {
 		size_t fd;
@@ -1209,7 +1210,8 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	ksiginfoq_t kq;
 	sig_t action;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(!cpu_intr_p());
+	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(&p->p_smutex));
 	KASSERT((ksi->ksi_flags & KSI_QUEUED) == 0);
 	KASSERT(signo > 0 && signo < NSIG);
@@ -1288,8 +1290,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			 * the action is default; don't stop the process below
 			 * if sleeping, and don't clear any pending SIGCONT.
 			 */
-			if (prop & SA_TTYSTOP &&
-			    (p->p_sflag & PS_ORPHANPG) != 0)
+			if (prop & SA_TTYSTOP && p->p_pgrp->pg_jobc == 0)
 				return;
 
 			if (prop & SA_KILL && p->p_nice > NZERO)
@@ -1461,7 +1462,7 @@ static void
 proc_stop_done(struct proc *p, bool ppsig, int ppmask)
 {
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(&p->p_smutex));
 	KASSERT((p->p_sflag & PS_STOPPING) != 0);
 	KASSERT(p->p_nrlwps == 0 || (p->p_nrlwps == 1 && p == curproc));
@@ -1511,9 +1512,9 @@ sigswitch(bool ppsig, int ppmask, int signo)
 	 * a new signal, then signal the parent.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		if (!mutex_tryenter(&proclist_mutex)) {
+		if (!mutex_tryenter(proc_lock)) {
 			mutex_exit(&p->p_smutex);
-			mutex_enter(&proclist_mutex);
+			mutex_enter(proc_lock);
 			mutex_enter(&p->p_smutex);
 		}
 
@@ -1525,7 +1526,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 			proc_stop_done(p, ppsig, ppmask);
 		}
 
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 
 	/*
@@ -1720,8 +1721,12 @@ issignal(struct lwp *l)
 			 * process group, ignore tty stop signals.
 			 */
 			if (prop & SA_STOP) {
+				/*
+				 * XXX Don't hold proc_lock for p_lflag,
+				 * but it's not a big deal.
+				 */
 				if (p->p_slflag & PSL_TRACED ||
-		    		    ((p->p_sflag & PS_ORPHANPG) != 0 &&
+		    		    ((p->p_lflag & PL_ORPHANPG) != 0 &&
 				    prop & SA_TTYSTOP)) {
 				    	/* Ignore the signal. */
 					continue;
@@ -1871,11 +1876,12 @@ sendsig_reset(struct lwp *l, int signo)
 void
 killproc(struct proc *p, const char *why)
 {
+
+	KASSERT(mutex_owned(proc_lock));
+
 	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);
 	uprintf_locked("sorry, pid %d was killed: %s\n", p->p_pid, why);
-	mutex_enter(&proclist_mutex);	/* XXXSMP */
 	psignal(p, SIGKILL);
-	mutex_exit(&proclist_mutex);	/* XXXSMP */
 }
 
 /*
@@ -2062,8 +2068,7 @@ proc_stop_callout(void *cookie)
 		restart = false;
 		more = false;
 
-		mutex_enter(&proclist_lock);
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
 			mutex_enter(&p->p_smutex);
 
@@ -2097,8 +2102,7 @@ proc_stop_callout(void *cookie)
 			if (restart)
 				break;
 		}
-		mutex_exit(&proclist_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	} while (restart);
 
 	/*
@@ -2119,7 +2123,7 @@ proc_unstop(struct proc *p)
 	struct lwp *l;
 	int sig;
 
-	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(&p->p_smutex));
 
 	p->p_stat = SACTIVE;

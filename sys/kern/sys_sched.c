@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.19 2008/03/05 12:47:13 njoly Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.20 2008/04/24 15:35:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.19 2008/03/05 12:47:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.20 2008/04/24 15:35:30 ad Exp $");
 
 #include <sys/param.h>
 
@@ -123,11 +123,14 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 
 	if (pid != 0) {
 		/* Find the process */
-		p = p_find(pid, PFIND_UNLOCK_FAIL);
-		if (p == NULL)
+		mutex_enter(proc_lock);
+		p = p_find(pid, PFIND_LOCKED);
+		if (p == NULL) {
+			mutex_exit(proc_lock);
 			return ESRCH;
+		}
 		mutex_enter(&p->p_smutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		/* Disallow modification of system processes */
 		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(&p->p_smutex);
@@ -330,13 +333,15 @@ sys__sched_setaffinity(struct lwp *l,
 
 	if (SCARG(uap, pid) != 0) {
 		/* Find the process */
-		p = p_find(SCARG(uap, pid), PFIND_UNLOCK_FAIL);
+		mutex_enter(proc_lock);
+		p = p_find(SCARG(uap, pid), PFIND_LOCKED);
 		if (p == NULL) {
+			mutex_exit(proc_lock);
 			error = ESRCH;
 			goto error;
 		}
 		mutex_enter(&p->p_smutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		/* Disallow modification of system processes. */
 		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(&p->p_smutex);

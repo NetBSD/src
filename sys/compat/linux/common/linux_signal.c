@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.59 2008/04/23 13:11:42 ad Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.60 2008/04/24 15:35:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.59 2008/04/23 13:11:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.60 2008/04/24 15:35:27 ad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -647,18 +647,18 @@ linux_sys_tgkill(struct lwp *l, const struct linux_sys_tgkill_args *uap, registe
 
 	/* We use the PID as the TID, but make sure the group ID is right */
 	/* XXX racy */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if ((p = p_find(SCARG(uap, tid), PFIND_LOCKED)) == NULL ||
 	    p->p_emul != &emul_linux) {
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return ESRCH;
 	}
 	led = p->p_emuldata;
 	if (led->s->group_pid != SCARG(uap, tgid)) {
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return ESRCH;
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	return linux_sys_kill(l, &cup, retval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.129 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.130 2008/04/24 15:35:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.129 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.130 2008/04/24 15:35:30 ad Exp $");
 
 #include "opt_pipe.h"
 
@@ -563,9 +563,9 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0) {
-			mutex_enter(&proclist_mutex);
+			mutex_enter(proc_lock);
 			psignal(l->l_proc, SIGPIPE);
-			mutex_exit(&proclist_mutex);
+			mutex_exit(proc_lock);
 		}
 	}
 	if (error == 0)

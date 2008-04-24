@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.52 2008/04/23 13:34:44 ad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.53 2008/04/24 15:35:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.52 2008/04/23 13:34:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.53 2008/04/24 15:35:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,9 +294,9 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE) {
-			mutex_enter(&proclist_mutex);
+			mutex_enter(proc_lock);
 			psignal(curproc, SIGPIPE);
-			mutex_exit(&proclist_mutex);
+			mutex_exit(proc_lock);
 		}
 	}
 	cnt -= auio.uio_resid;
