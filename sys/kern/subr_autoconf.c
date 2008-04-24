@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.145 2008/04/22 11:45:28 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.146 2008/04/24 13:56:30 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.145 2008/04/22 11:45:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146 2008/04/24 13:56:30 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -406,7 +406,7 @@ void
 configure(void)
 {
 	extern void ssp_init(void);
-	int i;
+	int i, s;
 
 	/* Initialize data structures. */
 	config_init();
@@ -440,6 +440,9 @@ configure(void)
 	initclocks();
 
 	cold = 0;	/* clocks are running, we're warm now! */
+	s = splsched();
+	curcpu()->ci_schedstate.spc_flags |= SPCF_RUNNING;
+	splx(s);
 
 	/* Boot the secondary processors. */
 	mp_online = true;

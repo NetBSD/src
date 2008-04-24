@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_xcall.c,v 1.7 2008/04/14 00:18:43 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.8 2008/04/24 13:56:30 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -81,7 +81,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.7 2008/04/14 00:18:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.8 2008/04/24 13:56:30 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -191,6 +191,8 @@ xc_lowpri(u_int flags, xcfunc_t func, void *arg1, void *arg2,
 	if (ci == NULL) {
 		xc_broadcast_ev.ev_count++;
 		for (CPU_INFO_FOREACH(cii, ci)) {
+			if ((ci->ci_schedstate.spc_flags & SPCF_RUNNING) == 0)
+				continue;
 			xc_headp += 1;
 			ci->ci_data.cpu_xcall_pending = true;
 			cv_signal(&ci->ci_data.cpu_xcall);
