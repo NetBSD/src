@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.12 2008/03/29 15:34:19 skrll Exp $
+#	$NetBSD: files.hppa,v 1.13 2008/04/24 07:28:30 skrll Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -12,6 +12,7 @@ defflag	opt_cputype.h	HP7000_CPU HP7100_CPU HP7150_CPU HP7100LC_CPU
 file	arch/hppa/hppa/db_interface.c		ddb
 file	arch/hppa/hppa/db_disasm.c		ddb
 file	arch/hppa/hppa/db_memrw.c		ddb | kgdb
+file	arch/hppa/hppa/db_trace.c		ddb
 file	arch/hppa/hppa/fpu.c
 file	arch/hppa/hppa/kgdb_hppa.c		kgdb
 file	arch/hppa/hppa/kobj_machdep.c		modular
