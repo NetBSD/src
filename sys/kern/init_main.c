@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.350 2008/04/21 00:13:46 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.351 2008/04/24 08:51:06 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.350 2008/04/21 00:13:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.351 2008/04/24 08:51:06 sborrill Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -555,7 +555,7 @@ main(void)
 	kmstartup();
 #endif
 
-	/* Initialize system accouting. */
+	/* Initialize system accounting. */
 	acct_init();
 
 #ifndef PIPE_SOCKETPAIR
