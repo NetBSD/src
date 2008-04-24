@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.87 2008/04/15 16:02:04 thorpej Exp $	*/
+/*	$NetBSD: inet.c,v 1.88 2008/04/24 04:09:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.87 2008/04/15 16:02:04 thorpej Exp $");
+__RCSID("$NetBSD: inet.c,v 1.88 2008/04/24 04:09:27 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,11 +286,10 @@ tcp_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet.tcp.stats", tcpstat, &size,
 				 NULL, 0) == -1)
-			err(1, "net.inet.tcp.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)tcpstat, sizeof (tcpstat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf ("%s:\n", name);
@@ -413,11 +412,10 @@ udp_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet.udp.stats", udpstat, &size,
 				 NULL, 0) == -1)
-			err(1, "net.inet.udp.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)udpstat, sizeof (udpstat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf ("%s:\n", name);
@@ -467,11 +465,10 @@ ip_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet.ip.stats", ipstat, &size,
 				 NULL, 0) == -1)
-			err(1, "net.inet.ip.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)ipstat, sizeof (ipstat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf("%s:\n", name);
@@ -553,11 +550,10 @@ icmp_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet.icmp.stats", icmpstat, &size,
 				 NULL, 0) == -1)
-			err(1, "net.inet.icmp.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)icmpstat, sizeof (icmpstat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf("%s:\n", name);
@@ -608,11 +604,10 @@ igmp_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet.igmp.stats", igmpstat, &size,
 				 NULL, 0) == -1)
-			err(1, "net.inet.igmp.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)igmpstat, sizeof (igmpstat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf("%s:\n", name);
@@ -646,14 +641,11 @@ carp_stats(u_long off, char *name)
 		size_t size = sizeof(carpstat);
 
 		if (sysctlbyname("net.inet.carp.stats", carpstat, &size,
-				 NULL, 0) == -1) {
-			/* most likely CARP is not compiled in the kernel */
+				 NULL, 0) == -1)
 			return;
-		}
 	} else {
-		if (off == 0)
-			return;
-		kread(off, (char *)carpstat, sizeof(carpstat));
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf("%s:\n", name);
@@ -735,13 +727,11 @@ arp_stats(u_long off, char *name)
 		size_t size = sizeof(arpstat);
 
 		if (sysctlbyname("net.inet.arp.stats", arpstat, &size,
-				 NULL, 0) == -1) {
+				 NULL, 0) == -1)
 			return;
-		}
 	} else {
-		if (off == 0)
-			return;
-		kread(off, (char *)arpstat, sizeof(arpstat));
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf("%s:\n", name);

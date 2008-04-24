@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.6 2006/09/22 23:21:52 elad Exp $	*/
+/*	$NetBSD: bpf.c,v 1.7 2008/04/24 04:09:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -70,8 +70,7 @@ bpf_stats(void)
 		printf("\t%" PRIu64 " total packets dropped\n", 
 		    bpf_s.bs_drop);
 	} else {
-		/* XXX */
-		errx(1, "bpf_stats not implemented using kvm");
+		warnx("BPF stats not available via KVM.");
 	}
 }
 
