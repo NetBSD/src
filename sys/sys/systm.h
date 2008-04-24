@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.219 2008/04/01 19:49:31 drochner Exp $	*/
+/*	$NetBSD: systm.h,v 1.220 2008/04/24 11:51:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -128,7 +128,6 @@ extern int nsysent;
 #error	"what byte order is this machine?"
 #endif
 
-#define	SYCALL_MPSAFE	0x0001	/* syscall is MP-safe */
 #define	SYCALL_INDIRECT	0x0002	/* indirect (ie syscall() or __syscall()) */
 
 extern int boothowto;		/* reboot flags, from console subsystem */

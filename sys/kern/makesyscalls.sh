@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.68 2008/03/22 15:11:01 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.69 2008/04/24 11:51:19 ad Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -334,10 +334,6 @@ function parseline() {
 	}
 	if ($f == "INDIR") {		# allow for "NOARG INDIR"
 		sycall_flags = "SYCALL_INDIRECT | " sycall_flags
-		f++
-	}
-	if ($f == "MPSAFE") {		# allow for MP-safe syscalls
-		sycall_flags = "SYCALL_MPSAFE | " sycall_flags
 		f++
 	}
 	if ($f == "RUMP") {

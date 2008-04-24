@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.24 2008/02/06 22:12:39 dsl Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.25 2008/04/24 11:51:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.24 2008/02/06 22:12:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.25 2008/04/24 11:51:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,8 +157,6 @@ linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	struct proc *p = l->l_proc;
 
 	LWP_CACHE_CREDS(l, p);
-
-	KERNEL_LOCK(1, l);
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -229,7 +227,6 @@ linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -244,8 +241,6 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	struct proc *p = l->l_proc;
 
 	LWP_CACHE_CREDS(l, p);
-
-	KERNEL_LOCK(1, l);
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -321,8 +316,6 @@ out:
 		framep->tf_regs[FRAME_A3] = 1;
 		break;
 	}
-
-	KERNEL_UNLOCK_LAST(l);
 
 	trace_exit(code, rval, error);
 

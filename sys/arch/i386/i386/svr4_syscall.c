@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.38 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.39 2008/04/24 11:51:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.38 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.39 2008/04/24 11:51:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -121,9 +121,7 @@ svr4_syscall_plain(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	KERNEL_LOCK(1, l);
 	error = (*callp->sy_call)(l, args, rval);
-	KERNEL_UNLOCK_LAST(l);
 
 	switch (error) {
 	case 0:
@@ -197,15 +195,12 @@ svr4_syscall_fancy(frame)
 			goto bad;
 	}
 
-	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
-		goto out;
+	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
+		rval[0] = 0;
+		rval[1] = 0;
+		error = (*callp->sy_call)(l, args, rval);
+	}
 
-	rval[0] = 0;
-	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
-out:
-	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
 		frame->tf_eax = rval[0];
