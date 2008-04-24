@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2008/04/21 15:15:34 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17 2008/04/24 20:44:02 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2008/04/21 15:15:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2008/04/24 20:44:02 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -355,6 +355,11 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
+		if (cpunum >= X86_MAXPROCS) {
+			aprint_error(": apic id %d ignored, "
+				"please increase X86_MAXPROCS\n", cpunum);
+		}
+
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    M_DEVBUF, M_WAITOK);
