@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.6 2008/04/15 22:24:37 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.7 2008/04/24 05:29:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.6 2008/04/15 22:24:37 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.7 2008/04/24 05:29:40 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -193,7 +193,7 @@ setia6eui64(const char *cmd, int val)
 
 	if (afp->af_af != AF_INET6)
 		errx(EXIT_FAILURE, "%s not allowed for the AF", cmd);
- 	in6 = (struct in6_addr *)&in6_addreq.ifra_addr.sin6_addr;
+ 	in6 = &in6_addreq.ifra_addr.sin6_addr;
 	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0)
 		errx(EXIT_FAILURE, "interface index is already filled");
 	if (getifaddrs(&ifap) != 0)
@@ -255,13 +255,13 @@ in6_alias(struct in6_ifreq *creq)
 	printf("\tinet6 %s", hbuf);
 
 	if (flags & IFF_POINTOPOINT) {
-		(void) memset(&ifr6, 0, sizeof(ifr6));
+		memset(&ifr6, 0, sizeof(ifr6));
 		estrlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		ifr6.ifr_addr = creq->ifr_addr;
 		if (ioctl(s, SIOCGIFDSTADDR_IN6, &ifr6) == -1) {
 			if (errno != EADDRNOTAVAIL)
 				warn("SIOCGIFDSTADDR_IN6");
-			(void) memset(&ifr6.ifr_addr, 0, sizeof(ifr6.ifr_addr));
+			memset(&ifr6.ifr_addr, 0, sizeof(ifr6.ifr_addr));
 			ifr6.ifr_addr.sin6_family = AF_INET6;
 			ifr6.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 		}
@@ -274,7 +274,7 @@ in6_alias(struct in6_ifreq *creq)
 		printf(" -> %s", hbuf);
 	}
 
-	(void) memset(&ifr6, 0, sizeof(ifr6));
+	memset(&ifr6, 0, sizeof(ifr6));
 	estrlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 	ifr6.ifr_addr = creq->ifr_addr;
 	if (ioctl(s, SIOCGIFNETMASK_IN6, &ifr6) == -1) {
@@ -286,7 +286,7 @@ in6_alias(struct in6_ifreq *creq)
 					       sizeof(struct in6_addr)));
 	}
 
-	(void) memset(&ifr6, 0, sizeof(ifr6));
+	memset(&ifr6, 0, sizeof(ifr6));
 	estrlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 	ifr6.ifr_addr = creq->ifr_addr;
 	if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) == -1) {
@@ -310,7 +310,7 @@ in6_alias(struct in6_ifreq *creq)
 
 	if (Lflag) {
 		struct in6_addrlifetime *lifetime;
-		(void) memset(&ifr6, 0, sizeof(ifr6));
+		memset(&ifr6, 0, sizeof(ifr6));
 		estrlcpy(ifr6.ifr_name, name, sizeof(ifr6.ifr_name));
 		ifr6.ifr_addr = creq->ifr_addr;
 		lifetime = &ifr6.ifr_ifru.ifru_lifetime;
