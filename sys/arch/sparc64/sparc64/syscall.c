@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.28 2008/04/10 14:28:28 nakayama Exp $ */
+/*	$NetBSD: syscall.c,v 1.29 2008/04/24 11:51:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2008/04/10 14:28:28 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2008/04/24 11:51:18 ad Exp $");
 
 #define NEW_FPSTATE
 
@@ -316,14 +316,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-        /* Lock the kernel if the syscall isn't MP-safe. */
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		error = (*callp->sy_call)(l, &args, rval);
-	} else {
-		KERNEL_LOCK(1, l);
-		error = (*callp->sy_call)(l, &args, rval);
-		KERNEL_UNLOCK_LAST(l);
-	}
+	error = (*callp->sy_call)(l, &args, rval);
 
 	switch (error) {
 	case 0:
@@ -408,9 +401,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 #else
 	ap = &args;
 #endif
-	KERNEL_LOCK(1, l);
 	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
-		KERNEL_UNLOCK_LAST(l);
 		goto out;
 	}
 #ifdef __arch64__
@@ -422,13 +413,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_UNLOCK_LAST(l);
-		error = (*callp->sy_call)(l, &args, rval);
-	} else {
-		error = (*callp->sy_call)(l, &args, rval);
-		KERNEL_UNLOCK_LAST(l);
-	}
+	error = (*callp->sy_call)(l, &args, rval);
 out:
 	switch (error) {
 	case 0:
@@ -480,7 +465,6 @@ child_return(void *arg)
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 	ktrsysret((l->l_proc->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 }
