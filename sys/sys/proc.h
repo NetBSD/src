@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.271 2008/03/17 08:27:50 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.272 2008/04/24 15:35:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -204,8 +204,7 @@ struct emul {
  *
  * a:	p_auxlock
  * k:	ktrace_mutex
- * m:	proclist_mutex
- * l:	proclist_lock
+ * l:	proc_lock
  * s:	p_smutex
  * t:	p_stmutex
  * p:	p_mutex
@@ -213,7 +212,7 @@ struct emul {
  * ::	unlocked, stable
  */
 struct proc {
-	LIST_ENTRY(proc) p_list;	/* l, m: List of all processes */
+	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
 
 	kmutex_t	p_auxlock;	/* :: secondary, longer term lock */
 	kmutex_t	p_mutex;	/* :: general mutex */
@@ -263,8 +262,8 @@ struct proc {
 	int		p_nlwpwait;	/* s: Number of LWPs in lwp_wait1() */
 	int		p_ndlwps;	/* s: Number of detached LWPs */
 	int 		p_nlwpid;	/* s: Next LWP ID */
-	u_int		p_nstopchild;	/* m: Count of stopped/dead children */
-	u_int		p_waited;	/* m: parent has waited on child */
+	u_int		p_nstopchild;	/* l: Count of stopped/dead children */
+	u_int		p_waited;	/* l: parent has waited on child */
 	struct lwp	*p_zomblwp;	/* s: detached LWP to be reaped */
 
 	/* scheduling */
@@ -371,11 +370,10 @@ struct proc {
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
-#define	PS_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
 
 /*
- * These flags are kept in p_sflag and are protected by the proclist_lock
+ * These flags are kept in p_sflag and are protected by the proc_lock
  * and p_smutex.  Access from process context or interrupt context.
  */
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
@@ -389,10 +387,11 @@ struct proc {
 #define	PST_PROFIL	0x00000020 /* Has started profiling */
 
 /*
- * The final set are protected by the proclist_lock.  Access
+ * The final set are protected by the proc_lock.  Access
  * from process context only.
  */
 #define	PL_CONTROLT	0x00000002 /* Has a controlling terminal */
+#define	PL_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 
 /*
  * Macro to compute the exit signal to be delivered.
@@ -473,10 +472,7 @@ extern u_int		nprocs;		/* Current number of procs */
 extern int		maxproc;	/* Max number of procs */
 #define	vmspace_kernel()	(proc0.p_vmspace)
 
-/* Process list locks; see kern_proc.c for locking protocol details */
-extern kmutex_t		proclist_lock;
-extern kmutex_t		proclist_mutex;
-
+extern kmutex_t		*proc_lock;
 extern struct proclist	allproc;	/* List of all processes */
 extern struct proclist	zombproc;	/* List of zombie processes */
 

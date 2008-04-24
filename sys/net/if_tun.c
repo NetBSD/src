@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.105 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.106 2008/04/24 15:35:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.105 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.106 2008/04/24 15:35:30 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -82,6 +82,8 @@ static struct if_clone tun_cloner =
 
 static void tunattach0(struct tun_softc *);
 static void tuninit(struct tun_softc *);
+static void tun_i_softintr(void *);
+static void tun_o_softintr(void *);
 #ifdef ALTQ
 static void tunstart(struct ifnet *);
 #endif
@@ -181,6 +183,8 @@ tun_clone_create(struct if_clone *ifc, int unit)
 			"%s%d", ifc->ifc_name, unit);
 	tunattach0(tp);
 	tp->tun_flags |= TUN_INITED;
+	tp->tun_osih = softint_establish(SOFTINT_CLOCK, tun_o_softintr, tp);
+	tp->tun_isih = softint_establish(SOFTINT_CLOCK, tun_i_softintr, tp);
 
 	simple_lock(&tun_softc_lock);
 	LIST_INSERT_HEAD(&tun_softc_list, tp, tun_list);
@@ -246,13 +250,13 @@ tun_clone_destroy(struct ifnet *ifp)
 		tp->tun_flags &= ~TUN_RWAIT;
 		wakeup((void *)tp);
 	}
-	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
-		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
-
 	selnotify(&tp->tun_rsel, 0, 0);
 
 	simple_unlock(&tp->tun_lock);
 	splx(s);
+
+	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
+		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -262,6 +266,8 @@ tun_clone_destroy(struct ifnet *ifp)
 	if (!zombie) {
 		seldestroy(&tp->tun_rsel);
 		seldestroy(&tp->tun_wsel);
+		softint_disestablish(tp->tun_osih);
+		softint_disestablish(tp->tun_isih);
 		free(tp, M_DEVBUF);
 	}
 
@@ -327,6 +333,8 @@ tunclose(dev_t dev, int flag, int mode,
 		/* interface was "destroyed" before the close */
 		seldestroy(&tp->tun_rsel);
 		seldestroy(&tp->tun_wsel);
+		softint_disestablish(tp->tun_osih);
+		softint_disestablish(tp->tun_isih);
 		free(tp, M_DEVBUF);
 		goto out_nolock;
 	}
@@ -590,14 +598,33 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		wakeup((void *)tp);
 	}
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
-		fownsignal(tp->tun_pgid, SIGIO, POLL_IN, POLLIN|POLLRDNORM,
-		    NULL);
+		softint_schedule(tp->tun_isih);
 
 	selnotify(&tp->tun_rsel, 0, 0);
 out:
 	simple_unlock(&tp->tun_lock);
 	splx(s);
 	return (0);
+}
+
+static void
+tun_i_softintr(void *cookie)
+{
+	struct tun_softc *tp = cookie;
+
+	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
+		fownsignal(tp->tun_pgid, SIGIO, POLL_IN, POLLIN|POLLRDNORM,
+		    NULL);
+}
+
+static void
+tun_o_softintr(void *cookie)
+{
+	struct tun_softc *tp = cookie;
+
+	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
+		fownsignal(tp->tun_pgid, SIGIO, POLL_OUT, POLLOUT|POLLWRNORM,
+		    NULL);
 }
 
 /*
@@ -976,8 +1003,7 @@ tunstart(struct ifnet *ifp)
 			wakeup((void *)tp);
 		}
 		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
-			fownsignal(tp->tun_pgid, SIGIO, POLL_OUT,
-				POLLOUT|POLLWRNORM, NULL);
+			softint_schedule(tp->tun_osih);
 
 		selnotify(&tp->tun_rsel, 0, 0);
 	}

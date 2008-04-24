@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.5 2007/12/20 23:03:09 dsl Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.6 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.5 2007/12/20 23:03:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.6 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -137,9 +137,9 @@ int
 sys_nosys(struct lwp *l, const void *v, register_t *retval)
 {
 
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	psignal(l->l_proc, SIGSYS);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 	return ENOSYS;
 }
 

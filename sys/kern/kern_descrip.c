@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.175 2008/04/09 19:36:59 wiz Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.176 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.175 2008/04/09 19:36:59 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.176 2008/04/24 15:35:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.175 2008/04/09 19:36:59 wiz Exp $
 #include <sys/atomic.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/cpu.h>
 
 static int	cwdi_ctor(void *, void *, int);
 static void	cwdi_dtor(void *, void *);
@@ -1717,7 +1718,7 @@ fd_checkstd(void)
 		fd_affix(p, fp, fd);
 	}
 	if (closed[0] != '\0') {
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		pp = p->p_pptr;
 		mutex_enter(&pp->p_mutex);
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
@@ -1726,7 +1727,7 @@ fd_checkstd(void)
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, &closed[1]);
 		mutex_exit(&pp->p_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	}
 	return (0);
 }
@@ -1792,21 +1793,19 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	struct pgrp *pgrp;
 	ksiginfo_t ksi;
 
+	KASSERT(!cpu_intr_p());
+
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
 	ksi.ksi_code = code;
 	ksi.ksi_band = band;
 
-	/*
-	 * Since we may be called from an interrupt context, we must use
-	 * the proclist_mutex.
-	 */
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	if (pgid > 0 && (p1 = p_find(pgid, PFIND_LOCKED)))
 		kpsignal(p1, &ksi, fdescdata);
 	else if (pgid < 0 && (pgrp = pg_find(-pgid, PFIND_LOCKED)))
 		kpgsignal(pgrp, &ksi, fdescdata, 0);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 }
 
 int

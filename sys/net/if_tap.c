@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.41 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.42 2008/04/24 15:35:30 ad Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.41 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42 2008/04/24 15:35:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.41 2008/03/21 21:55:00 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/simplelock.h>
+#include <sys/intr.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -109,6 +110,7 @@ struct tap_softc {
 	pid_t		sc_pgid; /* For async. IO */
 	kmutex_t	sc_rdlock;
 	struct simplelock	sc_kqlock;
+	void		*sc_sih;
 };
 
 /* autoconf(9) glue */
@@ -197,8 +199,9 @@ static void	tap_stop(struct ifnet *, int);
 static int	tap_init(struct ifnet *);
 static int	tap_ioctl(struct ifnet *, u_long, void *);
 
-/* This is an internal function to keep tap_ioctl readable */
+/* Internal functions */
 static int	tap_lifaddr(struct ifnet *, u_long, struct ifaliasreq *);
+static void	tap_softintr(void *);
 
 /*
  * tap is a clonable interface, although it is highly unrealistic for
@@ -255,6 +258,7 @@ tap_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	sc->sc_dev = self;
+	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
@@ -367,6 +371,8 @@ tap_detach(device_t self, int flags)
 	if_down(ifp);
 	splx(s);
 
+	softint_disestablish(sc->sc_sih);
+
 	/*
 	 * Destroying a single leaf is a very straightforward operation using
 	 * sysctl_destroyv.  One should be sure to always end the path with
@@ -458,8 +464,29 @@ tap_start(struct ifnet *ifp)
 		wakeup(sc);
 		selnotify(&sc->sc_rsel, 0, 1);
 		if (sc->sc_flags & TAP_ASYNCIO)
-			fownsignal(sc->sc_pgid, SIGIO, POLL_IN,
-			    POLLIN|POLLRDNORM, NULL);
+			softint_schedule(sc->sc_sih);
+	}
+}
+
+static void
+tap_softintr(void *cookie)
+{
+	struct tap_softc *sc;
+	struct ifnet *ifp;
+	int a, b;
+
+	sc = cookie;
+
+	if (sc->sc_flags & TAP_ASYNCIO) {
+		ifp = &sc->sc_ec.ec_if;
+		if (ifp->if_flags & IFF_RUNNING) {
+			a = POLL_IN;
+			b = POLLIN|POLLRDNORM;
+		} else {
+			a = POLL_HUP;
+			b = 0;
+		}
+		fownsignal(sc->sc_pgid, SIGIO, a, b, NULL);
 	}
 }
 
@@ -553,7 +580,7 @@ tap_stop(struct ifnet *ifp, int disable)
 	wakeup(sc);
 	selnotify(&sc->sc_rsel, 0, 1);
 	if (sc->sc_flags & TAP_ASYNCIO)
-		fownsignal(sc->sc_pgid, SIGIO, POLL_HUP, 0, NULL);
+		softint_schedule(sc->sc_sih);
 }
 
 /*

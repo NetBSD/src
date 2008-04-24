@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.32 2007/03/09 14:11:23 ad Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.33 2008/04/24 15:35:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.32 2007/03/09 14:11:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.33 2008/04/24 15:35:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ procfs_dostatus(
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	mutex_enter(&p->p_mutex);
 
 	pid = p->p_pid;
@@ -182,7 +182,7 @@ procfs_dostatus(
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "\n");
 
 	mutex_exit(&p->p_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	return (uiomove_frombuf(psbuf, ps - psbuf, uio));
 }

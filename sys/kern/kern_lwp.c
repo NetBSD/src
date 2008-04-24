@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.101 2008/04/15 18:54:30 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.102 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.101 2008/04/15 18:54:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.102 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -627,9 +627,9 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 
 	mutex_exit(&p2->p_smutex);
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	if ((p2->p_flag & PK_SYSTEM) == 0) {
 		/* Locking is needed, since LWP is in the list of all LWPs */
@@ -743,11 +743,9 @@ lwp_exit(struct lwp *l)
 	/*
 	 * Remove the LWP from the global list.
 	 */
-	mutex_enter(&proclist_lock);
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	LIST_REMOVE(l, l_list);
-	mutex_exit(&proclist_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Get rid of all references to the LWP that others (e.g. procfs)
@@ -1118,7 +1116,7 @@ lwp_find2(pid_t pid, lwpid_t lid)
 	mutex_enter(&p->p_smutex);
 	if (pid != 0) {
 		/* Case of p_find */
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	}
 
 	/* Find the thread */

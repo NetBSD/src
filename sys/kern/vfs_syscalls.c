@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.348 2008/03/28 05:02:08 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.349 2008/04/24 15:35:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.348 2008/03/28 05:02:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.349 2008/04/24 15:35:30 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -575,7 +575,8 @@ checkdirs(struct vnode *olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
+	/* XXXAD Should not be acquiring these locks with proc_lock held!! */
 	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
 		if (!cwdi)
@@ -593,7 +594,7 @@ checkdirs(struct vnode *olddp)
 		}
 		rw_exit(&cwdi->cwdi_lock);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
 		VREF(newdp);

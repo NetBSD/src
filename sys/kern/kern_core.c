@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.10 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.11 2008/04/24 15:35:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.10 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.11 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_coredump.h"
 
@@ -95,7 +95,7 @@ coredump(struct lwp *l, const char *pattern)
 	p = l->l_proc;
 	vm = p->p_vmspace;
 
-	mutex_enter(&proclist_lock);	/* p_session */
+	mutex_enter(proc_lock);		/* p_session */
 	mutex_enter(&p->p_mutex);
 
 	/*
@@ -107,7 +107,7 @@ coredump(struct lwp *l, const char *pattern)
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur) {
 		error = EFBIG;		/* better error code? */
 		mutex_exit(&p->p_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		goto done;
 	}
 
@@ -132,7 +132,7 @@ coredump(struct lwp *l, const char *pattern)
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
 		error = EPERM;
 		mutex_exit(&p->p_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		goto done;
 	}
 
@@ -144,7 +144,7 @@ coredump(struct lwp *l, const char *pattern)
 		if (!security_setidcore_dump) {
 			error = EPERM;
 			mutex_exit(&p->p_mutex);
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			goto done;
 		}
 		pattern = security_setidcore_path;
@@ -158,7 +158,7 @@ coredump(struct lwp *l, const char *pattern)
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&lim->pl_lock);
 	mutex_exit(&p->p_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	if (error)
 		goto done;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name);
@@ -210,7 +210,7 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 	char		*d, *end;
 	int		i;
 
-	KASSERT(mutex_owned(&proclist_lock));
+	KASSERT(mutex_owned(proc_lock));
 
 	for (s = src, d = dst, end = d + len; *s != '\0'; s++) {
 		if (*s == '%') {

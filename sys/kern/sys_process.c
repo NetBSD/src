@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.136 2008/02/24 18:30:07 dsl Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.137 2008/04/24 15:35:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.136 2008/02/24 18:30:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.137 2008/04/24 15:35:30 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -147,7 +147,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	 * If attaching or detaching, we need to get a write hold on the
 	 * proclist lock so that we can re-parent the target process.
 	 */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 
 	/* "A foolish consistency..." XXX */
 	if (req == PT_TRACE_ME) {
@@ -156,7 +156,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	} else {
 		/* Find the process we're supposed to be operating on. */
 		if ((t = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			return (ESRCH);
 		}
 
@@ -165,7 +165,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
 		    t, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (error) {
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			mutex_exit(&t->p_mutex);
 			return (ESRCH);
 		}
@@ -176,7 +176,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	 * exiting.
 	 */
 	if (!rw_tryenter(&t->p_reflock, RW_READER)) {
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		mutex_exit(&t->p_mutex);
 		return EBUSY;
 	}
@@ -321,7 +321,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		    NULL, NULL);
 
 	if (error != 0) {
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		mutex_exit(&t->p_mutex);
 		rw_exit(&t->p_reflock);
 		return error;
@@ -342,7 +342,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		pheld = 1;
 		break;
 	default:
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		mutex_exit(&t->p_mutex);
 		pheld = 0;
 		break;
@@ -565,7 +565,6 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		signo = SCARG(uap, data);
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
-		mutex_enter(&proclist_mutex);
 		mutex_enter(&t->p_smutex);
 		if (t->p_stat == SSTOP) {
 			/*
@@ -581,7 +580,6 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			kpsignal2(t, &ksi);
 		}
 		mutex_exit(&t->p_smutex);
-		mutex_exit(&proclist_mutex);
 		break;
 
 	case  PT_KILL:
@@ -746,7 +744,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		lwp_delref(lt);
 	if (pheld) {
 		mutex_exit(&t->p_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	}
 	rw_exit(&t->p_reflock);
 
@@ -915,30 +913,26 @@ process_stoptrace(void)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc, *pp;
 
-	/* XXXSMP proc_stop -> child_psignal -> kpsignal2 -> pool_get */ 
-	KERNEL_LOCK(1, l);
-
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	mutex_enter(&p->p_smutex);
 	pp = p->p_pptr;
 	if (pp->p_pid == 1) {
 		CLR(p->p_slflag, PSL_SYSCALL);	/* XXXSMP */
 		mutex_exit(&p->p_smutex);
-		mutex_exit(&proclist_mutex);
-		KERNEL_UNLOCK_ONE(l);
+		mutex_exit(proc_lock);
 		return;
 	}
 
 	p->p_xstat = SIGTRAP;
 	proc_stop(p, 1, SIGSTOP);
-	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Call issignal() once only, to have it take care of the
 	 * pending stop.  Signal processing will take place as usual
 	 * from userret().
 	 */
+	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	(void)issignal(l);
 	mutex_exit(&p->p_smutex);
 	KERNEL_LOCK(l->l_biglocks - 1, l);

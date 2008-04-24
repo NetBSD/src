@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.138 2008/04/20 15:27:10 scw Exp $	*/
+/*	$NetBSD: bpf.c,v 1.139 2008/04/24 15:35:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.138 2008/04/20 15:27:10 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.139 2008/04/24 15:35:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -153,6 +153,7 @@ static int	bpf_ioctl(struct file *, u_long, void *);
 static int	bpf_poll(struct file *, int);
 static int	bpf_close(struct file *);
 static int	bpf_kqfilter(struct file *, struct knote *);
+static void	bpf_softintr(void *);
 
 static const struct fileops bpf_fileops = {
 	bpf_read,
@@ -403,6 +404,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_pid = l->l_proc->p_pid;
 	callout_init(&d->bd_callout, 0);
 	selinit(&d->bd_sel);
+	d->bd_sih = softint_establish(SOFTINT_CLOCK, bpf_softintr, d);
 
 	mutex_enter(&bpf_mtx);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
@@ -440,6 +442,7 @@ bpf_close(struct file *fp)
 	mutex_exit(&bpf_mtx);
 	callout_destroy(&d->bd_callout);
 	seldestroy(&d->bd_sel);
+	softint_disestablish(d->bd_sih);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;
 
@@ -565,11 +568,19 @@ bpf_wakeup(struct bpf_d *d)
 {
 	wakeup(d);
 	if (d->bd_async)
-		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
-
+		softint_schedule(d->bd_sih);
 	selnotify(&d->bd_sel, 0, 0);
 }
 
+static void
+bpf_softintr(void *cookie)
+{
+	struct bpf_d *d;
+
+	d = cookie;
+	if (d->bd_async)
+		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
+}
 
 static void
 bpf_timed_out(void *arg)

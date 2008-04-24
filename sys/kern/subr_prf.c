@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.118 2008/04/17 14:07:31 yamt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.119 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.118 2008/04/17 14:07:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.119 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -419,7 +419,7 @@ uprintf(const char *fmt, ...)
 	struct proc *p = curproc;
 	va_list ap;
 
-	/* mutex_enter(&proclist_mutex); XXXSMP */
+	/* mutex_enter(proc_lock); XXXSMP */
 
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		/* No mutex needed; going to process TTY. */
@@ -428,7 +428,7 @@ uprintf(const char *fmt, ...)
 		va_end(ap);
 	}
 
-	/* mutex_exit(&proclist_mutex); XXXSMP */
+	/* mutex_exit(proc_lock); XXXSMP */
 }
 
 void
@@ -467,12 +467,12 @@ tprintf_open(struct proc *p)
 
 	cookie = NULL;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		SESSHOLD(p->p_session);
 		cookie = (tpr_t)p->p_session;
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	return cookie;
 }
@@ -486,9 +486,9 @@ tprintf_close(tpr_t sess)
 {
 
 	if (sess) {
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		SESSRELE((struct session *) sess);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	}
 }
 
@@ -506,7 +506,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	int s, flags = TOLOG;
 	va_list ap;
 
-	/* mutex_enter(&proclist_mutex); XXXSMP */
+	/* mutex_enter(proc_lock); XXXSMP */
 	if (sess && sess->s_ttyvp && ttycheckoutq(sess->s_ttyp, 0)) {
 		flags |= TOTTY;
 		tp = sess->s_ttyp;
@@ -520,7 +520,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
-	/* mutex_exit(&proclist_mutex);	XXXSMP */
+	/* mutex_exit(proc_lock);	XXXSMP */
 
 	logwakeup();
 }

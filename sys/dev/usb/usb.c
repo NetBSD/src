@@ -1,7 +1,7 @@
-/*	$NetBSD: usb.c,v 1.111 2008/04/03 14:07:01 drochner Exp $	*/
+/*	$NetBSD: usb.c,v 1.112 2008/04/24 15:35:28 ad Exp $	*/
 
 /*
- * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.111 2008/04/03 14:07:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.112 2008/04/24 15:35:28 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -146,12 +146,13 @@ Static SIMPLEQ_HEAD(, usb_event_q) usb_events =
 Static int usb_nevents = 0;
 Static struct selinfo usb_selevent;
 Static usb_proc_ptr usb_async_proc;  /* process that wants USB SIGIO */
+Static void *usb_async_sih;
 Static int usb_dev_open = 0;
 Static struct usb_event *usb_alloc_event(void);
 Static void usb_free_event(struct usb_event *);
 Static void usb_add_event(int, struct usb_event *);
-
 Static int usb_get_next_event(struct usb_event *);
+Static void usb_async_intr(void *);
 
 #ifdef COMPAT_30
 Static void usb_copy_old_devinfo(struct usb_device_info_old *, const struct usb_device_info *);
@@ -280,6 +281,9 @@ usb_doattach(device_t self)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	usb_async_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
+	   usb_async_intr, NULL);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -450,7 +454,9 @@ usbopen(dev_t dev, int flag, int mode, struct lwp *l)
 		if (usb_dev_open)
 			return (EBUSY);
 		usb_dev_open = 1;
+		mutex_enter(proc_lock);
 		usb_async_proc = 0;
+		mutex_exit(proc_lock);
 		return (0);
 	}
 
@@ -556,7 +562,9 @@ usbclose(dev_t dev, int flag, int mode,
 	int unit = minor(dev);
 
 	if (unit == USB_DEV_MINOR) {
+		mutex_enter(proc_lock);
 		usb_async_proc = 0;
+		mutex_exit(proc_lock);
 		usb_dev_open = 0;
 	}
 
@@ -576,10 +584,12 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			return (0);
 
 		case FIOASYNC:
+			mutex_enter(proc_lock);
 			if (*(int *)data)
 				usb_async_proc = l->l_proc;
 			else
 				usb_async_proc = 0;
+			mutex_exit(proc_lock);
 			return (0);
 
 		default:
@@ -898,11 +908,20 @@ usb_add_event(int type, struct usb_event *uep)
 	wakeup(&usb_events);
 	selnotify(&usb_selevent, 0, 0);
 	if (usb_async_proc != NULL) {
-		mutex_enter(&proclist_mutex);
-		psignal(usb_async_proc, SIGIO);
-		mutex_exit(&proclist_mutex);
+		softint_schedule(usb_async_sih);
 	}
 	splx(s);
+}
+
+Static void
+usb_async_intr(void *cookie)
+{
+	proc_t *proc;
+
+	mutex_enter(proc_lock);
+	if ((proc = usb_async_proc) != NULL)
+		psignal(proc, SIGIO);
+	mutex_exit(proc_lock);
 }
 
 void

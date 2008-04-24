@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.140 2008/04/23 13:51:48 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.141 2008/04/24 15:35:27 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.140 2008/04/23 13:51:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.141 2008/04/24 15:35:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -831,16 +831,16 @@ svr4_sys_pgrpsys(struct lwp *l, const struct svr4_sys_pgrpsys_args *uap, registe
 		/*FALLTHROUGH*/
 
 	case 0:			/* getpgrp() */
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		*retval = p->p_pgrp->pg_id;
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return 0;
 
 	case 2:			/* getsid(pid) */
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		if (SCARG(uap, pid) != 0 &&
 		    (p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_ZOMBIE)) == NULL) {
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			return ESRCH;
 		}
 		/*
@@ -848,22 +848,22 @@ svr4_sys_pgrpsys(struct lwp *l, const struct svr4_sys_pgrpsys_args *uap, registe
 		 * the session leader.
 		 */
 		*retval = (register_t) p->p_session->s_sid;
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return 0;
 
 	case 3:			/* setsid() */
 		return sys_setsid(l, NULL, retval);
 
 	case 4:			/* getpgid(pid) */
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		if (SCARG(uap, pid) != 0 &&
 		    (p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_ZOMBIE)) == NULL) {
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			return ESRCH;
 		}
 
 		*retval = (int) p->p_pgrp->pg_id;
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return 0;
 
 	case 5:			/* setpgid(pid, pgid); */
@@ -1021,9 +1021,9 @@ svr4_sys_waitsys(struct lwp *l, const struct svr4_sys_waitsys_args *uap, registe
 		break;
 
 	case SVR4_P_PGID:
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		id = -l->l_proc->p_pgid;
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		break;
 
 	case SVR4_P_ALL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.166 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.167 2008/04/24 15:35:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.166 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.167 2008/04/24 15:35:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,9 +425,9 @@ procfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct pfsnode *pfs = VTOPFS(vp);
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	*ap->a_recycle = (p_find(pfs->pfs_pid, PFIND_LOCKED) == NULL);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	VOP_UNLOCK(vp, 0);
 
@@ -1215,9 +1215,9 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 	    UIO_MX - offsetof(struct dirent, d_name), "%ld", (long)p->p_pid);
 	d.d_type = DT_DIR;
 
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	error = uiomove(&d, UIO_MX, uiop);
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if (error) {
 		ctxp->error = error;
 		return -1;
