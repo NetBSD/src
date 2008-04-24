@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.6 2008/04/22 02:02:50 jmcneill Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.7 2008/04/24 21:42:05 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.6 2008/04/22 02:02:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.7 2008/04/24 21:42:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -106,7 +106,7 @@ acpi_osd_sched_fini(void)
 ACPI_THREAD_ID
 AcpiOsGetThreadId(void)
 {
-	return curlwp->l_lid + 1;
+	return (ACPI_THREAD_ID)curlwp;
 }
 
 /*
