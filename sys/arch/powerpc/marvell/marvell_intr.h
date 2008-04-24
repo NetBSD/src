@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.13 2007/12/03 15:34:13 ad Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.14 2008/04/24 11:36:51 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 
 #ifndef _MVPPPC_INTR_H_
 #define _MVPPPC_INTR_H_
+
+#include <powerpc/psl.h>
+#include <powerpc/frame.h>
 
 /*
  * Interrupt Priority Levels
