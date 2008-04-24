@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.32 2008/04/22 02:23:05 tls Exp $	*/
+/*	$NetBSD: cpu.c,v 1.33 2008/04/24 15:59:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.32 2008/04/22 02:23:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2008/04/24 15:59:57 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -294,6 +294,13 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
+#if defined(MULTIPROCESSOR)
+		if (cpunum >= X86_MAXPROCS) {
+			aprint_error(": apic id %d ignored, "
+			    "please increase X86_MAXPROCS\n", cpunum);
+			return;
+		}
+#endif
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    M_DEVBUF, M_WAITOK);
