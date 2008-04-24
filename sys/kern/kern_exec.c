@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.270 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.271 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.270 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.271 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -851,12 +851,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
 	if ((p->p_sflag & PS_PPWAIT) != 0) {
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		mutex_enter(&p->p_smutex);
 		p->p_sflag &= ~PS_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(&p->p_smutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	}
 
 	/*
@@ -1016,7 +1016,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	rw_exit(&exec_lock);
 #endif
 
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 
 	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED) {
 		KSI_INIT_EMPTY(&ksi);
@@ -1037,12 +1037,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		p->p_stat = SSTOP;
 		p->p_nrlwps--;
 		mutex_exit(&p->p_smutex);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else {
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 
 	PNBUF_PUT(pathbuf);
@@ -1245,7 +1245,7 @@ emul_unregister(const char *name)
 	 * emul_unregister() is running quite sendomly, it's better
 	 * to do expensive check here than to use any locking.
 	 */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
 		PROCLIST_FOREACH(ptmp, pd->pd_list) {
 			if (ptmp->p_emul == it->el_emul) {
@@ -1254,7 +1254,7 @@ emul_unregister(const char *name)
 			}
 		}
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	if (error)
 		goto out;

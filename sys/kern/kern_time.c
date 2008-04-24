@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.144 2008/04/22 12:04:22 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.145 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.144 2008/04/22 12:04:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.145 2008/04/24 15:35:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -174,13 +174,13 @@ settime1(struct proc *p, struct timespec *ts, bool check_kauth)
 	 * pausing all CPUs while we adjust the clock.
 	 */
 	timeval2bintime(&delta, &btdelta);
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		lwp_lock(l);
 		bintime_add(&l->l_stime, &btdelta);
 		lwp_unlock(l);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	resettodr();
 	splx(s);
 
@@ -1338,9 +1338,9 @@ timer_intr(void *cookie)
 		pt->pt_overruns = 0;
 		mutex_spin_exit(&timer_lock);
 
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		kpsignal(p, &ksi, NULL);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 
 		mutex_spin_enter(&timer_lock);
 	}

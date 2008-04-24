@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.137 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.138 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.137 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.138 2008/04/24 15:35:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 	int low = NZERO + PRIO_MAX + 1;
 	int who = SCARG(uap, who);
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
 		if (who == 0)
@@ -145,10 +145,10 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 		break;
 
 	default:
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return (EINVAL);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	if (low == NZERO + PRIO_MAX + 1)
 		return (ESRCH);
@@ -170,7 +170,7 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 	int found = 0, error = 0;
 	int who = SCARG(uap, who);
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
 		if (who == 0)
@@ -219,7 +219,7 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		error = EINVAL;
 		break;
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	if (found == 0)
 		return (ESRCH);
 	return (error);

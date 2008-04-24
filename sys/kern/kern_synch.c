@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.227 2008/04/13 22:54:19 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.228 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.227 2008/04/13 22:54:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.228 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -816,7 +816,7 @@ suspendsched(void)
 	/*
 	 * We do this by process in order not to violate the locking rules.
 	 */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		mutex_enter(&p->p_smutex);
 
@@ -854,7 +854,7 @@ suspendsched(void)
 
 		mutex_exit(&p->p_smutex);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
@@ -987,7 +987,7 @@ sched_pstats(void *arg)
 
 	sched_pstats_ticks++;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		/*
 		 * Increment time in/out of memory and sleep time (if
@@ -1044,13 +1044,10 @@ sched_pstats(void *arg)
 			}
 		}
 		mutex_exit(&p->p_smutex);
-		if (sig) {
-			mutex_enter(&proclist_mutex);
+		if (sig)
 			psignal(p, sig);
-			mutex_exit(&proclist_mutex);
-		}
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	uvm_meter();
 	cv_wakeup(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);

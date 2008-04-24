@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.12 2008/02/19 12:20:02 yamt Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.13 2008/04/24 15:35:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.12 2008/02/19 12:20:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.13 2008/04/24 15:35:30 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -275,21 +275,22 @@ sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 	if (SCARG(uap, pid) > 0) {
 		/* kill single process */
-		if ((p = p_find(SCARG(uap, pid), PFIND_UNLOCK_FAIL)) == NULL)
+		mutex_enter(proc_lock);
+		if ((p = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
+			mutex_exit(proc_lock);
 			return (ESRCH);
+		}
 		mutex_enter(&p->p_mutex);
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signum),
 		    NULL, NULL);
 		if (!error && signum) {
-			mutex_enter(&proclist_mutex);
 			mutex_enter(&p->p_smutex);
 			kpsignal2(p, &ksi);
 			mutex_exit(&p->p_smutex);
-			mutex_exit(&proclist_mutex);
 		}
 		mutex_exit(&p->p_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return (error);
 	}
 	switch (SCARG(uap, pid)) {
