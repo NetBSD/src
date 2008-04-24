@@ -1,4 +1,4 @@
-/*	$NetBSD: atalk.c,v 1.12 2008/04/24 04:09:27 thorpej Exp $	*/
+/*	$NetBSD: atalk.c,v 1.13 2008/04/24 04:09:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-__RCSID("$NetBSD: atalk.c,v 1.12 2008/04/24 04:09:27 thorpej Exp $");
+__RCSID("$NetBSD: atalk.c,v 1.13 2008/04/24 04:09:50 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,7 +293,7 @@ ddp_stats(u_long off, char *name)
 	if (use_sysctl) {
 		size_t size = sizeof(ddpstat);
 
-		if (sysctlbyname("net.at.ddp.stats", ddpstat, &size,
+		if (sysctlbyname("net.atalk.ddp.stats", ddpstat, &size,
 				 NULL, 0) == -1)
 			return;
 	} else {
