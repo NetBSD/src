@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.17 2008/04/04 19:16:24 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.18 2008/04/24 23:26:00 alc Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * operation.
  *
  * When a thread is awakened, it needs to get its turnstile back.  If there
- * are still other threads waiting in the active turnstile, the the thread
+ * are still other threads waiting in the active turnstile, the thread
  * grabs a free turnstile off the free list.  Otherwise, it can take back
  * the active turnstile from the lock (thus deactivating the turnstile).
  *
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.17 2008/04/04 19:16:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.18 2008/04/24 23:26:00 alc Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
