@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.219 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: if.c,v 1.220 2008/04/24 13:30:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.219 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.220 2008/04/24 13:30:52 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -1643,7 +1643,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 #else
 		error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, l));
+		    (struct mbuf *)ifp, l);
 #endif
 		sounlock(so);
 		break;
