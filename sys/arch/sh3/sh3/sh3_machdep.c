@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.70 2008/03/22 03:23:27 uwe Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.71 2008/04/24 18:39:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.70 2008/03/22 03:23:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.71 2008/04/24 18:39:21 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -387,9 +387,9 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -467,10 +467,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -565,7 +565,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	tf->tf_r15 = context.sc_r15;
 	tf->tf_pr = context.sc_pr;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
@@ -573,7 +573,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }
@@ -670,12 +670,12 @@ cpu_setmcontext(l, mcp, flags)
 	}
 #endif
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (0);
 }

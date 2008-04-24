@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.45 2007/12/20 23:03:00 dsl Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.46 2008/04/24 18:39:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.45 2007/12/20 23:03:00 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.46 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -211,14 +211,14 @@ mach_thread_create_running(struct mach_trap_args *args)
 	/*
 	 * Make the child runnable.
 	 */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	lwp_lock(mctc.mctc_lwp);
 	mctc.mctc_lwp->l_private = 0;
 	mctc.mctc_lwp->l_stat = LSRUN;
 	sched_enqueue(mctc.mctc_lwp, false);
 	p->p_nrlwps++;
 	lwp_unlock(mctc.mctc_lwp);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	/*
 	 * Get the child's kernel port
@@ -402,10 +402,10 @@ mach_thread_suspend(struct mach_trap_args *args)
 	struct proc *p = tl->l_proc;
 	int error;
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	lwp_lock(tl);
 	error = lwp_suspend(l, tl);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
@@ -424,10 +424,10 @@ mach_thread_resume(struct mach_trap_args *args)
 	struct lwp *tl = args->tl;
 	struct proc *p = tl->l_proc;
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	lwp_lock(tl);
 	lwp_continue(tl);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);

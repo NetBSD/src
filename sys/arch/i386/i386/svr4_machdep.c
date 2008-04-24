@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.89 2007/12/22 01:15:37 yamt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.90 2008/04/24 18:39:20 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.89 2007/12/22 01:15:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.90 2008/04/24 18:39:20 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -394,9 +394,9 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*

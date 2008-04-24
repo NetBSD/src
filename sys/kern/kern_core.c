@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.11 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.12 2008/04/24 18:39:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.11 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.12 2008/04/24 18:39:23 ad Exp $");
 
 #include "opt_coredump.h"
 
@@ -96,7 +96,7 @@ coredump(struct lwp *l, const char *pattern)
 	vm = p->p_vmspace;
 
 	mutex_enter(proc_lock);		/* p_session */
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 
 	/*
 	 * Refuse to core if the data + stack + user size is larger than
@@ -106,7 +106,7 @@ coredump(struct lwp *l, const char *pattern)
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur) {
 		error = EFBIG;		/* better error code? */
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		goto done;
 	}
@@ -131,7 +131,7 @@ coredump(struct lwp *l, const char *pattern)
 	if (vp->v_mount == NULL ||
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
 		error = EPERM;
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		goto done;
 	}
@@ -143,7 +143,7 @@ coredump(struct lwp *l, const char *pattern)
 	if (p->p_flag & PK_SUGID) {
 		if (!security_setidcore_dump) {
 			error = EPERM;
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 			mutex_exit(proc_lock);
 			goto done;
 		}
@@ -157,7 +157,7 @@ coredump(struct lwp *l, const char *pattern)
 		pattern = lim->pl_corename;
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&lim->pl_lock);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
 	if (error)
 		goto done;

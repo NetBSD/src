@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.303 2008/03/10 13:43:33 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.304 2008/04/24 18:39:20 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.303 2008/03/10 13:43:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.304 2008/04/24 18:39:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1499,10 +1499,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = l->l_ctxlink;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*

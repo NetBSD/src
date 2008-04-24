@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.136 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.137 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.136 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.137 2008/04/24 18:39:24 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -307,11 +307,10 @@ proc0_init(void)
 
 	KASSERT(l->l_lid == p->p_nlwpid);
 
-	mutex_init(&p->p_smutex, MUTEX_DEFAULT, IPL_SCHED);
 	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&l->l_swaplock, MUTEX_DEFAULT, IPL_NONE);
+	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	rw_init(&p->p_reflock);
 	cv_init(&p->p_waitcv, "wait");
@@ -1220,7 +1219,7 @@ proc_crmod_enter(void)
 			free(cn, M_TEMP);
 	}
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 
 	/* Ensure the LWP cached credentials are up to date. */
 	if ((oc = l->l_cred) != p->p_cred) {
@@ -1244,15 +1243,15 @@ proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 	struct proc *p = l->l_proc;
 	kauth_cred_t oc;
 
+	KASSERT(mutex_owned(p->p_lock));
+
 	/* Is there a new credential to set in? */
 	if (scred != NULL) {
-		mutex_enter(&p->p_smutex);
 		p->p_cred = scred;
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			if (l2 != l)
 				l2->l_prflag |= LPR_CRMOD;
 		}
-		mutex_exit(&p->p_smutex);
 
 		/* Ensure the LWP cached credentials are up to date. */
 		if ((oc = l->l_cred) != scred) {
@@ -1270,7 +1269,7 @@ proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 		p->p_flag |= PK_SUGID;
 	}
 
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 
 	/* If there is a credential to be released, free it now. */
 	if (fcred != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.19 2008/04/17 14:03:42 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.20 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.19 2008/04/17 14:03:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.20 2008/04/24 18:39:24 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -333,7 +333,7 @@ sched_nice(struct proc *p, int n)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_nice = n;
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -404,7 +404,7 @@ sched_proc_fork(struct proc *parent, struct proc *child)
 {
 	lwp_t *pl;
 
-	KASSERT(mutex_owned(&parent->p_smutex));
+	KASSERT(mutex_owned(parent->p_lock));
 
 	pl = LIST_FIRST(&parent->p_lwps);
 	child->p_estcpu_inherited = pl->l_estcpu;
@@ -425,7 +425,7 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 
 	/* XXX Only if parent != init?? */
 
-	mutex_enter(&parent->p_smutex);
+	mutex_enter(parent->p_lock);
 	pl = LIST_FIRST(&parent->p_lwps);
 	cl = LIST_FIRST(&child->p_lwps);
 	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
@@ -435,7 +435,7 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 		pl->l_estcpu = ESTCPULIM(pl->l_estcpu + cl->l_estcpu - estcpu);
 		lwp_unlock(pl);
 	}
-	mutex_exit(&parent->p_smutex);
+	mutex_exit(parent->p_lock);
 }
 
 void

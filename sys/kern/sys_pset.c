@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.5 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.6 2008/04/24 18:39:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.5 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.6 2008/04/24 18:39:24 ad Exp $");
 
 #include <sys/param.h>
 
@@ -411,12 +411,12 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 		error = ESRCH;
 		goto error;
 	}
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	mutex_exit(proc_lock);
 
 	/* Disallow modification of the system processes */
 	if (p->p_flag & PK_SYSTEM) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		error = EPERM;
 		goto error;
 	}
@@ -439,7 +439,7 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 		lwp_migrate(t, ci);
 		lcnt++;
 	}
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (lcnt == 0) {
 		error = ESRCH;
 		goto error;

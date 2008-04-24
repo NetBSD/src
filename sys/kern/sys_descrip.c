@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.1 2008/03/21 21:53:35 ad Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.2 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.1 2008/03/21 21:53:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.2 2008/04/24 18:39:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,9 +252,9 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 				break;
 			}
 			if ((p->p_flag & PK_ADVLOCK) == 0) {
-				mutex_enter(&p->p_mutex);
+				mutex_enter(p->p_lock);
 				p->p_flag |= PK_ADVLOCK;
-				mutex_exit(&p->p_mutex);
+				mutex_exit(p->p_lock);
 			}
 			error = VOP_ADVLOCK(vp, p, F_SETLK, fl, flg);
 			break;
@@ -265,9 +265,9 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 				break;
 			}
 			if ((p->p_flag & PK_ADVLOCK) == 0) {
-				mutex_enter(&p->p_mutex);
+				mutex_enter(p->p_lock);
 				p->p_flag |= PK_ADVLOCK;
-				mutex_exit(&p->p_mutex);
+				mutex_exit(p->p_lock);
 			}
 			error = VOP_ADVLOCK(vp, p, F_SETLK, fl, flg);
 			break;

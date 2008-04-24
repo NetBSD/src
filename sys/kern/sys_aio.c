@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.17 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.18 2008/04/24 18:39:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.17 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.18 2008/04/24 18:39:24 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -129,18 +129,16 @@ aio_init(struct proc *p)
 	}
 
 	/* Recheck if we are really first */
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	if (p->p_aio) {
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		aio_exit(p, aio);
 		lwp_exit(l);
 		return 0;
 	}
 	p->p_aio = aio;
-	mutex_exit(&p->p_mutex);
 
 	/* Complete the initialization of thread, and run it */
-	mutex_enter(&p->p_smutex);
 	aio->aio_worker = l;
 	p->p_nrlwps++;
 	lwp_lock(l);
@@ -148,7 +146,7 @@ aio_init(struct proc *p)
 	l->l_priority = MAXPRI_USER;
 	sched_enqueue(l, false);
 	lwp_unlock(l);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return 0;
 }
@@ -197,9 +195,9 @@ aio_worker(void *arg)
 	 * handles only SIGKILL and SIGSTOP.
 	 */
 	sigfillset(&nss);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(curlwp, SIG_SETMASK, &nss, &oss);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	KASSERT(error == 0);
 
 	for (;;) {

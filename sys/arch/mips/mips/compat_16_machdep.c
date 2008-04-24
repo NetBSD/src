@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.10 2007/12/20 23:02:41 dsl Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.11 2008/04/24 18:39:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10 2007/12/20 23:02:41 dsl Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.11 2008/04/24 18:39:21 ad Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -151,9 +151,9 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&ksc, (void *)scp, sizeof(ksc));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -268,7 +268,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 #endif
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
@@ -276,7 +276,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &ksc.sc_mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

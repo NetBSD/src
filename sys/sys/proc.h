@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.272 2008/04/24 15:35:31 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.273 2008/04/24 18:39:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,9 +205,8 @@ struct emul {
  * a:	p_auxlock
  * k:	ktrace_mutex
  * l:	proc_lock
- * s:	p_smutex
  * t:	p_stmutex
- * p:	p_mutex
+ * p:	p_lock
  * q:	mqlist_mtx
  * ::	unlocked, stable
  */
@@ -215,12 +214,11 @@ struct proc {
 	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
 
 	kmutex_t	p_auxlock;	/* :: secondary, longer term lock */
-	kmutex_t	p_mutex;	/* :: general mutex */
-	kmutex_t	p_smutex;	/* :: mutex on scheduling state */
+	kmutex_t	*p_lock;	/* :: general mutex */
 	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
 	krwlock_t	p_reflock;	/* p: lock for debugger, procfs */
-	kcondvar_t	p_waitcv;	/* s: wait, stop CV on children */
-	kcondvar_t	p_lwpcv;	/* s: wait, stop CV on LWPs */
+	kcondvar_t	p_waitcv;	/* p: wait, stop CV on children */
+	kcondvar_t	p_lwpcv;	/* p: wait, stop CV on LWPs */
       
 	/* Substructures: */
 	struct kauth_cred *p_cred;	/* p: Master copy of credentials */
@@ -237,12 +235,12 @@ struct proc {
 
 	int		p_exitsig;	/* l: signal to send to parent on exit */
 	int		p_flag;		/* p: P_* flags */
-	int		p_sflag;	/* s: PS_* flags */
+	int		p_sflag;	/* p: PS_* flags */
 	int		p_slflag;	/* s, l: PSL_* flags */
 	int		p_lflag;	/* l: PL_* flags */
 	int		p_stflag;	/* t: PST_* flags */
-	char		p_stat;		/* s: S* process status. */
-	char		p_trace_enabled;/* s: cached by syscall_intern() */
+	char		p_stat;		/* p: S* process status. */
+	char		p_trace_enabled;/* p: cached by syscall_intern() */
 	char		p_pad1[2];	/*  unused */
 
 	pid_t		p_pid;		/* :: Process identifier. */
@@ -250,32 +248,32 @@ struct proc {
 	struct proc 	*p_pptr;	/* l: Pointer to parent process. */
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: List of children. */
-	LIST_HEAD(, lwp) p_lwps;	/* s: List of LWPs. */
+	LIST_HEAD(, lwp) p_lwps;	/* p: List of LWPs. */
 	struct ras	*p_raslist;	/* a: List of RAS entries */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps
 
-	int 		p_nlwps;	/* s: Number of LWPs */
-	int 		p_nzlwps;	/* s: Number of zombie LWPs */
-	int		p_nrlwps;	/* s: Number running/sleeping LWPs */
-	int		p_nlwpwait;	/* s: Number of LWPs in lwp_wait1() */
-	int		p_ndlwps;	/* s: Number of detached LWPs */
-	int 		p_nlwpid;	/* s: Next LWP ID */
+	int 		p_nlwps;	/* p: Number of LWPs */
+	int 		p_nzlwps;	/* p: Number of zombie LWPs */
+	int		p_nrlwps;	/* p: Number running/sleeping LWPs */
+	int		p_nlwpwait;	/* p: Number of LWPs in lwp_wait1() */
+	int		p_ndlwps;	/* p: Number of detached LWPs */
+	int 		p_nlwpid;	/* p: Next LWP ID */
 	u_int		p_nstopchild;	/* l: Count of stopped/dead children */
 	u_int		p_waited;	/* l: parent has waited on child */
-	struct lwp	*p_zomblwp;	/* s: detached LWP to be reaped */
+	struct lwp	*p_zomblwp;	/* p: detached LWP to be reaped */
 
 	/* scheduling */
-	void		*p_sched_info;	/* s: Scheduler-specific structure */
-	fixpt_t		p_estcpu;	/* s: Time avg. value of p_cpticks */
-	fixpt_t		p_estcpu_inherited; /* s: cpu inherited from children */
+	void		*p_sched_info;	/* p: Scheduler-specific structure */
+	fixpt_t		p_estcpu;	/* p: Time avg. value of p_cpticks */
+	fixpt_t		p_estcpu_inherited; /* p: cpu inherited from children */
 	unsigned int	p_forktime;
-	fixpt_t         p_pctcpu;       /* s: %cpu from dead LWPs */
+	fixpt_t         p_pctcpu;       /* p: %cpu from dead LWPs */
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */
-	struct bintime 	p_rtime;	/* s: real time */
+	struct bintime 	p_rtime;	/* p: real time */
 	u_quad_t 	p_uticks;	/* t: Statclock hits in user mode */
 	u_quad_t 	p_sticks;	/* t: Statclock hits in system mode */
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
@@ -290,8 +288,8 @@ struct proc {
 	const struct execsw *p_execsw;	/* :: exec package information */
 	struct klist	p_klist;	/* p: knotes attached to proc */
 
-	LIST_HEAD(, lwp) p_sigwaiters;	/* s: LWPs waiting for signals */
-	sigpend_t	p_sigpend;	/* s: pending signals */
+	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
+	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 
 /*
@@ -304,9 +302,9 @@ struct proc {
  */
 #define	p_startcopy	p_sigctx
 
-	struct sigctx 	p_sigctx;	/* s: Shared signal state */
+	struct sigctx 	p_sigctx;	/* p: Shared signal state */
 
-	u_char		p_nice;		/* s: Process "nice" value */
+	u_char		p_nice;		/* p: Process "nice" value */
 	char		p_comm[MAXCOMLEN+1];
 					/* p: basename of last exec file */
 	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
@@ -322,7 +320,7 @@ struct proc {
  */
 #define	p_endcopy	p_xstat
 
-	u_short		p_xstat;	/* s: Exit status for wait; also stop signal */
+	u_short		p_xstat;	/* p: Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct mdproc	p_md;		/* p: Any machine-dependent fields */
 	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
@@ -346,7 +344,7 @@ struct proc {
     ((p)->p_stat == SZOMB || (p)->p_stat == SDYING || (p)->p_stat == SDEAD)
 
 /*
- * These flags are kept in p_flag and are protected by p_mutex.  Access from
+ * These flags are kept in p_flag and are protected by p_lock.  Access from
  * process context only.
  */
 #define	PK_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
@@ -359,8 +357,8 @@ struct proc {
 #define	PK_MARKER	0x80000000 /* Is a dummy marker process */
 
 /*
- * These flags are kept in p_sflag and are protected by p_smutex.  Access from
- * process context or interrupt context.
+ * These flags are kept in p_sflag and are protected by p_lock.  Access from
+ * process context only.
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	PS_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
@@ -374,7 +372,7 @@ struct proc {
 
 /*
  * These flags are kept in p_sflag and are protected by the proc_lock
- * and p_smutex.  Access from process context or interrupt context.
+ * and p_lock.  Access from process context only.
  */
 #define	PSL_TRACED	0x00000800 /* Debugged process being traced */
 #define	PSL_FSTRACE	0x00010000 /* Debugger process being traced by procfs */

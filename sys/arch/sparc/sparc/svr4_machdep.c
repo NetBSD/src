@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.64 2007/12/22 01:15:37 yamt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.65 2008/04/24 18:39:21 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.64 2007/12/22 01:15:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.65 2008/04/24 18:39:21 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -136,7 +136,7 @@ svr4_getmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long *flags)
 
 	write_user_windows();
 	if (rwindow_save(l)) {
-		mutex_enter(&l->l_proc->p_smutex);
+		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 	}
 
@@ -226,7 +226,7 @@ svr4_setmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long flags)
 
 	write_user_windows();
 	if (rwindow_save(l)) {
-		mutex_enter(&l->l_proc->p_smutex);
+		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 	}
 
@@ -491,13 +491,13 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Modify the signal context to be used by sigreturn.
 	 */
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	frame.sf_uc.uc_mcontext.greg[SVR4_SPARC_SP] = oldsp;
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
 	error = (rwindow_save(l) || copyout(&frame, fp, sizeof(frame)) != 0 ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error) {
 		/*

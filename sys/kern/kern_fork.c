@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.161 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.162 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.161 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.162 2008/04/24 18:39:24 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -221,9 +221,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		error = 0;
 
 	p1 = l1->l_proc;
-	mutex_enter(&p1->p_mutex);
-	uid = kauth_cred_getuid(p1->p_cred);
-	mutex_exit(&p1->p_mutex);
+	uid = kauth_cred_getuid(l1->l_cred);
 	tnprocs = atomic_inc_uint_nv(&nprocs);
 
 	/*
@@ -317,14 +315,21 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_flag |= (PK_SYSTEM | PK_NOCLDWAIT);
 	}
 
-	/* XXX p_smutex can be IPL_VM except for audio drivers */
-	mutex_init(&p2->p_smutex, MUTEX_DEFAULT, IPL_SCHED);
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
+
+	/*
+	 * Share a lock between the processes if they are to share signal
+	 * state: we must synchronize access to it.
+	 */
+	if (flags & FORK_SHARESIGS) {
+		p2->p_lock = p1->p_lock;
+		mutex_obj_hold(p1->p_lock);
+	} else
+		p2->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	kauth_proc_fork(p1, p2);
 
@@ -394,11 +399,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Create signal actions for the child process.
 	 */
 	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
-	mutex_enter(&p1->p_smutex);
+	mutex_enter(p1->p_lock);
 	p2->p_sflag |=
 	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
 	sched_proc_fork(p1, p2);
-	mutex_exit(&p1->p_smutex);
+	mutex_exit(p1->p_lock);
 
 	p2->p_stflag = p1->p_stflag;
 
@@ -492,7 +497,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * if the parent requested the child to start in SSTOP state.
 	 */
 	tmp = (p2->p_userret != NULL ? LW_WUSERRET : 0);
-	mutex_enter(&p2->p_smutex);
+	mutex_enter(p2->p_lock);
 
 	getmicrotime(&p2->p_stats->p_start);
 	p2->p_acflag = AFORK;
@@ -534,9 +539,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (flags & FORK_PPWAIT)
 		while (p2->p_sflag & PS_PPWAIT)
-			cv_wait(&p1->p_waitcv, &p2->p_smutex);
+			cv_wait(&p1->p_waitcv, p2->p_lock);
 
-	mutex_exit(&p2->p_smutex);
+	mutex_exit(p2->p_lock);
 
 	/*
 	 * Return child pid to parent process,

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.32 2007/12/22 01:15:37 yamt Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.33 2008/04/24 18:39:21 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.32 2007/12/22 01:15:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.33 2008/04/24 18:39:21 ad Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -147,7 +147,7 @@ svr4_32_getmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
 		Debugger();
 #endif
 #endif
-		mutex_enter(&l->l_proc->p_smutex);
+		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 	}
 
@@ -245,7 +245,7 @@ svr4_32_setmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
 		Debugger();
 #endif
 #endif
-		mutex_enter(&l->l_proc->p_smutex);
+		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 	}
 
@@ -521,7 +521,7 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sendsig_reset(l, sig);
 	frame.sf_uc.uc_mcontext.greg[SVR4_SPARC_SP] = oldsp;
 	newsp = (u_long)fp - sizeof(struct rwindow32);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	svr4_32_getcontext(l, &frame.sf_uc, &tmask);
 	write_user_windows();
 
@@ -532,7 +532,7 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 #endif
 	error = (rwindow_save(l) || copyout(&frame, fp, sizeof(frame)) != 0 ||
 	    copyout(&oldsp, &((struct rwindow32 *)newsp)->rw_in[6], sizeof(oldsp)));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error) {
 		/*
@@ -540,14 +540,14 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		 * instruction to halt it in its tracks.
 		 */
 #ifdef DEBUG
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("svr4_32_sendsig: window save or copyout error\n");
 		printf("svr4_32_sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
 #ifdef DDB
 		Debugger();
 #endif
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
@@ -573,13 +573,13 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		printf("svr4_32_sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, (void *)(u_long)addr);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 	}
 #endif
 }

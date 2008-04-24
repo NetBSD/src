@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.11 2007/10/17 19:54:31 garbled Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.12 2008/04/24 18:39:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.11 2007/10/17 19:54:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.12 2008/04/24 18:39:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,12 +247,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			sizeof(l->l_addr->u_pcb.pcb_fpregs));
 	}
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return 0;
 }

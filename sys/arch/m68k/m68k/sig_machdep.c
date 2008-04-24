@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.36 2007/10/17 19:55:12 garbled Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.37 2008/04/24 18:39:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.36 2007/10/17 19:55:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.37 2008/04/24 18:39:20 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -205,10 +205,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&kf.sf_uc.uc_stack, 0, sizeof(kf.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &kf.sf_uc.uc_mcontext, &kf.sf_uc.uc_flags);
 	error = copyout(&kf, fp, sizeof(kf));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -430,12 +430,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 			m68881_restore(fpf);
 	}
 
-	mutex_enter(&l->l_proc->p_smutex);
+	mutex_enter(l->l_proc->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&l->l_proc->p_smutex);
+	mutex_exit(l->l_proc->p_lock);
 
 	return 0;
 }

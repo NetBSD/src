@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.196 2008/04/23 13:05:54 ad Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.197 2008/04/24 18:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.196 2008/04/23 13:05:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.197 2008/04/24 18:39:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -262,9 +262,9 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 		return error;
 
         p = curproc;
-        mutex_enter(&p->p_smutex);
+        mutex_enter(p->p_lock);
 	sigdelset(&p->p_sigpend.sp_set, SIGCHLD); /* XXXAD ksiginfo leak */
-        mutex_exit(&p->p_smutex);
+        mutex_exit(p->p_lock);
 
 	if (SCARG(uap, rusage) != NULL)
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
@@ -639,13 +639,13 @@ linux_sys_times(struct lwp *l, const struct linux_sys_times_args *uap, register_
 		struct linux_tms ltms;
 		struct rusage ru;
 
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 		ltms.ltms_utime = CONVTCK(ru.ru_utime);
 		ltms.ltms_stime = CONVTCK(ru.ru_stime);
 		ltms.ltms_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
 		ltms.ltms_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 
 		if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
 			return error;

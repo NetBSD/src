@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.26 2008/04/22 12:04:22 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.27 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.26 2008/04/22 12:04:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.27 2008/04/24 18:39:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -285,10 +285,10 @@ sleepq_block(int timo, bool catch)
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
 		else if ((l->l_flag & LW_PENDSIG) != 0) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			if ((sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 		}
 	}
 
@@ -398,7 +398,7 @@ sleepq_sigtoerror(lwp_t *l, int sig)
 	struct proc *p = l->l_proc;
 	int error;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	/*
 	 * If this sleep was canceled, don't let the syscall restart.

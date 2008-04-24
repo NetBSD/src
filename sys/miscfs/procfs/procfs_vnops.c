@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.167 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.168 2008/04/24 18:39:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.167 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.168 2008/04/24 18:39:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,10 +329,10 @@ procfs_open(v)
 		 (m) & FWRITE ? KAUTH_REQ_PROCESS_PROCFS_WRITE : \
 		 KAUTH_REQ_PROCESS_PROCFS_READ)
 
-	mutex_enter(&p2->p_mutex);
+	mutex_enter(p2->p_lock);
 	error = kauth_authorize_process(l1->l_cred, KAUTH_PROCESS_PROCFS,
 	    p2, pfs, KAUTH_ARG(M2K(ap->a_mode)), NULL);
-	mutex_exit(&p2->p_mutex);
+	mutex_exit(p2->p_lock);
 	if (error) {
 		procfs_proc_unlock(p2);
 		return (error);
@@ -673,11 +673,11 @@ procfs_getattr(v)
 	}
 
 	if (procp != NULL) {
-		mutex_enter(&procp->p_mutex);
+		mutex_enter(procp->p_lock);
 		error = kauth_authorize_process(kauth_cred_get(),
 		    KAUTH_PROCESS_CANSEE, procp,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
-		mutex_exit(&procp->p_mutex);
+		mutex_exit(procp->p_lock);
 		if (error != 0) {
 		    	procfs_proc_unlock(procp);
 		    	if (path != NULL)
@@ -1075,10 +1075,10 @@ procfs_lookup(v)
 			struct lwp *plwp;
 			int found;
 
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			plwp = proc_representative_lwp(p, NULL, 1);
 			lwp_addref(plwp);
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 			found = cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
 			    (pt->pt_valid == NULL
@@ -1307,10 +1307,10 @@ procfs_readdir(v)
 		for (pt = &proc_targets[i];
 		     uio->uio_resid >= UIO_MX && i < nproc_targets; pt++, i++) {
 			if (pt->pt_valid) {
-				/* XXX LWP can disappear */
-				mutex_enter(&p->p_smutex);
+				/* XXXSMP LWP can disappear */
+				mutex_enter(p->p_lock);
 				l = proc_representative_lwp(p, NULL, 1);
-				mutex_exit(&p->p_smutex);
+				mutex_exit(p->p_lock);
 				if ((*pt->pt_valid)(l, vp->v_mount) == 0)
 					continue;
 			}
