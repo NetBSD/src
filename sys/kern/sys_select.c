@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.4 2008/04/17 14:02:24 yamt Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.5 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.4 2008/04/17 14:02:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.5 2008/04/24 18:39:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,10 +264,10 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 
 	if (mask) {
 		sigminusset(&sigcantmask, mask);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		oldmask = l->l_sigmask;
 		l->l_sigmask = *mask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	} else
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
@@ -310,9 +310,9 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	selclear();
 
 	if (mask) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		l->l_sigmask = oldmask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 
  done:
@@ -460,10 +460,10 @@ pollcommon(lwp_t *l, register_t *retval,
 
 	if (mask) {
 		sigminusset(&sigcantmask, mask);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		oldmask = l->l_sigmask;
 		l->l_sigmask = *mask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	} else
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
@@ -505,9 +505,9 @@ pollcommon(lwp_t *l, register_t *retval,
 	selclear();
 
 	if (mask) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		l->l_sigmask = oldmask;
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
  done:
 	/* poll is not restarted after signals... */

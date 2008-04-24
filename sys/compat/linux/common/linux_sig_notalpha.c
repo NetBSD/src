@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.36 2007/12/20 23:02:56 dsl Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.37 2008/04/24 18:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.36 2007/12/20 23:02:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.37 2008/04/24 18:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,9 +107,9 @@ linux_sys_siggetmask(struct lwp *l, const void *v, register_t *retval)
 	linux_old_sigset_t lss;
 	int error;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, SIG_SETMASK, 0, &bss);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (error)
 		return (error);
 	native_to_linux_old_sigset(&lss, &bss);
@@ -135,9 +135,9 @@ linux_sys_sigsetmask(struct lwp *l, const struct linux_sys_sigsetmask_args *uap,
 
 	nlss = SCARG(uap, mask);
 	linux_old_to_native_sigset(&nbss, &nlss);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, SIG_SETMASK, &nbss, &obss);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (error)
 		return (error);
 	native_to_linux_old_sigset(&olss, &obss);

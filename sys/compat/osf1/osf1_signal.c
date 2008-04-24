@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.34 2007/12/20 23:03:03 dsl Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.35 2008/04/24 18:39:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.34 2007/12/20 23:03:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.35 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ osf1_sys_sigprocmask(struct lwp *l, const struct osf1_sys_sigprocmask_args *uap,
 
 	osf1_cvt_sigset_to_native(&oss, &bss);
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	switch (SCARG(uap, how)) {
 	case OSF1_SIG_BLOCK:
@@ -276,7 +276,7 @@ osf1_sys_sigprocmask(struct lwp *l, const struct osf1_sys_sigprocmask_args *uap,
 		break;
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return error;
 }

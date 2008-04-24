@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.14 2007/12/20 23:02:39 dsl Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.15 2008/04/24 18:39:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14 2007/12/20 23:02:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15 2008/04/24 18:39:20 ad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -142,14 +142,14 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	tf->tf_ss = context.sc_ss;
 
 	/* Restore signal stack. */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }
@@ -253,9 +253,9 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -353,12 +353,12 @@ compat_16_x86_vm86(struct lwp *l, char *args, register_t *retval)
 #undef	DOVREG
 #undef	DOREG
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Going into vm86 mode jumps off the signal stack. */
 	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	set_vflags(l, vm86s.regs.sc_eflags | PSL_VM);
 

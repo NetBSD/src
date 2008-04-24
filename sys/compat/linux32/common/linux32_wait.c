@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.7 2008/04/23 13:30:41 ad Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.8 2008/04/24 18:39:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.7 2008/04/23 13:30:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.8 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,9 +125,9 @@ linux32_sys_wait4(struct lwp *l, const struct linux32_sys_wait4_args *uap, regis
 		return error;
 
 	p = curproc;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	sigdelset(&p->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	if (SCARG_P32(uap, rusage) != NULL) {
 		netbsd32_from_rusage(&ru, &ru32);

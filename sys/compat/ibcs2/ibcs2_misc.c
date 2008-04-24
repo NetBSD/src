@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.102 2008/04/24 15:35:27 ad Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.103 2008/04/24 18:39:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.102 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.103 2008/04/24 18:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,10 +945,10 @@ ibcs2_sys_times(struct lwp *l, const struct ibcs2_sys_times_args *uap, register_
 #define CONVTCK(r)      (r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
 	ru = l->l_proc->p_stats->p_ru;
-	mutex_enter(&l->l_proc->p_smutex);
+	mutex_enter(l->l_proc->p_lock);
 	calcru(l->l_proc, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 	rulwps(l->l_proc, &ru);
-	mutex_exit(&l->l_proc->p_smutex);
+	mutex_exit(l->l_proc->p_lock);
 	tms.tms_utime = CONVTCK(ru.ru_utime);
 	tms.tms_stime = CONVTCK(ru.ru_stime);
 

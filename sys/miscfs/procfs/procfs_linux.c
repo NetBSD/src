@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.49 2008/04/24 15:35:30 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.50 2008/04/24 18:39:25 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.49 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.50 2008/04/24 18:39:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,8 +418,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	get_proc_size_info(l, &stext, &etext, &sstack);
 
 	mutex_enter(proc_lock);
-	mutex_enter(&p->p_mutex);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	calcru(p, NULL, NULL, NULL, &rt);
 
@@ -481,8 +480,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    p->p_exitsig,
 	    0);						/* XXX: processor */
 
-	mutex_exit(&p->p_smutex);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
 
 	if (len == 0)

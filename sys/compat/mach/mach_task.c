@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_task.c,v 1.69 2008/04/24 15:35:27 ad Exp $ */
+/*	$NetBSD: mach_task.c,v 1.70 2008/04/24 18:39:23 ad Exp $ */
 
 /*-
- * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.69 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.70 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -462,9 +462,9 @@ mach_task_info(struct mach_trap_args *args)
 
 		ru = tp->p_stats->p_ru;
 		mtbi = (struct mach_task_basic_info *)&rep->rep_info[0];
-		mutex_enter(&tp->p_smutex);
+		mutex_enter(tp->p_lock);
 		rulwps(tp, &ru);
-		mutex_exit(&tp->p_smutex);
+		mutex_exit(tp->p_lock);
 
 		mtbi->mtbi_suspend_count = ru.ru_nvcsw + ru.ru_nivcsw;
 		mtbi->mtbi_virtual_size = ru.ru_ixrss;
@@ -511,9 +511,9 @@ mach_task_info(struct mach_trap_args *args)
 
 		mtei = (struct mach_task_events_info *)&rep->rep_info[0];
 		ru = tp->p_stats->p_ru;
-		mutex_enter(&tp->p_smutex);
+		mutex_enter(tp->p_lock);
 		rulwps(tp, &ru);
-		mutex_exit(&tp->p_smutex);
+		mutex_exit(tp->p_lock);
 
 		mtei->mtei_faults = ru.ru_majflt;
 		mtei->mtei_pageins = ru.ru_minflt;
@@ -571,9 +571,9 @@ mach_task_suspend(struct mach_trap_args *args)
 		}
 	}
 	mutex_enter(proc_lock);
-	mutex_enter(&tp->p_smutex);
+	mutex_enter(tp->p_lock);
 	proc_stop(tp, 0, SIGSTOP);
-	mutex_enter(&tp->p_smutex);
+	mutex_enter(tp->p_lock);
 	mutex_enter(proc_lock);
 
 	*msglen = sizeof(*rep);
@@ -608,9 +608,9 @@ mach_task_resume(struct mach_trap_args *args)
 	printf("resuming pid %d\n", tp->p_pid);
 #endif
 	mutex_enter(proc_lock);
-	mutex_enter(&tp->p_smutex);
+	mutex_enter(tp->p_lock);
 	(void)proc_unstop(tp);
-	mutex_enter(&tp->p_smutex);
+	mutex_enter(tp->p_lock);
 	mutex_enter(proc_lock);
 
 	*msglen = sizeof(*rep);

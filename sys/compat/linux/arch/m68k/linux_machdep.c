@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.36 2007/12/20 23:02:53 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.37 2008/04/24 18:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.36 2007/12/20 23:02:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37 2008/04/24 18:39:22 ad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -229,9 +229,9 @@ setup_linux_sigframe(struct frame *frame, int sig, const sigset_t *mask, void *u
 	kf.sf_c.c_sc.sc_ps = frame->f_sr;
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&kf, fp, sizeof(struct linux_sigframe));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error) {
 #ifdef DEBUG
@@ -411,9 +411,9 @@ setup_linux_rt_sigframe(struct frame *frame, int sig, const sigset_t *mask, void
 	kf.sf_uc.uc_stack.ss_size = l->l_sigstk.ss_size;
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&kf, fp, sizeof(struct linux_rt_sigframe));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error) {
 #ifdef DEBUG
@@ -528,7 +528,7 @@ linux_sys_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	/* Grab whole of the sigcontext. */
 	if (copyin((void *) usp, &tsigc2, sizeof tsigc2)) {
 bad:
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		sigexit(l, SIGSEGV);
 	}
 
@@ -556,7 +556,7 @@ bad:
 			sz, frame->f_stackadj);
 #endif
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
@@ -570,7 +570,7 @@ bad:
 #endif
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	/*
 	 * Restore the user supplied information.
@@ -684,7 +684,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	/* Grab whole of the ucontext. */
 	if (copyin(ucp, &tuc, sizeof tuc)) {
 bad:		
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		sigexit(l, SIGSEGV);
 	}
 
@@ -713,7 +713,7 @@ bad:
 	if (tuc.uc_mc.mc_version != LINUX_MCONTEXT_VERSION)
 		goto bad;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	l->l_sigstk.ss_flags =
@@ -724,7 +724,7 @@ bad:
 	linux_to_native_sigset(&mask, &tuc.uc_sigmask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	/*
 	 * Restore the user supplied information.

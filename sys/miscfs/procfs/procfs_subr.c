@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.87 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.88 2008/04/24 18:39:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.87 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.88 2008/04/24 18:39:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,20 +368,20 @@ procfs_rw(v)
 	 */
 #define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_PROCFS_READ : \
 		 KAUTH_REQ_PROCESS_PROCFS_WRITE)
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_PROCFS,
 	    p, pfs, KAUTH_ARG(M2K(uio->uio_rw)), NULL);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 	if (error) {
 		procfs_proc_unlock(p);
 		return (error);
 	}
 #undef	M2K
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	l = proc_representative_lwp(p, NULL, 1);
 	lwp_addref(l);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	switch (pfs->pfs_type) {
 	case PFSnote:

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.628 2008/04/21 15:15:33 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.629 2008/04/24 18:39:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.628 2008/04/21 15:15:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629 2008/04/24 18:39:20 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -783,7 +783,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	fp--;
 
@@ -815,10 +815,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		(*p->p_emul->e_syscall_intern)(p);
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -840,7 +840,7 @@ void
 sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 
-	KASSERT(mutex_owned(&curproc->p_smutex));
+	KASSERT(mutex_owned(curproc->p_lock));
 
 #ifdef COMPAT_16
 	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
@@ -2268,12 +2268,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
 #endif
 	}
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	return (0);
 }
 

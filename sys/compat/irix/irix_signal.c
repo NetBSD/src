@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.46 2007/12/20 23:02:51 dsl Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.47 2008/04/24 18:39:22 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.46 2007/12/20 23:02:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.47 2008/04/24 18:39:22 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -310,9 +310,9 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Install the sigframe onto the stack
 	 */
 	sendsig_reset(l, ksi->ksi_signo);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&sf.isf_ctx, sp, sizeof(sf.isf_ctx));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -386,7 +386,7 @@ irix_set_sigcontext (scp, mask, code, l)
 	int i;
 	struct frame *f;
 
-	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(l->l_proc->p_lock));
 
 #ifdef DEBUG_IRIX
 	printf("irix_set_sigcontext()\n");
@@ -439,7 +439,7 @@ irix_set_ucontext(struct irix_ucontext *ucp, const sigset_t *mask, int code, str
 {
 	struct frame *f;
 
-	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(l->l_proc->p_lock));
 
 #ifdef DEBUG_IRIX
 	printf("irix_set_ucontext()\n");
@@ -534,17 +534,17 @@ irix_sys_sigreturn(struct lwp *l, const struct irix_sys_sigreturn_args *uap, reg
 		    sizeof(ksf.isf_ctx))) != 0)
 			return error;
 	
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		irix_get_ucontext(&ksf.isf_ctx.iss.iuc, l);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	} else {
 		if ((error = copyin(usf, &ksf.isf_ctx.isc,
 		    sizeof(ksf.isf_ctx))) != 0)
 			return error;
 
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		irix_get_sigcontext(&ksf.isf_ctx.isc, l);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 
 #ifdef DEBUG_IRIX
@@ -563,7 +563,7 @@ irix_get_ucontext(struct irix_ucontext *ucp, struct lwp *l)
 	struct frame *f;
 	sigset_t mask;
 
-	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(l->l_proc->p_lock));
 
 	/* Restore the register context. */
 	f = (struct frame *)l->l_md.md_regs;
@@ -635,7 +635,7 @@ irix_get_sigcontext(struct irix_sigcontext *scp, struct lwp *l)
 	struct frame *f;
 	sigset_t mask;
 
-	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(l->l_proc->p_lock));
 
 	/* Restore the register context. */
 	f = (struct frame *)l->l_md.md_regs;
@@ -720,7 +720,7 @@ irix_sys_getcontext(struct lwp *l, const struct irix_sys_getcontext_args *uap, r
 	kucp.iuc_flags = IRIX_UC_ALL;
 	kucp.iuc_link = NULL;		/* XXX */
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	native_to_irix_sigset(&l->l_sigmask, &kucp.iuc_sigmask);
 	kucp.iuc_stack.ss_sp = l->l_sigstk.ss_sp;
 	kucp.iuc_stack.ss_size = l->l_sigstk.ss_size;
@@ -729,7 +729,7 @@ irix_sys_getcontext(struct lwp *l, const struct irix_sys_getcontext_args *uap, r
 		kucp.iuc_stack.ss_flags &= IRIX_SS_ONSTACK;
 	if (l->l_sigstk.ss_flags & SS_DISABLE)
 		kucp.iuc_stack.ss_flags &= IRIX_SS_DISABLE;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	for (i = 0; i < 36; i++) /* Is order correct? */
 		kucp.iuc_mcontext.svr4___gregs[i] = f->f_regs[i];
@@ -765,7 +765,7 @@ irix_sys_setcontext(struct lwp *l, const struct irix_sys_setcontext_args *uap, r
 
 	f = (struct frame *)l->l_md.md_regs;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (kucp.iuc_flags & IRIX_UC_SIGMASK)
 		irix_to_native_sigset(&kucp.iuc_sigmask,
@@ -782,7 +782,7 @@ irix_sys_setcontext(struct lwp *l, const struct irix_sys_setcontext_args *uap, r
 			l->l_sigstk.ss_flags &= SS_DISABLE;
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	if (kucp.iuc_flags & IRIX_UC_CPU)
 		for (i = 0; i < 36; i++) /* Is register order right? */
@@ -907,9 +907,9 @@ irix_sys_sigprocmask(struct lwp *l, const struct irix_sys_sigprocmask_args *uap,
 	/* We now need the corresponding netbsd mask */
 	irix_to_native_sigset(&niss, &nbss);
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, SIG_SETMASK, &nbss, &obss);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	if (error != 0 || SCARG(&cup, oset) == NULL)
 		return error;

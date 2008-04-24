@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.228 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.229 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.228 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.229 2008/04/24 18:39:24 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -718,7 +718,7 @@ setrunnable(struct lwp *l)
 	sigset_t *ss;
 
 	KASSERT((l->l_flag & LW_IDLE) == 0);
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_mutex != l->l_cpu->ci_schedstate.spc_mutex);
 
@@ -818,10 +818,10 @@ suspendsched(void)
 	 */
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 
 		if ((p->p_flag & PK_SYSTEM) != 0) {
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 			continue;
 		}
 
@@ -852,7 +852,7 @@ suspendsched(void)
 			lwp_unlock(l);
 		}
 
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 	mutex_exit(proc_lock);
 
@@ -994,7 +994,7 @@ sched_pstats(void *arg)
 		 * sleeping).  We ignore overflow; with 16-bit int's
 		 * (remember them?) overflow takes 45 days.
 		 */
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		mutex_spin_enter(&p->p_stmutex);
 		runtm = p->p_rtime.sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -1043,7 +1043,7 @@ sched_pstats(void *arg)
 					rlim->rlim_cur += 5;
 			}
 		}
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		if (sig)
 			psignal(p, sig);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.91 2008/03/26 14:19:43 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.92 2008/04/24 18:39:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.91 2008/03/26 14:19:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.92 2008/04/24 18:39:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -408,9 +408,9 @@ mfs_start(struct mount *mp, int flags)
 			else if (dounmount(mp, 0, curlwp) != 0) {
 				p = curproc;
 				ksiginfo_queue_init(&kq);
-				mutex_enter(&p->p_smutex);
+				mutex_enter(p->p_lock);
 				sigclearall(p, NULL, &kq);
-				mutex_exit(&p->p_smutex);
+				mutex_exit(p->p_lock);
 				ksiginfo_queue_drain(&kq);
 			}
 			sleepreturn = 0;

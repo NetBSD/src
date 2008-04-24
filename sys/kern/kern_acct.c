@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.85 2008/04/24 15:35:28 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.86 2008/04/24 18:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.85 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.86 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,9 +423,9 @@ acct_process(struct lwp *l)
 	memcpy(acct.ac_comm, p->p_comm, sizeof(acct.ac_comm));
 
 	/* (2) The amount of user and system time that was used */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	calcru(p, &ut, &st, NULL, NULL);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_usec);
 	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_usec);
 

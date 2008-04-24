@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.176 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.177 2008/04/24 18:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.176 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.177 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1720,13 +1720,13 @@ fd_checkstd(void)
 	if (closed[0] != '\0') {
 		mutex_enter(proc_lock);
 		pp = p->p_pptr;
-		mutex_enter(&pp->p_mutex);
+		mutex_enter(pp->p_lock);
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
 		    "was invoked by uid %d ppid %d (%s) "
 		    "with fd %s closed\n",
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, &closed[1]);
-		mutex_exit(&pp->p_mutex);
+		mutex_exit(pp->p_lock);
 		mutex_exit(proc_lock);
 	}
 	return (0);

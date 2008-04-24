@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 2007/11/05 20:43:05 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 2008/04/24 18:39:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34 2007/11/05 20:43:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 2008/04/24 18:39:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -344,12 +344,12 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
 
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
 		sigdelset(&l->l_sigmask, SIGILL);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *)(int)tf->tf_format;

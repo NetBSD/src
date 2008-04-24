@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.46 2007/04/16 19:12:18 ad Exp $	*/
+/*	$NetBSD: vm86.c,v 1.47 2008/04/24 18:39:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.46 2007/04/16 19:12:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.47 2008/04/24 18:39:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ vm86_return(l, retval)
 	struct proc *p = l->l_proc;
 	ksiginfo_t ksi;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/*
 	 * We can't set the virtual flags in our real trap frame,
@@ -239,7 +239,7 @@ vm86_return(l, retval)
 		/* NOTREACHED */
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGURG;
@@ -440,9 +440,9 @@ x86_vm86(struct lwp *l, char *args, register_t *retval)
 
 	/* Going into vm86 mode jumps off the signal stack. */
 	p = l->l_proc;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	set_vflags(l, vm86s.regs[_REG_EFL] | PSL_VM);
 

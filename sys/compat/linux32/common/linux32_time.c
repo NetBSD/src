@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.18 2008/04/17 17:47:23 njoly Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.19 2008/04/24 18:39:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.18 2008/04/17 17:47:23 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,11 +168,11 @@ linux32_sys_times(struct lwp *l, const struct linux32_sys_times_args *uap, regis
 	struct rusage		 ru;
 	struct proc		 *p = l->l_proc;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	ru = p->p_stats->p_ru;
 	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 	rulwps(p, &ru);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	ltms32.ltms32_utime = timeval_to_clock_t(&ru.ru_utime);
 	ltms32.ltms32_stime = timeval_to_clock_t(&ru.ru_stime);

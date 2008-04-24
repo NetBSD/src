@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.87 2008/04/12 17:16:09 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.88 2008/04/24 18:39:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  * a:	proclist_mutex
  * c:	condition variable interlock, passed to cv_wait()
  * l:	*l_mutex
- * p:	l_proc->p_smutex
+ * p:	l_proc->p_lock
  * s:	spc_mutex, which may or may not be referenced by l_mutex
  * t:	l_proc->p_stmutex
  * S:	l_selcpu->sc_lock

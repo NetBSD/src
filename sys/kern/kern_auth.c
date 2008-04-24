@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.58 2008/03/27 18:30:15 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.59 2008/04/24 18:39:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.58 2008/03/27 18:30:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.59 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -279,10 +279,10 @@ void
 kauth_proc_fork(struct proc *parent, struct proc *child)
 {
 
-	mutex_enter(&parent->p_mutex);
+	mutex_enter(parent->p_lock);
 	kauth_cred_hold(parent->p_cred);
 	child->p_cred = parent->p_cred;
-	mutex_exit(&parent->p_mutex);
+	mutex_exit(parent->p_lock);
 
 	/* XXX: relies on parent process stalling during fork() */
 	kauth_cred_hook(parent->p_cred, KAUTH_CRED_FORK, parent,

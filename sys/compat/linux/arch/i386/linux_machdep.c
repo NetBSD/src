@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.134 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.135 2008/04/24 18:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.134 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.135 2008/04/24 18:39:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -327,9 +327,9 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	linux_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -395,9 +395,9 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	linux_save_sigcontext(l, tf, mask, &frame.sf_sc);
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -539,7 +539,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	 * Linux really does it this way; it doesn't have space in sigframe
 	 * to save the onstack flag.
 	 */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	ss_gap = (ssize_t)((char *)scp->sc_esp_at_signal - (char *)sas->ss_sp);
 	if (ss_gap >= 0 && ss_gap < sas->ss_size)
 		sas->ss_flags |= SS_ONSTACK;
@@ -549,7 +549,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&mask, &scp->sc_mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	DPRINTF(("sigreturn exit esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 	return EJUSTRETURN;

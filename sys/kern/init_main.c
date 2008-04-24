@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.352 2008/04/24 15:35:28 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.353 2008/04/24 18:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.352 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353 2008/04/24 18:39:23 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -657,14 +657,14 @@ main(void)
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
 			memset(&l->l_rtime, 0, sizeof(l->l_rtime));
 			lwp_unlock(l);
 		}
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 	mutex_exit(proc_lock);
 	binuptime(&curlwp->l_stime);

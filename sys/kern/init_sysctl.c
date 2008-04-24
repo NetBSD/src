@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.132 2008/04/24 15:35:28 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.133 2008/04/24 18:39:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.132 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.133 2008/04/24 18:39:23 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -1689,13 +1689,13 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 			}
 			mutex_exit(proc_lock);
 
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 				if (buflen >= elem_size && elem_count > 0) {
 					lwp_lock(l2);
 					fill_lwp(l2, &klwp);
 					lwp_unlock(l2);
-					mutex_exit(&p->p_smutex);
+					mutex_exit(p->p_lock);
 
 					/*
 					 * Copy out elem_size, but not
@@ -1708,14 +1708,14 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 						rw_exit(&p->p_reflock);
 						goto cleanup;
 					}
-					mutex_enter(&p->p_smutex);
+					mutex_enter(p->p_lock);
 					LIST_FOREACH(l3, &p->p_lwps,
 					    l_sibling) {
 						if (l2 == l3)
 							break;
 					}
 					if (l3 == NULL) {
-						mutex_exit(&p->p_smutex);
+						mutex_exit(p->p_lock);
 						rw_exit(&p->p_reflock);
 						error = EAGAIN;
 						goto cleanup;
@@ -1726,7 +1726,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 				}
 				needed += elem_size;
 			}
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 
 			/* Drop reference to process. */
 			mutex_enter(proc_lock);
@@ -1749,13 +1749,13 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 			goto cleanup;
 		}
 
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			if (buflen >= elem_size && elem_count > 0) {
 				lwp_lock(l2);
 				fill_lwp(l2, &klwp);
 				lwp_unlock(l2);
-				mutex_exit(&p->p_smutex);
+				mutex_exit(p->p_lock);
 				/*
 				 * Copy out elem_size, but not larger than
 				 * the size of a struct kinfo_proc2.
@@ -1766,13 +1766,13 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 					rw_exit(&p->p_reflock);
 					goto cleanup;
 				}
-				mutex_enter(&p->p_smutex);
+				mutex_enter(p->p_lock);
 				LIST_FOREACH(l3, &p->p_lwps, l_sibling) {
 					if (l2 == l3)
 						break;
 				}
 				if (l3 == NULL) {
-					mutex_exit(&p->p_smutex);
+					mutex_exit(p->p_lock);
 					rw_exit(&p->p_reflock);
 					error = EAGAIN;
 					goto cleanup;
@@ -1783,7 +1783,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 			}
 			needed += elem_size;
 		}
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 
 		/* Drop reference to process. */
 		rw_exit(&p->p_reflock);
@@ -2021,12 +2021,12 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				/* XXX want 0 to mean "kernel files" */
 				continue;
 			}
-			mutex_enter(&p->p_mutex);
+			mutex_enter(p->p_lock);
 			error = kauth_authorize_process(l->l_cred,
 			    KAUTH_PROCESS_CANSEE, p,
 			    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_OPENFILES),
 			    NULL, NULL);
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 			if (error != 0) {
 				continue;
 			}
@@ -2194,12 +2194,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		if (p->p_stat == SIDL)
 			continue;
 
-		mutex_enter(&p->p_mutex);
+		mutex_enter(p->p_lock);
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CANSEE, p,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (error != 0) {
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 			continue;
 		}
 
@@ -2263,11 +2263,11 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 
 		default:
 			error = EINVAL;
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 			goto cleanup;
 		}
 		if (!match) {
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 			continue;
 		}
 
@@ -2275,14 +2275,14 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		 * Grab a hold on the process.
 		 */
 		if (!rw_tryenter(&p->p_reflock, RW_READER)) {
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 			continue;
 		}
 		
 		if (type == KERN_PROC) {
 			if (buflen >= sizeof(struct kinfo_proc)) {
 				fill_eproc(p, eproc);
-				mutex_exit(&p->p_mutex);
+				mutex_exit(p->p_lock);
 				mutex_exit(proc_lock);
 				error = dcopyout(l, p, &dp->kp_proc,
 				    sizeof(struct proc));
@@ -2300,13 +2300,13 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				dp++;
 				buflen -= sizeof(struct kinfo_proc);
 			} else {
-				mutex_exit(&p->p_mutex);
+				mutex_exit(p->p_lock);
 			}
 			needed += sizeof(struct kinfo_proc);
 		} else { /* KERN_PROC2 */
 			if (buflen >= elem_size && elem_count > 0) {
 				fill_kproc2(p, kproc2);
-				mutex_exit(&p->p_mutex);
+				mutex_exit(p->p_lock);
 				mutex_exit(proc_lock);
 				/*
 				 * Copy out elem_size, but not larger than
@@ -2323,7 +2323,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				buflen -= elem_size;
 				elem_count--;
 			} else {
-				mutex_exit(&p->p_mutex);
+				mutex_exit(p->p_lock);
 			}
 			needed += elem_size;
 		}
@@ -2415,7 +2415,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		error = EINVAL;
 		goto out_locked;
 	}
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 
 	/* Check permission. */
 	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV)
@@ -2427,7 +2427,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	else
 		error = EINVAL; /* XXXGCC */
 	if (error) {
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		goto out_locked;
 	}
 
@@ -2437,7 +2437,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		else
 			*oldlenp = ARG_MAX;	/* XXX XXX XXX */
 		error = 0;
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		goto out_locked;
 	}
 
@@ -2447,7 +2447,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	 */
 	if (P_ZOMBIE(p) || (p->p_flag & PK_SYSTEM) != 0) {
 		error = EINVAL;
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		goto out_locked;
 	}
 
@@ -2464,7 +2464,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	}
 	vmspace = p->p_vmspace;
 	uvmspace_addref(vmspace);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
 
 	/*
@@ -2855,7 +2855,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	struct rusage ru;
 
 	KASSERT(mutex_owned(proc_lock));
-	KASSERT(mutex_owned(&p->p_mutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	memset(ki, 0, sizeof(*ki));
 
@@ -2909,8 +2909,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	} else {
 		ki->p_tdev = NODEV;
 	}
-
-	mutex_enter(&p->p_smutex);
 
 	ki->p_uticks = p->p_uticks;
 	ki->p_sticks = p->p_sticks;
@@ -3044,8 +3042,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	}
 	if (l != NULL)
 		ki->p_cpuid = l->l_cpu->ci_cpuid;
-
-	mutex_exit(&p->p_smutex);
 }
 
 /*
@@ -3102,7 +3098,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 	struct lwp *l;
 
 	KASSERT(mutex_owned(proc_lock));
-	KASSERT(mutex_owned(&p->p_mutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_session;
@@ -3123,13 +3119,11 @@ fill_eproc(struct proc *p, struct eproc *ep)
 		ep->e_vm.vm_ssize = vm->vm_ssize;
 
 		/* Pick a "representative" LWP */
-		mutex_enter(&p->p_smutex);
 		l = proc_representative_lwp(p, NULL, 1);
 		lwp_lock(l);
 		if (l->l_wchan)
 			strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);
 		lwp_unlock(l);
-		mutex_exit(&p->p_smutex);
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;

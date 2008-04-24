@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28 2008/01/05 19:11:53 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29 2008/04/24 18:39:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2008/01/05 19:11:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2008/04/24 18:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -275,7 +275,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = 0;
 
 	/* 
@@ -302,7 +302,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (error == 0)
 		error = copyout(&sigframe, sp, sizeof(sigframe));
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		sigexit(l, SIGILL);
@@ -388,7 +388,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 
 	fp = (struct linux_rt_sigframe *)(tf->tf_rsp - 8);
 	if ((error = copyin(fp, &frame, sizeof(frame))) != 0) {
-		mutex_enter(&l->l_proc->p_smutex);
+		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 		return error;
 	}
@@ -449,7 +449,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	if (lsigctx->fpstate != NULL) {
 		error = copyin(lsigctx->fpstate, &fpstate, sizeof(fpstate));
 		if (error != 0) {
-			mutex_enter(&l->l_proc->p_smutex);
+			mutex_enter(l->l_proc->p_lock);
 			sigexit(l, SIGILL);
 			return error;
 		}
@@ -484,9 +484,9 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	/*
 	 * And let setucontext deal with that.
 	 */
-	mutex_enter(&l->l_proc->p_smutex);
+	mutex_enter(l->l_proc->p_lock);
 	error = setucontext(l, &uctx);
-	mutex_exit(&l->l_proc->p_smutex);
+	mutex_exit(l->l_proc->p_lock);
 	if (error)
 		return error;
 
