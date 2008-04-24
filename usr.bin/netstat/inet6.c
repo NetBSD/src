@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.49 2008/04/15 05:40:15 thorpej Exp $	*/
+/*	$NetBSD: inet6.c,v 1.50 2008/04/24 04:09:27 thorpej Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.49 2008/04/15 05:40:15 thorpej Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.50 2008/04/24 04:09:27 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -349,11 +349,10 @@ tcp6_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet6.tcp6.stats", &tcp6stat, &size,
 		    NULL, 0) == -1)
-			err(1, "net.inet6.tcp6.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)&tcp6stat, sizeof (tcp6stat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf ("%s:\n", name);
@@ -436,11 +435,10 @@ udp6_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet6.udp6.stats", udp6stat, &size,
 		    NULL, 0) == -1)
-			err(1, "net.inet6.udp6.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)udp6stat, sizeof (udp6stat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 	printf("%s:\n", name);
 #define	p(f, m) if (udp6stat[f] || sflag <= 1) \
@@ -581,11 +579,10 @@ ip6_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet6.ip6.stats", ip6stat, &size,
 		    NULL, 0) == -1)
-			err(1, "net.inet6.ip6.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)ip6stat, sizeof (ip6stat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 	printf("%s:\n", name);
 
@@ -1066,11 +1063,10 @@ icmp6_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet6.icmp6.stats", icmp6stat, &size,
 		    NULL, 0) == -1)
-			err(1, "net.inet6.icmp6.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)icmp6stat, sizeof (icmp6stat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 	
 	printf("%s:\n", name);
@@ -1214,11 +1210,10 @@ pim6_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet6.pim6.stats", pim6stat, &size,
 		    NULL, 0) == -1)
-			err(1, "net.inet6.pim6.stats");
-        } else {
-		if (off == 0)
 			return;
-		kread(off, (char *)pim6stat, sizeof(pim6stat));
+        } else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 	printf("%s:\n", name);
 
@@ -1248,11 +1243,10 @@ rip6_stats(u_long off, char *name)
 
 		if (sysctlbyname("net.inet6.raw6.stats", rip6stat, &size,
 		    NULL, 0) == -1)
-			err(1, "net.inet6.raw6.stats");
-	} else {
-		if (off == 0)
 			return;
-		kread(off, (char *)rip6stat, sizeof(rip6stat));
+	} else {
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 	printf("%s:\n", name);
 

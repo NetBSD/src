@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.13 2008/04/23 07:29:47 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.14 2008/04/24 04:09:27 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.33 2003/07/25 09:54:32 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.13 2008/04/23 07:29:47 thorpej Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.14 2008/04/24 04:09:27 thorpej Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -82,6 +82,7 @@ __RCSID("$NetBSD: ipsec.c,v 1.13 2008/04/23 07:29:47 thorpej Exp $");
 #include <netkey/keysock.h>
 #endif
 
+#include <err.h>
 #include <kvm.h>
 #include <stdio.h>
 #include <string.h>
@@ -230,9 +231,8 @@ ipsec_stats(u_long off, char *name)
 				 NULL, 0) == -1)
 			return;
 	} else {
-		if (off == 0)
-			return;
-		kread(off, (char *)&ipsecstat, sizeof (ipsecstat));
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf ("%s:\n", name);
@@ -266,9 +266,8 @@ pfkey_stats(u_long off, char *name)
 				 NULL, 0) == -1)
 			return;
 	} else {
-		if (off == 0)
-			return;
-		kread(off, (char *)pfkeystat, sizeof(pfkeystat));
+		warnx("%s stats not available via KVM.", name);
+		return;
 	}
 
 	printf ("%s:\n", name);
