@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.25 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.26 2008/04/24 21:34:48 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.25 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.26 2008/04/24 21:34:48 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -63,6 +63,7 @@ __weak_alias(strptime,_strptime)
 #define ALT_O			0x02
 #define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return NULL; }
 
+static const char gmt[4] = { "GMT" };
 
 static const u_char *conv_num(const unsigned char *, int *, uint, uint);
 static const u_char *find_string(const u_char *, int *, const char * const *,
@@ -281,6 +282,36 @@ literal:
 					i = i + 1900 - TM_YEAR_BASE;
 			}
 			tm->tm_year = i;
+			continue;
+
+		case 'Z':
+			tzset();
+			if (strncmp((const char *)bp, gmt, 3) == 0) {
+				tm->tm_isdst = 0;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = gmt;
+#endif
+				bp += 3;
+			} else {
+				const unsigned char *ep;
+
+				ep = find_string(bp, &i,
+					       	 (const char * const *)tzname,
+					       	  NULL, 2);
+				if (ep != NULL) {
+					tm->tm_isdst = i;
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -(timezone);
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = tzname[i];
+#endif
+				}
+				bp = ep;
+			}
 			continue;
 
 		/*
