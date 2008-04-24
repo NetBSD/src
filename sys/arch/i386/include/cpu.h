@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.166 2008/04/21 15:15:34 cegger Exp $	*/
+/*	$NetBSD: cpu.h,v 1.167 2008/04/24 11:26:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,7 +87,7 @@ struct cpu_info {
 	 */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-	int		ci_want_resched;
+	int		ci_fpused;	/* XEN: FPU was used by curlwp */
 	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
@@ -200,9 +200,10 @@ struct cpu_info {
 	uint32_t	ci_suspend_cr2;
 	uint32_t	ci_suspend_cr3;
 	uint32_t	ci_suspend_cr4;
-#ifdef XEN
-	int		ci_fpused;	/* FPU was used by curlwp */
-#endif
+
+	/* The following must be in a single cache line. */
+	int		ci_want_resched __aligned(64);
+	int		ci_padout __aligned(64);
 };
 
 /*
