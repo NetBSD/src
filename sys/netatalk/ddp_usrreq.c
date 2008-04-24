@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.31 2008/04/23 15:17:42 thorpej Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.32 2008/04/24 11:38:37 ad Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.31 2008/04/23 15:17:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.32 2008/04/24 11:38:37 ad Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -96,7 +96,9 @@ ddp_usrreq(so, req, m, addr, rights, l)
 		    (struct ifnet *) rights, l));
 	}
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		at_purgeif((struct ifnet *) rights);
+		mutex_exit(softnet_lock);
 		return (0);
 	}
 	if (rights && rights->m_len) {
@@ -113,6 +115,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 			error = EINVAL;
 			break;
 		}
+		sosetlock(so);
 		if ((error = at_pcballoc(so)) != 0) {
 			break;
 		}
@@ -471,7 +474,9 @@ at_pcbdetach(so, ddp)
 {
 	soisdisconnected(so);
 	so->so_pcb = 0;
+	/* sofree drops the lock */
 	sofree(so);
+	mutex_enter(softnet_lock);
 
 	/* remove ddp from ddp_ports list */
 	if (ddp->ddp_lsat.sat_port != ATADDR_ANYPORT &&

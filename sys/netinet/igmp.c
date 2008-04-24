@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.47 2008/04/23 05:26:50 thorpej Exp $	*/
+/*	$NetBSD: igmp.c,v 1.48 2008/04/24 11:38:37 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,13 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.47 2008/04/23 05:26:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.48 2008/04/24 11:38:37 ad Exp $");
 
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
@@ -479,7 +480,6 @@ igmp_fasttimo(void)
 {
 	struct in_multi *inm;
 	struct in_multistep step;
-	int s;
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
@@ -488,7 +488,9 @@ igmp_fasttimo(void)
 	if (!igmp_timers_are_running)
 		return;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	igmp_timers_are_running = 0;
 	IN_FIRST_MULTI(step, inm);
 	while (inm != NULL) {
@@ -509,23 +511,26 @@ igmp_fasttimo(void)
 		}
 		IN_NEXT_MULTI(step, inm);
 	}
-	splx(s);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void
 igmp_slowtimo(void)
 {
 	struct router_info *rti;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	LIST_FOREACH(rti, &rti_head, rti_link) {
 		if (rti->rti_type == IGMP_v1_ROUTER &&
 		    ++rti->rti_age >= IGMP_AGE_THRESHOLD) {
 			rti->rti_type = IGMP_v2_ROUTER;
 		}
 	}
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void

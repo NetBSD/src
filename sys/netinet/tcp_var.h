@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.155 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.156 2008/04/24 11:38:38 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -822,12 +822,11 @@ struct secasvar;
 
 int	 tcp_attach(struct socket *);
 void	 tcp_canceltimers(struct tcpcb *);
-int	 tcp_timers_invoking(struct tcpcb*);
 struct tcpcb *
 	 tcp_close(struct tcpcb *);
 int	 tcp_isdead(struct tcpcb *);
 #ifdef INET6
-void	 tcp6_ctlinput(int, const struct sockaddr *, void *);
+void	 *tcp6_ctlinput(int, const struct sockaddr *, void *);
 #endif
 void	 *tcp_ctlinput(int, const struct sockaddr *, void *);
 int	 tcp_ctloutput(int, struct socket *, int, int, struct mbuf **);

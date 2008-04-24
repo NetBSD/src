@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.169 2008/04/10 12:32:37 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.170 2008/04/24 11:38:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.169 2008/04/10 12:32:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170 2008/04/24 11:38:39 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -192,7 +192,7 @@ nfs_connect(nmp, rep, l)
 	struct lwp *l;
 {
 	struct socket *so;
-	int s, error, rcvreserve, sndreserve;
+	int error, rcvreserve, sndreserve;
 	struct sockaddr *saddr;
 	struct sockaddr_in *sin;
 #ifdef INET6
@@ -203,7 +203,7 @@ nfs_connect(nmp, rep, l)
 	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
 	error = socreate(saddr->sa_family, &nmp->nm_so,
-		nmp->nm_sotype, nmp->nm_soproto, l);
+		nmp->nm_sotype, nmp->nm_soproto, l, NULL);
 	if (error)
 		goto bad;
 	so = nmp->nm_so;
@@ -262,40 +262,41 @@ nfs_connect(nmp, rep, l)
 	 * Protocols that do not require connections may be optionally left
 	 * unconnected for servers that reply from a port other than NFS_PORT.
 	 */
+	solock(so);
 	if (nmp->nm_flag & NFSMNT_NOCONN) {
 		if (nmp->nm_soflags & PR_CONNREQUIRED) {
+			sounlock(so);
 			error = ENOTCONN;
 			goto bad;
 		}
 	} else {
 		error = soconnect(so, nmp->nm_nam, l);
-		if (error)
+		if (error) {
+			sounlock(so);
 			goto bad;
+		}
 
 		/*
 		 * Wait for the connection to complete. Cribbed from the
 		 * connect system call but with the wait timing out so
 		 * that interruptible mounts don't hang here for a long time.
 		 */
-		s = splsoftnet();
 		while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-			(void) tsleep((void *)&so->so_timeo, PSOCK,
-				"nfscn1", 2 * hz);
+			(void)sowait(so, 2 * hz);
 			if ((so->so_state & SS_ISCONNECTING) &&
 			    so->so_error == 0 && rep &&
 			    (error = nfs_sigintr(nmp, rep, rep->r_lwp)) != 0){
 				so->so_state &= ~SS_ISCONNECTING;
-				splx(s);
+				sounlock(so);
 				goto bad;
 			}
 		}
 		if (so->so_error) {
 			error = so->so_error;
 			so->so_error = 0;
-			splx(s);
+			sounlock(so);
 			goto bad;
 		}
-		splx(s);
 	}
 	if (nmp->nm_flag & (NFSMNT_SOFT | NFSMNT_INT)) {
 		so->so_rcv.sb_timeo = (5 * hz);
@@ -317,6 +318,7 @@ nfs_connect(nmp, rep, l)
 		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
 		    NFS_MAXPKTHDR) * 2;
 	} else {
+		sounlock(so);
 		if (nmp->nm_sotype != SOCK_STREAM)
 			panic("nfscon sotype");
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
@@ -337,12 +339,16 @@ nfs_connect(nmp, rep, l)
 		    sizeof (u_int32_t)) * 2;
 		rcvreserve = (nmp->nm_rsize + NFS_MAXPKTHDR +
 		    sizeof (u_int32_t)) * 2;
+		solock(so);
 	}
 	error = soreserve(so, sndreserve, rcvreserve);
-	if (error)
+	if (error) {
+		sounlock(so);
 		goto bad;
+	}
 	so->so_rcv.sb_flags |= SB_NOINTR;
 	so->so_snd.sb_flags |= SB_NOINTR;
+	sounlock(so);
 
 	/* Initialize other non-zero congestion variables */
 	nmp->nm_srtt[0] = nmp->nm_srtt[1] = nmp->nm_srtt[2] = nmp->nm_srtt[3] =
@@ -409,7 +415,9 @@ nfs_disconnect(nmp)
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
+		solock(so);
 		soshutdown(so, SHUT_RDWR);
+		sounlock(so);
 		drain = (nmp->nm_iflag & NFSMNT_DISMNT) != 0;
 		if (drain) {
 			/*
@@ -499,9 +507,7 @@ nfs_send(so, nam, top, rep, l)
 	else
 		flags = 0;
 
-	KERNEL_LOCK(1, curlwp);
 	error = (*so->so_send)(so, sendnam, NULL, top, NULL, flags,  l);
-	KERNEL_UNLOCK_ONE(curlwp);
 	if (error) {
 		if (rep) {
 			if (error == ENOBUFS && so->so_type == SOCK_DGRAM) {
@@ -1674,6 +1680,7 @@ nfs_timer(void *arg)
 		 *	Resend it
 		 * Set r_rtt to -1 in case we fail to send it now.
 		 */
+		solock(so);
 		rep->r_rtt = -1;
 		if (sbspace(&so->so_snd) >= rep->r_mreq->m_pkthdr.len &&
 		   ((nmp->nm_flag & NFSMNT_DUMBTIMR) ||
@@ -1715,6 +1722,7 @@ nfs_timer(void *arg)
 				rep->r_rtt = 0;
 			}
 		}
+		sounlock(so);
 	}
 	splx(s);
 
@@ -2240,9 +2248,7 @@ nfsrv_rcv(struct nfssvc_sock *slp)
 		auio.uio_resid = 1000000000;
 		/* not need to setup uio_vmspace */
 		flags = MSG_DONTWAIT;
-		KERNEL_LOCK(1, curlwp);
 		error = (*so->so_receive)(so, &nam, &auio, &mp, NULL, &flags);
-		KERNEL_UNLOCK_ONE(curlwp);
 		if (error || mp == NULL) {
 			if (error == EWOULDBLOCK)
 				setflags |= SLP_A_NEEDQ;
@@ -2278,10 +2284,8 @@ nfsrv_rcv(struct nfssvc_sock *slp)
 			auio.uio_resid = 1000000000;
 			/* not need to setup uio_vmspace */
 			flags = MSG_DONTWAIT;
-			KERNEL_LOCK(1, curlwp);
 			error = (*so->so_receive)(so, &nam, &auio, &mp, NULL,
 			    &flags);
-			KERNEL_UNLOCK_ONE(curlwp);
 			if (mp) {
 				if (nam) {
 					m = nam;

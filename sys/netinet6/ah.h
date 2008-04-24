@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.24 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ah.h,v 1.25 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ extern int ah6_calccksum(struct mbuf *, u_int8_t *, size_t,
 	const struct ah_algorithm *, struct secasvar *);
 
 extern void ah6_init(void);
-extern void ah6_ctlinput(int, const struct sockaddr *, void *);
+extern void *ah6_ctlinput(int, const struct sockaddr *, void *);
 #endif /* INET6 */
 
 #endif /* _KERNEL */

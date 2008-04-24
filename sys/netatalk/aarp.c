@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.26 2007/12/04 10:22:34 dyoung Exp $	*/
+/*	$NetBSD: aarp.c,v 1.27 2008/04/24 11:38:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.26 2007/12/04 10:22:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.27 2008/04/24 11:38:37 ad Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.26 2007/12/04 10:22:34 dyoung Exp $");
 #include <sys/mbuf.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/socketvar.h>
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_ether.h>
@@ -106,6 +107,7 @@ aarptimer(void *ignored)
 	struct aarptab *aat;
 	int             i, s;
 
+	mutex_enter(softnet_lock);
 	callout_reset(&aarptimer_callout, AARPT_AGE * hz, aarptimer, NULL);
 	aat = aarptab;
 	for (i = 0; i < AARPTAB_SIZE; i++, aat++) {
@@ -119,6 +121,7 @@ aarptimer(void *ignored)
 		aarptfree(aat);
 		splx(s);
 	}
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -545,6 +548,8 @@ aarpprobe(arp)
 	struct sockaddr sa;
 	struct ifnet   *ifp = arp;
 
+	mutex_enter(softnet_lock);
+
 	/*
          * We need to check whether the output ethernet type should
          * be phase 1 or 2. We have the interface that we'll be sending
@@ -560,18 +565,22 @@ aarpprobe(arp)
 	}
 	if (ia == NULL) {	/* serious error XXX */
 		printf("aarpprobe why did this happen?!\n");
+		mutex_exit(softnet_lock);
 		return;
 	}
 	if (aa->aa_probcnt <= 0) {
 		aa->aa_flags &= ~AFA_PROBING;
 		wakeup(aa);
+		mutex_exit(softnet_lock);
 		return;
 	} else {
 		callout_reset(&aa->aa_probe_ch, hz / 5, aarpprobe, arp);
 	}
 
-	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL)
+	if ((m = m_gethdr(M_DONTWAIT, MT_DATA)) == NULL) {
+		mutex_exit(softnet_lock);
 		return;
+	}
 
 	MCLAIM(m, &aarp_mowner);
 	m->m_len = sizeof(*ea);
@@ -595,8 +604,10 @@ aarpprobe(arp)
 		    sizeof(eh->ether_dhost));
 		eh->ether_type = 0;	/* if_output will treat as 802 */
 		M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
-		if (!m)
+		if (!m) {
+			mutex_exit(softnet_lock);
 			return;
+		}
 
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
@@ -627,6 +638,7 @@ aarpprobe(arp)
 	sa.sa_family = AF_UNSPEC;
 	(*ifp->if_output) (ifp, m, &sa, NULL);	/* XXX */
 	aa->aa_probcnt--;
+	mutex_exit(softnet_lock);
 }
 
 void

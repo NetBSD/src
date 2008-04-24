@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.285 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.286 2008/04/24 11:38:38 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.285 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.286 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3468,16 +3468,17 @@ void
 syn_cache_timer(void *arg)
 {
 	struct syn_cache *sc = arg;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	callout_ack(&sc->sc_timer);
 
 	if (__predict_false(sc->sc_flags & SCF_DEAD)) {
 		TCP_STATINC(TCP_STAT_SC_DELAYED_FREE);
 		callout_destroy(&sc->sc_timer);
 		pool_put(&syn_cache_pool, sc);
-		splx(s);
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
 		return;
 	}
 
@@ -3502,14 +3503,16 @@ syn_cache_timer(void *arg)
 	sc->sc_rxtshift++;
 	SYN_CACHE_TIMER_ARM(sc);
 
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 	return;
 
  dropit:
 	TCP_STATINC(TCP_STAT_SC_TIMED_OUT);
 	syn_cache_rm(sc);
 	syn_cache_put(sc);	/* calls pool_put but see spl above */
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -4082,7 +4085,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	 * options into the reply.
 	 */
 	bzero(sc, sizeof(struct syn_cache));
-	callout_init(&sc->sc_timer, 0);
+	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 	bcopy(src, &sc->sc_src, src->sa_len);
 	bcopy(dst, &sc->sc_dst, dst->sa_len);
 	sc->sc_flags = 0;

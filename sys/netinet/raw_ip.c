@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.106 2008/04/23 06:09:04 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.107 2008/04/24 11:38:38 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.106 2008/04/23 06:09:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.107 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -528,9 +528,11 @@ rip_usrreq(struct socket *so, int req,
 	s = splsoftnet();
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&rawcbtable, (struct ifnet *)control);
+		mutex_exit(softnet_lock);
 		splx(s);
 		return (0);
 	}
@@ -548,6 +550,7 @@ rip_usrreq(struct socket *so, int req,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (inp != 0) {
 			error = EISCONN;
 			break;

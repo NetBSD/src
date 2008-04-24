@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_timer.c,v 1.13 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_timer.c,v 1.14 2008/04/24 11:38:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_timer.c,v 1.13 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_timer.c,v 1.14 2008/04/24 11:38:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -145,9 +145,11 @@ clnp_freefrags(
 void
 clnp_slowtimo(void)
 {
-	struct clnp_fragl *cfh = clnp_frags;
-	int s = splsoftnet();
+	struct clnp_fragl *cfh;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+	cfh = clnp_frags;
 	while (cfh != NULL) {
 		if (--cfh->cfl_ttl == 0) {
 			cfh = clnp_freefrags(cfh);
@@ -156,7 +158,8 @@ clnp_slowtimo(void)
 			cfh = cfh->cfl_next;
 		}
 	}
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -174,8 +177,13 @@ clnp_slowtimo(void)
 void
 clnp_drain(void)
 {
-	struct clnp_fragl *cfh = clnp_frags;
+	struct clnp_fragl *cfh;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+	cfh = clnp_frags;
 	while (cfh != NULL)
 		cfh = clnp_freefrags(cfh);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }

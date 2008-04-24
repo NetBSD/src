@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.156 2008/03/27 18:30:15 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.157 2008/04/24 11:38:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.156 2008/03/27 18:30:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.157 2008/04/24 11:38:36 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -814,14 +814,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_entered_file = NULL;
 	pp->pr_entered_line = 0;
 
-	/*
-	 * XXXAD hack to prevent IP input processing from blocking.
-	 */
-	if (ipl == IPL_SOFTNET) {
-		mutex_init(&pp->pr_lock, MUTEX_DEFAULT, IPL_VM);
-	} else {
-		mutex_init(&pp->pr_lock, MUTEX_DEFAULT, ipl);
-	}
+	mutex_init(&pp->pr_lock, MUTEX_DEFAULT, ipl);
 	cv_init(&pp->pr_cv, wchan);
 	pp->pr_ipl = ipl;
 
@@ -1629,9 +1622,8 @@ pool_reclaim(struct pool *pp)
 	}
 
 	/*
-	 * XXXSMP Because mutexes at IPL_SOFTXXX are still spinlocks,
-	 * and we are called from the pagedaemon without kernel_lock.
-	 * Does not apply to IPL_SOFTBIO.
+	 * XXXSMP Because we do not want to cause non-MPSAFE code
+	 * to block.
 	 */
 	if (pp->pr_ipl == IPL_SOFTNET || pp->pr_ipl == IPL_SOFTCLOCK ||
 	    pp->pr_ipl == IPL_SOFTSERIAL) {
@@ -2074,15 +2066,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	if (palloc == NULL && ipl == IPL_NONE)
 		palloc = &pool_allocator_nointr;
 	pool_init(pp, size, align, align_offset, flags, wchan, palloc, ipl);
-
-	/*
-	 * XXXAD hack to prevent IP input processing from blocking.
-	 */
-	if (ipl == IPL_SOFTNET) {
-		mutex_init(&pc->pc_lock, MUTEX_DEFAULT, IPL_VM);
-	} else {
-		mutex_init(&pc->pc_lock, MUTEX_DEFAULT, ipl);
-	}
+	mutex_init(&pc->pc_lock, MUTEX_DEFAULT, ipl);
 
 	if (ctor == NULL) {
 		ctor = (int (*)(void *, void *, int))nullop;
