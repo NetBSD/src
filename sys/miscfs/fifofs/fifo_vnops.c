@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.64 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.65 2008/04/24 15:18:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.64 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.65 2008/04/24 15:18:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,10 +596,11 @@ filt_fiforead(struct knote *kn, long hint)
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
 		kn->kn_flags |= EV_EOF;
-		return (1);
+		rv = 1;
+	} else {
+		kn->kn_flags &= ~EV_EOF;
+		rv = (kn->kn_data > 0);
 	}
-	kn->kn_flags &= ~EV_EOF;
-	rv = (kn->kn_data > 0);
 	if (hint != NOTE_SUBMIT)
 		sounlock(so);
 	return rv;
@@ -626,14 +627,15 @@ filt_fifowrite(struct knote *kn, long hint)
 
 	so = (struct socket *)kn->kn_hook;
 	if (hint != NOTE_SUBMIT)
-		sounlock(so);
+		solock(so);
 	kn->kn_data = sbspace(&so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
 		kn->kn_flags |= EV_EOF;
-		return (1);
+		rv = 1;
+	} else {
+		kn->kn_flags &= ~EV_EOF;
+		rv = (kn->kn_data >= so->so_snd.sb_lowat);
 	}
-	kn->kn_flags &= ~EV_EOF;
-	rv = (kn->kn_data >= so->so_snd.sb_lowat);
 	if (hint != NOTE_SUBMIT)
 		sounlock(so);
 	return rv;
