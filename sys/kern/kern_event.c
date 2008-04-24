@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.56 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.57 2008/04/24 18:39:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.56 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.57 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,11 +440,11 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	mutex_exit(proc_lock);
 	if (kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_KEVENT_FILTER,
 	    p, NULL, NULL, NULL) != 0) {
-	    	mutex_exit(&p->p_mutex);
+	    	mutex_exit(p->p_lock);
 		return EACCES;
 	}
 
@@ -460,7 +460,7 @@ filt_procattach(struct knote *kn)
 		kn->kn_flags &= ~EV_FLAG1;
 	}
 	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
-    	mutex_exit(&p->p_mutex);
+    	mutex_exit(p->p_lock);
 
 	return 0;
 }
@@ -485,9 +485,9 @@ filt_procdetach(struct knote *kn)
 
 	p = kn->kn_obj;
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 }
 
 /*

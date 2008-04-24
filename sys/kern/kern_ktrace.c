@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.141 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.142 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.141 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.142 2008/04/24 18:39:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 	PROCLIST_FOREACH(p, &allproc) {
 		if (p->p_tracep != ktd)
 			continue;
-		mutex_enter(&p->p_mutex);
+		mutex_enter(p->p_lock);
 		mutex_enter(&ktrace_lock);
 		if (p->p_tracep == ktd) {
 			if (!auth || ktrcanset(curl, p))
@@ -479,7 +479,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 				error = EPERM;
 		}
 		mutex_exit(&ktrace_lock);
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 	}
 	mutex_exit(proc_lock);
 
@@ -1264,7 +1264,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 	int vers = ops & KTRFAC_VER_MASK;
 	int error = 0;
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	mutex_enter(&ktrace_lock);
 
 	if (!ktrcanset(curl, p))
@@ -1317,7 +1317,7 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 
  out:
  	mutex_exit(&ktrace_lock);
- 	mutex_exit(&p->p_mutex);
+ 	mutex_exit(p->p_lock);
 
 	return (1);
 }
@@ -1499,7 +1499,7 @@ ktrace_thread(void *arg)
 int
 ktrcanset(lwp_t *calll, struct proc *targetp)
 {
-	KASSERT(mutex_owned(&targetp->p_mutex));
+	KASSERT(mutex_owned(targetp->p_lock));
 	KASSERT(mutex_owned(&ktrace_lock));
 
 	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_KTRACE,

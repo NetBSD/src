@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.44 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.45 2008/04/24 18:39:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.44 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.45 2008/04/24 18:39:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ procfs_control(curl, l, op, sig, pfs)
 	int error = 0;
 
 	mutex_enter(proc_lock);
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 
 	switch (op) {
 	/*
@@ -252,7 +252,7 @@ procfs_control(curl, l, op, sig, pfs)
 	}
 
 	if (error != 0) {
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		return (error);
 	}
@@ -270,15 +270,21 @@ procfs_control(curl, l, op, sig, pfs)
 		 *   proc gets to see all the action.
 		 * Stop the target.
 		 */
-		mutex_enter(&p->p_smutex);
 		SET(p->p_slflag, PSL_TRACED|PSL_FSTRACE);
-		mutex_exit(&p->p_smutex);
 		p->p_opptr = p->p_pptr;
 		if (p->p_pptr != curp) {
-			mutex_enter(&p->p_pptr->p_smutex);
+			if (p->p_pptr->p_lock < p->p_lock) {
+				if (!mutex_tryenter(p->p_pptr->p_lock)) {
+					mutex_exit(p->p_lock);
+					mutex_enter(p->p_pptr->p_lock);
+				}
+			} else if (p->p_pptr->p_lock > p->p_lock) {
+				mutex_enter(p->p_pptr->p_lock);
+			}
 			p->p_pptr->p_slflag |= PSL_CHTRACED;
-			mutex_exit(&p->p_pptr->p_smutex);
 			proc_reparent(p, curp);
+			if (p->p_pptr->p_lock != p->p_lock)
+				mutex_exit(p->p_pptr->p_lock);
 		}
 		sig = SIGSTOP;
 		goto sendsig;
@@ -309,16 +315,12 @@ procfs_control(curl, l, op, sig, pfs)
 
 			/* not being traced any more */
 			p->p_opptr = NULL;
-			mutex_enter(&p->p_smutex);
 			CLR(p->p_slflag, PSL_TRACED|PSL_FSTRACE);
 			p->p_waited = 0;	/* XXXSMP */
-			mutex_exit(&p->p_smutex);
 		}
 
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
-		mutex_exit(&p->p_mutex);
-		mutex_enter(&p->p_smutex);
 		lwp_lock(l);
 		if (l->l_stat == LSSTOP) {
 			p->p_xstat = sig;
@@ -326,19 +328,23 @@ procfs_control(curl, l, op, sig, pfs)
 			setrunnable(l);
 		} else {
 			lwp_unlock(l);
-			if (sig != 0)
+			if (sig != 0) {
+				mutex_exit(p->p_lock);
 				psignal(p, sig);
+				mutex_enter(p->p_lock);
+			}
 		}
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		return (error);
 
 	case PROCFS_CTL_WAIT:
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 
 		/*
 		 * Wait for the target process to stop.
+		 * XXXSMP WTF is this?
 		 */
 		while (l->l_stat != LSSTOP && P_ZOMBIE(p)) {
 			error = tsleep(l, PWAIT|PCATCH, "procfsx", hz);
@@ -353,7 +359,7 @@ procfs_control(curl, l, op, sig, pfs)
 		/* NOTREACHED */
 	}
 
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
 	return (error);
 }

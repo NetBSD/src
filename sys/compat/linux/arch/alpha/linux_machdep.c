@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.41 2007/12/20 23:02:51 dsl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.42 2008/04/24 18:39:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.41 2007/12/20 23:02:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42 2008/04/24 18:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,9 +184,9 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 	sigframe.info.lsi_uid = kauth_cred_geteuid(l->l_cred);	/* Use real uid here? */
 
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout((void *)&sigframe, (void *)sfp, fsize);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 #ifdef DEBUG
@@ -276,9 +276,9 @@ void setup_linux_sigframe(tf, sig, mask)
 	sigframe.sf_sc.sc_traparg_a2 = tf->tf_regs[FRAME_A2];
 
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout((void *)&sigframe, (void *)sfp, fsize);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 #ifdef DEBUG
@@ -387,7 +387,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 	 * However, the OSF/1 sigcontext which they use has
 	 * an onstack member.  This could be needed in the future.
 	 */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (context.sc_onstack & LINUX_SA_ONSTACK)
 	    l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
@@ -395,7 +395,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext context,
 
 	/* Reset the signal mask */
 	(void) sigprocmask1(l, SIG_SETMASK, mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	/*
 	 * Check for security violations.

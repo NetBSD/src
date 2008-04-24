@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.17 2007/12/20 23:03:02 dsl Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.18 2008/04/24 18:39:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.17 2007/12/20 23:03:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.18 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,9 @@ netbsd32_getrusage(struct lwp *l, const struct netbsd32_getrusage_args *uap, reg
 
 	case RUSAGE_SELF:
 		rup = &p->p_stats->p_ru;
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		calcru(p, &rup->ru_utime, &rup->ru_stime, NULL, NULL);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		break;
 
 	case RUSAGE_CHILDREN:

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.62 2007/12/20 23:03:05 dsl Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.63 2008/04/24 18:39:23 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.62 2007/12/20 23:03:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.63 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,17 +253,17 @@ svr4_sys_signal(struct lwp *l, const struct svr4_sys_signal_args *uap, register_
 	sighold:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		error = sigprocmask1(l, SIG_BLOCK, &ss, 0);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return error;
 
 	case SVR4_SIGRELSE_MASK:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		error = sigprocmask1(l, SIG_UNBLOCK, &ss, 0);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return error;
 
 	case SVR4_SIGIGNORE_MASK:
@@ -324,10 +324,10 @@ svr4_sys_sigprocmask(struct lwp *l, const struct svr4_sys_sigprocmask_args *uap,
 			return error;
 		svr4_to_native_sigset(&nsss, &nbss);
 	}
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(l, how,
 	    SCARG(uap, set) ? &nbss : NULL, SCARG(uap, oset) ? &obss : NULL);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (error)
 		return error;
 	if (SCARG(uap, oset)) {
@@ -445,9 +445,9 @@ svr4_setcontext(struct lwp *l, struct svr4_ucontext *uc)
 
 	if (uc->uc_flags & _UC_SIGMASK) {
 		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		sigprocmask1(l, SIG_SETMASK, &mask, NULL);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 
 	/* Ignore the stack; see comment in svr4_getcontext. */

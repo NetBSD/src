@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.42 2008/03/21 18:02:39 plunky Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.43 2008/04/24 18:39:22 ad Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.42 2008/03/21 18:02:39 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.43 2008/04/24 18:39:22 ad Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -604,7 +604,7 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 	    error = tsleep(&vmp->vm_sleep, (coda_call_sleep|coda_pcatch), "coda_call", hz*2);
 	    if (error == 0)
 	    	break;
-	    mutex_enter(&p->p_smutex);
+	    mutex_enter(p->p_lock);
 	    if (error == EWOULDBLOCK) {
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep TIMEOUT %d sec\n", 2+2*i);
@@ -633,7 +633,7 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 			    l->l_sigmask.__bits[2], l->l_sigmask.__bits[3],
 			    tmp.__bits[0], tmp.__bits[1], tmp.__bits[2], tmp.__bits[3]);
 #endif
-		    mutex_exit(&p->p_smutex);
+		    mutex_exit(p->p_lock);
 		    break;
 #ifdef	notyet
 		    sigminusset(&l->l_sigmask, &p->p_sigpend.sp_set);
@@ -644,7 +644,7 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 			    l->l_sigmask.__bits[2], l->l_sigmask.__bits[3]);
 #endif
 	    }
-	    mutex_exit(&p->p_smutex);
+	    mutex_exit(p->p_lock);
 	} while (error && i++ < 128 && VC_OPEN(vcp));
 	l->l_sigmask = psig_omask;	/* XXXSA */
 #else
