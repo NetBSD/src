@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.220 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.221 2008/04/24 18:39:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.220 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221 2008/04/24 18:39:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2374,18 +2374,20 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 				pick = p;
 				continue;
 			}
-			if (pick < p) {
-				mutex_enter(&pick->p_smutex);
-				mutex_enter(&p->p_smutex);
-			} else {
-				mutex_enter(&p->p_smutex);
-				mutex_enter(&pick->p_smutex);
-			}
+			if (pick->p_lock < p->p_lock) {
+				mutex_enter(pick->p_lock);
+				mutex_enter(p->p_lock);
+			} else if (pick->p_lock > p->p_lock) {
+				mutex_enter(p->p_lock);
+				mutex_enter(pick->p_lock);
+			} else
+				mutex_enter(p->p_lock);
 			oldpick = pick;
 			if (proc_compare(pick, p))
 				pick = p;
-			mutex_exit(&p->p_smutex);
-			mutex_exit(&oldpick->p_smutex);
+			mutex_exit(p->p_lock);
+			if (p->p_lock != oldpick->p_lock)
+				mutex_exit(oldpick->p_lock);
 		}
 		if (fromsig &&
 		    (SIGACTION_PS(pick->p_sigacts, SIGINFO).sa_flags &
@@ -2408,7 +2410,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	    pick->p_pid);
 	strlcat(buf, lmsg, bufsz);
 
-	mutex_enter(&pick->p_smutex);
+	mutex_enter(pick->p_lock);
 	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
 		lwp_lock(l);
 		snprintf(lmsg, sizeof(lmsg), "%s%s",
@@ -2422,7 +2424,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	}
 	pctcpu += pick->p_pctcpu;
 	calcru(pick, &utime, &stime, NULL, NULL);
-	mutex_exit(&pick->p_smutex);
+	mutex_exit(pick->p_lock);
 
 	/* Round up and print user+system time, %CPU and RSS. */
 	utime.tv_usec += 5000;
@@ -2489,8 +2491,8 @@ proc_compare(struct proc *p1, struct proc *p2)
 {
 	lwp_t *l1, *l2;
 
-	KASSERT(mutex_owned(&p1->p_smutex));
-	KASSERT(mutex_owned(&p2->p_smutex));
+	KASSERT(mutex_owned(p1->p_lock));
+	KASSERT(mutex_owned(p2->p_lock));
 
 	if ((l1 = LIST_FIRST(&p1->p_lwps)) == NULL)
 		return (1);

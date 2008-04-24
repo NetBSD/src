@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.141 2008/04/24 15:35:27 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.142 2008/04/24 18:39:23 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.141 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.142 2008/04/24 18:39:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -750,10 +750,10 @@ svr4_sys_times(struct lwp *l, const struct svr4_sys_times_args *uap, register_t 
 	struct proc		 *p = l->l_proc;
 
 	ru = p->p_stats->p_ru;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 	rulwps(p, &ru);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	tms.tms_utime = timeval_to_clock_t(&ru.ru_utime);
 	tms.tms_stime = timeval_to_clock_t(&ru.ru_stime);

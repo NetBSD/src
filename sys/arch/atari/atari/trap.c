@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2007/12/03 15:33:22 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.96 2008/04/24 18:39:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2007/12/03 15:33:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2008/04/24 18:39:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -441,12 +441,12 @@ trap(fp, type, code, v)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		    type==T_COPERR ? "coprocessor" : "format");
 #endif
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
 		sigdelset(&l->l_sigmask, SIGILL);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *)(int)fp->f_format;

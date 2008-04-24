@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.36 2008/01/08 22:09:48 elad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.37 2008/04/24 18:39:22 ad Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.36 2008/01/08 22:09:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37 2008/04/24 18:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,9 +191,9 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Install the sigframe onto the stack
 	 */
 	fp -= sizeof(struct linux_sigframe);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&sf, fp, sizeof(sf));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -270,7 +270,7 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	f->f_regs[_R_BADVADDR] = ksf.lsf_sc.lsc_badvaddr;
 	f->f_regs[_R_CAUSE] = ksf.lsf_sc.lsc_cause;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
@@ -279,7 +279,7 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	linux_to_native_sigset(&mask, (linux_sigset_t *)&ksf.lsf_mask);
 	(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

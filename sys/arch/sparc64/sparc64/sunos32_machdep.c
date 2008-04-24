@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.25 2007/12/20 23:02:42 dsl Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.26 2008/04/24 18:39:21 ad Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.25 2007/12/20 23:02:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.26 2008/04/24 18:39:21 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -119,9 +119,9 @@ sunos32_setregs(l, pack, stack)
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	p->p_flag |= PK_32;
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 
 	/* Setup the ev_out32 hook */
 #if NFIRM_EVENTS > 0
@@ -201,13 +201,13 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef DEBUG
 	sigpid = p->p_pid;
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		printf("sunos32_sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
 		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc, oldsp);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 	}
 #endif
 	/*
@@ -245,7 +245,7 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	newsp = (struct rwindow32 *)((long)fp - sizeof(struct rwindow32));
 	write_user_windows();
 #ifdef DEBUG
@@ -255,21 +255,21 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 #endif
 	error = (rwindow_save(l) || copyout((void *)&sf, (void *)fp, sizeof sf) || 
 	    copyout((void *)&oldsp32, &(((struct rwindow32 *)newsp)->rw_in[6]), sizeof oldsp32));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
 #ifdef DEBUG
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sunos32_sendsig: window save or copyout error\n");
 		printf("sunos32_sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
@@ -291,13 +291,13 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_out[6] = (uint64_t)(u_int)(u_long)newsp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		printf("sunos32_sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, (void *)(u_long)addr);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 	}
 #endif
 }
@@ -316,7 +316,7 @@ sunos32_sys_sigreturn(struct lwp *l, const struct sunos32_sys_sigreturn_args *ua
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
 	if (rwindow_save(l)) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		sigexit(l, SIGILL);
 	}
 #ifdef DEBUG
@@ -367,7 +367,7 @@ sunos32_sys_sigreturn(struct lwp *l, const struct sunos32_sys_sigreturn_args *ua
 	}
 #endif
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (scp->sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
@@ -375,7 +375,7 @@ sunos32_sys_sigreturn(struct lwp *l, const struct sunos32_sys_sigreturn_args *ua
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

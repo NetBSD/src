@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.37 2007/12/20 23:02:53 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.38 2008/04/24 18:39:22 ad Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37 2007/12/20 23:02:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38 2008/04/24 18:39:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * just skip it when building the stack frame. Hence the LINUX_ABIGAP.
 	 */
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, (void *)fp, sizeof (frame) - LINUX_ABIGAP);
 
 	if (error != 0) {
@@ -217,7 +217,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -227,7 +227,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	fp -= sizeof(struct linux_sigcontext);
 	error = copyout(&sc, (void *)fp, sizeof (struct linux_sigcontext));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -333,7 +333,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *
 	memcpy(curpcb->pcb_fpu.fpreg, (void *)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/*
 	 * Restore signal stack.
@@ -354,7 +354,7 @@ linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *
 	linux_to_native_sigset(&mask, &sigframe.luc.luc_sigmask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }
@@ -423,7 +423,7 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	memcpy(curpcb->pcb_fpu.fpreg, (void *)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/*
 	 * Restore signal stack.
@@ -443,7 +443,7 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	    &context._unused[3]);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }
