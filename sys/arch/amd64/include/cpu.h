@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 2008/04/23 15:57:38 he Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 2008/04/24 11:26:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,11 +85,11 @@ struct cpu_info {
 	uint8_t ci_coreid;
 	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
 	/*
 	 * Private members.
 	 */
+	struct cc_microtime_state ci_cc __aligned(64);/* cc_microtime state */
 	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
@@ -135,7 +135,6 @@ struct cpu_info {
 	void (*cpu_setup)(struct cpu_info *);
 	void (*ci_info)(struct cpu_info *);
 
-	int		ci_want_resched;
 	struct trapframe *ci_ddb_regs;
 
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
@@ -178,6 +177,10 @@ struct cpu_info {
 	uint64_t	ci_suspend_cr3;
 	uint64_t	ci_suspend_cr4;
 	uint64_t	ci_suspend_cr8;
+
+	/* The following must be in a single cache line. */
+	int		ci_want_resched __aligned(64);
+	int		ci_padout __aligned(64);
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */
