@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.91 2008/04/23 05:26:50 thorpej Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.92 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.91 2008/04/23 05:26:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.92 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -487,7 +487,7 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
 
 	pim6 = 0;/* used for stubbing out/in pim stuff */
 
-	callout_init(&expire_upcalls_ch, 0);
+	callout_init(&expire_upcalls_ch, CALLOUT_MPSAFE);
 	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
 	    expire_upcalls, NULL);
 
@@ -1296,9 +1296,10 @@ expire_upcalls(void *unused)
 	struct rtdetq *rte;
 	struct mf6c *mfc, **nptr;
 	int i;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	for (i = 0; i < MF6CTBLSIZ; i++) {
 		if (n6expire[i] == 0)
 			continue;
@@ -1339,9 +1340,11 @@ expire_upcalls(void *unused)
 			}
 		}
 	}
-	splx(s);
 	callout_reset(&expire_upcalls_ch, EXPIRE_TIMEOUT,
 	    expire_upcalls, NULL);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*

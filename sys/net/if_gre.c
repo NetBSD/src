@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.129 2008/04/03 21:40:59 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.130 2008/04/24 11:38:37 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.129 2008/04/03 21:40:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130 2008/04/24 11:38:37 ad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -544,24 +544,23 @@ gre_sosend(struct socket *so, struct mbuf *top, struct lwp *l)
 	struct mbuf	**mp;
 	struct proc	*p;
 	long		space, resid;
-	int		error, s;
+	int		error;
 
 	p = l->l_proc;
 
 	resid = top->m_pkthdr.len;
 	if (p)
 		l->l_ru.ru_msgsnd++;
-#define	snderr(errno)	{ error = errno; splx(s); goto release; }
+#define	snderr(errno)	{ error = errno; goto release; }
 
+	solock(so);
 	if ((error = sblock(&so->so_snd, M_NOWAIT)) != 0)
 		goto out;
-	s = splsoftnet();
 	if (so->so_state & SS_CANTSENDMORE)
 		snderr(EPIPE);
 	if (so->so_error) {
 		error = so->so_error;
 		so->so_error = 0;
-		splx(s);
 		goto release;
 	}
 	if ((so->so_state & SS_ISCONNECTED) == 0) {
@@ -576,27 +575,19 @@ gre_sosend(struct socket *so, struct mbuf *top, struct lwp *l)
 		snderr(EMSGSIZE);
 	if (space < resid)
 		snderr(EWOULDBLOCK);
-	splx(s);
 	mp = &top;
 	/*
 	 * Data is prepackaged in "top".
 	 */
-	s = splsoftnet();
-
 	if (so->so_state & SS_CANTSENDMORE)
 		snderr(EPIPE);
-
 	error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, top, NULL, NULL, l);
-	splx(s);
-
 	top = NULL;
 	mp = &top;
-	if (error != 0)
-		goto release;
-
  release:
 	sbunlock(&so->so_snd);
  out:
+ 	sounlock(so);
 	if (top != NULL)
 		m_freem(top);
 	return error;
@@ -610,7 +601,7 @@ static int
 gre_soreceive(struct socket *so, struct mbuf **mp0)
 {
 	struct mbuf *m, **mp;
-	int flags, len, error, s, type;
+	int flags, len, error, type;
 	const struct protosw	*pr;
 	struct mbuf *nextrecord;
 
@@ -625,14 +616,14 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 
 	KASSERT(pr->pr_flags & PR_ATOMIC);
 
+	solock(so);
 	if (so->so_state & SS_ISCONFIRMING)
 		(*pr->pr_usrreq)(so, PRU_RCVD, NULL, NULL, NULL, curlwp);
-
  restart:
-	if ((error = sblock(&so->so_rcv, M_NOWAIT)) != 0)
+	if ((error = sblock(&so->so_rcv, M_NOWAIT)) != 0) {
+		sounlock(so);
 		return error;
-	s = splsoftnet();
-
+	}
 	m = so->so_rcv.sb_mb;
 	/*
 	 * If we have less data than requested, do not block awaiting more.
@@ -796,13 +787,12 @@ gre_soreceive(struct socket *so, struct mbuf **mp0)
 	if (*mp0 == NULL && (flags & MSG_EOR) == 0 &&
 	    (so->so_state & SS_CANTRCVMORE) == 0) {
 		sbunlock(&so->so_rcv);
-		splx(s);
 		goto restart;
 	}
 
  release:
 	sbunlock(&so->so_rcv);
-	splx(s);
+	sounlock(so);
 	return error;
 }
 
@@ -1057,6 +1047,7 @@ gre_getnames(struct socket *so, struct lwp *l, struct sockaddr_storage *src,
 
 	ss = mtod(m, struct sockaddr_storage *);
 
+	solock(so);
 	if ((rc = gre_getsockname(so, m, l)) != 0)
 		goto out;
 	*src = *ss;
@@ -1064,8 +1055,8 @@ gre_getnames(struct socket *so, struct lwp *l, struct sockaddr_storage *src,
 	if ((rc = gre_getpeername(so, m, l)) != 0)
 		goto out;
 	*dst = *ss;
-
 out:
+	sounlock(so);
 	m_freem(m);
 	return rc;
 }

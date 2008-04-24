@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: mld6.c,v 1.45 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.45 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
@@ -221,7 +222,9 @@ static void
 mld_timeo(void *arg)
 {
 	struct in6_multi *in6m = arg;
-	int s = splsoftnet();
+
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	in6m->in6m_timer = IN6M_TIMER_UNDEF;
 
@@ -234,7 +237,8 @@ mld_timeo(void *arg)
 		break;
 	}
 
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 static u_long
@@ -674,7 +678,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 			return (NULL);
 		}
 
-		callout_init(&in6m->in6m_timer_ch, 0);
+		callout_init(&in6m->in6m_timer_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&in6m->in6m_timer_ch, mld_timeo, in6m);
 		in6m->in6m_timer = timer;
 		if (in6m->in6m_timer > 0) {

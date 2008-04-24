@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.37 2007/12/20 16:19:38 dyoung Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.38 2008/04/24 11:38:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.37 2007/12/20 16:19:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.38 2008/04/24 11:38:39 ad Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -459,7 +459,7 @@ bootpc_call(nd, lwp)
 	int vcilen;
 #endif
 
-	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp);
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp, NULL);
 	if (error) {
 		printf("bootp: socreate, error=%d\n", error);
 		return (error);

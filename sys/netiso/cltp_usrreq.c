@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.32 2007/03/04 06:03:31 christos Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.33 2008/04/24 11:38:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.32 2007/03/04 06:03:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.33 2008/04/24 11:38:38 ad Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -298,7 +298,9 @@ cltp_usrreq(so, req, m, nam, control, l)
 		    (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		iso_purgeif((struct ifnet *)control);
+		mutex_exit(softnet_lock);
 		return (0);
 	}
 

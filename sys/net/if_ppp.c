@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.121 2008/02/07 01:22:01 dyoung Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.122 2008/04/24 11:38:37 ad Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.121 2008/02/07 01:22:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.122 2008/04/24 11:38:37 ad Exp $");
 
 #include "ppp.h"
 
@@ -128,6 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.121 2008/02/07 01:22:01 dyoung Exp $");
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #include <sys/simplelock.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -1268,6 +1269,7 @@ pppintr(void *arg)
 	struct mbuf *m;
 	int s;
 
+	mutex_enter(softnet_lock);
 	if (!(sc->sc_flags & SC_TBUSY)
 	    && (IFQ_IS_EMPTY(&sc->sc_if.if_snd) == 0 || sc->sc_fastq.ifq_head
 		|| sc->sc_outm)) {
@@ -1284,6 +1286,7 @@ pppintr(void *arg)
 			break;
 		ppp_inproc(sc, m);
 	}
+	mutex_exit(softnet_lock);
 }
 
 #ifdef PPP_COMPRESS
