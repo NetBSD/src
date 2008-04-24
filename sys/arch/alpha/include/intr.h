@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.64 2008/03/10 14:01:36 ad Exp $ */
+/* $NetBSD: intr.h,v 1.65 2008/04/24 10:01:37 he Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@
 #define _ALPHA_INTR_H_
 
 #include <sys/evcnt.h>
+#include <machine/cpu.h>
 
 /*
  * The Alpha System Control Block.  This is 8k long, and you get
