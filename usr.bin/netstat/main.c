@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.68 2008/04/23 15:35:37 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.69 2008/04/24 03:46:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.68 2008/04/23 15:35:37 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.69 2008/04/24 03:46:25 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,21 +69,21 @@ struct nlist nl[] = {
 #define	N_MBSTAT	0
 	{ "_mbstat" },
 #define	N_IPSTAT	1
-	{ "_ipstat" },
+	{ "_ipstat" },		/* not available via kvm */
 #define	N_TCBTABLE	2
 	{ "_tcbtable" },
 #define	N_TCPSTAT	3
-	{ "_tcpstat" },
+	{ "_tcpstat" },		/* not available via kvm */
 #define	N_UDBTABLE	4
 	{ "_udbtable" },
 #define	N_UDPSTAT	5
-	{ "_udpstat" },
+	{ "_udpstat" },		/* not available via kvm */
 #define	N_IFNET		6
 	{ "_ifnet" },
 #define	N_IMP		7
 	{ "_imp_softc" },
 #define	N_ICMPSTAT	8
-	{ "_icmpstat" },
+	{ "_icmpstat" },	/* not available via kvm */
 #define	N_RTSTAT	9
 	{ "_rtstat" },
 #define	N_UNIXSW	10
@@ -111,7 +111,7 @@ struct nlist nl[] = {
 #define	N_FILE		21
 	{ "_file" },
 #define N_IGMPSTAT	22
-	{ "_igmpstat" },
+	{ "_igmpstat" },	/* not available via kvm */
 #define N_MRTPROTO	23
 	{ "_ip_mrtproto" },
 #define N_MRTSTAT	24
@@ -127,7 +127,7 @@ struct nlist nl[] = {
 #define N_MCLBYTES	29
 	{ "_mclbytes" },
 #define N_DDPSTAT	30
-	{ "_ddpstat"},
+	{ "_ddpstat"},		/* not available via kvm */
 #define N_DDPCB		31
 	{ "_ddpcb"},
 #define N_MBPOOL	32
@@ -139,19 +139,19 @@ struct nlist nl[] = {
 #define N_DIVSTAT	35
 	{ "_divstat"},
 #define N_IP6STAT	36
-	{ "_ip6stat" },
+	{ "_ip6stat" },		/* not available via kvm */
 #define N_TCP6STAT	37
-	{ "_tcp6stat" },
+	{ "_tcp6stat" },	/* not available via kvm */
 #define N_UDP6STAT	38
-	{ "_udp6stat" },
+	{ "_udp6stat" },	/* not available via kvm */
 #define N_ICMP6STAT	39
-	{ "_icmp6stat" },
+	{ "_icmp6stat" },	/* not available via kvm */
 #define N_IPSECSTAT	40
-	{ "_ipsecstat" },
+	{ "_ipsecstat" },	/* not available via kvm */
 #define N_IPSEC6STAT	41
-	{ "_ipsec6stat" },
+	{ "_ipsec6stat" },	/* not available via kvm */
 #define N_PIM6STAT	42
-	{ "_pim6stat" },
+	{ "_pim6stat" },	/* not available via kvm */
 #define N_MRT6PROTO	43
 	{ "_ip6_mrtproto" },
 #define N_MRT6STAT	44
@@ -161,11 +161,11 @@ struct nlist nl[] = {
 #define N_MIF6TABLE	46
 	{ "_mif6table" },
 #define N_PFKEYSTAT	47
-	{ "_pfkeystat" },
+	{ "_pfkeystat" },	/* not available via kvm */
 #define N_ARPSTAT	48
-	{ "_arpstat" },
+	{ "_arpstat" },		/* not available via kvm */
 #define N_RIP6STAT	49
-	{ "_rip6stat" },
+	{ "_rip6stat" },	/* not available via kvm */
 #define	N_ARPINTRQ	50
 	{ "_arpintrq" },
 #define	N_IPINTRQ	51
@@ -197,7 +197,7 @@ struct nlist nl[] = {
 #define N_PIMSTAT	64
 	{ "_pimstat" },
 #define N_CARPSTAT	65
-	{ "_carpstats" },
+	{ "_carpstats" },	/* not available via kvm */
 	{ "" },
 };
 
