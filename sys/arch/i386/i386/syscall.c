@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.53 2008/04/21 12:51:37 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.54 2008/04/24 11:51:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.53 2008/04/21 12:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.54 2008/04/24 11:51:18 ad Exp $");
 
 #include "opt_vm86.h"
 
@@ -105,16 +105,8 @@ syscall(struct trapframe *frame)
 		    args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
-
 		KASSERT(l->l_holdcnt == 0);
-
-		if (callp->sy_flags & SYCALL_MPSAFE) {
-			error = (*callp->sy_call)(l, args, rval);
-		} else {
-			KERNEL_LOCK(1, l);
-			error = (*callp->sy_call)(l, args, rval);
-			KERNEL_UNLOCK_LAST(l);
-		}
+		error = (*callp->sy_call)(l, args, rval);
 	}
 
 	if (__predict_false(l->l_proc->p_trace_enabled)

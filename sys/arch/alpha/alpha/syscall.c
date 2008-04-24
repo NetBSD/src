@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.30 2008/02/06 22:12:39 dsl Exp $ */
+/* $NetBSD: syscall.c,v 1.31 2008/04/24 11:51:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30 2008/02/06 22:12:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.31 2008/04/24 11:51:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,6 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	u_int64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
-	bool needlock;
 
 	LWP_CACHE_CREDS(l, p);
 
@@ -205,14 +204,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	needlock = (callp->sy_flags & SYCALL_MPSAFE) == 0;
-	if (needlock) {
-		KERNEL_LOCK(1, l);
-	}
 	error = (*callp->sy_call)(l, args, rval);
-	if (needlock) {
-		KERNEL_UNLOCK_LAST(l);
-	}
 
 	switch (error) {
 	case 0:
@@ -247,8 +239,6 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	LWP_CACHE_CREDS(l, p);
 
-	KERNEL_LOCK(1, l);
-
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
 
@@ -279,7 +269,6 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		    (nargs - 6) * sizeof(u_int64_t));
 		if (error) {
 			args = copyargs;
-			KERNEL_UNLOCK_LAST(l);
 			goto bad;
 		}
 	case 6:	
@@ -302,14 +291,12 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	}
 	args += hidden;
 
-	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
-		goto out;
+	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
+		rval[0] = 0;
+		rval[1] = 0;
+		error = (*callp->sy_call)(l, args, rval);
+	}
 
-	rval[0] = 0;
-	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
-out:
-	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
 		framep->tf_regs[FRAME_V0] = rval[0];
@@ -345,7 +332,6 @@ child_return(void *arg)
 	 * Return values in the frame set by cpu_fork().
 	 */
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 	ktrsysret(SYS_fork, 0, 0);
 }
