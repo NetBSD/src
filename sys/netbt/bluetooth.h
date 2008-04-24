@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.6 2007/09/17 01:23:17 rillig Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.7 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -143,6 +143,8 @@ extern int bluetooth_debug;
 # define DPRINTFN(...) ((void)0)
 # define UNKNOWN(x) ((void)0)
 #endif	/* BLUETOOTH_DEBUG */
+
+extern kmutex_t *bt_lock;
 
 #endif	/* _KERNEL */
 

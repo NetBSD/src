@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.33 2008/03/22 18:04:42 ad Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.34 2008/04/24 11:38:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.33 2008/03/22 18:04:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.34 2008/04/24 11:38:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,19 +105,8 @@ static int nb_tcpsndbuf = NB_SNDQ;
 static int nb_tcprcvbuf = NB_RCVQ;
 static const struct timeval nb_timo = { 15, 0 };	/* XXX sysctl? */
 
-#ifndef __NetBSD__
-SYSCTL_DECL(_net_smb);
-SYSCTL_INT(_net_smb, OID_AUTO, tcpsndbuf, CTLFLAG_RW, &nb_tcpsndbuf, 0, "");
-SYSCTL_INT(_net_smb, OID_AUTO, tcprcvbuf, CTLFLAG_RW, &nb_tcprcvbuf, 0, "");
-#endif
-
-#ifndef __NetBSD__
-#define nb_sosend(so,m,flags,p) (so)->so_proto->pr_usrreqs->pru_sosend( \
-				    so, NULL, 0, m, 0, flags, p)
-#else
 #define nb_sosend(so,m,flags,l) (*(so)->so_send)(so, NULL, (struct uio *)0, \
 					m, (struct mbuf *)0, flags, l)
-#endif
 
 static int  nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 	u_int8_t *rpcodep, struct lwp *l);
@@ -126,18 +115,7 @@ static int  smb_nbst_disconnect(struct smb_vc *vcp, struct lwp *l);
 static int
 nb_setsockopt_int(struct socket *so, int level, int name, int val)
 {
-#ifdef __NetBSD__
 	return sosetopt(so, level, name, NULL); /* XXX */
-#else
-	struct sockopt sopt;
-
-	bzero(&sopt, sizeof(sopt));
-	sopt.sopt_level = level;
-	sopt.sopt_name = name;
-	sopt.sopt_val = &val;
-	sopt.sopt_valsize = sizeof(val);
-	return sosetopt(so, &sopt);
-#endif
 }
 
 static int
@@ -199,55 +177,53 @@ static int
 nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct lwp *l)
 {
 	struct socket *so;
-	int error, s;
-#ifdef __NetBSD__
+	int error;
 	struct mbuf *m;
-#endif
 
-	error = socreate(AF_INET, &so, SOCK_STREAM, IPPROTO_TCP, l);
+	error = socreate(AF_INET, &so, SOCK_STREAM, IPPROTO_TCP, l, NULL);
 	if (error)
 		return error;
+	solock(so);
 	nbp->nbp_tso = so;
 	so->so_upcallarg = (void *)nbp;
 	so->so_upcall = nb_upcall;
 	so->so_rcv.sb_flags |= SB_UPCALL;
+	so->so_rcv.sb_flags &= ~SB_NOINTR;
+	so->so_snd.sb_flags &= ~SB_NOINTR;
 	so->so_rcv.sb_timeo = NB_SNDTIMEO;
 	so->so_snd.sb_timeo = NB_RCVTIMEO;
 	error = soreserve(so, nb_tcpsndbuf, nb_tcprcvbuf);
+	sounlock(so);
 	if (error)
 		goto bad;
 	nb_setsockopt_int(so, SOL_SOCKET, SO_KEEPALIVE, 1);
 	nb_setsockopt_int(so, IPPROTO_TCP, TCP_NODELAY, 1);
-	so->so_rcv.sb_flags &= ~SB_NOINTR;
-	so->so_snd.sb_flags &= ~SB_NOINTR;
-#ifndef __NetBSD__
-	error = soconnect(so, (struct sockaddr*)to, l);
-#else
 	m = m_get(M_WAIT, MT_SONAME);
 	*mtod(m, struct sockaddr *) = *(struct sockaddr *)to;
 	m->m_len = sizeof(struct sockaddr);
+	solock(so);
 	error = soconnect(so, m, l);
 	m_free(m);
-#endif
-	if (error)
+	if (error) {
+		sounlock(so);
 		goto bad;
-	s = splnet();
+	}
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		tsleep(&so->so_timeo, PSOCK, "smbcon", 2 * hz);
+		sowait(so, 2 * hz);
 		if ((so->so_state & SS_ISCONNECTING) && so->so_error == 0 &&
 			(error = nb_intr(nbp, l)) != 0) {
 			so->so_state &= ~SS_ISCONNECTING;
-			splx(s);
+			sounlock(so);
 			goto bad;
 		}
 	}
 	if (so->so_error) {
 		error = so->so_error;
 		so->so_error = 0;
-		splx(s);
+		sounlock(so);
 		goto bad;
 	}
-	splx(s);
+	sounlock(so);
 	return 0;
 bad:
 	smb_nbst_disconnect(nbp->nbp_vc, l);
@@ -348,15 +324,7 @@ nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
 	auio.uio_offset = 0;
 	auio.uio_resid = sizeof(len);
 	UIO_SETUP_SYSSPACE(&auio);
-#ifndef __NetBSD__
-	error = so->so_proto->pr_usrreqs->pru_soreceive
-	    (so, (struct sockaddr **)NULL, &auio,
-	    (struct mbuf **)NULL, (struct mbuf **)NULL, &flags);
-#else
-	error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
-				  (struct mbuf **)NULL,
-				  (struct mbuf **)NULL, &flags);
-#endif
+	error = (*so->so_receive)(so, NULL, &auio, NULL, NULL, &flags);
 	if (error)
 		return error;
 	if (auio.uio_resid > 0) {
@@ -441,15 +409,8 @@ nbssn_recv(struct nbpcb *nbp, struct mbuf **mpp, int *lenp,
 			 */
 			do {
 				rcvflg = MSG_WAITALL;
-#ifdef __NetBSD__
-				error = (*so->so_receive)(so, (struct mbuf **)0,
-					&auio, &tm, (struct mbuf **)NULL,
-					&rcvflg);
-#else
-				error = so->so_proto->pr_usrreqs->pru_soreceive
-				    (so, (struct sockaddr **)NULL,
-				    &auio, &tm, (struct mbuf **)NULL, &rcvflg);
-#endif
+				error = (*so->so_receive)(so, NULL, &auio, &tm,
+				    NULL, &rcvflg);
 			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
 			if (error)
@@ -610,7 +571,9 @@ smb_nbst_disconnect(struct smb_vc *vcp, struct lwp *l)
 	if ((so = nbp->nbp_tso) != NULL) {
 		nbp->nbp_flags &= ~NBF_CONNECTED;
 		nbp->nbp_tso = (struct socket *)NULL;
+		solock(so);
 		soshutdown(so, 2);
+		sounlock(so);
 		soclose(so);
 	}
 	if (nbp->nbp_state != NBST_RETARGET) {
@@ -666,11 +629,15 @@ static void
 smb_nbst_intr(struct smb_vc *vcp)
 {
 	struct nbpcb *nbp = vcp->vc_tdata;
+	struct socket *so;
 
-	if (nbp == NULL || nbp->nbp_tso == NULL)
+	if (nbp == NULL || (so = nbp->nbp_tso) == NULL)
 		return;
-	sorwakeup(nbp->nbp_tso);
-	sowwakeup(nbp->nbp_tso);
+	
+	solock(so);
+	sorwakeup(so);
+	sowwakeup(so);
+	sounlock(so);
 }
 
 static int
@@ -733,4 +700,3 @@ struct smb_tran_desc smb_tran_nbtcp_desc = {
 	smb_nbst_fatal,
 	{ NULL, NULL },
 };
-

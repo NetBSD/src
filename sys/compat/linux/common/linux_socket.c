@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.90 2008/04/23 13:13:25 ad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.91 2008/04/24 11:38:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.90 2008/04/23 13:13:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.91 2008/04/24 11:38:36 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1212,17 +1212,17 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 
 	if (error == EISCONN) {
 		struct socket *so;
-		int s, state, prflags, nbio;
+		int state, prflags, nbio;
 
 		/* getsock() will use the descriptor for us */
 	    	if (fd_getsock(SCARG(uap, s), &so) != 0)
 		    	return EISCONN;
 
-		s = splsoftnet();
+		solock(so);
 		state = so->so_state;
 		nbio = so->so_nbio;
 		prflags = so->so_proto->pr_flags;
-		splx(s);
+		sounlock(so);
 		fd_putfile(SCARG(uap, s));
 		/*
 		 * We should only let this call succeed once per

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.h,v 1.12 2007/02/17 22:34:13 dyoung Exp $	*/
+/*	$NetBSD: in6_gif.h,v 1.13 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: in6_gif.h,v 1.7 2001/07/26 06:53:16 jinmei Exp $	*/
 
 /*
@@ -45,6 +45,6 @@ int gif_encapcheck6(struct mbuf *, int, int, void *);
 #endif
 int in6_gif_attach(struct gif_softc *);
 int in6_gif_detach(struct gif_softc *);
-void in6_gif_ctlinput(int, const struct sockaddr *, void *);
+void *in6_gif_ctlinput(int, const struct sockaddr *, void *);
 
 #endif /* !_NETINET6_IN6_GIF_H_ */

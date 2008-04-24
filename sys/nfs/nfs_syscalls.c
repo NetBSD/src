@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.133 2008/03/23 00:46:25 rmind Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.134 2008/04/24 11:38:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.133 2008/03/23 00:46:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.134 2008/04/24 11:38:39 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -393,7 +393,7 @@ nfssvc_addsock(fp, mynam)
 	struct nfssvc_sock *slp;
 	struct socket *so;
 	struct nfssvc_sock *tslp;
-	int error, s;
+	int error;
 
 	so = (struct socket *)fp->f_data;
 	tslp = (struct nfssvc_sock *)0;
@@ -424,7 +424,9 @@ nfssvc_addsock(fp, mynam)
 		siz = NFS_MAXPACKET + sizeof (u_long);
 	else
 		siz = NFS_MAXPACKET;
+	solock(so);
 	error = soreserve(so, siz, siz);
+	sounlock(so);
 	if (error) {
 		m_freem(mynam);
 		return (error);
@@ -454,10 +456,12 @@ nfssvc_addsock(fp, mynam)
 		m->m_len = sizeof(int32_t);
 		sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
 	}
+	solock(so);
 	so->so_rcv.sb_flags &= ~SB_NOINTR;
 	so->so_rcv.sb_timeo = 0;
 	so->so_snd.sb_flags &= ~SB_NOINTR;
 	so->so_snd.sb_timeo = 0;
+	sounlock(so);
 	if (tslp) {
 		slp = tslp;
 	} else {
@@ -473,13 +477,11 @@ nfssvc_addsock(fp, mynam)
 	slp->ns_aflags = SLP_A_NEEDQ;
 	slp->ns_gflags = 0;
 	slp->ns_sflags = 0;
-	KERNEL_LOCK(1, curlwp);
-	s = splsoftnet();
+	solock(so);
 	so->so_upcallarg = (void *)slp;
 	so->so_upcall = nfsrv_soupcall;
 	so->so_rcv.sb_flags |= SB_UPCALL;
-	splx(s);
-	KERNEL_UNLOCK_ONE(curlwp);
+	sounlock(so);
 	nfsrv_wakenfsd(slp);
 	return (0);
 }
@@ -802,7 +804,6 @@ nfsrv_zapsock(slp)
 	struct nfsrv_descript *nwp;
 	struct socket *so;
 	struct mbuf *m;
-	int s;
 
 	if (nfsdsock_drain(slp)) {
 		return;
@@ -816,14 +817,12 @@ nfsrv_zapsock(slp)
 
 	so = slp->ns_so;
 	KASSERT(so != NULL);
-	KERNEL_LOCK(1, curlwp);
-	s = splsoftnet();
+	solock(so);
 	so->so_upcall = NULL;
 	so->so_upcallarg = NULL;
 	so->so_rcv.sb_flags &= ~SB_UPCALL;
-	splx(s);
 	soshutdown(so, SHUT_RDWR);
-	KERNEL_UNLOCK_ONE(curlwp);
+	sounlock(so);
 
 	if (slp->ns_nam)
 		m_free(slp->ns_nam);

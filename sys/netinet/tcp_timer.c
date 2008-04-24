@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.79 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.80 2008/04/24 11:38:38 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.79 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.80 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -201,31 +201,12 @@ tcp_timer_init(void)
 }
 
 /*
- * Return how many timers are currently being invoked.
- */
-int
-tcp_timers_invoking(struct tcpcb *tp)
-{
-	int i;
-	int count = 0;
-
-	for (i = 0; i < TCPT_NTIMERS; i++)
-		if (callout_invoking(&tp->t_timer[i]))
-			count++;
-	if (callout_invoking(&tp->t_delack_ch))
-		count++;
-
-	return count;
-}
-
-/*
  * Callout to process delayed ACKs for a TCPCB.
  */
 void
 tcp_delack(void *arg)
 {
 	struct tcpcb *tp = arg;
-	int s;
 
 	/*
 	 * If tcp_output() wasn't able to transmit the ACK
@@ -233,16 +214,17 @@ tcp_delack(void *arg)
 	 * ACK callout.
 	 */
 
-	s = splsoftnet();
-	callout_ack(&tp->t_delack_ch);
-	if (tcp_isdead(tp)) {
-		splx(s);
+	mutex_enter(softnet_lock);
+	if ((tp->t_flags & TF_DEAD) != 0) {
+		mutex_exit(softnet_lock);
 		return;
 	}
 
 	tp->t_flags |= TF_ACKNOW;
+	KERNEL_LOCK(1, NULL);
 	(void) tcp_output(tp);
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -253,12 +235,11 @@ tcp_delack(void *arg)
 void
 tcp_slowtimo(void)
 {
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
 	tcp_iss_seq += TCP_ISSINCR;			/* increment iss */
 	tcp_now++;					/* for timestamps */
-	splx(s);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -287,19 +268,18 @@ tcp_timer_rexmt(void *arg)
 {
 	struct tcpcb *tp = arg;
 	uint32_t rto;
-	int s;
 #ifdef TCP_DEBUG
 	struct socket *so = NULL;
 	short ostate;
 #endif
 
-	s = splsoftnet();
-	callout_ack(&tp->t_timer[TCPT_REXMT]);
-	if (tcp_isdead(tp)) {
-		splx(s);
+	mutex_enter(softnet_lock);
+	if ((tp->t_flags & TF_DEAD) != 0) {
+		mutex_exit(softnet_lock);
 		return;
 	}
 
+	KERNEL_LOCK(1, NULL);
 	if ((tp->t_flags & TF_PMTUD_PEND) && tp->t_inpcb &&
 	    SEQ_GEQ(tp->t_pmtud_th_seq, tp->snd_una) &&
 	    SEQ_LT(tp->t_pmtud_th_seq, (int)(tp->snd_una + tp->t_ourmss))) {
@@ -321,7 +301,8 @@ tcp_timer_rexmt(void *arg)
 		 */
 		in_pcbnotifyall(&tcbtable, icmpsrc.sin_addr, EMSGSIZE,
 		    tcp_mtudisc);
- 		splx(s);
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
  		return;
  	}
 #ifdef TCP_DEBUG
@@ -435,7 +416,8 @@ tcp_timer_rexmt(void *arg)
 		tcp_trace(TA_USER, ostate, tp, NULL,
 		    PRU_SLOWTIMO | (TCPT_REXMT << 8));
 #endif
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void
@@ -443,19 +425,18 @@ tcp_timer_persist(void *arg)
 {
 	struct tcpcb *tp = arg;
 	uint32_t rto;
-	int s;
 #ifdef TCP_DEBUG
 	struct socket *so = NULL;
 	short ostate;
 #endif
 
-	s = splsoftnet();
-	callout_ack(&tp->t_timer[TCPT_PERSIST]);
-	if (tcp_isdead(tp)) {
-		splx(s);
+	mutex_enter(softnet_lock);
+	if ((tp->t_flags & TF_DEAD) != 0) {
+		mutex_exit(softnet_lock);
 		return;
 	}
 
+	KERNEL_LOCK(1, NULL);
 #ifdef TCP_DEBUG
 #ifdef INET
 	if (tp->t_inpcb)
@@ -503,7 +484,8 @@ tcp_timer_persist(void *arg)
 		tcp_trace(TA_USER, ostate, tp, NULL,
 		    PRU_SLOWTIMO | (TCPT_PERSIST << 8));
 #endif
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void
@@ -511,17 +493,17 @@ tcp_timer_keep(void *arg)
 {
 	struct tcpcb *tp = arg;
 	struct socket *so = NULL;	/* Quell compiler warning */
-	int s;
 #ifdef TCP_DEBUG
 	short ostate;
 #endif
 
-	s = splsoftnet();
-	callout_ack(&tp->t_timer[TCPT_KEEP]);
-	if (tcp_isdead(tp)) {
-		splx(s);
+	mutex_enter(softnet_lock);
+	if ((tp->t_flags & TF_DEAD) != 0) {
+		mutex_exit(softnet_lock);
 		return;
 	}
+
+	KERNEL_LOCK(1, NULL);
 
 #ifdef TCP_DEBUG
 	ostate = tp->t_state;
@@ -585,29 +567,29 @@ tcp_timer_keep(void *arg)
 		tcp_trace(TA_USER, ostate, tp, NULL,
 		    PRU_SLOWTIMO | (TCPT_KEEP << 8));
 #endif
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 	return;
 
  dropit:
 	TCP_STATINC(TCP_STAT_KEEPDROPS);
 	(void) tcp_drop(tp, ETIMEDOUT);
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void
 tcp_timer_2msl(void *arg)
 {
 	struct tcpcb *tp = arg;
-	int s;
 #ifdef TCP_DEBUG
 	struct socket *so = NULL;
 	short ostate;
 #endif
 
-	s = splsoftnet();
-	callout_ack(&tp->t_timer[TCPT_2MSL]);
-	if (tcp_isdead(tp)) {
-		splx(s);
+	mutex_enter(softnet_lock);
+	if ((tp->t_flags & TF_DEAD) != 0) {
+		mutex_exit(softnet_lock);
 		return;
 	}
 
@@ -615,6 +597,7 @@ tcp_timer_2msl(void *arg)
 	 * 2 MSL timeout went off, clear the SACK scoreboard, reset
 	 * the FACK estimate.
 	 */
+	KERNEL_LOCK(1, NULL);
 	tcp_free_sackholes(tp);
 	tp->snd_fack = tp->snd_una;
 
@@ -649,5 +632,6 @@ tcp_timer_2msl(void *arg)
 		tcp_trace(TA_USER, ostate, tp, NULL,
 		    PRU_SLOWTIMO | (TCPT_2MSL << 8));
 #endif
-	splx(s);
+	mutex_exit(softnet_lock);
+	KERNEL_UNLOCK_ONE(NULL);
 }

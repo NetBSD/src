@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.43 2008/04/23 09:57:59 plunky Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.44 2008/04/24 11:38:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.43 2008/04/23 09:57:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.44 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_iso.h"
 
@@ -488,7 +488,9 @@ iso_pcbdetach(void *v)
 	if (so) {		/* in the x.25 domain, we sometimes have no
 				 * socket */
 		so->so_pcb = 0;
+		/* sofree drops the lock */
 		sofree(so);
+		mutex_enter(softnet_lock);
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {

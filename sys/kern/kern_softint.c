@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.15 2008/04/12 18:22:03 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.16 2008/04/24 11:38:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.15 2008/04/12 18:22:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16 2008/04/24 11:38:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -324,8 +324,8 @@ softint_init(struct cpu_info *ci)
 		 * XXX Needs to go away.
 		 */
 #define DONETISR(n, f)							\
-    softint_netisrs[(n)] = 						\
-        softint_establish(SOFTINT_NET, (void (*)(void *))(f), NULL)
+    softint_netisrs[(n)] = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE,\
+        (void (*)(void *))(f), NULL)
 #include <net/netisr_dispatch.h>
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.267 2008/04/23 06:09:04 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.268 2008/04/24 11:38:37 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.267 2008/04/23 06:09:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.268 2008/04/24 11:38:37 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -469,14 +469,18 @@ ipintr(void)
 	int s;
 	struct mbuf *m;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	while (!IF_IS_EMPTY(&ipintrq)) {
 		s = splnet();
 		IF_DEQUEUE(&ipintrq, m);
 		splx(s);
-		if (m == 0)
-			return;
+		if (m == NULL)
+			break;
 		ip_input(m);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -1389,7 +1393,9 @@ ip_slowtimo(void)
 	static u_int dropscanidx = 0;
 	u_int i;
 	u_int median_ttl;
-	int s = splsoftnet();
+
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	IPQ_LOCK();
 
@@ -1431,7 +1437,9 @@ ip_slowtimo(void)
 		dropscanidx = i;
 	}
 	IPQ_UNLOCK();
-	splx(s);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -1441,20 +1449,24 @@ void
 ip_drain(void)
 {
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	/*
 	 * We may be called from a device's interrupt context.  If
 	 * the ipq is already busy, just bail out now.
 	 */
-	if (ipq_lock_try() == 0)
-		return;
+	if (ipq_lock_try() != 0) {
+		/*
+		 * Drop half the total fragments now. If more mbufs are
+		 * needed, we will be called again soon.
+		 */
+		ip_reass_drophalf();
+		IPQ_UNLOCK();
+	}
 
-	/*
-	 * Drop half the total fragments now. If more mbufs are needed,
-	 *  we will be called again soon.
-	 */
-	ip_reass_drophalf();
-
-	IPQ_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*

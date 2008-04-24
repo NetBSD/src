@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.52 2008/04/23 07:29:47 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.53 2008/04/24 11:38:38 ad Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.52 2008/04/23 07:29:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.53 2008/04/24 11:38:38 ad Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4451,7 +4451,7 @@ key_bbcmp(const void *a1, const void *a2, u_int bits)
  * time handler.
  * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
- * XXX: year 2038 problem may remain.
+ * XXX2038: year 2038 problem may remain.
  */
 void
 key_timehandler(void* arg)
@@ -4461,6 +4461,7 @@ key_timehandler(void* arg)
 	time_t now = time_second;
 
 	s = splsoftnet();	/*called from softclock()*/
+	mutex_enter(softnet_lock);
 
 	/* SPD */
     {
@@ -4707,6 +4708,7 @@ key_timehandler(void* arg)
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
 #endif /* IPSEC_DEBUG2 */
 
+	mutex_exit(softnet_lock);
 	splx(s);
 	return;
 }

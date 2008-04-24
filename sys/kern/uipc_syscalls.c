@@ -1,4 +1,37 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.128 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.129 2008/04/24 11:38:36 ad Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.128 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.129 2008/04/24 11:38:36 ad Exp $");
 
 #include "opt_pipe.h"
 
@@ -139,7 +172,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 {
 	file_t		*fp, *fp2;
 	struct mbuf	*nam;
-	int		error, s, fd;
+	int		error, fd;
 	struct socket	*so, *so2;
 
 	if ((fp = fd_getfile(sock)) == NULL)
@@ -150,9 +183,8 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 		return (error);
 	nam = m_get(M_WAIT, MT_SONAME);
 	*new_sock = fd;
-	s = splsoftnet();
 	so = fp->f_data;
-	fd_putfile(sock);	/* XXX wrong, socket can disappear */
+	solock(so);
 	if (!(so->so_proto->pr_flags & PR_LISTEN)) {
 		error = EOPNOTSUPP;
 		goto bad;
@@ -170,8 +202,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 			so->so_error = ECONNABORTED;
 			break;
 		}
-		error = tsleep(&so->so_timeo, PSOCK | PCATCH,
-		    netcon, 0);
+		error = sowait(so, 0);
 		if (error) {
 			goto bad;
 		}
@@ -182,7 +213,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 		goto bad;
 	}
 	/* connection has been removed from the listen queue */
-	KNOTE(&so->so_rcv.sb_sel.sel_klist, 0);
+	KNOTE(&so->so_rcv.sb_sel.sel_klist, NOTE_SUBMIT);
 	so2 = TAILQ_FIRST(&so->so_q);
 	if (soqremque(so2, 1) == 0)
 		panic("accept");
@@ -191,7 +222,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
 	error = soaccept(so2, nam);
-	splx(s);
+	sounlock(so);
 	if (error) {
 		/* an error occurred, free the file descriptor and mbuf */
 		m_freem(nam);
@@ -204,10 +235,12 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 		fd_affix(curproc, fp2, fd);
 		*name = nam;
 	}
+	fd_putfile(sock);
 	return (error);
  bad:
-	splx(s);
+ 	sounlock(so);
  	m_freem(nam);
+	fd_putfile(sock);
  	fd_abort(curproc, fp2, fd);
  	return (error);
 }
@@ -263,12 +296,12 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 	struct socket	*so;
 	int		error;
 	int		interrupted = 0;
-	int		s;
 
 	if ((error = fd_getsock(fd, &so)) != 0) {
 		m_freem(nam);
 		return (error);
 	}
+	solock(so);
 	MCLAIM(nam, so->so_mowner);
 	if (so->so_state & SS_ISCONNECTING) {
 		error = EALREADY;
@@ -282,10 +315,8 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 		error = EINPROGRESS;
 		goto out;
 	}
-	s = splsoftnet();
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-		error = tsleep(&so->so_timeo, PSOCK | PCATCH,
-			       netcon, 0);
+		error = sowait(so, 0);
 		if (error) {
 			if (error == EINTR || error == ERESTART)
 				interrupted = 1;
@@ -296,13 +327,13 @@ do_sys_connect(struct lwp *l, int fd, struct mbuf *nam)
 		error = so->so_error;
 		so->so_error = 0;
 	}
-	splx(s);
  bad:
 	if (!interrupted)
 		so->so_state &= ~SS_ISCONNECTING;
 	if (error == ERESTART)
 		error = EINTR;
  out:
+ 	sounlock(so);
  	fd_putfile(fd);
 	m_freem(nam);
 	return (error);
@@ -324,11 +355,11 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap, register_t 
 
 	p = curproc;
 	error = socreate(SCARG(uap, domain), &so1, SCARG(uap, type),
-	    SCARG(uap, protocol), l);
+	    SCARG(uap, protocol), l, NULL);
 	if (error)
 		return (error);
 	error = socreate(SCARG(uap, domain), &so2, SCARG(uap, type),
-	    SCARG(uap, protocol), l);
+	    SCARG(uap, protocol), l, so1);
 	if (error)
 		goto free1;
 	if ((error = fd_allocfile(&fp1, &fd)) != 0)
@@ -345,20 +376,22 @@ sys_socketpair(struct lwp *l, const struct sys_socketpair_args *uap, register_t 
 	fp2->f_ops = &socketops;
 	fp2->f_data = so2;
 	sv[1] = fd;
-	if ((error = soconnect2(so1, so2)) != 0)
-		goto free4;
-	if (SCARG(uap, type) == SOCK_DGRAM) {
+	solock(so1);
+	error = soconnect2(so1, so2);
+	if (error == 0 && SCARG(uap, type) == SOCK_DGRAM) {
 		/*
 		 * Datagram socket connection is asymmetric.
 		 */
-		 if ((error = soconnect2(so2, so1)) != 0)
-			goto free4;
+		error = soconnect2(so2, so1);
 	}
-	error = copyout(sv, SCARG(uap, rsv), 2 * sizeof(int));
-	fd_affix(p, fp2, sv[1]);
-	fd_affix(p, fp1, sv[0]);
-	return (error);
- free4:
+	sounlock(so1);
+	if (error == 0)
+		error = copyout(sv, SCARG(uap, rsv), 2 * sizeof(int));
+	if (error == 0) {
+		fd_affix(p, fp2, sv[1]);
+		fd_affix(p, fp1, sv[0]);
+		return (0);
+	}
 	fd_abort(p, fp2, sv[1]);
  free3:
 	fd_abort(p, fp1, sv[0]);
@@ -519,9 +552,7 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		MCLAIM(control, so->so_mowner);
 
 	len = auio.uio_resid;
-	KERNEL_LOCK(1, NULL);
 	error = (*so->so_send)(so, to, &auio, NULL, control, flags, l);
-	KERNEL_UNLOCK_ONE(NULL);
 	/* Protocol is responsible for freeing 'control' */
 	control = NULL;
 
@@ -798,10 +829,8 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 
 	len = auio.uio_resid;
 	mp->msg_flags &= MSG_USERFLAGS;
-	KERNEL_LOCK(1, NULL);
 	error = (*so->so_receive)(so, from, &auio, NULL, control,
-			  &mp->msg_flags);
-	KERNEL_UNLOCK_ONE(NULL);
+	    &mp->msg_flags);
 	len -= auio.uio_resid;
 	*retsize = len;
 	if (error != 0 && len != 0
@@ -843,7 +872,9 @@ sys_shutdown(struct lwp *l, const struct sys_shutdown_args *uap, register_t *ret
 
 	if ((error = fd_getsock(SCARG(uap, s), &so)) != 0)
 		return (error);
+	solock(so);
 	error = soshutdown(so, SCARG(uap, how));
+	sounlock(so);
 	fd_putfile(SCARG(uap, s));
 	return (error);
 }
@@ -951,9 +982,9 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	proc_t		*p;
 
 	p = curproc;
-	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l)) != 0)
+	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l, NULL)) != 0)
 		return (error);
-	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l)) != 0)
+	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l, rso)) != 0)
 		goto free1;
 	/* remember this socket pair implements a pipe */
 	wso->so_state |= SS_ISAPIPE;
@@ -972,7 +1003,10 @@ sys_pipe(struct lwp *l, const void *v, register_t *retval)
 	wf->f_ops = &socketops;
 	wf->f_data = wso;
 	retval[1] = fd;
-	if ((error = unp_connect2(wso, rso, PRU_CONNECT2)) != 0)
+	solock(wso);
+	error = unp_connect2(wso, rso, PRU_CONNECT2);
+	sounlock(wso);
+	if (error != 0)
 		goto free4;
 	fd_affix(p, wf, (int)retval[1]);
 	fd_affix(p, rf, (int)retval[0]);
@@ -1003,20 +1037,21 @@ do_sys_getsockname(struct lwp *l, int fd, int which, struct mbuf **nam)
 	if ((error = fd_getsock(fd, &so)) != 0)
 		return error;
 
+	m = m_getclr(M_WAIT, MT_SONAME);
+	MCLAIM(m, so->so_mowner);
+
+	solock(so);
 	if (which == PRU_PEERADDR
 	    && (so->so_state & (SS_ISCONNECTED | SS_ISCONFIRMING)) == 0) {
 		error = ENOTCONN;
-		goto bad;
+	} else {
+		*nam = m;
+		error = (*so->so_proto->pr_usrreq)(so, which, NULL, m, NULL,
+		    NULL);
 	}
-
-	m = m_getclr(M_WAIT, MT_SONAME);
-	*nam = m;
-	MCLAIM(m, so->so_mowner);
-	error = (*so->so_proto->pr_usrreq)(so, which, (struct mbuf *)0,
-	    m, (struct mbuf *)0, (struct lwp *)0);
+ 	sounlock(so);
 	if (error != 0)
 		m_free(m);
- bad:
  	fd_putfile(fd);
 	return error;
 }

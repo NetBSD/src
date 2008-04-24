@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.84 2008/02/20 17:05:53 matt Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.85 2008/04/24 11:38:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.84 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.85 2008/04/24 11:38:37 ad Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.84 2008/02/20 17:05:53 matt Exp $");
 #include <sys/ioctl.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -363,7 +364,9 @@ static void
 pppoe_softintr_handler(void *dummy)
 {
 	/* called at splsoftnet() */
+	mutex_enter(softnet_lock);
 	pppoe_input();
+	mutex_exit(softnet_lock);
 }
 
 /* called at appropriate protection level */

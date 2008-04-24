@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.117 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.118 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.117 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.118 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -206,11 +206,11 @@ ip6_init2(void *dummy)
 {
 
 	/* nd6_timer_init */
-	callout_init(&nd6_timer_ch, 0);
+	callout_init(&nd6_timer_ch, CALLOUT_MPSAFE);
 	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
 
 	/* timer for regeneranation of temporary addresses randomize ID */
-	callout_init(&in6_tmpaddrtimer_ch, 0);
+	callout_init(&in6_tmpaddrtimer_ch, CALLOUT_MPSAFE);
 	callout_reset(&in6_tmpaddrtimer_ch,
 		      (ip6_temp_preferred_lifetime - ip6_desync_factor -
 		       ip6_temp_regen_advance) * hz,
@@ -226,19 +226,23 @@ ip6intr(void)
 	int s;
 	struct mbuf *m;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	for (;;) {
 		s = splnet();
 		IF_DEQUEUE(&ip6intrq, m);
 		splx(s);
 		if (m == 0)
-			return;
+			break;
 		/* drop the packet if IPv6 operation is disabled on the IF */
 		if ((ND_IFINFO(m->m_pkthdr.rcvif)->flags & ND6_IFF_IFDISABLED)) {
 			m_freem(m);
-			return;
+			break;
 		}
 		ip6_input(m);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 extern struct	route ip6_forward_rt;

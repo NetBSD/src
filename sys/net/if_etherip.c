@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.18 2008/04/05 13:53:07 cegger Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.19 2008/04/24 11:38:37 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -29,7 +29,7 @@
  *  SUCH DAMAGE.
  *
  *
- *  Copyright (c) 2003, 2004 The NetBSD Foundation.
+ *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.18 2008/04/05 13:53:07 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.19 2008/04/24 11:38:37 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.18 2008/04/05 13:53:07 cegger Exp $
 #include <sys/queue.h>
 #include <sys/kauth.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/intr.h>
 
 #include <net/if.h>
@@ -361,12 +362,13 @@ etheripintr(void *arg)
 	struct mbuf *m;
 	int s, error;
 
+	mutex_enter(softnet_lock);
 	for (;;) {
 		s = splnet();
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
 		if (m == NULL)
-			return;
+			break;
 		
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -393,6 +395,7 @@ etheripintr(void *arg)
 			ifp->if_flags &= ~IFF_OACTIVE;
 		} else  m_freem(m);
 	}
+	mutex_exit(softnet_lock);
 }
 
 static int

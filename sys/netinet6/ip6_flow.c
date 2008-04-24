@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.15 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.16 2008/04/24 11:38:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.15 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.16 2008/04/24 11:38:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,6 +410,9 @@ ip6flow_slowtimo(void)
 {
 	struct ip6flow *ip6f, *next_ip6f;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
 		if (PRT_SLOW_ISEXPIRED(ip6f->ip6f_timer) ||
@@ -423,6 +426,9 @@ ip6flow_slowtimo(void)
 			ip6f->ip6f_forwarded = 0;
 		}
 	}
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*

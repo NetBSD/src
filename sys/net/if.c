@@ -1,7 +1,7 @@
-/*	$NetBSD: if.c,v 1.218 2008/02/29 21:23:55 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.219 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218 2008/02/29 21:23:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.219 2008/04/24 11:38:37 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -1637,13 +1637,15 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			break;
 		if (so->so_proto == NULL)
 			return EOPNOTSUPP;
+		solock(so);
 #ifdef COMPAT_OSOCK
 		error = compat_ifioctl(so, ocmd, cmd, data, l);
 #else
-		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
+		error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
 		    (struct mbuf *)ifp, l));
 #endif
+		sounlock(so);
 		break;
 	}
 

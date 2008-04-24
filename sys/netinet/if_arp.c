@@ -1,7 +1,7 @@
-/*	$NetBSD: if_arp.c,v 1.133 2008/04/23 05:26:50 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.134 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.133 2008/04/23 05:26:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.134 2008/04/24 11:38:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -100,6 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.133 2008/04/23 05:26:50 thorpej Exp $")
 #include <sys/protosw.h>
 #include <sys/domain.h>
 #include <sys/sysctl.h>
+#include <sys/socketvar.h>
+#include <sys/percpu.h>
 
 #include <net/ethertypes.h>
 #include <net/if.h>
@@ -341,8 +343,13 @@ arp_drain(void)
 	int count = 0;
 	struct mbuf *mold;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	if (arp_lock_try(0) == 0) {
 		printf("arp_drain: locked; punting\n");
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
 		return;
 	}
 
@@ -359,6 +366,8 @@ arp_drain(void)
 	}
 	ARP_UNLOCK();
 	ARP_STATADD(ARP_STAT_DFRDROPPED, count);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 
@@ -369,14 +378,15 @@ arp_drain(void)
 static void
 arptimer(void *arg)
 {
-	int s;
 	struct llinfo_arp *la, *nla;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	if (arp_lock_try(0) == 0) {
 		/* get it later.. */
-		splx(s);
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
 		return;
 	}
 
@@ -403,7 +413,8 @@ arptimer(void *arg)
 
 	ARP_UNLOCK();
 
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -473,7 +484,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			ts.tv_nsec = 0;
 			tc_setclock(&ts);
 		}
-		callout_init(&arptimer_ch, 0);
+		callout_init(&arptimer_ch, CALLOUT_MPSAFE);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
 	}
 
@@ -822,6 +833,8 @@ arpintr(void)
 	int s;
 	int arplen;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	while (arpintrq.ifq_head) {
 		s = splnet();
 		IF_DEQUEUE(&arpintrq, m);
@@ -866,6 +879,8 @@ badlen:
 		}
 		m_freem(m);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*

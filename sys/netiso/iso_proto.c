@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.27 2008/04/23 09:57:59 plunky Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.28 2008/04/24 11:38:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.27 2008/04/23 09:57:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.28 2008/04/24 11:38:38 ad Exp $");
 
 
 #include <sys/param.h>
@@ -96,6 +96,32 @@ const int isoctlerrmap[PRC_NCMDS] = {
 };
 
 DOMAIN_DEFINE(isodomain);	/* forward declare and add to link set */
+
+/* Wrappers to acquire kernel_lock. */
+
+PR_WRAP_USRREQ(cltp_usrreq)
+PR_WRAP_USRREQ(clnp_usrreq)
+PR_WRAP_USRREQ(idrp_usrreq)
+PR_WRAP_USRREQ(tp_usrreq)
+PR_WRAP_USRREQ(esis_usrreq)
+
+#define	cltp_usrreq	cltp_usrreq_wrapper
+#define	clnp_usrreq	clnp_usrreq_wrapper
+#define	idrp_usrreq	idrp_usrreq_wrapper
+#define	tp_usrreq	tp_usrreq_wrapper
+#define	esis_usrreq	esis_usrreq_wrapper
+
+PR_WRAP_CTLOUTPUT(rclnp_ctloutput)
+PR_WRAP_CTLOUTPUT(tp_ctloutput)
+
+#define	rclnp_ctloutput	rclnp_ctloutput_wrapper
+#define	tp_ctloutput	tp_ctloutput_wrapper
+
+PR_WRAP_CTLINPUT(esis_ctlinput)
+PR_WRAP_CTLINPUT(tpclnp_ctlinput)
+
+#define	esis_ctlinput	esis_ctlinput_wrapper
+#define	tpclnp_ctlinput	tpclnp_ctlinput_wrapper
 
 const struct protosw  isosw[] = {
 	/*

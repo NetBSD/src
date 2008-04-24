@@ -1,4 +1,4 @@
-/*	$NetBSD: unpcb.h,v 1.16 2008/03/28 12:14:22 ad Exp $	*/
+/*	$NetBSD: unpcb.h,v 1.17 2008/04/24 11:38:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,6 +35,7 @@
 #define _SYS_UNPCB_H_
 
 #include <sys/un.h>
+#include <sys/mutex.h>
 
 /*
  * Protocol control block for an active
@@ -75,6 +76,7 @@ struct	unpcb {
 	struct	unpcb *unp_refs;	/* referencing socket linked list */
 	struct 	unpcb *unp_nextref;	/* link in unp_refs list */
 	struct	sockaddr_un *unp_addr;	/* bound address of socket */
+	kmutex_t *unp_streamlock;	/* lock for est. stream connections */
 	size_t	unp_addrlen;		/* size of socket address */
 	int	unp_cc;			/* copy of rcv.sb_cc */
 	int	unp_mbcnt;		/* copy of rcv.sb_mbcnt */

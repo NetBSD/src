@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.81 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.82 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.81 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -145,6 +145,44 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.81 2008/04/23 06:09:05 thorpej Exp $
  */
 
 DOMAIN_DEFINE(inet6domain);	/* forward declare and add to link set */
+
+/* Wrappers to acquire kernel_lock. */
+
+PR_WRAP_USRREQ(rip6_usrreq)
+PR_WRAP_USRREQ(udp6_usrreq)
+PR_WRAP_USRREQ(tcp_usrreq)
+
+#define	rip6_usrreq 	rip6_usrreq_wrapper
+#define	udp6_usrreq 	udp6_usrreq_wrapper
+#define	tcp_usrreq 	tcp_usrreq_wrapper
+
+PR_WRAP_CTLINPUT(rip6_ctlinput)
+PR_WRAP_CTLINPUT(encap6_ctlinput)
+PR_WRAP_CTLINPUT(udp6_ctlinput)
+PR_WRAP_CTLINPUT(tcp6_ctlinput)
+
+#define	rip6_ctlinput	rip6_ctlinput_wrapper
+#define	encap6_ctlinput	encap6_ctlinput_wrapper
+#define	udp6_ctlinput	udp6_ctlinput_wrapper
+#define	tcp6_ctlinput	tcp6_ctlinput_wrapper
+
+PR_WRAP_CTLOUTPUT(rip6_ctloutput)
+PR_WRAP_CTLOUTPUT(ip6_ctloutput)
+PR_WRAP_CTLOUTPUT(tcp_ctloutput)
+PR_WRAP_CTLOUTPUT(icmp6_ctloutput)
+
+#define	rip6_ctloutput	rip6_ctloutput_wrapper
+#define	ip6_ctloutput	ip6_ctloutput_wrapper
+#define	tcp_ctloutput	tcp_ctloutput_wrapper
+#define	icmp6_ctloutput	icmp6_ctloutput_wrapper
+
+#if defined(IPSEC) || defined(FAST_IPSEC)
+PR_WRAP_CTLINPUT(ah6_ctlinput)
+PR_WRAP_CTLINPUT(esp6_ctlinput)
+
+#define	ah6_ctlinput	ah6_ctlinput_wrapper
+#define	esp6_ctlinput	esp6_ctlinput_wrapper
+#endif
 
 const struct ip6protosw inet6sw[] = {
 {	.pr_domain = &inet6domain,

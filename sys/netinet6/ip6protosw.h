@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.19 2007/07/19 20:48:57 dyoung Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.20 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ struct ip6protosw {
 	int	(*pr_output)		/* output to protocol (from above) */
 			(struct mbuf *, struct socket *, struct sockaddr_in6 *,
 			 struct mbuf *);
-	void	(*pr_ctlinput)		/* control input (from below) */
+	void	*(*pr_ctlinput)		/* control input (from below) */
 			(int, const struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
 			(int, struct socket *, int, int, struct mbuf **);
