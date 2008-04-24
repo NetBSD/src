@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.140.2.1 2008/04/19 08:33:27 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.140.2.2 2008/04/24 08:28:48 peter Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -872,6 +872,7 @@ struct	m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define PACKET_TAG_ENCAP			2  /* encapsulation data */
 #define PACKET_TAG_ESP				3  /* ESP information */
 #define PACKET_TAG_PF				11 /* packet filter */
+#define PACKET_TAG_ALTQ_QID			12 /* ALTQ queue id */
 
 #define PACKET_TAG_IPSEC_IN_CRYPTO_DONE		16
 #define PACKET_TAG_IPSEC_IN_DONE		17

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.27 2008/01/20 18:09:03 joerg Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.27.8.1 2008/04/24 08:28:49 peter Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.27 2008/01/20 18:09:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.27.8.1 2008/04/24 08:28:49 peter Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -526,7 +526,7 @@ mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 	void		*hdr;
 	int		 af;
 
-	t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
+	t = m_tag_find(m, PACKET_TAG_ALTQ_QID, NULL);
 	if (t != NULL) {
 		at = (struct altq_tag *)(t + 1);
 		if (at == NULL)
