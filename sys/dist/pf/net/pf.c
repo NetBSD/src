@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.2.4 2008/04/23 19:25:18 peter Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.2.5 2008/04/24 08:28:49 peter Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.4 2008/04/23 19:25:18 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.5 2008/04/24 08:28:49 peter Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -1699,9 +1699,18 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 #ifdef ALTQ
 	if (r != NULL && r->qid) {
 #ifdef __NetBSD__
-		pf_mtag->qid = r->qid;
-		/* add hints for ecn */
-		pf_mtag->hdr = mtod(m, struct ip *);
+		struct m_tag	*mtag;
+		struct altq_tag	*atag;
+
+		mtag = m_tag_get(PACKET_TAG_ALTQ_QID, sizeof(*atag), M_NOWAIT);
+		if (mtag != NULL) {
+			atag = (struct altq_tag *)(mtag + 1);
+			atag->qid = r->qid;
+			/* add hints for ecn */
+			atag->af = af;
+			atag->hdr = mtod(m, struct ip *);
+			m_tag_prepend(m, mtag);
+		}
 #else
 		m->m_pkthdr.pf.qid = r->qid;
 		/* add hints for ecn */
@@ -1851,9 +1860,18 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code, sa_family_t af,
 #ifdef ALTQ
 	if (r->qid) {
 #ifdef __NetBSD__
-		pf_mtag->qid = r->qid;
-		/* add hints for ecn */
-		pf_mtag->hdr = mtod(m0, struct ip *);
+		struct m_tag	*mtag;
+		struct altq_tag	*atag;
+
+		mtag = m_tag_get(PACKET_TAG_ALTQ_QID, sizeof(*atag), M_NOWAIT);
+		if (mtag != NULL) {
+			atag = (struct altq_tag *)(mtag + 1);
+			atag->qid = r->qid;
+			/* add hints for ecn */
+			atag->af = af;
+			atag->hdr = mtod(m0, struct ip *);
+			m_tag_prepend(m0, mtag);
+		}
 #else
 		m0->m_pkthdr.pf.qid = r->qid;
 		/* add hints for ecn */
@@ -5871,12 +5889,21 @@ done:
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
 #ifdef __NetBSD__
-		if (pqid || (pd.tos & IPTOS_LOWDELAY))
-			pf_mtag->qid = r->pqid;
-		else
-			pf_mtag->qid = r->qid;
-		/* add hints for ecn */
-		pf_mtag->hdr = h;
+		struct m_tag	*mtag;
+		struct altq_tag	*atag;
+
+		mtag = m_tag_get(PACKET_TAG_ALTQ_QID, sizeof(*atag), M_NOWAIT);
+		if (mtag != NULL) {
+			atag = (struct altq_tag *)(mtag + 1);
+			if (pqid || (pd.tos & IPTOS_LOWDELAY))
+				atag->qid = r->pqid;
+			else
+				atag->qid = r->qid;
+			/* add hints for ecn */
+			atag->af = AF_INET;
+			atag->hdr = h;
+			m_tag_prepend(m, mtag);
+		}
 #else
 		if (pqid || (pd.tos & IPTOS_LOWDELAY))
 			m->m_pkthdr.pf.qid = r->pqid;
@@ -6003,7 +6030,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0, log = 0;
 	struct mbuf		*m = *m0, *n = NULL;
-	struct ip6_hdr		*h;
+	struct ip6_hdr		*h = NULL; /* XXX gcc */
 	struct pf_rule		*a = NULL, *r = &pf_default_rule, *tr, *nr;
 	struct pf_state		*s = NULL;
 	struct pf_state_key	*sk = NULL;
@@ -6278,12 +6305,21 @@ done:
 #ifdef ALTQ
 	if (action == PF_PASS && r->qid) {
 #ifdef __NetBSD__
-		if (pd.tos & IPTOS_LOWDELAY)
-			pf_mtag->qid = r->pqid;
-		else
-			pf_mtag->qid = r->qid;
-		/* add hints for ecn */
-		pf_mtag->hdr = h;
+		struct m_tag	*mtag;
+		struct altq_tag	*atag;
+
+		mtag = m_tag_get(PACKET_TAG_ALTQ_QID, sizeof(*atag), M_NOWAIT);
+		if (mtag != NULL) {
+			atag = (struct altq_tag *)(mtag + 1);
+			if (pd.tos & IPTOS_LOWDELAY)
+				atag->qid = r->pqid;
+			else
+				atag->qid = r->qid;
+			/* add hints for ecn */
+			atag->af = AF_INET6;
+			atag->hdr = h;
+			m_tag_prepend(m, mtag);
+		}
 #else
 		if (pd.tos & IPTOS_LOWDELAY)
 			m->m_pkthdr.pf.qid = r->pqid;
