@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.h,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_decode.h,v 1.4 2008/04/24 01:27:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,10 +46,10 @@
  * All routines declared here are exported via mime.h
  */
 
-FILE	*mime_decode_body(struct mime_info *);
-void	 mime_decode_close(struct mime_info *);
-FILE	*mime_decode_header(struct mime_info *);
-char	*mime_decode_hfield(char *, size_t, char *);
+FILE *	mime_decode_body(struct mime_info *);
+void	mime_decode_close(struct mime_info *);
+FILE *	mime_decode_header(struct mime_info *);
+char *	mime_decode_hfield(char *, size_t, const char *, char *);
 struct mime_info *mime_decode_open(struct message *);
 int	mime_sendmessage(struct message *, FILE *, struct ignoretab *,
     const char *, struct mime_info *);

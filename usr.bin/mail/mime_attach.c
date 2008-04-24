@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.8 2007/12/14 16:55:20 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.9 2008/04/24 01:27:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.8 2007/12/14 16:55:20 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.9 2008/04/24 01:27:06 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -305,7 +305,7 @@ content_encoding_by_fileno(int fd, const char *ctype)
 		return MIME_TRANSFER_BASE64;
 	}
 	encoding = content_encoding_core(fp, ctype);
-	Fclose(fp);
+	(void)Fclose(fp);
 	(void)lseek(fd, cur_pos, SEEK_SET);
 	return encoding;
 }
