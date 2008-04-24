@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.155 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.155 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.156 2008/04/24 15:35:30 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -625,10 +625,10 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 		    kauth_cred_get());
 		if (error == 0 && com == TIOCSCTTY) {
 			VREF(vp);
-			mutex_enter(&proclist_lock);
+			mutex_enter(proc_lock);
 			ovp = curproc->p_session->s_ttyvp;
 			curproc->p_session->s_ttyvp = vp;
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			if (ovp != NULL)
 				vrele(ovp);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.160 2008/03/23 17:40:25 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.161 2008/04/24 15:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.160 2008/03/23 17:40:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.161 2008/04/24 15:35:29 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -439,7 +439,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * It's now safe for the scheduler and other processes to see the
 	 * child process.
 	 */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_lflag & PL_CONTROLT)
 		p2->p_lflag |= PL_CONTROLT;
@@ -447,27 +447,13 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&parent->p_children, p2, p_sibling);
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
 
-	mutex_enter(&proclist_mutex);
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	mutex_exit(&proclist_mutex);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
-
-	mutex_exit(&proclist_lock);
 
 	p2->p_trace_enabled = trace_is_enabled(p2);
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif
-
-	/*
-	 * Now can be swapped.
-	 */
-	uvm_lwp_rele(l1);
-
-	/*
-	 * Notify any interested parties about the new process.
-	 */
-	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
 
 	/*
 	 * Update stats now that we know the fork was successful.
@@ -488,11 +474,24 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_traceflag |= KTRFAC_TRC_EMUL;
 
 	/*
+	 * Now can be swapped.
+	 */
+	uvm_lwp_rele(l1);
+
+	/*
+	 * Notify any interested parties about the new process.
+	 */
+	if (!SLIST_EMPTY(&p1->p_klist)) {
+		mutex_exit(proc_lock);
+		KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
+		mutex_enter(proc_lock);
+	}
+
+	/*
 	 * Make child runnable, set start time, and add to run queue except
 	 * if the parent requested the child to start in SSTOP state.
 	 */
 	tmp = (p2->p_userret != NULL ? LW_WUSERRET : 0);
-	mutex_enter(&proclist_mutex);
 	mutex_enter(&p2->p_smutex);
 
 	getmicrotime(&p2->p_stats->p_start);
@@ -516,7 +515,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		lwp_unlock(l2);
 	}
 
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Start profiling.
@@ -526,6 +525,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		startprofclock(p2);
 		mutex_spin_exit(&p2->p_stmutex);
 	}
+
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for

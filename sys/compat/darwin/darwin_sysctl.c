@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.57 2008/04/05 14:03:16 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.58 2008/04/24 15:35:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.57 2008/04/05 14:03:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.58 2008/04/24 15:35:27 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -630,7 +630,7 @@ darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 
 	pd = proclists;
 again:
@@ -708,7 +708,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	if (where != NULL) {
 		*oldlenp = (char *)dp - where;
@@ -720,7 +720,7 @@ again:
 	}
 	return (0);
  cleanup:
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	return (error);
 }
 

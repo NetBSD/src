@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.4 2008/01/30 17:54:56 elad Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.5 2008/04/24 15:35:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.4 2008/01/30 17:54:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.5 2008/04/24 15:35:30 ad Exp $");
 
 #include <sys/param.h>
 
@@ -209,14 +209,14 @@ kern_pset_destroy(psetid_t psid)
 	mutex_exit(&psets_lock);
 
 	/* Unmark the processor-set ID from each thread */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		/* Safe to check and set without lock held */
 		if (l->l_psid != psid)
 			continue;
 		l->l_psid = PS_NONE;
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/* Destroy the processor-set */
 	mutex_enter(&psets_lock);
@@ -404,13 +404,15 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 	}
 
 	/* Find the process */
-	p = p_find(pid, PFIND_UNLOCK_FAIL);
+	mutex_enter(proc_lock);
+	p = p_find(pid, PFIND_LOCKED);
 	if (p == NULL) {
+		mutex_exit(proc_lock);
 		error = ESRCH;
 		goto error;
 	}
 	mutex_enter(&p->p_smutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/* Disallow modification of the system processes */
 	if (p->p_flag & PK_SYSTEM) {

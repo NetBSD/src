@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.21 2007/02/09 21:55:04 ad Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.22 2008/04/24 15:35:27 ad Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.21 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.22 2008/04/24 15:35:27 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -211,7 +211,9 @@ mach_create_thread_child(arg)
 	if (mctc->mctc_flavor != MACHO_POWERPC_THREAD_STATE) {
 		mctc->mctc_child_done = 1;
 		wakeup(&mctc->mctc_child_done);	
+		mutex_enter(proc_lock);
 		killproc(p, "mach_create_thread_child: unknown flavor");
+		mutex_exit(proc_lock);
 	}
 	
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.86 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.87 2008/04/24 15:35:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.86 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.87 2008/04/24 15:35:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -699,7 +699,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 	struct proc *tp;
 	int error = 0;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 
 	if (pid == 0)
 		tp = &proc0;
@@ -708,7 +708,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 	if (tp != NULL && !rw_tryenter(&tp->p_reflock, RW_READER))
 		error = EBUSY;
 
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	*bunghole = tp;
 	return error;

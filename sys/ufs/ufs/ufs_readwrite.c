@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.86 2008/01/02 11:49:14 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.87 2008/04/24 15:35:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.86 2008/01/02 11:49:14 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.87 2008/04/24 15:35:31 ad Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -265,9 +265,9 @@ WRITE(void *v)
 	if (vp->v_type == VREG && l &&
 	    uio->uio_offset + uio->uio_resid >
 	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		psignal(l->l_proc, SIGXFSZ);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		return (EFBIG);
 	}
 	if (uio->uio_resid == 0)
