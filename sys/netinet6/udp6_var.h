@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.22 2008/04/15 04:43:25 thorpej Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.23 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -99,7 +99,7 @@
 }
 
 #ifdef _KERNEL
-void	udp6_ctlinput(int, const struct sockaddr *, void *);
+void	*udp6_ctlinput(int, const struct sockaddr *, void *);
 void	udp6_init(void);
 int	udp6_input(struct mbuf **, int *, int);
 int	udp6_output(struct in6pcb *, struct mbuf *, struct mbuf *,

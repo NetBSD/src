@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.54 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.55 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.54 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.55 2008/04/24 11:38:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,6 +408,8 @@ ipflow_slowtimo(void)
 	struct ipflow *ipf, *next_ipf;
 	uint64_t *ips;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer) ||
@@ -424,6 +426,8 @@ ipflow_slowtimo(void)
 			ipf->ipf_uses = 0;
 		}
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void

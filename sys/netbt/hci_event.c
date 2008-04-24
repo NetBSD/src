@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.17 2008/03/17 09:16:17 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.18 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.17 2008/03/17 09:16:17 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.18 2008/04/24 11:38:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -839,7 +839,7 @@ hci_cmd_read_bdaddr(struct hci_unit *unit, struct mbuf *m)
 
 	unit->hci_flags &= ~BTF_INIT_BDADDR;
 
-	wakeup(unit);
+	cv_broadcast(&unit->hci_init);
 }
 
 /*
@@ -867,7 +867,7 @@ hci_cmd_read_buffer_size(struct hci_unit *unit, struct mbuf *m)
 
 	unit->hci_flags &= ~BTF_INIT_BUFFER_SIZE;
 
-	wakeup(unit);
+	cv_broadcast(&unit->hci_init);
 }
 
 /*
@@ -955,7 +955,7 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 
 	unit->hci_flags &= ~BTF_INIT_FEATURES;
 
-	wakeup(unit);
+	cv_broadcast(&unit->hci_init);
 
 	DPRINTFN(1, "%s: lmp_mask %4.4x, acl_mask %4.4x, sco_mask %4.4x\n",
 		device_xname(unit->hci_dev), unit->hci_lmp_mask,
@@ -984,7 +984,7 @@ hci_cmd_read_local_ver(struct hci_unit *unit, struct mbuf *m)
 
 	if (rp.hci_version < HCI_SPEC_V12) {
 		unit->hci_flags &= ~BTF_INIT_COMMANDS;
-		wakeup(unit);
+		cv_broadcast(&unit->hci_init);
 		return;
 	}
 
@@ -1012,7 +1012,7 @@ hci_cmd_read_local_commands(struct hci_unit *unit, struct mbuf *m)
 	unit->hci_flags &= ~BTF_INIT_COMMANDS;
 	memcpy(unit->hci_cmds, rp.commands, HCI_COMMANDS_SIZE);
 
-	wakeup(unit);
+	cv_broadcast(&unit->hci_init);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.18 2008/04/23 15:17:42 thorpej Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.19 2008/04/24 11:38:37 ad Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.18 2008/04/23 15:17:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.19 2008/04/24 11:38:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ atintr()
 	struct at_ifaddr *aa;
 	int             s;
 
+	mutex_enter(softnet_lock);
 	for (;;) {
 		s = splnet();
 
@@ -127,6 +128,7 @@ atintr()
 			ddp_input(m, ifp, &elh, 1);
 		}
 	}
+	mutex_exit(softnet_lock);
 }
 
 struct route    forwro;

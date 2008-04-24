@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.15 2008/04/23 07:29:47 thorpej Exp $	*/
+/*	$NetBSD: keysock.c,v 1.16 2008/04/24 11:38:38 ad Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.15 2008/04/23 07:29:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.16 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -641,6 +641,7 @@ key_usrreq(struct socket *so, int req,struct mbuf *m, struct mbuf *nam,
 	s = splsoftnet();
 	if (req == PRU_ATTACH) {
 		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB, M_WAITOK);
+		sosetlock(so);
 		so->so_pcb = kp;
 		if (so->so_pcb)
 			bzero(so->so_pcb, sizeof(*kp));

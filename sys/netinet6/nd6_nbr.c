@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.85 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.86 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.85 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.86 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.85 2008/04/15 03:57:04 thorpej Exp $")
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/sockio.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -1099,7 +1100,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 		return;
 	}
 	bzero(dp, sizeof(*dp));
-	callout_init(&dp->dad_timer_ch, 0);
+	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
 	nd6log((LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
@@ -1151,11 +1152,11 @@ nd6_dad_stop(struct ifaddr *ifa)
 static void
 nd6_dad_timer(struct ifaddr *ifa)
 {
-	int s;
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 
-	s = splsoftnet();	/* XXX */
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	/* Sanity check */
 	if (ia == NULL) {
@@ -1248,7 +1249,8 @@ nd6_dad_timer(struct ifaddr *ifa)
 	}
 
 done:
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void

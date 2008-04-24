@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.158 2008/04/23 07:29:47 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.159 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.158 2008/04/23 07:29:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.159 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4651,7 +4651,7 @@ key_bbcmp(p1v, p2v, bits)
  * time handler.
  * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
- * XXX: year 2038 problem may remain.
+ * XXX2038: year 2038 problem may remain.
  */
 void
 key_timehandler(void *arg)
@@ -4663,6 +4663,7 @@ key_timehandler(void *arg)
 	getmicrotime(&tv);
 
 	s = splsoftnet();	/*called from softclock()*/
+	mutex_enter(softnet_lock);
 
 	/* SPD */
     {
@@ -4925,6 +4926,7 @@ key_timehandler(void *arg)
 
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
 
+	mutex_exit(softnet_lock);
 	splx(s);
 	return;
 }

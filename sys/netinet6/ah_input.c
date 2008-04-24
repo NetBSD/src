@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.56 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.57 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.56 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.57 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -923,7 +923,7 @@ fail:
 	return IPPROTO_DONE;
 }
 
-void
+void *
 ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newah *ahp;
@@ -937,9 +937,9 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -961,7 +961,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(ah))
-			return;
+			return NULL;
 
 		if (m->m_len < off + sizeof(ah)) {
 			/*
@@ -1009,5 +1009,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	} else {
 		/* we normally notify any pcb here */
 	}
+
+	return NULL;
 }
 #endif /* INET6 */

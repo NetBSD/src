@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_socket.c,v 1.7 2007/04/21 06:15:23 plunky Exp $	*/
+/*	$NetBSD: l2cap_socket.c,v 1.8 2008/04/24 11:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.7 2007/04/21 06:15:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_socket.c,v 1.8 2008/04/24 11:38:37 ad Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -120,9 +120,14 @@ l2cap_usrreq(struct socket *up, int req, struct mbuf *m,
 		return EOPNOTSUPP;
 
 	case PRU_ATTACH:
+		if (up->so_lock == NULL) {
+			mutex_obj_hold(bt_lock);
+			up->so_lock = bt_lock;
+			solock(up);
+		}
+		KASSERT(solocked(up));
 		if (pcb != NULL)
 			return EINVAL;
-
 		/*
 		 * For L2CAP socket PCB we just use an l2cap_channel structure
 		 * since we have nothing to add..

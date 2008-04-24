@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.97 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.98 2008/04/24 11:38:38 ad Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.97 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.98 2008/04/24 11:38:38 ad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -293,7 +293,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	return IPPROTO_DONE;
 }
 
-void
+void *
 rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct ip6_hdr *ip6;
@@ -305,10 +305,10 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;;
 	if (PRC_IS_REDIRECT(cmd))
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
@@ -316,7 +316,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	else if (cmd == PRC_MSGSIZE)
 		; /* special code is present, see below */
 	else if (inet6ctlerrmap[cmd] == 0)
-		return;
+		return NULL;;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -385,6 +385,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
 	    (const struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
+	return NULL;
 }
 
 /*
@@ -627,14 +628,17 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 		    (struct ifnet *)control, l);
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		in6_pcbpurgeif0(&raw6cbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&raw6cbtable, (struct ifnet *)control);
+		mutex_exit(softnet_lock);
 		return 0;
 	}
 
 	switch (req) {
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (in6p != NULL)
 			panic("rip6_attach");
 		if (!priv) {
