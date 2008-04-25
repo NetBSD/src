@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.40 2008/04/25 17:18:24 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.41 2008/04/25 22:18:34 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.40 2008/04/25 17:18:24 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.41 2008/04/25 22:18:34 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: cgram.y,v 1.40 2008/04/25 17:18:24 christos Exp $");
 
 #include "lint1.h"
 
+extern char *yytext;
 /*
  * Contains the level of current declaration. 0 is extern.
  * Used for symbol table entries.
@@ -147,6 +148,8 @@ static inline void RESTORE(const char *file, size_t line)
 %token			T_COMMA
 %token			T_SEMI
 %token			T_ELLIPSE
+%token			T_REAL
+%token			T_IMAG
 
 /* storage classes (extern, static, auto, register and typedef) */
 %token	<y_scl>		T_SCLASS
@@ -192,7 +195,7 @@ static inline void RESTORE(const char *file, size_t line)
 %left	T_SHFTOP
 %left	T_ADDOP
 %left	T_MULT T_DIVOP
-%right	T_UNOP T_INCDEC T_SIZEOF
+%right	T_UNOP T_INCDEC T_SIZEOF T_REAL T_IMAG
 %left	T_LPARN T_LBRACK T_STROP
 
 %token	<y_sb>		T_NAME
@@ -344,7 +347,7 @@ func_def:
 	  func_decl {
 		if ($1->s_type->t_tspec != FUNC) {
 			/* syntax error */
-			error(249);
+			error(249, yytext);
 			YYERROR;
 		}
 		if ($1->s_type->t_typedef) {
@@ -1666,6 +1669,18 @@ term:
 			$$ = NULL;
 		}
 	  }
+	| T_REAL term {
+		$$ = build(REAL, $2, NULL);
+	  }
+	| T_IMAG term {
+		$$ = build(IMAG, $2, NULL);
+	  }
+	| T_REAL T_LPARN term T_RPARN {
+		$$ = build(REAL, $3, NULL);
+	  }
+	| T_IMAG T_LPARN term T_RPARN {
+		$$ = build(IMAG, $3, NULL);
+	  }
 	| T_SIZEOF term					%prec T_SIZEOF {
 		if (($$ = $2 == NULL ? NULL : bldszof($2->tn_type)) != NULL)
 			chkmisc($2, 0, 0, 0, 0, 0, 1);
@@ -1727,7 +1742,7 @@ point_or_arrow:
 point:
 	  T_STROP {
 		if ($1 != POINT)
-			error(249);
+			error(249, yytext);
 	  }
 	;
 
@@ -1746,7 +1761,7 @@ identifier:
 int
 yyerror(char *msg)
 {
-	error(249);
+	error(249, yytext);
 	if (++sytxerr >= 5)
 		norecover();
 	return (0);
