@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_callmsg.c,v 1.17 2003/05/29 18:15:25 christos Exp $	*/
+/*	$NetBSD: rpc_callmsg.c,v 1.18 2008/04/25 17:44:44 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_callmsg.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_callmsg.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_callmsg.c,v 1.17 2003/05/29 18:15:25 christos Exp $");
+__RCSID("$NetBSD: rpc_callmsg.c,v 1.18 2008/04/25 17:44:44 christos Exp $");
 #endif
 #endif
 
@@ -140,8 +140,7 @@ xdr_callmsg(xdrs, cmsg)
 					return (FALSE);
 				}
 				if (oa->oa_base == NULL) {
-					oa->oa_base = (caddr_t)
-					    mem_alloc(oa->oa_length);
+					oa->oa_base = mem_alloc(oa->oa_length);
 					if (oa->oa_base == NULL)
 						return (FALSE);
 				}
@@ -176,8 +175,7 @@ xdr_callmsg(xdrs, cmsg)
 					return (FALSE);
 				}
 				if (oa->oa_base == NULL) {
-					oa->oa_base = (caddr_t)
-					    mem_alloc(oa->oa_length);
+					oa->oa_base = mem_alloc(oa->oa_length);
 					if (oa->oa_base == NULL)
 						return (FALSE);
 				}

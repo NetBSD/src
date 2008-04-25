@@ -1,4 +1,4 @@
-/*	$NetBSD: mt_misc.c,v 1.5 2006/01/26 12:37:11 kleink Exp $	*/
+/*	$NetBSD: mt_misc.c,v 1.6 2008/04/25 17:44:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: mt_misc.c,v 1.5 2006/01/26 12:37:11 kleink Exp $");
+__RCSID("$NetBSD: mt_misc.c,v 1.6 2008/04/25 17:44:44 christos Exp $");
 #endif
 
 #include	"namespace.h"
@@ -130,8 +130,9 @@ __rpc_createerr()
 	thr_once(&rce_once, __rpc_createerr_setup);
 	rce_addr = thr_getspecific(rce_key);
 	if (rce_addr == NULL) {
-		rce_addr = (struct rpc_createerr *)
-		    malloc(sizeof (struct rpc_createerr));
+		rce_addr = malloc(sizeof(*rce_addr));
+		if (rce_addr == NULL)
+			return &rpc_createerr;
 		thr_setspecific(rce_key, (void *) rce_addr);
 		memset(rce_addr, 0, sizeof (struct rpc_createerr));
 	}
