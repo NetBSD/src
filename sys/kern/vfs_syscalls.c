@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.349 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.350 2008/04/25 13:40:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.349 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.350 2008/04/25 13:40:55 joerg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3488,7 +3488,7 @@ sys_rmdir(struct lwp *l, const struct sys_rmdir_args *uap, register_t *retval)
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
 	 */
-	if (vp->v_vflag & VV_ROOT) {
+	if ((vp->v_vflag & VV_ROOT) != 0 || vp->v_mountedhere != NULL) {
 		error = EBUSY;
 		goto out;
 	}
