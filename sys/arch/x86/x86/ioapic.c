@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.33 2008/04/18 15:32:46 cegger Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.34 2008/04/25 17:41:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.33 2008/04/18 15:32:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.34 2008/04/25 17:41:10 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -403,7 +403,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 	       struct cpu_info *ci)
 {
 	uint32_t redlo;
-	uint32_t redhi = 0;
+	uint32_t redhi;
 	int delmode;
 
 	struct ioapic_pin *pp;
@@ -416,9 +416,10 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 
 	/* XXX magic numbers */
 	if ((delmode != 0) && (delmode != 1))
-		;
+		redhi = 0;
 	else if (pp->ip_type == IST_NONE) {
 		redlo |= IOAPIC_REDLO_MASK;
+		redhi = 0;
 	} else {
 		redlo |= (idt_vec & 0xff);
 		redlo |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
@@ -433,7 +434,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 		 * CPUs.  but there's no point in doing that until after 
 		 * most interrupts run without the kernel lock.  
 		 */
-		redhi |= (ci->ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
+		redhi = (ci->ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
 
 		/* XXX derive this bit from BIOS info */
 		if (pp->ip_type == IST_LEVEL)
