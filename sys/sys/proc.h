@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.273 2008/04/24 18:39:25 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.274 2008/04/25 11:21:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -349,6 +349,7 @@ struct proc {
  */
 #define	PK_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
 #define	PK_SYSTEM	0x00000002 /* System process (kthread) */
+#define	PK_SYSVSEM	0x00000004 /* Used SysV semaphores */
 #define	PK_SUGID	0x00000100 /* Had set id privileges since last exec */
 #define	PK_EXEC		0x00004000 /* Process called exec */
 #define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */

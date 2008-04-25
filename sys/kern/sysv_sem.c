@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.80 2008/04/22 12:14:12 njoly Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.81 2008/04/25 11:21:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.80 2008/04/22 12:14:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.81 2008/04/25 11:21:18 ad Exp $");
 
 #define SYSVSEM
 
@@ -761,6 +761,13 @@ sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
 	int do_wakeup, do_undos;
 
 	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, SCARG(uap,sops), nsops));
+
+	if (__predict_false((p->p_flag & PK_SYSVSEM) == 0)) {
+		mutex_enter(p->p_lock);
+		p->p_flag |= PK_SYSVSEM;
+		mutex_exit(p->p_lock);
+	}
+
 restart:
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
@@ -1021,6 +1028,9 @@ semexit(struct proc *p, void *v)
 {
 	struct sem_undo *suptr;
 	struct sem_undo **supptr;
+
+	if ((p->p_flag & PK_SYSVSEM) == 0)
+		return;
 
 	mutex_enter(&semlock);
 
