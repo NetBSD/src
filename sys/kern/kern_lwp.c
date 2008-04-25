@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.104 2008/04/24 21:47:11 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.105 2008/04/25 14:34:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.104 2008/04/24 21:47:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.105 2008/04/25 14:34:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -670,8 +670,8 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 		membar_exit();
 		prev->l_ctxswtch = 0;
 	}
-	spl0();
 	pmap_activate(new);
+	spl0();
 	LOCKDEBUG_BARRIER(NULL, 0);
 	if ((new->l_pflag & LP_MPSAFE) == 0) {
 		KERNEL_LOCK(1, new);
