@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.3 1998/07/27 13:50:47 mycroft Exp $	*/
+/*	$NetBSD: op.h,v 1.4 2008/04/25 22:18:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -52,6 +52,7 @@ typedef	struct {
 	u_int	m_enumop : 1;	/* valid operation on enums */
 	u_int	m_badeop : 1;	/* dubious operation on enums */
 	u_int	m_eqwarn : 1;	/* warning if on operand stems from == */
+	u_int	m_rqintcomp : 1;/* operands must be integer or complex */
 	const char *m_name;	/* name of op. */
 } mod_t;
 
@@ -113,6 +114,8 @@ typedef	enum {
 	LOAD,
 	PUSH,
 	RETURN,
+	REAL,
+	IMAG,
 	INIT,		/* pseudo op, not used in trees */
 	CASE,		/* pseudo op, not used in trees */
 	FARG		/* pseudo op, not used in trees */
