@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2008/04/19 13:46:12 cegger Exp $	*/
+/*	$NetBSD: intr.h,v 1.26 2008/04/25 13:26:27 ad Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -190,6 +190,10 @@ void intr_printconfig(void);
 int intr_find_mpmapping(int, int, struct xen_intr_handle *);
 struct pic *intr_findpic(int);
 void intr_add_pcibus(struct pcibus_attach_args *);
+
+int x86_send_ipi(struct cpu_info *, int);
+void x86_broadcast_ipi(int);
+void x86_multicast_ipi(int, int);
 
 #endif /* !_LOCORE */
 
