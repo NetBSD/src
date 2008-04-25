@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_rint.c,v 1.11 2002/05/26 22:01:58 wiz Exp $");
+__RCSID("$NetBSD: s_rint.c,v 1.12 2008/04/25 22:21:53 christos Exp $");
 #endif
 
 /*
@@ -37,14 +37,14 @@ TWO52[2]={
 double
 rint(double x)
 {
-	int32_t i0,j0,sx;
+	int32_t i0,jj0,sx;
 	u_int32_t i,i1;
 	double w,t;
 	EXTRACT_WORDS(i0,i1,x);
 	sx = (i0>>31)&1;
-	j0 = ((i0>>20)&0x7ff)-0x3ff;
-	if(j0<20) {
-	    if(j0<0) {
+	jj0 = ((i0>>20)&0x7ff)-0x3ff;
+	if(jj0<20) {
+	    if(jj0<0) {
 		if(((i0&0x7fffffff)|i1)==0) return x;
 		i1 |= (i0&0x0fffff);
 		i0 &= 0xfffe0000;
@@ -56,22 +56,22 @@ rint(double x)
 		SET_HIGH_WORD(t,(i0&0x7fffffff)|(sx<<31));
 	        return t;
 	    } else {
-		i = (0x000fffff)>>j0;
+		i = (0x000fffff)>>jj0;
 		if(((i0&i)|i1)==0) return x; /* x is integral */
 		i>>=1;
 		if(((i0&i)|i1)!=0) {
-		    if(j0==19) i1 = 0x40000000; else
-		    i0 = (i0&(~i))|((0x20000)>>j0);
+		    if(jj0==19) i1 = 0x40000000; else
+		    i0 = (i0&(~i))|((0x20000)>>jj0);
 		}
 	    }
-	} else if (j0>51) {
-	    if(j0==0x400) return x+x;	/* inf or NaN */
+	} else if (jj0>51) {
+	    if(jj0==0x400) return x+x;	/* inf or NaN */
 	    else return x;		/* x is integral */
 	} else {
-	    i = ((u_int32_t)(0xffffffff))>>(j0-20);
+	    i = ((u_int32_t)(0xffffffff))>>(jj0-20);
 	    if((i1&i)==0) return x;	/* x is integral */
 	    i>>=1;
-	    if((i1&i)!=0) i1 = (i1&(~i))|((0x40000000)>>(j0-20));
+	    if((i1&i)!=0) i1 = (i1&(~i))|((0x40000000)>>(jj0-20));
 	}
 	INSERT_WORDS(x,i0,i1);
 	w = TWO52[sx]+x;

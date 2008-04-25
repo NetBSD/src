@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.82 2008/02/20 09:55:38 drochner Exp $
+#  $NetBSD: Makefile,v 1.83 2008/04/25 22:21:53 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -43,8 +43,7 @@
 #
 
 # XXX lint buts on some archs and needs stubs
-NOLINT=		# defined
-USE_SHLIBDIR=	yes
+#USE_SHLIBDIR=	yes
 
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
@@ -94,10 +93,10 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 #ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_support.S n_sincos.S n_tan.S
 # XXX - ripped out due to lack of the insn polyd in the Mariah chip,
 # and emulation code isn't written yet.
-WARNS?=2
+WARNS?=4
 .endif
 
-WARNS?=		1
+WARNS?=4
 
 .PATH:	${.CURDIR}/man
 .PATH:	${.CURDIR}/src
