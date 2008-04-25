@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.40 2007/11/10 20:55:33 jmcneill Exp $
+.\"	$NetBSD: audio.9,v 1.41 2008/04/25 14:16:05 mjf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,7 +137,7 @@ The upper layer of the audio driver allocates one buffer for playing
 and one for recording.
 It handles the buffering of data from the user processes in these.
 The data is presented to the lower level in smaller chunks, called blocks.
-If there, during playback, is no data available from the user process when
+If, during playback, there is no data available from the user process when
 the hardware request another block a block of silence will be used instead.
 Furthermore, if the user process does not read data quickly enough during
 recording data will be thrown away.
