@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.22 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.23 2008/04/25 23:51:41 dogcow Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.22 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.23 2008/04/25 23:51:41 dogcow Exp $");
 #endif
 #endif
 
@@ -771,7 +771,7 @@ __rpcb_findaddr(program, version, nconf, host, clpp)
 		}
 		port = htons(port);
 		CLNT_CONTROL(client, CLGET_SVC_ADDR, (char *)(void *)&remote);
-		if (((address = malloc(sizeof(*addr))) == NULL) ||
+		if (((address = malloc(sizeof(struct netbuf))) == NULL) ||
 		    ((address->buf = malloc(remote.len)) == NULL)) {
 			rpc_createerr.cf_stat = RPC_SYSTEMERROR;
 			clnt_geterr(client, &rpc_createerr.cf_error);
