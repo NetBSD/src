@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1134 2008/04/23 09:57:59 plunky Exp $
+#	$NetBSD: mi,v 1.1135 2008/04/25 22:26:06 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3178,6 +3178,7 @@
 ./usr/libdata/lint/llib-lkvm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ll.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
+./usr/libdata/lint/llib-lm.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
