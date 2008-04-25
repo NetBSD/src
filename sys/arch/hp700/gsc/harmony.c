@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.9 2007/10/17 19:54:25 garbled Exp $	*/
+/*	$NetBSD: harmony.c,v 1.10 2008/04/25 08:17:52 mjf Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -114,11 +114,11 @@ const struct audio_hw_if harmony_sa_hw_if = {
 	harmony_trigger_input,
 };
 
-int harmony_match(struct device *, struct cfdata *, void *);
-void harmony_attach(struct device *, struct device *, void *);
+int harmony_match(device_t, struct cfdata *, void *);
+void harmony_attach(device_t, device_t, void *);
 
 
-CFATTACH_DECL(harmony, sizeof(struct harmony_softc),
+CFATTACH_DECL_NEW(harmony, sizeof(struct harmony_softc),
     harmony_match, harmony_attach, NULL, NULL);
 
 int harmony_intr(void *);
@@ -144,7 +144,7 @@ void harmony_acc_tmo(void *);
 #endif
 
 int
-harmony_match(struct device *parent, struct cfdata *match, void *aux)
+harmony_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct gsc_attach_args *ga;
 
@@ -160,15 +160,15 @@ harmony_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-harmony_attach(struct device *parent, struct device *self, void *aux)
+harmony_attach(device_t parent, device_t self, void *aux)
 {
-	struct harmony_softc *sc;
+	struct harmony_softc *sc = device_private(self);
 	struct gsc_attach_args *ga;
 	uint8_t rev;
 	uint32_t cntl;
 	int i;
 
-	sc = (struct harmony_softc *)self;
+	sc->sc_dv = self;
 	ga = aux;
 	sc->sc_bt = ga->ga_iot;
 	sc->sc_dmat = ga->ga_dmatag;
@@ -247,7 +247,7 @@ harmony_attach(struct device *parent, struct device *self, void *aux)
 	    offsetof(struct harmony_empty, playback[0][0]),
 	    PLAYBACK_EMPTYS * HARMONY_BUFSIZE, BUS_DMASYNC_PREWRITE);
 
-	(void) hp700_intr_establish(&sc->sc_dv, IPL_AUDIO,
+	(void) hp700_intr_establish(sc->sc_dv, IPL_AUDIO,
 	    harmony_intr, sc, ga->ga_int_reg, ga->ga_irq);
 
 	/* set defaults */
@@ -276,13 +276,13 @@ harmony_attach(struct device *parent, struct device *self, void *aux)
 	snprintf(sc->sc_audev.version, sizeof sc->sc_audev.version,
 	    "%u.%u;%u", ga->ga_type.iodc_sv_rev,
 	    ga->ga_type.iodc_model, ga->ga_type.iodc_revision);
-	strlcpy(sc->sc_audev.config, sc->sc_dv.dv_xname,
+	strlcpy(sc->sc_audev.config, device_xname(sc->sc_dv),
 	    sizeof(sc->sc_audev.config));
 
-	audio_attach_mi(&harmony_sa_hw_if, sc, &sc->sc_dv);
+	audio_attach_mi(&harmony_sa_hw_if, sc, sc->sc_dv);
 
 #if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dv.dv_xname,
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dv),
 	    RND_TYPE_UNKNOWN, 0);
 
 	callout_init(&sc->sc_acc_tmo, 0);
@@ -1064,7 +1064,7 @@ harmony_freem(void *vsc, void *ptr, struct malloc_type *pool)
 		free(d, pool);
 		return;
 	}
-	printf("%s: free rogue pointer\n", sc->sc_dv.dv_xname);
+	printf("%s: free rogue pointer\n", device_xname(sc->sc_dv));
 }
 
 size_t
@@ -1097,7 +1097,7 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 		continue;
 	if (d == NULL) {
 		printf("%s: trigger_output: bad addr: %p\n",
-		    sc->sc_dv.dv_xname, start);
+		    device_xname(sc->sc_dv), start);
 		return EINVAL;
 	}
 
@@ -1192,7 +1192,7 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 		continue;
 	if (d == NULL) {
 		printf("%s: trigger_input: bad addr: %p\n",
-		    sc->sc_dv.dv_xname, start);
+		    device_xname(sc->sc_dv), start);
 		return EINVAL;
 	}
 
@@ -1334,7 +1334,8 @@ harmony_try_more(struct harmony_softc *sc)
 	if (cur < d->d_map->dm_segs[0].ds_addr ||
 	    cur >= (d->d_map->dm_segs[0].ds_addr + c->c_segsz))
 		panic("%s: bad current %x < %lx || %x > %lx",
-		    sc->sc_dv.dv_xname, cur, d->d_map->dm_segs[0].ds_addr, cur,
+		    device_xname(sc->sc_dv), cur, 
+		    d->d_map->dm_segs[0].ds_addr, cur,
 		    d->d_map->dm_segs[0].ds_addr + c->c_segsz);
 #endif /* DIAGNOSTIC */
 
