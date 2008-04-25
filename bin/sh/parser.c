@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.67 2008/02/27 21:55:07 dsl Exp $	*/
+/*	$NetBSD: parser.c,v 1.68 2008/04/25 17:32:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.67 2008/02/27 21:55:07 dsl Exp $");
+__RCSID("$NetBSD: parser.c,v 1.68 2008/04/25 17:32:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1120,7 +1120,7 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 endword:
 	if (syntax == ARISYNTAX)
 		synerror("Missing '))'");
-	if (syntax != BASESYNTAX && ! parsebackquote && eofmark == NULL)
+	if (syntax != BASESYNTAX && /* ! parsebackquote && */ eofmark == NULL)
 		synerror("Unterminated quoted string");
 	if (varnest != 0) {
 		startlinno = plinno;
