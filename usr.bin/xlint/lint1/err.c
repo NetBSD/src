@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.32 2008/03/04 02:41:46 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.33 2008/04/25 22:18:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.32 2008/03/04 02:41:46 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.33 2008/04/25 22:18:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -308,7 +308,7 @@ const	char *msgs[] = {
 	"dubious conversion of enum to '%s'",			      /* 246 */
 	"pointer casts may be troublesome",			      /* 247 */
 	"floating-point constant out of range",			      /* 248 */
-	"syntax error",						      /* 249 */
+	"syntax error '%s'",					      /* 249 */
 	"unknown character \\%o",				      /* 250 */
 	"malformed integer constant",				      /* 251 */
 	"integer constant out of range",			      /* 252 */
@@ -382,6 +382,8 @@ const	char *msgs[] = {
 	"({ }) is a GCC extension",				      /* 320 */
 	"array initializer with designators is a C9X feature",	      /* 321 */
 	"zero sized array is a C99 extension",			      /* 322 */
+	"Invalid type %s for _Complex",				      /* 323 */
+	"__%s__ is illegal for type %s",			      /* 324 */
 };
 
 /*
