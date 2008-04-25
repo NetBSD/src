@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.278 2008/04/25 00:07:24 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.279 2008/04/25 11:24:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.278 2008/04/25 00:07:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.279 2008/04/25 11:24:11 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -120,7 +120,7 @@ void	sigswitch(bool, int, int);
 void	sigrealloc(ksiginfo_t *);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
-struct pool	sigacts_pool;	/* memory pool for sigacts structures */
+static pool_cache_t sigacts_cache; /* memory pool for sigacts structures */
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
 static callout_t proc_stop_ch;
@@ -157,10 +157,9 @@ signal_init(void)
 
 	sigactspool_allocator.pa_pagesz = (PAGE_SIZE)*2;
 
-	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
-	    sizeof(struct sigacts) > PAGE_SIZE ?
-	    &sigactspool_allocator : &pool_allocator_nointr,
-	    IPL_NONE);
+	sigacts_cache = pool_cache_init(sizeof(struct sigacts), 0, 0, 0,
+	    "sigacts", sizeof(struct sigacts) > PAGE_SIZE ?
+	    &sigactspool_allocator : NULL, IPL_NONE, NULL, NULL, NULL);
 
 	exechook_establish(ksiginfo_exechook, NULL);
 
@@ -191,6 +190,7 @@ sigacts_poolpage_alloc(struct pool *pp, int flags)
 static void
 sigacts_poolpage_free(struct pool *pp, void *v)
 {
+
         uvm_km_free(kernel_map, (vaddr_t)v, (PAGE_SIZE)*2, UVM_KMF_WIRED);
 }
 
@@ -209,12 +209,10 @@ sigactsinit(struct proc *pp, int share)
 	ps = pp->p_sigacts;
 
 	if (share) {
-		mutex_enter(&ps->sa_mutex);
-		ps->sa_refcnt++;
-		mutex_exit(&ps->sa_mutex);
+		atomic_inc_uint(&ps->sa_refcnt);
 		ps2 = ps;
 	} else {
-		ps2 = pool_get(&sigacts_pool, PR_WAITOK);
+		ps2 = pool_cache_get(sigacts_cache, PR_WAITOK);
 		/* XXXAD get rid of this */
 		mutex_init(&ps2->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 		mutex_enter(&ps->sa_mutex);
@@ -241,7 +239,7 @@ sigactsunshare(struct proc *p)
 	oldps = p->p_sigacts;
 	if (oldps->sa_refcnt == 1)
 		return;
-	ps = pool_get(&sigacts_pool, PR_WAITOK);
+	ps = pool_cache_get(sigacts_cache, PR_WAITOK);
 	/* XXXAD get rid of this */
 	mutex_init(&ps->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
@@ -257,15 +255,10 @@ sigactsunshare(struct proc *p)
 void
 sigactsfree(struct sigacts *ps)
 {
-	int refcnt;
 
-	mutex_enter(&ps->sa_mutex);
-	refcnt = --ps->sa_refcnt;
-	mutex_exit(&ps->sa_mutex);
-
-	if (refcnt == 0) {
+	if (atomic_dec_uint_nv(&ps->sa_refcnt) == 0) {
 		mutex_destroy(&ps->sa_mutex);
-		pool_put(&sigacts_pool, ps);
+		pool_cache_put(sigacts_cache, ps);
 	}
 }
 
@@ -1940,8 +1933,6 @@ sigexit(struct lwp *l, int signo)
 	p->p_acflag |= AXSIG;
 	p->p_sigctx.ps_signo = signo;
 	mutex_exit(p->p_lock);
-
-	KERNEL_LOCK(1, l);
 
 	if (docore) {
 		if ((error = coredump(l, NULL)) == 0)
