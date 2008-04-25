@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.4 2007/02/07 14:20:58 hubertf Exp $	*/
+/*	$NetBSD: tyname.c,v 1.5 2008/04/25 22:18:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.4 2007/02/07 14:20:58 hubertf Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.5 2008/04/25 22:18:34 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -84,6 +84,9 @@ basictyname(tspec_t t)
 	case UNION:	return "union";
 	case FUNC:	return "function";
 	case ARRAY:	return "array";
+	case FCOMPLEX:	return "float _Complex";
+	case DCOMPLEX:	return "double _Complex";
+	case COMPLEX:	return "_Complex";
 	default:
 		LERROR("basictyname()");
 		return NULL;
@@ -121,6 +124,9 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 	case LDOUBLE:
 	case VOID:
 	case FUNC:
+	case COMPLEX:
+	case FCOMPLEX:
+	case DCOMPLEX:
 		(void)snprintf(buf, bufsiz, "%s", s);
 		break;
 	case PTR:

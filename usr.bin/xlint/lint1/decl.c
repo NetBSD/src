@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.38 2006/11/08 18:31:15 christos Exp $ */
+/* $NetBSD: decl.c,v 1.39 2008/04/25 22:18:34 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.38 2006/11/08 18:31:15 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.39 2008/04/25 22:18:34 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -117,6 +117,9 @@ initdecl(void)
 	typetab[FLOAT].t_tspec = FLOAT;
 	typetab[DOUBLE].t_tspec = DOUBLE;
 	typetab[LDOUBLE].t_tspec = LDOUBLE;
+	typetab[FCOMPLEX].t_tspec = FCOMPLEX;
+	typetab[DCOMPLEX].t_tspec = DCOMPLEX;
+	typetab[COMPLEX].t_tspec = COMPLEX;
 	typetab[VOID].t_tspec = VOID;
 	/*
 	 * Next two are not real types. They are only used by the parser
@@ -250,7 +253,8 @@ void
 addtype(type_t *tp)
 {
 	tspec_t	t;
-
+//	char buf[1024];
+// printf("addtype %s\n", tyname(buf, sizeof(buf), tp));
 	if (tp->t_typedef) {
 		if (dcs->d_type != NULL || dcs->d_atyp != NOTSPEC ||
 		    dcs->d_lmod != NOTSPEC || dcs->d_smod != NOTSPEC) {
@@ -293,6 +297,16 @@ addtype(type_t *tp)
 		return;
 	}
 
+	if (t == COMPLEX) {
+		if (dcs->d_cmod == FLOAT)
+			t = FCOMPLEX;
+		else if (dcs->d_cmod == DOUBLE)
+			t = DCOMPLEX;
+		else
+			error(323, basictyname(dcs->d_cmod));
+		dcs->d_cmod = NOTSPEC;
+	}
+
 	if (t == LONG && dcs->d_lmod == LONG) {
 		/* "long long" or "long ... long" */
 		t = QUAD;
@@ -327,10 +341,14 @@ addtype(type_t *tp)
 			/* more than one, print error in deftyp() */
 			dcs->d_terr = 1;
 		dcs->d_lmod = t;
+	} else if (t == FLOAT || t == DOUBLE) {
+		if (dcs->d_cmod != NOTSPEC)
+			dcs->d_terr = 1;
+		dcs->d_cmod = t;
 	} else {
 		/*
-		 * remember specifiers "void", "char", "int", "float" or
-		 * "double" int dcs->d_atyp
+		 * remember specifiers "void", "char", "int",
+		 * or "_Complex" int dcs->d_atyp
 		 */
 		if (dcs->d_atyp != NOTSPEC)
 			/* more than one, print error in deftyp() */
@@ -410,13 +428,16 @@ tdeferr(type_t *td, tspec_t t)
 	case STRUCT:
 	case VOID:
 	case LDOUBLE:
-	case DOUBLE:
 	case FLOAT:
+	case DOUBLE:
 	case UQUAD:
 	case QUAD:
 	case ULONG:
 	case UINT:
 	case INT:
+	case FCOMPLEX:
+	case DCOMPLEX:
+	case COMPLEX:
 		break;
 
 	case NTSPEC:	/* this value unused */
@@ -606,7 +627,7 @@ void
 clrtyp(void)
 {
 
-	dcs->d_atyp = dcs->d_smod = dcs->d_lmod = NOTSPEC;
+	dcs->d_atyp = dcs->d_cmod = dcs->d_smod = dcs->d_lmod = NOTSPEC;
 	dcs->d_scl = NOSCL;
 	dcs->d_type = NULL;
 	dcs->d_const = dcs->d_volatile = 0;
@@ -625,18 +646,22 @@ clrtyp(void)
 void
 deftyp(void)
 {
-	tspec_t	t, s, l;
+	tspec_t	t, s, l, c;
 	type_t	*tp;
 	scl_t	scl;
 
-	t = dcs->d_atyp;	/* BOOL, CHAR, INT, FLOAT, DOUBLE, VOID */
+	t = dcs->d_atyp;	/* BOOL, CHAR, INT, COMPLEX, VOID */
 	s = dcs->d_smod;	/* SIGNED, UNSIGNED */
 	l = dcs->d_lmod;	/* SHORT, LONG, QUAD */
+	c = dcs->d_cmod;	/* FLOAT, DOUBLE */
 	tp = dcs->d_type;
 	scl = dcs->d_scl;
 
-	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && tp == NULL)
+	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && c == NOTSPEC &&
+	    tp == NULL)
 		dcs->d_notyp = 1;
+	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && tp == NULL)
+		t = c;
 
 	if (tp != NULL && (t != NOTSPEC || s != NOTSPEC || l != NOTSPEC)) {
 		/* should never happen */
@@ -679,6 +704,8 @@ deftyp(void)
 			}
 			break;
 		case VOID:
+		case FCOMPLEX:
+		case DCOMPLEX:
 			break;
 		default:
 			LERROR("deftyp()");

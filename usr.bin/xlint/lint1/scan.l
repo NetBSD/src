@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.37 2007/02/06 00:08:31 he Exp $ */
+/* $NetBSD: scan.l,v 1.38 2008/04/25 22:18:34 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.37 2007/02/06 00:08:31 he Exp $");
+__RCSID("$NetBSD: scan.l,v 1.38 2008/04/25 22:18:34 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -97,10 +97,10 @@ EX	([eE][+-]?[0-9]+)
 0{OD}*[lLuU]*			return (icon(8));
 {NZD}{D}*[lLuU]*		return (icon(10));
 0[xX]{HD}+[lLuU]*		return (icon(16));
-{D}+\.{D}*{EX}?[fFlL]?		|
-{D}+{EX}[fFlL]?			|
-0[xX]{HD}+p{HD}+[fFlL]?		|
-\.{D}+{EX}?[fFlL]?		return (fcon());
+{D}+\.{D}*{EX}?[fFlL]?[i]?	|
+{D}+{EX}[fFlL]?[i]?		|
+0[xX]{HD}+p{HD}+[fFlL]?[i]? 	|
+\.{D}+{EX}?[fFlL]?[i]?		return (fcon());
 "="				return (operator(T_ASSIGN, ASSIGN));
 "*="				return (operator(T_OPASS, MULASS));
 "/="				return (operator(T_OPASS, DIVASS));
@@ -202,6 +202,7 @@ static	struct	kwtab {
 	{ "case",	T_CASE,		0,	0,	0,	  0, 0, 0 },
 	{ "char",	T_TYPE,		0,	CHAR,	0,	  0, 0, 0 },
 	{ "const",	T_QUAL,		0,	0,	CONST,	  1, 0, 0 },
+	{ "_Complex",	T_TYPE,		0,	COMPLEX,0,	  0, 1, 0 },
 	{ "__const__",	T_QUAL,		0,	0,	CONST,	  0, 0, 0 },
 	{ "__const",	T_QUAL,		0,	0,	CONST,	  0, 0, 0 },
 	{ "continue",	T_CONTINUE,	0,	0,	0,	  0, 0, 0 },
@@ -215,12 +216,14 @@ static	struct	kwtab {
 	{ "for",	T_FOR,		0,	0,	0,	  0, 0, 0 },
 	{ "goto",	T_GOTO,		0,	0,	0,	  0, 0, 0 },
 	{ "if",		T_IF,		0,	0,	0,	  0, 0, 0 },
+	{ "__imag__",	T_IMAG,		0,	0,	0,	  0, 1, 0 },
 	{ "inline",	T_SCLASS,	INLINE,	0,	0,	  0, 1, 0 },
 	{ "__inline__",	T_SCLASS,	INLINE,	0,	0,	  0, 0, 0 },
 	{ "__inline",	T_SCLASS,	INLINE,	0,	0,	  0, 0, 0 },
 	{ "int",	T_TYPE,		0,	INT,	0,	  0, 0, 0 },
 	{ "__symbolrename", T_SYMBOLRENAME, 0,	0,	0,	  0, 0, 0 },
 	{ "long",	T_TYPE,		0,	LONG,	0,	  0, 0, 0 },
+	{ "__real__",	T_REAL,		0,	0,	0,	  0, 1, 0 },
 	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0, 0 },
 	{ "return",	T_RETURN,	0,	0,	0,	  0, 0, 0 },
 	{ "short",	T_TYPE,		0,	SHORT,	0,	  0, 0, 0 },
@@ -391,7 +394,6 @@ name(void)
 	sb->sb_name = yytext;
 	sb->sb_len = yyleng;
 	sb->sb_hash = hash(yytext);
-
 	if ((sym = search(sb)) != NULL && sym->s_keyw) {
 		freesb(sb);
 		return (keyw(sym));
@@ -591,6 +593,9 @@ icon(int base)
 	case CHAR:
 	case BOOL:
 	case UNSIGN:
+	case FCOMPLEX:
+	case DCOMPLEX:
+	case COMPLEX:
 		break;
 
 	case NTSPEC:	/* this value unused */
@@ -668,6 +673,10 @@ fcon(void)
 	cp = yytext;
 	len = yyleng;
 
+	if (cp[len - 1] == 'i') {
+		/* imaginary, do nothing for now */
+		len--;
+	}
 	if ((c = cp[len - 1]) == 'f' || c == 'F') {
 		typ = FLOAT;
 		len--;

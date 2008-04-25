@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.19 2005/09/24 15:30:35 perry Exp $ */
+/* $NetBSD: lint1.h,v 1.20 2008/04/25 22:18:34 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -307,7 +307,8 @@ typedef	struct tnode {
  *
  */
 typedef	struct dinfo {
-	tspec_t	d_atyp;		/* VOID, CHAR, INT, FLOAT or DOUBLE */
+	tspec_t	d_atyp;		/* VOID, CHAR, INT, or COMPLEX */
+	tspec_t	d_cmod;		/* FLOAT, or DOUBLE */
 	tspec_t	d_smod;		/* SIGNED or UNSIGN */
 	tspec_t	d_lmod;		/* SHORT, LONG or QUAD */
 	scl_t	d_scl;		/* storage class */
