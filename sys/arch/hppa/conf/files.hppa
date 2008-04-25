@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.13 2008/04/24 07:28:30 skrll Exp $
+#	$NetBSD: files.hppa,v 1.14 2008/04/25 12:41:50 skrll Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -29,8 +29,10 @@ file	arch/hppa/hppa/procfs_machdep.c		procfs
 #
 # Compatibility
 #
+include "compat/ossaudio/files.ossaudio"
+
 include "compat/osf1/files.osf1"
 file	arch/hp700/hp700/osf1_machdep.c		compat_osf1
+
 include	"compat/linux/files.linux"
-include "compat/ossaudio/files.ossaudio"
-file	arch/hp700/hp700/linux_machdep.c		compat_linux
+file	arch/hp700/hp700/linux_machdep.c	compat_linux
