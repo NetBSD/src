@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.39 2006/11/08 18:31:15 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.40 2008/04/25 17:18:24 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.39 2006/11/08 18:31:15 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.40 2008/04/25 17:18:24 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -105,6 +105,8 @@ static inline void RESTORE(const char *file, size_t line)
 #define RESTORE(f, l) (void)(onowarn == -1 ? (clrwflgs(), 0) : (nowarn = onowarn))
 #endif
 %}
+
+%expect 1
 
 %union {
 	int	y_int;
@@ -1273,7 +1275,12 @@ label:
 	| T_CASE constant T_COLON {
 		label(T_CASE, NULL, $2);
 		ftflg = 1;
-	  }
+	}
+	| T_CASE constant T_ELLIPSE constant T_COLON {
+		/* XXX: We don't fill all cases */
+		label(T_CASE, NULL, $2);
+		ftflg = 1;
+	}
 	| T_DEFAULT T_COLON {
 		label(T_DEFAULT, NULL, NULL);
 		ftflg = 1;
