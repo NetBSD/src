@@ -1,6 +1,6 @@
-.\"	$NetBSD: strptime.3,v 1.19 2008/04/25 14:37:00 ginsbach Exp $
+.\"	$NetBSD: strptime.3,v 1.20 2008/04/25 20:51:10 ginsbach Exp $
 .\"
-.\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997, 1998, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This file was contributed to The NetBSD Foundation by Klaus Klein.
@@ -119,6 +119,9 @@ the date as %m/%d/%y.
 .It Cm \&%e
 the same as
 .Cm \&%d .
+.It Cm \&%F
+the date as %Y-%m-%d
+(the ISO 8601 date format).
 .It Cm \&%h
 the same as
 .Cm \&%b .
