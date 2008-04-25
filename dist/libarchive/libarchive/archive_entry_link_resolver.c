@@ -145,8 +145,10 @@ archive_entry_linkresolver_free(struct archive_entry_linkresolver *res)
 	struct links_entry *le;
 
 	if (res->buckets != NULL) {
-		while ((le = next_entry(res)) != NULL)
-			archive_entry_free(le->entry);
+		while ((le = next_entry(res)) != NULL) {
+			if (le->entry != NULL)
+				archive_entry_free(le->entry);
+		}
 		free(res->buckets);
 		res->buckets = NULL;
 	}
@@ -180,8 +182,10 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 			archive_entry_set_size(*e, 0);
 			archive_entry_set_hardlink(*e,
 			    archive_entry_pathname(le->canonical));
-		} else
-			insert_entry(res, *e);
+		} else {
+			le = insert_entry(res, *e);
+			le->entry = NULL;
+		}
 		return;
 	case ARCHIVE_ENTRY_LINKIFY_LIKE_OLD_CPIO:
 		/* This one is trivial. */
@@ -248,8 +252,8 @@ find_entry(struct archive_entry_linkresolver *res,
 	bucket = hash % res->number_buckets;
 	for (le = res->buckets[bucket]; le != NULL; le = le->next) {
 		if (le->hash == hash
-		    && dev == archive_entry_dev(le->entry)
-		    && ino == archive_entry_ino(le->entry)) {
+		    && dev == archive_entry_dev(le->canonical)
+		    && ino == archive_entry_ino(le->canonical)) {
 			/*
 			 * Decrement link count each time and release
 			 * the entry if it hits zero.  This saves
@@ -337,8 +341,8 @@ insert_entry(struct archive_entry_linkresolver *res,
 	le->previous = NULL;
 	res->buckets[bucket] = le;
 	le->hash = hash;
-	le->links = archive_entry_nlink(entry) - 1;
 	le->canonical = archive_entry_clone(entry);
+	le->links = archive_entry_nlink(le->canonical) - 1;
 	return (le);
 }
 
