@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_pow.c,v 1.13 2004/06/30 18:43:15 drochner Exp $");
+__RCSID("$NetBSD: e_pow.c,v 1.14 2008/04/25 22:21:53 christos Exp $");
 #endif
 
 /* __ieee754_pow(x,y) return x**y
@@ -100,7 +100,7 @@ double
 __ieee754_pow(double x, double y)
 {
 	double z,ax,z_h,z_l,p_h,p_l;
-	double y1,t1,t2,r,s,t,u,v,w;
+	double yy1,t1,t2,r,s,t,u,v,w;
 	int32_t i,j,k,yisint,n;
 	int32_t hx,hy,ix,iy;
 	u_int32_t lx,ly;
@@ -249,11 +249,11 @@ __ieee754_pow(double x, double y)
 	    t2 = z_l-(((t1-t)-dp_h[k])-z_h);
 	}
 
-    /* split up y into y1+y2 and compute (y1+y2)*(t1+t2) */
-	y1  = y;
-	SET_LOW_WORD(y1,0);
-	p_l = (y-y1)*t1+y*t2;
-	p_h = y1*t1;
+    /* split up y into yy1+y2 and compute (yy1+y2)*(t1+t2) */
+	yy1  = y;
+	SET_LOW_WORD(yy1,0);
+	p_l = (y-yy1)*t1+y*t2;
+	p_h = yy1*t1;
 	z = p_l+p_h;
 	EXTRACT_WORDS(j,i,z);
 	if (j>=0x40900000) {				/* z >= 1024 */
