@@ -1,7 +1,7 @@
-/*	$NetBSD: ipi.c,v 1.9 2008/04/16 16:06:52 cegger Exp $	*/
+/*	$NetBSD: ipi.c,v 1.10 2008/04/25 13:26:27 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.9 2008/04/16 16:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.10 2008/04/25 13:26:27 ad Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.9 2008/04/16 16:06:52 cegger Exp $");
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
+#ifdef MULTIPROCESSOR
 int
 x86_send_ipi(struct cpu_info *ci, int ipimask)
 {
@@ -129,3 +130,23 @@ x86_ipi_handler(void)
 		(*ipifunc[bit])(ci);
 	}
 }
+#else
+int
+x86_send_ipi(struct cpu_info *ci, int ipimask)
+{
+
+	return 0;
+}
+
+void
+x86_broadcast_ipi(int ipimask)
+{
+
+}
+
+void
+x86_multicast_ipi(int cpumask, int ipimask)
+{
+
+}
+#endif
