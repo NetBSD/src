@@ -1,3 +1,8 @@
+2008-04-25  Yvan Vanhullebus  <vanhu@netasq.com>
+	Track:4, from Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/isakmp_inf.c: extract ports information from
+	SADB_X_EXT_NAT_T_[SD]PORT if present in purge_ipsec_spi()
+
 2008-04-02  Emmanuel Dreyfus  <manu@netbsd.org>
 	From Timo Teräs <timo.teras@iki.fi>
 	* src/racoon/{sockmisc.h|sockmisc.c|Makefile.am}: fix Linux build
