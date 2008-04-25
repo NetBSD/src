@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.12 2007/02/03 16:20:08 christos Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.13 2008/04/25 17:44:44 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetpath.c,v 1.12 2007/02/03 16:20:08 christos Exp $");
+__RCSID("$NetBSD: getnetpath.c,v 1.13 2008/04/25 17:44:44 christos Exp $");
 #endif
 #endif
 
@@ -102,8 +102,7 @@ setnetpath()
 	malloc_debug(1);
 #endif
 
-	if ((np_sessionp = (struct netpath_vars *)
-	    malloc(sizeof (struct netpath_vars))) == NULL)
+	if ((np_sessionp = malloc(sizeof(*np_sessionp))) == NULL)
 		return (NULL);
 	if ((np_sessionp->nc_handlep = setnetconfig()) == NULL) {
 		free(np_sessionp);
@@ -184,8 +183,9 @@ getnetpath(handlep)
 		 */
 		if ((ncp = getnetconfigent(npp)) != NULL) {
 					/* cobble alloc chain entry */
-			chainp = (struct netpath_chain *)
-			    malloc(sizeof (struct netpath_chain));
+			chainp = malloc(sizeof (struct netpath_chain));
+			if (chainp == NULL)
+				return NULL;
 			chainp->ncp = ncp;
 			chainp->nchain_next = NULL;
 			if (np_sessionp->ncp_list == NULL)
