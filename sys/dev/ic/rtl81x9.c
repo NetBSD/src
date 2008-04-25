@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.81 2008/01/19 22:10:17 dyoung Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.82 2008/04/25 11:27:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.81 2008/01/19 22:10:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.82 2008/04/25 11:27:19 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -613,7 +613,8 @@ rtk_reset(struct rtk_softc *sc)
 			break;
 	}
 	if (i == RTK_TIMEOUT)
-		printf("%s: reset never completed!\n", device_xname(&sc->sc_dev));
+		printf("%s: reset never completed!\n",
+		    device_xname(sc->sc_dev));
 }
 
 /*
@@ -623,7 +624,7 @@ rtk_reset(struct rtk_softc *sc)
 void
 rtk_attach(struct rtk_softc *sc)
 {
-	device_t self = &sc->sc_dev;
+	device_t self = sc->sc_dev;
 	struct ifnet *ifp;
 	struct rtk_tx_desc *txd;
 	uint16_t val;
@@ -658,7 +659,7 @@ rtk_attach(struct rtk_softc *sc)
 	    RTK_RXBUFLEN + 16, PAGE_SIZE, 0, &sc->sc_dmaseg, 1, &sc->sc_dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
 		aprint_error_dev(self,
-			"can't allocate recv buffer, error = %d\n", error);
+		    "can't allocate recv buffer, error = %d\n", error);
 		goto fail_0;
 	}
 
@@ -666,7 +667,7 @@ rtk_attach(struct rtk_softc *sc)
 	    RTK_RXBUFLEN + 16, (void **)&sc->rtk_rx_buf,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self,
-			"can't map recv buffer, error = %d\n", error);
+		    "can't map recv buffer, error = %d\n", error);
 		goto fail_1;
 	}
 
@@ -674,7 +675,7 @@ rtk_attach(struct rtk_softc *sc)
 	    RTK_RXBUFLEN + 16, 1, RTK_RXBUFLEN + 16, 0, BUS_DMA_NOWAIT,
 	    &sc->recv_dmamap)) != 0) {
 		aprint_error_dev(self,
-			"can't create recv buffer DMA map, error = %d\n", error);
+		    "can't create recv buffer DMA map, error = %d\n", error);
 		goto fail_2;
 	}
 
@@ -682,7 +683,7 @@ rtk_attach(struct rtk_softc *sc)
 	    sc->rtk_rx_buf, RTK_RXBUFLEN + 16,
 	    NULL, BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 		aprint_error_dev(self,
-			"can't load recv buffer DMA map, error = %d\n", error);
+		    "can't load recv buffer DMA map, error = %d\n", error);
 		goto fail_3;
 	}
 
@@ -692,8 +693,8 @@ rtk_attach(struct rtk_softc *sc)
 		    MCLBYTES, 1, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &txd->txd_dmamap)) != 0) {
 			aprint_error_dev(self,
-				"can't create snd buffer DMA map,"
-				" error = %d\n", error);
+			    "can't create snd buffer DMA map, error = %d\n",
+			    error);
 			goto fail_4;
 		}
 		txd->txd_txaddr = RTK_TXADDR0 + (i * 4);
@@ -879,7 +880,7 @@ rtk_enable(struct rtk_softc *sc)
 	if (RTK_IS_ENABLED(sc) == 0 && sc->sc_enable != NULL) {
 		if ((*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			return EIO;
 		}
 		sc->sc_flags |= RTK_ENABLED;
@@ -1044,7 +1045,7 @@ rtk_rxeof(struct rtk_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
 			printf("%s: unable to allocate Rx mbuf\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			ifp->if_ierrors++;
 			goto next_packet;
 		}
@@ -1052,7 +1053,7 @@ rtk_rxeof(struct rtk_softc *sc)
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				printf("%s: unable to allocate Rx cluster\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 				ifp->if_ierrors++;
 				m_freem(m);
 				m = NULL;
@@ -1151,7 +1152,7 @@ rtk_txeof(struct rtk_softc *sc)
 			if (txstat & RTK_TXSTAT_TX_UNDERRUN) {
 #ifdef DEBUG
 				printf("%s: transmit underrun;",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 #endif
 				if (sc->sc_txthresh < RTK_TXTH_MAX) {
 					sc->sc_txthresh += 2;
@@ -1186,7 +1187,7 @@ rtk_intr(void *arg)
 	sc = arg;
 	ifp = &sc->ethercom.ec_if;
 
-	if (!device_has_power(&sc->sc_dev))
+	if (!device_has_power(sc->sc_dev))
 		return 0;
 
 	/* Disable interrupts. */
@@ -1271,14 +1272,15 @@ rtk_start(struct ifnet *ifp)
 			MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 			if (m_new == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 				break;
 			}
 			if (m_head->m_pkthdr.len > MHLEN) {
 				MCLGET(m_new, M_DONTWAIT);
 				if ((m_new->m_flags & M_EXT) == 0) {
 					printf("%s: unable to allocate Tx "
-					    "cluster\n", device_xname(&sc->sc_dev));
+					    "cluster\n",
+					    device_xname(sc->sc_dev));
 					m_freem(m_new);
 					break;
 				}
@@ -1299,7 +1301,8 @@ rtk_start(struct ifnet *ifp)
 			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", device_xname(&sc->sc_dev), error);
+				    "error = %d\n",
+				    device_xname(sc->sc_dev), error);
 				break;
 			}
 		}
@@ -1448,7 +1451,7 @@ rtk_init(struct ifnet *ifp)
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ifp->if_timer = 0;
-		printf("%s: interface not running\n", device_xname(&sc->sc_dev));
+		printf("%s: interface not running\n", device_xname(sc->sc_dev));
 	}
 	return error;
 }
@@ -1483,7 +1486,7 @@ rtk_watchdog(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	printf("%s: watchdog timeout\n", device_xname(&sc->sc_dev));
+	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
 	ifp->if_oerrors++;
 	rtk_txeof(sc);
 	rtk_rxeof(sc);

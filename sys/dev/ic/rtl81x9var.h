@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.40 2007/12/09 20:27:59 jmcneill Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.41 2008/04/25 11:27:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -177,7 +177,7 @@ struct rtk_tx_desc {
 };
 
 struct rtk_softc {
-	struct device sc_dev;		/* generic device structures */
+	device_t sc_dev;		/* generic device structures */
 	struct ethercom		ethercom;	/* interface info */
 	struct mii_data		mii;
 	struct callout		rtk_tick_ch;	/* tick callout */
