@@ -1,7 +1,7 @@
-/*	$NetBSD: strptime.c,v 1.26 2008/04/24 21:34:48 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.27 2008/04/25 20:51:10 ginsbach Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code was contributed to The NetBSD Foundation by Klaus Klein.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.26 2008/04/24 21:34:48 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.27 2008/04/25 20:51:10 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -127,6 +127,11 @@ literal:
 
 		case 'D':	/* The date as "%m/%d/%y". */
 			new_fmt = "%m/%d/%y";
+			LEGAL_ALT(0);
+			goto recurse;
+
+		case 'F':	/* The date as "%Y-%m-%d". */
+			new_fmt = "%Y-%m-%d";
 			LEGAL_ALT(0);
 			goto recurse;
 
