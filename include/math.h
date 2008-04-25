@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.46 2007/02/22 22:08:19 drochner Exp $	*/
+/*	$NetBSD: math.h,v 1.47 2008/04/25 21:20:57 christos Exp $	*/
 
 /*
  * ====================================================
@@ -148,7 +148,7 @@ extern  _LIB_VERSION_TYPE  _LIB_VERSION;
 #ifndef __cplusplus
 struct exception {
 	int type;
-	char *name;
+	const char *name;
 	double arg1;
 	double arg2;
 	double retval;
