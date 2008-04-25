@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.277 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.278 2008/04/25 00:07:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.277 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.278 2008/04/25 00:07:24 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -427,7 +427,6 @@ ksiginfo_t *
 ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 {
 	ksiginfo_t *kp;
-	int s;
 
 	if (ok != NULL) {
 		if ((ok->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) ==
@@ -437,9 +436,7 @@ ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 			return ok;
 	}
 
-	s = splvm();
 	kp = pool_get(&ksiginfo_pool, flags);
-	splx(s);
 	if (kp == NULL) {
 #ifdef DIAGNOSTIC
 		printf("Out of memory allocating ksiginfo for pid %d\n",
@@ -468,13 +465,10 @@ ksiginfo_alloc(struct proc *p, ksiginfo_t *ok, int flags)
 void
 ksiginfo_free(ksiginfo_t *kp)
 {
-	int s;
 
 	if ((kp->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) != KSI_FROMPOOL)
 		return;
-	s = splvm();
 	pool_put(&ksiginfo_pool, kp);
-	splx(s);
 }
 
 /*
@@ -486,19 +480,14 @@ void
 ksiginfo_queue_drain0(ksiginfoq_t *kq)
 {
 	ksiginfo_t *ksi;
-	int s;
 
 	KASSERT(!CIRCLEQ_EMPTY(kq));
 
-	KERNEL_LOCK(1, curlwp);		/* XXXSMP */
 	while (!CIRCLEQ_EMPTY(kq)) {
 		ksi = CIRCLEQ_FIRST(kq);
 		CIRCLEQ_REMOVE(kq, ksi, ksi_list);
-		s = splvm();
 		pool_put(&ksiginfo_pool, ksi);
-		splx(s);
 	}
-	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
 }
 
 /*
