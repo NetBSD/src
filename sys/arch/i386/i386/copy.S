@@ -1,8 +1,8 @@
-/*	$NetBSD: copy.S,v 1.13 2007/12/11 23:06:11 lukem Exp $	*/
+/*	$NetBSD: copy.S,v 1.14 2008/04/25 16:34:25 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,7 +72,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.13 2007/12/11 23:06:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.14 2008/04/25 16:34:25 ad Exp $");
 
 #include "assym.h"
 
@@ -86,37 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.13 2007/12/11 23:06:11 lukem Exp $");
 	movl	L_ADDR(reg), reg
 
 /*
- * The following primitives are used to fill and copy regions of memory.
+ * The following primitives are to copy regions of memory.
  */
-
-/*
- * XXX No section 9 man page for fillw.
- * fillw seems to be very sparsely used (only in pccons it seems.)
- * One wonders if it couldn't be done without.
- * -- Perry Metzger, May 7, 2001
- */
-/*
- * void fillw(short pattern, void *addr, size_t len);
- * Write len copies of pattern at addr.
- */
-/* LINTSTUB: Func: void fillw(short pattern, void *addr, size_t len) */
-ENTRY(fillw)
-	pushl	%edi
-	movl	8(%esp),%eax
-	movl	12(%esp),%edi
-	movw	%ax,%cx
-	rorl	$16,%eax
-	movw	%cx,%ax
-	movl	16(%esp),%ecx
-	shrl	%ecx			# do longwords
-	rep
-	stosl
-	movl	16(%esp),%ecx
-	andl	$1,%ecx			# do remainder
-	rep
-	stosw
-	popl	%edi
-	ret
 
 /*
  * int kcopy(const void *from, void *to, size_t len);
@@ -190,6 +161,7 @@ ENTRY(kcopy)
 ENTRY(copyout)
 	pushl	%esi
 	pushl	%edi
+
 .Lcopyout_start:
 	DO_DEFERRED_SWITCH_RETRY
 
