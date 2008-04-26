@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.252 2008/03/04 09:32:01 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.253 2008/04/26 13:44:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.252 2008/03/04 09:32:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.253 2008/04/26 13:44:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2430,7 +2430,7 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
 
 int
 uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
-    struct vm_map_entry *newents, int nnewents)
+    struct vm_map_entry *newents, int nnewents, struct vm_map_entry **oldentryp)
 {
 	struct vm_map_entry *oldent, *last;
 
@@ -2537,7 +2537,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 * now we can free the old blank entry and return.
 	 */
 
-	uvm_mapent_free(oldent);
+	*oldentryp = oldent;
 	return (true);
 }
 
@@ -2566,6 +2566,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	vaddr_t dstaddr, end, newend, oldoffset, fudge, orig_fudge;
 	struct vm_map_entry *chain, *endchain, *entry, *orig_entry, *newentry,
 	    *deadentry, *oldentry;
+	struct vm_map_entry *resentry = NULL; /* a dummy reservation entry */
 	vsize_t elen;
 	int nchain, error, copy_ok;
 	UVMHIST_FUNC("uvm_map_extract"); UVMHIST_CALLED(maphist);
@@ -2765,7 +2766,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	if (srcmap == dstmap || vm_map_lock_try(dstmap) == true) {
 		copy_ok = 1;
 		if (!uvm_map_replace(dstmap, dstaddr, dstaddr+len, chain,
-		    nchain)) {
+		    nchain, &resentry)) {
 			if (srcmap != dstmap)
 				vm_map_unlock(dstmap);
 			error = EIO;
@@ -2852,7 +2853,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	if (copy_ok == 0) {
 		vm_map_lock(dstmap);
 		error = uvm_map_replace(dstmap, dstaddr, dstaddr+len, chain,
-		    nchain);
+		    nchain, &resentry);
 		vm_map_unlock(dstmap);
 
 		if (error == false) {
@@ -2860,6 +2861,9 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 			goto bad2;
 		}
 	}
+
+	if (resentry != NULL)
+		uvm_mapent_free(resentry);
 
 	uvm_map_check(srcmap, "map_extract src leave");
 	uvm_map_check(dstmap, "map_extract dst leave");
@@ -2875,6 +2879,9 @@ bad2:			/* src already unlocked */
 	if (chain)
 		uvm_unmap_detach(chain,
 		    (flags & UVM_EXTRACT_QREF) ? AMAP_REFALL : 0);
+
+	if (resentry != NULL)
+		uvm_mapent_free(resentry);
 
 	uvm_map_check(srcmap, "map_extract src err leave");
 	uvm_map_check(dstmap, "map_extract dst err leave");
