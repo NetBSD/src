@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stats.c,v 1.1 2008/04/23 05:21:17 thorpej Exp $	*/
+/*	$NetBSD: net_stats.c,v 1.2 2008/04/26 08:17:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stats.c,v 1.1 2008/04/23 05:21:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stats.c,v 1.2 2008/04/26 08:17:01 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -87,6 +87,6 @@ netstat_sysctl(netstat_sysctl_context *ctx, SYSCTLFN_ARGS)
 	netstat_convert_to_user(ctx);
 	node = *rnode;
 	node.sysctl_data = ctx->ctx_counters;
-	node.sysctl_size = ctx->ctx_ncounters;
+	node.sysctl_size = sizeof(uint64_t) * ctx->ctx_ncounters;
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
