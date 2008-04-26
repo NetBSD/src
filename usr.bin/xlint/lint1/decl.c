@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.39 2008/04/25 22:18:34 christos Exp $ */
+/* $NetBSD: decl.c,v 1.40 2008/04/26 16:14:23 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.39 2008/04/25 22:18:34 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.40 2008/04/26 16:14:23 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -342,9 +342,15 @@ addtype(type_t *tp)
 			dcs->d_terr = 1;
 		dcs->d_lmod = t;
 	} else if (t == FLOAT || t == DOUBLE) {
-		if (dcs->d_cmod != NOTSPEC)
-			dcs->d_terr = 1;
-		dcs->d_cmod = t;
+		if (dcs->d_lmod == NOTSPEC) {
+			if (dcs->d_cmod != NOTSPEC)
+				dcs->d_terr = 1;
+			dcs->d_cmod = t;
+		} else {
+			if (dcs->d_atyp != NOTSPEC)
+				dcs->d_terr = 1;
+			dcs->d_atyp = t;
+		}
 	} else {
 		/*
 		 * remember specifiers "void", "char", "int",

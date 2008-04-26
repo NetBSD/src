@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.33 2008/04/25 22:18:34 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.34 2008/04/26 16:14:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.33 2008/04/25 22:18:34 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.34 2008/04/26 16:14:23 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -232,7 +232,7 @@ const	char *msgs[] = {
 	"first operand must have scalar type, op ? :",		      /* 170 */
 	"assignment type mismatch",				      /* 171 */
 	"too many struct/union initializers",			      /* 172 */
-	"too many array initializers",				      /* 173 */
+	"too many array initializers, expected %d",		      /* 173 */
 	"too many initializers",				      /* 174 */
 	"initialisation of an incomplete type",			      /* 175 */
 	"invalid initializer type %s",				      /* 176 */
