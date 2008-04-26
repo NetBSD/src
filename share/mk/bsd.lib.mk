@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.275 2008/04/26 21:26:03 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.276 2008/04/26 22:28:13 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -441,9 +441,14 @@ _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
 
-.if !defined(LIB) || ${LIB} != "c"
+.if !defined(LIB)
 DPLIBC ?= ${DESTDIR}${LIBC_SO}
 LDLIBC ?= -lc
+.else
+.if ${LIB} != "c" && ${LIB:M*gcc*} == ""
+DPLIBC ?= ${DESTDIR}${LIBC_SO}
+LDLIBC ?= -lc
+.endif
 .endif
 
 lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
