@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.1.2.2 2008/04/26 18:27:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.2.2 2008/04/26 18:27:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,14 +223,13 @@ compat_50_sys_futimes(struct lwp *l,
 	int error;
 	struct file *fp;
 
-	return (error);
 	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
-		return (error);
+		return error;
 	error = compat_50_do_sys_utimes(l, fp->f_data, NULL, 0,
 	    SCARG(uap, tptr));
 	fd_putfile(SCARG(uap, fd));
-	return (error);
+	return error;
 }
 
 /*
