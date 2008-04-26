@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.7 2007/03/04 06:00:30 christos Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.8 2008/04/26 14:57:44 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.7 2007/03/04 06:00:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.8 2008/04/26 14:57:44 drochner Exp $");
 
 #include <sys/param.h>
 
@@ -110,7 +110,7 @@ struct ohci_sbus_softc {
 	LIST_HEAD(, ohci_dma_segment) sc_dmaseg_head;
 };
 
-CFATTACH_DECL(ohci_sbus, sizeof(struct ohci_sbus_softc),
+CFATTACH_DECL_NEW(ohci_sbus, sizeof(struct ohci_sbus_softc),
     ohci_sbus_match, ohci_sbus_attach, NULL, NULL);
 
 int
@@ -123,10 +123,13 @@ ohci_sbus_match(struct device *parent, struct cfdata *cf, void *aux)
 void
 ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ohci_sbus_softc *sc = (void *)self;
+	struct ohci_sbus_softc *sc = device_private(self);
 	usbd_status result;
 
 	printf("\n");
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	sc->sc.iot = bus_space_create(0, "OHCI I/O space", SBUS_OHCI_REGBASE,
 	    SBUS_OHCI_REGSIZE);
@@ -152,8 +155,7 @@ ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-	    usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 void
