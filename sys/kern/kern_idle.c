@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.15 2008/04/26 08:08:27 yamt Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.16 2008/04/26 08:09:30 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.15 2008/04/26 08:08:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.16 2008/04/26 08:09:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -112,7 +112,7 @@ schedule:
 
 /*
  * Find an idle CPU and remove from the idle bitmask.  The bitmask
- * is always accurate but is "good enough" for the purpose of finding
+ * is not always accurate but is "good enough" for the purpose of finding
  * a CPU to run a job on.
  */
 struct cpu_info *
