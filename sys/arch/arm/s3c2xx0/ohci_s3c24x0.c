@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.4 2008/03/31 02:39:40 dogcow Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.5 2008/04/26 14:57:44 drochner Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.4 2008/03/31 02:39:40 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.5 2008/04/26 14:57:44 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ struct ohci_ssio_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-CFATTACH_DECL(ohci_ssio, sizeof(struct ohci_ssio_softc),
+CFATTACH_DECL_NEW(ohci_ssio, sizeof(struct ohci_ssio_softc),
     ohci_ssio_match, ohci_ssio_attach, ohci_ssio_detach, ohci_activate);
 
 int
@@ -93,12 +93,15 @@ ohci_ssio_match(struct device *parent, struct cfdata *match, void *aux)
 void
 ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ohci_ssio_softc *sc = (struct ohci_ssio_softc *)self;
+	struct ohci_ssio_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *)aux;
 
 	usbd_status r;
 
 	aprint_normal("\n");
+
+	sc->sc.sc_dev = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	sc->sc.iot = sa->sa_iot;
 	/*ohcidebug=15;*/
@@ -134,8 +137,7 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 int
