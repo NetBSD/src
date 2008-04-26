@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.17 2008/04/25 22:18:34 christos Exp $ */
+/* $NetBSD: emit1.c,v 1.18 2008/04/26 23:34:55 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.17 2008/04/25 22:18:34 christos Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.18 2008/04/26 23:34:55 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -54,8 +54,8 @@ static	void	outfstrg(strg_t *);
  * node of type type_t
  * a node is coded as follows:
  *	_Bool			B
- *	_Complex double		u X 
- *	_Complex float		s X 
+ *	_Complex float		s X
+ *	_Complex double		X 
  *	char			C
  *	signed char		s C
  *	unsigned char		u C
@@ -123,8 +123,8 @@ outtype(type_t *tp)
 		case ENUM:	t = 'T';	s = 'e';	break;
 		case STRUCT:	t = 'T';	s = 's';	break;
 		case UNION:	t = 'T';	s = 'u';	break;
-		case DCOMPLEX:	t = 'X';	s = 'u';	break;
 		case FCOMPLEX:	t = 'X';	s = 's';	break;
+		case DCOMPLEX:	t = 'X';	s = '\0';	break;
 		default:
 			LERROR("outtyp()");
 		}
