@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.273 2008/01/09 11:26:14 simonb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.274 2008/04/26 20:03:44 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -441,7 +441,12 @@ _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
 
-lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
+.if ${LIB} != "c"
+DPLIBC ?= ${DESTDIR}${LIBC_SO}
+LDLIBC ?= -lc
+.endif
+
+lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	${_MKTARGET_BUILD}
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
@@ -451,11 +456,12 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
-	    -L${_GCC_LIBGCCDIR}
+	    -L${_GCC_LIBGCCDIR} ${LDLIBC}
 .else
 	${CC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    ${_LIBLDOPTS} \
-	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
+	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD} \
+	    ${LDLIBC}
 .endif
 .if ${OBJECT_FMT} == "ELF"
 #  We don't use INSTALL_SYMLINK here because this is just
