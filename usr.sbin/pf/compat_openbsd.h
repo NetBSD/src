@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_openbsd.h,v 1.4 2006/10/26 10:18:31 christos Exp $	*/
+/*	$NetBSD: compat_openbsd.h,v 1.4.16.1 2008/04/26 12:58:26 peter Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -39,6 +39,7 @@
  */
 
 #define	TAILQ_END(h)	NULL
+#define	LIST_END(h)	NULL
 
 
 /*
