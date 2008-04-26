@@ -1,3 +1,4 @@
+# $NetBSD: spamd,v 1.1.1.1.26.2 2008/04/26 12:56:11 peter Exp $
 # $OpenBSD: spamd,v 1.2 2005/08/06 19:52:37 jmc Exp $
 
 # spamd-setup puts addresses to be redirected into table <spamd>.
