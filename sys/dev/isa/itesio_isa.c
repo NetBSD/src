@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.16 2008/04/26 12:59:24 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.17 2008/04/26 19:01:53 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.16 2008/04/26 12:59:24 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.17 2008/04/26 19:01:53 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,6 +139,7 @@ itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 	case ITESIO_ID8712:
 	case ITESIO_ID8716:
 	case ITESIO_ID8718:
+	case ITESIO_ID8726:
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = 2;
 		ia->ia_niomem = 0;
