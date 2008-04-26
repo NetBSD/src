@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.12 2008/02/29 06:35:40 dyoung Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.13 2008/04/26 01:19:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.12 2008/02/29 06:35:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.13 2008/04/26 01:19:15 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.12 2008/02/29 06:35:40 dyoung Ex
 #include <dev/acpi/acpi_ecvar.h>
 
 #if defined(__i386__) || defined(__amd64__)
+#include <dev/isa/isareg.h>
 #include <machine/pio.h>
 #endif
 
@@ -511,8 +512,8 @@ thinkpad_brightness_read(thinkpad_softc_t *sc)
 	 * with the EC, and Thinkpads are x86-only, this will have to do
 	 * for now.
 	 */
-	outb(0x70, 0x6c);
-	return inb(0x71) & 7;
+	outb(IO_RTC, 0x6c);
+	return inb(IO_RTC+1) & 7;
 #else
 	return 0;
 #endif
