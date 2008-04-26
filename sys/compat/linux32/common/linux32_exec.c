@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.11 2008/04/24 15:35:27 ad Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.12 2008/04/26 22:55:10 njoly Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.11 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.12 2008/04/26 22:55:10 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,6 @@ linux32_e_proc_init(p, parent, forkflags)
 			return;
 		}
 #endif
-		mutex_enter(proc_lock);
 		s = ep->s;
 		s->refs++;
 	} else {
