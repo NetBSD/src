@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.228 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.229 2008/04/26 08:13:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.228 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.229 2008/04/26 08:13:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -420,6 +420,8 @@ tcp_init(void)
 	MOWNER_ATTACH(&tcp_sock_tx_mowner);
 	MOWNER_ATTACH(&tcp_sock_rx_mowner);
 	MOWNER_ATTACH(&tcp_mowner);
+
+	tcpstat_percpu = percpu_alloc(sizeof(uint64_t) * TCP_NSTATS);
 }
 
 /*
