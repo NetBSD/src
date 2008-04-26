@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.62 2008/04/26 11:15:14 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.63 2008/04/26 11:28:26 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.62 2008/04/26 11:15:14 xtraeme Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.63 2008/04/26 11:28:26 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -721,7 +721,7 @@ print_sensors(void)
 	 * to avoid redundancy... like vmstat(1).
 	 */
 	
-	a = "Cur";
+	a = "Current";
 	units = "Unit";
 	if (statistics) {
 		b = "Max";
