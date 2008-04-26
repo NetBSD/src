@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_parser.c,v 1.9.18.1 2008/04/19 09:13:41 yamt Exp $	*/
+/*	$NetBSD: pfctl_parser.c,v 1.9.18.2 2008/04/26 12:54:34 peter Exp $	*/
 /*	$OpenBSD: pfctl_parser.c,v 1.234 2006/10/31 23:46:24 mcbride Exp $ */
 
 /*
@@ -1222,19 +1222,21 @@ struct node_host *
 ifa_exists(const char *ifa_name)
 {
 	struct node_host	*n;
+#ifndef __NetBSD__
 	struct ifgroupreq	ifgr;
 	int			s;
+#endif /* !__NetBSD__ */
 
 	if (iftab == NULL)
 		ifa_load();
 
 	/* check wether this is a group */
+#ifndef __NetBSD__
+	/* XXXPF TODO investigate what's needed for NetBSD */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 		err(1, "socket");
 	bzero(&ifgr, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, ifa_name, sizeof(ifgr.ifgr_name));
-#ifndef __NetBSD__
-/* XXXPF TODO implement NetBSD version */
 	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == 0) {
 		/* fake a node_host */
 		if ((n = calloc(1, sizeof(*n))) == NULL)
@@ -1244,8 +1246,8 @@ ifa_exists(const char *ifa_name)
 		close(s);
 		return (n);
 	}
-#endif /* !__NetBSD__ */
 	close(s);
+#endif /* !__NetBSD__ */
 
 	for (n = iftab; n; n = n->next) {
 		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
@@ -1258,6 +1260,11 @@ ifa_exists(const char *ifa_name)
 struct node_host *
 ifa_grouplookup(const char *ifa_name, int flags)
 {
+#ifdef __NetBSD__
+	/* XXXPF TODO investigate what's needed for NetBSD */
+
+	return (NULL);
+#else
 	struct ifg_req		*ifg;
 	struct ifgroupreq	 ifgr;
 	int			 s, len;
@@ -1267,10 +1274,6 @@ ifa_grouplookup(const char *ifa_name, int flags)
 		err(1, "socket");
 	bzero(&ifgr, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, ifa_name, sizeof(ifgr.ifgr_name));
-#ifdef __NetBSD__
-/* XXXPF TODO implement NetBSD version */
-	return (NULL);
-#else
 	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1) {
 		close(s);
 		return (NULL);
@@ -1281,7 +1284,6 @@ ifa_grouplookup(const char *ifa_name, int flags)
 		err(1, "calloc");
 	if (ioctl(s, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCGIFGMEMB");
-#endif /* !__NetBSD__ */
 
 	for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(struct ifg_req);
 	    ifg++) {
@@ -1299,6 +1301,7 @@ ifa_grouplookup(const char *ifa_name, int flags)
 	close(s);
 
 	return (h);
+#endif /* !__NetBSD__ */
 }
 
 struct node_host *
