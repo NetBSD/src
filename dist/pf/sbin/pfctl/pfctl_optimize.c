@@ -1,4 +1,4 @@
-/*	$NetBSD: pfctl_optimize.c,v 1.5.20.1 2008/04/19 09:13:41 yamt Exp $	*/
+/*	$NetBSD: pfctl_optimize.c,v 1.5.20.2 2008/04/26 12:54:34 peter Exp $	*/
 /*	$OpenBSD: pfctl_optimize.c,v 1.13 2006/10/31 14:17:45 mcbride Exp $ */
 
 /*
@@ -22,9 +22,9 @@
 #include <sys/socket.h>
 
 #include <net/if.h>
-#include <netinet/in.h>
 #include <net/pfvar.h>
 
+#include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include <assert.h>
