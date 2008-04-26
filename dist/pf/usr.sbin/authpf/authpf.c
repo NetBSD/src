@@ -1,4 +1,4 @@
-/*	$NetBSD: authpf.c,v 1.5.18.2 2008/04/19 12:31:04 yamt Exp $	*/
+/*	$NetBSD: authpf.c,v 1.5.18.3 2008/04/26 12:55:07 peter Exp $	*/
 /*	$OpenBSD: authpf.c,v 1.104 2007/02/24 17:35:08 beck Exp $	*/
 
 /*
@@ -26,7 +26,6 @@
 #include <sys/wait.h>
 
 #include <net/if.h>
-#include <netinet/in.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
@@ -561,7 +560,6 @@ check_luser(char *luserdir, char *luser)
 		    sizeof(tmp));
 		while (fputs(tmp, stdout) != EOF && !feof(f)) {
 			if (fgets(tmp, sizeof(tmp), f) == NULL) {
-				fclose(f);
 				fflush(stdout);
 				fclose(f);
 				return (0);
