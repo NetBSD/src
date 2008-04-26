@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.20 2008/04/25 22:18:34 christos Exp $ */
+/* $NetBSD: read.c,v 1.21 2008/04/26 17:11:52 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.20 2008/04/25 22:18:34 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.21 2008/04/26 17:11:52 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -1143,22 +1143,21 @@ inpname(const char *cp, const char **epp)
 static int
 getfnidx(const char *fn)
 {
-	int	i;
+	size_t	i;
 
-	/* 0 ist reserved */
+	/* 0 is reserved */
 	for (i = 1; fnames[i] != NULL; i++) {
 		if (strcmp(fnames[i], fn) == 0)
-			break;
+			return i;
 	}
-	if (fnames[i] != NULL)
-		return (i);
 
 	if (i == nfnames - 1) {
-		fnames = xrealloc(fnames, (nfnames * 2) * sizeof(char *));
+		size_t nlen = nfnames * 2;
+		fnames = xrealloc(fnames, nlen * sizeof(char *));
 		(void)memset(fnames + nfnames, 0, nfnames * sizeof(char *));
-		flines = xrealloc(fnames, (nfnames * 2) * sizeof(size_t));
+		flines = xrealloc(flines, nlen * sizeof(size_t));
 		(void)memset(flines + nfnames, 0, nfnames * sizeof(size_t));
-		nfnames *= 2;
+		nfnames = nlen;
 	}
 
 	fnames[i] = xstrdup(fn);
