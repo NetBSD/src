@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.61 2008/04/26 02:56:57 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.62 2008/04/26 11:15:14 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.61 2008/04/26 02:56:57 xtraeme Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.62 2008/04/26 11:15:14 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -830,11 +830,13 @@ do {								\
 				if (sensor->critmin_value) {
 					CONVERTTEMP(temp,
 					    sensor->critmin_value, degrees);
-					(void)printf("%8.3f ", temp);
-					if (sensor->critmax_value)	
-						ilen = 16 + 1;
+					if (sensor->critmax_value)
+						ilen = 8;
 					else
-						ilen = 24 + 2;
+						ilen = 16 + 1;
+
+					(void)printf("%*.3f ", (int)ilen, temp);
+					ilen = 16 + 1;
 				}
 			}
 
@@ -859,12 +861,13 @@ do {								\
 				}
 
 				if (sensor->critmin_value) {
-					(void)printf("%8u ",
-					    sensor->critmin_value);
 					if (sensor->critmax_value)
-						ilen = 16 + 1;
+						ilen = 8;
 					else
-						ilen = 24 + 2;
+						ilen = 16 + 1;
+					(void)printf("%*u ", ilen,
+					    sensor->critmin_value);
+					ilen = 16 + 1;
 				}
 			}
 
@@ -913,19 +916,21 @@ do {								\
 				}
 
 				if (sensor->critmin_value) {
-					(void)printf("%8.3f ",
-					    sensor->critmin_value / 1000000.0);
 					if (sensor->critmax_value)
-						ilen = 16 + 1;
+						ilen = 8;
 					else
-						ilen = 24 + 2;
+						ilen = 16 + 1;
+					(void)printf("%*.3f ", (int)ilen,
+					    sensor->critmin_value / 1000000.0);
+					ilen = 16 + 1;
 				}
 
 				if (sensor->critcap_value) {
-					(void)printf("%8.2f%% ",
+					ilen = 24 + 2;
+					(void)printf("%*.2f%% ", (int)ilen,
 					    (sensor->critcap_value * 100.0) /
 					    sensor->max_value);
-					ilen = 16 + 1;
+					ilen = 8;
 				}
 			}
 
