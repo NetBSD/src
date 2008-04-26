@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.170 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.171 2008/04/26 08:13:59 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.170 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.171 2008/04/26 08:13:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -237,7 +237,12 @@ udp_init(void)
 	MOWNER_ATTACH(&udp_rx_mowner);
 	MOWNER_ATTACH(&udp_mowner);
 
+#ifdef INET
 	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
+#endif
+#ifdef INET6
+	udp6stat_percpu = percpu_alloc(sizeof(uint64_t) * UDP6_NSTATS);
+#endif
 }
 
 /*
