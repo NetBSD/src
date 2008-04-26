@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.63 2008/04/26 11:28:26 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.64 2008/04/26 20:58:51 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.63 2008/04/26 11:28:26 xtraeme Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.64 2008/04/26 20:58:51 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -865,7 +865,7 @@ do {								\
 						ilen = 8;
 					else
 						ilen = 16 + 1;
-					(void)printf("%*u ", ilen,
+					(void)printf("%*u ", (int)ilen,
 					    sensor->critmin_value);
 					ilen = 16 + 1;
 				}
