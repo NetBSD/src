@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.83 2008/04/25 22:21:53 christos Exp $
+#  $NetBSD: Makefile,v 1.84 2008/04/26 19:19:06 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -42,8 +42,7 @@
 #					    default standard
 #
 
-# XXX lint buts on some archs and needs stubs
-#USE_SHLIBDIR=	yes
+USE_SHLIBDIR=	yes
 
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
