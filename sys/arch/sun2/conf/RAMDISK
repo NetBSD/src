@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.37 2008/04/25 23:01:28 he Exp $
+# $NetBSD: RAMDISK,v 1.38 2008/04/26 02:43:07 tsutsui Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -26,7 +26,6 @@ maxusers	2
 #options 	SYSVMSG		# System V message queues
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
