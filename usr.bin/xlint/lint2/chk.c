@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.18 2005/04/07 16:28:40 christos Exp $ */
+/* $NetBSD: chk.c,v 1.19 2008/04/26 19:38:30 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.18 2005/04/07 16:28:40 christos Exp $");
+__RCSID("$NetBSD: chk.c,v 1.19 2008/04/26 19:38:30 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -307,19 +307,24 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 
 	tp1 = TP(def->s_type);
 	for (sym = hte->h_syms; sym != NULL; sym = sym->s_nxt) {
+		type_t *xt1, *xt2;
 		if (sym == def)
 			continue;
 		tp2 = TP(sym->s_type);
 		warn = 0;
 		if (tp1->t_tspec == FUNC && tp2->t_tspec == FUNC) {
-			eq = eqtype(tp1->t_subt, tp2->t_subt, 1, 0, 0, &warn);
+			eq = eqtype(xt1 = tp1->t_subt, xt2 = tp2->t_subt,
+			    1, 0, 0, &warn);
 		} else {
-			eq = eqtype(tp1, tp2, 0, 0, 0, &warn);
+			eq = eqtype(xt1 = tp1, xt2 = tp2, 0, 0, 0, &warn);
 		}
 		if (!eq || (sflag && warn)) {
+			char b1[64], b2[64];
 			pos1 = xstrdup(mkpos(&def->s_pos));
 			/* %s value declared inconsistently\t%s  ::  %s */
-			msg(5, hte->h_name, pos1, mkpos(&sym->s_pos));
+			msg(5, hte->h_name, tyname(b1, sizeof(b1), xt1),
+			    tyname(b2, sizeof(b2), xt2), pos1,
+			    mkpos(&sym->s_pos));
 			free(pos1);
 		}
 	}
@@ -1130,13 +1135,17 @@ chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 		ap2 = TP(sym->s_type)->t_args;
 		n = 0;
 		while (*ap1 != NULL && *ap2 != NULL) {
+			type_t *xt1, *xt2;
 			warn = 0;
-			eq = eqtype(*ap1, *ap2, 1, osdef, 0, &warn);
+			eq = eqtype(xt1 = *ap1, xt2 = *ap2, 1, osdef, 0, &warn);
 			if (!eq || warn) {
+				char b1[64], b2[64];
 				pos1 = xstrdup(mkpos(&sym1->s_pos));
 				pos2 = mkpos(&sym->s_pos);
 				/* %s, arg %d declared inconsistently ... */
-				msg(11, hte->h_name, n + 1, pos1, pos2);
+				msg(11, hte->h_name, n + 1,
+				    tyname(b1, sizeof(b1), xt1),
+				    tyname(b2, sizeof(b2), xt2), pos1, pos2);
 				free(pos1);
 			}
 			n++;
