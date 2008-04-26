@@ -1,3 +1,4 @@
+# $NetBSD: queue2,v 1.1.1.1.26.2 2008/04/26 12:56:11 peter Exp $
 # $OpenBSD: queue2,v 1.4 2006/10/07 04:48:01 mcbride Exp $
 # advanced queue example.
 # give interactive ssh traffic priority over ssh bulk transfers (scp, sftp)
