@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.21 2008/04/26 17:11:52 christos Exp $ */
+/* $NetBSD: read.c,v 1.22 2008/04/26 20:11:09 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.21 2008/04/26 17:11:52 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.22 2008/04/26 20:11:09 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -633,7 +633,7 @@ inptype(const char *cp, const char **epp)
 		tp->t_tspec = s == 'e' ? ENUM : (s == 's' ? STRUCT : UNION);
 		break;
 	case 'X':
-		tp->t_tspec = s == 'u' ? DCOMPLEX : FCOMPLEX;
+		tp->t_tspec = s == 's' ? FCOMPLEX : DCOMPLEX;
 		break;
 	}
 
@@ -761,11 +761,17 @@ gettlen(const char *cp, const char **epp)
 		c = *cp++;
 	}
 
-	if (c == 's' || c == 'u' || c == 'l' || c == 'e') {
+	switch (c) {
+	case 's':
+	case 'u':
+	case 'l':
+	case 'e':
 		s = c;
 		c = *cp++;
-	} else {
+		break;
+	default:
 		s = '\0';
+		break;
 	}
 
 	t = NOTSPEC;
@@ -848,10 +854,10 @@ gettlen(const char *cp, const char **epp)
 		}
 		break;
 	case 'X':
-		if (s == 'u') {
-			t = DCOMPLEX;
-		} else if (s == 's') {
+		if (s == 's') {
 			t = FCOMPLEX;
+		} else if (s == '\0') {
+			t = DCOMPLEX;
 		}
 		break;
 	default:
