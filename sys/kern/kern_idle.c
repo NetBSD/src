@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.14 2008/04/24 13:56:30 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.15 2008/04/26 08:08:27 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.14 2008/04/24 13:56:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.15 2008/04/26 08:08:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -53,7 +53,7 @@ idle_loop(void *dummy)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = curlwp;
-	unsigned mask = (1 << cpu_index(ci));
+	uint32_t mask = 1 << cpu_index(ci);
 	bool set = false;
 	int s;
 
