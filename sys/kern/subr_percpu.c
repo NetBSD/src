@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.4 2008/04/09 05:11:20 thorpej Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.5 2008/04/26 08:06:11 yamt Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.4 2008/04/09 05:11:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.5 2008/04/26 08:06:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -254,7 +254,7 @@ percpu_alloc(size_t size)
 }
 
 /*
- * percpu_alloc: free percpu storage
+ * percpu_free: free percpu storage
  *
  * => called in thread context.
  * => considered as an expensive and rare operation.
