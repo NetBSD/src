@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.105 2008/04/25 14:34:41 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.106 2008/04/27 11:39:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.105 2008/04/25 14:34:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106 2008/04/27 11:39:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -753,9 +753,8 @@ lwp_exit(struct lwp *l)
 	 * mark it waiting for collection in the proc structure.  Note that
 	 * before we can do that, we need to free any other dead, deatched
 	 * LWP waiting to meet its maker.
-	 *
-	 * XXXSMP disable preemption.
 	 */
+	KPREEMPT_DISABLE();
 	mutex_enter(p->p_lock);
 	lwp_drainrefs(l);
 
