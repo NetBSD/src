@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.47 2008/04/27 00:13:58 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.48 2008/04/27 01:45:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.47 2008/04/27 00:13:58 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.48 2008/04/27 01:45:04 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2164,27 +2164,42 @@ static void
 incompat(op_t op, tspec_t lt, tspec_t rt)
 {
 	mod_t	*mp;
+	int e = 0;
 
 	mp = &modtab[op];
 
 	if (lt == VOID || (mp->m_binary && rt == VOID)) {
 		/* void type illegal in expression */
-		error(109);
+		e = 109;
 	} else if (op == ASSIGN) {
 		if ((lt == STRUCT || lt == UNION) &&
 		    (rt == STRUCT || rt == UNION)) {
 			/* assignment of different structures */
-			error(240);
+			e = 240;
 		} else {
 			/* assignment type mismatch */
-			error(171);
+			e = 171;
 		}
 	} else if (mp->m_binary) {
 		/* operands of %s have incompatible types */
-		error(107, mp->m_name);
+		e = 107;
 	} else {
 		/* operand of %s has incompatible type */
-		error(108, mp->m_name);
+		e = 108;
+	}
+	switch (e) {
+	case 0:
+		return;
+	case 109:
+		error(e);
+		return;
+	case 108:
+	case 107:
+		error(e, mp->m_name, basictyname(lt), basictyname(rt));
+		return;
+	default:
+		error(e, basictyname(lt), basictyname(rt));
+		return;
 	}
 }
 
