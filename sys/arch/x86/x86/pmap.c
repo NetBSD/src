@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 2008/04/27 22:41:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2008/04/27 22:41:15 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -744,6 +744,8 @@ static void
 pmap_apte_flush(struct pmap *pmap)
 {
 
+	KASSERT(kpreempt_disabled());
+
 	/*
 	 * Flush the APTE mapping from all other CPUs that
 	 * are using the pmap we are using (who's APTE space
@@ -787,8 +789,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	int s;
 #endif
 
-	KASSERT(kpreempt_disabled());
-
 	/* the kernel's pmap is always accessible */
 	if (pmap == pmap_kernel()) {
 		*pmap2 = NULL;
@@ -796,6 +796,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		*pdeppp = normal_pdes;
 		return;
 	}
+	KASSERT(kpreempt_disabled());
 
  retry:
 	l = curlwp;
@@ -915,6 +916,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	if (pmap == pmap_kernel()) {
 		return;
 	}
+	KASSERT(kpreempt_disabled());
 	if (pmap2 == NULL) {
 		mutex_exit(&pmap->pm_lock);
 	} else {
@@ -1832,6 +1834,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
 
 	level = 1;
 	do {
@@ -1872,6 +1875,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  *
  * => pmap should NOT be pmap_kernel()
  * => pmap should be locked
+ * => preemption should be disabled
  */
 
 static struct vm_page *
@@ -1886,6 +1890,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
 
 	ptp = NULL;
 	pa = (paddr_t)-1;
@@ -2530,6 +2535,8 @@ pmap_load(void)
 		return;
 	}
 	cpumask = ci->ci_cpumask;
+	l = ci->ci_curlwp;
+	ncsw = l->l_ncsw;
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_IPI); 
@@ -2539,7 +2546,6 @@ pmap_load(void)
 	KASSERT((x86_read_psl() & PSL_I) != 0);
 #endif
 
-	l = ci->ci_curlwp;
 	KASSERT(l != NULL);
 	pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	KASSERT(pmap != pmap_kernel());
@@ -2685,7 +2691,6 @@ pmap_load(void)
 	 * to the old pmap.  if we block, we need to go around again.
 	 */
 
-	ncsw = l->l_ncsw;
 	pmap_destroy(oldpmap);
 	if (l->l_ncsw != ncsw) {
 		goto retry;
@@ -2705,6 +2710,8 @@ pmap_deactivate(struct lwp *l)
 {
 	struct pmap *pmap;
 	struct cpu_info *ci;
+
+	KASSERT(kpreempt_disabled());
 
 	if (l != curlwp) {
 		return;
@@ -3697,6 +3704,7 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
+	kpreempt_disable();
 startover:
 	pp_lock(pp);
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
@@ -3720,8 +3728,6 @@ startover:
 	result = pp->pp_attrs & clearbits;
 	pp->pp_attrs &= ~clearbits;
 	pp_unlock(pp);
-
-	kpreempt_disable();
 	pmap_tlb_shootwait();
 	kpreempt_enable();
 
