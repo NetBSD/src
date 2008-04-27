@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.221 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.222 2008/04/27 22:38:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -482,9 +482,11 @@ do {						\
 #define	KERNEL_UNLOCK_ONE(l)		KERNEL_UNLOCK(1, (l), NULL)
 
 /* Preemption control. */
+#ifdef _KERNEL
 void	kpreempt_disable(void);
 void	kpreempt_enable(void);
 bool	kpreempt_disabled(void);
+#endif
 
 void assert_sleepable(void);
 #if defined(DEBUG)
