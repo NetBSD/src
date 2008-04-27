@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.201 2008/03/24 12:24:37 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.201.4.1 2008/04/27 12:52:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201 2008/03/24 12:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201.4.1 2008/04/27 12:52:50 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -569,6 +569,8 @@ extern struct nfsnodehashhead *nfsnodehashtbl;
 extern u_long nfsnodehash;
 
 u_long nfsdirhashmask;
+
+static kmutex_t nfs_xidlock;
 
 int nfs_webnamei __P((struct nameidata *, struct vnode *, struct proc *));
 
@@ -1555,6 +1557,8 @@ nfs_init0(void)
 	/*
 	 * Initialize reply list and start timer
 	 */
+	mutex_init(&nfs_reqq_lock, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	mutex_init(&nfs_xidlock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&nfs_reqq);
 	nfs_timer_init();
 	MOWNER_ATTACH(&nfs_mowner);
@@ -1710,6 +1714,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	gid = fxdr_unsigned(gid_t, fp->fa_gid);
 	vap = np->n_vattr;
 
+	mutex_enter(&np->n_attrlock);
 	/*
 	 * Invalidate access cache if uid, gid, mode or ctime changed.
 	 */
@@ -1763,6 +1768,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		vap->va_filerev = 0;
 	}
 	if (vap->va_size > VFSTONFS(vp->v_mount)->nm_maxfilesize) {
+		mutex_exit(&np->n_attrlock);
 		return EFBIG;
 	}
 	if (vap->va_size != np->n_size) {
@@ -1778,6 +1784,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 				if (flags & NAC_NOTRUNC) {
 					np->n_flag |= NTRUNCDELAYED;
 				} else {
+					mutex_exit(&np->n_attrlock); /* XXX */
 					genfs_node_wrlock(vp);
 					mutex_enter(&vp->v_interlock);
 					(void)VOP_PUTPAGES(vp, 0,
@@ -1785,6 +1792,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 					    PGO_FREE | PGO_ALLPAGES);
 					uvm_vnp_setsize(vp, np->n_size);
 					genfs_node_unlock(vp);
+					mutex_enter(&np->n_attrlock);
 				}
 			}
 		}
@@ -1799,6 +1807,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 				vaper->va_mtime = np->n_mtim;
 		}
 	}
+	mutex_exit(&np->n_attrlock);
 	return (0);
 }
 
@@ -1816,34 +1825,43 @@ nfs_getattrcache(vp, vaper)
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	struct vattr *vap;
 
+	mutex_enter(&np->n_attrlock);
 	if (np->n_attrstamp == 0 ||
 	    (time_second - np->n_attrstamp) >= nfs_attrtimeo(nmp, np)) {
+		mutex_exit(&np->n_attrlock);
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
 	nfsstats.attrcache_hits++;
+
 	vap = np->n_vattr;
 	if (vap->va_size != np->n_size) {
 		if (vap->va_type == VREG) {
+			voff_t size;
+
 			if ((np->n_flag & NMODIFIED) != 0 &&
 			    vap->va_size < np->n_size) {
 				vap->va_size = np->n_size;
 			} else {
 				np->n_size = vap->va_size;
 			}
+			size = np->n_size;
+			mutex_exit(&np->n_attrlock); /* XXX */
 			genfs_node_wrlock(vp);
-			uvm_vnp_setsize(vp, np->n_size);
+			uvm_vnp_setsize(vp, size);
 			genfs_node_unlock(vp);
+			mutex_enter(&np->n_attrlock);
 		} else
 			np->n_size = vap->va_size;
 	}
-	memcpy((void *)vaper, (void *)vap, sizeof(struct vattr));
+	memcpy(vaper, vap, sizeof(struct vattr));
 	if (np->n_flag & NCHG) {
 		if (np->n_flag & NACC)
 			vaper->va_atime = np->n_atim;
 		if (np->n_flag & NUPD)
 			vaper->va_mtime = np->n_mtim;
 	}
+	mutex_exit(&np->n_attrlock);
 	return (0);
 }
 
@@ -2904,10 +2922,9 @@ nfs_getxid()
 {
 	static u_int32_t base;
 	static u_int32_t nfs_xid = 0;
-	static struct simplelock nfs_xidlock = SIMPLELOCK_INITIALIZER;
 	u_int32_t newxid;
 
-	simple_lock(&nfs_xidlock);
+	mutex_enter(&nfs_xidlock);
 	/*
 	 * derive initial xid from system time
 	 * XXX time is invalid if root not yet mounted
@@ -2926,7 +2943,7 @@ nfs_getxid()
 	if (__predict_false(++nfs_xid == 0))
 		nfs_xid++;
 	newxid = nfs_xid;
-	simple_unlock(&nfs_xidlock);
+	mutex_exit(&nfs_xidlock);
 
 	return txdr_unsigned(newxid);
 }

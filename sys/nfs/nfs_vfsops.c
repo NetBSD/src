@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.196.10.1 2008/04/27 12:52:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196.10.1 2008/04/27 12:52:50 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $"
 #include <sys/systm.h>
 #include <sys/timetc.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -435,11 +436,10 @@ nfs_decode_args(nmp, argp, l)
 	struct nfs_args *argp;
 	struct lwp *l;
 {
-	int s;
 	int adjsock;
 	int maxio;
 
-	s = splsoftnet();
+	rw_enter(&nmp->nm_solock, RW_WRITER);
 
 	/*
 	 * Silently clear NFSMNT_NOCONN if it's a TCP mount, it makes
@@ -464,7 +464,6 @@ nfs_decode_args(nmp, argp, l)
 
 	/* Update flags. */
 	nmp->nm_flag = argp->flags;
-	splx(s);
 
 	if ((argp->flags & NFSMNT_TIMEO) && argp->timeo > 0) {
 		nmp->nm_timeo = (argp->timeo * NFS_HZ + 5) / 10;
@@ -556,6 +555,8 @@ nfs_decode_args(nmp, argp, l)
 				kpause("nfscn3", false, hz, NULL);
 			}
 	}
+
+	rw_exit(&nmp->nm_solock);
 }
 
 /*
@@ -629,6 +630,7 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return (EPROGMISMATCH);
 #endif
 	if (mp->mnt_flag & MNT_UPDATE) {
+#if 0
 		if (nmp == NULL)
 			return (EIO);
 		/*
@@ -639,6 +641,8 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_XLATECOOKIE));
 		nfs_decode_args(nmp, args, l);
 		return (0);
+#endif
+		return EOPNOTSUPP;
 	}
 	if (args->fhsize < 0 || args->fhsize > NFSX_V3FHMAX)
 		return (EINVAL);
@@ -714,6 +718,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		TAILQ_INIT(&nmp->nm_bufq);
 		rw_init(&nmp->nm_writeverflock);
 		mutex_init(&nmp->nm_lock, MUTEX_DEFAULT, IPL_NONE);
+		rw_init(&nmp->nm_solock);
 		cv_init(&nmp->nm_rcvcv, "nfsrcv");
 		cv_init(&nmp->nm_sndcv, "nfssnd");
 		cv_init(&nmp->nm_aiocv, "nfsaio");
@@ -757,6 +762,8 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 
 	nfs_decode_args(nmp, argp, l);
 
+	mp->mnt_iflag |= IMNT_MPSAFE;
+
 	mp->mnt_fs_bshift = ffs(MIN(nmp->nm_rsize, nmp->nm_wsize)) - 1;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
 
@@ -764,9 +771,13 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	 * For Connection based sockets (TCP,...) defer the connect until
 	 * the first request, in case the server is not responding.
 	 */
+	rw_enter(&nmp->nm_solock, RW_WRITER);
 	if (nmp->nm_sotype == SOCK_DGRAM &&
-		(error = nfs_connect(nmp, (struct nfsreq *)0, l)))
+	    (error = nfs_connect(nmp, NULL, l))) {
+		rw_exit(&nmp->nm_solock);
 		goto bad;
+	}
+	rw_exit(&nmp->nm_solock);
 
 	/*
 	 * This is silly, but it has to be set so that vinifod() works.
@@ -779,7 +790,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	if (error)
 		goto bad;
 	*vpp = NFSTOV(np);
-	MALLOC(attrs, struct vattr *, sizeof(struct vattr), M_TEMP, M_WAITOK);
+	attrs = kmem_alloc(sizeof(*attrs), KM_SLEEP);
 	VOP_GETATTR(*vpp, attrs, l->l_cred);
 	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
 		cr = kauth_cred_alloc();
@@ -792,7 +803,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, l, cr);
 		kauth_cred_free(cr);
 	}
-	FREE(attrs, M_TEMP);
+	kmem_free(attrs, sizeof(*attrs));
 
 	/*
 	 * A reference count is needed on the nfsnode representing the
@@ -803,6 +814,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	 * number == ROOTINO (2). So, just unlock, but no rele.
 	 */
 
+	(*vpp)->v_vflag |= VV_ROOT;
 	nmp->nm_vnode = *vpp;
 	VOP_UNLOCK(*vpp, 0);
 
@@ -811,9 +823,12 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 
 	return (0);
 bad:
+	rw_enter(&nmp->nm_solock, RW_WRITER);
 	nfs_disconnect(nmp);
+	rw_exit(&nmp->nm_solock);
 	rw_destroy(&nmp->nm_writeverflock);
 	mutex_destroy(&nmp->nm_lock);
+	rw_destroy(&nmp->nm_solock);
 	cv_destroy(&nmp->nm_rcvcv);
 	cv_destroy(&nmp->nm_sndcv);
 	cv_destroy(&nmp->nm_aiocv);
@@ -886,11 +901,14 @@ nfs_unmount(struct mount *mp, int mntflags)
 	 */
 	vput(vp);
 	vgone(vp);
+	rw_enter(&nmp->nm_solock, RW_WRITER);
 	nfs_disconnect(nmp);
+	rw_exit(&nmp->nm_solock);
 	m_freem(nmp->nm_nam);
 
 	rw_destroy(&nmp->nm_writeverflock);
 	mutex_destroy(&nmp->nm_lock);
+	rw_destroy(&nmp->nm_solock);
 	cv_destroy(&nmp->nm_rcvcv);
 	cv_destroy(&nmp->nm_sndcv);
 	cv_destroy(&nmp->nm_aiocv);
@@ -918,7 +936,6 @@ nfs_root(mp, vpp)
 		return error;
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
-	vp->v_vflag = VV_ROOT;
 	*vpp = vp;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.21 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.21.4.1 2008/04/27 12:52:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.21 2008/03/21 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.21.4.1 2008/04/27 12:52:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,8 +310,8 @@ nfs_kqfilter(void *v)
 
 	/* ensure the poller is running */
 	if (!nfskq_thread) {
-		error = kthread_create(PRI_NONE, 0, NULL, nfs_kqpoll,
-		    NULL, &nfskq_thread, "nfskqpoll");
+		error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+		    nfs_kqpoll, NULL, &nfskq_thread, "nfskqpoll");
 		if (error) {
 			mutex_exit(&nfskevq_lock);
 			return error;

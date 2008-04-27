@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.46 2007/07/31 21:14:19 pooka Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.46.28.1 2008/04/27 12:52:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -108,10 +108,6 @@ struct nfs_args {
 #define NFSMNT_GOTFSINFO	0x00000004  /* Got the V3 fsinfo */
 #define	NFSMNT_MNTD		0x00000008  /* Mnt server for mnt point */
 #define	NFSMNT_DISMNT		0x00000020  /* Dismounted */
-#define	NFSMNT_SNDLOCK		0x00000040  /* Send socket lock */
-#define	NFSMNT_WANTSND		0x00000080  /* Want above */
-#define	NFSMNT_RCVLOCK		0x00000100  /* Rcv socket lock */
-#define	NFSMNT_WANTRCV		0x00000200  /* Want above */
 #define	NFSMNT_WAITAUTH		0x00000400  /* Wait for authentication */
 #define	NFSMNT_HASAUTH		0x00000800  /* Has authenticator */
 #define	NFSMNT_WANTAUTH		0x00001000  /* Wants an authenticator */
@@ -125,27 +121,33 @@ struct nfs_args {
  * Mount structure.
  * One allocated on every NFS mount.
  * Holds NFS specific information for mount.
+ *
+ * R:	nfs_reqq_lock
+ * S:	nm_solock
  */
 struct	nfsmount {
 	kmutex_t nm_lock;		/* Lock for this structure */
+	lwp_t	*nm_rcvlwp;
+	lwp_t	*nm_sndlwp;
 	kcondvar_t nm_rcvcv;
 	kcondvar_t nm_sndcv;
 	int	nm_flag;		/* Flags for soft/hard... */
 	struct	mount *nm_mountp;	/* Vfs structure for this filesystem */
 	int	nm_numgrps;		/* Max. size of groupslist */
 	struct vnode *nm_vnode;
-	struct	socket *nm_so;		/* Rpc socket */
-	int	nm_sotype;		/* Type of socket */
-	int	nm_soproto;		/* and protocol */
-	int	nm_soflags;		/* pr_flags for socket protocol */
+	krwlock_t nm_solock;
+	struct	socket *nm_so;		/* S: Rpc socket */
+	int	nm_sotype;		/* S: Type of socket */
+	int	nm_soproto;		/* S: and protocol */
+	int	nm_soflags;		/* S: pr_flags for socket protocol */
 	struct	mbuf *nm_nam;		/* Addr of server */
 	int	nm_timeo;		/* Init timer for NFSMNT_DUMBTIMR */
 	int	nm_retry;		/* Max retries */
 	int	nm_srtt[4];		/* Timers for rpcs */
 	int	nm_sdrtt[4];
-	int	nm_sent;		/* Request send count */
-	int	nm_cwnd;		/* Request send window */
-	int	nm_timeouts;		/* Request timeouts */
+	int	nm_sent;		/* R: Request send count */
+	int	nm_cwnd;		/* R: Request send window */
+	int	nm_timeouts;		/* R: Request timeouts */
 	int	nm_deadthresh;		/* Threshold of timeouts-->dead server*/
 	int	nm_rsize;		/* Max size of read rpc */
 	int	nm_wsize;		/* Max size of write rpc */

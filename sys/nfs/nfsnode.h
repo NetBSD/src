@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.67 2008/01/25 14:32:16 ad Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.67.10.1 2008/04/27 12:52:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -165,21 +165,23 @@ struct nfsnode {
 
 	LIST_ENTRY(nfsnode)	n_hash;		/* Hash chain */
 	nfsfh_t			*n_fhp;		/* NFS File Handle */
-	struct vattr		*n_vattr;	/* Vnode attribute cache */
 	struct vnode		*n_vnode;	/* associated vnode */
 	struct lockf		*n_lockf;	/* Locking record of file */
-	time_t			n_attrstamp;	/* Attr. cache timestamp */
 	struct timespec		n_mtime;	/* Prev modify time. */
 	time_t			n_ctime;	/* Prev create time. */
 	short			n_fhsize;	/* size in bytes, of fh */
 	short			n_flag;		/* Flag for locking.. */
 	nfsfh_t			n_fh;		/* Small File Handle */
+	kauth_cred_t		n_rcred;
+	kauth_cred_t		n_wcred;
+
+	kmutex_t		n_attrlock;
+	time_t			n_attrstamp;	/* Attr. cache timestamp */
+	struct vattr		*n_vattr;	/* Vnode attribute cache */
 	time_t			n_accstamp;	/* Access cache timestamp */
 	uid_t			n_accuid;	/* Last access requester */
 	int			n_accmode;	/* Mode last requested */
 	int			n_accerror;	/* Error last returned */
-	kauth_cred_t		n_rcred;
-	kauth_cred_t		n_wcred;
 };
 LIST_HEAD(nfsnodehashhead, nfsnode);
 

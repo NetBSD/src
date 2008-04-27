@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.101 2008/01/30 09:50:24 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.101.10.1 2008/04/27 12:52:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.101 2008/01/30 09:50:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.101.10.1 2008/04/27 12:52:49 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -215,6 +215,7 @@ loop:
 		ungetnewvnode(vp);
 		goto loop;
 	}
+	mutex_init(&np->n_attrlock, MUTEX_DEFAULT, IPL_NONE);
 	vp->v_data = np;
 	genfs_node_init(vp, &nfs_genfsops);
 	/*
@@ -334,6 +335,7 @@ nfs_reclaim(v)
 	if (vp->v_type == VREG) {
 		mutex_destroy(&np->n_commitlock);
 	}
+	mutex_destroy(&np->n_attrlock);
 	genfs_node_destroy(vp);
 	pool_put(&nfs_node_pool, np);
 	vp->v_data = NULL;
