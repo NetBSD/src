@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7 2003/05/21 18:04:43 thorpej Exp $	*/
+/*	$NetBSD: pte.h,v 1.8 2008/04/27 18:58:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -49,6 +49,8 @@
  *
  * The ARM MMU is capable of mapping memory in the following chunks:
  *
+ *	16M	SuperSections (L1 table, ARMv6+)
+ *
  *	1M	Sections (L1 table)
  *
  *	64K	Large Pages (L2 table)
@@ -57,13 +59,13 @@
  *
  *	1K	Tiny Pages (L2 table)
  *
- * There are two types of L2 tables: Coarse Tables and Fine Tables.
- * Coarse Tables can map Large and Small Pages.  Fine Tables can
- * map Tiny Pages.
+ * There are two types of L2 tables: Coarse Tables and Fine Tables (not
+ * available on ARMv6+).  Coarse Tables can map Large and Small Pages.
+ * Fine Tables can map Tiny Pages.
  *
  * Coarse Tables can define 4 Subpages within Large and Small pages.
  * Subpages define different permissions for each Subpage within
- * a Page.
+ * a Page.  ARMv6 format Coarse Tables have no subpages.
  *
  * Coarse Tables are 1K in length.  Fine tables are 4K in length.
  *
@@ -72,6 +74,11 @@
  * aligned to a 16K boundary.  Each entry in the L1 Table maps
  * 1M of virtual address space, either via a Section mapping or
  * via an L2 Table.
+ *
+ * ARMv6+ has a second TTBR register which can be used if any of the
+ * upper address bits are non-zero (think kernel).  For NetBSD, this
+ * would be 1 upper bit splitting user/kernel in a 2GB/2GB split.
+ * This would also reduce the size of the L1 Table to 8K.
  *
  * In addition, the Fast Context Switching Extension (FCSE) is available
  * on some ARM v4 and ARM v5 processors.  FCSE is a way of eliminating
@@ -84,6 +91,11 @@
 typedef uint32_t	pd_entry_t;	/* L1 table entry */
 typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #endif /* _LOCORE */
+
+#define	L1_SS_SIZE	0x01000000	/* 16M */
+#define	L1_SS_OFFSET	(L1_SS_SIZE - 1)
+#define	L1_SS_FRAME	(~L1_SS_OFFSET)
+#define	L1_SS_SHIFT	24
 
 #define	L1_S_SIZE	0x00100000	/* 1M */
 #define	L1_S_OFFSET	(L1_S_SIZE - 1)
@@ -146,7 +158,14 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_S_ADDR_MASK	0xfff00000	/* phys address of section */
 
 #define	L1_S_XSCALE_P	0x00000200	/* ECC enable for this section */
-#define	L1_S_XSCALE_TEX(x) ((x) << 12)	/* Type Extension */
+#define	L1_S_XS_TEX(x) ((x) << 12)	/* Type Extension */
+#define	L1_S_V6_TEX(x)	((x) << 12)	/* Type Extension */
+#define	L1_S_V6_P	0x00000200	/* ECC enable for this section */
+#define	L1_S_V6_SUPER	0x00040000	/* ARMv6 SuperSection (16MB) bit */
+#define	L1_S_V6_XN	L1_S_IMP	/* ARMv6 eXecute Never */
+#define	L1_S_V6_APX	0x00008000	/* ARMv6 AP eXtension */
+#define	L1_S_V6_S	0x00010000	/* ARMv6 Shared */
+#define	L1_S_V6_nG	0x00020000	/* ARMv6 not-Global */
 
 /* L1 Coarse Descriptor */
 #define	L1_C_IMP0	0x00000004	/* implementation defined */
@@ -157,6 +176,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L1_C_ADDR_MASK	0xfffffc00	/* phys address of L2 Table */
 
 #define	L1_C_XSCALE_P	0x00000200	/* ECC enable for this section */
+#define	L1_C_V6_P	0x00000200	/* ECC enable for this section */
 
 /* L1 Fine Descriptor */
 #define	L1_F_IMP0	0x00000004	/* implementation defined */
@@ -184,7 +204,7 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 	 * Descriptor has the same format as the XScale Tiny Descriptor,
 	 * but describes a 4K page, rather than a 1K page.
 	 */
-#define	L2_TYPE_XSCALE_XS 0x03		/* XScale Extended Small Page */
+#define	L2_TYPE_XS	0x03		/* XScale/ARMv6 Extended Small Page */
 
 #define	L2_B		0x00000004	/* Bufferable page */
 #define	L2_C		0x00000008	/* Cacheable page */
@@ -194,8 +214,12 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	L2_AP3(x)	((x) << 10)	/* access permissions (sp 3) */
 #define	L2_AP(x)	(L2_AP0(x) | L2_AP1(x) | L2_AP2(x) | L2_AP3(x))
 
-#define	L2_XSCALE_L_TEX(x) ((x) << 12)	/* Type Extension */
-#define	L2_XSCALE_T_TEX(x) ((x) << 6)	/* Type Extension */
+#define	L2_XS_L_TEX(x)	((x) << 12)	/* Type Extension */
+#define	L2_XS_T_TEX(x)	((x) << 6)	/* Type Extension */
+#define	L2_XS_XN	0x00000001	/* ARMv6 eXecute Never */
+#define	L2_XS_APX	0x00000200	/* ARMv6 AP eXtension */
+#define	L2_XS_S		0x00000400	/* ARMv6 Shared */
+#define	L2_XS_nG	0x00000800	/* ARMv6 Not-Global */
 
 /*
  * Access Permissions for L1 and L2 Descriptors.
@@ -213,6 +237,16 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	AP_KRW		0x01		/* kernel read/write */
 #define	AP_KRWUR	0x02		/* kernel read/write usr read */
 #define	AP_KRWURW	0x03		/* kernel read/write usr read/write */
+
+/*
+ * Note: These values assume the S (System) and the R (ROM) bits are clear and
+ * the XP (eXtended page table) bit is set in CP15 register 1.  ARMv6 only.
+ */
+#define	APX_KR(APX)	(APX|0x01)	/* kernel read */
+#define	APX_KRUR(APX)	(APX|0x02)	/* kernel read user read */
+#define	APX_KRW(APX)	(    0x01)	/* kernel read/write */
+#define	APX_KRWUR(APX)	(    0x02)	/* kernel read/write user read */
+#define	APX_KRWURW(APX)	(    0x03)	/* kernel read/write user read/write */
 
 /*
  * Domain Types for the Domain Access Control Register.
