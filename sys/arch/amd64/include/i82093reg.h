@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093reg.h,v 1.3 2003/05/11 15:46:57 fvdl Exp $ */
+/*	 $NetBSD: i82093reg.h,v 1.4 2008/04/27 17:47:11 skd Exp $ */
 
 #include <x86/i82093reg.h>
 
@@ -13,15 +13,23 @@
 
 #ifdef MULTIPROCESSOR
 
-#define ioapic_asm_lock(num) \
-	movl	$1,%esi						;\
-77:								\
-	xchgl	%esi,PIC_LOCK(%rdi)				;\
-	testl	%esi,%esi					;\
-	jne	77b
+#define ioapic_asm_lock(num) 			        \
+	movb	$1,%bl				;	\
+76:							\
+        xchgb	%bl,PIC_LOCK(%rdi)		;	\
+	testb	%bl,%bl				;	\
+	jz	78f				;	\
+77:							\
+	pause					;	\
+	nop					;	\
+	nop					;	\
+	cmpb	$0,PIC_LOCK(%rdi)		;	\
+	jne	77b				;	\
+	jmp	76b				;	\
+78:
 
 #define ioapic_asm_unlock(num) \
-	movl	$0,PIC_LOCK(%rdi)
+	movb	$0,PIC_LOCK(%rdi)
 	
 #else
 
