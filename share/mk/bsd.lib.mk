@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.276 2008/04/26 22:28:13 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.277 2008/04/27 23:48:10 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -441,13 +441,18 @@ _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
 
+# gcc -shared now adds -lc automatically. For libraries other than libc and
+# libgcc* we add as a dependency the installed shared libc. For libc and
+# libgcc* we avoid adding libc as a dependency by using -nostdlib. Note that
+# -Xl,-nostdlib is not enough because we want to tell the compiler-driver not
+# to add standard libraries, not the linker.
 .if !defined(LIB)
 DPLIBC ?= ${DESTDIR}${LIBC_SO}
-LDLIBC ?= -lc
 .else
 .if ${LIB} != "c" && ${LIB:M*gcc*} == ""
 DPLIBC ?= ${DESTDIR}${LIBC_SO}
-LDLIBC ?= -lc
+.else
+LDLIBC ?= -nostdlib
 .endif
 .endif
 
@@ -456,17 +461,16 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	${_MKTARGET_BUILD}
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
-	${CC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
+	${CC} ${LDLIBC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
 	    ${_LIBLDOPTS} \
 	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
-	    -L${_GCC_LIBGCCDIR} ${LDLIBC}
+	    -L${_GCC_LIBGCCDIR}
 .else
-	${CC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
-	    ${_LIBLDOPTS} \
-	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD} \
-	    ${LDLIBC}
+	${CC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} \
+	    -o ${.TARGET} ${_LIBLDOPTS} \
+	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
 .endif
 .if ${OBJECT_FMT} == "ELF"
 #  We don't use INSTALL_SYMLINK here because this is just
