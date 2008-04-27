@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.3 2008/04/05 16:35:35 cegger Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.4 2008/04/27 22:34:49 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.3 2008/04/05 16:35:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.4 2008/04/27 22:34:49 ad Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -722,17 +722,17 @@ static int
 set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 {
 	usbd_status err;
-	uint8_t lcr1 = 0, lcr2 = 0;
+	uint8_t lcr1val = 0, lcr2val = 0;
 
-	err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1, UCHCOM_REG_LCR2, &lcr2);
+	err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
 	if (err) {
 		printf("%s: cannot get LCR: %s\n",
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 		return EIO;
 	}
 
-	lcr1 &= ~UCHCOM_LCR1_MASK;
-	lcr2 &= ~UCHCOM_LCR2_MASK;
+	lcr1val &= ~UCHCOM_LCR1_MASK;
+	lcr2val &= ~UCHCOM_LCR2_MASK;
 
 	/*
 	 * XXX: it is difficult to handle the line control appropriately:
@@ -753,14 +753,14 @@ set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 	}
 
 	if (ISSET(cflag, PARENB)) {
-		lcr1 |= UCHCOM_LCR1_PARENB;
+		lcr1val |= UCHCOM_LCR1_PARENB;
 		if (ISSET(cflag, PARODD))
-			lcr2 |= UCHCOM_LCR2_PARODD;
+			lcr2val |= UCHCOM_LCR2_PARODD;
 		else
-			lcr2 |= UCHCOM_LCR2_PAREVEN;
+			lcr2val |= UCHCOM_LCR2_PAREVEN;
 	}
 
-	err = write_reg(sc, UCHCOM_REG_LCR1, lcr1, UCHCOM_REG_LCR2, lcr2);
+	err = write_reg(sc, UCHCOM_REG_LCR1, lcr1val, UCHCOM_REG_LCR2, lcr2val);
 	if (err) {
 		printf("%s: cannot set LCR: %s\n",
 		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
@@ -790,10 +790,10 @@ static int
 reset_chip(struct uchcom_softc *sc)
 {
 	usbd_status err;
-	uint8_t lcr1, lcr2, pre, div, mod;
+	uint8_t lcr1val, lcr2val, pre, div, mod;
 	uint16_t val=0, idx=0;
 
-	err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1, UCHCOM_REG_LCR2, &lcr2);
+	err = read_reg(sc, UCHCOM_REG_LCR1, &lcr1val, UCHCOM_REG_LCR2, &lcr2val);
 	if (err)
 		goto failed;
 
@@ -805,9 +805,9 @@ reset_chip(struct uchcom_softc *sc)
 	if (err)
 		goto failed;
 
-	val |= (uint16_t)(lcr1&0xF0) << 8;
+	val |= (uint16_t)(lcr1val&0xF0) << 8;
 	val |= 0x01;
-	val |= (uint16_t)(lcr2&0x0F) << 8;
+	val |= (uint16_t)(lcr2val&0x0F) << 8;
 	val |= 0x02;
 	idx |= pre & 0x07;
 	val |= 0x04;
