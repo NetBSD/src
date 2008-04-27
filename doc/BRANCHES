@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.249 2008/04/19 09:29:06 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.250 2008/04/27 12:53:25 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -523,6 +523,16 @@ Notes:
 		  with vmem_xalloc.  find a tester with hardware for it.
 		- g/c replaced code, including kmapent and malloc.
 		- consider to remove other submaps.  eg. mb_map
+
+Branch:		yamt-nfs-mp
+Description:	make nfs client mp-safe
+Status:		Active
+Start Date:	Sun Apr 27 2008
+End Date:	
+Base Tag:	yamt-nfs-mp-base
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys  (src/common is tagged but not branched)
+Notes:		
 
 Branch:		yamt-pf42
 Description:	import newer pf from OpenBSD 4.2
