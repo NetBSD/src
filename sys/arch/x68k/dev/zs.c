@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.36 2008/03/29 19:15:35 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.37 2008/04/27 05:10:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.36 2008/03/29 19:15:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.37 2008/04/27 05:10:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,8 +492,6 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
 }
 
 
-static struct zs_chanstate zscn_cs;
-
 /****************************************************************
  * Console support functions (x68k specific!)
  * Note: this code is allowed to know about the layout of
@@ -531,6 +529,8 @@ cons_decl(zs);
 
 static int zs_getc(void);
 static void zs_putc(int);
+
+static struct zs_chanstate zscn_cs;
 
 /*
  * Polled input char.
