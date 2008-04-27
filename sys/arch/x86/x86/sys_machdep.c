@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.12 2008/04/21 12:56:31 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13 2008/04/27 11:37:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.12 2008/04/21 12:56:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.13 2008/04/27 11:37:48 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -549,12 +549,12 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 		kmem_free(old, IOMAPSIZE);
 	}
 
-	crit_enter();
+	kpreempt_disable();
 	ci = curcpu();
 	memcpy(ci->ci_iomap, pcb->pcb_iomap, sizeof(ci->ci_iomap));
 	ci->ci_tss.tss_iobase =
 	    ((uintptr_t)ci->ci_iomap - (uintptr_t)&ci->ci_tss) << 16;
-	crit_exit();
+	kpreempt_enable();
 
 	return error;
 #else
@@ -657,7 +657,7 @@ x86_set_sdbase(void *arg, char which)
 	sd.sd_def32 = 1;
 	sd.sd_gran = 1;
 
-	crit_enter();
+	kpreempt_disable();
 	if (which == 'f') {
 		memcpy(&curpcb->pcb_fsd, &sd, sizeof(sd));
 		memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
@@ -665,7 +665,7 @@ x86_set_sdbase(void *arg, char which)
 		memcpy(&curpcb->pcb_gsd, &sd, sizeof(sd));
 		memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
 	}
-	crit_exit();
+	kpreempt_enable();
 
 	return 0;
 #else
