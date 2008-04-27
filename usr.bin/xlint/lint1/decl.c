@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.40 2008/04/26 16:14:23 christos Exp $ */
+/* $NetBSD: decl.c,v 1.41 2008/04/27 00:13:58 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.40 2008/04/26 16:14:23 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.41 2008/04/27 00:13:58 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -303,7 +303,7 @@ addtype(type_t *tp)
 		else if (dcs->d_cmod == DOUBLE)
 			t = DCOMPLEX;
 		else
-			error(323, basictyname(dcs->d_cmod));
+			error(308, basictyname(dcs->d_cmod));
 		dcs->d_cmod = NOTSPEC;
 	}
 

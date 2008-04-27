@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.46 2008/04/25 22:18:34 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.47 2008/04/27 00:13:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.46 2008/04/25 22:18:34 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.47 2008/04/27 00:13:58 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -2367,7 +2367,7 @@ bldri(op_t op, tnode_t *ln)
 		cn = getinode(FLOAT, (int64_t)1);
 		break;
 	default:
-		error(324, op == REAL ? "real" : "imag",
+		error(276, op == REAL ? "real" : "imag",
 		    tyname(buf, sizeof(buf), ln->tn_type));
 		return NULL;
 	}
