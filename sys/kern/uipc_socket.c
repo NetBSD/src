@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.160 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.161 2008/04/27 14:26:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.161 2008/04/27 14:26:58 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -594,6 +594,7 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 void
 sofree(struct socket *so)
 {
+	u_int refs;
 
 	KASSERT(solocked(so));
 
@@ -623,8 +624,10 @@ sofree(struct socket *so)
 	KASSERT(!cv_has_waiters(&so->so_rcv.sb_cv));
 	KASSERT(!cv_has_waiters(&so->so_snd.sb_cv));
 	sorflush(so);
+	refs = so->so_aborting;	/* XXX */
 	sounlock(so);
-	soput(so);
+	if (refs == 0)		/* XXX */
+		soput(so);
 }
 
 /*
@@ -700,17 +703,22 @@ soclose(struct socket *so)
 int
 soabort(struct socket *so)
 {
+	u_int refs;
 	int error;
 	
 	KASSERT(solocked(so));
 	KASSERT(so->so_head == NULL);
 
+	so->so_aborting++;		/* XXX */
 	error = (*so->so_proto->pr_usrreq)(so, PRU_ABORT, NULL,
 	    NULL, NULL, NULL);
+	refs = --so->so_aborting;	/* XXX */
 	if (error) {
 		sofree(so);
 	} else {
 		sounlock(so);
+		if (refs == 0) 
+			sofree(so);
 	}
 	return error;
 }
