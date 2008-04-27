@@ -1,8 +1,7 @@
-/* $NetBSD: kern_cctr.c,v 1.5 2008/04/05 18:17:36 tsutsui Exp $ */
-
+/*	$NetBSD: kern_cctr.c,v 1.6 2008/04/27 22:43:08 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * re-implementation of TSC for MP systems merging cc_microtime and
@@ -83,7 +82,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.5 2008/04/05 18:17:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.6 2008/04/27 22:43:08 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -145,10 +144,14 @@ cc_init(timecounter_get_t getcc, uint64_t freq, const char *name, int quality)
 u_int
 cc_get_timecount(struct timecounter *tc)
 {
-	struct cpu_info *ci = curcpu();
-	int64_t rcc, cc;
+	struct cpu_info *ci;
+	int64_t rcc, cc, ncsw;
 	u_int gen;
 
+ retry:
+ 	ncsw = curlwp->l_ncsw;
+ 	__insn_barrier();
+	ci = curcpu();
 	if (ci->ci_cc.cc_denom == 0) {
 		/*
 		 * This is our first time here on this CPU.  Just
@@ -182,6 +185,11 @@ cc_get_timecount(struct timecounter *tc)
 		rcc = (cc * ci->ci_cc.cc_delta) / ci->ci_cc.cc_denom
 		    + ci->ci_cc.cc_val;
 	} while (gen == 0 || gen != ci->ci_cc.cc_gen);
+ 	__insn_barrier();
+ 	if (ncsw != curlwp->l_ncsw) {
+ 		/* Was preempted */ 
+ 		goto retry;
+	}
 
 	return rcc;
 }
@@ -199,7 +207,9 @@ cc_calibrate(struct timecounter *tc)
 {
 	static int calls;
 	struct cpu_info *ci;
-	
+
+	KASSERT(kpreempt_disabled());
+
 	 /*
 	  * XXX: for high interrupt frequency
 	  * support: ++calls < hz / tc_tick
