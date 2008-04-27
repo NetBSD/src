@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.112 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.113 2008/04/27 11:29:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.112 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.113 2008/04/27 11:29:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -806,6 +806,7 @@ unp_detach(struct unpcb *unp)
 	if ((vp = unp->unp_vnode) != NULL) {
 		sounlock(so);
 		/* Acquire v_interlock to protect against unp_connect(). */
+		/* XXXAD racy */
 		mutex_enter(&vp->v_interlock);
 		vp->v_socket = NULL;
 		vrelel(vp, 0);
