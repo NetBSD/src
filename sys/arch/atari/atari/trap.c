@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96 2008/04/24 18:39:20 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.97 2008/04/27 14:44:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97 2008/04/27 14:44:25 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -738,11 +738,11 @@ struct writebackstats {
 	int wbsize[4];
 } wbstats;
 
-char *f7sz[] = { "longword", "byte", "word", "line" };
-char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
-char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
+const char *f7sz[] = { "longword", "byte", "word", "line" };
+const char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
+const char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
 		 "M-code", "k-data", "k-code", "RES" };
-char wberrstr[] =
+const char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 
 static void dumpwb __P((int, u_short, u_int, u_int));
