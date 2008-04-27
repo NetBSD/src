@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1046 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1047 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -506,3 +506,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	amdtemp(4): AMD CPU Temperature driver. Adapted from OpenBSD.
 		[cegger 20080423]
 	netiso: Remove obsolete TPCONS support. [plunky 20080423]
+	arm: merge armv6 kernel support from matt-armv6 branch.
+		[matt 20080427]
