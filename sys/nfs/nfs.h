@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.69 2007/12/04 17:42:30 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.69.16.1 2008/04/27 12:52:49 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -317,38 +317,44 @@ struct uio; struct buf; struct vattr; struct nameidata;	/* XXX */
 
 /*
  * Nfs outstanding request list element
+ *
+ * R:	nfs_reqq_lock
  */
 struct nfsreq {
-	TAILQ_ENTRY(nfsreq) r_chain;
-	struct mbuf	*r_mreq;
-	struct mbuf	*r_mrep;
-	struct mbuf	*r_md;
-	void *		r_dpos;
+	TAILQ_ENTRY(nfsreq) r_chain;	/* R: */
+	struct mbuf	*r_mreq;	/* R: request */
+	struct mbuf	*r_mrep;	/* R: reply */
+	struct mbuf	*r_md;		/* reply */
+	void *		r_dpos;		/* reply */
 	struct nfsmount *r_nmp;
 	u_int32_t	r_xid;
+	int		r_rflags;	/* R: flags on request, see below */
 	int		r_flags;	/* flags on request, see below */
-	int		r_retry;	/* max retransmission count */
-	int		r_rexmit;	/* current retrans count */
+	int		r_retry;	/* R: max retransmission count */
+	int		r_rexmit;	/* R: current retrans count */
 	int		r_timer;	/* tick counter on reply */
 	u_int32_t	r_procnum;	/* NFS procedure number */
-	int		r_rtt;		/* RTT for rpc */
+	int		r_rtt;		/* R: RTT for rpc */
 	struct lwp	*r_lwp;		/* LWP that did I/O system call */
 };
 
 /*
  * Queue head for nfsreq's
  */
+extern kmutex_t nfs_reqq_lock;
 extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 
 /* Flag values for r_flags */
 #define R_TIMING	0x01		/* timing request (in mntp) */
-#define R_SENT		0x02		/* request has been sent */
 #define	R_SOFTTERM	0x04		/* soft mnt, too many retries */
 #define	R_INTR		0x08		/* intr mnt, signal pending */
 #define	R_SOCKERR	0x10		/* Fatal error on socket */
 #define	R_TPRINTFMSG	0x20		/* Did a tprintf msg. */
 #define	R_MUSTRESEND	0x40		/* Must resend request */
 #define	R_REXMITTED	0x100		/* retransmitted after reconnect */
+
+/* Flag values for r_rflags */
+#define RR_SENT		0x02		/* request has been sent */
 
 /*
  * A list of nfssvc_sock structures is maintained with all the sockets
