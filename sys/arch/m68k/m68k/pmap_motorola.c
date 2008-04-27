@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.35 2007/12/31 13:38:51 ad Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.36 2008/04/27 12:34:54 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.35 2007/12/31 13:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.36 2008/04/27 12:34:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2186,9 +2186,9 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
-			simple_lock(&uvm_kernel_object->vmobjlock);
+			mutex_enter(&uvm_kernel_object->vmobjlock);
 			uvm_pagefree(PHYS_TO_VM_PAGE(ptppa));
-			simple_unlock(&uvm_kernel_object->vmobjlock);
+			mutex_exit(&uvm_kernel_object->vmobjlock);
 			PMAP_DPRINTF(PDB_REMOVE|PDB_PTPAGE,
 			    ("remove: PT page 0x%lx (0x%lx) freed\n",
 			    ptpva, ptppa));
@@ -2648,15 +2648,15 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 		pmap->pm_sref++;
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
 		    ("enter: about to alloc UPT pg at %lx\n", va));
-		simple_lock(&uvm_kernel_object->vmobjlock);
+		mutex_enter(&uvm_kernel_object->vmobjlock);
 		while ((pg = uvm_pagealloc(uvm_kernel_object,
 					   va - vm_map_min(kernel_map),
 					   NULL, UVM_PGA_ZERO)) == NULL) {
-			simple_unlock(&uvm_kernel_object->vmobjlock);
+			mutex_exit(&uvm_kernel_object->vmobjlock);
 			uvm_wait("ptpage");
-			simple_lock(&uvm_kernel_object->vmobjlock);
+			mutex_enter(&uvm_kernel_object->vmobjlock);
 		}
-		simple_unlock(&uvm_kernel_object->vmobjlock);
+		mutex_exit(&uvm_kernel_object->vmobjlock);
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
@@ -2764,13 +2764,13 @@ pmap_ptpage_addref(vaddr_t ptpva)
 {
 	struct vm_page *pg;
 
-	simple_lock(&uvm_kernel_object->vmobjlock);
+	mutex_enter(&uvm_kernel_object->vmobjlock);
 	pg = uvm_pagelookup(uvm_kernel_object, ptpva - vm_map_min(kernel_map));
 	pg->wire_count++;
 	PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
 	    ("ptpage addref: pg %p now %d\n",
 	     pg, pg->wire_count));
-	simple_unlock(&uvm_kernel_object->vmobjlock);
+	mutex_exit(&uvm_kernel_object->vmobjlock);
 }
 
 /*
@@ -2784,13 +2784,13 @@ pmap_ptpage_delref(vaddr_t ptpva)
 	struct vm_page *pg;
 	int rv;
 
-	simple_lock(&uvm_kernel_object->vmobjlock);
+	mutex_enter(&uvm_kernel_object->vmobjlock);
 	pg = uvm_pagelookup(uvm_kernel_object, ptpva - vm_map_min(kernel_map));
 	rv = --pg->wire_count;
 	PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
 	    ("ptpage delref: pg %p now %d\n",
 	     pg, pg->wire_count));
-	simple_unlock(&uvm_kernel_object->vmobjlock);
+	mutex_exit(&uvm_kernel_object->vmobjlock);
 	return rv;
 }
 
