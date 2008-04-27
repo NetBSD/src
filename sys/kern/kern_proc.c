@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.137 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.138 2008/04/27 01:12:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.137 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.138 2008/04/27 01:12:27 christos Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -787,6 +787,9 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		pgrp->pg_jobc = 0;
 	}
 
+	/* Interlock with ttread(). */
+	mutex_spin_enter(&tty_lock);
+
 	/*
 	 * Adjust eligibility of affected pgrps to participate in job control.
 	 * Increment eligibility counts before decrementing, otherwise we
@@ -794,9 +797,6 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	 */
 	fixjobc(p, pgrp, 1);
 	fixjobc(p, p->p_pgrp, 0);
-
-	/* Interlock with ttread(). */
-	mutex_spin_enter(&tty_lock);
 
 	/* Move process to requested group. */
 	LIST_REMOVE(p, p_pglist);
