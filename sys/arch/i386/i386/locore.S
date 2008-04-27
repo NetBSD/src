@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.67 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.68 2008/04/27 22:40:09 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -141,7 +141,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.68 2008/04/27 22:40:09 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -816,16 +816,16 @@ NENTRY(lgdt_finish)
  * NOTE: This function does not have a normal calling sequence!
  */
 NENTRY(lwp_trampoline)
-	pushl	%ebp
+	movl	%ebp,%edi	/* for .Lsyscall_checkast */
 	xorl	%ebp,%ebp
+	pushl	%edi
 	pushl	%eax
 	call	_C_LABEL(lwp_startup)
 	addl	$8,%esp
 	pushl	%ebx
 	call	*%esi
 	addl	$4,%esp
-	DO_DEFERRED_SWITCH
-	INTRFASTEXIT
+	jmp	.Lsyscall_checkast
 	/* NOTREACHED */
 
 /*
@@ -1070,14 +1070,7 @@ IDTVEC(syscall)
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-
 #ifdef DIAGNOSTIC
-	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
-	jz	1f
-	pushl	$6f
-	call	_C_LABEL(printf)
-	addl	$4, %esp
-1:
 	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
 	jz	1f
@@ -1089,27 +1082,18 @@ syscall1:
 #endif
 1:
 #endif /* DIAGNOSTIC */
-	movl	CPUVAR(CURLWP),%edx
 	incl	CPUVAR(NSYSCALL)	# count it atomically
-	movl	%esp,L_MD_REGS(%edx)	# save pointer to frame
-	movl	L_PROC(%edx),%edx
+	movl	CPUVAR(CURLWP),%edi
+	movl	L_PROC(%edi),%edx
+	movl	%esp,L_MD_REGS(%edi)	# save pointer to frame
 	pushl	%esp
 	call	*P_MD_SYSCALL(%edx)	# get pointer to syscall() function
 	addl	$4,%esp
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)
-	CHECK_ASTPENDING(%eax)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%eax)
-	STI(%eax)
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	pushl	%esp
-	call	_C_LABEL(trap)
-	addl	$4,%esp
-	jmp	.Lsyscall_checkast	/* re-check ASTs */
-1:	CHECK_DEFERRED_SWITCH
+	movl	L_MD_ASTPENDING(%edi), %eax
+	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
 #ifdef XEN
 	STIC(%eax)
@@ -1150,10 +1134,21 @@ syscall1:
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"
-6:	.asciz	"WARNING: WANT PMAPLOAD ON SYSCALL ENTRY\n"
 #endif /* DIAGNOSTIC */
-9:	STI(%eax)
+9:
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jz	10f
+	STI(%eax)
 	call	_C_LABEL(pmap_load)
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
+10:
+	/* Always returning to user mode here. */
+	movl	$0, L_MD_ASTPENDING(%edi)
+	STI(%eax)
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
+	call	_C_LABEL(trap)
+	addl	$4,%esp
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
 #if NNPX > 0
