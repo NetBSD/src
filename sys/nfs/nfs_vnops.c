@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.266 2008/02/13 09:51:37 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.266.10.1 2008/04/27 12:52:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266 2008/02/13 09:51:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.1 2008/04/27 12:52:50 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -326,10 +326,13 @@ nfs_access(v)
 	int cachevalid;
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	uid_t uid = kauth_cred_geteuid(ap->a_cred);
+	int result;
 
-	cachevalid = (np->n_accstamp != -1 &&
+	mutex_enter(&np->n_attrlock);
+	cachevalid = np->n_accstamp != -1 &&
 	    (time_uptime - np->n_accstamp) < nfs_attrtimeo(nmp, np) &&
-	    np->n_accuid == kauth_cred_geteuid(ap->a_cred));
+	    np->n_accuid == uid;
 
 	/*
 	 * Check access cache first. If this request has been made for this
@@ -337,11 +340,18 @@ nfs_access(v)
 	 */
 	if (cachevalid) {
 		if (!np->n_accerror) {
-			if  ((np->n_accmode & ap->a_mode) == ap->a_mode)
-				return np->n_accerror;
-		} else if ((np->n_accmode & ap->a_mode) == np->n_accmode)
-			return np->n_accerror;
+			if  ((np->n_accmode & ap->a_mode) == ap->a_mode) {
+				result = np->n_accerror;
+				mutex_exit(&np->n_attrlock);
+				return result;
+			}
+		} else if ((np->n_accmode & ap->a_mode) == np->n_accmode) {
+			result = np->n_accerror;
+			mutex_exit(&np->n_attrlock);
+			return result;
+		}
 	}
+	mutex_exit(&np->n_attrlock);
 
 #ifndef NFS_V2_ONLY
 	/*
@@ -410,6 +420,7 @@ nfs_access(v)
 	}
 
 	if (!error || error == EACCES) {
+		mutex_enter(&np->n_attrlock);
 		/*
 		 * If we got the same result as for a previous,
 		 * different request, OR it in. Don't update
@@ -427,6 +438,7 @@ nfs_access(v)
 			np->n_accmode = ap->a_mode;
 			np->n_accerror = error;
 		}
+		mutex_exit(&np->n_attrlock);
 	}
 
 	return (error);
@@ -1207,7 +1219,9 @@ nfs_readrpc(vp, uiop)
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
+	mutex_enter(&nmp->nm_lock);
 	iostat_busy(nmp->nm_stats);
+	mutex_exit(&nmp->nm_lock);
 	byte_count = 0; /* count bytes actually transferred */
 	while (tsiz > 0) {
 		nfsstats.rpccnt[NFSPROC_READ]++;
@@ -1254,7 +1268,9 @@ nfs_readrpc(vp, uiop)
 			tsiz = 0;
 	}
 nfsmout:
+	mutex_enter(&nmp->nm_lock);
 	iostat_unbusy(nmp->nm_stats, byte_count, 1);
+	mutex_exit(&nmp->nm_lock);
 	return (error);
 }
 
@@ -1335,7 +1351,9 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 retry:
 	origresid = uiop->uio_resid;
 	KASSERT(origresid == uiop->uio_iov->iov_len);
+	mutex_enter(&nmp->nm_lock);
 	iostat_busy(nmp->nm_stats);
+	mutex_exit(&nmp->nm_lock);
 	byte_count = 0; /* count of bytes actually written */
 	while (tsiz > 0) {
 		uint32_t datalen; /* data bytes need to be allocated in mbuf */
@@ -1488,7 +1506,9 @@ retry:
 		}
 	}
 nfsmout:
+	mutex_enter(&nmp->nm_lock);
 	iostat_unbusy(nmp->nm_stats, byte_count, 0);
+	mutex_exit(&nmp->nm_lock);
 	if (pageprotected) {
 		/*
 		 * wait until mbufs go away.

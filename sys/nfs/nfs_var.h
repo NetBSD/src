@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.78 2008/04/10 12:32:37 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.78.4.1 2008/04/27 12:52:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -176,8 +176,6 @@ int nfs_connect(struct nfsmount *, struct nfsreq *, struct lwp *);
 int nfs_reconnect(struct nfsreq *);
 void nfs_disconnect(struct nfsmount *);
 void nfs_safedisconnect(struct nfsmount *);
-int nfs_send(struct socket *, struct mbuf *, struct mbuf *, struct nfsreq *,
-	struct lwp *);
 int nfs_request(struct nfsnode *, struct mbuf *, int, struct lwp *,
 	kauth_cred_t, struct mbuf **, struct mbuf **, char **, int *);
 int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *,
