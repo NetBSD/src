@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9 2007/12/20 23:02:39 dsl Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10 2008/04/27 18:58:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9 2007/12/20 23:02:39 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10 2008/04/27 18:58:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9 2007/12/20 23:02:39 dsl Exp $");
 #include <machine/sysarch.h>
 
 /* Prototypes */
-static int arm32_sync_icache __P((struct proc *, char *, register_t *));
-static int arm32_drain_writebuf __P((struct proc *, char *, register_t *));
+static int arm32_sync_icache(struct lwp *, const void *, register_t *);
+static int arm32_drain_writebuf(struct lwp *, const void *, register_t *);
 
 static int
-arm32_sync_icache(struct proc *p, char *args, register_t *retval)
+arm32_sync_icache(struct lwp *l, const void *args, register_t *retval)
 {
 	struct arm_sync_icache_args ua;
 	int error;
@@ -67,14 +67,15 @@ arm32_sync_icache(struct proc *p, char *args, register_t *retval)
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
 		return (error);
 
-	cpu_icache_sync_range(ua.addr, ua.len);
+	pmap_icache_sync_range(vm_map_pmap(&l->l_proc->p_vmspace->vm_map),
+	    ua.addr, ua.addr + ua.len);
 
 	*retval = 0;
 	return(0);
 }
 
 static int
-arm32_drain_writebuf(struct proc *p, char *args, register_t *retval)
+arm32_drain_writebuf(struct lwp *l, const void *args, register_t *retval)
 {
 	/* No args. */
 
@@ -91,16 +92,15 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 		syscallarg(int) op;
 		syscallarg(void *) parms;
 	} */
-	struct proc *p = l->l_proc;
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
 	case ARM_SYNC_ICACHE : 
-		error = arm32_sync_icache(p, SCARG(uap, parms), retval);
+		error = arm32_sync_icache(l, SCARG(uap, parms), retval);
 		break;
 
 	case ARM_DRAIN_WRITEBUF : 
-		error = arm32_drain_writebuf(p, SCARG(uap, parms), retval);
+		error = arm32_drain_writebuf(l, SCARG(uap, parms), retval);
 		break;
 
 	default:

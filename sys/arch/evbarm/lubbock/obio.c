@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.7 2008/01/08 02:07:53 matt Exp $ */
+/*	$NetBSD: obio.c,v 1.8 2008/04/27 18:58:46 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.7 2008/01/08 02:07:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.8 2008/04/27 18:58:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ obio_intr(void *arg)
 			/* if ipl of this irq is higher than current spl level,
 			   call the handler directly instead of dispatching it to
 			   software interrupt. */
-			if (sc->sc_handler[irqno].level > current_spl_level) {
+			if (sc->sc_handler[irqno].level > curcpl()) {
 				(* sc->sc_handler[irqno].func)(
 					sc->sc_handler[irqno].arg );
 			}
@@ -161,7 +161,7 @@ obio_softintr(void *arg)
 	struct obio_softc *sc = (struct obio_softc *)arg;
 	int irqno;
 	int psw;
-	int spl_save = current_spl_level;
+	int spl_save = curcpl();
 
 	psw = disable_interrupts(I32_bit);
 	while ((irqno = find_first_bit(sc->sc_obio_intr_pending)) >= 0) {
