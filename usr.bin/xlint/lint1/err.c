@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.35 2008/04/27 00:13:58 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.36 2008/04/27 01:45:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.35 2008/04/27 00:13:58 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.36 2008/04/27 01:45:04 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -166,8 +166,8 @@ const	char *msgs[] = {
 	"left operand of '->' must be pointer to struct/union",	      /* 104 */
 	"non-unique member requires struct/union %s",		      /* 105 */
 	"left operand of '->' must be pointer",			      /* 106 */
-	"operands of '%s' have incompatible types",		      /* 107 */
-	"operand of '%s' has incompatible type",		      /* 108 */
+	"operands of '%s' have incompatible types (%s != %s)",		      /* 107 */
+	"operand of '%s' has incompatible type (%s != %s)",		      /* 108 */
 	"void type illegal in expression",			      /* 109 */
 	"pointer to function is not allowed here",		      /* 110 */
 	"unacceptable operand of '%s'",				      /* 111 */
@@ -230,7 +230,7 @@ const	char *msgs[] = {
 	"array subscript cannot be > %d: %ld",			      /* 168 */
 	"precedence confusion possible: parenthesize!",		      /* 169 */
 	"first operand must have scalar type, op ? :",		      /* 170 */
-	"assignment type mismatch",				      /* 171 */
+	"assignment type mismatch (%s != %s)",			      /* 171 */
 	"too many struct/union initializers",			      /* 172 */
 	"too many array initializers, expected %d",		      /* 173 */
 	"too many initializers",				      /* 174 */
@@ -299,7 +299,7 @@ const	char *msgs[] = {
 	"redeclaration of formal parameter %s",			      /* 237 */
 	"initialisation of union is illegal in traditional C",	      /* 238 */
 	"constant argument to NOT",				      /* 239 */
-	"assignment of different structures",			      /* 240 */
+	"assignment of different structures (%s != %s)",	      /* 240 */
 	"dubious operation on enum, op %s",			      /* 241 */
 	"combination of '%s' and '%s', op %s",			      /* 242 */
 	"dubious comparison of enums, op %s",			      /* 243 */
