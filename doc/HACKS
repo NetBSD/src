@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.98 2008/03/28 21:18:24 christos Exp $
+# $NetBSD: HACKS,v 1.99 2008/04/27 03:10:36 tsutsui Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -509,14 +509,16 @@ port	sh3
 port	m68000
 
 	hack	gcc4-m68000
-	cdate	Fri Feb  8 10:29:37 PST 2008
-	who	mrg
-	file	share/mk/sys.mk	: 1.94
+	cdate	Sun Apr 27 03:06:46 UTC 2008
+	who	mrg, tsutsui
 	file	rescue/Makefile	: 1.21
-	file	lib/libcurses/Makefile	: 1.54
+	file	sbin/dump_lfs/Makefile	: 1.9
+	file	share/mk/sys.mk	: 1.95
+	file	usr.sbin/ndbootd/Makefile	: 1.5
 	descr
 		Many errors across the tree with optimisation.
-		This hack uses -O0 to avoid the problem.
+		This hack uses -O1 and adds some -fno-tree-foo options
+		to avoid the problem.
 	kcah
 
 
