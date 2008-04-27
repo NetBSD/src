@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.29 2008/03/27 18:30:15 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.30 2008/04/27 11:28:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.29 2008/03/27 18:30:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.30 2008/04/27 11:28:49 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -639,12 +639,17 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
 	uint16_t cpuno;
-	int s;
+	int s, s0;
 
 	if (panicstr != NULL || ld_panic)
 		return;
 
-	crit_enter();
+	/*
+	 * Use splsoftclock() and not a critical section to block preemption.
+	 * kpreempt_disable() will skew preemption statistics by firing again
+	 * in mi_switch(), while we are preempting!
+	 */
+	s0 = splsoftclock();
 
 	if (curcpu()->ci_spin_locks2 != 0) {
 		cpuno = (uint16_t)cpu_number();
@@ -656,6 +661,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 					lockdebug_abort1(ld, &ld_spinner_lk,
 					    __func__,
 					    "not held by current CPU", true);
+					splx(s0);
 					return;
 				}
 				continue;
@@ -663,6 +669,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 			if (ld->ld_cpu == cpuno && (l->l_pflag & LP_INTR) == 0) {
 				lockdebug_abort1(ld, &ld_spinner_lk,
 				    __func__, "spin lock held", true);
+				splx(s0);
 				return;
 			}
 		}
@@ -676,6 +683,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 				if (ld->ld_lwp == l) {
 					lockdebug_abort1(ld, &ld_sleeper_lk,
 					    __func__, "sleep lock held", true);
+					splx(s0);
 					return;
 				}
 			}
@@ -686,7 +694,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 			    l->l_shlocks);
 	}
 
-	crit_exit();
+	splx(s0);
 }
 
 /*
