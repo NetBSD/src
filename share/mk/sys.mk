@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.94 2008/02/09 02:37:22 mrg Exp $
+#	$NetBSD: sys.mk,v 1.95 2008/04/27 03:06:46 tsutsui Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -35,7 +35,7 @@ DBG?=	-O2
 .elif ${MACHINE_ARCH} == "vax"
 DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 .elif ${MACHINE_ARCH} == "m68000"
-DBG?=	-O0
+DBG?=	-O1 -fno-tree-sra -fno-tree-copyrename -fno-tree-fre -fno-tree-ch
 .else
 DBG?=	-O
 .endif
