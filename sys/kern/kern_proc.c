@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.138 2008/04/27 01:12:27 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.139 2008/04/27 10:56:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.138 2008/04/27 01:12:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139 2008/04/27 10:56:28 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -787,9 +787,6 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		pgrp->pg_jobc = 0;
 	}
 
-	/* Interlock with ttread(). */
-	mutex_spin_enter(&tty_lock);
-
 	/*
 	 * Adjust eligibility of affected pgrps to participate in job control.
 	 * Increment eligibility counts before decrementing, otherwise we
@@ -797,6 +794,9 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	 */
 	fixjobc(p, pgrp, 1);
 	fixjobc(p, p->p_pgrp, 0);
+
+	/* Interlock with ttread(). */
+	mutex_spin_enter(&tty_lock);
 
 	/* Move process to requested group. */
 	LIST_REMOVE(p, p_pglist);
@@ -836,6 +836,7 @@ leavepgrp(struct proc *p)
 
 	KASSERT(mutex_owned(proc_lock));
 
+	/* Interlock with ttread() */
 	mutex_spin_enter(&tty_lock);
 	pgrp = p->p_pgrp;
 	LIST_REMOVE(p, p_pglist);
@@ -1018,10 +1019,8 @@ orphanpg(struct pgrp *pg)
 	LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 		if (p->p_stat == SSTOP) {
 			p->p_lflag |= PL_ORPHANPG;
-			mutex_spin_exit(&tty_lock);
 			psignal(p, SIGHUP);
 			psignal(p, SIGCONT);
-			mutex_spin_enter(&tty_lock);
 		}
 	}
 }
