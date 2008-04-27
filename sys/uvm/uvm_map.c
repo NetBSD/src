@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.253 2008/04/26 13:44:00 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.254 2008/04/27 11:39:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.253 2008/04/26 13:44:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254 2008/04/27 11:39:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3986,9 +3986,11 @@ uvmspace_unshare(struct lwp *l)
 	/* make a new vmspace, still holding old one */
 	nvm = uvmspace_fork(ovm);
 
+	kpreempt_disable();
 	pmap_deactivate(l);		/* unbind old vmspace */
 	p->p_vmspace = nvm;
 	pmap_activate(l);		/* switch to new vmspace */
+	kpreempt_enable();
 
 	uvmspace_free(ovm);		/* drop reference to old vmspace */
 }
@@ -4065,9 +4067,11 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 		 * install new vmspace and drop our ref to the old one.
 		 */
 
+		kpreempt_disable();
 		pmap_deactivate(l);
 		p->p_vmspace = nvm;
 		pmap_activate(l);
+		kpreempt_enable();
 
 		uvmspace_free(ovm);
 	}
