@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.34 2008/04/26 16:14:23 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.35 2008/04/27 00:13:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.34 2008/04/26 16:14:23 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.35 2008/04/27 00:13:58 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -335,7 +335,7 @@ const	char *msgs[] = {
 	"bit-field type '%s' invalid in ANSI C",		      /* 273 */
 	"ANSI C forbids comparison of %s with %s",		      /* 274 */
 	"cast discards 'const' from pointer target type",	      /* 275 */
-	"",							      /* 276 */
+	"__%s__ is illegal for type %s",			      /* 276 */
 	"initialisation of '%s' with '%s'",			      /* 277 */
 	"combination of '%s' and '%s', arg #%d",		      /* 278 */
 	"combination of '%s' and '%s' in return",		      /* 279 */
@@ -367,7 +367,7 @@ const	char *msgs[] = {
 	"ANSI C forbids conversion of %s to %s, op %s",		      /* 305 */
 	"constant truncated by conversion, op %s",		      /* 306 */
 	"static variable %s set but not used",			      /* 307 */
-	"",							      /* 308 */
+	"Invalid type %s for _Complex",				      /* 308 */
 	"extra bits set to 0 in conversion of '%s' to '%s', op %s",   /* 309 */
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
@@ -382,8 +382,6 @@ const	char *msgs[] = {
 	"({ }) is a GCC extension",				      /* 320 */
 	"array initializer with designators is a C9X feature",	      /* 321 */
 	"zero sized array is a C99 extension",			      /* 322 */
-	"Invalid type %s for _Complex",				      /* 323 */
-	"__%s__ is illegal for type %s",			      /* 324 */
 };
 
 /*
