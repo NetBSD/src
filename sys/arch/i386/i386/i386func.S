@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.8 2008/03/27 13:00:25 ad Exp $	*/
+/*	$NetBSD: i386func.S,v 1.9 2008/04/27 11:26:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.8 2008/03/27 13:00:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.9 2008/04/27 11:26:18 ad Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -125,6 +125,11 @@ ENTRY(rdr6)
 
 ENTRY(rcr2)
 	movl	%cr2, %eax
+	ret
+
+ENTRY(lcr2)
+	movl	4(%esp), %eax
+	movl	%eax, %cr2
 	ret
 
 ENTRY(wbinvd)
