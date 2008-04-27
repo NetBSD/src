@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.35 2008/04/21 15:15:34 cegger Exp $	*/
+/*	$NetBSD: vector.S,v 1.36 2008/04/27 22:40:09 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.35 2008/04/21 15:15:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.36 2008/04/27 22:40:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -860,13 +860,19 @@ IDTVEC(trap07)
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
 	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
 	pushl	CPUVAR(SELF)
 	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap
-	INTRFASTEXIT
+	jmp	.Lalltraps_checkusr
 #else
+#ifndef XEN
+	sti
+#endif
 	ZTRAP(T_DNA)
 #endif
 IDTVEC(trap08)
@@ -911,8 +917,7 @@ IDTVEC(trap0e)
 	addl	$4,%eax
 	pushl	%eax
 	call	_C_LABEL(trap)
-	addl	$4,%esp
-	addl	$4,%esp
+	addl	$8,%esp
 .Ltrap0e_checkusr:
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	trap0e_checkast
@@ -991,8 +996,14 @@ IDTVEC(trap0f)
 	 * way to delivering an interrupt.. presumably enough has been set 
 	 * up that it's inconvenient to abort delivery completely..)
 	 */
-	iret
-	
+	pushl	$0			# dummy error code
+	pushl	$T_ASTFLT
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	jmp	.Lalltraps_checkusr
+
 IDTVEC(trap10)
 #if NNPX > 0
 	/*
@@ -1003,14 +1014,16 @@ IDTVEC(trap10)
 	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
 	INTRENTRY
-	pushl	CPUVAR(ILEVEL)
+	movl	CPUVAR(ILEVEL),%ebx
+	pushl	%ebx
 	pushl	%esp
 	pushl	$0			# dummy arg
 	incl	_C_LABEL(uvmexp)+V_TRAP
 	call	_C_LABEL(npxintr)
 	addl	$12,%esp
-	INTRFASTEXIT
+	jmp	.Lalltraps_checkusr
 #else
+	sti
 	ZTRAP(T_ARITHTRAP)
 #endif
 IDTVEC(trap11)
