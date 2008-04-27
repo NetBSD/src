@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.5 2008/04/16 16:06:51 cegger Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.6 2008/04/27 11:26:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ void	lldt(u_short);
 void	ltr(u_short);
 void	lcr0(u_int);
 u_int	rcr0(void);
+void	lcr2(vaddr_t);
 vaddr_t	rcr2(void);
 void	lcr3(vaddr_t);
 vaddr_t	rcr3(void);

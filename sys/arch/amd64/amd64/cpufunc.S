@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.7 2008/02/08 18:17:39 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.8 2008/04/27 11:25:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -87,6 +87,10 @@ NENTRY(lcr0)
 
 NENTRY(rcr0)
 	movq	%cr0, %rax
+	ret
+
+NENTRY(lcr2)
+	movq	%rdi, %cr2
 	ret
 
 NENTRY(rcr2)
