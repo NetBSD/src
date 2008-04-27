@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_subr.c,v 1.184 2008/04/04 20:13:18 cegger Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.185 2008/04/27 11:37:48 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.184 2008/04/04 20:13:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.185 2008/04/27 11:37:48 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1388,22 +1388,4 @@ trace_exit(register_t code, register_t rval[], int error)
 	    (PSL_SYSCALL|PSL_TRACED))
 		process_stoptrace();
 #endif
-}
-
-/*
- * Disable kernel preemption.
- */
-void
-crit_enter(void)
-{
-	/* nothing */
-}
-
-/*
- * Reenable kernel preemption.
- */
-void
-crit_exit(void)
-{
-	/* nothing */
 }

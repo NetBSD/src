@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.40 2007/11/28 16:44:46 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.41 2008/04/27 11:37:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.40 2007/11/28 16:44:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.41 2008/04/27 11:37:48 ad Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1054,9 +1054,9 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	}
 #ifndef XEN	/* XXX */
 	if ((xpte & (PG_V | PG_U)) == (PG_V | PG_U)) {
-		crit_enter();
+		kpreempt_disable();
 		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
-		crit_exit();
+		kpreempt_enable();
 	}
 	pmap_update(pmap_kernel());
 #endif

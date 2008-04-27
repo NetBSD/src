@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.27 2008/01/07 20:56:32 dsl Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.28 2008/04/27 11:37:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.27 2008/01/07 20:56:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.28 2008/04/27 11:37:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ ras_lookup(struct proc *p, void *addr)
 
 	startaddr = (void *)-1;
 
-	crit_enter();
+	KPREEMPT_DISABLE();
 	for (rp = p->p_raslist; rp != NULL; rp = rp->ras_next) {
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			startaddr = rp->ras_startaddr;
@@ -125,7 +125,7 @@ ras_lookup(struct proc *p, void *addr)
 			break;
 		}
 	}
-	crit_exit();
+	KPREEMPT_ENABLE();
 
 	return startaddr;
 }

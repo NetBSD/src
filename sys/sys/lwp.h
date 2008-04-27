@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.88 2008/04/24 18:39:25 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.89 2008/04/27 11:37:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -415,6 +415,25 @@ spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
 	KASSERT(ci1 != ci2);
 	mutex_spin_exit(spc1->spc_mutex);
 	mutex_spin_exit(spc2->spc_mutex);
+}
+
+/*
+ * Disable and re-enable preemption.  Only for low-level kernel
+ * use.  Code outside kern/ should use kpreempt_disable() and
+ * kpreempt_enable().
+ */
+static inline void
+KPREEMPT_DISABLE(void)
+{
+
+	__insn_barrier();
+}
+
+static inline void
+KPREEMPT_ENABLE(void)
+{
+
+	__insn_barrier();
 }
 
 #endif /* _KERNEL */

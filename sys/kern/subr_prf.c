@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.119 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.120 2008/04/27 11:37:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.119 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120 2008/04/27 11:37:48 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -185,7 +185,7 @@ panic(const char *fmt, ...)
 	 * here and spin until the system is rebooted.  Allow the CPU that
 	 * first paniced to panic again.
 	 */
-	crit_enter();
+	kpreempt_disable();
 	ci = curcpu();
 	oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
 	if (oci != NULL && oci != ci) {

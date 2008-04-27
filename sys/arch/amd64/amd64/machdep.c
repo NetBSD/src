@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 2008/04/24 18:39:20 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 2008/04/27 11:37:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2008/04/27 11:37:48 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1023,6 +1023,8 @@ extern  struct user *proc0paddr;
 void
 setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int sel)
 {
+
+	kpreempt_disable();
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 
 	gd->gd_looffset = (uint64_t)func & 0xffff;
@@ -1038,16 +1040,20 @@ setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int 
 	gd->gd_xx3 = 0;
 
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
+	kpreempt_enable();
 }
 
 void
 unsetgate( struct gate_descriptor *gd)
 {
+
+	kpreempt_disable();
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 
 	memset(gd, 0, sizeof (*gd));
 
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
+	kpreempt_enable();
 }
 
 void
@@ -1608,6 +1614,7 @@ init_x86_64(paddr_t first_avail)
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
+	kpreempt_disable();
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
@@ -1742,6 +1749,7 @@ init_x86_64(paddr_t first_avail)
 #ifdef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
+	kpreempt_enable();
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
 	lgdt(&region);
@@ -1806,11 +1814,12 @@ cpu_reset(void)
 	 * Try to cause a triple fault and watchdog reset by making the IDT
 	 * invalid and causing a fault.
 	 */
+	kpreempt_disable();
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);           
 	pmap_changeprot_local(idt_vaddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
-
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
+	kpreempt_enable();
 	breakpoint();
 
 #if 0
