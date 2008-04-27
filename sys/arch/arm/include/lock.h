@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.15 2007/10/17 19:53:41 garbled Exp $	*/
+/*	$NetBSD: lock.h,v 1.16 2008/04/27 18:58:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ __swp(int __val, volatile unsigned char *__ptr)
 {
 
 	__asm volatile("swpb %0, %1, [%2]"
-	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
+	    : "=&r" (__val) : "r" (__val), "r" (__ptr) : "memory");
 	return __val;
 }
 #else
@@ -95,7 +95,7 @@ __swp(int __val, volatile int *__ptr)
 {
 
 	__asm volatile("swp %0, %1, [%2]"
-	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
+	    : "=&r" (__val) : "r" (__val), "r" (__ptr) : "memory");
 	return __val;
 }
 #endif /* _KERNEL */
