@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.14 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.15 2008/04/27 18:58:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,26 +36,30 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_cpuoptions.h"
 
 #include "assym.h"
 
 #include <machine/asm.h>
+#include <machine/cpu.h>
 
 #ifdef __XSCALE__
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.14 2005/12/11 12:16:41 christos Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.15 2008/04/27 18:58:43 matt Exp $")	
 
 	.text
 	.align	0
 
+#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
 #ifdef MULTIPROCESSOR
 .Lcpu_info:
 	.word	_C_LABEL(cpu_info)
 #else
 .Lcurpcb:
-	.word _C_LABEL(curpcb)
+	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+#endif
 #endif
 
 #ifdef __PROG32
@@ -67,7 +71,7 @@ RCSID("$NetBSD: bcopyinout.S,v 1.14 2005/12/11 12:16:41 christos Exp $")
 #define RESTORE_REGS	ldmfd	sp!, {r4-r11, r14}
 #endif
 		
-#if defined(__XSCALE__)
+#if defined(__XSCALE__) || defined(_ARCH_ARM_6)
 #define HELLOCPP #
 #define PREFETCH(rx,o)	pld	[ rx , HELLOCPP (o) ]
 #else
@@ -88,10 +92,12 @@ ENTRY(copyin)
 	/* Quick exit if length is zero */	
 	teq	r2, #0
 	moveq	r0, #0
-	moveq	pc, lr
+	RETc(eq)
 
 	SAVE_REGS
-#ifdef MULTIPROCESSOR
+#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	GET_CURPCB(r4)
+#elif defined(MULTIPROCESSOR)
 	/* XXX Probably not appropriate for non-Hydra SMPs */
 	stmfd	sp!, {r0-r2, r14}
 	bl	_C_LABEL(cpu_number)
@@ -288,13 +294,13 @@ ENTRY(copyin)
 	str	r5, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 
-	mov	pc, lr
+	RET
 
 .Lcopyfault:
 	str	r5, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 
-	mov	pc, lr
+	RET
 
 /*
  * r0 = kernel space address
@@ -314,7 +320,9 @@ ENTRY(copyout)
 	moveq	pc, lr
 
 	SAVE_REGS
-#ifdef MULTIPROCESSOR
+#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	GET_CURPCB(r4)
+#elif defined(MULTIPROCESSOR)
 	/* XXX Probably not appropriate for non-Hydra SMPs */
 	stmfd	sp!, {r0-r2, r14}
 	bl	_C_LABEL(cpu_number)
@@ -508,7 +516,7 @@ ENTRY(copyout)
 	str	r5, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 
-	mov	pc, lr
+	RET
 
 /*
  * r0 = kernel space source address
@@ -527,7 +535,9 @@ ENTRY(kcopy)
 	moveq	pc, lr
 
 	SAVE_REGS
-#ifdef MULTIPROCESSOR
+#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	GET_CURPCB(r4)
+#elif defined(MULTIPROCESSOR)
 	/* XXX Probably not appropriate for non-Hydra SMPs */
 	stmfd	sp!, {r0-r2, r14}
 	bl	_C_LABEL(cpu_number)
@@ -710,7 +720,7 @@ ENTRY(kcopy)
 	str	r5, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
 
-	mov	pc, lr
+	RET
 #endif	/* !__XSCALE__ */
 
 #ifdef __PROG32
@@ -721,7 +731,9 @@ ENTRY(kcopy)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_1)
-#ifdef MULTIPROCESSOR
+#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	GET_CURPCB(r2)
+#elif defined(MULTIPROCESSOR)
 	/* XXX Probably not appropriate for non-Hydra SMPs */
 	stmfd	sp!, {r0-r1, r14}
 	bl	_C_LABEL(cpu_number)
@@ -746,7 +758,7 @@ ENTRY(badaddr_read_1)
 	strb	r3, [r1]
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	RET
 
 /*
  * int badaddr_read_2(const uint16_t *src, uint16_t *dest)
@@ -755,14 +767,16 @@ ENTRY(badaddr_read_1)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_2)
-#ifdef MULTIPROCESSOR
+#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	GET_CURPCB(r2)
+#elif defined(MULTIPROCESSOR)
 	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r1, r14}
+	stmfd	sp!, {r0-r1, r3, r14}
 	bl	_C_LABEL(cpu_number)
 	ldr	r2, .Lcpu_info
 	ldr	r2, [r2, r0, lsl #2]
 	ldr	r2, [r2, #CI_CURPCB]
-	ldmfd	sp!, {r0-r1, r14}
+	ldmfd	sp!, {r0-r1, r3, r14}
 #else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
@@ -780,7 +794,7 @@ ENTRY(badaddr_read_2)
 	strh	r3, [r1]
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	RET
 
 /*
  * int badaddr_read_4(const uint32_t *src, uint32_t *dest)
@@ -789,14 +803,16 @@ ENTRY(badaddr_read_2)
  * else EFAULT if a page fault occurred.
  */
 ENTRY(badaddr_read_4)
-#ifdef MULTIPROCESSOR
+#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	GET_CURPCB(r2)
+#elif defined(MULTIPROCESSOR)
 	/* XXX Probably not appropriate for non-Hydra SMPs */
-	stmfd	sp!, {r0-r1, r14}
+	stmfd	sp!, {r0-r1, r3, r14}
 	bl	_C_LABEL(cpu_number)
 	ldr	r2, .Lcpu_info
 	ldr	r2, [r2, r0, lsl #2]
 	ldr	r2, [r2, #CI_CURPCB]
-	ldmfd	sp!, {r0-r1, r14}
+	ldmfd	sp!, {r0-r1, r3, r14}
 #else
 	ldr	r2, .Lcurpcb
 	ldr	r2, [r2]
@@ -814,5 +830,5 @@ ENTRY(badaddr_read_4)
 	str	r3, [r1]
 	mov	r0, #0		/* No fault */
 1:	str	ip, [r2, #PCB_ONFAULT]
-	mov	pc, lr
+	RET
 #endif /* __PROG32 */

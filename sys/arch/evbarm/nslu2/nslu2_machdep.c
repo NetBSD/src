@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.5 2008/01/19 13:11:16 chris Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.6 2008/04/27 18:58:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.5 2008/01/19 13:11:16 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.6 2008/04/27 18:58:47 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -191,7 +191,6 @@ vm_offset_t pagetables_start;
 int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
 pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
@@ -471,7 +470,6 @@ initarm(void *arg)
 	u_int kerneldatasize;
 	u_int l1pagetable;
 	u_int freemempos;
-	pv_addr_t kernel_l1pt;
 	uint32_t reg;
 
 	/*
@@ -575,8 +573,6 @@ initarm(void *arg)
 #endif
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = 0;
-	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
@@ -826,8 +822,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Setup the IRQ system */
 #ifdef VERBOSE_INIT_ARM

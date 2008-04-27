@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.15 2008/01/06 03:45:27 matt Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.16 2008/04/27 18:58:45 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -54,9 +54,6 @@
 	.text
 	.align	0
 
-.Lcurrent_intr_depth: 
-	.word	_C_LABEL(cpu_info_store) + CI_IDEPTH
-
 .Lintr_dispatch:
 	.word	_C_LABEL(i80200_extirq_dispatch)
 
@@ -81,24 +78,23 @@ ASENTRY_NP(irq_entry)
 	 * determine if we are in an IRQ.  Instead, we will
 	 * count each time the interrupt handler is nested.
 	 */
-	ldr	r0, .Lcurrent_intr_depth
-	ldr	r1, [r0]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	add	r1, r1, #1
-	str	r1, [r0]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	/*
 	 * Get the interrupt status into a callee-save register.
 	 */
-	mrc	p13, 0, r4, c4, c0, 0
+	mrc	p13, 0, r5, c4, c0, 0
 
 #if defined(PERFCTRS)
 	/*
 	 * Check for PMU interrupts.
 	 * If we have one, call the routine to handle it.
 	 */
-	tst	r4, #(INTSRC_PI)
+	tst	r5, #(INTSRC_PI)
 	beq	.Lpmc_intr_return
-	mov	r1, r4
+	mov	r1, r5
 	mov	r0, sp
 	mov	lr, pc
 	ldr	pc, .Lpmc_dispatch
@@ -116,7 +112,7 @@ ASENTRY_NP(irq_entry)
 	 * interrupts disabled, and will return with interrupts
 	 * disabled.
 	 */
-	tst	r4, #(INTSRC_II)
+	tst	r5, #(INTSRC_II)
 	beq	.Lextirq_return		/* no external IRQ pending */
 	ldr	r1, .Lintr_dispatch
 	mov	r0, sp
@@ -125,20 +121,12 @@ ASENTRY_NP(irq_entry)
 .Lextirq_return:
 
 	/* Decremement the nest count. */
-	ldr	r0, .Lcurrent_intr_depth 
-	ldr	r1, [r0]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	sub	r1, r1, #1
-	str	r1, [r0]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	LOCK_CAS_CHECK
 
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 	movs	pc, lr			/* Exit */
-
-	.bss
-	.align	0
-
-	.global _C_LABEL(astpending)
-_C_LABEL(astpending):
-	.word	0

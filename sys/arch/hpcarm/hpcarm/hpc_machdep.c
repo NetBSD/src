@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.84 2008/04/20 16:19:46 rafal Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.85 2008/04/27 18:58:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.84 2008/04/20 16:19:46 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.85 2008/04/27 18:58:47 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -131,7 +131,6 @@ int max_processes = 64;			/* Default number */
 
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
 pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
@@ -298,7 +297,6 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	vaddr_t freemempos;
-	pv_addr_t kernel_l1pt;
 	vsize_t pt_size;
 	int loop, i;
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -694,8 +692,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 #ifdef BOOT_DUMP
 	dumppages((char *)kernel_l1pt.pv_va, 16);

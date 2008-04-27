@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.67 2008/03/15 10:19:40 rearnsha Exp $	*/
+/*	$NetBSD: cpu.c,v 1.68 2008/04/27 18:58:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2008/03/15 10:19:40 rearnsha Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2008/04/27 18:58:43 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -190,6 +190,11 @@ static const char * const generic_steppings[16] = {
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
+};
+
+static const char * const pN_steppings[16] = {
+	"*p0",	"*p1",	"*p2",	"*p3",	"*p4",	"*p5",	"*p6",	"*p7",
+	"*p8",	"*p9",	"*p10",	"*p11",	"*p12",	"*p13",	"*p14",	"*p15",
 };
 
 static const char * const sa110_steppings[16] = {
@@ -394,10 +399,12 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_IXP425_266,	CPU_CLASS_XSCALE,	"IXP425 266MHz",
 	  ixp425_steppings },
 
-	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S",
-	  generic_steppings },
-	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S R1",
-	  generic_steppings },
+	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S r0",
+	  pN_steppings },
+	{ CPU_ID_ARM1136JSR1,	CPU_CLASS_ARM11J,	"ARM1136J-S r1",
+	  pN_steppings },
+	{ CPU_ID_ARM1176JS,	CPU_CLASS_ARM11J,	"ARM1176J-S r0",
+	  pN_steppings },
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
@@ -457,6 +464,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	u_int cpuid;
 	enum cpu_class cpu_class = CPU_CLASS_NONE;
 	int i;
+	const char *steppingstr;
 
 	cpuid = ci->ci_arm_cpuid;
 
@@ -468,10 +476,12 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	for (i = 0; cpuids[i].cpuid != 0; i++)
 		if (cpuids[i].cpuid == (cpuid & CPU_ID_CPU_MASK)) {
 			cpu_class = cpuids[i].cpu_class;
-			sprintf(cpu_model, "%s %s (%s core)",
+			steppingstr = cpuids[i].cpu_steppings[cpuid &
+			    CPU_ID_REVISION_MASK],
+			sprintf(cpu_model, "%s%s%s (%s core)",
 			    cpuids[i].cpu_name,
-			    cpuids[i].cpu_steppings[cpuid &
-						    CPU_ID_REVISION_MASK],
+			    steppingstr[0] == '*' ? "" : " ",
+			    &steppingstr[steppingstr[0] == '*'],
 			    cpu_classes[cpu_class].class_name);
 			break;
 		}
@@ -591,7 +601,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 	case CPU_CLASS_XSCALE:
 #endif
-#ifdef CPU_ARM11
+#if defined(CPU_ARM11)
 	case CPU_CLASS_ARM11J:
 #endif
 		break;

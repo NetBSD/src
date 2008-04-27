@@ -1,4 +1,4 @@
-#	$NetBSD: std.osk5912,v 1.2 2008/01/27 12:37:12 chris Exp $
+#	$NetBSD: std.osk5912,v 1.3 2008/04/27 18:58:46 matt Exp $
 #
 # standard NetBSD/evbarm for OSK5912 options
 
@@ -15,7 +15,7 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
-makeoptions	LOADADDRESS="0xc0000000"
+makeoptions	LOADADDRESS="0x80000000"
 makeoptions	BOARDTYPE="osk5912"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.osk5912"
 
