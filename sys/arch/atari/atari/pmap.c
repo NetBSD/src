@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2007/10/17 19:53:45 garbled Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2008/04/27 14:44:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2007/10/17 19:53:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2008/04/27 14:44:04 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ int pmapdebug = PDB_PARANOIA;
 
 #define	PMAP_DPRINTF(l, x)	if (pmapdebug & (l)) printf x
 
-static void	pmap_check_wiring __P((char *, vaddr_t));
+static void	pmap_check_wiring __P((const char *, vaddr_t));
 static void	pmap_pvdump __P((paddr_t));
 #else
 #define	PMAP_DPRINTF(l, x)
@@ -1261,7 +1261,7 @@ validate:
 	if (pmapdebug & 0x10000 && mmutype == MMU_68040 && 
 	    pmap == pmap_kernel()) {
 		struct proc *cp = curproc;
-		char *s;
+		const char *s;
 		if (va >= ATARI_UPTBASE && 
 		    va < (ATARI_UPTBASE + ATARI_UPTMAXSIZE))
 			s = "UPT";
@@ -1534,6 +1534,7 @@ pmap_extract(pmap, va, pap)
 	u_int pte;
 
 #ifdef DEBUG
+	pa = 0;	/* XXX gcc -Wuninitialized */
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_extract(%p, %lx) -> ", pmap, va);
 #endif
@@ -2065,9 +2066,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
 			    NULL, PRM_TFLUSH|PRM_CFLUSH);
-			simple_lock(&uvm_kernel_object->vmobjlock);
+			mutex_enter(&uvm_kernel_object->vmobjlock);
 			uvm_pagefree(PHYS_TO_VM_PAGE(paddr));
-			simple_unlock(&uvm_kernel_object->vmobjlock);
+			mutex_exit(&uvm_kernel_object->vmobjlock);
 #ifdef DEBUG
 			if (pmapdebug & (PDB_REMOVE|PDB_PTPAGE))
 			    printf("remove: PT page 0x%lx (0x%lx) freed\n",
@@ -2233,10 +2234,10 @@ pmap_ptpage_addref(ptpva)
 {
 	struct vm_page *pg;
 
-	simple_lock(&uvm_kernel_object->vmobjlock);
+	mutex_enter(&uvm_kernel_object->vmobjlock);
 	pg = uvm_pagelookup(uvm_kernel_object, ptpva - vm_map_min(kernel_map));
 	pg->wire_count++;
-	simple_unlock(&uvm_kernel_object->vmobjlock);
+	mutex_exit(&uvm_kernel_object->vmobjlock);
 }
 
 /*
@@ -2251,10 +2252,10 @@ pmap_ptpage_delref(ptpva)
 	struct vm_page *pg;
 	int rv;
 
-	simple_lock(&uvm_kernel_object->vmobjlock);
+	mutex_enter(&uvm_kernel_object->vmobjlock);
 	pg = uvm_pagelookup(uvm_kernel_object, ptpva - vm_map_min(kernel_map));
 	rv = --pg->wire_count;
-	simple_unlock(&uvm_kernel_object->vmobjlock);
+	mutex_exit(&uvm_kernel_object->vmobjlock);
 	return (rv);
 }
 
@@ -2569,15 +2570,15 @@ pmap_enter_ptpage(pmap, va, can_fail)
 		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
 			printf("enter_pt: about to alloc UPT pg at %lx\n", va);
 #endif
-		simple_lock(&uvm_kernel_object->vmobjlock);
+		mutex_enter(&uvm_kernel_object->vmobjlock);
 		while ((pg = uvm_pagealloc(uvm_kernel_object,
 					   va - vm_map_min(kernel_map),
 					   NULL, UVM_PGA_ZERO)) == NULL) {
-			simple_unlock(&uvm_kernel_object->vmobjlock);
+			mutex_exit(&uvm_kernel_object->vmobjlock);
 			uvm_wait("ptpage");
-			simple_lock(&uvm_kernel_object->vmobjlock);
+			mutex_enter(&uvm_kernel_object->vmobjlock);
 		}
-		simple_unlock(&uvm_kernel_object->vmobjlock);
+		mutex_exit(&uvm_kernel_object->vmobjlock);
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
@@ -2719,7 +2720,7 @@ pmap_pvdump(pa)
  */
 static void
 pmap_check_wiring(str, va)
-	char *str;
+	const char *str;
 	vaddr_t va;
 {
 	pt_entry_t *pte;
