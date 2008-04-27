@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.47 2007/12/31 15:32:01 ad Exp $
+# 	$NetBSD: LIBERO,v 1.48 2008/04/27 06:26:04 tsutsui Exp $
 
 #	NEWS1750 config file;
 #
@@ -20,7 +20,6 @@ options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
 #options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
