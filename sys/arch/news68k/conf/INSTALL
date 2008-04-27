@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.43 2007/10/17 19:55:53 garbled Exp $
+# 	$NetBSD: INSTALL,v 1.44 2008/04/27 06:26:04 tsutsui Exp $
 
 #	config for bootable floppy kernel
 #
@@ -25,7 +25,6 @@ options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44 Megabytes
 #options 	SYSVMSG			# System V message queues
 #options 	SYSVSEM			# System V semaphores
 #options 	SYSVSHM			# System V shared memory
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
