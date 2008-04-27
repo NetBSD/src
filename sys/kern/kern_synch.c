@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.229 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.230 2008/04/27 11:37:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.229 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.230 2008/04/27 11:37:48 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -402,6 +402,37 @@ preempt(void)
 	l->l_nivcsw++;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
+}
+
+/*
+ * Disable kernel preemption.
+ */
+void
+kpreempt_disable(void)
+{
+
+	KPREEMPT_DISABLE();
+}
+
+/*
+ * Reenable kernel preemption.
+ */
+void
+kpreempt_enable(void)
+{
+
+	KPREEMPT_ENABLE();
+}
+
+/*
+ * Return true if preemption is explicitly disabled.
+ */
+bool
+kpreempt_disabled(void)
+{
+
+	/* Just a diagnostic check, so for now always true. */
+	return true;
 }
 
 /*
