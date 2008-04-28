@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.14 2008/04/28 13:09:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.14 2008/04/28 13:09:00 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -78,8 +78,10 @@ ENTRY(mutex_enter)
 	xorl	%eax, %eax
 	LOCK(1)
 	cmpxchgl %ecx, MTX_OWNER(%edx)
-	jnz,pn	_C_LABEL(mutex_vector_enter)
+	jnz	1f
 	ret
+1:
+	jmp	_C_LABEL(mutex_vector_enter)
 
 /*
  * void mutex_exit(kmutex_t *mtx);
@@ -95,8 +97,10 @@ ENTRY(mutex_exit)
 	movl	CPUVAR(CURLWP), %eax
 	xorl	%ecx, %ecx
 	cmpxchgl %ecx, MTX_OWNER(%edx)
-	jnz,pn	_C_LABEL(mutex_vector_exit)
+	jnz	1f
 	ret
+1:
+	jmp	_C_LABEL(mutex_vector_exit)
 
 /*
  * void rw_enter(krwlock_t *rwl, krw_t op);
@@ -114,7 +118,7 @@ ENTRY(rw_enter)
 1:	movl	RW_OWNER(%edx), %eax
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leal	RW_READ_INCR(%eax), %ecx
-	jnz,pn	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	LOCK(2)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	jnz,pn	1b
@@ -128,8 +132,10 @@ ENTRY(rw_enter)
 	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(3)
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz,pn	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	ret
+3:
+	jmp	_C_LABEL(rw_vector_enter)
 
 /*
  * void rw_exit(krwlock_t *rwl);
@@ -146,10 +152,10 @@ ENTRY(rw_exit)
 	 * Reader
 	 */
 1:	testb	$RW_HAS_WAITERS, %al
-	jnz,pn	3f
+	jnz	3f
 	cmpl	$RW_READ_INCR, %eax
 	leal	-RW_READ_INCR(%eax), %ecx
-	jb,pn	3f
+	jb	3f
 	LOCK(4)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	jnz,pn	1b
@@ -160,10 +166,10 @@ ENTRY(rw_exit)
 	 */
 2:	leal	-RW_WRITE_LOCKED(%eax), %ecx
 	subl	CPUVAR(CURLWP), %ecx
-	jnz,pn	3f
+	jnz	3f
 	LOCK(5)
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz,pn	3f
+	jnz	3f
 	ret
 
 	/*
@@ -218,22 +224,25 @@ ENTRY(rw_tryenter)
  */
 ENTRY(mutex_spin_enter)
 	movl	4(%esp), %edx
-	movl	CPUVAR(ILEVEL), %ecx
-	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
-	jnc	1f
-	movl	%ecx, CPUVAR(MTX_OLDSPL)
-1:	movb	MTX_IPL(%edx), %ch
+	movb	CPUVAR(ILEVEL), %cl
+	movb	MTX_IPL(%edx), %ch
 	cmpb	%ch, %cl
-	jg,pn	2f
+	jg	1f
 	movb	%ch, CPUVAR(ILEVEL)		/* splraiseipl() */
+1:
+	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
+	jnc	2f
+	movb	%cl, CPUVAR(MTX_OLDSPL)
 2:
 #ifdef FULL
 	mov	$0x0100, %eax			/* new + expected value */
 	LOCK(11)
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
-	jnz,pn	_C_LABEL(mutex_spin_retry)
+	jnz	3f
 #endif
 	ret
+3:
+	jmp	_C_LABEL(mutex_spin_retry)
 
 	ALIGN64
 LABEL(mutex_spin_enter_end)
@@ -312,6 +321,7 @@ NENTRY(__cpu_simple_lock_init)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
+
 NENTRY(__cpu_simple_lock)
 	movl	4(%esp), %edx
 	movl	$0x0100, %eax
