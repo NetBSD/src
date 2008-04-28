@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.106 2008/04/27 14:26:58 ad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.107 2008/04/28 16:37:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -335,7 +335,7 @@ sb_notify(struct sockbuf *sb)
  * still be negative (cc > hiwat or mbcnt > mbmax).  Should detect
  * overflow and return 0.
  */
-static inline u_long
+static inline long
 sbspace(struct sockbuf *sb)
 {
 
