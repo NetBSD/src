@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.19 2008/04/28 21:17:16 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.20 2008/04/28 23:00:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.19 2008/04/28 21:17:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.20 2008/04/28 23:00:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -253,11 +253,11 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 
 	snprintf(si->si_name, sizeof(si->si_name), "%s/%u", desc,
 	    ci->ci_index);
-	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_MISC, NULL,
 	   "softint", si->si_name);
 	snprintf(si->si_name_block, sizeof(si->si_name_block), "%s block/%u",
 	    desc, ci->ci_index);
-	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_MISC, NULL,
 	   "softint", si->si_name_block);
 
 	si->si_lwp->l_private = si;
