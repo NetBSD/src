@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.53 2008/04/27 22:41:15 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2008/04/28 17:18:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2008/04/27 22:41:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2008/04/28 17:18:19 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3038,7 +3038,6 @@ pmap_map_ptp(struct vm_page *ptp)
 	id = cpu_number();
 	ptppte = PTESLEW(ptp_pte, id);
 	ptpva = VASLEW(ptpp, id);
-	kpreempt_disable();
 	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 #if !defined(XEN)
 	    PG_RW |
@@ -3879,13 +3878,13 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 		}
 #endif
 		pmap_unmap_ptes(pmap, pmap2);		/* unlocks map */
-		kpreempt_enable();
 	}
 #ifdef DIAGNOSTIC
 	else {
 		panic("pmap_unwire: invalid PDE");
 	}
 #endif
+	kpreempt_enable();
 }
 
 /*
