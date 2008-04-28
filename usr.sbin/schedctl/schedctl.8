@@ -1,4 +1,4 @@
-.\"	$NetBSD: schedctl.8,v 1.3 2008/01/26 14:27:42 wiz Exp $
+.\"	$NetBSD: schedctl.8,v 1.4 2008/04/28 16:52:17 ad Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 24, 2008
+.Dd April 28, 2008
 .Dt SCHEDCTL 8
 .Os
 .Sh NAME
@@ -66,13 +66,13 @@ A value of \-1 is used to unset the affinity.
 .It Fl C Ar class
 Scheduling class (policy) might be:
 .Bl -tag -width SCHEDOTHERXX
-.It Dv 0: SCHED_OTHER
+.It Dv SCHED_OTHER
 Time-sharing (TS) scheduling policy.
 The default policy in
 .Nx .
-.It Dv 1: SCHED_FIFO
+.It Dv SCHED_FIFO
 First in, first out (FIFO) scheduling policy.
-.It Dv 2: SCHED_RR
+.It Dv SCHED_RR
 Round-robin scheduling policy.
 .El
 .It Fl P Ar priority
