@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.34 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.35 2008/04/28 18:49:27 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.34 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.35 2008/04/28 18:49:27 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,6 +363,9 @@ ad1848_isa_probe(struct ad1848_isa_softc *isc)
 					break;
 				case 0x82:
 					sc->chip_name = "CS4232";
+					break;
+				case 0xa2:
+					sc->chip_name = "CS4232C";
 					break;
 				case 0x03:
 				case 0x83:
