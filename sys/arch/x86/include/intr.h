@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.32 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.33 2008/04/28 22:47:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,6 +33,7 @@
 #define _X86_INTR_H_
 
 #define	__HAVE_FAST_SOFTINTS
+#define	__HAVE_PREEMPTION
 
 #include <machine/intrdefs.h>
 
@@ -148,6 +149,8 @@ splraiseipl(ipl_cookie_t icookie)
  */
 
 void Xsoftintr(void);
+void Xpreemptrecurse(void);
+void Xpreemptresume(void);
 
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];

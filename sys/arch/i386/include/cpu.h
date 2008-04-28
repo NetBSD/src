@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.167 2008/04/24 11:26:52 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.168 2008/04/28 22:47:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -244,7 +244,7 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_STOP(_ci)	        	((_ci)->ci_func->stop(_ci))
 #define CPU_START_CLEANUP(_ci)		((_ci)->ci_func->cleanup(_ci))
 
-#if defined(__GNUC__) && defined(_KERNEL)
+#if defined(__GNUC__) && !defined(_LKM)
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
@@ -271,11 +271,22 @@ x86_curlwp(void)
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
 	return l;
 }
-#else	/* __GNUC__ && _KERNEL */
+__inline static void __unused
+cpu_set_curpri(int pri)
+{
+
+	__asm volatile(
+	    "movl %1, %%fs:%0" :
+	    "=m" (*(struct cpu_info *)offsetof(struct cpu_info, ci_schedstate.spc_curpriority)) :
+	    "r" (pri)
+	);
+}
+#else	/* __GNUC__ && !_LKM */
 /* For non-GCC and LKMs */
 struct cpu_info	*x86_curcpu(void);
 lwp_t	*x86_curlwp(void);
-#endif	/* __GNUC__ && _KERNEL */
+void	cpu_set_curpri(int);
+#endif	/* __GNUC__ && !_LKM */
 
 #define cpu_number() 		(curcpu()->ci_cpuid)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.18 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: spl.S,v 1.19 2008/04/28 22:47:37 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /*
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -79,7 +79,7 @@
 
 #ifndef XEN
 /*
- * softintr()
+ * Xsoftintr()
  *
  * Switch to the LWP assigned to handle interrupts from the given
  * source.  We borrow the VM context from the interrupted LWP.
@@ -109,12 +109,12 @@ IDTVEC(softintr)
 	movq	%r15,%rdi		/* interrupted LWP */
 	movl	IS_MAXLEVEL(%rax),%esi	/* ipl to run at */
 	call	_C_LABEL(softint_dispatch)/* run handlers */
+	cli
 	movq	L_ADDR(%r15),%rcx
 	movq	PCB_RSP(%rcx),%rsp
 	xchgq	%r15,CPUVAR(CURLWP)	/* must be globally visible */
 	popq	%r15			/* unwind switchframe */
 	addq	$(5 * 8),%rsp
-	cli
 	jmp	*%r13			/* back to splx/doreti */
 
 /*
@@ -139,6 +139,39 @@ NENTRY(softintr_ret)
 NENTRY(softint_trigger)
 	orl	%edi,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
+
+
+/*
+ * Xpreemptrecurse()
+ *
+ * Handles preemption interrupts via Xspllower().
+ */
+IDTVEC(preemptrecurse)
+	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	sti
+	xorq	%rdi, %rdi
+	call	_C_LABEL(kpreempt)
+	cli
+	jmp	*%r13
+
+/*
+ * Xpreemptresume()
+ *
+ * Handles preemption interrupts via Xdoreti().
+ */
+IDTVEC(preemptresume)
+	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	sti
+	testq   $SEL_RPL, TF_CS(%rsp)
+	jnz	1f
+	movq	TF_RIP(%rsp), %rdi
+	call	_C_LABEL(kpreempt)		# from kernel
+	cli
+	jmp	*%r13
+1:
+	call	_C_LABEL(preempt)		# from user
+	cli
+	jmp	*%r13
 
 /*
  * int splraise(int s);

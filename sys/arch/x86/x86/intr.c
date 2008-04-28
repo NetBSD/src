@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.c,v 1.44 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.45 2008/04/28 22:47:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.44 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.45 2008/04/28 22:47:37 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -892,6 +892,7 @@ struct intrhand fake_softserial_intrhand;
 struct intrhand fake_softbio_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
+struct intrhand fake_preempt_intrhand;
 
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 static const char *x86_ipi_names[X86_NIPI] = X86_IPI_NAMES;
@@ -920,9 +921,7 @@ redzone_const_or_zero(int x)
 void
 cpu_intr_init(struct cpu_info *ci)
 {
-#if NLAPIC > 0
 	struct intrsource *isp;
-#endif
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 #endif
@@ -961,6 +960,17 @@ cpu_intr_init(struct cpu_info *ci)
 		    NULL, device_xname(ci->ci_dev), x86_ipi_names[i]);
 #endif
 #endif
+
+	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
+	if (isp == NULL)
+		panic("can't allocate fixed interrupt source");
+	isp->is_recurse = Xpreemptrecurse;
+	isp->is_resume = Xpreemptresume;
+	fake_preempt_intrhand.ih_level = IPL_PREEMPT;
+	isp->is_handlers = &fake_preempt_intrhand;
+	isp->is_pic = &softintr_pic;
+	ci->ci_isources[SIR_PREEMPT] = isp;
 
 	intr_calculatemasks(ci);
 

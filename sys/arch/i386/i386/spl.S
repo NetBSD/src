@@ -1,7 +1,7 @@
-/*	$NetBSD: spl.S,v 1.28 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: spl.S,v 1.29 2008/04/28 22:47:37 ad Exp $	*/
 
 /*
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.28 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.29 2008/04/28 22:47:37 ad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -142,19 +142,13 @@ LABEL(cx8_spllower_end)
 	nop	/* Don't get confused with cx8_spllower_end */
 
 IDTVEC(spllower)
-#if defined(DDB) || defined(GPROF)
 	pushl	%ebp
 	movl	%esp,%ebp
 	MCOUNT_ASM
-#endif /* defined(DDB) || defined(GPROF) */
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-#if defined(DDB) || defined(GPROF)
 	movl	8(%ebp),%ebx
-#else /* defined(DDB) || defined(GPROF) */
-	movl	16(%esp),%ebx
-#endif /* defined(DDB) || defined(GPROF) */
 	movl	$.Lspllower_resume,%esi		# address to resume loop at
 1:
 # because of the way Xen interrupts works *%esi will in fact be called
@@ -203,9 +197,7 @@ IDTVEC(spllower)
 	popl	%edi
 	popl	%esi
 	popl	%ebx
-#if defined(DDB) || defined(GPROF)
 	leave
-#endif /* defined(DDB) || defined(GPROF) */
 	ret
 #if defined(DEBUG)
 .Lspllower_panic:
@@ -325,7 +317,7 @@ NENTRY(call_evtchn_do_event)
 
 #ifndef XEN
 /*
- * softintr()
+ * Xsoftintr()
  *
  * Switch to the LWP assigned to handle interrupts from the given
  * source.  We borrow the VM context from the interrupted LWP.
@@ -354,13 +346,13 @@ IDTVEC(softintr)
 	pushl	%esi
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	addl	$8,%esp
+	cli
 	movl	L_ADDR(%esi),%ecx
 	movl	PCB_ESP(%ecx),%esp
 	xchgl	%esi,CPUVAR(CURLWP)	/* must be globally visible */
 	popl	%edi			/* unwind switchframe */
 	popl	%esi
 	addl	$8,%esp
-	cli
 	jmp	*%esi			/* back to splx/doreti */
 
 /*
@@ -386,4 +378,43 @@ NENTRY(softint_trigger)
 	movl	4(%esp),%eax
 	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
+
+/*
+ * Xpreemptrecurse()
+ *
+ * Handles preemption interrupts via Xspllower().
+ */
+IDTVEC(preemptrecurse)
+	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	sti
+	pushl	$0
+	call	_C_LABEL(kpreempt)
+	addl	$4, %esp
+	cli
+	jmp	*%esi
+
+/*
+ * Xpreemptresume()
+ *
+ * Handles preemption interrupts via Xdoreti().
+ */
+IDTVEC(preemptresume)
+	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	sti
+	testb   $CHK_UPL, TF_CS(%esp)
+	jnz	1f
+#ifdef VM86
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+	jnz	1f
+#endif
+	movl	TF_EIP(%esp), %eax
+	pushl	%eax
+	call	_C_LABEL(kpreempt)		# from kernel
+	addl	$4, %esp
+	cli
+	jmp	*%esi
+1:
+	call	_C_LABEL(preempt)		# from user
+	cli
+	jmp	*%esi
 #endif /* !XEN */
