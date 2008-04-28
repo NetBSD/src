@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.36 2008/04/27 14:29:09 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.37 2008/04/28 13:18:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.36 2008/04/27 14:29:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.37 2008/04/28 13:18:50 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -135,6 +135,7 @@ do {									\
 	s = splraiseipl(mtx->mtx_ipl);					\
 	x__ci = curcpu();						\
 	x__cnt = x__ci->ci_mtx_count--;					\
+	__insn_barrier();						\
 	if (x__cnt == MUTEX_COUNT_BIAS)					\
 		x__ci->ci_mtx_oldspl = (s);				\
 } while (/* CONSTCOND */ 0)
