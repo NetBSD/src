@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.127 2008/03/04 14:53:38 cube Exp $	*/
+/*	$NetBSD: npx.c,v 1.128 2008/04/28 18:15:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.127 2008/03/04 14:53:38 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.128 2008/04/28 18:15:39 ad Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -357,6 +357,12 @@ npxintr(void *arg, struct intrframe *frame)
 
 	sc = npx_softc;
 
+	kpreempt_disable();
+#ifndef XEN
+	KASSERT((x86_read_psl() & PSL_I) == 0);
+	x86_enable_intr();
+#endif
+
 	uvmexp.traps++;
 	IPRINTF(("%s: fp intr\n", device_xname(ci->ci_dev)));
 
@@ -371,13 +377,16 @@ npxintr(void *arg, struct intrframe *frame)
 	 * If we're saving, ignore the interrupt.  The FPU will generate
 	 * another one when we restore the state later.
 	 */
-	if (ci->ci_fpsaving)
+	if (ci->ci_fpsaving) {
+		kpreempt_enable();
 		return (1);
+	}
 
 	if (l == NULL || npx_type == NPX_NONE) {
 		printf("npxintr: l = %p, curproc = %p, npx_type = %d\n",
 		    l, curproc, npx_type);
 		printf("npxintr: came from nowhere");
+		kpreempt_enable();
 		return 1;
 	}
 
@@ -475,6 +484,7 @@ npxintr(void *arg, struct intrframe *frame)
 		psignal(l->l_proc, SIGFPE);
 	}
 
+	kpreempt_enable();
 	return (1);
 }
 
@@ -521,9 +531,16 @@ npxdna_xmm(struct cpu_info *ci)
 
 	KDASSERT(i386_use_fxsave == 1);
 
+	kpreempt_disable();
+#ifndef XEN
+	KASSERT((x86_read_psl() & PSL_I) == 0);
+	x86_enable_intr();
+#endif
+
 	if (ci->ci_fpsaving) {
 #ifndef XEN
 		printf("recursive npx trap; cr0=%x\n", rcr0());
+		kpreempt_enable();
 		return (0);
 #else
 		/*
@@ -531,6 +548,7 @@ npxdna_xmm(struct cpu_info *ci)
 		 * fpu_save, if we're saving the FPU state not from interrupt
 		 * context (f.i. during fork()).  Just return in this case.
 		 */
+		kpreempt_enable();
 		return (1);
 #endif /* XEN */
 	}
@@ -594,6 +612,7 @@ npxdna_xmm(struct cpu_info *ci)
 		fxrstor(&l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
 	}
 
+	kpreempt_enable();
 	return (1);
 }
 
@@ -605,9 +624,16 @@ npxdna_s87(struct cpu_info *ci)
 
 	KDASSERT(i386_use_fxsave == 0);
 
+	kpreempt_disable();
+#ifndef XEN
+	KASSERT((x86_read_psl() & PSL_I) == 0);
+	x86_enable_intr();
+#endif
+
 	if (ci->ci_fpsaving) {
 #ifndef XEN
 		printf("recursive npx trap; cr0=%x\n", rcr0());
+		kpreempt_enable();
 		return (0);
 #else
 		/*
@@ -615,6 +641,7 @@ npxdna_s87(struct cpu_info *ci)
 		 * fpu_save, if we're saving the FPU state not from interrupt
 		 * context (f.i. during fork()).  Just return in this case.
 		 */
+		kpreempt_enable();
 		return (1);
 #endif /* XEN */
 	}
@@ -674,6 +701,7 @@ npxdna_s87(struct cpu_info *ci)
 		frstor(&l->l_addr->u_pcb.pcb_savefpu.sv_87);
 	}
 
+	kpreempt_enable();
 	return (1);
 }
 
@@ -683,6 +711,8 @@ npxsave_cpu(bool save)
 	struct cpu_info *ci = curcpu();
 	struct lwp *l;
 	int s;
+
+	KASSERT(kpreempt_disabled());
 
 	l = ci->ci_fpcurlwp;
 	if (l == NULL)
@@ -746,13 +776,15 @@ npxsave_lwp(struct lwp *l, bool save)
 {
 	struct cpu_info *oci;
 
-	KDASSERT(l->l_addr != NULL);
+	KASSERT(l->l_addr != NULL);
 
+	kpreempt_disable();
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL) {
 #ifdef XEN
 		HYPERVISOR_fpu_taskswitch();
 #endif
+		kpreempt_enable();
 		return;
 	}
 
@@ -797,4 +829,5 @@ npxsave_lwp(struct lwp *l, bool save)
 #ifdef XEN
 	HYPERVISOR_fpu_taskswitch();
 #endif
+	kpreempt_enable();
 }
