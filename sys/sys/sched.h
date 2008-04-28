@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.52 2008/04/24 13:56:30 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.53 2008/04/28 15:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -250,6 +250,7 @@ struct cpu_info *sched_takecpu(struct lwp *);
 void		sched_print_runqueue(void (*pr)(const char *, ...));
 
 /* Dispatching */
+bool		kpreempt(uintptr_t);
 void		preempt(void);
 int		mi_switch(struct lwp *);
 void		resched_cpu(struct lwp *);

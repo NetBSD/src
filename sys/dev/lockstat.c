@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.13 2008/01/04 21:17:48 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.14 2008/04/28 15:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.13 2008/01/04 21:17:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.14 2008/04/28 15:36:01 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -228,6 +228,7 @@ lockstat_stop(lsdisable_t *ld)
 	u_int cpuno, overflow;
 	struct timespec ts;
 	int error;
+	lwp_t *l;
 
 	KASSERT(lockstat_enabled);
 
@@ -255,6 +256,15 @@ lockstat_stop(lsdisable_t *ld)
 		error = 0;
 
 	lockstat_init_tables(NULL);
+
+	/* Run through all LWPs and clear the slate for the next run. */
+	mutex_enter(proc_lock);
+	LIST_FOREACH(l, &alllwp, l_list) {
+		l->l_pfailaddr = 0;
+		l->l_pfailtime = 0;
+		l->l_pfaillock = 0;
+	}
+	mutex_exit(proc_lock);
 
 	if (ld == NULL)
 		return error;

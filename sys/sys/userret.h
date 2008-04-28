@@ -1,7 +1,7 @@
-/* $NetBSD: userret.h,v 1.12 2007/11/06 00:42:46 ad Exp $ */
+/* $NetBSD: userret.h,v 1.13 2008/04/28 15:36:01 ad Exp $ */
 
 /*-
- * Copyright (c) 1998, 2000, 2003, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
 #define	_SYS_USERRET_H_
 
 #ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
+#include "opt_preemption.h"
 #endif
 
 #include <sys/lockdebug.h>
@@ -87,21 +87,29 @@
 static __inline void
 mi_userret(struct lwp *l)
 {
-	struct cpu_info *ci;
-
-	LOCKDEBUG_BARRIER(NULL, 0);
 
 	/*
 	 * Handle "exceptional" events: pending signals, stop/exit actions,
 	 * etc.  Note that the event must be flagged BEFORE any AST is
 	 * posted as we are reading unlocked.
 	 */
-	ci = l->l_cpu;
-	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0)
+#ifdef PREEMPTION
+	if (__predict_false((l->l_flag & LW_USERRET) != 0))
 		lwp_userret(l);
-
+	l->l_kpriority = false;
+	cpu_set_curpri(l->l_priority);	/* XXX this needs to die */
+#else
+	struct cpu_info *ci;
+	ci = l->l_cpu;
+	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0) {
+		lwp_userret(l);
+		ci = l->l_cpu;
+	}
 	l->l_kpriority = false;
 	ci->ci_schedstate.spc_curpriority = l->l_priority;
+#endif
+
+	LOCKDEBUG_BARRIER(NULL, 0);
 }
 
 #endif	/* !_SYS_USERRET_H_ */

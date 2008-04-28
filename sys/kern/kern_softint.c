@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.16 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.17 2008/04/28 15:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -182,8 +182,10 @@
  *	record,	removing additional spl calls (see subr_workqueue.c). 
  */
 
+#include "opt_preemption.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.17 2008/04/28 15:36:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -432,6 +434,8 @@ softint_schedule(void *arg)
 	uintptr_t offset;
 	int s;
 
+	KASSERT(kpreempt_disabled());
+
 	/* Find the handler record for this CPU. */
 	offset = (uintptr_t)arg;
 	KASSERT(offset != 0 && offset < softint_bytes);
@@ -553,6 +557,10 @@ schednetisr(int isr)
 }
 
 #ifndef __HAVE_FAST_SOFTINTS
+
+#ifdef PREEMPTION
+#error PREEMPTION requires __HAVE_FAST_SOFTINTS
+#endif
 
 /*
  * softint_init_md:
