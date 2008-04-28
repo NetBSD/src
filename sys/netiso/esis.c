@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.50 2007/12/04 10:31:14 dyoung Exp $	*/
+/*	$NetBSD: esis.c,v 1.51 2008/04/28 13:24:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.50 2007/12/04 10:31:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.51 2008/04/28 13:24:38 ad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -192,6 +192,7 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (rp != 0) {
 			error = EISCONN;
 			break;
