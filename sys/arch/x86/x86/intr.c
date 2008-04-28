@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.45 2008/04/28 22:47:37 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.46 2008/04/28 23:00:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.45 2008/04/28 22:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46 2008/04/28 23:00:22 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -940,7 +940,7 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_timer_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_TIMER] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_MISC, NULL,
 	    device_xname(ci->ci_dev), "timer");
 
 #ifdef MULTIPROCESSOR
@@ -956,7 +956,7 @@ cpu_intr_init(struct cpu_info *ci)
 	ci->ci_isources[LIR_IPI] = isp;
 
 	for (i = 0; i < X86_NIPI; i++)
-		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_INTR,
+		evcnt_attach_dynamic(&ci->ci_ipi_events[i], EVCNT_TYPE_MISC,
 		    NULL, device_xname(ci->ci_dev), x86_ipi_names[i]);
 #endif
 #endif
