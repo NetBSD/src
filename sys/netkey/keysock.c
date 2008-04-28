@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.47 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: keysock.c,v 1.48 2008/04/28 15:18:43 ad Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.47 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.48 2008/04/28 15:18:43 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -119,6 +119,7 @@ key_usrreq(so, req, m, nam, control, l)
 
 	s = splsoftnet();
 	if (req == PRU_ATTACH) {
+		sosetlock(so);
 		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB,
 		    M_WAITOK|M_ZERO);
 		so->so_pcb = (void *)kp;
