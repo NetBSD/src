@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.27 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.28 2008/04/28 17:40:11 degroote Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.27 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.28 2008/04/28 17:40:11 degroote Exp $");
 
 /*
  * IPsec output processing.
@@ -640,7 +640,7 @@ ipsec6_process_packet(
 				goto bad;
 
 			splx(s);
-			return ipsec_reinject_ipstack(m, AF_INET);
+			return ipsec_reinject_ipstack(m, AF_INET6);
 		}
 	}
 
