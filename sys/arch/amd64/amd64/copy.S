@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.9 2008/02/06 22:27:09 dsl Exp $	*/
+/*	$NetBSD: copy.S,v 1.10 2008/04/28 18:32:12 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,23 +62,44 @@
 	call	_C_LABEL(do_pmap_load)		; \
 	jmp	98b
 
+	.text
+
+x86_copyfunc_start:	.globl	x86_copyfunc_start
+
+/*
+ * Handle deferred pmap switch.  We must re-enable preemption without
+ * making a function call, so that the program counter is visible to
+ * cpu_kpreempt_exit().  It can then know if it needs to restore the
+ * pmap on returning, because a preemption occurred within one of the
+ * copy functions.
+ */
 ENTRY(do_pmap_load)
-#if 1
 	pushq	%rbp
 	movq	%rsp,%rbp
-#endif
 	pushq	%rdi
 	pushq	%rsi
 	pushq	%rdx
 	pushq	%rcx
+	pushq	%rbx
+	movq	CPUVAR(CURLWP), %rbx
+1:
+	incl	L_NOPREEMPT(%rbx)
 	call	_C_LABEL(pmap_load)
+	decl	L_NOPREEMPT(%rbx)
+	jnz	2f
+	cmpl	$0, L_DOPREEMPT(%rbx)
+	jz	2f
+	xorq	%rdi, %rdi
+	call	_C_LABEL(kpreempt)
+2:
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jnz	1b
+	popq	%rbx
 	popq	%rcx
 	popq	%rdx
 	popq	%rsi
 	popq	%rdi
-#if 1
 	leaveq
-#endif
 	ret
 
 /*
@@ -254,7 +275,7 @@ NENTRY(copy_fault)
 	ret
 
 ENTRY(copyoutstr)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	xchgq	%rdi,%rsi
 	movq	%rdx,%r8
 	movq	%rcx,%r9
@@ -293,9 +314,10 @@ ENTRY(copyoutstr)
 	jae	_C_LABEL(copystr_efault)
 	movq	$ENAMETOOLONG,%rax
 	jmp	copystr_return
+	DEFERRED_SWITCH_CALL
 
 ENTRY(copyinstr)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	xchgq	%rdi,%rsi
 	movq	%rdx,%r8
 	movq	%rcx,%r9
@@ -335,6 +357,7 @@ ENTRY(copyinstr)
 	jae	_C_LABEL(copystr_efault)
 	movq	$ENAMETOOLONG,%rax
 	jmp	copystr_return
+	DEFERRED_SWITCH_CALL
 
 ENTRY(copystr_efault)
 	movl	$EFAULT,%eax
@@ -425,7 +448,7 @@ ENTRY(fubyte)
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
 	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
+	leaq	_C_LABEL(fusufailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
 	movzbl	(%rdi),%eax
 	movq	$0,PCB_ONFAULT(%rcx)
@@ -473,7 +496,6 @@ ENTRY(suswintr)
 	GET_CURPCB(%rcx)
 	leaq	_C_LABEL(fusuintrfailure)(%rip),%r11
 	movq	%r11,PCB_ONFAULT(%rcx)
-
 	movw	%si,(%rdi)
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%rcx)
@@ -512,3 +534,5 @@ ENTRY(fusufailure)
 ENTRY(fusuaddrfault)
 	movl	$-1,%eax
 	ret
+
+x86_copyfunc_end:	.globl	x86_copyfunc_end
