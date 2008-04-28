@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.15 2008/04/28 20:24:11 martin Exp $ */
+/*	$NetBSD: userret.h,v 1.16 2008/04/28 21:17:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,11 +65,8 @@
 #ifndef _SYS_USERRET_H_
 #define	_SYS_USERRET_H_
 
-#ifdef _KERNEL_OPT
-#include "opt_preemption.h"
-#endif
-
 #include <sys/lockdebug.h>
+#include <sys/intr.h>
 
 /*
  * Define the MI code needed before returning to user mode, for
@@ -86,7 +83,7 @@ mi_userret(struct lwp *l)
 	 * etc.  Note that the event must be flagged BEFORE any AST is
 	 * posted as we are reading unlocked.
 	 */
-#ifdef PREEMPTION
+#ifdef __HAVE_PREEMPTION
 	if (__predict_false((l->l_flag & LW_USERRET) != 0))
 		lwp_userret(l);
 	l->l_kpriority = false;
