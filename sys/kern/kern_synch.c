@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.234 2008/04/28 21:17:16 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.235 2008/04/28 22:15:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.234 2008/04/28 21:17:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.235 2008/04/28 22:15:47 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -1240,13 +1240,13 @@ sched_init(void)
 	/* Minimal count of LWPs for catching: log2(count of CPUs) */
 	min_catch = min(ilog2(ncpu), 4);
 
-	evcnt_attach_dynamic(&kpreempt_ev_crit, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&kpreempt_ev_crit, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: critical section");
-	evcnt_attach_dynamic(&kpreempt_ev_klock, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&kpreempt_ev_klock, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: kernel_lock");
-	evcnt_attach_dynamic(&kpreempt_ev_ipl, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&kpreempt_ev_ipl, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: IPL");
-	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "immediate");
 
 	/* Initialize balancing callout and run it */
