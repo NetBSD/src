@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.35 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.36 2008/04/28 13:24:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.35 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.36 2008/04/28 13:24:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,6 +417,7 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (tpcb != 0) {
 			error = EISCONN;
 			break;
