@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.27 2007/12/11 00:21:51 martin Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.28 2008/04/28 18:49:27 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.27 2007/12/11 00:21:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.28 2008/04/28 18:49:27 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.27 2007/12/11 00:21:51 martin Exp $");
 #ifdef AUDIO_DEBUG
 #define DPRINTF(x)	if (ad1848debug) printf x
 int	ad1848debug = 0;
+void ad1848_dump_regs(struct ad1848_softc *);
 #else
 #define DPRINTF(x)
 #endif
