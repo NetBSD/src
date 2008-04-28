@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.42 2008/03/24 19:40:18 martin Exp $	*/
+/*	$NetBSD: rump.c,v 1.43 2008/04/28 19:31:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -100,6 +100,9 @@ rump_init()
 		desiredvnodes = 1<<16;
 	}
 
+	rump_cpu.ci_data.cpu_cachelock = mutex_obj_alloc(MUTEX_DEFAULT,
+	    IPL_NONE);
+
 	rw_init(&rump_cwdi.cwdi_lock);
 	l = &lwp0;
 	p = &proc0;
@@ -124,14 +127,14 @@ rump_init()
 	syncdelay = 0;
 	dovfsusermount = 1;
 
-	vfsinit();
-	bufinit();
-	fd_sys_init();
-
-	rumpvfs_init();
-
 	rump_sleepers_init();
 	rumpuser_thrinit();
+
+	fd_sys_init();
+	vfsinit();
+	bufinit();
+
+	rumpvfs_init();
 
 	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
 
@@ -637,7 +640,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	l->l_proc = p;
         l->l_lid = lid;
 
-	p->p_fd = fd_init(&rump_filedesc0);
+	p->p_fd = fd_init(NULL);
         l->l_fd = p->p_fd;
 
 	if (set)
