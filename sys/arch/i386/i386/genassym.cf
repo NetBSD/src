@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.67 2008/04/28 20:23:24 martin Exp $
+#	$NetBSD: genassym.cf,v 1.68 2008/04/28 22:47:37 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -318,6 +318,7 @@ define	CPU_INFO_IOMAP		offsetof(struct cpu_info, ci_iomap)
 define	IOMAP_INVALOFF		IOMAP_INVALOFF
 define	CPU_INFO_CC		offsetof(struct cpu_info, ci_cc)
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
+define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
@@ -407,6 +408,7 @@ define	SIZEOF_TREC		sizeof(struct trec)
 define	SIZEOF_TLOG		sizeof(struct tlog)
 
 define	IPL_NONE		IPL_NONE
+define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_SCHED		IPL_SCHED
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
