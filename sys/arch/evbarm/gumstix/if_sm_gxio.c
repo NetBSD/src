@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.4 2007/10/17 19:54:12 garbled Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.5 2008/04/28 20:23:16 martin Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -46,13 +46,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.4 2007/10/17 19:54:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.5 2008/04/28 20:23:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
