@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.37 2008/04/19 06:29:23 simonb Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.38 2008/04/28 18:49:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.37 2008/04/19 06:29:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.38 2008/04/28 18:49:40 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -165,7 +165,7 @@ identifycpu(struct cpu_info *ci)
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(CPUVENDOR_INTEL);
 		else
-			aprint_normal("%s: Enhanced SpeedStep disabled by "
+			aprint_verbose("%s: Enhanced SpeedStep disabled by "
 			    "BIOS\n", device_xname(ci->ci_dev));
 	}
 #endif
