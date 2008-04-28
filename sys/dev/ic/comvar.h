@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.61 2008/03/14 15:09:11 cube Exp $	*/
+/*	comvar.h,v 1.55.8.3 2008/01/09 01:52:50 matt Exp	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -80,8 +80,11 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #define	COM_REG_IER		4
 #define	COM_REG_IIR		5
 #define	COM_REG_FIFO		6
+#define	COM_REG_TCR		6
 #define	COM_REG_EFR		7
+#define	COM_REG_TLR		7
 #define	COM_REG_LCR		8
+#define	COM_REG_MDR1		8
 #define	COM_REG_MCR		9
 #define	COM_REG_LSR		10
 #define	COM_REG_MSR		11
@@ -118,6 +121,9 @@ extern const bus_size_t com_std_map[16];
 #define	COM_REG_MCR		com_mcr
 #define	COM_REG_LSR		com_lsr
 #define	COM_REG_MSR		com_msr
+#define	COM_REG_TCR		com_msr
+#define	COM_REG_TLR		com_scratch
+#define	COM_REG_MDR1		8
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
@@ -200,6 +206,7 @@ struct com_softc {
 #define	COM_TYPE_HAYESP		1	/* Hayes ESP modem */
 #define	COM_TYPE_PXA2x0		2	/* Intel PXA2x0 processor built-in */
 #define	COM_TYPE_AU1x00		3	/* AMD/Alchemy Au1x000 proc. built-in */
+#define	COM_TYPE_OMAP		4	/* TI OMAP processor built-in */
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);
