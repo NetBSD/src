@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_stub.c,v 1.7 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.8 2008/04/28 21:17:16 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.7 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.8 2008/04/28 21:17:16 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.7 2008/04/28 20:24:03 martin Exp $")
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).  Flag
@@ -124,6 +126,28 @@ __strong_alias(sys_sa_setconcurrency,sys_nosys);
 __strong_alias(sys_sa_yield,sys_nosys);
 __strong_alias(sys_sa_preempt,sys_nosys);
 __strong_alias(sys_sa_unblockyield,sys_nosys);
+
+#ifndef __HAVE_PREEMPTION
+bool
+cpu_kpreempt_enter(uintptr_t where, int s)
+{
+
+	return false;
+}
+
+void
+cpu_kpreempt_exit(uintptr_t where)
+{
+
+}
+
+bool
+cpu_kpreempt_disabled(void)
+{
+
+	return true;
+}
+#endif	/* !__HAVE_PREEMPTION */
 
 /* ARGSUSED */
 int
