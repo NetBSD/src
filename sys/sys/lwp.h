@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.89 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.90 2008/04/28 15:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -162,11 +162,16 @@ struct lwp {
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
-	u_short		l_unused;
+	u_short		l_unused;	/* !: unused */
 	u_short		l_blcnt;	/* !: count of kernel_lock held */
+	int		l_nopreempt;	/* !: don't preempt me! */
+	u_int		l_dopreempt;	/* s: kernel preemption pending */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
 	struct rusage	l_ru;		/* !: accounting information */
+	uint64_t	l_pfailtime;	/* !: for kernel preemption */
+	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
+	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
 
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
@@ -423,18 +428,32 @@ spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
  * kpreempt_enable().
  */
 static inline void
-KPREEMPT_DISABLE(void)
+KPREEMPT_DISABLE(lwp_t *l)
 {
 
+	KASSERT(l == curlwp);
+	l->l_nopreempt++;
 	__insn_barrier();
 }
 
 static inline void
-KPREEMPT_ENABLE(void)
+KPREEMPT_ENABLE(lwp_t *l)
 {
 
+	KASSERT(l == curlwp);
+	KASSERT(l->l_nopreempt > 0);
+	__insn_barrier();
+	if (--l->l_nopreempt != 0)
+		return;
+	__insn_barrier();
+	if (__predict_false(l->l_dopreempt))
+		kpreempt(0);
 	__insn_barrier();
 }
+
+/* For lwp::l_dopreempt */
+#define	DOPREEMPT_ACTIVE	0x01
+#define	DOPREEMPT_COUNTED	0x02
 
 #endif /* _KERNEL */
 
