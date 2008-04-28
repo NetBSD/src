@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.231 2008/04/28 15:36:01 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.232 2008/04/28 15:38:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.231 2008/04/28 15:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.232 2008/04/28 15:38:03 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -209,7 +209,12 @@ kcondvar_t	lbolt;			/* once a second sleep address */
  * Kernel preemption.
  */
 #ifdef PREEMPTION
+#if 0
 int		sched_kpreempt_pri = PRI_USER_RT;
+#else
+/* XXX disable for now until any bugs are worked out. */
+int		sched_kpreempt_pri = 1000;
+#endif
 
 static struct evcnt kpreempt_ev_crit;
 static struct evcnt kpreempt_ev_klock;
