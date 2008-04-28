@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.25 2008/04/28 20:23:24 martin Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.26 2008/04/28 22:47:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.25 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.26 2008/04/28 22:47:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -47,11 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.25 2008/04/28 20:23:24 martin Exp $")
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <x86/cpu_msr.h>
-#include <machine/intr.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.25 2008/04/28 20:23:24 martin Exp $")
 #include "acpi.h"
 
 void i386_ipi_halt(struct cpu_info *);
+void i386_ipi_kpreempt(struct cpu_info *);
 
 #if NNPX > 0
 void i386_ipi_synch_fpu(struct cpu_info *);
@@ -95,6 +97,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	gdt_reload_cpu,
 	msr_write_ipi,
 	acpi_cpu_sleep,
+	i386_ipi_kpreempt,
 };
 
 void
@@ -136,3 +139,10 @@ i386_reload_mtrr(struct cpu_info *ci)
 		mtrr_reload_cpu(ci);
 }
 #endif
+
+void
+i386_ipi_kpreempt(struct cpu_info *ci)
+{
+
+	softint_trigger(1 << SIR_PREEMPT);
+}

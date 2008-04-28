@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.9 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.10 2008/04/28 22:47:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -244,6 +244,10 @@ NENTRY(x86_curcpu)
 
 NENTRY(x86_curlwp)
 	movq	%gs:(CPU_INFO_CURLWP), %rax
+	ret
+
+NENTRY(cpu_set_curpri)
+	movl	%edi, %gs:(CPU_INFO_CURPRIORITY)
 	ret
 
 NENTRY(__byte_swap_u32_variable)
