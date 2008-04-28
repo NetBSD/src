@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.629 2008/04/24 18:39:20 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.630 2008/04/28 18:15:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.630 2008/04/28 18:15:39 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1827,7 +1827,8 @@ init386(paddr_t first_avail)
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
 		idt_vec_reserve(x);
-		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
+		setgate(&idt[x], IDTVEC(exceptions)[x], 0,
+		    (x == 7 || x == 16) ? SDT_SYS386IGT : SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 	}
