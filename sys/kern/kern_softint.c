@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.18 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.19 2008/04/28 21:17:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -175,10 +175,8 @@
  *	record,	removing additional spl calls (see subr_workqueue.c). 
  */
 
-#include "opt_preemption.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.18 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.19 2008/04/28 21:17:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -551,8 +549,8 @@ schednetisr(int isr)
 
 #ifndef __HAVE_FAST_SOFTINTS
 
-#ifdef PREEMPTION
-#error PREEMPTION requires __HAVE_FAST_SOFTINTS
+#ifdef __HAVE_PREEMPTION
+#error __HAVE_PREEMPTION requires __HAVE_FAST_SOFTINTS
 #endif
 
 /*

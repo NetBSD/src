@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.233 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.234 2008/04/28 21:17:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -94,13 +94,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.233 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.234 2008/04/28 21:17:16 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_perfctrs.h"
-#include "opt_preemption.h"
 
 #define	__MUTEX_PRIVATE
 
@@ -199,9 +198,9 @@ unsigned	sched_pstats_ticks;
 kcondvar_t	lbolt;			/* once a second sleep address */
 
 /*
- * Kernel preemption.
+ * Preemption control.
  */
-#ifdef PREEMPTION
+int		sched_upreempt_pri = PRI_KERNEL;
 #if 0
 int		sched_kpreempt_pri = PRI_USER_RT;
 #else
@@ -213,10 +212,6 @@ static struct evcnt kpreempt_ev_crit;
 static struct evcnt kpreempt_ev_klock;
 static struct evcnt kpreempt_ev_ipl;
 static struct evcnt kpreempt_ev_immed;
-#else
-int		sched_kpreempt_pri = INT_MAX;
-#endif
-int		sched_upreempt_pri = PRI_KERNEL;
 
 /*
  * Migration and balancing.
@@ -420,17 +415,17 @@ preempt(void)
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 
-#ifdef PREEMPTION
-/* XXX Yuck, for lockstat. */
+/*
+ * Handle a request made by another agent to preempt the current LWP
+ * in-kernel.  Usually called when l_dopreempt may be non-zero.
+ *
+ * Character addresses for lockstat only.
+ */
 static char	in_critical_section;
 static char	kernel_lock_held;
 static char	spl_raised;
 static char	is_softint;
 
-/*
- * Handle a request made by another agent to preempt the current LWP
- * in-kernel.  Usually called when l_dopreempt may be non-zero.
- */
 bool
 kpreempt(uintptr_t where)
 {
@@ -459,7 +454,7 @@ kpreempt(uintptr_t where)
 		if (__predict_false(l->l_nopreempt != 0)) {
 			/* LWP holds preemption disabled, explicitly. */
 			if ((dop & DOPREEMPT_COUNTED) == 0) {
-				atomic_inc_64(&kpreempt_ev_crit.ev_count);
+				kpreempt_ev_crit.ev_count++;
 			}
 			failed = (uintptr_t)&in_critical_section;
 			break;
@@ -476,7 +471,7 @@ kpreempt(uintptr_t where)
 			/* Hold or want kernel_lock, code is not MT safe. */
 			splx(s);
 			if ((dop & DOPREEMPT_COUNTED) == 0) {
-				atomic_inc_64(&kpreempt_ev_klock.ev_count);
+				kpreempt_ev_klock.ev_count++;
 			}
 			failed = (uintptr_t)&kernel_lock_held;
 			break;
@@ -489,14 +484,14 @@ kpreempt(uintptr_t where)
 			 */
 			splx(s);
 			if ((dop & DOPREEMPT_COUNTED) == 0) {
-				atomic_inc_64(&kpreempt_ev_ipl.ev_count);
+				kpreempt_ev_ipl.ev_count++;
 			}
 			failed = (uintptr_t)&spl_raised;
 			break;
 		}
 		/* Do it! */
 		if (__predict_true((dop & DOPREEMPT_COUNTED) == 0)) {
-			atomic_inc_64(&kpreempt_ev_immed.ev_count);
+			kpreempt_ev_immed.ev_count++;
 		}
 		lwp_lock(l);
 		mi_switch(l);
@@ -543,22 +538,6 @@ kpreempt_disabled(void)
 	return l->l_nopreempt != 0 || l->l_stat == LSZOMB ||
 	    (l->l_flag & LW_IDLE) != 0 || cpu_kpreempt_disabled();
 }
-#else
-bool
-kpreempt(uintptr_t where)
-{
-
-	panic("kpreempt");
-	return true;
-}
-
-bool
-kpreempt_disabled(void)
-{
-
-	return true;
-}
-#endif
 
 /*
  * Disable kernel preemption.
@@ -1261,7 +1240,6 @@ sched_init(void)
 	/* Minimal count of LWPs for catching: log2(count of CPUs) */
 	min_catch = min(ilog2(ncpu), 4);
 
-#ifdef PREEMPTION
 	evcnt_attach_dynamic(&kpreempt_ev_crit, EVCNT_TYPE_INTR, NULL,
 	   "kpreempt", "defer: critical section");
 	evcnt_attach_dynamic(&kpreempt_ev_klock, EVCNT_TYPE_INTR, NULL,
@@ -1270,7 +1248,6 @@ sched_init(void)
 	   "kpreempt", "defer: IPL");
 	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_INTR, NULL,
 	   "kpreempt", "immediate");
-#endif
 
 	/* Initialize balancing callout and run it */
 #ifdef MULTIPROCESSOR
@@ -1325,11 +1302,7 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
 		NULL, 0, &softint_timing, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
-#ifdef PREEMPTION
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-#else
-		CTLFLAG_PERMANENT,
-#endif
 		CTLTYPE_INT, "kpreempt_pri",
 		SYSCTL_DESCR("Minimum priority to trigger kernel preemption"),
 		NULL, 0, &sched_kpreempt_pri, 0,
