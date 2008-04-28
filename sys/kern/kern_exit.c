@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.205 2008/04/27 11:39:20 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.206 2008/04/28 15:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.205 2008/04/27 11:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.206 2008/04/28 15:36:01 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -538,7 +538,6 @@ exit1(struct lwp *l, int rv)
 	 * switch to idle context; at that point, we will be marked as a
 	 * full blown zombie.
 	 */
-	KPREEMPT_DISABLE();
 	mutex_enter(p->p_lock);
 	lwp_drainrefs(l);
 	lwp_lock(l);

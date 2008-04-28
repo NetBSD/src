@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.158 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.159 2008/04/28 15:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.158 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.159 2008/04/28 15:36:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2376,7 +2376,7 @@ pool_cache_cpu_enter(pool_cache_t pc, int *s)
 	 * CPU-local data.  To avoid touching shared state, we
 	 * pull the neccessary information from CPU local data.
 	 */
-	KPREEMPT_DISABLE();
+	KPREEMPT_DISABLE(curlwp);
 	cc = pc->pc_cpus[curcpu()->ci_index];
 	KASSERT(cc->cc_cache == pc);
 	if (cc->cc_ipl != IPL_NONE) {
@@ -2394,7 +2394,7 @@ pool_cache_cpu_exit(pool_cache_cpu_t *cc, int *s)
 	if (cc->cc_ipl != IPL_NONE) {
 		splx(*s);
 	}
-	KPREEMPT_ENABLE();
+	KPREEMPT_ENABLE(curlwp);
 }
 
 #if __GNUC_PREREQ__(3, 0)
