@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.19 2008/01/01 19:49:06 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.20 2008/04/28 19:47:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -165,12 +165,17 @@ IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
 IDTVEC(trap07)
 	pushq	$0			# dummy error code
-	pushq	$T_DNA
+	pushq	$T_ASTFLT
 	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+#ifdef XEN
   	STI(si)
+#endif
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
-	INTRFASTEXIT
+	jmp	.Lalltraps_checkusr
 IDTVEC(trap08)
 	TRAP(T_DOUBLEFLT)
 IDTVEC(trap09)
@@ -187,7 +192,13 @@ IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
 IDTVEC(intrspurious)
 IDTVEC(trap0f)
-	iretq
+	pushq	$0			# dummy error code
+	pushq	$T_ASTFLT
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+	jmp	.Lalltraps_checkusr
 IDTVEC(trap10)
 	ZTRAP(T_ARITHTRAP)
 IDTVEC(trap11)
@@ -263,6 +274,7 @@ calltrap:
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
+.Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jnz	.Lalltraps_checkast
 	jmp	6f
