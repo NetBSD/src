@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.7 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.8 2008/04/28 22:47:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.7 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.8 2008/04/28 22:47:37 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -184,6 +184,11 @@ NENTRY(x86_curcpu)
 
 NENTRY(x86_curlwp)
 	movl	%fs:(CPU_INFO_CURLWP), %eax
+	ret
+
+NENTRY(cpu_set_curpri)
+	movl	4(%esp), %eax
+	movl	%eax, %fs:(CPU_INFO_CURPRIORITY)
 	ret
 
 ENTRY(__byte_swap_u32_variable)

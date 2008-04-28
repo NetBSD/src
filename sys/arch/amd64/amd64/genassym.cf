@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.29 2008/04/28 20:23:12 martin Exp $
+#	$NetBSD: genassym.cf,v 1.30 2008/04/28 22:47:37 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -248,6 +248,7 @@ define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
 define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
 define	CPU_INFO_CC		offsetof(struct cpu_info, ci_cc)
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
+define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
@@ -342,6 +343,7 @@ define	IS_LWP			offsetof(struct intrsource, is_lwp)
 endif
 
 define	IPL_NONE		IPL_NONE
+define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
 define	IPL_IPI			IPL_IPI

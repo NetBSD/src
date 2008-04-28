@@ -1,7 +1,7 @@
-/*	$NetBSD: x86_machdep.c,v 1.16 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.17 2008/04/28 22:47:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,10 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_multiprocessor.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.16 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.17 2008/04/28 22:47:37 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.16 2008/04/28 20:23:40 martin Exp 
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/atomic.h>
 
 #include <x86/cpu_msr.h>
 
@@ -125,23 +125,50 @@ x86_init(void)
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
+	struct cpu_info *cur;
 	lwp_t *l;
 
+	cur = curcpu();
 	l = ci->ci_data.cpu_onproc;
 	ci->ci_want_resched = 1;
-	aston(l);
-#ifdef MULTIPROCESSOR
-	if (ci == curcpu()) {
+
+	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
+		/*
+		 * No point doing anything, it will switch soon.
+		 * Also here to prevent an assertion failure in
+		 * kpreempt() due to preemption being set on a
+		 * soft interrupt LWP.
+		 */
 		return;
 	}
-	if (l != ci->ci_data.cpu_idlelwp) {
+
+	if (l == ci->ci_data.cpu_idlelwp) {
+		if (ci == cur)
+			return;
+		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0) {
+			x86_send_ipi(ci, 0);
+		}
+		return;
+	}
+
+	if ((flags & RESCHED_KPREEMPT) != 0) {
+#ifdef __HAVE_PREEMPTION
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
+		if (ci == cur) {
+			softint_trigger(1 << SIR_PREEMPT);
+		} else {
+			x86_send_ipi(ci, X86_IPI_KPREEMPT);
+		}
+#endif
+	} else {
+		aston(l);
+		if (ci == cur) {
+			return;
+		}
 		if ((flags & RESCHED_IMMED) != 0) {
 			x86_send_ipi(ci, 0);
 		}
-	} else if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0) {
-		x86_send_ipi(ci, 0);
 	}
-#endif
 }
 
 void
@@ -149,10 +176,8 @@ cpu_signotify(struct lwp *l)
 {
 
 	aston(l);
-#ifdef MULTIPROCESSOR
 	if (l->l_cpu != curcpu())
 		x86_send_ipi(l->l_cpu, 0);
-#endif
 }
 
 void
@@ -171,3 +196,73 @@ cpu_intr_p(void)
 
 	return (curcpu()->ci_idepth >= 0);
 }
+
+#ifdef __HAVE_PREEMPTION
+/*
+ * Called to check MD conditions that would prevent preemption, and to
+ * arrange for those conditions to be rechecked later.
+ */
+bool
+cpu_kpreempt_enter(uintptr_t where, int s)
+{
+	struct cpu_info *ci;
+	lwp_t *l;
+
+	KASSERT(kpreempt_disabled());
+
+	l = curlwp;
+	ci = curcpu();
+
+	/*
+	 * If SPL raised, can't go.  Note this implies that spin
+	 * mutexes at IPL_NONE are _not_ valid to use.
+	 */
+	if (s > IPL_PREEMPT) {
+		softint_trigger(1 << SIR_PREEMPT);
+		aston(l);	/* paranoid */
+		return false;
+	}
+
+	/* Must save cr2 or it could be clobbered. */
+	((struct pcb *)l->l_addr)->pcb_cr2 = rcr2();
+
+	return true;
+}
+
+/*
+ * Called after returning from a kernel preemption, and called with
+ * preemption disabled.
+ */
+void
+cpu_kpreempt_exit(uintptr_t where)
+{
+	extern char x86_copyfunc_start, x86_copyfunc_end;
+
+	KASSERT(kpreempt_disabled());
+
+	/*
+	 * If we interrupted any of the copy functions we must reload
+	 * the pmap when resuming, as they cannot tolerate it being
+	 * swapped out.
+	 */
+	if (where >= (uintptr_t)&x86_copyfunc_start &&
+	    where < (uintptr_t)&x86_copyfunc_end) {
+		pmap_load();
+	}
+
+	/* Restore cr2 only after the pmap, as pmap_load can block. */
+	lcr2(((struct pcb *)curlwp->l_addr)->pcb_cr2);
+}
+
+/*
+ * Return true if preemption is disabled for MD reasons.  Must be called
+ * with preemption disabled, and thus is only for diagnostic checks.
+ */
+bool
+cpu_kpreempt_disabled(void)
+{
+
+	return curcpu()->ci_ilevel > IPL_NONE;
+}
+#endif	/* __HAVE_PREEMPTION */
+
