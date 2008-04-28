@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.40 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.41 2008/04/28 19:35:56 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -87,7 +87,7 @@
 
 
 /*-
- * Copyright (c) 1998, 2000, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -1005,7 +1005,6 @@ IDTVEC(syscall)
 	movq	L_ADDR(%r15),%r15
 	movq	PCB_RSP0(%r15),%r15
 	xchgq	%r15,%rsp
-	sti
 
 	/*
 	 * XXX don't need this whole frame, split of the
@@ -1017,6 +1016,7 @@ IDTVEC(syscall)
 	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))	/* Known to be user ss */
 	pushq	%r15				/* User space rsp */
 	movq	CPUVAR(SCRATCH),%r15
+	sti
 	subq	$TF_REGSIZE+(TF_RSP-TF_TRAPNO),%rsp
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
@@ -1054,18 +1054,12 @@ IDTVEC(syscall)
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(si)
-	CHECK_ASTPENDING(%r14)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r14)
-	STI(si)
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	.Lsyscall_checkast	/* re-check ASTs */
-1:	CHECK_DEFERRED_SWITCH
+	movl	L_MD_ASTPENDING(%r14), %eax
+	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
-	STI(si)
+#ifdef XEN
+	STI(si)					/* wtf is this? */
+#endif
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
 syscall_return:
@@ -1073,11 +1067,7 @@ syscall_return:
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 #endif
-	/*
-	 * XXX interrupts off longer than they should be here.
-	 */
 #ifndef XEN
-	cli
 	swapgs
 #endif
 	movw	TF_ES(%rsp),%es
@@ -1113,9 +1103,19 @@ syscall_return:
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
-
-9:	STI(si)
+9:
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jz	10f
+	STI(si)
 	call	_C_LABEL(do_pmap_load)
+	jmp	.Lsyscall_checkast	/* re-check ASTs */
+10:
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%r14)
+	STI(si)
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
 /*
@@ -1127,13 +1127,13 @@ syscall_return:
  */
 NENTRY(lwp_trampoline)
 	movq	%rbp,%rsi
+	movq	%rbp,%r14	/* for .Losyscall_checkast */
 	movq	%rax,%rdi
 	xorq	%rbp,%rbp
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
 	call	*%r12
-	DO_DEFERRED_SWITCH
-	INTRFASTEXIT
+	jmp	.Losyscall_checkast
 	/* NOTREACHED */
 
 /*
@@ -1143,13 +1143,13 @@ NENTRY(lwp_trampoline)
  */
 NENTRY(child_trampoline)
 	movq	%rbp,%rsi
+	movq	%rbp,%r14	/* for .Lsyscall_checkast */
 	movq	%rax,%rdi
 	xorq	%rbp,%rbp
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
 	call	*%r12
-	DO_DEFERRED_SWITCH
-	jmp	syscall_return
+	jmp	.Lsyscall_checkast
 
 	.globl  _C_LABEL(osyscall_return)
 
