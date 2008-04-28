@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.9 2008/02/02 13:37:13 itohy Exp $ */
+/* $NetBSD: hp300.c,v 1.10 2008/04/28 20:24:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.9 2008/02/02 13:37:13 itohy Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.10 2008/04/28 20:24:16 martin Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
