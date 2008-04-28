@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.18 2008/04/24 23:26:00 alc Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.19 2008/04/28 15:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.18 2008/04/24 23:26:00 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.19 2008/04/28 15:36:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -267,6 +267,13 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	sleepq_enqueue(sq, obj, "tstile", sobj);
 
 	/*
+	 * Disable preemption across this entire block, as we may drop
+	 * scheduler locks (allowing preemption), and would prefer not
+	 * to be interrupted while in a state of flux.
+	 */
+	KPREEMPT_DISABLE(l);
+
+	/*
 	 * lend our priority to lwps on the blocking chain.
 	 */
 	prio = lwp_eprio(l);
@@ -326,6 +333,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 
 	sleepq_block(0, false);
 	cur->l_kpribase = obase;
+	KPREEMPT_ENABLE(cur);
 }
 
 /*
