@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: trap.c,v 1.46 2008/04/28 18:32:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45 2008/04/16 21:51:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.46 2008/04/28 18:32:12 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -198,6 +198,7 @@ trap(struct trapframe *frame)
 	int error;
 	uint64_t cr2;
 	ksiginfo_t ksi;
+	bool pfail;
 
 	uvmexp.traps++;
 
@@ -493,19 +494,51 @@ faultcommon:
 			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
-			if (type == T_PAGEFLT) {
+			pfail = false;
+			while (type == T_PAGEFLT) {
 				/*
 				 * we need to switch pmap now if we're in
 				 * the middle of copyin/out.
 				 *
 				 * but we don't need to do so for kcopy as
 				 * it never touch userspace.
+ 				 */
+				kpreempt_disable();
+				if (curcpu()->ci_want_pmapload) {
+					if (onfault != kcopy_fault) {
+						pmap_load();
+					}
+				}
+				/*
+				 * We need to keep the pmap loaded and
+				 * so avoid being preempted until back
+				 * into the copy functions.  Disable
+				 * interrupts at the hardware level before
+				 * re-enabling preemption.  Interrupts
+				 * will be re-enabled by 'iret' when
+				 * returning back out of the trap stub.
+				 * They'll only be re-enabled when the
+				 * program counter is once again in
+				 * the copy functions, and so visible
+				 * to cpu_kpreempt_exit().
 				 */
-
-				if (onfault != kcopy_fault &&
-				    curcpu()->ci_want_pmapload)
-					pmap_load();
-				return;
+#ifndef XEN
+				x86_disable_intr();
+#endif
+				l->l_nopreempt--;
+				if (l->l_nopreempt > 0 || !l->l_dopreempt ||
+				    pfail) {
+					return;
+				}
+#ifndef XEN
+				x86_enable_intr();
+#endif
+				/*
+				 * If preemption fails for some reason,
+				 * don't retry it.  The conditions won't
+				 * change under our nose.
+				 */
+				pfail = kpreempt(0);
 			}
 			goto out;
 		}
