@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.13 2008/04/28 15:36:01 ad Exp $ */
+/* $NetBSD: userret.h,v 1.14 2008/04/28 17:18:41 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ mi_userret(struct lwp *l)
 #endif
 
 	LOCKDEBUG_BARRIER(NULL, 0);
+	KASSERT(l->l_nopreempt == 0);
 }
 
 #endif	/* !_SYS_USERRET_H_ */
