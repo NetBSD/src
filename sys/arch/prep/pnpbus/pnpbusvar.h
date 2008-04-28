@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbusvar.h,v 1.4 2006/10/27 19:52:51 garbled Exp $	*/
+/*	$NetBSD: pnpbusvar.h,v 1.5 2008/04/28 19:01:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@ struct pnpbus_compatid {
 #define PNPBUS_MAXIRQ 2
 #define PNPBUS_MAXDMA 2
 
+#define IST_PNP	-1
+
 struct pnpresources {
 	int nummem, numiomem, numio, numirq, numdma;
 	SIMPLEQ_HEAD(, pnpbus_mem) mem;
@@ -87,10 +89,11 @@ struct pnpresources {
  * Bus attach arguments
  */
 struct pnpbus_attach_args {
-	bus_space_tag_t paa_iot;		/* i/o space tag */
-	bus_space_tag_t paa_memt;		/* mem space tag */
-	isa_chipset_tag_t paa_ic;		/* ISA chipset tag */
-	bus_dma_tag_t paa_dmat;			/* ISA DMA tag */
+	const char *paa_name;		/* match to struct confargs*/
+	bus_space_tag_t paa_iot;	/* i/o space tag */
+	bus_space_tag_t paa_memt;	/* mem space tag */
+	isa_chipset_tag_t paa_ic;	/* ISA chipset tag */
+	bus_dma_tag_t paa_dmat;		/* ISA DMA tag */
 };
 
 /*
@@ -128,8 +131,8 @@ struct pnpbus_softc {
 
 int	pnpbus_scan(struct pnpbus_dev_attach_args *pna, PPC_DEVICE *dev);
 void	pnpbus_print_devres(struct pnpbus_dev_attach_args *pna);
-void	*pnpbus_intr_establish(int idx, int level, int (*ih_fun)(void *),
-	    void *ih_arg, struct pnpresources *r);
+void	*pnpbus_intr_establish(int idx, int level, int tover,
+	    int (*ih_fun)(void *), void *ih_arg, struct pnpresources *r);
 void	pnpbus_intr_disestablish(void *arg);
 int	pnpbus_getirqnum(struct pnpresources *r, int idx, int *irqp, int *istp);
 int	pnpbus_getdmachan(struct pnpresources *r, int idx, int *chanp);

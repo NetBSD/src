@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.7 2007/10/17 19:56:52 garbled Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.8 2008/04/28 19:01:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.7 2007/10/17 19:56:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.8 2008/04/28 19:01:45 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,11 @@ extern struct cfdriver pnpbus_cd;
 static int
 pnpbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+	struct pnpbus_attach_args *paa = aux;
+
+	if (paa->paa_name != NULL && strcmp(paa->paa_name, "pnpbus") == 0)
+		return 1;
+	return 0;
 }
 
 static void
@@ -491,7 +495,7 @@ pnpbus_print(void *args, const char *name)
  * Set up an interrupt handler to start being called.
  */
 void *
-pnpbus_intr_establish(int idx, int level, int (*ih_fun)(void *),
+pnpbus_intr_establish(int idx, int level, int tover, int (*ih_fun)(void *),
     void *ih_arg, struct pnpresources *r)
 {
 	struct pnpbus_irq *irq;
@@ -506,6 +510,8 @@ pnpbus_intr_establish(int idx, int level, int (*ih_fun)(void *),
 
 	irqnum = ffs(irq->mask) - 1;
 	type = (irq->flags & 0x0c) ? IST_LEVEL : IST_EDGE;
+	if (tover != IST_PNP)
+		type = tover;
 
 	return (void *)intr_establish(irqnum, type, level, ih_fun, ih_arg);
 }

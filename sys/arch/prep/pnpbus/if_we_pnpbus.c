@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_pnpbus.c,v 1.2 2007/10/17 19:56:52 garbled Exp $	*/
+/*	$NetBSD: if_we_pnpbus.c,v 1.3 2008/04/28 19:01:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.2 2007/10/17 19:56:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_pnpbus.c,v 1.3 2008/04/28 19:01:45 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -251,7 +251,7 @@ we_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 		break;
 	}
-	wsc->sc_ih = pnpbus_intr_establish(i, IPL_NET, dp8390_intr, sc,
+	wsc->sc_ih = pnpbus_intr_establish(i, IPL_NET, IST_PNP, dp8390_intr, sc,
 	    &pna->pna_res);
 	if (wsc->sc_ih == NULL)
 		aprint_error("%s: can't establish interrupt\n",

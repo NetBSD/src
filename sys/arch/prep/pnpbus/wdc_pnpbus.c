@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.7 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.8 2008/04/28 19:01:45 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.7 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.8 2008/04/28 19:01:45 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,8 +151,8 @@ wdc_pnpbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.ch_ndrive = 2;
 	wdc_init_shadow_regs(&sc->sc_channel);
 
-	sc->sc_ih = pnpbus_intr_establish(0, IPL_BIO, wdcintr, &sc->sc_channel,
-	    &pna->pna_res);
+	sc->sc_ih = pnpbus_intr_establish(0, IPL_BIO, IST_PNP,
+	    wdcintr, &sc->sc_channel, &pna->pna_res);
 
 	aprint_normal("\n");
 	wdcattach(&sc->sc_channel);
