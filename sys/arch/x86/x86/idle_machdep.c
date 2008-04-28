@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.5 2007/11/14 17:55:00 ad Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.6 2008/04/28 13:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.5 2007/11/14 17:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.6 2008/04/28 13:10:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -62,6 +62,8 @@ void
 cpu_idle(void)
 {
 	struct cpu_info *ci = curcpu();
+
+	KASSERT(ci->ci_ilevel == IPL_NONE);
 
 	if ((ci->ci_feature2_flags & CPUID2_MONITOR) != 0) {
 		cpu_idle_mwait(ci);
