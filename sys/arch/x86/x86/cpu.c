@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.35 2008/04/29 19:18:19 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.36 2008/04/29 19:19:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2008/04/29 19:18:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2008/04/29 19:19:29 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -286,7 +286,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
-		if ((boothowto & RB_MD2) != 0) {
+		if ((boothowto & RB_MD1) != 0) {
 			aprint_error(": multiprocessor boot disabled\n");
 			return;
 		}
