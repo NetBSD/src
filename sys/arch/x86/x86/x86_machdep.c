@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.18 2008/04/29 15:42:59 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.19 2008/04/29 15:44:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.18 2008/04/29 15:42:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.19 2008/04/29 15:44:07 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -128,6 +128,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	struct cpu_info *cur;
 	lwp_t *l;
 
+	KASSERT(kpreempt_disabled());
 	cur = curcpu();
 	l = ci->ci_data.cpu_onproc;
 	ci->ci_want_resched = 1;
@@ -175,6 +176,7 @@ void
 cpu_signotify(struct lwp *l)
 {
 
+	KASSERT(kpreempt_disabled());
 	aston(l);
 	if (l->l_cpu != curcpu())
 		x86_send_ipi(l->l_cpu, 0);
@@ -184,6 +186,7 @@ void
 cpu_need_proftick(struct lwp *l)
 {
 
+	KASSERT(kpreempt_disabled());
 	KASSERT(l->l_cpu == curcpu());
 
 	l->l_pflag |= LP_OWEUPC;
