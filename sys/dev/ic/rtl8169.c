@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.102 2008/04/25 11:27:19 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.103 2008/04/29 14:16:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102 2008/04/25 11:27:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.103 2008/04/29 14:16:57 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -187,9 +187,9 @@ re_set_bufaddr(struct re_desc *d, bus_addr_t addr)
 }
 
 static int
-re_gmii_readreg(struct device *self, int phy, int reg)
+re_gmii_readreg(device_t dev, int phy, int reg)
 {
-	struct rtk_softc *sc = (void *)self;
+	struct rtk_softc *sc = device_private(dev);
 	uint32_t rval;
 	int i;
 
