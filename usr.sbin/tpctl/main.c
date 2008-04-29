@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2004/02/24 15:12:18 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2008/04/29 06:53:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -49,7 +46,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.2 2004/02/24 15:12:18 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2008/04/29 06:53:04 martin Exp $");
 #endif /* not lint */
 
 void load_data(char *data_file, struct tpctl_data *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.2 2003/07/08 23:33:50 uwe Exp $	*/
+/*	$NetBSD: fb.c,v 1.3 2008/04/29 06:53:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMRUA Shin
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fb.c,v 1.2 2003/07/08 23:33:50 uwe Exp $");
+__RCSID("$NetBSD: fb.c,v 1.3 2008/04/29 06:53:04 martin Exp $");
 #endif /* not lint */
 
 #define INVALID_CACHE -1

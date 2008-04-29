@@ -1,4 +1,4 @@
-/*	$NetBSD: adbvar.h,v 1.1 2007/01/17 23:20:16 macallan Exp $ */
+/*	$NetBSD: adbvar.h,v 1.2 2008/04/29 06:53:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adbvar.h,v 1.1 2007/01/17 23:20:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adbvar.h,v 1.2 2008/04/29 06:53:02 martin Exp $");
 
 #ifndef ADBVAR_H
 #define ADBVAR_H

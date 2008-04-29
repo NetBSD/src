@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.7 2007/08/05 13:52:44 jmmv Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.8 2008/04/29 06:53:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2006, 2007\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: ofctl.c,v 1.7 2007/08/05 13:52:44 jmmv Exp $");
+__RCSID("$NetBSD: ofctl.c,v 1.8 2008/04/29 06:53:04 martin Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
