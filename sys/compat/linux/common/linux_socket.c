@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.92 2008/04/28 20:23:44 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.93 2008/04/29 09:56:38 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.92 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.93 2008/04/29 09:56:38 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -118,7 +118,7 @@ int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
-		const struct osockaddr *, int);
+		const struct osockaddr *, unsigned int);
 static int linux_sa_put(struct osockaddr *osa);
 static int linux_to_bsd_msg_flags(int);
 static int bsd_to_linux_msg_flags(int);
@@ -1292,7 +1292,8 @@ linux_sys_getpeername(struct lwp *l, const struct linux_sys_getpeername_args *ua
  * family and convert to sockaddr.
  */
 static int
-linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa, int salen)
+linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
+    const struct osockaddr *osa, unsigned int salen)
 {
 	int error, bdom;
 	struct sockaddr *sa;
