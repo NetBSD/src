@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1047 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1048 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -508,3 +508,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	netiso: Remove obsolete TPCONS support. [plunky 20080423]
 	arm: merge armv6 kernel support from matt-armv6 branch.
 		[matt 20080427]
+	gpio(4): Extend with open/close to handle request/release the
+		ppbus(4) on open/close. From Hans Rosenfeld. [cegger 20080429]
+	ppbus(4): Extend to attach on gpiobus. From Hans Rosenfeld.
+		[cegger 20080429]
