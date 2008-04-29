@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.205 2008/04/22 22:37:13 cegger Exp $
+# $NetBSD: GENERIC,v 1.206 2008/04/29 12:43:58 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.205 $"
+#ident 		"GENERIC-$Revision: 1.206 $"
 
 maxusers	64		# estimated number of users
 
@@ -66,7 +66,6 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
-options 	MULTIPROCESSOR	# SMP
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
