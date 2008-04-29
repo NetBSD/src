@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.4 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.5 2008/04/29 20:57:50 scw Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.4 2008/04/28 20:22:53 martin Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.5 2008/04/29 20:57:50 scw Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -59,6 +59,9 @@ void	__libc_atomic_init(void) __attribute__ ((visibility("hidden")));
 
 RAS_DECL(_atomic_cas);
 
+#ifdef	__HAVE_ASM_ATOMIC_CAS_UP
+extern uint32_t _atomic_cas_up(volatile uint32_t *, uint32_t, uint32_t);
+#else
 static uint32_t
 _atomic_cas_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 {
@@ -74,6 +77,7 @@ _atomic_cas_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 
 	return ret;
 }
+#endif
 
 static uint32_t
 _atomic_cas_mp(volatile uint32_t *ptr, uint32_t old, uint32_t new)
