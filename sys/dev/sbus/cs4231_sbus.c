@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.41 2008/04/29 15:59:34 martin Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.42 2008/04/29 18:07:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.41 2008/04/29 15:59:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.42 2008/04/29 18:07:11 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -162,9 +162,9 @@ cs4231_sbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmatag = sa->sa_dmatag;
 
 	sbsc->sc_pint = sparc_softintr_establish(IPL_VM,
-	    cs4231_sbus_pint, sc);
+	    (void *)cs4231_sbus_pint, sc);
 	sbsc->sc_rint = sparc_softintr_establish(IPL_VM,
-	    cs4231_sbus_rint, sc);
+	    (void *)cs4231_sbus_rint, sc);
 
 	/*
 	 * Map my registers in, if they aren't already in virtual
