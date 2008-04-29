@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.46 2008/04/28 23:00:22 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.47 2008/04/29 18:47:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46 2008/04/28 23:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.47 2008/04/29 18:47:18 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -567,11 +567,7 @@ duplicate:
 		if (pic == &i8259_pic)
 			idtvec = ICU_OFFSET + legacy_irq;
 		else {
-#ifdef IOAPIC_HWMASK
-			if (level > isp->is_maxlevel) {
-#else
 			if (isp->is_minlevel == 0 || level < isp->is_minlevel) {
-#endif
 				idtvec = idt_vec_alloc(APIC_LEVEL(level),
 				    IDT_INTR_HIGH);
 				if (idtvec == 0)
