@@ -1,4 +1,4 @@
-/*      $NetBSD: n_exp__E.c,v 1.6 2003/08/07 16:44:51 agc Exp $ */
+/*      $NetBSD: n_exp__E.c,v 1.7 2008/04/29 15:10:02 uwe Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -110,7 +110,7 @@ ic(q2, 9.9176615021572857300E-4, -10, 1.03FC4CB8C98E8)
 double
 __exp__E(double x, double c)
 {
-	const static double zero=0.0, one=1.0, half=1.0/2.0, small=1.0E-19;
+	static const double zero=0.0, one=1.0, half=1.0/2.0, small=1.0E-19;
 	double z,p,q,xp,xh,w;
 	if(copysign(x,one)>small) {
            z = x*x  ;
