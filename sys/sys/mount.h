@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.173 2008/01/30 11:47:03 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.174 2008/04/29 18:18:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -214,15 +214,18 @@ struct vfsops {
 	int	(*vfs_suspendctl) (struct mount *, int);
 	int	(*vfs_renamelock_enter)(struct mount *);
 	void	(*vfs_renamelock_exit)(struct mount *);
+	int	(*vfs_fsync)	(struct vnode *, int);
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
 };
 
-/* XXX Actually file system internal. */
+/* XXX vget is actually file system internal. */
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+
 #define VFS_RENAMELOCK_ENTER(MP)  (*(MP)->mnt_op->vfs_renamelock_enter)(MP)
 #define VFS_RENAMELOCK_EXIT(MP)   (*(MP)->mnt_op->vfs_renamelock_exit)(MP)
+#define VFS_FSYNC(MP, VP, FLG)	  (*(MP)->mnt_op->vfs_fsync)(VP, FLG)
 
 int	VFS_MOUNT(struct mount *, const char *, void *, size_t *);
 int	VFS_START(struct mount *, int);

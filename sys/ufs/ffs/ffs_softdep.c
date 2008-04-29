@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.109 2008/04/11 16:25:38 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.110 2008/04/29 18:18:09 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.109 2008/04/11 16:25:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.110 2008/04/29 18:18:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -4771,18 +4771,25 @@ softdep_sync_metadata(struct vnode *vp)
 	if (vp->v_type != VBLK) {
 		if (!DOINGSOFTDEP(vp))
 			return (0);
-	} else
+	} else {
 		if (vp->v_specmountpoint == NULL ||
 		    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP) == 0)
 			return (0);
+	}
+
 	/*
 	 * Ensure that any direct block dependencies have been cleared.
 	 */
 	mutex_enter(&bufcache_lock);
-	error = flush_inodedep_deps(VTOI(vp)->i_fs, VTOI(vp)->i_number);
-	if (error) {
-		mutex_exit(&bufcache_lock);
-		return (error);
+	if (vp->v_tag == VT_UFS) {
+		error = flush_inodedep_deps(VTOI(vp)->i_fs,
+		    VTOI(vp)->i_number);
+		if (error) {
+			mutex_exit(&bufcache_lock);
+			return (error);
+		}
+	} else {
+		KASSERT(vp->v_type == VBLK);
 	}
 	/*
 	 * For most files, the only metadata dependencies are the
@@ -4887,6 +4894,7 @@ loop:
 			 * recently allocated files. We walk its diradd
 			 * lists pushing out the associated inode.
 			 */
+			KASSERT(vp->v_tag == VT_UFS);
 			pagedep = WK_PAGEDEP(wk);
 			for (i = 0; i < DAHASHSZ; i++) {
 				if (LIST_FIRST(&pagedep->pd_diraddhd[i]) == 0)
@@ -5005,7 +5013,8 @@ clean:
 	 * this by explicitly setting IN_MODIFIED so that ffs_update() will
 	 * see it.
 	 */
-	if (inodedep_lookup(VTOI(vp)->i_fs, VTOI(vp)->i_number, 0, &inodedep))
+	if (vp->v_tag == VT_UFS &&
+	    inodedep_lookup(VTOI(vp)->i_fs, VTOI(vp)->i_number, 0, &inodedep))
 		VTOI(vp)->i_flag |= IN_MODIFIED;
 	mutex_exit(&bufcache_lock);
 	return (0);

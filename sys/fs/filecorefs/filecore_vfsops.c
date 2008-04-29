@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.49 2008/02/05 15:19:38 ad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.50 2008/04/29 18:18:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49 2008/02/05 15:19:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.50 2008/04/29 18:18:08 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -129,6 +129,7 @@ struct vfsops filecore_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	filecore_vnodeopv_descs,
 	0,
 	{ NULL, NULL }

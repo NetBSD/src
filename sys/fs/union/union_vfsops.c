@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.52 2008/02/27 19:59:48 matt Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.53 2008/04/29 18:18:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.52 2008/02/27 19:59:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.53 2008/04/29 18:18:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,6 +540,7 @@ struct vfsops union_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	union_renamelock_enter,
 	union_renamelock_exit,
+	(void *)eopnotsupp,
 	union_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
