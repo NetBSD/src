@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.20 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.21 2008/04/29 23:51:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.20 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.21 2008/04/29 23:51:04 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,6 +123,8 @@ kmutex_t mntvnode_lock;
 kmutex_t vnode_free_list_lock;
 kmutex_t specfs_lock;
 kmutex_t vfs_list_lock;
+kmutex_t mount_lock;
+kcondvar_t mount_cv;
 
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
@@ -154,6 +156,8 @@ vntblinit(void)
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&specfs_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&mount_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&mount_cv, "mount");
 
 	mount_specificdata_domain = specificdata_domain_create();
 
@@ -194,6 +198,7 @@ vfs_destroy(struct mount *mp)
 	if (atomic_dec_uint_nv(&mp->mnt_refcnt) > 0) {
 		return;
 	}
+	KASSERT(mp->mnt_unmounter == NULL);
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
 	rw_destroy(&mp->mnt_lock);
 	if (mp->mnt_op != NULL) {
@@ -716,8 +721,7 @@ printlockedvnodes(void)
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		if (vfs_trybusy(mp, RW_READER, &nmp)) {
 			continue;
 		}
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {

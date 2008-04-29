@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.257 2008/04/29 18:18:09 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.258 2008/04/29 23:51:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.257 2008/04/29 18:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.258 2008/04/29 23:51:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -213,8 +213,7 @@ lfs_writerd(void *arg)
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_trybusy(mp, RW_WRITER, &mountlist_lock)) {
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
+			if (vfs_trybusy(mp, RW_WRITER, &nmp)) {
 				continue;
 			}
 			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
