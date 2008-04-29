@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.39 2008/04/29 14:10:00 ad Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.40 2008/04/29 14:46:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.39 2008/04/29 14:10:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.40 2008/04/29 14:46:57 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -81,8 +81,8 @@ struct cs4231_sbus_softc {
 
 static int	cs4231_sbus_match(struct device *, struct cfdata *, void *);
 static void	cs4231_sbus_attach(struct device *, struct device *, void *);
-static void	cs4231_sbus_pint(void *);
-static void	cs4231_sbus_rint(void *);
+static int	cs4231_sbus_pint(void *);
+static int	cs4231_sbus_rint(void *);
 
 CFATTACH_DECL(audiocs_sbus, sizeof(struct cs4231_sbus_softc),
     cs4231_sbus_match, cs4231_sbus_attach, NULL, NULL);
@@ -579,7 +579,7 @@ cs4231_sbus_intr(void *arg)
 	return 1;
 }
 
-static void
+static int
 cs4231_sbus_pint(void *cookie)
 {
 	struct cs4231_softc *sc = cookie;
@@ -590,9 +590,10 @@ cs4231_sbus_pint(void *cookie)
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
 	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }
 
-static void
+static int
 cs4231_sbus_rint(void *cookie)
 {
 	struct cs4231_softc *sc = cookie;
@@ -603,6 +604,7 @@ cs4231_sbus_rint(void *cookie)
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
 	KERNEL_UNLOCK_ONE(NULL);
+	return 0;
 }
 
 #endif /* NAUDIO > 0 */
