@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.38 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.39 2008/04/29 14:10:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.38 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.39 2008/04/29 14:10:00 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -161,9 +161,9 @@ cs4231_sbus_attach(struct device *parent, struct device *self, void *aux)
 	sbsc->sc_bt = sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
 
-	sbsc->sc_pint = softint_establish(SOFTINT_SERIAL,
+	sbsc->sc_pint = sparc_softintr_establish(IPL_VM,
 	    cs4231_sbus_pint, sbsc);
-	sbsc->sc_rint = softint_establish(SOFTINT_SERIAL,
+	sbsc->sc_rint = sparc_softintr_establish(IPL_VM,
 	    cs4231_sbus_rint, sbsc);
 
 	/*
@@ -537,7 +537,7 @@ cs4231_sbus_intr(void *arg)
 				APC_DMA_CNC, dmasize);
 
 			if (t->t_intr != NULL)
-				softint_schedule(sbsc->sc_rint);
+				sparc_softintr_schedule(sbsc->sc_rint);
 			++t->t_intrcnt.ev_count;
 			served = 1;
 		}
@@ -561,7 +561,7 @@ cs4231_sbus_intr(void *arg)
 			}
 
 			if (t->t_intr != NULL)
-				softint_schedule(sbsc->sc_pint);
+				sparc_softintr_schedule(sbsc->sc_pint);
 			++t->t_intrcnt.ev_count;
 			served = 1;
 		}
@@ -583,20 +583,26 @@ static void
 cs4231_sbus_pint(void *cookie)
 {
 	struct cs4231_softc *sc = cookie;
-	struct cs_transfer *t = &sc->sc_playback;
+	struct cs_transfer *t;
 
+	KERNEL_LOCK(1, NULL);
+	t = &sc->sc_playback;
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static void
 cs4231_sbus_rint(void *cookie)
 {
 	struct cs4231_softc *sc = cookie;
-	struct cs_transfer *t = &sc->sc_capture;
+	struct cs_transfer *t;
 
+	KERNEL_LOCK(1, NULL);
+	t = &sc->sc_capture;
 	if (t->t_intr != NULL)
 		(*t->t_intr)(t->t_arg);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 #endif /* NAUDIO > 0 */
