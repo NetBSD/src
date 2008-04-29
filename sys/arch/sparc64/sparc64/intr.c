@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.58 2008/04/29 14:06:31 ad Exp $ */
+/*	$NetBSD: intr.c,v 1.59 2008/04/29 15:57:56 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58 2008/04/29 14:06:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.59 2008/04/29 15:57:56 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -254,6 +254,7 @@ sparc_softintr_establish(int pil, int (*fun)(void *), void *arg)
 
 	ih->ih_fun = fun;
 	ih->ih_pil = pil;
+	ih->ih_arg = arg;
 	return ih;
 }
 
