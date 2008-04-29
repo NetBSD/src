@@ -1,4 +1,4 @@
-/*	$NetBSD: tp.c,v 1.5 2006/05/22 20:17:03 uwe Exp $	*/
+/*	$NetBSD: tp.c,v 1.6 2008/04/29 06:53:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 TAKEMRUA Shin
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +40,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tp.c,v 1.5 2006/05/22 20:17:03 uwe Exp $");
+__RCSID("$NetBSD: tp.c,v 1.6 2008/04/29 06:53:04 martin Exp $");
 #endif /* not lint */
 
 int
