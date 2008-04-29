@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.34 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.35 2008/04/29 19:18:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2008/04/29 19:18:19 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2008/04/28 20:23:40 martin Exp $");
 #include <sys/malloc.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -276,9 +277,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	uintptr_t ptr;
-#if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
-#endif
 
 	sc->sc_dev = self;
 
@@ -287,13 +286,15 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
-#if defined(MULTIPROCESSOR)
+		if ((boothowto & RB_MD2) != 0) {
+			aprint_error(": multiprocessor boot disabled\n");
+			return;
+		}
 		if (cpunum >= X86_MAXPROCS) {
 			aprint_error(": apic id %d ignored, "
 			    "please increase X86_MAXPROCS\n", cpunum);
 			return;
 		}
-#endif
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    M_DEVBUF, M_WAITOK);
