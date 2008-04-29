@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.15 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.16 2008/04/29 18:41:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.15 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.16 2008/04/29 18:41:06 ad Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -556,7 +556,10 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 
 	switch(req) {
 	case PRU_CONTROL:
-		return hci_ioctl((unsigned long)m, (void *)nam, l);
+		mutex_enter(bt_lock);
+		err = hci_ioctl((unsigned long)m, (void *)nam, l);
+		mutex_exit(bt_lock);
+		return err;
 
 	case PRU_PURGEIF:
 		return EOPNOTSUPP;
