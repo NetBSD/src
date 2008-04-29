@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.174 2008/04/29 18:18:09 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.175 2008/04/29 23:51:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -108,7 +108,7 @@ struct mount {
 	struct vnode	*mnt_syncer;		/* syncer vnode */
 	void		*mnt_transinfo;		/* for FS-internal use */
 	void		*mnt_data;		/* private data */
-	struct lwp	*mnt_writer;		/* who is [un]mounting */
+	struct lwp	*mnt_unmounter;		/* who is unmounting */
 	krwlock_t	mnt_lock;		/* mount structure lock */
 	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
 	int		mnt_refcnt;		/* ref count on this structure */
@@ -120,6 +120,7 @@ struct mount {
 	struct statvfs	mnt_stat;		/* cache of filesystem stats */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
+	struct lwp	*mnt_writer;		/* who holds write lock */
 };
 
 /*
@@ -333,8 +334,8 @@ int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
 void	vfs_unmountall(struct lwp *);	    /* unmount file systems */
-int 	vfs_busy(struct mount *, const krw_t, kmutex_t *);
-int 	vfs_trybusy(struct mount *, const krw_t, kmutex_t *);
+int 	vfs_busy(struct mount *, const krw_t);
+int 	vfs_trybusy(struct mount *, const krw_t, struct mount **);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
 void	vfs_unbusy(struct mount *, bool);
 int	vfs_attach(struct vfsops *);
@@ -352,8 +353,9 @@ extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
 extern  kmutex_t mountlist_lock;
-extern	kmutex_t spechash_lock;
 extern	kmutex_t vfs_list_lock;
+extern	kmutex_t mount_lock;
+extern	kcondvar_t mount_cv;
 
 long	makefstype(const char *);
 int	dounmount(struct mount *, int, struct lwp *);
