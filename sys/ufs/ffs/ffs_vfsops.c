@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.223 2008/04/17 09:52:47 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.224 2008/04/29 18:18:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223 2008/04/17 09:52:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.224 2008/04/29 18:18:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,6 +114,7 @@ struct vfsops ffs_vfsops = {
 	ffs_suspendctl,
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	ffs_full_fsync,
 	ffs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

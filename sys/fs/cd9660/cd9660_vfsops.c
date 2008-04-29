@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.57 2008/02/27 19:43:36 matt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.58 2008/04/29 18:18:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.57 2008/02/27 19:43:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.58 2008/04/29 18:18:08 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -108,6 +108,7 @@ struct vfsops cd9660_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	cd9660_vnodeopv_descs,
 	0,	/* refcount */
 	{ NULL, NULL } /* list */
