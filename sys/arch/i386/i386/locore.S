@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.69 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.70 2008/04/29 18:27:18 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.69 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.70 2008/04/29 18:27:18 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -906,6 +906,16 @@ ENTRY(cpu_switchto)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
+
+#if defined(DIAGNOSTIC) && !defined(XEN)
+	cmpl	$IPL_SCHED,CPUVAR(ILEVEL)
+	jbe	0f
+	pushl	$.Lstr
+	call	_C_LABEL(panic)
+	addl	$4,%esp
+.Lstr:	.string	"cpu_switcho: switching above IPL_SCHED\0"
+0:
+#endif
 
 	movl	16(%esp),%esi		# oldlwp
 	movl	20(%esp),%edi		# newlwp
