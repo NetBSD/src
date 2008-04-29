@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.34 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.35 2008/04/29 23:51:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.34 2008/04/28 20:24:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.35 2008/04/29 23:51:05 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -242,7 +242,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	}
 
 	/* Mark the file system busy. */
-	error = vfs_busy(mp, RW_READER, NULL);
+	error = vfs_busy(mp, RW_READER);
 	vput(vp);
 	if (error != 0)
 		return error;
