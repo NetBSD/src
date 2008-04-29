@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 2008/04/29 15:26:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2008/04/29 15:26:26 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1759,6 +1759,17 @@ init_x86_64(paddr_t first_avail)
 
 	init_x86_64_ksyms();
 
+#ifndef XEN
+	intr_default_setup();
+#else
+	events_default_setup();
+#endif
+
+	splraise(IPL_HIGH);
+	x86_enable_intr();
+
+	x86_init();
+
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1770,17 +1781,6 @@ init_x86_64(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif
-
-#ifndef XEN
-	intr_default_setup();
-#else
-	events_default_setup();
-#endif
-
-	splraise(IPL_HIGH);
-	x86_enable_intr();
-
-	x86_init();
 }
 
 void

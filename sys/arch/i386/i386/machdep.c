@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.631 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.632 2008/04/29 15:27:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.631 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.632 2008/04/29 15:27:08 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1876,23 +1876,6 @@ init386(paddr_t first_avail)
 
 	init386_ksyms();
 
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef IPKDB
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
-#ifdef KGDB
-	kgdb_port_init();
-	if (boothowto & RB_KDB) {
-		kgdb_debug_init = 1;
-		kgdb_connect(1);
-	}
-#endif
-
 #if NMCA > 0
 	/* check for MCA bus, needed to be done before ISA stuff - if
 	 * MCA is detected, ISA needs to use level triggered interrupts
@@ -1909,6 +1892,23 @@ init386(paddr_t first_avail)
 
 	splraise(IPL_IPI);
 	x86_enable_intr();
+
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef IPKDB
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
+#endif
+#ifdef KGDB
+	kgdb_port_init();
+	if (boothowto & RB_KDB) {
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+	}
+#endif
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "
