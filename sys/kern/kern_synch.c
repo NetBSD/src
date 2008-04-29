@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.237 2008/04/29 14:35:20 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.238 2008/04/29 15:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.237 2008/04/29 14:35:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.238 2008/04/29 15:51:23 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -913,8 +913,10 @@ suspendsched(void)
 	 */
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		mutex_enter(p->p_lock);
+		if ((p->p_flag & PK_MARKER) != 0)
+			continue;
 
+		mutex_enter(p->p_lock);
 		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(p->p_lock);
 			continue;
@@ -1084,6 +1086,9 @@ sched_pstats(void *arg)
 
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
+		if ((p->p_flag & PK_MARKER) != 0)
+			continue;
+
 		/*
 		 * Increment time in/out of memory and sleep time (if
 		 * sleeping).  We ignore overflow; with 16-bit int's
