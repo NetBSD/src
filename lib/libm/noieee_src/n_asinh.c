@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asinh.c,v 1.6 2003/08/07 16:44:50 agc Exp $	*/
+/*	$NetBSD: n_asinh.c,v 1.7 2008/04/29 15:10:02 uwe Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,7 @@ double
 asinh(double x)
 {
 	double t,s;
-	const static double	small=1.0E-10,	/* fl(1+small*small) == 1 */
+	static const double	small=1.0E-10,	/* fl(1+small*small) == 1 */
 				big  =1.0E20,	/* fl(1+big) == big */
 				one  =1.0   ;
 
