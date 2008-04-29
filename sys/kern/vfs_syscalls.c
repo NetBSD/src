@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.351 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.352 2008/04/29 15:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.351 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.352 2008/04/29 15:51:23 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -571,6 +571,8 @@ checkdirs(struct vnode *olddp)
 	mutex_enter(proc_lock);
 	/* XXXAD Should not be acquiring these locks with proc_lock held!! */
 	PROCLIST_FOREACH(p, &allproc) {
+		if ((p->p_flag & PK_MARKER) != 0)
+			continue;
 		cwdi = p->p_cwdi;
 		if (!cwdi)
 			continue;
