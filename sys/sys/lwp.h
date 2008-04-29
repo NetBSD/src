@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.91 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: lwp.h,v 1.92 2008/04/29 13:02:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -413,6 +413,26 @@ spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
 	KASSERT(ci1 != ci2);
 	mutex_spin_exit(spc1->spc_mutex);
 	mutex_spin_exit(spc2->spc_mutex);
+}
+
+/*
+ * Allow machine-dependent code to override curlwp in <machine/cpu.h> for
+ * its own convenience.  Otherwise, we declare it as appropriate.
+ */
+#if !defined(curlwp)
+#if defined(MULTIPROCESSOR)
+#define	curlwp		curcpu()->ci_curlwp	/* Current running LWP */
+#else
+extern struct lwp	*curlwp;		/* Current running LWP */
+#endif /* MULTIPROCESSOR */
+#endif /* ! curlwp */
+#define	curproc		(curlwp->l_proc)
+
+static inline bool
+CURCPU_IDLE_P(void)
+{
+	struct cpu_info *ci = curcpu();
+	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
 }
 
 /*
