@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.17 2008/04/28 22:47:37 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.18 2008/04/29 15:42:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.17 2008/04/28 22:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.18 2008/04/29 15:42:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,8 +193,12 @@ cpu_need_proftick(struct lwp *l)
 bool
 cpu_intr_p(void)
 {
+	int idepth;
 
-	return (curcpu()->ci_idepth >= 0);
+	kpreempt_disable();
+	idepth = curcpu()->ci_idepth;
+	kpreempt_enable();
+	return (idepth >= 0);
 }
 
 #ifdef __HAVE_PREEMPTION
