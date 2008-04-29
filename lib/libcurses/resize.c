@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.18 2008/04/14 20:33:41 jdc Exp $	*/
+/*	$NetBSD: resize.c,v 1.19 2008/04/29 17:46:39 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.18 2008/04/14 20:33:41 jdc Exp $");
+__RCSID("$NetBSD: resize.c,v 1.19 2008/04/29 17:46:39 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -294,8 +294,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	win->cury = win->curx = 0;
 	win->maxy = nlines;
 	win->maxx = ncols;
-	if (win->scr_b >= win->maxy)
-		win->scr_b = win->maxy - 1;
+	win->scr_b = win->maxy - 1;
 	__swflags(win);
 
 	  /*
