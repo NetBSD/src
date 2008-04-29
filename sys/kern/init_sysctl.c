@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.135 2008/04/29 16:21:27 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.136 2008/04/29 18:13:24 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.135 2008/04/29 16:21:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.136 2008/04/29 18:13:24 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2180,12 +2180,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 	marker = kmem_alloc(sizeof(*marker), KM_SLEEP);
 
 	mutex_enter(proc_lock);
-	mmmbrains = true;
+	mmmbrains = false;
 	for (p = LIST_FIRST(&allproc);; p = next) {
 		if (p == NULL) {
-			if (mmmbrains) {
+			if (!mmmbrains) {
 				p = LIST_FIRST(&zombproc);
-				mmmbrains = false;
+				mmmbrains = true;
 			}
 			if (p == NULL)
 				break;
@@ -2278,7 +2278,11 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		/*
 		 * Grab a hold on the process.
 		 */
-		zombie = !rw_tryenter(&p->p_reflock, RW_READER);
+		if (mmmbrains) { 
+			zombie = true;
+		} else {
+			zombie = !rw_tryenter(&p->p_reflock, RW_READER);
+		}
 		if (zombie) {
 			LIST_INSERT_AFTER(p, marker, p_list);
 		}
@@ -2333,6 +2337,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		 * Release reference to process.
 		 */
 	 	if (zombie) {
+			next = LIST_NEXT(marker, p_list);
  			LIST_REMOVE(marker, p_list);
 		} else {
 			rw_exit(&p->p_reflock);
