@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.281 2008/04/29 14:04:06 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.282 2008/04/29 15:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.281 2008/04/29 14:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.282 2008/04/29 15:51:23 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -2041,6 +2041,8 @@ proc_stop_callout(void *cookie)
 
 		mutex_enter(proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
+			if ((p->p_flag & PK_MARKER) != 0)
+				continue;
 			mutex_enter(p->p_lock);
 
 			if ((p->p_sflag & PS_STOPPING) == 0) {

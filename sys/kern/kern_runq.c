@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.1 2008/04/29 14:35:20 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.2 2008/04/29 15:51:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.1 2008/04/29 14:35:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.2 2008/04/29 15:51:23 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -705,6 +705,8 @@ sched_print_runqueue(void (*pr)(const char *, ...)
 	    "LID", "PRI", "EPRI", "FL", "ST", "LWP", "CPU", "LRTIME");
 
 	PROCLIST_FOREACH(p, &allproc) {
+		if ((p->p_flag & PK_MARKER) != 0)
+			continue;
 		(*pr)(" /- %d (%s)\n", (int)p->p_pid, p->p_comm);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			ci = l->l_cpu;
