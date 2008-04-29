@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.901 2008/04/28 22:46:40 ad Exp $
+#	$NetBSD: files,v 1.902 2008/04/29 14:35:20 rmind Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1380,6 +1380,7 @@ file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_resource.c
+file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
