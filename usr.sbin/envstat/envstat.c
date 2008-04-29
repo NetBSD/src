@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.64 2008/04/26 20:58:51 xtraeme Exp $ */
+/* $NetBSD: envstat.c,v 1.65 2008/04/29 21:46:17 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.64 2008/04/26 20:58:51 xtraeme Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.65 2008/04/29 21:46:17 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -934,7 +934,7 @@ do {								\
 				}
 			}
 
-			if (statistics) {
+			if (statistics && !sensor->percentage) {
 				/* show statistics if flag set */
 				(void)printf("%8.3f %8.3f %8.3f ",
 				    stats->max / 1000000.0,
