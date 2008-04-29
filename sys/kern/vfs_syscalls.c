@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.352 2008/04/29 15:51:23 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.353 2008/04/29 23:51:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.352 2008/04/29 15:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.353 2008/04/29 23:51:04 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -187,7 +187,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if (error)
 		goto out;
 
-	if (vfs_trybusy(mp, RW_WRITER, 0)) {
+	if (vfs_busy(mp, RW_WRITER)) {
 		error = EPERM;
 		goto out;
 	}
@@ -337,7 +337,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	rw_init(&mp->mnt_lock);
  	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	(void)vfs_busy(mp, RW_WRITER, 0);
+	(void)vfs_busy(mp, RW_WRITER);
 
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
@@ -416,7 +416,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if ((vp->v_vflag & VV_ROOT) == 0)
 		return EINVAL;
 
-	if (vfs_trybusy(mp, RW_WRITER, NULL))
+	if (vfs_busy(mp, RW_WRITER))
 		return EPERM;
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
@@ -653,7 +653,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	 * mount point.  See dounmount() for details.
 	 */
 	mutex_enter(&syncer_mutex);
-	error = vfs_busy(mp, RW_WRITER, NULL);
+	error = vfs_busy(mp, RW_WRITER);
 	vrele(vp);
 	if (error != 0) {
 		mutex_exit(&syncer_mutex);
@@ -661,6 +661,34 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	}
 
 	return (dounmount(mp, SCARG(uap, flags), l));
+}
+
+/*
+ * Lock mount and keep additional reference across unmount.
+ */
+static void
+dounmount_lock(struct mount *mp)
+{
+
+	KASSERT(rw_write_held(&mp->mnt_lock));
+	KASSERT(mp->mnt_unmounter == NULL);
+
+	mp->mnt_unmounter = curlwp;
+	vfs_unbusy(mp, true);
+}
+
+/*
+ * Unlock mount and drop additional reference.
+ */
+static void
+dounmount_unlock(struct mount *mp)
+{
+
+	mutex_enter(&mount_lock);
+	mp->mnt_unmounter = NULL;
+	cv_broadcast(&mount_cv);
+	mutex_exit(&mount_lock);
+	vfs_destroy(mp);
 }
 
 /*
@@ -683,6 +711,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 #endif /* NVERIEXEC > 0 */
 
+	dounmount_lock(mp);
 	used_syncer = (mp->mnt_syncer != NULL);
 
 	/*
@@ -726,7 +755,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mp->mnt_flag |= async;
 		if (used_syncer)
 			mutex_exit(&syncer_mutex);
-		vfs_unbusy(mp, false);
+		dounmount_unlock(mp);
 		return (error);
 	}
 	vfs_scrubvnlist(mp);
@@ -741,7 +770,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
-	vfs_unbusy(mp, false);
+	dounmount_unlock(mp);
 	vfs_destroy(mp);
 	if (coveredvp != NULLVP)
 		vrele(coveredvp);
@@ -767,9 +796,9 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 		l = &lwp0;
 
 	mutex_enter(&mountlist_lock);
-	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = mp->mnt_list.cqe_prev;
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	     mp = nmp) {
+		if (vfs_trybusy(mp, RW_READER, &nmp)) {
 			continue;
 		}
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
@@ -780,7 +809,7 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
 		mutex_enter(&mountlist_lock);
-		nmp = mp->mnt_list.cqe_prev;
+		nmp = mp->mnt_list.cqe_next;
 		vfs_unbusy(mp, false);
 
 	}
@@ -988,8 +1017,7 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		if (vfs_trybusy(mp, RW_READER, &nmp)) {
 			continue;
 		}
 		if (sfsp && count < maxcount) {
@@ -1083,7 +1111,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		goto out;
 	}
 	while ((mp = vp->v_mountedhere) != NULL) {
-		if (vfs_busy(mp, RW_READER, NULL))
+		if (vfs_busy(mp, RW_READER))
 			continue;
 		vput(vp);
 		error = VFS_ROOT(mp, &tdp);

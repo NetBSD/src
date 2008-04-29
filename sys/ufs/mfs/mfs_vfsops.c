@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.93 2008/04/29 18:18:09 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.94 2008/04/29 23:51:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.93 2008/04/29 18:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.94 2008/04/29 23:51:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -373,7 +373,7 @@ mfs_start(struct mount *mp, int flags)
 	 * Add a reference to the mfsnode to prevent it disappearing in
 	 * this routine.
 	 */
-	if ((error = vfs_busy(mp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mp, RW_READER)) != 0)
 		return error;
 	vp = VFSTOUFS(mp)->um_devvp;
 	mfsp = VTOMFS(vp);

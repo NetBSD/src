@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.337 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.338 2008/04/29 23:51:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.337 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.338 2008/04/29 23:51:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -282,25 +282,15 @@ try_nextlist:
 	return vp;
 }
 
-/*
- * Mark a mount point as busy, and gain a new reference to it.  Used to
- * synchronize access and to delay unmounting.
- *
- * => Interlock is not released on failure.
- * => If no interlock, the caller is expected to already hold a reference
- *    on the mount.
- * => If interlocked, the interlock must prevent the last reference to
- *    the mount from disappearing.
- */
-int
-vfs_busy(struct mount *mp, const krw_t op, kmutex_t *interlock)
+static inline int
+vfs_dobusy(struct mount *mp, const krw_t op, struct mount **nextp)
 {
 
 	KASSERT(mp->mnt_refcnt > 0);
 
 	atomic_inc_uint(&mp->mnt_refcnt);
-	if (interlock != NULL) {
-		mutex_exit(interlock);
+	if (nextp != NULL) {
+		mutex_exit(&mountlist_lock);
 	}
 	if (mp->mnt_writer == curlwp) {
 		mp->mnt_recursecnt++;
@@ -311,11 +301,12 @@ vfs_busy(struct mount *mp, const krw_t op, kmutex_t *interlock)
 			mp->mnt_writer = curlwp;
 		}
 	}
-	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
-		vfs_unbusy(mp, false);
-		if (interlock != NULL) {
-			mutex_enter(interlock);
+	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
+		if (nextp != NULL) {
+			mutex_enter(&mountlist_lock);
+			*nextp = CIRCLEQ_NEXT(mp, mnt_list);
 		}
+		vfs_unbusy(mp, false);
 		return ENOENT;
 	}
 
@@ -323,35 +314,62 @@ vfs_busy(struct mount *mp, const krw_t op, kmutex_t *interlock)
 }
 
 /*
- * As vfs_busy(), but return immediately if the mount cannot be
- * locked without waiting.
+ * Mark a mount point as busy, and gain a new reference to it.  Used to
+ * synchronize access and to delay unmounting.
+ *
+ * => The caller is expected to hold a reference to the mount.
  */
 int
-vfs_trybusy(struct mount *mp, krw_t op, kmutex_t *interlock)
+vfs_busy(struct mount *mp, const krw_t op)
 {
+	int error;
 
-	KASSERT(mp->mnt_refcnt > 0);
-
-	if (mp->mnt_writer == curlwp) {
-		mp->mnt_recursecnt++;
-	} else {
-		if (!rw_tryenter(&mp->mnt_lock, op)) {
-			return EBUSY;
+	for (;;) {
+		error = vfs_dobusy(mp, op, NULL);
+		if (error != 0) {
+			return error;
 		}
-		if (op == RW_WRITER) {
-			KASSERT(mp->mnt_writer == NULL);
-			mp->mnt_writer = curlwp;
+		if (__predict_true(mp->mnt_unmounter == NULL)) {
+			return 0;
 		}
+		mutex_enter(&mount_lock);
+		if (mp->mnt_unmounter != NULL) {
+			vfs_unbusy(mp, false);
+			cv_wait(&mount_cv, &mount_lock);
+		}
+		mutex_exit(&mount_lock);
 	}
-	atomic_inc_uint(&mp->mnt_refcnt);
-	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
+}
+
+/*
+ * As vfs_busy(), but return error if the file system is being
+ * unmounted (and do not wait for the unmount).
+ *
+ * => If namep != NULL, mountlist_lock is understood to be held.  On
+ *    failure a pointer to the next mount will be returned via namep.
+ *
+ * => If namep == NULL, the caller is expected to hold a reference
+ *    to the mount.
+ */
+int
+vfs_trybusy(struct mount *mp, krw_t op, struct mount **nextp)
+{
+	lwp_t *l;
+	int error;
+
+	KASSERT(nextp == NULL || mutex_owned(&mountlist_lock));
+
+	error = vfs_dobusy(mp, op, nextp);
+	l = mp->mnt_unmounter;
+	if (error == 0 && (l != NULL && l != curlwp)) {
+		if (nextp != NULL) {
+			mutex_enter(&mountlist_lock);
+			*nextp = CIRCLEQ_NEXT(mp, mnt_list);
+		}
 		vfs_unbusy(mp, false);
-		return ENOENT;
+		error = EBUSY;
 	}
-	if (interlock != NULL) {
-		mutex_exit(interlock);
-	}
-	return 0;
+	return error;
 }
 
 /*
@@ -411,7 +429,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	mp->mnt_refcnt = 1;
 	rw_init(&mp->mnt_lock);
 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	(void)vfs_busy(mp, RW_WRITER, NULL);
+	(void)vfs_busy(mp, RW_WRITER);
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
@@ -455,7 +473,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		 * -f), this will return an error.  If the
 		 * unmount fails, we'll keep going afterwards.
 		 */
-		error = vfs_busy(mp, RW_READER, NULL);
+		error = vfs_busy(mp, RW_READER);
 		if (error)
 			return error;
 	}
@@ -1630,8 +1648,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		if (vfs_trybusy(mp, RW_READER, &nmp)) {
 			continue;
 		}
 		savebp = bp;
@@ -1763,7 +1780,7 @@ vfs_unmountall(struct lwp *l)
 		 * mount point.  See dounmount() for details.
 		 */
 		mutex_enter(&syncer_mutex);
-		if (vfs_busy(mp, RW_WRITER, NULL)) {
+		if (vfs_busy(mp, RW_WRITER)) {
 			mutex_exit(&syncer_mutex);
 			continue;
 		}

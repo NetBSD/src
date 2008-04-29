@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.111 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.112 2008/04/29 23:51:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.111 2008/04/28 20:24:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.112 2008/04/29 23:51:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,8 +576,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	if (only_onefs) {
 		KASSERT(fs != NULL);
-		if (vfs_trybusy(fs->lfs_ivnode->v_mount, RW_READER,
-		    &mountlist_lock))
+		if (vfs_trybusy(fs->lfs_ivnode->v_mount, RW_READER, NULL))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
@@ -588,9 +587,8 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
+			if (vfs_trybusy(mp, RW_READER, &nmp)) {
 				DLOG((DLOG_FLUSH, "lfs_flush: fs vfs_busy\n"));
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
