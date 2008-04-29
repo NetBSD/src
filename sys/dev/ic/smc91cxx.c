@@ -1,4 +1,4 @@
-/*	smc91cxx.c,v 1.61.2.2 2007/11/06 23:27:11 matt Exp	*/
+/*	$NetBSD: smc91cxx.c,v 1.68 2008/04/29 17:48:43 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "smc91cxx.c,v 1.61.2.2 2007/11/06 23:27:11 matt Exp");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.68 2008/04/29 17:48:43 nakayama Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -221,7 +221,7 @@ smc91cxx_intr_mask_write(bus_space_tag_t bst, bus_space_handle_t bsh,
 #if BYTE_ORDER == LITTLE_ENDIAN
 	bus_space_write_2(bst, bsh, INTR_STAT_REG_B, mask << 8);
 #else
-	bus_space_write_2(bst, bsh, INTR_STAT_REG_B);
+	bus_space_write_2(bst, bsh, INTR_STAT_REG_B, mask);
 #endif
 #else
 	bus_space_write_1(bst, bsh, INTR_MASK_REG_B, mask);
@@ -779,7 +779,7 @@ smc91cxx_start(ifp)
 		oddbyte = 0;
 	}
 #else
-	if (pad > 1 && (pad & 1))
+	if (pad > 1 && (pad & 1)) {
 		bus_space_write_2(bst, bsh, DATA_REG_W, oddbyte << 8);
 		oddbyte = 0;
 	}
