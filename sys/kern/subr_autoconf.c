@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.146 2008/04/24 13:56:30 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.147 2008/04/29 14:35:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146 2008/04/24 13:56:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147 2008/04/29 14:35:21 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -450,7 +450,8 @@ configure(void)
 	cpu_boot_secondary_processors();
 #endif
 
-	/* Setup the scheduler. */
+	/* Setup the runqueues and scheduler. */
+	runq_init();
 	sched_init();
 
 	/*

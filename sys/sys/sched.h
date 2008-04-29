@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.54 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: sched.h,v 1.55 2008/04/29 14:35:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -204,6 +204,7 @@ struct cpu_info;
  */
 
 /* Scheduler initialization */
+void		runq_init(void);
 void		sched_init(void);
 void		sched_rqinit(void);
 void		sched_cpuattach(struct cpu_info *);
