@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.51.2.5 2008/04/24 08:28:49 peter Exp $	*/
+/*	$NetBSD: pf.c,v 1.51.2.6 2008/04/29 17:24:29 peter Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.5 2008/04/24 08:28:49 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.51.2.6 2008/04/29 17:24:29 peter Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -242,8 +242,13 @@ u_int16_t		 pf_calc_mss(struct pf_addr *, sa_family_t,
 				u_int16_t);
 void			 pf_set_rt_ifp(struct pf_state *,
 			    struct pf_addr *);
+#ifdef __NetBSD__
+int			 pf_check_proto_cksum(struct mbuf *, int, int, int,
+			    u_int8_t, sa_family_t);
+#else
 int			 pf_check_proto_cksum(struct mbuf *, int, int,
 			    u_int8_t, sa_family_t);
+#endif /* !__NetBSD__ */
 int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 			    struct pf_addr_wrap *);
 struct pf_state		*pf_find_state(struct pfi_kif *,
@@ -3419,8 +3424,13 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			u_int32_t	 ack = ntohl(th->th_seq) + pd->p_len;
 			struct ip	*h = mtod(m, struct ip *);
 
+#ifdef __NetBSD__
+			if (pf_check_proto_cksum(m, direction, off,
+			    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET))
+#else
 			if (pf_check_proto_cksum(m, off,
 			    ntohs(h->ip_len) - off, IPPROTO_TCP, AF_INET))
+#endif /* !__NetBSD__ */
 				REASON_SET(&reason, PFRES_PROTCKSUM);
 			else {
 				if (th->th_flags & TH_SYN)
@@ -5565,9 +5575,15 @@ bad:
  *   len is the total length of protocol header plus payload
  * returns 0 when the checksum is valid, otherwise returns 1.
  */
+#ifdef __NetBSD__
+int
+pf_check_proto_cksum(struct mbuf *m, int direction, int off, int len,
+    u_int8_t p, sa_family_t af)
+#else
 int
 pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
     sa_family_t af)
+#endif /* !__NetBSD__ */
 {
 #ifndef __NetBSD__
 	u_int16_t flag_ok, flag_bad;
@@ -5603,8 +5619,9 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 	if (m->m_pkthdr.len < off + len)
 		return (1);
 #ifdef __NetBSD__
-	switch (p) {
-	case IPPROTO_TCP: {
+	if (direction == PF_IN) {
+		switch (p) {
+		case IPPROTO_TCP: {
 			struct tcphdr th; /* XXX */
 			int thlen;
 
@@ -5614,11 +5631,12 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 			    thlen, len - thlen) != 0;
 		}
 
-	case IPPROTO_UDP: {
+		case IPPROTO_UDP: {
 			struct udphdr uh; /* XXX */
 
 			m_copydata(m, off, sizeof(uh), &uh); /* XXX */
 			return udp_input_checksum(af, m, &uh, off, len) != 0;
+		}
 		}
 	}
 #endif /* __NetBSD__ */
