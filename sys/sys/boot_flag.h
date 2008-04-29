@@ -1,4 +1,4 @@
-/* $NetBSD: boot_flag.h,v 1.6 2008/04/28 20:24:10 martin Exp $ */
+/* $NetBSD: boot_flag.h,v 1.7 2008/04/29 19:16:08 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,6 +40,18 @@
  */
 #define	BOOT_FLAG(arg, retval) do {				\
 	switch (arg) {						\
+	case '1': /* machine dependent flag */			\
+		(retval) |= RB_MD1;				\
+		break;						\
+	case '2': /* machine dependent flag */			\
+		(retval) |= RB_MD2;				\
+		break;						\
+	case '3': /* machine dependent flag */			\
+		(retval) |= RB_MD3;				\
+		break;						\
+	case '4': /* machine dependent flag */			\
+		(retval) |= RB_MD4;				\
+		break;						\
 	case 'a': /* ask for file name to boot from */		\
 		(retval) |= RB_ASKNAME;				\
 		break;						\
