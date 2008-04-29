@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.207 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.208 2008/04/29 16:21:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.207 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208 2008/04/29 16:21:01 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -429,8 +429,10 @@ exit1(struct lwp *l, int rv)
 	 * eventual former children on zombproc list won't reference
 	 * p_opptr anymore.
 	 */
-	if (p->p_slflag & PSL_CHTRACED) {
+	if (__predict_false(p->p_slflag & PSL_CHTRACED)) {
 		PROCLIST_FOREACH(q, &allproc) {
+			if ((q->p_flag & PK_MARKER) != 0)
+				continue;
 			if (q->p_opptr == p)
 				q->p_opptr = NULL;
 		}
