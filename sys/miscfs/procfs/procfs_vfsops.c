@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.77 2008/01/28 14:31:19 dholland Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.78 2008/04/29 18:18:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.77 2008/01/28 14:31:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.78 2008/04/29 18:18:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -316,6 +316,7 @@ struct vfsops procfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	procfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

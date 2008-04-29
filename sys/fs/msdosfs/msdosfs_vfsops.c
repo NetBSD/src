@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.61 2008/01/30 11:47:00 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.62 2008/04/29 18:18:08 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.61 2008/01/30 11:47:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.62 2008/04/29 18:18:08 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -135,6 +135,7 @@ struct vfsops msdosfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	msdosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

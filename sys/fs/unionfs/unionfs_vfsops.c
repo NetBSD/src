@@ -548,6 +548,7 @@ struct vfsops unionfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	unionfs_renamelock_enter,
 	unionfs_renamelock_exit,
+	(void *)eopnotsupp,
 	unionfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },

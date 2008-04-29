@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.35 2008/01/28 14:31:17 dholland Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.36 2008/04/29 18:18:08 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35 2008/01/28 14:31:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.36 2008/04/29 18:18:08 ad Exp $");
 #endif /* not lint */
 
 
@@ -132,6 +132,7 @@ struct vfsops udf_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	udf_vnodeopv_descs,
 	0, /* int vfs_refcount   */
 	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
