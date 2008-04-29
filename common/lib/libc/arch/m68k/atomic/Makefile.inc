@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2008/04/06 04:01:56 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2008/04/29 20:57:50 scw Exp $
 
 #
 # Note: The atomic operations here in these assembly files are atomic
@@ -33,6 +33,8 @@ SRCS+=	atomic_init_cas.c
 .else
 
 SRCS+=	atomic_init_testset.c
+SRCS+=	atomic_cas_68000.S
+CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_UP
 
 .endif
 .endif
