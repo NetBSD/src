@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.282 2008/04/29 15:51:23 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.283 2008/04/29 15:55:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.282 2008/04/29 15:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283 2008/04/29 15:55:24 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -777,7 +777,8 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 		 * broadcast
 		 */
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM || p == cp)
+			if (p->p_pid <= 1 || p == cp ||
+			    p->p_flag & (PK_SYSTEM|PK_MARKER))
 				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_authorize_process(pc,
