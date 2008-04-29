@@ -1,4 +1,4 @@
-/*	$NetBSD: core_netbsd.c,v 1.14 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: core_netbsd.c,v 1.15 2008/04/29 16:21:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.14 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_netbsd.c,v 1.15 2008/04/29 16:21:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ CORENAME(coredump_netbsd)(struct lwp *l, void *iocookie)
 	 * the user area.  For now, it's dead.
 	 */
 	memcpy(&p->p_addr->u_kproc.kp_proc, p, sizeof(struct proc));
-	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc);
+	fill_eproc(p, &p->p_addr->u_kproc.kp_eproc, false);
 #endif
 	error = CORENAME(cpu_coredump)(l, NULL, &cs.core);
 	if (error)
