@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.138 2008/04/28 20:23:49 martin Exp $  */
+/*	$NetBSD: atw.c,v 1.139 2008/04/30 14:07:13 ad Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.138 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.139 2008/04/30 14:07:13 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -2868,7 +2868,7 @@ atw_intr(void *arg)
 
 			if (txstatus & ATW_INTR_TLT) {
 				DPRINTF(sc, ("%s: tx lifetime exceeded\n",
-				    device-xname(&sc->sc_dev)));
+				    device_xname(&sc->sc_dev)));
 			}
 
 			if (txstatus & ATW_INTR_TRT) {

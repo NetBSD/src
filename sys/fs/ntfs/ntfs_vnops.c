@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.40 2008/01/30 09:50:20 ad Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.41 2008/04/30 14:07:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40 2008/01/30 09:50:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.41 2008/04/30 14:07:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -680,8 +680,8 @@ ntfs_lookup(void *v)
 	kauth_cred_t cred = cnp->cn_cred;
 	int error;
 
-	dprintf(("ntfs_lookup: \"%.*s\" (%ld bytes) in %llu\n",
-	    (int)cnp->cn_namelen, cnp->cn_nameptr, cnp->cn_namelen,
+	dprintf(("ntfs_lookup: \"%.*s\" (%lld bytes) in %llu\n",
+	    (int)cnp->cn_namelen, cnp->cn_nameptr, (long long)cnp->cn_namelen,
 	    (unsigned long long)dip->i_number));
 
 	error = VOP_ACCESS(dvp, VEXEC, cred);

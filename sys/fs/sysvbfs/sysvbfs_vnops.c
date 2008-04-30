@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.18 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.19 2008/04/30 14:07:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.18 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.19 2008/04/30 14:07:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,7 +77,7 @@ sysvbfs_lookup(void *arg)
 	int error;
 	bool islastcn = cnp->cn_flags & ISLASTCN;
 
-	DPRINTF("%s: %s op=%d %ld\n", __func__, name, nameiop,
+	DPRINTF("%s: %s op=%d %d\n", __func__, name, nameiop,
 	    cnp->cn_flags);
 
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.58 2008/04/28 20:24:01 martin Exp $ */
+/* $NetBSD: wsmouse.c,v 1.59 2008/04/30 14:07:14 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.58 2008/04/28 20:24:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.59 2008/04/30 14:07:14 ad Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -569,7 +569,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct lwp *l)
 		return (ENXIO);
 
 #if NWSMUX > 0
-	DPRINTF(("wsmouseopen: %s mux=%p p=%p\n", device_xname(&sc->sc_base.me_dv),
+	DPRINTF(("wsmouseopen: %s mux=%p p=%p\n", device_xname(sc->sc_base.me_dv),
 		 sc->sc_base.me_parent, l));
 #endif
 
@@ -590,7 +590,7 @@ wsmouseopen(dev_t dev, int flags, int mode, struct lwp *l)
 	error = wsmousedoopen(sc, evar);
 	if (error) {
 		DPRINTF(("wsmouseopen: %s open failed\n",
-			 device_xname(&sc->sc_base.me_dv)));
+			 device_xname(sc->sc_base.me_dv)));
 		sc->sc_base.me_evp = NULL;
 		wsevent_fini(evar);
 	}

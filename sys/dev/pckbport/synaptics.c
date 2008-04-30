@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.20 2008/03/15 18:46:22 cube Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.21 2008/04/30 14:07:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.20 2008/03/15 18:46:22 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.21 2008/04/30 14:07:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ pms_synaptics_probe_init(void *vsc)
 #ifdef SYNAPTICSDEBUG
 			if (res == 0)
 				aprint_normal_dev(psc->sc_dev,
-				    "%s: synaptics_probe: Extended "
+				    "synaptics_probe: Extended "
 				    "Capabilities 0x%02x.\n", resp[1]);
 #endif
 			if (!res && (resp[1] >> 4) >= 2) {

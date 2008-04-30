@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.25 2008/01/25 14:32:12 ad Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.26 2008/04/30 14:07:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.25 2008/01/25 14:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.26 2008/04/30 14:07:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,8 +240,8 @@ filecore_read(v)
 		} else {
 			error = bread(vp, lbn, size, NOCRED, &bp);
 #ifdef FILECORE_DEBUG_BR
-			printf("bread(%p, %x, %ld, CRED, %p)=%d\n",
-			    vp, lbn, size, bp, error);
+			printf("bread(%p, %llx, %ld, CRED, %p)=%d\n",
+			    vp, (long long)lbn, size, bp, error);
 #endif
 		}
 		n = MIN(n, size - bp->b_resid);
