@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.21 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.22 2008/04/30 06:49:23 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.21 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.22 2008/04/30 06:49:23 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,7 @@ compat_20_netbsd32_getfsstat(struct lwp *l, const struct compat_20_netbsd32_getf
 	mutex_enter(&mountlist_lock);
 	count = 0;
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = mp->mnt_list.cqe_next;
+		if (vfs_trybusy(mp, RW_READER, &nmp)) {
 			continue;
 		}
 		if (sfsp && count < maxcount) {
