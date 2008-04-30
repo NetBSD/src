@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.14 2006/01/12 20:29:33 wiz Exp $
+.\"     $NetBSD: bufq.9,v 1.15 2008/04/30 12:09:02 reinoud Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,8 @@
 .Nm bufq_move ,
 .Nm BUFQ_PUT ,
 .Nm BUFQ_GET ,
-.Nm BUFQ_PEEK
+.Nm BUFQ_PEEK ,
+.Nm BUFQ_CANCEL
 .Nd device buffer queues
 .Sh SYNOPSIS
 .In sys/bufq.h
@@ -67,6 +68,8 @@
 .Fn BUFQ_GET "struct bufq_state *bufq"
 .Ft "struct buf *"
 .Fn BUFQ_PEEK "struct bufq_state *bufq"
+.Ft "struct buf *"
+.Fn BUFQ_CANCEL "struct bufq_state *bufq" "struct buf *bp"
 .Sh DESCRIPTION
 The
 .Nm
@@ -160,6 +163,15 @@ is called.
 Returns
 .Dv NULL
 if the queue is empty.
+.It Fn BUFQ_CANCEL "bufq" "bp"
+Cancel the buf
+.Fa bp
+issued earlier on the queue.
+Returns
+.Dv NULL
+if the element can not be found on the queue or 
+.Fa bp
+if it has been found and removed.
 .El
 .Sh CODE REFERENCES
 The actual code implementing the device buffer queues can be found
