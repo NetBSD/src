@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1048 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1049 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -495,6 +495,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		SCSI-2 bus, utilizing HVD signalling via the siop(4)
 		driver. [skrll 20080405]
 	openssh: Import 5.0. [christos 20080406]
+	ofppc: Support for SMP added. [garbled 20080408]
 	opencrypto: Improve performance to 84,000 short modular math ops/sec
 		    by adding asynchronous operation and batched submit/
 		    retrieve of requests/results.  Rewrite manual page to
@@ -508,7 +509,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	netiso: Remove obsolete TPCONS support. [plunky 20080423]
 	arm: merge armv6 kernel support from matt-armv6 branch.
 		[matt 20080427]
+	prep: Support for floppy controller/drive. [garbled 20080428]
 	gpio(4): Extend with open/close to handle request/release the
 		ppbus(4) on open/close. From Hans Rosenfeld. [cegger 20080429]
 	ppbus(4): Extend to attach on gpiobus. From Hans Rosenfeld.
 		[cegger 20080429]
+	prep: Bootable ISO now built automatically. [garbled 20080430]
