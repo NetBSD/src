@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.22 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.23 2008/04/30 21:06:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.22 2008/04/30 12:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.23 2008/04/30 21:06:28 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -212,6 +212,7 @@ vfs_destroy(struct mount *mp, bool interlocked)
 	 * threads traversing the mountlist.  See vfs_trybusy().
 	 */
 	if ((mp->mnt_iflag & IMNT_ONLIST) != 0) {
+		KASSERT((mp->mnt_iflag & IMNT_GONE) != 0);
 		if (!interlocked) {
 			mutex_enter(&mountlist_lock);
 		}
@@ -219,8 +220,6 @@ vfs_destroy(struct mount *mp, bool interlocked)
 		if (!interlocked) {
 			mutex_exit(&mountlist_lock);
 		}
-	} else {
-		KASSERT((mp->mnt_iflag & IMNT_GONE) != 0);
 	}
 
 	/*
