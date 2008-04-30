@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.62 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.63 2008/04/30 12:49:16 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.62 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.63 2008/04/30 12:49:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -213,24 +213,25 @@ msdosfs_mountroot()
 	args.dirmask = 0777;
 
 	if ((error = msdosfs_mountfs(rootvp, mp, l, &args)) != 0) {
-		vfs_unbusy(mp, false);
-		vfs_destroy(mp);
+		vfs_unbusy(mp, false, NULL);
+		vfs_destroy(mp, false);
 		return (error);
 	}
 
 	if ((error = update_mp(mp, &args)) != 0) {
 		(void)msdosfs_unmount(mp, 0);
-		vfs_unbusy(mp, false);
-		vfs_destroy(mp);
+		vfs_unbusy(mp, false, NULL);
+		vfs_destroy(mp, false);
 		vrele(rootvp);
 		return (error);
 	}
 
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	mp->mnt_iflag |= IMNT_ONLIST;
 	mutex_exit(&mountlist_lock);
 	(void)msdosfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (0);
 }
 

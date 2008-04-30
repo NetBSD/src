@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.338 2008/04/29 23:51:04 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.339 2008/04/30 12:49:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.338 2008/04/29 23:51:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.339 2008/04/30 12:49:16 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -304,9 +304,8 @@ vfs_dobusy(struct mount *mp, const krw_t op, struct mount **nextp)
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
 		if (nextp != NULL) {
 			mutex_enter(&mountlist_lock);
-			*nextp = CIRCLEQ_NEXT(mp, mnt_list);
 		}
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, nextp);
 		return ENOENT;
 	}
 
@@ -317,7 +316,7 @@ vfs_dobusy(struct mount *mp, const krw_t op, struct mount **nextp)
  * Mark a mount point as busy, and gain a new reference to it.  Used to
  * synchronize access and to delay unmounting.
  *
- * => The caller is expected to hold a reference to the mount.
+ * => The caller must hold a pre-existing reference to the mount.
  */
 int
 vfs_busy(struct mount *mp, const krw_t op)
@@ -334,7 +333,7 @@ vfs_busy(struct mount *mp, const krw_t op)
 		}
 		mutex_enter(&mount_lock);
 		if (mp->mnt_unmounter != NULL) {
-			vfs_unbusy(mp, false);
+			vfs_unbusy(mp, false, NULL);
 			cv_wait(&mount_cv, &mount_lock);
 		}
 		mutex_exit(&mount_lock);
@@ -345,10 +344,11 @@ vfs_busy(struct mount *mp, const krw_t op)
  * As vfs_busy(), but return error if the file system is being
  * unmounted (and do not wait for the unmount).
  *
- * => If namep != NULL, mountlist_lock is understood to be held.  On
- *    failure a pointer to the next mount will be returned via namep.
+ * => If nextp != NULL, mountlist_lock is understood to be held.  On
+ *    failure a pointer to the next mount will be returned via nextp.
+ *    The caller need not hold a reference to the mount.
  *
- * => If namep == NULL, the caller is expected to hold a reference
+ * => If nextp == NULL, the caller is expected to hold a reference
  *    to the mount.
  */
 int
@@ -359,14 +359,31 @@ vfs_trybusy(struct mount *mp, krw_t op, struct mount **nextp)
 
 	KASSERT(nextp == NULL || mutex_owned(&mountlist_lock));
 
+	if (nextp != NULL) {
+		/*
+		 * We need to prevent adding a reference to the mount
+		 * if it is already on the way out: the reference count
+		 * could be zero, and as a result another thread could
+		 * be in vfs_destroy() trying to throw away the mount.
+		 *
+		 * mnt_iflag is protected by mnt_lock, but this check is
+		 * safe if mountlist_lock is held.  mountlist_lock will
+		 * be held by vfs_destroy() before removing the mount
+		 * from mountlist.
+		 */
+		if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
+			*nextp = CIRCLEQ_NEXT(mp, mnt_list);
+			return ENOENT;
+		}
+	}
+
 	error = vfs_dobusy(mp, op, nextp);
 	l = mp->mnt_unmounter;
 	if (error == 0 && (l != NULL && l != curlwp)) {
 		if (nextp != NULL) {
 			mutex_enter(&mountlist_lock);
-			*nextp = CIRCLEQ_NEXT(mp, mnt_list);
 		}
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, nextp);
 		error = EBUSY;
 	}
 	return error;
@@ -375,9 +392,12 @@ vfs_trybusy(struct mount *mp, krw_t op, struct mount **nextp)
 /*
  * Unlock a busy filesystem and drop reference to it.  If 'keepref' is
  * true, unlock but preserve the reference.
+ *
+ * => If nextp != NULL, mountlist_lock is understood to be held.  On
+ *    failure a pointer to the next mount will be returned via nextp.
  */
 void
-vfs_unbusy(struct mount *mp, bool keepref)
+vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 {
 
 	KASSERT(mp->mnt_refcnt > 0);
@@ -393,8 +413,11 @@ vfs_unbusy(struct mount *mp, bool keepref)
 	} else {
 		rw_exit(&mp->mnt_lock);
 	}
+	if (nextp != NULL) {
+		*nextp = CIRCLEQ_NEXT(mp, mnt_list);
+	}
 	if (!keepref) {
-		vfs_destroy(mp);
+		vfs_destroy(mp, nextp != NULL);
 	}
 }
 
@@ -520,7 +543,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		vp = getcleanvnode();
 		if (vp == NULL) {
 			if (mp != NULL) {
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, NULL);
 			}
 			if (tryalloc) {
 				printf("WARNING: unable to allocate new "
@@ -564,7 +587,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	if (mp != NULL) {
 		if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
 			vp->v_vflag |= VV_MPSAFE;
-		vfs_unbusy(mp, true);
+		vfs_unbusy(mp, true, NULL);
 	}
 
 	return (0);
@@ -702,7 +725,7 @@ insmntque(vnode_t *vp, struct mount *mp)
 
 	if (omp != NULL) {
 		/* Release reference to old mount. */
-		vfs_destroy(omp);
+		vfs_destroy(omp, false);
 	}
 }
 
@@ -1691,8 +1714,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		}
 		mutex_exit(&mntvnode_lock);
 		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 		vnfree(mvp);
 	}
 	mutex_exit(&mountlist_lock);
@@ -1720,7 +1742,7 @@ vfs_scrubvnlist(struct mount *mp)
 			vp->v_mount = NULL;
 			mutex_exit(&mntvnode_lock);
 			mutex_exit(&vp->v_interlock);
-			vfs_destroy(mp);
+			vfs_destroy(mp, false);
 			goto retry;
 		}
 		mutex_exit(&vp->v_interlock);

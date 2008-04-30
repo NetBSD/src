@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.21 2008/04/29 23:51:04 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.22 2008/04/30 12:49:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.21 2008/04/29 23:51:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.22 2008/04/30 12:49:17 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -190,15 +190,43 @@ vfs_getvfs(fsid_t *fsid)
 
 /*
  * Drop a reference to a mount structure, freeing if the last reference.
+ *
+ * => If nextp != NULL, the caller holds mountlist_lock.
+ *
+ * => If nextp == NULL, it must be safe to take mountlist_lock.
  */
 void
-vfs_destroy(struct mount *mp)
+vfs_destroy(struct mount *mp, bool interlocked)
 {
 
-	if (atomic_dec_uint_nv(&mp->mnt_refcnt) > 0) {
+	KASSERT(!interlocked || mutex_owned(&mountlist_lock));
+
+	if (__predict_true(atomic_dec_uint_nv(&mp->mnt_refcnt) > 0)) {
 		return;
 	}
+
 	KASSERT(mp->mnt_unmounter == NULL);
+
+	/*
+	 * Remove it from the mountlist.  We must interlock with
+	 * threads traversing the mountlist.  See vfs_trybusy().
+	 */
+	if ((mp->mnt_iflag & IMNT_ONLIST) != 0) {
+		if (!interlocked) {
+			mutex_enter(&mountlist_lock);
+		}
+		CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
+		if (!interlocked) {
+			mutex_exit(&mountlist_lock);
+		}
+	} else {
+		KASSERT((mp->mnt_iflag & IMNT_GONE) != 0);
+	}
+
+	/*
+	 * Nothing else has visibility of the mount: we can now
+	 * free the data structures.
+	 */
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
 	rw_destroy(&mp->mnt_lock);
 	if (mp->mnt_op != NULL) {
@@ -729,8 +757,7 @@ printlockedvnodes(void)
 				vprint(NULL, vp);
 		}
 		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 }

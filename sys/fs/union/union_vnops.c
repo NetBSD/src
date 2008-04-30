@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.31 2008/04/29 23:51:04 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.32 2008/04/30 12:49:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.31 2008/04/29 23:51:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.32 2008/04/30 12:49:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 			continue;
 		vput(dvp);
 		error = VFS_ROOT(mp, &tdvp);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		if (error) {
 			return (error);
 		}

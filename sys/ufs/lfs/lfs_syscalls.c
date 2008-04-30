@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.130 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.131 2008/04/30 12:49:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.130 2008/04/28 20:24:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.131 2008/04/30 12:49:17 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -503,7 +503,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	lfs_segunlock(fs);
 
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 	if (error)
 		return (error);
 	else if (do_again)
@@ -532,7 +532,7 @@ err3:
 	}
 
 	lfs_segunlock(fs);
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 #ifdef DIAGNOSTIC
 	if (numrefed != 0)
 		panic("lfs_markv: numrefed=%d", numrefed);
@@ -822,7 +822,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		panic("lfs_bmapv: numrefed=%d", numrefed);
 #endif
 
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 
 	return 0;
 }
@@ -868,7 +868,7 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	error = lfs_do_segclean(fs, segnum);
 	lfs_segunlock(fs);
 	KERNEL_UNLOCK_ONE(NULL);
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.353 2008/04/29 23:51:04 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.354 2008/04/30 12:49:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.353 2008/04/29 23:51:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.354 2008/04/30 12:49:17 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -242,7 +242,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		if (mp->mnt_syncer != NULL)
 			vfs_deallocate_syncvnode(mp);
 	}
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 
  out:
 	return (error);
@@ -364,9 +364,8 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	cache_purge(vp);
 	if (error != 0) {
 		vp->v_mountedhere = NULL;
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp, false);
-		vfs_destroy(mp);
+		vfs_unbusy(mp, false, NULL);
+		vfs_destroy(mp, false);
 		return error;
 	}
 
@@ -374,6 +373,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	mutex_enter(&mountlist_lock);
 	vp->v_mountedhere = mp;
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	mp->mnt_iflag |= IMNT_ONLIST;
 	mutex_exit(&mountlist_lock);
     	vn_restorerecurse(vp, recurse);
 	VOP_UNLOCK(vp, 0);
@@ -381,15 +381,15 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 		error = vfs_allocate_syncvnode(mp);
 	/* Hold an additional reference to the mount across VFS_START(). */
-	vfs_unbusy(mp, true);
+	vfs_unbusy(mp, true, NULL);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
 	if (error) {
 		vrele(vp);
-		vfs_destroy(mp);
+		vfs_destroy(mp, false);
 	}
 	/* Drop reference held for VFS_START(). */
-	vfs_destroy(mp);
+	vfs_destroy(mp, false);
 	*vpp = NULL;
 	return error;
 }
@@ -424,7 +424,7 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (error);
 }
 
@@ -674,7 +674,7 @@ dounmount_lock(struct mount *mp)
 	KASSERT(mp->mnt_unmounter == NULL);
 
 	mp->mnt_unmounter = curlwp;
-	vfs_unbusy(mp, true);
+	vfs_unbusy(mp, true, NULL);
 }
 
 /*
@@ -684,11 +684,13 @@ static void
 dounmount_unlock(struct mount *mp)
 {
 
+	KASSERT(mp->mnt_unmounter == curlwp);
+
 	mutex_enter(&mount_lock);
 	mp->mnt_unmounter = NULL;
 	cv_broadcast(&mount_cv);
 	mutex_exit(&mount_lock);
-	vfs_destroy(mp);
+	vfs_destroy(mp, false);
 }
 
 /*
@@ -759,11 +761,8 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 	}
 	vfs_scrubvnlist(mp);
-	mutex_enter(&mountlist_lock);
-	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
 		coveredvp->v_mountedhere = NULL;
-	mutex_exit(&mountlist_lock);
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
@@ -771,7 +770,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
 	dounmount_unlock(mp);
-	vfs_destroy(mp);
+	vfs_destroy(mp, false);
 	if (coveredvp != NULLVP)
 		vrele(coveredvp);
 	return (0);
@@ -809,8 +808,7 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
 		mutex_enter(&mountlist_lock);
-		nmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 
 	}
 	mutex_exit(&mountlist_lock);
@@ -1024,13 +1022,12 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 			error = dostatvfs(mp, sb, l, flags, 0);
 			if (error) {
 				mutex_enter(&mountlist_lock);
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, &nmp);
 				continue;
 			}
 			error = copyfn(sb, sfsp, entry_sz);
 			if (error) {
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, NULL);
 				goto out;
 			}
 			sfsp = (char *)sfsp + entry_sz;
@@ -1038,8 +1035,7 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 		}
 		count++;
 		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
 
 	mutex_exit(&mountlist_lock);
@@ -1115,7 +1111,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 			continue;
 		vput(vp);
 		error = VFS_ROOT(mp, &tdp);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		if (error)
 			goto out;
 		vp = tdp;

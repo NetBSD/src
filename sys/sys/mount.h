@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.175 2008/04/29 23:51:05 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.176 2008/04/30 12:49:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -337,13 +337,13 @@ void	vfs_unmountall(struct lwp *);	    /* unmount file systems */
 int 	vfs_busy(struct mount *, const krw_t);
 int 	vfs_trybusy(struct mount *, const krw_t, struct mount **);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
-void	vfs_unbusy(struct mount *, bool);
+void	vfs_unbusy(struct mount *, bool, struct mount **);
 int	vfs_attach(struct vfsops *);
 int	vfs_detach(struct vfsops *);
 void	vfs_reinit(void);
 struct vfsops *vfs_getopsbyname(const char *);
 void	vfs_delref(struct vfsops *);
-void	vfs_destroy(struct mount *);
+void	vfs_destroy(struct mount *, bool);
 void	vfs_scrubvnlist(struct mount *);
 
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,

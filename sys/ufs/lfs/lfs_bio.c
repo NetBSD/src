@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.112 2008/04/29 23:51:05 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.113 2008/04/30 12:49:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.112 2008/04/29 23:51:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.113 2008/04/30 12:49:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -581,7 +581,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
 		mutex_exit(&lfs_lock);
-		vfs_unbusy(fs->lfs_ivnode->v_mount, false);
+		vfs_unbusy(fs->lfs_ivnode->v_mount, false, NULL);
 	} else {
 		locked_fakequeue_count = 0;
 		mutex_enter(&mountlist_lock);
@@ -599,8 +599,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 				mutex_exit(&lfs_lock);
 			}
 			mutex_enter(&mountlist_lock);
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
-			vfs_unbusy(mp, false);
+			vfs_unbusy(mp, false, &nmp);
 		}
 		mutex_exit(&mountlist_lock);
 	}
