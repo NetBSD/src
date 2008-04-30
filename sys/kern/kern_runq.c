@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.2 2008/04/29 15:51:23 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.3 2008/04/30 09:17:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.2 2008/04/29 15:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.3 2008/04/30 09:17:12 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -121,11 +121,11 @@ runq_init(void)
 
 	/* Balancing */
 	worker_ci = curcpu();
-	cacheht_time = mstohz(5);		/* ~5 ms  */
+	cacheht_time = mstohz(3);		/* ~3 ms  */
 	balance_period = mstohz(300);		/* ~300ms */
 
-	/* Minimal count of LWPs for catching: log2(count of CPUs) */
-	min_catch = min(ilog2(ncpu), 4);
+	/* Minimal count of LWPs for catching */
+	min_catch = 1;
 
 	/* Initialize balancing callout and run it */
 #ifdef MULTIPROCESSOR
