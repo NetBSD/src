@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.28 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: icp.c,v 1.29 2008/04/30 14:07:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.28 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.29 2008/04/30 14:07:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -460,7 +460,7 @@ icp_rescan(struct icp_softc *icp, int unit)
 	if ((newsize = icp->icp_info) == 0) {
 #ifdef ICP_DEBUG
 		printf("%s: rescan: unit %d has zero size\n",
-		    device-xname(&icp->icp_dv), unit);
+		    device_xname(&icp->icp_dv), unit);
 #endif
  gone:
 		/*
