@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.14 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.15 2008/04/30 12:09:02 reinoud Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.14 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.15 2008/04/30 12:09:02 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,12 @@ bufq_peek(struct bufq_state *bufq)
 {
 
 	return (*bufq->bq_get)(bufq, 0);
+}
+
+struct buf *
+bufq_cancel(struct bufq_state *bufq, struct buf *bp)
+{
+	return (*bufq->bq_cancel)(bufq, bp);
 }
 
 /*
