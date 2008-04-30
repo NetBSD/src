@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.22 2008/04/30 06:49:23 jmmv Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.23 2008/04/30 12:49:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.22 2008/04/30 06:49:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.23 2008/04/30 12:49:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,23 +122,21 @@ compat_20_netbsd32_getfsstat(struct lwp *l, const struct compat_20_netbsd32_getf
 			     SCARG(uap, flags) == 0) &&
 			    (error = VFS_STATVFS(mp, sp)) != 0) {
 				mutex_enter(&mountlist_lock);
-				nmp = mp->mnt_list.cqe_next;
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, &nmp);
 				continue;
 			}
 			sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 			compat_20_netbsd32_from_statvfs(sp, &sb32);
 			error = copyout(&sb32, sfsp, sizeof(sb32));
 			if (error) {
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, NULL);
 				return (error);
 			}
 			sfsp = (char *)sfsp + sizeof(sb32);
 		}
 		count++;
 		mutex_enter(&mountlist_lock);
-		nmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 	if (sfsp && count > maxcount)

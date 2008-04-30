@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.37 2008/01/30 11:47:05 ad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.38 2008/04/30 12:49:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.37 2008/01/30 11:47:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.38 2008/04/30 12:49:17 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -166,7 +166,7 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
 	default:
 		error = EINVAL;
 	}
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (error);
 #endif
 }
