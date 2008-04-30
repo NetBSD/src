@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.128 2008/04/28 18:15:39 ad Exp $	*/
+/*	$NetBSD: npx.c,v 1.129 2008/04/30 00:16:30 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.128 2008/04/28 18:15:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.129 2008/04/30 00:16:30 cegger Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -539,7 +539,7 @@ npxdna_xmm(struct cpu_info *ci)
 
 	if (ci->ci_fpsaving) {
 #ifndef XEN
-		printf("recursive npx trap; cr0=%x\n", rcr0());
+		printf("recursive npx trap; cr0=%lx\n", rcr0());
 		kpreempt_enable();
 		return (0);
 #else
@@ -632,7 +632,7 @@ npxdna_s87(struct cpu_info *ci)
 
 	if (ci->ci_fpsaving) {
 #ifndef XEN
-		printf("recursive npx trap; cr0=%x\n", rcr0());
+		printf("recursive npx trap; cr0=%lx\n", rcr0());
 		kpreempt_enable();
 		return (0);
 #else

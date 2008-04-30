@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.7 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.8 2008/04/30 00:16:30 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@ void	invlpg(vaddr_t);
 void	lidt(struct region_descriptor *);
 void	lldt(u_short);
 void	ltr(u_short);
-void	lcr0(u_int);
-u_int	rcr0(void);
+void	lcr0(u_long);
+u_long	rcr0(void);
 void	lcr2(vaddr_t);
 vaddr_t	rcr2(void);
 void	lcr3(vaddr_t);
