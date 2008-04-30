@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114 2007/11/12 14:54:43 jmmv Exp $
+#	$NetBSD: Makefile,v 1.115 2008/04/30 21:15:33 garbled Exp $
 
 .include <bsd.own.mk>
 
@@ -64,7 +64,7 @@ SUBDIR+=	macppc-fixcoff
 .endif
 
 .if ${MACHINE} == "prep"
-SUBDIR+=	prep-mkbootimage
+SUBDIR+=	powerpc-mkbootimage
 .endif
 
 .if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
