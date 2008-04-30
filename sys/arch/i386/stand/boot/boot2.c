@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.23 2008/04/29 21:35:47 ad Exp $	*/
+/*	$NetBSD: boot2.c,v 1.24 2008/04/30 16:18:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -302,6 +302,7 @@ parsebootconf(const char *conf)
 	int fd, err, off;
 	struct stat st;
 	char *key, *value, *v2;
+	extern char twiddle_toggle;
 #ifdef SUPPORT_USTARFS
 	void *op_open;
 #endif
@@ -345,6 +346,7 @@ parsebootconf(const char *conf)
 		return;
 	}
 	
+	twiddle_toggle = 1;
 	off = 0;
 	do {
 		len = read(fd, bc + off, 1024);
@@ -353,6 +355,7 @@ parsebootconf(const char *conf)
 		off += len;
 	} while (len > 0);
 	bc[off] = '\0';
+	twiddle_toggle = 0;
 	
 	close(fd);
 	/* bc now contains the whole boot.cfg file */
