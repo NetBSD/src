@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.16 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: boot1.c,v 1.17 2008/04/30 16:18:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.16 2008/04/28 20:23:25 martin Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.17 2008/04/30 16:18:26 ad Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -68,7 +68,9 @@ boot1(uint32_t biosdev, uint32_t *sector)
 	bios_sector = *sector;
 	d.dev = biosdev;
 
+#ifdef SHOW_BANNER
         putstr("\r\nNetBSD/x86 " STR(FS) " Primary Bootstrap\r\n");
+#endif
 
 	if (set_geometry(&d, NULL))
 		return "set_geometry\r\n";
