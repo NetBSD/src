@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.138 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: contents,v 1.139 2008/04/30 15:29:11 ad Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,30 +58,12 @@ kernel containing code for everything supported in this release.
 This kernel runs on Vr41xx and TX3922 CPUs only.
 .\} \" hpcmips
 .\} \" !atari/mac68k/sgimips/evgppc
-.if \n[macppc]:\n[sparc]:\n[sparc64]:\n[i386]:\n[amd64] \{\
+.if \n[macppc]:\n[sparc]:\n[sparc64] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.  This 
 kernel also supports SMP on systems with more than one CPU.
-.\}
-.if \n[i386] \{\
-.			It Pa netbsd-GENERIC.NOACPI.gz
-A gzipped
-.Nx
-kernel containing code for everything supported in this release but without
-ACPI support, for use on legacy hardware.
-.\}
-.
-.if \n[amd64] \{\
-.			It Pa netbsd-INSTALL.gz
-A gzipped
-.Nx
-kernel which is somewhat smaller.
-This is the kernel on the install floppies and CD-ROMs.
-.			It Pa netbsd-INSTALL.symbols.gz
-Symbols for
-.Pa netbsd-INSTALL.gz .
 .\}
 .
 .if \n[hp300] \{\
