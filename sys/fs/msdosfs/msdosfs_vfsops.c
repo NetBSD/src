@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.63 2008/04/30 12:49:16 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.64 2008/04/30 14:07:14 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.63 2008/04/30 12:49:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.64 2008/04/30 14:07:14 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -859,7 +859,7 @@ msdosfs_unmount(mp, mntflags)
 		struct vnode *vp = pmp->pm_devvp;
 
 		printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
-		printf("flag %08x, usecount %d, writecount %ld, holdcnt %ld\n",
+		printf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
 		    vp->v_vflag | vp->v_iflag | vp->v_uflag, vp->v_usecount,
 		    vp->v_writecount, vp->v_holdcnt);
 		printf("mount %p, op %p\n",

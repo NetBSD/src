@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.40 2008/04/28 20:24:10 martin Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.41 2008/04/30 14:07:14 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.40 2008/04/28 20:24:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.41 2008/04/30 14:07:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1705,7 +1705,7 @@ bail:
 					DPRINTF(("cryptodev_key: copyout oparam"
 						"%d failed, error=%d\n", 
 						i-krp->krp_iparams, 
-						crypt_result[req].status));
+						crypt_res[req].status));
 					goto fail;
 				}
 			}
