@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.204 2008/03/31 02:42:27 lukem Exp $
+#	$NetBSD: bsd.README,v 1.205 2008/04/30 21:15:33 garbled Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -1379,7 +1379,7 @@ TOOL_PAX		Manipulate file archives and copy directories.  [pax]
 
 TOOL_PIC		Compile pictures for groff.  [pic]
 
-TOOL_PREPMKBOOTIMAGE	prep-mkbootimage (XXXBUILDSH).  [prep-mkbootimage]
+TOOL_POWERPCMKBOOTIMAGE	powerpc-mkbootimage (XXXBUILDSH).  [powerpc-mkbootimage]
 
 TOOL_PWD_MKDB		Generate the password databases.  [pwd_mkdb]
 
