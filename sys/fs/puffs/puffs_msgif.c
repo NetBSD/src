@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.69 2008/04/29 23:51:04 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.70 2008/04/30 12:49:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.69 2008/04/29 23:51:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.70 2008/04/30 12:49:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1036,7 +1036,7 @@ puffs_msgif_close(void *this)
 	mutex_enter(&syncer_mutex);
 	if (mp->mnt_iflag & IMNT_GONE) {
 		mutex_exit(&syncer_mutex);
-		vfs_destroy(mp);
+		vfs_destroy(mp, false);
 		return 0;
 	}
 
@@ -1053,7 +1053,7 @@ puffs_msgif_close(void *this)
 	 */
 	if (vfs_busy(mp, RW_WRITER)) {
 		mutex_exit(&syncer_mutex);
-		vfs_destroy(mp);
+		vfs_destroy(mp, false);
 		return 0;
 	}
 
@@ -1064,7 +1064,7 @@ puffs_msgif_close(void *this)
 	 */
 	rv = dounmount(mp, MNT_FORCE, curlwp);
 	KASSERT(rv == 0);
-	vfs_destroy(mp);
+	vfs_destroy(mp, false);
 
 	return 0;
 }
