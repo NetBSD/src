@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.938 2008/04/17 19:12:49 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.939 2008/04/30 12:23:55 joerg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.936 2008/04/15 21:24:07 cegger Exp
+ *	NetBSD: pcidevs,v 1.938 2008/04/30 12:23:29 joerg Exp
  */
 
 /*
@@ -730,6 +730,7 @@
 #define	PCI_PRODUCT_3WARE_9000	0x1002		/* 9000-series RAID */
 #define	PCI_PRODUCT_3WARE_9550	0x1003		/* 9550-series RAID */
 #define	PCI_PRODUCT_3WARE_9650	0x1004		/* 9650-series RAID */
+#define	PCI_PRODUCT_3WARE_9690	0x1005		/* 9690-series RAID */
 
 /* AboCom products */
 #define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
