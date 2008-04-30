@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_debug.c,v 1.6 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_debug.c,v 1.7 2008/04/30 20:20:53 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.6 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.7 2008/04/30 20:20:53 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -43,11 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.6 2008/04/28 20:24:04 martin Exp $"
 #include <sys/systm.h>
 #include <sys/kmem.h>
 #include <sys/debug.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/lock.h>
-#include <sys/cpu.h>
 
 /*
  * Allocation/free validation by pointer address.  Introduces
@@ -63,7 +64,7 @@ typedef struct fcitem {
 
 fcitem_t		*freecheck_free;
 __cpu_simple_lock_t	freecheck_lock;
-int			debug_freecheck;
+u_int			debug_freecheck;
 
 void
 debug_init(void)
@@ -116,8 +117,8 @@ freecheck_out(void **head, void *addr)
 	splx(s);
 
 	if (i == NULL) {
-		printf("freecheck_out: no more slots\n");
-		debug_freecheck = 0;
+		if (atomic_swap_uint(&debug_freecheck, 1) == 0)
+			printf("freecheck_out: no more slots\n");
 	}
 }
 
