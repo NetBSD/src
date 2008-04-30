@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.937 2008/04/17 19:12:26 christos Exp $
+$NetBSD: pcidevs,v 1.938 2008/04/30 12:23:29 joerg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -723,6 +723,7 @@ product 3WARE ESCALADE_ASIC	0x1001	Escalade ATA RAID 7000/8000 series Controller
 product 3WARE 9000		0x1002	9000-series RAID
 product 3WARE 9550		0x1003	9550-series RAID
 product 3WARE 9650		0x1004	9650-series RAID
+product 3WARE 9690		0x1005	9690-series RAID
 
 /* AboCom products */
 product ABOCOM FE2500		0xab02	FE2500 10/100 Ethernet
