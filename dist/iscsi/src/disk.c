@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.37 2007/12/18 20:31:50 agc Exp $ */
+/* $NetBSD: disk.c,v 1.38 2008/04/30 20:28:30 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -814,6 +814,76 @@ device_init(globals_t *gp __attribute__((__unused__)), targv_t *tvp, disc_target
 	return disks.c++;
 }
 
+/* handle MODE_SENSE_6 and MODE_SENSE_10 commands */
+static int
+mode_sense(const int bytes, target_cmd_t *cmd)
+{
+	iscsi_scsi_cmd_args_t	*args = cmd->scsi_cmd;
+	uint16_t		 len;
+	uint8_t			*cp;
+	uint8_t			*cdb = args->cdb;
+	size_t			 mode_data_len;
+
+	switch(bytes) {
+	case 6:
+		cp = args->send_data;
+		len = ISCSI_MODE_SENSE_LEN;
+		mode_data_len = len + 3;
+
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_6\n");
+		(void) memset(cp, 0x0, mode_data_len);
+
+		cp[0] = mode_data_len;
+		cp[1] = 0;
+		cp[2] = 0;
+		cp[3] = 8;	/* block descriptor length */
+		cp[10] = 2;	/* density code and block length */
+
+		args->input = 1;
+		args->length = (unsigned)(len);
+		args->status = SCSI_SUCCESS;
+		return 1;
+	case 10:
+		cp = args->send_data;
+		len = ISCSI_MODE_SENSE_LEN;
+		mode_data_len = len + 3;
+
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_10\n");
+		(void) memset(cp, 0x0, mode_data_len);
+		if (cdb[4] == 0) {
+			/* zero length cdb means just return success */
+			args->input = 1;
+			args->length = (unsigned)(mode_data_len);
+			args->status = SCSI_SUCCESS;
+			return 1;
+		}
+		if ((cdb[2] & PAGE_CONTROL_MASK) == PAGE_CONTROL_CHANGEABLE_VALUES) {
+			/* just send back a CHECK CONDITION */
+			args->input = 1;
+			args->length = (unsigned)(len);
+			args->status = SCSI_CHECK_CONDITION;
+			cp[2] = SCSI_SKEY_ILLEGAL_REQUEST;
+			cp[12] = ASC_LUN_UNSUPPORTED;
+			cp[13] = ASCQ_LUN_UNSUPPORTED;
+			return 1;
+		}
+		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "PC %02x\n", cdb[2]);
+
+		cp[0] = mode_data_len;
+		cp[1] = 0;
+		cp[2] = 0;
+		cp[3] = 8;	/* block descriptor length */
+		cp[10] = 2;	/* density code and block length */
+
+		args->input = 1;
+		args->length = (unsigned)(len);
+		args->status = SCSI_SUCCESS;
+		return 1;
+	}
+	return 0;
+}
+
+
 int 
 device_command(target_session_t * sess, target_cmd_t * cmd)
 {
@@ -827,7 +897,6 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 	uint8_t			*data;
 	uint8_t			*cdb = args->cdb;
 	uint8_t			lun = (uint8_t) (args->lun >> 32);
-	size_t			mode_data_len;
 
 	totsize = &cdb[4];
 
@@ -1025,22 +1094,7 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		break;
 
 	case MODE_SENSE_6:
-		cp = data = args->send_data;
-		len = ISCSI_MODE_SENSE_LEN;
-		mode_data_len = len + 3;
-
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_6 (len %u blocks)\n", len);
-		(void) memset(cp, 0x0, mode_data_len);
-		/* magic constants courtesy of some values in the Lunix UNH iSCSI target */
-		cp[0] = mode_data_len;
-		cp[1] = 0;
-		cp[2] = 0;
-		cp[3] = 8;	/* block descriptor length */
-		cp[10] = 2;	/* density code and block length */
-
-		args->input = 1;
-		args->length = (unsigned)(len);
-		args->status = SCSI_SUCCESS;
+		mode_sense(6, cmd);
 		break;
 
 	case WRITE_10:
@@ -1090,42 +1144,16 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 		args->length = 0;
 		break;
 
-#if 0
+	case MODE_SENSE_10:
+		mode_sense(10, cmd);
+		break;
+
 	case MODE_SELECT_10:
 		/* XXX still to do */
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SELECT_10\n");
 		args->status = SCSI_SUCCESS;
 		args->length = 0;
 		break;
-
-	case MODE_SENSE_10:
-		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "MODE_SENSE_10\n");
-
-		cp = data = args->send_data;
-		len = ISCSI_MODE_SENSE_LEN;
-		mode_data_len = len + 3;
-
-		(void) memset(cp, 0x0, mode_data_len);
-
-		if (cdb[4] == 0) {
-			/* zero length cdb means just return success */
-		} else {
-			if (!(cdb[1] & DISABLE_BLOCK_DESCRIPTORS)) {
-			}
-
-			*((uint16_t *) (void *)cp) = (uint16_t) ISCSI_HTONS((uint16_t) mode_data_len);
-			cp[2] = SCSI_SKEY_ILLEGAL_REQUEST;
-			cp[4] = (cdb[1] & LONG_LBA_ACCEPTED) ? 0x01 : 0;
-			*((uint16_t *) (void *)(cp + 6)) = (uint16_t) ISCSI_HTONS((uint16_t) 6); /* additional sense length */
-			cp[12] = ASC_LUN_UNSUPPORTED;
-			cp[13] = ASCQ_LUN_UNSUPPORTED;
-		}
-
-		args->input = 1;
-		args->length = (unsigned)(mode_data_len);
-		args->status = SCSI_SUCCESS;
-		break;
-#endif
 
 	case PERSISTENT_RESERVE_IN:
 		iscsi_trace(TRACE_SCSI_CMD, __FILE__, __LINE__, "PERSISTENT_RESERVE_IN\n");
