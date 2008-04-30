@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2008/04/30 21:15:33 garbled Exp $
+#	$NetBSD: Makefile,v 1.116 2008/04/30 21:18:17 garbled Exp $
 
 .include <bsd.own.mk>
 
@@ -63,7 +63,7 @@ SUBDIR+=	ibmnws-ncdcs
 SUBDIR+=	macppc-fixcoff
 .endif
 
-.if ${MACHINE} == "prep"
+.if (${MACHINE} == "prep" || ${MACHINE} == "rs6000" || ${MACHINE} == "bebox")
 SUBDIR+=	powerpc-mkbootimage
 .endif
 
