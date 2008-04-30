@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.23 2008/04/29 23:51:05 ad Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.24 2008/04/30 12:49:17 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.23 2008/04/29 23:51:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.24 2008/04/30 12:49:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -163,7 +163,7 @@ sync_fsync(v)
 		VFS_SYNC(mp, MNT_LAZY, ap->a_cred);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 	}
 	return (0);
 }

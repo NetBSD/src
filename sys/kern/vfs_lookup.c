@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.105 2008/04/29 23:51:04 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.106 2008/04/30 12:49:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.105 2008/04/29 23:51:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.106 2008/04/30 12:49:16 ad Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -783,7 +783,7 @@ unionlookup:
 		VOP_UNLOCK(ndp->ni_dvp, 0);
 		vput(dp);
 		error = VFS_ROOT(mp, &tdp);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		if (error) {
 			vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
 			goto bad;

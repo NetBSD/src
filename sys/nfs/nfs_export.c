@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_export.c,v 1.35 2008/04/29 23:51:05 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.36 2008/04/30 12:49:17 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.35 2008/04/29 23:51:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.36 2008/04/30 12:49:17 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -287,7 +287,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 
 out:
 	netexport_wrunlock();
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return error;
 }
 

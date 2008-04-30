@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.94 2008/04/29 23:51:05 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.95 2008/04/30 12:49:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.94 2008/04/29 23:51:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.95 2008/04/30 12:49:17 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -199,21 +199,22 @@ mfs_mountroot(void)
 	mfsp->mfs_refcnt = 1;
 	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		bufq_free(mfsp->mfs_buflist);
-		vfs_destroy(mp);
+		vfs_destroy(mp, false);
 		kmem_free(mfsp, sizeof(*mfsp));
 		return (error);
 	}
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	mp->mnt_iflag |= IMNT_ONLIST;
 	mutex_exit(&mountlist_lock);
 	mp->mnt_vnodecovered = NULLVP;
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (0);
 }
 
@@ -380,7 +381,7 @@ mfs_start(struct mount *mp, int flags)
 	mutex_enter(&mfs_lock);
 	mfsp->mfs_refcnt++;
 	mutex_exit(&mfs_lock);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 
 	base = mfsp->mfs_baseoff;
 	mutex_enter(&mfs_lock);
