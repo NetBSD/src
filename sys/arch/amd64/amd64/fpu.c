@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.23 2008/04/16 21:51:02 cegger Exp $	*/
+/*	$NetBSD: fpu.c,v 1.24 2008/04/30 00:16:30 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.23 2008/04/16 21:51:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.24 2008/04/30 00:16:30 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -220,7 +220,7 @@ fpudna(struct cpu_info *ci)
 	int s;
 
 	if (ci->ci_fpsaving) {
-		printf("recursive fpu trap; cr0=%x\n", rcr0());
+		printf("recursive fpu trap; cr0=%lx\n", rcr0());
 		return;
 	}
 
