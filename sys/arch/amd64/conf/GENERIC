@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.206 2008/04/29 12:43:58 ad Exp $
+# $NetBSD: GENERIC,v 1.207 2008/04/30 22:08:18 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.206 $"
+#ident 		"GENERIC-$Revision: 1.207 $"
 
 maxusers	64		# estimated number of users
 
@@ -249,8 +249,6 @@ config		netbsd	root on ? type ?
 # Device configuration
 #
 
-mainbus0 at root
-
 #IPMI support
 #ipmi0		at mainbus?
 
@@ -291,9 +289,6 @@ sony*		at acpi?		# Sony Notebook Controller
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
-
-cpu* 		at mainbus?
-ioapic* 	at mainbus? apid ?
 
 #apm0	at mainbus0			# Advanced power management
 
