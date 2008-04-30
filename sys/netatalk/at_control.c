@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.25 2008/04/28 14:31:46 ad Exp $	 */
+/*	$NetBSD: at_control.c,v 1.26 2008/04/30 00:25:17 ad Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.25 2008/04/28 14:31:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.26 2008/04/30 00:25:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -536,8 +536,8 @@ at_ifinit(ifp, aa, sat)
 				 */
 				callout_reset(&aa->aa_probe_ch, hz / 5,
 				    aarpprobe, ifp);
-				if (mtsleep(aa, PPAUSE | PCATCH, "at_ifinit",
-				    0, softnet_lock)) {
+				if (tsleep(aa, PPAUSE | PCATCH, "at_ifinit",
+				    0)) {
 					/*
 				         * theoretically we shouldn't time out
 					 * here so if we returned with an error.
