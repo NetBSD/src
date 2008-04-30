@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.12 2008/04/24 15:35:27 ad Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.13 2008/04/30 14:07:13 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.12 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.13 2008/04/30 14:07:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -137,9 +137,10 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		}
 
 		FUTEXPRINTF(("FUTEX_WAIT %d.%d: val = %d, uaddr = %p, "
-		    "*uaddr = %d, timeout = %d.%09ld\n", 
+		    "*uaddr = %d, timeout = %lld.%09ld\n", 
 		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val), 
-		    SCARG(uap, uaddr), val, timeout.tv_sec, timeout.tv_nsec));
+		    SCARG(uap, uaddr), val, (long long)timeout.tv_sec,
+		    timeout.tv_nsec));
 
 		f = futex_get(SCARG(uap, uaddr));
 		ret = futex_sleep(f, timeout_hz);

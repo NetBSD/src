@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.50 2008/04/24 15:35:28 ad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.51 2008/04/30 14:07:14 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.50 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.51 2008/04/30 14:07:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,8 +344,8 @@ msdosfs_setattr(v)
 	kauth_cred_t cred = ap->a_cred;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_setattr(): vp %p, vap %p, cred %p, p %p\n",
-	    ap->a_vp, vap, cred, ap->a_l);
+	printf("msdosfs_setattr(): vp %p, vap %p, cred %p\n",
+	    ap->a_vp, vap, cred);
 #endif
 	/*
 	 * Note we silently ignore uid or gid changes.

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.65 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: midi.c,v 1.66 2008/04/30 14:07:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.65 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.66 2008/04/30 14:07:13 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1446,7 +1446,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	size_t xfrcount;
 	int pollout = 0;
 
-	DPRINTFN(6, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit,
+	DPRINTFN(6, ("midiwrite: %p, unit=%d, count=%lu\n", sc, (int)minor(dev),
 		     (unsigned long)uio->uio_resid));
 
 	if (sc->dying)

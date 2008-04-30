@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.19 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.20 2008/04/30 14:07:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.19 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.20 2008/04/30 14:07:13 ad Exp $");
 
 #include "rnd.h"
 
@@ -239,7 +239,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 			sge->SgAddress = htole64(xfer->dm_segs[i].ds_addr);
 			sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
 			AAC_DPRINTF(AAC_D_IO,
-			    ("#%d va %p pa %lx len %lx\n", i, data,
+			    ("#%d va %p pa %llx len %lx\n", i, data,
 			    (u_int64_t)xfer->dm_segs[i].ds_addr,
 			    (u_long)xfer->dm_segs[i].ds_len));
 		}
