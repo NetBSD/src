@@ -1,7 +1,7 @@
-/*	$NetBSD: fd.c,v 1.85 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: fd.c,v 1.86 2008/04/30 23:02:43 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.86 2008/04/30 23:02:43 ad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -149,17 +149,19 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85 2008/04/28 20:23:52 martin Exp $");
 #include <dev/isa/fdreg.h>
 #include <dev/isa/fdcvar.h>
 
-#if defined(i386)
+#if defined(i386) || defined(x86_64)
 
 #include <dev/ic/mc146818reg.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
 
+#if defined(i386)
 #include "mca.h"
 #if NMCA > 0
 #include <machine/mca_machdep.h>		/* for MCA_system */
 #endif
+#endif
 
-#endif /* i386 */
+#endif /* i386 || x86_64 */
 
 #include <dev/isa/fdvar.h>
 
@@ -241,9 +243,9 @@ void fdstart(struct fd_softc *);
 
 struct dkdriver fddkdriver = { fdstrategy, NULL };
 
-#if defined(i386)
+#if defined(i386) || defined(x86_64)
 const struct fd_type *fd_nvtotype(const char *, int, int);
-#endif /* i386 */
+#endif /* i386 || x86_64 */
 void fd_set_motor(struct fdc_softc *fdc, int reset);
 void fd_motor_off(void *arg);
 void fd_motor_on(void *arg);
@@ -387,9 +389,6 @@ fdcfinishattach(device_t self)
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	struct fdc_attach_args fa;
-#if defined(i386)
-	int type;
-#endif
 
 	/*
 	 * Reset the controller to get it into a known state. Not all
@@ -409,17 +408,25 @@ fdcfinishattach(device_t self)
 	out_fdc(iot, ioh, 0xdf);
 	out_fdc(iot, ioh, 2);
 
-#if defined(i386)
+#if defined(i386) || defined(x86_64)
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
 	 * `primary' floppy controller.
 	 */
 	/* XXX device_unit() abuse */
-	if (device_unit(fdc->sc_dev) == 0)
-		type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
-	else
-		type = -1;
-#endif /* i386 */
+	if (device_unit(fdc->sc_dev) == 0) {
+		int type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
+		fdc->sc_known = 1;
+		fdc->sc_knownfds[0] = fd_nvtotype(device_xname(fdc->sc_dev),
+		    type, 0);
+		if (fdc->sc_knownfds[0] != NULL)
+			fdc->sc_present |= 1;
+		fdc->sc_knownfds[1] = fd_nvtotype(device_xname(fdc->sc_dev),
+		    type, 1);
+		if (fdc->sc_knownfds[1] != NULL)
+			fdc->sc_present |= 2;
+	}
+#endif /* i386 || x86_64 */
 
 	/* physical limit: four drives per controller. */
 	fdc->sc_state = PROBING;
@@ -431,14 +438,7 @@ fdcfinishattach(device_t self)
 				    fdprint);
 			}
 		} else {
-#if defined(i386)
-			if (type >= 0 && fa.fa_drive < 2)
-				fa.fa_deftype =
-				    fd_nvtotype(device_xname(fdc->sc_dev),
-				        type, fa.fa_drive);
-			else
-				fa.fa_deftype = NULL;		/* unknown */
-#elif defined(atari)
+#if defined(atari)
 			/*
 			 * Atari has a different ordening, defaults to 1.44
 			 */
@@ -449,7 +449,7 @@ fdcfinishattach(device_t self)
 			 * on these platforms?
 			 */
 			fa.fa_deftype = &fd_types[0];
-#endif /* i386 */
+#endif
 			(void)config_found_ia(fdc->sc_dev, "fdc", (void *)&fa, fdprint);
 		}
 	}
@@ -624,7 +624,7 @@ fddetach(device_t self, int flags)
 	return 0;
 }
 
-#if defined(i386)
+#if defined(i386) || defined(x86_64)
 /*
  * Translate nvram type into internal data structure.  Return NULL for
  * none/unknown/unusable.
@@ -665,7 +665,7 @@ fd_nvtotype(const char *fdc, int nvraminfo, int drive)
 		return NULL;
 	}
 }
-#endif /* i386 */
+#endif /* i386 || x86_64 */
 
 static const struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
