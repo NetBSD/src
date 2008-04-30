@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.19 2006/06/02 22:11:06 hubertf Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.20 2008/04/30 22:00:05 ad Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -33,7 +33,7 @@ FLOPPYKERNOBJ!=		cd ${.CURDIR}/../../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
 
 FLOPPY_BOOT?=		${MDEC}/boot
 FLOPPY_NETBSD=		${FLOPPYKERNOBJ}/${FLOPPYKERNEL}
-FLOPPYFILES=		boot ${FLOPPYMETAFILE} netbsd
+FLOPPYFILES=		boot ${DISTRIBDIR}/i386/floppies/common/boot.cfg ${FLOPPYMETAFILE} netbsd
 FLOPPYPAD=		1
 
 FLOPPY_RELEASEDIR=	installation/floppy
