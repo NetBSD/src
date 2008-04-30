@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.41 2008/04/22 21:33:13 ad Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.42 2008/04/30 06:49:23 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.41 2008/04/22 21:33:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.42 2008/04/30 06:49:23 jmmv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -150,8 +150,7 @@ osf1_sys_getfsstat(struct lwp *l, const struct osf1_sys_getfsstat_args *uap, reg
 	mutex_enter(&mountlist_lock);
 	for (count = 0, mp = mountlist.cqh_first; mp != (void *)&mountlist;
 	    mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = mp->mnt_list.cqe_next;
+		if (vfs_trybusy(mp, RW_READER, &nmp)) {
 			continue;
 		}
 		if (osf_sfsp && count < maxcount) {
