@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.61 2008/04/08 20:30:17 dyoung Exp $
+# $NetBSD: NET4501,v 1.62 2008/04/30 15:29:12 ad Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.61 $"
+#ident 		"NET4501-$Revision: 1.62 $"
 
 maxusers	32		# estimated number of users
 
@@ -173,9 +173,6 @@ config		netbsd	root on ? type ?
 #
 # Device configuration
 #
-
-mainbus0 at root
-cpu0 	at mainbus0
 
 # Basic Bus Support
 

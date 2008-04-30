@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.118 2008/03/27 21:13:29 gdt Exp $
+#	$NetBSD: INSTALL_TINY,v 1.119 2008/04/30 15:29:11 ad Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -190,8 +190,6 @@ options 	PCDISPLAY_SOFTCURSOR
 # Device configuration
 #
 
-mainbus0 at root
-cpu0	at mainbus0
 #apm0	at mainbus0			# Advanced power management
 
 

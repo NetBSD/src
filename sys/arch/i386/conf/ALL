@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.168 2008/04/30 14:13:26 ad Exp $
+# $NetBSD: ALL,v 1.169 2008/04/30 15:29:11 ad Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.168 $"
+#ident 		"ALL-$Revision: 1.169 $"
 
 maxusers	32		# estimated number of users
 
@@ -309,11 +309,6 @@ config		netbsd	root on ? type ?
 # Device configuration
 #
 
-mainbus0 at root
-
-cpu* at mainbus?
-ioapic* at mainbus?
-
 # Doesn't do anything yet.
 p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
 
@@ -336,8 +331,6 @@ ipmi0		at mainbus?
 
 # This option can be used to retrieve CPU and APIC information.
 # that I/O APICs can be used if ACPI is enabled below.
-# To use the I/O APIC(s), enable the ioapic line above.
-#options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 #options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
 #options 	ACPI_SCANPCI	# find PCI roots using ACPI
 
