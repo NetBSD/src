@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.505 2008/03/31 02:42:27 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.506 2008/04/30 21:15:33 garbled Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -243,7 +243,7 @@ TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
 TOOL_PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
 TOOL_PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
-TOOL_PREPMKBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}prep-mkbootimage
+TOOL_POWERPCMKBOOTIMAGE=${TOOLDIR}/bin/${_TOOL_PREFIX}powerpc-mkbootimage
 TOOL_PWD_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
 TOOL_REFER=		${TOOLDIR}/bin/${_TOOL_PREFIX}refer
 TOOL_ROFF_ASCII=	PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}nroff

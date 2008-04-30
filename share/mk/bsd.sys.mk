@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.162 2008/04/22 12:47:59 tsutsui Exp $
+#	$NetBSD: bsd.sys.mk,v 1.163 2008/04/30 21:15:33 garbled Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -166,7 +166,7 @@ TOOL_MSGC?=		msgc
 TOOL_MTREE?=		mtree
 TOOL_PAX?=		pax
 TOOL_PIC?=		pic
-TOOL_PREPMKBOOTIMAGE?=	prep-mkbootimage
+TOOL_POWERPCMKBOOTIMAGE?=	powerpc-mkbootimage
 TOOL_PWD_MKDB?=		pwd_mkdb
 TOOL_REFER?=		refer
 TOOL_ROFF_ASCII?=	nroff

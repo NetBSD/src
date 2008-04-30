@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.8 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.9 2008/04/30 21:15:33 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,8 +47,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/signal.h>
 
-#ifdef __NetBSD__
+#undef USE_SYSCTL
+
+#if defined(__NetBSD__) && !defined(HAVE_NBTOOL_CONFIG_H)
+#define USE_SYSCTL 1
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
 #endif
@@ -119,7 +124,7 @@ usage(int extended)
 			fprintf(stderr, " %s", sup_plats[i]);
 		fprintf(stderr, "\n\n");
 	}
-#ifdef __NetBSD__
+#ifdef USE_SYSCTL
 	fprintf(stderr, "usage: %s [-lsv] [-m machine_arch] [-b bootfile] "
 	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
 #else
@@ -822,7 +827,7 @@ main(int argc, char **argv)
 	int ch, lfloppyflag=0;
 	char *kernel = NULL, *boot = NULL, *rawdev = NULL, *outname = NULL;
 	char *march = NULL;
-#ifdef __NetBSD__	
+#ifdef USE_SYSCTL
 	char machine_arch[SYS_NMLN];
 	int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
 #endif
@@ -874,7 +879,7 @@ main(int argc, char **argv)
 		march = NULL;
 	if (march == NULL) {
 		int i;
-#ifdef __NetBSD__
+#ifdef USE_SYSCTL
 		size_t len = sizeof(machine_arch);
 
 		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,
