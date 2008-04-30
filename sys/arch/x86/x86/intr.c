@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.47 2008/04/29 18:47:18 joerg Exp $	*/
+/*	$NetBSD: intr.c,v 1.48 2008/04/30 12:00:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.47 2008/04/29 18:47:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.48 2008/04/30 12:00:52 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -759,15 +759,14 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 	mutex_exit(&x86_intr_lock);
 
-	if (ci->ci_isources[slot]->is_resume == NULL ||
-	    source->is_idtvec != idt_vec) {
+	if (source->is_resume == NULL || source->is_idtvec != idt_vec) {
 		if (source->is_idtvec != 0 && source->is_idtvec != idt_vec)
 			idt_vec_free(source->is_idtvec);
 		source->is_idtvec = idt_vec;
 		stubp = type == IST_LEVEL ?
 		    &pic->pic_level_stubs[slot] : &pic->pic_edge_stubs[slot];
-		ci->ci_isources[slot]->is_resume = stubp->ist_resume;
-		ci->ci_isources[slot]->is_recurse = stubp->ist_recurse;
+		source->is_resume = stubp->ist_resume;
+		source->is_recurse = stubp->ist_recurse;
 		setgate(&idt[idt_vec], stubp->ist_entry, 0, SDT_SYS386IGT,
 		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 	}
