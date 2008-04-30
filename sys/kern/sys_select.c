@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.6 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.7 2008/04/30 12:45:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.6 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.7 2008/04/30 12:45:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,6 +292,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 			continue;
 		}
 		l->l_selflag = SEL_BLOCKING;
+		l->l_kpriority = true;
 		lwp_lock(l);
 		lwp_unlock_to(l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
@@ -487,6 +488,7 @@ pollcommon(lwp_t *l, register_t *retval,
 			continue;
 		}
 		l->l_selflag = SEL_BLOCKING;
+		l->l_kpriority = true;
 		lwp_lock(l);
 		lwp_unlock_to(l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
