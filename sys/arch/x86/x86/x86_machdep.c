@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.19 2008/04/29 15:44:07 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.20 2008/04/30 12:44:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.19 2008/04/29 15:44:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.20 2008/04/30 12:44:27 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,7 +162,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		}
 #endif
 	} else {
-		aston(l);
+		aston(l, X86_AST_PREEMPT);
 		if (ci == cur) {
 			return;
 		}
@@ -177,7 +177,7 @@ cpu_signotify(struct lwp *l)
 {
 
 	KASSERT(kpreempt_disabled());
-	aston(l);
+	aston(l, X86_AST_GENERIC);
 	if (l->l_cpu != curcpu())
 		x86_send_ipi(l->l_cpu, 0);
 }
@@ -190,7 +190,7 @@ cpu_need_proftick(struct lwp *l)
 	KASSERT(l->l_cpu == curcpu());
 
 	l->l_pflag |= LP_OWEUPC;
-	aston(l);
+	aston(l, X86_AST_GENERIC);
 }
 
 bool
@@ -226,7 +226,7 @@ cpu_kpreempt_enter(uintptr_t where, int s)
 	 */
 	if (s > IPL_PREEMPT) {
 		softint_trigger(1 << SIR_PREEMPT);
-		aston(l);	/* paranoid */
+		aston(l, X86_AST_PREEMPT);	/* paranoid */
 		return false;
 	}
 

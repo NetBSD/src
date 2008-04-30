@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2008/04/28 22:47:37 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2008/04/30 12:44:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -261,7 +261,11 @@ extern struct cpu_info *cpu_info[X86_MAXPROCS];
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);    
 
-#define aston(l)	((l)->l_md.md_astpending = 1)
+#define	X86_AST_GENERIC		0x01
+#define	X86_AST_PREEMPT		0x02
+
+#define aston(l, why)		((l)->l_md.md_astpending |= (why))
+#define	cpu_did_resched(l)	((l)->l_md.md_astpending &= ~X86_AST_PREEMPT)
 
 extern uint32_t cpus_attached;
 

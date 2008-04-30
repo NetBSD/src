@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.240 2008/04/30 00:52:22 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.241 2008/04/30 12:44:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.240 2008/04/30 00:52:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241 2008/04/30 12:44:27 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -666,7 +666,11 @@ mi_switch(lwp_t *l)
 		ci->ci_data.cpu_onproc = newl;
 	}
 
-	/* Kernel preemption related tasks. */
+	/*
+	 * Preemption related tasks.  Must be done with the current
+	 * CPU locked.
+	 */
+	cpu_did_resched(l);
 	l->l_dopreempt = 0;
 	if (__predict_false(l->l_pfailaddr != 0)) {
 		LOCKSTAT_FLAG(lsflag);
