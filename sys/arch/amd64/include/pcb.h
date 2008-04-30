@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.13 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: pcb.h,v 1.14 2008/04/30 21:04:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct pcb {
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
 #define PCB_GS64	0x02
 #define PCB_FS64	0x04
-	int	  pcb_cr0;		/* saved image of CR0 */
+	u_int	  pcb_cr0;		/* saved image of CR0 */
 	uint64_t pcb_rsp0;
 	uint64_t pcb_cr2;		/* page fault address (CR2) */
 	uint64_t pcb_cr3;
