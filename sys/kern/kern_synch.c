@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.238 2008/04/29 15:51:23 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.239 2008/04/30 00:30:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.238 2008/04/29 15:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.239 2008/04/30 00:30:56 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -148,13 +148,13 @@ sched_init(void)
 	callout_init(&sched_pstats_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&sched_pstats_ch, sched_pstats, NULL);
 
-	evcnt_attach_dynamic(&kpreempt_ev_crit, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&kpreempt_ev_crit, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: critical section");
-	evcnt_attach_dynamic(&kpreempt_ev_klock, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&kpreempt_ev_klock, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: kernel_lock");
-	evcnt_attach_dynamic(&kpreempt_ev_ipl, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&kpreempt_ev_ipl, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: IPL");
-	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "immediate");
 
 	sched_pstats(NULL);
