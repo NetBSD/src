@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.239 2008/04/30 00:30:56 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.240 2008/04/30 00:52:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.239 2008/04/30 00:30:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.240 2008/04/30 00:52:22 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -431,8 +431,8 @@ kpreempt(uintptr_t where)
 
 	/* Record preemption failure for reporting via lockstat. */
 	if (__predict_false(failed)) {
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_COUNTED);
 		int lsflag = 0;
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_COUNTED);
 		LOCKSTAT_ENTER(lsflag);
 		/* Might recurse, make it atomic. */
 		if (__predict_false(lsflag)) {
