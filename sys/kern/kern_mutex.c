@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.38 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.39 2008/04/30 00:40:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.38 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.39 2008/04/30 00:40:13 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -655,7 +655,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *    value of the waiters flag.
 		 *
 		 * 2. The onproc check returns false: the holding LWP is
-		 *    not running.  We now have the oppertunity to check
+		 *    not running.  We now have the opportunity to check
 		 *    if mutex_exit() has blatted the modifications made
 		 *    by MUTEX_SET_WAITERS().
 		 *
