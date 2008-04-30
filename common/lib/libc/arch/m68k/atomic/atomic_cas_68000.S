@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_68000.S,v 1.1 2008/04/29 20:57:50 scw Exp $	*/
+/*	$NetBSD: atomic_cas_68000.S,v 1.2 2008/04/30 09:59:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@ ENTRY_NOPROFILE(_atomic_cas_up)
 	movl	%sp@(4), %a0		/* Fetch ptr */
 
 RAS_START_ASM_HIDDEN(_atomic_cas)
-	movl	%a0@, d0		/* d0 = *ptr */
-	cmp	%sp@(8), d0		/* Same as old? */
+	movl	%a0@, %d0		/* d0 = *ptr */
+	cmpl	%sp@(8), %d0		/* Same as old? */
 	jne	1f			/* Nope */
 	movl	%sp@(12), %a0@		/* *ptr = new */
 RAS_END_ASM_HIDDEN(_atomic_cas)
