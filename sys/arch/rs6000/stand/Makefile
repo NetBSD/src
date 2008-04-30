@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2007/12/17 19:11:58 garbled Exp $
+#	$NetBSD: Makefile,v 1.2 2008/04/30 21:22:19 garbled Exp $
 
-SUBDIR=	common .WAIT boot mkbootimage
+SUBDIR=	common .WAIT boot
 
 .include <bsd.subdir.mk>
