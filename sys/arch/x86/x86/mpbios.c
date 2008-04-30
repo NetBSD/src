@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.42 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.43 2008/04/30 23:25:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.42 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.43 2008/04/30 23:25:49 ad Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -109,12 +109,13 @@ __KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.42 2008/04/28 20:23:40 martin Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/specialreg.h>
 #include <machine/cpuvar.h>
-#include <machine/bus.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pio.h>
 
@@ -286,6 +287,10 @@ mpbios_probe(struct device *self)
 	int 		scan_loc;
 
 	struct		mp_map t;
+
+	/* If MP is disabled, don't use MPBIOS or the ioapics. */
+	if ((boothowto & RB_MD1) != 0)
+		return 0;
 
 	/* see if EBDA exists */
 
