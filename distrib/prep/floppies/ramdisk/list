@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.9 2008/05/01 21:20:54 garbled Exp $
+#	$NetBSD: list,v 1.10 2008/05/01 22:44:23 garbled Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -69,7 +69,7 @@ COPY	${CURDIR}/termcap.src 			usr/share/misc/termcap
 COPY	${NETBSDSRCDIR}/etc/group		etc/group
 COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
 COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
-COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/distrib/common/protocols	etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # the disktab explanation file
