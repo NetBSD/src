@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/05/01 15:35:15 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2008/05/01 20:56:39 gdt Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,6 @@ WARNS?=		2
 CLEANFILES=	revision.h
 atf-version.cpp: revision.h
 revision.h: revision-dist.h
-	cp ${SRCDIR}/admin/revision-dist.h revision.h
+	cp -f ${SRCDIR}/admin/revision-dist.h revision.h
 
 .include <bsd.prog.mk>
