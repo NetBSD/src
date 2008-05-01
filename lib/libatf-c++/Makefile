@@ -1,26 +1,21 @@
-# $NetBSD: Makefile,v 1.2 2008/02/04 20:32:11 jmmv Exp $
+# $NetBSD: Makefile,v 1.1 2008/05/01 15:33:33 jmmv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
-LIB=		atf
-NOPIC=		yes # Interface is still too unstable
+LIB=		atf-c++
+LDADD=		-L${.OBJDIR}/../libatf-c -latf-c
+NOPIC=		# defined; interface is still too unstable
 
 SRCDIR=		${NETBSDSRCDIR}/dist/atf
 .PATH:		${SRCDIR}
-.PATH:		${SRCDIR}/atf
+.PATH:		${SRCDIR}/atf-c++
 
-CPPFLAGS+=	-I${.CURDIR}
-CPPFLAGS+=	-I${SRCDIR}/libs
+CPPFLAGS+=	-I${.CURDIR}/../libatf-c
 CPPFLAGS+=	-I.
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
-CPPFLAGS+=	-DATF_ARCH=\"${MACHINE}\"
-CPPFLAGS+=	-DATF_CONFDIR=\"/etc/atf\"
-CPPFLAGS+=	-DATF_LIBEXECDIR=\"/usr/libexec\"
-CPPFLAGS+=	-DATF_MACHINE=\"${MACHINE_ARCH}\"
-CPPFLAGS+=	-DATF_PKGDATADIR=\"/usr/share/atf\"
-CPPFLAGS+=	-DATF_SHELL=\"/bin/sh\"
-CPPFLAGS+=	-DATF_WORKDIR=\"/tmp\"
 
 WARNS?=		2
 
@@ -34,7 +29,6 @@ SRCS=		application.cpp \
 		fs.cpp \
 		io.cpp \
 		parser.cpp \
-		sanity.cpp \
 		signals.cpp \
 		tests.cpp \
 		text.cpp \
@@ -59,10 +53,10 @@ INCS=		application.hpp \
 		ui.hpp \
 		user.hpp \
 		utils.hpp
-INCSDIR=	/usr/include/atf
+INCSDIR=	/usr/include/atf-c++
 
-INCS+=		atf.hpp
-INCSDIR_atf.hpp=/usr/include
+INCS+=		atf-c++.hpp
+INCSDIR_atf-c++.hpp=/usr/include
 
 MAN=		# empty
 
