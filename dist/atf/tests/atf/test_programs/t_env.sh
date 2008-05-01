@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgement:
-#        This product includes software developed by the NetBSD
-#        Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 # CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -42,10 +35,6 @@ def_undef_head()
 }
 def_undef_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
     undef_vars="LANG LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY \
                 LC_NUMERIC LC_TIME TZ"
     def_vars="HOME"
@@ -55,8 +44,8 @@ def_undef_body()
         mangleenv="${mangleenv} ${v}=bogus-value"
     done
 
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${mangleenv} ${h} -s ${srcdir} -r3 \
+    for h in $(get_helpers); do
+        atf_check "${mangleenv} ${h} -s $(atf_get_srcdir) -r3 \
                    env_list 3>resout" 0 stdout ignore
 
         for v in ${undef_vars}; do
@@ -76,12 +65,9 @@ home_head()
 }
 home_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "HOME=foo ${h} -s ${srcdir} env_home" 0 ignore ignore
+    for h in ${h_c} ${h_cpp} ${h_sh}; do
+        atf_check "HOME=foo ${h} -s $(atf_get_srcdir) env_home" \
+                  0 ignore ignore
     done
 }
 

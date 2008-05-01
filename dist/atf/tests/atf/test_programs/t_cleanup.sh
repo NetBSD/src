@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgement:
-#        This product includes software developed by the NetBSD
-#        Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 # CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -38,14 +31,14 @@ run_tests()
 {
     h=${1} what=${2} status=${3} code=${4}
 
-    atf_check "${h} -s ${srcdir} -r3 -v 'cleanup=no' \
+    atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'cleanup=no' \
                -v 'tmpfile=$(pwd)/tmpfile' \
                cleanup_${what} 3>resout" ${code} ignore ignore
     atf_check "grep 'cleanup_${what}, ${status}' resout" 0 ignore null
     atf_check "test -f tmpfile" 0 null null
     atf_check "rm tmpfile" 0 null null
 
-    atf_check "${h} -s ${srcdir} -r3 -v 'cleanup=yes' \
+    atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'cleanup=yes' \
                -v 'tmpfile=$(pwd)/tmpfile' \
                cleanup_${what} 3>resout" ${code} ignore ignore
     atf_check "grep 'cleanup_${what}, ${status}' resout" 0 ignore null
@@ -59,11 +52,7 @@ hook_head()
 }
 hook_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
+    for h in $(get_helpers); do
         run_tests ${h} pass passed 0
         run_tests ${h} fail failed 1
         run_tests ${h} skip skipped 0
@@ -79,12 +68,8 @@ curdir_head()
 }
 curdir_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check '${h} -s ${srcdir} -r3 cleanup_curdir 3>resout' \
+    for h in $(get_helpers); do
+        atf_check '${h} -s $(atf_get_srcdir) -r3 cleanup_curdir 3>resout' \
                   0 stdout ignore
         atf_check 'grep "Old value: 1234" stdout' 0 ignore null
     done
@@ -98,12 +83,15 @@ on_signal_head()
 }
 on_signal_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh= # ${srcdir}/h_sh XXX The test is broken; disabled for now.
+    for h in $(get_helpers); do
+        case ${h} in
+            *h_sh*)
+                # XXX Broken for now.
+                continue
+                ;;
+        esac
 
-    for h in ${h_cpp} ${h_sh}; do
-        ${h} -s ${srcdir} -r3 -v "tmpfile=$(pwd)/tmpfile" \
+        ${h} -s $(atf_get_srcdir) -r3 -v "tmpfile=$(pwd)/tmpfile" \
             cleanup_sigterm 3>resout
         atf_check "grep 'cleanup_sigterm, failed' resout" 0 ignore null
         atf_check "test -f tmpfile" 1 null null
@@ -119,12 +107,8 @@ fork_head()
 }
 fork_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        ${h} -s ${srcdir} -r3 -v "tmpfile=$(pwd)/tmpfile" \
+    for h in $(get_helpers); do
+        ${h} -s $(atf_get_srcdir) -r3 -v "tmpfile=$(pwd)/tmpfile" \
             cleanup_fork 3>resout
         atf_check "grep 'cleanup_fork, passed' resout" 0 ignore null
     done

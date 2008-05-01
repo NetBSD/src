@@ -47,7 +47,7 @@ required.  Newer ones will most likely work and, maybe, some slightly older
 ones:
 
 * GNU autoconf 2.61
-* GNU automake 1.10
+* GNU automake 1.10.1
 * GNU libtool 1.5.24 (1.1220.2.455 2007/06/24 02:13:29)
 
 

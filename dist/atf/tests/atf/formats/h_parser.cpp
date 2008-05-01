@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
 // 2. Redistributions in binary form must reproduce the above copyright
 //    notice, this list of conditions and the following disclaimer in the
 //    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this
-//    software must display the following acknowledgement:
-//        This product includes software developed by the NetBSD
-//        Foundation, Inc. and its contributors.
-// 4. Neither the name of The NetBSD Foundation nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 // CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -45,10 +38,14 @@ extern "C" {
 #include <string>
 #include <vector>
 
-#include "atf/formats.hpp"
-#include "atf/io.hpp"
-#include "atf/parser.hpp"
-#include "atf/sanity.hpp"
+extern "C" {
+#include "atf-c/object.h"
+}
+
+#include "atf-c++/formats.hpp"
+#include "atf-c++/io.hpp"
+#include "atf-c++/parser.hpp"
+#include "atf-c++/sanity.hpp"
 
 class atffile_reader : protected atf::formats::atf_atffile_reader {
     void
@@ -132,22 +129,14 @@ class tcs_reader : protected atf::formats::atf_tcs_reader {
     got_tc_end(const atf::tests::tcr& tcr)
     {
         std::string r;
-        switch (tcr.get_status()) {
-        case atf::tests::tcr::status_passed:
+        if (tcr.get_state() == atf::tests::tcr::passed_state)
             r = "passed";
-            break;
-
-        case atf::tests::tcr::status_failed:
+        else if (tcr.get_state() == atf::tests::tcr::failed_state)
             r = "failed, " + tcr.get_reason();
-            break;
-
-        case atf::tests::tcr::status_skipped:
+        else if (tcr.get_state() == atf::tests::tcr::skipped_state)
             r = "skipped, " + tcr.get_reason();
-            break;
-
-        default:
+        else
             UNREACHABLE;
-        }
 
         std::cout << "got_tc_end(" << r << ")" << std::endl;
     }
@@ -231,22 +220,14 @@ class tps_reader : protected atf::formats::atf_tps_reader {
     got_tc_end(const atf::tests::tcr& tcr)
     {
         std::string r;
-        switch (tcr.get_status()) {
-        case atf::tests::tcr::status_passed:
+        if (tcr.get_state() == atf::tests::tcr::passed_state)
             r = "passed";
-            break;
-
-        case atf::tests::tcr::status_failed:
+        else if (tcr.get_state() == atf::tests::tcr::failed_state)
             r = "failed, " + tcr.get_reason();
-            break;
-
-        case atf::tests::tcr::status_skipped:
+        else if (tcr.get_state() == atf::tests::tcr::skipped_state)
             r = "skipped, " + tcr.get_reason();
-            break;
-
-        default:
+        else
             UNREACHABLE;
-        }
 
         std::cout << "got_tc_end(" << r << ")" << std::endl;
     }
@@ -304,6 +285,8 @@ process(const std::string& file, const std::string& outname = "",
 int
 main(int argc, char* argv[])
 {
+    atf_init_objects();
+
     try {
         if (argc < 3) {
             std::cerr << "Missing arguments" << std::endl;
