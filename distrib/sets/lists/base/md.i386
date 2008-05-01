@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.121 2008/01/19 23:30:08 dyoung Exp $
+# $NetBSD: md.i386,v 1.122 2008/05/01 21:51:20 xtraeme Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -28,6 +28,7 @@
 ./usr/lib/libpmc.so.0				base-sys-shlib
 ./usr/lib/libpmc.so.0.0				base-sys-shlib
 ./usr/libexec/ld.so				base-sys-shlib
+./usr/lkm/aps.o					base-sys-lkm
 ./usr/lkm/compat_freebsd.o			base-sys-lkm
 ./usr/lkm/compat_linux.o			base-sys-lkm
 ./usr/lkm/compat_pecoff.o			base-sys-lkm
@@ -38,7 +39,12 @@
 ./usr/lkm/exec_linux_elf.o			base-sys-lkm
 ./usr/lkm/exec_pecoff.o				base-sys-lkm
 ./usr/lkm/exec_svr4_elf.o			base-sys-lkm
+./usr/lkm/finsio.o				base-sys-lkm
+./usr/lkm/itesio.o				base-sys-lkm
+./usr/lkm/nsclpcsio.o				base-sys-lkm
 ./usr/lkm/powernow.o				base-sys-lkm
+./usr/lkm/smsc.o				base-sys-lkm
+./usr/lkm/ug.o					base-sys-lkm
 ./usr/lkm/wi_pcmcia.o				base-sys-lkm
 ./usr/mdec/biosboot				base-obsolete		obsolete
 ./usr/mdec/biosboot.sym				base-obsolete		obsolete
