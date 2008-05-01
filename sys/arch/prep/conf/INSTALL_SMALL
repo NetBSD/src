@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.5 2008/02/13 14:05:06 tsutsui Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.6 2008/05/01 20:57:38 garbled Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -29,6 +29,7 @@ options 	PIC_I8259
 #options 	COMPAT_16	# NetBSD 1.6,
 #options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+no options	EXEC_AOUT	# no a.out support
 
 # File systems
 file-system 	FFS		# UFS
@@ -167,7 +168,7 @@ scsibus* at siop?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
+#st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 
@@ -256,5 +257,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	rnd			# /dev/random and in-kernel generator
+options		NO_DEV_PTM
+#pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well
