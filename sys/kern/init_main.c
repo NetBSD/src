@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.354 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: init_main.c,v 1.355 2008/05/01 14:44:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.354 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355 2008/05/01 14:44:48 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -346,9 +346,6 @@ main(void)
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
-	/* Start module system. */
-	module_init();
-
 	/* Initialize callouts, part 1. */
 	callout_startup();
 
@@ -429,6 +426,9 @@ main(void)
 
 	/* Initialize the log device. */
 	loginit();
+
+	/* Start module system. */
+	module_init();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
