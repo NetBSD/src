@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.18 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.19 2008/05/01 12:03:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.18 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.19 2008/05/01 12:03:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,8 +351,10 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 			pmap_pte_setbits(pte, PG_N);
 		xpte |= *pte;
 	}
+	kpreempt_disable();
 	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
-	pmap_update(pmap_kernel());
+	pmap_tlb_shootwait();
+	kpreempt_enable();
 
 	return 0;
 }
