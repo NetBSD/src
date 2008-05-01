@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.4 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.5 2008/05/01 14:48:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2008/05/01 14:48:19 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -93,15 +93,13 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 
 	switch (rtype) {
 	case R_386_NONE:	/* none */
-		break;
+		return 0;
 
 	case R_386_32:		/* S + A */
 		addr = kobj_sym_lookup(ko, symidx);
 		if (addr == 0)
 			return -1;
 		addr += addend;
-		if (*where != addr)
-			*where = addr;
 		break;
 
 	case R_386_PC32:	/* S + A - P */
@@ -109,8 +107,6 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		if (addr == 0)
 			return -1;
 		addr += addend - (Elf_Addr)where;
-		if (*where != addr)
-			*where = addr;
 		break;
 
 	case R_386_COPY:	/* none */
@@ -125,14 +121,10 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		addr = kobj_sym_lookup(ko, symidx);
 		if (addr == 0)
 			return -1;
-		if (*where != addr)
-			*where = addr;
 		break;
 
 	case R_386_RELATIVE:
 		addr = relocbase + addend;
-		if (*where != addr)
-			*where = addr;
 		break;
 
 	default:
@@ -140,6 +132,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		return -1;
 	}
 
+	*where = addr;
 	return 0;
 }
 
