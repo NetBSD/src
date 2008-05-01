@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
 // 2. Redistributions in binary form must reproduce the above copyright
 //    notice, this list of conditions and the following disclaimer in the
 //    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this
-//    software must display the following acknowledgement:
-//        This product includes software developed by the NetBSD
-//        Foundation, Inc. and its contributors.
-// 4. Neither the name of The NetBSD Foundation nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 // CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -36,8 +29,8 @@
 
 #include <iostream>
 
-#include "atf/env.hpp"
-#include "atf/macros.hpp"
+#include "atf-c++/env.hpp"
+#include "atf-c++/macros.hpp"
 
 // ------------------------------------------------------------------------
 // Helper tests for "t_atf_run".
@@ -46,20 +39,20 @@
 ATF_TEST_CASE(atf_run_config);
 ATF_TEST_CASE_HEAD(atf_run_config)
 {
-    set("descr", "Helper test case for the t_atf_run test program");
+    set_md_var("descr", "Helper test case for the t_atf_run test program");
 }
 ATF_TEST_CASE_BODY(atf_run_config)
 {
-    std::cout << "1st: " << config().get("1st") << std::endl;
-    std::cout << "2nd: " << config().get("2nd") << std::endl;
-    std::cout << "3rd: " << config().get("3rd") << std::endl;
-    std::cout << "4th: " << config().get("4th") << std::endl;
+    std::cout << "1st: " << get_config_var("1st") << std::endl;
+    std::cout << "2nd: " << get_config_var("2nd") << std::endl;
+    std::cout << "3rd: " << get_config_var("3rd") << std::endl;
+    std::cout << "4th: " << get_config_var("4th") << std::endl;
 }
 
 ATF_TEST_CASE(atf_run_fds);
 ATF_TEST_CASE_HEAD(atf_run_fds)
 {
-    set("descr", "Helper test case for the t_atf_run test program");
+    set_md_var("descr", "Helper test case for the t_atf_run test program");
 }
 ATF_TEST_CASE_BODY(atf_run_fds)
 {
@@ -72,13 +65,13 @@ ATF_TEST_CASE_BODY(atf_run_fds)
 ATF_TEST_CASE(atf_run_testvar);
 ATF_TEST_CASE_HEAD(atf_run_testvar)
 {
-    set("descr", "Helper test case for the t_atf_run test program");
+    set_md_var("descr", "Helper test case for the t_atf_run test program");
 }
 ATF_TEST_CASE_BODY(atf_run_testvar)
 {
-    if (!config().has("testvar"))
+    if (!has_config_var("testvar"))
         ATF_FAIL("testvar variable not defined");
-    std::cout << "testvar: " << config().get("testvar") << std::endl;
+    std::cout << "testvar: " << get_config_var("testvar") << std::endl;
 }
 
 // ------------------------------------------------------------------------
@@ -88,7 +81,7 @@ ATF_TEST_CASE_BODY(atf_run_testvar)
 ATF_TEST_CASE(atf_report_diff);
 ATF_TEST_CASE_HEAD(atf_report_diff)
 {
-    set("descr", "Helper test case for the t_atf_report test program");
+    set_md_var("descr", "Helper test case for the t_atf_report test program");
 }
 ATF_TEST_CASE_BODY(atf_report_diff)
 {

@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgement:
-#        This product includes software developed by the NetBSD
-#        Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 # CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -42,13 +35,10 @@ default_head()
 }
 default_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
     tmpdir=$(cd $(atf-config -t atf_workdir) && pwd -P)
 
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} \
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) \
                   -v pathfile=$(pwd)/path workdir_path" 0 ignore ignore
         atf_check "grep '^${tmpdir}/atf.' <path" 0 ignore ignore
     done
@@ -63,14 +53,11 @@ tmpdir_head()
 }
 tmpdir_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
     tmpdir=$(pwd -P)/workdir
     mkdir ${tmpdir}
 
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "ATF_WORKDIR=${tmpdir} ${h} -s ${srcdir} \
+    for h in $(get_helpers); do
+        atf_check "ATF_WORKDIR=${tmpdir} ${h} -s $(atf_get_srcdir) \
                    -v pathfile=$(pwd)/path workdir_path" 0 ignore ignore
         atf_check "grep '^${tmpdir}/atf.' <path" 0 ignore ignore
     done
@@ -80,20 +67,16 @@ atf_test_case conf
 conf_head()
 {
     atf_set "descr" "Tests that the work directory is used correctly when" \
-                    "overridden through the test program's 'workdir'" \
-                    "configuration option"
+                    "overridden through the test program's -w flag"
 }
 conf_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
     tmpdir=$(pwd -P)/workdir
     mkdir ${tmpdir}
 
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} \
-                   -v pathfile=$(pwd)/path -v workdir=${tmpdir} \
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) \
+                   -v pathfile=$(pwd)/path -w ${tmpdir} \
                    workdir_path" 0 ignore ignore
         atf_check "grep '^${tmpdir}/atf.' <path" 0 ignore null
     done
@@ -108,17 +91,14 @@ cleanup_head()
 }
 cleanup_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
     tmpdir=$(pwd -P)/workdir
     mkdir ${tmpdir}
 
-    for h in ${h_cpp} ${h_sh}; do
+    for h in $(get_helpers); do
         # First try to clean a work directory that, supposedly, does not
         # have any subdirectories.
-        atf_check "${h} -s ${srcdir} \
-                   -v pathfile=$(pwd)/path -v workdir=${tmpdir} \
+        atf_check "${h} -s $(atf_get_srcdir) \
+                   -v pathfile=$(pwd)/path -w ${tmpdir} \
                    workdir_path" 0 ignore ignore
         atf_check "test -d $(cat path)" 1 null null
         set -- ${tmpdir}/atf.*
@@ -128,9 +108,27 @@ cleanup_body()
 
         # Now do the same but with a work directory that has subdirectories.
         # The program will have to recurse into them to clean them all.
-        atf_check "${h} -s ${srcdir} -v pathfile=$(pwd)/path \
-                   -v workdir=${tmpdir} workdir_cleanup" 0 ignore ignore
+        atf_check "${h} -s $(atf_get_srcdir) -v pathfile=$(pwd)/path \
+                   -w ${tmpdir} workdir_cleanup" 0 ignore ignore
         atf_check "test -d $(cat path)" 1 null null
+    done
+}
+
+atf_test_case missing
+missing_head()
+{
+    atf_set "descr" "Tests that an error is raised if the work directory" \
+                    "does not exist"
+}
+missing_body()
+{
+    tmpdir=$(pwd -P)/workdir
+
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) \
+                   -v pathfile=$(pwd)/path -w ${tmpdir} \
+                   workdir_path" 1 null stderr
+        atf_check "grep 'Cannot find.*${tmpdir}' stderr" 0 ignore null
     done
 }
 
@@ -144,6 +142,7 @@ atf_init_test_cases()
     atf_add_test_case tmpdir
     atf_add_test_case conf
     atf_add_test_case cleanup
+    atf_add_test_case missing
 }
 
 # vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4
