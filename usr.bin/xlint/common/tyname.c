@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.6 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: tyname.c,v 1.7 2008/05/01 15:39:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.6 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.7 2008/05/01 15:39:33 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -131,7 +131,7 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 #ifdef t_enum
 		    tp->t_enum->etag->s_name
 #else
-		    tp->t_tag->h_name
+		    tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name
 #endif
 		    );
 		break;
@@ -141,7 +141,7 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 #ifdef t_str
 		    tp->t_str->stag->s_name
 #else
-		    tp->t_tag->h_name
+		    tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name
 #endif
 		    );
 		break;
