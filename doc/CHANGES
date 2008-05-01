@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1050 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1051 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -519,3 +519,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	tests: Convert the tests in the tests/ hierarchy that were written in
 		C++ to C, making use of the libatf-c library that comes with
 		the ATF 0.5 just imported.  [jmmv 20080501]
+	hpqlb(4): Hotkey driver for HP notebooks. [cegger 20080501]
