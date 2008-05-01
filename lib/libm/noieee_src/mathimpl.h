@@ -1,4 +1,4 @@
-/*	$NetBSD: mathimpl.h,v 1.8 2006/07/08 00:28:21 matt Exp $	*/
+/*	$NetBSD: mathimpl.h,v 1.9 2008/05/01 15:33:15 christos Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,8 +34,9 @@
 
 #include <sys/cdefs.h>
 #include <math.h>
+#include <stdint.h>
 
-#if defined(__vax__)||defined(tahoe)
+#if defined(__vax__) || defined(tahoe)
 
 /* Deal with different ways to concatenate in cpp */
 #define cat3(a,b,c)	a ## b ## c
@@ -67,21 +68,23 @@
     */
 #ifdef _LIBM_DECLARE
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
-	const union { long l[2]; double d; } cat3(__,name,x) = { .l[0] = cat3t(0x,x1,x2), .l[1] = cat3t(0x,x3,x4)};
+    const union { uint32_t l[2]; double d; } cat3(__,name,x) = { \
+	.l = { [0] = cat3t(0x,x1,x2), [1] = cat3t(0x,x3,x4) } };
 #elif defined(_LIBM_STATIC)
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
-	static const union { long l[2]; double d; } cat3(__,name,x) = { .l[0] = cat3t(0x,x1,x2), .l[1] = cat3t(0x,x3,x4)};
+    static const union { uint32_t l[2]; double d; } cat3(__,name,x) = { \
+	.l = { [0] = cat3t(0x,x1,x2), [1] = cat3t(0x,x3,x4) } };
 #else
 #  define vc(name, value, x1,x2,x3,x4, bexp, xval) \
-	extern union { long l[2]; double d; } cat3(__,name,x);
+	extern const union { uint32_t l[2]; double d; } cat3(__,name,x);
 #endif
-#  define ic(name, value, bexp, xval) ;
+#  define ic(name, value, bexp, xval) 
 
 #else	/* __vax__ or tahoe */
 
    /* Hooray, we have an IEEE machine */
 #  undef vccast
-#  define vc(name, value, x1,x2,x3,x4, bexp, xval) ;
+#  define vc(name, value, x1,x2,x3,x4, bexp, xval) 
 
 #ifdef _LIBM_DECLARE
 #  define ic(name, value, bexp, xval) \
