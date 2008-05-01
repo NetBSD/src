@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.4 2008/05/01 14:44:48 ad Exp $	*/
+/*	$NetBSD: module.h,v 1.5 2008/05/01 17:23:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@ int	module_load(const char *, int, prop_dictionary_t);
 int	module_unload(const char *);
 int	module_hold(const char *);
 void	module_rele(const char *);
+int	module_find_section(const char *, void **, size_t *);
 
 #else	/* _KERNEL */
 
