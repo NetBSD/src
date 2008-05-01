@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1067 2008/04/22 22:37:12 cegger Exp $
+# $NetBSD: mi,v 1.1068 2008/05/01 22:09:29 xtraeme Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -965,6 +965,7 @@
 ./usr/share/man/cat4/hpcsh/j6x0tp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/psh3lcd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/psh3tp.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpqlb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hptide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman		.cat
@@ -3513,6 +3514,7 @@
 ./usr/share/man/man4/hpcsh/j6x0tp.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/psh3lcd.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/psh3tp.4		man-sys-man		.man
+./usr/share/man/man4/hpqlb.4			man-sys-man		.man
 ./usr/share/man/man4/hptide.4			man-sys-man		.man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man		.man
 ./usr/share/man/man4/i386/apm.4			man-sys-man		.man
