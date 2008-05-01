@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/02/04 20:31:32 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2008/05/01 15:35:14 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,7 @@ PROG_CXX=	atf-killpg
 SRCS=		atf-killpg.cpp
 MAN=		atf-killpg.1
 
-CPPFLAGS+=	-I${SRCDIR}/libs
-LDADD+=		-latf
+LDADD+=		-latf-c++ -latf-c
 
 WARNS?=		2
 
