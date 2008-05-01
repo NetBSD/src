@@ -1,0 +1,30 @@
+# $NetBSD: TODO.devfs,v 1.2.2.1 2008/05/01 11:22:41 mjf Exp $
+
+High Priority:
+	- finish converting drivers
+	- chmod/chgrp/mv need to signal the changes to devfsd(8)
+	- flesh out "matching" framework
+	- is devfs_mount MPSAFE?
+	- devfs_kernel_mount should be moved to a common routine that can
+	  be used by devfs and the kernel mount code,
+		- vfs_syscalls.c:mount_domount()
+	- switch to dynamic majors
+
+Medium Priority:
+	- make devfs completely not support regular files
+	- tmpfs string pools are not needed in devfs fs code, just use
+	  kmem_alloc()
+	- statvfs does free space management, it should be removed and
+	  be made to lie and say N inodes and blocks are always free.
+	- upgrade path
+		* Mounting devfs -o union and reading in device files
+	- mkdir /dev/pts in the devfs fs code
+	- some devices need /dev/audio0 ln -s audio0 audio, how do we cater
+	  for them? it probably shouldn't be in the device driver as it's
+	  surely all about policy and should be in devfsd(8)
+
+Low Priority:
+	- think about using more optimized data structures for device_name.
+	- in some places memory is allocatd whilst holding a lock. 
+	  allocation can take quite a while if system is low on 
+	  memory (ad@)
