@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.3 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: module.h,v 1.4 2008/05/01 14:44:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -112,6 +112,7 @@ extern u_int		module_count;
 extern struct modlist	module_list;
 
 void	module_init(void);
+void	module_init_md(void);
 void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
 void	module_jettison(void);
