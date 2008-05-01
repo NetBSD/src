@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.207 2008/04/30 22:08:18 ad Exp $
+# $NetBSD: GENERIC,v 1.208 2008/05/01 20:18:18 cegger Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.207 $"
+#ident 		"GENERIC-$Revision: 1.208 $"
 
 maxusers	64		# estimated number of users
 
@@ -279,6 +279,7 @@ asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
+hpqlb*		at acpi?		# HP Quick Launch Buttons
 hpet*		at acpi?		# High Precision Event Timer
 joy*		at acpi?		# Joystick/Game port
 #lpt* 		at acpi?		# Parallel port
