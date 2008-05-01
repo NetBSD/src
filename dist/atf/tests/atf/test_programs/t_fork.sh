@@ -12,13 +12,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgement:
-#        This product includes software developed by the NetBSD
-#        Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 # CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -45,12 +38,8 @@ mangle_fds_head()
 }
 mangle_fds_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} -r3 -v resfd=3 \
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v resfd=3 \
                    fork_mangle_fds 3>resout" 0 ignore ignore
         atf_check "grep 'passed' resout" 0 ignore null
     done
@@ -64,13 +53,9 @@ stop_head()
 }
 stop_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        ${h} -s ${srcdir} -v pidfile=$(pwd)/pid -v donefile=$(pwd)/done \
-             -r3 fork_stop 3>resout &
+    for h in $(get_helpers); do
+        ${h} -s $(atf_get_srcdir) -v pidfile=$(pwd)/pid \
+             -v donefile=$(pwd)/done -r3 fork_stop 3>resout &
         ppid=${!}
         echo "Waiting for pid file for test program ${ppid}"
         while test ! -f pid; do sleep 1; done
@@ -94,16 +79,12 @@ umask_head()
 }
 umask_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
     echo 0022 >expout
     atf_check 'umask' 0 expout null
 
-    for h in ${h_cpp} ${h_sh}; do
+    for h in $(get_helpers); do
         umask 0000
-        atf_check "${h} -s ${srcdir} -r3 fork_umask 3>resout" \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 fork_umask 3>resout" \
                   0 stdout ignore
         atf_check "grep 'umask: 0022' stdout" 0 ignore null
         atf_check "grep 'passed' resout" 0 ignore null
