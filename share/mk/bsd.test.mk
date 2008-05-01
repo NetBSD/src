@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.6 2008/03/02 11:31:42 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.7 2008/05/01 15:36:36 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -7,9 +7,19 @@ TESTSBASE=	/usr/tests
 
 _TESTS=		# empty
 
+.if defined(TESTS_C)
+PROGS+=		${TESTS_C}
+LDADD+=		-latf-c
+.  for _T in ${TESTS_C}
+BINDIR.${_T}=	${TESTSDIR}
+MAN.${_T}?=	# empty
+_TESTS+=	${_T}
+.  endfor
+.endif
+
 .if defined(TESTS_CXX)
 PROGS_CXX+=	${TESTS_CXX}
-LDADD+=		-latf
+LDADD+=		-latf-c++ -latf-c
 .  for _T in ${TESTS_CXX}
 BINDIR.${_T}=	${TESTSDIR}
 MAN.${_T}?=	# empty
@@ -49,6 +59,6 @@ FILESDIR_Atffile=	${TESTSDIR}
 .include <bsd.files.mk>
 .endif
 
-.if !empty(SCRIPTS) || !empty(PROGS_CXX)
+.if !empty(SCRIPTS) || !empty(PROGS) || !empty(PROGS_CXX)
 .  include <bsd.prog.mk>
 .endif
