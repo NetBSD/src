@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.11 2008/05/01 14:44:48 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.12 2008/05/01 17:23:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.11 2008/05/01 14:44:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.12 2008/05/01 17:23:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ struct vm_map *lkm_map;
 
 struct modlist	module_list = TAILQ_HEAD_INITIALIZER(module_list);
 struct modlist	module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
+static module_t	*module_active;
 u_int		module_count;
 kmutex_t	module_lock;
 
@@ -103,7 +104,9 @@ module_init(void)
 	if (lkm_map == NULL)
 		lkm_map = kernel_map;
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
+#if 0
 	module_init_md();
+#endif
 }
 
 /*
@@ -347,7 +350,10 @@ module_do_builtin(const char *name, module_t **modp)
 	/*
 	 * Try to initialize the module.
 	 */
+	KASSERT(module_active == NULL);
+	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, NULL);
+	module_active = NULL;
 	if (error != 0) {
 		module_error("builtin module `%s' "
 		    "failed to init", mi->mi_name);
@@ -548,7 +554,10 @@ module_do_load(const char *filename, bool isdep, int flags,
 	/*
 	 * We loaded all needed modules successfully: initialize.
 	 */
+	KASSERT(module_active == NULL);
+	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
+	module_active = NULL;
 	if (error != 0) {
 		module_error("modctl function returned error %d", error);
 		goto fail;
@@ -604,7 +613,10 @@ module_do_unload(const char *name)
 	if (mod->mod_refcnt != 0 || mod->mod_source == MODULE_SOURCE_KERNEL) {
 		return EBUSY;
 	}
+	KASSERT(module_active == NULL);
+	module_active = mod;
 	error = (*mod->mod_info->mi_modcmd)(MODULE_CMD_FINI, NULL);
+	module_active = NULL;
 	if (error != 0) {
 		return error;
 	}
@@ -695,4 +707,20 @@ module_fetch_info(module_t *mod)
 	mod->mod_info = *(modinfo_t **)addr;
 
 	return 0;
+}
+
+/*
+ * module_find_section:
+ *
+ *	Allows a module that is being initialized to look up a section
+ *	within its ELF object.
+ */
+int
+module_find_section(const char *name, void **addr, size_t *size)
+{
+
+	KASSERT(mutex_owned(&module_lock));
+	KASSERT(module_active != NULL);
+
+	return kobj_find_section(module_active->mod_kobj, name, addr, size);
 }
