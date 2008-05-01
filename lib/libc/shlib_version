@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.198 2008/04/27 09:26:20 christos Exp $
+#	$NetBSD: shlib_version,v 1.199 2008/05/01 15:52:31 christos Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -22,6 +22,6 @@
 # - libc/locale/setlocale{1,32}.c: remove
 # - libc/locale/setrunelocale.c: __MB_LEN_MAX_RUNTIME -> MB_LEN_MAX
 # - remove frexp, ldexp, modf: they belong to libm.
-#
+# - make sure we can support thread local [on arm don't use r9 for example]
 major=12
 minor=159
