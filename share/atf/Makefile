@@ -1,14 +1,16 @@
-# $NetBSD: Makefile,v 1.2 2008/02/04 20:30:45 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2008/05/01 15:35:50 jmmv Exp $
 
 .include <bsd.own.mk>
 
 SRCDIR=		${NETBSDSRCDIR}/dist/atf
-.PATH:		${SRCDIR}/data ${SRCDIR}/subrs
+.PATH:		${SRCDIR}/data ${SRCDIR}/atf-sh
 
 .if ${MKSHARE} != "no"
 # Files in ${SRCDIR}/data.
-FILES=			atf.pc
-FILESDIR_atf.pc=	/usr/lib/pkgconfig
+FILES=			atf-c.pc \
+			atf-c++.pc
+FILESDIR_atf-c.pc=	/usr/lib/pkgconfig
+FILESDIR_atf-c++.pc=	/usr/lib/pkgconfig
 
 # Files in ${SRCDIR}/subrs.
 FILESDIR=	/usr/share/atf
@@ -18,12 +20,22 @@ FILES+=		atf.footer.subr \
 		atf.init.subr
 .endif
 
-realall: atf.pc
-atf.pc: atf.pc.in
-	sed -e 's,__CXX__,${CXX},g' \
+realall: atf-c.pc
+atf-c.pc: atf-c.pc.in
+	sed -e 's,__ATF_VERSION__,0.5,g' \
+	    -e 's,__CC__,gcc,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
-	    <${SRCDIR}/data/atf.pc.in >atf.pc
-CLEANFILES+=	atf.pc
+	    <${SRCDIR}/data/atf-c.pc.in >atf-c.pc
+CLEANFILES+=	atf-c.pc
+
+realall: atf-c++.pc
+atf-c++.pc: atf-c++.pc.in
+	sed -e 's,__ATF_VERSION__,0.5,g' \
+	    -e 's,__CXX__,g++,g' \
+	    -e 's,__INCLUDEDIR__,/usr/include,g' \
+	    -e 's,__LIBDIR__,/usr/lib,g' \
+	    <${SRCDIR}/data/atf-c++.pc.in >atf-c++.pc
+CLEANFILES+=	atf-c++.pc
 
 .include <bsd.prog.mk>
