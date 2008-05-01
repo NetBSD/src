@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.176 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.177 2008/05/01 16:05:13 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -48,6 +48,7 @@
 #include <sys/rwlock.h>
 #include <sys/statvfs.h>
 #include <sys/specificdata.h>
+#include <sys/condvar.h>
 #endif	/* !_STANDALONE */
 
 /*
