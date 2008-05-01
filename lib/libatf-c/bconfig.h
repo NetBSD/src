@@ -1,5 +1,5 @@
-/* config.h.  Generated from config.h.in by configure.  */
-/* config.h.in.  Generated from configure.ac by autoheader.  */
+/* bconfig.h.  Generated from bconfig.h.in by configure.  */
+/* bconfig.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if basename takes a constant pointer */
 /* #undef HAVE_CONST_BASENAME */
@@ -9,6 +9,9 @@
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
+
+/* Define to 1 if getcwd(NULL, 0) works */
+#define HAVE_GETCWD_DYN 1
 
 /* Define to 1 if getopt allows a + sign for POSIX behavior */
 /* #undef HAVE_GNU_GETOPT */
@@ -67,6 +70,12 @@
 /* Define to 1 if vsnprintf is in std */
 /* #undef HAVE_VSNPRINTF_IN_STD */
 
+/* Define to the last valid signal number */
+#define LAST_SIGNO 63
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+/* #undef NO_MINUS_C_MINUS_O */
+
 /* Name of package */
 #define PACKAGE "atf"
 
@@ -80,16 +89,16 @@
 #define PACKAGE_NAME "Automated Testing Framework"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Automated Testing Framework 0.4"
+#define PACKAGE_STRING "Automated Testing Framework 0.5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "atf"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.4"
+#define PACKAGE_VERSION "0.5"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.4"
+#define VERSION "0.5"
