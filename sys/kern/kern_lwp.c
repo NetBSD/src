@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.108 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.109 2008/05/01 21:25:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.108 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.109 2008/05/01 21:25:23 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -265,7 +265,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 	 * If the current LWP has been told to exit, we must not suspend anyone
 	 * else or deadlock could occur.  We won't return to userspace.
 	 */
-	if ((curl->l_stat & (LW_WEXIT | LW_WCORE)) != 0) {
+	if ((curl->l_flag & (LW_WEXIT | LW_WCORE)) != 0) {
 		lwp_unlock(t);
 		return (EDEADLK);
 	}
