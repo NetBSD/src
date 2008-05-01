@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1135 2008/04/25 22:26:06 christos Exp $
+#	$NetBSD: mi,v 1.1136 2008/05/01 15:41:16 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -107,26 +107,68 @@
 ./usr/include/arpa/telnet.h			comp-c-include
 ./usr/include/arpa/tftp.h			comp-c-include
 ./usr/include/assert.h				comp-c-include
-./usr/include/atf				comp-atf-include
-./usr/include/atf.hpp				comp-atf-include
-./usr/include/atf/application.hpp		comp-atf-include
-./usr/include/atf/atffile.hpp			comp-atf-include
-./usr/include/atf/config.hpp			comp-atf-include
-./usr/include/atf/env.hpp			comp-atf-include
-./usr/include/atf/exceptions.hpp		comp-atf-include
-./usr/include/atf/expand.hpp			comp-atf-include
-./usr/include/atf/formats.hpp			comp-atf-include
-./usr/include/atf/fs.hpp			comp-atf-include
-./usr/include/atf/io.hpp			comp-atf-include
-./usr/include/atf/macros.hpp			comp-atf-include
-./usr/include/atf/parser.hpp			comp-atf-include
-./usr/include/atf/sanity.hpp			comp-atf-include
-./usr/include/atf/signals.hpp			comp-atf-include
-./usr/include/atf/tests.hpp			comp-atf-include
-./usr/include/atf/text.hpp			comp-atf-include
-./usr/include/atf/ui.hpp			comp-atf-include
-./usr/include/atf/user.hpp			comp-atf-include
-./usr/include/atf/utils.hpp			comp-atf-include
+./usr/include/atf				comp-obsolete		obsolete
+./usr/include/atf.hpp				comp-obsolete		obsolete
+./usr/include/atf/application.hpp		comp-obsolete		obsolete
+./usr/include/atf/atffile.hpp			comp-obsolete		obsolete
+./usr/include/atf/config.hpp			comp-obsolete		obsolete
+./usr/include/atf/env.hpp			comp-obsolete		obsolete
+./usr/include/atf/exceptions.hpp		comp-obsolete		obsolete
+./usr/include/atf/expand.hpp			comp-obsolete		obsolete
+./usr/include/atf/formats.hpp			comp-obsolete		obsolete
+./usr/include/atf/fs.hpp			comp-obsolete		obsolete
+./usr/include/atf/io.hpp			comp-obsolete		obsolete
+./usr/include/atf/macros.hpp			comp-obsolete		obsolete
+./usr/include/atf/parser.hpp			comp-obsolete		obsolete
+./usr/include/atf/sanity.hpp			comp-obsolete		obsolete
+./usr/include/atf/signals.hpp			comp-obsolete		obsolete
+./usr/include/atf/tests.hpp			comp-obsolete		obsolete
+./usr/include/atf/text.hpp			comp-obsolete		obsolete
+./usr/include/atf/ui.hpp			comp-obsolete		obsolete
+./usr/include/atf/user.hpp			comp-obsolete		obsolete
+./usr/include/atf/utils.hpp			comp-obsolete		obsolete
+./usr/include/atf-c				comp-atf-include
+./usr/include/atf-c.h				comp-atf-include
+./usr/include/atf-c/config.h			comp-atf-include
+./usr/include/atf-c/defs.h			comp-atf-include
+./usr/include/atf-c/dynstr.h			comp-atf-include
+./usr/include/atf-c/env.h			comp-atf-include
+./usr/include/atf-c/error.h			comp-atf-include
+./usr/include/atf-c/expand.h			comp-atf-include
+./usr/include/atf-c/fs.h			comp-atf-include
+./usr/include/atf-c/io.h			comp-atf-include
+./usr/include/atf-c/list.h			comp-atf-include
+./usr/include/atf-c/macros.h			comp-atf-include
+./usr/include/atf-c/map.h			comp-atf-include
+./usr/include/atf-c/object.h			comp-atf-include
+./usr/include/atf-c/sanity.h			comp-atf-include
+./usr/include/atf-c/signals.h			comp-atf-include
+./usr/include/atf-c/tc.h			comp-atf-include
+./usr/include/atf-c/tcr.h			comp-atf-include
+./usr/include/atf-c/text.h			comp-atf-include
+./usr/include/atf-c/tp.h			comp-atf-include
+./usr/include/atf-c/ui.h			comp-atf-include
+./usr/include/atf-c/user.h			comp-atf-include
+./usr/include/atf-c++				comp-atf-include
+./usr/include/atf-c++.hpp			comp-atf-include
+./usr/include/atf-c++/application.hpp		comp-atf-include
+./usr/include/atf-c++/atffile.hpp		comp-atf-include
+./usr/include/atf-c++/config.hpp		comp-atf-include
+./usr/include/atf-c++/env.hpp			comp-atf-include
+./usr/include/atf-c++/exceptions.hpp		comp-atf-include
+./usr/include/atf-c++/expand.hpp		comp-atf-include
+./usr/include/atf-c++/formats.hpp		comp-atf-include
+./usr/include/atf-c++/fs.hpp			comp-atf-include
+./usr/include/atf-c++/io.hpp			comp-atf-include
+./usr/include/atf-c++/macros.hpp		comp-atf-include
+./usr/include/atf-c++/parser.hpp		comp-atf-include
+./usr/include/atf-c++/sanity.hpp		comp-atf-include
+./usr/include/atf-c++/signals.hpp		comp-atf-include
+./usr/include/atf-c++/tests.hpp			comp-atf-include
+./usr/include/atf-c++/text.hpp			comp-atf-include
+./usr/include/atf-c++/ui.hpp			comp-atf-include
+./usr/include/atf-c++/user.hpp			comp-atf-include
+./usr/include/atf-c++/utils.hpp			comp-atf-include
 ./usr/include/bfd				comp-obsolete		obsolete
 ./usr/include/bfd/ansidecl.h			comp-obsolete		obsolete
 ./usr/include/bfd/bfd.h				comp-obsolete		obsolete
@@ -2132,8 +2174,12 @@
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
-./usr/lib/libatf.a				comp-atf-lib
-./usr/lib/libatf_p.a				comp-atf-lib		profile
+./usr/lib/libatf.a				comp-obsolete		obsolete
+./usr/lib/libatf_p.a				comp-obsolete		obsolete
+./usr/lib/libatf-c.a				comp-atf-lib
+./usr/lib/libatf-c_p.a				comp-atf-lib		profile
+./usr/lib/libatf-c++.a				comp-atf-lib
+./usr/lib/libatf-c++_p.a			comp-atf-lib		profile
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
 ./usr/lib/libbind9.a				comp-bind-lib
 ./usr/lib/libbind9_p.a				comp-bind-proflib	profile
@@ -2313,7 +2359,9 @@
 ./usr/lib/libz.a				comp-c-lib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
 ./usr/lib/pkgconfig				comp-c-lib
-./usr/lib/pkgconfig/atf.pc			comp-atf-lib
+./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
+./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib
+./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
@@ -4337,6 +4385,7 @@
 ./usr/share/man/cat3/atoi.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atoll.0			comp-c-catman		.cat
+./usr/share/man/cat3/atf-c-api.0		comp-atf-catman		.cat
 ./usr/share/man/cat3/atf-c++-api.0		comp-atf-catman		.cat
 ./usr/share/man/cat3/atf-sh-api.0		comp-atf-catman		.cat
 ./usr/share/man/cat3/attr_get.0			comp-c-catman		.cat
@@ -9372,6 +9421,7 @@
 ./usr/share/man/man3/atoi.3			comp-c-man		.man
 ./usr/share/man/man3/atol.3			comp-c-man		.man
 ./usr/share/man/man3/atoll.3			comp-c-man		.man
+./usr/share/man/man3/atf-c-api.3		comp-atf-man		.man
 ./usr/share/man/man3/atf-c++-api.3		comp-atf-man		.man
 ./usr/share/man/man3/atf-sh-api.3		comp-atf-man		.man
 ./usr/share/man/man3/attr_get.3			comp-c-man		.man
