@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.6 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.7 2008/05/01 16:06:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.6 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.7 2008/05/01 16:06:41 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,17 +44,17 @@ __KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.6 2008/04/28 20:23:47 martin Exp $")
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
 
-#define SONY_NOTIFY_FnKeyEvent			0x92
-#define SONY_NOTIFY_BrightnessDownPressed	0x85
-#define SONY_NOTIFY_BrightnessDownReleased	0x05
-#define SONY_NOTIFY_BrightnessUpPressed		0x86
-#define SONY_NOTIFY_BrightnessUpReleased	0x06
-#define SONY_NOTIFY_DisplaySwitchPressed	0x87
-#define SONY_NOTIFY_DisplaySwitchReleased	0x07
-#define SONY_NOTIFY_ZoomPressed			0x8a
-#define SONY_NOTIFY_ZoomReleased		0x0a
-#define SONY_NOTIFY_SuspendPressed		0x8c
-#define SONY_NOTIFY_SuspendReleased		0x0c
+#define	SONY_NOTIFY_FnKeyEvent			0x92
+#define	SONY_NOTIFY_BrightnessDownPressed	0x85
+#define	SONY_NOTIFY_BrightnessDownReleased	0x05
+#define	SONY_NOTIFY_BrightnessUpPressed		0x86
+#define	SONY_NOTIFY_BrightnessUpReleased	0x06
+#define	SONY_NOTIFY_DisplaySwitchPressed	0x87
+#define	SONY_NOTIFY_DisplaySwitchReleased	0x07
+#define	SONY_NOTIFY_ZoomPressed			0x8a
+#define	SONY_NOTIFY_ZoomReleased		0x0a
+#define	SONY_NOTIFY_SuspendPressed		0x8c
+#define	SONY_NOTIFY_SuspendReleased		0x0c
 
 struct sony_acpi_softc {
 	device_t sc_dev;
@@ -68,7 +68,7 @@ struct sony_acpi_softc {
 	struct sysmon_pswitch sc_smpsw[SONY_PSW_LAST];
 	int sc_smpsw_valid;
 
-#define SONY_ACPI_QUIRK_FNINIT	0x01
+#define	SONY_ACPI_QUIRK_FNINIT	0x01
 	int sc_quirks;
 	bool sc_has_pic;
 
