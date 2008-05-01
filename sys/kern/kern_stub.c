@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.8 2008/04/28 21:17:16 ad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.9 2008/05/01 00:20:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.8 2008/04/28 21:17:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.9 2008/05/01 00:20:12 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -127,6 +127,9 @@ __strong_alias(sys_sa_yield,sys_nosys);
 __strong_alias(sys_sa_preempt,sys_nosys);
 __strong_alias(sys_sa_unblockyield,sys_nosys);
 
+/*
+ * Stubs for architectures that do not support kernel preemption.
+ */
 #ifndef __HAVE_PREEMPTION
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
@@ -147,6 +150,10 @@ cpu_kpreempt_disabled(void)
 
 	return true;
 }
+#else
+# ifndef MULTIPROCESSOR
+#   error __HAVE_PREEMPTION requires MULTIPROCESSOR
+# endif
 #endif	/* !__HAVE_PREEMPTION */
 
 /* ARGSUSED */
