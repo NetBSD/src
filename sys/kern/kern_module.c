@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.10 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.11 2008/05/01 14:44:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.10 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.11 2008/05/01 14:44:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,7 @@ static int	module_do_load(const char *, bool, int, prop_dictionary_t,
 static int	module_do_unload(const char *);
 static void	module_error(const char *, ...);
 static int	module_do_builtin(const char *, module_t **);
+static int	module_fetch_info(module_t *);
 
 /*
  * module_error:
@@ -102,6 +103,7 @@ module_init(void)
 	if (lkm_map == NULL)
 		lkm_map = kernel_map;
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
+	module_init_md();
 }
 
 /*
@@ -135,10 +137,16 @@ module_init_class(modclass_t class)
 	 * Now preloaded modules.  These will be pulled off the
 	 * list as we call module_do_load();
 	 */
-	while ((mod = TAILQ_FIRST(&module_bootlist)) != NULL) {
-		module_do_load(mod->mod_info->mi_name, false, 0,
-		    NULL, NULL);
-	}
+	do {
+		TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
+			mi = mod->mod_info;
+			if (class != MODULE_CLASS_ANY &&
+			    class != mi->mi_class)
+				continue;
+			module_do_load(mi->mi_name, false, 0, NULL, NULL);
+			break;
+		}
+	} while (mod != NULL);
 	mutex_exit(&module_lock);
 }
 
@@ -378,8 +386,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	module_t *mod, *mod2;
 	char buf[MAXMODNAME];
 	const char *s, *p;
-	void *addr;
-	size_t size;
 	int error;
 	size_t len;
 	u_int i;
@@ -433,25 +439,17 @@ module_do_load(const char *filename, bool isdep, int flags,
 			return error;
 		}
 		mod->mod_source = MODULE_SOURCE_FILESYS;
+		error = module_fetch_info(mod);
+		if (error != 0) {
+			goto fail;
+		}
 	}
 	TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 
 	/*
-	 * Find module info record and check compatibility.
+	 * Check compatibility.
 	 */
-	error = kobj_find_section(mod->mod_kobj, "link_set_modules",
-	    &addr, &size);
-	if (error != 0) {
-		module_error("`link_set_modules' section not present");
-		goto fail;
-	}
-	if (size != sizeof(modinfo_t **)) {
-		module_error("`link_set_modules' section wrong size");
-		goto fail;
-	}
-	mod->mod_info = *(modinfo_t **)addr;
 	mi = mod->mod_info;
-
 	if (strlen(mi->mi_name) >= MAXMODNAME) {
 		error = EINVAL;
 		module_error("module name too long");
@@ -642,19 +640,59 @@ module_prime(void *base, size_t size)
 	mod->mod_source = MODULE_SOURCE_BOOT;
 
 	error = kobj_open_mem(&mod->mod_kobj, base, size);
-	if (error == 0) {
+	if (error != 0) {
 		kmem_free(mod, sizeof(*mod));
 		module_error("unable to open object pushed by boot loader");
 		return error;
 	}
+
 	error = kobj_load(mod->mod_kobj);
 	if (error != 0) {
+		kobj_close(mod->mod_kobj);
 		kmem_free(mod, sizeof(*mod));
-		module_error("unable to push object pushed by boot loader");
+		module_error("unable to load object pushed by boot loader");
 		return error;
 	}
-	mod->mod_source = MODULE_SOURCE_FILESYS;
+	error = module_fetch_info(mod);
+	if (error != 0) {
+		kobj_close(mod->mod_kobj);
+		kobj_unload(mod->mod_kobj);
+		kmem_free(mod, sizeof(*mod));
+		module_error("unable to load object pushed by boot loader");
+		return error;
+	}
+
 	TAILQ_INSERT_TAIL(&module_bootlist, mod, mod_chain);
+
+	return 0;
+}
+
+/*
+ * module_fetch_into:
+ *
+ *	Fetch modinfo record from a loaded module.
+ */
+static int
+module_fetch_info(module_t *mod)
+{
+	int error;
+	void *addr;
+	size_t size;
+
+	/*
+	 * Find module info record and check compatibility.
+	 */
+	error = kobj_find_section(mod->mod_kobj, "link_set_modules",
+	    &addr, &size);
+	if (error != 0) {
+		module_error("`link_set_modules' section not present");
+		return error;
+	}
+	if (size != sizeof(modinfo_t **)) {
+		module_error("`link_set_modules' section wrong size");
+		return error;
+	}
+	mod->mod_info = *(modinfo_t **)addr;
 
 	return 0;
 }
