@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2007/11/12 15:00:00 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2008/05/01 15:35:14 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,7 @@ PROG_CXX=	atf-cleanup
 SRCS=		atf-cleanup.cpp
 MAN=		atf-cleanup.1
 
-CPPFLAGS+=	-I${SRCDIR}/libs
-LDADD+=		-latf
+LDADD+=		-latf-c++ -latf-c
 
 WARNS?=		2
 
