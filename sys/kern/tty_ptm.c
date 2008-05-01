@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.23.6.1 2008/04/03 12:43:05 mjf Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.23.6.2 2008/05/01 15:36:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.23.6.1 2008/04/03 12:43:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.23.6.2 2008/05/01 15:36:37 mjf Exp $");
 
 #include "opt_ptm.h"
 
@@ -294,21 +294,6 @@ pty_fill_ptmget(struct lwp *l, dev_t dev, int cfd, int sfd, void *data)
 	return (*ptm->makename)(ptm, l, ptmg->sn, sizeof(ptmg->sn), dev, 't');
 }
 
-void
-/*ARGSUSED*/
-ptmattach(int n)
-{
-	extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
-	/* find the major and minor of the pty devices */
-	if ((pts_major = cdevsw_lookup_major(&pts_cdevsw)) == -1)
-		panic("ptmattach: Can't find pty slave in cdevsw");
-	if ((ptc_major = cdevsw_lookup_major(&ptc_cdevsw)) == -1)
-		panic("ptmattach: Can't find pty master in cdevsw");
-#ifdef COMPAT_BSDPTY
-	ptm = &ptm_bsdpty;
-#endif
-}
-
 static int
 /*ARGSUSED*/
 ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
@@ -392,4 +377,25 @@ const struct cdevsw ptm_cdevsw = {
 	ptmopen, ptmclose, noread, nowrite, ptmioctl,
 	nullstop, notty, nopoll, nommap, nokqfilter, D_TTY
 };
+
+void
+/*ARGSUSED*/
+ptmattach(int n)
+{
+	int ptm_major;
+	extern const struct cdevsw pts_cdevsw, ptc_cdevsw;
+	/* find the major and minor of the pty devices */
+	if ((pts_major = cdevsw_lookup_major(&pts_cdevsw)) == -1)
+		panic("ptmattach: Can't find pty slave in cdevsw");
+	if ((ptc_major = cdevsw_lookup_major(&ptc_cdevsw)) == -1)
+		panic("ptmattach: Can't find pty master in cdevsw");
+#ifdef COMPAT_BSDPTY
+	ptm = &ptm_bsdpty;
+#endif
+	ptm_major = cdevsw_lookup_major(&ptm_cdevsw);
+	device_register_name(makedev(ptm_major, 0), NULL, true, 
+	    DEV_OTHER, "ptmx");
+	device_register_name(makedev(ptm_major, 1), NULL, true,
+	    DEV_OTHER, "ptm");
+}
 #endif
