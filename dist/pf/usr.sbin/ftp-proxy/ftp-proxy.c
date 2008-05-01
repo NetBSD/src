@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.1.2.1 2008/04/26 12:57:42 peter Exp $ */
+/*	$NetBSD: ftp-proxy.c,v 1.1.2.2 2008/05/01 11:45:35 peter Exp $ */
 /*	$OpenBSD: ftp-proxy.c,v 1.15 2007/08/15 15:18:02 camield Exp $ */
 
 /*
@@ -591,7 +591,11 @@ logmsg(int pri, const char *message, ...)
 		/* We don't care about truncation. */
 		vsnprintf(buf, sizeof buf, message, ap);
 #ifdef __NetBSD__
-		strvisx(visbuf, buf, sizeof visbuf, VIS_CSTYLE | VIS_NL);
+		size_t len = strlen(buf);
+		if (len > sizeof visbuf) {
+			len = sizeof visbuf;
+		}
+		strvisx(visbuf, buf, len, VIS_CSTYLE | VIS_NL);
 #else
 		strnvis(visbuf, buf, sizeof visbuf, VIS_CSTYLE | VIS_NL);
 #endif /* !__NetBSD__ */
