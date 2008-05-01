@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2007/11/24 18:44:00 christos Exp $
+# $NetBSD: Makefile,v 1.3 2008/05/01 15:35:14 jmmv Exp $
 
 CLEANFILES+=	atf-host-compile
 CLEANFILES+=	atf-host-compile.tmp
@@ -15,7 +15,7 @@ atf-host-compile: atf-host-compile.sh
 	else \
 		H=/usr/bin/${HOST_SH}; \
 	fi; \
-	${HOST_SED} -e s,__ATF_PKGDATADIR__,${SRCDIR}/subrs,g \
+	${HOST_SED} -e s,__ATF_PKGDATADIR__,${SRCDIR}/atf-sh,g \
 	            -e s,__ATF_SHELL__,$$H,g \
 	            <${SRCDIR}/tools/atf-host-compile.sh \
 	            >atf-host-compile.tmp; \
