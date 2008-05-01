@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.12 2008/05/01 14:44:48 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.13 2008/05/01 17:07:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.12 2008/05/01 14:44:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.13 2008/05/01 17:07:10 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -293,6 +293,7 @@ kobj_load(kobj_t ko)
 	int pb, rl, ra;
 	int alignmask;
 	int i, j;
+	void *addr;
 
 	KASSERT(ko->ko_type != KT_UNSET);
 	KASSERT(ko->ko_source != NULL);
@@ -508,8 +509,8 @@ kobj_load(kobj_t ko)
 	if (ko->ko_type == KT_MEMORY) {
 		mapbase += (vaddr_t)ko->ko_source;
 	} else {
-		mapbase = uvm_km_alloc(lkm_map, round_page(mapsize), 0,
-		    UVM_KMF_WIRED | UVM_KMF_EXEC);
+		mapbase = uvm_km_alloc(lkm_map, round_page(mapsize),
+		    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
 		if (mapbase == 0) {
 			error = ENOMEM;
 			goto out;
@@ -531,21 +532,36 @@ kobj_load(kobj_t ko)
 		case SHT_PROGBITS:
 		case SHT_NOBITS:
 			alignmask = shdr[i].sh_addralign - 1;
-			mapbase += alignmask;
-			mapbase &= ~alignmask;
-			ko->ko_progtab[pb].addr = (void *)mapbase;
-			if (shdr[i].sh_type == SHT_PROGBITS) {
-				ko->ko_progtab[pb].name = "<<PROGBITS>>";
-				error = kobj_read_bits(ko,
-				    ko->ko_progtab[pb].addr, shdr[i].sh_size,
-				    shdr[i].sh_offset);
-				if (error != 0) {
+			if (ko->ko_type == KT_MEMORY) {
+				addr = (void *)(shdr[i].sh_offset +
+				    (vaddr_t)ko->ko_source);
+				if (((vaddr_t)addr & alignmask) != 0) {
+					kobj_error("section %d not aligned\n",
+					    i);
 					goto out;
 				}
 			} else {
+				mapbase += alignmask;
+				mapbase &= ~alignmask;
+				addr = (void *)mapbase;
+				mapbase += shdr[i].sh_size;
+			}
+			ko->ko_progtab[pb].addr = addr;
+			if (shdr[i].sh_type == SHT_PROGBITS) {
+				ko->ko_progtab[pb].name = "<<PROGBITS>>";
+				error = kobj_read_bits(ko, addr,
+				    shdr[i].sh_size, shdr[i].sh_offset);
+				if (error != 0) {
+					goto out;
+				}
+			} else if (ko->ko_type == KT_MEMORY &&
+			    shdr[i].sh_size != 0) {
+			    	kobj_error("non-loadable BSS section in "
+			    	    "pre-loaded module");
+			    	goto out;
+			} else {
 				ko->ko_progtab[pb].name = "<<NOBITS>>";
-				memset(ko->ko_progtab[pb].addr, 0,
-				    shdr[i].sh_size);
+				memset(addr, 0, shdr[i].sh_size);
 			}
 			ko->ko_progtab[pb].size = shdr[i].sh_size;
 			ko->ko_progtab[pb].sec = i;
@@ -560,10 +576,8 @@ kobj_load(kobj_t ko)
 				if (es->st_shndx != i) {
 					continue;
 				}
-				es->st_value +=
-				    (Elf_Addr)ko->ko_progtab[pb].addr;
+				es->st_value += (Elf_Addr)addr;
 			}
-			mapbase += shdr[i].sh_size;
 			pb++;
 			break;
 		case SHT_REL:
@@ -602,6 +616,8 @@ kobj_load(kobj_t ko)
 			}
 			ra++;
 			break;
+		default:
+			break;
 		}
 	}
 	if (pb != ko->ko_nprogtab) {
@@ -613,8 +629,8 @@ kobj_load(kobj_t ko)
 	if (ra != ko->ko_nrela) {
 		panic("lost rela");
 	}
-	if (mapbase != ko->ko_address + mapsize) {
-		panic("mapbase 0x%lx != address %lx + mapsize 0x%lx (0x%lx)\n",
+	if (ko->ko_type != KT_MEMORY && mapbase != ko->ko_address + mapsize) {
+		panic("mapbase 0x%lx != address %lx + mapsize %ld (0x%lx)\n",
 		    (long)mapbase, (long)ko->ko_address, (long)mapsize,
 		    (long)ko->ko_address + mapsize);
 	}
