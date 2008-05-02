@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.361 2008/04/28 20:23:47 martin Exp $ */
+/*	$NetBSD: wd.c,v 1.362 2008/05/02 21:11:00 plunky Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.361 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.362 2008/05/02 21:11:00 plunky Exp $");
 
 #include "opt_ata.h"
 
@@ -485,6 +485,7 @@ wddetach(struct device *self, int flags)
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
+	disk_destroy(&sc->sc_dk);
 
 #ifdef WD_SOFTBADSECT
 	/* Clean out the bad sector list */
