@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2008/04/29 00:44:58 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 2008/05/02 15:26:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2008/04/29 00:44:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2008/05/02 15:26:39 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1275,7 +1275,13 @@ pmap_bootstrap(vaddr_t kva_start)
 		if (KERNBASE == VM_MIN_KERNEL_ADDRESS) {
 			kva_end = virtual_avail;
 		} else {
-			kva_end = roundup((vaddr_t)&end, PAGE_SIZE);
+			extern vaddr_t eblob, esym;
+			kva_end = (vaddr_t)&end;
+			if (esym > kva_end)
+				kva_end = esym;
+			if (eblob > kva_end)
+				kva_end = eblob;
+			kva_end = roundup(kva_end, PAGE_SIZE);
 		}
 		for (kva = KERNBASE; kva < kva_end; kva += PAGE_SIZE) {
 			p1i = pl1_i(kva);

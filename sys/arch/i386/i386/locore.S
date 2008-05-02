@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.70 2008/04/29 18:27:18 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.71 2008/05/02 15:26:38 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.70 2008/04/29 18:27:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.71 2008/05/02 15:26:38 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -205,6 +205,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.70 2008/04/29 18:27:18 ad Exp $");
 
 	.globl	_C_LABEL(cpu)
 	.globl	_C_LABEL(esym)
+	.globl	_C_LABEL(eblob)
 	.globl	_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(gdt)
@@ -488,8 +489,8 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Virtual address space of kernel:
  *
- * text | data | bss | [syms] | page dir | proc0 kstack | L1 ptp
- *			      0          1       2      3
+ * text | data | bss | [syms] | [blobs] | page dir | proc0 kstack | L1 ptp
+ *			                0          1       2      3
  */
 
 #define	PROC0_PDIR_OFF	0
@@ -512,6 +513,7 @@ try586:	/* Use the `cpuid' instruction. */
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
+
 #if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
@@ -522,8 +524,15 @@ try586:	/* Use the `cpuid' instruction. */
 1:
 #endif
 
+	/* Skip over any modules/blobs. */
+	movl	RELOC(eblob),%eax
+	testl	%eax,%eax
+	jz	1f
+	subl	$KERNBASE,%eax
+	movl	%eax,%edi
+1:
 	/* Compute sizes */
-	movl	%edi,%esi			# edi = esym ? esym : end
+	movl	%edi,%esi
 	addl	$PGOFSET,%esi			# page align up
 	andl	$~PGOFSET,%esi
 

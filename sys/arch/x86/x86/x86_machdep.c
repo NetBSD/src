@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.20 2008/04/30 12:44:27 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.21 2008/05/02 15:26:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_modular.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.20 2008/04/30 12:44:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.21 2008/05/02 15:26:39 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.20 2008/04/30 12:44:27 ad Exp $");
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/atomic.h>
+#include <sys/module.h>
 
 #include <x86/cpu_msr.h>
 
@@ -121,6 +124,38 @@ x86_init(void)
 	msr_cpu_broadcast_initmtx();
 #endif
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+	struct btinfo_modulelist *biml;
+	struct bi_modulelist_entry *bi, *bimax;
+
+	biml = lookup_bootinfo(BTINFO_MODULELIST);
+	if (biml == NULL) {
+		aprint_debug("No module info at boot\n");
+		return;
+	}
+
+	bi = (struct bi_modulelist_entry *)((uint8_t *)biml + sizeof(*biml));
+	bimax = bi + biml->num;
+	for (; bi < bimax; bi++) {
+		if (bi->type != BI_MODULE_ELF) {
+			aprint_debug("Skipping non-ELF module\n");
+			continue;
+		}
+		aprint_debug("Prep module path=%s len=%d pa=%x\n", bi->path,
+		    bi->len, bi->base);
+		KASSERT(trunc_page(bi->base) == bi->base);
+		(void)module_prime((void *)((uintptr_t)bi->base + KERNBASE),
+		    bi->len);
+	}
+}
+#endif	/* MODULAR */
 
 void
 cpu_need_resched(struct cpu_info *ci, int flags)

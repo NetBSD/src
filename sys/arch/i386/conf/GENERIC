@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.892 2008/05/01 20:18:18 cegger Exp $
+# $NetBSD: GENERIC,v 1.893 2008/05/02 15:26:38 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.892 $"
+#ident 		"GENERIC-$Revision: 1.893 $"
 
 maxusers	64		# estimated number of users
 
@@ -99,6 +99,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
+options		MODULAR		# new style module framework
 options 	APM_NO_IDLE	# needed for SMP
 
 options 	USERCONF	# userconf(4) support
@@ -1441,6 +1442,9 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
+options		MEMORY_DISK_HOOKS	# enable root ramdisk
+options		MEMORY_DISK_DYNAMIC	# loaded via kernel module
+
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
