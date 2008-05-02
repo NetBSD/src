@@ -1,8 +1,8 @@
-/*	$NetBSD: dumptab.c,v 1.8 2007/05/27 16:31:42 tls Exp $	*/
+/*	$NetBSD: dumptab.c,v 1.9 2008/05/02 19:22:10 xtraeme Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dumptab.c,v 1.8 2007/05/27 16:31:42 tls Exp $");
+__RCSID("$NetBSD: dumptab.c,v 1.9 2008/05/02 19:22:10 xtraeme Exp $");
 #endif
 
 /*
@@ -29,11 +29,11 @@ __RCSID("$NetBSD: dumptab.c,v 1.8 2007/05/27 16:31:42 tls Exp $");
 static void dump_generic(FILE *, struct shared_bindata *);
 static void dump_host(FILE *, struct host *);
 static void list_ipaddresses(FILE *, struct in_addr_list *);
-void dumptab(char *);
+void dumptab(const char *);
 
 #ifndef	DEBUG
 void
-dumptab(char *filename)
+dumptab(const char *filename)
 {
 	report(LOG_INFO, "No dumptab support!");
 }
@@ -45,7 +45,7 @@ dumptab(char *filename)
  */
 
 void
-dumptab(char *filename)
+dumptab(const char *filename)
 {
 	int n;
 	struct host *hp;
