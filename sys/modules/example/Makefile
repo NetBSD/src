@@ -1,12 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2008/02/10 10:51:18 jmmv Exp $
+#	$NetBSD: Makefile,v 1.3 2008/05/02 14:20:50 ad Exp $
 
 KMOD=   example
+SRCS=	example.c
 
-SRCS=   	real-example.c
-# XXX A hack to workaround the fact that the final module is named
-# example.o.  To be removed once we change the extension of modules.
-BUILDSYMLINKS=	${.CURDIR}/example.c real-example.c
-
-NOMAN=	# defined
-
-.include <bsd.kmod.mk>
+.include <bsd.kmodule.mk>
