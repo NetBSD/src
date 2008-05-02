@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/02/23 17:52:14 sborrill Exp $
+#	$NetBSD: Makefile,v 1.5 2008/05/02 23:13:06 ad Exp $
 #
 
 .include "${.CURDIR}/../Makefile.cdrom"
@@ -6,7 +6,7 @@
 CDBASE=		boot-com			# gives ${CDBASE}.iso
 CDBOOTOPTIONS=	-o console=com0
 
-CDBUILDEXTRA=	boot.cfg		# Add boot.cfg file
+CDBUILDEXTRA+=	boot.cfg		# Add boot.cfg file
 CLEANFILES+=	boot.cfg
 
 prepare_md_post:
