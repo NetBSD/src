@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.1 2008/05/01 20:18:19 cegger Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.2 2008/05/02 01:53:33 simonb Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.1 2008/05/01 20:18:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.2 2008/05/02 01:53:33 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,7 +193,8 @@ hpqlb_hotkey_handler(struct wskbd_softc *wskbd_sc, void *cookie,
 		if (type != WSCONS_EVENT_KEY_DOWN)
 			break;
 		if (sc->sc_smpsw_sleep_valid == false) {
-			DPRINTF(("%s: Sleep hotkey\n", device_xname(sc->sc_dev)));
+			DPRINTF(("%s: Sleep hotkey\n",
+			    device_xname(sc->sc_dev)));
 			break;
 		}
 		sysmon_pswitch_event(&sc->sc_smpsw[HP_PSW_SLEEP],
@@ -229,6 +230,7 @@ hpqlb_hotkey_handler(struct wskbd_softc *wskbd_sc, void *cookie,
 static void
 hpqlb_init(device_t self)
 {
+
 	/* HPQ0006: HP Quick Launch Buttons */
 	/* HPQ0007: HP Remote Device */
 	/* val 0, 1 or 7 == HPQ0006 */
@@ -282,6 +284,7 @@ hpqlb_finalize(device_t self)
 static bool
 hpqlb_resume(device_t self PMF_FN_ARGS)
 {
+
 	hpqlb_init(self);
 
 	return true;
