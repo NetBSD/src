@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.15 2004/10/29 21:21:42 dsl Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.16 2008/05/02 19:59:19 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,8 @@ main(argc, argv)
 	int curcyl, spc, def, part, layout, j, ch;
 	int threshhold, numcyls[NPARTITIONS], startcyl[NPARTITIONS];
 	off_t totsize = 0;
-	char *lp, *tyname;
+	const char *tyname;
+	char *lp;
 
 	while ((ch = getopt(argc, argv, "pds:")) != -1) {
 		switch (ch) {
@@ -365,15 +366,15 @@ main(argc, argv)
 struct disklabel disk;
 
 struct	field {
-	char		*f_name;
-	char		*f_defaults;
+	const char	*f_name;
+	const char	*f_defaults;
 	u_int32_t	*f_location;
 } fields[] = {
 	{ "sector size",		"512",	&disk.d_secsize },
-	{ "#sectors/track",		0,	&disk.d_nsectors },
-	{ "#tracks/cylinder",		0,	&disk.d_ntracks },
-	{ "#cylinders",			0,	&disk.d_ncylinders },
-	{ 0, 0, 0 },
+	{ "#sectors/track",		NULL,	&disk.d_nsectors },
+	{ "#tracks/cylinder",		NULL,	&disk.d_ntracks },
+	{ "#cylinders",			NULL,	&disk.d_ncylinders },
+	{ NULL, NULL, 0 },
 };
 
 struct disklabel *
@@ -462,7 +463,8 @@ again:
 				fprintf(stderr, "no default value\n");
 				goto again;
 			}
-			cp = fp->f_defaults;
+			/* XXX __UNCONST */
+			cp = __UNCONST(fp->f_defaults);
 		}
 		*fp->f_location = atol(cp);
 		if (*fp->f_location == 0) {

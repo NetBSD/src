@@ -1,4 +1,4 @@
-/*	$NetBSD: cnwctl.c,v 1.6 2001/08/18 17:10:04 ad Exp $	*/
+/*	$NetBSD: cnwctl.c,v 1.7 2008/05/02 19:59:19 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc.
@@ -60,7 +60,8 @@ int
 main(int argc, char **argv)
 {
 	int c, domain, i, key, rate, sflag, Sflag, skt;
-	char *e, *interface;
+	const char *interface;
+	char *e;
 	struct ifreq ifr;
         struct cnwistats cnwis, onwis;
         struct cnwstatus cnws;
