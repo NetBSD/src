@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: readfile.c,v 1.15 2007/05/27 16:31:42 tls Exp $");
+__RCSID("$NetBSD: readfile.c,v 1.16 2008/05/02 19:22:10 xtraeme Exp $");
 #endif
 
 
@@ -131,13 +131,13 @@ __RCSID("$NetBSD: readfile.c,v 1.15 2007/05/27 16:31:42 tls Exp $");
  */
 
 struct symbolmap {
-	char *symbol;
+	const char *symbol;
 	int symbolcode;
 };
 
 
 struct htypename {
-	char *name;
+	const char *name;
 	byte htype;
 };
 
@@ -632,7 +632,7 @@ PRIVATE int
 process_entry(struct host *host, char *src)
 {
 	int retval;
-	char *msg;
+	const char *msg;
 
 	if (!host || *src == '\0') {
 		return -1;
@@ -777,7 +777,7 @@ eval_symbol(char **symbol, struct host *hp)
 	byte *tmphaddr;
 	struct symbolmap *symbolptr;
 	u_int32 value;
-	int32 timeoff;
+	int32 ltimeoff;
 	int i, numsymbols;
 	unsigned len;
 	int optype;					/* Indicates boolean, addition, or deletion */
@@ -964,9 +964,9 @@ eval_symbol(char **symbol, struct host *hp)
 			if (!strncmp(tmpstr, "auto", 4)) {
 				hp->time_offset = secondswest;
 			} else {
-				if (sscanf(tmpstr, "%d", &timeoff) != 1)
+				if (sscanf(tmpstr, "%d", &ltimeoff) != 1)
 					return E_BAD_LONGWORD;
-				hp->time_offset = timeoff;
+				hp->time_offset = ltimeoff;
 			}
 			hp->flags.time_offset = TRUE;
 		}
@@ -1108,7 +1108,7 @@ eval_symbol(char **symbol, struct host *hp)
 
 	case SYM_MIN_WAIT:
 		PARSE_INT(min_wait);
-		if (hp->min_wait < 0)
+		if (hp->min_wait == 0)
 			return E_BAD_VALUE;
 		break;
 
