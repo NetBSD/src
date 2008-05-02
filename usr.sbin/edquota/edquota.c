@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.27 2006/05/26 13:21:47 jnemeth Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.28 2008/05/02 19:59:19 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,9 +66,9 @@ __RCSID("$NetBSD: edquota.c,v 1.27 2006/05/26 13:21:47 jnemeth Exp $");
 #include <unistd.h>
 #include "pathnames.h"
 
-char *qfname = QUOTAFILENAME;
-char *qfextension[] = INITQFNAMES;
-char *quotagroup = QUOTAGROUP;
+const char *qfname = QUOTAFILENAME;
+const char *qfextension[] = INITQFNAMES;
+const char *quotagroup = QUOTAGROUP;
 char tmpfil[] = _PATH_TMP;
 
 struct quotause {
@@ -84,7 +84,7 @@ struct quotause {
 
 int	main __P((int, char **));
 void	usage __P((void));
-int	getentry __P((char *, int));
+int	getentry __P((const char *, int));
 struct quotause *
 	getprivs __P((long, int, char *));
 void	putprivs __P((long, int, struct quotause *));
@@ -96,7 +96,7 @@ int	readtimes __P((struct quotause *, int));
 char *	cvtstoa __P((time_t));
 int	cvtatos __P((time_t, char *, time_t *));
 void	freeprivs __P((struct quotause *));
-int	alldigits __P((char *));
+int	alldigits __P((const char *));
 int	hasquota __P((struct fstab *, int, char **));
 
 int
@@ -167,7 +167,7 @@ main(argc, argv)
 		exit(0);
 	}
 	if (soft || hard) {
-		struct quotause *qup;
+		struct quotause *lqup;
 		u_int32_t softb, hardb, softi, hardi;
 		if (tflag)
 			usage();
@@ -185,26 +185,26 @@ main(argc, argv)
 			if ((id = getentry(*argv, quotatype)) == -1)
 				continue;
 			curprivs = getprivs(id, quotatype, fs);
-			for (qup = curprivs; qup; qup = qup->next) {
+			for (lqup = curprivs; lqup; lqup = lqup->next) {
 				if (soft) {
 					if (softb &&
-					    qup->dqblk.dqb_curblocks >= softb &&
-					    (qup->dqblk.dqb_bsoftlimit == 0 ||
-					    qup->dqblk.dqb_curblocks <
-					    qup->dqblk.dqb_bsoftlimit))
-						qup->dqblk.dqb_btime = 0;
+					    lqup->dqblk.dqb_curblocks >= softb &&
+					    (lqup->dqblk.dqb_bsoftlimit == 0 ||
+					    lqup->dqblk.dqb_curblocks <
+					    lqup->dqblk.dqb_bsoftlimit))
+						lqup->dqblk.dqb_btime = 0;
 					if (softi &&
-					    qup->dqblk.dqb_curinodes >= softi &&
-					    (qup->dqblk.dqb_isoftlimit == 0 ||
-					    qup->dqblk.dqb_curinodes <
-					    qup->dqblk.dqb_isoftlimit))
-						qup->dqblk.dqb_itime = 0;
-					qup->dqblk.dqb_bsoftlimit = softb;
-					qup->dqblk.dqb_isoftlimit = softi;
+					    lqup->dqblk.dqb_curinodes >= softi &&
+					    (lqup->dqblk.dqb_isoftlimit == 0 ||
+					    lqup->dqblk.dqb_curinodes <
+					    lqup->dqblk.dqb_isoftlimit))
+						lqup->dqblk.dqb_itime = 0;
+					lqup->dqblk.dqb_bsoftlimit = softb;
+					lqup->dqblk.dqb_isoftlimit = softi;
 				}
 				if (hard) {
-					qup->dqblk.dqb_bhardlimit = hardb;
-					qup->dqblk.dqb_ihardlimit = hardi;
+					lqup->dqblk.dqb_bhardlimit = hardb;
+					lqup->dqblk.dqb_ihardlimit = hardi;
 				}
 			}
 			putprivs(id, quotatype, curprivs);
@@ -261,7 +261,7 @@ usage()
  */
 int
 getentry(name, quotatype)
-	char *name;
+	const char *name;
 	int quotatype;
 {
 	struct passwd *pw;
@@ -409,11 +409,11 @@ putprivs(id, quotatype, quplist)
  * Take a list of privileges and get it edited.
  */
 int
-editit(tmpfile)
-	char *tmpfile;
+editit(ltmpfile)
+	char *ltmpfile;
 {
 	long omask;
-	int pid, stat;
+	int pid, lst;
 	char p[MAX_TMPSTR];
 
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
@@ -432,23 +432,23 @@ editit(tmpfile)
 		return (0);
 	}
 	if (pid == 0) {
-		char *ed;
+		const char *ed;
 
 		sigsetmask(omask);
 		setgid(getgid());
 		setuid(getuid());
 		if ((ed = getenv("EDITOR")) == (char *)0)
 			ed = _PATH_VI;
-		if (strlen(ed) + strlen(tmpfile) + 2 >= MAX_TMPSTR) {
+		if (strlen(ed) + strlen(ltmpfile) + 2 >= MAX_TMPSTR) {
 			err (1, "%s", "editor or filename too long");
 		}
-		snprintf (p, MAX_TMPSTR, "%s %s", ed, tmpfile);
+		snprintf (p, MAX_TMPSTR, "%s %s", ed, ltmpfile);
 		execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", p, NULL);
 		err(1, "%s", ed);
 	}
-	waitpid(pid, &stat, 0);
+	waitpid(pid, &lst, 0);
 	sigsetmask(omask);
-	if (!WIFEXITED(stat) || WEXITSTATUS(stat) != 0)
+	if (!WIFEXITED(lst) || WEXITSTATUS(lst) != 0)
 		return (0);
 	return (1);
 }
@@ -709,23 +709,23 @@ bad:
  * Convert seconds to ASCII times.
  */
 char *
-cvtstoa(time)
-	time_t time;
+cvtstoa(ltime)
+	time_t ltime;
 {
 	static char buf[20];
 
-	if (time % (24 * 60 * 60) == 0) {
-		time /= 24 * 60 * 60;
-		snprintf(buf, sizeof buf, "%ld day%s", (long)time,
-		    time == 1 ? "" : "s");
-	} else if (time % (60 * 60) == 0) {
-		time /= 60 * 60;
-		sprintf(buf, "%ld hour%s", (long)time, time == 1 ? "" : "s");
-	} else if (time % 60 == 0) {
-		time /= 60;
-		sprintf(buf, "%ld minute%s", (long)time, time == 1 ? "" : "s");
+	if (ltime % (24 * 60 * 60) == 0) {
+		ltime /= 24 * 60 * 60;
+		snprintf(buf, sizeof buf, "%ld day%s", (long)ltime,
+		    ltime == 1 ? "" : "s");
+	} else if (ltime % (60 * 60) == 0) {
+		ltime /= 60 * 60;
+		sprintf(buf, "%ld hour%s", (long)ltime, ltime == 1 ? "" : "s");
+	} else if (ltime % 60 == 0) {
+		ltime /= 60;
+		sprintf(buf, "%ld minute%s", (long)ltime, ltime == 1 ? "" : "s");
 	} else
-		sprintf(buf, "%ld second%s", (long)time, time == 1 ? "" : "s");
+		sprintf(buf, "%ld second%s", (long)ltime, ltime == 1 ? "" : "s");
 	return (buf);
 }
 
@@ -733,20 +733,20 @@ cvtstoa(time)
  * Convert ASCII input times to seconds.
  */
 int
-cvtatos(time, units, seconds)
-	time_t time;
+cvtatos(ltime, units, seconds)
+	time_t ltime;
 	char *units;
 	time_t *seconds;
 {
 
 	if (memcmp(units, "second", 6) == 0)
-		*seconds = time;
+		*seconds = ltime;
 	else if (memcmp(units, "minute", 6) == 0)
-		*seconds = time * 60;
+		*seconds = ltime * 60;
 	else if (memcmp(units, "hour", 4) == 0)
-		*seconds = time * 60 * 60;
+		*seconds = ltime * 60 * 60;
 	else if (memcmp(units, "day", 3) == 0)
-		*seconds = time * 24 * 60 * 60;
+		*seconds = ltime * 24 * 60 * 60;
 	else {
 		printf("%s: bad units, specify %s\n", units,
 		    "days, hours, minutes, or seconds");
@@ -775,7 +775,7 @@ freeprivs(quplist)
  */
 int
 alldigits(s)
-	char *s;
+	const char *s;
 {
 	int c;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eshconfig.c,v 1.7 2008/04/28 20:24:15 martin Exp $	*/
+/*	$NetBSD: eshconfig.c,v 1.8 2008/05/02 19:59:19 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eshconfig.c,v 1.7 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: eshconfig.c,v 1.8 2008/05/02 19:59:19 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,9 +134,9 @@ struct ifdrv ifd;
  */
 
 static int
-drvspec_ioctl(char *name, int fd, int cmd, int len, caddr_t data)
+drvspec_ioctl(char *lname, int fd, int cmd, int len, caddr_t data)
 {
-	strcpy(ifd.ifd_name, name);
+	strcpy(ifd.ifd_name, lname);
 	ifd.ifd_cmd = cmd;
 	ifd.ifd_len = len;
 	ifd.ifd_data = data;
@@ -634,7 +634,7 @@ rr_checksum(const u_int32_t *data, int length)
 
 struct stats_values {
 	int	 offset;
-	char *name;
+	const char *name;
 };
 
 struct stats_values stats_values[] = {
@@ -700,7 +700,7 @@ esh_reset()
 }
 
 static void
-esh_stats(int get_stats)
+esh_stats(int lget_stats)
 {
 	u_int32_t	*stats;
 	long long value;
@@ -713,14 +713,14 @@ esh_stats(int get_stats)
 	stats = rr_stats.rs_stats;
 
 	value = (((long long) stats[0x78 / 4]) << 32) | stats[0x7c / 4];
-	if (get_stats == 1 || value > 0)
+	if (lget_stats == 1 || value > 0)
 		printf("%12lld bytes sent\n", value);
 	value = ((long long) stats[0xb8 / 4] << 32) | stats[0xbc / 4];
-	if (get_stats == 1 || value > 0)
+	if (lget_stats == 1 || value > 0)
 		printf("%12lld bytes received\n", value);
 
 	for (offset = 0; stats_values[offset].offset != 0; offset++) {
-		if (get_stats == 1 || stats[stats_values[offset].offset / 4] > 0)
+		if (lget_stats == 1 || stats[stats_values[offset].offset / 4] > 0)
 			printf("%12d %s\n", stats[stats_values[offset].offset / 4],
 			       stats_values[offset].name);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.19 2008/04/28 20:24:15 martin Exp $ */
+/*	$NetBSD: apm.c,v 1.20 2008/05/02 19:59:19 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 	struct apm_command command;
 	struct apm_reply reply;
 	struct apm_power_info *api = &reply.batterystate;
-	char *sockname = _PATH_APM_SOCKET;
+	const char *sockname = _PATH_APM_SOCKET;
 	enum apm_action action = NONE;
 	int ch, doac, dobstate, domin, dopct, dostatus, fd, nodaemon,
 	    rval, verbose;

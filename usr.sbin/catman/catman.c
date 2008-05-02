@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.27 2008/04/28 20:24:15 martin Exp $       */
+/*      $NetBSD: catman.c,v 1.28 2008/05/02 19:59:19 xtraeme Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,8 +134,8 @@ setdefentries(char *m_path, char *m_add, const char *sections)
 {
 	TAG *defnewp, *sectnewp, *subp;
 	ENTRY *e_defp, *e_subp;
-	const char *p;
-	char *slashp, *machine;
+	const char *p, *slashp;
+	char *machine;
 	char buf[MAXPATHLEN * 2];
 	int i;
 
