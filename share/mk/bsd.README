@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.205 2008/04/30 21:15:33 garbled Exp $
+#	$NetBSD: bsd.README,v 1.206 2008/05/02 11:45:19 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -188,7 +188,7 @@ MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
 		Default: yes
 
-MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
+MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
 		Also:
 			- don't install the .a libraries
 			- don't install _pic.a libraries on PIC systems
@@ -755,7 +755,7 @@ USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
 		Default: no
 
-MKPRIVATELIB	If not "no", act as "MKPROFILE=no MKPIC=no MKLINT=no",
+MKPRIVATELIB	If not "no", act as "MKLINT=no MKPIC=no MKPROFILE=no",
 		and don't install the (.a) library.
 		This is useful for "build only" helper libraries.
 		Default: no
