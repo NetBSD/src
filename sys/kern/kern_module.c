@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.12 2008/05/01 17:23:16 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.13 2008/05/02 12:59:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,8 +34,10 @@
  * fail because of missing symbols.
  */
 
+#include "opt_modular.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.12 2008/05/01 17:23:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.13 2008/05/02 12:59:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +106,7 @@ module_init(void)
 	if (lkm_map == NULL)
 		lkm_map = kernel_map;
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
-#if 0
+#ifdef MODULAR	/* XXX */
 	module_init_md();
 #endif
 }
