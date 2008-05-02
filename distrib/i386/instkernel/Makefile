@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/04/30 15:29:11 ad Exp $
+#	$NetBSD: Makefile,v 1.11 2008/05/02 23:13:06 ad Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,7 +17,7 @@ ${V}=		${${V}DIR}/${F}.fs
 
 # If you change the list of distributed install kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
-MDSETTARGETS=	INSTALL			${RAMDISK_B}	-
+MDSETTARGETS+=	GENERIC			${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_FLOPPY		${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_XEN2_DOMU	${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_XEN3_DOMU	${RAMDISK_B}	-
@@ -28,6 +28,9 @@ MDSETTARGETS+=	INSTALL_XEN3PAE_DOMU	${RAMDISK_B}	-
 # MDSETTARGETS+=	INSTALL_TINY		${RESCUE_T}	netbsd-RESCUE_TINY
 
 MDSET_RELEASEDIR=	binary/kernel
+# need symbols to load modules. don't actually want image inserted.
+MDSET_NOSTRIP.netbsd-GENERIC=
+MDSET_NOIMAGE.netbsd-GENERIC=
 # do not strip Xen kernels, there's no space constraints here.
 MDSET_NOSTRIP.netbsd-INSTALL_XEN2_DOMU=
 MDSET_NOSTRIP.netbsd-INSTALL_XEN3_DOMU=
