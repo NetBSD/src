@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.276 2008/05/02 15:53:10 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.277 2008/05/02 16:06:38 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.276 2008/05/02 15:53:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.277 2008/05/02 16:06:38 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -3510,6 +3510,15 @@ mmc_gettrackinfo(struct scsipi_periph *periph,
 		flags |= MMC_TRACKINFO_NWA_VALID;
 	if (ti.data_valid   & 0x02)
 		flags |= MMC_TRACKINFO_LRA_VALID;
+	if ((trackinfo->track_mode & (3<<2)) == 4)		/* 01xxb */
+		flags |= MMC_TRACKINFO_DATA;
+	if ((trackinfo->track_mode & (1<<2)) == 0) {		/* x0xxb */
+		flags |= MMC_TRACKINFO_AUDIO;
+		if (trackinfo->track_mode & (1<<3))		/* 10xxb */
+			flags |= MMC_TRACKINFO_AUDIO_4CHAN;
+		if (trackinfo->track_mode & 1)			/* xxx1b */
+			flags |= MMC_TRACKINFO_PRE_EMPH;
+	}
 
 	trackinfo->flags = flags;
 	trackinfo->track_start    = _4btol(ti.track_start);
