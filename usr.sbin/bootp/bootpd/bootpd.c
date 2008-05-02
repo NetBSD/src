@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.21 2007/05/27 16:31:41 tls Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.22 2008/05/02 19:22:10 xtraeme Exp $");
 #endif
 
 /*
@@ -103,7 +103,7 @@ __RCSID("$NetBSD: bootpd.c,v 1.21 2007/05/27 16:31:41 tls Exp $");
  * Externals, forward declarations, and global variables
  */
 
-extern void dumptab(char *);
+extern void dumptab(const char *);
 
 PRIVATE void catcher(int);
 PRIVATE int chk_access(char *, int32 *);
@@ -146,7 +146,7 @@ int actualtimeout = 15 * 60000;			/* fifteen minutes */
 int s;							/* Socket file descriptor */
 char *pktbuf;					/* Receive packet buffer */
 int pktlen;
-char *progname;
+const char *progname;
 char *chdir_path;
 char hostname[MAXHOSTNAMELEN + 1];	/* System host name */
 struct in_addr my_ip_addr;
@@ -159,8 +159,8 @@ PRIVATE int do_dumptab = 0;
  * Globals below are associated with the bootp database file (bootptab).
  */
 
-char *bootptab = CONFIG_FILE;
-char *bootpd_dump = DUMPTAB_FILE;
+const char *bootptab = CONFIG_FILE;
+const char *bootpd_dump = DUMPTAB_FILE;
 
 
 
@@ -597,7 +597,7 @@ handle_request(void)
 	int32 bootsize = 0;
 	unsigned hlen, hashcode;
 	int32 dest;
-	char realpath[1024];
+	char lrealpath[1024];
 	char *clntpath;
 	char *homedir, *bootfile;
 	int n;
@@ -809,11 +809,11 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 * daemon chroot directory (i.e. /tftpboot).
 	 */
 	if (hp->flags.tftpdir) {
-		strlcpy(realpath, hp->tftpdir->string, sizeof(realpath));
-		clntpath = &realpath[strlen(realpath)];
+		strlcpy(lrealpath, hp->tftpdir->string, sizeof(lrealpath));
+		clntpath = &lrealpath[strlen(lrealpath)];
 	} else {
-		realpath[0] = '\0';
-		clntpath = realpath;
+		lrealpath[0] = '\0';
+		clntpath = lrealpath;
 	}
 
 	/*
@@ -865,17 +865,17 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 */
 	if (homedir) {
 		if (homedir[0] != '/')
-			strlcat(realpath, "/", sizeof(realpath));
-		strlcat(realpath, homedir, sizeof(realpath));
+			strlcat(lrealpath, "/", sizeof(lrealpath));
+		strlcat(lrealpath, homedir, sizeof(lrealpath));
 		homedir = NULL;
 	}
 	if (bootfile) {
 		if (bootfile[0] != '/') {
-			strlcat(realpath, "/", sizeof(realpath));
-			realpath[sizeof(realpath) - 1] = '\0';
+			strlcat(lrealpath, "/", sizeof(lrealpath));
+			lrealpath[sizeof(lrealpath) - 1] = '\0';
 		}
-		strlcat(realpath, bootfile, sizeof(realpath));
-		realpath[sizeof(realpath) - 1] = '\0';
+		strlcat(lrealpath, bootfile, sizeof(lrealpath));
+		lrealpath[sizeof(lrealpath) - 1] = '\0';
 		bootfile = NULL;
 	}
 
@@ -885,9 +885,9 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	n = strlen(clntpath);
 	strlcat(clntpath, ".", sizeof(clntpath));
 	strlcat(clntpath, hp->hostname->string, sizeof(clntpath));
-	if (chk_access(realpath, &bootsize) < 0) {
+	if (chk_access(lrealpath, &bootsize) < 0) {
 		clntpath[n] = 0;			/* Try it without the suffix */
-		if (chk_access(realpath, &bootsize) < 0) {
+		if (chk_access(lrealpath, &bootsize) < 0) {
 			/* neither "file.host" nor "file" was found */
 #ifdef	CHECK_FILE_ACCESS
 
@@ -1237,7 +1237,7 @@ dovend_rfc1048(struct bootp *bp, struct host *hp, int32 bootsize)
 		 */
 		{
 			byte *p, *ep;
-			byte tag, len;
+			byte tag, llen;
 			short msgsz = 0;
 			
 			p = vp + 4;
@@ -1250,10 +1250,10 @@ dovend_rfc1048(struct bootp *bp, struct host *hp, int32 bootsize)
 				if (tag == TAG_END)
 					break;
 				/* Now scan the length byte. */
-				len = *p++;
+				llen = *p++;
 				switch (tag) {
 				case TAG_MAX_MSGSZ:
-					if (len == 2) {
+					if (llen == 2) {
 						bcopy(p, (char*)&msgsz, 2);
 						msgsz = ntohs(msgsz);
 					}
@@ -1262,7 +1262,7 @@ dovend_rfc1048(struct bootp *bp, struct host *hp, int32 bootsize)
 					/* XXX - Should preserve this if given... */
 					break;
 				} /* swtich */
-				p += len;
+				p += llen;
 			}
 
 			if (msgsz > sizeof(*bp)) {
