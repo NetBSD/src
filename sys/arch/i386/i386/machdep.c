@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.632 2008/04/29 15:27:08 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.633 2008/05/02 15:26:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.632 2008/04/29 15:27:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.633 2008/05/02 15:26:38 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -301,6 +301,7 @@ extern int time_adjusted;
 
 struct bootinfo	bootinfo;
 int *esym;
+int *eblob;
 extern int boothowto;
 
 #ifndef XEN
@@ -381,6 +382,7 @@ native_loader(int bl_boothowto, int bl_bootdev,
 		size_t i;
 		uint8_t *data;
 		struct bootinfo *bidest;
+		struct btinfo_modulelist *bi;
 
 		bidest = RELOC(struct bootinfo *, &bootinfo);
 
@@ -396,6 +398,15 @@ native_loader(int bl_boothowto, int bl_bootdev,
 				break;
 
 			memcpy(data, bc, bc->len);
+			/*
+			 * If any modules were loaded, record where they
+			 * end.  We'll need to skip over them.
+			 */
+			bi = (struct btinfo_modulelist *)data;
+			if (bi->common.type == BTINFO_MODULELIST) {
+				*RELOC(int **, &eblob) =
+				    (int *)(bi->endpa + KERNBASE);
+			}
 			data += bc->len;
 		}
 		bidest->bi_nentries = i;
