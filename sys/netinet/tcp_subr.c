@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.230 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.231 2008/05/02 13:40:33 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.230 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.231 2008/05/02 13:40:33 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1278,6 +1278,8 @@ tcp_freeq(struct tcpcb *tp)
 
 /*
  * Protocol drain routine.  Called when memory is in short supply.
+ * Don't acquire softnet_lock as can be called from hardware
+ * interrupt handler.
  */
 void
 tcp_drain(void)
@@ -1285,7 +1287,6 @@ tcp_drain(void)
 	struct inpcb_hdr *inph;
 	struct tcpcb *tp;
 
-	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
 	/*
@@ -1320,7 +1321,6 @@ tcp_drain(void)
 	}
 
 	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
 }
 
 /*
