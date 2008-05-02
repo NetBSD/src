@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon-bozo.c,v 1.3 2008/03/03 22:15:09 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.4 2008/05/02 19:14:03 degroote Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.9 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -169,6 +169,7 @@ again:
 			if (fds[i].revents == 0)
 				continue;
 
+			slen = sizeof(ss);
 			fd = accept(sock[i], (struct sockaddr *)&ss, &slen);
 			if (fd == -1) {
 				if (errno != EAGAIN)
