@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.269 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.270 2008/05/02 13:40:32 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.269 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.270 2008/05/02 13:40:32 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1436,13 +1436,13 @@ ip_slowtimo(void)
 }
 
 /*
- * Drain off all datagram fragments.
+ * Drain off all datagram fragments.  Don't acquire softnet_lock as
+ * can be called from hardware interrupt context.
  */
 void
 ip_drain(void)
 {
 
-	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
 	/*
@@ -1459,7 +1459,6 @@ ip_drain(void)
 	}
 
 	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
 }
 
 /*
