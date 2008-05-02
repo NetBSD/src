@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/02 13:03:58 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2008/05/02 14:20:50 ad Exp $
 
 KMOD=   miniroot
 SRCS=   miniroot.c
 
-.include <bsd.kmod.mk>
+.include <bsd.kmodule.mk>
