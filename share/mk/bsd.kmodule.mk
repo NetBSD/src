@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.1 2008/05/02 14:20:50 ad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.2 2008/05/02 23:12:01 ad Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -76,7 +76,8 @@ ${PROG}: ${OBJS} ${DPADD}
 
 ##### Install rules
 .if !target(kmodinstall)
-_PROG:=		${DESTDIR}${KMODDIR}/${PROG}		# installed path
+KMODINSTDIR=	${DESTDIR}${KMODULEDIR}/${KMOD}
+_PROG:=		${KMODINSTDIR}/${PROG} # installed path
 
 .if ${MKUPDATE} == "no"
 ${_PROG}! ${PROG}					# install rule
@@ -90,6 +91,7 @@ ${_PROG}:	.MADE					# no build at install
 .endif
 .endif
 	${_MKTARGET_INSTALL}
+	${INSTALL_DIR} ${KMODINSTDIR}
 	${INSTALL_FILE} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
 		${.ALLSRC} ${.TARGET}
 
