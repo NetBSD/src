@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.48 2008/04/27 01:45:04 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.49 2008/05/02 15:10:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.48 2008/04/27 01:45:04 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.49 2008/05/02 15:10:05 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: tree.c,v 1.48 2008/04/27 01:45:04 christos Exp $");
 #include <float.h>
 #include <limits.h>
 #include <math.h>
+#include <signal.h>
 
 #include "lint1.h"
 #include "cgram.h"
@@ -87,6 +88,8 @@ static	void	displexpr(tnode_t *, int);
 static	void	chkaidx(tnode_t *, int);
 static	void	chkcomp(op_t, tnode_t *, tnode_t *);
 static	void	precconf(tnode_t *);
+
+extern sig_atomic_t fpe;
 
 /*
  * Initialize mods of operators.
@@ -2904,6 +2907,7 @@ foldflt(tnode_t *tn)
 	tspec_t	t;
 	ldbl_t	l, r = 0;
 
+	fpe = 0;
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = t = tn->tn_type->t_tspec;
 
@@ -2974,7 +2978,7 @@ foldflt(tnode_t *tn)
 
 	if (isnan((double)v->v_ldbl))
 		LERROR("foldflt()");
-	if (!finite((double)v->v_ldbl) ||
+	if (fpe || !finite((double)v->v_ldbl) ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
 	    (t == DOUBLE &&
@@ -2988,6 +2992,7 @@ foldflt(tnode_t *tn)
 		} else {
 			v->v_ldbl = v->v_ldbl < 0 ? -LDBL_MAX: LDBL_MAX;
 		}
+	    fpe = 0;
 	}
 
 	return (getcnode(tn->tn_type, v));
