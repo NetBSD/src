@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.186 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.187 2008/05/02 13:02:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.186 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.187 2008/05/02 13:02:31 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -723,17 +723,16 @@ isswap(struct device *dv)
  */
 
 #include "md.h"
-#if NMD == 0
-#undef MEMORY_DISK_HOOKS
-#endif
 
-#ifdef MEMORY_DISK_HOOKS
+#if NMD > 0
 static struct device fakemdrootdev[NMD];
 extern struct cfdriver md_cd;
 #endif
 
 #ifdef MEMORY_DISK_IS_ROOT
-#define BOOT_FROM_MEMORY_HOOKS 1
+int md_is_root = 1;
+#else
+int md_is_root = 0;
 #endif
 
 /*
@@ -757,9 +756,6 @@ setroot(struct device *bootdv, int bootpartition)
 {
 	struct device *dv;
 	int len, majdev;
-#ifdef MEMORY_DISK_HOOKS
-	int i;
-#endif
 	dev_t nrootdev;
 	dev_t ndumpdev = NODEV;
 	char buf[128];
@@ -776,21 +772,21 @@ setroot(struct device *bootdv, int bootpartition)
 		boothowto |= RB_ASKNAME;
 #endif
 
-#ifdef MEMORY_DISK_HOOKS
-	for (i = 0; i < NMD; i++) {
-		fakemdrootdev[i].dv_class  = DV_DISK;
-		fakemdrootdev[i].dv_cfdata = NULL;
-		fakemdrootdev[i].dv_cfdriver = &md_cd;
-		fakemdrootdev[i].dv_unit   = i;
-		fakemdrootdev[i].dv_parent = NULL;
-		snprintf(fakemdrootdev[i].dv_xname,
-		    sizeof(fakemdrootdev[i].dv_xname), "md%d", i);
+#if NMD > 0
+	if (md_is_root) {
+		int i;
+		for (i = 0; i < NMD; i++) {
+			fakemdrootdev[i].dv_class  = DV_DISK;
+			fakemdrootdev[i].dv_cfdata = NULL;
+			fakemdrootdev[i].dv_cfdriver = &md_cd;
+			fakemdrootdev[i].dv_unit   = i;
+			fakemdrootdev[i].dv_parent = NULL;
+			snprintf(fakemdrootdev[i].dv_xname,
+			    sizeof(fakemdrootdev[i].dv_xname), "md%d", i);
+		}
+		bootdv = &fakemdrootdev[0];
+		bootpartition = 0;
 	}
-#endif /* MEMORY_DISK_HOOKS */
-
-#ifdef MEMORY_DISK_IS_ROOT
-	bootdv = &fakemdrootdev[0];
-	bootpartition = 0;
 #endif
 
 	/*
@@ -1117,19 +1113,19 @@ static struct device *
 finddevice(const char *name)
 {
 	const char *wname;
-#if defined(BOOT_FROM_MEMORY_HOOKS)
-	int j;
-#endif /* BOOT_FROM_MEMORY_HOOKS */
 
 	if ((wname = getwedgename(name, strlen(name))) != NULL)
 		return dkwedge_find_by_wname(wname);
 
-#ifdef BOOT_FROM_MEMORY_HOOKS
-	for (j = 0; j < NMD; j++) {
-		if (strcmp(name, fakemdrootdev[j].dv_xname) == 0)
-			return &fakemdrootdev[j];
+#if NMD > 0
+	if (md_is_root) {
+		int j;
+		for (j = 0; j < NMD; j++) {
+			if (strcmp(name, fakemdrootdev[j].dv_xname) == 0)
+				return &fakemdrootdev[j];
+		}
 	}
-#endif /* BOOT_FROM_MEMORY_HOOKS */
+#endif
 
 	return device_find_by_xname(name);
 }
@@ -1138,17 +1134,16 @@ static struct device *
 getdisk(char *str, int len, int defpart, dev_t *devp, int isdump)
 {
 	struct device	*dv;
-#ifdef MEMORY_DISK_HOOKS
-	int		i;
-#endif
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-#ifdef MEMORY_DISK_HOOKS
-		if (isdump == 0)
+#if NMD > 0
+		if (isdump == 0 && md_is_root) {
+			int i;
 			for (i = 0; i < NMD; i++)
 				printf(" %s[a-%c]", fakemdrootdev[i].dv_xname,
 				    'a' + MAXPARTITIONS - 1);
+		}
 #endif
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
 			if (DEV_USES_PARTITIONS(dv))
@@ -1189,9 +1184,6 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 	const char *wname;
 	char *cp, c;
 	int majdev, part;
-#ifdef MEMORY_DISK_HOOKS
-	int i;
-#endif
 	if (len == 0)
 		return (NULL);
 
@@ -1218,12 +1210,16 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
 	} else
 		part = defpart;
 
-#ifdef MEMORY_DISK_HOOKS
-	for (i = 0; i < NMD; i++)
-		if (strcmp(str, fakemdrootdev[i].dv_xname) == 0) {
-			dv = &fakemdrootdev[i];
-			goto gotdisk;
+#if NMD > 0
+	if (md_is_root) {
+		int i;
+		for (i = 0; i < NMD; i++) {
+			if (strcmp(str, fakemdrootdev[i].dv_xname) == 0) {
+				dv = &fakemdrootdev[i];
+				goto gotdisk;
+			}
 		}
+	}
 #endif
 
 	dv = finddevice(str);

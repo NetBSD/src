@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.14 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: md_root.c,v 1.15 2008/05/02 13:02:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.14 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.15 2008/05/02 13:02:31 ad Exp $");
 
 #include "opt_md.h"
 
@@ -83,6 +83,7 @@ char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 void
 md_root_setconf(char *addr, size_t size)
 {
+	md_is_root = 1;
 	md_root_image = addr;
 	md_root_size = size;
 }
@@ -96,13 +97,13 @@ md_attach_hook(int unit, struct md_conf *md)
 {
 	char pbuf[9];
 
-	if (unit == 0) {
+	if (unit == 0 && md_is_root) {
 		/* Setup root ramdisk */
 		md->md_addr = (void *)md_root_image;
 		md->md_size = (size_t)md_root_size;
 		md->md_type = MD_KMEM_FIXED;
 		format_bytes(pbuf, sizeof(pbuf), md->md_size);
-		aprint_normal("md%d: internal %s image area\n", unit, pbuf);
+		aprint_verbose("md%d: internal %s image area\n", unit, pbuf);
 	}
 }
 
@@ -113,7 +114,7 @@ void
 md_open_hook(int unit, struct md_conf *md)
 {
 
-	if (unit == 0) {
+	if (unit == 0 && md_is_root) {
 		/* The root ramdisk only works single-user. */
 		boothowto |= MEMORY_RBFLAGS;
 	}
