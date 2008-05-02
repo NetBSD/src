@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.21 2008/05/01 15:41:16 jmmv Exp $
+# $NetBSD: mi,v 1.22 2008/05/02 14:20:50 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -388,7 +388,8 @@
 ./usr/tests/games/t_factor			tests-games-tests
 ./usr/tests/modules				tests-sys-tests
 ./usr/tests/modules/Atffile			tests-sys-tests
-./usr/tests/modules/k_helper.o			tests-sys-tests		modular
+./usr/tests/modules/k_helper.kmod		tests-sys-tests		modular
+./usr/tests/modules/k_helper.o			tests-obsolete		obsolete
 ./usr/tests/modules/t_modctl			tests-sys-tests		modular
 ./usr/tests/modules/t_modload			tests-sys-tests		modular
 ./usr/tests/net					tests-net-tests
