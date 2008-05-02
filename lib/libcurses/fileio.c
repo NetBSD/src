@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.1 2008/04/14 20:38:45 jdc Exp $	*/
+/*	$NetBSD: fileio.c,v 1.2 2008/05/02 11:13:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -15,10 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -35,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.1 2008/04/14 20:38:45 jdc Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.2 2008/05/02 11:13:02 martin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
