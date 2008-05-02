@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.13 2008/05/01 17:07:10 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.14 2008/05/02 13:00:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.13 2008/05/01 17:07:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.14 2008/05/02 13:00:01 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -254,17 +254,6 @@ kobj_close(kobj_t ko)
 	}
 
 	ko->ko_source = NULL;
-
-	/* Program table and section strings are no longer needed. */
-	if (ko->ko_progtab != NULL) {
-		kobj_free(ko, ko->ko_progtab, ko->ko_nprogtab *
-		    sizeof(*ko->ko_progtab));
-		ko->ko_progtab = NULL;
-	}
-	if (ko->ko_shstrtab) {
-		kobj_free(ko, ko->ko_shstrtab, ko->ko_shstrtabsz);
-		ko->ko_shstrtab = NULL;
-	}
 
 	/* If the object hasn't been loaded, then destroy it. */
 	if (!ko->ko_loaded) {
@@ -687,6 +676,15 @@ kobj_unload(kobj_t ko)
 	}
 	if (ko->ko_strtab != NULL) {
 		kobj_free(ko, ko->ko_strtab, ko->ko_strtabsz);
+	}
+	if (ko->ko_progtab != NULL) {
+		kobj_free(ko, ko->ko_progtab, ko->ko_nprogtab *
+		    sizeof(*ko->ko_progtab));
+		ko->ko_progtab = NULL;
+	}
+	if (ko->ko_shstrtab) {
+		kobj_free(ko, ko->ko_shstrtab, ko->ko_shstrtabsz);
+		ko->ko_shstrtab = NULL;
 	}
 
 	/*
