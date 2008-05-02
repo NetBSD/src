@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.339 2008/04/30 12:49:16 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.340 2008/05/02 17:40:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.339 2008/04/30 12:49:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.340 2008/05/02 17:40:30 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -285,6 +285,7 @@ try_nextlist:
 static inline int
 vfs_dobusy(struct mount *mp, const krw_t op, struct mount **nextp)
 {
+	lwp_t *l;
 
 	KASSERT(mp->mnt_refcnt > 0);
 
@@ -292,14 +293,17 @@ vfs_dobusy(struct mount *mp, const krw_t op, struct mount **nextp)
 	if (nextp != NULL) {
 		mutex_exit(&mountlist_lock);
 	}
-	if (mp->mnt_writer == curlwp) {
-		mp->mnt_recursecnt++;
+	l = curlwp;
+	if (l->l_mpbusy == mp) {
+		if (op == RW_WRITER) {
+			KASSERT(rw_write_held(&mp->mnt_lock));
+		} else {
+			KASSERT(rw_lock_held(&mp->mnt_lock));
+		}
+		l->l_mprecurse++;
 	} else {
 		rw_enter(&mp->mnt_lock, op);
-		if (op == RW_WRITER) {
-			KASSERT(mp->mnt_writer == NULL);
-			mp->mnt_writer = curlwp;
-		}
+		l->l_mpbusy = mp;
 	}
 	if (__predict_false((mp->mnt_iflag & IMNT_GONE) != 0)) {
 		if (nextp != NULL) {
@@ -399,15 +403,18 @@ vfs_trybusy(struct mount *mp, krw_t op, struct mount **nextp)
 void
 vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 {
+	lwp_t *l;
 
 	KASSERT(mp->mnt_refcnt > 0);
 
-	if (mp->mnt_writer == curlwp) {
-		KASSERT(rw_write_held(&mp->mnt_lock));
-		if (mp->mnt_recursecnt != 0) {
-			mp->mnt_recursecnt--;
+	l = curlwp;
+	if (l->l_mpbusy != NULL) {
+		KASSERT(l->l_mpbusy == mp);
+		KASSERT(rw_lock_held(&mp->mnt_lock));
+		if (l->l_mprecurse != 0) {
+			l->l_mprecurse--;
 		} else {
-			mp->mnt_writer = NULL;
+			l->l_mpbusy = NULL;
 			rw_exit(&mp->mnt_lock);
 		}
 	} else {
