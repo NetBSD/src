@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.275 2008/05/02 15:34:16 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.276 2008/05/02 15:53:10 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.275 2008/05/02 15:34:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.276 2008/05/02 15:53:10 reinoud Exp $");
 
 #include "rnd.h"
 
@@ -3037,6 +3037,31 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 		}
 		/* unlikely to ever grow past our 1kb buffer */
 	} while (features_len >= 0xffff);
+
+	/*
+	 * Fixup CD-RW drives that are on crack.
+	 *
+	 * Some drives report the capability to incrementally write
+	 * sequentially on CD-R(W) media...  nice, but this should not be
+	 * active for a fixed packet formatted CD-RW media. Other report the
+	 * ability of HW_DEFECTFREE even when the media is NOT MRW
+	 * formatted....
+	 */
+	if (mmc_discinfo->mmc_profile == 0x0a) {
+		if ((mmc_discinfo->mmc_cur & MMC_CAP_SEQUENTIAL) == 0)
+			mmc_discinfo->mmc_cur |= MMC_CAP_STRICTOVERWRITE;
+		if (mmc_discinfo->mmc_cur & MMC_CAP_STRICTOVERWRITE)
+			mmc_discinfo->mmc_cur &= ~MMC_CAP_SEQUENTIAL;
+		if (mmc_discinfo->mmc_cur & MMC_CAP_MRW) {
+			mmc_discinfo->mmc_cur &= ~MMC_CAP_SEQUENTIAL;
+			mmc_discinfo->mmc_cur &= ~MMC_CAP_STRICTOVERWRITE;
+		} else {
+			mmc_discinfo->mmc_cur &= ~MMC_CAP_HW_DEFECTFREE;
+		}
+	}
+	if (mmc_discinfo->mmc_profile == 0x09) {
+		mmc_discinfo->mmc_cur &= ~MMC_CAP_REWRITABLE;
+	}
 
 #ifdef DEBUG
 	printf("CD mmc %d, mmc_cur 0x%"PRIx64", mmc_cap 0x%"PRIx64"\n",
