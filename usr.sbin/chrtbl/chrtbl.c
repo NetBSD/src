@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.9 2006/03/19 07:04:06 phil Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.10 2008/05/02 19:59:19 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -63,7 +63,7 @@ static int output_binary __P((const struct chartbl *));
 int main __P((int, char *[]));
 
 static const struct toklist {
-	char	 *name;
+	const char	 *name;
 	int	(*func) __P((struct chartbl *, const char *, int arg,
 	    char *, size_t lno));
 	int	  arg;
