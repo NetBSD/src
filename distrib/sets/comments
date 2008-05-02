@@ -46,6 +46,7 @@ base-ipf-lkm loadable kernel module for IPfilter
 base-ipf-root directories for IPfilter
 base-isdn-bin utilities and daemons for ISDN network connectivity
 base-isdn-examples directories for the ISDN example files
+base-kernel-modules loadable kernel modules
 base-krb5-bin commands and utilities for the Kerberos V network authentication system
 base-krb5-examples example configuration files for the Kerberos V network authentication system
 base-krb5-root root file system support for the Kerberos V network authentication system

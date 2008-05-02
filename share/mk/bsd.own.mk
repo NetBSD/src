@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.507 2008/05/02 11:45:19 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.508 2008/05/02 23:12:01 ad Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -354,6 +354,11 @@ KMODDIR?=	/usr/lkm
 KMODGRP?=	wheel
 KMODOWN?=	root
 KMODMODE?=	${NONBINMODE}
+
+KMODULEDIR?=	/kernel/modules
+KMODULEGRP?=	wheel
+KMODULEOWN?=	root
+KMODULEMODE?=	${NONBINMODE}
 
 LOCALEDIR?=	/usr/share/locale
 LOCALEGRP?=	wheel
