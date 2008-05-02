@@ -1,4 +1,4 @@
-/*	$NetBSD: qdisc_cdnr.c,v 1.5 2006/10/28 11:43:02 peter Exp $	*/
+/*	$NetBSD: qdisc_cdnr.c,v 1.6 2008/05/02 19:07:44 xtraeme Exp $	*/
 /*	$KAME: qdisc_cdnr.c,v 1.6 2002/11/08 06:36:18 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -49,10 +49,10 @@
 #define NELEMENTS	64
 #define MAX_PROB	(128*1024)
 
-static char *element_names[] = { "none", "top", "element", "tbmeter", "trtcm",
+static const char *element_names[] = { "none", "top", "element", "tbmeter", "trtcm",
 				 "tswtcm" };
-static char *tbmprof_names[] = { "in:    ", "out:   " };
-static char *tcmprof_names[] = { "green: ", "yellow:", "red:   " };
+static const char *tbmprof_names[] = { "in:    ", "out:   " };
+static const char *tcmprof_names[] = { "green: ", "yellow:", "red:   " };
 
 void
 cdnr_stat_loop(int fd, const char *ifname, int count, int interval)
@@ -63,7 +63,8 @@ cdnr_stat_loop(int fd, const char *ifname, int count, int interval)
 	struct tce_stats	*sp, *lp, *new, *last, *tmp;
 	struct timeval		cur_time, last_time;
 	double			sec;
-	char			**profile_names, _ifname[32];
+	const char		**profile_names;
+	char			_ifname[32];
 	int			i, j, nprofile;
 	int cnt = count;
 	sigset_t		omask;
