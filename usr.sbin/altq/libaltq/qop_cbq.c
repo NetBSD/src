@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_cbq.c,v 1.6 2002/05/31 06:53:48 itojun Exp $	*/
+/*	$NetBSD: qop_cbq.c,v 1.7 2008/05/02 19:07:44 xtraeme Exp $	*/
 /*	$KAME: qop_cbq.c,v 1.7 2002/05/31 06:03:35 kjc Exp $	*/
 /*
  * Copyright (c) Sun Microsystems, Inc. 1993-1998 All rights reserved.
@@ -755,7 +755,7 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 {
 	struct cbq_ifinfo *cbq_ifinfo = ifinfo->private;
 	double          maxq, maxidle_s, maxidle, minidle,
-			offtime, nsPerByte, ptime, cptime;
+			lofftime, nsPerByte, ptime, cptime;
 	double		z = (double)(1 << RM_FILTER_GAIN);
 	double          g = (1.0 - 1.0 / z);
 	double          f;
@@ -836,22 +836,22 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 	if (IsDebug(DEBUG_ALTQ))
 		LOG(LOG_DEBUG, 0, "  maxidle=%.2f us", maxidle/1000.0);
 	if (minburst)
-		offtime = cptime * (1.0 + 1.0/(1.0 - g) * (1.0 - gtom) / gtom);
+		lofftime = cptime * (1.0 + 1.0/(1.0 - g) * (1.0 - gtom) / gtom);
 	else
-		offtime = cptime;
+		lofftime = cptime;
 	minidle = -((double)max_pkt_size * (double)nsPerByte);
 	if (IsDebug(DEBUG_ALTQ))
-		LOG(LOG_DEBUG, 0, "  offtime=%.2f us minidle=%.2f us",
-		    offtime/1000.0, minidle/1000.0);
+		LOG(LOG_DEBUG, 0, "  lofftime=%.2f us minidle=%.2f us",
+		    lofftime/1000.0, minidle/1000.0);
 
 	maxidle = ((maxidle * 8.0) / nsPerByte) * pow(2, RM_FILTER_GAIN);
 #if 1 /* ALTQ */
-	/* also scale offtime and minidle */
- 	offtime = (offtime * 8.0) / nsPerByte * pow(2, RM_FILTER_GAIN);
+	/* also scale lofftime and minidle */
+ 	lofftime = (lofftime * 8.0) / nsPerByte * pow(2, RM_FILTER_GAIN);
 	minidle = ((minidle * 8.0) / nsPerByte) * pow(2, RM_FILTER_GAIN);
 #endif
 	maxidle = maxidle / 1000.0;
-	offtime = offtime / 1000.0;
+	lofftime = lofftime / 1000.0;
 	minidle = minidle / 1000.0;
 	/* adjust queue size when maxdelay is specified.
 	   queue size should be relative to its share */
@@ -898,7 +898,7 @@ cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
 	cl_spec->maxq = (u_int) maxq;
 	cl_spec->maxidle = (u_int) fabs(maxidle);
 	cl_spec->minidle = (int)minidle;
-	cl_spec->offtime = (u_int) fabs(offtime);
+	cl_spec->offtime = (u_int) fabs(lofftime);
 
 	cl_spec->parent_class_handle = parent_class;
 	cl_spec->borrow_class_handle = borrow_class;
