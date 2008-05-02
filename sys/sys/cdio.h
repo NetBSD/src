@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.29 2007/11/27 18:06:38 reinoud Exp $	*/
+/*	$NetBSD: cdio.h,v 1.30 2008/05/02 16:06:38 reinoud Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -364,18 +364,23 @@ struct mmc_trackinfo {
 };
 #define MMCGETTRACKINFO	_IOWR('c', 29, struct mmc_trackinfo)
 
-#define MMC_TRACKINFO_COPY		(1 << 0)
-#define MMC_TRACKINFO_DAMAGED		(1 << 1)
-#define MMC_TRACKINFO_FIXED_PACKET	(1 << 2)
-#define MMC_TRACKINFO_INCREMENTAL	(1 << 3)
-#define MMC_TRACKINFO_BLANK		(1 << 4)
-#define MMC_TRACKINFO_RESERVED		(1 << 5)
-#define MMC_TRACKINFO_NWA_VALID		(1 << 6)
-#define MMC_TRACKINFO_LRA_VALID		(1 << 7)
+#define MMC_TRACKINFO_COPY		(1 <<  0)
+#define MMC_TRACKINFO_DAMAGED		(1 <<  1)
+#define MMC_TRACKINFO_FIXED_PACKET	(1 <<  2)
+#define MMC_TRACKINFO_INCREMENTAL	(1 <<  3)
+#define MMC_TRACKINFO_BLANK		(1 <<  4)
+#define MMC_TRACKINFO_RESERVED		(1 <<  5)
+#define MMC_TRACKINFO_NWA_VALID		(1 <<  6)
+#define MMC_TRACKINFO_LRA_VALID		(1 <<  7)
+#define MMC_TRACKINFO_DATA		(1 <<  8)
+#define MMC_TRACKINFO_AUDIO		(1 <<  9)
+#define MMC_TRACKINFO_AUDIO_4CHAN	(1 << 10)
+#define MMC_TRACKINFO_PRE_EMPH		(1 << 11)
 
 #define MMC_TRACKINFO_FLAGBITS \
     "\8\1COPY\2DAMAGED\3FIXEDPACKET\4INCREMENTAL\5BLANK" \
-    "\6RESERVED\7NWA_VALID\10LRA_VALID"
+    "\6RESERVED\7NWA_VALID\10LRA_VALID\11DATA\12AUDIO" \
+    "\13AUDIO_4CHAN\14PRE_EMPH"
 
 #endif /* _KERNEL || _EXPOSE_MMC */
 
