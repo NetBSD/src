@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1136 2008/05/01 15:41:16 jmmv Exp $
+#	$NetBSD: mi,v 1.1137 2008/05/02 14:20:50 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13500,6 +13500,7 @@
 ./usr/share/mk/bsd.kinc.mk			comp-util-share		share
 ./usr/share/mk/bsd.klinks.mk			comp-util-share		share
 ./usr/share/mk/bsd.kmod.mk			comp-util-share		share
+./usr/share/mk/bsd.kmodule.mk			comp-util-share		share
 ./usr/share/mk/bsd.lib.mk			comp-util-share		share
 ./usr/share/mk/bsd.links.mk			comp-util-share		share
 ./usr/share/mk/bsd.man.mk			comp-util-share		share
