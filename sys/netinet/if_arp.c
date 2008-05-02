@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.135 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.136 2008/05/02 13:40:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.135 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.136 2008/05/02 13:40:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -327,7 +327,8 @@ arp_init(void)
 
 /*
  * ARP protocol drain routine.  Called when memory is in short supply.
- * Called at splvm();
+ * Called at splvm();  don't acquire softnet_lock as can be called from
+ * hardware interrupt handlers.
  */
 void
 arp_drain(void)
@@ -336,13 +337,11 @@ arp_drain(void)
 	int count = 0;
 	struct mbuf *mold;
 
-	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
 	if (arp_lock_try(0) == 0) {
 		printf("arp_drain: locked; punting\n");
 		KERNEL_UNLOCK_ONE(NULL);
-		mutex_exit(softnet_lock);
 		return;
 	}
 
@@ -360,7 +359,6 @@ arp_drain(void)
 	ARP_UNLOCK();
 	ARP_STATADD(ARP_STAT_DFRDROPPED, count);
 	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
 }
 
 
