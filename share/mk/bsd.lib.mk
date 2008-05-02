@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.278 2008/04/29 07:48:31 simonb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.279 2008/05/02 11:45:19 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -372,7 +372,7 @@ _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif									# }
 
 LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
-.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
+.if ${MKLINT} != "no" && !empty(LOBJS)
 _LIBS+=llib-l${LIB}.ln
 .endif
 
@@ -384,7 +384,7 @@ ALLOBJS=
 ALLOBJS+=${STOBJS}
 .endif
 ALLOBJS+=${POBJS} ${SOBJS}
-.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
+.if ${MKLINT} != "no" && !empty(LOBJS)
 ALLOBJS+=${LOBJS}
 .endif
 .else	# !defined(LIB)							# } {
@@ -635,7 +635,7 @@ ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_F
 .endif
 .endif
 
-.if ${MKLINT} != "no" && ${MKLINKLIB} != "no" && !empty(LOBJS)
+.if ${MKLINT} != "no" && !empty(LOBJS)
 libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 .PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 

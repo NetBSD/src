@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.506 2008/04/30 21:15:33 garbled Exp $
+#	$NetBSD: bsd.own.mk,v 1.507 2008/05/02 11:45:19 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -581,6 +581,7 @@ MKHTML:=	no
 .endif
 
 .if ${MKLINKLIB} == "no"
+MKLINT:=	no
 MKPICINSTALL:=	no
 MKPROFILE:=	no
 .endif
