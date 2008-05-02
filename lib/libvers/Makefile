@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.7 2008/05/02 11:27:08 lukem Exp $
 
 NOLINKLIB=	# defined
 NOPIC=		# defined
@@ -8,8 +8,6 @@ NOPROFILE=	# defined
 
 DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH:		${DIST}/heimdal/lib/vers
-
-MKLINT=		# defined
 
 LIB=		vers
 
