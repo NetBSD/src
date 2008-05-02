@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.79 2008/04/21 19:06:43 tls Exp $
+# $NetBSD: INSTALL,v 1.80 2008/05/02 15:26:38 ad Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -7,9 +7,9 @@
 
 include	"arch/amd64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.79 $"
+#ident 		"INSTALL-$Revision: 1.80 $"
 
-options 	MEMORY_DISK_HOOKS
+no options	MEMORY_DISK_DYNAMIC
 options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
 options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks

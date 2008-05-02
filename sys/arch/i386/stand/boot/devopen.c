@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2008/04/28 20:23:25 martin Exp $	 */
+/*	$NetBSD: devopen.c,v 1.7 2008/05/02 15:26:38 ad Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ bios2dev(int biosdev, u_int sector, char **devname, int *unit, int *partition)
 
 #ifdef _STANDALONE
 struct btinfo_bootpath bibp;
+extern bool kernel_loaded;
 #endif
 
 /*
@@ -135,8 +136,10 @@ devopen(struct open_file *f, const char *fname, char **file)
 	f->f_dev = &devsw[0];		/* must be biosdisk */
 
 #ifdef _STANDALONE
-	strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
-	BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+	if (!kernel_loaded) {
+		strncpy(bibp.bootpath, *file, sizeof(bibp.bootpath));
+		BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
+	}
 #endif
 
 	return biosdisk_open(f, biosdev, partition);

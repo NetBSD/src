@@ -1,4 +1,30 @@
-/*	$NetBSD: exec.c,v 1.22 2005/12/11 12:17:48 christos Exp $	 */
+/*	$NetBSD: exec.c,v 1.23 2008/05/02 15:26:38 ad Exp $	 */
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,17 +106,34 @@
 #include <sys/reboot.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include "loadfile.h"
 #include "libi386.h"
 #include "bootinfo.h"
+#include "bootmod.h"
 #ifdef SUPPORT_PS2
 #include "biosmca.h"
 #endif
 
 #define BOOT_NARGS	6
 
+#ifndef	PAGE_SIZE
+#define	PAGE_SIZE	4096
+#endif
+
 extern struct btinfo_console btinfo_console;
+
+boot_module_t *boot_modules;
+bool boot_modules_enabled = true;
+bool kernel_loaded;
+
+static struct btinfo_modulelist *btinfo_modulelist;
+static size_t btinfo_modulelist_size;
+static uint32_t image_end;
+
+static uint8_t *module_alloc(size_t);
+static void	module_init(void);
 
 int
 exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
@@ -111,7 +154,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 	       file ? file : "NULL", loadaddr);
 #endif
 
-	BI_ALLOC(6); /* ??? */
+	BI_ALLOC(32); /* ??? */
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
 
@@ -188,9 +231,18 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 #endif
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
-
 	boot_argv[3] = marks[MARK_END];
+	image_end = marks[MARK_END];
+	kernel_loaded = true;
 
+	/* pull in any modules if necessary */
+	if (boot_modules_enabled) {
+		module_init();
+		if (btinfo_modulelist) {
+			BI_ADD(btinfo_modulelist, BTINFO_MODULELIST,
+			    btinfo_modulelist_size);
+		}
+	}
 
 #ifdef DEBUG
 	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_ENTRY],
@@ -210,4 +262,97 @@ out:
 	BI_FREE();
 	bootinfo = 0;
 	return -1;
+}
+
+static uint8_t *
+module_alloc(size_t len)
+{
+	uint32_t addr;
+
+	addr = (image_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+	image_end += (len + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+
+#ifdef DEBUG
+	printf("Allocated %d bytes of module memory at %x\n", len, addr);
+#endif
+
+	return (uint8_t *)addr;
+}
+
+static void
+module_init(void)
+{
+	struct bi_modulelist_entry *bi;
+	struct stat st;
+	char *buf;
+	boot_module_t *bm;
+	size_t len;
+	off_t off;
+	int err, fd;
+
+	/* First, see which modules are valid and calculate btinfo size */
+	len = sizeof(struct btinfo_modulelist);
+	for (bm = boot_modules; bm; bm = bm->bm_next) {
+		fd = open(bm->bm_path, 0);
+		if (fd == -1) {
+			printf("WARNING: couldn't open %s\n", bm->bm_path);
+			bm->bm_len = -1;
+			continue;
+		}
+		err = fstat(fd, &st);
+		if (err == -1) {
+			printf("WARNING: couldn't stat %s\n", bm->bm_path);
+			close(fd);
+			bm->bm_len = -1;
+			continue;
+		}
+		bm->bm_len = st.st_size;
+		close(fd);
+		len += sizeof(struct bi_modulelist_entry);
+	}
+
+	/* Allocate the module list */
+	btinfo_modulelist = alloc(len);
+	if (btinfo_modulelist == NULL) {
+		printf("WARNING: couldn't allocate module list\n");
+		return;
+	}
+	memset(btinfo_modulelist, 0, len);
+	btinfo_modulelist_size = len;
+
+	/* Fill in btinfo structure */
+	buf = (char *)btinfo_modulelist;
+	btinfo_modulelist->num = 0;
+	off = sizeof(struct btinfo_modulelist);
+
+	for (bm = boot_modules; bm; bm = bm->bm_next) {
+		if (bm->bm_len == -1)
+			continue;
+		printf("Loading %s ", bm->bm_path);
+		bm->bm_data = module_alloc(bm->bm_len);
+		if (bm->bm_data == NULL) {
+			printf("NO MEMORY\n");
+			continue;
+		}
+		fd = open(bm->bm_path, 0);
+		if (fd == -1) {
+			printf("ERROR: couldn't open %s\n", bm->bm_path);
+			continue;
+		}
+		len = pread(fd, bm->bm_data, bm->bm_len);
+		if (len != bm->bm_len) {
+			printf(" FAILED\n");
+		} else {
+			btinfo_modulelist->num++;
+			bi = (struct bi_modulelist_entry *)(buf + off);
+			off += sizeof(struct bi_modulelist_entry);
+			strncpy(bi->path, bm->bm_path, sizeof(bi->path) - 1);
+			bi->base = (uint32_t)bm->bm_data;
+			bi->len = bm->bm_len;
+			bi->type = BI_MODULE_ELF;
+			printf(" \n");
+		}
+		close(fd);
+	}
+	btinfo_modulelist->endpa = image_end;
 }
