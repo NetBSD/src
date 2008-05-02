@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.42 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.43 2008/05/02 15:26:38 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -235,11 +235,12 @@ _C_LABEL(lapic_isr):
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendorname), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
-	.globl	_C_LABEL(esym),_C_LABEL(boothowto)
+	.globl	_C_LABEL(esym),_C_LABEL(eblob),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdtstore)
+
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
@@ -253,6 +254,7 @@ _C_LABEL(cpu_vendorname):	.space	16	# vendor string returned by `cpuid'
 					#   instruction
 _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
+_C_LABEL(eblob):	.quad	0	# ptr to end of modules
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
 _C_LABEL(proc0paddr):	.quad	0
 _C_LABEL(PDPpaddr):	.quad	0	# paddr of PTD, for libkvm
@@ -342,6 +344,17 @@ start:	movw	$0x1234,0x472			# warm boot
 	jg	2f
 	movl	%ecx,%esi
 	movl	%eax,%ecx
+	/*
+	 * If any modules were loaded, record where they
+	 * end.  We'll need to skip over them.
+	 */
+	cmpl	$BTINFO_MODULELIST, 4(%esi)
+	jne	0f
+	pushl	12(%esi)		/* endpa */
+	popl	RELOC(eblob)
+	addl	$KERNBASE_LO, RELOC(eblob)
+	adcl	$KERNBASE_HI, RELOC(eblob)+4
+0:
 	rep
 	movsb
 	popl	%eax
@@ -471,6 +484,13 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	%eax,%edi
 1:
 #endif
+	/* Skip over any modules/blobs. */
+	movl	RELOC(eblob),%eax
+	testl	%eax,%eax
+	jz	1f
+	subl	$KERNBASE_LO,%eax	/* XXX */
+	movl	%eax,%edi
+1:
 	/* Clear tables */
 	movl	%edi,%esi
 	addl	$PGOFSET,%esi
