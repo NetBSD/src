@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5 2008/05/02 18:40:51 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -63,10 +63,4 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	struct cpu_info *ci;
 
 	ci = cpu_attach_common(self, 0);
-	if (ci == NULL)
-		return;
-
-	cpu_attach_common(self, 0);
-
-	/* cpu_setup(self); */
 }
