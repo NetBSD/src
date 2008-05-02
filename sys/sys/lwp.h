@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.92 2008/04/29 13:02:03 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.93 2008/05/02 17:40:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -165,6 +165,8 @@ struct lwp {
 	uint64_t	l_pfailtime;	/* !: for kernel preemption */
 	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
 	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
+	void		*l_mpbusy;	/* !: XXX hack for vfs_busy */
+	int		l_mprecurse;	/* !: XXX hack for vfs_busy */
 
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
