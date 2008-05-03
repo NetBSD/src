@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2007/01/06 19:45:29 kardel Exp $
+#	$NetBSD: Makefile,v 1.2 2008/05/03 14:48:32 lukem Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=	opts
 SRCS=	libopts.c

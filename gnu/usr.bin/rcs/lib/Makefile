@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.21 2004/05/23 02:24:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2008/05/03 14:48:30 lukem Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 # Define FSYNC_ALL to get slower but safer writes in case of crashes in
 # the middle of CVS/RCS changes

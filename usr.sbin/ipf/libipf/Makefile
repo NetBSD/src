@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2007/05/16 04:26:07 taca Exp $
+#	$NetBSD: Makefile,v 1.9 2008/05/03 14:48:32 lukem Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=		ipf
 

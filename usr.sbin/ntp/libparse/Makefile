@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2006/06/11 19:34:28 kardel Exp $
+#	$NetBSD: Makefile,v 1.7 2008/05/03 14:48:32 lukem Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=	parse
 SRCS=	binio.c clk_computime.c clk_dcf7000.c clk_hopf6021.c \

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/29 19:27:22 nathanw Exp $
+#	$NetBSD: Makefile,v 1.3 2008/05/03 14:48:31 lukem Exp $
 
 .include <bsd.own.mk>
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=		readline
 

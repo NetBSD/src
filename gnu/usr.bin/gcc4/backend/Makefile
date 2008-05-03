@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2007/04/08 09:35:32 scw Exp $
+#	$NetBSD: Makefile,v 1.10 2008/05/03 14:48:30 lukem Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=		backend
 
