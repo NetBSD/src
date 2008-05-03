@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.10 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic.S,v 1.11 2008/05/03 05:41:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,11 +34,11 @@
 #ifdef _KERNEL
 #define	LOCK(n)		.Lpatch/**/n:	lock
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
-#define	END(a)		_ALIGN_TEXT; LABEL(a)
+#define	ENDLABEL(a)		_ALIGN_TEXT; LABEL(a)
 #else
 #define	LOCK(n)		lock
 #define	ALIAS(f, t)	WEAK_ALIAS(f,t)
-#define	END(a)		/* nothing */
+#define	ENDLABEL(a)		/* nothing */
 #endif
 
 	.text
@@ -152,19 +152,19 @@ NENTRY(_membar_consumer)
 	LOCK(13)
 	addl	$0, -4(%esp)
 	ret
-END(membar_consumer_end)
+ENDLABEL(membar_consumer_end)
 
 NENTRY(_membar_producer)
 	/* A store is enough */
 	movl	$0, -4(%esp)
 	ret
-END(membar_producer_end)
+ENDLABEL(membar_producer_end)
 
 NENTRY(_membar_sync)
 	LOCK(14)
 	addl	$0, -4(%esp)
 	ret
-END(membar_sync_end)
+ENDLABEL(membar_sync_end)
 
 #ifdef _KERNEL
 NENTRY(_atomic_cas_64)
@@ -191,7 +191,7 @@ NENTRY(_atomic_cas_64)
 	movl	0(%edi), %eax
 	movl	4(%edi), %edx
 	jmp	1b
-END(_atomic_cas_64_end)
+ENDLABEL(_atomic_cas_64_end)
 
 NENTRY(_atomic_cas_cx8)
 	pushl	%edi
@@ -207,17 +207,17 @@ NENTRY(_atomic_cas_cx8)
 	popl	%edi
 	ret
 	.space	32, 0x90
-END(_atomic_cas_cx8_end)
+ENDLABEL(_atomic_cas_cx8_end)
 
 NENTRY(sse2_lfence)
 	lfence
 	ret
-END(sse2_lfence_end)
+ENDLABEL(sse2_lfence_end)
 
 NENTRY(sse2_mfence)
 	mfence
 	ret
-END(sse2_mfence_end)
+ENDLABEL(sse2_mfence_end)
 
 atomic_lockpatch:
 	.globl	atomic_lockpatch

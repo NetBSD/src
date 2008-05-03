@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.10 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic.S,v 1.11 2008/05/03 05:42:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,11 +34,11 @@
 #ifdef _KERNEL
 #define	LOCK(n)		.Lpatch/**/n:	lock
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
-#define	END(a)		_ALIGN_TEXT; LABEL(a)
+#define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
 #else
 #define	LOCK(n)		lock
 #define	ALIAS(f, t)	WEAK_ALIAS(f,t)
-#define	END(a)		/* nothing */
+#define	ENDLABEL(a)	/* nothing */
 #endif
 
 	.text
@@ -225,30 +225,30 @@ NENTRY(_membar_consumer)
 	LOCK(25)
 	addq	$0, -8(%rsp)
 	ret
-END(membar_consumer_end)
+ENDLABEL(membar_consumer_end)
 
 NENTRY(_membar_producer)
 	/* A store is enough */
 	movq	$0, -8(%rsp)
 	ret
-END(membar_producer_end)
+ENDLABEL(membar_producer_end)
 
 NENTRY(_membar_sync)
 	LOCK(26)
 	addq	$0, -8(%rsp)
 	ret
-END(membar_sync_end)
+ENDLABEL(membar_sync_end)
 
 #ifdef _KERNEL
 NENTRY(sse2_lfence)
 	lfence
 	ret
-END(sse2_lfence_end)
+ENDLABEL(sse2_lfence_end)
 
 NENTRY(sse2_mfence)
 	mfence
 	ret
-END(sse2_mfence_end)
+ENDLABEL(sse2_mfence_end)
 
 atomic_lockpatch:
 	.globl	atomic_lockpatch
