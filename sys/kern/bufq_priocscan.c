@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.11 2008/04/30 12:09:02 reinoud Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.12 2008/05/03 05:18:36 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.11 2008/04/30 12:09:02 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.12 2008/05/03 05:18:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,9 @@ struct bufq_priocscan {
  * how many requests to serve when having pending requests on other queues.
  *
  * XXX tune
+ * be careful: while making these values larger likely
+ * increases the total throughput, it can also increase latencies
+ * for some workloads.
  */
 const int priocscan_burst[] = {
 	64, 16, 4
