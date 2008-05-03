@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.140 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.141 2008/05/03 05:36:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.140 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.141 2008/05/03 05:36:02 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -750,7 +750,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 
 	if (pgrp == NULL) {
 		pgrp = new_pgrp;
-		new_pgrp = 0;
+		new_pgrp = NULL;
 		if (sess != NULL) {
 			sess->s_sid = p->p_pid;
 			sess->s_leader = p;
@@ -766,7 +766,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 			SESSHOLD(sess);
 		}
 		pgrp->pg_session = sess;
-		sess = 0;
+		sess = NULL;
 
 		pgrp->pg_id = pgid;
 		LIST_INIT(&pgrp->pg_members);
