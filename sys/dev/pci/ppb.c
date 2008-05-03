@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.37 2008/02/22 22:15:31 dyoung Exp $	*/
+/*	$NetBSD: ppb.c,v 1.38 2008/05/03 05:02:41 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.37 2008/02/22 22:15:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.38 2008/05/03 05:02:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ ppb_fix_pcix(device_t self)
 		return; /* Not a PCIe device */
 
 	if ((reg & 0x000f0000) != 0x00010000) {
-		aprint_normal_dev(self, "unuspported PCI Express version\n");
+		aprint_normal_dev(self, "unsupported PCI Express version\n");
 		return;
 	}
 	reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + 0x18);
