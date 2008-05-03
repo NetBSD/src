@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.58 2007/10/17 19:54:45 garbled Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.59 2008/05/03 05:50:33 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.58 2007/10/17 19:54:45 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.59 2008/05/03 05:50:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ db_numargs(int *retaddrp)
 
 	argp = (int *)db_get_value((int)retaddrp, 4, false);
 	if (argp < (int *)VM_MIN_KERNEL_ADDRESS || argp > (int *)etext) {
-		args = 5;
+		args = 10;
 	} else {
 		inst = db_get_value((int)argp, 4, false);
 		if ((inst & 0xff) == 0x59)	/* popl %ecx */
@@ -154,7 +154,7 @@ db_numargs(int *retaddrp)
 		else if ((inst & 0xffff) == 0xc483)	/* addl %n, %esp */
 			args = ((inst >> 16) & 0xff) / 4;
 		else
-			args = 5;
+			args = 10;
 	}
 	return (args);
 }
