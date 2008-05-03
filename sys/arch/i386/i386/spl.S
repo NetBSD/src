@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.29 2008/04/28 22:47:37 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.30 2008/05/03 06:11:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.29 2008/04/28 22:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.30 2008/05/03 06:11:19 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -56,6 +56,7 @@ ENTRY(splraise)
 	movl	%edx,CPUVAR(ILEVEL)
 1:
 	ret
+END(splraise)
 
 /*
  * void spllower(int s);
@@ -82,6 +83,7 @@ ENTRY(spllower)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(spllower_end)
+END(spllower)
 
 /*
  * void	cx8_spllower(int s);
@@ -118,6 +120,7 @@ LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(cx8_spllower_end)
+END(cx8_spllower)
 
 #endif /* XEN */
 
@@ -206,6 +209,7 @@ IDTVEC(spllower)
 	call	_C_LABEL(panic)
 1:	.asciz	"SPLLOWER: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
+IDTVEC_END(spllower)
 
 /*
  * Handle return from interrupt after device handler finishes.
@@ -296,6 +300,7 @@ doreti_checkast:
 	call	_C_LABEL(panic)
 1:	.asciz	"DORETI: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
+IDTVEC_END(doreti)
 
 #ifdef XEN
 /*
@@ -313,6 +318,7 @@ NENTRY(call_evtchn_do_event)
 	addl	$8, %esp
 	IDEPTH_DECR
 	ret
+END(call_evtchn_do_event)
 #endif /* XEN */
 
 #ifndef XEN
@@ -354,6 +360,7 @@ IDTVEC(softintr)
 	popl	%esi
 	addl	$8,%esp
 	jmp	*%esi			/* back to splx/doreti */
+IDTVEC_END(softintr)
 
 /*
  * softintr_ret()
@@ -368,6 +375,7 @@ NENTRY(softintr_ret)
 	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
 	cli
 	jmp	*%esi			/* back to splx/doreti */
+END(softintr_ret)
 
 /*
  * void softint_trigger(uintptr_t machdep);
@@ -378,6 +386,7 @@ NENTRY(softint_trigger)
 	movl	4(%esp),%eax
 	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
+END(softint_trigger)
 
 /*
  * Xpreemptrecurse()
@@ -392,6 +401,7 @@ IDTVEC(preemptrecurse)
 	addl	$4, %esp
 	cli
 	jmp	*%esi
+IDTVEC_END(preemptrecurse)
 
 /*
  * Xpreemptresume()
@@ -417,4 +427,5 @@ IDTVEC(preemptresume)
 	call	_C_LABEL(preempt)		# from user
 	cli
 	jmp	*%esi
+IDTVEC_END(preemptresume)
 #endif /* !XEN */
