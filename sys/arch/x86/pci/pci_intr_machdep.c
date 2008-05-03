@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.8 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.9 2008/05/03 17:03:45 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.8 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.9 2008/05/03 17:03:45 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -109,9 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.8 2008/04/28 20:23:40 martin 
 #endif
 
 int
-pci_intr_map(pa, ihp)
-	struct pci_attach_args *pa;
-	pci_intr_handle_t *ihp;
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
