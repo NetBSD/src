@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.57 2008/01/04 21:24:22 xtraeme Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.58 2008/05/03 05:46:59 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2008/01/04 21:24:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.58 2008/05/03 05:46:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -103,8 +103,7 @@ db_machine_init()
 
 #ifdef MULTIPROCESSOR
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
-	setgate((struct gate_descriptor *)&idt[ddb_vec], &Xintrddbipi, 0,
-	    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+	idt_vec_set(ddb_vec, &Xintrddbipi);
 #endif
 }
 
