@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.14 2008/05/02 13:00:01 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.15 2008/05/03 15:57:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.14 2008/05/02 13:00:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.15 2008/05/03 15:57:17 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -660,9 +660,6 @@ void
 kobj_unload(kobj_t ko)
 {
 	int error;
-
-	KASSERT(ko->ko_progtab == NULL);
-	KASSERT(ko->ko_shstrtab == NULL);
 
 	if (ko->ko_address != 0 && ko->ko_type != KT_MEMORY) {
 		uvm_km_free(lkm_map, ko->ko_address, round_page(ko->ko_size),
