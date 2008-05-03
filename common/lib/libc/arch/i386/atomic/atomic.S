@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.11 2008/05/03 05:41:40 yamt Exp $	*/
+/*	$NetBSD: atomic.S,v 1.12 2008/05/03 05:43:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,11 +34,11 @@
 #ifdef _KERNEL
 #define	LOCK(n)		.Lpatch/**/n:	lock
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
-#define	ENDLABEL(a)		_ALIGN_TEXT; LABEL(a)
+#define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
 #else
 #define	LOCK(n)		lock
 #define	ALIAS(f, t)	WEAK_ALIAS(f,t)
-#define	ENDLABEL(a)		/* nothing */
+#define	ENDLABEL(a)	/* nothing */
 #endif
 
 	.text
