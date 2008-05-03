@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.31 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.32 2008/05/03 06:24:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.31 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.32 2008/05/03 06:24:55 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -476,7 +476,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 	if ((ld = lockdebug_lookup(lock, &lk)) == NULL)
 		return;
 
-	if ((ld->ld_flags & LD_LOCKED) != 0) {
+	if ((ld->ld_flags & LD_LOCKED) != 0 || ld->ld_shares != 0) {
 		if ((ld->ld_flags & LD_SLEEPER) != 0) {
 			if (ld->ld_lwp == l)
 				recurse = true;
@@ -538,8 +538,6 @@ lockdebug_locked(volatile void *lock, uintptr_t where, int shared)
 
 		ld->ld_flags |= LD_LOCKED;
 		ld->ld_locked = where;
-		ld->ld_cpu = (uint16_t)cpu_number();
-		ld->ld_lwp = l;
 		ld->ld_exwant--;
 
 		if ((ld->ld_flags & LD_SLEEPER) != 0) {
@@ -550,6 +548,8 @@ lockdebug_locked(volatile void *lock, uintptr_t where, int shared)
 			TAILQ_INSERT_TAIL(&ld_spinners, ld, ld_chain);
 		}
 	}
+	ld->ld_cpu = (uint16_t)cpu_number();
+	ld->ld_lwp = l;
 
 	lockdebug_unlock(lk);
 }
@@ -585,6 +585,10 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 		}
 		l->l_shlocks--;
 		ld->ld_shares--;
+		if (ld->ld_lwp == l)
+			ld->ld_lwp = NULL;
+		if (ld->ld_cpu == (uint16_t)cpu_number())
+			ld->ld_cpu = (uint16_t)-1;
 	} else {
 		if ((ld->ld_flags & LD_LOCKED) == 0) {
 			lockdebug_abort1(ld, lk, __func__, "not locked",
