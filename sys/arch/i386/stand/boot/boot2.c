@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.25 2008/05/02 15:26:38 ad Exp $	*/
+/*	$NetBSD: boot2.c,v 1.26 2008/05/03 09:46:40 sborrill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@ static const char * const names[][2] = {
 #define BOOTCONF "boot.cfg"
 #define MAXMENU 10
 #define MAXBANNER 10
+#define COMMAND_SEPARATOR ';'
 #endif /* !SMALL */
 
 static char *default_devname;
@@ -463,7 +464,7 @@ void
 doboottypemenu(void)
 {
 	int choice;
-	char input[80], c;
+	char input[80], c, *ic, *oc;
 		
 	printf("\n");
 	/* Display menu */
@@ -508,8 +509,29 @@ doboottypemenu(void)
 		    check_password(boot_params.bp_password))) {
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
-		} else
-			docommand(bootconf.command[choice]);
+		} else {
+			ic = bootconf.command[choice];
+			/* Split command string at ; into separate commands */
+			do {
+				oc = input;
+				/* Look for ; separator */
+				for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
+					*oc++ = *ic;
+				if (*input == '\0')
+					continue;
+				/* Strip out any trailing spaces */
+				oc--;
+				for (; *oc ==' ' && oc > input; oc--);
+				*++oc = '\0';
+				if (*ic == COMMAND_SEPARATOR)
+					ic++;
+				/* Stop silly command strings like ;;; */
+				if (*input != '\0')
+					docommand(input);
+				/* Skip leading spaces */
+				for (; *ic == ' '; ic++);
+			} while (*ic);
+		}
 			
 	}
 }
