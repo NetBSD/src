@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.10 2008/03/21 21:54:59 ad Exp $ */
+/* $NetBSD: drm_drv.c,v 1.11 2008/05/03 14:26:01 drochner Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.11 2008/05/03 14:26:01 drochner Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -201,7 +201,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
         /* dev->maplist : drm_load */
         dev->context_sareas = NULL;
         dev->max_context = 0;
-	DRM_SPININIT(&dev->dev_lock, "drm device");
+	mutex_init(&dev->dev_lock, MUTEX_DEFAULT, IPL_NONE);
         dev->dma = NULL;
 	/* dev->irq : drm_load */
 	dev->irq_enabled = 0;
