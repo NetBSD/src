@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.38 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: dk.c,v 1.39 2008/05/03 08:23:41 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.38 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.39 2008/05/03 08:23:41 plunky Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -506,6 +506,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 
 	/* Detach from the disk list. */
 	disk_detach(&sc->sc_dk);
+	disk_destroy(&sc->sc_dk);
 
 	/* Poof. */
 	rw_enter(&dkwedges_lock, RW_WRITER);
