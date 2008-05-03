@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.7 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.8 2008/05/03 13:07:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ wait_count:	.byte	6
 boot_drive:	.byte	0
 mbr_loaded:	.byte	0
 
-str_banner:	.ascii	"\r\nNetBSD/i386 cd9660 Primary Bootstrap"
+str_banner:	.ascii	"\r\nNetBSD/x86 cd9660 Primary Bootstrap"
 str_crlf:	.asciz	"\r\n"
 str_press_key:	.asciz	"\r\nPress any key to boot from CD"
 str_dot:	.asciz	"."
