@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.222 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: tty.c,v 1.223 2008/05/03 05:34:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.222 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.223 2008/05/03 05:34:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1678,8 +1678,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	 * Hang process if it's in the background.
 	 */
 	if (isbackground(p, tp)) {
-		if (sigismember(&p->p_sigctx.ps_sigignore, SIGTTIN) ||
-		    sigismember(&curlwp->l_sigmask, SIGTTIN) ||
+		if (sigismasked(curlwp, SIGTTIN) ||
 		    p->p_sflag & PS_PPWAIT || p->p_pgrp->pg_jobc == 0) {
 			mutex_spin_exit(&tty_lock);
 			return (EIO);
@@ -1949,8 +1948,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	p = curproc;
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_sflag & PS_PPWAIT) == 0 &&
-	    !sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU) &&
-	    !sigismember(&curlwp->l_sigmask, SIGTTOU)) {
+	    !sigismasked(curlwp, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;
 			mutex_spin_exit(&tty_lock);
