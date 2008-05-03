@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.27 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.28 2008/05/03 16:14:40 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.27 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.28 2008/05/03 16:14:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,8 +210,7 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 				panic("pckbc_acpi_attach: couldn't map");
 
 			t = malloc(sizeof(struct pckbc_internal),
-			    M_DEVBUF, M_WAITOK);
-			memset(t, 0, sizeof(*t));
+			    M_DEVBUF, M_WAITOK|M_ZERO);
 			t->t_iot = aa->aa_iot;
 			t->t_ioh_d = ioh_d;
 			t->t_ioh_c = ioh_c;
