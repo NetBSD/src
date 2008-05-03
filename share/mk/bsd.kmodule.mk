@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.2 2008/05/02 23:12:01 ad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.3 2008/05/03 15:48:15 ad Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -45,7 +45,7 @@ ${OBJS} ${LOBJS}: ${DPSRCS}
     ${MACHINE_CPU} == "powerpc"
 ${KMOD}_tmp.o: ${OBJS} ${DPADD}
 	${_MKTARGET_COMPILE}
-	${LD} -r -o tmp.o ${OBJS}
+	${LD} -r -d -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
 
 ${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk
@@ -56,7 +56,7 @@ ${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk
 
 ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${_MKTARGET_LINK}
-	${LD} -r \
+	${LD} -r -d \
 		`${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
 			 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmwrap.awk` \
 		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
@@ -70,7 +70,7 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 .else
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
-	${LD} -r -o tmp.o ${OBJS}
+	${LD} -r -d -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
 .endif
 
