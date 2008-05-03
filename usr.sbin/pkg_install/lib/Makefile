@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.33 2008/02/22 16:20:53 joerg Exp $
+# $NetBSD: Makefile,v 1.34 2008/05/03 14:48:32 lukem Exp $
 # Original from FreeBSD, no rcs id.
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=		install
 SRCS=		automatic.c conflicts.c decompress.c dewey.c \
