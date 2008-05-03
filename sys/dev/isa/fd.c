@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.86 2008/04/30 23:02:43 ad Exp $	*/
+/*	$NetBSD: fd.c,v 1.87 2008/05/03 08:23:41 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.86 2008/04/30 23:02:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.87 2008/05/03 08:23:41 plunky Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -612,6 +612,7 @@ fddetach(device_t self, int flags)
 #endif
 
 	disk_detach(&fd->sc_dk);
+	disk_destroy(&fd->sc_dk);
 
 	/* Kill off any queued buffers. */
 	bufq_drain(fd->sc_q);
