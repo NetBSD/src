@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.60 2008/04/30 13:11:02 martin Exp $
+# $NetBSD: postinstall,v 1.61 2008/05/03 09:44:45 apb Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1428,6 +1428,7 @@ main()
 			cat <<_Fix_me_
 To fix, run:
     ${0} -s ${SRC_ARG} -d ${DEST_DIR:-/}$m fix${items_failed}
+Note that this may overwrite local changes.
 _Fix_me_
 		    fi
 		fi
