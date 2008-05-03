@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.71 2008/05/02 15:26:38 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.72 2008/05/03 05:56:44 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.71 2008/05/02 15:26:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.72 2008/05/03 05:56:44 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -805,6 +805,7 @@ NENTRY(lgdt_finish)
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
 	pushl	%eax
 	lret
+END(lgdt_finish)
 
 #endif /* XEN */
 
@@ -829,6 +830,7 @@ NENTRY(lwp_trampoline)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast
 	/* NOTREACHED */
+END(lwp_trampoline)
 
 /*
  * sigcode()
@@ -850,6 +852,7 @@ NENTRY(sigcode)
 	int	$0x80			# exit if sigreturn fails
 	.globl	_C_LABEL(esigcode)
 _C_LABEL(esigcode):
+END(sigcode)
 
 /*
  * int setjmp(label_t *)
@@ -867,6 +870,7 @@ ENTRY(setjmp)
 	movl	%edx,20(%eax)		# save eip
 	xorl	%eax,%eax		# return 0
 	ret
+END(setjmp)
 
 /*
  * int longjmp(label_t *)
@@ -884,6 +888,7 @@ ENTRY(longjmp)
 	movl	%edx,(%esp)		# put in return frame
 	movl	$1,%eax			# return 1
 	ret
+END(longjmp)
 
 /*
  * void dumpsys(void)
@@ -899,6 +904,7 @@ ENTRY(dumpsys)
 	call	_C_LABEL(dodumpsys)	# dump!
 	addl	$(3*4), %esp		# unwind switchframe
 	ret
+END(dumpsys)
 
 /*
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
@@ -1049,6 +1055,7 @@ ENTRY(cpu_switchto)
 	popl	%esi
 	movl	$((CPU_INFO_IOMAP - CPU_INFO_TSS) << 16),CPUVAR(IOBASE)
 	jmp	.Liobitmap_done
+END(cpu_switchto)
 
 /*
  * void savectx(struct pcb *pcb);
@@ -1060,6 +1067,7 @@ ENTRY(savectx)
 	movl	%esp,PCB_ESP(%edx)
 	movl	%ebp,PCB_EBP(%edx)
 	ret
+END(savectx)
 
 /*
  * osyscall()
@@ -1071,6 +1079,7 @@ IDTVEC(osyscall)
 	popl	8(%esp)
 	pushl	$7		# size of instruction for restart
 	jmp	syscall1
+IDTVEC_END(osyscall)
 
 /*
  * syscall()
@@ -1162,6 +1171,7 @@ syscall1:
 	call	_C_LABEL(trap)
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
+IDTVEC_END(syscall)
 
 #if NNPX > 0
 /*
@@ -1184,6 +1194,7 @@ NENTRY(probeintr)
 	outb	%al,$0xf0	# clear BUSY# latch
 	popl	%eax
 	iret
+END(probeintr)
 
 /*
  * void probetrap(void)
@@ -1193,6 +1204,7 @@ NENTRY(probetrap)
 	incl	_C_LABEL(npx_traps_while_probing)
 	fnclex
 	iret
+END(probetrap)
 
 /*
  * int npx586bug1(int a, int b)
@@ -1208,6 +1220,7 @@ NENTRY(npx586bug1)
 	fistpl	(%esp)
 	popl	%eax
 	ret
+END(npx586bug1)
 #endif /* NNPX > 0 */
 
 /*
@@ -1237,6 +1250,7 @@ ENTRY(sse2_zero_page)
 	sfence
 	pop	%ebp
 	ret
+END(sse2_zero_page)
 
 /*
  * void sse2_copy_page(void *src, void *dst)
@@ -1271,3 +1285,4 @@ ENTRY(sse2_copy_page)
 	popl	%ebx
 	popl	%ebp
 	ret
+END(sse2_copy_page)
