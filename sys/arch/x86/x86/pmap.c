@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2008/05/03 00:21:35 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2008/05/03 02:56:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2008/05/03 00:21:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2008/05/03 02:56:13 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2175,7 +2175,6 @@ pmap_create(void)
 	pmap->pm_flags = 0;
 	pmap->pm_cpus = 0;
 	pmap->pm_kernel_cpus = 0;
-	pmap->pm_noflush = false;
 
 	/* init the LDT */
 	pmap->pm_ldt = NULL;
@@ -4433,20 +4432,6 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 #endif
 
 /*
- * pmap_remove_all: pmap is being recycled or destroyed (exec or exit).
- *
- * => called by last LWP in process.
- */
-
-void
-pmap_remove_all(struct pmap *pm)
-{
-
-	/* Don't bother with flush activity until next pmap_update. */
-	pm->pm_noflush = true;
-}
-
-/*
  * pmap_tlb_shootdown: invalidate pages on all CPUs using pmap 'pm'
  *
  * => always invalidates locally before returning
@@ -4471,10 +4456,6 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 
 	KASSERT(eva == 0 || eva >= sva);
 	KASSERT(kpreempt_disabled());
-	
-	if (pm->pm_noflush) {
-		return;
-	}
 
 	if (pte & PG_PS)
 		sva &= PG_LGFRAME;
@@ -4654,11 +4635,6 @@ pmap_update(struct pmap *pm)
 	kpreempt_disable();
 	pmap_tlb_shootwait();
 	kpreempt_enable();
-
-	if (pm->pm_noflush) {
-		tlbflush();
-		pm->pm_noflush = false;
-	}
 }
 
 #if PTP_LEVELS > 4
