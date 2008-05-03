@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 2008/05/03 00:21:35 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 2008/05/03 02:56:13 ad Exp $	*/
 
 /*
  *
@@ -161,7 +161,6 @@ struct pmap {
 #endif /* !defined(__x86_64__) */
 	int pm_flags;			/* see below */
 
-	bool pm_noflush;		/* exec/exit in progress */
 	union descriptor *pm_ldt;	/* user-set LDT */
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
@@ -225,7 +224,6 @@ bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
-void		pmap_remove_all(struct pmap *);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -243,6 +241,13 @@ bool	pmap_pageidlezero(paddr_t);
 /*
  * inline functions
  */
+
+/*ARGSUSED*/
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing
