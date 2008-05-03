@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.6 2008/05/03 09:46:40 sborrill Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.7 2008/05/03 20:19:02 sborrill Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -77,8 +77,8 @@ For example:
 .Bd -literal
 menu=Boot normally:boot
 menu=Boot single-user:boot -s
-menu=Boot with module foo:load=/foo.kmod;boot
-menu=Boot with serial console:consdev=com0;boot
+menu=Boot with module foo:load /foo.kmod;boot
+menu=Boot with serial console:consdev com0;boot
 menu=:boot hd1a:netbsd -as
 .Ed
 .Pp
@@ -133,8 +133,8 @@ banner=Please choose an option from the following menu:
 menu=Boot normally:boot
 menu=Boot single-user:boot -s
 menu=Boot from second disk:boot hd1a:
-menu=Boot with module foo:load=/foo.kmod;boot
-menu=Boot with modules foo and bar:load=/foo.kmod;load=/bar.kmod;boot
+menu=Boot with module foo:load /foo.kmod;boot
+menu=Boot with modules foo and bar:load /foo.kmod;load /bar.kmod;boot
 menu=Go to command line (advanced users only):prompt
 timeout=-1
 default=1
