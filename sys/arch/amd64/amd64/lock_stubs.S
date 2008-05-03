@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.15 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.16 2008/05/03 05:45:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #define	FULL
 #endif
 
-#define	END(name,a)	.align	a; LABEL(name)
+#define	ENDLABEL(name,a) .align	a; LABEL(name)
 #define	LOCK(num)	.Lpatch/**/num: lock
 
 #ifndef LOCKDEBUG
