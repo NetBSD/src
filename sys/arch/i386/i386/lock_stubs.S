@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.16 2008/05/03 05:40:21 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.17 2008/05/03 05:58:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.16 2008/05/03 05:40:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.17 2008/05/03 05:58:45 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -75,6 +75,7 @@ ENTRY(mutex_enter)
 	ret
 1:
 	jmp	_C_LABEL(mutex_vector_enter)
+END(mutex_enter)
 
 /*
  * void mutex_exit(kmutex_t *mtx);
@@ -94,6 +95,7 @@ ENTRY(mutex_exit)
 	ret
 1:
 	jmp	_C_LABEL(mutex_vector_exit)
+END(mutex_exit)
 
 /*
  * void rw_enter(krwlock_t *rwl, krw_t op);
@@ -129,6 +131,7 @@ ENTRY(rw_enter)
 	ret
 3:
 	jmp	_C_LABEL(rw_vector_enter)
+END(rw_enter)
 
 /*
  * void rw_exit(krwlock_t *rwl);
@@ -169,6 +172,7 @@ ENTRY(rw_exit)
 	 * Slow path.
 	 */
 3:	jmp	_C_LABEL(rw_vector_exit)
+END(rw_exit)
 
 /*
  * int rw_tryenter(krwlock_t *rwl, krw_t op);
@@ -207,6 +211,7 @@ ENTRY(rw_tryenter)
 
 3:	xorl	%eax, %eax
 	ret
+END(rw_tryenter)
 
 #ifndef __XEN__
 
@@ -239,6 +244,7 @@ ENTRY(mutex_spin_enter)
 
 	ALIGN64
 LABEL(mutex_spin_enter_end)
+END(mutex_spin_enter)
 
 /*
  * Release a spin mutex and post a store fence.
@@ -260,6 +266,7 @@ ENTRY(mutex_spin_exit)
 	nop					/* XXX round up */
 	.align	32
 LABEL(mutex_spin_exit_end)
+END(mutex_spin_exit)
 
 /*
  * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
@@ -293,6 +300,7 @@ LABEL(i686_mutex_spin_exit_patch)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(i686_mutex_spin_exit_end)
+END(i686_mutex_spin_exit)
 
 #else	/* !__XEN__ */
 
@@ -314,6 +322,7 @@ NENTRY(__cpu_simple_lock_init)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
+END(__cpu_simple_lock_init)
 
 NENTRY(__cpu_simple_lock)
 	movl	4(%esp), %edx
@@ -331,11 +340,13 @@ NENTRY(__cpu_simple_lock)
 	cmpb	$0, (%edx)
 	je	1b
 	jmp	2b
+END(__cpu_simple_lock)
 
 NENTRY(__cpu_simple_unlock)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
+END(__cpu_simple_unlock)
 
 NENTRY(__cpu_simple_lock_try)
 	movl	4(%esp), %edx
@@ -345,6 +356,7 @@ NENTRY(__cpu_simple_lock_try)
 	movl	$0, %eax
 	setz	%al	
 	ret
+END(__cpu_simple_lock_try)
 
 /*
  * Patchpoints to replace with NOP when ncpu == 1.
