@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.38 2008/05/03 05:02:41 cegger Exp $	*/
+/*	$NetBSD: ppb.c,v 1.39 2008/05/03 05:44:06 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.38 2008/05/03 05:02:41 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.39 2008/05/03 05:44:06 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.38 2008/05/03 05:02:41 cegger Exp $");
 #include <dev/pci/pcidevs.h>
 
 struct ppb_softc {
-	struct device sc_dev;		/* generic device glue */
+	device_t sc_dev;		/* generic device glue */
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset... */
 	pcitag_t sc_tag;		/* ...and tag. */
 
@@ -55,7 +55,7 @@ static bool		ppb_resume(device_t PMF_FN_PROTO);
 static bool		ppb_suspend(device_t PMF_FN_PROTO);
 
 static int
-ppbmatch(device_t parent, struct cfdata *match, void *aux)
+ppbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -66,9 +66,9 @@ ppbmatch(device_t parent, struct cfdata *match, void *aux)
 	 */
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_PCI)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -111,6 +111,7 @@ ppbattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = pa->pa_tag;
+	sc->sc_dev = self;
 
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 
@@ -205,5 +206,5 @@ ppbchilddet(device_t self, device_t child)
 	/* we keep no references to child devices, so do nothing */
 }
 
-CFATTACH_DECL2(ppb, sizeof(struct ppb_softc),
+CFATTACH_DECL2_NEW(ppb, sizeof(struct ppb_softc),
     ppbmatch, ppbattach, ppbdetach, NULL, NULL, ppbchilddet);
