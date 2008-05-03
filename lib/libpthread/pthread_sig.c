@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47.4.7 2007/11/04 05:57:40 wrstuden Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.4.8 2008/05/03 23:56:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.7 2007/11/04 05:57:40 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.4.8 2008/05/03 23:56:54 wrstuden Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -104,6 +104,7 @@ static struct pthread_queue_t pt_sigwaiting;
 static pthread_spin_t pt_sigwaiting_lock = __SIMPLELOCK_UNLOCKED;
 static pthread_t pt_sigwmaster;
 static pthread_cond_t pt_sigwaiting_cond = PTHREAD_COND_INITIALIZER;
+static int pt_sig_selfsent;	/* non-zero if sending sig to sigwmaster */
 
 static void pthread__make_siginfo(siginfo_t *, int);
 static void pthread__kill(pthread_t, pthread_t, siginfo_t *);
@@ -144,6 +145,9 @@ pthread__signal_start(void)
 		__sigemptyset14(&act.sa_mask);
 		__libc_sigaction14(i, &act, NULL);
 	}
+
+	/* And re-enable any signals we may have masked up to now */
+	_sys___sigprocmask14(SIG_UNBLOCK, &pt_process_sigmask, NULL);
 }
 
 static void
@@ -488,6 +492,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 				__sigplusset(target->pt_sigwait, &wset);
 		}
 
+		pt_sig_selfsent = 0;
 		pthread_spinunlock(self, &pt_sigwaiting_lock);
 
 		/*
@@ -499,6 +504,36 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 		SDPRINTF(("(stw %p) master unblocking\n", self));
 
 		pthread_spinlock(self, &pt_sigwaiting_lock);
+
+		/*
+		 * If we haven't been canceled and another thread sent us a
+		 * signal (noted in pt_sig_selfsent), if it is one _we_ are
+		 * interested in, turn either a canceled system call or a
+		 * timeout into reporting that signal.
+		 */
+		if ((pt_sig_selfsent) && !(self->pt_cancel) && (error)
+		    && (errno == ECANCELED || errno == EAGAIN)) {
+			sigset_t scratchset;
+			scratchset = *set;
+			__sigandset(&self->pt_siglist, &scratchset);
+			sig = firstsig(&scratchset);
+			if (sig) {
+				/* Turn this into a successful return */
+				error = 0;
+				info->si_signo = sig;
+				/* clear it */
+				__sigdelset14(&self->pt_siglist, sig);
+				SDPRINTF(("(stw %p) master noticing %d\n",
+					self, sig));
+			} else {
+				/*
+				 * Someone sent us a signal we don't care
+				 * about. How sweet. We'll ignore that for
+				 * now.
+				 */
+			}
+		}
+
 		if ((error && (errno != ECANCELED || self->pt_cancel))
 		    || (!error && __sigismember14(set, info->si_signo)) ) {
 
@@ -725,6 +760,23 @@ pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 		pthread_spinlock(self, &target->pt_siglock);
 	} else {
 		/*
+		 * Check to see if a thread's waiting for this
+		 * signal.
+		 */
+		pthread_spinlock(self, &pt_sigwaiting_lock);
+		if ((pt_sigwmaster) &&
+		    __sigismember14(pt_sigwmaster->pt_sigwait, si->si_signo)) {
+			/*
+			 * Someone, the sigwait master or otherwise, is waiting
+			 * for this signal. Deliver it.
+			 */
+			target = pt_sigwmaster;
+			pthread_spinlock(self, &target->pt_siglock);
+			pthread_spinunlock(self, &pt_sigwaiting_lock);
+			goto got_target;
+		}
+		pthread_spinunlock(self, &pt_sigwaiting_lock);
+		/*
 		 * Pick a thread that doesn't have the signal blocked
 		 * and can be reasonably forced to run. 
 		 */
@@ -782,6 +834,7 @@ pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 			return;
 		}
 	}
+got_target:
 
 	/*
 	 * We now have a signal and a victim. 
@@ -835,7 +888,7 @@ pthread__kill_self(pthread_t self, siginfo_t *si)
 	self->pt_sigmask = oldmask;
 }
 
-/* Must be called with target's siglock held */
+/* Must be called with target's pt_siglock held */
 static void
 pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 {
@@ -869,6 +922,12 @@ try_again:
 			pthread_spinunlock(self, &target->pt_statelock);
 			pthread_spinunlock(self, &pthread__runqueue_lock);
 			__sigaddset14(&target->pt_siglist, si->si_signo);
+			if (target == pt_sigwmaster) {
+				SDPRINTF(("(pthread__kill %p) sigmaster, "
+						"waking master\n", target));
+				_lwp_wakeup(pt_sigwmaster->pt_lastlwp);
+				pt_sig_selfsent = 1;
+			}
 			return;
 		}
 	} else {
