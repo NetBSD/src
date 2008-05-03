@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.23 2008/05/02 15:26:38 ad Exp $	 */
+/*	$NetBSD: exec.c,v 1.24 2008/05/03 18:49:13 ad Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -132,7 +132,6 @@ static struct btinfo_modulelist *btinfo_modulelist;
 static size_t btinfo_modulelist_size;
 static uint32_t image_end;
 
-static uint8_t *module_alloc(size_t);
 static void	module_init(void);
 
 int
@@ -264,21 +263,6 @@ out:
 	return -1;
 }
 
-static uint8_t *
-module_alloc(size_t len)
-{
-	uint32_t addr;
-
-	addr = (image_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-	image_end += (len + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
-
-#ifdef DEBUG
-	printf("Allocated %d bytes of module memory at %x\n", len, addr);
-#endif
-
-	return (uint8_t *)addr;
-}
-
 static void
 module_init(void)
 {
@@ -300,7 +284,7 @@ module_init(void)
 			continue;
 		}
 		err = fstat(fd, &st);
-		if (err == -1) {
+		if (err == -1 || st.st_size == -1) {
 			printf("WARNING: couldn't stat %s\n", bm->bm_path);
 			close(fd);
 			bm->bm_len = -1;
@@ -329,29 +313,27 @@ module_init(void)
 		if (bm->bm_len == -1)
 			continue;
 		printf("Loading %s ", bm->bm_path);
-		bm->bm_data = module_alloc(bm->bm_len);
-		if (bm->bm_data == NULL) {
-			printf("NO MEMORY\n");
-			continue;
-		}
 		fd = open(bm->bm_path, 0);
 		if (fd == -1) {
 			printf("ERROR: couldn't open %s\n", bm->bm_path);
 			continue;
 		}
-		len = pread(fd, bm->bm_data, bm->bm_len);
-		if (len != bm->bm_len) {
+		image_end = (image_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
+		len = pread(fd, (void *)image_end, SSIZE_MAX);
+		if (len < bm->bm_len) {
 			printf(" FAILED\n");
 		} else {
 			btinfo_modulelist->num++;
 			bi = (struct bi_modulelist_entry *)(buf + off);
 			off += sizeof(struct bi_modulelist_entry);
 			strncpy(bi->path, bm->bm_path, sizeof(bi->path) - 1);
-			bi->base = (uint32_t)bm->bm_data;
-			bi->len = bm->bm_len;
+			bi->base = image_end;
+			bi->len = len;
 			bi->type = BI_MODULE_ELF;
 			printf(" \n");
 		}
+		if (len > 0)
+			image_end += len;
 		close(fd);
 	}
 	btinfo_modulelist->endpa = image_end;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.26 2008/05/03 09:46:40 sborrill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.27 2008/05/03 18:49:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -758,7 +758,6 @@ command_load(char *arg)
 	memcpy(str, arg, len);
 	bm->bm_path = str;
 	bm->bm_next = NULL;
-	bm->bm_data = NULL;
 	if (boot_modules == NULL)
 		boot_modules = bm;
 	else {
