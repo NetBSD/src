@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.59 2008/04/30 12:49:16 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.60 2008/05/03 15:57:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.59 2008/04/30 12:49:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.60 2008/05/03 15:57:41 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,12 +66,15 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.59 2008/04/30 12:49:16 ad Exp $"
 #include <sys/conf.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>
 #include <fs/cd9660/iso_rrip.h>
 #include <fs/cd9660/cd9660_node.h>
 #include <fs/cd9660/cd9660_mount.h>
+
+MODULE(MODULE_CLASS_VFS, cd9660, NULL);
 
 MALLOC_JUSTDEFINE(M_ISOFSMNT, "ISOFS mount", "ISOFS mount structure");
 
@@ -113,7 +116,6 @@ struct vfsops cd9660_vfsops = {
 	0,	/* refcount */
 	{ NULL, NULL } /* list */
 };
-VFS_ATTACH(cd9660_vfsops);
 
 static const struct genfs_ops cd9660_genfsops = {
 	.gop_size = genfs_size,
@@ -129,6 +131,20 @@ static const struct genfs_ops cd9660_genfsops = {
 static int iso_makemp(struct iso_mnt *isomp, struct buf *bp, int *ea_len);
 static int iso_mountfs(struct vnode *devvp, struct mount *mp,
 		struct lwp *l, struct iso_args *argp);
+
+static int
+cd9660_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&cd9660_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&cd9660_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 int
 cd9660_mountroot(void)
