@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.280 2008/05/03 14:36:06 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.281 2008/05/03 14:48:31 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -7,7 +7,9 @@
 # Pull in <bsd.sys.mk> here so we can override its .c.o rule
 .include <bsd.sys.mk>
 
-.if ${MKPRIVATELIB} != "no"
+LIBISPRIVATE?=	no
+
+.if ${LIBISPRIVATE} != "no"
 MKDEBUGLIB:=	no
 MKLINT:=	no
 MKPIC:=		no
@@ -342,10 +344,10 @@ STOBJS+=${OBJS}
 
 LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 
-.if ${MKPRIVATELIB} != "no"
+.if ${LIBISPRIVATE} != "no"
 # No installation is required
 libinstall::
-.else	# ${MKPRIVATELIB} == "no"					# {
+.else	# ${LIBISPRIVATE} == "no"					# {
 
 .if ${MKDEBUGLIB} != "no"
 _LIBS+=lib${LIB}_g.a
@@ -384,7 +386,7 @@ _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 _LIBS+=llib-l${LIB}.ln
 .endif
 
-.endif	# ${MKPRIVATELIB} == "no"					# }
+.endif	# ${LIBISPRIVATE} == "no"					# }
 
 ALLOBJS=
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
