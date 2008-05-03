@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.34 2008/03/29 09:11:35 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.35 2008/05/03 05:20:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -93,14 +93,11 @@
  * MI NCR53C710 scsi adaptor driver; based on arch/amiga/dev/siop.c:
  *	NetBSD: siop.c,v 1.43 1999/09/30 22:59:53 thorpej Exp
  *
- * bus_space/bus_dma'fied by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
- *
- * The 53c710 datasheet is available at:
- * http://www.lsilogic.com/techlib/techdocs/storage_stand_prod/index.html
+ * bus_space/bus_dma'fied by Izumi Tsutsui <tsutsui@NetBSD.org>
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.34 2008/03/29 09:11:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.35 2008/05/03 05:20:01 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
