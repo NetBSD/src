@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.38 2008/04/12 08:21:19 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.39 2008/05/03 05:21:25 tsutsui Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -34,12 +34,12 @@
  */
 
 /*
- * Ported to NetBSD by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp> from OpenBSD:
+ * Ported to NetBSD by Izumi Tsutsui <tsutsui@NetBSD.org> from OpenBSD:
  * $OpenBSD: iha.c,v 1.3 2001/02/20 00:47:33 krw Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.38 2008/04/12 08:21:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.39 2008/05/03 05:21:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
