@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.279 2008/05/02 11:45:19 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.280 2008/05/03 14:36:06 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -6,6 +6,13 @@
 .include <bsd.gcc.mk>
 # Pull in <bsd.sys.mk> here so we can override its .c.o rule
 .include <bsd.sys.mk>
+
+.if ${MKPRIVATELIB} != "no"
+MKDEBUGLIB:=	no
+MKLINT:=	no
+MKPIC:=		no
+MKPROFILE:=	no
+.endif
 
 ##### Basic targets
 .PHONY:		checkver libinstall
@@ -333,6 +340,8 @@ OBJS+=${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
 STOBJS+=${OBJS}
 
+LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
+
 .if ${MKPRIVATELIB} != "no"
 # No installation is required
 libinstall::
@@ -371,7 +380,6 @@ _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 .endif									# }
 
-LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if ${MKLINT} != "no" && !empty(LOBJS)
 _LIBS+=llib-l${LIB}.ln
 .endif
@@ -496,6 +504,11 @@ llib-l${LIB}.ln: ${LOBJS}
 	${LINT} -C${LIB} ${.ALLSRC} ${LLIBS}
 .endif
 .endif									# }
+
+lint: ${LOBJS}
+.if defined(LOBJS) && !empty(LOBJS)
+	${LINT} ${LINTFLAGS} ${LOBJS}
+.endif
 
 cleanlib: .PHONY
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
