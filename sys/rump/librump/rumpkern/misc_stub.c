@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.8 2008/04/11 15:24:48 ad Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.9 2008/05/04 12:52:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,6 @@
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
-#include <sys/module.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
 
@@ -104,12 +103,6 @@ sysctl_relock(void)
 
 void
 sysctl_unlock(void)
-{
-
-}
-
-void
-module_init_class(modclass_t mc)
 {
 
 }
