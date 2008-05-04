@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.15 2008/05/03 15:57:17 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.16 2008/05/04 12:51:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,19 +62,23 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.15 2008/05/03 15:57:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.16 2008/05/04 12:51:44 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
-#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kobj.h>
+#include <sys/errno.h>
+
+#ifdef MODULAR
+
+#include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
-#include <sys/kobj.h>
 #include <sys/ksyms.h>
 #include <sys/lkm.h>
 #include <sys/exec.h>
@@ -84,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.15 2008/05/03 15:57:17 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 
-#ifdef MODULAR
 
 typedef struct {
 	void		*addr;
