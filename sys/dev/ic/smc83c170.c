@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.74 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.75 2008/05/04 17:16:27 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.74 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.75 2008/05/04 17:16:27 xtraeme Exp $");
 
 #include "bpfilter.h"
 
@@ -1494,7 +1494,7 @@ epic_mediachange(ifp)
 	}
 #ifdef EPICMEDIADEBUG
 	printf("%s: using phy %s\n", ifp->if_xname,
-	       device_xname(&miisc->mii_dev));
+	       device_xname(miisc->mii_dev));
 #endif
 
 	if (miisc->mii_flags & MIIF_HAVEFIBER) {
