@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.14 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: spic.c,v 1.15 2008/05/04 16:13:35 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.14 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.15 2008/05/04 16:13:35 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ spic_intr(void *v) {
 			goto skip;
 			break;
 		default:
-			aprint_debug_dev(&sc->sc_dev, "unknown lid event 0x%02x\n", v1);
+			aprint_debug_dev(sc->sc_dev, "unknown lid event 0x%02x\n", v1);
 			goto skip;
 			break;
 		}
@@ -201,10 +201,10 @@ spic_intr(void *v) {
 		dz -= 0x20;
 		break;
 	case SPIC_EVENT_BRIGHTNESS_UP:
-		pmf_event_inject(&sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP);
+		pmf_event_inject(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP);
 		break;
 	case SPIC_EVENT_BRIGHTNESS_DOWN:
-		pmf_event_inject(&sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN);
+		pmf_event_inject(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN);
 		break;
 	default:
 		printf("spic0: v1=0x%02x v2=0x%02x\n", v1, v2);
@@ -268,7 +268,7 @@ spic_attach(struct spic_softc *sc)
 
 	a.accessops = &spic_accessops;
 	a.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(&sc->sc_dev, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(sc->sc_dev, &a, wsmousedevprint);
 
 	sc->sc_smpsw[SPIC_PSWITCH_LID].smpsw_name = "spiclid0";
 	sc->sc_smpsw[SPIC_PSWITCH_LID].smpsw_type = PSWITCH_TYPE_LID;
@@ -280,7 +280,7 @@ spic_attach(struct spic_softc *sc)
 	for (i = 0; i < SPIC_NPSWITCH; i++) {
 		rv = sysmon_pswitch_register(&sc->sc_smpsw[i]);
 		if (rv != 0)
-			aprint_error_dev(&sc->sc_dev, "unable to register %s with sysmon\n",
+			aprint_error_dev(sc->sc_dev, "unable to register %s with sysmon\n",
 			    sc->sc_smpsw[i].smpsw_name);
 	}
 
