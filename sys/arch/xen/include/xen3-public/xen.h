@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.7 2007/10/17 19:58:31 garbled Exp $ */
+/* $NetBSD: xen.h,v 1.8 2008/05/04 19:56:28 cegger Exp $ */
 /******************************************************************************
  * xen.h
  * 
@@ -70,7 +70,7 @@
 #define __HYPERVISOR_vcpu_op              24
 #define __HYPERVISOR_set_segment_base     25 /* x86/64 only */
 #define __HYPERVISOR_mmuext_op            26
-#define __HYPERVISOR_acm_op               27
+#define __HYPERVISOR_xsm_op               27
 #define __HYPERVISOR_nmi_op               28
 #define __HYPERVISOR_sched_op             29
 #define __HYPERVISOR_callback_op          30
@@ -246,7 +246,11 @@ struct mmuext_op {
         /* SET_LDT */
         unsigned int nr_ents;
         /* TLB_FLUSH_MULTI, INVLPG_MULTI */
-        XEN_GUEST_HANDLE_00030205(void) vcpumask;
+#if __XEN_INTERFACE_VERSION__ >= 0x00030205
+        XEN_GUEST_HANDLE(void) vcpumask;
+#else
+        void *vcpumask;
+#endif
     } arg2;
 };
 typedef struct mmuext_op mmuext_op_t;
@@ -566,9 +570,17 @@ typedef struct dom0_vga_console_info {
             uint8_t  green_pos, green_size;
             uint8_t  blue_pos, blue_size;
             uint8_t  rsvd_pos, rsvd_size;
+#if __XEN_INTERFACE_VERSION__ >= 0x00030206
+            /* VESA capabilities (offset 0xa, VESA command 0x4f00). */
+            uint32_t gbl_caps;
+            /* Mode attributes (offset 0x0, VESA command 0x4f01). */
+            uint16_t mode_attrs;
+#endif
         } vesa_lfb;
     } u;
 } dom0_vga_console_info_t;
+#define xen_vga_console_info dom0_vga_console_info
+#define xen_vga_console_info_t dom0_vga_console_info_t
 
 typedef uint8_t xen_domain_handle_t[16];
 
@@ -576,10 +588,10 @@ typedef uint8_t xen_domain_handle_t[16];
 #define __mk_unsigned_long(x) x ## UL
 #define mk_unsigned_long(x) __mk_unsigned_long(x)
 
-DEFINE_XEN_GUEST_HANDLE(uint8_t);
-DEFINE_XEN_GUEST_HANDLE(uint16_t);
-DEFINE_XEN_GUEST_HANDLE(uint32_t);
-DEFINE_XEN_GUEST_HANDLE(uint64_t);
+__DEFINE_XEN_GUEST_HANDLE(uint8,  uint8_t);
+__DEFINE_XEN_GUEST_HANDLE(uint16, uint16_t);
+__DEFINE_XEN_GUEST_HANDLE(uint32, uint32_t);
+__DEFINE_XEN_GUEST_HANDLE(uint64, uint64_t);
 
 #else /* __ASSEMBLY__ */
 
