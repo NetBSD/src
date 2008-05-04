@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.54 2008/04/19 16:18:13 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.55 2008/05/04 01:45:07 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -926,4 +926,9 @@ sys/dev/pcmcia/esp_pcmcia.c			1.30
 
 	Fix kernel panics on attach. Fix kern/34537 (and part of kern/26909).
 	[itohy, ticket #1130]
+
+sys/arch/i386/bios/vesafb.c			1.27
+
+	Disable splashscreen during autoconf in a number of scenarios.
+	[sborrill, ticket #1135]
 
