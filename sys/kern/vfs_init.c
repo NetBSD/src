@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_init.c,v 1.38 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.39 2008/05/04 12:43:58 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.38 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.39 2008/05/04 12:43:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -116,6 +116,10 @@ const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
 
 struct vfs_list_head vfs_list =			/* vfs list */
     LIST_HEAD_INITIALIZER(vfs_list);
+
+/* XXX Until this particular link set goes away. */
+static struct vfsops vfsops_dummy;
+__link_set_add_rodata(vfsops, vfsops_dummy);
 
 /*
  * This code doesn't work if the defn is **vnodop_defns with cc.
@@ -338,6 +342,8 @@ vfsinit(void)
 	 */
 	module_init_class(MODULE_CLASS_VFS);
 	__link_set_foreach(vfsp, vfsops) {
+		if (*vfsp == &vfsops_dummy)
+			continue;
 		if (vfs_attach(*vfsp)) {
 			printf("multiple `%s' file systems",
 			    (*vfsp)->vfs_name);
