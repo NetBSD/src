@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.136 2008/05/02 13:40:32 ad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.137 2008/05/04 07:22:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.136 2008/05/02 13:40:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.137 2008/05/04 07:22:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1575,13 +1575,8 @@ db_show_arptab(db_expr_t addr, bool have_addr,
 static int
 sysctl_net_inet_arp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t arps[ARP_NSTATS];
 
-	ctx.ctx_stat = arpstat_percpu;
-	ctx.ctx_counters = arps;
-	ctx.ctx_ncounters = ARP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(arpstat_percpu, ARP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
