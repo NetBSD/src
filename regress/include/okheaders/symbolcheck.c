@@ -206,7 +206,6 @@
 #endif
 #include <net/slcompress.h>	/* Needs <netinet> stuff */
 #include <net/slip.h>
-#include <net/zlib.h>
 
 #include <a.out.h>
 #include <ar.h>
