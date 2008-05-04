@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.8 2008/05/04 20:09:32 jmcneill Exp $ */
+/* $NetBSD: drm_vm.c,v 1.9 2008/05/04 20:27:50 jmcneill Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.8 2008/05/04 20:09:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.9 2008/05/04 20:27:50 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -84,7 +84,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {
 		if (map->type == _DRM_SHM) {
-			if (offset >= (off_t)map->handle && offset < (off_t)map->handle + map->size)
+			if (offset >= (uintptr_t)map->handle && offset < (uintptr_t)map->handle + map->size)
 				break;
 		} else {
 			if (offset >= map->offset && offset < map->offset + map->size)
