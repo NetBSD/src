@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.48 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: igmp.c,v 1.49 2008/05/04 07:22:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.48 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.49 2008/05/04 07:22:14 thorpej Exp $");
 
 #include "opt_mrouting.h"
 
@@ -603,13 +603,8 @@ igmp_purgeif(struct ifnet *ifp)	/* MUST be called at splsoftnet() */
 static int
 sysctl_net_inet_igmp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t igmps[IGMP_NSTATS];
 
-	ctx.ctx_stat = igmpstat_percpu;
-	ctx.ctx_counters = igmps;
-	ctx.ctx_ncounters = IGMP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(igmpstat_percpu, IGMP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_igmp_setup, "sysctl net.inet.igmp subtree setup")

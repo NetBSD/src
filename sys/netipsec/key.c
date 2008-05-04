@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.54 2008/05/03 21:53:23 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.55 2008/05/04 07:22:15 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.54 2008/05/03 21:53:23 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.55 2008/05/04 07:22:15 thorpej Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -8151,13 +8151,8 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 static int
 sysctl_net_key_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ps[PFKEY_NSTATS];
 
-	ctx.ctx_stat = pfkeystat_percpu;
-	ctx.ctx_counters = ps;
-	ctx.ctx_ncounters = PFKEY_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(pfkeystat_percpu, PFKEY_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")

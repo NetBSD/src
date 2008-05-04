@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.98 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.99 2008/05/04 07:22:15 thorpej Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.98 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.99 2008/05/04 07:22:15 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -873,13 +873,8 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 static int
 sysctl_net_inet6_raw6_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t rip6s[RIP6_NSTATS];
 
-	ctx.ctx_stat = rip6stat_percpu;
-	ctx.ctx_counters = rip6s;
-	ctx.ctx_ncounters = RIP6_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(rip6stat_percpu, RIP6_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")
