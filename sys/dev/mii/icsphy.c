@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.45 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.46 2008/05/04 17:06:09 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.45 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.46 2008/05/04 17:06:09 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.45 2008/04/28 20:23:53 martin Exp $");
 
 #include <dev/mii/icsphyreg.h>
 
-static int	icsphymatch(struct device *, struct cfdata *, void *);
-static void	icsphyattach(struct device *, struct device *, void *);
+static int	icsphymatch(device_t, cfdata_t, void *);
+static void	icsphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(icsphy, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(icsphy, sizeof(struct mii_softc),
     icsphymatch, icsphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	icsphy_service(struct mii_softc *, struct mii_data *, int);
@@ -114,8 +114,7 @@ static const struct mii_phydesc icsphys[] = {
 };
 
 static int
-icsphymatch(struct device *parent, struct cfdata *match,
-    void *aux)
+icsphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -126,7 +125,7 @@ icsphymatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-icsphyattach(struct device *parent, struct device *self, void *aux)
+icsphyattach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -137,6 +136,7 @@ icsphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_dev = self;
 	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
@@ -149,7 +149,7 @@ icsphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal_dev(&sc->mii_dev, "");
+	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
 	else

@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.21 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.22 2008/05/04 17:06:09 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.21 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.22 2008/05/04 17:06:09 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.21 2008/04/28 20:23:53 martin Exp $");
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-static int	gentbimatch(struct device *, struct cfdata *, void *);
-static void	gentbiattach(struct device *, struct device *, void *);
+static int	gentbimatch(device_t, cfdata_t, void *);
+static void	gentbiattach(device_t, device_t, void *);
 
-CFATTACH_DECL(gentbi, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(gentbi, sizeof(struct mii_softc),
     gentbimatch, gentbiattach, mii_phy_detach, mii_phy_activate);
 
 static int	gentbi_service(struct mii_softc *, struct mii_data *, int);
@@ -97,7 +97,7 @@ static const struct mii_phy_funcs gentbi_funcs = {
 };
 
 static int
-gentbimatch(struct device *parent, struct cfdata *match, void *aux)
+gentbimatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
@@ -130,7 +130,7 @@ gentbimatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-gentbiattach(struct device *parent, struct device *self, void *aux)
+gentbiattach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -140,6 +140,7 @@ gentbiattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": Generic ten-bit interface, rev. %d\n",
 	    MII_REV(ma->mii_id2));
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &gentbi_funcs;
@@ -158,7 +159,7 @@ gentbiattach(struct device *parent, struct device *self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
-	aprint_normal_dev(&sc->mii_dev, "");
+	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");

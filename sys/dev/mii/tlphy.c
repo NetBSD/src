@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.55 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.56 2008/05/04 17:06:10 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.55 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.56 2008/05/04 17:06:10 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,10 +96,10 @@ struct tlphy_softc {
 	int sc_need_acomp;
 };
 
-static int	tlphymatch(struct device *, struct cfdata *, void *);
-static void	tlphyattach(struct device *, struct device *, void *);
+static int	tlphymatch(device_t, cfdata_t, void *);
+static void	tlphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(tlphy, sizeof(struct tlphy_softc),
+CFATTACH_DECL_NEW(tlphy, sizeof(struct tlphy_softc),
     tlphymatch, tlphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	tlphy_service(struct mii_softc *, struct mii_data *, int);
@@ -120,8 +120,7 @@ static const struct mii_phydesc tlphys[] = {
 };
 
 static int
-tlphymatch(struct device *parent, struct cfdata *match,
-    void *aux)
+tlphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -132,7 +131,7 @@ tlphymatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-tlphyattach(struct device *parent, struct device *self, void *aux)
+tlphyattach(device_t parent, device_t self, void *aux)
 {
 	struct tlphy_softc *sc = device_private(self);
 	struct tl_softc *tlsc = device_private(device_parent(self));
@@ -145,6 +144,7 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->sc_mii.mii_dev = self;
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
 	sc->sc_mii.mii_funcs = &tlphy_funcs;
@@ -172,7 +172,7 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 #define	PRINT(str)	aprint_normal("%s%s", sep, str); sep = ", "
 
-	aprint_normal_dev(&sc->sc_mii.mii_dev, "");
+	aprint_normal_dev(self, "");
 	if (sc->sc_tlphycap) {
 		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2) {
 			ADD(IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
@@ -321,7 +321,7 @@ tlphy_status(struct mii_softc *physc)
 			mii->mii_media_active |= IFM_10_5;
 		else
 			printf("%s: AUI selected with no matching media !\n",
-			    device_xname(&sc->sc_mii.mii_dev));
+			    device_xname(sc->sc_mii.mii_dev));
 		mii->mii_media_status |= IFM_ACTIVE;
 		return;
 	}

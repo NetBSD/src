@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.34 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.35 2008/05/04 17:06:10 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.34 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.35 2008/05/04 17:06:10 xtraeme Exp $");
 
 #include "opt_mii.h"
 
@@ -91,10 +91,10 @@ struct mii_knowndev {
 #include <dev/mii/miidevs_data.h>
 #endif
 
-static int	ukphymatch(struct device *, struct cfdata *, void *);
-static void	ukphyattach(struct device *, struct device *, void *);
+static int	ukphymatch(device_t, cfdata_t, void *);
+static void	ukphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ukphy, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(ukphy, sizeof(struct mii_softc),
     ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	ukphy_service(struct mii_softc *, struct mii_data *, int);
@@ -104,8 +104,7 @@ static const struct mii_phy_funcs ukphy_funcs = {
 };
 
 static int
-ukphymatch(struct device *parent, struct cfdata *match,
-    void *aux)
+ukphymatch(device_t parent, cfdata_t match, void *aux)
 {
 
 	/*
@@ -115,7 +114,7 @@ ukphymatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-ukphyattach(struct device *parent, struct device *self, void *aux)
+ukphyattach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -135,14 +134,15 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 		    mii_knowndevs[i].model == model)
 			break;
 	if (mii_knowndevs[i].descr != NULL)
-		aprint_normal_dev(&sc->mii_dev, "%s (OUI 0x%06x, model 0x%04x), rev. %d\n",
+		aprint_normal_dev(self, "%s (OUI 0x%06x, model 0x%04x), rev. %d\n",
 		       mii_knowndevs[i].descr,
 		       oui, model, rev);
 	else
 #endif
-		aprint_normal_dev(&sc->mii_dev, "OUI 0x%06x, model 0x%04x, rev. %d\n",
+		aprint_normal_dev(self, "OUI 0x%06x, model 0x%04x, rev. %d\n",
 		       oui, model, rev);
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &ukphy_funcs;
@@ -161,7 +161,7 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
-	aprint_normal_dev(&sc->mii_dev, "");
+	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");

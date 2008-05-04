@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.49 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: exphy.c,v 1.50 2008/05/04 17:06:09 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.49 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.50 2008/05/04 17:06:09 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.49 2008/04/28 20:23:53 martin Exp $");
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 
-static int	exphymatch(struct device *, struct cfdata *, void *);
-static void	exphyattach(struct device *, struct device *, void *);
+static int	exphymatch(device_t, cfdata_t, void *);
+static void	exphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(exphy, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(exphy, sizeof(struct mii_softc),
     exphymatch, exphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	exphy_service(struct mii_softc *, struct mii_data *, int);
@@ -93,7 +93,7 @@ static const struct mii_phy_funcs exphy_funcs = {
 };
 
 static int
-exphymatch(struct device *parent, struct cfdata *match, void *aux)
+exphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -114,7 +114,7 @@ exphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-exphyattach(struct device *parent, struct device *self, void *aux)
+exphyattach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -123,6 +123,7 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": 3Com internal media interface\n");
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &exphy_funcs;

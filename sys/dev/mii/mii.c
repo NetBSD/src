@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.46 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: mii.c,v 1.47 2008/05/04 17:06:09 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.46 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.47 2008/05/04 17:06:09 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,7 +58,7 @@ static int	mii_print(void *, const char *);
  * to the network interface driver parent.
  */
 void
-mii_attach(struct device *parent, struct mii_data *mii, int capmask,
+mii_attach(device_t parent, struct mii_data *mii, int capmask,
     int phyloc, int offloc, int flags)
 {
 	struct mii_attach_args ma;
@@ -176,9 +176,9 @@ mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
 			break;
 
 		case DVACT_DEACTIVATE:
-			if (config_deactivate(&child->mii_dev) != 0)
+			if (config_deactivate(child->mii_dev) != 0)
 				panic("%s: config_activate(%d) failed",
-				    device_xname(&child->mii_dev), act);
+				    device_xname(child->mii_dev), act);
 		}
 	}
 }
@@ -205,7 +205,7 @@ mii_detach(struct mii_data *mii, int phyloc, int offloc)
 			    offloc != child->mii_offset)
 				continue;
 		}
-		(void) config_detach(&child->mii_dev, DETACH_FORCE);
+		(void)config_detach(child->mii_dev, DETACH_FORCE);
 	}
 }
 
@@ -226,7 +226,7 @@ mii_print(void *aux, const char *pnp)
 static inline int
 phy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
-	if (!device_is_active(&sc->mii_dev))
+	if (!device_is_active(sc->mii_dev))
 		return ENXIO;
 	return PHY_SERVICE(sc, mii, cmd);
 }

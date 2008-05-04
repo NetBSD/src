@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.38 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.39 2008/05/04 17:06:09 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.38 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.39 2008/05/04 17:06:09 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.38 2008/04/28 20:23:53 martin Exp $");
 
 #include <dev/mii/brgphyreg.h>
 
-static int	brgphymatch(struct device *, struct cfdata *, void *);
-static void	brgphyattach(struct device *, struct device *, void *);
+static int	brgphymatch(device_t, cfdata_t, void *);
+static void	brgphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(brgphy, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(brgphy, sizeof(struct mii_softc),
     brgphymatch, brgphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	brgphy_service(struct mii_softc *, struct mii_data *, int);
@@ -218,6 +218,7 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
@@ -228,32 +229,32 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	switch (MII_MODEL(ma->mii_id2)) {
 	case MII_MODEL_BROADCOM_BCM5400:
 		sc->mii_funcs = &brgphy_5401_funcs;
-		aprint_normal_dev(&sc->mii_dev, "using BCM5401 DSP patch\n");
+		aprint_normal_dev(self, "using BCM5401 DSP patch\n");
 		break;
 
 	case MII_MODEL_BROADCOM_BCM5401:
 		if (MII_REV(ma->mii_id2) == 1 || MII_REV(ma->mii_id2) == 3) {
 			sc->mii_funcs = &brgphy_5401_funcs;
-			aprint_normal_dev(&sc->mii_dev, "using BCM5401 DSP patch\n");
+			aprint_normal_dev(self, "using BCM5401 DSP patch\n");
 		} else
 			sc->mii_funcs = &brgphy_funcs;
 		break;
 
 	case MII_MODEL_BROADCOM_BCM5411:
 		sc->mii_funcs = &brgphy_5411_funcs;
-		aprint_normal_dev(&sc->mii_dev, "using BCM5411 DSP patch\n");
+		aprint_normal_dev(self, "using BCM5411 DSP patch\n");
 		break;
 
 #ifdef notyet /* unverified, untested */
 	case MII_MODEL_BROADCOM_BCM5703:
 		sc->mii_funcs = &brgphy_5703_funcs;
-		aprint_normal_dev(&sc->mii_dev, "using BCM5703 DSP patch\n");
+		aprint_normal_dev(self, "using BCM5703 DSP patch\n");
 		break;
 #endif
 
 	case MII_MODEL_BROADCOM_BCM5704:
 		sc->mii_funcs = &brgphy_5704_funcs;
-		aprint_normal_dev(&sc->mii_dev, "using BCM5704 DSP patch\n");
+		aprint_normal_dev(self, "using BCM5704 DSP patch\n");
 		break;
 
 	case MII_MODEL_BROADCOM_BCM5705:
@@ -285,7 +286,7 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 
-	aprint_normal_dev(&sc->mii_dev, "");
+	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
