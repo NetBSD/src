@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.2 2006/10/07 07:21:13 gdamore Exp $ */
+/* $NetBSD: spi.c,v 1.3 2008/05/04 14:21:56 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.2 2006/10/07 07:21:13 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.3 2008/05/04 14:21:56 xtraeme Exp $");
 
 #include "locators.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.2 2006/10/07 07:21:13 gdamore Exp $");
 #include <dev/spi/spivar.h>
 
 struct spi_softc {
-	struct device		sc_dev;
 	struct spi_controller	sc_controller;
 	int			sc_mode;
 	int			sc_speed;
@@ -89,7 +88,7 @@ spibus_print(void *aux, const char *pnp)
 
 
 static int
-spi_match(struct device *parent, struct cfdata *cf, void *aux)
+spi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	
 	return 1;
@@ -107,10 +106,9 @@ spi_print(void *aux, const char *pnp)
 }
 
 static int
-spi_search(struct device *parent, struct cfdata *cf, const int *ldesc,
-    void *aux)
+spi_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct spi_softc *sc = (void *)parent;
+	struct spi_softc *sc = device_private(parent);
 	struct spi_attach_args sa;
 	int addr;
 
@@ -134,7 +132,7 @@ spi_search(struct device *parent, struct cfdata *cf, const int *ldesc,
  * device drivers from the ABI for the SPI bus drivers.
  */
 static void
-spi_attach(struct device *parent, struct device *self, void *aux)
+spi_attach(device_t parent, device_t self, void *aux)
 {
 	struct spi_softc *sc = device_private(self);
 	struct spibus_attach_args *sba = aux;
@@ -167,7 +165,7 @@ spi_attach(struct device *parent, struct device *self, void *aux)
 	config_search_ia(spi_search, self, "spi", NULL);
 }
 
-CFATTACH_DECL(spi, sizeof(struct spi_softc),
+CFATTACH_DECL_NEW(spi, sizeof(struct spi_softc),
     spi_match, spi_attach, NULL, NULL);
 
 /*
