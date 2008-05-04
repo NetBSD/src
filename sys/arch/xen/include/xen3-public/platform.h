@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.2 2007/09/23 16:25:29 bouyer Exp $ */
+/* $NetBSD: platform.h,v 1.3 2008/05/04 19:56:28 cegger Exp $ */
 /******************************************************************************
  * platform.h
  * 
@@ -115,6 +115,91 @@ struct xenpf_platform_quirk {
 typedef struct xenpf_platform_quirk xenpf_platform_quirk_t;
 DEFINE_XEN_GUEST_HANDLE(xenpf_platform_quirk_t);
 
+#define XENPF_firmware_info       50
+#define XEN_FW_DISK_INFO          1 /* from int 13 AH=08/41/48 */
+#define XEN_FW_DISK_MBR_SIGNATURE 2 /* from MBR offset 0x1b8 */
+#define XEN_FW_VBEDDC_INFO        3 /* from int 10 AX=4f15 */
+struct xenpf_firmware_info {
+    /* IN variables. */
+    uint32_t type;
+    uint32_t index;
+    /* OUT variables. */
+    union {
+        struct {
+            /* Int13, Fn48: Check Extensions Present. */
+            uint8_t device;                   /* %dl: bios device number */
+            uint8_t version;                  /* %ah: major version      */
+            uint16_t interface_support;       /* %cx: support bitmap     */
+            /* Int13, Fn08: Legacy Get Device Parameters. */
+            uint16_t legacy_max_cylinder;     /* %cl[7:6]:%ch: max cyl # */
+            uint8_t legacy_max_head;          /* %dh: max head #         */
+            uint8_t legacy_sectors_per_track; /* %cl[5:0]: max sector #  */
+            /* Int13, Fn41: Get Device Parameters (as filled into %ds:%esi). */
+            /* NB. First uint16_t of buffer must be set to buffer size.      */
+            XEN_GUEST_HANDLE(void) edd_params;
+        } disk_info; /* XEN_FW_DISK_INFO */
+        struct {
+            uint8_t device;                   /* bios device number  */
+            uint32_t mbr_signature;           /* offset 0x1b8 in mbr */
+        } disk_mbr_signature; /* XEN_FW_DISK_MBR_SIGNATURE */
+        struct {
+            /* Int10, AX=4F15: Get EDID info. */
+            uint8_t capabilities;
+            uint8_t edid_transfer_time;
+            /* must refer to 128-byte buffer */
+            XEN_GUEST_HANDLE(uint8) edid;
+        } vbeddc_info; /* XEN_FW_VBEDDC_INFO */
+    } u;
+};
+typedef struct xenpf_firmware_info xenpf_firmware_info_t;
+DEFINE_XEN_GUEST_HANDLE(xenpf_firmware_info_t);
+
+#define XENPF_enter_acpi_sleep    51
+struct xenpf_enter_acpi_sleep {
+    /* IN variables */
+    uint16_t pm1a_cnt_val;      /* PM1a control value. */
+    uint16_t pm1b_cnt_val;      /* PM1b control value. */
+    uint32_t sleep_state;       /* Which state to enter (Sn). */
+    uint32_t flags;             /* Must be zero. */
+};
+typedef struct xenpf_enter_acpi_sleep xenpf_enter_acpi_sleep_t;
+DEFINE_XEN_GUEST_HANDLE(xenpf_enter_acpi_sleep_t);
+
+#define XENPF_change_freq         52
+struct xenpf_change_freq {
+    /* IN variables */
+    uint32_t flags; /* Must be zero. */
+    uint32_t cpu;   /* Physical cpu. */
+    uint64_t freq;  /* New frequency (Hz). */
+};
+typedef struct xenpf_change_freq xenpf_change_freq_t;
+DEFINE_XEN_GUEST_HANDLE(xenpf_change_freq_t);
+
+/*
+ * Get idle times (nanoseconds since boot) for physical CPUs specified in the
+ * @cpumap_bitmap with range [0..@cpumap_nr_cpus-1]. The @idletime array is
+ * indexed by CPU number; only entries with the corresponding @cpumap_bitmap
+ * bit set are written to. On return, @cpumap_bitmap is modified so that any
+ * non-existent CPUs are cleared. Such CPUs have their @idletime array entry
+ * cleared.
+ */
+#define XENPF_getidletime         53
+struct xenpf_getidletime {
+    /* IN/OUT variables */
+    /* IN: CPUs to interrogate; OUT: subset of IN which are present */
+    XEN_GUEST_HANDLE(uint8) cpumap_bitmap;
+    /* IN variables */
+    /* Size of cpumap bitmap. */
+    uint32_t cpumap_nr_cpus;
+    /* Must be indexable for every cpu in cpumap_bitmap. */
+    XEN_GUEST_HANDLE(uint64) idletime;
+    /* OUT variables */
+    /* System time when the idletime snapshots were taken. */
+    uint64_t now;
+};
+typedef struct xenpf_getidletime xenpf_getidletime_t;
+DEFINE_XEN_GUEST_HANDLE(xenpf_getidletime_t);
+
 struct xen_platform_op {
     uint32_t cmd;
     uint32_t interface_version; /* XENPF_INTERFACE_VERSION */
@@ -125,6 +210,10 @@ struct xen_platform_op {
         struct xenpf_read_memtype      read_memtype;
         struct xenpf_microcode_update  microcode;
         struct xenpf_platform_quirk    platform_quirk;
+        struct xenpf_firmware_info     firmware_info;
+        struct xenpf_enter_acpi_sleep  enter_acpi_sleep;
+        struct xenpf_change_freq       change_freq;
+        struct xenpf_getidletime       getidletime;
         uint8_t                        pad[128];
     } u;
 };

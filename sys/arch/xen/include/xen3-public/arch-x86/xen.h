@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
+/* $NetBSD: xen.h,v 1.3 2008/05/04 19:56:28 cegger Exp $ */
 /******************************************************************************
  * arch-x86/xen.h
  * 
@@ -25,20 +25,25 @@
  * Copyright (c) 2004-2006, K A Fraser
  */
 
+#include "../xen.h"
+
 #ifndef __XEN_PUBLIC_ARCH_X86_XEN_H__
 #define __XEN_PUBLIC_ARCH_X86_XEN_H__
 
 /* Structural guest handles introduced in 0x00030201. */
 #if __XEN_INTERFACE_VERSION__ >= 0x00030201
-#define __DEFINE_XEN_GUEST_HANDLE(name, type) \
+#define ___DEFINE_XEN_GUEST_HANDLE(name, type) \
     typedef struct { type *p; } __guest_handle_ ## name
 #else
-#define __DEFINE_XEN_GUEST_HANDLE(name, type) \
+#define ___DEFINE_XEN_GUEST_HANDLE(name, type) \
     typedef type * __guest_handle_ ## name
 #endif
 
+#define __DEFINE_XEN_GUEST_HANDLE(name, type) \
+    ___DEFINE_XEN_GUEST_HANDLE(name, type)
 #define DEFINE_XEN_GUEST_HANDLE(name)   __DEFINE_XEN_GUEST_HANDLE(name, name)
-#define XEN_GUEST_HANDLE(name)          __guest_handle_ ## name
+#define __XEN_GUEST_HANDLE(name)        __guest_handle_ ## name
+#define XEN_GUEST_HANDLE(name)          __XEN_GUEST_HANDLE(name)
 #define set_xen_guest_handle(hnd, val)  do { (hnd).p = val; } while (0)
 #ifdef __XEN_TOOLS__
 #define get_xen_guest_handle(val, hnd)  do { val = (hnd).p; } while (0)
