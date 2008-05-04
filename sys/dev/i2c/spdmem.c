@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.7 2008/04/06 20:25:59 cegger Exp $ */
+/* $NetBSD: spdmem.c,v 1.8 2008/05/04 15:26:29 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7 2008/04/06 20:25:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.8 2008/05/04 15:26:29 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,13 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.7 2008/04/06 20:25:59 cegger Exp $");
 #include <dev/i2c/spdmemreg.h>
 #include <dev/i2c/spdmemvar.h>
 
-static int spdmem_match(struct device *, struct cfdata *, void *);
-static void spdmem_attach(struct device *, struct device *, void *);
+static int spdmem_match(device_t, cfdata_t, void *);
+static void spdmem_attach(device_t, device_t, void *);
 SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
 
 static uint8_t spdmem_read(struct spdmem_softc *, uint8_t);
 
-CFATTACH_DECL(spdmem, sizeof(struct spdmem_softc),
+CFATTACH_DECL_NEW(spdmem, sizeof(struct spdmem_softc),
     spdmem_match, spdmem_attach, NULL, NULL);
 
 #define IS_RAMBUS_TYPE (s->sm_len < 4)
@@ -117,7 +117,7 @@ static const uint8_t spdmem_cycle_frac[] = {
 static int hw_node = CTL_EOL;
 
 static int
-spdmem_match(struct device *parent, struct cfdata *match, void *aux)
+spdmem_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	struct spdmem_softc sc;
@@ -142,7 +142,7 @@ spdmem_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-spdmem_attach(struct device *parent, struct device *self, void *aux)
+spdmem_attach(device_t parent, device_t self, void *aux)
 {
 	struct spdmem_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
