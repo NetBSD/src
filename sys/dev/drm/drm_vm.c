@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.9 2008/05/04 20:27:50 jmcneill Exp $ */
+/* $NetBSD: drm_vm.c,v 1.10 2008/05/04 21:43:01 jmcneill Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.9 2008/05/04 20:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.10 2008/05/04 21:43:01 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -41,6 +41,7 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	drm_file_t *priv;
 	drm_map_type_t type;
 	paddr_t phys;
+	uintptr_t roffset;
 
 	DRM_LOCK();
 	priv = drm_find_file_by_proc(dev, DRM_CURPROC);
@@ -82,9 +83,10 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 				   for performance, even if the list was a
 				   bit longer. */
 	DRM_LOCK();
+	roffset = DRM_NETBSD_HANDLE2ADDR(offset);
 	TAILQ_FOREACH(map, &dev->maplist, link) {
 		if (map->type == _DRM_SHM) {
-			if (offset >= (uintptr_t)map->handle && offset < (uintptr_t)map->handle + map->size)
+			if (roffset >= (uintptr_t)map->handle && roffset < (uintptr_t)map->handle + map->size)
 				break;
 		} else {
 			if (offset >= map->offset && offset < map->offset + map->size)
