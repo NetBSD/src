@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1138 2008/05/03 09:43:40 plunky Exp $
+#	$NetBSD: mi,v 1.1139 2008/05/04 22:58:52 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1433,7 +1433,7 @@
 ./usr/include/net/route.h			comp-c-include
 ./usr/include/net/slcompress.h			comp-c-include
 ./usr/include/net/slip.h			comp-c-include
-./usr/include/net/zlib.h			comp-c-include
+./usr/include/net/zlib.h			comp-obsolete		obsolete
 ./usr/include/net80211/_ieee80211.h		comp-c-include
 ./usr/include/net80211/ieee80211.h		comp-c-include
 ./usr/include/net80211/ieee80211_channel.h	comp-obsolete		obsolete
