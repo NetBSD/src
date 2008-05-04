@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467var.h,v 1.4 2007/11/16 08:00:14 xtraeme Exp $	*/
+/*	$NetBSD: adt7467var.h,v 1.5 2008/05/04 14:45:01 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -35,7 +35,7 @@
 #define ADT7456VAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.4 2007/11/16 08:00:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.5 2008/05/04 14:45:01 xtraeme Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.4 2007/11/16 08:00:14 xtraeme Exp $
 #define ADT7467_MAXSENSORS	5
 
 struct adt7467c_softc {
-	struct device sc_dev;
 	struct device *parent;
 	int sc_node, address;
 	struct sysmon_envsys *sc_sme;
@@ -54,6 +53,6 @@ struct adt7467c_softc {
 	uint8_t regs[32];
 };
 
-void adt7467c_setup(struct adt7467c_softc *);
+void adt7467c_setup(device_t);
 
 #endif

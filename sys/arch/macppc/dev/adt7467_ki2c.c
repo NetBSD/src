@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467_ki2c.c,v 1.2 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: adt7467_ki2c.c,v 1.3 2008/05/04 14:45:01 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467_ki2c.c,v 1.2 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467_ki2c.c,v 1.3 2008/05/04 14:45:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,17 +48,14 @@ __KERNEL_RCSID(0, "$NetBSD: adt7467_ki2c.c,v 1.2 2005/12/11 12:18:03 christos Ex
 
 #include <dev/i2c/adt7467var.h>
 
-static void adt7467_ki2c_attach(struct device *, struct device *, void *);
-static int adt7467_ki2c_match(struct device *, struct cfdata *, void *);
+static void adt7467_ki2c_attach(device_t, device_t, void *);
+static int adt7467_ki2c_match(device_t, cfdata_t, void *);
 
-CFATTACH_DECL(adt7467_ki2c, sizeof(struct adt7467c_softc),
+CFATTACH_DECL_NEW(adt7467_ki2c, sizeof(struct adt7467c_softc),
     adt7467_ki2c_match, adt7467_ki2c_attach, NULL, NULL);
 
 int
-adt7467_ki2c_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+adt7467_ki2c_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ki2c_confargs *ka = aux;
 	char compat[32];
@@ -75,11 +72,9 @@ adt7467_ki2c_match(parent, cf, aux)
 }
 
 void
-adt7467_ki2c_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+adt7467_ki2c_attach(device_t parent, device_t self, void *aux)
 {
-	struct adt7467c_softc *sc = (struct adt7467c_softc *)self;
+	struct adt7467c_softc *sc = device_private(self);
 	struct ki2c_confargs *ka = aux;
 	int node;
 
@@ -87,7 +82,7 @@ adt7467_ki2c_attach(parent, self, aux)
 	sc->sc_node = node;
 	sc->parent = parent;
 	sc->address = ka->ka_addr & 0xfe;
-	printf(" ADT7467 thermal monitor and fan controller\n");
+	aprint_normal(" ADT7467 thermal monitor and fan controller\n");
 	sc->sc_i2c = ka->ka_tag;
-	adt7467c_setup(sc);
+	adt7467c_setup(self);
 }

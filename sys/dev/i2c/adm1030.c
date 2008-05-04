@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.12 2008/04/06 20:25:59 cegger Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.13 2008/05/04 14:45:01 xtraeme Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.12 2008/04/06 20:25:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.13 2008/05/04 14:45:01 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.12 2008/04/06 20:25:59 cegger Exp $");
 #include "sysmon_envsys.h"
 #include <dev/i2c/adm1030var.h>
 
-static void adm1030c_attach(struct device *, struct device *, void *);
-static int adm1030c_match(struct device *, struct cfdata *, void *);
+static void adm1030c_attach(device_t, device_t, void *);
+static int adm1030c_match(device_t, cfdata_t, void *);
 
 static uint8_t adm1030c_readreg(struct adm1030c_softc *, uint8_t);
 static void adm1030c_writereg(struct adm1030c_softc *, uint8_t, uint8_t);
@@ -59,32 +59,27 @@ static int adm1030c_temp2muk(uint8_t);
 static int adm1030c_reg2rpm(uint8_t);
 static void adm1030c_refresh(struct sysmon_envsys *, envsys_data_t *);
 
-CFATTACH_DECL(adm1030c, sizeof(struct adm1030c_softc),
+CFATTACH_DECL_NEW(adm1030c, sizeof(struct adm1030c_softc),
     adm1030c_match, adm1030c_attach, NULL, NULL);
 
 static int
-adm1030c_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+adm1030c_match(device_t parent, cfdata_t cf, void *aux)
 {
 	/* no probing when we're attaching to iic */
 	return 1;
 }
 
 static void
-adm1030c_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+adm1030c_attach(device_t parent, device_t self, void *aux)
 {
 	struct adm1030c_softc *sc = device_private(self);
 	struct i2c_attach_args *args = aux;
 
 	sc->parent = parent;
 	sc->address = args->ia_addr;
-	printf(" ADM1030 thermal monitor and fan controller\n");
+	aprint_normal(" ADM1030 thermal monitor and fan controller\n");
 	sc->sc_i2c = (struct i2c_controller *)args->ia_tag;
-	adm1030c_setup(sc);
+	adm1030c_setup(self);
 }
 
 static uint8_t
@@ -171,8 +166,9 @@ sysctl_adm1030c_temp(SYSCTLFN_ARGS)
 }
 
 void
-adm1030c_setup(struct adm1030c_softc *sc)
+adm1030c_setup(device_t self)
 {
+	struct adm1030c_softc *sc = device_private(self);
 	int error;
 	int ret;
 	struct sysctlnode *me = NULL, *node = NULL;
@@ -183,7 +179,7 @@ adm1030c_setup(struct adm1030c_softc *sc)
 	
 	ret=sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&me,
 	       CTLFLAG_READWRITE,
-	       CTLTYPE_NODE, device_xname(&sc->sc_dev), NULL,
+	       CTLTYPE_NODE, device_xname(self), NULL,
 	       NULL, 0, NULL, 0,
 	       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
@@ -226,17 +222,19 @@ adm1030c_setup(struct adm1030c_softc *sc)
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[2]))
 		goto out;
 
-	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
+	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = adm1030c_refresh;
 
 	if ((error = sysmon_envsys_register(sc->sc_sme)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to register with sysmon (%d)\n", error);
+		aprint_error_dev(self,
+		    "unable to register with sysmon (%d)\n", error);
 		goto out;
 	}
 	return;
 
 out:
+	free(sc->sc_sensor, M_DEVBUF);
 	sysmon_envsys_destroy(sc->sc_sme);
 }
 
