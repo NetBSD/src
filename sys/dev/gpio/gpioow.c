@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.4 2008/05/01 22:00:44 cegger Exp $ */
+/* $NetBSD: gpioow.c,v 1.5 2008/05/04 14:01:14 xtraeme Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.4 2008/05/01 22:00:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.5 2008/05/04 14:01:14 xtraeme Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -37,14 +37,12 @@ __KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.4 2008/05/01 22:00:44 cegger Exp $");
 #define GPIOOW_PIN_DATA		0
 
 struct gpioow_softc {
-	device_t		sc_dev;
-
 	void *			sc_gpio;
 	struct gpio_pinmap	sc_map;
 	int			__map[GPIOOW_NPINS];
 
 	struct onewire_bus	sc_ow_bus;
-	struct device *		sc_ow_dev;
+	device_t		sc_ow_dev;
 
 	int			sc_data;
 	int			sc_dying;
@@ -63,7 +61,7 @@ void	gpioow_bb_tx(void *);
 int	gpioow_bb_get(void *);
 void	gpioow_bb_set(void *, int);
 
-CFATTACH_DECL(gpioow, sizeof(struct gpioow_softc),
+CFATTACH_DECL_NEW(gpioow, sizeof(struct gpioow_softc),
 	gpioow_match, gpioow_attach, gpioow_detach, gpioow_activate);
 
 extern struct cfdriver gpioow_cd;
@@ -89,8 +87,6 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 	struct gpio_attach_args *ga = aux;
 	struct onewirebus_attach_args oba;
 	int caps;
-
-	sc->sc_dev = self;
 
 	/* Check that we have enough pins */
 	if (gpio_npins(ga->ga_mask) != GPIOOW_NPINS) {
