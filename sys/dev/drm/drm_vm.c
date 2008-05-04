@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.6 2007/12/11 11:17:32 lukem Exp $ */
+/* $NetBSD: drm_vm.c,v 1.7 2008/05/04 19:19:40 jmcneill Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.6 2007/12/11 11:17:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.7 2008/05/04 19:19:40 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -47,11 +47,11 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	DRM_UNLOCK();
 	if (priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
-		return EINVAL;
+		return -1;
 	}
 
 	if (!priv->authenticated)
-		return DRM_ERR(EACCES);
+		return -1;
 
 	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
 		drm_device_dma_t *dma = dev->dma;
