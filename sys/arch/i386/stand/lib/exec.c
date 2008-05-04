@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.24 2008/05/03 18:49:13 ad Exp $	 */
+/*	$NetBSD: exec.c,v 1.25 2008/05/04 11:00:09 martin Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,8 +62,6 @@
  *	Matthias Drochner.  All rights reserved.
  * Copyright (c) 1996
  * 	Perry E. Metzger.  All rights reserved.
- * Copyright (c) 1997
- * 	Martin Husemann.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
