@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.7 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: leds.c,v 1.8 2008/05/04 00:10:42 jklos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.7 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.8 2008/05/04 00:10:42 jklos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ static u_char led_px = 0;
 /*
  * Initial value is the default pattern set.
  */
-static const struct led_patterns ledpat = {
+struct led_patterns ledpat = {
 	16,	/* divisor */
 	12,	/* patlen */
 	{	/* patterns */
@@ -134,7 +134,7 @@ leds_uio(struct uio *uio)
 {
 	int cnt, error;
 	int off;	/* NOT off_t */
-	void *va;
+	char *va;
 
 	off = uio->uio_offset;
 	if ((off < 0) || (off > sizeof(ledpat)))
@@ -144,7 +144,9 @@ leds_uio(struct uio *uio)
 	if (cnt == 0)
 		return (0); /* EOF */
 
-	va = ((char*)(&ledpat)) + off;
+
+	va = (char *)&ledpat;
+	va = va + off;
 	error = uiomove(va, cnt, uio);
 
 	return (error);
