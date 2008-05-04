@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.159 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: key.c,v 1.160 2008/05/04 07:22:15 thorpej Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.159 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.160 2008/05/04 07:22:15 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -8439,13 +8439,8 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 static int
 sysctl_net_key_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ps[PFKEY_NSTATS];
 
-	ctx.ctx_stat = pfkeystat_percpu;
-	ctx.ctx_counters = ps;
-	ctx.ctx_ncounters = PFKEY_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(pfkeystat_percpu, PFKEY_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_key_setup, "sysctl net.key subtree setup")

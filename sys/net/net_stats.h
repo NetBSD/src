@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stats.h,v 1.2 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: net_stats.h,v 1.3 2008/05/04 07:22:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,27 +66,17 @@ do {									\
 	_NET_STAT_PUTREF(stat);						\
 } while (/*CONSTCOND*/0)
 
-/*
- * netstat_sysctl_context --
- *	Context passed to netstat_sysctl().
- */
-typedef struct {
-	percpu_t	*ctx_stat;	/* stat's percpu context */
-	uint64_t	*ctx_counters;	/* pointer to collated counter array */
-	u_int		 ctx_ncounters;	/* number of counters in array */
-} netstat_sysctl_context;
-
 __BEGIN_DECLS
 struct lwp;
 struct sysctlnode;
 
-int	netstat_sysctl(netstat_sysctl_context *,
+int	netstat_sysctl(percpu_t *, u_int,
 		       const int *, u_int, void *,
 		       size_t *, const void *, size_t,
 		       const int *, struct lwp *, const struct sysctlnode *);
 
-#define	NETSTAT_SYSCTL(ctx)						\
-	netstat_sysctl((ctx), name, namelen, oldp, oldlenp,		\
+#define	NETSTAT_SYSCTL(stat, nctrs)					\
+	netstat_sysctl((stat), (nctrs), name, namelen, oldp, oldlenp,	\
 		       newp, newlen, oname, l, rnode)
 __END_DECLS
 #endif /* _KERNEL */

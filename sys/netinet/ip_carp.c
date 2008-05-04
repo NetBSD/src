@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.25 2008/04/23 05:26:50 thorpej Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.26 2008/05/04 07:22:14 thorpej Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.25 2008/04/23 05:26:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.26 2008/05/04 07:22:14 thorpej Exp $");
 
 /*
  * TODO:
@@ -2242,13 +2242,8 @@ carp_ether_purgemulti(struct carp_softc *sc)
 static int
 sysctl_net_inet_carp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t carps[CARP_NSTATS];
 
-	ctx.ctx_stat = carpstat_percpu;
-	ctx.ctx_counters = carps;
-	ctx.ctx_ncounters = CARP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(carpstat_percpu, CARP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_carp_setup, "sysctl net.inet.carp subtree setup")

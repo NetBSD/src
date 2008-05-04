@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.32 2008/04/24 11:38:37 ad Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.33 2008/05/04 07:22:14 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.32 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.33 2008/05/04 07:22:14 thorpej Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -585,13 +585,8 @@ ddp_clean()
 static int
 sysctl_net_atalk_ddp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ddps[DDP_NSTATS];
 
-	ctx.ctx_stat = ddpstat_percpu;
-	ctx.ctx_counters = ddps;
-	ctx.ctx_ncounters = DDP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ddpstat_percpu, DDP_NSTATS));
 }
 
 /*

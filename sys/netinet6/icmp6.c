@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.146 2008/04/23 05:26:50 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.147 2008/05/04 07:22:15 thorpej Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.146 2008/04/23 05:26:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.147 2008/05/04 07:22:15 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2748,13 +2748,8 @@ sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet6_icmp6_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t icmp6s[ICMP6_NSTATS];
 
-	ctx.ctx_stat = icmp6stat_percpu;
-	ctx.ctx_counters = icmp6s;
-	ctx.ctx_ncounters = ICMP6_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(icmp6stat_percpu, ICMP6_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,

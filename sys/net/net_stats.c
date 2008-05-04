@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stats.c,v 1.3 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: net_stats.c,v 1.4 2008/05/04 07:22:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,13 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stats.c,v 1.3 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stats.c,v 1.4 2008/05/04 07:22:14 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
+#include <sys/kmem.h>
 
 #include <net/net_stats.h>
+
+typedef struct {
+	uint64_t	*ctx_counters;	/* pointer to collated counter array */
+	u_int		 ctx_ncounters;	/* number of counters in array */
+} netstat_sysctl_context;
 
 /*
  * netstat_convert_to_user_cb --
@@ -54,32 +60,37 @@ netstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
 }
 
 /*
- * netstat_convert_to_user --
- *	Internal routine to convert per-CPU network statistics into
- *	collated form.
- */
-static void
-netstat_convert_to_user(netstat_sysctl_context *ctx)
-{
-
-	memset(ctx->ctx_counters, 0, sizeof(uint64_t) * ctx->ctx_ncounters);
-	percpu_foreach(ctx->ctx_stat, netstat_convert_to_user_cb, ctx);
-}
-
-/*
  * netstat_sysctl --
  *	Common routine for collating and reporting network statistics
  *	that are gathered per-CPU.  Statistics counters are assumed
  *	to be arrays of uint64_t's.
  */
 int
-netstat_sysctl(netstat_sysctl_context *ctx, SYSCTLFN_ARGS)
+netstat_sysctl(percpu_t *stat, u_int ncounters, SYSCTLFN_ARGS)
 {
+	netstat_sysctl_context ctx;
 	struct sysctlnode node;
+	uint64_t *counters;
+	size_t countersize;
+	int rv;
 
-	netstat_convert_to_user(ctx);
+	countersize = sizeof(uint64_t) * ncounters;
+
+	counters = kmem_zalloc(countersize, KM_SLEEP);
+	if (counters == NULL)
+		return (ENOMEM);
+
+	ctx.ctx_counters = counters;
+	ctx.ctx_ncounters = ncounters;
+
+	percpu_foreach(stat, netstat_convert_to_user_cb, &ctx);
+
 	node = *rnode;
-	node.sysctl_data = ctx->ctx_counters;
-	node.sysctl_size = sizeof(uint64_t) * ctx->ctx_ncounters;
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	node.sysctl_data = counters;
+	node.sysctl_size = countersize;
+	rv = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	kmem_free(counters, countersize);
+
+	return (rv);
 }

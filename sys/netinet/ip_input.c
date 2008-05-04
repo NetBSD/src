@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.270 2008/05/02 13:40:32 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.271 2008/05/04 07:22:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.270 2008/05/02 13:40:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.271 2008/05/04 07:22:14 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2202,13 +2202,8 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ips[IP_NSTATS];
 
-	ctx.ctx_stat = ipstat_percpu;
-	ctx.ctx_counters = ips;
-	ctx.ctx_ncounters = IP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipstat_percpu, IP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")

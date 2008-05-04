@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.31 2008/04/27 12:58:48 degroote Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.32 2008/05/04 07:22:15 thorpej Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.31 2008/04/27 12:58:48 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.32 2008/05/04 07:22:15 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -445,61 +445,36 @@ sysctl_fast_ipsec_test(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_fast_ipsec_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[IPSEC_NSTATS];
 
-	ctx.ctx_stat = ipsecstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = IPSEC_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipsecstat_percpu, IPSEC_NSTATS));
 }
 
 static int
 sysctl_net_inet_ah_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[AH_NSTATS];
 
-	ctx.ctx_stat = ahstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = AH_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ahstat_percpu, AH_NSTATS));
 }
 
 static int
 sysctl_net_inet_esp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[ESP_NSTATS];
 
-	ctx.ctx_stat = espstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = ESP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(espstat_percpu, ESP_NSTATS));
 }
 
 static int
 sysctl_net_inet_ipcomp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[IPCOMP_NSTATS];
 
-	ctx.ctx_stat = ipcompstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = IPCOMP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipcompstat_percpu, IPCOMP_NSTATS));
 }
 
 static int
 sysctl_net_inet_ipip_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[IPIP_NSTATS];
 
-	ctx.ctx_stat = ipipstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = IPIP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipipstat_percpu, IPIP_NSTATS));
 }
 
 /* XXX will need a different oid at parent */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.118 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.119 2008/05/04 07:22:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.118 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.119 2008/05/04 07:22:14 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -979,13 +979,8 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_icmp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t icps[ICMP_NSTATS];
 
-	ctx.ctx_stat = icmpstat_percpu;
-	ctx.ctx_counters = icps;
-	ctx.ctx_ncounters = ICMP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(icmpstat_percpu, ICMP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")
