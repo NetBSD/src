@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.65 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: hme.c,v 1.66 2008/05/04 17:06:09 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.65 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.66 2008/05/04 17:06:09 xtraeme Exp $");
 
 /* #define HMEDEBUG */
 
@@ -285,7 +285,7 @@ hme_config(sc)
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
 				aprint_error_dev(&sc->sc_dev, "cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
-				       device_xname(&child->mii_dev),
+				       device_xname(child->mii_dev),
 				       child->mii_phy, child->mii_inst);
 				continue;
 			}
