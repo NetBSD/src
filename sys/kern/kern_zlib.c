@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $
+ * $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $");
 /* +++ zutil.h */
 
 /* zutil.h -- internal interface and configuration of the compression library
- * Copyright (C) 1995-2002 Jean-loup Gailly.
+ * Copyright (C) 1995-2003 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -45,12 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
 
-#include "zlib.h"
+#include <sys/zlib.h>
 
 #if defined(KERNEL) || defined(_KERNEL)
 /* Assume this is a *BSD or SVR4 kernel */
@@ -294,7 +294,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +656,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
 
 /* #include "deflate.h" */
 
@@ -2030,7 +2030,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -3548,7 +3548,6 @@ int stream_size;
 }
 
 
-#if 0
 int ZEXPORT inflateInit_(z, vers, stream_size)
 z_streamp z;
 const char *vers;
@@ -3556,7 +3555,6 @@ int stream_size;
 {
   return inflateInit2_(z, DEF_WBITS, vers, stream_size);
 }
-#endif
 
 
 #define NEEDBYTE {if(z->avail_in==0)goto empty;r=Z_OK;}
@@ -5909,7 +5907,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.28 2006/11/16 01:33:40 christos Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
 
 /* #include "zlib.h" */
 
@@ -5954,3 +5952,66 @@ uLong ZEXPORT adler32(adler, buf, len)
 }
 /* --- adler32.c */
 
+/* +++ uncompr.c */
+/* uncompr.c -- decompress a memory buffer
+ * Copyright (C) 1995-2003 Jean-loup Gailly.
+ * For conditions of distribution and use, see copyright notice in zlib.h
+ */
+
+/* @(#) Id */
+
+#define ZLIB_INTERNAL
+#include <sys/zlib.h>
+
+/* ===========================================================================
+     Decompresses the source buffer into the destination buffer.  sourceLen is
+   the byte length of the source buffer. Upon entry, destLen is the total
+   size of the destination buffer, which must be large enough to hold the
+   entire uncompressed data. (The size of the uncompressed data must have
+   been saved previously by the compressor and transmitted to the decompressor
+   by some mechanism outside the scope of this compression library.)
+   Upon exit, destLen is the actual size of the compressed buffer.
+     This function can be used to decompress a whole file at once if the
+   input file is mmap'ed.
+
+     uncompress returns Z_OK if success, Z_MEM_ERROR if there was not
+   enough memory, Z_BUF_ERROR if there was not enough room in the output
+   buffer, or Z_DATA_ERROR if the input data was corrupted.
+*/
+int ZEXPORT uncompress (dest, destLen, source, sourceLen)
+    Bytef *dest;
+    uLongf *destLen;
+    const Bytef *source;
+    uLong sourceLen;
+{
+    z_stream stream;
+    int err;
+
+    stream.next_in = (Bytef*)__UNCONST(source);
+    stream.avail_in = (uInt)sourceLen;
+    /* Check for source > 64K on 16-bit machine: */
+    if ((uLong)stream.avail_in != sourceLen) return Z_BUF_ERROR;
+
+    stream.next_out = dest;
+    stream.avail_out = (uInt)*destLen;
+    if ((uLong)stream.avail_out != *destLen) return Z_BUF_ERROR;
+
+    stream.zalloc = (alloc_func)0;
+    stream.zfree = (free_func)0;
+
+    err = inflateInit(&stream);
+    if (err != Z_OK) return err;
+
+    err = inflate(&stream, Z_FINISH);
+    if (err != Z_STREAM_END) {
+        inflateEnd(&stream);
+        if (err == Z_NEED_DICT || (err == Z_BUF_ERROR && stream.avail_in == 0))
+            return Z_DATA_ERROR;
+        return err;
+    }
+    *destLen = stream.total_out;
+
+    err = inflateEnd(&stream);
+    return err;
+}
+/* --- uncompr.c */
