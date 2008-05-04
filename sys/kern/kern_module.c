@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.13 2008/05/02 12:59:34 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.14 2008/05/04 21:35:12 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.13 2008/05/02 12:59:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.14 2008/05/04 21:35:12 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,9 @@ module_do_load(const char *filename, bool isdep, int flags,
 			break;
 		}
 	}
-	if (mod == NULL) {
+	if (mod != NULL) {
+		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
+	} else {
 		mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
 		if (mod == NULL) {
 			depth--;
@@ -446,13 +448,13 @@ module_do_load(const char *filename, bool isdep, int flags,
 			module_error("unable to load kernel object");
 			return error;
 		}
+		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 		mod->mod_source = MODULE_SOURCE_FILESYS;
 		error = module_fetch_info(mod);
 		if (error != 0) {
 			goto fail;
 		}
 	}
-	TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 
 	/*
 	 * Check compatibility.
