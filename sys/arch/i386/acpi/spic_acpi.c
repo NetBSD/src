@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.19 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.20 2008/05/04 16:13:35 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.19 2008/04/28 20:23:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.20 2008/05/04 16:13:35 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,16 +59,15 @@ static const char * const spic_acpi_ids[] = {
 	NULL
 };
 
-static int	spic_acpi_match(struct device *, struct cfdata *, void *);
-static void	spic_acpi_attach(struct device *, struct device *, void *);
+static int	spic_acpi_match(device_t, cfdata_t, void *);
+static void	spic_acpi_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(spic_acpi, sizeof(struct spic_acpi_softc),
+CFATTACH_DECL_NEW(spic_acpi, sizeof(struct spic_acpi_softc),
     spic_acpi_match, spic_acpi_attach, NULL, NULL);
 
 
 static int
-spic_acpi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+spic_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -79,9 +78,9 @@ spic_acpi_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-spic_acpi_attach(struct device *parent, struct device *self, void *aux)
+spic_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct spic_acpi_softc *sc = (void *) self;
+	struct spic_acpi_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	struct acpi_io *io;
 	struct acpi_irq *irq;
@@ -92,10 +91,11 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Sony Programmable I/O Controller\n");
 	aprint_normal(": Sony Programmable I/O Controller\n");
 
+	sc->sc_spic.sc_dev = self;
 	sc->sc_node = aa->aa_node;
 
 	/* Parse our resources. */
-	rv = acpi_resource_parse(&sc->sc_spic.sc_dev, sc->sc_node->ad_handle,
+	rv = acpi_resource_parse(self, sc->sc_node->ad_handle,
 	    "_CRS", &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
 		return;
@@ -103,17 +103,17 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_spic.sc_iot = aa->aa_iot;
 	io = acpi_res_io(&res, 0);
 	if (io == NULL) {
-		aprint_error_dev(&sc->sc_spic.sc_dev, "unable to find io resource\n");
+		aprint_error_dev(self, "unable to find io resource\n");
 		goto out;
 	}
 	if (bus_space_map(sc->sc_spic.sc_iot, io->ar_base, io->ar_length,
 	    0, &sc->sc_spic.sc_ioh) != 0) {
-		aprint_error_dev(&sc->sc_spic.sc_dev, "unable to map data register\n");
+		aprint_error_dev(self, "unable to map data register\n");
 		goto out;
 	}
 	irq = acpi_res_irq(&res, 0);
 	if (irq == NULL) {
-		aprint_error_dev(&sc->sc_spic.sc_dev, "unable to find irq resource\n");
+		aprint_error_dev(self, "unable to find irq resource\n");
 		/* XXX unmap */
 		goto out;
 	}
