@@ -1,4 +1,31 @@
-/*	$NetBSD: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $	*/
+/*	$NetBSD: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +38,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $
+ * $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $
  */
 
 /*
@@ -22,11 +49,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $");
+
+#include <sys/kmem.h>
 
 #define NO_DUMMY_DECL
-#define NO_ZCFUNCS
-#define MY_ZCALLOC
 
 #if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
 #define inflate	inflate_ppp	/* FreeBSD already has an inflate :-( */
@@ -45,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -271,8 +298,8 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 
 typedef uLong (ZEXPORT *check_func) __P((uLong check, const Bytef *buf,
 				       uInt len));
-voidpf zcalloc __P((voidpf opaque, unsigned items, unsigned size));
-void   zcfree  __P((voidpf opaque, voidpf ptr));
+static voidpf zcalloc __P((voidpf opaque, unsigned items, unsigned size));
+static void   zcfree  __P((voidpf opaque, voidpf ptr));
 
 #define ZALLOC(strm, items, size) \
            (*((strm)->zalloc))((strm)->opaque, (items), (size))
@@ -294,7 +321,7 @@ void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +683,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
 
 /* #include "deflate.h" */
 
@@ -2030,7 +2057,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -5881,21 +5908,27 @@ extern voidp  calloc __P((uInt items, uInt size));
 extern void   free   __P((voidpf ptr));
 #endif
 
-voidpf zcalloc (opaque, items, size)
-    voidpf opaque;
-    unsigned items;
-    unsigned size;
+static voidpf
+zcalloc(voidpf opaque, unsigned int items, unsigned int size)
 {
-    if (opaque) items += size - size; /* make compiler happy */
-    return (voidpf)calloc(items, size);
+	const u_int overhead = (u_int)roundup(sizeof(size_t), (ALIGNBYTES+1));
+	u_int totalsize;
+
+	totalsize = items * size + overhead;
+	opaque = kmem_zalloc(totalsize, KM_SLEEP);
+	*(size_t *)opaque = totalsize;
+
+	return (voidpf)((uint8_t *)opaque + overhead);
 }
 
-void  zcfree (opaque, ptr)
-    voidpf opaque;
-    voidpf ptr;
+static void
+zcfree(voidpf opaque, voidpf ptr)
 {
-    free(ptr);
-    if (opaque) return; /* make compiler happy */
+	const u_int overhead = (u_int)roundup(sizeof(size_t), (ALIGNBYTES+1));
+	size_t *sz;
+
+	sz = (size_t *)((uint8_t *)ptr - overhead);
+	kmem_free(sz, *sz);
 }
 
 #endif /* MY_ZCALLOC */
@@ -5907,7 +5940,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.1 2008/05/04 23:07:09 ad Exp $ */
+/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
 
 /* #include "zlib.h" */
 
