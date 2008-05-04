@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.18 2008/05/02 01:29:36 bjs Exp $ */
+/* $NetBSD: drmP.h,v 1.19 2008/05/04 20:09:32 jmcneill Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -305,6 +305,13 @@ extern drm_device_t *drm_units[];
 #define DRM_DEVICE							\
 	drm_device_t *dev = (minor(kdev) < DRM_MAXUNITS) ?		\
 		drm_units[minor(kdev)] : NULL
+#ifdef __x86_64__
+#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr   & 0x7fffffffffffffff)
+#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle | 0x8000000000000000)
+#else
+#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr)
+#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle)
+#endif
 #elif defined(__OpenBSD__)
 #define DRM_DEVICE							\
 #define DRM_SUSER(p)		(suser(p->p_ucred, &p->p_acflag) == 0)
