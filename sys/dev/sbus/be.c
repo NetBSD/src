@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.58 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: be.c,v 1.59 2008/05/04 17:14:41 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.58 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.59 2008/05/04 17:14:41 xtraeme Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -393,14 +393,14 @@ beattach(parent, self, aux)
 #ifdef DIAGNOSTIC
 			if (LIST_NEXT(child, mii_list) != NULL) {
 				aprint_error_dev(&sc->sc_dev, "spurious MII device %s attached\n",
-				       device_xname(&child->mii_dev));
+				       device_xname(child->mii_dev));
 			}
 #endif
 			if (child->mii_phy != BE_PHY_EXTERNAL ||
 			    child->mii_inst > 0) {
 				aprint_error_dev(&sc->sc_dev, "cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
-				       device_xname(&child->mii_dev),
+				       device_xname(child->mii_dev),
 				       child->mii_phy, child->mii_inst);
 			} else {
 				sc->sc_phys[instance] = child->mii_phy;
