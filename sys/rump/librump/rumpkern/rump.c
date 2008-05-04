@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.43 2008/04/28 19:31:45 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.44 2008/05/04 12:52:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -39,6 +39,7 @@
 #include <sys/select.h>
 #include <sys/vnode.h>
 #include <sys/vfs_syscalls.h>
+#include <sys/module.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -131,6 +132,7 @@ rump_init()
 	rumpuser_thrinit();
 
 	fd_sys_init();
+	module_init();
 	vfsinit();
 	bufinit();
 
