@@ -1,4 +1,4 @@
-/* $NetBSD: xbseeprom.c,v 1.4 2008/03/27 17:34:54 ad Exp $ */
+/* $NetBSD: xbseeprom.c,v 1.5 2008/05/04 15:26:29 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.4 2008/03/27 17:34:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbseeprom.c,v 1.5 2008/05/04 15:26:29 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ static void	xbseeprom_read_1(struct xbseeprom_softc *, uint8_t, uint8_t *);
 
 static char	xbseeprom_serial[17];
 
-CFATTACH_DECL(xbseeprom, sizeof(struct xbseeprom_softc),
+CFATTACH_DECL_NEW(xbseeprom, sizeof(struct xbseeprom_softc),
     xbseeprom_match, xbseeprom_attach, NULL, NULL);
 
 static int
