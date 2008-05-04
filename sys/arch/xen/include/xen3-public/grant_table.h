@@ -1,4 +1,4 @@
-/* $NetBSD: grant_table.h,v 1.7 2007/10/17 19:58:30 garbled Exp $ */
+/* $NetBSD: grant_table.h,v 1.8 2008/05/04 19:56:28 cegger Exp $ */
 /******************************************************************************
  * grant_table.h
  * 
@@ -120,6 +120,7 @@ typedef struct grant_entry grant_entry_t;
  *  GTF_readonly: Restrict @domid to read-only mappings and accesses. [GST]
  *  GTF_reading: Grant entry is currently mapped for reading by @domid. [XEN]
  *  GTF_writing: Grant entry is currently mapped for writing by @domid. [XEN]
+ *  GTF_PAT, GTF_PWT, GTF_PCD: (x86) cache attribute flags for the grant [GST]
  */
 #define _GTF_readonly       (2)
 #define GTF_readonly        (1U<<_GTF_readonly)
@@ -127,6 +128,12 @@ typedef struct grant_entry grant_entry_t;
 #define GTF_reading         (1U<<_GTF_reading)
 #define _GTF_writing        (4)
 #define GTF_writing         (1U<<_GTF_writing)
+#define _GTF_PWT            (5)
+#define GTF_PWT             (1U<<_GTF_PWT)
+#define _GTF_PCD            (6)
+#define GTF_PCD             (1U<<_GTF_PCD)
+#define _GTF_PAT            (7)
+#define GTF_PAT             (1U<<_GTF_PAT)
 
 /*
  * Subflags for GTF_accept_transfer:
@@ -329,6 +336,29 @@ struct gnttab_query_size {
 typedef struct gnttab_query_size gnttab_query_size_t;
 DEFINE_XEN_GUEST_HANDLE(gnttab_query_size_t);
 
+/*
+ * GNTTABOP_unmap_and_replace: Destroy one or more grant-reference mappings
+ * tracked by <handle> but atomically replace the page table entry with one
+ * pointing to the machine address under <new_addr>.  <new_addr> will be
+ * redirected to the null entry.
+ * NOTES:
+ *  1. The call may fail in an undefined manner if either mapping is not
+ *     tracked by <handle>.
+ *  2. After executing a batch of unmaps, it is guaranteed that no stale
+ *     mappings will remain in the device or host TLBs.
+ */
+#define GNTTABOP_unmap_and_replace    7
+struct gnttab_unmap_and_replace {
+    /* IN parameters. */
+    uint64_t host_addr;
+    uint64_t new_addr;
+    grant_handle_t handle;
+    /* OUT parameters. */
+    int16_t  status;              /* GNTST_* */
+};
+typedef struct gnttab_unmap_and_replace gnttab_unmap_and_replace_t;
+DEFINE_XEN_GUEST_HANDLE(gnttab_unmap_and_replace_t);
+
 
 /*
  * Bitfield values for update_pin_status.flags.
@@ -371,7 +401,8 @@ DEFINE_XEN_GUEST_HANDLE(gnttab_query_size_t);
 #define GNTST_no_device_space  (-7) /* Out of space in I/O MMU.              */
 #define GNTST_permission_denied (-8) /* Not enough privilege for operation.  */
 #define GNTST_bad_page         (-9) /* Specified page was invalid for op.    */
-#define GNTST_bad_copy_arg    (-10) /* copy arguments cross page boundary */
+#define GNTST_bad_copy_arg    (-10) /* copy arguments cross page boundary.   */
+#define GNTST_address_too_big (-11) /* transfer page address too large.      */
 
 #define GNTTABOP_error_msgs {                   \
     "okay",                                     \
@@ -384,7 +415,8 @@ DEFINE_XEN_GUEST_HANDLE(gnttab_query_size_t);
     "no spare translation slot in the I/O MMU", \
     "permission denied",                        \
     "bad page",                                 \
-    "copy arguments cross page boundary"        \
+    "copy arguments cross page boundary",       \
+    "page address size too large"               \
 }
 
 #endif /* __XEN_PUBLIC_GRANT_TABLE_H__ */
