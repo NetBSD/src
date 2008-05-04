@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent_private.h,v 1.1 2006/05/17 20:36:50 christos Exp $	*/
+/*	$NetBSD: dirent_private.h,v 1.2 2008/05/04 18:53:26 tonnerre Exp $	*/
 
 /*
  * One struct _dirpos is malloced to describe the current directory
@@ -17,6 +17,6 @@ void _seekdir_unlocked(struct _dirdesc *, long);
 long _telldir_unlocked(struct _dirdesc *);
 #ifndef __LIBC12_SOURCE__
 struct dirent;
-struct dirent *_readdir_unlocked(struct _dirdesc *)
-    __RENAME(___readdir_unlocked30);
+struct dirent *_readdir_unlocked(struct _dirdesc *, int)
+    __RENAME(___readdir_unlocked50);
 #endif
