@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.28 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.29 2008/05/04 16:16:56 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.28 2008/04/28 20:23:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.29 2008/05/04 16:16:56 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.28 2008/04/28 20:23:23 martin Exp $"
 
 
 struct vald_acpi_softc {
-	struct device sc_dev;		/* base device glue */
+	device_t sc_dev;		/* base device glue */
 	struct acpi_devnode *sc_node;	/* our ACPI devnode */
 	int sc_flags;			/* see below */
 
@@ -130,8 +130,8 @@ static const char * const vald_acpi_hids[] = {
 #define LIBRIGHT_UP	0x01
 #define LIBRIGHT_DOWN	0x02
 
-static int	vald_acpi_match(struct device *, struct cfdata *, void *);
-static void	vald_acpi_attach(struct device *, struct device *, void *);
+static int	vald_acpi_match(device_t, cfdata_t, void *);
+static void	vald_acpi_attach(device_t, device_t, void *);
 
 static void	vald_acpi_event(void *);
 static void	vald_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
@@ -155,7 +155,7 @@ static void		vald_acpi_fan_switch(struct vald_acpi_softc *);
 static ACPI_STATUS	vald_acpi_bcm_set(ACPI_HANDLE, UINT32);
 static ACPI_STATUS	vald_acpi_dssx_set(UINT32);
 
-CFATTACH_DECL(vald_acpi, sizeof(struct vald_acpi_softc),
+CFATTACH_DECL_NEW(vald_acpi, sizeof(struct vald_acpi_softc),
     vald_acpi_match, vald_acpi_attach, NULL, NULL);
 
 /*
@@ -164,8 +164,7 @@ CFATTACH_DECL(vald_acpi, sizeof(struct vald_acpi_softc),
  *	Autoconfiguration `match' routine.
  */
 static int
-vald_acpi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+vald_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -181,9 +180,9 @@ vald_acpi_match(struct device *parent, struct cfdata *match,
  *	Autoconfiguration `attach' routine.
  */
 static void
-vald_acpi_attach(struct device *parent, struct device *self, void *aux)
+vald_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct vald_acpi_softc *sc = (void *) self;
+	struct vald_acpi_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
 	UINT32 value, result;
@@ -192,25 +191,26 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": Toshiba VALD\n");
 
 	sc->sc_node = aa->aa_node;
+	sc->sc_dev = self;
 
 	/* Get AC adaptor status via _PSR. */
 	rv = acpi_eval_integer(ACPI_ROOT_OBJECT, "\\_SB_.ADP1._PSR",
 	    &sc->sc_ac_status);
 	if (ACPI_FAILURE(rv))
-		aprint_error_dev(&sc->sc_dev, "Unable to evaluate _PSR: %s\n",
+		aprint_error_dev(self, "Unable to evaluate _PSR: %s\n",
 		    AcpiFormatException(rv));
 	else
-		aprint_verbose_dev(&sc->sc_dev, "AC adaptor %sconnected\n",
+		aprint_verbose_dev(self, "AC adaptor %sconnected\n",
 		    (sc->sc_ac_status == 0 ? "not ": ""));
 
 	/* Get LCD backlight status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_BACKLIGHT, &value, &result);
 	if (ACPI_SUCCESS(rv)) {
 		if (result != 0)
-			aprint_error_dev(&sc->sc_dev, "can't get backlight status error=%d\n",
+			aprint_error_dev(self, "can't get backlight status error=%d\n",
 			    result);
 		else
-			aprint_verbose_dev(&sc->sc_dev, "LCD backlight %s\n",
+			aprint_verbose_dev(self, "LCD backlight %s\n",
 			    ((value == GHCI_ON) ? "on" : "off"));
 	}
 
@@ -218,12 +218,12 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	rv = vald_acpi_ghci_set(sc, GHCI_SYSTEM_EVENT_FIFO, GHCI_ENABLE,
 	    &result);
 	if (ACPI_SUCCESS(rv) && result != 0)
-		aprint_error_dev(&sc->sc_dev, "can't enable SystemEventFIFO error=%d\n",
+		aprint_error_dev(self, "can't enable SystemEventFIFO error=%d\n",
 		    result);
 
 	rv = vald_acpi_ghci_set(sc, GHCI_HOTKEY_EVENT, GHCI_ENABLE, &result);
 	if (ACPI_SUCCESS(rv) && result != 0)
-		aprint_error_dev(&sc->sc_dev, "can't enable HotkeyEvent error=%d\n",
+		aprint_error_dev(self, "can't enable HotkeyEvent error=%d\n",
 		    result);
 
 	/* Check SystemFIFO events. */
@@ -240,7 +240,7 @@ vald_acpi_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, vald_acpi_notify_handler, sc);
 	if (ACPI_FAILURE(rv))
-		aprint_error_dev(&sc->sc_dev, "can't install DEVICE NOTIFY handler: %s\n",
+		aprint_error_dev(self, "can't install DEVICE NOTIFY handler: %s\n",
 		    AcpiFormatException(rv));
 }
 
@@ -260,18 +260,18 @@ vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify,
 	case ACPI_NOTIFY_ValdStatusChanged:
 #ifdef VALD_ACPI_DEBUG
 		printf("%s: received ValdStatusChanged message.\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 #endif /* VALD_ACPI_DEBUG */
 
 		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, vald_acpi_event, sc);
 
 		if (ACPI_FAILURE(rv))
-			aprint_error_dev(&sc->sc_dev, "WARNING: unable to queue vald change "
+			aprint_error_dev(sc->sc_dev, "WARNING: unable to queue vald change "
 			    "event: %s\n", AcpiFormatException(rv));
 		break;
 
 	default:
-		aprint_error_dev(&sc->sc_dev, "received unknown notify messages: 0x%x\n",
+		aprint_error_dev(sc->sc_dev, "received unknown notify messages: 0x%x\n",
 		    notify);
 		break;
 	}
@@ -294,7 +294,7 @@ vald_acpi_event(void *arg)
 		    &result);
 		if (ACPI_SUCCESS(rv) && result == 0) {
 #ifdef VALD_ACPI_DEBUG
-			printf("%s: System Event %x\n", device_xname(&sc->sc_dev),
+			printf("%s: System Event %x\n", device_xname(sc->sc_dev),
 			    value);
 #endif
 			switch (value) {
@@ -355,7 +355,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
 	    "GHCI", &ArgList, &buf);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(&sc->sc_dev, "failed to evaluate GHCI: %s\n",
+		aprint_error_dev(sc->sc_dev, "failed to evaluate GHCI: %s\n",
 		    AcpiFormatException(rv));
 		return (rv);
 	}
@@ -413,7 +413,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle,
 	    "GHCI", &ArgList, &buf);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(&sc->sc_dev, "failed to evaluate GHCI: %s\n",
+		aprint_error_dev(sc->sc_dev, "failed to evaluate GHCI: %s\n",
 		    AcpiFormatException(rv));
 		return (rv);
 	}
@@ -505,7 +505,7 @@ vald_acpi_libright_get(struct vald_acpi_softc *sc)
 	ACPI_HANDLE parent;
 	ACPI_STATUS rv;
 
-	aprint_verbose_dev(&sc->sc_dev, "get LCD brightness via _BCL\n");
+	aprint_verbose_dev(sc->sc_dev, "get LCD brightness via _BCL\n");
 
 #ifdef ACPI_DEBUG
 	printf("acpi_libright_get: start\n");
@@ -570,7 +570,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 		rv = vald_acpi_ghci_set(sc, GHCI_BACKLIGHT, backlight_new,
 		    &result);
 		if (ACPI_SUCCESS(rv) && result != 0)
-			aprint_error_dev(&sc->sc_dev, "can't set LCD backlight %s error=%x\n",
+			aprint_error_dev(sc->sc_dev, "can't set LCD backlight %s error=%x\n",
 			    ((backlight_new == 1) ? "on" : "off"), result);
 	}
 
@@ -581,7 +581,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 
 		rv = vald_acpi_bcm_set(sc->lcd_handle, bright);
 		if (ACPI_FAILURE(rv))
-			aprint_error_dev(&sc->sc_dev, "unable to evaluate _BCM: %s\n",
+			aprint_error_dev(sc->sc_dev, "unable to evaluate _BCM: %s\n",
 			    AcpiFormatException(rv));
 	} else {
 		bright = 0;
@@ -610,7 +610,7 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't get video status  error=%x\n",
+		aprint_error_dev(sc->sc_dev, "can't get video status  error=%x\n",
 		    result);
 		return;
 	}
@@ -633,7 +633,7 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 
 	rv = vald_acpi_dssx_set(value);
 	if (ACPI_FAILURE(rv))
-		aprint_error_dev(&sc->sc_dev, "unable to evaluate DSSX: %s\n",
+		aprint_error_dev(sc->sc_dev, "unable to evaluate DSSX: %s\n",
 		    AcpiFormatException(rv));
 
 }
@@ -700,7 +700,7 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't get FAN status error=%d\n",
+		aprint_error_dev(sc->sc_dev, "can't get FAN status error=%d\n",
 		    result);
 		return;
 	}
@@ -722,7 +722,7 @@ vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
-		aprint_error_dev(&sc->sc_dev, "can't set FAN status error=%d\n",
+		aprint_error_dev(sc->sc_dev, "can't set FAN status error=%d\n",
 		    result);
 		return;
 	}
