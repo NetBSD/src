@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.7 2008/05/04 19:19:40 jmcneill Exp $ */
+/* $NetBSD: drm_vm.c,v 1.8 2008/05/04 20:09:32 jmcneill Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.7 2008/05/04 19:19:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.8 2008/05/04 20:09:32 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -83,8 +83,13 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 				   bit longer. */
 	DRM_LOCK();
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (offset >= map->offset && offset < map->offset + map->size)
-			break;
+		if (map->type == _DRM_SHM) {
+			if (offset >= (off_t)map->handle && offset < (off_t)map->handle + map->size)
+				break;
+		} else {
+			if (offset >= map->offset && offset < map->offset + map->size)
+				break;
+		}
 	}
 
 	if (map == NULL) {
@@ -110,8 +115,10 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		phys = vtophys((paddr_t)map->handle + (offset - map->offset));
 		break;
 	case _DRM_SCATTER_GATHER:
-	case _DRM_SHM:
 		phys = vtophys(offset);
+		break;
+	case _DRM_SHM:
+		phys = vtophys(DRM_NETBSD_HANDLE2ADDR(offset));
 		break;
 	default:
 		DRM_ERROR("bad map type %d\n", type);
