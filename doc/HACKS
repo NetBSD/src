@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.100 2008/04/27 03:33:06 tsutsui Exp $
+# $NetBSD: HACKS,v 1.101 2008/05/04 15:42:12 tsutsui Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -448,16 +448,20 @@ port	sh3
 port	m68000
 
 	hack	gcc4-m68000
-	cdate	Sun Apr 27 03:06:46 UTC 2008
+	cdate	Sun May  4 15:37:19 UTC 2008
 	who	mrg, tsutsui
 	file	rescue/Makefile	: 1.21
 	file	sbin/dump_lfs/Makefile	: 1.9
-	file	share/mk/sys.mk	: 1.95
+	file	sbin/fsck_ffs/Makefile	: 1.35
+	file	sbin/fsdb/Makefile	: 1.22
+	file	share/mk/sys.mk	: 1.96
 	file	usr.sbin/ndbootd/Makefile	: 1.5
 	descr
-		Many errors across the tree with optimisation.
+		Several internal compiler errors with gcc -O1
+		around 64bit integer arithmetic.
 		This hack uses -O1 and adds some -fno-tree-foo options
 		to avoid the problem.
+		This might be related with GCC Bugzilla Bug 32424.
 	kcah
 
 
