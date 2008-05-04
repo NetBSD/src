@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.902 2008/04/29 14:35:20 rmind Exp $
+#	$NetBSD: files,v 1.903 2008/05/04 23:07:09 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1396,6 +1396,7 @@ file	kern/kern_turnstile.c
 file	kern/kern_todr.c
 file	kern/kern_uuid.c
 file	kern/kern_xxx.c
+file	kern/kern_zlib.c
 file	kern/kgdb_stub.c		kgdb
 file	kern/sched_4bsd.c		sched_4bsd
 file	kern/sched_m2.c			sched_m2
@@ -1530,7 +1531,6 @@ file	net/raw_usrreq.c
 file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
