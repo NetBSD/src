@@ -1,4 +1,4 @@
-/*	$NetBSD: geode.c,v 1.11 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: geode.c,v 1.12 2008/05/05 11:49:40 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.11 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.12 2008/05/05 11:49:40 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: geode.c,v 1.11 2008/04/28 20:23:25 martin Exp $");
 #endif
 
 static int
-geode_gcb_match(struct device *parent, struct cfdata *match,
-    void *aux)
+geode_gcb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -104,9 +103,9 @@ geode_gcb_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-geode_gcb_attach(struct device *parent, struct device *self, void *aux)
+geode_gcb_attach(device_t parent, device_t self, void *aux)
 {
-	struct geode_gcb_softc *sc = (void *) self;
+	struct geode_gcb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	uint32_t cba;
 	u_int rev;
@@ -115,12 +114,12 @@ geode_gcb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	if (bus_space_map(sc->sc_iot, (bus_addr_t)cba, SC1100_GCB_SIZE, 0,
 	    &sc->sc_ioh) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
+		aprint_error_dev(self, "unable to map registers\n");
 		return;
 	}
 
 	GEODE_DPRINTF(("%s: mapped %u bytes at %#08" PRIx32 "\n",
-	    device_xname(&sc->sc_dev), SC1100_GCB_SIZE, cba));
+	    device_xname(self), SC1100_GCB_SIZE, cba));
 
 	rev = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SC1100_GCB_REV_B);
 
@@ -150,6 +149,6 @@ geode_gcb_childdetached(device_t parent, device_t child)
 	 */
 }
 
-CFATTACH_DECL2(geodegcb, sizeof(struct geode_gcb_softc),
+CFATTACH_DECL2_NEW(geodegcb, sizeof(struct geode_gcb_softc),
     geode_gcb_match, geode_gcb_attach, geode_gcb_detach, NULL, NULL,
     geode_gcb_childdetached);
