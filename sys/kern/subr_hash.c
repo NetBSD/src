@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.2 2008/03/17 21:16:03 rmind Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.3 2008/05/05 17:11:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,10 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.2 2008/03/17 21:16:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.3 2008/05/05 17:11:17 ad Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 
 /*
@@ -50,8 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.2 2008/03/17 21:16:03 rmind Exp $");
  * suitable for masking a value to use as an index into the returned array.
  */
 void *
-hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
-    int mflags, u_long *hashmask)
+hashinit(u_int elements, enum hashtype htype, bool waitok, u_long *hashmask)
 {
 	u_long hashsize, i;
 	LIST_HEAD(, generic) *hashtbl_list;
@@ -76,14 +75,11 @@ hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
 		esize = sizeof(*hashtbl_tailq);
 		break;
 	default:
-#ifdef DIAGNOSTIC
 		panic("hashinit: invalid table type");
-#else
-		return NULL;
-#endif
 	}
 
-	if ((p = malloc(hashsize * esize, mtype, mflags)) == NULL)
+	p = kmem_alloc(hashsize * esize, (waitok ? KM_SLEEP : KM_NOSLEEP));
+	if (p == NULL)
 		return (NULL);
 
 	switch (htype) {
@@ -111,8 +107,26 @@ hashinit(u_int elements, enum hashtype htype, struct malloc_type *mtype,
  * Free memory from hash table previosly allocated via hashinit().
  */
 void
-hashdone(void *hashtbl, struct malloc_type *mtype)
+hashdone(void *hashtbl, enum hashtype htype, u_long hashmask)
 {
+	LIST_HEAD(, generic) *hashtbl_list;
+	SLIST_HEAD(, generic) *hashtbl_slist;
+	TAILQ_HEAD(, generic) *hashtbl_tailq;
+	size_t esize;
 
-	free(hashtbl, mtype);
+	switch (htype) {
+	case HASH_LIST:
+		esize = sizeof(*hashtbl_list);
+		break;
+	case HASH_SLIST:
+		esize = sizeof(*hashtbl_slist);
+		break;
+	case HASH_TAILQ:
+		esize = sizeof(*hashtbl_tailq);
+		break;
+	default:
+		panic("hashdone: invalid table type");
+	}
+
+	kmem_free(hashtbl, esize * (hashmask + 1));
 }

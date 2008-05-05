@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.76 2008/04/29 18:18:09 ad Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.77 2008/05/05 17:11:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.76 2008/04/29 18:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.77 2008/05/05 17:11:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,8 +192,8 @@ umapfs_mount(mp, path, data, data_len)
 	amp->umapm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	amp->umapm_vnodeop_p = umap_vnodeop_p;
 	mutex_init(&amp->umapm_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, HASH_LIST, M_CACHE,
-	    M_WAITOK, &amp->umapm_node_hash);
+	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, HASH_LIST, true,
+	    &amp->umapm_node_hash);
 
 
 	/*
@@ -205,6 +205,8 @@ umapfs_mount(mp, path, data, data_len)
 	 */
 	if (error) {
 		vput(lowerrootvp);
+		hashdone(amp->umapm_node_hashtbl, HASH_LIST,
+		    amp->umapm_node_hash);
 		free(amp, M_UFSMNT);	/* XXX */
 		return (error);
 	}
@@ -263,6 +265,7 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the umap_mount structure
 	 */
 	mutex_destroy(&amp->umapm_hashlock);
+	hashdone(amp->umapm_node_hashtbl, HASH_LIST, amp->umapm_node_hash);
 	free(amp, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return (0);

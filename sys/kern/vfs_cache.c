@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.75 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.76 2008/05/05 17:11:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.75 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.76 2008/05/05 17:11:17 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -70,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.75 2008/04/28 20:24:05 martin Exp $"
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
@@ -636,13 +635,12 @@ nchinit(void)
 
 	namecache_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
-	nchashtbl =
-	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &nchash);
+	nchashtbl = hashinit(desiredvnodes, HASH_LIST, true, &nchash);
 	ncvhashtbl =
 #ifdef NAMECACHE_ENTER_REVERSE
-	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
+	    hashinit(desiredvnodes, HASH_LIST, true, &ncvhash);
 #else
-	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
+	    hashinit(desiredvnodes/8, HASH_LIST, true, &ncvhash);
 #endif
 
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, cache_thread,
@@ -703,12 +701,12 @@ nchreinit(void)
 	struct ncvhashhead *oldhash2, *hash2;
 	u_long i, oldmask1, oldmask2, mask1, mask2;
 
-	hash1 = hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &mask1);
+	hash1 = hashinit(desiredvnodes, HASH_LIST, true, &mask1);
 	hash2 =
 #ifdef NAMECACHE_ENTER_REVERSE
-	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &mask2);
+	    hashinit(desiredvnodes, HASH_LIST, true, &mask2);
 #else
-	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &mask2);
+	    hashinit(desiredvnodes/8, HASH_LIST, true, &mask2);
 #endif
 	mutex_enter(namecache_lock);
 	cache_lock_cpus();
@@ -734,8 +732,8 @@ nchreinit(void)
 	}
 	cache_unlock_cpus();
 	mutex_exit(namecache_lock);
-	hashdone(oldhash1, M_CACHE);
-	hashdone(oldhash2, M_CACHE);
+	hashdone(oldhash1, HASH_LIST, oldmask1);
+	hashdone(oldhash2, HASH_LIST, oldmask2);
 }
 
 /*

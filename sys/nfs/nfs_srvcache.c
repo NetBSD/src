@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.41 2007/12/04 17:42:31 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.42 2008/05/05 17:11:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.41 2007/12/04 17:42:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.42 2008/05/05 17:11:17 ad Exp $");
 
 #include "opt_iso.h"
 
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.41 2007/12/04 17:42:31 yamt Exp $
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/mbuf.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -165,8 +164,8 @@ nfsrv_initcache()
 {
 
 	mutex_init(&nfsrv_reqcache_lock, MUTEX_DEFAULT, IPL_NONE);
-	nfsrvhashtbl = hashinit(desirednfsrvcache, HASH_LIST, M_NFSD,
-	    M_WAITOK, &nfsrvhash);
+	nfsrvhashtbl = hashinit(desirednfsrvcache, HASH_LIST, true,
+	    &nfsrvhash);
 	TAILQ_INIT(&nfsrvlruhead);
 	pool_init(&nfs_reqcache_pool, sizeof(struct nfsrvcache), 0, 0, 0,
 	    "nfsreqcachepl", &pool_allocator_nointr, IPL_NONE);

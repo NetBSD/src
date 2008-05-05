@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_bio.c,v 1.196 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.197 2008/05/05 17:11:17 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.196 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.197 2008/05/05 17:11:17 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.196 2008/04/28 20:24:05 martin Exp $")
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
@@ -472,7 +471,7 @@ bufinit(void)
 		struct pool_allocator *pa;
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
-		char *name = malloc(8, M_TEMP, M_WAITOK);
+		char *name = kmem_alloc(8, KM_SLEEP);
 		if (__predict_true(size >= 1024))
 			(void)snprintf(name, 8, "buf%dk", size / 1024);
 		else
@@ -499,7 +498,7 @@ bufinit(void)
 	 * For now, use an empirical 3K per buffer.
 	 */
 	nbuf = (bufmem_hiwater / 1024) / 3;
-	bufhashtbl = hashinit(nbuf, HASH_LIST, M_CACHE, M_WAITOK, &bufhash);
+	bufhashtbl = hashinit(nbuf, HASH_LIST, true, &bufhash);
 }
 
 void
