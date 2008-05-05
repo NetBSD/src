@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.h,v 1.4 2008/05/04 23:07:09 ad Exp $ */
+/*	$NetBSD: deflate.h,v 1.5 2008/05/05 13:41:30 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.h,v 1.3 2002/03/14 01:26:51 millert Exp $ */
 
@@ -37,7 +37,7 @@
 #ifndef _CRYPTO_DEFLATE_H_
 #define _CRYPTO_DEFLATE_H_
 
-#include <sys/zlib.h>
+#include <net/zlib.h>
 
 #define Z_METHOD	8
 #define Z_MEMLEVEL	8
