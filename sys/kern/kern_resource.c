@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.140 2008/04/29 15:51:23 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.141 2008/05/05 17:11:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.140 2008/04/29 15:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.141 2008/05/05 17:11:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ resource_init(void)
 	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
 	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
-	uihashtbl = hashinit(uihash_sz, HASH_SLIST, M_PROC, M_WAITOK, &uihash);
+	uihashtbl = hashinit(uihash_sz, HASH_SLIST, true, &uihash);
 }
 
 /*

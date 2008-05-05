@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.124 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.125 2008/05/05 17:11:17 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.124 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.125 2008/05/05 17:11:17 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -159,12 +159,12 @@ in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
 
 	CIRCLEQ_INIT(&table->inpt_queue);
-	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, M_PCB,
-	    M_WAITOK, &table->inpt_porthash);
-	table->inpt_bindhashtbl = hashinit(bindhashsize, HASH_LIST, M_PCB,
-	    M_WAITOK, &table->inpt_bindhash);
-	table->inpt_connecthashtbl = hashinit(connecthashsize, HASH_LIST,
-	    M_PCB, M_WAITOK, &table->inpt_connecthash);
+	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, true,
+	    &table->inpt_porthash);
+	table->inpt_bindhashtbl = hashinit(bindhashsize, HASH_LIST, true,
+	    &table->inpt_bindhash);
+	table->inpt_connecthashtbl = hashinit(connecthashsize, HASH_LIST, true,
+	    &table->inpt_connecthash);
 	table->inpt_lastlow = IPPORT_RESERVEDMAX;
 	table->inpt_lastport = (u_int16_t)anonportmax;
 }
