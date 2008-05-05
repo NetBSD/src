@@ -1,31 +1,4 @@
-/*	$NetBSD: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $	*/
-
-/*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
+/*	$NetBSD: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -38,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $
+ * $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $
  */
 
 /*
@@ -49,11 +22,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $");
-
-#include <sys/kmem.h>
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $");
 
 #define NO_DUMMY_DECL
+#define NO_ZCFUNCS
+#define MY_ZCALLOC
 
 #if defined(__FreeBSD__) && (defined(KERNEL) || defined(_KERNEL))
 #define inflate	inflate_ppp	/* FreeBSD already has an inflate :-( */
@@ -63,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $");
 /* +++ zutil.h */
 
 /* zutil.h -- internal interface and configuration of the compression library
- * Copyright (C) 1995-2003 Jean-loup Gailly.
+ * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -72,12 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $");
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
 
-#include <sys/zlib.h>
+#include "zlib.h"
 
 #if defined(KERNEL) || defined(_KERNEL)
 /* Assume this is a *BSD or SVR4 kernel */
@@ -298,8 +271,8 @@ extern const char *z_errmsg[10]; /* indexed by 2-zlib_error */
 
 typedef uLong (ZEXPORT *check_func) __P((uLong check, const Bytef *buf,
 				       uInt len));
-static voidpf zcalloc __P((voidpf opaque, unsigned items, unsigned size));
-static void   zcfree  __P((voidpf opaque, voidpf ptr));
+voidpf zcalloc __P((voidpf opaque, unsigned items, unsigned size));
+void   zcfree  __P((voidpf opaque, voidpf ptr));
 
 #define ZALLOC(strm, items, size) \
            (*((strm)->zalloc))((strm)->opaque, (items), (size))
@@ -321,7 +294,7 @@ static void   zcfree  __P((voidpf opaque, voidpf ptr));
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -683,7 +656,7 @@ void _tr_stored_type_only __P((deflate_state *));
  *
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
 
 /* #include "deflate.h" */
 
@@ -2057,7 +2030,7 @@ local block_state deflate_slow(s, flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -3575,6 +3548,7 @@ int stream_size;
 }
 
 
+#if 0
 int ZEXPORT inflateInit_(z, vers, stream_size)
 z_streamp z;
 const char *vers;
@@ -3582,6 +3556,7 @@ int stream_size;
 {
   return inflateInit2_(z, DEF_WBITS, vers, stream_size);
 }
+#endif
 
 
 #define NEEDBYTE {if(z->avail_in==0)goto empty;r=Z_OK;}
@@ -5908,27 +5883,21 @@ extern voidp  calloc __P((uInt items, uInt size));
 extern void   free   __P((voidpf ptr));
 #endif
 
-static voidpf
-zcalloc(voidpf opaque, unsigned int items, unsigned int size)
+voidpf zcalloc (opaque, items, size)
+    voidpf opaque;
+    unsigned items;
+    unsigned size;
 {
-	const u_int overhead = (u_int)roundup(sizeof(size_t), (ALIGNBYTES+1));
-	u_int totalsize;
-
-	totalsize = items * size + overhead;
-	opaque = kmem_zalloc(totalsize, KM_SLEEP);
-	*(size_t *)opaque = totalsize;
-
-	return (voidpf)((uint8_t *)opaque + overhead);
+    if (opaque) items += size - size; /* make compiler happy */
+    return (voidpf)calloc(items, size);
 }
 
-static void
-zcfree(voidpf opaque, voidpf ptr)
+void  zcfree (opaque, ptr)
+    voidpf opaque;
+    voidpf ptr;
 {
-	const u_int overhead = (u_int)roundup(sizeof(size_t), (ALIGNBYTES+1));
-	size_t *sz;
-
-	sz = (size_t *)((uint8_t *)ptr - overhead);
-	kmem_free(sz, *sz);
+    free(ptr);
+    if (opaque) return; /* make compiler happy */
 }
 
 #endif /* MY_ZCALLOC */
@@ -5940,7 +5909,7 @@ zcfree(voidpf opaque, voidpf ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: kern_zlib.c,v 1.2 2008/05/04 23:48:05 ad Exp $ */
+/* @(#) $Id: zlib.c,v 1.30 2008/05/05 13:41:30 ad Exp $ */
 
 /* #include "zlib.h" */
 
@@ -5985,66 +5954,3 @@ uLong ZEXPORT adler32(adler, buf, len)
 }
 /* --- adler32.c */
 
-/* +++ uncompr.c */
-/* uncompr.c -- decompress a memory buffer
- * Copyright (C) 1995-2003 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h
- */
-
-/* @(#) Id */
-
-#define ZLIB_INTERNAL
-#include <sys/zlib.h>
-
-/* ===========================================================================
-     Decompresses the source buffer into the destination buffer.  sourceLen is
-   the byte length of the source buffer. Upon entry, destLen is the total
-   size of the destination buffer, which must be large enough to hold the
-   entire uncompressed data. (The size of the uncompressed data must have
-   been saved previously by the compressor and transmitted to the decompressor
-   by some mechanism outside the scope of this compression library.)
-   Upon exit, destLen is the actual size of the compressed buffer.
-     This function can be used to decompress a whole file at once if the
-   input file is mmap'ed.
-
-     uncompress returns Z_OK if success, Z_MEM_ERROR if there was not
-   enough memory, Z_BUF_ERROR if there was not enough room in the output
-   buffer, or Z_DATA_ERROR if the input data was corrupted.
-*/
-int ZEXPORT uncompress (dest, destLen, source, sourceLen)
-    Bytef *dest;
-    uLongf *destLen;
-    const Bytef *source;
-    uLong sourceLen;
-{
-    z_stream stream;
-    int err;
-
-    stream.next_in = (Bytef*)__UNCONST(source);
-    stream.avail_in = (uInt)sourceLen;
-    /* Check for source > 64K on 16-bit machine: */
-    if ((uLong)stream.avail_in != sourceLen) return Z_BUF_ERROR;
-
-    stream.next_out = dest;
-    stream.avail_out = (uInt)*destLen;
-    if ((uLong)stream.avail_out != *destLen) return Z_BUF_ERROR;
-
-    stream.zalloc = (alloc_func)0;
-    stream.zfree = (free_func)0;
-
-    err = inflateInit(&stream);
-    if (err != Z_OK) return err;
-
-    err = inflate(&stream, Z_FINISH);
-    if (err != Z_STREAM_END) {
-        inflateEnd(&stream);
-        if (err == Z_NEED_DICT || (err == Z_BUF_ERROR && stream.avail_in == 0))
-            return Z_DATA_ERROR;
-        return err;
-    }
-    *destLen = stream.total_out;
-
-    err = inflateEnd(&stream);
-    return err;
-}
-/* --- uncompr.c */
