@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.27 2008/05/03 18:49:13 ad Exp $	*/
+/*	$NetBSD: boot2.c,v 1.28 2008/05/05 08:36:55 chris Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ static const char * const names[][2] = {
 #ifndef SMALL
 #define BOOTCONF "boot.cfg"
 #define MAXMENU 10
-#define MAXBANNER 10
+#define MAXBANNER 12
 #define COMMAND_SEPARATOR ';'
 #endif /* !SMALL */
 
