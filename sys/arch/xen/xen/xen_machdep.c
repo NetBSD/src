@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.2 2007/11/22 16:17:09 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.3 2008/05/05 17:47:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.2 2007/11/22 16:17:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.3 2008/05/05 17:47:06 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.2 2007/11/22 16:17:09 bouyer Exp $
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <xen/hypervisor.h>
+
+uint64_t tsc_freq;	/* XXX */
 
 void
 xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
