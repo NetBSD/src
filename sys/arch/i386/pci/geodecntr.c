@@ -1,4 +1,4 @@
-/*	$NetBSD: geodecntr.c,v 1.6 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: geodecntr.c,v 1.7 2008/05/05 11:49:40 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.6 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.7 2008/05/05 11:49:40 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.6 2008/04/28 20:23:25 martin Exp $")
 #include <arch/i386/pci/geodereg.h>
 
 struct  geodecntr_softc {
-	struct device           sc_dev;
 	struct geode_gcb_softc *sc_gcb_dev;
 	struct timecounter      sc_tc;
 };
@@ -53,7 +52,7 @@ static unsigned geode_get_timecount(struct timecounter *);
 static int attached = 0;
 
 static int
-geodecntr_match(device_t parent, struct cfdata *match, void *aux)
+geodecntr_match(device_t parent, cfdata_t match, void *aux)
 {
 	return !attached;
 }
@@ -111,6 +110,6 @@ static unsigned geode_get_timecount(struct timecounter *tc)
 	    SC1100_GCB_TMVALUE_L);
 }
 
-CFATTACH_DECL(geodecntr, sizeof(struct geodecntr_softc),
+CFATTACH_DECL_NEW(geodecntr, sizeof(struct geodecntr_softc),
 	      geodecntr_match, geodecntr_attach, geodecntr_detach, NULL);
 
