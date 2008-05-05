@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/02 23:13:06 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2008/05/05 17:10:28 ad Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,9 @@ RAMDISKFS=	${RAMDISKDIR}/${RAMDISK}.fs
 miniroot.kmod:	${RAMDISKFS} ${SRCMOD}
 		${OBJCOPY} --add-section miniroot=${RAMDISKFS} \
 		    --set-section-flags miniroot=alloc,contents,load,data \
-		    ${SRCMOD} ${DSTMOD}
+		    ${SRCMOD} ${DSTMOD}.tmp
+		gzip -9c < ${DSTMOD}.tmp > ${DSTMOD}
+		rm -f ${DSTMOD}.tmp
 
 .include <bsd.prog.mk>
 
