@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.70 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: iop.c,v 1.71 2008/05/05 17:11:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.70 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.71 2008/05/05 17:11:16 ad Exp $");
 
 #include "iop.h"
 
@@ -287,9 +287,10 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	mutex_init(&sc->sc_conflock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_confcv, "iopconf");
 
-	if (iop_ictxhashtbl == NULL)
+	if (iop_ictxhashtbl == NULL) {
 		iop_ictxhashtbl = hashinit(IOP_ICTXHASH_NBUCKETS, HASH_LIST,
-		    M_DEVBUF, M_NOWAIT, &iop_ictxhash);
+		    true, &iop_ictxhash);
+	}
 
 	/* Disable interrupts at the IOP. */
 	mask = iop_inl(sc, IOP_REG_INTR_MASK);

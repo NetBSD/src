@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.110 2008/04/29 18:18:09 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.111 2008/05/05 17:11:17 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.110 2008/04/29 18:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.111 2008/05/05 17:11:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -64,9 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.110 2008/04/29 18:18:09 ad Exp $")
 
 u_int softdep_lockedbufs;
 
-MALLOC_JUSTDEFINE(M_PAGEDEP, "pagedep", "file page dependencies");
 MALLOC_JUSTDEFINE(M_INODEDEP, "inodedep", "Inode depependencies");
-MALLOC_JUSTDEFINE(M_NEWBLK, "newblk", "New block allocation");
 
 /*
  * These definitions need to be adapted to the system to which
@@ -1056,9 +1054,7 @@ softdep_initialize()
 
 	bioopsp = &bioops_softdep;
 
-	malloc_type_attach(M_PAGEDEP);
 	malloc_type_attach(M_INODEDEP);
-	malloc_type_attach(M_NEWBLK);
 
 	i = sizeof(struct freeblks);
 	if (i < sizeof(struct buf))
@@ -1102,14 +1098,13 @@ softdep_initialize()
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
 	max_softdeps = desiredvnodes / 4;
-	pagedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, M_PAGEDEP,
-	    M_WAITOK, &pagedep_hash);
+	pagedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, true,
+	    &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", 0);
-	inodedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, M_INODEDEP,
-	    M_WAITOK, &inodedep_hash);
+	inodedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, true,
+	    &inodedep_hash);
 	sema_init(&inodedep_in_progress, "inodedep", 0);
-	newblk_hashtbl = hashinit(64, HASH_LIST, M_NEWBLK, M_WAITOK,
-	    &newblk_hash);
+	newblk_hashtbl = hashinit(64, HASH_LIST, true, &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", 0);
 	for (i = 0; i < PCBPHASHSIZE; i++) {
 		LIST_INIT(&pcbphashhead[i]);
@@ -1129,10 +1124,8 @@ softdep_reinitialize()
 	u_long oldmask1, oldmask2, mask1, mask2, val;
 	int i;
 
-	hash1 = hashinit(desiredvnodes / 5, HASH_LIST, M_PAGEDEP, M_WAITOK,
-	    &mask1);
-	hash2 = hashinit(desiredvnodes, HASH_LIST, M_INODEDEP, M_WAITOK,
-	    &mask2);
+	hash1 = hashinit(desiredvnodes / 5, HASH_LIST, true, &mask1);
+	hash2 = hashinit(desiredvnodes, HASH_LIST, true, &mask2);
 
 	max_softdeps = desiredvnodes * 4;
 
@@ -1161,8 +1154,8 @@ softdep_reinitialize()
 		}
 	}
 	mutex_exit(&bufcache_lock);
-	hashdone(oldhash1, M_PAGEDEP);
-	hashdone(oldhash2, M_INODEDEP);
+	hashdone(oldhash1, HASH_LIST, oldmask1);
+	hashdone(oldhash2, HASH_LIST, oldmask2);
 }
 
 /*

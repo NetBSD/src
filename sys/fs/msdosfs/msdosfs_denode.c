@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.31 2008/01/17 10:39:14 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.32 2008/05/05 17:11:16 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.31 2008/01/17 10:39:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.32 2008/05/05 17:11:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,8 +105,7 @@ msdosfs_init()
 	malloc_type_attach(M_MSDOSFSTMP);
 	pool_init(&msdosfs_denode_pool, sizeof(struct denode), 0, 0, 0,
 	    "msdosnopl", &pool_allocator_nointr, IPL_NONE);
-	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT,
-	    M_WAITOK, &dehash);
+	dehashtbl = hashinit(desiredvnodes / 2, HASH_LIST, true, &dehash);
 	mutex_init(&msdosfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&msdosfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 }
@@ -123,8 +122,7 @@ msdosfs_reinit()
 	u_long oldmask, mask, val;
 	int i;
 
-	hash = hashinit(desiredvnodes / 2, HASH_LIST, M_MSDOSFSMNT, M_WAITOK,
-	    &mask);
+	hash = hashinit(desiredvnodes / 2, HASH_LIST, true, &mask);
 
 	mutex_enter(&msdosfs_ihash_lock);
 	oldhash = dehashtbl;
@@ -140,13 +138,13 @@ msdosfs_reinit()
 		}
 	}
 	mutex_exit(&msdosfs_ihash_lock);
-	hashdone(oldhash, M_MSDOSFSMNT);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 void
 msdosfs_done()
 {
-	hashdone(dehashtbl, M_MSDOSFSMNT);
+	hashdone(dehashtbl, HASH_LIST, dehash);
 	pool_destroy(&msdosfs_denode_pool);
 	mutex_destroy(&msdosfs_ihash_lock);
 	mutex_destroy(&msdosfs_hashlock);
