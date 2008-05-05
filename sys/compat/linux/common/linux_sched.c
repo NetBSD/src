@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.55 2008/05/01 16:06:17 njoly Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.56 2008/05/05 02:29:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.55 2008/05/01 16:06:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.56 2008/05/05 02:29:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -236,8 +236,11 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 		KASSERT(prio <= SCHED_PRI_MAX);
 		KASSERT(linux_params != NULL);
 #endif
+
+#ifdef DEBUG_LINUX
 		printf("native2linux: native: policy %d, priority %d\n",
 		    native_policy, prio);
+#endif
 
 		if (native_policy == SCHED_OTHER) {
 			linux_params->sched_priority = 0;
@@ -248,8 +251,10 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 			    / (SCHED_PRI_MAX - SCHED_PRI_MIN)
 			    + LINUX_SCHED_RTPRIO_MIN;
 		}
+#ifdef DEBUG_LINUX
 		printf("native2linux: linux: policy %d, priority %d\n",
 		    -1, linux_params->sched_priority);
+#endif
 	}
 
 	return 0;
@@ -314,14 +319,18 @@ linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_ar
 	error = do_sched_getparam(SCARG(uap, pid), 0, &policy, &sp);
 	if (error)
 		goto out;
+#ifdef DEBUG_LINUX
 	printf("getparam: native: policy %d, priority %d\n",
 	    policy, sp.sched_priority);
+#endif
 
 	error = sched_native2linux(policy, &sp, NULL, &lp);
 	if (error)
 		goto out;
+#ifdef DEBUG_LINUX
 	printf("getparam: linux: policy %d, priority %d\n",
 	    policy, lp.sched_priority);
+#endif
 
 	error = copyout(&lp, SCARG(uap, sp), sizeof(lp));
 	if (error)
@@ -351,14 +360,18 @@ linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setsche
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
 		goto out;
+#ifdef DEBUG_LINUX
 	printf("setscheduler: linux: policy %d, priority %d\n",
 	    SCARG(uap, policy), lp.sched_priority);
+#endif
 
 	error = sched_linux2native(SCARG(uap, policy), &lp, &policy, &sp);
 	if (error)
 		goto out;
+#ifdef DEBUG_LINUX
 	printf("setscheduler: native: policy %d, priority %d\n",
 	    policy, sp.sched_priority);
+#endif
 
 	error = do_sched_setparam(SCARG(uap, pid), 0, policy, &sp);
 	if (error)
