@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.24 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.25 2008/05/05 01:37:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.24 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.25 2008/05/05 01:37:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ gphytermatch(device_t parent, cfdata_t match, void *aux)
 static void
 gphyterattach(device_t parent, device_t self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
