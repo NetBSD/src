@@ -1,4 +1,4 @@
-/* $NetBSD: drm_agpsupport.c,v 1.4 2007/12/11 11:17:30 lukem Exp $ */
+/* $NetBSD: drm_agpsupport.c,v 1.5 2008/05/05 14:00:10 jmcneill Exp $ */
 
 /* drm_agpsupport.h -- DRM support for AGP/GART backend -*- linux-c -*-
  * Created: Mon Dec 13 09:56:45 1999 by faith@precisioninsight.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.4 2007/12/11 11:17:30 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.5 2008/05/05 14:00:10 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_agpsupport.c,v 1.5 2006/04/09 20:45:44 anholt Exp $");
 */
@@ -370,7 +370,7 @@ int drm_agp_free_ioctl(DRM_IOCTL_ARGS)
 	return retcode;
 }
 
-drm_agp_head_t *drm_agp_init(void)
+drm_agp_head_t *drm_agp_init(drm_device_t *dev)
 {
 	device_t agpdev;
 	drm_agp_head_t *head   = NULL;
@@ -391,7 +391,7 @@ drm_agp_head_t *drm_agp_init(void)
 		agp_get_info(agpdev, &head->info);
 #endif
 		head->memory = NULL;
-		DRM_INFO("AGP at 0x%08lx %dMB\n",
+		aprint_normal_dev(&dev->device, "AGP at 0x%08lx %dMB\n",
 			 (long)head->info.ai_aperture_base,
 			 (int)(head->info.ai_aperture_size >> 20));
 	}
