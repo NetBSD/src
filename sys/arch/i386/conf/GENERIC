@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.893 2008/05/02 15:26:38 ad Exp $
+# $NetBSD: GENERIC,v 1.894 2008/05/05 14:43:18 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -20,9 +20,9 @@
 
 include 	"arch/i386/conf/std.i386"
 
-options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.893 $"
+#ident 		"GENERIC-$Revision: 1.894 $"
 
 maxusers	64		# estimated number of users
 
@@ -242,17 +242,17 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
-options 	EISAVERBOSE	# verbose EISA device autoconfig messages
-options 	MIIVERBOSE	# verbose PHY autoconfig messages
-options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
+#options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
-options 	MCAVERBOSE	# verbose MCA device autoconfig messages
+#options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
