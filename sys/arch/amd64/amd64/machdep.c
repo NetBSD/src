@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2008/04/29 15:26:26 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2008/05/05 17:47:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2008/04/29 15:26:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2008/05/05 17:47:06 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -496,6 +496,7 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
+	extern uint64_t tsc_freq;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -518,6 +519,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "tsc_freq", NULL,
+		       NULL, 0, &tsc_freq, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void

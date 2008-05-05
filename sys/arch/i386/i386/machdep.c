@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.633 2008/05/02 15:26:38 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.634 2008/05/05 17:47:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.633 2008/05/02 15:26:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.634 2008/05/05 17:47:06 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -660,6 +660,7 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
  */
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
+	extern uint64_t tsc_freq;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -723,6 +724,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sparse_dump", NULL,
 		       NULL, 0, &sparse_dump, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "tsc_freq", NULL,
+		       NULL, 0, &tsc_freq, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
