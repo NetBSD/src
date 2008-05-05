@@ -1,4 +1,4 @@
-.\"     $NetBSD: _lwp_ctl.2,v 1.1 2007/12/14 21:52:18 yamt Exp $
+.\"     $NetBSD: _lwp_ctl.2,v 1.2 2008/05/05 05:04:06 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd December 15, 2007
+.Dd May 5, 2008
 .Dt _LWP_CTL 2
 .Os
 .Sh NAME
@@ -51,6 +51,8 @@ The bitwise-OR of the following flags.
 .Bl -tag -width LWPCTL_FEATURE_CURCPU
 .It Dv LWPCTL_FEATURE_CURCPU
 Request lc_curcpu.
+.It Dv LWPCTL_FEATURE_PCTR
+Request lc_pctr.
 .El
 .It Fa address
 The address to store a pointer to lwpctl structure for the calling LWP.
@@ -71,6 +73,16 @@ It's available only if requested with the
 .Dv LWPCTL_FEATURE_CURCPU
 flag.
 .El
+.Bl -tag -width int_lc_curcpu
+.It int lc_pctr
+The integer which is incremented on every context switches to the LWP.
+It can be used to detect preemption of the LWP.
+(thus its name "preemption counter".)
+It's updated by the kernel and should be considered as read-only for
+userland.
+It's available only if requested with the
+.Dv LWPCTL_FEATURE_PCTR
+flag.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 .Fn _lwp_ctl
