@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.11 2008/05/03 14:26:01 drochner Exp $ */
+/* $NetBSD: drm_drv.c,v 1.12 2008/05/05 14:00:10 jmcneill Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.11 2008/05/03 14:26:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.12 2008/05/05 14:00:10 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -247,8 +247,9 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	dev->agp_buffer_map = 0;
 	/* dev->unit - already done */
 
-	printf("\n");
-	DRM_INFO("%s (unit %d)\n", id_entry->name, dev->unit);
+	aprint_naive("\n");
+	aprint_normal(": %s (unit %d)\n", id_entry->name, dev->unit);
+
 	drm_load(dev);
 }
 
@@ -462,7 +463,7 @@ static int drm_load(drm_device_t *dev)
 
 	if (dev->driver.use_agp) {
 		if (drm_device_is_agp(dev))
-			dev->agp = drm_agp_init();
+			dev->agp = drm_agp_init(dev);
 		if (dev->driver.require_agp && dev->agp == NULL) {
 			DRM_ERROR("Card isn't AGP, or couldn't initialize "
 			    "AGP.\n");
@@ -484,7 +485,7 @@ static int drm_load(drm_device_t *dev)
 		goto error;
 	}
 	
-	DRM_INFO("Initialized %s %d.%d.%d %s\n",
+	aprint_normal_dev(&dev->device, "Initialized %s %d.%d.%d %s\n",
 	  	dev->driver.name,
 	  	dev->driver.major,
 	  	dev->driver.minor,

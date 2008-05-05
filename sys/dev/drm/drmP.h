@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.19 2008/05/04 20:09:32 jmcneill Exp $ */
+/* $NetBSD: drmP.h,v 1.20 2008/05/05 14:00:10 jmcneill Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -1033,7 +1033,7 @@ void	drm_vbl_send_signals(drm_device_t *dev);
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
 int	drm_device_is_agp(drm_device_t *dev);
 int	drm_device_is_pcie(drm_device_t *dev);
-drm_agp_head_t *drm_agp_init(void);
+drm_agp_head_t *drm_agp_init(drm_device_t *dev);
 int	drm_agp_acquire(drm_device_t *dev);
 int	drm_agp_release(drm_device_t *dev);
 int	drm_agp_info(drm_device_t * dev, drm_agp_info_t *info);
