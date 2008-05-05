@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.107 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.108 2008/05/05 22:54:11 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.107 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.108 2008/05/05 22:54:11 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -722,6 +722,7 @@ cmdscanner(void)
 			 * such commands as invalid.
 			 */
 			if (strchr(margv[0], ':') != NULL ||
+			    !editing ||
 			    el_parse(el, margc, (const char **)margv) != 0)
 #endif /* !NO_EDITCOMPLETE */
 				fputs("?Invalid command.\n", ttyout);
