@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.15 2008/04/10 19:13:38 cegger Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.16 2008/05/05 11:42:45 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.15 2008/04/10 19:13:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.16 2008/05/05 11:42:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,9 +464,9 @@ static int
 voodoofb_drm_print(void *opaque, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("direct rendering for %s", pnp);
+		aprint_normal("drm at %s", pnp);
 
-	return UNSUPP;
+	return UNCONF;
 }
 
 static int
