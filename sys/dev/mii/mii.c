@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.47 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: mii.c,v 1.48 2008/05/05 01:37:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.47 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.48 2008/05/05 01:37:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,8 +135,8 @@ mii_attach(device_t parent, struct mii_data *mii, int capmask,
 
 		locs[MIICF_PHY] = ma.mii_phyno;
 
-		child = (struct mii_softc *)config_found_sm_loc(parent, "mii",
-			locs, &ma, mii_print, config_stdsubmatch);
+		child = device_private(config_found_sm_loc(parent, "mii",
+			locs, &ma, mii_print, config_stdsubmatch));
 		if (child) {
 			/*
 			 * Link it up in the parent's MII data.
