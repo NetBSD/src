@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.340 2008/05/02 17:40:30 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.341 2008/05/05 17:08:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.340 2008/05/02 17:40:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.341 2008/05/05 17:08:54 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -302,6 +302,8 @@ vfs_dobusy(struct mount *mp, const krw_t op, struct mount **nextp)
 		}
 		l->l_mprecurse++;
 	} else {
+		KASSERT(l->l_mpbusy == NULL);
+		KASSERT(l->l_mprecurse == 0);
 		rw_enter(&mp->mnt_lock, op);
 		l->l_mpbusy = mp;
 	}
