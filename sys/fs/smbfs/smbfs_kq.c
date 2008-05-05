@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.21 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.22 2008/05/05 17:11:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.21 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.22 2008/05/05 17:11:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.21 2008/04/28 20:24:02 martin Exp $")
 #include <sys/unistd.h>
 #include <sys/vnode.h>
 #include <sys/lockf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/file.h>
 #include <sys/dirent.h>
@@ -305,7 +305,7 @@ filt_smbfsdetach(struct knote *kn)
 		} else
 			SLIST_REMOVE(&kplist, ke, kevq, k_link);
 		SLIST_REMOVE(&kevlist, ke, kevq, kev_link);
-		FREE(ke, M_KEVENT);
+		kmem_free(ke, sizeof(*ke));
 	}
 	kevs--;
 
@@ -481,7 +481,7 @@ smbfs_kqfilter(void *v)
 	 * and the malloc is cheaper than scanning possibly
 	 * large kevlist list second time after malloc.
 	 */
-	MALLOC(ken, struct kevq *, sizeof(struct kevq), M_KEVENT, M_WAITOK);
+	ken = kmem_alloc(sizeof(*ken), KM_SLEEP);
 
 	/* Check the list and insert new entry */
 	mutex_enter(&smbkq_lock);
@@ -493,7 +493,7 @@ smbfs_kqfilter(void *v)
 	if (ke) {
 		/* already watched, so just bump usecount */
 		ke->usecount++;
-		FREE(ken, M_KEVENT);	/* dispose, don't need */
+		kmem_free(ken, sizeof(*ken));
 	} else {
 		/* need a new one */
 		memset(ken, 0, sizeof(*ken));

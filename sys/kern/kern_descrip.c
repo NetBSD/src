@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.178 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.179 2008/05/05 17:11:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.178 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.179 2008/05/05 17:11:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1512,7 +1512,7 @@ fd_free(void)
 		free(fdp->fd_ofiles, M_FILEDESC);
 	}
 	if (fdp->fd_knhash != NULL) {
-		hashdone(fdp->fd_knhash, M_KEVENT);
+		hashdone(fdp->fd_knhash, HASH_LIST, fdp->fd_knhashmask);
 		fdp->fd_knhash = NULL;
 		fdp->fd_knhashmask = 0;
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.201 2008/03/24 12:24:37 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.202 2008/05/05 17:11:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201 2008/03/24 12:24:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.202 2008/05/05 17:11:17 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201 2008/03/24 12:24:37 yamt Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/time.h>
 #include <sys/dirent.h>
@@ -1203,8 +1202,8 @@ nfs_initdircache(vp)
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdirhashhead *dircache;
 
-	dircache = hashinit(NFS_DIRHASHSIZ, HASH_LIST, M_NFSDIROFF,
-	    M_WAITOK, &nfsdirhashmask);
+	dircache = hashinit(NFS_DIRHASHSIZ, HASH_LIST, true,
+	    &nfsdirhashmask);
 
 	NFSDC_LOCK(np);
 	if (np->n_dircache == NULL) {
@@ -1215,7 +1214,7 @@ nfs_initdircache(vp)
 	}
 	NFSDC_UNLOCK(np);
 	if (dircache)
-		hashdone(dircache, M_NFSDIROFF);
+		hashdone(dircache, HASH_LIST, nfsdirhashmask);
 }
 
 void

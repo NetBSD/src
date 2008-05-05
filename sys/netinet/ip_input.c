@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.271 2008/05/04 07:22:14 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.272 2008/05/05 17:11:17 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.271 2008/05/04 07:22:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.272 2008/05/05 17:11:17 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -420,10 +420,10 @@ ip_init(void)
 	ip_nmbclusters_changed();
 
 	TAILQ_INIT(&in_ifaddrhead);
-	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
-	    M_WAITOK, &in_ifaddrhash);
-	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IPMADDR,
-	    M_WAITOK, &in_multihash);
+	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
+	    &in_ifaddrhash);
+	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
+	    &in_multihash);
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
 	ipflow_init(ip_hashsize);

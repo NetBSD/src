@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.79 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.80 2008/05/05 17:11:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.79 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.80 2008/05/05 17:11:17 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -94,8 +94,6 @@ SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
 			       CTL_CREATE, CTL_EOL);
 }
 #endif
-
-static MALLOC_JUSTDEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
 
 VFS_PROTOS(smbfs);
 
@@ -191,8 +189,8 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	memset(smp, 0, sizeof(*smp));
 	mp->mnt_data = smp;
 
-	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST,
-				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
+	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, true,
+	    &smp->sm_hashlen);
 
 	mutex_init(&smp->sm_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	smp->sm_share = ssp;
@@ -250,7 +248,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
 
-	free(smp->sm_hash, M_SMBFSHASH);
+	hashdone(smp->sm_hash, HASH_LIST, smp->sm_hashlen);
 	mutex_destroy(&smp->sm_hashlock);
 	FREE(smp, M_SMBFSDATA);
 	return error;
@@ -335,7 +333,6 @@ smbfs_init(void)
 
 	malloc_type_attach(M_SMBNODENAME);
 	malloc_type_attach(M_SMBFSDATA);
-	malloc_type_attach(M_SMBFSHASH);
 	pool_init(&smbfs_node_pool, sizeof(struct smbnode), 0, 0, 0,
 	    "smbfsnopl", &pool_allocator_nointr, IPL_NONE);
 
@@ -358,7 +355,6 @@ smbfs_done(void)
 	pool_destroy(&smbfs_node_pool);
 	malloc_type_detach(M_SMBNODENAME);
 	malloc_type_detach(M_SMBFSDATA);
-	malloc_type_detach(M_SMBFSHASH);
 
 	SMBVDEBUG("done.\n");
 }

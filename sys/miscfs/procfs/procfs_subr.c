@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.89 2008/04/28 20:24:08 martin Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.90 2008/05/05 17:11:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.89 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.90 2008/05/05 17:11:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,8 +547,7 @@ procfs_hashinit()
 {
 	mutex_init(&pfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
-	pfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
-	    M_WAITOK, &pfs_ihash);
+	pfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, true, &pfs_ihash);
 }
 
 void
@@ -558,8 +557,7 @@ procfs_hashreinit()
 	struct pfs_hashhead *oldhash, *hash;
 	u_long i, oldmask, mask, val;
 
-	hash = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT, M_WAITOK,
-	    &mask);
+	hash = hashinit(desiredvnodes / 4, HASH_LIST, true, &mask);
 
 	mutex_enter(&pfs_ihash_lock);
 	oldhash = pfs_hashtbl;
@@ -574,7 +572,7 @@ procfs_hashreinit()
 		}
 	}
 	mutex_exit(&pfs_ihash_lock);
-	hashdone(oldhash, M_UFSMNT);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -583,7 +581,7 @@ procfs_hashreinit()
 void
 procfs_hashdone()
 {
-	hashdone(pfs_hashtbl, M_UFSMNT);
+	hashdone(pfs_hashtbl, HASH_LIST, pfs_ihash);
 	mutex_destroy(&pfs_hashlock);
 	mutex_destroy(&pfs_ihash_lock);
 }

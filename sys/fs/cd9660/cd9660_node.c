@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.23 2008/02/27 19:43:36 matt Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.24 2008/05/05 17:11:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.23 2008/02/27 19:43:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.24 2008/05/05 17:11:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,7 @@ cd9660_init(void)
 	malloc_type_attach(M_ISOFSMNT);
 	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
 	    "cd9660nopl", &pool_allocator_nointr, IPL_NONE);
-	isohashtbl = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
-	    &isohash);
+	isohashtbl = hashinit(desiredvnodes, HASH_LIST, true, &isohash);
 	mutex_init(&cd9660_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&cd9660_hashlock, MUTEX_DEFAULT, IPL_NONE);
 }
@@ -101,8 +100,7 @@ cd9660_reinit(void)
 	u_long oldmask1, mask1, val;
 	u_int i;
 
-	hash1 = hashinit(desiredvnodes, HASH_LIST, M_ISOFSMNT, M_WAITOK,
-	    &mask1);
+	hash1 = hashinit(desiredvnodes, HASH_LIST, true, &mask1);
 
 	mutex_enter(&cd9660_ihash_lock);
 	oldhash1 = isohashtbl;
@@ -117,7 +115,7 @@ cd9660_reinit(void)
 		}
 	}
 	mutex_exit(&cd9660_ihash_lock);
-	hashdone(oldhash1, M_ISOFSMNT);
+	hashdone(oldhash1, HASH_LIST, oldmask1);
 }
 
 /*
@@ -126,7 +124,7 @@ cd9660_reinit(void)
 void
 cd9660_done(void)
 {
-	hashdone(isohashtbl, M_ISOFSMNT);
+	hashdone(isohashtbl, HASH_LIST, isohash);
 	pool_destroy(&cd9660_node_pool);
 	mutex_destroy(&cd9660_ihash_lock);
 	mutex_destroy(&cd9660_hashlock);
