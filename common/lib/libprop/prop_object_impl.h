@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.20 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.21 2008/05/06 13:52:51 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -265,6 +265,7 @@ struct _prop_object_iterator {
 #define	_PROP_RWLOCK_WRLOCK(x)	rw_enter(&(x), RW_WRITER)
 #define	_PROP_RWLOCK_UNLOCK(x)	rw_exit(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)	rw_destroy(&(x))
+#define	_PROP_RWLOCK_OWNED(x)	_PROP_ASSERT(rw_lock_held(&(x)))
 
 #elif defined(_STANDALONE)
 
@@ -301,6 +302,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_WRLOCK(x)	/* nothing */
 #define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
 #define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
+#define	_PROP_RWLOCK_OWNED(x)	/* nothing */
 
 #else
 
@@ -344,6 +346,8 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_WRLOCK(x)	rwlock_wrlock(&(x))
 #define	_PROP_RWLOCK_UNLOCK(x)	rwlock_unlock(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)	rwlock_destroy(&(x))
+#define	_PROP_RWLOCK_OWNED(x)	/* nothing */
+
 #elif defined(HAVE_NBTOOL_CONFIG_H)
 /*
  * None of NetBSD's build tools are multi-threaded.
@@ -358,6 +362,8 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_WRLOCK(x)	/* nothing */
 #define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
 #define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
+#define	_PROP_RWLOCK_OWNED(x)	/* nothing */
+
 #else
 /*
  * Use pthread mutexes everywhere else.
@@ -374,6 +380,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_WRLOCK(x)	pthread_rwlock_wrlock(&(x))
 #define	_PROP_RWLOCK_UNLOCK(x)	pthread_rwlock_unlock(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)	pthread_rwlock_destroy(&(x))
+#define	_PROP_RWLOCK_OWNED(x)	/* nothing */
 #endif
 
 #endif /* _KERNEL */
