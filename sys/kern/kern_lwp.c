@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.109 2008/05/01 21:25:23 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.110 2008/05/06 18:40:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.109 2008/05/01 21:25:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110 2008/05/06 18:40:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -577,6 +577,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	l2->l_pflag = LP_MPSAFE;
 	l2->l_fd = p2->p_fd;
+	TAILQ_INIT(&l2->l_ld_locks);
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/* Mark it as a system LWP and not a candidate for swapping */
