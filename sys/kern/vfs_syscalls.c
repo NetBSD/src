@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.354 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.355 2008/05/06 12:51:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.354 2008/04/30 12:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.355 2008/05/06 12:51:22 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -561,35 +561,59 @@ void
 checkdirs(struct vnode *olddp)
 {
 	struct cwdinfo *cwdi;
-	struct vnode *newdp;
+	struct vnode *newdp, *rele1, *rele2;
 	struct proc *p;
+	bool retry;
 
 	if (olddp->v_usecount == 1)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	mutex_enter(proc_lock);
-	/* XXXAD Should not be acquiring these locks with proc_lock held!! */
-	PROCLIST_FOREACH(p, &allproc) {
-		if ((p->p_flag & PK_MARKER) != 0)
-			continue;
-		cwdi = p->p_cwdi;
-		if (!cwdi)
-			continue;
-		rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-		if (cwdi->cwdi_cdir == olddp) {
-			vrele(cwdi->cwdi_cdir);
-			VREF(newdp);
-			cwdi->cwdi_cdir = newdp;
+
+	do {
+		retry = false;
+		mutex_enter(proc_lock);
+		PROCLIST_FOREACH(p, &allproc) {
+			if ((p->p_flag & PK_MARKER) != 0)
+				continue;
+			if ((cwdi = p->p_cwdi) == NULL)
+				continue;
+			/*
+			 * Can't change to the old directory any more,
+			 * so even if we see a stale value it's not a
+			 * problem.
+			 */
+			if (cwdi->cwdi_cdir != olddp &&
+			    cwdi->cwdi_rdir != olddp)
+			    	continue;
+			retry = true;
+			rele1 = NULL;
+			rele2 = NULL;
+			atomic_inc_uint(&cwdi->cwdi_refcnt);
+			mutex_exit(proc_lock);
+			rw_enter(&cwdi->cwdi_lock, RW_WRITER);
+			if (cwdi->cwdi_cdir == olddp) {
+				rele1 = cwdi->cwdi_cdir;
+				VREF(newdp);
+				cwdi->cwdi_cdir = newdp;
+			}
+			if (cwdi->cwdi_rdir == olddp) {
+				rele2 = cwdi->cwdi_rdir;
+				VREF(newdp);
+				cwdi->cwdi_rdir = newdp;
+			}
+			rw_exit(&cwdi->cwdi_lock);
+			cwdfree(cwdi);
+			if (rele1 != NULL)
+				vrele(rele1);
+			if (rele2 != NULL)
+				vrele(rele2);
+			mutex_enter(proc_lock);
+			break;
 		}
-		if (cwdi->cwdi_rdir == olddp) {
-			vrele(cwdi->cwdi_rdir);
-			VREF(newdp);
-			cwdi->cwdi_rdir = newdp;
-		}
-		rw_exit(&cwdi->cwdi_lock);
-	}
-	mutex_exit(proc_lock);
+		mutex_exit(proc_lock);
+	} while (retry);
+
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
 		VREF(newdp);
