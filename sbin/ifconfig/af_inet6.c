@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.9 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.10 2008/05/06 21:16:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.9 2008/05/06 16:15:17 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.10 2008/05/06 21:16:52 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -153,16 +153,12 @@ prefix(void *val, int size)
 int
 setia6flags_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 {
-	int ia6flag;
-	prop_number_t num;
+	int64_t ia6flag;
 
-	num = (prop_number_t)prop_dictionary_get(env, "ia6flag");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "ia6flag", &ia6flag)) {
 		errno = ENOENT;
 		return -1;
 	}
-
-	ia6flag = (int)prop_number_integer_value(num);
 
 	if (ia6flag < 0) {
 		ia6flag = -ia6flag;
@@ -181,15 +177,14 @@ setia6flags(prop_dictionary_t env, prop_dictionary_t xenv)
 int
 setia6pltime_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 {
-	prop_number_t num;
+	int64_t pltime;
 
-	num = (prop_number_t)prop_dictionary_get(env, "pltime");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "pltime", &pltime)) {
 		errno = ENOENT;
 		return -1;
 	}
 
-	return setia6lifetime(env, prop_number_integer_value(num),
+	return setia6lifetime(env, pltime,
 	    &ifra->ifra_lifetime.ia6t_preferred,
 	    &ifra->ifra_lifetime.ia6t_pltime);
 }
@@ -203,15 +198,14 @@ setia6pltime(prop_dictionary_t env, prop_dictionary_t xenv)
 int
 setia6vltime_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 {
-	prop_number_t num;
+	int64_t vltime;
 
-	num = (prop_number_t)prop_dictionary_get(env, "vltime");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "vltime", &vltime)) {
 		errno = ENOENT;
 		return -1;
 	}
 
-	return setia6lifetime(env, prop_number_integer_value(num),
+	return setia6lifetime(env, vltime,
 		&ifra->ifra_lifetime.ia6t_expire,
 		&ifra->ifra_lifetime.ia6t_vltime);
 }

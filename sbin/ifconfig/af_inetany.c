@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.3 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.4 2008/05/06 21:16:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.3 2008/05/06 17:29:04 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.4 2008/05/06 21:16:52 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -143,8 +143,7 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 	};
 #endif
 	int af, rc, s;
-	bool delete, replace;
-	prop_bool_t b;
+	bool alias, delete, replace;
 	prop_data_t d;
 	const struct paddr_prefix *addr, *brd, *dst, *mask;
 	unsigned short flags;
@@ -229,12 +228,12 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 	else
 		brd = NULL;
 
-	if ((b = (prop_bool_t)prop_dictionary_get(env, "alias")) == NULL) {
+	if (!prop_dictionary_get_bool(env, "alias", &alias)) {
 		delete = false;
 		replace = (param->gifaddr.cmd != 0);
 	} else {
 		replace = false;
-		delete = !prop_bool_true(b);
+		delete = !alias;
 	}
 
 	memset(param->req.buf, 0, param->req.buflen);
