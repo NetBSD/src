@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.356 2008/05/06 12:54:25 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.357 2008/05/06 13:31:02 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.356 2008/05/06 12:54:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.357 2008/05/06 13:31:02 xtraeme Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1133,7 +1133,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 	while ((mp = vp->v_mountedhere) != NULL) {
 		error = vfs_trybusy(mp, RW_READER, NULL);
 		vput(vp);
-		if (error != 0) {
+		if (error != 0)
 			goto out;
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp, false, NULL);
