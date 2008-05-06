@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.20 2003/08/07 11:15:32 agc Exp $
+.\"	$NetBSD: printf.1,v 1.21 2008/05/06 12:01:35 apb Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)printf.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd November 5, 1993
+.Dd May 6, 2008
 .Dt PRINTF 1
 .Os
 .Sh NAME
@@ -387,3 +387,26 @@ Hexadecimal character constants are restricted to, and should be specified
 as, two character constants.
 This is contrary to the ISO C standard but
 does guarantee detection of the end of the constant.
+.Sh NOTES
+All formats which treat the
+.Ar argument
+as a number first convert the
+.Ar argument
+from its external representation as a character string
+to an internal numeric representation, and then apply the
+format to the internal numeric representation, producing
+another external character string representation.
+One might expect the
+.Cm \&%c
+format to do likewise, but in fact it does not.
+.Pp
+To convert a string representation of a decimal, octal, or hexadecimal
+number into the corresponding character, two nested
+.Nm
+invocations may be used, in which the inner invocation
+converts the input to an octal string, and the outer
+invocation uses the octal string as part of a format.
+For example, the following command outputs the character whose code
+is 0x0A, which is a newline in ASCII:
+.Pp
+.Dl printf \&"$(printf \&"\e\e%o" \&"0x0A")"
