@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.259 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.259 2008/04/30 12:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -213,7 +213,7 @@ lfs_writerd(void *arg)
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_trybusy(mp, RW_WRITER, &nmp)) {
+			if (vfs_busy(mp, &nmp)) {
 				continue;
 			}
 			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
@@ -239,8 +239,6 @@ lfs_writerd(void *arg)
 				} else
 					mutex_exit(&lfs_lock);
 			}
-
-			mutex_enter(&mountlist_lock);
 			vfs_unbusy(mp, false, &nmp);
 		}
 		mutex_exit(&mountlist_lock);
@@ -345,12 +343,11 @@ lfs_mountroot()
 	}
 	if ((error = lfs_mountfs(rootvp, mp, l))) {
 		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp, false);
+		vfs_destroy(mp);
 		return (error);
 	}
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_iflag |= IMNT_ONLIST;
 	mutex_exit(&mountlist_lock);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);

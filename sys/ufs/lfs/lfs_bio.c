@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.113 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.114 2008/05/06 18:43:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.113 2008/04/30 12:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.114 2008/05/06 18:43:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,7 +576,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	if (only_onefs) {
 		KASSERT(fs != NULL);
-		if (vfs_trybusy(fs->lfs_ivnode->v_mount, RW_READER, NULL))
+		if (vfs_busy(fs->lfs_ivnode->v_mount, NULL))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
@@ -587,7 +587,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_trybusy(mp, RW_READER, &nmp)) {
+			if (vfs_busy(mp, &nmp)) {
 				DLOG((DLOG_FLUSH, "lfs_flush: fs vfs_busy\n"));
 				continue;
 			}
@@ -598,7 +598,6 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 				lfs_flush_fs(tfs, flags);
 				mutex_exit(&lfs_lock);
 			}
-			mutex_enter(&mountlist_lock);
 			vfs_unbusy(mp, false, &nmp);
 		}
 		mutex_exit(&mountlist_lock);
