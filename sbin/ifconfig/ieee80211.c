@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.13 2008/05/06 08:16:12 skrll Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.14 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.13 2008/05/06 08:16:12 skrll Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.14 2008/05/06 17:29:04 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -627,7 +627,7 @@ ieee80211_statistics(prop_dictionary_t env)
 }
 
 void
-ieee80211_status(prop_dictionary_t env)
+ieee80211_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int i, nwkey_verbose;
 	struct ieee80211_nwid nwid;
@@ -651,8 +651,6 @@ ieee80211_status(prop_dictionary_t env)
 		err(EXIT_FAILURE, "%s: getifname", __func__);
 
 	memset(&ifr, 0, sizeof(ifr));
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_data = &nwid;
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));

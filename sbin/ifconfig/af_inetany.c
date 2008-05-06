@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.2 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.3 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.2 2008/05/06 16:15:17 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.3 2008/05/06 17:29:04 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -103,7 +103,7 @@ in6_pre_aifaddr(prop_dictionary_t env, void *arg)
 }
 
 void
-commit_address(prop_dictionary_t env)
+commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *ifname;
 	struct ifreq in_ifr;
@@ -206,7 +206,7 @@ commit_address(prop_dictionary_t env)
 	if ((s = getsock(af)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if ((ifname = getifinfo(env, env, &flags)) == NULL)
+	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
 		return;
 
 	if ((d = (prop_data_t)prop_dictionary_get(env, "address")) != NULL)
