@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.h,v 1.2 2006/05/11 00:46:02 mrg Exp $	*/
+/*	$NetBSD: af_inet6.h,v 1.3 2008/05/06 04:33:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -25,26 +25,30 @@
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
 
 /* XXX */
 #include <netinet/in.h>
 
+#include "parse.h"
+
 /* XXX */
 extern struct in6_ifreq    in6_ridreq;
 extern struct in6_aliasreq in6_addreq;
 
-void	setia6flags(const char *, int);
-void	setia6pltime(const char *, int);
-void	setia6vltime(const char *, int);
-void	setia6lifetime(const char *, const char *);
-void	setia6eui64(const char *, int);
+int	setia6flags(prop_dictionary_t, prop_dictionary_t);
+int	setia6pltime(prop_dictionary_t, prop_dictionary_t);
+int	setia6vltime(prop_dictionary_t, prop_dictionary_t);
+int	setia6eui64(prop_dictionary_t, prop_dictionary_t);
 
-void	in6_fillscopeid(struct sockaddr_in6 *sin6);     
-void	in6_alias(struct in6_ifreq *);  
-void	in6_status(int);
-void	in6_getaddr(const char *, int); 
-void	in6_getprefix(const char *, int);
+void	in6_fillscopeid(struct sockaddr_in6 *sin6);
+void	in6_status(prop_dictionary_t, prop_dictionary_t, int);
+void	in6_getaddr(const struct paddr_prefix *, int);
+void	in6_getprefix(int, int);
 void	in6_init(void);
+int	setia6eui64_impl(prop_dictionary_t, struct in6_aliasreq *);
+int	setia6vltime_impl(prop_dictionary_t, struct in6_aliasreq *);
+int	setia6pltime_impl(prop_dictionary_t, struct in6_aliasreq *);
+int	setia6flags_impl(prop_dictionary_t, struct in6_aliasreq *);
