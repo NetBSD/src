@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.h,v 1.1 2005/03/20 02:43:50 thorpej Exp $	*/
+/*	$NetBSD: af_inet.h,v 1.2 2008/05/06 04:33:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,15 +31,12 @@
 
 /* XXX */
 #include <netinet/in.h>
+#include "parse.h"
 
-/* XXX */
-extern struct in_aliasreq in_addreq;
+void	in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
+    struct ifreq *);
+void	in_status(prop_dictionary_t, prop_dictionary_t, int); 
+void	in_addr_commit(prop_dictionary_t);
+void	in_addr_commit0(prop_dictionary_t);
 
-extern int setipdst;
-
-void	in_alias(struct ifreq *);
-void	in_status(int); 
-void	in_getaddr(const char *, int);
-void	in_getprefix(const char *, int);
-
-void	setifipdst(const char *, int d);
+int 	setifipdst(prop_dictionary_t, prop_dictionary_t);

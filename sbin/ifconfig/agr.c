@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.4 2008/04/22 17:18:11 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.5 2008/05/06 04:33:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.4 2008/04/22 17:18:11 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.5 2008/05/06 04:33:42 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -41,9 +41,12 @@ __RCSID("$NetBSD: agr.c,v 1.4 2008/04/22 17:18:11 dyoung Exp $");
 #include <err.h>
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <util.h>
 
+#include "env.h"
+#include "parse.h"
 #include "extern.h"
 #include "agr.h"
 
@@ -67,50 +70,55 @@ assertifname(const char *ifname)
 	}
 }
 
-void
-agraddport(const char *val, int d)
+int
+agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	char buf[IFNAMSIZ];
 	struct agrreq ar;
+	int s;
+	prop_string_t str;
+	prop_number_t num;
+	const char *ifname;
+	struct ifreq ifr;
+
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	assertifname(ifr.ifr_name);
 
-	strlcpy(buf, val, sizeof(buf));
+	num = (prop_number_t)prop_dictionary_get(env, "agrcmd");
+	if (num == NULL) {
+		warnx("%s.%d", __func__, __LINE__);
+		errno = ENOENT;
+		return -1;
+	}
 
+	str = (prop_string_t)prop_dictionary_get(env, "agrport");
+	if (str == NULL) {
+		warnx("%s.%d", __func__, __LINE__);
+		errno = ENOENT;
+		return -1;
+	}
+	strlcpy(buf, prop_string_cstring_nocopy(str), sizeof(buf));
+
+	memset(&ifr, 0, sizeof(ifr));
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	memset(&ar, 0, sizeof(ar));
 	ar.ar_version = AGRREQ_VERSION;
-	ar.ar_cmd = AGRCMD_ADDPORT;
+	ar.ar_cmd = (int)prop_number_integer_value(num);
 	ar.ar_buf = buf;
 	ar.ar_buflen = strlen(buf);
 	ifr.ifr_data = &ar;
 
 	if (ioctl(s, SIOCSETAGR, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSETAGR");
+	return 0;
 }
 
 void
-agrremport(const char *val, int d)
-{
-	char buf[IFNAMSIZ];
-	struct agrreq ar;
-
-	assertifname(ifr.ifr_name);
-
-	strlcpy(buf, val, sizeof(buf));
-
-	memset(&ar, 0, sizeof(ar));
-	ar.ar_version = AGRREQ_VERSION;
-	ar.ar_cmd = AGRCMD_REMPORT;
-	ar.ar_buf = buf;
-	ar.ar_buflen = strlen(buf);
-	ifr.ifr_data = &ar;
-
-	if (ioctl(s, SIOCSETAGR, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCSETAGR");
-}
-
-void
-agr_status()
+agr_status(prop_dictionary_t env)
 {
 	struct agrreq ar;
 	void *buf = NULL;
@@ -118,10 +126,19 @@ agr_status()
 	struct agrportlist *apl;
 	struct agrportinfo *api;
 	int i;
+	int s;
+	const char *ifname;
+	struct ifreq ifr;
 
-	if (checkifname(ifr.ifr_name)) {
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
+
+	memset(&ifr, 0, sizeof(ifr));
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+	if (checkifname(ifname))
 		return;
-	}
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 again:
 	memset(&ar, 0, sizeof(ar));
@@ -129,7 +146,7 @@ again:
 	ar.ar_cmd = AGRCMD_PORTLIST;
 	ar.ar_buf = buf;
 	ar.ar_buflen = buflen;
-	ifr.ifr_data = (void *)&ar;
+	ifr.ifr_data = &ar;
 
 	if (ioctl(s, SIOCGETAGR, &ifr) == -1) {
 		if (errno != E2BIG) {

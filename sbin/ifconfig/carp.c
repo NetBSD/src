@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.4 2008/04/22 00:14:20 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.5 2008/05/06 04:33:42 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -41,82 +41,137 @@
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
+#include <util.h>
 
+#include "env.h"
+#include "parse.h"
 #include "extern.h"
-
-void	carp_status(void);
-void	setcarp_advbase(const char *,int);
-void	setcarp_advskew(const char *, int);
-void	setcarp_passwd(const char *, int);
-void	setcarp_vhid(const char *, int);
-void	setcarp_state(const char *, int);
-void	setcarpdev(const char *, int);
-void	unsetcarpdev(const char *, int);
+#include "carp.h"
 
 static const char *carp_states[] = { CARP_STATES };
 
+#ifndef INET_ONLY
+struct kwinst carpstatekw[] = {
+	  {.k_word = "INIT", .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "BACKUP", .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "MASTER", .k_nextparser = &command_root.pb_parser}
+};
+
+struct pinteger parse_advbase = PINTEGER_INITIALIZER1(&parse_advbase, "advbase",
+    0, 255, 10, setcarp_advbase, "advbase", &command_root.pb_parser);
+
+struct pinteger parse_advskew = PINTEGER_INITIALIZER1(&parse_advskew, "advskew",
+    0, 254, 10, setcarp_advskew, "advskew", &command_root.pb_parser);
+
+struct piface carpdev = PIFACE_INITIALIZER(&carpdev, "carpdev", setcarpdev,
+    "carpdev", &command_root.pb_parser);
+
+struct pkw carpstate = PKW_INITIALIZER(&carpstate, "carp state", NULL,
+    "carp_state", carpstatekw, __arraycount(carpstatekw),
+    &command_root.pb_parser);
+
+struct pstr pass = PSTR_INITIALIZER(&pass, "pass", setcarp_passwd,
+    "pass", &command_root.pb_parser);
+
+struct pinteger parse_vhid = PINTEGER_INITIALIZER1(&vhid, "vhid",
+    0, 255, 10, setcarp_vhid, "vhid", &command_root.pb_parser);
+#endif
+
 void
-carp_status(void)
+carp_status(prop_dictionary_t env)
 {
 	const char *state;
+	struct ifreq ifr;
 	struct carpreq carpr;
+	int s;
+	const char *ifname;
 
-	memset(&carpr, 0, sizeof(struct carpreq));
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
+
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = &carpr;
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		return;
 
-	if (carpr.carpr_vhid > 0) {
-		if (carpr.carpr_state > CARP_MAXSTATE)
-			state = "<UNKNOWN>";
-		else
-			state = carp_states[carpr.carpr_state];
+	if (carpr.carpr_vhid <= 0)
+		return;
+	if (carpr.carpr_state > CARP_MAXSTATE)
+		state = "<UNKNOWN>";
+	else
+		state = carp_states[carpr.carpr_state];
 
-		printf("\tcarp: %s carpdev %s vhid %d advbase %d advskew %d\n",
-		    state, carpr.carpr_carpdev[0] != '\0' ?
-		    carpr.carpr_carpdev : "none", carpr.carpr_vhid,
-		    carpr.carpr_advbase, carpr.carpr_advskew);
-	}
+	printf("\tcarp: %s carpdev %s vhid %d advbase %d advskew %d\n",
+	    state, carpr.carpr_carpdev[0] != '\0' ?
+	    carpr.carpr_carpdev : "none", carpr.carpr_vhid,
+	    carpr.carpr_advbase, carpr.carpr_advskew);
 }
 
-/* ARGSUSED */
-void
-setcarp_passwd(const char *val, int d)
+int
+setcarp_passwd(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct carpreq carpr;
+	struct ifreq ifr;
+	int s;
+	prop_data_t data;
+	const char *ifname;
 
-	memset(&carpr, 0, sizeof(struct carpreq));
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
+
+	data = (prop_data_t)prop_dictionary_get(env, "pass");
+	if (data == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = &carpr;
+
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
+	memset(carpr.carpr_key, 0, sizeof(carpr.carpr_key));
 	/* XXX Should hash the password into the key here, perhaps? */
-	strlcpy((char *)carpr.carpr_key, val, CARP_KEY_LEN);
+	strlcpy((char *)carpr.carpr_key, prop_data_data_nocopy(data),
+	    MIN(CARP_KEY_LEN, prop_data_size(data)));
 
 	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
+	return 0;
 }
 
-/* ARGSUSED */
-void
-setcarp_vhid(const char *val, int d)
+int
+setcarp_vhid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
+	struct ifreq ifr;
 	struct carpreq carpr;
-	long tmp;
-	char *ep;
 	int vhid;
+	int s;
+	prop_number_t num;
 
-	errno = 0;
-	tmp = strtol(val, &ep, 10);
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if (*ep != '\0' || tmp < 0 || tmp > 255
-	    || errno == ERANGE)
-		errx(EXIT_FAILURE, "vhid: %s: must be between 0 and 255",
-		    val);
+	num = (prop_number_t)prop_dictionary_get(env, "vhid");
+	if (num == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
 
-	vhid = (int)tmp;
+	vhid = (int)prop_number_integer_value(num);
 
 	memset(&carpr, 0, sizeof(struct carpreq));
 	ifr.ifr_data = &carpr;
@@ -128,29 +183,37 @@ setcarp_vhid(const char *val, int d)
 
 	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
+	return 0;
 }
 
-/* ARGSUSED */
-void
-setcarp_advskew(const char *val, int d)
+int
+setcarp_advskew(prop_dictionary_t env, prop_dictionary_t xenv)
 {
+	struct ifreq ifr;
 	struct carpreq carpr;
-	long tmp;
-	char *ep;
 	int advskew;
+	int s;
+	prop_number_t num;
+	const char *ifname;
 
-	errno = 0;
-	tmp = strtol(val, &ep, 10);
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if (*ep != '\0' || tmp < 0 || tmp > 254
-	    || errno == ERANGE)
-		errx(EXIT_FAILURE, "advskew: %s: must be between 0 and 254",
-		    val);
+	num = (prop_number_t)prop_dictionary_get(env, "advskew");
+	if (num == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
 
-	advskew = (int)tmp;
+	advskew = (int)prop_number_integer_value(num);
 
-	memset(&carpr, 0, sizeof(struct carpreq));
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = &carpr;
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
@@ -159,29 +222,38 @@ setcarp_advskew(const char *val, int d)
 
 	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
+	return 0;
 }
 
 /* ARGSUSED */
-void
-setcarp_advbase(const char *val, int d)
+int
+setcarp_advbase(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct carpreq carpr;
-	long tmp;
-	char *ep;
 	int advbase;
+	int s;
+	prop_number_t num;
+	struct ifreq ifr;
+	const char *ifname;
 
-	errno = 0;
-	tmp = strtol(val, &ep, 10);
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if (*ep != '\0' || tmp < 0 || tmp > 255
-	    || errno == ERANGE)
-		errx(EXIT_FAILURE, "advbase: %s: must be between 0 and 255",
-		    val);
+	num = (prop_number_t)prop_dictionary_get(env, "advbase");
+	if (num == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
 
-	advbase = (int)tmp;
+	advbase = (int)prop_number_integer_value(num);
 
-	memset(&carpr, 0, sizeof(struct carpreq));
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = &carpr;
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
@@ -190,63 +262,80 @@ setcarp_advbase(const char *val, int d)
 
 	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
+	return 0;
 }
 
 /* ARGSUSED */
-void
-setcarp_state(const char *val, int d)
+int
+setcarp_state(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct carpreq carpr;
-	int i;
+	int s;
+	prop_number_t num;
+	struct ifreq ifr;
+	const char *ifname;
 
-	memset(&carpr, 0, sizeof(carpr));
-	ifr.ifr_data = &carpr;
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if (ioctl(s, SIOCGVH, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCGVH");
-
-	for (i = 0; i <= CARP_MAXSTATE; i++) {
-		if (!strcasecmp(val, carp_states[i])) {
-			carpr.carpr_state = i;
-			break;
-		}
+	num = (prop_number_t)prop_dictionary_get(env, "carp_state");
+	if (num == NULL) {
+		errno = ENOENT;
+		return -1;
 	}
 
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&carpr, 0, sizeof(carpr));
+	ifr.ifr_data = &carpr;
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+
+	if (ioctl(s, SIOCGVH, &ifr) == -1)
+		err(EXIT_FAILURE, "SIOCGVH");
+
+	carpr.carpr_state = (int)prop_number_integer_value(num);
+
 	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
+	return 0;
 }
 
 /* ARGSUSED */
-void
-setcarpdev(const char *val, int d)
+int
+setcarpdev(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct carpreq carpr;
+	int s;
+	prop_data_t data;
+	struct ifreq ifr;
+	const char *ifname;
 
+	data = (prop_data_t)prop_dictionary_get(env, "carpdev");
+	if (data == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	if ((s = getsock(AF_UNSPEC)) == -1)
+		err(EXIT_FAILURE, "%s: getsock", __func__);
+
+	memset(&ifr, 0, sizeof(ifr));
 	memset(&carpr, 0, sizeof(carpr));
 	ifr.ifr_data = &carpr;
+	if ((ifname = getifname(env)) == NULL)
+		err(EXIT_FAILURE, "%s: getifname", __func__);
+
+	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
-	strlcpy(carpr.carpr_carpdev, val, sizeof(carpr.carpr_carpdev));
+	strlcpy(carpr.carpr_carpdev, prop_data_data_nocopy(data),
+	    MIN(sizeof(carpr.carpr_carpdev), prop_data_size(data)));
 
 	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
-}
-
-void
-unsetcarpdev(const char *val, int d)
-{
-	struct carpreq carpr;
-
-	memset(&carpr, 0, sizeof(carpr));
-	ifr.ifr_data = &carpr;
-
-	if (ioctl(s, SIOCGVH, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCGVH");
-
-	memset(&carpr.carpr_carpdev, 0, sizeof(carpr.carpr_carpdev));
-
-	if (ioctl(s, SIOCSVH, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCSVH");
+	return 0;
 }
