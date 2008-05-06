@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.341 2008/05/05 17:08:54 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.342 2008/05/06 12:37:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.341 2008/05/05 17:08:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.342 2008/05/06 12:37:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -501,11 +501,9 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 		/*
 		 * Mark filesystem busy while we're creating a
 		 * vnode.  If unmount is in progress, this will
-		 * wait; if the unmount succeeds (only if umount
-		 * -f), this will return an error.  If the
-		 * unmount fails, we'll keep going afterwards.
+		 * fail.
 		 */
-		error = vfs_busy(mp, RW_READER);
+		error = vfs_trybusy(mp, RW_READER, NULL);
 		if (error)
 			return error;
 	}
