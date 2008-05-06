@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2008/05/06 04:33:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -28,45 +28,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  */
+#include "util.h"
 
 #define	RIDADDR 0  
 #define	ADDR    1
 #define	MASK    2
 #define	DSTADDR 3
 
-struct afswtch {
-	const char *af_name;
-	short af_af;
-	void (*af_status)(int);
-	void (*af_getaddr)(const char *, int);
-	void (*af_getprefix)(const char *, int);
-	u_long af_difaddr;
-	u_long af_aifaddr;
-	u_long af_gifaddr;
-	void *af_ridreq;
-	void *af_addreq;
-};
-
-extern const struct afswtch *afp;
-extern struct ifreq ifr;
-extern int s;
-extern int explicit_prefix;
-extern int clearaddr;
-extern int newaddr;
-extern char name[30];
-
-extern u_short flags;
 extern int lflag;
 extern int zflag;
 #ifdef INET6
 extern int Lflag;
 #endif /* INET6 */
-
-extern struct ifreq ifr, ridreq;
-extern struct ifaliasreq addreq;
-
-const struct afswtch *lookup_af_byname(const char *);
-const struct afswtch *lookup_af_bynum(int);
-const char *get_string(const char *, const char *, u_int8_t *, int *);
-void	print_string(const u_int8_t *, int);
-void    getsock(int);
