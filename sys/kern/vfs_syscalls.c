@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.358 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.359 2008/05/06 19:14:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.358 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359 2008/05/06 19:14:32 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -685,8 +685,8 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 		return (EINVAL);
 	}
 
-	error = dounmount(mp, SCARG(uap, flags), l);
 	vrele(vp);
+	error = dounmount(mp, SCARG(uap, flags), l);
 	return error;
 }
 
