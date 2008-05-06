@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.6 2008/05/06 17:29:04 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.7 2008/05/06 21:16:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -158,20 +158,16 @@ setcarp_vhid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ifreq ifr;
 	struct carpreq carpr;
-	int vhid;
+	int64_t vhid;
 	int s;
-	prop_number_t num;
 
 	if ((s = getsock(AF_UNSPEC)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	num = (prop_number_t)prop_dictionary_get(env, "vhid");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "vhid", &vhid)) {
 		errno = ENOENT;
 		return -1;
 	}
-
-	vhid = (int)prop_number_integer_value(num);
 
 	memset(&carpr, 0, sizeof(struct carpreq));
 	ifr.ifr_data = &carpr;
@@ -191,21 +187,17 @@ setcarp_advskew(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ifreq ifr;
 	struct carpreq carpr;
-	int advskew;
+	int64_t advskew;
 	int s;
-	prop_number_t num;
 	const char *ifname;
 
 	if ((s = getsock(AF_UNSPEC)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	num = (prop_number_t)prop_dictionary_get(env, "advskew");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "advskew", &advskew)) {
 		errno = ENOENT;
 		return -1;
 	}
-
-	advskew = (int)prop_number_integer_value(num);
 
 	memset(&ifr, 0, sizeof(ifr));
 	memset(&carpr, 0, sizeof(carpr));
@@ -230,22 +222,18 @@ int
 setcarp_advbase(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct carpreq carpr;
-	int advbase;
+	int64_t advbase;
 	int s;
-	prop_number_t num;
 	struct ifreq ifr;
 	const char *ifname;
 
 	if ((s = getsock(AF_UNSPEC)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	num = (prop_number_t)prop_dictionary_get(env, "advbase");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "advbase", &advbase)) {
 		errno = ENOENT;
 		return -1;
 	}
-
-	advbase = (int)prop_number_integer_value(num);
 
 	memset(&ifr, 0, sizeof(ifr));
 	memset(&carpr, 0, sizeof(carpr));
@@ -271,15 +259,14 @@ setcarp_state(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct carpreq carpr;
 	int s;
-	prop_number_t num;
 	struct ifreq ifr;
+	int64_t carp_state;
 	const char *ifname;
 
 	if ((s = getsock(AF_UNSPEC)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	num = (prop_number_t)prop_dictionary_get(env, "carp_state");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "carp_state", &carp_state)) {
 		errno = ENOENT;
 		return -1;
 	}
@@ -295,7 +282,7 @@ setcarp_state(prop_dictionary_t env, prop_dictionary_t xenv)
 	if (ioctl(s, SIOCGVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGVH");
 
-	carpr.carpr_state = (int)prop_number_integer_value(num);
+	carpr.carpr_state = carp_state;
 
 	if (ioctl(s, SIOCSVH, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSVH");
