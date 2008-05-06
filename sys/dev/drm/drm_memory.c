@@ -1,4 +1,4 @@
-/* $NetBSD: drm_memory.c,v 1.8 2008/03/13 05:35:43 bjs Exp $ */
+/* $NetBSD: drm_memory.c,v 1.9 2008/05/06 01:26:14 bjs Exp $ */
 
 /* drm_memory.h -- Memory management wrappers for DRM -*- linux-c -*-
  * Created: Thu Feb  4 14:00:34 1999 by faith@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.8 2008/03/13 05:35:43 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.9 2008/05/06 01:26:14 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -54,42 +54,53 @@ MALLOC_DEFINE(M_DRM, "drm", "DRM Data Structures");
 
 void drm_mem_init(void)
 {
-/*
-	malloc_type_attach(M_DRM);
-*/
 }
 
 void drm_mem_uninit(void)
 {
 }
 
-void *drm_alloc(size_t size, int area)
+inline void *drm_mem_alloc(size_t size)
 {
-	return malloc(size, M_DRM, M_NOWAIT);
+	return kmem_alloc(size, KM_NOSLEEP);
 }
 
-void *drm_calloc(size_t nmemb, size_t size, int area)
+inline void *drm_mem_zalloc(size_t size)
 {
-	return malloc(size * nmemb, M_DRM, M_NOWAIT | M_ZERO);
+	return kmem_zalloc(size, KM_NOSLEEP);
 }
 
-void *drm_realloc(void *oldpt, size_t oldsize, size_t size, int area)
+inline void *drm_mem_calloc(size_t nmemb, size_t size)
+{
+	return kmem_zalloc(size * nmemb, KM_NOSLEEP);
+}
+
+inline void *drm_mem_realloc(void *oldpt, size_t oldsize, size_t size)
 {
 	void *pt;
 
-	pt = malloc(size, M_DRM, M_NOWAIT);
+	pt = drm_mem_alloc(size);
 	if (pt == NULL)
 		return NULL;
 	if (oldpt && oldsize) {
 		memcpy(pt, oldpt, oldsize);
-		free(oldpt, M_DRM);
+		drm_mem_free(oldpt, oldsize);
 	}
 	return pt;
 }
 
-void drm_free(void *pt, size_t size, int area)
+inline void drm_mem_free(void *pt, size_t size)
 {
-	free(pt, M_DRM);
+#if 0
+	KASSERT(pt == NULL)
+#else
+	if (pt == NULL) {
+		DRM_DEBUG("drm_mem_free: told to free a null pointer!");
+		return;
+	}
+#endif
+
+	kmem_free(pt, size);
 }
 
 void *drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
@@ -226,4 +237,61 @@ drm_mtrr_del(int __unused handle, unsigned long offset, size_t size, int flags)
 #else
 	return 0;
 #endif
+}
+
+inline struct drm_dmamem *
+drm_dmamem_alloc(bus_dma_tag_t tag, size_t size, int wait)
+{
+	struct drm_dmamem *dma;
+	int kmflag;
+
+	kmflag = (wait & DRM_DMA_NOWAIT) != 0 ? KM_NOSLEEP : KM_SLEEP;
+
+	dma = kmem_zalloc(sizeof(*dma), kmflag);
+	if (dma == NULL)
+		return NULL;
+
+	dma->dm_size = size;
+	dma->dm_tag = tag;
+
+	if (bus_dmamap_create(dma->dm_tag, size, size / PAGE_SIZE + 1, size, 0,
+	    wait|BUS_DMA_ALLOCNOW, &dma->dm_map) != 0)
+		goto dmafree;
+
+	if (bus_dmamem_alloc(dma->dm_tag, size, PAGE_SIZE, 0, dma->dm_segs,
+	    1, &dma->dm_nsegs, wait) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(dma->dm_tag, dma->dm_segs, dma->dm_nsegs, size,
+	    &dma->dm_kva, wait|BUS_DMA_COHERENT) != 0)
+		goto free;
+
+	if (bus_dmamap_load(dma->dm_tag, dma->dm_map, dma->dm_kva, size,
+	    NULL, wait) != 0)
+		goto unmap;
+
+	return dma;
+
+unmap:
+	bus_dmamem_unmap(dma->dm_tag, dma->dm_kva, size);
+free:
+	bus_dmamem_free(dma->dm_tag, dma->dm_segs, dma->dm_nsegs);
+destroy:
+	bus_dmamap_destroy(dma->dm_tag, dma->dm_map);
+dmafree:
+	kmem_free(dma, sizeof(*dma));
+
+	return NULL;
+}
+
+inline void
+drm_dmamem_free(struct drm_dmamem *dma)
+{
+	if (dma != NULL) {
+		bus_dmamap_unload(dma->dm_tag, dma->dm_map);
+		bus_dmamem_unmap(dma->dm_tag, dma->dm_kva, dma->dm_size);
+		bus_dmamem_free(dma->dm_tag, dma->dm_segs, dma->dm_nsegs);
+		bus_dmamap_destroy(dma->dm_tag, dma->dm_map);
+		kmem_free(dma, sizeof(*dma));
+	}
 }
