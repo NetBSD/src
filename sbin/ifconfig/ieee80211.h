@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.5 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.6 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -50,4 +50,4 @@ int	setifpowersavesleep(prop_dictionary_t, prop_dictionary_t);
 int	scan_exec(prop_dictionary_t, prop_dictionary_t);
 
 void	ieee80211_statistics(prop_dictionary_t);
-void	ieee80211_status(prop_dictionary_t);
+void	ieee80211_status(prop_dictionary_t, prop_dictionary_t);

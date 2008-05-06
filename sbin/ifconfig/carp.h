@@ -1,4 +1,4 @@
-/* $NetBSD: carp.h,v 1.2 2008/05/06 04:33:42 dyoung Exp $ */
+/* $NetBSD: carp.h,v 1.3 2008/05/06 17:29:04 dyoung Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@ extern struct piface carpdev;
 extern struct pkw carpstate;
 extern struct pstr pass;
 
-void	carp_status(prop_dictionary_t);
+void	carp_status(prop_dictionary_t, prop_dictionary_t);
 int	setcarp_advbase(prop_dictionary_t, prop_dictionary_t);
 int	setcarp_advskew(prop_dictionary_t, prop_dictionary_t);
 int	setcarp_passwd(prop_dictionary_t, prop_dictionary_t);

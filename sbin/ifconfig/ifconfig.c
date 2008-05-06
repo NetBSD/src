@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.188 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.189 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.188 2008/05/06 16:15:17 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.189 2008/05/06 17:29:04 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,8 @@ static int media_status_exec(prop_dictionary_t, prop_dictionary_t);
 int	carrier(prop_dictionary_t);
 void	printall(const char *, prop_dictionary_t);
 int	list_cloners(prop_dictionary_t, prop_dictionary_t);
-void 	status(const struct sockaddr_dl *, prop_dictionary_t);
+void 	status(const struct sockaddr_dl *, prop_dictionary_t,
+    prop_dictionary_t);
 void 	usage(void);
 
 void	print_media_word(int, const char *);
@@ -744,7 +745,7 @@ main(int argc, char **argv)
 		errx(EXIT_FAILURE, "%s: lookup_af_bynum", __func__);
 
 	if (afp->af_addr_commit != NULL) {
-		(*afp->af_addr_commit)(env);
+		(*afp->af_addr_commit)(env, xenv);
 	} else {
 		if (clearaddr) {
 			estrlcpy(afp->af_ridreq, ifname, IFNAMSIZ);
@@ -791,10 +792,8 @@ printall(const char *ifname, prop_dictionary_t env0)
 	struct ifaddrs *ifap, *ifa;
 	struct ifreq ifr;
 	const struct sockaddr_dl *sdl = NULL;
-	prop_dictionary_t env;
-	prop_string_t str;
+	prop_dictionary_t env, oenv;
 	int idx;
-	bool rc;
 	char *p;
 
 	if (env0 == NULL)
@@ -802,7 +801,9 @@ printall(const char *ifname, prop_dictionary_t env0)
 	else
 		env = prop_dictionary_copy_mutable(env0);
 
-	if (env == NULL)
+	oenv = prop_dictionary_create();
+
+	if (env == NULL || oenv == NULL)
 		errx(EXIT_FAILURE, "%s: prop_dictionary_copy/create", __func__);
 
 	if (getifaddrs(&ifap) != 0)
@@ -823,11 +824,7 @@ printall(const char *ifname, prop_dictionary_t env0)
 			sdl = (const struct sockaddr_dl *) ifa->ifa_addr;
 		if (p && strcmp(p, ifa->ifa_name) == 0)
 			continue;
-		if ((str = prop_string_create_cstring(ifa->ifa_name)) == NULL)
-			continue;
-		rc = prop_dictionary_set(env, "if", str);
-		prop_object_release((prop_object_t)str);
-		if (!rc)
+		if (!prop_dictionary_set_cstring(env, "if", ifa->ifa_name))
 			continue;
 		p = ifa->ifa_name;
 
@@ -851,12 +848,13 @@ printall(const char *ifname, prop_dictionary_t env0)
 			continue;
 		}
 
-		status(sdl, env);
+		status(sdl, env, oenv);
 		sdl = NULL;
 	}
 	if (lflag)
 		printf("\n");
 	prop_object_release((prop_object_t)env);
+	prop_object_release((prop_object_t)oenv);
 	freeifaddrs(ifap);
 }
 
@@ -1168,22 +1166,21 @@ int
 setifflags(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ifreq ifreq;
-	int ifflag, s;
-	prop_number_t num;
+	int64_t ifflag;
+	int s;
+	bool rc;
 	const char *ifname;
 
 	s = getsock(AF_INET);
 
-	num = (prop_number_t)prop_dictionary_get(env, "ifflag");
-	assert(num != NULL);
+	rc = prop_dictionary_get_int64(env, "ifflag", &ifflag);
+	assert(rc);
 	if ((ifname = getifname(env)) == NULL)
 		return -1;
 
 	estrlcpy(ifreq.ifr_name, ifname, sizeof(ifreq.ifr_name));
  	if (ioctl(s, SIOCGIFFLAGS, &ifreq) == -1)
 		return -1;
-
-	ifflag = (int)prop_number_integer_value(num);
 
 	if (ifflag < 0) {
 		ifflag = -ifflag;
@@ -1242,19 +1239,20 @@ getifcaps(prop_dictionary_t env, prop_dictionary_t oenv, struct ifcapreq *oifcr)
 static int
 setifcaps(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	int ifcap, s;
-	prop_number_t num;
+	int64_t ifcap;
+	int s;
+	bool rc;
 	prop_data_t capdata;
 	const char *ifname;
 	struct ifcapreq ifcr;
 
 	s = getsock(AF_INET);
 
-	num = (prop_number_t)prop_dictionary_get(env, "ifcap");
-	assert(num != NULL);
+	rc = prop_dictionary_get_int64(env, "ifcap", &ifcap);
+	assert(rc);
+
 	if ((ifname = getifname(env)) == NULL)
 		return -1;
-	ifcap = (int)prop_number_integer_value(num);
 
 	if (getifcaps(env, oenv, &ifcr) == -1)
 		return -1;
@@ -1278,9 +1276,10 @@ static int
 setifmetric(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ifreq ifr;
-	prop_number_t num;
+	bool rc;
 	const char *ifname;
 	int s;
+	int64_t metric;
 
 	if ((s = getsock(AF_UNSPEC)) == -1)
 		return -1;
@@ -1288,11 +1287,11 @@ setifmetric(prop_dictionary_t env, prop_dictionary_t xenv)
 	if ((ifname = getifname(env)) == NULL)
 		return -1;
 
-	num = (prop_number_t)prop_dictionary_get(env, "metric");
-	assert(num != NULL);
+	rc = prop_dictionary_get_int64(env, "metric", &metric);
+	assert(rc);
 
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	ifr.ifr_metric = (int)prop_number_integer_value(num);
+	ifr.ifr_metric = metric;
 	if (ioctl(s, SIOCSIFMETRIC, &ifr) == -1)
 		warn("SIOCSIFMETRIC");
 	return 0;
@@ -1301,7 +1300,6 @@ setifmetric(prop_dictionary_t env, prop_dictionary_t xenv)
 static void
 do_setifpreference(prop_dictionary_t env)
 {
-	prop_number_t num;
 	struct if_addrprefreq ifap;
 	int af, s;
 	const char *ifname;
@@ -1315,13 +1313,15 @@ do_setifpreference(prop_dictionary_t env)
 	if ((afp = lookup_af_bynum(af)) == NULL)
 		errx(EXIT_FAILURE, "%s: lookup_af_bynum", __func__);
 
-	num = (prop_number_t)prop_dictionary_get(env, "preference");
-	if (num == NULL)
+	memset(&ifap, 0, sizeof(ifap));
+
+	if (!prop_dictionary_get_int16(env, "preference",
+	    &ifap.ifap_preference))
 		return; 
 
 	d = (prop_data_t)prop_dictionary_get(env, "address");
 	assert(d != NULL);
-	
+
 	pfx = prop_data_data_nocopy(d);
 
 	s = getsock(AF_UNSPEC);
@@ -1330,7 +1330,6 @@ do_setifpreference(prop_dictionary_t env)
 		err(EXIT_FAILURE, "%s: getifname", __func__);
 
 	strlcpy(ifap.ifap_name, ifname, sizeof(ifap.ifap_name));
-	ifap.ifap_preference = (int16_t)prop_number_integer_value(num);
 	memcpy(&ifap.ifap_addr, &pfx->pfx_addr,
 	    MIN(sizeof(ifap.ifap_addr), pfx->pfx_addr.sa_len));
 	if (ioctl(s, SIOCSIFADDRPREF, &ifap) == -1)
@@ -1340,7 +1339,8 @@ do_setifpreference(prop_dictionary_t env)
 static int
 setifmtu(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	prop_number_t num;
+	int64_t mtu;
+	bool rc;
 	const char *ifname;
 	struct ifreq ifr;
 	int s;
@@ -1351,11 +1351,11 @@ setifmtu(prop_dictionary_t env, prop_dictionary_t xenv)
 	if ((ifname = getifname(env)) == NULL)
 		return -1;
 
-	num = (prop_number_t)prop_dictionary_get(env, "mtu");
-	assert(num != NULL);
+	rc = prop_dictionary_get_int64(env, "mtu", &mtu);
+	assert(rc);
 
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	ifr.ifr_mtu = (int)prop_number_integer_value(num);
+	ifr.ifr_mtu = mtu;
 	if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
 		warn("SIOCSIFMTU");
 
@@ -1373,7 +1373,6 @@ void
 init_current_media(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ifmediareq ifmr;
-	prop_bool_t b;
 	int s;
 	const char *ifname;
 
@@ -1401,12 +1400,10 @@ init_current_media(prop_dictionary_t env, prop_dictionary_t oenv)
 				err(EXIT_FAILURE, "SIOCGIFMEDIA");
 		}
 
-		if ((b = prop_bool_create(true)) == NULL)
-			err(EXIT_FAILURE, "%s: prop_bool_create", __func__);
-
-		if (!prop_dictionary_set(oenv, "initmedia", (prop_object_t)b))
-			err(EXIT_FAILURE, "%s: prop_dictionary_set", __func__);
-		prop_object_release((prop_object_t)b);
+		if (!prop_dictionary_set_bool(oenv, "initmedia", true)) {
+			err(EXIT_FAILURE, "%s: prop_dictionary_set_bool",
+			    __func__);
+		}
 		media_current = ifmr.ifm_current;
 	}
 
@@ -1554,13 +1551,14 @@ unsetmediaopt(prop_dictionary_t env, prop_dictionary_t xenv)
 int
 setmediainst(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	int type, subtype, options, inst;
-	prop_number_t num;
+	int type, subtype, options;
+	int64_t inst;
+	bool rc;
 
 	init_current_media(env, xenv);
 
-	num = (prop_number_t)prop_dictionary_get(env, "mediainst");
-	assert(num != NULL);
+	rc = prop_dictionary_get_int64(env, "mediainst", &inst);
+	assert(rc);
 
 	/* Can only issue `instance' once. */
 	/* Must have already specified `media' */
@@ -1568,8 +1566,6 @@ setmediainst(prop_dictionary_t env, prop_dictionary_t xenv)
 	type = IFM_TYPE(media_current);
 	subtype = IFM_SUBTYPE(media_current);
 	options = IFM_OPTIONS(media_current);
-
-	inst = (int)prop_number_integer_value(num);
 
 	media_current = IFM_MAKEWORD(type, subtype, options, inst);
 
@@ -1679,7 +1675,8 @@ const struct ifmedia_status_description ifm_status_descriptions[] =
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status(const struct sockaddr_dl *sdl, prop_dictionary_t env)
+status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
+    prop_dictionary_t oenv)
 {
 	struct ifmediareq ifmr;
 	struct ifdatareq ifdr;
@@ -1702,7 +1699,7 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env)
 	if ((s = getsock(af)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	if ((ifname = getifinfo(env, env, &flags)) == NULL)
+	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
 		err(EXIT_FAILURE, "%s: getifinfo", __func__);
 
 	(void)snprintb(fbuf, sizeof(fbuf), IFFBITS, flags);
@@ -1719,7 +1716,7 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env)
 		printf(" mtu %d", ifr.ifr_mtu);
 	printf("\n");
 
-	if (getifcaps(env, env, &ifcr) == -1)
+	if (getifcaps(env, oenv, &ifcr) == -1)
 		err(EXIT_FAILURE, "%s: getifcaps", __func__);
 
 	if (ifcr.ifcr_capabilities != 0) {
@@ -1731,13 +1728,13 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env)
 		printf("\tenabled=%s\n", &fbuf[2]);
 	}
 
-	ieee80211_status(env);
-	vlan_status(env);
+	ieee80211_status(env, oenv);
+	vlan_status(env, oenv);
 #ifndef INET_ONLY
-	carp_status(env);
+	carp_status(env, oenv);
 #endif
-	tunnel_status(env);
-	agr_status(env);
+	tunnel_status(env, oenv);
+	agr_status(env, oenv);
 
 	if (sdl != NULL &&
 	    getnameinfo((const struct sockaddr *)sdl, sdl->sdl_len,
@@ -1906,16 +1903,17 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env)
  proto_status:
 
 	if (afp != NULL)
-		(*afp->af_status)(env, env, true);
+		(*afp->af_status)(env, oenv, true);
 	else for (afp = afs; afp->af_name != NULL; afp++)
-		(*afp->af_status)(env, env, false);
+		(*afp->af_status)(env, oenv, false);
 }
 
 int
 setifprefixlen(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	const char *ifname;
-	prop_number_t num;
+	bool rc;
+	int64_t plen;
 	int af;
 	const struct afswtch *afp;
 	unsigned short flags;
@@ -1931,10 +1929,10 @@ setifprefixlen(prop_dictionary_t env, prop_dictionary_t xenv)
 	if ((ifname = getifinfo(env, xenv, &flags)) == NULL)
 		err(EXIT_FAILURE, "getifinfo");
 
-	num = (prop_number_t)prop_dictionary_get(env, "prefixlen");
-	assert(num != NULL);
+	rc = prop_dictionary_get_int64(env, "prefixlen", &plen);
+	assert(rc);
 
-	pfx = prefixlen_to_mask(af, (int)prop_number_integer_value(num));
+	pfx = prefixlen_to_mask(af, plen);
 	if (pfx == NULL)
 		err(EXIT_FAILURE, "prefixlen_to_mask");
 

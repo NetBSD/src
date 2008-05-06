@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.10 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.11 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.10 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.11 2008/05/06 17:29:04 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -159,7 +159,7 @@ deletetunnel(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 void
-tunnel_status(prop_dictionary_t env)
+tunnel_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	char dstserv[sizeof(",65535")];
 	char srcserv[sizeof(",65535")];

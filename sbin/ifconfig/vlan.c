@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.4 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.5 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.4 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.5 2008/05/06 17:29:04 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -159,7 +159,7 @@ setvlanif(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 void
-vlan_status(prop_dictionary_t env)
+vlan_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct vlanreq vlr;
 	int s;
