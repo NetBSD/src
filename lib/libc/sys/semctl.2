@@ -1,4 +1,4 @@
-.\"	$NetBSD: semctl.2,v 1.16 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: semctl.2,v 1.17 2008/05/06 20:25:09 njoly Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -223,6 +223,13 @@ is not a valid command.
 or
 .Fa arg.array
 specifies an invalid address.
+.It Bq Er ERANGE
+.Fa cmd
+is equal to
+.Dv SETVAL
+or
+.Dv SETALL
+and the value to be set is greater than the system semaphore maximum value.
 .El
 .Sh SEE ALSO
 .Xr semget 2 ,

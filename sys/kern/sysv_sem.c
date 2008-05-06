@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.82 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.83 2008/05/06 20:25:09 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.82 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.83 2008/05/06 20:25:09 njoly Exp $");
 
 #define SYSVSEM
 
@@ -603,6 +603,10 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		}
 		KASSERT(arg != NULL);
+		if ((unsigned int)arg->val > seminfo.semvmx) {
+			error = ERANGE;
+			break;
+		}
 		semaptr->_sem_base[semnum].semval = arg->val;
 		semundo_clear(ix, semnum);
 		cv_broadcast(&semcv[ix]);
@@ -613,11 +617,16 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		KASSERT(arg != NULL);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			error = copyin(&arg->array[i],
-			    &semaptr->_sem_base[i].semval,
+			unsigned short semval;
+			error = copyin(&arg->array[i], &semval,
 			    sizeof(arg->array[i]));
 			if (error != 0)
 				break;
+			if ((unsigned int)semval > seminfo.semvmx) {
+				error = ERANGE;
+				break;
+			}
+			semaptr->_sem_base[i].semval = semval;
 		}
 		semundo_clear(ix, -1);
 		cv_broadcast(&semcv[ix]);
