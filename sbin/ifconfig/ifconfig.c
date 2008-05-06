@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.190 2008/05/06 18:09:50 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.191 2008/05/06 18:16:34 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.190 2008/05/06 18:09:50 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.191 2008/05/06 18:16:34 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -1263,7 +1263,7 @@ setifcaps(prop_dictionary_t env, prop_dictionary_t oenv)
 	if ((capdata = prop_data_create_data(&ifcr, sizeof(ifcr))) == NULL)
 		return -1;
 
-	rc = prop_dictionary_set(oenv, "ifcaps", capdata;
+	rc = prop_dictionary_set(oenv, "ifcaps", capdata);
 	prop_object_release((prop_object_t)capdata);
 
 	return rc ? 0 : -1;
