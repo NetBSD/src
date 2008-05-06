@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.14 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.15 2008/05/06 21:18:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.14 2008/05/06 17:29:04 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.15 2008/05/06 21:18:17 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,7 +63,8 @@ __RCSID("$NetBSD: ieee80211.c,v 1.14 2008/05/06 17:29:04 dyoung Exp $");
 #include "parse.h"
 #include "env.h"
 
-static int set80211(prop_dictionary_t env, int, int, int, u_int8_t *);
+static int set80211(prop_dictionary_t env, uint16_t, int16_t, int16_t,
+    u_int8_t *);
 static u_int ieee80211_mhz2ieee(u_int, u_int);
 static int getmaxrate(const uint8_t [15], u_int8_t);
 static const char * getcaps(int);
@@ -139,7 +140,8 @@ struct pstr parse_bssid = PSTR_INITIALIZER(&parse_bssid, "bssid", setifbssid,
     "bssid", &command_root.pb_parser);
 
 static int
-set80211(prop_dictionary_t env, int type, int val, int len, u_int8_t *data)
+set80211(prop_dictionary_t env, uint16_t type, int16_t val, int16_t len,
+    u_int8_t *data)
 {
 	struct ieee80211req	ireq;
 	const char *ifname;
@@ -167,23 +169,21 @@ set80211(prop_dictionary_t env, int type, int val, int len, u_int8_t *data)
 int
 sethidessid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	prop_bool_t on;
+	bool on, rc;
 
-	on = (prop_bool_t)prop_dictionary_get(env, "hidessid");
-	assert(on != NULL);
-	return set80211(env, IEEE80211_IOC_HIDESSID,
-	    prop_bool_true(on) ? 1 : 0, 0, NULL);
+	rc = prop_dictionary_get_bool(env, "hidessid", &on);
+	assert(rc);
+	return set80211(env, IEEE80211_IOC_HIDESSID, on ? 1 : 0, 0, NULL);
 }
 
 int
 setapbridge(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	prop_bool_t on;
+	bool on, rc;
 
-	on = (prop_bool_t)prop_dictionary_get(env, "apbridge");
-	assert(on != NULL);
-	return set80211(env, IEEE80211_IOC_APBRIDGE,
-	    prop_bool_true(on) ? 1 : 0, 0, NULL);
+	rc = prop_dictionary_get_bool(env, "apbridge", &on);
+	assert(rc);
+	return set80211(env, IEEE80211_IOC_APBRIDGE, on ? 1 : 0, 0, NULL);
 }
 
 static enum ieee80211_opmode
@@ -296,24 +296,12 @@ setifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
 int
 setiffrag(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	prop_number_t num;
-	const char *ifname;
-	struct ieee80211req ireq;
-	int s;
+	bool rc;
+	int16_t val;
 
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		return -1;
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
-
-	num = (prop_number_t)prop_dictionary_get(env, "frag");
-	assert(num != NULL);
-
-	estrlcpy(ireq.i_name, ifname, sizeof(ireq.i_name));
-	ireq.i_type = IEEE80211_IOC_FRAGTHRESHOLD;
-	ireq.i_val = (int16_t)prop_number_integer_value(num);
-	if (ioctl(s, SIOCS80211, &ireq) == -1)
+	rc = prop_dictionary_get_int16(env, "frag", &val);
+	assert(rc);
+	if (set80211(env, IEEE80211_IOC_FRAGTHRESHOLD, val, 0, NULL) == -1)
 		err(EXIT_FAILURE, "IEEE80211_IOC_FRAGTHRESHOLD");
 	return 0;
 }
@@ -321,7 +309,7 @@ setiffrag(prop_dictionary_t env, prop_dictionary_t xenv)
 int
 setifchan(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	prop_number_t num;
+	bool rc;
 	const char *ifname;
 	struct ieee80211chanreq channel;
 	int s;
@@ -332,11 +320,9 @@ setifchan(prop_dictionary_t env, prop_dictionary_t xenv)
 	if ((ifname = getifname(env)) == NULL)
 		return -1;
 
-	num = (prop_number_t)prop_dictionary_get(env, "chan");
-	assert(num != NULL);
-
 	estrlcpy(channel.i_name, ifname, sizeof(channel.i_name));
-	channel.i_channel = (uint16_t)prop_number_integer_value(num);
+	rc = prop_dictionary_get_uint16(env, "chan", &channel.i_channel);
+	assert(rc);
 	if (ioctl(s, SIOCS80211CHANNEL, &channel) == -1)
 		err(EXIT_FAILURE, "SIOCS80211CHANNEL");
 	return 0;
@@ -446,7 +432,7 @@ setifpowersave(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_power power;
 	const char *ifname;
-	prop_bool_t on;
+	bool on, rc;
 	int s;
 
 	if ((s = getsock(AF_UNSPEC)) == -1)
@@ -460,10 +446,10 @@ setifpowersave(prop_dictionary_t env, prop_dictionary_t xenv)
 		err(EXIT_FAILURE, "SIOCG80211POWER");
 	}
 
-	on = (prop_bool_t)prop_dictionary_get(env, "powersave");
-	assert(on != NULL);
+	rc = prop_dictionary_get_bool(env, "powersave", &on);
+	assert(rc);
 
-	power.i_enabled = prop_bool_true(on) ? 1 : 0;
+	power.i_enabled = on ? 1 : 0;
 	if (ioctl(s, SIOCS80211POWER, &power) == -1) {
 		warn("SIOCS80211POWER");
 		return -1;
@@ -477,13 +463,14 @@ setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t xenv)
 	struct ieee80211_power power;
 	int s;
 	const char *ifname;
-	prop_number_t num;
+	int64_t maxsleep;
+	bool rc;
 
 	if ((ifname = getifname(env)) == NULL)
 		return -1;
 
-	num = (prop_number_t)prop_dictionary_get(env, "powersavesleep");
-	assert(num != NULL);
+	rc = prop_dictionary_get_int64(env, "powersavesleep", &maxsleep);
+	assert(rc);
 
 	if ((s = getsock(AF_UNSPEC)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
@@ -493,7 +480,7 @@ setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t xenv)
 		err(EXIT_FAILURE, "SIOCG80211POWER");
 	}
 
-	power.i_maxsleep = (int)prop_number_integer_value(num);
+	power.i_maxsleep = maxsleep;
 	if (ioctl(s, SIOCS80211POWER, &power) == -1)
 		err(EXIT_FAILURE, "SIOCS80211POWER");
 	return 0;
@@ -781,27 +768,15 @@ ieee80211_status(prop_dictionary_t env, prop_dictionary_t oenv)
 static void
 scan_and_wait(prop_dictionary_t env)
 {
-	struct ieee80211req ireq;
 	int sroute;
-	int s;
-	const char *ifname;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
-
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
 
 	sroute = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (sroute < 0) {
 		perror("socket(PF_ROUTE,SOCK_RAW)");
 		return;
 	}
-	memset(&ireq, 0, sizeof(ireq));
-	estrlcpy(ireq.i_name, ifname, sizeof(ireq.i_name));
-	ireq.i_type = IEEE80211_IOC_SCAN_REQ;
 	/* NB: only root can trigger a scan so ignore errors */
-	if (ioctl(s, SIOCS80211, &ireq) >= 0) {
+	if (set80211(env, IEEE80211_IOC_SCAN_REQ, 0, 0, NULL) >= 0) {
 		char buf[2048];
 		struct if_announcemsghdr *ifan;
 		struct rt_msghdr *rtm;
