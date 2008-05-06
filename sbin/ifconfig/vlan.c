@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.5 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.6 2008/05/06 18:58:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.5 2008/05/06 17:29:04 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.6 2008/05/06 18:58:47 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -102,19 +102,16 @@ setvlan(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct vlanreq vlr;
 	int s;
-	prop_number_t num;
-	unsigned short tag;
+	int64_t tag;
 	struct ifreq ifr;
 
 	if ((s = getvlan(env, &ifr, &vlr, false)) == -1)
 		err(EXIT_FAILURE, "%s: getvlan", __func__);
 
-	num = (prop_number_t)prop_dictionary_get(env, "vlantag");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "vlantag", &tag)) {
 		errno = ENOENT;
 		return -1;
 	}
-	tag = (unsigned short)prop_number_integer_value(num);
 
 	vlr.vlr_tag = tag;
 
@@ -128,30 +125,25 @@ setvlanif(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct vlanreq vlr;
 	int s;
-	prop_number_t num;
-	prop_string_t str;
-	unsigned short tag;
+	const char *parent;
+	int64_t tag;
 	struct ifreq ifr;
 
 	if ((s = getvlan(env, &ifr, &vlr, false)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	num = (prop_number_t)prop_dictionary_get(env, "vlantag");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "vlantag", &tag)) {
 		errno = ENOENT;
 		return -1;
 	}
-	tag = (unsigned short)prop_number_integer_value(num);
 
-	str = (prop_string_t)prop_dictionary_get(env, "vlanif");
-	if (str == NULL) {
+	if (!prop_dictionary_get_cstring_nocopy(env, "vlanif", &parent)) {
 		errno = ENOENT;
 		return -1;
 	}
-	strlcpy(vlr.vlr_parent, prop_string_cstring_nocopy(str),
-	    sizeof(vlr.vlr_parent));
-	if (!prop_string_equals_cstring(str, ""))
-		vlr.vlr_tag = tag;
+	strlcpy(vlr.vlr_parent, parent, sizeof(vlr.vlr_parent));
+	if (strcmp(parent, "") != 0)
+		vlr.vlr_tag = (unsigned short)tag;
 
 	if (ioctl(s, SIOCSETVLAN, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSETVLAN");
