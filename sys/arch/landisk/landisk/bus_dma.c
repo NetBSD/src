@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 2008/05/03 23:45:40 uwe Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 2008/05/06 01:29:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2008/05/03 23:45:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2008/05/06 01:29:00 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,14 +380,45 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 		if (m->m_len == 0)
 			continue;
 
-		vaddr = (vaddr_t)(m->m_data);
-		paddr = (paddr_t)(PMAP_UNMAP_POOLPAGE(vaddr));
+		vaddr = (vaddr_t)m->m_data;
 		size = m->m_len;
-		error = _bus_dmamap_load_paddr(t, map, paddr, vaddr, size,
-					       &seg, &lastaddr, first);
-		if (error)
-			return error;
-		first = 0;
+
+		if (SH3_P1SEG_BASE <= vaddr && vaddr < SH3_P3SEG_BASE) {
+			paddr = (paddr_t)(PMAP_UNMAP_POOLPAGE(vaddr));
+			error = _bus_dmamap_load_paddr(t, map,
+						       paddr, vaddr, size,
+						       &seg, &lastaddr, first);
+			if (error)
+				return error;
+			first = 0;
+		}
+		else {
+			/* XXX: stolen from load_buffer, need to refactor */
+			while (size > 0) {
+				bus_size_t sgsize;
+				bool mapped;
+
+				mapped = pmap_extract(pmap_kernel(), vaddr,
+						      &paddr);
+				if (!mapped)
+					return EFAULT;
+
+				sgsize = PAGE_SIZE - (vaddr & PGOFSET);
+				if (size < sgsize)
+					sgsize = size;
+
+				error = _bus_dmamap_load_paddr(t, map,
+						paddr, vaddr, sgsize,
+						&seg, &lastaddr, first);
+				if (error)
+					return error;
+
+				vaddr += sgsize;
+				size -= sgsize;
+				first = 0;
+			}
+
+		}
 	}
 
 	map->dm_nsegs = seg + 1;
