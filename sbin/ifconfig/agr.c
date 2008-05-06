@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.6 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.7 2008/05/06 21:16:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.6 2008/05/06 17:29:04 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.7 2008/05/06 21:16:52 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -76,30 +76,28 @@ agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
 	char buf[IFNAMSIZ];
 	struct agrreq ar;
 	int s;
-	prop_string_t str;
-	prop_number_t num;
+	const char *port;
 	const char *ifname;
 	struct ifreq ifr;
+	int64_t cmd;
 
 	if ((s = getsock(AF_UNSPEC)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	assertifname(ifr.ifr_name);
 
-	num = (prop_number_t)prop_dictionary_get(env, "agrcmd");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "agrcmd", &cmd)) {
 		warnx("%s.%d", __func__, __LINE__);
 		errno = ENOENT;
 		return -1;
 	}
 
-	str = (prop_string_t)prop_dictionary_get(env, "agrport");
-	if (str == NULL) {
+	if (!prop_dictionary_get_cstring_nocopy(env, "agrport", &port)) {
 		warnx("%s.%d", __func__, __LINE__);
 		errno = ENOENT;
 		return -1;
 	}
-	strlcpy(buf, prop_string_cstring_nocopy(str), sizeof(buf));
+	strlcpy(buf, port, sizeof(buf));
 
 	memset(&ifr, 0, sizeof(ifr));
 	if ((ifname = getifname(env)) == NULL)
@@ -107,7 +105,7 @@ agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	memset(&ar, 0, sizeof(ar));
 	ar.ar_version = AGRREQ_VERSION;
-	ar.ar_cmd = (int)prop_number_integer_value(num);
+	ar.ar_cmd = cmd;
 	ar.ar_buf = buf;
 	ar.ar_buflen = strlen(buf);
 	ifr.ifr_data = &ar;
