@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 2008/05/06 01:29:00 uwe Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6 2008/05/06 02:12:19 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2008/05/06 01:29:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2008/05/06 02:12:19 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,6 +297,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (buflen > map->_dm_size)
 		return (EINVAL);
 
+	error = 0;
 	seg = 0;
 
 	if (SH3_P1SEG_BASE <= addr && addr + buflen <= SH3_P2SEG_END) {
