@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1140 2008/05/05 13:41:29 ad Exp $
+#	$NetBSD: mi,v 1.1141 2008/05/06 08:38:43 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -108,26 +108,27 @@
 ./usr/include/arpa/tftp.h			comp-c-include
 ./usr/include/assert.h				comp-c-include
 ./usr/include/atf				comp-obsolete		obsolete
-./usr/include/atf.hpp				comp-obsolete		obsolete
-./usr/include/atf/application.hpp		comp-obsolete		obsolete
-./usr/include/atf/atffile.hpp			comp-obsolete		obsolete
-./usr/include/atf/config.hpp			comp-obsolete		obsolete
-./usr/include/atf/env.hpp			comp-obsolete		obsolete
-./usr/include/atf/exceptions.hpp		comp-obsolete		obsolete
-./usr/include/atf/expand.hpp			comp-obsolete		obsolete
-./usr/include/atf/formats.hpp			comp-obsolete		obsolete
-./usr/include/atf/fs.hpp			comp-obsolete		obsolete
-./usr/include/atf/io.hpp			comp-obsolete		obsolete
-./usr/include/atf/macros.hpp			comp-obsolete		obsolete
-./usr/include/atf/parser.hpp			comp-obsolete		obsolete
-./usr/include/atf/sanity.hpp			comp-obsolete		obsolete
-./usr/include/atf/signals.hpp			comp-obsolete		obsolete
-./usr/include/atf/tests.hpp			comp-obsolete		obsolete
-./usr/include/atf/text.hpp			comp-obsolete		obsolete
-./usr/include/atf/ui.hpp			comp-obsolete		obsolete
-./usr/include/atf/user.hpp			comp-obsolete		obsolete
-./usr/include/atf/utils.hpp			comp-obsolete		obsolete
 ./usr/include/atf-c				comp-atf-include
+./usr/include/atf-c++				comp-atf-include
+./usr/include/atf-c++.hpp			comp-atf-include
+./usr/include/atf-c++/application.hpp		comp-atf-include
+./usr/include/atf-c++/atffile.hpp		comp-atf-include
+./usr/include/atf-c++/config.hpp		comp-atf-include
+./usr/include/atf-c++/env.hpp			comp-atf-include
+./usr/include/atf-c++/exceptions.hpp		comp-atf-include
+./usr/include/atf-c++/expand.hpp		comp-atf-include
+./usr/include/atf-c++/formats.hpp		comp-atf-include
+./usr/include/atf-c++/fs.hpp			comp-atf-include
+./usr/include/atf-c++/io.hpp			comp-atf-include
+./usr/include/atf-c++/macros.hpp		comp-atf-include
+./usr/include/atf-c++/parser.hpp		comp-atf-include
+./usr/include/atf-c++/sanity.hpp		comp-atf-include
+./usr/include/atf-c++/signals.hpp		comp-atf-include
+./usr/include/atf-c++/tests.hpp			comp-atf-include
+./usr/include/atf-c++/text.hpp			comp-atf-include
+./usr/include/atf-c++/ui.hpp			comp-atf-include
+./usr/include/atf-c++/user.hpp			comp-atf-include
+./usr/include/atf-c++/utils.hpp			comp-atf-include
 ./usr/include/atf-c.h				comp-atf-include
 ./usr/include/atf-c/config.h			comp-atf-include
 ./usr/include/atf-c/defs.h			comp-atf-include
@@ -149,26 +150,25 @@
 ./usr/include/atf-c/tp.h			comp-atf-include
 ./usr/include/atf-c/ui.h			comp-atf-include
 ./usr/include/atf-c/user.h			comp-atf-include
-./usr/include/atf-c++				comp-atf-include
-./usr/include/atf-c++.hpp			comp-atf-include
-./usr/include/atf-c++/application.hpp		comp-atf-include
-./usr/include/atf-c++/atffile.hpp		comp-atf-include
-./usr/include/atf-c++/config.hpp		comp-atf-include
-./usr/include/atf-c++/env.hpp			comp-atf-include
-./usr/include/atf-c++/exceptions.hpp		comp-atf-include
-./usr/include/atf-c++/expand.hpp		comp-atf-include
-./usr/include/atf-c++/formats.hpp		comp-atf-include
-./usr/include/atf-c++/fs.hpp			comp-atf-include
-./usr/include/atf-c++/io.hpp			comp-atf-include
-./usr/include/atf-c++/macros.hpp		comp-atf-include
-./usr/include/atf-c++/parser.hpp		comp-atf-include
-./usr/include/atf-c++/sanity.hpp		comp-atf-include
-./usr/include/atf-c++/signals.hpp		comp-atf-include
-./usr/include/atf-c++/tests.hpp			comp-atf-include
-./usr/include/atf-c++/text.hpp			comp-atf-include
-./usr/include/atf-c++/ui.hpp			comp-atf-include
-./usr/include/atf-c++/user.hpp			comp-atf-include
-./usr/include/atf-c++/utils.hpp			comp-atf-include
+./usr/include/atf.hpp				comp-obsolete		obsolete
+./usr/include/atf/application.hpp		comp-obsolete		obsolete
+./usr/include/atf/atffile.hpp			comp-obsolete		obsolete
+./usr/include/atf/config.hpp			comp-obsolete		obsolete
+./usr/include/atf/env.hpp			comp-obsolete		obsolete
+./usr/include/atf/exceptions.hpp		comp-obsolete		obsolete
+./usr/include/atf/expand.hpp			comp-obsolete		obsolete
+./usr/include/atf/formats.hpp			comp-obsolete		obsolete
+./usr/include/atf/fs.hpp			comp-obsolete		obsolete
+./usr/include/atf/io.hpp			comp-obsolete		obsolete
+./usr/include/atf/macros.hpp			comp-obsolete		obsolete
+./usr/include/atf/parser.hpp			comp-obsolete		obsolete
+./usr/include/atf/sanity.hpp			comp-obsolete		obsolete
+./usr/include/atf/signals.hpp			comp-obsolete		obsolete
+./usr/include/atf/tests.hpp			comp-obsolete		obsolete
+./usr/include/atf/text.hpp			comp-obsolete		obsolete
+./usr/include/atf/ui.hpp			comp-obsolete		obsolete
+./usr/include/atf/user.hpp			comp-obsolete		obsolete
+./usr/include/atf/utils.hpp			comp-obsolete		obsolete
 ./usr/include/bfd				comp-obsolete		obsolete
 ./usr/include/bfd/ansidecl.h			comp-obsolete		obsolete
 ./usr/include/bfd/bfd.h				comp-obsolete		obsolete
@@ -2174,12 +2174,12 @@
 ./usr/lib/libarchive_p.a			comp-c-proflib		profile
 ./usr/lib/libasn1.a				comp-krb5-lib		kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	kerberos,profile
-./usr/lib/libatf.a				comp-obsolete		obsolete
-./usr/lib/libatf_p.a				comp-obsolete		obsolete
-./usr/lib/libatf-c.a				comp-atf-lib
-./usr/lib/libatf-c_p.a				comp-atf-lib		profile
 ./usr/lib/libatf-c++.a				comp-atf-lib
 ./usr/lib/libatf-c++_p.a			comp-atf-lib		profile
+./usr/lib/libatf-c.a				comp-atf-lib
+./usr/lib/libatf-c_p.a				comp-atf-lib		profile
+./usr/lib/libatf.a				comp-obsolete		obsolete
+./usr/lib/libatf_p.a				comp-obsolete		obsolete
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
 ./usr/lib/libbind9.a				comp-bind-lib
 ./usr/lib/libbind9_p.a				comp-bind-proflib	profile
@@ -2359,9 +2359,9 @@
 ./usr/lib/libz.a				comp-c-lib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
 ./usr/lib/pkgconfig				comp-c-lib
-./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
-./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib
+./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib
+./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
@@ -4381,13 +4381,13 @@
 ./usr/share/man/cat3/atanh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atanhf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atexit.0			comp-c-catman		.cat
+./usr/share/man/cat3/atf-c++-api.0		comp-atf-catman		.cat
+./usr/share/man/cat3/atf-c-api.0		comp-atf-catman		.cat
+./usr/share/man/cat3/atf-sh-api.0		comp-atf-catman		.cat
 ./usr/share/man/cat3/atof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atoi.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atoll.0			comp-c-catman		.cat
-./usr/share/man/cat3/atf-c-api.0		comp-atf-catman		.cat
-./usr/share/man/cat3/atf-c++-api.0		comp-atf-catman		.cat
-./usr/share/man/cat3/atf-sh-api.0		comp-atf-catman		.cat
 ./usr/share/man/cat3/attr_get.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attr_off.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attr_on.0			comp-c-catman		.cat
@@ -5767,8 +5767,8 @@
 ./usr/share/man/cat3/krb5_rd_error.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_rep.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_req.0		comp-krb5-catman	kerberos,.cat
-./usr/share/man/cat3/krb5_rd_safe.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_rd_req_with_keyblock.0	comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_rd_safe.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_realm_compare.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_ret_address.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_ret_addrs.0		comp-krb5-catman	kerberos,.cat
@@ -6391,9 +6391,9 @@
 ./usr/share/man/cat3/prop_string_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/proplib.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pset.0			comp-c-catman		.cat
-./usr/share/man/cat3/pset_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pset_assign.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pset_bind.0		comp-c-catman		.cat
+./usr/share/man/cat3/pset_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pset_destroy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/psignal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread.0			comp-c-catman		.cat
@@ -6616,13 +6616,13 @@
 ./usr/share/man/cat3/scanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sched.0			comp-c-catman		.cat
-./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
-./usr/share/man/cat3/sched_getparam.0		comp-c-catman		.cat
-./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
-./usr/share/man/cat3/sched_getscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_get_priority_max.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_get_priority_min.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_getparam.0		comp-c-catman		.cat
+./usr/share/man/cat3/sched_getscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_rr_get_interval.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
+./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_yield.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
@@ -8210,9 +8210,9 @@
 ./usr/share/man/cat9/sysmon_envsys_create.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys_destroy.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys_register.0	comp-sys-catman		.cat
-./usr/share/man/cat9/sysmon_envsys_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/sysmon_envsys_sensor_attach.0	comp-sys-catman	.cat
 ./usr/share/man/cat9/sysmon_envsys_sensor_detach.0	comp-sys-catman	.cat
+./usr/share/man/cat9/sysmon_envsys_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/tc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_badaddr.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_intr_disestablish.0	comp-sys-catman		.cat
@@ -9418,13 +9418,13 @@
 ./usr/share/man/man3/atanh.3			comp-c-man		.man
 ./usr/share/man/man3/atanhf.3			comp-c-man		.man
 ./usr/share/man/man3/atexit.3			comp-c-man		.man
+./usr/share/man/man3/atf-c++-api.3		comp-atf-man		.man
+./usr/share/man/man3/atf-c-api.3		comp-atf-man		.man
+./usr/share/man/man3/atf-sh-api.3		comp-atf-man		.man
 ./usr/share/man/man3/atof.3			comp-c-man		.man
 ./usr/share/man/man3/atoi.3			comp-c-man		.man
 ./usr/share/man/man3/atol.3			comp-c-man		.man
 ./usr/share/man/man3/atoll.3			comp-c-man		.man
-./usr/share/man/man3/atf-c-api.3		comp-atf-man		.man
-./usr/share/man/man3/atf-c++-api.3		comp-atf-man		.man
-./usr/share/man/man3/atf-sh-api.3		comp-atf-man		.man
 ./usr/share/man/man3/attr_get.3			comp-c-man		.man
 ./usr/share/man/man3/attr_off.3			comp-c-man		.man
 ./usr/share/man/man3/attr_on.3			comp-c-man		.man
@@ -10804,8 +10804,8 @@
 ./usr/share/man/man3/krb5_rd_error.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_rep.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_req.3		comp-krb5-man		kerberos,.man
-./usr/share/man/man3/krb5_rd_safe.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_rd_req_with_keyblock.3	comp-krb5-man		kerberos,.man
+./usr/share/man/man3/krb5_rd_safe.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_realm_compare.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_ret_address.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_ret_addrs.3		comp-krb5-man		kerberos,.man
@@ -11428,9 +11428,9 @@
 ./usr/share/man/man3/prop_string_size.3		comp-c-man		.man
 ./usr/share/man/man3/proplib.3			comp-c-man		.man
 ./usr/share/man/man3/pset.3			comp-c-man		.man
-./usr/share/man/man3/pset_create.3		comp-c-man		.man
 ./usr/share/man/man3/pset_assign.3		comp-c-man		.man
 ./usr/share/man/man3/pset_bind.3		comp-c-man		.man
+./usr/share/man/man3/pset_create.3		comp-c-man		.man
 ./usr/share/man/man3/pset_destroy.3		comp-c-man		.man
 ./usr/share/man/man3/psignal.3			comp-c-man		.man
 ./usr/share/man/man3/pthread.3			comp-c-man		.man
@@ -11653,13 +11653,13 @@
 ./usr/share/man/man3/scanf.3			comp-c-man		.man
 ./usr/share/man/man3/scanw.3			comp-c-man		.man
 ./usr/share/man/man3/sched.3			comp-c-man		.man
-./usr/share/man/man3/sched_setparam.3		comp-c-man		.man
-./usr/share/man/man3/sched_getparam.3		comp-c-man		.man
-./usr/share/man/man3/sched_setscheduler.3	comp-c-man		.man
-./usr/share/man/man3/sched_getscheduler.3	comp-c-man		.man
 ./usr/share/man/man3/sched_get_priority_max.3	comp-c-man		.man
 ./usr/share/man/man3/sched_get_priority_min.3	comp-c-man		.man
+./usr/share/man/man3/sched_getparam.3		comp-c-man		.man
+./usr/share/man/man3/sched_getscheduler.3	comp-c-man		.man
 ./usr/share/man/man3/sched_rr_get_interval.3	comp-c-man		.man
+./usr/share/man/man3/sched_setparam.3		comp-c-man		.man
+./usr/share/man/man3/sched_setscheduler.3	comp-c-man		.man
 ./usr/share/man/man3/sched_yield.3		comp-c-man		.man
 ./usr/share/man/man3/scrl.3			comp-c-man		.man
 ./usr/share/man/man3/scroll.3			comp-c-man		.man
@@ -13242,9 +13242,9 @@
 ./usr/share/man/man9/sysmon_envsys_create.9	comp-sys-man 		.man
 ./usr/share/man/man9/sysmon_envsys_destroy.9	comp-sys-man 		.man
 ./usr/share/man/man9/sysmon_envsys_register.9	comp-sys-man 		.man
-./usr/share/man/man9/sysmon_envsys_unregister.9	comp-sys-man 		.man
 ./usr/share/man/man9/sysmon_envsys_sensor_attach.9	comp-sys-man 	.man
 ./usr/share/man/man9/sysmon_envsys_sensor_detach.9	comp-sys-man 	.man
+./usr/share/man/man9/sysmon_envsys_unregister.9	comp-sys-man 		.man
 ./usr/share/man/man9/tc.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_badaddr.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_intr_disestablish.9	comp-sys-man		.man
