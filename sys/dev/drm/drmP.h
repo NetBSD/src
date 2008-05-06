@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.20 2008/05/05 14:00:10 jmcneill Exp $ */
+/* $NetBSD: drmP.h,v 1.21 2008/05/06 01:26:14 bjs Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -56,6 +56,7 @@ typedef struct drm_file drm_file_t;
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #ifdef __FreeBSD__
@@ -230,7 +231,7 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_STRUCTPROC		struct proc
 #define DRM_STRUCTCDEVPROC	struct lwp
 #define DRM_SPINTYPE		kmutex_t
-#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_VM)
+#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_NONE)
 #define DRM_SPINUNINIT(l)	mutex_destroy(l)
 #define DRM_SPINLOCK(l)		mutex_enter(l)
 #define DRM_SPINUNLOCK(u)	mutex_exit(u)
@@ -256,6 +257,7 @@ MALLOC_DECLARE(M_DRM);
 #define spldrm()		spltty()
 #endif /* __NetBSD__ */
 #endif /* __NetBSD__ || __OpenBSD__ */
+
 
 /* Currently our DRMFILE (filp) is a void * which is actually the pid
  * of the current process.  It should be a per-open unique pointer, but
@@ -312,6 +314,11 @@ extern drm_device_t *drm_units[];
 #define DRM_NETBSD_ADDR2HANDLE(addr)	(addr)
 #define DRM_NETBSD_HANDLE2ADDR(handle)	(handle)
 #endif
+/* see struct drm_dmamem */
+#define DRM_NETBSD_DMA_VADDR(p)		((p)->dm_kva)
+#define DRM_NETBSD_DMA_ADDR(p)		((p)->dm_segs[0].ds_addr)
+#define DRM_DMA_WAITOK	    		BUS_DMA_WAITOK
+#define DRM_DMA_NOWAIT	    		BUS_DMA_NOWAIT
 #elif defined(__OpenBSD__)
 #define DRM_DEVICE							\
 #define DRM_SUSER(p)		(suser(p->p_ucred, &p->p_acflag) == 0)
@@ -603,16 +610,21 @@ typedef struct drm_freelist {
 	int		  high_mark;   /* High water mark		   */
 } drm_freelist_t;
 
+struct drm_dmamem {             
+	bus_dma_tag_t		dm_tag;
+        bus_dmamap_t            dm_map;
+	bus_dma_segment_t       *dm_segs;
+	int			dm_nsegs;
+	size_t                  dm_size;
+	void                    *dm_kva;
+};      
+
 typedef struct drm_dma_handle {
 	void *vaddr;
 	bus_addr_t busaddr;
-	bus_dma_tag_t dmat;
-	bus_dmamap_t map;
-	bus_dma_segment_t segs[1];
 	size_t size;
-	void *addr;
+	struct drm_dmamem *dmam;
 } drm_dma_handle_t;
-#define DRM_PCI_DMAADDR(p)   ((p)->map->dm_segs[0].ds_addr)
 
 typedef struct drm_buf_entry {
 	int		  buf_size;
@@ -695,6 +707,7 @@ typedef struct drm_sg_mem {
 	int             pages;
 	dma_addr_t	*busaddr;
 	drm_dma_handle_t *dmah;	/* Handle to PCI memory for ATI PCIGART table */
+	struct drm_dmamem *dmam;
 } drm_sg_mem_t;
 
 typedef TAILQ_HEAD(drm_map_list, drm_local_map) drm_map_list_t;
@@ -970,16 +983,29 @@ extern drm_file_t	*drm_find_file_by_proc(drm_device_t *dev,
 					       DRM_STRUCTPROC *p);
 #endif /* __NetBSD__ || __OpenBSD__ */
 
-/* Memory management support (drm_memory.c) */
-void	drm_mem_init(void);
-void	drm_mem_uninit(void);
-void	*drm_alloc(size_t size, int area);
-void	*drm_calloc(size_t nmemb, size_t size, int area);
-void	*drm_realloc(void *oldpt, size_t oldsize, size_t size,
-				   int area);
-void	drm_free(void *pt, size_t size, int area);
+void		drm_mem_init(void);	/* XXX unused */
+void		drm_mem_uninit(void);	/* XXX unused */
+
+/* NetBSD-specific memory allocation functions */
+inline void	*drm_mem_alloc(size_t size);
+inline void	*drm_mem_zalloc(size_t size);
+inline void	*drm_mem_calloc(size_t nmemb, size_t size);
+inline void	*drm_mem_realloc(void *oldpt, size_t oldsize, size_t size);
+inline void	drm_mem_free(void *pt, size_t size);
+
+/* NetBSD-specific DMA memory management */
+inline struct	drm_dmamem *drm_dmamem_alloc(bus_dma_tag_t tag, size_t size, int wait);
+inline void	drm_dmamem_free(struct drm_dmamem *dmam);
+
+/* macros for os-independent code (discards deprecated 'area' argument) */
+#define drm_alloc(sz, a)                drm_mem_alloc(sz)
+#define drm_calloc(sz, a)               drm_mem_zalloc(sz)
+#define drm_realloc(old, oldsz, sz, a)  drm_mem_realloc(old, oldsz, sz)
+#define drm_free(p, sz, a)              drm_mem_free(p, sz)
+
 void	*drm_ioremap(drm_device_t *dev, drm_local_map_t *map);
 void	drm_ioremapfree(drm_local_map_t *map);
+
 int	drm_mtrr_add(unsigned long offset, size_t size, int flags);
 int	drm_mtrr_del(int handle, unsigned long offset, size_t size, int flags);
 
