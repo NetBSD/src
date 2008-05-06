@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.2 2008/05/06 16:09:18 dyoung Exp $	*/
+/*	$NetBSD: env.c,v 1.3 2008/05/06 18:35:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2008 David Young.  All rights reserved.
@@ -70,14 +70,12 @@ getifflags(prop_dictionary_t env, prop_dictionary_t oenv,
     unsigned short *flagsp)
 {
 	struct ifreq ifr;
-	prop_number_t num;
 	const char *ifname;
+	uint64_t ifflags;
 	int s;
 
-	num = (prop_number_t)prop_dictionary_get(env, "ifflags");
-
-	if (num != NULL) {
-		*flagsp = (unsigned short)prop_number_integer_value(num);
+	if (prop_dictionary_get_uint64(env, "ifflags", &ifflags)) {
+		*flagsp = (unsigned short)ifflags;
 		return 0;
 	}
 
@@ -94,10 +92,8 @@ getifflags(prop_dictionary_t env, prop_dictionary_t oenv,
 
 	*flagsp = (unsigned short)ifr.ifr_flags;
 
-	num = prop_number_create_unsigned_integer(
+	prop_dictionary_set_uint64(oenv, "ifflags",
 	    (unsigned short)ifr.ifr_flags);
-	(void)prop_dictionary_set(oenv, "ifflags", num);
-	prop_object_release((prop_object_t)num);
 
 	return 0;
 }
@@ -114,12 +110,9 @@ getifinfo(prop_dictionary_t env, prop_dictionary_t oenv, unsigned short *flagsp)
 const char *
 getifname(prop_dictionary_t env)
 {
-	prop_string_t str;
+	const char *s;
 
-	str = (prop_string_t)prop_dictionary_get(env, "if");
-	if (str == NULL)
-		return NULL;
-	return prop_string_cstring_nocopy(str);
+	return prop_dictionary_get_cstring_nocopy(env, "if", &s) ? s : NULL;
 }
 
 ssize_t
@@ -167,12 +160,11 @@ getargstr(prop_dictionary_t env, const char *key, char *buf, size_t buflen)
 int
 getaf(prop_dictionary_t env)
 {
-	prop_number_t num;
+	int64_t af;
 
-	num = (prop_number_t)prop_dictionary_get(env, "af");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "af", &af)) {
 		errno = ENOENT;
 		return -1;
 	}
-	return (int)prop_number_integer_value(num);
+	return (int)af;
 }
