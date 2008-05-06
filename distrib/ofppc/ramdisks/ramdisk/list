@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2008/01/02 11:39:04 mrg Exp $
+#	$NetBSD: list,v 1.2 2008/05/06 15:32:06 dyoung Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -72,7 +72,7 @@ SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	vi		srcdir	usr.bin/vi/build
 
-LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz
+LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz -lprop
 
 # various files that we need in /etc for the install
 COPY	${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script sbin/dhclient-script	555

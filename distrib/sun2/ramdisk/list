@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.7 2004/10/19 17:45:53 he Exp $
+#	$NetBSD: list,v 1.8 2008/05/06 15:32:07 dyoung Exp $
 #
 # ramdisk/list - packing list for the ramdisk.
 #
@@ -79,7 +79,7 @@ PROG		bin/rcmd
 PROG		bin/sync
 PROG		bin/zcat
 
-LIBS libhack.o -lrmt -lutil -lz
+LIBS libhack.o -lrmt -lutil -lz -lprop
 
 # These are built with special flags to save a little space.
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig

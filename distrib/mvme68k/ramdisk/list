@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.14 2007/05/10 23:22:31 dogcow Exp $
+#	$NetBSD: list,v 1.15 2008/05/06 15:32:06 dyoung Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
@@ -44,7 +44,7 @@ SPECIAL	route		srcdir distrib/utils/x_route
 SPECIAL	umount		srcdir distrib/utils/x_umount
 SPECIAL	installboot	srcdir sys/arch/mvme68k/stand/installboot
 
-LIBS	libhack.o -lutil -lz -ll -lrmt
+LIBS	libhack.o -lutil -lz -ll -lrmt -lprop
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/rd.fstab			etc/fstab
