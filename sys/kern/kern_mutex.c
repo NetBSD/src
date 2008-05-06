@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.39 2008/04/30 00:40:13 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.40 2008/05/06 17:11:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.39 2008/04/30 00:40:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.40 2008/05/06 17:11:45 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.39 2008/04/30 00:40:13 yamt Exp $")
 
 #define	MUTEX_WANTLOCK(mtx)					\
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
-        (uintptr_t)__builtin_return_address(0), 0)
+        (uintptr_t)__builtin_return_address(0), false, false)
 #define	MUTEX_LOCKED(mtx)					\
     LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx),			\
         (uintptr_t)__builtin_return_address(0), 0)
