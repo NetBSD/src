@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.22 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.23 2008/05/06 17:11:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.22 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.23 2008/05/06 17:11:45 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -63,9 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.22 2008/04/28 20:24:03 martin Exp 
 
 #if defined(LOCKDEBUG)
 
-#define	RW_WANTLOCK(rw, op)						\
+#define	RW_WANTLOCK(rw, op, t)						\
 	LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw),			\
-	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
+	    (uintptr_t)__builtin_return_address(0), op == RW_READER, t);
 #define	RW_LOCKED(rw, op)						\
 	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw),				\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
@@ -80,7 +80,7 @@ do {									\
 
 #else	/* LOCKDEBUG */
 
-#define	RW_WANTLOCK(rw, op)	/* nothing */
+#define	RW_WANTLOCK(rw, op, t)	/* nothing */
 #define	RW_LOCKED(rw, op)	/* nothing */
 #define	RW_UNLOCKED(rw, op)	/* nothing */
 #define	RW_DASSERT(rw, cond)	/* nothing */
@@ -294,7 +294,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 	RW_ASSERT(rw, !cpu_intr_p());
 	RW_ASSERT(rw, curthread != 0);
-	RW_WANTLOCK(rw, op);
+	RW_WANTLOCK(rw, op, false);
 
 	if (panicstr == NULL) {
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
@@ -567,7 +567,7 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_enter();
 #endif
-	RW_WANTLOCK(rw, op);
+	RW_WANTLOCK(rw, op, true);
 	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
@@ -680,7 +680,7 @@ rw_tryupgrade(krwlock_t *rw)
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
-	RW_WANTLOCK(rw, RW_WRITER);
+	RW_WANTLOCK(rw, RW_WRITER, true);
 
 	for (owner = rw->rw_owner;; owner = next) {
 		RW_ASSERT(rw, (owner & RW_WRITE_LOCKED) == 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.140 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.141 2008/05/06 17:11:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.140 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.141 2008/05/06 17:11:45 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -179,7 +179,7 @@ _kernel_lock(int nlocks)
 
 	_KERNEL_LOCK_ASSERT(l->l_blcnt == 0);
 	LOCKDEBUG_WANTLOCK(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS,
-	    0);
+	    false, false);
 
 	if (__cpu_simple_lock_try(kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
