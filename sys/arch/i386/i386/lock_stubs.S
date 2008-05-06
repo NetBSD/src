@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.17 2008/05/03 05:58:45 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.18 2008/05/06 22:57:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.17 2008/05/03 05:58:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.18 2008/05/06 22:57:39 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -187,29 +187,31 @@ ENTRY(rw_tryenter)
 	/*
 	 * Reader
 	 */
-1:	movl	RW_OWNER(%edx), %eax
-	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
+	movl	RW_OWNER(%edx), %eax
+1:
 	leal	RW_READ_INCR(%eax), %ecx
+	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	jnz	3f
 	LOCK(12)
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	movl	$0, %eax
-	setz	%al
+	jnz	1b
+	movl	%edx, %eax			/* nonzero */
 	ret
 
 	/*
 	 * Writer
 	 */
-2:	movl	CPUVAR(CURLWP), %ecx
-	xorl	%eax, %eax
+2:
+	movl	CPUVAR(CURLWP), %ecx
 	orl	$RW_WRITE_LOCKED, %ecx
+	xorl	%eax, %eax
 	LOCK(13)
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	movl	$0, %eax
+	xorl	%eax, %eax
 	setz	%al
 	ret
-
-3:	xorl	%eax, %eax
+3:
+	xorl	%eax, %eax
 	ret
 END(rw_tryenter)
 
