@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.18 2008/05/06 22:57:39 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.19 2008/05/06 23:03:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.18 2008/05/06 22:57:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.19 2008/05/06 23:03:03 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -207,7 +207,7 @@ ENTRY(rw_tryenter)
 	xorl	%eax, %eax
 	LOCK(13)
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	xorl	%eax, %eax
+	movl	$0, %eax
 	setz	%al
 	ret
 3:
