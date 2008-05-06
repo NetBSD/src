@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1141 2008/05/06 08:38:43 yamt Exp $
+#	$NetBSD: mi,v 1.1142 2008/05/06 08:40:47 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7833,6 +7833,10 @@
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpause.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kpreempt.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kpreempt_disable.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kpreempt_disabled.0	comp-sys-catman		.cat
+./usr/share/man/cat9/kpreempt_enable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman		.cat
@@ -12865,6 +12869,10 @@
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
 ./usr/share/man/man9/kpause.9			comp-sys-man		.man
+./usr/share/man/man9/kpreempt.9			comp-sys-man		.man
+./usr/share/man/man9/kpreempt_disable.9		comp-sys-man		.man
+./usr/share/man/man9/kpreempt_disabled.9	comp-sys-man		.man
+./usr/share/man/man9/kpreempt_enable.9		comp-sys-man		.man
 ./usr/share/man/man9/kprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man		.man
