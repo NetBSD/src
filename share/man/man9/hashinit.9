@@ -1,4 +1,4 @@
-.\"     $NetBSD: hashinit.9,v 1.4 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: hashinit.9,v 1.5 2008/05/06 10:13:55 yamt Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 3, 2006
+.Dd May 6, 2008
 .Dt HASHINIT 9
 .Os
 .Sh NAME
@@ -35,18 +35,16 @@
 .Nm hashdone
 .Nd kernel hash table construction and destruction
 .Sh SYNOPSIS
-.In sys/malloc.h
 .In sys/systm.h
 .Ft "void *"
 .Fo hashinit
 .Fa "u_int chains"
 .Fa "enum hashtype htype"
-.Fa "struct malloc_type *mtype"
-.Fa "int mflags"
+.Fa "bool waitok"
 .Fa "u_long *hashmask"
 .Fc
 .Ft void
-.Fn hashdone "void *hashtbl" "struct malloc_type *mtype"
+.Fn hashdone "void *hashtbl" "enum hashtype htype" "u_long hashmask"
 .Sh DESCRIPTION
 The
 .Fn hashinit
@@ -76,12 +74,12 @@ can define head structures of different sizes, the total size of the
 allocated table can vary with the choice of
 .Fa htype .
 .Pp
-The
-.Fa mtype
-and
-.Fa mflags
-arguments have the meanings of the corresponding arguments to
-.Xr malloc 9 .
+If
+.Fa waitok
+is true,
+.Fa hashinit
+can wait until enough memory is available.
+Otherwise, it immediately fails if there is not enough memory is available.
 .Pp
 A value will be stored into
 .Fa *hashmask
@@ -95,8 +93,10 @@ function deallocates the storage allocated by
 and pointed to by
 .Fa hashtbl ,
 given the same
-.Fa mtype
-that was passed to
+.Fa htype
+and
+.Fa hashmask
+that were passed to and returned from
 .Fn hashinit .
 If the table contains any nonempty chain when
 .Fn hashdone
@@ -109,11 +109,10 @@ should be cast as pointer to an array of
 or
 .Dv TAILQ_HEAD
 as appropriate.
-It can be
+.Fn hashinit
+returns
 .Dv NULL
-only if the specified
-.Fa mflags
-allow it.
+on failure.
 .Sh SEE ALSO
 .Xr queue 3 ,
 .Xr hash 9 ,
