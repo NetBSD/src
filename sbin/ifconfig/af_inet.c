@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.6 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.7 2008/05/06 16:15:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.6 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.7 2008/05/06 16:15:17 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -158,7 +158,7 @@ in_preference(const char *ifname, const struct sockaddr *sa)
 }
 
 void
-in_status(prop_dictionary_t env, prop_dictionary_t oenv, int force)
+in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct ifaddrs *ifap, *ifa;
 	struct ifreq ifr;

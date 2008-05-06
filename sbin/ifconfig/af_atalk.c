@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.8 2008/05/06 15:02:49 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.9 2008/05/06 16:15:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.8 2008/05/06 15:02:49 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.9 2008/05/06 16:15:17 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -127,7 +127,7 @@ checkatrange(struct sockaddr *sa)
 }
 
 void
-at_status(prop_dictionary_t env, prop_dictionary_t oenv, int force)
+at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct sockaddr_at *sat, null_sat;
 	struct netrange *nr;
