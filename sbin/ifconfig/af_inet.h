@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.h,v 1.2 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: af_inet.h,v 1.3 2008/05/06 16:15:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,8 +35,7 @@
 
 void	in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
     struct ifreq *);
-void	in_status(prop_dictionary_t, prop_dictionary_t, int); 
-void	in_addr_commit(prop_dictionary_t);
-void	in_addr_commit0(prop_dictionary_t);
+void	in_status(prop_dictionary_t, prop_dictionary_t, bool);
+void	commit_address(prop_dictionary_t);
 
 int 	setifipdst(prop_dictionary_t, prop_dictionary_t);

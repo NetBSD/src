@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.h,v 1.3 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: af_iso.h,v 1.4 2008/05/06 16:15:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,5 +42,5 @@ extern struct pinteger parse_nsellength, snpaoffset;
 int	setsnpaoffset(prop_dictionary_t, prop_dictionary_t);
 int	setnsellength(prop_dictionary_t, prop_dictionary_t);
 
-void	iso_status(prop_dictionary_t, prop_dictionary_t, int);
+void	iso_status(prop_dictionary_t, prop_dictionary_t, bool);
 void	iso_getaddr(const struct paddr_prefix *, int);

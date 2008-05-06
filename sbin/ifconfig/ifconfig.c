@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.187 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.188 2008/05/06 16:15:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.187 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.188 2008/05/06 16:15:17 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ void	init_current_media(prop_dictionary_t, prop_dictionary_t);
 /* Known address families */
 static const struct afswtch afs[] = {
 	  {.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
-	   .af_addr_commit = in_addr_commit}
+	   .af_addr_commit = commit_address}
 
 #ifdef INET6
 	, {.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
@@ -722,18 +722,6 @@ main(int argc, char **argv)
 
 	af = getaf(env);
 	switch (af) {
-	case AF_INET6:
-		if (prop_dictionary_get(env, "prefixlen") == NULL) {
-                        /* Aggregatable address architecture defines
-                         * all prefixes are 64. So, it is convenient
-                         * to set prefixlen to 64 if it is not
-                         * specified.
-			 */
-			afp = lookup_af_bynum(af);
-			if (afp->af_getprefix != NULL)
-				(*afp->af_getprefix)(64, MASK);
-		}
-		break;
 #ifndef INET_ONLY
 	case AF_APPLETALK:
 		checkatrange(&at_addreq.ifra_addr);
@@ -917,16 +905,14 @@ static int
 clone_command(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ifreq ifreq;
-	int cmd, s;
-	prop_number_t num;
+	int s;
+	int64_t cmd;
 	const char *ifname;
 
-	num = (prop_number_t)prop_dictionary_get(env, "clonecmd");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "clonecmd", &cmd)) {
 		errno = ENOENT;
 		return -1;
 	}
-	cmd = (int)prop_number_integer_value(num);
 
 	if ((ifname = getifname(env)) == NULL)
 		return -1;
@@ -935,7 +921,7 @@ clone_command(prop_dictionary_t env, prop_dictionary_t xenv)
 	s = getsock(AF_INET);
 
 	estrlcpy(ifreq.ifr_name, ifname, sizeof(ifreq.ifr_name));
-	if (ioctl(s, cmd, &ifreq) == -1) {
+	if (ioctl(s, (unsigned long)cmd, &ifreq) == -1) {
 		warn("%s", __func__);
 		return -1;
 	}
@@ -1081,8 +1067,7 @@ setifbroadaddr(prop_dictionary_t env, prop_dictionary_t xenv)
 int
 notealias(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	bool delete;
-	prop_bool_t b;
+	bool alias, delete;
 	int af;
 	const struct afswtch *afp;
 
@@ -1095,12 +1080,11 @@ notealias(prop_dictionary_t env, prop_dictionary_t xenv)
 	if (afp->af_addr_commit != NULL)
 		return 0;
 
-	b = (prop_bool_t)prop_dictionary_get(env, "alias");
-	if (b == NULL) {
+	if (!prop_dictionary_get_bool(env, "alias", &alias)) {
 		errno = ENOENT;
 		return -1;
 	}
-	delete = !prop_bool_true(b);
+	delete = !alias;
 	if (setaddr && doalias == 0 && delete)
 		memcpy(rqtosa(afp, af_ridreq), rqtosa(afp, af_addreq),
 		    rqtosa(afp, af_addreq)->sa_len);
@@ -1709,7 +1693,13 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env)
 	unsigned short flags;
 	const struct afswtch *afp;
 
-	if ((s = getsock(AF_UNSPEC)) == -1)
+	if ((af = getaf(env)) == -1) {
+		afp = NULL;
+		af = AF_UNSPEC;
+	} else
+		afp = lookup_af_bynum(af);
+
+	if ((s = getsock(af)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	if ((ifname = getifinfo(env, env, &flags)) == NULL)
@@ -1914,15 +1904,11 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env)
 	ieee80211_statistics(env);
 
  proto_status:
-	if ((af = getaf(env)) == -1)
-		afp = NULL;
-	else
-		afp = lookup_af_bynum(af);
 
 	if (afp != NULL)
-		(*afp->af_status)(env, env, 1);
+		(*afp->af_status)(env, env, true);
 	else for (afp = afs; afp->af_name != NULL; afp++)
-		(*afp->af_status)(env, env, 0);
+		(*afp->af_status)(env, env, false);
 }
 
 int
