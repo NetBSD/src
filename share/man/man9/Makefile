@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.262 2008/05/03 09:43:40 plunky Exp $
+#       $NetBSD: Makefile,v 1.263 2008/05/06 08:34:35 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -304,6 +304,10 @@ MLINKS+=isapnp.9 isapnp_devmatch.9 \
 	isapnp.9 isapnp_unconfig.9
 MLINKS+=knote.9 KNOTE.9 \
 	kfilter_register.9 kfilter_unregister.9
+MAN+=	kpreempt.9
+MLINKS+=kpreempt.9 kpreempt_disable.9 \
+	kpreempt.9 kpreempt_disabled.9 \
+	kpreempt.9 kpreempt_enable.9
 MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 sprintf.9 \
 	kprintf.9 snprintf.9 kprintf.9 vprintf.9 kprintf.9 vsprintf.9 \
 	kprintf.9 vsnprintf.9 kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
