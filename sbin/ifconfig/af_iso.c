@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.8 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.9 2008/05/06 21:20:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.8 2008/05/06 16:15:17 dyoung Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.9 2008/05/06 21:20:05 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -74,8 +74,9 @@ struct sockaddr_iso *sisotab[] = {
 
 static void adjust_nsellength(uint8_t);
 
-struct pinteger snpaoffset = PINTEGER_INITIALIZER1(&snpaoffset, "snpaoffset",
-    INT_MIN, INT_MAX, 10, setsnpaoffset, "snpaoffset", &command_root.pb_parser);
+struct pinteger parse_snpaoffset = PINTEGER_INITIALIZER1(&snpaoffset,
+    "snpaoffset", INT_MIN, INT_MAX, 10, setsnpaoffset, "snpaoffset",
+    &command_root.pb_parser);
 struct pinteger parse_nsellength = PINTEGER_INITIALIZER1(&nsellength,
     "nsellength", 0, UINT8_MAX, 10, setnsellength, "nsellength",
     &command_root.pb_parser);
@@ -97,14 +98,13 @@ iso_getaddr(const struct paddr_prefix *pfx, int which)
 int
 setsnpaoffset(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	prop_number_t num;
+	int64_t snpaoffset;
 
-	num = (prop_number_t)prop_dictionary_get(env, "snpaoffset");
-	if (num == NULL) {
+	if (!prop_dictionary_get_int64(env, "snpaoffset", &snpaoffset)) {
 		errno = ENOENT;
 		return -1;
 	}
-	iso_addreq.ifra_snpaoffset = (int)prop_number_integer_value(num);
+	iso_addreq.ifra_snpaoffset = snpaoffset;
 	return 0;
 }
 
@@ -112,17 +112,16 @@ int
 setnsellength(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	int af;
-	prop_number_t num;
+	uint8_t nsellength;
 
 	if ((af = getaf(env)) == -1 || af != AF_ISO)
 		errx(EXIT_FAILURE, "Setting NSEL length valid only for iso");
 
-	num = (prop_number_t)prop_dictionary_get(env, "nsellength");
-	if (num == NULL) {
+	if (!prop_dictionary_get_uint8(env, "nsellength", &nsellength)) {
 		errno = ENOENT;
 		return -1;
 	}
-	adjust_nsellength((uint8_t)prop_number_integer_value(num));
+	adjust_nsellength(nsellength);
 	return 0;
 }
 

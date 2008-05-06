@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.191 2008/05/06 18:16:34 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.192 2008/05/06 21:20:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.191 2008/05/06 18:16:34 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.192 2008/05/06 21:20:05 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -354,7 +354,7 @@ struct kwinst misckw[] = {
 	, {.k_word = "phase", .k_nextparser = &phase.pi_parser}
 	, {.k_word = "range", .k_nextparser = &parse_range.ps_parser}
 	, {.k_word = "nsellength", .k_nextparser = &parse_nsellength.pi_parser}
-	, {.k_word = "snpaoffset", .k_nextparser = &snpaoffset.pi_parser}
+	, {.k_word = "snpaoffset", .k_nextparser = &parse_snpaoffset.pi_parser}
 	/* CARP */
 	, {.k_word = "advbase", .k_nextparser = &parse_advbase.pi_parser}
 	, {.k_word = "advskew", .k_nextparser = &parse_advskew.pi_parser}
@@ -565,6 +565,22 @@ media_status_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 	exit(carrier(env));
 }
 
+static void
+do_setifcaps(int s, const char *ifname, prop_dictionary_t env)
+{
+	struct ifcapreq ifcr;
+	prop_data_t d;
+
+	d = (prop_data_t )prop_dictionary_get(env, "ifcap");
+	if (d == NULL || sizeof(ifcr) != prop_data_size(d))
+		return;
+
+	memcpy(&ifcr, prop_data_data_nocopy(d), sizeof(ifcr));
+	estrlcpy(ifcr.ifcr_name, ifname, sizeof(ifcr.ifcr_name));
+	if (ioctl(s, SIOCSIFCAP, &ifcr) == -1)
+		err(EXIT_FAILURE, "SIOCSIFCAP");
+}
+
 int
 main(int argc, char **argv)
 {
@@ -576,7 +592,6 @@ main(int argc, char **argv)
 	int ch, narg = 0, rc;
 	prop_dictionary_t env, xenv;
 	const char *ifname;
-	struct ifcapreq ifcr;
 
 	memset(match, 0, sizeof(match));
 
@@ -762,12 +777,7 @@ main(int argc, char **argv)
 	}
 
 	do_setifpreference(env);
-	if (prop_dictionary_get(env, "ifcap") != NULL) {
-		memset(&ifcr, 0, sizeof(ifcr));
-		estrlcpy(ifcr.ifcr_name, ifname, sizeof(ifcr.ifcr_name));
-		if (ioctl(s, SIOCSIFCAP, &ifcr) == -1)
-			err(EXIT_FAILURE, "SIOCSIFCAP");
-	}
+	do_setifcaps(s, ifname, env);
 
 	if (check_up_state == 1)
 		check_ifflags_up(ifname);
