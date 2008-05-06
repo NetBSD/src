@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.h,v 1.2 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: tunnel.h,v 1.3 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,4 +34,4 @@ extern struct paddr tundst, tunsrc;
 
 int	settunnel(prop_dictionary_t, prop_dictionary_t);
 int	deletetunnel(prop_dictionary_t, prop_dictionary_t);
-void	tunnel_status(prop_dictionary_t);
+void	tunnel_status(prop_dictionary_t, prop_dictionary_t);

@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.5 2008/05/06 04:33:42 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.6 2008/05/06 17:29:04 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -78,7 +78,7 @@ struct pinteger parse_vhid = PINTEGER_INITIALIZER1(&vhid, "vhid",
 #endif
 
 void
-carp_status(prop_dictionary_t env)
+carp_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *state;
 	struct ifreq ifr;
