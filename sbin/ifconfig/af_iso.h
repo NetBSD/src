@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.h,v 1.4 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_iso.h,v 1.5 2008/05/06 21:20:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 /* XXX */
 extern struct iso_ifreq	   iso_ridreq;
 extern struct iso_aliasreq iso_addreq;
-extern struct pinteger parse_nsellength, snpaoffset;
+extern struct pinteger parse_nsellength, parse_snpaoffset;
 
 int	setsnpaoffset(prop_dictionary_t, prop_dictionary_t);
 int	setnsellength(prop_dictionary_t, prop_dictionary_t);
