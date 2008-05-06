@@ -1,4 +1,4 @@
-/*	$NetBSD: noarch.c,v 1.1 2008/05/05 17:54:14 ad Exp $	*/
+/*	$NetBSD: noarch.c,v 1.2 2008/05/06 09:10:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,8 +27,10 @@
  */
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
+
 #ifndef lint
-__RCSID("$NetBSD: noarch.c,v 1.1 2008/05/05 17:54:14 ad Exp $");
+__RCSID("$NetBSD: noarch.c,v 1.2 2008/05/06 09:10:25 skrll Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
