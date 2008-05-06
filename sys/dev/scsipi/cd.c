@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.277 2008/05/02 16:06:38 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.278 2008/05/06 11:08:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.277 2008/05/02 16:06:38 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.278 2008/05/06 11:08:19 yamt Exp $");
 
 #include "rnd.h"
 
@@ -670,7 +670,7 @@ cdstrategy(struct buf *bp)
 			}
 
 			blkno = ((blkno * lp->d_secsize) / cd->params.blksize);
-			nbp = getiobuf(false, NULL);
+			nbp = getiobuf(NULL, false);
 			if (!nbp) {
 				/* No memory -- fail the iop. */
 				free(bounce, M_DEVBUF);
@@ -960,7 +960,7 @@ cdbounce(struct buf *bp)
 			count = MAXPHYS;
 		}
 
-		nbp = getiobuf(false, NULL);
+		nbp = getiobuf(NULL, false);
 		if (!nbp) {
 			/* No memory -- fail the iop. */
 			bp->b_error = ENOMEM;
