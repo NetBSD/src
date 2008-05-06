@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.17 2008/05/06 22:57:39 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.18 2008/05/06 23:03:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -273,7 +273,7 @@ NENTRY(rw_tryenter)
 	orq	$RW_WRITE_LOCKED, %rcx
 	LOCK(9)
 	cmpxchgq %rcx, RW_OWNER(%rdi)
-	xorl	%eax, %eax
+	movl	$0, %eax
 	setz	%al
 	ret
 
