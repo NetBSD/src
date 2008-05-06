@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.355 2008/05/06 12:51:22 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.356 2008/05/06 12:54:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.355 2008/05/06 12:51:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.356 2008/05/06 12:54:25 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -821,7 +821,7 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &nmp)) {
+		if (vfs_trybusy(mp, RW_WRITER, &nmp)) {
 			continue;
 		}
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
@@ -1131,9 +1131,10 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		goto out;
 	}
 	while ((mp = vp->v_mountedhere) != NULL) {
-		if (vfs_busy(mp, RW_READER))
-			continue;
+		error = vfs_trybusy(mp, RW_READER, NULL);
 		vput(vp);
+		if (error != 0) {
+			goto out;
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp, false, NULL);
 		if (error)
