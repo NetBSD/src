@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.12 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.13 2008/05/06 13:52:51 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -340,13 +340,10 @@ _prop_array_iterator_reset(void *v)
 	prop_array_t pa = pai->pai_base.pi_obj;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
-
-	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	_PROP_RWLOCK_OWNED(pa->pa_rwlock);
 
 	pai->pai_index = 0;
 	pai->pai_base.pi_version = pa->pa_version;
-
-	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 }
 
 /*
@@ -502,7 +499,9 @@ prop_array_iterator(prop_array_t pa)
 	pai->pai_base.pi_reset = _prop_array_iterator_reset;
 	prop_object_retain(pa);
 	pai->pai_base.pi_obj = pa;
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
 	_prop_array_iterator_reset(pai);
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 
 	return (&pai->pai_base);
 }

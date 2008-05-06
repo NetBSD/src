@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.24 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.25 2008/05/06 13:52:51 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -598,13 +598,10 @@ _prop_dictionary_iterator_reset(void *v)
 	prop_dictionary_t pd = pdi->pdi_base.pi_obj;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
-
-	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
 
 	pdi->pdi_index = 0;
 	pdi->pdi_base.pi_version = pd->pd_version;
-
-	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
 }
 
 /*
@@ -764,7 +761,9 @@ prop_dictionary_iterator(prop_dictionary_t pd)
 	pdi->pdi_base.pi_reset = _prop_dictionary_iterator_reset;
 	prop_object_retain(pd);
 	pdi->pdi_base.pi_obj = pd;
+	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
 	_prop_dictionary_iterator_reset(pdi);
+	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
 
 	return (&pdi->pdi_base);
 }
