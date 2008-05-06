@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.96 2008/05/04 15:37:19 tsutsui Exp $
+#	$NetBSD: sys.mk,v 1.97 2008/05/06 22:19:11 uwe Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -32,6 +32,9 @@ CC?=		cc
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64"
 DBG?=	-O2
+.elif ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
+# -O2 is too -falign-* zealous for low-memory sh3 machines
+DBG?=	-Os -freorder-blocks
 .elif ${MACHINE_ARCH} == "vax"
 DBG?=	-O1 -fgcse -fstrength-reduce -fgcse-after-reload
 .elif ${MACHINE_ARCH} == "m68000"
