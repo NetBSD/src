@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2008/05/06 04:40:45 dyoung Exp $
+#	$NetBSD: Makefile,v 1.34 2008/05/06 16:07:00 dyoung Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -9,6 +9,8 @@
 PROG=	ifconfig
 MAN=	ifconfig.8
 
+WARNS=	4
+
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/ -Wall -Wno-unused-parameter -pedantic -std=c99
 
 .if (${USE_INET6} != "no")
@@ -16,6 +18,7 @@ CPPFLAGS+=-DINET6
 .endif
 
 DPADD+=${LIBUTIL}
+DPADD+=${LIBPROP}
 LDADD+=-lutil
 LDADD+=-lprop
 
