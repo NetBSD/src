@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.32 2008/04/30 12:49:16 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.33 2008/05/06 18:43:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.32 2008/04/30 12:49:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.33 2008/05/06 18:43:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 	 */
 	while (dvp != udvp && (dvp->v_type == VDIR) &&
 	       (mp = dvp->v_mountedhere)) {
-		if (vfs_busy(mp, RW_READER))
+		if (vfs_busy(mp, NULL))
 			continue;
 		vput(dvp);
 		error = VFS_ROOT(mp, &tdvp);
