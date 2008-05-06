@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.7 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.8 2008/05/06 16:15:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.7 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.8 2008/05/06 16:15:17 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -141,7 +141,7 @@ adjust_nsellength(uint8_t nsellength)
 }
 
 void
-iso_status(prop_dictionary_t env, prop_dictionary_t oenv, int force)
+iso_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct sockaddr_iso *siso;
 	struct iso_ifreq isoifr;
