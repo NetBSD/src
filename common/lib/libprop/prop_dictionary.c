@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.25 2008/05/06 13:52:51 xtraeme Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.26 2008/05/06 22:57:26 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -399,6 +399,7 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 	bool rv = false;
 
 	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
 
 	if (pd->pd_count == 0) {
 		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
@@ -570,10 +571,11 @@ _prop_dictionary_iterator_next_object(void *v)
 	struct _prop_dictionary_iterator *pdi = v;
 	prop_dictionary_t pd = pdi->pdi_base.pi_obj;
 	prop_dictionary_keysym_t pdk = NULL;
+	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
-
-	_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	acquired = _prop_rwlock_tryrdlock(&pd->pd_rwlock);
+	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
 
 	if (pd->pd_version != pdi->pdi_base.pi_version)
 		goto out;	/* dictionary changed during iteration */
@@ -587,7 +589,9 @@ _prop_dictionary_iterator_next_object(void *v)
 	pdi->pdi_index++;
 
  out:
-	_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+	if (acquired) {
+		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+	}
 	return (pdk);
 }
 
@@ -596,12 +600,18 @@ _prop_dictionary_iterator_reset(void *v)
 {
 	struct _prop_dictionary_iterator *pdi = v;
 	prop_dictionary_t pd = pdi->pdi_base.pi_obj;
+	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
+	acquired = _prop_rwlock_tryrdlock(&pd->pd_rwlock);
 	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
 
 	pdi->pdi_index = 0;
 	pdi->pdi_base.pi_version = pd->pd_version;
+
+	if (acquired) {
+		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+	}
 }
 
 /*

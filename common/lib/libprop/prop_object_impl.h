@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.21 2008/05/06 13:52:51 xtraeme Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.22 2008/05/06 22:57:26 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -267,6 +267,12 @@ struct _prop_object_iterator {
 #define	_PROP_RWLOCK_DESTROY(x)	rw_destroy(&(x))
 #define	_PROP_RWLOCK_OWNED(x)	_PROP_ASSERT(rw_lock_held(&(x)))
 
+static __inline int
+_prop_rwlock_tryrdlock(krwlock_t *lock)
+{
+	return rw_tryenter(lock, RW_READER);
+}
+
 #elif defined(_STANDALONE)
 
 /*
@@ -303,6 +309,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
 #define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
 #define	_PROP_RWLOCK_OWNED(x)	/* nothing */
+
+static __inline int
+_prop_rwlock_tryrdlock(void *v __unused)
+{
+	return 0;		/* dummy */
+}
 
 #else
 
@@ -348,6 +360,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_DESTROY(x)	rwlock_destroy(&(x))
 #define	_PROP_RWLOCK_OWNED(x)	/* nothing */
 
+static __inline int
+_prop_rwlock_tryrdlock(rwlock_t *lock)
+{
+	return rwlock_tryrdlock(lock);
+}
+
 #elif defined(HAVE_NBTOOL_CONFIG_H)
 /*
  * None of NetBSD's build tools are multi-threaded.
@@ -363,6 +381,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
 #define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
 #define	_PROP_RWLOCK_OWNED(x)	/* nothing */
+
+static __inline int
+_prop_rwlock_tryrdlock(void *v __unused)
+{
+	return 0;		/* dummy */
+}
 
 #else
 /*
@@ -381,6 +405,13 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_UNLOCK(x)	pthread_rwlock_unlock(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)	pthread_rwlock_destroy(&(x))
 #define	_PROP_RWLOCK_OWNED(x)	/* nothing */
+
+static __inline int
+_prop_rwlock_tryrdlock(pthread_rwlock_t *lock)
+{
+	return pthread_rwlock_tryrdlock(lock);
+}
+
 #endif
 
 #endif /* _KERNEL */
@@ -390,9 +421,9 @@ void *		_prop_standalone_realloc(void *, size_t);
  */
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-#define	_PROP_ARG_UNUSED	__unused
+#define		_PROP_ARG_UNUSED	__unused
 #else
-#define	_PROP_ARG_UNUSED	/* delete */
+#define		_PROP_ARG_UNUSED	/* delete */
 #endif /* __NetBSD__ */
 
 #endif /* _PROPLIB_PROP_OBJECT_IMPL_H_ */
