@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.5 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.6 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.5 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.6 2008/05/06 17:29:04 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -118,7 +118,7 @@ agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 void
-agr_status(prop_dictionary_t env)
+agr_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct agrreq ar;
 	void *buf = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.h,v 1.2 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: agr.h,v 1.3 2008/05/06 17:29:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,4 +28,4 @@
 #include "parse.h"
 
 int agrsetport(prop_dictionary_t, prop_dictionary_t);
-void agr_status(prop_dictionary_t);
+void agr_status(prop_dictionary_t, prop_dictionary_t);
