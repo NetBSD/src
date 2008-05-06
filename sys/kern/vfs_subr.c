@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.342 2008/05/06 12:37:04 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.343 2008/05/06 12:39:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.342 2008/05/06 12:37:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.343 2008/05/06 12:39:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -335,6 +335,9 @@ vfs_busy(struct mount *mp, const krw_t op)
 			return error;
 		}
 		if (__predict_true(mp->mnt_unmounter == NULL)) {
+			return 0;
+		}
+		if (mp->mnt_unmounter == curlwp) {
 			return 0;
 		}
 		mutex_enter(&mount_lock);
