@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.30 2008/04/05 18:26:39 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.31 2008/05/06 11:45:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -88,9 +88,6 @@
 					/* 005F reserved */
 #define RTK_TXSTAT_ALL	0x0060		/* TX status of all descriptors */
 
-#define RTK_CSIDR	0x0064          
-#define RTK_CSIAR	0x0068          
-
 /* Direct PHY access registers only available on 8139 */
 #define RTK_BMCR	0x0062		/* PHY basic mode control */
 #define RTK_BMSR	0x0064		/* PHY basic mode status */
@@ -129,11 +126,13 @@
 #define RTK_GTXSTART		0x0038	/* 8 bits */
 #define RTK_TIMERINT_8169	0x0058	/* different offset than 8139 */
 #define RTK_PHYAR		0x0060
-#define RTK_TBICSR		0x0064
-#define RTK_TBI_ANAR		0x0068
+#define RTK_CSIDR		0x0064          
+#define RTK_CSIAR		0x0068          
 #define RTK_TBI_LPAR		0x006A
 #define RTK_GMEDIASTAT		0x006C	/* 8 bits */
+#define RTK_EPHYAR		0x0080
 #define RTK_LDPS		0x0082	/* Link Down Power Saving */
+#define RTK_DBG_REG		0x00D1
 #define RTK_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
 #define RTK_IM			0x00E2
 
