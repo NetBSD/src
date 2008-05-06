@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.23 2008/04/30 21:06:28 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.24 2008/05/06 18:43:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.23 2008/04/30 21:06:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.24 2008/05/06 18:43:44 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,8 +123,6 @@ kmutex_t mntvnode_lock;
 kmutex_t vnode_free_list_lock;
 kmutex_t specfs_lock;
 kmutex_t vfs_list_lock;
-kmutex_t mount_lock;
-kcondvar_t mount_cv;
 
 struct mntlist mountlist =			/* mounted filesystem list */
     CIRCLEQ_HEAD_INITIALIZER(mountlist);
@@ -156,8 +154,6 @@ vntblinit(void)
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&specfs_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&mount_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&mount_cv, "mount");
 
 	mount_specificdata_domain = specificdata_domain_create();
 
@@ -190,36 +186,13 @@ vfs_getvfs(fsid_t *fsid)
 
 /*
  * Drop a reference to a mount structure, freeing if the last reference.
- *
- * => If nextp != NULL, the caller holds mountlist_lock.
- *
- * => If nextp == NULL, it must be safe to take mountlist_lock.
  */
 void
-vfs_destroy(struct mount *mp, bool interlocked)
+vfs_destroy(struct mount *mp)
 {
-
-	KASSERT(!interlocked || mutex_owned(&mountlist_lock));
 
 	if (__predict_true(atomic_dec_uint_nv(&mp->mnt_refcnt) > 0)) {
 		return;
-	}
-
-	KASSERT(mp->mnt_unmounter == NULL);
-
-	/*
-	 * Remove it from the mountlist.  We must interlock with
-	 * threads traversing the mountlist.  See vfs_trybusy().
-	 */
-	if ((mp->mnt_iflag & IMNT_ONLIST) != 0) {
-		KASSERT((mp->mnt_iflag & IMNT_GONE) != 0);
-		if (!interlocked) {
-			mutex_enter(&mountlist_lock);
-		}
-		CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
-		if (!interlocked) {
-			mutex_exit(&mountlist_lock);
-		}
 	}
 
 	/*
@@ -227,11 +200,12 @@ vfs_destroy(struct mount *mp, bool interlocked)
 	 * free the data structures.
 	 */
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
-	rw_destroy(&mp->mnt_lock);
+	rw_destroy(&mp->mnt_unmounting);
+	mutex_destroy(&mp->mnt_updating);
+	mutex_destroy(&mp->mnt_renamelock);
 	if (mp->mnt_op != NULL) {
 		vfs_delref(mp->mnt_op);
 	}
-	mutex_destroy(&mp->mnt_renamelock);
 	kmem_free(mp, sizeof(*mp));
 }
 
@@ -748,7 +722,7 @@ printlockedvnodes(void)
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &nmp)) {
+		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
@@ -1286,8 +1260,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	bitmask_snprintf(mp->mnt_iflag, __IMNT_FLAG_BITS, sbuf, sizeof(sbuf));
 	(*pr)("iflag = %s\n", sbuf);
 
-	(*pr)("refcnt = %d lock @ %p writer = %p\n", mp->mnt_refcnt,
-	    &mp->mnt_lock, mp->mnt_writer);
+	(*pr)("refcnt = %d unmounting @ %p updating @ %p\n", mp->mnt_refcnt,
+	    &mp->mnt_unmounting, &mp->mnt_updating);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);

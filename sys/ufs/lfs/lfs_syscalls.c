@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.131 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.132 2008/05/06 18:43:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.131 2008/04/30 12:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.132 2008/05/06 18:43:45 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -252,7 +252,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	cnt = blkcnt;
 
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
 	/*
@@ -682,7 +682,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		return (ENOENT);
 
 	ump = VFSTOUFS(mntp);
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
 	cnt = blkcnt;
@@ -860,7 +860,7 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	fs = VFSTOUFS(mntp)->um_lfs;
 	segnum = SCARG(uap, segment);
 
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
 	KERNEL_LOCK(1, NULL);

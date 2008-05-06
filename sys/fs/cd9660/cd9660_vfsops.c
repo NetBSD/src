@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.60 2008/05/03 15:57:41 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.61 2008/05/06 18:43:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.60 2008/05/03 15:57:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.61 2008/05/06 18:43:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -166,12 +166,11 @@ cd9660_mountroot(void)
 	args.flags = ISOFSMNT_ROOT;
 	if ((error = iso_mountfs(rootvp, mp, l, &args)) != 0) {
 		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp, false);
+		vfs_destroy(mp);
 		return (error);
 	}
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_iflag |= IMNT_ONLIST;
 	mutex_exit(&mountlist_lock);
 	(void)cd9660_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);

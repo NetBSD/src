@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.24 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.25 2008/05/06 18:43:44 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.24 2008/04/30 12:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.25 2008/05/06 18:43:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -138,7 +138,6 @@ sync_fsync(v)
 	} */ *ap = v;
 	struct vnode *syncvp = ap->a_vp;
 	struct mount *mp = syncvp->v_mount;
-	int asyncflag;
 
 	/*
 	 * We only need to do something if this is a lazy evaluation.
@@ -157,12 +156,8 @@ sync_fsync(v)
 	 * Walk the list of vnodes pushing all that are dirty and
 	 * not already on the sync list.
 	 */
-	if (vfs_trybusy(mp, RW_WRITER, NULL) == 0) {
-		asyncflag = mp->mnt_flag & MNT_ASYNC;
-		mp->mnt_flag &= ~MNT_ASYNC;
+	if (vfs_busy(mp, NULL) == 0) {
 		VFS_SYNC(mp, MNT_LAZY, ap->a_cred);
-		if (asyncflag)
-			mp->mnt_flag |= MNT_ASYNC;
 		vfs_unbusy(mp, false, NULL);
 	}
 	return (0);

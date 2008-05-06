@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.107 2008/05/06 15:04:00 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.108 2008/05/06 18:43:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.107 2008/05/06 15:04:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.108 2008/05/06 18:43:44 ad Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -776,12 +776,11 @@ unionlookup:
 	 */
 	while (dp->v_type == VDIR && (mp = dp->v_mountedhere) &&
 	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
-		error = vfs_trybusy(mp, RW_READER, NULL);
+		error = vfs_busy(mp, NULL);
 		if (error != 0) {
 			vput(dp);
 			goto bad;
 		}
-
 		KASSERT(ndp->ni_dvp != dp);
 		VOP_UNLOCK(ndp->ni_dvp, 0);
 		vput(dp);
