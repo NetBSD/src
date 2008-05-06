@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.16 2008/05/03 05:45:01 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.17 2008/05/06 22:57:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -254,14 +254,15 @@ NENTRY(rw_tryenter)
 	/*
 	 * Reader: this is the most common case.
 	 */
-1:	movq	RW_OWNER(%rdi), %rax
+	movq	RW_OWNER(%rdi), %rax
+1:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
 	jnz	3f
 	LOCK(8)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
-	movl	$0, %eax
-	setz	%al
+	jnz	1b
+	movl	%edi, %eax			/* nonzero */
 	ret
 
 	/*
@@ -272,7 +273,7 @@ NENTRY(rw_tryenter)
 	orq	$RW_WRITE_LOCKED, %rcx
 	LOCK(9)
 	cmpxchgq %rcx, RW_OWNER(%rdi)
-	movl	$0, %eax
+	xorl	%eax, %eax
 	setz	%al
 	ret
 
