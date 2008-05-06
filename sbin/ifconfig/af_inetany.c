@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.1 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.2 2008/05/06 16:15:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.1 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.2 2008/05/06 16:15:17 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -58,30 +58,59 @@ __RCSID("$NetBSD: af_inetany.c,v 1.1 2008/05/06 04:33:42 dyoung Exp $");
 #include "env.h"
 #include "extern.h"
 #include "af_inet.h"
+#include "af_inet6.h"
 
 #define	IFADDR_PARAM(__arg)	{.cmd = (__arg), .desc = #__arg}
 #define	BUFPARAM(__arg) 	{.buf = &(__arg), .buflen = sizeof(__arg)}
 
-struct buf {
+struct apbuf {
 	void *buf;
 	size_t buflen;
 };
 
+struct afparam {
+	struct {
+		char *buf;
+		size_t buflen;
+	} name[2];
+	struct apbuf dgaddr, addr, brd, dst, mask, req, dgreq, defmask,
+	    pre_aifaddr_arg;
+	struct {
+		unsigned long cmd;
+		const char *desc;
+	} aifaddr, difaddr, gifaddr;
+	int (*pre_aifaddr)(prop_dictionary_t, void *);
+};
+
 static void *
-loadbuf(struct buf *b, const struct paddr_prefix *pfx)
+loadbuf(struct apbuf *b, const struct paddr_prefix *pfx)
 {
 	return memcpy(b->buf, &pfx->pfx_addr,
 	              MIN(b->buflen, pfx->pfx_addr.sa_len));
 }
 
+static int
+in6_pre_aifaddr(prop_dictionary_t env, void *arg)
+{
+	struct in6_aliasreq *ifra = arg;
+
+	setia6eui64_impl(env, ifra);
+	setia6vltime_impl(env, ifra);
+	setia6pltime_impl(env, ifra);
+	setia6flags_impl(env, ifra);
+
+	return 0;
+}
+
 void
-in_addr_commit(prop_dictionary_t env)
+commit_address(prop_dictionary_t env)
 {
 	const char *ifname;
 	struct ifreq in_ifr;
 	struct in_aliasreq in_ifra;
-#if 1
-	struct in6_ifreq in6_ifr = {
+	struct in6_ifreq in6_ifr;
+#if 0
+	 = {
 		.ifr_addr = {
 			.sin6_family = AF_INET6,
 			.sin6_addr = {
@@ -91,7 +120,17 @@ in_addr_commit(prop_dictionary_t env)
 			}
 		}
 	};
-	struct in6_aliasreq in6_ifra = {
+#endif
+	static struct sockaddr_in6 in6_defmask = {
+		.sin6_addr = {
+			.s6_addr = {0xff, 0xff, 0xff, 0xff,
+			            0xff, 0xff, 0xff, 0xff}
+		}
+	};
+
+	struct in6_aliasreq in6_ifra;
+#if 0
+	 = {
 		.ifra_prefixmask = {
 			.sin6_addr = {
 				.s6_addr =
@@ -109,17 +148,7 @@ in_addr_commit(prop_dictionary_t env)
 	prop_data_t d;
 	const struct paddr_prefix *addr, *brd, *dst, *mask;
 	unsigned short flags;
-	struct afparam {
-		struct {
-			char *buf;
-			size_t buflen;
-		} name[2];
-		struct buf dgaddr, addr, brd, dst, mask, req, dgreq;
-		struct {
-			unsigned long cmd;
-			const char *desc;
-		} aifaddr, difaddr, gifaddr;
-	} inparam = {
+	struct afparam inparam = {
 		  .req = BUFPARAM(in_ifra)
 		, .dgreq = BUFPARAM(in_ifr)
 		, .name = {
@@ -136,9 +165,8 @@ in_addr_commit(prop_dictionary_t env)
 		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR)
 		, .difaddr = IFADDR_PARAM(SIOCDIFADDR)
 		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR)
-	}
-#if 1
-	, in6param = {
+		, .defmask = {.buf = NULL, .buflen = 0}
+	}, in6param = {
 		  .req = BUFPARAM(in6_ifra)
 		, .dgreq = BUFPARAM(in6_ifr)
 		, .name = {
@@ -155,9 +183,10 @@ in_addr_commit(prop_dictionary_t env)
 		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR_IN6)
 		, .difaddr = IFADDR_PARAM(SIOCDIFADDR_IN6)
 		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR_IN6)
-	}
-#endif
-	, *param;
+		, .defmask = BUFPARAM(in6_defmask)
+		, .pre_aifaddr = in6_pre_aifaddr
+		, .pre_aifaddr_arg = BUFPARAM(in6_ifra)
+	}, *param;
 
 	if ((af = getaf(env)) == -1)
 		af = AF_INET;
@@ -202,7 +231,7 @@ in_addr_commit(prop_dictionary_t env)
 
 	if ((b = (prop_bool_t)prop_dictionary_get(env, "alias")) == NULL) {
 		delete = false;
-		replace = (af == AF_INET);
+		replace = (param->gifaddr.cmd != 0);
 	} else {
 		replace = false;
 		delete = !prop_bool_true(b);
@@ -225,6 +254,10 @@ in_addr_commit(prop_dictionary_t env)
 	case IFF_BROADCAST:
 		if (mask != NULL)
 			loadbuf(&param->mask, mask);
+		else if (param->defmask.buf != NULL) {
+			memcpy(param->mask.buf, param->defmask.buf,
+			    MIN(param->mask.buflen, param->defmask.buflen));
+		}
 		if (brd != NULL)
 			loadbuf(&param->brd, brd);
 		break;
@@ -257,6 +290,9 @@ in_addr_commit(prop_dictionary_t env)
 			err(EXIT_FAILURE, param->difaddr.desc);
 		return;
 	}
+	if (param->pre_aifaddr != NULL &&
+	    (*param->pre_aifaddr)(env, param) == -1)
+		err(EXIT_FAILURE, "pre-%s", param->aifaddr.desc);
 	if (ioctl(s, param->aifaddr.cmd, param->req.buf) == -1)
 		err(EXIT_FAILURE, param->aifaddr.desc);
 }
