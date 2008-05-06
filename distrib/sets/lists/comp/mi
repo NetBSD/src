@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1142 2008/05/06 08:40:47 yamt Exp $
+#	$NetBSD: mi,v 1.1143 2008/05/06 11:34:18 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7724,7 +7724,7 @@
 ./usr/share/man/cat9/getblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/geteblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf.0			comp-sys-catman		.cat
-./usr/share/man/cat9/getiobuf_nowait.0		comp-sys-catman		.cat
+./usr/share/man/cat9/getiobuf_nowait.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/gsignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman		.cat
@@ -12760,7 +12760,7 @@
 ./usr/share/man/man9/getblk.9			comp-sys-man		.man
 ./usr/share/man/man9/geteblk.9			comp-sys-man		.man
 ./usr/share/man/man9/getiobuf.9			comp-sys-man		.man
-./usr/share/man/man9/getiobuf_nowait.9		comp-sys-man		.man
+./usr/share/man/man9/getiobuf_nowait.9		comp-obsolete		obsolete
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man		.man
 ./usr/share/man/man9/gsignal.9			comp-sys-man		.man
 ./usr/share/man/man9/hardclock.9		comp-sys-man		.man
