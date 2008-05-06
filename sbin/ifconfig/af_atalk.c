@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.9 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.10 2008/05/06 21:16:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.9 2008/05/06 16:15:17 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.10 2008/05/06 21:16:52 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -96,14 +96,10 @@ setatrange(prop_dictionary_t env, prop_dictionary_t xenv)
 int
 setatphase(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	prop_number_t num;
-
-	num = (prop_number_t)prop_dictionary_get(env, "phase");
-	if (num == NULL) {
+	if (!prop_dictionary_get_uint8(env, "phase", &at_nr.nr_phase)) {
 		errno = ENOENT;
 		return -1;
 	}
-	at_nr.nr_phase = (uint8_t)prop_number_integer_value(num);
 	return 0;
 }
 

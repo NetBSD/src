@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.2 2008/05/06 16:09:18 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.3 2008/05/06 21:13:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2008 David Young.  All rights reserved.
@@ -221,7 +221,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	const struct paddr *pa = (const struct paddr *)p;
 	prop_data_t d;
 	prop_object_t o;
-	prop_number_t num;
+	int64_t af0;
 	int af, rc;
 	struct paddr_prefix *pfx, *mask;
 	const struct sockaddr *sa = NULL;
@@ -242,9 +242,10 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	    prop_dictionary_get(im->m_env, pa->pa_deactivator) != NULL)
 		return -1;
 
-	num = (prop_number_t)prop_dictionary_get(im->m_env, "af");
-
-	af = (num != NULL) ? (int)prop_number_integer_value(num) : AF_UNSPEC;
+	if (!prop_dictionary_get_int64(im->m_env, "af", &af0))
+		af = AF_UNSPEC;
+	else
+		af = af0;
 
 	switch (af) {
 	case AF_UNSPEC:
