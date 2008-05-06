@@ -1,4 +1,4 @@
-/* $NetBSD: drm_pci.c,v 1.9 2008/05/06 01:26:14 bjs Exp $ */
+/* $NetBSD: drm_pci.c,v 1.10 2008/05/06 01:45:47 bjs Exp $ */
 
 /*
  * Copyright 2003 Eric Anholt.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.9 2008/05/06 01:26:14 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.10 2008/05/06 01:45:47 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -34,35 +34,72 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt E
 drm_dma_handle_t *
 drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 {
-	drm_dma_handle_t *hdl;
-	struct drm_dmamem *dmam;
+	drm_dma_handle_t *h;
+	int error, nsegs;
 
-	hdl = drm_mem_zalloc(sizeof(drm_dma_handle_t));
-	if (hdl == NULL)
-		goto err;
 
-	dmam = drm_dmamem_alloc(dev->pa.pa_dmat, size, DRM_DMA_NOWAIT);
-	if (dmam == NULL)
-		goto free;
+	/* Need power-of-two alignment, so fail the allocation if it isn't. */
+	if ((align & (align - 1)) != 0) {
+		DRM_ERROR("drm_pci_alloc with non-power-of-two alignment %d\n",
+		    (int)align);
+		return NULL;
+	}
 
-	hdl->busaddr = DRM_NETBSD_DMA_ADDR(dmam);
-	hdl->vaddr = DRM_NETBSD_DMA_VADDR(dmam);
-	hdl->size = size;
-	return hdl;
+	h = malloc(sizeof(drm_dma_handle_t), M_DRM, M_ZERO | M_NOWAIT);
 
+	if (h == NULL)
+		return NULL;
+	if ((error = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
+	    h->segs, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
+		printf("drm: Unable to allocate DMA, error %d\n", error);
+		goto fail;
+	}
+	if ((error = bus_dmamem_map(dev->pa.pa_dmat, h->segs, nsegs, size, 
+	     &h->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+		printf("drm: Unable to map DMA, error %d\n", error);
+	     	goto free;
+	}
+	if ((error = bus_dmamap_create(dev->pa.pa_dmat, size, 1, size, 0,
+	     BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &h->map)) != 0) {
+		printf("drm: Unable to create DMA map, error %d\n", error);
+		goto unmap;
+	}
+	if ((error = bus_dmamap_load(dev->pa.pa_dmat, h->map, h->addr, size,
+	     NULL, BUS_DMA_NOWAIT)) != 0) {
+		printf("drm: Unable to load DMA map, error %d\n", error);
+		goto destroy;
+	}
+	h->busaddr = DRM_PCI_DMAADDR(h);
+	h->vaddr = h->addr;
+	h->size = size;
+
+	return h;
+
+destroy:
+	bus_dmamap_destroy(dev->pa.pa_dmat, h->map);
+unmap:
+	bus_dmamem_unmap(dev->pa.pa_dmat, h->addr, size);
 free:
-	drm_mem_free(hdl, sizeof(*hdl));
-err:
+	bus_dmamem_free(dev->pa.pa_dmat, h->segs, 1);
+fail:
+	free(h, M_DRM);
 	return NULL;
 	
 }
 
+/*
+ * 	Free a DMA-accessible consistent memory block.
+ */
+
 void
-drm_pci_free(drm_device_t *dev, drm_dma_handle_t *hdl)
+drm_pci_free(drm_device_t *dev, drm_dma_handle_t *h)
 {
-	if (hdl != NULL) {
-		if (hdl->dmam != NULL)
-			drm_dmamem_free(hdl->dmam);
-	drm_mem_free(hdl, sizeof(*hdl));
-	}
+	if (h == NULL)
+		return;
+	bus_dmamap_unload(dev->pa.pa_dmat, h->map);
+	bus_dmamap_destroy(dev->pa.pa_dmat, h->map);
+	bus_dmamem_unmap(dev->pa.pa_dmat, h->addr, h->size);
+	bus_dmamem_free(dev->pa.pa_dmat, h->segs, 1);
+
+	free(h, M_DRM);
 }
