@@ -1,3 +1,4 @@
+/*	$NetBSD: ieee80211.c,v 1.13 2008/05/06 08:16:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -30,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.12 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.13 2008/05/06 08:16:12 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
