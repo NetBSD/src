@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.263 2008/05/06 08:34:35 yamt Exp $
+#       $NetBSD: Makefile,v 1.264 2008/05/06 11:32:46 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -250,8 +250,7 @@ MLINKS+=fstrans.9 fstrans_done.9 \
 	fstrans.9 fscow_establish.9 \
 	fstrans.9 fscow_disestablish.9 \
 	fstrans.9 fscow_run.9
-MLINKS+=getiobuf.9 getiobuf_nowait.9 \
-	getiobuf.9 putiobuf.9
+MLINKS+=getiobuf.9 putiobuf.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=hashinit.9 hashdone.9
 MLINKS+=humanize_number.9 format_bytes.9
