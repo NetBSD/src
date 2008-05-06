@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.49 2008/03/26 14:19:43 ad Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.50 2008/05/06 18:43:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.49 2008/03/26 14:19:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.50 2008/05/06 18:43:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_poll_desc, mfs_poll },			/* poll */
 	{ &vop_revoke_desc, mfs_revoke },		/* revoke */
 	{ &vop_mmap_desc, mfs_mmap },			/* mmap */
-	{ &vop_fsync_desc, spec_fsync },		/* fsync */
+	{ &vop_fsync_desc, mfs_fsync },			/* fsync */
 	{ &vop_seek_desc, mfs_seek },			/* seek */
 	{ &vop_remove_desc, mfs_remove },		/* remove */
 	{ &vop_link_desc, mfs_link },			/* link */
@@ -323,5 +323,48 @@ mfs_print(void *v)
 	printf("tag VT_MFS, pid %d, base %p, size %ld\n",
 	    (mfsp->mfs_proc != NULL) ? mfsp->mfs_proc->p_pid : 0,
 	    mfsp->mfs_baseoff, mfsp->mfs_size);
+	return (0);
+}
+
+/*
+ * Do a lazy sync of the filesystem.
+ */
+int
+mfs_fsync(v)
+	void *v;
+{
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		kauth_cred_t a_cred;
+		int a_flags;
+		off_t offlo;
+		off_t offhi;
+	} */ *ap = v;
+	struct vnode *syncvp = ap->a_vp;
+	struct mount *mp = syncvp->v_mount;
+	int asyncflag;
+
+	/*
+	 * We only need to do something if this is a lazy evaluation.
+	 */
+	if (!(ap->a_flags & FSYNC_LAZY))
+		return (0);
+
+	/*
+	 * Walk the list of vnodes pushing all that are dirty and
+	 * not already on the sync list.
+	 */
+	if (vfs_busy(mp, NULL) == 0) {
+		VOP_UNLOCK(syncvp, 0);
+		mutex_enter(&mp->mnt_updating);
+		asyncflag = mp->mnt_flag & MNT_ASYNC;
+		mp->mnt_flag &= ~MNT_ASYNC;
+		VFS_SYNC(mp, MNT_LAZY, ap->a_cred);
+		if (asyncflag)
+			mp->mnt_flag |= MNT_ASYNC;
+		mutex_exit(&mp->mnt_updating);
+		vfs_unbusy(mp, false, NULL);
+		vn_lock(syncvp, LK_EXCLUSIVE | LK_RETRY);
+	}
 	return (0);
 }

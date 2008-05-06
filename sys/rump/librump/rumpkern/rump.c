@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.44 2008/05/04 12:52:58 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.45 2008/05/06 18:43:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -166,7 +166,8 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 	mp->mnt_op = vfsops;
 	mp->mnt_flag = mntflags;
 	TAILQ_INIT(&mp->mnt_vnodelist);
-	rw_init(&mp->mnt_lock);
+	rw_init(&mp->mnt_unmounting);
+	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_refcnt = 1;
 

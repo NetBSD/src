@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.95 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.96 2008/05/06 18:43:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.95 2008/04/30 12:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.96 2008/05/06 18:43:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.95 2008/04/30 12:49:17 ad Exp $");
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
-#include <miscfs/syncfs/syncfs.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -201,13 +200,12 @@ mfs_mountroot(void)
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
 		vfs_unbusy(mp, false, NULL);
 		bufq_free(mfsp->mfs_buflist);
-		vfs_destroy(mp, false);
+		vfs_destroy(mp);
 		kmem_free(mfsp, sizeof(*mfsp));
 		return (error);
 	}
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_iflag |= IMNT_ONLIST;
 	mutex_exit(&mountlist_lock);
 	mp->mnt_vnodecovered = NULLVP;
 	ump = VFSTOUFS(mp);
@@ -374,7 +372,7 @@ mfs_start(struct mount *mp, int flags)
 	 * Add a reference to the mfsnode to prevent it disappearing in
 	 * this routine.
 	 */
-	if ((error = vfs_busy(mp, RW_READER)) != 0)
+	if ((error = vfs_busy(mp, NULL)) != 0)
 		return error;
 	vp = VFSTOUFS(mp)->um_devvp;
 	mfsp = VTOMFS(vp);
@@ -400,14 +398,7 @@ mfs_start(struct mount *mp, int flags)
 		 */
 		if (sleepreturn != 0) {
 			mutex_exit(&mfs_lock);
-			/*
-			 * XXX Freeze syncer.  Must do this before locking
-			 * the mount point.  See dounmount() for details.
-			 */
-			mutex_enter(&syncer_mutex);
-			if (vfs_trybusy(mp, RW_WRITER, NULL) != 0)
-				mutex_exit(&syncer_mutex);
-			else if (dounmount(mp, 0, curlwp) != 0) {
+			if (dounmount(mp, 0, curlwp) != 0) {
 				p = curproc;
 				ksiginfo_queue_init(&kq);
 				mutex_enter(p->p_lock);

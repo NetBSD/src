@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.198 2008/04/30 12:49:17 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.199 2008/05/06 18:43:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.198 2008/04/30 12:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.199 2008/05/06 18:43:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -360,7 +360,6 @@ nfs_mountroot()
 	 */
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_iflag |= IMNT_ONLIST;
 	mutex_exit(&mountlist_lock);
 	rootvp = vp;
 	mp->mnt_vnodecovered = NULLVP;
@@ -422,7 +421,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
 			 ndmntp->ndm_args.hostname, vpp, l);
 	if (error) {
 		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp, false);
+		vfs_destroy(mp);
 		printf("nfs_mountroot: mount %s failed: %d\n",
 		       mntname, error);
 	} else
