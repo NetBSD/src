@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.23 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.24 2008/05/06 18:40:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@ struct lwp;
  * as cpu_info is size-limited on most ports.
  */
 
+struct lockdebug;
+
 struct cpu_data {
 	/*
 	 * The first section is likely to be touched by other CPUs -
@@ -88,6 +90,8 @@ struct cpu_data {
 	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
 	struct selcpu	*cpu_selcpu;		/* per-CPU select() info */
 	void		*cpu_cachelock;		/* per-cpu vfs_cache lock */
+	_TAILQ_HEAD(,struct lockdebug,volatile) cpu_ld_locks;/* !: lockdebug */
+	__cpu_simple_lock_t cpu_ld_lock;	/* lockdebug */
 };
 
 /* compat definitions */

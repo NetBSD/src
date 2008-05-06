@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.29 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.30 2008/05/06 18:40:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.29 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.30 2008/05/06 18:40:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,8 @@ mi_cpu_attach(struct cpu_info *ci)
 	ci->ci_index = ncpu;
 	cpu_infos[cpu_index(ci)] = ci;
 	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
+	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
+	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
 
 	sched_cpuattach(ci);
 	uvm_cpu_attach(ci);
