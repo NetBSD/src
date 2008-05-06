@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.6 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.7 2008/05/06 21:24:40 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.6 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.7 2008/05/06 21:24:40 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,8 +138,10 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	/*
 	 * SBUS config
 	 */
+	(void) bus_space_read_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_RESET);
+	delay(100);
 	bus_space_write_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_CONFIG,
-	    GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
+	    GEM_SBUS_CFG_BSIZE128|GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
 
 	gem_attach(sc, enaddr);
 
