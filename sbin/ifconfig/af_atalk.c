@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.7 2008/05/06 04:33:42 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.8 2008/05/06 15:02:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.7 2008/05/06 04:33:42 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.8 2008/05/06 15:02:49 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -139,13 +139,15 @@ at_status(prop_dictionary_t env, prop_dictionary_t oenv, int force)
 	if ((s = getsock(AF_APPLETALK)) == -1) {
 		if (errno == EAFNOSUPPORT)
 			return;
-		err(EXIT_FAILURE, "socket");
+		err(EXIT_FAILURE, "getsock");
 	}
 	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
 		err(EXIT_FAILURE, "%s: getifinfo", __func__);
 
 	if ((af = getaf(env)) == -1)
-		err(EXIT_FAILURE, "%s: getaf", __func__);
+		af = AF_APPLETALK;
+	else if (af != AF_APPLETALK)
+		return;
 
 	memset(&ifr, 0, sizeof(ifr));
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
