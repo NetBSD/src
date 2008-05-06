@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.192 2008/05/06 21:20:05 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.193 2008/05/06 21:58:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.192 2008/05/06 21:20:05 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.193 2008/05/06 21:58:05 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -571,9 +571,11 @@ do_setifcaps(int s, const char *ifname, prop_dictionary_t env)
 	struct ifcapreq ifcr;
 	prop_data_t d;
 
-	d = (prop_data_t )prop_dictionary_get(env, "ifcap");
-	if (d == NULL || sizeof(ifcr) != prop_data_size(d))
+	d = (prop_data_t )prop_dictionary_get(env, "ifcaps");
+	if (d == NULL)
 		return;
+
+	assert(sizeof(ifcr) == prop_data_size(d));
 
 	memcpy(&ifcr, prop_data_data_nocopy(d), sizeof(ifcr));
 	estrlcpy(ifcr.ifcr_name, ifname, sizeof(ifcr.ifcr_name));
