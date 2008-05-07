@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.197 2008/05/07 20:11:15 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.198 2008/05/07 20:12:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.197 2008/05/07 20:11:15 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.198 2008/05/07 20:12:31 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ static const struct afswtch afs[] = {
 	.k_negnum = -(__flag)					\
 }
 
-struct kwinst ifflagskw[] = {
+static const struct kwinst ifflagskw[] = {
 	  IFKW("arp", IFF_NOARP)
 	, IFKW("debug", IFF_DEBUG)
 	, IFKW("link0", IFF_LINK0)
@@ -221,7 +221,7 @@ struct kwinst ifflagskw[] = {
 	, {.k_word = "up", .k_type = KW_T_NUM, .k_num = IFF_UP}
 };
 
-struct kwinst ifcapskw[] = {
+static const struct kwinst ifcapskw[] = {
 	  IFKW("ip4csum-tx",	IFCAP_CSUM_IPv4_Tx)
 	, IFKW("ip4csum-rx",	IFCAP_CSUM_IPv4_Rx)
 	, IFKW("tcp4csum-tx",	IFCAP_CSUM_TCPv4_Tx)
@@ -282,7 +282,7 @@ struct pstr mediaopt = PSTR_INITIALIZER(&mediaopt, "mediaopt",
 struct pstr media = PSTR_INITIALIZER(&media, "media",
     setmedia, "media", &command_root.pb_parser);
 
-struct kwinst misckw[] = {
+static const struct kwinst misckw[] = {
 	  {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_neg = true,
 	   .k_bool = true, .k_negbool = false,
@@ -340,13 +340,13 @@ struct kwinst misckw[] = {
 };
 
 /* key: clonecmd */
-struct kwinst clonekw[] = {
+static const struct kwinst clonekw[] = {
 	{.k_word = "create", .k_type = KW_T_NUM, .k_num = SIOCIFCREATE,
 	 .k_nextparser = &opt_silent_family.pb_parser},
 	{.k_word = "destroy", .k_type = KW_T_NUM, .k_num = SIOCIFDESTROY}
 };
 
-struct kwinst familykw[] = {
+static const struct kwinst familykw[] = {
 	  {.k_word = "inet", .k_type = KW_T_NUM, .k_num = AF_INET,
 	   .k_nextparser = NULL}
 #ifdef INET6
@@ -441,7 +441,7 @@ struct pkw silent_family = PKW_INITIALIZER(&silent_family, "silent family",
     NULL, "af", familykw, __arraycount(familykw), &command_root.pb_parser);
 
 #ifdef INET6
-struct kwinst ia6flagskw[] = {
+static const struct kwinst ia6flagskw[] = {
 	  IFKW("anycast",	IN6_IFF_ANYCAST)
 	, IFKW("tentative",	IN6_IFF_TENTATIVE)
 	, IFKW("deprecated",	IN6_IFF_DEPRECATED)
@@ -453,7 +453,7 @@ struct pinteger pltime = PINTEGER_INITIALIZER(&pltime, "pltime", 0,
 struct pinteger vltime = PINTEGER_INITIALIZER(&vltime, "vltime", 0,
     setia6vltime, "vltime", &command_root.pb_parser);
 
-struct kwinst ia6lifetimekw[] = {
+static const struct kwinst ia6lifetimekw[] = {
 	  {.k_word = "pltime", .k_nextparser = &pltime.pi_parser}
 	, {.k_word = "vltime", .k_nextparser = &vltime.pi_parser}
 };
