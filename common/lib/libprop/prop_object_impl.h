@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.24 2008/05/07 10:01:50 tron Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.25 2008/05/07 10:16:41 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -266,7 +266,7 @@ struct _prop_object_iterator {
 #define	_PROP_RWLOCK_UNLOCK(x)		rw_exit(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)		rw_destroy(&(x))
 #define	_PROP_RWLOCK_OWNED(x)		_PROP_ASSERT(rw_lock_held(&(x)))
-#define	_PROP_RWLOCK_TRYRDLOCK(x)	rw_tryenter((x), RW_READER)
+#define	_PROP_RWLOCK_TRYRDLOCK(x)	rw_tryenter(&(x), RW_READER)
 
 #elif defined(_STANDALONE)
 
@@ -349,7 +349,7 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_RWLOCK_UNLOCK(x)		rwlock_unlock(&(x))
 #define	_PROP_RWLOCK_DESTROY(x)		rwlock_destroy(&(x))
 #define	_PROP_RWLOCK_OWNED(x)		/* nothing */
-#define _PROP_RWLOCK_TRYRDLOCK(x)	rwlock_tryrdlock(x)
+#define _PROP_RWLOCK_TRYRDLOCK(x)	rwlock_tryrdlock(&(x))
 
 #elif defined(HAVE_NBTOOL_CONFIG_H)
 /*
