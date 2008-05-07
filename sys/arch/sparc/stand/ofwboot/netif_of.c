@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.4 2006/07/13 20:03:34 uwe Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.5 2008/05/07 17:56:09 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -63,7 +63,6 @@ struct iodesc sockets[SOPEN_MAX];
 struct iodesc *
 socktodesc(int sock)
 {
-
 	if (sock != 0)
 		return NULL;
 	return sockets;
@@ -172,6 +171,9 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
 #ifdef	NETIF_DEBUG
 	printf("netif_put: xmit returned %d\n", rv);
 #endif
+
+	if (rv > len)
+		rv = len;
 
 	return rv;
 }
