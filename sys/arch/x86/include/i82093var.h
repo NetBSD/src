@@ -1,4 +1,4 @@
-/* $NetBSD: i82093var.h,v 1.7 2008/04/28 20:23:40 martin Exp $ */
+/* $NetBSD: i82093var.h,v 1.8 2008/05/07 07:00:16 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,9 +78,6 @@ struct ioapic_softc {
 #define APIC_IRQ_ISLEGACY(x) (!((x) & APIC_INT_VIA_APIC))
 #define APIC_IRQ_LEGACY_IRQ(x) ((x) & 0xff)
 
-void *apic_intr_establish(int, int, int, int (*)(void *), void *); 
-void apic_intr_disestablish(void *);
-
 void ioapic_print_redir(struct ioapic_softc *, const char *, int);
 void ioapic_format_redir(char *, const char *, int, uint32_t, uint32_t);
 struct ioapic_softc *ioapic_find(int);
@@ -88,7 +85,6 @@ struct ioapic_softc *ioapic_find_bybase(int);
 
 void ioapic_enable(void);
 void ioapic_reenable(void);
-void lapic_vectorset(void); /* XXX */
 
 extern int nioapics;
 extern struct ioapic_softc *ioapics;

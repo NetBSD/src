@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.48 2008/04/30 12:00:52 joerg Exp $	*/
+/*	$NetBSD: intr.c,v 1.49 2008/05/07 07:00:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.48 2008/04/30 12:00:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.49 2008/05/07 07:00:16 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -288,7 +288,7 @@ x86_nmi(void)
 /*
  * Recalculate the interrupt masks from scratch.
  */
-void
+static void
 intr_calculatemasks(struct cpu_info *ci)
 {
 	int irq, level, unusedirqs, intrlevel[MAX_INTR_SOURCES];
@@ -464,7 +464,7 @@ intr_scan_bus(int bus, int pin, int *handle)
 }
 #endif
 
-int
+static int
 intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		       int *index)
 {
@@ -514,7 +514,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 /*
  * A simple round-robin allocator to assign interrupts to CPUs.
  */
-int
+static int
 intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 		   struct cpu_info **cip, int *index, int *idt_slot)
 {
