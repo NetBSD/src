@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.56 2008/05/05 02:29:31 jmcneill Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.57 2008/05/07 15:18:35 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.56 2008/05/05 02:29:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.57 2008/05/07 15:18:35 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -231,11 +231,9 @@ sched_native2linux(int native_policy, struct sched_param *native_params,
 	if (native_params != NULL) {
 		int prio = native_params->sched_priority;
 
-#if 0
 		KASSERT(prio >= SCHED_PRI_MIN);
 		KASSERT(prio <= SCHED_PRI_MAX);
 		KASSERT(linux_params != NULL);
-#endif
 
 #ifdef DEBUG_LINUX
 		printf("native2linux: native: policy %d, priority %d\n",
