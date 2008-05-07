@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.c,v 1.11 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: tunnel.c,v 1.12 2008/05/07 20:03:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tunnel.c,v 1.11 2008/05/06 17:29:04 dyoung Exp $");
+__RCSID("$NetBSD: tunnel.c,v 1.12 2008/05/07 20:03:27 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -67,6 +67,15 @@ struct paddr tundst = PADDR_INITIALIZER(&tundst, "tundst", settunnel,
 
 struct paddr tunsrc = PADDR_INITIALIZER(&tunsrc, "tunsrc", NULL,
     "tunsrc", NULL, NULL, NULL, &tundst.pa_parser);
+
+static const struct kwinst tunnelkw[] = {
+	  {.k_word = "deletetunnel", .k_exec = deletetunnel,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "tunnel", .k_nextparser = &tunsrc.pa_parser}
+};
+
+struct pkw tunnel = PKW_INITIALIZER(&tunnel, "tunnel", NULL, NULL,
+    tunnelkw, __arraycount(tunnelkw), NULL);
 
 int
 settunnel(prop_dictionary_t env, prop_dictionary_t xenv)
