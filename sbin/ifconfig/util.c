@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2008/05/06 16:09:18 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2008/05/07 18:17:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2008 David Young.  All rights reserved.
@@ -174,6 +174,9 @@ prefixlen_to_mask(int af, int plen)
 		errno = EINVAL;
 		return NULL;
 	}
+
+	if (plen == 0)
+		plen = addrlen * NBBY;
 
 	memset(addr, 0xff, (plen + NBBY - 1) / NBBY);
 
