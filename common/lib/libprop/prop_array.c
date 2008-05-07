@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.14 2008/05/06 22:57:26 xtraeme Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.15 2008/05/07 10:01:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -315,7 +315,7 @@ _prop_array_iterator_next_object(void *v)
 	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
-	acquired = _prop_rwlock_tryrdlock(&pa->pa_rwlock);
+	acquired = _PROP_RWLOCK_TRYRDLOCK(&pa->pa_rwlock);
 	_PROP_RWLOCK_OWNED(pa->pa_rwlock);
 
 	if (pa->pa_version != pai->pai_base.pi_version)
@@ -344,7 +344,7 @@ _prop_array_iterator_reset(void *v)
 	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
-	acquired = _prop_rwlock_tryrdlock(&pa->pa_rwlock);
+	acquired = _PROP_RWLOCK_TRYRDLOCK(&pa->pa_rwlock);
 	_PROP_RWLOCK_OWNED(pa->pa_rwlock);
 
 	pai->pai_index = 0;
