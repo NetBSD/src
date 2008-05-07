@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.h,v 1.4 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.h,v 1.5 2008/05/07 21:29:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,6 +37,8 @@
 /* XXX */
 extern struct in6_ifreq    in6_ridreq;
 extern struct in6_aliasreq in6_addreq;
+
+extern struct pkw ia6flags, inet6;
 
 int	setia6flags(prop_dictionary_t, prop_dictionary_t);
 int	setia6pltime(prop_dictionary_t, prop_dictionary_t);
