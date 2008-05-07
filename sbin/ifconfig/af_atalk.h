@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.h,v 1.3 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.h,v 1.4 2008/05/07 20:45:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,6 +31,7 @@
 extern struct ifaliasreq at_addreq;
 extern struct pinteger phase;
 extern struct pstr parse_range;
+extern struct pkw atalk;
 
 int	setatrange(prop_dictionary_t, prop_dictionary_t);
 int	setatphase(prop_dictionary_t, prop_dictionary_t);
