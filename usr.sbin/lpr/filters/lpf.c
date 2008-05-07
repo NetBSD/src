@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.11 2003/08/07 11:25:26 agc Exp $	*/
+/*	$NetBSD: lpf.c,v 1.12 2008/05/07 17:44:44 christos Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lpf.c,v 1.11 2003/08/07 11:25:26 agc Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.12 2008/05/07 17:44:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	int done, linedone, maxrep, ch, prch;
 	char *limit;
 
-        while ((ch = getopt(argc, argv, "cfh:i:l:n:w:")) != -1)
+        while ((ch = getopt(argc, argv, "cfh:i:j:l:n:w:")) != -1)
 		switch (ch) {
 		case 'n':
 			name = optarg;
@@ -106,6 +106,8 @@ main(int argc, char *argv[])
 			break;
 		case 'f':	/* Fix missing carriage returns */
 			crnl++;
+			break;
+		case 'j':	/* ignore job name */
 			break;
 		default:
 			usage();
