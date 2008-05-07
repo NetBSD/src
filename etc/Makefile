@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.351 2008/04/30 16:48:53 ad Exp $
+#	$NetBSD: Makefile,v 1.352 2008/05/07 21:30:26 gdt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -609,6 +609,7 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 				[ ! -f $${ks} ] && continue; \
 				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${ks}-${configfile:C/.*\///}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
+				rm -f $${knl_gz}; \
 				echo "gzip -c -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
 				gzip -c -9 < $${ks} > $${knl_gz}; \
 			done; \
