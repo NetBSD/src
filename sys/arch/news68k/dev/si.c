@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.22 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: si.c,v 1.23 2008/05/07 13:02:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.22 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.23 2008/05/07 13:02:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.22 2008/04/28 20:23:30 martin Exp $");
 struct si_softc {
 	struct	ncr5380_softc	ncr_sc;
 	int	sc_options;
-	volatile struct dma_regs *sc_regs;
+	struct dma_regs *sc_regs;
 	int	sc_xlen;
 };
 
@@ -240,7 +240,7 @@ static void
 si_dma_start(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct dma_regs *dmac = sc->sc_regs;
+	struct dma_regs *dmac = sc->sc_regs;
 	struct sci_req *sr = ncr_sc->sc_current;
 	u_int addr, offset, rest;
 	long len;
@@ -329,7 +329,7 @@ static void
 si_dma_stop(struct ncr5380_softc *ncr_sc)
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct dma_regs *dmac = sc->sc_regs;
+	struct dma_regs *dmac = sc->sc_regs;
 	struct sci_req *sr = ncr_sc->sc_current;
 	int resid, ntrans;
 
