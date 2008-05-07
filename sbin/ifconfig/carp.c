@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.7 2008/05/06 21:16:52 dyoung Exp $ */
+/* $NetBSD: carp.c,v 1.8 2008/05/07 20:45:01 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -75,6 +75,22 @@ struct pstr pass = PSTR_INITIALIZER(&pass, "pass", setcarp_passwd,
 
 struct pinteger parse_vhid = PINTEGER_INITIALIZER1(&vhid, "vhid",
     0, 255, 10, setcarp_vhid, "vhid", &command_root.pb_parser);
+
+static const struct kwinst carpkw[] = {
+	  {.k_word = "advbase", .k_nextparser = &parse_advbase.pi_parser}
+	, {.k_word = "advskew", .k_nextparser = &parse_advskew.pi_parser}
+	, {.k_word = "carpdev", .k_nextparser = &carpdev.pif_parser}
+	, {.k_word = "-carpdev", .k_key = "carpdev", .k_type = KW_T_STR,
+	   .k_str = "", .k_exec = setcarpdev,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "pass", .k_nextparser = &pass.ps_parser}
+	, {.k_word = "state", .k_nextparser = &carpstate.pk_parser}
+	, {.k_word = "vhid", .k_nextparser = &parse_vhid.pi_parser}
+};
+
+struct pkw carp = PKW_INITIALIZER(&carp, "CARP", NULL, NULL,
+    carpkw, __arraycount(carpkw), NULL);
+
 #endif
 
 void
