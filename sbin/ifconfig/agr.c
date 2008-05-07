@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.7 2008/05/06 21:16:52 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.8 2008/05/07 01:13:51 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.7 2008/05/06 21:16:52 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.8 2008/05/07 01:13:51 yamt Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -84,8 +84,6 @@ agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
 	if ((s = getsock(AF_UNSPEC)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
-	assertifname(ifr.ifr_name);
-
 	if (!prop_dictionary_get_int64(env, "agrcmd", &cmd)) {
 		warnx("%s.%d", __func__, __LINE__);
 		errno = ENOENT;
@@ -102,6 +100,7 @@ agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
 	memset(&ifr, 0, sizeof(ifr));
 	if ((ifname = getifname(env)) == NULL)
 		err(EXIT_FAILURE, "%s: getifname", __func__);
+	assertifname(ifname);
 	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	memset(&ar, 0, sizeof(ar));
 	ar.ar_version = AGRREQ_VERSION;
