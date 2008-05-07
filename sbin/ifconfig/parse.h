@@ -145,6 +145,13 @@ extern const struct parser_methods pterm_methods;
 	.pk_nextinit = (__defnext)					\
 }
 
+#define	IFKW(__word, __flag)					\
+{								\
+	.k_word = (__word), .k_neg = true, .k_type = KW_T_NUM,	\
+	.k_num = (__flag),					\
+	.k_negnum = -(__flag)					\
+}
+
 #define	KW_T_NONE	0
 #define	KW_T_OBJ	1
 #define	KW_T_NUM	2
