@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.10 2008/05/06 21:16:52 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.11 2008/05/07 20:45:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.10 2008/05/06 21:16:52 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.11 2008/05/07 20:45:01 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -64,6 +64,14 @@ struct pinteger phase = PINTEGER_INITIALIZER1(&phase, "phase",
 
 struct pstr parse_range = PSTR_INITIALIZER(&range, "range", setatrange, "range",
     &command_root.pb_parser);
+
+static const struct kwinst atalkkw[] = {
+	  {.k_word = "phase", .k_nextparser = &phase.pi_parser}
+	, {.k_word = "range", .k_nextparser = &parse_range.ps_parser}
+};
+
+struct pkw atalk = PKW_INITIALIZER(&atalk, "AppleTalk", NULL, NULL,
+    atalkkw, __arraycount(atalkkw), NULL);
 
 void
 at_getaddr(const struct paddr_prefix *pfx, int which)

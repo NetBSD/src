@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.198 2008/05/07 20:12:31 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.199 2008/05/07 20:45:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.198 2008/05/07 20:12:31 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.199 2008/05/07 20:45:01 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,22 +317,6 @@ static const struct kwinst misckw[] = {
 	, {.k_word = "prefixlen", .k_nextparser = &parse_prefixlen.pi_parser}
 	, {.k_word = "trailers", .k_neg = true,
 	   .k_exec = notrailers, .k_nextparser = &command_root.pb_parser}
-#ifndef INET_ONLY
-	, {.k_word = "phase", .k_nextparser = &phase.pi_parser}
-	, {.k_word = "range", .k_nextparser = &parse_range.ps_parser}
-	, {.k_word = "nsellength", .k_nextparser = &parse_nsellength.pi_parser}
-	, {.k_word = "snpaoffset", .k_nextparser = &parse_snpaoffset.pi_parser}
-	/* CARP */
-	, {.k_word = "advbase", .k_nextparser = &parse_advbase.pi_parser}
-	, {.k_word = "advskew", .k_nextparser = &parse_advskew.pi_parser}
-	, {.k_word = "carpdev", .k_nextparser = &carpdev.pif_parser}
-	, {.k_word = "-carpdev", .k_key = "carpdev", .k_type = KW_T_STR,
-	   .k_str = "", .k_exec = setcarpdev,
-	   .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "pass", .k_nextparser = &pass.ps_parser}
-	, {.k_word = "state", .k_nextparser = &carpstate.pk_parser}
-	, {.k_word = "vhid", .k_nextparser = &parse_vhid.pi_parser}
-#endif
 #ifdef INET6
 	, {.k_word = "eui64", .k_exec = setia6eui64,
 	   .k_nextparser = &command_root.pb_parser}
@@ -406,6 +390,11 @@ struct branch opt_clone_brs[] = {
 	, {.b_nextparser = &tunnel.pk_parser}
 	, {.b_nextparser = &vlan.pk_parser}
 	, {.b_nextparser = &agr.pk_parser}
+#ifndef INET_ONLY
+	, {.b_nextparser = &carp.pk_parser}
+	, {.b_nextparser = &atalk.pk_parser}
+	, {.b_nextparser = &iso.pk_parser}
+#endif
 	, {.b_nextparser = &kw80211.pk_parser}
 	, {.b_nextparser = &address.pa_parser}
 	, {.b_nextparser = &dstormask.pa_parser}
