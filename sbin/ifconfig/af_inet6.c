@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.11 2008/05/07 18:08:30 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.12 2008/05/07 21:29:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.11 2008/05/07 18:08:30 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.12 2008/05/07 21:29:27 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -78,6 +78,30 @@ struct in6_aliasreq in6_addreq = {
 		, .ia6t_vltime = ND6_INFINITE_LIFETIME
 	}
 };
+
+static const struct kwinst ia6flagskw[] = {
+	  IFKW("anycast",	IN6_IFF_ANYCAST)
+	, IFKW("tentative",	IN6_IFF_TENTATIVE)
+	, IFKW("deprecated",	IN6_IFF_DEPRECATED)
+};
+
+static struct pinteger parse_pltime = PINTEGER_INITIALIZER(&parse_pltime,
+    "pltime", 0, setia6pltime, "pltime", &command_root.pb_parser);
+
+static struct pinteger parse_vltime = PINTEGER_INITIALIZER(&parse_vltime,
+    "vltime", 0, setia6vltime, "vltime", &command_root.pb_parser);
+
+static const struct kwinst inet6kw[] = {
+	  {.k_word = "pltime", .k_nextparser = &parse_pltime.pi_parser}
+	, {.k_word = "vltime", .k_nextparser = &parse_vltime.pi_parser}
+	, {.k_word = "eui64", .k_exec = setia6eui64,
+	   .k_nextparser = &command_root.pb_parser}
+};
+
+struct pkw ia6flags = PKW_INITIALIZER(&ia6flags, "ia6flags", setia6flags,
+    "ia6flag", ia6flagskw, __arraycount(ia6flagskw), &command_root.pb_parser);
+struct pkw inet6 = PKW_INITIALIZER(&inet6, "IPv6 keywords", NULL,
+    NULL, inet6kw, __arraycount(inet6kw), NULL);
 
 static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
 static void in6_alias(const char *, prop_dictionary_t, prop_dictionary_t,
