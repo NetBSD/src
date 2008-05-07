@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.38 2008/02/24 19:31:30 dholland Exp $	*/
+/*	$NetBSD: lpr.c,v 1.39 2008/05/07 17:44:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.38 2008/02/24 19:31:30 dholland Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.39 2008/05/07 17:44:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ main(int argc, char *argv[])
 	seteuid(uid);
 	card('H', host);
 	card('P', person);
-	if (hdr) {
+	if (hdr && !SH) {
 		if (jobname == NULL) {
 			if (argc == 0)
 				jobname = "stdin";
