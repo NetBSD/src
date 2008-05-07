@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.h,v 1.3 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: agr.h,v 1.4 2008/05/07 19:55:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  */
 #include "parse.h"
+
+extern struct pkw agr;
 
 int agrsetport(prop_dictionary_t, prop_dictionary_t);
 void agr_status(prop_dictionary_t, prop_dictionary_t);

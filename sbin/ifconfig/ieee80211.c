@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.15 2008/05/06 21:18:17 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.16 2008/05/07 19:55:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.15 2008/05/06 21:18:17 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.16 2008/05/07 19:55:24 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ static const char * iename(int);
 
 extern int vflag;
 
-struct kwinst ieee80211boolkw[] = {
+static const struct kwinst ieee80211boolkw[] = {
 	  {.k_word = "hidessid", .k_key = "hidessid", .k_neg = true,
 	   .k_type = KW_T_BOOL, .k_bool = true, .k_negbool = false,
 	   .k_exec = sethidessid}
@@ -106,6 +106,30 @@ struct kwinst ieee80211boolkw[] = {
 	   .k_type = KW_T_BOOL, .k_bool = true, .k_negbool = false,
 	   .k_exec = setifpowersave}
 };
+
+static const struct kwinst kw80211kw[] = {
+	  {.k_word = "bssid", .k_nextparser = &parse_bssid.ps_parser}
+	, {.k_word = "-bssid", .k_exec = unsetifbssid,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "chan", .k_nextparser = &parse_chan.pi_parser}
+	, {.k_word = "-chan", .k_key = "chan", .k_type = KW_T_NUM,
+	   .k_num = IEEE80211_CHAN_ANY, .k_exec = setifchan,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "frag", .k_nextparser = &parse_frag.pi_parser}
+	, {.k_word = "-frag", .k_key = "frag", .k_type = KW_T_NUM,
+	   .k_num = IEEE80211_FRAG_MAX, .k_exec = setiffrag,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "nwid", .k_nextparser = &parse_ssid.ps_parser}
+	, {.k_word = "nwkey", .k_nextparser = &parse_nwkey.ps_parser}
+	, {.k_word = "-nwkey", .k_exec = unsetifnwkey,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "ssid", .k_nextparser = &parse_ssid.ps_parser}
+	, {.k_word = "powersavesleep",
+	   .k_nextparser = &parse_powersavesleep.pi_parser}
+};
+
+struct pkw kw80211 = PKW_INITIALIZER(&kw80211, "802.11 keywords", NULL, NULL,
+    kw80211kw, __arraycount(kw80211kw), NULL);
 
 struct pkw ieee80211bool = PKW_INITIALIZER(&ieee80211bool, "ieee80211 boolean",
     NULL, NULL, ieee80211boolkw, __arraycount(ieee80211boolkw),
