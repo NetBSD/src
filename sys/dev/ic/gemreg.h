@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.12 2008/05/06 21:09:34 jdc Exp $ */
+/*	$NetBSD: gemreg.h,v 1.13 2008/05/07 06:36:48 jdc Exp $ */
 
 /*
  *
@@ -72,8 +72,8 @@
 #define GEM_SBUS_RESET		0x0000	/* Sbus Reset */
 #define GEM_SBUS_CONFIG		0x0004	/* Sbus Burst-Size Configuration */
 #define GEM_SBUS_ERROR_STATUS	0x0008	/* Sbus Fatal Error */
-#define GEM_SBUS_SOFT_RESET	0x000c	/* Sbus Software Reset */
-#define GEM_SBUS_SOFT_RESET2	0x0010	/* Sbus Software Reset */
+#define GEM_SBUS_REVISION	0x000c	/* Sbus Revision */
+#define GEM_SBUS_SOFT_RESET	0x0010	/* Sbus Software Reset */
 
 /*
  * Bits in GEM_SEB_STATE register
