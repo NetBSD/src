@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.194 2008/05/07 18:08:30 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.195 2008/05/07 19:55:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.194 2008/05/07 18:08:30 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.195 2008/05/07 19:55:24 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,10 +83,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.194 2008/05/07 18:08:30 dyoung Exp $");
 #include <net/if_ether.h>
 #include <netinet/in.h>		/* XXX */
 #include <netinet/in_var.h>	/* XXX */
-#include <net/agr/if_agrioctl.h>
  
-#include <net80211/ieee80211_ioctl.h>
-
 #include <netdb.h>
 
 #include <sys/protosw.h>
@@ -248,7 +245,7 @@ extern struct pbranch command_root;
 extern struct pbranch opt_command;
 extern struct pbranch opt_family, opt_silent_family;
 extern struct pkw cloning, silent_family, family, ia6flags, ia6lifetime,
-    ieee80211bool, ifcaps, ifflags, lists, misc;
+    ifcaps, ifflags, lists, misc;
 
 struct pinteger parse_metric = PINTEGER_INITIALIZER(&parse_metric, "metric", 10,
     setifmetric, "metric", &command_root.pb_parser);
@@ -286,29 +283,15 @@ struct pstr media = PSTR_INITIALIZER(&media, "media",
     setmedia, "media", &command_root.pb_parser);
 
 struct kwinst misckw[] = {
-	  {.k_word = "agrport", .k_type = KW_T_NUM, .k_neg = true,
-	   .k_num = AGRCMD_ADDPORT, .k_negnum = AGRCMD_REMPORT,
-	   .k_exec = agrsetport}
-	, {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
+	  {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_neg = true,
 	   .k_bool = true, .k_negbool = false,
 	   .k_exec = notealias, .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "bssid", .k_nextparser = &parse_bssid.ps_parser}
-	, {.k_word = "-bssid", .k_exec = unsetifbssid,
-	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "broadcast", .k_nextparser = &parse_broadcast.pa_parser}
-	, {.k_word = "chan", .k_nextparser = &parse_chan.pi_parser}
-	, {.k_word = "-chan", .k_key = "chan", .k_type = KW_T_NUM,
-	   .k_num = IEEE80211_CHAN_ANY, .k_exec = setifchan,
-	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "delete", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_bool = false, .k_exec = notealias,
 	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "deletetunnel", .k_exec = deletetunnel,
-	   .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "frag", .k_nextparser = &parse_frag.pi_parser}
-	, {.k_word = "-frag", .k_key = "frag", .k_type = KW_T_NUM,
-	   .k_num = IEEE80211_FRAG_MAX, .k_exec = setiffrag,
 	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "instance", .k_key = "anymedia", .k_type = KW_T_BOOL,
 	   .k_bool = true, .k_act = "media", .k_deact = "mediainst",
@@ -332,16 +315,9 @@ struct kwinst misckw[] = {
 	, {.k_word = "metric", .k_nextparser = &parse_metric.pi_parser}
 	, {.k_word = "mtu", .k_nextparser = &parse_mtu.pi_parser}
 	, {.k_word = "netmask", .k_nextparser = &parse_netmask.pa_parser}
-	, {.k_word = "nwid", .k_nextparser = &parse_ssid.ps_parser}
-	, {.k_word = "nwkey", .k_nextparser = &parse_nwkey.ps_parser}
-	, {.k_word = "-nwkey", .k_exec = unsetifnwkey,
-	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "preference", .k_act = "address",
 	   .k_nextparser = &parse_preference.pi_parser}
 	, {.k_word = "prefixlen", .k_nextparser = &parse_prefixlen.pi_parser}
-	, {.k_word = "ssid", .k_nextparser = &parse_ssid.ps_parser}
-	, {.k_word = "powersavesleep",
-	   .k_nextparser = &parse_powersavesleep.pi_parser}
 	, {.k_word = "trailers", .k_neg = true,
 	   .k_exec = notrailers, .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "tunnel", .k_nextparser = &tunsrc.pa_parser}
@@ -436,6 +412,8 @@ struct branch opt_clone_brs[] = {
 	, {.b_nextparser = &ia6lifetime.pk_parser}
 #endif /*INET6*/
 	, {.b_nextparser = &misc.pk_parser}
+	, {.b_nextparser = &agr.pk_parser}
+	, {.b_nextparser = &kw80211.pk_parser}
 	, {.b_nextparser = &address.pa_parser}
 	, {.b_nextparser = &dstormask.pa_parser}
 	, {.b_nextparser = &broadcast.pa_parser}
