@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.196 2008/05/07 20:03:27 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.197 2008/05/07 20:11:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.196 2008/05/07 20:03:27 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.197 2008/05/07 20:11:15 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,11 +317,6 @@ struct kwinst misckw[] = {
 	, {.k_word = "prefixlen", .k_nextparser = &parse_prefixlen.pi_parser}
 	, {.k_word = "trailers", .k_neg = true,
 	   .k_exec = notrailers, .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "vlan", .k_nextparser = &vlan.pi_parser}
-	, {.k_word = "vlanif", .k_act = "vlan",
-	   .k_nextparser = &vlanif.pif_parser}
-	, {.k_word = "-vlanif", .k_key = "vlanif", .k_type = KW_T_STR,
-	   .k_str = "", .k_exec = setvlanif}
 #ifndef INET_ONLY
 	, {.k_word = "phase", .k_nextparser = &phase.pi_parser}
 	, {.k_word = "range", .k_nextparser = &parse_range.ps_parser}
@@ -409,6 +404,7 @@ struct branch opt_clone_brs[] = {
 #endif /*INET6*/
 	, {.b_nextparser = &misc.pk_parser}
 	, {.b_nextparser = &tunnel.pk_parser}
+	, {.b_nextparser = &vlan.pk_parser}
 	, {.b_nextparser = &agr.pk_parser}
 	, {.b_nextparser = &kw80211.pk_parser}
 	, {.b_nextparser = &address.pa_parser}
