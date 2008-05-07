@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.h,v 1.3 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: vlan.h,v 1.4 2008/05/07 20:11:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,8 +29,9 @@
  * SUCH DAMAGE.
  */
 
-extern struct pinteger vlan;
+extern struct pinteger vlantag;
 extern struct piface vlanif;
+extern struct pkw vlan;
 
 int	setvlan(prop_dictionary_t, prop_dictionary_t);
 int	setvlanif(prop_dictionary_t, prop_dictionary_t);
