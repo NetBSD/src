@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.195 2008/05/07 19:55:24 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.196 2008/05/07 20:03:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.195 2008/05/07 19:55:24 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.196 2008/05/07 20:03:27 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,7 +245,7 @@ extern struct pbranch command_root;
 extern struct pbranch opt_command;
 extern struct pbranch opt_family, opt_silent_family;
 extern struct pkw cloning, silent_family, family, ia6flags, ia6lifetime,
-    ifcaps, ifflags, lists, misc;
+    ifcaps, ifflags, misc;
 
 struct pinteger parse_metric = PINTEGER_INITIALIZER(&parse_metric, "metric", 10,
     setifmetric, "metric", &command_root.pb_parser);
@@ -291,15 +291,12 @@ struct kwinst misckw[] = {
 	, {.k_word = "delete", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_bool = false, .k_exec = notealias,
 	   .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "deletetunnel", .k_exec = deletetunnel,
-	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "instance", .k_key = "anymedia", .k_type = KW_T_BOOL,
 	   .k_bool = true, .k_act = "media", .k_deact = "mediainst",
 	   .k_nextparser = &mediainst.pi_parser}
 	, {.k_word = "inst", .k_key = "anymedia", .k_type = KW_T_BOOL,
 	   .k_bool = true, .k_act = "media", .k_deact = "mediainst",
 	   .k_nextparser = &mediainst.pi_parser}
-	, {.k_word = "list", .k_nextparser = &lists.pk_parser}
 	, {.k_word = "media", .k_key = "anymedia", .k_type = KW_T_BOOL,
 	   .k_bool = true, .k_deact = "media", .k_altdeact = "anymedia",
 	   .k_nextparser = &media.ps_parser}
@@ -320,7 +317,6 @@ struct kwinst misckw[] = {
 	, {.k_word = "prefixlen", .k_nextparser = &parse_prefixlen.pi_parser}
 	, {.k_word = "trailers", .k_neg = true,
 	   .k_exec = notrailers, .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "tunnel", .k_nextparser = &tunsrc.pa_parser}
 	, {.k_word = "vlan", .k_nextparser = &vlan.pi_parser}
 	, {.k_word = "vlanif", .k_act = "vlan",
 	   .k_nextparser = &vlanif.pif_parser}
@@ -412,6 +408,7 @@ struct branch opt_clone_brs[] = {
 	, {.b_nextparser = &ia6lifetime.pk_parser}
 #endif /*INET6*/
 	, {.b_nextparser = &misc.pk_parser}
+	, {.b_nextparser = &tunnel.pk_parser}
 	, {.b_nextparser = &agr.pk_parser}
 	, {.b_nextparser = &kw80211.pk_parser}
 	, {.b_nextparser = &address.pa_parser}

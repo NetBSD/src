@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.16 2008/05/07 19:55:24 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.17 2008/05/07 20:03:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.16 2008/05/07 19:55:24 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.17 2008/05/07 20:03:27 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -107,6 +107,13 @@ static const struct kwinst ieee80211boolkw[] = {
 	   .k_exec = setifpowersave}
 };
 
+static const struct kwinst listskw[] = {
+	{.k_word = "scan", .k_exec = scan_exec}
+};
+
+static struct pkw lists = PKW_INITIALIZER(&lists, "ieee80211 lists", NULL,
+    "list", listskw, __arraycount(listskw), &command_root.pb_parser);
+
 static const struct kwinst kw80211kw[] = {
 	  {.k_word = "bssid", .k_nextparser = &parse_bssid.ps_parser}
 	, {.k_word = "-bssid", .k_exec = unsetifbssid,
@@ -119,6 +126,7 @@ static const struct kwinst kw80211kw[] = {
 	, {.k_word = "-frag", .k_key = "frag", .k_type = KW_T_NUM,
 	   .k_num = IEEE80211_FRAG_MAX, .k_exec = setiffrag,
 	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "list", .k_nextparser = &lists.pk_parser}
 	, {.k_word = "nwid", .k_nextparser = &parse_ssid.ps_parser}
 	, {.k_word = "nwkey", .k_nextparser = &parse_nwkey.ps_parser}
 	, {.k_word = "-nwkey", .k_exec = unsetifnwkey,
@@ -144,13 +152,6 @@ struct pinteger parse_frag = PINTEGER_INITIALIZER1(&parse_frag, "frag",
 
 struct pstr parse_ssid = PSTR_INITIALIZER(&parse_pass, "ssid", setifssid,
     "ssid", &command_root.pb_parser);
-
-struct kwinst listskw[] = {
-	{.k_word = "scan", .k_exec = scan_exec}
-};
-
-struct pkw lists = PKW_INITIALIZER(&lists, "lists", NULL, "list", listskw,
-    __arraycount(listskw), &command_root.pb_parser);
 
 struct pinteger parse_powersavesleep =
     PINTEGER_INITIALIZER1(&parse_powersavesleep, "powersavesleep",
