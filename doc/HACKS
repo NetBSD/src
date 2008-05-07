@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.101 2008/05/04 15:42:12 tsutsui Exp $
+# $NetBSD: HACKS,v 1.102 2008/05/07 12:50:35 tsutsui Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -282,6 +282,15 @@ kcah
 
 port	vax
 
+	hack	gcc4/vax ICE
+	cdate	
+	who	tsutsui
+	file	sys/arch/vax/conf/Makefile.vax
+	descr
+		GCC4 on vax gets ICE on compiling sys/ddb/db_command.c.
+		-fno-tree-ter prevents it so add it to COPTS.
+	kcah
+
 	hack	gcc4/vax compiler crash
 	cdate	Fri Jun 30 22:39:12 PDT 2006
 	who	mrg
@@ -323,7 +332,7 @@ port	vax
 		added this feature to GCC 3 so it can be removed when switching.
 	kcah
 
-	hack	gcc-vax-libbz2
+	hack	gcc 2.95/vax libbz2
 	mdate	27 Jun 2002
 	who	thorpej
 	file	lib/libbz2/Makefile
@@ -420,18 +429,6 @@ port	arm
 		really should be enough, but turns out not to be.
 	kcah
 
-	hack	gcc 3.3.2/arm sys/kern/uipc_socket.c
-	cdate	Tue Oct 28 18:02:16 GMT 2003
-	who	skrll
-	pr	23044
-	file	sys/arch/arm/conf/Makefile.arm : 1.19
-	descr
-		Performing a build.sh tools on a CATS with NFS mounted 
-		obj and src directories results in "panic: receive 1"
-		The hack is to compile sys/kern/uipc_socket.c with
-		-fno-strict-aliasing
-	kcah
-
 
 port	sh3
 
@@ -448,7 +445,8 @@ port	sh3
 port	m68000
 
 	hack	gcc4-m68000
-	cdate	Sun May  4 15:37:19 UTC 2008
+	cdate	Fri Feb  8 10:29:37 PST 2008
+	mdate	Sun May  4 15:37:19 UTC 2008
 	who	mrg, tsutsui
 	file	rescue/Makefile	: 1.21
 	file	sbin/dump_lfs/Makefile	: 1.9
