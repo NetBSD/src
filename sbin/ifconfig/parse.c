@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.3 2008/05/06 21:13:20 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.4 2008/05/07 18:08:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2008 David Young.  All rights reserved.
@@ -228,7 +228,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	struct addrinfo hints, *result = NULL;
 	char *arg, *end, *plen = NULL, *servname0;
 	const char *servname;
-	long prefixlen = 0;
+	long prefixlen = -1;
 	size_t len;
 
 	if (arg0 == NULL)
@@ -296,17 +296,17 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 
 
 		if (plen == NULL)
-			prefixlen = 0;
+			prefixlen = -1;
 		else {
 			prefixlen = strtol(plen, &end, 10);
 			if (end != NULL && *end != '\0')
 				sa = NULL;
+			if (prefixlen < 0 || prefixlen >= UINT8_MAX) {
+				errno = ERANGE;
+				sa = NULL;
+			}
 		}
 
-		if (prefixlen < 0 || prefixlen >= UINT8_MAX) {
-			errno = ERANGE;
-			sa = NULL;
-		}
 		free(arg);
 		if (sa != NULL || af != AF_UNSPEC)
 			break;
@@ -351,7 +351,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	}
 #endif
 
-	pfx->pfx_len = (uint8_t)prefixlen;
+	pfx->pfx_len = (int16_t)prefixlen;
 	memcpy(&pfx->pfx_addr, sa, sa->sa_len);
 	af = sa->sa_family;
 

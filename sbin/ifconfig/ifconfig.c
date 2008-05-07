@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.193 2008/05/06 21:58:05 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.194 2008/05/07 18:08:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.193 2008/05/06 21:58:05 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.194 2008/05/07 18:08:30 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -960,7 +960,7 @@ setifaddr(prop_dictionary_t env, prop_dictionary_t xenv)
 	assert(d != NULL);
 	pfx0 = prop_data_data_nocopy(d);
 
-	if (pfx0->pfx_len != 0) {
+	if (pfx0->pfx_len >= 0) {
 		pfx = prefixlen_to_mask(af, pfx0->pfx_len);
 		if (pfx == NULL)
 			err(EXIT_FAILURE, "prefixlen_to_mask");

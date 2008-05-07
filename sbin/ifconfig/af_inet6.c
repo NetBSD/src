@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.10 2008/05/06 21:16:52 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.11 2008/05/07 18:08:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.10 2008/05/06 21:16:52 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.11 2008/05/07 18:08:30 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -69,6 +69,7 @@ struct in6_ifreq    in6_ridreq = {
 
 struct in6_aliasreq in6_addreq = {
 	.ifra_prefixmask = {
+		.sin6_len = sizeof(in6_addreq.ifra_prefixmask),
 		.sin6_addr = {
 			.s6_addr =
 			    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}}},
@@ -452,7 +453,7 @@ in6_getaddr(const struct paddr_prefix *pfx, int which)
 	if (pfx->pfx_addr.sa_family != AF_INET6)
 		errx(EXIT_FAILURE, "%s: address family mismatch", __func__);
 
-	if (which == ADDR)
+	if (which == ADDR && pfx->pfx_len >= 0)
 		in6_getprefix(pfx->pfx_len, MASK);
 
 	memcpy(sin6, &pfx->pfx_addr, MIN(sizeof(*sin6), pfx->pfx_addr.sa_len));
