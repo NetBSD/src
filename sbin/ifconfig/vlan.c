@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.6 2008/05/06 18:58:47 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.7 2008/05/07 20:11:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.6 2008/05/06 18:58:47 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.7 2008/05/07 20:11:15 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -53,11 +53,22 @@ __RCSID("$NetBSD: vlan.c,v 1.6 2008/05/06 18:58:47 dyoung Exp $");
 #include "extern.h"
 #include "vlan.h"
 
-struct pinteger vlan = PINTEGER_INITIALIZER1(&vlan, "vlan", 0, USHRT_MAX, 10,
-    setvlan, "vlan", &command_root.pb_parser);
+struct pinteger vlantag = PINTEGER_INITIALIZER1(&vlantag, "VLAN tag",
+    0, USHRT_MAX, 10, setvlan, "vlantag", &command_root.pb_parser);
 
 struct piface vlanif = PIFACE_INITIALIZER(&vlanif, "vlanif", setvlanif,
     "vlanif", &command_root.pb_parser);
+
+static const struct kwinst vlankw[] = {
+	  {.k_word = "vlan", .k_nextparser = &vlantag.pi_parser}
+	, {.k_word = "vlanif", .k_act = "vlan",
+	   .k_nextparser = &vlanif.pif_parser}
+	, {.k_word = "-vlanif", .k_key = "vlanif", .k_type = KW_T_STR,
+	   .k_str = "", .k_exec = setvlanif}
+};
+
+struct pkw vlan = PKW_INITIALIZER(&vlan, "vlan", NULL, NULL,
+    vlankw, __arraycount(vlankw), NULL);
 
 static int
 checkifname(const char *ifname)
