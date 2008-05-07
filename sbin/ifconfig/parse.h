@@ -218,7 +218,7 @@ struct pranges {
 };
 
 struct paddr_prefix {
-	uint8_t		pfx_len;
+	int16_t		pfx_len;
 	struct sockaddr	pfx_addr;
 };
 
