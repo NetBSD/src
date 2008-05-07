@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.20 2008/04/28 20:23:55 martin Exp $ */
+/*	$NetBSD: twa.c,v 1.21 2008/05/07 17:47:20 joerg Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.20 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.21 2008/05/07 17:47:20 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,6 +197,7 @@ static const struct twa_message	twa_aen_table[] = {
 	{0x002A, "Background verify failed"},
 	{0x002B, "Background verify done"},
 	{0x002C, "Bad sector overwritten during rebuild"},
+	{0x002D, "Source drive error occurred"},
 	{0x002E, "Replace failed because replacement drive too small"},
 	{0x002F, "Verify failed because array was never initialized"},
 	{0x0030, "Unsupported ATA drive"},
@@ -234,8 +235,8 @@ static const struct twa_message	twa_aen_table[] = {
 	{0x0050, "Battery capacity test completed"},
 	{0x0051, "Battery health check started"},
 	{0x0052, "Battery health check completed"},
-	{0x0053, "Need to do a capacity test"},
-	{0x0054, "Charge termination voltage is at high level"},
+	{0x0053, "Battery capacity test needed"},
+	{0x0054, "Battery charge termination voltage is at high level"},
 	{0x0055, "Battery charging started"},
 	{0x0056, "Battery charging completed"},
 	{0x0057, "Battery charging fault"},
@@ -822,6 +823,10 @@ twa_alloc_req_pkts(struct twa_softc *sc, int num_reqs)
 	size_t max_segs, max_xfer;
 	int	i, rv, rseg, size;
 
+	if ((sc->sc_units = malloc(sc->sc_nunits *
+	    sizeof(struct twa_drive), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) 
+		return(ENOMEM);
+
 	if ((sc->twa_req_buf = malloc(num_reqs * sizeof(struct twa_request),
 					M_DEVBUF, M_NOWAIT)) == NULL)
 		return(ENOMEM);
@@ -914,25 +919,36 @@ twa_recompute_openings(struct twa_softc *sc)
 	struct twa_drive *td;
 	int unit;
 	int openings;
+	uint64_t total_size;
 
-	if (sc->sc_nunits != 0)
-		openings = ((TWA_Q_LENGTH / 2) / sc->sc_nunits);
-	else
-		openings = 0;
-	if (openings == sc->sc_openings)
-		return;
-	sc->sc_openings = openings;
+	total_size = 0;
+	for (unit = 0; unit < sc->sc_nunits; unit++) {
+		td = &sc->sc_units[unit];
+		total_size += td->td_size;
+	}
+
+	for (unit = 0; unit < sc->sc_nunits; unit++) {
+		td = &sc->sc_units[unit];
+		/*
+		 * In theory, TWA_Q_LENGTH - 1 should be usable, but
+		 * keep one additional ccb for internal commands.
+		 * This makes the controller more reliable under load.
+		 */
+		if (total_size > 0) {
+			openings = (TWA_Q_LENGTH - 2) * td->td_size / total_size;
+		} else
+			openings = 0;
+
+		if (openings == td->td_openings)
+			continue;
+		td->td_openings = openings;
 
 #ifdef TWA_DEBUG
-	printf("%s: %d array%s, %d openings per array\n",
-	    device_xname(&sc->twa_dv), sc->sc_nunits,
-	    sc->sc_nunits == 1 ? "" : "s", sc->sc_openings);
+		printf("%s: unit %d openings %d\n",
+				device_xname(&sc->twa_dv), unit, openings);
 #endif
-	for (unit = 0; unit < TWA_MAX_UNITS; unit++) {
-		td = &sc->sc_units[unit];
 		if (td->td_dev != NULL)
-			(*td->td_callbacks->tcb_openings)(td->td_dev,
-				sc->sc_openings);
+			(*td->td_callbacks->tcb_openings)(td->td_dev, td->td_openings);
 	}
 }
 
@@ -946,7 +962,7 @@ twa_request_bus_scan(struct twa_softc *sc)
 	int s, unit;
 
 	s = splbio();
-	for (unit = 0; unit < TWA_MAX_UNITS; unit++) {
+	for (unit = 0; unit < sc->sc_nunits; unit++) {
 
 		if ((tr = twa_get_request(sc, 0)) == NULL) {
 			splx(s);
@@ -969,8 +985,6 @@ twa_request_bus_scan(struct twa_softc *sc)
             			twa_print_inquiry_data(sc,
 				   ((struct scsipi_inquiry_data *)tr->tr_data));
 
-				sc->sc_nunits++;
-
 				sc->sc_units[unit].td_size =
 					twa_read_capacity(tr, unit);
 
@@ -986,8 +1000,6 @@ twa_request_bus_scan(struct twa_softc *sc)
 			}
 		} else {
 			if (td->td_dev != NULL) {
-				sc->sc_nunits--;
-
 				(void) config_detach(td->td_dev, DETACH_FORCE);
 				td->td_dev = NULL;
 				td->td_size = 0;
@@ -1092,6 +1104,38 @@ twa_drain_response_queue(struct twa_softc *sc)
 		rq = (union twa_response_queue)twa_inl(sc,
 		    TWA_RESPONSE_QUEUE_OFFSET);
 	}
+}
+
+/*
+ * twa_drain_response_queue_large:
+ *
+ * specific to the 9550 controller to remove requests.
+ *
+ * Removes all requests from "large" response queue on the 9550 controller.
+ * This procedure is called as part of the 9550 controller reset sequence.
+ */
+static int
+twa_drain_response_queue_large(struct twa_softc *sc, uint32_t timeout)
+{
+        uint32_t        start_time = 0, end_time;
+        uint32_t        response = 0;
+
+        if (sc->sc_product_id == PCI_PRODUCT_3WARE_9550) {
+               start_time = 0;
+               end_time = (timeout * TWA_MICROSECOND);
+
+               while ((response &
+                   TWA_9550SX_DRAIN_COMPLETE) != TWA_9550SX_DRAIN_COMPLETE) {
+			response = twa_inl(sc, TWA_RESPONSE_QUEUE_LARGE_OFFSET);
+			if (start_time >= end_time)
+                               return (1);
+                        DELAY(1);
+                        start_time++;
+               }
+               /* P-chip delay */
+               DELAY(500000);
+       }
+       return (0);
 }
 
 static void
@@ -1462,7 +1506,6 @@ twa_setup(struct twa_softc *sc)
 	TAILQ_INIT(&sc->twa_busy);
 	TAILQ_INIT(&sc->twa_pending);
 
-	sc->sc_nunits = 0;
 	sc->twa_sc_flags = 0;
 
 	if (twa_alloc_req_pkts(sc, TWA_Q_LENGTH)) {
@@ -1540,12 +1583,14 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": 3ware Apache\n");
 		
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9000) {
+		sc->sc_nunits = TWA_MAX_UNITS;
 		if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
 	    	    &sc->twa_bus_iot, &sc->twa_bus_ioh, NULL, NULL)) {
 			aprint_error_dev(&sc->twa_dv, "can't map i/o space\n");
 			return;
 		}
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9550) {
+		sc->sc_nunits = TWA_MAX_UNITS;
 		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08, 
 	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot, 
 		    &sc->twa_bus_ioh, NULL, NULL)) {
@@ -1553,10 +1598,12 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 	} else {
+		sc->sc_nunits = 0;
 		aprint_error_dev(&sc->twa_dv, "product id 0x%02x not recognized\n", 
 		    PCI_PRODUCT(pa->pa_id));
 		return;
 	}
+ 	sc->sc_product_id = PCI_PRODUCT(pa->pa_id);
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -1632,7 +1679,7 @@ twa_shutdown(void *arg)
 		if ((sc = device_lookup(&twa_cd, i)) == NULL)
 			continue;
 
-		for (unit = 0; unit < TWA_MAX_UNITS; unit++)
+		for (unit = 0; unit < sc->sc_nunits; unit++)
 			if (sc->sc_units[unit].td_dev != NULL)
 				(void) config_detach(sc->sc_units[unit].td_dev,
 					DETACH_FORCE | DETACH_QUIET);
@@ -1712,19 +1759,14 @@ twa_submit_io(struct twa_request *tr)
  * Return value:	None
  */
 static int
-twa_setup_data_dmamap(void *arg, bus_dma_segment_t *segs, int nsegments,
-    int error)
+twa_setup_data_dmamap(void *arg, bus_dma_segment_t *segs, int nsegments)
 {
 	struct twa_request		*tr = (struct twa_request *)arg;
 	struct twa_command_packet	*cmdpkt = tr->tr_command;
 	struct twa_command_9k		*cmd9k;
 	union twa_command_7k		*cmd7k;
 	uint8_t				sgl_offset;
-
-	if (error == EFBIG) {
-		tr->tr_error = error;
-		goto out;
-	}
+	int				error;
 
 	if (tr->tr_cmd_pkt_type & TWA_CMD_PKT_TYPE_9K) {
 		cmd9k = &(cmdpkt->command.cmd_pkt_9k);
@@ -1758,7 +1800,6 @@ twa_setup_data_dmamap(void *arg, bus_dma_segment_t *segs, int nsegments,
 	}
 	error = twa_submit_io(tr);
 
-out:
 	if (error) {
 		twa_unmap_request(tr);
 		/*
@@ -1767,7 +1808,7 @@ out:
 		 * will never get called because we were unable to submit the
 		 * request.  So, free up the request right here.
 		 */
-		if ((tr->tr_flags & TWA_CMD_IN_PROGRESS) && (tr->tr_callback))
+		if (tr->tr_callback)
 			twa_release_request(tr);
 	}
 	return (error);
@@ -1787,7 +1828,7 @@ int
 twa_map_request(struct twa_request *tr)
 {
 	struct twa_softc	*sc = tr->tr_sc;
-	int			 s, rv, error = 0;
+	int			 s, rv;
 
 	/* If the command involves data, map that too. */
 	if (tr->tr_data != NULL) {
@@ -1831,7 +1872,7 @@ twa_map_request(struct twa_request *tr)
 
 		if ((rv = twa_setup_data_dmamap(tr,
 				tr->tr_dma_map->dm_segs,
-				tr->tr_dma_map->dm_nsegs, error))) {
+				tr->tr_dma_map->dm_nsegs))) {
 
 			if (tr->tr_flags & TWA_CMD_DATA_COPY_NEEDED) {
 				s = splvm();
@@ -1841,8 +1882,7 @@ twa_map_request(struct twa_request *tr)
 				tr->tr_data = tr->tr_real_data;
 				tr->tr_length = tr->tr_real_length;
 			}
-		} else
-			error = tr->tr_error;
+		}
 
 	} else
 		if ((rv = twa_submit_io(tr)))
@@ -2106,6 +2146,8 @@ twaopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if ((twa = device_lookup(&twa_cd, minor(dev))) == NULL)
 		return (ENXIO);
+	if ((twa->twa_sc_flags & TWA_STATE_OPEN) != 0)
+		return (EBUSY);
 
 	twa->twa_sc_flags |= TWA_STATE_OPEN;
 
@@ -2436,7 +2478,7 @@ fw_passthru_done:
 
 		tn = (struct twa_unitname *)data;
 			/* XXX mutex */
-		if (tn->tn_unit < 0 || tn->tn_unit >= TWA_MAX_UNITS)
+		if (tn->tn_unit < 0 || tn->tn_unit >= sc->sc_nunits)
 			return (EINVAL);
 		tdr = &sc->sc_units[tn->tn_unit];
 		if (tdr->td_dev == NULL)
@@ -2742,6 +2784,9 @@ twa_reset(struct twa_softc *sc)
 	int	s;
 	int	error = 0;
 
+	/* Set the 'in reset' flag. */
+	sc->twa_sc_flags |= TWA_STATE_IN_RESET;
+
 	/*
 	 * Disable interrupts from the controller, and mask any
 	 * accidental entry into our interrupt handler.
@@ -2777,6 +2822,10 @@ out:
 		TWA_CONTROL_CLEAR_ATTENTION_INTERRUPT |
 		TWA_CONTROL_UNMASK_RESPONSE_INTERRUPT |
 		TWA_CONTROL_ENABLE_INTERRUPTS);
+
+	/* Clear the 'in reset' flag. */
+	sc->twa_sc_flags &= ~TWA_STATE_IN_RESET;
+
 	return(error);
 }
 
@@ -2793,6 +2842,11 @@ twa_soft_reset(struct twa_softc *sc)
 			TWA_CONTROL_MASK_RESPONSE_INTERRUPT |
 			TWA_CONTROL_DISABLE_INTERRUPTS);
 
+	if (twa_drain_response_queue_large(sc, 30) != 0) {
+		aprint_error_dev(&sc->twa_dv,
+		    "response queue not empty after reset.\n");
+		return(1);
+	}
 	if (twa_wait_status(sc, TWA_STATUS_MICROCONTROLLER_READY |
 				TWA_STATUS_ATTENTION_INTERRUPT, 30)) {
 		aprint_error_dev(&sc->twa_dv, "no attention interrupt after reset.\n");
@@ -3257,7 +3311,6 @@ twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 			pci_conf_write(sc->pc, sc->tag,
 				PCI_COMMAND_STATUS_REG,
 				TWA_PCI_CONFIG_CLEAR_PARITY_ERROR);
-			result = 1;
 		}
 		if (status_reg & TWA_STATUS_PCI_ABORT_INTERRUPT) {
 			aprint_error_dev(&sc->twa_dv, "clearing PCI abort\n");
@@ -3266,19 +3319,11 @@ twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 			pci_conf_write(sc->pc, sc->tag,
 				PCI_COMMAND_STATUS_REG,
 				TWA_PCI_CONFIG_CLEAR_PCI_ABORT);
-			result = 1;
 		}
 		if (status_reg & TWA_STATUS_QUEUE_ERROR_INTERRUPT) {
 			aprint_error_dev(&sc->twa_dv, "clearing controller queue error\n");
 			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
 				TWA_CONTROL_CLEAR_PCI_ABORT);
-			result = 1;
-		}
-		if (status_reg & TWA_STATUS_SBUF_WRITE_ERROR) {
-			aprint_error_dev(&sc->twa_dv, "clearing SBUF write error\n");
-			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
-				TWA_CONTROL_CLEAR_SBUF_WRITE_ERROR);
-			result = 1;
 		}
 		if (status_reg & TWA_STATUS_MICROCONTROLLER_ERROR) {
 			aprint_error_dev(&sc->twa_dv, "micro-controller error\n");

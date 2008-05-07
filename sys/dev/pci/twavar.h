@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.7 2007/03/04 06:02:26 christos Exp $ */
+/*	$NetBSD: twavar.h,v 1.8 2008/05/07 17:47:20 joerg Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@ struct twa_callbacks {
 struct twa_drive {
 	uint32_t	td_id;
 	uint64_t	td_size;
+	int		td_openings;
 	struct device	*td_dev;
 	const struct twa_callbacks *td_callbacks;
 };
@@ -75,7 +76,7 @@ struct twa_softc {
 	struct twa_request	*twa_req_buf;
 	struct twa_command_packet *twa_cmd_pkt_buf;
 
-	struct twa_drive	sc_units[TWA_MAX_UNITS];
+	struct twa_drive	*sc_units;
 	/* AEN handler fields. */
 	struct tw_cl_event_packet *twa_aen_queue[TWA_Q_LENGTH];/* circular queue of AENs from firmware */
 	uint16_t		working_srl;	/* driver & firmware negotiated srl */
@@ -102,10 +103,10 @@ struct twa_softc {
 						 * for synchronization between
 						 * ioctl calls
 						 */
-	int			sc_openings;
 	int			sc_nunits;
 
 	struct twa_request      *sc_twa_request;
+	uint32_t		sc_product_id;
 };
 
 
@@ -138,6 +139,7 @@ struct twa_softc {
 #define TWA_STATE_OPEN			(1<<2)	/* control device is open */
 #define TWA_STATE_SIMQ_FROZEN		(1<<3)	/* simq frozen */
 #define TWA_STATE_REQUEST_WAIT		(1<<4)
+#define TWA_STATE_IN_RESET		(1<<5)	/* controller being reset */
 
 /* Possible values of sc->twa_ioctl_lock.lock. */
 #define TWA_LOCK_FREE		0x0	/* lock is free */

@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.10 2008/04/28 20:23:55 martin Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.11 2008/05/07 17:47:20 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.10 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.11 2008/05/07 17:47:20 joerg Exp $");
 
 #include "rnd.h"
 
@@ -125,7 +125,7 @@ ld_twa_attach(struct device *parent, struct device *self, void *aux)
 	ld->sc_secperunit = twa->sc_units[sc->sc_hwunit].td_size;
 	ld->sc_flags = LDF_ENABLED;
 	ld->sc_secsize = TWA_SECTOR_SIZE;
-	ld->sc_maxqueuecnt = twa->sc_openings;
+	ld->sc_maxqueuecnt = twa->sc_units[sc->sc_hwunit].td_openings;
 	ld->sc_start = ld_twa_start;
 	ld->sc_dump = ld_twa_dump;
 	ld->sc_flush = ld_twa_flush;
