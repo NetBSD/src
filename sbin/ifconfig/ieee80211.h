@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.6 2008/05/06 17:29:04 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.7 2008/05/07 19:55:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -32,6 +32,7 @@
 #include "parse.h"
 
 extern struct pinteger parse_chan, parse_frag;
+extern struct pkw kw80211;
 extern struct pkw ieee80211bool;
 extern struct pstr parse_bssid, parse_ssid, parse_nwkey;
 extern struct pinteger parse_powersavesleep;
