@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.199 2008/05/07 20:45:01 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.200 2008/05/07 21:29:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.199 2008/05/07 20:45:01 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.200 2008/05/07 21:29:27 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,13 +204,6 @@ static const struct afswtch afs[] = {
 	, {.af_name = NULL}	/* sentinel */
 };
 
-#define	IFKW(__word, __flag)					\
-{								\
-	.k_word = (__word), .k_neg = true, .k_type = KW_T_NUM,	\
-	.k_num = (__flag),					\
-	.k_negnum = -(__flag)					\
-}
-
 static const struct kwinst ifflagskw[] = {
 	  IFKW("arp", IFF_NOARP)
 	, IFKW("debug", IFF_DEBUG)
@@ -244,8 +237,7 @@ static const struct kwinst ifcapskw[] = {
 extern struct pbranch command_root;
 extern struct pbranch opt_command;
 extern struct pbranch opt_family, opt_silent_family;
-extern struct pkw cloning, silent_family, family, ia6flags, ia6lifetime,
-    ifcaps, ifflags, misc;
+extern struct pkw cloning, silent_family, family, ifcaps, ifflags, misc;
 
 struct pinteger parse_metric = PINTEGER_INITIALIZER(&parse_metric, "metric", 10,
     setifmetric, "metric", &command_root.pb_parser);
@@ -317,10 +309,6 @@ static const struct kwinst misckw[] = {
 	, {.k_word = "prefixlen", .k_nextparser = &parse_prefixlen.pi_parser}
 	, {.k_word = "trailers", .k_neg = true,
 	   .k_exec = notrailers, .k_nextparser = &command_root.pb_parser}
-#ifdef INET6
-	, {.k_word = "eui64", .k_exec = setia6eui64,
-	   .k_nextparser = &command_root.pb_parser}
-#endif /*INET6*/
 };
 
 /* key: clonecmd */
@@ -384,7 +372,7 @@ struct branch opt_clone_brs[] = {
 	, {.b_nextparser = &ifcaps.pk_parser}
 #ifdef INET6
 	, {.b_nextparser = &ia6flags.pk_parser}
-	, {.b_nextparser = &ia6lifetime.pk_parser}
+	, {.b_nextparser = &inet6.pk_parser}
 #endif /*INET6*/
 	, {.b_nextparser = &misc.pk_parser}
 	, {.b_nextparser = &tunnel.pk_parser}
@@ -428,30 +416,6 @@ struct pkw family = PKW_INITIALIZER(&family, "family", NULL, "af",
 
 struct pkw silent_family = PKW_INITIALIZER(&silent_family, "silent family",
     NULL, "af", familykw, __arraycount(familykw), &command_root.pb_parser);
-
-#ifdef INET6
-static const struct kwinst ia6flagskw[] = {
-	  IFKW("anycast",	IN6_IFF_ANYCAST)
-	, IFKW("tentative",	IN6_IFF_TENTATIVE)
-	, IFKW("deprecated",	IN6_IFF_DEPRECATED)
-};
-
-struct pinteger pltime = PINTEGER_INITIALIZER(&pltime, "pltime", 0,
-    setia6pltime, "pltime", &command_root.pb_parser);
-
-struct pinteger vltime = PINTEGER_INITIALIZER(&vltime, "vltime", 0,
-    setia6vltime, "vltime", &command_root.pb_parser);
-
-static const struct kwinst ia6lifetimekw[] = {
-	  {.k_word = "pltime", .k_nextparser = &pltime.pi_parser}
-	, {.k_word = "vltime", .k_nextparser = &vltime.pi_parser}
-};
-
-struct pkw ia6flags = PKW_INITIALIZER(&ia6flags, "ia6flags", setia6flags,
-    "ia6flag", ia6flagskw, __arraycount(ia6flagskw), &command_root.pb_parser);
-struct pkw ia6lifetime = PKW_INITIALIZER(&ia6lifetime, "ia6lifetime", NULL,
-    NULL, ia6lifetimekw, __arraycount(ia6lifetimekw), NULL);
-#endif /*INET6*/
 
 struct pkw ifcaps = PKW_INITIALIZER(&ifcaps, "ifcaps", setifcaps,
     "ifcap", ifcapskw, __arraycount(ifcapskw), &command_root.pb_parser);
