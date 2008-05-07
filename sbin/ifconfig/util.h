@@ -23,5 +23,7 @@ const struct afswtch *lookup_af_bynum(int);
 void	print_string(const u_int8_t *, int);
 int    getsock(int);
 struct paddr_prefix *prefixlen_to_mask(int, int);
+int direct_ioctl(prop_dictionary_t, unsigned long, void *);
+int indirect_ioctl(prop_dictionary_t, unsigned long, void *);
 
 #endif /* _IFCONFIG_UTIL_H */

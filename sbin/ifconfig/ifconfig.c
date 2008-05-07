@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.200 2008/05/07 21:29:27 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.201 2008/05/07 23:55:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.200 2008/05/07 21:29:27 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.201 2008/05/07 23:55:06 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ int	media_current;
 int	mediaopt_set;
 int	mediaopt_clear;
 
-void	check_ifflags_up(const char *);
+void	check_ifflags_up(prop_dictionary_t);
 
 int 	notealias(prop_dictionary_t, prop_dictionary_t);
 int 	notrailers(prop_dictionary_t, prop_dictionary_t);
@@ -490,7 +490,7 @@ media_status_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static void
-do_setifcaps(int s, const char *ifname, prop_dictionary_t env)
+do_setifcaps(prop_dictionary_t env)
 {
 	struct ifcapreq ifcr;
 	prop_data_t d;
@@ -502,8 +502,7 @@ do_setifcaps(int s, const char *ifname, prop_dictionary_t env)
 	assert(sizeof(ifcr) == prop_data_size(d));
 
 	memcpy(&ifcr, prop_data_data_nocopy(d), sizeof(ifcr));
-	estrlcpy(ifcr.ifcr_name, ifname, sizeof(ifcr.ifcr_name));
-	if (ioctl(s, SIOCSIFCAP, &ifcr) == -1)
+	if (direct_ioctl(env, SIOCSIFCAP, &ifcr) == -1)
 		err(EXIT_FAILURE, "SIOCSIFCAP");
 }
 
@@ -703,10 +702,10 @@ main(int argc, char **argv)
 	}
 
 	do_setifpreference(env);
-	do_setifcaps(s, ifname, env);
+	do_setifcaps(env);
 
 	if (check_up_state == 1)
-		check_ifflags_up(ifname);
+		check_ifflags_up(env);
 
 	exit(EXIT_SUCCESS);
 }
@@ -838,24 +837,14 @@ list_cloners(prop_dictionary_t env, prop_dictionary_t oenv)
 static int
 clone_command(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	struct ifreq ifreq;
-	int s;
 	int64_t cmd;
-	const char *ifname;
 
 	if (!prop_dictionary_get_int64(env, "clonecmd", &cmd)) {
 		errno = ENOENT;
 		return -1;
 	}
 
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
-
-	/* We're called early... */
-	s = getsock(AF_INET);
-
-	estrlcpy(ifreq.ifr_name, ifname, sizeof(ifreq.ifr_name));
-	if (ioctl(s, (unsigned long)cmd, &ifreq) == -1) {
+	if (indirect_ioctl(env, (unsigned long)cmd, NULL) == -1) {
 		warn("%s", __func__);
 		return -1;
 	}
@@ -1081,52 +1070,41 @@ setifdstormask(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 void
-check_ifflags_up(const char *ifname)
+check_ifflags_up(prop_dictionary_t env)
 {
-	struct ifreq ifreq;
-	int s;
+	struct ifreq ifr;
 
-	s = getsock(AF_UNSPEC);
-
-	estrlcpy(ifreq.ifr_name, ifname, sizeof(ifreq.ifr_name));
- 	if (ioctl(s, SIOCGIFFLAGS, &ifreq) == -1)
+ 	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGIFFLAGS");
-	if (ifreq.ifr_flags & IFF_UP)
+	if (ifr.ifr_flags & IFF_UP)
 		return;
-	ifreq.ifr_flags |= IFF_UP;
-	if (ioctl(s, SIOCSIFFLAGS, &ifreq) == -1)
+	ifr.ifr_flags |= IFF_UP;
+	if (direct_ioctl(env, SIOCSIFFLAGS, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSIFFLAGS");
 }
 
 int
 setifflags(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	struct ifreq ifreq;
+	struct ifreq ifr;
 	int64_t ifflag;
-	int s;
 	bool rc;
-	const char *ifname;
-
-	s = getsock(AF_INET);
 
 	rc = prop_dictionary_get_int64(env, "ifflag", &ifflag);
 	assert(rc);
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
-	estrlcpy(ifreq.ifr_name, ifname, sizeof(ifreq.ifr_name));
- 	if (ioctl(s, SIOCGIFFLAGS, &ifreq) == -1)
+ 	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
 		return -1;
 
 	if (ifflag < 0) {
 		ifflag = -ifflag;
 		if (ifflag == IFF_UP)
 			check_up_state = 0;
-		ifreq.ifr_flags &= ~ifflag;
+		ifr.ifr_flags &= ~ifflag;
 	} else
-		ifreq.ifr_flags |= ifflag;
+		ifr.ifr_flags |= ifflag;
 
-	if (ioctl(s, SIOCSIFFLAGS, &ifreq) == -1)
+	if (direct_ioctl(env, SIOCSIFFLAGS, &ifr) == -1)
 		return -1;
 
 	return 0; 
@@ -1135,18 +1113,10 @@ setifflags(prop_dictionary_t env, prop_dictionary_t xenv)
 static int
 getifcaps(prop_dictionary_t env, prop_dictionary_t oenv, struct ifcapreq *oifcr)
 {
-	const char *ifname;
 	bool rc;
-	int s;
 	struct ifcapreq ifcr;
 	const struct ifcapreq *tmpifcr;
 	prop_data_t capdata;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		return -1;
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
 	capdata = (prop_data_t)prop_dictionary_get(env, "ifcaps");
 
@@ -1156,8 +1126,7 @@ getifcaps(prop_dictionary_t env, prop_dictionary_t oenv, struct ifcapreq *oifcr)
 		return 0;
 	}
 
-	estrlcpy(ifcr.ifcr_name, ifname, sizeof(ifcr.ifcr_name));
-	(void)ioctl(s, SIOCGIFCAP, &ifcr);
+	(void)direct_ioctl(env, SIOCGIFCAP, &ifcr);
 	*oifcr = ifcr;
 
 	capdata = prop_data_create_data(&ifcr, sizeof(ifcr));
@@ -1210,22 +1179,13 @@ setifmetric(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ifreq ifr;
 	bool rc;
-	const char *ifname;
-	int s;
 	int64_t metric;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		return -1;
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
 	rc = prop_dictionary_get_int64(env, "metric", &metric);
 	assert(rc);
 
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_metric = metric;
-	if (ioctl(s, SIOCSIFMETRIC, &ifr) == -1)
+	if (direct_ioctl(env, SIOCSIFMETRIC, &ifr) == -1)
 		warn("SIOCSIFMETRIC");
 	return 0;
 }
@@ -1234,8 +1194,7 @@ static void
 do_setifpreference(prop_dictionary_t env)
 {
 	struct if_addrprefreq ifap;
-	int af, s;
-	const char *ifname;
+	int af;
 	const struct afswtch *afp;
 	prop_data_t d;
 	const struct paddr_prefix *pfx;
@@ -1257,15 +1216,9 @@ do_setifpreference(prop_dictionary_t env)
 
 	pfx = prop_data_data_nocopy(d);
 
-	s = getsock(AF_UNSPEC);
-
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
-	strlcpy(ifap.ifap_name, ifname, sizeof(ifap.ifap_name));
 	memcpy(&ifap.ifap_addr, &pfx->pfx_addr,
 	    MIN(sizeof(ifap.ifap_addr), pfx->pfx_addr.sa_len));
-	if (ioctl(s, SIOCSIFADDRPREF, &ifap) == -1)
+	if (direct_ioctl(env, SIOCSIFADDRPREF, &ifap) == -1)
 		warn("SIOCSIFADDRPREF");
 }
 
@@ -1274,22 +1227,13 @@ setifmtu(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	int64_t mtu;
 	bool rc;
-	const char *ifname;
 	struct ifreq ifr;
-	int s;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		return -1;
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
 	rc = prop_dictionary_get_int64(env, "mtu", &mtu);
 	assert(rc);
 
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = mtu;
-	if (ioctl(s, SIOCSIFMTU, &ifr) == -1)
+	if (direct_ioctl(env, SIOCSIFMTU, &ifr) == -1)
 		warn("SIOCSIFMTU");
 
 	return 0;
@@ -1305,15 +1249,11 @@ media_error(int type, const char *val, const char *opt)
 void
 init_current_media(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	struct ifmediareq ifmr;
-	int s;
 	const char *ifname;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
+	struct ifmediareq ifmr;
 
 	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
+		err(EXIT_FAILURE, "getifname");
 
 	/*
 	 * If we have not yet done so, grab the currently-selected
@@ -1322,9 +1262,8 @@ init_current_media(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	if (prop_dictionary_get(env, "initmedia") == NULL) {
 		memset(&ifmr, 0, sizeof(ifmr));
-		estrlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
 
-		if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
+		if (direct_ioctl(env, SIOCGIFMEDIA, &ifmr) == -1) {
 			/*
 			 * If we get E2BIG, the kernel is telling us
 			 * that there are more, so we can ignore it.
@@ -1349,11 +1288,6 @@ void
 process_media_commands(prop_dictionary_t env)
 {
 	struct ifreq ifr;
-	const char *ifname;
-	int s;
-
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	if (prop_dictionary_get(env, "media") == NULL &&
 	    prop_dictionary_get(env, "mediaopt") == NULL &&
@@ -1363,9 +1297,6 @@ process_media_commands(prop_dictionary_t env)
 		return;
 	}
 
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
 	/*
 	 * Media already set up, and commands sanity-checked.  Set/clear
 	 * any options, and we're ready to go.
@@ -1374,10 +1305,9 @@ process_media_commands(prop_dictionary_t env)
 	media_current &= ~mediaopt_clear;
 
 	memset(&ifr, 0, sizeof(ifr));
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_media = media_current;
 
-	if (ioctl(s, SIOCSIFMEDIA, &ifr) == -1)
+	if (direct_ioctl(env, SIOCSIFMEDIA, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCSIFMEDIA");
 }
 
@@ -1565,19 +1495,10 @@ int
 carrier(prop_dictionary_t env)
 {
 	struct ifmediareq ifmr;
-	int s;
-	const char *ifname;
 
-	if ((s = getsock(AF_UNSPEC)) == -1)
-		err(EXIT_FAILURE, "%s: getsock", __func__);
+	memset(&ifmr, 0, sizeof(ifmr));
 
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "%s: getifname", __func__);
-
-	(void) memset(&ifmr, 0, sizeof(ifmr));
-	estrlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
-
-	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
+	if (direct_ioctl(env, SIOCGIFMEDIA, &ifmr) == -1) {
 		/*
 		 * Interface doesn't support SIOC{G,S}IFMEDIA;
 		 * assume ok.
@@ -1629,6 +1550,7 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 	} else
 		afp = lookup_af_bynum(af);
 
+	/* get out early if the family is unsupported by the kernel */
 	if ((s = getsock(af)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
