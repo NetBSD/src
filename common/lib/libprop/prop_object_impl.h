@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.22 2008/05/06 22:57:26 xtraeme Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.23 2008/05/07 05:40:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -421,9 +421,9 @@ _prop_rwlock_tryrdlock(pthread_rwlock_t *lock)
  */
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-#define		_PROP_ARG_UNUSED	__unused
+#define	_PROP_ARG_UNUSED	__unused
 #else
-#define		_PROP_ARG_UNUSED	/* delete */
+#define	_PROP_ARG_UNUSED	/* delete */
 #endif /* __NetBSD__ */
 
 #endif /* _PROPLIB_PROP_OBJECT_IMPL_H_ */
