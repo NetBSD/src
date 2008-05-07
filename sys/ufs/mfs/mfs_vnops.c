@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.50 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.51 2008/05/07 21:30:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.50 2008/05/06 18:43:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.51 2008/05/07 21:30:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,38 +333,6 @@ int
 mfs_fsync(v)
 	void *v;
 {
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		kauth_cred_t a_cred;
-		int a_flags;
-		off_t offlo;
-		off_t offhi;
-	} */ *ap = v;
-	struct vnode *syncvp = ap->a_vp;
-	struct mount *mp = syncvp->v_mount;
-	int asyncflag;
 
-	/*
-	 * We only need to do something if this is a lazy evaluation.
-	 */
-	if (!(ap->a_flags & FSYNC_LAZY))
-		return (0);
-
-	/*
-	 * Walk the list of vnodes pushing all that are dirty and
-	 * not already on the sync list.
-	 */
-	if (vfs_busy(mp, NULL) == 0) {
-		VOP_UNLOCK(syncvp, 0);
-		mutex_enter(&mp->mnt_updating);
-		asyncflag = mp->mnt_flag & MNT_ASYNC;
-		mp->mnt_flag &= ~MNT_ASYNC;
-		VFS_SYNC(mp, MNT_LAZY, ap->a_cred);
-		if (asyncflag)
-			mp->mnt_flag |= MNT_ASYNC;
-		mutex_exit(&mp->mnt_updating);
-		vfs_unbusy(mp, false, NULL);
-		vn_lock(syncvp, LK_EXCLUSIVE | LK_RETRY);
-	}
 	return (0);
 }
