@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.8 2008/05/07 01:13:51 yamt Exp $	*/
+/*	$NetBSD: agr.c,v 1.9 2008/05/07 19:55:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.8 2008/05/07 01:13:51 yamt Exp $");
+__RCSID("$NetBSD: agr.c,v 1.9 2008/05/07 19:55:24 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -52,6 +52,15 @@ __RCSID("$NetBSD: agr.c,v 1.8 2008/05/07 01:13:51 yamt Exp $");
 
 static int checkifname(const char *);
 static void assertifname(const char *);
+
+static const struct kwinst agrkw[] = {
+	  {.k_word = "agrport", .k_type = KW_T_NUM, .k_neg = true,
+	   .k_num = AGRCMD_ADDPORT, .k_negnum = AGRCMD_REMPORT,
+	   .k_exec = agrsetport}
+};
+
+struct pkw agr = PKW_INITIALIZER(&agr, "agr", NULL, NULL,
+    agrkw, __arraycount(agrkw), NULL);
 
 static int
 checkifname(const char *ifname)
