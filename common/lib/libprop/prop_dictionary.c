@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.26 2008/05/06 22:57:26 xtraeme Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.27 2008/05/07 10:01:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -574,7 +574,7 @@ _prop_dictionary_iterator_next_object(void *v)
 	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
-	acquired = _prop_rwlock_tryrdlock(&pd->pd_rwlock);
+	acquired = _PROP_RWLOCK_TRYRDLOCK(&pd->pd_rwlock);
 	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
 
 	if (pd->pd_version != pdi->pdi_base.pi_version)
@@ -603,7 +603,7 @@ _prop_dictionary_iterator_reset(void *v)
 	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_dictionary(pd));
-	acquired = _prop_rwlock_tryrdlock(&pd->pd_rwlock);
+	acquired = _PROP_RWLOCK_TRYRDLOCK(&pd->pd_rwlock);
 	_PROP_RWLOCK_OWNED(pd->pd_rwlock);
 
 	pdi->pdi_index = 0;
