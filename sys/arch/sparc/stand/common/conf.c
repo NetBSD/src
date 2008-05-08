@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1997/06/01 03:39:33 mrg Exp $ */
+/*	$NetBSD: conf.c,v 1.1.108.1 2008/05/08 07:57:32 jdc Exp $ */
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -37,10 +37,13 @@
 #include <lib/libsa/nfs.h>
  
 struct fs_ops file_system_ufs[] = {
-	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
+	FS_OPS(ffsv1),
+	FS_OPS(ffsv2)
 };
+
 struct fs_ops file_system_nfs[] = {
-	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+	FS_OPS(nfs)
 };
-struct fs_ops file_system[1];
-int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+
+struct fs_ops file_system[2];
+int nfsys = __arraycount(file_system);
