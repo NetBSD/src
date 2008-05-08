@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.21 2008/05/07 17:47:20 joerg Exp $ */
+/*	$NetBSD: twa.c,v 1.22 2008/05/08 11:27:54 joerg Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.21 2008/05/07 17:47:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.22 2008/05/08 11:27:54 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,6 +401,14 @@ static const struct twa_pci_identity pci_twa_products[] = {
 	  PCI_PRODUCT_3WARE_9550,
 	  "3ware 9550SX series",
 	},
+	{ PCI_VENDOR_3WARE,
+	  PCI_PRODUCT_3WARE_9650,
+	  "3ware 9650SE series",
+	},
+	{ PCI_VENDOR_3WARE,
+	  PCI_PRODUCT_3WARE_9690,
+	  "3ware 9690 series",
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -688,7 +696,7 @@ twa_inquiry(struct twa_request *tr, int lunid)
 
 	tr->tr_length = TWA_SECTOR_SIZE;
 	tr->tr_cmd_pkt_type = TWA_CMD_PKT_TYPE_9K;
-	tr->tr_flags |= TWA_CMD_DATA_IN;
+	tr->tr_flags |= TWA_CMD_DATA_IN | TWA_CMD_DATA_OUT;
 
 	tr_9k_cmd = &tr->tr_command->command.cmd_pkt_9k;
 
@@ -1050,6 +1058,21 @@ twa_start(struct twa_request *tr)
 	int			error;
 
 	s = splbio();
+
+	/*
+	 * The 9650 has a bug in the detection of the full queue condition.
+	 * If a write operation has filled the queue and is directly followed
+	 * by a status read, it sometimes doesn't return the correct result.
+	 * To work around this, the upper 32bit are written first.
+	 * This effectively serialises the hardware, but does not change
+	 * the state of the queue.
+	 */
+	if (sc->sc_product_id == PCI_PRODUCT_3WARE_9650) {
+		/* Write lower 32 bits of address */
+		TWA_WRITE_9650_COMMAND_QUEUE_LOW(sc, tr->tr_cmd_phys +
+			sizeof(struct twa_command_header));
+	}
+
 	/* Check to see if we can post a command. */
 	status_reg = twa_inl(sc, TWA_STATUS_REGISTER_OFFSET);
 	if ((error = twa_check_ctlr_state(sc, status_reg)))
@@ -1070,9 +1093,18 @@ twa_start(struct twa_request *tr)
 			sizeof(struct twa_command_packet),
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-		/* Cmd queue is not full.  Post the command. */
-		TWA_WRITE_COMMAND_QUEUE(sc, tr->tr_cmd_phys +
-			sizeof(struct twa_command_header));
+		if (sc->sc_product_id == PCI_PRODUCT_3WARE_9650) {
+			/*
+			 * Cmd queue is not full.  Post the command to 9650
+			 * by writing upper 32 bits of address.
+			 */
+			TWA_WRITE_9650_COMMAND_QUEUE_HIGH(sc, tr->tr_cmd_phys +
+				sizeof(struct twa_command_header));
+		} else {
+			/* Cmd queue is not full.  Post the command. */
+			TWA_WRITE_COMMAND_QUEUE(sc, tr->tr_cmd_phys +
+				sizeof(struct twa_command_header));
+		}
 
 		/* Mark the request as currently being processed. */
 		tr->tr_status = TWA_CMD_BUSY;
@@ -1109,7 +1141,7 @@ twa_drain_response_queue(struct twa_softc *sc)
 /*
  * twa_drain_response_queue_large:
  *
- * specific to the 9550 controller to remove requests.
+ * specific to the 9550 and 9650 controller to remove requests.
  *
  * Removes all requests from "large" response queue on the 9550 controller.
  * This procedure is called as part of the 9550 controller reset sequence.
@@ -1120,7 +1152,8 @@ twa_drain_response_queue_large(struct twa_softc *sc, uint32_t timeout)
         uint32_t        start_time = 0, end_time;
         uint32_t        response = 0;
 
-        if (sc->sc_product_id == PCI_PRODUCT_3WARE_9550) {
+        if (sc->sc_product_id == PCI_PRODUCT_3WARE_9550 ||
+            sc->sc_product_id == PCI_PRODUCT_3WARE_9650 ) {
                start_time = 0;
                end_time = (timeout * TWA_MICROSECOND);
 
@@ -1570,6 +1603,7 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 	struct ctlname ctlnames[] = CTL_NAMES;
 	const struct sysctlnode *node; 
 	int i;
+	bool use_64bit;
 
 	sc = (struct twa_softc *)self;
 
@@ -1577,13 +1611,13 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 	pc = pa->pa_pc;
 	sc->pc = pa->pa_pc;
 	sc->tag = pa->pa_tag;
-	sc->twa_dma_tag = pa->pa_dmat;
 
 	aprint_naive(": RAID controller\n");
 	aprint_normal(": 3ware Apache\n");
 		
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9000) {
 		sc->sc_nunits = TWA_MAX_UNITS;
+		use_64bit = false;
 		if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
 	    	    &sc->twa_bus_iot, &sc->twa_bus_ioh, NULL, NULL)) {
 			aprint_error_dev(&sc->twa_dv, "can't map i/o space\n");
@@ -1591,6 +1625,25 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9550) {
 		sc->sc_nunits = TWA_MAX_UNITS;
+		use_64bit = true;
+		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08, 
+	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot, 
+		    &sc->twa_bus_ioh, NULL, NULL)) {
+			aprint_error_dev(&sc->twa_dv, "can't map mem space\n");
+			return;
+		}
+	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9650) {
+		sc->sc_nunits = TWA_9650_MAX_UNITS;
+		use_64bit = true;
+		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08, 
+	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot, 
+		    &sc->twa_bus_ioh, NULL, NULL)) {
+			aprint_error_dev(&sc->twa_dv, "can't map mem space\n");
+			return;
+		}
+	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9690) {
+		sc->sc_nunits = TWA_9690_MAX_UNITS;
+		use_64bit = true;
 		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08, 
 	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot, 
 		    &sc->twa_bus_ioh, NULL, NULL)) {
@@ -1599,10 +1652,17 @@ twa_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else {
 		sc->sc_nunits = 0;
+		use_64bit = false;
 		aprint_error_dev(&sc->twa_dv, "product id 0x%02x not recognized\n", 
 		    PCI_PRODUCT(pa->pa_id));
 		return;
 	}
+
+	if (pci_dma64_available(pa) && use_64bit)
+		sc->twa_dma_tag = pa->pa_dmat64;
+	else
+		sc->twa_dma_tag = pa->pa_dmat;
+
  	sc->sc_product_id = PCI_PRODUCT(pa->pa_id);
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -1783,10 +1843,9 @@ twa_setup_data_dmamap(void *arg, bus_dma_segment_t *segs, int nsegments)
 		cmd7k->generic.size +=
 			((TWA_64BIT_ADDRESSES ? 3 : 2) * nsegments);
 	}
-
 	if (tr->tr_flags & TWA_CMD_DATA_IN)
 		bus_dmamap_sync(tr->tr_sc->twa_dma_tag, tr->tr_dma_map, 0,
-			tr->tr_length, BUS_DMASYNC_PREREAD);
+			tr->tr_length, BUS_DMASYNC_PREWRITE);
 	if (tr->tr_flags & TWA_CMD_DATA_OUT) {
 		/*
 		 * If we're using an alignment buffer, and we're
@@ -1796,7 +1855,7 @@ twa_setup_data_dmamap(void *arg, bus_dma_segment_t *segs, int nsegments)
 			memcpy(tr->tr_data, tr->tr_real_data,
 				tr->tr_real_length);
 		bus_dmamap_sync(tr->tr_sc->twa_dma_tag, tr->tr_dma_map, 0,
-			tr->tr_length, BUS_DMASYNC_PREWRITE);
+			tr->tr_length, BUS_DMASYNC_PREREAD);
 	}
 	error = twa_submit_io(tr);
 
@@ -1856,9 +1915,8 @@ twa_map_request(struct twa_request *tr)
 		 * Map the data buffer into bus space and build the S/G list.
 		 */
 		rv = bus_dmamap_load(sc->twa_dma_tag, tr->tr_dma_map,
-			tr->tr_data, tr->tr_length, NULL, BUS_DMA_NOWAIT |
-			BUS_DMA_STREAMING | (tr->tr_flags & TWA_CMD_DATA_OUT) ?
-			BUS_DMA_READ : BUS_DMA_WRITE);
+			tr->tr_data, tr->tr_length, NULL,
+			BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
 
 		if (rv != 0) {
 			if ((tr->tr_flags & TWA_CMD_DATA_COPY_NEEDED) != 0) {
@@ -3321,9 +3379,20 @@ twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 				TWA_PCI_CONFIG_CLEAR_PCI_ABORT);
 		}
 		if (status_reg & TWA_STATUS_QUEUE_ERROR_INTERRUPT) {
-			aprint_error_dev(&sc->twa_dv, "clearing controller queue error\n");
-			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
-				TWA_CONTROL_CLEAR_PCI_ABORT);
+ 			/*
+			 * As documented by 3ware, the 9650 erroneously
+			 * flags queue errors during resets.
+			 * Just ignore them during the reset instead of
+			 * bothering the console.
+ 			 */
+ 			if ((sc->sc_product_id != PCI_PRODUCT_3WARE_9650) ||
+ 			    ((sc->twa_sc_flags & TWA_STATE_IN_RESET) == 0)) { 
+ 				aprint_error_dev(&sc->twa_dv,
+ 				    "clearing controller queue error\n");
+ 			}
+ 		
+  			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
+ 				TWA_CONTROL_CLEAR_QUEUE_ERROR);
 		}
 		if (status_reg & TWA_STATUS_MICROCONTROLLER_ERROR) {
 			aprint_error_dev(&sc->twa_dv, "micro-controller error\n");
