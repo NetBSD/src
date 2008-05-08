@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.48 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: legal.common,v 1.49 2008/05/08 15:36:35 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -465,9 +465,6 @@ This product includes software developed by Terrence R. Lambert.
 This product includes software developed by Tetsuya Isaki.
 .It
 This product includes software developed by Thomas Gerner
-.It
-This product includes software developed by Thomas Klausner for
-the NetBSD Project.
 .It
 This product includes software developed by Tobias Weingartner.
 .It
