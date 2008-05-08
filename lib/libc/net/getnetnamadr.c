@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.37 2007/01/27 22:27:35 christos Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.38 2008/05/08 05:06:18 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.37 2007/01/27 22:27:35 christos Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.38 2008/05/08 05:06:18 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -115,6 +115,48 @@ int	_yp_getnetbyname(void *, void *, va_list);
 struct netent *_ypnetent(char *);
 #endif
 
+/*
+ * parse_reversed_addr --
+ *	parse str, which should be of the form 'd.c.b.a.IN-ADDR.ARPA'
+ *	(a PTR as per RFC 1101) and convert into an in_addr_t of the
+ *	address 'a.b.c.d'.
+ *	returns 0 on success (storing in *result), or -1 on error.
+ */
+static int
+parse_reversed_addr(const char *str, in_addr_t *result)
+{
+	unsigned long	octet[4];
+	const char	*sp;
+	char		*ep;
+	int		octidx;
+
+	sp = str;
+				/* find the four octets 'd.b.c.a.' */
+	for (octidx = 0; octidx < 4; octidx++) {
+					/* ensure it's a number */
+		if (!isdigit((unsigned char)*sp))
+			return -1;
+		octet[octidx] = strtoul(sp, &ep, 10);
+					/* with a trailing '.' */
+		if (*ep != '.')
+			return -1;
+					/* and is 0 <= octet <= 255 */
+		if (octet[octidx] > 255)
+			return -1;
+		sp = ep + 1;
+	}
+				/* ensure trailer is correct */
+	if (strcasecmp(sp, "IN-ADDR.ARPA") != 0)
+		return -1;
+	*result = 0;
+				/* build result from octets in reverse */
+	for (octidx = 3; octidx >= 0; octidx--) {
+		*result <<= 8;
+		*result |= (octet[octidx] & 0xff);
+	}
+	return 0;
+}
+
 static struct netent *
 getnetanswer(querybuf *answer, int anslen, int net_i)
 {
@@ -122,10 +164,9 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 	u_char *cp;
 	int n;
 	u_char *eom;
-	int type, class, ancount, qdcount, haveanswer, i, nchar;
-	char aux1[MAXDNAME], aux2[MAXDNAME], ans[MAXDNAME];
-	char *in, *st, *pauxt, *bp, **ap;
-	char *paux1 = &aux1[0], *paux2 = &aux2[0], *ep;
+	int type, class, ancount, qdcount, haveanswer;
+	char ans[MAXDNAME];
+	char *in, *bp, **ap, *ep;
 	static	char netbuf[PACKETSZ];
 
 	_DIAGASSERT(answer != NULL);
@@ -187,7 +228,7 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 				cp += n;
 				return NULL;
 			}
-			cp += n; 
+			cp += n;
 			*ap++ = bp;
 			bp += strlen(bp) + 1;
 			net_entry.n_addrtype =
@@ -211,26 +252,8 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 				return NULL;
 			}
 			net_entry.n_name = ans;
-			aux2[0] = '\0';
-			for (i = 0; i < 4; i++) {
-				for (st = in, nchar = 0;
-				     isdigit((unsigned char)*st);
-				     st++, nchar++)
-					;
-				if (*st != '.' || nchar == 0 || nchar > 3)
-					goto next_alias;
-				if (i != 0)
-					nchar++;
-				(void)strlcpy(paux1, in, (size_t)nchar);
-				paux1[nchar] = '\0';
-				pauxt = paux2;
-				paux2 = strcat(paux1, paux2);
-				paux1 = pauxt;
-				in = ++st;
-			}		  
-			if (strcasecmp(in, "IN-ADDR.ARPA") != 0)
+			if (parse_reversed_addr(in, &net_entry.n_net) == -1)
 				goto next_alias;
-			net_entry.n_net = inet_network(paux2);
 			break;
 		}
 		net_entry.n_aliases++;
