@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.16 2008/05/05 11:42:45 jmcneill Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.17 2008/05/08 01:50:46 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.16 2008/05/05 11:42:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.17 2008/05/08 01:50:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
