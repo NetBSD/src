@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2008/05/07 22:07:24 dyoung Exp $
+#	$NetBSD: Makefile,v 1.36 2008/05/08 07:09:18 dyoung Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -11,7 +11,7 @@ MAN=	ifconfig.8
 
 WARNS=	4
 
-CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/ -pedantic
+CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6
