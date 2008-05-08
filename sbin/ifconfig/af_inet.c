@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.7 2008/05/06 16:15:17 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.8 2008/05/08 07:13:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.7 2008/05/06 16:15:17 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.8 2008/05/08 07:13:20 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: af_inet.c,v 1.7 2008/05/06 16:15:17 dyoung Exp $");
 #include "env.h"
 #include "extern.h"
 #include "af_inet.h"
+#include "af_inetany.h"
 
 static void in_preference(const char *, const struct sockaddr *);
 
@@ -208,4 +209,31 @@ in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		}
 	}
 	freeifaddrs(ifap);
+}
+
+void
+in_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	struct ifreq in_ifr;
+	struct in_aliasreq in_ifra;
+	struct afparam inparam = {
+		  .req = BUFPARAM(in_ifra)
+		, .dgreq = BUFPARAM(in_ifr)
+		, .name = {
+			  {.buf = in_ifr.ifr_name,
+			   .buflen = sizeof(in_ifr.ifr_name)}
+			, {.buf = in_ifra.ifra_name,
+			   .buflen = sizeof(in_ifra.ifra_name)}
+		  }
+		, .dgaddr = BUFPARAM(in_ifr.ifr_addr)
+		, .addr = BUFPARAM(in_ifra.ifra_addr)
+		, .dst = BUFPARAM(in_ifra.ifra_dstaddr)
+		, .brd = BUFPARAM(in_ifra.ifra_broadaddr)
+		, .mask = BUFPARAM(in_ifra.ifra_mask)
+		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR)
+		, .difaddr = IFADDR_PARAM(SIOCDIFADDR)
+		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR)
+		, .defmask = {.buf = NULL, .buflen = 0}
+	};
+	commit_address(env, oenv, &inparam);
 }
