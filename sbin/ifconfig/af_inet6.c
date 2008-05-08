@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.12 2008/05/07 21:29:27 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.13 2008/05/08 07:13:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.12 2008/05/07 21:29:27 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.13 2008/05/08 07:13:20 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: af_inet6.c,v 1.12 2008/05/07 21:29:27 dyoung Exp $");
 #include "parse.h"
 #include "extern.h"
 #include "af_inet6.h"
+#include "af_inetany.h"
 
 struct in6_ifreq    in6_ridreq = {
 	.ifr_addr = {
@@ -510,4 +511,78 @@ in6_getprefix(int len, int which)
 		*cp++ = 0xff;
 	if (len)
 		*cp = 0xff << (8 - len);
+}
+
+static int
+in6_pre_aifaddr(prop_dictionary_t env, void *arg)
+{
+	struct in6_aliasreq *ifra = arg;
+
+	setia6eui64_impl(env, ifra);
+	setia6vltime_impl(env, ifra);
+	setia6pltime_impl(env, ifra);
+	setia6flags_impl(env, ifra);
+
+	return 0;
+}
+
+void
+in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	struct in6_ifreq in6_ifr;
+#if 0
+	 = {
+		.ifr_addr = {
+			.sin6_family = AF_INET6,
+			.sin6_addr = {
+				.s6_addr =
+				    {0xff, 0xff, 0xff, 0xff,
+				     0xff, 0xff, 0xff, 0xff}
+			}
+		}
+	};
+#endif
+	static struct sockaddr_in6 in6_defmask = {
+		.sin6_addr = {
+			.s6_addr = {0xff, 0xff, 0xff, 0xff,
+			            0xff, 0xff, 0xff, 0xff}
+		}
+	};
+
+	struct in6_aliasreq in6_ifra;
+#if 0
+	 = {
+		.ifra_prefixmask = {
+			.sin6_addr = {
+				.s6_addr =
+				    {0xff, 0xff, 0xff, 0xff,
+				     0xff, 0xff, 0xff, 0xff}}},
+		.ifra_lifetime = {
+			  .ia6t_pltime = ND6_INFINITE_LIFETIME
+			, .ia6t_vltime = ND6_INFINITE_LIFETIME
+		}
+	};
+#endif
+	struct afparam in6param = {
+		  .req = BUFPARAM(in6_ifra)
+		, .dgreq = BUFPARAM(in6_ifr)
+		, .name = {
+			{.buf = in6_ifr.ifr_name,
+			 .buflen = sizeof(in6_ifr.ifr_name)},
+			{.buf = in6_ifra.ifra_name,
+			 .buflen = sizeof(in6_ifra.ifra_name)}
+		  }
+		, .dgaddr = BUFPARAM(in6_ifr.ifr_addr)
+		, .addr = BUFPARAM(in6_ifra.ifra_addr)
+		, .dst = BUFPARAM(in6_ifra.ifra_dstaddr)
+		, .brd = BUFPARAM(in6_ifra.ifra_broadaddr)
+		, .mask = BUFPARAM(in6_ifra.ifra_prefixmask)
+		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR_IN6)
+		, .difaddr = IFADDR_PARAM(SIOCDIFADDR_IN6)
+		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR_IN6)
+		, .defmask = BUFPARAM(in6_defmask)
+		, .pre_aifaddr = in6_pre_aifaddr
+		, .pre_aifaddr_arg = BUFPARAM(in6_ifra)
+	};
+	commit_address(env, oenv, &in6param);
 }
