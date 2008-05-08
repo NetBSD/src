@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.146 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.147 2008/05/08 18:56:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.147 2008/05/08 18:56:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -84,7 +84,6 @@ static void	timer_intr(void *);
 static void	itimerfire(struct ptimer *);
 static void	itimerfree(struct ptimers *, int);
 
-kmutex_t	time_lock;
 kmutex_t	timer_lock;
 
 static void	*timer_sih;
@@ -102,7 +101,7 @@ void
 time_init(void)
 {
 
-	mutex_init(&time_lock, MUTEX_DEFAULT, IPL_NONE);
+	/* nothing yet */
 }
 
 void
