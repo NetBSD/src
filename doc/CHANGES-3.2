@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.130 2008/04/19 15:36:55 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.131 2008/05/08 11:58:21 jdc Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -4044,4 +4044,23 @@ sys/dev/raidframe/rf_driver.c			1.117
 
 	Fix display of total number of sectors if > 2^32 on 32-bit machines
 	[sborrill, ticket #1922]
+
+sys/dev/isa/if_fmv_isa.c			1.12
+
+	Fix a botch (inverted test) in rev 1.4.
+	[tsutsui, ticket #1924]
+
+usr.bin/gzip/znew				1.3
+
+	Our gzip does not have "-o" option.
+	So replace -o with >, so that znew can now work again.
+	[nakayama, ticket #1926]
+
+sys/arch/sparc/stand/common/conf.c		1.2
+sys/arch/sparc/stand/common/promdev.c		1.21
+
+	Add support booting from UFS2 partition for sparc.
+	Tested on tme emulating SS2.
+	Closes PR#36068.
+	[tsutsui, ticket #1928]
 
