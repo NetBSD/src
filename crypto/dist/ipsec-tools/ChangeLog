@@ -1,3 +1,7 @@
+2008-05-08  Emmanuel Dreyfus  <manu@netbsd.org>
+        From Christian Hohnstaedt <christian@hohnstaedt.de>:
+	* configure.ac: allow out of tree building
+
 2008-04-25  Yvan Vanhullebus  <vanhu@netasq.com>
 	Track:4, from Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/isakmp_inf.c: extract ports information from
