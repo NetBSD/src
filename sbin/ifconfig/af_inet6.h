@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.h,v 1.5 2008/05/07 21:29:27 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.h,v 1.6 2008/05/08 07:13:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -54,3 +54,4 @@ int	setia6eui64_impl(prop_dictionary_t, struct in6_aliasreq *);
 int	setia6vltime_impl(prop_dictionary_t, struct in6_aliasreq *);
 int	setia6pltime_impl(prop_dictionary_t, struct in6_aliasreq *);
 int	setia6flags_impl(prop_dictionary_t, struct in6_aliasreq *);
+void	in6_commit_address(prop_dictionary_t, prop_dictionary_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.201 2008/05/07 23:55:06 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.202 2008/05/08 07:13:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.201 2008/05/07 23:55:06 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.202 2008/05/08 07:13:20 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ void	init_current_media(prop_dictionary_t, prop_dictionary_t);
 /* Known address families */
 static const struct afswtch afs[] = {
 	  {.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
-	   .af_addr_commit = commit_address}
+	   .af_addr_commit = in_commit_address}
 
 #ifdef INET6
 	, {.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
