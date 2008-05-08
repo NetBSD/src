@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.38 2008/05/08 05:06:18 lukem Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.39 2008/05/08 12:26:55 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.38 2008/05/08 05:06:18 lukem Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.39 2008/05/08 12:26:55 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -165,8 +165,8 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 	int n;
 	u_char *eom;
 	int type, class, ancount, qdcount, haveanswer;
-	char ans[MAXDNAME];
 	char *in, *bp, **ap, *ep;
+	static  char n_name[MAXDNAME];
 	static	char netbuf[PACKETSZ];
 
 	_DIAGASSERT(answer != NULL);
@@ -211,13 +211,13 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 	*ap = NULL;
 	net_entry.n_aliases = net_aliases;
 	haveanswer = 0;
+	n_name[0] = '\0';
 	while (--ancount >= 0 && cp < eom) {
 		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
 		if ((n < 0) || !res_dnok(bp))
 			break;
 		cp += n;
-		ans[0] = '\0';
-		(void)strlcpy(ans, bp, sizeof(ans));
+		(void)strlcpy(n_name, bp, sizeof(n_name));
 		GETSHORT(type, cp);
 		GETSHORT(class, cp);
 		cp += INT32SZ;		/* TTL */
@@ -251,7 +251,7 @@ getnetanswer(querybuf *answer, int anslen, int net_i)
 				h_errno = HOST_NOT_FOUND;
 				return NULL;
 			}
-			net_entry.n_name = ans;
+			net_entry.n_name = n_name;
 			if (parse_reversed_addr(in, &net_entry.n_net) == -1)
 				goto next_alias;
 			break;
