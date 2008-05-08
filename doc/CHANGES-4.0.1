@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.29 2008/04/14 21:04:32 jdc Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.30 2008/05/08 08:07:27 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -298,4 +298,13 @@ src/dist/tcpdump/print-isoclns.c		patch
 
 	Fix CVE-2007-1218, CVE-2007-3798 and CAN-2005-1278 in base-tcpdump.
 	[tonnerre, ticket #1124]
+
+usr.bin/gzip/zgrep				1.6
+
+	grep "-H" option (print the filename for each match) always prints
+	filenames whether "-h" option (suppress filenames when multiple files
+	are searched) is specified or not.
+	Make zgrep "-h" option actually work with using "-H" option only
+	when "-h" is not specified.
+	[nakayama, ticket #1134]
 
