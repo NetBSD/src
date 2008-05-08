@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv_isa.c,v 1.9 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: if_fmv_isa.c,v 1.9.2.1 2008/05/08 07:52:44 jdc Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.9 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv_isa.c,v 1.9.2.1 2008/05/08 07:52:44 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ fmv_find(bus_space_tag_t iot, bus_space_handle_t ioh, int *iobase, int *irq)
 	};
 
 	/* Simple probe. */
-	if (fe_simple_probe(iot, ioh, probe_table) != 0)
+	if (fe_simple_probe(iot, ioh, probe_table) == 0)
 		return 0;
 
 	/* Check if our I/O address matches config info on EEPROM. */
