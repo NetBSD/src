@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmixvar.h,v 1.1 2007/01/17 23:32:10 macallan Exp $	*/
+/*	$NetBSD: sgsmixvar.h,v 1.2 2008/05/08 02:32:48 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -11,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,7 +27,7 @@
 #define SGSMIXVAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmixvar.h,v 1.1 2007/01/17 23:32:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmixvar.h,v 1.2 2008/05/08 02:32:48 macallan Exp $");
 
 void sgsmix_set_speaker_vol(void *, int, int);
 void sgsmix_set_headphone_vol(void *, int, int);
