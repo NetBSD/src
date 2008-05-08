@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.939 2008/04/30 12:23:55 joerg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.940 2008/05/08 15:34:15 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.938 2008/04/30 12:23:29 joerg Exp
+ *	NetBSD: pcidevs,v 1.939 2008/05/08 15:33:34 sborrill Exp
  */
 
 /*
@@ -2041,6 +2041,7 @@
 #define	PCI_PRODUCT_IBM_GXT6500P	0x021b		/* GXT-6500P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_GXT4500P	0x021c		/* GXT-4500P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_GXT135P	0x0233		/* GXT-135P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_SERVERAID8K	0x9580		/* ServeRAID 8k */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
 /* IC Ensemble / VIA Technologies products */
