@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467_ki2c.c,v 1.3 2008/05/04 14:45:01 xtraeme Exp $	*/
+/*	$NetBSD: adt7467_ki2c.c,v 1.4 2008/05/08 01:36:03 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -27,12 +27,12 @@
  */
 
 /* 
- * a driver fot the ADT7467 environmental controller found in the iBook G4 
+ * a driver for the ADT7467 environmental controller found in the iBook G4 
  * and probably other Apple machines 
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467_ki2c.c,v 1.3 2008/05/04 14:45:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467_ki2c.c,v 1.4 2008/05/08 01:36:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ adt7467_ki2c_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ki2c_confargs *ka = aux;
 	char compat[32];
-
+	
 	if (strcmp(ka->ka_name, "fan") != 0)
 		return 0;
 
@@ -76,13 +76,24 @@ adt7467_ki2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct adt7467c_softc *sc = device_private(self);
 	struct ki2c_confargs *ka = aux;
-	int node;
+	int node, rev, stp;
+	uint8_t reg, buf;
 
 	node = ka->ka_node;
 	sc->sc_node = node;
 	sc->parent = parent;
 	sc->address = ka->ka_addr & 0xfe;
-	aprint_normal(" ADT7467 thermal monitor and fan controller\n");
+
+	iic_acquire_bus(ka->ka_tag, 0);
+	reg = 0x3f;
+	iic_exec(ka->ka_tag, I2C_OP_READ, ka->ka_addr & 0xfe, &reg, 1,
+	    &buf, 1, 0);
+	rev = (buf & 0xf0) >> 4;
+	stp = (buf & 0x0f);
+	iic_release_bus(ka->ka_tag, 0);
+
+	aprint_normal(" ADT7467 thermal monitor and fan controller, "
+	    "rev. %d.%d\n", rev, stp);
 	sc->sc_i2c = ka->ka_tag;
 	adt7467c_setup(self);
 }
