@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.10 2008/05/07 20:45:01 dyoung Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.11 2008/05/08 07:11:03 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.10 2008/05/07 20:45:01 dyoung Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.11 2008/05/08 07:11:03 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -41,12 +41,6 @@ __RCSID("$NetBSD: af_iso.c,v 1.10 2008/05/07 20:45:01 dyoung Exp $");
 #include <sys/socket.h>
 
 #include <net/if.h> 
-
-#if 0	/* XXX done in af_iso.h */
-#define EON
-#include <netiso/iso.h> 
-#include <netiso/iso_var.h>
-#endif
 
 #include <err.h>
 #include <errno.h>
