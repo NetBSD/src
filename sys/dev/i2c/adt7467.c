@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.12 2008/05/04 14:45:01 xtraeme Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.13 2008/05/08 02:03:22 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -11,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,7 +25,7 @@
  */
 
 /* 
- * a driver fot the ADT7467 environmental controller found in the iBook G4 
+ * a driver for the ADT7467 environmental controller found in the iBook G4 
  * and probably other Apple machines 
  */
 
@@ -37,7 +35,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.12 2008/05/04 14:45:01 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.13 2008/05/08 02:03:22 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +77,10 @@ adt7467c_attach(device_t parent, device_t self, void *aux)
 
 	sc->parent = parent;
 	sc->address = args->ia_addr;
+
 	aprint_normal(" ADT7467 thermal monitor and fan controller, "
 	    "addr: %02x\n", sc->address);
+
 	sc->sc_i2c = (struct i2c_controller *)args->ia_tag;
 	adt7467c_setup(self);
 }
