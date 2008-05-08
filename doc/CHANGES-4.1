@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.55 2008/05/04 01:45:07 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.56 2008/05/08 08:07:06 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -931,4 +931,32 @@ sys/arch/i386/bios/vesafb.c			1.27
 
 	Disable splashscreen during autoconf in a number of scenarios.
 	[sborrill, ticket #1135]
+
+sys/dev/isa/if_fmv_isa.c			1.12
+
+	Fix a botch (inverted test) in rev 1.4.
+	[tsutsui, ticket #1131]
+
+sys/arch/sparc/stand/common/conf.c		1.2
+sys/arch/sparc/stand/common/promdev.c		1.21
+
+	Add support booting from UFS2 partition for sparc.
+	Tested on tme emulating SS2.
+	Closes PR#36068.
+	[tsutsui, ticket #1132]
+
+usr.bin/gzip/znew				1.3
+
+	Our gzip does not have "-o" option.
+	So replace -o with >, so that znew can now work again.
+	[nakayama, ticket #1133]
+
+usr.bin/gzip/zgrep				1.6
+
+	grep "-H" option (print the filename for each match) always prints
+	filenames whether "-h" option (suppress filenames when multiple files
+	are searched) is specified or not.
+	Make zgrep "-h" option actually work with using "-H" option only
+	when "-h" is not specified.
+	[nakayama, ticket #1134]
 
