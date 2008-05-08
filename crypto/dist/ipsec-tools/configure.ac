@@ -242,7 +242,7 @@ AC_CHECK_HEADER(openssl/sha2.h, [], [
 	    CRYPTOBJS="$CRYPTOBJS sha2.o"
 	])
 
-	CPPFLAGS_ADD="$CPPFLAGS_ADD -I./\${top_srcdir}/src/racoon/missing"
+	CPPFLAGS_ADD="$CPPFLAGS_ADD -I\${top_srcdir}/src/racoon/missing"
 ])
 AC_SUBST(CRYPTOBJS)
 
