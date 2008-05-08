@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.15.14.2 2006/11/10 09:18:38 ghen Exp $ */
+/*	$NetBSD: promdev.c,v 1.15.14.3 2008/05/08 11:57:25 jdc Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -201,14 +201,17 @@ devopen(f, fname, file)
 		*file = (char *)fname;
 
 	if (pd->devtype == DT_NET) {
-		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
+		nfsys = 1;
+		memcpy(file_system, file_system_nfs,
+		    sizeof(struct fs_ops) * nfsys);
 		if ((error = net_open(pd)) != 0) {
 			printf("Can't open NFS network connection on `%s'\n",
 				prom_bootdevice);
 			return (error);
 		}
 	} else {
-		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		memcpy(file_system, file_system_ufs,
+		    sizeof(struct fs_ops) * nfsys);
 
 #ifdef NOTDEF_DEBUG
 	printf("devopen: Checking disklabel for RAID partition\n");
