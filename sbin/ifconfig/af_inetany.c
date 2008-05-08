@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.4 2008/05/06 21:16:52 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.5 2008/05/08 07:13:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.4 2008/05/06 21:16:52 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.5 2008/05/08 07:13:20 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -59,28 +59,7 @@ __RCSID("$NetBSD: af_inetany.c,v 1.4 2008/05/06 21:16:52 dyoung Exp $");
 #include "extern.h"
 #include "af_inet.h"
 #include "af_inet6.h"
-
-#define	IFADDR_PARAM(__arg)	{.cmd = (__arg), .desc = #__arg}
-#define	BUFPARAM(__arg) 	{.buf = &(__arg), .buflen = sizeof(__arg)}
-
-struct apbuf {
-	void *buf;
-	size_t buflen;
-};
-
-struct afparam {
-	struct {
-		char *buf;
-		size_t buflen;
-	} name[2];
-	struct apbuf dgaddr, addr, brd, dst, mask, req, dgreq, defmask,
-	    pre_aifaddr_arg;
-	struct {
-		unsigned long cmd;
-		const char *desc;
-	} aifaddr, difaddr, gifaddr;
-	int (*pre_aifaddr)(prop_dictionary_t, void *);
-};
+#include "af_inetany.h"
 
 static void *
 loadbuf(struct apbuf *b, const struct paddr_prefix *pfx)
@@ -89,119 +68,20 @@ loadbuf(struct apbuf *b, const struct paddr_prefix *pfx)
 	              MIN(b->buflen, pfx->pfx_addr.sa_len));
 }
 
-static int
-in6_pre_aifaddr(prop_dictionary_t env, void *arg)
-{
-	struct in6_aliasreq *ifra = arg;
-
-	setia6eui64_impl(env, ifra);
-	setia6vltime_impl(env, ifra);
-	setia6pltime_impl(env, ifra);
-	setia6flags_impl(env, ifra);
-
-	return 0;
-}
-
 void
-commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
+commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
+    struct afparam *param)
 {
 	const char *ifname;
-	struct ifreq in_ifr;
-	struct in_aliasreq in_ifra;
-	struct in6_ifreq in6_ifr;
-#if 0
-	 = {
-		.ifr_addr = {
-			.sin6_family = AF_INET6,
-			.sin6_addr = {
-				.s6_addr =
-				    {0xff, 0xff, 0xff, 0xff,
-				     0xff, 0xff, 0xff, 0xff}
-			}
-		}
-	};
-#endif
-	static struct sockaddr_in6 in6_defmask = {
-		.sin6_addr = {
-			.s6_addr = {0xff, 0xff, 0xff, 0xff,
-			            0xff, 0xff, 0xff, 0xff}
-		}
-	};
-
-	struct in6_aliasreq in6_ifra;
-#if 0
-	 = {
-		.ifra_prefixmask = {
-			.sin6_addr = {
-				.s6_addr =
-				    {0xff, 0xff, 0xff, 0xff,
-				     0xff, 0xff, 0xff, 0xff}}},
-		.ifra_lifetime = {
-			  .ia6t_pltime = ND6_INFINITE_LIFETIME
-			, .ia6t_vltime = ND6_INFINITE_LIFETIME
-		}
-	};
-#endif
 	int af, rc, s;
 	bool alias, delete, replace;
 	prop_data_t d;
 	const struct paddr_prefix *addr, *brd, *dst, *mask;
 	unsigned short flags;
-	struct afparam inparam = {
-		  .req = BUFPARAM(in_ifra)
-		, .dgreq = BUFPARAM(in_ifr)
-		, .name = {
-			  {.buf = in_ifr.ifr_name,
-			   .buflen = sizeof(in_ifr.ifr_name)}
-			, {.buf = in_ifra.ifra_name,
-			   .buflen = sizeof(in_ifra.ifra_name)}
-		  }
-		, .dgaddr = BUFPARAM(in_ifr.ifr_addr)
-		, .addr = BUFPARAM(in_ifra.ifra_addr)
-		, .dst = BUFPARAM(in_ifra.ifra_dstaddr)
-		, .brd = BUFPARAM(in_ifra.ifra_broadaddr)
-		, .mask = BUFPARAM(in_ifra.ifra_mask)
-		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR)
-		, .difaddr = IFADDR_PARAM(SIOCDIFADDR)
-		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR)
-		, .defmask = {.buf = NULL, .buflen = 0}
-	}, in6param = {
-		  .req = BUFPARAM(in6_ifra)
-		, .dgreq = BUFPARAM(in6_ifr)
-		, .name = {
-			{.buf = in6_ifr.ifr_name,
-			 .buflen = sizeof(in6_ifr.ifr_name)},
-			{.buf = in6_ifra.ifra_name,
-			 .buflen = sizeof(in6_ifra.ifra_name)}
-		  }
-		, .dgaddr = BUFPARAM(in6_ifr.ifr_addr)
-		, .addr = BUFPARAM(in6_ifra.ifra_addr)
-		, .dst = BUFPARAM(in6_ifra.ifra_dstaddr)
-		, .brd = BUFPARAM(in6_ifra.ifra_broadaddr)
-		, .mask = BUFPARAM(in6_ifra.ifra_prefixmask)
-		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR_IN6)
-		, .difaddr = IFADDR_PARAM(SIOCDIFADDR_IN6)
-		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR_IN6)
-		, .defmask = BUFPARAM(in6_defmask)
-		, .pre_aifaddr = in6_pre_aifaddr
-		, .pre_aifaddr_arg = BUFPARAM(in6_ifra)
-	}, *param;
 
 	if ((af = getaf(env)) == -1)
 		af = AF_INET;
 
-	switch (af) {
-	case AF_INET:
-		param = &inparam;
-		break;
-	case AF_INET6:
-		param = &in6param;
-		break;
-	default:
-		errx(EXIT_FAILURE, "%s: unknown address family %d", __func__,
-		    af);
-		break;
-	}
 	if ((s = getsock(af)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
