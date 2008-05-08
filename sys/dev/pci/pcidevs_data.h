@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.938 2008/04/30 12:23:56 joerg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.939 2008/05/08 15:34:15 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.938 2008/04/30 12:23:29 joerg Exp
+ *	NetBSD: pcidevs,v 1.939 2008/05/08 15:33:34 sborrill Exp
  */
 
 /*
@@ -7062,6 +7062,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT135P,
 	    "GXT-135P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID8K,
+	    "ServeRAID 8k",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
@@ -14184,4 +14188,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2946;
+const int pci_nproducts = 2947;
