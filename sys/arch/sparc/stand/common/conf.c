@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.70.1 2008/05/08 11:57:25 jdc Exp $ */
+/*	$NetBSD: conf.c,v 1.1.70.2 2008/05/08 12:06:15 jdc Exp $ */
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -46,4 +46,4 @@ struct fs_ops file_system_nfs[] = {
 };
 
 struct fs_ops file_system[2];
-int nfsys = __arraycount(file_system);
+int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
