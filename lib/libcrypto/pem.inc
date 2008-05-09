@@ -1,4 +1,4 @@
-#	$NetBSD: pem.inc,v 1.6 2007/12/09 22:44:19 adrianp Exp $
+#	$NetBSD: pem.inc,v 1.7 2008/05/09 21:52:18 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,7 @@
 
 
 PEM_SRCS = pem_sign.c pem_seal.c pem_info.c pem_lib.c pem_all.c pem_err.c \
-	pem_x509.c pem_xaux.c pem_oth.c pem_pk8.c pem_pkey.c
+	pem_x509.c pem_xaux.c pem_oth.c pem_pk8.c pem_pkey.c pvkfmt.c
 SRCS += ${PEM_SRCS}
 
 .for cryptosrc in ${PEM_SRCS}

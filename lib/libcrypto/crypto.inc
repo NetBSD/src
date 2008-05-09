@@ -1,4 +1,4 @@
-#	$NetBSD: crypto.inc,v 1.8 2007/12/09 22:44:14 adrianp Exp $
+#	$NetBSD: crypto.inc,v 1.9 2008/05/09 21:52:18 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,7 +8,7 @@
 .PATH:	${OPENSSLSRC}/crypto
 
 
-CRYPTO_SRCS = cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c tmdiff.c \
+CRYPTO_SRCS = cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c \
 	cpt_err.c ebcdic.c uid.c o_time.c o_dir.c
 SRCS += ${CRYPTO_SRCS}
 
