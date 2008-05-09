@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.39 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.40 2008/05/09 06:20:39 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.39 2008/04/28 20:24:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.40 2008/05/09 06:20:39 rumble Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -324,7 +324,7 @@ bootpcheck(m, context)
 		return (-1);
 	}
 	if (m->m_pkthdr.len > BOOTP_SIZE_MAX) {
-		DPRINTF(("bootpcheck: long packet %d > %d\n", m->m_pkthdr.len,
+		DPRINTF(("Bootpcheck: long packet %d > %d\n", m->m_pkthdr.len,
 		    BOOTP_SIZE_MAX));
 		return (-1);
 	}
@@ -352,12 +352,19 @@ bootpcheck(m, context)
 	}
 	if (memcmp(bootp->bp_chaddr, bpc->haddr, bpc->halen)) {
 #ifdef DEBUG_NFS_BOOT_DHCP
-		char bp_chaddr[3 * bpc->halen], haddr[3 * bpc->halen];
-#endif
+		char *bp_chaddr, *haddr;
+
+		bp_chaddr = malloc(3 * bpc->halen, M_TEMP, M_WAITOK);
+		haddr     = malloc(3 * bpc->halen, M_TEMP, M_WAITOK);
+
 		DPRINTF(("bootpcheck: incorrect hwaddr %s != %s\n",
-		    ether_snprintf(bp_chaddr, sizeof(bp_chaddr),
+		    ether_snprintf(bp_chaddr, 3 * bpc->halen,
 		    bootp->bp_chaddr),
-		    ether_snprintf(haddr, sizeof(haddr), bpc->haddr)));
+		    ether_snprintf(haddr, 3 * bpc->halen, bpc->haddr)));
+
+		free(bp_chaddr, M_TEMP);
+		free(haddr, M_TEMP);
+#endif
 		return (-1);
 	}
 	if (bootp->bp_xid != bpc->xid) {
