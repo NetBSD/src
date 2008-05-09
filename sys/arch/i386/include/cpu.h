@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.169 2008/04/30 12:44:27 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.170 2008/05/09 18:11:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -398,6 +398,9 @@ extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 extern int i386_use_fxsave;
 extern int i386_has_sse;
 extern int i386_has_sse2;
+
+extern void (*x86_cpu_idle)(void);
+#define	cpu_idle() (*x86_cpu_idle)()
 
 /* machdep.c */
 void	dumpconf(void);

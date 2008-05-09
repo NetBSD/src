@@ -1,6 +1,7 @@
-/*	$NetBSD: x86_machdep.c,v 1.21 2008/05/02 15:26:39 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.22 2008/05/09 18:11:29 joerg Exp $	*/
 
 /*-
+ * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -32,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.21 2008/05/02 15:26:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.22 2008/05/09 18:11:29 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,8 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.21 2008/05/02 15:26:39 ad Exp $");
 #include <sys/intr.h>
 #include <sys/atomic.h>
 #include <sys/module.h>
+#include <sys/sysctl.h>
 
 #include <x86/cpu_msr.h>
+#include <x86/cpuvar.h>
+#include <x86/cputypes.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
@@ -181,9 +185,8 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if (l == ci->ci_data.cpu_idlelwp) {
 		if (ci == cur)
 			return;
-		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0) {
+		if (x86_cpu_idle == x86_cpu_idle_halt)
 			x86_send_ipi(ci, 0);
-		}
 		return;
 	}
 
@@ -308,3 +311,38 @@ cpu_kpreempt_disabled(void)
 }
 #endif	/* __HAVE_PREEMPTION */
 
+void (*x86_cpu_idle)(void);
+static char x86_cpu_idle_text[16];
+
+SYSCTL_SETUP(sysctl_machdep_cpu_idle, "sysctl machdep cpu_idle")
+{
+	const struct sysctlnode	*mnode, *node;
+
+	sysctl_createv(NULL, 0, NULL, &mnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &mnode, &node,
+		       CTLFLAG_PERMANENT, CTLTYPE_STRING, "idle-mechanism",
+		       SYSCTL_DESCR("Mechanism used for the idle loop."),
+		       NULL, 0, x86_cpu_idle_text, 0,
+		       CTL_CREATE, CTL_EOL);
+}
+
+void
+x86_cpu_idle_init(void)
+{
+#ifndef XEN
+	if ((curcpu()->ci_feature2_flags & CPUID2_MONITOR) == 0 ||
+	    cpu_vendor == CPUVENDOR_AMD) {
+		strlcpy(x86_cpu_idle_text, "halt", sizeof(x86_cpu_idle_text));
+		x86_cpu_idle = x86_cpu_idle_halt;
+	} else {
+		strlcpy(x86_cpu_idle_text, "mwait", sizeof(x86_cpu_idle_text));
+		x86_cpu_idle = x86_cpu_idle_mwait;
+	}
+#else
+	strlcpy(x86_cpu_idle_text, "xen", sizeof(x86_cpu_idle_text));
+	x86_cpu_idle = x86_cpu_idle_xen;
+#endif
+}
