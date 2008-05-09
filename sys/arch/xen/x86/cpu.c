@@ -1,8 +1,9 @@
-/*	$NetBSD: cpu.c,v 1.18 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 2008/05/09 18:11:29 joerg Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -65,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2008/05/09 18:11:29 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1069,4 +1070,19 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	/* XXX this needs to read the shared_info of the CPU being probed.. */
 	ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
 #endif /* XEN3 */
+}
+
+void
+x86_cpu_idle_xen(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+
+	x86_disable_intr();
+	if (!__predict_false(ci->ci_want_resched)) {
+		idle_block();
+	} else {
+		x86_enable_intr();
+	}
 }

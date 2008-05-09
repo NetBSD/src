@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2008/04/30 12:44:27 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2008/05/09 18:11:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -326,6 +326,9 @@ extern int cpu_feature2;
 extern int cpu_id;
 extern int cpuid_level;
 extern char cpu_vendorname[];
+
+extern void (*x86_cpu_idle)(void);
+#define	cpu_idle() (*x86_cpu_idle)()
 
 /* identcpu.c */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.84 2008/04/25 13:26:27 ad Exp $
+#	$NetBSD: files.xen,v 1.85 2008/05/09 18:11:29 joerg Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -99,7 +99,6 @@ endif
 
 file	kern/subr_disk_mbr.c		disk
 file	arch/xen/x86/hypervisor_machdep.c
-file	arch/xen/x86/idle_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/xen/x86/x86_xpmap.c
 file	arch/xen/x86/xen_intr.c
