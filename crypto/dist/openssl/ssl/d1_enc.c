@@ -120,7 +120,9 @@
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
 #include <openssl/rand.h>
-
+#ifdef KSSL_DEBUG
+#include <openssl/des.h>
+#endif
 
 int dtls1_enc(SSL *s, int send)
 	{
@@ -132,8 +134,8 @@ int dtls1_enc(SSL *s, int send)
 
 	if (send)
 		{
-		if (s->write_hash != NULL)
-			n=EVP_MD_size(s->write_hash);
+		if (EVP_MD_CTX_md(s->write_hash))
+			n=EVP_MD_CTX_size(s->write_hash);
 		ds=s->enc_write_ctx;
 		rec= &(s->s3->wrec);
 		if (s->enc_write_ctx == NULL)
@@ -154,8 +156,8 @@ int dtls1_enc(SSL *s, int send)
 		}
 	else
 		{
-		if (s->read_hash != NULL)
-			n=EVP_MD_size(s->read_hash);
+		if (EVP_MD_CTX_md(s->read_hash))
+			n=EVP_MD_CTX_size(s->read_hash);
 		ds=s->enc_read_ctx;
 		rec= &(s->s3->rrec);
 		if (s->enc_read_ctx == NULL)
