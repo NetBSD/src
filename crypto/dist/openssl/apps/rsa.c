@@ -81,6 +81,7 @@
  * -des		- encrypt output if PEM format with DES in cbc mode
  * -des3	- encrypt output if PEM format
  * -idea	- encrypt output if PEM format
+ * -seed	- encrypt output if PEM format
  * -aes128	- encrypt output if PEM format
  * -aes192	- encrypt output if PEM format
  * -aes256	- encrypt output if PEM format
@@ -113,6 +114,8 @@ int MAIN(int argc, char **argv)
 	char *engine=NULL;
 #endif
 	int modulus=0;
+
+	int pvk_encr = 2;
 
 	apps_startup();
 
@@ -176,6 +179,16 @@ int MAIN(int argc, char **argv)
 			pubin=1;
 		else if (strcmp(*argv,"-pubout") == 0)
 			pubout=1;
+		else if (strcmp(*argv,"-RSAPublicKey_in") == 0)
+			pubin = 2;
+		else if (strcmp(*argv,"-RSAPublicKey_out") == 0)
+			pubout = 2;
+		else if (strcmp(*argv,"-pvk-strong") == 0)
+			pvk_encr=2;
+		else if (strcmp(*argv,"-pvk-weak") == 0)
+			pvk_encr=1;
+		else if (strcmp(*argv,"-pvk-none") == 0)
+			pvk_encr=0;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -210,6 +223,9 @@ bad:
 		BIO_printf(bio_err," -des3           encrypt PEM output with ede cbc des using 168 bit key\n");
 #ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea           encrypt PEM output with cbc idea\n");
+#endif
+#ifndef OPENSSL_NO_SEED
+		BIO_printf(bio_err," -seed           encrypt PEM output with cbc seed\n");
 #endif
 #ifndef OPENSSL_NO_AES
 		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
@@ -253,10 +269,23 @@ bad:
 		EVP_PKEY	*pkey;
 
 		if (pubin)
-			pkey = load_pubkey(bio_err, infile,
-				(informat == FORMAT_NETSCAPE && sgckey ?
-					FORMAT_IISSGC : informat), 1,
+			{
+			int tmpformat=-1;
+			if (pubin == 2)
+				{
+				if (informat == FORMAT_PEM)
+					tmpformat = FORMAT_PEMRSA;
+				else if (informat == FORMAT_ASN1)
+					tmpformat = FORMAT_ASN1RSA;
+				}
+			else if (informat == FORMAT_NETSCAPE && sgckey)
+				tmpformat = FORMAT_IISSGC;
+			else
+				tmpformat = informat;
+					
+			pkey = load_pubkey(bio_err, infile, tmpformat, 1,
 				passin, e, "Public Key");
+			}
 		else
 			pkey = load_key(bio_err, infile,
 				(informat == FORMAT_NETSCAPE && sgckey ?
@@ -264,7 +293,7 @@ bad:
 				passin, e, "Private Key");
 
 		if (pkey != NULL)
-		rsa = pkey == NULL ? NULL : EVP_PKEY_get1_RSA(pkey);
+			rsa = EVP_PKEY_get1_RSA(pkey);
 		EVP_PKEY_free(pkey);
 	}
 
@@ -342,7 +371,13 @@ bad:
 		}
 	BIO_printf(bio_err,"writing RSA key\n");
 	if 	(outformat == FORMAT_ASN1) {
-		if(pubout || pubin) i=i2d_RSA_PUBKEY_bio(out,rsa);
+		if(pubout || pubin) 
+			{
+			if (pubout == 2)
+				i=i2d_RSAPublicKey_bio(out,rsa);
+			else
+				i=i2d_RSA_PUBKEY_bio(out,rsa);
+			}
 		else i=i2d_RSAPrivateKey_bio(out,rsa);
 	}
 #ifndef OPENSSL_NO_RC4
@@ -366,9 +401,25 @@ bad:
 #endif
 	else if (outformat == FORMAT_PEM) {
 		if(pubout || pubin)
-		    i=PEM_write_bio_RSA_PUBKEY(out,rsa);
+			{
+			if (pubout == 2)
+		    		i=PEM_write_bio_RSAPublicKey(out,rsa);
+			else
+		    		i=PEM_write_bio_RSA_PUBKEY(out,rsa);
+			}
 		else i=PEM_write_bio_RSAPrivateKey(out,rsa,
 						enc,NULL,0,NULL,passout);
+	} else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
+		EVP_PKEY *pk;
+		pk = EVP_PKEY_new();
+		EVP_PKEY_set1_RSA(pk, rsa);
+		if (outformat == FORMAT_PVK)
+			i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+		else if (pubin || pubout)
+			i = i2b_PublicKey_bio(out, pk);
+		else
+			i = i2b_PrivateKey_bio(out, pk);
+		EVP_PKEY_free(pk);
 	} else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
