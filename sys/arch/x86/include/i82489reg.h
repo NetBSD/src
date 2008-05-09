@@ -1,7 +1,7 @@
-/*	$NetBSD: i82489reg.h,v 1.5 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.6 2008/05/09 21:23:48 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,7 @@
  */
 
 #define	LAPIC_ID		0x020		/* ID. RW */
-#	define LAPIC_ID_MASK		0x0f000000
+#	define LAPIC_ID_MASK		0xff000000
 #	define LAPIC_ID_SHIFT		24
 
 #define LAPIC_VERS		0x030		/* Version. R */
