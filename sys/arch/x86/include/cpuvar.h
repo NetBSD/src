@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.24 2008/04/28 20:23:40 martin Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.25 2008/05/09 18:11:29 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -107,6 +107,13 @@ void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_tss(struct cpu_info *);
 void cpu_init_first(void);
+
+void x86_cpu_idle_init(void);
+void x86_cpu_idle_halt(void);
+void x86_cpu_idle_mwait(void);
+#ifdef XEN
+void x86_cpu_idle_xen(void);
+#endif
 
 #ifdef INTEL_CORETEMP
 void coretemp_register(struct cpu_info *);

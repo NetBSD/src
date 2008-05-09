@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.36 2008/04/29 19:19:29 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.37 2008/05/09 18:11:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.36 2008/04/29 19:19:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2008/05/09 18:11:29 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -374,6 +374,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
 		x86_errata();
+		x86_cpu_idle_init();
 		break;
 
 	case CPU_ROLE_BP:
@@ -394,6 +395,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		lapic_calibrate_timer(ci);
 #endif
 		x86_errata();
+		x86_cpu_idle_init();
 		break;
 
 	case CPU_ROLE_AP:
@@ -1017,5 +1019,34 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 		last_tsc = rdtsc();
 		i8254_delay(100000);
 		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+	}
+}
+
+void
+x86_cpu_idle_mwait(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+
+	x86_monitor(&ci->ci_want_resched, 0, 0);
+	if (__predict_false(ci->ci_want_resched)) {
+		return;
+	}
+	x86_mwait(0, 0);
+}
+
+void
+x86_cpu_idle_halt(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+
+	x86_disable_intr();
+	if (!__predict_false(ci->ci_want_resched)) {
+		x86_stihlt();
+	} else {
+		x86_enable_intr();
 	}
 }
