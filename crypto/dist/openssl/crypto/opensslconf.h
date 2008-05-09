@@ -27,6 +27,18 @@
 #ifndef OPENSSL_THREADS
 #define OPENSSL_THREADS
 #endif
+#ifndef OPENSSL_NO_HW_PADLOCK
+#define OPENSSL_NO_HW_PADLOCK
+#endif
+#ifndef OPENSSL_NO_GOST
+#define OPENSSL_NO_GOST
+#endif
+#ifndef OPENSSL_NO_SEED
+#define OPENSSL_NO_SEED
+#endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+#define OPENSSL_NO_WHIRLPOOL
+#endif
 #endif
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */

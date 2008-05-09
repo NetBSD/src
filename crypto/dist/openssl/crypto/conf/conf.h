@@ -79,8 +79,6 @@ typedef struct
 	} CONF_VALUE;
 
 DECLARE_STACK_OF(CONF_VALUE)
-DECLARE_STACK_OF(CONF_MODULE)
-DECLARE_STACK_OF(CONF_IMODULE)
 
 struct conf_st;
 struct conf_method_st;
@@ -105,6 +103,9 @@ struct conf_method_st
 typedef struct conf_imodule_st CONF_IMODULE;
 typedef struct conf_module_st CONF_MODULE;
 
+DECLARE_STACK_OF(CONF_MODULE)
+DECLARE_STACK_OF(CONF_IMODULE)
+
 /* DSO module function typedefs */
 typedef int conf_init_func(CONF_IMODULE *md, const CONF *cnf);
 typedef void conf_finish_func(CONF_IMODULE *md);
@@ -114,6 +115,7 @@ typedef void conf_finish_func(CONF_IMODULE *md);
 #define CONF_MFLAGS_SILENT		0x4
 #define CONF_MFLAGS_NO_DSO		0x8
 #define CONF_MFLAGS_IGNORE_MISSING_FILE	0x10
+#define CONF_MFLAGS_DEFAULT_SECTION	0x20
 
 int CONF_set_default_method(CONF_METHOD *meth);
 void CONF_set_nconf(CONF *conf,LHASH *hash);
@@ -213,6 +215,7 @@ void ERR_load_CONF_strings(void);
 #define CONF_F_CONF_LOAD_BIO				 102
 #define CONF_F_CONF_LOAD_FP				 103
 #define CONF_F_CONF_MODULES_LOAD			 116
+#define CONF_F_CONF_PARSE_LIST				 119
 #define CONF_F_DEF_LOAD					 120
 #define CONF_F_DEF_LOAD_BIO				 121
 #define CONF_F_MODULE_INIT				 115
@@ -232,6 +235,7 @@ void ERR_load_CONF_strings(void);
 
 /* Reason codes. */
 #define CONF_R_ERROR_LOADING_DSO			 110
+#define CONF_R_LIST_CANNOT_BE_NULL			 115
 #define CONF_R_MISSING_CLOSE_SQUARE_BRACKET		 100
 #define CONF_R_MISSING_EQUAL_SIGN			 101
 #define CONF_R_MISSING_FINISH_FUNCTION			 111
