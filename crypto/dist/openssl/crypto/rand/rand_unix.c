@@ -163,7 +163,7 @@ int RAND_poll(void)
 	static const char *randomfiles[] = { DEVRANDOM };
 	struct stat randomstats[sizeof(randomfiles)/sizeof(randomfiles[0])];
 	int fd;
-	size_t i;
+	unsigned int i;
 #endif
 #ifdef DEVRANDOM_EGD
 	static const char *egdsockets[] = { DEVRANDOM_EGD, NULL };
@@ -176,7 +176,8 @@ int RAND_poll(void)
 	 * have this. Use /dev/urandom if you can as /dev/random may block
 	 * if it runs out of random entries.  */
 
-	for (i=0; i<sizeof(randomfiles)/sizeof(randomfiles[0]) && n < ENTROPY_NEEDED; i++)
+	for (i = 0; (i < sizeof(randomfiles)/sizeof(randomfiles[0])) &&
+			(n < ENTROPY_NEEDED); i++)
 		{
 		if ((fd = open(randomfiles[i], O_RDONLY
 #ifdef O_NONBLOCK
@@ -193,7 +194,7 @@ int RAND_poll(void)
 			{
 			int usec = 10*1000; /* spend 10ms on each file */
 			int r;
-			size_t j;
+			unsigned int j;
 			struct stat *st=&randomstats[i];
 
 			/* Avoid using same input... Used to be O_NOFOLLOW
@@ -211,7 +212,12 @@ int RAND_poll(void)
 				{
 				int try_read = 0;
 
-#if defined(OPENSSL_SYS_LINUX) || defined(__NetBSD__)
+#if defined(OPENSSL_SYS_BEOS_R5)
+				/* select() is broken in BeOS R5, so we simply
+				 *  try to read something and snooze if we couldn't */
+				try_read = 1;
+
+#elif defined(OPENSSL_SYS_LINUX) || defined(__NetBSD__)
 				/* use poll() */
 				struct pollfd pset;
 				
@@ -258,6 +264,10 @@ int RAND_poll(void)
 					r = read(fd,(unsigned char *)tmpbuf+n, ENTROPY_NEEDED-n);
 					if (r > 0)
 						n += r;
+#if defined(OPENSSL_SYS_BEOS_R5)
+					if (r == 0)
+						snooze(t.tv_usec);
+#endif
 					}
 				else
 					r = -1;
@@ -310,6 +320,14 @@ int RAND_poll(void)
 
 	l=time(NULL);
 	RAND_add(&l,sizeof(l),0.0);
+
+#if defined(OPENSSL_SYS_BEOS)
+	{
+	system_info sysInfo;
+	get_system_info(&sysInfo);
+	RAND_add(&sysInfo,sizeof(sysInfo),0);
+	}
+#endif
 
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	return 1;
