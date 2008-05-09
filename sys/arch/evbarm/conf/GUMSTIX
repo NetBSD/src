@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.24 2008/01/27 06:23:38 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.25 2008/05/09 00:08:37 matt Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -209,18 +209,18 @@ audio*	at audiobus?
 pxaudc0	at pxaip?				# USB Device Controller
 
 # integrated MMC/SD contoller
-#pxamci0	at pxaip? addr 0x41100000 size 0x48
-#sdmmc*	at pxamci?
+pxamci0	at pxaip? addr 0x41100000 size 0x48
+sdmmc*	at pxamci?
 #options 	PXAMCI_DEBUG
 #options 	SDMMC_DEBUG
 #options 	SDMMC_DUMP_CSD
 
 # SCSI bus support
-#scsibus* at scsi?
+scsibus* at scsi?
 
 # SCSI devices
-#sd*	at scsibus? target ? lun ? # SCSI disk drives
-#uk*	at scsibus? target ? lun ? # SCSI unknown
+sd*	at scsibus? target ? lun ? # SCSI disk drives
+uk*	at scsibus? target ? lun ? # SCSI unknown
 
 # gumstix device support
 gxio0	at pxaip?
