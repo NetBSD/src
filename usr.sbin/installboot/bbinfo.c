@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.12 2008/04/28 20:24:16 martin Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.13 2008/05/09 10:53:55 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -35,10 +35,15 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.12 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.13 2008/05/09 10:53:55 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
+#include <sys/ioctl.h>
+#include <sys/dkio.h>
+#include <errno.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -96,6 +101,29 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams,
 	}
 
 	rv = pwrite(params->fsfd, bb, bbparams->maxsize, bbparams->offset);
+#ifdef DIOCWLABEL
+	if (rv == -1 && errno == EROFS) {
+		/*
+		 * The first sector might be protected by
+		 * bounds_check_with_label(9)
+		 */
+		int enable;
+
+		enable = 1;
+		rv = ioctl(params->fsfd, DIOCWLABEL, &enable);
+		if (rv != 0) {
+			warn("Cannot enable writes to the label sector");
+			goto done;
+		}
+
+		rv = pwrite(params->fsfd, bb, bbparams->maxsize,
+		    bbparams->offset);
+
+		/* Reset write-protect. */
+		enable = 0;
+		(void)ioctl(params->fsfd, DIOCWLABEL, &enable);
+	}
+#endif
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
@@ -260,6 +288,29 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 	}
 
 	rv = pwrite(params->fsfd, bb, bbparams->maxsize, bbparams->offset);
+#ifdef DIOCWLABEL
+	if (rv == -1 && errno == EROFS) {
+		/*
+		 * The first sector might be protected by
+		 * bounds_check_with_label(9)
+		 */
+		int enable;
+
+		enable = 1;
+		rv = ioctl(params->fsfd, DIOCWLABEL, &enable);
+		if (rv != 0) {
+			warn("Cannot enable writes to the label sector");
+			goto done;
+		}
+
+		rv = pwrite(params->fsfd, bb, bbparams->maxsize,
+		    bbparams->offset);
+
+		/* Reset write-protect. */
+		enable = 0;
+		(void)ioctl(params->fsfd, DIOCWLABEL, &enable);
+	}
+#endif
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
