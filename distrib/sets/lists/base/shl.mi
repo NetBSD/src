@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.430 2008/04/20 07:11:21 mrg Exp $
+# $NetBSD: shl.mi,v 1.431 2008/05/09 22:08:26 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -15,7 +15,7 @@
 #
 ./lib/libc.so.12.159				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
-./lib/libcrypto.so.3.2				base-crypto-shlib	crypto
+./lib/libcrypto.so.4.0				base-crypto-shlib	crypto
 ./lib/libedit.so.2.11				base-sys-shlib
 ./lib/libevent.so.1.0				base-sys-shlib
 ./lib/libipsec.so.2.2				base-net-shlib
@@ -61,7 +61,7 @@
 ./usr/lib/libc.so.12.159			base-sys-shlib
 ./usr/lib/libcom_err.so.5.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.2			base-sys-shlib
-./usr/lib/libcrypto.so.3.2			base-crypto-shlib	crypto
+./usr/lib/libcrypto.so.4.0			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.6.4			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
 ./usr/lib/libdns.so.0.0				base-bind-shlib
@@ -112,7 +112,7 @@
 ./usr/lib/libsl.so.3.0				base-krb5-shlib		kerberos
 ./usr/lib/libss.so.5.0				base-krb5-shlib		kerberos
 ./usr/lib/libssh.so.8.0				base-secsh-bin		crypto
-./usr/lib/libssl.so.4.0				base-crypto-shlib	crypto
+./usr/lib/libssl.so.5.0				base-crypto-shlib	crypto
 ./usr/lib/libstdc++.so.5.0			base-sys-shlib		gcc=3
 ./usr/lib/libstdc++.so.6.0			base-sys-shlib		gcc=4
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib

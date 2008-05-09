@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1143 2008/05/06 11:34:18 yamt Exp $
+#	$NetBSD: mi,v 1.1144 2008/05/09 22:08:27 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1652,6 +1652,7 @@
 ./usr/include/openssl/bn.h			comp-c-include		crypto
 ./usr/include/openssl/buffer.h			comp-c-include		crypto
 ./usr/include/openssl/cast.h			comp-c-include		crypto
+./usr/include/openssl/cms.h			comp-c-include		crypto
 ./usr/include/openssl/comp.h			comp-c-include		crypto
 ./usr/include/openssl/conf.h			comp-c-include		crypto
 ./usr/include/openssl/conf_api.h		comp-c-include		crypto
@@ -1691,7 +1692,7 @@
 ./usr/include/openssl/pem2.h			comp-c-include		crypto
 ./usr/include/openssl/pkcs12.h			comp-c-include		crypto
 ./usr/include/openssl/pkcs7.h			comp-c-include		crypto
-./usr/include/openssl/pq_compat.h		comp-c-include		crypto
+./usr/include/openssl/pq_compat.h		comp-obsolete		obsolete
 ./usr/include/openssl/pqueue.h			comp-c-include		crypto
 ./usr/include/openssl/rand.h			comp-c-include		crypto
 ./usr/include/openssl/rc2.h			comp-c-include		crypto
@@ -1710,7 +1711,8 @@
 ./usr/include/openssl/store.h			comp-c-include		crypto
 ./usr/include/openssl/symhacks.h		comp-c-include		crypto
 ./usr/include/openssl/tls1.h			comp-c-include		crypto
-./usr/include/openssl/tmdiff.h			comp-c-include		crypto
+./usr/include/openssl/ts.h			comp-c-include		crypto
+./usr/include/openssl/tmdiff.h			comp-obsolete		obsolete
 ./usr/include/openssl/txt_db.h			comp-c-include		crypto
 ./usr/include/openssl/ui.h			comp-c-include		crypto
 ./usr/include/openssl/ui_compat.h		comp-c-include		crypto
