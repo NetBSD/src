@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2007/12/09 21:57:36 adrianp Exp $
+#	$NetBSD: Makefile,v 1.49 2008/05/09 21:52:18 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -28,7 +28,7 @@ USE_FIPS=	no
 # XXX There's a bit of work to do before we can enable warnings.
 WARNS=0
 
-CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC}
+CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC} -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto/dist
 
@@ -69,13 +69,13 @@ CLEANFILES+= buildinf.h
 # This list is built from the contents of the include/openssl
 # directory in the OpenSSL source distribution.
 INCS+=	aes.h asn1.h asn1_mac.h asn1t.h bio.h blowfish.h bn.h \
-	buffer.h cast.h comp.h conf.h conf_api.h crypto.h des.h \
+	buffer.h cast.h cms.h comp.h conf.h conf_api.h crypto.h des.h \
 	dh.h dsa.h dso.h e_os2.h ebcdic.h ec.h ecdh.h ecdsa.h engine.h \
 	err.h evp.h hmac.h krb5_asn.h lhash.h md2.h md4.h md5.h \
 	obj_mac.h objects.h ocsp.h opensslconf.h opensslv.h ossl_typ.h \
 	pem.h pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h ripemd.h \
-	rsa.h safestack.h sha.h stack.h store.h symhacks.h tmdiff.h txt_db.h \
-	ui.h ui_compat.h x509.h x509_vfy.h x509v3.h pqueue.h pq_compat.h
+	rsa.h safestack.h sha.h stack.h store.h symhacks.h ts.h txt_db.h \
+	ui.h ui_compat.h x509.h x509_vfy.h x509v3.h pqueue.h
 #	des_old.h 
 
 # IDEA - patented, but we install the header anyways
