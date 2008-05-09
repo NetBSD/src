@@ -110,13 +110,11 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 		case ASN1_ITYPE_CHOICE:
 		if (asn1_cb)
 			{
-			i = asn1_cb(ASN1_OP_FREE_PRE, pval, it);
+			i = asn1_cb(ASN1_OP_FREE_PRE, pval, it, NULL);
 			if (i == 2)
 				return;
 			}
 		i = asn1_get_choice_selector(pval, it);
-		if (asn1_cb)
-			asn1_cb(ASN1_OP_FREE_PRE, pval, it);
 		if ((i >= 0) && (i < it->tcount))
 			{
 			ASN1_VALUE **pchval;
@@ -125,7 +123,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 			ASN1_template_free(pchval, tt);
 			}
 		if (asn1_cb)
-			asn1_cb(ASN1_OP_FREE_POST, pval, it);
+			asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
 		if (!combine)
 			{
 			OPENSSL_free(*pval);
@@ -151,7 +149,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 			return;
 		if (asn1_cb)
 			{
-			i = asn1_cb(ASN1_OP_FREE_PRE, pval, it);
+			i = asn1_cb(ASN1_OP_FREE_PRE, pval, it, NULL);
 			if (i == 2)
 				return;
 			}		
@@ -172,7 +170,7 @@ static void asn1_item_combine_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int c
 			ASN1_template_free(pseqval, seqtt);
 			}
 		if (asn1_cb)
-			asn1_cb(ASN1_OP_FREE_POST, pval, it);
+			asn1_cb(ASN1_OP_FREE_POST, pval, it, NULL);
 		if (!combine)
 			{
 			OPENSSL_free(*pval);
@@ -221,7 +219,7 @@ void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		{
 		ASN1_TYPE *typ = (ASN1_TYPE *)*pval;
 		utype = typ->type;
-		pval = (ASN1_VALUE **)&typ->value.ptr;
+		pval = &typ->value.asn1_value;
 		if (!*pval)
 			return;
 		}

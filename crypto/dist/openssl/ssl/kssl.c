@@ -70,7 +70,7 @@
 
 #define _XOPEN_SOURCE 500 /* glibc2 needs this to declare strptime() */
 #include <time.h>
-#if 0 /* experimental */
+#if 0 /* Experimental */
 #undef _XOPEN_SOURCE /* To avoid clashes with anything else... */
 #endif
 #include <string.h>
@@ -2196,7 +2196,7 @@ krb5_error_code  kssl_build_principal_2(
 #else /* !OPENSSL_NO_KRB5 */
 
 #if defined(PEDANTIC) || defined(OPENSSL_SYS_VMS)
-static int dummy=(int)&dummy;
+static void *dummy=&dummy;
 #endif
 
 #endif	/* !OPENSSL_NO_KRB5	*/

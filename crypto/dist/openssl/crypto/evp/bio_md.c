@@ -157,8 +157,11 @@ static int md_write(BIO *b, const char *in, int inl)
 				(unsigned int)ret);
 			}
 		}
-	BIO_clear_retry_flags(b);
-	BIO_copy_next_retry(b);
+	if(b->next_bio != NULL)
+		{
+		BIO_clear_retry_flags(b);
+		BIO_copy_next_retry(b);
+		}
 	return(ret);
 	}
 
@@ -192,13 +195,9 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret=0;
 		break;
 	case BIO_C_GET_MD_CTX:
-		if (b->init)
-			{
-			pctx=ptr;
-			*pctx=ctx;
-			}
-		else
-			ret=0;
+		pctx=ptr;
+		*pctx=ctx;
+		b->init = 1;
 		break;
 	case BIO_C_SET_MD_CTX:
 		if (b->init)

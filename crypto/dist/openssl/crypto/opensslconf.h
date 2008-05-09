@@ -4,9 +4,6 @@
 /* OpenSSL was configured with the following options: */
 #ifndef OPENSSL_DOING_MAKEDEPEND
 
-#ifndef OPENSSL_NO_CAMELLIA
-# define OPENSSL_NO_CAMELLIA
-#endif
 #ifndef OPENSSL_NO_GMP
 # define OPENSSL_NO_GMP
 #endif
@@ -24,6 +21,9 @@
 #endif
 
 #endif /* OPENSSL_DOING_MAKEDEPEND */
+#ifndef OPENSSL_THREADS
+# define OPENSSL_THREADS
+#endif
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
 # define OPENSSL_NO_DYNAMIC_ENGINE
 #endif
@@ -33,9 +33,6 @@
    who haven't had the time to do the appropriate changes in their
    applications.  */
 #ifdef OPENSSL_ALGORITHM_DEFINES
-# if defined(OPENSSL_NO_CAMELLIA) && !defined(NO_CAMELLIA)
-#  define NO_CAMELLIA
-# endif
 # if defined(OPENSSL_NO_GMP) && !defined(NO_GMP)
 #  define NO_GMP
 # endif
@@ -99,7 +96,7 @@
  * This enables code handling data aligned at natural CPU word
  * boundary. See crypto/rc4/rc4_enc.c for further details.
  */
-#undef RC4_CHUNK
+#define RC4_CHUNK unsigned long
 #endif
 #endif
 
@@ -107,7 +104,7 @@
 /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
  * %20 speed up (longs are 8 bytes, int's are 4). */
 #ifndef DES_LONG
-#define DES_LONG unsigned long
+#define DES_LONG unsigned int
 #endif
 #endif
 
@@ -118,14 +115,9 @@
 /* Should we define BN_DIV2W here? */
 
 /* Only one for the following should be defined */
-/* The prime number generation stuff may not work when
- * EIGHT_BIT but I don't care since I've only used this mode
- * for debuging the bignum libraries */
-#undef SIXTY_FOUR_BIT_LONG
+#define SIXTY_FOUR_BIT_LONG
 #undef SIXTY_FOUR_BIT
-#define THIRTY_TWO_BIT
-#undef SIXTEEN_BIT
-#undef EIGHT_BIT
+#undef THIRTY_TWO_BIT
 #endif
 
 #if defined(HEADER_RC4_LOCL_H) && !defined(CONFIG_HEADER_RC4_LOCL_H)
@@ -167,7 +159,7 @@ YOU SHOULD NOT HAVE BOTH DES_RISC1 AND DES_RISC2 DEFINED!!!!!
 /* Unroll the inner loop, this sometimes helps, sometimes hinders.
  * Very mucy CPU dependant */
 #ifndef DES_UNROLL
-#undef DES_UNROLL
+#define DES_UNROLL
 #endif
 
 /* These default values were supplied by

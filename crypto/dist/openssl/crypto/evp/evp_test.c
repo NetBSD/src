@@ -424,6 +424,13 @@ int main(int argc,char **argv)
 		continue;
 		}
 #endif
+#ifdef OPENSSL_NO_SEED
+	    if (strstr(cipher, "SEED") == cipher)
+		{
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		continue;
+		}
+#endif
 	    fprintf(stderr,"Can't find %s\n",cipher);
 	    EXIT(3);
 	    }
@@ -434,7 +441,7 @@ int main(int argc,char **argv)
 #endif
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
-    ERR_remove_state(0);
+    ERR_remove_thread_state(NULL);
     ERR_free_strings();
     CRYPTO_mem_leaks_fp(stderr);
 

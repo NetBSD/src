@@ -225,7 +225,7 @@ int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 	{
-	return ctx->cipher->key_len;
+	return ctx->key_len;
 	}
 
 int EVP_CIPHER_nid(const EVP_CIPHER *cipher)
@@ -255,11 +255,15 @@ int EVP_MD_pkey_type(const EVP_MD *md)
 
 int EVP_MD_size(const EVP_MD *md)
 	{
+	if (!md)
+		return -1;
 	return md->md_size;
 	}
 
-const EVP_MD * EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
+const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 	{
+	if (!ctx)
+		return NULL;
 	return ctx->digest;
 	}
 
