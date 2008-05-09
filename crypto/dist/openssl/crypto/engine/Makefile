@@ -20,13 +20,13 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	eng_table.c eng_pkey.c eng_fat.c eng_all.c \
 	tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c \
-	tb_cipher.c tb_digest.c \
-	eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c eng_padlock.c
+	tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c \
+	eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c
 LIBOBJ= eng_err.o eng_lib.o eng_list.o eng_init.o eng_ctrl.o \
 	eng_table.o eng_pkey.o eng_fat.o eng_all.o \
 	tb_rsa.o tb_dsa.o tb_ecdsa.o tb_dh.o tb_ecdh.o tb_rand.o tb_store.o \
-	tb_cipher.o tb_digest.o \
-	eng_openssl.o eng_cnf.o eng_dyn.o eng_cryptodev.o eng_padlock.o
+	tb_cipher.o tb_digest.o tb_pkmeth.o tb_asnmth.o \
+	eng_openssl.o eng_cnf.o eng_dyn.o eng_cryptodev.o
 
 SRC= $(LIBSRC)
 
@@ -182,17 +182,6 @@ eng_openssl.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 eng_openssl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 eng_openssl.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 eng_openssl.o: ../../include/openssl/x509_vfy.h ../cryptlib.h eng_openssl.c
-eng_padlock.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
-eng_padlock.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-eng_padlock.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-eng_padlock.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-eng_padlock.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-eng_padlock.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-eng_padlock.o: ../../include/openssl/opensslconf.h
-eng_padlock.o: ../../include/openssl/opensslv.h
-eng_padlock.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-eng_padlock.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-eng_padlock.o: ../../include/openssl/symhacks.h eng_padlock.c
 eng_pkey.o: ../../e_os.h ../../include/openssl/bio.h
 eng_pkey.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 eng_pkey.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
@@ -212,6 +201,17 @@ eng_table.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 eng_table.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 eng_table.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_int.h
 eng_table.o: eng_table.c
+tb_asnmth.o: ../../e_os.h ../../include/openssl/asn1.h
+tb_asnmth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+tb_asnmth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+tb_asnmth.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+tb_asnmth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+tb_asnmth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+tb_asnmth.o: ../../include/openssl/opensslconf.h
+tb_asnmth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+tb_asnmth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+tb_asnmth.o: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
+tb_asnmth.o: eng_int.h tb_asnmth.c
 tb_cipher.o: ../../e_os.h ../../include/openssl/bio.h
 tb_cipher.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 tb_cipher.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
@@ -262,6 +262,17 @@ tb_ecdsa.o: ../../include/openssl/opensslconf.h
 tb_ecdsa.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tb_ecdsa.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 tb_ecdsa.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_int.h tb_ecdsa.c
+tb_pkmeth.o: ../../e_os.h ../../include/openssl/asn1.h
+tb_pkmeth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+tb_pkmeth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+tb_pkmeth.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+tb_pkmeth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+tb_pkmeth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+tb_pkmeth.o: ../../include/openssl/opensslconf.h
+tb_pkmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+tb_pkmeth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+tb_pkmeth.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_int.h
+tb_pkmeth.o: tb_pkmeth.c
 tb_rand.o: ../../e_os.h ../../include/openssl/bio.h
 tb_rand.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 tb_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
