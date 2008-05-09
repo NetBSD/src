@@ -71,7 +71,7 @@ extern "C" {
 #endif
 
 #ifndef __NetBSD__
-#if defined(OPENSSL_SYS_WIN16) || defined(__LP32__)
+#if defined(__LP32__)
 #define RIPEMD160_LONG unsigned long
 #elif defined(OPENSSL_SYS_CRAY) || defined(__ILP64__)
 #define RIPEMD160_LONG unsigned long

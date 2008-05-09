@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -116,9 +116,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 
-static SSL_METHOD *ssl23_get_server_method(int ver);
+static const SSL_METHOD *ssl23_get_server_method(int ver);
 int ssl23_get_client_hello(SSL *s);
-static SSL_METHOD *ssl23_get_server_method(int ver)
+static const SSL_METHOD *ssl23_get_server_method(int ver)
 	{
 #ifndef OPENSSL_NO_SSL2
 	if (ver == SSL2_VERSION)
@@ -416,7 +416,9 @@ int ssl23_get_client_hello(SSL *s)
 		n2s(p,sil);
 		n2s(p,cl);
 		d=(unsigned char *)s->init_buf->data;
-		if ((csl+sil+cl+11) != s->packet_length)
+		if ((csl+sil+cl+11) != s->packet_length) /* We can't have TLS extensions in SSL 2.0 format
+		                                          * Client Hello, can we? Error condition should be
+		                                          * '>' otherweise */
 			{
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_RECORD_LENGTH_MISMATCH);
 			goto err;
@@ -459,6 +461,15 @@ int ssl23_get_client_hello(SSL *s)
 		*(d++)=1;
 		*(d++)=0;
 		
+#if 0
+                /* copy any remaining data with may be extensions */
+	        p = p+csl+sil+cl;
+		while (p <  s->packet+s->packet_length)
+			{
+			*(d++)=*(p++);
+			}
+#endif
+
 		i = (d-(unsigned char *)s->init_buf->data) - 4;
 		l2n3((long)i, d_len);
 
