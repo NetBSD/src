@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.3 2008/05/06 18:35:38 dyoung Exp $	*/
+/*	$NetBSD: env.c,v 1.4 2008/05/09 04:46:50 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2008 David Young.  All rights reserved.
@@ -142,7 +142,7 @@ getargstr(prop_dictionary_t env, const char *key, char *buf, size_t buflen)
 	prop_data_t data;
 	size_t datalen;
 
-	data = (prop_data_t)prop_dictionary_get(env, "bssid");
+	data = (prop_data_t)prop_dictionary_get(env, key);
 	if (data == NULL) {
 		errno = ENOENT;
 		return -1;
