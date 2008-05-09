@@ -1,4 +1,4 @@
-#	$NetBSD: files.gumstix,v 1.10 2008/03/17 09:30:02 kiyohara Exp $
+#	$NetBSD: files.gumstix,v 1.11 2008/05/09 00:08:37 matt Exp $
 #
 # Gumstix. Inc. Gumstix boards configuration info
 #
@@ -8,7 +8,7 @@ file	arch/evbarm/gumstix/gumstix_machdep.c
 # CPU support and integrated peripherals
 include "arch/arm/xscale/files.pxa2x0"
 
-#include "dev/sdmmc/files.sdmmc"
+include "dev/sdmmc/files.sdmmc"
 
 # gumstix devices
 device	gxio {[addr = -1], [gpirq = -1]}
@@ -24,6 +24,10 @@ file	arch/evbarm/gumstix/if_sm_gxio.c		sm_gxio
 # PCMCIA/CF socket
 attach	pxapcic at pxaip with pxapcic_gxpcic
 file	arch/evbarm/gumstix/gxpcic.c			pxapcic_gxpcic
+
+# PXA2x0 MMC/SD controller
+attach	pxamci at pxaip with gxmci
+file	arch/evbarm/gumstix/gxmci.c			gxmci
 
 # Inter-Integrated Circuit controller
 device	gxiic: pxaiic, i2cbus

@@ -1,4 +1,4 @@
-#	$NetBSD: std.g42xxeb,v 1.4 2008/01/27 12:37:11 chris Exp $
+#	$NetBSD: std.g42xxeb,v 1.5 2008/05/09 00:08:37 matt Exp $
 #
 # standard NetBSD/evbarm for TWINTAIL (G4255EB) options
 
@@ -16,6 +16,7 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
+options 	KERNEL_EXT_BASE=0xc0000000
 makeoptions	LOADADDRESS="0xc0200000"
 makeoptions	BOARDTYPE="g42xxeb"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.g42xxeb"
