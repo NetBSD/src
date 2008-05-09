@@ -87,6 +87,7 @@
  * -camellia128 - encrypt output if PEM format
  * -camellia192 - encrypt output if PEM format
  * -camellia256 - encrypt output if PEM format
+ * -seed        - encrypt output if PEM format
  * -text	- print a text version
  * -modulus	- print the DSA public key
  */
@@ -112,6 +113,8 @@ int MAIN(int argc, char **argv)
 	char *passargin = NULL, *passargout = NULL;
 	char *passin = NULL, *passout = NULL;
 	int modulus=0;
+
+	int pvk_encr = 2;
 
 	apps_startup();
 
@@ -172,6 +175,12 @@ int MAIN(int argc, char **argv)
 			engine= *(++argv);
 			}
 #endif
+		else if (strcmp(*argv,"-pvk-strong") == 0)
+			pvk_encr=2;
+		else if (strcmp(*argv,"-pvk-weak") == 0)
+			pvk_encr=1;
+		else if (strcmp(*argv,"-pvk-none") == 0)
+			pvk_encr=0;
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
 		else if (strcmp(*argv,"-text") == 0)
@@ -219,6 +228,9 @@ bad:
 		BIO_printf(bio_err," -camellia128, -camellia192, -camellia256\n");
 		BIO_printf(bio_err,"                 encrypt PEM output with cbc camellia\n");
 #endif
+#ifndef OPENSSL_NO_SEED
+		BIO_printf(bio_err," -seed           encrypt PEM output with cbc seed\n");
+#endif
 		BIO_printf(bio_err," -text           print the key in text\n");
 		BIO_printf(bio_err," -noout          don't print key out\n");
 		BIO_printf(bio_err," -modulus        print the DSA public value\n");
@@ -256,16 +268,22 @@ bad:
 		}
 
 	BIO_printf(bio_err,"read DSA key\n");
-	if	(informat == FORMAT_ASN1) {
-		if(pubin) dsa=d2i_DSA_PUBKEY_bio(in,NULL);
-		else dsa=d2i_DSAPrivateKey_bio(in,NULL);
-	} else if (informat == FORMAT_PEM) {
-		if(pubin) dsa=PEM_read_bio_DSA_PUBKEY(in,NULL, NULL, NULL);
-		else dsa=PEM_read_bio_DSAPrivateKey(in,NULL,NULL,passin);
-	} else
+
 		{
-		BIO_printf(bio_err,"bad input format specified for key\n");
-		goto end;
+		EVP_PKEY	*pkey;
+
+		if (pubin)
+			pkey = load_pubkey(bio_err, infile, informat, 1,
+				passin, e, "Public Key");
+		else
+			pkey = load_key(bio_err, infile, informat, 1,
+				passin, e, "Private Key");
+
+		if (pkey)
+			{
+			dsa = EVP_PKEY_get1_DSA(pkey);
+			EVP_PKEY_free(pkey);
+			}
 		}
 	if (dsa == NULL)
 		{
@@ -318,6 +336,17 @@ bad:
 			i=PEM_write_bio_DSA_PUBKEY(out,dsa);
 		else i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
 							NULL,0,NULL, passout);
+	} else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
+		EVP_PKEY *pk;
+		pk = EVP_PKEY_new();
+		EVP_PKEY_set1_DSA(pk, dsa);
+		if (outformat == FORMAT_PVK)
+			i = i2b_PVK_bio(out, pk, pvk_encr, 0, passout);
+		else if (pubin || pubout)
+			i = i2b_PublicKey_bio(out, pk);
+		else
+			i = i2b_PrivateKey_bio(out, pk);
+		EVP_PKEY_free(pk);
 	} else {
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;

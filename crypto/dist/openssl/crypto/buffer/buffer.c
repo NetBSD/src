@@ -89,10 +89,10 @@ void BUF_MEM_free(BUF_MEM *a)
 	OPENSSL_free(a);
 	}
 
-int BUF_MEM_grow(BUF_MEM *str, int len)
+int BUF_MEM_grow(BUF_MEM *str, size_t len)
 	{
 	char *ret;
-	unsigned int n;
+	size_t n;
 
 	if (str->length >= len)
 		{
@@ -125,10 +125,10 @@ int BUF_MEM_grow(BUF_MEM *str, int len)
 	return(len);
 	}
 
-int BUF_MEM_grow_clean(BUF_MEM *str, int len)
+int BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 	{
 	char *ret;
-	unsigned int n;
+	size_t n;
 
 	if (str->length >= len)
 		{
@@ -218,4 +218,27 @@ size_t BUF_strlcat(char *dst, const char *src, size_t size)
 	for(; size > 0 && *dst; size--, dst++)
 		l++;
 	return l + BUF_strlcpy(dst, src, size);
+	}
+
+void BUF_reverse(unsigned char *out, unsigned char *in, size_t size)
+	{
+	size_t i;
+	if (in)
+		{
+		out += size - 1;
+		for (i = 0; i < size; i++)
+			*in++ = *out--;
+		}
+	else
+		{
+		unsigned char *q;
+		char c;
+		q = out + size - 1;
+		for (i = 0; i < size/2; i++)
+			{
+			c = *q;
+			*q-- = *out;
+			*out++ = c;
+			}
+		}
 	}
