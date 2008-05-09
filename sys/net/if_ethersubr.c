@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.164 2008/03/15 05:07:34 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.165 2008/05/09 06:08:19 rumble Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164 2008/03/15 05:07:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.165 2008/05/09 06:08:19 rumble Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1043,7 +1043,6 @@ ether_sprintf(const u_char *ap)
 {
 	static char etherbuf[3 * ETHER_ADDR_LEN];
 	return ether_snprintf(etherbuf, sizeof(etherbuf), ap);
-	return etherbuf;
 }
 
 char *
