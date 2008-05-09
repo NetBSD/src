@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.22 2008/05/09 18:11:29 joerg Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.23 2008/05/09 21:25:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.22 2008/05/09 18:11:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.23 2008/05/09 21:25:43 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -185,8 +185,10 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if (l == ci->ci_data.cpu_idlelwp) {
 		if (ci == cur)
 			return;
+#ifndef XEN /* XXX review when Xen gets MP support */
 		if (x86_cpu_idle == x86_cpu_idle_halt)
 			x86_send_ipi(ci, 0);
+#endif
 		return;
 	}
 
