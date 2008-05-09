@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4 2008/05/07 18:08:30 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.5 2008/05/09 20:48:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2008 David Young.  All rights reserved.
@@ -143,6 +143,11 @@ pstr_match(const struct parser *p, const struct match *im, struct match *om,
 	uint8_t buf[128];
 	int len;
 
+	if (arg == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	len = (int)sizeof(buf);
 	if (get_string(arg, NULL, buf, &len) == NULL) {
 		errno = EINVAL;
@@ -174,7 +179,12 @@ pinteger_match(const struct parser *p, const struct match *im, struct match *om,
 	const struct pinteger *pi = (const struct pinteger *)p;
 	char *end;
 	int64_t val;
-	
+
+	if (arg == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	val = strtoimax(arg, &end, pi->pi_base);
 	if ((val == INTMAX_MIN || val == INTMAX_MAX) && errno == ERANGE)
 		return -1;
@@ -231,8 +241,10 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 	long prefixlen = -1;
 	size_t len;
 
-	if (arg0 == NULL)
+	if (arg0 == NULL) {
+		errno = EINVAL;
 		return -1;
+	}
 
 	if (pa->pa_activator != NULL &&
 	    prop_dictionary_get(im->m_env, pa->pa_activator) == NULL)
