@@ -121,7 +121,7 @@ int _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
 	v = (CONF_VALUE *)lh_insert(conf->data, value);
 	if (v != NULL)
 		{
-		sk_CONF_VALUE_delete_ptr(ts,v);
+		(void)sk_CONF_VALUE_delete_ptr(ts,v);
 		OPENSSL_free(v->name);
 		OPENSSL_free(v->value);
 		OPENSSL_free(v);
@@ -145,7 +145,7 @@ char *_CONF_get_string(const CONF *conf, const char *section, const char *name)
 			if (v != NULL) return(v->value);
 			if (strcmp(section,"ENV") == 0)
 				{
-				p=Getenv(name);
+				p=getenv(name);
 				if (p != NULL) return(p);
 				}
 			}
@@ -158,7 +158,7 @@ char *_CONF_get_string(const CONF *conf, const char *section, const char *name)
 			return(NULL);
 		}
 	else
-		return(Getenv(name));
+		return(getenv(name));
 	}
 
 #if 0 /* There's no way to provide error checking with this function, so
