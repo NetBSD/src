@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.6 2008/05/09 21:23:48 ad Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.7 2008/05/09 21:53:56 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -108,8 +108,6 @@
 
 
 #define LAPIC_ICRHI	0x310			/* Int. cmd. RW */
-#	define LAPIC_ID_MASK		0x0f000000
-#	define LAPIC_ID_SHIFT		24
 
 #define LAPIC_LVTT	0x320			/* Loc.vec.(timer) RW */
 #	define LAPIC_LVTT_VEC_MASK	0x000000ff
