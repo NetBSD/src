@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.18 2006/05/31 12:59:39 tsutsui Exp $	*/
+/*	$NetBSD: pcib.c,v 1.19 2008/05/09 10:59:55 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18 2006/05/31 12:59:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.19 2008/05/09 10:59:55 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,14 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18 2006/05/31 12:59:39 tsutsui Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-static int	pcib_match(struct device *, struct cfdata *, void *);
-static void	pcib_attach(struct device *, struct device *, void *);
+static int	pcib_match(device_t, cfdata_t, void *);
+static void	pcib_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pcib, sizeof(struct device),
+CFATTACH_DECL_NEW(pcib, 0,
     pcib_match, pcib_attach, NULL, NULL);
 
 static int
-pcib_match(struct device *parent, struct cfdata *match, void *aux)
+pcib_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -61,13 +61,14 @@ pcib_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-pcib_attach(struct device *parent, struct device *self, void *aux)
+pcib_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
+	aprint_normal("\n");
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("\n%s: %s, rev %d\n", self->dv_xname, devinfo,
+	aprint_normal_dev(self, "%s, rev %d\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 }
