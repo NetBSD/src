@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.36 2008/05/04 13:13:36 martin Exp $ */
+/*	$NetBSD: if_gre.h,v 1.37 2008/05/09 20:14:07 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,12 +41,12 @@
 
 #ifdef _KERNEL
 struct gre_soparm {
+	struct socket		*sp_so;
 	struct sockaddr_storage sp_src;	/* source of gre packets */
 	struct sockaddr_storage sp_dst;	/* destination of gre packets */
 	int		sp_type;	/* encapsulating socket type */
 	int		sp_proto;	/* encapsulating protocol */
-	int		sp_fd;
-	int		sp_bysock;	/* encapsulation configured by passing
+	bool		sp_bysock;	/* encapsulation configured by passing
 					 * socket, not by SIOCSLIFPHYADDR
 					 */
 };
@@ -70,18 +70,26 @@ struct gre_bufq {
 
 MALLOC_DECLARE(M_GRE_BUFQ);
 
+enum gre_msg {
+	  GRE_M_NONE = 0
+	, GRE_M_SETFP
+	, GRE_M_DELFP
+	, GRE_M_STOP
+	, GRE_M_OK
+	, GRE_M_ERR
+};
+
 struct gre_softc {
 	struct ifnet		sc_if;
 	kmutex_t		sc_mtx;
 	kcondvar_t		sc_condvar;
+	kcondvar_t		sc_fp_condvar;
 	struct gre_bufq		sc_snd;
 	struct gre_soparm	sc_soparm;
-	struct lwp		*sc_lwp;
 	volatile enum gre_state	sc_state;
 	volatile int		sc_waiters;
-	volatile int		sc_upcalls;
+	volatile int		sc_fp_waiters;
 	void			*sc_si;
-	struct socket		*sc_so;
 
 	struct evcnt		sc_recv_ev;
 	struct evcnt		sc_send_ev;
@@ -91,6 +99,9 @@ struct gre_softc {
 	struct evcnt		sc_pullup_ev;
 	struct evcnt		sc_unsupp_ev;
 	struct evcnt		sc_oflow_ev;
+	file_t	* volatile	sc_fp;
+	volatile enum gre_msg	sc_msg;
+	int			sc_fd;
 };
 
 struct gre_h {
