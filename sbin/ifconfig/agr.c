@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.10 2008/05/07 23:55:06 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.11 2008/05/09 20:45:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.10 2008/05/07 23:55:06 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.11 2008/05/09 20:45:09 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -54,13 +54,17 @@ __RCSID("$NetBSD: agr.c,v 1.10 2008/05/07 23:55:06 dyoung Exp $");
 static int checkifname(prop_dictionary_t);
 static void assertifname(prop_dictionary_t);
 
+static struct piface agrif = PIFACE_INITIALIZER(&agrif, "agr interface",
+    agrsetport, "agrport", &command_root.pb_parser);
+
 static const struct kwinst agrkw[] = {
-	  {.k_word = "agrport", .k_type = KW_T_NUM, .k_neg = true,
-	   .k_num = AGRCMD_ADDPORT, .k_negnum = AGRCMD_REMPORT,
-	   .k_exec = agrsetport}
+	  {.k_word = "agrport", .k_type = KW_T_NUM, .k_num = AGRCMD_ADDPORT,
+	   .k_nextparser = &agrif.pif_parser}
+	, {.k_word = "-agrport", .k_type = KW_T_NUM, .k_num = AGRCMD_REMPORT,
+	   .k_nextparser = &agrif.pif_parser}
 };
 
-struct pkw agr = PKW_INITIALIZER(&agr, "agr", NULL, NULL,
+struct pkw agr = PKW_INITIALIZER(&agr, "agr", NULL, "agrcmd",
     agrkw, __arraycount(agrkw), NULL);
 
 static int
