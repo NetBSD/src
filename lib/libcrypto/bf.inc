@@ -1,4 +1,4 @@
-#	$NetBSD: bf.inc,v 1.8 2007/12/09 22:44:13 adrianp Exp $
+#	$NetBSD: bf.inc,v 1.9 2008/05/10 21:30:06 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,8 +7,10 @@
 
 .PATH:	${OPENSSLSRC}/crypto/bf
 
-
-BF_SRCS = bf_skey.c bf_ecb.c bf_enc.c bf_cfb64.c bf_ofb64.c 
+.if !defined(BF_SRCS)
+BF_SRCS = bf_enc.c bf_ecb.c
+.endif
+BF_SRCS += bf_skey.c bf_cfb64.c bf_ofb64.c 
 SRCS += ${BF_SRCS}
 
 .for cryptosrc in ${BF_SRCS}
