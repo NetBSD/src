@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.13 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.14 2008/05/10 12:57:18 tnn Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ struct irix_usema_rec {
 	struct irix_semaphore *iur_sem;
 	int iur_shid;
 	struct proc *iur_p;
+	struct selinfo iur_si;
 	int iur_waiting_count;
 	TAILQ_HEAD(iur_waiting_p, irix_waiting_proc_rec) iur_waiting_p;
 	TAILQ_HEAD(iur_released_p, irix_waiting_proc_rec) iur_released_p;
