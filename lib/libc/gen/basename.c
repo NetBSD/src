@@ -1,4 +1,4 @@
-/*	$NetBSD: basename.c,v 1.7 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: basename.c,v 1.8 2008/05/10 22:39:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: basename.c,v 1.7 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: basename.c,v 1.8 2008/05/10 22:39:40 christos Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -45,7 +45,7 @@ __weak_alias(basename,_basename)
 
 #if !HAVE_BASENAME
 char *
-basename(const char *path)
+basename(char *path)
 {
 	static char singledot[] = ".";
 	static char result[PATH_MAX];
