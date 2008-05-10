@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.9 2008/05/03 06:11:19 yamt Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.10 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.9 2008/05/03 06:11:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.10 2008/05/10 16:12:32 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -141,10 +141,15 @@ ENTRY(wrmsr_locked)
 	ret
 END(wrmsr_locked)
 
-ENTRY(rdtsc)
+ENTRY(cpu_counter)
 	rdtsc
 	ret
-END(rdtsc)
+END(cpu_counter)
+
+ENTRY(cpu_counter32)
+	rdtsc
+	ret
+END(cpu_counter32)
 
 ENTRY(rdpmc)
 	movl	4(%esp), %ecx

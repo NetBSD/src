@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.c,v 1.37 2008/05/09 18:11:29 joerg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.38 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2008/05/09 18:11:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2008/05/10 16:12:32 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2008/05/09 18:11:29 joerg Exp $");
 #include <machine/gdt.h>
 #include <machine/mtrr.h>
 #include <machine/pio.h>
+#include <machine/cpu_counter.h>
 
 #ifdef i386
 #include <machine/tlog.h>
@@ -109,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2008/05/09 18:11:29 joerg Exp $");
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
+
+#include "tsc.h"
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
@@ -460,15 +463,7 @@ cpu_init(struct cpu_info *ci)
 	if (ci->cpu_setup != NULL)
 		(*ci->cpu_setup)(ci);
 
-#ifdef i386
-	/*
-	 * On a 486 or above, enable ring 0 write protection.
-	 */
-	if (ci->ci_cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP);
-#else
 	lcr0(rcr0() | CR0_WP);
-#endif
 
 	/*
 	 * On a P6 or above, enable global TLB caching if the
@@ -518,8 +513,17 @@ cpu_init(struct cpu_info *ci)
 #endif	/* i386 */
 #endif /* MTRR */
 
-	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
+
+	if (ci != &cpu_info_primary) {
+		/* Synchronize TSC again, and check for drift. */
+		wbinvd();
+		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
+		tsc_sync_ap(ci);
+		tsc_sync_ap(ci);
+	} else {
+		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
+	}
 
 #ifndef MULTIPROCESSOR
 	/* XXX */
@@ -551,6 +555,9 @@ cpu_boot_secondary_processors(void)
 	}
 
 	x86_mp_online = true;
+
+	/* Now that we know about the TSC, attach the timecounter. */
+	tsc_tc_init();
 }
 
 static void
@@ -583,14 +590,13 @@ cpu_init_idle_lwps(void)
 void
 cpu_start_secondary(struct cpu_info *ci)
 {
-	int i;
 	extern paddr_t mp_pdirpa;
+	u_long psl;
+	int i;
 
 	mp_pdirpa = pmap_init_tmp_pgtbl(mp_trampoline_paddr);
 
 	atomic_or_32(&ci->ci_flags, CPUF_AP);
-
-	aprint_debug_dev(ci->ci_dev, "starting\n");
 
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0)
@@ -611,12 +617,25 @@ cpu_start_secondary(struct cpu_info *ci)
 #endif
 		i8254_delay(10);
 	}
+
 	if ((ci->ci_flags & CPUF_PRESENT) == 0) {
 		aprint_error_dev(ci->ci_dev, "failed to become ready\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
 #endif
+	} else {
+		/*
+		 * Synchronize time stamp counters.  Invalidate cache and do twice
+		 * to try and minimize possible cache effects.  Disable interrupts
+		 * to try and rule out any external interference.
+		 */
+		psl = x86_read_psl();
+		x86_disable_intr();
+		wbinvd();
+		tsc_sync_bp(ci);
+		tsc_sync_bp(ci);
+		x86_write_psl(psl);
 	}
 
 	CPU_START_CLEANUP(ci);
@@ -625,6 +644,8 @@ cpu_start_secondary(struct cpu_info *ci)
 void
 cpu_boot_secondary(struct cpu_info *ci)
 {
+	int64_t drift;
+	u_long psl;
 	int i;
 
 	atomic_or_32(&ci->ci_flags, CPUF_GO);
@@ -637,6 +658,19 @@ cpu_boot_secondary(struct cpu_info *ci)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
 #endif
+	} else {
+		/* Synchronize TSC again, check for drift. */
+		drift = ci->ci_data.cpu_cc_skew;
+		psl = x86_read_psl();
+		x86_disable_intr();
+		wbinvd();
+		tsc_sync_bp(ci);
+		tsc_sync_bp(ci);
+		x86_write_psl(psl);
+		drift -= ci->ci_data.cpu_cc_skew;
+		aprint_debug_dev(ci->ci_dev, "TSC skew=%lld drift=%lld\n",
+		    (long long)ci->ci_data.cpu_cc_skew, (long long)drift);
+		tsc_sync_drift(drift);
 	}
 }
 
@@ -659,12 +693,39 @@ cpu_hatch(void *v)
 	cpu_feature &= ci->ci_feature_flags;
 	cpu_feature2 &= ci->ci_feature2_flags;
 
+	/* XXX Until we have a proper calibration loop, just lie. */
+	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;
+
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
+
+	/*
+	 * Synchronize time stamp counters.  Invalidate cache and do twice
+	 * to try and minimize possible cache effects.  Note that interrupts
+	 * are off at this point.
+	 */
+	wbinvd();
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
+	tsc_sync_ap(ci);
+	tsc_sync_ap(ci);
+
+	/*
+	 * Wait to be brought online.  Use 'monitor/mwait' if available,
+	 * in order to make the TSC drift as much as possible. so that
+	 * we can detect it later.  If not available, try 'pause'. 
+	 * We'd like to use 'hlt', but we have interrupts off.
+	 */
 	while ((ci->ci_flags & CPUF_GO) == 0) {
-		/* Don't use delay, boot CPU may be patching the text. */
-		for (i = 10000; i != 0; i--)
-			x86_pause();
+		if ((ci->ci_feature2_flags & CPUID2_MONITOR) != 0) {
+			x86_monitor(&ci->ci_flags, 0, 0);
+			if ((ci->ci_flags & CPUF_GO) != 0) {
+				continue;
+			}
+			x86_mwait(0, 0);
+		} else {
+			for (i = 10000; i != 0; i--) {
+				x86_pause();
+			}
+		}
 	}
 
 	/* Because the text may have been patched in x86_patch(). */
@@ -1016,9 +1077,9 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	if (ci->ci_feature_flags & CPUID_TSC) {
 		/* Serialize. */
 		x86_cpuid(0, junk);
-		last_tsc = rdtsc();
+		last_tsc = cpu_counter();
 		i8254_delay(100000);
-		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+		ci->ci_data.cpu_cc_freq = (cpu_counter() - last_tsc) * 10;
 	}
 }
 

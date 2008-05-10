@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2008/01/23 20:02:15 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2008/01/23 20:02:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2008/05/10 16:12:32 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,8 +107,6 @@ cpu_configure()
 #ifdef MULTIPROCESSOR
 	cpu_init_idle_lwps();
 #endif
-
-	init_TSC_tc();
 
 	spl0();
 	lcr8(0);
