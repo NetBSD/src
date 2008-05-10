@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.16 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.17 2008/05/10 16:37:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.16 2008/05/10 16:12:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.17 2008/05/10 16:37:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ tsc_tc_init(void)
 			    CPUID2MODEL(ci->ci_signature) == 0x0f;
 			break;
 		case 0x0f:
-			safe = CPUID2MODEL(ci->ci_signature) > 0x03;
+			safe = CPUID2MODEL(ci->ci_signature) >= 0x03;
 			break;
 		}
 	} else if (cpu_vendor == CPUVENDOR_AMD) {
