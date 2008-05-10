@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.134 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.135 2008/05/10 02:26:10 rumble Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.134 2008/05/06 18:43:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.135 2008/05/10 02:26:10 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.134 2008/05/06 18:43:45 ad Exp $
 #include <sys/lock.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -105,6 +106,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.134 2008/05/06 18:43:45 ad Exp $
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
+
+MODULE(MODULE_CLASS_VFS, ext2fs, NULL);
 
 extern kmutex_t ufs_hashlock;
 
@@ -149,7 +152,6 @@ struct vfsops ext2fs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(ext2fs_vfsops);
 
 static const struct genfs_ops ext2fs_genfsops = {
 	.gop_size = genfs_size,
@@ -163,6 +165,20 @@ static const struct ufs_ops ext2fs_ufsops = {
 	.uo_update = ext2fs_update,
 	.uo_vfree = ext2fs_vfree,
 };
+
+static int
+ext2fs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&ext2fs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&ext2fs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 /*
  * XXX Same structure as FFS inodes?  Should we share a common pool?

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.32 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.33 2008/05/10 02:26:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.32 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.33 2008/05/10 02:26:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,10 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.32 2008/04/29 18:18:08 ad Exp $")
 #include <sys/tty.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
+
+MODULE(MODULE_CLASS_VFS, ptyfs, NULL);
 
 MALLOC_JUSTDEFINE(M_PTYFSMNT, "ptyfs mount", "ptyfs mount structures");
 MALLOC_JUSTDEFINE(M_PTYFSTMP, "ptyfs temp", "ptyfs temporary structures");
@@ -401,4 +404,17 @@ struct vfsops ptyfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(ptyfs_vfsops);
+
+static int
+ptyfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&ptyfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&ptyfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
