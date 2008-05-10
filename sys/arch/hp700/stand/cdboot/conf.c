@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2008/05/10 19:11:59 skrll Exp $	*/
+/*	$NetBSD: conf.c,v 1.1 2008/05/10 19:11:59 skrll Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.12 2000/05/30 22:02:28 mickey Exp $	*/
 
@@ -42,16 +42,12 @@ const char version[] = "0.6";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
-	FS_OPS(lif),
-	FS_OPS(ufs),
 	FS_OPS(cd9660),
 };
 int nfsys = NENTS(file_system);
 
 struct devsw devsw[] = {
 	{ "dk",	iodcstrategy, dkopen, dkclose, noioctl },
-	{ "ct",	iodcstrategy, ctopen, ctclose, noioctl },
-	{ "lf", iodcstrategy, lfopen, lfclose, noioctl }
 };
 int	ndevs = NENTS(devsw);
 
