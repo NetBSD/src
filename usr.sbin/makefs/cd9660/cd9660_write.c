@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_write.c,v 1.8 2006/04/22 17:33:55 christos Exp $	*/
+/*	$NetBSD: cd9660_write.c,v 1.9 2008/05/10 19:00:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_write.c,v 1.8 2006/04/22 17:33:55 christos Exp $");
+__RCSID("$NetBSD: cd9660_write.c,v 1.9 2008/05/10 19:00:07 skrll Exp $");
 #endif  /* !__lint */
 
 static int cd9660_write_volume_descriptors(FILE *);
@@ -70,6 +70,16 @@ cd9660_write_image(const char* image)
 
 	if (diskStructure.verbose_level > 0)
 		printf("Writing image\n");
+
+	if (diskStructure.has_generic_bootimage) {
+		status = cd9660_copy_file(fd, 0,
+		    diskStructure.generic_bootimage);
+		if (status == 0) {
+			warnx("%s: Error writing generic boot image",
+			    __func__);
+			goto cleanup_bad_image;
+		}
+	}
 
 	/* Write the volume descriptors */
 	status = cd9660_write_volume_descriptors(fd);
