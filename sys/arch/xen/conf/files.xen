@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.85 2008/05/09 18:11:29 joerg Exp $
+#	$NetBSD: files.xen,v 1.86 2008/05/10 16:27:57 ad Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -139,6 +139,7 @@ file	arch/xen/x86/consinit.c
 file	arch/xen/x86/intr.c
 file	arch/x86/x86/ipi.c
 file	arch/x86/x86/sys_machdep.c
+file	arch/x86/x86/tsc.c
 file	arch/x86/x86/x86_machdep.c
 
 include	"arch/xen/conf/files.compat"
