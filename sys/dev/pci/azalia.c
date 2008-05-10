@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.55 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: azalia.c,v 1.56 2008/05/10 14:27:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.55 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.56 2008/05/10 14:27:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -344,10 +344,10 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	vendor = pci_findvendor(pa->pa_id);
 	name = pci_findproduct(pa->pa_id);
 	if (vendor != NULL && name != NULL) {
-		aprint_normal("%s: host: %s %s (rev. %d)\n",
+		aprint_normal("%s: host: %s %s (rev. %d)",
 		    XNAME(sc), vendor, name, PCI_REVISION(pa->pa_class));
 	} else {
-		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)\n",
+		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)",
 		    XNAME(sc), PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
 		    PCI_REVISION(pa->pa_class));
 	}
@@ -491,8 +491,8 @@ azalia_attach(azalia_t *az)
 	uint16_t statests;
 
 	if (az->audiodev == NULL)
-		aprint_normal("%s: host: High Definition Audio rev. %d.%d\n",
-		    XNAME(az), AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
+		aprint_normal(", HDA rev. %d.%d\n",
+		    AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
 
 	gcap = AZ_READ_2(az, GCAP);
 	az->nistreams = HDA_GCAP_ISS(gcap);
@@ -1056,15 +1056,15 @@ azalia_codec_init(codec_t *this, int reinit)
 	if (!reinit) {
 		aprint_normal("%s: codec[%d]: ", XNAME(this->az), addr);
 		if (this->name == NULL) {
-			aprint_normal("0x%4.4x/0x%4.4x (rev. %u.%u)\n",
+			aprint_normal("0x%4.4x/0x%4.4x (rev. %u.%u)",
 			    id >> 16, id & 0xffff,
 			    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
 		} else {
-			aprint_normal("%s (rev. %u.%u)\n", this->name,
+			aprint_normal("%s (rev. %u.%u)", this->name,
 			    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
 		}
-		aprint_normal("%s: codec[%d]: High Definition Audio rev. %u.%u\n",
-		    XNAME(this->az), addr, COP_RID_MAJ(rev), COP_RID_MIN(rev));
+		aprint_normal(", HDA rev. %u.%u\n",
+		    COP_RID_MAJ(rev), COP_RID_MIN(rev));
 	}
 
 	/* identify function nodes */
@@ -1097,7 +1097,7 @@ azalia_codec_init(codec_t *this, int reinit)
 		}
 	}
 	if (this->audiofunc < 0 && !reinit) {
-		aprint_error("%s: codec[%d] has no audio function groups\n",
+		aprint_verbose("%s: codec[%d] has no audio function groups\n",
 		    XNAME(this->az), addr);
 		return -1;
 	}
