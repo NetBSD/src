@@ -1,8 +1,8 @@
-/*	$NetBSD: powernow_k7.c,v 1.30 2008/04/28 20:23:24 martin Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.31 2008/05/10 16:12:32 ad Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.30 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.31 2008/05/10 16:12:32 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -373,7 +373,7 @@ k7_powernow_init(void)
 	startvid = PN7_STA_SVID(status);
 	currentfid = PN7_STA_CFID(status);
 
-	cpu_mhz = ci->ci_tsc_freq / 1000000;
+	cpu_mhz = ci->ci_data.cpu_cc_freq / 1000000;
 	cstate->fsb = cpu_mhz / (k7pnow_fid_to_mult[currentfid]/10);
 	if (k7pnow_states(cstate, ci->ci_signature, maxfid, startvid)) {
 		freq_names_len = cstate->n_states * (sizeof("9999 ")-1) + 1;

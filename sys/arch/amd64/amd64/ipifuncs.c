@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.18 2008/04/28 22:47:37 ad Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.19 2008/05/10 16:12:32 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.18 2008/04/28 22:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.19 2008/05/10 16:12:32 ad Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -84,7 +84,7 @@ void acpi_cpu_sleep(struct cpu_info *);
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	x86_64_ipi_halt,
-	tsc_calibrate_cpu,
+	NULL,
 	x86_64_ipi_flush_fpu,
 	x86_64_ipi_synch_fpu,
 	x86_64_reload_mtrr,
