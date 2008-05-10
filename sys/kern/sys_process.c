@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.139 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.139.2.1 2008/05/10 23:49:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.139 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.139.2.1 2008/05/10 23:49:05 wrstuden Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.139 2008/04/28 20:24:04 martin Exp
 #include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

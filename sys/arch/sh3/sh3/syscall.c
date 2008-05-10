@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10 2008/02/06 22:12:40 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.12.1 2008/05/10 23:48:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,6 +81,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 
 #include <sh3/userret.h>

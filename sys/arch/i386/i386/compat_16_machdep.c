@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.16 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.16.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16.2.1 2008/05/10 23:48:44 wrstuden Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2008/04/28 20:23:24 marti
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef VM86
@@ -137,9 +138,9 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	/* Restore signal stack. */
 	mutex_enter(p->p_lock);
 	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
 	mutex_exit(p->p_lock);
@@ -229,7 +230,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_err = tf->tf_err;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -263,7 +264,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 #endif
 
@@ -349,7 +350,7 @@ compat_16_x86_vm86(struct lwp *l, char *args, register_t *retval)
 	mutex_enter(p->p_lock);
 
 	/* Going into vm86 mode jumps off the signal stack. */
-	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	mutex_exit(p->p_lock);
 

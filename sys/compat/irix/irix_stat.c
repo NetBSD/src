@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.24 2008/04/28 20:23:42 martin Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.24.2.1 2008/05/10 23:48:51 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.24 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.24.2.1 2008/05/10 23:48:51 wrstuden Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.24 2008/04/28 20:23:42 martin Exp $"
 #include <sys/stdint.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
 

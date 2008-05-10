@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 2008/03/11 05:34:03 matt Exp $     */
+/*	$NetBSD: trap.c,v 1.113.6.1 2008/05/10 23:48:47 wrstuden Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.6.1 2008/05/10 23:48:47 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2008/03/11 05:34:03 matt Exp $");
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
 

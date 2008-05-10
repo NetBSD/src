@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.12 2008/04/24 11:51:18 ad Exp $     */
+/*	$NetBSD: syscall.c,v 1.12.4.1 2008/05/10 23:48:47 wrstuden Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2008/04/24 11:51:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12.4.1 2008/05/10 23:48:47 wrstuden Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.12 2008/04/24 11:51:18 ad Exp $");
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/ktrace.h>
 #include <sys/pool.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29 2008/04/24 18:39:22 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29.4.1 2008/05/10 23:48:52 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2008/04/24 18:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.4.1 2008/05/10 23:48:52 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -146,13 +146,13 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((char *)l->l_sigstk.ss_sp +
-		    l->l_sigstk.ss_size);
+		sp = ((char *)l->l_sigstk->ss_sp +
+		    l->l_sigstk->ss_size);
 	else
 		sp = (char *)tf->tf_rsp - 128;
 
@@ -187,12 +187,12 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sigframe.uc.luc_link = NULL;
 
 	/* This is used regardless of SA_ONSTACK in Linux */
-	sigframe.uc.luc_stack.ss_sp = l->l_sigstk.ss_sp;
-	sigframe.uc.luc_stack.ss_size = l->l_sigstk.ss_size;
+	sigframe.uc.luc_stack.ss_sp = l->l_sigstk->ss_sp;
+	sigframe.uc.luc_stack.ss_size = l->l_sigstk->ss_size;
 	sigframe.uc.luc_stack.ss_flags = 0;
-	if (l->l_sigstk.ss_flags & SS_ONSTACK)
+	if (l->l_sigstk->ss_flags & SS_ONSTACK)
 		sigframe.uc.luc_stack.ss_flags |= LINUX_SS_ONSTACK;
-	if (l->l_sigstk.ss_flags & SS_DISABLE)
+	if (l->l_sigstk->ss_flags & SS_DISABLE)
 		sigframe.uc.luc_stack.ss_flags |= LINUX_SS_DISABLE;
 
 	sigframe.uc.luc_mcontext.r8 = tf->tf_r8;
@@ -319,7 +319,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Remember we use signal stack
 	 */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2008/05/05 17:47:06 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.2.1 2008/05/10 23:48:43 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2008/05/05 17:47:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.1 2008/05/10 23:48:43 wrstuden Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -153,6 +153,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2008/05/05 17:47:06 ad Exp $");
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 
@@ -560,12 +562,12 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		sp = ((char *)l->l_sigstk->ss_sp + l->l_sigstk->ss_size);
 	else
 		sp = (char *)tf->tf_rsp - 128;
 
@@ -600,7 +602,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = l->l_ctxlink;
-	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
@@ -627,7 +629,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 
 int	waittime = -1;
@@ -1912,9 +1914,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
 	return 0;

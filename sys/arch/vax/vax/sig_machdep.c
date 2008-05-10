@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.15 2008/04/24 18:39:22 ad Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.15.4.1 2008/05/10 23:48:47 wrstuden Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.15 2008/04/24 18:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.15.4.1 2008/05/10 23:48:47 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.15 2008/04/24 18:39:22 ad Exp $");
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
 #include <sys/ksyms.h>
@@ -195,9 +196,9 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 
 	mutex_enter(p->p_lock);
 	if (ksc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	native_sigset13_to_sigset(&ksc.sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
@@ -295,9 +296,9 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 
 	mutex_enter(p->p_lock);
 	if (ksc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &ksc.sc_mask, 0);
 	mutex_exit(p->p_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.15 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.15.2.1 2008/05/10 23:49:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15.2.1 2008/05/10 23:49:05 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -494,25 +494,25 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 	KASSERT(mutex_owned(l->l_proc->p_lock));
 
 	if (oss)
-		*oss = l->l_sigmask;
+		*oss = *l->l_sigmask;
 	if (nss) {
 		switch (how) {
 		case SIG_BLOCK:
-			sigplusset(nss, &l->l_sigmask);
+			sigplusset(nss, l->l_sigmask);
 			more = 0;
 			break;
 		case SIG_UNBLOCK:
-			sigminusset(nss, &l->l_sigmask);
+			sigminusset(nss, l->l_sigmask);
 			more = 1;
 			break;
 		case SIG_SETMASK:
-			l->l_sigmask = *nss;
+			*l->l_sigmask = *nss;
 			more = 1;
 			break;
 		default:
 			return (EINVAL);
 		}
-		sigminusset(&sigcantmask, &l->l_sigmask);
+		sigminusset(&sigcantmask, l->l_sigmask);
 		if (more && sigispending(l, 0)) {
 			/*
 			 * Check for pending signals on return to user.
@@ -534,7 +534,7 @@ sigpending1(struct lwp *l, sigset_t *ss)
 	mutex_enter(p->p_lock);
 	*ss = l->l_sigpend.sp_set;
 	sigplusset(&p->p_sigpend.sp_set, ss);
-	sigminusset(&l->l_sigmask, ss);
+	sigminusset(l->l_sigmask, ss);
 	mutex_exit(p->p_lock);
 }
 
@@ -555,9 +555,9 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 		 */
 		mutex_enter(p->p_lock);
 		l->l_sigrestore = 1;
-		l->l_sigoldmask = l->l_sigmask;
-		l->l_sigmask = *ss;
-		sigminusset(&sigcantmask, &l->l_sigmask);
+		l->l_sigoldmask = *l->l_sigmask;
+		*l->l_sigmask = *ss;
+		sigminusset(&sigcantmask, l->l_sigmask);
 
 		/* Check for pending signals when sleeping. */
 		if (sigispending(l, 0)) {
@@ -585,19 +585,19 @@ sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
 	mutex_enter(p->p_lock);
 
 	if (oss)
-		*oss = l->l_sigstk;
+		*oss = *l->l_sigstk;
 
 	if (nss) {
 		if (nss->ss_flags & ~SS_ALLBITS)
 			error = EINVAL;
 		else if (nss->ss_flags & SS_DISABLE) {
-			if (l->l_sigstk.ss_flags & SS_ONSTACK)
+			if (l->l_sigstk->ss_flags & SS_ONSTACK)
 				error = EINVAL;
 		} else if (nss->ss_size < MINSIGSTKSZ)
 			error = ENOMEM;
 
 		if (!error)
-			l->l_sigstk = *nss;
+			*l->l_sigstk = *nss;
 	}
 
 	mutex_exit(p->p_lock);

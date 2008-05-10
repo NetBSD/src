@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.50.1 2008/05/10 23:48:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -76,6 +76,7 @@
 #define	_SH3_FRAME_H_
 
 #include <sys/signal.h>
+#include <sys/sa.h>
 
 /*
  * Exception Stack Frame

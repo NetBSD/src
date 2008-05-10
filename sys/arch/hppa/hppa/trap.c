@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.55.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2008/04/28 20:23:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.2.1 2008/05/10 23:48:44 wrstuden Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2008/04/28 20:23:23 martin Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/mutex.h>
 #include <sys/ktrace.h>
 #include <sys/proc.h>

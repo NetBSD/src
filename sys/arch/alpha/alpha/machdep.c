@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.305 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: machdep.c,v 1.305.2.1 2008/05/10 23:48:42 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.1 2008/05/10 23:48:42 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2008/04/28 20:23:10 martin Exp $")
 #include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
@@ -101,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305 2008/04/28 20:23:10 martin Exp $")
 #include <machine/fpu.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -1423,12 +1426,12 @@ getframe(const struct lwp *l, int sig, int *onstack)
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack =
-	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		frame = (void *)((char *)l->l_sigstk.ss_sp +
-					l->l_sigstk.ss_size);
+		frame = (void *)((char *)l->l_sigstk->ss_sp +
+					l->l_sigstk->ss_size);
 	else
 		frame = (void *)(alpha_pal_rdusp());
 	return (frame);
@@ -1532,7 +1535,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)

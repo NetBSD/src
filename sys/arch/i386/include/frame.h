@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.30 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: frame.h,v 1.30.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #define _I386_FRAME_H_
 
 #include <sys/signal.h>
+#include <sys/sa.h>
 
 /*
  * System stack frames.

@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_30.c,v 1.3 2007/12/20 23:02:45 dsl Exp $	*/
+/*	$NetBSD: uipc_syscalls_30.c,v 1.3.12.1 2008/05/10 23:48:48 wrstuden Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_30.c,v 1.3 2007/12/20 23:02:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_30.c,v 1.3.12.1 2008/05/10 23:48:48 wrstuden Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -14,6 +14,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_30.c,v 1.3 2007/12/20 23:02:45 dsl Exp
 #include <sys/msg.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/errno.h>
 

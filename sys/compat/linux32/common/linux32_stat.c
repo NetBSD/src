@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.11 2008/03/21 21:54:58 ad Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.11.6.1 2008/05/10 23:48:56 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11.6.1 2008/05/10 23:48:56 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11 2008/03/21 21:54:58 ad Exp $")
 
 #include <machine/types.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
