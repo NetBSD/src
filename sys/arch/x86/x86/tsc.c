@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.17 2008/05/10 16:37:08 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.18 2008/05/10 16:44:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.17 2008/05/10 16:37:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.18 2008/05/10 16:44:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,9 @@ tsc_tc_init(void)
 		 * Core Solo and Core Duo processors (family 06, model 0e)
 		 * Xeon 5100 series and Core 2 Duo (family 06, model 0f)
 		 *
-		 * We'll also assume that it's safe on the Pentium.  It
-		 * can probably be assumed for the earlier P-II and P-III
-		 * Xeons, but for now, punt.
+		 * We'll also assume that it's safe on the Pentium, and
+		 * that it's safe on P-II and P-III Xeons due to the
+		 * typical configuration of those systems.
 		 */
 		switch (CPUID2FAMILY(ci->ci_signature)) {
 		case 0x05:
@@ -95,7 +95,8 @@ tsc_tc_init(void)
 			break;
 		case 0x06:
 			safe = CPUID2MODEL(ci->ci_signature) == 0x0e ||
-			    CPUID2MODEL(ci->ci_signature) == 0x0f;
+			    CPUID2MODEL(ci->ci_signature) == 0x0f ||
+			    CPUID2MODEL(ci->ci_signature) == 0x0a;
 			break;
 		case 0x0f:
 			safe = CPUID2MODEL(ci->ci_signature) >= 0x03;
