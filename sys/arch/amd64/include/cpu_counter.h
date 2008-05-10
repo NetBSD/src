@@ -1,11 +1,8 @@
-/*	$NetBSD: cpu_counter.h,v 1.6 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.7 2008/05/10 14:53:54 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Bill Sommerfeld.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,22 +26,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMD64_CPU_COUNTER_H_
-#define _AMD64_CPU_COUNTER_H_
-
-#ifdef _KERNEL
-
-/*
- * Machine-specific support for CPU counter.
- */
-
-#include <machine/cpu.h>
-#include <machine/cpufunc.h>
-
 #include <x86/cpu_counter.h>
-
-#define cpu_hascounter()	(1)
-
-#endif /* _KERNEL */
-
-#endif /* !_AMD64_CPU_COUNTER_H_ */
