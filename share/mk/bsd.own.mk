@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.509 2008/05/03 14:48:31 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.510 2008/05/10 19:01:14 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -220,6 +220,7 @@ TOOL_GMAKE=		${TOOLDIR}/bin/${_TOOL_PREFIX}gmake
 TOOL_GROFF=		PATH=${TOOLDIR}/lib/groff:$${PATH} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff
 TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
 TOOL_HP300MKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hp300-mkboot
+TOOL_HP700MKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hp700-mkboot
 TOOL_INDXBIB=		${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
 TOOL_INSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}installboot
 TOOL_INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
