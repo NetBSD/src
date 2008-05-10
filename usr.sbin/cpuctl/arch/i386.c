@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.1 2008/05/05 17:54:14 ad Exp $	*/
+/*	$NetBSD: i386.c,v 1.2 2008/05/10 15:01:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.1 2008/05/05 17:54:14 ad Exp $");
+__RCSID("$NetBSD: i386.c,v 1.2 2008/05/10 15:01:05 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1605,6 +1605,11 @@ identifycpu(const char *cpuname)
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
 #endif
+
+	aprint_normal_dev(ci->ci_dev, "family %02x model %02x "
+	    "extfamily %02x extmodel %02x\n", CPUID2FAMILY(ci->ci_signature),
+	    CPUID2MODEL(ci->ci_signature), CPUID2EXTFAMILY(ci->ci_signature),
+	    CPUID2EXTMODEL(ci->ci_signature));
 }
 
 static const char *
