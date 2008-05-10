@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.22 2008/05/08 11:27:54 joerg Exp $ */
+/*	$NetBSD: twa.c,v 1.23 2008/05/10 14:36:02 joerg Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.22 2008/05/08 11:27:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.23 2008/05/10 14:36:02 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,10 +137,6 @@ static int 	twa_set_param(struct twa_softc *, int, int, int, void *,
 static void	twa_describe_controller(struct twa_softc *);
 static int	twa_wait_status(struct twa_softc *, uint32_t, uint32_t);
 static int	twa_done(struct twa_softc *);
-#if 0
-static int	twa_flash_firmware(struct twa_softc *sc);
-static int	twa_hard_reset(struct twa_softc *sc);
-#endif
 
 extern struct	cfdriver twa_cd;
 extern uint32_t twa_fw_img_size;
@@ -1383,11 +1379,8 @@ twa_done(struct twa_softc *sc)
  * Function name:	twa_init_ctlr
  * Description:		Establishes a logical connection with the controller.
  *			If bundled with firmware, determines whether or not
- *			to flash firmware, based on arch_id, fw SRL (Spec.
- *			Revision Level), branch & build #'s.  Also determines
- *			whether or not the driver is compatible with the
- *			firmware on the controller, before proceeding to work
- *			with it.
+ *			the driver is compatible with the firmware on the
+ *			controller, before proceeding to work with it.
  *
  * Input:		sc	-- ptr to per ctlr structure
  * Output:		None
@@ -1403,10 +1396,6 @@ twa_init_ctlr(struct twa_softc *sc)
 	uint16_t	fw_on_ctlr_build = 0;
 	uint32_t	init_connect_result = 0;
 	int		error = 0;
-#if 0
-	int8_t		fw_flashed = FALSE;
-	int8_t		fw_flash_failed = FALSE;
-#endif
 
 	/* Wait for the controller to become ready. */
 	if (twa_wait_status(sc, TWA_STATUS_MICROCONTROLLER_READY,
@@ -1426,100 +1415,6 @@ twa_init_ctlr(struct twa_softc *sc)
 			&fw_on_ctlr_build, &init_connect_result))) {
 		return(error);
 	}
-#if 0
-	if ((init_connect_result & TWA_BUNDLED_FW_SAFE_TO_FLASH) &&
-		(init_connect_result & TWA_CTLR_FW_RECOMMENDS_FLASH)) {
-		/*
-		 * The bundled firmware is safe to flash, and the firmware
-		 * on the controller recommends a flash.  So, flash!
-		 */
-		printf("%s: flashing bundled firmware...\n",
-		    device_xname(&sc->twa_dv));
-
-		if ((error = twa_flash_firmware(sc))) {
-			fw_flash_failed = TRUE;
-
-			printf("%s: unable to flash bundled firmware.\n",
-			    device_xname(&sc->twa_dv));
-		} else {
-			printf("%s: successfully flashed bundled firmware.\n",
-				 device_xname(&sc->twa_dv));
-			fw_flashed = TRUE;
-		}
-	}
-	if (fw_flashed) {
-		/* The firmware was flashed.  Have the new image loaded */
-		error = twa_hard_reset(sc);
-		if (error == 0)
-			error = twa_init_ctlr(sc);
-		/*
-		 * If hard reset of controller failed, we need to return.
-		 * Otherwise, the above recursive call to twa_init_ctlr will
-		 * have completed the rest of the initialization (starting
-		 * from twa_drain_aen_queue below).  Don't do it again.
-		 * Just return.
-		 */
-		return(error);
-	} else {
-		/*
-		 * Either we are not bundled with a firmware image, or
-		 * the bundled firmware is not safe to flash,
-		 * or flash failed for some reason.  See if we can at
-		 * least work with the firmware on the controller in the
-		 * current mode.
-		 */
-		if (init_connect_result & TWA_CTLR_FW_COMPATIBLE) {
-			/* Yes, we can.  Make note of the operating mode. */
-			sc->working_srl = TWA_CURRENT_FW_SRL;
-			sc->working_branch = TWA_CURRENT_FW_BRANCH;
-			sc->working_build = TWA_CURRENT_FW_BUILD;
-		} else {
-			/*
-			 * No, we can't.  See if we can at least work with
-			 * it in the base mode.  We should never come here
-			 * if firmware has just been flashed.
-			 */
-			printf("%s: Driver/Firmware mismatch.  Negotiating "
-			    "for base level.\n", device_xname(&sc->twa_dv));
-			if ((error = twa_init_connection(sc,
-			    TWA_INIT_MESSAGE_CREDITS,
-			    TWA_EXTENDED_INIT_CONNECT, TWA_BASE_FW_SRL,
-			    TWA_9000_ARCH_ID, TWA_BASE_FW_BRANCH,
-			    TWA_BASE_FW_BUILD, &fw_on_ctlr_srl,
-			    &fw_on_ctlr_arch_id, &fw_on_ctlr_branch,
-			    &fw_on_ctlr_build, &init_connect_result))) {
-				printf("%s: can't initialize connection in "
-				    "base mode.\n", device_xname(&sc->twa_dv));
-				return(error);
-			}
-			if (!(init_connect_result & TWA_CTLR_FW_COMPATIBLE)) {
-				/*
-				 * The firmware on the controller is not even
-				 * compatible with our base mode.  We cannot
-				 * work with it.  Bail...
-				 */
-				printf("Incompatible firmware on controller\n");
-#ifdef TWA_FLASH_FIRMWARE
-				if (fw_flash_failed)
-					printf("...and could not flash bundled "
-					    "firmware.\n");
-				else
-					printf("...and bundled firmware not "
-					    "safe to flash.\n");
-#endif /* TWA_FLASH_FIRMWARE */
-				return(1);
-			}
-			/*
-			 * We can work with this firmware, but only in
-			 * base mode.
-			 */
-			sc->working_srl = TWA_BASE_FW_SRL;
-			sc->working_branch = TWA_BASE_FW_BRANCH;
-			sc->working_build = TWA_BASE_FW_BUILD;
-			sc->twa_operating_mode = TWA_BASE_MODE;
-		}
-	}
-#endif
 	twa_drain_aen_queue(sc);
 
 	/* Set controller state to initialized. */
@@ -1948,192 +1843,6 @@ twa_map_request(struct twa_request *tr)
 
 	return (rv);
 }
-
-#if 0
-/*
- * Function name:	twa_flash_firmware
- * Description:		Flashes bundled firmware image onto controller.
- *
- * Input:		sc	-- ptr to per ctlr structure
- * Output:		None
- * Return value:	0	-- success
- *			non-zero-- failure
- */
-static int
-twa_flash_firmware(struct twa_softc *sc)
-{
-	struct twa_request			*tr;
-	struct twa_command_download_firmware	*cmd;
-	uint32_t				count;
-	uint32_t				fw_img_chunk_size;
-	uint32_t				this_chunk_size = 0;
-	uint32_t				remaining_img_size = 0;
-	int					s, error = 0;
-	int					i;
-
-	if ((tr = twa_get_request(sc, 0)) == NULL) {
-		/* No free request packets available.  Can't proceed. */
-		error = EIO;
-		goto out;
-	}
-
-	count = (twa_fw_img_size / 65536);
-
-	count += ((twa_fw_img_size % 65536) != 0) ? 1 : 0;
-
-	tr->tr_cmd_pkt_type |= TWA_CMD_PKT_TYPE_INTERNAL;
-	/* Allocate sufficient memory to hold a chunk of the firmware image. */
-	fw_img_chunk_size = ((twa_fw_img_size / count) + 511) & ~511;
-
-	s = splvm();
-	tr->tr_data = (void *)uvm_km_alloc(kmem_map, fw_img_chunk_size, 512,
-				UVM_KMF_WIRED);
-	splx(s);
-
-	if (tr->tr_data == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
-
-	remaining_img_size = twa_fw_img_size;
-	cmd = &(tr->tr_command->command.cmd_pkt_7k.download_fw);
-
-	for (i = 0; i < count; i++) {
-		/* Build a cmd pkt for downloading firmware. */
-		memset(tr->tr_command, 0, sizeof(struct twa_command_packet));
-
-		tr->tr_command->cmd_hdr.header_desc.size_header = 128;
-
-		cmd->opcode = TWA_OP_DOWNLOAD_FIRMWARE;
-		cmd->sgl_offset = 2;	/* offset in dwords, to the beginning
-					   of sg list */
-		cmd->size = 2;		/* this field will be updated at data
-					   map time */
-		cmd->request_id = tr->tr_request_id;
-		cmd->unit = 0;
-		cmd->status = 0;
-		cmd->flags = 0;
-		cmd->param = 8;	/* prom image */
-
-		if (i != (count - 1))
-			this_chunk_size = fw_img_chunk_size;
-		else	 /* last chunk */
-			this_chunk_size = remaining_img_size;
-
-		remaining_img_size -= this_chunk_size;
-
-		memset(tr->tr_data, 0, fw_img_chunk_size);
-
-		memcpy(tr->tr_data, twa_fw_img + (i * fw_img_chunk_size),
-			this_chunk_size);
-		/*
-		 * The next line will effect only the last chunk.
-		 */
-		tr->tr_length = (this_chunk_size + 511) & ~511;
-
-		tr->tr_flags |= TWA_CMD_DATA_OUT;
-
-		error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
-
-		if (error) {
-			if (error == ETIMEDOUT)
-				/* clean-up done by twa_immediate_request */
-				return(error);
-			break;
-		}
-		error = cmd->status;
-
-		if (i != (count - 1)) {
-
-			/*
-			 * XXX FreeBSD code doesn't check for no error condition
-			 * but based on observation, error seems to return 0
-			 */
-			if ((error =
-			    tr->tr_command->cmd_hdr.status_block.error) == 0) {
-				continue;
-			} else if ((error =
-			    tr->tr_command->cmd_hdr.status_block.error) ==
-			    TWA_ERROR_MORE_DATA) {
-				    continue;
-			} else {
-				twa_hard_reset(sc);
-				break;
-			}
-		} else	 /* last chunk */
-			if (error) {
-				aprint_error_dev(&sc->twa_dv, "firmware flash request failed. "
-				    "error = 0x%x\n", error);
-				twa_hard_reset(sc);
-			}
-	}
-
-	if (tr->tr_data) {
-		s = splvm();
-		uvm_km_free(kmem_map, (vaddr_t)tr->tr_data,
-			fw_img_chunk_size, UVM_KMF_WIRED);
-		splx(s);
-	}
-out:
-	if (tr)
-		twa_release_request(tr);
-	return(error);
-}
-
-/*
- * Function name:	twa_hard_reset
- * Description:		Hard reset the controller.
- *
- * Input:		sc	-- ptr to per ctlr structure
- * Output:		None
- * Return value:	0	-- success
- *			non-zero-- failure
- */
-static int
-twa_hard_reset(struct twa_softc *sc)
-{
-	struct twa_request			*tr;
-	struct twa_command_reset_firmware	*cmd;
-	int					error;
-
-	if ((tr = twa_get_request(sc, 0)) == NULL)
-		return(EIO);
-	tr->tr_cmd_pkt_type |= TWA_CMD_PKT_TYPE_INTERNAL;
-	/* Build a cmd pkt for sending down the hard reset command. */
-	tr->tr_command->cmd_hdr.header_desc.size_header = 128;
-
-	cmd = &(tr->tr_command->command.cmd_pkt_7k.reset_fw);
-	cmd->opcode = TWA_OP_RESET_FIRMWARE;
-	cmd->size = 2;	/* this field will be updated at data map time */
-	cmd->request_id = tr->tr_request_id;
-	cmd->unit = 0;
-	cmd->status = 0;
-	cmd->flags = 0;
-	cmd->param = 0;	/* don't reload FPGA logic */
-
-	tr->tr_data = NULL;
-	tr->tr_length = 0;
-
-	error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
-	if (error) {
-		printf("%s: hard reset request could not be posted. "
-		    "error = 0x%x\n", device_xname(&sc->twa_dv), error);
-		if (error == ETIMEDOUT)
-			/* clean-up done by twa_immediate_request */
-			return(error);
-		goto out;
-	}
-	if ((error = cmd->status)) {
-		aprint_error_dev(&sc->twa_dv, "hard reset request failed. error = 0x%x\n",
-			error);
-	}
-
-out:
-	if (tr)
-		twa_release_request(tr);
-	return(error);
-}
-#endif
 
 /*
  * Function name:	twa_intr
