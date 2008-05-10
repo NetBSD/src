@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.36 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.36.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.36 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.36.2.1 2008/05/10 23:48:44 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -145,7 +145,7 @@ ibcs2_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_err = tf->tf_err;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -169,7 +169,7 @@ ibcs2_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -91,6 +91,8 @@
 #include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/ksyms.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/msgbuf.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>

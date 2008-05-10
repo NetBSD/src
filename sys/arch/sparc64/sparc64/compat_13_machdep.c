@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.21 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.21.2.1 2008/05/10 23:48:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.21 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.21.2.1 2008/05/10 23:48:46 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.21 2008/04/28 20:23:37 marti
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sparc64/sparc64/sigdebug.h>
 
@@ -150,9 +151,9 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 
 	mutex_enter(p->p_lock);
 	if (scp->sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);

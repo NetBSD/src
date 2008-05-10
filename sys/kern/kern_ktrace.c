@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.144 2008/04/29 15:55:24 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.144.2.1 2008/05/10 23:49:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.144 2008/04/29 15:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.144.2.1 2008/05/10 23:49:03 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.144 2008/04/29 15:55:24 ad Exp $")
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*

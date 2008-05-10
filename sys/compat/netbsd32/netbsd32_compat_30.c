@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.24 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.24.6.1 2008/05/10 23:48:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.24 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.24.6.1 2008/05/10 23:48:57 wrstuden Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.24 2008/03/21 21:54:58 ad E
 #include <sys/filedesc.h>
 #include <sys/namei.h>
 #include <sys/statvfs.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>

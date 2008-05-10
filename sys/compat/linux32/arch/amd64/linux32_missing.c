@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.c,v 1.5 2008/02/02 19:37:53 dsl Exp $ */
+/*	$NetBSD: linux32_missing.c,v 1.5.12.1 2008/05/10 23:48:56 wrstuden Exp $ */
 
 #include <sys/cdefs.h>
 
@@ -11,6 +11,7 @@
 #include <sys/ucred.h>
 #include <sys/mount.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.64 2008/04/28 20:23:45 martin Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.64.2.1 2008/05/10 23:48:59 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.64 2008/04/28 20:23:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.64.2.1 2008/05/10 23:48:59 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.64 2008/04/28 20:23:45 martin Exp 
 #include <sys/malloc.h>
 #include <sys/wait.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -266,7 +267,7 @@ svr4_sys_signal(struct lwp *l, const struct svr4_sys_signal_args *uap, register_
 		return (sigaction1(l, signum, &nbsa, 0, NULL, 0));
 
 	case SVR4_SIGPAUSE_MASK:
-		ss = l->l_sigmask;	/* XXXAD locking */
+		ss = *l->l_sigmask;	/* XXXAD locking */
 		sigdelset(&ss, signum);
 		return (sigsuspend1(l, &ss));
 
@@ -413,15 +414,15 @@ svr4_getcontext(struct lwp *l, struct svr4_ucontext *uc)
 	 * in the System V Interface Definition appears to allow returning
 	 * the main context stack.
 	 */
-	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
+	if ((l->l_sigstk->ss_flags & SS_ONSTACK) == 0) {
 		uc->uc_stack.ss_sp = (void *)USRSTACK;
 		uc->uc_stack.ss_size = ctob(p->p_vmspace->vm_ssize);
 		uc->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
 		/* Simply copy alternate signal execution stack. */
-		uc->uc_stack.ss_sp = l->l_sigstk.ss_sp;
-		uc->uc_stack.ss_size = l->l_sigstk.ss_size;
-		uc->uc_stack.ss_flags = l->l_sigstk.ss_flags;
+		uc->uc_stack.ss_sp = l->l_sigstk->ss_sp;
+		uc->uc_stack.ss_size = l->l_sigstk->ss_size;
+		uc->uc_stack.ss_flags = l->l_sigstk->ss_flags;
 	}
 	(void)sigprocmask1(l, 0, NULL, &mask);
 

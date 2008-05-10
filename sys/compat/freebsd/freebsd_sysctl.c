@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.14 2008/04/28 20:23:41 martin Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.14.2.1 2008/05/10 23:48:49 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.14 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.14.2.1 2008/05/10 23:48:49 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.14 2008/04/28 20:23:41 martin E
 #include <sys/sysctl.h>
 #include <sys/ktrace.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>

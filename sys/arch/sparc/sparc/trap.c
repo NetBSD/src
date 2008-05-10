@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.175 2008/04/24 18:39:21 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.175.4.1 2008/05/10 23:48:46 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175.4.1 2008/05/10 23:48:46 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.175 2008/04/24 18:39:21 ad Exp $");
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>

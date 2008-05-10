@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.15 2008/04/24 18:39:20 ad Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.15.4.1 2008/05/10 23:48:43 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15.4.1 2008/05/10 23:48:43 wrstuden Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.15 2008/04/24 18:39:20 ad Ex
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>  
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -103,9 +104,9 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&context.sc_mask, &mask);

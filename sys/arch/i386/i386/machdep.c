@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.634 2008/05/05 17:47:06 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.634.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.634 2008/05/05 17:47:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.634.2.1 2008/05/10 23:48:44 wrstuden Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -108,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.634 2008/05/05 17:47:06 ad Exp $");
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/ksyms.h>
 
 #ifdef IPKDB
@@ -739,10 +741,10 @@ getframe(struct lwp *l, int sig, int *onstack)
 	struct trapframe *tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
+		return (char *)l->l_sigstk->ss_sp + l->l_sigstk->ss_size;
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM)
 		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
@@ -817,7 +819,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = l->l_ctxlink;
-	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 
@@ -843,7 +845,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -2281,9 +2283,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	}
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 	return (0);
 }

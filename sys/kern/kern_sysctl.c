@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.216 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.216.2.1 2008/05/10 23:49:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.216 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.216.2.1 2008/05/10 23:49:04 wrstuden Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.216 2008/04/28 20:24:03 martin Exp
 #include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>

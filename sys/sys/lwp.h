@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.94 2008/05/06 18:40:57 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.94.2.1 2008/05/10 23:49:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ struct lwp {
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
 	cpuset_t	l_affinity;	/* l: CPU set for affinity */
+	struct sadata_vp *l_savp;	/* p: SA "virtual processor" */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -134,13 +135,20 @@ struct lwp {
 	int		l_sigrestore;	/* p: need to restore old sig mask */
 	sigset_t	l_sigwaitset;	/* p: signals being waited for */
 	kcondvar_t	l_sigcv;	/* p: for sigsuspend() */
+	stack_t 	*l_sigstk;	/* p: sp & on stack state variable */
+	sigset_t	*l_sigmask;	/* p: signal mask to use */
 	struct ksiginfo	*l_sigwaited;	/* p: delivered signals from set */
 	sigpend_t	*l_sigpendset;	/* p: XXX issignal()/postsig() baton */
 	LIST_ENTRY(lwp)	l_sigwaiter;	/* p: chain on list of waiting LWPs */
-	stack_t		l_sigstk;	/* p: sp & on stack state variable */
-	sigset_t	l_sigmask;	/* p: signal mask */
+	sigset_t	l_lsigmask;	/* p: signal mask per thread */
+	stack_t 	l_lsigstk;	/* p: sp & on stack state variable */
 	sigpend_t	l_sigpend;	/* p: signals to this LWP */
 	sigset_t	l_sigoldmask;	/* p: mask for sigpause */
+	/*
+	 * For 1:1 threads, l_sigstk = &l_lsigstk and l_sigmask = &l_lsigmask
+	 * for SA threads, they point to process-wide info.
+	 * XXX verify l_sigstk use
+	 */
 
 	/* Private data */
 	specificdata_reference
@@ -198,17 +206,22 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
+#define	LW_SA		0x00000400 /* Scheduler activations LWP */
 #define	LW_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
 #define	LW_AFFINITY	0x00200000 /* Affinity is assigned to the thread */
+#define	LW_SA_UPCALL	0x00400000 /* SA upcall is pending */
+#define	LW_SA_BLOCKING	0x00800000 /* Blocking in tsleep() */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_RUNNING	0x20000000 /* Active on a CPU (except if LSZOMB) */
+#define	LW_SA_YIELD	0x40000000 /* LWP on VP is yielding */
+#define	LW_SA_IDLE	0x80000000 /* VP is idle */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -219,6 +232,8 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
+#define	LP_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
+#define	LP_SA_PAGEFAULT	0x00000200 /* SA LWP in pagefault handler */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The third set is kept in l_prflag. */

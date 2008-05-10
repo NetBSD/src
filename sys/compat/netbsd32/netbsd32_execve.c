@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.31 2007/12/20 23:03:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.31.12.1 2008/05/10 23:48:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.31 2007/12/20 23:03:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.31.12.1 2008/05/10 23:48:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.31 2007/12/20 23:03:01 dsl Exp
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/exec.h>

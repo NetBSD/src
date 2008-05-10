@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.42 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.42.2.1 2008/05/10 23:48:43 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42.2.1 2008/05/10 23:48:43 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/ktrace.h>
 #include <sys/syscall.h>
 #include <sys/syscall_stats.h>

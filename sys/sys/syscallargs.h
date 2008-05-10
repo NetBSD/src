@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.194 2008/04/24 11:51:47 ad Exp $ */
+/* $NetBSD: syscallargs.h,v 1.194.4.1 2008/05/10 23:49:08 wrstuden Exp $ */
 
 /*
  * System call argument lists.
@@ -1762,6 +1762,30 @@ struct sys__lwp_ctl_args {
 };
 check_syscall_args(sys__lwp_ctl)
 
+struct sys_sa_register_args {
+	syscallarg(sa_upcall_t) new;
+	syscallarg(sa_upcall_t *) old;
+	syscallarg(int) flags;
+	syscallarg(ssize_t) stackinfo_offset;
+};
+check_syscall_args(sys_sa_register)
+
+struct sys_sa_stacks_args {
+	syscallarg(int) num;
+	syscallarg(stack_t *) stacks;
+};
+check_syscall_args(sys_sa_stacks)
+
+struct sys_sa_setconcurrency_args {
+	syscallarg(int) concurrency;
+};
+check_syscall_args(sys_sa_setconcurrency)
+
+struct sys_sa_preempt_args {
+	syscallarg(int) sa_id;
+};
+check_syscall_args(sys_sa_preempt)
+
 struct sys___sigaction_sigtramp_args {
 	syscallarg(int) signum;
 	syscallarg(const struct sigaction *) nsa;
@@ -2897,17 +2921,17 @@ int	sys__lwp_getname(struct lwp *, const struct sys__lwp_getname_args *, registe
 
 int	sys__lwp_ctl(struct lwp *, const struct sys__lwp_ctl_args *, register_t *);
 
-int	sys_sa_register(struct lwp *, const void *, register_t *);
+int	sys_sa_register(struct lwp *, const struct sys_sa_register_args *, register_t *);
 
-int	sys_sa_stacks(struct lwp *, const void *, register_t *);
+int	sys_sa_stacks(struct lwp *, const struct sys_sa_stacks_args *, register_t *);
 
 int	sys_sa_enable(struct lwp *, const void *, register_t *);
 
-int	sys_sa_setconcurrency(struct lwp *, const void *, register_t *);
+int	sys_sa_setconcurrency(struct lwp *, const struct sys_sa_setconcurrency_args *, register_t *);
 
 int	sys_sa_yield(struct lwp *, const void *, register_t *);
 
-int	sys_sa_preempt(struct lwp *, const void *, register_t *);
+int	sys_sa_preempt(struct lwp *, const struct sys_sa_preempt_args *, register_t *);
 
 int	sys_sa_unblockyield(struct lwp *, const void *, register_t *);
 

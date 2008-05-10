@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.44 2008/02/14 19:41:54 garbled Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.44.12.1 2008/05/10 23:48:45 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44 2008/02/14 19:41:54 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44.12.1 2008/05/10 23:48:45 wrstuden Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.44 2008/02/14 19:41:54 garbled Exp
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>

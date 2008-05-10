@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.212 2008/04/24 11:51:47 ad Exp $ */
+/* $NetBSD: syscall.h,v 1.212.4.1 2008/05/10 23:49:08 wrstuden Exp $ */
 
 /*
  * System call numbers.
@@ -979,22 +979,22 @@
 /* syscall: "_lwp_ctl" ret: "int" args: "int" "struct lwpctl **" */
 #define	SYS__lwp_ctl	325
 
-/* syscall: "sa_register" ret: "int" args: */
+/* syscall: "sa_register" ret: "int" args: "sa_upcall_t" "sa_upcall_t *" "int" "ssize_t" */
 #define	SYS_sa_register	330
 
-/* syscall: "sa_stacks" ret: "int" args: */
+/* syscall: "sa_stacks" ret: "int" args: "int" "stack_t *" */
 #define	SYS_sa_stacks	331
 
 /* syscall: "sa_enable" ret: "int" args: */
 #define	SYS_sa_enable	332
 
-/* syscall: "sa_setconcurrency" ret: "int" args: */
+/* syscall: "sa_setconcurrency" ret: "int" args: "int" */
 #define	SYS_sa_setconcurrency	333
 
 /* syscall: "sa_yield" ret: "int" args: */
 #define	SYS_sa_yield	334
 
-/* syscall: "sa_preempt" ret: "int" args: */
+/* syscall: "sa_preempt" ret: "int" args: "int" */
 #define	SYS_sa_preempt	335
 
 /* syscall: "sa_unblockyield" ret: "int" args: */

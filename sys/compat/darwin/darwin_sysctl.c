@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.59 2008/04/28 20:23:41 martin Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.59.2.1 2008/05/10 23:48:49 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.59 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.59.2.1 2008/05/10 23:48:49 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.59 2008/04/28 20:23:41 martin Ex
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
+#include <sys/sa.h>
 #include <sys/ktrace.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
@@ -763,7 +764,7 @@ darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 	native_sigset13_to_sigset(&dep->p_siglist, &l->l_sigpendset->sp_set);
 	/* (ptr) dep->p_textvp */
 	/* dep->p_holdcnt */
-	native_sigset13_to_sigset(&dep->p_sigmask, &l->l_sigmask);
+	native_sigset13_to_sigset(&dep->p_sigmask, l->l_sigmask);
 	native_sigset13_to_sigset(&dep->p_sigignore,
 	    &p->p_sigctx.ps_sigignore);
 	native_sigset13_to_sigset(&dep->p_sigcatch,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.34 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.34.6.1 2008/05/10 23:49:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.34 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.34.6.1 2008/05/10 23:49:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.34 2008/03/21 21:54:59 ad Exp 
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/vnode.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 

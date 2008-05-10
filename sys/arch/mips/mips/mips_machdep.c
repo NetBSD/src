@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.201 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.201.2.1 2008/05/10 23:48:45 wrstuden Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.201 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.201.2.1 2008/05/10 23:48:45 wrstuden Exp $");
 
 #include "opt_cputype.h"
 
@@ -132,6 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.201 2008/04/28 20:23:28 martin Ex
 #include <sys/kcore.h>
 #include <sys/pool.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
 
@@ -1766,9 +1768,9 @@ cpu_setmcontext(l, mcp, flags)
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 2008/04/24 18:39:21 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.73.4.1 2008/05/10 23:48:45 wrstuden Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73.4.1 2008/05/10 23:48:45 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -98,6 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2008/04/24 18:39:21 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -404,7 +406,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
-		sigdelset(&l->l_sigmask, SIGILL);
+		sigdelset(l->l_sigmask, SIGILL);
 		mutex_exit(p->p_lock);
 
 		ksi.ksi_signo = SIGILL;

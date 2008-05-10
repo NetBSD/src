@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.13 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.13.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,11 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.13 2008/04/28 20:23:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.13.2.1 2008/05/10 23:48:44 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
 #include <sys/lwp.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
@@ -242,9 +244,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
 	return 0;

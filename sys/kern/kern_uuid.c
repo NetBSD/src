@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.14 2008/04/19 18:21:38 plunky Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.14.4.1 2008/05/10 23:49:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.14 2008/04/19 18:21:38 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.14.4.1 2008/05/10 23:49:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.14 2008/04/19 18:21:38 plunky Exp $"
 /* NetBSD */
 #include <sys/proc.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/uio.h>
 

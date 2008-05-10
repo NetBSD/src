@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.223 2008/04/24 11:51:47 ad Exp $ */
+/* $NetBSD: init_sysent.c,v 1.223.4.1 2008/05/10 23:49:03 wrstuden Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.223 2008/04/24 11:51:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.223.4.1 2008/05/10 23:49:03 wrstuden Exp $");
 
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -22,6 +22,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.223 2008/04/24 11:51:47 ad Exp $")
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef COMPAT_43
@@ -912,17 +913,17 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 328 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 329 = unimplemented */
-	{ 0, 0, 0,
+	{ ns(struct sys_sa_register_args), 0,
 	    (sy_call_t *)sys_sa_register },	/* 330 = sa_register */
-	{ 0, 0, 0,
+	{ ns(struct sys_sa_stacks_args), 0,
 	    (sy_call_t *)sys_sa_stacks },	/* 331 = sa_stacks */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_sa_enable },	/* 332 = sa_enable */
-	{ 0, 0, 0,
+	{ ns(struct sys_sa_setconcurrency_args), 0,
 	    (sy_call_t *)sys_sa_setconcurrency },/* 333 = sa_setconcurrency */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_sa_yield },	/* 334 = sa_yield */
-	{ 0, 0, 0,
+	{ ns(struct sys_sa_preempt_args), 0,
 	    (sy_call_t *)sys_sa_preempt },	/* 335 = sa_preempt */
 	{ 0, 0, 0,
 	    (sy_call_t *)sys_sa_unblockyield },	/* 336 = sa_unblockyield */

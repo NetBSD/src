@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.241 2008/04/30 12:44:27 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.241.2.1 2008/05/10 23:49:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241 2008/04/30 12:44:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241.2.1 2008/05/10 23:49:04 wrstuden Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241 2008/04/30 12:44:27 ad Exp $");
 #include <sys/cpu.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>

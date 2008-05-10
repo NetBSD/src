@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.106 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.106.4.1 2008/05/10 23:49:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.106 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.106.4.1 2008/05/10 23:49:04 wrstuden Exp $");
 
 #include "opt_compat_43.h"
 
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.106 2008/04/24 15:35:29 ad Exp $");
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int	sys_getpid(struct lwp *, const void *, register_t *);

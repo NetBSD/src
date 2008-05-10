@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.283 2008/04/29 15:55:24 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.283.2.1 2008/05/10 23:49:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283 2008/04/29 15:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283.2.1 2008/05/10 23:49:04 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -88,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.283 2008/04/29 15:55:24 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/ucontext.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/exec.h>
 #include <sys/kauth.h>
 #include <sys/acct.h>
@@ -297,9 +299,9 @@ siginit(struct proc *p)
 	 */
 	l = LIST_FIRST(&p->p_lwps);
 	l->l_sigwaited = NULL;
-	l->l_sigstk.ss_flags = SS_DISABLE;
-	l->l_sigstk.ss_size = 0;
-	l->l_sigstk.ss_sp = 0;
+	l->l_sigstk->ss_flags = SS_DISABLE;
+	l->l_sigstk->ss_size = 0;
+	l->l_sigstk->ss_sp = 0;
 	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
 
@@ -367,9 +369,9 @@ execsigs(struct proc *p)
 	 */
 	l = LIST_FIRST(&p->p_lwps);
 	l->l_sigwaited = NULL;
-	l->l_sigstk.ss_flags = SS_DISABLE;
-	l->l_sigstk.ss_size = 0;
-	l->l_sigstk.ss_sp = 0;
+	l->l_sigstk->ss_flags = SS_DISABLE;
+	l->l_sigstk->ss_size = 0;
+	l->l_sigstk->ss_sp = 0;
 	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
 	mutex_exit(p->p_lock);
@@ -651,7 +653,7 @@ sigispending(struct lwp *l, int signo)
 	tset = l->l_sigpend.sp_set;
 	sigplusset(&p->p_sigpend.sp_set, &tset);
 	sigminusset(&p->p_sigctx.ps_sigignore, &tset);
-	sigminusset(&l->l_sigmask, &tset);
+	sigminusset(l->l_sigmask, &tset);
 
 	if (signo == 0) {
 		if (firstsig(&tset) != 0)
@@ -696,7 +698,7 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	ucp->uc_flags = 0;
 	ucp->uc_link = l->l_ctxlink;
 
-	ucp->uc_sigmask = l->l_sigmask;
+	ucp->uc_sigmask = *l->l_sigmask;
 	ucp->uc_flags |= _UC_SIGMASK;
 
 	/*
@@ -704,13 +706,13 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	 * in the System V Interface Definition appears to allow returning
 	 * the main context stack.
 	 */
-	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
+	if ((l->l_sigstk->ss_flags & SS_ONSTACK) == 0) {
 		ucp->uc_stack.ss_sp = (void *)l->l_proc->p_stackbase;
 		ucp->uc_stack.ss_size = ctob(l->l_proc->p_vmspace->vm_ssize);
 		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
 		/* Simply copy alternate signal execution stack. */
-		ucp->uc_stack = l->l_sigstk;
+		ucp->uc_stack = *l->l_sigstk;
 	}
 	ucp->uc_flags |= _UC_STACK;
 	mutex_exit(p->p_lock);
@@ -746,9 +748,9 @@ setucontext(struct lwp *l, const ucontext_t *ucp)
 	 */
 	if ((ucp->uc_flags & _UC_STACK) != 0) {
 		if (ucp->uc_stack.ss_flags & SS_ONSTACK)
-			l->l_sigstk.ss_flags |= SS_ONSTACK;
+			l->l_sigstk->ss_flags |= SS_ONSTACK;
 		else
-			l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+			l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	}
 
 	return 0;
@@ -872,13 +874,13 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	ps = p->p_sigacts;
 	if ((p->p_slflag & PSL_TRACED) == 0 &&
 	    sigismember(&p->p_sigctx.ps_sigcatch, signo) &&
-	    !sigismember(&l->l_sigmask, signo)) {
+	    !sigismember(l->l_sigmask, signo)) {
 		mutex_exit(proc_lock);
 		l->l_ru.ru_nsignals++;
-		kpsendsig(l, ksi, &l->l_sigmask);
+		kpsendsig(l, ksi, l->l_sigmask);
 		mutex_exit(p->p_lock);
 		ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
-		    &l->l_sigmask, ksi);
+		    l->l_sigmask, ksi);
 	} else {
 		/* XXX for core dump/debugger */
 		p->p_sigctx.ps_lwp = l->l_lid;
@@ -983,7 +985,7 @@ sigismasked(struct lwp *l, int sig)
 	struct proc *p = l->l_proc;
 
 	return (sigismember(&p->p_sigctx.ps_sigignore, sig) ||
-	    sigismember(&l->l_sigmask, sig));
+	    sigismember(l->l_sigmask, sig));
 }
 
 /*
@@ -1017,7 +1019,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	/*
 	 * SIGCONT can be masked, but must always restart stopped LWPs.
 	 */
-	masked = sigismember(&l->l_sigmask, sig);
+	masked = sigismember(l->l_sigmask, sig);
 	if (masked && ((prop & SA_CONT) == 0 || l->l_stat != LSSTOP)) {
 		lwp_unlock(l);
 		return 0;
@@ -1550,7 +1552,7 @@ sigchecktrace(sigpend_t **spp)
 		*spp = &l->l_sigpend;
 	else
 		*spp = &p->p_sigpend;
-	if (sigismember(&l->l_sigmask, signo))
+	if (sigismember(l->l_sigmask, signo))
 		signo = 0;
 
 	return signo;
@@ -1606,14 +1608,14 @@ issignal(struct lwp *l)
 			ss = sp->sp_set;
 			if ((p->p_sflag & PS_PPWAIT) != 0)
 				sigminusset(&stopsigmask, &ss);
-			sigminusset(&l->l_sigmask, &ss);
+			sigminusset(l->l_sigmask, &ss);
 
 			if ((signo = firstsig(&ss)) == 0) {
 				sp = &p->p_sigpend;
 				ss = sp->sp_set;
 				if ((p->p_sflag & PS_PPWAIT) != 0)
 					sigminusset(&stopsigmask, &ss);
-				sigminusset(&l->l_sigmask, &ss);
+				sigminusset(l->l_sigmask, &ss);
 
 				if ((signo = firstsig(&ss)) == 0) {
 					/*
@@ -1775,7 +1777,7 @@ postsig(int signo)
 		returnmask = &l->l_sigoldmask;
 		l->l_sigrestore = 0;
 	} else
-		returnmask = &l->l_sigmask;
+		returnmask = l->l_sigmask;
 
 	/*
 	 * Commit to taking the signal before releasing the mutex.
@@ -1803,7 +1805,7 @@ postsig(int signo)
 	 * If we get here, the signal must be caught.
 	 */
 #ifdef DIAGNOSTIC
-	if (action == SIG_IGN || sigismember(&l->l_sigmask, signo))
+	if (action == SIG_IGN || sigismember(l->l_sigmask, signo))
 		panic("postsig action");
 #endif
 
@@ -1829,7 +1831,7 @@ sendsig_reset(struct lwp *l, int signo)
 	p->p_sigctx.ps_signo = 0;
 
 	mutex_enter(&ps->sa_mutex);
-	sigplusset(&SIGACTION_PS(ps, signo).sa_mask, &l->l_sigmask);
+	sigplusset(&SIGACTION_PS(ps, signo).sa_mask, l->l_sigmask);
 	if (SIGACTION_PS(ps, signo).sa_flags & SA_RESETHAND) {
 		sigdelset(&p->p_sigctx.ps_sigcatch, signo);
 		if (signo != SIGCONT && sigprop[signo] & SA_IGNORE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.26 2008/04/28 20:23:46 martin Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.26.2.1 2008/05/10 23:49:02 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.26 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.26.2.1 2008/05/10 23:49:02 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.26 2008/04/28 20:23:46 martin E
 #include <sys/malloc.h>
 #include <sys/wait.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>
@@ -590,9 +591,9 @@ svr4_32_setcontext(struct lwp *l, struct svr4_32_ucontext *uc)
 
 	/* set signal stack */
 	if (uc->uc_flags & SVR4_UC_STACK) {
-		l->l_sigstk.ss_sp = NETBSD32PTR64(uc->uc_stack.ss_sp);
-		l->l_sigstk.ss_size = uc->uc_stack.ss_size;
-		l->l_sigstk.ss_flags =
+		l->l_sigstk->ss_sp = NETBSD32PTR64(uc->uc_stack.ss_sp);
+		l->l_sigstk->ss_size = uc->uc_stack.ss_size;
+		l->l_sigstk->ss_flags =
 		    (uc->uc_stack.ss_flags & SVR4_SS_ONSTACK ? SS_ONSTACK : 0) |
 		    (uc->uc_stack.ss_flags & SVR4_SS_DISABLE ? SS_DISABLE : 0);
 	}
@@ -624,7 +625,7 @@ svr4_32_sys_context(struct lwp *l, const struct svr4_32_sys_context_args *uap, r
 	switch (SCARG(uap, func)) {
 	case SVR4_GETCONTEXT:
 		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
-		svr4_32_getcontext(l, &uc, &l->l_sigmask);
+		svr4_32_getcontext(l, &uc, l->l_sigmask);
 		return copyout(&uc, SCARG_P32(uap, uc), sizeof(uc));
 
 	case SVR4_SETCONTEXT:

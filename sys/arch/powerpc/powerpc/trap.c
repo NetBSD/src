@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125 2008/02/05 18:52:56 garbled Exp $	*/
+/*	$NetBSD: trap.c,v 1.125.12.1 2008/05/10 23:48:46 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2008/02/05 18:52:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.12.1 2008/05/10 23:48:46 wrstuden Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2008/02/05 18:52:56 garbled Exp $");
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/kauth.h>

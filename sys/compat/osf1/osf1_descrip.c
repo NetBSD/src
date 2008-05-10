@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.26 2008/03/21 21:54:58 ad Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.26.6.1 2008/05/10 23:48:58 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26.6.1 2008/05/10 23:48:58 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26 2008/03/21 21:54:58 ad Exp $")
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/reboot.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
