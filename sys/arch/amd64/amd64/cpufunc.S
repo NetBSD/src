@@ -1,7 +1,7 @@
-/*	$NetBSD: cpufunc.S,v 1.10 2008/04/28 22:47:37 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.11 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -216,11 +216,15 @@ NENTRY(wbinvd)
 	ret
 #endif
 
-NENTRY(rdtsc)
+NENTRY(cpu_counter)
 	xorq	%rax, %rax
 	rdtsc
 	shlq	$32, %rdx
 	orq	%rdx, %rax
+	ret
+
+NENTRY(cpu_counter32)
+	rdtsc
 	ret
 
 NENTRY(rdpmc)
