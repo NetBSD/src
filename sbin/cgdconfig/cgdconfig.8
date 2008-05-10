@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.24 2008/04/30 13:10:52 martin Exp $
+.\" $NetBSD: cgdconfig.8,v 1.25 2008/05/10 21:38:40 elric Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nd configuration utility for the cryptographic disk driver
 .Sh SYNOPSIS
 .Nm
-.Op Fl nv
+.Op Fl npv
 .Op Fl V Ar vmeth
 .Ar cgd dev
 .Op Ar paramsfile
@@ -105,6 +105,15 @@ When generating a
 .Ar paramsfile ,
 store it in
 .Ar outfile .
+.It Fl p
+Read all passphrases from stdin rather than
+.Pa /dev/tty .
+Passphrases are separated by newlines.
+Users of this flag must be able to predict the order in which passphrases
+are prompted.
+If this flag is specified then verification errors will cause the device
+in question to be unconfigured rather than prompting for the passphrase
+again.
 .It Fl s
 Read the key from stdin.
 .It Fl U
