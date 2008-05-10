@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.38 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.39 2008/05/10 17:23:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2008/05/10 16:12:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2008/05/10 17:23:54 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -321,11 +321,15 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		ci = &cpu_info_primary;
 #if defined(MULTIPROCESSOR)
 		if (cpunum != lapic_cpu_number()) {
-			printf("\n");
-			panic("%s: running CPU is at apic %d"
+			uint32_t reg;
+			aprint_verbose("\n");
+			aprint_verbose("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
 			    device_xname(sc->sc_dev), lapic_cpu_number(),
 			    cpunum);
+			reg = i82489_readreg(LAPIC_ID);
+			i82489_writereg(LAPIC_ID, (reg & ~LAPIC_ID_MASK) |
+			    (cpunum << LAPIC_ID_SHIFT));
 		}
 #endif
 	}
