@@ -47,8 +47,11 @@
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
+#include <sys/module.h>
 
 #include <fs/unionfs/unionfs.h>
+
+MODULE(MODULE_CLASS_VFS, unionfs, NULL);
 
 MALLOC_DEFINE(M_UNIONFSMNT, "UNIONFS mount", "UNIONFS mount structure");
 
@@ -553,4 +556,17 @@ struct vfsops unionfs_vfsops = {
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(unionfs_vfsops);
+
+static int
+unionfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&unionfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&unionfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
