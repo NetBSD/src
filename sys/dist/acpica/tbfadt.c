@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbfadt   - FADT table utilities
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -521,7 +521,7 @@ AcpiTbValidateFadt (
              */
             if ((Address64->Address && !Length) || (!Address64->Address && Length))
             {
-                ACPI_WARNING ((AE_INFO,
+                ACPI_DEBUG_PRINT ((ACPI_DB_WARN,
                     "Optional field \"%s\" has zero address or length: %8.8X%8.8X/%X",
                     FadtInfoTable[i].Name, ACPI_FORMAT_UINT64 (Address64->Address), Length));
             }
