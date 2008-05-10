@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.37 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.38 2008/05/10 02:26:10 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.37 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.38 2008/05/10 02:26:10 rumble Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -162,9 +162,9 @@ static void netexport_wrunlock(void);
 static void nfs_export_unmount(struct mount *);
 
 struct vfs_hooks nfs_export_hooks = {
-	nfs_export_unmount
+	nfs_export_unmount,
+	{ NULL, NULL }
 };
-VFS_HOOKS_ATTACH(nfs_export_hooks);
 
 /*
  * VFS unmount hook for NFS exports.

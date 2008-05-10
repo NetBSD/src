@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.78 2008/04/29 18:18:09 ad Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.79 2008/05/10 02:26:10 rumble Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.78 2008/04/29 18:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.79 2008/05/10 02:26:10 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,12 +96,15 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.78 2008/04/29 18:18:09 ad Exp $"
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 
 #include <miscfs/procfs/procfs.h>
 
 #include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
+
+MODULE(MODULE_CLASS_VFS, procfs, NULL);
 
 VFS_PROTOS(procfs);
 
@@ -321,4 +324,17 @@ struct vfsops procfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(procfs_vfsops);
+
+static int
+procfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&procfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&procfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
