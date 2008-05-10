@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.50 2008/04/29 18:18:08 ad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.51 2008/05/10 02:26:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.50 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.51 2008/05/10 02:26:09 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,7 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.50 2008/04/29 18:18:08 ad Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/simplelock.h>
+#include <sys/module.h>
 #include <fs/adosfs/adosfs.h>
+
+MODULE(MODULE_CLASS_VFS, adosfs, NULL);
 
 VFS_PROTOS(adosfs);
 
@@ -834,4 +837,17 @@ struct vfsops adosfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(adosfs_vfsops);
+
+static int
+adosfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&adosfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&adosfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

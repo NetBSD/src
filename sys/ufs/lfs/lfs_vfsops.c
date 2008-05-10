@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.261 2008/05/10 02:26:10 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.261 2008/05/10 02:26:10 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -109,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.260 2008/05/06 18:43:45 ad Exp $");
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
+
+MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static bool lfs_issequential_hole(const struct ufsmount *,
@@ -160,7 +163,6 @@ struct vfsops lfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(lfs_vfsops);
 
 const struct genfs_ops lfs_genfsops = {
 	.gop_size = lfs_gop_size,
@@ -177,6 +179,20 @@ static const struct ufs_ops lfs_ufsops = {
 	.uo_vfree = lfs_vfree,
 	.uo_balloc = lfs_balloc,
 };
+
+static int
+lfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&lfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&lfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 /*
  * XXX Same structure as FFS inodes?  Should we share a common pool?

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.226 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.227 2008/05/10 02:26:10 rumble Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.226 2008/05/06 18:43:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.227 2008/05/10 02:26:10 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.226 2008/05/06 18:43:45 ad Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -75,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.226 2008/05/06 18:43:45 ad Exp $");
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+MODULE(MODULE_CLASS_VFS, ffs, NULL);
 
 /* how many times ffs_init() was called */
 int ffs_initcount = 0;
@@ -119,7 +122,6 @@ struct vfsops ffs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(ffs_vfsops);
 
 static const struct genfs_ops ffs_genfsops = {
 	.gop_size = ffs_gop_size,
@@ -136,6 +138,20 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_vfree = ffs_vfree,
 	.uo_balloc = ffs_balloc,
 };
+
+static int
+ffs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&ffs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&ffs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 pool_cache_t ffs_inode_cache;
 pool_cache_t ffs_dinode1_cache;

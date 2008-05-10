@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.39 2008/05/04 12:43:58 ad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.40 2008/05/10 02:26:09 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.39 2008/05/04 12:43:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.40 2008/05/10 02:26:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -116,10 +116,6 @@ const struct vnodeopv_desc * const vfs_special_vnodeopv_descs[] = {
 
 struct vfs_list_head vfs_list =			/* vfs list */
     LIST_HEAD_INITIALIZER(vfs_list);
-
-/* XXX Until this particular link set goes away. */
-static struct vfsops vfsops_dummy;
-__link_set_add_rodata(vfsops, vfsops_dummy);
 
 /*
  * This code doesn't work if the defn is **vnodop_defns with cc.
@@ -304,8 +300,6 @@ vfs_op_check(void)
 void
 vfsinit(void)
 {
-	__link_set_decl(vfsops, struct vfsops);
-	struct vfsops * const *vfsp;
 
 	/*
 	 * Initialize the namei pathname buffer pool and cache.
@@ -337,19 +331,15 @@ vfsinit(void)
 	vfs_opv_init(vfs_special_vnodeopv_descs);
 
 	/*
+	 * Initialise VFS hooks.
+	 */
+	vfs_hooks_init();
+
+	/*
 	 * Establish each file system which was statically
 	 * included in the kernel.
 	 */
 	module_init_class(MODULE_CLASS_VFS);
-	__link_set_foreach(vfsp, vfsops) {
-		if (*vfsp == &vfsops_dummy)
-			continue;
-		if (vfs_attach(*vfsp)) {
-			printf("multiple `%s' file systems",
-			    (*vfsp)->vfs_name);
-			panic("vfsinit");
-		}
-	}
 }
 
 /*

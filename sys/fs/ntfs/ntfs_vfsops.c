@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.69 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.70 2008/05/10 02:26:09 rumble Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.69 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.70 2008/05/10 02:26:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.69 2008/05/06 18:43:44 ad Exp $");
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -57,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.69 2008/05/06 18:43:44 ad Exp $");
 #include <fs/ntfs/ntfs_vfsops.h>
 #include <fs/ntfs/ntfs_ihash.h>
 #include <fs/ntfs/ntfsmount.h>
+
+MODULE(MODULE_CLASS_VFS, ntfs, NULL);
 
 MALLOC_JUSTDEFINE(M_NTFSMNT, "NTFS mount", "NTFS mount structure");
 MALLOC_JUSTDEFINE(M_NTFSNTNODE,"NTFS ntnode",  "NTFS ntnode information");
@@ -890,4 +893,17 @@ struct vfsops ntfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(ntfs_vfsops);
+
+static int
+ntfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&ntfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&ntfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

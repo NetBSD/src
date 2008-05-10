@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.36 2008/04/29 18:18:08 ad Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.37 2008/05/10 02:26:09 rumble Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.36 2008/04/29 18:18:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.37 2008/05/10 02:26:09 rumble Exp $");
 #endif /* not lint */
 
 
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.36 2008/04/29 18:18:08 ad Exp $");
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
@@ -73,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.36 2008/04/29 18:18:08 ad Exp $");
 #include "udf_subr.h"
 #include "udf_bswap.h"
 
+MODULE(MODULE_CLASS_VFS, udf, NULL);
 
 /* verbose levels of the udf filingsystem */
 int udf_verbose = UDF_DEBUGGING;
@@ -137,8 +139,20 @@ struct vfsops udf_vfsops = {
 	0, /* int vfs_refcount   */
 	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
 };
-VFS_ATTACH(udf_vfsops);
 
+static int
+udf_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&udf_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&udf_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 /* --------------------------------------------------------------------- */
 

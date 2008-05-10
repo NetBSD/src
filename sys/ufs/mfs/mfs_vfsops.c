@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.96 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.97 2008/05/10 02:26:11 rumble Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.96 2008/05/06 18:43:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.97 2008/05/10 02:26:11 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.96 2008/05/06 18:43:45 ad Exp $");
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -64,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.96 2008/05/06 18:43:45 ad Exp $");
 
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
+
+MODULE(MODULE_CLASS_VFS, mfs, NULL);
 
 void *	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
 u_long	mfs_rootsize;	/* size of mini-root in bytes */
@@ -112,7 +115,20 @@ struct vfsops mfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(mfs_vfsops);
+
+static int
+mfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&mfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&mfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 SYSCTL_SETUP(sysctl_vfs_mfs_setup, "sysctl vfs.mfs subtree setup")
 {

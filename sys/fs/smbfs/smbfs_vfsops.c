@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.80 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.81 2008/05/10 02:26:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.80 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.81 2008/05/10 02:26:09 rumble Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.80 2008/05/05 17:11:17 ad Exp $")
 #include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 #include <miscfs/genfs/genfs.h>
 
 
@@ -64,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.80 2008/05/05 17:11:17 ad Exp $")
 #include <fs/smbfs/smbfs.h>
 #include <fs/smbfs/smbfs_node.h>
 #include <fs/smbfs/smbfs_subr.h>
+
+MODULE(MODULE_CLASS_VFS, smbfs, NULL);
 
 #ifndef __NetBSD__
 SYSCTL_NODE(_vfs, OID_AUTO, smbfs, CTLFLAG_RW, 0, "SMB/CIFS file system");
@@ -134,7 +137,20 @@ struct vfsops smbfs_vfsops = {
 	0,			/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(smbfs_vfsops);
+
+static int
+smbfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&smbfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&smbfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 int
 smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.65 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.66 2008/05/10 02:26:09 rumble Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.65 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.66 2008/05/10 02:26:09 rumble Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.65 2008/05/06 18:43:44 ad Exp $
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/msdosfs/bpb.h>
 #include <fs/msdosfs/bootsect.h>
@@ -83,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.65 2008/05/06 18:43:44 ad Exp $
 #include <fs/msdosfs/denode.h>
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/msdosfs/fat.h>
+
+MODULE(MODULE_CLASS_VFS, msdosfs, NULL);
 
 #ifdef MSDOSFS_DEBUG
 #define DPRINTF(a) uprintf a
@@ -140,7 +143,20 @@ struct vfsops msdosfs_vfsops = {
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(msdosfs_vfsops);
+
+static int
+msdosfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&msdosfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&msdosfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 static int
 update_mp(mp, argp)
