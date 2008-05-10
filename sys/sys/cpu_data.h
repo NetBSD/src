@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.24 2008/05/06 18:40:57 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.25 2008/05/10 14:56:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ struct cpu_data {
 	void		*cpu_cachelock;		/* per-cpu vfs_cache lock */
 	_TAILQ_HEAD(,struct lockdebug,volatile) cpu_ld_locks;/* !: lockdebug */
 	__cpu_simple_lock_t cpu_ld_lock;	/* lockdebug */
+	uint64_t	cpu_cc_freq;		/* cycle counter frequency */
+	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
 };
 
 /* compat definitions */
