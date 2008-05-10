@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.20 2008/03/29 16:22:53 kiyohara Exp $	*/
+/*	$NetBSD: firewire.c,v 1.21 2008/05/10 13:56:54 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.20 2008/03/29 16:22:53 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.21 2008/05/10 13:56:54 jmcneill Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -1474,16 +1474,16 @@ void fw_sidrcv(struct firewire_comm* fc, uint32_t *sid, u_int len)
 	bcopy(p, &CSRARC(fc, SPED_MAP + 8), (fc->speed_map->crc_len - 1)*4);
 
 	fc->max_hop = fc->max_node - i_branch;
-	printf(", maxhop <= %d", fc->max_hop);
+	aprint_normal(", maxhop <= %d", fc->max_hop);
 		
 	if(fc->irm == -1 ){
-		printf(", Not found IRM capable node");
+		aprint_normal(", Not found IRM capable node");
 	}else{
-		printf(", cable IRM = %d", fc->irm);
+		aprint_normal(", cable IRM = %d", fc->irm);
 		if (fc->irm == fc->nodeid)
-			printf(" (me)");
+			aprint_normal(" (me)");
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	if (try_bmr && (fc->irm != -1) && (CSRARC(fc, BUS_MGR_ID) == 0x3f)) {
 		if (fc->irm == fc->nodeid) {
@@ -2337,10 +2337,10 @@ fw_bmr(struct firewire_comm *fc)
 	fw_printf(fc->bdev, "bus manager %d ", CSRARC(fc, BUS_MGR_ID));
 	if(CSRARC(fc, BUS_MGR_ID) != fc->nodeid) {
 		/* We are not the bus manager */
-		printf("\n");
+		aprint_normal("\n");
 		return(0);
 	}
-	printf("(me)\n");
+	aprint_normal("(me)\n");
 
 	/* Optimize gapcount */
 	if(fc->max_hop <= MAX_GAPHOP )
