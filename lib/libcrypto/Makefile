@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2008/05/09 21:52:18 christos Exp $
+#	$NetBSD: Makefile,v 1.50 2008/05/10 20:14:20 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -126,6 +126,9 @@ INCSDIR=/usr/include/openssl
 # this rebuilds the `srcs.inc' and the .inc files it reads.
 # note that the resulting `srcs.inc' file needs to be modified
 # to deal with our MKCRYPTO_* configuration variables.
+
+xxx:
+	echo ${SRCS}
 
 update_inc:
 	(cd ${.CURDIR}; find ${OPENSSLSRC}/crypto \
