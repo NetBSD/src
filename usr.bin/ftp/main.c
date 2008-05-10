@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.108 2008/05/05 22:54:11 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.109 2008/05/10 00:05:31 skd Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.108 2008/05/05 22:54:11 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.109 2008/05/10 00:05:31 skd Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,10 +180,13 @@ main(int volatile argc, char **volatile argv)
 	rate_put_incr = DEFAULTINCR;
 #ifdef INET6
 	epsv4 = 1;
+	epsv6 = 1;	
 #else
 	epsv4 = 0;
+	epsv6 = 0;	
 #endif
 	epsv4bad = 0;
+	epsv6bad = 0;
 	src_addr = NULL;
 	upload_path = NULL;
 	isupload = 0;

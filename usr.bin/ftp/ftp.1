@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.124 2008/05/02 18:11:06 martin Exp $
+.\" 	$NetBSD: ftp.1,v 1.125 2008/05/10 00:05:31 skd Exp $
 .\"
 .\" Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -488,12 +488,12 @@ Toggle command line editing, and context sensitive command and file
 completion.
 This is automatically enabled if input is from a terminal, and
 disabled otherwise.
-.It Ic epsv4
+.It Ic epsv epsv4 epsv6
 Toggle the use of the extended
 .Dv EPSV
 and
 .Dv EPRT
-commands on IPv4 connections; first try
+commands on all IP, IPv4, and IPv6 connections respectively.  First try
 .Dv EPSV /
 .Dv EPRT ,
 and then
@@ -502,7 +502,11 @@ and then
 This is enabled by default.
 If an extended command fails then this option will be temporarily
 disabled for the duration of the current connection, or until
+.Ic epsv
+,
 .Ic epsv4
+, or
+.Ic epsv6
 is executed again.
 .It Ic exit
 A synonym for
