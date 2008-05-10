@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.10 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.11 2008/05/10 16:21:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.10 2008/05/10 16:12:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.11 2008/05/10 16:21:41 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -143,11 +143,14 @@ END(wrmsr_locked)
 
 ENTRY(cpu_counter)
 	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
+	adcl	CPUVAR(CC_SKEW+4), %edx
 	ret
 END(cpu_counter)
 
 ENTRY(cpu_counter32)
 	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
 	ret
 END(cpu_counter32)
 

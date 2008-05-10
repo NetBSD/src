@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.11 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.12 2008/05/10 16:21:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -221,10 +221,12 @@ NENTRY(cpu_counter)
 	rdtsc
 	shlq	$32, %rdx
 	orq	%rdx, %rax
+	addq	CPUVAR(CC_SKEW), %rax
 	ret
 
 NENTRY(cpu_counter32)
 	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
 	ret
 
 NENTRY(rdpmc)
