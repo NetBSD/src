@@ -1,7 +1,7 @@
-/*	$NetBSD: intio.c,v 1.34 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: intio.c,v 1.35 2008/05/10 11:49:37 martin Exp $	*/
 
 /*-
- * Copyright (c) 1998 NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.34 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.35 2008/05/10 11:49:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
