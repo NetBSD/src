@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.10 2006/06/28 02:20:44 lukem Exp $
+#	$NetBSD: Makefile.buildboot,v 1.11 2008/05/10 19:11:59 skrll Exp $
 
 RELOC=	120000
 HEAP_LIMIT=0x1c0000
@@ -38,11 +38,11 @@ vers.c: ${.CURDIR}/version
 		hp700 ${NEWVERSWHAT}
 
 CPPFLAGS+=		-D_STANDALONE -Dhp700 ${DEBUGFLAGS}
-CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT} 
-CPPFLAGS+=		-DNO_NET -D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS
+CPPFLAGS+=		-DRELOC=0x${RELOC} -DHEAP_LIMIT=${HEAP_LIMIT}
+CPPFLAGS+=		-DNO_NET
 
-COMMONSOURCE=		cons.c ct.c dev_hppa.c dk.c itecons.c \
-			lf.c lif.c machdep.c pdc.c time.c
+COMMONSOURCE=		cons.c dev_hppa.c dk.c itecons.c \
+			machdep.c pdc.c time.c
 DRIVERSOURCE=		
 
 ### find out what to use for libkern
@@ -57,7 +57,6 @@ LIBZ=		${ZLIB}
 
 ### find out what to use for libsa
 SA_AS=		library
-SAMISCMAKEFLAGS+="SA_USE_CREAD=yes"
 SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes"
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
