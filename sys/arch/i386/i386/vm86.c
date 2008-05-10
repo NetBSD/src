@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.48 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: vm86.c,v 1.48.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.48 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.48.2.1 2008/05/10 23:48:44 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.48 2008/04/28 20:23:24 martin Exp $");
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 
@@ -214,7 +215,7 @@ vm86_return(l, retval)
 	 * since it's used to jump to the signal handler.  Instead we
 	 * let sendsig() pull in the vm86_eflags bits.
 	 */
-	if (sigismember(&l->l_sigmask, SIGURG)) {
+	if (sigismember(l->l_sigmask, SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG blocked)\n",
 		    p->p_pid);
@@ -434,7 +435,7 @@ x86_vm86(struct lwp *l, char *args, register_t *retval)
 	/* Going into vm86 mode jumps off the signal stack. */
 	p = l->l_proc;
 	mutex_enter(p->p_lock);
-	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
 	set_vflags(l, vm86s.regs[_REG_EFL] | PSL_VM);

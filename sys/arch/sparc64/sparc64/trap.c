@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147 2008/04/09 15:21:02 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.147.6.1 2008/05/10 23:48:46 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2008/04/09 15:21:02 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147.6.1 2008/05/10 23:48:46 wrstuden Exp $");
 
 #define NEW_FPSTATE
 
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2008/04/09 15:21:02 nakayama Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/resource.h>
@@ -1080,7 +1082,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       l->l_proc->p_pid, l->l_proc->p_comm,
 				/* XXX */
-			       l->l_sigmask.__bits[0], 
+			       l->l_sigmask->__bits[0], 
 			       l->l_proc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
@@ -1352,7 +1354,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
-			       curlwp->l_sigmask.__bits[0], 
+			       curlwp->l_sigmask->__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
@@ -1658,7 +1660,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
-			       curlwp->l_sigmask.__bits[0], 
+			       curlwp->l_sigmask->__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif

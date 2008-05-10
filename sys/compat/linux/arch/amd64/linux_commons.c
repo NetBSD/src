@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_commons.c,v 1.7 2007/08/15 12:07:29 ad Exp $ */
+/*	$NetBSD: linux_commons.c,v 1.7.28.1 2008/05/10 23:48:52 wrstuden Exp $ */
 
 /*
  * This file includes C files from the common
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.7 2007/08/15 12:07:29 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.7.28.1 2008/05/10 23:48:52 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -25,6 +25,7 @@ __KERNEL_RCSID(1, "$NetBSD: linux_commons.c,v 1.7 2007/08/15 12:07:29 ad Exp $")
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/signal.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_signal.h>

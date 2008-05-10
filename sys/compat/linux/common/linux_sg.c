@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.13 2008/03/21 21:54:58 ad Exp $ */
+/* $NetBSD: linux_sg.c,v 1.13.6.1 2008/05/10 23:48:56 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.13 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.13.6.1 2008/05/10 23:48:56 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.13 2008/03/21 21:54:58 ad Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

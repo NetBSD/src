@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.96 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.96.2.1 2008/05/10 23:48:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.96 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.96.2.1 2008/05/10 23:48:55 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.96 2008/04/28 20:23:43 martin Exp $
 #include <sys/conf.h>
 #include <sys/pipe.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/vfs_syscalls.h>
 

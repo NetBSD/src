@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.276 2008/04/29 13:02:03 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.276.2.1 2008/05/10 23:49:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -172,6 +172,9 @@ struct emul {
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
 
+	/* SA-related information */
+	const struct sa_emul *e_sa;
+
 	size_t		e_ucsize;	/* size of ucontext_t */
 	void		(*e_startlwp)(void *);
 };
@@ -257,6 +260,8 @@ struct proc {
 	u_int		p_waited;	/* l: parent has waited on child */
 	struct lwp	*p_zomblwp;	/* p: detached LWP to be reaped */
 
+	struct sadata	*p_sa;		/* p: Scheduler activation info */
+
 	/* scheduling */
 	void		*p_sched_info;	/* p: Scheduler-specific structure */
 	fixpt_t		p_estcpu;	/* p: Time avg. value of p_cpticks */
@@ -282,6 +287,7 @@ struct proc {
 	struct klist	p_klist;	/* p: knotes attached to proc */
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
+	sigstore_t	p_sigstore;	/* p: process-wide signal state */
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 
@@ -356,12 +362,14 @@ struct proc {
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	PS_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
+#define	PS_SA		0x00000400 /* Process using scheduler activations */
 #define	PS_WCORE	0x00001000 /* Process needs to dump core */
 #define	PS_WEXIT	0x00002000 /* Working on exiting */
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
+#define	PS_NOSA 	0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
 
 /*

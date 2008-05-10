@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.136 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.136.2.1 2008/05/10 23:48:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.136 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.136.2.1 2008/05/10 23:48:52 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.136 2008/04/28 20:23:42 martin E
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
@@ -252,7 +253,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	linux_siginfo_t *lsi;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &l->l_sigstk;
+	struct sigaltstack *sas = l->l_sigstk;
 
 	tf = l->l_md.md_regs;
 	/* Do we need to jump onto the signal stack? */
@@ -362,7 +363,7 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &l->l_sigstk;
+	struct sigaltstack *sas = l->l_sigstk;
 
 	tf = l->l_md.md_regs;
 
@@ -474,7 +475,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
     register_t *retval)
 {
 	struct proc *p = l->l_proc;
-	struct sigaltstack *sas = &l->l_sigstk;
+	struct sigaltstack *sas = l->l_sigstk;
 	struct trapframe *tf;
 	sigset_t mask;
 	ssize_t ss_gap;

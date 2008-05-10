@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.25.2.1 2008/05/10 23:48:46 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.25.2.1 2008/05/10 23:48:46 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,15 +83,15 @@ darwin_sendsig(ksi, mask)
 
 	/* Use an alternate signal stack? */
 	onstack =
-	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Set the new stack pointer sfp */
 	if (onstack) {
 		sfp = (struct darwin_sigframe *)
-		    ((char *)l->l_sigstk.ss_sp +
-		    l->l_sigstk.ss_size);
-		stack_size = l->l_sigstk.ss_size;
+		    ((char *)l->l_sigstk->ss_sp +
+		    l->l_sigstk->ss_size);
+		stack_size = l->l_sigstk->ss_size;
 	} else {
 		sfp = (struct darwin_sigframe *)tf->fixreg[1];
 		stack_size = 0;
@@ -170,7 +170,7 @@ darwin_sendsig(ksi, mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 
 	return;
 }
@@ -234,9 +234,9 @@ darwin_sys_sigreturn_x2(struct lwp *l, const struct darwin_sys_sigreturn_x2_args
 
 	/* Restore signal stack */
 	if (uctx.uc_onstack & SS_ONSTACK)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&uctx.uc_sigmask, &mask);

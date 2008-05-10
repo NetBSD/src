@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.29 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.29.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.29 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.29.2.1 2008/05/10 23:48:44 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.29 2008/04/28 20:23:27 martin Exp
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/kauth.h>
@@ -273,7 +274,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	buildcontext(l, p->p_sigctx.ps_sigcode, sfp);
 
 	if (onstack)
-		l->l_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 
 /*

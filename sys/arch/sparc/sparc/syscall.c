@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18 2008/04/24 11:51:18 ad Exp $ */
+/*	$NetBSD: syscall.c,v 1.18.4.1 2008/05/10 23:48:46 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2008/04/24 11:51:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.4.1 2008/05/10 23:48:46 wrstuden Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2008/04/24 11:51:18 ad Exp $");
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/ktrace.h>
 

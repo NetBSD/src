@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.25.2.1 2008/05/10 23:48:46 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.25.2.1 2008/05/10 23:48:46 wrstuden Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/exec_macho.h>

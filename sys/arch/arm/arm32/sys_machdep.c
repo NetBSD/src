@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10.2.1 2008/05/10 23:48:43 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10 2008/04/27 18:58:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10.2.1 2008/05/10 23:48:43 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10 2008/04/27 18:58:44 matt Exp $"
 #include <sys/mount.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/sysarch.h>
