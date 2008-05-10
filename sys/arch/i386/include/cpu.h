@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.170 2008/05/09 18:11:28 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.171 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,6 @@
 
 #include <sys/device.h>
 #include <sys/cpu_data.h>
-#include <sys/cc_microtime.h>
 
 #include <lib/libkern/libkern.h>	/* offsetof */
 
@@ -103,7 +102,6 @@ struct cpu_info {
 	/*
 	 * Private members.
 	 */
-	struct cc_microtime_state ci_cc __aligned(64);/* cc_microtime state */
 	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
@@ -148,7 +146,6 @@ struct cpu_info {
 	uint32_t	ci_brand_id;	 /* Intel brand id */
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
-	uint64_t	ci_tsc_freq;	 /* cpu cycles/second */
 	volatile uint32_t	ci_lapic_counter;
 
 	const struct cpu_functions *ci_func;  /* start/stop functions */
@@ -221,6 +218,7 @@ struct cpu_info {
 
 #define CPUF_APIC_CD    0x0010		/* CPU has apic configured */
 
+#define	CPUF_SYNCTSC	0x0800		/* Synchronize TSC */
 #define	CPUF_PRESENT	0x1000		/* CPU is present */
 #define	CPUF_RUNNING	0x2000		/* CPU is running */
 #define	CPUF_PAUSE	0x4000		/* CPU is paused in DDB */

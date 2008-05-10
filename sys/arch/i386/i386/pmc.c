@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.15 2007/10/17 19:54:46 garbled Exp $	*/
+/*	$NetBSD: pmc.c,v 1.16 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.15 2007/10/17 19:54:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.16 2008/05/10 16:12:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.15 2007/10/17 19:54:46 garbled Exp $");
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
 #include <machine/pmc.h>
+#include <machine/cpu_counter.h>
 
 static int pmc_initialized;
 static int pmc_ncounters;
@@ -272,7 +273,7 @@ pmc_read(struct lwp *l, struct x86_pmc_read_args *uargs,
 		    rdmsr(pmc_state[args.counter].pmcs_ctrmsr) &
 		    0xffffffffffULL;
 		if (pmc_flags & PMC_INFO_HASTSC)
-			pmc_state[args.counter].pmcs_tsc = rdtsc();
+			pmc_state[args.counter].pmcs_tsc = cpu_counter();
 	}
 
 	args.val = pmc_state[args.counter].pmcs_val;

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.38 2008/04/28 18:49:40 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.39 2008/05/10 16:12:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.38 2008/04/28 18:49:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.39 2008/05/10 16:12:32 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -99,10 +99,10 @@ identifycpu(struct cpu_info *ci)
 
 	aprint_normal_dev(ci->ci_dev, "%s", cpu_model);
 
-	if (ci->ci_tsc_freq != 0)
+	if (ci->ci_data.cpu_cc_freq != 0)
 		aprint_normal(", %lu.%02lu MHz",
-		    (ci->ci_tsc_freq + 4999) / 1000000,
-		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+		    (ci->ci_data.cpu_cc_freq + 4999) / 1000000,
+		    ((ci->ci_data.cpu_cc_freq + 4999) / 10000) % 100);
 	aprint_normal("\n");
 
 	if (cpu_vendor == CPUVENDOR_INTEL) {

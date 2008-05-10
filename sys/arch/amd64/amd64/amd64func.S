@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64func.S,v 1.5 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: amd64func.S,v 1.6 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,28 +37,13 @@
 #include "assym.h"
 
 ENTRY(tsc_get_timecount)
-	jmp	_C_LABEL(tsc_slow_timecount)
-	movq	CPUVAR(CURLWP), %rsi
+	movq	CPUVAR(CURLWP), %rcx
 1:
-	movl	L_NCSW(%rsi), %ecx	/* gen = l_ncsw */
-	movq	L_CPU(%rsi), %rdi
-	addq	$CPU_INFO_CC, %rdi
-	cmpl	$0, CC_DENOM(%rdi)	/* if (first time) */
-	jz	2f			/*    return tsc_slow_timecount() */
-	addl	CC_GEN(%rdi), %ecx	/* gen += cc_gen */
-	movl	CC_DELTA+4(%rdi), %eax	/* if (cc_delta > 0xffffffff || */
-	orl	CC_DENOM+4(%rdi), %eax	/*     cc_denom > 0xffffffff) */
-	jnz	2f			/*    return tsc_slow_timecount() */
-	rdtsc				/* cc = cpu_counter32(); */
-	subl	CC_CC(%rdi), %eax	/* cc -= cc_cc; (can wrap) */
-	mull	CC_DELTA(%rdi)		/* rcc = (cc * cc_delta) */
-	divl	CC_DENOM(%rdi)		/*     / cc_denom */
-	addl	CC_VAL(%rdi), %eax	/*     + cc_val; */
-	subl	CC_GEN(%rdi), %ecx	/* if (gen != cc_gen + */
-	cmpl	L_NCSW(%rsi), %ecx	/*     l_ncsw) */
-	jne	3f			/*    continue; */
-	ret				/* return rcc; */
+	movq	L_NCSW(%rcx), %rdi
+	rdtsc
+	addl	CPUVAR(CC_SKEW), %eax
+	cmpq	%rdi, L_NCSW(%rcx)
+	jne	2f
+	ret
 2:
-	jmp	_C_LABEL(tsc_slow_timecount)
-3:
 	jmp	1b

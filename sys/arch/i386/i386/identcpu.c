@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.92 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.93 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.92 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.93 2008/05/10 16:12:32 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -1277,10 +1277,10 @@ identifycpu(struct cpu_info *ci)
 	    classnames[class]);
 	aprint_normal("%s: %s", cpuname, cpu_model);
 
-	if (ci->ci_tsc_freq != 0)
+	if (ci->ci_data.cpu_cc_freq != 0)
 		aprint_normal(", %qd.%02qd MHz",
-		    (ci->ci_tsc_freq + 4999) / 1000000,
-		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+		    (ci->ci_data.cpu_cc_freq + 4999) / 1000000,
+		    ((ci->ci_data.cpu_cc_freq + 4999) / 10000) % 100);
 	if (ci->ci_signature != 0)
 		aprint_normal(", id 0x%x", ci->ci_signature);
 	aprint_normal("\n");

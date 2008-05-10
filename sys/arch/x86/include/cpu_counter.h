@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.3 2008/05/10 14:53:54 ad Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.4 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,50 +34,11 @@
 
 #ifdef _KERNEL
 
-#include <machine/cpu.h>
-#include <machine/cpufunc.h>
-#include <machine/specialreg.h>
+uint64_t	cpu_counter(void);
+uint32_t	cpu_counter32(void);
+uint64_t	cpu_frequency(struct cpu_info *);
+int		cpu_hascounter(void);
 
-/*
- * x86 common functions for CPU counter.
- */
-
-static __inline uint64_t
-cpu_counter(void)
-{
-
-	return rdtsc();
-}
-
-static __inline uint32_t
-cpu_counter32(void)
-{
-
-	return rdtsc() & 0xffffffffUL;
-}
-
-static __inline uint64_t
-cpu_frequency(struct cpu_info *ci)
-{
-
-	return ci->ci_tsc_freq;
-}
-
-static __inline int
-cpu_hascounter(void)
-{
-
-	/*
-	 * Note that:
-	 * 1) Intel documentation is very specific that code *must* test
-	 * the CPU feature flag, even if you "know" that a particular
-	 * rev of the hardware supports it.
-	 * 2) We know that the TSC is busted on some Cyrix CPU in that if
-	 * you execute "hlt" when in powersave mode, TSC stops counting,
-	 * even though the CPU clock crystal is still ticking (it always has to).
-	 */
-	return (cpu_feature & CPUID_TSC) != 0;
-}
 #endif	/* _KERNEL */
 
 #endif /* !_X86_CPU_COUNTER_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68 2008/04/28 22:47:37 ad Exp $
+#	$NetBSD: genassym.cf,v 1.69 2008/05/10 16:12:32 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -316,9 +316,9 @@ define	CPU_INFO_ESP0		offsetof(struct cpu_info, ci_tss.tss_esp0)
 define	CPU_INFO_IOBASE		offsetof(struct cpu_info, ci_tss.tss_iobase)
 define	CPU_INFO_IOMAP		offsetof(struct cpu_info, ci_iomap)
 define	IOMAP_INVALOFF		IOMAP_INVALOFF
-define	CPU_INFO_CC		offsetof(struct cpu_info, ci_cc)
 define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
+define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
@@ -340,12 +340,6 @@ define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPU_INFO_INTRSTACK	offsetof(struct cpu_info, ci_intrstack)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
-
-define	CC_DENOM		offsetof(struct cc_microtime_state, cc_denom)
-define	CC_DELTA		offsetof(struct cc_microtime_state, cc_delta)
-define	CC_VAL			offsetof(struct cc_microtime_state, cc_val)
-define	CC_GEN			offsetof(struct cc_microtime_state, cc_gen)
-define	CC_CC			offsetof(struct cc_microtime_state, cc_cc)
 
 define	ACPI_SUSPEND_GDT		offsetof(struct cpu_info, ci_suspend_gdt)
 define	ACPI_SUSPEND_IDT		offsetof(struct cpu_info, ci_suspend_idt)

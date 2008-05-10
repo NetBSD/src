@@ -1,11 +1,8 @@
-/*	$NetBSD: tsc.c,v 1.15 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: tsc.c,v 1.16 2008/05/10 16:12:32 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * re-implementation of TSC for MP systems merging cc_microtime and
- * TSC for timecounters by Frank Kardel
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,301 +26,200 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* basic calibration ideas are (kern_microtime.c): */
-/******************************************************************************
- *                                                                            *
- * Copyright (c) David L. Mills 1993, 1994                                    *
- *                                                                            *
- * Permission to use, copy, modify, and distribute this software and its      *
- * documentation for any purpose and without fee is hereby granted, provided  *
- * that the above copyright notice appears in all copies and that both the    *
- * copyright notice and this permission notice appear in supporting           *
- * documentation, and that the name University of Delaware not be used in     *
- * advertising or publicity pertaining to distribution of the software        *
- * without specific, written prior permission.  The University of Delaware    *
- * makes no representations about the suitability this software for any       *
- * purpose.  It is provided "as is" without express or implied warranty.      *
- *                                                                            *
- ******************************************************************************/
-
-/* reminiscents from older version of this file are: */
-/*-
- * Copyright (c) 1998-2003 Poul-Henning Kamp
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
 #include <sys/cdefs.h>
-/* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.15 2008/04/28 20:23:40 martin Exp $");
-
-#include "opt_multiprocessor.h"
-#ifdef i386
-#include "opt_enhanced_speedstep.h"
-#endif
-#ifdef i386
-#include "opt_powernow_k7.h"
-#endif
-#include "opt_powernow_k8.h"
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.16 2008/05/10 16:12:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sysctl.h>
 #include <sys/time.h>
 #include <sys/timetc.h>
+#include <sys/lwp.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
-#include <sys/power.h>
-#include <sys/reboot.h>	/* XXX for bootverbose */
-#include <machine/cpu.h>
+#include <sys/cpu.h>
+
 #include <machine/cpu_counter.h>
-#include <x86/x86/tsc.h>
+#include <machine/cpuvar.h>
+#include <machine/cpufunc.h>
 #include <machine/specialreg.h>
+#include <machine/cputypes.h>
+
+#include "tsc.h"
+
+u_int	tsc_get_timecount(struct timecounter *);
 
 uint64_t	tsc_freq;
-u_int		tsc_present;
-int		tsc_is_broken = 0;
-
-static int64_t tsc_cal_val;  /* last calibrate time stamp */
-
-timecounter_get_t tsc_get_timecount;
-timecounter_get_t tsc_slow_timecount;
-static timecounter_pps_t tsc_calibrate;
-
-void tsc_calibrate_cpu(struct cpu_info *);
+int64_t		tsc_drift_max = 250;	/* max cycles */
+int64_t		tsc_drift_observed;
 
 static struct timecounter tsc_timecounter = {
-	tsc_get_timecount,	/* get_timecount */
-	tsc_calibrate,		/* once per second - used to calibrate cpu TSC */
- 	~0u,			/* counter_mask */
-	0,			/* frequency */
-	 "TSC",			/* name */
-#if (defined(ENHANCED_SPEEDSTEP) || defined(POWERNOW_K7) || defined(POWERNOW_K8))
-	-100,			/* don't pick TSC automatically */
-				/* if frequency changes might affect TSC */
-#else
-	800,			/* quality (adjusted in code) */
-#endif
-	NULL,
-	NULL,
+	.tc_get_timecount = tsc_get_timecount,
+	.tc_counter_mask = ~0U,
+	.tc_name = "TSC",
+	.tc_quality = 3000,
 };
 
 void
-init_TSC(void)
-{
-	uint64_t tscval[2];
-
-	if (cpu_feature & CPUID_TSC)
-		tsc_present = 1;
-	else
-		tsc_present = 0;
-
-	if (!tsc_present) 
-		return;
-
-	if (bootverbose)
-	        printf("Calibrating TSC clock ... ");
-
-	do {
-		tscval[0] = rdtsc();
-		i8254_delay(100000);
-		tscval[1] = rdtsc();
-	} while (tscval[1] < tscval[0]);
-
-	tsc_freq = 10 * (tscval[1] - tscval[0]);
-	if (bootverbose)
-		printf("TSC clock: %" PRId64 " Hz\n", tsc_freq);
-}
-
-void
-init_TSC_tc(void)
-{
-	if (tsc_present && tsc_freq != 0 && !tsc_is_broken) {
-		tsc_timecounter.tc_frequency = tsc_freq;
-		tc_init(&tsc_timecounter);
-	}
-}
-
-/* XXX make tsc_timecounter.tc_frequency settable by sysctl() */
-
-/*
- * pick up tick count scaled to reference tick count
- */
-u_int
-tsc_slow_timecount(struct timecounter *tc)
+tsc_tc_init(void)
 {
 	struct cpu_info *ci;
-	int64_t rcc, cc, ncsw;
-	u_int gen;
+	uint32_t descs[4];
+	bool safe;
 
- retry:
- 	ncsw = curlwp->l_ncsw;
- 	__insn_barrier();
-	ci = curcpu();
-	if (ci->ci_cc.cc_denom == 0) {
-		/*
-		 * This is our first time here on this CPU.  Just
-		 * start with reasonable initial values.
-		 */
-	        ci->ci_cc.cc_cc    = cpu_counter32();
-		ci->ci_cc.cc_val   = 0;
-		if (ci->ci_cc.cc_gen == 0)
-			ci->ci_cc.cc_gen++;
-
-		ci->ci_cc.cc_denom = cpu_frequency(ci);
-		if (ci->ci_cc.cc_denom == 0)
-			ci->ci_cc.cc_denom = tsc_freq;
-		ci->ci_cc.cc_delta = ci->ci_cc.cc_denom;
-	}
-
-	/* read counter and re-read when the re-calibration
-	   strikes inbetween */
-	do {
-		/* pick up current generation number */
-		gen = ci->ci_cc.cc_gen;
-
-		/* determine local delta ticks */
-		cc = cpu_counter32() - ci->ci_cc.cc_cc;
-		if (cc < 0)
-			cc += 0x100000000LL;
-
-		/* scale to primary */
-		rcc = (cc * ci->ci_cc.cc_delta) / ci->ci_cc.cc_denom
-			+ ci->ci_cc.cc_val;
-	} while (gen == 0 || gen != ci->ci_cc.cc_gen);
- 	__insn_barrier();
- 	if (ncsw != curlwp->l_ncsw) {
- 		/* Was preempted */ 
- 		goto retry;
-	}
-
-	return rcc;
-}
-
-/*
- * called once per second via the pps callback
- * for the calibration of the TSC counters.
- * it is called only for the PRIMARY cpu. all
- * other cpus are called via a broadcast IPI
- */
-static void
-tsc_calibrate(struct timecounter *tc)
-{
-	struct cpu_info *ci = curcpu();
-	
-	/* pick up reference ticks */
-	tsc_cal_val = cpu_counter32();
-
-#if defined(MULTIPROCESSOR)
-	x86_broadcast_ipi(X86_IPI_MICROSET);
-#endif
-
-	tsc_calibrate_cpu(ci);
-}
-
-/*
- * This routine is called about once per second directly by the master
- * processor and via an interprocessor interrupt for other processors.
- * It determines the CC frequency of each processor relative to the
- * master clock and the time this determination is made.  These values
- * are used by tsc_get_timecount() to interpolate the ticks between
- * timer interrupts.  Note that we assume the kernel variables have
- * been zeroed early in life.
- */
-void
-tsc_calibrate_cpu(struct cpu_info *ci)
-{
-	u_int   gen;
-	int64_t val;
-	int64_t delta, denom;
-	int s;
-#ifdef TIMECOUNTER_DEBUG
-	int64_t factor, old_factor;
-#endif
-	val = tsc_cal_val;
-
-	s = splhigh();
-	/* create next generation number */
-	gen = ci->ci_cc.cc_gen;
-	gen++;
-	if (gen == 0)
-		gen++;
-	/* update in progress */
-	ci->ci_cc.cc_gen = 0;
-
-	denom = ci->ci_cc.cc_cc;
-	ci->ci_cc.cc_cc = cpu_counter32();
-
-	if (ci->ci_cc.cc_denom == 0) {
-		/*
-		 * This is our first time here on this CPU.  Just
-		 * start with reasonable initial values.
-		 */
-		ci->ci_cc.cc_val = val;
-		ci->ci_cc.cc_denom = cpu_frequency(ci);
-		if (ci->ci_cc.cc_denom == 0)
-			ci->ci_cc.cc_denom = tsc_freq;
-		ci->ci_cc.cc_delta = ci->ci_cc.cc_denom;
-		ci->ci_cc.cc_gen = gen;
-		splx(s);
+	if ((cpu_feature & CPUID_TSC) == 0) {
 		return;
 	}
 
-#ifdef TIMECOUNTER_DEBUG
-	old_factor = (ci->ci_cc.cc_delta * 1000 ) / ci->ci_cc.cc_denom;
-#endif
+	ci = curcpu();
+	safe = false;
+	tsc_freq = ci->ci_data.cpu_cc_freq;
 
-	/* local ticks per period */
-	denom = ci->ci_cc.cc_cc - denom;
-	if (denom < 0)
-		denom += 0x100000000LL;
+	if (cpu_vendor == CPUVENDOR_INTEL) {
+		/*
+		 * From Intel(tm) 64 and IA-32 Architectures Software
+		 * Developer's Manual Volume 3A: System Programming Guide,
+		 * Part 1 Order Number: 253668-026US February 2008, these
+		 * are the processors where the TSC is known safe:
+		 *
+		 * Pentium 4, Intel Xeon (family 0f, models 03 and higher)
+		 * Core Solo and Core Duo processors (family 06, model 0e)
+		 * Xeon 5100 series and Core 2 Duo (family 06, model 0f)
+		 *
+		 * We'll also assume that it's safe on the Pentium.  It
+		 * can probably be assumed for the earlier P-II and P-III
+		 * Xeons, but for now, punt.
+		 */
+		switch (CPUID2FAMILY(ci->ci_signature)) {
+		case 0x05:
+			safe = true;
+			break;
+		case 0x06:
+			safe = CPUID2MODEL(ci->ci_signature) == 0x0e ||
+			    CPUID2MODEL(ci->ci_signature) == 0x0f;
+			break;
+		case 0x0f:
+			safe = CPUID2MODEL(ci->ci_signature) > 0x03;
+			break;
+		}
+	} else if (cpu_vendor == CPUVENDOR_AMD) {
+		/*
+		 * TSC and Power Management Events on AMD Processors
+		 * Nov 2, 2005 Rich Brunner, AMD Fellow
+		 * http://lkml.org/lkml/2005/11/4/173
+		 *
+		 * There are a lot of recommendations in this note.
+		 * We're only going to follow the simple, reliable
+		 * ones.
+		 */
+		switch (CPUID2FAMILY(ci->ci_signature)) {
+		case 0x06:
+		case 0x07:
+			/*
+			 * TSC is fine, apart from P-state changes.
+			 * The PowerNow code need hooks to disable
+			 * the TSC if the user modifies operating
+			 * parameters.  For now, punt.  XXX
+			 */
+			break;
+		case 0x0f:
+			/* Check for "invariant TSC", bit 8 of %edx. */
+			x86_cpuid(0x80000007, descs);
+			safe = (descs[3] & (1 << 8)) != 0;
+			break;
+		}
+	}
 
-	ci->ci_cc.cc_denom = denom;
+	if (!safe) {
+		aprint_debug("TSC not known safe on this CPU\n");
+		tsc_timecounter.tc_quality = -100;
+	} else if (tsc_drift_observed > tsc_drift_max) {
+		aprint_error("ERROR: %lld cycle TSC drift observed\n",
+		    (long long)tsc_drift_observed);
+		tsc_timecounter.tc_quality = -100;
+		safe = false;
+	}
 
-	/* reference ticks per period */
-	delta = val - ci->ci_cc.cc_val;
-	if (delta < 0)
-		delta += 0x100000000LL;
+	tsc_timecounter.tc_frequency = tsc_freq;
+	tc_init(&tsc_timecounter);
+}
 
-	ci->ci_cc.cc_val = val;
-	ci->ci_cc.cc_delta = delta;
-	
-	/* publish new generation number */
-	ci->ci_cc.cc_gen = gen;
-	splx(s);
+/*
+ * Record drift (in clock cycles).  Called during AP startup.
+ */
+void
+tsc_sync_drift(int64_t drift)
+{
 
-#ifdef TIMECOUNTER_DEBUG
-	factor = (delta * 1000) / denom - old_factor;
-	if (factor < 0)
-		factor = -factor;
+	if (drift < 0)
+		drift = -drift;
+	if (drift > tsc_drift_observed)
+		tsc_drift_observed = drift;
+}
 
-	if (factor > old_factor / 10)
-		printf("tsc_calibrate_cpu[%lu]: 10%% exceeded - delta %"
-		       PRId64 ", denom %" PRId64 ", factor %" PRId64
-		       ", old factor %" PRId64"\n", ci->ci_cpuid,
-		       delta, denom, (delta * 1000) / denom, old_factor);
-#if 0
-	printf("tsc_calibrate_cpu[%lu]: delta %" PRId64
-	       ", denom %" PRId64 ", factor %" PRId64 "\n", ci->ci_cpuid, delta, denom, (delta * 1000) / denom);
-#endif
-#endif /* TIMECOUNTER_DEBUG */
+/*
+ * Called during startup of APs, by the boot processor.  Interrupts
+ * are disabled on entry.
+ */
+void
+tsc_sync_bp(struct cpu_info *ci)
+{
+	uint64_t tsc;
+
+	/* Clear remote result, pending later update. */
+	ci->ci_data.cpu_cc_skew = ~0LL;
+
+	/* Flag it and read our TSC. */
+	atomic_or_uint(&ci->ci_flags, CPUF_SYNCTSC);
+	tsc = rdmsr(MSR_TSC) >> 1;
+
+	/* Wait for remote to complete, and read ours again. */
+	while ((ci->ci_flags & CPUF_SYNCTSC) != 0) {
+		__insn_barrier();
+	}
+	tsc += (rdmsr(MSR_TSC) >> 1);
+
+	/* Wait for the results to come in. */
+	while (ci->ci_data.cpu_cc_skew == ~0LL) {
+		x86_pause();
+	}
+
+	/* Compute final value to adjust for skew. */
+	ci->ci_data.cpu_cc_skew = tsc - ci->ci_data.cpu_cc_skew;
+}
+
+/*
+ * Called during startup of AP, by the AP itself.  Interrupts are
+ * disabled on entry.
+ */
+void
+tsc_sync_ap(struct cpu_info *ci)
+{
+	uint64_t tsc;
+
+	/* Wait for go-ahead from primary. */
+	while ((ci->ci_flags & CPUF_SYNCTSC) == 0) {
+		__insn_barrier();
+	}
+	tsc = (rdmsr(MSR_TSC) >> 1);
+
+	/* Instruct primary to read its counter. */
+	atomic_and_uint(&ci->ci_flags, ~CPUF_SYNCTSC);
+	tsc += (rdmsr(MSR_TSC) >> 1);
+
+	/* Finally, post back our result. */
+	ci->ci_data.cpu_cc_skew = tsc;
+}
+
+uint64_t
+cpu_frequency(struct cpu_info *ci)
+{
+
+	return ci->ci_data.cpu_cc_freq;
+}
+
+int
+cpu_hascounter(void)
+{
+
+	return cpu_feature & CPUID_TSC;
 }
