@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2008/05/09 18:11:29 joerg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.20 2008/05/10 16:27:57 ad Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2008/05/09 18:11:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2008/05/10 16:27:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1064,11 +1064,11 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 		freq = freq << -tinfo->tsc_shift;
 	else
 		freq = freq >> tinfo->tsc_shift;
-	ci->ci_tsc_freq = freq;
+	ci->ci_data.cpu_cc_freq = freq;
 #else
 	/* Xen2 */
 	/* XXX this needs to read the shared_info of the CPU being probed.. */
-	ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
+	ci->ci_data.cpu_cc_freq = HYPERVISOR_shared_info->cpu_freq;
 #endif /* XEN3 */
 }
 
