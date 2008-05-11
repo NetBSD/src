@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.11 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: ipi.c,v 1.12 2008/05/11 15:59:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,14 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.11 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.12 2008/05/11 15:59:51 ad Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
  
-#include <machine/intr.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
@@ -57,7 +58,7 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 	if (!(ci->ci_flags & CPUF_RUNNING))
 		return ENOENT;
 
-	ret = x86_ipi(LAPIC_IPI_VECTOR, ci->ci_apicid, LAPIC_DLMODE_FIXED);
+	ret = x86_ipi(LAPIC_IPI_VECTOR, ci->ci_cpuid, LAPIC_DLMODE_FIXED);
 	if (ret != 0) {
 		printf("ipi of %x from %s to %s failed\n",
 		    ipimask,
@@ -95,12 +96,12 @@ x86_multicast_ipi(int cpumask, int ipimask)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	cpumask &= ~(1U << cpu_number());
+	cpumask &= ~(1U << cpu_index(curcpu()));
 	if (cpumask == 0)
 		return;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if ((cpumask & (1U << ci->ci_cpuid)) == 0)
+		if ((cpumask & (1U << cpu_index(ci))) == 0)
 			continue;
 		x86_send_ipi(ci, ipimask);
 	}
