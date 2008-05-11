@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.13 2008/05/11 12:43:35 ad Exp $	*/
+/*	$NetBSD: i386func.S,v 1.14 2008/05/11 16:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.13 2008/05/11 12:43:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.14 2008/05/11 16:23:05 ad Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -51,6 +51,11 @@ END(invlpg)
 
 ENTRY(lldt)
 	movl	4(%esp), %eax
+	cmpl	%eax, CPUVAR(CURLDT)
+	jne	1f
+	ret
+1:
+	movl	%eax, CPUVAR(CURLDT)
 	lldt	%ax
 	ret
 END(lldt)
