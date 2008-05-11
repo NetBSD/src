@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.h,v 1.5 2008/05/08 07:13:20 dyoung Exp $	*/
+/*	$NetBSD: af_inet.h,v 1.6 2008/05/11 23:25:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,8 +33,6 @@
 #include <netinet/in.h>
 #include "parse.h"
 
-void	in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
-    struct ifreq *);
 void	in_status(prop_dictionary_t, prop_dictionary_t, bool);
 void	in_commit_address(prop_dictionary_t, prop_dictionary_t);
 
