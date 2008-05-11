@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.9 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: params.h,v 1.10 2008/05/11 03:15:21 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ struct keygen {
 	size_t		 kg_iterations;
 	bits_t		*kg_salt;
 	bits_t		*kg_key;
+	string_t	*kg_cmd;
 	struct keygen	*next;
 };
 
@@ -61,6 +62,7 @@ struct params {
 #define KEYGEN_STOREDKEY		0x3
 #define KEYGEN_URANDOMKEY		0x4
 #define KEYGEN_PKCS5_PBKDF2_SHA1	0x5
+#define KEYGEN_SHELL_CMD		0x6
 
 /* verification methods */
 
@@ -105,6 +107,7 @@ struct keygen	*keygen_set_method(struct keygen *, string_t *);
 struct keygen	*keygen_salt(bits_t *);
 struct keygen	*keygen_iterations(size_t);
 struct keygen	*keygen_key(bits_t *);
+struct keygen	*keygen_cmd(string_t *);
 
 int		 keygen_fput(struct keygen *, int, FILE *);
 __END_DECLS

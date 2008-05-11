@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.25 2008/05/10 21:38:40 elric Exp $
+.\" $NetBSD: cgdconfig.8,v 1.26 2008/05/11 03:15:21 elric Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,6 +175,10 @@ Note, however, that some or all of the bits used to generate the
 key may be obtained from a pseudo-random number generator,
 which may not be as secure as the entropy based hard-random
 number generator.
+.It shell_cmd
+This method executes a shell command via
+.Xr popen 3
+and reads the key from stdout.
 .El
 .Ss Verification Method
 The verification method is how
@@ -292,6 +296,9 @@ The keygen statement's statement block may contain the following statements:
 .It key Ar string
 The key.
 Only used for the storedkey key generation method.
+.It cmd Ar string
+The command to execute.
+Only used for the shell_cmd key generation method.
 .It iterations Ar integer
 The number of iterations.
 Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
