@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.13 2008/05/08 07:13:20 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.14 2008/05/11 22:07:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.13 2008/05/08 07:13:20 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.14 2008/05/11 22:07:23 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -95,7 +95,8 @@ static struct pinteger parse_vltime = PINTEGER_INITIALIZER(&parse_vltime,
 static const struct kwinst inet6kw[] = {
 	  {.k_word = "pltime", .k_nextparser = &parse_pltime.pi_parser}
 	, {.k_word = "vltime", .k_nextparser = &parse_vltime.pi_parser}
-	, {.k_word = "eui64", .k_exec = setia6eui64,
+	, {.k_word = "eui64", .k_key = "eui64", .k_type = KW_T_BOOL,
+	   .k_bool = true, .k_exec = setia6eui64,
 	   .k_nextparser = &command_root.pb_parser}
 };
 
@@ -104,6 +105,7 @@ struct pkw ia6flags = PKW_INITIALIZER(&ia6flags, "ia6flags", setia6flags,
 struct pkw inet6 = PKW_INITIALIZER(&inet6, "IPv6 keywords", NULL,
     NULL, inet6kw, __arraycount(inet6kw), NULL);
 
+static void in6_delscopeid(struct sockaddr_in6 *sin6);
 static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
 static void in6_alias(const char *, prop_dictionary_t, prop_dictionary_t,
     struct in6_ifreq *);
@@ -263,12 +265,19 @@ setia6lifetime(prop_dictionary_t env, int64_t val, time_t *timep,
 int
 setia6eui64_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 {
+	char buf[2][80];
 	struct ifaddrs *ifap, *ifa;
 	const struct sockaddr_in6 *sin6 = NULL;
 	const struct in6_addr *lladdr = NULL;
 	struct in6_addr *in6;
 	const char *ifname;
+	bool doit = false;
 	int af;
+
+	if (!prop_dictionary_get_bool(env, "eui64", &doit) || !doit) {
+		errno = ENOENT;
+		return -1;
+	}
 
 	if ((ifname = getifname(env)) == NULL)
 		return -1;
@@ -279,8 +288,20 @@ setia6eui64_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 		    "eui64 address modifier not allowed for the AF");
 	}
  	in6 = &ifra->ifra_addr.sin6_addr;
-	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0)
-		errx(EXIT_FAILURE, "interface index is already filled");
+	if (memcmp(&in6addr_any.s6_addr[8], &in6->s6_addr[8], 8) != 0) {
+		union {
+			struct sockaddr_in6 sin6;
+			struct sockaddr sa;
+		} any = {.sin6 = {.sin6_family = AF_INET6}};
+		memcpy(&any.sin6.sin6_addr, &in6addr_any,
+		    sizeof(any.sin6.sin6_addr));
+		(void)sockaddr_snprintf(buf[0], sizeof(buf[0]), "%a%%S",
+		    &any.sa);
+		(void)sockaddr_snprintf(buf[1], sizeof(buf[1]), "%a%%S",
+		    (const struct sockaddr *)&ifra->ifra_addr);
+		errx(EXIT_FAILURE, "interface index is already filled, %s | %s",
+		    buf[0], buf[1]);
+	}
 	if (getifaddrs(&ifap) != 0)
 		err(EXIT_FAILURE, "getifaddrs");
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
@@ -308,10 +329,22 @@ setia6eui64(prop_dictionary_t env, prop_dictionary_t xenv)
 	return setia6eui64_impl(env, &in6_addreq);
 }
 
+/* KAME idiosyncrasy */
+static void
+in6_delscopeid(struct sockaddr_in6 *sin6)
+{
+	if (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+	    sin6->sin6_scope_id == 0)
+		return;
+
+	*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] = htons(sin6->sin6_scope_id);
+	sin6->sin6_scope_id = 0;
+}
+
+/* KAME idiosyncrasy */
 void
 in6_fillscopeid(struct sockaddr_in6 *sin6)
 {
-	/* KAME idiosyncrasy */
 	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 		sin6->sin6_scope_id =
 			ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
@@ -483,12 +516,7 @@ in6_getaddr(const struct paddr_prefix *pfx, int which)
 
 	memcpy(sin6, &pfx->pfx_addr, MIN(sizeof(*sin6), pfx->pfx_addr.sa_len));
 
-	/* KAME idiosyncrasy */
-	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) && sin6->sin6_scope_id) {
-		*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] =
-			htons(sin6->sin6_scope_id);
-		sin6->sin6_scope_id = 0;
-	}
+	in6_delscopeid(sin6);
 }
 
 void
@@ -514,14 +542,16 @@ in6_getprefix(int len, int which)
 }
 
 static int
-in6_pre_aifaddr(prop_dictionary_t env, void *arg)
+in6_pre_aifaddr(prop_dictionary_t env, struct afparam *param)
 {
-	struct in6_aliasreq *ifra = arg;
+	struct in6_aliasreq *ifra = param->req.buf;
 
 	setia6eui64_impl(env, ifra);
 	setia6vltime_impl(env, ifra);
 	setia6pltime_impl(env, ifra);
 	setia6flags_impl(env, ifra);
+	in6_delscopeid(&ifra->ifra_addr);
+	in6_delscopeid(&ifra->ifra_dstaddr);
 
 	return 0;
 }
@@ -529,9 +559,7 @@ in6_pre_aifaddr(prop_dictionary_t env, void *arg)
 void
 in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	struct in6_ifreq in6_ifr;
-#if 0
-	 = {
+	struct in6_ifreq in6_ifr = {
 		.ifr_addr = {
 			.sin6_family = AF_INET6,
 			.sin6_addr = {
@@ -541,7 +569,6 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 			}
 		}
 	};
-#endif
 	static struct sockaddr_in6 in6_defmask = {
 		.sin6_addr = {
 			.s6_addr = {0xff, 0xff, 0xff, 0xff,
@@ -549,9 +576,7 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 		}
 	};
 
-	struct in6_aliasreq in6_ifra;
-#if 0
-	 = {
+	struct in6_aliasreq in6_ifra = {
 		.ifra_prefixmask = {
 			.sin6_addr = {
 				.s6_addr =
@@ -562,7 +587,6 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 			, .ia6t_vltime = ND6_INFINITE_LIFETIME
 		}
 	};
-#endif
 	struct afparam in6param = {
 		  .req = BUFPARAM(in6_ifra)
 		, .dgreq = BUFPARAM(in6_ifr)
@@ -582,7 +606,6 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR_IN6)
 		, .defmask = BUFPARAM(in6_defmask)
 		, .pre_aifaddr = in6_pre_aifaddr
-		, .pre_aifaddr_arg = BUFPARAM(in6_ifra)
 	};
 	commit_address(env, oenv, &in6param);
 }

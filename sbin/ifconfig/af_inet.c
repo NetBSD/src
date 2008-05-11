@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.8 2008/05/08 07:13:20 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.9 2008/05/11 22:07:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.8 2008/05/08 07:13:20 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.9 2008/05/11 22:07:23 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -235,5 +235,7 @@ in_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR)
 		, .defmask = {.buf = NULL, .buflen = 0}
 	};
+	memset(&in_ifr, 0, sizeof(in_ifr));
+	memset(&in_ifra, 0, sizeof(in_ifra));
 	commit_address(env, oenv, &inparam);
 }

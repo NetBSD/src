@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.5 2008/05/08 07:13:20 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.6 2008/05/11 22:07:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.5 2008/05/08 07:13:20 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.6 2008/05/11 22:07:23 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -115,9 +115,6 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 		replace = false;
 		delete = !alias;
 	}
-
-	memset(param->req.buf, 0, param->req.buflen);
-	memset(param->dgreq.buf, 0, param->dgreq.buflen);
 
 	strlcpy(param->name[0].buf, ifname, param->name[0].buflen);
 	strlcpy(param->name[1].buf, ifname, param->name[1].buflen);
