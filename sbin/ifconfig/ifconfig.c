@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.202 2008/05/08 07:13:20 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.203 2008/05/11 22:07:23 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.202 2008/05/08 07:13:20 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.203 2008/05/11 22:07:23 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,12 +182,8 @@ static const struct afswtch afs[] = {
 
 #ifdef INET6
 	, {.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
-	   .af_getaddr = in6_getaddr, .af_getprefix = in6_getprefix,
-	   .af_difaddr = SIOCDIFADDR_IN6, .af_aifaddr = SIOCAIFADDR_IN6,
-	/* Deleting the first address before setting new one is
-	 * not prefered way in this protocol.
-	 */
-	   .af_gifaddr = 0, .af_ridreq = &in6_ridreq, .af_addreq = &in6_addreq}
+	   .af_addr_commit = in6_commit_address
+}
 #endif
 
 #ifndef INET_ONLY	/* small version, for boot media */
