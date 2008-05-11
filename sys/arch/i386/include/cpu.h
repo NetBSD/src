@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.171 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.172 2008/05/11 14:44:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -136,14 +136,11 @@ struct cpu_info {
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
 
-	int32_t		ci_cpuid_level;
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
 	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
 	uint32_t	ci_feature3_flags;/* X86 extended feature bits */
 	uint32_t	ci_padlock_flags;/* VIA PadLock feature bits */
-	uint32_t	ci_cpu_class;	 /* CPU class */
-	uint32_t	ci_brand_id;	 /* Intel brand id */
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
 	volatile uint32_t	ci_lapic_counter;
@@ -353,45 +350,15 @@ struct timeval;
 #define	DELAY(x)		(*delay_func)(x)
 #define delay(x)		(*delay_func)(x)
 
-/*
- * pull in #defines for kinds of processors
- */
-#include <machine/cputypes.h>
-
-struct cpu_nocpuid_nameclass {
-	int cpu_vendor;
-	const char *cpu_vendorname;
-	const char *cpu_name;
-	int cpu_class;
-	void (*cpu_setup)(struct cpu_info *);
-	void (*cpu_cacheinfo)(struct cpu_info *);
-	void (*cpu_info)(struct cpu_info *);
-};
-
-
-struct cpu_cpuid_nameclass {
-	const char *cpu_id;
-	int cpu_vendor;
-	const char *cpu_vendorname;
-	struct cpu_cpuid_family {
-		int cpu_class;
-		const char *cpu_models[CPU_MAXMODEL+2];
-		void (*cpu_setup)(struct cpu_info *);
-		void (*cpu_probe)(struct cpu_info *);
-		void (*cpu_info)(struct cpu_info *);
-	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
-};
-
 extern int biosbasemem;
 extern int biosextmem;
 extern unsigned int cpu_feature;
 extern unsigned int cpu_feature2;
 extern unsigned int cpu_feature_padlock;
 extern int cpu;
+extern int cpuid_level;
 extern int cpu_class;
 extern char cpu_brand_string[];
-extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
-extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 
 extern int i386_use_fxsave;
 extern int i386_has_sse;
@@ -411,7 +378,8 @@ void 	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
 void 	tmx86_init_longrun(void);
 
 /* identcpu.c */
-void 	identifycpu(struct cpu_info *);
+void 	cpu_probe(struct cpu_info *);
+void	cpu_identify(struct cpu_info *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
