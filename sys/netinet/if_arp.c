@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.137 2008/05/04 07:22:14 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.138 2008/05/11 20:16:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.137 2008/05/04 07:22:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.138 2008/05/11 20:16:12 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -597,7 +597,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			break;
 		}
 		arp_inuse++, arp_allocated++;
-		Bzero(la, allocsize);
+		memset(la, 0, allocsize);
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
@@ -1236,11 +1236,12 @@ arplookup1(struct mbuf *m, const struct in_addr *addr, int create, int proxy,
 	struct arphdr *ah;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct rtentry *rt;
-	static struct sockaddr_inarp sin;
-	const char *why = 0;
+	struct sockaddr_inarp sin;
+	const char *why = NULL;
 
 	ah = mtod(m, struct arphdr *);
 	if (rt0 == NULL) {
+		memset(&sin, 0, sizeof(sin));
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		sin.sin_addr = *addr;
