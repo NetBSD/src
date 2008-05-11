@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.135 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: if.h,v 1.136 2008/05/11 23:48:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -463,7 +463,7 @@ struct ifaddr {
 	uint32_t	*ifa_seqno;
 	int16_t	ifa_preference;	/* preference level for this address */
 };
-#define	IFA_ROUTE	RTF_UP /* 0x01 *//* route installed */
+#define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
 
 /*
  * Message format for use in obtaining information about interfaces
@@ -636,6 +636,7 @@ struct if_laddrreq {
 	char iflr_name[IFNAMSIZ];
 	unsigned int flags;
 #define IFLR_PREFIX	0x8000	/* in: prefix given  out: kernel fills id */
+#define IFLR_ACTIVE	0x4000	/* in/out: link-layer address activation */
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
