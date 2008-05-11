@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.57 2008/05/08 08:15:27 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.58 2008/05/11 06:24:08 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -960,4 +960,42 @@ usr.bin/gzip/zgrep				1.6
 	when "-h" is not specified.
 	Fixes PR#36062.
 	[nakayama, ticket #1134]
+
+usr.sbin/lpr/common_source/common.c		1.38
+
+	Sort queue by time and jobid so that jobs submitted within the
+	same second are printed in order.
+	[mlelstv, ticket #1136]
+
+sys/netipsec/key.c				1.54
+
+	In key_do_allocsa_policy, fix a bad usage of key_setsadbmsg.
+	The third argument is an SADB_SATYPE_*, not an IPPROTO_* .
+	Fixes PR#38405
+	[degroote, ticket #1137]
+
+gnu/dist/gcc4/gcc/config/m68k/m68k.md		1.5
+
+	Pull the follwoing fix from upstream:
+	  http://gcc.gnu.org/viewcvs/trunk/gcc/config/m68k/m68k.md#rev117181
+	Fixes "internal compiler error: in do_SUBST" on compiling
+	floating point ops with -msoft-float or -m68010 on LP64 hosts,
+	May fix PR#38359.
+	[tsutsui, ticket #1138]
+
+gnu/dist/gcc4/gcc/genemit.c			1.2
+gnu/dist/gcc4/gcc/genrecog.c			1.2
+gnu/dist/gcc4/gcc/hwint.h			1.2
+
+	Defer wide int L/LL suffix choice in insn-*.c until we compile for
+	host using correct set of HOST_WIDE_INT* defines.  Fixes compilation
+	of native sh3 gcc on 64-bit build machines.
+	PR#34549.
+	[uwe, ticket #1139]
+
+sys/dev/raidframe/rf_layout.c			1.20
+
+	Both StripeUnitsPerParityUnit and StripeUnitsPerReconstructUnit need
+	to be positive integers.
+	[oster, ticket #1140]
 
