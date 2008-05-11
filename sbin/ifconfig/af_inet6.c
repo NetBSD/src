@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.16 2008/05/11 22:16:29 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.17 2008/05/11 22:18:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.16 2008/05/11 22:16:29 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.17 2008/05/11 22:18:20 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -312,7 +312,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 		err(EXIT_FAILURE, "socket");
 	}
 
-	sin6 = (struct sockaddr_in6 *)&creq->ifr_addr;
+	sin6 = &creq->ifr_addr;
 
 	in6_fillscopeid(sin6);
 	scopeid = sin6->sin6_scope_id;
@@ -335,7 +335,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 			ifr6.ifr_addr.sin6_family = AF_INET6;
 			ifr6.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 		}
-		sin6 = (struct sockaddr_in6 *)&ifr6.ifr_addr;
+		sin6 = &ifr6.ifr_addr;
 		in6_fillscopeid(sin6);
 		hbuf[0] = '\0';
 		if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
@@ -351,7 +351,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFNETMASK_IN6");
 	} else {
-		sin6 = (struct sockaddr_in6 *)&ifr6.ifr_addr;
+		sin6 = &ifr6.ifr_addr;
 		printf(" prefixlen %d", prefix(&sin6->sin6_addr,
 					       sizeof(struct in6_addr)));
 	}
@@ -437,11 +437,6 @@ in6_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	}
 	freeifaddrs(ifap);
 }
-
-#define SIN6(x) ((struct sockaddr_in6 *) &(x))
-struct sockaddr_in6 *sin6tab[] = {
-    SIN6(in6_ridreq.ifr_addr), SIN6(in6_addreq.ifra_addr),
-    SIN6(in6_addreq.ifra_prefixmask), SIN6(in6_addreq.ifra_dstaddr)};
 
 static int
 in6_pre_aifaddr(prop_dictionary_t env, struct afparam *param)
