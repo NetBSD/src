@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.50 2008/05/11 13:18:25 joerg Exp $	*/
+/*	$NetBSD: intr.c,v 1.51 2008/05/11 14:25:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.50 2008/05/11 13:18:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.51 2008/05/11 14:25:02 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -761,9 +761,10 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	pic->pic_hwunmask(pic, pin);
 
 #ifdef INTRDEBUG
-	printf("allocated pic %s type %s pin %d level %d to cpu%u slot %d idt entry %d\n",
+	printf("allocated pic %s type %s pin %d level %d to %s slot %d "
+	    "idt entry %d\n",
 	    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin, level,
-	    ci->ci_apicid, slot, idt_vec);
+	    device_xname(ci->ci_dev), slot, idt_vec);
 #endif
 
 	return (ih);
@@ -808,9 +809,9 @@ intr_disestablish(struct intrhand *ih)
 	pic->pic_hwunmask(pic, ih->ih_pin);
 
 #ifdef INTRDEBUG
-	printf("cpu%u: remove slot %d (pic %s pin %d vec %d)\n",
-	    ci->ci_apicid, ih->ih_slot, device_xname(&pic->pic_dev), ih->ih_pin,
-	    idtvec);
+	printf("%s: remove slot %d (pic %s pin %d vec %d)\n",
+	    device_xname(ci->ci_dev), ih->ih_slot, device_xname(&pic->pic_dev),
+	    ih->ih_pin, idtvec);
 #endif
 
 	if (source->is_handlers == NULL) {
@@ -991,7 +992,7 @@ intr_printconfig(void)
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		printf("cpu%d: interrupt masks:\n", ci->ci_apicid);
+		printf("%s: interrupt masks:\n", device_xname(ci->ci_dev));
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
@@ -999,8 +1000,8 @@ intr_printconfig(void)
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
 				continue;
-			printf("cpu%u source %d is pin %d from pic %s maxlevel %d\n",
-			    ci->ci_apicid, i, isp->is_pin,
+			printf("%s source %d is pin %d from pic %s maxlevel %d\n",
+			    device_xname(ci->ci_dev), i, isp->is_pin,
 			    isp->is_pic->pic_name, isp->is_maxlevel);
 			for (ih = isp->is_handlers; ih != NULL;
 			     ih = ih->ih_next)
