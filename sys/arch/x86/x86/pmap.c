@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2008/05/11 15:59:51 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2008/05/11 16:17:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2008/05/11 15:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2008/05/11 16:17:38 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2385,6 +2385,7 @@ pmap_ldt_cleanup(struct lwp *l)
 	int sel = -1;
 
 	mutex_enter(&pmap->pm_lock);
+	kpreempt_disable();
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		sel = pmap->pm_ldt_sel;
@@ -2399,6 +2400,7 @@ pmap_ldt_cleanup(struct lwp *l)
 		pmap->pm_flags &= ~PMF_USER_LDT;
 	}
 
+	kpreempt_enable();
 	mutex_exit(&pmap->pm_lock);
 
 	if (sel != -1)
