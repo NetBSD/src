@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43 2008/05/11 16:23:05 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.44 2008/05/11 16:26:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2008/05/11 16:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2008/05/11 16:26:56 ad Exp $");
 
 #include "opt_ddb.h"
-#include "opt_multiprocessor.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
 #include "opt_mtrr.h"
 
@@ -101,11 +100,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2008/05/11 16:23:05 ad Exp $");
 #include <machine/tlog.h>
 #endif
 
-#if NLAPIC > 0
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#endif
 
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/nvram.h>
@@ -161,9 +158,7 @@ static void	cpu_set_tss_gates(struct cpu_info *);
 static void	tss_init(struct i386tss *, void *, void *);
 #endif
 
-#ifdef MULTIPROCESSOR
 static void	cpu_init_idle_lwp(struct cpu_info *);
-#endif
 
 uint32_t cpus_attached = 0;
 uint32_t cpus_running = 0;
@@ -175,7 +170,6 @@ paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 
 static vaddr_t cmos_data_mapping;
 
-#ifdef MULTIPROCESSOR
 /*
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
@@ -212,7 +206,6 @@ cpu_init_first(void)
 	pmap_kenter_pa(cmos_data_mapping, 0, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 }
-#endif
 
 int
 cpu_match(device_t parent, cfdata_t match, void *aux)
@@ -301,13 +294,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
 		ci->ci_curldt = -1;
-#if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL) {
 			printf("\n");
 			panic("cpu at apic id %d already attached?", cpunum);
 		}
 		cpu_info[cpunum] = ci;
-#endif
 #ifdef TRAPLOG
 		ci->ci_tlog_base = malloc(sizeof(struct tlog),
 		    M_DEVBUF, M_WAITOK);
@@ -316,7 +307,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		aprint_naive(": %s Processor\n",
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &cpu_info_primary;
-#if defined(MULTIPROCESSOR)
 		if (cpunum != lapic_cpu_number()) {
 			uint32_t reg;
 			aprint_verbose("\n");
@@ -328,7 +318,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			i82489_writereg(LAPIC_ID, (reg & ~LAPIC_ID_MASK) |
 			    (cpunum << LAPIC_ID_SHIFT));
 		}
-#endif
 	}
 
 	ci->ci_self = ci;
@@ -339,7 +328,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_func = caa->cpu_func;
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
-#ifdef MULTIPROCESSOR
 		int error;
 
 		error = mi_cpu_attach(ci);
@@ -349,7 +337,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			    "mi_cpu_attach failed with %d\n", error);
 			return;
 		}
-#endif
 		cpu_init_tss(ci);
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
@@ -385,14 +372,12 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
-#if NLAPIC > 0
 		/*
 		 * Enable local apic
 		 */
 		lapic_enable();
 		lapic_set_lvt();
 		lapic_calibrate_timer(ci);
-#endif
 		x86_errata();
 		x86_cpu_idle_init();
 		break;
@@ -401,7 +386,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * report on an AP
 		 */
-#if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
@@ -413,9 +397,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			ci->ci_next = cpu_info_list->ci_next;
 			cpu_info_list->ci_next = ci;
 		}
-#else
-		aprint_normal(": not started\n");
-#endif
 		break;
 
 	default:
@@ -429,7 +410,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-#if defined(MULTIPROCESSOR)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 
@@ -443,7 +423,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 		);
 	}
-#endif
 }
 
 /*
@@ -515,14 +494,8 @@ cpu_init(struct cpu_info *ci)
 	} else {
 		atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
 	}
-
-#ifndef MULTIPROCESSOR
-	/* XXX */
-	x86_patch();
-#endif
 }
 
-#ifdef MULTIPROCESSOR
 void
 cpu_boot_secondary_processors(void)
 {
@@ -809,8 +782,6 @@ cpu_copy_trampoline(void)
 	uvm_km_free(kernel_map, mp_trampoline_vaddr, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 
-#endif
-
 #ifdef i386
 static void
 tss_init(struct i386tss *tss, void *stack, void *func)
@@ -853,7 +824,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	setgate(&idt[8], NULL, 0, SDT_SYSTASKGT, SEL_KPL,
 	    GSEL(GTRAPTSS_SEL, SEL_KPL));
 
-#if defined(DDB) && defined(MULTIPROCESSOR)
+#if defined(DDB)
 	/*
 	 * Set up separate handler for the DDB IPI, so that it doesn't
 	 * stomp on a possibly corrupted stack.
@@ -884,10 +855,8 @@ cpu_set_tss_gates(struct cpu_info *ci)
 int
 mp_cpu_start(struct cpu_info *ci, paddr_t target)
 {
-#if NLAPIC > 0
-	int error;
-#endif
 	unsigned short dwordptr[2];
+	int error;
 
 	/*
 	 * Bootstrap code must be addressable in real mode
@@ -912,7 +881,6 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 
 	memcpy((uint8_t *)cmos_data_mapping + 0x467, dwordptr, 4);
 
-#if NLAPIC > 0
 	if ((cpu_feature & CPUID_APIC) == 0) {
 		aprint_error("mp_cpu_start: CPU does not have APIC\n");
 		return ENODEV;
@@ -950,7 +918,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 		}
 		i8254_delay(200);
 	}
-#endif
+
 	return 0;
 }
 
