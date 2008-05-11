@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.133 2008/05/11 07:28:18 jdc Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.134 2008/05/11 07:42:04 jdc Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -4079,4 +4079,10 @@ sys/dev/raidframe/rf_layout.c			1.20
 	Both StripeUnitsPerParityUnit and StripeUnitsPerReconstructUnit need
 	to be positive integers.
 	[oster, ticket #1930]
+
+usr.sbin/lpr/common_source/common.c		1.38 via patch
+
+	Sort queue by time and jobid so that jobs submitted within the
+	same second are printed in order.
+	[mlelstv, ticket #1929]
 
