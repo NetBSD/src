@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.4 2008/05/11 00:54:06 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.5 2008/05/11 01:16:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.4 2008/05/11 00:54:06 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.5 2008/05/11 01:16:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,14 +242,8 @@ sa_newsavp(struct sadata *sa)
  * upcall handler address.
  */
 int
-sys_sa_register(struct lwp *l, void *v, register_t *retval)
+sys_sa_register(struct lwp *l, const struct sys_sa_register_args *uap, register_t *retval)
 {
-	struct sys_sa_register_args /* {
-		syscallarg(sa_upcall_t) new;
-		syscallarg(sa_upcall_t *) old;
-		syscallarg(int) flags;
-		syscallarg(ssize_t) stackinfo_offset;
-	} */ *uap = v;
 	int error;
 	sa_upcall_t prev;
 
@@ -520,13 +514,9 @@ sa_copyin_stack(stack_t *stacks, int index, stack_t *dest)
  * work. NETBSD32 has its own front-end for this call.
  */
 int
-sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
+sys_sa_stacks(struct lwp *l, const struct sys_sa_stacks_args *uap,
+	register_t *retval)
 {
-	struct sys_sa_stacks_args /* {
-		syscallarg(int) num;
-		syscallarg(stack_t *) stacks;
-	} */ *uap = v;
-
 	return sa_stacks1(l, retval, SCARG(uap, num), SCARG(uap, stacks), sa_copyin_stack);
 }
 
@@ -612,7 +602,7 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
  * (SA_UPCALL_NEWPROC).
  */
 int
-sys_sa_enable(struct lwp *l, void *v, register_t *retval)
+sys_sa_enable(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
@@ -748,11 +738,9 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
  * reactivate previously allocated virtual CPUs.
  */
 int
-sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
+sys_sa_setconcurrency(struct lwp *l, const struct sys_sa_setconcurrency_args *uap,
+	register_t *retval)
 {
-	struct sys_sa_setconcurrency_args /* {
-		syscallarg(int) concurrency;
-	} */ *uap = v;
 	struct sadata *sa = l->l_proc->p_sa;
 #ifdef MULTIPROCESSOR
 	struct sadata_vp *vp = l->l_savp;
@@ -832,7 +820,7 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
  * the kernel.
  */
 int
-sys_sa_yield(struct lwp *l, void *v, register_t *retval)
+sys_sa_yield(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
@@ -936,11 +924,8 @@ sa_yield(struct lwp *l)
  * kick something into the upcall handler.
  */
 int
-sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
+sys_sa_preempt(struct lwp *l, const struct sys_sa_preempt_args *uap, register_t *retval)
 {
-	struct sys_sa_preempt_args /* {
-		syscallarg(int) sa_id;
-	} */ *uap = v;
 	struct sadata		*sa = l->l_proc->p_sa;
 	struct lwp		*t;
 	int			target, s, error;
