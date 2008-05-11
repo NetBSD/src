@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.745 2008/05/02 23:12:00 ad Exp $
+# $NetBSD: mi,v 1.746 2008/05/11 18:01:46 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -590,6 +590,7 @@
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-tn3270-bin
 ./usr/bin/msgs					base-util-bin
+./usr/bin/nbsvtool				base-crypto-bin		crypto
 ./usr/bin/netgroup				base-nis-bin
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
