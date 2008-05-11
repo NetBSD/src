@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.126 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: nd6.c,v 1.127 2008/05/11 20:19:44 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.126 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.127 2008/05/11 20:19:44 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1955,19 +1955,19 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 				goto sendpkt;
 			}
 
-			if (rt->rt_gwroute == 0)
+			if (rt->rt_gwroute == NULL)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
 			lookup:
 				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
-				if ((rt = rt->rt_gwroute) == 0)
+				if ((rt = rt->rt_gwroute) == NULL)
 					senderr(EHOSTUNREACH);
 				/* the "G" test below also prevents rt == rt0 */
 				if ((rt->rt_flags & RTF_GATEWAY) ||
 				    (rt->rt_ifp != ifp)) {
 					rt->rt_refcnt--;
-					rt0->rt_gwroute = 0;
+					rt0->rt_gwroute = NULL;
 					senderr(EHOSTUNREACH);
 				}
 			}
@@ -1982,7 +1982,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	 */
 
 	/* Look up the neighbor cache for the nexthop */
-	if (rt && (rt->rt_flags & RTF_LLINFO) != 0)
+	if (rt != NULL && (rt->rt_flags & RTF_LLINFO) != 0)
 		ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	else {
 		/*
@@ -2089,9 +2089,8 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	/* clean ipsec history once it goes out of the node */
 	ipsec_delaux(m);
 #endif
-	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
+	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
 		return (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
-	}
 	return (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
 
   bad:
@@ -2128,7 +2127,7 @@ nd6_need_cache(struct ifnet *ifp)
 
 int
 nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
-    struct mbuf *m, const struct sockaddr *dst, u_char *lldst,
+    struct mbuf *m, const struct sockaddr *dst, uint8_t *lldst,
     size_t dstsize)
 {
 	const struct sockaddr_dl *sdl;
