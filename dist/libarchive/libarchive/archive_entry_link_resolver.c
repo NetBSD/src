@@ -146,8 +146,8 @@ archive_entry_linkresolver_free(struct archive_entry_linkresolver *res)
 
 	if (res->buckets != NULL) {
 		while ((le = next_entry(res)) != NULL) {
-			if (le->entry != NULL)
-				archive_entry_free(le->entry);
+			archive_entry_free(le->entry);
+			archive_entry_free(le->canonical);
 		}
 		free(res->buckets);
 		res->buckets = NULL;
@@ -166,8 +166,10 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 
 	if (*e == NULL) {
 		le = next_entry(res);
-		if (le != NULL)
+		if (le != NULL) {
 			*e = le->entry;
+			le->entry = NULL;
+		}
 		return;
 	}
 
@@ -206,8 +208,10 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 			    archive_entry_pathname(le->canonical));
 			/* If we ran out of links, return the
 			 * final entry as well. */
-			if (le->links == 0)
+			if (le->links == 0) {
 				*f = le->entry;
+				le->entry = NULL;
+			}
 		} else {
 			/*
 			 * If we haven't seen it, tuck it away
@@ -236,6 +240,7 @@ find_entry(struct archive_entry_linkresolver *res,
 	/* Free a held entry. */
 	if (res->spare != NULL) {
 		archive_entry_free(res->spare->canonical);
+		archive_entry_free(res->spare->entry);
 		free(res->spare);
 		res->spare = NULL;
 	}
@@ -324,7 +329,8 @@ insert_entry(struct archive_entry_linkresolver *res,
 	le = malloc(sizeof(struct links_entry));
 	if (le == NULL)
 		return (NULL);
-	le->entry = entry;
+	memset(le, 0, sizeof(*le));
+	le->canonical = archive_entry_clone(entry);
 
 	/* If the links cache is getting too full, enlarge the hash table. */
 	if (res->number_entries > res->number_buckets * 2)
@@ -341,8 +347,7 @@ insert_entry(struct archive_entry_linkresolver *res,
 	le->previous = NULL;
 	res->buckets[bucket] = le;
 	le->hash = hash;
-	le->canonical = archive_entry_clone(entry);
-	le->links = archive_entry_nlink(le->canonical) - 1;
+	le->links = archive_entry_nlink(entry) - 1;
 	return (le);
 }
 
