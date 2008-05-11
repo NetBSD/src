@@ -1,4 +1,4 @@
-/* $NetBSD: isp_tpublic.h,v 1.16 2008/03/11 05:33:30 mjacob Exp $ */
+/* $NetBSD: isp_tpublic.h,v 1.17 2008/05/11 02:08:11 mjacob Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -87,7 +87,7 @@ typedef enum {
  *
  * The r_version tag defines the version of this API.
  */
-#define    QR_VERSION    19
+#define    QR_VERSION    20
 typedef struct {
     /* NB: structure tags from here to r_version must never change */
     void *                  r_identity;
@@ -163,6 +163,7 @@ typedef struct tmd_notify {
     uint64_t    nt_tagval;      /* tag value */
     uint32_t    nt_channel;     /* channel id */
     tmd_ncode_t nt_ncode;       /* action */
+    void *      nt_tmd;         /* TMD for this notify */
     void *      nt_lreserved;
     void *      nt_hreserved;
 } tmd_notify_t;
