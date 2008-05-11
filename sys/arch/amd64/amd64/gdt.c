@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.18 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: gdt.c,v 1.19 2008/05/11 15:32:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.18 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.19 2008/05/11 15:32:20 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -172,7 +172,7 @@ gdt_init(void)
 	}
 	pmap_update(pmap_kernel());
 	memcpy(gdtstore, old_gdt, DYNSEL_START);
-	ci->ci_gdt = gdtstore;
+	ci->ci_gdt = (void *)gdtstore;
 #ifndef XEN
 	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
 	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
@@ -187,14 +187,14 @@ void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
 #if 0
-        ci->ci_gdt = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
+        ci->ci_gdt = (void *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
         uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
             (vaddr_t)ci->ci_gdt + MINGDTSIZ, false, false);
         memset(ci->ci_gdt, 0, MINGDTSIZ);
         memcpy(ci->ci_gdt, gdtstore,
 	   DYNSEL_START + gdt_dyncount * sizeof(struct sys_segment_descriptor));
 #else
-	ci->ci_gdt = gdtstore;
+	ci->ci_gdt = (void *)gdtstore;
 #endif
 }
 

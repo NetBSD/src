@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.4 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.5 2008/05/11 15:32:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -168,7 +168,7 @@ wakeup_32:
 	/* Enable SYSCALL extension and Long Mode */
 	movl	$MSR_EFER,%ecx
 	rdmsr
-	movl	WAKEUP_msr_efer + ACPI_WAKEUP_ADDR,%eax
+	movl	WAKEUP_efer + ACPI_WAKEUP_ADDR,%eax
 	wrmsr
 
 	/* Load temporary PML4, code will switch to full PML4 later */
@@ -241,5 +241,5 @@ WAKEUP_beep_on_reset:	.byte 0
 
 	.global WAKEUP_curcpu
 WAKEUP_curcpu:		.quad 0
-	.global WAKEUP_msr_efer
-WAKEUP_msr_efer:	.long 0
+	.global WAKEUP_efer
+WAKEUP_efer:		.long 0
