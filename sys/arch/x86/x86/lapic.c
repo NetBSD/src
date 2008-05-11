@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.37 2008/05/11 15:59:51 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.38 2008/05/11 21:50:06 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.37 2008/05/11 15:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.38 2008/05/11 21:50:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -516,7 +516,7 @@ x86_ipi(int vec, int target, int dl)
 {
 	int result, s;
 
-	s = splclock();
+	s = splhigh();
 
 	i82489_icr_wait();
 
