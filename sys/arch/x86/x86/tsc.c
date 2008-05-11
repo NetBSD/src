@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.18 2008/05/10 16:44:00 ad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.19 2008/05/11 12:41:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.18 2008/05/10 16:44:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.19 2008/05/11 12:41:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ tsc_sync_bp(struct cpu_info *ci)
 	uint64_t tsc;
 
 	/* Clear remote result, pending later update. */
-	ci->ci_data.cpu_cc_skew = ~0LL;
+	ci->ci_data.cpu_cc_skew = 0x7fffffffffffffffLL;
 
 	/* Flag it and read our TSC. */
 	atomic_or_uint(&ci->ci_flags, CPUF_SYNCTSC);
@@ -180,7 +180,7 @@ tsc_sync_bp(struct cpu_info *ci)
 	tsc += (rdmsr(MSR_TSC) >> 1);
 
 	/* Wait for the results to come in. */
-	while (ci->ci_data.cpu_cc_skew == ~0LL) {
+	while (ci->ci_data.cpu_cc_skew == 0x7fffffffffffffffLL) {
 		x86_pause();
 	}
 
