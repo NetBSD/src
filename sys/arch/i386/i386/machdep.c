@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.634 2008/05/05 17:47:06 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.635 2008/05/11 14:44:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.634 2008/05/05 17:47:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.635 2008/05/11 14:44:54 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1384,14 +1384,13 @@ init386(paddr_t first_avail)
 	extern u_char biostramp_image[];
 #endif
 
-
 #ifdef XEN
 	XENPRINTK(("HYPERVISOR_shared_info %p (%x)\n", HYPERVISOR_shared_info,
 	    xen_start_info.shared_info));
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
-	cpu_probe_features(&cpu_info_primary);
+	cpu_probe(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;

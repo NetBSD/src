@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.72 2008/05/03 05:56:44 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.73 2008/05/11 14:44:54 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.72 2008/05/03 05:56:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.73 2008/05/11 14:44:54 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -204,6 +204,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.72 2008/05/03 05:56:44 yamt Exp $");
 	.data
 
 	.globl	_C_LABEL(cpu)
+	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
 	.globl	_C_LABEL(atdevbase)
@@ -236,6 +237,7 @@ _C_LABEL(lapic_tpr):
 #endif
 
 _C_LABEL(cpu):		.long	0	# are we 80486, Pentium, or..
+_C_LABEL(cpuid_level):	.long	0
 _C_LABEL(atdevbase):	.long	0	# location of start of iomem in virtual
 _C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
@@ -309,7 +311,7 @@ _C_LABEL(Multiboot_Header):
 	movw	%ax,%fs
 	movw	%ax,%gs
 	decl	%eax
-	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+	movl	%eax,RELOC(cpuid_level)
 
 	/* Find out our CPU type. */
 
@@ -469,7 +471,7 @@ trycyrix486:
 try586:	/* Use the `cpuid' instruction. */
 	xorl	%eax,%eax
 	cpuid
-	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+	movl	%eax,RELOC(cpuid_level)
 
 2:
 	/*
@@ -748,11 +750,11 @@ start:
 	movw	%ax,%fs
 	movw	%ax,%gs
 	decl	%eax
-	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+	movl	%eax,RELOC(cpuid_level)
 
 	xorl	%eax,%eax
 	cpuid
-	movl	%eax,RELOC(cpu_info_primary)+CPU_INFO_LEVEL
+	movl	%eax,RELOC(cpuid_level)
 
 	call	xen_pmap_bootstrap
 	/*

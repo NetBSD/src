@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.59 2008/03/10 22:03:40 ad Exp $
+#	$NetBSD: files.amd64,v 1.60 2008/05/11 14:44:53 ad Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -44,7 +44,6 @@ file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
-file	arch/amd64/amd64/identcpu.c
 file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
