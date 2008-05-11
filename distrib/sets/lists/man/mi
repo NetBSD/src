@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1068 2008/05/01 22:09:29 xtraeme Exp $
+# $NetBSD: mi,v 1.1069 2008/05/11 18:01:46 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -291,6 +291,7 @@
 ./usr/share/man/cat1/msguniq.0			man-locale-catman	.cat
 ./usr/share/man/cat1/mt.0			man-util-catman		.cat
 ./usr/share/man/cat1/mv.0			man-util-catman		.cat
+./usr/share/man/cat1/nbsvtool.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/netgroup.0			man-nis-catman		.cat
 ./usr/share/man/cat1/netstat.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/newaliases.0		man-postfix-catman	postfix,.cat
@@ -2840,6 +2841,7 @@
 ./usr/share/man/man1/msguniq.1			man-locale-man		.man
 ./usr/share/man/man1/mt.1			man-util-man		.man
 ./usr/share/man/man1/mv.1			man-util-man		.man
+./usr/share/man/man1/nbsvtool.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/netgroup.1			man-nis-man		.man
 ./usr/share/man/man1/netstat.1			man-netutil-man		.man
 ./usr/share/man/man1/newaliases.1		man-postfix-man		postfix,.man
