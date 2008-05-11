@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.3 2008/05/11 18:29:42 tsutsui Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.4 2008/05/11 21:19:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.3 2008/05/11 18:29:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4 2008/05/11 21:19:18 cegger Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -155,6 +155,27 @@ static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = {
 	{ 0, 0x04,    4, 0, 0 },
 	{ 0, 0x06,    8, 0, 0 },
 	{ 0, 0x08,   16, 0, 0 },
+	{ 0, 0x0a,   32, 0, 0 },
+	{ 0, 0x0b,   48, 0, 0 },
+	{ 0, 0x0c,   64, 0, 0 },
+	{ 0, 0x0d,   96, 0, 0 },
+	{ 0, 0x0e,  128, 0, 0 },
+	{ 0, 0x0f, 0xff, 0, 0 },
+	{ 0, 0x00,    0, 0, 0 },
+};
+
+static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = {
+	{ 0, 0x00,    0, 0, 0 },
+	{ 0, 0x01,    1, 0, 0 },
+	{ 0, 0x02,    2, 0, 0 },
+	{ 0, 0x04,    4, 0, 0 },
+	{ 0, 0x06,    8, 0, 0 },
+	{ 0, 0x08,   16, 0, 0 },
+	{ 0, 0x0a,   32, 0, 0 },
+	{ 0, 0x0b,   48, 0, 0 },
+	{ 0, 0x0c,   64, 0, 0 },
+	{ 0, 0x0d,   96, 0, 0 },
+	{ 0, 0x0e,  128, 0, 0 },
 	{ 0, 0x0f, 0xff, 0, 0 },
 	{ 0, 0x00,    0, 0, 0 },
 };
@@ -346,6 +367,50 @@ cpu_probe_amd_cache(struct cpu_info *ci)
 		cai->cai_associativity = cp->cai_associativity;
 	else
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	if (family < 0xf) {
+		/* No L3 cache info available. */
+		return;
+	}
+
+	cai = &ci->ci_cinfo[CAI_L3CACHE];
+	cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
+	cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
+	cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
+
+	cp = cache_info_lookup(amd_cpuid_l3cache_assoc_info,
+	    cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown reserved */
+
+	if (lfunc < 0x80000019) {
+		/* No 1GB Page TLB */
+		return;
+	}
+
+	x86_cpuid(0x80000019, descs);
+
+	cai = &ci->ci_cinfo[CAI_L1_1GBDTLB];
+	cai->cai_totalsize = AMD_L1_1GB_EAX_DTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L1_1GB_EAX_DTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (1 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_L1_1GBITLB];
+	cai->cai_totalsize = AMD_L1_1GB_EAX_IUTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L1_1GB_EAX_IUTLB_ASSOC(descs[0]);
+	cai->cai_linesize = (1 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_L2_1GBDTLB];
+	cai->cai_totalsize = AMD_L2_1GB_EBX_DUTLB_ENTRIES(descs[1]);
+	cai->cai_associativity = AMD_L2_1GB_EBX_DUTLB_ASSOC(descs[1]);
+	cai->cai_linesize = (1 * 1024);
+
+	cai = &ci->ci_cinfo[CAI_L2_1GBITLB];
+	cai->cai_totalsize = AMD_L2_1GB_EBX_IUTLB_ENTRIES(descs[0]);
+	cai->cai_associativity = AMD_L2_1GB_EBX_IUTLB_ASSOC(descs[0]);
+	cai->cai_linesize = (1 * 1024);
 }
 
 static void
