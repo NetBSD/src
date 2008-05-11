@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.147 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.148 2008/05/11 05:17:23 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.147 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.148 2008/05/11 05:17:23 mlelstv Exp $");
 
 #include "opt_scsi.h"
 
@@ -1149,6 +1149,9 @@ int
 scsipi_prevent(struct scsipi_periph *periph, int type, int flags)
 {
 	struct scsi_prevent_allow_medium_removal cmd;
+
+	if (periph->periph_quirks & PQUIRK_NODOORLOCK)
+		return 0;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = SCSI_PREVENT_ALLOW_MEDIUM_REMOVAL;
