@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.18 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: utils.c,v 1.19 2008/05/11 03:15:21 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.18 2008/04/28 20:23:08 martin Exp $");
+__RCSID("$NetBSD: utils.c,v 1.19 2008/05/11 03:15:21 elric Exp $");
 #endif
 
 #include <sys/param.h>
@@ -137,6 +137,17 @@ struct string {
 	char	*text;
 	size_t	 length;
 };
+
+string_t *
+string_zero()
+{
+	string_t *out;
+
+	out = emalloc(sizeof(*out));
+	out->length = 0;
+	out->text = NULL;
+	return out;
+}
 
 string_t *
 string_new(const char *intext, size_t inlength)

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgdlex.l,v 1.2 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: cgdlex.l,v 1.3 2008/05/11 03:15:21 elric Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgdlex.l,v 1.2 2008/04/28 20:23:08 martin Exp $");
+__RCSID("$NetBSD: cgdlex.l,v 1.3 2008/05/11 03:15:21 elric Exp $");
 #endif
 
 #include <err.h>
@@ -60,11 +60,32 @@ __RCSID("$NetBSD: cgdlex.l,v 1.2 2008/04/28 20:23:08 martin Exp $");
 		return (x);					\
 	} while (0)
 
+#define QUOTEDBEGIN() do {						\
+		BEGIN(quoted);						\
+		quoted_string = string_zero();				\
+	} while (0)
+#define QUOTEDADD() do {						\
+		string_t	*tmp;					\
+									\
+		tmp = string_new(yytext, yyleng);			\
+		quoted_string = string_add_d(quoted_string, tmp);	\
+	} while (0)
+#define RETQUOTED(x) do {						\
+		yylval.string = quoted_string;				\
+		quoted_string = NULL;					\
+		BEGIN(INITIAL);						\
+		return(x);						\
+	} while (0)
+
 int yylineno;
+
+string_t	*quoted_string;
 
 void	yyerror(const char *);
 int	yylex(void);
 %}
+
+%x quoted
 
 %%
 
@@ -77,6 +98,7 @@ keygen					{ RETTOKEN(KEYGEN); }
 salt					{ RETTOKEN(SALT); }
 iterations				{ RETTOKEN(ITERATIONS); }
 key					{ RETTOKEN(KEY); }
+cmd					{ RETTOKEN(CMD); }
 keygen_method				{ RETTOKEN(KEYGEN_METHOD); }
 keygen_salt				{ RETTOKEN(KEYGEN_SALT); }
 keygen_iterations			{ RETTOKEN(KEYGEN_ITERATIONS); }
@@ -85,7 +107,12 @@ xor_key					{ RETTOKEN(XOR_KEY); }
 \\\n					/* ignore a quoted nl */
 [ \t]					/* ignore spaces and tabs */
 #[^;\n]*				/* ignore comments */
-[^ }{\t\n;]+				{ RETSTRING(STRINGLIT); }
+[^ }{\t\n;"]+				{ RETSTRING(STRINGLIT); }
+
+\"					{ QUOTEDBEGIN(); }
+<quoted>[^\"]+				{ QUOTEDADD(); }
+<quoted>\"				{ RETQUOTED(STRINGLIT); }
+
 .					{ return yytext[0]; }
 
 %%
