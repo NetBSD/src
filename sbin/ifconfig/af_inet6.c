@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.14 2008/05/11 22:07:23 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.15 2008/05/11 22:12:04 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.14 2008/05/11 22:07:23 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.15 2008/05/11 22:12:04 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -87,20 +87,19 @@ static const struct kwinst ia6flagskw[] = {
 };
 
 static struct pinteger parse_pltime = PINTEGER_INITIALIZER(&parse_pltime,
-    "pltime", 0, setia6pltime, "pltime", &command_root.pb_parser);
+    "pltime", 0, NULL, "pltime", &command_root.pb_parser);
 
 static struct pinteger parse_vltime = PINTEGER_INITIALIZER(&parse_vltime,
-    "vltime", 0, setia6vltime, "vltime", &command_root.pb_parser);
+    "vltime", 0, NULL, "vltime", &command_root.pb_parser);
 
 static const struct kwinst inet6kw[] = {
 	  {.k_word = "pltime", .k_nextparser = &parse_pltime.pi_parser}
 	, {.k_word = "vltime", .k_nextparser = &parse_vltime.pi_parser}
 	, {.k_word = "eui64", .k_key = "eui64", .k_type = KW_T_BOOL,
-	   .k_bool = true, .k_exec = setia6eui64,
-	   .k_nextparser = &command_root.pb_parser}
+	   .k_bool = true, .k_nextparser = &command_root.pb_parser}
 };
 
-struct pkw ia6flags = PKW_INITIALIZER(&ia6flags, "ia6flags", setia6flags,
+struct pkw ia6flags = PKW_INITIALIZER(&ia6flags, "ia6flags", NULL,
     "ia6flag", ia6flagskw, __arraycount(ia6flagskw), &command_root.pb_parser);
 struct pkw inet6 = PKW_INITIALIZER(&inet6, "IPv6 keywords", NULL,
     NULL, inet6kw, __arraycount(inet6kw), NULL);
@@ -197,12 +196,6 @@ setia6flags_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 }
 
 int
-setia6flags(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	return setia6flags_impl(env, &in6_addreq);
-}
-
-int
 setia6pltime_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 {
 	int64_t pltime;
@@ -218,12 +211,6 @@ setia6pltime_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 }
 
 int
-setia6pltime(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	return setia6pltime_impl(env, &in6_addreq);
-}
-
-int
 setia6vltime_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 {
 	int64_t vltime;
@@ -236,12 +223,6 @@ setia6vltime_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 	return setia6lifetime(env, vltime,
 		&ifra->ifra_lifetime.ia6t_expire,
 		&ifra->ifra_lifetime.ia6t_vltime);
-}
-
-int
-setia6vltime(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	return setia6vltime_impl(env, &in6_addreq);
 }
 
 static int
@@ -321,12 +302,6 @@ setia6eui64_impl(prop_dictionary_t env, struct in6_aliasreq *ifra)
 
 	freeifaddrs(ifap);
 	return 0;
-}
-
-int
-setia6eui64(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	return setia6eui64_impl(env, &in6_addreq);
 }
 
 /* KAME idiosyncrasy */
@@ -502,44 +477,6 @@ in6_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 struct sockaddr_in6 *sin6tab[] = {
     SIN6(in6_ridreq.ifr_addr), SIN6(in6_addreq.ifra_addr),
     SIN6(in6_addreq.ifra_prefixmask), SIN6(in6_addreq.ifra_dstaddr)};
-
-void
-in6_getaddr(const struct paddr_prefix *pfx, int which)
-{
-	struct sockaddr_in6 *sin6 = sin6tab[which];
-
-	if (pfx->pfx_addr.sa_family != AF_INET6)
-		errx(EXIT_FAILURE, "%s: address family mismatch", __func__);
-
-	if (which == ADDR && pfx->pfx_len >= 0)
-		in6_getprefix(pfx->pfx_len, MASK);
-
-	memcpy(sin6, &pfx->pfx_addr, MIN(sizeof(*sin6), pfx->pfx_addr.sa_len));
-
-	in6_delscopeid(sin6);
-}
-
-void
-in6_getprefix(int len, int which)
-{
-	struct sockaddr_in6 *gpsin = sin6tab[which];
-	u_char *cp;
-
-	if (len < 0 || len > 128)
-		errx(EXIT_FAILURE, "%d: bad value", len);
-	gpsin->sin6_len = sizeof(*gpsin);
-	if (which != MASK)
-		gpsin->sin6_family = AF_INET6;
-	if (len == 0 || len == 128) {
-		memset(&gpsin->sin6_addr, 0xff, sizeof(struct in6_addr));
-		return;
-	}
-	memset((void *)&gpsin->sin6_addr, 0x00, sizeof(gpsin->sin6_addr));
-	for (cp = (u_char *)&gpsin->sin6_addr; len > 7; len -= 8)
-		*cp++ = 0xff;
-	if (len)
-		*cp = 0xff << (8 - len);
-}
 
 static int
 in6_pre_aifaddr(prop_dictionary_t env, struct afparam *param)
