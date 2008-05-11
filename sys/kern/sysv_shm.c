@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.107 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.108 2008/05/11 18:48:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.107 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.108 2008/05/11 18:48:00 rmind Exp $");
 
 #define SYSVSHM
 
@@ -428,7 +428,7 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 			goto err;
 		}
 	} else {
-		/* This is just a hint to uvm_mmap() about where to put it. */
+		/* This is just a hint to uvm_map() about where to put it. */
 		attach_va = p->p_emul->e_vm_default_addr(p,
 		    (vaddr_t)vm->vm_daddr, size);
 	}
@@ -730,6 +730,7 @@ sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 		error = uobj_wirepages(shmseg->_shm_internal, 0,
 		    round_page(shmseg->shm_segsz));
 		if (error) {
+			uao_detach(shmseg->_shm_internal);
 			mutex_enter(&shm_lock);
 			shm_free_segment(segnum);
 			shm_realloc_disable--;
