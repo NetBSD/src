@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.35 2008/05/08 18:56:58 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.36 2008/05/11 14:42:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.35 2008/05/08 18:56:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.36 2008/05/11 14:42:18 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -218,7 +218,6 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 			error = copyout(buf, where, slen + 1);
 			mutex_spin_enter(&timecounter_lock);
 			if (mods != timecounter_mods) {
-				mutex_spin_exit(&timecounter_lock);
 				goto retry;
 			}
 			spc = " ";
