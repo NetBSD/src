@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.17 2008/05/11 22:18:20 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.18 2008/05/11 22:30:07 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.17 2008/05/11 22:18:20 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.18 2008/05/11 22:30:07 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -316,7 +316,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 
 	in6_fillscopeid(sin6);
 	scopeid = sin6->sin6_scope_id;
-	if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
+	if (getnameinfo((const struct sockaddr *)sin6, sin6->sin6_len,
 			hbuf, sizeof(hbuf), NULL, 0, niflag))
 		strlcpy(hbuf, "", sizeof(hbuf));	/* some message? */
 	printf("\tinet6 %s", hbuf);
@@ -325,9 +325,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 		err(EXIT_FAILURE, "%s: getifflags", __func__);
 
 	if (flags & IFF_POINTOPOINT) {
-		memset(&ifr6, 0, sizeof(ifr6));
-		estrlcpy(ifr6.ifr_name, ifname, sizeof(ifr6.ifr_name));
-		ifr6.ifr_addr = creq->ifr_addr;
+		ifr6 = *creq;
 		if (ioctl(s, SIOCGIFDSTADDR_IN6, &ifr6) == -1) {
 			if (errno != EADDRNOTAVAIL)
 				warn("SIOCGIFDSTADDR_IN6");
@@ -344,9 +342,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 		printf(" -> %s", hbuf);
 	}
 
-	memset(&ifr6, 0, sizeof(ifr6));
-	estrlcpy(ifr6.ifr_name, ifname, sizeof(ifr6.ifr_name));
-	ifr6.ifr_addr = creq->ifr_addr;
+	ifr6 = *creq;
 	if (ioctl(s, SIOCGIFNETMASK_IN6, &ifr6) == -1) {
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFNETMASK_IN6");
@@ -356,9 +352,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 					       sizeof(struct in6_addr)));
 	}
 
-	memset(&ifr6, 0, sizeof(ifr6));
-	estrlcpy(ifr6.ifr_name, ifname, sizeof(ifr6.ifr_name));
-	ifr6.ifr_addr = creq->ifr_addr;
+	ifr6 = *creq;
 	if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) == -1) {
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFAFLAG_IN6");
@@ -380,9 +374,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 
 	if (Lflag) {
 		struct in6_addrlifetime *lifetime;
-		memset(&ifr6, 0, sizeof(ifr6));
-		estrlcpy(ifr6.ifr_name, ifname, sizeof(ifr6.ifr_name));
-		ifr6.ifr_addr = creq->ifr_addr;
+		ifr6 = *creq;
 		lifetime = &ifr6.ifr_ifru.ifru_lifetime;
 		if (ioctl(s, SIOCGIFALIFETIME_IN6, &ifr6) == -1) {
 			if (errno != EADDRNOTAVAIL)
