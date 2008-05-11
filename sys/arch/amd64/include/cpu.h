@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.56 2008/05/11 16:57:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,8 @@
 #define _AMD64_CPU_H_
 
 #include <x86/cpu.h>
+
+#ifdef _KERNEL
 
 #if defined(__GNUC__) && !defined(_LKM)
 static struct cpu_info *x86_curcpu(void);
@@ -84,5 +86,7 @@ cpu_set_curpri(int pri)
 #define CLKF_PC(frame)		((frame)->cf_if.if_tf.tf_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 #define LWP_PC(l)		((l)->l_md.md_regs->tf_rip)
+
+#endif	/* _KERNEL */
 
 #endif /* !_AMD64_CPU_H_ */
