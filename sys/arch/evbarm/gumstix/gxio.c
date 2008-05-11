@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.7 2007/10/17 19:54:12 garbled Exp $ */
+/*	$NetBSD: gxio.c,v 1.8 2008/05/11 08:23:17 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.7 2007/10/17 19:54:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.8 2008/05/11 08:23:17 kiyohara Exp $");
 
 #include "opt_gxio.h"
 
@@ -57,9 +57,9 @@ struct gxioconf {
 	void (*config)(void);
 };
 
-static int gxiomatch(struct device *, struct cfdata *, void *);
-static void gxioattach(struct device *, struct device *, void *);
-static int gxiosearch(struct device *, struct cfdata *, const int *, void *);
+static int gxiomatch(device_t, struct cfdata *, void *);
+static void gxioattach(device_t, device_t, void *);
+static int gxiosearch(device_t, struct cfdata *, const int *, void *);
 static int gxioprint(void *, const char *);
 
 void gxio_config_pin(void);
@@ -74,7 +74,7 @@ static void netduo_config(void);
 static void netmmc_config(void);
 static void wifistix_cf_config(void);
 
-CFATTACH_DECL(
+CFATTACH_DECL_NEW(
     gxio, sizeof(struct gxio_softc), gxiomatch, gxioattach, NULL, NULL);
 
 char busheader[MAX_BOOT_STRING];
@@ -126,7 +126,7 @@ static const struct gxioconf busheader_conf[] = {
 
 /* ARGSUSED */
 static int
-gxiomatch(struct device *parent, struct cfdata *match, void *aux)
+gxiomatch(device_t parent, struct cfdata *match, void *aux)
 {
 	bus_space_tag_t iot = &pxa2x0_bs_tag;
 	bus_space_handle_t ioh;
@@ -142,13 +142,14 @@ gxiomatch(struct device *parent, struct cfdata *match, void *aux)
 
 /* ARGSUSED */
 static void
-gxioattach(struct device *parent, struct device *self, void *aux)
+gxioattach(device_t parent, device_t self, void *aux)
 {
 	struct gxio_softc *sc = device_private(self);
 
 	aprint_normal("\n");
 	aprint_naive("\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = &pxa2x0_bs_tag;
 
 	if (bus_space_map(sc->sc_iot,
@@ -163,8 +164,7 @@ gxioattach(struct device *parent, struct device *self, void *aux)
 
 /* ARGSUSED */
 static int
-gxiosearch(
-    struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
+gxiosearch(device_t parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
 	struct gxio_softc *sc = device_private(parent);
 	struct gxio_attach_args gxa;

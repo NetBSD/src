@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.5 2008/04/28 20:23:16 martin Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.6 2008/05/11 08:23:17 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.5 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.6 2008/05/11 08:23:17 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.5 2008/04/28 20:23:16 martin Exp $"
 #include "locators.h"
 
 
-static int sm_gxio_match(struct device *, struct cfdata *, void *);
-static void sm_gxio_attach(struct device *, struct device *, void *);
+static int sm_gxio_match(device_t, struct cfdata *, void *);
+static void sm_gxio_attach(device_t, device_t, void *);
 
 static int ether_serial_digit = 1;
 
@@ -109,7 +109,7 @@ CFATTACH_DECL(sm_gxio, sizeof(struct sm_gxio_softc),
 
 /* ARGSUSED */
 static int
-sm_gxio_match(struct device *parent, struct cfdata *match, void *aux)
+sm_gxio_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct gxio_attach_args *gxa = aux;
 	bus_space_tag_t iot = gxa->gxa_iot;
@@ -165,7 +165,7 @@ sm_gxio_match(struct device *parent, struct cfdata *match, void *aux)
 
 /* ARGSUSED */
 void
-sm_gxio_attach(struct device *parent, struct device *self, void *aux)
+sm_gxio_attach(device_t parent, device_t self, void *aux)
 {
 	struct sm_gxio_softc *gsc = device_private(self);
 	struct smc91cxx_softc *sc = &gsc->sc_smc;
@@ -203,6 +203,6 @@ sm_gxio_attach(struct device *parent, struct device *self, void *aux)
 	    gxa->gxa_gpirq, IST_EDGE_RISING, IPL_NET, smc91cxx_intr, sc);
 
 	if (gsc->sc_ih == NULL)
-		aprint_error("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 }
