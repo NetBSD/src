@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.23 2008/04/08 22:00:37 jdc Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.24 2008/05/11 07:25:33 jdc Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -281,3 +281,12 @@ src/crypto/dist/ssh/sshd.8			1.39 via patch
 	(backport from OpenSSH 4.9)
 	[adrianp, ticket #1921]
 
+usr.bin/gzip/zgrep				1.6
+
+	grep "-H" option (print the filename for each match) always prints
+	filenames whether "-h" option (suppress filenames when multiple files
+	are searched) is specified or not.
+	Make zgrep "-h" option actually work with using "-H" option only
+	when "-h" is not specified.
+	Fixes PR#36062.
+	[nakayama, ticket #1927]
