@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.3 2008/05/11 00:31:34 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.4 2008/05/11 00:54:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.3 2008/05/11 00:31:34 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.4 2008/05/11 00:54:06 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +57,29 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.3 2008/05/11 00:31:34 wrstuden Ex
 
 #include <uvm/uvm_extern.h>
 
+/*
+ * memory pool for sadata structures
+ */
 static POOL_INIT(sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
-    &pool_allocator_nointr); /* memory pool for sadata structures */
+    &pool_allocator_nointr, IPL_NONE);
+
+/*
+ * memory pool for pending upcalls
+ */
 static POOL_INIT(saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0,
-    "saupcpl", &pool_allocator_nointr); /* memory pool for pending upcalls */
+    "saupcpl", &pool_allocator_nointr, IPL_NONE);
+
+/*
+ * memory pool for sastack structs
+ */
 static POOL_INIT(sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
-    &pool_allocator_nointr); /* memory pool for sastack structs */
+    &pool_allocator_nointr, IPL_NONE);
+
+/*
+ * memory pool for sadata_vp structures
+ */
 static POOL_INIT(savp_pool, sizeof(struct sadata_vp), 0, 0, 0, "savppl",
-    &pool_allocator_nointr); /* memory pool for sadata_vp structures */
+    &pool_allocator_nointr, IPL_NONE);
 
 static struct sadata_vp *sa_newsavp(struct sadata *);
 static inline int sa_stackused(struct sastack *, struct sadata *);
@@ -188,7 +203,9 @@ sa_newsavp(struct sadata *sa)
 	sau = sadata_upcall_alloc(1);
 	/* Initialize. */
 	memset(vp, 0, sizeof(*vp));
-	simple_lock_init(&vp->savp_lock);
+	/* Lock has to be IPL_SCHED, since we use it in the
+	 * hooks from the scheduler code */
+	mutex_init(&vp->savp_lock, MUTEX_DEFAULT, IPL_SCHED);
 	vp->savp_lwp = NULL;
 	vp->savp_wokenq_head = NULL;
 	vp->savp_faultaddr = 0;
@@ -198,7 +215,7 @@ sa_newsavp(struct sadata *sa)
 	vp->savp_sleeper_upcall = sau;
 	SIMPLEQ_INIT(&vp->savp_upcalls);
 
-	simple_lock(&sa->sa_lock);
+	mutex_enter(&sa->sa_lock);
 	/* find first free savp_id and add vp to sorted slist */
 	if (SLIST_EMPTY(&sa->sa_vps) ||
 	    SLIST_FIRST(&sa->sa_vps)->savp_id != 0) {
@@ -214,7 +231,7 @@ sa_newsavp(struct sadata *sa)
 		vp->savp_id = qvp->savp_id + 1;
 		SLIST_INSERT_AFTER(qvp, vp, savp_next);
 	}
-	simple_unlock(&sa->sa_lock);
+	mutex_exit(&sa->sa_lock);
 
 	return (vp);
 }
@@ -278,7 +295,8 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 		sa = pool_get(&sadata_pool, PR_WAITOK);
 		/* Initialize. */
 		memset(sa, 0, sizeof(*sa));
-		simple_lock_init(&sa->sa_lock);
+		/* WRS: not sure if need SCHED. need to audit lockers */
+		mutex_init(&sa->sa_lock, MUTEX_DEFAULT, IPL_SCHED);
 		sa->sa_flag = flags & SA_FLAG_ALL;
 		sa->sa_maxconcurrency = 1;
 		sa->sa_concurrency = 1;
@@ -653,19 +671,19 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 	sa = p->p_sa;
 
 	addedconcurrency = 0;
-	simple_lock(&sa->sa_lock);
+	mutex_enter(&sa->sa_lock);
 	while (sa->sa_maxconcurrency < concurrency) {
 		sa->sa_maxconcurrency++;
 		sa->sa_concurrency++;
-		simple_unlock(&sa->sa_lock);
+		mutex_exit(&sa->sa_lock);
 
 		inmem = uvm_uarea_alloc(&uaddr);
 		if (__predict_false(uaddr == 0)) {
 			/* reset concurrency */
-			simple_lock(&sa->sa_lock);
+			mutex_enter(&sa->sa_lock);
 			sa->sa_maxconcurrency--;
 			sa->sa_concurrency--;
-			simple_unlock(&sa->sa_lock);
+			mutex_exit(&sa->sa_lock);
 			return (addedconcurrency);
 		} else {
 			newlwp(l, p, uaddr, inmem, 0, NULL, 0,
@@ -698,10 +716,10 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 				sa_putcachelwp(p, l2);
 				SCHED_UNLOCK(s);
 				/* reset concurrency */
-				simple_lock(&sa->sa_lock);
+				mutex_enter(&sa->sa_lock);
 				sa->sa_maxconcurrency--;
 				sa->sa_concurrency--;
-				simple_unlock(&sa->sa_lock);
+				mutex_exit(&sa->sa_lock);
 				return (addedconcurrency);
 			}
 			SCHED_LOCK(s);
@@ -709,9 +727,9 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			SCHED_UNLOCK(s);
 			addedconcurrency++;
 		}
-		simple_lock(&sa->sa_lock);
+		mutex_enter(&sa->sa_lock);
 	}
-	simple_unlock(&sa->sa_lock);
+	mutex_exit(&sa->sa_lock);
 
 	return (addedconcurrency);
 }
@@ -889,15 +907,15 @@ sa_yield(struct lwp *l)
 		DPRINTFN(1,("sa_yield(%d.%d) really going dormant\n",
 			     p->p_pid, l->l_lid));
 
-		simple_lock(&sa->sa_lock);
+		mutex_enter(&sa->sa_lock);
 		sa->sa_concurrency--;
-		simple_unlock(&sa->sa_lock);
+		mutex_exit(&sa->sa_lock);
 
 		ret = tsleep(l, PUSER | PCATCH, "sawait", 0);
 
-		simple_lock(&sa->sa_lock);
+		mutex_enter(&sa->sa_lock);
 		sa->sa_concurrency++;
-		simple_unlock(&sa->sa_lock);
+		mutex_exit(&sa->sa_lock);
 
 		KDASSERT(vp->savp_lwp == l || p->p_sflag & PS_WEXIT);
 
