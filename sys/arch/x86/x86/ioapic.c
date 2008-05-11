@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.35 2008/04/28 20:23:40 martin Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.36 2008/05/11 15:59:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.35 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.36 2008/05/11 15:59:51 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -352,7 +352,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		if (i >= 16)
 			redlo |= IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 		ioapic_write(sc, IOAPIC_REDLO(i), redlo);
-		redhi = (cpu_info_primary.ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
+		redhi = (cpu_info_primary.ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
 		ioapic_write(sc, IOAPIC_REDHI(i), redhi);
 	}
 	
@@ -427,7 +427,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 		 * CPUs.  but there's no point in doing that until after 
 		 * most interrupts run without the kernel lock.  
 		 */
-		redhi = (ci->ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
+		redhi = (ci->ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
 
 		/* XXX derive this bit from BIOS info */
 		if (pp->ip_type == IST_LEVEL)

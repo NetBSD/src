@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.25 2008/05/09 18:11:29 joerg Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.26 2008/05/11 15:59:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ struct cpu_attach_args {
 extern uint32_t cpus_running;
 #endif
 
-int x86_ipi(int,int,int);
+int x86_ipi(int, int, int);
 void x86_self_ipi(int);
 int x86_ipi_init(int);
 void x86_errata(void);
