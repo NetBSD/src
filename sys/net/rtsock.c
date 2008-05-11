@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.101 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.102 2008/05/11 20:14:41 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.101 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.102 2008/05/11 20:14:41 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -367,7 +367,7 @@ route_output(struct mbuf *m, ...)
 				R_Malloc(new_rtm, struct rt_msghdr *, len);
 				if (new_rtm == NULL)
 					senderr(ENOBUFS);
-				Bcopy(rtm, new_rtm, rtm->rtm_msglen);
+				memmove(new_rtm, rtm, rtm->rtm_msglen);
 				Free(rtm); rtm = new_rtm;
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, (void *)rtm,
