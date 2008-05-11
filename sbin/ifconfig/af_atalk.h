@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.h,v 1.4 2008/05/07 20:45:01 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.h,v 1.5 2008/05/11 23:28:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,3 +40,4 @@ void	checkatrange(struct sockaddr *);
 
 void	at_status(prop_dictionary_t, prop_dictionary_t, bool);
 void	at_getaddr(const struct paddr_prefix *, int);
+void	at_commit_address(prop_dictionary_t, prop_dictionary_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: af_atalk.c,v 1.11 2008/05/07 20:45:01 dyoung Exp $	*/
+/*	$NetBSD: af_atalk.c,v 1.12 2008/05/11 23:28:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_atalk.c,v 1.11 2008/05/07 20:45:01 dyoung Exp $");
+__RCSID("$NetBSD: af_atalk.c,v 1.12 2008/05/11 23:28:40 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -83,8 +83,9 @@ at_getaddr(const struct paddr_prefix *pfx, int which)
 	    MIN(sizeof(at_addreq.ifra_addr), pfx->pfx_addr.sa_len));
 }
 
-int
-setatrange(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+setatrange_impl(prop_dictionary_t env, prop_dictionary_t xenv,
+    struct netrange *nr)
 {
 	char range[24];
 	u_short	first = 123, last = 123;
@@ -96,19 +97,37 @@ setatrange(prop_dictionary_t env, prop_dictionary_t xenv)
 	    first == 0 || last == 0 || first > last)
 		errx(EXIT_FAILURE, "%s: illegal net range: %u-%u", range,
 		    first, last);
-	at_nr.nr_firstnet = htons(first);
-	at_nr.nr_lastnet = htons(last);
+	nr->nr_firstnet = htons(first);
+	nr->nr_lastnet = htons(last);
+	return 0;
+}
+
+int
+setatrange(prop_dictionary_t env, prop_dictionary_t xenv)
+{
+	return setatrange_impl(env, xenv, &at_nr);
+}
+
+void
+at_commit_address(prop_dictionary_t env, prop_dictionary_t xenv)
+{
+}
+
+static int
+setatphase_impl(prop_dictionary_t env, prop_dictionary_t xenv,
+    struct netrange *nr)
+{
+	if (!prop_dictionary_get_uint8(env, "phase", &nr->nr_phase)) {
+		errno = ENOENT;
+		return -1;
+	}
 	return 0;
 }
 
 int
 setatphase(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	if (!prop_dictionary_get_uint8(env, "phase", &at_nr.nr_phase)) {
-		errno = ENOENT;
-		return -1;
-	}
-	return 0;
+	return setatphase_impl(env, xenv, &at_nr);
 }
 
 void
@@ -133,7 +152,7 @@ checkatrange(struct sockaddr *sa)
 void
 at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
-	struct sockaddr_at *sat, null_sat;
+	struct sockaddr_at *sat;
 	struct netrange *nr;
 	struct ifreq ifr;
 	int af, s;
@@ -164,36 +183,30 @@ at_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		} else
 			warn("SIOCGIFADDR");
 	}
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	sat = (struct sockaddr_at *)&ifr.ifr_addr;
 
-	(void) memset(&null_sat, 0, sizeof(null_sat));
-
-	nr = (struct netrange *) &sat->sat_zero;
+	nr = (struct netrange *)&sat->sat_zero;
 	printf("\tatalk %d.%d range %d-%d phase %d",
 	    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node,
 	    ntohs(nr->nr_firstnet), ntohs(nr->nr_lastnet), nr->nr_phase);
 
 	if (flags & IFF_POINTOPOINT) {
+		estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 		if (ioctl(s, SIOCGIFDSTADDR, &ifr) == -1) {
 			if (errno == EADDRNOTAVAIL)
 				memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			else
 				warn("SIOCGIFDSTADDR");
 		}
-		estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 		sat = (struct sockaddr_at *)&ifr.ifr_dstaddr;
-		if (!sat)
-			sat = &null_sat;
 		printf("--> %d.%d",
 		    ntohs(sat->sat_addr.s_net), sat->sat_addr.s_node);
 	}
 	if (flags & IFF_BROADCAST) {
 		/* note RTAX_BRD overlap with IFF_POINTOPOINT */
 		sat = (struct sockaddr_at *)&ifr.ifr_broadaddr;
-		if (sat)
-			printf(" broadcast %d.%d", ntohs(sat->sat_addr.s_net),
-			    sat->sat_addr.s_node);
+		printf(" broadcast %d.%d", ntohs(sat->sat_addr.s_net),
+		    sat->sat_addr.s_node);
 	}
 	printf("\n");
 }
