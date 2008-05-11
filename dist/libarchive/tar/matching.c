@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/matching.c,v 1.11 2007/03/11 10:36:42 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/matching.c,v 1.12 2008/03/18 06:18:49 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -157,7 +157,7 @@ excluded(struct bsdtar *bsdtar, const char *pathname)
 			 */
 			if (match->matches == 0) {
 				match->matches++;
-				matching->inclusions_unmatched_count++;
+				matching->inclusions_unmatched_count--;
 				return (0);
 			}
 			/*
