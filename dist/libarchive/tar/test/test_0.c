@@ -26,41 +26,37 @@
 __FBSDID("$FreeBSD$");
 
 /*
- * This is called "test_option_ell" instead of "test_option_l" to
- * avoid any conflicts with "test_option_L" on case-insensitive
- * filesystems.
+ * This first test does basic sanity checks on the environment.  For
+ * most of these, we just exit on failure.
  */
 
-DEFINE_TEST(test_option_ell)
+DEFINE_TEST(test_0)
 {
-	struct stat st, st2;
-	int fd;
-	int r;
+	struct stat st;
 
-	/* Create a file. */
-	fd = open("f", O_CREAT | O_WRONLY, 0644);
-	assert(fd >= 0);
-	assertEqualInt(1, write(fd, "a", 1));
-	close(fd);
+	failure("File %s does not exist?!", testprog);
+	if (!assertEqualInt(0, stat(testprog, &st)))
+		exit(1);
 
-	/* Stat it. */
-	assertEqualInt(0, stat("f", &st));
+	failure("%s is not executable?!", testprog);
+	if (!assert((st.st_mode & 0111) != 0))
+		exit(1);
 
-	/* Copy the file to the "copy" dir. */
-	r = systemf("echo f | %s -pd copy >copy.out 2>copy.err",
-	    testprog);
-	assertEqualInt(r, 0);
+	/*
+	 * Try to succesfully run the program; this requires that
+	 * we know some option that will succeed.
+	 */
+	if (0 == systemf("%s --version >/dev/null", testprog)) {
+		/* This worked. */
+	} else if (0 == systemf("%s -W version >/dev/null", testprog)) {
+		/* This worked. */
+	} else {
+		failure("Unable to successfully run any of the following:\n"
+		    "  * %s --version\n"
+		    "  * %s -W version\n",
+		    testprog, testprog);
+		assert(0);
+	}
 
-	/* Check that the copy is a true copy and not a link. */
-	assertEqualInt(0, stat("copy/f", &st2));
-	assert(st2.st_ino != st.st_ino);
-
-	/* Copy the file to the "link" dir with the -l option. */
-	r = systemf("echo f | %s -pld link >link.out 2>link.err",
-	    testprog);
-	assertEqualInt(r, 0);
-
-	/* Check that this is a link and not a copy. */
-	assertEqualInt(0, stat("link/f", &st2));
-	assert(st2.st_ino == st.st_ino);
+	/* TODO: Ensure that our reference files are available. */
 }

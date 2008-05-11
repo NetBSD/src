@@ -23,11 +23,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
+#include <utime.h>
 __FBSDID("$FreeBSD$");
 
 DEFINE_TEST(test_option_u)
 {
-	struct timeval times[2];
+	struct utimbuf times;
 	char *p;
 	size_t s;
 	int fd;
@@ -40,7 +41,7 @@ DEFINE_TEST(test_option_u)
 	close(fd);
 
 	/* Copy the file to the "copy" dir. */
-	r = systemf("echo f | %s -pd --quiet copy >copy.out 2>copy.err",
+	r = systemf("echo f | %s -pd copy >copy.out 2>copy.err",
 	    testprog);
 	assertEqualInt(r, 0);
 
@@ -56,15 +57,13 @@ DEFINE_TEST(test_option_u)
 	close(fd);
 
 	/* Set the mtime to the distant past. */
-	memset(times, 0, sizeof(times));
-	times[0].tv_sec = 1; /* atime = 1.000000002 */
-	times[0].tv_usec = 2;
-	times[1].tv_sec = 3; /* mtime = 3.000000004 */
-	times[1].tv_usec = 4;
-	assertEqualInt(0, utimes("f", times));
+	memset(&times, 0, sizeof(times));
+	times.actime = 1;
+	times.modtime = 3;
+	assertEqualInt(0, utime("f", &times));
 
 	/* Copy the file to the "copy" dir. */
-	r = systemf("echo f | %s -pd --quiet copy >copy.out 2>copy.err",
+	r = systemf("echo f | %s -pd copy >copy.out 2>copy.err",
 	    testprog);
 	assertEqualInt(r, 0);
 
@@ -74,7 +73,7 @@ DEFINE_TEST(test_option_u)
 	assertEqualMem(p, "a", 1);
 
 	/* Copy the file to the "copy" dir with -u (force) */
-	r = systemf("echo f | %s -pud --quiet copy >copy.out 2>copy.err",
+	r = systemf("echo f | %s -pud copy >copy.out 2>copy.err",
 	    testprog);
 	assertEqualInt(r, 0);
 
