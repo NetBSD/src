@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.12 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: i386func.S,v 1.13 2008/05/11 12:43:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.12 2008/05/10 16:12:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.13 2008/05/11 12:43:35 ad Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -191,3 +191,4 @@ ENTRY(tsc_get_timecount)
 	ret
 2:
 	jmp	1b
+END(tsc_get_timecount)
