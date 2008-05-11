@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.108 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.109 2008/05/11 20:14:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.108 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.109 2008/05/11 20:14:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -704,7 +704,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == NULL)
 			senderr(ENOBUFS);
-		Bzero(rt, sizeof(*rt));
+		memset(rt, 0, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
 		LIST_INIT(&rt->rt_timer);
 		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__, __LINE__,
@@ -993,10 +993,9 @@ rt_timer_queue_create(u_int timeout)
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
 		return NULL;
-	Bzero(rtq, sizeof *rtq);
+	memset(rtq, 0, sizeof(*rtq));
 
 	rtq->rtq_timeout = timeout;
-	rtq->rtq_count = 0;
 	TAILQ_INIT(&rtq->rtq_head);
 	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
 
