@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/05/05 17:10:28 ad Exp $
+#	$NetBSD: Makefile,v 1.3 2008/05/11 12:31:45 chris Exp $
 
 .include <bsd.own.mk>
 
@@ -21,4 +21,6 @@ miniroot.kmod:	${RAMDISKFS} ${SRCMOD}
 .include <bsd.prog.mk>
 
 release:	miniroot.kmod
+		${HOST_INSTALL_FILE} -m ${BINMODE} ${PROG}  \
+		    ${RELEASEDIR}/${MACHINE}/installation/miniroot/
 
