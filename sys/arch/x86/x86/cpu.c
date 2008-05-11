@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.41 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.42 2008/05/11 15:59:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2008/05/11 15:32:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2008/05/11 15:59:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -293,11 +293,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": multiprocessor boot disabled\n");
 			return;
 		}
-		if (cpunum >= X86_MAXPROCS) {
-			aprint_error(": apic id %d ignored, "
-			    "please increase X86_MAXPROCS\n", cpunum);
-			return;
-		}
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    M_DEVBUF, M_WAITOK);
@@ -338,13 +333,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
-	ci->ci_apicid = caa->cpu_number;
-#ifdef MULTIPROCESSOR
-	ci->ci_cpuid = ci->ci_apicid;
-#else
-	ci->ci_cpuid = 0;	/* False for APs, but they're not used anyway */
-#endif
-	ci->ci_cpumask = (1 << ci->ci_cpuid);
+	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
@@ -364,6 +353,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
+	ci->ci_cpumask = (1 << cpu_index(ci));
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -761,8 +751,7 @@ cpu_hatch(void *v)
 	splx(s);
 	x86_errata();
 
-	aprint_debug_dev(ci->ci_dev, "CPU %ld running\n",
-	    (long)ci->ci_cpuid);
+	aprint_debug_dev(ci->ci_dev, "running\n");
 }
 
 #if defined(DDB)
@@ -932,7 +921,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		error = x86_ipi_init(ci->ci_apicid);
+		error = x86_ipi_init(ci->ci_cpuid);
 		if (error != 0) {
 			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (1)\n",
 					__func__);
@@ -941,7 +930,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 
 		i8254_delay(10000);
 
-		error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+		error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
 		    LAPIC_DLMODE_STARTUP);
 		if (error != 0) {
 			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (2)\n",
@@ -950,7 +939,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 		}
 		i8254_delay(200);
 
-		error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+		error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
 		    LAPIC_DLMODE_STARTUP);
 		if (error != 0) {
 			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (3)\n",

@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.36 2008/05/10 15:05:01 ad Exp $ */
+/* $NetBSD: lapic.c,v 1.37 2008/05/11 15:59:51 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.36 2008/05/10 15:05:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.37 2008/05/11 15:59:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -172,8 +172,8 @@ lapic_set_lvt(void)
 
 	for (i = 0; i < mp_nintr; i++) {
 		mpi = &mp_intrs[i];
-		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS
-					    || mpi->cpu_id == ci->ci_apicid)) {
+		if (mpi->ioapic == NULL && (mpi->cpu_id == MPS_ALL_APICS ||
+		    mpi->cpu_id == ci->ci_cpuid)) {
 #ifdef DIAGNOSTIC
 			if (mpi->ioapic_pin > 1)
 				panic("lapic_set_lvt: bad pin value %d",

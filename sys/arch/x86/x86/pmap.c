@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2008/05/03 02:56:13 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 2008/05/11 15:59:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2008/05/03 02:56:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2008/05/11 15:59:51 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4561,8 +4561,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 				mb->mb_addr2 = eva;
 				mb->mb_global = pte;
 				if (x86_ipi(LAPIC_TLB_MCAST_VECTOR,
-				    ci->ci_apicid,
-				    LAPIC_DLMODE_FIXED))
+				    ci->ci_cpuid, LAPIC_DLMODE_FIXED))
 					panic("pmap_tlb_shootdown: ipi failed");
 			}
 			self->ci_need_tlbwait = 1;
