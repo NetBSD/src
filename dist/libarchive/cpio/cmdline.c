@@ -112,7 +112,7 @@ cpio_getopt(struct cpio *cpio)
 	opt = getopt_long(cpio->argc, cpio->argv, cpio_opts,
 	    cpio_longopts, &option_index);
 #else
-	opt = getopt(cpio->argc, cpio->argv, optstring);
+	opt = getopt(cpio->argc, cpio->argv, cpio_opts);
 #endif
 
 	/* Support long options through -W longopt=value */
