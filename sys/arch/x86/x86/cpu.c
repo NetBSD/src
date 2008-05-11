@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40 2008/05/11 14:44:54 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.41 2008/05/11 15:32:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2008/05/11 14:44:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2008/05/11 15:32:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -461,9 +461,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 void
 cpu_init(struct cpu_info *ci)
 {
-	/* configure the CPU if needed */
-	if (ci->cpu_setup != NULL)
-		(*ci->cpu_setup)(ci);
 
 	lcr0(rcr0() | CR0_WP);
 
