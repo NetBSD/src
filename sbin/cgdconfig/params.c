@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.22 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: params.c,v 1.23 2008/05/11 03:15:21 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.22 2008/04/28 20:23:08 martin Exp $");
+__RCSID("$NetBSD: params.c,v 1.23 2008/05/11 03:15:21 elric Exp $");
 #endif
 
 #include <sys/types.h>
@@ -294,6 +294,7 @@ keygen_new(void)
 	kg->kg_iterations = (size_t)-1;
 	kg->kg_salt = NULL;
 	kg->kg_key = NULL;
+	kg->kg_cmd = NULL;
 	kg->next = NULL;
 	return kg;
 }
@@ -306,6 +307,7 @@ keygen_free(struct keygen *kg)
 		return;
 	bits_free(kg->kg_salt);
 	bits_free(kg->kg_key);
+	string_free(kg->kg_cmd);
 	keygen_free(kg->next);
 	free(kg);
 }
@@ -333,6 +335,8 @@ keygen_verify(const struct keygen *kg)
 			warnx("keygen pkcs5_pbkdf2 must provide a salt");
 			return 0;
 		}
+		if (kg->kg_cmd)
+			warnx("keygen pkcs5_pbkdf2 does not need a `cmd'");
 		break;
 	case KEYGEN_PKCS5_PBKDF2_SHA1:
 		if (kg->kg_iterations == (size_t)-1) {
@@ -345,6 +349,8 @@ keygen_verify(const struct keygen *kg)
 			warnx("keygen pkcs5_pbkdf2/sha1 must provide a salt");
 			return 0;
 		}
+		if (kg->kg_cmd)
+			warnx("keygen pkcs5_pbkdf2/sha1 does not need a `cmd'");
 		break;
 	case KEYGEN_STOREDKEY:
 		if (kg->kg_iterations != (size_t)-1)
@@ -355,6 +361,8 @@ keygen_verify(const struct keygen *kg)
 		}
 		if (kg->kg_salt)
 			warnx("keygen storedkey does not need `salt'");
+		if (kg->kg_cmd)
+			warnx("keygen storedkey does not need `cmd'");
 		break;
 	case KEYGEN_RANDOMKEY:
 	case KEYGEN_URANDOMKEY:
@@ -364,6 +372,20 @@ keygen_verify(const struct keygen *kg)
 			warnx("keygen [u]randomkey does not need `key'");
 		if (kg->kg_salt)
 			warnx("keygen [u]randomkey does not need `salt'");
+		if (kg->kg_cmd)
+			warnx("keygen [u]randomkey does not need `cmd'");
+		break;
+	case KEYGEN_SHELL_CMD:
+		if (kg->kg_iterations != (size_t)-1)
+			warnx("keygen shell_cmd does not need `iterations'");
+		if (kg->kg_key)
+			warnx("keygen shell_cmd does not need `key'");
+		if (kg->kg_salt)
+			warnx("keygen shell_cmd does not need `salt'");
+		if (!kg->kg_cmd) {
+			warnx("keygen shell_cmd must provide a `cmd'");
+			return 0;
+		}
 		break;
 	}
 	return keygen_verify(kg->next);
@@ -399,6 +421,7 @@ keygen_filldefaults(struct keygen *kg, size_t keylen)
 	switch (kg->kg_method) {
 	case KEYGEN_RANDOMKEY:
 	case KEYGEN_URANDOMKEY:
+	case KEYGEN_SHELL_CMD:
 		break;
 	case KEYGEN_PKCS5_PBKDF2_OLD:
 	case KEYGEN_PKCS5_PBKDF2_SHA1:
@@ -449,6 +472,9 @@ keygen_combine(struct keygen *kg1, struct keygen *kg2)
 	if (kg2->kg_key)
 		bits_assign(&kg1->kg_key, kg2->kg_key);
 
+	if (kg2->kg_cmd)
+		string_assign(&kg1->kg_cmd, kg2->kg_cmd);
+
 	return kg1;
 }
 
@@ -468,6 +494,8 @@ keygen_method(string_t *in)
 		kg->kg_method = KEYGEN_STOREDKEY;
 	if (!strcmp("urandomkey", kgm))
 		kg->kg_method = KEYGEN_URANDOMKEY;
+	if (!strcmp("shell_cmd", kgm))
+		kg->kg_method = KEYGEN_SHELL_CMD;
 
 	string_free(in);
 
@@ -522,6 +550,15 @@ keygen_key(bits_t *in)
 	struct keygen *kg = keygen_new();
 
 	kg->kg_key = in;
+	return kg;
+}
+
+struct keygen *
+keygen_cmd(string_t *in)
+{
+	struct keygen *kg = keygen_new();
+
+	kg->kg_cmd = in;
 	return kg;
 }
 

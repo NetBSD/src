@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.22 2008/05/10 21:38:40 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.23 2008/05/11 03:15:21 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.22 2008/05/10 21:38:40 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.23 2008/05/11 03:15:21 elric Exp $");
 #endif
 
 #include <err.h>
@@ -102,7 +102,9 @@ static void	 eliminate_cores(void);
 static bits_t	*getkey(const char *, struct keygen *, size_t);
 static bits_t	*getkey_storedkey(const char *, struct keygen *, size_t);
 static bits_t	*getkey_randomkey(const char *, struct keygen *, size_t, int);
-static bits_t	*getkey_pkcs5_pbkdf2(const char *, struct keygen *, size_t, int);
+static bits_t	*getkey_pkcs5_pbkdf2(const char *, struct keygen *, size_t,
+				     int);
+static bits_t	*getkey_shell_cmd(const char *, struct keygen *, size_t);
 static char	*maybe_getpass(char *);
 static int	 opendisk_werror(const char *, char *, size_t);
 static int	 unconfigure_fd(int);
@@ -315,6 +317,9 @@ getkey(const char *dev, struct keygen *kg, size_t len)
 		case KEYGEN_PKCS5_PBKDF2_OLD:
 			tmp = getkey_pkcs5_pbkdf2(dev, kg, len, 1);
 			break;
+		case KEYGEN_SHELL_CMD:
+			tmp = getkey_shell_cmd(dev, kg, len);
+			break;
 		default:
 			warnx("unrecognised keygen method %d in getkey()",
 			    kg->kg_method);
@@ -408,6 +413,20 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
 	kg->kg_key = bits_dup(ret);
 	free(passp);
 	free(tmp);
+	return ret;
+}
+
+/*ARGSUSED*/
+static bits_t *
+getkey_shell_cmd(const char *target, struct keygen *kg, size_t keylen)
+{
+	FILE	*f;
+	bits_t	*ret;
+
+	f = popen(string_tocharstar(kg->kg_cmd), "r");
+	ret = bits_fget(f, keylen);
+	pclose(f);
+
 	return ret;
 }
 
