@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.69 2008/05/10 16:12:32 ad Exp $
+#	$NetBSD: genassym.cf,v 1.70 2008/05/11 14:44:54 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -320,11 +320,9 @@ define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 define	CPU_INFO_CURPRIORITY	offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
 
-define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 define	CPU_INFO_FEATURES	offsetof(struct cpu_info, ci_feature_flags)
-define	CPU_INFO_BRAND		offsetof(struct cpu_info, ci_brand_id)
 
 define	CPU_TLOG_OFFSET		offsetof(struct cpu_info, ci_tlog_offset)
 define	CPU_TLOG_BASE		offsetof(struct cpu_info, ci_tlog_base)

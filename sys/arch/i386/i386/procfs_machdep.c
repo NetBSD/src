@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.28 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.29 2008/05/11 14:44:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.28 2008/05/10 16:12:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.29 2008/05/11 14:44:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,9 +134,9 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 		"stepping\t: ",
 		xcpu,
 		(char *)ci->ci_vendor,
-		ci->ci_cpuid_level >= 0 ?
+		cpuid_level >= 0 ?
 		    ((ci->ci_signature >> 8) & 15) : cpu_class + 3,
-		ci->ci_cpuid_level >= 0 ?
+		cpuid_level >= 0 ?
 		    ((ci->ci_signature >> 4) & 15) : 0,
 		cpu_model
 	    );
@@ -146,7 +146,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	if (left <= 0)
 		return 0;
 
-	if (ci->ci_cpuid_level >= 0)
+	if (cpuid_level >= 0)
 		l = snprintf(p, left, "%d\n", ci->ci_signature & 15);
 	else
 		l = snprintf(p, left, "unknown\n");
@@ -182,7 +182,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 		i386_fpu_fdivbug ? "yes" : "no",
 		i386_fpu_present ? "yes" : "no",
 		i386_fpu_exception ? "yes" : "no",
-		ci->ci_cpuid_level,
+		cpuid_level,
 		(rcr0() & CR0_WP) ? "yes" : "no",
 		featurebuf);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.39 2008/05/10 17:23:54 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.40 2008/05/11 14:44:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2008/05/10 17:23:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2008/05/11 14:44:54 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -372,11 +372,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		aprint_normal(": (uniprocessor)\n");
 		atomic_or_32(&ci->ci_flags,
 		    CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
-		identifycpu(ci);
+		cpu_get_tsc_freq(ci);
+		cpu_identify(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
@@ -385,11 +385,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		break;
 
 	case CPU_ROLE_BP:
-		aprint_normal(": (boot processor)\n");
 		atomic_or_32(&ci->ci_flags,
 		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
-		identifycpu(ci);
+		cpu_get_tsc_freq(ci);
+		cpu_identify(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
@@ -409,8 +409,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		/*
 		 * report on an AP
 		 */
-		aprint_normal(": (application processor)\n");
-
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
@@ -419,12 +417,12 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
-			identifycpu(ci);
+			cpu_identify(ci);
 			ci->ci_next = cpu_info_list->ci_next;
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		aprint_normal_dev(sc->sc_dev, "not started\n");
+		aprint_normal(": not started\n");
 #endif
 		break;
 
@@ -693,9 +691,7 @@ cpu_hatch(void *v)
 #ifdef __x86_64__
 	cpu_init_msrs(ci, true);
 #endif
-	cpu_probe_features(ci);
-	cpu_feature &= ci->ci_feature_flags;
-	cpu_feature2 &= ci->ci_feature2_flags;
+	cpu_probe(ci);
 
 	/* XXX Until we have a proper calibration loop, just lie. */
 	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;

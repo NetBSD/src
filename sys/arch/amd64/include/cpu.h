@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 2008/05/11 14:44:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -127,7 +127,6 @@ struct cpu_info {
 	uint32_t	ci_feature2_flags;
 	uint32_t	ci_feature3_flags;
 	uint32_t	ci_padlock_flags;
-	uint32_t	ci_brand_id;
 	uint32_t	ci_cflush_lsize;
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	volatile uint32_t	ci_lapic_counter;
@@ -327,6 +326,8 @@ extern int cpu_feature;
 extern int cpu_feature2;
 extern int cpu_id;
 extern int cpuid_level;
+extern int cpu_class;
+extern char cpu_brand_string[];
 extern char cpu_vendorname[];
 
 extern void (*x86_cpu_idle)(void);
@@ -334,8 +335,8 @@ extern void (*x86_cpu_idle)(void);
 
 /* identcpu.c */
 
-void	identifycpu(struct cpu_info *);
-void cpu_probe_features(struct cpu_info *);
+void	cpu_probe(struct cpu_info *);
+void	cpu_identify(struct cpu_info *);
 
 /* machdep.c */
 void	dumpconf(void);
