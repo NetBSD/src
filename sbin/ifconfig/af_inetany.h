@@ -23,7 +23,7 @@ struct afparam {
 		unsigned long cmd;
 		const char *desc;
 	} aifaddr, difaddr, gifaddr;
-	int (*pre_aifaddr)(prop_dictionary_t, void *);
+	int (*pre_aifaddr)(prop_dictionary_t, struct afparam *);
 };
 
 void	commit_address(prop_dictionary_t, prop_dictionary_t, struct afparam *);
