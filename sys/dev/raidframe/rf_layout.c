@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.18 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.18.24.1 2008/05/11 06:22:31 jdc Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.18 2005/12/11 12:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.18.24.1 2008/05/11 06:22:31 jdc Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -415,7 +415,21 @@ rf_ConfigureLayout(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	if (layoutPtr->sectorsPerStripeUnit <= 0) {
 		RF_ERRORMSG2("raid%d: Invalid sectorsPerStripeUnit: %d\n",
 			     raidPtr->raidid,
-			     (int)layoutPtr->sectorsPerStripeUnit );
+			     (int)layoutPtr->sectorsPerStripeUnit);
+		return (EINVAL);
+	}
+
+	if (layoutPtr->SUsPerPU <= 0) {
+		RF_ERRORMSG2("raid%d: Invalid StripeUnitsPerParityUnit: %d\n",
+			     raidPtr->raidid,
+			     (int)layoutPtr->SUsPerPU);
+		return (EINVAL);
+	}
+
+	if (layoutPtr->SUsPerRU <= 0) {
+		RF_ERRORMSG2("raid%d: Invalid StripeUnitsPerReconstructUnit: %d\n",
+			     raidPtr->raidid,
+			     (int)layoutPtr->SUsPerRU);
 		return (EINVAL);
 	}
 
