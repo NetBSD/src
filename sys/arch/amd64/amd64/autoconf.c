@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2008/05/10 16:12:32 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2008/05/11 15:32:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,16 +46,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2008/05/10 16:12:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2008/05/11 15:32:20 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/cpu.h>
 
 #include <machine/pte.h>
-#include <machine/cpu.h>
+#include <machine/cpufunc.h>
 
 #include "ioapic.h"
 #include "lapic.h"
