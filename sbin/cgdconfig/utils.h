@@ -1,4 +1,4 @@
-/* $NetBSD: utils.h,v 1.8 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: utils.h,v 1.9 2008/05/11 03:15:21 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ void		  memxor(void *, const void *, size_t);
 
 void		  free_notnull(void *);
 
+string_t	 *string_zero(void);
 string_t	 *string_new(const char *, size_t);
 string_t	 *string_dup(const string_t *);
 void		  string_assign(string_t **, string_t *);
