@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.222 2008/04/29 18:42:26 ad Exp $	*/
+/*	$NetBSD: if.c,v 1.223 2008/05/11 23:48:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.222 2008/04/29 18:42:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.223 2008/05/11 23:48:07 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -155,6 +155,9 @@ static int	if_rt_walktree(struct rtentry *, void *);
 
 static struct if_clone *if_clone_lookup(const char *, int *);
 static int	if_clone_list(struct if_clonereq *);
+
+static void if_activate_sadl(struct ifnet *, struct ifaddr *,
+    const struct sockaddr_dl *);
 
 static LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 static int if_cloners_count;
@@ -266,6 +269,7 @@ if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen)
 	sdl = satosdl(ifa->ifa_addr);
 
 	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lla, ifp->if_addrlen);
+	/* TBD routing socket */
 }
 
 struct ifaddr *
@@ -298,6 +302,18 @@ if_dl_create(const struct ifnet *ifp, const struct sockaddr_dl **sdlp)
 	return ifa;
 }
 
+static void
+if_sadl_setrefs(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	const struct sockaddr_dl *sdl;
+	ifnet_addrs[ifp->if_index] = ifa;
+	IFAREF(ifa);
+	ifp->if_dl = ifa;
+	IFAREF(ifa);
+	sdl = satosdl(ifa->ifa_addr);
+	ifp->if_sadl = sdl;
+}
+
 /*
  * Allocate the link level name for the specified interface.  This
  * is an attachment helper.  It must be called after ifp->if_addrlen
@@ -320,12 +336,40 @@ if_alloc_sadl(struct ifnet *ifp)
 
 	ifa = if_dl_create(ifp, &sdl);
 
-	ifnet_addrs[ifp->if_index] = ifa;
-	IFAREF(ifa);
 	ifa_insert(ifp, ifa);
-	ifp->if_dl = ifa;
-	IFAREF(ifa);
-	ifp->if_sadl = sdl;
+	if_sadl_setrefs(ifp, ifa);
+}
+
+static void
+if_deactivate_sadl(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+
+	KASSERT(ifp->if_dl != NULL);
+
+	ifa = ifp->if_dl;
+
+	ifp->if_sadl = NULL;
+
+	ifnet_addrs[ifp->if_index] = NULL;
+	IFAFREE(ifa);
+	ifp->if_dl = NULL;
+	IFAFREE(ifa);
+}
+
+static void
+if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa,
+    const struct sockaddr_dl *sdl)
+{
+	int s;
+
+	s = splnet();
+
+	if_deactivate_sadl(ifp);
+
+	if_sadl_setrefs(ifp, ifa);
+	splx(s);
+	rt_ifmsg(ifp);
 }
 
 /*
@@ -353,12 +397,7 @@ if_free_sadl(struct ifnet *ifp)
 	rtinit(ifa, RTM_DELETE, 0);
 	ifa_remove(ifp, ifa);
 
-	ifp->if_sadl = NULL;
-
-	ifnet_addrs[ifp->if_index] = NULL;
-	IFAFREE(ifa);
-	ifp->if_dl = NULL;
-	IFAFREE(ifa);
+	if_deactivate_sadl(ifp);
 	splx(s);
 }
 
@@ -1354,10 +1393,19 @@ ifunit(const char *name)
 int
 ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 {
-	int s;
+	bool isactive, mkactive;
+	int error, s;
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
+	struct if_laddrreq *iflr;
+	struct ifaddr *ifa;
+	union {
+		struct sockaddr sa;
+		struct sockaddr_dl sdl;
+		struct sockaddr_storage ss;
+	} u;
+	const struct sockaddr_dl *asdl, *nsdl;
 
 	switch (cmd) {
 	case SIOCSIFCAP:
@@ -1483,8 +1531,102 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 		nd6_setmtu(ifp);
 #endif
 		return ENETRESET;
+	case SIOCALIFADDR:
+	case SIOCDLIFADDR:
+	case SIOCGLIFADDR:
+		iflr = data;
+
+		if (iflr->addr.ss_family != AF_LINK)
+			return ENOTTY;
+
+		asdl = satocsdl(sstocsa(&iflr->addr));
+
+		if (asdl->sdl_alen != ifp->if_addrlen)
+			return EINVAL;
+
+		if (sockaddr_dl_init(&u.sdl, sizeof(u.ss), ifp->if_index,
+		    ifp->if_type, ifp->if_xname, strlen(ifp->if_xname),
+		    CLLADDR(asdl), asdl->sdl_alen) == NULL)
+			return EINVAL;
+
+		if ((iflr->flags & IFLR_PREFIX) == 0)
+			;
+		else if (iflr->prefixlen != NBBY * ifp->if_addrlen)
+			return EINVAL;	/* XXX match with prefix */
+
+		error = 0;
+
+		s = splnet();
+
+		IFADDR_FOREACH(ifa, ifp) {
+			if (sockaddr_cmp(&u.sa, ifa->ifa_addr) == 0)
+				break;
+		}
+
+		switch (cmd) {
+		case SIOCGLIFADDR:
+			if ((iflr->flags & IFLR_PREFIX) == 0) {
+				IFADDR_FOREACH(ifa, ifp) {
+					if (ifa->ifa_addr->sa_family == AF_LINK)
+						break;
+				}
+			}
+			if (ifa == NULL) {
+				error = EADDRNOTAVAIL; 
+				break;
+			}
+
+			if (ifa == ifp->if_dl)
+				iflr->flags = IFLR_ACTIVE;
+			else
+				iflr->flags = 0;
+
+			sockaddr_copy(sstosa(&iflr->addr), sizeof(iflr->addr),
+			    ifa->ifa_addr);
+
+			break;
+		case SIOCDLIFADDR:
+			if (ifa == NULL)
+				error = EADDRNOTAVAIL;
+			else if (ifa == ifp->if_dl)
+				error = EBUSY;
+			else {
+				/* TBD routing socket */
+				rt_newaddrmsg(RTM_DELETE, ifa, 0, NULL);
+				ifa_remove(ifp, ifa);
+			}
+			break;
+		case SIOCALIFADDR:
+			if (ifa != NULL)
+				;
+			else if ((ifa = if_dl_create(ifp, &nsdl)) == NULL) {
+				error = ENOMEM;
+				break;
+			} else {
+				sockaddr_copy(ifa->ifa_addr,
+				    ifa->ifa_addr->sa_len, &u.sa);
+				ifa_insert(ifp, ifa);
+				rt_newaddrmsg(RTM_ADD, ifa, 0, NULL);
+			}
+
+			mkactive = (iflr->flags & IFLR_ACTIVE) != 0;
+			isactive = (ifa == ifp->if_dl);
+
+			if (!isactive && mkactive) {
+				if_activate_sadl(ifp, ifa, nsdl);
+				error = ENETRESET;
+			}
+			break;
+		}
+		splx(s);
+		if (error != ENETRESET)
+			return error;
+		else if ((ifp->if_flags & IFF_RUNNING) != 0)
+			return (*ifp->if_init)(ifp);
+		else
+			return 0;
 	default:
-		return EOPNOTSUPP;
+		return ENOTTY;
 	}
 	return 0;
 }
@@ -1626,7 +1768,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	default:
 		error = ifioctl_common(ifp, cmd, data);
-		if (error != EOPNOTSUPP)
+		if (error != ENOTTY)
 			break;
 		if (so->so_proto == NULL)
 			return EOPNOTSUPP;
