@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.37 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: dpti.c,v 1.38 2008/05/11 14:25:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.37 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.38 2008/05/11 14:25:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.37 2008/04/28 20:23:48 martin Exp $");
 #include <sys/bus.h>
 #ifdef __i386__
 #include <machine/pio.h>
+#include <machine/cputypes.h>
 #endif
 
 #include <dev/i2o/i2o.h>
