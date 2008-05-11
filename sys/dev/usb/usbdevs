@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.498 2008/04/28 20:24:00 martin Exp $
+$NetBSD: usbdevs,v 1.499 2008/05/11 06:42:47 cegger Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -327,6 +327,7 @@ vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor TRUMPION		0x090a	Trumpion Microelectronics
 vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
+vendor GARMIN		0x091e	Garmin
 vendor GOHUBS		0x0921	GoHubs
 vendor BIOMETRIC	0x0929	American Biometric Company
 vendor TOSHIBA		0x0930	Toshiba
@@ -1090,6 +1091,9 @@ product GIGASET RT2573		0x0722	RT2573
 
 /* G.Mate, Inc products */
 product GMATE YP3X00		0x1001	YP3X00 PDA
+
+/* Garmin products */
+product GARMIN FORERUNNER305	0x0003	Forerunner 305
 
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
