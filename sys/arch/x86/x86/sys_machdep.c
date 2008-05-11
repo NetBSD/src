@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15 2008/05/11 16:13:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.14 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15 2008/05/11 16:13:34 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -344,6 +344,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	free_ldt = NULL;
 	free_len = 0;
 	mutex_enter(&pmap->pm_lock);
+	kpreempt_disable();
 	if (pmap->pm_ldt == 0 || (ua->start + ua->num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
@@ -406,6 +407,7 @@ copy:
 	for (i = 0, n = ua->start; i < ua->num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
 
+	kpreempt_enable();
 	mutex_exit(&pmap->pm_lock);
 
 	if (new_ldt != NULL)
