@@ -37,6 +37,14 @@ DEFINE_TEST(test_version)
 
 
 	r = systemf("%s --version >version.stdout 2>version.stderr", testprog);
+	if (r != 0)
+		r = systemf("%s -W version >version.stdout 2>version.stderr",
+		    testprog);
+	failure("Unable to run either %s --version or %s -W version",
+	    testprog, testprog);
+	if (!assert(r == 0))
+		return;
+
 	/* --version should generate nothing to stdout. */
 	assertEmptyFile("version.stderr");
 	/* Verify format of version message. */

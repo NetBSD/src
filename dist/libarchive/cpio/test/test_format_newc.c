@@ -106,13 +106,13 @@ DEFINE_TEST(test_format_newc)
 
 	/* Use the cpio program to create an archive. */
 	close(list);
-	r = systemf("%s -o --format=newc --quiet <list >newc.out 2>newc.err",
+	r = systemf("%s -o --format=newc <list >newc.out 2>newc.err",
 	    testprog);
 	if (!assertEqualInt(r, 0))
 		return;
 
 	/* Verify that nothing went to stderr. */
-	assertEmptyFile("newc.err");
+	assertFileContents("2 blocks\n", 9, "newc.err");
 
 	/* Verify that stdout is a well-formed cpio file in "newc" format. */
 	p = slurpfile(&s, "newc.out");
