@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.47 2007/09/02 19:42:22 dyoung Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.48 2008/05/11 20:20:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.47 2007/09/02 19:42:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.48 2008/05/11 20:20:27 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -129,8 +129,8 @@ static struct sockaddr_iso
 
 #define zsi blank_siso
 #define zero_isoa	zsi.siso_addr
-#define zap_isoaddr(a, b) {Bzero(&a.siso_addr, sizeof(*r)); r = b; \
-	   Bcopy(r, &a.siso_addr, 1 + (r)->isoa_len);}
+#define zap_isoaddr(a, b) {memset(&a.siso_addr, 0, sizeof(*r)); r = b; \
+	   memmove(&a.siso_addr, r, 1 + (r)->isoa_len);}
 #define S(x) ((struct sockaddr *)&(x))
 
 static struct sockaddr_dl gte_dl;
@@ -233,7 +233,7 @@ llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 				log(LOG_DEBUG, "llc_rtrequest: malloc failed\n");
 				break;
 			}
-			Bzero(lc, sizeof(*lc));
+			memset(lc, 0, sizeof(*lc));
 			lc->lc_rt = rt;
 			rt->rt_flags |= RTF_LLINFO;
 			LIST_INSERT_HEAD(&llinfo_llc, lc, lc_list);
