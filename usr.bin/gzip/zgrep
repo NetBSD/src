@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zgrep,v 1.4 2004/05/25 07:09:09 mrg Exp $
+# $NetBSD: zgrep,v 1.4.6.1 2008/05/11 07:17:39 jdc Exp $
 #
 # Copyright (c) 2003 Thomas Klausner.
 #
@@ -32,6 +32,7 @@ zcat=/usr/bin/zcat
 endofopts=0
 pattern_found=0
 grep_args=""
+silent=0
 
 prg=$0
 
@@ -74,6 +75,10 @@ do
 	-)
 	    endofopts=1
 	    ;;
+	-h)
+	    silent=1
+	    shift
+	    ;;
 	-*)
 	    grep_args="${grep_args} $1"
 	    shift
@@ -104,9 +109,12 @@ then
     ${zcat} -fq - | ${grep} ${grep_args} "${pattern}" -
 else
     # ... on all files given on the command line
+    if [ ${silent} -lt 1 ]; then
+	grep_args="-H ${grep_args}"
+    fi
     while [ $# -gt 0 ]
     do
-	${zcat} -fq -- "$1" | ${grep} -H --label="${1}" "${pattern}" ${grep_args} -
+	${zcat} -fq -- "$1" | ${grep} --label="${1}" "${pattern}" ${grep_args} -
 	shift
     done
 fi
