@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.111 2008/04/28 20:23:58 martin Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.112 2008/05/11 05:17:23 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -440,6 +440,7 @@ struct scsipi_periph {
 #define	PQUIRK_LITTLETOC	0x00000400	/* audio TOC is little-endian */
 #define	PQUIRK_NOCAPACITY	0x00000800	/* no READ CD CAPACITY */
 #define	PQUIRK_NOTUR		0x00001000	/* no TEST UNIT READY */
+#define	PQUIRK_NODOORLOCK	0x00002000	/* can't lock door */
 #define	PQUIRK_NOSENSE		0x00004000	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
 #define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
