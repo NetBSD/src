@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.12 2008/05/11 15:59:51 ad Exp $	*/
+/*	$NetBSD: ipi.c,v 1.13 2008/05/11 21:48:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.12 2008/05/11 15:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.13 2008/05/11 21:48:02 ad Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
@@ -96,14 +96,12 @@ x86_multicast_ipi(int cpumask, int ipimask)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	cpumask &= ~(1U << cpu_index(curcpu()));
-	if (cpumask == 0)
+	if ((cpumask &= ~curcpu()->ci_cpumask) == 0)
 		return;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if ((cpumask & (1U << cpu_index(ci))) == 0)
-			continue;
-		x86_send_ipi(ci, ipimask);
+		if ((cpumask & ci->ci_cpumask) != 0)
+			x86_send_ipi(ci, ipimask);
 	}
 }
 
