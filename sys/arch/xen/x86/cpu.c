@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 2008/05/10 16:27:57 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21 2008/05/11 15:02:34 ad Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2008/05/10 16:27:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2008/05/11 15:02:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -427,7 +427,8 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		atomic_or_32(&ci->ci_flags,
 		     CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
-		identifycpu(ci);
+		cpu_get_tsc_freq(ci);
+		cpu_identify(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
@@ -441,7 +442,8 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		atomic_or_32(&ci->ci_flags, 
 		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
-		identifycpu(ci);
+		cpu_get_tsc_freq(ci);
+		cpu_identify(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
@@ -689,9 +691,7 @@ cpu_hatch(void *v)
         cpu_init_msrs(ci, true);
 #endif
 
-	cpu_probe_features(ci);
-	cpu_feature &= ci->ci_feature_flags;
-	cpu_feature2 &= ci->ci_feature2_flags;
+	cpu_probe(ci);
 
 	/* not on Xen... */
 	blacklist_features = ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX); /* XXX add CPUID_SVM */
