@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.44 2008/05/11 16:26:56 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.45 2008/05/11 22:26:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2008/05/11 16:26:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2008/05/11 22:26:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -174,7 +174,8 @@ static vaddr_t cmos_data_mapping;
  * Array of CPU info structures.  Must be statically-allocated because
  * curproc, etc. are used early.
  */
-struct cpu_info *cpu_info[X86_MAXPROCS] = { &cpu_info_primary, };
+struct cpu_info *cpu_info[X86_MAXPROCS];
+struct cpu_info *cpu_starting;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
@@ -190,14 +191,8 @@ static void	cpu_copy_trampoline(void);
 void
 cpu_init_first(void)
 {
-	int cpunum = lapic_cpu_number();
 
-	if (cpunum != 0) {
-		cpu_info[0] = NULL;
-		cpu_info[cpunum] = &cpu_info_primary;
-	}
-
-	cpu_info_primary.ci_cpuid = cpunum;
+	cpu_info_primary.ci_cpuid = lapic_cpu_number();
 	cpu_copy_trampoline();
 
 	cmos_data_mapping = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
@@ -278,6 +273,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
+	/* Make sure DELAY() is initialized. */
+	DELAY(1);
+
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
 	 * structure, otherwise use the primary's.
@@ -294,11 +292,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
 		ci->ci_curldt = -1;
-		if (cpu_info[cpunum] != NULL) {
-			printf("\n");
-			panic("cpu at apic id %d already attached?", cpunum);
-		}
-		cpu_info[cpunum] = ci;
 #ifdef TRAPLOG
 		ci->ci_tlog_base = malloc(sizeof(struct tlog),
 		    M_DEVBUF, M_WAITOK);
@@ -343,6 +336,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	}
 
 	ci->ci_cpumask = (1 << cpu_index(ci));
+	cpu_info[cpu_index(ci)] = ci;
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -558,13 +552,16 @@ cpu_start_secondary(struct cpu_info *ci)
 	u_long psl;
 	int i;
 
+	KASSERT(cpu_starting == NULL);
+
+	cpu_starting = ci;
 	mp_pdirpa = pmap_init_tmp_pgtbl(mp_trampoline_paddr);
-
 	atomic_or_32(&ci->ci_flags, CPUF_AP);
-
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
-	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0)
+	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0) {
+		cpu_starting = NULL;
 		return;
+	}
 
 	/*
 	 * wait for it to become ready
@@ -603,6 +600,7 @@ cpu_start_secondary(struct cpu_info *ci)
 	}
 
 	CPU_START_CLEANUP(ci);
+	cpu_starting = NULL;
 }
 
 void
@@ -654,9 +652,7 @@ cpu_hatch(void *v)
 	cpu_init_msrs(ci, true);
 #endif
 	cpu_probe(ci);
-
-	/* XXX Until we have a proper calibration loop, just lie. */
-	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;
+	cpu_get_tsc_freq(ci);
 
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 
@@ -1028,14 +1024,11 @@ void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
 	uint64_t last_tsc;
-	u_int junk[4];
 
 	if (ci->ci_feature_flags & CPUID_TSC) {
-		/* Serialize. */
-		x86_cpuid(0, junk);
-		last_tsc = cpu_counter();
+		last_tsc = rdmsr(MSR_TSC);
 		i8254_delay(100000);
-		ci->ci_data.cpu_cc_freq = (cpu_counter() - last_tsc) * 10;
+		ci->ci_data.cpu_cc_freq = (rdmsr(MSR_TSC) - last_tsc) * 10;
 	}
 }
 
