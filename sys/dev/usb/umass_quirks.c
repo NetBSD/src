@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.73 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.74 2008/05/11 05:20:33 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.73 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.74 2008/05/11 05:20:33 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,6 +194,28 @@ Static const struct umass_quirk umass_quirks[] = {
 	  0,
 	  UMASS_QUIRK_USE_DEFAULTMATCH, /* use default MATCH function */
 	  umass_init_e220, NULL
+	},
+	/* IBEAD devices don't like all SCSI commands */
+	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_MUSICSTICK },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_I_BEAD100 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0, 
+	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,  
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_I_BEAD150 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
+	  0,
+	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
 	},
 };
 
