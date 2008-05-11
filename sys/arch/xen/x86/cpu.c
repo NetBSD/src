@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.22 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.23 2008/05/11 15:59:51 ad Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2008/05/11 15:32:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2008/05/11 15:59:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -246,8 +246,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
-	ci->ci_apicid = caa->cpu_number;
-	ci->ci_cpuid = ci->ci_apicid;
+	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
 
 	printf(": ");
@@ -386,17 +385,11 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
-	ci->ci_apicid = cpunum;
+	ci->ci_cpuid = cpunum;
 
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	ci->ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[cpunum];
 
-#ifdef MULTIPROCESSOR
-	ci->ci_cpuid = ci->ci_apicid;
-#else
-	ci->ci_cpuid = 0;	/* False for APs, but they're not used anyway */
-#endif
-	ci->ci_cpumask = (1 << ci->ci_cpuid);
 	ci->ci_func = caa->cpu_func;
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
@@ -415,6 +408,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
+	ci->ci_cpumask = (1 << cpu_index(ci));
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -916,13 +910,13 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		if ((error = x86_ipi_init(ci->ci_apicid)) != 0)
+		if ((error = x86_ipi_init(ci->ci_cpuid)) != 0)
 			return error;
 
 		delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
-			error = x86_ipi_init(ci->ci_apicid);
+			error = x86_ipi_init(ci->ci_cpuid);
 			if (error != 0) {
 				aprint_error_dev(ci->ci_dev, "%s: IPI not taken (1)\n",
 						__func__);
@@ -931,7 +925,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 
 			delay(10000);
 
-			error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+			error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
 					LAPIC_DLMODE_STARTUP);
 			if (error != 0) {
 				aprint_error_dev(ci->ci_dev, "%s: IPI not taken (2)\n",
@@ -940,7 +934,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 			}
 			delay(200);
 
-			error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+			error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
 					LAPIC_DLMODE_STARTUP);
 			if (error != 0) {
 				aprint_error_dev(ci->ci_dev, "%s: IPI not taken ((3)\n",
