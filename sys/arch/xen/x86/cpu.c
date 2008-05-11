@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.23 2008/05/11 15:59:51 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.24 2008/05/11 16:23:05 ad Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2008/05/11 15:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.24 2008/05/11 16:23:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -153,6 +153,7 @@ struct cpu_info cpu_info_primary = {
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
+	.ci_curldt = -1;
 #ifdef TRAPLOG
 	.ci_tlog = &tlog_primary,
 #endif
@@ -231,6 +232,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
+		ci->ci_curldt = -1;
 		if (phycpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
 		phycpu_info[cpunum] = ci;

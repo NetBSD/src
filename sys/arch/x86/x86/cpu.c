@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.42 2008/05/11 15:59:51 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.43 2008/05/11 16:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2008/05/11 15:59:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2008/05/11 16:23:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -147,6 +147,7 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
+	.ci_curldt = -1,
 #ifdef TRAPLOG
 	.ci_tlog_base = &tlog_primary,
 #endif /* !TRAPLOG */
@@ -299,6 +300,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
 		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
+		ci->ci_curldt = -1;
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL) {
 			printf("\n");

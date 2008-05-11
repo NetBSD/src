@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.12 2008/05/10 16:21:41 ad Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.13 2008/05/11 16:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,6 +67,11 @@ NENTRY(lidt)
 	ret
 
 NENTRY(lldt)
+	cmpl	%edi, CPUVAR(CURLDT)
+	jne	1f
+	ret
+1:
+	movl	%edi, CPUVAR(CURLDT)
 	lldt	%di
 	ret
 
