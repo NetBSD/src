@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.18 2008/05/11 22:30:07 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.19 2008/05/11 23:27:32 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.18 2008/05/11 22:30:07 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.19 2008/05/11 23:27:32 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -108,15 +108,6 @@ static void in6_delscopeid(struct sockaddr_in6 *sin6);
 static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
 static void in6_alias(const char *, prop_dictionary_t, prop_dictionary_t,
     struct in6_ifreq *);
-
-static char *
-sec2str(time_t total)
-{
-	static char result[256];
-	snprintf(result, sizeof(result), "%lu", (u_long)total);
-
-	return result;
-}
 
 static int
 prefix(void *val, int size)
@@ -383,17 +374,17 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 			time_t t = time(NULL);
 			printf(" pltime ");
 			if (lifetime->ia6t_preferred) {
-				printf("%s", lifetime->ia6t_preferred < t
-					? "0"
-					: sec2str(lifetime->ia6t_preferred - t));
+				printf("%lu",
+				    (unsigned long)(lifetime->ia6t_preferred -
+				        MIN(t, lifetime->ia6t_preferred)));
 			} else
 				printf("infty");
 
 			printf(" vltime ");
 			if (lifetime->ia6t_expire) {
-				printf("%s", lifetime->ia6t_expire < t
-					? "0"
-					: sec2str(lifetime->ia6t_expire - t));
+				printf("%lu",
+				    (unsigned long)(lifetime->ia6t_expire -
+				        MIN(t, lifetime->ia6t_expire)));
 			} else
 				printf("infty");
 		}
