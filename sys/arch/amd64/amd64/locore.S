@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43 2008/05/02 15:26:38 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.44 2008/05/11 13:33:54 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -181,6 +181,7 @@
 #include <machine/trap.h>
 #include <machine/bootinfo.h>
 #include <machine/frameasm.h>
+#include <machine/cputypes.h>
 
 #if NLAPIC > 0
 #include <machine/i82489reg.h>
@@ -239,7 +240,7 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
-	.globl	_C_LABEL(gdtstore)
+	.globl	_C_LABEL(gdtstore),_C_LABEL(cpu)
 
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
