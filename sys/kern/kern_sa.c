@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.2 2008/05/11 00:23:35 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.3 2008/05/11 00:31:34 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.2 2008/05/11 00:23:35 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.3 2008/05/11 00:31:34 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -899,7 +899,7 @@ sa_yield(struct lwp *l)
 		sa->sa_concurrency++;
 		simple_unlock(&sa->sa_lock);
 
-		KDASSERT(vp->savp_lwp == l || p->p_sflag & P_WEXIT);
+		KDASSERT(vp->savp_lwp == l || p->p_sflag & PS_WEXIT);
 
 		/* KERNEL_PROC_UNLOCK(l); in upcallret() */
 		upcallret(l);
@@ -1184,8 +1184,8 @@ sa_switch(struct lwp *l, int type)
 
 	SCHED_ASSERT_LOCKED();
 
-	if (p->p_sflag & P_WEXIT) {
-		mi_switch(l, NULL);
+	if (p->p_sflag & PS_WEXIT) {
+		mi_switch(l);
 		return;
 	}
 
@@ -1196,7 +1196,7 @@ sa_switch(struct lwp *l, int type)
 		 */
 		if (vp->savp_wokenq_head == NULL && p->p_userret == NULL) {
 			l->l_flag |= LW_SA_IDLE;
-			mi_switch(l, NULL);
+			mi_switch(l);
 		} else {
 			/* make us running again. */
 			unsleep(l);
@@ -1224,7 +1224,7 @@ sa_switch(struct lwp *l, int type)
 #endif
 panic("Oops! Don't have a sleeper!\n");
 			/* XXXWRS Shouldn't we just kill the app here? */
-			mi_switch(l, NULL);
+			mi_switch(l);
 			return;
 		}
 
@@ -1248,7 +1248,7 @@ panic("Oops! Don't have a sleeper!\n");
 			printf("sa_switch(%d.%d): no cached LWP for upcall.\n",
 			    p->p_pid, l->l_lid);
 #endif
-			mi_switch(l, NULL);
+			mi_switch(l);
 			sadata_upcall_free(sau);
 			return;
 		}
@@ -1261,15 +1261,15 @@ panic("Oops! Don't have a sleeper!\n");
 		 * We do this only here since we need l's ucontext to
 		 * get l's userspace stack. sa_upcall0 above has saved
 		 * it for us.
-		 * The LW_SA_PAGEFAULT flag is set in the MD
+		 * The LP_SA_PAGEFAULT flag is set in the MD
 		 * pagefault code to indicate a pagefault.  The MD
 		 * pagefault code also saves the faultaddr for us.
 		 */
-		if ((l->l_flag & LW_SA_PAGEFAULT) && sa_pagefault(l,
+		if ((l->l_flag & LP_SA_PAGEFAULT) && sa_pagefault(l,
 			&sau->sau_event.ss_captured.ss_ctx) != 0) {
 			cpu_setfunc(l2, sa_switchcall, NULL);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
-			mi_switch(l, NULL);
+			mi_switch(l);
 			/*
 			 * WRS Not sure how vp->savp_sleeper_upcall != NULL
 			 * but be careful none the less
@@ -1313,7 +1313,8 @@ panic("Oops! Don't have a sleeper!\n");
 
 	DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d.\n",
 	    p->p_pid, l->l_lid, l2 ? l2->l_lid : 0));
-	mi_switch(l, l2);
+	/* WRS need to add code to make sure we switch to l2 */
+	mi_switch(l);
 	DPRINTFN(4,("sa_switch(%d.%d flag %x) returned.\n",
 	    p->p_pid, l->l_lid, l->l_flag));
 	KDASSERT(l->l_wchan == 0);
@@ -1344,7 +1345,7 @@ sa_switchcall(void *arg)
 	vp = l2->l_savp;
 	sau = arg;
 
-	if (p->p_sflag & P_WEXIT) {
+	if (p->p_sflag & PS_WEXIT) {
 		sadata_upcall_free(sau);
 		lwp_exit(l2);
 	}
@@ -1393,7 +1394,7 @@ sa_switchcall(void *arg)
 			vp->savp_lwp = l;
 			l->l_flag &= ~LW_SA_BLOCKING;
 			p->p_nrlwps--;
-			mi_switch(l2, NULL);
+			mi_switch(l2);
 			/* mostly NOTREACHED */
 			SCHED_ASSERT_UNLOCKED();
 			splx(s);
@@ -1423,7 +1424,7 @@ sa_newcachelwp(struct lwp *l)
 	int s;
 
 	p = l->l_proc;
-	if (p->p_sflag & P_WEXIT)
+	if (p->p_sflag & PS_WEXIT)
 		return (0);
 
 	inmem = uvm_uarea_alloc(&uaddr);
@@ -1517,7 +1518,7 @@ sa_unblock_userret(struct lwp *l)
 	sa = p->p_sa;
 	vp = l->l_savp;
 
-	if (p->p_sflag & P_WEXIT)
+	if (p->p_sflag & PS_WEXIT)
 		return;
 
 	SCHED_ASSERT_UNLOCKED();
@@ -1545,11 +1546,11 @@ sa_unblock_userret(struct lwp *l)
 			lwp_exit(l);
 
 		sast = sa_getstack(sa);
-		if (p->p_sflag & P_WEXIT)
+		if (p->p_sflag & PS_WEXIT)
 			lwp_exit(l);
 
 		sau = sadata_upcall_alloc(1);
-		if (p->p_sflag & P_WEXIT) {
+		if (p->p_sflag & PS_WEXIT) {
 			sadata_upcall_free(sau);
 			lwp_exit(l);
 		}
@@ -1644,14 +1645,14 @@ sa_upcall_userret(struct lwp *l)
 
 		SCHED_UNLOCK(s);
 
-		if (p->p_sflag & P_WEXIT)
+		if (p->p_sflag & PS_WEXIT)
 			lwp_exit(l);
 
 		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking %d\n",
 		    p->p_pid, l->l_lid, l2->l_lid));
 
 		sau = sadata_upcall_alloc(1);
-		if (p->p_sflag & P_WEXIT) {
+		if (p->p_sflag & PS_WEXIT) {
 			sadata_upcall_free(sau);
 			lwp_exit(l);
 		}
@@ -2052,11 +2053,12 @@ sa_setwoken(struct lwp *l)
 
 	l->l_stat = LSSUSPENDED;
 	p->p_nrlwps--;
-	mi_switch(l, l2);
+	/* WRS need to add code to make sure we switch to l2 */
+	mi_switch(l);
 	/* maybe NOTREACHED */
 	SCHED_ASSERT_UNLOCKED();
 	splx(s);
-	if (p->p_sflag & P_WEXIT)
+	if (p->p_sflag & PS_WEXIT)
 		lwp_exit(l);
 }
 
