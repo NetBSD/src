@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.14 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.15 2008/05/11 22:26:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.14 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.15 2008/05/11 22:26:59 ad Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -186,7 +186,7 @@ _TRMP_LABEL(mp_startup)
 
 	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
 	shrl	$LAPIC_ID_SHIFT,%ecx
-	movl	_C_LABEL(cpu_info)(,%ecx,4),%ecx
+	movl	_C_LABEL(cpu_starting),%ecx
 	
 	HALTT(0x7, %ecx)
 
