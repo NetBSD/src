@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.25 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: pci.9,v 1.26 2008/05/11 14:15:53 he Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,9 @@
 .In dev/pci/pcireg.h
 .In dev/pci/pcidevs.h
 .Ft int
-.Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "int reg" "void *sc" "int (*wakeup)(pci_chipset_tag_t pc, pcitag_t tag, void *sc, pcireg_t reg)"
+.Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "int reg" "void *sc" \
+"int (*wakeup)(pci_chipset_tag_t pc, pcitag_t tag" \
+"\t\tvoid *sc, pcireg_t reg)"
 .Ft pcireg_t
 .Fn pci_conf_read "pci_chipset_tag_t pc" "pcitag_t tag" "int reg"
 .Ft void
