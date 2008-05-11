@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2008/05/11 15:59:50 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2008/05/11 16:23:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,6 +111,7 @@ struct cpu_info {
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
+	int ci_curldt;		/* current LDT descriptor */
 	uint64_t ci_scratch;
 
 #ifdef XEN
