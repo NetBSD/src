@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.10 2008/05/11 23:25:46 dyoung Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.11 2008/05/12 20:59:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.10 2008/05/11 23:25:46 dyoung Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.11 2008/05/12 20:59:13 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -63,7 +63,7 @@ static void in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
     struct in_aliasreq *);
 static void in_preference(const char *, const struct sockaddr *);
 
-void
+static void
 in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
     struct in_aliasreq *creq)
 {
