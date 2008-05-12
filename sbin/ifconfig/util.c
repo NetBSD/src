@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2008/05/07 23:55:07 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2008/05/12 21:52:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2008 David Young.  All rights reserved.
@@ -54,7 +54,7 @@ getsock(int naf)
 	if (oaf != -1)
 		close(s);
 
-	if (naf == AF_UNSPEC)
+	if (naf == AF_UNSPEC || naf == AF_LINK)
 		naf = AF_INET;
 
 	s = socket(naf, SOCK_DGRAM, 0);
