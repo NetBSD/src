@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.203 2008/05/11 22:07:23 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.204 2008/05/12 22:06:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.203 2008/05/11 22:07:23 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.204 2008/05/12 22:06:13 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,6 +111,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.203 2008/05/11 22:07:23 dyoung Exp $");
 #ifdef INET6
 #include "af_inet6.h"
 #endif /* INET6 */
+#include "af_link.h"
 
 #include "agr.h"
 #include "carp.h"
@@ -180,10 +181,11 @@ static const struct afswtch afs[] = {
 	  {.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
 	   .af_addr_commit = in_commit_address}
 
+	, {.af_name = "link", .af_af = AF_LINK, .af_status = link_status,
+	   .af_addr_commit = link_commit_address}
 #ifdef INET6
 	, {.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
-	   .af_addr_commit = in6_commit_address
-}
+	   .af_addr_commit = in6_commit_address}
 #endif
 
 #ifndef INET_ONLY	/* small version, for boot media */
@@ -271,7 +273,9 @@ struct pstr media = PSTR_INITIALIZER(&media, "media",
     setmedia, "media", &command_root.pb_parser);
 
 static const struct kwinst misckw[] = {
-	  {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
+	  {.k_word = "active", .k_key = "active", .k_type = KW_T_BOOL,
+	   .k_bool = true, .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_neg = true,
 	   .k_bool = true, .k_negbool = false,
 	   .k_exec = notealias, .k_nextparser = &command_root.pb_parser}
@@ -316,6 +320,8 @@ static const struct kwinst clonekw[] = {
 
 static const struct kwinst familykw[] = {
 	  {.k_word = "inet", .k_type = KW_T_NUM, .k_num = AF_INET,
+	   .k_nextparser = NULL}
+	, {.k_word = "link", .k_type = KW_T_NUM, .k_num = AF_LINK,
 	   .k_nextparser = NULL}
 #ifdef INET6
 	, {.k_word = "inet6", .k_type = KW_T_NUM, .k_num = AF_INET6,
