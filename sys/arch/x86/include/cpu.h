@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2008/05/11 16:23:05 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2008/05/12 14:41:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -242,7 +242,7 @@ lwp_t	*x86_curlwp(void);
 void	cpu_set_curpri(int);
 #endif
 
-#define cpu_number() 		(curcpu()->ci_cpuid)
+#define cpu_number() 		(cpu_index(curcpu()))
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
@@ -251,8 +251,6 @@ void	cpu_set_curpri(int);
 
 #define aston(l, why)		((l)->l_md.md_astpending |= (why))
 #define	cpu_did_resched(l)	((l)->l_md.md_astpending &= ~X86_AST_PREEMPT)
-
-extern	struct cpu_info *cpu_info[X86_MAXPROCS];
 
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
