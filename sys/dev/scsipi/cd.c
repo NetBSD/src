@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.280 2008/05/12 09:41:02 tron Exp $	*/
+/*	$NetBSD: cd.c,v 1.281 2008/05/12 21:39:56 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.280 2008/05/12 09:41:02 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.281 2008/05/12 21:39:56 jnemeth Exp $");
 
 #include "rnd.h"
 
@@ -88,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.280 2008/05/12 09:41:02 tron Exp $");
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/cdvar.h>
+
+#include <prop/proplib.h>
 
 #define	CDUNIT(z)			DISKUNIT(z)
 #define	CDPART(z)			DISKPART(z)
@@ -175,6 +177,8 @@ static int	mmc_getdiscinfo(struct scsipi_periph *, struct mmc_discinfo *);
 static int	mmc_gettrackinfo(struct scsipi_periph *, struct mmc_trackinfo *);
 static int	mmc_do_op(struct scsipi_periph *, struct mmc_op *);
 static int	mmc_setup_writeparams(struct scsipi_periph *, struct mmc_writeparams *);
+
+static void	cd_set_properties(struct cd_softc *);
 
 CFATTACH_DECL_NEW(cd, sizeof(struct cd_softc), cdmatch, cdattach, cddetach,
     cdactivate);
@@ -476,6 +480,8 @@ cdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 			/* Fabricate a disk label. */
 			cdgetdisklabel(cd);
 			SC_DEBUG(periph, SCSIPI_DB3, ("Disklabel fabricated "));
+
+			cd_set_properties(cd);
 		}
 	}
 
@@ -3857,3 +3863,34 @@ mmc_setup_writeparams(struct scsipi_periph *periph,
 	return 0;
 }
 
+static void
+cd_set_properties(struct cd_softc *cd)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    cd->params.disksize);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    cd->params.blksize);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(cd->sc_dev),
+	    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = cd->sc_dk.dk_info;
+	cd->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
+}
