@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.5 2008/05/05 17:54:14 ad Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.6 2008/05/12 14:16:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.5 2008/05/05 17:54:14 ad Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.6 2008/05/12 14:16:04 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -197,8 +197,8 @@ cpu_list(char **argv)
 	if (ioctl(fd, IOC_CPU_GETCOUNT, &cnt) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_GETCOUNT");
 
-	printf("No   ID     Unbound LWPs Interrupts     Last change\n");
- 	printf("---- ------ ------------ -------------- ----------------------------\n");
+	printf("Num  HwId Unbound LWPs Interrupts     Last change\n");
+ 	printf("---- ---- ------------ -------------- ----------------------------\n");
 
 	for (i = 0; i < cnt; i++) {
 		cs.cs_id = i;
@@ -214,7 +214,7 @@ cpu_list(char **argv)
 			intr = "intr";
 		else
 			intr = "nointr";
-		printf("%-4d %-7x %-12s %-12s   %s", i, cs.cs_id, state,
+		printf("%-4d %-4x %-12s %-12s   %s", i, cs.cs_id, state,
 		   intr, asctime(localtime(&cs.cs_lastmod)));
 	}
 }
