@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.5 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: wm.c,v 1.6 2008/05/12 09:58:36 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ int
 wm_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct tdesc *txd;
+	volatile struct tdesc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
@@ -246,7 +246,7 @@ int
 wm_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct rdesc *rxd;
+	volatile struct rdesc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

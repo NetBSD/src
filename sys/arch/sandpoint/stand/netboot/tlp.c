@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.15 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: tlp.c,v 1.16 2008/05/12 09:58:36 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ int
 tlp_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
+	volatile struct desc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
@@ -234,7 +234,7 @@ int
 tlp_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

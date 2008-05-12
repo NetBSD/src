@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.13 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: vge.c,v 1.14 2008/05/12 09:58:36 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -310,7 +310,7 @@ int
 vge_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct tdesc *txd;
+	volatile struct tdesc *txd;
 	unsigned loop;
 	
 	len = (len & T_FLMASK);
@@ -341,7 +341,7 @@ int
 vge_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct rdesc *rxd;
+	volatile struct rdesc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 
