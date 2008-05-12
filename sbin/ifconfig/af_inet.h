@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.h,v 1.6 2008/05/11 23:25:46 dyoung Exp $	*/
+/*	$NetBSD: af_inet.h,v 1.7 2008/05/12 00:40:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,11 +29,5 @@
  * SUCH DAMAGE.
  */
 
-/* XXX */
-#include <netinet/in.h>
-#include "parse.h"
-
 void	in_status(prop_dictionary_t, prop_dictionary_t, bool);
 void	in_commit_address(prop_dictionary_t, prop_dictionary_t);
-
-int 	setifipdst(prop_dictionary_t, prop_dictionary_t);
