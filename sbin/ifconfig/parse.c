@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 2008/05/09 20:48:59 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 2008/05/12 00:39:18 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2008 David Young.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <arpa/inet.h>
 #include <sys/param.h>
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <netatalk/at.h>
 #include <netiso/iso.h>
 
@@ -217,6 +218,66 @@ pinteger_match(const struct parser *p, const struct match *im, struct match *om,
 }
 
 static int
+parse_linkaddr(const char *addr, struct sockaddr_storage *ss)
+{
+	static const size_t maxlen =
+	    sizeof(*ss) - offsetof(struct sockaddr_dl, sdl_data[0]);
+	enum {
+		LLADDR_S_INITIAL = 0,
+		LLADDR_S_ONE_OCTET,
+		LLADDR_S_TWO_OCTETS,
+		LLADDR_S_COLON
+	} state = LLADDR_S_INITIAL;
+	uint8_t octet = 0, val;
+	struct sockaddr_dl *sdl;
+	const char *p;
+	int i;
+
+	memset(ss, 0, sizeof(*ss));
+	ss->ss_family = AF_LINK;
+	sdl = (struct sockaddr_dl *)ss;
+
+	for (i = 0, p = addr; i < maxlen; p++) {
+		if (*p == '\0') {
+			if (state != LLADDR_S_ONE_OCTET &&
+			    state != LLADDR_S_TWO_OCTETS)
+				return -1;
+			sdl->sdl_data[i++] = octet;
+			sdl->sdl_len =
+			    offsetof(struct sockaddr_dl, sdl_data[i]);
+			return 0;
+		}
+		if (*p == ':') {
+			if (state != LLADDR_S_ONE_OCTET &&
+			    state != LLADDR_S_TWO_OCTETS)
+				return -1;
+			sdl->sdl_data[i++] = octet;
+			state = LLADDR_S_COLON;
+		}
+		if ('a' <= *p && *p <= 'f')
+			val = 10 + *p - 'a';
+		else if ('A' <= *p && *p <= 'F')
+			val = 10 + *p - 'A';
+		else if ('0' <= *p && *p <= '9')
+			val = *p - '0';
+		else
+			return -1;
+
+		if (state == LLADDR_S_ONE_OCTET) {
+			state = LLADDR_S_TWO_OCTETS;
+			octet <<= 4;
+			octet |= val;
+		} else if (state != LLADDR_S_INITIAL && state != LLADDR_S_COLON)
+			return -1;
+		else {
+			state = LLADDR_S_ONE_OCTET;
+			octet = val;
+		}
+	}
+	return -1;
+}
+
+static int
 paddr_match(const struct parser *p, const struct match *im, struct match *om,
     int argidx, const char *arg0)
 {
@@ -227,6 +288,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 		struct sockaddr_at sat;
 		struct sockaddr_iso siso;
 		struct sockaddr_in sin;
+		struct sockaddr_storage ss;
 	} u;
 	const struct paddr *pa = (const struct paddr *)p;
 	prop_data_t d;
@@ -342,6 +404,12 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 		/* XXX iso_addr(3) matches ANYTHING! */
 		u.siso.siso_addr = *iso_addr(arg0);
 		sa = &u.sa;
+		break;
+	case AF_LINK:
+		if (parse_linkaddr(arg0, &u.ss) == -1)
+			sa = NULL;
+		else
+			sa = &u.sa;
 		break;
 	}
 
