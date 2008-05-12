@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.6 2008/05/11 01:34:49 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.7 2008/05/12 07:15:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.6 2008/05/11 01:34:49 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.7 2008/05/12 07:15:10 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -972,6 +972,29 @@ exit_lock:
 
 
 /* XXX Hm, naming collision. */
+/*
+ * sa_preempt(). In the 4.0 code, this routine is called when we 
+ * are in preempt() and the caller informed us it does NOT
+ * have more work to do (it's going to userland after we return).
+ * If mi_switch() tells us we switched to another thread, we
+ * generate a BLOCKED upcall. Since we are returning to userland
+ * we then will immediately generate an UNBLOCKED upcall as well.
+ *	The only place that actually didn't tell preempt() that
+ * we had more to do was sys_sched_yield() (well, midi did too, but
+ * that was a bug).
+ *
+ * For simplicitly, in 5.0+ code, just call this routine in
+ * sys_sched_yield after we preempt(). The BLOCKED/UNBLOCKED
+ * upcall sequence will get delivered when we return to userland
+ * and will ensure that the SA scheduler has an opportunity to
+ * effectively preempt the thread that was running in userland.
+ *
+ * Of course, it would be simpler for libpthread to just intercept
+ * this call, but we do this to ensure binary compatability. Plus
+ * it's not hard to do.
+ *
+ * We are called and return with no locks held.
+ */
 void
 sa_preempt(struct lwp *l)
 {
