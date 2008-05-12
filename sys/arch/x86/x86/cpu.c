@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.48 2008/05/12 14:29:06 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.49 2008/05/12 14:41:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2008/05/12 14:29:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.49 2008/05/12 14:41:07 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -167,14 +167,7 @@ extern char x86_64_doubleflt_stack[];
 
 bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
-
 static vaddr_t cmos_data_mapping;
-
-/*
- * Array of CPU info structures.  Must be statically-allocated because
- * curproc, etc. are used early.
- */
-struct cpu_info *cpu_info[X86_MAXPROCS];
 struct cpu_info *cpu_starting;
 
 void    	cpu_hatch(void *);
@@ -343,7 +336,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	}
 
 	ci->ci_cpumask = (1 << cpu_index(ci));
-	cpu_info[cpu_index(ci)] = ci;
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -507,7 +499,7 @@ cpu_boot_secondary_processors(void)
 	x86_patch();
 
 	for (i=0; i < X86_MAXPROCS; i++) {
-		ci = cpu_info[i];
+		ci = cpu_lookup_byindex(i);
 		if (ci == NULL)
 			continue;
 		if (ci->ci_data.cpu_idlelwp == NULL)
@@ -541,7 +533,7 @@ cpu_init_idle_lwps(void)
 	u_long i;
 
 	for (i = 0; i < X86_MAXPROCS; i++) {
-		ci = cpu_info[i];
+		ci = cpu_lookup_byindex(i);
 		if (ci == NULL)
 			continue;
 		if (ci->ci_data.cpu_idlelwp == NULL)
