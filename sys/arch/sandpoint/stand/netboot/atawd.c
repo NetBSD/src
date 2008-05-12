@@ -1,4 +1,33 @@
-/* $NetBSD: atawd.c,v 1.5 2008/04/09 16:26:29 nisimura Exp $ */
+/* $NetBSD: atawd.c,v 1.6 2008/05/12 09:29:56 nisimura Exp $ */
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tohru Nishimura.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,15 +77,12 @@ int wdopen(struct open_file *, ...);
 int wdclose(struct open_file *);
 int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int parsefstype(void *);
-
-static int  wd_get_params(struct wd_softc *);
-static int  wdgetdisklabel(struct wd_softc *);
+static int wd_get_params(struct wd_softc *);
+static int wdgetdisklabel(struct wd_softc *);
 
 void atac_init(unsigned);
 int atac_probe(struct atacdv *);
-
 static int atac_wait_for_ready(struct atac_channel *); 
-static int atac_exec_read(struct wd_softc *, int, daddr_t, void *);
 static int atac_exec_identify(struct wd_softc *, void *);
 static int atac_read_block(struct wd_softc *, struct atac_command *);
 static int atacommand(struct wd_softc *, struct atac_command *);
@@ -135,6 +161,16 @@ wdstrategy(void *f, int rw, daddr_t dblk, size_t size, void *p, size_t *rsize)
 
 	*rsize = size;
 	return 0;
+}
+
+int
+parsefstype(void *data)
+{
+	struct wd_softc *wd = data;
+	struct disklabel *lp = &wd->sc_label;
+	struct partition *pp = &lp->d_partitions[wd->sc_part];
+
+	return pp->p_fstype;
 }
 
 void
@@ -315,16 +351,6 @@ wdgetdisklabel(struct wd_softc *wd)
 	return 0;
 }
 
-int
-parsefstype(void *data)
-{
-	struct wd_softc *wd = data;
-	struct disklabel *lp = &wd->sc_label;
-	struct partition *pp = &lp->d_partitions[wd->sc_part];
-
-	return pp->p_fstype;
-}
-
 static int
 atac_wait_for_ready(struct atac_channel *chp)
 {
@@ -430,7 +456,7 @@ atac_exec_identify(struct wd_softc *wd, void *data)
 
 static int
 atac_exec_read(struct wd_softc *wd, int exe, daddr_t blkno, void *data)
-{	
+{
 	int error;
 	struct atac_command *cmd;
 
