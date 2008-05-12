@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.45 2008/05/11 22:26:59 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.46 2008/05/12 11:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2008/05/11 22:26:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46 2008/05/12 11:58:10 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -652,7 +652,9 @@ cpu_hatch(void *v)
 	cpu_init_msrs(ci, true);
 #endif
 	cpu_probe(ci);
-	cpu_get_tsc_freq(ci);
+
+	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;
+	/* cpu_get_tsc_freq(ci); */ 
 
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 
