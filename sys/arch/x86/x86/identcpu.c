@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.4 2008/05/11 21:19:18 cegger Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.5 2008/05/12 03:58:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4 2008/05/11 21:19:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.5 2008/05/12 03:58:47 simonb Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -111,11 +111,6 @@ static const struct x86_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x3d,  6,      384 * 1024, 64 },
 	{ CAI_L2CACHE,  0x3e,  4,      512 * 1024, 64 },
 	{ CAI_L2CACHE,  0x39,  4,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3a,  6,      192 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3b,  2,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3c,  4,      256 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3d,  6,      384 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3e,  4,      512 * 1024, 64 },
 	{ CAI_L2CACHE,  0x40,  0,               0,  0 },
 	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32 },
 	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32 },
