@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.47 2008/05/12 14:19:33 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.48 2008/05/12 14:29:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2008/05/12 14:19:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.48 2008/05/12 14:29:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -275,6 +275,11 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	/* Make sure DELAY() is initialized. */
 	DELAY(1);
+
+	if (cpus_attached == ~0) {
+		aprint_error(": increase MAXCPUS, X86_MAXPROCS\n");
+		return;
+	}
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
