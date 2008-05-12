@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.19 2008/05/11 23:27:32 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.20 2008/05/12 15:35:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.19 2008/05/11 23:27:32 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.20 2008/05/12 15:35:50 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -442,6 +442,7 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 	struct in6_ifreq in6_ifr = {
 		.ifr_addr = {
 			.sin6_family = AF_INET6,
+			.sin6_len = sizeof(in6_ifr.ifr_addr),
 			.sin6_addr = {
 				.s6_addr =
 				    {0xff, 0xff, 0xff, 0xff,
@@ -450,6 +451,8 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 		}
 	};
 	static struct sockaddr_in6 in6_defmask = {
+		.sin6_family = AF_INET6,
+		.sin6_len = sizeof(in6_defmask),
 		.sin6_addr = {
 			.s6_addr = {0xff, 0xff, 0xff, 0xff,
 			            0xff, 0xff, 0xff, 0xff}
@@ -458,6 +461,8 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 
 	struct in6_aliasreq in6_ifra = {
 		.ifra_prefixmask = {
+			.sin6_family = AF_INET6,
+			.sin6_len = sizeof(in6_ifra.ifra_prefixmask),
 			.sin6_addr = {
 				.s6_addr =
 				    {0xff, 0xff, 0xff, 0xff,
