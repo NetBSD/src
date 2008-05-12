@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.10 2008/04/28 20:23:34 martin Exp $ */
+/* $NetBSD: rge.c,v 1.11 2008/05/12 09:58:36 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -227,7 +227,7 @@ int
 rge_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
+	volatile struct desc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
@@ -254,7 +254,7 @@ int
 rge_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 
