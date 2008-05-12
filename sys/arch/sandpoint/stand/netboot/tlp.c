@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.16 2008/05/12 09:58:36 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.17 2008/05/12 11:56:15 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -78,6 +78,10 @@ struct desc {
 
 #define TLP_BMR		0x000		/* 0: bus mode */
 #define  BMR_RST	01
+#define  BMR_CAL8	0x00002000	/* 32B cache alignment */
+#define  BMR_CAL16	0x00008000	/* 64B */
+#define  BMR_CAL32	0x0000c000	/* 128B */
+#define  BMR_CAL	0x0000c000
 #define TLP_TPD		0x008		/* 1: instruct Tx to start */
 #define TLP_RPD		0x010		/* 2: instruct Rx to start */
 #define TLP_RRBA	0x018		/* 3: Rx descriptor base */
@@ -139,6 +143,16 @@ tlp_init(unsigned tag, void *data)
 	val = CSR_READ(l, TLP_BMR);
 	CSR_WRITE(l, TLP_BMR, val | BMR_RST);
 	DELAY(1000);
+	val &= ~BMR_CAL;
+	switch (pcicfgread(tag, 0x0c) & 0xff) {
+	case 32:
+		val |= BMR_CAL32; break;
+	case 16:
+		val |= BMR_CAL16; break;
+	case 8:
+	default:
+		val |= BMR_CAL8; break;
+	}
 	CSR_WRITE(l, TLP_BMR, val);
 	DELAY(1000);
 	(void)CSR_READ(l, TLP_BMR);
