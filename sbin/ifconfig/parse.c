@@ -1,7 +1,7 @@
-/*	$NetBSD: parse.c,v 1.6 2008/05/12 00:39:18 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.7 2008/05/12 21:54:51 dyoung Exp $	*/
 
 /*-
- * Copyright (c)2008 David Young.  All rights reserved.
+ * Copyright (c) 2008 David Young.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -224,9 +224,9 @@ parse_linkaddr(const char *addr, struct sockaddr_storage *ss)
 	    sizeof(*ss) - offsetof(struct sockaddr_dl, sdl_data[0]);
 	enum {
 		LLADDR_S_INITIAL = 0,
-		LLADDR_S_ONE_OCTET,
-		LLADDR_S_TWO_OCTETS,
-		LLADDR_S_COLON
+		LLADDR_S_ONE_OCTET = 1,
+		LLADDR_S_TWO_OCTETS = 2,
+		LLADDR_S_COLON = 3
 	} state = LLADDR_S_INITIAL;
 	uint8_t octet = 0, val;
 	struct sockaddr_dl *sdl;
@@ -238,21 +238,29 @@ parse_linkaddr(const char *addr, struct sockaddr_storage *ss)
 	sdl = (struct sockaddr_dl *)ss;
 
 	for (i = 0, p = addr; i < maxlen; p++) {
+		dbg_warnx("%s.%d: *p == %c, state %d", __func__, __LINE__, *p,
+		    state);
 		if (*p == '\0') {
+			dbg_warnx("%s.%d", __func__, __LINE__);
 			if (state != LLADDR_S_ONE_OCTET &&
 			    state != LLADDR_S_TWO_OCTETS)
 				return -1;
+			dbg_warnx("%s.%d", __func__, __LINE__);
 			sdl->sdl_data[i++] = octet;
 			sdl->sdl_len =
 			    offsetof(struct sockaddr_dl, sdl_data[i]);
+			sdl->sdl_alen = i;
 			return 0;
 		}
 		if (*p == ':') {
+			dbg_warnx("%s.%d", __func__, __LINE__);
 			if (state != LLADDR_S_ONE_OCTET &&
 			    state != LLADDR_S_TWO_OCTETS)
 				return -1;
+			dbg_warnx("%s.%d", __func__, __LINE__);
 			sdl->sdl_data[i++] = octet;
 			state = LLADDR_S_COLON;
+			continue;
 		}
 		if ('a' <= *p && *p <= 'f')
 			val = 10 + *p - 'a';
@@ -263,6 +271,7 @@ parse_linkaddr(const char *addr, struct sockaddr_storage *ss)
 		else
 			return -1;
 
+		dbg_warnx("%s.%d", __func__, __LINE__);
 		if (state == LLADDR_S_ONE_OCTET) {
 			state = LLADDR_S_TWO_OCTETS;
 			octet <<= 4;
@@ -273,6 +282,7 @@ parse_linkaddr(const char *addr, struct sockaddr_storage *ss)
 			state = LLADDR_S_ONE_OCTET;
 			octet = val;
 		}
+		dbg_warnx("%s.%d", __func__, __LINE__);
 	}
 	return -1;
 }
