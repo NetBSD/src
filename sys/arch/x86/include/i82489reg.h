@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.7 2008/05/09 21:53:56 cegger Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.8 2008/05/12 18:36:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -142,3 +142,13 @@
 #define LAPIC_BASE		0xfee00000
 
 #define LAPIC_IRQ_MASK(i)	(1 << ((i) + 1))
+
+/*
+ * Model specific registers
+ */
+
+#define	LAPIC_MSR	0x001b
+#	define	LAPIC_MSR_BSP		0x00000100	/* boot processor */
+#	define	LAPIC_MSR_ENABLE	0x00000800	/* software enable */
+#	define	LAPIC_MSR_ADDR		0xfffff000	/* physical address */
+
