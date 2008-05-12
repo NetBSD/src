@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.46 2008/05/12 11:58:10 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.47 2008/05/12 14:19:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46 2008/05/12 11:58:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2008/05/12 14:19:33 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -303,13 +303,15 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		if (cpunum != lapic_cpu_number()) {
 			uint32_t reg;
 			aprint_verbose("\n");
-			aprint_verbose("%s: running CPU is at apic %d"
-			    " instead of at expected %d",
-			    device_xname(sc->sc_dev), lapic_cpu_number(),
+			aprint_verbose_dev(self, "running CPU at apic %d"
+			    " instead of at expected %d", lapic_cpu_number(),
 			    cpunum);
 			reg = i82489_readreg(LAPIC_ID);
 			i82489_writereg(LAPIC_ID, (reg & ~LAPIC_ID_MASK) |
 			    (cpunum << LAPIC_ID_SHIFT));
+		}
+		if (cpunum != lapic_cpu_number()) {
+			aprint_error_dev(self, "unable to reset apic id\n");
 		}
 	}
 
@@ -326,7 +328,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		error = mi_cpu_attach(ci);
 		if (error != 0) {
 			aprint_normal("\n");
-			aprint_error_dev(sc->sc_dev,
+			aprint_error_dev(self,
 			    "mi_cpu_attach failed with %d\n", error);
 			return;
 		}
@@ -399,7 +401,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	}
 	cpu_vm_init(ci);
 
-	cpus_attached |= ci->ci_cpumask;
+	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -407,7 +409,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
 
-		aprint_verbose_dev(sc->sc_dev,
+		aprint_verbose_dev(self,
 		    "idle lwp at %p, idle sp at %p\n",
 		    l,
 #ifdef i386
