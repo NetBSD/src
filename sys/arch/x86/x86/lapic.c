@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.38 2008/05/11 21:50:06 ad Exp $ */
+/*	$NetBSD: lapic.c,v 1.39 2008/05/12 23:46:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.38 2008/05/11 21:50:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.39 2008/05/12 23:46:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -96,6 +96,22 @@ lapic_map(paddr_t lapic_base)
 	int s;
 	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
+
+	/*
+	 * If the CPU has an APIC MSR, use it and ignore the supplied value:
+	 * some ACPI implementations have been observed to pass bad values.
+	 * Additionally, ensure that the lapic is enabled as we are committed
+	 * to using it at this point.  Be conservative and assume that the MSR
+	 * is not present on the Pentium (is it?).
+	 */
+	if (CPUID2FAMILY(curcpu()->ci_signature) >= 6) {
+		lapic_base = (paddr_t)rdmsr(LAPIC_MSR);
+		if ((lapic_base & LAPIC_MSR_ADDR) == 0) {
+			lapic_base |= LAPIC_BASE;
+		}
+		wrmsr(LAPIC_MSR, lapic_base | LAPIC_MSR_ENABLE);
+		lapic_base &= LAPIC_MSR_ADDR;
+	}
 
 	x86_disable_intr();
 	s = lapic_tpr;
@@ -324,6 +340,7 @@ lapic_initclocks(void)
 	i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
 	i82489_writereg (LAPIC_ICR_TIMER, lapic_tval);
 	i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
+	i82489_writereg (LAPIC_EOI, 0);
 }
 
 extern unsigned int gettick(void);	/* XXX put in header file */
@@ -350,7 +367,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	int i;
 	char tbuf[9];
 
-	aprint_verbose_dev(ci->ci_dev, "calibrating local timer\n");
+	aprint_debug_dev(ci->ci_dev, "calibrating local timer\n");
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,
@@ -382,7 +399,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 
 	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
 
-	aprint_verbose_dev(ci->ci_dev, "apic clock running at %s\n", tbuf);
+	aprint_debug_dev(ci->ci_dev, "apic clock running at %s\n", tbuf);
 
 	if (lapic_per_second != 0) {
 		/*
