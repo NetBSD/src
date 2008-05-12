@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.137 2008/04/30 17:18:53 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.138 2008/05/12 14:28:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.137 2008/04/30 17:18:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.138 2008/05/12 14:28:22 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2733,7 +2733,7 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (n <= 0)
-			cp_id[0] = ci->ci_cpuid;
+			cp_id[0] = cpu_index(ci);
 		/*
 		 * if a specific processor was requested and we just
 		 * did it, we're done here
@@ -2968,7 +2968,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		if (l->l_wchan)
 			strncpy(ki->p_wmesg, l->l_wmesg, sizeof(ki->p_wmesg));
 		ki->p_wchan = PTRTOUINT64(l->l_wchan);
-		ki->p_cpuid = l->l_cpu->ci_cpuid;
+		ki->p_cpuid = cpu_index(l->l_cpu);
 		lwp_unlock(l);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			/* This is hardly correct, but... */
@@ -3074,7 +3074,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	if (l->l_wchan)
 		strncpy(kl->l_wmesg, l->l_wmesg, sizeof(kl->l_wmesg));
 	kl->l_wchan = PTRTOUINT64(l->l_wchan);
-	kl->l_cpuid = l->l_cpu->ci_cpuid;
+	kl->l_cpuid = cpu_index(l->l_cpu);
 	bintime2timeval(&l->l_rtime, &tv);
 	kl->l_rtime_sec = tv.tv_sec;
 	kl->l_rtime_usec = tv.tv_usec;
