@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.21 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.21.4.1 2008/05/12 07:15:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.1 2008/05/12 07:15:10 wrstuden Exp $");
 
 #include <sys/param.h>
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21 2008/04/24 18:39:24 ad Exp $");
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/pset.h>
+#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
@@ -447,6 +448,9 @@ sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
+	if (l->l_flag & LW_SA) {
+		sa_preempt(l);
+	}
 	return 0;
 }
 
