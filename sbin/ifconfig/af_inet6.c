@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.20 2008/05/12 15:35:50 dyoung Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.21 2008/05/12 20:58:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.20 2008/05/12 15:35:50 dyoung Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.21 2008/05/12 20:58:16 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -57,28 +57,6 @@ __RCSID("$NetBSD: af_inet6.c,v 1.20 2008/05/12 15:35:50 dyoung Exp $");
 #include "extern.h"
 #include "af_inet6.h"
 #include "af_inetany.h"
-
-struct in6_ifreq    in6_ridreq = {
-	.ifr_addr = {
-		.sin6_family = AF_INET6,
-		.sin6_addr = {
-			.s6_addr =
-			    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
-		}
-	}
-};
-
-struct in6_aliasreq in6_addreq = {
-	.ifra_prefixmask = {
-		.sin6_len = sizeof(in6_addreq.ifra_prefixmask),
-		.sin6_addr = {
-			.s6_addr =
-			    {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}}},
-	.ifra_lifetime = {
-		  .ia6t_pltime = ND6_INFINITE_LIFETIME
-		, .ia6t_vltime = ND6_INFINITE_LIFETIME
-	}
-};
 
 static const struct kwinst ia6flagskw[] = {
 	  IFKW("anycast",	IN6_IFF_ANYCAST)
