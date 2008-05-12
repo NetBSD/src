@@ -34,7 +34,6 @@
 #
 # Usage:
 # 1) find /usr/src -type f -print \
-#    | grep -v sys/compat/freebsd/freebsd_rtprio.h \
 #    | perl extract-contrib-string.pl
 #    >x
 # 2) merge text after "--------" in "x" into
@@ -65,9 +64,7 @@ $ack_endline=
     .'|(@InsertRedistribution@)';
 
 $known_bad_clause_3_wording=
-      'sys/compat/hpux/hpux_exec_aout.c'	# cgd@NetBSD.org
-    .'|sys/compat/hpux/hpux_exec.c'		# cgd@NetBSD.org
-    .'|usr.bin/lex/.*'				# UCB
+      'usr.bin/lex/.*'				# UCB
     .'|usr.sbin/hilinfo/hilinfo.c'	   	# CSS @ Utah
     ;	
 
@@ -145,6 +142,8 @@ while(<>) {
 		$msg =~ s/\n[#\\\|";]\s*/\n/g;		# sh etc.
 		$msg =~ s/^[ 	*]*//g;      		# C
 		$msg =~ s/\n[ 	*]*/\n/g;    		# C
+		$msg =~ s/^\s*\/\/\s*/ /g;		# C++/C99
+		$msg =~ s/\ns*\/\/\s*/ /g;		# C++/C99
 		$msg =~ s/\@cartouche\n//;              # texinfo
 
 		$msg =~ s///g;
