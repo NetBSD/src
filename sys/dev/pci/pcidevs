@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.939 2008/05/08 15:33:34 sborrill Exp $
+$NetBSD: pcidevs,v 1.940 2008/05/13 10:43:21 rjs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3576,6 +3576,7 @@ product SIS 750			0x0750	750 Host Bridge
 product SIS 751			0x0751	751 Host Bridge
 product SIS 752			0x0752	752 Host Bridge
 product SIS 755			0x0755	755 Host Bridge
+product SIS 756			0x0756	756 Host Bridge
 product SIS 760			0x0760	760 Host Bridge
 product SIS 761			0x0761	761 Host Bridge
 product SIS 900			0x0900	900 10/100 Ethernet
