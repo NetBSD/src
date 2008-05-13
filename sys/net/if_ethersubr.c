@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.166 2008/05/11 20:13:30 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.167 2008/05/13 17:58:52 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.166 2008/05/11 20:13:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.167 2008/05/13 17:58:52 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1449,19 +1449,6 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
-		case AF_LINK:
-		    {
-			const struct sockaddr_dl *sdl = satocsdl(ifa->ifa_addr);
-
-			if (sdl->sdl_type != IFT_ETHER ||
-			    sdl->sdl_alen != ifp->if_addrlen)
-				return EINVAL;
-
-			if_set_sadl(ifp, CLLADDR(sdl), ifp->if_addrlen);
-
-			/* Set new address. */
-			return (*ifp->if_init)(ifp);
-		    }
 #ifdef INET
 		case AF_INET:
 			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
