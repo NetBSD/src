@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.75 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.76 2008/05/13 08:31:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.75 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.76 2008/05/13 08:31:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -139,7 +139,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the fdescmount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 
 	return (0);
 }
