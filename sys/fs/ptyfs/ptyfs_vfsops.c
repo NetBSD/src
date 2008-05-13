@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.33 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.34 2008/05/13 05:36:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.33 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.34 2008/05/13 05:36:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ ptyfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if ((error = set_statvfs_info(path, UIO_USERSPACE, "ptyfs",
 	    UIO_SYSSPACE, mp->mnt_op->vfs_name, mp, l)) != 0) {
-		free(pmnt, M_UFSMNT);
+		free(pmnt, M_PTYFSMNT);
 		return error;
 	}
 
@@ -294,7 +294,7 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the ptyfsmount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);
+	free(mp->mnt_data, M_PTYFSMNT);
 	mp->mnt_data = 0;
 	ptyfs_count--;
 
