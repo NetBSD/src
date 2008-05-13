@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.79 2008/05/10 02:26:10 rumble Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.80 2008/05/13 08:31:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.79 2008/05/10 02:26:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.80 2008/05/13 08:31:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -188,7 +188,7 @@ procfs_unmount(struct mount *mp, int mntflags)
 	exechook_disestablish(VFSTOPROC(mp)->pmnt_exechook);
 
 	free(mp->mnt_data, M_UFSMNT);
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 
 	return (0);
 }
