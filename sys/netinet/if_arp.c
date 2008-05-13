@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.139 2008/05/13 17:51:26 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.140 2008/05/13 18:24:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.139 2008/05/13 17:51:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.140 2008/05/13 18:24:01 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -692,7 +692,7 @@ arprequest(struct ifnet *ifp,
 	m->m_pkthdr.len = m->m_len;
 	MH_ALIGN(m, m->m_len);
 	ah = mtod(m, struct arphdr *);
-	bzero((void *)ah, m->m_len);
+	memset(ah, 0, m->m_len);
 	switch (ifp->if_type) {
 	case IFT_IEEE1394:	/* RFC2734 */
 		/* fill it now for ar_tpa computation */
@@ -756,7 +756,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	 */
 	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
-		bcopy(CLLADDR(sdl), desten,
+		memcpy(desten, CLLADDR(sdl),
 		    min(sdl->sdl_alen, ifp->if_addrlen));
 		rt->rt_pksent = time_second; /* Time for last pkt sent */
 		return 1;
@@ -1116,7 +1116,7 @@ in_arpinput(struct mbuf *m)
 				    (riflen & 1) == 0) {
 					rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
 					rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
-					bcopy(rif, TOKEN_RIF(la), riflen);
+					memcpy(TOKEN_RIF(la), rif, riflen);
 				}
 			}
 		}
@@ -1388,7 +1388,7 @@ in_revarpinput(struct mbuf *m)
 		goto wake;
 	tha = ar_tha(ah);
 	KASSERT(tha);
-	if (bcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
+	if (memcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
 	memcpy(&srv_ip, ar_spa(ah), sizeof(srv_ip));
 	memcpy(&myip, ar_tpa(ah), sizeof(myip));
@@ -1420,7 +1420,7 @@ revarprequest(struct ifnet *ifp)
 	m->m_pkthdr.len = m->m_len;
 	MH_ALIGN(m, m->m_len);
 	ah = mtod(m, struct arphdr *);
-	bzero((void *)ah, m->m_len);
+	memset(ah, 0, m->m_len);
 	ah->ar_pro = htons(ETHERTYPE_IP);
 	ah->ar_hln = ifp->if_addrlen;		/* hardware address length */
 	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
@@ -1429,7 +1429,7 @@ revarprequest(struct ifnet *ifp)
 	memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	tha = ar_tha(ah);
 	KASSERT(tha);
-	bcopy(CLLADDR(ifp->if_sadl), tha, ah->ar_hln);
+	memcpy(tha, CLLADDR(ifp->if_sadl), ah->ar_hln);
 
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
@@ -1464,8 +1464,8 @@ revarpwhoarewe(struct ifnet *ifp, struct in_addr *serv_in,
 	if (!myip_initialized)
 		return ENETUNREACH;
 
-	bcopy((void *)&srv_ip, serv_in, sizeof(*serv_in));
-	bcopy((void *)&myip, clnt_in, sizeof(*clnt_in));
+	memcpy(serv_in, &srv_ip, sizeof(*serv_in));
+	memcpy(clnt_in, &myip, sizeof(*clnt_in));
 	return 0;
 }
 
