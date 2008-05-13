@@ -1,4 +1,4 @@
-.\"     $NetBSD: select.9,v 1.2 2008/03/25 21:51:32 xtraeme Exp $
+.\"     $NetBSD: select.9,v 1.3 2008/05/13 15:52:51 tnn Exp $
 .\"
 .\" Copyright (C) 2002 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" $FreeBSD: src/share/man/man9/selrecord.9,v 1.2 2002/05/30 13:29:17 ru Exp $
 .\"
 .\" FreeBSD: .Dd March 20, 2002
-.Dd March 25, 2008
+.Dd May 13, 2008
 .Dt SELECT 9
 .Os
 .Sh NAME
@@ -60,7 +60,7 @@ function may block.
 .Pp
 .Fn selrecord
 and
-.Fn selwakeup
+.Fn selnotify
 are used by device drivers to coordinate
 with the kernel implementation of
 .Xr select 2
@@ -95,14 +95,14 @@ threads that an event of interest has occurred.
 The same lock held across the poll method and call to 
 .Fn selrecord
 must be held across the call to 
-.Fn selwakeup .
+.Fn selnotify .
 The lock prevents an event of interest being signalled while a thread is
 in the process of recording its interest.
 .Pp
 The
 .Fa events
 indicates which event happen.
-Zero may be used if unknow.
+Zero may be used if unknown.
 .Pp
 .Fn selnotify
 also calls
