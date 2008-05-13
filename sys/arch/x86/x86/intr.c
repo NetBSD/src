@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.53 2008/05/13 14:29:17 joerg Exp $	*/
+/*	$NetBSD: intr.c,v 1.54 2008/05/13 20:19:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.53 2008/05/13 14:29:17 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.54 2008/05/13 20:19:26 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -846,8 +846,8 @@ intr_string(int ih)
 	if (ih & APIC_INT_VIA_APIC) {
 		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic != NULL) {
-			sprintf(irqstr, "%s pin %d (irq %d)",
-			    pic->pic_name, APIC_IRQ_PIN(ih), ih&0xff);
+			sprintf(irqstr, "%s pin %d",
+			    pic->pic_name, APIC_IRQ_PIN(ih));
 		} else {
 			sprintf(irqstr, "apic %d int %d (irq %d)",
 			    APIC_IRQ_APIC(ih),
