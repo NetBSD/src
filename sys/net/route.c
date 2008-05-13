@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.111 2008/05/13 20:21:09 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.112 2008/05/13 20:49:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.111 2008/05/13 20:21:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.112 2008/05/13 20:49:33 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -917,7 +917,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 			rt_replace_ifa(rt, ifa);
 			rt->rt_ifp = ifa->ifa_ifp;
 			if (ifa->ifa_rtrequest)
-				ifa->ifa_rtrequest(cmd, rt, NULL);
+				ifa->ifa_rtrequest(RTM_ADD, rt, NULL);
 		}
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}
