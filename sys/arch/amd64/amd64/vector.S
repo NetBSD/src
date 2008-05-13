@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.21 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: vector.S,v 1.22 2008/05/13 14:12:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -364,7 +364,6 @@ IDTVEC(resume_lapic_ipi)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
-	sti
 	INTRFASTEXIT
 
 #if defined(DDB)
@@ -413,7 +412,6 @@ IDTVEC(resume_lapic_ltimer)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
-	sti
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
@@ -605,12 +603,10 @@ IDTVEC(intr_/**/name/**/num)						;\
 	orl     $(1 << num),CPUVAR(IPENDING)				;\
 	level_mask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	INTRFASTEXIT							;\
 9:									\
 	unmask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	INTRFASTEXIT
 
 #define ICUADDR IO_ICU1
