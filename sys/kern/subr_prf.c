@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.120 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.121 2008/05/13 11:54:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.120 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.121 2008/05/13 11:54:45 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -190,7 +190,6 @@ panic(const char *fmt, ...)
 	oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
 	if (oci != NULL && oci != ci) {
 		/* Give interrupts a chance to try and prevent deadlock. */
-		spl0();
 		for (;;) {
 			DELAY(10);
 		}
