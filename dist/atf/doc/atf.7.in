@@ -135,7 +135,7 @@ For end users wishing to run tests:
 For developers wanting to write their own tests:
 .Bl -enum -compact
 .It
-Everything recommeded to users.
+Everything recommended to users.
 .It
 .Xr atf-test-case 4
 .It
@@ -151,9 +151,9 @@ For those interested in
 internals:
 .Bl -enum -compact
 .It
-Everything recommeded to users.
+Everything recommended to users.
 .It
-Everything recommeded to developers.
+Everything recommended to developers.
 .It
 .Xr atf-formats 5
 .It
