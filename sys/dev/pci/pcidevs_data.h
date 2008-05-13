@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.939 2008/05/08 15:34:15 sborrill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.940 2008/05/13 10:44:02 rjs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.939 2008/05/08 15:33:34 sborrill Exp
+ *	NetBSD: pcidevs,v 1.940 2008/05/13 10:43:21 rjs Exp
  */
 
 /*
@@ -12468,6 +12468,10 @@ static const struct pci_product pci_products[] = {
 	    "755 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_756,
+	    "756 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_760,
 	    "760 Host Bridge",
 	},
@@ -14188,4 +14192,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2947;
+const int pci_nproducts = 2948;
