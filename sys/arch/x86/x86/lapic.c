@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.39 2008/05/12 23:46:01 ad Exp $	*/
+/*	$NetBSD: lapic.c,v 1.40 2008/05/13 22:39:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.39 2008/05/12 23:46:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.40 2008/05/13 22:39:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -508,24 +508,56 @@ i82489_icr_wait(void)
 int
 x86_ipi_init(int target)
 {
+	uint32_t esr;
+
+	i82489_writereg(LAPIC_ESR, 0);
+	(void)i82489_readreg(LAPIC_ESR);
 
 	if ((target&LAPIC_DEST_MASK)==0) {
 		i82489_writereg(LAPIC_ICRHI, target<<LAPIC_ID_SHIFT);
 	}
-
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	    LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT );
-
 	i82489_icr_wait();
-
 	i8254_delay(10000);
-
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	     LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
-
 	i82489_icr_wait();
 
-	return (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY)?EBUSY:0;
+	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
+		return EBUSY;
+	}
+	esr = i82489_readreg(LAPIC_ESR) & ~0x40;
+	if (esr != 0) {
+		printf("x86_ipi_init: ESR %08x\n", esr);
+	}
+
+	return 0;
+}
+
+int
+x86_ipi_startup(int target, int vec)
+{
+	uint32_t esr;
+
+	i82489_writereg(LAPIC_ESR, 0);
+	(void)i82489_readreg(LAPIC_ESR);
+
+	i82489_icr_wait();
+	i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
+	i82489_writereg(LAPIC_ICRLO, vec | LAPIC_DLMODE_STARTUP |
+	    LAPIC_LEVEL_ASSERT);
+	i82489_icr_wait();
+
+	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
+		return EBUSY;
+	}
+	esr = i82489_readreg(LAPIC_ESR) & ~0x40;
+	if (esr != 0) {
+		printf("x86_ipi_startup: ESR %08x\n", esr);
+	}
+
+	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.49 2008/05/12 14:41:07 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.50 2008/05/13 22:39:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.49 2008/05/12 14:41:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2008/05/13 22:39:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -551,20 +551,19 @@ cpu_start_secondary(struct cpu_info *ci)
 	u_long psl;
 	int i;
 
-	KASSERT(cpu_starting == NULL);
-
-	cpu_starting = ci;
 	mp_pdirpa = pmap_init_tmp_pgtbl(mp_trampoline_paddr);
 	atomic_or_32(&ci->ci_flags, CPUF_AP);
 	ci->ci_curlwp = ci->ci_data.cpu_idlelwp;
 	if (CPU_STARTUP(ci, mp_trampoline_paddr) != 0) {
-		cpu_starting = NULL;
 		return;
 	}
 
 	/*
-	 * wait for it to become ready
+	 * Wait for it to become ready.   Setting cpu_starting opens the
+	 * initial gate and allows the AP to start soft initialization.
 	 */
+	KASSERT(cpu_starting == NULL);
+	cpu_starting = ci;
 	for (i = 100000; (!(ci->ci_flags & CPUF_PRESENT)) && i > 0; i--) {
 #ifdef MPDEBUG
 		extern int cpu_trace[3];
@@ -891,26 +890,23 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 		error = x86_ipi_init(ci->ci_cpuid);
 		if (error != 0) {
 			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (1)\n",
-					__func__);
+			    __func__);
 			return error;
 		}
-
 		i8254_delay(10000);
 
-		error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
-		    LAPIC_DLMODE_STARTUP);
+		error = x86_ipi_startup(ci->ci_cpuid, target / PAGE_SIZE);
 		if (error != 0) {
 			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (2)\n",
-					__func__);
+			    __func__);
 			return error;
 		}
 		i8254_delay(200);
 
-		error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
-		    LAPIC_DLMODE_STARTUP);
+		error = x86_ipi_startup(ci->ci_cpuid, target / PAGE_SIZE);
 		if (error != 0) {
 			aprint_error_dev(ci->ci_dev, "%s: IPI not taken (3)\n",
-					__func__);
+			    __func__);
 			return error;
 		}
 		i8254_delay(200);

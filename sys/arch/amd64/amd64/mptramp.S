@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.8 2008/05/11 22:26:59 ad Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.9 2008/05/13 22:39:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -216,10 +216,12 @@ _TRMP_LABEL(mptramp_longmode)
 
 	
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
-
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
-	shrl	$LAPIC_ID_SHIFT,%ecx
+1:
+	/* Don't touch lapic until BP has done init sequence. */
 	movq	_C_LABEL(cpu_starting),%rdi
+	pause
+	testq	%rdi, %rdi
+	jz	1b
 
 	movl	_C_LABEL(cpu_feature),%eax
 	andl	$CPUID_NOX,%eax

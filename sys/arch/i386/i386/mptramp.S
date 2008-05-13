@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.15 2008/05/11 22:26:59 ad Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.16 2008/05/13 22:39:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.15 2008/05/11 22:26:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.16 2008/05/13 22:39:17 ad Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -184,9 +184,12 @@ _TRMP_LABEL(mp_startup)
 # ok, we're now running with paging enabled and sharing page tables with cpu0.
 # figure out which processor we really are, what stack we should be on, etc.
 
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
-	shrl	$LAPIC_ID_SHIFT,%ecx
+	/* Don't touch lapic until BP has done init sequence. */
+1:
 	movl	_C_LABEL(cpu_starting),%ecx
+	pause
+	testl	%ecx, %ecx
+	jz	1b
 	
 	HALTT(0x7, %ecx)
 
