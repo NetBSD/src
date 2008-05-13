@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.51 2008/05/11 14:25:02 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.52 2008/05/13 12:14:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.51 2008/05/11 14:25:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.52 2008/05/13 12:14:06 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -471,30 +471,24 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 	int start, slot, i;
 	struct intrsource *isp;
 
-	if (pic == &i8259_pic) {
-		if (!CPU_IS_PRIMARY(ci))
-			return ENODEV;
-		slot = pin;
-		mutex_enter(&x86_intr_lock);
-	} else {
-		start = CPU_IS_PRIMARY(ci) ? NUM_LEGACY_IRQS : 0;
-		slot = -1;
+	start = CPU_IS_PRIMARY(ci) ? NUM_LEGACY_IRQS : 0;
+	slot = -1;
 
-		mutex_enter(&x86_intr_lock);
-		/*
-		 * intr_allocate_slot has checked for an existing mapping.
-		 * Now look for a free slot.
-		 */
-		for (i = start; i < MAX_INTR_SOURCES ; i++) {
-			if (ci->ci_isources[i] == NULL) {
-				slot = i;
-				break;
-			}
+	mutex_enter(&x86_intr_lock);
+	for (i = start; i < MAX_INTR_SOURCES ; i++) {
+		isp = ci->ci_isources[i];
+		if (isp != NULL && isp->is_pic == pic && isp->is_pin == pin) {
+			slot = i;
+			break;
 		}
-		if (slot == -1) {
-			mutex_exit(&x86_intr_lock);
-			return ENODEV;
+		if (isp == NULL && slot == -1) {
+			slot = i;
+			continue;
 		}
+	}
+	if (slot == -1) {
+		mutex_exit(&x86_intr_lock);
+		return EBUSY;
 	}
 
 	isp = ci->ci_isources[slot];
@@ -521,7 +515,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
  * A simple round-robin allocator to assign interrupts to CPUs.
  */
 static int
-intr_allocate_slot(struct pic *pic, int pin, int level,
+intr_allocate_slot(struct pic *pic, int legacy_irq, int pin, int level,
 		   struct cpu_info **cip, int *index, int *idt_slot)
 {
 	CPU_INFO_ITERATOR cii;
@@ -529,40 +523,69 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 	struct intrsource *isp;
 	int slot, idtvec, error;
 
-	/* First check if this pin is already used by an interrupt vector. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	/*
+	 * If a legacy IRQ is wanted, try to use a fixed slot pointing
+	 * at the primary CPU. In the case of IO APICs, multiple pins
+	 * may map to one legacy IRQ, but they should not be shared
+	 * in that case, so the first one gets the legacy slot, but
+	 * a subsequent allocation with a different pin will get
+	 * a different slot.
+	 */
+	if (legacy_irq != -1) {
+		ci = &cpu_info_primary;
+		/* must check for duplicate pic + pin first */
 		for (slot = 0 ; slot < MAX_INTR_SOURCES ; slot++) {
-			if ((isp = ci->ci_isources[slot]) == NULL)
-				continue;
-			if (isp->is_pic == pic && isp->is_pin == pin) {
-				*idt_slot = isp->is_idtvec;
-				*index = slot;
-				*cip = ci;
-				return 0;
+			isp = ci->ci_isources[slot];
+			if (isp != NULL && isp->is_pic == pic &&
+			    isp->is_pin == pin ) {
+				goto duplicate;
 			}
 		}
-	}
+		slot = legacy_irq;
+		isp = ci->ci_isources[slot];
+		if (isp == NULL) {
+			MALLOC(isp, struct intrsource *,
+			    sizeof (struct intrsource), M_DEVBUF,
+			     M_NOWAIT|M_ZERO);
+			if (isp == NULL)
+				return ENOMEM;
+			snprintf(isp->is_evname, sizeof (isp->is_evname),
+			    "pin %d", pin);
+			evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR,
+			    NULL, device_xname(&pic->pic_dev), isp->is_evname);
+			mutex_enter(&x86_intr_lock);
+			ci->ci_isources[slot] = isp;
+			mutex_exit(&x86_intr_lock);
+		} else {
+			if (isp->is_pin != pin) {
+				if (pic == &i8259_pic)
+					return EINVAL;
+				goto other;
+			}
+		}
+duplicate:
+		if (pic == &i8259_pic)
+			idtvec = ICU_OFFSET + legacy_irq;
+		else {
+			if (isp->is_minlevel == 0 || level < isp->is_minlevel) {
+				idtvec = idt_vec_alloc(APIC_LEVEL(level),
+				    IDT_INTR_HIGH);
+				if (idtvec == 0)
+					return EBUSY;
+			} else
+				idtvec = isp->is_idtvec;
+		}
+	} else {
+other:
+		/*
+		 * Otherwise, look for a free slot elsewhere. Do the primary
+		 * CPU first.
+		 */
+		ci = &cpu_info_primary;
+		error = intr_allocate_slot_cpu(ci, pic, pin, &slot);
+		if (error == 0)
+			goto found;
 
-	/*
-	 * The pic/pin combination doesn't have an existing mapping.
-	 * Find a slot for a new interrupt source and allocate an IDT
-	 * vector.
-	 *
-	 * For the i8259 case, this always uses the reserved slots
-	 * of the primary CPU and fixed IDT vectors.  This is required
-	 * by other parts of the code, see x86/intr.h for more details.
-	 *
-	 * For the IOAPIC case, interrupts are assigned to the
-	 * primary CPU by default, until it runs out of slots.
-	 *
-	 * XXX Check how many interrupts each CPU got and assign it to
-	 * XXX the least loaded CPU.  Consider adding options to bind
-	 * XXX interrupts to specific CPUs.
-	 * XXX Drop apic level support, just assign IDT vectors sequentially.
-	 */
-	ci = &cpu_info_primary;
-	error = intr_allocate_slot_cpu(ci, pic, pin, &slot);
-	if (error != 0) {
 		/*
 		 * ..now try the others.
 		 */
@@ -571,27 +594,19 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 				continue;
 			error = intr_allocate_slot_cpu(ci, pic, pin, &slot);
 			if (error == 0)
-				break;
+				goto found;
 		}
-		if (error != 0)
-			return EBUSY;
-	}
-
-	if (pic == &i8259_pic)
-		idtvec = ICU_OFFSET + pin;
-	else
+		return EBUSY;
+found:
 		idtvec = idt_vec_alloc(APIC_LEVEL(level), IDT_INTR_HIGH);
-
-	if (idtvec == 0) {
-		mutex_enter(&x86_intr_lock);
-		evcnt_detach(&ci->ci_isources[slot]->is_evcnt);
-		FREE(ci->ci_isources[slot], M_DEVBUF);
-		ci->ci_isources[slot] = NULL;
-		mutex_exit(&x86_intr_lock);
-		return ENODEV;
+		if (idtvec == 0) {
+			mutex_enter(&x86_intr_lock);
+			FREE(ci->ci_isources[slot], M_DEVBUF);
+			ci->ci_isources[slot] = NULL;
+			mutex_exit(&x86_intr_lock);
+			return EBUSY;
+		}
 	}
-
-	ci->ci_isources[slot]->is_idtvec = idtvec;
 	*idt_slot = idtvec;
 	*index = slot;
 	*cip = ci;
@@ -658,7 +673,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		panic("intr_establish: non-legacy IRQ on i8259");
 #endif
 
-	error = intr_allocate_slot(pic, pin, level, &ci, &slot,
+	error = intr_allocate_slot(pic, legacy_irq, pin, level, &ci, &slot,
 	    &idt_vec);
 	if (error != 0) {
 		printf("failed to allocate interrupt slot for PIC %s pin %d\n",
