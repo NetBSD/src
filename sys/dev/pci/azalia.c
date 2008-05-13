@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.56 2008/05/10 14:27:20 jmcneill Exp $	*/
+/*	$NetBSD: azalia.c,v 1.57 2008/05/13 20:21:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.56 2008/05/10 14:27:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.57 2008/05/13 20:21:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -2074,7 +2074,9 @@ azalia_stream_intr(stream_t *this, uint32_t intsts)
 		return 0;
 	STR_WRITE_1(this, STS, HDA_SD_STS_DESE
 	    | HDA_SD_STS_FIFOE | HDA_SD_STS_BCIS);
-	this->intr(this->intr_arg);
+
+	if (this->intr != NULL)
+		this->intr(this->intr_arg);
 	return 1;
 }
 
