@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 2008/05/13 14:20:58 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 2008/05/13 14:26:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -65,10 +65,11 @@ struct fs_ops file_system[] = {
 	FS_OPS(ffsv1),
 	FS_OPS(ffsv2),
 	FS_OPS(ext2fs),
-	FS_OPS(nfs),
 };
 
 int nfsys = __arraycount(file_system);
+
+const struct fs_ops file_system_nfs = FS_OPS(nfs);
 
 struct netif_driver *netif_drivers[] = {
 	&ether_tlp_driver,
