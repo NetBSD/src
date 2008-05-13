@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.139 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.140 2008/05/13 09:16:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.139 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.140 2008/05/13 09:16:11 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -614,18 +614,20 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 */
 		t->p_opptr = t->p_pptr;
 		if (t->p_pptr != p) {
-			if (t->p_pptr->p_lock < t->p_lock) {
-				if (!mutex_tryenter(t->p_pptr->p_lock)) {
+			struct proc *parent = t->p_pptr;
+
+			if (parent->p_lock < t->p_lock) {
+				if (!mutex_tryenter(parent->p_lock)) {
 					mutex_exit(t->p_lock);
-					mutex_enter(t->p_pptr->p_lock);
+					mutex_enter(parent->p_lock);
 				}
-			} else if (t->p_pptr->p_lock > t->p_lock) {
-				mutex_enter(t->p_pptr->p_lock);
+			} else if (parent->p_lock > t->p_lock) {
+				mutex_enter(parent->p_lock);
 			}
-			t->p_pptr->p_slflag |= PSL_CHTRACED;
+			parent->p_slflag |= PSL_CHTRACED;
 			proc_reparent(t, p);
-			if (t->p_pptr->p_lock != t->p_lock)
-				mutex_exit(t->p_pptr->p_lock);
+			if (parent->p_lock != t->p_lock)
+				mutex_exit(parent->p_lock);
 		}
 		SET(t->p_slflag, PSL_TRACED);
 		signo = SIGSTOP;
