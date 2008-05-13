@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.59 2008/04/27 03:14:59 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.60 2008/05/13 15:27:30 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
 
-WARNS=	1
+WARNS=	2
 
 CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/lib/libterm
 .if defined(DEBUG_CURSES)
