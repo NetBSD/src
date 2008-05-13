@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.6 2008/05/12 16:41:15 tsutsui Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.7 2008/05/13 11:22:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.6 2008/05/12 16:41:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7 2008/05/13 11:22:15 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -197,7 +197,7 @@ const int i386_nocpuid_cpus[] = {
 };
 
 static const char cpu_vendor_names[][10] = {
-	"Unknown", "Intel", "NS/Cyrix", "NexGen", "IDT/VIA", "AMD", "Transmeta"
+	"Unknown", "Intel", "NS/Cyrix", "NexGen", "AMD", "IDT/VIA", "Transmeta"
 };
 
 static const struct x86_cache_info *
