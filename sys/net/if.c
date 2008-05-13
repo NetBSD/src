@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.224 2008/05/13 18:09:22 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.225 2008/05/13 20:40:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.224 2008/05/13 18:09:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.225 2008/05/13 20:40:33 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -1197,8 +1197,8 @@ link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	const struct sockaddr *dst;
 	struct ifnet *ifp;
 
-	if (cmd != RTM_ADD || ((ifa = rt->rt_ifa) == NULL) ||
-	    ((ifp = ifa->ifa_ifp) == NULL) || ((dst = rt_getkey(rt)) == NULL))
+	if (cmd != RTM_ADD || (ifa = rt->rt_ifa) == NULL ||
+	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL)
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		rt_replace_ifa(rt, ifa);
