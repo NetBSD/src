@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.134 2008/05/11 07:42:04 jdc Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.135 2008/05/13 06:27:24 jdc Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -4085,4 +4085,13 @@ usr.sbin/lpr/common_source/common.c		1.38 via patch
 	Sort queue by time and jobid so that jobs submitted within the
 	same second are printed in order.
 	[mlelstv, ticket #1929]
+
+crypto/dist/openssl/crypto/bn/bn_mont.c		1.2 (via patch)
+
+	Fix for CVE-2007-3108
+	The BN_from_montgomery function in crypto/bn/bn_mont.c in
+	OpenSSL 0.9.8e and earlier does not properly perform Montgomery
+	multiplication, which might allow local users to conduct a
+	side-channel attack and retrieve RSA private keys.
+	[adrianp, ticket #1931]
 
