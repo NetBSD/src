@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.894 2008/05/05 14:43:18 ad Exp $
+# $NetBSD: GENERIC,v 1.895 2008/05/13 13:43:47 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.894 $"
+#ident 		"GENERIC-$Revision: 1.895 $"
 
 maxusers	64		# estimated number of users
 
@@ -32,8 +32,6 @@ makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 # CPU-related options.
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
-# insert delay no-ops in interrupts; recommended on very old machines
-#options 	PIC_DELAY
 
 # Enhanced SpeedStep Technology in the Pentium M
 options 	ENHANCED_SPEEDSTEP
