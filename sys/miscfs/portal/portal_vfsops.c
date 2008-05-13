@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.73 2008/05/10 02:26:10 rumble Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.74 2008/05/13 08:31:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.73 2008/05/10 02:26:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.74 2008/05/13 08:31:13 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -203,7 +203,7 @@ portal_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the portalmount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return (0);
 }
 
