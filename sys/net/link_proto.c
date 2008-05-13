@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.3 2007/08/30 02:17:35 dyoung Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.4 2008/05/13 18:09:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.3 2007/08/30 02:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.4 2008/05/13 18:09:22 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -45,8 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.3 2007/08/30 02:17:35 dyoung Exp $"
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/raw_cb.h>
+#include <net/route.h>
 
 static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
+static int link_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+    struct mbuf *, struct lwp *);
+static void link_init(void);
 
 /*
  * Definitions of protocols supported in the link-layer domain.
@@ -54,15 +58,168 @@ static int sockaddr_dl_cmp(const struct sockaddr *, const struct sockaddr *);
 
 DOMAIN_DEFINE(linkdomain);	/* forward define and add to link set */
 
+const struct protosw linksw[] = {
+	{	.pr_type = SOCK_DGRAM,
+		.pr_domain = &linkdomain,
+		.pr_protocol = 0,	/* XXX */
+		.pr_flags = PR_ATOMIC|PR_ADDR|PR_PURGEIF,
+		.pr_input = NULL,
+		.pr_ctlinput = NULL,
+		.pr_ctloutput = NULL,
+		.pr_usrreq = link_usrreq,
+		.pr_init = link_init,
+	},
+};
+
 struct domain linkdomain = {
 	.dom_family = AF_LINK,
 	.dom_name = "link",
 	.dom_externalize = NULL,
 	.dom_dispose = NULL,
-	.dom_protosw = NULL,
-	.dom_protoswNPROTOSW = NULL,
+	.dom_protosw = linksw,
+	.dom_protoswNPROTOSW = &linksw[__arraycount(linksw)],
 	.dom_sockaddr_cmp = sockaddr_dl_cmp
 };
+
+static void
+link_init(void)
+{
+	return;
+}
+
+static int
+link_control(struct socket *so, unsigned long cmd, void *data,
+    struct ifnet *ifp, struct lwp *l)
+{
+	int error, s;
+	bool isactive, mkactive;
+	struct if_laddrreq *iflr;
+	union {
+		struct sockaddr sa;
+		struct sockaddr_dl sdl;
+		struct sockaddr_storage ss;
+	} u;
+	struct ifaddr *ifa;
+	const struct sockaddr_dl *asdl, *nsdl;
+
+	switch (cmd) {
+	case SIOCALIFADDR:
+	case SIOCDLIFADDR:
+	case SIOCGLIFADDR:
+		iflr = data;
+
+		if (iflr->addr.ss_family != AF_LINK)
+			return EINVAL;
+
+		asdl = satocsdl(sstocsa(&iflr->addr));
+
+		if (asdl->sdl_alen != ifp->if_addrlen)
+			return EINVAL;
+
+		if (sockaddr_dl_init(&u.sdl, sizeof(u.ss), ifp->if_index,
+		    ifp->if_type, ifp->if_xname, strlen(ifp->if_xname),
+		    CLLADDR(asdl), asdl->sdl_alen) == NULL)
+			return EINVAL;
+
+		if ((iflr->flags & IFLR_PREFIX) == 0)
+			;
+		else if (iflr->prefixlen != NBBY * ifp->if_addrlen)
+			return EINVAL;	/* XXX match with prefix */
+
+		error = 0;
+
+		s = splnet();
+
+		IFADDR_FOREACH(ifa, ifp) {
+			if (sockaddr_cmp(&u.sa, ifa->ifa_addr) == 0)
+				break;
+		}
+
+		switch (cmd) {
+		case SIOCGLIFADDR:
+			if ((iflr->flags & IFLR_PREFIX) == 0) {
+				IFADDR_FOREACH(ifa, ifp) {
+					if (ifa->ifa_addr->sa_family == AF_LINK)
+						break;
+				}
+			}
+			if (ifa == NULL) {
+				error = EADDRNOTAVAIL; 
+				break;
+			}
+
+			if (ifa == ifp->if_dl)
+				iflr->flags = IFLR_ACTIVE;
+			else
+				iflr->flags = 0;
+
+			sockaddr_copy(sstosa(&iflr->addr), sizeof(iflr->addr),
+			    ifa->ifa_addr);
+
+			break;
+		case SIOCDLIFADDR:
+			if (ifa == NULL)
+				error = EADDRNOTAVAIL;
+			else if (ifa == ifp->if_dl)
+				error = EBUSY;
+			else {
+				/* TBD routing socket */
+				rt_newaddrmsg(RTM_DELETE, ifa, 0, NULL);
+				ifa_remove(ifp, ifa);
+			}
+			break;
+		case SIOCALIFADDR:
+			if (ifa != NULL)
+				;
+			else if ((ifa = if_dl_create(ifp, &nsdl)) == NULL) {
+				error = ENOMEM;
+				break;
+			} else {
+				sockaddr_copy(ifa->ifa_addr,
+				    ifa->ifa_addr->sa_len, &u.sa);
+				ifa_insert(ifp, ifa);
+				rt_newaddrmsg(RTM_ADD, ifa, 0, NULL);
+			}
+
+			mkactive = (iflr->flags & IFLR_ACTIVE) != 0;
+			isactive = (ifa == ifp->if_dl);
+
+			if (!isactive && mkactive) {
+				if_activate_sadl(ifp, ifa, nsdl);
+				error = ENETRESET;
+			}
+			break;
+		}
+		splx(s);
+		if (error != ENETRESET)
+			return error;
+		else if ((ifp->if_flags & IFF_RUNNING) != 0)
+			return (*ifp->if_init)(ifp);
+		else
+			return 0;
+	default:
+		return ENOTTY;
+	}
+}
+
+static int
+link_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
+	struct mbuf *control, struct lwp *l)
+{
+	switch (req) {
+	case PRU_ATTACH:
+		sosetlock(so);
+		return 0;
+	case PRU_DETACH:
+		sofree(so);
+		return 0;
+	case PRU_CONTROL:
+		return link_control(so, (unsigned long)m, nam,
+		    (struct ifnet *)control, l);
+	default:
+		return EOPNOTSUPP;
+	}
+}
 
 /* Compare the field at byte offsets [fieldstart, fieldend) in
  * two memory regions, [l, l + llen) and [r, r + llen).
