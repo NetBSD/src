@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.102 2008/05/11 20:14:41 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.103 2008/05/13 20:16:30 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.102 2008/05/11 20:14:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.103 2008/05/13 20:16:30 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -307,7 +307,7 @@ route_output(struct mbuf *m, ...)
                 /* XXX This will mask dst with netmask before
                  * searching.  It did not used to do that.  --dyoung
 		 */
-		error = rtrequest(RTM_GET, dst, gate, netmask, 0, &rt);
+		error = rtrequest1(RTM_GET, &info, &rt);
 		if (error != 0)
 			senderr(error);
 		if (rtm->rtm_type != RTM_GET) {/* XXX: too grotty */
