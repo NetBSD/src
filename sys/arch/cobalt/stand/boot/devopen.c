@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7 2008/05/13 14:26:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #include <lib/libkern/libkern.h>
 
 #include "boot.h"
+
+extern const struct fs_ops file_system_nfs;
 
 /*
  * Parse a device spec.
@@ -76,6 +78,8 @@ devparse(const char *fname, int *dev, uint8_t *unit, uint8_t *part,
 			/* no unit number or partition suffix on netboot */
 			u = 0;
 			p = 0;
+			nfsys = 1;
+			file_system[0] = file_system_nfs;
 		} else {
 			/* parse [disk][unit][part] (ex. wd0a) strings */	
 			if (!isnum(fname[i]))
