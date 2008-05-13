@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.78 2008/05/10 02:26:10 rumble Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.79 2008/05/13 08:31:13 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.78 2008/05/10 02:26:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.79 2008/05/13 08:31:13 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	mutex_destroy(&amp->umapm_hashlock);
 	hashdone(amp->umapm_node_hashtbl, HASH_LIST, amp->umapm_node_hash);
 	free(amp, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return (0);
 }
 

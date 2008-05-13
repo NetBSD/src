@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.34 2008/05/13 05:36:43 simonb Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.35 2008/05/13 08:31:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.34 2008/05/13 05:36:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.35 2008/05/13 08:31:12 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the ptyfsmount structure
 	 */
 	free(mp->mnt_data, M_PTYFSMNT);
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	ptyfs_count--;
 
 	return 0;
