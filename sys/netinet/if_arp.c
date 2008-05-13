@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.138 2008/05/11 20:16:12 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.139 2008/05/13 17:51:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.138 2008/05/11 20:16:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.139 2008/05/13 17:51:26 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -246,7 +246,7 @@ struct domain arpdomain = {
 	.dom_family = PF_ARP,
 	.dom_name = "arp",
 	.dom_protosw = arpsw,
-	.dom_protoswNPROTOSW = &arpsw[sizeof(arpsw)/sizeof(arpsw[0])],
+	.dom_protoswNPROTOSW = &arpsw[__arraycount(arpsw)],
 };
 
 /*
@@ -279,11 +279,11 @@ arp_lock_try(int recurse)
 	s = splvm();
 	if (!recurse && arp_locked) {
 		splx(s);
-		return (0);
+		return 0;
 	}
 	arp_locked++;
 	splx(s);
-	return (1);
+	return 1;
 }
 
 static inline void
@@ -345,7 +345,7 @@ arp_drain(void)
 		return;
 	}
 
-	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
+	for (la = LIST_FIRST(&llinfo_arp); la != NULL; la = nla) {
 		nla = LIST_NEXT(la, la_list);
 
 		mold = la->la_hold;
@@ -382,7 +382,7 @@ arptimer(void *arg)
 	}
 
 	callout_reset(&arptimer_ch, arpt_prune * hz, arptimer, NULL);
-	for (la = LIST_FIRST(&llinfo_arp); la != 0; la = nla) {
+	for (la = LIST_FIRST(&llinfo_arp); la != NULL; la = nla) {
 		struct rtentry *rt = la->la_rt;
 
 		nla = LIST_NEXT(la, la_list);
@@ -575,7 +575,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		}
 		satosdl(gate)->sdl_type = ifp->if_type;
 		satosdl(gate)->sdl_index = ifp->if_index;
-		if (la != 0)
+		if (la != NULL)
 			break; /* This happens on a route change */
 		/*
 		 * Case 2:  This route may come from cloning, or a manual route
@@ -592,7 +592,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		}
 		R_Malloc(la, struct llinfo_arp *, allocsize);
 		rt->rt_llinfo = (void *)la;
-		if (la == 0) {
+		if (la == NULL) {
 			log(LOG_DEBUG, "arp_rtrequest: malloc failed\n");
 			break;
 		}
@@ -640,11 +640,11 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		break;
 
 	case RTM_DELETE:
-		if (la == 0)
+		if (la == NULL)
 			break;
 		arp_inuse--;
 		LIST_REMOVE(la, la_list);
-		rt->rt_llinfo = 0;
+		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 
 		s = splnet();
@@ -741,13 +741,13 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	if ((la = arplookup1(m, &satocsin(dst)->sin_addr, 1, 0, rt)) != NULL)
 		rt = la->la_rt;
 
-	if (la == 0 || rt == 0) {
+	if (la == NULL || rt == NULL) {
 		ARP_STATINC(ARP_STAT_ALLOCFAIL);
 		log(LOG_DEBUG,
 		    "arpresolve: can't allocate llinfo on %s for %s\n",
 		    ifp->if_xname, in_fmtaddr(satocsin(dst)->sin_addr));
 		m_freem(m);
-		return (0);
+		return 0;
 	}
 	sdl = satocsdl(rt->rt_gateway);
 	/*
@@ -809,7 +809,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 			}
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -893,7 +893,7 @@ in_arpinput(struct mbuf *m)
 {
 	struct arphdr *ah;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct llinfo_arp *la = 0;
+	struct llinfo_arp *la = NULL;
 	struct rtentry  *rt;
 	struct in_ifaddr *ia;
 #if NBRIDGE > 0
@@ -1046,7 +1046,7 @@ in_arpinput(struct mbuf *m)
 		goto reply;
 	}
 	la = arplookup(m, &isaddr, in_hosteq(itaddr, myaddr), 0);
-	if (la && (rt = la->la_rt) && (sdl = satosdl(rt->rt_gateway))) {
+	if (la != NULL && (rt = la->la_rt) && (sdl = satosdl(rt->rt_gateway))) {
 		if (sdl->sdl_alen &&
 		    memcmp(ar_sha(ah), CLLADDR(sdl), sdl->sdl_alen)) {
 			if (rt->rt_flags & RTF_STATIC) {
@@ -1155,7 +1155,7 @@ reply:
 		memcpy(ar_sha(ah), CLLADDR(ifp->if_sadl), ah->ar_hln);
 	} else {
 		la = arplookup(m, &itaddr, 0, SIN_PROXY);
-		if (la == 0)
+		if (la == NULL)
 			goto out;
 		rt = la->la_rt;
 		if (rt->rt_ifp->if_type == IFT_CARP &&
@@ -1208,7 +1208,7 @@ static void arptfree(struct llinfo_arp *la)
 
 	ARP_LOCK_CHECK();
 
-	if (rt == 0)
+	if (rt == NULL)
 		panic("arptfree");
 	if (rt->rt_refcnt > 0 && (sdl = satosdl(rt->rt_gateway)) &&
 	    sdl->sdl_family == AF_LINK) {
@@ -1248,7 +1248,7 @@ arplookup1(struct mbuf *m, const struct in_addr *addr, int create, int proxy,
 		sin.sin_other = proxy ? SIN_PROXY : 0;
 		rt = rtalloc1(sintosa(&sin), create);
 		if (rt == NULL)
-			return (NULL);
+			return NULL;
 		rt->rt_refcnt--;
 	} else
 		rt = rt0;
@@ -1259,7 +1259,7 @@ arplookup1(struct mbuf *m, const struct in_addr *addr, int create, int proxy,
 
 
 	if (IS_LLINFO(rt))
-		return ((struct llinfo_arp *)rt->rt_llinfo);
+		return (struct llinfo_arp *)rt->rt_llinfo;
 
 	if (create) {
 		if (rt->rt_flags & RTF_GATEWAY)
@@ -1272,20 +1272,20 @@ arplookup1(struct mbuf *m, const struct in_addr *addr, int create, int proxy,
 		log(LOG_DEBUG, "arplookup: unable to enter address"
 		    " for %s@%s on %s (%s)\n",
 		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
-		    (ifp) ? ifp->if_xname : 0, why);
+		    (ifp) ? ifp->if_xname : "null", why);
 		if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_CLONED) != 0) {
 			rtrequest(RTM_DELETE, rt_getkey(rt),
-		    	    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    	    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
 		}
 	}
-	return (0);
+	return NULL;
 }
 
 int
 arpioctl(u_long cmd, void *data)
 {
 
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 }
 
 void
@@ -1434,7 +1434,7 @@ revarprequest(struct ifnet *ifp)
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
-	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
 
 }
 
@@ -1483,7 +1483,7 @@ db_print_sa(const struct sockaddr *sa)
 	int len;
 	const u_char *p;
 
-	if (sa == 0) {
+	if (sa == NULL) {
 		db_printf("[NULL]");
 		return;
 	}
@@ -1502,7 +1502,7 @@ db_print_sa(const struct sockaddr *sa)
 static void
 db_print_ifa(struct ifaddr *ifa)
 {
-	if (ifa == 0)
+	if (ifa == NULL)
 		return;
 	db_printf("  ifa_addr=");
 	db_print_sa(ifa->ifa_addr);
@@ -1521,7 +1521,7 @@ db_print_llinfo(void *li)
 {
 	struct llinfo_arp *la;
 
-	if (li == 0)
+	if (li == NULL)
 		return;
 	la = (struct llinfo_arp *)li;
 	db_printf("  la_rt=%p la_hold=%p, la_asked=0x%lx\n",
@@ -1558,7 +1558,7 @@ db_show_rtentry(struct rtentry *rt, void *w)
 			  rt->rt_gwroute, rt->rt_llinfo);
 	db_print_llinfo(rt->rt_llinfo);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -1577,7 +1577,7 @@ static int
 sysctl_net_inet_arp_stats(SYSCTLFN_ARGS)
 {
 
-	return (NETSTAT_SYSCTL(arpstat_percpu, ARP_NSTATS));
+	return NETSTAT_SYSCTL(arpstat_percpu, ARP_NSTATS);
 }
 
 SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
