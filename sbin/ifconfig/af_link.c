@@ -1,4 +1,4 @@
-/*	$NetBSD: af_link.c,v 1.1 2008/05/12 22:06:13 dyoung Exp $	*/
+/*	$NetBSD: af_link.c,v 1.2 2008/05/13 18:10:17 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_link.c,v 1.1 2008/05/12 22:06:13 dyoung Exp $");
+__RCSID("$NetBSD: af_link.c,v 1.2 2008/05/13 18:10:17 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -65,7 +65,7 @@ link_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	if ((ifname = getifname(env)) == NULL)
 		err(EXIT_FAILURE, "%s: getifname", __func__);
 
-	if ((s = getsock(AF_UNSPEC)) == -1)
+	if ((s = getsock(AF_LINK)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 
 	if (getifaddrs(&ifap) == -1)
