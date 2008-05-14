@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.128 2008/03/31 00:12:21 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.129 2008/05/14 14:27:02 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.128 2008/03/31 00:12:21 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.129 2008/05/14 14:27:02 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.128 2008/03/31 00:12:21 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.129 2008/05/14 14:27:02 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -746,6 +746,12 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	name = Var_Subst(NULL, cp, ctxt, 0);
     } else
 	name = cp;
+    if (ctxt == VAR_GLOBAL) {
+	v = VarFind(name, VAR_CMD, 0);
+	if (v != (Var *)NIL) {
+	    goto out;
+	}
+    }
     v = VarFind(name, ctxt, 0);
     if (v == (Var *)NIL) {
 	VarAdd(name, val, ctxt);
@@ -777,6 +783,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
+ out:
     if (name != cp)
 	free(UNCONST(name));
     if (v != (Var *)NIL)
