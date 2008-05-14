@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.14.2.1 2008/05/10 23:48:42 wrstuden Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.14.2.2 2008/05/14 01:34:58 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,6 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
 #include <sys/systm.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -86,7 +85,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14.2.1 2008/05/10 23:48:42 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.14.2.2 2008/05/14 01:34:58 wrstuden Exp $");
 
 
 #ifdef DEBUG

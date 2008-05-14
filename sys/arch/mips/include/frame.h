@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.7.2.1 2008/05/10 23:48:45 wrstuden Exp $	*/
+/*	$NetBSD: frame.h,v 1.7.2.2 2008/05/14 01:34:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 #endif
 
 #include <sys/signal.h>
-#include <sys/sa.h>
 
 void *getframe(struct lwp *, int, int *);
 #if defined(COMPAT_16) || defined(COMPAT_ULTRIX)

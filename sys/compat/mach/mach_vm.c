@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.60.2.1 2008/05/10 23:48:57 wrstuden Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.60.2.2 2008/05/14 01:35:09 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002-2003, 2008 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.60.2.1 2008/05/10 23:48:57 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.60.2.2 2008/05/14 01:35:09 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
 #include <sys/mman.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>

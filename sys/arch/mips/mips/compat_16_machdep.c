@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.12.2.1 2008/05/10 23:48:45 wrstuden Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.12.2.2 2008/05/14 01:35:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.2.1 2008/05/10 23:48:45 wrstuden Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.2.2 2008/05/14 01:35:00 wrstuden Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.2.1 2008/05/10 23:48:45 w
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>

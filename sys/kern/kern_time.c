@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.146.2.1 2008/05/10 23:49:04 wrstuden Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.146.2.2 2008/05/14 01:35:13 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.1 2008/05/10 23:49:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.2 2008/05/14 01:35:13 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.1 2008/05/10 23:49:04 wrstuden
 #include <sys/timex.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
 

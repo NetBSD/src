@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.35.2.1 2008/05/10 23:49:02 wrstuden Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.35.2.2 2008/05/14 01:35:11 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.35.2.1 2008/05/10 23:49:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.35.2.2 2008/05/14 01:35:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.35.2.1 2008/05/10 23:49:02 wrstud
 #include <sys/sysctl.h>
 #include <sys/vfs_syscalls.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.11.2.2 2008/05/11 00:23:35 wrstuden Exp $	*/
+/*	$NetBSD: sa.h,v 1.11.2.3 2008/05/14 01:35:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifndef _SYS_SA_H_
 #define _SYS_SA_H_
 
+#include <sys/satypes.h>
 #include <sys/ucontext.h>
 
 struct sa_t {
@@ -51,8 +52,6 @@ struct sa_t {
 struct sa_stackinfo_t {
 	unsigned int sasi_stackgen; /* stack generation counter */
 };
-
-typedef void (*sa_upcall_t)(int, struct sa_t *[], int, int, void *);
 
 #define SA_UPCALL_NEWPROC		0
 #define SA_UPCALL_PREEMPTED		1

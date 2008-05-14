@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.27.2.1 2008/05/10 23:48:52 wrstuden Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.27.2.2 2008/05/14 01:35:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.27.2.1 2008/05/10 23:48:52 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.27.2.2 2008/05/14 01:35:03 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.27.2.1 2008/05/10 23:48:52 wrstu
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
