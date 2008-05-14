@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.13 2008/05/12 09:58:36 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.14 2008/05/14 23:14:11 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int nvt_match(unsigned, void *);
 void *nvt_init(unsigned, void *);
 int nvt_send(void *, char *, unsigned);
 int nvt_recv(void *, char *, unsigned, unsigned);
@@ -157,6 +158,20 @@ static void mii_stoppoll(struct local *);
 static int mii_read(struct local *, int, int);
 static void mii_write(struct local *, int, int, int);
 static void mii_dealan(struct local *, unsigned);
+
+int
+nvt_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x1106, 0x3053):
+	case PCI_DEVICE(0x1106, 0x3065):
+		return 1;
+	}
+	return 0;
+}
 
 void *
 nvt_init(unsigned tag, void *data)

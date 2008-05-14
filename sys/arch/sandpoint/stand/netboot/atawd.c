@@ -1,4 +1,4 @@
-/* $NetBSD: atawd.c,v 1.6 2008/05/12 09:29:56 nisimura Exp $ */
+/* $NetBSD: atawd.c,v 1.7 2008/05/14 23:14:11 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -51,21 +51,20 @@
 #endif
 
 struct atacdv {
-	void *(*init)(unsigned, unsigned);
+	int (*match)(unsigned, void *);
+	void *(*init)(unsigned, void *);
 	unsigned chvalid;
 	void *priv;
-	int unit;
 };
 
 #define ATAC_DECL(xxx) \
-    void * xxx ## _init(unsigned, unsigned)
+    int xxx ## _match(unsigned, void *); \
+    void * xxx ## _init(unsigned, void *)
 
 ATAC_DECL(pciide);
-ATAC_DECL(siisata);
 
 static struct atacdv vatacdv[] = {
-	{ pciide_init, 01 },
-	{ siisata_init, 0xf },
+	{ pciide_match, pciide_init, 01 },
 };
 static int natacdv = sizeof(vatacdv)/sizeof(vatacdv[0]);
 struct atacdv *atac;
@@ -80,7 +79,7 @@ int parsefstype(void *);
 static int wd_get_params(struct wd_softc *);
 static int wdgetdisklabel(struct wd_softc *);
 
-void atac_init(unsigned);
+int atac_init(unsigned);
 int atac_probe(struct atacdv *);
 static int atac_wait_for_ready(struct atac_channel *); 
 static int atac_exec_identify(struct wd_softc *, void *);
@@ -173,21 +172,22 @@ parsefstype(void *data)
 	return pp->p_fstype;
 }
 
-void
+int
 atac_init(unsigned tag)
 {
-	void *l;
+	struct atacdv *dv;
 	int n;
 
 	for (n = 0; n < natacdv; n++) {
-		l = (*vatacdv[n].init)(tag, vatacdv[n].chvalid);
-		if (l != NULL)
+		dv = &vatacdv[n];
+		if ((*dv->match)(tag, NULL) > 0)
 			goto found;
 	}
-	return;
+	return 0;
   found:
-	atac = &vatacdv[n];
-	atac->priv = l;
+	atac = dv;
+	atac->priv = (*dv->init)(tag, (void *)dv->chvalid);
+	return 1;
 }
 
 int

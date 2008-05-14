@@ -1,4 +1,4 @@
-/* $NetBSD: vge.c,v 1.14 2008/05/12 09:58:36 nisimura Exp $ */
+/* $NetBSD: vge.c,v 1.15 2008/05/14 23:14:12 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int vge_match(unsigned, void *);
 void *vge_init(unsigned, void *);
 int vge_send(void *, char *, unsigned);
 int vge_recv(void *, char *, unsigned, unsigned);
@@ -205,6 +206,19 @@ static int mii_read(struct local *, int, int);
 static void mii_write(struct local *, int, int, int);
 static void mii_dealan(struct local *, unsigned);
 
+int
+vge_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x1106, 0x3119):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 vge_init(unsigned tag, void *data)
 {
@@ -214,9 +228,6 @@ vge_init(unsigned tag, void *data)
 	struct rdesc *rxd;
 	uint8_t *en;
 
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_DEVICE(0x1106, 0x3119) != val)
-		return NULL;
 
 	l = ALLOC(struct local, 64);   /* desc alignment */
 	memset(l, 0, sizeof(struct local));

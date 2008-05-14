@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.17 2008/05/12 11:56:15 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.18 2008/05/14 23:14:11 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -76,20 +76,20 @@ struct desc {
 	uint32_t xd0, xd1, xd2, xd3;
 };
 
-#define TLP_BMR		0x000		/* 0: bus mode */
+#define TLP_BMR		0x00		/* 0: bus mode */
 #define  BMR_RST	01
-#define  BMR_CAL8	0x00002000	/* 32B cache alignment */
+#define  BMR_CAL8	0x00004000	/* 32B cache alignment */
 #define  BMR_CAL16	0x00008000	/* 64B */
 #define  BMR_CAL32	0x0000c000	/* 128B */
 #define  BMR_CAL	0x0000c000
-#define TLP_TPD		0x008		/* 1: instruct Tx to start */
-#define TLP_RPD		0x010		/* 2: instruct Rx to start */
-#define TLP_RRBA	0x018		/* 3: Rx descriptor base */
-#define TLP_TRBA	0x020		/* 4: Tx descriptor base */
-#define TLP_STS		0x028		/* 5: status */
+#define TLP_TPD		0x08		/* 1: instruct Tx to start */
+#define TLP_RPD		0x10		/* 2: instruct Rx to start */
+#define TLP_RRBA	0x18		/* 3: Rx descriptor base */
+#define TLP_TRBA	0x20		/* 4: Tx descriptor base */
+#define TLP_STS		0x28		/* 5: status */
 #define  STS_TS		0x00700000	/* Tx status */
 #define  STS_RS		0x000e0000	/* Rx status */
-#define TLP_OMR		0x030		/* 6: operation mode */
+#define TLP_OMR		0x30		/* 6: operation mode */
 #define  OMR_SDP	(1U<<25)	/* always ON */
 #define  OMR_PS		(1U<<18)	/* port select */
 #define  OMR_PM		(1U<< 6)	/* promiscuous */
@@ -97,7 +97,7 @@ struct desc {
 #define  OMR_REN	(1U<< 1)	/* instruct start/stop Rx */
 #define  OMR_FD		(1U<< 9)	/* FDX */
 #define TLP_IEN		0x38		/* 7: interrupt enable mask */
-#define TLP_APROM	0x048		/* 9: SEEPROM and MII management */
+#define TLP_APROM	0x48		/* 9: SEEPROM and MII management */
 #define  SROM_RD	(1U <<14)	/* read operation */
 #define  SROM_WR	(1U <<13)	/* write openration */
 #define  SROM_SR	(1U <<11)	/* SEEPROM select */
@@ -122,6 +122,19 @@ static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
 
+int
+tlp_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x1011, 0x0009):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 tlp_init(unsigned tag, void *data)
 {
@@ -130,11 +143,6 @@ tlp_init(unsigned tag, void *data)
 	struct desc *txd, *rxd;
 	uint8_t *en;
 	uint32_t *p;
-
-	val = pcicfgread(tag, PCI_ID_REG);
-	/* genuine DE500 */
-	if (PCI_DEVICE(0x1011, 0x0009) != val)
-		return NULL;
 	
 	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
