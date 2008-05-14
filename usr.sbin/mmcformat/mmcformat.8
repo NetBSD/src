@@ -1,0 +1,136 @@
+.\" $NetBSD: mmcformat.8,v 1.1 2008/05/14 16:49:48 reinoud Exp $
+.\"
+.\" Copyright (c) 2008 Reinoud Zandijk
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+.\" IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.Dd May, 9, 2008
+.Dt MMCFORMAT 8
+.Os
+.Sh NAME
+.Nm mmcformat
+.Nd format optical media
+.Sh SYNOPSIS
+.Nm
+.Op Fl B
+.Op Fl F
+.Op Fl O
+.Op Fl M
+.Op Fl R
+.Op Fl G
+.Op Fl S
+.Op Fl s
+.Op Fl w
+.Op Fl p
+.Op Fl c Ar cert-num
+.Op Fl r
+.Op Fl h
+.Op Fl H
+.Op Fl I
+.\" .Op X format is not implemented yet
+.Op Fl b blockingnr
+.Op D
+.Ar special
+.Sh DESCRIPTION
+The
+.Nm
+utility formats optical media conforming to the MMC standard. These include
+CD , DVD, and Blu-Ray (BD) media.
+.Pp
+The options are as follows:
+.Bl -tag -width indent
+.It Fl B
+Blank media when possible before formatting it.
+.It Fl F
+Format media.
+.It Fl O
+Old style CD-RW formatting ; recommended for CD-RW.
+.It Fl M
+Select MRW (Mount Raineer) error correcting background format.
+.It Fl R
+Restart previously stopped MCD-MRW or DVD+RW backfround format.
+.It Fl G
+Grow last CD-RW/DVD-RW session.
+.It Fl S
+Grow spare space DVD-RAM / BD-RE.
+.It Fl s
+Format DVD+MRW / BD-RE with extra spare space.
+.It Fl w
+Wait until completion of background format.
+.It Fl p
+Explicitly set packet format.
+.It Fl c Ar cert-num
+Certify media for DVD-RAM / DV-RE. The argument cert-num specifies: 0) no
+certification , 1) full certification , 2) quick certification.
+.It Fl r
+Recompile defect list for DVD-RAM.
+.It Fl h
+Show help or inquiry format possibilities for inserted media.
+.It Fl H
+Show help or inquiry format possibilities for inserted media.
+.It Fl i
+Show help or inquiry format possibilities for inserted media.
+.It Fl b blockingnr
+Explicit select packet size in sectors for CD-RW only; not recommended to
+change from its default 32.
+.It Fl D
+Verbose all SCSI/ATAPI command errors.
+.El
+.Sh NOTES
+Due to the enormous varieties in optical media, the tool is made as generic as
+possible. This can result in confusion.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+mmcformat -B -O /dev/rcd0d
+.Ed
+.Pp
+Blanks and then formats a CD-RW disc using the `old-style' format command. Its
+recommended to use this `old-style' command unless your drive reports its not
+supported; if so, resort to the default
+.Fl F
+.
+Note that a CD-RW disc can be reformatted without being blanked. Blanking
+swiches between sequential and fixed packet writing by erasing the disc. This
+can also help to revive old discs.
+.Pp
+.Bd -literal -offset indent
+mmcformat -F -M /dev/rcd0d
+.Ed
+.Pp
+Format a CD-RW or a DVD+RW to use MRW (Mount Raineer). This format tries to
+hide media flaws as much as possible by relocation.
+.Sh SEE ALSO
+.Xr scsictl 8
+.Sh BUGS
+It could be merged with
+.Xr scsictl 8
+but that tool is very harddisc oriented.
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An Reinoud Zandijk Aq reinoud@NetBSD.org .

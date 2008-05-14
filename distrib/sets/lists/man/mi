@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1069 2008/05/11 18:01:46 joerg Exp $
+# $NetBSD: mi,v 1.1070 2008/05/14 16:49:47 reinoud Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2173,6 +2173,7 @@
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mld6query.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/mlxctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/mmcformat.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mmeye/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mmeye/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/modload.0			man-sysutil-catman	.cat
@@ -2246,6 +2247,7 @@
 ./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_msdos.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_sysvbfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/newfs_udf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newlfs.0			man-obsolete		obsolete
 ./usr/share/man/cat8/news68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/news68k/makedev.0		man-obsolete		obsolete
@@ -4723,6 +4725,7 @@
 ./usr/share/man/man8/mknod.8			man-sysutil-man		.man
 ./usr/share/man/man8/mld6query.8		man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/mlxctl.8			man-sysutil-man		.man
+./usr/share/man/man8/mmcformat.8		man-sysutil-man		.man
 ./usr/share/man/man8/mmeye/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mmeye/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/modload.8			man-sysutil-man		.man
@@ -4796,6 +4799,7 @@
 ./usr/share/man/man8/newfs_lfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_sysvbfs.8		man-sysutil-man		.man
+./usr/share/man/man8/newfs_udf.8		man-sysutil-man		.man
 ./usr/share/man/man8/newlfs.8			man-obsolete		obsolete
 ./usr/share/man/man8/news68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/news68k/makedev.8		man-obsolete		obsolete

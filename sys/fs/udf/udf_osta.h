@@ -1,4 +1,4 @@
-/* $NetBSD: udf_osta.h,v 1.3 2006/03/05 16:55:44 christos Exp $ */
+/* $NetBSD: udf_osta.h,v 1.4 2008/05/14 16:49:48 reinoud Exp $ */
 
 /*
  * Prototypes for the OSTA functions
@@ -8,8 +8,11 @@
 #ifndef _FS_UDF_OSTA_H_
 #define _FS_UDF_OSTA_H_
 
-
 #include <sys/types.h>
+
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
 
 #ifndef UNIX
 #define	UNIX
@@ -33,6 +36,7 @@ int udf_UncompressUnicode(int, byte *, unicode_t *);
 int udf_CompressUnicode(int, int, unicode_t *, byte *);
 unsigned short udf_cksum(unsigned char *, int);
 unsigned short udf_unicode_cksum(unsigned short *, int);
+uint16_t udf_ea_cksum(uint8_t *data);
 int UDFTransName(unicode_t *, unicode_t *, int);
 int UnicodeLength(unicode_t *string);
 
