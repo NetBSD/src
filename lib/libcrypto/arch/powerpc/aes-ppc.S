@@ -732,7 +732,7 @@ AES_encrypt:
 	xor	10,14,30
 	xor	11,15,31
 	addi	5,5,16
-	bc	25,0,.Lenc_loop
+	bdnz+	.Lenc_loop
 
 	addi	7,3,2048
 	nop	
@@ -1082,7 +1082,7 @@ AES_decrypt:
 	xor	10,14,30
 	xor	11,15,31
 	addi	5,5,16
-	bc	25,0,.Ldec_loop
+	bdnz+	.Ldec_loop
 
 	addi	7,3,2048
 	nop	

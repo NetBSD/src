@@ -1247,7 +1247,7 @@ sha256_block_data_order:
 	add	8,0,3
 	add	8,8,5
 
-	bc	25,0,.Lrounds
+	bdnz+	.Lrounds
 
 	lwz	3,40(1)
 	lwz	31,36(1)

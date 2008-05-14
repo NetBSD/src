@@ -78,7 +78,7 @@ bn_mul_mont:
 
 	addi	15,15,4
 	addi	16,16,4
-	bc	25,0,.L1st
+	bdnz+	.L1st
 
 	addc	19,23,20
 	addze	20,24
@@ -140,7 +140,7 @@ bn_mul_mont:
 	addze	22,22
 	stw	21,0(16)
 	addi	16,16,4
-	bc	25,0,.Linner
+	bdnz+	.Linner
 
 	lwz	12,4(16)
 	addc	19,23,20
@@ -176,7 +176,7 @@ bn_mul_mont:
 	subfe	10,11,12
 	stwx	10,9,15
 	addi	15,15,4
-	bc	25,0,.Lsub
+	bdnz+	.Lsub
 
 	li	15,0
 	mtctr	8
@@ -191,7 +191,7 @@ bn_mul_mont:
 	stwx	12,9,15
 	stwx	15,16,15
 	addi	15,15,4
-	bc	25,0,.Lcopy
+	bdnz+	.Lcopy
 
 	lwz	14,16(1)
 	lwz	15,20(1)
