@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.50 2008/05/13 22:39:18 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.51 2008/05/14 12:53:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.50 2008/05/13 22:39:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2008/05/14 12:53:49 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -263,11 +263,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	struct cpu_info *ci;
 	uintptr_t ptr;
 	int cpunum = caa->cpu_number;
+	static bool again;
 
 	sc->sc_dev = self;
-
-	/* Make sure DELAY() is initialized. */
-	DELAY(1);
 
 	if (cpus_attached == ~0) {
 		aprint_error(": increase MAXCPUS, X86_MAXPROCS\n");
@@ -299,6 +297,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &cpu_info_primary;
 		if (cpunum != lapic_cpu_number()) {
+			/* XXX should be done earlier. */
 			uint32_t reg;
 			aprint_verbose("\n");
 			aprint_verbose_dev(self, "running CPU at apic %d"
@@ -315,7 +314,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	ci->ci_self = ci;
 	sc->sc_info = ci;
-
 	ci->ci_dev = self;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
@@ -340,38 +338,42 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
 
+	/*
+	 * Boot processor may not be attached first, but the below
+	 * must be done to allow booting other processors.
+	 */
+	if (!again) {
+		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_PRIMARY);
+		/* Basic init. */
+		cpu_intr_init(ci);
+		cpu_get_tsc_freq(ci);
+		cpu_init(ci);
+		cpu_set_tss_gates(ci);
+		pmap_cpu_init_late(ci);
+		x86_errata();
+		if (caa->cpu_role != CPU_ROLE_SP) {
+			/* Enable lapic. */
+			lapic_enable();
+			lapic_set_lvt();
+			lapic_calibrate_timer(ci);
+		}
+		/* Make sure DELAY() is initialized. */
+		DELAY(1);
+		again = true;
+	}
+
 	/* further PCB init done later. */
 
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		atomic_or_32(&ci->ci_flags,
-		    CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
-		cpu_intr_init(ci);
-		cpu_get_tsc_freq(ci);
+		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		cpu_identify(ci);
-		cpu_init(ci);
-		cpu_set_tss_gates(ci);
-		pmap_cpu_init_late(ci);
-		x86_errata();
 		x86_cpu_idle_init();
 		break;
 
 	case CPU_ROLE_BP:
-		atomic_or_32(&ci->ci_flags,
-		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
-		cpu_intr_init(ci);
-		cpu_get_tsc_freq(ci);
+		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
-		cpu_init(ci);
-		cpu_set_tss_gates(ci);
-		pmap_cpu_init_late(ci);
-		/*
-		 * Enable local apic
-		 */
-		lapic_enable();
-		lapic_set_lvt();
-		lapic_calibrate_timer(ci);
-		x86_errata();
 		x86_cpu_idle_init();
 		break;
 
@@ -396,8 +398,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		aprint_normal("\n");
 		panic("unknown processor type??\n");
 	}
-	cpu_vm_init(ci);
 
+	cpu_vm_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
@@ -883,8 +885,11 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	}
 
 	/*
-	 * ... prior to executing the following sequence:"
+	 * ... prior to executing the following sequence:".  We'll also add in
+	 * local cache flush, in case the BIOS has left the AP with its cache
+	 * disabled.  It may not be able to cope with MP coherency.
 	 */
+	wbinvd();
 
 	if (ci->ci_flags & CPUF_AP) {
 		error = x86_ipi_init(ci->ci_cpuid);
