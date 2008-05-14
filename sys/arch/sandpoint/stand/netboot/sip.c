@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.13 2008/05/12 09:58:36 nisimura Exp $ */
+/* $NetBSD: sip.c,v 1.14 2008/05/14 23:14:11 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int sip_match(unsigned, void *);
 void *sip_init(unsigned, void *);
 int sip_send(void *, char *, unsigned);
 int sip_recv(void *, char *, unsigned, unsigned);
@@ -120,6 +121,19 @@ static void mii_dealan(struct local *, unsigned);
 /* Table and macro to bit-reverse an octet. */
 static const uint8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 #define bbr(v)	((bbr4[(v)&0xf] << 4) | bbr4[((v)>>4) & 0xf])
+
+int
+sip_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x100b, 0x0020):
+		return 1;
+	}
+	return 0;
+}
 
 void *
 sip_init(unsigned tag, void *data)

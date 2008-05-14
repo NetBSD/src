@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.12 2008/05/12 09:58:36 nisimura Exp $ */
+/* $NetBSD: pcn.c,v 1.13 2008/05/14 23:14:11 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int pcn_match(unsigned, void *);
 void *pcn_init(unsigned, void *);
 int pcn_send(void *, char *, unsigned);
 int pcn_recv(void *, char *, unsigned, unsigned);
@@ -136,6 +137,15 @@ static unsigned pcn_bcr_read(struct local *, int);
 static void pcn_bcr_write(struct local *, int, int);
 static void mii_initphy(struct local *l);
 
+int
+pcn_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	return (v == PCI_DEVICE(0x1022, 0x2000));
+}
+
 void *
 pcn_init(unsigned tag, void *data)
 {
@@ -144,10 +154,6 @@ pcn_init(unsigned tag, void *data)
 	struct desc *txd, *rxd;
 	uint8_t *en;
 	struct pcninit initblock, *ib;
-
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_DEVICE(0x1022, 0x2000) != val)
-		return NULL;
 
 	l = ALLOC(struct local, sizeof(struct desc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
