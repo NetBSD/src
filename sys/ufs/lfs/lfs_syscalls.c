@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.132.2.1 2008/05/10 23:49:08 wrstuden Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.132.2.2 2008/05/14 01:35:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.132.2.1 2008/05/10 23:49:08 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.132.2.2 2008/05/14 01:35:18 wrstuden Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.132.2.1 2008/05/10 23:49:08 wrstu
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <ufs/ufs/inode.h>

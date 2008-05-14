@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.17.4.1 2008/05/10 23:48:42 wrstuden Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.17.4.2 2008/05/14 01:34:58 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17.4.1 2008/05/10 23:48:42 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17.4.2 2008/05/14 01:34:58 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.17.4.1 2008/05/10 23:48:42 w
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>

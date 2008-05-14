@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.59.2.1 2008/05/10 23:48:49 wrstuden Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.59.2.2 2008/05/14 01:35:02 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.59.2.1 2008/05/10 23:48:49 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.59.2.2 2008/05/14 01:35:02 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.59.2.1 2008/05/10 23:48:49 wrstu
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
-#include <sys/sa.h>
 #include <sys/ktrace.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>

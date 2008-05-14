@@ -1,4 +1,4 @@
-/* $NetBSD: mach_sysent.c,v 1.21.12.1 2008/05/10 23:48:57 wrstuden Exp $ */
+/* $NetBSD: mach_sysent.c,v 1.21.12.2 2008/05/14 01:35:09 wrstuden Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.21.12.1 2008/05/10 23:48:57 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.21.12.2 2008/05/14 01:35:09 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -19,7 +19,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_sysent.c,v 1.21.12.1 2008/05/10 23:48:57 wrstud
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>

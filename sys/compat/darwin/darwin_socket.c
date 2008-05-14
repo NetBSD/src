@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.20.2.1 2008/05/10 23:48:49 wrstuden Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.20.2.2 2008/05/14 01:35:02 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.20.2.1 2008/05/10 23:48:49 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.20.2.2 2008/05/14 01:35:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/signal.h>
 #include <sys/lwp.h>
-#include <sys/sa.h>
 #include <sys/socketvar.h>
 #include <sys/un.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14.12.1 2008/05/10 23:48:44 wrstuden Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14.12.2 2008/05/14 01:34:59 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD");
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

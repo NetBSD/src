@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.74.12.1 2008/05/10 23:48:57 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.74.12.2 2008/05/14 01:35:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -42,7 +42,6 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>

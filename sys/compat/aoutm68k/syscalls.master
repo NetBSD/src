@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.27.4.1 2008/05/10 23:48:48 wrstuden Exp $
+	$NetBSD: syscalls.master,v 1.27.4.2 2008/05/14 01:35:01 wrstuden Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -50,7 +50,6 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/aoutm68k/aoutm68k_syscallargs.h>
 

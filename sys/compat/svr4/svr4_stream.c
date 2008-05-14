@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.77.2.1 2008/05/10 23:48:59 wrstuden Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.77.2.2 2008/05/14 01:35:11 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.77.2.1 2008/05/10 23:48:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.77.2.2 2008/05/14 01:35:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.77.2.1 2008/05/10 23:48:59 wrstude
 #include <sys/device.h>
 #include <sys/stat.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifndef SVR4_32

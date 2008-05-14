@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.21.12.1 2008/05/10 23:48:57 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.21.12.2 2008/05/14 01:35:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.21.12.1 2008/05/10 23:48:57 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.21.12.2 2008/05/14 01:35:09 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/ipc.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.21.12.1 2008/05/10 23:48:57
 #define	SYSVSHM
 #endif
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>

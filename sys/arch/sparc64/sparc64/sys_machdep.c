@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.9.12.1 2008/05/10 23:48:46 wrstuden Exp $ */
+/*	$NetBSD: sys_machdep.c,v 1.9.12.2 2008/05/14 01:35:01 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9.12.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9.12.2 2008/05/14 01:35:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.9.12.1 2008/05/10 23:48:46 wrstude
 #include <sys/buf.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int

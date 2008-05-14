@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.49.2.1 2008/05/10 23:49:02 wrstuden Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.49.2.2 2008/05/14 01:35:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.49.2.1 2008/05/10 23:49:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.49.2.2 2008/05/14 01:35:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.49.2.1 2008/05/10 23:49:02 wrstuden 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 #include <compat/common/compat_util.h>
