@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.137.2.1 2008/05/10 23:49:03 wrstuden Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.137.2.2 2008/05/14 19:54:12 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.137.2.1 2008/05/10 23:49:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.137.2.2 2008/05/14 19:54:12 wrstuden Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2974,7 +2974,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			/* This is hardly correct, but... */
 			sigplusset(&l->l_sigpend.sp_set, &ss1);
-			sigplusset(l->l_sigmask, &ss2);
+			sigplusset(&l->l_sigmask, &ss2);
 			ki->p_cpticks += l->l_cpticks;
 			ki->p_pctcpu += l->l_pctcpu;
 			ki->p_estcpu += l->l_estcpu;

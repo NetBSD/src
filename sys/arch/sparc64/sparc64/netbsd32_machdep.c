@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.79.4.1 2008/05/10 23:48:46 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.79.4.2 2008/05/14 19:54:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79.4.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79.4.2 2008/05/14 19:54:11 wrstuden Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -190,12 +190,12 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (onstack) {
-		fp = (struct sparc32_sigframe *)((char *)l->l_sigstk->ss_sp +
-					l->l_sigstk->ss_size);
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		fp = (struct sparc32_sigframe *)((char *)l->l_sigstk.ss_sp +
+					l->l_sigstk.ss_size);
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sparc32_sigframe *)oldsp;
 	fp = (struct sparc32_sigframe *)((u_long)(fp - 1) & ~7);
@@ -290,7 +290,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
@@ -328,14 +328,14 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	oldsp = (struct rwindow32*)(u_long)(u_int)tf->tf_out[6];
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct sparc32_sigframe_siginfo *)
-		    ((char *)l->l_sigstk->ss_sp +
-					  l->l_sigstk->ss_size);
+		    ((char *)l->l_sigstk.ss_sp +
+					  l->l_sigstk.ss_size);
 	else
 		fp = (struct sparc32_sigframe_siginfo *)oldsp;
 	fp = (struct sparc32_sigframe_siginfo*)((u_long)(fp - 1) & ~7);
@@ -343,7 +343,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Build the signal context to be used by sigreturn.
 	 */
 	uc.uc_flags = _UC_SIGMASK |
-		((l->l_sigstk->ss_flags & SS_ONSTACK)
+		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
@@ -401,7 +401,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -490,9 +490,9 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 #endif
 	mutex_enter(p->p_lock);
 	if (scp->sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask */
 	native_sigset13_to_sigset((sigset13_t *)&scp->sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
@@ -584,9 +584,9 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 	/* Restore signal stack. */
 	mutex_enter(p->p_lock);
 	if (sc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &sc.sc_mask, 0);
 	mutex_exit(p->p_lock);
@@ -1226,9 +1226,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 #ifdef _UC_SETSTACK
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 #endif
 	return (0);

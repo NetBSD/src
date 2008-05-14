@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.12.4.2 2008/05/14 01:34:59 wrstuden Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.12.4.3 2008/05/14 19:54:10 wrstuden Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.4.2 2008/05/14 01:34:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.12.4.3 2008/05/14 19:54:10 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -217,7 +217,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	kf.sf_sc.sc_ps = frame->f_sr;
 
 	/* Save signal stack. */
-	kf.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	kf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	kf.sf_sc.sc_mask = *mask;
@@ -260,7 +260,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -402,9 +402,9 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 
 	/* Restore signal stack. */
 	if (scp->sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &scp->sc_mask, 0);
