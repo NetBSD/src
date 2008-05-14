@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.7 2008/05/12 09:29:56 nisimura Exp $ */
+/* $NetBSD: siisata.c,v 1.8 2008/05/14 23:14:11 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,29 +43,38 @@
  */
 #define DEVTOV(pa) 		(uint32_t)(pa)
 
-void *siisata_init(unsigned, unsigned);
+int siisata_match(unsigned, void *);
+void *siisata_init(unsigned, void *);
 
 static void map3112chan(unsigned, int, struct atac_channel *);
 static void map3114chan(unsigned, int, struct atac_channel *);
 
+int
+siisata_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x1095, 0x3112): /* SiI 3112 SATALink */
+	case PCI_DEVICE(0x1095, 0x3512): /*     3512 SATALink */
+	case PCI_DEVICE(0x1095, 0x3114): /* SiI 3114 SATALink */
+		return 1;
+	}
+	return 0;
+}
+
 void *
-siisata_init(unsigned tag, unsigned data)
+siisata_init(unsigned tag, void *data)
 {
 	unsigned val, chvalid;
 	struct atac_softc *l;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	switch (val) {
-	case PCI_DEVICE(0x1095, 0x3112): /* SiI 3112 SATALink */
-	case PCI_DEVICE(0x1095, 0x3512): /*     3512 SATALink */
-		chvalid = 0x3;
-		break;
-	case PCI_DEVICE(0x1095, 0x3114): /* SiI 3114 SATALink */
-		chvalid = 0xf;
-		break;
-	default:
-		return NULL;
-	}
+	if ((PCI_PRODUCT(val) & 0xf) == 4)
+		chvalid = 0xf; /* 4 channel model */
+	else
+		chvalid = 0x3; /* 2 channel model */
 
 	l = alloc(sizeof(struct atac_softc));
 	memset(l, 0, sizeof(struct atac_softc));
@@ -80,7 +89,7 @@ siisata_init(unsigned tag, unsigned data)
 		map3114chan(tag, 2, &l->channel[2]);
 		map3114chan(tag, 3, &l->channel[3]);
 	}
-	l->chvalid = chvalid & data;
+	l->chvalid = chvalid & (unsigned)data;
 	l->tag = tag;
 	return l;
 }

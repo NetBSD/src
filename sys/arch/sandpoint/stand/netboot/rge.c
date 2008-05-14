@@ -1,4 +1,4 @@
-/* $NetBSD: rge.c,v 1.11 2008/05/12 09:58:36 nisimura Exp $ */
+/* $NetBSD: rge.c,v 1.12 2008/05/14 23:14:11 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -151,6 +151,19 @@ static int mii_read(struct local *, int, int);
 static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
+
+int
+rge_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x10ec, 0x8169):
+		return 1;
+	}
+	return 0;
+}
 
 void *
 rge_init(unsigned tag, void *data)
