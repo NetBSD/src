@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.21.4.2 2008/05/14 01:35:01 wrstuden Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.21.4.3 2008/05/14 19:54:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.21.4.2 2008/05/14 01:35:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.21.4.3 2008/05/14 19:54:10 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -90,12 +90,12 @@ void sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
 		fp = (struct sunos_sigframe *)
-		     ((char *)l->l_sigstk->ss_sp + l->l_sigstk->ss_size);
+		     ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		fp = (struct sunos_sigframe *)oldsp;
 
@@ -119,7 +119,7 @@ void sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	sf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 	native_sigset_to_sigset13(mask, &sf.sf_sc.sc_mask);
 	sf.sf_sc.sc_sp = oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
@@ -173,7 +173,7 @@ void sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sunos_sigdebug & SDB_KSTACK) && p->p_pid == sunos_sigpid)

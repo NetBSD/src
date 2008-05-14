@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.16.2.2 2008/05/14 01:34:59 wrstuden Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.16.2.3 2008/05/14 19:54:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16.2.2 2008/05/14 01:34:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16.2.3 2008/05/14 19:54:09 wrstuden Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -137,9 +137,9 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	/* Restore signal stack. */
 	mutex_enter(p->p_lock);
 	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
 	mutex_exit(p->p_lock);
@@ -229,7 +229,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_err = tf->tf_err;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -263,7 +263,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 #endif
 
@@ -349,7 +349,7 @@ compat_16_x86_vm86(struct lwp *l, char *args, register_t *retval)
 	mutex_enter(p->p_lock);
 
 	/* Going into vm86 mode jumps off the signal stack. */
-	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	mutex_exit(p->p_lock);
 

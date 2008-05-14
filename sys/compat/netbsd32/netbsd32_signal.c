@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.29.4.1 2008/05/10 23:48:58 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.29.4.2 2008/05/14 19:54:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.29.4.1 2008/05/10 23:48:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.29.4.2 2008/05/14 19:54:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,16 +293,16 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 	 * in the System V Interface Definition appears to allow returning
 	 * the main context stack.
 	 */
-	if ((l->l_sigstk->ss_flags & SS_ONSTACK) == 0) {
+	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
 		ucp->uc_stack.ss_sp = USRSTACK32;
 		ucp->uc_stack.ss_size = ctob(p->p_vmspace->vm_ssize);
 		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
 		/* Simply copy alternate signal execution stack. */
 		ucp->uc_stack.ss_sp =
-		    (uint32_t)(intptr_t)l->l_sigstk->ss_sp;
-		ucp->uc_stack.ss_size = l->l_sigstk->ss_size;
-		ucp->uc_stack.ss_flags = l->l_sigstk->ss_flags;
+		    (uint32_t)(intptr_t)l->l_sigstk.ss_sp;
+		ucp->uc_stack.ss_size = l->l_sigstk.ss_size;
+		ucp->uc_stack.ss_flags = l->l_sigstk.ss_flags;
 	}
 	ucp->uc_flags |= _UC_STACK;
 	mutex_exit(p->p_lock);
@@ -355,9 +355,9 @@ setucontext32(struct lwp *l, const ucontext32_t *ucp)
 	 */
 	if ((ucp->uc_flags & _UC_STACK) != 0) {
 		if (ucp->uc_stack.ss_flags & SS_ONSTACK)
-			l->l_sigstk->ss_flags |= SS_ONSTACK;
+			l->l_sigstk.ss_flags |= SS_ONSTACK;
 		else
-			l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+			l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	}
 
 	return 0;

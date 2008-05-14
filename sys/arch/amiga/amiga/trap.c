@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.119.4.1 2008/05/10 23:48:43 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.119.4.2 2008/05/14 19:54:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.4.1 2008/05/10 23:48:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.119.4.2 2008/05/14 19:54:09 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -686,7 +686,7 @@ trap(fp, type, code, v)
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
-		sigdelset(l->l_sigmask, SIGILL);
+		sigdelset(&l->l_sigmask, SIGILL);
 		mutex_exit(p->p_lock);
 
 		ksi.ksi_signo = SIGILL;
