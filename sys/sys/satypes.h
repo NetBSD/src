@@ -1,20 +1,20 @@
-/*	$NetBSD: linux_pipe.c,v 1.13.2.2 2008/05/14 01:35:03 wrstuden Exp $	*/
+/*	$NetBSD: satypes.h,v 1.1.2.1 2008/05/14 01:35:18 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Nathan J. Williams.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * 2. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -29,42 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.13.2.2 2008/05/14 01:35:03 wrstuden Exp $");
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/mman.h>
-#include <sys/mount.h>
-#include <sys/proc.h>
-
-#include <sys/syscallargs.h>
-
-#include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_mmap.h>
-#include <compat/linux/common/linux_signal.h>
-
-#include <compat/linux/linux_syscallargs.h>
+#ifndef _SYS_SATYPES_H_
+#define _SYS_SATYPES_H_
 
 /*
- * The Alpha version of sys_pipe.
- *
- * Linux returns fd[1] in a4
- * and fd[0] in the retval[0].
+ * Type definitions for types used in SA code.
  */
 
+struct sa_t;
 
-int
-linux_sys_pipe(struct lwp *l, const void *v, register_t *retval)
-{
-	int error;
+typedef void (*sa_upcall_t)(int, struct sa_t *[], int, int, void *);
 
-	if ((error = sys_pipe(l, 0, retval)))
-		return error;
-
-	(l->l_md.md_tf)->tf_regs[FRAME_A4] = retval[1];
-	return 0;
-}
+#endif /* !_SYS_SATYPES_H_ */

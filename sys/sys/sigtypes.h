@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.8 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.8.76.1 2008/05/14 01:35:18 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -118,5 +118,13 @@ typedef struct
 #endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
 
 #endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || ... */
+
+#if defined(_NETBSD_SOURCE)
+/*
+ * Now include types used by Scheduler Activations. Included here as
+ * this is the best standard header to add them to.
+ */
+#include <sys/satypes.h>
+#endif
 
 #endif	/* !_SYS_SIGTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.24.2.1 2008/05/10 23:48:47 wrstuden Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.24.2.2 2008/05/14 01:35:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.24.2.1 2008/05/10 23:48:47 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.24.2.2 2008/05/14 01:35:01 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.24.2.1 2008/05/10 23:48:47 wrstu
 #include <sys/vfs_syscalls.h>
 
 #include <sys/syscall.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/stat.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fdio.c,v 1.13.6.1 2008/05/10 23:48:55 wrstuden Exp $	*/
+/*	$NetBSD: linux_fdio.c,v 1.13.6.2 2008/05/14 01:35:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.13.6.1 2008/05/10 23:48:55 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.13.6.2 2008/05/14 01:35:04 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.13.6.1 2008/05/10 23:48:55 wrstuden
 
 #include <sys/fdio.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <dev/isa/fdreg.h>

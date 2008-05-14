@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.20.2.1 2008/05/10 23:48:51 wrstuden Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.20.2.2 2008/05/14 01:35:03 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.20.2.1 2008/05/10 23:48:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.20.2.2 2008/05/14 01:35:03 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.20.2.1 2008/05/10 23:48:51 wrstuden
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
 #include <sys/types.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
 

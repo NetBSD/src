@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_unistd.c,v 1.11.2.1 2008/05/10 23:48:49 wrstuden Exp $ */
+/*	$NetBSD: darwin_unistd.c,v 1.11.2.2 2008/05/14 01:35:02 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.11.2.1 2008/05/10 23:48:49 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_unistd.c,v 1.11.2.2 2008/05/14 01:35:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/endian.h>
 #include <sys/syscallargs.h>
 

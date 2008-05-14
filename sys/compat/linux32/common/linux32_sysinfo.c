@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysinfo.c,v 1.6.12.1 2008/05/10 23:48:56 wrstuden Exp $ */
+/*	$NetBSD: linux32_sysinfo.c,v 1.6.12.2 2008/05/14 01:35:08 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.6.12.1 2008/05/10 23:48:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.6.12.2 2008/05/14 01:35:08 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.6.12.1 2008/05/10 23:48:56 wrs
 #include <sys/dirent.h>
 #include <sys/proc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

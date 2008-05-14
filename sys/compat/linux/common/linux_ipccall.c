@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.31.2.1 2008/05/10 23:48:56 wrstuden Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.31.2.2 2008/05/14 01:35:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.31.2.1 2008/05/10 23:48:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.31.2.2 2008/05/14 01:35:05 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.31.2.1 2008/05/10 23:48:56 wrstu
 
 /* real syscalls */
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /* sys_ipc + args prototype */

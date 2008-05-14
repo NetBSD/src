@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10.2.1 2008/05/10 23:48:43 wrstuden Exp $	*/
+/*	$NetBSD: frame.h,v 1.10.2.2 2008/05/14 01:34:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,6 @@
 #ifndef _LOCORE
 
 #include <sys/signal.h>
-#include <sys/sa.h>
 #include <sys/ucontext.h>
 
 /*

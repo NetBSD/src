@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.26.2.1 2008/05/10 23:49:02 wrstuden Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.26.2.2 2008/05/14 01:35:11 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.26.2.1 2008/05/10 23:49:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.26.2.2 2008/05/14 01:35:11 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.26.2.1 2008/05/10 23:49:02 wrst
 #include <sys/malloc.h>
 #include <sys/wait.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>

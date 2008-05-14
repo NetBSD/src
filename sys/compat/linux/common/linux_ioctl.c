@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.54.2.1 2008/05/10 23:48:56 wrstuden Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.54.2.2 2008/05/14 01:35:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.54.2.1 2008/05/10 23:48:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.54.2.2 2008/05/14 01:35:05 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.54.2.1 2008/05/10 23:48:56 wrstude
 #include <net/if.h>
 #include <sys/sockio.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

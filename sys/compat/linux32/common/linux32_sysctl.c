@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.9.12.1 2008/05/10 23:48:56 wrstuden Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.9.12.2 2008/05/14 01:35:08 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.9.12.1 2008/05/10 23:48:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.9.12.2 2008/05/14 01:35:08 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.9.12.1 2008/05/10 23:48:56 wrst
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 

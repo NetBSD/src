@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ioctl.c,v 1.21.2.1 2008/05/10 23:49:02 wrstuden Exp $	 */
+/*	$NetBSD: svr4_32_ioctl.c,v 1.21.2.2 2008/05/14 01:35:11 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.21.2.1 2008/05/10 23:49:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.21.2.2 2008/05/14 01:35:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_ioctl.c,v 1.21.2.1 2008/05/10 23:49:02 wrstu
 #include <net/if.h>
 #include <sys/malloc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/socket.h>

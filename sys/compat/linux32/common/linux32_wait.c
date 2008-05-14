@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_wait.c,v 1.8.4.1 2008/05/10 23:48:57 wrstuden Exp $ */
+/*	$NetBSD: linux32_wait.c,v 1.8.4.2 2008/05/14 01:35:08 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.8.4.1 2008/05/10 23:48:57 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.8.4.2 2008/05/14 01:35:08 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_wait.c,v 1.8.4.1 2008/05/10 23:48:57 wrstude
 
 #include <machine/types.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>

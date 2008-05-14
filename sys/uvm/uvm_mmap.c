@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.122.6.1 2008/05/10 23:49:09 wrstuden Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.122.6.2 2008/05/14 01:35:18 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122.6.1 2008/05/10 23:49:09 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122.6.2 2008/05/14 01:35:18 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.122.6.1 2008/05/10 23:49:09 wrstuden 
 
 #include <miscfs/specfs/specdev.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67.22.1 2008/05/10 23:48:46 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67.22.2 2008/05/14 01:35:00 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67.22.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67.22.2 2008/05/14 01:35:00 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67.22.1 2008/05/10 23:48:46 wrstuden E
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>

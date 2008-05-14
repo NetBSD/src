@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.48.2.1 2008/05/10 23:48:44 wrstuden Exp $	*/
+/*	$NetBSD: vm86.c,v 1.48.2.2 2008/05/14 01:34:59 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.48.2.1 2008/05/10 23:48:44 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.48.2.2 2008/05/14 01:34:59 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.48.2.1 2008/05/10 23:48:44 wrstuden Exp $
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 

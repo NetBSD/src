@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.14.2.1 2008/05/10 23:48:48 wrstuden Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.14.2.2 2008/05/14 01:35:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.14.2.1 2008/05/10 23:48:48 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.14.2.2 2008/05/14 01:35:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.14.2.1 2008/05/10 23:48:48 wrstude
 #define	SYSVSEM
 #endif
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/sem.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.131.2.1 2008/05/10 23:49:05 wrstuden Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.131.2.2 2008/05/14 01:35:14 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.131.2.1 2008/05/10 23:49:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.131.2.2 2008/05/14 01:35:14 wrstuden Exp $");
 
 #include "opt_pipe.h"
 
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.131.2.1 2008/05/10 23:49:05 wrst
 #include <sys/event.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sem.c,v 1.7.2.1 2008/05/10 23:48:58 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_sem.c,v 1.7.2.2 2008/05/14 01:35:09 wrstuden Exp $	*/
 
 /*
  *  Copyright (c) 2006 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.7.2.1 2008/05/10 23:48:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.7.2.2 2008/05/14 01:35:09 wrstuden Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_posix.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sem.c,v 1.7.2.1 2008/05/10 23:48:58 wrstude
 #include <sys/ksem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>

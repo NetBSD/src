@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.49.2.1 2008/05/10 23:49:04 wrstuden Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.49.2.2 2008/05/14 01:35:13 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.49.2.1 2008/05/10 23:49:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.49.2.2 2008/05/14 01:35:13 wrstuden Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.49.2.1 2008/05/10 23:49:04 wrstud
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
 

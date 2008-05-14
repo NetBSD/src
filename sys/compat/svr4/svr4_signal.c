@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.64.2.1 2008/05/10 23:48:59 wrstuden Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.64.2.2 2008/05/14 01:35:11 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.64.2.1 2008/05/10 23:48:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.64.2.2 2008/05/14 01:35:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.64.2.1 2008/05/10 23:48:59 wrstude
 #include <sys/malloc.h>
 #include <sys/wait.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
