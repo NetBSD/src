@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.21.4.1 2008/05/12 07:15:10 wrstuden Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.21.4.2 2008/05/14 00:27:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.1 2008/05/12 07:15:10 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.2 2008/05/14 00:27:11 wrstuden Exp $");
 
 #include <sys/param.h>
 
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21.4.1 2008/05/12 07:15:10 wrstuden 
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/pset.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
