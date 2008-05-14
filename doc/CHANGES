@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1054 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1055 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -522,4 +522,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	hpqlb(4): Hotkey driver for HP notebooks. [cegger 20080501]
 	drm(4): Added amd64 support. [jmcneill 20080504]
 	aac(4): Added IBM ServeRAID 8k support. [sborrill 20080508]
-	openssl: Imported 20080509 current snapshot [christos 20080509]
+	openssl: Imported 20080509 current snapshot. [christos 20080509]
+	getent(1): Added support for "netgroup" database. [tron 20080514]
