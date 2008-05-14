@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.94.2.1 2008/05/10 23:49:08 wrstuden Exp $	*/
+/*	$NetBSD: lwp.h,v 1.94.2.2 2008/05/14 19:54:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -135,20 +135,13 @@ struct lwp {
 	int		l_sigrestore;	/* p: need to restore old sig mask */
 	sigset_t	l_sigwaitset;	/* p: signals being waited for */
 	kcondvar_t	l_sigcv;	/* p: for sigsuspend() */
-	stack_t 	*l_sigstk;	/* p: sp & on stack state variable */
-	sigset_t	*l_sigmask;	/* p: signal mask to use */
 	struct ksiginfo	*l_sigwaited;	/* p: delivered signals from set */
 	sigpend_t	*l_sigpendset;	/* p: XXX issignal()/postsig() baton */
 	LIST_ENTRY(lwp)	l_sigwaiter;	/* p: chain on list of waiting LWPs */
-	sigset_t	l_lsigmask;	/* p: signal mask per thread */
-	stack_t 	l_lsigstk;	/* p: sp & on stack state variable */
+	stack_t		l_sigstk;	/* p: sp & on stack state variable */
+	sigset_t	l_sigmask;	/* p: signal mask */
 	sigpend_t	l_sigpend;	/* p: signals to this LWP */
 	sigset_t	l_sigoldmask;	/* p: mask for sigpause */
-	/*
-	 * For 1:1 threads, l_sigstk = &l_lsigstk and l_sigmask = &l_lsigmask
-	 * for SA threads, they point to process-wide info.
-	 * XXX verify l_sigstk use
-	 */
 
 	/* Private data */
 	specificdata_reference

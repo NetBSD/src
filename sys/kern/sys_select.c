@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.7.2.1 2008/05/10 23:49:05 wrstuden Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.7.2.2 2008/05/14 19:54:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.7.2.1 2008/05/10 23:49:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.7.2.2 2008/05/14 19:54:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,11 +258,11 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	if (mask) {
 		sigminusset(&sigcantmask, mask);
 		mutex_enter(p->p_lock);
-		oldmask = *l->l_sigmask;
-		*l->l_sigmask = *mask;
+		oldmask = l->l_sigmask;
+		l->l_sigmask = *mask;
 		mutex_exit(p->p_lock);
 	} else
-		oldmask = *l->l_sigmask;	/* XXXgcc */
+		oldmask = l->l_sigmask;	/* XXXgcc */
 
 	sc = curcpu()->ci_data.cpu_selcpu;
 	l->l_selcpu = sc;
@@ -305,7 +305,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 
 	if (mask) {
 		mutex_enter(p->p_lock);
-		*l->l_sigmask = oldmask;
+		l->l_sigmask = oldmask;
 		mutex_exit(p->p_lock);
 	}
 
@@ -455,11 +455,11 @@ pollcommon(lwp_t *l, register_t *retval,
 	if (mask) {
 		sigminusset(&sigcantmask, mask);
 		mutex_enter(p->p_lock);
-		oldmask = *l->l_sigmask;
-		*l->l_sigmask = *mask;
+		oldmask = l->l_sigmask;
+		l->l_sigmask = *mask;
 		mutex_exit(p->p_lock);
 	} else
-		oldmask = *l->l_sigmask;	/* XXXgcc */
+		oldmask = l->l_sigmask;	/* XXXgcc */
 
 	sc = curcpu()->ci_data.cpu_selcpu;
 	l->l_selcpu = sc;
@@ -501,7 +501,7 @@ pollcommon(lwp_t *l, register_t *retval,
 
 	if (mask) {
 		mutex_enter(p->p_lock);
-		*l->l_sigmask = oldmask;
+		l->l_sigmask = oldmask;
 		mutex_exit(p->p_lock);
 	}
  done:

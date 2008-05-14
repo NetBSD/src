@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58.4.1 2008/05/10 23:48:45 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.58.4.2 2008/05/14 19:54:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58.4.1 2008/05/10 23:48:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.58.4.2 2008/05/14 19:54:10 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -388,7 +388,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
-		sigdelset(l->l_sigmask, SIGILL);
+		sigdelset(&l->l_sigmask, SIGILL);
 		mutex_exit(p->p_lock);
 
 		ksi.ksi_signo = SIGILL;

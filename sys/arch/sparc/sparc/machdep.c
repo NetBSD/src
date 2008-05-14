@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.278.2.2 2008/05/14 01:35:01 wrstuden Exp $ */
+/*	$NetBSD: machdep.c,v 1.278.2.3 2008/05/14 19:54:10 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278.2.2 2008/05/14 01:35:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278.2.3 2008/05/14 19:54:10 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -513,13 +513,13 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
 		fp = (struct sigframe_sigcontext *)
-			((char *)l->l_sigstk->ss_sp +
-			 l->l_sigstk->ss_size);
+			((char *)l->l_sigstk.ss_sp +
+			 l->l_sigstk.ss_size);
 	else
 		fp = (struct sigframe_sigcontext *)oldsp;
 
@@ -543,7 +543,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	sf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 	sf.sf_sc.sc_mask = *mask;
 #ifdef COMPAT_13
 	/*
@@ -621,7 +621,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -665,13 +665,13 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
 		fp = (struct sigframe *)
-			((char *)l->l_sigstk->ss_sp +
-				  l->l_sigstk->ss_size);
+			((char *)l->l_sigstk.ss_sp +
+				  l->l_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
 
@@ -687,7 +687,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Build the signal context to be used by sigreturn.
 	 */
 	uc.uc_flags = _UC_SIGMASK |
-		((l->l_sigstk->ss_flags & SS_ONSTACK)
+		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = l->l_ctxlink;
@@ -748,7 +748,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -814,9 +814,9 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 
 	mutex_enter(p->p_lock);
 	if (scp->sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask */
 	(void) sigprocmask1(l, SIG_SETMASK, &scp->sc_mask, 0);
 	mutex_exit(p->p_lock);
@@ -1003,9 +1003,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
 	return (0);

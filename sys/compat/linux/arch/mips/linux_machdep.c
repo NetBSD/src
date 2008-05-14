@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.38.2.2 2008/05/14 01:35:04 wrstuden Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.38.2.3 2008/05/14 19:54:12 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.2 2008/05/14 01:35:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.3 2008/05/14 19:54:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Do we need to jump onto the signal stack?
 	 */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
@@ -145,8 +145,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (onstack)
 		fp = (struct linux_sigframe *)
-		    ((uint8_t *)l->l_sigstk->ss_sp
-		    + l->l_sigstk->ss_size);
+		    ((uint8_t *)l->l_sigstk.ss_sp
+		    + l->l_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
 		fp = (struct linux_sigframe *)(u_int32_t)f->f_regs[_R_SP];
@@ -178,7 +178,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Save signal stack.  XXX broken
 	 */
-	/* kregs.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK; */
+	/* kregs.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK; */
 
 	/*
 	 * Install the sigframe onto the stack
@@ -217,7 +217,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 	return;
 }
@@ -266,7 +266,7 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
-	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_to_native_sigset(&mask, (linux_sigset_t *)&ksf.lsf_mask);

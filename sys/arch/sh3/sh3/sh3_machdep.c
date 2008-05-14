@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.72.2.1 2008/05/10 23:48:46 wrstuden Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.72.2.2 2008/05/14 19:54:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.72.2.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.72.2.2 2008/05/14 19:54:10 wrstuden Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -375,7 +375,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_expevt = tf->tf_expevt;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -423,7 +423,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember if we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 #endif /* COMPAT_16 */
 
@@ -458,7 +458,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = l->l_ctxlink;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
-	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 		? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
@@ -485,7 +485,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember if we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -563,9 +563,9 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
 	mutex_exit(p->p_lock);
@@ -667,9 +667,9 @@ cpu_setmcontext(l, mcp, flags)
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
 	return (0);

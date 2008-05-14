@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.29.12.2 2008/05/14 01:35:02 wrstuden Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.29.12.3 2008/05/14 19:54:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.29.12.2 2008/05/14 01:35:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.29.12.3 2008/05/14 19:54:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ ibcs2_sys_sigsys(struct lwp *l, const struct ibcs2_sys_sigsys_args *uap, registe
 		return (sigaction1(l, signum, &nbsa, 0, NULL, 0));
 
 	case IBCS2_SIGPAUSE_MASK:
-		ss = *l->l_sigmask;
+		ss = l->l_sigmask;
 		sigdelset(&ss, signum);
 		return (sigsuspend1(l, &ss));
 

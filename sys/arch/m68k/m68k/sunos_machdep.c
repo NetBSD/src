@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.36.4.2 2008/05/14 01:34:59 wrstuden Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.36.4.3 2008/05/14 19:54:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.36.4.2 2008/05/14 01:34:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.36.4.3 2008/05/14 19:54:10 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		SIGACTION(p, sig).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, sig);
 		sigdelset(&p->p_sigctx.ps_sigcatch, sig);
-		sigdelset(l->l_sigmask, sig);
+		sigdelset(&l->l_sigmask, sig);
 		mutex_exit(p->p_lock);
 		psignal(p, sig);
 		mutex_enter(p->p_lock);
@@ -181,7 +181,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	kf.sf_sc.sc_ps = frame->f_sr;
 
 	/* Save signal stack. */
-	kf.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	kf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	native_sigset_to_sigset13(mask, &kf.sf_sc.sc_mask);
@@ -214,7 +214,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -271,9 +271,9 @@ sunos_sys_sigreturn(struct lwp *l, const struct sunos_sys_sigreturn_args *uap, r
 
 	/* Restore signal stack. */
 	if (scp->sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);

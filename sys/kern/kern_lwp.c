@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.110.2.1 2008/05/10 23:49:04 wrstuden Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.110.2.2 2008/05/14 19:54:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110.2.1 2008/05/10 23:49:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110.2.2 2008/05/14 19:54:12 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -615,11 +615,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	} else
 		l2->l_prflag = 0;
 
-	l2->l_lsigmask = l1->l_lsigmask;
-	if (l1->l_sigmask == &l1->l_lsigmask)
-		l2->l_sigmask = &l2->l_lsigmask;
-	else
-		l2->l_sigmask = l1->l_sigmask;
+	l2->l_sigmask = l1->l_sigmask;
 	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 

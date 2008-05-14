@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.35.4.1 2008/05/10 23:48:43 wrstuden Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.35.4.2 2008/05/14 19:54:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.35.4.1 2008/05/10 23:48:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.35.4.2 2008/05/14 19:54:09 wrstuden Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -74,10 +74,10 @@ getframe(struct lwp *l, int sig, int *onstack)
 	struct trapframe *tf = process_frame(l);
 
 	/* Do we need to jump onto the signal stack? */
-	*onstack = (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)l->l_sigstk->ss_sp + l->l_sigstk->ss_size;
+		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 	return (void *)tf->tf_usr_sp;
 }
 
@@ -131,7 +131,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = l->l_ctxlink;
-	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
@@ -175,7 +175,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -275,9 +275,9 @@ cpu_setmcontext(l, mcp, flags)
 
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
 	return (0);

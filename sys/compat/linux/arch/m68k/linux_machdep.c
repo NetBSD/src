@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.38.2.2 2008/05/14 01:35:04 wrstuden Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.38.2.3 2008/05/14 19:54:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.2 2008/05/14 01:35:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.3 2008/05/14 19:54:12 wrstuden Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -397,11 +397,11 @@ setup_linux_rt_sigframe(struct frame *frame, int sig, const sigset_t *mask, void
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
-	kf.sf_uc.uc_stack.ss_sp = l->l_sigstk->ss_sp;
+	kf.sf_uc.uc_stack.ss_sp = l->l_sigstk.ss_sp;
 	kf.sf_uc.uc_stack.ss_flags =
-		(l->l_sigstk->ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
-		(l->l_sigstk->ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
-	kf.sf_uc.uc_stack.ss_size = l->l_sigstk->ss_size;
+		(l->l_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
+		(l->l_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
+	kf.sf_uc.uc_stack.ss_size = l->l_sigstk.ss_size;
 	sendsig_reset(l, sig);
 
 	mutex_exit(p->p_lock);
@@ -467,7 +467,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -552,7 +552,7 @@ bad:
 	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
-	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 #if LINUX__NSIG_WORDS > 1
@@ -709,8 +709,8 @@ bad:
 	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
-	l->l_sigstk->ss_flags =
-		(l->l_sigstk->ss_flags & ~SS_ONSTACK) |
+	l->l_sigstk.ss_flags =
+		(l->l_sigstk.ss_flags & ~SS_ONSTACK) |
 		(tuc.uc_stack.ss_flags & LINUX_SS_ONSTACK ? SS_ONSTACK : 0);
 
 	/* Restore signal mask. */

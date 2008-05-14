@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50.2.2 2008/05/14 01:35:01 wrstuden Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.50.2.3 2008/05/14 19:54:11 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.2.2 2008/05/14 01:35:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50.2.3 2008/05/14 19:54:11 wrstuden Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -497,15 +497,15 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_sigframe *)((char *)l->l_sigstk->ss_sp +
-						l->l_sigstk->ss_size);
+		fp = (struct svr4_sigframe *)((char *)l->l_sigstk.ss_sp +
+						l->l_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)oldsp;
 	fp = (struct svr4_sigframe *) ((long) (fp - 1) & ~0x0f);
@@ -591,7 +591,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		mutex_exit(p->p_lock);
