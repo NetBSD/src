@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.2 2008/05/10 15:01:05 ad Exp $	*/
+/*	$NetBSD: i386.c,v 1.3 2008/05/15 23:31:56 chris Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.2 2008/05/10 15:01:05 ad Exp $");
+__RCSID("$NetBSD: i386.c,v 1.3 2008/05/15 23:31:56 chris Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1197,7 +1197,7 @@ cpu_probe_features(struct cpu_info *ci)
 	if (ci->ci_cpuid_level < 1)
 		return;
 
-	xmax = sizeof(__arraycount(i386_cpuid_cpus));
+	xmax = __arraycount(i386_cpuid_cpus);
 	for (i = 0; i < xmax; i++) {
 		if (!strncmp((char *)ci->ci_vendor,
 		    i386_cpuid_cpus[i].cpu_id, 12)) {
@@ -1258,7 +1258,7 @@ amd_family6_probe(struct cpu_info *ci)
 	if (*cpu_brand_string == '\0')
 		return;
 	
-	for (i = 1; i < sizeof(__arraycount(amd_brand)); i++)
+	for (i = 1; i < __arraycount(amd_brand); i++)
 		if ((p = strstr(cpu_brand_string, amd_brand[i])) != NULL) {
 			ci->ci_brand_id = i;
 			strlcpy(amd_brand_name, p, sizeof(amd_brand_name));
