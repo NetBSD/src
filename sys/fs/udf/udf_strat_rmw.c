@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.2 2008/05/15 10:57:40 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.2 2008/05/15 10:57:40 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -851,6 +851,12 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 						0);
 				eccline->bufs[eccsect] = NULL;
 			}
+
+			src = (uint8_t *) buf->b_data + bpos;
+			dst = (uint8_t *) eccline->blob + eccsect * sector_size;
+			if (len != sector_size)
+				memset(dst, 0, sector_size);
+			memcpy(dst, src, len);
 
 			/* note that its finished for this extent */
 			eccline->bufs[eccsect] = NULL;
