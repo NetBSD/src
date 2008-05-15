@@ -302,5 +302,5 @@ three FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
 four FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
 five FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
 five v=is x k=is x
-six v=is y k=is y
-show-v v=override k=override
+six v=is x k=is x
+show-v v=override k=is x
