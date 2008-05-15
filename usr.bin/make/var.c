@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.130 2008/05/15 18:25:12 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.131 2008/05/15 21:05:54 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.130 2008/05/15 18:25:12 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.131 2008/05/15 21:05:54 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.130 2008/05/15 18:25:12 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.131 2008/05/15 21:05:54 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -191,6 +191,7 @@ typedef struct Var {
 #define VAR_REEXPORT	32	    /* Indicate if var needs re-export.
 				     * This would be true if it contains $'s
 				     */
+#define VAR_FROM_CMD	64 	    /* Variable came from command line */
 }  Var;
 
 /*
@@ -729,6 +730,8 @@ Var_Export(char *str, int isExport)
  *	VAR_CMD->context is searched. This is done to avoid the literally
  *	thousands of unnecessary strcmp's that used to be done to
  *	set, say, $(@) or $(<).
+ *	If the context is VAR_GLOBAL though, we check if the variable
+ *	was set in VAR_CMD from the command line and skip it if so.
  *-----------------------------------------------------------------------
  */
 void
@@ -746,14 +749,18 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	name = Var_Subst(NULL, cp, ctxt, 0);
     } else
 	name = cp;
-#ifdef skip_global_if_cmd
     if (ctxt == VAR_GLOBAL) {
 	v = VarFind(name, VAR_CMD, 0);
 	if (v != (Var *)NIL) {
-	    goto out;
+	    if ((v->flags & VAR_FROM_CMD)) {
+		if (DEBUG(VAR)) {
+		    fprintf(debug_file, "%s:%s = %s ignored!\n", ctxt->name, name, val);
+		}
+		goto out;
+	    }
+	    VarFreeEnv(v, TRUE);
 	}
     }
-#endif
     v = VarFind(name, ctxt, 0);
     if (v == (Var *)NIL) {
 	VarAdd(name, val, ctxt);
@@ -773,7 +780,11 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
      * to the environment (as per POSIX standard)
      */
     if (ctxt == VAR_CMD && (flags & VAR_NO_EXPORT) == 0) {
-
+	if (v == (Var *)NIL) {
+	    /* we just added it */
+	    v = VarFind(name, ctxt, 0);
+	}
+	v->flags |= VAR_FROM_CMD;
 	/*
 	 * If requested, don't export these in the environment
 	 * individually.  We still put them in MAKEOVERRIDES so
@@ -785,9 +796,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
-#ifdef skip_global_if_cmd
  out:
-#endif
     if (name != cp)
 	free(UNCONST(name));
     if (v != (Var *)NIL)
