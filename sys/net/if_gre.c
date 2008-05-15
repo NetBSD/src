@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.132 2008/05/09 20:14:07 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.133 2008/05/15 01:30:48 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.132 2008/05/09 20:14:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.133 2008/05/15 01:30:48 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -148,7 +148,7 @@ static int gre_getnames(struct socket *, struct lwp *,
     struct sockaddr_storage *, struct sockaddr_storage *);
 static void gre_clearconf(struct gre_soparm *, bool);
 static int gre_soreceive(struct socket *, struct mbuf **);
-static int gre_sosend(struct socket *, struct mbuf *, struct lwp *);
+static int gre_sosend(struct socket *, struct mbuf *);
 static struct socket *gre_reconf(struct gre_softc *, const struct gre_soparm *);
 
 static bool gre_fp_send(struct gre_softc *, enum gre_msg, file_t *);
@@ -251,7 +251,7 @@ greintr(void *arg)
 	GRE_DPRINTF(sc, "enter\n");
 	while ((m = gre_bufq_dequeue(&sc->sc_snd)) != NULL) {
 		/* XXX handle ENOBUFS? */
-		if ((rc = gre_sosend(so, m, curlwp)) != 0)
+		if ((rc = gre_sosend(so, m)) != 0)
 			GRE_DPRINTF(sc, "gre_sosend failed %d\n", rc);
 	}
 }
@@ -544,12 +544,13 @@ out:
 }
 
 static int
-gre_sosend(struct socket *so, struct mbuf *top, struct lwp *l)
+gre_sosend(struct socket *so, struct mbuf *top)
 {
 	struct mbuf	**mp;
 	struct proc	*p;
 	long		space, resid;
 	int		error;
+	struct lwp * const l = curlwp;
 
 	p = l->l_proc;
 
