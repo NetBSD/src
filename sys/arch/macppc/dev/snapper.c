@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.25 2007/11/07 19:47:01 garbled Exp $	*/
+/*	$NetBSD: snapper.c,v 1.26 2008/05/15 19:47:09 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25 2007/11/07 19:47:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.26 2008/05/15 19:47:09 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25 2007/11/07 19:47:01 garbled Exp $")
 #define SNAPPER_MAXPAGES	16
 
 struct snapper_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int sc_mode;		  // 0 for TAS3004
 #define SNAPPER_IS_TAS3001	1 // codec is TAS3001
 #define SNAPPER_SWVOL		2 // software codec
@@ -112,9 +112,9 @@ struct snapper_softc {
 	struct dbdma_command *sc_idmacmd;
 };
 
-int snapper_match(struct device *, struct cfdata *, void *);
-void snapper_attach(struct device *, struct device *, void *);
-void snapper_defer(struct device *);
+int snapper_match(device_t, struct cfdata *, void *);
+void snapper_attach(device_t, device_t, void *);
+void snapper_defer(device_t);
 int snapper_intr(void *);
 int snapper_query_encoding(void *, struct audio_encoding *);
 int snapper_set_params(void *, int, int, audio_params_t *,
@@ -267,7 +267,7 @@ snapper_filter_dtor(stream_filter_t *this)
 		free(this, M_DEVBUF);
 }
 
-CFATTACH_DECL(snapper, sizeof(struct snapper_softc), snapper_match,
+CFATTACH_DECL_NEW(snapper, sizeof(struct snapper_softc), snapper_match,
 	snapper_attach, NULL, NULL);
 
 const struct audio_hw_if snapper_hw_if = {
@@ -679,7 +679,7 @@ struct tas3004_reg {
 #define	GPIO_DATA	0x01	/* Data */
 
 int
-snapper_match(struct device *parent, struct cfdata *match, void *aux)
+snapper_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca;
 	int soundbus, soundchip, soundcodec;
@@ -716,7 +716,7 @@ snapper_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-snapper_attach(struct device *parent, struct device *self, void *aux)
+snapper_attach(device_t parent, device_t self, void *aux)
 {
 	struct snapper_softc *sc;
 	struct confargs *ca;
@@ -725,6 +725,8 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 	char compat[32];
 
 	sc = device_private(self);
+	sc->sc_dev = self;
+
 	ca = aux;
 
 	soundbus = OF_child(ca->ca_node);
@@ -786,10 +788,10 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-snapper_defer(struct device *dev)
+snapper_defer(device_t dev)
 {
 	struct snapper_softc *sc;
-	struct device *dv;
+	device_t dv;
 	struct deq_softc *deq;
 	
 	sc = device_private(dev);
@@ -819,7 +821,7 @@ snapper_defer(struct device *dev)
 		break;
 	}
 
-	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&snapper_hw_if, sc, sc->sc_dev);
 
 	/* ki2c_setmode(sc->sc_i2c, I2C_STDSUBMODE); */
 	snapper_init(sc, sc->sc_node);
@@ -1708,7 +1710,7 @@ snapper_set_rate(struct snapper_softc *sc)
 			break;
 		default:
 			printf("%s: unsupported sample size %d\n",
-			    sc->sc_dev.dv_xname, sc->sc_bitspersample);
+			    device_xname(sc->sc_dev), sc->sc_bitspersample);
 			return EINVAL;
 	}
 
