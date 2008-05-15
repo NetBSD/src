@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.2 2008/05/15 10:57:40 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.3 2008/05/15 14:22:40 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.2 2008/05/15 10:57:40 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.3 2008/05/15 14:22:40 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -205,7 +205,7 @@ udf_dispose_eccline(struct udf_eccline *eccline)
 	KASSERT(eccline->refcnt == 0);
 	KASSERT(eccline->dirty  == 0);
 
-	DPRINTF(SHEDULE, ("dispose eccline with start sector %d, "
+	DPRINTF(ECCLINE, ("dispose eccline with start sector %d, "
 		"present %0"PRIx64"\n", eccline->start_sector,
 		eccline->present));
 
@@ -335,16 +335,16 @@ udf_geteccline(struct udf_mount *ump, uint32_t sector, int flags)
 	mutex_enter(&priv->discstrat_mutex);
 
 retry:
-	DPRINTF(SHEDULE, ("get line sector %d, line %d\n", sector, line));
+	DPRINTF(ECCLINE, ("get line sector %d, line %d\n", sector, line));
 	LIST_FOREACH(eccline, &priv->eccline_hash[line], hashchain) {
 		if (eccline->start_sector == start_sector) {
-			DPRINTF(SHEDULE, ("\tfound eccline, start_sector %d\n",
+			DPRINTF(ECCLINE, ("\tfound eccline, start_sector %d\n",
 				eccline->start_sector));
 
 			UDF_LOCK_ECCLINE(eccline);
 			/* move from freelist (!) */
 			if (eccline->queued_on == UDF_SHED_FREE) {
-				DPRINTF(SHEDULE,("was on freelist\n"));
+				DPRINTF(ECCLINE, ("was on freelist\n"));
 				KASSERT(eccline->refcnt == 0);
 				udf_push_eccline(eccline, UDF_SHED_IDLE);
 			}
@@ -354,14 +354,14 @@ retry:
 		}
 	}
 
-	DPRINTF(SHEDULE, ("\tnot found in eccline cache\n"));
+	DPRINTF(ECCLINE, ("\tnot found in eccline cache\n"));
 	/* not found in eccline cache */
 
 	lb_size  = udf_rw32(ump->logical_vol->lb_size);
 	blobsize = ump->packet_size * lb_size;
 
 	/* dont allow too many pending requests */
-	DPRINTF(SHEDULE, ("\tallocating new eccline\n"));
+	DPRINTF(ECCLINE, ("\tallocating new eccline\n"));
 	num_busy = (priv->num_queued[UDF_SHED_SEQWRITING] + priv->num_floating);
 	if ((flags & ECC_SEQWRITING) && (num_busy > UDF_ECCLINE_MAXBUSY)) {
 		ret = cv_timedwait(&priv->discstrat_cv,
@@ -452,7 +452,7 @@ udf_puteccline(struct udf_eccline *eccline)
 		wakeup(eccline);
 	}
 
-	DPRINTF(SHEDULE, ("put eccline start sector %d, refcnt %d\n",
+	DPRINTF(ECCLINE, ("put eccline start sector %d, refcnt %d\n",
 		eccline->start_sector, eccline->refcnt));
 
 	/* requeue */
@@ -485,9 +485,9 @@ udf_puteccline(struct udf_eccline *eccline)
 		KASSERT(deccline->refcnt == 0);
 		if (deccline->flags & ECC_WANTED) {
 			udf_push_eccline(deccline, UDF_SHED_IDLE);
-			DPRINTF(SHEDULE, ("Tried removing, pushed back to free list\n"));
+			DPRINTF(ECCLINE, ("Tried removing, pushed back to free list\n"));
 		} else {
-			DPRINTF(SHEDULE, ("Removing entry from free list\n"));
+			DPRINTF(ECCLINE, ("Removing entry from free list\n"));
 			udf_dispose_eccline(deccline);
 		}
 		tries--;
@@ -759,7 +759,7 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 	}
 
 	if (queue == UDF_SHED_READING) {
-		DPRINTF(SHEDULE, ("\nudf_issue_buf READ %p : sector %d type %d,"
+		DPRINTF(SHEDULE, ("\nudf_queuebuf_rmw READ %p : sector %d type %d,"
 			"b_resid %d, b_bcount %d, b_bufsize %d\n",
 			buf, (uint32_t) buf->b_blkno / blks, buf->b_udf_c_type,
 			buf->b_resid, buf->b_bcount, buf->b_bufsize));
@@ -803,7 +803,7 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 	}
 
 	if (queue == UDF_SHED_WRITING) {
-		DPRINTF(SHEDULE, ("\nudf_issue_buf WRITE %p : sector %d "
+		DPRINTF(SHEDULE, ("\nudf_queuebuf_rmw WRITE %p : sector %d "
 			"type %d, b_resid %d, b_bcount %d, b_bufsize %d\n",
 			buf, (uint32_t) buf->b_blkno / blks, buf->b_udf_c_type,
 			buf->b_resid, buf->b_bcount, buf->b_bufsize));
@@ -874,7 +874,7 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 
 	/* sequential writing */
 	KASSERT(queue == UDF_SHED_SEQWRITING);
-	DPRINTF(SHEDULE, ("\nudf_issue_buf SEQWRITE %p : sector XXXX "
+	DPRINTF(SHEDULE, ("\nudf_queuebuf_rmw SEQWRITE %p : sector XXXX "
 		"type %d, b_resid %d, b_bcount %d, b_bufsize %d\n",
 		buf, buf->b_udf_c_type, buf->b_resid, buf->b_bcount,
 		buf->b_bufsize));
@@ -970,7 +970,7 @@ udf_shedule_read_callback(struct buf *buf)
 	int sector_size = ump->discinfo.sector_size;
 	int error, i, len;
 
-	DPRINTF(SHEDULE, ("read callback called\n"));
+	DPRINTF(ECCLINE, ("read callback called\n"));
 	/* post process read action */
 	error = buf->b_error;
 	for (i = 0; i < ump->packet_size; i++) {
@@ -1005,7 +1005,7 @@ udf_shedule_read_callback(struct buf *buf)
 
 	wakeup(eccline);
 	udf_puteccline(eccline);
-	DPRINTF(SHEDULE, ("read callback finished\n"));
+	DPRINTF(ECCLINE, ("read callback finished\n"));
 }
 
 
@@ -1017,7 +1017,7 @@ udf_shedule_write_callback(struct buf *buf)
 	uint64_t bit;
 	int error, i, len;
 
-	DPRINTF(SHEDULE, ("write callback called\n"));
+	DPRINTF(ECCLINE, ("write callback called\n"));
 	/* post process write action */
 	error = buf->b_error;
 	for (i = 0; i < ump->packet_size; i++) {
@@ -1059,10 +1059,8 @@ udf_issue_eccline(struct udf_eccline *eccline, int queued_on)
 	int blks = sector_size / DEV_BSIZE;
 	int i;
 
-	DPRINTF(SHEDULE, ("at work: "));
-
 	if (queued_on == UDF_SHED_READING) {
-		DPRINTF(SHEDULE, ("reading\n"));
+		DPRINTF(SHEDULE, ("udf_issue_eccline reading : "));
 		/* read all bits that are not yet present */
 		eccline->readin = (~eccline->present) & allbits;
 		KASSERT(eccline->readin);
@@ -1096,17 +1094,21 @@ udf_issue_eccline(struct udf_eccline *eccline, int queued_on)
 				nestbuf->b_blkno = buf->b_blkno + i*blks;
 				nestbuf->b_rawblkno = buf->b_rawblkno + i*blks;
 
+				DPRINTF(SHEDULE, ("sector %d ",
+					start + i));
 				/* call asynchronous */
 				VOP_STRATEGY(ump->devvp, nestbuf);
 			}
+			DPRINTF(SHEDULE, ("\n"));
 			return;
 		}
 	} else {
 		/* write or seqwrite */
-		DPRINTF(SHEDULE, ("writing or seqwriting\n"));
+		DPRINTF(SHEDULE, ("udf_issue_eccline writing or seqwriting : "));
 		if (eccline->present != allbits) {
 			/* requeue to read-only */
-			DPRINTF(SHEDULE, ("\t-> not complete, requeue to reading\n"));
+			DPRINTF(SHEDULE, ("\n\t-> not complete, requeue to "
+				"reading\n"));
 			udf_push_eccline(eccline, UDF_SHED_READING);
 			return;
 		}
@@ -1129,6 +1131,8 @@ udf_issue_eccline(struct udf_eccline *eccline, int queued_on)
 
 	mutex_exit(&priv->discstrat_mutex);
 		/* call asynchronous */
+		DPRINTF(SHEDULE, ("sector %d for %d\n",
+			start, ump->packet_size));
 		VOP_STRATEGY(ump->devvp, buf);
 	mutex_enter(&priv->discstrat_mutex);
 }
@@ -1153,7 +1157,7 @@ udf_discstrat_thread(void *arg)
 			eccline = udf_pop_eccline(priv, UDF_SHED_FREE);
 			KASSERT(eccline);
 			KASSERT(eccline->refcnt == 0);
-			DPRINTF(SHEDULE, ("Removing entry from free list\n"));
+			DPRINTF(ECCLINE, ("Removing entry from free list\n"));
 			udf_dispose_eccline(eccline);
 		}
 
@@ -1177,7 +1181,7 @@ udf_discstrat_thread(void *arg)
 		if (eccline) {
 			wait = 0;
 			new_queue = priv->cur_queue;
-			DPRINTF(SHEDULE, ("UDF_ISSUE_ECCLINE\n"));
+			DPRINTF(ECCLINE, ("UDF_ISSUE_ECCLINE\n"));
 
 			/* complete the `get' by locking and refcounting it */
 			UDF_LOCK_ECCLINE(eccline);
