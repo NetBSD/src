@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.26 2008/05/15 19:47:09 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.27 2008/05/15 20:11:00 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.26 2008/05/15 19:47:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.27 2008/05/15 20:11:00 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -147,6 +147,8 @@ void snapper_mute_headphone(struct snapper_softc *, int);
 int snapper_cint(void *);
 int tas3004_init(struct snapper_softc *);
 void snapper_init(struct snapper_softc *, int);
+static void snapper_volume_up(device_t);
+static void snapper_volume_down(device_t);
 
 struct snapper_codecvar {
 	stream_filter_t	base;
@@ -784,6 +786,11 @@ snapper_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
+	/* PMF event handler */
+	pmf_event_register(self, PMFE_AUDIO_VOLUME_DOWN,
+	    snapper_volume_down, TRUE);
+	pmf_event_register(self, PMFE_AUDIO_VOLUME_UP,
+	    snapper_volume_up, TRUE);
 	config_defer(self, snapper_defer);
 }
 
@@ -2100,3 +2107,20 @@ snapper_init(struct snapper_softc *sc, int node)
 	snapper_write_mixers(sc);
 }
 
+static void
+snapper_volume_up(device_t dev)
+{
+	struct snapper_softc *sc = device_private(dev);
+
+	snapper_set_volume(sc, min(0xff, sc->sc_vol_l + 8),
+	     min(0xff, sc->sc_vol_r + 8));
+}
+
+static void
+snapper_volume_down(device_t dev)
+{
+	struct snapper_softc *sc = device_private(dev);
+
+	snapper_set_volume(sc, max(0, sc->sc_vol_l - 8),
+	     max(0, sc->sc_vol_r - 8));
+}
