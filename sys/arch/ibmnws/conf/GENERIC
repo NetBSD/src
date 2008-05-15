@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31 2008/05/15 23:36:47 rjs Exp $
+#	$NetBSD: GENERIC,v 1.32 2008/05/15 23:38:49 rjs Exp $
 #
 #
 
@@ -9,7 +9,8 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
 # Console settings
-options		CONSOLE="\"com\""
+options 	CONSOLE="\"genfb\""
+#options		CONSOLE="\"com\""
 options		CONSOLE_SPEED=9600
 options		CONSOLE_ADDR=0x3f8
 
@@ -129,13 +130,18 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 # Console Devices
 
 # wscons
-# pckbc0		at isa?			# pc keyboard controller
-# pckbd*		at pckbc?		# PC keyboard
-# pms*		at pckbc?		# PS/2 mouse for wsmouse
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
 # vga*		at pci?
 # wsdisplay*	at vga? console ?
-# wskbd*		at pckbd? console ?
-# wsmouse*	at pms? mux 0
+genfb*		at pci? dev ? function ?
+wskbd*		at pckbd? console ?
+wsmouse*	at pms? mux 0
+
+# make sure the console display is always wsdisplay0 XXX Why?
+wsdisplay0      at wsemuldisplaydev? console 1
+wsdisplay*      at wsemuldisplaydev?
 
 # attimer0	at isa?
 # pcppi0	at isa?				# PC prog. periph. interface

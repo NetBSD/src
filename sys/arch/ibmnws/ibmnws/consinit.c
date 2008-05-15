@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.3 2007/10/17 19:55:01 garbled Exp $	*/
+/*	$NetBSD: consinit.c,v 1.4 2008/05/15 23:38:49 rjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -39,14 +39,6 @@
 
 #include <dev/cons.h>
 
-#include "vga.h"
-#if (NVGA > 0)
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
-
 #include "pckbc.h"
 #if (NPCKBC > 0)
 #include <dev/isa/isareg.h>
@@ -75,31 +67,13 @@ consinit(void)
 		return;
 	initted = 1;
 
-#if (NPFB > 0)
-	if (!strcmp(CONSOLE, "fb")) {
-		pfb_cnattach(CONSOLE_ADDR);
+	if (!strcmp(CONSOLE, "genfb")) {
 #if (NPCKBC > 0)
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
 	}
-#endif
-
-#if (NVGA > 0)
-	if (!strcmp(CONSOLE, "vga")) {
-#if (NVGA > 0)
-		if (!vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag, -1, 1))
-			goto dokbd;
-#endif
-dokbd:
-#if (NPCKBC > 0)
-		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
-		    PCKBC_KBD_SLOT);
-#endif
-		return;
-	}
-#endif /* VGA */
 
 #if (NCOM > 0)
  	if (!strcmp(CONSOLE, "com")) {
