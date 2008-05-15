@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.133 2008/05/15 01:30:48 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.134 2008/05/15 04:03:53 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -8,6 +8,8 @@
  * by Heiko W.Rupp <hwr@pilhuhn.de>
  *
  * IPv6-over-GRE contributed by Gert Doering <gert@greenie.muc.de>
+ *
+ * GRE over UDP/IPv4/IPv6 sockets contributed by David Young <dyoung@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +31,9 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * This material is based upon work partially supported by NSF
+ * under Contract No. NSF CNS-0626584.
  */
 
 /*
@@ -40,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.133 2008/05/15 01:30:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.134 2008/05/15 04:03:53 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
