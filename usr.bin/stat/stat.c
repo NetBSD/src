@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.26 2008/04/28 20:24:15 martin Exp $ */
+/*	$NetBSD: stat.c,v 1.27 2008/05/16 17:58:33 atatat Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.26 2008/04/28 20:24:15 martin Exp $");
+__RCSID("$NetBSD: stat.c,v 1.27 2008/05/16 17:58:33 atatat Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -796,7 +796,7 @@ format1(const struct stat *st,
 				l = 0;
 				path[0] = '\0';
 			}
-			sdata = path + (ofmt == FMT_STRING ? 0: 4);
+			sdata = path + (ofmt == FMTF_STRING ? 0 : 4);
 		}
 
 		formats = FMTF_STRING;
