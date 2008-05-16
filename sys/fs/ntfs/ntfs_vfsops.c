@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.70 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.71 2008/05/16 09:21:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.70 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.71 2008/05/16 09:21:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 
 	bp = NULL;
 
-	error = bread(devvp, BBLOCK, BBSIZE, NOCRED, &bp);
+	error = bread(devvp, BBLOCK, BBSIZE, NOCRED, 0, &bp);
 	if (error)
 		goto out;
 	ntmp = malloc( sizeof *ntmp, M_NTFSMNT, M_WAITOK );

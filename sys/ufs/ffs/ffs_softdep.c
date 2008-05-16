@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.111 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.112 2008/05/16 09:22:00 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.111 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.112 2008/05/16 09:22:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.111 2008/05/05 17:11:17 ad Exp $")
 #include <sys/vnode.h>
 #include <sys/inttypes.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -1196,7 +1197,7 @@ softdep_mount(devvp, mp, fs, cred)
 	bzero(&cstotal, sizeof cstotal);
 	for (cyl = 0; cyl < fs->fs_ncg; cyl++) {
 		if ((error = bread(devvp, fsbtodb(fs, cgtod(fs, cyl)),
-		    fs->fs_cgsize, cred, &bp)) != 0) {
+		    fs->fs_cgsize, cred, 0, &bp)) != 0) {
 			brelse(bp, 0);
 			return (error);
 		}
@@ -1916,7 +1917,7 @@ softdep_setup_freeblocks(
 	 */
 	if ((error = bread(ip->i_devvp,
 	    fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-	    (int)fs->fs_bsize, NOCRED, &bp)) != 0)
+	    (int)fs->fs_bsize, NOCRED, B_MODIFY, &bp)) != 0)
 		softdep_error("softdep_setup_freeblocks", error);
 	if (ip->i_ump->um_fstype == UFS1) {
 #ifdef FFS_EI
@@ -2452,7 +2453,7 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 	} else {
 		softdep_trackbufs(1, false);
 		mutex_exit(&bufcache_lock);
-		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
+		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, 0, &bp);
 		if (error)
 			return (error);
 	}
@@ -4670,7 +4671,7 @@ softdep_fsync(vp, f)
 		 * Flush directory page containing the inode's name.
 		 */
 		error = bread(pvp, lbn, blksize(fs, VTOI(pvp), lbn),
-		    lp->l_cred, &bp);
+		    lp->l_cred, 0, &bp);
 		if (error == 0)
 			error = VOP_BWRITE(bp);
 		vput(pvp);
@@ -5250,7 +5251,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		mutex_exit(&bufcache_lock);
 		if ((error = bread(ump->um_devvp,
 		    fsbtodb(ump->um_fs, ino_to_fsba(ump->um_fs, inum)),
-		    (int)ump->um_fs->fs_bsize, NOCRED, &bp)) != 0)
+		    (int)ump->um_fs->fs_bsize, NOCRED, 0, &bp)) != 0)
 			break;
 		if ((error = VOP_BWRITE(bp)) != 0)
 			break;

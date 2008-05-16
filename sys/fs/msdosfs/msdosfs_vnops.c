@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.51 2008/04/30 14:07:14 ad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.52 2008/05/16 09:21:59 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.51 2008/04/30 14:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.52 2008/05/16 09:21:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,7 +522,7 @@ msdosfs_read(v)
 		 * vnode for the directory.
 		 */
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, lbn), blsize,
-		    NOCRED, &bp);
+		    NOCRED, 0, &bp);
 		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			brelse(bp, 0);
@@ -1141,7 +1141,7 @@ abortit:
 		} else
 			bn = cntobn(pmp, cn);
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn),
-		    pmp->pm_bpcluster, NOCRED, &bp);
+		    pmp->pm_bpcluster, NOCRED, B_MODIFY, &bp);
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			brelse(bp, 0);
@@ -1225,6 +1225,7 @@ msdosfs_mkdir(v)
 	int error;
 	int bn;
 	u_long newcluster, pcl;
+	daddr_t lbn;
 	struct direntry *denp;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	struct buf *bp;
@@ -1259,8 +1260,9 @@ msdosfs_mkdir(v)
 	 * directory to be pointing at if there were a crash.
 	 */
 	bn = cntobn(pmp, newcluster);
+	lbn = de_bn2kb(pmp, bn);
 	/* always succeeds */
-	bp = getblk(pmp->pm_devvp, de_bn2kb(pmp, bn), pmp->pm_bpcluster, 0, 0);
+	bp = getblk(pmp->pm_devvp, lbn, pmp->pm_bpcluster, 0, 0);
 	memset(bp->b_data, 0, pmp->pm_bpcluster);
 	memcpy(bp->b_data, &dosdirtemplate, sizeof dosdirtemplate);
 	denp = (struct direntry *)bp->b_data;
@@ -1556,7 +1558,7 @@ msdosfs_readdir(v)
 		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
-		    NOCRED, &bp);
+		    NOCRED, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			free(dirbuf, M_MSDOSFSTMP);

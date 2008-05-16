@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.135 2008/05/10 02:26:10 rumble Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.136 2008/05/16 09:22:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.135 2008/05/10 02:26:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.136 2008/05/16 09:22:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -500,7 +500,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 		size = DEV_BSIZE;
 	else
 		size = dpart.disklab->d_secsize;
-	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, &bp);
+	error = bread(devvp, (daddr_t)(SBOFF / size), SBSIZE, NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
@@ -539,7 +539,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 		error = bread(devvp ,
 		    fsbtodb(fs, fs->e2fs.e2fs_first_dblock +
 		    1 /* superblock */ + i),
-		    fs->e2fs_bsize, NOCRED, &bp);
+		    fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			return (error);
@@ -588,7 +588,7 @@ loop:
 		 */
 		ip = VTOI(vp);
 		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-		    (int)fs->e2fs_bsize, NOCRED, &bp);
+		    (int)fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			vput(vp);
 			mutex_enter(&mntvnode_lock);
@@ -648,7 +648,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	printf("sb size: %d ino size %d\n", sizeof(struct ext2fs),
 	    EXT2_DINODE_SIZE);
 #endif
-	error = bread(devvp, (SBOFF / size), SBSIZE, cred, &bp);
+	error = bread(devvp, (SBOFF / size), SBSIZE, cred, 0, &bp);
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
@@ -695,7 +695,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		error = bread(devvp ,
 		    fsbtodb(m_fs, m_fs->e2fs.e2fs_first_dblock +
 		    1 /* superblock */ + i),
-		    m_fs->e2fs_bsize, NOCRED, &bp);
+		    m_fs->e2fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			free(m_fs->e2fs_gd, M_UFSMNT);
 			goto out;
@@ -1012,7 +1012,7 @@ retry:
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
-	    (int)fs->e2fs_bsize, NOCRED, &bp);
+	    (int)fs->e2fs_bsize, NOCRED, 0, &bp);
 	if (error) {
 
 		/*
