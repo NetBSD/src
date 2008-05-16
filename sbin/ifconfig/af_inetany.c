@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.7 2008/05/12 22:01:32 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.8 2008/05/16 20:57:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.7 2008/05/12 22:01:32 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.8 2008/05/16 20:57:42 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -121,17 +121,16 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	 * TBD: handle preference
 	 */
 	switch (flags & (IFF_BROADCAST|IFF_POINTOPOINT)) {
-	case 0:
-		break;
 	case IFF_BROADCAST:
+		if (brd != NULL)
+			loadbuf(&param->brd, brd);
+	case 0:
 		if (mask != NULL)
 			loadbuf(&param->mask, mask);
 		else if (param->defmask.buf != NULL) {
 			memcpy(param->mask.buf, param->defmask.buf,
 			    MIN(param->mask.buflen, param->defmask.buflen));
 		}
-		if (brd != NULL)
-			loadbuf(&param->brd, brd);
 		break;
 	case IFF_POINTOPOINT:
 		if (dst == NULL) {
