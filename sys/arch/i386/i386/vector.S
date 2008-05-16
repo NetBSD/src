@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.35 2008/04/21 15:15:34 cegger Exp $	*/
+/*	$NetBSD: vector.S,v 1.35.2.1 2008/05/16 02:22:34 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -50,13 +50,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.35 2008/04/21 15:15:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.35.2.1 2008/05/16 02:22:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -161,6 +154,7 @@ IDTVEC(recurse_lapic_ipi)
 	pushl	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+IDTVEC_END(recurse_lapic_ipi)
 IDTVEC(intr_lapic_ipi)
 	pushl	$0		
 	pushl	$T_ASTFLT
@@ -169,6 +163,7 @@ IDTVEC(intr_lapic_ipi)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_IPI,%ebx
 	jae	2f
+IDTVEC_END(intr_lapic_ipi)
 IDTVEC(resume_lapic_ipi)
 1:
 	pushl	%ebx
@@ -181,6 +176,7 @@ IDTVEC(resume_lapic_ipi)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
 	INTRFASTEXIT
+IDTVEC_END(resume_lapic_ipi)
 
 /*
  * Multicast TLB shootdown handler for !kernel_pmap.
@@ -246,6 +242,7 @@ IDTVEC(intr_lapic_tlb_mcast)
 	movl	%cr3, %eax
 	movl	%eax, %cr3
 	jmp	2b
+IDTVEC_END(intr_lapic_tlb_mcast)
 
 /*
  * Broadcast TLB shootdown handler for kernel_pmap.
@@ -294,6 +291,7 @@ IDTVEC(intr_lapic_tlb_bcast)
 	movl	%cr3, %eax
 	movl	%eax, %cr3
 	jmp	2b
+IDTVEC_END(intr_lapic_tlb_bcast)
 
 #if defined(DDB)
 IDTVEC(intrddbipi)
@@ -311,6 +309,7 @@ IDTVEC(intrddbipi)
 	movl	$0,_C_LABEL(lapic_tpr)
 	iret
 	jmp	1b
+IDTVEC_END(intrddbipi)
 #endif /* DDB */
 #endif /* MULTIPROCESSOR */
 	
@@ -325,6 +324,7 @@ IDTVEC(recurse_lapic_ltimer)
 	pushl	$T_ASTFLT
 	INTRENTRY		
 	jmp	1f
+IDTVEC_END(recurse_lapic_ltimer)
 IDTVEC(intr_lapic_ltimer)
 	pushl	$0		
 	pushl	$T_ASTFLT
@@ -347,6 +347,7 @@ IDTVEC(resume_lapic_ltimer)
 2:
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
 	INTRFASTEXIT
+IDTVEC_END(intr_lapic_ltimer)
 #endif /* NLAPIC > 0 */
 
 
@@ -366,18 +367,20 @@ IDTVEC(recurse_/**/name/**/num)						;\
 	subl	$4,%esp							;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
+IDTVEC_END(recurse_/**/name/**/num)					;\
 IDTVEC(resume_/**/name/**/num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	movl	%ebx,%esi						;\
 	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
 	movl	IS_MAXLEVEL(%ebp),%ebx					;\
 	jmp	1f							;\
+IDTVEC_END(resume_/**/name/**/num)					;\
 IDTVEC(intr_/**/name/**/num)						;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp		;\
-	mask(num)		/* mask it in hardware */	;\
+	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
+	mask(num)		/* mask it in hardware */		;\
 	early_ack(num)			/* and allow other intrs */	;\
 	testl	%ebp,%ebp						;\
 	jz	9f			/* stray */			;\
@@ -426,7 +429,8 @@ IDTVEC(intr_/**/name/**/num)						;\
 	unmask(num)							;\
 	late_ack(num)							;\
 	addl	$4,%esp							;\
-	INTRFASTEXIT
+	INTRFASTEXIT							;\
+IDTVEC_END(intr_/**/name/**/num)
 
 #define ICUADDR IO_ICU1
 
@@ -860,13 +864,19 @@ IDTVEC(trap07)
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
 	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
 	pushl	CPUVAR(SELF)
 	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap
-	INTRFASTEXIT
+	jmp	.Lalltraps_checkusr
 #else
+#ifndef XEN
+	sti
+#endif
 	ZTRAP(T_DNA)
 #endif
 IDTVEC(trap08)
@@ -911,8 +921,7 @@ IDTVEC(trap0e)
 	addl	$4,%eax
 	pushl	%eax
 	call	_C_LABEL(trap)
-	addl	$4,%esp
-	addl	$4,%esp
+	addl	$8,%esp
 .Ltrap0e_checkusr:
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	trap0e_checkast
@@ -991,8 +1000,14 @@ IDTVEC(trap0f)
 	 * way to delivering an interrupt.. presumably enough has been set 
 	 * up that it's inconvenient to abort delivery completely..)
 	 */
-	iret
-	
+	pushl	$0			# dummy error code
+	pushl	$T_ASTFLT
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif
+	jmp	.Lalltraps_checkusr
+
 IDTVEC(trap10)
 #if NNPX > 0
 	/*
@@ -1003,14 +1018,16 @@ IDTVEC(trap10)
 	pushl	$0			# dummy error code
 	pushl	$T_ASTFLT
 	INTRENTRY
-	pushl	CPUVAR(ILEVEL)
+	movl	CPUVAR(ILEVEL),%ebx
+	pushl	%ebx
 	pushl	%esp
 	pushl	$0			# dummy arg
 	incl	_C_LABEL(uvmexp)+V_TRAP
 	call	_C_LABEL(npxintr)
 	addl	$12,%esp
-	INTRFASTEXIT
+	jmp	.Lalltraps_checkusr
 #else
+	sti
 	ZTRAP(T_ARITHTRAP)
 #endif
 IDTVEC(trap11)

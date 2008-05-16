@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.255 2008/01/30 11:47:04 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.255.10.1 2008/05/16 02:26:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255 2008/01/30 11:47:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255.10.1 2008/05/16 02:26:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -98,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255 2008/01/30 11:47:04 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -116,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255 2008/01/30 11:47:04 ad Exp $");
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
+
+MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static bool lfs_issequential_hole(const struct ufsmount *,
@@ -162,11 +158,11 @@ struct vfsops lfs_vfsops = {
 	(void *)eopnotsupp,	/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	lfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(lfs_vfsops);
 
 const struct genfs_ops lfs_genfsops = {
 	.gop_size = lfs_gop_size,
@@ -183,6 +179,20 @@ static const struct ufs_ops lfs_ufsops = {
 	.uo_vfree = lfs_vfree,
 	.uo_balloc = lfs_balloc,
 };
+
+static int
+lfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&lfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&lfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 /*
  * XXX Same structure as FFS inodes?  Should we share a common pool?
@@ -219,8 +229,7 @@ lfs_writerd(void *arg)
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_trybusy(mp, RW_WRITER, &mountlist_lock)) {
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
+			if (vfs_busy(mp, &nmp)) {
 				continue;
 			}
 			if (strncmp(mp->mnt_stat.f_fstypename, MOUNT_LFS,
@@ -246,10 +255,7 @@ lfs_writerd(void *arg)
 				} else
 					mutex_exit(&lfs_lock);
 			}
-
-			mutex_enter(&mountlist_lock);
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
-			vfs_unbusy(mp, false);
+			vfs_unbusy(mp, false, &nmp);
 		}
 		mutex_exit(&mountlist_lock);
 
@@ -352,7 +358,7 @@ lfs_mountroot()
 		return (error);
 	}
 	if ((error = lfs_mountfs(rootvp, mp, l))) {
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -360,7 +366,7 @@ lfs_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
 	return (0);
 }

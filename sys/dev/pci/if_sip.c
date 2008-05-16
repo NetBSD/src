@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.132 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.132.4.1 2008/05/16 02:24:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -80,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.132 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.132.4.1 2008/05/16 02:24:43 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -998,7 +991,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	int i, rseg, error;
 	const struct sip_product *sip;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	pcireg_t pmreg;
+	pcireg_t csr;
 	pcireg_t memtype;
 	bus_size_t tx_dmamap_size;
 	int ntxsegs_alloc;
@@ -1088,17 +1081,16 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	 * Make sure bus mastering is enabled.  Also make sure
 	 * Write/Invalidate is enabled if we're allowed to use it.
 	 */
-	pmreg = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
-		pmreg |= PCI_COMMAND_INVALIDATE_ENABLE;
+		csr |= PCI_COMMAND_INVALIDATE_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    pmreg | PCI_COMMAND_MASTER_ENABLE);
+	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
-	    error != EOPNOTSUPP) {
-		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n",
-		    error);
+	error = pci_activate(pa->pa_pc, pa->pa_tag, self, pci_activate_null);
+	if (error != 0 && error != EOPNOTSUPP) {
+		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -1838,6 +1830,9 @@ sipcom_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int32_t isr;
 	int handled = 0;
+
+	if (!device_is_active(&sc->sc_dev))
+		return 0;
 
 	/* Disable interrupts. */
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IER, 0);

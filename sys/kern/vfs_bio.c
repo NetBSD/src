@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_bio.c,v 1.195 2008/04/22 11:05:06 reinoud Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.195.2.1 2008/05/16 02:25:28 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -114,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.195 2008/04/22 11:05:06 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.195.2.1 2008/05/16 02:25:28 yamt Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -126,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.195 2008/04/22 11:05:06 reinoud Exp $"
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/conf.h>
@@ -479,7 +471,7 @@ bufinit(void)
 		struct pool_allocator *pa;
 		struct pool *pp = &bmempools[i];
 		u_int size = 1 << (i + MEMPOOL_INDEX_OFFSET);
-		char *name = malloc(8, M_TEMP, M_WAITOK);
+		char *name = kmem_alloc(8, KM_SLEEP);
 		if (__predict_true(size >= 1024))
 			(void)snprintf(name, 8, "buf%dk", size / 1024);
 		else
@@ -506,7 +498,7 @@ bufinit(void)
 	 * For now, use an empirical 3K per buffer.
 	 */
 	nbuf = (bufmem_hiwater / 1024) / 3;
-	bufhashtbl = hashinit(nbuf, HASH_LIST, M_CACHE, M_WAITOK, &bufhash);
+	bufhashtbl = hashinit(nbuf, HASH_LIST, true, &bufhash);
 }
 
 void

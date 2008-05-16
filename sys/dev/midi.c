@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.64 2008/04/24 15:35:28 ad Exp $	*/
+/*	$NetBSD: midi.c,v 1.64.2.1 2008/05/16 02:23:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.64 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.64.2.1 2008/05/16 02:23:49 yamt Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1453,7 +1446,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	size_t xfrcount;
 	int pollout = 0;
 
-	DPRINTFN(6, ("midiwrite: %p, unit=%d, count=%lu\n", sc, unit,
+	DPRINTFN(6, ("midiwrite: %p, unit=%d, count=%lu\n", sc, (int)minor(dev),
 		     (unsigned long)uio->uio_resid));
 
 	if (sc->dying)

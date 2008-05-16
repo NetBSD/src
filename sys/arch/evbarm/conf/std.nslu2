@@ -1,4 +1,4 @@
-#       $NetBSD: std.nslu2,v 1.2 2008/01/27 12:37:12 chris Exp $
+#       $NetBSD: std.nslu2,v 1.2.10.1 2008/05/16 02:22:10 yamt Exp $
 #
 # Standard NetBSD/evbarm options for Linksys NSLU2
 
@@ -10,10 +10,10 @@ include		"arch/arm/conf/std.arm"	# arch standard options
 include "arch/evbarm/conf/files.nslu2"
 
 options 	EXEC_ELF32
-options 	EXEC_AOUT
 options 	EXEC_SCRIPT
 options 	ARM32
 
+options 	KERNEL_BASE_EXT=0xc0000000
 makeoptions 	LOADADDRESS="0xc0200000"
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.nslu2"
 

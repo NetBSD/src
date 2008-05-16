@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.221 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.221.2.1 2008/05/16 02:25:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.221.2.1 2008/05/16 02:25:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1685,8 +1678,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	 * Hang process if it's in the background.
 	 */
 	if (isbackground(p, tp)) {
-		if (sigismember(&p->p_sigctx.ps_sigignore, SIGTTIN) ||
-		    sigismember(&curlwp->l_sigmask, SIGTTIN) ||
+		if (sigismasked(curlwp, SIGTTIN) ||
 		    p->p_sflag & PS_PPWAIT || p->p_pgrp->pg_jobc == 0) {
 			mutex_spin_exit(&tty_lock);
 			return (EIO);
@@ -1956,8 +1948,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	p = curproc;
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_sflag & PS_PPWAIT) == 0 &&
-	    !sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU) &&
-	    !sigismember(&curlwp->l_sigmask, SIGTTOU)) {
+	    !sigismasked(curlwp, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;
 			mutex_spin_exit(&tty_lock);

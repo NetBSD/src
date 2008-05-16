@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.13 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.13.74.1 2008/05/16 02:24:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -65,6 +58,8 @@ struct smc91cxx_softc {
 	u_int8_t	sc_chipid;
 	u_int8_t	sc_internal_phy;	/* 91C111 only */
 
+	uint8_t		sc_intmask;
+	uint8_t		sc_txpacketno;		/* cached packetno */
 #if NRND > 0
 	rndsource_element_t rnd_source;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.28 2007/05/02 20:40:28 dyoung Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.28.32.1 2008/05/16 02:25:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.28 2007/05/02 20:40:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.28.32.1 2008/05/16 02:25:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -299,6 +299,7 @@ clnp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (rp != 0) {
 			error = EISCONN;
 			break;

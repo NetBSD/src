@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.3 2007/12/18 07:17:08 joerg Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.3.14.1 2008/05/16 02:21:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	  This product includes software developed by the NetBSD
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -175,7 +168,7 @@ wakeup_32:
 	/* Enable SYSCALL extension and Long Mode */
 	movl	$MSR_EFER,%ecx
 	rdmsr
-	movl	WAKEUP_msr_efer + ACPI_WAKEUP_ADDR,%eax
+	movl	WAKEUP_efer + ACPI_WAKEUP_ADDR,%eax
 	wrmsr
 
 	/* Load temporary PML4, code will switch to full PML4 later */
@@ -248,5 +241,5 @@ WAKEUP_beep_on_reset:	.byte 0
 
 	.global WAKEUP_curcpu
 WAKEUP_curcpu:		.quad 0
-	.global WAKEUP_msr_efer
-WAKEUP_msr_efer:	.long 0
+	.global WAKEUP_efer
+WAKEUP_efer:		.long 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.43 2008/04/24 18:39:22 ad Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.43.2.1 2008/05/16 02:23:34 yamt Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.43 2008/04/24 18:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.43.2.1 2008/05/16 02:23:34 yamt Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -75,6 +75,7 @@ extern int coda_nc_initialized;    /* Set if cache has been initialized */
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/conf.h>
+#include <sys/atomic.h>
 
 #include <miscfs/syncfs/syncfs.h>
 
@@ -196,16 +197,8 @@ vc_nb_close(dev_t dev, int flag, int mode, struct lwp *l)
     }
 
     /* Let unmount know this is for real */
-    /*
-     * XXX Freeze syncer.  Must do this before locking the
-     * mount point.  See dounmount for details().
-     */
-    mutex_enter(&syncer_mutex);
+    atomic_inc_uint(&mi->mi_vfsp->mnt_refcnt);
     VTOC(mi->mi_rootvp)->c_flags |= C_UNMOUNTING;
-    if (vfs_busy(mi->mi_vfsp, RW_WRITER, NULL)) {
-	mutex_exit(&syncer_mutex);
-	return (EBUSY);
-    }
     coda_unmounting(mi->mi_vfsp);
 
     /* Wakeup clients so they can return. */

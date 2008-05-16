@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.6 2008/04/19 11:53:13 hannken Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.6.2.1 2008/05/16 02:25:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.6 2008/04/19 11:53:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.6.2.1 2008/05/16 02:25:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1203,6 +1203,29 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	off = pgs[0]->offset;
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_WRITE | UVMPAGER_MAPIN_WAITOK);
+	len = npages << PAGE_SHIFT;
+
+	error = genfs_do_io(vp, off, kva, len, flags, UIO_WRITE,
+			    uvm_aio_biodone);
+
+	return error;
+}
+
+int
+genfs_gop_write_rwmap(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
+{
+	off_t off;
+	vaddr_t kva;
+	size_t len;
+	int error;
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
+
+	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
+	    vp, pgs, npages, flags);
+
+	off = pgs[0]->offset;
+	kva = uvm_pagermapin(pgs, npages,
+	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 	len = npages << PAGE_SHIFT;
 
 	error = genfs_do_io(vp, off, kva, len, flags, UIO_WRITE,

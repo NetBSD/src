@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stats.h,v 1.1 2008/04/23 05:21:17 thorpej Exp $	*/
+/*	$NetBSD: net_stats.h,v 1.1.2.1 2008/05/16 02:25:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -73,27 +66,17 @@ do {									\
 	_NET_STAT_PUTREF(stat);						\
 } while (/*CONSTCOND*/0)
 
-/*
- * netstat_sysctl_context --
- *	Context passed to netstat_sysctl().
- */
-typedef struct {
-	percpu_t	*ctx_stat;	/* stat's percpu context */
-	uint64_t	*ctx_counters;	/* pointer to collated counter array */
-	u_int		 ctx_ncounters;	/* number of counters in array */
-} netstat_sysctl_context;
-
 __BEGIN_DECLS
 struct lwp;
 struct sysctlnode;
 
-int	netstat_sysctl(netstat_sysctl_context *,
+int	netstat_sysctl(percpu_t *, u_int,
 		       const int *, u_int, void *,
 		       size_t *, const void *, size_t,
 		       const int *, struct lwp *, const struct sysctlnode *);
 
-#define	NETSTAT_SYSCTL(ctx)						\
-	netstat_sysctl((ctx), name, namelen, oldp, oldlenp,		\
+#define	NETSTAT_SYSCTL(stat, nctrs)					\
+	netstat_sysctl((stat), (nctrs), name, namelen, oldp, oldlenp,	\
 		       newp, newlen, oname, l, rnode)
 __END_DECLS
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.102 2008/04/25 11:27:19 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.102.2.1 2008/05/16 02:24:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102 2008/04/25 11:27:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.1 2008/05/16 02:24:06 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -187,9 +187,9 @@ re_set_bufaddr(struct re_desc *d, bus_addr_t addr)
 }
 
 static int
-re_gmii_readreg(struct device *self, int phy, int reg)
+re_gmii_readreg(device_t dev, int phy, int reg)
 {
-	struct rtk_softc *sc = (void *)self;
+	struct rtk_softc *sc = device_private(dev);
 	uint32_t rval;
 	int i;
 
@@ -390,7 +390,7 @@ re_reset(struct rtk_softc *sc)
 
 	/*
 	 * NB: Realtek-supplied Linux driver does this only for
-	 * MCFG_METHOD_2, which corresponds to sc->sc_rev == 2.
+	 * MCFG_METHOD_2, which corresponds to sc->sc_rev == 3.
 	 */
 	if (1) /* XXX check softc flag for 8169s version */
 		CSR_WRITE_1(sc, RTK_LDPS, 1);
@@ -570,53 +570,52 @@ re_attach(struct rtk_softc *sc)
 	/* Reset the adapter. */
 	re_reset(sc);
 
-	if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
-		addr_len = RTK_EEADDR_LEN1;
-	else
-		addr_len = RTK_EEADDR_LEN0;
-
-	/*
-	 * Get station address from the EEPROM.
-	 */
-	for (i = 0; i < ETHER_ADDR_LEN / 2; i++) {
-		val = rtk_read_eeprom(sc, RTK_EE_EADDR0 + i, addr_len);
-		eaddr[(i * 2) + 0] = val & 0xff;
-		eaddr[(i * 2) + 1] = val >> 8;
-	}
-
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		uint32_t hwrev;
 
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
 		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
 		/* These rev numbers are taken from Realtek's driver */
-		if (       hwrev == RTK_HWREV_8100E_SPIN2) {
-			sc->sc_rev = 15;
-		} else if (hwrev == RTK_HWREV_8100E) {
-			sc->sc_rev = 14;
-		} else if (hwrev == RTK_HWREV_8101E) {
-			sc->sc_rev = 13;
-		} else if (hwrev == RTK_HWREV_8168_SPIN2 ||
-		           hwrev == RTK_HWREV_8168_SPIN3) {
-			sc->sc_rev = 12;
-		} else if (hwrev == RTK_HWREV_8168_SPIN1) {
-			sc->sc_rev = 11;
-		} else if (hwrev == RTK_HWREV_8169_8110SC) {
-			sc->sc_rev = 5;
-		} else if (hwrev == RTK_HWREV_8169_8110SB) {
-			sc->sc_rev = 4;
-		} else if (hwrev == RTK_HWREV_8169S) {
-			sc->sc_rev = 3;
-		} else if (hwrev == RTK_HWREV_8110S) {
-			sc->sc_rev = 2;
-		} else if (hwrev == RTK_HWREV_8169) {
+		switch (hwrev) {
+		case RTK_HWREV_8169:
+			/* XXX not in the Realtek driver */
 			sc->sc_rev = 1;
 			sc->sc_quirk |= RTKQ_8169NONS;
-		} else {
+			break;
+		case RTK_HWREV_8169S:
+		case RTK_HWREV_8110S:
+			sc->sc_rev = 3;
+			break;
+		case RTK_HWREV_8169_8110SB:
+			sc->sc_rev = 4;
+			break;
+		case RTK_HWREV_8169_8110SC:
+			sc->sc_rev = 5;
+			break;
+		case RTK_HWREV_8101E:
+			sc->sc_rev = 11;
+			break;
+		case RTK_HWREV_8168_SPIN1:
+			sc->sc_rev = 21;
+			break;
+		case RTK_HWREV_8168_SPIN2:
+			sc->sc_rev = 22;
+			break;
+		case RTK_HWREV_8168_SPIN3:
+			sc->sc_rev = 23;
+			break;
+		case RTK_HWREV_8168C:
+			sc->sc_rev = 24;
+			break;
+		case RTK_HWREV_8100E:
+		case RTK_HWREV_8100E_SPIN2:
+			/* XXX not in the Realtek driver */
+			sc->sc_rev = 0;
+			break;
+		default:
 			aprint_normal_dev(sc->sc_dev,
 			    "Unknown revision (0x%08x)\n", hwrev);
-			/* assume the latest one */
-			sc->sc_rev = 15;
+			sc->sc_rev = 0;
 		}
 
 		/* Set RX length mask */
@@ -626,6 +625,31 @@ re_attach(struct rtk_softc *sc)
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_FRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
+	}
+
+	if (sc->sc_rev == 24) {
+		/*
+		 * Get station address from ID registers.
+		 */
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
+	} else {
+		/*
+		 * Get station address from the EEPROM.
+		 */
+		if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
+			addr_len = RTK_EEADDR_LEN1;
+		else
+			addr_len = RTK_EEADDR_LEN0;
+
+		/*
+		 * Get station address from the EEPROM.
+		 */
+		for (i = 0; i < ETHER_ADDR_LEN / 2; i++) {
+			val = rtk_read_eeprom(sc, RTK_EE_EADDR0 + i, addr_len);
+			eaddr[(i * 2) + 0] = val & 0xff;
+			eaddr[(i * 2) + 1] = val >> 8;
+		}
 	}
 
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",

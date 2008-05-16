@@ -1,10 +1,11 @@
-$NetBSD: README,v 1.2 2006/03/23 19:11:02 garbled Exp $
+$NetBSD: README,v 1.2.66.1 2008/05/16 02:23:03 yamt Exp $
 
 Contents.
 	boot        NetBSD/prep boot-loader
 	boot_com0   NetBSD/prep boot-loader(serial console) 
 	mkbootimage Make bootable floppy image.
 
+mkbootimage is located in arch/powerpc/stand/mkbootimage.
 
 How to make bootable floppy disk image.
 
@@ -12,7 +13,7 @@ How to make bootable floppy disk image.
 	 $ make
 	    For cross compile environment:
 	        $ for i in common boot_com0 boot; do (cd $i; ppc-make); done
-	        $ (cd mkbootimage; make)
-	 $ mkbootimage/mkbootimage boot/boot /tmp/boot.fs
+	        $ (cd ../../powerpc/stand/mkbootimage; make)
+	 $ mkbootimage boot/boot /tmp/boot.fs
 	    To make kernel attached bootable floppy image:
-		    $ mkbootimage/mkbootimage -b boot/boot -k ../compile/YOUR_KERNEL/netbsd /tmp/boot.fs
+		    $ mkbootimage -m prep -b boot/boot -k ../compile/YOUR_KERNEL/netbsd /tmp/boot.fs

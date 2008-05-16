@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm11.S,v 1.4 2007/10/17 19:53:29 garbled Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm11.S,v 1.4.20.1 2008/05/16 02:21:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -34,6 +34,7 @@
  * architecture or physically tagged cache.
  */
  
+#include "assym.h"
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
@@ -44,9 +45,11 @@
  * addresses that are about to change.
  */
 ENTRY(arm11_setttb)
+#ifdef PMAP_CACHE_VIVT
 	stmfd	sp!, {r0, lr}
-	bl	_C_LABEL(armv5_idcache_wbinv_all)
+	bl	_C_LABEL(armv6_idcache_wbinv_all)
 	ldmfd	sp!, {r0, lr}
+#endif
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
@@ -96,26 +99,31 @@ ENTRY(arm11_context_switch)
 ENTRY(arm11_tlb_flushID)
 	mcr	p15, 0, r0, c8, c7, 0	/* flush I+D tlb */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mov	pc, lr
+	RET
 
 ENTRY(arm11_tlb_flushI)
 	mcr	p15, 0, r0, c8, c5, 0	/* flush I tlb */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mov	pc, lr
+	RET
 
 ENTRY(arm11_tlb_flushD)
 	mcr	p15, 0, r0, c8, c6, 0	/* flush D tlb */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mov	pc, lr
+	RET
 
 ENTRY(arm11_tlb_flushD_SE)
 	mcr	p15, 0, r0, c8, c6, 1	/* flush D tlb single entry */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mov	pc, lr
+	RET
 
 /*
  * Other functions
  */
 ENTRY(arm11_drain_writebuf)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
-	mov	pc, lr
+	RET
+
+ENTRY_NP(arm11_sleep)
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c0, 4	/* wait for interrupt */
+	RET

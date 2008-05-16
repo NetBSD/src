@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.17 2008/04/16 16:06:51 cegger Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.17.4.1 2008/05/16 02:23:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.17 2008/04/16 16:06:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.17.4.1 2008/05/16 02:23:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,8 +351,10 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 			pmap_pte_setbits(pte, PG_N);
 		xpte |= *pte;
 	}
+	kpreempt_disable();
 	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
-	pmap_update(pmap_kernel());
+	pmap_tlb_shootwait();
+	kpreempt_enable();
 
 	return 0;
 }

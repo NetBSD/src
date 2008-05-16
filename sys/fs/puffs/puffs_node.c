@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.12 2008/03/01 14:16:51 rmind Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.12.4.1 2008/05/16 02:25:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.12 2008/03/01 14:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.12.4.1 2008/05/16 02:25:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -90,60 +90,15 @@ puffs_getvnode(struct mount *mp, puffs_cookie_t ck, enum vtype type,
 		goto bad;
 	}
 
-	/*
-	 * XXX: there is a deadlock condition between vfs_busy() and
-	 * vnode locks.  For an unmounting file system the mountpoint
-	 * is frozen, but in unmount(FORCE) vflush() wants to access all
-	 * of the vnodes.  If we are here waiting for the mountpoint
-	 * lock while holding on to a vnode lock, well, we ain't
-	 * just pining for the fjords anymore.  If we release the
-	 * vnode lock, we will be in the situation "mount point
-	 * is dying" and panic() will ensue in insmntque.  So as a
-	 * temporary workaround, get a vnode without putting it on
-	 * the mount point list, check if mount point is still alive
-	 * and kicking and only then add the vnode to the list.
-	 */
-	error = getnewvnode(VT_PUFFS, NULL, puffs_vnodeop_p, &vp);
+	error = getnewvnode(VT_PUFFS, mp, puffs_vnodeop_p, &vp);
 	if (error)
 		goto bad;
 	vp->v_vnlock = NULL;
 	vp->v_type = type;
 
 	/*
-	 * Check what mount point isn't going away.  This will work
-	 * until we decide to remove biglock or make the kernel
-	 * preemptive.  But hopefully the real problem will be fixed
-	 * by then.
-	 *
-	 * XXX: yes, should call vfs_busy(), but thar be rabbits with
-	 * vicious streaks a mile wide ...
-	 *
-	 * XXX: there is a transient failure here: if someone is unmounting
-	 * the file system but doesn't succeed (due to it being busy),
-	 * we incorrectly fail new vnode allocation.  This is *very*
-	 * hard to fix with the current structure of file system unmounting.
-	 */
-	if (mp->mnt_iflag & IMNT_UNMOUNT) {
-		DPRINTF(("puffs_getvnode: mp %p unmount, unable to create "
-		    "vnode for cookie %p\n", mp, ck));
-		ungetnewvnode(vp);
-		error = ENXIO;
-		goto bad;
-	}
-
-	/*
 	 * Creation should not fail after this point.  Or if it does,
 	 * care must be taken so that VOP_INACTIVE() isn't called.
-	 */
-
-	/* So mp is not dead yet.. good.. inform new vnode of its master */
-	mutex_enter(&mntvnode_lock);
-	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	vp->v_mount = mp;
-	mutex_exit(&mntvnode_lock);
-
-	/*
-	 * clerical tasks & footwork
 	 */
 
 	/* default size */

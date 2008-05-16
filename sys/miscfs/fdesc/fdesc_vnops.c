@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.102 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.102.4.1 2008/05/16 02:25:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.102 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.102.4.1 2008/05/16 02:25:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ fdesc_init()
 	/* locate the major number */
 	cttymajor = cdevsw_lookup_major(&ctty_cdevsw);
 	devctty = makedev(cttymajor, 0);
-	fdhashtbl = hashinit(NFDCACHE, HASH_LIST, M_CACHE, M_NOWAIT, &fdhash);
+	fdhashtbl = hashinit(NFDCACHE, HASH_LIST, true, &fdhash);
 }
 
 /*
@@ -198,7 +198,7 @@ fdesc_init()
 void
 fdesc_done()
 {
-	hashdone(fdhashtbl, M_CACHE);
+	hashdone(fdhashtbl, HASH_LIST, fdhash);
 }
 
 /*

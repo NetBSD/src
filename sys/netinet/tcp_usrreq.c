@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.144 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.144.2.1 2008/05/16 02:25:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,13 +49,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -102,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.144 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.144.2.1 2008/05/16 02:25:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1622,13 +1615,8 @@ sysctl_tcp_keep(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_tcp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t tcps[TCP_NSTATS];
 
-	ctx.ctx_stat = tcpstat_percpu;
-	ctx.ctx_counters = tcps;
-	ctx.ctx_ncounters = TCP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(tcpstat_percpu, TCP_NSTATS));
 }
 
 /*

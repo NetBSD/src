@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.22 2008/04/08 20:10:20 cegger Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.22.4.1 2008/05/16 02:24:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -75,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.22 2008/04/08 20:10:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.22.4.1 2008/05/16 02:24:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.22 2008/04/08 20:10:20 cegger Exp $");
 
 #include <dev/mii/gphyterreg.h>
 
-static int	gphytermatch(struct device *, struct cfdata *, void *);
-static void	gphyterattach(struct device *, struct device *, void *);
+static int	gphytermatch(device_t, cfdata_t, void *);
+static void	gphyterattach(device_t, device_t, void *);
 
-CFATTACH_DECL(gphyter, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(gphyter, sizeof(struct mii_softc),
     gphytermatch, gphyterattach, mii_phy_detach, mii_phy_activate);
 
 static int	gphyter_service(struct mii_softc *, struct mii_data *, int);
@@ -119,8 +112,7 @@ static const struct mii_phydesc gphyters[] = {
 };
 
 static int
-gphytermatch(struct device *parent, struct cfdata *match,
-    void *aux)
+gphytermatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -131,9 +123,9 @@ gphytermatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-gphyterattach(struct device *parent, struct device *self, void *aux)
+gphyterattach(device_t parent, device_t self, void *aux)
 {
-	struct mii_softc *sc = (struct mii_softc *)self;
+	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
@@ -143,6 +135,7 @@ gphyterattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &gphyter_funcs;
@@ -170,7 +163,7 @@ gphyterattach(struct device *parent, struct device *self, void *aux)
 	if (anar & ANAR_10_FD)
 		sc->mii_capabilities |= (BMSR_10TFDX & ma->mii_capmask);
 
-	aprint_normal_dev(&sc->mii_dev, "");
+	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
 	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
 		aprint_error("no media present");
@@ -179,7 +172,7 @@ gphyterattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	strap = PHY_READ(sc, MII_GPHYTER_STRAP);
-	aprint_normal_dev(&sc->mii_dev, "strapped to %s mode",
+	aprint_normal_dev(self, "strapped to %s mode",
 	    (strap & STRAP_MS_VAL) ? "master" : "slave");
 	if (strap & STRAP_NC_MODE)
 		aprint_normal(", pre-C5 BCM5400 compat enabled");

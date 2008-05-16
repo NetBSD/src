@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.5 2003/03/12 17:35:57 drochner Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.5.108.1 2008/05/16 02:22:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -135,7 +128,7 @@ net_close(f)
 		if (debug)
 			printf("net_close: calling netif_close()\n");
 		pxe_netif_close(netdev_sock);
-		pxe_netif_shutdown(); /* XXX shouldn't be done here */
+		//pxe_netif_shutdown(); /* XXX shouldn't be done here */
 		netdev_sock = -1;
 	}
 	return (0);

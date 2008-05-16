@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.8 2008/03/23 17:19:57 tsutsui Exp $	*/
+/*	$NetBSD: cons.c,v 1.8.4.1 2008/05/16 02:22:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -84,11 +84,11 @@
 #include "cons.h"
 
 #ifdef CONS_SERIAL
-void siocnprobe(struct consdev *);
-void siocninit(struct consdev *);
-void siocnputchar(void *, int);
-int siocngetchar(void *);
-int siocnscan(void *);
+void comcnprobe(struct consdev *);
+void comcninit(struct consdev *);
+void comcnputchar(void *, int);
+int comcngetchar(void *);
+int comcnscan(void *);
 # include "ns16550.h"
 # ifndef COMPORT
 #  define COMPORT COM1
@@ -116,7 +116,7 @@ int zscnscan(void *);
 struct consdev constab[] = {
 #ifdef CONS_SERIAL
 	{ "com", COMPORT, COMSPEED,
-	    siocnprobe, siocninit, siocngetchar, siocnputchar, siocnscan },
+	    comcnprobe, comcninit, comcngetchar, comcnputchar, comcnscan },
 #endif
 #ifdef CONS_ZS
 	{ "zs", ZSCHAN, ZSSPEED,
@@ -175,95 +175,12 @@ cnscan(void)
 	return -1;
 }
 
-#ifdef CONS_FB
-/*
- * frame buffer console
- */
-void
-fbcnprobe(struct consdev *cp)
-{
-
-	cp->cn_pri = CN_INTERNAL;
-}
-
-void
-fbcninit(struct consdev *cp)
-{
-
-	video_init((uint8_t *)cp->address);
-	kbdreset();
-}
-
-int
-fbcngetchar(void *dev)
-{
-
-	return kbd_getc();
-}
-
-void
-fbcnputchar(void *dev, int c)
-{
-
-	video_putc(c);
-}
-
-int
-fbcnscan(void *dev)
-{
-
-	return kbd(1);
-}
-#endif /* CONS_FB */
-
-#ifdef CONS_VGA
-/*
- * VGA console
- */
-void
-vgacnprobe(struct consdev *cp)
-{
-
-	cp->cn_pri = CN_NORMAL;
-}
-
-void
-vgacninit(struct consdev *cp)
-{
-
-	vga_reset((uint8_t *)cp->address);
-	vga_init((uint8_t *)cp->address);
-	kbdreset();
-}
-
-int
-vgacngetchar(void *dev)
-{
-
-	return kbd_getc();
-}
-
-void
-vgacnputchar(void *dev, int c)
-{
-
-	vga_putc(c);
-}
-
-int
-vgacnscan(void *dev)
-{
-
-	return kbd(1);
-}
-#endif /* CONS_VGA */
-
 #ifdef CONS_SERIAL
 /*
  * serial console
  */
 void
-siocnprobe(struct consdev *cp)
+comcnprobe(struct consdev *cp)
 {
 
 	if (*((uint32_t *)COMPROBE) != 0 &&
@@ -272,33 +189,33 @@ siocnprobe(struct consdev *cp)
 }
 
 void
-siocninit(struct consdev *cp)
+comcninit(struct consdev *cp)
 {
 
-	cp->cn_dev = (void *)NS16550_init(cp->address, cp->speed);
+	cp->cn_dev = com_init(cp->address, cp->speed);
 }
 
 int
-siocngetchar(void *dev)
+comcngetchar(void *dev)
 {
 
-	return NS16550_getc((struct NS16550 *)dev);
+	return com_getc(dev);
 }
 
 void
-siocnputchar(void *dev, int c)
+comcnputchar(void *dev, int c)
 {
 
 	if (c == '\n')
-		NS16550_putc((struct NS16550 *)dev, '\r');
-	NS16550_putc((struct NS16550 *)dev, c);
+		com_putc(dev, '\r');
+	com_putc(dev, c);
 }
 
 int
-siocnscan(void *dev)
+comcnscan(void *dev)
 {
 
-	return NS16550_scankbd((struct NS16550 *)dev);
+	return com_scankbd(dev);
 }
 #endif /* CONS_SERIAL */
 

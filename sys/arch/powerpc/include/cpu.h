@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.64.4.1 2008/05/16 02:23:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -340,7 +340,7 @@ void cpu_spinup_trampoline(void);
 #define	DELAY(n)		delay(n)
 
 #define	cpu_need_resched(ci, v)	(ci->ci_want_resched = ci->ci_astpending = 1)
-#define	cpu_did_resched()	((void)(curcpu()->ci_want_resched = 0))
+#define	cpu_did_resched(l)	((void)(curcpu()->ci_want_resched = 0))
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
 #define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 

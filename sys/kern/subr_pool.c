@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.158 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.158.2.1 2008/05/16 02:25:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.158 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.158.2.1 2008/05/16 02:25:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2376,7 +2369,7 @@ pool_cache_cpu_enter(pool_cache_t pc, int *s)
 	 * CPU-local data.  To avoid touching shared state, we
 	 * pull the neccessary information from CPU local data.
 	 */
-	KPREEMPT_DISABLE();
+	KPREEMPT_DISABLE(curlwp);
 	cc = pc->pc_cpus[curcpu()->ci_index];
 	KASSERT(cc->cc_cache == pc);
 	if (cc->cc_ipl != IPL_NONE) {
@@ -2394,7 +2387,7 @@ pool_cache_cpu_exit(pool_cache_cpu_t *cc, int *s)
 	if (cc->cc_ipl != IPL_NONE) {
 		splx(*s);
 	}
-	KPREEMPT_ENABLE();
+	KPREEMPT_ENABLE(curlwp);
 }
 
 #if __GNUC_PREREQ__(3, 0)

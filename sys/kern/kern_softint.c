@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.16 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.16.2.1 2008/05/16 02:25:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -183,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16.2.1 2008/05/16 02:25:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -260,11 +253,11 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 
 	snprintf(si->si_name, sizeof(si->si_name), "%s/%u", desc,
 	    ci->ci_index);
-	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_MISC, NULL,
 	   "softint", si->si_name);
 	snprintf(si->si_name_block, sizeof(si->si_name_block), "%s block/%u",
 	    desc, ci->ci_index);
-	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_MISC, NULL,
 	   "softint", si->si_name_block);
 
 	si->si_lwp->l_private = si;
@@ -432,6 +425,8 @@ softint_schedule(void *arg)
 	uintptr_t offset;
 	int s;
 
+	KASSERT(kpreempt_disabled());
+
 	/* Find the handler record for this CPU. */
 	offset = (uintptr_t)arg;
 	KASSERT(offset != 0 && offset < softint_bytes);
@@ -553,6 +548,10 @@ schednetisr(int isr)
 }
 
 #ifndef __HAVE_FAST_SOFTINTS
+
+#ifdef __HAVE_PREEMPTION
+#error __HAVE_PREEMPTION requires __HAVE_FAST_SOFTINTS
+#endif
 
 /*
  * softint_init_md:

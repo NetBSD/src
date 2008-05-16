@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.42 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.42.2.1 2008/05/16 02:23:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.42 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.42.2.1 2008/05/16 02:23:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,8 +491,6 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	struct ifreq *ifr = data;
 	struct ifnet *ifp = ifunit(ifr->ifr_name);
 	struct sockaddr *sa;
-
-	KASSERT(solocked(so));
 
 	if (ifp == NULL)
 		return ENXIO;

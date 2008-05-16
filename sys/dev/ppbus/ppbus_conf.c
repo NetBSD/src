@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.15 2008/04/18 14:56:40 cegger Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.15.4.1 2008/05/16 02:25:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.15 2008/04/18 14:56:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.15.4.1 2008/05/16 02:25:01 yamt Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
+
+#include "gpio.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +171,9 @@ ppbus_attach(device_t parent, device_t self, void *aux)
 	SLIST_INIT(&(ppbus->sc_childlist_head));
 	config_search_ia(ppbus_search_children, self, "ppbus", &args);
 
+#if NGPIO > 0
+	gpio_ppbus_attach(ppbus);
+#endif
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.53 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: key.c,v 1.53.2.1 2008/05/16 02:25:45 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.53 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.53.2.1 2008/05/16 02:25:45 yamt Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -969,13 +969,19 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 		 */
 		if (d->lft_c->sadb_lifetime_addtime != 0) {
 			struct mbuf *m, *result;
+			uint8_t satype;
 
 			key_sa_chgstate(d, SADB_SASTATE_DEAD);
 
 			IPSEC_ASSERT(d->refcnt > 0,
 				("key_do_allocsa_policy: bogus ref count"));
+
+			satype = key_proto2satype(d->sah->saidx.proto);
+			if (satype == 0) 
+				goto msgfail;
+
 			m = key_setsadbmsg(SADB_DELETE, 0,
-			    d->sah->saidx.proto, 0, 0, d->refcnt - 1);
+			    satype, 0, 0, d->refcnt - 1);
 			if (!m)
 				goto msgfail;
 			result = m;
@@ -8145,13 +8151,8 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 static int
 sysctl_net_key_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ps[PFKEY_NSTATS];
 
-	ctx.ctx_stat = pfkeystat_percpu;
-	ctx.ctx_counters = ps;
-	ctx.ctx_ncounters = PFKEY_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(pfkeystat_percpu, PFKEY_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")

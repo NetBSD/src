@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_stub.c,v 1.6 2008/04/24 15:35:29 ad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.6.2.1 2008/05/16 02:25:26 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -69,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.6 2008/04/24 15:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.6.2.1 2008/05/16 02:25:26 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -80,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.6 2008/04/24 15:35:29 ad Exp $");
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).  Flag
@@ -131,6 +126,35 @@ __strong_alias(sys_sa_setconcurrency,sys_nosys);
 __strong_alias(sys_sa_yield,sys_nosys);
 __strong_alias(sys_sa_preempt,sys_nosys);
 __strong_alias(sys_sa_unblockyield,sys_nosys);
+
+/*
+ * Stubs for architectures that do not support kernel preemption.
+ */
+#ifndef __HAVE_PREEMPTION
+bool
+cpu_kpreempt_enter(uintptr_t where, int s)
+{
+
+	return false;
+}
+
+void
+cpu_kpreempt_exit(uintptr_t where)
+{
+
+}
+
+bool
+cpu_kpreempt_disabled(void)
+{
+
+	return true;
+}
+#else
+# ifndef MULTIPROCESSOR
+#   error __HAVE_PREEMPTION requires MULTIPROCESSOR
+# endif
+#endif	/* !__HAVE_PREEMPTION */
 
 /* ARGSUSED */
 int

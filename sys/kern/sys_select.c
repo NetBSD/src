@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.5 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.5.2.1 2008/05/16 02:25:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -77,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.5 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.5.2.1 2008/05/16 02:25:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,6 +292,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 			continue;
 		}
 		l->l_selflag = SEL_BLOCKING;
+		l->l_kpriority = true;
 		lwp_lock(l);
 		lwp_unlock_to(l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
@@ -494,6 +488,7 @@ pollcommon(lwp_t *l, register_t *retval,
 			continue;
 		}
 		l->l_selflag = SEL_BLOCKING;
+		l->l_kpriority = true;
 		lwp_lock(l);
 		lwp_unlock_to(l, &sc->sc_lock);
 		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);

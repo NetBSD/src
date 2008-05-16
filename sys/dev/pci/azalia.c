@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.54 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: azalia.c,v 1.54.4.1 2008/05/16 02:24:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -48,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.54 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.54.4.1 2008/05/16 02:24:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -351,10 +344,10 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 	vendor = pci_findvendor(pa->pa_id);
 	name = pci_findproduct(pa->pa_id);
 	if (vendor != NULL && name != NULL) {
-		aprint_normal("%s: host: %s %s (rev. %d)\n",
+		aprint_normal("%s: host: %s %s (rev. %d)",
 		    XNAME(sc), vendor, name, PCI_REVISION(pa->pa_class));
 	} else {
-		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)\n",
+		aprint_normal("%s: host: 0x%4.4x/0x%4.4x (rev. %d)",
 		    XNAME(sc), PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
 		    PCI_REVISION(pa->pa_class));
 	}
@@ -498,8 +491,8 @@ azalia_attach(azalia_t *az)
 	uint16_t statests;
 
 	if (az->audiodev == NULL)
-		aprint_normal("%s: host: High Definition Audio rev. %d.%d\n",
-		    XNAME(az), AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
+		aprint_normal(", HDA rev. %d.%d\n",
+		    AZ_READ_1(az, VMAJ), AZ_READ_1(az, VMIN));
 
 	gcap = AZ_READ_2(az, GCAP);
 	az->nistreams = HDA_GCAP_ISS(gcap);
@@ -1063,15 +1056,15 @@ azalia_codec_init(codec_t *this, int reinit)
 	if (!reinit) {
 		aprint_normal("%s: codec[%d]: ", XNAME(this->az), addr);
 		if (this->name == NULL) {
-			aprint_normal("0x%4.4x/0x%4.4x (rev. %u.%u)\n",
+			aprint_normal("0x%4.4x/0x%4.4x (rev. %u.%u)",
 			    id >> 16, id & 0xffff,
 			    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
 		} else {
-			aprint_normal("%s (rev. %u.%u)\n", this->name,
+			aprint_normal("%s (rev. %u.%u)", this->name,
 			    COP_RID_REVISION(rev), COP_RID_STEPPING(rev));
 		}
-		aprint_normal("%s: codec[%d]: High Definition Audio rev. %u.%u\n",
-		    XNAME(this->az), addr, COP_RID_MAJ(rev), COP_RID_MIN(rev));
+		aprint_normal(", HDA rev. %u.%u\n",
+		    COP_RID_MAJ(rev), COP_RID_MIN(rev));
 	}
 
 	/* identify function nodes */
@@ -1104,7 +1097,7 @@ azalia_codec_init(codec_t *this, int reinit)
 		}
 	}
 	if (this->audiofunc < 0 && !reinit) {
-		aprint_error("%s: codec[%d] has no audio function groups\n",
+		aprint_verbose("%s: codec[%d] has no audio function groups\n",
 		    XNAME(this->az), addr);
 		return -1;
 	}
@@ -2081,7 +2074,9 @@ azalia_stream_intr(stream_t *this, uint32_t intsts)
 		return 0;
 	STR_WRITE_1(this, STS, HDA_SD_STS_DESE
 	    | HDA_SD_STS_FIFOE | HDA_SD_STS_BCIS);
-	this->intr(this->intr_arg);
+
+	if (this->intr != NULL)
+		this->intr(this->intr_arg);
 	return 1;
 }
 

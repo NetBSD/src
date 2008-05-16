@@ -1,4 +1,4 @@
-/* $NetBSD: drm_vm.c,v 1.6 2007/12/11 11:17:32 lukem Exp $ */
+/* $NetBSD: drm_vm.c,v 1.6.12.1 2008/05/16 02:23:57 yamt Exp $ */
 
 /*-
  * Copyright 2003 Eric Anholt
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.6 2007/12/11 11:17:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.6.12.1 2008/05/16 02:23:57 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_vm.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -41,17 +41,18 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 	drm_file_t *priv;
 	drm_map_type_t type;
 	paddr_t phys;
+	uintptr_t roffset;
 
 	DRM_LOCK();
 	priv = drm_find_file_by_proc(dev, DRM_CURPROC);
 	DRM_UNLOCK();
 	if (priv == NULL) {
 		DRM_ERROR("can't find authenticator\n");
-		return EINVAL;
+		return -1;
 	}
 
 	if (!priv->authenticated)
-		return DRM_ERR(EACCES);
+		return -1;
 
 	if (dev->dma && offset >= 0 && offset < ptoa(dev->dma->page_count)) {
 		drm_device_dma_t *dma = dev->dma;
@@ -82,9 +83,15 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 				   for performance, even if the list was a
 				   bit longer. */
 	DRM_LOCK();
+	roffset = DRM_NETBSD_HANDLE2ADDR(offset);
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (offset >= map->offset && offset < map->offset + map->size)
-			break;
+		if (map->type == _DRM_SHM) {
+			if (roffset >= (uintptr_t)map->handle && roffset < (uintptr_t)map->handle + map->size)
+				break;
+		} else {
+			if (offset >= map->offset && offset < map->offset + map->size)
+				break;
+		}
 	}
 
 	if (map == NULL) {
@@ -110,8 +117,10 @@ paddr_t drm_mmap(dev_t kdev, off_t offset, int prot)
 		phys = vtophys((paddr_t)map->handle + (offset - map->offset));
 		break;
 	case _DRM_SCATTER_GATHER:
-	case _DRM_SHM:
 		phys = vtophys(offset);
+		break;
+	case _DRM_SHM:
+		phys = vtophys(DRM_NETBSD_HANDLE2ADDR(offset));
 		break;
 	default:
 		DRM_ERROR("bad map type %d\n", type);

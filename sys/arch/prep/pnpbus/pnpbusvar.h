@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbusvar.h,v 1.4 2006/10/27 19:52:51 garbled Exp $	*/
+/*	$NetBSD: pnpbusvar.h,v 1.4.56.1 2008/05/16 02:23:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -73,6 +66,8 @@ struct pnpbus_compatid {
 #define PNPBUS_MAXIRQ 2
 #define PNPBUS_MAXDMA 2
 
+#define IST_PNP	-1
+
 struct pnpresources {
 	int nummem, numiomem, numio, numirq, numdma;
 	SIMPLEQ_HEAD(, pnpbus_mem) mem;
@@ -87,10 +82,11 @@ struct pnpresources {
  * Bus attach arguments
  */
 struct pnpbus_attach_args {
-	bus_space_tag_t paa_iot;		/* i/o space tag */
-	bus_space_tag_t paa_memt;		/* mem space tag */
-	isa_chipset_tag_t paa_ic;		/* ISA chipset tag */
-	bus_dma_tag_t paa_dmat;			/* ISA DMA tag */
+	const char *paa_name;		/* match to struct confargs*/
+	bus_space_tag_t paa_iot;	/* i/o space tag */
+	bus_space_tag_t paa_memt;	/* mem space tag */
+	isa_chipset_tag_t paa_ic;	/* ISA chipset tag */
+	bus_dma_tag_t paa_dmat;		/* ISA DMA tag */
 };
 
 /*
@@ -128,8 +124,8 @@ struct pnpbus_softc {
 
 int	pnpbus_scan(struct pnpbus_dev_attach_args *pna, PPC_DEVICE *dev);
 void	pnpbus_print_devres(struct pnpbus_dev_attach_args *pna);
-void	*pnpbus_intr_establish(int idx, int level, int (*ih_fun)(void *),
-	    void *ih_arg, struct pnpresources *r);
+void	*pnpbus_intr_establish(int idx, int level, int tover,
+	    int (*ih_fun)(void *), void *ih_arg, struct pnpresources *r);
 void	pnpbus_intr_disestablish(void *arg);
 int	pnpbus_getirqnum(struct pnpresources *r, int idx, int *irqp, int *istp);
 int	pnpbus_getdmachan(struct pnpresources *r, int idx, int *chanp);

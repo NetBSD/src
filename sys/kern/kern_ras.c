@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.28 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.28.2.1 2008/05/16 02:25:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.28 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.28.2.1 2008/05/16 02:25:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +107,12 @@ ras_lookup(struct proc *p, void *addr)
 {
 	struct ras *rp;
 	void *startaddr;
+	lwp_t *l;
 
 	startaddr = (void *)-1;
+	l = curlwp;
 
-	KPREEMPT_DISABLE();
+	KPREEMPT_DISABLE(l);
 	for (rp = p->p_raslist; rp != NULL; rp = rp->ras_next) {
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			startaddr = rp->ras_startaddr;
@@ -125,7 +120,7 @@ ras_lookup(struct proc *p, void *addr)
 			break;
 		}
 	}
-	KPREEMPT_ENABLE();
+	KPREEMPT_ENABLE(l);
 
 	return startaddr;
 }

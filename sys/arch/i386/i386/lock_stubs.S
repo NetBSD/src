@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13.10.1 2008/05/16 02:22:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -44,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13.10.1 2008/05/16 02:22:34 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -61,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $");
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
 #define	LOCK(num)	.Lpatch/**/num:	lock
-#define	END(name,a)	.align	a; LABEL(name)
+#define	ENDLABEL(name,a) .align	a; LABEL(name)
 
 #if !defined(LOCKDEBUG)
 
@@ -78,8 +71,11 @@ ENTRY(mutex_enter)
 	xorl	%eax, %eax
 	LOCK(1)
 	cmpxchgl %ecx, MTX_OWNER(%edx)
-	jnz,pn	_C_LABEL(mutex_vector_enter)
+	jnz	1f
 	ret
+1:
+	jmp	_C_LABEL(mutex_vector_enter)
+END(mutex_enter)
 
 /*
  * void mutex_exit(kmutex_t *mtx);
@@ -95,8 +91,11 @@ ENTRY(mutex_exit)
 	movl	CPUVAR(CURLWP), %eax
 	xorl	%ecx, %ecx
 	cmpxchgl %ecx, MTX_OWNER(%edx)
-	jnz,pn	_C_LABEL(mutex_vector_exit)
+	jnz	1f
 	ret
+1:
+	jmp	_C_LABEL(mutex_vector_exit)
+END(mutex_exit)
 
 /*
  * void rw_enter(krwlock_t *rwl, krw_t op);
@@ -114,7 +113,7 @@ ENTRY(rw_enter)
 1:	movl	RW_OWNER(%edx), %eax
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leal	RW_READ_INCR(%eax), %ecx
-	jnz,pn	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	LOCK(2)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	jnz,pn	1b
@@ -128,8 +127,11 @@ ENTRY(rw_enter)
 	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(3)
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz,pn	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	ret
+3:
+	jmp	_C_LABEL(rw_vector_enter)
+END(rw_enter)
 
 /*
  * void rw_exit(krwlock_t *rwl);
@@ -146,10 +148,10 @@ ENTRY(rw_exit)
 	 * Reader
 	 */
 1:	testb	$RW_HAS_WAITERS, %al
-	jnz,pn	3f
+	jnz	3f
 	cmpl	$RW_READ_INCR, %eax
 	leal	-RW_READ_INCR(%eax), %ecx
-	jb,pn	3f
+	jb	3f
 	LOCK(4)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	jnz,pn	1b
@@ -160,16 +162,17 @@ ENTRY(rw_exit)
 	 */
 2:	leal	-RW_WRITE_LOCKED(%eax), %ecx
 	subl	CPUVAR(CURLWP), %ecx
-	jnz,pn	3f
+	jnz	3f
 	LOCK(5)
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz,pn	3f
+	jnz	3f
 	ret
 
 	/*
 	 * Slow path.
 	 */
 3:	jmp	_C_LABEL(rw_vector_exit)
+END(rw_exit)
 
 /*
  * int rw_tryenter(krwlock_t *rwl, krw_t op);
@@ -184,30 +187,33 @@ ENTRY(rw_tryenter)
 	/*
 	 * Reader
 	 */
-1:	movl	RW_OWNER(%edx), %eax
-	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
+	movl	RW_OWNER(%edx), %eax
+1:
 	leal	RW_READ_INCR(%eax), %ecx
+	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	jnz	3f
 	LOCK(12)
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	movl	$0, %eax
-	setz	%al
+	jnz	1b
+	movl	%edx, %eax			/* nonzero */
 	ret
 
 	/*
 	 * Writer
 	 */
-2:	movl	CPUVAR(CURLWP), %ecx
-	xorl	%eax, %eax
+2:
+	movl	CPUVAR(CURLWP), %ecx
 	orl	$RW_WRITE_LOCKED, %ecx
+	xorl	%eax, %eax
 	LOCK(13)
 	cmpxchgl %ecx, RW_OWNER(%edx)
 	movl	$0, %eax
 	setz	%al
 	ret
-
-3:	xorl	%eax, %eax
+3:
+	xorl	%eax, %eax
 	ret
+END(rw_tryenter)
 
 #ifndef __XEN__
 
@@ -218,25 +224,29 @@ ENTRY(rw_tryenter)
  */
 ENTRY(mutex_spin_enter)
 	movl	4(%esp), %edx
-	movl	CPUVAR(ILEVEL), %ecx
-	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
-	jnc	1f
-	movl	%ecx, CPUVAR(MTX_OLDSPL)
-1:	movb	MTX_IPL(%edx), %ch
+	movb	CPUVAR(ILEVEL), %cl
+	movb	MTX_IPL(%edx), %ch
 	cmpb	%ch, %cl
-	jg,pn	2f
+	jg	1f
 	movb	%ch, CPUVAR(ILEVEL)		/* splraiseipl() */
+1:
+	subl	$1, CPUVAR(MTX_COUNT)		/* decl does not set CF */
+	jnc	2f
+	movb	%cl, CPUVAR(MTX_OLDSPL)
 2:
 #ifdef FULL
 	mov	$0x0100, %eax			/* new + expected value */
 	LOCK(11)
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
-	jnz,pn	_C_LABEL(mutex_spin_retry)
+	jnz	3f
 #endif
 	ret
+3:
+	jmp	_C_LABEL(mutex_spin_retry)
 
 	ALIGN64
 LABEL(mutex_spin_enter_end)
+END(mutex_spin_enter)
 
 /*
  * Release a spin mutex and post a store fence.
@@ -258,6 +268,7 @@ ENTRY(mutex_spin_exit)
 	nop					/* XXX round up */
 	.align	32
 LABEL(mutex_spin_exit_end)
+END(mutex_spin_exit)
 
 /*
  * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
@@ -291,6 +302,7 @@ LABEL(i686_mutex_spin_exit_patch)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
 LABEL(i686_mutex_spin_exit_end)
+END(i686_mutex_spin_exit)
 
 #else	/* !__XEN__ */
 
@@ -312,6 +324,8 @@ NENTRY(__cpu_simple_lock_init)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
+END(__cpu_simple_lock_init)
+
 NENTRY(__cpu_simple_lock)
 	movl	4(%esp), %edx
 	movl	$0x0100, %eax
@@ -328,11 +342,13 @@ NENTRY(__cpu_simple_lock)
 	cmpb	$0, (%edx)
 	je	1b
 	jmp	2b
+END(__cpu_simple_lock)
 
 NENTRY(__cpu_simple_unlock)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
+END(__cpu_simple_unlock)
 
 NENTRY(__cpu_simple_lock_try)
 	movl	4(%esp), %edx
@@ -342,6 +358,7 @@ NENTRY(__cpu_simple_lock_try)
 	movl	$0, %eax
 	setz	%al	
 	ret
+END(__cpu_simple_lock_try)
 
 /*
  * Patchpoints to replace with NOP when ncpu == 1.

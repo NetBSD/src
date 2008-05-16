@@ -1,4 +1,4 @@
-/* $NetBSD: vcpu.h,v 1.5 2007/10/17 19:58:31 garbled Exp $ */
+/* $NetBSD: vcpu.h,v 1.5.20.1 2008/05/16 02:23:29 yamt Exp $ */
 /******************************************************************************
  * vcpu.h
  * 
@@ -169,16 +169,37 @@ DEFINE_XEN_GUEST_HANDLE(vcpu_set_singleshot_timer_t);
  * The pointer need not be page aligned, but the structure must not
  * cross a page boundary.
  *
- * If the specified mfn is INVALID_MFN, then it reverts to using the
- * vcpu_info structure in the shared_info page.
+ * This may be called only once per vcpu.
  */
-#define VCPUOP_register_vcpu_info   10  /* arg == struct vcpu_info */
+#define VCPUOP_register_vcpu_info   10  /* arg == vcpu_register_vcpu_info_t */
 struct vcpu_register_vcpu_info {
-    xen_pfn_t mfn;              /* mfn of page to place vcpu_info */
-    uint32_t offset;            /* offset within page */
+    uint64_t mfn;    /* mfn of page to place vcpu_info */
+    uint32_t offset; /* offset within page */
+    uint32_t rsvd;   /* unused */
 };
 typedef struct vcpu_register_vcpu_info vcpu_register_vcpu_info_t;
 DEFINE_XEN_GUEST_HANDLE(vcpu_register_vcpu_info_t);
+
+/* Send an NMI to the specified VCPU. @extra_arg == NULL. */
+#define VCPUOP_send_nmi             11
+
+/* 
+ * Get the physical ID information for a pinned vcpu's underlying physical
+ * processor.  The physical ID informmation is architecture-specific.
+ * On x86: id[31:0]=apic_id, id[63:32]=acpi_id, and all values 0xff and
+ *         greater are reserved.
+ * This command returns -EINVAL if it is not a valid operation for this VCPU.
+ */
+#define VCPUOP_get_physid           12 /* arg == vcpu_get_physid_t */
+struct vcpu_get_physid {
+    uint64_t phys_id;
+};
+typedef struct vcpu_get_physid vcpu_get_physid_t;
+DEFINE_XEN_GUEST_HANDLE(vcpu_get_physid_t);
+#define xen_vcpu_physid_to_x86_apicid(physid) \
+    ((((uint32_t)(physid)) >= 0xff) ? 0xff : ((uint8_t)(physid)))
+#define xen_vcpu_physid_to_x86_acpiid(physid) \
+    ((((uint32_t)((physid)>>32)) >= 0xff) ? 0xff : ((uint8_t)((physid)>>32)))
 
 #endif /* __XEN_PUBLIC_VCPU_H__ */
 

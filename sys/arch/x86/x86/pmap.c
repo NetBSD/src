@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52.2.1 2008/05/16 02:23:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52.2.1 2008/05/16 02:23:29 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -744,6 +744,8 @@ static void
 pmap_apte_flush(struct pmap *pmap)
 {
 
+	KASSERT(kpreempt_disabled());
+
 	/*
 	 * Flush the APTE mapping from all other CPUs that
 	 * are using the pmap we are using (who's APTE space
@@ -787,8 +789,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	int s;
 #endif
 
-	KASSERT(kpreempt_disabled());
-
 	/* the kernel's pmap is always accessible */
 	if (pmap == pmap_kernel()) {
 		*pmap2 = NULL;
@@ -796,6 +796,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		*pdeppp = normal_pdes;
 		return;
 	}
+	KASSERT(kpreempt_disabled());
 
  retry:
 	l = curlwp;
@@ -915,6 +916,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	if (pmap == pmap_kernel()) {
 		return;
 	}
+	KASSERT(kpreempt_disabled());
 	if (pmap2 == NULL) {
 		mutex_exit(&pmap->pm_lock);
 	} else {
@@ -1273,7 +1275,13 @@ pmap_bootstrap(vaddr_t kva_start)
 		if (KERNBASE == VM_MIN_KERNEL_ADDRESS) {
 			kva_end = virtual_avail;
 		} else {
-			kva_end = roundup((vaddr_t)&end, PAGE_SIZE);
+			extern vaddr_t eblob, esym;
+			kva_end = (vaddr_t)&end;
+			if (esym > kva_end)
+				kva_end = esym;
+			if (eblob > kva_end)
+				kva_end = eblob;
+			kva_end = roundup(kva_end, PAGE_SIZE);
 		}
 		for (kva = KERNBASE; kva < kva_end; kva += PAGE_SIZE) {
 			p1i = pl1_i(kva);
@@ -1610,7 +1618,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	if (ci == &cpu_info_primary)
 		evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "global", "TLB IPI");
-	evcnt_attach_dynamic(&ci->ci_tlb_evcnt, EVCNT_TYPE_INTR,
+	evcnt_attach_dynamic(&ci->ci_tlb_evcnt, EVCNT_TYPE_MISC,
 	    NULL, device_xname(ci->ci_dev), "TLB IPI");
 }
 
@@ -1832,6 +1840,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
 
 	level = 1;
 	do {
@@ -1872,6 +1881,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  *
  * => pmap should NOT be pmap_kernel()
  * => pmap should be locked
+ * => preemption should be disabled
  */
 
 static struct vm_page *
@@ -1886,6 +1896,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
 
 	ptp = NULL;
 	pa = (paddr_t)-1;
@@ -2374,6 +2385,7 @@ pmap_ldt_cleanup(struct lwp *l)
 	int sel = -1;
 
 	mutex_enter(&pmap->pm_lock);
+	kpreempt_disable();
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		sel = pmap->pm_ldt_sel;
@@ -2388,6 +2400,7 @@ pmap_ldt_cleanup(struct lwp *l)
 		pmap->pm_flags &= ~PMF_USER_LDT;
 	}
 
+	kpreempt_enable();
 	mutex_exit(&pmap->pm_lock);
 
 	if (sel != -1)
@@ -2530,6 +2543,8 @@ pmap_load(void)
 		return;
 	}
 	cpumask = ci->ci_cpumask;
+	l = ci->ci_curlwp;
+	ncsw = l->l_ncsw;
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_IPI); 
@@ -2539,7 +2554,6 @@ pmap_load(void)
 	KASSERT((x86_read_psl() & PSL_I) != 0);
 #endif
 
-	l = ci->ci_curlwp;
 	KASSERT(l != NULL);
 	pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	KASSERT(pmap != pmap_kernel());
@@ -2685,7 +2699,6 @@ pmap_load(void)
 	 * to the old pmap.  if we block, we need to go around again.
 	 */
 
-	ncsw = l->l_ncsw;
 	pmap_destroy(oldpmap);
 	if (l->l_ncsw != ncsw) {
 		goto retry;
@@ -2705,6 +2718,8 @@ pmap_deactivate(struct lwp *l)
 {
 	struct pmap *pmap;
 	struct cpu_info *ci;
+
+	KASSERT(kpreempt_disabled());
 
 	if (l != curlwp) {
 		return;
@@ -3031,7 +3046,6 @@ pmap_map_ptp(struct vm_page *ptp)
 	id = cpu_number();
 	ptppte = PTESLEW(ptp_pte, id);
 	ptpva = VASLEW(ptpp, id);
-	kpreempt_disable();
 	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 #if !defined(XEN)
 	    PG_RW |
@@ -3697,6 +3711,7 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
+	kpreempt_disable();
 startover:
 	pp_lock(pp);
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
@@ -3720,8 +3735,6 @@ startover:
 	result = pp->pp_attrs & clearbits;
 	pp->pp_attrs &= ~clearbits;
 	pp_unlock(pp);
-
-	kpreempt_disable();
 	pmap_tlb_shootwait();
 	kpreempt_enable();
 
@@ -3873,13 +3886,13 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 		}
 #endif
 		pmap_unmap_ptes(pmap, pmap2);		/* unlocks map */
-		kpreempt_enable();
 	}
 #ifdef DIAGNOSTIC
 	else {
 		panic("pmap_unwire: invalid PDE");
 	}
 #endif
+	kpreempt_enable();
 }
 
 /*
@@ -4550,8 +4563,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 				mb->mb_addr2 = eva;
 				mb->mb_global = pte;
 				if (x86_ipi(LAPIC_TLB_MCAST_VECTOR,
-				    ci->ci_apicid,
-				    LAPIC_DLMODE_FIXED))
+				    ci->ci_cpuid, LAPIC_DLMODE_FIXED))
 					panic("pmap_tlb_shootdown: ipi failed");
 			}
 			self->ci_need_tlbwait = 1;

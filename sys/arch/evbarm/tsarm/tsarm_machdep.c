@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.6 2008/01/19 13:11:16 chris Exp $	*/
+/*	$NetBSD: tsarm_machdep.c,v 1.6.10.1 2008/05/16 02:22:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.6 2008/01/19 13:11:16 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.6.10.1 2008/05/16 02:22:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,7 +165,6 @@ u_int free_pages;
 int physmem = 0;
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
 pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
@@ -397,7 +396,6 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	pv_addr_t kernel_l1pt;
 	paddr_t memstart;
 	psize_t memsize;
 
@@ -526,8 +524,6 @@ initarm(void *arg)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = 0;
-	kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if (((physical_freeend - L1_TABLE_SIZE) & (L1_TABLE_SIZE - 1)) == 0
@@ -777,8 +773,7 @@ initarm(void *arg)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Setup the IRQ system */
 #ifdef VERBOSE_INIT_ARM

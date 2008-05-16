@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.22 2008/04/24 15:35:27 ad Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.22.2.1 2008/05/16 02:22:34 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.22 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.22.2.1 2008/05/16 02:22:34 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -75,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.22 2008/04/24 15:35:27 ad Exp $")
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/cputypes.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
@@ -171,7 +165,7 @@ mach_host_basic_info(info)
 	info->memory_size = active + inactive;
 #undef cpu_type
 	info->cpu_type = MACHO_CPU_TYPE_I386;
-	switch (cpu_info_primary.ci_cpu_class) {
+	switch (cpu_class) {
 	case CPUCLASS_386:
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_386;
 		break;
@@ -185,8 +179,7 @@ mach_host_basic_info(info)
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_PENTPRO;
 		break;
 	default:
-		uprintf("Undefined CPU class %d",
-		    cpu_info_primary.ci_cpu_class);
+		uprintf("Undefined CPU class %d", cpu_class);
 		info->cpu_subtype = MACHO_CPU_SUBTYPE_I386_ALL;
 	}
 }

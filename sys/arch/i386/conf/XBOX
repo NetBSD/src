@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.13 2008/01/21 22:12:00 ichiro Exp $
+# $NetBSD: XBOX,v 1.13.10.1 2008/05/16 02:22:33 yamt Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -84,10 +84,6 @@ config		netbsd	root on ? type nfs
 #
 # Device configuration
 #
-
-mainbus0 at root
-
-cpu* at mainbus?
 
 # Basic Bus Support
 

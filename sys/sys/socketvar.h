@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.105 2008/04/24 11:38:39 ad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.105.2.1 2008/05/16 02:25:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -154,6 +147,7 @@ struct socket {
 	short		so_qlimit;	/* max number queued connections */
 	short		so_timeo;	/* connection timeout */
 	u_short		so_error;	/* error affecting connection */
+	u_short		so_aborting;	/* references from soabort() */
 	pid_t		so_pgid;	/* pgid for signals */
 	u_long		so_oobmark;	/* chars to oob mark */
 	struct sockbuf	so_snd;		/* send buffer */
@@ -334,7 +328,7 @@ sb_notify(struct sockbuf *sb)
  * still be negative (cc > hiwat or mbcnt > mbmax).  Should detect
  * overflow and return 0.
  */
-static inline u_long
+static inline long
 sbspace(struct sockbuf *sb)
 {
 

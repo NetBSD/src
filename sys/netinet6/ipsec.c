@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.129 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.129.2.1 2008/05/16 02:25:45 yamt Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.129 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.129.2.1 2008/05/16 02:25:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3555,13 +3555,8 @@ sysctl_ipsec(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_ipsec_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[IPSEC_NSTATS];
 
-	ctx.ctx_stat = ipsecstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = IPSEC_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipsecstat_percpu, IPSEC_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
@@ -3712,13 +3707,8 @@ u_char	ipsec6ctlermap[PRC_NCMDS] = {
 static int
 sysctl_net_inet6_ipsec6_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[IPSEC_NSTATS];
 
-	ctx.ctx_stat = ipsec6stat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = IPSEC_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipsec6stat_percpu, IPSEC_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_ipsec6_setup,

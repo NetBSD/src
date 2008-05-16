@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.50 2008/04/24 18:39:25 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.50.2.1 2008/05/16 02:25:39 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.50 2008/04/24 18:39:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.50.2.1 2008/05/16 02:25:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,8 +559,7 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
 
@@ -589,9 +588,7 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		memcpy(mtab + mtabsz, bf, len);
 		mtabsz += len;
 
-		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 	free(bf, M_TEMP);

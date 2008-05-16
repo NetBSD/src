@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.57 2008/02/27 19:43:36 matt Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.57.4.1 2008/05/16 02:25:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.57 2008/02/27 19:43:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.57.4.1 2008/05/16 02:25:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,12 +66,15 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.57 2008/02/27 19:43:36 matt Exp 
 #include <sys/conf.h>
 #include <sys/dirent.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/cd9660/iso.h>
 #include <fs/cd9660/cd9660_extern.h>
 #include <fs/cd9660/iso_rrip.h>
 #include <fs/cd9660/cd9660_node.h>
 #include <fs/cd9660/cd9660_mount.h>
+
+MODULE(MODULE_CLASS_VFS, cd9660, NULL);
 
 MALLOC_JUSTDEFINE(M_ISOFSMNT, "ISOFS mount", "ISOFS mount structure");
 
@@ -108,11 +111,11 @@ struct vfsops cd9660_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	cd9660_vnodeopv_descs,
 	0,	/* refcount */
 	{ NULL, NULL } /* list */
 };
-VFS_ATTACH(cd9660_vfsops);
 
 static const struct genfs_ops cd9660_genfsops = {
 	.gop_size = genfs_size,
@@ -128,6 +131,20 @@ static const struct genfs_ops cd9660_genfsops = {
 static int iso_makemp(struct iso_mnt *isomp, struct buf *bp, int *ea_len);
 static int iso_mountfs(struct vnode *devvp, struct mount *mp,
 		struct lwp *l, struct iso_args *argp);
+
+static int
+cd9660_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&cd9660_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&cd9660_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 int
 cd9660_mountroot(void)
@@ -148,7 +165,7 @@ cd9660_mountroot(void)
 
 	args.flags = ISOFSMNT_ROOT;
 	if ((error = iso_mountfs(rootvp, mp, l, &args)) != 0) {
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -156,7 +173,7 @@ cd9660_mountroot(void)
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 	(void)cd9660_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (0);
 }
 

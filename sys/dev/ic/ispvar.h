@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.68 2008/03/11 05:33:30 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.68.4.1 2008/05/16 02:24:04 yamt Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -106,7 +106,9 @@ struct ispmdvec {
  * Overall parameters
  */
 #define	MAX_TARGETS		16
+#ifndef	MAX_FC_TARG
 #define	MAX_FC_TARG		512
+#endif
 #define	ISP_MAX_TARGETS(isp)	(IS_FC(isp)? MAX_FC_TARG : MAX_TARGETS)
 #define	ISP_MAX_LUNS(isp)	(isp)->isp_maxluns
 
@@ -561,7 +563,7 @@ struct ispsoftc {
 	volatile uint32_t	:	8,
 				:	2,
 		isp_dead	:	1,
-		isp_in_intr	:	1,
+				:	1,
 		isp_mboxbsy	:	1,	/* mailbox command active */
 		isp_state	:	3,
 		isp_nactive	:	16;	/* how many commands active */
@@ -737,6 +739,7 @@ struct ispsoftc {
 #define	ISP_HA_FC_2400		0x60
 
 #define	IS_SCSI(isp)	(isp->isp_type & ISP_HA_SCSI)
+#define	IS_1020(isp)	(isp->isp_type < ISP_HA_SCSI_1240)
 #define	IS_1240(isp)	(isp->isp_type == ISP_HA_SCSI_1240)
 #define	IS_1080(isp)	(isp->isp_type == ISP_HA_SCSI_1080)
 #define	IS_1280(isp)	(isp->isp_type == ISP_HA_SCSI_1280)
@@ -966,6 +969,7 @@ void isp_async(ispsoftc_t *, ispasync_t, ...);
  *	MBOX_RELEASE(ispsoftc_t *)		release lock on mailbox regs
  *
  *	FC_SCRATCH_ACQUIRE(ispsoftc_t *, chan)	acquire lock on FC scratch area
+ *						return -1 if you cannot
  *	FC_SCRATCH_RELEASE(ispsoftc_t *, chan)	acquire lock on FC scratch area
  *
  *	SCSI_GOOD	SCSI 'Good' Status
@@ -1007,10 +1011,6 @@ void isp_async(ispsoftc_t *, ispasync_t, ...);
  *	XS_INITERR(xs)	initialize error state
  *
  *	XS_SAVE_SENSE(xs, sp, len)	save sense data
- *
- *	XS_SET_STATE_STAT(isp, sp, xs)	platform dependent interpreter of
- *					response queue entry status bits
- *
  *
  *	DEFAULT_FRAMESIZE(ispsoftc_t *)		Default Frame Size
  *	DEFAULT_EXEC_THROTTLE(ispsoftc_t *)	Default Execution Throttle

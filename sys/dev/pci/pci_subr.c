@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.74 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.74.4.1 2008/05/16 02:24:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.1 2008/05/16 02:24:44 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -792,7 +792,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("PCI Express Endpoint device\n");
 		break;
 	case 0x1:
-		printf("Legcay PCI Express Endpoint device\n");
+		printf("Legacy PCI Express Endpoint device\n");
 		break;
 	case 0x4:
 		printf("Root Port of PCI Express Root Complex\n");

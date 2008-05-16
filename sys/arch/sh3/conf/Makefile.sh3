@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.25 2008/03/01 14:01:44 joerg Exp $
+#	$NetBSD: Makefile.sh3,v 1.25.4.1 2008/05/16 02:23:06 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -34,8 +34,8 @@ GENASSYM_CONF=	${SH3}/sh3/genassym.cf
 ##
 CPPFLAGS+=	-D${MACHINE}
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-# pkgsrc/cross/sh* dies with -O2, use -O1 for now
-COPTS?=		-O1
+# -O2 is too -falign-* zealous for low-memory sh3 machines
+COPTS?=		-Os -freorder-blocks
 
 ##
 ## (3) libkern and compat

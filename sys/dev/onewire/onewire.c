@@ -1,4 +1,4 @@
-/* $NetBSD: onewire.c,v 1.8 2008/04/08 20:14:02 cegger Exp $ */
+/* $NetBSD: onewire.c,v 1.8.4.1 2008/05/16 02:24:42 yamt Exp $ */
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.8 2008/04/08 20:14:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.8.4.1 2008/05/16 02:24:42 yamt Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.8 2008/04/08 20:14:02 cegger Exp $");
 #define ONEWIRE_SCANTIME	3
 
 struct onewire_softc {
-	struct device			sc_dev;
+	device_t			sc_dev;
 
 	struct onewire_bus *		sc_bus;
 	krwlock_t			sc_rwlock;
@@ -61,21 +61,21 @@ struct onewire_softc {
 
 struct onewire_device {
 	TAILQ_ENTRY(onewire_device)	d_list;
-	struct device *			d_dev;
+	device_t			d_dev;
 	u_int64_t			d_rom;
 	int				d_present;
 };
 
-int	onewire_match(struct device *, struct cfdata *, void *);
-void	onewire_attach(struct device *, struct device *, void *);
-int	onewire_detach(struct device *, int);
-int	onewire_activate(struct device *, enum devact);
-int	onewire_print(void *, const char *);
+static int	onewire_match(device_t, cfdata_t, void *);
+static void	onewire_attach(device_t, device_t, void *);
+static int	onewire_detach(device_t, int);
+static int	onewire_activate(device_t, enum devact);
+int		onewire_print(void *, const char *);
 
-void	onewire_thread(void *);
-void	onewire_scan(struct onewire_softc *);
+static void	onewire_thread(void *);
+static void	onewire_scan(struct onewire_softc *);
 
-CFATTACH_DECL(onewire, sizeof(struct onewire_softc),
+CFATTACH_DECL_NEW(onewire, sizeof(struct onewire_softc),
 	onewire_match, onewire_attach, onewire_detach, onewire_activate);
 
 const struct cdevsw onewire_cdevsw = {
@@ -85,18 +85,19 @@ const struct cdevsw onewire_cdevsw = {
 
 extern struct cfdriver onewire_cd;
 
-int
-onewire_match(struct device *parent, struct cfdata *cf, void *aux)
+static int
+onewire_match(device_t parent, cfdata_t cf, void *aux)
 {
 	return 1;
 }
 
-void
-onewire_attach(struct device *parent, struct device *self, void *aux)
+static void
+onewire_attach(device_t parent, device_t self, void *aux)
 {
 	struct onewire_softc *sc = device_private(self);
 	struct onewirebus_attach_args *oba = aux;
 
+	sc->sc_dev = self;
 	sc->sc_bus = oba->oba_bus;
 	rw_init(&sc->sc_rwlock);
 	TAILQ_INIT(&sc->sc_devs);
@@ -105,12 +106,12 @@ onewire_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	if (kthread_create(PRI_NONE, 0, NULL, onewire_thread, sc,
-	    &sc->sc_thread, "%s", device_xname(&sc->sc_dev)) != 0)
-		aprint_error_dev(&sc->sc_dev, "can't create kernel thread\n");
+	    &sc->sc_thread, "%s", device_xname(self)) != 0)
+		aprint_error_dev(self, "can't create kernel thread\n");
 }
 
-int
-onewire_detach(struct device *self, int flags)
+static int
+onewire_detach(device_t self, int flags)
 {
 	struct onewire_softc *sc = device_private(self);
 	int rv;
@@ -130,8 +131,8 @@ onewire_detach(struct device *self, int flags)
 	return rv;
 }
 
-int
-onewire_activate(struct device *self, enum devact act)
+static int
+onewire_activate(device_t self, enum devact act)
 {
 	struct onewire_softc *sc = device_private(self);
 	int rv = 0;
@@ -302,7 +303,7 @@ onewire_matchrom(void *arg, u_int64_t rom)
 		onewire_write_byte(arg, (rom >> (i * 8)) & 0xff);
 }
 
-void
+static void
 onewire_thread(void *arg)
 {
 	struct onewire_softc *sc = arg;
@@ -316,7 +317,8 @@ onewire_thread(void *arg)
 	wakeup(&sc->sc_dying);
 	kthread_exit(0);
 }
-void
+
+static void
 onewire_scan(struct onewire_softc *sc)
 {
 	struct onewire_device *d, *next, *nd;
@@ -342,7 +344,7 @@ onewire_scan(struct onewire_softc *sc)
 		onewire_lock(sc);
 		if (onewire_reset(sc) != 0) {
 			DPRINTF(("%s: scan: no presence pulse\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			onewire_unlock(sc);
 			break;
 		}
@@ -382,7 +384,7 @@ onewire_scan(struct onewire_softc *sc)
 			default:
 				DPRINTF(("%s: scan: triplet error 0x%x, "
 				    "step %d\n",
-				    device_xname(&sc->sc_dev), rv, i));
+				    device_xname(sc->sc_dev), rv, i));
 				onewire_unlock(sc);
 				return;
 			}
@@ -420,7 +422,7 @@ onewire_scan(struct onewire_softc *sc)
 			bzero(&oa, sizeof(oa));
 			oa.oa_onewire = sc;
 			oa.oa_rom = rom;
-			if ((dev = config_found(&sc->sc_dev, &oa,
+			if ((dev = config_found(sc->sc_dev, &oa,
 			    onewire_print)) == NULL)
 				continue;
 

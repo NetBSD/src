@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.56 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.56.2.1 2008/05/16 02:25:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -65,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.56 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.56.2.1 2008/05/16 02:25:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,11 +189,9 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		else if (IOCGROUP(cmd) == 'r')
 			error = rtioctl(cmd, data, curlwp);
 		else {
-			solock(so);
 			error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 			    (struct mbuf *)cmd, (struct mbuf *)data, NULL,
 			     curlwp);
-			sounlock(so);
 		}
 		KERNEL_UNLOCK_ONE(NULL);
 		break;

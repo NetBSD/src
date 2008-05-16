@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.12 2008/01/05 00:31:55 ad Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.12.10.1 2008/05/16 02:22:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.12 2008/01/05 00:31:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.12.10.1 2008/05/16 02:22:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -69,79 +69,74 @@ struct aau321_softc {
 };
 
 static struct iopaau_function aau321_func_zero = {
-	iopaau_func_zero_setup,
-	NULL,
+	.af_setup = iopaau_func_zero_setup,
 };
 
 static struct iopaau_function aau321_func_fill8 = {
-	iopaau_func_fill8_setup,
-	NULL,
+	.af_setup = iopaau_func_fill8_setup,
 };
 
 static struct iopaau_function aau321_func_xor_1_4 = {
-	iopaau_func_xor_setup,
-	NULL,
+	.af_setup = iopaau_func_xor_setup,
 };
 
 static struct iopaau_function aau321_func_xor_5_8 = {
-	iopaau_func_xor_setup,
-	NULL,
+	.af_setup = iopaau_func_xor_setup,
 };
 
 static const struct dmover_algdesc aau321_algdescs[] = {
 	{
-	  DMOVER_FUNC_ZERO,
-	  &aau321_func_zero,
-	  0
+	  .dad_name = DMOVER_FUNC_ZERO,
+	  .dad_data = &aau321_func_zero,
+	  .dad_ninputs = 0
 	},
 	{
-	  DMOVER_FUNC_FILL8,
-	  &aau321_func_fill8,
-	  0
+	  .dad_name = DMOVER_FUNC_FILL8,
+	  .dad_data = &aau321_func_fill8,
+	  .dad_ninputs = 0
 	},
 	{
-	  DMOVER_FUNC_COPY,
-	  &aau321_func_xor_1_4,
-	  1
+	  .dad_name = DMOVER_FUNC_COPY,
+	  .dad_data = &aau321_func_xor_1_4,
+	  .dad_ninputs = 1
 	},
 	{
-	  DMOVER_FUNC_XOR2,
-	  &aau321_func_xor_1_4,
-	  2
+	  .dad_name = DMOVER_FUNC_XOR2,
+	  .dad_data = &aau321_func_xor_1_4,
+	  .dad_ninputs = 2
 	},
 	{
-	  DMOVER_FUNC_XOR3,
-	  &aau321_func_xor_1_4,
-	  3
+	  .dad_name = DMOVER_FUNC_XOR3,
+	  .dad_data = &aau321_func_xor_1_4,
+	  .dad_ninputs = 3
 	},
 	{
-	  DMOVER_FUNC_XOR4,
-	  &aau321_func_xor_1_4,
-	  4
+	  .dad_name = DMOVER_FUNC_XOR4,
+	  .dad_data = &aau321_func_xor_1_4,
+	  .dad_ninputs = 4
 	},
 	{
-	  DMOVER_FUNC_XOR5,
-	  &aau321_func_xor_5_8,
+	  .dad_name = DMOVER_FUNC_XOR5,
+	  .dad_data = &aau321_func_xor_5_8,
 	  5
 	},
 	{
-	  DMOVER_FUNC_XOR6,
-	  &aau321_func_xor_5_8,
-	  6
+	  .dad_name = DMOVER_FUNC_XOR6,
+	  .dad_data = &aau321_func_xor_5_8,
+	  .dad_ninputs = 6
 	},
 	{
-	  DMOVER_FUNC_XOR7,
-	  &aau321_func_xor_5_8,
-	  7
+	  .dad_name = DMOVER_FUNC_XOR7,
+	  .dad_data = &aau321_func_xor_5_8,
+	  .dad_ninputs = 7
 	},
 	{
-	  DMOVER_FUNC_XOR8,
-	  &aau321_func_xor_5_8,
-	  8
+	  .dad_name = DMOVER_FUNC_XOR8,
+	  .dad_data = &aau321_func_xor_5_8,
+	  .dad_ninputs = 8
 	},
 };
-#define	AAU321_ALGDESC_COUNT \
-	(sizeof(aau321_algdescs) / sizeof(aau321_algdescs[0]))
+#define	AAU321_ALGDESC_COUNT	__arraycount(aau321_algdescs)
 
 static int
 aau321_match(struct device *parent, struct cfdata *match, void *aux)
@@ -164,6 +159,14 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	KASSERT(iopaau_desc_4_cache != NULL);
+	aau321_func_zero.af_desc_cache = iopaau_desc_4_cache;
+	aau321_func_fill8.af_desc_cache = iopaau_desc_4_cache;
+	aau321_func_xor_1_4.af_desc_cache = iopaau_desc_4_cache;
+
+	KASSERT(iopaau_desc_8_cache != NULL);
+	aau321_func_xor_5_8.af_desc_cache = iopaau_desc_8_cache;
 
 	sc->sc_st = ia->ia_st;
 	error = bus_space_subregion(sc->sc_st, ia->ia_sh,

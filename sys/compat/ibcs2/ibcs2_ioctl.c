@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.43 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.43.4.1 2008/05/16 02:23:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.43 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.43.4.1 2008/05/16 02:23:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,12 +543,12 @@ ibcs2_sys_gtty(struct lwp *l, const struct ibcs2_sys_gtty_args *uap, register_t 
 	int error;
 
 	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL) {
-		DPRINTF(("ibcs2_sys_gtty(%d): bad fd %d ", p->p_pid,
+		DPRINTF(("ibcs2_sys_gtty(%d): bad fd %d ", curproc->p_pid,
 			 SCARG(uap, fd)));
 		return EBADF;
 	}
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
-		DPRINTF(("ibcs2_sys_gtty(%d): bad fp flag ", p->p_pid));
+		DPRINTF(("ibcs2_sys_gtty(%d): bad fp flag ", curproc->p_pid));
 		error = EBADF;
 		goto out;
 	}

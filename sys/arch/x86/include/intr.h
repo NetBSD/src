@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.31 2008/01/21 02:56:14 dyoung Exp $	*/
+/*	$NetBSD: intr.h,v 1.31.10.1 2008/05/16 02:23:28 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,6 +33,7 @@
 #define _X86_INTR_H_
 
 #define	__HAVE_FAST_SOFTINTS
+#define	__HAVE_PREEMPTION
 
 #include <machine/intrdefs.h>
 
@@ -155,6 +149,8 @@ splraiseipl(ipl_cookie_t icookie)
  */
 
 void Xsoftintr(void);
+void Xpreemptrecurse(void);
+void Xpreemptresume(void);
 
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
@@ -169,10 +165,6 @@ void *nmi_establish(int (*)(void *), void *);
 bool nmi_disestablish(void *);
 int nmi_dispatch(void);
 int x86_nmi(void);
-void intr_calculatemasks(struct cpu_info *);
-int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *);
-int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
-		       int *);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
 void intr_disestablish(struct intrhand *);
 void intr_add_pcibus(struct pcibus_attach_args *);

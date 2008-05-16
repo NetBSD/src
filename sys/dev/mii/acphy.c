@@ -1,4 +1,4 @@
-/*	$NetBSD: acphy.c,v 1.21 2008/04/08 20:10:20 cegger Exp $	*/
+/*	$NetBSD: acphy.c,v 1.21.4.1 2008/05/16 02:24:36 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.21 2008/04/08 20:10:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.21.4.1 2008/05/16 02:24:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: acphy.c,v 1.21 2008/04/08 20:10:20 cegger Exp $");
 
 #include <dev/mii/acphyreg.h>
 
-static int	acphymatch(struct device *, struct cfdata *, void *);
-static void	acphyattach(struct device *, struct device *, void *);
+static int	acphymatch(device_t, cfdata_t, void *);
+static void	acphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(acphy, sizeof(struct mii_softc),
+CFATTACH_DECL_NEW(acphy, sizeof(struct mii_softc),
     acphymatch, acphyattach, mii_phy_detach, mii_phy_activate);
 
 static int	acphy_service(struct mii_softc *, struct mii_data *, int);
@@ -90,8 +90,7 @@ static const struct mii_phydesc acphys[] = {
 };
 
 static int
-acphymatch(struct device *parent, struct cfdata *match,
-    void *aux)
+acphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -102,7 +101,7 @@ acphymatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-acphyattach(struct device *parent, struct device *self, void *aux)
+acphyattach(device_t parent, device_t self, void *aux)
 {
 	struct mii_softc *sc = device_private(self);
 	struct mii_attach_args *ma = aux;
@@ -113,6 +112,7 @@ acphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &acphy_funcs;
@@ -128,7 +128,7 @@ acphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	aprint_normal_dev(&sc->mii_dev, "");
+	aprint_normal_dev(sc->mii_dev, "");
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 	if (sc->mii_flags & MIIF_HAVEFIBER) {

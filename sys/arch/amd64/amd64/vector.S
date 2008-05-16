@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.19 2008/01/01 19:49:06 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.19.10.1 2008/05/16 02:21:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,13 +50,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -165,12 +158,17 @@ IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
 IDTVEC(trap07)
 	pushq	$0			# dummy error code
-	pushq	$T_DNA
+	pushq	$T_ASTFLT
 	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+#ifdef XEN
   	STI(si)
+#endif
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
-	INTRFASTEXIT
+	jmp	.Lalltraps_checkusr
 IDTVEC(trap08)
 	TRAP(T_DOUBLEFLT)
 IDTVEC(trap09)
@@ -187,7 +185,13 @@ IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
 IDTVEC(intrspurious)
 IDTVEC(trap0f)
-	iretq
+	pushq	$0			# dummy error code
+	pushq	$T_ASTFLT
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+	jmp	.Lalltraps_checkusr
 IDTVEC(trap10)
 	ZTRAP(T_ARITHTRAP)
 IDTVEC(trap11)
@@ -263,6 +267,7 @@ calltrap:
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
+.Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jnz	.Lalltraps_checkast
 	jmp	6f
@@ -359,7 +364,6 @@ IDTVEC(resume_lapic_ipi)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_IPI),CPUVAR(IPENDING)
-	sti
 	INTRFASTEXIT
 
 #if defined(DDB)
@@ -408,7 +412,6 @@ IDTVEC(resume_lapic_ltimer)
 	jmp	_C_LABEL(Xdoreti)
 2:
 	orl	$(1 << LIR_TIMER),CPUVAR(IPENDING)
-	sti
 	INTRFASTEXIT
 #endif /* NLAPIC > 0 */
 
@@ -600,12 +603,10 @@ IDTVEC(intr_/**/name/**/num)						;\
 	orl     $(1 << num),CPUVAR(IPENDING)				;\
 	level_mask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	INTRFASTEXIT							;\
 9:									\
 	unmask(num)							;\
 	late_ack(num)							;\
-	sti								;\
 	INTRFASTEXIT
 
 #define ICUADDR IO_ICU1

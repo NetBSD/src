@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.142 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.142.2.1 2008/05/16 02:25:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.142 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.142.2.1 2008/05/16 02:25:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,7 +461,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		if (p->p_tracep != ktd)
+		if ((p->p_flag & PK_MARKER) != 0 || p->p_tracep != ktd)
 			continue;
 		mutex_enter(p->p_lock);
 		mutex_enter(&ktrace_lock);

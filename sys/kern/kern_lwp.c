@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.106 2008/04/27 11:39:20 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.106.2.1 2008/05/16 02:25:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -205,7 +198,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106 2008/04/27 11:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.106.2.1 2008/05/16 02:25:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -272,7 +265,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 	 * If the current LWP has been told to exit, we must not suspend anyone
 	 * else or deadlock could occur.  We won't return to userspace.
 	 */
-	if ((curl->l_stat & (LW_WEXIT | LW_WCORE)) != 0) {
+	if ((curl->l_flag & (LW_WEXIT | LW_WCORE)) != 0) {
 		lwp_unlock(t);
 		return (EDEADLK);
 	}
@@ -544,6 +537,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	struct lwp *l2, *isfree;
 	turnstile_t *ts;
 
+	KASSERT(l1 == curlwp || l1->l_proc == &proc0);
+
 	/*
 	 * First off, reap any detached LWP waiting to be collected.
 	 * We can re-use its LWP structure and turnstile.
@@ -579,16 +574,20 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
-	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
-	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	l2->l_pflag = LP_MPSAFE;
 	l2->l_fd = p2->p_fd;
+	TAILQ_INIT(&l2->l_ld_locks);
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/* Mark it as a system LWP and not a candidate for swapping */
 		l2->l_flag |= LW_SYSTEM;
 	}
+
+	kpreempt_disable();
+	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
+	l2->l_cpu = l1->l_cpu;
+	kpreempt_enable();
 
 	lwp_initspecific(l2);
 	sched_lwp_fork(l1, l2);
@@ -660,6 +659,7 @@ void
 lwp_startup(struct lwp *prev, struct lwp *new)
 {
 
+	KASSERT(kpreempt_disabled());
 	if (prev != NULL) {
 		/*
 		 * Normalize the count of the spin-mutexes, it was
@@ -670,9 +670,11 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 		membar_exit();
 		prev->l_ctxswtch = 0;
 	}
-	pmap_activate(new);
+	KPREEMPT_DISABLE(new);
 	spl0();
+	pmap_activate(new);
 	LOCKDEBUG_BARRIER(NULL, 0);
+	KPREEMPT_ENABLE(new);
 	if ((new->l_pflag & LP_MPSAFE) == 0) {
 		KERNEL_LOCK(1, new);
 	}
@@ -754,7 +756,6 @@ lwp_exit(struct lwp *l)
 	 * before we can do that, we need to free any other dead, deatched
 	 * LWP waiting to meet its maker.
 	 */
-	KPREEMPT_DISABLE();
 	mutex_enter(p->p_lock);
 	lwp_drainrefs(l);
 
@@ -1233,7 +1234,7 @@ lwp_setlock(struct lwp *l, kmutex_t *new)
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-	membar_producer();
+	membar_exit();
 	l->l_mutex = new;
 }
 
@@ -1249,7 +1250,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
-	membar_producer();
+	membar_exit();
 	l->l_mutex = new;
 	mutex_spin_exit(old);
 }
@@ -1653,7 +1654,9 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	*uaddr = lcp->lcp_uaddr + offset * sizeof(lwpctl_t);
 	mutex_exit(&lp->lp_lock);
 
+	KPREEMPT_DISABLE(l);
 	l->l_lwpctl->lc_curcpu = (short)curcpu()->ci_data.cpu_index;
+	KPREEMPT_ENABLE(l);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: setstack.S,v 1.3 2008/01/19 12:30:51 chris Exp $	*/
+/*	$NetBSD: setstack.S,v 1.3.10.1 2008/05/16 02:21:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -49,6 +49,8 @@
 
 #include <machine/cpu.h>
 #include <machine/asm.h>
+
+	RCSID("$NetBSD: setstack.S,v 1.3.10.1 2008/05/16 02:21:56 yamt Exp $")
 
 /* To set the stack pointer for a particular mode we must switch
  * to that mode update the banked r13 and then switch back.

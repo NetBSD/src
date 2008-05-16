@@ -1,4 +1,4 @@
-# $NetBSD: std.amd64,v 1.4 2008/01/25 21:12:11 joerg Exp $
+# $NetBSD: std.amd64,v 1.4.10.1 2008/05/16 02:21:51 yamt Exp $
 #
 # standard, required NetBSD/amd64 'options'
 
@@ -9,3 +9,9 @@ options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	MTRR
+options		MULTIPROCESSOR
+
+mainbus0 at root
+cpu* at mainbus?
+ioapic* at mainbus? apid ?
+

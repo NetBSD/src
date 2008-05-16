@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.629 2008/04/24 18:39:20 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.629.2.1 2008/05/16 02:22:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629 2008/04/24 18:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.1 2008/05/16 02:22:34 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -308,6 +301,7 @@ extern int time_adjusted;
 
 struct bootinfo	bootinfo;
 int *esym;
+int *eblob;
 extern int boothowto;
 
 #ifndef XEN
@@ -388,6 +382,7 @@ native_loader(int bl_boothowto, int bl_bootdev,
 		size_t i;
 		uint8_t *data;
 		struct bootinfo *bidest;
+		struct btinfo_modulelist *bi;
 
 		bidest = RELOC(struct bootinfo *, &bootinfo);
 
@@ -403,6 +398,15 @@ native_loader(int bl_boothowto, int bl_bootdev,
 				break;
 
 			memcpy(data, bc, bc->len);
+			/*
+			 * If any modules were loaded, record where they
+			 * end.  We'll need to skip over them.
+			 */
+			bi = (struct btinfo_modulelist *)data;
+			if (bi->common.type == BTINFO_MODULELIST) {
+				*RELOC(int **, &eblob) =
+				    (int *)(bi->endpa + KERNBASE);
+			}
 			data += bc->len;
 		}
 		bidest->bi_nentries = i;
@@ -656,6 +660,7 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
  */
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
+	extern uint64_t tsc_freq;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -719,6 +724,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sparse_dump", NULL,
 		       NULL, 0, &sparse_dump, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "tsc_freq", NULL,
+		       NULL, 0, &tsc_freq, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
@@ -1374,14 +1384,13 @@ init386(paddr_t first_avail)
 	extern u_char biostramp_image[];
 #endif
 
-
 #ifdef XEN
 	XENPRINTK(("HYPERVISOR_shared_info %p (%x)\n", HYPERVISOR_shared_info,
 	    xen_start_info.shared_info));
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
-	cpu_probe_features(&cpu_info_primary);
+	cpu_probe(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
@@ -1827,7 +1836,8 @@ init386(paddr_t first_avail)
 	/* exceptions */
 	for (x = 0; x < 32; x++) {
 		idt_vec_reserve(x);
-		setgate(&idt[x], IDTVEC(exceptions)[x], 0, SDT_SYS386TGT,
+		setgate(&idt[x], IDTVEC(exceptions)[x], 0,
+		    (x == 7 || x == 16) ? SDT_SYS386IGT : SDT_SYS386TGT,
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 	}
@@ -1882,23 +1892,6 @@ init386(paddr_t first_avail)
 
 	init386_ksyms();
 
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef IPKDB
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
-#ifdef KGDB
-	kgdb_port_init();
-	if (boothowto & RB_KDB) {
-		kgdb_debug_init = 1;
-		kgdb_connect(1);
-	}
-#endif
-
 #if NMCA > 0
 	/* check for MCA bus, needed to be done before ISA stuff - if
 	 * MCA is detected, ISA needs to use level triggered interrupts
@@ -1915,6 +1908,23 @@ init386(paddr_t first_avail)
 
 	splraise(IPL_IPI);
 	x86_enable_intr();
+
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef IPKDB
+	ipkdb_init();
+	if (boothowto & RB_KDB)
+		ipkdb_connect(0);
+#endif
+#ifdef KGDB
+	kgdb_port_init();
+	if (boothowto & RB_KDB) {
+		kgdb_debug_init = 1;
+		kgdb_connect(1);
+	}
+#endif
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
 		printf("warning: too little memory available; "

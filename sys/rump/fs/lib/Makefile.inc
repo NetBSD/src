@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.4 2007/10/26 10:44:27 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.4.22.1 2008/05/16 02:25:50 yamt Exp $
 #
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 NOMAN=		wizd
-MKLINT?=	no
-MKPIC?=		no
 
 WARNS?=		4
 DBG=		-O0 -g

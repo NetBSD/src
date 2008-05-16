@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.55 2008/01/19 15:04:09 chris Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.55.10.1 2008/05/16 02:21:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,9 +42,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55 2008/01/19 15:04:09 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.55.10.1 2008/05/16 02:21:55 yamt Exp $");
 
 #include "opt_md.h"
+#include "opt_cpuoptions.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
@@ -87,7 +88,12 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
+struct cpu_info cpu_info_store = {
+	.ci_cpl = IPL_HIGH,
+#ifndef PROCESS_ID_IS_CURLWP
+	.ci_curlwp = &lwp0,
+#endif
+};
 
 void *	msgbufaddr;
 extern paddr_t msgbufphys;
@@ -434,6 +440,79 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 bool
 cpu_intr_p(void)
 {
-
-	return curcpu()->ci_idepth != 0;
+	return curcpu()->ci_intr_depth != 0;
 }
+
+#ifdef __HAVE_FAST_SOFTINTS
+#if IPL_SOFTSERIAL != IPL_SOFTNET + 1
+#error IPLs are screwed up
+#endif
+#if IPL_SOFTNET != IPL_SOFTBIO + 1
+#error IPLs are screwed up
+#endif
+#if IPL_SOFTBIO != IPL_SOFTCLOCK + 1
+#error IPLs are screwed up
+#endif
+#if !(IPL_SOFTCLOCK > IPL_NONE)
+#error IPLs are screwed up
+#endif
+#define	SOFTINT2IPLMAP \
+	((IPL_SOFTSERIAL << (SOFTINT_SERIAL * 4)) | \
+	 (IPL_SOFTNET    << (SOFTINT_NET    * 4)) | \
+	 (IPL_SOFTBIO    << (SOFTINT_BIO    * 4)) | \
+	 (IPL_SOFTCLOCK  << (SOFTINT_CLOCK  * 4)))
+#define	SOFTINT2IPL(l)	((SOFTINT2IPLMAP >> ((l) * 4)) & 0x0f)
+
+/*
+ * This returns a mask of softint IPLs that be dispatch at <ipl>
+ * We want to shift 2 since we want a mask of <ipl> + 1.
+ * SOFTIPLMASK(IPL_NONE)	= 0xfffffffe
+ * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0xffffffe0
+ */
+#define	SOFTIPLMASK(ipl) ((~((2 << (ipl)) - 1)) & (15 << IPL_SOFTCLOCK))
+
+void softint_switch(lwp_t *, int);
+
+void
+softint_trigger(uintptr_t mask)
+{
+	curcpu()->ci_softints |= mask;
+}
+
+void
+softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
+{
+	lwp_t ** lp = &curcpu()->ci_softlwps[level];
+	KASSERT(*lp == NULL || *lp == l);
+	*lp = l;
+	*machdep = 1 << SOFTINT2IPL(level);
+}
+
+void
+dosoftints(void)
+{
+	struct cpu_info * const ci = curcpu();
+	const int opl = ci->ci_cpl;
+	const uint32_t softiplmask = SOFTIPLMASK(opl);
+
+	for (;;) {
+		u_int softints = ci->ci_softints & softiplmask;
+		if (softints == 0)
+			return;
+		ci->ci_cpl = IPL_HIGH;
+#define	DOSOFTINT(n) \
+		if (softints & (1 << IPL_SOFT ## n)) { \
+			ci->ci_softints &= ~(1 << IPL_SOFT ## n); \
+			softint_switch(ci->ci_softlwps[SOFTINT_ ## n], \
+			    IPL_SOFT ## n); \
+			ci->ci_cpl = opl; \
+			continue; \
+		}
+		DOSOFTINT(SERIAL);
+		DOSOFTINT(NET);
+		DOSOFTINT(BIO);
+		DOSOFTINT(CLOCK);
+		panic("dosoftints wtf (softints=%u?, ipl=%d)", softints, opl);
+	}
+}
+#endif /* __HAVE_FAST_SOFTINTS */

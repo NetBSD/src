@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_intr.h,v 1.7 2008/01/06 01:37:55 matt Exp $ */
+/*	$NetBSD: s3c24x0_intr.h,v 1.7.10.1 2008/05/16 02:22:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corporation.  All rights reserved.
@@ -43,7 +43,7 @@ extern int s3c24x0_soft_imask[];
 
 #define	get_pending_softint()	(softint_pending & soft_intr_mask)
 #define	update_softintr_mask()	\
-	(soft_intr_mask = s3c24x0_soft_imask[current_spl_level])
+	(soft_intr_mask = s3c24x0_soft_imask[curcpl()])
 #endif
 
 #define	s3c2xx0_update_hw_mask() \

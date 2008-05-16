@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.223 2008/04/17 09:52:47 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.223.4.1 2008/05/16 02:26:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223 2008/04/17 09:52:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.1 2008/05/16 02:26:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223 2008/04/17 09:52:47 hannken Exp
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -75,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223 2008/04/17 09:52:47 hannken Exp
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
+
+MODULE(MODULE_CLASS_VFS, ffs, NULL);
 
 /* how many times ffs_init() was called */
 int ffs_initcount = 0;
@@ -114,11 +117,11 @@ struct vfsops ffs_vfsops = {
 	ffs_suspendctl,
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	ffs_full_fsync,
 	ffs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(ffs_vfsops);
 
 static const struct genfs_ops ffs_genfsops = {
 	.gop_size = ffs_gop_size,
@@ -135,6 +138,20 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_vfree = ffs_vfree,
 	.uo_balloc = ffs_balloc,
 };
+
+static int
+ffs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&ffs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&ffs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 pool_cache_t ffs_inode_cache;
 pool_cache_t ffs_dinode1_cache;
@@ -164,7 +181,7 @@ ffs_mountroot(void)
 		return (error);
 	}
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -176,7 +193,7 @@ ffs_mountroot(void)
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	setrootfstime((time_t)fs->fs_time);
 	return (0);
 }

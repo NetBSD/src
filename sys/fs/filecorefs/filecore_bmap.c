@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.6 2007/10/08 18:04:03 ad Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.6.22.1 2008/05/16 02:25:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.6 2007/10/08 18:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.6.22.1 2008/05/16 02:25:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ filecore_map(fcmp, addr, lbn, bnp)
 	int error = 0;
 
 #ifdef FILECORE_DEBUG
-	printf("filecore_map(addr=%x, lbn=%x)\n", addr, lbn);
+	printf("filecore_map(addr=%x, lbn=%llx)\n", addr, (long long)lbn);
 #endif
 	frag = addr >> 8;
 	sect = (addr & 0xff) +
@@ -258,8 +258,8 @@ filecore_bread(fcmp, addr, size, cred, bp)
 	}
 	error = bread(fcmp->fc_devvp, bn, size, cred, bp);
 #ifdef FILECORE_DEBUG_BR
-	printf("bread(%p, %x, %d, CRED, %p)=%d\n", fcmp->fc_devvp, bn, size,
-	       *bp, error);
+	printf("bread(%p, %llx, %d, CRED, %p)=%d\n", fcmp->fc_devvp,
+	    (long long)bn, size, *bp, error);
 #endif
 	return error;
 }
@@ -279,8 +279,8 @@ filecore_dbread(ip, bp)
 	error = bread(ip->i_mnt->fc_devvp, ip->i_block, FILECORE_DIR_SIZE,
 		      NOCRED, bp);
 #ifdef FILECORE_DEBUG_BR
-	printf("bread(%p, %x, %d, CRED, %p)=%d\n", ip->i_mnt->fc_devvp,
-	       ip->i_block, FILECORE_DIR_SIZE, *bp, error);
+	printf("bread(%p, %llx, %d, CRED, %p)=%d\n", ip->i_mnt->fc_devvp,
+	       (long long)ip->i_block, FILECORE_DIR_SIZE, *bp, error);
 #endif
 	return error;
 }

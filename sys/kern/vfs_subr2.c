@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.19 2008/02/15 13:46:04 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.19.10.1 2008/05/16 02:25:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -82,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.19 2008/02/15 13:46:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.19.10.1 2008/05/16 02:25:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -198,15 +191,21 @@ void
 vfs_destroy(struct mount *mp)
 {
 
-	if (atomic_dec_uint_nv(&mp->mnt_refcnt) > 0) {
+	if (__predict_true(atomic_dec_uint_nv(&mp->mnt_refcnt) > 0)) {
 		return;
 	}
+
+	/*
+	 * Nothing else has visibility of the mount: we can now
+	 * free the data structures.
+	 */
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
-	rw_destroy(&mp->mnt_lock);
+	rw_destroy(&mp->mnt_unmounting);
+	mutex_destroy(&mp->mnt_updating);
+	mutex_destroy(&mp->mnt_renamelock);
 	if (mp->mnt_op != NULL) {
 		vfs_delref(mp->mnt_op);
 	}
-	mutex_destroy(&mp->mnt_renamelock);
 	kmem_free(mp, sizeof(*mp));
 }
 
@@ -723,8 +722,7 @@ printlockedvnodes(void)
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
@@ -732,8 +730,7 @@ printlockedvnodes(void)
 				vprint(NULL, vp);
 		}
 		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 }
@@ -1263,8 +1260,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	bitmask_snprintf(mp->mnt_iflag, __IMNT_FLAG_BITS, sbuf, sizeof(sbuf));
 	(*pr)("iflag = %s\n", sbuf);
 
-	(*pr)("refcnt = %d lock @ %p writer = %p\n", mp->mnt_refcnt,
-	    &mp->mnt_lock, mp->mnt_writer);
+	(*pr)("refcnt = %d unmounting @ %p updating @ %p\n", mp->mnt_refcnt,
+	    &mp->mnt_unmounting, &mp->mnt_updating);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);

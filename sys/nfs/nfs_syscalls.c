@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.134.2.1 2008/04/27 12:52:50 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.134.2.2 2008/05/16 02:25:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.134.2.1 2008/04/27 12:52:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.134.2.2 2008/05/16 02:25:49 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -353,9 +353,8 @@ nfsrv_sockalloc()
 
 	slp = kmem_alloc(sizeof(*slp), KM_SLEEP);
 	memset(slp, 0, sizeof (struct nfssvc_sock));
-	/* XXX could be IPL_SOFTNET */
-	mutex_init(&slp->ns_lock, MUTEX_DRIVER, IPL_VM);
-	mutex_init(&slp->ns_alock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&slp->ns_lock, MUTEX_DRIVER, IPL_SOFTNET);
+	mutex_init(&slp->ns_alock, MUTEX_DRIVER, IPL_SOFTNET);
 	cv_init(&slp->ns_cv, "nfsdsock");
 	TAILQ_INIT(&slp->ns_uidlruhead);
 	LIST_INIT(&slp->ns_tq);
@@ -902,8 +901,7 @@ nfsrv_init(terminating)
 	struct nfssvc_sock *slp;
 
 	if (!terminating) {
-		/* XXX could be IPL_SOFTNET */
-		mutex_init(&nfsd_lock, MUTEX_DRIVER, IPL_VM);
+		mutex_init(&nfsd_lock, MUTEX_DRIVER, IPL_SOFTNET);
 		cv_init(&nfsd_initcv, "nfsdinit");
 	}
 

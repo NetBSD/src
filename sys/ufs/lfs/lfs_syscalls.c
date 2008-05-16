@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.129 2008/04/21 11:45:34 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.129.2.1 2008/05/16 02:26:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.129 2008/04/21 11:45:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.129.2.1 2008/05/16 02:26:00 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -259,7 +252,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	cnt = blkcnt;
 
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
 	/*
@@ -510,7 +503,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	lfs_segunlock(fs);
 
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 	if (error)
 		return (error);
 	else if (do_again)
@@ -539,7 +532,7 @@ err3:
 	}
 
 	lfs_segunlock(fs);
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 #ifdef DIAGNOSTIC
 	if (numrefed != 0)
 		panic("lfs_markv: numrefed=%d", numrefed);
@@ -689,7 +682,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		return (ENOENT);
 
 	ump = VFSTOUFS(mntp);
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
 	cnt = blkcnt;
@@ -829,7 +822,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		panic("lfs_bmapv: numrefed=%d", numrefed);
 #endif
 
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 
 	return 0;
 }
@@ -867,7 +860,7 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	fs = VFSTOUFS(mntp)->um_lfs;
 	segnum = SCARG(uap, segment);
 
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
 	KERNEL_LOCK(1, NULL);
@@ -875,7 +868,7 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	error = lfs_do_segclean(fs, segnum);
 	lfs_segunlock(fs);
 	KERNEL_UNLOCK_ONE(NULL);
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 	return error;
 }
 

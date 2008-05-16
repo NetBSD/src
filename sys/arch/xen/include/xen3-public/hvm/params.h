@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
+/* $NetBSD: params.h,v 1.2.32.1 2008/05/16 02:23:30 yamt Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -51,6 +51,37 @@
 
 #define HVM_PARAM_BUFIOREQ_PFN 6
 
-#define HVM_NR_PARAMS          7
+#ifdef __ia64__
+#define HVM_PARAM_NVRAM_FD     7
+#define HVM_PARAM_VHPT_SIZE    8
+#define HVM_PARAM_BUFPIOREQ_PFN	9
+#endif
+
+/*
+ * Set mode for virtual timers (currently x86 only):
+ *  delay_for_missed_ticks (default):
+ *   Do not advance a vcpu's time beyond the correct delivery time for
+ *   interrupts that have been missed due to preemption. Deliver missed
+ *   interrupts when the vcpu is rescheduled and advance the vcpu's virtual
+ *   time stepwise for each one.
+ *  no_delay_for_missed_ticks:
+ *   As above, missed interrupts are delivered, but guest time always tracks
+ *   wallclock (i.e., real) time while doing so.
+ *  no_missed_ticks_pending:
+ *   No missed interrupts are held pending. Instead, to ensure ticks are
+ *   delivered at some non-zero rate, if we detect missed ticks then the
+ *   internal tick alarm is not disabled if the VCPU is preempted during the
+ *   next tick period.
+ *  one_missed_tick_pending:
+ *   Missed interrupts are collapsed together and delivered as one 'late tick'.
+ *   Guest time always tracks wallclock (i.e., real) time.
+ */
+#define HVM_PARAM_TIMER_MODE   10
+#define HVMPTM_delay_for_missed_ticks    0
+#define HVMPTM_no_delay_for_missed_ticks 1
+#define HVMPTM_no_missed_ticks_pending   2
+#define HVMPTM_one_missed_tick_pending   3
+
+#define HVM_NR_PARAMS          11
 
 #endif /* __XEN_PUBLIC_HVM_PARAMS_H__ */

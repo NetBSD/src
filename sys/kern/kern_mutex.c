@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.35 2008/04/22 14:46:35 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.35.2.1 2008/05/16 02:25:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -47,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.35 2008/04/22 14:46:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.35.2.1 2008/05/16 02:25:25 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -83,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.35 2008/04/22 14:46:35 ad Exp $");
 
 #define	MUTEX_WANTLOCK(mtx)					\
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
-        (uintptr_t)__builtin_return_address(0), 0)
+        (uintptr_t)__builtin_return_address(0), false, false)
 #define	MUTEX_LOCKED(mtx)					\
     LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx),			\
         (uintptr_t)__builtin_return_address(0), 0)
@@ -130,10 +123,12 @@ do {								\
 
 #define	MUTEX_SPIN_SPLRAISE(mtx)					\
 do {									\
-	struct cpu_info *x__ci = curcpu();				\
+	struct cpu_info *x__ci;						\
 	int x__cnt, s;							\
-	x__cnt = x__ci->ci_mtx_count--;					\
 	s = splraiseipl(mtx->mtx_ipl);					\
+	x__ci = curcpu();						\
+	x__cnt = x__ci->ci_mtx_count--;					\
+	__insn_barrier();						\
 	if (x__cnt == MUTEX_COUNT_BIAS)					\
 		x__ci->ci_mtx_oldspl = (s);				\
 } while (/* CONSTCOND */ 0)
@@ -660,7 +655,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *    value of the waiters flag.
 		 *
 		 * 2. The onproc check returns false: the holding LWP is
-		 *    not running.  We now have the oppertunity to check
+		 *    not running.  We now have the opportunity to check
 		 *    if mutex_exit() has blatted the modifications made
 		 *    by MUTEX_SET_WAITERS().
 		 *

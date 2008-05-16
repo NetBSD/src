@@ -1,4 +1,4 @@
-/* $NetBSD: vmx_assist.h,v 1.3 2007/10/17 19:58:31 garbled Exp $ */
+/* $NetBSD: vmx_assist.h,v 1.3.20.1 2008/05/16 02:23:30 yamt Exp $ */
 /*
  * vmx_assist.h: Context definitions for the VMXASSIST world switch.
  *
@@ -35,6 +35,10 @@
 #define VMXASSIST_OLD_CONTEXT (VMXASSIST_NEW_CONTEXT + 4)
 
 #ifndef __ASSEMBLY__
+
+#define NR_EXCEPTION_HANDLER    32
+#define NR_INTERRUPT_HANDLERS   16
+#define NR_TRAPS        (NR_EXCEPTION_HANDLER+NR_INTERRUPT_HANDLERS)
 
 union vmcs_arbytes {
     struct arbyte_fields {
@@ -99,6 +103,8 @@ struct vmx_assist_context {
     uint32_t  ldtr_limit;
     uint32_t  ldtr_base;
     union vmcs_arbytes ldtr_arbytes;
+
+    unsigned char rm_irqbase[2];
 };
 typedef struct vmx_assist_context vmx_assist_context_t;
 

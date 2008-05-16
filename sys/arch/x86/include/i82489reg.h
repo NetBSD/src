@@ -1,7 +1,7 @@
-/*	$NetBSD: i82489reg.h,v 1.4 2008/01/22 12:42:08 joerg Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.4.10.1 2008/05/16 02:23:28 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #define	LAPIC_ID		0x020		/* ID. RW */
-#	define LAPIC_ID_MASK		0x0f000000
+#	define LAPIC_ID_MASK		0xff000000
 #	define LAPIC_ID_SHIFT		24
 
 #define LAPIC_VERS		0x030		/* Version. R */
@@ -115,8 +108,6 @@
 
 
 #define LAPIC_ICRHI	0x310			/* Int. cmd. RW */
-#	define LAPIC_ID_MASK		0x0f000000
-#	define LAPIC_ID_SHIFT		24
 
 #define LAPIC_LVTT	0x320			/* Loc.vec.(timer) RW */
 #	define LAPIC_LVTT_VEC_MASK	0x000000ff
@@ -151,3 +142,13 @@
 #define LAPIC_BASE		0xfee00000
 
 #define LAPIC_IRQ_MASK(i)	(1 << ((i) + 1))
+
+/*
+ * Model specific registers
+ */
+
+#define	LAPIC_MSR	0x001b
+#	define	LAPIC_MSR_BSP		0x00000100	/* boot processor */
+#	define	LAPIC_MSR_ENABLE	0x00000800	/* software enable */
+#	define	LAPIC_MSR_ADDR		0xfffff000	/* physical address */
+

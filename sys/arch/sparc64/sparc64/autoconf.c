@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.154 2008/04/21 21:00:23 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.154.2.1 2008/05/16 02:23:15 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154 2008/04/21 21:00:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154.2.1 2008/05/16 02:23:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -848,7 +848,8 @@ device_register(struct device *dev, void *aux)
 		ofnode = PCITAG_NODE(pa->pa_tag);
 		device_setofnode(dev, ofnode);
 		dev_path_exact_match(dev, ofnode);
-	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")) {
+	} else if (device_is_a(busdev, "sbus") || device_is_a(busdev, "dma")
+	    || device_is_a(busdev, "ledma")) {
 		struct sbus_attach_args *sa = aux;
 
 		ofnode = sa->sa_node;

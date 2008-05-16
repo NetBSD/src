@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.48 2008/03/27 12:04:43 jmcneill Exp $ */
+/* $NetBSD: esa.c,v 1.48.4.1 2008/05/16 02:24:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.48 2008/03/27 12:04:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.48.4.1 2008/05/16 02:24:43 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -853,11 +853,14 @@ esa_intr(void *hdl)
 		aprint_normal_dev(sc->sc_dev, "hardware volume interrupt\n");
 		event = bus_space_read_1(iot, ioh, ESA_HW_VOL_COUNTER_MASTER);
 		switch(event) {
-		case 0x99:
-		case 0xaa:
-		case 0x66:
-		case 0x88:
-			aprint_normal_dev(sc->sc_dev, "esa_intr: FIXME\n");
+		case 0xaa:	/* volume up */
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
+			break;
+		case 0x66:	/* volume down */
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
+			break;
+		case 0x88:	/* mute */
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_TOGGLE);
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,

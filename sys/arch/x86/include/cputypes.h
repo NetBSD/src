@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.1 2007/01/01 20:56:59 ad Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.1.56.1 2008/05/16 02:23:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -61,13 +61,13 @@
  * CPU vendors
  */
 
-#define CPUVENDOR_UNKNOWN	-1
-#define CPUVENDOR_INTEL		0
-#define CPUVENDOR_CYRIX		1
-#define CPUVENDOR_NEXGEN	2
-#define CPUVENDOR_AMD		3
-#define CPUVENDOR_IDT		4
-#define CPUVENDOR_TRANSMETA	5
+#define CPUVENDOR_UNKNOWN	0
+#define CPUVENDOR_INTEL		1
+#define CPUVENDOR_CYRIX		2	
+#define CPUVENDOR_NEXGEN	3
+#define CPUVENDOR_AMD		4
+#define CPUVENDOR_IDT		5
+#define CPUVENDOR_TRANSMETA	6
 
 /*
  * Some other defines, dealing with values returned by cpuid.

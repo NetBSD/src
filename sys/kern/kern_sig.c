@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.279 2008/04/25 11:24:11 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.279.2.1 2008/05/16 02:25:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -73,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.279 2008/04/25 11:24:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.279.2.1 2008/05/16 02:25:25 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -784,7 +777,8 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 		 * broadcast
 		 */
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM || p == cp)
+			if (p->p_pid <= 1 || p == cp ||
+			    p->p_flag & (PK_SYSTEM|PK_MARKER))
 				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_authorize_process(pc,
@@ -1891,9 +1885,15 @@ sigexit(struct lwp *l, int signo)
 		lwp_unlock(l);
 		mutex_exit(p->p_lock);
 		lwp_userret(l);
-#ifdef DIAGNOSTIC
-		panic("sigexit");
-#endif
+		panic("sigexit 1");
+		/* NOTREACHED */
+	}
+
+	/* If process is already on the way out, then bail now. */
+	if ((p->p_sflag & PS_WEXIT) != 0) {
+		mutex_exit(p->p_lock);
+		lwp_exit(l);
+		panic("sigexit 2");
 		/* NOTREACHED */
 	}
 
@@ -1932,9 +1932,9 @@ sigexit(struct lwp *l, int signo)
 	exitsig = signo;
 	p->p_acflag |= AXSIG;
 	p->p_sigctx.ps_signo = signo;
-	mutex_exit(p->p_lock);
 
 	if (docore) {
+		mutex_exit(p->p_lock);
 		if ((error = coredump(l, NULL)) == 0)
 			exitsig |= WCOREFLAG;
 
@@ -1953,10 +1953,9 @@ sigexit(struct lwp *l, int signo)
 #ifdef PAX_SEGVGUARD
 		pax_segvguard(l, p->p_textvp, p->p_comm, true);
 #endif /* PAX_SEGVGUARD */
+		/* Acquire the sched state mutex.  exit1() will release it. */
+		mutex_enter(p->p_lock);
 	}
-
-	/* Acquire the sched state mutex.  exit1() will release it. */
-	mutex_enter(p->p_lock);
 
 	/* No longer dumping core. */
 	p->p_sflag &= ~PS_WCORE;
@@ -2043,6 +2042,8 @@ proc_stop_callout(void *cookie)
 
 		mutex_enter(proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
+			if ((p->p_flag & PK_MARKER) != 0)
+				continue;
 			mutex_enter(p->p_lock);
 
 			if ((p->p_sflag & PS_STOPPING) == 0) {

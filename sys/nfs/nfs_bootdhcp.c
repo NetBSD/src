@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.38 2008/04/24 11:38:39 ad Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.38.2.1 2008/05/16 02:25:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -51,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.38 2008/04/24 11:38:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.38.2.1 2008/05/16 02:25:49 yamt Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -331,7 +324,7 @@ bootpcheck(m, context)
 		return (-1);
 	}
 	if (m->m_pkthdr.len > BOOTP_SIZE_MAX) {
-		DPRINTF(("bootpcheck: long packet %d > %d\n", m->m_pkthdr.len,
+		DPRINTF(("Bootpcheck: long packet %d > %d\n", m->m_pkthdr.len,
 		    BOOTP_SIZE_MAX));
 		return (-1);
 	}
@@ -359,12 +352,19 @@ bootpcheck(m, context)
 	}
 	if (memcmp(bootp->bp_chaddr, bpc->haddr, bpc->halen)) {
 #ifdef DEBUG_NFS_BOOT_DHCP
-		char bp_chaddr[3 * bpc->halen], haddr[3 * bpc->halen];
-#endif
+		char *bp_chaddr, *haddr;
+
+		bp_chaddr = malloc(3 * bpc->halen, M_TEMP, M_WAITOK);
+		haddr     = malloc(3 * bpc->halen, M_TEMP, M_WAITOK);
+
 		DPRINTF(("bootpcheck: incorrect hwaddr %s != %s\n",
-		    ether_snprintf(bp_chaddr, sizeof(bp_chaddr),
+		    ether_snprintf(bp_chaddr, 3 * bpc->halen,
 		    bootp->bp_chaddr),
-		    ether_snprintf(haddr, sizeof(haddr), bpc->haddr)));
+		    ether_snprintf(haddr, 3 * bpc->halen, bpc->haddr)));
+
+		free(bp_chaddr, M_TEMP);
+		free(haddr, M_TEMP);
+#endif
 		return (-1);
 	}
 	if (bootp->bp_xid != bpc->xid) {

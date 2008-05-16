@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.335 2008/04/10 06:53:12 dyoung Exp $
+#	$NetBSD: files.i386,v 1.335.4.1 2008/05/16 02:22:33 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -81,7 +81,6 @@ file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
-file	arch/i386/i386/identcpu.c
 file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr

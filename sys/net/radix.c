@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.38 2007/07/12 04:28:59 dyoung Exp $	*/
+/*	$NetBSD: radix.c,v 1.38.32.1 2008/05/16 02:25:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.38 2007/07/12 04:28:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.38.32.1 2008/05/16 02:25:41 yamt Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -495,9 +495,9 @@ rn_addmask(
 	if (mlen <= skip)
 		return mask_rnhead->rnh_nodes;
 	if (skip > 1)
-		Bcopy(rn_ones + 1, addmask_key + 1, skip - 1);
+		memmove(addmask_key + 1, rn_ones + 1, skip - 1);
 	if ((m0 = mlen) > skip)
-		Bcopy(netmask + skip, addmask_key + skip, mlen - skip);
+		memmove(addmask_key + skip, netmask + skip, mlen - skip);
 	/*
 	 * Trim trailing zeroes.
 	 */
@@ -510,19 +510,19 @@ rn_addmask(
 		return mask_rnhead->rnh_nodes;
 	}
 	if (m0 < last_zeroed)
-		Bzero(addmask_key + m0, last_zeroed - m0);
+		memset(addmask_key + m0, 0, last_zeroed - m0);
 	*addmask_key = last_zeroed = mlen;
 	x = rn_search(addmask_key, rn_masktop);
-	if (Bcmp(addmask_key, x->rn_key, mlen) != 0)
+	if (memcmp(addmask_key, x->rn_key, mlen) != 0)
 		x = 0;
 	if (x || search)
 		return x;
 	R_Malloc(x, struct radix_node *, max_keylen + 2 * sizeof (*x));
 	if ((saved_x = x) == NULL)
 		return NULL;
-	Bzero(x, max_keylen + 2 * sizeof (*x));
+	memset(x, 0, max_keylen + 2 * sizeof (*x));
 	cp = netmask = (void *)(x + 2);
-	Bcopy(addmask_key, (void *)(x + 2), mlen);
+	memmove(x + 2, addmask_key, mlen);
 	x = rn_insert(cp, mask_rnhead, &maskduplicated, x);
 	if (maskduplicated) {
 		log(LOG_ERR, "rn_addmask: mask impossibly already in tree\n");
@@ -578,7 +578,7 @@ rn_new_radix_mask(
 		log(LOG_ERR, "Mask for route not entered\n");
 		return NULL;
 	}
-	Bzero(m, sizeof *m);
+	memset(m, 0, sizeof(*m));
 	m->rm_b = tt->rn_b;
 	m->rm_flags = tt->rn_flags;
 	if (tt->rn_flags & RNF_NORMAL)
@@ -770,7 +770,7 @@ rn_delete1(
 	saved_tt = tt;
 	top = x;
 	if (tt == NULL ||
-	    Bcmp(v + head_off, tt->rn_key + head_off, vlen - head_off))
+	    memcmp(v + head_off, tt->rn_key + head_off, vlen - head_off) != 0)
 		return NULL;
 	/*
 	 * Delete our route from mask lists.
@@ -1028,7 +1028,7 @@ rn_inithead0(rnh, off)
 	struct radix_node *tt;
 	struct radix_node *ttt;
 
-	Bzero(rnh, sizeof (*rnh));
+	memset(rnh, 0, sizeof(*rnh));
 	t = rn_newpair(rn_zeros, off, rnh->rnh_nodes);
 	ttt = rnh->rnh_nodes + 2;
 	t->rn_r = ttt;
@@ -1075,7 +1075,7 @@ rn_init()
 	R_Malloc(rn_zeros, char *, 3 * max_keylen);
 	if (rn_zeros == NULL)
 		panic("rn_init");
-	Bzero(rn_zeros, 3 * max_keylen);
+	memset(rn_zeros, 0, 3 * max_keylen);
 	rn_ones = cp = rn_zeros + max_keylen;
 	addmask_key = cplim = rn_ones + max_keylen;
 	while (cp < cplim)

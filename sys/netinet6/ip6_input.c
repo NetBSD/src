@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.118 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.118.2.1 2008/05/16 02:25:45 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.118 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.118.2.1 2008/05/16 02:25:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1654,13 +1654,8 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 static int
 sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ip6s[IP6_NSTATS];
 
-	ctx.ctx_stat = ip6stat_percpu;
-	ctx.ctx_counters = ip6s;
-	ctx.ctx_ncounters = IP6_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ip6stat_percpu, IP6_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")

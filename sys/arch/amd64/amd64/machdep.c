@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.89 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.1 2008/05/16 02:21:49 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
+ * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -84,7 +77,6 @@
  *
  */
 
-
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -120,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.1 2008/05/16 02:21:49 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -187,6 +179,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2008/04/27 11:37:48 ad Exp $");
 #include <machine/mtrr.h>
 #include <machine/mpbiosvar.h>
 
+#include <x86/cputypes.h>
 #include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 
@@ -237,6 +230,8 @@ int	cpureset_delay = CPURESET_DELAY;
 #else
 int     cpureset_delay = 2000; /* default to 2s */
 #endif
+
+int	cpu_class = CPUCLASS_686;
 
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
@@ -503,6 +498,7 @@ sysctl_machdep_diskinfo(SYSCTLFN_ARGS)
 
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
+	extern uint64_t tsc_freq;
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -525,6 +521,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_QUAD, "tsc_freq", NULL,
+		       NULL, 0, &tsc_freq, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void
@@ -1234,14 +1235,15 @@ init_x86_64(paddr_t first_avail)
 	struct btinfo_memmap *bim;
 	uint64_t addr, size, io_end, new_physmem;
 #endif
+	cpu_probe(&cpu_info_primary);
 #else /* XEN */
+	cpu_probe(&cpu_info_primary);
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 	first_bt_vaddr = (vaddr_t) (first_avail + KERNBASE + PAGE_SIZE * 2);
 	__PRINTK(("first_bt_vaddr 0x%lx\n", first_bt_vaddr));
-	cpu_probe_features(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	/* not on Xen... */
 	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
@@ -1766,6 +1768,17 @@ init_x86_64(paddr_t first_avail)
 
 	init_x86_64_ksyms();
 
+#ifndef XEN
+	intr_default_setup();
+#else
+	events_default_setup();
+#endif
+
+	splraise(IPL_HIGH);
+	x86_enable_intr();
+
+	x86_init();
+
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -1777,17 +1790,6 @@ init_x86_64(paddr_t first_avail)
 		kgdb_connect(1);
 	}
 #endif
-
-#ifndef XEN
-	intr_default_setup();
-#else
-	events_default_setup();
-#endif
-
-	splraise(IPL_HIGH);
-	x86_enable_intr();
-
-	x86_init();
 }
 
 void

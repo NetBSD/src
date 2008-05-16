@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.116 2008/04/09 17:01:53 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.116.4.1 2008/05/16 02:24:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116 2008/04/09 17:01:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116.4.1 2008/05/16 02:24:44 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -282,7 +282,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
 	/* a driver already attached? */
-	if (sc->PCI_SC_DEVICESC(device, function) && !match)
+	if (sc->PCI_SC_DEVICESC(device, function).c_dev != NULL && !match)
 		return (0);
 
 	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
@@ -360,12 +360,20 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		if (ret != 0 && pap != NULL)
 			*pap = pa;
 	} else {
+		struct pci_child *c;
 		locs[PCICF_DEV] = device;
 		locs[PCICF_FUNCTION] = function;
 
 		subdev = config_found_sm_loc(sc->sc_dev, "pci", locs, &pa,
 					     pciprint, config_stdsubmatch);
-		sc->PCI_SC_DEVICESC(device, function) = subdev;
+
+		c = &sc->PCI_SC_DEVICESC(device, function);
+		c->c_dev = subdev;
+		pci_conf_capture(pc, tag, &c->c_conf);
+		if (pci_get_powerstate(pc, tag, &c->c_powerstate) == 0)
+			c->c_psok = true;
+		else
+			c->c_psok = false;
 		ret = (subdev != NULL);
 	}
 
@@ -375,15 +383,23 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 void
 pcidevdetached(device_t self, device_t child)
 {
-	struct pci_softc *psc = device_private(self);
+	struct pci_softc *sc = device_private(self);
 	int d, f;
+	pcitag_t tag;
+	struct pci_child *c;
 
 	d = device_locator(child, PCICF_DEV);
 	f = device_locator(child, PCICF_FUNCTION);
 
-	KASSERT(psc->PCI_SC_DEVICESC(d, f) == child);
+	c = &sc->PCI_SC_DEVICESC(d, f);
 
-	psc->PCI_SC_DEVICESC(d, f) = 0;
+	KASSERT(c->c_dev == child);
+
+	tag = pci_make_tag(sc->sc_pc, sc->sc_bus, d, f);
+	if (c->c_psok)
+		pci_set_powerstate(sc->sc_pc, tag, c->c_powerstate);
+	pci_conf_restore(sc->sc_pc, tag, &c->c_conf);
+	c->c_dev = NULL;
 }
 
 CFATTACH_DECL2_NEW(pci, sizeof(struct pci_softc),

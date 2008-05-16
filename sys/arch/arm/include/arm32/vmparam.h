@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2008/01/04 21:58:03 ad Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21.10.1 2008/05/16 02:22:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -123,11 +123,23 @@ struct vm_page_md {
 #define	k_mappings	k_u.i_mappings
 };
 
+/*
+ * Set the default color of each page.
+ */
+#if ARM_MMU_V6 > 0
+#define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
+	(pg)->mdpage.pvh_attrs = (pg)->phys_addr & arm_cache_prefer_mask
+#else
+#define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
+	(pg)->mdpage.pvh_attrs = 0
+#endif
+ 
+
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
 	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
-	(pg)->mdpage.pvh_attrs = 0;					\
+	VM_MDPAGE_PVH_ATTRS_INIT(pg);					\
 	(pg)->mdpage.uro_mappings = 0;					\
 	(pg)->mdpage.urw_mappings = 0;					\
 	(pg)->mdpage.k_mappings = 0;					\

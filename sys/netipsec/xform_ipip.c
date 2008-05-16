@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.23 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.23.2.1 2008/05/16 02:25:45 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.23 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.23.2.1 2008/05/16 02:25:45 yamt Exp $");
 
 /*
  * IP-inside-IP processing
@@ -687,7 +687,7 @@ static struct xformsw ipe4_xformsw = {
 
 #ifdef INET
 PR_WRAP_CTLOUTPUT(rip_ctloutput)
-PR_WRAP_CTLOUTPUT(rip_usrreq)
+PR_WRAP_USRREQ(rip_usrreq)
 #define	rip_ctloutput	rip_ctloutput_wrapper
 #define	rip_usrreq	rip_usrreq_wrapper
 
@@ -710,7 +710,7 @@ static struct ipprotosw ipe4_protosw = {
 #endif
 #ifdef INET6
 PR_WRAP_CTLOUTPUT(rip6_ctloutput)
-PR_WRAP_CTLOUTPUT(rip6_usrreq)
+PR_WRAP_USRREQ(rip6_usrreq)
 #define	rip6_ctloutput	rip6_ctloutput_wrapper
 #define	rip6_usrreq	rip6_usrreq_wrapper
 
