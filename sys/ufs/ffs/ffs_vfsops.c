@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.227 2008/05/10 02:26:10 rumble Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.228 2008/05/16 09:22:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.227 2008/05/10 02:26:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.228 2008/05/16 09:22:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -537,7 +537,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		size = dpart.disklab->d_secsize;
 	/* XXX we don't handle possibility that superblock moved. */
 	error = bread(devvp, fs->fs_sblockloc / size, fs->fs_sbsize,
-		      NOCRED, &bp);
+		      NOCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
@@ -590,7 +590,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
 		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / size),
-			APPLEUFS_LABEL_SIZE, cred, &bp);
+			APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			return (error);
@@ -640,7 +640,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
-			      NOCRED, &bp);
+			      NOCRED, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			return (error);
@@ -705,7 +705,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 */
 		ip = VTOI(vp);
 		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-			      (int)fs->fs_bsize, NOCRED, &bp);
+			      (int)fs->fs_bsize, NOCRED, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			vput(vp);
@@ -790,7 +790,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			goto out;
 		}
 		error = bread(devvp, sblock_try[i] / size, SBLOCKSIZE, cred,
-			      &bp);
+			      0, &bp);
 		if (error) {
 			fs = NULL;
 			goto out;
@@ -899,7 +899,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		 * is found, then treat it like an Apple UFS filesystem anyway
 		 */
 		error = bread(devvp, (daddr_t)(APPLEUFS_LABEL_OFFSET / size),
-			APPLEUFS_LABEL_SIZE, cred, &bp);
+			APPLEUFS_LABEL_SIZE, cred, 0, &bp);
 		if (error)
 			goto out;
 		error = ffs_appleufs_validate(fs->fs_fsmnt,
@@ -924,7 +924,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	if (!ronly) {
 		error = bread(devvp, fsbtodb(fs, fs->fs_size - 1), fs->fs_fsize,
-		    cred, &bp);
+		    cred, 0, &bp);
 		if (bp->b_bcount != fs->fs_fsize)
 			error = EINVAL;
 		if (error) {
@@ -952,7 +952,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (i + fs->fs_frag > blks)
 			size = (blks - i) * fs->fs_fsize;
 		error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + i), size,
-			      cred, &bp);
+			      cred, 0, &bp);
 		if (error) {
 			free(fs->fs_csp, M_UFSMNT);
 			goto out;
@@ -1542,7 +1542,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
-		      (int)fs->fs_bsize, NOCRED, &bp);
+		      (int)fs->fs_bsize, NOCRED, 0, &bp);
 	if (error) {
 
 		/*
