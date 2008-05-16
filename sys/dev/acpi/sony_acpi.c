@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5 2008/03/26 18:35:17 xtraeme Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.4.1 2008/05/16 02:23:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5 2008/03/26 18:35:17 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.4.1 2008/05/16 02:23:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,17 +44,17 @@ __KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5 2008/03/26 18:35:17 xtraeme Exp $"
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
 
-#define SONY_NOTIFY_FnKeyEvent			0x92
-#define SONY_NOTIFY_BrightnessDownPressed	0x85
-#define SONY_NOTIFY_BrightnessDownReleased	0x05
-#define SONY_NOTIFY_BrightnessUpPressed		0x86
-#define SONY_NOTIFY_BrightnessUpReleased	0x06
-#define SONY_NOTIFY_DisplaySwitchPressed	0x87
-#define SONY_NOTIFY_DisplaySwitchReleased	0x07
-#define SONY_NOTIFY_ZoomPressed			0x8a
-#define SONY_NOTIFY_ZoomReleased		0x0a
-#define SONY_NOTIFY_SuspendPressed		0x8c
-#define SONY_NOTIFY_SuspendReleased		0x0c
+#define	SONY_NOTIFY_FnKeyEvent			0x92
+#define	SONY_NOTIFY_BrightnessDownPressed	0x85
+#define	SONY_NOTIFY_BrightnessDownReleased	0x05
+#define	SONY_NOTIFY_BrightnessUpPressed		0x86
+#define	SONY_NOTIFY_BrightnessUpReleased	0x06
+#define	SONY_NOTIFY_DisplaySwitchPressed	0x87
+#define	SONY_NOTIFY_DisplaySwitchReleased	0x07
+#define	SONY_NOTIFY_ZoomPressed			0x8a
+#define	SONY_NOTIFY_ZoomReleased		0x0a
+#define	SONY_NOTIFY_SuspendPressed		0x8c
+#define	SONY_NOTIFY_SuspendReleased		0x0c
 
 struct sony_acpi_softc {
 	device_t sc_dev;
@@ -75,7 +68,7 @@ struct sony_acpi_softc {
 	struct sysmon_pswitch sc_smpsw[SONY_PSW_LAST];
 	int sc_smpsw_valid;
 
-#define SONY_ACPI_QUIRK_FNINIT	0x01
+#define	SONY_ACPI_QUIRK_FNINIT	0x01
 	int sc_quirks;
 	bool sc_has_pic;
 

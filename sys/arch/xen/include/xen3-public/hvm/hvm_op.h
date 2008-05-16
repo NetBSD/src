@@ -1,4 +1,4 @@
-/* $NetBSD: hvm_op.h,v 1.2 2007/09/23 16:25:30 bouyer Exp $ */
+/* $NetBSD: hvm_op.h,v 1.2.32.1 2008/05/16 02:23:30 yamt Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -70,5 +70,8 @@ struct xen_hvm_set_pci_link_route {
 };
 typedef struct xen_hvm_set_pci_link_route xen_hvm_set_pci_link_route_t;
 DEFINE_XEN_GUEST_HANDLE(xen_hvm_set_pci_link_route_t);
+
+/* Flushes all VCPU TLBs: @arg must be NULL. */
+#define HVMOP_flush_tlbs          5
 
 #endif /* __XEN_PUBLIC_HVM_HVM_OP_H__ */

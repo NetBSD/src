@@ -1,4 +1,4 @@
-/* $NetBSD: xenoprof.h,v 1.2 2007/09/23 16:25:29 bouyer Exp $ */
+/* $NetBSD: xenoprof.h,v 1.2.32.1 2008/05/16 02:23:29 yamt Exp $ */
 /******************************************************************************
  * xenoprof.h
  * 
@@ -50,7 +50,8 @@
 #define XENOPROF_release_counters   12
 #define XENOPROF_shutdown           13
 #define XENOPROF_get_buffer         14
-#define XENOPROF_last_op            14
+#define XENOPROF_set_backtrace      15
+#define XENOPROF_last_op            15
 
 #define MAX_OPROF_EVENTS    32
 #define MAX_OPROF_DOMAINS   25
@@ -62,6 +63,11 @@ struct event_log {
     uint8_t mode;
     uint8_t event;
 };
+
+/* PC value that indicates a special code */
+#define XENOPROF_ESCAPE_CODE ~0UL
+/* Transient events for the xenoprof->oprofile cpu buf */
+#define XENOPROF_TRACE_BEGIN 1
 
 /* Xenoprof buffer shared between Xen and domain - 1 per VCPU */
 struct xenoprof_buf {

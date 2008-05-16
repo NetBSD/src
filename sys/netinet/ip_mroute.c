@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.111 2008/02/06 03:20:51 matt Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.111.10.1 2008/05/16 02:25:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111 2008/02/06 03:20:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111.10.1 2008/05/16 02:25:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -623,8 +623,7 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 
 	ip_mrouter = so;
 
-	mfchashtbl =
-	    hashinit(MFCTBLSIZ, HASH_LIST, M_MRTABLE, M_WAITOK, &mfchash);
+	mfchashtbl = hashinit(MFCTBLSIZ, HASH_LIST, true, &mfchash);
 	bzero((void *)nexpire, sizeof(nexpire));
 
 	pim_assert = 0;
@@ -1420,6 +1419,11 @@ ip_mforward(struct mbuf *m, struct ifnet *ifp)
 
 		return (1);
 	}
+
+	/*
+	 * Clear any in-bound checksum flags for this packet.
+	 */
+	m->m_pkthdr.csum_flags = 0;
 
 #ifdef RSVP_ISI
 	if (imo && ((vifi = imo->imo_multicast_vif) < numvifs)) {

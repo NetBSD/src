@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.3 2006/09/20 00:41:13 uwe Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.3.58.1 2008/05/16 02:22:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -12,10 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -31,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.3 2006/09/20 00:41:13 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_machdep.c,v 1.3.58.1 2008/05/16 02:22:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

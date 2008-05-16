@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.41 2008/04/16 16:06:52 cegger Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.41.4.1 2008/05/16 02:23:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -103,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.41 2008/04/16 16:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.41.4.1 2008/05/16 02:23:29 yamt Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -116,12 +109,13 @@ __KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.41 2008/04/16 16:06:52 cegger Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/specialreg.h>
 #include <machine/cpuvar.h>
-#include <machine/bus.h>
 #include <machine/mpbiosvar.h>
 #include <machine/pio.h>
 
@@ -293,6 +287,10 @@ mpbios_probe(struct device *self)
 	int 		scan_loc;
 
 	struct		mp_map t;
+
+	/* If MP is disabled, don't use MPBIOS or the ioapics. */
+	if ((boothowto & RB_MD1) != 0)
+		return 0;
 
 	/* see if EBDA exists */
 

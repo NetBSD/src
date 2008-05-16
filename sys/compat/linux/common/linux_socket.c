@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.91 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.91.2.1 2008/05/16 02:23:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.91 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.91.2.1 2008/05/16 02:23:43 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -125,7 +118,7 @@ int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
-		const struct osockaddr *, int);
+		const struct osockaddr *, unsigned int);
 static int linux_sa_put(struct osockaddr *osa);
 static int linux_to_bsd_msg_flags(int);
 static int bsd_to_linux_msg_flags(int);
@@ -1299,7 +1292,8 @@ linux_sys_getpeername(struct lwp *l, const struct linux_sys_getpeername_args *ua
  * family and convert to sockaddr.
  */
 static int
-linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa, int salen)
+linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
+    const struct osockaddr *osa, unsigned int salen)
 {
 	int error, bdom;
 	struct sockaddr *sa;

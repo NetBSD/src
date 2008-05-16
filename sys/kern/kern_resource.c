@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.139 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.139.2.1 2008/05/16 02:25:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139.2.1 2008/05/16 02:25:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ resource_init(void)
 	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
 	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
-	uihashtbl = hashinit(uihash_sz, HASH_SLIST, M_PROC, M_WAITOK, &uihash);
+	uihashtbl = hashinit(uihash_sz, HASH_SLIST, true, &uihash);
 }
 
 /*
@@ -136,6 +136,8 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 		if (who == 0)
 			who = (int)kauth_cred_geteuid(l->l_cred);
 		PROCLIST_FOREACH(p, &allproc) {
+			if ((p->p_flag & PK_MARKER) != 0)
+				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)who && p->p_nice < low)
@@ -205,6 +207,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		if (who == 0)
 			who = (int)kauth_cred_geteuid(l->l_cred);
 		PROCLIST_FOREACH(p, &allproc) {
+			if ((p->p_flag & PK_MARKER) != 0)
+				continue;
 			mutex_enter(p->p_lock);
 			if (kauth_cred_geteuid(p->p_cred) ==
 			    (uid_t)SCARG(uap, who)) {

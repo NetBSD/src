@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.57 2008/04/24 18:39:23 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.57.2.1 2008/05/16 02:25:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -62,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.57 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.57.2.1 2008/05/16 02:25:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.57 2008/04/24 18:39:23 ad Exp $");
 #include <sys/event.h>
 #include <sys/eventvar.h>
 #include <sys/poll.h>
-#include <sys/malloc.h>		/* for hashinit */
 #include <sys/kmem.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
@@ -127,8 +119,6 @@ static const struct filterops timer_filtops =
 
 static u_int	kq_ncallouts = 0;
 static int	kq_calloutmax = (4 * 1024);
-
-MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");	/* for hashinit */
 
 #define	KN_HASHSIZE		64		/* XXX should be tunable */
 #define	KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
@@ -935,7 +925,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 				if (fdp->fd_knhashmask == 0) {
 					/* XXXAD can block with fd_lock held */
 					fdp->fd_knhash = hashinit(KN_HASHSIZE,
-					    HASH_LIST, M_KEVENT, M_WAITOK,
+					    HASH_LIST, true,
 					    &fdp->fd_knhashmask);
 				}
 				list = &fdp->fd_knhash[KN_HASH(kn->kn_id,

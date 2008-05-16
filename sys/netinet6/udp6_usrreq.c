@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.84 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.84.2.1 2008/05/16 02:25:45 yamt Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.84 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.84.2.1 2008/05/16 02:25:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -117,7 +117,7 @@ static	void udp6_notify(struct in6pcb *, int);
 void
 udp6_init(void)
 {
-	/* initialization done in udp_input() due to initialization order */
+	/* initialization done in udp_init() due to initialization order */
 }
 
 /*
@@ -410,13 +410,8 @@ release:
 static int
 sysctl_net_inet6_udp6_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t udp6s[UDP6_NSTATS];
 
-	ctx.ctx_stat = udp6stat_percpu;
-	ctx.ctx_counters = udp6s;
-	ctx.ctx_ncounters = UDP6_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(udp6stat_percpu, UDP6_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_udp6_setup, "sysctl net.inet6.udp6 subtree setup")

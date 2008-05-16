@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.16 2008/01/28 14:31:16 dholland Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.16.10.1 2008/05/16 02:25:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16 2008/01/28 14:31:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16.10.1 2008/05/16 02:25:18 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -127,12 +127,15 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16 2008/01/28 14:31:16 dholland Exp
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/stat.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <fs/hfs/hfs.h>
 #include <fs/hfs/libhfs.h>
+
+MODULE(MODULE_CLASS_VFS, hfs, NULL);
 
 MALLOC_JUSTDEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
 
@@ -167,15 +170,29 @@ struct vfsops hfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	hfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(hfs_vfsops); /* XXX Is this needed? */
 
 static const struct genfs_ops hfs_genfsops = {
         .gop_size = genfs_size,
 };
+
+static int
+hfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&hfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&hfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}
 
 int
 hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)

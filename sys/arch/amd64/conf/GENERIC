@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.205 2008/04/22 22:37:13 cegger Exp $
+# $NetBSD: GENERIC,v 1.205.2.1 2008/05/16 02:21:51 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -20,9 +20,9 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.205 $"
+#ident 		"GENERIC-$Revision: 1.205.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -66,7 +66,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
-options 	MULTIPROCESSOR	# SMP
+options		MODULAR		# new style module framework
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -202,13 +202,13 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	ACPIVERBOSE	# verbose ACPI configuration messages
-options 	MIIVERBOSE	# verbose PHY autoconfig messages
-options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	ACPIVERBOSE	# verbose ACPI configuration messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -250,8 +250,6 @@ config		netbsd	root on ? type ?
 # Device configuration
 #
 
-mainbus0 at root
-
 #IPMI support
 #ipmi0		at mainbus?
 
@@ -282,6 +280,7 @@ asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
+hpqlb*		at acpi?		# HP Quick Launch Buttons
 hpet*		at acpi?		# High Precision Event Timer
 joy*		at acpi?		# Joystick/Game port
 #lpt* 		at acpi?		# Parallel port
@@ -292,9 +291,6 @@ sony*		at acpi?		# Sony Notebook Controller
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
-
-cpu* 		at mainbus?
-ioapic* 	at mainbus? apid ?
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -1013,6 +1009,9 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
+options		MEMORY_DISK_HOOKS	# enable root ramdisk
+options		MEMORY_DISK_DYNAMIC	# loaded via kernel module
+
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 

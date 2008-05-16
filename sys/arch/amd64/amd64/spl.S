@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.17 2008/02/13 11:38:03 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.17.10.1 2008/05/16 02:21:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 /*
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,13 +50,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -86,7 +79,7 @@
 
 #ifndef XEN
 /*
- * softintr()
+ * Xsoftintr()
  *
  * Switch to the LWP assigned to handle interrupts from the given
  * source.  We borrow the VM context from the interrupted LWP.
@@ -116,12 +109,12 @@ IDTVEC(softintr)
 	movq	%r15,%rdi		/* interrupted LWP */
 	movl	IS_MAXLEVEL(%rax),%esi	/* ipl to run at */
 	call	_C_LABEL(softint_dispatch)/* run handlers */
+	cli
 	movq	L_ADDR(%r15),%rcx
 	movq	PCB_RSP(%rcx),%rsp
 	xchgq	%r15,CPUVAR(CURLWP)	/* must be globally visible */
 	popq	%r15			/* unwind switchframe */
 	addq	$(5 * 8),%rsp
-	cli
 	jmp	*%r13			/* back to splx/doreti */
 
 /*
@@ -146,6 +139,39 @@ NENTRY(softintr_ret)
 NENTRY(softint_trigger)
 	orl	%edi,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
+
+
+/*
+ * Xpreemptrecurse()
+ *
+ * Handles preemption interrupts via Xspllower().
+ */
+IDTVEC(preemptrecurse)
+	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	sti
+	xorq	%rdi, %rdi
+	call	_C_LABEL(kpreempt)
+	cli
+	jmp	*%r13
+
+/*
+ * Xpreemptresume()
+ *
+ * Handles preemption interrupts via Xdoreti().
+ */
+IDTVEC(preemptresume)
+	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
+	sti
+	testq   $SEL_RPL, TF_CS(%rsp)
+	jnz	1f
+	movq	TF_RIP(%rsp), %rdi
+	call	_C_LABEL(kpreempt)		# from kernel
+	cli
+	jmp	*%r13
+1:
+	call	_C_LABEL(preempt)		# from user
+	cli
+	jmp	*%r13
 
 /*
  * int splraise(int s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.235 2008/04/14 09:42:50 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.235.4.1 2008/05/16 02:22:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -75,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235 2008/04/14 09:42:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.4.1 2008/05/16 02:22:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -291,6 +284,7 @@ trap(frame)
 	void *onfault;
 	int error;
 	uint32_t cr2;
+	bool pfail;
 
 	uvmexp.traps++;
 
@@ -662,23 +656,52 @@ copyfault:
 			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
-			if (type == T_PAGEFLT) {
+			pfail = false;
+			while (type == T_PAGEFLT) {
 				/*
 				 * we need to switch pmap now if we're in
 				 * the middle of copyin/out.
 				 *
 				 * but we don't need to do so for kcopy as
 				 * it never touch userspace.
-				 */
-
+ 				 */
+				kpreempt_disable();
 				if (curcpu()->ci_want_pmapload) {
 					onfault = onfault_handler(pcb, frame);
-					if (onfault != NULL &&
-					    onfault != kcopy_fault) {
+					if (onfault != kcopy_fault) {
 						pmap_load();
 					}
 				}
-				return;
+				/*
+				 * We need to keep the pmap loaded and
+				 * so avoid being preempted until back
+				 * into the copy functions.  Disable
+				 * interrupts at the hardware level before
+				 * re-enabling preemption.  Interrupts
+				 * will be re-enabled by 'iret' when
+				 * returning back out of the trap stub.
+				 * They'll only be re-enabled when the
+				 * program counter is once again in
+				 * the copy functions, and so visible
+				 * to cpu_kpreempt_exit().
+				 */
+#ifndef XEN
+				x86_disable_intr();
+#endif
+				l->l_nopreempt--;
+				if (l->l_nopreempt > 0 || !l->l_dopreempt ||
+				    pfail) {
+					return;
+				}
+#ifndef XEN
+				x86_enable_intr();
+#endif
+				/*
+				 * If preemption fails for some reason,
+				 * don't retry it.  The conditions won't
+				 * change under our nose.
+				 */
+				pfail = kpreempt(0);
 			}
 			goto out;
 		}

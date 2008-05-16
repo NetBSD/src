@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_utils.c,v 1.8 2007/10/08 18:04:03 ad Exp $	*/
+/*	$NetBSD: filecore_utils.c,v 1.8.22.1 2008/05/16 02:25:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.8 2007/10/08 18:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_utils.c,v 1.8.22.1 2008/05/16 02:25:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ filecore_getparent(ip)
 	int i = 0;
 
 #ifdef FILECORE_DEBUG
-	printf("filecore_getparent(ino=%x)\n", ip->i_number);
+	printf("filecore_getparent(ino=%llx)\n", (long long)ip->i_number);
 #endif
 	if (ip->i_parent != -2) {
 		return ip->i_parent;

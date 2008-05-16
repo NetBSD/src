@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.25 2008/01/30 09:50:27 ad Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.25.10.1 2008/05/16 02:26:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.25 2008/01/30 09:50:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.25.10.1 2008/05/16 02:26:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
 
@@ -60,10 +59,10 @@ kmutex_t	ufs_hashlock;
 void
 ufs_ihashinit(void)
 {
+
 	mutex_init(&ufs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ufs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
-	ihashtbl =
-	    hashinit(desiredvnodes, HASH_LIST, M_UFSMNT, M_WAITOK, &ihash);
+	ihashtbl = hashinit(desiredvnodes, HASH_LIST, true, &ihash);
 }
 
 /*
@@ -78,7 +77,7 @@ ufs_ihashreinit(void)
 	u_long oldmask, mask, val;
 	int i;
 
-	hash = hashinit(desiredvnodes, HASH_LIST, M_UFSMNT, M_WAITOK, &mask);
+	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
 	mutex_enter(&ufs_ihash_lock);
 	oldhash = ihashtbl;
 	oldmask = ihash;
@@ -92,7 +91,7 @@ ufs_ihashreinit(void)
 		}
 	}
 	mutex_exit(&ufs_ihash_lock);
-	hashdone(oldhash, M_UFSMNT);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -101,7 +100,8 @@ ufs_ihashreinit(void)
 void
 ufs_ihashdone(void)
 {
-	hashdone(ihashtbl, M_UFSMNT);
+
+	hashdone(ihashtbl, HASH_LIST, ihash);
 	mutex_destroy(&ufs_hashlock);
 	mutex_destroy(&ufs_ihash_lock);
 }

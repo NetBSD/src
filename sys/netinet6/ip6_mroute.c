@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.92 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.92.2.1 2008/05/16 02:25:45 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.92 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.92.2.1 2008/05/16 02:25:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1929,13 +1929,8 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 static int
 sysctl_net_inet6_pim6_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t pim6s[PIM6_NSTATS];
 
-	ctx.ctx_stat = pim6stat_percpu;
-	ctx.ctx_counters = pim6s;
-	ctx.ctx_ncounters = PIM6_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(pim6stat_percpu, PIM6_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_pim6_setup, "sysctl net.inet6.pim6 subtree setup")

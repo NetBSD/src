@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.1 2006/10/07 07:21:13 gdamore Exp $ */
+/* $NetBSD: m25p.c,v 1.1.58.1 2008/05/16 02:25:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.1 2006/10/07 07:21:13 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.1.58.1 2008/05/16 02:25:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,22 +58,21 @@ __KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.1 2006/10/07 07:21:13 gdamore Exp $");
  * Device driver for STMicroelectronics M25P Family SPI Flash Devices
  */
 
-static int m25p_match(struct device *, struct cfdata *, void *);
-static void m25p_attach(struct device *, struct device *, void *);
+static int m25p_match(device_t , cfdata_t , void *);
+static void m25p_attach(device_t , device_t , void *);
 static const char *m25p_getname(void *);
 static struct spi_handle *m25p_gethandle(void *);
 static int m25p_getflags(void *);
 static int m25p_getsize(void *, int);
 
 struct m25p_softc {
-	struct device		sc_dev;
 	struct spi_handle	*sc_sh;
 	const char		*sc_name;
 	int			sc_sizes[SPIFLASH_SIZE_COUNT];
 	int			sc_flags;
 };
 
-CFATTACH_DECL(m25p, sizeof(struct m25p_softc),
+CFATTACH_DECL_NEW(m25p, sizeof(struct m25p_softc),
     m25p_match, m25p_attach, NULL, NULL);
 
 static const struct spiflash_hw_if m25p_hw_if = {
@@ -98,7 +97,7 @@ static const struct m25p_info {
 };
 
 static int
-m25p_match(struct device *parent, struct cfdata *cf, void *aux)
+m25p_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct spi_attach_args *sa = aux;
 
@@ -110,7 +109,7 @@ m25p_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-m25p_attach(struct device *parent, struct device *self, void *aux)
+m25p_attach(device_t parent, device_t self, void *aux)
 {
 	struct m25p_softc *sc = device_private(self);
 	struct spi_attach_args *sa = aux;
@@ -166,7 +165,7 @@ m25p_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_flags = SPIFLASH_FLAG_FAST_READ;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	spiflash_attach_mi(&m25p_hw_if, sc, self);
 }

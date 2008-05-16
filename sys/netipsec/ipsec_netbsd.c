@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.30 2008/04/23 06:09:05 thorpej Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.30.2.1 2008/05/16 02:25:45 yamt Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.30 2008/04/23 06:09:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.30.2.1 2008/05/16 02:25:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -184,7 +184,7 @@ esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 }
 
 #ifdef INET6
-void
+void *
 ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
        const struct newah *ahp;
@@ -197,9 +197,9 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
        if (sa->sa_family != AF_INET6 ||
            sa->sa_len != sizeof(struct sockaddr_in6))
-               return;
+               return NULL;
        if ((unsigned)cmd >= PRC_NCMDS)
-               return;
+               return NULL;
 
        /* if the parameter is from icmp6, decode it. */
        if (d != NULL) {
@@ -221,7 +221,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
                /* check if we can safely examine src and dst ports */
                if (m->m_pkthdr.len < off + sizeof(ah))
-                       return;
+                       return NULL;
 
                if (m->m_len < off + sizeof(ah)) {
                        /*
@@ -266,11 +266,12 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
        } else {
                /* we normally notify any pcb here */
        }
+	   return NULL;
 }
 
 
 
-void
+void *
 esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newesp *espp;
@@ -283,9 +284,9 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -325,7 +326,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(esp))
-			return;
+			return NULL;
 
 		if (m->m_len < off + sizeof(esp)) {
 			/*
@@ -369,6 +370,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	} else {
 		/* we normally notify any pcb here */
 	}
+	return NULL;
 }
 #endif /* INET6 */
 
@@ -443,61 +445,36 @@ sysctl_fast_ipsec_test(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_fast_ipsec_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[IPSEC_NSTATS];
 
-	ctx.ctx_stat = ipsecstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = IPSEC_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipsecstat_percpu, IPSEC_NSTATS));
 }
 
 static int
 sysctl_net_inet_ah_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[AH_NSTATS];
 
-	ctx.ctx_stat = ahstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = AH_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ahstat_percpu, AH_NSTATS));
 }
 
 static int
 sysctl_net_inet_esp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[ESP_NSTATS];
 
-	ctx.ctx_stat = espstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = ESP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(espstat_percpu, ESP_NSTATS));
 }
 
 static int
 sysctl_net_inet_ipcomp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[IPCOMP_NSTATS];
 
-	ctx.ctx_stat = ipcompstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = IPCOMP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipcompstat_percpu, IPCOMP_NSTATS));
 }
 
 static int
 sysctl_net_inet_ipip_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t ipss[IPIP_NSTATS];
 
-	ctx.ctx_stat = ipipstat_percpu;
-	ctx.ctx_counters = ipss;
-	ctx.ctx_ncounters = IPIP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(ipipstat_percpu, IPIP_NSTATS));
 }
 
 /* XXX will need a different oid at parent */

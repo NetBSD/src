@@ -1,4 +1,4 @@
-/* $NetBSD: nvt.c,v 1.11 2008/04/08 23:59:03 nisimura Exp $ */
+/* $NetBSD: nvt.c,v 1.11.4.1 2008/05/16 02:23:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -64,6 +57,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int nvt_match(unsigned, void *);
 void *nvt_init(unsigned, void *);
 int nvt_send(void *, char *, unsigned);
 int nvt_recv(void *, char *, unsigned, unsigned);
@@ -165,6 +159,20 @@ static int mii_read(struct local *, int, int);
 static void mii_write(struct local *, int, int, int);
 static void mii_dealan(struct local *, unsigned);
 
+int
+nvt_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x1106, 0x3053):
+	case PCI_DEVICE(0x1106, 0x3065):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 nvt_init(unsigned tag, void *data)
 {
@@ -246,7 +254,7 @@ int
 nvt_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *txd;
+	volatile struct desc *txd;
 	unsigned loop;
 	
 	len = (len & T_FLMASK);
@@ -277,7 +285,7 @@ int
 nvt_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *rxd;
+	volatile struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

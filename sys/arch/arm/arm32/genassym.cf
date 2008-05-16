@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.38 2008/01/19 15:04:10 chris Exp $
+#	$NetBSD: genassym.cf,v 1.38.10.1 2008/05/16 02:21:56 yamt Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -90,6 +90,7 @@ define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
+define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 
 define	PCB_TF			offsetof(struct pcb, pcb_tf)
@@ -102,6 +103,8 @@ define	PCB_R12			offsetof(struct pcb, pcb_un.un_32.pcb32_r12)
 define	PCB_SP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
 define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
+define	PCB_USER_PID_RW		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_rw)
+define	PCB_USER_PID_RO		offsetof(struct pcb, pcb_un.un_32.pcb32_user_pid_ro)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 
@@ -139,11 +142,15 @@ define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
 define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
-define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
-ifdef MULTIPROCESSOR
+ifndef PROCESS_ID_IS_CURLWP
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 endif
+define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
+define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
+define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
+define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
+define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 if defined(EXEC_AOUT)
 define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
 endif

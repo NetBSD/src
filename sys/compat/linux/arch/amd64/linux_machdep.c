@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29 2008/04/24 18:39:22 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29.2.1 2008/05/16 02:23:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2008/04/24 18:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.2.1 2008/05/16 02:23:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2008/04/24 18:39:22 ad Exp $"
 #include <machine/mcontext.h>
 #include <machine/specialreg.h>
 #include <machine/vmparam.h>
+#include <machine/cpufunc.h>
 
 /* 
  * To see whether wscons is configured (for virtual console ioctl calls).

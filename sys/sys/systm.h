@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.221 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.221.2.1 2008/05/16 02:25:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -152,14 +152,12 @@ enum hashtype {
 	HASH_TAILQ
 };
 
-struct malloc_type;
-void	*hashinit(u_int, enum hashtype, struct malloc_type *, int, u_long *);
-void	hashdone(void *, struct malloc_type *);
+#ifdef _KERNEL
+void	*hashinit(u_int, enum hashtype, bool, u_long *);
+void	hashdone(void *, enum hashtype, u_long);
 int	seltrue(dev_t, int, struct lwp *);
 int	sys_nosys(struct lwp *, const void *, register_t *);
 
-
-#ifdef _KERNEL
 void	aprint_normal(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	aprint_error(const char *, ...)
@@ -482,9 +480,11 @@ do {						\
 #define	KERNEL_UNLOCK_ONE(l)		KERNEL_UNLOCK(1, (l), NULL)
 
 /* Preemption control. */
+#ifdef _KERNEL
 void	kpreempt_disable(void);
 void	kpreempt_enable(void);
 bool	kpreempt_disabled(void);
+#endif
 
 void assert_sleepable(void);
 #if defined(DEBUG)

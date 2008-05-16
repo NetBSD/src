@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.21 2008/04/08 12:07:25 cegger Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.21.4.1 2008/05/16 02:24:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21 2008/04/08 12:07:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21.4.1 2008/05/16 02:24:03 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -49,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21 2008/04/08 12:07:25 cegger Exp $");
 #include <sys/malloc.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <sys/cpu.h>
 
 #include <sys/audioio.h>
@@ -162,6 +156,9 @@ cs4231_common_attach(struct cs4231_softc *sc, bus_space_handle_t ioh)
 		break;
 	case 0x82:
 		sc->sc_ad1848.chip_name = "CS4232";
+		break;
+	case 0xa2:
+		sc->sc_ad1848.chip_name = "CS4232C";
 		break;
 	default:
 		if ((buf = malloc(32, M_TEMP, M_NOWAIT)) != NULL) {

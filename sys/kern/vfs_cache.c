@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.74 2008/04/12 17:34:26 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.74.4.1 2008/05/16 02:25:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -65,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.74 2008/04/12 17:34:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.74.4.1 2008/05/16 02:25:28 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -77,7 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.74 2008/04/12 17:34:26 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
@@ -643,13 +635,12 @@ nchinit(void)
 
 	namecache_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
-	nchashtbl =
-	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &nchash);
+	nchashtbl = hashinit(desiredvnodes, HASH_LIST, true, &nchash);
 	ncvhashtbl =
 #ifdef NAMECACHE_ENTER_REVERSE
-	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
+	    hashinit(desiredvnodes, HASH_LIST, true, &ncvhash);
 #else
-	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &ncvhash);
+	    hashinit(desiredvnodes/8, HASH_LIST, true, &ncvhash);
 #endif
 
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, cache_thread,
@@ -710,12 +701,12 @@ nchreinit(void)
 	struct ncvhashhead *oldhash2, *hash2;
 	u_long i, oldmask1, oldmask2, mask1, mask2;
 
-	hash1 = hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &mask1);
+	hash1 = hashinit(desiredvnodes, HASH_LIST, true, &mask1);
 	hash2 =
 #ifdef NAMECACHE_ENTER_REVERSE
-	    hashinit(desiredvnodes, HASH_LIST, M_CACHE, M_WAITOK, &mask2);
+	    hashinit(desiredvnodes, HASH_LIST, true, &mask2);
 #else
-	    hashinit(desiredvnodes/8, HASH_LIST, M_CACHE, M_WAITOK, &mask2);
+	    hashinit(desiredvnodes/8, HASH_LIST, true, &mask2);
 #endif
 	mutex_enter(namecache_lock);
 	cache_lock_cpus();
@@ -741,8 +732,8 @@ nchreinit(void)
 	}
 	cache_unlock_cpus();
 	mutex_exit(namecache_lock);
-	hashdone(oldhash1, M_CACHE);
-	hashdone(oldhash2, M_CACHE);
+	hashdone(oldhash1, HASH_LIST, oldmask1);
+	hashdone(oldhash2, HASH_LIST, oldmask2);
 }
 
 /*

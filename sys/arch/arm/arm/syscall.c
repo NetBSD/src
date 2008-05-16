@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.40 2008/04/24 11:51:18 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.40.2.1 2008/05/16 02:21:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -78,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40 2008/04/24 11:51:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40.2.1 2008/05/16 02:21:55 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -152,7 +145,10 @@ swi_handler(trapframe_t *frame)
 	if (frame->tf_spsr & PSR_T_bit) {
 		/* Map a Thumb SWI onto the bottom 256 ARM SWIs.  */
 		insn = fusword((void *)(frame->tf_pc - THUMB_INSN_SIZE));
-		insn = (insn & 0x00ff) | 0xef000000;
+		if (insn & 0x00ff)
+			insn = (insn & 0x00ff) | 0xef000000;
+		else
+			insn = frame->tf_ip | 0xef000000;
 	}
 	else
 #endif

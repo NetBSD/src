@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.205 2008/04/27 11:39:20 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.205.2.1 2008/05/16 02:25:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -74,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.205 2008/04/27 11:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.205.2.1 2008/05/16 02:25:24 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -436,8 +429,10 @@ exit1(struct lwp *l, int rv)
 	 * eventual former children on zombproc list won't reference
 	 * p_opptr anymore.
 	 */
-	if (p->p_slflag & PSL_CHTRACED) {
+	if (__predict_false(p->p_slflag & PSL_CHTRACED)) {
 		PROCLIST_FOREACH(q, &allproc) {
+			if ((q->p_flag & PK_MARKER) != 0)
+				continue;
 			if (q->p_opptr == p)
 				q->p_opptr = NULL;
 		}
@@ -538,7 +533,6 @@ exit1(struct lwp *l, int rv)
 	 * switch to idle context; at that point, we will be marked as a
 	 * full blown zombie.
 	 */
-	KPREEMPT_DISABLE();
 	mutex_enter(p->p_lock);
 	lwp_drainrefs(l);
 	lwp_lock(l);

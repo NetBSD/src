@@ -1,8 +1,7 @@
-/*	$NetBSD: ns16550.h,v 1.4 2008/03/23 17:19:57 tsutsui Exp $	*/
+/*	$NetBSD: ns16550.h,v 1.4.4.1 2008/05/16 02:22:09 yamt Exp $	*/
 
 /*-
- * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
- * All rights reserved.
+ * Copyright (c) 2008 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Gary Thomas.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,44 +24,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * NS16550 Serial Port
- */
-
-struct NS16550 {
-		volatile uint8_t rbr;  /* 0 */
-		volatile uint8_t ier;  /* 1 */
-		volatile uint8_t fcr;  /* 2 */
-		volatile uint8_t lcr;  /* 3 */
-		volatile uint8_t mcr;  /* 4 */
-		volatile uint8_t lsr;  /* 5 */
-		volatile uint8_t msr;  /* 6 */
-		volatile uint8_t scr;  /* 7 */
-};
-
-#define thr rbr
-#define iir fcr
-#define dll rbr
-#define dlm ier
-
-#define LSR_DR   0x01  /* Data ready */
-#define LSR_OE   0x02  /* Overrun */
-#define LSR_PE   0x04  /* Parity error */
-#define LSR_FE   0x08  /* Framing error */
-#define LSR_BI   0x10  /* Break */
-#define LSR_THRE 0x20  /* Xmit holding register empty */
-#define LSR_TEMT 0x40  /* Xmitter empty */
-#define LSR_ERR  0x80  /* Error */
-
-#define LCR_EERS 0xBF  /* Enable access to Enhanced Register Set */
-#define LCR_DLAB 0x80  /* Divisor latch access enable */
-
 #ifndef COMPROBE
 #define COMPROBE 0xa020001c
 #endif
 
-volatile struct NS16550 *NS16550_init(int, int);
-void NS16550_putc(volatile struct NS16550 *, int);
-int NS16550_getc(volatile struct NS16550 *);
-int NS16550_scankbd(volatile struct NS16550 *);
-int NS16550_test(volatile struct NS16550 *);
+void *com_init(int, int);
+void com_putc(void *, int);
+int com_getc(void *);
+int com_scankbd(void *);

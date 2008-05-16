@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.171 2008/04/26 08:13:59 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.171.2.1 2008/05/16 02:25:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.171 2008/04/26 08:13:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.171.2.1 2008/05/16 02:25:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1349,13 +1349,8 @@ release:
 static int
 sysctl_net_inet_udp_stats(SYSCTLFN_ARGS)
 {
-	netstat_sysctl_context ctx;
-	uint64_t udps[UDP_NSTATS];
 
-	ctx.ctx_stat = udpstat_percpu;
-	ctx.ctx_counters = udps;
-	ctx.ctx_ncounters = UDP_NSTATS;
-	return (NETSTAT_SYSCTL(&ctx));
+	return (NETSTAT_SYSCTL(udpstat_percpu, UDP_NSTATS));
 }
 
 /*

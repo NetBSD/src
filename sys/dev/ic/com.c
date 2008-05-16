@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.279 2008/04/21 12:56:31 ad Exp $	*/
+/*	com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -73,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279 2008/04/21 12:56:31 ad Exp $");
+__KERNEL_RCSID(0, "com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -268,6 +261,11 @@ comspeed(long speed, long frequency, int type)
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
 	int x, err;
+	int divisor = 16;
+
+	if ((type == COM_TYPE_OMAP) && (speed > 230400)) {
+	    divisor = 13;
+	}
 
 #if 0
 	if (speed == 0)
@@ -275,10 +273,10 @@ comspeed(long speed, long frequency, int type)
 #endif
 	if (speed <= 0)
 		return (-1);
-	x = divrnd(frequency / 16, speed);
+	x = divrnd(frequency / divisor, speed);
 	if (x <= 0)
 		return (-1);
-	err = divrnd(((quad_t)frequency) * 1000 / 16, speed * x) - 1000;
+	err = divrnd(((quad_t)frequency) * 1000 / divisor, speed * x) - 1000;
 	if (err < 0)
 		err = -err;
 	if (err > COM_TOLERANCE)
@@ -405,7 +403,13 @@ com_attach_subr(struct com_softc *sc)
 		fifo_msg = "Au1X00 UART, working fifo";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
-	}
+ 
+ 	case COM_TYPE_OMAP:
+ 		sc->sc_fifolen = 64;
+ 		fifo_msg = "OMAP UART, working fifo";
+ 		SET(sc->sc_hwflags, COM_HW_FIFO);
+ 		goto fifodelay;
+  	}
 
 	sc->sc_fifolen = 1;
 	/* look for a NS 16550AF UART with FIFOs */
@@ -669,6 +673,15 @@ com_activate(device_t self, enum devact act)
 		break;
 	}
 
+	if (sc->sc_type == COM_TYPE_OMAP) {
+		/* enable but mode is based on speed */
+		if (sc->sc_tty->t_termios.c_ospeed > 230400) {
+			CSR_WRITE_1(&sc->sc_regs, COM_REG_MDR1, MDR1_MODE_UART_13X);
+		} else {
+			CSR_WRITE_1(&sc->sc_regs, COM_REG_MDR1, MDR1_MODE_UART_16X);
+		}
+	}
+	mutex_spin_exit(&sc->sc_lock);
 	return (rv);
 }
 
@@ -1444,6 +1457,11 @@ com_loadchannelregs(struct com_softc *sc)
 	else
 		CSR_WRITE_1(regsp, COM_REG_IER, 0);
 
+	if (sc->sc_type == COM_TYPE_OMAP) {
+		/* disable before changing settings */
+		CSR_WRITE_1(regsp, COM_REG_MDR1, MDR1_MODE_DISABLE);
+	}
+
 	if (ISSET(sc->sc_hwflags, COM_HW_FLOW)) {
 		if (sc->sc_type != COM_TYPE_AU1x00) {	/* no EFR on alchemy */
 			CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
@@ -1470,6 +1488,34 @@ com_loadchannelregs(struct com_softc *sc)
 		    sc->sc_prescaler);
 	}
 #endif
+	if (sc->sc_type == COM_TYPE_OMAP) {
+		/* setup the fifos.  the FCR value is not used as long
+		   as SCR[6] and SCR[7] are 0, which they are at reset
+		   and we never touch the SCR register */
+		uint8_t rx_fifo_trig = 40;
+		uint8_t tx_fifo_trig = 60;
+		uint8_t rx_start = 8;
+		uint8_t rx_halt = 60;
+		uint8_t tlr_value = ((rx_fifo_trig>>2) << 4) | (tx_fifo_trig>>2);
+		uint8_t tcr_value = ((rx_start>>2) << 4) | (rx_halt>>2);
+
+		/* enable access to TCR & TLR */
+		CSR_WRITE_1(regsp, COM_REG_MCR, sc->sc_mcr | MCR_TCR_TLR);
+
+		/* write tcr and tlr values */
+		CSR_WRITE_1(regsp, COM_REG_TLR, tlr_value);
+		CSR_WRITE_1(regsp, COM_REG_TCR, tcr_value);
+
+		/* disable access to TCR & TLR */
+		CSR_WRITE_1(regsp, COM_REG_MCR, sc->sc_mcr);
+
+		/* enable again, but mode is based on speed */
+		if (sc->sc_tty->t_termios.c_ospeed > 230400) {
+			CSR_WRITE_1(regsp, COM_REG_MDR1, MDR1_MODE_UART_13X);
+		} else {
+			CSR_WRITE_1(regsp, COM_REG_MDR1, MDR1_MODE_UART_16X);
+		}
+	}
 
 	CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 }
@@ -2102,6 +2148,11 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 		&regsp->cr_ioh))
 		return (ENOMEM); /* ??? */
 
+	if (type == COM_TYPE_OMAP) {
+		/* disable before changing settings */
+		CSR_WRITE_1(regsp, COM_REG_MDR1, MDR1_MODE_DISABLE);
+	}
+
 	rate = comspeed(rate, frequency, type);
 	if (type != COM_TYPE_AU1x00) {
 		/* no EFR on alchemy */
@@ -2117,6 +2168,36 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 	CSR_WRITE_1(regsp, COM_REG_MCR, MCR_DTR | MCR_RTS);
 	CSR_WRITE_1(regsp, COM_REG_FIFO,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
+
+	if (type == COM_TYPE_OMAP) {
+		/* setup the fifos.  the FCR value is not used as long
+		   as SCR[6] and SCR[7] are 0, which they are at reset
+		   and we never touch the SCR register */
+		uint8_t rx_fifo_trig = 40;
+		uint8_t tx_fifo_trig = 60;
+		uint8_t rx_start = 8;
+		uint8_t rx_halt = 60;
+		uint8_t tlr_value = ((rx_fifo_trig>>2) << 4) | (tx_fifo_trig>>2);
+		uint8_t tcr_value = ((rx_start>>2) << 4) | (rx_halt>>2);
+
+		/* enable access to TCR & TLR */
+		CSR_WRITE_1(regsp, COM_REG_MCR, MCR_DTR | MCR_RTS | MCR_TCR_TLR);
+
+		/* write tcr and tlr values */
+		CSR_WRITE_1(regsp, COM_REG_TLR, tlr_value);
+		CSR_WRITE_1(regsp, COM_REG_TCR, tcr_value);
+
+		/* disable access to TCR & TLR */
+		CSR_WRITE_1(regsp, COM_REG_MCR, MCR_DTR | MCR_RTS);
+
+		/* enable again, but mode is based on speed */
+		if (rate > 230400) {
+			CSR_WRITE_1(regsp, COM_REG_MDR1, MDR1_MODE_UART_13X);
+		} else {
+			CSR_WRITE_1(regsp, COM_REG_MDR1, MDR1_MODE_UART_16X);
+		}
+	}
+
 #ifdef COM_PXA2X0
 	if (type == COM_TYPE_PXA2x0)
 		CSR_WRITE_1(regsp, COM_REG_IER, IER_EUART);

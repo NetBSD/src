@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2008/04/26 20:10:15 xtraeme Exp $
+# $NetBSD: Makefile.inc,v 1.8.2.1 2008/05/16 02:25:37 yamt Exp $
 
 .include "../Makefile.inc"
 
@@ -30,4 +30,4 @@ ${TEMPL_FILE:S/.tmpl//}:
 		-e "s|@LKM_ISA_DRQ2@|${LKM_ISA_DRQ2}|g" \
 		-e "s|@LKM_ISA_DRVNAME@|${LKM_ISA_DRVNAME}|g" \
 		-e "s|@LKM_ISA_DRVNAME_CA@|${LKM_ISA_DRVNAME_CA}|g" \
-		${TEMPL_DIR}/${TEMPL_FILE} > ${.CURDIR}/${TEMPL_FILE:S/.tmpl//}
+		${TEMPL_DIR}/${TEMPL_FILE} > ${.OBJDIR}/${TEMPL_FILE:S/.tmpl//}

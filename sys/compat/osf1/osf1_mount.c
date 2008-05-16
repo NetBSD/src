@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.41 2008/04/22 21:33:13 ad Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.41.2.1 2008/05/16 02:23:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.41 2008/04/22 21:33:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.41.2.1 2008/05/16 02:23:44 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -150,8 +150,7 @@ osf1_sys_getfsstat(struct lwp *l, const struct osf1_sys_getfsstat_args *uap, reg
 	mutex_enter(&mountlist_lock);
 	for (count = 0, mp = mountlist.cqh_first; mp != (void *)&mountlist;
 	    mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = mp->mnt_list.cqe_next;
+		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
 		if (osf_sfsp && count < maxcount) {
@@ -168,16 +167,14 @@ osf1_sys_getfsstat(struct lwp *l, const struct osf1_sys_getfsstat_args *uap, reg
 				osf1_cvt_statfs_from_native(sp, &osfs);
 				if ((error = copyout(&osfs, osf_sfsp,
 				    sizeof (struct osf1_statfs)))) {
-				    	vfs_unbusy(mp, false);
+				    	vfs_unbusy(mp, false, NULL);
 					return (error);
 				}
 				osf_sfsp += sizeof (struct osf1_statfs);
 			}
 		}
 		count++;
-		mutex_enter(&mountlist_lock);
-		nmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 	if (osf_sfsp && count > maxcount)
