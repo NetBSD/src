@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.118 2008/04/29 18:18:09 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.119 2008/05/16 09:22:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.118 2008/04/29 18:18:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.119 2008/05/16 09:22:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -524,7 +524,7 @@ spec_read(void *v)
 			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
-			error = bread(vp, bn, bsize, NOCRED, &bp);
+			error = bread(vp, bn, bsize, NOCRED, 0, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp, 0);
@@ -601,7 +601,8 @@ spec_write(void *v)
 			if (n == bsize)
 				bp = getblk(vp, bn, bsize, 0, 0);
 			else
-				error = bread(vp, bn, bsize, NOCRED, &bp);
+				error = bread(vp, bn, bsize, NOCRED,
+				    B_MODIFY, &bp);
 			if (error) {
 				brelse(bp, 0);
 				return (error);

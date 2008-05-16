@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.197 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.198 2008/05/16 09:21:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.197 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.198 2008/05/16 09:21:59 hannken Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.197 2008/05/05 17:11:17 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
 
@@ -516,10 +517,6 @@ buf_lotsfree(void)
 {
 	int try, thresh;
 
-	/* Always allocate if doing copy on write */
-	if (curlwp->l_pflag & LP_UFSCOW)
-		return 1;
-
 	/* Always allocate if less than the low water mark. */
 	if (bufmem < bufmem_lowater)
 		return 1;
@@ -705,15 +702,19 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  */
 int
 bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
-    buf_t **bpp)
+    int flags, buf_t **bpp)
 {
 	buf_t *bp;
+	int error;
 
 	/* Get buffer for block. */
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
 	/* Wait for the read to complete, and return result. */
-	return (biowait(bp));
+	error = biowait(bp);
+	if (error == 0 && (flags & B_MODIFY) != 0)
+		error = fscow_run(bp, true);
+	return error;
 }
 
 /*
@@ -722,10 +723,10 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
  */
 int
 breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
-    int *rasizes, int nrablks, kauth_cred_t cred, buf_t **bpp)
+    int *rasizes, int nrablks, kauth_cred_t cred, int flags, buf_t **bpp)
 {
 	buf_t *bp;
-	int i;
+	int error, i;
 
 	bp = *bpp = bio_doread(vp, blkno, size, cred, 0);
 
@@ -746,7 +747,10 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
 	mutex_exit(&bufcache_lock);
 
 	/* Otherwise, we had to start a read for it; wait until it's valid. */
-	return (biowait(bp));
+	error = biowait(bp);
+	if (error == 0 && (flags & B_MODIFY) != 0)
+		error = fscow_run(bp, true);
+	return error;
 }
 
 /*
@@ -756,10 +760,11 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t *rablks,
  */
 int
 breada(struct vnode *vp, daddr_t blkno, int size, daddr_t rablkno,
-    int rabsize, kauth_cred_t cred, buf_t **bpp)
+    int rabsize, kauth_cred_t cred, int flags, buf_t **bpp)
 {
 
-	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1, cred, bpp));
+	return (breadn(vp, blkno, size, &rablkno, &rabsize, 1,
+	    cred, flags, bpp));
 }
 
 /*
@@ -877,6 +882,9 @@ vn_bwrite(void *v)
 void
 bdwrite(buf_t *bp)
 {
+
+	KASSERT(bp->b_vp == NULL || bp->b_vp->v_tag != VT_UFS ||
+	    ISSET(bp->b_flags, B_COWDONE));
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 

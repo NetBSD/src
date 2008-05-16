@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.61 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.62 2008/05/16 09:21:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.61 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.62 2008/05/16 09:21:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -353,7 +353,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 
 	for (iso_blknum = 16; iso_blknum < 100; iso_blknum++) {
 		if ((error = bread(devvp, (iso_blknum+sess) * btodb(iso_bsize),
-				   iso_bsize, NOCRED, &bp)) != 0)
+				   iso_bsize, NOCRED, 0, &bp)) != 0)
 			goto out;
 
 		vdp = (struct iso_volume_descriptor *)bp->b_data;
@@ -431,7 +431,7 @@ iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 				   (isomp->root_extent + ext_attr_length) <<
 				   (isomp->im_bshift - DEV_BSHIFT),
 				   isomp->logical_block_size, NOCRED,
-				   &bp)) != 0)
+				   0, &bp)) != 0)
 		    goto out;
 
 		rootp = (struct iso_directory_record *)bp->b_data;
@@ -742,7 +742,7 @@ cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
 
 		error = bread(imp->im_devvp,
 			      lbn << (imp->im_bshift - DEV_BSHIFT),
-			      imp->logical_block_size, NOCRED, &bp);
+			      imp->logical_block_size, NOCRED, 0, &bp);
 		if (error) {
 			vput(vp);
 			brelse(bp, 0);

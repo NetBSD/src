@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.211 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.212 2008/05/16 09:22:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.211 2008/04/28 20:24:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.212 2008/05/16 09:22:00 hannken Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -682,8 +682,8 @@ lfs_segwrite(struct mount *mp, int flags)
 		curseg = 0;
 		for (n = 0; n < fs->lfs_segtabsz; n++) {
 			dirty = 0;
-			if (bread(fs->lfs_ivnode,
-			    fs->lfs_cleansz + n, fs->lfs_bsize, NOCRED, &bp))
+			if (bread(fs->lfs_ivnode, fs->lfs_cleansz + n,
+			    fs->lfs_bsize, NOCRED, B_MODIFY, &bp))
 				panic("lfs_segwrite: ifile read");
 			segusep = (SEGUSE *)bp->b_data;
 			maxseg = min(segleft, fs->lfs_sepb);
@@ -1475,7 +1475,8 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 		    break;
 	    default:
 		    ap = &a[num - 1];
-		    if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED, &bp))
+		    if (bread(vp, ap->in_lbn, fs->lfs_bsize, NOCRED,
+			B_MODIFY, &bp))
 			    panic("lfs_updatemeta: bread bno %" PRId64,
 				  ap->in_lbn);
 

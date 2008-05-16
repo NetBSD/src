@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.66 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.67 2008/05/16 09:21:59 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.66 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.67 2008/05/16 09:21:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -514,7 +514,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, secsize, NOCRED, &bp)) != 0)
+	if ((error = bread(devvp, 0, secsize, NOCRED, 0, &bp)) != 0)
 		goto error_exit;
 	bsp = (union bootsector *)bp->b_data;
 	b33 = (struct byte_bpb33 *)bsp->bs33.bsBPB;
@@ -745,7 +745,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		 *	padded at the end or in the middle?
 		 */
 		if ((error = bread(devvp, de_bn2kb(pmp, pmp->pm_fsinfo),
-		    pmp->pm_BytesPerSec, NOCRED, &bp)) != 0)
+		    pmp->pm_BytesPerSec, NOCRED, 0, &bp)) != 0)
 			goto error_exit;
 		fp = (struct fsinfo *)bp->b_data;
 		if (!memcmp(fp->fsisig1, "RRaA", 4)

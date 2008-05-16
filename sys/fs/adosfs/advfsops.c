@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.51 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.52 2008/05/16 09:21:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.51 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.52 2008/05/16 09:21:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -213,7 +213,7 @@ adosfs_mountfs(devvp, mp, l)
 
 	bp = NULL;
 	if ((error = bread(devvp, (daddr_t)BBOFF,
-			   amp->bsize, NOCRED, &bp)) != 0) {
+			   amp->bsize, NOCRED, 0, &bp)) != 0) {
 		brelse(bp, 0);
 		goto fail;
 	}
@@ -398,7 +398,7 @@ adosfs_vget(mp, an, vpp)
 	adosfs_ainshash(amp, ap);
 
 	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
-			   amp->bsize, NOCRED, &bp)) != 0) {
+			   amp->bsize, NOCRED, 0, &bp)) != 0) {
 		brelse(bp, 0);
 		vput(vp);
 		return (error);
@@ -518,7 +518,7 @@ adosfs_vget(mp, an, vpp)
 		brelse(bp, 0);
 		bp = NULL;
 		error = bread(amp->devvp, ap->linkto * amp->bsize / DEV_BSIZE,
-		    amp->bsize, NOCRED, &bp);
+		    amp->bsize, NOCRED, 0, &bp);
 		if (error) {
 			brelse(bp, 0);
 			vput(vp);
@@ -600,7 +600,7 @@ adosfs_loadbitmap(amp)
 	bp = mapbp = NULL;
 	bn = amp->rootb;
 	if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE, amp->bsize,
-	    NOCRED, &bp)) != 0) {
+	    NOCRED, 0, &bp)) != 0) {
 		brelse(bp, 0);
 		return (error);
 	}
@@ -618,7 +618,7 @@ adosfs_loadbitmap(amp)
 			brelse(mapbp, 0);
 		if ((error = bread(amp->devvp,
 		    adoswordn(bp, blkix) * amp->bsize / DEV_BSIZE, amp->bsize,
-		     NOCRED, &mapbp)) != 0)
+		     NOCRED, 0, &mapbp)) != 0)
 			break;
 		if (adoscksum(mapbp, amp->nwords)) {
 #ifdef DIAGNOSTIC
@@ -645,7 +645,7 @@ adosfs_loadbitmap(amp)
 			bn = adoswordn(bp, blkix);
 			brelse(bp, 0);
 			if ((error = bread(amp->devvp, bn * amp->bsize / DEV_BSIZE,
-			    amp->bsize, NOCRED, &bp)) != 0)
+			    amp->bsize, NOCRED, 0, &bp)) != 0)
 				break;
 			/*
 			 * Why is there no checksum on these blocks?
