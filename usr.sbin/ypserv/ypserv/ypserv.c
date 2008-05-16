@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.21 2007/12/15 19:44:57 perry Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.22 2008/05/16 16:41:42 chuck Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.21 2007/12/15 19:44:57 perry Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.22 2008/05/16 16:41:42 chuck Exp $");
 #endif
 
 #include <sys/types.h>
@@ -97,6 +97,7 @@ static struct bindsock {
 
 static void	usage(void) __dead;
 static int	bind_resv_port(int, sa_family_t, in_port_t);
+void		ypserv_sock_hostname(struct host_info *host);
 
 static void
 _msgout(int level, const char *msg, ...)
@@ -108,6 +109,11 @@ _msgout(int level, const char *msg, ...)
         else
 		vsyslog(level, msg, ap);
 	va_end(ap);
+}
+
+void ypserv_sock_hostname(struct host_info *host)
+{
+	host->name[0] = 0;
 }
 
 static void
@@ -142,6 +148,14 @@ ypprog_2(struct svc_req *rqstp, SVCXPRT *transp)
 	(void)request_init(&req, RQ_DAEMON, getprogname(), RQ_CLIENT_SIN,
 	    caller, NULL);
 	sock_methods(&req);
+
+	/*
+	 * Do not do hostname lookups!  This avoids possible delays due
+	 * to DNS, preventing a possible DoS attack, as well as possible 
+	 * circular lookups (e.g. a hostname lookup requiring a request 
+	 * to ourselves).
+	 */
+	req.hostname = ypserv_sock_hostname;
 #endif
 
 	switch (rqstp->rq_proc) {
