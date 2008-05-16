@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.227 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.228 2008/05/16 20:21:59 jnemeth Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.223 2007/09/22 19:59:55 kiyohara Exp
+ *	NetBSD: pcmciadevs,v 1.225 2008/05/16 20:21:12 jnemeth Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -667,6 +667,8 @@
 #define	PCMCIA_PRODUCT_COREGA_FETHER_PCC_TXF	-1
 #define	PCMCIA_CIS_COREGA_FETHER_II_PCC_TXD	{ "corega K.K.", "corega FEtherII PCC-TXD", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_FETHER_II_PCC_TXD	-1
+#define	PCMCIA_CIS_COREGA_LAPCCTXD	{ "corega K.K.", "(CG-LAPCCTXD)", "(HardwareFirmwareVer.)", NULL }
+#define	PCMCIA_PRODUCT_COREGA_LAPCCTXD	-1
 #define	PCMCIA_CIS_COREGA_WIRELESS_LAN_PCC_11	{ "corega K.K.", "Wireless LAN PCC-11", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCC_11	-1
 #define	PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCA_11	{ "corega K.K.", "Wireless LAN PCCA-11", NULL, NULL }
