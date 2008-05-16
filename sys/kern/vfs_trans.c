@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.20 2008/05/16 09:01:56 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.21 2008/05/16 14:08:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.20 2008/05/16 09:01:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.21 2008/05/16 14:08:56 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -546,8 +546,6 @@ fscow_run(struct buf *bp, bool data_valid)
 	struct fstrans_lwp_info *fli;
 	struct fstrans_mount_info *fmi;
 	struct fscow_handler *hp;
-
-	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
 
 	if ((bp->b_flags & B_COWDONE))
 		goto done;
