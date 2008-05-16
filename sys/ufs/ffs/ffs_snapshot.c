@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.66 2008/04/17 09:52:47 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.67 2008/05/16 09:22:00 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.66 2008/04/17 09:52:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.67 2008/05/16 09:22:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -117,8 +117,6 @@ static int readvnblk(struct vnode *, void *, ufs2_daddr_t);
 static int ffs_copyonwrite(void *, struct buf *, bool);
 static int readfsblk(struct vnode *, void *, ufs2_daddr_t);
 static int writevnblk(struct vnode *, void *, ufs2_daddr_t);
-static inline int cow_enter(void);
-static inline void cow_leave(int);
 static inline ufs2_daddr_t db_get(struct inode *, int);
 static inline void db_assign(struct inode *, int, ufs2_daddr_t);
 static inline ufs2_daddr_t idb_get(struct inode *, void *, int);
@@ -379,7 +377,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	len = (i == fs->fs_frag) ? 0 : i * fs->fs_fsize;
 	if (len > 0) {
 		if ((error = bread(devvp, fsbtodb(fs, fs->fs_csaddr + loc),
-		    len, KERNCRED, &bp)) != 0) {
+		    len, KERNCRED, 0, &bp)) != 0) {
 			brelse(bp, 0);
 			free(copy_fs->fs_csp, M_UFSMNT);
 			goto out1;
@@ -640,7 +638,7 @@ out1:
 	}
 #endif
 	for (loc = 0; loc < len; loc++) {
-		error = bread(vp, blkno + loc, fs->fs_bsize, KERNCRED, &nbp);
+		error = bread(vp, blkno + loc, fs->fs_bsize, KERNCRED, 0, &nbp);
 		if (error) {
 			brelse(nbp, 0);
 			fs->fs_snapinum[snaploc] = 0;
@@ -667,7 +665,7 @@ done:
 	free(copy_fs->fs_csp, M_UFSMNT);
 	if (!error) {
 		error = bread(vp, lblkno(fs, fs->fs_sblockloc), fs->fs_bsize,
-		    KERNCRED, &nbp);
+		    KERNCRED, 0, &nbp);
 		if (error) {
 			brelse(nbp, 0);
 			fs->fs_snapinum[snaploc] = 0;
@@ -740,7 +738,7 @@ cgaccount(int cg, struct vnode *vp, void *data, int passno)
 	fs = ip->i_fs;
 	ns = UFS_FSNEEDSWAP(fs);
 	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, KERNCRED, &bp);
+		(int)fs->fs_cgsize, KERNCRED, 0, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);
@@ -815,7 +813,7 @@ expunge_ufs1(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		    struct fs *, ufs_lbn_t, int),
     int expungetype)
 {
-	int i, s, error, ns, indiroff;
+	int i, error, ns, indiroff;
 	ufs_lbn_t lbn, rlbn;
 	ufs2_daddr_t len, blkno, numblks, blksperindir;
 	struct ufs1_dinode *dip;
@@ -832,10 +830,8 @@ expunge_ufs1(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	if (lbn < NDADDR) {
 		blkno = db_get(VTOI(snapvp), lbn);
 	} else {
-		s = cow_enter();
 		error = ffs_balloc(snapvp, lblktosize(fs, (off_t)lbn),
 		   fs->fs_bsize, KERNCRED, B_METAONLY, &bp);
-		cow_leave(s);
 		if (error)
 			return (error);
 		indiroff = (lbn - NDADDR) % NINDIR(fs);
@@ -1083,7 +1079,7 @@ expunge_ufs2(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 		    struct fs *, ufs_lbn_t, int),
     int expungetype)
 {
-	int i, s, error, ns, indiroff;
+	int i, error, ns, indiroff;
 	ufs_lbn_t lbn, rlbn;
 	ufs2_daddr_t len, blkno, numblks, blksperindir;
 	struct ufs2_dinode *dip;
@@ -1100,10 +1096,8 @@ expunge_ufs2(struct vnode *snapvp, struct inode *cancelip, struct fs *fs,
 	if (lbn < NDADDR) {
 		blkno = db_get(VTOI(snapvp), lbn);
 	} else {
-		s = cow_enter();
 		error = ffs_balloc(snapvp, lblktosize(fs, (off_t)lbn),
 		   fs->fs_bsize, KERNCRED, B_METAONLY, &bp);
-		cow_leave(s);
 		if (error)
 			return (error);
 		indiroff = (lbn - NDADDR) % NINDIR(fs);
@@ -1515,7 +1509,7 @@ ffs_snapblkfree(struct fs *fs, struct vnode *devvp, ufs2_daddr_t bno,
 	ufs_lbn_t lbn;
 	ufs2_daddr_t blkno;
 	uint32_t gen;
-	int s, indiroff = 0, snapshot_locked = 0, error = 0, claimedblk = 0;
+	int indiroff = 0, snapshot_locked = 0, error = 0, claimedblk = 0;
 
 	si = VFSTOUFS(mp)->um_snapinfo;
 	lbn = fragstoblks(fs, bno);
@@ -1542,10 +1536,8 @@ retry:
 			blkno = db_get(ip, lbn);
 		} else {
 			mutex_exit(&si->si_lock);
-			s = cow_enter();
 			error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn),
 			    fs->fs_bsize, KERNCRED, B_METAONLY, &ibp);
-			cow_leave(s);
 			if (error) {
 				mutex_enter(&si->si_lock);
 				break;
@@ -1851,7 +1843,7 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 	void *saved_data = NULL;
 	ufs2_daddr_t lbn, blkno, *snapblklist;
 	uint32_t gen;
-	int lower, upper, mid, s, ns, indiroff, snapshot_locked = 0, error = 0;
+	int lower, upper, mid, ns, indiroff, snapshot_locked = 0, error = 0;
 
 	/*
 	 * Check for valid snapshots.
@@ -1924,10 +1916,8 @@ retry:
 			blkno = db_get(ip, lbn);
 		} else {
 			mutex_exit(&si->si_lock);
-			s = cow_enter();
 			error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn),
 			   fs->fs_bsize, KERNCRED, B_METAONLY, &ibp);
-			cow_leave(s);
 			if (error) {
 				mutex_enter(&si->si_lock);
 				break;
@@ -1945,10 +1935,6 @@ retry:
 #endif
 		if (blkno != 0)
 			continue;
-#ifdef DIAGNOSTIC
-		if (curlwp->l_pflag & LP_UFSCOW)
-			printf("ffs_copyonwrite: recursive call\n");
-#endif
 		/*
 		 * Allocate the block into which to do the copy. Since
 		 * multiple processes may all try to copy the same block,
@@ -2078,21 +2064,19 @@ readvnblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 static int
 writevnblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 {
-	int s, error;
+	int error;
 	off_t offset;
 	struct buf *bp;
 	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 
 	offset = lblktosize(fs, (off_t)lbn);
-	s = cow_enter();
 	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(offset),
 	    round_page(offset+fs->fs_bsize), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	if (error == 0)
 		error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn),
 		    fs->fs_bsize, KERNCRED, B_SYNC, &bp);
-	cow_leave(s);
 	if (error)
 		return error;
 
@@ -2103,31 +2087,6 @@ writevnblk(struct vnode *vp, void *data, ufs2_daddr_t lbn)
 	mutex_exit(&bufcache_lock);
 
 	return bwrite(bp);
-}
-
-/*
- * Set/reset lwp's LP_UFSCOW flag.
- * May be called recursive.
- */
-static inline int
-cow_enter(void)
-{
-	struct lwp *l = curlwp;
-
-	if (l->l_pflag & LP_UFSCOW) {
-		return 0;
-	} else {
-		l->l_pflag |= LP_UFSCOW;
-		return LP_UFSCOW;
-	}
-}
-
-static inline void
-cow_leave(int flag)
-{
-	struct lwp *l = curlwp;
-
-	l->l_pflag &= ~flag;
 }
 
 /*

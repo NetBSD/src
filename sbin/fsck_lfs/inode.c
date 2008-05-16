@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.38 2008/04/28 20:23:08 martin Exp $	 */
+/* $NetBSD: inode.c,v 1.39 2008/05/16 09:21:59 hannken Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -246,7 +246,8 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 		return (SKIP);
 
 	devvp = fs->lfs_devvp;
-	bread(devvp, fsbtodb(fs, idesc->id_blkno), fs->lfs_bsize, NOCRED, &bp);
+	bread(devvp, fsbtodb(fs, idesc->id_blkno), fs->lfs_bsize,
+	    NOCRED, 0, &bp);
 	ilevel--;
 	for (sizepb = fs->lfs_bsize, i = 0; i < ilevel; i++)
 		sizepb *= NINDIR(fs);

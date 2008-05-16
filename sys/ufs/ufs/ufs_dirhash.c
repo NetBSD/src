@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.21 2008/01/03 19:28:50 ad Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.22 2008/05/16 09:22:01 hannken Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.21 2008/01/03 19:28:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_dirhash.c,v 1.22 2008/05/16 09:22:01 hannken Exp $");
 
 /*
  * This implements a hash-based lookup scheme for UFS directories.
@@ -219,7 +219,7 @@ ufsdirhash_build(struct inode *ip)
 		if ((pos & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp, 0);
-			if (ufs_blkatoff(vp, (off_t)pos, NULL, &bp) != 0)
+			if (ufs_blkatoff(vp, (off_t)pos, NULL, &bp, false) != 0)
 				goto fail;
 		}
 
@@ -416,7 +416,8 @@ restart:
 			if (bp != NULL)
 				brelse(bp, 0);
 			blkoff = offset & ~bmask;
-			if (ufs_blkatoff(vp, (off_t)blkoff, NULL, &bp) != 0)
+			if (ufs_blkatoff(vp, (off_t)blkoff,
+			    NULL, &bp, true) != 0)
 				return (EJUSTRETURN);
 		}
 		dp = (struct direct *)((char *)bp->b_data + (offset & bmask));
@@ -525,7 +526,7 @@ ufsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 	    dh->dh_blkfree[dirblock] >= howmany(slotneeded, DIRALIGN));
 	DIRHASH_UNLOCK(dh);
 	pos = dirblock * dirblksiz;
-	error = ufs_blkatoff(ip->i_vnode, (off_t)pos, (void *)&dp, &bp);
+	error = ufs_blkatoff(ip->i_vnode, (off_t)pos, (void *)&dp, &bp, false);
 	if (error)
 		return (-1);
 	/* Find the first entry with free space. */
