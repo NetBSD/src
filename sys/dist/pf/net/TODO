@@ -1,11 +1,8 @@
 pf specific:
 
 TODO:
-- create groups like openbsd 3.7 pf (mostly done but needs testing)
 - implement pf_modulate_sack
 - implement bound_iface for NAT rules
-- make LKM load/unload work, fix memory leaks if any
-- ALTQ, make it work
 - make filter on gid/pid work
 - resolve XXXPF comments
 
@@ -13,6 +10,9 @@ DONE:
 + use mbuf tags in pf, don't put everything in mbuf like openbsd does.
 + interfaces must be known when loading rules and pf is not enabled.
   do this in pfi_initialize, requires ifinit() to be setup.
++ ALTQ, make it work
++ make LKM load/unload work, fix memory leaks if any
++ create groups like openbsd 3.7 pf (still needs testing)
 
 
 non-pf specific (but needed for pf):
