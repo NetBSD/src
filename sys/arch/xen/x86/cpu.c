@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.25 2008/05/11 16:25:46 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.26 2008/05/16 17:20:01 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2008/05/11 16:25:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2008/05/16 17:20:01 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -419,7 +419,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		aprint_normal(": (uniprocessor)\n");
 		atomic_or_32(&ci->ci_flags,
 		     CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
@@ -428,13 +427,13 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_cpu_idle_init();
 #if 0
 		x86_errata();
 #endif
 		break;
 
 	case CPU_ROLE_BP:
-		aprint_normal("apid %d (boot processor)\n", caa->cpu_number);
 		atomic_or_32(&ci->ci_flags, 
 		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
@@ -443,6 +442,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_cpu_idle_init();
 #if NLAPIC > 0
 		/*
 		 * Enable local apic
@@ -460,7 +460,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		/*
 		 * report on an AP
 		 */
-		aprint_normal("apid %d (application processor)\n", caa->cpu_number);
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
