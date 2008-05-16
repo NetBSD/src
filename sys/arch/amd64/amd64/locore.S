@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.44 2008/05/11 13:33:54 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.45 2008/05/16 17:18:25 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -769,6 +769,10 @@ start:
 	movq	$tmpstk, %rax
 	subq	$8, %rax
 	movq	%rax, %rsp
+
+	xorl	%eax,%eax
+	cpuid
+	movl	%eax,_C_LABEL(cpuid_level)
 
 	call	xen_pmap_bootstrap
 
