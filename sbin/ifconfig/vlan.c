@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.8 2008/05/07 23:55:07 dyoung Exp $	*/
+/*	$NetBSD: vlan.c,v 1.9 2008/05/16 20:53:35 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.8 2008/05/07 23:55:07 dyoung Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.9 2008/05/16 20:53:35 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -62,7 +62,7 @@ struct piface vlanif = PIFACE_INITIALIZER(&vlanif, "vlanif", setvlanif,
 
 static const struct kwinst vlankw[] = {
 	  {.k_word = "vlan", .k_nextparser = &vlantag.pi_parser}
-	, {.k_word = "vlanif", .k_act = "vlan",
+	, {.k_word = "vlanif", .k_act = "vlantag",
 	   .k_nextparser = &vlanif.pif_parser}
 	, {.k_word = "-vlanif", .k_key = "vlanif", .k_type = KW_T_STR,
 	   .k_str = "", .k_exec = setvlanif}
