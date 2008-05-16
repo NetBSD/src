@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.10 2008/04/29 06:53:03 martin Exp $ */
+/*	$NetBSD: agten.c,v 1.11 2008/05/16 15:57:21 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.10 2008/04/29 06:53:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.11 2008/05/16 15:57:21 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -76,15 +76,15 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.10 2008/04/29 06:53:03 martin Exp $");
 
 #include "opt_agten.h"
 
-static int	agten_match(struct device *, struct cfdata *, void *);
-static void	agten_attach(struct device *, struct device *, void *);
+static int	agten_match(device_t, struct cfdata *, void *);
+static void	agten_attach(device_t, device_t, void *);
 
 static int	agten_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	agten_mmap(void *, void *, off_t, int);
 static void	agten_init_screen(void *, struct vcons_screen *, int, long *);
 
 struct agten_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 
@@ -169,7 +169,7 @@ static int agten_fb_open(dev_t, int, int, struct lwp *);
 static int agten_fb_close(dev_t, int, int, struct lwp *);
 static int agten_fb_ioctl(dev_t, u_long, void *, int, struct lwp *);
 static paddr_t agten_fb_mmap(dev_t, off_t, int);
-static void agten_fb_unblank(struct device *);
+static void agten_fb_unblank(device_t);
 
 static struct fbdriver agtenfbdriver = {
 	agten_fb_unblank, agten_fb_open, agten_fb_close, agten_fb_ioctl,
@@ -200,7 +200,7 @@ agten_write_dac_10(struct agten_softc *sc, int reg, uint16_t val)
 }
 	
 static int
-agten_match(struct device *dev, struct cfdata *cf, void *aux)
+agten_match(device_t dev, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -210,9 +210,9 @@ agten_match(struct device *dev, struct cfdata *cf, void *aux)
 }
 
 static void
-agten_attach(struct device *parent, struct device *dev, void *aux)
+agten_attach(device_t parent, device_t dev, void *aux)
 {
-	struct agten_softc *sc = (struct agten_softc *)dev;
+	struct agten_softc *sc = device_private(dev);
 	struct sbus_attach_args *sa = aux;
 	struct fbdevice *fb = &sc->sc_fb;
 	struct wsemuldisplaydev_attach_args aa;
@@ -222,6 +222,7 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	int node = sa->sa_node;
 	int console;
  
+ 	sc->sc_dev = dev;
 	sc->sc_defaultscreen_descr = (struct wsscreen_descr){
 		"default",
 		0, 0,
@@ -274,7 +275,7 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_glint_regs = sbus_bus_addr(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
 
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	sbus_establish(&sc->sc_sd, sc->sc_dev);
 
 #if 0
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,
@@ -325,11 +326,11 @@ agten_attach(struct device *parent, struct device *dev, void *aux)
 	aa.accessops = &agten_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 
 	fb->fb_driver = &agtenfbdriver;
-	fb->fb_device = &sc->sc_dev;
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_device = sc->sc_dev;
+	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_type = FBTYPE_AG10E;
 	fb->fb_type.fb_cmsize = 256;	/* doesn't matter, we're always 24bit */
 	fb->fb_type.fb_size = sc->sc_glint_fbsz;
@@ -597,7 +598,7 @@ agten_init(struct agten_softc *sc)
 	for (i = 0; i < 0x3ff; i+= 4)
 		agten_write_dac_10(sc, IBM561_CMD_GAMMA, i);
 
-	/* enable outouts, RGB mode */
+	/* enable outputs, RGB mode */
 	agten_write_idx(sc, IBM561_CONFIG_REG3);
 	agten_write_dac(sc, IBM561_CMD, 0x41);
 
@@ -837,7 +838,8 @@ agten_do_sun_cursor(struct agten_softc *sc, struct fbcursor *cur)
 		agten_write_idx(sc, IBM561_CURSOR_LUT + cur->cmap.index + 2);
 		for (i = 0; i < cur->cmap.count; i++) {
 			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.red[i]);
-			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.green[i]);
+			agten_write_dac(sc, IBM561_CMD_CMAP, 
+			    cur->cmap.green[i]);
 			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.blue[i]);
 		}
 	}
@@ -897,9 +899,9 @@ util_interleave_lin(uint8_t b1, uint8_t b2)
 
 /* and now the /dev/fb* stuff */
 static void
-agten_fb_unblank(struct device *dev)
+agten_fb_unblank(device_t dev)
 {
-	struct agten_softc *sc = (void *)dev;
+	struct agten_softc *sc = device_private(dev);
 
 	agten_init(sc);
 	agten_set_video(sc, 1);
@@ -908,7 +910,7 @@ agten_fb_unblank(struct device *dev)
 static int
 agten_fb_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct agten_softc *sc = agten_cd.cd_devs[minor(dev)];
+	struct agten_softc *sc = device_private(agten_cd.cd_devs[minor(dev)]);
 	int unit = minor(dev);
 
 	if (unit >= agten_cd.cd_ndevs || agten_cd.cd_devs[unit] == NULL)
@@ -925,7 +927,7 @@ agten_fb_open(dev_t dev, int flags, int mode, struct lwp *l)
 static int
 agten_fb_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct agten_softc *sc = agten_cd.cd_devs[minor(dev)];
+	struct agten_softc *sc = device_private(agten_cd.cd_devs[minor(dev)]);
 
 	sc->sc_fb_is_open--;
 	if (sc->sc_fb_is_open < 0)
@@ -942,7 +944,7 @@ agten_fb_close(dev_t dev, int flags, int mode, struct lwp *l)
 static int
 agten_fb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
-	struct agten_softc *sc = agten_cd.cd_devs[minor(dev)];
+	struct agten_softc *sc = device_private(agten_cd.cd_devs[minor(dev)]);
 	struct fbgattr *fba;
 	int error;
 
@@ -1037,7 +1039,7 @@ agten_fb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 static paddr_t
 agten_fb_mmap(dev_t dev, off_t off, int prot)
 {
-	struct agten_softc *sc = agten_cd.cd_devs[minor(dev)];
+	struct agten_softc *sc = device_private(agten_cd.cd_devs[minor(dev)]);
 
 	/*
 	 * mappings are subject to change
