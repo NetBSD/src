@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.23 2008/04/16 16:06:51 cegger Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.23.4.1 2008/05/16 02:23:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -104,9 +97,10 @@ struct cpu_attach_args {
 extern uint32_t cpus_running;
 #endif
 
-int x86_ipi(int,int,int);
+int x86_ipi(int, int, int);
 void x86_self_ipi(int);
 int x86_ipi_init(int);
+int x86_ipi_startup(int, int);
 void x86_errata(void);
 
 void identifycpu(struct cpu_info *);
@@ -114,6 +108,13 @@ void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
 void cpu_init_tss(struct cpu_info *);
 void cpu_init_first(void);
+
+void x86_cpu_idle_init(void);
+void x86_cpu_idle_halt(void);
+void x86_cpu_idle_mwait(void);
+#ifdef XEN
+void x86_cpu_idle_xen(void);
+#endif
 
 #ifdef INTEL_CORETEMP
 void coretemp_register(struct cpu_info *);

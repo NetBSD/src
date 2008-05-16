@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.15 2008/01/30 09:50:23 ad Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.15.10.1 2008/05/16 02:25:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.15 2008/01/30 09:50:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.15.10.1 2008/05/16 02:25:39 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -266,8 +266,7 @@ kernfs_hashinit()
 
 	mutex_init(&kfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&kfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
-	kfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
-	    M_WAITOK, &kfs_ihash);
+	kfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, true, &kfs_ihash);
 }
 
 void
@@ -277,8 +276,7 @@ kernfs_hashreinit()
 	struct kfs_hashhead *oldhash, *hash;
 	u_long i, oldmask, mask, val;
 
-	hash = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT, M_WAITOK,
-	    &mask);
+	hash = hashinit(desiredvnodes / 4, HASH_LIST, true, &mask);
 
 	mutex_enter(&kfs_ihash_lock);
 	oldhash = kfs_hashtbl;
@@ -293,7 +291,7 @@ kernfs_hashreinit()
 		}
 	}
 	mutex_exit(&kfs_ihash_lock);
-	hashdone(oldhash, M_UFSMNT);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -303,7 +301,7 @@ void
 kernfs_hashdone()
 {
 
-	hashdone(kfs_hashtbl, M_UFSMNT);
+	hashdone(kfs_hashtbl, HASH_LIST, kfs_ihash);
 	mutex_destroy(&kfs_hashlock);
 	mutex_destroy(&kfs_ihash_lock);
 }

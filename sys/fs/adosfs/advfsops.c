@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.49 2008/02/05 15:18:36 ad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.49.10.1 2008/05/16 02:25:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.49 2008/02/05 15:18:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.49.10.1 2008/05/16 02:25:17 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -58,7 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.49 2008/02/05 15:18:36 ad Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/simplelock.h>
+#include <sys/module.h>
 #include <fs/adosfs/adosfs.h>
+
+MODULE(MODULE_CLASS_VFS, adosfs, NULL);
 
 VFS_PROTOS(adosfs);
 
@@ -829,8 +832,22 @@ struct vfsops adosfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	adosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(adosfs_vfsops);
+
+static int
+adosfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&adosfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&adosfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

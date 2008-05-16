@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2008/02/07 12:25:42 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46.10.1 2008/05/16 02:22:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2008/02/07 12:25:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.10.1 2008/05/16 02:22:23 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"

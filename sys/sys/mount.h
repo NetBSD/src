@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.173 2008/01/30 11:47:03 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.173.10.1 2008/05/16 02:25:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -48,6 +48,7 @@
 #include <sys/rwlock.h>
 #include <sys/statvfs.h>
 #include <sys/specificdata.h>
+#include <sys/condvar.h>
 #endif	/* !_STANDALONE */
 
 /*
@@ -108,8 +109,7 @@ struct mount {
 	struct vnode	*mnt_syncer;		/* syncer vnode */
 	void		*mnt_transinfo;		/* for FS-internal use */
 	void		*mnt_data;		/* private data */
-	struct lwp	*mnt_writer;		/* who is [un]mounting */
-	krwlock_t	mnt_lock;		/* mount structure lock */
+	krwlock_t	mnt_unmounting;		/* to prevent new activity */
 	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
 	int		mnt_refcnt;		/* ref count on this structure */
 	int		mnt_recursecnt;		/* count of write locks */
@@ -120,6 +120,7 @@ struct mount {
 	struct statvfs	mnt_stat;		/* cache of filesystem stats */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
+	kmutex_t	mnt_updating;		/* to serialize updates */
 };
 
 /*
@@ -214,15 +215,18 @@ struct vfsops {
 	int	(*vfs_suspendctl) (struct mount *, int);
 	int	(*vfs_renamelock_enter)(struct mount *);
 	void	(*vfs_renamelock_exit)(struct mount *);
+	int	(*vfs_fsync)	(struct vnode *, int);
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
 };
 
-/* XXX Actually file system internal. */
+/* XXX vget is actually file system internal. */
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+
 #define VFS_RENAMELOCK_ENTER(MP)  (*(MP)->mnt_op->vfs_renamelock_enter)(MP)
 #define VFS_RENAMELOCK_EXIT(MP)   (*(MP)->mnt_op->vfs_renamelock_exit)(MP)
+#define VFS_FSYNC(MP, VP, FLG)	  (*(MP)->mnt_op->vfs_fsync)(VP, FLG)
 
 int	VFS_MOUNT(struct mount *, const char *, void *, size_t *);
 int	VFS_START(struct mount *, int);
@@ -274,13 +278,14 @@ int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
 		const char *);						\
 int	fsname##_suspendctl(struct mount *, int)
 
-#define	VFS_ATTACH(vfs)		__link_set_add_data(vfsops, vfs)
-
 struct vfs_hooks {
 	void	(*vh_unmount)(struct mount *);
+	LIST_ENTRY(vfs_hooks) vfs_hooks_list;
 };
-#define	VFS_HOOKS_ATTACH(hooks)	__link_set_add_data(vfs_hooks, hooks)
 
+void	vfs_hooks_init(void);
+int	vfs_hooks_attach(struct vfs_hooks *);
+int	vfs_hooks_detach(struct vfs_hooks *);
 void	vfs_hooks_unmount(struct mount *);
 
 #endif /* _KERNEL */
@@ -330,10 +335,9 @@ int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
 void	vfs_unmountall(struct lwp *);	    /* unmount file systems */
-int 	vfs_busy(struct mount *, const krw_t, kmutex_t *);
-int 	vfs_trybusy(struct mount *, const krw_t, kmutex_t *);
+int 	vfs_busy(struct mount *, struct mount **);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
-void	vfs_unbusy(struct mount *, bool);
+void	vfs_unbusy(struct mount *, bool, struct mount **);
 int	vfs_attach(struct vfsops *);
 int	vfs_detach(struct vfsops *);
 void	vfs_reinit(void);
@@ -349,7 +353,6 @@ extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
 extern	int nvfssw;
 extern  kmutex_t mountlist_lock;
-extern	kmutex_t spechash_lock;
 extern	kmutex_t vfs_list_lock;
 
 long	makefstype(const char *);

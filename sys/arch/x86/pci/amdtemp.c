@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.1 2008/04/22 22:37:14 cegger Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.1.2.1 2008/05/16 02:23:28 yamt Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /* 
@@ -16,9 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -51,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.1 2008/04/22 22:37:14 cegger Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.1.2.1 2008/05/16 02:23:28 yamt Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>

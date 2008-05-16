@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.74 2008/03/04 13:59:11 cube Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.74.4.1 2008/05/16 02:22:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,13 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.74 2008/03/04 13:59:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.74.4.1 2008/05/16 02:22:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/bus.h>
+#include <sys/reboot.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
@@ -229,7 +229,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 #if NACPI > 0
-	if (acpi_check(self, "acpibus"))
+	if ((boothowto & RB_MD2) == 0 && acpi_check(self, "acpibus"))
 		acpi_present = acpi_probe();
 	/*
 	 * First, see if the MADT contains CPUs, and possibly I/O APICs.

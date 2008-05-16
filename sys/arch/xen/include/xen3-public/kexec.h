@@ -1,4 +1,4 @@
-/* $NetBSD: kexec.h,v 1.2 2007/09/23 16:25:29 bouyer Exp $ */
+/* $NetBSD: kexec.h,v 1.2.32.1 2008/05/16 02:23:29 yamt Exp $ */
 /******************************************************************************
  * kexec.h - Public portion
  * 
@@ -79,6 +79,9 @@
 typedef struct xen_kexec_image {
 #if defined(__i386__) || defined(__x86_64__)
     unsigned long page_list[KEXEC_XEN_NO_PAGES];
+#endif
+#if defined(__ia64__)
+    unsigned long reboot_code_buffer;
 #endif
     unsigned long indirection_page;
     unsigned long start_address;

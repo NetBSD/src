@@ -1,4 +1,4 @@
-# $NetBSD: std.i386,v 1.27 2008/01/25 21:12:12 joerg Exp $
+# $NetBSD: std.i386,v 1.27.10.1 2008/05/16 02:22:33 yamt Exp $
 #
 # standard, required NetBSD/i386 'options'
 
@@ -8,9 +8,14 @@ include		"conf/std"	# MI standard options
 options 	EXEC_AOUT	# exec a.out binaries
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
-
 options 	CPU_IN_CKSUM
 #options 	CRYPTO_MD_DES_ENC	# machine-dependant code for DES
 #options 	CRYPTO_MD_DES_CBC	# machine-dependant DES CBC code
 #options 	CRYPTO_MD_BF_ENC	# machine-dependant code for BF_encrypt
 #options 	CRYPTO_MD_BF_CBC	# careful: uses bswapl, requires 486
+options		MULTIPROCESSOR		# multiprocessor supprot
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS
+
+mainbus0 at root
+cpu* at mainbus?
+ioapic* at mainbus?

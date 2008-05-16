@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.139 2008/04/27 10:56:28 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.139.2.1 2008/05/16 02:25:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -69,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139 2008/04/27 10:56:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139.2.1 2008/05/16 02:25:25 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -757,7 +750,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 
 	if (pgrp == NULL) {
 		pgrp = new_pgrp;
-		new_pgrp = 0;
+		new_pgrp = NULL;
 		if (sess != NULL) {
 			sess->s_sid = p->p_pid;
 			sess->s_leader = p;
@@ -773,7 +766,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 			SESSHOLD(sess);
 		}
 		pgrp->pg_session = sess;
-		sess = 0;
+		sess = NULL;
 
 		pgrp->pg_id = pgid;
 		LIST_INIT(&pgrp->pg_members);

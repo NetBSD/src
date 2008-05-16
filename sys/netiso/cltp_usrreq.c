@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.33 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.33.2.1 2008/05/16 02:25:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.33 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.33.2.1 2008/05/16 02:25:45 yamt Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -318,6 +318,7 @@ cltp_usrreq(so, req, m, nam, control, l)
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (isop != 0) {
 			error = EISCONN;
 			break;

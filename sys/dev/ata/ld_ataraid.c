@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.26 2008/04/05 22:04:36 cegger Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.26.4.1 2008/05/16 02:23:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.26 2008/04/05 22:04:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.26.4.1 2008/05/16 02:23:53 yamt Exp $");
 
 #include "rnd.h"
 
@@ -92,7 +92,7 @@ static int	ld_ataraid_start_span(struct ld_softc *, struct buf *);
 static int	ld_ataraid_start_raid0(struct ld_softc *, struct buf *);
 static void	ld_ataraid_iodone_raid0(struct buf *);
 
-CFATTACH_DECL(ld_ataraid, sizeof(struct ld_ataraid_softc),
+CFATTACH_DECL_NEW(ld_ataraid, sizeof(struct ld_ataraid_softc),
     ld_ataraid_match, ld_ataraid_attach, NULL, NULL);
 
 static int ld_ataraid_initialized;
@@ -113,18 +113,16 @@ struct cbuf {
 #define	CBUF_PUT(cbp)	pool_put(&ld_ataraid_cbufpl, (cbp))
 
 static int
-ld_ataraid_match(struct device *parent,
-    struct cfdata *match, void *aux)
+ld_ataraid_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-ld_ataraid_attach(struct device *parent, struct device *self,
-    void *aux)
+ld_ataraid_attach(device_t parent, device_t self, void *aux)
 {
-	struct ld_ataraid_softc *sc = (void *) self;
+	struct ld_ataraid_softc *sc = device_private(self);
 	struct ld_softc *ld = &sc->sc_ld;
 	struct ataraid_array_info *aai = aux;
 	const char *level;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.12 2008/01/08 02:07:52 matt Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.12.10.1 2008/05/16 02:22:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -48,12 +48,6 @@
 
 	.text
 	.align 0
-
-Lcurrent_spl_level:	
-	.word	_C_LABEL(current_spl_level)
-
-Lcurrent_intr_depth:
-	.word	_C_LABEL(cpu_info_store) + CI_IDEPTH
 
 Lspl_masks:
 	.word	_C_LABEL(spl_masks)
@@ -105,10 +99,9 @@ ASENTRY_NP(irq_entry)
 	 * each time the interrupt handler is nested.
 	 */
 
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r1, [r0]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	add	r1, r1, #1
-	str	r1, [r0]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	/*
  	 * Need to block all interrupts at the IPL or lower for
@@ -123,7 +116,7 @@ ASENTRY_NP(irq_entry)
 	 * This would benefit from a special ffs type routine
 	 */
 
-	mov	r9, #(_SPL_LEVELS - 1)
+	mov	r9, #(NIPL - 1)
 	ldr	r7, Lspl_masks
 
 Lfind_highest_ipl:
@@ -137,9 +130,8 @@ Lfind_highest_ipl:
 	ldr	r2, [r7, r9, lsl #2]
 	mvn	r2, r2
 
-	ldr	r0, Lcurrent_spl_level
-	ldr	r1, [r0]
-	str	r9, [r0]
+	ldr	r1, [r4, #CI_CPL]
+	str	r9, [r4, #CI_CPL]
 	stmfd	sp!, {r1}
 
 	/* Update the SAIP irq masks */
@@ -220,8 +212,7 @@ nextirq:
 	bne	irqloop			/* no - loop back. */
 
 	ldmfd	sp!, {r2}
-	ldr	r1, Lcurrent_spl_level
-	str	r2, [r1]
+	str	r2, [r4, #CI_CPL]
 
 	/* Restore previous disabled mask */
 	bl	_C_LABEL(irq_setmasks)
@@ -243,10 +234,9 @@ nextirq:
 #endif
 
 	/* Decrement the nest count */
-	ldr	r0, Lcurrent_intr_depth
-	ldr	r1, [r0]
+	ldr	r1, [r4, #CI_INTR_DEPTH]
 	sub	r1, r1, #1
-	str	r1, [r0]
+	str	r1, [r4, #CI_INTR_DEPTH]
 
 	LOCK_CAS_CHECK
 
@@ -264,8 +254,7 @@ ENTRY(irq_setmasks)
 
 	/* Calculate interrupt mask */
 	ldr	r0, Lspl_masks
-	ldr	r2, Lcurrent_spl_level
-	ldr	r2, [r2]
+	ldr	r2, [r4, #CI_CPL]
 	ldr	r2, [r0, r2, lsl #2]
 
 	ldr	r0, _C_LABEL(saipic_base)

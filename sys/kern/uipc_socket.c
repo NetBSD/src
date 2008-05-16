@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.160 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.160.2.1 2008/05/16 02:25:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.160.2.1 2008/05/16 02:25:28 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -574,8 +567,10 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 
 	solock(so);
 	if ((so->so_state & (SS_ISCONNECTED | SS_ISCONNECTING | 
-	    SS_ISDISCONNECTING)) != 0)
+	    SS_ISDISCONNECTING)) != 0) {
+	    	sounlock(so);
 		return (EOPNOTSUPP);
+	}
 	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, NULL,
 	    NULL, NULL, l);
 	if (error != 0) {
@@ -594,6 +589,7 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 void
 sofree(struct socket *so)
 {
+	u_int refs;
 
 	KASSERT(solocked(so));
 
@@ -623,8 +619,10 @@ sofree(struct socket *so)
 	KASSERT(!cv_has_waiters(&so->so_rcv.sb_cv));
 	KASSERT(!cv_has_waiters(&so->so_snd.sb_cv));
 	sorflush(so);
+	refs = so->so_aborting;	/* XXX */
 	sounlock(so);
-	soput(so);
+	if (refs == 0)		/* XXX */
+		soput(so);
 }
 
 /*
@@ -700,14 +698,17 @@ soclose(struct socket *so)
 int
 soabort(struct socket *so)
 {
+	u_int refs;
 	int error;
 	
 	KASSERT(solocked(so));
 	KASSERT(so->so_head == NULL);
 
+	so->so_aborting++;		/* XXX */
 	error = (*so->so_proto->pr_usrreq)(so, PRU_ABORT, NULL,
 	    NULL, NULL, NULL);
-	if (error) {
+	refs = --so->so_aborting;	/* XXX */
+	if (error || (refs == 0)) {
 		sofree(so);
 	} else {
 		sounlock(so);

@@ -1,4 +1,4 @@
-/* $NetBSD: cs4231reg.h,v 1.10 2005/12/11 12:21:26 christos Exp $ */
+/* $NetBSD: cs4231reg.h,v 1.10.74.1 2008/05/16 02:24:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -89,7 +82,9 @@
 #define CS_VERSION_ID		25
 #define CS_MONO_IO_CONTROL	26
 #define CS_POWERDOWN_CONTROL	27
+#define CS_LEFT_OUT		27 /* 4232 */
 #define CS_REC_FORMAT		28
+#define CS_RIGHT_OUT		29 /* 4232 */
 #define CS_XTAL_SELECT		29
 #define CS_UPPER_REC_CNT	30
 #define CS_LOWER_REC_CNT	31
@@ -135,9 +130,13 @@
 #define CS_VERSION_NUMBER	0xe0	/* Version number:
 					 *	0x101 - 4231 rev. A
 					 *	0x100 - 4231 previous revs
+					 *	0x100 - 4232 (unreleased?)
+					 *	0x101 - 4232 rev. C
 					 */
 #define CS_VERSION_CHIPID	0x07	/* Chip Identification.
-					 * Currently know values: 0x000
+					 * Currently know values:
+					 *	0x000 - CS4231
+					 *	0x010 - CS4232
 					 */
 
 /* MONO_IO_CONTROL - register I26 */
@@ -149,9 +148,21 @@
 #define MONO_INPUT_MUTE		0x80
 #define MONO_INPUT_MUTE_MASK	(~MONO_INPUT_MUTE & 0xff)
 
+/* CS_LEFT_OUT - register I27 */
+#define LEFT_OUT_ATTEN_BITS	0x0f
+#define LEFT_OUT_ATTEN_MASK	0xf0
+#define LEFT_OUT_MUTE		0x80
+#define LEFT_OUT_MUTE_MASK	(~LEFT_OUT_MUTE & 0xff)
+
 /* CS_REC_FORMAT - register I28 */
 #define REC_FMT_reserved	0x0f	/* reserved */
 #define REC_FMT_SM		0x10	/* 0: mono, 1: stereo */
 #define REC_FMT_CL		0x20	/* 0: linear, 1: companded */
 #define REC_FMT_FMT0		0x40	/* See register I8 for valid */
 #define REC_FMT_FMT1		0x80	/* combination of the FMT and CL bits */
+
+/* CS_RIGHT_OUT - register I27 */
+#define RIGHT_OUT_ATTEN_BITS	0x0f
+#define RIGHT_OUT_ATTEN_MASK	0xf0
+#define RIGHT_OUT_MUTE		0x80
+#define RIGHT_OUT_MUTE_MASK	(~RIGHT_OUT_MUTE & 0xff)

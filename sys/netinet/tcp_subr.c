@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.229 2008/04/26 08:13:35 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.229.2.1 2008/05/16 02:25:42 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -98,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.229 2008/04/26 08:13:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.229.2.1 2008/05/16 02:25:42 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1285,6 +1278,8 @@ tcp_freeq(struct tcpcb *tp)
 
 /*
  * Protocol drain routine.  Called when memory is in short supply.
+ * Don't acquire softnet_lock as can be called from hardware
+ * interrupt handler.
  */
 void
 tcp_drain(void)
@@ -1292,7 +1287,6 @@ tcp_drain(void)
 	struct inpcb_hdr *inph;
 	struct tcpcb *tp;
 
-	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
 	/*
@@ -1327,7 +1321,6 @@ tcp_drain(void)
 	}
 
 	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
 }
 
 /*

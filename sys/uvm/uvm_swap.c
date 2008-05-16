@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.137 2008/02/29 20:35:23 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.137.4.1 2008/05/16 02:26:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.137 2008/02/29 20:35:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.137.4.1 2008/05/16 02:26:01 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -518,6 +518,7 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	if (SCARG(uap, cmd) == SWAP_DUMPOFF) {
 		/* drop the current dump device */
 		dumpdev = NODEV;
+		dumpcdev = NODEV;
 		cpu_dumpconf();
 		goto out;
 	}
@@ -569,9 +570,10 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 			error = ENOTBLK;
 			break;
 		}
-		if (bdevsw_lookup(vp->v_rdev))
+		if (bdevsw_lookup(vp->v_rdev)) {
 			dumpdev = vp->v_rdev;
-		else
+			dumpcdev = devsw_blk2chr(dumpdev);
+		} else
 			dumpdev = NODEV;
 		cpu_dumpconf();
 		break;

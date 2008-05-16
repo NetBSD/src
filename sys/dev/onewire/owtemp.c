@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.13 2008/04/08 20:14:02 cegger Exp $ */
+/*	$NetBSD: owtemp.c,v 1.13.4.1 2008/05/16 02:24:42 yamt Exp $ */
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.13 2008/04/08 20:14:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.13.4.1 2008/05/16 02:24:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.13 2008/04/08 20:14:02 cegger Exp $");
 #define DS_CMD_READ_SCRATCHPAD	0xbe
 
 struct owtemp_softc {
-	struct device			sc_dev;
-
 	void *				sc_onewire;
 	u_int64_t			sc_rom;
 
@@ -53,14 +51,14 @@ struct owtemp_softc {
 	int				sc_dying;
 };
 
-int	owtemp_match(struct device *, struct cfdata *, void *);
-void	owtemp_attach(struct device *, struct device *, void *);
-int	owtemp_detach(struct device *, int);
-int	owtemp_activate(struct device *, enum devact);
+static int	owtemp_match(device_t, cfdata_t, void *);
+static void	owtemp_attach(device_t, device_t, void *);
+static int	owtemp_detach(device_t, int);
+static int	owtemp_activate(device_t, enum devact);
 
-void	owtemp_update(void *);
+static void	owtemp_update(void *);
 
-CFATTACH_DECL(owtemp, sizeof(struct owtemp_softc),
+CFATTACH_DECL_NEW(owtemp, sizeof(struct owtemp_softc),
 	owtemp_match, owtemp_attach, owtemp_detach, owtemp_activate);
 
 extern struct cfdriver owtemp_cd;
@@ -76,18 +74,20 @@ static void	owtemp_refresh(struct sysmon_envsys *, envsys_data_t *);
 static uint32_t	owtemp_decode_ds18b20(const uint8_t *);
 static uint32_t	owtemp_decode_ds1920(const uint8_t *);
 
-int
-owtemp_match(struct device *parent, struct cfdata *cf, void *aux)
+static int
+owtemp_match(device_t parent, cfdata_t match, void *aux)
 {
 	return (onewire_matchbyfam(aux, owtemp_fams,
 	    __arraycount(owtemp_fams)));
 }
 
-void
-owtemp_attach(struct device *parent, struct device *self, void *aux)
+static void
+owtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct owtemp_softc *sc = device_private(self);
 	struct onewire_attach_args *oa = aux;
+
+	aprint_naive("\n");
 
 	sc->sc_onewire = oa->oa_onewire;
 	sc->sc_rom = oa->oa_rom;
@@ -107,28 +107,28 @@ owtemp_attach(struct device *parent, struct device *self, void *aux)
 	/* Initialize sensor */
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	(void)strlcpy(sc->sc_sensor.desc,
-	    device_xname(&sc->sc_dev), sizeof(sc->sc_sensor.desc));
+	    device_xname(self), sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
 
 	/* Hook into system monitor. */
-	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
+	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = owtemp_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error_dev(&sc->sc_dev, "unable to register with sysmon\n");
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
-int
-owtemp_detach(struct device *self, int flags)
+static int
+owtemp_detach(device_t self, int flags)
 {
 	struct owtemp_softc *sc = device_private(self);
 
@@ -137,8 +137,8 @@ owtemp_detach(struct device *self, int flags)
 	return 0;
 }
 
-int
-owtemp_activate(struct device *self, enum devact act)
+static int
+owtemp_activate(device_t self, enum devact act)
 {
 	struct owtemp_softc *sc = device_private(self);
 
@@ -153,7 +153,7 @@ owtemp_activate(struct device *self, enum devact act)
 	return (0);
 }
 
-void
+static void
 owtemp_update(void *arg)
 {
 	struct owtemp_softc *sc = arg;

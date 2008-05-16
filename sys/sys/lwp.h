@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.89 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.89.2.1 2008/05/16 02:25:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -73,6 +66,8 @@
  * Fields are clustered together by usage (to increase the likelyhood
  * of cache hits) and by size (to reduce dead space in the structure).
  */
+struct lockdebug;
+
 struct lwp {
 	/* Scheduling and overall state */
 	TAILQ_ENTRY(lwp) l_runq;	/* s: run queue */
@@ -162,11 +157,17 @@ struct lwp {
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
-	u_short		l_unused;
+	u_short		l_unused;	/* !: unused */
 	u_short		l_blcnt;	/* !: count of kernel_lock held */
+	int		l_nopreempt;	/* !: don't preempt me! */
+	u_int		l_dopreempt;	/* s: kernel preemption pending */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
 	struct rusage	l_ru;		/* !: accounting information */
+	uint64_t	l_pfailtime;	/* !: for kernel preemption */
+	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
+	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
+	_TAILQ_HEAD(,struct lockdebug,volatile) l_ld_locks;/* !: locks held by LWP */
 
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
@@ -418,23 +419,57 @@ spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
 }
 
 /*
+ * Allow machine-dependent code to override curlwp in <machine/cpu.h> for
+ * its own convenience.  Otherwise, we declare it as appropriate.
+ */
+#if !defined(curlwp)
+#if defined(MULTIPROCESSOR)
+#define	curlwp		curcpu()->ci_curlwp	/* Current running LWP */
+#else
+extern struct lwp	*curlwp;		/* Current running LWP */
+#endif /* MULTIPROCESSOR */
+#endif /* ! curlwp */
+#define	curproc		(curlwp->l_proc)
+
+static inline bool
+CURCPU_IDLE_P(void)
+{
+	struct cpu_info *ci = curcpu();
+	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
+}
+
+/*
  * Disable and re-enable preemption.  Only for low-level kernel
  * use.  Code outside kern/ should use kpreempt_disable() and
  * kpreempt_enable().
  */
 static inline void
-KPREEMPT_DISABLE(void)
+KPREEMPT_DISABLE(lwp_t *l)
 {
 
+	KASSERT(l == curlwp);
+	l->l_nopreempt++;
 	__insn_barrier();
 }
 
 static inline void
-KPREEMPT_ENABLE(void)
+KPREEMPT_ENABLE(lwp_t *l)
 {
 
+	KASSERT(l == curlwp);
+	KASSERT(l->l_nopreempt > 0);
+	__insn_barrier();
+	if (--l->l_nopreempt != 0)
+		return;
+	__insn_barrier();
+	if (__predict_false(l->l_dopreempt))
+		kpreempt(0);
 	__insn_barrier();
 }
+
+/* For lwp::l_dopreempt */
+#define	DOPREEMPT_ACTIVE	0x01
+#define	DOPREEMPT_COUNTED	0x02
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.10 2008/01/06 01:37:57 matt Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.10.10.1 2008/05/16 02:22:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.10 2008/01/06 01:37:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.10.10.1 2008/05/16 02:22:04 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -68,9 +68,6 @@ struct intrq intrq[NIRQ];
 /* Interrupts to mask at each level. */
 uint32_t becc_imask[NIPL];
 
-/* Current interrupt priority level. */
-volatile uint32_t current_spl_level;  
-
 /* Interrupts pending. */
 volatile uint32_t becc_ipending;
 volatile uint32_t becc_sipending;
@@ -85,7 +82,7 @@ uint32_t intr_steer;
  * Interrupt bit names.
  * XXX Some of these are BRH-centric.
  */
-const char *becc_irqnames[] = {
+const char * const becc_irqnames[] = {
 	"soft",
 	"timer A",
 	"timer B",
@@ -199,10 +196,6 @@ becc_intr_calculate_masks(void)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	becc_imask[IPL_SOFTCLOCK] = (1U << ICU_SOFT);
-	becc_imask[IPL_SOFTNET] = (1U << ICU_SOFT);
-	becc_imask[IPL_SOFTBIO] = (1U << ICU_SOFT);
-	becc_imask[IPL_SOFTSERIAL] = (1U << ICU_SOFT);
 	becc_imask[IPL_VM] |= becc_imask[IPL_SOFTSERIAL];
 	becc_imask[IPL_SCHED] |= becc_imask[IPL_VM];
 	becc_imask[IPL_HIGH] |= becc_imask[IPL_SCHED];
@@ -226,77 +219,20 @@ becc_intr_calculate_masks(void)
 void
 splx(int new)
 {
-
 	becc_splx(new);
 }
 
 int
 _spllower(int ipl)
 {
-
 	return (becc_spllower(ipl));
 }
 
 int
 _splraise(int ipl)
 {
-
 	return (becc_splraise(ipl));
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-void
-_setsoftintr(int si)
-{
-
-	becc_setsoftintr(si);
-}
-
-static const int si_to_ipl[] = {
-	[SI_SOFTBIO]	= IPL_SOFTBIO,
-	[SI_SOFTCLOCK]	= IPL_SOFTCLOCK,
-	[SI_SOFTNET]	= IPL_SOFTNET,	
-	[SI_SOFTSERIAL]	= IPL_SOFTSERIAL,
-};               
-
-int
-becc_softint(void *arg)
-{
-	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
-	uint32_t	new, oldirqstate;
-
-	/* Clear interrupt */
-	BECC_CSR_WRITE(BECC_ICSR, 0);
-
-	if (__cpu_simple_lock_try(&processing) == 0)
-		return 0;
-
-	oldirqstate = disable_interrupts(I32_bit);
-
-	new = current_spl_level;
-
-#define DO_SOFTINT(si)							\
-	if (becc_sipending & (1 << (si))) {				\
-		becc_sipending &= ~(1 << (si));				\
-		current_spl_level |= becc_imask[si_to_ipl[(si)]];	\
-		restore_interrupts(oldirqstate);			\
-		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts(I32_bit);		\
-		current_spl_level = new;				\
-	}
-
-	DO_SOFTINT(SI_SOFTSERIAL);
-	DO_SOFTINT(SI_SOFTNET);
-	DO_SOFTINT(SI_SOFTCLOCK);
-	DO_SOFTINT(SI_SOFT);
-
-	__cpu_simple_unlock(&processing);
-
-	restore_interrupts(oldirqstate);
-
-	return 1;
-}
-#endif
 
 /*
  * becc_icu_init:
@@ -403,12 +339,11 @@ becc_intr_dispatch(struct irqframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
-	uint32_t oldirqstate, pcpl, irq, ibit, hwpend;
-	struct cpu_info *ci;
+	uint32_t oldirqstate, irq, ibit, hwpend;
+	struct cpu_info * const ci = curcpu();
+	const int ppl = ci->ci_cpl;
+	const uint32_t imask = becc_imask[ppl];
 
-	ci = curcpu();
-	ci->ci_idepth++;
-	pcpl = current_spl_level;
 	hwpend = becc_icsr_read();
 
 	/*
@@ -424,7 +359,7 @@ becc_intr_dispatch(struct irqframe *frame)
 
 		hwpend &= ~ibit;
 
-		if (pcpl & ibit) {
+		if (imask & ibit) {
 			/*
 			 * IRQ is masked; mark it as pending and check
 			 * the next one.  Note: the IRQ is already disabled.
@@ -438,25 +373,26 @@ becc_intr_dispatch(struct irqframe *frame)
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
-		current_spl_level |= iq->iq_mask;
-		oldirqstate = enable_interrupts(I32_bit);
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list)) {
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
+			ci->ci_cpl = ih->ih_ipl;
+			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
+			restore_interrupts(oldirqstate);
 		}
-		restore_interrupts(oldirqstate);
 
-		current_spl_level = pcpl;
+		ci->ci_cpl = ppl;
 
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
 		becc_set_intrmask();
 	}
 
-	ci->ci_idepth--;
-
-	if (becc_ipending & ~pcpl) {
-		intr_enabled |= (becc_ipending & ~pcpl);
+	if (becc_ipending & ~imask) {
+		intr_enabled |= (becc_ipending & ~imask);
 		becc_set_intrmask();
 	}
+
+#ifdef __HAVE_FAST_SOFTINTS
+	cpu_dosoftints();
+#endif
 }

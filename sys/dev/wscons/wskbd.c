@@ -1,10 +1,7 @@
-/* $NetBSD: wskbd.c,v 1.117 2008/04/27 05:15:45 cegger Exp $ */
+/* $NetBSD: wskbd.c,v 1.117.2.1 2008/05/16 02:25:17 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
- *
- * Keysym translator:
- * Contributed to The NetBSD Foundation by Juergen Hannken-Illjes.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +28,35 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ *  All rights reserved.
+ *
+ * Keysym translator contributed to The NetBSD Foundation by
+ * Juergen Hannken-Illjes.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -79,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.117 2008/04/27 05:15:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.117.2.1 2008/05/16 02:25:17 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -178,6 +204,9 @@ struct wskbd_softc {
 
 	int		sc_refcnt;
 	u_char		sc_dying;	/* device is being detached */
+
+	wskbd_hotkey_plugin *sc_hotkey;
+	void *sc_hotkeycookie;
 };
 
 #define MOD_SHIFT_L		(1 << 0)
@@ -387,6 +416,8 @@ wskbd_attach(device_t parent, device_t self, void *aux)
 
  	sc->sc_base.me_dv = self;
 	sc->sc_isconsole = ap->console;
+	sc->sc_hotkey = NULL;
+	sc->sc_hotkeycookie = NULL;
 
 #if NWSMUX > 0 || NWSDISPLAY > 0
 	sc->sc_base.me_ops = &wskbd_srcops;
@@ -1613,6 +1644,16 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	return (0);
 }
 
+device_t
+wskbd_hotkey_register(device_t self, void *cookie, wskbd_hotkey_plugin *hotkey)
+{
+	struct wskbd_softc *sc = device_private(self);
+
+	sc->sc_hotkey = hotkey;
+	sc->sc_hotkeycookie = cookie;
+	return sc->sc_base.me_dv;
+}
+
 static int
 wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 {
@@ -1620,6 +1661,7 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	keysym_t ksym, res, *group;
 	struct wscons_keymap kpbuf, *kp;
 	int iscommand = 0;
+	int ishotkey = 0;
 
 	if (type == WSCONS_EVENT_ALL_KEYS_UP) {
 		id->t_modifiers &= ~(MOD_SHIFT_L | MOD_SHIFT_R
@@ -1632,10 +1674,16 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 	}
 	
 	if (sc != NULL) {
+		if (sc->sc_hotkey != NULL)
+			ishotkey = sc->sc_hotkey(sc, sc->sc_hotkeycookie,
+						type, value);
+		if (ishotkey)
+			return 0;
+
 		if (value < 0 || value >= sc->sc_maplen) {
 #ifdef DEBUG
-			printf("wskbd_translate: keycode %d out of range\n",
-			       value);
+			printf("%s: keycode %d out of range\n",
+			       __func__, value);
 #endif
 			return (0);
 		}

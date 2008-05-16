@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.14 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.14.4.1 2008/05/16 02:24:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.14 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.14.4.1 2008/05/16 02:24:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

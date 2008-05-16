@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.8 2008/01/07 08:39:07 martti Exp $
+#	$NetBSD: XEN3_DOM0,v 1.8.10.1 2008/05/16 02:22:33 yamt Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -35,6 +35,7 @@ acpibut* 	at acpi?		# ACPI Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
-
+hpqlb*		at acpi?		# HP Quick Launch Buttons
+ 
 pseudo-device	xvif
 pseudo-device	xbdback

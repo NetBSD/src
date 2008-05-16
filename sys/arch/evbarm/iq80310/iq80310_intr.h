@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.h,v 1.6 2008/01/06 01:37:58 matt Exp $	*/
+/*	$NetBSD: iq80310_intr.h,v 1.6.10.1 2008/05/16 02:22:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -73,12 +73,11 @@ void	iq80310_do_soft(void);
 static inline int __attribute__((__unused__))
 iq80310_splraise(int ipl)
 {
-	extern volatile int current_spl_level;
 	extern int iq80310_imask[];
 	int old;
 
-	old = current_spl_level;
-	current_spl_level |= iq80310_imask[ipl];
+	old = curcpl();
+	set_curcpl(old | iq80310_imask[ipl]);
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();
@@ -90,14 +89,13 @@ static inline void __attribute__((__unused__))
 iq80310_splx(int new)
 {
 	extern volatile int iq80310_ipending;
-	extern volatile int current_spl_level;
 	int old;
 
 	/* Don't let the compiler re-order this code with preceding code */
 	__insn_barrier();
 
-	old = current_spl_level;
-	current_spl_level = new;
+	old = curcpl();
+	set_curcpl(new);
 
 #ifdef __HAVE_FAST_SOFTINTS
 	/* If there are software interrupts to process, do it. */
@@ -122,9 +120,8 @@ iq80310_splx(int new)
 static inline int __attribute__((__unused__))
 iq80310_spllower(int ipl)
 {
-	extern volatile int current_spl_level;
 	extern int iq80310_imask[];
-	int old = current_spl_level;
+	const int old = curcpl();
 
 	iq80310_splx(iq80310_imask[ipl]);
 	return (old);

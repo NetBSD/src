@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.113 2007/12/09 20:28:01 jmcneill Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.113.14.1 2008/05/16 02:24:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.113 2007/12/09 20:28:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.113.14.1 2008/05/16 02:24:26 yamt Exp $");
 
 #define ATRQ_CH 0
 #define ATRS_CH 1
@@ -1995,7 +1995,7 @@ fwohci_intr_core(struct fwohci_softc *sc, uint32_t stat, int count)
 		fw_printf(fc->dev, "node_id=0x%08x, gen=%d, ",
 		    node_id, (plen >> 16) & 0xff);
 		if (!(node_id & OHCI_NODE_VALID)) {
-			printf("Bus reset failure\n");
+			aprint_error("Bus reset failure\n");
 			goto sidout;
 		}
 
@@ -2003,11 +2003,11 @@ fwohci_intr_core(struct fwohci_softc *sc, uint32_t stat, int count)
 		sc->cycle_lost = 0;
 		OWRITE(sc, FWOHCI_INTMASK,  OHCI_INT_CYC_LOST);
 		if ((node_id & OHCI_NODE_ROOT) && !nocyclemaster) {
-			printf("CYCLEMASTER mode\n");
+			aprint_normal("CYCLEMASTER mode\n");
 			OWRITE(sc, OHCI_LNKCTL,
 			    OHCI_CNTL_CYCMTR | OHCI_CNTL_CYCTIMER);
 		} else {
-			printf("non CYCLEMASTER mode\n");
+			aprint_normal("non CYCLEMASTER mode\n");
 			OWRITE(sc, OHCI_LNKCTLCLR, OHCI_CNTL_CYCMTR);
 			OWRITE(sc, OHCI_LNKCTL, OHCI_CNTL_CYCTIMER);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.24 2008/01/15 14:50:08 joerg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.24.10.1 2008/05/16 02:22:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -44,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.24 2008/01/15 14:50:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.24.10.1 2008/05/16 02:22:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -54,11 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.24 2008/01/15 14:50:08 joerg Exp $");
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <x86/cpu_msr.h>
-#include <machine/intr.h>
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
@@ -71,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.24 2008/01/15 14:50:08 joerg Exp $");
 #include "acpi.h"
 
 void i386_ipi_halt(struct cpu_info *);
+void i386_ipi_kpreempt(struct cpu_info *);
 
 #if NNPX > 0
 void i386_ipi_synch_fpu(struct cpu_info *);
@@ -95,13 +90,14 @@ void acpi_cpu_sleep(struct cpu_info *);
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	i386_ipi_halt,
-	tsc_calibrate_cpu,	/* keep cycle counters synchronized */
+	NULL,
 	i386_ipi_flush_fpu,
 	i386_ipi_synch_fpu,
 	i386_reload_mtrr,
 	gdt_reload_cpu,
 	msr_write_ipi,
 	acpi_cpu_sleep,
+	i386_ipi_kpreempt,
 };
 
 void
@@ -143,3 +139,10 @@ i386_reload_mtrr(struct cpu_info *ci)
 		mtrr_reload_cpu(ci);
 }
 #endif
+
+void
+i386_ipi_kpreempt(struct cpu_info *ci)
+{
+
+	softint_trigger(1 << SIR_PREEMPT);
+}

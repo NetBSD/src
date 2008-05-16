@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.17 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: disassem.c,v 1.17.80.1 2008/05/16 02:21:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.17 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.17.80.1 2008/05/16 02:21:55 yamt Exp $");
 
 #include <sys/systm.h>
 #include <arch/arm/arm/disassem.h>
@@ -211,6 +211,9 @@ static const struct arm32_insn arm32_i[] = {
     { 0x0f100010, 0x0e100010, "mrc",	"#z" },
     { 0xff000010, 0xfe000000, "cdp2",	"#y" },
     { 0x0f000010, 0x0e000000, "cdp",	"#y" },
+    { 0x0f100010, 0x0e000010, "mcr",	"#z" },
+    { 0x0ff00000, 0x0c400000, "mcrr",	"#&" },
+    { 0x0ff00000, 0x0c500000, "mrrc",	"#&" },
     { 0xfe100090, 0xfc100000, "ldc2",	"L#v" },
     { 0x0e100090, 0x0c100000, "ldc",	"L#v" },
     { 0xfe100090, 0xfc000000, "stc2",	"L#v" },
@@ -500,6 +503,12 @@ disasm(const disasm_interface_t *di, vaddr_t loc, int altfmt)
 
 /*			if (((insn >> 5) & 0x07) != 0)
 				di->di_printf(", %d", (insn >> 5) & 0x07);*/
+			break;
+		/* & - co-processor register range transfer registers */
+		case '&':
+			di->di_printf("%d, r%d, r%d, c%d",
+			    (insn >> 4) & 0x0f, (insn >> 12) & 0x0f,
+			    (insn >> 16) & 0x0f, insn & 0x0f);
 			break;
 		default:
 			di->di_printf("[%c - unknown]", *f_ptr);

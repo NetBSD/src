@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.13 2008/04/26 01:19:15 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.13.2.1 2008/05/16 02:23:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -33,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.13 2008/04/26 01:19:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.13.2.1 2008/05/16 02:23:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.13 2008/04/26 01:19:15 jmcneill 
 #include <machine/pio.h>
 #endif
 
-#define THINKPAD_NSENSORS	8
+#define	THINKPAD_NSENSORS	8
 
 typedef struct thinkpad_softc {
 	device_t		sc_dev;
@@ -63,7 +57,7 @@ typedef struct thinkpad_softc {
 	ACPI_HANDLE		sc_cmoshdl;
 	bool			sc_cmoshdl_valid;
 
-#define TP_PSW_SLEEP		0
+#define	TP_PSW_SLEEP		0
 #define	TP_PSW_HIBERNATE	1
 #define	TP_PSW_DISPLAY_CYCLE	2
 #define	TP_PSW_LOCK_SCREEN	3
@@ -103,7 +97,7 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_CMOS_BRIGHTNESS_UP	0x04
 #define	THINKPAD_CMOS_BRIGHTNESS_DOWN	0x05
 
-#define THINKPAD_HKEY_VERSION		0x0100
+#define	THINKPAD_HKEY_VERSION		0x0100
 
 #define	THINKPAD_DISPLAY_LCD		0x01
 #define	THINKPAD_DISPLAY_CRT		0x02

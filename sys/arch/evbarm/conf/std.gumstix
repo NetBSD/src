@@ -1,4 +1,4 @@
-#	$NetBSD: std.gumstix,v 1.3 2008/01/27 12:37:11 chris Exp $
+#	$NetBSD: std.gumstix,v 1.3.10.1 2008/05/16 02:22:10 yamt Exp $
 #
 # standard NetBSD/evbarm for GUMSTIX options
 
@@ -15,6 +15,7 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 
+options 	KERNEL_EXT_BASE=0xc0000000
 makeoptions	LOADADDRESS="0xc0200000"
 makeoptions	BOARDTYPE="gumstix"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.gumstix"

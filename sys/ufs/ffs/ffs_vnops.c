@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.98 2008/01/30 09:50:25 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.98.10.1 2008/05/16 02:26:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.98 2008/01/30 09:50:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.98.10.1 2008/05/16 02:26:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,6 +331,9 @@ ffs_full_fsync(struct vnode *vp, int flags)
 {
 	struct buf *bp, *nbp;
 	int error, passes, skipmeta, inodedeps_only, waitfor;
+	struct mount *mp;
+
+	error = 0;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
@@ -347,13 +350,16 @@ ffs_full_fsync(struct vnode *vp, int flags)
 	 */
 
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
+		if ((flags & FSYNC_VFS) != 0)
+			mp = vp->v_specmountpoint;
+		else
+			mp = vp->v_mount;
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    ((flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
-		    (fstrans_getstate(vp->v_mount) == FSTRANS_SUSPENDING ?
+		    (fstrans_getstate(mp) == FSTRANS_SUSPENDING ?
 			PGO_FREE : 0));
-		if (error) {
+		if (error)
 			return error;
-		}
 	} else
 		mutex_exit(&vp->v_interlock);
 
@@ -437,12 +443,19 @@ loop:
 		waitfor = 0;
 	else
 		waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
-	error = ffs_update(vp, NULL, NULL, waitfor);
+
+	if (vp->v_tag == VT_UFS)
+		error = ffs_update(vp, NULL, NULL, waitfor);
+	else {
+		KASSERT(vp->v_type == VBLK);
+		KASSERT((flags & FSYNC_VFS) != 0);
+	}
 
 	if (error == 0 && flags & FSYNC_CACHE) {
 		int i = 0;
-		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
-			curlwp->l_cred);
+		if ((flags & FSYNC_VFS) == 0)
+			vp = VTOI(vp)->i_devvp;
+		VOP_IOCTL(vp, DIOCCACHESYNC, &i, FWRITE, curlwp->l_cred);
 	}
 
 	return error;

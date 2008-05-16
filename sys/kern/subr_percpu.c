@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.6 2008/04/27 11:37:48 ad Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.6.2.1 2008/05/16 02:25:26 yamt Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.6 2008/04/27 11:37:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.6.2.1 2008/05/16 02:25:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -54,6 +54,15 @@ static unsigned int percpu_nextoff;
 #define	PERCPU_QCACHE_MAX	0
 #define	PERCPU_IMPORT_SIZE	2048
 
+#if defined(DIAGNOSTIC)
+#define	MAGIC	0x50435055	/* "PCPU" */
+#define	percpu_encrypt(pc)	((pc) ^ MAGIC)
+#define	percpu_decrypt(pc)	((pc) ^ MAGIC)
+#else /* defined(DIAGNOSTIC) */
+#define	percpu_encrypt(pc)	(pc)
+#define	percpu_decrypt(pc)	(pc)
+#endif /* defined(DIAGNOSTIC) */
+
 static percpu_cpu_t *
 cpu_percpu(struct cpu_info *ci)
 {
@@ -64,8 +73,10 @@ cpu_percpu(struct cpu_info *ci)
 static unsigned int
 percpu_offset(percpu_t *pc)
 {
+	const unsigned int off = percpu_decrypt((uintptr_t)pc);
 
-	return (uintptr_t)pc;
+	KASSERT(off < percpu_nextoff);
+	return off;
 }
 
 /*
@@ -248,7 +259,7 @@ percpu_alloc(size_t size)
 
 	ASSERT_SLEEPABLE();
 	offset = vmem_alloc(percpu_offset_arena, size, VM_SLEEP | VM_BESTFIT);
-	pc = (percpu_t *)(uintptr_t)offset;
+	pc = (percpu_t *)percpu_encrypt((uintptr_t)offset);
 	percpu_zero(pc, size);
 	return pc;
 }
@@ -279,7 +290,7 @@ void *
 percpu_getref(percpu_t *pc)
 {
 
-	KPREEMPT_DISABLE();
+	KPREEMPT_DISABLE(curlwp);
 	return percpu_getptr_remote(pc, curcpu());
 }
 
@@ -294,7 +305,7 @@ void
 percpu_putref(percpu_t *pc)
 {
 
-	KPREEMPT_ENABLE();
+	KPREEMPT_ENABLE(curlwp);
 }
 
 /*

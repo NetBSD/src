@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.7 2008/04/05 16:41:24 cegger Exp $ */
+/* $NetBSD: spiflash.c,v 1.7.4.1 2008/05/16 02:25:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.7 2008/04/05 16:41:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.7.4.1 2008/05/16 02:25:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.7 2008/04/05 16:41:24 cegger Exp $");
  */
 
 struct spiflash_softc {
-	struct device		sc_dev;
 	struct disk		sc_dk;
 
 	struct spiflash_hw_if	sc_hw;
@@ -108,8 +107,8 @@ struct spiflash_attach_args {
 };
 
 #define	STATIC
-STATIC int spiflash_match(struct device *, struct cfdata *, void *);
-STATIC void spiflash_attach(struct device *, struct device *, void *);
+STATIC int spiflash_match(device_t , cfdata_t , void *);
+STATIC void spiflash_attach(device_t , device_t , void *);
 STATIC int spiflash_print(void *, const char *);
 STATIC int spiflash_common_erase(spiflash_handle_t, size_t, size_t);
 STATIC int spiflash_common_write(spiflash_handle_t, size_t, size_t,
@@ -123,7 +122,7 @@ STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
 STATIC int spiflash_nsectors(spiflash_handle_t, struct buf *);
 STATIC int spiflash_sector(spiflash_handle_t, struct buf *);
 
-CFATTACH_DECL(spiflash, sizeof(struct spiflash_softc),
+CFATTACH_DECL_NEW(spiflash, sizeof(struct spiflash_softc),
 	      spiflash_match, spiflash_attach, NULL, NULL);
 
 #ifdef	SPIFLASH_DEBUG
@@ -169,7 +168,7 @@ static struct dkdriver spiflash_dkdriver = { spiflash_strategy, NULL };
 
 spiflash_handle_t
 spiflash_attach_mi(const struct spiflash_hw_if *hw, void *cookie,
-    struct device *dev)
+    device_t dev)
 {
 	struct spiflash_attach_args sfa;
 	sfa.hw = hw;
@@ -188,14 +187,14 @@ spiflash_print(void *aux, const char *pnp)
 }
 
 int
-spiflash_match(struct device *parent, struct cfdata *cf, void *aux)
+spiflash_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 void
-spiflash_attach(struct device *parent, struct device *self, void *aux)
+spiflash_attach(device_t parent, device_t self, void *aux)
 {
 	struct spiflash_softc *sc = device_private(self);
 	struct spiflash_attach_args *sfa = aux;
@@ -221,7 +220,7 @@ spiflash_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive(": SPI flash\n");
 	aprint_normal(": %s SPI flash\n", sc->sc_name);
 	/* XXX: note that this has to change for boot-sectored flash */
-	aprint_normal_dev(&sc->sc_dev, "%d KB, %d sectors of %d KB each\n",
+	aprint_normal_dev(self, "%d KB, %d sectors of %d KB each\n",
 	    sc->sc_device_size / 1024,
 	    sc->sc_device_size / sc->sc_erase_size,
 	    sc->sc_erase_size / 1024);
@@ -232,7 +231,7 @@ spiflash_attach(struct device *parent, struct device *self, void *aux)
 	bufq_alloc(&sc->sc_doneq, "fcfs", BUFQ_SORT_RAWBLOCK);
 
 	sc->sc_dk.dk_driver = &spiflash_dkdriver;
-	sc->sc_dk.dk_name = device_xname(&sc->sc_dev);
+	sc->sc_dk.dk_name = device_xname(self);
 
 	disk_attach(&sc->sc_dk);
 
