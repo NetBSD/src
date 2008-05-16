@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1145 2008/05/11 18:01:46 joerg Exp $
+#	$NetBSD: mi,v 1.1146 2008/05/16 20:24:57 peter Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -602,7 +602,11 @@
 ./usr/include/err.h				comp-c-include
 ./usr/include/errno.h				comp-c-include
 ./usr/include/eti.h				comp-c-include
+./usr/include/evdns.h				comp-c-include
 ./usr/include/event.h				comp-c-include
+./usr/include/evhttp.h				comp-c-include
+./usr/include/evrpc.h				comp-c-include
+./usr/include/evutil.h				comp-c-include
 ./usr/include/fcntl.h				comp-c-include
 ./usr/include/filecorefs/filecore_mount.h	comp-c-include
 ./usr/include/float.h				comp-c-include
@@ -4455,6 +4459,15 @@
 ./usr/share/man/cat3/btowc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/btree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/buffer.0			comp-obsolete		obsolete
+./usr/share/man/cat3/bufferevent_base_set.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_disable.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_enable.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_new.0		comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_read.0		comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_settimeout.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_write.0	comp-c-catman		.cat
+./usr/share/man/cat3/bufferevent_write_buffer.0	comp-c-catman		.cat
 ./usr/share/man/cat3/byteorder.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bzero.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cabs.0			comp-c-catman		.cat
@@ -4824,15 +4837,60 @@
 ./usr/share/man/cat3/ether_ntohost.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ethers.0			comp-c-catman		.cat
 ./usr/share/man/cat3/evasprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_add_buffer.0	comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_add_printf.0	comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_add_vprintf.0	comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_drain.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_find.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_new.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_read.0		comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_readline.0	comp-c-catman		.cat
+./usr/share/man/cat3/evbuffer_write.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns.0			comp-c-catman		.cat
+./usr/share/man/cat3/evdns_clear_nameservers_and_suspend.0	comp-c-catman	.cat
+./usr/share/man/cat3/evdns_count_nameservers.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_err_to_string.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns_nameserver_add.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_nameserver_ip_add.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_resolv_conf_parse.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_resolve_ipv4.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_resolve_reverse.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_resume.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns_search_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns_search_clear.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_search_ndots_set.0	comp-c-catman		.cat
+./usr/share/man/cat3/evdns_set_log_fn.0		comp-c-catman		.cat
+./usr/share/man/cat3/evdns_shutdown.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event.0			comp-c-catman		.cat
 ./usr/share/man/cat3/event_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_base_dispatch.0	comp-c-catman		.cat
+./usr/share/man/cat3/event_base_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_base_loop.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_base_loopexit.0	comp-c-catman		.cat
+./usr/share/man/cat3/event_base_loopbreak.0	comp-c-catman		.cat
+./usr/share/man/cat3/event_base_once.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_base_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_del.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_dispatch.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_initialized.0	comp-c-catman		.cat
 ./usr/share/man/cat3/event_loop.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_loopexit.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_loopbreak.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_pending.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_set.0		comp-c-catman		.cat
+./usr/share/man/cat3/evhttp_bind_socket.0	comp-c-catman		.cat
+./usr/share/man/cat3/evhttp_free.0		comp-c-catman		.cat
+./usr/share/man/cat3/evhttp_new.0		comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_add.0		comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_del.0		comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_initialized.0	comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_pending.0		comp-c-catman		.cat
+./usr/share/man/cat3/evtimer_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/exec.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/execle.0			comp-c-catman		.cat
@@ -9496,6 +9554,15 @@
 ./usr/share/man/man3/btowc.3			comp-c-man		.man
 ./usr/share/man/man3/btree.3			comp-c-man		.man
 ./usr/share/man/man3/buffer.3			comp-obsolete		obsolete
+./usr/share/man/man3/bufferevent_base_set.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_disable.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_enable.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_free.3		comp-c-man		.man
+./usr/share/man/man3/bufferevent_new.3		comp-c-man		.man
+./usr/share/man/man3/bufferevent_read.3		comp-c-man		.man
+./usr/share/man/man3/bufferevent_settimeout.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_write.3	comp-c-man		.man
+./usr/share/man/man3/bufferevent_write_buffer.3	comp-c-man		.man
 ./usr/share/man/man3/byteorder.3		comp-c-man		.man
 ./usr/share/man/man3/bzero.3			comp-c-man		.man
 ./usr/share/man/man3/cabs.3			comp-c-man		.man
@@ -9865,15 +9932,60 @@
 ./usr/share/man/man3/ether_ntohost.3		comp-c-man		.man
 ./usr/share/man/man3/ethers.3			comp-c-man		.man
 ./usr/share/man/man3/evasprintf.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_add.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_add_buffer.3	comp-c-man		.man
+./usr/share/man/man3/evbuffer_add_printf.3	comp-c-man		.man
+./usr/share/man/man3/evbuffer_add_vprintf.3	comp-c-man		.man
+./usr/share/man/man3/evbuffer_drain.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_find.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_free.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_new.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_read.3		comp-c-man		.man
+./usr/share/man/man3/evbuffer_readline.3	comp-c-man		.man
+./usr/share/man/man3/evbuffer_write.3		comp-c-man		.man
+./usr/share/man/man3/evdns.3			comp-c-man		.man
+./usr/share/man/man3/evdns_clear_nameservers_and_suspend.3	comp-c-man	.man
+./usr/share/man/man3/evdns_count_nameservers.3	comp-c-man		.man
+./usr/share/man/man3/evdns_err_to_string.3	comp-c-man		.man
+./usr/share/man/man3/evdns_init.3		comp-c-man		.man
+./usr/share/man/man3/evdns_nameserver_add.3	comp-c-man		.man
+./usr/share/man/man3/evdns_nameserver_ip_add.3	comp-c-man		.man
+./usr/share/man/man3/evdns_resolv_conf_parse.3	comp-c-man		.man
+./usr/share/man/man3/evdns_resolve_ipv4.3	comp-c-man		.man
+./usr/share/man/man3/evdns_resolve_reverse.3	comp-c-man		.man
+./usr/share/man/man3/evdns_resume.3		comp-c-man		.man
+./usr/share/man/man3/evdns_search_add.3		comp-c-man		.man
+./usr/share/man/man3/evdns_search_clear.3	comp-c-man		.man
+./usr/share/man/man3/evdns_search_ndots_set.3	comp-c-man		.man
+./usr/share/man/man3/evdns_set_log_fn.3		comp-c-man		.man
+./usr/share/man/man3/evdns_shutdown.3		comp-c-man		.man
 ./usr/share/man/man3/event.3			comp-c-man		.man
 ./usr/share/man/man3/event_add.3		comp-c-man		.man
+./usr/share/man/man3/event_base_dispatch.3	comp-c-man		.man
+./usr/share/man/man3/event_base_free.3		comp-c-man		.man
+./usr/share/man/man3/event_base_loop.3		comp-c-man		.man
+./usr/share/man/man3/event_base_loopexit.3	comp-c-man		.man
+./usr/share/man/man3/event_base_loopbreak.3	comp-c-man		.man
+./usr/share/man/man3/event_base_once.3		comp-c-man		.man
+./usr/share/man/man3/event_base_set.3		comp-c-man		.man
 ./usr/share/man/man3/event_del.3		comp-c-man		.man
 ./usr/share/man/man3/event_dispatch.3		comp-c-man		.man
 ./usr/share/man/man3/event_init.3		comp-c-man		.man
 ./usr/share/man/man3/event_initialized.3	comp-c-man		.man
 ./usr/share/man/man3/event_loop.3		comp-c-man		.man
+./usr/share/man/man3/event_loopexit.3		comp-c-man		.man
+./usr/share/man/man3/event_loopbreak.3		comp-c-man		.man
+./usr/share/man/man3/event_once.3		comp-c-man		.man
 ./usr/share/man/man3/event_pending.3		comp-c-man		.man
 ./usr/share/man/man3/event_set.3		comp-c-man		.man
+./usr/share/man/man3/evhttp_bind_socket.3	comp-c-man		.man
+./usr/share/man/man3/evhttp_free.3		comp-c-man		.man
+./usr/share/man/man3/evhttp_new.3		comp-c-man		.man
+./usr/share/man/man3/evtimer_add.3		comp-c-man		.man
+./usr/share/man/man3/evtimer_del.3		comp-c-man		.man
+./usr/share/man/man3/evtimer_initialized.3	comp-c-man		.man
+./usr/share/man/man3/evtimer_pending.3		comp-c-man		.man
+./usr/share/man/man3/evtimer_set.3		comp-c-man		.man
 ./usr/share/man/man3/exec.3			comp-c-man		.man
 ./usr/share/man/man3/execl.3			comp-c-man		.man
 ./usr/share/man/man3/execle.3			comp-c-man		.man

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.2 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: regress.h,v 1.1 2008/05/16 20:24:57 peter Exp $	*/
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -25,28 +25,22 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifndef _REGRESS_H_
+#define _REGRESS_H_
 
-#ifdef __GNUC__
-#define EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b)))
-#else
-#define EV_CHECK_FMT(a,b)
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-void event_err(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
-void event_warn(const char *fmt, ...) EV_CHECK_FMT(1,2);
-void event_errx(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
-void event_warnx(const char *fmt, ...) EV_CHECK_FMT(1,2);
-void event_msgx(const char *fmt, ...) EV_CHECK_FMT(1,2);
-void _event_debugx(const char *fmt, ...) EV_CHECK_FMT(1,2);
+void http_suite(void);
+void http_basic_test(void);
 
-#ifdef USE_DEBUG
-#define event_debug(x) _event_debugx x
-#else
-#define event_debug(x) do {;} while (0)
+void rpc_suite(void);
+
+void dns_suite(void);
+	
+#ifdef __cplusplus
+}
 #endif
 
-#undef EV_CHECK_FMT
-
-#endif
+#endif /* _REGRESS_H_ */
