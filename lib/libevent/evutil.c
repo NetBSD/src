@@ -1,6 +1,6 @@
-/*	$NetBSD: log.h,v 1.2 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: evutil.c,v 1.1 2008/05/16 20:24:58 peter Exp $	*/
 /*
- * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
+ * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,28 +25,53 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-#ifdef __GNUC__
-#define EV_CHECK_FMT(a,b) __attribute__((format(printf, a, b)))
+#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#include <errno.h>
+
+#include "evutil.h"
+#include "log.h"
+
+int
+evutil_socketpair(int family, int type, int protocol, int fd[2])
+{
+	return socketpair(family, type, protocol, fd);
+}
+
+int
+evutil_make_socket_nonblocking(int fd)
+{
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		event_warn("fcntl(O_NONBLOCK)");
+		return -1;
+	}
+
+	return 0;
+}
+
+ev_int64_t
+evutil_strtoll(const char *s, char **endptr, int base)
+{
+#ifdef HAVE_STRTOLL
+	return (ev_int64_t)strtoll(s, endptr, base);
+#elif SIZEOF_LONG == 8
+	return (ev_int64_t)strtol(s, endptr, base);
 #else
-#define EV_CHECK_FMT(a,b)
+#error "I don't know how to parse 64-bit integers."
 #endif
-
-void event_err(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
-void event_warn(const char *fmt, ...) EV_CHECK_FMT(1,2);
-void event_errx(int eval, const char *fmt, ...) EV_CHECK_FMT(2,3);
-void event_warnx(const char *fmt, ...) EV_CHECK_FMT(1,2);
-void event_msgx(const char *fmt, ...) EV_CHECK_FMT(1,2);
-void _event_debugx(const char *fmt, ...) EV_CHECK_FMT(1,2);
-
-#ifdef USE_DEBUG
-#define event_debug(x) _event_debugx x
-#else
-#define event_debug(x) do {;} while (0)
-#endif
-
-#undef EV_CHECK_FMT
-
-#endif
+}
