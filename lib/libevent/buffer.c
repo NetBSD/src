@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.3 2005/04/17 07:20:00 provos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.4 2008/05/16 20:24:57 peter Exp $	*/
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,11 +26,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
 
-#include <err.h>
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,7 +93,7 @@ evbuffer_add_buffer(struct evbuffer *outbuf, struct evbuffer *inbuf)
 		/* 
 		 * Optimization comes with a price; we need to notify the
 		 * buffer if necessary of the changes. oldoff is the amount
-		 * of data that we tranfered from inbuf to outbuf
+		 * of data that we transfered from inbuf to outbuf
 		 */
 		if (inbuf->off != oldoff && inbuf->cb != NULL)
 			(*inbuf->cb)(inbuf, oldoff, inbuf->off, inbuf->cbarg);
@@ -100,30 +104,60 @@ evbuffer_add_buffer(struct evbuffer *outbuf, struct evbuffer *inbuf)
 	}
 
 	res = evbuffer_add(outbuf, inbuf->buffer, inbuf->off);
-	if (res == 0)
+	if (res == 0) {
+		/* We drain the input buffer on success */
 		evbuffer_drain(inbuf, inbuf->off);
+	}
 
 	return (res);
 }
 
 int
-evbuffer_add_printf(struct evbuffer *buf, char *fmt, ...)
+evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
+{
+	char *buffer;
+	size_t space;
+	size_t oldoff = buf->off;
+	int sz;
+	va_list aq;
+
+	/* make sure that at least some space is available */
+	evbuffer_expand(buf, 64);
+	for (;;) {
+		size_t used = buf->misalign + buf->off;
+		buffer = (char *)buf->buffer + buf->off;
+		assert(buf->totallen >= used);
+		space = buf->totallen - used;
+
+		va_copy(aq, ap);
+
+		sz = vsnprintf(buffer, space, fmt, aq);
+
+		va_end(aq);
+
+		if (sz < 0)
+			return (-1);
+		if (sz < space) {
+			buf->off += sz;
+			if (buf->cb != NULL)
+				(*buf->cb)(buf, oldoff, buf->off, buf->cbarg);
+			return (sz);
+		}
+		if (evbuffer_expand(buf, sz + 1) == -1)
+			return (-1);
+
+	}
+	/* NOTREACHED */
+}
+
+int
+evbuffer_add_printf(struct evbuffer *buf, const char *fmt, ...)
 {
 	int res = -1;
-	char *msg;
 	va_list ap;
 
 	va_start(ap, fmt);
-
-	if (vasprintf(&msg, fmt, ap) == -1)
-		goto end;
-	
-	res = strlen(msg);
-	if (evbuffer_add(buf, msg, res) == -1)
-		res = -1;
-	free(msg);
-
-end:
+	res = evbuffer_add_vprintf(buf, fmt, ap);
 	va_end(ap);
 
 	return (res);
@@ -144,9 +178,56 @@ evbuffer_remove(struct evbuffer *buf, void *data, size_t datlen)
 	return (nread);
 }
 
+/*
+ * Reads a line terminated by either '\r\n', '\n\r' or '\r' or '\n'.
+ * The returned buffer needs to be freed by the called.
+ */
+
+char *
+evbuffer_readline(struct evbuffer *buffer)
+{
+	u_char *data = EVBUFFER_DATA(buffer);
+	size_t len = EVBUFFER_LENGTH(buffer);
+	char *line;
+	unsigned int i;
+
+	for (i = 0; i < len; i++) {
+		if (data[i] == '\r' || data[i] == '\n')
+			break;
+	}
+
+	if (i == len)
+		return (NULL);
+
+	if ((line = malloc(i + 1)) == NULL) {
+		fprintf(stderr, "%s: out of memory\n", __func__);
+		evbuffer_drain(buffer, i);
+		return (NULL);
+	}
+
+	memcpy(line, data, i);
+	line[i] = '\0';
+
+	/*
+	 * Some protocols terminate a line with '\r\n', so check for
+	 * that, too.
+	 */
+	if ( i < len - 1 ) {
+		char fch = data[i], sch = data[i+1];
+
+		/* Drain one more character if needed */
+		if ( (sch == '\r' || sch == '\n') && sch != fch )
+			i += 1;
+	}
+
+	evbuffer_drain(buffer, i + 1);
+
+	return (line);
+}
+
 /* Adds data to an event buffer */
 
-static inline void
+static void
 evbuffer_align(struct evbuffer *buf)
 {
 	memmove(buf->orig_buffer, buf->buffer, buf->off);
@@ -193,7 +274,7 @@ evbuffer_expand(struct evbuffer *buf, size_t datlen)
 }
 
 int
-evbuffer_add(struct evbuffer *buf, void *data, size_t datlen)
+evbuffer_add(struct evbuffer *buf, const void *data, size_t datlen)
 {
 	size_t need = buf->misalign + buf->off + datlen;
 	size_t oldoff = buf->off;
@@ -249,9 +330,21 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 	size_t oldoff = buf->off;
 	int n = EVBUFFER_MAX_READ;
 
-	if (ioctl(fd, FIONREAD, &n) == -1)
+	if (ioctl(fd, FIONREAD, &n) == -1 || n == 0) {
 		n = EVBUFFER_MAX_READ;
-
+	} else if (n > EVBUFFER_MAX_READ && n > howmuch) {
+		/*
+		 * It's possible that a lot of data is available for
+		 * reading.  We do not want to exhaust resources
+		 * before the reader has a chance to do something
+		 * about it.  If the reader does not tell us how much
+		 * data we should read, we artifically limit it.
+		 */
+		if (n > buf->totallen << 2)
+			n = buf->totallen << 2;
+		if (n < EVBUFFER_MAX_READ)
+			n = EVBUFFER_MAX_READ;
+	}
 	if (howmuch < 0 || howmuch > n)
 		howmuch = n;
 
@@ -293,18 +386,18 @@ evbuffer_write(struct evbuffer *buffer, int fd)
 }
 
 u_char *
-evbuffer_find(struct evbuffer *buffer, u_char *what, size_t len)
+evbuffer_find(struct evbuffer *buffer, const u_char *what, size_t len)
 {
-	size_t remain = buffer->off;
-	u_char *search = buffer->buffer;
+	u_char *search = buffer->buffer, *end = search + buffer->off;
 	u_char *p;
 
-	while ((p = memchr(search, *what, remain)) != NULL && remain >= len) {
+	while (search < end &&
+	    (p = memchr(search, *what, end - search)) != NULL) {
+		if (p + len > end)
+			break;
 		if (memcmp(p, what, len) == 0)
 			return (p);
-
 		search = p + 1;
-		remain = buffer->off - (size_t)(search - buffer->buffer);
 	}
 
 	return (NULL);

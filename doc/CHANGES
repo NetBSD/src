@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1056 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1057 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -525,3 +525,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	openssl: Imported 20080509 current snapshot. [christos 20080509]
 	getent(1): Added support for "netgroup" database. [tron 20080514]
 	fs/udf: Added write support for the UDF file system. [reinoud 20080514]
+	event(3): Updated libevent to 1.4.4-stable. [peter 20080516]
