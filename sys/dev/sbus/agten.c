@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.12 2008/05/17 00:22:31 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.13 2008/05/17 02:00:08 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.12 2008/05/17 00:22:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.13 2008/05/17 02:00:08 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -601,13 +601,14 @@ agten_init(struct agten_softc *sc)
 
 	/* enable outputs, RGB mode */
 	agten_write_idx(sc, IBM561_CONFIG_REG3);
-	agten_write_dac(sc, IBM561_CMD, 0x41);
+	agten_write_dac(sc, IBM561_CMD, CR3_SERIAL_CLK_CTRL | CR3_RGB);
 
 	/* MUX 4:1 basic, 8bit overlay, 8bit WIDs */
 	agten_write_idx(sc, IBM561_CONFIG_REG1);
-	agten_write_dac(sc, IBM561_CMD, 0x2c);
+	agten_write_dac(sc, IBM561_CMD, CR1_MODE_4_1_BASIC | CR1_OVL_8BPP | 
+	    CR1_WID_8);
 
-	/* use internal PLL, enable video output */
+	/* use external clock, enable video output */
 	agten_write_idx(sc, IBM561_CONFIG_REG2);
 	agten_write_dac(sc, IBM561_CMD, CR2_ENABLE_CLC | CR2_PLL_REF_SELECT |
 	    CR2_PIXEL_CLOCK_SELECT | CR2_ENABLE_RGB_OUTPUT);
@@ -620,7 +621,8 @@ agten_init(struct agten_softc *sc)
 	 * reason true color mode gives messed up colours
 	 */
 	agten_write_idx(sc, IBM561_FB_WINTYPE);
-	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x134);
+	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x100 | FB_PIXEL_24BIT | 
+	    FB_MODE_DIRECT);
 
 	/* use gamma LUTs, no crosshair, 0 is transparent */
 	agten_write_idx(sc, IBM561_AUXFB_WINTYPE);
@@ -654,7 +656,7 @@ agten_gfx(struct agten_softc *sc)
 {
 	/* enable overlay transparency on colour 0x00 */
 	agten_write_idx(sc, IBM561_OL_WINTYPE);
-	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, 0x01);
+	agten_write_dac_10(sc, IBM561_CMD_FB_WAT, OL_MODE_TRANSP_ENABLE);
 
 	/* then blit the overlay full of 0x00 */
 	i128_rectfill(sc->sc_bustag, sc->sc_i128_regh, 0, 0, sc->sc_width,
@@ -796,7 +798,8 @@ agten_do_cursor(struct agten_softc *sc, struct wsdisplay_cursor *cur)
 		agten_write_idx(sc, IBM561_CURSOR_LUT + cur->cmap.index + 2);
 		for (i = 0; i < cur->cmap.count; i++) {
 			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.red[i]);
-			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.green[i]);
+			agten_write_dac(sc, IBM561_CMD_CMAP, 
+			    cur->cmap.green[i]);
 			agten_write_dac(sc, IBM561_CMD_CMAP, cur->cmap.blue[i]);
 		}
 	}
