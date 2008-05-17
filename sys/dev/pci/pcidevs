@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.21 2008/04/19 16:16:59 bouyer Exp $
+$NetBSD: pcidevs,v 1.855.2.22 2008/05/17 16:19:37 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1911,6 +1911,7 @@ product IBM TPAUDIO	0x0153	ThinkPad 600X/A20/T20/T22 Audio
 product IBM 405GP	0x0156	PPC 405GP PCI Bridge
 product IBM 133PCIX	0x01a7	133 PCI-X Bridge
 product IBM SERVERAID4	0x01bd	ServeRAID 4/5
+product IBM SERVERAID8K	0x9580	ServeRAID 8k
 product IBM MPIC2	0xffff	MPIC-II
 
 /* IC Ensemble / VIA Technologies products */
