@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.11 2008/05/17 01:00:19 macallan Exp $ */
+/*	$NetBSD: ts102.c,v 1.12 2008/05/17 01:30:48 macallan Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * Copyright (c) 2005, Michael Lorenz.
@@ -118,7 +118,7 @@ struct	tslot_softc;
  */
 struct	tslot_data {
 	struct tslot_softc	*td_parent;
-	struct device		*td_pcmcia;
+	device_t		td_pcmcia;
 
 	volatile uint8_t	*td_regs;
 	bus_addr_t		td_space[TS102_RANGE_CNT];
@@ -136,7 +136,7 @@ struct	tslot_data {
 };
 
 struct	tslot_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	struct sbusdev	sc_sd;
 	
 	bus_space_tag_t	sc_bustag;		/* socket control io	*/
@@ -153,7 +153,7 @@ struct	tslot_softc {
 	struct tslot_data sc_slot[TS102_NUM_SLOTS];
 };
 
-static void tslot_attach(struct device *, struct device *, void *);
+static void tslot_attach(device_t, device_t, void *);
 static void tslot_event_thread(void *);
 static int  tslot_intr(void *);
 static void tslot_intr_disestablish(pcmcia_chipset_handle_t, void *);
@@ -167,7 +167,7 @@ static void tslot_io_free(pcmcia_chipset_handle_t, struct pcmcia_io_handle *);
 static int  tslot_io_map(pcmcia_chipset_handle_t, int, bus_addr_t, bus_size_t,
     struct pcmcia_io_handle *, int *);
 static void tslot_io_unmap(pcmcia_chipset_handle_t, int);
-static int  tslot_match(struct device *, struct cfdata *, void *);
+static int  tslot_match(device_t, struct cfdata *, void *);
 static int  tslot_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
     struct pcmcia_mem_handle *);
 static void tslot_mem_free(pcmcia_chipset_handle_t, struct pcmcia_mem_handle *);
@@ -292,7 +292,7 @@ ts102_write_8(bus_space_tag_t space, bus_space_handle_t handle,
  */
 
 static int
-tslot_match(struct device *parent, struct cfdata *vcf, void *aux)
+tslot_match(device_t parent, struct cfdata *vcf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -300,10 +300,10 @@ tslot_match(struct device *parent, struct cfdata *vcf, void *aux)
 }
 
 static void
-tslot_attach(struct device *parent, struct device *self, void *args)
+tslot_attach(device_t parent, device_t self, void *args)
 {
 	struct sbus_attach_args *sa = args;
-	struct tslot_softc *sc = (struct tslot_softc *)self;
+	struct tslot_softc *sc = device_private(self);
 	struct tslot_data *td;
 	volatile uint8_t *regs;
 	int node, slot, rnum, base, size;
@@ -312,6 +312,7 @@ tslot_attach(struct device *parent, struct device *self, void *args)
 	bus_space_handle_t hrang = 0;
 	bus_space_tag_t tag;
 
+	sc->sc_dev = self;
 	node = sa->sa_node;
 	sc->sc_bustag=sa->sa_bustag;
 	if (sbus_bus_map(sa->sa_bustag,
@@ -412,7 +413,7 @@ tslot_reset(struct tslot_data *td, uint32_t iosize)
 	paa.iobase = 0;
 	paa.iosize = iosize;
 
-	td->td_pcmcia = config_found(&td->td_parent->sc_dev, &paa, tslot_print);
+	td->td_pcmcia = config_found(td->td_parent->sc_dev, &paa, tslot_print);
 
 	if (td->td_pcmcia == NULL) {
 		/*
@@ -717,7 +718,7 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 
 	if (i == 0) {
 		printf("%s: slot %d still busy after 3 seconds, status 0x%x\n",
-		    td->td_parent->sc_dev.dv_xname, td->td_slot,
+		    device_xname(td->td_parent->sc_dev), td->td_slot,
 		    TSLOT_READ(td, TS102_REG_CARD_A_STS));
 		return;
 	}
@@ -760,7 +761,7 @@ tslot_event_thread(void *v)
 		if (socket >= TS102_NUM_SLOTS) {
 #ifdef DEBUG
 			printf("%s: invalid slot number %d\n",
-			    sc->sc_dev.dv_xname, socket);
+			    device_xname(sc->sc_dev), socket);
 #endif
 			continue;
 		}
@@ -869,7 +870,7 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
 #ifdef TSLOT_DEBUG
 	printf("%s: interrupt on socket %d ir %x sts %x\n",
-	    sc->sc_dev.dv_xname, td->td_slot, intreg, status);
+	    device_xname(sc->sc_dev), td->td_slot, intreg, status);
 #endif
 
 	sockstat = td->td_status;
@@ -887,7 +888,8 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 		tslot_queue_event(sc, td->td_slot);
 #ifdef TSLOT_DEBUG
 		printf("%s: slot %d status changed from %d to %d\n",
-		    sc->sc_dev.dv_xname, td->td_slot, sockstat, td->td_status);
+		    device_xname(sc->sc_dev), td->td_slot, sockstat, 
+		    td->td_status);
 #endif
 		/*
 		 * Ignore extra interrupt bits, they are part of the change.
@@ -905,7 +907,7 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 		}
 		if ((sockstat & TS_CARD) == 0) {
 			printf("%s: spurious interrupt on slot %d isr %x\n",
-			    sc->sc_dev.dv_xname, td->td_slot, intreg);
+			    device_xname(sc->sc_dev), td->td_slot, intreg);
 			return;
 		}
 
