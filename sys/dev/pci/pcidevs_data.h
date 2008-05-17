@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.21 2008/04/19 16:17:43 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.22 2008/05/17 16:20:54 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.21 2008/04/19 16:16:59 bouyer Exp
+ *	NetBSD: pcidevs,v 1.855.2.22 2008/05/17 16:19:37 bouyer Exp
  */
 
 /*
@@ -6588,6 +6588,10 @@ static const struct pci_product pci_products[] = {
 	    "ServeRAID 4/5",
 	},
 	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID8K,
+	    "ServeRAID 8k",
+	},
+	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
 	    "MPIC-II",
 	},
@@ -13152,4 +13156,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2691;
+const int pci_nproducts = 2692;
