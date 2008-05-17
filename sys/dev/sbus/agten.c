@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.13 2008/05/17 02:00:08 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.14 2008/05/17 17:55:50 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.13 2008/05/17 02:00:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.14 2008/05/17 17:55:50 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -122,7 +122,7 @@ struct agten_softc {
 	struct vcons_data vd;
 };
 
-CFATTACH_DECL(agten, sizeof(struct agten_softc),
+CFATTACH_DECL_NEW(agten, sizeof(struct agten_softc),
     agten_match, agten_attach, NULL, NULL);
 
 
