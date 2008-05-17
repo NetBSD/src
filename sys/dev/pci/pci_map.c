@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.18 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.18.2.1 2008/05/17 16:16:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.18 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.18.2.1 2008/05/17 16:16:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,8 +163,11 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 			printf("pci_mem_find: expected type mem, found i/o\n");
 			return (1);
 		}
+		/* XXX Allow 64bit bars for 32bit requests.*/
 		if (PCI_MAPREG_MEM_TYPE(address) !=
-		    PCI_MAPREG_MEM_TYPE(type)) {
+		    PCI_MAPREG_MEM_TYPE(type) &&
+		    PCI_MAPREG_MEM_TYPE(address) !=
+		    PCI_MAPREG_MEM_TYPE_64BIT) {
 			printf("pci_mem_find: "
 			    "expected mem type %08x, found %08x\n",
 			    PCI_MAPREG_MEM_TYPE(type),
