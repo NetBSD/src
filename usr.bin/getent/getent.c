@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $	*/
+/*	$NetBSD: getent.c,v 1.9.2.1 2008/05/17 16:28:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $");
+__RCSID("$NetBSD: getent.c,v 1.9.2.1 2008/05/17 16:28:54 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -49,9 +49,11 @@ __RCSID("$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $");
 #include <grp.h>
 #include <limits.h>
 #include <netdb.h>
+#include <netgroup.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -71,6 +73,7 @@ static int	parsenum(const char *, unsigned long *);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
+static int	netgroup(int, char *[]);
 static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
 static int	protocols(int, char *[]);
@@ -92,6 +95,7 @@ static struct getentdb {
 	{	"ethers",	ethers,		},
 	{	"group",	group,		},
 	{	"hosts",	hosts,		},
+	{	"netgroup",	netgroup,	},
 	{	"networks",	networks,	},
 	{	"passwd",	passwd,		},
 	{	"protocols",	protocols,	},
@@ -320,6 +324,47 @@ hosts(int argc, char *argv[])
 	return rv;
 }
 
+		/*
+		 * netgroup
+		 */
+static int
+netgroup(int argc, char *argv[])
+{
+	int		rv, i;
+	bool		first;
+	const char	*host, *user, *domain;
+
+	assert(argc > 1);
+	assert(argv != NULL);
+
+#define NETGROUPPRINT(s)	(((s) != NULL) ? (s) : "")
+
+	rv = RV_OK;
+	if (argc == 2) {
+		fprintf(stderr, "Enumeration not supported on netgroup\n");
+		rv = RV_NOENUM;
+	} else {
+		for (i = 2; i < argc; i++) {
+			setnetgrent(argv[i]);
+			first = true;
+			while (getnetgrent(&host, &user, &domain) != 0) {
+				if (first) {
+					first = false;
+					(void)fputs(argv[i], stdout);
+				}
+				(void)printf(" (%s,%s,%s)",
+				    NETGROUPPRINT(host),
+				    NETGROUPPRINT(user),
+				    NETGROUPPRINT(domain));
+			}
+			if (!first)
+				(void)putchar('\n');
+			endnetgrent();
+		}
+	}
+
+	return rv;
+}
 
 		/*
 		 * networks
