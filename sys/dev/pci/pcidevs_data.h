@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.22 2008/05/17 16:20:54 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.23 2008/05/17 16:37:09 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.22 2008/05/17 16:19:37 bouyer Exp
+ *	NetBSD: pcidevs,v 1.855.2.23 2008/05/17 16:36:08 bouyer Exp
  */
 
 /*
@@ -3526,6 +3526,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
 	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_GMAC,
+	    "Shasta GMAC",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_AGP,
@@ -13156,4 +13160,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2692;
+const int pci_nproducts = 2693;

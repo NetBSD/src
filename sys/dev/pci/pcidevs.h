@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.22 2008/05/17 16:20:54 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.23 2008/05/17 16:37:09 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.22 2008/05/17 16:19:37 bouyer Exp
+ *	NetBSD: pcidevs,v 1.855.2.23 2008/05/17 16:36:08 bouyer Exp
  */
 
 /*
@@ -982,6 +982,7 @@
 #define	PCI_PRODUCT_APPLE_U3_PPB5	0x0049		/* U3 PCI-PCI bridge */
 #define	PCI_PRODUCT_APPLE_U3_AGP	0x004b		/* U3 AGP Interface */
 #define	PCI_PRODUCT_APPLE_K2_GMAC	0x004c		/* GMAC Ethernet */
+#define	PCI_PRODUCT_APPLE_SHASTA_GMAC	0x0051		/* Shasta GMAC */
 #define	PCI_PRODUCT_APPLE_INTREPID2_AGP	0x0066		/* Intrepid 2 AGP */
 #define	PCI_PRODUCT_APPLE_INTREPID2_PCI1	0x0067		/* Intrepid 2 PCI */
 #define	PCI_PRODUCT_APPLE_INTREPID2_PCI2	0x0068		/* Intrepid 2 PCI */
