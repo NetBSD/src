@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.58 2008/05/11 06:24:08 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.59 2008/05/17 16:31:13 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -998,4 +998,54 @@ sys/dev/raidframe/rf_layout.c			1.20
 	Both StripeUnitsPerParityUnit and StripeUnitsPerReconstructUnit need
 	to be positive integers.
 	[oster, ticket #1140]
+
+sys/arch/x86/isa/clock.c			1.25 via patch
+
+	unbreak i8254_get_timecount() in environments where the
+	clock interrupt is derived from other sources (e.g. lapic)
+	and the i8254 timer is running the full cycle without
+	being used as clock interrupt source.
+	[kardel, ticket #1058]
+
+sys/netinet/ip_mroute.c				1.113
+
+	Make sure to clear csum_flags before forward the packet.
+	Fix DIAGNOSTIC kernel's panic when the machine act
+	as multicast router.
+	[taca, ticket #1141]
+
+sys/dev/pci/pci_map.c				1.21
+
+	allow pci_find_mem to map a 64-bit BAR.
+	[sborrill, ticket #1142]
+
+share/man/man4/aac.4				1.13 via patch
+sys/dev/pci/aac_pci.c				1.25 via patch
+sys/dev/pci/pcidevs				1.939 via patch
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add support for IBM ServeRAID 8k (and 8k-l)
+	[sborrill, ticket #1143]
+
+sys/dev/pci/if_bge.c				1.144 via patch
+
+	Check wether interrupts originate from the bge hardware.
+	Fixes PR kern/33433.
+	[mlelstv, ticket #1144]
+
+usr.bin/getent/getent.1				1.17 via patch
+usr.bin/getent/getent.c				1.14 via patch
+
+	Add support for "netgroup" database. The output format matches what
+	Linux produces (because Solaris doesn't support this).
+	[tron, ticket #1147]
+
+libexec/mail.local/mail.local.c			1.24
+
+	Make sure temporary errors are reported as such, using status code
+	EX_TEMPFAIL (cannot lookup user through NSS, may be because of an
+	unreachable NIS or LDAP server), or EX_OSERR (other file or memory
+	related problems).
+	[manu, ticket #1148]
 
