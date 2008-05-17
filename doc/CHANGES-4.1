@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.59 2008/05/17 16:31:13 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.60 2008/05/17 16:39:50 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1048,4 +1048,21 @@ libexec/mail.local/mail.local.c			1.24
 	unreachable NIS or LDAP server), or EX_OSERR (other file or memory
 	related problems).
 	[manu, ticket #1148]
+
+src/share/man/man4/gem.4		1.5,1.6 via patch
+src/sys/arch/sparc64/conf/GENERIC	1.97 via patch
+src/sys/dev/ic/gem.c			1.59,1.61-1.68,1.70-1.73 via patch
+src/sys/dev/ic/gemreg.h			1.11 via patch
+src/sys/dev/ic/gemvar.h			1.16,1.18 via patch
+src/sys/dev/mii/bmtphy.c		1.24 via patch
+src/sys/dev/pci/if_gem_pci.c		1.25,1.27 via patch
+src/sys/dev/pci/pcidevs	1.12		via patch
+src/sys/dev/pci/pcidevs.h		regenerate
+src/sys/dev/pci/pcidevs_data.h		regenerate
+
+	Add support for Sun PCI X1141A (SX fibre) cards.
+	Add improvements to the driver.
+	Disable HW UDP4 and RX TCP4 checksums because they are buggy (PR#34799).
+	Add improvements to bmtphy.
+	[jdc, ticket #1145]
 
