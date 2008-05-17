@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.46 2008/05/17 07:46:35 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.47 2008/05/17 08:07:21 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.46 2008/05/17 07:46:35 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.47 2008/05/17 08:07:21 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2921,6 +2921,7 @@ udf_sorted_list_insert(struct udf_node *node)
 	uint32_t loc, s_loc;
 
 	ump = node->ump;
+	last_node = NULL;	/* XXX gcc */
 
 	if (LIST_EMPTY(&ump->sorted_udf_nodes)) {
 		LIST_INSERT_HEAD(&ump->sorted_udf_nodes, node, sortchain);
@@ -2934,7 +2935,6 @@ udf_sorted_list_insert(struct udf_node *node)
 	 * won't get spit up unnessisarily.
 	 */
 
-	last_node = NULL;
 	loc = udf_rw32(node->loc.loc.lb_num);
 	LIST_FOREACH(s_node, &ump->sorted_udf_nodes, sortchain) {
 		s_loc = udf_rw32(s_node->loc.loc.lb_num);
@@ -2944,7 +2944,6 @@ udf_sorted_list_insert(struct udf_node *node)
 		}
 		last_node = s_node;
 	}
-	KASSERT(last_node);
 	LIST_INSERT_AFTER(last_node, node, sortchain);
 }
 
