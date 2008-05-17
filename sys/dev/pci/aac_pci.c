@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.19.2.2 2007/11/25 09:20:35 xtraeme Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.19.2.3 2008/05/17 16:19:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.19.2.2 2007/11/25 09:20:35 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.19.2.3 2008/05/17 16:19:37 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,6 +350,15 @@ static struct aac_ident {
 		AAC_HWIF_I960RX,
 		AAC_QUIRK_NO4GB,
 		"HP ML110 G2 (Adaptec ASR-2610SA)"
+	},
+	{
+		PCI_VENDOR_ADP2,
+		PCI_PRODUCT_ADP2_ASR2120S,
+		PCI_VENDOR_IBM,
+		PCI_PRODUCT_IBM_SERVERAID8K,
+		AAC_HWIF_RKT,
+		0,
+		"IBM ServeRAID 8k"
 	},
 	{
 		PCI_VENDOR_DEC,
