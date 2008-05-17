@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.11 2008/05/16 15:57:21 macallan Exp $ */
+/*	$NetBSD: agten.c,v 1.12 2008/05/17 00:22:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.11 2008/05/16 15:57:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.12 2008/05/17 00:22:31 macallan Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -238,11 +238,17 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	sc->sc_video = -1;
 	sc->sc_bustag = sa->sa_bustag;
 
+	sc->sc_width = prom_getpropint(node, "ffb_width", 1152);
+	sc->sc_height = prom_getpropint(node, "ffb_height", 900);
+	sc->sc_depth = prom_getpropint(node, "ffb_depth", 8);
+	sc->sc_stride = sc->sc_width * (sc->sc_depth >> 3);
+
 	reg = prom_getpropint(node, "i128_fb_physaddr", -1);
 	sc->sc_i128_fbsz = prom_getpropint(node, "i128_fb_size", -1);
 	if (sbus_bus_map(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg,
-	    sc->sc_i128_fbsz, BUS_SPACE_MAP_LINEAR, &sc->sc_i128_fbh) != 0) {
+	    sc->sc_stride * sc->sc_height, BUS_SPACE_MAP_LINEAR, 
+	    &sc->sc_i128_fbh) != 0) {
 
 		aprint_error_dev(dev, "unable to map the framebuffer\n");
 		return;
@@ -281,11 +287,6 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,
 	    agten_intr, sc);
 #endif
-
-	sc->sc_width = prom_getpropint(node, "ffb_width", 1152);
-	sc->sc_height = prom_getpropint(node, "ffb_height", 900);
-	sc->sc_depth = prom_getpropint(node, "ffb_depth", 8);
-	sc->sc_stride = sc->sc_width * (sc->sc_depth >> 3);
 
 	printf(": %dx%d\n", sc->sc_width, sc->sc_height);
 	agten_init(sc);
