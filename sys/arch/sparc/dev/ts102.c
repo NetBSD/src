@@ -1,7 +1,8 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.10 2007/12/03 15:34:21 ad Exp $ */
+/*	$NetBSD: ts102.c,v 1.11 2008/05/17 01:00:19 macallan Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
+ * Copyright (c) 2005, Michael Lorenz.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,9 +49,6 @@
  *   of each window upon attach - this is similar to what the stp4020 driver
  *   does.
  *
- * - IPL for the cards interrupt handles are not respected. See the stp4020
- *   driver source for comments about this.
- * 
  * Endianness farce:
  *
  * - The documentation pretends that the endianness settings only affect the
