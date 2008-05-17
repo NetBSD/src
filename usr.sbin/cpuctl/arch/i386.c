@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.3 2008/05/15 23:31:56 chris Exp $	*/
+/*	$NetBSD: i386.c,v 1.4 2008/05/17 13:20:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.3 2008/05/15 23:31:56 chris Exp $");
+__RCSID("$NetBSD: i386.c,v 1.4 2008/05/17 13:20:27 tsutsui Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -281,7 +281,9 @@ static const struct x86_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024, NULL },
 	{ CAI_DTLB, 	0x03,    4, 64,        4 * 1024, NULL },
 	{ CAI_DTLB,     0xb3,    4,128,        4 * 1024, NULL },
+	{ CAI_DTLB,     0xb4,    4,256,        4 * 1024, NULL },
 	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024, NULL },
+	{ CAI_DTLB2,    0x05,    4, 32, 4 * 1024 * 1024 },
 	{ CAI_ITLB,     0x50, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
 	{ CAI_ITLB,     0x51, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
 	{ CAI_ITLB,     0x52, 0xff, 64,        4 * 1024, "4K/4M: 256 entries" },
@@ -293,6 +295,12 @@ static const struct x86_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64, NULL },
 	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32, NULL },
 	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32, NULL },
+	{ CAI_L2CACHE,  0x39,  4,      128 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x3a,  6,      192 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x3b,  2,      128 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x3c,  4,      256 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x3d,  6,      384 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x3e,  4,      512 * 1024, 64, NULL },
 	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
 	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32, NULL },
@@ -300,6 +308,8 @@ static const struct x86_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x49, 16, 4 * 1024 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x4e, 24, 6 * 1024 * 1024, 64, NULL },
+	{ CAI_DCACHE,   0x60,  8,       16 * 1024, 64 },
 	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64, NULL },
 	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64, NULL },
 	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64, NULL },
@@ -307,16 +317,20 @@ static const struct x86_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
 	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
 	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache"},
+	{ CAI_ICACHE,   0x73,  8,       64 * 1024, 64, "64K uOp cache"},
+	{ CAI_L2CACHE,  0x78,  4, 1 * 1024 * 1024, 64, NULL },
 	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64, NULL },
 	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64, NULL },
 	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64, NULL },
 	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64, NULL },
 	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x7f,  2,      512 * 1024, 64, NULL },
 	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32, NULL },
 	{ CAI_L2CACHE,  0x86,  4,      512 * 1024, 64, NULL },
+	{ CAI_L2CACHE,  0x87,  8, 1 * 1024 * 1024, 64, NULL },
 	{ 0,               0,  0,	        0,  0, NULL },
 };
 
