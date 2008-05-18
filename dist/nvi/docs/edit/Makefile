@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.1.1 2008/05/16 18:03:31 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:31 $
+# Id: Makefile,v 8.6 2001/01/28 15:50:07 skimo Exp (Berkeley) Date: 2001/01/28 15:50:07
 
 ROFF=	groff
 TBL=	tbl

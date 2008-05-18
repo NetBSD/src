@@ -1,3 +1,5 @@
+/*	$NetBSD: dldb.c,v 1.1.1.2 2008/05/18 14:29:41 aymeric Exp $ */
+
 #include "config.h"
 
 #include <dlfcn.h>

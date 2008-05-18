@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 2008/05/16 18:03:38 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:38 $
+#	Id: Makefile,v 8.25 2001/08/20 09:40:50 skimo Exp (Berkeley) Date: 2001/08/20 09:40:50
 
 MACROS=	-me
 ROFF=	groff

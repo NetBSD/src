@@ -1,3 +1,5 @@
+/*	$NetBSD: ex_cscope.c,v 1.1.1.2 2008/05/18 14:31:14 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1994, 1996
  *	Rob Mayoff.  All rights reserved.
@@ -10,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "$Id: ex_cscope.c,v 1.1.1.1 2008/05/16 18:03:55 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:55 $";
+static const char sccsid[] = "Id: ex_cscope.c,v 10.21 2003/11/05 17:11:54 skimo Exp (Berkeley) Date: 2003/11/05 17:11:54";
 #endif /* not lint */
 
 #include <sys/param.h>

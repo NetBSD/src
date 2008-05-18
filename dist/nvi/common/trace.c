@@ -1,3 +1,5 @@
+/*	$NetBSD: trace.c,v 1.1.1.2 2008/05/18 14:29:52 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -10,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "$Id: trace.c,v 1.1.1.1 2008/05/16 18:03:24 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:24 $";
+static const char sccsid[] = "Id: trace.c,v 8.4 1997/08/03 15:04:23 bostic Exp (Berkeley) Date: 1997/08/03 15:04:23";
 #endif /* not lint */
 
 #include <sys/queue.h>

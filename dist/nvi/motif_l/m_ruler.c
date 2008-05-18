@@ -1,3 +1,5 @@
+/*	$NetBSD: m_ruler.c,v 1.1.1.2 2008/05/18 14:31:28 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -10,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "$Id: m_ruler.c,v 1.1.1.1 2008/05/16 18:04:08 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:04:08 $";
+static const char sccsid[] = "Id: m_ruler.c,v 8.6 2003/11/05 17:10:00 skimo Exp (Berkeley) Date: 2003/11/05 17:10:00";
 #endif /* not lint */
 
 /* This module implements a dialog for the text ruler

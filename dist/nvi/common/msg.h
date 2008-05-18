@@ -1,3 +1,5 @@
+/*	$NetBSD: msg.h,v 1.1.1.2 2008/05/18 14:29:48 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: msg.h,v 1.1.1.1 2008/05/16 18:03:20 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:20 $
+ *	Id: msg.h,v 10.11 2000/04/21 21:26:19 skimo Exp (Berkeley) Date: 2000/04/21 21:26:19
  */
 
 /*

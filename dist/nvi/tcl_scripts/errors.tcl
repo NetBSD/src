@@ -1,4 +1,4 @@
-#	$Id: errors.tcl,v 1.1.1.1 2008/05/16 18:04:19 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:04:19 $
+#	Id: errors.tcl,v 8.2 1995/11/18 12:59:07 bostic Exp (Berkeley) Date: 1995/11/18 12:59:07
 #
 # File: errors.tcl
 #

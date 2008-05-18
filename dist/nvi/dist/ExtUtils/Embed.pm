@@ -1,4 +1,4 @@
-# $Id: Embed.pm,v 1.1.1.1 2008/05/16 18:03:31 aymeric Exp $
+# Id: Embed.pm,v 10.2 1996/09/19 09:12:51 bostic Exp
 require 5.002;
 
 package ExtUtils::Embed;
@@ -17,7 +17,7 @@ use vars qw(@ISA @EXPORT $VERSION
 	    );
 use strict;
 
-$VERSION = sprintf("%d.%02d", q$Revision: 1.1.1.1 $ =~ /(\d+)\.(\d+)/);
+$VERSION = sprintf("%d.%02d", qRevision: 10.2 =~ /(\d+)\.(\d+)/);
 #for the namespace change
 $Devel::embed::VERSION = "99.99";
 

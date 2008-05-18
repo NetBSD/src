@@ -1,3 +1,5 @@
+/*	$NetBSD: perlsfio.c,v 1.1.1.2 2008/05/18 14:31:33 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1996
  *	Keith Bostic.  All rights reserved.
@@ -8,7 +10,7 @@
  */
 
 #ifndef lint
-static const char sccsid[] = "$Id: perlsfio.c,v 1.1.1.1 2008/05/16 18:04:14 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:04:14 $";
+static const char sccsid[] = "Id: perlsfio.c,v 8.3 2000/04/30 17:00:15 skimo Exp (Berkeley) Date: 2000/04/30 17:00:15";
 #endif /* not lint */
 
 #include <sys/types.h>

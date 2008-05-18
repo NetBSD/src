@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Id: distrib,v 1.1.1.1 2008/05/16 18:03:28 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:28 $
+# Id: distrib,v 8.24 2001/06/25 11:20:24 skimo Exp (Berkeley) Date: 2001/06/25 11:20:24
 
 echo "Running libtoolize"
 libtoolize -c --force

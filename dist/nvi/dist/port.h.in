@@ -1,4 +1,4 @@
-/* $Id: port.h.in,v 1.1.1.1 2008/05/16 18:03:31 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:31 $ */
+/* Id: port.h.in,v 8.15 2001/01/01 20:26:48 skimo Exp (Berkeley) Date: 2001/01/01 20:26:48 */
 
 /*
  * Declare the basic types, if they aren't already declared.  Named and

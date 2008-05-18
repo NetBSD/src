@@ -1,6 +1,6 @@
-#	$Id: README,v 1.1.1.1 2008/05/16 18:03:01 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:01 $
+#	Id: README,v 8.153 2001/04/30 09:31:12 skimo Exp (Berkeley) Date: 2001/04/30 09:31:12
 
-This is version 1.80 (%H%) of nex/nvi, a reimplementation of the ex/vi
+This is version 1.81.6 (2007-11-18) of nex/nvi, a reimplementation of the ex/vi
 text editors originally distributed as part of the Fourth Berkeley
 Software Distribution (4BSD), by the University of California, Berkeley.
 

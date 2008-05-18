@@ -3,7 +3,7 @@
 .\"
 .\" %sccs.include.redist.roff%
 .\"
-.\"	$Id: edittut.ms,v 1.1.1.1 2008/05/16 18:03:34 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:34 $
+.\"	Id: edittut.ms,v 8.3 1996/08/18 11:36:05 bostic Exp (Berkeley) Date: 1996/08/18 11:36:05
 .\"
 .ll 6.5i
 .nr LL 6.5i

@@ -1,3 +1,5 @@
+/*	$NetBSD: gtkviscreen.c,v 1.1.1.2 2008/05/18 14:31:22 aymeric Exp $ */
+
 #include <stdio.h>
 #include <string.h>
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: mem.h,v 1.1.1.2 2008/05/18 14:29:48 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: mem.h,v 1.1.1.1 2008/05/16 18:03:20 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:20 $
+ *	Id: mem.h,v 10.13 2002/01/05 23:13:37 skimo Exp (Berkeley) Date: 2002/01/05 23:13:37
  */
 
 #ifdef HAVE_GCC

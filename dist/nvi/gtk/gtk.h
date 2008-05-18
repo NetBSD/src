@@ -1,3 +1,5 @@
+/*	$NetBSD: gtk.h,v 1.1.1.2 2008/05/18 14:31:22 aymeric Exp $ */
+
 typedef struct {
     GtkViScreen  *vi;
     GtkWidget	*main;

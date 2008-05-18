@@ -1,3 +1,5 @@
+/*	$NetBSD: mark.h,v 1.1.1.2 2008/05/18 14:29:47 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: mark.h,v 1.1.1.1 2008/05/16 18:03:19 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:19 $
+ *	Id: mark.h,v 10.5 2000/07/14 14:29:16 skimo Exp (Berkeley) Date: 2000/07/14 14:29:16
  */
 
 /*

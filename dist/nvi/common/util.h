@@ -1,3 +1,5 @@
+/*	$NetBSD: util.h,v 1.1.1.2 2008/05/18 14:29:52 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: util.h,v 1.1.1.1 2008/05/16 18:03:24 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:24 $
+ *	Id: util.h,v 10.5 1996/03/16 14:42:47 bostic Exp (Berkeley) Date: 1996/03/16 14:42:47
  */
 
 /* Macros to init/set/clear/test flags. */

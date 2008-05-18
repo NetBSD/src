@@ -1,3 +1,5 @@
+/*	$NetBSD: mmap.c,v 1.1.1.2 2008/05/18 14:29:38 aymeric Exp $ */
+
 #include "config.h"
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: log.h,v 1.1.1.2 2008/05/18 14:29:46 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: log.h,v 1.1.1.1 2008/05/16 18:03:18 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:18 $
+ *	Id: log.h,v 10.4 2002/06/08 21:00:33 skimo Exp (Berkeley) Date: 2002/06/08 21:00:33
  */
 
 #define	LOG_NOTYPE		0

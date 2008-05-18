@@ -1,3 +1,5 @@
+/*	$NetBSD: gs.c,v 1.1.1.2 2008/05/18 14:29:45 aymeric Exp $ */
+
 /*-
  * Copyright (c) 2000
  *	Sven Verdoolaege.  All rights reserved.

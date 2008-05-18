@@ -1,3 +1,5 @@
+/*	$NetBSD: vi_rec.c,v 1.1.1.2 2008/05/18 14:29:53 aymeric Exp $ */
+
 #include "db_config.h"
 
 #ifndef NO_SYSTEM_INCLUDES

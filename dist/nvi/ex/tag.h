@@ -1,3 +1,5 @@
+/*	$NetBSD: tag.h,v 1.1.1.2 2008/05/18 14:31:21 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -8,7 +10,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: tag.h,v 1.1.1.1 2008/05/16 18:04:02 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:04:02 $
+ *	Id: tag.h,v 10.8 2000/07/14 14:29:22 skimo Exp (Berkeley) Date: 2000/07/14 14:29:22
  */
 
 /*

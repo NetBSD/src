@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.1.1.2 2008/05/18 14:29:47 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char sccsid[] = "$Id: main.c,v 1.1.1.1 2008/05/16 18:03:19 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:19 $";
+static const char sccsid[] = "Id: main.c,v 10.63 2001/11/01 15:24:43 skimo Exp (Berkeley) Date: 2001/11/01 15:24:43";
 #endif /* not lint */
 
 #include <sys/types.h>
