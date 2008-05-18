@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.19 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.1 2008/05/18 02:06:14 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.19 2006/11/16 01:32:39 christos Exp $");
-
-#include "opt_pcibios.h"
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.1 2008/05/18 02:06:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.19 2006/11/16 01:32:39 christos
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/pci/pci_addr_fixup.h>
+#include <x86/pci/pci_addr_fixup.h>
 
 struct pciaddr pciaddr;
 

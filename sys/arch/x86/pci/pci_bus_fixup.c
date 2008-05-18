@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_fixup.c,v 1.8 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: pci_bus_fixup.c,v 1.1 2008/05/18 02:06:14 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.8 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.1 2008/05/18 02:06:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_bus_fixup.c,v 1.8 2006/11/16 01:32:39 christos E
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
 
-#include <i386/pci/pci_bus_fixup.h>
+#include <x86/pci/pci_bus_fixup.h>
 
 /* this array lists the parent for each bus number */
 int pci_bus_parent[256];
