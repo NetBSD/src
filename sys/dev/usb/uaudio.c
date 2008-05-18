@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.109.8.3 2007/06/18 13:45:13 itohy Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.109.8.4 2008/05/18 14:13:16 itohy Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.8.3 2007/06/18 13:45:13 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.109.8.4 2008/05/18 14:13:16 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2217,7 +2217,7 @@ uaudio_halt_in_dma(void *addr)
 	DPRINTF(("uaudio_halt_in_dma: enter\n"));
 	sc = addr;
 	if (sc->sc_recchan.pipe != NULL) {
-		uaudio_chan_abort(sc, &sc->sc_playchan);
+		uaudio_chan_abort(sc, &sc->sc_recchan);
 		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
 		uaudio_chan_close(sc, &sc->sc_recchan);
 		sc->sc_recchan.pipe = NULL;
