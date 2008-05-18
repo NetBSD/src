@@ -1,4 +1,4 @@
-
+/*	$NetBSD: ofdev.c,v 1.20 2008/05/18 13:18:19 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
