@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.211 2008/05/18 02:10:10 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.212 2008/05/18 03:52:17 bjs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.211 $"
+#ident 		"GENERIC-$Revision: 1.212 $"
 
 maxusers	64		# estimated number of users
 
@@ -260,7 +260,7 @@ options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
 #options	PCI_BUS_FIXUP		# fixup PCI bus numbering
-#options	PCI_INTR_FIXUP		# fixup PCI interrupt routing
+#options	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
