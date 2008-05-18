@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221 2008/04/28 20:23:37 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.222 2008/05/18 22:40:14 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2008/05/18 22:40:14 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1729,7 +1729,7 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, int pil, int level,
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
-	intr_establish(pil, ih);
+	intr_establish(pil, level != IPL_VM, ih);
 	return (ih);
 }
 
