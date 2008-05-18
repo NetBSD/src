@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1070 2008/05/14 16:49:47 reinoud Exp $
+# $NetBSD: mi,v 1.1071 2008/05/18 22:05:59 cegger Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -591,6 +591,7 @@
 ./usr/share/man/cat4/acpiacad.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpibat.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpibut.0			man-sys-catman		.cat
+./usr/share/man/cat4/acpidalb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpilid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpitz.0			man-sys-catman		.cat
@@ -3143,6 +3144,7 @@
 ./usr/share/man/man4/acpiacad.4			man-sys-man		.man
 ./usr/share/man/man4/acpibat.4			man-sys-man		.man
 ./usr/share/man/man4/acpibut.4			man-sys-man		.man
+./usr/share/man/man4/acpidalb.4			man-sys-man		.man
 ./usr/share/man/man4/acpiec.4			man-sys-man		.man
 ./usr/share/man/man4/acpilid.4			man-sys-man		.man
 ./usr/share/man/man4/acpitz.4			man-sys-man		.man
