@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.13 2008/05/18 02:45:17 bjs Exp $ */
+/* $NetBSD: drm_drv.c,v 1.14 2008/05/18 19:53:22 jmcneill Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.13 2008/05/18 02:45:17 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.14 2008/05/18 19:53:22 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
+
+#include <sys/module.h>
 
 #include "drmP.h"
 #include "drm.h"
@@ -814,4 +816,22 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, void *data, int flags,
 		DRM_DEBUG("    returning %d\n", retcode);
 
 	return DRM_ERR(retcode);
+}
+
+MODULE(MODULE_CLASS_MISC, drm, NULL);
+
+static int
+drm_modcmd(modcmd_t cmd, void *arg)
+{
+	int bmajor = -1, cmajor = -1;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return devsw_attach("drm", NULL, &bmajor, &drm_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &drm_cdevsw);
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

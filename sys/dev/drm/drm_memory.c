@@ -1,4 +1,4 @@
-/* $NetBSD: drm_memory.c,v 1.10 2008/05/06 01:45:47 bjs Exp $ */
+/* $NetBSD: drm_memory.c,v 1.11 2008/05/18 19:53:22 jmcneill Exp $ */
 
 /* drm_memory.h -- Memory management wrappers for DRM -*- linux-c -*-
  * Created: Thu Feb  4 14:00:34 1999 by faith@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.10 2008/05/06 01:45:47 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.11 2008/05/18 19:53:22 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -44,7 +44,11 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anhol
 #ifdef DRM_NO_AGP
 #define NAGP_I810 0
 #else
+#if defined(_KERNEL_OPT)
 #include "agp_i810.h"
+#else
+#define NAGP_I810 1	/* XXX */
+#endif
 #if NAGP_I810 > 0 /* XXX hack to borrow agp's register mapping */
 #include <dev/pci/agpvar.h>
 #endif
