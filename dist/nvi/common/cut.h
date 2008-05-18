@@ -1,3 +1,5 @@
+/*	$NetBSD: cut.h,v 1.1.1.2 2008/05/18 14:29:40 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: cut.h,v 1.1.1.1 2008/05/16 18:03:13 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:13 $
+ *	Id: cut.h,v 10.9 2000/07/22 17:31:18 skimo Exp (Berkeley) Date: 2000/07/22 17:31:18
  */
 
 typedef struct _texth TEXTH;		/* TEXT list head structure. */

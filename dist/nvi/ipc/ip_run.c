@@ -1,3 +1,5 @@
+/*	$NetBSD: ip_run.c,v 1.1.1.2 2008/05/18 14:31:25 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -10,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "$Id: ip_run.c,v 1.1.1.1 2008/05/16 18:04:05 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:04:05 $";
+static const char sccsid[] = "Id: ip_run.c,v 8.17 2000/07/04 21:48:54 skimo Exp (Berkeley) Date: 2000/07/04 21:48:54";
 #endif /* not lint */
 
 #include <sys/types.h>

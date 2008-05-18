@@ -1,3 +1,5 @@
+/*	$NetBSD: options.h,v 1.1.1.2 2008/05/18 14:29:49 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: options.h,v 1.1.1.1 2008/05/16 18:03:21 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:21 $
+ *	Id: options.h,v 10.20 2001/06/09 18:26:28 skimo Exp (Berkeley) Date: 2001/06/09 18:26:28
  */
 
 /*
