@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 2008/04/29 19:19:29 ad Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24 2008/05/18 02:06:14 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2008/04/29 19:19:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2008/05/18 02:06:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2008/04/29 19:19:29 ad Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
+#include "opt_pcifixup.h"
 
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
@@ -64,6 +65,15 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2008/04/29 19:19:29 ad Exp $");
 
 #if NIPMI > 0
 #include <x86/ipmivar.h>
+#endif
+
+#if NPCI > 0
+#if defined(PCI_BUS_FIXUP)
+#include <arch/x86/pci/pci_bus_fixup.h>
+#if defined(PCI_ADDR_FIXUP)
+#include <arch/x86/pci/pci_addr_fixup.h>
+#endif
+#endif
 #endif
 
 /*
@@ -154,6 +164,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if NACPI > 0 || defined(MPBIOS)
 	int numioapics = 0;
 #endif
+#if defined(PCI_BUS_FIXUP)
+	int pci_maxbus = 0;
+#endif
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -164,6 +177,18 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if NPCI > 0
 	pci_mode = pci_mode_detect();
+#if defined(PCI_BUS_FIXUP)
+	if (pci_mode != 0) {
+		pci_maxbus = pci_bus_fixup(NULL, 0);
+		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
+		    pci_maxbus);
+#if defined(PCI_ADDR_FIXUP)
+		pciaddr.extent_port = NULL;
+		pciaddr.extent_mem = NULL;
+		pci_addr_fixup(NULL, pci_maxbus);
+#endif
+	}
+#endif
 #endif
 
 #if NACPI > 0
