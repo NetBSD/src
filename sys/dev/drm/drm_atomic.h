@@ -1,4 +1,4 @@
-/* $NetBSD: drm_atomic.h,v 1.4 2008/05/18 02:42:43 bjs Exp $ */
+/* $NetBSD: drm_atomic.h,v 1.5 2008/05/18 03:49:08 bjs Exp $ */
 
 /**
  * \file drm_atomic.h
@@ -49,8 +49,8 @@ typedef u_int32_t atomic_t;
 #define atomic_sub(n, p)	atomic_subtract_int(p, n)
 #elif defined(__NetBSD__)
 #include <sys/atomic.h>
-#define atomic_set(p, v) 		(*(volatile uint32_t *)p) = (v))
-#define atomic_read(p) 			(*(volatile uint32_t *p))
+#define atomic_set(p, v) 		(*(p) = (volatile uint32_t)(v))
+#define atomic_read(p) 			(*(volatile uint32_t *)p)
 #define atomic_inc(p) 			atomic_inc_32(p)
 #define atomic_dec(p) 			atomic_dec_32(p)
 #define atomic_add(n, p) 		atomic_add_32(p, n)
