@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31.2.1 2008/05/18 12:31:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 2008/04/16 21:51:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31.2.1 2008/05/18 12:31:28 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -103,7 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 2008/04/16 21:51:03 cegger Exp $
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
+#ifdef MTRR
 #include <machine/mtrr.h>
+#endif
 
 extern char x86_64_doubleflt_stack[];
 
@@ -237,8 +239,10 @@ cpu_lwp_free(struct lwp *l, int proc)
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_lwp(l, false);
 
+#ifdef MTRR
 	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
+#endif
 }
 
 void

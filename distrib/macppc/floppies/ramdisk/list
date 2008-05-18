@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.28 2007/05/10 23:22:30 dogcow Exp $
+#	$NetBSD: list,v 1.28.14.1 2008/05/18 12:29:36 yamt Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -69,7 +69,7 @@ SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 
-LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz
+LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz -lprop
 
 COPY	${DESTDIR}/usr/mdec/bootxx	usr/mdec/bootxx
 COPY	${DESTDIR}/usr/mdec/mbr		usr/mdec/mbr

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
 // 2. Redistributions in binary form must reproduce the above copyright
 //    notice, this list of conditions and the following disclaimer in the
 //    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this
-//    software must display the following acknowledgement:
-//        This product includes software developed by the NetBSD
-//        Foundation, Inc. and its contributors.
-// 4. Neither the name of The NetBSD Foundation nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 // CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -40,12 +33,12 @@
 #include <utility>
 #include <vector>
 
-#include "atf/application.hpp"
-#include "atf/fs.hpp"
-#include "atf/formats.hpp"
-#include "atf/sanity.hpp"
-#include "atf/text.hpp"
-#include "atf/ui.hpp"
+#include "atf-c++/application.hpp"
+#include "atf-c++/fs.hpp"
+#include "atf-c++/formats.hpp"
+#include "atf-c++/sanity.hpp"
+#include "atf-c++/text.hpp"
+#include "atf-c++/ui.hpp"
 
 typedef std::auto_ptr< std::ostream > ostream_ptr;
 
@@ -151,13 +144,13 @@ public:
     write_tc_end(const atf::tests::tcr& tcr)
     {
         std::string str = "tc, ";
-        if (tcr.get_status() == atf::tests::tcr::status_passed) {
+        if (tcr.get_state() == atf::tests::tcr::passed_state) {
             str += m_tpname + ", " + m_tcname + ", passed";
-        } else if (tcr.get_status() == atf::tests::tcr::status_failed) {
+        } else if (tcr.get_state() == atf::tests::tcr::failed_state) {
             str += m_tpname + ", " + m_tcname + ", failed, " +
                    tcr.get_reason();
             m_failed = true;
-        } else if (tcr.get_status() == atf::tests::tcr::status_skipped) {
+        } else if (tcr.get_state() == atf::tests::tcr::skipped_state) {
             str += m_tpname + ", " + m_tcname + ", skipped, " +
                    tcr.get_reason();
         } else
@@ -256,15 +249,15 @@ class ticker_writer : public writer {
     {
         std::string str;
 
-        atf::tests::tcr::status s = tcr.get_status();
-        if (s == atf::tests::tcr::status_passed) {
+        atf::tests::tcr::state s = tcr.get_state();
+        if (s == atf::tests::tcr::passed_state) {
             str = "Passed.";
             m_tcs_passed++;
-        } else if (s == atf::tests::tcr::status_failed) {
+        } else if (s == atf::tests::tcr::failed_state) {
             str = "Failed: " + tcr.get_reason();
             m_tcs_failed++;
             m_failed_tcs.push_back(m_tpname + ":" + m_tcname);
-        } else if (s == atf::tests::tcr::status_skipped) {
+        } else if (s == atf::tests::tcr::skipped_state) {
             str = "Skipped: " + tcr.get_reason();
             m_tcs_skipped++;
         } else
@@ -414,13 +407,13 @@ class xml_writer : public writer {
     {
         std::string str;
 
-        atf::tests::tcr::status s = tcr.get_status();
-        if (s == atf::tests::tcr::status_passed) {
+        atf::tests::tcr::state s = tcr.get_state();
+        if (s == atf::tests::tcr::passed_state) {
             (*m_os) << "<passed />" << std::endl;
-        } else if (s == atf::tests::tcr::status_failed) {
+        } else if (s == atf::tests::tcr::failed_state) {
             (*m_os) << "<failed>" << elemval(tcr.get_reason())
                     << "</failed>" << std::endl;
-        } else if (s == atf::tests::tcr::status_skipped) {
+        } else if (s == atf::tests::tcr::skipped_state) {
             (*m_os) << "<skipped>" << elemval(tcr.get_reason())
                     << "</skipped>" << std::endl;
         } else

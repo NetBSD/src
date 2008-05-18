@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_timer.c,v 1.18 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_timer.c,v 1.18.38.1 2008/05/18 12:35:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.18 2007/03/04 06:03:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_timer.c,v 1.18.38.1 2008/05/18 12:35:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,8 +188,10 @@ tp_slowtimo(void)
 	struct tp_ref *rp;
 	struct tp_pcb  *tpcb;
 	struct tp_event E;
-	int             s = splsoftnet(), t;
+	int             t;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	/* check only open reference structures */
 	IncStat(ts_Cticks);
 	/* tp_ref[0] is never used */
@@ -226,7 +228,8 @@ tp_slowtimo(void)
 			}
 		}
 	}
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -281,9 +284,10 @@ void
 tp_fasttimo(void)
 {
 	struct tp_pcb *t;
-	int             s = splsoftnet();
 	struct tp_event E;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	E.ev_number = TM_sendack;
 	while ((t = tp_ftimeolist) != (struct tp_pcb *) & tp_ftimeolist) {
 		if (t == 0) {
@@ -300,7 +304,8 @@ tp_fasttimo(void)
 			t->tp_fasttimeo = 0;
 		}
 	}
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 #ifdef TP_DEBUG_TIMERS

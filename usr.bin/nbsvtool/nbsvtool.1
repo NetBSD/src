@@ -1,0 +1,101 @@
+.\" $NetBSD: nbsvtool.1,v 1.1.2.2 2008/05/18 12:36:07 yamt Exp $
+.\"
+.\" Copyright (c) 2004 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Love Hörnquist Åstrand <lha@it.su.se>
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.Dd June  1, 2004
+.Dt NBSVTOOL 1
+.Os
+.Sh NAME
+.Nm nbsvtool
+.Nd creates and verifies detached signatures of files
+.Sh SYNOPSIS
+.Nm nbsvtool
+.Op Fl a Ar anchor-certificates
+.Op Fl c Ar certificate-chain
+.Op Fl f Ar certificate-chain
+.Op Fl k Ar keyfile
+.OP Fl u Ar required-keyusage
+.OP Fl v
+command
+.Op Ar file ...
+.Sh DESCRIPTION
+.Nm
+is used to create and verify detached signatures of files.
+.Nm
+has two modes, signature creation and verification.
+.Pp
+The signature mode requires the options
+.Fa k
+and
+.Fa c .
+.Pp
+The command
+.Ql verify-code
+is an alias for
+.Ql -u code verify .
+.Pp
+Supported options:
+.Pp
+.Fl a Ar trust anchor
+trust anchor that will use to verify the certificate signing the request.
+.Pp
+.Fl c Ar certificate chain file
+Additional certificates that will be added to the signature
+when creating one.
+For verification it is used to fill missing links in the trust chain.
+.Pp
+.Fl f Ar certificate file
+The certicate file to use when creating signatures.
+The certicate needs to match the key given by
+.Fl k .
+This is enforced by the program.
+.Pp
+.Fl k Ar private key
+The private key file to use when creating signatures.
+.Pp
+.Fl u Ar key usage
+key usage is one of:
+.Ql ssl-server ,
+.Ql ssl-client ,
+.Ql code ,
+or
+.Ql smime .
+This verifies the extended key-usage attribute in the signer certificate.
+.Pp
+.Fl v
+Print verbose information of the signer.
+.Sh EXIT CODES
+0 every thing ok,
+.Pp
+everything else signals an error.
+.Sh EXAMPLES
+.D1 nbsvtool -k key -c cert-chain sign hello hello.sp7
+.D1 nbsvtool verify-code hello hello.sp7
+.D1 nbsvtool -u code verify file file.sp7
+.D1 nbsvtool -a anchor-file verify file.sp7
+.Sh SEE ALSO
+.Xr openssl_smine 1

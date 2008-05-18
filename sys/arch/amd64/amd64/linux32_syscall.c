@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.23 2008/03/11 02:24:43 ad Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.23.2.1 2008/05/18 12:31:27 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.23 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.23.2.1 2008/05/18 12:31:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,6 @@ linux32_syscall(frame)
 	args[4] = frame->tf_rdi & 0xffffffff;
 	args[5] = frame->tf_rbp & 0xffffffff;
 
-	KERNEL_LOCK(1, l);
-
 	if (__predict_false(p->p_trace_enabled)) {
 		narg = callp->sy_narg;
 		if (__predict_false(narg > __arraycount(args)))
@@ -84,7 +82,6 @@ linux32_syscall(frame)
 
 	error = (*callp->sy_call)(l, args, rval);
 out:
-	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];

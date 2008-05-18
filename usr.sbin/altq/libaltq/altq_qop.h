@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_qop.h,v 1.4 2006/11/26 11:38:07 peter Exp $	*/
+/*	$NetBSD: altq_qop.h,v 1.4.16.1 2008/05/18 12:36:13 yamt Exp $	*/
 /*	$KAME: altq_qop.h,v 1.5 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -38,7 +38,7 @@ struct fltrinfo;
 
 /* queueing discipline specific command parsers */
 struct qdisc_parser {
-	char	*qname;
+	const char	*qname;
 	int	(*interface_parser)(const char *ifname, int argc, char **argv);
 	int	(*class_parser)(const char *ifname, const char *clname,
 				const char *parent, int argc, char **argv);
@@ -46,8 +46,8 @@ struct qdisc_parser {
 
 /* queueing discipline specific operations */
 struct qdisc_ops {
-	int	qdisc_type;	/* discipline type (e.g., ALTQT_CBQ) */
-	char	*qname;		/* discipline name (e.g., cbq) */
+	int		qdisc_type;	/* discipline type (e.g., ALTQT_CBQ) */
+	const char	*qname;		/* discipline name (e.g., cbq) */
 
 	/* interface operations */
 	int	(*attach)(struct ifinfo *);
@@ -217,7 +217,7 @@ int client_input(FILE *fp);
 #define QOPERR_MAX		18
 
 extern int	filter_dontwarn;/* supress warning for the current filter */
-extern char	*altqconfigfile;	/* config file name */
+extern const char *altqconfigfile;	/* config file name */
 extern const char *qop_errlist[];	/* error string list */
 extern struct qdisc_ops nop_qdisc;
 extern char *cur_ifname(void);

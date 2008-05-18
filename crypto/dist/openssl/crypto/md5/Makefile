@@ -42,35 +42,14 @@ lib:    $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# ELF
-mx86-elf.s: asm/md5-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) md5-586.pl elf $(CFLAGS) > ../$@)
-# COFF
-mx86-cof.s: asm/md5-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) md5-586.pl coff $(CFLAGS) > ../$@)
-# a.out
-mx86-out.s: asm/md5-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) md5-586.pl a.out $(CFLAGS) > ../$@)
-
-md5-sparcv8plus.o: asm/md5-sparcv9.S
-	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
-		-o md5-sparcv8plus.o asm/md5-sparcv9.S
-
-# Old GNU assembler doesn't understand V9 instructions, so we
-# hire /usr/ccs/bin/as to do the job. Note that option is called
-# *-gcc27, but even gcc 2>=8 users may experience similar problem
-# if they didn't bother to upgrade GNU assembler. Such users should
-# not choose this option, but be adviced to *remove* GNU assembler
-# or upgrade it.
-md5-sparcv8plus-gcc27.o: asm/md5-sparcv9.S
-	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -E asm/md5-sparcv9.S | \
-		/usr/ccs/bin/as -xarch=v8plus - -o md5-sparcv8plus-gcc27.o
-
-md5-sparcv9.o: asm/md5-sparcv9.S
-	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
-		-o md5-sparcv9.o asm/md5-sparcv9.S
+md5-586.s:	asm/md5-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 
 md5-x86_64.s:	asm/md5-x86_64.pl;	$(PERL) asm/md5-x86_64.pl $@
+
+md5-ia64.s: asm/md5-ia64.S
+	$(CC) $(CFLAGS) -E asm/md5-ia64.S | \
+	$(PERL) -ne 's/;\s+/;\n/g; print;' > $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

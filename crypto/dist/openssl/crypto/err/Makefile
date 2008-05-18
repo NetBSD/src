@@ -83,6 +83,7 @@ err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 err.o: ../cryptlib.h err.c
 err_all.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 err_all.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+err_all.o: ../../include/openssl/cms.h ../../include/openssl/comp.h
 err_all.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
 err_all.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
 err_all.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
@@ -97,9 +98,9 @@ err_all.o: ../../include/openssl/pkcs12.h ../../include/openssl/pkcs7.h
 err_all.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
 err_all.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 err_all.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-err_all.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-err_all.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-err_all.o: err_all.c
+err_all.o: ../../include/openssl/ts.h ../../include/openssl/ui.h
+err_all.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+err_all.o: ../../include/openssl/x509v3.h err_all.c
 err_prn.o: ../../e_os.h ../../include/openssl/bio.h
 err_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 err_prn.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h

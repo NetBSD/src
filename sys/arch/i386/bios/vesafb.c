@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.26 2008/04/04 22:05:39 cegger Exp $ */
+/* $NetBSD: vesafb.c,v 1.26.2.1 2008/05/18 12:32:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.26 2008/04/04 22:05:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.26.2.1 2008/05/18 12:32:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,12 @@ __KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.26 2008/04/04 22:05:39 cegger Exp $");
 #include <arch/i386/bios/vesabios.h>
 #include <arch/i386/bios/vesabiosreg.h>
 #include <arch/i386/bios/vesafbvar.h>
+
+#ifdef VESAFB_DISABLE_TEXT
+#include <sys/reboot.h>
+#define DISABLESPLASH (boothowto & (RB_SINGLE | RB_USERCONF | RB_ASKNAME | \
+	    AB_VERBOSE | AB_DEBUG) )
+#endif
 
 MALLOC_DEFINE(M_VESAFB, "vesafb", "vesafb shadow framebuffer");
 
@@ -290,9 +296,14 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 
 	vesafb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 	vcons_init_screen(&sc->sc_vd, &vesafb_console_screen, 1, &defattr);
-#ifndef SPLASHSCREEN
-	vcons_redraw_screen(&vesafb_console_screen);
+#ifdef SPLASHSCREEN
+/*
+ * If system isn't going to go multiuser, or user has requested to see
+ * boot text, don't render splash screen immediately
+ */
+	if (DISABLESPLASH)	  
 #endif
+		vcons_redraw_screen(&vesafb_console_screen);
 
 	vesafb_stdscreen.ncols = ri->ri_cols;
 	vesafb_stdscreen.nrows = ri->ri_rows;
@@ -310,7 +321,8 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_si.si_height = ri->ri_height;
 	sc->sc_si.si_stride = ri->ri_stride;
 	sc->sc_si.si_fillrect = NULL;
-	splash_render(&sc->sc_si, SPLASH_F_CENTER|SPLASH_F_FILL);
+ 	if (!DISABLESPLASH)
+		splash_render(&sc->sc_si, SPLASH_F_CENTER|SPLASH_F_FILL);
 #endif
 
 #ifdef SPLASHSCREEN_PROGRESS
@@ -329,7 +341,8 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	aa.accesscookie = &sc->sc_vd;
 
 #ifdef VESAFB_DISABLE_TEXT
-	SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
+	if (!DISABLESPLASH)
+		SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
 #endif /* !VESAFB_DISABLE_TEXT */
 
 	sc->sc_isconsole = 1;
@@ -632,7 +645,7 @@ vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	}
 
 #ifdef VESA_DISABLE_TEXT
-	if (scr == &vesafb_console_screen)
+	if (scr == &vesafb_console_screen && !DISABLESPLASH)
 		SCREEN_DISABLE_DRAWING(&vesafb_console_screen);
 #endif
 }

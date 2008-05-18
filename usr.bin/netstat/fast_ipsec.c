@@ -1,4 +1,4 @@
-/*	$NetBSD: fast_ipsec.c,v 1.9 2007/12/29 21:36:43 degroote Exp $ */
+/*	$NetBSD: fast_ipsec.c,v 1.9.4.1 2008/05/18 12:36:07 yamt Exp $ */
 /* 	$FreeBSD: src/tools/tools/crypto/ipsecstats.c,v 1.1.4.1 2003/06/03 00:13:13 sam Exp $ */
 
 /*-
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __NetBSD__
-__RCSID("$NetBSD: fast_ipsec.c,v 1.9 2007/12/29 21:36:43 degroote Exp $");
+__RCSID("$NetBSD: fast_ipsec.c,v 1.9.4.1 2008/05/18 12:36:07 yamt Exp $");
 #endif
 #endif /* not lint*/
 
@@ -158,174 +158,179 @@ algname(int a, const struct alg algs[], int nalgs)
 void
 fast_ipsec_stats(u_long off, char *name)
 {
-	struct newipsecstat ipsecstats;
-	struct ahstat ahstats;
-	struct espstat espstats;
-	struct ipcompstat ipcs;
-	struct ipipstat ipips;
+	uint64_t ipsecstats[IPSEC_NSTATS];
+	uint64_t ahstats[AH_NSTATS];
+	uint64_t espstats[ESP_NSTATS];
+	uint64_t ipcs[IPCOMP_NSTATS];
+	uint64_t ipips[IPIP_NSTATS];
 	int status;
 	size_t slen;
 	int i;
 
-	memset(&ipsecstats, 0, sizeof(ipsecstats));
-	memset(&ahstats, 0, sizeof(ahstats));
-	memset(&espstats, 0, sizeof(espstats));
-	memset(&ipcs, 0, sizeof(ipcs));
-	memset(&ipips, 0, sizeof(ipips));
+	if (! use_sysctl) {
+		warnx("IPsec stats not available via KVM.");
+		return;
+	}
+
+	memset(ipsecstats, 0, sizeof(ipsecstats));
+	memset(ahstats, 0, sizeof(ahstats));
+	memset(espstats, 0, sizeof(espstats));
+	memset(ipcs, 0, sizeof(ipcs));
+	memset(ipips, 0, sizeof(ipips));
 
 	/* silence check */
 	if (!have_fast_ipsec())
 		return;
 
 	slen = sizeof(ipsecstats);
-	status = sysctlbyname("net.inet.ipsec.ipsecstats", &ipsecstats, &slen,
+	status = sysctlbyname("net.inet.ipsec.ipsecstats", ipsecstats, &slen,
 			      NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.ipsec.ipsecstats");
 
 	slen = sizeof (ahstats);
-	status = sysctlbyname("net.inet.ah.ah_stats", &ahstats, &slen, NULL, 0);
+	status = sysctlbyname("net.inet.ah.ah_stats", ahstats, &slen, NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.ah.ah_stats");
 
 	slen = sizeof (espstats);
-	status = sysctlbyname("net.inet.esp.esp_stats", &espstats, &slen, NULL, 0);
+	status = sysctlbyname("net.inet.esp.esp_stats", espstats, &slen, NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.esp.esp_stats");
 
 	slen = sizeof(ipcs);
-	status = sysctlbyname("net.inet.ipcomp.ipcomp_stats", &ipcs, &slen, NULL, 0);
+	status = sysctlbyname("net.inet.ipcomp.ipcomp_stats", ipcs, &slen, NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.ipcomp.ipcomp_stats");
 
 	slen = sizeof(ipips);
-	status = sysctlbyname("net.inet.ipip.ipip_stats", &ipips, &slen, NULL, 0);
+	status = sysctlbyname("net.inet.ipip.ipip_stats", ipips, &slen, NULL, 0);
 	if (status < 0 && errno != ENOMEM)
 		err(1, "net.inet.ipip.ipip_stats");
 
 	printf("(Fast) IPsec:\n");
 
 #define	STAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%"PRIu64" " fmt "\n", x)
-	if (ipsecstats.ips_in_polvio+ipsecstats.ips_out_polvio)
+	if (ipsecstats[IPSEC_STAT_IN_POLVIO]+ipsecstats[IPSEC_STAT_OUT_POLVIO])
 		printf("\t%"PRIu64" policy violations: %"PRIu64" input %"PRIu64" output\n",
-		        ipsecstats.ips_in_polvio + ipsecstats.ips_out_polvio,
-			ipsecstats.ips_in_polvio, ipsecstats.ips_out_polvio);
-	STAT(ipsecstats.ips_out_nosa, "no SA found (output)");
-	STAT(ipsecstats.ips_out_nomem, "no memory available (output)");
-	STAT(ipsecstats.ips_out_noroute, "no route available (output)");
-	STAT(ipsecstats.ips_out_inval, "generic errors (output)");
-	STAT(ipsecstats.ips_out_bundlesa, "bundled SA processed (output)");
-	STAT(ipsecstats.ips_spdcache_lookup, "SPD cache lookups");
-	STAT(ipsecstats.ips_spdcache_miss, "SPD cache misses");
+		        ipsecstats[IPSEC_STAT_IN_POLVIO] + ipsecstats[IPSEC_STAT_OUT_POLVIO],
+			ipsecstats[IPSEC_STAT_IN_POLVIO], ipsecstats[IPSEC_STAT_OUT_POLVIO]);
+	STAT(ipsecstats[IPSEC_STAT_OUT_NOSA], "no SA found (output)");
+	STAT(ipsecstats[IPSEC_STAT_OUT_NOMEM], "no memory available (output)");
+	STAT(ipsecstats[IPSEC_STAT_OUT_NOROUTE], "no route available (output)");
+	STAT(ipsecstats[IPSEC_STAT_OUT_INVAL], "generic errors (output)");
+	STAT(ipsecstats[IPSEC_STAT_OUT_BUNDLESA], "bundled SA processed (output)");
+	STAT(ipsecstats[IPSEC_STAT_SPDCACHELOOKUP], "SPD cache lookups");
+	STAT(ipsecstats[IPSEC_STAT_SPDCACHEMISS], "SPD cache misses");
 #undef STAT
 	printf("\n");
 	
 	printf("IPsec ah:\n");
 #define	AHSTAT(x,fmt)	if ((x) || sflag <= 1) printf("\t%"PRIu64" ah " fmt "\n", x)
-	AHSTAT(ahstats.ahs_input,   "input packets processed");
-	AHSTAT(ahstats.ahs_output,  "output packets processed");
-	AHSTAT(ahstats.ahs_hdrops,  "headers too short");
-	AHSTAT(ahstats.ahs_nopf,    "headers for unsupported address family");
-	AHSTAT(ahstats.ahs_notdb,   "packets with no SA");
-	AHSTAT(ahstats.ahs_badkcr, "packets dropped by crypto returning NULL mbuf");
-	AHSTAT(ahstats.ahs_badauth, "packets with bad authentication");
-	AHSTAT(ahstats.ahs_noxform, "packets with no xform");
-	AHSTAT(ahstats.ahs_qfull, "packets dropped due to queue full");
-	AHSTAT(ahstats.ahs_wrap,  "packets dropped for replay counter wrap");
-	AHSTAT(ahstats.ahs_replay,  "packets dropped for possible replay");
-	AHSTAT(ahstats.ahs_badauthl,"packets dropped for bad authenticator length");
-	AHSTAT(ahstats.ahs_invalid, "packets with an invalid SA");
-	AHSTAT(ahstats.ahs_toobig,  "packets too big");
-	AHSTAT(ahstats.ahs_pdrops,  "packets blocked due to policy");
-	AHSTAT(ahstats.ahs_crypto,  "failed crypto requests");
-	AHSTAT(ahstats.ahs_tunnel,  "tunnel sanity check failures");
+	AHSTAT(ahstats[AH_STAT_INPUT],   "input packets processed");
+	AHSTAT(ahstats[AH_STAT_OUTPUT],  "output packets processed");
+	AHSTAT(ahstats[AH_STAT_HDROPS],  "headers too short");
+	AHSTAT(ahstats[AH_STAT_NOPF],    "headers for unsupported address family");
+	AHSTAT(ahstats[AH_STAT_NOTDB],   "packets with no SA");
+	AHSTAT(ahstats[AH_STAT_BADKCR], "packets dropped by crypto returning NULL mbuf");
+	AHSTAT(ahstats[AH_STAT_BADAUTH], "packets with bad authentication");
+	AHSTAT(ahstats[AH_STAT_NOXFORM], "packets with no xform");
+	AHSTAT(ahstats[AH_STAT_QFULL], "packets dropped due to queue full");
+	AHSTAT(ahstats[AH_STAT_WRAP],  "packets dropped for replay counter wrap");
+	AHSTAT(ahstats[AH_STAT_REPLAY],  "packets dropped for possible replay");
+	AHSTAT(ahstats[AH_STAT_BADAUTHL],"packets dropped for bad authenticator length");
+	AHSTAT(ahstats[AH_STAT_INVALID], "packets with an invalid SA");
+	AHSTAT(ahstats[AH_STAT_TOOBIG],  "packets too big");
+	AHSTAT(ahstats[AH_STAT_PDROPS],  "packets blocked due to policy");
+	AHSTAT(ahstats[AH_STAT_CRYPTO],  "failed crypto requests");
+	AHSTAT(ahstats[AH_STAT_TUNNEL],  "tunnel sanity check failures");
 
 	printf("\tah histogram:\n");
 	for (i = 0; i < AH_ALG_MAX; i++)
-		if (ahstats.ahs_hist[i])
+		if (ahstats[AH_STAT_HIST + i])
 			printf("\t\tah packets with %s: %"PRIu64"\n"
 				, algname(i, aalgs, N(aalgs))
-				, ahstats.ahs_hist[i]
+				, ahstats[AH_STAT_HIST + i]
 			);
-	AHSTAT(ahstats.ahs_ibytes, "bytes received");
-	AHSTAT(ahstats.ahs_obytes, "bytes transmitted");
+	AHSTAT(ahstats[AH_STAT_IBYTES], "bytes received");
+	AHSTAT(ahstats[AH_STAT_OBYTES], "bytes transmitted");
 #undef AHSTAT
 	printf("\n");
 
 	printf("IPsec esp:\n");
 #define	ESPSTAT(x,fmt) if ((x) || sflag <= 1) printf("\t%"PRIu64" esp " fmt "\n", x)
-	ESPSTAT(espstats.esps_input,	"input packets processed");
-	ESPSTAT(espstats.esps_output,	"output packets processed");
-	ESPSTAT(espstats.esps_hdrops,	"headers too short");
-	ESPSTAT(espstats.esps_nopf,  "headers for unsupported address family");
-	ESPSTAT(espstats.esps_notdb,	"packets with no SA");
-	ESPSTAT(espstats.esps_badkcr,	"packets dropped by crypto returning NULL mbuf");
-	ESPSTAT(espstats.esps_qfull,	"packets dropped due to queue full");
-	ESPSTAT(espstats.esps_noxform,	"packets with no xform");
-	ESPSTAT(espstats.esps_badilen,	"packets with bad ilen");
-	ESPSTAT(espstats.esps_badenc,	"packets with bad encryption");
-	ESPSTAT(espstats.esps_badauth,	"packets with bad authentication");
-	ESPSTAT(espstats.esps_wrap, "packets dropped for replay counter wrap");
-	ESPSTAT(espstats.esps_replay,	"packets dropped for possible replay");
-	ESPSTAT(espstats.esps_invalid,	"packets with an invalid SA");
-	ESPSTAT(espstats.esps_toobig,	"packets too big");
-	ESPSTAT(espstats.esps_pdrops,	"packets blocked due to policy");
-	ESPSTAT(espstats.esps_crypto,	"failed crypto requests");
-	ESPSTAT(espstats.esps_tunnel,	"tunnel sanity check failures");
+	ESPSTAT(espstats[ESP_STAT_INPUT],"input packets processed");
+	ESPSTAT(espstats[ESP_STAT_OUTPUT],"output packets processed");
+	ESPSTAT(espstats[ESP_STAT_HDROPS],"headers too short");
+	ESPSTAT(espstats[ESP_STAT_NOPF], "headers for unsupported address family");
+	ESPSTAT(espstats[ESP_STAT_NOTDB],"packets with no SA");
+	ESPSTAT(espstats[ESP_STAT_BADKCR],"packets dropped by crypto returning NULL mbuf");
+	ESPSTAT(espstats[ESP_STAT_QFULL],"packets dropped due to queue full");
+	ESPSTAT(espstats[ESP_STAT_NOXFORM],"packets with no xform");
+	ESPSTAT(espstats[ESP_STAT_BADILEN],"packets with bad ilen");
+	ESPSTAT(espstats[ESP_STAT_BADENC],"packets with bad encryption");
+	ESPSTAT(espstats[ESP_STAT_BADAUTH],"packets with bad authentication");
+	ESPSTAT(espstats[ESP_STAT_WRAP], "packets dropped for replay counter wrap");
+	ESPSTAT(espstats[ESP_STAT_REPLAY],"packets dropped for possible replay");
+	ESPSTAT(espstats[ESP_STAT_INVALID],"packets with an invalid SA");
+	ESPSTAT(espstats[ESP_STAT_TOOBIG],"packets too big");
+	ESPSTAT(espstats[ESP_STAT_PDROPS],"packets blocked due to policy");
+	ESPSTAT(espstats[ESP_STAT_CRYPTO],"failed crypto requests");
+	ESPSTAT(espstats[ESP_STAT_TUNNEL],"tunnel sanity check failures");
 	printf("\tesp histogram:\n");
 	for (i = 0; i < ESP_ALG_MAX; i++)
-		if (espstats.esps_hist[i])
+		if (espstats[ESP_STAT_HIST + i])
 			printf("\t\tesp packets with %s: %"PRIu64"\n"
 				, algname(i, espalgs, N(espalgs))
-				, espstats.esps_hist[i]
+				, espstats[ESP_STAT_HIST + i]
 			);
-	ESPSTAT(espstats.esps_ibytes, "bytes received");
-	ESPSTAT(espstats.esps_obytes, "bytes transmitted");
+	ESPSTAT(espstats[ESP_STAT_IBYTES], "bytes received");
+	ESPSTAT(espstats[ESP_STAT_OBYTES], "bytes transmitted");
 #undef ESPSTAT
 	printf("IPsec ipip:\n");
 
 #define	IPIPSTAT(x,fmt) \
 	if ((x) || sflag <= 1) printf("\t%"PRIu64" ipip " fmt "\n", x)
-	IPIPSTAT(ipips.ipips_ipackets,	"total input packets");
-	IPIPSTAT(ipips.ipips_opackets,	"total output packets");
-	IPIPSTAT(ipips.ipips_hdrops,	"packets too short for header length");
-	IPIPSTAT(ipips.ipips_qfull,	"packets dropped due to queue full");
-	IPIPSTAT(ipips.ipips_pdrops,	"packets blocked due to policy");
-	IPIPSTAT(ipips.ipips_spoof,	"IP spoofing attempts");
-	IPIPSTAT(ipips.ipips_family,	"protocol family mismatched");
-	IPIPSTAT(ipips.ipips_unspec,	"missing tunnel-endpoint address");
-	IPIPSTAT(ipips.ipips_ibytes,	"input bytes received");
-	IPIPSTAT(ipips.ipips_obytes,	"output bytes processed");
+	IPIPSTAT(ipips[IPIP_STAT_IPACKETS],"total input packets");
+	IPIPSTAT(ipips[IPIP_STAT_OPACKETS],"total output packets");
+	IPIPSTAT(ipips[IPIP_STAT_HDROPS],"packets too short for header length");
+	IPIPSTAT(ipips[IPIP_STAT_QFULL],"packets dropped due to queue full");
+	IPIPSTAT(ipips[IPIP_STAT_PDROPS],"packets blocked due to policy");
+	IPIPSTAT(ipips[IPIP_STAT_SPOOF],"IP spoofing attempts");
+	IPIPSTAT(ipips[IPIP_STAT_FAMILY],"protocol family mismatched");
+	IPIPSTAT(ipips[IPIP_STAT_UNSPEC],"missing tunnel-endpoint address");
+	IPIPSTAT(ipips[IPIP_STAT_IBYTES],"input bytes received");
+	IPIPSTAT(ipips[IPIP_STAT_OBYTES],"output bytes processed");
 #undef IPIPSTAT
 
 	printf("IPsec ipcomp:\n");
 #define	IPCOMP(x,fmt) \
 	if ((x) || sflag <= 1) printf("\t%"PRIu64" ipcomp " fmt "\n", x)
 
-	IPCOMP(ipcs.ipcomps_hdrops,	"packets too short for header length");
-	IPCOMP(ipcs.ipcomps_nopf,	"protocol family not supported");
-	IPCOMP(ipcs.ipcomps_notdb,	"not db");
-	IPCOMP(ipcs.ipcomps_badkcr,	"packets dropped by crypto returning NULL mbuf");
-	IPCOMP(ipcs.ipcomps_qfull,	"queue full");
-        IPCOMP(ipcs.ipcomps_noxform,	"no support for transform");
-	IPCOMP(ipcs.ipcomps_wrap,  "packets dropped for replay counter wrap");
-	IPCOMP(ipcs.ipcomps_input,	"input IPcomp packets");
-	IPCOMP(ipcs.ipcomps_output,	"output IPcomp packets");
-	IPCOMP(ipcs.ipcomps_invalid,	"specified an invalid TDB");
-	IPCOMP(ipcs.ipcomps_toobig,	"packets decompressed as too big");
-	IPCOMP(ipcs.ipcomps_minlen, "packets too short to be compressed");
-	IPCOMP(ipcs.ipcomps_uselesscomp, "packet for which compression was useless");
-	IPCOMP(ipcs.ipcomps_pdrops,	"packets blocked due to policy");
-	IPCOMP(ipcs.ipcomps_crypto,	"failed crypto requests");
+	IPCOMP(ipcs[IPCOMP_STAT_HDROPS],"packets too short for header length");
+	IPCOMP(ipcs[IPCOMP_STAT_NOPF],	"protocol family not supported");
+	IPCOMP(ipcs[IPCOMP_STAT_NOTDB],	"not db");
+	IPCOMP(ipcs[IPCOMP_STAT_BADKCR],"packets dropped by crypto returning NULL mbuf");
+	IPCOMP(ipcs[IPCOMP_STAT_QFULL],	"queue full");
+        IPCOMP(ipcs[IPCOMP_STAT_NOXFORM],"no support for transform");
+	IPCOMP(ipcs[IPCOMP_STAT_WRAP],  "packets dropped for replay counter wrap");
+	IPCOMP(ipcs[IPCOMP_STAT_INPUT],	"input IPcomp packets");
+	IPCOMP(ipcs[IPCOMP_STAT_OUTPUT],"output IPcomp packets");
+	IPCOMP(ipcs[IPCOMP_STAT_INVALID],"specified an invalid TDB");
+	IPCOMP(ipcs[IPCOMP_STAT_TOOBIG],"packets decompressed as too big");
+	IPCOMP(ipcs[IPCOMP_STAT_MINLEN], "packets too short to be compressed");
+	IPCOMP(ipcs[IPCOMP_STAT_USELESS],"packet for which compression was useless");
+	IPCOMP(ipcs[IPCOMP_STAT_PDROPS],"packets blocked due to policy");
+	IPCOMP(ipcs[IPCOMP_STAT_CRYPTO],"failed crypto requests");
 
 	printf("\tIPcomp histogram:\n");
 	for (i = 0; i < IPCOMP_ALG_MAX; i++)
-		if (ipcs.ipcomps_hist[i])
+		if (ipcs[IPCOMP_STAT_HIST + i])
 			printf("\t\tIPcomp packets with %s: %"PRIu64"\n"
 				, algname(i, ipcompalgs, N(ipcompalgs))
-				, ipcs.ipcomps_hist[i]
+				, ipcs[IPCOMP_STAT_HIST + i]
 			);
-	IPCOMP(ipcs.ipcomps_ibytes,	"input bytes");
-	IPCOMP(ipcs.ipcomps_obytes,	"output bytes");
+	IPCOMP(ipcs[IPCOMP_STAT_IBYTES],"input bytes");
+	IPCOMP(ipcs[IPCOMP_STAT_OBYTES],"output bytes");
 #undef IPCOMP
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.4 2007/02/07 14:20:58 hubertf Exp $	*/
+/*	$NetBSD: tyname.c,v 1.4.10.1 2008/05/18 12:36:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,18 +35,19 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.4 2007/02/07 14:20:58 hubertf Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.4.10.1 2008/05/18 12:36:11 yamt Exp $");
 #endif
 
 #include <limits.h>
+#include <string.h>
 #include <stdlib.h>
 #include <err.h>
 
 #include PASS
 
 #ifndef LERROR
-#define LERROR(a) 	do { \
-    (void)warnx("%s, %d: %s", __FILE__, __LINE__, (a)); \
+#define LERROR(fmt, args...) 	do { \
+    (void)warnx("%s, %d: " fmt, __FILE__, __LINE__, ##args); \
     abort(); \
 } while (/*CONSTCOND*/0)
 #endif
@@ -84,8 +78,11 @@ basictyname(tspec_t t)
 	case UNION:	return "union";
 	case FUNC:	return "function";
 	case ARRAY:	return "array";
+	case FCOMPLEX:	return "float _Complex";
+	case DCOMPLEX:	return "double _Complex";
+	case COMPLEX:	return "_Complex";
 	default:
-		LERROR("basictyname()");
+		LERROR("basictyname(%d)", t);
 		return NULL;
 	}
 }
@@ -96,12 +93,18 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 	tspec_t	t;
 	const	char *s;
 	char lbuf[64];
+	char cv[20];
 
 	if ((t = tp->t_tspec) == INT && tp->t_isenum)
 		t = ENUM;
 
 	s = basictyname(t);
 
+	cv[0] = '\0';
+	if (tp->t_const)
+		(void)strcat(cv, "const ");
+	if (tp->t_volatile)
+		(void)strcat(cv, "volatile ");
 
 	switch (t) {
 	case BOOL:
@@ -121,37 +124,40 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 	case LDOUBLE:
 	case VOID:
 	case FUNC:
-		(void)snprintf(buf, bufsiz, "%s", s);
+	case COMPLEX:
+	case FCOMPLEX:
+	case DCOMPLEX:
+		(void)snprintf(buf, bufsiz, "%s%s", cv, s);
 		break;
 	case PTR:
-		(void)snprintf(buf, bufsiz, "%s to %s", s,
+		(void)snprintf(buf, bufsiz, "%s%s to %s", cv, s,
 		    tyname(lbuf, sizeof(lbuf), tp->t_subt));
 		break;
 	case ENUM:
-		(void)snprintf(buf, bufsiz, "%s %s", s,
+		(void)snprintf(buf, bufsiz, "%s%s %s", cv, s,
 #ifdef t_enum
 		    tp->t_enum->etag->s_name
 #else
-		    tp->t_tag->h_name
+		    tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name
 #endif
 		    );
 		break;
 	case STRUCT:
 	case UNION:
-		(void)snprintf(buf, bufsiz, "%s %s", s,
+		(void)snprintf(buf, bufsiz, "%s%s %s", cv, s,
 #ifdef t_str
 		    tp->t_str->stag->s_name
 #else
-		    tp->t_tag->h_name
+		    tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name
 #endif
 		    );
 		break;
 	case ARRAY:
-		(void)snprintf(buf, bufsiz, "%s of %s[%d]", s,
+		(void)snprintf(buf, bufsiz, "%s%s of %s[%d]", cv, s,
 		    tyname(lbuf, sizeof(lbuf), tp->t_subt), tp->t_dim);
 		break;
 	default:
-		LERROR("tyname()");
+		LERROR("tyname(%d)", t);
 	}
 	return (buf);
 }

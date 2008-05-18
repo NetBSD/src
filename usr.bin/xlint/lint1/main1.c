@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.17 2006/11/08 18:31:15 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.17.16.1 2008/05/18 12:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.17 2006/11/08 18:31:15 christos Exp $");
+__RCSID("$NetBSD: main1.c,v 1.17.16.1 2008/05/18 12:36:11 yamt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: main1.c,v 1.17 2006/11/08 18:31:15 christos Exp $");
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
+#include <signal.h>
 
 #include "lint1.h"
 
@@ -119,9 +120,18 @@ int	zflag = 1;
 
 err_set	msgset;
 
+sig_atomic_t fpe;
+
 static	void	usage(void);
 
 int main(int, char *[]);
+
+/*ARGSUSED*/
+static void
+sigfpe(int s)
+{
+	fpe = 1;
+}
 
 int
 main(int argc, char *argv[])
@@ -198,6 +208,7 @@ main(int argc, char *argv[])
 	if (yflag)
 		yydebug = 1;
 
+	(void)signal(SIGFPE, sigfpe);
 	initmem();
 	initdecl();
 	initscan();

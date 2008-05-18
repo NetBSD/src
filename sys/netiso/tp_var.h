@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.15 2007/03/04 06:03:33 christos Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.15.38.1 2008/05/18 12:35:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -57,11 +50,7 @@ struct in_addr;
 
 
 /* tp_cons.c */
-int tpcons_pcbconnect (void *, struct mbuf *);
-void *tpcons_ctlinput(int, const struct sockaddr *, void *);
-void tpcons_input (struct mbuf *, ...);
 int tpcons_output (struct mbuf *, ...);
-int tpcons_output_dg (struct mbuf *, ...);
 
 /* tp_driver.c */
 int tp_driver   (struct tp_pcb *, struct tp_event *);
@@ -185,18 +174,6 @@ int tp_usrreq   (struct socket *, int, struct mbuf *, struct mbuf *,
 void tp_ltrace   (struct socket *, struct uio *);
 int tp_confirm  (struct tp_pcb *);
 int tp_snd_control (struct mbuf *, struct socket *, struct mbuf **);
-
-#ifdef TPCONS
-/* if_cons.c */
-void nibble_copy (char *, unsigned, char *, unsigned, int);
-int nibble_match (char *, unsigned, char *, unsigned, int);
-void cons_init (void);
-int tp_incoming (struct mbuf *, void *);
-int cons_tpinput (struct mbuf *, void *);
-int cons_connect (struct isopcb *);
-void *cons_ctlinput(int, const struct sockaddr *, void *);
-int find_error_reason (struct x25_packet *);
-#endif
 
 #endif
 

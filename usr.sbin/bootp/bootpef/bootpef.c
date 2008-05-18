@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpef.c,v 1.7 2007/05/27 16:31:41 tls Exp $");
+__RCSID("$NetBSD: bootpef.c,v 1.7.10.1 2008/05/18 12:36:14 yamt Exp $");
 #endif
 
 
@@ -90,7 +90,7 @@ int main(int, char **);
  * General
  */
 
-char *progname;
+const char *progname;
 char *chdir_path;
 int debug = 0;					/* Debugging flag (level) */
 byte *buffer;
@@ -99,7 +99,7 @@ byte *buffer;
  * Globals below are associated with the bootp database file (bootptab).
  */
 
-char *bootptab = CONFIG_FILE;
+const char *bootptab = CONFIG_FILE;
 
 
 /*

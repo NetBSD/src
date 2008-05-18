@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.52 2008/03/03 05:07:43 lukem Exp $	*/
+/*	$NetBSD: printjob.c,v 1.52.2.1 2008/05/18 12:36:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.52 2008/03/03 05:07:43 lukem Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.52.2.1 2008/05/18 12:36:20 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -543,7 +543,7 @@ print(int format, char *file)
 	FILE *fp;
 	int status;
 	struct stat stb;
-	const char *prog, *av[15];
+	const char *prog, *av[17];
 	char buf[BUFSIZ];
 	int n, fi, fo, child_pid, p[2], stopped = 0, nofile;
 
@@ -702,6 +702,10 @@ print(int format, char *file)
 		av[0] = prog;
 	av[n++] = "-n";
 	av[n++] = logname;
+	if (*jobname != '\0' && strcmp(jobname, " ") != 0) {
+		av[n++] = "-j";
+		av[n++] = jobname;
+	}
 	av[n++] = "-h";
 	av[n++] = fromhost;
 	av[n++] = AF;

@@ -145,8 +145,10 @@ archive_entry_linkresolver_free(struct archive_entry_linkresolver *res)
 	struct links_entry *le;
 
 	if (res->buckets != NULL) {
-		while ((le = next_entry(res)) != NULL)
+		while ((le = next_entry(res)) != NULL) {
 			archive_entry_free(le->entry);
+			archive_entry_free(le->canonical);
+		}
 		free(res->buckets);
 		res->buckets = NULL;
 	}
@@ -164,8 +166,10 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 
 	if (*e == NULL) {
 		le = next_entry(res);
-		if (le != NULL)
+		if (le != NULL) {
 			*e = le->entry;
+			le->entry = NULL;
+		}
 		return;
 	}
 
@@ -180,8 +184,10 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 			archive_entry_set_size(*e, 0);
 			archive_entry_set_hardlink(*e,
 			    archive_entry_pathname(le->canonical));
-		} else
-			insert_entry(res, *e);
+		} else {
+			le = insert_entry(res, *e);
+			le->entry = NULL;
+		}
 		return;
 	case ARCHIVE_ENTRY_LINKIFY_LIKE_OLD_CPIO:
 		/* This one is trivial. */
@@ -202,8 +208,10 @@ archive_entry_linkify(struct archive_entry_linkresolver *res,
 			    archive_entry_pathname(le->canonical));
 			/* If we ran out of links, return the
 			 * final entry as well. */
-			if (le->links == 0)
+			if (le->links == 0) {
 				*f = le->entry;
+				le->entry = NULL;
+			}
 		} else {
 			/*
 			 * If we haven't seen it, tuck it away
@@ -232,6 +240,7 @@ find_entry(struct archive_entry_linkresolver *res,
 	/* Free a held entry. */
 	if (res->spare != NULL) {
 		archive_entry_free(res->spare->canonical);
+		archive_entry_free(res->spare->entry);
 		free(res->spare);
 		res->spare = NULL;
 	}
@@ -248,8 +257,8 @@ find_entry(struct archive_entry_linkresolver *res,
 	bucket = hash % res->number_buckets;
 	for (le = res->buckets[bucket]; le != NULL; le = le->next) {
 		if (le->hash == hash
-		    && dev == archive_entry_dev(le->entry)
-		    && ino == archive_entry_ino(le->entry)) {
+		    && dev == archive_entry_dev(le->canonical)
+		    && ino == archive_entry_ino(le->canonical)) {
 			/*
 			 * Decrement link count each time and release
 			 * the entry if it hits zero.  This saves
@@ -320,7 +329,8 @@ insert_entry(struct archive_entry_linkresolver *res,
 	le = malloc(sizeof(struct links_entry));
 	if (le == NULL)
 		return (NULL);
-	le->entry = entry;
+	memset(le, 0, sizeof(*le));
+	le->canonical = archive_entry_clone(entry);
 
 	/* If the links cache is getting too full, enlarge the hash table. */
 	if (res->number_entries > res->number_buckets * 2)
@@ -338,7 +348,6 @@ insert_entry(struct archive_entry_linkresolver *res,
 	res->buckets[bucket] = le;
 	le->hash = hash;
 	le->links = archive_entry_nlink(entry) - 1;
-	le->canonical = archive_entry_clone(entry);
 	return (le);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.92 2008/04/15 16:02:03 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.92.2.1 2008/05/18 12:35:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.92 2008/04/15 16:02:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.92.2.1 2008/05/18 12:35:28 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_eon.h"			/* ISO CLNL over IP */
@@ -150,6 +150,60 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.92 2008/04/15 16:02:03 thorpej Exp $"
 
 DOMAIN_DEFINE(inetdomain);	/* forward declare and add to link set */
 
+/* Wrappers to acquire kernel_lock. */
+
+PR_WRAP_USRREQ(rip_usrreq)
+PR_WRAP_USRREQ(udp_usrreq)
+PR_WRAP_USRREQ(tcp_usrreq)
+
+#define	rip_usrreq 	rip_usrreq_wrapper
+#define	udp_usrreq 	udp_usrreq_wrapper
+#define	tcp_usrreq 	tcp_usrreq_wrapper
+
+PR_WRAP_CTLINPUT(rip_ctlinput)
+PR_WRAP_CTLINPUT(udp_ctlinput)
+PR_WRAP_CTLINPUT(tcp_ctlinput)
+
+#define	rip_ctlinput	rip_ctlinput_wrapper
+#define	udp_ctlinput	udp_ctlinput_wrapper
+#define	tcp_ctlinput	tcp_ctlinput_wrapper
+
+PR_WRAP_CTLOUTPUT(rip_ctloutput)
+PR_WRAP_CTLOUTPUT(udp_ctloutput)
+PR_WRAP_CTLOUTPUT(tcp_ctloutput)
+
+#define	rip_ctloutput	rip_ctloutput_wrapper
+#define	udp_ctloutput	udp_ctloutput_wrapper
+#define	tcp_ctloutput	tcp_ctloutput_wrapper
+
+#if defined(IPSEC) || defined(FAST_IPSEC)
+PR_WRAP_CTLINPUT(ah4_ctlinput)
+
+#define	ah4_ctlinput	ah4_ctlinput_wrapper
+#endif
+
+#if defined(IPSEC_ESP) || defined(FAST_IPSEC)
+PR_WRAP_CTLINPUT(esp4_ctlinput)
+
+#define	esp4_ctlinput	esp4_ctlinput_wrapper
+#endif
+
+#ifdef TPIP
+PR_WRAP_CTLOUTPUT(tp_ctloutput)
+
+#define	tp_ctloutput	tp_ctloutput_wrapper
+
+PR_WRAP_CTLINPUT(tpip_ctlinput)
+
+#define	tpip_ctlinput	tpip_ctlinput_wrapper
+#endif
+
+#ifdef EON
+PR_WRAP_CTLINPUT(eonctlinput)
+
+#define	eonctlinput	eonctlinput_wrapper
+#endif
+
 const struct protosw inetsw[] = {
 {	.pr_domain = &inetdomain,
 	.pr_init = ip_init,
@@ -213,6 +267,7 @@ const struct protosw inetsw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ah4_input,
 	.pr_ctlinput = ah4_ctlinput,
+	.pr_init = ah4_init,
 },
 #ifdef IPSEC_ESP
 {	.pr_type = SOCK_RAW,
@@ -221,6 +276,7 @@ const struct protosw inetsw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = esp4_input,
 	.pr_ctlinput = esp4_ctlinput,
+	.pr_init = esp4_init,
 },
 #endif /* IPSEC_ESP */
 {	.pr_type = SOCK_RAW,
@@ -228,6 +284,7 @@ const struct protosw inetsw[] = {
 	.pr_protocol = IPPROTO_IPCOMP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = ipcomp4_input,
+	.pr_init = ipcomp4_init,
 },
 #endif /* IPSEC */
 #ifdef FAST_IPSEC

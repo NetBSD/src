@@ -1,4 +1,4 @@
-/*	$NetBSD: localedef.h,v 1.8 2007/03/30 15:55:38 he Exp $	*/
+/*	$NetBSD: localedef.h,v 1.8.32.1 2008/05/18 12:35:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -94,7 +94,7 @@ typedef struct {
 	const char *t_fmt_ampm;
 } _TimeLocale;
 
-extern _TimeLocale *_CurrentTimeLocale;
-extern _TimeLocale  _DefaultTimeLocale;
+extern const _TimeLocale *_CurrentTimeLocale;
+extern const _TimeLocale  _DefaultTimeLocale;
 
 #endif /* !_SYS_LOCALEDEF_H_ */

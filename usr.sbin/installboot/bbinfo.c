@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.11 2005/06/07 13:49:31 he Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.11.18.1 2008/05/18 12:36:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,10 +35,15 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.11 2005/06/07 13:49:31 he Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.11.18.1 2008/05/18 12:36:18 yamt Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
+#include <sys/ioctl.h>
+#include <sys/dkio.h>
+#include <errno.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -103,6 +101,29 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams,
 	}
 
 	rv = pwrite(params->fsfd, bb, bbparams->maxsize, bbparams->offset);
+#ifdef DIOCWLABEL
+	if (rv == -1 && errno == EROFS) {
+		/*
+		 * The first sector might be protected by
+		 * bounds_check_with_label(9)
+		 */
+		int enable;
+
+		enable = 1;
+		rv = ioctl(params->fsfd, DIOCWLABEL, &enable);
+		if (rv != 0) {
+			warn("Cannot enable writes to the label sector");
+			goto done;
+		}
+
+		rv = pwrite(params->fsfd, bb, bbparams->maxsize,
+		    bbparams->offset);
+
+		/* Reset write-protect. */
+		enable = 0;
+		(void)ioctl(params->fsfd, DIOCWLABEL, &enable);
+	}
+#endif
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;
@@ -267,6 +288,29 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 	}
 
 	rv = pwrite(params->fsfd, bb, bbparams->maxsize, bbparams->offset);
+#ifdef DIOCWLABEL
+	if (rv == -1 && errno == EROFS) {
+		/*
+		 * The first sector might be protected by
+		 * bounds_check_with_label(9)
+		 */
+		int enable;
+
+		enable = 1;
+		rv = ioctl(params->fsfd, DIOCWLABEL, &enable);
+		if (rv != 0) {
+			warn("Cannot enable writes to the label sector");
+			goto done;
+		}
+
+		rv = pwrite(params->fsfd, bb, bbparams->maxsize,
+		    bbparams->offset);
+
+		/* Reset write-protect. */
+		enable = 0;
+		(void)ioctl(params->fsfd, DIOCWLABEL, &enable);
+	}
+#endif
 	if (rv == -1) {
 		warn("Writing `%s'", params->filesystem);
 		goto done;

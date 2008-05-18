@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.13 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: spic.c,v 1.13.2.1 2008/05/18 12:33:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -56,7 +49,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.13 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.13.2.1 2008/05/18 12:33:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +159,7 @@ spic_intr(void *v) {
 			goto skip;
 			break;
 		default:
-			aprint_debug_dev(&sc->sc_dev, "unknown lid event 0x%02x\n", v1);
+			aprint_debug_dev(sc->sc_dev, "unknown lid event 0x%02x\n", v1);
 			goto skip;
 			break;
 		}
@@ -208,10 +201,10 @@ spic_intr(void *v) {
 		dz -= 0x20;
 		break;
 	case SPIC_EVENT_BRIGHTNESS_UP:
-		pmf_event_inject(&sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP);
+		pmf_event_inject(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP);
 		break;
 	case SPIC_EVENT_BRIGHTNESS_DOWN:
-		pmf_event_inject(&sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN);
+		pmf_event_inject(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN);
 		break;
 	default:
 		printf("spic0: v1=0x%02x v2=0x%02x\n", v1, v2);
@@ -275,7 +268,7 @@ spic_attach(struct spic_softc *sc)
 
 	a.accessops = &spic_accessops;
 	a.accesscookie = sc;
-	sc->sc_wsmousedev = config_found(&sc->sc_dev, &a, wsmousedevprint);
+	sc->sc_wsmousedev = config_found(sc->sc_dev, &a, wsmousedevprint);
 
 	sc->sc_smpsw[SPIC_PSWITCH_LID].smpsw_name = "spiclid0";
 	sc->sc_smpsw[SPIC_PSWITCH_LID].smpsw_type = PSWITCH_TYPE_LID;
@@ -287,7 +280,7 @@ spic_attach(struct spic_softc *sc)
 	for (i = 0; i < SPIC_NPSWITCH; i++) {
 		rv = sysmon_pswitch_register(&sc->sc_smpsw[i]);
 		if (rv != 0)
-			aprint_error_dev(&sc->sc_dev, "unable to register %s with sysmon\n",
+			aprint_error_dev(sc->sc_dev, "unable to register %s with sysmon\n",
 			    sc->sc_smpsw[i].smpsw_name);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.108 2008/03/01 14:16:51 rmind Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.108.2.1 2008/05/18 12:35:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.108 2008/03/01 14:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.108.2.1 2008/05/18 12:35:11 yamt Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -1097,9 +1097,7 @@ ptyioctl(dev, cmd, data, flag, l)
 			mutex_spin_enter(&tty_lock);
 			if (!ISSET(tp->t_lflag, NOFLSH))
 				ttyflush(tp, FREAD|FWRITE);
-			if ((sig == SIGINFO) &&
-			    (!ISSET(tp->t_lflag, NOKERNINFO)))
-				ttyinfo(tp, 1);
+			tp->t_state |= TS_SIGINFO;
 			ttysig(tp, TTYSIG_PG1, sig);
 			mutex_spin_exit(&tty_lock);
 			return(0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.42 2007/03/31 18:17:13 plunky Exp $	*/
+/*	$NetBSD: protosw.h,v 1.42.32.1 2008/05/18 12:35:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -261,6 +261,47 @@ const struct protosw *pffindtype(int, int);
 struct domain *pffinddomain(int);
 void pfctlinput(int, const struct sockaddr *);
 void pfctlinput2(int, const struct sockaddr *, void *);
+
+/*
+ * Wrappers for non-MPSAFE protocols
+ */
+#include <sys/systm.h>	/* kernel_lock */
+
+#define	PR_WRAP_USRREQ(name)				\
+static int						\
+name##_wrapper(struct socket *a, int b, struct mbuf *c,	\
+     struct mbuf *d, struct mbuf *e, struct lwp *f)	\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name(a, b, c, d, e, f);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}
+
+#define	PR_WRAP_CTLOUTPUT(name)				\
+static int						\
+name##_wrapper(int a, struct socket *b, int c, int d,	\
+     struct mbuf **e)					\
+{							\
+	int rv;						\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name(a, b, c, d, e);			\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}
+
+#define	PR_WRAP_CTLINPUT(name)				\
+static void *						\
+name##_wrapper(int a, const struct sockaddr *b, void *c)\
+{							\
+	void *rv;					\
+	KERNEL_LOCK(1, NULL);				\
+	rv = name(a, b, c);				\
+	KERNEL_UNLOCK_ONE(NULL);			\
+	return rv;					\
+}
+
 #endif /* _KERNEL */
 
 #endif /* !_SYS_PROTOSW_H_ */

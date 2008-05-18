@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.4 2005/04/16 07:45:59 yamt Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.4.84.1 2008/05/18 12:33:01 yamt Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -9,7 +9,6 @@ struct x86_cache_info {
 	uint8_t		cai_associativity;
 	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
 	u_int		cai_linesize;	/* or page size for TLB */
-	const char	*cai_string;
 };
 
 #define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
@@ -19,19 +18,36 @@ struct x86_cache_info {
 #define	CAI_ICACHE	4		/* Instruction cache */
 #define	CAI_DCACHE	5		/* Data cache */
 #define	CAI_L2CACHE	6		/* Level 2 cache */
+#define	CAI_L3CACHE	7		/* Level 3 cache */
+#define	CAI_L1_1GBITLB	8		/* L1 1GB Page instruction TLB */
+#define	CAI_L1_1GBDTLB	9		/* L1 1GB Page data TLB */
+#define CAI_L2_1GBITLB	10		/* L2 1GB Page instruction TLB */
+#define CAI_L2_1GBDTLB	11		/* L2 1GB Page data TLB */
 
-#define	CAI_COUNT	7
-
-struct cpu_info;
-
-const struct x86_cache_info *cache_info_lookup(const struct x86_cache_info *,
-					       u_int8_t);
-void amd_cpu_cacheinfo(struct cpu_info *);
-void via_cpu_cacheinfo(struct cpu_info *);
-void x86_print_cacheinfo(struct cpu_info *);
+#define	CAI_COUNT	12
 
 /*
  * AMD Cache Info:
+ *
+ *      Barcelona, Phenom:
+ *
+ *		Function 8000.0005 L1 TLB/Cache Information
+ *		EAX -- L1 TLB 2/4MB pages
+ *		EBX -- L1 TLB 4K pages
+ *		ECX -- L1 D-cache
+ *		EDX -- L1 I-cache
+ *
+ *		Function 8000.0006 L2 TLB/Cache Information
+ *		EAX -- L2 TLB 2/4MB pages
+ *		EBX -- L2 TLB 4K pages
+ *		ECX -- L2 Unified cache
+ *		EDX -- L3 Unified Cache
+ *
+ *		Function 8000.0019 TLB 1GB Page Information
+ *		EAX -- L1 1GB pages
+ *		EBX -- L2 1GB pages
+ *		ECX -- reserved
+ *		EDX -- reserved
  *
  *	Athlon, Duron:
  *
@@ -107,6 +123,24 @@ void x86_print_cacheinfo(struct cpu_info *);
 #define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
 #define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
 #define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
+
+/* L3 Cache */
+#define AMD_L3_EDX_C_SIZE(x)		((((x) >> 18) & 0xffff) * 1024)
+#define AMD_L3_EDX_C_ASSOC(x)		 (((x) >> 12) & 0xff)
+#define AMD_L3_EDX_C_LPT(x)		 (((x) >> 8)  & 0xf)
+#define AMD_L3_EDX_C_LS(x)		 ( (x)        & 0xff)
+
+/* L1 TLB 1GB pages */
+#define AMD_L1_1GB_EAX_DTLB_ASSOC(x)	(((x) >> 28) & 0xf)
+#define AMD_L1_1GB_EAX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xfff)
+#define AMD_L1_1GB_EAX_IUTLB_ASSOC(x)	(((x) >> 12) & 0xf)
+#define AMD_L1_1GB_EAX_IUTLB_ENTRIES(x)	( (x)        & 0xfff)
+
+/* L2 TLB 1GB pages */
+#define AMD_L2_1GB_EBX_DUTLB_ASSOC(x)	(((x) >> 28) & 0xf)
+#define AMD_L2_1GB_EBX_DUTLB_ENTRIES(x)	(((x) >> 16) & 0xfff)
+#define AMD_L2_1GB_EBX_IUTLB_ASSOC(x)	(((x) >> 12) & 0xf)
+#define AMD_L2_1GB_EBX_IUTLB_ENTRIES(x)	( (x)        & 0xfff)
 
 /*
  * VIA Cache Info:

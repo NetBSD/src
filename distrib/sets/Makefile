@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2008/03/16 07:02:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.57.2.1 2008/05/18 12:29:38 yamt Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -110,12 +110,24 @@ checkflist-x11: .PHONY check_DESTDIR
 	${SETSCMD} ./checkflist -x ${CHECKFLIST_FLAGS}
 
 
-# Note that the .WAIT inside the ${MAKETARSETS:@...} loop is not
-# logically necessary, but many systems exhibit poor performance when
-# running multiple parallel disk-intensive processes.
+# If MAKETARS_SERIAL is set to "YES" or "yes", then the tar sets will be
+# made in series, even if make's "-j" flag requests multiple parallel
+# jobs.  This is useful on systems that exhibit poor performance when
+# running multiple parallel disk-intensive operations.  The default is
+# MAKETARS_SERIAL=NO, which will obey the "-j" flag passed to the make
+# command.
+#
+MAKETARS_SERIAL?= NO
+.if empty(MAKETARS_SERIAL:M[Yy][Ee][Ss])
+_MAKETARS_WAIT= # empty
+.else
+_MAKETARS_WAIT= .WAIT
+.endif
+
 maketars: .PRECIOUS .PHONY check_DESTDIR check_RELEASEDIR \
 		sanitise_METALOG checkflist_if_DESTDIR .WAIT \
-		maketarsetup .WAIT ${MAKETARSETS:@.TARS.@.WAIT do-${.TARS.}@}
+		maketarsetup .WAIT \
+		${MAKETARSETS:@.TARS.@${_MAKETARS_WAIT} do-${.TARS.}@}
 	@true
 
 maketarsetup: .EXEC

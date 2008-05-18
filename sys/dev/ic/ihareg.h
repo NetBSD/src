@@ -1,4 +1,4 @@
-/*	$NetBSD: ihareg.h,v 1.8 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: ihareg.h,v 1.8.72.1 2008/05/18 12:33:43 yamt Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.
@@ -33,7 +33,7 @@
  */
 
 /*
- * Ported to NetBSD by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp> from OpenBSD:
+ * Ported to NetBSD by Izumi Tsutsui <tsutsui@NetBSD.org> from OpenBSD:
  * $OpenBSD: iha.h,v 1.2 2001/02/08 17:35:05 krw Exp $
  */
 

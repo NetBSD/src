@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.26 2007/03/04 06:03:32 christos Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.26.38.1 2008/05/18 12:35:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.26 2007/03/04 06:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.26.38.1 2008/05/18 12:35:41 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -256,13 +256,6 @@ tp_emit(
 					tpcb->tp_sent_lcdt = tpcb->tp_lcredit;
 					hdr->tpdu_cdt = tpcb->tp_lcredit;
 				} else {
-#ifdef TPCONS
-					if (tpcb->tp_netservice == ISO_CONS) {
-						struct isopcb  *isop = (struct isopcb *) tpcb->tp_npcb;
-						struct pklcd   *lcp = (struct pklcd *) (isop->isop_chan);
-						lcp->lcd_flags &= ~X25_DG_CIRCUIT;
-					}
-#endif
 					hdr->tpdu_cdt = 0;
 				}
 				hdr->tpdu_CCclass = tp_mask_to_num(tpcb->tp_class);
@@ -1044,31 +1037,8 @@ tp_error_emit(
 #endif
 	}
 	if (cons_channel) {
-#ifdef TPCONS
-		struct pklcd   *lcp = (struct pklcd *) cons_channel;
-#ifdef notdef
-		struct isopcb  *isop = (struct isopcb *) lcp->lcd_upnext;
-#endif
-		tpcons_output_dg(m, datalen, cons_channel);
-#ifdef notdef
-		if (tpcb == 0) iso_pcbdetach(isop);
-#endif
-		/*
-		 * but other side may want to try again over same VC, so,
-		 * we'll depend on him closing it, but in case it gets
-		 * forgotten we'll mark it for garbage collection
-		 */
-		lcp->lcd_flags |= X25_DG_CIRCUIT;
-#ifdef ARGO_DEBUG
-		if (argo_debug[D_ERROR_EMIT]) {
-			printf("OUTPUT: dutype %#x channel %p\n",
-			       dutype, cons_channel);
-		}
-#endif
-#else
 		printf("TP panic! cons channel %p but not cons configured\n",
 		       cons_channel);
-#endif
 		return 0;
 	} else if (tpcb) {
 

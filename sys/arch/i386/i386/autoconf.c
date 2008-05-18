@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.91 2008/01/23 20:02:16 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.91.8.1 2008/05/18 12:32:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91 2008/01/23 20:02:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91.8.1 2008/05/18 12:32:09 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.91 2008/01/23 20:02:16 joerg Exp $");
 #include <machine/gdt.h>
 #include <machine/pcb.h>
 #include <machine/cpufunc.h>
-#include <x86/x86/tsc.h>
 
 #include "ioapic.h"
 #include "lapic.h"
@@ -133,8 +132,6 @@ cpu_configure(void)
 	/* propagate this to the idle pcb's. */
 	cpu_init_idle_lwps();
 #endif
-
-	init_TSC_tc();
 
 	spl0();
 #if NLAPIC > 0

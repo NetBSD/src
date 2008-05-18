@@ -120,11 +120,55 @@
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
+#include <openssl/rand.h>
+
+/* mod 128 saturating subtract of two 64-bit values in big-endian order */
+static int satsub64be(const unsigned char *v1,const unsigned char *v2)
+{	int ret,sat,brw,i;
+
+	if (sizeof(long) == 8) do
+	{	const union { long one; char little; } is_endian = {1};
+		long l;
+
+		if (is_endian.little)			break;
+		/* not reached on little-endians */
+		/* following test is redundant, because input is
+		 * always aligned, but I take no chances... */
+		if (((size_t)v1|(size_t)v2)&0x7)	break;
+
+		l  = *((long *)v1);
+		l -= *((long *)v2);
+		if (l>128)		return 128;
+		else if (l<-128)	return -128;
+		else			return (int)l;
+	} while (0);
+
+	ret = (int)v1[7]-(int)v2[7];
+	sat = 0;
+	brw = ret>>8;	/* brw is either 0 or -1 */
+	if (ret & 0x80)
+	{	for (i=6;i>=0;i--)
+		{	brw += (int)v1[i]-(int)v2[i];
+			sat |= ~brw;
+			brw >>= 8;
+		}
+	}
+	else
+	{	for (i=6;i>=0;i--)
+		{	brw += (int)v1[i]-(int)v2[i];
+			sat |= brw;
+			brw >>= 8;
+		}
+	}
+	brw <<= 8;	/* brw is either 0 or -256 */
+
+	if (sat&0xff)	return brw | 0x80;
+	else		return brw + (ret&0xFF);
+}
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf, 
 	int len, int peek);
-static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	PQ_64BIT *seq_num);
+static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
 static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr, 
     unsigned int *is_next_epoch);
@@ -133,11 +177,8 @@ static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
 	unsigned short *priority, unsigned long *offset);
 #endif
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
-	PQ_64BIT priority);
+	unsigned char *priority);
 static int dtls1_process_record(SSL *s);
-#if PQ_64BIT_IS_INTEGER
-static PQ_64BIT bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num);
-#endif
 static void dtls1_clear_timeouts(SSL *s);
 
 /* copy buffered record into SSL structure */
@@ -161,9 +202,9 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 
 static int
-dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT priority)
-{
-    DTLS1_RECORD_DATA *rdata;
+dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
+	{
+	DTLS1_RECORD_DATA *rdata;
 	pitem *item;
 
 	rdata = OPENSSL_malloc(sizeof(DTLS1_RECORD_DATA));
@@ -206,7 +247,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT priority)
 		}
 	
 	return(1);
-    }
+	}
 
 
 static int
@@ -323,17 +364,17 @@ dtls1_get_buffered_record(SSL *s)
 static int
 dtls1_process_record(SSL *s)
 {
-    int i,al;
+	int i,al;
 	int clear=0;
-    int enc_err;
+	int enc_err;
 	SSL_SESSION *sess;
-    SSL3_RECORD *rr;
+	SSL3_RECORD *rr;
 	unsigned int mac_size;
 	unsigned char md[EVP_MAX_MD_SIZE];
 
 
 	rr= &(s->s3->rrec);
-    sess = s->session;
+	sess = s->session;
 
 	/* At this point, s->packet_length == SSL3_RT_HEADER_LNGTH + rr->length,
 	 * and we have that many bytes in s->packet
@@ -379,14 +420,14 @@ printf("\n");
 #endif
 
 	/* r->length is now the compressed data plus mac */
-if (	(sess == NULL) ||
+	if (	(sess == NULL) ||
 		(s->enc_read_ctx == NULL) ||
 		(s->read_hash == NULL))
-    clear=1;
+	clear=1;
 
 	if (!clear)
 		{
-		mac_size=EVP_MD_size(s->read_hash);
+		mac_size=EVP_MD_CTX_size(s->read_hash);
 
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+mac_size)
 			{
@@ -452,8 +493,8 @@ if (	(sess == NULL) ||
 
 	/* we have pulled in a full packet so zero things */
 	s->packet_length=0;
-    dtls1_record_bitmap_update(s, &(s->d1->bitmap));/* Mark receipt of record. */
-    return(1);
+	dtls1_record_bitmap_update(s, &(s->d1->bitmap));/* Mark receipt of record. */
+	return(1);
 
 decryption_failed_or_bad_record_mac:
 	/* Separate 'decryption_failed' alert was introduced with TLS 1.0,
@@ -486,17 +527,17 @@ int dtls1_get_record(SSL *s)
 	SSL3_RECORD *rr;
 	SSL_SESSION *sess;
 	unsigned char *p;
-	short version;
+	unsigned short version;
 	DTLS1_BITMAP *bitmap;
-    unsigned int is_next_epoch;
+	unsigned int is_next_epoch;
 
 	rr= &(s->s3->rrec);
 	sess=s->session;
 
-    /* The epoch may have changed.  If so, process all the
-     * pending records.  This is a non-blocking operation. */
-    if ( ! dtls1_process_buffered_records(s))
-        return 0;
+	/* The epoch may have changed.  If so, process all the
+	 * pending records.  This is a non-blocking operation. */
+	if ( ! dtls1_process_buffered_records(s))
+            return 0;
 
 	/* if we're renegotiating, then there may be buffered records */
 	if (dtls1_get_processed_record(s))
@@ -524,7 +565,7 @@ again:
 		ssl_minor= *(p++);
 		version=(ssl_major<<8)|ssl_minor;
 
-        /* sequence number is 64 bits, with top 2 bytes = epoch */ 
+		/* sequence number is 64 bits, with top 2 bytes = epoch */ 
 		n2s(p,rr->epoch);
 
 		memcpy(&(s->s3->read_sequence[2]), p, 6);
@@ -586,13 +627,13 @@ again:
 	/* match epochs.  NULL means the packet is dropped on the floor */
 	bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
 	if ( bitmap == NULL)
-        {
-        s->packet_length = 0;  /* dump this record */
-        goto again;   /* get another record */
+		{
+		s->packet_length = 0;  /* dump this record */
+		goto again;   /* get another record */
 		}
 
 	/* check whether this is a repeat, or aged record */
-	if ( ! dtls1_record_replay_check(s, bitmap, &(rr->seq_num)))
+	if ( ! dtls1_record_replay_check(s, bitmap))
 		{
 		s->packet_length=0; /* dump this record */
 		goto again;     /* get another record */
@@ -601,20 +642,21 @@ again:
 	/* just read a 0 length packet */
 	if (rr->length == 0) goto again;
 
-    /* If this record is from the next epoch (either HM or ALERT), buffer it
-     * since it cannot be processed at this time.
-     * Records from the next epoch are marked as received even though they are 
-     * not processed, so as to prevent any potential resource DoS attack */
-    if (is_next_epoch)
-        {
-        dtls1_record_bitmap_update(s, bitmap);
-        dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
-        s->packet_length = 0;
-        goto again;
-        }
+	/* If this record is from the next epoch (either HM or ALERT),
+	 * buffer it since it cannot be processed at this time. Records
+	 * from the next epoch are marked as received even though they
+	 * are not processed, so as to prevent any potential resource
+	 * DoS attack */
+	if (is_next_epoch)
+		{
+		dtls1_record_bitmap_update(s, bitmap);
+		dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
+		s->packet_length = 0;
+		goto again;
+		}
 
-    if ( ! dtls1_process_record(s))
-        return(0);
+	if ( ! dtls1_process_record(s))
+		return(0);
 
 	dtls1_clear_timeouts(s);  /* done waiting */
 	return(1);
@@ -973,47 +1015,36 @@ start:
 		}
 
 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
-        {
-        struct ccs_header_st ccs_hdr;
+		{
+		struct ccs_header_st ccs_hdr;
 
 		dtls1_get_ccs_header(rr->data, &ccs_hdr);
 
-		if ( ccs_hdr.seq == s->d1->handshake_read_seq)
+		/* 'Change Cipher Spec' is just a single byte, so we know
+		 * exactly what the record payload has to look like */
+		/* XDTLS: check that epoch is consistent */
+		if (	(rr->length != DTLS1_CCS_HEADER_LENGTH) || 
+			(rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
 			{
-			/* 'Change Cipher Spec' is just a single byte, so we know
-			 * exactly what the record payload has to look like */
-			/* XDTLS: check that epoch is consistent */
-			if (	(rr->length != DTLS1_CCS_HEADER_LENGTH) || 
-				(rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
-				{
-				i=SSL_AD_ILLEGAL_PARAMETER;
-				SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
-				goto err;
-				}
-			
-			rr->length=0;
-			
-			if (s->msg_callback)
-				s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC, 
-					rr->data, 1, s, s->msg_callback_arg);
-			
-			s->s3->change_cipher_spec=1;
-			if (!ssl3_do_change_cipher_spec(s))
-				goto err;
-			
-			/* do this whenever CCS is processed */
-			dtls1_reset_seq_numbers(s, SSL3_CC_READ);
-			
-			/* handshake read seq is reset upon handshake completion */
-			s->d1->handshake_read_seq++;
-			
-			goto start;
+			i=SSL_AD_ILLEGAL_PARAMETER;
+			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
+			goto err;
 			}
-		else
-			{
-			rr->length = 0;
-			goto start;
-			}
+
+		rr->length=0;
+
+		if (s->msg_callback)
+			s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC, 
+				rr->data, 1, s, s->msg_callback_arg);
+
+		s->s3->change_cipher_spec=1;
+		if (!ssl3_do_change_cipher_spec(s))
+			goto err;
+
+		/* do this whenever CCS is processed */
+		dtls1_reset_seq_numbers(s, SSL3_CC_READ);
+
+		goto start;
 		}
 
 	/* Unexpected handshake message (Client Hello, or protocol violation) */
@@ -1294,13 +1325,13 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 
 	if (	(sess == NULL) ||
 		(s->enc_write_ctx == NULL) ||
-		(s->write_hash == NULL))
+		(EVP_MD_CTX_md(s->write_hash) == NULL))
 		clear=1;
 
 	if (clear)
 		mac_size=0;
 	else
-		mac_size=EVP_MD_size(s->write_hash);
+		mac_size=EVP_MD_CTX_size(s->write_hash);
 
 	/* DTLS implements explicit IV, so no need for empty fragments */
 #if 0
@@ -1397,8 +1428,14 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 
 
 	/* ssl3_enc can only have an error on read */
-	wr->length += bs;  /* bs != 0 in case of CBC.  The enc fn provides
-						* the randomness */ 
+	if (bs)	/* bs != 0 in case of CBC */
+		{
+		RAND_pseudo_bytes(p,bs);
+		/* master IV and last CBC residue stand for
+		 * the rest of randomness */
+		wr->length += bs;
+		}
+
 	s->method->ssl3_enc->enc(s,1);
 
 	/* record length after mac and block padding */
@@ -1458,111 +1495,50 @@ err:
 
 
 
-static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
-	PQ_64BIT *seq_num)
+static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
 	{
-#if PQ_64BIT_IS_INTEGER
-	PQ_64BIT mask = 0x0000000000000001L;
-#endif
-	PQ_64BIT rcd_num, tmp;
+	int cmp;
+	unsigned int shift;
+	const unsigned char *seq = s->s3->read_sequence;
 
-	pq_64bit_init(&rcd_num);
-	pq_64bit_init(&tmp);
-
-	/* this is the sequence number for the record just read */
-	pq_64bit_bin2num(&rcd_num, s->s3->read_sequence, 8);
-
-	
-	if (pq_64bit_gt(&rcd_num, &(bitmap->max_seq_num)) ||
-		pq_64bit_eq(&rcd_num, &(bitmap->max_seq_num)))
+	cmp = satsub64be(seq,bitmap->max_seq_num);
+	if (cmp > 0)
 		{
-		pq_64bit_assign(seq_num, &rcd_num);
-		pq_64bit_free(&rcd_num);
-		pq_64bit_free(&tmp);
-		return 1;  /* this record is new */
+		memcpy (s->s3->rrec.seq_num,seq,8);
+		return 1; /* this record in new */
 		}
-
-	pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
-
-	if ( pq_64bit_get_word(&tmp) > bitmap->length)
-		{
-		pq_64bit_free(&rcd_num);
-		pq_64bit_free(&tmp);
-		return 0;  /* stale, outside the window */
-		}
-
-#if PQ_64BIT_IS_BIGNUM
-	{
-	int offset;
-	pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
-	pq_64bit_sub_word(&tmp, 1);
-	offset = pq_64bit_get_word(&tmp);
-	if ( pq_64bit_is_bit_set(&(bitmap->map), offset))
-		{
-		pq_64bit_free(&rcd_num);
-		pq_64bit_free(&tmp);
-		return 0;
-		}
-	}
-#else
-	mask <<= (bitmap->max_seq_num - rcd_num - 1);
-	if (bitmap->map & mask)
+	shift = -cmp;
+	if (shift >= sizeof(bitmap->map)*8)
+		return 0; /* stale, outside the window */
+	else if (bitmap->map & (1UL<<shift))
 		return 0; /* record previously received */
-#endif
-	
-	pq_64bit_assign(seq_num, &rcd_num);
-	pq_64bit_free(&rcd_num);
-	pq_64bit_free(&tmp);
+
+	memcpy (s->s3->rrec.seq_num,seq,8);
 	return 1;
 	}
 
 
 static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
 	{
+	int cmp;
 	unsigned int shift;
-	PQ_64BIT rcd_num;
-	PQ_64BIT tmp;
-	PQ_64BIT_CTX *ctx;
+	const unsigned char *seq = s->s3->read_sequence;
 
-	pq_64bit_init(&rcd_num);
-	pq_64bit_init(&tmp);
-
-	pq_64bit_bin2num(&rcd_num, s->s3->read_sequence, 8);
-
-	/* unfortunate code complexity due to 64-bit manipulation support
-	 * on 32-bit machines */
-	if ( pq_64bit_gt(&rcd_num, &(bitmap->max_seq_num)) ||
-		pq_64bit_eq(&rcd_num, &(bitmap->max_seq_num)))
+	cmp = satsub64be(seq,bitmap->max_seq_num);
+	if (cmp > 0)
 		{
-		pq_64bit_sub(&tmp, &rcd_num, &(bitmap->max_seq_num));
-		pq_64bit_add_word(&tmp, 1);
-
-		shift = (unsigned int)pq_64bit_get_word(&tmp);
-
-		pq_64bit_lshift(&(tmp), &(bitmap->map), shift);
-		pq_64bit_assign(&(bitmap->map), &tmp);
-
-		pq_64bit_set_bit(&(bitmap->map), 0);
-		pq_64bit_add_word(&rcd_num, 1);
-		pq_64bit_assign(&(bitmap->max_seq_num), &rcd_num);
-
-		pq_64bit_assign_word(&tmp, 1);
-		pq_64bit_lshift(&tmp, &tmp, bitmap->length);
-		ctx = pq_64bit_ctx_new(&ctx);
-		pq_64bit_mod(&(bitmap->map), &(bitmap->map), &tmp, ctx);
-		pq_64bit_ctx_free(ctx);
+		shift = cmp;
+		if (shift < sizeof(bitmap->map)*8)
+			bitmap->map <<= shift, bitmap->map |= 1UL;
+		else
+			bitmap->map = 1UL;
+		memcpy(bitmap->max_seq_num,seq,8);
 		}
-	else
-		{
-		pq_64bit_sub(&tmp, &(bitmap->max_seq_num), &rcd_num);
-		pq_64bit_sub_word(&tmp, 1);
-		shift = (unsigned int)pq_64bit_get_word(&tmp);
-
-		pq_64bit_set_bit(&(bitmap->map), shift);
+	else	{
+		shift = -cmp;
+		if (shift < sizeof(bitmap->map)*8)
+			bitmap->map |= 1UL<<shift;
 		}
-
-	pq_64bit_free(&rcd_num);
-	pq_64bit_free(&tmp);
 	}
 
 
@@ -1579,6 +1555,7 @@ int dtls1_dispatch_alert(SSL *s)
 	*ptr++ = s->s3->send_alert[0];
 	*ptr++ = s->s3->send_alert[1];
 
+#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
 	if (s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE)
 		{	
 		s2n(s->d1->handshake_read_seq, ptr);
@@ -1594,6 +1571,7 @@ int dtls1_dispatch_alert(SSL *s)
 #endif
 		l2n3(s->d1->r_msg_hdr.frag_off, ptr);
 		}
+#endif
 
 	i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0);
 	if (i <= 0)
@@ -1603,8 +1581,11 @@ int dtls1_dispatch_alert(SSL *s)
 		}
 	else
 		{
-		if ( s->s3->send_alert[0] == SSL3_AL_FATAL ||
-			s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE)
+		if (s->s3->send_alert[0] == SSL3_AL_FATAL
+#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
+		    || s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
+#endif
+		    )
 			(void)BIO_flush(s->wbio);
 
 		if (s->msg_callback)
@@ -1723,17 +1704,8 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 		{
 		seq = s->s3->read_sequence;
 		s->d1->r_epoch++;
-
-		pq_64bit_assign(&(s->d1->bitmap.map), &(s->d1->next_bitmap.map));
-		s->d1->bitmap.length = s->d1->next_bitmap.length;
-		pq_64bit_assign(&(s->d1->bitmap.max_seq_num), 
-			&(s->d1->next_bitmap.max_seq_num));
-
-		pq_64bit_free(&(s->d1->next_bitmap.map));
-		pq_64bit_free(&(s->d1->next_bitmap.max_seq_num));
+		memcpy(&(s->d1->bitmap), &(s->d1->next_bitmap), sizeof(DTLS1_BITMAP));
 		memset(&(s->d1->next_bitmap), 0x00, sizeof(DTLS1_BITMAP));
-		pq_64bit_init(&(s->d1->next_bitmap.map));
-		pq_64bit_init(&(s->d1->next_bitmap.max_seq_num));
 		}
 	else
 		{
@@ -1743,26 +1715,6 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 
 	memset(seq, 0x00, seq_bytes);
 	}
-
-#if PQ_64BIT_IS_INTEGER
-static PQ_64BIT
-bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num)
-       {
-       PQ_64BIT _num;
-
-       _num = (((PQ_64BIT)bytes[0]) << 56) |
-               (((PQ_64BIT)bytes[1]) << 48) |
-               (((PQ_64BIT)bytes[2]) << 40) |
-               (((PQ_64BIT)bytes[3]) << 32) |
-               (((PQ_64BIT)bytes[4]) << 24) |
-               (((PQ_64BIT)bytes[5]) << 16) |
-               (((PQ_64BIT)bytes[6]) <<  8) |
-               (((PQ_64BIT)bytes[7])      );
-
-	   *num = _num ;
-       return _num;
-       }
-#endif
 
 
 static void

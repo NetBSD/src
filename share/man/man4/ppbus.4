@@ -1,4 +1,4 @@
-.\" $NetBSD: ppbus.4,v 1.12 2007/08/20 16:07:05 perry Exp $
+.\" $NetBSD: ppbus.4,v 1.12.10.1 2008/05/18 12:31:07 yamt Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Nicolas Souchu
 .\" All rights reserved.
@@ -38,6 +38,7 @@
 .Cd "options PPBUS_DEBUG"
 .Cd "options DEBUG_1284"
 .Pp
+.Cd "gpio* at ppbus?"
 .Cd "lpt* at ppbus?"
 .Cd "plip* at ppbus?"
 .Cd "pps* at ppbus?"
@@ -58,6 +59,10 @@ system provides the following facilities:
 architecture-independent macros or functions to access parallel ports
 .It
 mechanism to allow various devices to share the same parallel port
+.It
+a
+.Xr gpio 4
+interface to access the individual pins
 .It
 a user interface named
 .Xr ppi 4
@@ -395,8 +400,18 @@ level for efficiency.
 .\" various I/O sequences to initialize, select and allocate the
 .\" peripheral
 .\" .El
+.Ss GPIO interface
+Pins 1 through 17 of the parallel port can be controlled through the
+.Xr gpio 4
+interface, pins 18 through 25 are hardwired to ground. Pins 10 through
+13 and pin 15 are input pins, the others are output pins. Some of the
+pins are inverted by the hardware, the values read or written are
+adjusted accordingly. Note that the
+.Xr gpio 4
+interface starts at 0 when numbering pins.
 .Sh SEE ALSO
 .Xr atppc 4 ,
+.Xr gpio 4,
 .Xr lpt 4 ,
 .Xr plip 4 ,
 .Xr ppi 4 ,

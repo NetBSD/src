@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.898 2008/03/30 12:32:13 skrll Exp $
+#	$NetBSD: files,v 1.898.2.1 2008/05/18 12:33:29 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1380,6 +1380,7 @@ file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_resource.c
+file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
@@ -1522,6 +1523,7 @@ file	net/if_pppoe.c			pppoe			needs-flag
 file	net/pfil.c			pfil_hooks | ipfilter | pf
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp
+file	net/net_stats.c
 file	net/radix.c
 file	net/raw_cb.c
 file	net/raw_usrreq.c

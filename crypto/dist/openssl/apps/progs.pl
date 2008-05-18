@@ -13,6 +13,9 @@ print <<'EOF';
 #define FUNC_TYPE_GENERAL	1
 #define FUNC_TYPE_MD		2
 #define FUNC_TYPE_CIPHER	3
+#define FUNC_TYPE_PKEY		4
+#define FUNC_TYPE_MD_ALG	5
+#define FUNC_TYPE_CIPHER_ALG	6
 
 typedef struct {
 	int type;
@@ -43,6 +46,8 @@ foreach (@ARGV)
 		{ print "#ifndef OPENSSL_NO_DH\n${str}#endif\n"; }
 	elsif ( ($_ =~ /^pkcs12$/))
 		{ print "#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)\n${str}#endif\n"; }
+	elsif ( ($_ =~ /^cms$/))
+		{ print "#ifndef OPENSSL_NO_CMS\n${str}#endif\n"; }
 	else
 		{ print $str; }
 	}
@@ -60,14 +65,15 @@ foreach (
 	"camellia-128-cbc", "camellia-128-ecb",
 	"camellia-192-cbc", "camellia-192-ecb",
 	"camellia-256-cbc", "camellia-256-ecb",
-	"base64",
-	"des", "des3", "desx", "idea", "rc4", "rc4-40",
+	"base64", "zlib",
+	"des", "des3", "desx", "idea", "seed", "rc4", "rc4-40",
 	"rc2", "bf", "cast", "rc5",
 	"des-ecb", "des-ede",    "des-ede3",
 	"des-cbc", "des-ede-cbc","des-ede3-cbc",
 	"des-cfb", "des-ede-cfb","des-ede3-cfb",
 	"des-ofb", "des-ede-ofb","des-ede3-ofb",
-	"idea-cbc","idea-ecb",   "idea-cfb", "idea-ofb",
+	"idea-cbc","idea-ecb",    "idea-cfb", "idea-ofb",
+	"seed-cbc","seed-ecb",    "seed-cfb", "seed-ofb",
 	"rc2-cbc", "rc2-ecb", "rc2-cfb","rc2-ofb", "rc2-64-cbc", "rc2-40-cbc",
 	"bf-cbc",  "bf-ecb",     "bf-cfb",   "bf-ofb",
 	"cast5-cbc","cast5-ecb", "cast5-cfb","cast5-ofb",
@@ -80,11 +86,13 @@ foreach (
 	elsif ($_ =~ /aes/)  { $t="#ifndef OPENSSL_NO_AES\n${t}#endif\n"; }
 	elsif ($_ =~ /camellia/)  { $t="#ifndef OPENSSL_NO_CAMELLIA\n${t}#endif\n"; }
 	elsif ($_ =~ /idea/) { $t="#ifndef OPENSSL_NO_IDEA\n${t}#endif\n"; }
+	elsif ($_ =~ /seed/) { $t="#ifndef OPENSSL_NO_SEED\n${t}#endif\n"; }
 	elsif ($_ =~ /rc4/)  { $t="#ifndef OPENSSL_NO_RC4\n${t}#endif\n"; }
 	elsif ($_ =~ /rc2/)  { $t="#ifndef OPENSSL_NO_RC2\n${t}#endif\n"; }
 	elsif ($_ =~ /bf/)   { $t="#ifndef OPENSSL_NO_BF\n${t}#endif\n"; }
 	elsif ($_ =~ /cast/) { $t="#ifndef OPENSSL_NO_CAST\n${t}#endif\n"; }
 	elsif ($_ =~ /rc5/)  { $t="#ifndef OPENSSL_NO_RC5\n${t}#endif\n"; }
+	elsif ($_ =~ /zlib/)  { $t="#ifdef ZLIB\n${t}#endif\n"; }
 	print $t;
 	}
 

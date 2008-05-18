@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2004/05/23 02:24:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.24.1 2008/05/18 12:36:24 yamt Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=	common
 SRCS=	localhostname.c ypdb.c yplib_host.c ypresp_xdr.c

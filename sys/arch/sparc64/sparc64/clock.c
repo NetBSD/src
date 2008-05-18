@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.95 2008/04/14 17:43:02 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.95.2.1 2008/05/18 12:32:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95 2008/04/14 17:43:02 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.95.2.1 2008/05/18 12:32:51 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -319,7 +319,7 @@ tickintr_establish(int pil, int (*fun)(void *))
 	struct intrhand *ih;
 	struct cpu_info *ci = curcpu();
 
-	ih = init_softint(pil, fun);
+	ih = sparc_softintr_establish(pil, fun, NULL);
 	ih->ih_number = 1;
 	if (CPU_IS_PRIMARY(ci))
 		intr_establish(pil, ih);
@@ -427,7 +427,7 @@ cpu_initclocks()
 	/* 
 	 * Establish scheduler softint.
 	 */
-	schedint = init_softint(PIL_SCHED, schedintr);
+	schedint = sparc_softintr_establish(PIL_SCHED, schedintr, NULL);
 	schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
 	statscheddiv = stathz / schedhz;
 	if (statscheddiv <= 0)

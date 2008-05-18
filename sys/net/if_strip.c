@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.85 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.85.10.1 2008/05/18 12:35:27 yamt Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.85 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.85.10.1 2008/05/18 12:35:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.85 2008/02/20 17:05:53 matt Exp $");
 #include <sys/syslog.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1068,6 +1069,7 @@ stripintr(void *arg)
 	/*
 	 * Output processing loop.
 	 */
+	mutex_enter(softnet_lock);
 	for (;;) {
 #ifdef INET
 		struct ip *ip;
@@ -1259,6 +1261,7 @@ stripintr(void *arg)
 		splx(s);
 #endif
 	}
+	mutex_exit(softnet_lock);
 }
 
 /*

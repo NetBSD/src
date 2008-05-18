@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 2008/04/06 12:19:36 cherry Exp $	*/
+/*	$NetBSD: clock.c,v 1.28.2.1 2008/05/18 12:33:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2008/04/06 12:19:36 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28.2.1 2008/05/18 12:33:03 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -366,8 +366,6 @@ startrtclock(void)
 	}
 
 	tc_init(&i8254_timecounter);
-
-	init_TSC();
 	rtc_register();
 }
 
@@ -420,15 +418,17 @@ i8254_get_timecount(struct timecounter *tc)
 {
 	u_int count;
 	uint16_t rdval;
-	int s;
+	u_long psl;
 
 	/* Don't want someone screwing with the counter while we're here. */
-	s = splhigh();
+	psl = x86_read_psl();
+	x86_disable_intr();
 	__cpu_simple_lock(&tmr_lock);
 	/* Select timer0 and latch counter value. */ 
 	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	/* insb to make the read atomic */
-	insb(IO_TIMER1+TIMER_CNTR0, &rdval, 2);
+	rdval = inb(IO_TIMER1+TIMER_CNTR0);
+	rdval |= (inb(IO_TIMER1+TIMER_CNTR0) << 8);
 	count = rtclock_tval - rdval;
 	if (rtclock_tval && (count < i8254_lastcount &&
 			     (!i8254_ticked || rtclock_tval == 0xFFFF))) {
@@ -438,7 +438,7 @@ i8254_get_timecount(struct timecounter *tc)
 	i8254_lastcount = count;
 	count += i8254_offset;
 	__cpu_simple_unlock(&tmr_lock);
-	splx(s);
+	x86_write_psl(psl);
 
 	return (count);
 }
@@ -447,20 +447,21 @@ unsigned int
 gettick(void)
 {
 	uint16_t rdval;
-	int s;
+	u_long psl;
 	
 	if (clock_broken_latch)
 		return (gettick_broken_latch());
 
 	/* Don't want someone screwing with the counter while we're here. */
-	s = splhigh();
+	psl = x86_read_psl();
+	x86_disable_intr();
 	__cpu_simple_lock(&tmr_lock);
 	/* Select counter 0 and latch it. */
 	outb(IO_TIMER1+TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	/* insb to make the read atomic */
-	insb(IO_TIMER1+TIMER_CNTR0, &rdval, 2);
+	rdval = inb(IO_TIMER1+TIMER_CNTR0);
+	rdval |= (inb(IO_TIMER1+TIMER_CNTR0) << 8);
 	__cpu_simple_unlock(&tmr_lock);
-	splx(s);
+	x86_write_psl(psl);
 
 	return rdval;
 }
@@ -502,7 +503,7 @@ i8254_delay(unsigned int n)
 		remaining = (unsigned long long) n * TIMER_FREQ / 1000000;
 	}
 
-	while (remaining > 0) {
+	while (remaining > 1) {
 #ifdef CLOCK_PARANOIA
 		int delta;
 		cur_tick = gettick();

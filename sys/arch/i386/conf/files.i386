@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.335 2008/04/10 06:53:12 dyoung Exp $
+#	$NetBSD: files.i386,v 1.335.2.1 2008/05/18 12:32:09 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -81,7 +81,6 @@ file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
-file	arch/i386/i386/identcpu.c
 file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
@@ -166,8 +165,6 @@ file	arch/i386/pci/via82c586.c	pcibios & pci_intr_fixup
 file	arch/i386/pci/via8231.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/amd756.c		pcibios & pci_intr_fixup
 file	arch/i386/pci/ali1543.c		pcibios & pci_intr_fixup
-file	arch/i386/pci/pci_bus_fixup.c	pci_bus_fixup
-file	arch/i386/pci/pci_addr_fixup.c	pci_addr_fixup
 defparam		PCI_CONF_MODE
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 

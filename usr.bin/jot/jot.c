@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.22 2008/03/02 21:33:42 dsl Exp $	*/
+/*	$NetBSD: jot.c,v 1.22.2.1 2008/05/18 12:36:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.22 2008/03/02 21:33:42 dsl Exp $");
+__RCSID("$NetBSD: jot.c,v 1.22.2.1 2008/05/18 12:36:06 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -93,6 +93,10 @@ main(int argc, char *argv[])
 	getargs(argc, argv);
 	if (randomize) {
 		x = ender - begin;
+		if (x < 0) {
+			x = -x;
+			begin = ender;
+		}
 		if (dox == 0)
 			/*
 			 * We are printing floating point, generate random
@@ -108,10 +112,7 @@ main(int argc, char *argv[])
 			 * one but ensure we never generate it.
 			 * This makes all the integer values equally likely.
 			 */
-			if (ender > begin)
-				x += 1.0;
-			else
-				x -= 1.0;
+			x += 1.0;
 			x /= (1u << 31);
 		}
 		srandom((unsigned long) step);

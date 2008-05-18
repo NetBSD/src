@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/03/30 05:32:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2008/05/18 12:30:10 yamt Exp $
 
 USE_FORT?=	yes # complex string handling
 
@@ -70,9 +70,6 @@ SRCS=		archive_check_magic.c \
 
 INCS=		archive.h archive_entry.h
 INCSDIR=	/usr/include
-
-DPSRCS+=	archive.h
-CLEANFILES+=	archive.h
 
 CPPFLAGS+=	-I${.CURDIR} -DPLATFORM_CONFIG_H=\"config_netbsd.h\"
 
@@ -222,36 +219,5 @@ MLINKS+=	archive_write_disk.3 archive_write_disk_set_skip_file.3
 MLINKS+=	archive_write_disk.3 archive_write_disk_set_standard_lookup.3
 MLINKS+=	archive_write_disk.3 archive_write_disk_set_user_lookup.3
 MLINKS+=	libarchive.3 archive.3
-
-ARCHIVE_VERSION= 		2.5.0
-ARCHIVE_VERSION_POST=		b
-ARCHIVE_API_MAJOR=	${ARCHIVE_VERSION:C/([0-9]*).*/\1/}
-ARCHIVE_API_MINOR=	${ARCHIVE_VERSION:C/[0-9]*\.([0-9]*).*/\1/}
-ARCHIVE_API_REV=	${ARCHIVE_VERSION:C/[0-9]*\.[0-9]*\.([0-9]*).*/\1/}
-
-.if !empty(ARCHIVE_API_MINOR:M?)
-ARCHIVE_API_MINOR_=	00${ARCHIVE_API_MINOR}
-.elif !empty(ARCHIVE_API_MINOR:M??)
-ARCHIVE_API_MINOR_=	0${ARCHIVE_API_MINOR}
-.else
-ARCHIVE_API_MINOR_=	${ARCHIVE_API_MINOR}
-.endif
-.if !empty(ARCHIVE_API_REV:M?)
-ARCHIVE_API_REV_=	00${ARCHIVE_API_REV}
-.elif !empty(ARCHIVE_API_REV:M??)
-ARCHIVE_API_REV_=	0${ARCHIVE_API_REV}
-.else
-ARCHIVE_API_REV_=	${ARCHIVE_API_REV}
-.endif
-ARCHIVE_VERSION_STAMP=	\
-	${ARCHIVE_API_MAJOR}${ARCHIVE_API_MINOR_}${ARCHIVE_API_REV_}
-
-# Build archive.h from archive.h.in by substituting version information.
-# Note: NetBSD has inttypes.h, so enable that include in archive.h.in
-archive.h:	archive.h.in
-	sed -e 's/@LIBARCHIVE_VERSION_NUMBER@/${ARCHIVE_VERSION_STAMP}/g' \
-	    -e 's/@LIBARCHIVE_VERSION_STRING@/${ARCHIVE_VERSION}${ARCHIVE_VERSION_POST}/g' \
-	    -e 's|@ARCHIVE_H_INCLUDE_INTTYPES_H@|#include <inttypes.h>  /* For int64_t */|g' \
-		< ${LIBARCHIVEDIR}/libarchive/archive.h.in > ${.TARGET}
 
 .include <bsd.lib.mk>

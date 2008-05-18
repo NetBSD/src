@@ -1,4 +1,30 @@
-/*	$NetBSD: boot2.c,v 1.22 2008/02/23 17:49:29 sborrill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.22.4.1 2008/05/18 12:32:17 yamt Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2003
@@ -51,6 +77,7 @@
 
 #include <libi386.h>
 #include "devopen.h"
+#include "bootmod.h"
 
 #ifdef SUPPORT_USTARFS
 #include "ustarfs.h"
@@ -83,7 +110,8 @@ static const char * const names[][2] = {
 #ifndef SMALL
 #define BOOTCONF "boot.cfg"
 #define MAXMENU 10
-#define MAXBANNER 10
+#define MAXBANNER 12
+#define COMMAND_SEPARATOR ';'
 #endif /* !SMALL */
 
 static char *default_devname;
@@ -107,6 +135,8 @@ void	command_quit(char *);
 void	command_boot(char *);
 void	command_dev(char *);
 void	command_consdev(char *);
+void	command_modules(char *);
+void	command_load(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -116,6 +146,8 @@ const struct bootblk_command commands[] = {
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
 	{ "consdev",	command_consdev },
+	{ "modules",	command_modules },
+	{ "load",	command_load },
 	{ NULL,		NULL },
 };
 
@@ -302,6 +334,7 @@ parsebootconf(const char *conf)
 	int fd, err, off;
 	struct stat st;
 	char *key, *value, *v2;
+	extern char twiddle_toggle;
 #ifdef SUPPORT_USTARFS
 	void *op_open;
 #endif
@@ -345,6 +378,7 @@ parsebootconf(const char *conf)
 		return;
 	}
 	
+	twiddle_toggle = 1;
 	off = 0;
 	do {
 		len = read(fd, bc + off, 1024);
@@ -353,6 +387,7 @@ parsebootconf(const char *conf)
 		off += len;
 	} while (len > 0);
 	bc[off] = '\0';
+	twiddle_toggle = 0;
 	
 	close(fd);
 	/* bc now contains the whole boot.cfg file */
@@ -410,6 +445,8 @@ parsebootconf(const char *conf)
 			bootconf.def = atoi(value) - 1;
 		} else if (!strncmp(key, "consdev", 7)) {
 			bootconf.consdev = value;
+		} else if (!strncmp(key, "load", 6)) {
+			command_load(value);
 		}
 	}
 	bootconf.nummenu = cmenu;
@@ -427,7 +464,7 @@ void
 doboottypemenu(void)
 {
 	int choice;
-	char input[80], c;
+	char input[80], c, *ic, *oc;
 		
 	printf("\n");
 	/* Display menu */
@@ -448,9 +485,8 @@ doboottypemenu(void)
 		} else if (bootconf.timeout == 0)
 			choice = bootconf.def;
 		else  {
-			printf("\nPress the key for your chosen option or ");
-			printf("Return to choose the default (%d)\n",
-			      bootconf.def + 1);
+			printf("\nChoose an option; RETURN for default; "
+			       "SPACE to stop countdown.\n");
 			printf("Option %d will be chosen in ",
 			      bootconf.def + 1);
 			c = awaitkey(bootconf.timeout, 1);
@@ -472,8 +508,29 @@ doboottypemenu(void)
 		    check_password(boot_params.bp_password))) {
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
-		} else
-			docommand(bootconf.command[choice]);
+		} else {
+			ic = bootconf.command[choice];
+			/* Split command string at ; into separate commands */
+			do {
+				oc = input;
+				/* Look for ; separator */
+				for (; *ic && *ic != COMMAND_SEPARATOR; ic++)
+					*oc++ = *ic;
+				if (*input == '\0')
+					continue;
+				/* Strip out any trailing spaces */
+				oc--;
+				for (; *oc ==' ' && oc > input; oc--);
+				*++oc = '\0';
+				if (*ic == COMMAND_SEPARATOR)
+					ic++;
+				/* Stop silly command strings like ;;; */
+				if (*input != '\0')
+					docommand(input);
+				/* Skip leading spaces */
+				for (; *ic == ' '; ic++);
+			} while (*ic);
+		}
 			
 	}
 }
@@ -568,11 +625,13 @@ command_help(char *arg)
 {
 
 	printf("commands are:\n"
-	       "boot [xdNx:][filename] [-acdqsvxz]\n"
+	       "boot [xdNx:][filename] [-12acdqsvxz]\n"
 	       "     (ex. \"hd0a:netbsd.old -s\"\n"
 	       "ls [path]\n"
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
+	       "modules {enabled|disabled}\n"
+	       "load {path_to_module}\n"
 	       "help|?\n"
 	       "quit\n");
 }
@@ -665,4 +724,45 @@ command_consdev(char *arg)
 		}
 	}
 	printf("invalid console device.\n");
+}
+
+void
+command_modules(char *arg)
+{
+
+	if (strcmp(arg, "enabled") == 0 ||
+	    strcmp(arg, "on") == 0)
+		boot_modules_enabled = true;
+	else if (strcmp(arg, "disabled") == 0 ||
+	    strcmp(arg, "off") == 0)
+		boot_modules_enabled = false;
+	else
+		printf("invalid flag, must be 'enabled' or 'disabled'.\n");
+}
+
+void
+command_load(char *arg)
+{
+	boot_module_t *bm, *bmp;
+	size_t len;
+	char *str;
+
+	bm = alloc(sizeof(boot_module_t));
+	len = strlen(arg) + 1;
+	str = alloc(len);
+	if (bm == NULL || str == NULL) {
+		printf("couldn't allocate module\n");
+		return;
+	}
+	memcpy(str, arg, len);
+	bm->bm_path = str;
+	bm->bm_next = NULL;
+	if (boot_modules == NULL)
+		boot_modules = bm;
+	else {
+		for (bmp = boot_modules; bmp->bm_next;
+		    bmp = bmp->bm_next)
+			;
+		bmp->bm_next = bm;
+	}
 }

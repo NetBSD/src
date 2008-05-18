@@ -145,7 +145,7 @@ static unsigned int crypto_lock_rand = 0; /* may be set only when a thread
                                            * holds CRYPTO_LOCK_RAND
                                            * (to prevent double locking) */
 /* access to lockin_thread is synchronized by CRYPTO_LOCK_RAND2 */
-static unsigned long locking_thread = 0; /* valid iff crypto_lock_rand is set */
+static CRYPTO_THREADID locking_tid;
 
 
 #ifdef PREDICT
@@ -213,8 +213,10 @@ static void ssleay_rand_add(const void *buf, int num, double add)
 	/* check if we already have the lock */
 	if (crypto_lock_rand)
 		{
+		CRYPTO_THREADID tid;
+		CRYPTO_THREADID_set(&tid);
 		CRYPTO_r_lock(CRYPTO_LOCK_RAND2);
-		do_not_lock = (locking_thread == CRYPTO_thread_id());
+		do_not_lock = !CRYPTO_THREADID_cmp(&locking_tid, &tid);
 		CRYPTO_r_unlock(CRYPTO_LOCK_RAND2);
 		}
 	else
@@ -372,7 +374,7 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 
 	/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
-	locking_thread = CRYPTO_thread_id();
+	CRYPTO_THREADID_set(&locking_tid);
 	CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
 	crypto_lock_rand = 1;
 
@@ -534,8 +536,10 @@ static int ssleay_rand_status(void)
 	 * (could happen if a RAND_poll() implementation calls RAND_status()) */
 	if (crypto_lock_rand)
 		{
+		CRYPTO_THREADID tid;
+		CRYPTO_THREADID_set(&tid);
 		CRYPTO_r_lock(CRYPTO_LOCK_RAND2);
-		do_not_lock = (locking_thread == CRYPTO_thread_id());
+		do_not_lock = !CRYPTO_THREADID_cmp(&locking_tid, &tid);
 		CRYPTO_r_unlock(CRYPTO_LOCK_RAND2);
 		}
 	else
@@ -547,7 +551,7 @@ static int ssleay_rand_status(void)
 		
 		/* prevent ssleay_rand_bytes() from trying to obtain the lock again */
 		CRYPTO_w_lock(CRYPTO_LOCK_RAND2);
-		locking_thread = CRYPTO_thread_id();
+		CRYPTO_THREADID_set(&locking_tid);
 		CRYPTO_w_unlock(CRYPTO_LOCK_RAND2);
 		crypto_lock_rand = 1;
 		}

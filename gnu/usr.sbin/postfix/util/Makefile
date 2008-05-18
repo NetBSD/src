@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.17 2007/08/02 08:29:04 heas Exp $
+#	$NetBSD: Makefile,v 1.17.8.1 2008/05/18 12:30:09 yamt Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 .include <bsd.own.mk>
 

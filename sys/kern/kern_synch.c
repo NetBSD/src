@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.227 2008/04/13 22:54:19 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.227.2.1 2008/05/18 12:35:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,32 +29,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
- * All rights reserved.
- * 
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
  */
 
 /*-
@@ -101,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.227 2008/04/13 22:54:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.227.2.1 2008/05/18 12:35:09 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -128,58 +95,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.227 2008/04/13 22:54:19 yamt Exp $"
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
 #include <sys/simplelock.h>
-#include <sys/bitops.h>
-#include <sys/kmem.h>
-#include <sys/sysctl.h>
-#include <sys/idle.h>
 
 #include <uvm/uvm_extern.h>
 
-/*
- * Priority related defintions.
- */
-#define	PRI_TS_COUNT	(NPRI_USER)
-#define	PRI_RT_COUNT	(PRI_COUNT - PRI_TS_COUNT)
-#define	PRI_HTS_RANGE	(PRI_TS_COUNT / 10)
-
-#define	PRI_HIGHEST_TS	(MAXPRI_USER)
-
-/*
- * Bits per map.
- */
-#define	BITMAP_BITS	(32)
-#define	BITMAP_SHIFT	(5)
-#define	BITMAP_MSB	(0x80000000U)
-#define	BITMAP_MASK	(BITMAP_BITS - 1)
-
-/*
- * Structures, runqueue.
- */
-
-typedef struct {
-	TAILQ_HEAD(, lwp) q_head;
-} queue_t;
-
-typedef struct {
-	/* Lock and bitmap */
-	uint32_t	r_bitmap[PRI_COUNT >> BITMAP_SHIFT];
-	/* Counters */
-	u_int		r_count;	/* Count of the threads */
-	u_int		r_avgcount;	/* Average count of threads */
-	u_int		r_mcount;	/* Count of migratable threads */
-	/* Runqueues */
-	queue_t		r_rt_queue[PRI_RT_COUNT];
-	queue_t		r_ts_queue[PRI_TS_COUNT];
-} runqueue_t;
+#include <dev/lockstat.h>
 
 static u_int	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
 static void	sched_lendpri(struct lwp *, pri_t);
-static void	*sched_getrq(runqueue_t *, const pri_t);
-#ifdef MULTIPROCESSOR
-static lwp_t	*sched_catchlwp(void);
-static void	sched_balance(void *);
-#endif
 
 syncobj_t sleep_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
@@ -197,21 +120,15 @@ syncobj_t sched_syncobj = {
 	syncobj_noowner,
 };
 
-const int 	schedppq = 1;
 callout_t 	sched_pstats_ch;
 unsigned	sched_pstats_ticks;
 kcondvar_t	lbolt;			/* once a second sleep address */
 
-/*
- * Migration and balancing.
- */
-static u_int	cacheht_time;		/* Cache hotness time */
-static u_int	min_catch;		/* Minimal LWP count for catching */
-static u_int	balance_period;		/* Balance period */
-static struct cpu_info *worker_ci;	/* Victim CPU */
-#ifdef MULTIPROCESSOR
-static struct callout balance_ch;	/* Callout of balancer */
-#endif
+/* Preemption event counters */
+static struct evcnt kpreempt_ev_crit;
+static struct evcnt kpreempt_ev_klock;
+static struct evcnt kpreempt_ev_ipl;
+static struct evcnt kpreempt_ev_immed;
 
 /*
  * During autoconfiguration or after a panic, a sleep will simply lower the
@@ -222,6 +139,26 @@ static struct callout balance_ch;	/* Callout of balancer */
  * it can be made higher to block network software interrupts after panics.
  */
 int	safepri;
+
+void
+sched_init(void)
+{
+
+	cv_init(&lbolt, "lbolt");
+	callout_init(&sched_pstats_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&sched_pstats_ch, sched_pstats, NULL);
+
+	evcnt_attach_dynamic(&kpreempt_ev_crit, EVCNT_TYPE_MISC, NULL,
+	   "kpreempt", "defer: critical section");
+	evcnt_attach_dynamic(&kpreempt_ev_klock, EVCNT_TYPE_MISC, NULL,
+	   "kpreempt", "defer: kernel_lock");
+	evcnt_attach_dynamic(&kpreempt_ev_ipl, EVCNT_TYPE_MISC, NULL,
+	   "kpreempt", "defer: IPL");
+	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_MISC, NULL,
+	   "kpreempt", "immediate");
+
+	sched_pstats(NULL);
+}
 
 /*
  * OBSOLETE INTERFACE
@@ -405,6 +342,150 @@ preempt(void)
 }
 
 /*
+ * Handle a request made by another agent to preempt the current LWP
+ * in-kernel.  Usually called when l_dopreempt may be non-zero.
+ *
+ * Character addresses for lockstat only.
+ */
+static char	in_critical_section;
+static char	kernel_lock_held;
+static char	spl_raised;
+static char	is_softint;
+
+bool
+kpreempt(uintptr_t where)
+{
+	uintptr_t failed;
+	lwp_t *l;
+	int s, dop;
+
+	l = curlwp;
+	failed = 0;
+	while ((dop = l->l_dopreempt) != 0) {
+		if (l->l_stat != LSONPROC) {
+			/*
+			 * About to block (or die), let it happen.
+			 * Doesn't really count as "preemption has
+			 * been blocked", since we're going to
+			 * context switch.
+			 */
+			l->l_dopreempt = 0;
+			return true;
+		}
+		if (__predict_false((l->l_flag & LW_IDLE) != 0)) {
+			/* Can't preempt idle loop, don't count as failure. */
+		    	l->l_dopreempt = 0;
+		    	return true;
+		}
+		if (__predict_false(l->l_nopreempt != 0)) {
+			/* LWP holds preemption disabled, explicitly. */
+			if ((dop & DOPREEMPT_COUNTED) == 0) {
+				kpreempt_ev_crit.ev_count++;
+			}
+			failed = (uintptr_t)&in_critical_section;
+			break;
+		}
+		if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
+		    	/* Can't preempt soft interrupts yet. */
+		    	l->l_dopreempt = 0;
+		    	failed = (uintptr_t)&is_softint;
+		    	break;
+		}
+		s = splsched();
+		if (__predict_false(l->l_blcnt != 0 ||
+		    curcpu()->ci_biglock_wanted != NULL)) {
+			/* Hold or want kernel_lock, code is not MT safe. */
+			splx(s);
+			if ((dop & DOPREEMPT_COUNTED) == 0) {
+				kpreempt_ev_klock.ev_count++;
+			}
+			failed = (uintptr_t)&kernel_lock_held;
+			break;
+		}
+		if (__predict_false(!cpu_kpreempt_enter(where, s))) {
+			/*
+			 * It may be that the IPL is too high.
+			 * kpreempt_enter() can schedule an
+			 * interrupt to retry later.
+			 */
+			splx(s);
+			if ((dop & DOPREEMPT_COUNTED) == 0) {
+				kpreempt_ev_ipl.ev_count++;
+			}
+			failed = (uintptr_t)&spl_raised;
+			break;
+		}
+		/* Do it! */
+		if (__predict_true((dop & DOPREEMPT_COUNTED) == 0)) {
+			kpreempt_ev_immed.ev_count++;
+		}
+		lwp_lock(l);
+		mi_switch(l);
+		l->l_nopreempt++;
+		splx(s);
+
+		/* Take care of any MD cleanup. */
+		cpu_kpreempt_exit(where);
+		l->l_nopreempt--;
+	}
+
+	/* Record preemption failure for reporting via lockstat. */
+	if (__predict_false(failed)) {
+		int lsflag = 0;
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_COUNTED);
+		LOCKSTAT_ENTER(lsflag);
+		/* Might recurse, make it atomic. */
+		if (__predict_false(lsflag)) {
+			if (where == 0) {
+				where = (uintptr_t)__builtin_return_address(0);
+			}
+			if (atomic_cas_ptr_ni((void *)&l->l_pfailaddr,
+			    NULL, (void *)where) == NULL) {
+				LOCKSTAT_START_TIMER(lsflag, l->l_pfailtime);
+				l->l_pfaillock = failed;
+			}
+		}
+		LOCKSTAT_EXIT(lsflag);
+	}
+
+	return failed;
+}
+
+/*
+ * Return true if preemption is explicitly disabled.
+ */
+bool
+kpreempt_disabled(void)
+{
+	lwp_t *l;
+
+	l = curlwp;
+
+	return l->l_nopreempt != 0 || l->l_stat == LSZOMB ||
+	    (l->l_flag & LW_IDLE) != 0 || cpu_kpreempt_disabled();
+}
+
+/*
+ * Disable kernel preemption.
+ */
+void
+kpreempt_disable(void)
+{
+
+	KPREEMPT_DISABLE(curlwp);
+}
+
+/*
+ * Reenable kernel preemption.
+ */
+void
+kpreempt_enable(void)
+{
+
+	KPREEMPT_ENABLE(curlwp);
+}
+
+/*
  * Compute the amount of time during which the current lwp was running.
  *
  * - update l_rtime unless it's an idle lwp.
@@ -438,6 +519,7 @@ mi_switch(lwp_t *l)
 	bool returning;
 
 	KASSERT(lwp_locked(l, NULL));
+	KASSERT(kpreempt_disabled());
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
 
 #ifdef KSTACK_CHECK_MAGIC
@@ -446,7 +528,7 @@ mi_switch(lwp_t *l)
 
 	binuptime(&bt);
 
-	KDASSERT(l->l_cpu == curcpu());
+	KASSERT(l->l_cpu == curcpu());
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
 	returning = false;
@@ -584,6 +666,24 @@ mi_switch(lwp_t *l)
 		ci->ci_data.cpu_onproc = newl;
 	}
 
+	/*
+	 * Preemption related tasks.  Must be done with the current
+	 * CPU locked.
+	 */
+	cpu_did_resched(l);
+	l->l_dopreempt = 0;
+	if (__predict_false(l->l_pfailaddr != 0)) {
+		LOCKSTAT_FLAG(lsflag);
+		LOCKSTAT_ENTER(lsflag);
+		LOCKSTAT_STOP_TIMER(lsflag, l->l_pfailtime);
+		LOCKSTAT_EVENT_RA(lsflag, l->l_pfaillock, LB_NOPREEMPT|LB_SPIN,
+		    1, l->l_pfailtime, l->l_pfailaddr);
+		LOCKSTAT_EXIT(lsflag);
+		l->l_pfailtime = 0;
+		l->l_pfaillock = 0;
+		l->l_pfailaddr = 0;
+	}
+
 	if (l != newl) {
 		struct lwp *prevlwp;
 
@@ -669,7 +769,6 @@ mi_switch(lwp_t *l)
 			membar_exit();
 			prevlwp->l_ctxswtch = 0;
 		}
-		splx(oldspl);
 
 		/* Update status for lwpctl, if present. */
 		if (l->l_lwpctl != NULL) {
@@ -677,6 +776,8 @@ mi_switch(lwp_t *l)
 			l->l_lwpctl->lc_pctr++;
 		}
 
+		KASSERT(l->l_cpu == ci);
+		splx(oldspl);
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */
@@ -688,10 +789,10 @@ mi_switch(lwp_t *l)
 
 	KASSERT(l == curlwp);
 	KASSERT(l->l_stat == LSONPROC);
-	KASSERT(l->l_cpu == ci);
 
 	/*
 	 * XXXSMP If we are using h/w performance counters, restore context.
+	 * XXXSMP preemption problem.
 	 */
 #if PERFCTRS
 	if (PMC_ENABLED(l->l_proc)) {
@@ -718,7 +819,7 @@ setrunnable(struct lwp *l)
 	sigset_t *ss;
 
 	KASSERT((l->l_flag & LW_IDLE) == 0);
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_mutex != l->l_cpu->ci_schedstate.spc_mutex);
 
@@ -778,10 +879,8 @@ setrunnable(struct lwp *l)
 	 */
 	ci = sched_takecpu(l);
 	l->l_cpu = ci;
-	if (l->l_mutex != l->l_cpu->ci_schedstate.spc_mutex) {
-		lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
-		lwp_lock(l);
-	}
+	spc_lock(ci);
+	lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
@@ -816,12 +915,14 @@ suspendsched(void)
 	/*
 	 * We do this by process in order not to violate the locking rules.
 	 */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		mutex_enter(&p->p_smutex);
+		if ((p->p_flag & PK_MARKER) != 0)
+			continue;
 
+		mutex_enter(p->p_lock);
 		if ((p->p_flag & PK_SYSTEM) != 0) {
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 			continue;
 		}
 
@@ -852,9 +953,9 @@ suspendsched(void)
 			lwp_unlock(l);
 		}
 
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
@@ -987,14 +1088,17 @@ sched_pstats(void *arg)
 
 	sched_pstats_ticks++;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
+		if ((p->p_flag & PK_MARKER) != 0)
+			continue;
+
 		/*
 		 * Increment time in/out of memory and sleep time (if
 		 * sleeping).  We ignore overflow; with 16-bit int's
 		 * (remember them?) overflow takes 45 days.
 		 */
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		mutex_spin_enter(&p->p_stmutex);
 		runtm = p->p_rtime.sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -1043,593 +1147,12 @@ sched_pstats(void *arg)
 					rlim->rlim_cur += 5;
 			}
 		}
-		mutex_exit(&p->p_smutex);
-		if (sig) {
-			mutex_enter(&proclist_mutex);
+		mutex_exit(p->p_lock);
+		if (sig)
 			psignal(p, sig);
-			mutex_exit(&proclist_mutex);
-		}
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	uvm_meter();
 	cv_wakeup(&lbolt);
 	callout_schedule(&sched_pstats_ch, hz);
 }
-
-void
-sched_init(void)
-{
-
-	cv_init(&lbolt, "lbolt");
-	callout_init(&sched_pstats_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&sched_pstats_ch, sched_pstats, NULL);
-
-	/* Balancing */
-	worker_ci = curcpu();
-	cacheht_time = mstohz(5);		/* ~5 ms  */
-	balance_period = mstohz(300);		/* ~300ms */
-
-	/* Minimal count of LWPs for catching: log2(count of CPUs) */
-	min_catch = min(ilog2(ncpu), 4);
-
-	/* Initialize balancing callout and run it */
-#ifdef MULTIPROCESSOR
-	callout_init(&balance_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&balance_ch, sched_balance, NULL);
-	callout_schedule(&balance_ch, balance_period);
-#endif
-	sched_pstats(NULL);
-}
-
-SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
-{
-	const struct sysctlnode *node = NULL;
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, &node,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "sched",
-		SYSCTL_DESCR("Scheduler options"),
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_CREATE, CTL_EOL);
-
-	if (node == NULL)
-		return;
-
-	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "cacheht_time",
-		SYSCTL_DESCR("Cache hotness time (in ticks)"),
-		NULL, 0, &cacheht_time, 0,
-		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "balance_period",
-		SYSCTL_DESCR("Balance period (in ticks)"),
-		NULL, 0, &balance_period, 0,
-		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "min_catch",
-		SYSCTL_DESCR("Minimal count of threads for catching"),
-		NULL, 0, &min_catch, 0,
-		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_READWRITE,
-		CTLTYPE_INT, "timesoftints",
-		SYSCTL_DESCR("Track CPU time for soft interrupts"),
-		NULL, 0, &softint_timing, 0,
-		CTL_CREATE, CTL_EOL);
-}
-
-void
-sched_cpuattach(struct cpu_info *ci)
-{
-	runqueue_t *ci_rq;
-	void *rq_ptr;
-	u_int i, size;
-
-	if (ci->ci_schedstate.spc_lwplock == NULL) {
-		ci->ci_schedstate.spc_lwplock =
-		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-	}
-	if (ci == lwp0.l_cpu) {
-		/* Initialize the scheduler structure of the primary LWP */
-		lwp0.l_mutex = ci->ci_schedstate.spc_lwplock;
-	}
-	if (ci->ci_schedstate.spc_mutex != NULL) {
-		/* Already initialized. */
-		return;
-	}
-
-	/* Allocate the run queue */
-	size = roundup2(sizeof(runqueue_t), coherency_unit) + coherency_unit;
-	rq_ptr = kmem_zalloc(size, KM_SLEEP);
-	if (rq_ptr == NULL) {
-		panic("sched_cpuattach: could not allocate the runqueue");
-	}
-	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), coherency_unit));
-
-	/* Initialize run queues */
-	ci->ci_schedstate.spc_mutex =
-	    mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-	for (i = 0; i < PRI_RT_COUNT; i++)
-		TAILQ_INIT(&ci_rq->r_rt_queue[i].q_head);
-	for (i = 0; i < PRI_TS_COUNT; i++)
-		TAILQ_INIT(&ci_rq->r_ts_queue[i].q_head);
-
-	ci->ci_schedstate.spc_sched_info = ci_rq;
-}
-
-/*
- * Control of the runqueue.
- */
-
-static void *
-sched_getrq(runqueue_t *ci_rq, const pri_t prio)
-{
-
-	KASSERT(prio < PRI_COUNT);
-	return (prio <= PRI_HIGHEST_TS) ?
-	    &ci_rq->r_ts_queue[prio].q_head :
-	    &ci_rq->r_rt_queue[prio - PRI_HIGHEST_TS - 1].q_head;
-}
-
-void
-sched_enqueue(struct lwp *l, bool swtch)
-{
-	runqueue_t *ci_rq;
-	struct schedstate_percpu *spc;
-	TAILQ_HEAD(, lwp) *q_head;
-	const pri_t eprio = lwp_eprio(l);
-	struct cpu_info *ci;
-
-	ci = l->l_cpu;
-	spc = &ci->ci_schedstate;
-	ci_rq = spc->spc_sched_info;
-	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-
-	/* Update the last run time on switch */
-	if (__predict_true(swtch == true)) {
-		l->l_rticks = hardclock_ticks;
-		l->l_rticksum += (hardclock_ticks - l->l_rticks);
-	} else if (l->l_rticks == 0)
-		l->l_rticks = hardclock_ticks;
-
-	/* Enqueue the thread */
-	q_head = sched_getrq(ci_rq, eprio);
-	if (TAILQ_EMPTY(q_head)) {
-		u_int i;
-		uint32_t q;
-
-		/* Mark bit */
-		i = eprio >> BITMAP_SHIFT;
-		q = BITMAP_MSB >> (eprio & BITMAP_MASK);
-		KASSERT((ci_rq->r_bitmap[i] & q) == 0);
-		ci_rq->r_bitmap[i] |= q;
-	}
-	TAILQ_INSERT_TAIL(q_head, l, l_runq);
-	ci_rq->r_count++;
-	if ((l->l_pflag & LP_BOUND) == 0)
-		ci_rq->r_mcount++;
-
-	/*
-	 * Update the value of highest priority in the runqueue,
-	 * if priority of this thread is higher.
-	 */
-	if (eprio > spc->spc_maxpriority)
-		spc->spc_maxpriority = eprio;
-
-	sched_newts(l);
-
-	/*
-	 * Wake the chosen CPU or cause a preemption if the newly
-	 * enqueued thread has higher priority.  Don't cause a 
-	 * preemption if the thread is yielding (swtch).
-	 */
-	if (!swtch && eprio > spc->spc_curpriority) {
-		cpu_need_resched(ci,
-		    (eprio >= PRI_KERNEL ? RESCHED_IMMED : 0));
-	}
-}
-
-void
-sched_dequeue(struct lwp *l)
-{
-	runqueue_t *ci_rq;
-	TAILQ_HEAD(, lwp) *q_head;
-	struct schedstate_percpu *spc;
-	const pri_t eprio = lwp_eprio(l);
-
-	spc = & l->l_cpu->ci_schedstate;
-	ci_rq = spc->spc_sched_info;
-	KASSERT(lwp_locked(l, spc->spc_mutex));
-
-	KASSERT(eprio <= spc->spc_maxpriority); 
-	KASSERT(ci_rq->r_bitmap[eprio >> BITMAP_SHIFT] != 0);
-	KASSERT(ci_rq->r_count > 0);
-
-	ci_rq->r_count--;
-	if ((l->l_pflag & LP_BOUND) == 0)
-		ci_rq->r_mcount--;
-
-	q_head = sched_getrq(ci_rq, eprio);
-	TAILQ_REMOVE(q_head, l, l_runq);
-	if (TAILQ_EMPTY(q_head)) {
-		u_int i;
-		uint32_t q;
-
-		/* Unmark bit */
-		i = eprio >> BITMAP_SHIFT;
-		q = BITMAP_MSB >> (eprio & BITMAP_MASK);
-		KASSERT((ci_rq->r_bitmap[i] & q) != 0);
-		ci_rq->r_bitmap[i] &= ~q;
-
-		/*
-		 * Update the value of highest priority in the runqueue, in a
-		 * case it was a last thread in the queue of highest priority.
-		 */
-		if (eprio != spc->spc_maxpriority)
-			return;
-
-		do {
-			if (ci_rq->r_bitmap[i] != 0) {
-				q = ffs(ci_rq->r_bitmap[i]);
-				spc->spc_maxpriority =
-				    (i << BITMAP_SHIFT) + (BITMAP_BITS - q);
-				return;
-			}
-		} while (i--);
-
-		/* If not found - set the lowest value */
-		spc->spc_maxpriority = 0;
-	}
-}
-
-/*
- * Migration and balancing.
- */
-
-#ifdef MULTIPROCESSOR
-
-/* Estimate if LWP is cache-hot */
-static inline bool
-lwp_cache_hot(const struct lwp *l)
-{
-
-	if (l->l_slptime || l->l_rticks == 0)
-		return false;
-
-	return (hardclock_ticks - l->l_rticks <= cacheht_time);
-}
-
-/* Check if LWP can migrate to the chosen CPU */
-static inline bool
-sched_migratable(const struct lwp *l, struct cpu_info *ci)
-{
-	const struct schedstate_percpu *spc = &ci->ci_schedstate;
-
-	/* CPU is offline */
-	if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
-		return false;
-
-	/* Affinity bind */
-	if (__predict_false(l->l_flag & LW_AFFINITY))
-		return CPU_ISSET(cpu_index(ci), &l->l_affinity);
-
-	/* Processor-set */
-	return (spc->spc_psid == l->l_psid);
-}
-
-/*
- * Estimate the migration of LWP to the other CPU.
- * Take and return the CPU, if migration is needed.
- */
-struct cpu_info *
-sched_takecpu(struct lwp *l)
-{
-	struct cpu_info *ci, *tci, *first, *next;
-	struct schedstate_percpu *spc;
-	runqueue_t *ci_rq, *ici_rq;
-	pri_t eprio, lpri, pri;
-
-	KASSERT(lwp_locked(l, NULL));
-
-	ci = l->l_cpu;
-	spc = &ci->ci_schedstate;
-	ci_rq = spc->spc_sched_info;
-
-	/* If thread is strictly bound, do not estimate other CPUs */
-	if (l->l_pflag & LP_BOUND)
-		return ci;
-
-	/* CPU of this thread is idling - run there */
-	if (ci_rq->r_count == 0)
-		return ci;
-
-	eprio = lwp_eprio(l);
-
-	/* Stay if thread is cache-hot */
-	if (__predict_true(l->l_stat != LSIDL) &&
-	    lwp_cache_hot(l) && eprio >= spc->spc_curpriority)
-		return ci;
-
-	/* Run on current CPU if priority of thread is higher */
-	ci = curcpu();
-	spc = &ci->ci_schedstate;
-	if (eprio > spc->spc_curpriority && sched_migratable(l, ci))
-		return ci;
-
-	/*
-	 * Look for the CPU with the lowest priority thread.  In case of
-	 * equal priority, choose the CPU with the fewest of threads.
-	 */
-	first = l->l_cpu;
-	ci = first;
-	tci = first;
-	lpri = PRI_COUNT;
-	do {
-		next = CIRCLEQ_LOOP_NEXT(&cpu_queue, ci, ci_data.cpu_qchain);
-		spc = &ci->ci_schedstate;
-		ici_rq = spc->spc_sched_info;
-		pri = max(spc->spc_curpriority, spc->spc_maxpriority);
-		if (pri > lpri)
-			continue;
-
-		if (pri == lpri && ci_rq->r_count < ici_rq->r_count)
-			continue;
-
-		if (!sched_migratable(l, ci))
-			continue;
-
-		lpri = pri;
-		tci = ci;
-		ci_rq = ici_rq;
-	} while (ci = next, ci != first);
-
-	return tci;
-}
-
-/*
- * Tries to catch an LWP from the runqueue of other CPU.
- */
-static struct lwp *
-sched_catchlwp(void)
-{
-	struct cpu_info *curci = curcpu(), *ci = worker_ci;
-	struct schedstate_percpu *spc;
-	TAILQ_HEAD(, lwp) *q_head;
-	runqueue_t *ci_rq;
-	struct lwp *l;
-
-	if (curci == ci)
-		return NULL;
-
-	/* Lockless check */
-	spc = &ci->ci_schedstate;
-	ci_rq = spc->spc_sched_info;
-	if (ci_rq->r_mcount < min_catch)
-		return NULL;
-
-	/*
-	 * Double-lock the runqueues.
-	 */
-	if (curci < ci) {
-		spc_lock(ci);
-	} else if (!mutex_tryenter(ci->ci_schedstate.spc_mutex)) {
-		const runqueue_t *cur_rq = curci->ci_schedstate.spc_sched_info;
-
-		spc_unlock(curci);
-		spc_lock(ci);
-		spc_lock(curci);
-
-		if (cur_rq->r_count) {
-			spc_unlock(ci);
-			return NULL;
-		}
-	}
-
-	if (ci_rq->r_mcount < min_catch) {
-		spc_unlock(ci);
-		return NULL;
-	}
-
-	/* Take the highest priority thread */
-	q_head = sched_getrq(ci_rq, spc->spc_maxpriority);
-	l = TAILQ_FIRST(q_head);
-
-	for (;;) {
-		/* Check the first and next result from the queue */
-		if (l == NULL)
-			break;
-		KASSERT(l->l_stat == LSRUN);
-		KASSERT(l->l_flag & LW_INMEM);
-
-		/* Look for threads, whose are allowed to migrate */
-		if ((l->l_pflag & LP_BOUND) || lwp_cache_hot(l) ||
-		    !sched_migratable(l, curci)) {
-			l = TAILQ_NEXT(l, l_runq);
-			continue;
-		}
-
-		/* Grab the thread, and move to the local run queue */
-		sched_dequeue(l);
-		l->l_cpu = curci;
-		lwp_unlock_to(l, curci->ci_schedstate.spc_mutex);
-		sched_enqueue(l, false);
-		return l;
-	}
-	spc_unlock(ci);
-
-	return l;
-}
-
-/*
- * Periodical calculations for balancing.
- */
-static void
-sched_balance(void *nocallout)
-{
-	struct cpu_info *ci, *hci;
-	runqueue_t *ci_rq;
-	CPU_INFO_ITERATOR cii;
-	u_int highest;
-
-	hci = curcpu();
-	highest = 0;
-
-	/* Make lockless countings */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		ci_rq = ci->ci_schedstate.spc_sched_info;
-
-		/* Average count of the threads */
-		ci_rq->r_avgcount = (ci_rq->r_avgcount + ci_rq->r_mcount) >> 1;
-
-		/* Look for CPU with the highest average */
-		if (ci_rq->r_avgcount > highest) {
-			hci = ci;
-			highest = ci_rq->r_avgcount;
-		}
-	}
-
-	/* Update the worker */
-	worker_ci = hci;
-
-	if (nocallout == NULL)
-		callout_schedule(&balance_ch, balance_period);
-}
-
-#else
-
-struct cpu_info *
-sched_takecpu(struct lwp *l)
-{
-
-	return l->l_cpu;
-}
-
-#endif	/* MULTIPROCESSOR */
-
-/*
- * Scheduler mill.
- */
-struct lwp *
-sched_nextlwp(void)
-{
-	struct cpu_info *ci = curcpu();
-	struct schedstate_percpu *spc;
-	TAILQ_HEAD(, lwp) *q_head;
-	runqueue_t *ci_rq;
-	struct lwp *l;
-
-	spc = &ci->ci_schedstate;
-	ci_rq = spc->spc_sched_info;
-
-#ifdef MULTIPROCESSOR
-	/* If runqueue is empty, try to catch some thread from other CPU */
-	if (__predict_false(spc->spc_flags & SPCF_OFFLINE)) {
-		if ((ci_rq->r_count - ci_rq->r_mcount) == 0)
-			return NULL;
-	} else if (ci_rq->r_count == 0) {
-		/* Reset the counter, and call the balancer */
-		ci_rq->r_avgcount = 0;
-		sched_balance(ci);
-
-		/* The re-locking will be done inside */
-		return sched_catchlwp();
-	}
-#else
-	if (ci_rq->r_count == 0)
-		return NULL;
-#endif
-
-	/* Take the highest priority thread */
-	KASSERT(ci_rq->r_bitmap[spc->spc_maxpriority >> BITMAP_SHIFT]);
-	q_head = sched_getrq(ci_rq, spc->spc_maxpriority);
-	l = TAILQ_FIRST(q_head);
-	KASSERT(l != NULL);
-
-	sched_oncpu(l);
-	l->l_rticks = hardclock_ticks;
-
-	return l;
-}
-
-bool
-sched_curcpu_runnable_p(void)
-{
-	const struct cpu_info *ci = curcpu();
-	const runqueue_t *ci_rq = ci->ci_schedstate.spc_sched_info;
-
-#ifndef __HAVE_FAST_SOFTINTS
-	if (ci->ci_data.cpu_softints)
-		return true;
-#endif
-
-	if (ci->ci_schedstate.spc_flags & SPCF_OFFLINE)
-		return (ci_rq->r_count - ci_rq->r_mcount);
-
-	return ci_rq->r_count;
-}
-
-/*
- * Debugging.
- */
-
-#ifdef DDB
-
-void
-sched_print_runqueue(void (*pr)(const char *, ...)
-    __attribute__((__format__(__printf__,1,2))))
-{
-	runqueue_t *ci_rq;
-	struct schedstate_percpu *spc;
-	struct lwp *l;
-	struct proc *p;
-	int i;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		spc = &ci->ci_schedstate;
-		ci_rq = spc->spc_sched_info;
-
-		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
-		(*pr)(" pid.lid = %d.%d, threads count = %u, "
-		    "avgcount = %u, highest pri = %d\n",
-#ifdef MULTIPROCESSOR
-		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
-#else
-		    curlwp->l_proc->p_pid, curlwp->l_lid,
-#endif
-		    ci_rq->r_count, ci_rq->r_avgcount, spc->spc_maxpriority);
-		i = (PRI_COUNT >> BITMAP_SHIFT) - 1;
-		do {
-			uint32_t q;
-			q = ci_rq->r_bitmap[i];
-			(*pr)(" bitmap[%d] => [ %d (0x%x) ]\n", i, ffs(q), q);
-		} while (i--);
-	}
-
-	(*pr)("   %5s %4s %4s %10s %3s %18s %4s %s\n",
-	    "LID", "PRI", "EPRI", "FL", "ST", "LWP", "CPU", "LRTIME");
-
-	PROCLIST_FOREACH(p, &allproc) {
-		(*pr)(" /- %d (%s)\n", (int)p->p_pid, p->p_comm);
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			ci = l->l_cpu;
-			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %18p %4u %u\n",
-			    (int)l->l_lid, l->l_priority, lwp_eprio(l),
-			    l->l_flag, l->l_stat == LSRUN ? "RQ" :
-			    (l->l_stat == LSSLEEP ? "SQ" : "-"),
-			    l, ci->ci_index,
-			    (u_int)(hardclock_ticks - l->l_rticks));
-		}
-	}
-}
-
-#endif

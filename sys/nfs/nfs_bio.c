@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.174 2008/03/29 13:48:00 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.174.2.1 2008/05/18 12:35:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.174 2008/03/29 13:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.174.2.1 2008/05/18 12:35:45 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -491,9 +491,9 @@ nfs_write(void *v)
 	 */
 	if (l && l->l_proc && uio->uio_offset + uio->uio_resid >
 	      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		psignal(l->l_proc, SIGXFSZ);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		return (EFBIG);
 	}
 
@@ -864,7 +864,9 @@ nfs_doio_read(struct buf *bp, struct uio *uiop)
 #if 0
 		if (uiop->uio_lwp && (vp->v_iflag & VI_TEXT) &&
 		    timespeccmp(&np->n_mtime, &np->n_vattr->va_mtime, !=)) {
+		    	mutex_enter(proc_lock);
 			killproc(uiop->uio_lwp->l_proc, "process text file was modified");
+		    	mutex_exit(proc_lock);
 #if 0 /* XXX NJWLWP */
 			uiop->uio_lwp->l_proc->p_holdcnt++;
 #endif

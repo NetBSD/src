@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.938 2008/04/17 19:12:49 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.938.2.1 2008/05/18 12:34:21 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.936 2008/04/15 21:24:07 cegger Exp
+ *	NetBSD: pcidevs,v 1.940 2008/05/13 10:43:21 rjs Exp
  */
 
 /*
@@ -730,6 +730,7 @@
 #define	PCI_PRODUCT_3WARE_9000	0x1002		/* 9000-series RAID */
 #define	PCI_PRODUCT_3WARE_9550	0x1003		/* 9550-series RAID */
 #define	PCI_PRODUCT_3WARE_9650	0x1004		/* 9650-series RAID */
+#define	PCI_PRODUCT_3WARE_9690	0x1005		/* 9690-series RAID */
 
 /* AboCom products */
 #define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 10/100 Ethernet */
@@ -2040,6 +2041,7 @@
 #define	PCI_PRODUCT_IBM_GXT6500P	0x021b		/* GXT-6500P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_GXT4500P	0x021c		/* GXT-4500P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_GXT135P	0x0233		/* GXT-135P Graphics Adapter */
+#define	PCI_PRODUCT_IBM_SERVERAID8K	0x9580		/* ServeRAID 8k */
 #define	PCI_PRODUCT_IBM_MPIC2	0xffff		/* MPIC-II */
 
 /* IC Ensemble / VIA Technologies products */
@@ -3581,6 +3583,7 @@
 #define	PCI_PRODUCT_SIS_751	0x0751		/* 751 Host Bridge */
 #define	PCI_PRODUCT_SIS_752	0x0752		/* 752 Host Bridge */
 #define	PCI_PRODUCT_SIS_755	0x0755		/* 755 Host Bridge */
+#define	PCI_PRODUCT_SIS_756	0x0756		/* 756 Host Bridge */
 #define	PCI_PRODUCT_SIS_760	0x0760		/* 760 Host Bridge */
 #define	PCI_PRODUCT_SIS_761	0x0761		/* 761 Host Bridge */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* 900 10/100 Ethernet */

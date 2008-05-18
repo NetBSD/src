@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.22 2008/01/24 17:32:54 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.22.8.1 2008/05/18 12:35:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.22 2008/01/24 17:32:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.22.8.1 2008/05/18 12:35:02 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -332,7 +325,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct bfs_inode *inode;
 	int error;
 
-	DPRINTF("%s: i-node=%d\n", __func__, ino);
+	DPRINTF("%s: i-node=%lld\n", __func__, (long long)ino);
 	/* Lookup requested i-node */
 	if (!bfs_inode_lookup(bfs, ino, &inode)) {
 		DPRINTF("bfs_inode_lookup failed.\n");

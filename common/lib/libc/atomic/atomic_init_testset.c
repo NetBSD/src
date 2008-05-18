@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.3 2008/02/11 23:48:23 ad Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.3.6.1 2008/05/18 12:28:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.3 2008/02/11 23:48:23 ad Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.3.6.1 2008/05/18 12:28:46 yamt Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -66,6 +59,9 @@ void	__libc_atomic_init(void) __attribute__ ((visibility("hidden")));
 
 RAS_DECL(_atomic_cas);
 
+#ifdef	__HAVE_ASM_ATOMIC_CAS_UP
+extern uint32_t _atomic_cas_up(volatile uint32_t *, uint32_t, uint32_t);
+#else
 static uint32_t
 _atomic_cas_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 {
@@ -81,6 +77,7 @@ _atomic_cas_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 
 	return ret;
 }
+#endif
 
 static uint32_t
 _atomic_cas_mp(volatile uint32_t *ptr, uint32_t old, uint32_t new)

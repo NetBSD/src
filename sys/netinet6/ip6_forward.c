@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.64 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.64.2.1 2008/05/18 12:35:35 yamt Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.64 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.64.2.1 2008/05/18 12:35:35 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.64 2008/04/15 03:57:04 thorpej Exp
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #endif /* IPSEC */
 
@@ -129,7 +130,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * before forwarding packet actually.
 	 */
 	if (ipsec6_in_reject(m, NULL)) {
-		ipsec6stat.in_polvio++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 		m_freem(m);
 		return;
 	}
@@ -184,7 +185,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
 	    IP_FORWARDING, &error);
 	if (sp == NULL) {
-		ipsec6stat.out_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 		IP6_STATINC(IP6_STAT_CANTFORWARD);
 		if (mcopy) {
 #if 0
@@ -205,7 +206,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		/*
 		 * This packet is just discarded.
 		 */
-		ipsec6stat.out_polvio++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_POLVIO);
 		IP6_STATINC(IP6_STAT_CANTFORWARD);
 		key_freesp(sp);
 		if (mcopy) {

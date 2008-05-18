@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.75 2008/01/28 14:31:19 dholland Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.75.8.1 2008/05/18 12:35:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75 2008/01/28 14:31:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75.8.1 2008/05/18 12:35:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,12 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75 2008/01/28 14:31:19 dholland Ex
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
+
+MODULE(MODULE_CLASS_VFS, umapfs, NULL);
 
 VFS_PROTOS(umapfs);
 
@@ -192,8 +195,8 @@ umapfs_mount(mp, path, data, data_len)
 	amp->umapm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	amp->umapm_vnodeop_p = umap_vnodeop_p;
 	mutex_init(&amp->umapm_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, HASH_LIST, M_CACHE,
-	    M_WAITOK, &amp->umapm_node_hash);
+	amp->umapm_node_hashtbl = hashinit(NUMAPNODECACHE, HASH_LIST, true,
+	    &amp->umapm_node_hash);
 
 
 	/*
@@ -205,6 +208,8 @@ umapfs_mount(mp, path, data, data_len)
 	 */
 	if (error) {
 		vput(lowerrootvp);
+		hashdone(amp->umapm_node_hashtbl, HASH_LIST,
+		    amp->umapm_node_hash);
 		free(amp, M_UFSMNT);	/* XXX */
 		return (error);
 	}
@@ -263,8 +268,9 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the umap_mount structure
 	 */
 	mutex_destroy(&amp->umapm_hashlock);
+	hashdone(amp->umapm_node_hashtbl, HASH_LIST, amp->umapm_node_hash);
 	free(amp, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return (0);
 }
 
@@ -318,8 +324,22 @@ struct vfsops umapfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	layerfs_renamelock_enter,
 	layerfs_renamelock_exit,
+	(void *)eopnotsupp,
 	umapfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(umapfs_vfsops);
+
+static int
+umapfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&umapfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&umapfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

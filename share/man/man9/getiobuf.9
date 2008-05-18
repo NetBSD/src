@@ -1,6 +1,6 @@
-.\"     $NetBSD: getiobuf.9,v 1.2 2006/01/17 00:02:19 wiz Exp $
+.\"     $NetBSD: getiobuf.9,v 1.2.22.1 2008/05/18 12:31:13 yamt Exp $
 .\"
-.\" Copyright (c)2006 YAMAMOTO Takashi,
+.\" Copyright (c)2006,2008 YAMAMOTO Takashi,
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,21 +24,18 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\" ------------------------------------------------------------
-.Dd January 17, 2006
+.Dd May 6, 2008
 .Dt GETIOBUF 9
 .Os
 .Sh NAME
 .Nm getiobuf ,
-.Nm getiobuf_nowait ,
 .Nm putiobuf
 .Nd I/O descriptor allocation interface
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In sys/buf.h
 .Ft struct buf *
-.Fn getiobuf "void"
-.Ft struct buf *
-.Fn getiobuf_nowait "void"
+.Fn getiobuf "struct vnode *vp" "bool waitok"
 .Ft void
 .Fn putiobuf "struct buf *bp"
 .\" ------------------------------------------------------------
@@ -49,7 +46,22 @@
 allocates a
 .Em buf
 structure.
-Note that this buffer doesn't belong to buffer cache.
+.Pp
+.Bl -tag -width waitok
+.It Fa vp
+The vnode to which the allocated buffer will be associated.
+This can be
+.Dv NULL .
+.It Fa waitok
+If true,
+.Fa getiobuf
+can sleep until enough memory is available.
+Otherwise, it returns
+.Dv NULL
+immediately if enough memory is not available.
+.El
+.Pp
+Note that the allocated buffer doesn't belong to buffer cache.
 To free it,
 .Fn putiobuf
 should be used.
@@ -57,21 +69,11 @@ should be used.
 should not be used on it.
 .Pp
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.Fn getiobuf_nowait
-is the same as
-.Fn getiobuf ,
-except that
-.Fn getiobuf_nowait
-never sleeps.
-.Pp
-.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Fn putiobuf
 frees
 .Fa bp ,
-which should be a buffer allocated with either of
-.Fn getiobuf
-or
-.Fn getiobuf_nowait .
+which should be a buffer allocated with
+.Fn getiobuf .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .El
 .\" ------------------------------------------------------------

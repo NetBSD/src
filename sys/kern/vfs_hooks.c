@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_hooks.c,v 1.2 2005/12/11 12:24:30 christos Exp $	*/
+/*	$NetBSD: vfs_hooks.c,v 1.2.74.1 2008/05/18 12:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,46 +34,82 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.2 2005/12/11 12:24:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_hooks.c,v 1.2.74.1 2008/05/18 12:35:11 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/mount.h>
+#include <sys/mutex.h>
 
-/*
- * Static list of file system specific hook sets supported by the kernel.
- */
-__link_set_decl(vfs_hooks, struct vfs_hooks);
+LIST_HEAD(vfs_hooks_head, vfs_hooks) vfs_hooks_head =
+    LIST_HEAD_INITIALIZER(vfs_hooks_head);
 
-/*
- * Initialize a VFS hook set that does nothing.  This is to ensure that
- * we have, at the very least, one item in the link set.  Otherwise,
- * ld(1) will complain.
- */
-static struct vfs_hooks null_hooks = {
-	NULL		/* vh_unmount */
-};
-VFS_HOOKS_ATTACH(null_hooks);
+kmutex_t vfs_hooks_lock;
+
+void
+vfs_hooks_init()
+{
+
+	mutex_init(&vfs_hooks_lock, MUTEX_DEFAULT, IPL_NONE);
+}
+
+int
+vfs_hooks_attach(struct vfs_hooks *vfs_hooks)
+{
+
+	mutex_enter(&vfs_hooks_lock);
+	LIST_INSERT_HEAD(&vfs_hooks_head, vfs_hooks, vfs_hooks_list);
+	mutex_exit(&vfs_hooks_lock);
+
+	return (0);
+}
+
+int
+vfs_hooks_detach(struct vfs_hooks *vfs_hooks)
+{
+	struct vfs_hooks *hp;
+	int ret = 0;
+
+	mutex_enter(&vfs_hooks_lock);
+        LIST_FOREACH(hp, &vfs_hooks_head, vfs_hooks_list) {
+                if (hp == vfs_hooks) {
+                        LIST_REMOVE(hp, vfs_hooks_list);
+                        break;
+                }
+        }
+        if (hp == NULL)
+       		ret = ESRCH;
+	mutex_exit(&vfs_hooks_lock);
+
+	return (ret);
+}
 
 /*
  * Macro to be used in one of the vfs_hooks_* function for hooks that
  * return an error code.  Calls will stop as soon as one of the hooks
  * fails.
  */
-#define VFS_HOOKS_W_ERROR(func, args)					\
+#define VFS_HOOKS_W_ERROR(func, fargs, hook, hargs)			\
+int									\
+func fargs								\
+{									\
 	int error;							\
-	struct vfs_hooks * const *hp;					\
+	struct vfs_hooks *hp;						\
  									\
 	error = 0;							\
  									\
-	__link_set_foreach(hp, vfs_hooks) {				\
-		if ((*hp)-> func != NULL) {				\
-			error = (*hp)-> func args;			\
+	mutex_enter(&vfs_hooks_lock);					\
+        LIST_FOREACH(hp, &vfs_hooks_head, vfs_hooks_list) {		\
+		if (hp-> hook != NULL) {				\
+			error = hp-> hook args;				\
 			if (error != 0)					\
 				break;					\
 		}							\
 	}								\
+	mutex_exit(&vfs_hooks_lock);					\
  									\
-	return error;
+	return error;							\
+}
 
 /*
  * Macro to be used in one of the vfs_hooks_* function for hooks that
@@ -91,12 +120,14 @@ VFS_HOOKS_ATTACH(null_hooks);
 void									\
 func fargs								\
 {									\
-	struct vfs_hooks * const *hp;					\
+	struct vfs_hooks *hp;						\
  									\
-	__link_set_foreach(hp, vfs_hooks) {				\
-		if ((*hp)-> hook != NULL)				\
-			(*hp)-> hook hargs;				\
+	mutex_enter(&vfs_hooks_lock);					\
+        LIST_FOREACH(hp, &vfs_hooks_head, vfs_hooks_list) {		\
+		if (hp-> hook != NULL)					\
+			hp-> hook hargs;				\
 	}								\
+	mutex_exit(&vfs_hooks_lock);					\
 }
 
 /*
@@ -104,12 +135,3 @@ func fargs								\
  */
 
 VFS_HOOKS_WO_ERROR(vfs_hooks_unmount, (struct mount *mp), vh_unmount, (mp));
-
-/*
-void
-vfs_hooks_unmount(struct mount *mp)
-{
-
-	VFS_HOOKS_WO_ERROR(vh_unmount, (mp));
-}
-*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.68 2008/01/05 12:30:47 dsl Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.68.8.1 2008/05/18 12:35:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.68 2008/01/05 12:30:47 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.68.8.1 2008/05/18 12:35:09 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -74,7 +74,9 @@ sys_reboot(struct lwp *l, const struct sys_reboot_args *uap, register_t *retval)
 	/*
 	 * Not all ports use the bootstr currently.
 	 */
+	KERNEL_LOCK(1, NULL);
 	cpu_reboot(SCARG(uap, opt), bootstr);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 
@@ -128,7 +130,6 @@ scdebug_call(register_t code, const register_t args[])
 	    || sy->sy_call == sys_nosys))
 		return;
 
-	KERNEL_LOCK(1, l);
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if ((int)code < 0
 #ifndef __HAVE_MINIMAL_EMUL
@@ -147,7 +148,6 @@ scdebug_call(register_t code, const register_t args[])
 		}
 	}
 	printf("\n");
-	KERNEL_UNLOCK_ONE(l);
 }
 
 void
@@ -170,7 +170,6 @@ scdebug_ret(register_t code, int error, const register_t retval[])
 	    || sy->sy_call == sys_nosys))
 		return;
 
-	KERNEL_LOCK(1, l);
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
 	if ((int)code < 0
 #ifndef __HAVE_MINIMAL_EMUL
@@ -182,6 +181,5 @@ scdebug_ret(register_t code, int error, const register_t retval[])
 		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", (long)code,
 		    error, (long)retval[0], (long)retval[1]);
 	printf("\n");
-	KERNEL_UNLOCK_ONE(l);
 }
 #endif /* SYSCALL_DEBUG */

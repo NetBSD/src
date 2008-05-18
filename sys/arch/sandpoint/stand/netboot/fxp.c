@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.7 2008/04/08 23:59:03 nisimura Exp $ */
+/* $NetBSD: fxp.c,v 1.7.2.1 2008/05/18 12:32:42 yamt Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -21,13 +21,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -136,6 +129,7 @@ struct local {
 	unsigned eeprom_addr;
 };
 
+int fxp_match(unsigned, void *);
 void *fxp_init(unsigned, void *);
 int fxp_send(void *, char *, unsigned);
 int fxp_recv(void *, char *, unsigned, unsigned);
@@ -179,6 +173,20 @@ static uint8_t fxp_cb_config_template[] = {
 static struct fxp_cb_config store_cbc;
 static struct fxp_cb_ias store_cbi;
 
+int
+fxp_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x8086, 0x1209):
+	case PCI_DEVICE(0x8086, 0x1229):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 fxp_init(unsigned tag, void *data)
 {
@@ -188,11 +196,6 @@ fxp_init(unsigned tag, void *data)
 	struct fxp_cb_ias *cb_ias = &store_cbi;
 	struct rxdesc *rfa;
 	unsigned v, i;
-
-	v = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_DEVICE(0x8086, 0x1209) != v
-	    && PCI_DEVICE(0x8086, 0x1229) != v)
-		return NULL;
 
 	sc = ALLOC(struct local, sizeof(struct txdesc)); /* desc alignment */
 	memset(sc, 0, sizeof(struct local));

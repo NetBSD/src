@@ -470,7 +470,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef HAVE_IO_H */
 
 /* Define if you have IPv6. */
-#define HAVE_IPV6 1
+/* #define HAVE_IPV6 1 -- defined by Makefile if (${USE_INET6} != "no") */
 
 /* Define if you have the function `iruserok'. */
 #define HAVE_IRUSEROK 1

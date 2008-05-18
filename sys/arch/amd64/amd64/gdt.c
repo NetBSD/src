@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.17 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: gdt.c,v 1.17.2.1 2008/05/18 12:31:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -44,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.17 2008/04/16 21:51:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.17.2.1 2008/05/18 12:31:27 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -179,7 +172,7 @@ gdt_init(void)
 	}
 	pmap_update(pmap_kernel());
 	memcpy(gdtstore, old_gdt, DYNSEL_START);
-	ci->ci_gdt = gdtstore;
+	ci->ci_gdt = (void *)gdtstore;
 #ifndef XEN
 	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
 	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
@@ -194,14 +187,14 @@ void
 gdt_alloc_cpu(struct cpu_info *ci)
 {
 #if 0
-        ci->ci_gdt = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
+        ci->ci_gdt = (void *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
         uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
             (vaddr_t)ci->ci_gdt + MINGDTSIZ, false, false);
         memset(ci->ci_gdt, 0, MINGDTSIZ);
         memcpy(ci->ci_gdt, gdtstore,
 	   DYNSEL_START + gdt_dyncount * sizeof(struct sys_segment_descriptor));
 #else
-	ci->ci_gdt = gdtstore;
+	ci->ci_gdt = (void *)gdtstore;
 #endif
 }
 

@@ -1,9 +1,39 @@
-Mar 14, 2008: libarchive 2.4.14 released.  This is identical to 2.4.13
-	except it contains a one-line fix to the uname/gname problem
-	introduced by the Feb 25 UTF-8 fix.  This bug makes libarchive
-	refuse to add a file to a pax archive if it has a valid gname
-	but not a valid uname.  In some cases, it can also cause the
-	uname to be stored for the gname.
+
+May 04, 2008: libarchive 2.5.3b released
+	* libarchive: Several fixes to link resolver to address bsdcpio crashes
+	* bsdcpio: -p hardlink handling fixes
+	* tar/pax: Ensure ustar dirnames end in '/'; be more careful about
+	  measuring filenames when deciding what pathname fields to use
+	* libarchive: Mark which entry strings are set; be accurate about
+	  distinguishing empty strings ("") from unset ones (NULL)
+	* tar: Don't crash reading entries with empty filenames
+	* libarchive_test, bsdtar_test, bsdcpio_test:  Better detaults:
+	  run all tests, delete temp dirs, summarize repeated failures
+	* -no-undefined to libtool for Cygwin
+	* libarchive_test: Skip large file tests on systems with 32-bit off_t
+	* iso9660: Don't bother trying to find the body of an empty file;
+	  this works around strange behavior from some ISO9660 writers
+	* tar: allow -r -T to be used together
+	* tar: allow --format with -r or -u
+	* libarchive: Don't build archive.h
+
+Mar 30, 2008: libarchive 2.5.1b released
+
+Mar 15, 2008: libarchive 2.5.0b released
+Mar 15, 2008: bsdcpio now seems to correctly write hardlinks into newc,
+	ustar, and old cpio archives.  Just a little more testing before
+	bsdcpio 1.0 becomes a reality.
+Mar 15, 2008: I think the new linkify() interface is finally handling
+	all known hardlink strategies.
+Mar 15, 2008: Mtree read fixes from Joerg Sonnenberger.
+Mar 15, 2008: Many new bsdtar and bsdcpio options from Joerg Sonnenberger.
+Mar 15, 2008: test harnesses no longer require uudecode; they
+	now have built-in decoding logic that decodes the reference
+	files as they are needed.
+
+Mar 14, 2008: libarchive 2.4.14 released; identical to 2.4.13 except for
+	a point fix for gname/uname mixup in pax format that was introduced
+	with the UTF-8 fixes.
 
 Feb 26, 2008: libarchive 2.4.13 released
 Feb 25, 2008: Handle path, linkname, gname, or uname that can't be converted

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.100 2008/03/27 19:06:51 ad Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.100.4.1 2008/05/18 12:33:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.100 2008/03/27 19:06:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.100.4.1 2008/05/18 12:33:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,10 +945,10 @@ ibcs2_sys_times(struct lwp *l, const struct ibcs2_sys_times_args *uap, register_
 #define CONVTCK(r)      (r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
 	ru = l->l_proc->p_stats->p_ru;
-	mutex_enter(&l->l_proc->p_smutex);
+	mutex_enter(l->l_proc->p_lock);
 	calcru(l->l_proc, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 	rulwps(l->l_proc, &ru);
-	mutex_exit(&l->l_proc->p_smutex);
+	mutex_exit(l->l_proc->p_lock);
 	tms.tms_utime = CONVTCK(ru.ru_utime);
 	tms.tms_stime = CONVTCK(ru.ru_stime);
 
@@ -1042,7 +1042,9 @@ ibcs2_sys_pgrpsys(struct lwp *l, const struct ibcs2_sys_pgrpsys_args *uap, regis
 
 	switch (SCARG(uap, type)) {
 	case 0:			/* getpgrp */
+		mutex_enter(proc_lock);
 		*retval = p->p_pgrp->pg_id;
+		mutex_exit(proc_lock);
 		return 0;
 
 	case 1:			/* setpgrp */
@@ -1052,7 +1054,9 @@ ibcs2_sys_pgrpsys(struct lwp *l, const struct ibcs2_sys_pgrpsys_args *uap, regis
 		SCARG(&sa, pid) = 0;
 		SCARG(&sa, pgid) = 0;
 		sys_setpgid(l, &sa, retval);
+		mutex_enter(proc_lock);
 		*retval = p->p_pgrp->pg_id;
+		mutex_exit(proc_lock);
 		return 0;
 	    }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: dsa.inc,v 1.7 2007/12/09 22:44:15 adrianp Exp $
+#	$NetBSD: dsa.inc,v 1.7.6.1 2008/05/18 12:30:21 yamt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -9,7 +9,7 @@
 
 
 DSA_SRCS = dsa_gen.c dsa_key.c dsa_lib.c dsa_asn1.c dsa_vrf.c dsa_sign.c \
-	dsa_err.c dsa_ossl.c dsa_depr.c
+	dsa_err.c dsa_ossl.c dsa_depr.c dsa_ameth.c dsa_pmeth.c dsa_prn.c
 SRCS += ${DSA_SRCS}
 
 .for cryptosrc in ${DSA_SRCS}

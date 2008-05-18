@@ -1,4 +1,4 @@
-/*	$NetBSD: bootpd.h,v 1.4 1998/01/09 08:09:02 perry Exp $	*/
+/*	$NetBSD: bootpd.h,v 1.4.42.1 2008/05/18 12:36:14 yamt Exp $	*/
 
 /************************************************************************
           Copyright 1988, 1991 by Carnegie Mellon University
@@ -201,8 +201,8 @@ struct host {
  */
 
 extern int debug;
-extern char *bootptab;
-extern char *progname;
+extern const char *bootptab;
+extern const char *progname;
 
 extern u_char vm_cmu[4];
 extern u_char vm_rfc1048[4];

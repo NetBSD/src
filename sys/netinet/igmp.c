@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.46 2008/04/15 16:02:03 thorpej Exp $	*/
+/*	$NetBSD: igmp.c,v 1.46.2.1 2008/05/18 12:35:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,20 +40,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.46 2008/04/15 16:02:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.46.2.1 2008/05/18 12:35:28 yamt Exp $");
 
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/net_stats.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -72,12 +73,7 @@ POOL_INIT(igmp_rti_pool, sizeof(struct router_info), 0, 0, 0, "igmppl", NULL,
 
 static percpu_t *igmpstat_percpu;
 
-#define	IGMP_STATINC(x)							\
-do {									\
-	uint64_t *_igmps_ = percpu_getref(igmpstat_percpu);		\
-	_igmps_[x]++;							\
-	percpu_putref(igmpstat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	IGMP_STATINC(x)		_NET_STATINC(igmpstat_percpu, x)
 
 int igmp_timers_are_running;
 static LIST_HEAD(, router_info) rti_head = LIST_HEAD_INITIALIZER(rti_head);
@@ -484,7 +480,6 @@ igmp_fasttimo(void)
 {
 	struct in_multi *inm;
 	struct in_multistep step;
-	int s;
 
 	/*
 	 * Quick check to see if any work needs to be done, in order
@@ -493,7 +488,9 @@ igmp_fasttimo(void)
 	if (!igmp_timers_are_running)
 		return;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	igmp_timers_are_running = 0;
 	IN_FIRST_MULTI(step, inm);
 	while (inm != NULL) {
@@ -514,23 +511,26 @@ igmp_fasttimo(void)
 		}
 		IN_NEXT_MULTI(step, inm);
 	}
-	splx(s);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void
 igmp_slowtimo(void)
 {
 	struct router_info *rti;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	LIST_FOREACH(rti, &rti_head, rti_link) {
 		if (rti->rti_type == IGMP_v1_ROUTER &&
 		    ++rti->rti_age >= IGMP_AGE_THRESHOLD) {
 			rti->rti_type = IGMP_v2_ROUTER;
 		}
 	}
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 void
@@ -600,36 +600,11 @@ igmp_purgeif(struct ifnet *ifp)	/* MUST be called at splsoftnet() */
 	rti_delete(ifp);	/* manipulates pools */
 }
 
-static void
-igmpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *igmpsc = v1;
-	uint64_t *igmps = v2;
-	u_int i;
-
-	for (i = 0; i < IGMP_NSTATS; i++)
-		igmps[i] += igmpsc[i];
-}
-
-static void
-igmpstat_convert_to_user(uint64_t *igmps)
-{
-
-	memset(igmps, 0, sizeof(uint64_t) * IGMP_NSTATS);
-	percpu_foreach(igmpstat_percpu, igmpstat_convert_to_user_cb, igmps);
-}
-
 static int
 sysctl_net_inet_igmp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t igmps[IGMP_NSTATS];
 
-	igmpstat_convert_to_user(igmps);
-	node = *rnode;
-	node.sysctl_data = igmps;
-	node.sysctl_size = sizeof(igmps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(igmpstat_percpu, IGMP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_igmp_setup, "sysctl net.inet.igmp subtree setup")

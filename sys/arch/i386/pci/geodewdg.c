@@ -1,4 +1,4 @@
-/*	$NetBSD: geodewdg.c,v 1.7 2008/01/03 04:52:55 dyoung Exp $	*/
+/*	$NetBSD: geodewdg.c,v 1.7.8.1 2008/05/18 12:32:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -48,13 +48,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -76,7 +69,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.7 2008/01/03 04:52:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.7.8.1 2008/05/18 12:32:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.7 2008/01/03 04:52:55 dyoung Exp $");
 #endif
 
 struct geode_wdog_softc {
-	struct device		sc_dev;
 	struct geode_gcb_softc *sc_gcb_dev;
 
 	uint16_t		sc_countdown;
@@ -222,7 +214,7 @@ geode_wdog_setmode(struct sysmon_wdog *smw)
 }
 
 static int
-geode_wdog_match(device_t parent, struct cfdata *match, void *aux)
+geode_wdog_match(device_t parent, cfdata_t match, void *aux)
 {
 	return !attached;
 }
@@ -296,5 +288,5 @@ geode_wdog_detach(device_t self, int flags)
 	return 0;
 }
 
-CFATTACH_DECL(geodewdog, sizeof(struct geode_wdog_softc),
+CFATTACH_DECL_NEW(geodewdog, sizeof(struct geode_wdog_softc),
 	      geode_wdog_match, geode_wdog_attach, geode_wdog_detach, NULL);

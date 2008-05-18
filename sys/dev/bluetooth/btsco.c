@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.19 2008/03/28 21:17:37 plunky Exp $	*/
+/*	$NetBSD: btsco.c,v 1.19.2.1 2008/05/18 12:33:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.19 2008/03/28 21:17:37 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.19.2.1 2008/05/18 12:33:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -91,6 +91,7 @@ struct btsco_softc {
 
 	device_t		 sc_audio;	/* MI audio device */
 	void			*sc_intr;	/* interrupt cookie */
+	kcondvar_t		 sc_connect;	/* connect wait */
 
 	/* Bluetooth */
 	bdaddr_t		 sc_laddr;	/* local address */
@@ -286,6 +287,7 @@ btsco_attach(device_t parent, device_t self, void *aux)
 	sc->sc_vgm = 200;
 	sc->sc_state = BTSCO_CLOSED;
 	sc->sc_name = device_xname(self);
+	cv_init(&sc->sc_connect, "connect");
 
 	/*
 	 * copy in our configuration info
@@ -339,11 +341,10 @@ static int
 btsco_detach(device_t self, int flags)
 {
 	struct btsco_softc *sc = device_private(self);
-	int s;
 
 	DPRINTF("sc=%p\n", sc);
 
-	s = splsoftnet();
+	mutex_enter(bt_lock);
 	if (sc->sc_sco != NULL) {
 		DPRINTF("sc_sco=%p\n", sc->sc_sco);
 		sco_disconnect(sc->sc_sco, 0);
@@ -356,7 +357,7 @@ btsco_detach(device_t self, int flags)
 		sco_detach(&sc->sc_sco_l);
 		sc->sc_sco_l = NULL;
 	}
-	splx(s);
+	mutex_exit(bt_lock);
 
 	if (sc->sc_audio != NULL) {
 		DPRINTF("sc_audio=%p\n", sc->sc_audio);
@@ -380,6 +381,8 @@ btsco_detach(device_t self, int flags)
 		if ((flags & DETACH_FORCE) == 0)
 			return EAGAIN;
 	}
+
+	cv_destroy(&sc->sc_connect);
 
 	return 0;
 }
@@ -417,7 +420,7 @@ btsco_sco_connected(void *arg)
 		sco_detach(&sc->sc_sco_l);
 
 	sc->sc_state = BTSCO_OPEN;
-	wakeup(sc);
+	cv_broadcast(&sc->sc_connect);
 }
 
 static void
@@ -438,7 +441,7 @@ btsco_sco_disconnected(void *arg, int err)
 		break;
 
 	case BTSCO_WAIT_CONNECT:	/* connect failed */
-		wakeup(sc);
+		cv_broadcast(&sc->sc_connect);
 		break;
 
 	case BTSCO_OPEN:		/* link lost */
@@ -557,7 +560,7 @@ btsco_open(void *hdl, int flags)
 {
 	struct sockaddr_bt sa;
 	struct btsco_softc *sc = hdl;
-	int err, s, timo;
+	int err, timo;
 
 	DPRINTF("%s flags 0x%x\n", sc->sc_name, flags);
 	/* flags FREAD & FWRITE? */
@@ -565,7 +568,7 @@ btsco_open(void *hdl, int flags)
 	if (sc->sc_sco != NULL || sc->sc_sco_l != NULL)
 		return EIO;
 
-	s = splsoftnet();
+	mutex_enter(bt_lock);
 
 	memset(&sa, 0, sizeof(sa));
 	sa.bt_len = sizeof(sa);
@@ -613,7 +616,7 @@ btsco_open(void *hdl, int flags)
 
 	sc->sc_state = BTSCO_WAIT_CONNECT;
 	while (err == 0 && sc->sc_state == BTSCO_WAIT_CONNECT)
-		err = tsleep(sc, PWAIT | PCATCH, "btsco", timo);
+		err = cv_timedwait_sig(&sc->sc_connect, bt_lock, timo);
 
 	switch (sc->sc_state) {
 	case BTSCO_CLOSED:		/* disconnected */
@@ -639,7 +642,7 @@ btsco_open(void *hdl, int flags)
 	}
 
 done:
-	splx(s);
+	mutex_exit(bt_lock);
 
 	DPRINTF("done err=%d, sc_state=%d, sc_mtu=%d\n",
 			err, sc->sc_state, sc->sc_mtu);
@@ -650,11 +653,10 @@ static void
 btsco_close(void *hdl)
 {
 	struct btsco_softc *sc = hdl;
-	int s;
 
 	DPRINTF("%s\n", sc->sc_name);
 
-	s = splsoftnet();
+	mutex_enter(bt_lock);
 	if (sc->sc_sco != NULL) {
 		sco_disconnect(sc->sc_sco, 0);
 		sco_detach(&sc->sc_sco);
@@ -663,7 +665,7 @@ btsco_close(void *hdl)
 	if (sc->sc_sco_l != NULL) {
 		sco_detach(&sc->sc_sco_l);
 	}
-	splx(s);
+	mutex_exit(bt_lock);
 
 	if (sc->sc_rx_mbuf != NULL) {
 		m_freem(sc->sc_rx_mbuf);

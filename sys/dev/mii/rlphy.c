@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.21 2008/04/08 20:10:20 cegger Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.21.2.1 2008/05/18 12:34:13 yamt Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.21 2008/04/08 20:10:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.21.2.1 2008/05/18 12:34:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,10 +61,10 @@ struct rlphy_softc {
 	int sc_rtl8201l;
 };
 
-int	rlphymatch(struct device *, struct cfdata *, void *);
-void	rlphyattach(struct device *, struct device *, void *);
+int	rlphymatch(device_t, cfdata_t, void *);
+void	rlphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL(rlphy, sizeof(struct rlphy_softc),
+CFATTACH_DECL_NEW(rlphy, sizeof(struct rlphy_softc),
     rlphymatch, rlphyattach, mii_phy_detach, mii_phy_activate);
 
 int	rlphy_service(struct mii_softc *, struct mii_data *, int);
@@ -87,7 +87,7 @@ static const struct mii_phydesc rlphys[] = {
 };
 
 int
-rlphymatch(struct device *parent, struct cfdata *match, void *aux)
+rlphymatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -109,7 +109,7 @@ rlphymatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-rlphyattach(struct device *parent, struct device *self, void *aux)
+rlphyattach(device_t parent, device_t self, void *aux)
 {
 	struct rlphy_softc *rsc = device_private(self);
 	struct mii_softc *sc = &rsc->sc_mii;
@@ -124,6 +124,7 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 	} else
 		aprint_normal(": Realtek internal PHY\n");
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &rlphy_funcs;
@@ -134,7 +135,7 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 
 	PHY_RESET(sc);
 
-	aprint_normal_dev(&sc->mii_dev, "");
+	aprint_normal_dev(self, "");
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)

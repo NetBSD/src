@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.10 2008/03/30 22:28:41 dholland Exp $	*/
+/*	$NetBSD: lint.h,v 1.10.2.1 2008/05/18 12:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -74,6 +74,9 @@ typedef enum {
 	PTR,		/* pointer */
 	ARRAY,		/* array */
 	FUNC,		/* function */
+	FCOMPLEX,	/* float _Complex */
+	DCOMPLEX,	/* double _Complex */
+	COMPLEX,	/* _Complex */
 	NTSPEC
 } tspec_t;
 
@@ -91,6 +94,7 @@ typedef	struct {
 	u_int	tt_isftyp : 1;		/* 1 if floating point type */
 	u_int	tt_isatyp : 1;		/* 1 if arithmetic type */
 	u_int	tt_issclt : 1;		/* 1 if scalar type */
+	u_int	tt_isctyp : 1;		/* 1 if complex type */
 	const char *tt_name;		/* Bezeichnung des Typs */
 } ttab_t;
 
@@ -102,6 +106,7 @@ typedef	struct {
 #define isutyp(t)	(ttab[t].tt_isutyp)
 #define isftyp(t)	(ttab[t].tt_isftyp)
 #define isatyp(t)	(ttab[t].tt_isatyp)
+#define isctyp(t)	(ttab[t].tt_isctyp)
 #define issclt(t)	(ttab[t].tt_issclt)
 
 extern	ttab_t	ttab[];

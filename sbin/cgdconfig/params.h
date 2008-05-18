@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.8 2007/11/06 02:50:49 christos Exp $ */
+/* $NetBSD: params.h,v 1.8.10.1 2008/05/18 12:30:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,6 +39,7 @@ struct keygen {
 	size_t		 kg_iterations;
 	bits_t		*kg_salt;
 	bits_t		*kg_key;
+	string_t	*kg_cmd;
 	struct keygen	*next;
 };
 
@@ -68,6 +62,7 @@ struct params {
 #define KEYGEN_STOREDKEY		0x3
 #define KEYGEN_URANDOMKEY		0x4
 #define KEYGEN_PKCS5_PBKDF2_SHA1	0x5
+#define KEYGEN_SHELL_CMD		0x6
 
 /* verification methods */
 
@@ -112,6 +107,7 @@ struct keygen	*keygen_set_method(struct keygen *, string_t *);
 struct keygen	*keygen_salt(bits_t *);
 struct keygen	*keygen_iterations(size_t);
 struct keygen	*keygen_key(bits_t *);
+struct keygen	*keygen_cmd(string_t *);
 
 int		 keygen_fput(struct keygen *, int, FILE *);
 __END_DECLS

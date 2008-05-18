@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.17 2008/01/20 18:09:13 joerg Exp $	*/
+/*	$NetBSD: timepps.h,v 1.17.8.1 2008/05/18 12:35:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -130,6 +130,10 @@ typedef struct {
 #define PPS_IOC_KCBIND		_IOW('1', 7, int)
 
 #ifdef _KERNEL
+
+#include <sys/mutex.h>
+
+extern kmutex_t timecounter_lock;
 
 struct pps_state {
 	/* Capture information. */

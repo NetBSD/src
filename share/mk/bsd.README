@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.204 2008/03/31 02:42:27 lukem Exp $
+#	$NetBSD: bsd.README,v 1.204.4.1 2008/05/18 12:31:18 yamt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -188,7 +188,7 @@ MKKERBEROS	If "no", disables building of Kerberos v5
 		infrastructure (libraries and support programs).
 		Default: yes
 
-MKLINKLIB	If "no", act as "MKPICINSTALL=no MKPROFILE=no".
+MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
 		Also:
 			- don't install the .a libraries
 			- don't install _pic.a libraries on PIC systems
@@ -755,7 +755,7 @@ USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
 		Default: no
 
-MKPRIVATELIB	If not "no", act as "MKPROFILE=no MKPIC=no MKLINT=no",
+LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no MKPROFILE=no",
 		and don't install the (.a) library.
 		This is useful for "build only" helper libraries.
 		Default: no
@@ -1379,7 +1379,7 @@ TOOL_PAX		Manipulate file archives and copy directories.  [pax]
 
 TOOL_PIC		Compile pictures for groff.  [pic]
 
-TOOL_PREPMKBOOTIMAGE	prep-mkbootimage (XXXBUILDSH).  [prep-mkbootimage]
+TOOL_POWERPCMKBOOTIMAGE	powerpc-mkbootimage (XXXBUILDSH).  [powerpc-mkbootimage]
 
 TOOL_PWD_MKDB		Generate the password databases.  [pwd_mkdb]
 

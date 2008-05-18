@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.17 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: segments.h,v 1.17.2.1 2008/05/18 12:31:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -232,13 +232,15 @@ void set_sys_segment(struct sys_segment_descriptor *, void *, size_t,
 			  int, int, int);
 void set_mem_segment(struct mem_segment_descriptor *, void *, size_t,
 			  int, int, int, int, int);
+void cpu_init_idt(void);
 
+#if !defined(XEN)
 void idt_init(void);
 void idt_vec_reserve(int);
 int idt_vec_alloc(int, int);
 void idt_vec_set(int, void (*)(void));
 void idt_vec_free(int);
-void cpu_init_idt(void);
+#endif
 
 struct lwp;
 int memseg_baseaddr(struct lwp *, uint64_t, char *, int, uint64_t *);

@@ -1,7 +1,6 @@
-#  $NetBSD: Makefile,v 1.8 2006/03/22 20:45:58 drochner Exp $
+#  $NetBSD: Makefile,v 1.8.18.1 2008/05/18 12:30:38 yamt Exp $
 #
 
-NOLINT=		# defined
 USE_SHLIBDIR=	yes
 
 LIB=		m387

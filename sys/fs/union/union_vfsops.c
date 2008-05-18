@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.52 2008/02/27 19:59:48 matt Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.52.2.1 2008/05/18 12:35:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.52 2008/02/27 19:59:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.52.2.1 2008/05/18 12:35:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,11 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.52 2008/02/27 19:59:48 matt Exp $
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/union/union.h>
+
+MODULE(MODULE_CLASS_VFS, union, NULL);
 
 VFS_PROTOS(union);
 
@@ -366,7 +369,7 @@ union_unmount(struct mount *mp, int mntflags)
 	 * Finally, throw away the union_mount structure
 	 */
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
-	mp->mnt_data = 0;
+	mp->mnt_data = NULL;
 	return (0);
 }
 
@@ -540,8 +543,22 @@ struct vfsops union_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	union_renamelock_enter,
 	union_renamelock_exit,
+	(void *)eopnotsupp,
 	union_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(union_vfsops);
+
+static int
+union_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&union_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&union_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

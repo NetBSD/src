@@ -1,4 +1,4 @@
-/*	$NetBSD: libaltq2.c,v 1.5 2002/03/05 04:11:51 itojun Exp $	*/
+/*	$NetBSD: libaltq2.c,v 1.5.34.1 2008/05/18 12:36:13 yamt Exp $	*/
 /*	$KAME: libaltq2.c,v 1.6 2002/02/20 10:43:35 kjc Exp $	*/
 /*
  * Copyright (C) 1997-2000
@@ -44,7 +44,7 @@
 #include "altq_qop.h"
 
 /* from rsvp_main.c */
-char *altqconfigfile = "/etc/altq.conf";
+const char *altqconfigfile = "/etc/altq.conf";
 
 /* from rsvp_global.h */
 int	if_num;		/* number of phyints */

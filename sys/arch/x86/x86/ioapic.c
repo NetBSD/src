@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.33 2008/04/18 15:32:46 cegger Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.33.2.1 2008/05/18 12:33:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.33 2008/04/18 15:32:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.33.2.1 2008/05/18 12:33:04 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -359,7 +352,7 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		if (i >= 16)
 			redlo |= IOAPIC_REDLO_LEVEL | IOAPIC_REDLO_ACTLO;
 		ioapic_write(sc, IOAPIC_REDLO(i), redlo);
-		redhi = (cpu_info_primary.ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
+		redhi = (cpu_info_primary.ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
 		ioapic_write(sc, IOAPIC_REDHI(i), redhi);
 	}
 	
@@ -403,7 +396,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 	       struct cpu_info *ci)
 {
 	uint32_t redlo;
-	uint32_t redhi = 0;
+	uint32_t redhi;
 	int delmode;
 
 	struct ioapic_pin *pp;
@@ -416,9 +409,10 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 
 	/* XXX magic numbers */
 	if ((delmode != 0) && (delmode != 1))
-		;
+		redhi = 0;
 	else if (pp->ip_type == IST_NONE) {
 		redlo |= IOAPIC_REDLO_MASK;
+		redhi = 0;
 	} else {
 		redlo |= (idt_vec & 0xff);
 		redlo |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
@@ -433,7 +427,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 		 * CPUs.  but there's no point in doing that until after 
 		 * most interrupts run without the kernel lock.  
 		 */
-		redhi |= (ci->ci_apicid << IOAPIC_REDHI_DEST_SHIFT);
+		redhi = (ci->ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);
 
 		/* XXX derive this bit from BIOS info */
 		if (pp->ip_type == IST_LEVEL)

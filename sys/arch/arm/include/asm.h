@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 2007/10/17 19:53:41 garbled Exp $	*/
+/*	$NetBSD: asm.h,v 1.10.18.1 2008/05/18 12:31:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,12 +70,14 @@
  */
 #define _ASM_TYPE_FUNCTION	%function
 #define _ASM_TYPE_OBJECT	%object
+#ifdef __thumb__
+#define _ENTRY(x) \
+	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; .thumb_func; x:
+#else
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
+#endif
 #define	_END(x)		.size x,.-x
-#define	END(y)		_END(_C_LABEL(y))
-#define	ASEND(y)	_END(_ASM_LABEL(y))
-
 
 #ifdef GPROF
 # ifdef __ELF__
@@ -91,22 +93,51 @@
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	ENTRY_NP(y)	_ENTRY(_C_LABEL(y))
+#define	END(y)		_END(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
-#define	END(y)		_END(_C_LABEL(y))
 #define	ASEND(y)	_END(_ASM_LABEL(y))
 
 #define	ASMSTR		.asciz
 
 #if defined(__ELF__) && defined(PIC)
+#ifdef __thumb__
+#define	PLT_SYM(x)	x
+#define	GOT_SYM(x)	PIC_SYM(x, GOTOFF)
+#define	GOT_GET(x,got,sym)	\
+	ldr	x, sym;		\
+	add	x, got;		\
+	ldr	x, [x]
+#else
+#define	PLT_SYM(x)	PIC_SYM(x, PLT)
+#define	GOT_SYM(x)	PIC_SYM(x, GOT)
+#define	GOT_GET(x,got,sym)	\
+	ldr	x, sym;		\
+	ldr	x, [x, got]
+#endif /* __thumb__ */
+
+#define	GOT_INIT(got,gotsym,pclabel) \
+	ldr	got, gotsym;	\
+	add	got, got, pc;	\
+	pclabel:
+#define	GOT_INITSYM(gotsym,pclabel) \
+	gotsym: .word _C_LABEL(_GLOBAL_OFFSET_TABLE_) + (. - (pclabel+4))
+
 #ifdef __STDC__
 #define	PIC_SYM(x,y)	x ## ( ## y ## )
 #else
 #define	PIC_SYM(x,y)	x/**/(/**/y/**/)
 #endif
+
 #else
+#define	PLT_SYM(x)	x
+#define	GOT_SYM(x)	x
+#define	GOT_GET(x,got,sym)	\
+	ldr	x, sym;
+#define	GOT_INIT(got,gotsym,pclabel)
+#define	GOT_INITSYM(gotsym,pclabel)
 #define	PIC_SYM(x,y)	x
-#endif
+#endif	/* ELF && PIC */
 
 #ifdef __ELF__
 #define RCSID(x)	.section ".ident"; .asciz x
@@ -141,24 +172,26 @@
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
 
-#if defined (_ARM_ARCH_6)
-#define GET_CPUINFO(rX)		mrc	p15, 0, rX, c13, c0, 4
-#endif
-
-#if defined (_ARM_ARCH_4T)
-# define RET	bx	lr
-# ifdef __STDC__
-#  define RETc(c) bx##c	lr
-# else
-#  define RETc(c) bx/**/c	lr
-# endif
+#ifdef __thumb__
+# define XPUSH		push
+# define XPOP		pop
+# define XPOPRET	pop	{pc}
 #else
-# define RET	mov	pc, lr
-# ifdef __STDC__
-#  define RETc(c) mov##c	pc, lr
+# define XPUSH		stmfd	sp!,
+# define XPOP		ldmfd	sp!,
+# ifdef _ARM_ARCH_5
+#  define XPOPRET	ldmfd	sp!, {pc}
 # else
-#  define RETc(c) mov/**/c	pc, lr
+#  define XPOPRET	ldmfd	sp!, {lr}; mov pc, lr
 # endif
+#endif
+  
+#if defined (_ARM_ARCH_4T)
+# define RET		bx		lr
+# define RETc(c)	__CONCAT(bx,c)	lr
+#else
+# define RET		mov		pc, lr
+# define RETc(c)	__CONCAT(mov,c)	pc, lr
 #endif
 
 #endif /* !_ARM_ASM_H_ */

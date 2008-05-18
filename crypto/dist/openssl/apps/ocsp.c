@@ -58,20 +58,38 @@
 #ifndef OPENSSL_NO_OCSP
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include "apps.h"
-#include <openssl/pem.h>
-#include <openssl/ocsp.h>
+#include <time.h>
+#include "apps.h" /* needs to be included before the openssl headers! */
+#include <openssl/e_os2.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <openssl/evp.h>
 #include <openssl/bn.h>
 
+#if defined(NETWARE_CLIB)
+#  ifdef NETWARE_BSDSOCK
+#    include <sys/socket.h>
+#    include <sys/bsdskt.h>
+#  else
+#    include <novsock2.h>
+#  endif
+#elif defined(NETWARE_LIBC)
+#  ifdef NETWARE_BSDSOCK
+#    include <sys/select.h>
+#  else
+#    include <novsock2.h>
+#  endif
+#endif
+  
 /* Maximum leeway in validity period: default 5 minutes */
 #define MAX_VALIDITY_PERIOD	(5 * 60)
 
-static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
+static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, const EVP_MD *cert_id_md, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids);
-static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
+static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, const EVP_MD * cert_id_md, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids);
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 				STACK *names, STACK_OF(OCSP_CERTID) *ids,
@@ -86,6 +104,8 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(char *port);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, char *port);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
+static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
+				OCSP_REQUEST *req, int req_timeout);
 
 #undef PROG
 #define PROG ocsp_main
@@ -112,11 +132,11 @@ int MAIN(int argc, char **argv)
 	BIO *acbio = NULL, *cbio = NULL;
 	BIO *derbio = NULL;
 	BIO *out = NULL;
+	int req_timeout = -1;
 	int req_text = 0, resp_text = 0;
 	long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
 	char *CAfile = NULL, *CApath = NULL;
 	X509_STORE *store = NULL;
-	SSL_CTX *ctx = NULL;
 	STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
 	char *sign_certfile = NULL, *verify_certfile = NULL, *rcertfile = NULL;
 	unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
@@ -133,6 +153,7 @@ int MAIN(int argc, char **argv)
 	char *rca_filename = NULL;
 	CA_DB *rdb = NULL;
 	int nmin = 0, ndays = -1;
+	const EVP_MD *cert_id_md = NULL;
 
 	if (bio_err == NULL) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
@@ -151,6 +172,22 @@ int MAIN(int argc, char **argv)
 				{
 				args++;
 				outfile = *args;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp(*args, "-timeout"))
+			{
+			if (args[1])
+				{
+				args++;
+				req_timeout = atol(*args);
+				if (req_timeout < 0)
+					{
+					BIO_printf(bio_err,
+						"Illegal timeout value %s\n",
+						*args);
+					badarg = 1;
+					}
 				}
 			else badarg = 1;
 			}
@@ -384,7 +421,8 @@ int MAIN(int argc, char **argv)
 				cert = load_cert(bio_err, *args, FORMAT_PEM,
 					NULL, e, "certificate");
 				if(!cert) goto end;
-				if(!add_ocsp_cert(&req, cert, issuer, ids))
+				if (!cert_id_md) cert_id_md = EVP_sha1();
+				if(!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
 					goto end;
 				if(!sk_push(reqnames, *args))
 					goto end;
@@ -396,7 +434,8 @@ int MAIN(int argc, char **argv)
 			if (args[1])
 				{
 				args++;
-				if(!add_ocsp_serial(&req, *args, issuer, ids))
+				if (!cert_id_md) cert_id_md = EVP_sha1();
+				if(!add_ocsp_serial(&req, *args, cert_id_md, issuer, ids))
 					goto end;
 				if(!sk_push(reqnames, *args))
 					goto end;
@@ -498,7 +537,10 @@ int MAIN(int argc, char **argv)
 				}
 			else badarg = 1;
 			}
-		else badarg = 1;
+		else if ((cert_id_md = EVP_get_digestbyname((*args)+1))==NULL)
+			{
+			badarg = 1;
+			}
 		args++;
 		}
 
@@ -554,6 +596,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-ndays n	 	 number of days before next update\n");
 		BIO_printf (bio_err, "-resp_key_id       identify reponse by signing certificate key ID\n");
 		BIO_printf (bio_err, "-nrequest n        number of requests to accept (default unlimited)\n");
+		BIO_printf (bio_err, "-<dgst alg>     use specified digest in the request");
 		goto end;
 		}
 
@@ -660,7 +703,8 @@ int MAIN(int argc, char **argv)
 			"signer private key");
 		if (!key)
 			goto end;
-		if (!OCSP_request_sign(req, signer, key, EVP_sha1(), sign_other, sign_flags))
+
+		if (!OCSP_request_sign(req, signer, key, NULL, sign_other, sign_flags))
 			{
 			BIO_printf(bio_err, "Error signing OCSP request\n");
 			goto end;
@@ -703,52 +747,14 @@ int MAIN(int argc, char **argv)
 	else if (host)
 		{
 #ifndef OPENSSL_NO_SOCK
-		cbio = BIO_new_connect(host);
+		resp = process_responder(bio_err, req, host, path,
+						port, use_ssl, req_timeout);
+		if (!resp)
+			goto end;
 #else
 		BIO_printf(bio_err, "Error creating connect BIO - sockets not supported.\n");
 		goto end;
 #endif
-		if (!cbio)
-			{
-			BIO_printf(bio_err, "Error creating connect BIO\n");
-			goto end;
-			}
-		if (port) BIO_set_conn_port(cbio, port);
-		if (use_ssl == 1)
-			{
-			BIO *sbio;
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
-			ctx = SSL_CTX_new(SSLv23_client_method());
-#elif !defined(OPENSSL_NO_SSL3)
-			ctx = SSL_CTX_new(SSLv3_client_method());
-#elif !defined(OPENSSL_NO_SSL2)
-			ctx = SSL_CTX_new(SSLv2_client_method());
-#else
-			BIO_printf(bio_err, "SSL is disabled\n");
-			goto end;
-#endif
-			if (ctx == NULL)
-				{
-				BIO_printf(bio_err, "Error creating SSL context.\n");
-				goto end;
-				}
-			SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
-			sbio = BIO_new_ssl(ctx, 1);
-			cbio = BIO_push(sbio, cbio);
-			}
-		if (BIO_do_connect(cbio) <= 0)
-			{
-			BIO_printf(bio_err, "Error connecting BIO\n");
-			goto end;
-			}
-		resp = OCSP_sendreq_bio(cbio, path, req);
-		BIO_free_all(cbio);
-		cbio = NULL;
-		if (!resp)
-			{
-			BIO_printf(bio_err, "Error querying OCSP responsder\n");
-			goto end;
-			}
 		}
 	else if (respin)
 		{
@@ -897,13 +903,12 @@ end:
 		OPENSSL_free(host);
 		OPENSSL_free(port);
 		OPENSSL_free(path);
-		SSL_CTX_free(ctx);
 		}
 
 	OPENSSL_EXIT(ret);
 }
 
-static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
+static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, const EVP_MD *cert_id_md,X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids)
 	{
 	OCSP_CERTID *id;
@@ -914,7 +919,7 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
 		}
 	if(!*req) *req = OCSP_REQUEST_new();
 	if(!*req) goto err;
-	id = OCSP_cert_to_id(NULL, cert, issuer);
+	id = OCSP_cert_to_id(cert_id_md, cert, issuer);
 	if(!id || !sk_OCSP_CERTID_push(ids, id)) goto err;
 	if(!OCSP_request_add0_id(*req, id)) goto err;
 	return 1;
@@ -924,7 +929,7 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
 	return 0;
 	}
 
-static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
+static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,const EVP_MD *cert_id_md, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids)
 	{
 	OCSP_CERTID *id;
@@ -946,7 +951,7 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
 		BIO_printf(bio_err, "Error converting serial number %s\n", serial);
 		return 0;
 		}
-	id = OCSP_cert_id_new(EVP_sha1(), iname, ikey, sno);
+	id = OCSP_cert_id_new(cert_id_md, iname, ikey, sno);
 	ASN1_INTEGER_free(sno);
 	if(!id || !sk_OCSP_CERTID_push(ids, id)) goto err;
 	if(!OCSP_request_add0_id(*req, id)) goto err;
@@ -1032,7 +1037,6 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 	OCSP_BASICRESP *bs = NULL;
 	int i, id_count, ret = 1;
 
-
 	id_count = OCSP_request_onereq_count(req);
 
 	if (id_count <= 0)
@@ -1041,7 +1045,6 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 		goto end;
 		}
 
-	ca_id = OCSP_cert_to_id(EVP_sha1(), NULL, ca);
 
 	bs = OCSP_BASICRESP_new();
 	thisupd = X509_gmtime_adj(NULL, 0);
@@ -1054,8 +1057,23 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 		OCSP_ONEREQ *one;
 		ASN1_INTEGER *serial;
 		char **inf;
+		ASN1_OBJECT *cert_id_md_oid;
+		const EVP_MD *cert_id_md;
 		one = OCSP_request_onereq_get0(req, i);
 		cid = OCSP_onereq_get0_id(one);
+
+		OCSP_id_get0_info(NULL,&cert_id_md_oid, NULL,NULL, cid);
+
+		cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);	
+		if (! cert_id_md) 
+			{
+			*resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR,
+				NULL);
+				goto end;
+			}	
+		if (ca_id) OCSP_CERTID_free(ca_id);
+		ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca);
+
 		/* Is this request about our CA? */
 		if (OCSP_id_issuer_cmp(ca_id, cid))
 			{
@@ -1100,8 +1118,8 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 		}
 
 	OCSP_copy_nonce(bs, req);
-		
-	OCSP_basic_sign(bs, rcert, rkey, EVP_sha1(), rother, flags);
+	
+	OCSP_basic_sign(bs, rcert, rkey, NULL, rother, flags);
 
 	*resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs);
 
@@ -1121,6 +1139,7 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser)
 	char *itmp, *row[DB_NUMBER],**rrow;
 	for (i = 0; i < DB_NUMBER; i++) row[i] = NULL;
 	bn = ASN1_INTEGER_to_BN(ser,NULL);
+	OPENSSL_assert(bn); /* FIXME: should report an error at this point and abort */
 	if (BN_is_zero(bn))
 		itmp = BUF_strdup("00");
 	else
@@ -1227,8 +1246,141 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
 		return 0;
 	BIO_printf(cbio, http_resp, i2d_OCSP_RESPONSE(resp, NULL));
 	i2d_OCSP_RESPONSE_bio(cbio, resp);
-	BIO_flush(cbio);
+	(void)BIO_flush(cbio);
 	return 1;
+	}
+
+static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
+				OCSP_REQUEST *req, int req_timeout)
+	{
+	int fd;
+	int rv;
+	OCSP_REQ_CTX *ctx = NULL;
+	OCSP_RESPONSE *rsp = NULL;
+	fd_set confds;
+	struct timeval tv;
+
+	if (req_timeout != -1)
+		BIO_set_nbio(cbio, 1);
+
+	rv = BIO_do_connect(cbio);
+
+	if ((rv <= 0) && ((req_timeout == -1) || !BIO_should_retry(cbio)))
+		{
+		BIO_puts(err, "Error connecting BIO\n");
+		return NULL;
+		}
+
+	if (req_timeout == -1)
+		return OCSP_sendreq_bio(cbio, path, req);
+
+	if (BIO_get_fd(cbio, &fd) <= 0)
+		{
+		BIO_puts(err, "Can't get connection fd\n");
+		goto err;
+		}
+
+	if (rv <= 0)
+		{
+		FD_ZERO(&confds);
+		openssl_fdset(fd, &confds);
+		tv.tv_usec = 0;
+		tv.tv_sec = req_timeout;
+		rv = select(fd + 1, NULL, (void *)&confds, NULL, &tv);
+		if (rv == 0)
+			{
+			BIO_puts(err, "Timeout on connect\n");
+			return NULL;
+			}
+		}
+
+
+	ctx = OCSP_sendreq_new(cbio, path, req, -1);
+	if (!ctx)
+		return NULL;
+	
+	for (;;)
+		{
+		rv = OCSP_sendreq_nbio(&rsp, ctx);
+		if (rv != -1)
+			break;
+		FD_ZERO(&confds);
+		openssl_fdset(fd, &confds);
+		tv.tv_usec = 0;
+		tv.tv_sec = req_timeout;
+		if (BIO_should_read(cbio))
+			rv = select(fd + 1, (void *)&confds, NULL, NULL, &tv);
+		else if (BIO_should_write(cbio))
+			rv = select(fd + 1, NULL, (void *)&confds, NULL, &tv);
+		else
+			{
+			BIO_puts(err, "Unexpected retry condition\n");
+			goto err;
+			}
+		if (rv == 0)
+			{
+			BIO_puts(err, "Timeout on request\n");
+			break;
+			}
+		if (rv == -1)
+			{
+			BIO_puts(err, "Select error\n");
+			break;
+			}
+			
+		}
+	err:
+	if (ctx)
+		OCSP_REQ_CTX_free(ctx);
+
+	return rsp;
+	}
+
+OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
+			char *host, char *path, char *port, int use_ssl,
+			int req_timeout)
+	{
+	BIO *cbio = NULL;
+	SSL_CTX *ctx = NULL;
+	OCSP_RESPONSE *resp = NULL;
+	cbio = BIO_new_connect(host);
+	if (!cbio)
+		{
+		BIO_printf(err, "Error creating connect BIO\n");
+		goto end;
+		}
+	if (port) BIO_set_conn_port(cbio, port);
+	if (use_ssl == 1)
+		{
+		BIO *sbio;
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
+		ctx = SSL_CTX_new(SSLv23_client_method());
+#elif !defined(OPENSSL_NO_SSL3)
+		ctx = SSL_CTX_new(SSLv3_client_method());
+#elif !defined(OPENSSL_NO_SSL2)
+		ctx = SSL_CTX_new(SSLv2_client_method());
+#else
+		BIO_printf(err, "SSL is disabled\n");
+			goto end;
+#endif
+		if (ctx == NULL)
+			{
+			BIO_printf(err, "Error creating SSL context.\n");
+			goto end;
+			}
+		SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
+		sbio = BIO_new_ssl(ctx, 1);
+		cbio = BIO_push(sbio, cbio);
+		}
+	resp = query_responder(err, cbio, path, req, req_timeout);
+	if (!resp)
+		BIO_printf(bio_err, "Error querying OCSP responsder\n");
+	end:
+	if (ctx)
+		SSL_CTX_free(ctx);
+	if (cbio)
+		BIO_free_all(cbio);
+	return resp;
 	}
 
 #endif

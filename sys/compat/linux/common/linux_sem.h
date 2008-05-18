@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sem.h,v 1.8 2007/12/20 23:02:56 dsl Exp $	*/
+/*	$NetBSD: linux_sem.h,v 1.8.8.1 2008/05/18 12:33:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,6 +61,17 @@ struct linux_semid_ds {
 	ushort			 l_sem_nsems;
 };
 
+struct linux_semid64_ds {
+	struct linux_ipc64_perm	 l_sem_perm;
+	linux_time_t		 l_sem_otime;
+	unsigned long		 l___unused1;
+	linux_time_t		 l_sem_ctime;
+	unsigned long		 l___unused2;
+	unsigned long		 l_sem_nsems;
+	unsigned long		 l___unused3;
+	unsigned long		 l___unused4;
+};
+
 union linux_semun {
 	int			 l_val;
 	struct linux_semid_ds	*l_buf;
@@ -92,7 +96,9 @@ int linux_sys_semctl(struct lwp *, const struct linux_sys_semctl_args *, registe
 #ifdef _KERNEL
 __BEGIN_DECLS
 void bsd_to_linux_semid_ds(struct semid_ds *, struct linux_semid_ds *);
+void bsd_to_linux_semid64_ds(struct semid_ds *, struct linux_semid64_ds *);
 void linux_to_bsd_semid_ds(struct linux_semid_ds *, struct semid_ds *);
+void linux_to_bsd_semid64_ds(struct linux_semid64_ds *, struct semid_ds *);
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSEM */

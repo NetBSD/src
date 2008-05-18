@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.116 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.116.2.1 2008/05/18 12:35:35 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.116 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.116.2.1 2008/05/18 12:35:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.116 2008/04/15 03:57:04 thorpej Exp 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #endif
 
 #ifdef FAST_IPSEC
@@ -205,11 +206,11 @@ ip6_init2(void *dummy)
 {
 
 	/* nd6_timer_init */
-	callout_init(&nd6_timer_ch, 0);
+	callout_init(&nd6_timer_ch, CALLOUT_MPSAFE);
 	callout_reset(&nd6_timer_ch, hz, nd6_timer, NULL);
 
 	/* timer for regeneranation of temporary addresses randomize ID */
-	callout_init(&in6_tmpaddrtimer_ch, 0);
+	callout_init(&in6_tmpaddrtimer_ch, CALLOUT_MPSAFE);
 	callout_reset(&in6_tmpaddrtimer_ch,
 		      (ip6_temp_preferred_lifetime - ip6_desync_factor -
 		       ip6_temp_regen_advance) * hz,
@@ -225,19 +226,23 @@ ip6intr(void)
 	int s;
 	struct mbuf *m;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	for (;;) {
 		s = splnet();
 		IF_DEQUEUE(&ip6intrq, m);
 		splx(s);
 		if (m == 0)
-			return;
+			break;
 		/* drop the packet if IPv6 operation is disabled on the IF */
 		if ((ND_IFINFO(m->m_pkthdr.rcvif)->flags & ND6_IFF_IFDISABLED)) {
 			m_freem(m);
-			return;
+			break;
 		}
 		ip6_input(m);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 extern struct	route ip6_forward_rt;
@@ -778,7 +783,7 @@ ip6_input(struct mbuf *m)
 		 */
 		if ((inet6sw[ip6_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
 		    ipsec6_in_reject(m, NULL)) {
-			ipsec6stat.in_polvio++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto bad;
 		}
 #endif
@@ -1646,36 +1651,11 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
-static void
-ip6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *ip6sc = v1;
-	uint64_t *ip6s = v2;
-	u_int i;
-
-	for (i = 0; i < IP6_NSTATS; i++)
-		ip6s[i] += ip6sc[i];
-}
-
-static void
-ip6stat_convert_to_user(uint64_t *ip6s)
-{
-
-	memset(ip6s, 0, sizeof(uint64_t) * IP6_NSTATS);
-	percpu_foreach(ip6stat_percpu, ip6stat_convert_to_user_cb, ip6s);
-}
-
 static int
 sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t ip6s[IP6_NSTATS];
 
-	ip6stat_convert_to_user(ip6s);
-	node = *rnode;
-	node.sysctl_data = ip6s;
-	node.sysctl_size = sizeof(ip6s);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(ip6stat_percpu, IP6_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")

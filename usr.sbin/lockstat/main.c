@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2008/04/04 17:25:09 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.12.2.1 2008/05/18 12:36:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -49,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.12 2008/04/04 17:25:09 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.12.2.1 2008/05/18 12:36:19 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,6 +104,7 @@ const name_t locknames[] = {
 	{ "spin_mutex", LB_SPIN_MUTEX },
 	{ "rwlock", LB_RWLOCK },
 	{ "kernel_lock", LB_KERNEL_LOCK },
+	{ "preemption", LB_NOPREEMPT },
 	{ NULL, 0 }
 };
 
@@ -129,6 +123,7 @@ const name_t alltypes[] = {
 	{ "RW lock sleep (reader)", LB_RWLOCK | LB_SLEEP2 },
 	{ "RW lock spin", LB_RWLOCK | LB_SPIN },
 	{ "Kernel lock spin", LB_KERNEL_LOCK | LB_SPIN },
+	{ "Kernel preemption defer", LB_NOPREEMPT | LB_SPIN },
 	{ NULL, 0 }
 };
 

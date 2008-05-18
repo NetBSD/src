@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2007/05/28 12:06:29 tls Exp $
+#	$NetBSD: Makefile,v 1.25.10.1 2008/05/18 12:36:09 yamt Exp $
 
 NOMAN=	# defined
 
@@ -7,7 +7,7 @@ NOMAN=	# defined
 USE_FORT?= yes	# cryptographic software
 
 # RCSid:
-#	$Id: Makefile,v 1.25 2007/05/28 12:06:29 tls Exp $
+#	$Id: Makefile,v 1.25.10.1 2008/05/18 12:36:09 yamt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -28,7 +28,7 @@ WARNS=0
 PROG=	openssl
 
 SRCS=	openssl.c
-SRCS+=	apps.c ecparam.c ec.c
+SRCS+=	apps.c ecparam.c ec.c pkeyparam.c genpkey.c pkey.c pkeyutl.c ts.c cms.c
 SRCS+=	s_cb.c s_socket.c
 SRCS+=	app_rand.c
 SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c dhparam.c enc.c passwd.c gendh.c errstr.c ca.c \

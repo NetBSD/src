@@ -51,6 +51,7 @@ B<openssl> B<ocsp>
 [B<-ndays n>]
 [B<-resp_key_id>]
 [B<-nrequest n>]
+[B<-md5|-sha1|...>]
 
 =head1 DESCRIPTION
 
@@ -73,7 +74,7 @@ specify output filename, default is standard output.
 
 This specifies the current issuer certificate. This option can be used
 multiple times. The certificate specified in B<filename> must be in
-PEM format.
+PEM format. This option B<MUST> come before any B<-cert> options.
 
 =item B<-cert filename>
 
@@ -146,7 +147,7 @@ certificate in such cases.
 
 =item B<-trust_other>
 
-the certificates specified by the B<-verify_certs> option should be explicitly
+the certificates specified by the B<-verify_other> option should be explicitly
 trusted and no additional checks will be performed on them. This is useful
 when the complete responder certificate chain is not available or trusting a
 root CA is not appropriate.
@@ -154,7 +155,7 @@ root CA is not appropriate.
 =item B<-VAfile file>
 
 file containing explicitly trusted responder certificates. Equivalent to the
-B<-verify_certs> and B<-trust_other> options.
+B<-verify_other> and B<-trust_other> options.
 
 =item B<-noverify>
 
@@ -166,7 +167,7 @@ of the responders certificate.
 
 ignore certificates contained in the OCSP response when searching for the
 signers certificate. With this option the signers certificate must be specified
-with either the B<-verify_certs> or B<-VAfile> options.
+with either the B<-verify_other> or B<-VAfile> options.
 
 =item B<-no_signature_verify>
 
@@ -205,6 +206,11 @@ If the B<notAfter> time is omitted from a response then this means that new stat
 information is immediately available. In this case the age of the B<notBefore> field
 is checked to see it is not older than B<age> seconds old. By default this additional
 check is not performed.
+
+=item B<-md5|-sha1|-sha256|-ripemod160|...>
+
+this option sets digest algorithm to use for certificate identification
+in the OCSP request. By default SHA-1 is used. 
 
 =back
 

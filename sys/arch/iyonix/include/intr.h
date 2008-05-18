@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2007/12/03 15:33:47 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.16.1 2008/05/18 12:32:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,6 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-void	_setsoftintr(int);
 
 #else	/* _LKM */
 
@@ -145,8 +144,6 @@ splraiseipl(ipl_cookie_t icookie)
 #define	spl0()		_spllower(IPL_NONE)
 
 #include <sys/spl.h>
-
-#include <arm/softintr.h>
 
 #endif /* ! _LOCORE */
 

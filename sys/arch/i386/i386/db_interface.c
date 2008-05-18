@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.57 2008/01/04 21:24:22 xtraeme Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.57.8.1 2008/05/18 12:32:10 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2008/01/04 21:24:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57.8.1 2008/05/18 12:32:10 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.57 2008/01/04 21:24:22 xtraeme Ex
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/simplelock.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -103,8 +104,7 @@ db_machine_init()
 
 #ifdef MULTIPROCESSOR
 	ddb_vec = idt_vec_alloc(0xf0, 0xff);
-	setgate((struct gate_descriptor *)&idt[ddb_vec], &Xintrddbipi, 0,
-	    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
+	idt_vec_set(ddb_vec, &Xintrddbipi);
 #endif
 }
 
@@ -137,6 +137,7 @@ db_suspend_others(void)
 static void
 db_resume_others(void)
 {
+	struct cpu_info *ci;
 	int i;
 
 	x86_mp_online = ddb_mp_online;
@@ -145,7 +146,7 @@ db_resume_others(void)
 	__cpu_simple_unlock(&db_lock);
 
 	for (i=0; i < X86_MAXPROCS; i++) {
-		struct cpu_info *ci = cpu_info[i];
+		ci = cpu_lookup_byindex(i);
 		if (ci == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PAUSE)
@@ -362,7 +363,7 @@ db_mach_cpu(
 		db_printf("%ld: CPU out of range\n", addr);
 		return;
 	}
-	ci = cpu_info[addr];
+	ci = cpu_lookup_byindex(addr);
 	if (ci == NULL) {
 		db_printf("CPU %ld not configured\n", addr);
 		return;

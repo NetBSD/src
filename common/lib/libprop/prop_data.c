@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.10 2008/02/16 17:37:13 apb Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.10.4.1 2008/05/18 12:28:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -231,7 +224,7 @@ prop_data_create_data(const void *v, size_t size)
 	void *nv;
 
 	pd = _prop_data_alloc();
-	if (pd != NULL) {
+	if (pd != NULL && size != 0) {
 		nv = _PROP_MALLOC(size, M_PROP_DATA);
 		if (nv == NULL) {
 			prop_object_release(pd);

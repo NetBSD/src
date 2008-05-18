@@ -1,4 +1,4 @@
-/*	$NetBSD: tunnel.h,v 1.1 2005/03/19 17:32:26 thorpej Exp $	*/
+/*	$NetBSD: tunnel.h,v 1.1.22.1 2008/05/18 12:30:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -28,7 +28,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  */
+#include "parse.h"
 
-void	settunnel(const char *, const char *);
-void	deletetunnel(const char *, int);
-void	tunnel_status(void);
+extern struct paddr tundst, tunsrc;
+extern struct pkw tunnel;
+
+int	settunnel(prop_dictionary_t, prop_dictionary_t);
+int	deletetunnel(prop_dictionary_t, prop_dictionary_t);
+void	tunnel_status(prop_dictionary_t, prop_dictionary_t);

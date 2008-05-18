@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.10 2007/02/22 06:34:42 thorpej Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.10.40.1 2008/05/18 12:35:06 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.10 2007/02/22 06:34:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.10.40.1 2008/05/18 12:35:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,9 @@ struct bufq_priocscan {
  * how many requests to serve when having pending requests on other queues.
  *
  * XXX tune
+ * be careful: while making these values larger likely
+ * increases the total throughput, it can also increase latencies
+ * for some workloads.
  */
 const int priocscan_burst[] = {
 	64, 16, 4
@@ -280,6 +283,28 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 	return bp;
 }
 
+static struct buf *
+bufq_priocscan_cancel(struct bufq_state *bufq, struct buf *buf)
+{
+	struct cscan_queue *q = bufq->bq_private;
+	struct bqhead *bqh;
+	struct buf *bq;
+	int idx;
+
+	for (idx = 0; idx < 2; idx++) {
+		bqh = &q->cq_head[idx];
+		bq = TAILQ_FIRST(bqh);
+		while (bq) {
+			if (bq == buf) {
+				TAILQ_REMOVE(bqh, bq, b_actq);
+				return buf;
+			}
+			bq = TAILQ_NEXT(bq, b_actq);
+		}
+	}
+	return NULL;
+}
+
 static void
 bufq_priocscan_init(struct bufq_state *bufq)
 {
@@ -288,6 +313,7 @@ bufq_priocscan_init(struct bufq_state *bufq)
 
 	bufq->bq_get = bufq_priocscan_get;
 	bufq->bq_put = bufq_priocscan_put;
+	bufq->bq_cancel = bufq_priocscan_cancel;
 	bufq->bq_private = malloc(sizeof(struct bufq_priocscan),
 	    M_DEVBUF, M_ZERO);
 

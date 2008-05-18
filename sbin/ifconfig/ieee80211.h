@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.4 2007/12/16 13:49:22 degroote Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.4.6.1 2008/05/18 12:30:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -25,21 +25,30 @@
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
 
-void	sethidessid(const char *, int);
-void	setapbridge(const char *, int);
-void	setifnwid(const char *, int);
-void	setifnwkey(const char *, int);  
-void	setifbssid(const char *, int);
-void	setifchan(const char *, int);
-void	setiffrag(const char *, int);
-void	setifpowersave(const char *, int);
-void	setifpowersavesleep(const char *, int);
-void	setiflist(const char *val, int dummy);
+#include "parse.h"
 
+extern struct pinteger parse_chan, parse_frag;
+extern struct pkw kw80211;
+extern struct pkw ieee80211bool;
+extern struct pstr parse_bssid, parse_ssid, parse_nwkey;
+extern struct pinteger parse_powersavesleep;
 
-void	ieee80211_statistics(void);
-void	ieee80211_status(void);
+int	sethidessid(prop_dictionary_t, prop_dictionary_t);
+int	setapbridge(prop_dictionary_t, prop_dictionary_t);
+int	setifssid(prop_dictionary_t, prop_dictionary_t);
+int	setifnwkey(prop_dictionary_t, prop_dictionary_t);
+int	unsetifnwkey(prop_dictionary_t, prop_dictionary_t);
+int	unsetifbssid(prop_dictionary_t, prop_dictionary_t);
+int	setifbssid(prop_dictionary_t, prop_dictionary_t);
+int	setifchan(prop_dictionary_t, prop_dictionary_t);
+int	setiffrag(prop_dictionary_t, prop_dictionary_t);
+int	setifpowersave(prop_dictionary_t, prop_dictionary_t);
+int	setifpowersavesleep(prop_dictionary_t, prop_dictionary_t);
+int	scan_exec(prop_dictionary_t, prop_dictionary_t);
+
+void	ieee80211_statistics(prop_dictionary_t);
+void	ieee80211_status(prop_dictionary_t, prop_dictionary_t);

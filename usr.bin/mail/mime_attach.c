@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.8 2007/12/14 16:55:20 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.8.4.1 2008/05/18 12:36:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.8 2007/12/14 16:55:20 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.8.4.1 2008/05/18 12:36:06 yamt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -305,7 +298,7 @@ content_encoding_by_fileno(int fd, const char *ctype)
 		return MIME_TRANSFER_BASE64;
 	}
 	encoding = content_encoding_core(fp, ctype);
-	Fclose(fp);
+	(void)Fclose(fp);
 	(void)lseek(fd, cur_pos, SEEK_SET);
 	return encoding;
 }

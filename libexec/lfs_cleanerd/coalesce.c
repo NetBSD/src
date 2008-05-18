@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.14 2007/10/08 21:41:12 ad Exp $  */
+/*      $NetBSD: coalesce.c,v 1.14.6.1 2008/05/18 12:30:45 yamt Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -125,7 +118,7 @@ get_dinode(struct clfs *fs, ino_t ino)
 	if (daddr == 0x0)
 		return NULL;
 
-	bread(fs->clfs_devvp, daddr, fs->lfs_ibsize, NOCRED, &bp);
+	bread(fs->clfs_devvp, daddr, fs->lfs_ibsize, NOCRED, 0, &bp);
 	for (dip = (struct ufs1_dinode *)bp->b_data;
 	     dip < (struct ufs1_dinode *)(bp->b_data + fs->lfs_ibsize); dip++)
 		if (dip->di_inumber == ino) {
@@ -300,7 +293,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	bps = segtod(fs, 1);
 	for (tbip = bip; tbip < bip + nb; tbip += bps) {
 		do {
-			bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, &bp);
+			bread(fs->lfs_ivnode, 0, fs->lfs_bsize, NOCRED, 0, &bp);
 			cip = *(CLEANERINFO *)bp->b_data;
 			brelse(bp, B_INVAL);
 

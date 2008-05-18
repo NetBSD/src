@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.12 2008/02/04 15:30:45 christos Exp $	*/
+/*	$NetBSD: getent.c,v 1.12.4.1 2008/05/18 12:36:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.12 2008/02/04 15:30:45 christos Exp $");
+__RCSID("$NetBSD: getent.c,v 1.12.4.1 2008/05/18 12:36:06 yamt Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -49,9 +42,11 @@ __RCSID("$NetBSD: getent.c,v 1.12 2008/02/04 15:30:45 christos Exp $");
 #include <grp.h>
 #include <limits.h>
 #include <netdb.h>
+#include <netgroup.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -77,6 +72,7 @@ static int	gettytab(int, char *[]);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
+static int	netgroup(int, char *[]);
 static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
 static int	printcap(int, char *[]);
@@ -102,6 +98,7 @@ static struct getentdb {
 	{	"gettytab",	gettytab,	},
 	{	"group",	group,		},
 	{	"hosts",	hosts,		},
+	{	"netgroup",	netgroup,	},
 	{	"networks",	networks,	},
 	{	"passwd",	passwd,		},
 	{	"princap",	printcap,	},
@@ -329,6 +326,47 @@ hosts(int argc, char *argv[])
 	return rv;
 }
 
+		/*
+		 * netgroup
+		 */
+static int
+netgroup(int argc, char *argv[])
+{
+	int		rv, i;
+	bool		first;
+	const char	*host, *user, *domain;
+
+	assert(argc > 1);
+	assert(argv != NULL);
+
+#define NETGROUPPRINT(s)	(((s) != NULL) ? (s) : "")
+
+	rv = RV_OK;
+	if (argc == 2) {
+		warnx("Enumeration not supported on netgroup");
+		rv = RV_NOENUM;
+	} else {
+		for (i = 2; i < argc; i++) {
+			setnetgrent(argv[i]);
+			first = true;
+			while (getnetgrent(&host, &user, &domain) != 0) {
+				if (first) {
+					first = false;
+					(void)fputs(argv[i], stdout);
+				}
+				(void)printf(" (%s,%s,%s)",
+				    NETGROUPPRINT(host),
+				    NETGROUPPRINT(user),
+				    NETGROUPPRINT(domain));
+			}
+			if (!first)
+				(void)putchar('\n');
+			endnetgrent();
+		}
+	}
+
+	return rv;
+}
 
 		/*
 		 * networks

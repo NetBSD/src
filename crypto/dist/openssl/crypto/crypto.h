@@ -1,6 +1,6 @@
 /* crypto/crypto.h */
 /* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -300,6 +300,17 @@ typedef struct crypto_ex_data_func_st
 
 DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 
+/* This structure is exposed to allow it to be used without dynamic allocation,
+ * however it exists to encapsulate the different ways of representing "thread
+ * ID"s (given that applications provide the thread implementation via
+ * callbacks). So treat this type as opaque if you don't want your code to fall
+ * apart when someone decides to extend this in some way. */
+typedef struct crypto_threadid
+	{
+	void *ptr;
+	unsigned long ulong;
+	} CRYPTO_THREADID;
+
 /* Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
  * entry.
  */
@@ -420,9 +431,27 @@ void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
 					      const char *file, int line));
 int (*CRYPTO_get_add_lock_callback(void))(int *num,int mount,int type,
 					  const char *file,int line);
+/* Implement "thread ID" via callback, choose the prototype that matches your
+ * thread implementation. */
 void CRYPTO_set_id_callback(unsigned long (*func)(void));
+void CRYPTO_set_idptr_callback(void *(*func)(void));
+/* Records the thread ID of the currently executing thread */
+void CRYPTO_THREADID_set(CRYPTO_THREADID *id);
+/* Compares two thread IDs. If the underlying notion of thread ID is linear,
+ * this returns -1, 0, or +1 to imply strict-ordering (as other ***_cmp()
+ * functions do). Otherwise, zero means equal, non-zero means not equal. */
+int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *id1, const CRYPTO_THREADID *id2);
+/* When you need "a number", eg. for hashing, use this. */
+unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
+/* Copy a threadid */
+void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dst, const CRYPTO_THREADID *src);
+#ifndef OPENSSL_NO_DEPRECATED
+/* Deprecated interfaces - these presume you know exactly what's going on under
+ * the covers. Better to migrate to the CRYPTO_THREADID_***() form. */
 unsigned long (*CRYPTO_get_id_callback(void))(void);
 unsigned long CRYPTO_thread_id(void);
+#endif
+
 const char *CRYPTO_get_lock_name(int type);
 int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
 		    int line);
@@ -440,12 +469,12 @@ void (*CRYPTO_get_dynlock_destroy_callback(void))(struct CRYPTO_dynlock_value *l
 /* CRYPTO_set_mem_functions includes CRYPTO_set_locked_mem_functions --
  * call the latter last if you need different functions */
 int CRYPTO_set_mem_functions(void *(*m)(size_t),void *(*r)(void *,size_t), void (*f)(void *));
-int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*free_func)(void *));
+int CRYPTO_set_locked_mem_functions(void *(*m)(size_t), void (*freefunc)(void *));
 int CRYPTO_set_mem_ex_functions(void *(*m)(size_t,const char *,int),
                                 void *(*r)(void *,size_t,const char *,int),
                                 void (*f)(void *));
 int CRYPTO_set_locked_mem_ex_functions(void *(*m)(size_t,const char *,int),
-                                       void (*free_func)(void *));
+                                       void (*freefunc)(void *));
 int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   void (*r)(void *,void *,int,const char *,int,int),
 				   void (*f)(void *,int),

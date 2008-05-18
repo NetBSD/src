@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.20 2008/04/11 14:55:51 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.20.2.1 2008/05/18 12:35:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.20 2008/04/11 14:55:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.20.2.1 2008/05/18 12:35:08 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -70,9 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.20 2008/04/11 14:55:51 ad Exp $");
 
 #if defined(LOCKDEBUG)
 
-#define	RW_WANTLOCK(rw, op)						\
+#define	RW_WANTLOCK(rw, op, t)						\
 	LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw),			\
-	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
+	    (uintptr_t)__builtin_return_address(0), op == RW_READER, t);
 #define	RW_LOCKED(rw, op)						\
 	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw),				\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
@@ -87,7 +80,7 @@ do {									\
 
 #else	/* LOCKDEBUG */
 
-#define	RW_WANTLOCK(rw, op)	/* nothing */
+#define	RW_WANTLOCK(rw, op, t)	/* nothing */
 #define	RW_LOCKED(rw, op)	/* nothing */
 #define	RW_UNLOCKED(rw, op)	/* nothing */
 #define	RW_DASSERT(rw, cond)	/* nothing */
@@ -301,7 +294,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 	RW_ASSERT(rw, !cpu_intr_p());
 	RW_ASSERT(rw, curthread != 0);
-	RW_WANTLOCK(rw, op);
+	RW_WANTLOCK(rw, op, false);
 
 	if (panicstr == NULL) {
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
@@ -574,7 +567,7 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_enter();
 #endif
-	RW_WANTLOCK(rw, op);
+	RW_WANTLOCK(rw, op, true);
 	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
@@ -687,7 +680,7 @@ rw_tryupgrade(krwlock_t *rw)
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
-	RW_WANTLOCK(rw, RW_WRITER);
+	RW_WANTLOCK(rw, RW_WRITER, true);
 
 	for (owner = rw->rw_owner;; owner = next) {
 		RW_ASSERT(rw, (owner & RW_WRITE_LOCKED) == 0);
@@ -727,7 +720,8 @@ rw_read_held(krwlock_t *rw)
 
 	if (panicstr != NULL)
 		return 1;
-
+	if (rw == NULL)
+		return 0;
 	owner = rw->rw_owner;
 	return (owner & RW_WRITE_LOCKED) == 0 && (owner & RW_THREAD) != 0;
 }
@@ -745,7 +739,8 @@ rw_write_held(krwlock_t *rw)
 
 	if (panicstr != NULL)
 		return 1;
-
+	if (rw == NULL)
+		return 0;
 	return (rw->rw_owner & (RW_WRITE_LOCKED | RW_THREAD)) ==
 	    (RW_WRITE_LOCKED | (uintptr_t)curlwp);
 }
@@ -763,7 +758,8 @@ rw_lock_held(krwlock_t *rw)
 
 	if (panicstr != NULL)
 		return 1;
-
+	if (rw == NULL)
+		return 0;
 	return (rw->rw_owner & RW_THREAD) != 0;
 }
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.394 2008/04/01 22:12:38 cegger Exp $
+.\"	$NetBSD: main,v 1.394.2.1 2008/05/18 12:29:36 yamt Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -11,13 +11,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"        This product includes software developed by the NetBSD
-.\"        Foundation, Inc. and its contributors.
-.\" 4. Neither the name of The NetBSD Foundation nor the names of its
-.\"    contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -117,56 +110,53 @@ install
 \*V on a machine of the \*M architecture.
 .Bl -bullet
 .It
-Fetch the
+Fetch files needed to install
+.Nx .
 .if \n[i386]:\n[amd64] \{\
-appropriate pair of boot floppy images from the
-.Pa \*M/installation/floppy/
-directory, or a CD-ROM image (the images from
-.Pa \*M/installation/cdrom/
-are bootable, but do not contain binary sets - these are intended for network
-installs, or when different bootblocks are needed).
-Most people will need the
+.Pp
+Option 1: bootable CD-ROM images containing the full distribution.
+.Pp
+These can be found
+on an FTP site near you, usually located in the
+.Pa /pub/NetBSD/iso
+directory.
+Check the NetBSD website for details.
+.Pp
+Option 2: bootable CD-ROM images from
+.Pa \*M/installation/cdrom/ .
+.Pp
+These images are bootable, but do not contain binary sets.
+They are intended for network installs, or system repair.
+.Pa boot.iso
+is for VGA console installation, and
+.Pa boot-com.iso
+is for installation over serial console (com0, 9600 baud).
+.Pp
+Option 3: boot floppy images from
+.Pa \*M/installation/floppy/ .
+.Pp
 .Pa boot1.fs
 and
 .Pa boot2.fs
-or
-.Pa boot.iso
-images for VGA console installation, or the
+are floppy images for VGA console installation.
 .Pa boot-com1.fs
 and
 .Pa boot-com2.fs
-or
-.Pa boot-com.iso
-images for installation via serial console.
-.if \n[i386] \{\
-You may also possibly (but not necessarily) want to use
-.Pa bootlap1.fs
-and
-.Pa bootlap2.fs
-if installing on a laptop.
-The INSTALL_LAPTOP kernel can be loaded from one of the cdrom images via
-the bootloader:
-.Ic boot Ar nblaptop .
-.\}
+are for installation via serial console (com0, 9600 baud).
+.It
+The default kernel on CD-ROMs has ACPI enabled.
+This is known to cause issues on a few machines which have buggy ACPI
+implementations.
 .Pp
-The default kernel on ISO images have ACPI enabled. This is known to cause
-issues on a few older machines which have buggy ACPI tables. To boot with
-ACPI disabled, interrupt the 
+To boot with ACPI disabled, choose the "no ACPI" option from the boot menu,
+or interrupt the menu and enter the
 .Nx
-boot loader, and enter:
-.Ic boot -c .
-At the userconf prompt, enter:
-.Ic disable acpi
-followed by:
-.Ic quit .
-.if \n[i386] \{\
-The kernel from the two floppy set is also present on the ISO images and can be
-loaded using:
-.Ic boot Ar nbnoacpi .
-.\}
-.\}
+boot prompt.
+Type 
+.Ic boot -2
+to boot with ACPI disabled.
 .if \n[macppc] \{\
-files necessary to boot your system.
+Fetch files necessary to boot your system.
 The files depend on what model you
 are using and how you plan to boot your machine.
 For systems with built-in floppy drives (Open Firmware 1 or 2), 
@@ -184,7 +174,7 @@ If you have a CD-R, you can fetch the CD image,
 .Pa macppccd-\*V.iso .
 .\}
 .if \n[sparc] \{\
-CD image,
+Fetch a CD image,
 .Pa sparccd-\*V.iso
 or the floppy disk images,
 .Pa sparc/install/floppy/disk1.gz No and Pa sparc/install/floppy/disk2 .
@@ -210,7 +200,7 @@ The actual binary distribution is in the
 .Pa \*M/binary/sets/
 directory.
 When you boot the install
-.if \n[i386] floppies,
+.if \n[i386] CD-ROM or floppies,
 .if \n[macppc] kernel from floppies, hard drive, or CD-ROM,
 .if \n[sparc] floppies or CD-ROM,
 .if \n[sparc64] CD-ROM or installation kernel,
@@ -235,9 +225,12 @@ and
 .Pa etc.tgz .
 In a typical workstation installation you will probably want
 all the installation sets.
-.if \n[i386] \{\
+.ie \n[i386]:\n[amd64] \{\
 .It
-Write the floppy images directly to a pair of floppies.
+Write the CD-ROM images or floppy images out.
+.Pp
+Many commercial and freeware programs are available to burn CD-ROMs.
+.Pp
 If you have problems writing a raw image to a floppy,
 the
 .Ic rawrite.exe
@@ -412,7 +405,7 @@ For third-party programs which are not part of the base
 .Nx
 distribution, you will want to explore the
 .Ic pkgsrc
-system with its more than 7200 program packages.
+system with its many thousands of third party software applications.
 .El
 .\}
 .Ss "What is NetBSD?"

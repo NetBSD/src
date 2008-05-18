@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.82 2008/02/20 09:55:38 drochner Exp $
+#  $NetBSD: Makefile,v 1.82.4.1 2008/05/18 12:30:38 yamt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -42,8 +42,6 @@
 #					    default standard
 #
 
-# XXX lint buts on some archs and needs stubs
-NOLINT=		# defined
 USE_SHLIBDIR=	yes
 
 # require this for the value of I387_LIBM from mk.conf, if set.
@@ -94,10 +92,10 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 #ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_support.S n_sincos.S n_tan.S
 # XXX - ripped out due to lack of the insn polyd in the Mariah chip,
 # and emulation code isn't written yet.
-WARNS?=2
+WARNS?=4
 .endif
 
-WARNS?=		1
+WARNS?=4
 
 .PATH:	${.CURDIR}/man
 .PATH:	${.CURDIR}/src
@@ -139,7 +137,9 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
-	llroundf.c s_frexp.c s_ldexp.c s_modf.c
+	llroundf.c
+# Also in libc.
+#COMMON_SRCS += s_frexp.c s_ldexp.c s_modf.c
 
 .PATH:	${.CURDIR}/compat
 COMMON_SRCS+= compat_cabs.c compat_cabsf.c

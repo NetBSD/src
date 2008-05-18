@@ -1,4 +1,4 @@
-/*	$NetBSD: automatic.c,v 1.1.1.3 2007/08/23 15:19:14 joerg Exp $	*/
+/*	$NetBSD: automatic.c,v 1.1.1.3.8.1 2008/05/18 12:29:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,7 +37,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: automatic.c,v 1.1.1.3 2007/08/23 15:19:14 joerg Exp $");
+__RCSID("$NetBSD: automatic.c,v 1.1.1.3.8.1 2008/05/18 12:29:33 yamt Exp $");
 #endif
 
 #if HAVE_ASSERT_H

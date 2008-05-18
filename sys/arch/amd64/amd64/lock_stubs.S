@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13.8.1 2008/05/18 12:31:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -57,7 +50,7 @@
 #define	FULL
 #endif
 
-#define	END(name,a)	.align	a; LABEL(name)
+#define	ENDLABEL(name,a) .align	a; LABEL(name)
 #define	LOCK(num)	.Lpatch/**/num: lock
 
 #ifndef LOCKDEBUG
@@ -74,8 +67,10 @@ NENTRY(mutex_enter)
 	xorq	%rax, %rax
 	LOCK(1)
 	cmpxchgq %rcx, MTX_OWNER(%rdi)
-	jnz,pn	_C_LABEL(mutex_vector_enter)
+	jnz	1f
 	ret
+1:
+	jmp	_C_LABEL(mutex_vector_enter)
 
 /*
  * void mutex_exit(kmutex_t *mtx);
@@ -90,8 +85,10 @@ NENTRY(mutex_exit)
 	movq	CPUVAR(CURLWP), %rax
 	xorq	%rdx, %rdx
 	cmpxchgq %rdx, MTX_OWNER(%rdi)
-	jnz,pn	_C_LABEL(mutex_vector_exit)
+	jnz	1f
 	ret
+1:
+	jmp	_C_LABEL(mutex_vector_exit)
 
 /*
  * void mutex_spin_enter(kmutex_t *mtx);
@@ -99,24 +96,25 @@ NENTRY(mutex_exit)
  * Acquire a spin mutex and post a load fence.
  */
 NENTRY(mutex_spin_enter)
-	movq	CPUVAR(SELF), %r8
 #if defined(FULL)
 	movl	$0x0100, %eax			/* new + expected value */
 #endif
-	movl	CPU_INFO_ILEVEL(%r8), %esi
-	subl	$1, CPU_INFO_MTX_COUNT(%r8)	/* decl doesnt set CF */
+	movl	CPUVAR(ILEVEL), %esi
 	movzbl	MTX_IPL(%rdi), %ecx		/* new SPL */
-	cmovncl	CPU_INFO_MTX_OLDSPL(%r8), %esi
 	cmpl	%ecx, %esi			/* higher? */
-	movl	%esi, CPU_INFO_MTX_OLDSPL(%r8)
 	cmovgl	%esi, %ecx
-	movl	%ecx, CPU_INFO_ILEVEL(%r8)	/* splraiseipl() */
+	movl	%ecx, CPUVAR(ILEVEL)		/* splraiseipl() */
+	subl	$1, CPUVAR(MTX_COUNT)		/* decl doesnt set CF */
+	cmovncl	CPUVAR(MTX_OLDSPL), %esi
+	movl	%esi, CPUVAR(MTX_OLDSPL)
 #if defined(FULL)
 	LOCK(11)
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
-	jnz,pn	_C_LABEL(mutex_spin_retry)	/* failed; hard case */
+	jnz	1f
 #endif
 	ret
+1:
+	jmp	_C_LABEL(mutex_spin_retry)	/* failed; hard case */
 
 /*
  * void mutex_spin_exit(kmutex_t *mtx);
@@ -189,7 +187,7 @@ NENTRY(rw_enter)
 1:	movq	RW_OWNER(%rdi), %rax
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
-	jnz,pn	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	LOCK(2)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz,pn	1b
@@ -203,8 +201,10 @@ NENTRY(rw_enter)
 	orq	$RW_WRITE_LOCKED, %rcx
 	LOCK(3)
 	cmpxchgq %rcx, RW_OWNER(%rdi)
-	jnz,pn	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	ret
+3:
+	jmp	_C_LABEL(rw_vector_enter)
 
 /*
  * void	rw_exit(krwlock_t *rwl);
@@ -220,10 +220,10 @@ NENTRY(rw_exit)
 	 * Reader
 	 */
 1:	testb	$RW_HAS_WAITERS, %al
-	jnz,pn	3f
+	jnz	3f
 	cmpq	$RW_READ_INCR, %rax
 	leaq	-RW_READ_INCR(%rax), %rdx
-	jb,pn	3f
+	jb	3f
 	LOCK(4)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz,pn	1b
@@ -234,7 +234,7 @@ NENTRY(rw_exit)
 	 */
 2:	leaq	-RW_WRITE_LOCKED(%rax), %rdx
 	subq	CPUVAR(CURLWP), %rdx
-	jnz,pn	3f
+	jnz	3f
 	LOCK(5)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz	3f
@@ -254,14 +254,15 @@ NENTRY(rw_tryenter)
 	/*
 	 * Reader: this is the most common case.
 	 */
-1:	movq	RW_OWNER(%rdi), %rax
+	movq	RW_OWNER(%rdi), %rax
+1:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
 	jnz	3f
 	LOCK(8)
 	cmpxchgq %rdx, RW_OWNER(%rdi)
-	movl	$0, %eax
-	setz	%al
+	jnz	1b
+	movl	%edi, %eax			/* nonzero */
 	ret
 
 	/*

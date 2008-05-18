@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.194 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.194.2.1 2008/05/18 12:35:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -98,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.194 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.194.2.1 2008/05/18 12:35:29 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -140,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.194 2008/04/12 05:58:22 thorpej Exp 
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /*IPSEC*/
@@ -525,7 +519,7 @@ sendit:
 	}
 
 	if (sp == NULL) {
-		ipsecstat.out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto bad;
 	}
 
@@ -537,7 +531,7 @@ sendit:
 		/*
 		 * This packet is just discarded.
 		 */
-		ipsecstat.out_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_POLVIO);
 		goto bad;
 
 	case IPSEC_POLICY_BYPASS:

@@ -1,4 +1,4 @@
-/* $NetBSD: atppcvar.h,v 1.10 2008/04/15 15:02:28 cegger Exp $ */
+/* $NetBSD: atppcvar.h,v 1.10.2.1 2008/05/18 12:33:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -36,6 +36,7 @@
 #include <machine/types.h>
 #include <sys/device.h>
 #include <sys/callout.h>
+#include <sys/simplelock.h>
 
 #include <dev/ppbus/ppbus_conf.h>
 

@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1043 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1043.2.1 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -495,6 +495,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		SCSI-2 bus, utilizing HVD signalling via the siop(4)
 		driver. [skrll 20080405]
 	openssh: Import 5.0. [christos 20080406]
+	ofppc: Support for SMP added. [garbled 20080408]
 	opencrypto: Improve performance to 84,000 short modular math ops/sec
 		    by adding asynchronous operation and batched submit/
 		    retrieve of requests/results.  Rewrite manual page to
@@ -502,3 +503,30 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		    by Coyote Point Systems, Inc. [tls 20080410]
 	acpi(4): Updated ACPI-CA to 20080321. [jmcneill 20080412]
 	libcurses: Add getwin() and putwin(). [jdc 20080414]
+	shark: Support for X on rev. 4 sharks is back [macallan 20080419]
+	amdtemp(4): AMD CPU Temperature driver. Adapted from OpenBSD.
+		[cegger 20080423]
+	netiso: Remove obsolete TPCONS support. [plunky 20080423]
+	arm: merge armv6 kernel support from matt-armv6 branch.
+		[matt 20080427]
+	prep: Support for floppy controller/drive. [garbled 20080428]
+	gpio(4): Extend with open/close to handle request/release the
+		ppbus(4) on open/close. From Hans Rosenfeld. [cegger 20080429]
+	ppbus(4): Extend to attach on gpiobus. From Hans Rosenfeld.
+		[cegger 20080429]
+	prep: Bootable ISO now built automatically. [garbled 20080430]
+	atf(7): Import 0.5.  [jmmv 20080501]
+	tests: Convert the tests in the tests/ hierarchy that were written in
+		C++ to C, making use of the libatf-c library that comes with
+		the ATF 0.5 just imported.  [jmmv 20080501]
+	hpqlb(4): Hotkey driver for HP notebooks. [cegger 20080501]
+	drm(4): Added amd64 support. [jmcneill 20080504]
+	openssl: Imported 20080509 current snapshot. [christos 20080509]
+	getent(1): Added support for "netgroup" database. [tron 20080514]
+	fs/udf: Added write support for the UDF file system. [reinoud 20080514]
+	event(3): Updated libevent to 1.4.4-stable. [peter 20080516]
+	ypserv(8): disabled libwrap address to hostname lookups to avoid
+		the chance of ypserv blocking for an extended period of
+		time due a long DNS timeout [chuck 20080516]
+	amd64: Added support for PCI_BUS_FIXUP and PCI_ADDR_FIXUP kernel
+		options. [jmcneill 20080517]

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.h,v 1.13 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: keysock.h,v 1.13.72.1 2008/05/18 12:35:44 yamt Exp $	*/
 /*	$KAME: keysock.h,v 1.8 2000/03/27 05:11:06 sumikawa Exp $	*/
 
 /*
@@ -34,29 +34,29 @@
 #define _NETKEY_KEYSOCK_H_
 
 /* statistics for pfkey socket */
-struct pfkeystat {
-	/* userland -> kernel */
-	u_quad_t out_total;		/* # of total calls */
-	u_quad_t out_bytes;		/* total bytecount */
-	u_quad_t out_msgtype[256];	/* message type histogram */
-	u_quad_t out_invlen;		/* invalid length field */
-	u_quad_t out_invver;		/* invalid version field */
-	u_quad_t out_invmsgtype;	/* invalid message type field */
-	u_quad_t out_tooshort;		/* msg too short */
-	u_quad_t out_nomem;		/* memory allocation failure */
-	u_quad_t out_dupext;		/* duplicate extension */
-	u_quad_t out_invexttype;	/* invalid extension type */
-	u_quad_t out_invsatype;		/* invalid sa type */
-	u_quad_t out_invaddr;		/* invalid address extension */
-	/* kernel -> userland */
-	u_quad_t in_total;		/* # of total calls */
-	u_quad_t in_bytes;		/* total bytecount */
-	u_quad_t in_msgtype[256];	/* message type histogram */
-	u_quad_t in_msgtarget[3];	/* one/all/registered */
-	u_quad_t in_nomem;		/* memory allocation failure */
-	/* others */
-	u_quad_t sockerr;		/* # of socket related errors */
-};
+#define	PFKEY_STAT_OUT_TOTAL	0	/* # of total calls */
+#define	PFKEY_STAT_OUT_BYTES	1	/* total bytecount */
+#define	PFKEY_STAT_OUT_MSGTYPE	2	/* message type histogram */
+		/* space for 256 counters */
+#define	PFKEY_STAT_OUT_INVLEN	258	/* invalid length field */
+#define	PFKEY_STAT_OUT_INVVER	259	/* invalid version field */
+#define	PFKEY_STAT_OUT_INVMSGTYPE 260	/* invalid message type field */
+#define	PFKEY_STAT_OUT_TOOSHORT	261	/* message too short */
+#define	PFKEY_STAT_OUT_NOMEM	262	/* memory allocation failure */
+#define	PFKEY_STAT_OUT_DUPEXT	263	/* duplicate extension */
+#define	PFKEY_STAT_OUT_INVEXTTYPE 264	/* invalid extension type */
+#define	PFKEY_STAT_OUT_INVSATYPE 265	/* invalid sa type */
+#define	PFKEY_STAT_OUT_INVADDR	266	/* invalid address extension */
+#define	PFKEY_STAT_IN_TOTAL	267	/* # of total calls */
+#define	PFKEY_STAT_IN_BYTES	268	/* total bytecount */
+#define	PFKEY_STAT_IN_MSGTYPE	269	/* message type histogram */
+		/* space for 256 counters */
+#define	PFKEY_STAT_IN_MSGTARGET	525	/* one/all/registered */
+		/* space for 3 counters */
+#define	PFKEY_STAT_IN_NOMEM	528	/* memory alloation failure */
+#define	PFKEY_STAT_SOCKERR	529	/* # of socket related errors */
+
+#define	PFKEY_NSTATS		530
 
 #define KEY_SENDUP_ONE		0
 #define KEY_SENDUP_ALL		1
@@ -72,8 +72,6 @@ struct keycb {
 		struct mbuf **, struct mbuf **, int *);
 	struct mbuf *kp_queue;	/* queued mbufs, linked by m_nextpkt */
 };
-
-extern struct pfkeystat pfkeystat;
 
 extern int key_output __P((struct mbuf *, ...));
 #ifndef __NetBSD__

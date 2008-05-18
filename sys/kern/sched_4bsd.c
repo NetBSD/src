@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.19 2008/04/17 14:03:42 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.19.2.1 2008/05/18 12:35:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -75,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.19 2008/04/17 14:03:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.19.2.1 2008/05/18 12:35:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -333,7 +326,7 @@ sched_nice(struct proc *p, int n)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_nice = n;
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -404,7 +397,7 @@ sched_proc_fork(struct proc *parent, struct proc *child)
 {
 	lwp_t *pl;
 
-	KASSERT(mutex_owned(&parent->p_smutex));
+	KASSERT(mutex_owned(parent->p_lock));
 
 	pl = LIST_FIRST(&parent->p_lwps);
 	child->p_estcpu_inherited = pl->l_estcpu;
@@ -425,7 +418,7 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 
 	/* XXX Only if parent != init?? */
 
-	mutex_enter(&parent->p_smutex);
+	mutex_enter(parent->p_lock);
 	pl = LIST_FIRST(&parent->p_lwps);
 	cl = LIST_FIRST(&child->p_lwps);
 	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
@@ -435,7 +428,7 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 		pl->l_estcpu = ESTCPULIM(pl->l_estcpu + cl->l_estcpu - estcpu);
 		lwp_unlock(pl);
 	}
-	mutex_exit(&parent->p_smutex);
+	mutex_exit(parent->p_lock);
 }
 
 void

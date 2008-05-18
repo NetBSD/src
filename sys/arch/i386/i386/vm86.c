@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.46 2007/04/16 19:12:18 ad Exp $	*/
+/*	$NetBSD: vm86.c,v 1.46.34.1 2008/05/18 12:32:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.46 2007/04/16 19:12:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.46.34.1 2008/05/18 12:32:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +207,7 @@ vm86_return(l, retval)
 	struct proc *p = l->l_proc;
 	ksiginfo_t ksi;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/*
 	 * We can't set the virtual flags in our real trap frame,
@@ -239,7 +232,7 @@ vm86_return(l, retval)
 		/* NOTREACHED */
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGURG;
@@ -440,9 +433,9 @@ x86_vm86(struct lwp *l, char *args, register_t *retval)
 
 	/* Going into vm86 mode jumps off the signal stack. */
 	p = l->l_proc;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	set_vflags(l, vm86s.regs[_REG_EFL] | PSL_VM);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.30 2008/01/02 11:48:49 ad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.30.8.1 2008/05/18 12:35:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,14 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.30 2008/01/02 11:48:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.30.8.1 2008/05/18 12:35:07 yamt Exp $");
 
 #include "opt_fileassoc.h"
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/exec.h>
@@ -164,7 +163,7 @@ table_dtor(void *vp)
 	}
 
 	/* Remove hash table and sysctl node */
-	hashdone(tbl->hash_tbl, M_TEMP);
+	hashdone(tbl->hash_tbl, HASH_LIST, tbl->hash_mask);
 	specificdata_fini(fileassoc_domain, &tbl->data);
 	kmem_free(tbl, sizeof(*tbl));
 }
@@ -321,8 +320,8 @@ fileassoc_table_resize(struct fileassoc_table *tbl)
 	newtbl->hash_size = (tbl->hash_size * 2);
 	if (newtbl->hash_size < tbl->hash_size)
 		newtbl->hash_size = tbl->hash_size;
-	newtbl->hash_tbl = hashinit(newtbl->hash_size, HASH_LIST, M_TEMP,
-	    M_WAITOK | M_ZERO, &newtbl->hash_mask);
+	newtbl->hash_tbl = hashinit(newtbl->hash_size, HASH_LIST,
+	    true, &newtbl->hash_mask);
 	newtbl->hash_used = 0;
 	specificdata_init(fileassoc_domain, &newtbl->data);
 
@@ -352,7 +351,7 @@ fileassoc_table_resize(struct fileassoc_table *tbl)
 		    "needed %zu entries, got %zu", tbl->hash_used,
 		    newtbl->hash_used);
 
-	hashdone(tbl->hash_tbl, M_TEMP);
+	hashdone(tbl->hash_tbl, HASH_LIST, tbl->hash_mask);
 	specificdata_fini(fileassoc_domain, &tbl->data);
 	kmem_free(tbl, sizeof(*tbl));
 
@@ -375,8 +374,8 @@ fileassoc_table_add(struct mount *mp)
 	/* Allocate and initialize a table. */
 	tbl = kmem_zalloc(sizeof(*tbl), KM_SLEEP);
 	tbl->hash_size = FILEASSOC_INITIAL_TABLESIZE;
-	tbl->hash_tbl = hashinit(tbl->hash_size, HASH_LIST, M_TEMP,
-	    M_WAITOK | M_ZERO, &tbl->hash_mask);
+	tbl->hash_tbl = hashinit(tbl->hash_size, HASH_LIST, true,
+	    &tbl->hash_mask);
 	tbl->hash_used = 0;
 	specificdata_init(fileassoc_domain, &tbl->data);
 

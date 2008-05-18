@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.111 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.111.2.1 2008/05/18 12:33:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.111 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.111.2.1 2008/05/18 12:33:29 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -467,11 +467,11 @@ ultrix_sys_setpgrp(struct lwp *l, const struct ultrix_sys_setpgrp_args *uap, reg
 
 #if defined (NFSSERVER)
 int
-ultrix_sys_nfssvc(struct lwp *l, const void *v, register_t *retval)
+ultrix_sys_nfssvc(struct lwp *l, const struct ultrix_sys_nfssvc_args *uap,
+    register_t *retval)
 {
 
 #if 0	/* XXX */
-	struct ultrix_sys_nfssvc_args *uap = v;
 	struct emul *e = p->p_emul;
 	struct sys_nfssvc_args outuap;
 	struct sockaddr sa;

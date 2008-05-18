@@ -1,8 +1,9 @@
-/*	$NetBSD: cpu.c,v 1.15 2008/04/18 15:32:46 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.15.2.1 2008/05/18 12:33:08 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -18,13 +19,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2008/04/18 15:32:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15.2.1 2008/05/18 12:33:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -159,6 +153,7 @@ struct cpu_info cpu_info_primary = {
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
+	.ci_curldt = -1,
 #ifdef TRAPLOG
 	.ci_tlog = &tlog_primary,
 #endif
@@ -237,6 +232,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
+		ci->ci_curldt = -1;
 		if (phycpu_info[cpunum] != NULL)
 			panic("cpu at apic id %d already attached?", cpunum);
 		phycpu_info[cpunum] = ci;
@@ -252,8 +248,8 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
-	ci->ci_apicid = caa->cpu_number;
-	ci->ci_cpuid = ci->ci_apicid;
+	ci->ci_cpuid = caa->cpu_number;
+	ci->ci_vcpu = NULL;
 
 	printf(": ");
 	switch (caa->cpu_role) {
@@ -345,9 +341,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	uintptr_t ptr;
-#if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
-#endif
 
 	sc->sc_dev = self;
 
@@ -356,6 +350,11 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	 * structure, otherwise use the primary's.
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
+		if (cpunum >= X86_MAXPROCS) {
+			aprint_error(": apic id %d ignored, "
+				"please increase X86_MAXPROCS\n", cpunum);
+		}
+
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    M_DEVBUF, M_WAITOK);
@@ -388,13 +387,11 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
-	ci->ci_apicid = caa->cpu_number;
-#ifdef MULTIPROCESSOR
-	ci->ci_cpuid = ci->ci_apicid;
-#else
-	ci->ci_cpuid = 0;	/* False for APs, but they're not used anyway */
-#endif
-	ci->ci_cpumask = (1 << ci->ci_cpuid);
+	ci->ci_cpuid = cpunum;
+
+	KASSERT(HYPERVISOR_shared_info != NULL);
+	ci->ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[cpunum];
+
 	ci->ci_func = caa->cpu_func;
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
@@ -413,6 +410,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
 
+	ci->ci_cpumask = (1 << cpu_index(ci));
 	pmap_reference(pmap_kernel());
 	ci->ci_pmap = pmap_kernel();
 	ci->ci_tlbstate = TLBSTATE_STALE;
@@ -421,28 +419,30 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 
 	switch (caa->cpu_role) {
 	case CPU_ROLE_SP:
-		aprint_normal(": (uniprocessor)\n");
 		atomic_or_32(&ci->ci_flags,
 		     CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
-		identifycpu(ci);
+		cpu_get_tsc_freq(ci);
+		cpu_identify(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_cpu_idle_init();
 #if 0
 		x86_errata();
 #endif
 		break;
 
 	case CPU_ROLE_BP:
-		aprint_normal("apid %d (boot processor)\n", caa->cpu_number);
 		atomic_or_32(&ci->ci_flags, 
 		    CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY);
 		cpu_intr_init(ci);
-		identifycpu(ci);
+		cpu_get_tsc_freq(ci);
+		cpu_identify(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
+		x86_cpu_idle_init();
 #if NLAPIC > 0
 		/*
 		 * Enable local apic
@@ -460,7 +460,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		/*
 		 * report on an AP
 		 */
-		aprint_normal("apid %d (application processor)\n", caa->cpu_number);
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
@@ -516,9 +515,6 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 void
 cpu_init(struct cpu_info *ci)
 {
-	/* configure the CPU if needed */
-	if (ci->cpu_setup != NULL)
-		(*ci->cpu_setup)(ci);
 
 	/*
 	 * On a P6 or above, enable global TLB caching if the
@@ -687,9 +683,7 @@ cpu_hatch(void *v)
         cpu_init_msrs(ci, true);
 #endif
 
-	cpu_probe_features(ci);
-	cpu_feature &= ci->ci_feature_flags;
-	cpu_feature2 &= ci->ci_feature2_flags;
+	cpu_probe(ci);
 
 	/* not on Xen... */
 	blacklist_features = ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX); /* XXX add CPUID_SVM */
@@ -917,13 +911,13 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	 */
 
 	if (ci->ci_flags & CPUF_AP) {
-		if ((error = x86_ipi_init(ci->ci_apicid)) != 0)
+		if ((error = x86_ipi_init(ci->ci_cpuid)) != 0)
 			return error;
 
 		delay(10000);
 
 		if (cpu_feature & CPUID_APIC) {
-			error = x86_ipi_init(ci->ci_apicid);
+			error = x86_ipi_init(ci->ci_cpuid);
 			if (error != 0) {
 				aprint_error_dev(ci->ci_dev, "%s: IPI not taken (1)\n",
 						__func__);
@@ -932,7 +926,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 
 			delay(10000);
 
-			error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+			error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
 					LAPIC_DLMODE_STARTUP);
 			if (error != 0) {
 				aprint_error_dev(ci->ci_dev, "%s: IPI not taken (2)\n",
@@ -941,7 +935,7 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 			}
 			delay(200);
 
-			error = x86_ipi(target / PAGE_SIZE, ci->ci_apicid,
+			error = x86_ipi(target / PAGE_SIZE, ci->ci_cpuid,
 					LAPIC_DLMODE_STARTUP);
 			if (error != 0) {
 				aprint_error_dev(ci->ci_dev, "%s: IPI not taken ((3)\n",
@@ -1054,8 +1048,7 @@ void
 cpu_get_tsc_freq(struct cpu_info *ci)
 {
 #ifdef XEN3
-	const volatile vcpu_time_info_t *tinfo =
-		   &HYPERVISOR_shared_info->vcpu_info[0].time;
+	const volatile vcpu_time_info_t *tinfo = &ci->ci_vcpu->time;
 	delay(1000000);
 	uint64_t freq = 1000000000ULL << 32;
 	freq = freq / (uint64_t)tinfo->tsc_to_system_mul;
@@ -1063,9 +1056,25 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 		freq = freq << -tinfo->tsc_shift;
 	else
 		freq = freq >> tinfo->tsc_shift;
-	ci->ci_tsc_freq = freq;
+	ci->ci_data.cpu_cc_freq = freq;
 #else
+	/* Xen2 */
 	/* XXX this needs to read the shared_info of the CPU being probed.. */
-	ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
+	ci->ci_data.cpu_cc_freq = HYPERVISOR_shared_info->cpu_freq;
 #endif /* XEN3 */
+}
+
+void
+x86_cpu_idle_xen(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+
+	x86_disable_intr();
+	if (!__predict_false(ci->ci_want_resched)) {
+		idle_block();
+	} else {
+		x86_enable_intr();
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.9 2007/03/04 06:03:28 christos Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.9.38.1 2008/05/18 12:35:40 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -59,10 +59,6 @@ struct in6pcb;
 /* KAME compatibility shims */
 #define	ipsec6_getpolicybyaddr	ipsec_getpolicybyaddr
 #define	ipsec6_getpolicybysock	ipsec_getpolicybysock
-#define	ipsec6stat		newipsecstat
-#define	out_inval		ips_out_inval
-#define	in_polvio		ips_in_polvio
-#define	out_polvio		ips_out_polvio
 #define	key_freesp(_x)		KEY_FREESP(&_x)
 
 int ipsec6_delete_pcbpolicy (struct in6pcb *);
@@ -89,8 +85,8 @@ const char *ipsec6_logpacketstr (struct ip6_hdr *, u_int32_t);
 
 #ifdef __NetBSD__
 /* NetBSD protosw ctlin entrypoint */
-void esp6_ctlinput(int, const struct sockaddr *, void *);
-void ah6_ctlinput(int, const struct sockaddr *, void *);
+void * esp6_ctlinput(int, const struct sockaddr *, void *);
+void * ah6_ctlinput(int, const struct sockaddr *, void *);
 #endif /* __NetBSD__ */
 
 struct m_tag;

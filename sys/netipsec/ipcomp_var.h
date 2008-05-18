@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_var.h,v 1.5 2007/12/29 14:56:35 degroote Exp $	*/
+/*	$NetBSD: ipcomp_var.h,v 1.5.8.1 2008/05/18 12:35:40 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipcomp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
@@ -42,29 +42,29 @@
  */
 #define	IPCOMP_ALG_MAX	8
 
-struct ipcompstat {
-	u_int64_t	ipcomps_hdrops;	/* Packet shorter than header shows */
-	u_int64_t	ipcomps_nopf;	/* Protocol family not supported */
-	u_int64_t	ipcomps_notdb;
-	u_int64_t	ipcomps_badkcr;
-	u_int64_t	ipcomps_qfull;
-	u_int64_t	ipcomps_noxform;
-	u_int64_t	ipcomps_wrap;
-	u_int64_t	ipcomps_input;	/* Input IPcomp packets */
-	u_int64_t	ipcomps_output;	/* Output IPcomp packets */
-	u_int64_t	ipcomps_invalid;/* Trying to use an invalid TDB */
-	u_int64_t	ipcomps_ibytes;	/* Input bytes */
-	u_int64_t	ipcomps_obytes;	/* Output bytes */
-	u_int64_t	ipcomps_toobig;	/* Packet got > IP_MAXPACKET */
-	u_int64_t	ipcomps_minlen; /* Packet too short for compress */
-	u_int64_t	ipcomps_uselesscomp; /* Packet compressed > Initial Packet */
-	u_int64_t	ipcomps_pdrops;	/* Packet blocked due to policy */
-	u_int64_t	ipcomps_crypto;	/* "Crypto" processing failure */
-	u_int64_t	ipcomps_hist[IPCOMP_ALG_MAX];/* Per-algorithm op count */
-};
+#define	IPCOMP_STAT_HDROPS	0	/* packet shorter than header shows */
+#define	IPCOMP_STAT_NOPF	1	/* protocol family not supported */
+#define	IPCOMP_STAT_NOTDB	2
+#define	IPCOMP_STAT_BADKCR	3
+#define	IPCOMP_STAT_QFULL	4
+#define	IPCOMP_STAT_NOXFORM	5
+#define	IPCOMP_STAT_WRAP	6
+#define	IPCOMP_STAT_INPUT	7	/* input IPcomp packets */
+#define	IPCOMP_STAT_OUTPUT	8	/* output IPcomp packets */
+#define	IPCOMP_STAT_INVALID	9	/* trying to use an invalid TDB */
+#define	IPCOMP_STAT_IBYTES	10	/* input bytes */
+#define	IPCOMP_STAT_OBYTES	11	/* output bytes */
+#define	IPCOMP_STAT_TOOBIG	12	/* packet got larger than IP_MAXPACKET */
+#define	IPCOMP_STAT_MINLEN	13	/* packet too short to compress */
+#define	IPCOMP_STAT_USELESS	14	/* packet compressed > initial packet */
+#define	IPCOMP_STAT_PDROPS	15	/* packet blocked due to policy */
+#define	IPCOMP_STAT_CRYPTO	16	/* crypto processing failure */
+#define	IPCOMP_STAT_HIST	17	/* per-algorithm op count */
+		/* space for IPCOMP_ALG_MAX (8) counters */
+
+#define	IPCOMP_NSTATS		25
 
 #ifdef _KERNEL
 extern	int ipcomp_enable;
-extern	struct ipcompstat ipcompstat;
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_IPCOMP_VAR_H_ */

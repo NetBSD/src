@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.34 2008/02/29 00:37:26 chris Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.34.2.1 2008/05/18 12:31:36 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.34 2008/02/29 00:37:26 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.34.2.1 2008/05/18 12:31:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,7 +585,7 @@ static void vidcvideo_queue_dc_change(struct fb_devconfig *dc, int dc_change)
 {
 	dc->_internal_dc_changed |= dc_change;
 
-	if (current_spl_level == _SPL_HIGH) {
+	if (curcpl() == IPL_HIGH) {
 		/* running in ddb or without interrupts */
 	    	dc->dc_writeback_delay = 1;
 		flush_dc_changes_to_screen(dc);
@@ -601,7 +601,7 @@ static void vidcvideo_queue_dc_change(struct fb_devconfig *dc, int dc_change)
 }
 
 
-static u_char ri_col_data[6][6] = {
+static const u_char ri_col_data[6][6] = {
 	{ 0,  0,  0,   0,  0,  0},	/*  1 bpp */
 	{ 0,  0,  0,   0,  0,  0},	/*  2 bpp */
 	{ 0,  0,  0,   0,  0,  0},	/*  4 bpp */
@@ -614,7 +614,7 @@ static void
 vidcvideo_colourmap_and_cursor_init(struct fb_devconfig *dc)
 {
 	struct rasops_info *ri = &dc->dc_console.scr_ri;
-	u_char *rgbdat;
+	const u_char *rgbdat;
 	struct hwcmap256 *cm;
 	const u_int8_t *p;
 	int index;

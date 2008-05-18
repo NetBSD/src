@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.15 2007/12/21 13:05:26 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.15.8.1 2008/05/18 12:32:07 yamt Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.15 2007/12/21 13:05:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.15.8.1 2008/05/18 12:32:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,140 +204,4 @@ int
 db_valid_breakpoint(db_addr_t addr)
 {
 	return (1);
-}
-
-void
-db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
-    const char *modif, void (*pr)(const char *, ...))
-{
-	register_t *fp, pc, rp;
-	bool kernel_only = true;
-	bool trace_thread = false;
-	bool lwpaddr = false;
-	db_sym_t sym;
-	db_expr_t off;
-	const char *name;
-	const char *cp = modif;
-	char c;
-
-	if (count < 0)
-		count = 65536;
-
-	while ((c = *cp++) != 0) {
-		if (c == 'a') {
-			lwpaddr = true;
-			trace_thread = true;
-		}
-		if (c == 't')
-			trace_thread = true;
-		if (c == 'u')
-			kernel_only = false;
-	}
-
-	if (!have_addr) {
-		fp = (register_t *)ddb_regs.tf_r3;
-		pc = ddb_regs.tf_iioq_head;
-		rp = ddb_regs.tf_rp;
-	} else {
-		if (trace_thread) {
-			struct proc *p;
-			struct user *u;
-			struct lwp *l;
-			if (lwpaddr) {
-				l = (struct lwp *)addr;
-				p = l->l_proc;
-				(*pr)("trace: pid %d ", p->p_pid);
-			} else {
-				(*pr)("trace: pid %d ", (int)addr);
-				p = p_find(addr, PFIND_LOCKED);
-				if (p == NULL) {
-					(*pr)("not found\n");
-					return;
-				}
-				l = proc_representative_lwp(p, NULL, 0);
-			}
-			(*pr)("lid %d ", l->l_lid);
-			if (!(l->l_flag & LW_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
-			u = l->l_addr;
-			if (p == curproc && l == curlwp) {
-				fp = (int *)ddb_regs.tf_r3;
-				pc = ddb_regs.tf_iioq_head;
-				rp = ddb_regs.tf_rp;
-			} else {
-				/* cpu_switchto fp, and return point */
-				fp = (int *)(u->u_pcb.pcb_ksp -
-				    (HPPA_FRAME_SIZE + 16*4));
-				pc = 0;
-				rp = fp[-5];
-			}
-			(*pr)("at %p\n", fp);
-		} else {
-			pc = 0;
-			fp = (register_t *)addr;
-			rp = fp[-5];
-		}
-	}
-
-	while (fp && count--) {
-
-#ifdef DDB_DEBUG
-		pr(">> %08x %08x %08x\t", fp, pc, rp);
-#endif
-
-		if (USERMODE(pc))
-			return;
-
-		sym = db_search_symbol(pc, DB_STGY_ANY, &off);
-		db_symbol_values (sym, &name, NULL);
-
-		pr("%s() at ", name);
-		db_printsym(pc, DB_STGY_PROC, pr);
-		pr("\n");
-
-		/*
-		 * if a terminal frame then report the trapframe
-		 * and continue after it (if not the last one).
-		 */
-		if (!fp[0]) {
-			register_t *scargs;
-			struct trapframe *tf;
-			int scoff;
-
-			/* Stack space for syscall args */
-			scoff = HPPA_FRAME_ROUND(HPPA_FRAME_SIZE + HPPA_FRAME_MAXARGS);
-
-			scargs = (register_t *)((char *)fp - scoff);
-			tf = (struct trapframe *)((char *)scargs - sizeof(*tf));
-
-			if (tf->tf_flags & TFF_SYS)
-				pr("-- syscall #%d(%x, %x, %x, %x, ...)\n",
-				    tf->tf_t1, scargs[1], scargs[2],
-				    scargs[3], scargs[4]);
-			else
-				pr("-- trap #%d%s\n", tf->tf_flags & 0x3f,
-				    (tf->tf_flags & T_USER)? " from user" : "");
-
-			if (!(tf->tf_flags & TFF_LAST)) {
-				fp = (register_t *)tf->tf_r3;
-				pc = tf->tf_iioq_head;
-				rp = tf->tf_rp;
-			} else {
-				pc = 0;
-				fp = 0;
-			}
-		} else {
-			/* next frame */
-			fp = (register_t *)fp[0];
-			pc = rp;
-			rp = fp[-5];
-		}
-	}
-
-	if (count && pc) {
-		db_printsym(pc, DB_STGY_XTRN, pr);
-		pr(":\n");
-	}
 }

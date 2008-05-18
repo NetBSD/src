@@ -108,53 +108,8 @@
 #include <signal.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(OPENSSL_SYS_MACOSX)
-# define USE_TOD
-#elif !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VXWORKS) && (!defined(OPENSSL_SYS_VMS) || defined(__DECC))
-# define TIMES
-#endif
-#if !defined(_UNICOS) && !defined(__OpenBSD__) && !defined(sgi) && !defined(__FreeBSD__) && !(defined(__bsdi) || defined(__bsdi__)) && !defined(_AIX) && !defined(OPENSSL_SYS_MPE) && !defined(__NetBSD__) && !defined(OPENSSL_SYS_VXWORKS) /* FIXME */
-# define TIMEB
-#endif
-
-#if defined(OPENSSL_SYS_NETWARE)
-#undef TIMES
-#undef TIMEB
-#include <time.h>
-#endif
-
-#ifndef _IRIX
-# include <time.h>
-#endif
-#ifdef TIMES
-# include <sys/types.h>
-# include <sys/times.h>
-#endif
-#ifdef USE_TOD
-# include <sys/time.h>
-# include <sys/resource.h>
-#endif
-
-/* Depending on the VMS version, the tms structure is perhaps defined.
-   The __TMS macro will show if it was.  If it wasn't defined, we should
-   undefine TIMES, since that tells the rest of the program how things
-   should be handled.				-- Richard Levitte */
-#if defined(OPENSSL_SYS_VMS_DECC) && !defined(__TMS)
-#undef TIMES
-#endif
-
-#ifdef TIMEB
-#include <sys/timeb.h>
-#endif
-
-#if !defined(TIMES) && !defined(TIMEB) && !defined(USE_TOD) && !defined(OPENSSL_SYS_VXWORKS) && !defined(OPENSSL_SYS_NETWARE)
-#error "It seems neither struct tms nor struct timeb is supported in this platform!"
-#endif
-
-#if defined(sun) || defined(__ultrix)
-#define _POSIX_SOURCE
-#include <limits.h>
-#include <sys/param.h>
+#ifdef _WIN32
+#include <windows.h>
 #endif
 
 #include <openssl/bn.h>
@@ -189,6 +144,9 @@
 #ifndef OPENSSL_NO_RIPEMD
 #include <openssl/ripemd.h>
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+#include <openssl/whrlpool.h>
+#endif
 #ifndef OPENSSL_NO_RC4
 #include <openssl/rc4.h>
 #endif
@@ -200,6 +158,9 @@
 #endif
 #ifndef OPENSSL_NO_IDEA
 #include <openssl/idea.h>
+#endif
+#ifndef OPENSSL_NO_SEED
+#include <openssl/seed.h>
 #endif
 #ifndef OPENSSL_NO_BF
 #include <openssl/blowfish.h>
@@ -223,34 +184,6 @@
 #include <openssl/ecdh.h>
 #endif
 
-/*
- * The following "HZ" timing stuff should be sync'd up with the code in
- * crypto/tmdiff.[ch]. That appears to try to do the same job, though I think
- * this code is more up to date than libcrypto's so there may be features to
- * migrate over first. This is used in two places further down AFAICS. 
- * The point is that nothing in openssl actually *uses* that tmdiff stuff, so
- * either speed.c should be using it or it should go because it's obviously not
- * useful enough. Anyone want to do a janitorial job on this?
- */
-
-/* The following if from times(3) man page.  It may need to be changed */
-#ifndef HZ
-# if defined(_SC_CLK_TCK) \
-     && (!defined(OPENSSL_SYS_VMS) || __CTRL_VER >= 70000000)
-#  define HZ sysconf(_SC_CLK_TCK)
-# else
-#  ifndef CLK_TCK
-#   ifndef _BSD_CLK_TCK_ /* FreeBSD hack */
-#    define HZ	100.0
-#   else /* _BSD_CLK_TCK_ */
-#    define HZ ((double)_BSD_CLK_TCK_)
-#   endif
-#  else /* CLK_TCK */
-#   define HZ ((double)CLK_TCK)
-#  endif
-# endif
-#endif
-
 #if !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(OPENSSL_SYS_OS2) && !defined(OPENSSL_SYS_NETWARE)
 # define HAVE_FORK 1
 #endif
@@ -259,7 +192,6 @@
 #define BUFSIZE	((long)1024*8+1)
 int run=0;
 
-static char ftime_used = 0, times_used = 0, gettimeofday_used = 0, getrusage_used = 0;
 static int mr=0;
 static int usertime=1;
 
@@ -272,7 +204,7 @@ static void print_result(int alg,int run_no,int count,double time_used);
 static int do_multi(int multi);
 #endif
 
-#define ALGOR_NUM	24
+#define ALGOR_NUM	29
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
@@ -282,11 +214,12 @@ static int do_multi(int multi);
 
 static const char *names[ALGOR_NUM]={
   "md2","mdc2","md4","md5","hmac(md5)","sha1","rmd160","rc4",
-  "des cbc","des ede3","idea cbc",
+  "des cbc","des ede3","idea cbc","seed cbc",
   "rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc",
   "aes-128 cbc","aes-192 cbc","aes-256 cbc",
   "camellia-128 cbc","camellia-192 cbc","camellia-256 cbc",
-  "evp","sha256","sha512"};
+  "evp","sha256","sha512","whirlpool",
+  "aes-128 ige","aes-192 ige","aes-256 ige"};
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static double rsa_results[RSA_NUM][2];
@@ -324,141 +257,46 @@ static SIGRETTYPE sig_done(int sig)
 #define START	0
 #define STOP	1
 
-#if defined(OPENSSL_SYS_NETWARE)
+#if defined(_WIN32)
 
-   /* for NetWare the best we can do is use clock() which returns the
-    * time, in hundredths of a second, since the NLM began executing
-   */
+#define SIGALRM
+static unsigned int lapse,schlock;
+static void alarm(unsigned int secs) { lapse = secs*1000; }
+
+static DWORD WINAPI sleepy(VOID *arg)
+	{
+	schlock = 1;
+	Sleep(lapse);
+	run = 0;
+	return 0;
+	}
+
 static double Time_F(int s)
 	{
-	double ret;
+	if (s == START)
+		{
+		HANDLE	thr;
+		schlock = 0;
+		thr = CreateThread(NULL,4096,sleepy,NULL,0,NULL);
+		if (thr==NULL)
+			{
+			DWORD ret=GetLastError();
+			BIO_printf(bio_err,"unable to CreateThread (%d)",ret);
+			ExitProcess(ret);
+			}
+		CloseHandle(thr);		/* detach the thread	*/
+		while (!schlock) Sleep(0);	/* scheduler spinlock	*/
+		}
 
-   static clock_t tstart,tend;
-
-   if (s == START)
-   {
-      tstart=clock();
-      return(0);
-   }
-   else
-   {
-      tend=clock();
-      ret=(double)((double)(tend)-(double)(tstart));
-      return((ret < 0.001)?0.001:ret);
-   }
-   }
-
+	return app_tminterval(s,usertime);
+	}
 #else
 
 static double Time_F(int s)
 	{
-	double ret;
-
-#ifdef USE_TOD
-	if(usertime)
-		{
-		static struct rusage tstart,tend;
-
-		getrusage_used = 1;
-		if (s == START)
-			{
-			getrusage(RUSAGE_SELF,&tstart);
-			return(0);
-			}
-		else
-			{
-			long i;
-
-			getrusage(RUSAGE_SELF,&tend);
-			i=(long)tend.ru_utime.tv_usec-(long)tstart.ru_utime.tv_usec;
-			ret=((double)(tend.ru_utime.tv_sec-tstart.ru_utime.tv_sec))
-			  +((double)i)/1000000.0;
-			return((ret < 0.001)?0.001:ret);
-			}
-		}
-	else
-		{
-		static struct timeval tstart,tend;
-		long i;
-
-		gettimeofday_used = 1;
-		if (s == START)
-			{
-			gettimeofday(&tstart,NULL);
-			return(0);
-			}
-		else
-			{
-			gettimeofday(&tend,NULL);
-			i=(long)tend.tv_usec-(long)tstart.tv_usec;
-			ret=((double)(tend.tv_sec-tstart.tv_sec))+((double)i)/1000000.0;
-			return((ret < 0.001)?0.001:ret);
-			}
-		}
-#else  /* ndef USE_TOD */
-		
-# ifdef TIMES
-	if (usertime)
-		{
-		static struct tms tstart,tend;
-
-		times_used = 1;
-		if (s == START)
-			{
-			times(&tstart);
-			return(0);
-			}
-		else
-			{
-			times(&tend);
-			ret = HZ;
-			ret=(double)(tend.tms_utime-tstart.tms_utime) / ret;
-			return((ret < 1e-3)?1e-3:ret);
-			}
-		}
-# endif /* times() */
-# if defined(TIMES) && defined(TIMEB)
-	else
-# endif
-# ifdef OPENSSL_SYS_VXWORKS
-                {
-		static unsigned long tick_start, tick_end;
-
-		if( s == START )
-			{
-			tick_start = tickGet();
-			return 0;
-			}
-		else
-			{
-			tick_end = tickGet();
-			ret = (double)(tick_end - tick_start) / (double)sysClkRateGet();
-			return((ret < 0.001)?0.001:ret);
-			}
-                }
-# elif defined(TIMEB)
-		{
-		static struct timeb tstart,tend;
-		long i;
-
-		ftime_used = 1;
-		if (s == START)
-			{
-			ftime(&tstart);
-			return(0);
-			}
-		else
-			{
-			ftime(&tend);
-			i=(long)tend.millitm-(long)tstart.millitm;
-			ret=((double)(tend.time-tstart.time))+((double)i)/1000.0;
-			return((ret < 0.001)?0.001:ret);
-			}
-		}
-# endif
-#endif
+	return app_tminterval(s,usertime);
 	}
-#endif /* if defined(OPENSSL_SYS_NETWARE) */
+#endif
 
 
 #ifndef OPENSSL_NO_ECDH
@@ -518,6 +356,9 @@ int MAIN(int argc, char **argv)
 	unsigned char sha512[SHA512_DIGEST_LENGTH];
 #endif
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+	unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
+#endif
 #ifndef OPENSSL_NO_RIPEMD
 	unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
 #endif
@@ -532,6 +373,9 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_IDEA
 	IDEA_KEY_SCHEDULE idea_ks;
+#endif
+#ifndef OPENSSL_NO_SEED
+	SEED_KEY_SCHEDULE seed_ks;
 #endif
 #ifndef OPENSSL_NO_BF
 	BF_KEY bf_ks;
@@ -570,7 +414,7 @@ int MAIN(int argc, char **argv)
 #define MAX_BLOCK_SIZE 64
 #endif
 	unsigned char DES_iv[8];
-	unsigned char iv[MAX_BLOCK_SIZE/8];
+	unsigned char iv[2*MAX_BLOCK_SIZE/8];
 #ifndef OPENSSL_NO_DES
 	DES_cblock *buf_as_des_cblock = NULL;
 	static DES_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
@@ -597,19 +441,24 @@ int MAIN(int argc, char **argv)
 #define	D_CBC_DES	8
 #define	D_EDE3_DES	9
 #define	D_CBC_IDEA	10
-#define	D_CBC_RC2	11
-#define	D_CBC_RC5	12
-#define	D_CBC_BF	13
-#define	D_CBC_CAST	14
-#define D_CBC_128_AES	15
-#define D_CBC_192_AES	16
-#define D_CBC_256_AES	17
-#define D_CBC_128_CML   18 
-#define D_CBC_192_CML   19
-#define D_CBC_256_CML   20 
-#define D_EVP		21
-#define D_SHA256	22	
-#define D_SHA512	23
+#define	D_CBC_SEED	11
+#define	D_CBC_RC2	12
+#define	D_CBC_RC5	13
+#define	D_CBC_BF	14
+#define	D_CBC_CAST	15
+#define D_CBC_128_AES	16
+#define D_CBC_192_AES	17
+#define D_CBC_256_AES	18
+#define D_CBC_128_CML   19 
+#define D_CBC_192_CML   20
+#define D_CBC_256_CML   21 
+#define D_EVP		22
+#define D_SHA256	23	
+#define D_SHA512	24
+#define D_WHIRLPOOL	25
+#define D_IGE_128_AES   26
+#define D_IGE_192_AES   27
+#define D_IGE_256_AES   28
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
@@ -929,6 +778,10 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+			if (strcmp(*argv,"whirlpool") == 0) doit[D_WHIRLPOOL]=1;
+		else
+#endif
 #ifndef OPENSSL_NO_RIPEMD
 			if (strcmp(*argv,"ripemd") == 0) doit[D_RMD160]=1;
 		else
@@ -950,7 +803,10 @@ int MAIN(int argc, char **argv)
 			if (strcmp(*argv,"aes-128-cbc") == 0) doit[D_CBC_128_AES]=1;
 		else	if (strcmp(*argv,"aes-192-cbc") == 0) doit[D_CBC_192_AES]=1;
 		else	if (strcmp(*argv,"aes-256-cbc") == 0) doit[D_CBC_256_AES]=1;
-		else
+		else    if (strcmp(*argv,"aes-128-ige") == 0) doit[D_IGE_128_AES]=1;
+		else	if (strcmp(*argv,"aes-192-ige") == 0) doit[D_IGE_192_AES]=1;
+		else	if (strcmp(*argv,"aes-256-ige") == 0) doit[D_IGE_256_AES]=1;
+                else
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 			if (strcmp(*argv,"camellia-128-cbc") == 0) doit[D_CBC_128_CML]=1;
@@ -997,6 +853,11 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
 		     if (strcmp(*argv,"idea-cbc") == 0) doit[D_CBC_IDEA]=1;
 		else if (strcmp(*argv,"idea") == 0) doit[D_CBC_IDEA]=1;
+		else
+#endif
+#ifndef OPENSSL_NO_SEED
+		     if (strcmp(*argv,"seed-cbc") == 0) doit[D_CBC_SEED]=1;
+		else if (strcmp(*argv,"seed") == 0) doit[D_CBC_SEED]=1;
 		else
 #endif
 #ifndef OPENSSL_NO_BF
@@ -1132,17 +993,24 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_SHA512
 			BIO_printf(bio_err,"sha512   ");
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+			BIO_printf(bio_err,"whirlpool");
+#endif
 #ifndef OPENSSL_NO_RIPEMD160
 			BIO_printf(bio_err,"rmd160");
 #endif
 #if !defined(OPENSSL_NO_MD2) || !defined(OPENSSL_NO_MDC2) || \
     !defined(OPENSSL_NO_MD4) || !defined(OPENSSL_NO_MD5) || \
-    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160)
+    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160) || \
+    !defined(OPENSSL_NO_WHIRLPOOL)
 			BIO_printf(bio_err,"\n");
 #endif
 
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err,"idea-cbc ");
+#endif
+#ifndef OPENSSL_NO_SEED
+			BIO_printf(bio_err,"seed-cbc ");
 #endif
 #ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err,"rc2-cbc  ");
@@ -1153,7 +1021,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_BF
 			BIO_printf(bio_err,"bf-cbc");
 #endif
-#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_RC2) || \
+#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_SEED) || !defined(OPENSSL_NO_RC2) || \
     !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_RC5)
 			BIO_printf(bio_err,"\n");
 #endif
@@ -1162,6 +1030,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_AES
 			BIO_printf(bio_err,"aes-128-cbc aes-192-cbc aes-256-cbc ");
+			BIO_printf(bio_err,"aes-128-ige aes-192-ige aes-256-ige ");
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 			BIO_printf(bio_err,"\n");
@@ -1195,6 +1064,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err,"idea     ");
 #endif
+#ifndef OPENSSL_NO_SEED
+			BIO_printf(bio_err,"seed     ");
+#endif
 #ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err,"rc2      ");
 #endif
@@ -1213,10 +1085,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_BF
 			BIO_printf(bio_err,"blowfish");
 #endif
-#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_RC2) || \
-    !defined(OPENSSL_NO_DES) || !defined(OPENSSL_NO_RSA) || \
-    !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_AES) || \
-    !defined(OPENSSL_NO_CAMELLIA) 
+#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_SEED) || \
+    !defined(OPENSSL_NO_RC2) || !defined(OPENSSL_NO_DES) || \
+    !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_BF) || \
+    !defined(OPENSSL_NO_AES) || !defined(OPENSSL_NO_CAMELLIA)
 			BIO_printf(bio_err,"\n");
 #endif
 
@@ -1263,11 +1135,6 @@ int MAIN(int argc, char **argv)
 
 	if (usertime == 0 && !mr)
 		BIO_printf(bio_err,"You have chosen to measure elapsed time instead of user CPU time.\n");
-	if (usertime <= 0 && !mr)
-		{
-		BIO_printf(bio_err,"To get the most accurate results, try to run this\n");
-		BIO_printf(bio_err,"program when this computer is idle.\n");
-		}
 
 #ifndef OPENSSL_NO_RSA
 	for (i=0; i<RSA_NUM; i++)
@@ -1318,6 +1185,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);
 #endif
+#ifndef OPENSSL_NO_SEED
+	SEED_set_key(key16,&seed_ks);
+#endif
 #ifndef OPENSSL_NO_RC4
 	RC4_set_key(&rc4_ks,16,key16);
 #endif
@@ -1361,6 +1231,7 @@ int MAIN(int argc, char **argv)
 	c[D_CBC_DES][0]=count;
 	c[D_EDE3_DES][0]=count/3;
 	c[D_CBC_IDEA][0]=count;
+	c[D_CBC_SEED][0]=count;
 	c[D_CBC_RC2][0]=count;
 	c[D_CBC_RC5][0]=count;
 	c[D_CBC_BF][0]=count;
@@ -1373,6 +1244,10 @@ int MAIN(int argc, char **argv)
 	c[D_CBC_256_CML][0]=count;
 	c[D_SHA256][0]=count;
 	c[D_SHA512][0]=count;
+	c[D_WHIRLPOOL][0]=count;
+	c[D_IGE_128_AES][0]=count;
+	c[D_IGE_192_AES][0]=count;
+	c[D_IGE_256_AES][0]=count;
 
 	for (i=1; i<SIZE_NUM; i++)
 		{
@@ -1385,6 +1260,7 @@ int MAIN(int argc, char **argv)
 		c[D_RMD160][i]=c[D_RMD160][0]*4*lengths[0]/lengths[i];
 		c[D_SHA256][i]=c[D_SHA256][0]*4*lengths[0]/lengths[i];
 		c[D_SHA512][i]=c[D_SHA512][0]*4*lengths[0]/lengths[i];
+		c[D_WHIRLPOOL][i]=c[D_WHIRLPOOL][0]*4*lengths[0]/lengths[i];
 		}
 	for (i=1; i<SIZE_NUM; i++)
 		{
@@ -1396,6 +1272,7 @@ int MAIN(int argc, char **argv)
 		c[D_CBC_DES][i]=c[D_CBC_DES][i-1]*l0/l1;
 		c[D_EDE3_DES][i]=c[D_EDE3_DES][i-1]*l0/l1;
 		c[D_CBC_IDEA][i]=c[D_CBC_IDEA][i-1]*l0/l1;
+		c[D_CBC_SEED][i]=c[D_CBC_SEED][i-1]*l0/l1;
 		c[D_CBC_RC2][i]=c[D_CBC_RC2][i-1]*l0/l1;
 		c[D_CBC_RC5][i]=c[D_CBC_RC5][i-1]*l0/l1;
 		c[D_CBC_BF][i]=c[D_CBC_BF][i-1]*l0/l1;
@@ -1406,6 +1283,9 @@ int MAIN(int argc, char **argv)
  		c[D_CBC_128_CML][i]=c[D_CBC_128_CML][i-1]*l0/l1;
 		c[D_CBC_192_CML][i]=c[D_CBC_192_CML][i-1]*l0/l1;
 		c[D_CBC_256_CML][i]=c[D_CBC_256_CML][i-1]*l0/l1;
+		c[D_IGE_128_AES][i]=c[D_IGE_128_AES][i-1]*l0/l1;
+		c[D_IGE_192_AES][i]=c[D_IGE_192_AES][i-1]*l0/l1;
+		c[D_IGE_256_AES][i]=c[D_IGE_256_AES][i-1]*l0/l1;
 		}
 #ifndef OPENSSL_NO_RSA
 	rsa_c[R_RSA_512][0]=count/2000;
@@ -1564,7 +1444,9 @@ int MAIN(int argc, char **argv)
 #else
 #define COND(c)	(run)
 #define COUNT(d) (count)
+#ifndef _WIN32
 	signal(SIGALRM,sig_done);
+#endif
 #endif /* SIGALRM */
 
 #ifndef OPENSSL_NO_MD2
@@ -1694,8 +1576,23 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-
 #endif
+
+#ifndef OPENSSL_NO_WHIRLPOOL
+	if (doit[D_WHIRLPOOL])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_WHIRLPOOL],c[D_WHIRLPOOL][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_WHIRLPOOL][j]); count++)
+				WHIRLPOOL(buf,lengths[j],whirlpool);
+			d=Time_F(STOP);
+			print_result(D_WHIRLPOOL,j,count,d);
+			}
+		}
+#endif
+
 #ifndef OPENSSL_NO_RIPEMD
 	if (doit[D_RMD160])
 		{
@@ -1799,6 +1696,50 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
+	if (doit[D_IGE_128_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_IGE_128_AES],c[D_IGE_128_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_IGE_128_AES][j]); count++)
+				AES_ige_encrypt(buf,buf2,
+					(unsigned long)lengths[j],&aes_ks1,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_IGE_128_AES,j,count,d);
+			}
+		}
+	if (doit[D_IGE_192_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_IGE_192_AES],c[D_IGE_192_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_IGE_192_AES][j]); count++)
+				AES_ige_encrypt(buf,buf2,
+					(unsigned long)lengths[j],&aes_ks2,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_IGE_192_AES,j,count,d);
+			}
+		}
+	if (doit[D_IGE_256_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_IGE_256_AES],c[D_IGE_256_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_IGE_256_AES][j]); count++)
+				AES_ige_encrypt(buf,buf2,
+					(unsigned long)lengths[j],&aes_ks3,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_IGE_256_AES,j,count,d);
+			}
+		}
+
+
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 	if (doit[D_CBC_128_CML])
@@ -1858,6 +1799,21 @@ int MAIN(int argc, char **argv)
 					iv,IDEA_ENCRYPT);
 			d=Time_F(STOP);
 			print_result(D_CBC_IDEA,j,count,d);
+			}
+		}
+#endif
+#ifndef OPENSSL_NO_SEED
+	if (doit[D_CBC_SEED])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_SEED],c[D_CBC_SEED][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_SEED][j]); count++)
+				SEED_cbc_encrypt(buf,buf,
+					(unsigned long)lengths[j],&seed_ks,iv,1);
+			d=Time_F(STOP);
+			print_result(D_CBC_SEED,j,count,d);
 			}
 		}
 #endif
@@ -2396,35 +2352,6 @@ show_res:
 		printf("%s ",BF_options());
 #endif
 		fprintf(stdout,"\n%s\n",SSLeay_version(SSLEAY_CFLAGS));
-		printf("available timing options: ");
-#ifdef TIMES
-		printf("TIMES ");
-#endif
-#ifdef TIMEB
-		printf("TIMEB ");
-#endif
-#ifdef USE_TOD
-		printf("USE_TOD ");
-#endif
-#ifdef HZ
-#define as_string(s) (#s)
-		{
-		double dbl = HZ;
-		printf("HZ=%g", dbl);
-		}
-# ifdef _SC_CLK_TCK
-		printf(" [sysconf value]");
-# endif
-#endif
-		printf("\n");
-		printf("timing function used: %s%s%s%s%s%s%s\n",
-		       (ftime_used ? "ftime" : ""),
-		       (ftime_used + times_used > 1 ? "," : ""),
-		       (times_used ? "times" : ""),
-		       (ftime_used + times_used + gettimeofday_used > 1 ? "," : ""),
-		       (gettimeofday_used ? "gettimeofday" : ""),
-		       (ftime_used + times_used + gettimeofday_used + getrusage_used > 1 ? "," : ""),
-		       (getrusage_used ? "getrusage" : ""));
 		}
 
 	if (pr_header)
@@ -2679,6 +2606,7 @@ static int do_multi(int multi)
 			close(fd[1]);
 			mr=1;
 			usertime=0;
+			free(fds);
 			return 0;
 			}
 		printf("Forked child %d\n",n);
@@ -2827,7 +2755,10 @@ static int do_multi(int multi)
 			else
 				fprintf(stderr,"Unknown type '%s' from child %d\n",buf,n);
 			}
+
+		fclose(f);
 		}
+	free(fds);
 	return 1;
 	}
 #endif

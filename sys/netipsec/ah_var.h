@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_var.h,v 1.3 2005/12/10 23:44:08 elad Exp $	*/
+/*	$NetBSD: ah_var.h,v 1.3.72.1 2008/05/18 12:35:40 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ah_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$OpenBSD: ip_ah.h,v 1.29 2002/06/09 16:26:10 itojun Exp $	*/
 /*
@@ -48,32 +48,32 @@
  */
 #define	AH_ALG_MAX	16
 
-struct ahstat {
-	u_int64_t	ahs_hdrops;	/* Packet shorter than header shows */
-	u_int64_t	ahs_nopf;	/* Protocol family not supported */
-	u_int64_t	ahs_notdb;
-	u_int64_t	ahs_badkcr;
-	u_int64_t	ahs_badauth;
-	u_int64_t	ahs_noxform;
-	u_int64_t	ahs_qfull;
-	u_int64_t	ahs_wrap;
-	u_int64_t	ahs_replay;
-	u_int64_t	ahs_badauthl;	/* Bad authenticator length */
-	u_int64_t	ahs_input;	/* Input AH packets */
-	u_int64_t	ahs_output;	/* Output AH packets */
-	u_int64_t	ahs_invalid;	/* Trying to use an invalid TDB */
-	u_int64_t	ahs_ibytes;	/* Input bytes */
-	u_int64_t	ahs_obytes;	/* Output bytes */
-	u_int64_t	ahs_toobig;	/* Packet got larger than IP_MAXPACKET */
-	u_int64_t	ahs_pdrops;	/* Packet blocked due to policy */
-	u_int64_t	ahs_crypto;	/* Crypto processing failure */
-	u_int64_t	ahs_tunnel;	/* Tunnel sanity check failure */
-	u_int64_t	ahs_hist[AH_ALG_MAX];	/* Per-algorithm op count */
-};
+#define	AH_STAT_HDROPS		0	/* packet shorter than header shows */
+#define	AH_STAT_NOPF		1	/* protocol family not supported */
+#define	AH_STAT_NOTDB		2
+#define	AH_STAT_BADKCR		3
+#define	AH_STAT_BADAUTH		4
+#define	AH_STAT_NOXFORM		5
+#define	AH_STAT_QFULL		6
+#define	AH_STAT_WRAP		7
+#define	AH_STAT_REPLAY		8
+#define	AH_STAT_BADAUTHL	9	/* bad authenticator length */
+#define	AH_STAT_INPUT		10	/* input AH packets */
+#define	AH_STAT_OUTPUT		11	/* output AH packets */
+#define	AH_STAT_INVALID		12	/* trying to use an invalid TDB */
+#define	AH_STAT_IBYTES		13	/* input bytes */
+#define	AH_STAT_OBYTES		14	/* output bytes */
+#define	AH_STAT_TOOBIG		15	/* packet got > than IP_MAXPACKET */
+#define	AH_STAT_PDROPS		16	/* packet blocked due to policy */
+#define	AH_STAT_CRYPTO		17	/* crypto processing failure */
+#define	AH_STAT_TUNNEL		18	/* tunnel sanity check failure */
+#define	AH_STAT_HIST		19	/* per-algorithm op count */
+		/* space for AH_ALG_MAX (16) counters */
+
+#define	AH_NSTATS		35
 
 #ifdef _KERNEL
 extern	int ah_enable;
 extern	int ah_cleartos;
-extern	struct ahstat ahstat;
 #endif /* _KERNEL */
 #endif /* !_NETIPSEC_AH_VAR_H_ */

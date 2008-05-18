@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypserv.8,v 1.18 2006/05/20 20:03:28 christos Exp $
+.\"	$NetBSD: ypserv.8,v 1.18.18.1 2008/05/18 12:36:24 yamt Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -83,6 +83,16 @@ server,
 will return the
 .Tn NIS
 result code YP_NODOM.
+To avoid problems with DNS lookups causing 
+.Nm
+to hang,
+.Nm
+disables DNS lookups for its client
+.Xr hosts_access 5
+lists.  The result is that
+.Nm
+can only use address based patterns.  This also means that wildcard patterns
+such as LOCAL or KNOWN will not work.
 .Pp
 The process pid of the
 .Nm

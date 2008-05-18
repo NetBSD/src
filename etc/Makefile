@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.350 2008/03/22 12:02:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.350.2.1 2008/05/18 12:29:47 yamt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -287,6 +287,11 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
 	    ${.CURDIR}/etc.${MACHINE}/ttys ${DESTDIR}/etc
+.if exists(etc.${MACHINE}/boot.cfg)
+	${_MKMSG_INSTALL} ${DESTDIR}/boot.cfg
+	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
+	    ${.CURDIR}/etc.${MACHINE}/boot.cfg ${DESTDIR}/
+.endif
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
@@ -604,6 +609,7 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 				[ ! -f $${ks} ] && continue; \
 				knl_gz="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/$${ks}-${configfile:C/.*\///}.gz"; \
 				[ $${knl_gz} -nt $${ks} ] && continue; \
+				rm -f $${knl_gz}; \
 				echo "gzip -c -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
 				gzip -c -9 < $${ks} > $${knl_gz}; \
 			done; \

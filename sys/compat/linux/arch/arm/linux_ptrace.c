@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.11 2007/12/20 23:02:52 dsl Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.11.8.1 2008/05/18 12:33:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11 2007/12/20 23:02:52 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.8.1 2008/05/18 12:33:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -94,6 +87,8 @@ struct linux_reg {
 #define LINUX_REG_CPSR	16
 #define LINUX_REG_ORIG_R0 17
 
+int linux_ptrace_disabled = 1;	/* bitrotted */
+
 int
 linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, register_t *retval)
 {
@@ -111,6 +106,9 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 	struct fpreg *fpregs = NULL;
 	struct linux_reg *linux_regs = NULL;
 	struct linux_fpreg *linux_fpregs = NULL;
+
+	if (linux_ptrace_disabled)
+		return ENOSYS;
 
 	request = SCARG(uap, request);
 

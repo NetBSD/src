@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.51 2007/12/07 19:44:38 elad Exp $	*/
+/*	$NetBSD: key.c,v 1.51.14.1 2008/05/18 12:35:40 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 	
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.51 2007/12/07 19:44:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.51.14.1 2008/05/18 12:35:40 yamt Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.51 2007/12/07 19:44:38 elad Exp $");
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
+#include <sys/once.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -99,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.51 2007/12/07 19:44:38 elad Exp $");
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
+#include <netipsec/ipsec_private.h>
 
 #include <netipsec/xform.h>
 #include <netipsec/ipsec_osdep.h>
@@ -112,6 +114,8 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.51 2007/12/07 19:44:38 elad Exp $");
 
 #define FULLMASK	0xff
 #define	_BITS(bytes)	((bytes) << 3)
+
+percpu_t *pfkeystat_percpu;
 
 /*
  * Note on SA reference counting:
@@ -965,13 +969,19 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
 		 */
 		if (d->lft_c->sadb_lifetime_addtime != 0) {
 			struct mbuf *m, *result;
+			uint8_t satype;
 
 			key_sa_chgstate(d, SADB_SASTATE_DEAD);
 
 			IPSEC_ASSERT(d->refcnt > 0,
 				("key_do_allocsa_policy: bogus ref count"));
+
+			satype = key_proto2satype(d->sah->saidx.proto);
+			if (satype == 0) 
+				goto msgfail;
+
 			m = key_setsadbmsg(SADB_DELETE, 0,
-			    d->sah->saidx.proto, 0, 0, d->refcnt - 1);
+			    satype, 0, 0, d->refcnt - 1);
 			if (!m)
 				goto msgfail;
 			result = m;
@@ -2520,8 +2530,12 @@ key_spddump(struct socket *so, struct mbuf *m0,
 	if (n == NULL) {
 		return key_senderror(so, m0, ENOENT);
 	}
-	pfkeystat.in_total++;
-	pfkeystat.in_bytes += len;
+	{
+		uint64_t *ps = PFKEY_STAT_GETREF();
+		ps[PFKEY_STAT_IN_TOTAL]++;
+		ps[PFKEY_STAT_IN_BYTES] += len;
+		PFKEY_STAT_PUTREF();
+	}
 
 	/*
 	 * PF_KEY DUMP responses are no longer broadcast to all PF_KEY sockets.
@@ -2540,7 +2554,7 @@ key_spddump(struct socket *so, struct mbuf *m0,
 	        n, SB_PRIO_ONESHOT_OVERFLOW);
 
 	if (!ok) {
-		pfkeystat.in_nomem++;
+		PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 		m_freem(n);
 		return key_senderror(so, m0, ENOBUFS);
 	}
@@ -4443,7 +4457,7 @@ key_bbcmp(const void *a1, const void *a2, u_int bits)
  * time handler.
  * scanning SPD and SAD to check status for each entries,
  * and do to remove or to expire.
- * XXX: year 2038 problem may remain.
+ * XXX2038: year 2038 problem may remain.
  */
 void
 key_timehandler(void* arg)
@@ -4453,6 +4467,7 @@ key_timehandler(void* arg)
 	time_t now = time_second;
 
 	s = splsoftnet();	/*called from softclock()*/
+	mutex_enter(softnet_lock);
 
 	/* SPD */
     {
@@ -4699,6 +4714,7 @@ key_timehandler(void* arg)
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
 #endif /* IPSEC_DEBUG2 */
 
+	mutex_exit(softnet_lock);
 	splx(s);
 	return;
 }
@@ -7058,8 +7074,12 @@ key_dump(struct socket *so, struct mbuf *m0,
 	if (n == NULL) {
 		return key_senderror(so, m0, ENOENT);
 	}
-	pfkeystat.in_total++;
-	pfkeystat.in_bytes += len;
+	{
+		uint64_t *ps = PFKEY_STAT_GETREF();
+		ps[PFKEY_STAT_IN_TOTAL]++;
+		ps[PFKEY_STAT_IN_BYTES] += len;
+		PFKEY_STAT_PUTREF();
+	}
 
 	/*
 	 * PF_KEY DUMP responses are no longer broadcast to all PF_KEY sockets.
@@ -7076,7 +7096,7 @@ key_dump(struct socket *so, struct mbuf *m0,
 	        n, SB_PRIO_ONESHOT_OVERFLOW);
 
 	if (!ok) {
-		pfkeystat.in_nomem++;
+		PFKEY_STATINC(PFKEY_STAT_IN_NOMEM);
 		m_freem(n);
 		return key_senderror(so, m0, ENOBUFS);
 	}
@@ -7210,7 +7230,7 @@ key_parse(struct mbuf *m, struct socket *so)
 	if ((m->m_flags & M_PKTHDR) == 0 ||
 	    m->m_pkthdr.len != m->m_pkthdr.len) {
 		ipseclog((LOG_DEBUG, "key_parse: invalid message length.\n"));
-		pfkeystat.out_invlen++;
+		PFKEY_STATINC(PFKEY_STAT_OUT_INVLEN);
 		error = EINVAL;
 		goto senderror;
 	}
@@ -7219,7 +7239,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		ipseclog((LOG_DEBUG,
 		    "key_parse: PF_KEY version %u is mismatched.\n",
 		    msg->sadb_msg_version));
-		pfkeystat.out_invver++;
+		PFKEY_STATINC(PFKEY_STAT_OUT_INVVER);
 		error = EINVAL;
 		goto senderror;
 	}
@@ -7227,7 +7247,7 @@ key_parse(struct mbuf *m, struct socket *so)
 	if (msg->sadb_msg_type > SADB_MAX) {
 		ipseclog((LOG_DEBUG, "key_parse: invalid type %u is passed.\n",
 		    msg->sadb_msg_type));
-		pfkeystat.out_invmsgtype++;
+		PFKEY_STATINC(PFKEY_STAT_OUT_INVMSGTYPE);
 		error = EINVAL;
 		goto senderror;
 	}
@@ -7284,7 +7304,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		case SADB_EXPIRE:
 			ipseclog((LOG_DEBUG, "key_parse: must specify satype "
 			    "when msg type=%u.\n", msg->sadb_msg_type));
-			pfkeystat.out_invsatype++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVSATYPE);
 			error = EINVAL;
 			goto senderror;
 		}
@@ -7304,7 +7324,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		case SADB_X_SPDDELETE2:
 			ipseclog((LOG_DEBUG, "key_parse: illegal satype=%u\n",
 			    msg->sadb_msg_type));
-			pfkeystat.out_invsatype++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVSATYPE);
 			error = EINVAL;
 			goto senderror;
 		}
@@ -7315,7 +7335,7 @@ key_parse(struct mbuf *m, struct socket *so)
 	case SADB_SATYPE_MIP:
 		ipseclog((LOG_DEBUG, "key_parse: type %u isn't supported.\n",
 		    msg->sadb_msg_satype));
-		pfkeystat.out_invsatype++;
+		PFKEY_STATINC(PFKEY_STAT_OUT_INVSATYPE);
 		error = EOPNOTSUPP;
 		goto senderror;
 	case 1:	/* XXX: What does it do? */
@@ -7325,7 +7345,7 @@ key_parse(struct mbuf *m, struct socket *so)
 	default:
 		ipseclog((LOG_DEBUG, "key_parse: invalid type %u is passed.\n",
 		    msg->sadb_msg_satype));
-		pfkeystat.out_invsatype++;
+		PFKEY_STATINC(PFKEY_STAT_OUT_INVSATYPE);
 		error = EINVAL;
 		goto senderror;
 	}
@@ -7342,7 +7362,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		/* check upper layer protocol */
 		if (src0->sadb_address_proto != dst0->sadb_address_proto) {
 			ipseclog((LOG_DEBUG, "key_parse: upper layer protocol mismatched.\n"));
-			pfkeystat.out_invaddr++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EINVAL;
 			goto senderror;
 		}
@@ -7351,7 +7371,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		if (PFKEY_ADDR_SADDR(src0)->sa_family !=
 		    PFKEY_ADDR_SADDR(dst0)->sa_family) {
 			ipseclog((LOG_DEBUG, "key_parse: address family mismatched.\n"));
-			pfkeystat.out_invaddr++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EINVAL;
 			goto senderror;
 		}
@@ -7359,7 +7379,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		    PFKEY_ADDR_SADDR(dst0)->sa_len) {
 			ipseclog((LOG_DEBUG,
 			    "key_parse: address struct size mismatched.\n"));
-			pfkeystat.out_invaddr++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EINVAL;
 			goto senderror;
 		}
@@ -7368,7 +7388,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		case AF_INET:
 			if (PFKEY_ADDR_SADDR(src0)->sa_len !=
 			    sizeof(struct sockaddr_in)) {
-				pfkeystat.out_invaddr++;
+				PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 				error = EINVAL;
 				goto senderror;
 			}
@@ -7376,7 +7396,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		case AF_INET6:
 			if (PFKEY_ADDR_SADDR(src0)->sa_len !=
 			    sizeof(struct sockaddr_in6)) {
-				pfkeystat.out_invaddr++;
+				PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 				error = EINVAL;
 				goto senderror;
 			}
@@ -7384,7 +7404,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		default:
 			ipseclog((LOG_DEBUG,
 			    "key_parse: unsupported address family.\n"));
-			pfkeystat.out_invaddr++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EAFNOSUPPORT;
 			goto senderror;
 		}
@@ -7406,7 +7426,7 @@ key_parse(struct mbuf *m, struct socket *so)
 		    dst0->sadb_address_prefixlen > plen) {
 			ipseclog((LOG_DEBUG,
 			    "key_parse: illegal prefixlen.\n"));
-			pfkeystat.out_invaddr++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVADDR);
 			error = EINVAL;
 			goto senderror;
 		}
@@ -7419,7 +7439,7 @@ key_parse(struct mbuf *m, struct socket *so)
 
 	if (msg->sadb_msg_type >= sizeof(key_typesw)/sizeof(key_typesw[0]) ||
 	    key_typesw[msg->sadb_msg_type] == NULL) {
-		pfkeystat.out_invmsgtype++;
+		PFKEY_STATINC(PFKEY_STAT_OUT_INVMSGTYPE);
 		error = EINVAL;
 		goto senderror;
 	}
@@ -7517,7 +7537,7 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 				    "key_align: duplicate ext_type %u "
 				    "is passed.\n", ext->sadb_ext_type));
 				m_freem(m);
-				pfkeystat.out_dupext++;
+				PFKEY_STATINC(PFKEY_STAT_OUT_DUPEXT);
 				return EINVAL;
 			}
 			break;
@@ -7526,7 +7546,7 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 			    "key_align: invalid ext_type %u is passed.\n",
 			    ext->sadb_ext_type));
 			m_freem(m);
-			pfkeystat.out_invexttype++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVEXTTYPE);
 			return EINVAL;
 		}
 
@@ -7534,7 +7554,7 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 
 		if (key_validate_ext(ext, extlen)) {
 			m_freem(m);
-			pfkeystat.out_invlen++;
+			PFKEY_STATINC(PFKEY_STAT_OUT_INVLEN);
 			return EINVAL;
 		}
 
@@ -7552,7 +7572,7 @@ key_align(struct mbuf *m, struct sadb_msghdr *mhp)
 
 	if (off != end) {
 		m_freem(m);
-		pfkeystat.out_invlen++;
+		PFKEY_STATINC(PFKEY_STAT_OUT_INVLEN);
 		return EINVAL;
 	}
 
@@ -7616,10 +7636,12 @@ key_validate_ext(const struct sadb_ext *ext, int len)
 	return 0;
 }
 
-void
-key_init()
+static int
+key_do_init(void)
 {
 	int i;
+
+	pfkeystat_percpu = percpu_alloc(sizeof(uint64_t) * PFKEY_NSTATS);
 
 	callout_init(&key_timehandler_ch, 0);
 
@@ -7657,7 +7679,15 @@ key_init()
 
 	printf("IPsec: Initialized Security Association Processing.\n");
 
-	return;
+	return (0);
+}
+
+void
+key_init(void)
+{
+	static ONCE_DECL(key_init_once);
+
+	RUN_ONCE(&key_init_once, key_do_init);
 }
 
 /*
@@ -8118,6 +8148,13 @@ sysctl_net_key_dumpsp(SYSCTLFN_ARGS)
 # define FAST_IPSEC_PFKEY_NAME "key"
 #endif
 
+static int
+sysctl_net_key_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(pfkeystat_percpu, PFKEY_NSTATS));
+}
+
 SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 {
 
@@ -8192,6 +8229,12 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 		       CTLTYPE_INT, "ah_keymin", NULL,
 		       NULL, 0, &ipsec_ah_keymin, 0,
 		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_AH_KEYMIN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("PF_KEY statistics"),
+		       sysctl_net_key_stats, 0, NULL, 0,
+		       CTL_NET, FAST_IPSEC_PFKEY, CTL_CREATE, CTL_EOL);
 }
 
 /*

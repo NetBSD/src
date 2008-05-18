@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 2006/02/25 12:04:23 simonb Exp $
+#	$NetBSD: Makefile,v 1.8.18.1 2008/05/18 12:29:48 yamt Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=		common
 SRCS=		allow.c board.c check.c fancy.c init.c odds.c \

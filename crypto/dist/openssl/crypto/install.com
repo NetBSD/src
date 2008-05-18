@@ -34,13 +34,13 @@ $	IF F$PARSE("WRK_SSLINCLUDE:") .EQS. "" THEN -
 $
 $	SDIRS := ,-
 		 OBJECTS,-
-		 MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
-		 DES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,-
+		 MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,-
+		 DES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,-
 		 BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,-
 		 BUFFER,BIO,STACK,LHASH,RAND,ERR,-
 		 EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,-
 		 UI,KRB5,-
-		 STORE,PQUEUE
+		 STORE,CMS,PQUEUE,TS
 $	EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,-
 		symhacks.h,ossl_typ.h
 $	EXHEADER_OBJECTS := objects.h,obj_mac.h
@@ -51,6 +51,7 @@ $	EXHEADER_SHA := sha.h
 $	EXHEADER_MDC2 := mdc2.h
 $	EXHEADER_HMAC := hmac.h
 $	EXHEADER_RIPEMD := ripemd.h
+$	EXHEADER_WHRLPOOL := whrlpool.h
 $	EXHEADER_DES := des.h,des_old.h
 $	EXHEADER_RC2 := rc2.h
 $	EXHEADER_RC4 := rc4.h
@@ -59,6 +60,7 @@ $	EXHEADER_IDEA := idea.h
 $	EXHEADER_BF := blowfish.h
 $	EXHEADER_CAST := cast.h
 $	EXHEADER_CAMELLIA := camellia.h
+$	EXHEADER_SEED := seed.h
 $	EXHEADER_BN := bn.h
 $	EXHEADER_EC := ec.h
 $	EXHEADER_RSA := rsa.h
@@ -90,7 +92,9 @@ $	EXHEADER_UI := ui.h,ui_compat.h
 $	EXHEADER_KRB5 := krb5_asn.h
 $!	EXHEADER_STORE := store.h,str_compat.h
 $	EXHEADER_STORE := store.h
-$	EXHEADER_PQUEUE := pqueue.h,pq_compat.h
+$	EXHEADER_CMS := cms.h
+$	EXHEADER_PQUEUE := pqueue.h
+$	EXHEADER_TS := ts.h
 $	LIBS := LIBCRYPTO
 $
 $	VEXE_DIR := [-.VAX.EXE.CRYPTO]

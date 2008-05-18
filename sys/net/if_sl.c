@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.110 2008/02/07 01:22:01 dyoung Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.110.8.1 2008/05/18 12:35:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.110 2008/02/07 01:22:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.110.8.1 2008/05/18 12:35:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.110 2008/02/07 01:22:01 dyoung Exp $");
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/kernel.h>
+#include <sys/socketvar.h>
 #if __NetBSD__
 #include <sys/systm.h>
 #include <sys/kauth.h>
@@ -697,6 +698,7 @@ slintr(void *arg)
 	/*
 	 * Output processing loop.
 	 */
+	mutex_enter(softnet_lock);
 	for (;;) {
 #ifdef INET
 		struct ip *ip;
@@ -965,6 +967,7 @@ slintr(void *arg)
 		splx(s);
 #endif
 	}
+	mutex_exit(softnet_lock);
 }
 
 /*

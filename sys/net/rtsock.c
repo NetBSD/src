@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.100 2008/03/29 13:00:43 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.100.4.1 2008/05/18 12:35:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100 2008/03/29 13:00:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.100.4.1 2008/05/18 12:35:28 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -160,6 +160,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int s;
 
 	if (req == PRU_ATTACH) {
+		sosetlock(so);
 		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK);
 		if ((so->so_pcb = rp) != NULL)
 			memset(so->so_pcb, 0, sizeof(*rp));
@@ -306,7 +307,7 @@ route_output(struct mbuf *m, ...)
                 /* XXX This will mask dst with netmask before
                  * searching.  It did not used to do that.  --dyoung
 		 */
-		error = rtrequest(RTM_GET, dst, gate, netmask, 0, &rt);
+		error = rtrequest1(RTM_GET, &info, &rt);
 		if (error != 0)
 			senderr(error);
 		if (rtm->rtm_type != RTM_GET) {/* XXX: too grotty */
@@ -366,7 +367,7 @@ route_output(struct mbuf *m, ...)
 				R_Malloc(new_rtm, struct rt_msghdr *, len);
 				if (new_rtm == NULL)
 					senderr(ENOBUFS);
-				Bcopy(rtm, new_rtm, rtm->rtm_msglen);
+				memmove(new_rtm, rtm, rtm->rtm_msglen);
 				Free(rtm); rtm = new_rtm;
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, (void *)rtm,
@@ -1173,6 +1174,8 @@ route_intr(void *cookie)
 	struct mbuf *m;
 	int s;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	while (!IF_IS_EMPTY(&route_intrq)) {
 		s = splnet();
 		IF_DEQUEUE(&route_intrq, m);
@@ -1182,6 +1185,8 @@ route_intr(void *cookie)
 		proto.sp_protocol = M_GETCTX(m, uintptr_t);
 		raw_input(m, &proto, &route_src, &route_dst);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -1211,12 +1216,15 @@ rt_init(void)
 {
 
 	route_intrq.ifq_maxlen = route_maxqlen;
-	route_sih = softint_establish(SOFTINT_NET, route_intr, NULL);
+	route_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    route_intr, NULL);
 }
 
 /*
  * Definitions of protocols supported in the ROUTE domain.
  */
+PR_WRAP_USRREQ(route_usrreq)
+#define	route_usrreq	route_usrreq_wrapper
 
 const struct protosw routesw[] = {
 	{

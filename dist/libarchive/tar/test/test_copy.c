@@ -76,8 +76,8 @@ static void
 verify_tree(int limit)
 {
 	struct stat st, st2;
-	char buff[260];
-	char buff2[260];
+	char filename[260];
+	char contents[260];
 	int i, r;
 	int fd;
 	int len;
@@ -88,23 +88,25 @@ verify_tree(int limit)
 	/* Generate the names we know should be there and verify them. */
 	for (i = 0; i < 200; i++) {
 		/* Verify a file named "f_abcdef..." */
-		buff[0] = 'f';
-		buff[1] = '_';
-		buff[i + 2] = 'a' + (i % 26);
-		buff[i + 3] = '\0';
-		if (limit != LIMIT_USTAR || strlen(buff) <= 100) {
-			fd = open(buff, O_RDONLY);
+		filename[0] = 'f';
+		filename[1] = '_';
+		filename[i + 2] = 'a' + (i % 26);
+		filename[i + 3] = '\0';
+		if (limit != LIMIT_USTAR || strlen(filename) <= 100) {
+			fd = open(filename, O_RDONLY);
 			failure("Couldn't open \"%s\": %s",
-			    buff, strerror(errno));
-			assert(fd >= 0);
-			len = read(fd, buff2, i + 10);
-			close(fd);
-			assertEqualInt(len, i + 3);
-			/* Verify contents of 'buff2' */
-			buff2[len] = '\0';
-			assertEqualString(buff, buff2);
-			/* stat() file and get dev/ino for next check */
-			assertEqualInt(0, lstat(buff, &st));
+			    filename, strerror(errno));
+			if (assert(fd >= 0)) {
+				len = read(fd, contents, i + 10);
+				close(fd);
+				assertEqualInt(len, i + 3);
+				/* Verify contents of 'contents' */
+				contents[len] = '\0';
+				failure("Each test file contains its own name");
+				assertEqualString(filename, contents);
+				/* stat() file and get dev/ino for next check */
+				assertEqualInt(0, lstat(filename, &st));
+			}
 		}
 
 		/*
@@ -112,18 +114,18 @@ verify_tree(int limit)
 		 * "original/" as part of the name, so the link
 		 * names here can't exceed 91 chars.
 		 */
-		if (limit != LIMIT_USTAR || strlen(buff) <= 91) {
+		if (limit != LIMIT_USTAR || strlen(filename) <= 91) {
 			/* Verify hardlink "l_abcdef..." */
-			buff[0] = 'l';
-			assertEqualInt(0, (r = lstat(buff, &st2)));
+			filename[0] = 'l';
+			assertEqualInt(0, (r = lstat(filename, &st2)));
 			if (r == 0) {
 				assertEqualInt(st2.st_dev, st.st_dev);
 				assertEqualInt(st2.st_ino, st.st_ino);
 			}
 
 			/* Verify hardlink "m_abcdef..." */
-			buff[0] = 'm';
-			assertEqualInt(0, (r = lstat(buff, &st2)));
+			filename[0] = 'm';
+			assertEqualInt(0, (r = lstat(filename, &st2)));
 			if (r == 0) {
 				assertEqualInt(st2.st_dev, st.st_dev);
 				assertEqualInt(st2.st_ino, st.st_ino);
@@ -135,26 +137,36 @@ verify_tree(int limit)
 		 * so the limit here is 100 characters.
 		 */
 		/* Verify symlink "s_abcdef..." */
-		buff[0] = 's';
-		if (limit != LIMIT_USTAR || strlen(buff) <= 100) {
+		filename[0] = 's';
+		if (limit != LIMIT_USTAR || strlen(filename) <= 100) {
 			/* This is a symlink. */
-			assertEqualInt(0, lstat(buff, &st2));
-			assert(S_ISLNK(st2.st_mode));
-			/* This is a symlink to the file above. */
-			assertEqualInt(0, stat(buff, &st2));
-			assertEqualInt(st2.st_dev, st.st_dev);
-			assertEqualInt(st2.st_ino, st.st_ino);
+			failure("Couldn't stat %s (length %d)",
+			    filename, strlen(filename));
+			if (assertEqualInt(0, lstat(filename, &st2))) {
+				assert(S_ISLNK(st2.st_mode));
+				/* This is a symlink to the file above. */
+				failure("Couldn't stat %s", filename);
+				if (assertEqualInt(0, stat(filename, &st2))) {
+					assertEqualInt(st2.st_dev, st.st_dev);
+					assertEqualInt(st2.st_ino, st.st_ino);
+				}
+			}
 		}
 
 		/* Verify dir "d_abcdef...". */
-		buff[0] = 'd';
-		if (limit != LIMIT_USTAR || strlen(buff) <= 100) {
+		filename[0] = 'd';
+		if (limit != LIMIT_USTAR || strlen(filename) < 100) {
 			/* This is a dir. */
-			assertEqualInt(0, lstat(buff, &st2));
-			assert(S_ISDIR(st2.st_mode));
-			/* TODO: opendir/readdir this directory and
-			 * make sure it's empty.
-			 */
+			failure("Couldn't stat %s (length %d)",
+			    filename, strlen(filename));
+			if (assertEqualInt(0, lstat(filename, &st2))) {
+				if (assert(S_ISDIR(st2.st_mode))) {
+					/* TODO: opendir/readdir this
+					 * directory and make sure
+					 * it's empty.
+					 */
+				}
+			}
 		}
 	}
 
@@ -164,11 +176,20 @@ verify_tree(int limit)
 		p = de->d_name;
 		switch(p[0]) {
 		case 'l': case 'm':
-			if (limit == LIMIT_USTAR)
-				assert(strlen(p) <= 91);
-		case 'd': case 'f': case 's':
-			if (limit == LIMIT_USTAR)
-				assert(strlen(p) <= 100);
+			if (limit == LIMIT_USTAR) {
+				failure("strlen(p) = %d", strlen(p));
+				assert(strlen(p) < 92);
+			}
+		case 'd':
+			if (limit == LIMIT_USTAR) {
+				failure("strlen(p)=%d", strlen(p));
+				assert(strlen(p) < 100);
+			}
+		case 'f': case 's':
+			if (limit == LIMIT_USTAR) {
+				failure("strlen(p)=%d", strlen(p));
+				assert(strlen(p) < 101);
+			}
 			/* Our files have very particular filename patterns. */
 			assert(p[1] == '_' && p[2] == 'a');
 			assert(p[2] == 'a');
@@ -239,7 +260,7 @@ copy_ustar(void)
 	 */
 	r = systemf("%s cf archive --format=ustar -C .. original >pack.out 2>pack.err",
 	    testprog);
-	failure("Error invoking \"%s cf\"", testprog);
+	failure("Error invoking \"%s cf archive --format=ustar\"", testprog);
 	assertEqualInt(r, 0);
 
 	/* Verify that nothing went to stdout. */

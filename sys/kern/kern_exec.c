@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.270 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.270.2.1 2008/05/18 12:35:07 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.270 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.270.2.1 2008/05/18 12:35:07 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -447,7 +447,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 */
 			
 	if ((p->p_flag & PK_SUGID) &&
-	    chgproccnt(kauth_cred_getuid(p->p_cred), 0) >
+	    chgproccnt(kauth_cred_getuid(l->l_cred), 0) >
 	    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
 		return EAGAIN;
 
@@ -634,9 +634,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Get rid of other LWPs. */
 	if (p->p_nlwps > 1) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		exit_lwps(l);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 	KDASSERT(p->p_nlwps == 1);
 
@@ -833,9 +833,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 
 	p->p_acflag &= ~AFORK;
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	p->p_flag |= PK_EXEC;
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 
 	/*
 	 * Stop profiling.
@@ -851,12 +851,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
 	if ((p->p_sflag & PS_PPWAIT) != 0) {
-		mutex_enter(&proclist_lock);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(proc_lock);
+		mutex_enter(p->p_lock);
 		p->p_sflag &= ~PS_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
-		mutex_exit(&p->p_smutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
 	}
 
 	/*
@@ -929,10 +929,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		kauth_cred_t ocred;
 
 		kauth_cred_hold(l->l_cred);
-		mutex_enter(&p->p_mutex);
+		mutex_enter(p->p_lock);
 		ocred = p->p_cred;
 		p->p_cred = l->l_cred;
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		kauth_cred_free(ocred);
 	}
 
@@ -1016,7 +1016,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	rw_exit(&exec_lock);
 #endif
 
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 
 	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED) {
 		KSI_INIT_EMPTY(&ksi);
@@ -1029,20 +1029,20 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		p->p_pptr->p_nstopchild++;
 		p->p_pptr->p_waited = 0;
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		ksiginfo_queue_init(&kq);
 		sigclearall(p, &contsigmask, &kq);
 		lwp_lock(l);
 		l->l_stat = LSSTOP;
 		p->p_stat = SSTOP;
 		p->p_nrlwps--;
-		mutex_exit(&p->p_smutex);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
 		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else {
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 
 	PNBUF_PUT(pathbuf);
@@ -1104,8 +1104,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		vrele(pack.ep_interp);
 
 	/* Acquire the sched-state mutex (exit1() will release it). */
-	KERNEL_LOCK(1, NULL);	/* XXXSMP */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 
 	/* NOTREACHED */
@@ -1245,7 +1244,7 @@ emul_unregister(const char *name)
 	 * emul_unregister() is running quite sendomly, it's better
 	 * to do expensive check here than to use any locking.
 	 */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
 		PROCLIST_FOREACH(ptmp, pd->pd_list) {
 			if (ptmp->p_emul == it->el_emul) {
@@ -1254,7 +1253,7 @@ emul_unregister(const char *name)
 			}
 		}
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	if (error)
 		goto out;

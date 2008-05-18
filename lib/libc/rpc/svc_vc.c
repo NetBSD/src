@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.20 2006/10/17 17:44:34 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.20.16.1 2008/05/18 12:30:18 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.20 2006/10/17 17:44:34 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.20.16.1 2008/05/18 12:30:18 yamt Exp $");
 #endif
 #endif
 
@@ -276,18 +276,12 @@ makefd_xprt(fd, sendsize, recvsize)
 	_DIAGASSERT(fd != -1);
 
 	xprt = mem_alloc(sizeof(SVCXPRT));
-	if (xprt == NULL) {
-		warnx("svc_vc: makefd_xprt: out of memory");
-		goto done;
-	}
+	if (xprt == NULL)
+		goto out;
 	memset(xprt, 0, sizeof *xprt);
 	cd = mem_alloc(sizeof(struct cf_conn));
-	if (cd == NULL) {
-		warnx("svc_tcp: makefd_xprt: out of memory");
-		mem_free(xprt, sizeof(SVCXPRT));
-		xprt = NULL;
-		goto done;
-	}
+	if (cd == NULL)
+		goto out;
 	cd->strm_stat = XPRT_IDLE;
 	xdrrec_create(&(cd->xdrs), sendsize, recvsize,
 	    (caddr_t)(void *)xprt, read_vc, write_vc);
@@ -297,11 +291,16 @@ makefd_xprt(fd, sendsize, recvsize)
 	xprt->xp_port = 0;  /* this is a connection, not a rendezvouser */
 	xprt->xp_fd = fd;
 	if (__rpc_fd2sockinfo(fd, &si) && __rpc_sockinfo2netid(&si, &netid))
-		xprt->xp_netid = strdup(netid);
+		if ((xprt->xp_netid = strdup(netid)) == NULL)
+			goto out;
 
 	xprt_register(xprt);
-done:
 	return (xprt);
+out:
+	warn("svc_tcp: makefd_xprt");
+	if (xprt)
+		mem_free(xprt, sizeof(SVCXPRT));
+	return NULL;
 }
 
 /*ARGSUSED*/
@@ -344,9 +343,11 @@ again:
 	 * make a new transporter (re-uses xprt)
 	 */
 	newxprt = makefd_xprt(sock, r->sendsize, r->recvsize);
+	if (newxprt == NULL)
+		goto out;
 	newxprt->xp_rtaddr.buf = mem_alloc(len);
 	if (newxprt->xp_rtaddr.buf == NULL)
-		return (FALSE);
+		goto out;
 	memcpy(newxprt->xp_rtaddr.buf, &addr, len);
 	newxprt->xp_rtaddr.len = len;
 #ifdef PORTMAP
@@ -367,9 +368,9 @@ again:
 	if (cd->maxrec != 0) {
 		flags = fcntl(sock, F_GETFL, 0);
 		if (flags  == -1)
-			return (FALSE);
+			goto out;
 		if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1)
-			return (FALSE);
+			goto out;
 		if (cd->recvsize > cd->maxrec)
 			cd->recvsize = cd->maxrec;
 		cd->nonblock = TRUE;
@@ -377,9 +378,12 @@ again:
 	} else
 		cd->nonblock = FALSE;
 
-	gettimeofday(&cd->last_recv_time, NULL);
+	(void)gettimeofday(&cd->last_recv_time, NULL);
 
 	return (FALSE); /* there is never an rpc msg to be processed */
+out:
+	(void)close(sock);
+	return (FALSE); /* there was an error */
 }
 
 /*ARGSUSED*/

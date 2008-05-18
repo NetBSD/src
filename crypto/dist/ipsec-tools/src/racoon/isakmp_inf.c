@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.26 2008/03/28 04:18:52 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.26.2.1 2008/05/18 12:28:48 yamt Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1158,6 +1158,10 @@ purge_ipsec_spi(dst0, proto, spi, n)
 	u_int64_t created;
 	size_t i;
 	caddr_t mhp[SADB_EXT_MAX + 1];
+#ifdef ENABLE_NATT
+	struct sadb_x_nat_t_type *natt_type;
+	struct sadb_x_nat_t_port *natt_port;
+#endif
 
 	plog(LLV_DEBUG2, LOCATION, NULL,
 		 "purge_ipsec_spi:\n");
@@ -1210,10 +1214,22 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			msg = next;
 			continue;
 		}
+#ifdef ENABLE_NATT
+		natt_type = (void *)mhp[SADB_X_EXT_NAT_T_TYPE];
+		if (natt_type && natt_type->sadb_x_nat_t_type_type) {
+			/* NAT-T is enabled for this SADB entry; copy
+			 * the ports from NAT-T extensions */
+			natt_port = (void *)mhp[SADB_X_EXT_NAT_T_SPORT];
+			if (extract_port(src) == 0 && natt_port != NULL)
+				set_port(src, ntohs(natt_port->sadb_x_nat_t_port_port));
+
+			natt_port = (void *)mhp[SADB_X_EXT_NAT_T_DPORT];
+			if (extract_port(dst) == 0 && natt_port != NULL)
+				set_port(dst, ntohs(natt_port->sadb_x_nat_t_port_port));
+		}
+#endif
 		plog(LLV_DEBUG2, LOCATION, NULL, "src: %s\n", saddr2str(src));
 		plog(LLV_DEBUG2, LOCATION, NULL, "dst: %s\n", saddr2str(dst));
-
-
 
 		/* XXX n^2 algorithm, inefficient */
 

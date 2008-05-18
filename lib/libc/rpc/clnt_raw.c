@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.28 2005/12/03 15:16:19 yamt Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.28.18.1 2008/05/18 12:30:18 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.28 2005/12/03 15:16:19 yamt Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.28.18.1 2008/05/18 12:30:18 yamt Exp $");
 #endif
 #endif
 
@@ -110,13 +110,13 @@ clnt_raw_create(prog, vers)
 	mutex_lock(&clntraw_lock);
 	if (clp == NULL) {
 		clp = calloc((size_t)1, sizeof (*clp));
-		if (clp == NULL) {
-			mutex_unlock(&clntraw_lock);
-			return NULL;
-		}
+		if (clp == NULL)
+			goto out;
 		if (__rpc_rawcombuf == NULL)
 			__rpc_rawcombuf =
 			    malloc(UDPMSGSIZE);
+		if (__rpc_rawcombuf == NULL)
+			goto out;
 		clp->_raw_buf = __rpc_rawcombuf;
 		clntraw_private = clp;
 	}
@@ -146,6 +146,12 @@ clnt_raw_create(prog, vers)
 	client->cl_auth = authnone_create();
 	mutex_unlock(&clntraw_lock);
 	return (client);
+out:
+	if (clp)
+		free(clp);
+	mutex_unlock(&clntraw_lock);
+	return NULL;
+
 }
 
 /* ARGSUSED */

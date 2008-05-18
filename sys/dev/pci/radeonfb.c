@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.27 2008/04/10 19:13:37 cegger Exp $ */
+/* $NetBSD: radeonfb.c,v 1.27.2.1 2008/05/18 12:34:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27.2.1 2008/05/18 12:34:22 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -911,8 +911,8 @@ static int
 radeonfb_drm_print(void *aux, const char *pnp)
 {
 	if (pnp)
-		aprint_normal("direct rendering for %s", pnp);
-	return (UNSUPP);
+		aprint_normal("drm at %s", pnp);
+	return (UNCONF);
 }
 
 int

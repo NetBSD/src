@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.29 2008/01/02 11:48:44 ad Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.29.8.1 2008/05/18 12:35:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.29 2008/01/02 11:48:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.29.8.1 2008/05/18 12:35:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,9 +284,9 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	if (uiop->uio_resid == 0)
 		return 0;
 	if (p && uiop->uio_offset + uiop->uio_resid > p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		psignal(p, SIGXFSZ);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		return EFBIG;
 	}
 	smb_makescred(&scred, l, cred);

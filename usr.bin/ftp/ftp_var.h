@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.77 2007/12/05 03:46:34 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.77.6.1 2008/05/18 12:36:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -255,6 +248,8 @@ GLOBAL	int	retry_connect;	/* seconds between retrying connection */
 GLOBAL	char   *tmpdir;		/* temporary directory */
 GLOBAL	int	epsv4;		/* use EPSV/EPRT on IPv4 connections */
 GLOBAL	int	epsv4bad;	/* EPSV doesn't work on the current server */
+GLOBAL	int	epsv6;		/* use EPSV/EPRT on IPv6 connections */
+GLOBAL	int	epsv6bad;	/* EPSV doesn't work on the current server */
 GLOBAL	int	editing;	/* command line editing enabled */
 GLOBAL	int	features[FEAT_max];	/* remote FEATures supported */
 

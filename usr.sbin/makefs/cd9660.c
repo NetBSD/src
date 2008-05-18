@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.19 2007/04/07 17:14:58 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.19.10.1 2008/05/18 12:36:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.19 2007/04/07 17:14:58 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.19.10.1 2008/05/18 12:36:20 yamt Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -239,6 +239,9 @@ cd9660_set_defaults(void)
 	cd9660_defaults_set = 1;
 
 	/* Boot support: Initially disabled */
+	diskStructure.has_generic_bootimage = 0;
+	diskStructure.generic_bootimage = NULL;
+
 	diskStructure.boot_image_directory = 0;
 	/*memset(diskStructure.boot_descriptor, 0, 2048);*/
 
@@ -381,6 +384,11 @@ cd9660_parse_opts(const char *option, fsinfo_t *fsopts)
 			cd9660_arguments_set_string(val, "Boot Image Directory",
 			    12 , 'd', diskStructure.boot_image_directory);
 		}
+	} else if (CD9660_IS_COMMAND_ARG_DUAL(var, "G", "generic-bootimage")) {
+		if (val == NULL)
+			warnx("error: The Boot Image parameter requires a valid boot information string");
+		else
+			rv = cd9660_add_generic_bootimage(val);
 	} else if (CD9660_IS_COMMAND_ARG(var, "no-trailing-padding"))
 		diskStructure.include_padding_areas = 0;
 	/* RRIP */
@@ -2078,3 +2086,39 @@ cd9660_create_special_directory(u_char type, cd9660node *parent)
 	return temp;
 }
 
+int
+cd9660_add_generic_bootimage(const char *bootimage)
+{
+	struct stat stbuf;
+
+	assert(bootimage != NULL);
+
+	if (*bootimage == '\0') {
+		warnx("Error: Boot image must be a filename");
+		return 0;
+	}
+
+	if ((diskStructure.generic_bootimage = strdup(bootimage)) == NULL) {
+		warn("%s: strdup", __func__);
+		return 0;
+	}
+
+	/* Get information about the file */
+	if (lstat(diskStructure.generic_bootimage, &stbuf) == -1)
+		err(EXIT_FAILURE, "%s: lstat(\"%s\")", __func__,
+		    diskStructure.generic_bootimage);
+
+	if (stbuf.st_size > 32768) {
+		warnx("Error: Boot image must be no greater than 32768 bytes");
+		return 0;
+	}
+
+	if (diskStructure.verbose_level > 0) {
+		printf("Generic boot image image has size %lld\n",
+		    (long long)stbuf.st_size);
+	}
+
+	diskStructure.has_generic_bootimage = 1;
+
+	return 1;
+}

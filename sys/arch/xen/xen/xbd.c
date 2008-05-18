@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.44 2008/04/16 18:41:48 cegger Exp $ */
+/* $NetBSD: xbd.c,v 1.44.2.1 2008/05/18 12:33:08 yamt Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.44 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.44.2.1 2008/05/18 12:33:08 yamt Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -1199,6 +1199,7 @@ xbd_detach(device_t dv, int flags)
 
 	/* Detach the disk. */
 	disk_detach(&xs->sc_dksc.sc_dkdev);
+	disk_destroy(&xs->sc_dksc.sc_dkdev);
 
 #if NRND > 0
 	/* Unhook the entropy source. */

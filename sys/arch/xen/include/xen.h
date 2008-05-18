@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.28 2008/02/19 19:50:53 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.28.8.1 2008/05/18 12:33:05 yamt Exp $	*/
 
 /*
  *
@@ -139,33 +139,33 @@ void xpq_flush_cache(void);
 
 #define __save_flags(x)							\
 do {									\
-	(x) = HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask;	\
+	(x) = curcpu()->ci_vcpu->evtchn_upcall_mask;			\
 } while (0)
 
 #define __restore_flags(x)						\
 do {									\
-	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
+	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;		\
 	__insn_barrier();						\
-	if ((_shared->vcpu_info[0].evtchn_upcall_mask = (x)) == 0) {	\
-		x86_lfence();					\
-		if (__predict_false(_shared->vcpu_info[0].evtchn_upcall_pending)) \
+	if ((_vci->evtchn_upcall_mask = (x)) == 0) {			\
+		x86_lfence();						\
+		if (__predict_false(_vci->evtchn_upcall_pending))	\
 			hypervisor_force_callback();			\
 	}								\
 } while (0)
 
 #define __cli()								\
 do {									\
-	HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask = 1;	\
-	x86_lfence();						\
+	curcpu()->ci_vcpu->evtchn_upcall_mask = 1;			\
+	x86_lfence();							\
 } while (0)
 
 #define __sti()								\
 do {									\
-	volatile shared_info_t *_shared = HYPERVISOR_shared_info;	\
+	volatile struct vcpu_info *_vci = curcpu()->ci_vcpu;		\
 	__insn_barrier();						\
-	_shared->vcpu_info[0].evtchn_upcall_mask = 0;			\
+	_vci->evtchn_upcall_mask = 0;					\
 	x86_lfence(); /* unmask then check (avoid races) */		\
-	if (__predict_false(_shared->vcpu_info[0].evtchn_upcall_pending)) \
+	if (__predict_false(_vci->evtchn_upcall_pending))		\
 		hypervisor_force_callback();				\
 } while (0)
 

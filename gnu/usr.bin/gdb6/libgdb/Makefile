@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2007/01/12 13:24:30 skrll Exp $
+#	$NetBSD: Makefile,v 1.7.10.1 2008/05/18 12:29:50 yamt Exp $
 
 .include <bsd.own.mk>
 
 .include "../Makefile.inc"
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 LIB=		gdb
 
 .include "${.CURDIR}/../arch/${MACHINE_ARCH}/defs.mk"

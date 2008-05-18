@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.25 2008/04/12 17:02:08 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.25.2.1 2008/05/18 12:35:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.25 2008/04/12 17:02:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.25.2.1 2008/05/18 12:35:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -275,7 +268,7 @@ sleepq_block(int timo, bool catch)
 			 * Even if the callout appears to have fired, we need to
 			 * stop it in order to synchronise with other CPUs.
 			 */
-			if (callout_halt(&l->l_timeout_ch))
+			if (callout_halt(&l->l_timeout_ch, NULL))
 				error = EWOULDBLOCK;
 		}
 	}
@@ -285,10 +278,10 @@ sleepq_block(int timo, bool catch)
 		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
 		else if ((l->l_flag & LW_PENDSIG) != 0) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			if ((sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 		}
 	}
 
@@ -398,7 +391,7 @@ sleepq_sigtoerror(lwp_t *l, int sig)
 	struct proc *p = l->l_proc;
 	int error;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	/*
 	 * If this sleep was canceled, don't let the syscall restart.

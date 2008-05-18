@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -147,8 +147,11 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_PKCS12,0,0)		,"PKCS12 routines"},
 {ERR_PACK(ERR_LIB_RAND,0,0)		,"random number generator"},
 {ERR_PACK(ERR_LIB_DSO,0,0)		,"DSO support routines"},
+{ERR_PACK(ERR_LIB_TS,0,0)		,"time stamp routines"},
 {ERR_PACK(ERR_LIB_ENGINE,0,0)		,"engine routines"},
 {ERR_PACK(ERR_LIB_OCSP,0,0)		,"OCSP routines"},
+{ERR_PACK(ERR_LIB_HMAC,0,0)		,"HMAC routines"},
+{ERR_PACK(ERR_LIB_CMS,0,0)		,"CMS routines"},
 {0,NULL},
 	};
 
@@ -195,6 +198,7 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 {ERR_R_DSO_LIB				,"DSO lib"},
 {ERR_R_ENGINE_LIB			,"ENGINE lib"},
 {ERR_R_OCSP_LIB				,"OCSP lib"},
+{ERR_R_TS_LIB				,"TS lib"},
 
 {ERR_R_NESTED_ASN1_ERROR		,"nested asn1 error"},
 {ERR_R_BAD_ASN1_OBJECT_HEADER		,"bad asn1 object header"},
@@ -971,39 +975,47 @@ static int err_cmp(const void *a_void, const void *b_void)
 /* static unsigned long pid_hash(ERR_STATE *a) */
 static unsigned long pid_hash(const void *a_void)
 	{
-	return(((const ERR_STATE *)a_void)->pid*13);
+	return CRYPTO_THREADID_hash(&((const ERR_STATE *)a_void)->tid);
 	}
 
 /* static int pid_cmp(ERR_STATE *a, ERR_STATE *b) */
 static int pid_cmp(const void *a_void, const void *b_void)
 	{
-	return((int)((long)((const ERR_STATE *)a_void)->pid -
-			(long)((const ERR_STATE *)b_void)->pid));
+	return CRYPTO_THREADID_cmp(&((const ERR_STATE *)a_void)->tid,
+				&((const ERR_STATE *)b_void)->tid);
 	}
 
-void ERR_remove_state(unsigned long pid)
+void ERR_remove_thread_state(CRYPTO_THREADID *tid)
 	{
 	ERR_STATE tmp;
 
+	if (tid)
+		CRYPTO_THREADID_cpy(&tmp.tid, tid);
+	else
+		CRYPTO_THREADID_set(&tmp.tid);
 	err_fns_check();
-	if (pid == 0)
-		pid=(unsigned long)CRYPTO_thread_id();
-	tmp.pid=pid;
 	/* thread_del_item automatically destroys the LHASH if the number of
 	 * items reaches zero. */
 	ERRFN(thread_del_item)(&tmp);
 	}
 
+#ifndef OPENSSL_NO_DEPRECATED
+void ERR_remove_state(unsigned long pid)
+	{
+	ERR_remove_thread_state(NULL);
+	}
+#endif
+
 ERR_STATE *ERR_get_state(void)
 	{
 	static ERR_STATE fallback;
+	CRYPTO_THREADID tid;
 	ERR_STATE *ret,tmp,*tmpp=NULL;
 	int i;
-	unsigned long pid;
 
 	err_fns_check();
-	pid=(unsigned long)CRYPTO_thread_id();
-	tmp.pid=pid;
+	CRYPTO_THREADID_set(&tid);
+	CRYPTO_THREADID_cpy(&tmp.tid, &tid);
 	ret=ERRFN(thread_get_item)(&tmp);
 
 	/* ret == the error state, if NULL, make a new one */
@@ -1011,7 +1023,7 @@ ERR_STATE *ERR_get_state(void)
 		{
 		ret=(ERR_STATE *)OPENSSL_malloc(sizeof(ERR_STATE));
 		if (ret == NULL) return(&fallback);
-		ret->pid=pid;
+		CRYPTO_THREADID_cpy(&ret->tid, &tid);
 		ret->top=0;
 		ret->bottom=0;
 		for (i=0; i<ERR_NUM_ERRORS; i++)

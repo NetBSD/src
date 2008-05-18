@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.6 2007/10/08 18:04:03 ad Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.6.20.1 2008/05/18 12:34:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.6 2007/10/08 18:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.6.20.1 2008/05/18 12:34:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -189,7 +189,7 @@ efs_bread(struct efs_mount *emp, uint32_t bboff, struct lwp *l, struct buf **bp)
 	KASSERT(bboff < EFS_SIZE_MAX);
 
 	return (bread(emp->em_devvp, (daddr_t)bboff * (EFS_BB_SIZE / DEV_BSIZE),
-	    EFS_BB_SIZE, (l == NULL) ? NOCRED : l->l_cred, bp));
+	    EFS_BB_SIZE, (l == NULL) ? NOCRED : l->l_cred, 0, bp));
 }
 
 /*

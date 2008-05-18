@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.227 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.227.2.1 2008/05/18 12:35:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000, 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -98,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.227 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.227.2.1 2008/05/18 12:35:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -420,6 +413,8 @@ tcp_init(void)
 	MOWNER_ATTACH(&tcp_sock_tx_mowner);
 	MOWNER_ATTACH(&tcp_sock_rx_mowner);
 	MOWNER_ATTACH(&tcp_mowner);
+
+	tcpstat_percpu = percpu_alloc(sizeof(uint64_t) * TCP_NSTATS);
 }
 
 /*
@@ -1008,10 +1003,10 @@ tcp_newtcpcb(int family, void *aux)
 
 	/* Don't sweat this loop; hopefully the compiler will unroll it. */
 	for (i = 0; i < TCPT_NTIMERS; i++) {
-		callout_init(&tp->t_timer[i], 0);
+		callout_init(&tp->t_timer[i], CALLOUT_MPSAFE);
 		TCP_TIMER_INIT(tp, i);
 	}
-	callout_init(&tp->t_delack_ch, 0);
+	callout_init(&tp->t_delack_ch, CALLOUT_MPSAFE);
 
 	switch (family) {
 	case AF_INET:
@@ -1103,34 +1098,6 @@ tcp_drop(struct tcpcb *tp, int errno)
 		errno = tp->t_softerror;
 	so->so_error = errno;
 	return (tcp_close(tp));
-}
-
-/*
- * Return whether this tcpcb is marked as dead, indicating
- * to the calling timer function that no further action should
- * be taken, as we are about to release this tcpcb.  The release
- * of the storage will be done if this is the last timer running.
- *
- * This should be called from the callout handler function after
- * callout_ack() is done, so that the number of invoking timer
- * functions is 0.
- */
-int
-tcp_isdead(struct tcpcb *tp)
-{
-	int i, dead = (tp->t_flags & TF_DEAD);
-
-	if (__predict_false(dead)) {
-		if (tcp_timers_invoking(tp) > 0)
-				/* not quite there yet -- count separately? */
-			return dead;
-		TCP_STATINC(TCP_STAT_DELAYED_FREE);
-		for (i = 0; i < TCPT_NTIMERS; i++)
-			callout_destroy(&tp->t_timer[i]);
-		callout_destroy(&tp->t_delack_ch);
-		pool_put(&tcpcb_pool, tp);	/* splsoftnet via tcp_timer.c */
-	}
-	return dead;
 }
 
 /*
@@ -1256,14 +1223,14 @@ tcp_close(struct tcpcb *tp)
 		m_free(tp->t_template);
 		tp->t_template = NULL;
 	}
-	if (tcp_timers_invoking(tp))
-		tp->t_flags |= TF_DEAD;
-	else {
-		for (j = 0; j < TCPT_NTIMERS; j++)
-			callout_destroy(&tp->t_timer[j]);
-		callout_destroy(&tp->t_delack_ch);
-		pool_put(&tcpcb_pool, tp);
+	tp->t_flags |= TF_DEAD;
+	for (j = 0; j < TCPT_NTIMERS; j++) {
+		callout_halt(&tp->t_timer[j], softnet_lock);
+		callout_destroy(&tp->t_timer[j]);
 	}
+	callout_halt(&tp->t_delack_ch, softnet_lock);
+	callout_destroy(&tp->t_delack_ch);
+	pool_put(&tcpcb_pool, tp);
 
 	if (inp) {
 		inp->inp_ppcb = 0;
@@ -1311,12 +1278,16 @@ tcp_freeq(struct tcpcb *tp)
 
 /*
  * Protocol drain routine.  Called when memory is in short supply.
+ * Don't acquire softnet_lock as can be called from hardware
+ * interrupt handler.
  */
 void
 tcp_drain(void)
 {
 	struct inpcb_hdr *inph;
 	struct tcpcb *tp;
+
+	KERNEL_LOCK(1, NULL);
 
 	/*
 	 * Free the sequence queue of all TCP connections.
@@ -1348,6 +1319,8 @@ tcp_drain(void)
 			TCP_REASS_UNLOCK(tp);
 		}
 	}
+
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -1377,7 +1350,7 @@ tcp_notify(struct inpcb *inp, int error)
 		so->so_error = error;
 	else
 		tp->t_softerror = error;
-	wakeup((void *) &so->so_timeo);
+	cv_broadcast(&so->so_cv);
 	sorwakeup(so);
 	sowwakeup(so);
 }
@@ -1405,14 +1378,14 @@ tcp6_notify(struct in6pcb *in6p, int error)
 		so->so_error = error;
 	else
 		tp->t_softerror = error;
-	wakeup((void *) &so->so_timeo);
+	cv_broadcast(&so->so_cv);
 	sorwakeup(so);
 	sowwakeup(so);
 }
 #endif
 
 #ifdef INET6
-void
+void *
 tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct tcphdr th;
@@ -1426,15 +1399,15 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 	else if (cmd == PRC_QUENCH) {
 		/* 
 		 * Don't honor ICMP Source Quench messages meant for
 		 * TCP connections.
 		 */
-		return;
+		return NULL;
 	} else if (PRC_IS_REDIRECT(cmd))
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_MSGSIZE)
@@ -1442,7 +1415,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	else if (cmd == PRC_HOSTDEAD)
 		d = NULL;
 	else if (inet6ctlerrmap[cmd] == 0)
-		return;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -1468,7 +1441,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		if (m->m_pkthdr.len < off + sizeof(th)) {
 			if (cmd == PRC_MSGSIZE)
 				icmp6_mtudisc_update((struct ip6ctlparam *)d, 0);
-			return;
+			return NULL;
 		}
 
 		bzero(&th, sizeof(th));
@@ -1501,7 +1474,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * no need to call in6_pcbnotify, it should have been
 			 * called via callback if necessary
 			 */
-			return;
+			return NULL;
 		}
 
 		nmatch = in6_pcbnotify(&tcbtable, sa, th.th_dport,
@@ -1516,6 +1489,8 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		(void) in6_pcbnotify(&tcbtable, sa, 0,
 		    (const struct sockaddr *)sa6_src, 0, cmd, NULL, notify);
 	}
+
+	return NULL;
 }
 #endif
 

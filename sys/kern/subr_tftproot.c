@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.4 2008/04/04 20:13:18 cegger Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.4.2.1 2008/05/18 12:35:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.4 2008/04/04 20:13:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.4.2.1 2008/05/18 12:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -215,7 +215,7 @@ tftproot_getfile(trh, l)
 	char *cp;
 	/* struct device *dv; */
 	
-	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, l)) != 0) {
+	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, l, NULL)) != 0) {
 		DPRINTF(("%s():%d socreate returned %d\n", 
 		    __func__, __LINE__, error));
 		goto out;

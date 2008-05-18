@@ -160,8 +160,6 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		p= &(d[4]);
 
 		i=s->method->ssl3_enc->final_finish_mac(s,
-			&(s->s3->finish_dgst1),
-			&(s->s3->finish_dgst2),
 			sender,slen,s->s3->tmp.finish_md);
 		s->s3->tmp.finish_md_len = i;
 		memcpy(p, s->s3->tmp.finish_md, i);
@@ -518,9 +516,16 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 	else if (i == EVP_PKEY_EC)
 		{
 		ret = SSL_PKEY_ECC;
-		}
+		}	
 #endif
-
+	else if (i == NID_id_GostR3410_94 || i == NID_id_GostR3410_94_cc) 
+		{
+		ret = SSL_PKEY_GOST94;
+		}
+	else if (i == NID_id_GostR3410_2001 || i == NID_id_GostR3410_2001_cc) 
+		{
+		ret = SSL_PKEY_GOST01;
+		}
 err:
 	if(!pkey) EVP_PKEY_free(pk);
 	return(ret);
@@ -589,16 +594,26 @@ int ssl_verify_alarm_type(long type)
 int ssl3_setup_buffers(SSL *s)
 	{
 	unsigned char *p;
-	unsigned int extra;
-	size_t len;
+	size_t len,align=0;
+
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+	align = (-SSL3_RT_HEADER_LENGTH)&(SSL3_ALIGN_PAYLOAD-1);
+#endif
 
 	if (s->s3->rbuf.buf == NULL)
 		{
+		len = SSL3_RT_MAX_PLAIN_LENGTH
+			+ SSL3_RT_MAX_ENCRYPTED_OVERHEAD
+			+ SSL3_RT_HEADER_LENGTH + align;
 		if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
-			extra=SSL3_RT_MAX_EXTRA;
-		else
-			extra=0;
-		len = SSL3_RT_MAX_PACKET_SIZE + extra;
+			{
+			s->s3->init_extra = 1;
+			len += SSL3_RT_MAX_EXTRA;
+			}
+#ifndef OPENSSL_NO_COMP
+		if (!(s->options & SSL_OP_NO_COMPRESSION))
+			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+#endif
 		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
 		s->s3->rbuf.buf = p;
@@ -607,8 +622,16 @@ int ssl3_setup_buffers(SSL *s)
 
 	if (s->s3->wbuf.buf == NULL)
 		{
-		len = SSL3_RT_MAX_PACKET_SIZE;
-		len += SSL3_RT_HEADER_LENGTH + 256; /* extra space for empty fragment */
+		len = s->max_send_fragment
+			+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
+			+ SSL3_RT_HEADER_LENGTH + align;
+#ifndef OPENSSL_NO_COMP
+		if (!(s->options & SSL_OP_NO_COMPRESSION))
+			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
+#endif
+		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+			len += SSL3_RT_HEADER_LENGTH + align
+				+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
 		s->s3->wbuf.buf = p;

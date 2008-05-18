@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.5 2008/01/18 11:01:23 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.5.8.1 2008/05/18 12:35:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.5 2008/01/18 11:01:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.5.8.1 2008/05/18 12:35:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -778,9 +778,10 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 
+	has_trans = false;
+
 retry:
 	modified = false;
-	has_trans = false;
 	flags = origflags;
 	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
 	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
@@ -790,6 +791,8 @@ retry:
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 				vn_syncer_remove_from_worklist(vp);
 		}
+		if (has_trans)
+			fstrans_done(vp->v_mount);
 		mutex_exit(slock);
 		return (0);
 	}
@@ -798,7 +801,7 @@ retry:
 	 * the vnode has pages, set up to process the request.
 	 */
 
-	if ((flags & PGO_CLEANIT) != 0) {
+	if (!has_trans && (flags & PGO_CLEANIT) != 0) {
 		mutex_exit(slock);
 		if (pagedaemon) {
 			error = fstrans_start_nowait(vp->v_mount, FSTRANS_LAZY);
@@ -808,6 +811,7 @@ retry:
 			fstrans_start(vp->v_mount, FSTRANS_LAZY);
 		has_trans = true;
 		mutex_enter(slock);
+		goto retry;
 	}
 
 	error = 0;
@@ -1168,9 +1172,6 @@ skip_scan:
 	onworklst = (vp->v_iflag & VI_ONWORKLST) != 0;
 	mutex_exit(slock);
 
-	if (has_trans)
-		fstrans_done(vp->v_mount);
-
 	if ((flags & PGO_RECLAIM) != 0 && onworklst) {
 		/*
 		 * in the case of PGO_RECLAIM, ensure to make the vnode clean.
@@ -1180,6 +1181,9 @@ skip_scan:
 		mutex_enter(slock);
 		goto retry;
 	}
+
+	if (has_trans)
+		fstrans_done(vp->v_mount);
 
 	return (error);
 }
@@ -1199,6 +1203,29 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	off = pgs[0]->offset;
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_WRITE | UVMPAGER_MAPIN_WAITOK);
+	len = npages << PAGE_SHIFT;
+
+	error = genfs_do_io(vp, off, kva, len, flags, UIO_WRITE,
+			    uvm_aio_biodone);
+
+	return error;
+}
+
+int
+genfs_gop_write_rwmap(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
+{
+	off_t off;
+	vaddr_t kva;
+	size_t len;
+	int error;
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
+
+	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
+	    vp, pgs, npages, flags);
+
+	off = pgs[0]->offset;
+	kva = uvm_pagermapin(pgs, npages,
+	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 	len = npages << PAGE_SHIFT;
 
 	error = genfs_do_io(vp, off, kva, len, flags, UIO_WRITE,

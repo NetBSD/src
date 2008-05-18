@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2008/04/14 13:38:03 cegger Exp $	*/
+/*	$NetBSD: intr.h,v 1.24.2.1 2008/05/18 12:33:05 yamt Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -105,6 +98,8 @@ struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	int	ih_level;
+	int	(*ih_realfun)(void *);
+	void	*ih_realarg;
 	struct	intrhand *ih_ipl_next;
 	struct	intrhand *ih_evt_next;
 	struct cpu_info *ih_cpu;
@@ -169,6 +164,10 @@ struct cpu_info;
 
 struct pcibus_attach_args;
 
+#ifdef MULTIPROCESSOR
+int intr_biglock_wrapper(void *);
+#endif
+
 void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct evtsource *);
@@ -184,6 +183,10 @@ void intr_printconfig(void);
 int intr_find_mpmapping(int, int, struct xen_intr_handle *);
 struct pic *intr_findpic(int);
 void intr_add_pcibus(struct pcibus_attach_args *);
+
+int x86_send_ipi(struct cpu_info *, int);
+void x86_broadcast_ipi(int);
+void x86_multicast_ipi(int, int);
 
 #endif /* !_LOCORE */
 

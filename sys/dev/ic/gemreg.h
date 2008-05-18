@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.11 2008/01/05 20:27:44 jdc Exp $ */
+/*	$NetBSD: gemreg.h,v 1.11.8.1 2008/05/18 12:33:42 yamt Exp $ */
 
 /*
  *
@@ -63,13 +63,17 @@
  */
 #define GEM_PCI_BANK2_OFFSET	0x1000
 #define GEM_PCI_BANK2_SIZE	0x14
-#define	GEM_ERROR_STATUS	0x0000	/* PCI error Status */
+#define	GEM_ERROR_STATUS	0x0000	/* PCI Error Status */
 #define	GEM_ERROR_MASK		0x0004	/* PCI Error Mask */
-#define GEM_SBUS_CONFIG		0x0004
-#define	GEM_BIF_CONFIG		0x0008	/* BIF Configuration */
-#define	GEM_BIF_DIAG		0x000c	/* BIF Diagnostic */
-#define	GEM_RESET		0x0010	/* Software Reset */
+#define	GEM_BIF_CONFIG		0x0008	/* PCI BIF Configuration */
+#define	GEM_BIF_DIAG		0x000c	/* PCI BIF Diagnostic */
+#define	GEM_RESET		0x0010	/* PCI Software Reset */
 
+#define GEM_SBUS_RESET		0x0000	/* Sbus Reset */
+#define GEM_SBUS_CONFIG		0x0004	/* Sbus Burst-Size Configuration */
+#define GEM_SBUS_ERROR_STATUS	0x0008	/* Sbus Fatal Error */
+#define GEM_SBUS_REVISION	0x000c	/* Sbus Revision */
+#define GEM_SBUS_SOFT_RESET	0x0010	/* Sbus Software Reset */
 
 /*
  * Bits in GEM_SEB_STATE register
@@ -137,6 +141,9 @@
 /*
  * Bits in GEM_SBUS_CONFIG register
  */
+#define GEM_SBUS_CFG_BSIZE32	0x00000001
+#define GEM_SBUS_CFG_BSIZE64	0x00000002
+#define GEM_SBUS_CFG_BSIZE128	0x00000004
 #define GEM_SBUS_CFG_BMODE64	0x00000008
 #define GEM_SBUS_CFG_PARITY	0x00000200
 

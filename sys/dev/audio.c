@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.238 2008/04/01 00:52:11 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.238.2.1 2008/05/18 12:33:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.238 2008/04/01 00:52:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.238.2.1 2008/05/18 12:33:30 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2605,10 +2605,10 @@ audio_softintr_rd(void *cookie)
 	if (sc->sc_async_audio != NULL) {
 		DPRINTFN(3, ("audio_softintr_rd: sending SIGIO %p\n",
 		    sc->sc_async_audio));
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		if ((p = sc->sc_async_audio) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 }
 
@@ -2623,10 +2623,10 @@ audio_softintr_wr(void *cookie)
 	if (sc->sc_async_audio != NULL) {
 		DPRINTFN(3, ("audio_softintr_wr: sending SIGIO %p\n",
 		    sc->sc_async_audio));
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		if ((p = sc->sc_async_audio) != NULL)
 			psignal(p, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 }
 
@@ -3767,9 +3767,9 @@ mixer_signal(struct audio_softc *sc)
 	struct mixer_asyncs *m;
 
 	for (m = sc->sc_async_mixer; m; m = m->next) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		psignal(m->proc, SIGIO);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 }
 

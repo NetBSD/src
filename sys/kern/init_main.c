@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.349.2.1 2008/04/19 08:33:27 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.349.2.2 2008/05/18 12:35:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -104,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349.2.1 2008/04/19 08:33:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.349.2.2 2008/05/18 12:35:06 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -353,9 +346,6 @@ main(void)
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
-	/* Start module system. */
-	module_init();
-
 	/* Initialize callouts, part 1. */
 	callout_startup();
 
@@ -419,6 +409,9 @@ main(void)
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
 
+	/* Initialize timekeeping, part 2. */
+	time_init2();
+
 	/*
 	 * Initialize mbuf's.  Do this now because we might attempt to
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
@@ -433,6 +426,9 @@ main(void)
 
 	/* Initialize the log device. */
 	loginit();
+
+	/* Start module system. */
+	module_init();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
@@ -555,7 +551,7 @@ main(void)
 	kmstartup();
 #endif
 
-	/* Initialize system accouting. */
+	/* Initialize system accounting. */
 	acct_init();
 
 #ifndef PIPE_SOCKETPAIR
@@ -654,19 +650,19 @@ main(void)
 	 */
 	getmicrotime(&time);
 	boottime = time;
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
 			memset(&l->l_rtime, 0, sizeof(l->l_rtime));
 			lwp_unlock(l);
 		}
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	binuptime(&curlwp->l_stime);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {

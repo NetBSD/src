@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.h,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_decode.h,v 1.3.16.1 2008/05/18 12:36:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,10 +39,10 @@
  * All routines declared here are exported via mime.h
  */
 
-FILE	*mime_decode_body(struct mime_info *);
-void	 mime_decode_close(struct mime_info *);
-FILE	*mime_decode_header(struct mime_info *);
-char	*mime_decode_hfield(char *, size_t, char *);
+FILE *	mime_decode_body(struct mime_info *);
+void	mime_decode_close(struct mime_info *);
+FILE *	mime_decode_header(struct mime_info *);
+char *	mime_decode_hfield(char *, size_t, const char *, char *);
 struct mime_info *mime_decode_open(struct message *);
 int	mime_sendmessage(struct message *, FILE *, struct ignoretab *,
     const char *, struct mime_info *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.50 2008/01/02 11:49:08 ad Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.50.8.1 2008/05/18 12:35:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.50 2008/01/02 11:49:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.50.8.1 2008/05/18 12:35:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,11 +177,11 @@ ext2fs_read(void *v)
 			xfersize = bytesinfile;
 
 		if (lblktosize(fs, nextlbn) >= ext2fs_size(ip))
-			error = bread(vp, lbn, size, NOCRED, &bp);
+			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		else {
 			int nextsize = fs->e2fs_bsize;
 			error = breadn(vp, lbn,
-				size, &nextlbn, &nextsize, 1, NOCRED, &bp);
+				size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
 		}
 		if (error)
 			break;
@@ -286,9 +286,9 @@ ext2fs_write(void *v)
 	if (vp->v_type == VREG && p &&
 	    uio->uio_offset + uio->uio_resid >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		psignal(p, SIGXFSZ);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		return (EFBIG);
 	}
 	if (uio->uio_resid == 0)

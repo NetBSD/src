@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.h,v 1.24 2007/11/09 00:05:38 ad Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.24.16.1 2008/05/18 12:33:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,8 +111,8 @@ extern struct zsops zsops_null;
 struct zs_chanstate {
 
 	/* Pointers to the device registers. */
-	volatile u_char	*cs_reg_csr; 	/* ctrl, status, and reg. number. */
-	volatile u_char	*cs_reg_data;	/* data or numbered register */
+	volatile uint8_t *cs_reg_csr; 	/* ctrl, status, and reg. number. */
+	volatile uint8_t *cs_reg_data;	/* data or numbered register */
 
 	int	cs_channel;		/* sub-unit number */
 	void   *cs_private;		/* sub-driver data pointer */
@@ -138,23 +138,23 @@ struct zs_chanstate {
 	 * rather than (or in addition to) the pending value; for these
 	 * cs_creg[] contains the current value.
 	 */
-	u_char	cs_creg[16];		/* current values */
-	u_char	cs_preg[16];		/* pending values */
+	uint8_t	cs_creg[16];		/* current values */
+	uint8_t	cs_preg[16];		/* pending values */
 	int 	cs_heldchange;		/* change pending (creg != preg) */
 
-	u_char	cs_rr0;			/* last rr0 processed */
-	u_char	cs_rr0_delta;		/* rr0 changes at status intr. */
-	u_char	cs_rr0_mask;		/* rr0 bits that stop output */
-	u_char	cs_rr0_dcd;		/* which bit to read as DCD */
-	u_char	cs_rr0_cts;		/* which bit to read as CTS */
-	u_char	cs_rr0_pps;		/* which bit to use for PPS */
+	uint8_t	cs_rr0;			/* last rr0 processed */
+	uint8_t	cs_rr0_delta;		/* rr0 changes at status intr. */
+	uint8_t	cs_rr0_mask;		/* rr0 bits that stop output */
+	uint8_t	cs_rr0_dcd;		/* which bit to read as DCD */
+	uint8_t	cs_rr0_cts;		/* which bit to read as CTS */
+	uint8_t	cs_rr0_pps;		/* which bit to use for PPS */
 	/* the above is set only while CRTSCTS is enabled. */
 
-	u_char	cs_wr5_dtr;		/* which bit to write as DTR */
-	u_char	cs_wr5_rts;		/* which bit to write as RTS */
+	uint8_t	cs_wr5_dtr;		/* which bit to write as DTR */
+	uint8_t	cs_wr5_rts;		/* which bit to write as RTS */
 	/* the above is set only while CRTSCTS is enabled. */
 
-	char	cs_softreq;		/* need soft interrupt call */
+	volatile uint8_t cs_softreq;	/* need soft interrupt call */
 	char	cs_spare1;  	/* (for skippy :) */
 
 	/*

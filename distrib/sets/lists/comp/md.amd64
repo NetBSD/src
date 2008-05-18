@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.32 2008/02/26 10:55:49 drochner Exp $
+# $NetBSD: md.amd64,v 1.32.2.1 2008/05/18 12:29:38 yamt Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -136,6 +136,7 @@
 ./usr/include/x86/bootinfo.h			comp-c-include
 ./usr/include/x86/bus.h				comp-c-include
 ./usr/include/x86/cacheinfo.h			comp-c-include
+./usr/include/x86/cpu.h				comp-c-include
 ./usr/include/x86/cputypes.h			comp-c-include
 ./usr/include/x86/cpuvar.h			comp-c-include
 ./usr/include/x86/float.h			comp-c-include

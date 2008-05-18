@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zgrep,v 1.5 2006/05/03 16:48:29 yamt Exp $
+# $NetBSD: zgrep,v 1.5.20.1 2008/05/18 12:36:06 yamt Exp $
 #
 # Copyright (c) 2003 Thomas Klausner.
 #
@@ -12,8 +12,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 # IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,6 +31,7 @@ endofopts=0
 pattern_found=0
 grep_args=""
 hyphen=0
+silent=0
 
 prg=$0
 
@@ -78,6 +77,10 @@ do
 	    hyphen=1
 	    shift
 	    ;;
+	-h)
+	    silent=1
+	    shift
+	    ;;
 	-*)
 	    grep_args="${grep_args} $1"
 	    shift
@@ -110,9 +113,12 @@ then
     ${zcat} -fq - | ${grep} ${grep_args} -- "${pattern}" -
 else
     # ... on all files given on the command line
+    if [ ${silent} -lt 1 ]; then
+	grep_args="-H ${grep_args}"
+    fi
     while [ $# -gt 0 ]
     do
-	${zcat} -fq -- "$1" | ${grep} -H --label="${1}" ${grep_args} -- "${pattern}" -
+	${zcat} -fq -- "$1" | ${grep} --label="${1}" ${grep_args} -- "${pattern}" -
 	shift
     done
 fi

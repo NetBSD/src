@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.44 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.44.2.1 2008/05/18 12:32:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.44 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.44.2.1 2008/05/18 12:32:10 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -106,8 +99,6 @@ linux_syscall(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	KERNEL_LOCK(1, l);
-
 	if (__predict_false(l->l_proc->p_trace_enabled)) {
 		error = trace_enter(code, args, callp->sy_narg);
 		if (__predict_true(error == 0)) {
@@ -117,8 +108,6 @@ linux_syscall(struct trapframe *frame)
 		}
 	} else
 		error = (*callp->sy_call)(l, args, rval);
-
-	KERNEL_UNLOCK_LAST(l);
 
 	if (__predict_true(error == 0)) {
 		frame->tf_eax = rval[0];

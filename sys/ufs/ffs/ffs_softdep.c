@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.109 2008/04/11 16:25:38 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.109.2.1 2008/05/18 12:35:55 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.109 2008/04/11 16:25:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.109.2.1 2008/05/18 12:35:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.109 2008/04/11 16:25:38 ad Exp $")
 #include <sys/vnode.h>
 #include <sys/inttypes.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -64,9 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.109 2008/04/11 16:25:38 ad Exp $")
 
 u_int softdep_lockedbufs;
 
-MALLOC_JUSTDEFINE(M_PAGEDEP, "pagedep", "file page dependencies");
 MALLOC_JUSTDEFINE(M_INODEDEP, "inodedep", "Inode depependencies");
-MALLOC_JUSTDEFINE(M_NEWBLK, "newblk", "New block allocation");
 
 /*
  * These definitions need to be adapted to the system to which
@@ -1056,9 +1055,7 @@ softdep_initialize()
 
 	bioopsp = &bioops_softdep;
 
-	malloc_type_attach(M_PAGEDEP);
 	malloc_type_attach(M_INODEDEP);
-	malloc_type_attach(M_NEWBLK);
 
 	i = sizeof(struct freeblks);
 	if (i < sizeof(struct buf))
@@ -1102,14 +1099,13 @@ softdep_initialize()
 	LIST_INIT(&mkdirlisthd);
 	LIST_INIT(&softdep_workitem_pending);
 	max_softdeps = desiredvnodes / 4;
-	pagedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, M_PAGEDEP,
-	    M_WAITOK, &pagedep_hash);
+	pagedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, true,
+	    &pagedep_hash);
 	sema_init(&pagedep_in_progress, "pagedep", 0);
-	inodedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, M_INODEDEP,
-	    M_WAITOK, &inodedep_hash);
+	inodedep_hashtbl = hashinit(max_softdeps / 2, HASH_LIST, true,
+	    &inodedep_hash);
 	sema_init(&inodedep_in_progress, "inodedep", 0);
-	newblk_hashtbl = hashinit(64, HASH_LIST, M_NEWBLK, M_WAITOK,
-	    &newblk_hash);
+	newblk_hashtbl = hashinit(64, HASH_LIST, true, &newblk_hash);
 	sema_init(&newblk_in_progress, "newblk", 0);
 	for (i = 0; i < PCBPHASHSIZE; i++) {
 		LIST_INIT(&pcbphashhead[i]);
@@ -1129,10 +1125,8 @@ softdep_reinitialize()
 	u_long oldmask1, oldmask2, mask1, mask2, val;
 	int i;
 
-	hash1 = hashinit(desiredvnodes / 5, HASH_LIST, M_PAGEDEP, M_WAITOK,
-	    &mask1);
-	hash2 = hashinit(desiredvnodes, HASH_LIST, M_INODEDEP, M_WAITOK,
-	    &mask2);
+	hash1 = hashinit(desiredvnodes / 5, HASH_LIST, true, &mask1);
+	hash2 = hashinit(desiredvnodes, HASH_LIST, true, &mask2);
 
 	max_softdeps = desiredvnodes * 4;
 
@@ -1161,8 +1155,8 @@ softdep_reinitialize()
 		}
 	}
 	mutex_exit(&bufcache_lock);
-	hashdone(oldhash1, M_PAGEDEP);
-	hashdone(oldhash2, M_INODEDEP);
+	hashdone(oldhash1, HASH_LIST, oldmask1);
+	hashdone(oldhash2, HASH_LIST, oldmask2);
 }
 
 /*
@@ -1203,7 +1197,7 @@ softdep_mount(devvp, mp, fs, cred)
 	bzero(&cstotal, sizeof cstotal);
 	for (cyl = 0; cyl < fs->fs_ncg; cyl++) {
 		if ((error = bread(devvp, fsbtodb(fs, cgtod(fs, cyl)),
-		    fs->fs_cgsize, cred, &bp)) != 0) {
+		    fs->fs_cgsize, cred, 0, &bp)) != 0) {
 			brelse(bp, 0);
 			return (error);
 		}
@@ -1923,7 +1917,7 @@ softdep_setup_freeblocks(
 	 */
 	if ((error = bread(ip->i_devvp,
 	    fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-	    (int)fs->fs_bsize, NOCRED, &bp)) != 0)
+	    (int)fs->fs_bsize, NOCRED, B_MODIFY, &bp)) != 0)
 		softdep_error("softdep_setup_freeblocks", error);
 	if (ip->i_ump->um_fstype == UFS1) {
 #ifdef FFS_EI
@@ -2459,7 +2453,7 @@ indir_trunc(freeblks, dbn, level, lbn, countp)
 	} else {
 		softdep_trackbufs(1, false);
 		mutex_exit(&bufcache_lock);
-		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
+		error = bread(devvp, dbn, (int)fs->fs_bsize, NOCRED, 0, &bp);
 		if (error)
 			return (error);
 	}
@@ -4677,7 +4671,7 @@ softdep_fsync(vp, f)
 		 * Flush directory page containing the inode's name.
 		 */
 		error = bread(pvp, lbn, blksize(fs, VTOI(pvp), lbn),
-		    lp->l_cred, &bp);
+		    lp->l_cred, 0, &bp);
 		if (error == 0)
 			error = VOP_BWRITE(bp);
 		vput(pvp);
@@ -4771,18 +4765,25 @@ softdep_sync_metadata(struct vnode *vp)
 	if (vp->v_type != VBLK) {
 		if (!DOINGSOFTDEP(vp))
 			return (0);
-	} else
+	} else {
 		if (vp->v_specmountpoint == NULL ||
 		    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP) == 0)
 			return (0);
+	}
+
 	/*
 	 * Ensure that any direct block dependencies have been cleared.
 	 */
 	mutex_enter(&bufcache_lock);
-	error = flush_inodedep_deps(VTOI(vp)->i_fs, VTOI(vp)->i_number);
-	if (error) {
-		mutex_exit(&bufcache_lock);
-		return (error);
+	if (vp->v_tag == VT_UFS) {
+		error = flush_inodedep_deps(VTOI(vp)->i_fs,
+		    VTOI(vp)->i_number);
+		if (error) {
+			mutex_exit(&bufcache_lock);
+			return (error);
+		}
+	} else {
+		KASSERT(vp->v_type == VBLK);
 	}
 	/*
 	 * For most files, the only metadata dependencies are the
@@ -4887,6 +4888,7 @@ loop:
 			 * recently allocated files. We walk its diradd
 			 * lists pushing out the associated inode.
 			 */
+			KASSERT(vp->v_tag == VT_UFS);
 			pagedep = WK_PAGEDEP(wk);
 			for (i = 0; i < DAHASHSZ; i++) {
 				if (LIST_FIRST(&pagedep->pd_diraddhd[i]) == 0)
@@ -5005,7 +5007,8 @@ clean:
 	 * this by explicitly setting IN_MODIFIED so that ffs_update() will
 	 * see it.
 	 */
-	if (inodedep_lookup(VTOI(vp)->i_fs, VTOI(vp)->i_number, 0, &inodedep))
+	if (vp->v_tag == VT_UFS &&
+	    inodedep_lookup(VTOI(vp)->i_fs, VTOI(vp)->i_number, 0, &inodedep))
 		VTOI(vp)->i_flag |= IN_MODIFIED;
 	mutex_exit(&bufcache_lock);
 	return (0);
@@ -5248,7 +5251,7 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		mutex_exit(&bufcache_lock);
 		if ((error = bread(ump->um_devvp,
 		    fsbtodb(ump->um_fs, ino_to_fsba(ump->um_fs, inum)),
-		    (int)ump->um_fs->fs_bsize, NOCRED, &bp)) != 0)
+		    (int)ump->um_fs->fs_bsize, NOCRED, 0, &bp)) != 0)
 			break;
 		if ((error = VOP_BWRITE(bp)) != 0)
 			break;

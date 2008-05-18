@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1066 2008/04/15 11:17:47 plunky Exp $
+# $NetBSD: mi,v 1.1066.2.1 2008/05/18 12:29:41 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -291,6 +291,7 @@
 ./usr/share/man/cat1/msguniq.0			man-locale-catman	.cat
 ./usr/share/man/cat1/mt.0			man-util-catman		.cat
 ./usr/share/man/cat1/mv.0			man-util-catman		.cat
+./usr/share/man/cat1/nbsvtool.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/netgroup.0			man-nis-catman		.cat
 ./usr/share/man/cat1/netstat.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/newaliases.0		man-postfix-catman	postfix,.cat
@@ -635,6 +636,7 @@
 ./usr/share/man/cat4/alpha/ttwoga.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/ttwopci.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amdpm.0			man-sys-catman		.cat
+./usr/share/man/cat4/amdtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amhphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/afsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/amiga/ahsc.0		man-sys-catman		.cat
@@ -964,6 +966,7 @@
 ./usr/share/man/cat4/hpcsh/j6x0tp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/psh3lcd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcsh/psh3tp.0		man-sys-catman		.cat
+./usr/share/man/cat4/hpqlb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hptide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman		.cat
@@ -2170,6 +2173,7 @@
 ./usr/share/man/cat8/mknod.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/mld6query.0		man-netutil-catman	use_inet6,.cat
 ./usr/share/man/cat8/mlxctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/mmcformat.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mmeye/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mmeye/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/modload.0			man-sysutil-catman	.cat
@@ -2243,6 +2247,7 @@
 ./usr/share/man/cat8/newfs_lfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_msdos.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newfs_sysvbfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/newfs_udf.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/newlfs.0			man-obsolete		obsolete
 ./usr/share/man/cat8/news68k/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/news68k/makedev.0		man-obsolete		obsolete
@@ -2838,6 +2843,7 @@
 ./usr/share/man/man1/msguniq.1			man-locale-man		.man
 ./usr/share/man/man1/mt.1			man-util-man		.man
 ./usr/share/man/man1/mv.1			man-util-man		.man
+./usr/share/man/man1/nbsvtool.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/netgroup.1			man-nis-man		.man
 ./usr/share/man/man1/netstat.1			man-netutil-man		.man
 ./usr/share/man/man1/newaliases.1		man-postfix-man		postfix,.man
@@ -3182,6 +3188,7 @@
 ./usr/share/man/man4/alpha/ttwoga.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/ttwopci.4		man-sys-man		.man
 ./usr/share/man/man4/amdpm.4			man-sys-man		.man
+./usr/share/man/man4/amdtemp.4			man-sys-man		.man
 ./usr/share/man/man4/amhphy.4			man-sys-man		.man
 ./usr/share/man/man4/amiga/afsc.4		man-sys-man		.man
 ./usr/share/man/man4/amiga/ahsc.4		man-sys-man		.man
@@ -3511,6 +3518,7 @@
 ./usr/share/man/man4/hpcsh/j6x0tp.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/psh3lcd.4		man-sys-man		.man
 ./usr/share/man/man4/hpcsh/psh3tp.4		man-sys-man		.man
+./usr/share/man/man4/hpqlb.4			man-sys-man		.man
 ./usr/share/man/man4/hptide.4			man-sys-man		.man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man		.man
 ./usr/share/man/man4/i386/apm.4			man-sys-man		.man
@@ -4717,6 +4725,7 @@
 ./usr/share/man/man8/mknod.8			man-sysutil-man		.man
 ./usr/share/man/man8/mld6query.8		man-netutil-man		use_inet6,.man
 ./usr/share/man/man8/mlxctl.8			man-sysutil-man		.man
+./usr/share/man/man8/mmcformat.8		man-sysutil-man		.man
 ./usr/share/man/man8/mmeye/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/mmeye/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/modload.8			man-sysutil-man		.man
@@ -4790,6 +4799,7 @@
 ./usr/share/man/man8/newfs_lfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_msdos.8		man-sysutil-man		.man
 ./usr/share/man/man8/newfs_sysvbfs.8		man-sysutil-man		.man
+./usr/share/man/man8/newfs_udf.8		man-sysutil-man		.man
 ./usr/share/man/man8/newlfs.8			man-obsolete		obsolete
 ./usr/share/man/man8/news68k/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/news68k/makedev.8		man-obsolete		obsolete

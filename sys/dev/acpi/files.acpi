@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.50 2008/03/31 15:17:21 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.50.2.1 2008/05/18 12:33:34 yamt Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -121,6 +121,11 @@ file	dev/acpi/asus_acpi.c		asus
 # Abit uGuru 2005
 attach	ug at acpinodebus with ug_acpi
 file	dev/acpi/ug_acpi.c		ug_acpi
+
+# HP Quick Launch Buttons
+device	hpqlb: sysmon_power
+attach	hpqlb at acpinodebus
+file	dev/acpi/hpqlb_acpi.c		hpqlb
 
 # Sony Notebook Controller (brightness, hotkeys, etc.)
 device	sony: displaydev

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.168 2008/04/15 04:43:25 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.168.2.1 2008/05/18 12:35:30 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.168 2008/04/15 04:43:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.168.2.1 2008/05/18 12:35:30 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -121,18 +121,20 @@ __KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.168 2008/04/15 04:43:25 thorpej Exp
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
+#include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
 #include <netipsec/esp.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
-#endif	/* FAST_IPSEC*/
+#endif	/* FAST_IPSEC */
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netinet6/esp.h>
 #include <netkey/key.h>
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -235,7 +237,12 @@ udp_init(void)
 	MOWNER_ATTACH(&udp_rx_mowner);
 	MOWNER_ATTACH(&udp_mowner);
 
+#ifdef INET
 	udpstat_percpu = percpu_alloc(sizeof(uint64_t) * UDP_NSTATS);
+#endif
+#ifdef INET6
+	udp6stat_percpu = percpu_alloc(sizeof(uint64_t) * UDP6_NSTATS);
+#endif
 }
 
 /*
@@ -622,7 +629,7 @@ udp4_sendup(struct mbuf *m, int off /* offset of data portion */,
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec4_in_reject_so(m, so)) {
-		ipsecstat.in_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp_error(n, ICMP_UNREACH, ICMP_UNREACH_ADMIN_PROHIBIT,
 			    0, 0);
@@ -669,7 +676,7 @@ udp6_sendup(struct mbuf *m, int off /* offset of data portion */,
 #if defined(IPSEC) || defined(FAST_IPSEC)
 	/* check AH/ESP integrity. */
 	if (so != NULL && ipsec6_in_reject_so(m, so)) {
-		ipsec6stat.in_polvio++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 		if ((n = m_copypacket(m, M_DONTWAIT)) != NULL)
 			icmp6_error(n, ICMP6_DST_UNREACH,
 			    ICMP6_DST_UNREACH_ADMIN, 0);
@@ -1179,9 +1186,11 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	s = splsoftnet();
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		in_pcbpurgeif0(&udbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&udbtable, (struct ifnet *)control);
+		mutex_exit(softnet_lock);
 		splx(s);
 		return (0);
 	}
@@ -1191,7 +1200,9 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("udp_usrreq: unexpected control mbuf");
 #endif
-	if (inp == 0 && req != PRU_ATTACH) {
+	if (req == PRU_ATTACH) {
+		sosetlock(so);
+	} else if (inp == 0) {
 		error = EINVAL;
 		goto release;
 	}
@@ -1335,36 +1346,11 @@ release:
 	return (error);
 }
 
-static void
-udpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *udpsc = v1;
-	uint64_t *udps = v2;
-	u_int i;
-
-	for (i = 0; i < UDP_NSTATS; i++)
-		udps[i] += udpsc[i];
-}
-
-static void
-udpstat_convert_to_user(uint64_t *udps)
-{
-
-	memset(udps, 0, sizeof(uint64_t) * UDP_NSTATS);
-	percpu_foreach(udpstat_percpu, udpstat_convert_to_user_cb, udps);
-}
-
 static int
 sysctl_net_inet_udp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t udps[UDP_NSTATS];
 
-	udpstat_convert_to_user(udps);
-	node = *rnode;
-	node.sysctl_data = udps;
-	node.sysctl_size = sizeof(udps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(udpstat_percpu, UDP_NSTATS));
 }
 
 /*

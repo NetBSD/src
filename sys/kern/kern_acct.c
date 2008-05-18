@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.84 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.84.2.1 2008/05/18 12:35:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.84 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.84.2.1 2008/05/18 12:35:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,9 +423,9 @@ acct_process(struct lwp *l)
 	memcpy(acct.ac_comm, p->p_comm, sizeof(acct.ac_comm));
 
 	/* (2) The amount of user and system time that was used */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	calcru(p, &ut, &st, NULL, NULL);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_usec);
 	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_usec);
 
@@ -452,12 +452,12 @@ acct_process(struct lwp *l)
 	acct.ac_gid = kauth_cred_getgid(l->l_cred);
 
 	/* (7) The terminal from which the process was started */
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if ((p->p_lflag & PL_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
 		acct.ac_tty = p->p_pgrp->pg_session->s_ttyp->t_dev;
 	else
 		acct.ac_tty = NODEV;
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/* (8) The boolean flags that tell how the process terminated, etc. */
 	acct.ac_flag = p->p_acflag;

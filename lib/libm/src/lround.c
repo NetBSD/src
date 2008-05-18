@@ -1,4 +1,4 @@
-/* $NetBSD: lround.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
+/* $NetBSD: lround.c,v 1.2.24.1 2008/05/18 12:30:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -49,7 +49,7 @@ LROUNDNAME(double x)
 
 	GET_HIGH_WORD(i0, x);
 	e = i0 >> 20;
-	s = e >> DBL_EXPBITS;
+	s = (uint32_t)e >> DBL_EXPBITS;
 	e = (e & 0x7ff) - DBL_EXP_BIAS;
 
 	/* 1.0 x 2^-1 is the smallest number which can be rounded to 1 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.40 2008/02/07 01:16:21 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.40.8.1 2008/05/18 12:32:38 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -60,15 +60,13 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40 2008/02/07 01:16:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40.8.1 2008/05/18 12:32:38 yamt Exp $");
 
 void
 child_return(void *arg)
 {
 	struct lwp * const l = arg;
 	struct trapframe * const tf = trapframe(l);
-
-	KERNEL_UNLOCK_LAST(l);
 
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
@@ -146,15 +144,8 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
-		KERNEL_LOCK(1, l);
-	}
-
 	error = (*callp->sy_call)(l, params, rval);
 
-	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
-		KERNEL_UNLOCK_LAST(l);
-	}
 	switch (error) {
 	case 0:
 		frame->fixreg[FIRSTARG] = rval[0];
@@ -208,7 +199,6 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 
 	LWP_CACHE_CREDS(l, p);
 
-	KERNEL_LOCK(1, l);
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
@@ -297,7 +287,6 @@ out:
 		frame->cr |= 0x10000000;
 		break;
 	}
-	KERNEL_UNLOCK_LAST(l);
 	trace_exit(realcode, rval, error);
 	userret(l, frame);
 }

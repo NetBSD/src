@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.937 2008/04/17 19:12:49 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.937.2.1 2008/05/18 12:34:22 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.936 2008/04/15 21:24:07 cegger Exp
+ *	NetBSD: pcidevs,v 1.940 2008/05/13 10:43:21 rjs Exp
  */
 
 /*
@@ -2686,6 +2686,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9650,
 	    "9650-series RAID",
+	},
+	{
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9690,
+	    "9690-series RAID",
 	},
 	{
 	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
@@ -7058,6 +7062,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT135P,
 	    "GXT-135P Graphics Adapter",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID8K,
+	    "ServeRAID 8k",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
@@ -12460,6 +12468,10 @@ static const struct pci_product pci_products[] = {
 	    "755 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_756,
+	    "756 Host Bridge",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_760,
 	    "760 Host Bridge",
 	},
@@ -14180,4 +14192,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2945;
+const int pci_nproducts = 2948;

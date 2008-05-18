@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: frag6.c,v 1.44.2.1 2008/05/18 12:35:34 yamt Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.44.2.1 2008/05/18 12:35:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.44 2008/04/15 03:57:04 thorpej Exp $");
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -678,7 +679,9 @@ void
 frag6_slowtimo(void)
 {
 	struct ip6q *q6;
-	int s = splsoftnet();
+
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	IP6Q_LOCK();
 	q6 = ip6q.ip6q_next;
@@ -715,7 +718,8 @@ frag6_slowtimo(void)
 	rtcache_free(&ipsrcchk_rt);
 #endif
 
-	splx(s);
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -725,12 +729,16 @@ void
 frag6_drain(void)
 {
 
-	if (ip6q_lock_try() == 0)
-		return;
-	while (ip6q.ip6q_next != &ip6q) {
-		IP6_STATINC(IP6_STAT_FRAGDROPPED);
-		/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
-		frag6_freef(ip6q.ip6q_next);
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+	if (ip6q_lock_try() != 0) {
+		while (ip6q.ip6q_next != &ip6q) {
+			IP6_STATINC(IP6_STAT_FRAGDROPPED);
+			/* XXX in6_ifstat_inc(ifp, ifs6_reass_fail) */
+			frag6_freef(ip6q.ip6q_next);
+		}
+		IP6Q_UNLOCK();
 	}
-	IP6Q_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }

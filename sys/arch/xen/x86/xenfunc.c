@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.4.8.1 2008/05/18 12:33:08 yamt Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.4.8.1 2008/05/18 12:33:08 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -68,13 +68,19 @@ invlpg(vaddr_t addr)
 void
 lldt(u_short sel)
 {
+	struct cpu_info *ci;
 
+	ci = curcpu();
+
+	if (ci->ci_curldt == sel)
+		return;
 	/* __PRINTK(("ldt %x\n", IDXSELN(sel))); */
 	if (sel == GSEL(GLDT_SEL, SEL_KPL))
 		xen_set_ldt((vaddr_t)ldt, NLDT);
 	else
-		xen_set_ldt(cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_base,
-		    cpu_info_primary.ci_gdt[IDXSELN(sel)].ld.ld_entries);
+		xen_set_ldt(ci->ci_gdt[IDXSELN(sel)].ld.ld_base,
+		    ci->ci_gdt[IDXSELN(sel)].ld.ld_entries);
+	ci->ci_curldt = sel;
 }
 #endif
 
@@ -85,12 +91,12 @@ ltr(u_short sel)
 }
 
 void
-lcr0(u_int val)
+lcr0(u_long val)
 {
 	__PRINTK(("XXX lcr0 not supported\n"));
 }
 
-u_int
+u_long
 rcr0(void)
 {
 	__PRINTK(("XXX rcr0 not supported\n"));
@@ -150,7 +156,7 @@ vaddr_t
 rcr2(void)
 {
 #ifdef XEN3
-	return HYPERVISOR_shared_info->vcpu_info[0].arch.cr2; /* XXX curcpu */
+	return curcpu()->ci_vcpu->arch.cr2;
 #else
 	return 0;
 #endif

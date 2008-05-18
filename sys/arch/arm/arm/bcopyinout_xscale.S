@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout_xscale.S,v 1.4 2005/12/06 08:05:31 ross Exp $	*/
+/*	$NetBSD: bcopyinout_xscale.S,v 1.4.78.1 2008/05/18 12:31:33 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-RCSID("$NetBSD: bcopyinout_xscale.S,v 1.4 2005/12/06 08:05:31 ross Exp $")	
+RCSID("$NetBSD: bcopyinout_xscale.S,v 1.4.78.1 2008/05/18 12:31:33 yamt Exp $")	
 
 	.text
 	.align	0
@@ -45,7 +45,7 @@ RCSID("$NetBSD: bcopyinout_xscale.S,v 1.4 2005/12/06 08:05:31 ross Exp $")
 	.word	_C_LABEL(cpu_info)
 #else
 .Lcurpcb:
-	.word _C_LABEL(curpcb)
+	.word _C_LABEL(cpu_info_store) + CI_CURPCB
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.14 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: comreg.h,v 1.14.72.1 2008/05/18 12:33:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -98,6 +98,8 @@
 #define	LCR_5BITS	0x00	/* 5 bits */
 
 /* modem control register */
+#define MCR_TCR_TLR	0x40	/* OMAP: enables access to the TCR & TLR regs */
+#define MCR_XONENABLE	0x20	/* OMAP XON_EN */
 #define	MCR_LOOPBACK	0x10	/* Loop test: echos from TX to RX */
 #define	MCR_IENABLE	0x08	/* Out2: enables UART interrupts */
 #define	MCR_DRS		0x04	/* Out1: resets some internal modems */
@@ -125,6 +127,22 @@
 #define	MSR_TERI	0x04	/* RI has toggled low to high */
 #define	MSR_DDSR	0x02	/* DSR has changed state */
 #define	MSR_DCTS	0x01	/* CTS has changed state */
+
+/* OMAP mode definition register 1 */
+#define MDR1_FRAME_END_MODE		0x80
+#define MDR1_SIP_MODE			0x40
+#define MDR1_SCT			0x20
+#define MDR1_SET_TXIR			0x10
+#define MDR1_IR_SLEEP			0x08
+#define MDR1_MODE_DISABLE		0x07
+#define MDR1_MODE_FIR			0x05
+#define MDR1_MODE_MIR			0x04
+#define MDR1_MODE_UART_13X		0x03
+#define MDR1_MODE_UART_16X_AUTOBAUD	0x02
+#define MDR1_MODE_SIR			0x01
+#define MDR1_MODE_UART_16X		0x00
+#define MDR1_MODE_MASK			0x07
+
 
 /* XXX ISA-specific. */
 #define	COM_NPORTS	8

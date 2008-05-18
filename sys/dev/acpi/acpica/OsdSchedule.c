@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.5 2007/12/21 18:42:38 jmcneill Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.5.8.1 2008/05/18 12:33:34 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.5 2007/12/21 18:42:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.5.8.1 2008/05/18 12:33:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -106,13 +106,7 @@ acpi_osd_sched_fini(void)
 ACPI_THREAD_ID
 AcpiOsGetThreadId(void)
 {
-
-	/* XXX ACPI CA can call this function in interrupt context */
-	if (curlwp == NULL)
-		return 1;
-
-	/* XXX Bleh, we're not allowed to return 0 (how stupid!) */
-	return (curlwp->l_proc->p_pid + 1);
+	return (ACPI_THREAD_ID)curlwp;
 }
 
 /*

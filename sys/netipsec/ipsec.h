@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.21 2007/12/29 14:53:25 degroote Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.21.8.1 2008/05/18 12:35:40 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -224,7 +224,6 @@ extern int ipsec_replay;
 extern int ipsec_integrity;
 #endif
 
-extern struct newipsecstat newipsecstat;
 extern struct secpolicy ip4_def_policy;
 extern int ip4_esp_trans_deflev;
 extern int ip4_esp_net_deflev;

@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_floorf.c,v 1.7 2002/05/26 22:01:56 wiz Exp $");
+__RCSID("$NetBSD: s_floorf.c,v 1.7.30.1 2008/05/18 12:30:39 yamt Exp $");
 #endif
 
 /*
@@ -35,27 +35,27 @@ static const float huge = 1.0e30;
 float
 floorf(float x)
 {
-	int32_t i0,j0;
+	int32_t i0,jj0;
 	u_int32_t i;
 	GET_FLOAT_WORD(i0,x);
-	j0 = ((i0>>23)&0xff)-0x7f;
-	if(j0<23) {
-	    if(j0<0) { 	/* raise inexact if x != 0 */
+	jj0 = ((i0>>23)&0xff)-0x7f;
+	if(jj0<23) {
+	    if(jj0<0) { 	/* raise inexact if x != 0 */
 		if(huge+x>(float)0.0) {/* return 0*sign(x) if |x|<1 */
 		    if(i0>=0) {i0=0;}
 		    else if((i0&0x7fffffff)!=0)
 			{ i0=0xbf800000;}
 		}
 	    } else {
-		i = (0x007fffff)>>j0;
+		i = (0x007fffff)>>jj0;
 		if((i0&i)==0) return x; /* x is integral */
 		if(huge+x>(float)0.0) {	/* raise inexact flag */
-		    if(i0<0) i0 += (0x00800000)>>j0;
+		    if(i0<0) i0 += (0x00800000)>>jj0;
 		    i0 &= (~i);
 		}
 	    }
 	} else {
-	    if(j0==0x80) return x+x;	/* inf or NaN */
+	    if(jj0==0x80) return x+x;	/* inf or NaN */
 	    else return x;		/* x is integral */
 	}
 	SET_FLOAT_WORD(x,i0);

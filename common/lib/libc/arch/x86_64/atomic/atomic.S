@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.9 2008/02/10 13:25:46 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.9.4.1 2008/05/18 12:28:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,11 +34,11 @@
 #ifdef _KERNEL
 #define	LOCK(n)		.Lpatch/**/n:	lock
 #define	ALIAS(f, t)	STRONG_ALIAS(f,t)
-#define	END(a)		_ALIGN_TEXT; LABEL(a)
+#define	ENDLABEL(a)	_ALIGN_TEXT; LABEL(a)
 #else
 #define	LOCK(n)		lock
 #define	ALIAS(f, t)	WEAK_ALIAS(f,t)
-#define	END(a)		/* nothing */
+#define	ENDLABEL(a)	/* nothing */
 #endif
 
 	.text
@@ -232,30 +225,30 @@ NENTRY(_membar_consumer)
 	LOCK(25)
 	addq	$0, -8(%rsp)
 	ret
-END(membar_consumer_end)
+ENDLABEL(membar_consumer_end)
 
 NENTRY(_membar_producer)
 	/* A store is enough */
 	movq	$0, -8(%rsp)
 	ret
-END(membar_producer_end)
+ENDLABEL(membar_producer_end)
 
 NENTRY(_membar_sync)
 	LOCK(26)
 	addq	$0, -8(%rsp)
 	ret
-END(membar_sync_end)
+ENDLABEL(membar_sync_end)
 
 #ifdef _KERNEL
 NENTRY(sse2_lfence)
 	lfence
 	ret
-END(sse2_lfence_end)
+ENDLABEL(sse2_lfence_end)
 
 NENTRY(sse2_mfence)
 	mfence
 	ret
-END(sse2_mfence_end)
+ENDLABEL(sse2_mfence_end)
 
 atomic_lockpatch:
 	.globl	atomic_lockpatch

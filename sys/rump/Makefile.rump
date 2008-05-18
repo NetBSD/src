@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile.rump,v 1.6 2008/01/24 22:41:07 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.6.8.1 2008/05/18 12:35:45 yamt Exp $
 #
 
 .include <bsd.own.mk>
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 NOMAN=		wizd
-MKLINT?=	no
-MKPIC?=		no
 
 WARNS?=		4
 DBG=		-g -O0

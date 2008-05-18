@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.9 2007/10/17 19:53:44 garbled Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.9.18.1 2008/05/18 12:31:41 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.9 2007/10/17 19:53:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.9.18.1 2008/05/18 12:31:41 yamt Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -310,9 +310,9 @@ pxa2x0_gpio_intr_disestablish(void *cookie)
 	if (gh->gh_gpio == 1) {
 #if 0
 		pxa2x0_intr_disestablish(sc->sc_irqcookie[1]);
-		sc->sc_irqcookie[0] = NULL;
+		sc->sc_irqcookie[1] = NULL;
 #else
-		panic("pxa2x0_gpio_intr_disestablish: can't unhook GPIO#0");
+		panic("pxa2x0_gpio_intr_disestablish: can't unhook GPIO#1");
 #endif
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.45 2008/03/04 02:41:46 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.45.2.1 2008/05/18 12:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.45 2008/03/04 02:41:46 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.45.2.1 2008/05/18 12:36:11 yamt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: tree.c,v 1.45 2008/03/04 02:41:46 christos Exp $");
 #include <float.h>
 #include <limits.h>
 #include <math.h>
+#include <signal.h>
 
 #include "lint1.h"
 #include "cgram.h"
@@ -70,6 +71,7 @@ static	void	piconv(op_t, tspec_t, type_t *, tnode_t *);
 static	void	ppconv(op_t, tnode_t *, type_t *);
 static	tnode_t	*bldstr(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*bldincdec(op_t, tnode_t *);
+static	tnode_t	*bldri(op_t, tnode_t *);
 static	tnode_t	*bldamper(tnode_t *, int);
 static	tnode_t	*bldplmi(op_t, tnode_t *, tnode_t *);
 static	tnode_t	*bldshft(op_t, tnode_t *, tnode_t *);
@@ -87,6 +89,8 @@ static	void	chkaidx(tnode_t *, int);
 static	void	chkcomp(op_t, tnode_t *, tnode_t *);
 static	void	precconf(tnode_t *);
 
+extern sig_atomic_t fpe;
+
 /*
  * Initialize mods of operators.
  */
@@ -97,117 +101,117 @@ initmtab(void)
 		op_t	op;
 		mod_t	m;
 	} imods[] = {
-		{ ARROW,  { 1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+		{ ARROW,  { 1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,
 		    "->" } },
-		{ POINT,  { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		{ POINT,  { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		    "." } },
-		{ NOT,    { 0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,1,0,
+		{ NOT,    { 0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,1,0,0,
 		    "!" } },
-		{ COMPL,  { 0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,1,1,
+		{ COMPL,  { 0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1,
 		    "~" } },
-		{ INCBEF, { 0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ INCBEF, { 0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "prefix++" } },
-		{ DECBEF, { 0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ DECBEF, { 0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "prefix--" } },
-		{ INCAFT, { 0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ INCAFT, { 0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "postfix++" } },
-		{ DECAFT, { 0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ DECAFT, { 0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "postfix--" } },
-		{ UPLUS,  { 0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,
+		{ UPLUS,  { 0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,0,
 		    "unary +" } },
-		{ UMINUS, { 0,0,0,0,1,1,1,0,0,0,1,0,0,0,0,1,1,
+		{ UMINUS, { 0,0,0,0,1,1,1,0,0,0,1,0,0,0,0,1,1,0,
 		    "unary -" } },
-		{ STAR,   { 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+		{ STAR,   { 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,
 		    "unary *" } },
-		{ AMPER,  { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		{ AMPER,  { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		    "unary &" } },
-		{ MULT,   { 1,0,0,0,1,1,1,0,1,0,0,1,0,0,0,1,1,
+		{ MULT,   { 1,0,0,0,1,1,1,0,1,0,0,1,0,0,0,1,1,0,
 		    "*" } },
-		{ DIV,    { 1,0,0,0,1,1,1,0,1,0,1,1,0,0,0,1,1,
+		{ DIV,    { 1,0,0,0,1,1,1,0,1,0,1,1,0,0,0,1,1,0,
 		    "/" } },
-		{ MOD,    { 1,0,1,0,0,1,1,0,1,0,1,1,0,0,0,1,1,
+		{ MOD,    { 1,0,1,0,0,1,1,0,1,0,1,1,0,0,0,1,1,0,
 		    "%" } },
-		{ PLUS,   { 1,0,0,1,0,1,1,0,1,0,0,0,0,0,0,1,0,
+		{ PLUS,   { 1,0,0,1,0,1,1,0,1,0,0,0,0,0,0,1,0,0,
 		    "+" } },
-		{ MINUS,  { 1,0,0,1,0,1,1,0,1,0,0,0,0,0,0,1,0,
+		{ MINUS,  { 1,0,0,1,0,1,1,0,1,0,0,0,0,0,0,1,0,0,
 		    "-" } },
-		{ SHL,    { 1,0,1,0,0,1,1,0,0,0,0,0,1,0,0,1,1,
+		{ SHL,    { 1,0,1,0,0,1,1,0,0,0,0,0,1,0,0,1,1,0,
 		    "<<" } },
-		{ SHR,    { 1,0,1,0,0,1,1,0,0,0,1,0,1,0,0,1,1,
+		{ SHR,    { 1,0,1,0,0,1,1,0,0,0,1,0,1,0,0,1,1,0,
 		    ">>" } },
-		{ LT,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,
+		{ LT,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,
 		    "<" } },
-		{ LE,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,
+		{ LE,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,
 		    "<=" } },
-		{ GT,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,
+		{ GT,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,
 		    ">" } },
-		{ GE,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,
+		{ GE,     { 1,1,0,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,
 		    ">=" } },
-		{ EQ,     { 1,1,0,1,0,1,1,0,1,0,0,0,0,1,1,0,1,
+		{ EQ,     { 1,1,0,1,0,1,1,0,1,0,0,0,0,1,1,0,1,0,
 		    "==" } },
-		{ NE,     { 1,1,0,1,0,1,1,0,1,0,0,0,0,1,1,0,1,
+		{ NE,     { 1,1,0,1,0,1,1,0,1,0,0,0,0,1,1,0,1,0,
 		    "!=" } },
-		{ AND,    { 1,0,1,0,0,1,1,0,1,0,0,0,1,0,0,1,0,
+		{ AND,    { 1,0,1,0,0,1,1,0,1,0,0,0,1,0,0,1,0,0,
 		    "&" } },
-		{ XOR,    { 1,0,1,0,0,1,1,0,1,0,0,0,1,0,0,1,0,
+		{ XOR,    { 1,0,1,0,0,1,1,0,1,0,0,0,1,0,0,1,0,0,
 		    "^" } },
-		{ OR,     { 1,0,1,0,0,1,1,0,1,0,0,0,1,0,0,1,0,
+		{ OR,     { 1,0,1,0,0,1,1,0,1,0,0,0,1,0,0,1,0,0,
 		    "|" } },
-		{ LOGAND, { 1,1,0,1,0,1,0,1,0,0,0,0,0,0,0,1,0,
+		{ LOGAND, { 1,1,0,1,0,1,0,1,0,0,0,0,0,0,0,1,0,0,
 		    "&&" } },
-		{ LOGOR,  { 1,1,0,1,0,1,0,1,0,0,0,0,1,0,0,1,0,
+		{ LOGOR,  { 1,1,0,1,0,1,0,1,0,0,0,0,1,0,0,1,0,0,
 		    "||" } },
-		{ QUEST,  { 1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,
+		{ QUEST,  { 1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,
 		    "?" } },
-		{ COLON,  { 1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,
+		{ COLON,  { 1,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,
 		    ":" } },
-		{ ASSIGN, { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,
+		{ ASSIGN, { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,
 		    "=" } },
-		{ MULASS, { 1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ MULASS, { 1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "*=" } },
-		{ DIVASS, { 1,0,0,0,1,0,0,0,0,1,0,1,0,0,0,1,0,
+		{ DIVASS, { 1,0,0,0,1,0,0,0,0,1,0,1,0,0,0,1,0,0,
 		    "/=" } },
-		{ MODASS, { 1,0,1,0,0,0,0,0,0,1,0,1,0,0,0,1,0,
+		{ MODASS, { 1,0,1,0,0,0,0,0,0,1,0,1,0,0,0,1,0,0,
 		    "%=" } },
-		{ ADDASS, { 1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ ADDASS, { 1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "+=" } },
-		{ SUBASS, { 1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ SUBASS, { 1,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "-=" } },
-		{ SHLASS, { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ SHLASS, { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "<<=" } },
-		{ SHRASS, { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ SHRASS, { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    ">>=" } },
-		{ ANDASS, { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ ANDASS, { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "&=" } },
-		{ XORASS, { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ XORASS, { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "^=" } },
-		{ ORASS,  { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,
+		{ ORASS,  { 1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,
 		    "|=" } },
-		{ NAME,   { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		{ NAME,   { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		    "NAME" } },
-		{ CON,    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		{ CON,    { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		    "CON" } },
-		{ STRING, { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		{ STRING, { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		    "STRING" } },
-		{ FSEL,   { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		{ FSEL,   { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		    "FSEL" } },
-		{ CALL,   { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,
+		{ CALL,   { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,
 		    "CALL" } },
-		{ COMMA,  { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,
+		{ COMMA,  { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,
 		    "," } },
-		{ CVT,    { 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+		{ CVT,    { 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,
 		    "CVT" } },
-		{ ICALL,  { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,
+		{ ICALL,  { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,
 		    "ICALL" } },
-		{ LOAD,	  { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		{ LOAD,	  { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		    "LOAD" } },
-		{ PUSH,   { 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,
+		{ PUSH,   { 0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,
 		    "PUSH" } },
-		{ RETURN, { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,
+		{ RETURN, { 1,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,
 		    "RETURN" } },
-		{ INIT,   { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,
+		{ INIT,   { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,
 		    "INIT" } },
-		{ FARG,   { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,
+		{ FARG,   { 1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,
 		    "FARG" } },
 		{ NOOP }
 	};
@@ -670,6 +674,10 @@ build(op_t op, tnode_t *ln, tnode_t *rn)
 	case QUEST:
 		ntn = mktnode(op, rn->tn_type, ln, rn);
 		break;
+	case REAL:
+	case IMAG:
+		ntn = bldri(op, ln);
+		break;
 	default:
 		rtp = mp->m_logop ? gettyp(INT) : ln->tn_type;
 		if (!mp->m_binary && rn != NULL)
@@ -794,6 +802,13 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	if (mp->m_rqint) {
 		/* integertypes required */
 		if (!isityp(lt) || (mp->m_binary && !isityp(rt))) {
+			incompat(op, lt, rt);
+			return (0);
+		}
+	} else if (mp->m_rqintcomp) {
+		/* integertypes required */
+		if ((!isityp(lt) && !isctyp(lt)) ||
+		    (mp->m_binary && (!isityp(rt) && !isctyp(rt)))) {
 			incompat(op, lt, rt);
 			return (0);
 		}
@@ -1178,6 +1193,8 @@ typeok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	case COMPL:
 	case NOT:
 	case NOOP:
+	case REAL:
+	case IMAG:
 		break;
 	}
 
@@ -1944,8 +1961,10 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		case UQUAD:
 			max = (uint64_t)UQUAD_MAX; min = 0;		break;
 		case FLOAT:
+		case FCOMPLEX:
 			max = FLT_MAX;		min = -FLT_MAX;		break;
 		case DOUBLE:
+		case DCOMPLEX:
 			max = DBL_MAX;		min = -DBL_MAX;		break;
 		case PTR:
 			/* Got already an error because of float --> ptr */
@@ -2148,27 +2167,42 @@ static void
 incompat(op_t op, tspec_t lt, tspec_t rt)
 {
 	mod_t	*mp;
+	int e = 0;
 
 	mp = &modtab[op];
 
 	if (lt == VOID || (mp->m_binary && rt == VOID)) {
 		/* void type illegal in expression */
-		error(109);
+		e = 109;
 	} else if (op == ASSIGN) {
 		if ((lt == STRUCT || lt == UNION) &&
 		    (rt == STRUCT || rt == UNION)) {
 			/* assignment of different structures */
-			error(240);
+			e = 240;
 		} else {
 			/* assignment type mismatch */
-			error(171);
+			e = 171;
 		}
 	} else if (mp->m_binary) {
 		/* operands of %s have incompatible types */
-		error(107, mp->m_name);
+		e = 107;
 	} else {
 		/* operand of %s has incompatible type */
-		error(108, mp->m_name);
+		e = 108;
+	}
+	switch (e) {
+	case 0:
+		return;
+	case 109:
+		error(e);
+		return;
+	case 108:
+	case 107:
+		error(e, mp->m_name, basictyname(lt), basictyname(rt));
+		return;
+	default:
+		error(e, basictyname(lt), basictyname(rt));
+		return;
 	}
 }
 
@@ -2331,6 +2365,34 @@ bldincdec(op_t op, tnode_t *ln)
 	return (ntn);
 }
 
+/*
+ * Create a node for REAL, IMAG
+ */
+static tnode_t *
+bldri(op_t op, tnode_t *ln)
+{
+	tnode_t	*cn, *ntn;
+	char buf[64];
+
+	if (ln == NULL)
+		LERROR("bldincdec()");
+
+	switch (ln->tn_type->t_tspec) {
+	case DCOMPLEX:
+		cn = getinode(DOUBLE, (int64_t)1);
+		break;
+	case FCOMPLEX:
+		cn = getinode(FLOAT, (int64_t)1);
+		break;
+	default:
+		error(276, op == REAL ? "real" : "imag",
+		    tyname(buf, sizeof(buf), ln->tn_type));
+		return NULL;
+	}
+	ntn = mktnode(op, cn->tn_type, ln, cn);
+
+	return (ntn);
+}
 /*
  * Create a tree node for the & operator
  */
@@ -2845,6 +2907,7 @@ foldflt(tnode_t *tn)
 	tspec_t	t;
 	ldbl_t	l, r = 0;
 
+	fpe = 0;
 	v = xcalloc(1, sizeof (val_t));
 	v->v_tspec = t = tn->tn_type->t_tspec;
 
@@ -2913,9 +2976,9 @@ foldflt(tnode_t *tn)
 		LERROR("foldflt()");
 	}
 
-	if (isnan((double)v->v_ldbl))
+	if (!fpe && isnan((double)v->v_ldbl))
 		LERROR("foldflt()");
-	if (!finite((double)v->v_ldbl) ||
+	if (fpe || !finite((double)v->v_ldbl) ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
 	    (t == DOUBLE &&
@@ -2929,6 +2992,7 @@ foldflt(tnode_t *tn)
 		} else {
 			v->v_ldbl = v->v_ldbl < 0 ? -LDBL_MAX: LDBL_MAX;
 		}
+	    fpe = 0;
 	}
 
 	return (getcnode(tn->tn_type, v));
@@ -3471,6 +3535,8 @@ chkmisc(tnode_t *tn, int vctx, int tctx, int eqwarn, int fcall, int rvdisc,
 	case XORASS:
 	case SHLASS:
 	case SHRASS:
+	case REAL:
+	case IMAG:
 		if (ln->tn_op == NAME && (reached || rchflg)) {
 			sc = ln->tn_sym->s_scl;
 			/*
@@ -3956,6 +4022,8 @@ precconf(tnode_t *tn)
 	case SHRASS:
 	case UPLUS:
 	case ANDASS:
+	case REAL:
+	case IMAG:
 		break;
 	}
 

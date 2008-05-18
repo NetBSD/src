@@ -1,4 +1,4 @@
-/* $NetBSD: xen.h,v 1.6 2007/10/17 19:58:29 garbled Exp $ */
+/* $NetBSD: xen.h,v 1.6.18.1 2008/05/18 12:33:05 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, K A Fraser
@@ -286,7 +286,7 @@ typedef struct shared_info_st
      * Per-VCPU information goes here. This will be cleaned up more when Xen 
      * actually supports multi-VCPU guests.
      */
-    volatile struct {
+    volatile struct vcpu_info {
         /*
          * 'evtchn_upcall_pending' is written non-zero by Xen to indicate
          * a pending notification for a particular VCPU. It is then cleared 

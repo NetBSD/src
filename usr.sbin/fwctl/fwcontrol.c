@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.6 2007/11/06 17:02:15 kiyohara Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.6.6.1 2008/05/18 12:36:18 yamt Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -388,7 +388,8 @@ show_crom(u_int32_t *crom_buf)
 {
 	int i;
 	struct crom_context cc;
-	char *desc, info[256];
+	const char *desc;
+	char info[256];
 	static const char *key_types = "ICLD";
 	struct csrreg *reg;
 	struct csrdirectory *dir;

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.10 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.10.2.1 2008/05/18 12:34:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -31,6 +31,8 @@
 #ifndef __PPBUS_CONF_H
 #define __PPBUS_CONF_H
 
+#include "gpio.h"
+
 #include <sys/device.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
@@ -40,6 +42,10 @@
 #include <dev/ppbus/ppbus_msq.h>
 #include <dev/ppbus/ppbus_device.h>
 
+#if NGPIO > 0
+#include <dev/gpio/gpiovar.h>
+#define PPBUS_NPINS 17
+#endif
 
 /* Function pointer types used for interface */
 typedef u_char (*PARPORT_IO_T)(device_t, int, u_char *, int, u_char);
@@ -130,6 +136,15 @@ struct ppbus_softc {
 	PARPORT_DMA_FREE_T ppbus_dma_free;
 	PARPORT_ADD_HANDLER_T ppbus_add_handler;
 	PARPORT_REMOVE_HANDLER_T ppbus_remove_handler;
+
+#if NGPIO > 0
+	struct gpio_chipset_tag sc_gpio_gc;
+	gpio_pin_t sc_gpio_pins[PPBUS_NPINS];
+#endif
 };
+
+#if NGPIO > 0
+void gpio_ppbus_attach(struct ppbus_softc *);
+#endif
 
 #endif /* __PPBUS_CONF_H */

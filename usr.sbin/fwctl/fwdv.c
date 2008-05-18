@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdv.c,v 1.2 2007/11/06 17:02:15 kiyohara Exp $	*/
+/*	$NetBSD: fwdv.c,v 1.2.6.1 2008/05/18 12:36:18 yamt Exp $	*/
 /*
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -82,7 +82,7 @@ struct frac pad_rate[2]  = {
 	{203, 2997},	/* = (8000 - 29.97 * 250)/(29.97 * 250) */
 	{1, 15},	/* = (8000 - 25 * 300)/(25 * 300) */
 };
-char *system_name[] = {"NTSC", "PAL"};
+const char *system_name[] = {"NTSC", "PAL"};
 int frame_rate[] = {30, 25};
 
 #define PSIZE 512
@@ -107,7 +107,7 @@ dvrecv(int d, const char *filename, char ich, int count)
 	struct fw_pkt *pkt;
 	char *pad, *buf;
 	u_int32_t *ptr;
-	int len, tlen, npad, fd, k, m, vec, system = -1, nb;
+	int len, tlen, npad, fd, k, m, vec, lsystem = -1, nb;
 	int nblocks[] = {250 /* NTSC */, 300 /* PAL */};
 	struct iovec wbuf[NPACKET_R];
 
@@ -199,17 +199,17 @@ again:
 			fprintf(stderr, "(%d,%d) ", dv->sct, dv->dseq);
 #endif
 			if  (dv->sct == DV_SCT_HEADER && dv->dseq == 0) {
-				if (system < 0) {
-					system = ciph->fdf.dv.fs;
+				if (lsystem < 0) {
+					lsystem = ciph->fdf.dv.fs;
 					fprintf(stderr,
-					    "%s\n", system_name[system]);
+					    "%s\n", system_name[lsystem]);
 				}
 
 				/* Fix DSF bit */
-				if (system == 1 &&
+				if (lsystem == 1 &&
 					(dv->payload[0] & DV_DSF_12) == 0)
 					dv->payload[0] |= DV_DSF_12;
-				nb = nblocks[system];
+				nb = nblocks[lsystem];
 				fprintf(stderr, "%d", k%10);
 #if FIX_FRAME
 				if (m > 0 && m != nb) {
@@ -229,7 +229,7 @@ again:
 				}
 #endif
 				k++;
-				if (k % frame_rate[system] == 0) {
+				if (k % frame_rate[lsystem] == 0) {
 					/* every second */
 					fprintf(stderr, "\n");
 				}
@@ -268,7 +268,7 @@ dvsend(int d, const char *filename, char ich, int count)
 	struct dvdbc *dv;
 	struct fw_pkt *pkt;
 	int len, tlen, header, fd, frames, packets, vec, offset, nhdr, i;
-	int system=-1, pad_acc, cycle_acc, cycle, f_cycle, f_frac;
+	int lsystem=-1, pad_acc, cycle_acc, cycle, f_cycle, f_frac;
 	struct iovec wbuf[TNBUF*2 + NEMPTY];
 	char *pbuf;
 	u_int32_t iso_data, iso_empty, hdr[TNBUF + NEMPTY][3];
@@ -353,42 +353,42 @@ next:
 #if 0
 		header = (dv->sct == 0 && dv->dseq == 0);
 #else
-		header = (packets == 0 || packets % npackets[system] == 0);
+		header = (packets == 0 || packets % npackets[lsystem] == 0);
 #endif
 
 		ciph = (struct ciphdr *)&hdr[nhdr][1];
 		if (header) {
-			if (system < 0) {
-				system = ((dv->payload[0] & DV_DSF_12) != 0);
-				printf("%s\n", system_name[system]);
+			if (lsystem < 0) {
+				lsystem = ((dv->payload[0] & DV_DSF_12) != 0);
+				printf("%s\n", system_name[lsystem]);
 				cycle = 1;
-				cycle_acc = frame_cycle[system].d * cycle;
+				cycle_acc = frame_cycle[lsystem].d * cycle;
 			}
 			fprintf(stderr, "%d", frames % 10);
 			frames ++;
 			if (count > 0 && frames > count)
 				break;
-			if (frames % frame_rate[system] == 0)
+			if (frames % frame_rate[lsystem] == 0)
 				fprintf(stderr, "\n");
 			fflush(stderr);
-			f_cycle = (cycle_acc / frame_cycle[system].d) & 0xf;
-			f_frac = (cycle_acc % frame_cycle[system].d
-					* CYCLE_FRAC) / frame_cycle[system].d;
+			f_cycle = (cycle_acc / frame_cycle[lsystem].d) & 0xf;
+			f_frac = (cycle_acc % frame_cycle[lsystem].d
+					* CYCLE_FRAC) / frame_cycle[lsystem].d;
 #if 0
 			ciph->fdf.dv.cyc = htons(f_cycle << 12 | f_frac);
 #else
 			ciph->fdf.dv.cyc = htons(cycle << 12 | f_frac);
 #endif
-			cycle_acc += frame_cycle[system].n;
-			cycle_acc %= frame_cycle[system].d * 0x10;
+			cycle_acc += frame_cycle[lsystem].n;
+			cycle_acc %= frame_cycle[lsystem].d * 0x10;
 
 		} else {
 			ciph->fdf.dv.cyc = 0xffff;
 		}
 		ciph->dbc = packets++ % 256;
-		pad_acc += pad_rate[system].n;
-		if (pad_acc >= pad_rate[system].d) {
-			pad_acc -= pad_rate[system].d;
+		pad_acc += pad_rate[lsystem].n;
+		if (pad_acc >= pad_rate[lsystem].d) {
+			pad_acc -= pad_rate[lsystem].d;
 			bcopy(hdr[nhdr], hdr[nhdr+1], sizeof(hdr[0]));
 			hdr[nhdr][0] = iso_empty;
 			wbuf[vec].iov_base = (char *)hdr[nhdr];

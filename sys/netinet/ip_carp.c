@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.24 2008/04/15 06:03:28 thorpej Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.24.2.1 2008/05/18 12:35:28 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.24 2008/04/15 06:03:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.24.2.1 2008/05/18 12:35:28 yamt Exp $");
 
 /*
  * TODO:
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.24 2008/04/15 06:03:28 thorpej Exp $")
 #include <sys/ucred.h>
 #include <sys/syslog.h>
 #include <sys/acct.h>
-#include <sys/percpu.h>
 
 #include <sys/cpu.h>
 
@@ -63,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.24 2008/04/15 06:03:28 thorpej Exp $")
 #include <net/if_ether.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <net/net_stats.h>
 #include <netinet/if_inarp.h>
 
 #include <machine/stdarg.h>
@@ -159,12 +159,7 @@ int carp_opts[CARPCTL_MAXID] = { 0, 1, 0, 0, 0 };	/* XXX for now */
 
 static percpu_t *carpstat_percpu;
 
-#define	CARP_STATINC(x)							\
-do {									\
-	uint64_t *_carps_ = percpu_getref(carpstat_percpu);		\
-	_carps_[x]++;							\
-	percpu_putref(carpstat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	CARP_STATINC(x)		_NET_STATINC(carpstat_percpu, x)
 
 struct carp_if {
 	TAILQ_HEAD(, carp_softc) vhif_vrs;
@@ -2244,36 +2239,11 @@ carp_ether_purgemulti(struct carp_softc *sc)
 	}
 }
 
-static void
-carpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *carpsc = v1;
-	uint64_t *carps = v2;
-	u_int i;
-
-	for (i = 0; i < CARP_NSTATS; i++)
-		carps[i] += carpsc[i];
-}
-
-static void
-carpstat_convert_to_user(uint64_t *carps)
-{
-
-	memset(carps, 0, sizeof(uint64_t) * CARP_NSTATS);
-	percpu_foreach(carpstat_percpu, carpstat_convert_to_user_cb, carps);
-}
-
 static int
 sysctl_net_inet_carp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t carps[CARP_NSTATS];
 
-	carpstat_convert_to_user(carps);
-	node = *rnode;
-	node.sysctl_data = carps;
-	node.sysctl_size = sizeof(carps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(carpstat_percpu, CARP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_carp_setup, "sysctl net.inet.carp subtree setup")

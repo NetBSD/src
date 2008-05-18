@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.10 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.10.2.1 2008/05/18 12:32:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.10 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.10.2.1 2008/05/18 12:32:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.10 2008/04/09 15:40:30 tsutsui Exp $");
 #include <newsmips/apbus/dmac3var.h>
 
 #include <mips/cache.h>
+
+#include "ioconf.h"
 
 #define DMA_BURST
 #define DMA_APAD_OFF
@@ -110,15 +112,14 @@ struct dmac3_softc *
 dmac3_link(int ctlnum)
 {
 	struct dmac3_softc *sc;
-	struct device *dv;
+	int unit;
 
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	    dv = TAILQ_NEXT(dv, dv_list)) {
-		if (strncmp(device_xname(dv), "dmac", 4) == 0) {
-			sc = device_private(dv);
-			if (sc->sc_ctlnum == ctlnum)
-				return sc;
-		}
+	for (unit = 0; unit < dmac_cd.cd_ndevs; unit++) {
+		sc = device_private(dmac_cd.cd_devs[unit]);
+		if (sc == NULL)
+			continue;
+		if (sc->sc_ctlnum == ctlnum)
+			return sc;
 	}
 	return NULL;
 }

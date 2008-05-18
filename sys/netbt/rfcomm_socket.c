@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.8 2007/10/15 18:04:34 plunky Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.8.20.1 2008/05/18 12:35:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.8 2007/10/15 18:04:34 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.8.20.1 2008/05/18 12:35:28 yamt Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -119,9 +119,14 @@ rfcomm_usrreq(struct socket *up, int req, struct mbuf *m,
 		return EOPNOTSUPP;
 
 	case PRU_ATTACH:
+		if (up->so_lock == NULL) {
+			mutex_obj_hold(bt_lock);
+			up->so_lock = bt_lock;
+			solock(up);
+		}
+		KASSERT(solocked(up));
 		if (pcb != NULL)
 			return EINVAL;
-
 		/*
 		 * Since we have nothing to add, we attach the DLC
 		 * structure directly to our PCB pointer.

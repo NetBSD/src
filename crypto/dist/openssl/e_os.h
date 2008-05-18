@@ -123,9 +123,6 @@ extern "C" {
 #if defined(OPENSSL_SYS_WIN32) && !defined(WIN32)
 #  define WIN32
 #endif
-#if defined(OPENSSL_SYS_WIN16) && !defined(WIN16)
-#  define WIN16
-#endif
 #if defined(OPENSSL_SYS_WINDOWS) && !defined(WINDOWS)
 #  define WINDOWS
 #endif
@@ -181,13 +178,26 @@ extern "C" {
 #define closesocket(s)		    close(s)
 #define readsocket(s,b,n)	    read((s),(b),(n))
 #define writesocket(s,b,n)	    write((s),(char *)(b),(n))
+#elif defined(OPENSSL_SYS_BEOS_R5)
+#define get_last_socket_error() errno
+#define clear_socket_error()    errno=0
+#define FIONBIO SO_NONBLOCK
+#define ioctlsocket(a,b,c)		  setsockopt((a),SOL_SOCKET,(b),(c),sizeof(*(c)))
+#define readsocket(s,b,n)       recv((s),(b),(n),0)
+#define writesocket(s,b,n)      send((s),(b),(n),0)
 #elif defined(OPENSSL_SYS_NETWARE)
 #if defined(NETWARE_BSDSOCK)
 #define get_last_socket_error() errno
 #define clear_socket_error()    errno=0
 #define closesocket(s)          close(s)
+#define ioctlsocket(a,b,c)      ioctl(a,b,c)
+#if defined(NETWARE_LIBC)
 #define readsocket(s,b,n)       recv((s),(b),(n),0)
 #define writesocket(s,b,n)      send((s),(b),(n),0)
+#else
+#define readsocket(s,b,n)       recv((s),(char*)(b),(n),0)
+#define writesocket(s,b,n)      send((s),(char*)(b),(n),0)
+#endif
 #else
 #define get_last_socket_error()	WSAGetLastError()
 #define clear_socket_error()	WSASetLastError(0)
@@ -203,7 +213,7 @@ extern "C" {
 #define writesocket(s,b,n)	write((s),(b),(n))
 #endif
 
-#ifdef WIN16
+#ifdef WIN16 /* never the case */
 #  define MS_CALLBACK	_far _loadds
 #  define MS_FAR	_far
 #else
@@ -249,18 +259,30 @@ extern "C" {
        /*
 	* Defining _WIN32_WINNT here in e_os.h implies certain "discipline."
 	* Most notably we ought to check for availability of each specific
-	* routine with GetProcAddress() and/or quard NT-specific calls with
+	* routine with GetProcAddress() and/or guard NT-specific calls with
 	* GetVersion() < 0x80000000. One can argue that in latter "or" case
 	* we ought to /DELAYLOAD some .DLLs in order to protect ourselves
 	* against run-time link errors. This doesn't seem to be necessary,
 	* because it turned out that already Windows 95, first non-NT Win32
 	* implementation, is equipped with at least NT 3.51 stubs, dummy
 	* routines with same name, but which do nothing. Meaning that it's
-	* apparently appropriate to guard generic NT calls with GetVersion
-	* alone, while NT 4.0 and above calls ought to be additionally
-	* checked upon with GetProcAddress.
+	* apparently sufficient to guard "vanilla" NT calls with GetVersion
+	* alone, while NT 4.0 and above interfaces ought to be linked with
+	* GetProcAddress at run-time.
 	*/
 #      define _WIN32_WINNT 0x0400
+#    endif
+#    if !defined(OPENSSL_NO_SOCK) && defined(_WIN32_WINNT)
+       /*
+        * Just like defining _WIN32_WINNT including winsock2.h implies
+        * certain "discipline" for maintaing [broad] binary compatibility.
+        * As long as structures are invariant among Winsock versions,
+        * it's sufficient to check for specific Winsock2 API availability
+        * at run-time [DSO_global_lookup is recommended]...
+        */
+#      include <winsock2.h>
+#      include <ws2tcpip.h>
+       /* yes, they have to be #included prior <windows.h> */
 #    endif
 #    include <windows.h>
 #    include <stddef.h>
@@ -277,12 +299,20 @@ static unsigned int _strlen31(const char *str)
 	}
 #    endif
 #    include <malloc.h>
+#    if defined(_MSC_VER) && _MSC_VER<=1200 && defined(_MT) && defined(isspace)
+       /* compensate for bug is VC6 ctype.h */
+#      undef isspace
+#      undef isdigit
+#      undef isalnum
+#      undef isupper
+#      undef isxdigit
+#    endif
 #  endif
 #  include <io.h>
 #  include <fcntl.h>
 
 #  ifdef OPENSSL_SYS_WINCE
-#    include <winsock_extras.h>
+#    define OPENSSL_NO_POSIX_IO
 #  endif
 
 #  define ssize_t long
@@ -295,12 +325,7 @@ static unsigned int _strlen31(const char *str)
 #    define _kbhit kbhit
 #  endif
 
-#  if defined(WIN16) && defined(SSLEAY) && defined(_WINEXITNOPERSIST)
-#    define EXIT(n) _wsetexit(_WINEXITNOPERSIST)
-#    define OPENSSL_EXIT(n) do { if (n == 0) EXIT(n); return(n); } while(0)
-#  else
-#    define EXIT(n) exit(n)
-#  endif
+#  define EXIT(n) exit(n)
 #  define LIST_SEPARATOR_CHAR ';'
 #  ifndef X_OK
 #    define X_OK	0
@@ -371,6 +396,11 @@ static unsigned int _strlen31(const char *str)
 #    undef  DEVRANDOM
 #    ifdef NETWARE_CLIB
 #      define getpid GetThreadID
+       extern int GetThreadID(void);
+/* #      include <conio.h> */
+       extern int kbhit(void);
+#    else
+#      include <screen.h>
 #    endif
 #    define NO_SYSLOG
 #    define _setmode setmode
@@ -408,6 +438,10 @@ static unsigned int _strlen31(const char *str)
 #      define setvbuf(a, b, c, d) setbuffer((a), (b), (d))
        typedef unsigned long clock_t;
 #    endif
+#    ifdef OPENSSL_SYS_WIN32_CYGWIN
+#      include <io.h>
+#      include <fcntl.h>
+#    endif
 
 #    define OPENSSL_CONF	"openssl.cnf"
 #    define SSLEAY_CONF		OPENSSL_CONF
@@ -434,8 +468,19 @@ static unsigned int _strlen31(const char *str)
 #      define SHUTDOWN(fd)		close(fd)
 #      define SHUTDOWN2(fd)		close(fd)
 #    elif !defined(__DJGPP__)
-#      include <winsock.h>
-extern HINSTANCE _hInstance;
+#      if defined(_WIN32_WCE) && _WIN32_WCE<410
+#        define getservbyname _masked_declaration_getservbyname
+#      endif
+#      if !defined(IPPROTO_IP)
+         /* winsock[2].h was included already? */
+#        include <winsock.h>
+#      endif
+#      ifdef getservbyname
+#        undef getservbyname
+         /* this is used to be wcecompat/include/winsock_extras.h */
+         struct servent* PASCAL getservbyname(const char*,const char*);
+#      endif
+
 #      ifdef _WIN64
 /*
  * Even though sizeof(SOCKET) is 8, it's safe to cast it to int, because
@@ -471,7 +516,11 @@ extern HINSTANCE _hInstance;
 #        include <sys/socket.h>
 #        include <netinet/in.h>
 #        include <sys/time.h>
-#        include <sys/select.h>
+#        if defined(NETWARE_CLIB)
+#          include <sys/bsdskt.h>
+#        else
+#          include <sys/select.h>
+#        endif
 #        define INVALID_SOCKET (int)(~0)
 #      else
 #        include <novsock2.h>
@@ -503,7 +552,9 @@ extern HINSTANCE _hInstance;
 #        include <sys/filio.h> /* Added for FIONBIO under unixware */
 #      endif
 #      include <netinet/in.h>
+#      if !defined(OPENSSL_SYS_BEOS_R5)
 #      include <arpa/inet.h>
+#    endif
 #    endif
 
 #    if defined(NeXT) || defined(_NEXT_SOURCE)
@@ -580,18 +631,6 @@ extern char *sys_errlist[]; extern int sys_nerr;
 
 /***********************************************/
 
-/* do we need to do this for getenv.
- * Just define getenv for use under windows */
-
-#ifdef WIN16
-/* How to do this needs to be thought out a bit more.... */
-/*char *GETENV(char *);
-#define Getenv	GETENV*/
-#define Getenv	getenv
-#else
-#define Getenv getenv
-#endif
-
 #define DG_GCC_BUG	/* gcc < 2.6.3 on DGUX */
 
 #ifdef sgi
@@ -613,16 +652,12 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #elif defined(OPENSSL_SYS_OS2) && defined(__EMX__)
 #  define strcasecmp stricmp
 #  define strncasecmp strnicmp
-#elif defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
-#  define strcasecmp stricmp
-#  define strncasecmp strnicmp
-#else
-#  ifdef NO_STRINGS_H
-    int	strcasecmp();
-    int	strncasecmp();
-#  else
-#    include <strings.h>
-#  endif /* NO_STRINGS_H */
+#elif defined(OPENSSL_SYS_NETWARE)
+#  include <string.h>
+#  if defined(NETWARE_CLIB)
+#    define strcasecmp stricmp
+#    define strncasecmp strnicmp
+#  endif /* NETWARE_CLIB */
 #endif
 
 #if defined(OPENSSL_SYS_OS2) && defined(__EMX__)
@@ -656,6 +691,15 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 #endif
 /* end vxworks */
+
+/* beos */
+#if defined(OPENSSL_SYS_BEOS_R5)
+#define SO_ERROR 0
+#define NO_SYS_UN
+#define IPPROTO_IP 0
+#include <OS.h>
+#endif
+
 
 #ifdef  __cplusplus
 }

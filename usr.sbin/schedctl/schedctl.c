@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.5 2008/03/24 10:33:17 xtraeme Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.5.2.1 2008/05/18 12:36:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.5 2008/03/24 10:33:17 xtraeme Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.5.2.1 2008/05/18 12:36:23 yamt Exp $");
 #endif
 
 #include <stdio.h>
@@ -53,7 +53,8 @@ __RCSID("$NetBSD: schedctl.c,v 1.5 2008/03/24 10:33:17 xtraeme Exp $");
 static const char *class_str[] = {
 	"SCHED_OTHER",
 	"SCHED_FIFO",
-	"SCHED_RR"
+	"SCHED_RR",
+	NULL
 };
 
 static void	sched_set(pid_t, lwpid_t, int, struct sched_param *, cpuset_t *);
@@ -110,7 +111,12 @@ main(int argc, char **argv)
 			break;
 		case 'C':
 			/* Scheduling class */
-			policy = atoi(optarg);
+			for (policy = 0; class_str[policy] != NULL; policy++) {
+				if (strcasecmp(optarg, class_str[policy]) == 0)
+					break;
+			}
+			if (class_str[policy] == NULL)
+				policy = atoi(optarg);
 			if (policy < SCHED_OTHER || policy > SCHED_RR) {
 				fprintf(stderr,
 				    "%s: invalid scheduling class\n",

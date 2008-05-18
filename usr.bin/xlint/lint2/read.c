@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.19 2007/09/28 21:53:50 uwe Exp $ */
+/* $NetBSD: read.c,v 1.19.6.1 2008/05/18 12:36:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.19 2007/09/28 21:53:50 uwe Exp $");
+__RCSID("$NetBSD: read.c,v 1.19.6.1 2008/05/18 12:36:13 yamt Exp $");
 #endif
 
 #include <ctype.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: read.c,v 1.19 2007/09/28 21:53:50 uwe Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "lint2.h"
 
@@ -65,6 +66,7 @@ static	size_t	ninpfns;
  * Indices of type short are used instead of pointers to save memory.
  */
 const	char **fnames;
+static	size_t *flines;
 static	size_t	nfnames;
 
 /*
@@ -89,8 +91,9 @@ static	hte_t **renametab;
 static	int	csrcfile;
 
 
-#define 	inperr()	inperror(__FILE__, __LINE__)
-static	void	inperror(const char *, size_t);
+#define 	inperr(fmt, args...) \
+    inperror(__FILE__, __LINE__, fmt, ##args)
+static	void	inperror(const char *, size_t, const char *, ...);
 static	void	setsrc(const char *);
 static	void	setfnid(int, const char *);
 static	void	funccall(pos_t *, const char *);
@@ -119,6 +122,8 @@ readfile(const char *name)
 		inpfns = xcalloc(ninpfns = 128, sizeof (short));
 	if (fnames == NULL)
 		fnames = xcalloc(nfnames = 256, sizeof (char *));
+	if (flines == NULL)
+		flines = xcalloc(nfnames, sizeof (size_t));
 	if (tlstlen == 0)
 		tlst = xcalloc(tlstlen = 256, sizeof (type_t *));
 	if (thtab == NULL)
@@ -132,9 +137,10 @@ readfile(const char *name)
 		err(1, "cannot open %s", name);
 
 	while ((line = fgetln(inp, &len)) != NULL) {
+		flines[srcfile]++;
 
 		if (len == 0 || line[len - 1] != '\n')
-			inperr();
+			inperr("%s", &line[len - 1]);
 		line[len - 1] = '\0';
 		cp = line;
 
@@ -150,7 +156,7 @@ readfile(const char *name)
 		if (*cp != '\0') {
 			rt = *cp++;
 		} else {
-			inperr();
+			inperr("null cp");
 		}
 
 		if (rt == 'S') {
@@ -168,16 +174,16 @@ readfile(const char *name)
 		 */
 		isrc = (int)strtol(cp, &eptr, 10);
 		if (cp == eptr)
-			inperr();
+			inperr("not a number: %s", cp);
 		cp = eptr;
 		isrc = inpfns[isrc];
 
 		/* line number in isrc */
 		if (*cp++ != '.')
-			inperr();
+			inperr("bad line number");
 		iline = (int)strtol(cp, &eptr, 10);
 		if (cp == eptr)
-			inperr();
+			inperr("not a number: %s", cp);
 		cp = eptr;
 
 		pos.p_src = (u_short)csrcfile;
@@ -197,7 +203,7 @@ readfile(const char *name)
 			usedsym(&pos, cp);
 			break;
 		default:
-			inperr();
+			inperr("bad record type %c", rt);
 		}
 
 	}
@@ -212,10 +218,17 @@ readfile(const char *name)
 
 
 static void
-inperror(const char *file, size_t line)
+inperror(const char *file, size_t line, const char *fmt, ...)
 {
+	va_list ap;
+	char buf[1024];
 
-	errx(1, "%s,%zd: input file error: %s", file, line, fnames[srcfile]);
+	va_start(ap, fmt);
+	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
+	errx(1, "%s,%zu: input file error: %s,%zu (%s)", file, line,
+	    fnames[srcfile], flines[srcfile], buf);
 }
 
 /*
@@ -240,7 +253,7 @@ setfnid(int fid, const char *cp)
 {
 
 	if (fid == -1)
-		inperr();
+		inperr("bad fid");
 
 	if (fid >= ninpfns) {
 		inpfns = xrealloc(inpfns, (ninpfns * 2) * sizeof (short));
@@ -281,16 +294,16 @@ funccall(pos_t *posp, const char *cp)
 		switch (c) {
 		case 'u':
 			if (rused || rdisc)
-				inperr();
+				inperr("used or discovered: %c", c);
 			rused = 1;
 			break;
 		case 'i':
 			if (rused || rdisc)
-				inperr();
+				inperr("used or discovered: %c", c);
 			break;
 		case 'd':
 			if (rused || rdisc)
-				inperr();
+				inperr("used or discovered: %c", c);
 			rdisc = 1;
 			break;
 		case 'z':
@@ -300,7 +313,7 @@ funccall(pos_t *posp, const char *cp)
 			ai = xalloc(sizeof (arginf_t));
 			ai->a_num = (int)strtol(cp, &eptr, 10);
 			if (cp == eptr)
-				inperr();
+				inperr("bad number: %s", cp);
 			cp = eptr;
 			if (c == 'z') {
 				ai->a_pcon = ai->a_zero = 1;
@@ -337,7 +350,7 @@ funccall(pos_t *posp, const char *cp)
 	hte->h_lcall = &fcall->f_nxt;
 
 	if (*cp != '\0')
-		inperr();
+		inperr("trailing line data: %s", cp);
 }
 
 /*
@@ -363,64 +376,64 @@ decldef(pos_t *posp, const char *cp)
 		switch (c) {
 		case 't':
 			if (sym.s_def != NODECL)
-				inperr();
+				inperr("nodecl %c", c);
 			sym.s_def = TDEF;
 			break;
 		case 'd':
 			if (sym.s_def != NODECL)
-				inperr();
+				inperr("nodecl %c", c);
 			sym.s_def = DEF;
 			break;
 		case 'e':
 			if (sym.s_def != NODECL)
-				inperr();
+				inperr("nodecl %c", c);
 			sym.s_def = DECL;
 			break;
 		case 'u':
 			if (used)
-				inperr();
+				inperr("used %c", c);
 			used = 1;
 			break;
 		case 'r':
 			if (sym.s_rval)
-				inperr();
+				inperr("rval");
 			sym.s_rval = 1;
 			break;
 		case 'o':
 			if (sym.s_osdef)
-				inperr();
+				inperr("osdef");
 			sym.s_osdef = 1;
 			break;
 		case 's':
 			if (sym.s_static)
-				inperr();
+				inperr("static");
 			sym.s_static = 1;
 			break;
 		case 'v':
 			if (sym.s_va)
-				inperr();
+				inperr("va");
 			sym.s_va = 1;
 			sym.s_nva = (short)strtol(cp, &ep, 10);
 			if (cp == ep)
-				inperr();
+				inperr("bad number: %s", cp);
 			cp = ep;
 			break;
 		case 'P':
 			if (sym.s_prfl)
-				inperr();
+				inperr("prfl");
 			sym.s_prfl = 1;
 			sym.s_nprfl = (short)strtol(cp, &ep, 10);
 			if (cp == ep)
-				inperr();
+				inperr("bad number: %s", cp);
 			cp = ep;
 			break;
 		case 'S':
 			if (sym.s_scfl)
-				inperr();
+				inperr("scfl");
 			sym.s_scfl = 1;
 			sym.s_nscfl = (short)strtol(cp, &ep, 10);
 			if (cp == ep)
-				inperr();
+				inperr("bad number: %s", cp);
 			cp = ep;
 			break;
 		}
@@ -497,7 +510,7 @@ decldef(pos_t *posp, const char *cp)
 	}
 
 	if (*cp != '\0')
-		inperr();
+		inperr("trailing line: %s", cp);
 }
 
 /*
@@ -515,7 +528,7 @@ usedsym(pos_t *posp, const char *cp)
 
 	/* needed as delimiter between two numbers */
 	if (*cp++ != 'x')
-		inperr();
+		inperr("bad delim %c", cp[-1]);
 
 	name = inpname(cp, &cp);
 	hte = _hsearch(renametab, name, 0);
@@ -567,11 +580,17 @@ inptype(const char *cp, const char **epp)
 		c = *cp++;
 	}
 
-	if (c == 's' || c == 'u' || c == 'l' || c == 'e') {
+	switch (c) {
+	case 's':
+	case 'u':
+	case 'l':
+	case 'e':
 		s = c;
 		c = *cp++;
-	} else {
+		break;
+	default:
 		s = '\0';
+		break;
 	}
 
 	switch (c) {
@@ -612,6 +631,9 @@ inptype(const char *cp, const char **epp)
 		break;
 	case 'T':
 		tp->t_tspec = s == 'e' ? ENUM : (s == 's' ? STRUCT : UNION);
+		break;
+	case 'X':
+		tp->t_tspec = s == 's' ? FCOMPLEX : DCOMPLEX;
 		break;
 	}
 
@@ -697,6 +719,9 @@ inptype(const char *cp, const char **epp)
 	case UNSIGN:
 	case SIGNED:
 	case NOTSPEC:
+	case FCOMPLEX:
+	case DCOMPLEX:
+	case COMPLEX:
 		break;
 	case NTSPEC:
 		abort();
@@ -726,21 +751,27 @@ gettlen(const char *cp, const char **epp)
 	while (c == 'c' || c == 'v') {
 		if (c == 'c') {
 			if (cm)
-				inperr();
+				inperr("cm: %c", c);
 			cm = 1;
 		} else {
 			if (vm)
-				inperr();
+				inperr("vm: %c", c);
 			vm = 1;
 		}
 		c = *cp++;
 	}
 
-	if (c == 's' || c == 'u' || c == 'l' || c == 'e') {
+	switch (c) {
+	case 's':
+	case 'u':
+	case 'l':
+	case 'e':
 		s = c;
 		c = *cp++;
-	} else {
+		break;
+	default:
 		s = '\0';
+		break;
 	}
 
 	t = NOTSPEC;
@@ -822,18 +853,26 @@ gettlen(const char *cp, const char **epp)
 			t = UNION;
 		}
 		break;
+	case 'X':
+		if (s == 's') {
+			t = FCOMPLEX;
+		} else if (s == '\0') {
+			t = DCOMPLEX;
+		}
+		break;
 	default:
-		inperr();
+		inperr("bad type: %c %c", c, s);
 	}
 
-	if (t == NOTSPEC)
-		inperr();
+	if (t == NOTSPEC) {
+		inperr("undefined type: %c %c", c, s);
+	}
 
 	switch (t) {
 	case ARRAY:
 		(void)strtol(cp, &eptr, 10);
 		if (cp == eptr)
-			inperr();
+			inperr("bad number: %s", cp);
 		cp = eptr;
 		(void)gettlen(cp, &cp);
 		break;
@@ -869,23 +908,23 @@ gettlen(const char *cp, const char **epp)
 			/* unique position: line.file.uniquifier */
 			(void)strtol(cp, &eptr, 10);
 			if (cp == eptr)
-				inperr();
+				inperr("bad number: %s", cp);
 			cp = eptr;
 			if (*cp++ != '.')
-				inperr();
+				inperr("not dot: %c", cp[-1]);
 			(void)strtol(cp, &eptr, 10);
 			if (cp == eptr)
-				inperr();
+				inperr("bad number: %s", cp);
 			cp = eptr;
 			if (*cp++ != '.')
-				inperr();
+				inperr("not dot: %c", cp[-1]);
 			(void)strtol(cp, &eptr, 10);
 			if (cp == eptr)
-				inperr();
+				inperr("bad number: %s", cp);
 			cp = eptr;
 			break;
 		default:
-			inperr();
+			inperr("bad value: %c\n", cp[-1]);
 		}
 		break;
 	case FLOAT:
@@ -907,6 +946,9 @@ gettlen(const char *cp, const char **epp)
 	case QUAD:
 	case UQUAD:
 	case LONG:
+	case FCOMPLEX:
+	case DCOMPLEX:
+	case COMPLEX:
 		break;
 #ifndef __COVERITY__
 	case NTSPEC:
@@ -1002,14 +1044,14 @@ inpqstrg(const char *src, const char **epp)
 	dst = strg = xmalloc(slen = 32);
 
 	if ((c = *src++) != '"')
-		inperr();
+		inperr("not quote: %c", c);
 	if ((c = *src++) == '\0')
-		inperr();
+		inperr("trailing data: %c", c);
 
 	while (c != '"') {
 		if (c == '\\') {
 			if ((c = *src++) == '\0')
-				inperr();
+				inperr("missing after \\");
 			switch (c) {
 			case 'n':
 				c = '\n';
@@ -1044,15 +1086,15 @@ inpqstrg(const char *src, const char **epp)
 			case '0': case '1': case '2': case '3':
 				v = (c - '0') << 6;
 				if ((c = *src++) < '0' || c > '7')
-					inperr();
+					inperr("not octal: %c", c);
 				v |= (c - '0') << 3;
 				if ((c = *src++) < '0' || c > '7')
-					inperr();
+					inperr("not octal: %c", c);
 				v |= c - '0';
 				c = (u_char)v;
 				break;
 			default:
-				inperr();
+				inperr("bad \\ escape: %c", c);
 			}
 		}
 		/* keep space for trailing '\0' */
@@ -1063,7 +1105,7 @@ inpqstrg(const char *src, const char **epp)
 		}
 		*dst++ = (char)c;
 		if ((c = *src++) == '\0')
-			inperr();
+			inperr("missing closing quote");
 	}
 	*dst = '\0';
 
@@ -1084,14 +1126,14 @@ inpname(const char *cp, const char **epp)
 
 	len = (int)strtol(cp, &eptr, 10);
 	if (cp == eptr)
-		inperr();
+		inperr("bad number: %s", cp);
 	cp = eptr;
 	if (len + 1 > blen)
 		buf = xrealloc(buf, blen = len + 1);
 	for (i = 0; i < len; i++) {
 		c = *cp++;
 		if (!isalnum((unsigned char)c) && c != '_')
-			inperr();
+			inperr("not alnum or _: %c", c);
 		buf[i] = c;
 	}
 	buf[i] = '\0';
@@ -1107,23 +1149,25 @@ inpname(const char *cp, const char **epp)
 static int
 getfnidx(const char *fn)
 {
-	int	i;
+	size_t	i;
 
-	/* 0 ist reserved */
+	/* 0 is reserved */
 	for (i = 1; fnames[i] != NULL; i++) {
 		if (strcmp(fnames[i], fn) == 0)
-			break;
+			return i;
 	}
-	if (fnames[i] != NULL)
-		return (i);
 
 	if (i == nfnames - 1) {
-		fnames = xrealloc(fnames, (nfnames * 2) * sizeof (char *));
-		(void)memset(fnames + nfnames, 0, nfnames * sizeof (char *));
-		nfnames *= 2;
+		size_t nlen = nfnames * 2;
+		fnames = xrealloc(fnames, nlen * sizeof(char *));
+		(void)memset(fnames + nfnames, 0, nfnames * sizeof(char *));
+		flines = xrealloc(flines, nlen * sizeof(size_t));
+		(void)memset(flines + nfnames, 0, nfnames * sizeof(size_t));
+		nfnames = nlen;
 	}
 
 	fnames[i] = xstrdup(fn);
+	flines[i] = 0;
 	return (i);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.40 2008/01/01 20:32:11 yamt Exp $
+#	$NetBSD: files.x86,v 1.40.8.1 2008/05/18 12:33:01 yamt Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -44,14 +44,13 @@ file 	arch/x86/x86/cpu.c 		cpu
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
 file	arch/x86/x86/bus_space.c
-file	arch/x86/x86/cacheinfo.c
 file	arch/x86/x86/consinit.c
 file	arch/x86/x86/errata.c
+file	arch/x86/x86/identcpu.c
 file	arch/x86/x86/i8259.c
-file	arch/x86/x86/idle_machdep.c
 file	arch/x86/x86/intr.c
 file	arch/x86/x86/idt.c
-file	arch/x86/x86/ipi.c		multiprocessor
+file	arch/x86/x86/ipi.c
 file	arch/x86/x86/msr_ipifuncs.c
 file	arch/x86/x86/mtrr_i686.c	mtrr
 file 	arch/x86/x86/patch.c
@@ -60,7 +59,6 @@ file 	arch/x86/x86/pmap.c
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/x86_autoconf.c
 file	arch/x86/x86/x86_machdep.c
-file	arch/x86/x86/x86_identcpu.c
 
 define	lapic
 file	arch/x86/x86/lapic.c		lapic needs-flag

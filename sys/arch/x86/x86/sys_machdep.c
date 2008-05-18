@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 2008/01/28 19:57:43 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11.8.1 2008/05/18 12:33:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11 2008/01/28 19:57:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11.8.1 2008/05/18 12:33:04 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -351,6 +344,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	free_ldt = NULL;
 	free_len = 0;
 	mutex_enter(&pmap->pm_lock);
+	kpreempt_disable();
 	if (pmap->pm_ldt == 0 || (ua->start + ua->num) > pmap->pm_ldt_len) {
 		if (pmap->pm_flags & PMF_USER_LDT)
 			ldt_len = pmap->pm_ldt_len;
@@ -413,6 +407,7 @@ copy:
 	for (i = 0, n = ua->start; i < ua->num; i++, n++)
 		pmap->pm_ldt[n] = descv[i];
 
+	kpreempt_enable();
 	mutex_exit(&pmap->pm_lock);
 
 	if (new_ldt != NULL)
@@ -549,12 +544,12 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 		kmem_free(old, IOMAPSIZE);
 	}
 
-	crit_enter();
+	kpreempt_disable();
 	ci = curcpu();
 	memcpy(ci->ci_iomap, pcb->pcb_iomap, sizeof(ci->ci_iomap));
 	ci->ci_tss.tss_iobase =
 	    ((uintptr_t)ci->ci_iomap - (uintptr_t)&ci->ci_tss) << 16;
-	crit_exit();
+	kpreempt_enable();
 
 	return error;
 #else
@@ -585,7 +580,9 @@ x86_get_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
+	KERNEL_LOCK(1, NULL);
 	error = mtrr_get(ua.mtrrp, &n, l->l_proc, MTRR_GETSET_USER);
+	KERNEL_UNLOCK_ONE(NULL);
 
 	copyout(&n, ua.n, sizeof (int));
 
@@ -618,9 +615,11 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
+	KERNEL_LOCK(1, NULL);
 	error = mtrr_set(ua.mtrrp, &n, l->l_proc, MTRR_GETSET_USER);
 	if (n != 0)
 		mtrr_commit();
+	KERNEL_UNLOCK_ONE(NULL);
 
 	copyout(&n, ua.n, sizeof n);
 
@@ -653,7 +652,7 @@ x86_set_sdbase(void *arg, char which)
 	sd.sd_def32 = 1;
 	sd.sd_gran = 1;
 
-	crit_enter();
+	kpreempt_disable();
 	if (which == 'f') {
 		memcpy(&curpcb->pcb_fsd, &sd, sizeof(sd));
 		memcpy(&curcpu()->ci_gdt[GUFS_SEL], &sd, sizeof(sd));
@@ -661,7 +660,7 @@ x86_set_sdbase(void *arg, char which)
 		memcpy(&curpcb->pcb_gsd, &sd, sizeof(sd));
 		memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
 	}
-	crit_exit();
+	kpreempt_enable();
 
 	return 0;
 #else
@@ -744,15 +743,21 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 
 #ifdef PERFCTRS
 	case X86_PMC_INFO:
+		KERNEL_LOCK(1, NULL);
 		error = pmc_info(l, SCARG(uap, parms), retval);
+		KERNEL_UNLOCK_ONE(NULL);
 		break;
 
 	case X86_PMC_STARTSTOP:
+		KERNEL_LOCK(1, NULL);
 		error = pmc_startstop(l, SCARG(uap, parms), retval);
+		KERNEL_UNLOCK_ONE(NULL);
 		break;
 
 	case X86_PMC_READ:
+		KERNEL_LOCK(1, NULL);
 		error = pmc_read(l, SCARG(uap, parms), retval);
+		KERNEL_UNLOCK_ONE(NULL);
 		break;
 #endif
 

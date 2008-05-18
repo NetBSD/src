@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq.h,v 1.7 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: bufq.h,v 1.7.72.1 2008/05/18 12:35:49 yamt Exp $	*/
 /*	NetBSD: buf.h,v 1.75 2004/09/18 16:40:11 yamt Exp 	*/
 
 /*-
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -103,6 +96,7 @@ void	bufq_free(struct bufq_state *);
 void	bufq_put(struct bufq_state *, struct buf *);
 struct buf *bufq_get(struct bufq_state *);
 struct buf *bufq_peek(struct bufq_state *);
+struct buf *bufq_cancel(struct bufq_state *, struct buf *);
 const char *bufq_getstrategyname(struct bufq_state *);
 void	bufq_move(struct bufq_state *, struct bufq_state *);
 
@@ -114,3 +108,7 @@ void	bufq_move(struct bufq_state *, struct bufq_state *);
 
 /* Get buffer from queue */
 #define BUFQ_PEEK(bufq)		bufq_peek(bufq)
+
+/* Remove specified buffer from queue */
+#define BUFQ_CANCEL(bufq, bp)	bufq_cancel(bufq, bp)
+

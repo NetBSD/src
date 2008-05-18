@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.73 2008/01/28 14:31:19 dholland Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.73.8.1 2008/05/18 12:35:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.73 2008/01/28 14:31:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.73.8.1 2008/05/18 12:35:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,12 @@ __KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.73 2008/01/28 14:31:19 dholland Ex
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 
 #include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/layer_extern.h>
+
+MODULE(MODULE_CLASS_VFS, nullfs, NULL);
 
 VFS_PROTOS(nullfs);
 
@@ -167,8 +170,8 @@ nullfs_mount(mp, path, data, data_len)
 	nmp->nullm_alloc = layer_node_alloc;	/* the default alloc is fine */
 	nmp->nullm_vnodeop_p = null_vnodeop_p;
 	mutex_init(&nmp->nullm_hashlock, MUTEX_DEFAULT, IPL_NONE);
-	nmp->nullm_node_hashtbl = hashinit(desiredvnodes, HASH_LIST, M_CACHE,
-	    M_WAITOK, &nmp->nullm_node_hash);
+	nmp->nullm_node_hashtbl = hashinit(desiredvnodes, HASH_LIST, true,
+	    &nmp->nullm_node_hash);
 
 	/*
 	 * Fix up null node for root vnode
@@ -179,7 +182,8 @@ nullfs_mount(mp, path, data, data_len)
 	 */
 	if (error) {
 		vput(lowerrootvp);
-		hashdone(nmp->nullm_node_hashtbl, M_CACHE);
+		hashdone(nmp->nullm_node_hashtbl, HASH_LIST,
+		    nmp->nullm_node_hash);
 		free(nmp, M_UFSMNT);	/* XXX */
 		return (error);
 	}
@@ -241,7 +245,7 @@ nullfs_unmount(struct mount *mp, int mntflags)
 	/*
 	 * Finally, throw away the null_mount structure
 	 */
-	hashdone(nmp->nullm_node_hashtbl, M_CACHE);
+	hashdone(nmp->nullm_node_hashtbl, HASH_LIST, nmp->nullm_node_hash);
 	mutex_destroy(&nmp->nullm_hashlock);
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = NULL;
@@ -298,8 +302,22 @@ struct vfsops nullfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	layerfs_renamelock_enter,
 	layerfs_renamelock_exit,
+	(void *)eopnotsupp,
 	nullfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(nullfs_vfsops);
+
+static int
+nullfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&nullfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&nullfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

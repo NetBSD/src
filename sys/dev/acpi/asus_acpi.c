@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.2 2008/03/31 15:29:18 xtraeme Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.2.4.1 2008/05/18 12:33:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -33,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.2 2008/03/31 15:29:18 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.2.4.1 2008/05/18 12:33:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +67,7 @@ typedef struct asus_softc {
 #define		ASUS_SDSP_ALL	\
 		(ASUS_SDSP_LCD | ASUS_SDSP_CRT | ASUS_SDSP_TV | ASUS_SDSP_DVI)
 
-static int	asus_match(device_t, struct cfdata *, void *);
+static int	asus_match(device_t, cfdata_t, void *);
 static void	asus_attach(device_t, device_t, void *);
 
 static void	asus_notify_handler(ACPI_HANDLE, UINT32, void *);
@@ -193,6 +187,9 @@ asus_init(device_t self)
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self, "couldn't evaluate INIT: %s\n",
 		    AcpiFormatException(rv));
+
+	if (ret.Pointer)
+		AcpiOsFree(ret.Pointer);
 }
 
 static bool

@@ -1,0 +1,23 @@
+#
+#	$Id: files.imx31,v 1.1.22.1 2008/05/18 12:31:47 yamt Exp $
+#
+
+# derived from:
+#	$NetBSD: files.imx31,v 1.1.22.1 2008/05/18 12:31:47 yamt Exp $
+#
+# Freescale iMX31 evaluation board configuration info
+#
+
+file	arch/evbarm/imx31/imx31lk_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/imx/files.imx"
+
+# PCMCIA controller
+device  imx31lk_pcic: pcmciabus
+attach  imx31lk_pcic at aips
+file    arch/arm/imx/imx_pcic.c              	imx31lk_pcic
+file    arch/evbarm/imx31/imx31lk_pcic.c	imx31lk_pcic

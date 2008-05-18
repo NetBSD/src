@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_irq.c,v 1.4 2007/12/15 00:39:33 perry Exp $	*/
+/*	$NetBSD: radeon_irq.c,v 1.4.8.1 2008/05/18 12:34:35 yamt Exp $	*/
 
 /* radeon_irq.c -- IRQ handling for radeon -*- linux-c -*- */
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_irq.c,v 1.4 2007/12/15 00:39:33 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_irq.c,v 1.4.8.1 2008/05/18 12:34:35 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_irq.c,v 1.7 2005/11/28 23:13:54 anholt Exp $");
 */
@@ -87,13 +87,13 @@ irqreturn_t radeon_driver_irq_handler(DRM_IRQ_ARGS)
 
 	/* SW interrupt */
 	if (stat & RADEON_SW_INT_TEST) {
-		DRM_WAKEUP(&dev_priv->swi_queue);
+		DRM_WAKEUP(&(dev_priv->swi_queue));
 	}
 
 	/* VBLANK interrupt */
 	if (stat & RADEON_CRTC_VBLANK_STAT) {
 		atomic_inc(&dev->vbl_received);
-		DRM_WAKEUP(&dev->vbl_queue);
+		DRM_WAKEUP(&(dev->vbl_queue));
 		drm_vbl_send_signals(dev);
 	}
 
@@ -129,7 +129,7 @@ static int radeon_wait_irq(drm_device_t * dev, int swi_nr)
 
 	dev_priv->stats.boxes |= RADEON_BOX_WAIT_IDLE;
 
-	DRM_WAIT_ON(ret, dev_priv->swi_queue, 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, &(dev_priv->swi_queue), 3 * DRM_HZ,
 		    RADEON_READ(RADEON_LAST_SWI_REG) >= swi_nr);
 
 	return ret;
@@ -155,7 +155,7 @@ int radeon_driver_vblank_wait(drm_device_t * dev, unsigned int *sequence)
 	 * by about a day rather than she wants to wait for years
 	 * using vertical blanks...
 	 */
-	DRM_WAIT_ON(ret, dev->vbl_queue, 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, &(dev->vbl_queue), 3 * DRM_HZ,
 		    (((cur_vblank = atomic_read(&dev->vbl_received))
 		      - *sequence) <= (1 << 23)));
 
@@ -233,7 +233,7 @@ void radeon_driver_irq_postinstall(drm_device_t * dev)
 	    (drm_radeon_private_t *) dev->dev_private;
 
 	atomic_set(&dev_priv->swi_emitted, 0);
-	DRM_INIT_WAITQUEUE(&dev_priv->swi_queue);
+	DRM_INIT_WAITQUEUE(&(dev_priv->swi_queue));
 
 	/* Turn on SW and VBL ints */
 	RADEON_WRITE(RADEON_GEN_INT_CNTL,
@@ -249,4 +249,5 @@ void radeon_driver_irq_uninstall(drm_device_t * dev)
 
 	/* Disable *all* interrupts */
 	RADEON_WRITE(RADEON_GEN_INT_CNTL, 0);
+	DRM_DESTROY_WAITQUEUE(&(dev_priv->swi_queue));
 }

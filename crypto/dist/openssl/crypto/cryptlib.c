@@ -1,6 +1,6 @@
 /* crypto/cryptlib.c */
 /* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -182,16 +182,17 @@ static STACK_OF(CRYPTO_dynlock) *dyn_locks=NULL;
 
 
 static void (MS_FAR *locking_callback)(int mode,int type,
-	const char *file,int line)=NULL;
+	const char *file,int line)=0;
 static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
-	int type,const char *file,int line)=NULL;
-static unsigned long (MS_FAR *id_callback)(void)=NULL;
+	int type,const char *file,int line)=0;
+static unsigned long (MS_FAR *id_callback)(void)=0;
+static void *(MS_FAR *idptr_callback)(void)=0;
 static struct CRYPTO_dynlock_value *(MS_FAR *dynlock_create_callback)
-	(const char *file,int line)=NULL;
+	(const char *file,int line)=0;
 static void (MS_FAR *dynlock_lock_callback)(int mode,
-	struct CRYPTO_dynlock_value *l, const char *file,int line)=NULL;
+	struct CRYPTO_dynlock_value *l, const char *file,int line)=0;
 static void (MS_FAR *dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
-	const char *file,int line)=NULL;
+	const char *file,int line)=0;
 
 int CRYPTO_get_new_lockid(char *name)
 	{
@@ -277,7 +278,7 @@ int CRYPTO_get_new_dynlockid(void)
 	else
 		/* If we found a place with a NULL pointer, put our pointer
 		   in it.  */
-		sk_CRYPTO_dynlock_set(dyn_locks,i,pointer);
+		(void)sk_CRYPTO_dynlock_set(dyn_locks,i,pointer);
 	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
 	if (i == -1)
@@ -319,7 +320,7 @@ void CRYPTO_destroy_dynlockid(int i)
 #endif
 			if (pointer->references <= 0)
 				{
-				sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
+				(void)sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
 				}
 			else
 				pointer = NULL;
@@ -414,14 +415,59 @@ void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
 	add_lock_callback=func;
 	}
 
-unsigned long (*CRYPTO_get_id_callback(void))(void)
-	{
-	return(id_callback);
-	}
+/* Thread IDs. So ... if we build without OPENSSL_NO_DEPRECATED, then we leave
+ * the existing implementations and just layer CRYPTO_THREADID_[get|cmp]
+ * harmlessly on top. Otherwise, we only use 'id_callback' or 'idptr_callback'
+ * if they're non-NULL, ie. we ignore CRYPTO_thread_id()'s fallbacks and we
+ * move CRYPTO_thread_idptr()'s "&errno" fallback trick into
+ * CRYPTO_THREADID_set(). */
 
 void CRYPTO_set_id_callback(unsigned long (*func)(void))
 	{
 	id_callback=func;
+	}
+
+void CRYPTO_set_idptr_callback(void *(*func)(void))
+	{
+	idptr_callback=func;
+	}
+
+void CRYPTO_THREADID_set(CRYPTO_THREADID *id)
+	{
+	memset(id, 0, sizeof(*id));
+	if (idptr_callback)
+		id->ptr = idptr_callback();
+	else if (id_callback)
+		id->ulong = id_callback();
+	else
+		id->ptr = &errno;
+	}
+
+int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *id1, const CRYPTO_THREADID *id2)
+	{
+	if (id1->ptr != id2->ptr)
+		return ((id1->ptr < id2->ptr) ? -1 : 1);
+	if (id1->ulong != id2->ulong)
+		return ((id1->ulong < id2->ulong ) ? -1 : 1);
+	return 0;
+	}
+
+unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
+	{
+	if (idptr_callback || !id_callback)
+		return (unsigned long)id->ptr;
+	return id->ulong;
+	}
+
+void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dst, const CRYPTO_THREADID *src)
+	{
+	memcpy(dst, src, sizeof(*src));
+	}
+
+#ifndef OPENSSL_NO_DEPRECATED
+unsigned long (*CRYPTO_get_id_callback(void))(void)
+	{
+	return(id_callback);
 	}
 
 unsigned long CRYPTO_thread_id(void)
@@ -436,6 +482,8 @@ unsigned long CRYPTO_thread_id(void)
 		ret=(unsigned long)GetCurrentThreadId();
 #elif defined(GETPID_IS_MEANINGLESS)
 		ret=1L;
+#elif defined(OPENSSL_SYS_BEOS)
+		ret=(unsigned long)find_thread(NULL);
 #else
 		ret=(unsigned long)getpid();
 #endif
@@ -444,12 +492,14 @@ unsigned long CRYPTO_thread_id(void)
 		ret=id_callback();
 	return(ret);
 	}
+#endif
 
 void CRYPTO_lock(int mode, int type, const char *file, int line)
 	{
 #ifdef LOCK_DEBUG
 		{
 		char *rw_text,*operation_text;
+		CRYPTO_THREADID tid;
 
 		if (mode & CRYPTO_LOCK)
 			operation_text="lock  ";
@@ -465,8 +515,9 @@ void CRYPTO_lock(int mode, int type, const char *file, int line)
 		else
 			rw_text="ERROR";
 
+		CRYPTO_THREADID_set(&tid);
 		fprintf(stderr,"lock:%08lx:(%s)%s %-18s %s:%d\n",
-			CRYPTO_thread_id(), rw_text, operation_text,
+			CRYPTO_THREADID_hash(&tid), rw_text, operation_text,
 			CRYPTO_get_lock_name(type), file, line);
 		}
 #endif
@@ -493,6 +544,10 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 	     int line)
 	{
 	int ret = 0;
+#ifdef LOCK_DEBUG
+	CRYPTO_THREADID tid;
+	CRYPTO_THREADID_set(&tid);
+#endif
 
 	if (add_lock_callback != NULL)
 		{
@@ -503,8 +558,7 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 		ret=add_lock_callback(pointer,amount,type,file,line);
 #ifdef LOCK_DEBUG
 		fprintf(stderr,"ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_thread_id(),
-			before,amount,ret,
+			CRYPTO_THREADID_hash(&tid), before,amount,ret,
 			CRYPTO_get_lock_name(type),
 			file,line);
 #endif
@@ -516,8 +570,7 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 		ret= *pointer+amount;
 #ifdef LOCK_DEBUG
 		fprintf(stderr,"ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_thread_id(),
-			*pointer,amount,ret,
+			CRYPTO_THREADID_hash(&tid), *pointer,amount,ret,
 			CRYPTO_get_lock_name(type),
 			file,line);
 #endif
@@ -572,7 +625,7 @@ void OPENSSL_cpuid_setup(void)
 unsigned long *OPENSSL_ia32cap_loc(void) { return NULL; }
 #endif
 int OPENSSL_NONPIC_relocated = 0;
-#if !defined(OPENSSL_CPUID_SETUP)
+#if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
 void OPENSSL_cpuid_setup(void) {}
 #endif
 

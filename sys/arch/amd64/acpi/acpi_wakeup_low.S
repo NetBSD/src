@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.3 2007/12/18 07:17:09 joerg Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.3.12.1 2008/05/18 12:31:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -51,22 +51,22 @@ acpi_md_sleep_exit:
 	movw	%ax,%gs
 
 	movl	$MSR_EFER,%ecx
-	movl	ACPI_SUSPEND_MSR_EFER(%r8),%eax
+	movl	ACPI_SUSPEND_EFER(%r8),%eax
 	wrmsr
 
 	movl	$MSR_FSBASE,%ecx
-	movl	ACPI_SUSPEND_FS_BASE_L(%r8),%eax
-	movl	ACPI_SUSPEND_FS_BASE_H(%r8),%edx
+	movl	ACPI_SUSPEND_FS(%r8),%eax
+	movl	ACPI_SUSPEND_FS+4(%r8),%edx
 	wrmsr
 
 	movl	$MSR_GSBASE,%ecx
-	movl	ACPI_SUSPEND_GS_BASE_L(%r8),%eax
-	movl	ACPI_SUSPEND_GS_BASE_H(%r8),%edx
+	movl	ACPI_SUSPEND_GS(%r8),%eax
+	movl	ACPI_SUSPEND_GS+4(%r8),%edx
 	wrmsr
 
 	movl	$MSR_KERNELGSBASE,%ecx
-	movl	ACPI_SUSPEND_GS_KERNELBASE_L(%r8),%eax
-	movl	ACPI_SUSPEND_GS_KERNELBASE_H(%r8),%edx
+	movl	ACPI_SUSPEND_KGS(%r8),%eax
+	movl	ACPI_SUSPEND_KGS+4(%r8),%edx
 	wrmsr
 
 	movq	ACPI_SUSPEND_CR8(%r8),%rax
@@ -91,18 +91,17 @@ acpi_md_sleep_exit:
 	lldt 	ACPI_SUSPEND_LDT(%r8)
 	lidt	ACPI_SUSPEND_IDT(%r8)
 
-	movq	ACPI_SUSPEND_RSP(%r8),%rsp
-
-	movq	ACPI_SUSPEND_RBX(%r8),%rbx
-	movq	ACPI_SUSPEND_RBP(%r8),%rbp
-	movq	ACPI_SUSPEND_R12(%r8),%r12
-	movq	ACPI_SUSPEND_R13(%r8),%r13
-	movq	ACPI_SUSPEND_R14(%r8),%r14
-	movq	ACPI_SUSPEND_R15(%r8),%r15
+	movq	ACPI_SUSPEND_REG+(0*8)(%r8),%rsp
+	movq	ACPI_SUSPEND_REG+(1*8)(%r8),%rbx
+	movq	ACPI_SUSPEND_REG+(2*8)(%r8),%rbp
+	movq	ACPI_SUSPEND_REG+(3*8)(%r8),%r12
+	movq	ACPI_SUSPEND_REG+(4*8)(%r8),%r13
+	movq	ACPI_SUSPEND_REG+(5*8)(%r8),%r14
+	movq	ACPI_SUSPEND_REG+(6*8)(%r8),%r15
 
 	xorq	%rax,%rax
 
-	pushq	ACPI_SUSPEND_RFL(%r8)
+	pushq	ACPI_SUSPEND_REG+(7*8)(%r8)
 	popfq
 	ret
 
@@ -111,12 +110,12 @@ acpi_md_sleep_exit:
 	.globl acpi_md_sleep_prepare
 acpi_md_sleep_prepare:
 	movq	CPUVAR(SELF),%r8
-	movq	%rbx,ACPI_SUSPEND_RBX(%r8)
-	movq	%rbp,ACPI_SUSPEND_RBP(%r8)
-	movq	%r12,ACPI_SUSPEND_R12(%r8)
-	movq	%r13,ACPI_SUSPEND_R13(%r8)
-	movq	%r14,ACPI_SUSPEND_R14(%r8)
-	movq	%r15,ACPI_SUSPEND_R15(%r8)
+	movq	%rbx,ACPI_SUSPEND_REG+(1*8)(%r8)
+	movq	%rbp,ACPI_SUSPEND_REG+(2*8)(%r8)
+	movq	%r12,ACPI_SUSPEND_REG+(3*8)(%r8)
+	movq	%r13,ACPI_SUSPEND_REG+(4*8)(%r8)
+	movq	%r14,ACPI_SUSPEND_REG+(5*8)(%r8)
+	movq	%r15,ACPI_SUSPEND_REG+(6*8)(%r8)
 
 	movq	%cr0,%rax
 	movq	%rax,ACPI_SUSPEND_CR0(%r8)
@@ -130,28 +129,28 @@ acpi_md_sleep_prepare:
 	movq	%rax,ACPI_SUSPEND_CR8(%r8)
 
 	pushfq
-	popq	ACPI_SUSPEND_RFL(%r8)
+	popq	ACPI_SUSPEND_REG+(7*8)(%r8)
 
-	movq	%rsp,ACPI_SUSPEND_RSP(%r8)
+	movq	%rsp,ACPI_SUSPEND_REG+(0*8)(%r8)
 
 	movl	$MSR_FSBASE,%ecx
 	rdmsr
-	movl	%eax,ACPI_SUSPEND_FS_BASE_L(%r8)
-	movl	%edx,ACPI_SUSPEND_FS_BASE_H(%r8)
+	movl	%eax,ACPI_SUSPEND_FS(%r8)
+	movl	%edx,ACPI_SUSPEND_FS+4(%r8)
 
 	movl	$MSR_GSBASE,%ecx
 	rdmsr
-	movl	%eax,ACPI_SUSPEND_GS_BASE_L(%r8)
-	movl	%edx,ACPI_SUSPEND_GS_BASE_H(%r8)
+	movl	%eax,ACPI_SUSPEND_GS(%r8)
+	movl	%edx,ACPI_SUSPEND_GS+4(%r8)
 
 	movl	$MSR_KERNELGSBASE,%ecx
 	rdmsr
-	movl	%eax,ACPI_SUSPEND_GS_KERNELBASE_L(%r8)
-	movl	%edx,ACPI_SUSPEND_GS_KERNELBASE_H(%r8)
+	movl	%eax,ACPI_SUSPEND_KGS(%r8)
+	movl	%edx,ACPI_SUSPEND_KGS+4(%r8)
 
 	movl	$MSR_EFER,%ecx
 	rdmsr
-	movl	%eax,ACPI_SUSPEND_MSR_EFER(%r8)
+	movl	%eax,ACPI_SUSPEND_EFER(%r8)
 
 	sgdt	ACPI_SUSPEND_GDT(%r8)
 	sidt	ACPI_SUSPEND_IDT(%r8)

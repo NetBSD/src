@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.12 2007/12/25 18:33:34 perry Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.12.8.1 2008/05/18 12:33:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -26,13 +26,6 @@
  *
  */
 
-#ifndef _LOCORE
-
-struct btinfo_common {
-	int len;
-	int type;
-};
-
 #define BTINFO_BOOTPATH		0
 #define BTINFO_ROOTDEVICE	1
 #define BTINFO_BOOTDISK		3
@@ -42,6 +35,14 @@ struct btinfo_common {
 #define BTINFO_SYMTAB		8
 #define BTINFO_MEMMAP		9
 #define	BTINFO_BOOTWEDGE	10
+#define BTINFO_MODULELIST	11
+
+#ifndef _LOCORE
+
+struct btinfo_common {
+	int len;
+	int type;
+};
 
 struct btinfo_bootpath {
 	struct btinfo_common common;
@@ -161,6 +162,22 @@ struct btinfo_biosgeom {
 	struct btinfo_common common;
 	int num;
 	struct bi_biosgeom_entry disk[1]; /* var len */
+};
+
+struct bi_modulelist_entry {
+	char path[80];
+	int type;
+	int len;
+	uint32_t base;
+};
+#define	BI_MODULE_NONE		0x00
+#define	BI_MODULE_ELF		0x01
+
+struct btinfo_modulelist {
+	struct btinfo_common common;
+	int num;
+	uint32_t endpa;
+	/* bi_modulelist_entry list follows */
 };
 
 #endif /* _LOCORE */

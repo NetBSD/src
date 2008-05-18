@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.9 2008/03/27 18:30:15 ad Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.9.4.1 2008/05/18 12:35:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.9 2008/03/27 18:30:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.9.4.1 2008/05/18 12:35:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -693,9 +693,9 @@ error:
 		mqueue_freemsg(msg, size);
 	} else if (notify) {
 		/* Send the notify, if needed */
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		kpsignal(notify, &ksi, NULL);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 	}
 
 	return error;

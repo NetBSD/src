@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.195 2008/04/04 12:38:53 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.195.2.1 2008/05/18 12:33:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -64,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.195 2008/04/04 12:38:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.195.2.1 2008/05/18 12:33:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -231,6 +224,7 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 	int error, status, options, linux_options, was_zombie;
 	struct rusage ru;
 	int pid = SCARG(uap, pid);
+	proc_t *p;
 
 	linux_options = SCARG(uap, options);
 	options = WOPTSCHECKED;
@@ -260,7 +254,10 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 	if (pid == 0)
 		return error;
 
-	sigdelset(&l->l_proc->p_sigpend.sp_set, SIGCHLD);	/* XXXAD ksiginfo leak */
+        p = curproc;
+        mutex_enter(p->p_lock);
+	sigdelset(&p->p_sigpend.sp_set, SIGCHLD); /* XXXAD ksiginfo leak */
+        mutex_exit(p->p_lock);
 
 	if (SCARG(uap, rusage) != NULL)
 		error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
@@ -635,13 +632,13 @@ linux_sys_times(struct lwp *l, const struct linux_sys_times_args *uap, register_
 		struct linux_tms ltms;
 		struct rusage ru;
 
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
 		ltms.ltms_utime = CONVTCK(ru.ru_utime);
 		ltms.ltms_stime = CONVTCK(ru.ru_stime);
 		ltms.ltms_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
 		ltms.ltms_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 
 		if ((error = copyout(&ltms, SCARG(uap, tms), sizeof ltms)))
 			return error;

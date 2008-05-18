@@ -1,6 +1,10 @@
-# $NetBSD: Makefile.cdrom,v 1.3 2007/11/15 00:31:19 joerg Exp $
+# $NetBSD: Makefile.cdrom,v 1.3.10.1 2008/05/18 12:29:35 yamt Exp $
+
+.include <bsd.own.mk>
+
+KMODOBJDIR!=    cd ${.CURDIR}/../../kmod && ${PRINTOBJDIR}
 
 CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot
-CDINSTKERNEL= ../../instkernel
-CDKERNELS=	netbsd-INSTALL_LARGE.gz	netbsd	# from ../instkernel
-CDKERNELS+=	netbsd-INSTALL.gz	nbnoacpi
+CDBUILDEXTRA+=	${KMODOBJDIR}/miniroot.kmod
+CDINSTKERNEL=	../../instkernel                                                                                                                                               
+CDKERNELS=	netbsd-GENERIC.gz       netbsd 

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2006/11/10 17:36:08 christos Exp $
+#	$NetBSD: Makefile,v 1.4.16.1 2008/05/18 12:29:50 yamt Exp $
 
 .include <bsd.own.mk>
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=		iberty
 

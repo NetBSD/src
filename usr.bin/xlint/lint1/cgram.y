@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.39 2006/11/08 18:31:15 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.39.16.1 2008/05/18 12:36:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.39 2006/11/08 18:31:15 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.39.16.1 2008/05/18 12:36:11 yamt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: cgram.y,v 1.39 2006/11/08 18:31:15 christos Exp $");
 
 #include "lint1.h"
 
+extern char *yytext;
 /*
  * Contains the level of current declaration. 0 is extern.
  * Used for symbol table entries.
@@ -106,6 +107,8 @@ static inline void RESTORE(const char *file, size_t line)
 #endif
 %}
 
+%expect 1
+
 %union {
 	int	y_int;
 	val_t	*y_val;
@@ -145,6 +148,8 @@ static inline void RESTORE(const char *file, size_t line)
 %token			T_COMMA
 %token			T_SEMI
 %token			T_ELLIPSE
+%token			T_REAL
+%token			T_IMAG
 
 /* storage classes (extern, static, auto, register and typedef) */
 %token	<y_scl>		T_SCLASS
@@ -190,7 +195,7 @@ static inline void RESTORE(const char *file, size_t line)
 %left	T_SHFTOP
 %left	T_ADDOP
 %left	T_MULT T_DIVOP
-%right	T_UNOP T_INCDEC T_SIZEOF
+%right	T_UNOP T_INCDEC T_SIZEOF T_REAL T_IMAG
 %left	T_LPARN T_LBRACK T_STROP
 
 %token	<y_sb>		T_NAME
@@ -342,7 +347,7 @@ func_def:
 	  func_decl {
 		if ($1->s_type->t_tspec != FUNC) {
 			/* syntax error */
-			error(249);
+			error(249, yytext);
 			YYERROR;
 		}
 		if ($1->s_type->t_typedef) {
@@ -1273,7 +1278,12 @@ label:
 	| T_CASE constant T_COLON {
 		label(T_CASE, NULL, $2);
 		ftflg = 1;
-	  }
+	}
+	| T_CASE constant T_ELLIPSE constant T_COLON {
+		/* XXX: We don't fill all cases */
+		label(T_CASE, NULL, $2);
+		ftflg = 1;
+	}
 	| T_DEFAULT T_COLON {
 		label(T_DEFAULT, NULL, NULL);
 		ftflg = 1;
@@ -1659,6 +1669,18 @@ term:
 			$$ = NULL;
 		}
 	  }
+	| T_REAL term {
+		$$ = build(REAL, $2, NULL);
+	  }
+	| T_IMAG term {
+		$$ = build(IMAG, $2, NULL);
+	  }
+	| T_REAL T_LPARN term T_RPARN {
+		$$ = build(REAL, $3, NULL);
+	  }
+	| T_IMAG T_LPARN term T_RPARN {
+		$$ = build(IMAG, $3, NULL);
+	  }
 	| T_SIZEOF term					%prec T_SIZEOF {
 		if (($$ = $2 == NULL ? NULL : bldszof($2->tn_type)) != NULL)
 			chkmisc($2, 0, 0, 0, 0, 0, 1);
@@ -1720,7 +1742,7 @@ point_or_arrow:
 point:
 	  T_STROP {
 		if ($1 != POINT)
-			error(249);
+			error(249, yytext);
 	  }
 	;
 
@@ -1739,7 +1761,7 @@ identifier:
 int
 yyerror(char *msg)
 {
-	error(249);
+	error(249, yytext);
 	if (++sytxerr >= 5)
 		norecover();
 	return (0);

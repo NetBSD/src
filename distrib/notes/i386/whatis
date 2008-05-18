@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.22 2007/12/14 07:07:29 jnemeth Exp $
+.\"	$NetBSD: whatis,v 1.22.8.1 2008/05/18 12:29:37 yamt Exp $
 .
 This is the twelfth major release of
 .Nx
@@ -13,12 +13,9 @@ See the supported hardware list for details.
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
 Default kernels now have ACPI enabled by default. If this causes problems
-on your hardware, use userconf and
-.Ic disable acpi
-to boot without ACPI support.
-You can also boot a legacy kernel from cdrom using:
-.Ic boot Ar nbnoacpi ,
-and choose to install the GENERIC.NOACPI kernel set from sysinst.
+on your hardware, use the
+.Fl -2
+flag at the boot prompt to disable ACPI.
 .bullet)
 .Pp
 .Nx \*V

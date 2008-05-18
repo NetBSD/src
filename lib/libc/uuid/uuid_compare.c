@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid_compare.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $	*/
+/*	$NetBSD: uuid_compare.c,v 1.1.24.1 2008/05/18 12:30:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: uuid_compare.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
+__RCSID("$NetBSD: uuid_compare.c,v 1.1.24.1 2008/05/18 12:30:21 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: uuid_compare.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
  *	 than any non-nil UUID.
  */
 int32_t
-uuid_compare(uuid_t *a, uuid_t *b, uint32_t *status)
+uuid_compare(const uuid_t *a, const uuid_t *b, uint32_t *status)
 {
 	int res;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.20 2008/04/08 20:10:20 cegger Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.20.2.1 2008/05/18 12:34:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.20 2008/04/08 20:10:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.20.2.1 2008/05/18 12:34:13 yamt Exp $");
 
 
 /*
@@ -58,15 +58,15 @@ __KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.20 2008/04/08 20:10:20 cegger Exp $");
 
 #include <dev/ic/rtl81x9reg.h>
 
-static int	rgephy_match(struct device *, struct cfdata *, void *);
-static void	rgephy_attach(struct device *, struct device *, void *);
+static int	rgephy_match(device_t, cfdata_t, void *);
+static void	rgephy_attach(device_t, device_t, void *);
 
 struct rgephy_softc {
 	struct mii_softc mii_sc;
 	int mii_revision;
 };
 
-CFATTACH_DECL(rgephy, sizeof(struct rgephy_softc),
+CFATTACH_DECL_NEW(rgephy, sizeof(struct rgephy_softc),
     rgephy_match, rgephy_attach, mii_phy_detach, mii_phy_activate);
 
 
@@ -93,7 +93,7 @@ static const struct mii_phydesc rgephys[] = {
 };
 
 static int
-rgephy_match(struct device *parent, struct cfdata *match, void *aux)
+rgephy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -104,7 +104,7 @@ rgephy_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-rgephy_attach(struct device *parent, struct device *self, void *aux)
+rgephy_attach(device_t parent, device_t self, void *aux)
 {
 	struct rgephy_softc *rsc = device_private(self);
 	struct mii_softc *sc = &rsc->mii_sc;
@@ -114,8 +114,6 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 	int rev;
 	const char *sep = "";
 
-	rsc = device_private(self);
-	sc = &rsc->mii_sc;
 	ma = aux;
 	mii = ma->mii_data;
 
@@ -126,6 +124,7 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 
 	rsc->mii_revision = rev;
 
+	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_pdata = mii;
@@ -149,7 +148,7 @@ rgephy_attach(struct device *parent, struct device *self, void *aux)
 	 * FreeBSD does not check EXSTAT, but instead adds gigabit
 	 * media explicitly. Why?
 	 */
-	aprint_normal_dev(&sc->mii_dev, "");
+	aprint_normal_dev(self, "");
 	if (sc->mii_capabilities & BMSR_EXTSTAT) {
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 	}

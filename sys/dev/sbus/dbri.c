@@ -1,14 +1,14 @@
-/*	$NetBSD: dbri.c,v 1.18 2008/04/05 18:35:31 cegger Exp $	*/
+/*	$NetBSD: dbri.c,v 1.18.2.1 2008/05/18 12:34:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
  * Copyright (c) 1998, 1999 Brent Baccala (baccala@freesoft.org)
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@netbsd.org>
- * Copyright (c) 2005, 2007 Michael Lorenz <macallan@netbsd.org>
+ * Copyright (c) 2005 Michael Lorenz <macallan@netbsd.org>
  * All rights reserved.
  *
- * This driver is losely based on a Linux driver written by Rudolf Koenig and
- * Brent Baccala who kindly gave their permission to use their code in a
+ * This driver is losely based on a Linux driver written by Rudolf Koenig and 
+ * Brent Baccala who kindly gave their permission to use their code in a 
  * BSD-licensed driver.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -19,30 +19,22 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Rudolf Koenig, Brent
- *      Baccala, Jared D. McNeill.
- * 4. Neither the name of the author nor the names of any contributors may
- *    be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.18 2008/04/05 18:35:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.18.2.1 2008/05/18 12:34:41 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -101,10 +93,10 @@ enum io {
  */
 
 /* softc stuff */
-static void	dbri_attach_sbus(struct device *, struct device *, void *);
-static int	dbri_match_sbus(struct device *, struct cfdata *, void *);
+static void	dbri_attach_sbus(device_t, device_t, void *);
+static int	dbri_match_sbus(device_t, struct cfdata *, void *);
 
-static void	dbri_config_interrupts(struct device *);
+static void	dbri_config_interrupts(device_t);
 
 /* interrupt handler */
 static int	dbri_intr(void *);
@@ -210,7 +202,7 @@ struct audio_hw_if dbri_hw_if = {
 	dbri_trigger_input
 };
 
-CFATTACH_DECL(dbri, sizeof(struct dbri_softc),
+CFATTACH_DECL_NEW(dbri, sizeof(struct dbri_softc),
     dbri_match_sbus, dbri_attach_sbus, NULL, NULL);
 
 #define DBRI_NFORMATS		4
@@ -257,7 +249,7 @@ enum {
  * Autoconfig routines
  */
 static int
-dbri_match_sbus(struct device *parent, struct cfdata *match, void *aux)
+dbri_match_sbus(device_t parent, struct cfdata *match, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	char *ver;
@@ -276,15 +268,16 @@ dbri_match_sbus(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
+dbri_attach_sbus(device_t parent, device_t self, void *aux)
 {
-	struct dbri_softc *sc = (struct dbri_softc *)self;
+	struct dbri_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = aux;
 	bus_space_handle_t ioh;
 	bus_size_t size;
 	int error, rseg, pwr, i;
 	char *ver = &sa->sa_name[9];
 
+	sc->sc_dev = self;
 	sc->sc_iot = sa->sa_bustag;
 	sc->sc_dmat = sa->sa_dmatag;
 	sc->sc_powerstate = 1;
@@ -373,7 +366,7 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 	sc->sc_bufsiz = size;
 
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	sbus_establish(&sc->sc_sd, sc->sc_dev);
 
 	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_SCHED, dbri_intr,
 	    sc);
@@ -403,14 +396,15 @@ dbri_set_power(struct dbri_softc *sc, int state)
 		return;
 
 	if (state) {
-		DPRINTF("%s: waiting to power up... ", device_xname(&sc->sc_dev));
+		DPRINTF("%s: waiting to power up... ", 
+		    device_xname(sc->sc_dev));
 		s = splhigh();
 		*AUXIO4M_REG |= (AUXIO4M_MMX);
 		splx(s);
 		delay(10000);
 		DPRINTF("done (%02x)\n", *AUXIO4M_REG);
 	} else {
-		DPRINTF("%s: powering down\n", device_xname(&sc->sc_dev));
+		DPRINTF("%s: powering down\n", device_xname(sc->sc_dev));
 		s = splhigh();
 		*AUXIO4M_REG &= ~AUXIO4M_MMX;
 		splx(s);
@@ -447,15 +441,15 @@ dbri_bring_up(struct dbri_softc *sc)
 }
 
 static void
-dbri_config_interrupts(struct device *dev)
+dbri_config_interrupts(device_t dev)
 {
-	struct dbri_softc *sc = (struct dbri_softc *)dev;
+	struct dbri_softc *sc = device_private(dev);
 
 	dbri_init(sc);
 	mmcodec_init(sc);
 	
 	/* Attach ourselves to the high level audio interface */
-	audio_attach_mi(&dbri_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&dbri_hw_if, sc, sc->sc_dev);
 
 	/* power down until open() */
 	dbri_set_power(sc, 0);
@@ -476,13 +470,16 @@ dbri_intr(void *hdl)
 		u_int32_t tmp;
 
 		if (x & DBRI_MRR)
-			aprint_debug_dev(&sc->sc_dev, "multiple ack error on sbus\n");
+			aprint_debug_dev(sc->sc_dev,
+			     "multiple ack error on sbus\n");
 		if (x & DBRI_MLE)
-			aprint_debug_dev(&sc->sc_dev, "multiple late error on sbus\n");
+			aprint_debug_dev(sc->sc_dev,
+			    "multiple late error on sbus\n");
 		if (x & DBRI_LBG)
-			aprint_debug_dev(&sc->sc_dev, "lost bus grant on sbus\n");
+			aprint_debug_dev(sc->sc_dev,
+			    "lost bus grant on sbus\n");
 		if (x & DBRI_MBE)
-			aprint_debug_dev(&sc->sc_dev, "burst error on sbus\n");
+			aprint_debug_dev(sc->sc_dev, "burst error on sbus\n");
 
 		/*
 		 * Some of these errors disable the chip's circuitry.
@@ -571,7 +568,7 @@ dbri_reset(struct dbri_softc *sc)
 		delay(10);
 	}
 	if (bail == 100000)
-		aprint_error_dev(&sc->sc_dev, "reset timed out\n");
+		aprint_error_dev(sc->sc_dev, "reset timed out\n");
 	return (0);
 }
 
@@ -580,7 +577,7 @@ dbri_command_lock(struct dbri_softc *sc)
 {
 
 	if (sc->sc_locked)
-		aprint_debug_dev(&sc->sc_dev, "command buffer locked\n");
+		aprint_debug_dev(sc->sc_dev, "command buffer locked\n");
 
 	sc->sc_locked++;
 
@@ -600,9 +597,10 @@ dbri_command_send(struct dbri_softc *sc, volatile u_int32_t *cmd)
 	sc->sc_locked--;
 
 	if (sc->sc_locked != 0) {
-		aprint_error_dev(&sc->sc_dev, "command buffer improperly locked\n");
+		aprint_error_dev(sc->sc_dev,
+		    "command buffer improperly locked\n");
 	} else if ((cmd - &sc->sc_dma->command[0]) >= DBRI_NUM_COMMANDS - 1) {
-		aprint_error_dev(&sc->sc_dev, "command buffer overflow\n");
+		aprint_error_dev(sc->sc_dev, "command buffer overflow\n");
 	} else {
 		*(cmd++) = DBRI_CMD(DBRI_COMMAND_PAUSE, 0, 0);
 		*(cmd++) = DBRI_CMD(DBRI_COMMAND_WAIT, 1, 0);
@@ -617,17 +615,17 @@ dbri_command_send(struct dbri_softc *sc, volatile u_int32_t *cmd)
 		}
 
 		if (maxloops == 0) {
-			aprint_error_dev(&sc->sc_dev, 
+			aprint_error_dev(sc->sc_dev, 
 			    "chip never completed command buffer\n");
 		} else {
 
 			DPRINTF("%s: command completed\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 
 			while ((--maxloops) > 0 && (!sc->sc_waitseen))
 				dbri_process_interrupt_buffer(sc);
 			if (maxloops == 0) {
-				aprint_error_dev(&sc->sc_dev, "chip never acked WAIT\n");
+				aprint_error_dev(sc->sc_dev, "chip never acked WAIT\n");
 			}
 		}
 	}
@@ -697,7 +695,7 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		if (sc->sc_pipe[channel].prec)
 			*(sc->sc_pipe[channel].prec) = val;
 #ifndef DBRI_SPIN
-		DPRINTF("%s: wakeup %p\n", device_xname(&sc->sc_dev), sc);
+		DPRINTF("%s: wakeup %p\n", device_xname(sc->sc_dev), sc);
 		wakeup(sc);
 #endif
 		break;
@@ -721,7 +719,7 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		volatile u_int32_t *cmd;
 		int td = sc->sc_pipe[channel].desc;
 
-		DPRINTF("%s: DBRI_INTR_UNDR\n", device_xname(&sc->sc_dev));
+		DPRINTF("%s: DBRI_INTR_UNDR\n", device_xname(sc->sc_dev));
 
 		sc->sc_dma->xmit[td].status = 0;
 
@@ -740,7 +738,7 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		break;
 	default:
 
-		aprint_error_dev(&sc->sc_dev, "unknown interrupt code %d\n",
+		aprint_error_dev(sc->sc_dev, "unknown interrupt code %d\n",
 		    code);
 		break;
 	}
@@ -764,24 +762,24 @@ mmcodec_init(struct dbri_softc *sc)
 	DPRINTF("mmcodec_init: PIO reads %x\n", reg2);
 
 	if (reg2 & DBRI_PIO2) {
-		aprint_normal_dev(&sc->sc_dev, " onboard CS4215 detected\n");
+		aprint_normal_dev(sc->sc_dev, " onboard CS4215 detected\n");
 		sc->sc_mm.onboard = 1;
 	}
 
 	if (reg2 & DBRI_PIO0) {
-		aprint_normal_dev(&sc->sc_dev, "speakerbox detected\n");
+		aprint_normal_dev(sc->sc_dev, "speakerbox detected\n");
 		bus_space_write_4(iot, ioh, DBRI_REG2, DBRI_PIO2_ENABLE);
 		sc->sc_mm.onboard = 0;
 	}
 
 	if ((reg2 & DBRI_PIO2) && (reg2 & DBRI_PIO0)) {
-		aprint_normal_dev(&sc->sc_dev, "using speakerbox\n");
+		aprint_normal_dev(sc->sc_dev, "using speakerbox\n");
 		bus_space_write_4(iot, ioh, DBRI_REG2, DBRI_PIO2_ENABLE);
 		sc->sc_mm.onboard = 0;
 	}
 
 	if (!(reg2 & (DBRI_PIO0|DBRI_PIO2))) {
-		aprint_normal_dev(&sc->sc_dev, "no mmcodec found\n");
+		aprint_normal_dev(sc->sc_dev, "no mmcodec found\n");
 		return -1;
 	}
 
@@ -803,13 +801,13 @@ mmcodec_init(struct dbri_softc *sc)
 		bail++;
 		if (bail > 100) {
 			DPRINTF("%s: cs4215 probe failed at offset %d\n",
-		    	    device_xname(&sc->sc_dev), sc->sc_mm.offset);
+		    	    device_xname(sc->sc_dev), sc->sc_mm.offset);
 			return (-1);
 		}
 		delay(10000);
 	}
 
-	aprint_normal_dev(&sc->sc_dev, "cs4215 rev %c found at offset %d\n",
+	aprint_normal_dev(sc->sc_dev, "cs4215 rev %c found at offset %d\n",
 	    0x43 + (sc->sc_version & 0xf), sc->sc_mm.offset);
 
 	/* set some sane defaults for mmcodec_init_data */
@@ -1020,19 +1018,19 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 
 	if (i == 0) {
 		DPRINTF("%s: cs4215 didn't respond to CLB (0x%02x)\n",
-		    device_xname(&sc->sc_dev), sc->sc_mm.status);
+		    device_xname(sc->sc_dev), sc->sc_mm.status);
 		return (-1);
 	}
 #else
 	while (((sc->sc_mm.status & 0xe4) != 0x20) && (bail < 10)) {
-		DPRINTF("%s: tsleep %p\n", device_xname(&sc->sc_dev), sc);
+		DPRINTF("%s: tsleep %p\n", device_xname(sc->sc_dev), sc);
 		tsleep(sc, PCATCH | PZERO, "dbrifxdt", hz);
 		bail++;
 	}
 #endif
 	if (bail >= 10) {
 		DPRINTF("%s: switching to control mode timed out (%x %x)\n",
-		    device_xname(&sc->sc_dev), sc->sc_mm.status,
+		    device_xname(sc->sc_dev), sc->sc_mm.status,
 		    bus_space_read_4(iot, ioh, DBRI_REG2));
 		return -1;
 	}
@@ -1090,14 +1088,14 @@ chi_reset(struct dbri_softc *sc, enum ms ms, int bpf)
 		divisor = 12288 / clockrate;
 
 		if (divisor > 255 || divisor * clockrate != 12288)
-			aprint_error_dev(&sc->sc_dev, "illegal bits-per-frame %d\n",
-			    bpf);
+			aprint_error_dev(sc->sc_dev,
+			    "illegal bits-per-frame %d\n", bpf);
 
 		*(cmd++) = DBRI_CMD(DBRI_COMMAND_CHI, 0,
 		    DBRI_CHI_CHICM(divisor) | DBRI_CHI_FD | DBRI_CHI_BPF(bpf));
 		break;
 	default:
-		aprint_error_dev(&sc->sc_dev, "unknown value for ms!\n");
+		aprint_error_dev(sc->sc_dev, "unknown value for ms!\n");
 		break;
 	}
 
@@ -1121,13 +1119,13 @@ pipe_setup(struct dbri_softc *sc, int pipe, int sdp)
 {
 	DPRINTF("pipe setup: %d\n", pipe);
 	if (pipe < 0 || pipe >= DBRI_PIPE_MAX) {
-		aprint_error_dev(&sc->sc_dev, "illegal pipe number %d\n", 
+		aprint_error_dev(sc->sc_dev, "illegal pipe number %d\n", 
 		    pipe);
 		return;
 	}
 
 	if ((sdp & 0xf800) != sdp)
-		aprint_error_dev(&sc->sc_dev, "strange SDP value %d\n",
+		aprint_error_dev(sc->sc_dev, "strange SDP value %d\n",
 		    sdp);
 
 	if (DBRI_SDP_MODE(sdp) == DBRI_SDP_FIXED &&
@@ -1153,14 +1151,14 @@ pipe_reset(struct dbri_softc *sc, int pipe)
 	volatile u_int32_t *cmd;
 
 	if (pipe < 0 || pipe >= DBRI_PIPE_MAX) {
-		aprint_error_dev(&sc->sc_dev, "illegal pipe number %d\n", 
+		aprint_error_dev(sc->sc_dev, "illegal pipe number %d\n", 
 		    pipe);
 		return;
 	}
 
 	sdp = sc->sc_pipe[pipe].sdp;
 	if (sdp == 0) {
-		aprint_error_dev(&sc->sc_dev, "can not reset uninitialized pipe %d\n",
+		aprint_error_dev(sc->sc_dev, "can not reset uninitialized pipe %d\n",
 		    pipe);
 		return;
 	}
@@ -1192,19 +1190,19 @@ pipe_receive_fixed(struct dbri_softc *sc, int pipe, volatile u_int32_t *prec)
 {
 
 	if (pipe < DBRI_PIPE_MAX / 2 || pipe >= DBRI_PIPE_MAX) {
-		aprint_error_dev(&sc->sc_dev, "illegal pipe number %d\n",
+		aprint_error_dev(sc->sc_dev, "illegal pipe number %d\n",
 		    pipe);
 		return;
 	}
 
 	if (DBRI_SDP_MODE(sc->sc_pipe[pipe].sdp) != DBRI_SDP_FIXED) {
-		aprint_error_dev(&sc->sc_dev, "non-fixed pipe %d\n",
+		aprint_error_dev(sc->sc_dev, "non-fixed pipe %d\n",
 		    pipe);
 		return;
 	}
 
 	if (sc->sc_pipe[pipe].sdp & DBRI_SDP_TO_SER) {
-		aprint_error_dev(&sc->sc_dev, "can not receive on transmit pipe %d\b",
+		aprint_error_dev(sc->sc_dev, "can not receive on transmit pipe %d\b",
 		    pipe);
 		return;
 	}
@@ -1220,25 +1218,25 @@ pipe_transmit_fixed(struct dbri_softc *sc, int pipe, u_int32_t data)
 	volatile u_int32_t *cmd;
 
 	if (pipe < DBRI_PIPE_MAX / 2 || pipe >= DBRI_PIPE_MAX) {
-		aprint_error_dev(&sc->sc_dev, "illegal pipe number %d\n",
+		aprint_error_dev(sc->sc_dev, "illegal pipe number %d\n",
 		    pipe);
 		return;
 	}
 
 	if (DBRI_SDP_MODE(sc->sc_pipe[pipe].sdp) == 0) {
-		aprint_error_dev(&sc->sc_dev, "uninitialized pipe %d\n",
+		aprint_error_dev(sc->sc_dev, "uninitialized pipe %d\n",
 		    pipe);
 		return;
 	}
 
 	if (DBRI_SDP_MODE(sc->sc_pipe[pipe].sdp) != DBRI_SDP_FIXED) {
-		aprint_error_dev(&sc->sc_dev, "non-fixed pipe %d\n",
+		aprint_error_dev(sc->sc_dev, "non-fixed pipe %d\n",
 		    pipe);
 		return;
 	}
 
 	if (!(sc->sc_pipe[pipe].sdp & DBRI_SDP_TO_SER)) {
-		aprint_error_dev(&sc->sc_dev, "called on receive pipe %d\n",
+		aprint_error_dev(sc->sc_dev, "called on receive pipe %d\n",
 		    pipe);
 		return;
 	}
@@ -1280,7 +1278,7 @@ setup_ring_xmit(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	td_first = td_last = -1;
 
 	if (sc->sc_pipe[pipe].sdp == 0) {
-		aprint_error_dev(&sc->sc_dev, "uninitialized pipe %d\n",
+		aprint_error_dev(sc->sc_dev, "uninitialized pipe %d\n",
 		    pipe);
 		return;
 	}
@@ -1373,7 +1371,7 @@ setup_ring_recv(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	td_first = td_last = -1;
 
 	if (sc->sc_pipe[pipe].sdp == 0) {
-		aprint_error_dev(&sc->sc_dev, "uninitialized pipe %d\n",
+		aprint_error_dev(sc->sc_dev, "uninitialized pipe %d\n",
 		    pipe);
 		return;
 	}
@@ -1453,13 +1451,13 @@ pipe_ts_link(struct dbri_softc *sc, int pipe, enum io dir, int basepipe,
 	DPRINTF("%s: %d\n", __func__, pipe);
 	if (pipe < 0 || pipe >= DBRI_PIPE_MAX ||
 	    basepipe < 0 || basepipe >= DBRI_PIPE_MAX) {
-		aprint_error_dev(&sc->sc_dev, "illegal pipe numbers (%d, %d)\n",
+		aprint_error_dev(sc->sc_dev, "illegal pipe numbers (%d, %d)\n",
 		    pipe, basepipe);
 		return;
 	}
 
 	if (sc->sc_pipe[pipe].sdp == 0 || sc->sc_pipe[basepipe].sdp == 0) {
-		aprint_error_dev(&sc->sc_dev, "uninitialized pipe (%d, %d)\n",
+		aprint_error_dev(sc->sc_dev, "uninitialized pipe (%d, %d)\n",
 		    pipe, basepipe);
 		return;
 	}
@@ -1522,7 +1520,7 @@ pipe_ts_link(struct dbri_softc *sc, int pipe, enum io dir, int basepipe,
 		break;
 	default:
 		DPRINTF("%s: should not have happened!\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		break;
 	}
 

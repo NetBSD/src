@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.48 2008/01/30 11:47:02 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.48.10.1 2008/05/18 12:35:26 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48 2008/01/30 11:47:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.48.10.1 2008/05/18 12:35:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,9 +417,8 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 
 	get_proc_size_info(l, &stext, &etext, &sstack);
 
-	mutex_enter(&proclist_lock);
-	mutex_enter(&p->p_mutex);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(proc_lock);
+	mutex_enter(p->p_lock);
 
 	calcru(p, NULL, NULL, NULL, &rt);
 
@@ -481,9 +480,8 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    p->p_exitsig,
 	    0);						/* XXX: processor */
 
-	mutex_exit(&p->p_smutex);
-	mutex_exit(&p->p_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(p->p_lock);
+	mutex_exit(proc_lock);
 
 	if (len == 0)
 		goto out;
@@ -561,8 +559,7 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
 
@@ -591,9 +588,7 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		memcpy(mtab + mtabsz, bf, len);
 		mtabsz += len;
 
-		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 	free(bf, M_TEMP);

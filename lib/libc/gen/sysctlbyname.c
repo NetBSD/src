@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlbyname.c,v 1.3 2005/06/12 05:21:27 lukem Exp $ */
+/*	$NetBSD: sysctlbyname.c,v 1.3.18.1 2008/05/18 12:30:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -34,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlbyname.c,v 1.3 2005/06/12 05:21:27 lukem Exp $");
+__RCSID("$NetBSD: sysctlbyname.c,v 1.3.18.1 2008/05/18 12:30:16 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"

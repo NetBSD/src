@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.8 2006/02/06 18:29:48 wiz Exp $
+# $NetBSD: Makefile,v 1.8.18.1 2008/05/18 12:30:08 yamt Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/libs/libgroff/Makefile,v 1.5 2003/05/01 13:22:19 ru Exp $
 
 DIST_SUBDIR=	src/libs/libgroff
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=		groff
 SRCS=		assert.cpp change_lf.cpp cmap.cpp color.cpp cset.cpp \

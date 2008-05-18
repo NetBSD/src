@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.744 2008/04/15 11:17:47 plunky Exp $
+# $NetBSD: mi,v 1.744.2.1 2008/05/18 12:29:38 yamt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -113,6 +113,8 @@
 ./etc/ssh					base-sys-root
 ./etc/systrace					base-util-root		obsolete
 ./etc/uucp					base-obsolete		obsolete
+./kernel					base-sys-root
+./kernel/modules				base-sys-root
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete
@@ -214,6 +216,7 @@
 ./sbin/newfs_lfs				base-sysutil-root
 ./sbin/newfs_msdos				base-sysutil-root
 ./sbin/newfs_sysvbfs				base-sysutil-root
+./sbin/newfs_udf				base-sysutil-root
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
@@ -588,6 +591,7 @@
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-tn3270-bin
 ./usr/bin/msgs					base-util-bin
+./usr/bin/nbsvtool				base-crypto-bin		crypto
 ./usr/bin/netgroup				base-nis-bin
 ./usr/bin/netstat				base-netutil-bin
 ./usr/bin/newaliases				base-mailwrapper-bin
@@ -1167,6 +1171,7 @@
 ./usr/sbin/mknetid				base-nis-bin		yp
 ./usr/sbin/mld6query				base-netutil-bin	use_inet6
 ./usr/sbin/mlxctl				base-sysutil-bin
+./usr/sbin/mmcformat				base-sysutil-bin
 ./usr/sbin/mopa.out				base-obsolete		obsolete
 ./usr/sbin/mopchk				base-bootserver-bin
 ./usr/sbin/mopcopy				base-bootserver-bin

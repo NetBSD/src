@@ -1,4 +1,4 @@
-/*	$NetBSD: hwaddr.h,v 1.4 2007/04/29 20:23:37 msaitoh Exp $	*/
+/*	$NetBSD: hwaddr.h,v 1.4.10.1 2008/05/18 12:36:14 yamt Exp $	*/
 
 /* hwaddr.h */
 #ifndef	HWADDR_H
@@ -13,7 +13,7 @@
  */
 struct hwinfo {
     unsigned int hlen;
-    char *name;
+    const char *name;
 };
 
 extern struct hwinfo hwinfolist[];

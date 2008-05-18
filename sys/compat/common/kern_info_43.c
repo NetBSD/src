@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.32 2008/01/08 22:08:45 elad Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.32.10.1 2008/05/18 12:33:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.32 2008/01/08 22:08:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.32.10.1 2008/05/18 12:33:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,9 @@ compat_43_sys_getdtablesize(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	*retval = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 	return (0);
 }
 

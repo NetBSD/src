@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.116.2.1 2008/04/19 08:33:27 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.116.2.2 2008/05/18 12:35:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -48,13 +48,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -101,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.116.2.1 2008/04/19 08:33:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.116.2.2 2008/05/18 12:35:29 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -983,36 +976,11 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	return (0);
 }
 
-static void
-icmpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *icpsc = v1;
-	uint64_t *icps = v2;
-	u_int i;
-
-	for (i = 0; i < ICMP_NSTATS; i++)
-		icps[i] += icpsc[i];
-}
-
-static void
-icmpstat_convert_to_user(uint64_t *icps)
-{
-
-	memset(icps, 0, sizeof(uint64_t) * ICMP_NSTATS);
-	percpu_foreach(icmpstat_percpu, icmpstat_convert_to_user_cb, icps);
-}
-
 static int
 sysctl_net_inet_icmp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t icps[ICMP_NSTATS];
 
-	icmpstat_convert_to_user(icps);
-	node = *rnode;
-	node.sysctl_data = icps;
-	node.sysctl_size = sizeof(icps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(icmpstat_percpu, ICMP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_icmp_setup, "sysctl net.inet.icmp subtree setup")

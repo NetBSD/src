@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.107 2008/04/10 18:12:02 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.107.2.1 2008/05/18 12:35:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -100,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.107 2008/04/10 18:12:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.107.2.1 2008/05/18 12:35:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -711,44 +704,37 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == NULL)
 			senderr(ENOBUFS);
-		Bzero(rt, sizeof(*rt));
+		memset(rt, 0, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
 		LIST_INIT(&rt->rt_timer);
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__, __LINE__,
-		    (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (rt_setkey(rt, dst, M_NOWAIT) == NULL ||
 		    rt_setgate(rt, gateway) != 0) {
 			pool_put(&rtentry_pool, rt);
 			senderr(ENOBUFS);
 		}
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__, __LINE__,
-		    (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (netmask) {
 			rt_maskedcopy(dst, (struct sockaddr *)&maskeddst,
 			    netmask);
 			rt_setkey(rt, (struct sockaddr *)&maskeddst, M_NOWAIT);
-			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-			    __LINE__, (void *)rt->_rt_key);
+			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		} else {
 			rt_setkey(rt, dst, M_NOWAIT);
-			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-			    __LINE__, (void *)rt->_rt_key);
+			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		}
 		rt_set_ifa(rt, ifa);
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-		    __LINE__, (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
 			rt->rt_parent = *ret_nrt;
 			rt->rt_parent->rt_refcnt++;
 		}
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-		    __LINE__, (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		rn = rnh->rnh_addaddr(rt_getkey(rt), netmask, rnh,
 		    rt->rt_nodes);
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-		    __LINE__, (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (rn == NULL && (crt = rtalloc1(rt_getkey(rt), 0)) != NULL) {
 			/* overwrite cloned route */
 			if ((crt->rt_flags & RTF_CLONED) != 0) {
@@ -757,11 +743,9 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 				    netmask, rnh, rt->rt_nodes);
 			}
 			RTFREE(crt);
-			RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-			    __LINE__, (void *)rt->_rt_key);
+			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		}
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-		    __LINE__, (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (rn == NULL) {
 			IFAFREE(ifa);
 			if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent)
@@ -772,12 +756,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			pool_put(&rtentry_pool, rt);
 			senderr(EEXIST);
 		}
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-		    __LINE__, (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt, info);
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-		    __LINE__, (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
@@ -815,31 +797,26 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 	KASSERT(rt != rt->rt_gwroute);
 
 	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-	    __LINE__, (void *)rt->_rt_key);
+	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
 	if (rt->rt_gwroute) {
 		RTFREE(rt->rt_gwroute);
 		rt->rt_gwroute = NULL;
 	}
 	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-	    __LINE__, (void *)rt->_rt_key);
+	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 	if (rt->rt_gateway != NULL)
 		sockaddr_free(rt->rt_gateway);
 	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-	    __LINE__, (void *)rt->_rt_key);
+	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 	if ((rt->rt_gateway = sockaddr_dup(gate, M_NOWAIT)) == NULL)
 		return ENOMEM;
 	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-	    __LINE__, (void *)rt->_rt_key);
+	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
 	if (rt->rt_flags & RTF_GATEWAY) {
 		KASSERT(rt->_rt_key != NULL);
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-		    __LINE__, (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		rt->rt_gwroute = rtalloc1(gate, 1);
 		/*
 		 * If we switched gateways, grab the MTU from the new
@@ -849,8 +826,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 		 * MTU of the route to run PMTUD again from scratch. XXX
 		 */
 		KASSERT(rt->_rt_key != NULL);
-		RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-		    __LINE__, (void *)rt->_rt_key);
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (rt->rt_gwroute
 		    && !(rt->rt_rmx.rmx_locks & RTV_MTU)
 		    && rt->rt_rmx.rmx_mtu
@@ -859,8 +835,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 		}
 	}
 	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("%s l.%d: rt->_rt_key = %p\n", __func__,
-	    __LINE__, (void *)rt->_rt_key);
+	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 	return 0;
 }
 
@@ -1000,10 +975,9 @@ rt_timer_queue_create(u_int timeout)
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
 		return NULL;
-	Bzero(rtq, sizeof *rtq);
+	memset(rtq, 0, sizeof(*rtq));
 
 	rtq->rtq_timeout = timeout;
-	rtq->rtq_count = 0;
 	TAILQ_INIT(&rtq->rtq_head);
 	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
 

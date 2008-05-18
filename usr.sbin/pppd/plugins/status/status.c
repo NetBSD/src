@@ -1,4 +1,4 @@
-/*	$NetBSD: status.c,v 1.2 2006/12/25 18:39:48 wiz Exp $	*/
+/*	$NetBSD: status.c,v 1.2.10.1 2008/05/18 12:36:23 yamt Exp $	*/
 
 /*
  * status.c - pppd plugin to implement an `lcpstatus' option.
@@ -7,7 +7,9 @@
  * is quite useful as is (with a bit of external help, at any rate).
  *
  * Written January 2003 by John F. Woods, jfw@funhouse.com
+ */
 
+/*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -22,13 +24,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
