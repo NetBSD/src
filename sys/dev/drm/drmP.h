@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.24 2008/05/18 02:45:17 bjs Exp $ */
+/* $NetBSD: drmP.h,v 1.25 2008/05/18 19:53:22 jmcneill Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -47,7 +47,9 @@ typedef struct drm_device drm_device_t;
 typedef struct drm_file drm_file_t;
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(_KERNEL_OPT)
 #include <opt_drm.h>
+#endif
 #ifdef DRM_DEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG_DEFAULT_ON 1
@@ -137,7 +139,9 @@ typedef struct drm_file drm_file_t;
 #include "drm_atomic.h"
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(_KERNEL_OPT)
 #include <opt_drm.h>
+#endif
 #ifdef DRM_DEBUG
 #undef DRM_DEBUG
 #define DRM_DEBUG_DEFAULT_ON 1
