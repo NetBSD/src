@@ -1,3 +1,5 @@
+/*	$NetBSD: key.h,v 1.1.1.2 2008/05/18 14:29:46 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: key.h,v 1.1.1.1 2008/05/16 18:03:18 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:18 $
+ *	Id: key.h,v 10.50 2001/06/28 17:53:58 skimo Exp (Berkeley) Date: 2001/06/28 17:53:58
  */
 
 #include "multibyte.h"

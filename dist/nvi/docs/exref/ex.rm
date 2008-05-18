@@ -3,7 +3,7 @@
 .\"
 .\" %sccs.include.redist.roff%
 .\"
-.\"	$Id: ex.rm,v 1.1.1.1 2008/05/16 18:03:36 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:36 $
+.\"	Id: ex.rm,v 8.5 1996/08/18 11:36:16 bostic Exp (Berkeley) Date: 1996/08/18 11:36:16
 .\"
 .nr LL 6.5i
 .nr FL 6.5i

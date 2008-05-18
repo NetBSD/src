@@ -1,3 +1,5 @@
+/*	$NetBSD: common.h,v 1.1.1.2 2008/05/18 14:29:40 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: common.h,v 1.1.1.1 2008/05/16 18:03:13 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:13 $
+ *	Id: common.h,v 10.20 2002/03/02 23:36:22 skimo Exp (Berkeley) Date: 2002/03/02 23:36:22
  */
 
 /*
