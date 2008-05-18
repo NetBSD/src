@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.55 2008/05/13 08:31:13 simonb Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.56 2008/05/18 13:56:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.55 2008/05/13 08:31:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.56 2008/05/18 13:56:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,9 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		error = EOPNOTSUPP;
 		goto bad;
 	}
+
+	printf("WARNING: the union file system is experimental and "
+	    "may be unstable\n");
 
 	lowerrootvp = mp->mnt_vnodecovered;
 	VREF(lowerrootvp);
