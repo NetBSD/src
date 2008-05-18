@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.20 2007/02/18 23:16:59 matt Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.20.40.1 2008/05/18 12:35:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.20 2007/02/18 23:16:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.20.40.1 2008/05/18 12:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -74,6 +74,7 @@ const struct protosw unixsw[] = {
 
 struct domain unixdomain = {
 	.dom_family = AF_LOCAL,
+	.dom_init = uipc_init,
 	.dom_name = "unix",
 	.dom_externalize = unp_externalize,
 	.dom_dispose = unp_dispose,

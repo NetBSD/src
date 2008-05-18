@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstixvar.h,v 1.2 2006/10/17 17:06:22 kiyohara Exp $ */
+/*	$NetBSD: gumstixvar.h,v 1.2.60.1 2008/05/18 12:31:48 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -46,7 +46,7 @@ extern uint32_t system_serial_low;
 
 
 struct gxio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };

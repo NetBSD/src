@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.51 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.51.2.1 2008/05/18 12:33:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.51 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.51.2.1 2008/05/18 12:33:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,9 +294,9 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE) {
-			mutex_enter(&proclist_mutex);
+			mutex_enter(proc_lock);
 			psignal(curproc, SIGPIPE);
-			mutex_exit(&proclist_mutex);
+			mutex_exit(proc_lock);
 		}
 	}
 	cnt -= auio.uio_resid;
@@ -718,6 +718,7 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 	char   *bp, *bend;
 	int     len = (int)SCARG(uap, length);
 	int	lenused;
+	struct	cwdinfo *cwdi;
 
 	if (len > MAXPATHLEN*4)
 		len = MAXPATHLEN*4;
@@ -738,8 +739,11 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 	 * limit it to N/2 vnodes for an N byte buffer.
 	 */
 #define GETCWD_CHECK_ACCESS 0x0001
-	error = getcwd_common (p->p_cwdi->cwdi_cdir, NULL, &bp, path, len/2,
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	error = getcwd_common (cwdi->cwdi_cdir, NULL, &bp, path, len/2,
 			       GETCWD_CHECK_ACCESS, l);
+	rw_exit(&cwdi->cwdi_lock);
 
 	if (error)
 		goto out;

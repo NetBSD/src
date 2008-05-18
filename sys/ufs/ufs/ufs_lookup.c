@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.96 2007/12/08 19:29:56 pooka Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.96.14.1 2008/05/18 12:35:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.96 2007/12/08 19:29:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.96.14.1 2008/05/18 12:35:56 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -248,7 +248,8 @@ ufs_lookup(void *v)
 	} else {
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
-		    (error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL, &bp)))
+		    (error = ufs_blkatoff(vdp, (off_t)dp->i_offset,
+		    NULL, &bp, false)))
 			goto out;
 		numdirpasses = 2;
 		nchstats.ncs_2passes++;
@@ -268,7 +269,7 @@ searchloop:
 			if (bp != NULL)
 				brelse(bp, 0);
 			error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
-			    &bp);
+			    &bp, false);
 			if (error)
 				goto out;
 			entryoffsetinblock = 0;
@@ -885,7 +886,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	/*
 	 * Get the block containing the space for the new directory entry.
 	 */
-	error = ufs_blkatoff(dvp, (off_t)dp->i_offset, &dirbuf, &bp);
+	error = ufs_blkatoff(dvp, (off_t)dp->i_offset, &dirbuf, &bp, true);
 	if (error) {
 		if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
 			bdwrite(newdirbp);
@@ -1044,7 +1045,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 		 * Whiteout entry: set d_ino to WINO.
 		 */
 		error = ufs_blkatoff(dvp, (off_t)dp->i_offset, (void *)&ep,
-				     &bp);
+				     &bp, true);
 		if (error)
 			return (error);
 		ep->d_ino = ufs_rw32(WINO, needswap);
@@ -1053,7 +1054,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 	}
 
 	if ((error = ufs_blkatoff(dvp,
-	    (off_t)(dp->i_offset - dp->i_count), (void *)&ep, &bp)) != 0)
+	    (off_t)(dp->i_offset - dp->i_count), (void *)&ep, &bp, true)) != 0)
 		return (error);
 
 #ifdef UFS_DIRHASH
@@ -1135,7 +1136,7 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
-	error = ufs_blkatoff(vdp, (off_t)dp->i_offset, (void *)&ep, &bp);
+	error = ufs_blkatoff(vdp, (off_t)dp->i_offset, (void *)&ep, &bp, true);
 	if (error)
 		return (error);
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(dp->i_ump));
@@ -1316,7 +1317,8 @@ int ufs_dirrablks = UFS_DIRRABLKS;
  */
 
 int
-ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
+ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp,
+    bool modify)
 {
 	struct inode *ip;
 	struct buf *bp;
@@ -1355,7 +1357,7 @@ ufs_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp)
 	}
 	KASSERT(run >= 1);
 	error = breadn(vp, blks[0], blksizes[0], &blks[1], &blksizes[1],
-	    run - 1, NOCRED, &bp);
+	    run - 1, NOCRED, (modify ? B_MODIFY : 0), &bp);
 	if (error != 0) {
 		brelse(bp, 0);
 		*bpp = NULL;

@@ -1,4 +1,4 @@
-/* $NetBSD: lroundf.c,v 1.2 2004/10/13 15:18:32 drochner Exp $ */
+/* $NetBSD: lroundf.c,v 1.2.24.1 2008/05/18 12:30:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -49,7 +49,7 @@ LROUNDNAME(float x)
 
 	GET_FLOAT_WORD(i0, x);
 	e = i0 >> SNG_FRACBITS;
-	s = e >> SNG_EXPBITS;
+	s = (uint32_t)e >> SNG_EXPBITS;
 	e = (e & 0xff) - SNG_EXP_BIAS;
 
 	/* 1.0 x 2^-1 is the smallest number which can be rounded to 1 */

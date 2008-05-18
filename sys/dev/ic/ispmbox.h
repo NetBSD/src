@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.51 2008/03/11 05:33:30 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.51.2.1 2008/05/18 12:33:44 yamt Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -290,15 +290,6 @@ typedef struct {
 } ispdslist_t;
 
 
-/*
- * These elements get swizzled around for SBus instances.
- */
-#define	ISP_SWAP8(a, b)	{		\
-	uint8_t tmp;			\
-	tmp = a;			\
-	a = b;				\
-	b = tmp;			\
-}
 typedef struct {
 	uint8_t		rqs_entry_type;
 	uint8_t		rqs_entry_count;

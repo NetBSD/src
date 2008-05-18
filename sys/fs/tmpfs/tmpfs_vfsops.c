@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.38 2008/02/06 11:22:12 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.38.8.1 2008/05/18 12:35:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -49,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.38 2008/02/06 11:22:12 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.38.8.1 2008/05/18 12:35:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,9 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.38 2008/02/06 11:22:12 jmmv Exp $
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <fs/tmpfs/tmpfs.h>
+
+MODULE(MODULE_CLASS_VFS, tmpfs, NULL);
 
 /* --------------------------------------------------------------------- */
 
@@ -446,8 +442,22 @@ struct vfsops tmpfs_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	tmpfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
 };
-VFS_ATTACH(tmpfs_vfsops);
+
+static int
+tmpfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&tmpfs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&tmpfs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid_hash.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $	*/
+/*	$NetBSD: uuid_hash.c,v 1.1.24.1 2008/05/18 12:30:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: uuid_hash.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
+__RCSID("$NetBSD: uuid_hash.c,v 1.1.24.1 2008/05/18 12:30:21 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: uuid_hash.c,v 1.1 2004/09/13 21:44:54 thorpej Exp $");
  *	http://www.opengroup.org/onlinepubs/009629399/uuid_hash.htm
  */
 uint16_t
-uuid_hash(uuid_t *u, uint32_t *status)
+uuid_hash(const uuid_t *u, uint32_t *status)
 {
 
 	if (status)

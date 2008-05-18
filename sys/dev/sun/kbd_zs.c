@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.22 2008/03/29 19:15:36 tsutsui Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.22.2.1 2008/05/18 12:34:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.22 2008/03/29 19:15:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.22.2.1 2008/05/18 12:34:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ kbd_zs_attach(device_t parent, device_t self, void *aux)
 	if (k->k_kbd.k_isconsole == 0) {
 		/* Not the console; may need reset. */
 		reset = (channel == 0) ?
-			ZSWR9_A_RESET : ZSWR9_B_RESET;
+		    ZSWR9_A_RESET : ZSWR9_B_RESET;
 		zs_write_reg(cs, 9, reset);
 	}
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
@@ -196,11 +196,9 @@ kbd_zs_attach(device_t parent, device_t self, void *aux)
  * used by kbd_sun_start_tx();
  */
 void
-kbd_zs_write_data(k, c)
-	struct kbd_sun_softc *k;
-	int c;
+kbd_zs_write_data(struct kbd_sun_softc *k, int c)
 {
-	int	s;
+	int s;
 
 	/* Need splzs to avoid interruption of the delay. */
 	s = splzs();
@@ -213,7 +211,7 @@ kbd_zs_rxint(struct zs_chanstate *cs)
 {
 	struct kbd_sun_softc *k;
 	int put, put_next;
-	u_char c, rr1;
+	uint8_t c, rr1;
 
 	k = cs->cs_private;
 	put = k->k_rbput;
@@ -244,7 +242,8 @@ kbd_zs_rxint(struct zs_chanstate *cs)
 				/* Debugger done.  Fake L1-up to finish it. */
 				c = k->k_magic1 | KBD_UP;
 			} else {
-				printf("kbd: magic sequence, but not console\n");
+				printf("%s: magic sequence, but not console\n",
+				    device_xname(k->k_kbd.k_dev));
 			}
 		}
 	}
@@ -288,7 +287,7 @@ static void
 kbd_zs_stint(struct zs_chanstate *cs, int force)
 {
 	struct kbd_sun_softc *k;
-	int rr0;
+	uint8_t rr0;
 
 	k = cs->cs_private;
 
@@ -299,7 +298,7 @@ kbd_zs_stint(struct zs_chanstate *cs, int force)
 	if (rr0 & ZSRR0_BREAK) {
 		/* Keyboard unplugged? */
 		zs_abort(cs);
-		return (0);
+		return;
 	}
 #endif
 
@@ -328,7 +327,7 @@ kbd_zs_softint(struct zs_chanstate *cs)
 	struct kbd_sun_softc *k;
 	int get, c, s;
 	int intr_flags;
-	u_short ring_data;
+	uint16_t ring_data;
 
 	k = cs->cs_private;
 
@@ -338,7 +337,7 @@ kbd_zs_softint(struct zs_chanstate *cs)
 	k->k_intr_flags = 0;
 
 	/* Now lower to spltty for the rest. */
-	(void) spltty();
+	(void)spltty();
 
 	/*
 	 * Copy data from the receive ring to the event layer.

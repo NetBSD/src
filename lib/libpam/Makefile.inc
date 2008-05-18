@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.7 2008/01/27 20:26:56 christos Exp $
+# $NetBSD: Makefile.inc,v 1.7.4.1 2008/05/18 12:30:39 yamt Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -37,5 +37,5 @@ CSHLIBFLAGS+= -DNO_STATIC_MODULES
 
 # Define the shared library version here.  libpam and the modules share a
 # version, and we need these variables early for module install rules.
-SHLIB_MAJOR=	0
+SHLIB_MAJOR=	1
 SHLIB_MINOR=	0

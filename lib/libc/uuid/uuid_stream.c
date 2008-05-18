@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid_stream.c,v 1.2 2006/02/09 22:03:15 dogcow Exp $	*/
+/*	$NetBSD: uuid_stream.c,v 1.2.18.1 2008/05/18 12:30:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: uuid_stream.c,v 1.2 2006/02/09 22:03:15 dogcow Exp $");
+__RCSID("$NetBSD: uuid_stream.c,v 1.2.18.1 2008/05/18 12:30:21 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -108,7 +108,7 @@ uuid_dec_be(const void *buf, uuid_t *uuid)
 	int i;
 
 	uuid->time_low = be32dec(p);
-	uuid->time_mid = le16dec(p + 4);
+	uuid->time_mid = be16dec(p + 4);
 	uuid->time_hi_and_version = be16dec(p + 6);
 	uuid->clock_seq_hi_and_reserved = p[8];
 	uuid->clock_seq_low = p[9];

@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $	*/
+/*	$NetBSD: copystr.S,v 1.8.114.1 2008/05/18 12:31:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,22 +39,26 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_cpuoptions.h"
 	
 #include "assym.h"
 #include <machine/asm.h>
+#include <machine/cpu.h>
 
-RCSID("$NetBSD: copystr.S,v 1.8 2002/10/13 14:54:48 bjh21 Exp $")
+RCSID("$NetBSD: copystr.S,v 1.8.114.1 2008/05/18 12:31:33 yamt Exp $")
 
 #include <sys/errno.h>
 
 	.text
 	.align	0
+#if !defined(PROCESS_ID_IS_CURCPU) && !defined(PROCESS_ID_IS_CURLWP)
 #ifdef MULTIPROCESSOR
 .Lcpu_info:
 	.word	_C_LABEL(cpu_info)
 #else
 .Lcurpcb:
-	.word	_C_LABEL(curpcb)
+	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+#endif
 #endif
 
 /*
@@ -87,7 +91,7 @@ ENTRY(copystr)
 	strne	r5, [r3]
 
 	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
-	mov	pc, lr
+	RET
 
 #ifdef __PROG32
 #define SAVE_REGS	stmfd	sp!, {r4-r6}
@@ -114,7 +118,9 @@ ENTRY(copyinstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-#ifdef MULTIPROCESSOR
+#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	GET_CURPCB(r4)
+#elif defined(MULTIPROCESSOR)
 	/* XXX Probably not appropriate for non-Hydra SMPs */
 	stmfd	sp!, {r0-r3, r14}
 	bl	_C_LABEL(cpu_number)
@@ -153,7 +159,7 @@ ENTRY(copyinstr)
 	strne	r6, [r3]
 
 	RESTORE_REGS
-	mov	pc, lr
+	RET
 
 /*
  * r0 - kernel space address
@@ -171,7 +177,9 @@ ENTRY(copyoutstr)
 	moveq	r0, #ENAMETOOLONG
 	beq	2f
 
-#ifdef MULTIPROCESSOR
+#if defined(PROCESS_ID_IS_CURCPU) || defined(PROCESS_ID_IS_CURLWP)
+	GET_CURPCB(r4)
+#elif defined(MULTIPROCESSOR)
 	/* XXX Probably not appropriate for non-Hydra SMPs */
 	stmfd	sp!, {r0-r3, r14}
 	bl	_C_LABEL(cpu_number)
@@ -210,14 +218,14 @@ ENTRY(copyoutstr)
 	strne	r6, [r3]
 
 	RESTORE_REGS
-	mov	pc, lr
+	RET
 
 /* A fault occurred during the copy */
 .Lcopystrfault:
 	mov	r1, #0x00000000
 	str	r1, [r4, #PCB_ONFAULT]
 	RESTORE_REGS
-	mov	pc, lr
+	RET
 
 #ifdef DIAGNOSTIC
 .Lcopystrpcbfault:

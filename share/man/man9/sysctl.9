@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.8 2007/10/04 17:16:01 alc Exp $
+.\"	$NetBSD: sysctl.9,v 1.8.8.1 2008/05/18 12:31:13 yamt Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -14,9 +14,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. Neither the name of The NetBSD Foundation nor the names of its
-.\"    contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -530,7 +527,7 @@ The address of the function is added to a list of functions that
 .Fn sysctl_init
 traverses during initialization.
 .Pp
-Setup functions to not have to add nodes to the main tree, but can set
+Setup functions do not have to add nodes to the main tree, but can set
 up their own trees for emulation or other purposes.
 Emulations that require use of a main tree but with some nodes changed
 to suit their own purposes can arrange to overlay a sparse private

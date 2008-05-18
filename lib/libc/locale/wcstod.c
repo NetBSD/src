@@ -1,4 +1,4 @@
-/* $NetBSD: wcstod.c,v 1.13 2007/07/19 12:05:42 christos Exp $ */
+/* $NetBSD: wcstod.c,v 1.13.10.1 2008/05/18 12:30:17 yamt Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcstod.c,v 1.13 2007/07/19 12:05:42 christos Exp $");
+__RCSID("$NetBSD: wcstod.c,v 1.13.10.1 2008/05/18 12:30:17 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: wcstod.c,v 1.13 2007/07/19 12:05:42 christos Exp $");
 #include <wchar.h>
 #include <wctype.h>
 
-__strong_alias(_wcstod,wcstod)
 __weak_alias(wcstod,_wcstod)
 
 #define _FUNCNAME	wcstod

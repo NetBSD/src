@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.66 2008/03/29 22:05:15 chris Exp $	*/
+/*	$NetBSD: fault.c,v 1.66.2.1 2008/05/18 12:31:34 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.66 2008/03/29 22:05:15 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.66.2.1 2008/05/18 12:31:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,8 +246,9 @@ data_abort_handler(trapframe_t *tf)
 	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
 		enable_interrupts(I32_bit);
 
-	/* Get the current lwp structure or lwp0 if there is none */
-	l = (curlwp != NULL) ? curlwp : &lwp0;
+	/* Get the current lwp structure */
+	KASSERT(curlwp != NULL);
+	l = curlwp;
 
 	UVMHIST_LOG(maphist, " (pc=0x%x, l=0x%x, far=0x%x, fsr=0x%x)",
 	    tf->tf_pc, l, far, fsr);
@@ -443,7 +444,7 @@ data_abort_handler(trapframe_t *tf)
 		goto out;
 	}
 
-	if (__predict_false(curcpu()->ci_idepth > 0)) {
+	if (__predict_false(curcpu()->ci_intr_depth > 0)) {
 		if (pcb->pcb_onfault) {
 			tf->tf_r0 = EINVAL;
 			tf->tf_pc = (register_t)(intptr_t) pcb->pcb_onfault;
@@ -832,7 +833,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(cpu_intr_p())) {
+	if (__predict_false(l->l_cpu->ci_intr_depth > 0)) {
 		printf("\nNon-emulated prefetch abort with intr_depth > 0\n");
 		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
 	}

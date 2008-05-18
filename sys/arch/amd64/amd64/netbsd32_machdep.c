@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.48 2008/04/16 21:51:03 cegger Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.48.2.1 2008/05/18 12:31:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.48 2008/04/16 21:51:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.48.2.1 2008/05/18 12:31:27 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -62,7 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.48 2008/04/16 21:51:03 cegger
 #include <machine/frame.h>
 #include <machine/reg.h>
 #include <machine/vmparam.h>
+#ifdef MTRR
 #include <machine/mtrr.h>
+#endif
 #include <machine/netbsd32_machdep.h>
 #include <machine/sysarch.h>
 #include <machine/userret.h>
@@ -80,8 +82,13 @@ const char	machine_arch32[] = "i386";
 
 extern void (osyscall_return)(void);
 
+#ifdef MTRR
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
 static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
+#else
+#define x86_64_get_mtrr32(x, y, z)	ENOSYS
+#define x86_64_set_mtrr32(x, y, z)	ENOSYS
+#endif
 
 static int check_sigcontext32(const struct netbsd32_sigcontext *,
     struct trapframe *);
@@ -235,9 +242,9 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -319,10 +326,10 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext32(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -411,7 +418,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 	tf->tf_rsp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
@@ -419,7 +426,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }
@@ -611,6 +618,7 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 	return error;
 }
 
+#ifdef MTRR
 static int
 x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 {
@@ -739,6 +747,7 @@ fail:
 	copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
 	return error;
 }
+#endif
 
 #if 0
 void
@@ -849,12 +858,12 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (0);
 }
@@ -1025,7 +1034,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	tf->tf_rsp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
@@ -1034,7 +1043,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 	/* Restore signal mask. */
 	native_sigset13_to_sigset((sigset13_t *)&context.sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (EJUSTRETURN);
 }

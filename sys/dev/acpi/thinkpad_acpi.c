@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.12 2008/02/29 06:35:40 dyoung Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.12.2.1 2008/05/18 12:33:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -33,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.12 2008/02/29 06:35:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.12.2.1 2008/05/18 12:33:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,10 +44,11 @@ __KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.12 2008/02/29 06:35:40 dyoung Ex
 #include <dev/acpi/acpi_ecvar.h>
 
 #if defined(__i386__) || defined(__amd64__)
+#include <dev/isa/isareg.h>
 #include <machine/pio.h>
 #endif
 
-#define THINKPAD_NSENSORS	8
+#define	THINKPAD_NSENSORS	8
 
 typedef struct thinkpad_softc {
 	device_t		sc_dev;
@@ -62,7 +57,7 @@ typedef struct thinkpad_softc {
 	ACPI_HANDLE		sc_cmoshdl;
 	bool			sc_cmoshdl_valid;
 
-#define TP_PSW_SLEEP		0
+#define	TP_PSW_SLEEP		0
 #define	TP_PSW_HIBERNATE	1
 #define	TP_PSW_DISPLAY_CYCLE	2
 #define	TP_PSW_LOCK_SCREEN	3
@@ -102,7 +97,7 @@ typedef struct thinkpad_softc {
 #define	THINKPAD_CMOS_BRIGHTNESS_UP	0x04
 #define	THINKPAD_CMOS_BRIGHTNESS_DOWN	0x05
 
-#define THINKPAD_HKEY_VERSION		0x0100
+#define	THINKPAD_HKEY_VERSION		0x0100
 
 #define	THINKPAD_DISPLAY_LCD		0x01
 #define	THINKPAD_DISPLAY_CRT		0x02
@@ -511,8 +506,8 @@ thinkpad_brightness_read(thinkpad_softc_t *sc)
 	 * with the EC, and Thinkpads are x86-only, this will have to do
 	 * for now.
 	 */
-	outb(0x70, 0x6c);
-	return inb(0x71) & 7;
+	outb(IO_RTC, 0x6c);
+	return inb(IO_RTC+1) & 7;
 #else
 	return 0;
 #endif

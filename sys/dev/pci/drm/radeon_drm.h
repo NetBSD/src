@@ -713,6 +713,7 @@ typedef struct drm_radeon_setparam {
 #define RADEON_SETPARAM_PCIGART_LOCATION 3	/* PCI Gart Location */
 
 #define RADEON_SETPARAM_NEW_MEMMAP 4		/* Use new memory map */
+#define RADEON_SETPARAM_PCIGART_TABLE_SIZE 5    /* PCI GART Table Size */
 
 /* 1.14: Clients can allocate/free a surface
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.36 2007/12/29 14:53:24 degroote Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.36.8.1 2008/05/18 12:35:40 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.36 2007/12/29 14:53:24 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.36.8.1 2008/05/18 12:35:40 yamt Exp $");
 
 /*
  * IPsec controller part.
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.36 2007/12/29 14:53:24 degroote Exp $");
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
 #ifdef INET6
 #include <netipsec/ipsec6.h>
 #endif
@@ -120,8 +121,7 @@ int ipsec_integrity = 0;
 int ipsec_debug = 0;
 #endif
 
-/* NB: name changed so netstat doesn't use it */
-struct newipsecstat newipsecstat;
+percpu_t *ipsecstat_percpu;
 int ip4_ah_offsetmask = 0;	/* maybe IP_DF? */
 int ip4_ipsec_dfbit = 2;	/* DF bit on encap. 0: clear 1: set 2: copy */
 int ip4_esp_trans_deflev = IPSEC_LEVEL_USE;
@@ -530,13 +530,13 @@ ipsec_getpolicybysock(struct mbuf *m, u_int dir, PCB_T *inp, int *error)
 #ifdef __NetBSD__
 	IPSEC_ASSERT(inp->inph_sp != NULL, ("null PCB policy cache"));
 	/* If we have a cached entry, and if it is still valid, use it. */
-	ipsecstat.ips_spdcache_lookup++;
+	IPSEC_STATINC(IPSEC_STAT_SPDCACHELOOKUP);
 	currsp = ipsec_checkpcbcache(m, /*inpcb_hdr*/inp->inph_sp, dir);
 	if (currsp) {
 		*error = 0;
 		return currsp;
 	}
-	ipsecstat.ips_spdcache_miss++;
+	IPSEC_STATINC(IPSEC_STAT_SPDCACHEMISS);
 #endif /* __NetBSD__ */
 
 	switch (af) {
@@ -698,7 +698,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (sp == NULL) {
 		IPSEC_ASSERT(*error != 0,
 			("ipsec4_checkpolicy: getpolicy failed w/o error"));
-		newipsecstat.ips_out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		return NULL;
 	}
 	IPSEC_ASSERT(*error == 0,
@@ -709,7 +709,7 @@ ipsec4_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		printf("ipsec4_checkpolicy: invalid policy %u\n", sp->policy);
 		/* fall thru... */
 	case IPSEC_POLICY_DISCARD:
-		newipsecstat.ips_out_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_POLVIO);
 		*error = -EINVAL;	/* packet is discarded by caller */
 		break;
 	case IPSEC_POLICY_BYPASS:
@@ -748,7 +748,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 	if (sp == NULL) {
 		IPSEC_ASSERT(*error != 0,
 			("ipsec6_checkpolicy: getpolicy failed w/o error"));
-		newipsecstat.ips_out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		return NULL;
 	}
 	IPSEC_ASSERT(*error == 0,
@@ -759,7 +759,7 @@ ipsec6_checkpolicy(struct mbuf *m, u_int dir, u_int flag, int *error,
 		printf("ipsec6_checkpolicy: invalid policy %u\n", sp->policy);
 		/* fall thru... */
 	case IPSEC_POLICY_DISCARD:
-		newipsecstat.ips_out_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_POLVIO);
 		*error = -EINVAL;   /* packet is discarded by caller */
 		break;
 	case IPSEC_POLICY_BYPASS:
@@ -1707,7 +1707,7 @@ ipsec4_in_reject(struct mbuf *m, struct inpcb *inp)
 	if (sp != NULL) {
 		result = ipsec_in_reject(sp, m);
 		if (result)
-			newipsecstat.ips_in_polvio++;
+			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		KEY_FREESP(&sp);
 	} else {
 		result = 0;	/* XXX should be panic ?
@@ -1748,7 +1748,7 @@ ipsec6_in_reject(struct mbuf *m, struct in6pcb *in6p)
 	if (sp != NULL) {
 		result = ipsec_in_reject(sp, m);
 		if (result)
-			newipsecstat.ips_in_polvio++;
+			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		KEY_FREESP(&sp);
 	} else {
 		result = 0;
@@ -2242,9 +2242,15 @@ xform_init(struct secasvar *sav, int xftype)
 }
 
 #ifdef __NetBSD__
+/*
+ * XXXJRT This should be done as a protosw init call.
+ */
 void
 ipsec_attach(void)
 {
+
+	ipsecstat_percpu = percpu_alloc(sizeof(uint64_t) * IPSEC_NSTATS);
+
 	printf("initializing IPsec...");
 	ah_attach();
 	esp_attach();

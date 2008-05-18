@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.12 2008/03/27 17:36:02 ad Exp $ */
+/* $NetBSD: pic16lc.c,v 1.12.2.1 2008/05/18 12:33:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Jared D. McNeill.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.12 2008/03/27 17:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.12.2.1 2008/05/18 12:33:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +79,7 @@ static void	pic16lc_refresh(struct sysmon_envsys *, envsys_data_t *);
 static void	pic16lc_write_1(struct pic16lc_softc *, uint8_t, uint8_t);
 static void	pic16lc_read_1(struct pic16lc_softc *, uint8_t, uint8_t *);
 
-CFATTACH_DECL(pic16lc, sizeof(struct pic16lc_softc),
+CFATTACH_DECL_NEW(pic16lc, sizeof(struct pic16lc_softc),
     pic16lc_match, pic16lc_attach, NULL, NULL);
 
 static int
@@ -140,8 +134,7 @@ pic16lc_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_sme->sme_refresh = pic16lc_refresh;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}

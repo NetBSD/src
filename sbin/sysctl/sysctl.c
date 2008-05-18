@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.122 2006/12/21 22:25:39 elad Exp $ */
+/*	$NetBSD: sysctl.c,v 1.122.14.1 2008/05/18 12:30:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +69,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.122 2006/12/21 22:25:39 elad Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.122.14.1 2008/05/18 12:30:54 yamt Exp $");
 #endif
 #endif /* not lint */
 

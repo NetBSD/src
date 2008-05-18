@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.3 2006/11/16 01:32:50 christos Exp $ */
+/* $NetBSD: gpioow.c,v 1.3.50.1 2008/05/18 12:33:38 yamt Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.3 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.3.50.1 2008/05/18 12:33:38 yamt Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -37,23 +37,21 @@ __KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.3 2006/11/16 01:32:50 christos Exp $");
 #define GPIOOW_PIN_DATA		0
 
 struct gpioow_softc {
-	struct device		sc_dev;
-
 	void *			sc_gpio;
 	struct gpio_pinmap	sc_map;
 	int			__map[GPIOOW_NPINS];
 
 	struct onewire_bus	sc_ow_bus;
-	struct device *		sc_ow_dev;
+	device_t		sc_ow_dev;
 
 	int			sc_data;
 	int			sc_dying;
 };
 
-int	gpioow_match(struct device *, struct cfdata *, void *);
-void	gpioow_attach(struct device *, struct device *, void *);
-int	gpioow_detach(struct device *, int);
-int	gpioow_activate(struct device *, enum devact);
+int	gpioow_match(device_t, cfdata_t, void *);
+void	gpioow_attach(device_t, device_t, void *);
+int	gpioow_detach(device_t, int);
+int	gpioow_activate(device_t, enum devact);
 
 int	gpioow_ow_reset(void *);
 int	gpioow_ow_bit(void *, int);
@@ -63,7 +61,7 @@ void	gpioow_bb_tx(void *);
 int	gpioow_bb_get(void *);
 void	gpioow_bb_set(void *, int);
 
-CFATTACH_DECL(gpioow, sizeof(struct gpioow_softc),
+CFATTACH_DECL_NEW(gpioow, sizeof(struct gpioow_softc),
 	gpioow_match, gpioow_attach, gpioow_detach, gpioow_activate);
 
 extern struct cfdriver gpioow_cd;
@@ -76,14 +74,14 @@ static const struct onewire_bbops gpioow_bbops = {
 };
 
 int
-gpioow_match(struct device *parent, struct cfdata *cf,
+gpioow_match(device_t parent, cfdata_t cf,
     void *aux)
 {
 	return 1;
 }
 
 void
-gpioow_attach(struct device *parent, struct device *self, void *aux)
+gpioow_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpioow_softc *sc = device_private(self);
 	struct gpio_attach_args *ga = aux;
@@ -148,7 +146,7 @@ fail:
 }
 
 int
-gpioow_detach(struct device *self, int flags)
+gpioow_detach(device_t self, int flags)
 {
 	struct gpioow_softc *sc = device_private(self);
 	int rv = 0;
@@ -160,7 +158,7 @@ gpioow_detach(struct device *self, int flags)
 }
 
 int
-gpioow_activate(struct device *self, enum devact act)
+gpioow_activate(device_t self, enum devact act)
 {
 	struct gpioow_softc *sc = device_private(self);
 	int rv = 0;

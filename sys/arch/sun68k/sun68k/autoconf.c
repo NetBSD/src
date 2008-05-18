@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.25 2008/02/18 14:59:52 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25.8.1 2008/05/18 12:32:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -45,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2008/02/18 14:59:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25.8.1 2008/05/18 12:32:58 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -210,7 +203,7 @@ sun68k_bus_search(struct device *parent, struct cfdata *cf, const int *ldesc,
 	 */
 #ifdef	DIAGNOSTIC
 #define BAD_LOCATOR(ma_loc, what) \
-	panic("%s: %s %s for: %s%d", __func__ \
+	panic("%s: %s %s for: %s%d", __func__, \
 		map->ma_loc == LOCATOR_REQUIRED ? "missing" : "unexpected", \
 		what, cf->cf_name, cf->cf_unit)
 #else
@@ -220,7 +213,7 @@ sun68k_bus_search(struct device *parent, struct cfdata *cf, const int *ldesc,
 #define CHECK_LOCATOR(ma_loc, cf_loc, what) \
 	if ((map->ma_loc == LOCATOR_FORBIDDEN && cf->cf_loc != -1) || \
 	    (map->ma_loc == LOCATOR_REQUIRED && cf->cf_loc == -1)) \
-		BAD_LOCATOR( ma_loc, what); \
+		BAD_LOCATOR(ma_loc, what); \
 	else \
 		ma.ma_loc = cf->cf_loc
 

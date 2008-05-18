@@ -1,7 +1,7 @@
-/*	$NetBSD: busfunc.S,v 1.4 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.4.16.1 2008/05/18 12:31:27 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -47,6 +40,11 @@
 #if X86_BUS_SPACE_IO != 0
 #error depends on X86_BUS_SPACE_IO == 0
 #endif
+
+.Ldopanic:
+	movq	$.Lpstr, %rdi
+	call	_C_LABEL(panic)
+.Lpstr:	.string	"bus_space: 8-byte access to I/O space\0"
 
 /*
  * uint8_t bus_space_read_1(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -92,9 +90,21 @@ NENTRY(bus_space_read_4)
 	inl	%dx, %eax
 	ret
 
+/*
+ * uint64_t bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh,
+ *    bus_size_t offset);
+ */
+NENTRY(bus_space_read_8)
+	addq	%rsi, %rdx
+	testl	%edi, %edi
+	je	.Ldopanic
+	movq	(%rdx), %rax
+	ret
+
 STRONG_ALIAS(bus_space_read_stream_1,bus_space_read_1)
 STRONG_ALIAS(bus_space_read_stream_2,bus_space_read_2)
 STRONG_ALIAS(bus_space_read_stream_4,bus_space_read_4)
+STRONG_ALIAS(bus_space_read_stream_8,bus_space_read_8)
 
 /*
  * void bus_space_write_1(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -141,17 +151,29 @@ NENTRY(bus_space_write_4)
 	outl	%eax, %dx
 	ret
 
+/*
+ * void bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh,
+ *     bus_size_t offset, uint64_t value);
+ */
+NENTRY(bus_space_write_8)
+	addq	%rsi, %rdx
+	testl	%edi, %edi
+	je	.Ldopanic
+	movq	%rcx, (%rdx)
+	ret
+
 STRONG_ALIAS(bus_space_write_stream_1,bus_space_write_1)
 STRONG_ALIAS(bus_space_write_stream_2,bus_space_write_2)
 STRONG_ALIAS(bus_space_write_stream_4,bus_space_write_4)
+STRONG_ALIAS(bus_space_write_stream_8,bus_space_write_8)
 
 /*
  * void bus_space_read_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint8_t *addr, size_t count);
  */
 NENTRY(bus_space_read_multi_1)
-	testl	%edi, %edi
 	leaq	(%rsi,%rdx,1), %rdx
+	testl	%edi, %edi
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -161,9 +183,9 @@ NENTRY(bus_space_read_multi_1)
 	.align	16
 1:
 	movb	(%rdx), %al
-	decq	%r8
 	movb	%al, (%rcx)
 	leaq	1(%rcx), %rcx
+	decq	%r8
 	jnz	1b
 	ret
 
@@ -172,8 +194,8 @@ NENTRY(bus_space_read_multi_1)
  *    bus_size_t offset, uint16_t *addr, size_t count);
  */
 NENTRY(bus_space_read_multi_2)
-	testl	%edi, %edi
 	leaq	(%rsi,%rdx,1), %rdx
+	testl	%edi, %edi
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -183,9 +205,9 @@ NENTRY(bus_space_read_multi_2)
 	.align	16
 1:
 	movw	(%rdx), %ax
-	decq	%r8
 	movw	%ax, (%rcx)
 	leaq	2(%rcx), %rcx
+	decq	%r8
 	jnz	1b
 	ret
 
@@ -194,8 +216,8 @@ NENTRY(bus_space_read_multi_2)
  *    bus_size_t offset, uint32_t *addr, size_t count);
  */
 NENTRY(bus_space_read_multi_4)
-	testl	%edi, %edi
 	leaq	(%rsi,%rdx,1), %rdx
+	testl	%edi, %edi
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -205,23 +227,41 @@ NENTRY(bus_space_read_multi_4)
 	.align	16
 1:
 	movl	(%rdx), %eax
-	decq	%r8
 	movl	%eax, (%rcx)
 	leaq	4(%rcx), %rcx
+	decq	%r8
+	jnz	1b
+	ret
+
+/*
+ * void bus_space_read_multi_8(bus_space_tag_t tag, bus_space_handle_t bsh,
+ *    bus_size_t offset, uint64_t *addr, size_t count);
+ */
+NENTRY(bus_space_read_multi_8)
+	leaq	(%rsi,%rdx,1), %rdx
+	testl	%edi, %edi
+	je	.Ldopanic
+	.align	16
+1:
+	movq	(%rdx), %rax
+	movq	%rax, (%rcx)
+	leaq	8(%rcx), %rcx
+	decq	%r8
 	jnz	1b
 	ret
 
 STRONG_ALIAS(bus_space_read_multi_stream_1,bus_space_read_multi_1)
 STRONG_ALIAS(bus_space_read_multi_stream_2,bus_space_read_multi_2)
 STRONG_ALIAS(bus_space_read_multi_stream_4,bus_space_read_multi_4)
+STRONG_ALIAS(bus_space_read_multi_stream_8,bus_space_read_multi_8)
 
 /*
  * void bus_space_write_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint8_t *addr, size_t count);
  */
 NENTRY(bus_space_write_multi_1)
-	testl	%edi, %edi
 	leaq	(%rsi,%rdx,1), %rdx
+	testl	%edi, %edi
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -231,9 +271,9 @@ NENTRY(bus_space_write_multi_1)
 	.align	16
 1:
 	movb	(%rcx), %al
-	decq	%r8
 	movb	%al, (%rdx)
 	leaq	1(%rcx), %rcx
+	decq	%r8
 	jnz	1b
 	ret
 
@@ -242,8 +282,8 @@ NENTRY(bus_space_write_multi_1)
  *    bus_size_t offset, const uint16_t *addr, size_t count);
  */
 NENTRY(bus_space_write_multi_2)
-	testl	%edi, %edi
 	leaq	(%rsi,%rdx,1), %rdx
+	testl	%edi, %edi
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -253,9 +293,9 @@ NENTRY(bus_space_write_multi_2)
 	.align	16
 1:
 	movw	(%rcx), %ax
-	decq	%r8
 	movw	%ax, (%rdx)
 	leaq	2(%rcx), %rcx
+	decq	%r8
 	jnz	1b
 	ret
 
@@ -264,8 +304,8 @@ NENTRY(bus_space_write_multi_2)
  *    bus_size_t offset, const uint32_t *addr, size_t count);
  */
 NENTRY(bus_space_write_multi_4)
-	testl	%edi, %edi
 	leaq	(%rsi,%rdx,1), %rdx
+	testl	%edi, %edi
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -275,15 +315,33 @@ NENTRY(bus_space_write_multi_4)
 	.align	16
 1:
 	movl	(%rcx), %eax
-	decq	%r8
 	movl	%eax, (%rdx)
 	leaq	4(%rcx), %rcx
+	decq	%r8
+	jnz	1b
+	ret
+
+/*
+ * void bus_space_write_multi_8(bus_space_tag_t tag, bus_space_handle_t bsh,
+ *    bus_size_t offset, const uint64_t *addr, size_t count);
+ */
+NENTRY(bus_space_write_multi_8)
+	leaq	(%rsi,%rdx,1), %rdx
+	testl	%edi, %edi
+	je	.Ldopanic
+	.align	16
+1:
+	movq	(%rcx), %rax
+	movq	%rax, (%rdx)
+	leaq	8(%rcx), %rcx
+	decq	%r8
 	jnz	1b
 	ret
 
 STRONG_ALIAS(bus_space_write_multi_stream_1,bus_space_write_multi_1)
 STRONG_ALIAS(bus_space_write_multi_stream_2,bus_space_write_multi_2)
 STRONG_ALIAS(bus_space_write_multi_stream_4,bus_space_write_multi_4)
+STRONG_ALIAS(bus_space_write_multi_stream_8,bus_space_write_multi_8)
 
 /*
  * void bus_space_read_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -292,7 +350,6 @@ STRONG_ALIAS(bus_space_write_multi_stream_4,bus_space_write_multi_4)
 NENTRY(bus_space_read_region_1)
 	testl	%edi, %edi
 	je	2f
-1:
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -317,7 +374,6 @@ NENTRY(bus_space_read_region_1)
 NENTRY(bus_space_read_region_2)
 	testl	%edi, %edi
 	je	2f
-1:
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -342,7 +398,6 @@ NENTRY(bus_space_read_region_2)
 NENTRY(bus_space_read_region_4)
 	testl	%edi, %edi
 	je	2f
-1:
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -360,9 +415,24 @@ NENTRY(bus_space_read_region_4)
 	jnz	3b
 	ret
 
+/*
+ * void bus_space_read_region_8(bus_space_tag_t tag, bus_space_handle_t bsh,
+ *    bus_size_t offset, uint64_t *addr, size_t count);
+ */
+NENTRY(bus_space_read_region_8)
+	testl	%edi, %edi
+	je	.Ldopanic
+	addq	%rdx, %rsi
+	movq	%rcx, %rdi
+	movq	%r8, %rcx
+	rep
+	movsq	%ds:(%rsi), %es:(%rdi)
+	ret
+
 STRONG_ALIAS(bus_space_read_region_stream_1,bus_space_read_region_1)
 STRONG_ALIAS(bus_space_read_region_stream_2,bus_space_read_region_2)
 STRONG_ALIAS(bus_space_read_region_stream_4,bus_space_read_region_4)
+STRONG_ALIAS(bus_space_read_region_stream_8,bus_space_read_region_8)
 
 /*
  * void bus_space_write_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
@@ -371,7 +441,6 @@ STRONG_ALIAS(bus_space_read_region_stream_4,bus_space_read_region_4)
 NENTRY(bus_space_write_region_1)
 	testl	%edi, %edi
 	je	2f
-1:
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -396,7 +465,6 @@ NENTRY(bus_space_write_region_1)
 NENTRY(bus_space_write_region_2)
 	testl	%edi, %edi
 	je	2f
-1:
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -421,7 +489,6 @@ NENTRY(bus_space_write_region_2)
 NENTRY(bus_space_write_region_4)
 	testl	%edi, %edi
 	je	2f
-1:
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -439,6 +506,21 @@ NENTRY(bus_space_write_region_4)
 	jnz	3b
 	ret
 
+/*
+ * void bus_space_write_region_8(bus_space_tag_t tag, bus_space_handle_t bsh,
+ *    bus_size_t offset, const uint64_t *addr, size_t count);
+ */
+NENTRY(bus_space_write_region_8)
+	testl	%edi, %edi
+	je	.Ldopanic
+	leaq	(%rdx,%rsi,1), %rdi
+	movq	%rcx, %rsi
+	movq	%r8, %rcx
+	rep
+	movsq	%ds:(%rsi), %es:(%rdi)
+	ret
+
 STRONG_ALIAS(bus_space_write_region_stream_1,bus_space_write_region_1)
 STRONG_ALIAS(bus_space_write_region_stream_2,bus_space_write_region_2)
 STRONG_ALIAS(bus_space_write_region_stream_4,bus_space_write_region_4)
+STRONG_ALIAS(bus_space_write_region_stream_8,bus_space_write_region_8)

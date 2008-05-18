@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_rtprio.h,v 1.3 1998/01/05 17:51:28 perry Exp $	*/
+/*	$NetBSD: freebsd_rtprio.h,v 1.3.148.1 2008/05/18 12:33:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, Henrik Vestergaard Draboel
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by (name).
+ *	This product includes software developed by Henrik Vestergaard Draboel.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *

@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.144 2007/12/05 03:46:34 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.144.6.1 2008/05/18 12:36:05 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -19,13 +19,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -71,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.144 2007/12/05 03:46:34 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.144.6.1 2008/05/18 12:36:05 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -310,6 +303,7 @@ cleanuppeer(void)
 		anonftp = 0;
 	data = -1;
 	epsv4bad = 0;
+	epsv6bad = 0;
 	if (username)
 		free(username);
 	username = NULL;
@@ -871,10 +865,6 @@ fileindir(const char *file, const char *dir)
 	if (realdir[0] != '/')		/* relative result is ok */
 		return 1;
 	dirlen = strlen(dir);
-#if 0
-printf("file %s parent %s realdir %s dir %s [%d]\n",
-    file, parentdir, realdir, dir, dirlen);
-#endif
 	if (strncmp(realdir, dir, dirlen) == 0 &&
 	    (realdir[dirlen] == '/' || realdir[dirlen] == '\0'))
 		return 1;
@@ -1214,39 +1204,6 @@ formatbuf(char *buf, size_t len, const char *src)
 }
 
 /*
- * Parse `port' into a TCP port number, defaulting to `defport' if `port' is
- * an unknown service name. If defport != -1, print a warning upon bad parse.
- */
-int
-parseport(const char *port, int defport)
-{
-	int	 rv;
-	long	 nport;
-	char	*p, *ep;
-
-	p = ftp_strdup(port);
-	nport = strtol(p, &ep, 10);
-	if (*ep != '\0' && ep == p) {
-		struct servent	*svp;
-
-		svp = getservbyname(port, "tcp");
-		if (svp == NULL) {
- badparseport:
-			if (defport != -1)
-				warnx("Unknown port `%s', using port %d",
-				    port, defport);
-			rv = defport;
-		} else
-			rv = ntohs(svp->s_port);
-	} else if (nport < 1 || nport > MAX_IN_PORT_T || *ep != '\0')
-		goto badparseport;
-	else
-		rv = nport;
-	free(p);
-	return (rv);
-}
-
-/*
  * Determine if given string is an IPv6 address or not.
  * Return 1 for yes, 0 for no
  */
@@ -1340,11 +1297,15 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 	struct timeval	endtime, now, td;
 	struct pollfd	pfd[1];
 	char		hname[NI_MAXHOST];
+	char		sname[NI_MAXSERV];
 
 	setupsockbufsize(sock);
 	if (getnameinfo(name, namelen,
-	    hname, sizeof(hname), NULL, 0, NI_NUMERICHOST) != 0)
+	    hname, sizeof(hname), sname, sizeof(sname),
+	    NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
 		strlcpy(hname, "?", sizeof(hname));
+		strlcpy(sname, "?", sizeof(sname));
+	}
 
 	if (bindai != NULL) {			/* bind to specific addr */
 		struct addrinfo *ai;
@@ -1371,14 +1332,14 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 
 						/* save current socket flags */
 	if ((flags = fcntl(sock, F_GETFL, 0)) == -1) {
-		warn("Can't %s socket flags for connect to `%s'",
-		    "save", hname);
+		warn("Can't %s socket flags for connect to `%s:%s'",
+		    "save", hname, sname);
 		return -1;
 	}
 						/* set non-blocking connect */
 	if (fcntl(sock, F_SETFL, flags | O_NONBLOCK) == -1) {
-		warn("Can't set socket non-blocking for connect to `%s'",
-		    hname);
+		warn("Can't set socket non-blocking for connect to `%s:%s'",
+		    hname, sname);
 		return -1;
 	}
 
@@ -1396,7 +1357,7 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 	if (rv == -1) {				/* connection error */
 		if (errno != EINPROGRESS) {	/* error isn't "please wait" */
  connecterror:
-			warn("Can't connect to `%s'", hname);
+			warn("Can't connect to `%s:%s'", hname, sname);
 			return -1;
 		}
 
@@ -1441,8 +1402,8 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen)
 
 	if (fcntl(sock, F_SETFL, flags) == -1) {
 						/* restore socket flags */
-		warn("Can't %s socket flags for connect to `%s'",
-		    "restore", hname);
+		warn("Can't %s socket flags for connect to `%s:%s'",
+		    "restore", hname, sname);
 		return -1;
 	}
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbus.c,v 1.7 2007/10/17 19:56:52 garbled Exp $	*/
+/*	$NetBSD: pnpbus.c,v 1.7.18.1 2008/05/18 12:32:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.7 2007/10/17 19:56:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbus.c,v 1.7.18.1 2008/05/18 12:32:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +68,11 @@ extern struct cfdriver pnpbus_cd;
 static int
 pnpbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+	struct pnpbus_attach_args *paa = aux;
+
+	if (paa->paa_name != NULL && strcmp(paa->paa_name, "pnpbus") == 0)
+		return 1;
+	return 0;
 }
 
 static void
@@ -491,7 +488,7 @@ pnpbus_print(void *args, const char *name)
  * Set up an interrupt handler to start being called.
  */
 void *
-pnpbus_intr_establish(int idx, int level, int (*ih_fun)(void *),
+pnpbus_intr_establish(int idx, int level, int tover, int (*ih_fun)(void *),
     void *ih_arg, struct pnpresources *r)
 {
 	struct pnpbus_irq *irq;
@@ -506,6 +503,8 @@ pnpbus_intr_establish(int idx, int level, int (*ih_fun)(void *),
 
 	irqnum = ffs(irq->mask) - 1;
 	type = (irq->flags & 0x0c) ? IST_LEVEL : IST_EDGE;
+	if (tover != IST_PNP)
+		type = tover;
 
 	return (void *)intr_establish(irqnum, type, level, ih_fun, ih_arg);
 }

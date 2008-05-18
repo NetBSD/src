@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.43 2008/04/08 12:07:27 cegger Exp $ */
+/* $NetBSD: pckbc.c,v 1.43.2.1 2008/05/18 12:33:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.43 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.43.2.1 2008/05/18 12:33:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,7 @@ static struct pckbport_accessops const pckbc_ops = {
 #define	KBD_DELAY	DELAY(8)
 
 static inline int
-pckbc_wait_output(iot, ioh_c)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh_c;
+pckbc_wait_output(bus_space_tag_t iot, bus_space_handle_t ioh_c)
 {
 	u_int i;
 
@@ -117,10 +115,7 @@ pckbc_wait_output(iot, ioh_c)
 }
 
 int
-pckbc_send_cmd(iot, ioh_c, val)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh_c;
-	u_char val;
+pckbc_send_cmd(bus_space_tag_t iot, bus_space_handle_t ioh_c, u_char val)
 {
 	if (!pckbc_wait_output(iot, ioh_c))
 		return (0);
@@ -134,9 +129,7 @@ pckbc_send_cmd(iot, ioh_c, val)
  * This is not canonical way to handle polling input.
  */
 int
-pckbc_poll_data1(pt, slot)
-	void *pt;
-	pckbc_slot_t slot;
+pckbc_poll_data1(void *pt, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = pt;
 	struct pckbc_slotdata *q = t->t_slotdata[slot];
@@ -190,8 +183,7 @@ pckbc_poll_data1(pt, slot)
  * Get the current command byte.
  */
 static int
-pckbc_get8042cmd(t)
-	struct pckbc_internal *t;
+pckbc_get8042cmd(struct pckbc_internal *t)
 {
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh_c = t->t_ioh_c;
@@ -210,8 +202,7 @@ pckbc_get8042cmd(t)
  * Pass command byte to keyboard controller (8042).
  */
 static int
-pckbc_put8042cmd(t)
-	struct pckbc_internal *t;
+pckbc_put8042cmd(struct pckbc_internal *t)
 {
 	bus_space_tag_t iot = t->t_iot;
 	bus_space_handle_t ioh_d = t->t_ioh_d;
@@ -226,10 +217,7 @@ pckbc_put8042cmd(t)
 }
 
 static int
-pckbc_send_devcmd(pt, slot, val)
-	void *pt;
-	pckbc_slot_t slot;
-	u_char val;
+pckbc_send_devcmd(void *pt, pckbc_slot_t slot, u_char val)
 {
 	struct pckbc_internal *t = pt;
 	bus_space_tag_t iot = t->t_iot;
@@ -247,9 +235,7 @@ pckbc_send_devcmd(pt, slot, val)
 }
 
 int
-pckbc_is_console(iot, addr)
-	bus_space_tag_t iot;
-	bus_addr_t addr;
+pckbc_is_console(bus_space_tag_t iot, bus_addr_t addr)
 {
 	if (pckbc_console && !pckbc_console_attached &&
 	    pckbc_consdata.t_iot == iot &&
@@ -259,9 +245,7 @@ pckbc_is_console(iot, addr)
 }
 
 static int
-pckbc_attach_slot(sc, slot)
-	struct pckbc_softc *sc;
-	pckbc_slot_t slot;
+pckbc_attach_slot(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 	struct pckbc_internal *t = sc->id;
 	struct pckbc_attach_args pa;
@@ -300,8 +284,7 @@ pckbc_attach_slot(sc, slot)
 }
 
 void
-pckbc_attach(sc)
-	struct pckbc_softc *sc;
+pckbc_attach(struct pckbc_softc *sc)
 {
 	struct pckbc_internal *t;
 	bus_space_tag_t iot;
@@ -402,8 +385,7 @@ nomouse:
 }
 
 static void
-pckbc_init_slotdata(q)
-	struct pckbc_slotdata *q;
+pckbc_init_slotdata(struct pckbc_slotdata *q)
 {
 
 	q->polling = 0;
@@ -414,10 +396,7 @@ pckbc_init_slotdata(q)
  * return nonzero on success
  */
 static int
-pckbc_xt_translation(self, slot, on)
-	void *self;
-	pckbc_slot_t slot;
-	int on;
+pckbc_xt_translation(void *self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = self;
 	int ison;
@@ -459,10 +438,7 @@ static const struct pckbc_portcmd {
 };
 
 void
-pckbc_slot_enable(self, slot, on)
-	void *self;
-	pckbc_slot_t slot;
-	int on;
+pckbc_slot_enable(void *self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	const struct pckbc_portcmd *cmd;
@@ -475,10 +451,7 @@ pckbc_slot_enable(self, slot, on)
 }
 
 static void
-pckbc_set_poll(self, slot, on)
-	void *self;
-	pckbc_slot_t slot;
-	int on;
+pckbc_set_poll(void *self, pckbc_slot_t slot, int on)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 
@@ -505,9 +478,7 @@ pckbc_set_poll(self, slot, on)
 }
 
 static void
-pckbc_intr_establish(pt, slot)
-	void *pt;
-	pckbport_slot_t slot;
+pckbc_intr_establish(void *pt, pckbport_slot_t slot)
 {
 	struct pckbc_internal *t = pt;
 
@@ -515,8 +486,7 @@ pckbc_intr_establish(pt, slot)
 }
 
 int
-pckbcintr_hard(vsc)
-	void *vsc;
+pckbcintr_hard(void *vsc)
 {
 	struct pckbc_softc *sc = (struct pckbc_softc *)vsc;
 	struct pckbc_internal *t = sc->id;
@@ -578,8 +548,7 @@ pckbcintr_hard(vsc)
 }
 
 void
-pckbcintr_soft(vsc)
-	void *vsc;
+pckbcintr_soft(void *vsc)
 {
 	struct pckbc_softc *sc = vsc;
 	struct pckbc_internal *t = sc->id;
@@ -608,8 +577,7 @@ pckbcintr_soft(vsc)
 }
 
 int
-pckbcintr(vsc)
-	void *vsc;
+pckbcintr(void *vsc)
 {
 	struct pckbc_softc *sc = (struct pckbc_softc *)vsc;
 	struct pckbc_internal *t = sc->id;
@@ -643,11 +611,8 @@ pckbcintr(vsc)
 }
 
 int
-pckbc_cnattach(iot, addr, cmd_offset, slot)
-	bus_space_tag_t iot;
-	bus_addr_t addr;
-	bus_size_t cmd_offset;
-	pckbc_slot_t slot;
+pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr,
+	bus_size_t cmd_offset, pckbc_slot_t slot)
 {
 	bus_space_handle_t ioh_d, ioh_c;
 #ifdef PCKBC_CNATTACH_SELFTEST

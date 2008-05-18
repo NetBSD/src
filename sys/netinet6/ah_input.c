@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.55 2007/10/19 12:16:46 ad Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.55.18.1 2008/05/18 12:35:34 yamt Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.55 2007/10/19 12:16:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.55.18.1 2008/05/18 12:35:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.55 2007/10/19 12:16:46 ad Exp $");
 #endif
 
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netinet6/ah.h>
 #include <netkey/key.h>
 #include <netkey/keydb.h>
@@ -87,6 +88,13 @@ __KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.55 2007/10/19 12:16:46 ad Exp $");
 /*#define IPLEN_FLIPPED*/
 
 #ifdef INET
+void
+ah4_init(void)
+{
+
+	ipsec4_init();
+}
+
 void
 #if __STDC__
 ah4_input(struct mbuf *m, ...)
@@ -134,7 +142,7 @@ ah4_input(struct mbuf *m, va_alist)
 	if (ah == NULL) {
 		ipseclog((LOG_DEBUG, "IPv4 AH input: can't pullup;"
 			"dropping the packet for simplicity\n"));
-		ipsecstat.in_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
 	nxt = ah->ah_nxt;
@@ -150,7 +158,7 @@ ah4_input(struct mbuf *m, va_alist)
 		ipseclog((LOG_WARNING,
 		    "IPv4 AH input: no key association found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
-		ipsecstat.in_nosa++;
+		IPSEC_STATINC(IPSEC_STAT_IN_NOSA);
 		goto fail;
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
@@ -160,7 +168,7 @@ ah4_input(struct mbuf *m, va_alist)
 		ipseclog((LOG_DEBUG,
 		    "IPv4 AH input: non-mature/dying SA found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
-		ipsecstat.in_badspi++;
+		IPSEC_STATINC(IPSEC_STAT_IN_BADSPI);
 		goto fail;
 	}
 
@@ -169,7 +177,7 @@ ah4_input(struct mbuf *m, va_alist)
 		ipseclog((LOG_DEBUG, "IPv4 AH input: "
 		    "unsupported authentication algorithm for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
-		ipsecstat.in_badspi++;
+		IPSEC_STATINC(IPSEC_STAT_IN_BADSPI);
 		goto fail;
 	}
 
@@ -210,7 +218,7 @@ ah4_input(struct mbuf *m, va_alist)
 		    "(%lu, should be at least %lu): %s\n",
 		    (u_long)siz1, (u_long)siz,
 		    ipsec4_logpacketstr(ip, spi)));
-		ipsecstat.in_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
 	if ((ah->ah_len << 2) - sizoff != siz1) {
@@ -218,13 +226,13 @@ ah4_input(struct mbuf *m, va_alist)
 		    "(%d should be %lu): %s\n",
 		    (ah->ah_len << 2) - sizoff, (u_long)siz1,
 		    ipsec4_logpacketstr(ip, spi)));
-		ipsecstat.in_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
 	if (siz1 > sizeof(cksum)) {
 		ipseclog((LOG_NOTICE, "sum length too large: %s\n",
 		    ipsec4_logpacketstr(ip, spi)));
-		ipsecstat.in_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
 
@@ -232,7 +240,7 @@ ah4_input(struct mbuf *m, va_alist)
 		sizeof(struct ah) + sizoff + siz1);
 	if (ah == NULL) {
 		ipseclog((LOG_DEBUG, "IPv4 AH input: can't pullup\n"));
-		ipsecstat.in_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
     }
@@ -244,7 +252,7 @@ ah4_input(struct mbuf *m, va_alist)
 		if (ipsec_chkreplay(ntohl(((struct newah *)ah)->ah_seq), sav))
 			; /* okey */
 		else {
-			ipsecstat.in_ahreplay++;
+			IPSEC_STATINC(IPSEC_STAT_IN_AHREPLAY);
 			ipseclog((LOG_WARNING,
 			    "replay packet in IPv4 AH input: %s %s\n",
 			    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
@@ -267,10 +275,10 @@ ah4_input(struct mbuf *m, va_alist)
 	ip->ip_off = htons(ip->ip_off);
 #endif
 	if (ah4_calccksum(m, cksum, siz1, algo, sav)) {
-		ipsecstat.in_inval++;
+		IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
-	ipsecstat.in_ahhist[sav->alg_auth]++;
+	IPSEC_STATINC(IPSEC_STAT_IN_AHHIST + sav->alg_auth);
 #if 0
 	/*
 	 * flip them back.
@@ -295,7 +303,7 @@ ah4_input(struct mbuf *m, va_alist)
 		ipseclog((LOG_WARNING,
 		    "checksum mismatch in IPv4 AH input: %s %s\n",
 		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
-		ipsecstat.in_ahauthfail++;
+		IPSEC_STATINC(IPSEC_STAT_IN_AHAUTHFAIL);
 		goto fail;
 	}
     }
@@ -320,7 +328,7 @@ ah4_input(struct mbuf *m, va_alist)
 			if (!m) {
 				ipseclog((LOG_DEBUG,
 				    "IPv4 AH input: can't pullup\n"));
-				ipsecstat.in_inval++;
+				IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 				goto fail;
 			}
 		}
@@ -345,12 +353,12 @@ ah4_input(struct mbuf *m, va_alist)
 		ipseclog((LOG_DEBUG,
 		    "IPv4 AH input: authentication succeess\n"));
 #endif
-		ipsecstat.in_ahauthsucc++;
+		IPSEC_STATINC(IPSEC_STAT_IN_AHAUTHSUCC);
 	} else {
 		ipseclog((LOG_WARNING,
 		    "authentication failed in IPv4 AH input: %s %s\n",
 		    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
-		ipsecstat.in_ahauthfail++;
+		IPSEC_STATINC(IPSEC_STAT_IN_AHAUTHFAIL);
 		goto fail;
 	}
 
@@ -359,7 +367,7 @@ ah4_input(struct mbuf *m, va_alist)
 	 */
 	if ((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay) {
 		if (ipsec_updatereplay(ntohl(((struct newah *)ah)->ah_seq), sav)) {
-			ipsecstat.in_ahreplay++;
+			IPSEC_STATINC(IPSEC_STAT_IN_AHREPLAY);
 			goto fail;
 		}
 	}
@@ -387,7 +395,7 @@ ah4_input(struct mbuf *m, va_alist)
 		if (m->m_len < sizeof(*ip)) {
 			m = m_pullup(m, sizeof(*ip));
 			if (!m) {
-				ipsecstat.in_inval++;
+				IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 				goto fail;
 			}
 		}
@@ -399,20 +407,20 @@ ah4_input(struct mbuf *m, va_alist)
 			ipseclog((LOG_NOTICE, "ipsec tunnel address mismatch "
 			    "in IPv4 AH input: %s %s\n",
 			    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
-			ipsecstat.in_inval++;
+			IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 			goto fail;
 		}
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
 		    ipsec_addhist(m, IPPROTO_IPV4, 0) != 0) {
-			ipsecstat.in_nomem++;
+			IPSEC_STATINC(IPSEC_STAT_IN_NOMEM);
 			goto fail;
 		}
 
 		s = splnet();
 		if (IF_QFULL(&ipintrq)) {
-			ipsecstat.in_inval++;
+			IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 			splx(s);
 			goto fail;
 		}
@@ -457,7 +465,7 @@ ah4_input(struct mbuf *m, va_alist)
 		if (m->m_len < sizeof(*ip)) {
 			m = m_pullup(m, sizeof(*ip));
 			if (m == NULL) {
-				ipsecstat.in_inval++;
+				IPSEC_STATINC(IPSEC_STAT_IN_INVAL);
 				goto fail;
 			}
 		}
@@ -472,14 +480,14 @@ ah4_input(struct mbuf *m, va_alist)
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0) {
-			ipsecstat.in_nomem++;
+			IPSEC_STATINC(IPSEC_STAT_IN_NOMEM);
 			goto fail;
 		}
 
 		if (nxt != IPPROTO_DONE) {
 			if ((inetsw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0 &&
 			    ipsec4_in_reject(m, NULL)) {
-				ipsecstat.in_polvio++;
+				IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 				goto fail;
 			}
 			(*inetsw[ip_protox[nxt]].pr_input)(m, off, nxt);
@@ -493,7 +501,7 @@ ah4_input(struct mbuf *m, va_alist)
 			printf("DP ah4_input call free SA:%p\n", sav));
 		key_freesav(sav);
 	}
-	ipsecstat.in_success++;
+	IPSEC_STATINC(IPSEC_STAT_IN_SUCCESS);
 	return;
 
 fail:
@@ -560,6 +568,13 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 #endif /* INET */
 
 #ifdef INET6
+void
+ah6_init(void)
+{
+
+	ipsec6_init();
+}
+
 int
 ah6_input(struct mbuf **mp, int *offp, int proto)
 {
@@ -580,7 +595,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	IP6_EXTHDR_GET(ah, struct ah *, m, off, sizeof(struct newah));
 	if (ah == NULL) {
 		ipseclog((LOG_DEBUG, "IPv6 AH input: can't pullup\n"));
-		ipsec6stat.in_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 		return IPPROTO_DONE;
 	}
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -592,7 +607,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	if (ntohs(ip6->ip6_plen) == 0) {
 		ipseclog((LOG_ERR, "IPv6 AH input: "
 		    "AH with IPv6 jumbogram is not supported.\n"));
-		ipsec6stat.in_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
 
@@ -602,7 +617,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		ipseclog((LOG_WARNING,
 		    "IPv6 AH input: no key association found for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
-		ipsec6stat.in_nosa++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_NOSA);
 		goto fail;
 	}
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
@@ -612,7 +627,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		ipseclog((LOG_DEBUG,
 		    "IPv6 AH input: non-mature/dying SA found for spi %u; ",
 		    (u_int32_t)ntohl(spi)));
-		ipsec6stat.in_badspi++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_BADSPI);
 		goto fail;
 	}
 
@@ -621,7 +636,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		ipseclog((LOG_DEBUG, "IPv6 AH input: "
 		    "unsupported authentication algorithm for spi %u\n",
 		    (u_int32_t)ntohl(spi)));
-		ipsec6stat.in_badspi++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_BADSPI);
 		goto fail;
 	}
 
@@ -645,7 +660,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		    "(%lu, should be at least %lu): %s\n",
 		    (u_long)siz1, (u_long)siz,
 		    ipsec6_logpacketstr(ip6, spi)));
-		ipsec6stat.in_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
 	if ((ah->ah_len << 2) - sizoff != siz1) {
@@ -653,13 +668,13 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		    "(%d should be %lu): %s\n",
 		    (ah->ah_len << 2) - sizoff, (u_long)siz1,
 		    ipsec6_logpacketstr(ip6, spi)));
-		ipsec6stat.in_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
 	if (siz1 > sizeof(cksum)) {
 		ipseclog((LOG_NOTICE, "sum length too large: %s\n",
 		    ipsec6_logpacketstr(ip6, spi)));
-		ipsec6stat.in_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
 
@@ -667,7 +682,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		sizeof(struct ah) + sizoff + siz1);
 	if (ah == NULL) {
 		ipseclog((LOG_NOTICE, "couldn't pullup gather IPv6 AH checksum part"));
-		ipsec6stat.in_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 		m = NULL;
 		goto fail;
 	}
@@ -680,7 +695,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		if (ipsec_chkreplay(ntohl(((struct newah *)ah)->ah_seq), sav))
 			; /* okey */
 		else {
-			ipsec6stat.in_ahreplay++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_AHREPLAY);
 			ipseclog((LOG_WARNING,
 			    "replay packet in IPv6 AH input: %s %s\n",
 			    ipsec6_logpacketstr(ip6, spi),
@@ -695,10 +710,10 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	 */
 
 	if (ah6_calccksum(m, cksum, siz1, algo, sav)) {
-		ipsec6stat.in_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 		goto fail;
 	}
-	ipsec6stat.in_ahhist[sav->alg_auth]++;
+	IPSEC6_STATINC(IPSEC_STAT_IN_AHHIST + sav->alg_auth);
 
     {
 	void *sumpos = NULL;
@@ -715,7 +730,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		ipseclog((LOG_WARNING,
 		    "checksum mismatch in IPv6 AH input: %s %s\n",
 		    ipsec6_logpacketstr(ip6, spi), ipsec_logsastr(sav)));
-		ipsec6stat.in_ahauthfail++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_AHAUTHFAIL);
 		goto fail;
 	}
     }
@@ -757,12 +772,12 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		ipseclog((LOG_DEBUG,
 		    "IPv6 AH input: authentication succeess\n"));
 #endif
-		ipsec6stat.in_ahauthsucc++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_AHAUTHSUCC);
 	} else {
 		ipseclog((LOG_WARNING,
 		    "authentication failed in IPv6 AH input: %s %s\n",
 		    ipsec6_logpacketstr(ip6, spi), ipsec_logsastr(sav)));
-		ipsec6stat.in_ahauthfail++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_AHAUTHFAIL);
 		goto fail;
 	}
 
@@ -771,7 +786,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 	 */
 	if ((sav->flags & SADB_X_EXT_OLD) == 0 && sav->replay) {
 		if (ipsec_updatereplay(ntohl(((struct newah *)ah)->ah_seq), sav)) {
-			ipsec6stat.in_ahreplay++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_AHREPLAY);
 			goto fail;
 		}
 	}
@@ -799,7 +814,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 		if (m->m_len < sizeof(*ip6)) {
 			m = m_pullup(m, sizeof(*ip6));
 			if (!m) {
-				ipsec6stat.in_inval++;
+				IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 				goto fail;
 			}
 		}
@@ -812,20 +827,20 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 			    "in IPv6 AH input: %s %s\n",
 			    ipsec6_logpacketstr(ip6, spi),
 			    ipsec_logsastr(sav)));
-			ipsec6stat.in_inval++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 			goto fail;
 		}
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0 ||
 		    ipsec_addhist(m, IPPROTO_IPV6, 0) != 0) {
-			ipsec6stat.in_nomem++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_NOMEM);
 			goto fail;
 		}
 
 		s = splnet();
 		if (IF_QFULL(&ip6intrq)) {
-			ipsec6stat.in_inval++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 			splx(s);
 			goto fail;
 		}
@@ -881,7 +896,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 
 		key_sa_recordxfer(sav, m);
 		if (ipsec_addhist(m, IPPROTO_AH, spi) != 0) {
-			ipsec6stat.in_nomem++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_NOMEM);
 			goto fail;
 		}
 	}
@@ -894,7 +909,7 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 			printf("DP ah6_input call free SA:%p\n", sav));
 		key_freesav(sav);
 	}
-	ipsec6stat.in_success++;
+	IPSEC6_STATINC(IPSEC_STAT_IN_SUCCESS);
 	return nxt;
 
 fail:
@@ -908,7 +923,7 @@ fail:
 	return IPPROTO_DONE;
 }
 
-void
+void *
 ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newah *ahp;
@@ -922,9 +937,9 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -946,7 +961,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(ah))
-			return;
+			return NULL;
 
 		if (m->m_len < off + sizeof(ah)) {
 			/*
@@ -994,5 +1009,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	} else {
 		/* we normally notify any pcb here */
 	}
+
+	return NULL;
 }
 #endif /* INET6 */

@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.h,v 1.5 2005/12/11 12:21:15 christos Exp $ */
+/* $NetBSD: cardbus_exrom.h,v 1.5.72.1 2008/05/18 12:33:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -18,9 +18,6 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

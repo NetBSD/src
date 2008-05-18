@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.145 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.145.2.1 2008/05/18 12:35:34 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.145 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.145.2.1 2008/05/18 12:35:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -455,7 +455,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	struct icmp6_hdr *icmp6, *nicmp6;
 	int off = *offp;
 	int icmp6len = m->m_pkthdr.len - *offp;
-	int code, sum, noff;
+	int code, sum, noff, i;
 
 #define ICMP6_MAXLEN (sizeof(*nip6) + sizeof(*nicmp6) + 4)
 	KASSERT(ICMP6_MAXLEN < MCLBYTES);
@@ -466,13 +466,19 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	 * that not corrupted and of at least minimum length
 	 */
 
-	ip6 = mtod(m, struct ip6_hdr *);
 	if (icmp6len < sizeof(struct icmp6_hdr)) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
 		goto freeit;
 	}
 
+	i = off + sizeof(*icmp6);
+	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == 0) {
+		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
+		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
+		goto freeit;
+	}
+	ip6 = mtod(m, struct ip6_hdr *);
 	/*
 	 * calculate the checksum
 	 */
@@ -2745,36 +2751,11 @@ sysctl_net_inet6_icmp6_nd6(SYSCTLFN_ARGS)
 	    __UNCONST(newp), newlen));
 }
 
-static void
-icmp6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *icmp6sc = v1;
-	uint64_t *icmp6s = v2;
-	u_int i;
-
-	for (i = 0; i < ICMP6_NSTATS; i++)
-		icmp6s[i] += icmp6sc[i];
-}
-
-static void
-icmp6stat_convert_to_user(uint64_t *icmp6s)
-{
-
-	memset(icmp6s, 0, sizeof(uint64_t) * ICMP6_NSTATS);
-	percpu_foreach(icmp6stat_percpu, icmp6stat_convert_to_user_cb, icmp6s);
-}
-
 static int
 sysctl_net_inet6_icmp6_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t icmp6s[ICMP6_NSTATS];
 
-	icmp6stat_convert_to_user(icmp6s);
-	node = *rnode;
-	node.sysctl_data = icmp6s;
-	node.sysctl_size = sizeof(icmp6s);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(icmp6stat_percpu, ICMP6_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,

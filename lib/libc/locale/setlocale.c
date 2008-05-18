@@ -1,7 +1,7 @@
-/*	$NetBSD: setlocale.c,v 1.52 2007/09/29 07:55:45 tnozaki Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.52.6.1 2008/05/18 12:30:17 yamt Exp $	*/
 
 /*
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 2008
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.52 2007/09/29 07:55:45 tnozaki Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.52.6.1 2008/05/18 12:30:17 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,10 @@ __RCSID("$NetBSD: setlocale.c,v 1.52 2007/09/29 07:55:45 tnozaki Exp $");
 #else
 #include "ctypeio.h"
 #endif
-#include "timeio.h"
+#include "lcmessages.h"
+#include "lcmonetary.h"
+#include "lcnumeric.h"
+#include "lctime.h"
 
 #ifdef CITRUS
 #include <citrus/citrus_namespace.h>
@@ -265,14 +268,29 @@ revert_to_default(category)
 		break;
 	case LC_TIME:
 		if (_CurrentTimeLocale != &_DefaultTimeLocale) {
-			free((void *)_CurrentTimeLocale);
+			free(__UNCONST(_CurrentTimeLocale));
 			_CurrentTimeLocale = &_DefaultTimeLocale;
 		}
 		break;
 	case LC_MESSAGES:
+		if (_CurrentMessagesLocale != &_DefaultMessagesLocale) {
+			free(__UNCONST(_CurrentMessagesLocale));
+			_CurrentMessagesLocale = &_DefaultMessagesLocale;
+		}
+		break;
 	case LC_COLLATE:
+		break;
 	case LC_MONETARY:
+		if (_CurrentMonetaryLocale != &_DefaultMonetaryLocale) {
+			free(__UNCONST(_CurrentMonetaryLocale));
+			_CurrentMonetaryLocale = &_DefaultMonetaryLocale;
+		}
+		break;
 	case LC_NUMERIC:
+		if (_CurrentNumericLocale != &_DefaultNumericLocale) {
+			free(__UNCONST(_CurrentNumericLocale));
+			_CurrentNumericLocale = &_DefaultNumericLocale;
+		}
 		break;
 	}
 }
@@ -324,6 +342,7 @@ load_locale_sub(category, locname, isspecial)
 		break;
 
 	case LC_MESSAGES:
+#ifdef OLD_NO_LC_MESSAGES
 		/*
 		 * XXX we don't have LC_MESSAGES support yet,
 		 * but catopen may use the value of LC_MESSAGES category.
@@ -339,6 +358,10 @@ load_locale_sub(category, locname, isspecial)
 			if (!S_ISDIR(st.st_mode))
 				return -1;
 		}
+#else
+		if (!__loadmessages(name))
+			return -1;
+#endif
 		break;
 
 	case LC_TIME:
@@ -346,9 +369,15 @@ load_locale_sub(category, locname, isspecial)
 			return -1;
 		break;
 	case LC_COLLATE:
-	case LC_MONETARY:
-	case LC_NUMERIC:
 		return -1;
+	case LC_MONETARY:
+		if (!__loadmonetary(name))
+			return -1;
+		break;
+	case LC_NUMERIC:
+		if (!__loadnumeric(name))
+			return -1;
+		break;
 	}
 
 	return 0;

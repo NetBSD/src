@@ -1,4 +1,4 @@
-/* $NetBSD: arch-powerpc.h,v 1.2 2007/09/23 16:25:28 bouyer Exp $ */
+/* $NetBSD: arch-powerpc.h,v 1.2.30.1 2008/05/18 12:33:05 yamt Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -23,15 +23,19 @@
  * Authors: Hollis Blanchard <hollisb@us.ibm.com>
  */
 
+#include "xen.h"
+
 #ifndef __XEN_PUBLIC_ARCH_PPC_64_H__
 #define __XEN_PUBLIC_ARCH_PPC_64_H__
 
-#define __DEFINE_XEN_GUEST_HANDLE(name, type) \
+#define ___DEFINE_XEN_GUEST_HANDLE(name, type) \
     typedef struct { \
         int __pad[(sizeof (long long) - sizeof (void *)) / sizeof (int)]; \
         type *p; \
     } __attribute__((__aligned__(8))) __guest_handle_ ## name
 
+#define __DEFINE_XEN_GUEST_HANDLE(name, type) \
+    ___DEFINE_XEN_GUEST_HANDLE(name, type)
 #define DEFINE_XEN_GUEST_HANDLE(name) __DEFINE_XEN_GUEST_HANDLE(name, name)
 #define XEN_GUEST_HANDLE(name)        __guest_handle_ ## name
 #define set_xen_guest_handle(hnd, val) \

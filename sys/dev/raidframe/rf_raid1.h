@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.h,v 1.7 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_raid1.h,v 1.7.72.1 2008/05/18 12:34:40 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,30 +33,19 @@
 
 #include <dev/raidframe/raidframevar.h>
 
-int
-rf_ConfigureRAID1(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
-    RF_Config_t * cfgPtr);
-void
-rf_MapSectorRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void
-rf_MapParityRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
-    RF_RowCol_t * col, RF_SectorNum_t * diskSector, int remap);
-void
-rf_IdentifyStripeRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
-    RF_RowCol_t ** diskids);
-void
-rf_MapSIDToPSIDRAID1(RF_RaidLayout_t * layoutPtr,
-    RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
-    RF_ReconUnitNum_t * which_ru);
-void
-rf_RAID1DagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
-    RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
-int
-rf_VerifyParityRAID1(RF_Raid_t * raidPtr, RF_RaidAddr_t raidAddr,
-    RF_PhysDiskAddr_t * parityPDA, int correct_it, RF_RaidAccessFlags_t flags);
-int
-rf_SubmitReconBufferRAID1(RF_ReconBuffer_t * rbuf, int keep_int,
-    int use_committed);
+int rf_ConfigureRAID1(RF_ShutdownList_t **, RF_Raid_t *, RF_Config_t *);
+void rf_MapSectorRAID1(RF_Raid_t *, RF_RaidAddr_t, RF_RowCol_t *, 
+		       RF_SectorNum_t *, int);
+void rf_MapParityRAID1(RF_Raid_t *, RF_RaidAddr_t, RF_RowCol_t *,
+		       RF_SectorNum_t *, int);
+void rf_IdentifyStripeRAID1(RF_Raid_t *, RF_RaidAddr_t, RF_RowCol_t **);
+void rf_MapSIDToPSIDRAID1(RF_RaidLayout_t *, RF_StripeNum_t, RF_StripeNum_t *,
+			  RF_ReconUnitNum_t *);
+void rf_RAID1DagSelect(RF_Raid_t *, RF_IoType_t, RF_AccessStripeMap_t *,
+		       RF_VoidFuncPtr *);
+int rf_VerifyParityRAID1(RF_Raid_t *, RF_RaidAddr_t, RF_PhysDiskAddr_t *,
+			 int, RF_RaidAccessFlags_t);
+int rf_SubmitReconBufferRAID1(RF_ReconBuffer_t *, int, int);
+RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitRAID1(RF_Raid_t *);
 
 #endif				/* !_RF__RF_RAID1_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.28 2007/12/20 23:03:02 dsl Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.28.8.1 2008/05/18 12:33:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.28 2007/12/20 23:03:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.28.8.1 2008/05/18 12:33:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 {
 	struct proc *p = l->l_proc;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	ucp->uc_flags = 0;
 	ucp->uc_link = (uint32_t)(intptr_t)l->l_ctxlink;
@@ -305,9 +305,9 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 		ucp->uc_stack.ss_flags = l->l_sigstk.ss_flags;
 	}
 	ucp->uc_flags |= _UC_STACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext32(l, &ucp->uc_mcontext, &ucp->uc_flags);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 }
 
 /* ARGSUSED */
@@ -320,9 +320,9 @@ netbsd32_getcontext(struct lwp *l, const struct netbsd32_getcontext_args *uap, r
 	struct proc *p = l->l_proc;
 	ucontext32_t uc;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	getucontext32(l, &uc);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return copyout(&uc, SCARG_P32(uap, ucp), sizeof (ucontext32_t));
 }
@@ -333,7 +333,7 @@ setucontext32(struct lwp *l, const ucontext32_t *ucp)
 	struct proc *p = l->l_proc;
 	int error;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	if ((ucp->uc_flags & _UC_SIGMASK) != 0) {
 		error = sigprocmask1(l, SIG_SETMASK, &ucp->uc_sigmask, NULL);
@@ -341,9 +341,9 @@ setucontext32(struct lwp *l, const ucontext32_t *ucp)
 			return error;
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = cpu_setmcontext32(l, &ucp->uc_mcontext, ucp->uc_flags);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (error != 0)
 		return (error);
 
@@ -379,9 +379,9 @@ netbsd32_setcontext(struct lwp *l, const struct netbsd32_setcontext_args *uap, r
 		return (error);
 	if (!(uc.uc_flags & _UC_CPU))
 		return (EINVAL);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = setucontext32(l, &uc);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (error)
 		return (error);
 

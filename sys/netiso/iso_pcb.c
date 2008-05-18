@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.42 2008/01/14 04:17:35 dyoung Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.42.8.1 2008/05/18 12:35:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.42 2008/01/14 04:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.42.8.1 2008/05/18 12:35:40 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -485,23 +485,12 @@ iso_pcbdetach(void *v)
 		    isop, isop->isop_socket, so);
 	}
 #endif
-#ifdef TPCONS
-	if (isop->isop_chan) {
-		struct pklcd *lcp = (struct pklcd *) isop->isop_chan;
-		if (--isop->isop_refcnt > 0)
-			return;
-		if (lcp && lcp->lcd_state == DATA_TRANSFER) {
-			lcp->lcd_upper = 0;
-			lcp->lcd_upnext = 0;
-			pk_disconnect(lcp);
-		}
-		isop->isop_chan = 0;
-	}
-#endif
 	if (so) {		/* in the x.25 domain, we sometimes have no
 				 * socket */
 		so->so_pcb = 0;
+		/* sofree drops the lock */
 		sofree(so);
+		mutex_enter(softnet_lock);
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {

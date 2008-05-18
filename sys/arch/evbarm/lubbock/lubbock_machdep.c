@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.17 2008/01/19 13:11:16 chris Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.17.8.1 2008/05/18 12:31:50 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.17 2008/01/19 13:11:16 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.17.8.1 2008/05/18 12:31:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -442,7 +442,6 @@ initarm(void *arg)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	pv_addr_t kernel_l1pt;
 	paddr_t memstart;
 	psize_t memsize;
 	int led_data = 0;
@@ -934,8 +933,7 @@ initarm(void *arg)
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
 	LEDSTEP();
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 	LEDSTEP();
 
 #ifdef __HAVE_MEMORY_DISK__

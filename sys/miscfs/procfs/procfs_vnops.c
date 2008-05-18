@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.166 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.166.2.1 2008/05/18 12:35:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -112,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.166 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.166.2.1 2008/05/18 12:35:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,10 +322,10 @@ procfs_open(v)
 		 (m) & FWRITE ? KAUTH_REQ_PROCESS_PROCFS_WRITE : \
 		 KAUTH_REQ_PROCESS_PROCFS_READ)
 
-	mutex_enter(&p2->p_mutex);
+	mutex_enter(p2->p_lock);
 	error = kauth_authorize_process(l1->l_cred, KAUTH_PROCESS_PROCFS,
 	    p2, pfs, KAUTH_ARG(M2K(ap->a_mode)), NULL);
-	mutex_exit(&p2->p_mutex);
+	mutex_exit(p2->p_lock);
 	if (error) {
 		procfs_proc_unlock(p2);
 		return (error);
@@ -425,9 +418,9 @@ procfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct pfsnode *pfs = VTOPFS(vp);
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	*ap->a_recycle = (p_find(pfs->pfs_pid, PFIND_LOCKED) == NULL);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	VOP_UNLOCK(vp, 0);
 
@@ -673,11 +666,11 @@ procfs_getattr(v)
 	}
 
 	if (procp != NULL) {
-		mutex_enter(&procp->p_mutex);
+		mutex_enter(procp->p_lock);
 		error = kauth_authorize_process(kauth_cred_get(),
 		    KAUTH_PROCESS_CANSEE, procp,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
-		mutex_exit(&procp->p_mutex);
+		mutex_exit(procp->p_lock);
 		if (error != 0) {
 		    	procfs_proc_unlock(procp);
 		    	if (path != NULL)
@@ -1075,10 +1068,10 @@ procfs_lookup(v)
 			struct lwp *plwp;
 			int found;
 
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			plwp = proc_representative_lwp(p, NULL, 1);
 			lwp_addref(plwp);
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 			found = cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
 			    (pt->pt_valid == NULL
@@ -1215,9 +1208,9 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 	    UIO_MX - offsetof(struct dirent, d_name), "%ld", (long)p->p_pid);
 	d.d_type = DT_DIR;
 
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	error = uiomove(&d, UIO_MX, uiop);
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if (error) {
 		ctxp->error = error;
 		return -1;
@@ -1307,10 +1300,10 @@ procfs_readdir(v)
 		for (pt = &proc_targets[i];
 		     uio->uio_resid >= UIO_MX && i < nproc_targets; pt++, i++) {
 			if (pt->pt_valid) {
-				/* XXX LWP can disappear */
-				mutex_enter(&p->p_smutex);
+				/* XXXSMP LWP can disappear */
+				mutex_enter(p->p_lock);
 				l = proc_representative_lwp(p, NULL, 1);
-				mutex_exit(&p->p_smutex);
+				mutex_exit(p->p_lock);
 				if ((*pt->pt_valid)(l, vp->v_mount) == 0)
 					continue;
 			}

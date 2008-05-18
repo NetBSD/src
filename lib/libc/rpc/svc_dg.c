@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.11 2005/06/09 22:13:17 yamt Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.11.18.1 2008/05/18 12:30:18 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.11 2005/06/09 22:13:17 yamt Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.11.18.1 2008/05/18 12:30:18 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -367,7 +367,7 @@ svc_dg_ops(xprt)
 #define	SPARSENESS 4	/* 75% sparse */
 
 #define	ALLOC(type, size)	\
-	(type *) mem_alloc((sizeof (type) * (size)))
+	mem_alloc((sizeof (type) * (size)))
 
 #define	MEMZERO(addr, type, size)	 \
 	(void) memset((void *) (addr), 0, sizeof (type) * (int) (size))

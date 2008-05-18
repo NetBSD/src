@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.8 2008/01/26 10:46:39 scw Exp $	*/
+/*	$NetBSD: ixp425_if_npe.c,v 1.8.8.1 2008/05/18 12:31:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.8 2008/01/26 10:46:39 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.8.8.1 2008/05/18 12:31:41 yamt Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.

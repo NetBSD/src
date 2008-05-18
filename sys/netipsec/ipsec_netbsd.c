@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.29 2007/10/19 12:16:46 ad Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.29.18.1 2008/05/18 12:35:40 yamt Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.29 2007/10/19 12:16:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.29.18.1 2008/05/18 12:35:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.29 2007/10/19 12:16:46 ad Exp $")
 
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
 #include <netipsec/key.h>
 #include <netipsec/keydb.h>
 #include <netipsec/key_debug.h>
@@ -183,7 +184,7 @@ esp4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 }
 
 #ifdef INET6
-void
+void *
 ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
        const struct newah *ahp;
@@ -196,9 +197,9 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
        if (sa->sa_family != AF_INET6 ||
            sa->sa_len != sizeof(struct sockaddr_in6))
-               return;
+               return NULL;
        if ((unsigned)cmd >= PRC_NCMDS)
-               return;
+               return NULL;
 
        /* if the parameter is from icmp6, decode it. */
        if (d != NULL) {
@@ -220,7 +221,7 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
                /* check if we can safely examine src and dst ports */
                if (m->m_pkthdr.len < off + sizeof(ah))
-                       return;
+                       return NULL;
 
                if (m->m_len < off + sizeof(ah)) {
                        /*
@@ -265,11 +266,12 @@ ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
        } else {
                /* we normally notify any pcb here */
        }
+	   return NULL;
 }
 
 
 
-void
+void *
 esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newesp *espp;
@@ -282,9 +284,9 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -324,7 +326,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 		/* check if we can safely examine src and dst ports */
 		if (m->m_pkthdr.len < off + sizeof(esp))
-			return;
+			return NULL;
 
 		if (m->m_len < off + sizeof(esp)) {
 			/*
@@ -368,6 +370,7 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	} else {
 		/* we normally notify any pcb here */
 	}
+	return NULL;
 }
 #endif /* INET6 */
 
@@ -439,6 +442,41 @@ sysctl_fast_ipsec_test(SYSCTLFN_ARGS)
 }
 #endif
 
+static int
+sysctl_net_inet_fast_ipsec_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(ipsecstat_percpu, IPSEC_NSTATS));
+}
+
+static int
+sysctl_net_inet_ah_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(ahstat_percpu, AH_NSTATS));
+}
+
+static int
+sysctl_net_inet_esp_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(espstat_percpu, ESP_NSTATS));
+}
+
+static int
+sysctl_net_inet_ipcomp_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(ipcompstat_percpu, IPCOMP_NSTATS));
+}
+
+static int
+sysctl_net_inet_ipip_stats(SYSCTLFN_ARGS)
+{
+
+	return (NETSTAT_SYSCTL(ipipstat_percpu, IPIP_NSTATS));
+}
+
 /* XXX will need a different oid at parent */
 SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree setup")
 {
@@ -478,7 +516,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipip_stats", NULL,
-		       NULL, 0, &ipipstat, sizeof(ipipstat),
+		       sysctl_net_inet_ipip_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IPIP,
 		       CTL_CREATE, CTL_EOL);
 
@@ -503,7 +541,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "esp_stats", NULL,
-		       NULL, 0, &espstat, sizeof(espstat),
+		       sysctl_net_inet_esp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_ESP,
 		       CTL_CREATE, CTL_EOL);
 
@@ -540,7 +578,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ah_stats", NULL,
-		       NULL, 0, &ahstat, sizeof(ahstat),
+		       sysctl_net_inet_ah_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_AH,
 		       CTL_CREATE, CTL_EOL);
 
@@ -553,7 +591,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipcomp_stats", NULL,
-		       NULL, 0, &ipcompstat, sizeof(ipcompstat),
+		       sysctl_net_inet_ipcomp_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IPCOMP,
 		       CTL_CREATE, CTL_EOL);
 
@@ -628,7 +666,7 @@ SYSCTL_SETUP(sysctl_net_inet_fast_ipsec_setup, "sysctl net.inet.ipsec subtree se
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_STRUCT, "ipsecstats", NULL,
-		       NULL, 0, &ipsecstat, sizeof(ipsecstat),
+		       sysctl_net_inet_fast_ipsec_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET, ipproto_ipsec,
 		       CTL_CREATE, CTL_EOL);
 #ifdef IPSEC_DEBUG
@@ -675,7 +713,7 @@ SYSCTL_SETUP(sysctl_net_inet6_fast_ipsec6_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("IPSec statistics and counters"),
-		       NULL, 0, &ipsec6stat, sizeof(ipsec6stat),
+		       sysctl_net_inet_fast_ipsec_stats, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_AH,
 		       IPSECCTL_STATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

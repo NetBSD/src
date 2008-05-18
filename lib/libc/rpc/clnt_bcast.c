@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.18 2006/11/03 20:24:41 christos Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.18.16.1 2008/05/18 12:30:18 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.18 2006/11/03 20:24:41 christos Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.18.16.1 2008/05/18 12:30:18 yamt Exp $");
 #endif
 #endif
 
@@ -160,7 +160,7 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 		if (ifap->ifa_addr->sa_family != af ||
 		    !(ifap->ifa_flags & IFF_UP))
 			continue;
-		bip = (struct broadif *)malloc(sizeof *bip);
+		bip = malloc(sizeof(*bip));
 		if (bip == NULL)
 			break;
 		bip->index = if_nametoindex(ifap->ifa_name);

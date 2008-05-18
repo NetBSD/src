@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.70 2008/01/21 20:34:13 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.70.4.1 2008/05/18 12:36:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.70 2008/01/21 20:34:13 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.70.4.1 2008/05/18 12:36:07 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,6 @@ __RCSID("$NetBSD: route.c,v 1.70 2008/01/21 20:34:13 dyoung Exp $");
 #include <netinet/in.h>
 #include <netatalk/at.h>
 #include <netiso/iso.h>
-
-#ifdef NS
-#include <netns/ns.h>
-#endif
 
 #include <sys/sysctl.h>
 
@@ -91,9 +87,6 @@ static union sockaddr_union {
 	struct	sockaddr_iso u_iso;
 	struct	sockaddr_at u_at;
 	struct	sockaddr_dl u_dl;
-#ifdef NS
-	struct	sockaddr_ns u_ns;
-#endif
 	u_short	u_data[128];
 	int u_dummy;		/* force word-alignment */
 } pt_u;
@@ -353,82 +346,6 @@ rt_stats(off)
 		(unsigned long long)rtstat.rts_wildcard,
 		plural(rtstat.rts_wildcard));
 }
-
-#ifdef NS
-short ns_nullh[] = {0,0,0};
-short ns_bh[] = {-1,-1,-1};
-
-char *
-ns_print(sa)
-	struct sockaddr *sa;
-{
-	struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
-	struct ns_addr work;
-	union {
-		union	ns_net net_e;
-		u_long	long_e;
-	} net;
-	u_short port;
-	static char mybuf[50], cport[10], chost[25];
-	char *host = "";
-	char *p;
-	u_char *q;
-
-	work = sns->sns_addr;
-	port = ntohs(work.x_port);
-	work.x_port = 0;
-	net.net_e  = work.x_net;
-	if (ns_nullhost(work) && net.long_e == 0) {
-		if (port ) {
-			(void)snprintf(mybuf, sizeof mybuf, "*.%xH", port);
-			upHex(mybuf);
-		} else
-			(void)snprintf(mybuf, sizeof mybuf, "*.*");
-		return (mybuf);
-	}
-
-	if (memcmp(ns_bh, work.x_host.c_host, 6) == 0) {
-		host = "any";
-	} else if (memcmp(ns_nullh, work.x_host.c_host, 6) == 0) {
-		host = "*";
-	} else {
-		q = work.x_host.c_host;
-		(void)snprintf(chost, sizeof chost, "%02x%02x%02x%02x%02x%02xH",
-			q[0], q[1], q[2], q[3], q[4], q[5]);
-		for (p = chost; *p == '0' && p < chost + 12; p++)
-			continue;
-		host = p;
-	}
-	if (port)
-		(void)snprintf(cport, sizeof cport, ".%xH", htons(port));
-	else
-		*cport = 0;
-
-	(void)snprintf(mybuf, sizeof mybuf, "%xH.%s%s", (int)ntohl(net.long_e),
-	    host, cport);
-	upHex(mybuf);
-	return (mybuf);
-}
-
-char *
-ns_phost(sa)
-	struct sockaddr *sa;
-{
-	struct sockaddr_ns *sns = (struct sockaddr_ns *)sa;
-	struct sockaddr_ns work;
-	static union ns_net ns_zeronet;
-	char *p;
-
-	work = *sns;
-	work.sns_addr.x_port = 0;
-	work.sns_addr.x_net = ns_zeronet;
-
-	p = ns_print((struct sockaddr *)&work);
-	if (strncmp("0H.", p, 3) == 0)
-		p += 3;
-	return (p);
-}
-#endif
 
 void
 upHex(p0)

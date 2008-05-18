@@ -28,7 +28,7 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_archive_api_feature.c,v 1.4 200
 DEFINE_TEST(test_archive_api_feature)
 {
 	char buff[128];
-	char *p;
+	const char *p;
 
 	/* This is the (hopefully) final versioning API. */
 	assertEqualInt(ARCHIVE_VERSION_NUMBER, archive_version_number());

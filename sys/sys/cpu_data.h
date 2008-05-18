@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.21 2008/04/11 15:31:34 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.21.2.1 2008/05/18 12:35:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -61,15 +54,17 @@ struct lwp;
  * as cpu_info is size-limited on most ports.
  */
 
+struct lockdebug;
+
 struct cpu_data {
 	/*
 	 * The first section is likely to be touched by other CPUs -
 	 * it is cache hot.
 	 */
 	lwp_t		*cpu_biglock_wanted;	/* LWP spinning on biglock */
-	void		*cpu_callout;		/* running callout */
-	void		*cpu_callout_cancel;	/* callout to be cancelled */
-	u_int		cpu_callout_nwait;	/* # LWPs waiting on callout */
+	void		*cpu_callout;		/* per-CPU callout state */
+	void		*cpu_unused1;		/* unused */
+	u_int		cpu_unused2;		/* unused */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 	kcondvar_t	cpu_xcall;		/* cross-call support */
 	int		cpu_xcall_pending;	/* cross-call support */
@@ -95,6 +90,10 @@ struct cpu_data {
 	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
 	struct selcpu	*cpu_selcpu;		/* per-CPU select() info */
 	void		*cpu_cachelock;		/* per-cpu vfs_cache lock */
+	_TAILQ_HEAD(,struct lockdebug,volatile) cpu_ld_locks;/* !: lockdebug */
+	__cpu_simple_lock_t cpu_ld_lock;	/* lockdebug */
+	uint64_t	cpu_cc_freq;		/* cycle counter frequency */
+	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
 };
 
 /* compat definitions */

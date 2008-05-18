@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_misc.c,v 1.5 2007/11/03 17:20:17 plunky Exp $	*/
+/*	$NetBSD: l2cap_misc.c,v 1.5.18.1 2008/05/18 12:35:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.5 2007/11/03 17:20:17 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_misc.c,v 1.5.18.1 2008/05/18 12:35:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -185,9 +185,8 @@ l2cap_rtx(void *arg)
 {
 	struct l2cap_req *req = arg;
 	struct l2cap_channel *chan;
-	int s;
 
-	s = splsoftnet();
+	mutex_enter(bt_lock);
 	callout_ack(&req->lr_rtx);
 
 	chan = req->lr_chan;
@@ -198,7 +197,7 @@ l2cap_rtx(void *arg)
 	if (chan && chan->lc_state != L2CAP_CLOSED)
 		l2cap_close(chan, ETIMEDOUT);
 
-	splx(s);
+	mutex_exit(bt_lock);
 }
 
 /*

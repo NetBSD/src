@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.219 2008/04/09 15:21:02 nakayama Exp $ */
+/*	$NetBSD: machdep.c,v 1.219.2.1 2008/05/18 12:32:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -78,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2008/04/09 15:21:02 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219.2.1 2008/05/18 12:32:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -501,7 +494,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);	
+	mutex_exit(p->p_lock);	
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
 	ucsz = (char *)&uc.__uc_pad - (char *)&uc;
 
@@ -518,7 +511,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
 	    copyout(&uc, &fp->sf_uc, ucsz) != 0 ||
 	    suword(&newsp->rw_in[6], (uintptr_t)tf->tf_out[6]) != 0);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error) {
 		/*
@@ -1779,7 +1772,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
 	if (rwindow_save(l)) {
-		mutex_enter(&l->l_proc->p_smutex);
+		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 	}
 
@@ -1866,7 +1859,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
 	if (rwindow_save(l)) {
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		sigexit(l, SIGILL);
 	}
 
@@ -1946,12 +1939,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	/* XXX mcp->__xrs */
 	/* XXX mcp->__asrs */
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (0);
 }

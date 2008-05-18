@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.19 2005/07/30 11:11:46 wiz Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.19.18.1 2008/05/18 12:30:18 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_raw.c 1.25 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.19 2005/07/30 11:11:46 wiz Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.19.18.1 2008/05/18 12:30:18 yamt Exp $");
 #endif
 #endif
 
@@ -101,13 +101,13 @@ svc_raw_create()
 	mutex_lock(&svcraw_lock);
 	srp = svc_raw_private;
 	if (srp == NULL) {
-		srp = (struct svc_raw_private *)calloc(1, sizeof (*srp));
-		if (srp == NULL) {
-			mutex_unlock(&svcraw_lock);
-			return (NULL);
-		}
+		srp = calloc(1, sizeof(*srp));
+		if (srp == NULL)
+			goto out;
 		if (__rpc_rawcombuf == NULL)
 			__rpc_rawcombuf = malloc(UDPMSGSIZE);
+		if (__rpc_rawcombuf == NULL)
+			goto out;
 		srp->raw_buf = __rpc_rawcombuf; /* Share it with the client */
 		svc_raw_private = srp;
 	}
@@ -120,6 +120,9 @@ svc_raw_create()
 	xprt_register(&srp->server);
 	mutex_unlock(&svcraw_lock);
 	return (&srp->server);
+out:
+	mutex_unlock(&svcraw_lock);
+	return (NULL);
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*      $NetBSD: j720pcic.c,v 1.4 2006/03/04 13:57:11 peter Exp $        */
+/*      $NetBSD: j720pcic.c,v 1.4.70.1 2008/05/18 12:32:02 yamt Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -39,7 +32,7 @@
 /* Jornada 720 PCMCIA support. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.4 2006/03/04 13:57:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.4.70.1 2008/05/18 12:32:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

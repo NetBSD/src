@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.75 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.75.8.1 2008/05/18 12:35:27 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.75 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.75.8.1 2008/05/18 12:35:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -596,7 +596,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		m_adj(m, sizeof(struct fddi_header));
 
 #ifdef NETATALK
-		if (Bcmp(&(l->llc_snap_org_code)[0], at_org_code,
+		if (memcmp(&(l->llc_snap_org_code)[0], at_org_code,
 			 sizeof(at_org_code)) == 0 &&
 		 	ntohs(l->llc_snap_ether_type) == ETHERTYPE_ATALK) {
 		    inq = &atintrq2;
@@ -605,7 +605,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		    break;
 		}
 
-		if (Bcmp(&(l->llc_snap_org_code)[0], aarp_org_code,
+		if (memcmp(&(l->llc_snap_org_code)[0], aarp_org_code,
 			 sizeof(aarp_org_code)) == 0 &&
 			ntohs(l->llc_snap_ether_type) == ETHERTYPE_AARP) {
 		    m_adj( m, sizeof( struct llc ));

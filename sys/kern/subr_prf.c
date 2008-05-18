@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.118 2008/04/17 14:07:31 yamt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.118.2.1 2008/05/18 12:35:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.118 2008/04/17 14:07:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.118.2.1 2008/05/18 12:35:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -185,12 +185,11 @@ panic(const char *fmt, ...)
 	 * here and spin until the system is rebooted.  Allow the CPU that
 	 * first paniced to panic again.
 	 */
-	crit_enter();
+	kpreempt_disable();
 	ci = curcpu();
 	oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
 	if (oci != NULL && oci != ci) {
 		/* Give interrupts a chance to try and prevent deadlock. */
-		spl0();
 		for (;;) {
 			DELAY(10);
 		}
@@ -419,7 +418,7 @@ uprintf(const char *fmt, ...)
 	struct proc *p = curproc;
 	va_list ap;
 
-	/* mutex_enter(&proclist_mutex); XXXSMP */
+	/* mutex_enter(proc_lock); XXXSMP */
 
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		/* No mutex needed; going to process TTY. */
@@ -428,7 +427,7 @@ uprintf(const char *fmt, ...)
 		va_end(ap);
 	}
 
-	/* mutex_exit(&proclist_mutex); XXXSMP */
+	/* mutex_exit(proc_lock); XXXSMP */
 }
 
 void
@@ -467,12 +466,12 @@ tprintf_open(struct proc *p)
 
 	cookie = NULL;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		SESSHOLD(p->p_session);
 		cookie = (tpr_t)p->p_session;
 	}
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	return cookie;
 }
@@ -486,9 +485,9 @@ tprintf_close(tpr_t sess)
 {
 
 	if (sess) {
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		SESSRELE((struct session *) sess);
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	}
 }
 
@@ -506,7 +505,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	int s, flags = TOLOG;
 	va_list ap;
 
-	/* mutex_enter(&proclist_mutex); XXXSMP */
+	/* mutex_enter(proc_lock); XXXSMP */
 	if (sess && sess->s_ttyvp && ttycheckoutq(sess->s_ttyp, 0)) {
 		flags |= TOTTY;
 		tp = sess->s_ttyp;
@@ -520,7 +519,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
-	/* mutex_exit(&proclist_mutex);	XXXSMP */
+	/* mutex_exit(proc_lock);	XXXSMP */
 
 	logwakeup();
 }

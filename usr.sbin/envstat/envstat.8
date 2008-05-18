@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.42 2008/04/17 20:51:48 xtraeme Exp $
+.\"	$NetBSD: envstat.8,v 1.42.2.1 2008/05/18 12:36:15 yamt Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -14,13 +14,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"        This product includes software developed by the NetBSD
-.\"        Foundation, Inc. and its contributors.
-.\" 4. Neither the name of The NetBSD Foundation nor the names of its
-.\"    contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -34,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 17, 2008
+.Dd April 26, 2008
 .Dt ENVSTAT 8
 .Os
 .Sh NAME
@@ -42,7 +35,7 @@
 .Nd utility to handle environmental sensors
 .Sh SYNOPSIS
 .Nm
-.Op Fl DfIlSx
+.Op Fl DfIlSTx
 .Op Fl c Ar file
 .Op Fl d Ar device
 .Op Fl i Ar interval
@@ -117,6 +110,13 @@ default.
 Restrict the display to the named sensors.
 The pair device and sensor description must be supplied as a comma separated list.
 Device as well as sensor descriptions are case sensitive.
+.It Fl T
+Create and display max, min and average statistics for a sensor. Must
+be used with an
+.Ar interval ,
+otherwise statistics cannot be collected up. Please note that to get realistic
+values a lower interval value should be used, but that will also increase
+overhead.
 .It Fl w Ar width
 Use
 .Ar width
@@ -152,9 +152,15 @@ To set all properties specified in the configuration file:
 .Pp
 .Dl $ envstat -c /etc/envsys.conf
 .Pp
-To remove all properties that were previously set by the configuration
+To remove all properties that were set previously in the configuration
 file:
+.Pp
 .Dl $ envstat -S
+.Pp
+To display statistics for all sensors and ignoring sensors with
+invalid states every second:
+.Pp
+.Dl $ envstat -ITi1
 .Sh SEE ALSO
 .Xr proplib 3 ,
 .Xr acpiacad 4 ,
@@ -163,6 +169,7 @@ file:
 .Xr adt7463c 4 ,
 .Xr adt7467c 4 ,
 .Xr aiboost 4 ,
+.Xr amdtemp 4 ,
 .Xr aps 4 ,
 .Xr arcmsr 4 ,
 .Xr battery_pmu 4 ,

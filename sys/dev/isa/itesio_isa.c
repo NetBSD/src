@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.15 2008/04/04 08:44:22 xtraeme Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.15.2.1 2008/05/18 12:34:03 yamt Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.15 2008/04/04 08:44:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.15.2.1 2008/05/18 12:34:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,8 +102,8 @@ static const int itesio_vrfact[] = {
 	RFACT_NONE,	/* +3.3V	*/
 	RFACT(68, 100),	/* +5V 		*/
 	RFACT(30, 10),	/* +12V 	*/
-	RFACT(21, 10),	/* -12V 	*/
-	RFACT(83, 20),	/* -5V 		*/
+	RFACT(21, 10),	/* -5V 		*/
+	RFACT(83, 20),	/* -12V 	*/
 	RFACT(68, 100),	/* STANDBY	*/
 	RFACT_NONE	/* VBAT		*/
 };
@@ -139,6 +139,7 @@ itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 	case ITESIO_ID8712:
 	case ITESIO_ID8716:
 	case ITESIO_ID8718:
+	case ITESIO_ID8726:
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = 2;
 		ia->ia_niomem = 0;
@@ -377,8 +378,8 @@ itesio_setup_sensors(struct itesio_softc *sc)
 	COPYDESCR(sc->sc_sensor[5].desc, "+3.3V");
 	COPYDESCR(sc->sc_sensor[6].desc, "+5V");
 	COPYDESCR(sc->sc_sensor[7].desc, "+12V");
-	COPYDESCR(sc->sc_sensor[8].desc, "-12V");
-	COPYDESCR(sc->sc_sensor[9].desc, "-5V");
+	COPYDESCR(sc->sc_sensor[8].desc, "-5V");
+	COPYDESCR(sc->sc_sensor[9].desc, "-12V");
 	COPYDESCR(sc->sc_sensor[10].desc, "STANDBY");
 	COPYDESCR(sc->sc_sensor[11].desc, "VBAT");
 
@@ -439,16 +440,18 @@ itesio_refresh_volts(struct itesio_softc *sc, envsys_data_t *edata)
 
 	/* voltage returned as (mV << 4) */
 	edata->value_cur = (sdata << 4);
+	/* negative values */
+	if (i == 5 || i == 6)
+		edata->value_cur -= ITESIO_EC_VREF;
 	/* rfact is (factor * 10^4) */
 	edata->value_cur *= itesio_vrfact[i];
-
 	if (edata->rfact)
 		edata->value_cur += edata->rfact;
-	else
-		edata->rfact = itesio_vrfact[i];
-
 	/* division by 10 gets us back to uVDC */
 	edata->value_cur /= 10;
+	if (i == 5 || i == 6)
+		edata->value_cur += ITESIO_EC_VREF * 1000;
+
 	edata->state = ENVSYS_SVALID;
 }
 

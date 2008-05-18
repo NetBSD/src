@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.128.2.1 2008/05/18 12:35:35 yamt Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.128 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.128.2.1 2008/05/18 12:35:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.128 2008/04/15 03:57:04 thorpej Exp
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #endif /* IPSEC */
 
@@ -268,7 +269,7 @@ ip6_output(
 	}
 
 	if (sp == NULL) {
-		ipsec6stat.out_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 		goto freehdrs;
 	}
 
@@ -280,7 +281,7 @@ ip6_output(
 		/*
 		 * This packet is just discarded.
 		 */
-		ipsec6stat.out_polvio++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_POLVIO);
 		goto freehdrs;
 
 	case IPSEC_POLICY_BYPASS:

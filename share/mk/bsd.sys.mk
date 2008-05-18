@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.161 2008/04/15 00:08:05 tsutsui Exp $
+#	$NetBSD: bsd.sys.mk,v 1.161.2.1 2008/05/18 12:31:18 yamt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -17,7 +17,12 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
 # Set linker warnings to be fatal
+# XXX no proper way to avoid "FOO is a patented algorithm" warnings
+# XXX on linking static libs
+.if (!defined(MKPIC) || ${MKPIC} != "no") && \
+    (!defined(LDSTATIC) || ${LDSTATIC} != "-static")
 LDFLAGS+=	-Wl,--fatal-warnings
+.endif
 .endif
 .if ${WARNS} > 1
 CFLAGS+=	-Wreturn-type -Wswitch -Wshadow
@@ -161,7 +166,7 @@ TOOL_MSGC?=		msgc
 TOOL_MTREE?=		mtree
 TOOL_PAX?=		pax
 TOOL_PIC?=		pic
-TOOL_PREPMKBOOTIMAGE?=	prep-mkbootimage
+TOOL_POWERPCMKBOOTIMAGE?=	powerpc-mkbootimage
 TOOL_PWD_MKDB?=		pwd_mkdb
 TOOL_REFER?=		refer
 TOOL_ROFF_ASCII?=	nroff

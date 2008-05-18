@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.114 2007/11/12 14:54:43 jmmv Exp $
+#	$NetBSD: Makefile,v 1.114.6.1 2008/05/18 12:36:01 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -63,8 +63,8 @@ SUBDIR+=	ibmnws-ncdcs
 SUBDIR+=	macppc-fixcoff
 .endif
 
-.if ${MACHINE} == "prep"
-SUBDIR+=	prep-mkbootimage
+.if (${MACHINE} == "prep" || ${MACHINE} == "rs6000" || ${MACHINE} == "bebox")
+SUBDIR+=	powerpc-mkbootimage
 .endif
 
 .if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")

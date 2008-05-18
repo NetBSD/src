@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_var.h,v 1.4 2005/12/10 23:44:08 elad Exp $ */
+/*	$NetBSD: ipsec_var.h,v 1.4.72.1 2008/05/18 12:35:40 yamt Exp $ */
 /*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 
 /*-
@@ -32,44 +32,28 @@
 #ifndef _NETIPSEC_IPSEC_VAR_H_
 #define _NETIPSEC_IPSEC_VAR_H_
 
-/* statistics for ipsec processing */
-struct newipsecstat {
-	u_int64_t ips_in_polvio;	/* input: sec policy violation */
-	u_int64_t ips_out_polvio;	/* output: sec policy violation */
-	u_int64_t ips_out_nosa;		/* output: SA unavailable  */
-	u_int64_t ips_out_nomem;	/* output: no memory available */
-	u_int64_t ips_out_noroute;	/* output: no route available */
-	u_int64_t ips_out_inval;	/* output: generic error */
-	u_int64_t ips_out_bundlesa;	/* output: bundled SA processed */
-	u_int64_t ips_mbcoalesced;	/* mbufs coalesced during clone */
-	u_int64_t ips_clcoalesced;	/* clusters coalesced during clone */
-	u_int64_t ips_clcopied;		/* clusters copied during clone */
-	u_int64_t ips_mbinserted;	/* mbufs inserted during makespace */
-#ifdef __NetBSD__
-	u_int64_t ips_spdcache_lookup;
-	u_int64_t ips_spdcache_miss;
-#endif /* __NetBSD__ */
-
-	/*
-	 * Temporary statistics for performance analysis.
-	 */
-	/* See where ESP/AH/IPCOMP header land in mbuf on input */
-	u_int64_t ips_input_front;
-	u_int64_t ips_input_middle;
-	u_int64_t ips_input_end;
-
-};
-
-#ifdef _KERNEL
 /*
- * XXX JRS FIXME: later replace NetBSD sourcecode with an IPSECSTAT_POLVIO() macro.
- * for now, map the old fields to the new fields.  */
-#define ipsecstat newipsecstat
+ * statistics for ipsec processing
+ * Each counter is an unsigned 64-bit value.
+ */
+#define	IPSEC_STAT_IN_POLVIO	0	/* input: sec policy violation */
+#define	IPSEC_STAT_OUT_POLVIO	1	/* output: sec policy violation */
+#define	IPSEC_STAT_OUT_NOSA	2	/* output: SA unavailable */
+#define	IPSEC_STAT_OUT_NOMEM	3	/* output: no memory available */
+#define	IPSEC_STAT_OUT_NOROUTE	4	/* output: no route available */
+#define	IPSEC_STAT_OUT_INVAL	5	/* output: generic error */
+#define	IPSEC_STAT_OUT_BUNDLESA	6	/* output: bundled SA processed */
+#define	IPSEC_STAT_MBCOALESCED	7	/* mbufs coalesced during clone */
+#define	IPSEC_STAT_CLCOALESCED	8	/* clusters coalesced during clone */
+#define	IPSEC_STAT_CLCOPIED	9	/* clusters copied during clone */
+#define	IPSEC_STAT_MBINSERTED	10	/* mbufs inserted during makespace */
+#define	IPSEC_STAT_SPDCACHELOOKUP 11
+#define	IPSEC_STAT_SPDCACHEMISS	12
+#define	IPSEC_STAT_INPUT_FRONT	13
+#define	IPSEC_STAT_INPUT_MIDDLE	14
+#define	IPSEC_STAT_INPUT_END	15
 
-#define in_polvio ips_in_polvio
-#define out_polvio ips_out_polvio
-#define out_inval ips_out_inval
-#endif /*_KERNEL*/
+#define	IPSEC_NSTATS		16
 
 /*
  * Definitions for IPsec & Key sysctl operations.

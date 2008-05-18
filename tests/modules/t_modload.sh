@@ -1,4 +1,4 @@
-# $NetBSD: t_modload.sh,v 1.1 2008/03/02 11:22:10 jmmv Exp $
+# $NetBSD: t_modload.sh,v 1.1.6.1 2008/05/18 12:36:01 yamt Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -11,13 +11,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#        This product includes software developed by the NetBSD
-#        Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 # ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -48,7 +41,7 @@ modload: No such file or directory
 EOF
 	atf_check "modload non-existent.o" 1 null experr
 
-	atf_check "modload $(atf_get_srcdir)/k_helper.o" 0 null null
+	atf_check "modload $(atf_get_srcdir)/k_helper.kmod" 0 null null
 	check_sysctl vendor.k_helper.present 1
 	check_sysctl vendor.k_helper.prop_int_ok 0
 	check_sysctl vendor.k_helper.prop_str_ok 0
@@ -66,19 +59,19 @@ bflag_head() {
 bflag_body() {
 	echo "Checking error conditions"
 
-	atf_check "modload -b foo k_helper.o" 1 null stderr
+	atf_check "modload -b foo k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid parameter.*foo' stderr" 0 ignore null
 
-	atf_check "modload -b foo= k_helper.o" 1 null stderr
+	atf_check "modload -b foo= k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid boolean value' stderr" 0 ignore null
 
-	atf_check "modload -b foo=bar k_helper.o" 1 null stderr
+	atf_check "modload -b foo=bar k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid boolean value.*bar' stderr" 0 ignore null
 
-	atf_check "modload -b foo=falsea k_helper.o" 1 null stderr
+	atf_check "modload -b foo=falsea k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid boolean value.*falsea' stderr" 0 ignore null
 
-	atf_check "modload -b foo=truea k_helper.o" 1 null stderr
+	atf_check "modload -b foo=truea k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid boolean value.*truea' stderr" 0 ignore null
 
 	# TODO Once sysctl(8) supports CTLTYPE_BOOL nodes.
@@ -96,23 +89,23 @@ iflag_head() {
 iflag_body() {
 	echo "Checking error conditions"
 
-	atf_check "modload -i foo k_helper.o" 1 null stderr
+	atf_check "modload -i foo k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid parameter.*foo' stderr" 0 ignore null
 
-	atf_check "modload -i foo= k_helper.o" 1 null stderr
+	atf_check "modload -i foo= k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid integer value' stderr" 0 ignore null
 
-	atf_check "modload -i foo=bar k_helper.o" 1 null stderr
+	atf_check "modload -i foo=bar k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid integer value.*bar' stderr" 0 ignore null
 
-	atf_check "modload -i foo=123a k_helper.o" 1 null stderr
+	atf_check "modload -i foo=123a k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid integer value.*123a' stderr" 0 ignore null
 
 	echo "Checking valid values"
 
 	for v in 5 10; do
 		atf_check "modload -i prop_int='${v}' \
-			   $(atf_get_srcdir)/k_helper.o" 0 null null
+			   $(atf_get_srcdir)/k_helper.kmod" 0 null null
 		check_sysctl vendor.k_helper.prop_int_ok 1
 		check_sysctl vendor.k_helper.prop_int_val "${v}"
 		atf_check "modunload k_helper" 0 null null
@@ -130,14 +123,14 @@ sflag_head() {
 sflag_body() {
 	echo "Checking error conditions"
 
-	atf_check "modload -s foo k_helper.o" 1 null stderr
+	atf_check "modload -s foo k_helper.kmod" 1 null stderr
 	atf_check "grep 'Invalid parameter.*foo' stderr" 0 ignore null
 
 	echo "Checking valid values"
 
 	for v in '1st string' '2nd string'; do
 		atf_check "modload -s prop_str='${v}' \
-			   $(atf_get_srcdir)/k_helper.o" 0 null null
+			   $(atf_get_srcdir)/k_helper.kmod" 0 null null
 		check_sysctl vendor.k_helper.prop_str_ok 1
 		check_sysctl vendor.k_helper.prop_str_val "${v}"
 		atf_check "modunload k_helper" 0 null null

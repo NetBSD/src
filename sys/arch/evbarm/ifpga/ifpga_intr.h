@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.7 2008/01/06 01:37:58 matt Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.7.8.1 2008/05/18 12:31:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -48,10 +48,6 @@
 #include <evbarm/ifpga/ifpgareg.h>
 #include <evbarm/ifpga/ifpgavar.h>
 
-#ifdef __HAVE_FAST_SOFTINTS
-void ifpga_do_pending(void);
-#endif
-
 static inline void __attribute__((__unused__))
 ifpga_set_intrmask(void)
 {
@@ -65,24 +61,17 @@ ifpga_set_intrmask(void)
 	    IFPGA_INTR_ENABLESET, mask);
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-#define INT_SWMASK				\
-        (IFPGA_INTR_bit31 | IFPGA_INTR_bit30 |	\
-         IFPGA_INTR_bit29 | IFPGA_INTR_bit28)
-#endif
-
 static inline void __attribute__((__unused__))
 ifpga_splx(int new)
 {
 	extern volatile uint32_t intr_enabled;
-	extern volatile int current_spl_level;
 	extern volatile int ifpga_ipending;
 	int oldirqstate, hwpend;
 
 	__insn_barrier();
 
 	oldirqstate = disable_interrupts(I32_bit);
-	current_spl_level = new;
+	set_curcpl(new);
 
 	hwpend = (ifpga_ipending & IFPGA_INTR_HWMASK) & ~new;
 	if (hwpend != 0) {
@@ -93,20 +82,16 @@ ifpga_splx(int new)
 	restore_interrupts(oldirqstate);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	if ((ifpga_ipending & INT_SWMASK) & ~new)
-		ifpga_do_pending();
+	cpu_dosoftints();
 #endif
 }
 
 static inline int __attribute__((__unused__))
 ifpga_splraise(int ipl)
 {
-	extern volatile int current_spl_level;
 	extern int ifpga_imask[];
-	int	old;
-
-	old = current_spl_level;
-	current_spl_level = old | ifpga_imask[ipl];
+	const int old = curcpl();
+	set_curcpl(old | ifpga_imask[ipl]);
 
 	__insn_barrier();
 
@@ -116,9 +101,8 @@ ifpga_splraise(int ipl)
 static inline int __attribute__((__unused__))
 ifpga_spllower(int ipl)
 {
-	extern volatile int current_spl_level;
 	extern int ifpga_imask[];
-	int old = current_spl_level;
+	const int old = curcpl();
 
 	ifpga_splx(ifpga_imask[ipl]);
 	return(old);
@@ -129,18 +113,12 @@ ifpga_spllower(int ipl)
 #define splx(new)		ifpga_splx(new)
 #define	_spllower(ipl)		ifpga_spllower(ipl)
 #define	_splraise(ipl)		ifpga_splraise(ipl)
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #else
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #endif /* ! EVBARM_SPL_NOINLINE */
 

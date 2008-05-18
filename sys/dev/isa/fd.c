@@ -1,7 +1,7 @@
-/*	$NetBSD: fd.c,v 1.84 2008/04/11 19:16:44 cegger Exp $	*/
+/*	$NetBSD: fd.c,v 1.84.2.1 2008/05/18 12:34:02 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -88,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84 2008/04/11 19:16:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.2.1 2008/05/18 12:34:02 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -156,17 +149,19 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84 2008/04/11 19:16:44 cegger Exp $");
 #include <dev/isa/fdreg.h>
 #include <dev/isa/fdcvar.h>
 
-#if defined(i386)
+#if defined(i386) || defined(x86_64)
 
 #include <dev/ic/mc146818reg.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
 
+#if defined(i386)
 #include "mca.h"
 #if NMCA > 0
 #include <machine/mca_machdep.h>		/* for MCA_system */
 #endif
+#endif
 
-#endif /* i386 */
+#endif /* i386 || x86_64 */
 
 #include <dev/isa/fdvar.h>
 
@@ -248,9 +243,9 @@ void fdstart(struct fd_softc *);
 
 struct dkdriver fddkdriver = { fdstrategy, NULL };
 
-#if defined(i386)
+#if defined(i386) || defined(x86_64)
 const struct fd_type *fd_nvtotype(const char *, int, int);
-#endif /* i386 */
+#endif /* i386 || x86_64 */
 void fd_set_motor(struct fdc_softc *fdc, int reset);
 void fd_motor_off(void *arg);
 void fd_motor_on(void *arg);
@@ -394,9 +389,6 @@ fdcfinishattach(device_t self)
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	struct fdc_attach_args fa;
-#if defined(i386)
-	int type;
-#endif
 
 	/*
 	 * Reset the controller to get it into a known state. Not all
@@ -416,17 +408,25 @@ fdcfinishattach(device_t self)
 	out_fdc(iot, ioh, 0xdf);
 	out_fdc(iot, ioh, 2);
 
-#if defined(i386)
+#if defined(i386) || defined(x86_64)
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
 	 * `primary' floppy controller.
 	 */
 	/* XXX device_unit() abuse */
-	if (device_unit(fdc->sc_dev) == 0)
-		type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
-	else
-		type = -1;
-#endif /* i386 */
+	if (device_unit(fdc->sc_dev) == 0) {
+		int type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
+		fdc->sc_known = 1;
+		fdc->sc_knownfds[0] = fd_nvtotype(device_xname(fdc->sc_dev),
+		    type, 0);
+		if (fdc->sc_knownfds[0] != NULL)
+			fdc->sc_present |= 1;
+		fdc->sc_knownfds[1] = fd_nvtotype(device_xname(fdc->sc_dev),
+		    type, 1);
+		if (fdc->sc_knownfds[1] != NULL)
+			fdc->sc_present |= 2;
+	}
+#endif /* i386 || x86_64 */
 
 	/* physical limit: four drives per controller. */
 	fdc->sc_state = PROBING;
@@ -438,14 +438,7 @@ fdcfinishattach(device_t self)
 				    fdprint);
 			}
 		} else {
-#if defined(i386)
-			if (type >= 0 && fa.fa_drive < 2)
-				fa.fa_deftype =
-				    fd_nvtotype(device_xname(fdc->sc_dev),
-				        type, fa.fa_drive);
-			else
-				fa.fa_deftype = NULL;		/* unknown */
-#elif defined(atari)
+#if defined(atari)
 			/*
 			 * Atari has a different ordening, defaults to 1.44
 			 */
@@ -456,7 +449,7 @@ fdcfinishattach(device_t self)
 			 * on these platforms?
 			 */
 			fa.fa_deftype = &fd_types[0];
-#endif /* i386 */
+#endif
 			(void)config_found_ia(fdc->sc_dev, "fdc", (void *)&fa, fdprint);
 		}
 	}
@@ -619,6 +612,7 @@ fddetach(device_t self, int flags)
 #endif
 
 	disk_detach(&fd->sc_dk);
+	disk_destroy(&fd->sc_dk);
 
 	/* Kill off any queued buffers. */
 	bufq_drain(fd->sc_q);
@@ -631,7 +625,7 @@ fddetach(device_t self, int flags)
 	return 0;
 }
 
-#if defined(i386)
+#if defined(i386) || defined(x86_64)
 /*
  * Translate nvram type into internal data structure.  Return NULL for
  * none/unknown/unusable.
@@ -672,7 +666,7 @@ fd_nvtotype(const char *fdc, int nvraminfo, int drive)
 		return NULL;
 	}
 }
-#endif /* i386 */
+#endif /* i386 || x86_64 */
 
 static const struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)

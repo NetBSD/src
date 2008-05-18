@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_export.c,v 1.33 2008/02/28 17:07:49 elad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.33.2.1 2008/05/18 12:35:45 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -20,13 +20,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -82,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.33 2008/02/28 17:07:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.33.2.1 2008/05/18 12:35:45 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -169,9 +162,9 @@ static void netexport_wrunlock(void);
 static void nfs_export_unmount(struct mount *);
 
 struct vfs_hooks nfs_export_hooks = {
-	nfs_export_unmount
+	nfs_export_unmount,
+	{ NULL, NULL }
 };
-VFS_HOOKS_ATTACH(nfs_export_hooks);
 
 /*
  * VFS unmount hook for NFS exports.
@@ -249,7 +242,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	}
 
 	/* Mark the file system busy. */
-	error = vfs_busy(mp, RW_READER, NULL);
+	error = vfs_busy(mp, NULL);
 	vput(vp);
 	if (error != 0)
 		return error;
@@ -294,7 +287,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 
 out:
 	netexport_wrunlock();
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return error;
 }
 

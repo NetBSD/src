@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2008/04/16 16:06:52 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50.2.1 2008/05/18 12:33:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2008/04/16 16:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50.2.1 2008/05/18 12:33:04 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -744,6 +744,8 @@ static void
 pmap_apte_flush(struct pmap *pmap)
 {
 
+	KASSERT(kpreempt_disabled());
+
 	/*
 	 * Flush the APTE mapping from all other CPUs that
 	 * are using the pmap we are using (who's APTE space
@@ -794,9 +796,9 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		*pdeppp = normal_pdes;
 		return;
 	}
+	KASSERT(kpreempt_disabled());
 
  retry:
-	crit_enter();
 	l = curlwp;
 	ncsw = l->l_ncsw;
  	ourpmap = NULL;
@@ -812,10 +814,8 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	if (ci->ci_want_pmapload &&
 	    vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap) {
 		pmap_load();
-		if (l->l_ncsw != ncsw) {
-			crit_exit();
+		if (l->l_ncsw != ncsw)
 			goto retry;
-		}
 	}
 	iscurrent = pmap_is_curpmap(pmap);
 	/* if curpmap then we are always mapped */
@@ -894,7 +894,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
  	 */
 	if (l->l_ncsw != ncsw) {
  unlock_and_retry:
-		crit_exit();
 	    	if (ourpmap != NULL) {
 			mutex_exit(&ourpmap->pm_lock);
 			pmap_destroy(ourpmap);
@@ -917,6 +916,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	if (pmap == pmap_kernel()) {
 		return;
 	}
+	KASSERT(kpreempt_disabled());
 	if (pmap2 == NULL) {
 		mutex_exit(&pmap->pm_lock);
 	} else {
@@ -935,9 +935,6 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		mutex_exit(&pmap2->pm_lock);
 		pmap_destroy(pmap2);
 	}
-
-	/* re-enable preemption */
-	crit_exit();
 }
 
 inline static void
@@ -1050,9 +1047,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #endif
 	if ((opte & (PG_V | PG_U)) == (PG_V | PG_U)) {
 		/* This should not happen, so no need to batch updates. */
-		crit_enter();
+		kpreempt_disable();
 		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
-		crit_exit();
+		kpreempt_enable();
 	}
 }
 
@@ -1066,10 +1063,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
  */
 
 void
-pmap_kenter_ma(va, ma, prot)
-	vaddr_t va;
-	paddr_t ma;
-	vm_prot_t prot;
+pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot)
 {
 	pt_entry_t *pte, opte, npte;
 
@@ -1088,10 +1082,9 @@ pmap_kenter_ma(va, ma, prot)
 
 	if (pmap_valid_entry(opte)) {
 #if defined(MULTIPROCESSOR)
-		int32_t cpumask = 0;
-
-		pmap_tlb_shootdown(pmap_kernel(), va, opte, &cpumask);
-		pmap_tlb_shootnow(cpumask);
+		kpreempt_disable();
+		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
+		kpreempt_enable();
 #else
 		/* Don't bother deferring in the single CPU case. */
 		pmap_update_pg(va);
@@ -1104,11 +1097,15 @@ pmap_kenter_ma(va, ma, prot)
 /*
  * Change protection for a virtual address. Local for a CPU only, don't
  * care about TLB shootdowns.
+ *
+ * => must be called with preemption disabled
  */
 void
 pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 {
 	pt_entry_t *pte, opte, npte;
+
+	KASSERT(kpreempt_disabled());
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
@@ -1167,9 +1164,9 @@ pmap_kremove(vaddr_t sva, vsize_t len)
 #endif
 	}
 	if ((xpte & (PG_V | PG_U)) == (PG_V | PG_U)) {
-		crit_enter();
+		kpreempt_disable();
 		pmap_tlb_shootdown(pmap_kernel(), sva, eva, xpte);
-		crit_exit();
+		kpreempt_enable();
 	}
 }
 
@@ -1278,7 +1275,13 @@ pmap_bootstrap(vaddr_t kva_start)
 		if (KERNBASE == VM_MIN_KERNEL_ADDRESS) {
 			kva_end = virtual_avail;
 		} else {
-			kva_end = roundup((vaddr_t)&end, PAGE_SIZE);
+			extern vaddr_t eblob, esym;
+			kva_end = (vaddr_t)&end;
+			if (esym > kva_end)
+				kva_end = esym;
+			if (eblob > kva_end)
+				kva_end = eblob;
+			kva_end = roundup(kva_end, PAGE_SIZE);
 		}
 		for (kva = KERNBASE; kva < kva_end; kva += PAGE_SIZE) {
 			p1i = pl1_i(kva);
@@ -1615,7 +1618,7 @@ pmap_cpu_init_late(struct cpu_info *ci)
 	if (ci == &cpu_info_primary)
 		evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 		    NULL, "global", "TLB IPI");
-	evcnt_attach_dynamic(&ci->ci_tlb_evcnt, EVCNT_TYPE_INTR,
+	evcnt_attach_dynamic(&ci->ci_tlb_evcnt, EVCNT_TYPE_MISC,
 	    NULL, device_xname(ci->ci_dev), "TLB IPI");
 }
 
@@ -1837,6 +1840,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
 
 	level = 1;
 	do {
@@ -1877,6 +1881,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  *
  * => pmap should NOT be pmap_kernel()
  * => pmap should be locked
+ * => preemption should be disabled
  */
 
 static struct vm_page *
@@ -1891,6 +1896,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 
 	KASSERT(pmap != pmap_kernel());
 	KASSERT(mutex_owned(&pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
 
 	ptp = NULL;
 	pa = (paddr_t)-1;
@@ -2239,6 +2245,7 @@ pmap_destroy(struct pmap *pmap)
 	 * clear APDP_PDE if pmap is the currently mapped
 	 */
 	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
+		kpreempt_disable();
 		for (i = 0; i < PDP_SIZE; i++) {
 	        	pmap_pte_set(&APDP_PDE[i], 0);
 #ifdef PAE
@@ -2248,6 +2255,7 @@ pmap_destroy(struct pmap *pmap)
 		}
 		pmap_pte_flush();
 	        pmap_apte_flush(pmap_kernel());
+	        kpreempt_enable();
 	}
 #endif
 
@@ -2377,6 +2385,7 @@ pmap_ldt_cleanup(struct lwp *l)
 	int sel = -1;
 
 	mutex_enter(&pmap->pm_lock);
+	kpreempt_disable();
 
 	if (pmap->pm_flags & PMF_USER_LDT) {
 		sel = pmap->pm_ldt_sel;
@@ -2391,6 +2400,7 @@ pmap_ldt_cleanup(struct lwp *l)
 		pmap->pm_flags &= ~PMF_USER_LDT;
 	}
 
+	kpreempt_enable();
 	mutex_exit(&pmap->pm_lock);
 
 	if (sel != -1)
@@ -2413,6 +2423,8 @@ pmap_activate(struct lwp *l)
 {
 	struct cpu_info *ci;
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
+
+	KASSERT(kpreempt_disabled());
 
 	ci = curcpu();
 
@@ -2472,6 +2484,7 @@ pmap_reactivate(struct pmap *pmap)
 	ci = curcpu();
 	cpumask = ci->ci_cpumask;
 
+	KASSERT(kpreempt_disabled());
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
 #elif defined(PAE)
@@ -2522,11 +2535,16 @@ pmap_load(void)
 	struct pcb *pcb;
 	uint64_t ncsw;
 
-	crit_enter();
-	KASSERT(curcpu()->ci_want_pmapload);
+	kpreempt_disable();
  retry:
 	ci = curcpu();
+	if (!ci->ci_want_pmapload) {
+		kpreempt_enable();
+		return;
+	}
 	cpumask = ci->ci_cpumask;
+	l = ci->ci_curlwp;
+	ncsw = l->l_ncsw;
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_IPI); 
@@ -2536,7 +2554,6 @@ pmap_load(void)
 	KASSERT((x86_read_psl() & PSL_I) != 0);
 #endif
 
-	l = ci->ci_curlwp;
 	KASSERT(l != NULL);
 	pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	KASSERT(pmap != pmap_kernel());
@@ -2558,7 +2575,7 @@ pmap_load(void)
 		}
 
 		ci->ci_want_pmapload = 0;
-		crit_exit();
+		kpreempt_enable();
 		return;
 	}
 
@@ -2682,13 +2699,12 @@ pmap_load(void)
 	 * to the old pmap.  if we block, we need to go around again.
 	 */
 
-	ncsw = l->l_ncsw;
 	pmap_destroy(oldpmap);
 	if (l->l_ncsw != ncsw) {
 		goto retry;
 	}
 
-	crit_exit();
+	kpreempt_enable();
 }
 
 /*
@@ -2702,6 +2718,8 @@ pmap_deactivate(struct lwp *l)
 {
 	struct pmap *pmap;
 	struct cpu_info *ci;
+
+	KASSERT(kpreempt_disabled());
 
 	if (l != curlwp) {
 		return;
@@ -2794,13 +2812,16 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 
+	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	if (!pmap_pdes_valid(va, pdes, &pde)) {
 		pmap_unmap_ptes(pmap, pmap2);
+		kpreempt_enable();
 		return false;
 	}
 	pte = ptes[pl1_i(va)];
 	pmap_unmap_ptes(pmap, pmap2);
+	kpreempt_enable();
 
 	if (pde & PG_PS) {
 		if (pap != NULL)
@@ -2849,14 +2870,17 @@ pmap_extract_ma(pmap, va, pap)
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
  
+	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	if (!pmap_pdes_valid(va, pdes, &pde)) {
 		pmap_unmap_ptes(pmap, pmap2);
+		kpreempt_enable();
 		return false;
 	}
  
 	pte = ptes[pl1_i(va)];
 	pmap_unmap_ptes(pmap, pmap2);
+	kpreempt_enable();
  
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
@@ -2924,11 +2948,14 @@ pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 void
 pmap_zero_page(paddr_t pa)
 {
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *zpte = PTESLEW(zero_pte, id);
-	void *zerova = VASLEW(zerop, id);
+	pt_entry_t *zpte;
+	void *zerova;
+	int id;
+
+	kpreempt_disable();
+	id = cpu_number();
+	zpte = PTESLEW(zero_pte, id);
+	zerova = VASLEW(zerop, id);
 
 #ifdef DIAGNOSTIC
 	if (*zpte)
@@ -2948,6 +2975,7 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
+	kpreempt_enable();
 }
 
 /*
@@ -2971,14 +2999,19 @@ pmap_pageidlezero(paddr_t pa)
 void
 pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 {
-#ifdef MULTIPROCESSOR
-	int id = cpu_number();
-#endif
-	pt_entry_t *spte = PTESLEW(csrc_pte,id);
-	pt_entry_t *dpte = PTESLEW(cdst_pte,id);
-	void *csrcva = VASLEW(csrcp, id);
-	void *cdstva = VASLEW(cdstp, id);
+	pt_entry_t *spte;
+	pt_entry_t *dpte;
+	void *csrcva;
+	void *cdstva;
+	int id;
 
+	kpreempt_disable();
+	id = cpu_number();
+	spte = PTESLEW(csrc_pte,id);
+	dpte = PTESLEW(cdst_pte,id);
+	csrcva = VASLEW(csrcp, id);
+	cdstva = VASLEW(cdstp, id);
+	
 #ifdef DIAGNOSTIC
 	if (*spte || *dpte)
 		panic("pmap_copy_page: lock botch");
@@ -2998,6 +3031,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_pte_set(dpte, 0);
 	pmap_pte_flush();
 #endif
+	kpreempt_enable();
 }
 
 static pt_entry_t *
@@ -3006,6 +3040,8 @@ pmap_map_ptp(struct vm_page *ptp)
 	pt_entry_t *ptppte;
 	void *ptpva;
 	int id;
+
+	KASSERT(kpreempt_disabled());
 
 	id = cpu_number();
 	ptppte = PTESLEW(ptp_pte, id);
@@ -3027,6 +3063,8 @@ pmap_unmap_ptp(void)
 #if defined(DIAGNOSTIC) || defined(XEN)
 	pt_entry_t *pte;
 
+	KASSERT(kpreempt_disabled());
+
 	pte = PTESLEW(ptp_pte, cpu_number());
 	if (*pte != 0) {
 		pmap_pte_set(pte, 0);
@@ -3039,6 +3077,7 @@ static pt_entry_t *
 pmap_map_pte(struct pmap *pmap, struct vm_page *ptp, vaddr_t va)
 {
 
+	KASSERT(kpreempt_disabled());
 	if (pmap_is_curpmap(pmap)) {
 		return &PTE_BASE[pl1_i(va)]; /* (k)vtopte */
 	}
@@ -3049,6 +3088,8 @@ pmap_map_pte(struct pmap *pmap, struct vm_page *ptp, vaddr_t va)
 static void
 pmap_unmap_pte(void)
 {
+
+	KASSERT(kpreempt_disabled());
 
 	pmap_unmap_ptp();
 }
@@ -3080,6 +3121,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 	pt_entry_t opte, xpte = 0;
 
 	KASSERT(pmap == pmap_kernel() || mutex_owned(&pmap->pm_lock));
+	KASSERT(kpreempt_disabled());
 
 	/*
 	 * note that ptpva points to the PTE that maps startva.   this may
@@ -3179,6 +3221,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	struct pmap_page *pp;
 
 	KASSERT(pmap == pmap_kernel() || mutex_owned(&pmap->pm_lock));
+	KASSERT(pmap == pmap_kernel() || kpreempt_disabled());
 
 	if (!pmap_valid_entry(*pte))
 		return(false);		/* VA not mapped */
@@ -3272,6 +3315,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 	struct vm_page *ptp, *empty_ptps = NULL;
 	struct pmap *pmap2;
 
+	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
 
 	/*
@@ -3372,10 +3416,8 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 			pmap_tlb_shootdown(pmap, sva, eva, xpte);
 	}
 	pmap_unmap_ptes(pmap, pmap2);		/* unlock pmap */
-
-	crit_enter();
 	pmap_tlb_shootwait();
-	crit_exit();
+	kpreempt_enable();
 
 	/* Now we can free unused PVs and ptps */
 	if (pv_tofree)
@@ -3411,6 +3453,7 @@ pmap_sync_pv(struct pv_pte *pvpte, pt_entry_t expect, int clearbits,
 	KASSERT((expect & ~(PG_FRAME | PG_V)) == 0);
 	KASSERT((expect & PG_V) != 0);
 	KASSERT(clearbits == ~0 || (clearbits & ~(PG_M | PG_U | PG_RW)) == 0);
+	KASSERT(kpreempt_disabled());
 
 	ptep = pmap_map_pte(pmap, ptp, va);
 	do {
@@ -3507,6 +3550,7 @@ pmap_page_remove(struct vm_page *pg)
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
+	kpreempt_disable();
 startover:
 	pp_lock(pp);
 	while ((pvpte = pv_pte_first(pp)) != NULL) {
@@ -3556,9 +3600,7 @@ startover:
 
 			KASSERT(pmap != pmap_kernel());
 
-			crit_enter();
 			pmap_tlb_shootwait();
-			crit_exit();
 			pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 			pmap_stats_update_bypte(pmap, 0, opte);
 			ptp->wire_count--;
@@ -3580,10 +3622,8 @@ startover:
 		pp_lock(pp);
 	}
 	pp_unlock(pp);
-
-	crit_enter();
 	pmap_tlb_shootwait();
-	crit_exit();
+	kpreempt_enable();
 
 	/* Now we can free unused pvs and ptps. */
 	pmap_free_pvs(killlist);
@@ -3671,6 +3711,7 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
+	kpreempt_disable();
 startover:
 	pp_lock(pp);
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
@@ -3694,10 +3735,8 @@ startover:
 	result = pp->pp_attrs & clearbits;
 	pp->pp_attrs &= ~clearbits;
 	pp_unlock(pp);
-
-	crit_enter();
 	pmap_tlb_shootwait();
-	crit_exit();
+	kpreempt_enable();
 
 	return result != 0;
 }
@@ -3738,6 +3777,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	pt_entry_t opte;
 	struct pmap *pmap2;
 
+	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
 
 	/* should be ok, but just in case ... */
@@ -3801,9 +3841,8 @@ next:;
 	/*
 	 * if we kept a removal record and removed some pages update the TLB
 	 */
-	crit_enter();
 	pmap_tlb_shootwait();
-	crit_exit();
+	kpreempt_enable();
 }
 
 /*
@@ -3823,6 +3862,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 
+	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
 
 	if (pmap_pdes_valid(va, pdes, NULL)) {
@@ -3852,6 +3892,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 		panic("pmap_unwire: invalid PDE");
 	}
 #endif
+	kpreempt_enable();
 }
 
 /*
@@ -3973,11 +4014,12 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (new_pve == NULL || new_pve2 == NULL) {
 		if (flags & PMAP_CANFAIL) {
 			error = ENOMEM;
-			goto out;
+			goto out2;
 		}
 		panic("pmap_enter: pve allocation failed");
 	}
 
+	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
 	if (pmap == pmap_kernel()) {
 		ptp = NULL;
@@ -4093,14 +4135,14 @@ same_pa:
 
 	if ((~opte & (PG_V | PG_U)) == 0 &&
 	    ((opte ^ npte) & (PG_FRAME | PG_RW)) != 0) {
-		crit_enter();
 		pmap_tlb_shootdown(pmap, va, 0, opte);
 		pmap_tlb_shootwait();
-		crit_exit();
 	}
 
 	error = 0;
 out:
+	kpreempt_enable();
+out2:
 	if (old_pve != NULL) {
 		pool_cache_put(&pmap_pv_cache, old_pve);
 	}
@@ -4145,6 +4187,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 
 		if (uvm_page_physget(paddrp) == false)
 			panic("pmap_get_physpage: out of memory");
+		kpreempt_disable();
 		pmap_pte_set(early_zero_pte,
 		    pmap_pa2pte(*paddrp) | PG_V | PG_RW | PG_k);
 		pmap_pte_flush();
@@ -4154,6 +4197,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		pmap_pte_set(early_zero_pte, 0);
 		pmap_pte_flush();
 #endif /* defined(DIAGNOSTIC) */
+		kpreempt_enable();
 	} else {
 		/* XXX */
 		PMAP_SUBOBJ_LOCK(kpm, level - 1);
@@ -4357,6 +4401,7 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	 * we lock in the pmap => pv_head direction
 	 */
 
+	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
 
 	/*
@@ -4384,6 +4429,7 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 	pmap_unmap_ptes(pmap, pmap2);
+	kpreempt_enable();
 }
 #endif
 
@@ -4411,6 +4457,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 	bool kernel;
 
 	KASSERT(eva == 0 || eva >= sva);
+	KASSERT(kpreempt_disabled());
 
 	if (pte & PG_PS)
 		sva &= PG_LGFRAME;
@@ -4516,8 +4563,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 				mb->mb_addr2 = eva;
 				mb->mb_global = pte;
 				if (x86_ipi(LAPIC_TLB_MCAST_VECTOR,
-				    ci->ci_apicid,
-				    LAPIC_DLMODE_FIXED))
+				    ci->ci_cpuid, LAPIC_DLMODE_FIXED))
 					panic("pmap_tlb_shootdown: ipi failed");
 			}
 			self->ci_need_tlbwait = 1;
@@ -4556,6 +4602,8 @@ pmap_tlb_shootwait(void)
 	struct cpu_info *self;
 	struct pmap_mbox *mb;
 
+	KASSERT(kpreempt_disabled());
+
 	/*
 	 * Anything to do?  XXX Really we want to avoid touching the cache
 	 * lines of the two mailboxes, but the processor may read ahead.
@@ -4585,9 +4633,9 @@ void
 pmap_update(struct pmap *pm)
 {
 
-	crit_enter();
+	kpreempt_disable();
 	pmap_tlb_shootwait();
-	crit_exit();
+	kpreempt_enable();
 }
 
 #if PTP_LEVELS > 4

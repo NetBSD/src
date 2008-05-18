@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2006/08/26 18:15:39 christos Exp $
+#	$NetBSD: Makefile,v 1.12.16.1 2008/05/18 12:36:23 yamt Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=	sup
 

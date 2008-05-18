@@ -1,6 +1,6 @@
-/*	$NetBSD: p_nec_jc94.c,v 1.7 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: p_nec_jc94.c,v 1.7.76.1 2008/05/18 12:31:32 yamt Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.7 2005/12/11 12:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_jc94.c,v 1.7.76.1 2008/05/18 12:31:32 yamt Exp $");
 
 #include <sys/param.h>
 

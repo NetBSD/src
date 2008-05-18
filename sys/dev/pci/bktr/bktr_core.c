@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.48 2008/04/10 19:13:38 cegger Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.48.2.1 2008/05/18 12:34:35 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.48 2008/04/10 19:13:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.48.2.1 2008/05/18 12:34:35 yamt Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -465,6 +465,7 @@ static int      i2c_write_byte(bktr_ptr_t bktr, unsigned char data);
 static int      i2c_read_byte(bktr_ptr_t bktr, unsigned char *data, int last);
 #endif
 
+static void	bktr_softintr(void *);
 
 
 /*
@@ -634,6 +635,8 @@ bktr_store_address(unit, BKTR_MEM_BUF,          sbuf);
 
 	/* Initialise any MSP34xx or TDA98xx audio chips */
 	init_audio_devices(bktr);
+	bktr->sih = softint_establish(SOFTINT_MPSAFE | SOFTINT_CLOCK,
+	    bktr_softintr, bktr);
 	return 1;
 }
 
@@ -914,12 +917,7 @@ common_bktr_intr(void *arg)
 		 */
 
 		if (bktr->proc && !(bktr->signal & METEOR_SIG_MODE_MASK)) {
-			mutex_enter(&proclist_mutex);
-			PROC_LOCK(bktr->proc);
-			psignal(bktr->proc,
-				 bktr->signal&(~METEOR_SIG_MODE_MASK));
-			PROC_UNLOCK(bktr->proc);
-			mutex_exit(&proclist_mutex);
+			softint_schedule(bktr->sih);
 		}
 
 		/*
@@ -954,8 +952,20 @@ common_bktr_intr(void *arg)
 	return 1;
 }
 
+void
+bktr_softintr(void *cookie)
+{
+	bktr_ptr_t bktr;
 
+	bktr = cookie;
 
+	mutex_enter(proc_lock);
+	if (bktr->proc && !(bktr->signal & METEOR_SIG_MODE_MASK)) {
+		psignal(bktr->proc,
+		    bktr->signal&(~METEOR_SIG_MODE_MASK));
+	}
+	mutex_exit(proc_lock);
+}
 
 /*
  *
@@ -968,6 +978,10 @@ video_open(bktr_ptr_t bktr)
 
 	if (bktr->flags & METEOR_OPEN)		/* device is busy */
 		return(EBUSY);
+
+	mutex_enter(proc_lock);
+	bktr->proc = NULL;
+	mutex_exit(proc_lock);
 
 	bktr->flags |= METEOR_OPEN;
 
@@ -1046,7 +1060,6 @@ video_open(bktr_ptr_t bktr)
 	bktr->frames_captured = 0;
 	bktr->even_fields_captured = 0;
 	bktr->odd_fields_captured = 0;
-	bktr->proc = NULL;
 	set_fps(bktr, frame_rate);
 	bktr->video.addr = 0;
 	bktr->video.width = 0;
@@ -1581,7 +1594,9 @@ video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, void *arg,
 		break;
 
 	case METEORSSIGNAL:
+		mutex_enter(proc_lock);
 		if(*(int *)arg == 0 || *(int *)arg >= NSIG) {
+			mutex_exit(proc_lock);
 			return(EINVAL);
 			break;
 		}
@@ -1591,6 +1606,7 @@ video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, void *arg,
 #else
 		bktr->proc = l->l_proc;
 #endif
+		mutex_exit(proc_lock);
 		break;
 
 	case METEORGSIGNAL:

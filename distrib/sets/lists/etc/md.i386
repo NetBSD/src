@@ -1,3 +1,4 @@
-# $NetBSD: md.i386,v 1.10 2004/01/11 09:59:49 lukem Exp $
+# $NetBSD: md.i386,v 1.10.38.1 2008/05/18 12:29:40 yamt Exp $
+./boot.cfg					etc-sys-etc
 ./etc/ld.so.conf				etc-sys-etc
 ./etc/ttyaction					etc-sys-etc

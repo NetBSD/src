@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2006/08/26 18:15:37 christos Exp $
+#	$NetBSD: Makefile,v 1.9.16.1 2008/05/18 12:36:22 yamt Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=	ntp
 SRCS=	a_md5encrypt.c adjtime.c atoint.c atolfp.c atouint.c \

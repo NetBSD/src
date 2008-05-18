@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_irq.c,v 1.3 2007/12/11 11:48:43 lukem Exp $	*/
+/*	$NetBSD: mga_irq.c,v 1.3.10.1 2008/05/18 12:34:35 yamt Exp $	*/
 
 /* mga_irq.c -- IRQ handling for radeon -*- linux-c -*-
  */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_irq.c,v 1.3 2007/12/11 11:48:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_irq.c,v 1.3.10.1 2008/05/18 12:34:35 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_irq.c,v 1.6 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -57,7 +57,7 @@ irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS)
 	if (status & MGA_VLINEPEN) {
 		MGA_WRITE(MGA_ICLEAR, MGA_VLINEICLR);
 		atomic_inc(&dev->vbl_received);
-		DRM_WAKEUP(&dev->vbl_queue);
+		DRM_WAKEUP(&(dev->vbl_queue));
 		drm_vbl_send_signals(dev);
 		handled = 1;
 	}
@@ -78,7 +78,7 @@ irqreturn_t mga_driver_irq_handler(DRM_IRQ_ARGS)
 		}
 
 		atomic_inc(&dev_priv->last_fence_retired);
-		DRM_WAKEUP(&dev_priv->fence_queue);
+		DRM_WAKEUP(&(dev_priv->fence_queue));
 		handled = 1;
 	}
 
@@ -97,7 +97,7 @@ int mga_driver_vblank_wait(drm_device_t * dev, unsigned int *sequence)
 	 * by about a day rather than she wants to wait for years
 	 * using vertical blanks...
 	 */
-	DRM_WAIT_ON(ret, dev->vbl_queue, 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, &(dev->vbl_queue), 3 * DRM_HZ,
 		    (((cur_vblank = atomic_read(&dev->vbl_received))
 		      - *sequence) <= (1 << 23)));
 
@@ -116,7 +116,7 @@ int mga_driver_fence_wait(drm_device_t * dev, unsigned int *sequence)
 	 * by about a day rather than she wants to wait for years
 	 * using fences.
 	 */
-	DRM_WAIT_ON(ret, dev_priv->fence_queue, 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, &(dev_priv->fence_queue), 3 * DRM_HZ,
 		    (((cur_fence = atomic_read(&dev_priv->last_fence_retired))
 		      - *sequence) <= (1 << 23)));
 
@@ -139,7 +139,7 @@ void mga_driver_irq_postinstall(drm_device_t * dev)
 {
 	drm_mga_private_t *dev_priv = (drm_mga_private_t *) dev->dev_private;
 
-	DRM_INIT_WAITQUEUE( &dev_priv->fence_queue );
+	DRM_INIT_WAITQUEUE( &(dev_priv->fence_queue) );
 
 	/* Turn on vertical blank interrupt and soft trap interrupt. */
 	MGA_WRITE(MGA_IEN, MGA_VLINEIEN | MGA_SOFTRAPEN);
@@ -153,6 +153,7 @@ void mga_driver_irq_uninstall(drm_device_t * dev)
 
 	/* Disable *all* interrupts */
 	MGA_WRITE(MGA_IEN, 0);
+	DRM_DESTROY_WAITQUEUE(&(dev_priv->fence_queue));
 	
 	dev->irq_enabled = 0;
 }

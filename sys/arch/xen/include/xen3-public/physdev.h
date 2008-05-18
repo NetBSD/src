@@ -1,4 +1,4 @@
-/* $NetBSD: physdev.h,v 1.5 2007/10/17 19:58:30 garbled Exp $ */
+/* $NetBSD: physdev.h,v 1.5.18.1 2008/05/18 12:33:05 yamt Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -82,7 +82,11 @@ DEFINE_XEN_GUEST_HANDLE(physdev_set_iopl_t);
 #define PHYSDEVOP_set_iobitmap           7
 struct physdev_set_iobitmap {
     /* IN */
-    XEN_GUEST_HANDLE_00030205(uint8_t) bitmap;
+#if __XEN_INTERFACE_VERSION__ >= 0x00030205
+    XEN_GUEST_HANDLE(uint8) bitmap;
+#else
+    uint8_t *bitmap;
+#endif
     uint32_t nr_ports;
 };
 typedef struct physdev_set_iobitmap physdev_set_iobitmap_t;

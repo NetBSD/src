@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pnpbus.c,v 1.7 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: wdc_pnpbus.c,v 1.7.2.1 2008/05/18 12:32:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.7 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pnpbus.c,v 1.7.2.1 2008/05/18 12:32:39 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,8 +144,8 @@ wdc_pnpbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.ch_ndrive = 2;
 	wdc_init_shadow_regs(&sc->sc_channel);
 
-	sc->sc_ih = pnpbus_intr_establish(0, IPL_BIO, wdcintr, &sc->sc_channel,
-	    &pna->pna_res);
+	sc->sc_ih = pnpbus_intr_establish(0, IPL_BIO, IST_PNP,
+	    wdcintr, &sc->sc_channel, &pna->pna_res);
 
 	aprint_normal("\n");
 	wdcattach(&sc->sc_channel);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 2008/04/15 16:06:28 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.65.2.1 2008/05/18 12:36:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.65 2008/04/15 16:06:28 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.65.2.1 2008/05/18 12:36:07 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,143 +69,135 @@ struct nlist nl[] = {
 #define	N_MBSTAT	0
 	{ "_mbstat" },
 #define	N_IPSTAT	1
-	{ "_ipstat" },
+	{ "_ipstat" },		/* not available via kvm */
 #define	N_TCBTABLE	2
 	{ "_tcbtable" },
 #define	N_TCPSTAT	3
-	{ "_tcpstat" },
+	{ "_tcpstat" },		/* not available via kvm */
 #define	N_UDBTABLE	4
 	{ "_udbtable" },
 #define	N_UDPSTAT	5
-	{ "_udpstat" },
+	{ "_udpstat" },		/* not available via kvm */
 #define	N_IFNET		6
 	{ "_ifnet" },
 #define	N_IMP		7
 	{ "_imp_softc" },
 #define	N_ICMPSTAT	8
-	{ "_icmpstat" },
+	{ "_icmpstat" },	/* not available via kvm */
 #define	N_RTSTAT	9
 	{ "_rtstat" },
 #define	N_UNIXSW	10
 	{ "_unixsw" },
-#define N_IDP		11
-	{ "_nspcb"},
-#define N_IDPSTAT	12
-	{ "_idpstat"},
-#define N_SPPSTAT	13
-	{ "_spp_istat"},
-#define N_NSERR		14
-	{ "_ns_errstat"},
-#define	N_CLNPSTAT	15
+#define	N_CLNPSTAT	11
 	{ "_clnp_stat"},
-#define	IN_NOTUSED	16
+#define	IN_NOTUSED	12
 	{ "_tp_inpcb" },
-#define	ISO_TP		17
+#define	ISO_TP		13
 	{ "_tp_refinfo" },
-#define	N_TPSTAT	18
+#define	N_TPSTAT	14
 	{ "_tp_stat" },
-#define	N_ESISSTAT	19
+#define	N_ESISSTAT	15
 	{ "_esis_stat"},
-#define N_NIMP		20
+#define N_NIMP		16
 	{ "_nimp"},
-#define N_RTREE		21
+#define N_RTREE		17
 	{ "_rt_tables"},
-#define N_CLTP		22
+#define N_CLTP		18
 	{ "_cltb"},
-#define N_CLTPSTAT	23
+#define N_CLTPSTAT	19
 	{ "_cltpstat"},
-#define	N_NFILE		24
+#define	N_NFILE		20
 	{ "_nfile" },
-#define	N_FILE		25
+#define	N_FILE		21
 	{ "_file" },
-#define N_IGMPSTAT	26
-	{ "_igmpstat" },
-#define N_MRTPROTO	27
+#define N_IGMPSTAT	22
+	{ "_igmpstat" },	/* not available via kvm */
+#define N_MRTPROTO	23
 	{ "_ip_mrtproto" },
-#define N_MRTSTAT	28
+#define N_MRTSTAT	24
 	{ "_mrtstat" },
-#define N_MFCHASHTBL	29
+#define N_MFCHASHTBL	25
 	{ "_mfchashtbl" },
-#define	N_MFCHASH	30
+#define	N_MFCHASH	26
 	{ "_mfchash" },
-#define N_VIFTABLE	31
+#define N_VIFTABLE	27
 	{ "_viftable" },
-#define N_MSIZE		32
+#define N_MSIZE		28
 	{ "_msize" },
-#define N_MCLBYTES	33
+#define N_MCLBYTES	29
 	{ "_mclbytes" },
-#define N_DDPSTAT	34
-	{ "_ddpstat"},
-#define N_DDPCB		35
+#define N_DDPSTAT	30
+	{ "_ddpstat"},		/* not available via kvm */
+#define N_DDPCB		31
 	{ "_ddpcb"},
-#define N_MBPOOL	36
+#define N_MBPOOL	32
 	{ "_mbpool" },
-#define N_MCLPOOL	37
+#define N_MCLPOOL	33
 	{ "_mclpool" },
-#define N_DIVPCB	38
+#define N_DIVPCB	34
 	{ "_divcb"},
-#define N_DIVSTAT	39
+#define N_DIVSTAT	35
 	{ "_divstat"},
-#define N_IP6STAT	40
-	{ "_ip6stat" },
-#define N_TCP6STAT	41
-	{ "_tcp6stat" },
-#define N_UDP6STAT	42
-	{ "_udp6stat" },
-#define N_ICMP6STAT	43
-	{ "_icmp6stat" },
-#define N_IPSECSTAT	44
-	{ "_ipsecstat" },
-#define N_IPSEC6STAT	45
-	{ "_ipsec6stat" },
-#define N_PIM6STAT	46
-	{ "_pim6stat" },
-#define N_MRT6PROTO	47
+#define N_IP6STAT	36
+	{ "_ip6stat" },		/* not available via kvm */
+#define N_TCP6STAT	37
+	{ "_tcp6stat" },	/* not available via kvm */
+#define N_UDP6STAT	38
+	{ "_udp6stat" },	/* not available via kvm */
+#define N_ICMP6STAT	39
+	{ "_icmp6stat" },	/* not available via kvm */
+#define N_IPSECSTAT	40
+	{ "_ipsecstat" },	/* not available via kvm */
+#define N_IPSEC6STAT	41
+	{ "_ipsec6stat" },	/* not available via kvm */
+#define N_PIM6STAT	42
+	{ "_pim6stat" },	/* not available via kvm */
+#define N_MRT6PROTO	43
 	{ "_ip6_mrtproto" },
-#define N_MRT6STAT	48
+#define N_MRT6STAT	44
 	{ "_mrt6stat" },
-#define N_MF6CTABLE	49
+#define N_MF6CTABLE	45
 	{ "_mf6ctable" },
-#define N_MIF6TABLE	50
+#define N_MIF6TABLE	46
 	{ "_mif6table" },
-#define N_PFKEYSTAT	51
-	{ "_pfkeystat" },
-#define N_ARPSTAT	52
-	{ "_arpstat" },
-#define N_RIP6STAT	53
-	{ "_rip6stat" },
-#define	N_ARPINTRQ	54
+#define N_PFKEYSTAT	47
+	{ "_pfkeystat" },	/* not available via kvm */
+#define N_ARPSTAT	48
+	{ "_arpstat" },		/* not available via kvm */
+#define N_RIP6STAT	49
+	{ "_rip6stat" },	/* not available via kvm */
+#define	N_ARPINTRQ	50
 	{ "_arpintrq" },
-#define	N_IPINTRQ	55
+#define	N_IPINTRQ	51
 	{ "_ipintrq" },
-#define	N_IP6INTRQ	56
+#define	N_IP6INTRQ	52
 	{ "_ip6intrq" },
-#define	N_ATINTRQ1	57
+#define	N_ATINTRQ1	53
 	{ "_atintrq1" },
-#define	N_ATINTRQ2	58
+#define	N_ATINTRQ2	54
 	{ "_atintrq2" },
-#define	N_NSINTRQ	59
+#define	N_NSINTRQ	55
 	{ "_nsintrq" },
-#define	N_CLNLINTRQ	60
+#define	N_CLNLINTRQ	56
 	{ "_clnlintrq" },
-#define	N_LLCINTRQ	61
+#define	N_LLCINTRQ	57
 	{ "_llcintrq" },
-#define	N_HDINTRQ	62
+#define	N_HDINTRQ	58
 	{ "_hdintrq" },
-#define	N_NATMINTRQ	63
+#define	N_NATMINTRQ	59
 	{ "_natmintrq" },
-#define	N_PPPOEDISCINQ	64
+#define	N_PPPOEDISCINQ	61
 	{ "_ppoediscinq" },
-#define	N_PPPOEINQ	65
+#define	N_PPPOEINQ	61
 	{ "_ppoeinq" },
-#define	N_PKINTRQ	66
+#define	N_PKINTRQ	62
 	{ "_pkintrq" },
-#define	N_HARDCLOCK_TICKS 67
+#define	N_HARDCLOCK_TICKS 63
 	{ "_hardclock_ticks" },
-#define N_PIMSTAT	68
+#define N_PIMSTAT	64
 	{ "_pimstat" },
-#define N_CARPSTAT	69
-	{ "_carpstats" },
+#define N_CARPSTAT	65
+	{ "_carpstats" },	/* not available via kvm */
 	{ "" },
 };
 
@@ -297,19 +289,6 @@ struct protox atalkprotox[] = {
 	  0,		NULL,		0 }
 };
 
-#ifdef NS
-struct protox nsprotox[] = {
-	{ N_IDP,	N_IDPSTAT,	1,	nsprotopr,
-	  idp_stats,	NULL,		0,	"idp" },
-	{ N_IDP,	N_SPPSTAT,	1,	nsprotopr,
-	  spp_stats,	NULL,		0,	"spp" },
-	{ -1,		N_NSERR,	1,	0,
-	  nserr_stats,	NULL,		0,	"ns_err" },
-	{ -1,		-1,		0,	0,
-	  0,		NULL,		0 }
-};
-#endif
-
 struct protox isoprotox[] = {
 	{ ISO_TP,	N_TPSTAT,	1,	iso_protopr,
 	  tp_stats,	NULL,		0,	"tp" },
@@ -334,9 +313,6 @@ struct protox *protoprotox[] = { protox,
 #endif
 #ifndef SMALL
 				 atalkprotox,
-#ifdef NS
-				 nsprotox,
-#endif
 				 isoprotox,
 #endif
 				 NULL };
@@ -350,9 +326,6 @@ const struct softintrq {
 	{ "ip6intrq", N_IP6INTRQ },
 	{ "atintrq1", N_ATINTRQ1 },
 	{ "atintrq2", N_ATINTRQ2 },
-#ifdef NS
-	{ "nsintrq", N_NSINTRQ },
-#endif
 	{ "clnlintrq", N_CLNLINTRQ },
 	{ "llcintrq", N_LLCINTRQ },
 	{ "hdintrq", N_HDINTRQ },
@@ -390,25 +363,12 @@ prepare(char *nlistf, char *memf, struct protox *tp)
 		   iflag ||
 #ifndef SMALL
 		   gflag ||
-		   (pflag && tp->pr_sindex == N_DDPSTAT) ||
-#ifdef NS
-		   (pflag && tp->pr_sindex == N_IDPSTAT) ||
-		   (pflag && tp->pr_sindex == N_SPPSTAT) ||
-		   (pflag && tp->pr_sindex == N_NSERR) ||
-#endif
 		   (pflag && tp->pr_sindex == N_TPSTAT) ||
 		   (pflag && tp->pr_sindex == N_CLTPSTAT) ||
 		   (pflag && tp->pr_sindex == N_CLNPSTAT) ||
 		   (pflag && tp->pr_sindex == N_ESISSTAT) ||
 #endif
 		   (pflag && tp->pr_sindex == N_PIMSTAT) ||
-#ifdef IPSEC
-		   (pflag && tp->pr_sindex == N_IPSECSTAT) ||
-		   (pflag && tp->pr_sindex == N_PFKEYSTAT) ||
-#ifdef INET6
-		   (pflag && tp->pr_sindex == N_IPSEC6STAT) ||
-#endif
-#endif
 		   Pflag) {
 		/* These flags are not yet supported via sysctl(3). */
 		use_sysctl = 0;
@@ -471,12 +431,6 @@ main(argc, argv)
 			dflag = 1;
 			break;
 		case 'f':
-#ifdef NS
-			if (strcmp(optarg, "ns") == 0) {
-				af = AF_NS;
-				break;
-			}
-#endif
 			if (strcmp(optarg, "inet") == 0)
 				af = AF_INET;
 			else if (strcmp(optarg, "inet6") == 0)
@@ -721,11 +675,6 @@ main(argc, argv)
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
 		for (tp = atalkprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
-#ifdef NS
-	if (af == AF_NS || af == AF_UNSPEC)
-		for (tp = nsprotox; tp->pr_name; tp++)
-			printproto(tp, tp->pr_name);
-#endif
 	if (af == AF_ISO || af == AF_UNSPEC)
 		for (tp = isoprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);

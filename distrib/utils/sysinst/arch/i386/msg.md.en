@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.56 2007/12/25 01:03:32 ad Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.56.8.1 2008/05/18 12:29:41 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -164,4 +164,3 @@ message updatembr
 the latest version of the NetBSD bootcode?}
 
 message set_kernel_1	{Kernel (GENERIC)}
-message set_kernel_2	{Kernel (GENERIC.NOACPI)}

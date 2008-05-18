@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.15 2008/01/30 09:50:21 ad Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.15.8.1 2008/05/18 12:35:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,15 +73,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.15 2008/01/30 09:50:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.15.8.1 2008/05/18 12:35:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
-#include <sys/malloc.h>
 #include <sys/stat.h>
+#include <sys/malloc.h>
 #include <sys/file.h>
 #include <sys/namei.h>
 #include <sys/filedesc.h>
@@ -264,10 +264,10 @@ ptyfs_freevp(struct vnode *vp)
 void
 ptyfs_hashinit(void)
 {
-	ptyfs_used_tbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
-	    M_WAITOK, &ptyfs_used_mask);
-	ptyfs_free_tbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
-	    M_WAITOK, &ptyfs_free_mask);
+	ptyfs_used_tbl = hashinit(desiredvnodes / 4, HASH_LIST, true,
+	    &ptyfs_used_mask);
+	ptyfs_free_tbl = hashinit(desiredvnodes / 4, HASH_LIST, true,
+	    &ptyfs_free_mask);
 	mutex_init(&ptyfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ptyfs_used_slock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ptyfs_free_slock, MUTEX_DEFAULT, IPL_NONE);
@@ -288,8 +288,7 @@ ptyfs_rehash(kmutex_t *hlock, struct ptyfs_hashhead **hhead,
 	struct ptyfs_hashhead *oldhash, *hash;
 	u_long i, oldmask, mask, val;
 
-	hash = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT, M_WAITOK,
-	    &mask);
+	hash = hashinit(desiredvnodes / 4, HASH_LIST, true, &mask);
 
 	mutex_enter(hlock);
 	oldhash = *hhead;
@@ -305,7 +304,7 @@ ptyfs_rehash(kmutex_t *hlock, struct ptyfs_hashhead **hhead,
 		}
 	}
 	mutex_exit(hlock);
-	hashdone(oldhash, M_UFSMNT);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -314,8 +313,9 @@ ptyfs_rehash(kmutex_t *hlock, struct ptyfs_hashhead **hhead,
 void
 ptyfs_hashdone(void)
 {
-	hashdone(ptyfs_used_tbl, M_UFSMNT);
-	hashdone(ptyfs_free_tbl, M_UFSMNT);
+
+	hashdone(ptyfs_used_tbl, HASH_LIST, ptyfs_used_mask);
+	hashdone(ptyfs_free_tbl, HASH_LIST, ptyfs_free_mask);
 }
 
 /*

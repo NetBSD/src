@@ -1,7 +1,7 @@
-/* $NetBSD: udf_vfsops.c,v 1.35 2008/01/28 14:31:17 dholland Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.35.8.1 2008/05/18 12:35:06 yamt Exp $ */
 
 /*
- * Copyright (c) 2006 Reinoud Zandijk
+ * Copyright (c) 2006, 2008 Reinoud Zandijk
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *          This product includes software developed for the
- *          NetBSD Project.  See http://www.NetBSD.org/ for
- *          information about NetBSD.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  * 
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,16 +26,16 @@
  * 
  */
 
-
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35 2008/01/28 14:31:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35.8.1 2008/05/18 12:35:06 yamt Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
 #include "opt_compat_netbsd.h"
+#include "opt_udf.h"
 #endif
 
 #include <sys/param.h>
@@ -65,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35 2008/01/28 14:31:17 dholland Exp
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
@@ -73,6 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.35 2008/01/28 14:31:17 dholland Exp
 #include "udf_subr.h"
 #include "udf_bswap.h"
 
+MODULE(MODULE_CLASS_VFS, udf, NULL);
+
+#define VTOI(vnode) ((struct udf_node *) vnode->v_data)
 
 /* verbose levels of the udf filingsystem */
 int udf_verbose = UDF_DEBUGGING;
@@ -89,13 +86,6 @@ VFS_PROTOS(udf);
 
 /* internal functions */
 static int udf_mountfs(struct vnode *, struct mount *, struct lwp *, struct udf_args *);
-#if 0
-static int update_mp(struct mount *, struct udf_args *);
-#endif
-
-
-/* handies */
-#define	VFSTOUDF(mp)	((struct udf_mount *)mp->mnt_data)
 
 
 /* --------------------------------------------------------------------- */
@@ -132,12 +122,11 @@ struct vfsops udf_vfsops = {
 	(void *)eopnotsupp,		/* vfs_suspendctl */
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	udf_vnodeopv_descs,
 	0, /* int vfs_refcount   */
 	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
 };
-VFS_ATTACH(udf_vfsops);
-
 
 /* --------------------------------------------------------------------- */
 
@@ -157,7 +146,6 @@ udf_init(void)
 	    IPL_NONE);
 }
 
-/* --------------------------------------------------------------------- */
 
 void
 udf_reinit(void)
@@ -166,7 +154,6 @@ udf_reinit(void)
 	/* reinit pool? */
 }
 
-/* --------------------------------------------------------------------- */
 
 void
 udf_done(void)
@@ -177,6 +164,21 @@ udf_done(void)
 	malloc_type_detach(M_UDFMNT);
 	malloc_type_detach(M_UDFVOLD);
 	malloc_type_detach(M_UDFTEMP);
+}
+
+
+static int
+udf_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&udf_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&udf_vfsops);
+	default:
+		return ENOTTY;
+	}
 }
 
 /* --------------------------------------------------------------------- */
@@ -202,23 +204,6 @@ free_udf_mountinfo(struct mount *mp)
 
 	ump = VFSTOUDF(mp);
 	if (ump) {
-		/* dereference all system nodes */
-		if (ump->metadata_file)
-			vrele(ump->metadata_file->vnode);
-		if (ump->metadatamirror_file)
-			vrele(ump->metadatamirror_file->vnode);
-		if (ump->metadatabitmap_file)
-			vrele(ump->metadatabitmap_file->vnode);
-
-		/* vflush all (system) nodes if any */
-		(void) vflush(mp, NULLVP, FORCECLOSE);
-
-		/* dispose of our descriptor pool */
-		if (ump->desc_pool) {
-			pool_destroy(ump->desc_pool);
-			free(ump->desc_pool, M_UDFMNT);
-		}
-
 		/* clear our data */
 		for (i = 0; i < UDF_ANCHORS; i++)
 			MPFREE(ump->anchors[i], M_UDFVOLD);
@@ -227,20 +212,60 @@ free_udf_mountinfo(struct mount *mp)
 		MPFREE(ump->unallocated,      M_UDFVOLD);
 		MPFREE(ump->implementation,   M_UDFVOLD);
 		MPFREE(ump->logvol_integrity, M_UDFVOLD);
-		for (i = 0; i < UDF_PARTITIONS; i++)
+		for (i = 0; i < UDF_PARTITIONS; i++) {
 			MPFREE(ump->partitions[i], M_UDFVOLD);
+			MPFREE(ump->part_unalloc_dscr[i], M_UDFVOLD);
+			MPFREE(ump->part_freed_dscr[i], M_UDFVOLD);
+		}
 		MPFREE(ump->fileset_desc,     M_UDFVOLD);
-		MPFREE(ump->vat_table,        M_UDFVOLD);
 		MPFREE(ump->sparing_table,    M_UDFVOLD);
+		MPFREE(ump->metadata_bitmap.bits, M_UDFVOLD);
+
+		MPFREE(ump->la_node_ad_cpy, M_UDFMNT);
+		MPFREE(ump->la_pmapping, M_TEMP);
+		MPFREE(ump->la_lmapping, M_TEMP);
 
 		mutex_destroy(&ump->ihash_lock);
 		mutex_destroy(&ump->get_node_lock);
+
+		mutex_destroy(&ump->allocate_mutex);
+		MPFREE(ump->vat_table, M_UDFVOLD);
+
 		free(ump, M_UDFMNT);
 	}
 }
 #undef MPFREE
 
 /* --------------------------------------------------------------------- */
+
+/* if the system nodes exist, release them */
+static void
+udf_release_system_nodes(struct mount *mp)
+{
+	struct udf_mount *ump = VFSTOUDF(mp);
+	int error;
+
+	/* if we haven't even got an ump, dont bother */
+	if (!ump)
+		return;
+
+	/* VAT partition support */
+	if (ump->vat_node)
+		vrele(ump->vat_node->vnode);
+
+	/* Metadata partition support */
+	if (ump->metadata_node)
+		vrele(ump->metadata_node->vnode);
+	if (ump->metadatamirror_node)
+		vrele(ump->metadatamirror_node->vnode);
+	if (ump->metadatabitmap_node)
+		vrele(ump->metadatabitmap_node->vnode);
+
+	/* This flush should NOT write anything nor allow any node to remain */
+	if ((error = vflush(ump->vfs_mountp, NULLVP, 0)) != 0)
+		panic("Failure to flush UDF system vnodes\n");
+}
+
 
 int
 udf_mount(struct mount *mp, const char *path,
@@ -305,8 +330,14 @@ udf_mount(struct mount *mp, const char *path,
 		return ENXIO; 
 	}
 
+#ifndef UDF_READWRITE
 	/* force read-only for now */
-	mp->mnt_flag |= MNT_RDONLY;
+	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+		printf("Enable kernel option UDF_READWRITE for writing\n");
+		vrele(devvp);
+		return EROFS;
+	}
+#endif
 
 	/*
 	 * If mount by non-root, then verify that user has necessary
@@ -338,6 +369,9 @@ udf_mount(struct mount *mp, const char *path,
 		/* opened ok, try mounting */
 		error = udf_mountfs(devvp, mp, l, args);
 		if (error) {
+			udf_release_system_nodes(mp);
+			/* cleanup */
+			udf_discstrat_finish(VFSTOUDF(mp));
 			free_udf_mountinfo(mp);
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void) VOP_CLOSE(devvp, openflags, NOCRED);
@@ -356,8 +390,23 @@ udf_mount(struct mount *mp, const char *path,
 	/* successfully mounted */
 	DPRINTF(VOLUMES, ("udf_mount() successfull\n"));
 
-	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 			mp->mnt_op->vfs_name, mp, l);
+	if (error)
+		return error;
+
+	/* If we're not opened read-only, open its logical volume */
+	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+		if ((error = udf_open_logvol(VFSTOUDF(mp))) != 0) {
+			printf( "mount_udf: can't open logical volume for "
+				"writing,downgrading access to read-only\n");
+			mp->mnt_flag |= MNT_RDONLY;
+			/* FIXME we can't return error now on open failure */
+			return 0;
+		}
+	}
+
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -408,16 +457,38 @@ udf_unmount(struct mount *mp, int mntflags)
 	if ((error = vflush(mp, NULLVP, flags | SKIPSYSTEM)) != 0)
 		return error;
 
+	/* update nodes and wait for completion of writeout of system nodes */
+	udf_sync(mp, FSYNC_WAIT, NOCRED);
+
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_LOCKING)
 		udf_unmount_sanity_check(mp);
 #endif
 
-	DPRINTF(VOLUMES, ("flush OK\n"));
+	/* flush again, to check if we are still busy for something else */
+	if ((error = vflush(ump->vfs_mountp, NULLVP, flags | SKIPSYSTEM)) != 0)
+		return error;
 
-	/*
-	 * TODO close logical volume and close session if requested.
-	 */
+	DPRINTF(VOLUMES, ("flush OK on unmount\n"));
+
+	/* close logical volume and close session if requested */
+	if ((error = udf_close_logvol(ump, mntflags)) != 0)
+		return error;
+
+#ifdef DEBUG
+	DPRINTF(VOLUMES, ("FINAL sanity check\n"));
+	if (udf_verbose & UDF_DEBUG_LOCKING)
+		udf_unmount_sanity_check(mp);
+#endif
+
+	/* NOTE release system nodes should NOT write anything */
+	udf_release_system_nodes(mp);
+
+	/* finalise disc strategy */
+	udf_discstrat_finish(ump);
+
+	/* synchronise device caches */
+	(void) udf_synchronise_caches(ump);
 
 	/* close device */
 	DPRINTF(VOLUMES, ("closing device\n"));
@@ -439,10 +510,10 @@ udf_unmount(struct mount *mp, int mntflags)
 	ump->devvp->v_specmountpoint = NULL;
 	vput(ump->devvp);
 
-	/* free up umt structure */
+	/* free our ump */
 	free_udf_mountinfo(mp);
 
-	/* free ump struct reference */
+	/* free ump struct references */
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 
@@ -462,20 +533,32 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 {
 	struct udf_mount     *ump;
 	uint32_t sector_size, lb_size, bshift;
+	uint32_t logvol_integrity;
 	int    num_anchors, error, lst;
 
 	/* flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)))
 		return error;
 
+	/* setup basic mount information */
+	mp->mnt_data = NULL;
+	mp->mnt_stat.f_fsidx.__fsid_val[0] = (uint32_t) devvp->v_rdev;
+	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_UDF);
+	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = UDF_MAX_NAMELEN;
+	mp->mnt_flag |= MNT_LOCAL;
+
 	/* allocate udf part of mount structure; malloc always succeeds */
 	ump = malloc(sizeof(struct udf_mount), M_UDFMNT, M_WAITOK | M_ZERO);
 
 	/* init locks */
+	mutex_init(&ump->logvol_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ump->ihash_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ump->get_node_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&ump->allocate_mutex, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&ump->dirtynodes_cv, "udfsync2");
 
-	/* init `ino_t' to udf_node hash table */
+	/* init `ino_t' to udf_node hash table and other lists */
 	for (lst = 0; lst < UDF_INODE_HASHSIZE; lst++) {
 		LIST_INIT(&ump->udf_nodes[lst]);
 	}
@@ -503,10 +586,29 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		return EIO;
 	}
 
+	/*
+	 * Inspect if we're asked to mount read-write on a non recordable or
+	 * closed sequential disc.
+	 */
+	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
+		if ((ump->discinfo.mmc_cur & MMC_CAP_RECORDABLE) == 0) {
+			printf("UDF mount: disc is not recordable\n");
+			return EROFS;
+		}
+		/*
+		 * TODO if on sequential media and last session is closed,
+		 * check for enough space to open/close new session
+		 */
+	}
+
+	/* initialise bootstrap disc strategy */
+	ump->strategy = &udf_strat_bootstrap;
+	udf_discstrat_init(ump);
+
 	/* read all anchors to get volume descriptor sequence */
-	num_anchors = udf_read_anchors(ump, args);
+	num_anchors = udf_read_anchors(ump);
 	if (num_anchors == 0)
-		return ENOENT;
+		return EINVAL;
 
 	DPRINTF(VOLUMES, ("Read %d anchors on this disc, session %d\n",
 	    num_anchors, args->sessionnr));
@@ -517,49 +619,62 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 		return error;
 	}
 
+	/* close down (direct) disc strategy */
+	udf_discstrat_finish(ump);
+
 	/* check consistency and completeness */
-	if ((error = udf_process_vds(ump, args))) {
+	if ((error = udf_process_vds(ump))) {
 		printf( "UDF mount: disc not properly formatted"
 			"(bad VDS)\n");
 		return error;
 	}
 
-	/*
-	 * Initialise pool for descriptors associated with nodes. This is done
-	 * in lb_size units though currently lb_size is dictated to be
-	 * sector_size.
-	 */
-	lb_size = udf_rw32(ump->logical_vol->lb_size);
-	ump->desc_pool = malloc(sizeof(struct pool), M_UDFMNT, M_WAITOK);
-	memset(ump->desc_pool, 0, sizeof(struct pool));
-	pool_init(ump->desc_pool, lb_size, 0, 0, 0, "udf_desc_pool", NULL,
-	    IPL_NONE);
+	/* switch to new disc strategy */
+	KASSERT(ump->strategy != &udf_strat_bootstrap);
+	udf_discstrat_init(ump);
 
+	/* initialise late allocation administration space */
+	ump->la_lmapping = malloc(sizeof(uint64_t) * UDF_MAX_MAPPINGS,
+			M_TEMP, M_WAITOK);
+	ump->la_pmapping = malloc(sizeof(uint64_t) * UDF_MAX_MAPPINGS,
+			M_TEMP, M_WAITOK);
+
+	/* setup node cleanup extents copy space */
+	lb_size = udf_rw32(ump->logical_vol->lb_size);
+	ump->la_node_ad_cpy = malloc(lb_size * UDF_MAX_ALLOC_EXTENTS,
+		M_UDFMNT, M_WAITOK);
+	memset(ump->la_node_ad_cpy, 0, lb_size * UDF_MAX_ALLOC_EXTENTS);
+
+	/* setup rest of mount information */
+	mp->mnt_data = ump;
+
+	/* bshift is allways equal to disc sector size */
+	mp->mnt_dev_bshift = bshift;
+	mp->mnt_fs_bshift  = bshift;
+
+	/* note that the mp info needs to be initialised for reading! */
 	/* read vds support tables like VAT, sparable etc. */
-	if ((error = udf_read_vds_tables(ump, args))) {
+	if ((error = udf_read_vds_tables(ump))) {
 		printf( "UDF mount: error in format or damaged disc "
 			"(VDS tables failing)\n");
 		return error;
 	}
 
-	if ((error = udf_read_rootdirs(ump, args))) {
+	/* check if volume integrity is closed otherwise its dirty */
+	logvol_integrity = udf_rw32(ump->logvol_integrity->integrity_type);
+	if (logvol_integrity != UDF_INTEGRITY_CLOSED) {
+		printf("UDF mount: file system is not clean; ");
+		printf("please fsck(8)\n");
+		return EPERM;
+	}
+
+	/* read root directory */
+	if ((error = udf_read_rootdirs(ump))) {
 		printf( "UDF mount: "
 			"disc not properly formatted or damaged disc "
 			"(rootdirs failing)\n");
 		return error;
 	}
-
-	/* setup rest of mount information */
-	mp->mnt_data = ump;
-	mp->mnt_stat.f_fsidx.__fsid_val[0] = (uint32_t) devvp->v_rdev;
-	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_UDF);
-	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
-	mp->mnt_stat.f_namemax = UDF_MAX_NAMELEN;
-	mp->mnt_flag |= MNT_LOCAL;
-
-	/* bshift is always equal to disc sector size */
-	mp->mnt_dev_bshift = bshift;
-	mp->mnt_fs_bshift  = bshift;
 
 	/* do we have to set this? */
 	devvp->v_specmountpoint = mp;
@@ -623,14 +738,23 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_frsize = ump->discinfo.sector_size;
 	sbp->f_iosize = ump->discinfo.sector_size;
 
-	/* TODO integrity locking */
-	/* free and used space for mountpoint based on logvol integrity */
+	mutex_enter(&ump->allocate_mutex);
 	lvid = ump->logvol_integrity;
-	if (lvid) {
-		num_part = udf_rw32(lvid->num_part);
-		impl = (struct udf_logvol_info *) (lvid->tables + 2*num_part);
+	freeblks = sizeblks = 0;
 
-		freeblks = sizeblks = 0;
+	/* Sequentials report free space directly (CD/DVD/BD-R) */
+	KASSERT(lvid);
+	num_part = udf_rw32(lvid->num_part);
+	impl = (struct udf_logvol_info *) (lvid->tables + 2*num_part);
+
+	if (ump->discinfo.mmc_cur & MMC_CAP_SEQUENTIAL) {
+		/* XXX assumption at most two tracks open */
+		freeblks = ump->data_track.free_blocks;
+		if (ump->data_track.tracknr != ump->metadata_track.tracknr)
+			freeblks += ump->metadata_track.free_blocks;
+		sizeblks = ump->discinfo.last_possible_lba;
+	} else {
+		/* free and used space for mountpoint based on logvol integrity */
 		for (part=0; part < num_part; part++) {
 			pos1 = &lvid->tables[0] + part;
 			pos2 = &lvid->tables[0] + num_part + part;
@@ -639,20 +763,27 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
 				sizeblks += udf_rw32(*pos2);
 			}
 		}
-		sbp->f_blocks = sizeblks;
-		sbp->f_bfree  = freeblks;
+	}
+	freeblks -= ump->uncomitted_lb;
+
+	sbp->f_blocks = sizeblks;
+	sbp->f_bfree  = freeblks;
+	sbp->f_files  = 0;
+	if (impl) {
 		sbp->f_files  = udf_rw32(impl->num_files);
 		sbp->f_files += udf_rw32(impl->num_directories);
-
-		/* XXX read only for now XXX */
-		sbp->f_bavail = 0;
-		sbp->f_bresvd = 0;
-
-		/* tricky, next only aplies to ffs i think, so set to zero */
-		sbp->f_ffree  = 0;
-		sbp->f_favail = 0;
-		sbp->f_fresvd = 0;
 	}
+
+	/* XXX read only for now XXX */
+	sbp->f_bavail = 0;
+	sbp->f_bresvd = 0;
+
+	/* tricky, next only aplies to ffs i think, so set to zero */
+	sbp->f_ffree  = 0;
+	sbp->f_favail = 0;
+	sbp->f_fresvd = 0;
+
+	mutex_exit(&ump->allocate_mutex);
 
 	copy_statvfs_info(sbp, mp);
 	return 0;
@@ -660,12 +791,51 @@ udf_statvfs(struct mount *mp, struct statvfs *sbp)
 
 /* --------------------------------------------------------------------- */
 
+/*
+ * TODO what about writing out free space maps, lvid etc? only on `waitfor'
+ * i.e. explicit syncing by the user?
+ */
+
 int
-udf_sync(struct mount *mp, int waitfor,
-    kauth_cred_t cred)
+udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
+	struct udf_mount *ump = VFSTOUDF(mp);
+	int error;
+
 	DPRINTF(CALL, ("udf_sync called\n"));
-	/* nothing to be done as upto now read-only */
+	/* if called when mounted readonly, just ignore */
+	if (mp->mnt_flag & MNT_RDONLY)
+		return 0;
+
+	if (ump->syncing && !waitfor) {
+		printf("UDF: skipping autosync\n");
+		return 0;
+	}
+
+	/* get sync lock */
+	ump->syncing = 1;
+
+	udf_do_sync(ump, cred, waitfor);
+
+	if (waitfor == MNT_WAIT) {
+		/* XXX lock for VAT en bitmaps? */
+		/* metadata nodes are written synchronous */
+		DPRINTF(CALL, ("udf_sync: syncing metadata\n"));
+		if (ump->lvclose & UDF_WRITE_VAT)
+			udf_writeout_vat(ump);
+		if (ump->lvclose & UDF_WRITE_PART_BITMAPS) {
+			error = udf_write_partition_spacetables(ump, waitfor);
+			if (error) {
+				printf( "udf_close_logvol: writeout of space "
+					"tables failed\n");
+			}
+			ump->lvclose &= ~UDF_WRITE_PART_BITMAPS;
+		}
+
+	}
+	DPRINTF(CALL, ("end of udf_sync()\n"));
+	ump->syncing = 0;
+
 	return 0;
 }
 

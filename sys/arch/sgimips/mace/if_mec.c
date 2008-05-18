@@ -1,8 +1,7 @@
-/* $NetBSD: if_mec.c,v 1.18 2008/02/25 22:49:20 martin Exp $ */
+/* $NetBSD: if_mec.c,v 1.18.2.1 2008/05/18 12:32:42 yamt Exp $ */
 
-/*
- * Copyright (c) 2004 Izumi Tsutsui.
- * All rights reserved.
+/*-
+ * Copyright (c) 2004 Izumi Tsutsui.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -64,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18 2008/02/25 22:49:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18.2.1 2008/05/18 12:32:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -266,7 +263,7 @@ struct mec_control_data {
  * software state per device
  */
 struct mec_softc {
-	struct device sc_dev;		/* generic device structures */
+	device_t sc_dev;		/* generic device structures */
 
 	bus_space_tag_t sc_st;		/* bus_space tag */
 	bus_space_handle_t sc_sh;	/* bus_space handle */
@@ -325,42 +322,36 @@ struct mec_softc {
 #define ETHER_PAD_LEN	(ETHER_MIN_LEN - ETHER_CRC_LEN)
 #define MEC_ETHER_ALIGN	2
 
-#ifdef DDB
-#define STATIC
-#else
-#define STATIC static
-#endif
+static int	mec_match(device_t, cfdata_t, void *);
+static void	mec_attach(device_t, device_t, void *);
 
-STATIC int	mec_match(struct device *, struct cfdata *, void *);
-STATIC void	mec_attach(struct device *, struct device *, void *);
-
-STATIC int	mec_mii_readreg(struct device *, int, int);
-STATIC void	mec_mii_writereg(struct device *, int, int, int);
-STATIC int	mec_mii_wait(struct mec_softc *);
-STATIC void	mec_statchg(struct device *);
+static int	mec_mii_readreg(device_t, int, int);
+static void	mec_mii_writereg(device_t, int, int, int);
+static int	mec_mii_wait(struct mec_softc *);
+static void	mec_statchg(device_t);
 
 static void	enaddr_aton(const char *, uint8_t *);
 
-STATIC int	mec_init(struct ifnet * ifp);
-STATIC void	mec_start(struct ifnet *);
-STATIC void	mec_watchdog(struct ifnet *);
-STATIC void	mec_tick(void *);
-STATIC int	mec_ioctl(struct ifnet *, u_long, void *);
-STATIC void	mec_reset(struct mec_softc *);
-STATIC void	mec_setfilter(struct mec_softc *);
-STATIC int	mec_intr(void *arg);
-STATIC void	mec_stop(struct ifnet *, int);
-STATIC void	mec_rxintr(struct mec_softc *);
-STATIC void	mec_txintr(struct mec_softc *);
-STATIC void	mec_shutdown(void *);
+static int	mec_init(struct ifnet * ifp);
+static void	mec_start(struct ifnet *);
+static void	mec_watchdog(struct ifnet *);
+static void	mec_tick(void *);
+static int	mec_ioctl(struct ifnet *, u_long, void *);
+static void	mec_reset(struct mec_softc *);
+static void	mec_setfilter(struct mec_softc *);
+static int	mec_intr(void *arg);
+static void	mec_stop(struct ifnet *, int);
+static void	mec_rxintr(struct mec_softc *);
+static void	mec_txintr(struct mec_softc *);
+static void	mec_shutdown(void *);
 
-CFATTACH_DECL(mec, sizeof(struct mec_softc),
+CFATTACH_DECL_NEW(mec, sizeof(struct mec_softc),
     mec_match, mec_attach, NULL, NULL);
 
 static int mec_matched = 0;
 
-STATIC int
-mec_match(struct device *parent, struct cfdata *match, void *aux)
+static int
+mec_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* allow only one device */
@@ -371,10 +362,10 @@ mec_match(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-STATIC void
-mec_attach(struct device *parent, struct device *self, void *aux)
+static void
+mec_attach(device_t parent, device_t self, void *aux)
 {
-	struct mec_softc *sc = (void *)self;
+	struct mec_softc *sc = device_private(self);
 	struct mace_attach_args *maa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint64_t address, command;
@@ -384,10 +375,11 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	int i, err, rseg;
 	bool mac_is_fake;
 
+	sc->sc_dev = self;
 	sc->sc_st = maa->maa_st;
 	if (bus_space_subregion(sc->sc_st, maa->maa_sh,
 	    maa->maa_offset, 0,	&sc->sc_sh) != 0) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -401,7 +393,8 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	if ((err = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct mec_control_data), MEC_CONTROL_DATA_ALIGN, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to allocate control data, error = %d\n", err);
+		aprint_error(": unable to allocate control data, error = %d\n",
+		    err);
 		goto fail_0;
 	}
 	/*
@@ -415,7 +408,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	if ((err = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct mec_control_data),
 	    (void **)&sc->sc_control_data, /*BUS_DMA_COHERENT*/ 0)) != 0) {
-		printf(": unable to map control data, error = %d\n", err);
+		aprint_error(": unable to map control data, error = %d\n", err);
 		goto fail_1;
 	}
 	memset(sc->sc_control_data, 0, sizeof(struct mec_control_data));
@@ -423,15 +416,15 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	if ((err = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct mec_control_data), 1,
 	    sizeof(struct mec_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		printf(": unable to create control data DMA map, error = %d\n",
-		    err);
+		aprint_error(": unable to create control data DMA map,"
+		    " error = %d\n", err);
 		goto fail_2;
 	}
 	if ((err = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct mec_control_data), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to load control data DMA map, error = %d\n",
-		    err);
+		aprint_error(": unable to load control data DMA map,"
+		    " error = %d\n", err);
 		goto fail_3;
 	}
 
@@ -440,8 +433,8 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 		if ((err = bus_dmamap_create(sc->sc_dmat,
 		    MCLBYTES, 1, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			printf(": unable to create tx DMA map %d, error = %d\n",
-			    i, err);
+			aprint_error(": unable to create tx DMA map %d,"
+			    " error = %d\n", i, err);
 			goto fail_4;
 		}
 	}
@@ -450,7 +443,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 
 	/* get Ethernet address from ARCBIOS */
 	if ((macaddr = ARCBIOS->GetEnvironmentVariable("eaddr")) == NULL) {
-		printf(": unable to get MAC address!\n");
+		aprint_error(": unable to get MAC address!\n");
 		goto fail_4;
 	}
 	/*
@@ -504,14 +497,15 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 
 	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
 
-	printf(": MAC-110 Ethernet, rev %u\n",
+	aprint_normal(": MAC-110 Ethernet, rev %u\n",
 	    (u_int)((command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT));
 
 	if (mac_is_fake)
-		printf("%s: could not get ethernet address from firmware"
+		aprint_normal_dev(self,
+		    "could not get ethernet address from firmware"
 		    " - generated one from the \"netaddr\" environment"
-		    " variable\n", sc->sc_dev.dv_xname);
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+		    " variable\n");
+	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 
 	/* Done, now attach everything */
@@ -525,7 +519,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+	mii_attach(self, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
 	child = LIST_FIRST(&sc->sc_mii.mii_phys);
@@ -539,7 +533,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_phyaddr = child->mii_phy;
 	}
 
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(self));
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = mec_ioctl;
@@ -557,7 +551,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	cpu_intr_establish(maa->maa_intr, maa->maa_intrmask, mec_intr, sc);
 
 #if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
 	    RND_TYPE_NET, 0);
 #endif
 
@@ -588,10 +582,10 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	return;
 }
 
-STATIC int
-mec_mii_readreg(struct device *self, int phy, int reg)
+static int
+mec_mii_readreg(device_t self, int phy, int reg)
 {
-	struct mec_softc *sc = (void *)self;
+	struct mec_softc *sc = device_private(self);
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	uint64_t val;
@@ -618,10 +612,10 @@ mec_mii_readreg(struct device *self, int phy, int reg)
 	return 0;
 }
 
-STATIC void
-mec_mii_writereg(struct device *self, int phy, int reg, int val)
+static void
+mec_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct mec_softc *sc = (void *)self;
+	struct mec_softc *sc = device_private(self);
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 
@@ -642,7 +636,7 @@ mec_mii_writereg(struct device *self, int phy, int reg, int val)
 	mec_mii_wait(sc);
 }
 
-STATIC int
+static int
 mec_mii_wait(struct mec_softc *sc)
 {
 	uint32_t busy;
@@ -663,14 +657,14 @@ mec_mii_wait(struct mec_softc *sc)
 #endif
 	}
 
-	printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
+	printf("%s: MII timed out\n", device_xname(sc->sc_dev));
 	return 1;
 }
 
-STATIC void
-mec_statchg(struct device *self)
+static void
+mec_statchg(device_t self)
 {
-	struct mec_softc *sc = (void *)self;
+	struct mec_softc *sc = device_private(self);
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	uint32_t control;
@@ -720,7 +714,7 @@ enaddr_aton(const char *str, uint8_t *eaddr)
 	}
 }
 
-STATIC int
+static int
 mec_init(struct ifnet *ifp)
 {
 	struct mec_softc *sc = ifp->if_softc;
@@ -781,7 +775,7 @@ mec_init(struct ifnet *ifp)
 	return 0;
 }
 
-STATIC void
+static void
 mec_reset(struct mec_softc *sc)
 {
 	bus_space_tag_t st = sc->sc_st;
@@ -809,7 +803,7 @@ mec_reset(struct mec_softc *sc)
 	    bus_space_read_8(st, sh, MEC_MAC_CONTROL)));
 }
 
-STATIC void
+static void
 mec_start(struct ifnet *ifp)
 {
 	struct mec_softc *sc = ifp->if_softc;
@@ -907,7 +901,8 @@ mec_start(struct ifnet *ifp)
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL) {
 					printf("%s: unable to allocate "
-					    "TX mbuf\n", sc->sc_dev.dv_xname);
+					    "TX mbuf\n",
+					    device_xname(sc->sc_dev));
 					break;
 				}
 				if (len > (MHLEN - MEC_ETHER_ALIGN)) {
@@ -915,7 +910,7 @@ mec_start(struct ifnet *ifp)
 					if ((m->m_flags & M_EXT) == 0) {
 						printf("%s: unable to allocate "
 						    "TX cluster\n",
-						    sc->sc_dev.dv_xname);
+						    device_xname(sc->sc_dev));
 						m_freem(m);
 						break;
 					}
@@ -941,7 +936,7 @@ mec_start(struct ifnet *ifp)
 				if (error) {
 					printf("%s: unable to load TX buffer, "
 					    "error = %d\n",
-					    sc->sc_dev.dv_xname, error);
+					    device_xname(sc->sc_dev), error);
 					break;
 				}
 			}
@@ -1092,7 +1087,7 @@ mec_start(struct ifnet *ifp)
 	}
 }
 
-STATIC void
+static void
 mec_stop(struct ifnet *ifp, int disable)
 {
 	struct mec_softc *sc = ifp->if_softc;
@@ -1118,7 +1113,7 @@ mec_stop(struct ifnet *ifp, int disable)
 	}
 }
 
-STATIC int
+static int
 mec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int s, error;
@@ -1144,18 +1139,18 @@ mec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
-STATIC void
+static void
 mec_watchdog(struct ifnet *ifp)
 {
 	struct mec_softc *sc = ifp->if_softc;
 
-	printf("%s: device timeout\n", sc->sc_dev.dv_xname);
+	printf("%s: device timeout\n", device_xname(sc->sc_dev));
 	ifp->if_oerrors++;
 
 	mec_init(ifp);
 }
 
-STATIC void
+static void
 mec_tick(void *arg)
 {
 	struct mec_softc *sc = arg;
@@ -1168,7 +1163,7 @@ mec_tick(void *arg)
 	callout_reset(&sc->sc_tick_ch, hz, mec_tick, sc);
 }
 
-STATIC void
+static void
 mec_setfilter(struct mec_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1221,7 +1216,7 @@ mec_setfilter(struct mec_softc *sc)
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
 }
 
-STATIC int
+static int
 mec_intr(void *arg)
 {
 	struct mec_softc *sc = arg;
@@ -1283,7 +1278,7 @@ mec_intr(void *arg)
 		     MEC_INT_RX_FIFO_UNDERFLOW |
 		     MEC_INT_RX_DMA_UNDERFLOW)) {
 			printf("%s: mec_intr: interrupt status = 0x%08x\n",
-			    sc->sc_dev.dv_xname, statreg);
+			    device_xname(sc->sc_dev), statreg);
 		}
 	}
 
@@ -1300,7 +1295,7 @@ mec_intr(void *arg)
 	return handled;
 }
 
-STATIC void
+static void
 mec_rxintr(struct mec_softc *sc)
 {
 	bus_space_tag_t st = sc->sc_st;
@@ -1354,7 +1349,7 @@ mec_rxintr(struct mec_softc *sc)
 		     MEC_RXSTAT_CRCERROR  |
 		     MEC_RXSTAT_VIOLATION)) {
 			printf("%s: mec_rxintr: status = 0x%016llx\n",
-			    sc->sc_dev.dv_xname, rxstat);
+			    device_xname(sc->sc_dev), rxstat);
 			goto dropit;
 		}
 
@@ -1371,14 +1366,14 @@ mec_rxintr(struct mec_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
 			printf("%s: unable to allocate RX mbuf\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 			goto dropit;
 		}
 		if (len > (MHLEN - MEC_ETHER_ALIGN)) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				printf("%s: unable to allocate RX cluster\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				m_freem(m);
 				m = NULL;
 				goto dropit;
@@ -1421,7 +1416,7 @@ mec_rxintr(struct mec_softc *sc)
 	sc->sc_rxptr = i;
 }
 
-STATIC void
+static void
 mec_txintr(struct mec_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1454,7 +1449,7 @@ mec_txintr(struct mec_softc *sc)
 
 		if ((txstat & MEC_TXSTAT_SUCCESS) == 0) {
 			printf("%s: TX error: txstat = 0x%016llx\n",
-			    sc->sc_dev.dv_xname, txstat);
+			    device_xname(sc->sc_dev), txstat);
 			ifp->if_oerrors++;
 			continue;
 		}
@@ -1485,7 +1480,7 @@ mec_txintr(struct mec_softc *sc)
 		ifp->if_timer = 0;
 }
 
-STATIC void
+static void
 mec_shutdown(void *arg)
 {
 	struct mec_softc *sc = arg;

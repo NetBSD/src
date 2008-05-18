@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.h,v 1.1 2005/03/19 03:53:55 thorpej Exp $	*/
+/*	$NetBSD: vlan.h,v 1.1.22.1 2008/05/18 12:30:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,7 +29,10 @@
  * SUCH DAMAGE.
  */
 
-void	setvlan(const char *, int);
-void	setvlanif(const char *, int);
-void	unsetvlanif(const char *, int);
-void	vlan_status(void);
+extern struct pinteger vlantag;
+extern struct piface vlanif;
+extern struct pkw vlan;
+
+int	setvlan(prop_dictionary_t, prop_dictionary_t);
+int	setvlanif(prop_dictionary_t, prop_dictionary_t);
+void	vlan_status(prop_dictionary_t, prop_dictionary_t);

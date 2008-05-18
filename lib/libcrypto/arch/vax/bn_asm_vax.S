@@ -1,4 +1,4 @@
-#	$NetBSD: bn_asm_vax.S,v 1.1 2003/11/03 10:22:28 ragge Exp $
+#	$NetBSD: bn_asm_vax.S,v 1.1.30.1 2008/05/18 12:30:23 yamt Exp $
 #
 # w.j.m. 15-jan-1999
 #
@@ -12,6 +12,8 @@
 # }
 
 	.globl	bn_mul_add_words
+	.type   bn_mul_add_words@function
+
 bn_mul_add_words:
 	.word	0x40
 
@@ -63,6 +65,7 @@ bn_mul_add_words:
 #; }
 #
 	.globl	bn_mul_words
+	.type   bn_mul_words@function
 bn_mul_words:
 	.word	0x40
 
@@ -110,6 +113,7 @@ bn_mul_words:
 #; }
 #
 	.globl	bn_sqr_words
+	.type   bn_sqr_words@function
 bn_sqr_words:
 	.word	0
 
@@ -222,6 +226,7 @@ bn_sqr_words:
 #;r8 = q'
 #
 	.globl	bn_div_words
+	.type   bn_div_words@function
 bn_div_words:
 	.word	0x1c0
 
@@ -326,6 +331,7 @@ bn_div_words:
 #
 
 	.globl	bn_add_words
+	.type   bn_add_words@function
 bn_add_words:
 	.word	0
 
@@ -357,6 +363,7 @@ bn_add_words:
 #; }
 #
 	.globl	bn_sub_words
+	.type   bn_sub_words@function
 bn_sub_words:
 	.word	0x40
 
@@ -384,12 +391,14 @@ bn_sub_words:
 #	Uses two loops and 16/64 emuls.
 #
 	.globl	bn_mul_comba4
+	.type   bn_mul_comba4@function
 bn_mul_comba4:
 	.word	0x3c0
 	movl	$4,%r9		# 4*4
 	brb	6f
 
 	.globl	bn_mul_comba8
+	.type   bn_mul_comba8@function
 bn_mul_comba8:
 	.word	0x3c0
 	movl	$8,%r9		# 8*8
@@ -399,12 +408,14 @@ bn_mul_comba8:
 	brb	5f
 
 	.globl	bn_sqr_comba4
+	.type   bn_sqr_comba4@function
 bn_sqr_comba4:
 	.word	0x3c0
 	movl	$4,%r9		# 4*4
 	brb 0f
 
 	.globl	bn_sqr_comba8
+	.type   bn_sqr_comba8@function
 bn_sqr_comba8:
 	.word	0x3c0
 	movl	$8,%r9		# 8*8

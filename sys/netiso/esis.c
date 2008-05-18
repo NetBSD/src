@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.50 2007/12/04 10:31:14 dyoung Exp $	*/
+/*	$NetBSD: esis.c,v 1.50.14.1 2008/05/18 12:35:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.50 2007/12/04 10:31:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.50.14.1 2008/05/18 12:35:40 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -192,6 +192,7 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (rp != 0) {
 			error = EISCONN;
 			break;
@@ -618,9 +619,9 @@ esis_eshinput(
 						       clnp_iso_addrp(nsap2));
 					}
 #endif
-					if (Bcmp(nsap->isoa_genaddr,
-						 nsap2->isoa_genaddr,
-						 nsap->isoa_len - nsellength)
+					if (memcmp(nsap->isoa_genaddr,
+						   nsap2->isoa_genaddr,
+						   nsap->isoa_len - nsellength)
 					     == 0) {
 						nlen = nsellength;
 						break;
@@ -961,14 +962,14 @@ esis_shoutput(
 		if (type == ESIS_ISH && naddr > 0)
 			break;
 		TAILQ_FOREACH(ia2, &iso_ifaddr, ia_list)
-			if (Bcmp(ia->ia_addr.siso_data,
-				 ia2->ia_addr.siso_data, n) == 0)
+			if (memcmp(ia->ia_addr.siso_data,
+				   ia2->ia_addr.siso_data, n) == 0)
 				break;
 		if (ia2 != ia)
 			continue;	/* Means we have previously copied
 					 * this nsap */
-		if (isoa && Bcmp(ia->ia_addr.siso_data,
-				 isoa->isoa_genaddr, n) == 0) {
+		if (isoa && memcmp(ia->ia_addr.siso_data,
+				   isoa->isoa_genaddr, n) == 0) {
 			isoa = 0;
 			continue;	/* Ditto */
 		}

@@ -1,8 +1,8 @@
-/*	$NetBSD: copy.S,v 1.13 2007/12/11 23:06:11 lukem Exp $	*/
+/*	$NetBSD: copy.S,v 1.13.8.1 2008/05/18 12:32:09 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -72,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.13 2007/12/11 23:06:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.13.8.1 2008/05/18 12:32:09 yamt Exp $");
 
 #include "assym.h"
 
@@ -86,36 +79,54 @@ __KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.13 2007/12/11 23:06:11 lukem Exp $");
 	movl	L_ADDR(reg), reg
 
 /*
- * The following primitives are used to fill and copy regions of memory.
+ * These are arranged so that the abnormal case is a forwards
+ * conditional branch - which will be predicted not-taken by
+ * both Intel and AMD processors.
  */
+#define DEFERRED_SWITCH_CHECK \
+	CHECK_DEFERRED_SWITCH			; \
+	jnz	99f				; \
+    98:
+
+#define DEFERRED_SWITCH_CALL \
+    99:						; \
+	call	_C_LABEL(do_pmap_load)		; \
+	jmp	98b
 
 /*
- * XXX No section 9 man page for fillw.
- * fillw seems to be very sparsely used (only in pccons it seems.)
- * One wonders if it couldn't be done without.
- * -- Perry Metzger, May 7, 2001
+ * The following primitives are to copy regions of memory.
  */
+	.text
+
+x86_copyfunc_start:	.globl	x86_copyfunc_start
+
 /*
- * void fillw(short pattern, void *addr, size_t len);
- * Write len copies of pattern at addr.
+ * Handle deferred pmap switch.  We must re-enable preemption without
+ * making a function call, so that the program counter is visible to
+ * cpu_kpreempt_exit().  It can then know if it needs to restore the
+ * pmap on returning, because a preemption occurred within one of the
+ * copy functions.
  */
-/* LINTSTUB: Func: void fillw(short pattern, void *addr, size_t len) */
-ENTRY(fillw)
-	pushl	%edi
-	movl	8(%esp),%eax
-	movl	12(%esp),%edi
-	movw	%ax,%cx
-	rorl	$16,%eax
-	movw	%cx,%ax
-	movl	16(%esp),%ecx
-	shrl	%ecx			# do longwords
-	rep
-	stosl
-	movl	16(%esp),%ecx
-	andl	$1,%ecx			# do remainder
-	rep
-	stosw
-	popl	%edi
+NENTRY(do_pmap_load)
+	pushl	%ebp
+	movl	%esp, %ebp
+	pushl	%ebx
+	movl	CPUVAR(CURLWP), %ebx
+1:
+	incl	L_NOPREEMPT(%ebx)
+	call	_C_LABEL(pmap_load)
+	decl	L_NOPREEMPT(%ebx)
+	jnz	2f
+	cmpl	$0, L_DOPREEMPT(%ebx)
+	jz	2f
+	pushl	$0
+	call	_C_LABEL(kpreempt)
+	addl	$4, %esp
+2:
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jnz	1b
+	popl	%ebx
+	leave
 	ret
 
 /*
@@ -126,10 +137,10 @@ ENTRY(fillw)
 ENTRY(kcopy)
 	pushl	%esi
 	pushl	%edi
-.Lkcopy_start:
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%ecx
+.Lkcopy_start:
 	movl	%edi,%eax
 	subl	%esi,%eax
 	cmpl	%ecx,%eax		# overlapping?
@@ -188,15 +199,13 @@ ENTRY(kcopy)
 
 /* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
+	DEFERRED_SWITCH_CHECK
 	pushl	%esi
 	pushl	%edi
-.Lcopyout_start:
-	DO_DEFERRED_SWITCH_RETRY
-
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%eax
-
+.Lcopyout_start:
 	/*
 	 * We check that the end of the destination buffer is not past the end
 	 * of the user's address space.
@@ -221,6 +230,7 @@ ENTRY(copyout)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
+	DEFERRED_SWITCH_CALL
 
 /*
  * int copyin(const void *from, void *to, size_t len);
@@ -230,20 +240,18 @@ ENTRY(copyout)
 
 /* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
+	DEFERRED_SWITCH_CHECK
 	pushl	%esi
 	pushl	%edi
-.Lcopyin_start:
-	DO_DEFERRED_SWITCH_RETRY
-
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%eax
-
 	/*
 	 * We check that the end of the destination buffer is not past the end
 	 * of the user's address space.  If it's not, then we only need to
 	 * check that each page is readable, and the CPU will do that for us.
 	 */
+.Lcopyin_start:
 	movl	%esi,%edx
 	addl	%eax,%edx
 	jc	_C_LABEL(copy_efault)
@@ -264,6 +272,7 @@ ENTRY(copyin)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
+	DEFERRED_SWITCH_CALL
 
 /* LINTSTUB: Ignore */
 NENTRY(copy_efault)
@@ -296,16 +305,13 @@ NENTRY(copy_fault)
  */
 /* LINTSTUB: Func: int copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done) */
 ENTRY(copyoutstr)
+	DEFERRED_SWITCH_CHECK
 	pushl	%esi
 	pushl	%edi
-
-.Lcopyoutstr_start:
-	DO_DEFERRED_SWITCH_RETRY
-
 	movl	12(%esp),%esi		# esi = from
 	movl	16(%esp),%edi		# edi = to
 	movl	20(%esp),%edx		# edx = maxlen
-
+.Lcopyoutstr_start:
 5:	
 	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%edi).
@@ -338,6 +344,7 @@ ENTRY(copyoutstr)
 	jae	_C_LABEL(copystr_efault)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
+	DEFERRED_SWITCH_CALL
 
 /*
  * int copyinstr(const void *from, void *to, size_t maxlen, size_t *lencopied);
@@ -349,12 +356,9 @@ ENTRY(copyoutstr)
  */
 /* LINTSTUB: Func: int copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done) */
 ENTRY(copyinstr)
+	DEFERRED_SWITCH_CHECK
 	pushl	%esi
 	pushl	%edi
-
-.Lcopyinstr_start:
-	DO_DEFERRED_SWITCH_RETRY
-
 	movl	12(%esp),%esi		# %esi = from
 	movl	16(%esp),%edi		# %edi = to
 	movl	20(%esp),%edx		# %edx = maxlen
@@ -362,6 +366,7 @@ ENTRY(copyinstr)
 	/*
 	 * Get min(%edx, VM_MAXUSER_ADDRESS-%esi).
 	 */
+.Lcopyinstr_start:
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
 	jc	_C_LABEL(copystr_efault)
@@ -390,6 +395,7 @@ ENTRY(copyinstr)
 	jae	_C_LABEL(copystr_efault)
 	movl	$ENAMETOOLONG,%eax
 	jmp	copystr_return
+	DEFERRED_SWITCH_CALL
 
 /* LINTSTUB: Ignore */
 NENTRY(copystr_efault)
@@ -461,7 +467,7 @@ ENTRY(copystr)
  */
 /* LINTSTUB: Func: long fuword(const void *base) */
 ENTRY(fuword)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -470,6 +476,7 @@ ENTRY(fuword)
 	movl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
+	DEFERRED_SWITCH_CALL
 
 /*
  * int fusword(const void *uaddr);
@@ -478,7 +485,7 @@ ENTRY(fuword)
  */
 /* LINTSTUB: Func: int fusword(const void *base) */
 ENTRY(fusword)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -487,6 +494,7 @@ ENTRY(fusword)
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
+	DEFERRED_SWITCH_CALL
 
 /*
  * int fuswintr(const void *uaddr);
@@ -515,7 +523,7 @@ ENTRY(fuswintr)
  */
 /* LINTSTUB: Func: int fubyte(const void *base) */
 ENTRY(fubyte)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -524,6 +532,7 @@ ENTRY(fubyte)
 	movzbl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
 	ret
+	DEFERRED_SWITCH_CALL
 
 /*
  * Handle faults from [fs]u*().  Clean up and return -1.
@@ -560,7 +569,7 @@ NENTRY(fusuaddrfault)
  */
 /* LINTSTUB: Func: int suword(void *base, long c) */
 ENTRY(suword)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-4,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -571,6 +580,7 @@ ENTRY(suword)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
 	ret
+	DEFERRED_SWITCH_CALL
 
 /*
  * int susword(void *uaddr, short x);
@@ -579,7 +589,7 @@ ENTRY(suword)
  */
 /* LINTSTUB: Func: int susword(void *base, short c) */
 ENTRY(susword)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -590,6 +600,7 @@ ENTRY(susword)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
 	ret
+	DEFERRED_SWITCH_CALL
 
 /*
  * int suswintr(void *uaddr, short x);
@@ -620,7 +631,7 @@ ENTRY(suswintr)
  */
 /* LINTSTUB: Func: int subyte(void *base, int c) */
 ENTRY(subyte)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-1,%edx
 	ja	_C_LABEL(fusuaddrfault)
@@ -631,24 +642,24 @@ ENTRY(subyte)
 	xorl	%eax,%eax
 	movl	%eax,PCB_ONFAULT(%ecx)
 	ret
+	DEFERRED_SWITCH_CALL
 
 /*
  * copyin() optimised for bringing in syscall arguments.
  */
 ENTRY(x86_copyargs)
+	DEFERRED_SWITCH_CHECK
 	pushl	%esi
-
 	movl	8(%esp),%esi
 	movl	12(%esp),%edx
 	movl	16(%esp),%ecx
 
-.Lx86_copyargs_start:
-	DO_DEFERRED_SWITCH_RETRY
 	/*
 	 * We check that the end of the destination buffer is not past the end
 	 * of the user's address space.  If it's not, then we only need to
 	 * check that each page is readable, and the CPU will do that for us.
 	 */
+.Lx86_copyargs_start:
 	movl	%esi,%eax
 	addl	%ecx,%eax
 	jc	_C_LABEL(x86_copyargs_efault)
@@ -693,6 +704,9 @@ NENTRY(x86_copyargs_efault)
 NENTRY(x86_copyargs_fault)
 	popl	%esi
 	ret
+	DEFERRED_SWITCH_CALL
+
+x86_copyfunc_end:	.globl	x86_copyfunc_end
 
 	.section ".rodata"
 	.globl _C_LABEL(onfault_table)

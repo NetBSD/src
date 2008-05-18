@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.15 2008/04/08 12:07:26 cegger Exp $ */
+/* $NetBSD: mfi.c,v 1.15.2.1 2008/05/18 12:33:44 yamt Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.15 2008/04/08 12:07:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.15.2.1 2008/05/18 12:33:44 yamt Exp $");
 
 #include "bio.h"
 
@@ -232,9 +232,9 @@ mfi_init_ccb(struct mfi_softc *sc)
 destroy:
 	/* free dma maps and ccb memory */
 	while (i) {
+		i--;
 		ccb = &sc->sc_ccb[i];
 		bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
-		i--;
 	}
 
 	free(sc->sc_ccb, M_DEVBUF);

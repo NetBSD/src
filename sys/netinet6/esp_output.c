@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_output.c,v 1.31 2007/12/09 18:27:39 degroote Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.31.12.1 2008/05/18 12:35:34 yamt Exp $	*/
 /*	$KAME: esp_output.c,v 1.44 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.31 2007/12/09 18:27:39 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.31.12.1 2008/05/18 12:35:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp_output.c,v 1.31 2007/12/09 18:27:39 degroote Exp
 #endif
 
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netinet6/ah.h>
 #include <netinet6/esp.h>
 #include <netkey/key.h>
@@ -212,7 +213,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	int afnumber;
 	size_t extendsiz;
 	int error = 0;
-	struct ipsecstat *stat;
+	percpu_t *stat;
 #ifdef IPSEC_NAT_T
 	struct udphdr *udp = NULL;
 #endif
@@ -221,13 +222,13 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 #ifdef INET
 	case AF_INET:
 		afnumber = 4;
-		stat = &ipsecstat;
+		stat = ipsecstat_percpu;
 		break;
 #endif
 #ifdef INET6
 	case AF_INET6:
 		afnumber = 6;
-		stat = &ipsec6stat;
+		stat = ipsec6stat_percpu;
 		break;
 #endif
 	default:
@@ -249,7 +250,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 				(u_int32_t)ntohl(ip->ip_src.s_addr),
 				(u_int32_t)ntohl(ip->ip_dst.s_addr),
 				(u_int32_t)ntohl(sav->spi)));
-			ipsecstat.out_inval++;
+			IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 			break;
 		    }
 #endif /* INET */
@@ -258,7 +259,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 			ipseclog((LOG_DEBUG, "esp6_output: internal error: "
 				"sav->replay is null: SPI=%u\n",
 				(u_int32_t)ntohl(sav->spi)));
-			ipsec6stat.out_inval++;
+			IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 			break;
 #endif /* INET6 */
 		default:
@@ -412,7 +413,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		else {
 			ipseclog((LOG_ERR,
 			    "IPv4 ESP output: size exceeds limit\n"));
-			ipsecstat.out_inval++;
+			IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = EMSGSIZE;
 			goto fail;
 		}
@@ -437,7 +438,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 				ipseclog((LOG_WARNING,
 				    "replay counter overflowed. %s\n",
 				    ipsec_logsastr(sav)));
-				stat->out_inval++;
+				_NET_STATINC(stat, IPSEC_STAT_OUT_INVAL);
 				error = EINVAL;
 				goto fail;
 			}
@@ -553,7 +554,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		else {
 			ipseclog((LOG_ERR,
 			    "IPv4 ESP output: size exceeds limit\n"));
-			ipsecstat.out_inval++;
+			IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = EMSGSIZE;
 			goto fail;
 		}
@@ -572,7 +573,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	 */
 	error = esp_schedule(algo, sav);
 	if (error) {
-		stat->out_inval++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_INVAL);
 		goto fail;
 	}
 
@@ -586,7 +587,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		/* m is already freed */
 		m = NULL;
 		ipseclog((LOG_ERR, "packet encryption failure\n"));
-		stat->out_inval++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_INVAL);
 		error = EINVAL;
 		goto fail;
 	}
@@ -620,7 +621,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	if (esp_auth(m, espoff, m->m_pkthdr.len - espoff, sav, authbuf)) {
 		ipseclog((LOG_ERR, "ESP checksum generation failure\n"));
 		error = EINVAL;
-		stat->out_inval++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_INVAL);
 		goto fail;
 	}
 
@@ -661,7 +662,7 @@ esp_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		else {
 			ipseclog((LOG_ERR,
 			    "IPv4 ESP output: size exceeds limit\n"));
-			ipsecstat.out_inval++;
+			IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 			error = EMSGSIZE;
 			goto fail;
 		}
@@ -689,8 +690,8 @@ noantireplay:
 		ipseclog((LOG_ERR,
 		    "NULL mbuf after encryption in esp%d_output", afnumber));
 	} else
-		stat->out_success++;
-	stat->out_esphist[sav->alg_enc]++;
+		_NET_STATINC(stat, IPSEC_STAT_OUT_SUCCESS);
+	_NET_STATINC(stat, IPSEC_STAT_OUT_ESPHIST + sav->alg_enc);
 	key_sa_recordxfer(sav, m);
 	return 0;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.4 2008/04/09 00:20:35 nisimura Exp $ */
+/* $NetBSD: wm.c,v 1.4.2.1 2008/05/18 12:32:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -62,6 +55,7 @@
 #define DELAY(n)		delay(n)
 #define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
 
+int wm_match(unsigned, void *);
 void *wm_init(unsigned, void *);
 int wm_send(void *, char *, unsigned);
 int wm_recv(void *, char *, unsigned, unsigned);
@@ -131,6 +125,19 @@ static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
 
+int
+wm_match(unsigned tag, void *data)
+{
+	unsigned v;
+
+	v = pcicfgread(tag, PCI_ID_REG);
+	switch (v) {
+	case PCI_DEVICE(0x8086, 0x107c):
+		return 1;
+	}
+	return 0;
+}
+
 void *
 wm_init(unsigned tag, void *data)
 {
@@ -139,10 +146,6 @@ wm_init(unsigned tag, void *data)
 	struct tdesc *txd;
 	struct rdesc *rxd;
 	uint8_t *en;
-
-	val = pcicfgread(tag, PCI_ID_REG);
-	if (PCI_DEVICE(0x8086, 0x107c) != val)
-		return NULL;
 
 	l = ALLOC(struct local, sizeof(struct tdesc)); /* desc alignment */
 	memset(l, 0, sizeof(struct local));
@@ -226,7 +229,7 @@ int
 wm_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct tdesc *txd;
+	volatile struct tdesc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
@@ -253,7 +256,7 @@ int
 wm_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct rdesc *rxd;
+	volatile struct rdesc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 

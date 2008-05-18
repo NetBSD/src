@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.26 2008/04/14 13:38:03 cegger Exp $      */
+/*      $NetBSD: xenevt.c,v 1.26.2.1 2008/05/18 12:33:08 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.26 2008/04/14 13:38:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.26.2.1 2008/05/18 12:33:08 yamt Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -152,6 +152,11 @@ xenevtattach(int n)
 {
 	struct intrhand *ih;
 	int s;
+	int level = IPL_HIGH;
+#ifdef MULTIPROCESSOR
+	bool mpsafe = (level != IPL_VM);
+#endif /* MULTIPROCESSOR */
+
 
 	devevent_sih = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))xenevt_notify, NULL);
@@ -159,16 +164,23 @@ xenevtattach(int n)
 	xenevt_ev1 = 0;
 	memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
 
-	/* register a hanlder at splhigh, so that spllower() will call us */
+	/* register a handler at splhigh, so that spllower() will call us */
 	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
 	     M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		panic("can't allocate xenevt interrupt source");
-	ih->ih_fun = xenevt_processevt;
-	ih->ih_arg = NULL;
+	ih->ih_fun = ih->ih_realfun = xenevt_processevt;
+	ih->ih_arg = ih->ih_realarg = NULL;
 	ih->ih_ipl_next = NULL;
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_arg = ih;
+	}
+#endif /* MULTIPROCESSOR */
+
 	s = splhigh();
-	event_set_iplhandler(ih, IPL_HIGH);
+	event_set_iplhandler(ih, level);
 	splx(s);
 }
 
@@ -229,7 +241,7 @@ xenevt_event(int port)
 }
 
 void
-xenevt_notify()
+xenevt_notify(void)
 {
 
 	int s = splhigh();

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.20 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.20.2.1 2008/05/18 12:35:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.20 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.20.2.1 2008/05/18 12:35:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.20 2008/03/21 21:54:59 ad Exp $");
 #include <sys/unistd.h>
 #include <sys/vnode.h>
 #include <sys/lockf.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/file.h>
 #include <sys/dirent.h>
@@ -312,7 +305,7 @@ filt_smbfsdetach(struct knote *kn)
 		} else
 			SLIST_REMOVE(&kplist, ke, kevq, k_link);
 		SLIST_REMOVE(&kevlist, ke, kevq, kev_link);
-		FREE(ke, M_KEVENT);
+		kmem_free(ke, sizeof(*ke));
 	}
 	kevs--;
 
@@ -488,7 +481,7 @@ smbfs_kqfilter(void *v)
 	 * and the malloc is cheaper than scanning possibly
 	 * large kevlist list second time after malloc.
 	 */
-	MALLOC(ken, struct kevq *, sizeof(struct kevq), M_KEVENT, M_WAITOK);
+	ken = kmem_alloc(sizeof(*ken), KM_SLEEP);
 
 	/* Check the list and insert new entry */
 	mutex_enter(&smbkq_lock);
@@ -500,7 +493,7 @@ smbfs_kqfilter(void *v)
 	if (ke) {
 		/* already watched, so just bump usecount */
 		ke->usecount++;
-		FREE(ken, M_KEVENT);	/* dispose, don't need */
+		kmem_free(ken, sizeof(*ken));
 	} else {
 		/* need a new one */
 		memset(ken, 0, sizeof(*ken));

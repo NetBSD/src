@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2008/02/04 20:30:15 jmmv Exp $
+# $NetBSD: Makefile,v 1.3.4.1 2008/05/18 12:36:00 yamt Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/atf
 
-SUBDIR=	data formats sh_interface test_programs tools units
+SUBDIR=	atf-c atf-c++ atf-sh data formats test_programs tools
 
 SRCDIR=		${NETBSDSRCDIR}/dist/atf
 .PATH:		${SRCDIR}/tests/atf

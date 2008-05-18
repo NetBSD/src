@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.3 2008/03/03 22:15:09 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.3.2.1 2008/05/18 12:30:44 yamt Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.7 2008/03/03 03:36:12 mrg Exp $	*/
 
@@ -44,7 +44,7 @@
 #include "bozohttpd.h"
 
 static	SSL_CTX		*ssl_context;
-static	SSL_METHOD	*ssl_method;
+static	const SSL_METHOD	*ssl_method;
 static	SSL		*bozossl;
 static	char		*certificate_file;
 static	char		*privatekey_file;

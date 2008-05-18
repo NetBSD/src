@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.34 2008/03/16 23:17:55 lukem Exp $ */
+/* $NetBSD: setup.c,v 1.34.2.1 2008/05/18 12:30:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -268,7 +261,7 @@ setup(const char *dev)
 		while (tdaddr < idaddr) {
 			bread(fs->lfs_devvp, fsbtodb(fs, tdaddr),
 			      fs->lfs_sumsize,
-			      NULL, &bp);
+			      NULL, 0, &bp);
 			sp = (SEGSUM *)bp->b_data;
 			if (sp->ss_sumsum != cksum(&sp->ss_datasum,
 						   fs->lfs_sumsize -
@@ -423,7 +416,7 @@ setup(const char *dev)
 	if (debug)
 		pwarn("maxino    = %llu\n", (unsigned long long)maxino);
 	for (i = 0; i < VTOI(ivp)->i_ffs1_size; i += fs->lfs_bsize) {
-		bread(ivp, i >> fs->lfs_bshift, fs->lfs_bsize, NOCRED, &bp);
+		bread(ivp, i >> fs->lfs_bshift, fs->lfs_bsize, NOCRED, 0, &bp);
 		/* XXX check B_ERROR */
 		brelse(bp, 0);
 	}

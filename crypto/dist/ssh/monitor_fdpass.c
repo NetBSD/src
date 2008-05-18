@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_fdpass.c,v 1.7 2008/04/13 21:44:14 christos Exp $	*/
+/*	$NetBSD: monitor_fdpass.c,v 1.7.2.1 2008/05/18 12:29:09 yamt Exp $	*/
 /* $OpenBSD: monitor_fdpass.c,v 1.17 2008/03/24 16:11:07 deraadt Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_fdpass.c,v 1.7 2008/04/13 21:44:14 christos Exp $");
+__RCSID("$NetBSD: monitor_fdpass.c,v 1.7.2.1 2008/05/18 12:29:09 yamt Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -65,6 +65,7 @@ mm_send_fd(int sock, int fd)
 	cmsg->cmsg_level = SOL_SOCKET;
 	cmsg->cmsg_type = SCM_RIGHTS;
 	*(int *)CMSG_DATA(cmsg) = fd;
+	msg.msg_controllen = cmsg->cmsg_len;
 
 	vec.iov_base = &ch;
 	vec.iov_len = 1;

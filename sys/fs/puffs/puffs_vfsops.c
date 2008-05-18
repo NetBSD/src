@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.78 2008/01/28 14:31:17 dholland Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.78.8.1 2008/05/18 12:35:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78 2008/01/28 14:31:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78.8.1 2008/05/18 12:35:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78 2008/01/28 14:31:17 dholland E
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <dev/putter/putter_sys.h>
 
@@ -53,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.78 2008/01/28 14:31:17 dholland E
 #include <lib/libkern/libkern.h>
 
 #include <nfs/nfsproto.h> /* for fh sizes */
+
+MODULE(MODULE_CLASS_VFS, puffs, NULL);
 
 VFS_PROTOS(puffs_vfsop);
 
@@ -832,8 +835,22 @@ struct vfsops puffs_vfsops = {
 	puffs_vfsop_suspendctl,		/* suspendctl	*/
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,
+	(void *)eopnotsupp,
 	puffs_vnodeopv_descs,		/* vnodeops	*/
 	0,				/* refcount	*/
 	{ NULL, NULL }
 };
-VFS_ATTACH(puffs_vfsops);
+
+static int
+puffs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return vfs_attach(&puffs_vfsops);
+	case MODULE_CMD_FINI:
+		return vfs_detach(&puffs_vfsops);
+	default:
+		return ENOTTY;
+	}
+}

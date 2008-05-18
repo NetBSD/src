@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.23 2007/02/09 21:55:11 ad Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.23.46.1 2008/05/18 12:32:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.23 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.23.46.1 2008/05/18 12:32:38 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -104,7 +97,9 @@ mach_create_thread_child(void *arg)
 	if (mctc->mctc_flavor != MACHO_POWERPC_THREAD_STATE) {
 		mctc->mctc_child_done = 1;
 		wakeup(&mctc->mctc_child_done);	
+		mutex_enter(proc_lock);
 		killproc(l->l_proc, "mach_create_thread_child: unknown flavor");
+		mutex_exit(proc_lock);
 	}
 	
 	tf = trapframe(l);

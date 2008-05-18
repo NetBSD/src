@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_debug.c,v 1.5 2007/11/14 11:06:53 yamt Exp $	*/
+/*	$NetBSD: subr_debug.c,v 1.5.16.1 2008/05/18 12:35:09 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.5 2007/11/14 11:06:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.5.16.1 2008/05/18 12:35:09 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -50,11 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.5 2007/11/14 11:06:53 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/kmem.h>
 #include <sys/debug.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/lock.h>
-#include <sys/cpu.h>
 
 /*
  * Allocation/free validation by pointer address.  Introduces
@@ -70,7 +64,7 @@ typedef struct fcitem {
 
 fcitem_t		*freecheck_free;
 __cpu_simple_lock_t	freecheck_lock;
-int			debug_freecheck;
+u_int			debug_freecheck;
 
 void
 debug_init(void)
@@ -123,8 +117,8 @@ freecheck_out(void **head, void *addr)
 	splx(s);
 
 	if (i == NULL) {
-		printf("freecheck_out: no more slots\n");
-		debug_freecheck = 0;
+		if (atomic_swap_uint(&debug_freecheck, 1) == 0)
+			printf("freecheck_out: no more slots\n");
 	}
 }
 

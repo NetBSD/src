@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.20 2005/02/11 06:21:21 simonb Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.20.24.1 2008/05/18 12:30:18 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.20 2005/02/11 06:21:21 simonb Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.20.24.1 2008/05/18 12:30:18 yamt Exp $");
 #endif
 #endif
 
@@ -157,9 +157,9 @@ authunix_create(machname, uid, gid, len, aup_gids)
 	au->au_origcred.oa_length = len = XDR_GETPOS(&xdrs);
 	au->au_origcred.oa_flavor = AUTH_UNIX;
 #ifdef KERNEL
-	au->au_origcred.oa_base = mem_alloc((u_int) len);
+	au->au_origcred.oa_base = mem_alloc((size_t)len);
 #else
-	if ((au->au_origcred.oa_base = mem_alloc((u_int) len)) == NULL) {
+	if ((au->au_origcred.oa_base = mem_alloc((size_t)len)) == NULL) {
 		warnx("authunix_create: out of memory");
 		goto cleanup_authunix_create;
 	}

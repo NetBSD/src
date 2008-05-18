@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.26 2008/04/16 18:41:48 cegger Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.26.2.1 2008/05/18 12:33:08 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.26 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.26.2.1 2008/05/18 12:33:08 yamt Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -283,6 +283,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 
 		/* detach disk */
 		disk_detach(&sc->sc_dksc.sc_dkdev);
+		disk_destroy(&sc->sc_dksc.sc_dkdev);
 	}
 
 	event_remove_handler(sc->sc_evtchn, &xbd_handler, sc);

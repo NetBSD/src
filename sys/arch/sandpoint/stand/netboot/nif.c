@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.4 2007/11/29 04:00:17 nisimura Exp $ */
+/* $NetBSD: nif.c,v 1.4.18.1 2008/05/18 12:32:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,12 +39,12 @@
 
 struct nifdv {
 	char *name;
+	int (*match)(unsigned, void *);
 	void *(*init)(unsigned, void *);
 	int (*send)(void *, char *, unsigned);
 	int (*recv)(void *, char *, unsigned, unsigned);
 	int (*halt)(void *, int);
 	void *priv;
-	int unit;
 };
 
 int netif_init(unsigned);
@@ -61,9 +54,10 @@ int netif_close(int);
 static struct iodesc netdesc;
 
 #define NIF_DECL(xxx) \
+    int xxx ## _match(unsigned, void *); \
     void * xxx ## _init(unsigned, void *); \
     int xxx ## _send(void *, char *, unsigned); \
-    int xxx ## _recv(void *, char *, unsigned, unsigned);
+    int xxx ## _recv(void *, char *, unsigned, unsigned)
 
 NIF_DECL(fxp);
 NIF_DECL(tlp);
@@ -75,17 +69,16 @@ NIF_DECL(rge);
 NIF_DECL(wm);
 
 static struct nifdv vnifdv[] = {
-	{ "fxp", fxp_init, fxp_send, fxp_recv },
-	{ "tlp", tlp_init, tlp_send, tlp_recv },
-	{ "nvt", nvt_init, nvt_send, nvt_recv },
-	{ "sip", sip_init, sip_send, sip_recv },
-	{ "pcn", pcn_init, pcn_send, pcn_recv },
-	{ "vge", vge_init, vge_send, vge_recv },
-	{ "rge", rge_init, rge_send, rge_recv },
-	{ "wm",  wm_init,  wm_send,  wm_recv  }
+	{ "fxp", fxp_match, fxp_init, fxp_send, fxp_recv },
+	{ "tlp", tlp_match, tlp_init, tlp_send, tlp_recv },
+	{ "nvt", nvt_match, nvt_init, nvt_send, nvt_recv },
+	{ "sip", sip_match, sip_init, sip_send, sip_recv },
+	{ "pcn", pcn_match, pcn_init, pcn_send, pcn_recv },
+	{ "vge", vge_match, vge_init, vge_send, vge_recv },
+	{ "rge", rge_match, rge_init, rge_send, rge_recv },
+	{ "wm",  wm_match, wm_init,  wm_send,  wm_recv  }
 };
 static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
-int nmatchednif = 0;
 
 int
 netif_init(tag)
@@ -94,25 +87,21 @@ netif_init(tag)
 	struct iodesc *s;
 	struct nifdv *dv;
 	int n;
-	void *l;
 	uint8_t enaddr[6];
 	extern uint8_t en[6];
 	extern char rootdev[4];
 
 	for (n = 0; n < nnifdv; n++) {
-		l = (*vnifdv[n].init)(tag, enaddr);
-		if (l != NULL)
+		dv = &vnifdv[n];
+		if ((*dv->match)(tag, NULL) > 0)
 			goto found;
 	}
 	return 0;
   found:
-	dv = alloc(sizeof(struct nifdv));
-	*dv = vnifdv[n];
-	dv->priv = l;
-	dv->unit = nmatchednif++;
+	dv->priv = (*dv->init)(tag, enaddr);
 	s = &netdesc;
 	s->io_netif = dv;
-	memcpy(s->myea, enaddr, sizeof(enaddr));
+	memcpy(s->myea, enaddr, sizeof(s->myea));
 	memcpy(en, enaddr, sizeof(en));
 	snprintf(rootdev, sizeof(rootdev), "%s", dv->name);
 	return 1;

@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.16 2008/04/15 04:08:58 bjs Exp $ */
+/* $NetBSD: drmP.h,v 1.16.2.1 2008/05/18 12:33:37 yamt Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -69,6 +69,7 @@ typedef struct drm_file drm_file_t;
 #endif
 #include <sys/proc.h>
 #include <sys/lock.h>
+#include <sys/condvar.h>
 #include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/filio.h>
@@ -198,10 +199,31 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_DEV_UID	0
 #define DRM_DEV_GID	0
 
-#define wait_queue_head_t	atomic_t
-#define DRM_WAKEUP(w)		wakeup((void *)w)
-#define DRM_WAKEUP_INT(w)	wakeup(w)
-#define DRM_INIT_WAITQUEUE(queue) do {(void)(queue);} while (0)
+typedef struct drm_wait_queue {
+	kcondvar_t	cv;
+	kmutex_t	lock;
+} wait_queue_head_t;
+
+#define	DRM_INIT_WAITQUEUE(q)	\
+{ \
+	mutex_init(&(q)->lock, MUTEX_DEFAULT, IPL_VM); \
+	cv_init(&(q)->cv, "drmwtq");	\
+}
+
+#define	DRM_DESTROY_WAITQUEUE(q)	\
+{ \
+	mutex_destroy(&(q)->lock);	\
+	cv_destroy(&(q)->cv);	\
+}
+
+#define	DRM_WAKEUP(q)	\
+{ \
+	mutex_enter(&(q)->lock); \
+	cv_broadcast(&(q)->cv);	\
+	mutex_exit(&(q)->lock);	\
+}
+
+#define	DRM_WAKEUP_INT DRM_WAKEUP
 
 #if defined(__FreeBSD__) && __FreeBSD_version < 502109
 #define bus_alloc_resource_any(dev, type, rid, flags) \
@@ -230,8 +252,12 @@ MALLOC_DECLARE(M_DRM);
 #define DRM_STRUCTPROC		struct proc
 #define DRM_STRUCTCDEVPROC	struct lwp
 #define DRM_SPINTYPE		kmutex_t
-#define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_NONE)
-#define DRM_SPINUNINIT(l)	mutex_destroy(l)
+/*
+ * XXX unused
+ * #define DRM_SPININIT(l,name)	mutex_init(l, MUTEX_DEFAULT, IPL_VM)
+ * #define DRM_SPINUNINIT(l)	mutex_destroy(l)
+ *
+ */
 #define DRM_SPINLOCK(l)		mutex_enter(l)
 #define DRM_SPINUNLOCK(u)	mutex_exit(u)
 #define DRM_SPINLOCK_ASSERT(l)	mutex_owned(l)
@@ -305,6 +331,13 @@ extern drm_device_t *drm_units[];
 #define DRM_DEVICE							\
 	drm_device_t *dev = (minor(kdev) < DRM_MAXUNITS) ?		\
 		drm_units[minor(kdev)] : NULL
+#ifdef __x86_64__
+#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr   & 0x7fffffffffffffff)
+#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle | 0x8000000000000000)
+#else
+#define DRM_NETBSD_ADDR2HANDLE(addr)	(addr)
+#define DRM_NETBSD_HANDLE2ADDR(handle)	(handle)
+#endif
 #elif defined(__OpenBSD__)
 #define DRM_DEVICE							\
 #define DRM_SUSER(p)		(suser(p->p_ucred, &p->p_acflag) == 0)
@@ -441,7 +474,7 @@ typedef vaddr_t vm_offset_t;
 #define le32_to_cpu(x) le32toh(x)
 
 #define DRM_ERR(v)		v
-#define DRM_HZ			hz
+#define DRM_HZ			mstohz(333)
 #define DRM_UDELAY(udelay)	DELAY(udelay)
 #define DRM_TIME_SLICE		(hz/20)  /* Time slice for GLXContexts	  */
 
@@ -497,16 +530,27 @@ for ( ret = 0 ; !ret && !(condition) ; ) {			\
 	DRM_LOCK();						\
 }
 #elif defined(__NetBSD__)
-#define DRM_WAIT_ON( ret, queue, timeout, condition )		\
-for ( ret = 0 ; !ret && !(condition) ; ) {			\
-	DRM_UNLOCK();						\
-	mutex_enter(&dev->irq_lock);				\
-	if (!(condition))					\
-	   ret = mtsleep(&(queue), PZERO | PCATCH, 		\
-			 "drmwtq", (timeout), &dev->irq_lock);	\
-	mutex_exit(&dev->irq_lock);				\
-	DRM_LOCK();						\
-}
+#define	DRM_WAIT_ON(ret, q, timeout, condition)  		\
+mutex_enter(&(q)->lock);					\
+while (!(condition)) {						\
+	ret = cv_timedwait_sig(&(q)->cv, &(q)->lock, (timeout)); \
+	if (ret != 0 && ret != EWOULDBLOCK) {			\
+		ret = EINTR;  					\
+		break; 						\
+	} else { 						\
+		ret = 0; 					\
+	} 							\
+} 								\
+mutex_exit(&(q)->lock);
+#define	DRM_LOCAL_WAIT_ON(ret, mutex, cv) 			\
+do {								\
+	mutex_enter(mutex);					\
+	ret = cv_wait_sig(cv, mutex);				\
+	if (ret != 0 && ret != EWOULDBLOCK)			\
+		ret = EINTR;					\
+	ret = 0; 						\
+	mutex_exit(mutex); 					\
+} while (0); 
 #else
 #define DRM_WAIT_ON( ret, queue, timeout, condition )		\
 for ( ret = 0 ; !ret && !(condition) ; ) {			\
@@ -635,7 +679,8 @@ struct drm_file {
 typedef struct drm_lock_data {
 	drm_hw_lock_t	  *hw_lock;	/* Hardware lock		   */
 	DRMFILE		  filp;	        /* Unique identifier of holding process (NULL is kernel)*/
-	int		  lock_queue;	/* Queue of blocked processes	   */
+	kmutex_t	  lock_mutex;
+	kcondvar_t	  lock_cv;	/* Queue of blocked processes	   */
 	unsigned long	  lock_time;	/* Time of last lock in jiffies	   */
 } drm_lock_data_t;
 
@@ -727,13 +772,19 @@ typedef struct drm_vbl_sig {
 #define DRM_ATI_GART_MAIN 1
 #define DRM_ATI_GART_FB   2
 
-typedef struct ati_pcigart_info {
+/* GART type */
+#define DRM_ATI_GART_PCI  1
+#define DRM_ATI_GART_PCIE 2
+#define DRM_ATI_GART_IGP  3
+
+struct drm_ati_pcigart_info {
 	int gart_table_location;
-	int is_pcie;
+	int gart_reg_if;
 	void *addr;
 	dma_addr_t bus_addr;
 	drm_local_map_t mapping;
-} drm_ati_pcigart_info;
+	int table_size;
+};
 
 struct drm_driver_info {
 	int	(*load)(struct drm_device *, unsigned long flags);
@@ -895,7 +946,8 @@ struct drm_device {
 
 	atomic_t	  context_flag;	/* Context swapping flag	   */
 	int		  last_context;	/* Last current context		   */
-   	int		  vbl_queue;	/* vbl wait channel */
+	wait_queue_head_t  vbl_queue;	/* vbl wait channel */
+
    	atomic_t          vbl_received;
 
 #ifdef __FreeBSD__
@@ -913,6 +965,7 @@ struct drm_device {
 	void		  *dev_private;
 	unsigned int	  agp_buffer_token;
 	drm_local_map_t   *agp_buffer_map;
+
 };
 
 extern int	drm_debug_flag;
@@ -1020,7 +1073,7 @@ void	drm_vbl_send_signals(drm_device_t *dev);
 /* AGP/PCI Express/GART support (drm_agpsupport.c) */
 int	drm_device_is_agp(drm_device_t *dev);
 int	drm_device_is_pcie(drm_device_t *dev);
-drm_agp_head_t *drm_agp_init(void);
+drm_agp_head_t *drm_agp_init(drm_device_t *dev);
 int	drm_agp_acquire(drm_device_t *dev);
 int	drm_agp_release(drm_device_t *dev);
 int	drm_agp_info(drm_device_t * dev, drm_agp_info_t *info);
@@ -1045,9 +1098,9 @@ extern int		drm_sysctl_cleanup(drm_device_t *dev);
 
 /* ATI PCIGART support (ati_pcigart.c) */
 int	drm_ati_pcigart_init(drm_device_t *dev,
-			     drm_ati_pcigart_info *gart_info);
+			     struct drm_ati_pcigart_info *gart_info);
 int	drm_ati_pcigart_cleanup(drm_device_t *dev,
-				drm_ati_pcigart_info *gart_info);
+				struct drm_ati_pcigart_info *gart_info);
 
 /* Locking IOCTL support (drm_drv.c) */
 int	drm_lock(DRM_IOCTL_ARGS);
@@ -1135,7 +1188,7 @@ static __inline__ struct drm_local_map *drm_core_findmap(struct drm_device *dev,
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
 	TAILQ_FOREACH(map, &dev->maplist, link) {
-		if (map->offset == offset)
+		if ((map->offset == offset) || (map->offset == DRM_NETBSD_HANDLE2ADDR((uintptr_t)offset)))
 			return map;
 	}
 	return NULL;

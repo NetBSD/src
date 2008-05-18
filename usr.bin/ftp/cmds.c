@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.123 2007/05/24 05:05:18 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.123.10.1 2008/05/18 12:36:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -19,13 +19,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -103,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.123 2007/05/24 05:05:18 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.123.10.1 2008/05/18 12:36:05 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -860,6 +853,8 @@ status(int argc, char *argv[])
 	fprintf(ttyout, "Use of PORT cmds: %s.\n", onoff(sendport));
 	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s%s.\n", onoff(epsv4),
 	    epsv4bad ? " (disabled for this connection)" : "");
+	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv6: %s%s.\n", onoff(epsv6),
+	    epsv6bad ? " (disabled for this connection)" : "");
 	fprintf(ttyout, "Command line editing: %s.\n",
 #ifdef NO_EDITCOMPLETE
 	    "support not compiled in"
@@ -2215,13 +2210,28 @@ setpassive(int argc, char *argv[])
 	code = passivemode;
 }
 
+
 void
 setepsv4(int argc, char *argv[])
 {
-
 	code = togglevar(argc, argv, &epsv4,
 	    verbose ? "EPSV/EPRT on IPv4" : NULL);
 	epsv4bad = 0;
+}
+
+void
+setepsv6(int argc, char *argv[])
+{
+	code = togglevar(argc, argv, &epsv6,
+	    verbose ? "EPSV/EPRT on IPv6" : NULL);
+	epsv6bad = 0;
+}
+
+void
+setepsv(int argc, char*argv[])
+{
+	setepsv4(argc,argv);
+	setepsv6(argc,argv);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.142 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.142.2.1 2008/05/18 12:35:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -49,13 +49,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -102,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.142 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.142.2.1 2008/05/18 12:35:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -210,6 +203,7 @@ tcp_usrreq(struct socket *so, int req,
 	s = splsoftnet();
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		switch (family) {
 #ifdef INET
 		case PF_INET:
@@ -226,12 +220,17 @@ tcp_usrreq(struct socket *so, int req,
 			break;
 #endif
 		default:
+			mutex_exit(softnet_lock);
 			splx(s);
 			return (EAFNOSUPPORT);
 		}
+		mutex_exit(softnet_lock);
 		splx(s);
 		return (0);
 	}
+
+	if (req == PRU_ATTACH)
+		sosetlock(so);
 
 	switch (family) {
 #ifdef INET
@@ -1613,36 +1612,11 @@ sysctl_tcp_keep(SYSCTLFN_ARGS)
 	return 0;
 }
 
-static void
-tcpstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *tcpsc = v1;
-	uint64_t *tcps = v2;
-	u_int i;
-
-	for (i = 0; i < TCP_NSTATS; i++)
-		tcps[i] += tcpsc[i];
-}
-
-static void
-tcpstat_convert_to_user(uint64_t *tcps)
-{
-
-	memset(tcps, 0, sizeof(uint64_t) * TCP_NSTATS);
-	percpu_foreach(tcpstat_percpu, tcpstat_convert_to_user_cb, tcps);
-}
-
 static int
 sysctl_net_inet_tcp_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t tcps[TCP_NSTATS];
 
-	tcpstat_convert_to_user(tcps);
-	node = *rnode;
-	node.sysctl_data = tcps;
-	node.sysctl_size = sizeof(tcps);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(tcpstat_percpu, TCP_NSTATS));
 }
 
 /*

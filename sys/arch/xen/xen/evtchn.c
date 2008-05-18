@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.35 2008/04/14 13:38:03 cegger Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.35.2.1 2008/05/18 12:33:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.35 2008/04/14 13:38:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.35.2.1 2008/05/18 12:33:08 yamt Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -124,8 +124,31 @@ static int xen_misdirect_handler(void *);
 
 // #define IRQ_DEBUG 4
 
+/* http://mail-index.netbsd.org/port-amd64/2004/02/22/0000.html */
+#ifdef MULTIPROCESSOR
+
+/*
+ * intr_biglock_wrapper: grab biglock and call a real interrupt handler.
+ */
+
+int
+intr_biglock_wrapper(void *vp)
+{
+	struct intrhand *ih = vp;
+	int ret;
+
+	KERNEL_LOCK(1, NULL);
+
+	ret = (*ih->ih_realfun)(ih->ih_realarg);
+
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return ret;
+}
+#endif /* MULTIPROCESSOR */
+
 void
-events_default_setup()
+events_default_setup(void)
 {
 	int i;
 
@@ -151,7 +174,7 @@ events_default_setup()
 }
 
 void
-init_events()
+init_events(void)
 {
 #ifndef XEN3
 	int evtch;
@@ -238,18 +261,12 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	ci->ci_ilevel = evtsource[evtch]->ev_maxlevel;
 	iplmask = evtsource[evtch]->ev_imask;
 	sti();
-#ifdef MULTIPROCESSOR
-	x86_intlock(regs);
-#endif
 	ih = evtsource[evtch]->ev_handlers;
 	while (ih != NULL) {
 		if (ih->ih_level <= ilevel) {
 #ifdef IRQ_DEBUG
 		if (evtch == IRQ_DEBUG)
 		    printf("ih->ih_level %d <= ilevel %d\n", ih->ih_level, ilevel);
-#endif
-#ifdef MULTIPROCESSOR
-			x86_intunlock(regs);
 #endif
 			cli();
 			hypervisor_set_ipending(iplmask,
@@ -264,9 +281,6 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		ih = ih->ih_evt_next;
 	}
 	cli();
-#ifdef MULTIPROCESSOR
-	x86_intunlock(regs);
-#endif
 	hypervisor_enable_event(evtch);
 splx:
 	/*
@@ -482,6 +496,9 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	struct evtsource *evts;
 	struct intrhand *ih, **ihp;
 	int s;
+#ifdef MULTIPROCESSOR
+	bool mpsafe = (level != IPL_VM);
+#endif /* MULTIPROCESSOR */
 
 #ifdef IRQ_DEBUG
 	printf("event_set_handler IRQ %d handler %p\n", evtch, func);
@@ -505,10 +522,16 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 
 	ih->ih_level = level;
-	ih->ih_fun = func;
-	ih->ih_arg = arg;
+	ih->ih_fun = ih->ih_realfun = func;
+	ih->ih_arg = ih->ih_realarg = arg;
 	ih->ih_evt_next = NULL;
 	ih->ih_ipl_next = NULL;
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_arg = ih;
+	}
+#endif /* MULTIPROCESSOR */
 
 	s = splhigh();
 
@@ -648,12 +671,10 @@ xen_debug_handler(void *arg)
 	int xci_ilevel = ci->ci_ilevel;
 	int xci_ipending = ci->ci_ipending;
 	int xci_idepth = ci->ci_idepth;
-	u_long upcall_pending =
-	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_pending;
-	u_long upcall_mask =
-	    HYPERVISOR_shared_info->vcpu_info[0].evtchn_upcall_mask;
+	u_long upcall_pending = ci->ci_vcpu->evtchn_upcall_pending;
+	u_long upcall_mask = ci->ci_vcpu->evtchn_upcall_mask;
 #ifdef XEN3
-	u_long pending_sel = HYPERVISOR_shared_info->vcpu_info[0].evtchn_pending_sel;
+	u_long pending_sel = ci->ci_vcpu->evtchn_pending_sel;
 #else
 	u_long pending_sel = HYPERVISOR_shared_info->evtchn_pending_sel;
 #endif
@@ -690,7 +711,7 @@ static int
 xen_misdirect_handler(void *arg)
 {
 #if 0
-	char *msg = "misdirect\n";
+	const char *msg = "misdirect\n";
 	(void)HYPERVISOR_console_io(CONSOLEIO_write, strlen(msg), msg);
 #endif
 	return 0;
