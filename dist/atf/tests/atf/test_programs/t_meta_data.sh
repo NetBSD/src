@@ -12,13 +12,6 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this
-#    software must display the following acknowledgement:
-#        This product includes software developed by the NetBSD
-#        Foundation, Inc. and its contributors.
-# 4. Neither the name of The NetBSD Foundation nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 # CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -45,14 +38,12 @@ ident_head()
 }
 ident_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} -r3 ident_1 3>resout" 0 ignore ignore
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) -r3 ident_1 3>resout" \
+                  0 ignore ignore
         atf_check "grep passed resout" 0 ignore null
-        atf_check "${h} -s ${srcdir} -r3 ident_2 3>resout" 0 ignore ignore
+        atf_check "${h} -s $(atf_get_srcdir) -r3 ident_2 3>resout" \
+                  0 ignore ignore
         atf_check "grep passed resout" 0 ignore null
     done
 }
@@ -68,43 +59,39 @@ require_arch_head()
 }
 require_arch_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
+    for h in $(get_helpers); do
         echo "Check for the real architecture"
         arch=$(atf-config -t atf_arch)
-        atf_check "${h} -s ${srcdir} -r3 -v arch='${arch}' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v arch='${arch}' \
                    require_arch 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "${h} -s ${srcdir} -r3 -v arch='foo ${arch}' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v arch='foo ${arch}' \
                    require_arch 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "${h} -s ${srcdir} -r3 -v arch='${arch} foo' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v arch='${arch} foo' \
                    require_arch 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
 
         echo "Some fictitious checks"
-        atf_check "ATF_ARCH=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_ARCH=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v arch='foo' \
                    require_arch 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "ATF_ARCH=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_ARCH=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v arch='foo bar' \
                    require_arch 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "ATF_ARCH=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_ARCH=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v arch='bar foo' \
                    require_arch 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
 
         echo "Now some failures"
-        atf_check "ATF_ARCH=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_ARCH=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v arch='bar' \
                    require_arch 3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
-        atf_check "ATF_ARCH=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_ARCH=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v arch='bar baz' \
                    require_arch 3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
@@ -122,22 +109,18 @@ require_config_head()
 }
 require_config_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} -r3 require_config 3>resout" \
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) -r3 require_config 3>resout" \
                   0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
         atf_check 'grep "var1 not defined" resout' 0 ignore null
 
-        atf_check "${h} -s ${srcdir} -r3 -v var1=foo \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v var1=foo \
                    require_config 3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
         atf_check 'grep "var2 not defined" resout' 0 ignore null
 
-        atf_check "${h} -s ${srcdir} -r3 -v var1=foo -v var2=bar \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v var1=foo -v var2=bar \
                    require_config 3>resout" 0 stdout ignore
         atf_check 'grep "passed" resout' 0 ignore null
         atf_check 'grep "var1: foo" stdout' 0 ignore null
@@ -156,43 +139,39 @@ require_machine_head()
 }
 require_machine_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
+    for h in $(get_helpers); do
         echo "Check for the real machine type"
         machine=$(atf-config -t atf_machine)
-        atf_check "${h} -s ${srcdir} -r3 -v machine='${machine}' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v machine='${machine}' \
                    require_machine 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "${h} -s ${srcdir} -r3 -v machine='foo ${machine}' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v machine='foo ${machine}' \
                    require_machine 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "${h} -s ${srcdir} -r3 -v machine='${machine} foo' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v machine='${machine} foo' \
                    require_machine 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
 
         echo "Some fictitious checks"
-        atf_check "ATF_MACHINE=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_MACHINE=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v machine='foo' \
                    require_machine 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "ATF_MACHINE=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_MACHINE=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v machine='foo bar' \
                    require_machine 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "ATF_MACHINE=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_MACHINE=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v machine='bar foo' \
                    require_machine 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
 
         echo "Now some failures"
-        atf_check "ATF_MACHINE=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_MACHINE=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v machine='bar' \
                    require_machine 3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
-        atf_check "ATF_MACHINE=foo ${h} -s ${srcdir} -r3 \
+        atf_check "ATF_MACHINE=foo ${h} -s $(atf_get_srcdir) -r3 \
                    -v machine='bar baz' \
                    require_machine 3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
@@ -205,29 +184,26 @@ require_machine_body()
 
 common_tests() {
     where=${1}
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
+    for h in $(get_helpers); do
         # Check absolute paths.
-        atf_check "${h} -s ${srcdir} -r3 -v 'progs=/bin/cp' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'progs=/bin/cp' \
                    require_progs_${where} 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "${h} -s ${srcdir} -r3 -v 'progs=/bin/__non-existent__' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v \
+                   'progs=/bin/__non-existent__' \
                    require_progs_${where} 3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
 
         # Relative paths are not allowed.
-        atf_check "${h} -s ${srcdir} -r3 -v 'progs=bin/cp' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'progs=bin/cp' \
                    require_progs_${where} 3>resout" 1 ignore stderr
         atf_check 'grep "failed" resout' 0 ignore null
 
         # Check plain file names, searching them in the PATH.
-        atf_check "${h} -s ${srcdir} -r3 -v 'progs=cp' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'progs=cp' \
                    require_progs_${where} 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
-        atf_check "${h} -s ${srcdir} -r3 -v 'progs=__non-existent__' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'progs=__non-existent__' \
                    require_progs_${where} 3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
     done
@@ -253,39 +229,35 @@ require_progs_header_body()
 {
     common_tests head
 
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
+    for h in $(get_helpers); do
         # Check a couple of absolute path names.  The second must make
         # the check fail.
-        atf_check "${h} -s ${srcdir} -r3 \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 \
                    -v 'progs=/bin/cp /bin/__non-existent__' \
                    require_progs_head 3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
         atf_check 'grep "non-existent" resout' 0 ignore null
 
         # Check a couple of absolute path names.  Both have to be found.
-        atf_check "${h} -s ${srcdir} -r3 -v 'progs=/bin/cp /bin/ls' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'progs=/bin/cp /bin/ls' \
                    require_progs_head 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
 
         # Check an absolute path name and a relative one.  The second must
         # make the check fail.
-        atf_check "${h} -s ${srcdir} -r3 -v 'progs=/bin/cp bin/cp' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'progs=/bin/cp bin/cp' \
                    require_progs_head 3>resout" 1 ignore stderr
         atf_check 'grep "failed" resout' 0 ignore null
 
         # Check an absolute path name and a plain one.  Both have to be
         # found.
-        atf_check "${h} -s ${srcdir} -r3 -v 'progs=/bin/cp ls' \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v 'progs=/bin/cp ls' \
                    require_progs_head 3>resout" 0 ignore ignore
         atf_check 'grep "passed" resout' 0 ignore null
 
         # Check an absolute path name and a plain one.  The second must
         # make the check fail.
-        atf_check "${h} -s ${srcdir} -r3 \
+        atf_check "${h} -s $(atf_get_srcdir) -r3 \
                    -v 'progs=/bin/cp __non-existent__' require_progs_head \
                    3>resout" 0 ignore ignore
         atf_check 'grep "skipped" resout' 0 ignore null
@@ -309,12 +281,8 @@ require_user_root_head()
 }
 require_user_root_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} -r3 require_user_root \
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v user=root require_user \
             3>resout" 0 ignore ignore
         if [ $(id -u) -eq 0 ]; then
             atf_check 'grep "passed" resout' 0 ignore null
@@ -331,13 +299,9 @@ require_user_unprivileged_head()
 }
 require_user_unprivileged_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} -r3 require_user_unprivileged \
-            3>resout" 0 ignore ignore
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v user=unprivileged \
+            require_user 3>resout" 0 ignore ignore
         if [ $(id -u) -eq 0 ]; then
             atf_check 'grep "skipped" resout' 0 ignore null
         else
@@ -355,18 +319,34 @@ require_user_multiple_head()
 }
 require_user_multiple_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} -r3 'require_user*' 3>resout" \
-            0 ignore ignore
+    for h in $(get_helpers); do
+        if [ $(id -u) -eq 0 ]; then
+            users="-v user=unprivileged -v user2=unprivileged -v user3=root"
+        else
+            users="-v user=root -v user2=root -v user3=unprivileged"
+        fi
+        atf_check "${h} -s $(atf_get_srcdir) -r3 ${users} require_user \
+            require_user2 require_user3 3>resout" 0 ignore ignore
         grep "skipped" resout >skips
         [ $(count_lines skips) -lt 2 ] && \
             atf_fail "Test program aborted prematurely"
         [ $(count_lines skips) -gt 2 ] && \
             atf_fail "Test program returned more skips than expected"
+    done
+}
+
+atf_test_case require_user_bad
+require_user_bad_head()
+{
+    atf_set "descr" "Tests that passing an invalid value to require.user" \
+                    "raises an error"
+}
+require_user_bad_body()
+{
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) -r3 -v user=foo require_user \
+            3>resout" 1 ignore ignore
+        atf_check 'grep "failed.*Invalid" resout' 0 ignore null
     done
 }
 
@@ -381,27 +361,23 @@ timeout_head()
 }
 timeout_body()
 {
-    srcdir=$(atf_get_srcdir)
-    h_cpp=${srcdir}/h_cpp
-    h_sh=${srcdir}/h_sh
-
-    for h in ${h_cpp} ${h_sh}; do
-        atf_check "${h} -s ${srcdir} \
+    for h in $(get_helpers); do
+        atf_check "${h} -s $(atf_get_srcdir) \
             -v timeout=0 -v sleep=1 \
             -r3 timeout 3>resout" 0 ignore ignore
         atf_check 'grep "timeout, passed" resout' 0 ignore null
 
-        atf_check "${h} -s ${srcdir} \
+        atf_check "${h} -s $(atf_get_srcdir) \
             -v timeout=10 -v sleep=1 \
             -r3 timeout 3>resout" 0 ignore ignore
         atf_check 'grep "timeout, passed" resout' 0 ignore null
 
-        atf_check "${h} -s ${srcdir} \
+        atf_check "${h} -s $(atf_get_srcdir) \
             -v timeout=1 -v sleep=10 \
             -r3 timeout 3>resout" 1 ignore ignore
         atf_check 'grep "timeout, failed,.*timed out" resout' 0 ignore null
 
-        atf_check "${h} -s ${srcdir} \
+        atf_check "${h} -s $(atf_get_srcdir) \
             -v timeout=1 -v sleep=10 -v timeout2=10 -v sleep2=1 \
             -r3 timeout timeout2 3>resout" 1 ignore ignore
         atf_check 'grep "timeout, failed,.*timed out" resout' 0 ignore null
@@ -424,6 +400,7 @@ atf_init_test_cases()
     atf_add_test_case require_user_root
     atf_add_test_case require_user_unprivileged
     atf_add_test_case require_user_multiple
+    atf_add_test_case require_user_bad
     atf_add_test_case timeout
 }
 

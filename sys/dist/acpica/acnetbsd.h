@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.3 $
+ *       $Revision: 1.3.2.1 $
  *
  *****************************************************************************/
 
@@ -121,6 +121,8 @@
 
 #include "acgcc.h"
 
+#define ACPI_THREAD_ID		uintptr_t
+#define ACPI_UINTPTR_T		uintptr_t
 #define ACPI_USE_LOCAL_CACHE
 
 #ifdef _LP64

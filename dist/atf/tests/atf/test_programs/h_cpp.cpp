@@ -12,13 +12,6 @@
 // 2. Redistributions in binary form must reproduce the above copyright
 //    notice, this list of conditions and the following disclaimer in the
 //    documentation and/or other materials provided with the distribution.
-// 3. All advertising materials mentioning features or use of this
-//    software must display the following acknowledgement:
-//        This product includes software developed by the NetBSD
-//        Foundation, Inc. and its contributors.
-// 4. Neither the name of The NetBSD Foundation nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
 // CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -37,6 +30,7 @@
 extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
@@ -48,10 +42,10 @@ extern "C" {
 #include <iostream>
 #include <stdexcept>
 
-#include "atf/env.hpp"
-#include "atf/fs.hpp"
-#include "atf/macros.hpp"
-#include "atf/text.hpp"
+#include "atf-c++/env.hpp"
+#include "atf-c++/fs.hpp"
+#include "atf-c++/macros.hpp"
+#include "atf-c++/text.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
@@ -82,54 +76,54 @@ touch(const std::string& path)
 ATF_TEST_CASE_WITH_CLEANUP(cleanup_pass);
 ATF_TEST_CASE_HEAD(cleanup_pass)
 {
-    set("descr", "Helper test case for the t_cleanup test program");
+    set_md_var("descr", "Helper test case for the t_cleanup test program");
 }
 ATF_TEST_CASE_BODY(cleanup_pass)
 {
-    touch(config().get("tmpfile"));
+    touch(get_config_var("tmpfile"));
 }
 ATF_TEST_CASE_CLEANUP(cleanup_pass)
 {
-    if (config().get_bool("cleanup"))
-        atf::fs::remove(atf::fs::path(config().get("tmpfile")));
+    if (atf::text::to_bool(get_config_var("cleanup")))
+        atf::fs::remove(atf::fs::path(get_config_var("tmpfile")));
 }
 
 ATF_TEST_CASE_WITH_CLEANUP(cleanup_fail);
 ATF_TEST_CASE_HEAD(cleanup_fail)
 {
-    set("descr", "Helper test case for the t_cleanup test program");
+    set_md_var("descr", "Helper test case for the t_cleanup test program");
 }
 ATF_TEST_CASE_BODY(cleanup_fail)
 {
-    touch(config().get("tmpfile"));
+    touch(get_config_var("tmpfile"));
     ATF_FAIL("On purpose");
 }
 ATF_TEST_CASE_CLEANUP(cleanup_fail)
 {
-    if (config().get_bool("cleanup"))
-        atf::fs::remove(atf::fs::path(config().get("tmpfile")));
+    if (atf::text::to_bool(get_config_var("cleanup")))
+        atf::fs::remove(atf::fs::path(get_config_var("tmpfile")));
 }
 
 ATF_TEST_CASE_WITH_CLEANUP(cleanup_skip);
 ATF_TEST_CASE_HEAD(cleanup_skip)
 {
-    set("descr", "Helper test case for the t_cleanup test program");
+    set_md_var("descr", "Helper test case for the t_cleanup test program");
 }
 ATF_TEST_CASE_BODY(cleanup_skip)
 {
-    touch(config().get("tmpfile"));
+    touch(get_config_var("tmpfile"));
     ATF_SKIP("On purpose");
 }
 ATF_TEST_CASE_CLEANUP(cleanup_skip)
 {
-    if (config().get_bool("cleanup"))
-        atf::fs::remove(atf::fs::path(config().get("tmpfile")));
+    if (atf::text::to_bool(get_config_var("cleanup")))
+        atf::fs::remove(atf::fs::path(get_config_var("tmpfile")));
 }
 
 ATF_TEST_CASE_WITH_CLEANUP(cleanup_curdir);
 ATF_TEST_CASE_HEAD(cleanup_curdir)
 {
-    set("descr", "Helper test case for the t_cleanup test program");
+    set_md_var("descr", "Helper test case for the t_cleanup test program");
 }
 ATF_TEST_CASE_BODY(cleanup_curdir)
 {
@@ -153,23 +147,23 @@ ATF_TEST_CASE_CLEANUP(cleanup_curdir)
 ATF_TEST_CASE_WITH_CLEANUP(cleanup_sigterm);
 ATF_TEST_CASE_HEAD(cleanup_sigterm)
 {
-    set("descr", "Helper test case for the t_cleanup test program");
+    set_md_var("descr", "Helper test case for the t_cleanup test program");
 }
 ATF_TEST_CASE_BODY(cleanup_sigterm)
 {
-    touch(config().get("tmpfile"));
+    touch(get_config_var("tmpfile"));
     ::kill(::getpid(), SIGTERM);
-    touch(config().get("tmpfile") + ".no");
+    touch(get_config_var("tmpfile") + ".no");
 }
 ATF_TEST_CASE_CLEANUP(cleanup_sigterm)
 {
-    atf::fs::remove(atf::fs::path(config().get("tmpfile")));
+    atf::fs::remove(atf::fs::path(get_config_var("tmpfile")));
 }
 
 ATF_TEST_CASE_WITH_CLEANUP(cleanup_fork);
 ATF_TEST_CASE_HEAD(cleanup_fork)
 {
-    set("descr", "Helper test case for the t_cleanup test program");
+    set_md_var("descr", "Helper test case for the t_cleanup test program");
 }
 ATF_TEST_CASE_BODY(cleanup_fork)
 {
@@ -188,41 +182,41 @@ ATF_TEST_CASE_CLEANUP(cleanup_fork)
 ATF_TEST_CASE(config_unset);
 ATF_TEST_CASE_HEAD(config_unset)
 {
-    set("descr", "Helper test case for the t_config test program");
+    set_md_var("descr", "Helper test case for the t_config test program");
 }
 ATF_TEST_CASE_BODY(config_unset)
 {
-    ATF_CHECK(!config().has("test"));
+    ATF_CHECK(!has_config_var("test"));
 }
 
 ATF_TEST_CASE(config_empty);
 ATF_TEST_CASE_HEAD(config_empty)
 {
-    set("descr", "Helper test case for the t_config test program");
+    set_md_var("descr", "Helper test case for the t_config test program");
 }
 ATF_TEST_CASE_BODY(config_empty)
 {
-    ATF_CHECK_EQUAL(config().get("test"), "");
+    ATF_CHECK_EQUAL(get_config_var("test"), "");
 }
 
 ATF_TEST_CASE(config_value);
 ATF_TEST_CASE_HEAD(config_value)
 {
-    set("descr", "Helper test case for the t_config test program");
+    set_md_var("descr", "Helper test case for the t_config test program");
 }
 ATF_TEST_CASE_BODY(config_value)
 {
-    ATF_CHECK_EQUAL(config().get("test"), "foo");
+    ATF_CHECK_EQUAL(get_config_var("test"), "foo");
 }
 
 ATF_TEST_CASE(config_multi_value);
 ATF_TEST_CASE_HEAD(config_multi_value)
 {
-    set("descr", "Helper test case for the t_config test program");
+    set_md_var("descr", "Helper test case for the t_config test program");
 }
 ATF_TEST_CASE_BODY(config_multi_value)
 {
-    ATF_CHECK_EQUAL(config().get("test"), "foo bar");
+    ATF_CHECK_EQUAL(get_config_var("test"), "foo bar");
 }
 
 // ------------------------------------------------------------------------
@@ -232,7 +226,7 @@ ATF_TEST_CASE_BODY(config_multi_value)
 ATF_TEST_CASE(env_home);
 ATF_TEST_CASE_HEAD(env_home)
 {
-    set("descr", "Helper test case for the t_env test program");
+    set_md_var("descr", "Helper test case for the t_env test program");
 }
 ATF_TEST_CASE_BODY(env_home)
 {
@@ -247,11 +241,13 @@ ATF_TEST_CASE_BODY(env_home)
 ATF_TEST_CASE(env_list);
 ATF_TEST_CASE_HEAD(env_list)
 {
-    set("descr", "Helper test case for the t_env test program");
+    set_md_var("descr", "Helper test case for the t_env test program");
 }
 ATF_TEST_CASE_BODY(env_list)
 {
-    std::system("env");
+    int exitcode = std::system("env");
+    ATF_CHECK(WIFEXITED(exitcode));
+    ATF_CHECK(WEXITSTATUS(exitcode) == EXIT_SUCCESS);
 }
 
 // ------------------------------------------------------------------------
@@ -261,11 +257,11 @@ ATF_TEST_CASE_BODY(env_list)
 ATF_TEST_CASE(fork_mangle_fds);
 ATF_TEST_CASE_HEAD(fork_mangle_fds)
 {
-    set("descr", "Helper test case for the t_fork test program");
+    set_md_var("descr", "Helper test case for the t_fork test program");
 }
 ATF_TEST_CASE_BODY(fork_mangle_fds)
 {
-    int resfd = std::atoi(config().get("resfd").c_str());
+    int resfd = std::atoi(get_config_var("resfd").c_str());
 
     if (::close(STDIN_FILENO) == -1)
         ATF_FAIL("Failed to close stdin");
@@ -285,16 +281,16 @@ ATF_TEST_CASE_BODY(fork_mangle_fds)
 ATF_TEST_CASE(fork_stop);
 ATF_TEST_CASE_HEAD(fork_stop)
 {
-    set("descr", "Helper test case for the t_fork test program");
+    set_md_var("descr", "Helper test case for the t_fork test program");
 }
 ATF_TEST_CASE_BODY(fork_stop)
 {
-    std::ofstream os(config().get("pidfile").c_str());
+    std::ofstream os(get_config_var("pidfile").c_str());
     os << ::getpid() << std::endl;
     os.close();
     std::cout << "Wrote pid file" << std::endl;
     std::cout << "Waiting for done file" << std::endl;
-    while (::access(config().get("donefile").c_str(), F_OK) != 0)
+    while (::access(get_config_var("donefile").c_str(), F_OK) != 0)
         ::usleep(10000);
     std::cout << "Exiting" << std::endl;
 }
@@ -302,7 +298,7 @@ ATF_TEST_CASE_BODY(fork_stop)
 ATF_TEST_CASE(fork_umask);
 ATF_TEST_CASE_HEAD(fork_umask)
 {
-    set("descr", "Helper test case for the t_fork test program");
+    set_md_var("descr", "Helper test case for the t_fork test program");
 }
 ATF_TEST_CASE_BODY(fork_umask)
 {
@@ -319,28 +315,28 @@ ATF_TEST_CASE_BODY(fork_umask)
 ATF_TEST_CASE(ident_1);
 ATF_TEST_CASE_HEAD(ident_1)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
 }
 ATF_TEST_CASE_BODY(ident_1)
 {
-    ATF_CHECK_EQUAL(get("ident"), "ident_1");
+    ATF_CHECK_EQUAL(get_md_var("ident"), "ident_1");
 }
 
 ATF_TEST_CASE(ident_2);
 ATF_TEST_CASE_HEAD(ident_2)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
 }
 ATF_TEST_CASE_BODY(ident_2)
 {
-    ATF_CHECK_EQUAL(get("ident"), "ident_2");
+    ATF_CHECK_EQUAL(get_md_var("ident"), "ident_2");
 }
 
 ATF_TEST_CASE(require_arch);
 ATF_TEST_CASE_HEAD(require_arch)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("require.arch", config().get("arch", "not-set"));
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("require.arch", get_config_var("arch", "not-set"));
 }
 ATF_TEST_CASE_BODY(require_arch)
 {
@@ -349,20 +345,20 @@ ATF_TEST_CASE_BODY(require_arch)
 ATF_TEST_CASE(require_config);
 ATF_TEST_CASE_HEAD(require_config)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("require.config", "var1 var2");
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("require.config", "var1 var2");
 }
 ATF_TEST_CASE_BODY(require_config)
 {
-    std::cout << "var1: " << config().get("var1") << std::endl;
-    std::cout << "var2: " << config().get("var2") << std::endl;
+    std::cout << "var1: " << get_config_var("var1") << std::endl;
+    std::cout << "var2: " << get_config_var("var2") << std::endl;
 }
 
 ATF_TEST_CASE(require_machine);
 ATF_TEST_CASE_HEAD(require_machine)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("require.machine", config().get("machine", "not-set"));
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("require.machine", get_config_var("machine", "not-set"));
 }
 ATF_TEST_CASE_BODY(require_machine)
 {
@@ -371,83 +367,73 @@ ATF_TEST_CASE_BODY(require_machine)
 ATF_TEST_CASE(require_progs_body);
 ATF_TEST_CASE_HEAD(require_progs_body)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
 }
 ATF_TEST_CASE_BODY(require_progs_body)
 {
-    require_prog(config().get("progs"));
+    require_prog(get_config_var("progs"));
 }
 
 ATF_TEST_CASE(require_progs_head);
 ATF_TEST_CASE_HEAD(require_progs_head)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("require.progs", config().get("progs", "not-set"));
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("require.progs", get_config_var("progs", "not-set"));
 }
 ATF_TEST_CASE_BODY(require_progs_head)
 {
 }
 
-ATF_TEST_CASE(require_user_root);
-ATF_TEST_CASE_HEAD(require_user_root)
+ATF_TEST_CASE(require_user);
+ATF_TEST_CASE_HEAD(require_user)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("require.user", "root");
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("require.user", get_config_var("user", "not-set"));
 }
-ATF_TEST_CASE_BODY(require_user_root)
-{
-}
-
-ATF_TEST_CASE(require_user_root2);
-ATF_TEST_CASE_HEAD(require_user_root2)
-{
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("require.user", "root");
-}
-ATF_TEST_CASE_BODY(require_user_root2)
+ATF_TEST_CASE_BODY(require_user)
 {
 }
 
-ATF_TEST_CASE(require_user_unprivileged);
-ATF_TEST_CASE_HEAD(require_user_unprivileged)
+ATF_TEST_CASE(require_user2);
+ATF_TEST_CASE_HEAD(require_user2)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("require.user", "unprivileged");
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("require.user", get_config_var("user2", "not-set"));
 }
-ATF_TEST_CASE_BODY(require_user_unprivileged)
+ATF_TEST_CASE_BODY(require_user2)
 {
 }
 
-ATF_TEST_CASE(require_user_unprivileged2);
-ATF_TEST_CASE_HEAD(require_user_unprivileged2)
+ATF_TEST_CASE(require_user3);
+ATF_TEST_CASE_HEAD(require_user3)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("require.user", "unprivileged");
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("require.user", get_config_var("user3", "not-set"));
 }
-ATF_TEST_CASE_BODY(require_user_unprivileged2)
+ATF_TEST_CASE_BODY(require_user3)
 {
 }
 
 ATF_TEST_CASE(timeout);
 ATF_TEST_CASE_HEAD(timeout)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("timeout", config().get("timeout", "0"));
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("timeout", get_config_var("timeout", "0"));
 }
 ATF_TEST_CASE_BODY(timeout)
 {
-    sleep(atf::text::to_type< int >(config().get("sleep")));
+    sleep(atf::text::to_type< int >(get_config_var("sleep")));
 }
 
 ATF_TEST_CASE(timeout2);
 ATF_TEST_CASE_HEAD(timeout2)
 {
-    set("descr", "Helper test case for the t_meta_data test program");
-    set("timeout", config().get("timeout2", "0"));
+    set_md_var("descr", "Helper test case for the t_meta_data test program");
+    set_md_var("timeout", get_config_var("timeout2", "0"));
 }
 ATF_TEST_CASE_BODY(timeout2)
 {
-    sleep(atf::text::to_type< int >(config().get("sleep2")));
+    sleep(atf::text::to_type< int >(get_config_var("sleep2")));
 }
 
 // ------------------------------------------------------------------------
@@ -457,11 +443,12 @@ ATF_TEST_CASE_BODY(timeout2)
 ATF_TEST_CASE(srcdir_exists);
 ATF_TEST_CASE_HEAD(srcdir_exists)
 {
-    set("descr", "Helper test case for the t_srcdir test program");
+    set_md_var("descr", "Helper test case for the t_srcdir test program");
 }
 ATF_TEST_CASE_BODY(srcdir_exists)
 {
-    if (!atf::fs::exists(atf::fs::path(get_srcdir()) / "datafile"))
+    if (!atf::fs::exists(atf::fs::path(get_config_var("srcdir")) /
+        "datafile"))
         ATF_FAIL("Cannot find datafile");
 }
 
@@ -472,7 +459,7 @@ ATF_TEST_CASE_BODY(srcdir_exists)
 ATF_TEST_CASE(status_newlines_fail);
 ATF_TEST_CASE_HEAD(status_newlines_fail)
 {
-    set("descr", "Helper test case for the t_status test program");
+    set_md_var("descr", "Helper test case for the t_status test program");
 }
 ATF_TEST_CASE_BODY(status_newlines_fail)
 {
@@ -482,7 +469,7 @@ ATF_TEST_CASE_BODY(status_newlines_fail)
 ATF_TEST_CASE(status_newlines_skip);
 ATF_TEST_CASE_HEAD(status_newlines_skip)
 {
-    set("descr", "Helper test case for the t_status test program");
+    set_md_var("descr", "Helper test case for the t_status test program");
 }
 ATF_TEST_CASE_BODY(status_newlines_skip)
 {
@@ -496,11 +483,11 @@ ATF_TEST_CASE_BODY(status_newlines_skip)
 ATF_TEST_CASE(workdir_path);
 ATF_TEST_CASE_HEAD(workdir_path)
 {
-    set("descr", "Helper test case for the t_workdir test program");
+    set_md_var("descr", "Helper test case for the t_workdir test program");
 }
 ATF_TEST_CASE_BODY(workdir_path)
 {
-    const std::string& p = config().get("pathfile");
+    const std::string& p = get_config_var("pathfile");
 
     std::ofstream os(p.c_str());
     if (!os)
@@ -514,11 +501,11 @@ ATF_TEST_CASE_BODY(workdir_path)
 ATF_TEST_CASE(workdir_cleanup);
 ATF_TEST_CASE_HEAD(workdir_cleanup)
 {
-    set("descr", "Helper test case for the t_workdir test program");
+    set_md_var("descr", "Helper test case for the t_workdir test program");
 }
 ATF_TEST_CASE_BODY(workdir_cleanup)
 {
-    const std::string& p = config().get("pathfile");
+    const std::string& p = get_config_var("pathfile");
 
     std::ofstream os(p.c_str());
     if (!os)
@@ -578,10 +565,9 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, require_machine);
     ATF_ADD_TEST_CASE(tcs, require_progs_body);
     ATF_ADD_TEST_CASE(tcs, require_progs_head);
-    ATF_ADD_TEST_CASE(tcs, require_user_root);
-    ATF_ADD_TEST_CASE(tcs, require_user_root2);
-    ATF_ADD_TEST_CASE(tcs, require_user_unprivileged);
-    ATF_ADD_TEST_CASE(tcs, require_user_unprivileged2);
+    ATF_ADD_TEST_CASE(tcs, require_user);
+    ATF_ADD_TEST_CASE(tcs, require_user2);
+    ATF_ADD_TEST_CASE(tcs, require_user3);
     ATF_ADD_TEST_CASE(tcs, timeout);
     ATF_ADD_TEST_CASE(tcs, timeout2);
 

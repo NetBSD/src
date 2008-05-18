@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.16 2008/04/05 15:50:49 cegger Exp $ */
+/*	$NetBSD: genfb.c,v 1.16.2.1 2008/05/18 12:34:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -12,9 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.16 2008/04/05 15:50:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.16.2.1 2008/05/18 12:34:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.115 2008/01/25 16:21:04 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.115.8.1 2008/05/18 12:35:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -65,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.115 2008/01/25 16:21:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.115.8.1 2008/05/18 12:35:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -531,7 +524,7 @@ spec_read(void *v)
 			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
 			on = uio->uio_offset % bsize;
 			n = min((unsigned)(bsize - on), uio->uio_resid);
-			error = bread(vp, bn, bsize, NOCRED, &bp);
+			error = bread(vp, bn, bsize, NOCRED, 0, &bp);
 			n = min(n, bsize - bp->b_resid);
 			if (error) {
 				brelse(bp, 0);
@@ -608,7 +601,8 @@ spec_write(void *v)
 			if (n == bsize)
 				bp = getblk(vp, bn, bsize, 0, 0);
 			else
-				error = bread(vp, bn, bsize, NOCRED, &bp);
+				error = bread(vp, bn, bsize, NOCRED,
+				    B_MODIFY, &bp);
 			if (error) {
 				brelse(bp, 0);
 				return (error);
@@ -779,8 +773,15 @@ spec_fsync(void *v)
 		off_t offhi;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp;
+	int error;
 
 	if (vp->v_type == VBLK) {
+		if ((mp = vp->v_specmountpoint) != NULL) {
+			error = VFS_FSYNC(mp, vp, ap->a_flags | FSYNC_VFS);
+			if (error != EOPNOTSUPP)
+				return error;
+		}
 		vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
 	}
 	return (0);
@@ -895,7 +896,7 @@ spec_close(void *v)
 		 *
 		 * XXX V. fishy.
 		 */
-		mutex_enter(&proclist_lock);
+		mutex_enter(proc_lock);
 		sess = curlwp->l_proc->p_session;
 		if (sn->sn_opencnt == 1 && vp == sess->s_ttyvp) {
 			mutex_spin_enter(&tty_lock);
@@ -905,16 +906,16 @@ spec_close(void *v)
 				sess->s_ttyp->t_session = NULL;
 				mutex_spin_exit(&tty_lock);
 				SESSRELE(sess);
-				mutex_exit(&proclist_lock);
+				mutex_exit(proc_lock);
 			} else {
 				mutex_spin_exit(&tty_lock);
 				if (sess->s_ttyp->t_pgrp != NULL)
 					panic("spec_close: spurious pgrp ref");
-				mutex_exit(&proclist_lock);
+				mutex_exit(proc_lock);
 			}
 			vrele(vp);
 		} else
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 
 		/*
 		 * If the vnode is locked, then we are in the midst

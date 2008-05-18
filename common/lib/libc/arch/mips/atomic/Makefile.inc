@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2008/02/11 14:21:12 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.6.4.1 2008/05/18 12:28:45 yamt Exp $
 
 .if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c")
 
@@ -15,7 +15,8 @@ SRCS+=	atomic_add_32_cas.c atomic_add_32_nv_cas.c atomic_and_32_cas.c \
 
 .if defined(LIB) && (${LIB} == "c")
 
-SRCS+=	membar_ops_nop.c atomic_init_testset.c
+SRCS+=	membar_ops_nop.c atomic_init_testset.c atomic_cas_up.S
+CPPFLAGS+= -D__HAVE_ASM_ATOMIC_CAS_UP
 
 .endif
 

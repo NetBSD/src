@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.81 2007/12/20 23:03:03 dsl Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.81.8.1 2008/05/18 12:33:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.81 2007/12/20 23:03:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.81.8.1 2008/05/18 12:33:24 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -140,6 +140,7 @@ osf1_sys_set_program_attributes(struct lwp *l, const struct osf1_sys_set_program
 	if (tsize > MAXTSIZ)
 		return (ENOMEM);
 
+	/* XXXSMP unlocked */
 	p->p_vmspace->vm_taddr = SCARG(uap, taddr);
 	p->p_vmspace->vm_tsize = tsize;
 	p->p_vmspace->vm_daddr = SCARG(uap, daddr);

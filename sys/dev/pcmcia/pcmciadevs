@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.223 2007/09/22 19:59:55 kiyohara Exp $
+$NetBSD: pcmciadevs,v 1.223.22.1 2008/05/18 12:34:36 yamt Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -16,13 +16,6 @@ $NetBSD: pcmciadevs,v 1.223 2007/09/22 19:59:55 kiyohara Exp $
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -479,6 +472,7 @@ product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX
 product COREGA FETHER_PCC_TXD	{ "corega&spK.K.", "corega&spFEther&spPCC-TXD", NULL, NULL } Corega FEther PCC-TXD
 product COREGA FETHER_PCC_TXF	{ "corega", "FEther&spPCC-TXF", NULL, NULL } Corega FEther PCC-TXF
 product COREGA FETHER_II_PCC_TXD	{ "corega&spK.K.", "corega&spFEtherII&spPCC-TXD", NULL, NULL } Corega FEtherII PCC-TXD
+product COREGA LAPCCTXD		{ "corega&spK.K.", "(CG-LAPCCTXD)", "(HardwareFirmwareVer.)", NULL } Corega LAPCCTXD
 product COREGA WIRELESS_LAN_PCC_11	{ "corega&spK.K.", "Wireless&spLAN&spPCC-11", NULL, NULL } Corega Wireless LAN PCC-11
 product COREGA WIRELESS_LAN_PCCA_11	{ "corega&spK.K.", "Wireless&spLAN&spPCCA-11", NULL, NULL } Corega Wireless LAN PCCA-11
 product COREGA WIRELESS_LAN_PCCB_11	{ "corega_K.K.", "Wireless_LAN_PCCB-11", NULL, NULL } Corega Wireless LAN PCCB-11

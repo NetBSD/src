@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.86 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.86.2.1 2008/05/18 12:35:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -109,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.86 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.86.2.1 2008/05/18 12:35:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,20 +361,20 @@ procfs_rw(v)
 	 */
 #define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_PROCFS_READ : \
 		 KAUTH_REQ_PROCESS_PROCFS_WRITE)
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_PROCFS,
 	    p, pfs, KAUTH_ARG(M2K(uio->uio_rw)), NULL);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 	if (error) {
 		procfs_proc_unlock(p);
 		return (error);
 	}
 #undef	M2K
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	l = proc_representative_lwp(p, NULL, 1);
 	lwp_addref(l);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	switch (pfs->pfs_type) {
 	case PFSnote:
@@ -554,8 +547,7 @@ procfs_hashinit()
 {
 	mutex_init(&pfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
-	pfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
-	    M_WAITOK, &pfs_ihash);
+	pfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, true, &pfs_ihash);
 }
 
 void
@@ -565,8 +557,7 @@ procfs_hashreinit()
 	struct pfs_hashhead *oldhash, *hash;
 	u_long i, oldmask, mask, val;
 
-	hash = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT, M_WAITOK,
-	    &mask);
+	hash = hashinit(desiredvnodes / 4, HASH_LIST, true, &mask);
 
 	mutex_enter(&pfs_ihash_lock);
 	oldhash = pfs_hashtbl;
@@ -581,7 +572,7 @@ procfs_hashreinit()
 		}
 	}
 	mutex_exit(&pfs_ihash_lock);
-	hashdone(oldhash, M_UFSMNT);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
@@ -590,7 +581,7 @@ procfs_hashreinit()
 void
 procfs_hashdone()
 {
-	hashdone(pfs_hashtbl, M_UFSMNT);
+	hashdone(pfs_hashtbl, HASH_LIST, pfs_ihash);
 	mutex_destroy(&pfs_hashlock);
 	mutex_destroy(&pfs_ihash_lock);
 }
@@ -699,7 +690,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 	struct proc *tp;
 	int error = 0;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 
 	if (pid == 0)
 		tp = &proc0;
@@ -708,7 +699,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 	if (tp != NULL && !rw_tryenter(&tp->p_reflock, RW_READER))
 		error = EBUSY;
 
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	*bunghole = tp;
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.8 2008/04/17 19:12:26 christos Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.8.2.1 2008/05/18 12:34:19 yamt Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.13 2007/12/05 08:30:33 jsg Exp $	*/
 
 /*-
@@ -64,6 +64,7 @@ struct nfe_rx_ring {
 	int			bufsz;
 	int			cur;
 	int			next;
+	kmutex_t		mtx;
 };
 
 struct nfe_softc {

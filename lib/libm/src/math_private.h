@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.12 2005/07/21 12:55:58 christos Exp $
+ * $NetBSD: math_private.h,v 1.12.18.1 2008/05/18 12:30:39 yamt Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -75,7 +75,7 @@ do {								\
   ew_u.value = (d);						\
   (ix0) = ew_u.parts.msw;					\
   (ix1) = ew_u.parts.lsw;					\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* Get the more significant 32 bit int from a double.  */
 
@@ -84,7 +84,7 @@ do {								\
   ieee_double_shape_type gh_u;					\
   gh_u.value = (d);						\
   (i) = gh_u.parts.msw;						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* Get the less significant 32 bit int from a double.  */
 
@@ -93,7 +93,7 @@ do {								\
   ieee_double_shape_type gl_u;					\
   gl_u.value = (d);						\
   (i) = gl_u.parts.lsw;						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* Set a double from two 32 bit ints.  */
 
@@ -103,7 +103,7 @@ do {								\
   iw_u.parts.msw = (ix0);					\
   iw_u.parts.lsw = (ix1);					\
   (d) = iw_u.value;						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* Set the more significant 32 bits of a double from an int.  */
 
@@ -113,7 +113,7 @@ do {								\
   sh_u.value = (d);						\
   sh_u.parts.msw = (v);						\
   (d) = sh_u.value;						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* Set the less significant 32 bits of a double from an int.  */
 
@@ -123,7 +123,7 @@ do {								\
   sl_u.value = (d);						\
   sl_u.parts.lsw = (v);						\
   (d) = sl_u.value;						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* A union which permits us to convert between a float and a 32 bit
    int.  */
@@ -141,7 +141,7 @@ do {								\
   ieee_float_shape_type gf_u;					\
   gf_u.value = (d);						\
   (i) = gf_u.word;						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* Set a float from a 32 bit int.  */
 
@@ -150,7 +150,7 @@ do {								\
   ieee_float_shape_type sf_u;					\
   sf_u.word = (i);						\
   (d) = sf_u.value;						\
-} while (0)
+} while (/*CONSTCOND*/0)
 
 /* ieee style elementary functions */
 extern double __ieee754_sqrt __P((double));

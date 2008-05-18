@@ -1,8 +1,8 @@
-/*	$NetBSD: report.c,v 1.6 2002/07/14 00:26:18 wiz Exp $	*/
+/*	$NetBSD: report.c,v 1.6.30.1 2008/05/18 12:36:14 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: report.c,v 1.6 2002/07/14 00:26:18 wiz Exp $");
+__RCSID("$NetBSD: report.c,v 1.6.30.1 2008/05/18 12:36:14 yamt Exp $");
 #endif
 
 /*
@@ -59,7 +59,7 @@ report_init(int nolog)
  * newlines and adds its own at the end).
  */
 
-static char *levelnames[] = {
+static const char *levelnames[] = {
 #ifdef LOG_SALERT
 	"level(0): ",
 	"alert(1): ",

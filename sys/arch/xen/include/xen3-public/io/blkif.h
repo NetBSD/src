@@ -1,4 +1,4 @@
-/* $NetBSD: blkif.h,v 1.6 2007/12/25 18:33:35 perry Exp $ */
+/* $NetBSD: blkif.h,v 1.6.8.1 2008/05/18 12:33:05 yamt Exp $ */
 /******************************************************************************
  * blkif.h
  * 
@@ -55,7 +55,7 @@
 #define BLKIF_OP_WRITE             1
 /*
  * Recognised only if "feature-barrier" is present in backend xenbus info.
- * The "feature_barrier" node contains a boolean indicating whether barrier
+ * The "feature-barrier" node contains a boolean indicating whether barrier
  * requests are likely to succeed or fail. Either way, a barrier request
  * may fail at any time with BLKIF_RSP_EOPNOTSUPP if it is unsupported by
  * the underlying block-device hardware. The boolean simply indicates whether
@@ -64,6 +64,19 @@
  * create the "feature-barrier" node!
  */
 #define BLKIF_OP_WRITE_BARRIER     2
+/*
+ * Recognised if "feature-flush-cache" is present in backend xenbus
+ * info.  A flush will ask the underlying storage hardware to flush its
+ * non-volatile caches as appropriate.  The "feature-flush-cache" node
+ * contains a boolean indicating whether flush requests are likely to
+ * succeed or fail. Either way, a flush request may fail at any time
+ * with BLKIF_RSP_EOPNOTSUPP if it is unsupported by the underlying
+ * block-device hardware. The boolean simply indicates whether or not it
+ * is worthwhile for the frontend to attempt flushes.  If a backend does
+ * not recognise BLKIF_OP_WRITE_FLUSH_CACHE, it should *not* create the
+ * "feature-flush-cache" node!
+ */
+#define BLKIF_OP_FLUSH_DISKCACHE   3
 
 /*
  * Maximum scatter/gather segments per request.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.27 2007/10/17 19:55:16 garbled Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.27.18.1 2008/05/18 12:32:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.27 2007/10/17 19:55:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.27.18.1 2008/05/18 12:32:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,18 +55,18 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn_obio.c,v 1.27 2007/10/17 19:55:16 garbled Exp 
 #define SONIC_PROM_BASE	0x50F08000
 #define SONIC_SLOTNO	9
 
-static int	sn_obio_match(struct device *, struct cfdata *, void *);
-static void	sn_obio_attach(struct device *, struct device *, void *);
+static int	sn_obio_match(device_t, cfdata_t, void *);
+static void	sn_obio_attach(device_t, device_t, void *);
 static int	sn_obio_getaddr(struct sonic_softc *, uint8_t *);
 static int	sn_obio_getaddr_kludge(struct sonic_softc *, uint8_t *);
 
-CFATTACH_DECL(sn_obio, sizeof(struct sonic_softc),
+CFATTACH_DECL_NEW(sn_obio, sizeof(struct sonic_softc),
     sn_obio_match, sn_obio_attach, NULL, NULL);
 
 static int
-sn_obio_match(struct device *parent, struct cfdata *cf, void *aux)
+sn_obio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
+	struct obio_attach_args *oa = aux;
 	bus_space_handle_t bsh;
 	int found = 0;
 
@@ -89,19 +89,20 @@ sn_obio_match(struct device *parent, struct cfdata *cf, void *aux)
  * Install interface into kernel networking data structures
  */
 static void
-sn_obio_attach(struct device *parent, struct device *self, void *aux)
+sn_obio_attach(device_t parent, device_t self, void *aux)
 {
-	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
-	struct sonic_softc	*sc = (void *)self;
+	struct sonic_softc *sc = device_private(self);
+	struct obio_attach_args *oa = aux;
 	uint8_t myaddr[ETHER_ADDR_LEN];
 	int i;
 
+	sc->sc_dev = self;
 	sc->sc_st = oa->oa_tag;
 	sc->sc_dmat = oa->oa_dmat;
 
 	if (bus_space_map(sc->sc_st,
 	    SONIC_REG_BASE, SONIC_NREGS * 4, 0, &sc->sc_sh)) {
-		printf(": failed to map space for SONIC regs.\n");
+		aprint_error(": failed to map space for SONIC regs.\n");
 		return;
 	}
 
@@ -142,18 +143,18 @@ sn_obio_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		printf(": unsupported machine type\n");
+		aprint_error(": unsupported machine type\n");
 		return;
 	}
 
 	if (sn_obio_getaddr(sc, myaddr) &&
 	    sn_obio_getaddr_kludge(sc, myaddr)) { /* XXX kludge for PB */
-		printf(": failed to get MAC address.\n");
+		aprint_error(": failed to get MAC address.\n");
 		bus_space_unmap(sc->sc_st, sc->sc_sh, SONIC_NREGS * 4);
 		return;
 	}
 
-	printf(": integrated SONIC Ethernet adapter\n");
+	aprint_normal(": integrated SONIC Ethernet adapter\n");
 
 	if (mac68k_machine.aux_interrupts) {
 		intr_establish(sonic_intr, (void *)sc, 3);
@@ -171,14 +172,14 @@ sn_obio_getaddr(struct sonic_softc *sc, uint8_t *lladdr)
 	bus_space_handle_t bsh;
 
 	if (bus_space_map(sc->sc_st, SONIC_PROM_BASE, PAGE_SIZE, 0, &bsh)) {
-		printf(": failed to map space to read SONIC address.\n%s",
-		    sc->sc_dev.dv_xname);
-		return (-1);
+		aprint_error(": failed to map space to read SONIC address.\n");
+		aprint_normal("%s:", device_xname(sc->sc_dev));
+		return -1;
 	}
 
 	if (!mac68k_bus_space_probe(sc->sc_st, bsh, 0, 1)) {
 		bus_space_unmap(sc->sc_st, bsh, PAGE_SIZE);
-		return (-1);
+		return -1;
 	}
 
 	sn_get_enaddr(sc->sc_st, bsh, 0, lladdr);

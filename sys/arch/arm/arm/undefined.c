@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.32 2007/11/05 20:43:02 ad Exp $	*/
+/*	$NetBSD: undefined.c,v 1.32.18.1 2008/05/18 12:31:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32 2007/11/05 20:43:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.32.18.1 2008/05/18 12:31:33 yamt Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -128,7 +128,7 @@ static int
 gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
 	struct lwp *l;
-	l = (curlwp == NULL) ? &lwp0 : curlwp;
+	l = curlwp;
 
 #ifdef THUMB_CODE
 	if (frame->tf_spsr & PSR_T_bit) {
@@ -227,7 +227,7 @@ undefinedinstruction(trapframe_t *frame)
 #endif
 
 	/* Get the current lwp/proc structure or lwp0/proc0 if there is none. */
-	l = curlwp == NULL ? &lwp0 : curlwp;
+	l = curlwp;
 
 #ifdef __PROG26
 	if ((frame->tf_r15 & R15_MODE) == R15_MODE_USR) {
@@ -370,12 +370,10 @@ undefinedinstruction(trapframe_t *frame)
 #ifdef FAST_FPE
 	/* Optimised exit code */
 	{
-
 		/*
 		 * Check for reschedule request, at the moment there is only
 		 * 1 ast so this code should always be run
 		 */
-
 		if (curcpu()->ci_want_resched) {
 			/*
 			 * We are being preempted.
@@ -386,7 +384,6 @@ undefinedinstruction(trapframe_t *frame)
 		/* Invoke MI userret code */
 		mi_userret(l);
 	}
-
 #else
 	userret(l);
 #endif

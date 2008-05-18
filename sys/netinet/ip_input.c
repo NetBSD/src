@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.266 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.266.2.1 2008/05/18 12:35:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -98,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.266 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.266.2.1 2008/05/18 12:35:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -149,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.266 2008/04/12 05:58:22 thorpej Exp $
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netkey/key.h>
 #endif
 #ifdef FAST_IPSEC
@@ -426,10 +420,10 @@ ip_init(void)
 	ip_nmbclusters_changed();
 
 	TAILQ_INIT(&in_ifaddrhead);
-	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IFADDR,
-	    M_WAITOK, &in_ifaddrhash);
-	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, M_IPMADDR,
-	    M_WAITOK, &in_multihash);
+	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
+	    &in_ifaddrhash);
+	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
+	    &in_multihash);
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY
 	ipflow_init(ip_hashsize);
@@ -468,14 +462,18 @@ ipintr(void)
 	int s;
 	struct mbuf *m;
 
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 	while (!IF_IS_EMPTY(&ipintrq)) {
 		s = splnet();
 		IF_DEQUEUE(&ipintrq, m);
 		splx(s);
-		if (m == 0)
-			return;
+		if (m == NULL)
+			break;
 		ip_input(m);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
@@ -835,7 +833,7 @@ ip_input(struct mbuf *m)
 		}
 #ifdef IPSEC
 		if (ipsec4_in_reject(m, NULL)) {
-			ipsecstat.in_polvio++;
+			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			goto bad;
 		}
 #endif
@@ -1000,7 +998,7 @@ found:
 	 */
 	if ((inetsw[ip_protox[ip->ip_p]].pr_flags & PR_LASTHDR) != 0 &&
 	    ipsec4_in_reject(m, NULL)) {
-		ipsecstat.in_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		goto bad;
 	}
 #endif
@@ -1388,7 +1386,9 @@ ip_slowtimo(void)
 	static u_int dropscanidx = 0;
 	u_int i;
 	u_int median_ttl;
-	int s = splsoftnet();
+
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
 
 	IPQ_LOCK();
 
@@ -1430,30 +1430,35 @@ ip_slowtimo(void)
 		dropscanidx = i;
 	}
 	IPQ_UNLOCK();
-	splx(s);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
- * Drain off all datagram fragments.
+ * Drain off all datagram fragments.  Don't acquire softnet_lock as
+ * can be called from hardware interrupt context.
  */
 void
 ip_drain(void)
 {
 
+	KERNEL_LOCK(1, NULL);
+
 	/*
 	 * We may be called from a device's interrupt context.  If
 	 * the ipq is already busy, just bail out now.
 	 */
-	if (ipq_lock_try() == 0)
-		return;
+	if (ipq_lock_try() != 0) {
+		/*
+		 * Drop half the total fragments now. If more mbufs are
+		 * needed, we will be called again soon.
+		 */
+		ip_reass_drophalf();
+		IPQ_UNLOCK();
+	}
 
-	/*
-	 * Drop half the total fragments now. If more mbufs are needed,
-	 *  we will be called again soon.
-	 */
-	ip_reass_drophalf();
-
-	IPQ_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -2194,36 +2199,11 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 }
 #endif /* GATEWAY */
 
-static void
-ipstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *ipsc = v1;
-	uint64_t *ips = v2;
-	u_int i;
-
-	for (i = 0; i < IP_NSTATS; i++)
-		ips[i] += ipsc[i];
-}
-
-static void
-ipstat_convert_to_user(uint64_t *ips)
-{
-
-	memset(ips, 0, sizeof(uint64_t) * IP_NSTATS);
-	percpu_foreach(ipstat_percpu, ipstat_convert_to_user_cb, ips);
-}
-
 static int
 sysctl_net_inet_ip_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t ips[IP_NSTATS];
 
-	ipstat_convert_to_user(ips);
-	node = *rnode;
-	node.sysctl_data = ips;
-	node.sysctl_size = sizeof(ips);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(ipstat_percpu, IP_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")

@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.36 2008/03/29 19:15:36 tsutsui Exp $	*/
+/*	$NetBSD: ms.c,v 1.36.2.1 2008/05/18 12:34:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36 2008/03/29 19:15:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36.2.1 2008/05/18 12:34:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.36 2008/03/29 19:15:36 tsutsui Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
+#include "ioconf.h"
 #include "locators.h"
 #include "wsmouse.h"
-
-extern struct cfdriver ms_cd;
 
 dev_type_open(msopen);
 dev_type_close(msclose);
@@ -104,30 +103,26 @@ int
 msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
-	int unit;
 
-	unit = minor(dev);
-	if (unit >= ms_cd.cd_ndevs)
-		return (ENXIO);
-	ms = device_private(ms_cd.cd_devs[unit]);
+	ms = device_lookup_private(&ms_cd, minor(dev));
 	if (ms == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	/* This is an exclusive open device. */
 	if (ms->ms_events.ev_io)
-		return (EBUSY);
+		return EBUSY;
 
 	if (ms->ms_deviopen) {
 		int err;
 		err = (*ms->ms_deviopen)(ms->ms_dev, flags);
 		if (err)
-			return (err);
+			return err;
 	}
 	ms->ms_events.ev_io = l->l_proc;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 
 	ms->ms_ready = 1;		/* start accepting events */
-	return (0);
+	return 0;
 }
 
 int
@@ -135,7 +130,7 @@ msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_softc *ms;
 
-	ms = device_private(ms_cd.cd_devs[minor(dev)]);
+	ms = device_lookup_private(&ms_cd, minor(dev));
 	ms->ms_ready = 0;		/* stop accepting events */
 	ev_fini(&ms->ms_events);
 
@@ -144,9 +139,9 @@ msclose(dev_t dev, int flags, int mode, struct lwp *l)
 		int err;
 		err = (*ms->ms_deviclose)(ms->ms_dev, flags);
 		if (err)
-			return (err);
+			return err;
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -154,8 +149,8 @@ msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_softc *ms;
 
-	ms = device_private(ms_cd.cd_devs[minor(dev)]);
-	return (ev_read(&ms->ms_events, uio, flags));
+	ms = device_lookup_private(&ms_cd, minor(dev));
+	return ev_read(&ms->ms_events, uio, flags);
 }
 
 int
@@ -163,39 +158,39 @@ msioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
 
-	ms = device_private(ms_cd.cd_devs[minor(dev)]);
+	ms = device_lookup_private(&ms_cd, minor(dev));
 
 	switch (cmd) {
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
-		return (0);
+		return 0;
 
 	case FIOASYNC:
 		ms->ms_events.ev_async = *(int *)data != 0;
-		return (0);
+		return 0;
 
 	case FIOSETOWN:
 		if (-*(int *)data != ms->ms_events.ev_io->p_pgid
 		    && *(int *)data != ms->ms_events.ev_io->p_pid)
-			return (EPERM);
-		return (0);
+			return EPERM;
+		return 0;
 
 	case TIOCSPGRP:
 		if (*(int *)data != ms->ms_events.ev_io->p_pgid)
-			return (EPERM);
-		return (0);
+			return EPERM;
+		return 0;
 
 	case VUIDGFORMAT:
 		/* we only do firm_events */
 		*(int *)data = VUID_FIRM_EVENT;
-		return (0);
+		return 0;
 
 	case VUIDSFORMAT:
 		if (*(int *)data != VUID_FIRM_EVENT)
-			return (EINVAL);
-		return (0);
+			return EINVAL;
+		return 0;
 	}
-	return (ENOTTY);
+	return ENOTTY;
 }
 
 int
@@ -203,8 +198,8 @@ mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_softc *ms;
 
-	ms = device_private(ms_cd.cd_devs[minor(dev)]);
-	return (ev_poll(&ms->ms_events, events, l));
+	ms = device_lookup_private(&ms_cd, minor(dev));
+	return ev_poll(&ms->ms_events, events, l);
 }
 
 int
@@ -212,8 +207,8 @@ mskqfilter(dev_t dev, struct knote *kn)
 {
 	struct ms_softc *ms;
 
-	ms = device_private(ms_cd.cd_devs[minor(dev)]);
-	return (ev_kqfilter(&ms->ms_events, kn));
+	ms = device_lookup_private(&ms_cd, minor(dev));
+	return ev_kqfilter(&ms->ms_events, kn);
 }
 
 /****************************************************************

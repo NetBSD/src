@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.29 2007/11/27 18:06:38 reinoud Exp $	*/
+/*	$NetBSD: cdio.h,v 1.29.16.1 2008/05/18 12:35:49 yamt Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -364,18 +364,61 @@ struct mmc_trackinfo {
 };
 #define MMCGETTRACKINFO	_IOWR('c', 29, struct mmc_trackinfo)
 
-#define MMC_TRACKINFO_COPY		(1 << 0)
-#define MMC_TRACKINFO_DAMAGED		(1 << 1)
-#define MMC_TRACKINFO_FIXED_PACKET	(1 << 2)
-#define MMC_TRACKINFO_INCREMENTAL	(1 << 3)
-#define MMC_TRACKINFO_BLANK		(1 << 4)
-#define MMC_TRACKINFO_RESERVED		(1 << 5)
-#define MMC_TRACKINFO_NWA_VALID		(1 << 6)
-#define MMC_TRACKINFO_LRA_VALID		(1 << 7)
+#define MMC_TRACKINFO_COPY		(1 <<  0)
+#define MMC_TRACKINFO_DAMAGED		(1 <<  1)
+#define MMC_TRACKINFO_FIXED_PACKET	(1 <<  2)
+#define MMC_TRACKINFO_INCREMENTAL	(1 <<  3)
+#define MMC_TRACKINFO_BLANK		(1 <<  4)
+#define MMC_TRACKINFO_RESERVED		(1 <<  5)
+#define MMC_TRACKINFO_NWA_VALID		(1 <<  6)
+#define MMC_TRACKINFO_LRA_VALID		(1 <<  7)
+#define MMC_TRACKINFO_DATA		(1 <<  8)
+#define MMC_TRACKINFO_AUDIO		(1 <<  9)
+#define MMC_TRACKINFO_AUDIO_4CHAN	(1 << 10)
+#define MMC_TRACKINFO_PRE_EMPH		(1 << 11)
 
 #define MMC_TRACKINFO_FLAGBITS \
     "\8\1COPY\2DAMAGED\3FIXEDPACKET\4INCREMENTAL\5BLANK" \
-    "\6RESERVED\7NWA_VALID\10LRA_VALID"
+    "\6RESERVED\7NWA_VALID\10LRA_VALID\11DATA\12AUDIO" \
+    "\13AUDIO_4CHAN\14PRE_EMPH"
+
+struct mmc_op {
+	uint16_t	operation;		/* IN */
+	uint16_t	mmc_profile;		/* IN */
+
+	/* parameters to operation */
+	uint16_t	tracknr;		/* IN */
+	uint16_t	sessionnr;		/* IN */
+	uint32_t	extent;			/* IN */
+
+	uint32_t	reserved[4];
+};
+#define MMCOP _IOWR('c', 30, struct mmc_op)
+
+#define MMC_OP_SYNCHRONISECACHE		 1
+#define MMC_OP_CLOSETRACK		 2
+#define MMC_OP_CLOSESESSION		 3
+#define MMC_OP_FINALISEDISC		 4
+#define MMC_OP_RESERVETRACK		 5
+#define MMC_OP_RESERVETRACK_NWA		 6
+#define MMC_OP_UNRESERVETRACK		 7
+#define MMC_OP_REPAIRTRACK		 8
+#define MMC_OP_UNCLOSELASTSESSION	 9
+#define MMC_OP_MAX			 9
+
+struct mmc_writeparams {
+	uint16_t	tracknr;		/* IN */
+	uint16_t	mmc_class;		/* IN */
+	uint32_t	mmc_cur;		/* IN */
+	uint32_t	blockingnr;		/* IN */
+
+	/* when tracknr == 0 */
+	uint8_t		track_mode;		/* IN; normally 5 */
+	uint8_t		data_mode;		/* IN; normally 2 */
+};
+#define MMC_TRACKMODE_DEFAULT	5		/* data, incremental recording */
+#define MMC_DATAMODE_DEFAULT	2		/* CDROM XA disc */
+#define MMCSETUPWRITEPARAMS _IOW('c', 31, struct mmc_writeparams)
 
 #endif /* _KERNEL || _EXPOSE_MMC */
 

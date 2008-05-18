@@ -1,4 +1,4 @@
-/*	$NetBSD: qop.c,v 1.8 2006/11/26 11:38:07 peter Exp $	*/
+/*	$NetBSD: qop.c,v 1.8.16.1 2008/05/18 12:36:13 yamt Exp $	*/
 /*	$KAME: qop.c,v 1.11 2001/10/26 04:57:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -172,12 +172,12 @@ int
 qcmd_disableall()
 {
 	struct ifinfo	*ifinfo;
-	int	err, error = 0;
+	int	lerr, error = 0;
 	
 	LIST_FOREACH(ifinfo, &qop_iflist, next)
-		if ((err = qop_disable(ifinfo)) != 0)
+		if ((lerr = qop_disable(ifinfo)) != 0)
 			if (error == 0)
-				error = err;
+				error = lerr;
 	return (error);
 }
 
@@ -1404,7 +1404,7 @@ qop_rio_set_defaults(struct redparams *params)
  * (also check the altq device file)
  */
 int
-open_module(const char *devname, int flags)
+open_module(const char *dvname, int flags)
 {
 #if defined(__FreeBSD__) && (__FreeBSD_version > 300000)
 	char modname[64], filename[MAXPATHLEN], *cp;
@@ -1413,8 +1413,8 @@ open_module(const char *devname, int flags)
 	struct stat sbuf;
 
 	/* check if the altq device exists */
-	if (stat(devname, &sbuf) < 0) {
-		LOG(LOG_ERR, errno, "can't access %s!", devname);
+	if (stat(dvname, &sbuf) < 0) {
+		LOG(LOG_ERR, errno, "can't access %s!", dvname);
 		return (-1);
 	}
 

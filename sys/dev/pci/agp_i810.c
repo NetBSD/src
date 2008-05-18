@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.52 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.52.2.1 2008/05/18 12:34:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.52 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.52.2.1 2008/05/18 12:34:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,7 @@ static int agp_i810_init(struct agp_softc *sc)
 		}
 
 		if (isc->stolen > 0) {
-			aprint_error(": detected %dk stolen memory\n%s",
+			aprint_normal(": detected %dk stolen memory\n%s",
 			    isc->stolen * 4, device_xname(&sc->as_dev));
 		}
 
@@ -512,7 +512,7 @@ static int agp_i810_init(struct agp_softc *sc)
 			return EINVAL;
 		}
 		if (isc->stolen > 0) {
-			aprint_error(": detected %dk stolen memory\n%s",
+			aprint_normal(": detected %dk stolen memory\n%s",
 			    isc->stolen * 4, device_xname(&sc->as_dev));
 		}
 

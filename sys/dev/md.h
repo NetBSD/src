@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 2007/03/04 06:01:42 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.8.38.1 2008/05/18 12:33:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -87,7 +87,7 @@ struct md_conf {
  */
 extern void md_attach_hook(int, struct md_conf *);
 extern void md_open_hook(int, struct md_conf *);
-#ifdef MEMORY_DISK_DYNAMIC
 extern void md_root_setconf(char *, size_t);
-#endif
+
+extern int md_is_root;
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.29 2007/11/09 21:00:06 plunky Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.29.16.1 2008/05/18 12:35:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.29 2007/11/09 21:00:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.29.16.1 2008/05/18 12:35:41 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -994,27 +994,6 @@ again:
 		 * get the dref bits of the fixed part (can't take the
 		 * address of a bit field)
 		 */
-#ifdef TPCONS
-		if (cons_channel && dutype == DT_TPDU_type) {
-			struct isopcb  *isop = ((struct isopcb *)
-			       ((struct pklcd *) cons_channel)->lcd_upnext);
-			if (isop && isop->isop_refcnt == 1 && isop->isop_socket &&
-			    (tpcb = sototpcb(isop->isop_socket)) &&
-			    (tpcb->tp_class == TP_CLASS_0 /* || == CLASS_1 */ )) {
-#ifdef ARGO_DEBUG
-				if (argo_debug[D_TPINPUT]) {
-					printf("tpinput_dt: class 0 short circuit\n");
-				}
-#endif
-				dref = tpcb->tp_lref;
-				sref = tpcb->tp_fref;
-				CHECK((tpcb->tp_refstate == REF_FREE),
-				      E_TP_MISM_REFS, ts_inv_dref, nonx_dref,
-				      (1 + 2 + (void *) & hdr->_tpduf - (void *) hdr))
-					goto tp0_data;
-			}
-		}
-#endif
 		{
 
 			CHECK(((int) dref <= 0 || dref >= tp_refinfo.tpr_size),
@@ -1265,14 +1244,6 @@ again:
 					      (1 + 2 + (char *)&hdr->_tpdufr.CRCC - (char *)hdr)
 				/* ^ more or less the location of class */
 					)
-#ifdef TPCONS
-					if (tpcb->tp_netservice == ISO_CONS &&
-					    class_to_use == TP_CLASS_0) {
-					struct isopcb  *isop = (struct isopcb *) tpcb->tp_npcb;
-					struct pklcd   *lcp = (struct pklcd *) isop->isop_chan;
-					lcp->lcd_flags &= ~X25_DG_CIRCUIT;
-				}
-#endif
 			}
 			if (!tpcb->tp_use_checksum)
 				IncStat(ts_csum_off);
@@ -1443,9 +1414,6 @@ again:
 			}
 #endif
 			if (tpcb->tp_class == TP_CLASS_0) {
-#ifdef TPCONS
-		tp0_data:
-#endif
 				e.TPDU_ATTR(DT).e_seq = 0;	/* actually don't care */
 				e.TPDU_ATTR(DT).e_eot = (((struct tp0du *) hdr)->tp0du_eot);
 			} else if (tpcb->tp_xtd_format) {

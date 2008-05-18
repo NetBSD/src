@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932var.h,v 1.7 2007/12/25 18:33:38 perry Exp $	*/
+/*	$NetBSD: dp83932var.h,v 1.7.8.1 2008/05/18 12:33:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,6 +63,11 @@
 #define	SONIC_RXSEQ_TO_DESC(x)	((x) & SONIC_NRXDESC_MASK)
 
 /*
+ * Number of CAM entries.
+ */
+#define	SONIC_NCAMENT		16
+
+/*
  * Control structures are DMA'd to the SONIC chip.  We allocate them in
  * a single clump that maps to a single DMA segment to make several things
  * easier.
@@ -93,7 +91,8 @@ struct sonic_control_data16 {
 	/*
 	 * The CAM descriptors.
 	 */
-	struct sonic_cda16 scd_cam[16];
+	struct sonic_cda16 scd_cam[SONIC_NCAMENT];
+	uint16_t scd_camenable;
 };
 
 #define	SONIC_CDOFF16(x)	offsetof(struct sonic_control_data16, x)
@@ -101,6 +100,8 @@ struct sonic_control_data16 {
 #define	SONIC_CDRXOFF16(x)	SONIC_CDOFF16(scd_rxdescs[(x)])
 #define	SONIC_CDRROFF16(x)	SONIC_CDOFF16(scd_rxbufs[(x)])
 #define	SONIC_CDCAMOFF16	SONIC_CDOFF16(scd_cam)
+#define	SONIC_CDCAMSIZE16	\
+	(sizeof(struct sonic_cda16) * SONIC_NCAMENT + sizeof(uint16_t))
 
 struct sonic_control_data32 {
 	/*
@@ -121,7 +122,8 @@ struct sonic_control_data32 {
 	/*
 	 * The CAM descriptors.
 	 */
-	struct sonic_cda32 scd_cam[16];
+	struct sonic_cda32 scd_cam[SONIC_NCAMENT];
+	uint32_t scd_camenable;
 };
 
 #define	SONIC_CDOFF32(x)	offsetof(struct sonic_control_data32, x)
@@ -129,6 +131,8 @@ struct sonic_control_data32 {
 #define	SONIC_CDRXOFF32(x)	SONIC_CDOFF32(scd_rxdescs[(x)])
 #define	SONIC_CDRROFF32(x)	SONIC_CDOFF32(scd_rxbufs[(x)])
 #define	SONIC_CDCAMOFF32	SONIC_CDOFF32(scd_cam)
+#define	SONIC_CDCAMSIZE32	\
+	(sizeof(struct sonic_cda32) * SONIC_NCAMENT + sizeof(uint32_t))
 
 /*
  * Software state for transmit and receive descriptors.
@@ -142,7 +146,7 @@ struct sonic_descsoft {
  * Software state per device.
  */
 struct sonic_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
@@ -180,11 +184,13 @@ struct sonic_softc {
 #define	sc_rda16	sc_cdun.cdun_16->scd_rxdescs
 #define	sc_rra16	sc_cdun.cdun_16->scd_rxbufs
 #define	sc_cda16	sc_cdun.cdun_16->scd_cam
+#define	sc_cdaenable16	sc_cdun.cdun_16->scd_camenable
 
 #define	sc_tda32	sc_cdun.cdun_32->scd_txdescs
 #define	sc_rda32	sc_cdun.cdun_32->scd_rxdescs
 #define	sc_rra32	sc_cdun.cdun_32->scd_rxbufs
 #define	sc_cda32	sc_cdun.cdun_32->scd_cam
+#define	sc_cdaenable32	sc_cdun.cdun_32->scd_camenable
 
 	int	sc_txpending;		/* number of Tx requests pending */
 	int	sc_txdirty;		/* first dirty Tx descriptor */
@@ -231,7 +237,7 @@ struct sonic_softc {
 
 #define	SONIC_CDCAMADDR(sc)						\
 	((sc)->sc_cddma +						\
-	 ((sc)->sc_32bit ? SONIC_CDCAMOFF32 : SONIC_CDCAMOFF32))
+	 ((sc)->sc_32bit ? SONIC_CDCAMOFF32 : SONIC_CDCAMOFF16))
 
 #define	SONIC_CDTXSYNC16(sc, x, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,		\
@@ -261,11 +267,11 @@ struct sonic_softc {
 do {									\
 	if ((sc)->sc_32bit)						\
 		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SONIC_CDCAMOFF32, sizeof(struct sonic_cda32) * 16,	\
+		    SONIC_CDCAMOFF32, SONIC_CDCAMSIZE32,		\
 		    (ops));						\
 	else								\
 		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
-		    SONIC_CDCAMOFF16, sizeof(struct sonic_cda16) * 16,	\
+		    SONIC_CDCAMOFF16, SONIC_CDCAMSIZE16,		\
 		    (ops));						\
 } while (/*CONSTCOND*/0)
 

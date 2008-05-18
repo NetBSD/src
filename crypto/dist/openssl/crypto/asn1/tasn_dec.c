@@ -114,6 +114,8 @@ unsigned long ASN1_tag2bit(int tag)
 /* Macro to initialize and invalidate the cache */
 
 #define asn1_tlc_clear(c)	if (c) (c)->valid = 0
+/* Version to avoid compiler warning about 'c' always non-NULL */
+#define asn1_tlc_clear_nc(c)	(c)->valid = 0
 
 /* Decode an ASN1 item, this currently behaves just 
  * like a standard 'd2i' function. 'in' points to 
@@ -130,7 +132,7 @@ ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
 	ASN1_VALUE *ptmpval = NULL;
 	if (!pval)
 		pval = &ptmpval;
-	asn1_tlc_clear(&c);
+	asn1_tlc_clear_nc(&c);
 	if (ASN1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &c) > 0) 
 		return *pval;
 	return NULL;
@@ -140,7 +142,7 @@ int ASN1_template_d2i(ASN1_VALUE **pval,
 		const unsigned char **in, long len, const ASN1_TEMPLATE *tt)
 	{
 	ASN1_TLC c;
-	asn1_tlc_clear(&c);
+	asn1_tlc_clear_nc(&c);
 	return asn1_template_ex_d2i(pval, in, len, tt, 0, &c);
 	}
 
@@ -306,7 +308,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 
 		case ASN1_ITYPE_CHOICE:
-		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
 				goto auxerr;
 
 		/* Allocate structure */
@@ -356,7 +358,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 		asn1_set_choice_selector(pval, i, it);
 		*in = p;
-		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
 				goto auxerr;
 		return 1;
 
@@ -403,7 +405,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 			goto err;
 			}
 
-		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
 				goto auxerr;
 
 		/* Get each field entry */
@@ -505,7 +507,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 		if (!asn1_enc_save(pval, *in, p - *in, it))
 			goto auxerr;
 		*in = p;
-		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it))
+		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
 				goto auxerr;
 		return 1;
 
@@ -944,7 +946,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 		if (utype != typ->type)
 			ASN1_TYPE_set(typ, utype, NULL);
 		opval = pval;
-		pval = (ASN1_VALUE **)&typ->value.ptr;
+		pval = &typ->value.asn1_value;
 		}
 	switch(utype)
 		{

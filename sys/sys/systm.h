@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.219 2008/04/01 19:49:31 drochner Exp $	*/
+/*	$NetBSD: systm.h,v 1.219.2.1 2008/05/18 12:35:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -128,7 +128,6 @@ extern int nsysent;
 #error	"what byte order is this machine?"
 #endif
 
-#define	SYCALL_MPSAFE	0x0001	/* syscall is MP-safe */
 #define	SYCALL_INDIRECT	0x0002	/* indirect (ie syscall() or __syscall()) */
 
 extern int boothowto;		/* reboot flags, from console subsystem */
@@ -153,14 +152,12 @@ enum hashtype {
 	HASH_TAILQ
 };
 
-struct malloc_type;
-void	*hashinit(u_int, enum hashtype, struct malloc_type *, int, u_long *);
-void	hashdone(void *, struct malloc_type *);
+#ifdef _KERNEL
+void	*hashinit(u_int, enum hashtype, bool, u_long *);
+void	hashdone(void *, enum hashtype, u_long);
 int	seltrue(dev_t, int, struct lwp *);
 int	sys_nosys(struct lwp *, const void *, register_t *);
 
-
-#ifdef _KERNEL
 void	aprint_normal(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	aprint_error(const char *, ...)
@@ -483,8 +480,11 @@ do {						\
 #define	KERNEL_UNLOCK_ONE(l)		KERNEL_UNLOCK(1, (l), NULL)
 
 /* Preemption control. */
-void	crit_enter(void);
-void	crit_exit(void);
+#ifdef _KERNEL
+void	kpreempt_disable(void);
+void	kpreempt_enable(void);
+bool	kpreempt_disabled(void);
+#endif
 
 void assert_sleepable(void);
 #if defined(DEBUG)

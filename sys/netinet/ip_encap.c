@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.31 2007/06/13 04:55:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.31.30.1 2008/05/18 12:35:28 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -684,7 +684,7 @@ fail:
 /* XXX encap4_ctlinput() is necessary if we set DF=1 on outer IPv4 header */
 
 #ifdef INET6
-void
+void *
 encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 {
 	void *d = d0;
@@ -698,16 +698,16 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 	if (cmd == PRC_HOSTDEAD)
 		d = NULL;
 	else if (cmd == PRC_MSGSIZE)
 		; /* special code is present, see below */
 	else if (inet6ctlerrmap[cmd] == 0)
-		return;
+		return NULL;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -759,6 +759,7 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 	}
 
 	rip6_ctlinput(cmd, sa, d0);
+	return NULL;
 }
 #endif
 

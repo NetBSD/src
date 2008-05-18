@@ -1,4 +1,4 @@
-#	$NetBSD: cast.inc,v 1.6 2007/12/09 22:44:14 adrianp Exp $
+#	$NetBSD: cast.inc,v 1.6.6.1 2008/05/18 12:30:21 yamt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,8 +7,11 @@
 
 .PATH:	${OPENSSLSRC}/crypto/cast
 
+.if !defined(CAST_SRCS)
+CAST_SRCS = c_enc.c
+.endif
 
-CAST_SRCS = c_skey.c c_ecb.c c_enc.c c_cfb64.c c_ofb64.c 
+CAST_SRCS += c_skey.c c_ecb.c c_cfb64.c c_ofb64.c 
 SRCS += ${CAST_SRCS}
 
 .for cryptosrc in ${CAST_SRCS}

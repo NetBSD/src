@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.18 2006/05/17 20:36:50 christos Exp $	*/
+/*	$NetBSD: telldir.c,v 1.18.18.1 2008/05/18 12:30:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.18 2006/05/17 20:36:50 christos Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.18.18.1 2008/05/18 12:30:16 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -117,6 +117,6 @@ _seekdir_unlocked(DIR *dirp, long loc)
 	dirp->dd_seek = lseek(dirp->dd_fd, lp->dp_seek, SEEK_SET);
 	dirp->dd_loc = 0;
 	while (dirp->dd_loc < lp->dp_loc)
-		if (_readdir_unlocked(dirp) == NULL)
+		if (_readdir_unlocked(dirp, 0) == NULL)
 			break;
 }

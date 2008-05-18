@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_header.c,v 1.4 2007/10/23 14:58:44 christos Exp $	*/
+/*	$NetBSD: mime_header.c,v 1.4.6.1 2008/05/18 12:36:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_header.c,v 1.4 2007/10/23 14:58:44 christos Exp $");
+__RCSID("$NetBSD: mime_header.c,v 1.4.6.1 2008/05/18 12:36:06 yamt Exp $");
 #endif /* not __lint__ */
 
 #include <stdio.h>
@@ -605,48 +598,54 @@ mime_decode_sfield(char *linebuf, size_t bufsize, const char *hstring)
 	*q = '\0';	/* null terminate the result! */
 }
 
-
 /*
  * Returns the correct hfield decoder, or NULL if none.
  * Info extracted from RFC 2822.
+ *
+ * name - pointer to field name of header line (with colon).
  */
 PUBLIC hfield_decoder_t
-mime_hfield_decoder(char *name)
+mime_hfield_decoder(const char *name)
 {
 	static const struct field_decoder_tbl_s {
 		const char *field_name;
+		size_t field_len;
 		hfield_decoder_t decoder;
 	} field_decoder_tbl[] = {
-		{ "Received:",			NULL },
-		{ "Content-Type:",		NULL },
-		{ "Content-Disposition:",	NULL },
-		{ "Content-Transfer-Encoding:",	NULL },
-		{ "Content-Description:",	mime_decode_sfield },
-		{ "Content-ID:",		mime_decode_sfield },
-		{ "MIME-Version:",		mime_decode_sfield },
-		{ "Bcc:",			mime_decode_sfield },
-		{ "Cc:",			mime_decode_sfield },
-		{ "Date:",			mime_decode_sfield },
-		{ "From:",			mime_decode_sfield },
-		{ "In-Reply-To:",		mime_decode_sfield },
-		{ "Keywords:",			mime_decode_sfield },
-		{ "Message-ID:",		mime_decode_sfield },
-		{ "References:",		mime_decode_sfield },
-		{ "Reply-To:",			mime_decode_sfield },
-		{ "Return-Path:",		mime_decode_sfield },
-		{ "Sender:",			mime_decode_sfield },
-		{ "To:",			mime_decode_sfield },
-		{ "Subject:",			mime_decode_usfield },
-		{ "Comments:",			mime_decode_usfield },
-		{ "X-",				mime_decode_usfield },
-		{ NULL,				mime_decode_usfield },	/* optional-fields */
+#define X(s)	s, sizeof(s) - 1
+		{ X("Received:"),			NULL },
+
+		{ X("Content-Type:"),			NULL },
+		{ X("Content-Disposition:"),		NULL },
+		{ X("Content-Transfer-Encoding:"),	NULL },
+		{ X("Content-Description:"),		mime_decode_sfield },
+		{ X("Content-ID:"),			mime_decode_sfield },
+		{ X("MIME-Version:"),			mime_decode_sfield },
+
+		{ X("Bcc:"),				mime_decode_sfield },
+		{ X("Cc:"),				mime_decode_sfield },
+		{ X("Date:"),				mime_decode_sfield },
+		{ X("From:"),				mime_decode_sfield },
+		{ X("In-Reply-To:"),			mime_decode_sfield },
+		{ X("Keywords:"),			mime_decode_sfield },
+		{ X("Message-ID:"),			mime_decode_sfield },
+		{ X("References:"),			mime_decode_sfield },
+		{ X("Reply-To:"),			mime_decode_sfield },
+		{ X("Return-Path:"),			mime_decode_sfield },
+		{ X("Sender:"),				mime_decode_sfield },
+		{ X("To:"),				mime_decode_sfield },
+		{ X("Subject:"),			mime_decode_usfield },
+		{ X("Comments:"),			mime_decode_usfield },
+		{ X("X-"),				mime_decode_usfield },
+		{ NULL, 0,				mime_decode_usfield },	/* optional-fields */
+#undef X
 	};
 	const struct field_decoder_tbl_s *fp;
 
 	/* XXX - this begs for a hash table! */
 	for (fp = field_decoder_tbl; fp->field_name; fp++)
-		if (strncasecmp(name, fp->field_name, strlen(fp->field_name)) == 0)
-			return fp->decoder;
+		if (strncasecmp(name, fp->field_name, fp->field_len) == 0)
+			break;
 	return fp->decoder;
 }
 

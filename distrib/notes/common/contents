@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.137 2008/03/15 18:21:14 martin Exp $
+.\"	$NetBSD: contents,v 1.137.2.1 2008/05/18 12:29:36 yamt Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -11,13 +11,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"        This product includes software developed by the NetBSD
-.\"        Foundation, Inc. and its contributors.
-.\" 4. Neither the name of The NetBSD Foundation nor the names of its
-.\"    contributors may be used to endorse or promote products derived
-.\"    from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -65,30 +58,12 @@ kernel containing code for everything supported in this release.
 This kernel runs on Vr41xx and TX3922 CPUs only.
 .\} \" hpcmips
 .\} \" !atari/mac68k/sgimips/evgppc
-.if \n[macppc]:\n[sparc]:\n[sparc64]:\n[i386]:\n[amd64] \{\
+.if \n[macppc]:\n[sparc]:\n[sparc64] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.  This 
 kernel also supports SMP on systems with more than one CPU.
-.\}
-.if \n[i386] \{\
-.			It Pa netbsd-GENERIC.NOACPI.gz
-A gzipped
-.Nx
-kernel containing code for everything supported in this release but without
-ACPI support, for use on legacy hardware.
-.\}
-.
-.if \n[amd64] \{\
-.			It Pa netbsd-INSTALL.gz
-A gzipped
-.Nx
-kernel which is somewhat smaller.
-This is the kernel on the install floppies and CD-ROMs.
-.			It Pa netbsd-INSTALL.symbols.gz
-Symbols for
-.Pa netbsd-INSTALL.gz .
 .\}
 .
 .if \n[hp300] \{\

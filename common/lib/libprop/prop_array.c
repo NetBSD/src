@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.11 2007/08/30 12:23:54 joerg Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.11.6.1 2008/05/18 12:28:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -319,10 +312,11 @@ _prop_array_iterator_next_object(void *v)
 	struct _prop_array_iterator *pai = v;
 	prop_array_t pa = pai->pai_base.pi_obj;
 	prop_object_t po = NULL;
+	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
-
-	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	acquired = _PROP_RWLOCK_TRYRDLOCK(pa->pa_rwlock);
+	_PROP_RWLOCK_OWNED(pa->pa_rwlock);
 
 	if (pa->pa_version != pai->pai_base.pi_version)
 		goto out;	/* array changed during iteration */
@@ -336,7 +330,9 @@ _prop_array_iterator_next_object(void *v)
 	pai->pai_index++;
 
  out:
-	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+	if (acquired) {
+		_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+	}
 	return (po);
 }
 
@@ -345,15 +341,18 @@ _prop_array_iterator_reset(void *v)
 {
 	struct _prop_array_iterator *pai = v;
 	prop_array_t pa = pai->pai_base.pi_obj;
+	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
-
-	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	acquired = _PROP_RWLOCK_TRYRDLOCK(pa->pa_rwlock);
+	_PROP_RWLOCK_OWNED(pa->pa_rwlock);
 
 	pai->pai_index = 0;
 	pai->pai_base.pi_version = pa->pa_version;
 
-	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+	if (acquired) {
+		_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+	}
 }
 
 /*
@@ -509,7 +508,9 @@ prop_array_iterator(prop_array_t pa)
 	pai->pai_base.pi_reset = _prop_array_iterator_reset;
 	prop_object_retain(pa);
 	pai->pai_base.pi_obj = pa;
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
 	_prop_array_iterator_reset(pai);
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 
 	return (&pai->pai_base);
 }

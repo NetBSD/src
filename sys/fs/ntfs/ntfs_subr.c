@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.36 2008/01/29 18:21:10 pooka Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.36.8.1 2008/05/18 12:35:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.36 2008/01/29 18:21:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.36.8.1 2008/05/18 12:35:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ ntfs_loadntnode(
 
 		error = bread(ntmp->ntm_devvp,
 			      bn, ntfs_bntob(ntmp->ntm_bpmftrec),
-			      NOCRED, &bp);
+			      NOCRED, 0, &bp);
 		if (error) {
 			printf("ntfs_loadntnode: BREAD FAILED\n");
 			brelse(bp, 0);
@@ -1516,6 +1516,7 @@ ntfs_writentvattr_plain(
 	int             cnt;
 	cn_t            ccn, ccl, cn, left, cl;
 	void *        data = rdata;
+	daddr_t		lbn;
 	struct buf     *bp;
 	size_t          tocopy;
 
@@ -1572,12 +1573,13 @@ ntfs_writentvattr_plain(
 				(long long) left));
 			if ((off == 0) && (tocopy == ntfs_cntob(cl)))
 			{
-				bp = getblk(ntmp->ntm_devvp, ntfs_cntobn(cn),
+				lbn = ntfs_cntobn(cn);
+				bp = getblk(ntmp->ntm_devvp, lbn,
 					    ntfs_cntob(cl), 0, 0);
 				clrbuf(bp);
 			} else {
 				error = bread(ntmp->ntm_devvp, ntfs_cntobn(cn),
-					      ntfs_cntob(cl), NOCRED, &bp);
+				    ntfs_cntob(cl), NOCRED, B_MODIFY, &bp);
 				if (error) {
 					brelse(bp, 0);
 					return (error);
@@ -1684,7 +1686,7 @@ ntfs_readntvattr_plain(
 					error = bread(ntmp->ntm_devvp,
 						      ntfs_cntobn(cn),
 						      ntfs_cntob(cl),
-						      NOCRED, &bp);
+						      NOCRED, 0, &bp);
 					if (error) {
 						brelse(bp, 0);
 						return (error);

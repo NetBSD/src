@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.101 2008/04/15 18:54:30 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.101.2.1 2008/05/18 12:35:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -187,10 +180,10 @@
  *			tschain_t::tc_mutex ->
  *			    spc::spc_mutex
  *
- *	Each process has an scheduler state lock (proc::p_smutex), and a
+ *	Each process has an scheduler state lock (proc::p_lock), and a
  *	number of counters on LWPs and their states: p_nzlwps, p_nrlwps, and
  *	so on.  When an LWP is to be entered into or removed from one of the
- *	following states, p_mutex must be held and the process wide counters
+ *	following states, p_lock must be held and the process wide counters
  *	adjusted:
  *
  *		LSIDL, LSZOMB, LSSTOP, LSSUSPENDED
@@ -200,12 +193,12 @@
  *
  *		LSRUN, LSONPROC, LSSLEEP
  *
- *	p_smutex does not need to be held when transitioning among these
+ *	p_lock does not need to be held when transitioning among these
  *	three states.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.101 2008/04/15 18:54:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.101.2.1 2008/05/18 12:35:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -255,7 +248,7 @@ lwpinit(void)
 /*
  * Set an suspended.
  *
- * Must be called with p_smutex held, and the LWP locked.  Will unlock the
+ * Must be called with p_lock held, and the LWP locked.  Will unlock the
  * LWP before return.
  */
 int
@@ -263,7 +256,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 {
 	int error;
 
-	KASSERT(mutex_owned(&t->l_proc->p_smutex));
+	KASSERT(mutex_owned(t->l_proc->p_lock));
 	KASSERT(lwp_locked(t, NULL));
 
 	KASSERT(curl != t || curl->l_stat == LSONPROC);
@@ -272,7 +265,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 	 * If the current LWP has been told to exit, we must not suspend anyone
 	 * else or deadlock could occur.  We won't return to userspace.
 	 */
-	if ((curl->l_stat & (LW_WEXIT | LW_WCORE)) != 0) {
+	if ((curl->l_flag & (LW_WEXIT | LW_WCORE)) != 0) {
 		lwp_unlock(t);
 		return (EDEADLK);
 	}
@@ -323,14 +316,14 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 /*
  * Restart a suspended LWP.
  *
- * Must be called with p_smutex held, and the LWP locked.  Will unlock the
+ * Must be called with p_lock held, and the LWP locked.  Will unlock the
  * LWP before return.
  */
 void
 lwp_continue(struct lwp *l)
 {
 
-	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(l->l_proc->p_lock));
 	KASSERT(lwp_locked(l, NULL));
 
 	/* If rebooting or not suspended, then just bail out. */
@@ -354,7 +347,7 @@ lwp_continue(struct lwp *l)
  * Wait for an LWP within the current process to exit.  If 'lid' is
  * non-zero, we are waiting for a specific LWP.
  *
- * Must be called with p->p_smutex held.
+ * Must be called with p->p_lock held.
  */
 int
 lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
@@ -365,7 +358,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 	lwpid_t curlid;
 	bool exiting;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	p->p_nlwpwait++;
 	l->l_waitingfor = lid;
@@ -380,7 +373,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		 * deed is done.
 		 */
 		if ((p->p_sflag & PS_WCORE) != 0) {
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 			lwp_userret(l);
 #ifdef DIAGNOSTIC
 			panic("lwp_wait1");
@@ -395,7 +388,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		while ((l2 = p->p_zomblwp) != NULL) {
 			p->p_zomblwp = NULL;
 			lwp_free(l2, false, false);/* releases proc mutex */
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 		}
 
 		/*
@@ -463,7 +456,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 
 			/* lwp_free() releases the proc lock. */
 			lwp_free(l2, false, false);
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			return 0;
 		}
 
@@ -480,7 +473,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		 */
 		if (exiting) {
 			KASSERT(p->p_nlwps > 1);
-			cv_wait(&p->p_lwpcv, &p->p_smutex);
+			cv_wait(&p->p_lwpcv, p->p_lock);
 			continue;
 		}
 
@@ -503,7 +496,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
 		 * awoken if any of the conditions examined change: if an
 		 * LWP exits, is collected, or is detached.
 		 */
-		if ((error = cv_wait_sig(&p->p_lwpcv, &p->p_smutex)) != 0)
+		if ((error = cv_wait_sig(&p->p_lwpcv, p->p_lock)) != 0)
 			break;
 	}
 
@@ -544,18 +537,20 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	struct lwp *l2, *isfree;
 	turnstile_t *ts;
 
+	KASSERT(l1 == curlwp || l1->l_proc == &proc0);
+
 	/*
 	 * First off, reap any detached LWP waiting to be collected.
 	 * We can re-use its LWP structure and turnstile.
 	 */
 	isfree = NULL;
 	if (p2->p_zomblwp != NULL) {
-		mutex_enter(&p2->p_smutex);
+		mutex_enter(p2->p_lock);
 		if ((isfree = p2->p_zomblwp) != NULL) {
 			p2->p_zomblwp = NULL;
 			lwp_free(isfree, true, false);/* releases proc mutex */
 		} else
-			mutex_exit(&p2->p_smutex);
+			mutex_exit(p2->p_lock);
 	}
 	if (isfree == NULL) {
 		l2 = pool_cache_get(lwp_cache, PR_WAITOK);
@@ -579,16 +574,20 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
-	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
-	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	l2->l_pflag = LP_MPSAFE;
 	l2->l_fd = p2->p_fd;
+	TAILQ_INIT(&l2->l_ld_locks);
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/* Mark it as a system LWP and not a candidate for swapping */
 		l2->l_flag |= LW_SYSTEM;
 	}
+
+	kpreempt_disable();
+	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
+	l2->l_cpu = l1->l_cpu;
+	kpreempt_enable();
 
 	lwp_initspecific(l2);
 	sched_lwp_fork(l1, l2);
@@ -606,7 +605,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 
-	mutex_enter(&p2->p_smutex);
+	mutex_enter(p2->p_lock);
 
 	if ((flags & LWP_DETACHED) != 0) {
 		l2->l_prflag = LPR_DETACHED;
@@ -625,11 +624,11 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
 
-	mutex_exit(&p2->p_smutex);
+	mutex_exit(p2->p_lock);
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	if ((p2->p_flag & PK_SYSTEM) == 0) {
 		/* Locking is needed, since LWP is in the list of all LWPs */
@@ -660,6 +659,7 @@ void
 lwp_startup(struct lwp *prev, struct lwp *new)
 {
 
+	KASSERT(kpreempt_disabled());
 	if (prev != NULL) {
 		/*
 		 * Normalize the count of the spin-mutexes, it was
@@ -670,9 +670,11 @@ lwp_startup(struct lwp *prev, struct lwp *new)
 		membar_exit();
 		prev->l_ctxswtch = 0;
 	}
+	KPREEMPT_DISABLE(new);
 	spl0();
 	pmap_activate(new);
 	LOCKDEBUG_BARRIER(NULL, 0);
+	KPREEMPT_ENABLE(new);
 	if ((new->l_pflag & LP_MPSAFE) == 0) {
 		KERNEL_LOCK(1, new);
 	}
@@ -711,7 +713,7 @@ lwp_exit(struct lwp *l)
 	 *
 	 * Note: the last LWP's specificdata will be deleted here.
 	 */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (p->p_nlwps - p->p_nzlwps == 1) {
 		KASSERT(current == true);
 		/* XXXSMP kernel_lock not held */
@@ -719,7 +721,7 @@ lwp_exit(struct lwp *l)
 		/* NOTREACHED */
 	}
 	p->p_nzlwps++;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	if (p->p_emul->e_lwp_exit)
 		(*p->p_emul->e_lwp_exit)(l);
@@ -743,11 +745,9 @@ lwp_exit(struct lwp *l)
 	/*
 	 * Remove the LWP from the global list.
 	 */
-	mutex_enter(&proclist_lock);
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	LIST_REMOVE(l, l_list);
-	mutex_exit(&proclist_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Get rid of all references to the LWP that others (e.g. procfs)
@@ -755,17 +755,15 @@ lwp_exit(struct lwp *l)
 	 * mark it waiting for collection in the proc structure.  Note that
 	 * before we can do that, we need to free any other dead, deatched
 	 * LWP waiting to meet its maker.
-	 *
-	 * XXXSMP disable preemption.
 	 */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	lwp_drainrefs(l);
 
 	if ((l->l_prflag & LPR_DETACHED) != 0) {
 		while ((l2 = p->p_zomblwp) != NULL) {
 			p->p_zomblwp = NULL;
 			lwp_free(l2, false, false);/* releases proc mutex */
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			l->l_refcnt++;
 			lwp_drainrefs(l);
 		}
@@ -795,7 +793,7 @@ lwp_exit(struct lwp *l)
 	cv_broadcast(&p->p_lwpcv);
 	if (l->l_lwpctl != NULL)
 		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_EXITED;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	/*
 	 * We can no longer block.  At this point, lwp_free() may already
@@ -890,7 +888,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		 * deadlock.
 		 */
 		cv_broadcast(&p->p_lwpcv);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	}
 
 #ifdef MULTIPROCESSOR
@@ -968,7 +966,7 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 	int cnt;
 
 	if (locking) {
-		KASSERT(mutex_owned(&p->p_smutex));
+		KASSERT(mutex_owned(p->p_lock));
 	}
 
 	/* Trivial case: only one LWP */
@@ -1035,7 +1033,7 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 	case SDYING:
 	case SDEAD:
 		if (locking)
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 		/* We have more than one LWP and we're in SIDL?
 		 * How'd that happen?
 		 */
@@ -1044,14 +1042,14 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 		break;
 	default:
 		if (locking)
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 		panic("Process %d (%s) in unknown state %d",
 		    p->p_pid, p->p_comm, p->p_stat);
 #endif
 	}
 
 	if (locking)
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 	panic("proc_representative_lwp: couldn't find a lwp for process"
 		" %d (%s)", p->p_pid, p->p_comm);
 	/* NOTREACHED */
@@ -1103,7 +1101,7 @@ lwp_migrate(lwp_t *l, struct cpu_info *ci)
 /*
  * Find the LWP in the process.  Arguments may be zero, in such case,
  * the calling process and first LWP in the list will be used.
- * On success - returns LWP locked.
+ * On success - returns proc locked.
  */
 struct lwp *
 lwp_find2(pid_t pid, lwpid_t lid)
@@ -1115,17 +1113,17 @@ lwp_find2(pid_t pid, lwpid_t lid)
 	p = (pid == 0) ? curlwp->l_proc : p_find(pid, PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		return NULL;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (pid != 0) {
 		/* Case of p_find */
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 	}
 
 	/* Find the thread */
 	l = (lid == 0) ? LIST_FIRST(&p->p_lwps) : lwp_find(p, lid);
-	if (l != NULL)
-		lwp_lock(l);
-	mutex_exit(&p->p_smutex);
+	if (l == NULL) {
+		mutex_exit(p->p_lock);
+	}
 
 	return l;
 }
@@ -1133,14 +1131,14 @@ lwp_find2(pid_t pid, lwpid_t lid)
 /*
  * Look up a live LWP within the speicifed process, and return it locked.
  *
- * Must be called with p->p_smutex held.
+ * Must be called with p->p_lock held.
  */
 struct lwp *
 lwp_find(struct proc *p, int id)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		if (l->l_lid == id)
@@ -1174,13 +1172,11 @@ lwp_update_creds(struct lwp *l)
 	p = l->l_proc;
 	oc = l->l_cred;
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
-	mutex_enter(&p->p_smutex);
 	l->l_prflag &= ~LPR_CRMOD;
-	mutex_exit(&p->p_smutex);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 	if (oc != NULL)
 		kauth_cred_free(oc);
 }
@@ -1238,7 +1234,7 @@ lwp_setlock(struct lwp *l, kmutex_t *new)
 
 	KASSERT(mutex_owned(l->l_mutex));
 
-	membar_producer();
+	membar_exit();
 	l->l_mutex = new;
 }
 
@@ -1254,7 +1250,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	old = l->l_mutex;
-	membar_producer();
+	membar_exit();
 	l->l_mutex = new;
 	mutex_spin_exit(old);
 }
@@ -1333,10 +1329,10 @@ lwp_userret(struct lwp *l)
 		 */
 		if ((l->l_flag & (LW_PENDSIG | LW_WCORE | LW_WEXIT)) ==
 		    LW_PENDSIG) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			while ((sig = issignal(l)) != 0)
 				postsig(sig);
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 		}
 
 		/*
@@ -1350,12 +1346,14 @@ lwp_userret(struct lwp *l)
 		 * suspended.
 		 */
 		if ((l->l_flag & LW_WSUSPEND) != 0) {
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			p->p_nrlwps--;
 			cv_broadcast(&p->p_lwpcv);
 			lwp_lock(l);
 			l->l_stat = LSSUSPENDED;
-			mutex_exit(&p->p_smutex);
+			lwp_unlock(l);
+			mutex_exit(p->p_lock);
+			lwp_lock(l);
 			mi_switch(l);
 		}
 
@@ -1403,7 +1401,7 @@ void
 lwp_addref(struct lwp *l)
 {
 
-	KASSERT(mutex_owned(&l->l_proc->p_smutex));
+	KASSERT(mutex_owned(l->l_proc->p_lock));
 	KASSERT(l->l_stat != LSZOMB);
 	KASSERT(l->l_refcnt != 0);
 
@@ -1419,12 +1417,12 @@ lwp_delref(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	KASSERT(l->l_stat != LSZOMB);
 	KASSERT(l->l_refcnt > 0);
 	if (--l->l_refcnt == 0)
 		cv_broadcast(&p->p_lwpcv);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 }
 
 /*
@@ -1435,12 +1433,12 @@ lwp_drainrefs(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
-	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_refcnt != 0);
 
 	l->l_refcnt--;
 	while (l->l_refcnt != 0)
-		cv_wait(&p->p_lwpcv, &p->p_smutex);
+		cv_wait(&p->p_lwpcv, p->p_lock);
 }
 
 /*
@@ -1557,12 +1555,12 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 		mutex_init(&lp->lp_lock, MUTEX_DEFAULT, IPL_NONE);
 		lp->lp_uao = NULL;
 		TAILQ_INIT(&lp->lp_pages);
-		mutex_enter(&p->p_mutex);
+		mutex_enter(p->p_lock);
 		if (p->p_lwpctl == NULL) {
 			p->p_lwpctl = lp;
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 		} else {
-			mutex_exit(&p->p_mutex);
+			mutex_exit(p->p_lock);
 			mutex_destroy(&lp->lp_lock);
 			kmem_free(lp, sizeof(*lp));
 			lp = p->p_lwpctl;
@@ -1656,7 +1654,9 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	*uaddr = lcp->lcp_uaddr + offset * sizeof(lwpctl_t);
 	mutex_exit(&lp->lp_lock);
 
+	KPREEMPT_DISABLE(l);
 	l->l_lwpctl->lc_curcpu = (short)curcpu()->ci_data.cpu_index;
+	KPREEMPT_ENABLE(l);
 
 	return 0;
 }

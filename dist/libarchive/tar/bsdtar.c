@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.86 2008/03/15 05:08:21 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.88 2008/05/02 05:40:05 kientzle Exp $");
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -150,6 +150,7 @@ enum {
 	OPTION_NO_SAME_OWNER,
 	OPTION_NO_SAME_PERMISSIONS,
 	OPTION_NULL,
+	OPTION_NUMERIC_OWNER,
 	OPTION_ONE_FILE_SYSTEM,
 	OPTION_POSIX,
 	OPTION_STRIP_COMPONENTS,
@@ -205,6 +206,7 @@ static const struct option tar_longopts[] = {
 	{ "no-same-owner",	no_argument,	   NULL, OPTION_NO_SAME_OWNER },
 	{ "no-same-permissions",no_argument,	   NULL, OPTION_NO_SAME_PERMISSIONS },
 	{ "null",		no_argument,	   NULL, OPTION_NULL },
+	{ "numeric-owner",	no_argument,	   NULL, OPTION_NUMERIC_OWNER },
 	{ "one-file-system",	no_argument,	   NULL, OPTION_ONE_FILE_SYSTEM },
 	{ "posix",		no_argument,	   NULL, OPTION_POSIX },
 	{ "preserve-permissions", no_argument,     NULL, 'p' },
@@ -455,6 +457,9 @@ main(int argc, char **argv)
 		case OPTION_NULL: /* GNU tar */
 			bsdtar->option_null++;
 			break;
+		case OPTION_NUMERIC_OWNER: /* GNU tar */
+			bsdtar->option_numeric_owner++;
+			break;
 		case 'O': /* GNU tar */
 			bsdtar->option_stdout = 1;
 			break;
@@ -638,7 +643,7 @@ main(int argc, char **argv)
 		only_mode(bsdtar, buff, "cxt");
 	}
 	if (bsdtar->create_format != NULL)
-		only_mode(bsdtar, "--format", "c");
+		only_mode(bsdtar, "--format", "cru");
 	if (bsdtar->symlink_mode != '\0') {
 		strcpy(buff, "-?");
 		buff[1] = bsdtar->symlink_mode;
@@ -788,7 +793,7 @@ version(void)
 	printf("bsdtar %s - %s\n",
 	    BSDTAR_VERSION_STRING,
 	    archive_version());
-	exit(1);
+	exit(0);
 }
 
 static const char *long_help_msg =

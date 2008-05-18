@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.13 2008/04/04 17:21:22 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.13.2.1 2008/05/18 12:35:08 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.13 2008/04/04 17:21:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.13.2.1 2008/05/18 12:35:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -53,13 +53,18 @@ idle_loop(void *dummy)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = curlwp;
-	unsigned mask = (1 << cpu_index(ci));
+	uint32_t mask = 1 << cpu_index(ci);
 	bool set = false;
+	int s;
 
 	/* Update start time for this thread. */
 	lwp_lock(l);
 	binuptime(&l->l_stime);
 	lwp_unlock(l);
+
+	s = splsched();
+	ci->ci_schedstate.spc_flags |= SPCF_RUNNING;
+	splx(s);
 
 	KERNEL_UNLOCK_ALL(l, NULL);
 	l->l_stat = LSONPROC;
@@ -107,7 +112,7 @@ schedule:
 
 /*
  * Find an idle CPU and remove from the idle bitmask.  The bitmask
- * is always accurate but is "good enough" for the purpose of finding
+ * is not always accurate but is "good enough" for the purpose of finding
  * a CPU to run a job on.
  */
 struct cpu_info *

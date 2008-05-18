@@ -1,4 +1,4 @@
-/* $NetBSD: drm_atomic.h,v 1.2 2007/11/21 19:22:12 bjs Exp $ */
+/* $NetBSD: drm_atomic.h,v 1.2.16.1 2008/05/18 12:33:37 yamt Exp $ */
 
 /**
  * \file drm_atomic.h
@@ -47,7 +47,18 @@ typedef u_int32_t atomic_t;
 #define atomic_dec(p)		atomic_subtract_int(p, 1)
 #define atomic_add(n, p)	atomic_add_int(p, n)
 #define atomic_sub(n, p)	atomic_subtract_int(p, n)
-#else /* __FreeBSD__ */
+#elif defined(__NetBSD__)
+#include <sys/atomic.h>
+#define atomic_set(p, v) 		(*(p) = (volatile uint32_t)(v))
+#define atomic_read(p) 			(*(volatile uint32_t *)p)
+#define atomic_inc(p) 			atomic_inc_32(p)
+#define atomic_dec(p) 			atomic_dec_32(p)
+#define atomic_add(n, p) 		atomic_add_32(p, n)
+#define atomic_sub(n, p) 		atomic_add_32(p, -n)
+#define atomic_add_int(p, v) 		atomic_inc_32(p, v)
+#define atomic_set_int(p, bits) 	atomic_or_32(p, bits)
+#define atomic_clear_int(p, bits) 	atomic_and_32(p, ~(bits))
+#else /* __NetBSD__ */
 /* FIXME */
 #define atomic_set(p, v)	(*(p) = (v))
 #define atomic_read(p)		(*(p))
@@ -62,6 +73,31 @@ typedef u_int32_t atomic_t;
 #define atomic_clear_int(p, bits) *(p) &= ~(bits)
 #endif /* !__FreeBSD__ */
 
+#ifdef __NetBSD__
+static inline int
+atomic_cmpset_int(volatile int *dst, int old, int new)
+{
+	return atomic_cas_uint(dst, old, new) == old;
+}
+
+static inline atomic_t
+test_and_set_bit(int b, volatile void *p)
+{
+	volatile uint32_t *val;
+	uint32_t mask, old;
+
+	val = (volatile uint32_t *)p;
+	mask = 1 << b;
+
+	do {
+		old = *val;
+		if ((old & mask) != 0)
+			break;
+	} while (atomic_cas_32(val, old, old | mask) != old);
+
+	return old & mask;
+}
+#else
 #if !defined(__FreeBSD_version) || (__FreeBSD_version < 500000)
 #if defined(__i386__)
 /* The extra atomic functions from 5.0 haven't been merged to 4.x */
@@ -98,7 +134,6 @@ atomic_cmpset_int(__volatile__ int *dst, int old, int new)
 	return 0;
 }
 #endif /* !__i386__ */
-#endif /* !__FreeBSD_version || __FreeBSD_version < 500000 */
 
 static __inline atomic_t
 test_and_set_bit(int b, volatile void *p)
@@ -108,8 +143,11 @@ test_and_set_bit(int b, volatile void *p)
 	unsigned int r = *(volatile int *)p & m;
 	*(volatile int *)p |= m;
 	splx(s);
+
 	return r;
 }
+#endif /* !__FreeBSD_version || __FreeBSD_version < 500000 */
+#endif
 
 static __inline void
 clear_bit(int b, volatile void *p)

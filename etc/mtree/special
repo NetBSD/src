@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.117 2008/04/15 11:17:47 plunky Exp $
+#	$NetBSD: special,v 1.117.2.1 2008/05/18 12:29:48 yamt Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -16,6 +16,8 @@
 /set uname=root gname=wheel
 
 .				type=dir  mode=0755
+
+./boot.cfg			type=file mode=0644 optional
 
 ./dev				type=dir  mode=0755
 ./dev/drum			type=char mode=0640 gname=kmem

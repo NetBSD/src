@@ -1,4 +1,4 @@
-#	$NetBSD: hmac.inc,v 1.6 2007/12/09 22:44:17 adrianp Exp $
+#	$NetBSD: hmac.inc,v 1.6.6.1 2008/05/18 12:30:21 yamt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,7 +8,7 @@
 .PATH:	${OPENSSLSRC}/crypto/hmac
 
 
-HMAC_SRCS = hmac.c
+HMAC_SRCS = hmac.c hm_ameth.c hm_pmeth.c
 SRCS += ${HMAC_SRCS}
 
 .for cryptosrc in ${HMAC_SRCS}

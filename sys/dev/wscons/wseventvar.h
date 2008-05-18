@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.11 2006/10/09 11:03:43 peter Exp $ */
+/* $NetBSD: wseventvar.h,v 1.11.50.1 2008/05/18 12:34:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -81,6 +81,7 @@ struct wseventvar {
 	volatile u_int put;	/* put (write) index (modified by interrupt) */
 	struct selinfo sel;	/* process selecting */
 	struct proc *io;	/* process that opened queue (can get SIGIO) */
+	void	*sih;		/* soft interrupt handle for signals */
 	int	wanted;		/* wake up on input ready */
 	int	async;		/* send SIGIO on input ready */
 	struct wscons_event *q;	/* circular buffer (queue) of events */

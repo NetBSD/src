@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.14 2007/03/04 06:03:35 christos Exp $	*/
+/*	$NetBSD: natm.c,v 1.14.38.1 2008/05/18 12:35:44 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.14 2007/03/04 06:03:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.14.38.1 2008/05/18 12:35:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,9 @@ struct proc *p;
 
       npcb_free(npcb, NPCB_DESTROY);	/* drain */
       so->so_pcb = NULL;
+      /* sofree drops the lock */
       sofree(so);
+      mutex_enter(softnet_lock);
 
       break;
 
@@ -359,12 +361,15 @@ natmintr()
   struct socket *so;
   struct natmpcb *npcb;
 
+  mutex_enter(softnet_lock);
 next:
   s = splnet();
   IF_DEQUEUE(&natmintrq, m);
   splx(s);
-  if (m == NULL)
+  if (m == NULL) {
+    mutex_exit(softnet_lock);
     return;
+  }
 
 #ifdef DIAGNOSTIC
   if ((m->m_flags & M_PKTHDR) == 0)

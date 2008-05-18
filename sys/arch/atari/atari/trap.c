@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.95 2007/12/03 15:33:22 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.95.16.1 2008/05/18 12:31:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95 2007/12/03 15:33:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.95.16.1 2008/05/18 12:31:41 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -441,12 +441,12 @@ trap(fp, type, code, v)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		    type==T_COPERR ? "coprocessor" : "format");
 #endif
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
 		sigdelset(&l->l_sigmask, SIGILL);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *)(int)fp->f_format;
@@ -738,11 +738,11 @@ struct writebackstats {
 	int wbsize[4];
 } wbstats;
 
-char *f7sz[] = { "longword", "byte", "word", "line" };
-char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
-char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
+const char *f7sz[] = { "longword", "byte", "word", "line" };
+const char *f7tt[] = { "normal", "MOVE16", "AFC", "ACK" };
+const char *f7tm[] = { "d-push", "u-data", "u-code", "M-data",
 		 "M-code", "k-data", "k-code", "RES" };
-char wberrstr[] =
+const char wberrstr[] =
     "WARNING: pid %d(%s) writeback [%s] failed, pc=%x fa=%x wba=%x wbd=%x\n";
 
 static void dumpwb __P((int, u_short, u_int, u_int));

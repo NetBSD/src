@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.248 2008/03/24 12:34:51 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.248.2.1 2008/05/18 12:29:42 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -523,6 +523,27 @@ Notes:
 		  with vmem_xalloc.  find a tester with hardware for it.
 		- g/c replaced code, including kmapent and malloc.
 		- consider to remove other submaps.  eg. mb_map
+
+Branch:		yamt-nfs-mp
+Description:	make nfs client mp-safe
+Status:		Active
+Start Date:	Sun Apr 27 2008
+End Date:	
+Base Tag:	yamt-nfs-mp-base
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys  (src/common is tagged but not branched)
+Notes:		
+
+Branch:		yamt-pf42
+Description:	import newer pf from OpenBSD 4.2
+Status:		Active
+Start Date:	Sat Apr 19 2008
+End Date:	
+Base Tag:	yamt-pf42-base
+Maintainer:	Peter Postma <peter@NetBSD.org>,
+		YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src
+Notes:		see sys/dist/pf/net/TODO
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.

@@ -1,5 +1,5 @@
 /*	$OpenBSD: fins.c,v 1.1 2008/03/19 19:33:09 deraadt Exp $	*/
-/*	$NetBSD: finsio_isa.c,v 1.3 2008/04/05 18:32:14 xtraeme Exp $	*/
+/*	$NetBSD: finsio_isa.c,v 1.3.2.1 2008/05/18 12:34:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Juan Romero Pardines
@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.3 2008/04/05 18:32:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: finsio_isa.c,v 1.3.2.1 2008/05/18 12:34:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,6 +543,8 @@ finsio_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme = sysmon_envsys_create();
 	for (i = 0; sc->sc_finsio_sensors[i].fs_desc; i++) {
 		sc->sc_sensor[i].units = sc->sc_finsio_sensors[i].fs_type;
+		if (sc->sc_sensor[i].units == ENVSYS_SVOLTS_DC)
+			sc->sc_sensor[i].flags = ENVSYS_FCHANGERFACT;
 		strlcpy(sc->sc_sensor[i].desc, sc->sc_finsio_sensors[i].fs_desc,
 			sizeof(sc->sc_sensor[i].desc));
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
@@ -628,7 +630,10 @@ finsio_refresh_volt(struct finsio_softc *sc, envsys_data_t *edata)
 		edata->state = ENVSYS_SINVALID;
 	else {
 		edata->state = ENVSYS_SVALID;
-		edata->value_cur = data * fs->fs_rfact;
+		if (edata->rfact)
+			edata->value_cur = data * edata->rfact;
+		else
+			edata->value_cur = data * fs->fs_rfact;
 	}
 }
 

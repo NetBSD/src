@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.11 2007/10/29 23:20:38 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.11.6.1 2008/05/18 12:36:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -41,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.11 2007/10/29 23:20:38 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.11.6.1 2008/05/18 12:36:06 yamt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -1043,71 +1036,79 @@ mime_decode_body(struct mime_info *mip)
 }
 
 
-
 /************************************************************************
  * Higher level header decoding interface.
  *
  * The core routines are in mime_header.c.
  */
 
+/*
+ * Decode a portion of the header field.
+ *
+ * linebuf	buffer to decode into.
+ * bufsize	size of linebuf.
+ * hdrline	full header line including header name.
+ * srcstr	pointer to string to decode
+ */
 PUBLIC char *
-mime_decode_hfield(char *linebuf, size_t bufsize, char *hdrstr)
+mime_decode_hfield(char *linebuf, size_t bufsize, const char *hdrline, char *srcstr)
 {
 	hfield_decoder_t decode;
-	decode = mime_hfield_decoder(hdrstr);
+	decode = mime_hfield_decoder(hdrline);
 	if (decode) {
-		decode(linebuf, bufsize, hdrstr);
+		decode(linebuf, bufsize, srcstr);
 		return linebuf;
 	}
-	return hdrstr;
+	return srcstr;
 }
 
 /*
- * Return the next header field found in the given message.
- * Return >= 0 if something found, < 0 elsewise.
- * "colon" is set to point to the colon in the header.
+ * Return the next header field found in the input stream.
+ * Return 0 if something found, -1 otherwise.
+ * For a proper header, "*colon" is set to point to the colon
+ * terminating the header name.  Otherwise it is NULL.
+ *
+ * NOTE: unlike gethfield() in support.c this:
+ * 1) preserves folding (newlines),
+ * 2) reads until fgetln() gets an EOF,
+ * 3) only sets *colon if there is a "proper" one.
  */
 static int
-get_folded_hfield(FILE *f, char *linebuf, size_t bufsize, int rem, char **colon)
+get_folded_hfield(FILE *f, char *linebuf, size_t bufsize, char **colon)
 {
 	char *cp, *cp2;
 	char *line;
 	size_t len;
 
+	if ((cp = fgetln(f, &len)) == NULL)
+		return -1;
+	for (cp2 = cp;
+	     cp2 < cp + len && isprint((unsigned char)*cp2) &&
+		 !is_WSP(*cp2) && *cp2 != ':';
+	     cp2++)
+		continue;
+	len = MIN(bufsize - 1, len);
+	bufsize -= len;
+	(void)memcpy(linebuf, cp, len);
+	*colon = *cp2 == ':' ? linebuf + (cp2 - cp) : NULL;
+	line = linebuf + len;
 	for (;;) {
-		if (--rem <= 0)
-			return -1;
+		int c;
+		(void)ungetc(c = getc(f), f);
+		if (!is_WSP(c))
+			break;
+
 		if ((cp = fgetln(f, &len)) == NULL)
-			return -1;
-		for (cp2 = cp;
-		     isprint((unsigned char)*cp2) &&
-			 !is_WSP(*cp2) && *cp2 != ':';
-		     cp2++)
-			continue;
+			break;
 		len = MIN(bufsize - 1, len);
 		bufsize -= len;
-		(void)memcpy(linebuf, cp, len);
-		*colon = *cp2 == ':' ? linebuf + (cp2 - cp) : NULL;
-		line = linebuf + len;
-		for (/*EMPTY*/; rem > 0; rem--) {
-			int c;
-			(void)ungetc(c = getc(f), f);
-			if (!is_WSP(c))
-				break;
-
-			if ((cp = fgetln(f, &len)) == NULL)
-				break;
-			len = MIN(bufsize - 1, len);
-			bufsize -= len;
-			if (len == 0)
-			    break;
-			(void)memcpy(line, cp, len);
-			line += len;
-		}
-		*line = 0;
-		return rem;
-		/* NOTREACHED */
+		if (len == 0)
+			break;
+		(void)memcpy(line, cp, len);
+		line += len;
 	}
+	*line = 0;
+	return 0;
 }
 
 static void
@@ -1118,16 +1119,15 @@ decode_header(FILE *fi, FILE *fo, void *cookie __unused)
 #ifdef __lint__
 	cookie = cookie;
 #endif
-	while(get_folded_hfield(fi, linebuf, sizeof(linebuf), INT_MAX, &colon) >= 0) {
+	while (get_folded_hfield(fi, linebuf, sizeof(linebuf), &colon) >= 0) {
 		char decbuf[LINESIZE];
 		char *hdrstr;
 		hdrstr = linebuf;
 		if (colon)
-			hdrstr = mime_decode_hfield(decbuf, sizeof(decbuf), hdrstr);
+			hdrstr = mime_decode_hfield(decbuf, sizeof(decbuf), hdrstr, hdrstr);
 		(void)fprintf(fo, hdrstr);
 	}
 }
-
 
 PUBLIC FILE *
 mime_decode_header(struct mime_info *mip)

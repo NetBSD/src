@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_output.c,v 1.30 2007/09/22 11:32:06 degroote Exp $	*/
+/*	$NetBSD: ah_output.c,v 1.30.22.1 2008/05/18 12:35:34 yamt Exp $	*/
 /*	$KAME: ah_output.c,v 1.31 2001/07/26 06:53:15 jinmei Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.30 2007/09/22 11:32:06 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.30.22.1 2008/05/18 12:35:34 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: ah_output.c,v 1.30 2007/09/22 11:32:06 degroote Exp 
 #endif
 
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #include <netinet6/ah.h>
 #include <netkey/key.h>
 #include <netkey/keydb.h>
@@ -163,7 +164,7 @@ ah4_output(struct mbuf *m, struct ipsecrequest *isr)
 			(u_int32_t)ntohl(ip->ip_src.s_addr),
 			(u_int32_t)ntohl(ip->ip_dst.s_addr),
 			(u_int32_t)ntohl(sav->spi)));
-		ipsecstat.out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		error = EINVAL;
 		goto fail;
 	}
@@ -172,7 +173,7 @@ ah4_output(struct mbuf *m, struct ipsecrequest *isr)
 	if (!algo) {
 		ipseclog((LOG_ERR, "ah4_output: unsupported algorithm: "
 		    "SPI=%u\n", (u_int32_t)ntohl(sav->spi)));
-		ipsecstat.out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		error = EINVAL;
 		goto fail;
 	}
@@ -250,7 +251,7 @@ ah4_output(struct mbuf *m, struct ipsecrequest *isr)
 				ipseclog((LOG_WARNING,
 				    "replay counter overflowed. %s\n",
 				    ipsec_logsastr(sav)));
-				ipsecstat.out_inval++;
+				IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 				error = EINVAL;
 				goto fail;
 			}
@@ -272,7 +273,7 @@ ah4_output(struct mbuf *m, struct ipsecrequest *isr)
 		ip->ip_len = htons(ntohs(ip->ip_len) + ahlen);
 	else {
 		ipseclog((LOG_ERR, "IPv4 AH output: size exceeds limit\n"));
-		ipsecstat.out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		error = EMSGSIZE;
 		goto fail;
 	}
@@ -298,7 +299,7 @@ ah4_output(struct mbuf *m, struct ipsecrequest *isr)
 	if (error) {
 		ipseclog((LOG_ERR,
 		    "error after ah4_calccksum, called from ah4_output"));
-		ipsecstat.out_inval++;
+		IPSEC_STATINC(IPSEC_STAT_OUT_INVAL);
 		goto fail;
 	}
 
@@ -306,8 +307,12 @@ ah4_output(struct mbuf *m, struct ipsecrequest *isr)
 		ip = mtod(m, struct ip *);	/* just to make sure */
 		ip->ip_dst.s_addr = dst.s_addr;
 	}
-	ipsecstat.out_success++;
-	ipsecstat.out_ahhist[sav->alg_auth]++;
+	{
+		uint64_t *ipss = IPSEC_STAT_GETREF();
+		ipss[IPSEC_STAT_OUT_SUCCESS]++;
+		ipss[IPSEC_STAT_OUT_AHHIST + sav->alg_auth]++;
+		IPSEC_STAT_PUTREF();
+	}
 	key_sa_recordxfer(sav, m);
 
 	return 0;
@@ -410,7 +415,7 @@ ah6_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 		ipseclog((LOG_DEBUG, "ah6_output: internal error: "
 			"sav->replay is null: SPI=%u\n",
 			(u_int32_t)ntohl(sav->spi)));
-		ipsec6stat.out_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 		error = EINVAL;
 		goto fail;
 	}
@@ -419,7 +424,7 @@ ah6_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	if (!algo) {
 		ipseclog((LOG_ERR, "ah6_output: unsupported algorithm: "
 		    "SPI=%u\n", (u_int32_t)ntohl(sav->spi)));
-		ipsec6stat.out_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 		error = EINVAL;
 		goto fail;
 	}
@@ -455,7 +460,7 @@ ah6_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 				ipseclog((LOG_WARNING,
 				    "replay counter overflowed. %s\n",
 				    ipsec_logsastr(sav)));
-				ipsec6stat.out_inval++;
+				IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 				error = EINVAL;
 				goto fail;
 			}
@@ -475,13 +480,13 @@ ah6_output(struct mbuf *m, u_char *nexthdrp, struct mbuf *md,
 	 */
 	error = ah6_calccksum(m, ahsumpos, plen, algo, sav);
 	if (error) {
-		ipsec6stat.out_inval++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_INVAL);
 		goto fail;
 	} else {
-		ipsec6stat.out_success++;
+		IPSEC6_STATINC(IPSEC_STAT_OUT_SUCCESS);
 		key_sa_recordxfer(sav, m);
 	}
-	ipsec6stat.out_ahhist[sav->alg_auth]++;
+	IPSEC6_STATINC(IPSEC_STAT_OUT_AHHIST + sav->alg_auth);
 
 	return 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.86 2008/01/02 11:49:14 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.86.8.1 2008/05/18 12:35:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.86 2008/01/02 11:49:14 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.86.8.1 2008/05/18 12:35:56 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -144,11 +144,11 @@ READ(void *v)
 		    bytesinfile);
 
 		if (lblktosize(fs, nextlbn) >= ip->i_size)
-			error = bread(vp, lbn, size, NOCRED, &bp);
+			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		else {
 			int nextsize = blksize(fs, ip, nextlbn);
 			error = breadn(vp, lbn,
-			    size, &nextlbn, &nextsize, 1, NOCRED, &bp);
+			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
 		}
 		if (error)
 			break;
@@ -265,9 +265,9 @@ WRITE(void *v)
 	if (vp->v_type == VREG && l &&
 	    uio->uio_offset + uio->uio_resid >
 	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(&proclist_mutex);
+		mutex_enter(proc_lock);
 		psignal(l->l_proc, SIGXFSZ);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(proc_lock);
 		return (EFBIG);
 	}
 	if (uio->uio_resid == 0)

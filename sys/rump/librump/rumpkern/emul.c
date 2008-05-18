@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.37 2008/04/06 05:17:54 matt Exp $	*/
+/*	$NetBSD: emul.c,v 1.37.2.1 2008/05/18 12:35:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -57,8 +57,7 @@
 
 time_t time_second = 1;
 
-kmutex_t proclist_mutex;
-kmutex_t proclist_lock;
+kmutex_t *proc_lock;
 struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;

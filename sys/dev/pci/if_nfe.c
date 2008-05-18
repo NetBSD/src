@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.33 2008/04/17 20:16:46 christos Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.33.2.1 2008/05/18 12:34:19 yamt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.33 2008/04/17 20:16:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.33.2.1 2008/05/18 12:34:19 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -33,6 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.33 2008/04/17 20:16:46 christos Exp $")
 #include <sys/types.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
@@ -111,6 +112,8 @@ void	nfe_tick(void *);
 
 CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc), nfe_match, nfe_attach,
     NULL, NULL);
+
+/* #define NFE_NO_JUMBO */
 
 #ifdef NFE_DEBUG
 int nfedebug = 0;
@@ -323,7 +326,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		    NFE_READ(sc, NFE_PWR2_CTL) & ~NFE_PWR2_WAKEUP_MASK);
 	}
 
-#ifdef notyet
+#ifndef NFE_NO_JUMBO
 	/* enable jumbo frames for adapters that support it */
 	if (sc->sc_flags & NFE_JUMBO_SUP)
 		sc->sc_flags |= NFE_USE_JUMBO;
@@ -344,6 +347,8 @@ nfe_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "could not allocate Tx ring\n");
 		return;
 	}
+
+	mutex_init(&sc->rxq.mtx, MUTEX_SPIN, IPL_NET);
 
 	if (nfe_alloc_rx_ring(sc, &sc->rxq) != 0) {
 		aprint_error_dev(self, "could not allocate Rx ring\n");
@@ -1545,12 +1550,15 @@ nfe_jalloc(struct nfe_softc *sc, int i)
 {
 	struct nfe_jbuf *jbuf;
 
+	mutex_enter(&sc->rxq.mtx);
 	jbuf = SLIST_FIRST(&sc->rxq.jfreelist);
+	if (jbuf != NULL)
+		SLIST_REMOVE_HEAD(&sc->rxq.jfreelist, jnext);
+	mutex_exit(&sc->rxq.mtx);
 	if (jbuf == NULL)
 		return NULL;
 	sc->rxq.jbufmap[i] =
 	    ((char *)jbuf->buf - (char *)sc->rxq.jpool) / NFE_JBYTES;
-	SLIST_REMOVE_HEAD(&sc->rxq.jfreelist, jnext);
 	return jbuf;
 }
 
@@ -1576,7 +1584,9 @@ nfe_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	jbuf = &sc->rxq.jbuf[i];
 
 	/* ..and put it back in the free list */
+	mutex_enter(&sc->rxq.mtx);
 	SLIST_INSERT_HEAD(&sc->rxq.jfreelist, jbuf, jnext);
+	mutex_exit(&sc->rxq.mtx);
 
 	if (m != NULL)
 		pool_cache_put(mb_cache, m);

@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.57 2008/04/15 18:27:01 jdc Exp $
+#	$NetBSD: Makefile,v 1.57.2.1 2008/05/18 12:30:34 yamt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
+
+WARNS=	2
 
 CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/lib/libterm
 .if defined(DEBUG_CURSES)
@@ -9,10 +11,6 @@ CPPFLAGS+=-g -DDEBUG
 .endif
 .if defined(SMALL)
 CPPFLAGS+=-DSMALL
-.endif
-COPTS+=-Wstrict-prototypes -Wmissing-prototypes
-.if empty(DBG:M*-O0*)
-COPTS+=-Wuninitialized
 .endif
 LIB=	curses
 SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \

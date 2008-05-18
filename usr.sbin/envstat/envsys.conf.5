@@ -1,7 +1,7 @@
-.\" $NetBSD: envsys.conf.5,v 1.6 2007/11/16 08:01:38 xtraeme Exp $
+.\" $NetBSD: envsys.conf.5,v 1.6.6.1 2008/05/18 12:36:15 yamt Exp $
 .\"
 .\" -
-.\" Copyright (c) 2007 Juan Romero Pardines.
+.\" Copyright (c) 2007, 2008 Juan Romero Pardines.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 13, 2007
+.Dd April 26, 2008
 .Dt ENVSYS.CONF 5
 .Os
 .Sh NAME
@@ -160,6 +160,11 @@ event will be sent to the
 .Xr powerd 8
 daemon (if running) and will execute the block for this event in
 .Pa /etc/powerd/scripts/sensor_battery .
+.Pp
+If this property is set, its value will be shown in the
+.Xr envstat 8
+display output with a column named
+.Ar CritCap .
 .It critical-max = 70C;
 .Pp
 Sets a critical max limit property in a sensor.
@@ -203,6 +208,11 @@ object in their dictionary).
 This rule applies for the
 .Ql critical-min
 property too.
+.Pp
+If this property is set, its value will be shown in the
+.Xr envstat 8
+display output with a column named
+.Ar CritMax .
 .It critical-min = 1.230;
 .Pp
 Sets a critical min limit property in a sensor.
@@ -219,6 +229,11 @@ daemon (if running) and will execute the block for this event in
 the appropriate
 .Pa /etc/powerd/scripts/sensor_foo
 script (depending on the sensor's type).
+.Pp
+If this property is set, its value will be shown in the
+.Xr envstat 8
+display output with a column named
+.Ar CritMin .
 .It description = string
 .Pp
 Sets a new description in a sensor.

@@ -1,4 +1,4 @@
-#	$NetBSD: rpc,v 1.6 2000/06/02 22:54:10 fvdl Exp $
+#	$NetBSD: rpc,v 1.6.38.1 2008/05/18 12:29:47 yamt Exp $
 #
 # rpc 88/08/01 4.0 RPCSRC; from 1.12   88/02/07 SMI
 #
@@ -34,3 +34,4 @@ nsed		100038
 nsemntd		100039
 pcnfsd		150001	pcnfs
 amd		300019	amq
+sgi_fam		391002	fam

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.28 2008/03/26 14:19:43 ad Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.28.2.1 2008/05/18 12:35:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,6 +62,7 @@ int	mfs_close(void *);
 int	mfs_inactive(void *);
 int	mfs_reclaim(void *);
 int	mfs_print(void *);
+int	mfs_fsync(void *);
 
 #ifdef _KERNEL
 

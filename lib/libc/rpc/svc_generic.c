@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_generic.c,v 1.9 2006/03/19 02:56:48 christos Exp $	*/
+/*	$NetBSD: svc_generic.c,v 1.9.18.1 2008/05/18 12:30:18 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_generic.c 1.21 89/02/28 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_generic.c,v 1.9 2006/03/19 02:56:48 christos Exp $");
+__RCSID("$NetBSD: svc_generic.c,v 1.9.18.1 2008/05/18 12:30:18 yamt Exp $");
 #endif
 #endif
 
@@ -129,7 +129,7 @@ svc_create(dispatch, prognum, versnum, nettype)
 			/* It was not found. Now create a new one */
 			xprt = svc_tp_create(dispatch, prognum, versnum, nconf);
 			if (xprt) {
-				l = (struct xlist *)malloc(sizeof (*l));
+				l = malloc(sizeof(*l));
 				if (l == NULL) {
 					warnx("svc_create: no memory");
 					mutex_unlock(&xprtlist_lock);
@@ -306,6 +306,10 @@ svc_tli_create(fd, nconf, bindaddr, sendsz, recvsz)
 	if (nconf) {
 		xprt->xp_netid = strdup(nconf->nc_netid);
 		xprt->xp_tp = strdup(nconf->nc_device);
+		if (xprt->xp_netid == NULL || xprt->xp_tp == NULL) {
+			svc_destroy(xprt);
+			return NULL;
+		}
 	}
 	return (xprt);
 

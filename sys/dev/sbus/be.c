@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.57 2008/04/05 18:35:31 cegger Exp $	*/
+/*	$NetBSD: be.c,v 1.57.2.1 2008/05/18 12:34:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -64,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.57 2008/04/05 18:35:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.57.2.1 2008/05/18 12:34:41 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -400,14 +393,14 @@ beattach(parent, self, aux)
 #ifdef DIAGNOSTIC
 			if (LIST_NEXT(child, mii_list) != NULL) {
 				aprint_error_dev(&sc->sc_dev, "spurious MII device %s attached\n",
-				       device_xname(&child->mii_dev));
+				       device_xname(child->mii_dev));
 			}
 #endif
 			if (child->mii_phy != BE_PHY_EXTERNAL ||
 			    child->mii_inst > 0) {
 				aprint_error_dev(&sc->sc_dev, "cannot accommodate MII device %s"
 				       " at phy %d, instance %d\n",
-				       device_xname(&child->mii_dev),
+				       device_xname(child->mii_dev),
 				       child->mii_phy, child->mii_inst);
 			} else {
 				sc->sc_phys[instance] = child->mii_phy;

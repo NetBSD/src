@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.33 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.33.2.1 2008/05/18 12:34:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.33 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.33.2.1 2008/05/18 12:34:20 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -91,8 +91,11 @@ struct re_pci_softc {
 	pcitag_t sc_pcitag;
 };
 
-static int	re_pci_match(struct device *, struct cfdata *, void *);
-static void	re_pci_attach(struct device *, struct device *, void *);
+static int	re_pci_match(device_t, cfdata_t, void *);
+static void	re_pci_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(re_pci, sizeof(struct re_pci_softc),
+    re_pci_match, re_pci_attach, NULL, NULL);
 
 /*
  * Various supported device vendors/types and their names.
@@ -130,18 +133,15 @@ static const struct rtk_type re_devs[] = {
 
 #define RE_LINKSYS_EG1032_SUBID	0x00241737
 
-CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_match, re_pci_attach,
-	      NULL, NULL);
-
 /*
  * Probe for a RealTek 8139C+/8169/8110 chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
  */
 static int
-re_pci_match(struct device *parent, struct cfdata *match, void *aux)
+re_pci_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const struct rtk_type	*t;
-	struct pci_attach_args	*pa = aux;
+	const struct rtk_type *t;
+	struct pci_attach_args *pa = aux;
 	pcireg_t subid;
 
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
@@ -173,23 +173,24 @@ re_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-re_pci_attach(struct device *parent, struct device *self, void *aux)
+re_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct re_pci_softc	*psc = (void *)self;
-	struct rtk_softc	*sc = &psc->sc_rtk;
-	struct pci_attach_args 	*pa = aux;
+	struct re_pci_softc *psc = device_private(self);
+	struct rtk_softc *sc = &psc->sc_rtk;
+	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	const struct rtk_type	*t;
-	uint32_t		hwrev;
-	int			error = 0;
-	pcireg_t		memtype;
-	bool			ioh_valid, memh_valid;
-	pcireg_t		command;
-	bus_space_tag_t		iot, memt;
-	bus_space_handle_t	ioh, memh;
-	bus_size_t		iosize, memsize, bsize;
+	const struct rtk_type *t;
+	uint32_t hwrev;
+	int error = 0;
+	pcireg_t command, memtype;
+	bool ioh_valid, memh_valid;
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
+	bus_size_t iosize, memsize, bsize;
+
+	sc->sc_dev = self;
 
 	/*
 	 * Map control/status registers.
@@ -221,7 +222,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		sc->rtk_bhandle = memh;
 		bsize = memsize;
 	} else {
-		aprint_error_dev(&sc->sc_dev, "can't map registers\n");
+		aprint_error(": can't map registers\n");
 		return;
 	}
 
@@ -236,15 +237,15 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		t++;
 	}
 
+	aprint_normal(": %s (rev. 0x%02x)\n",
+	    t->rtk_name, PCI_REVISION(pa->pa_class));
+
 	if (t->rtk_basetype == RTK_8139CPLUS)
 		sc->sc_quirk |= RTKQ_8139CPLUS;
 
 	if (t->rtk_basetype == RTK_8168 ||
 	    t->rtk_basetype == RTK_8101E)
 		sc->sc_quirk |= RTKQ_PCIE;
-
-	aprint_normal(": %s (rev. 0x%02x)\n",
-	    t->rtk_name, PCI_REVISION(pa->pa_class));
 
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -257,19 +258,19 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc);
 	if (psc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	re_attach(sc);
 
@@ -281,7 +282,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (hwrev == RTK_HWREV_8169) {
 		error = re_diag(sc);
 		if (error) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(self,
 			    "attach aborted due to hardware diag failure\n");
 
 			re_detach(sc);

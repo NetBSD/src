@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.83 2008/01/19 13:11:17 chris Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.83.8.1 2008/05/18 12:32:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.83 2008/01/19 13:11:17 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.83.8.1 2008/05/18 12:32:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -131,7 +131,6 @@ int max_processes = 64;			/* Default number */
 
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
 pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
@@ -153,9 +152,11 @@ extern int pmap_debug_level;
 
 #define	KERNEL_PT_VMEM		0	/* Page table for mapping video memory */
 #define	KERNEL_PT_SYS		1	/* Page table for mapping proc0 zero page */
-#define	KERNEL_PT_KERNEL	2	/* Page table for mapping kernel */
-#define	KERNEL_PT_IO		3	/* Page table for mapping IO */
-#define	KERNEL_PT_VMDATA	4	/* Page tables for mapping kernel VM */
+#define	KERNEL_PT_IO		2	/* Page table for mapping IO */
+#define	KERNEL_PT_KERNEL	3	/* Page table for mapping kernel */
+#define	KERNEL_PT_KERNEL_NUM	4
+#define KERNEL_PT_VMDATA	(KERNEL_PT_KERNEL+KERNEL_PT_KERNEL_NUM)
+				        /* Page tables for mapping kernel VM */
 #define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
@@ -296,7 +297,6 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	u_int kerneldatasize, symbolsize;
 	u_int l1pagetable;
 	vaddr_t freemempos;
-	pv_addr_t kernel_l1pt;
 	vsize_t pt_size;
 	int loop, i;
 #if NKSYMS || defined(DDB) || defined(LKM)
@@ -413,8 +413,8 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 * so was can get at it. The kernel will occupy the start of it.
 	 * After the kernel/args we allocate some of the fixed page tables
 	 * we need to get the system going.
-	 * We allocate one page directory and 8 page tables and store the
-	 * physical addresses in the kernel_pt_table array.	
+	 * We allocate one page directory and NUM_KERNEL_PTS page tables
+	 * and store the physical addresses in the kernel_pt_table array.	
 	 * Must remember that neither the page L1 or L2 page tables are the
 	 * same size as a page !
 	 *
@@ -425,9 +425,10 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	 * The start address will be page aligned.
 	 * We allocate the kernel page directory on the first free 16KB
 	 * boundary we find.
-	 * We allocate the kernel page tables on the first 1KB boundary we find.
-	 * We allocate 9 PT's. This means that in the process we
-	 * KNOW that we will encounter at least 1 16KB boundary.
+	 * We allocate the kernel page tables on the first 1KB boundary we 
+	 * find.  We allocate at least 9 PT's (12 currently).  This means
+	 * that in the process we KNOW that we will encounter at least one
+	 * 16KB boundary.
 	 *
 	 * Eventually if the top end of the memory gets used for process L1
 	 * page tables the kernel L1 page table may be moved up there.
@@ -523,18 +524,19 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	/* Map the L2 pages tables in the L1 page table */
 	pmap_link_l2pt(l1pagetable, 0x00000000,
 	    &kernel_pt_table[KERNEL_PT_SYS]);
-	pmap_link_l2pt(l1pagetable, KERNEL_BASE,
-	    &kernel_pt_table[KERNEL_PT_KERNEL]);
-	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
+#define SAIPIO_BASE		0xd0000000		/* XXX XXX */
+	pmap_link_l2pt(l1pagetable, SAIPIO_BASE,
+	    &kernel_pt_table[KERNEL_PT_IO]);
+	for (loop = 0; loop < KERNEL_PT_KERNEL_NUM; loop++)
+		pmap_link_l2pt(l1pagetable, KERNEL_BASE + loop * 0x00400000,
+		    &kernel_pt_table[KERNEL_PT_KERNEL + loop]);
+	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; loop++)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
 	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
-#define SAIPIO_BASE		0xd0000000		/* XXX XXX */
-	pmap_link_l2pt(l1pagetable, SAIPIO_BASE,
-	    &kernel_pt_table[KERNEL_PT_IO]);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
@@ -690,8 +692,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 #ifdef BOOT_DUMP
 	dumppages((char *)kernel_l1pt.pv_va, 16);

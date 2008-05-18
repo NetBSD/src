@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.h,v 1.2 2008/04/15 22:24:37 dyoung Exp $	*/
+/*	$NetBSD: af_iso.h,v 1.2.2.1 2008/05/18 12:30:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,9 +37,11 @@
 /* XXX */
 extern struct iso_ifreq	   iso_ridreq;
 extern struct iso_aliasreq iso_addreq;
+extern struct pinteger parse_nsellength, parse_snpaoffset;
+extern struct pkw iso;
 
-void	setsnpaoffset(const char *, int);
-void	setnsellength(const char *, int);
+int	setsnpaoffset(prop_dictionary_t, prop_dictionary_t);
+int	setnsellength(prop_dictionary_t, prop_dictionary_t);
 
-void	iso_status(int);
-void	iso_getaddr(const char *, int);
+void	iso_status(prop_dictionary_t, prop_dictionary_t, bool);
+void	iso_getaddr(const struct paddr_prefix *, int);

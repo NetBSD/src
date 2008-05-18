@@ -1,11 +1,14 @@
-/*	$NetBSD: if_gre.h,v 1.35 2008/02/20 17:05:53 matt Exp $ */
+/*	$NetBSD: if_gre.h,v 1.35.8.1 2008/05/18 12:35:27 yamt Exp $ */
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
- * All rights reserved
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Heiko W.Rupp <hwr@pilhuhn.de>
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by David Young <dyoung@NetBSD.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,13 +18,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -34,6 +30,9 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * This material is based upon work partially supported by NSF
+ * under Contract No. NSF CNS-0626584.
  */
 
 #ifndef _NET_IF_GRE_H_
@@ -48,12 +47,12 @@
 
 #ifdef _KERNEL
 struct gre_soparm {
+	struct socket		*sp_so;
 	struct sockaddr_storage sp_src;	/* source of gre packets */
 	struct sockaddr_storage sp_dst;	/* destination of gre packets */
 	int		sp_type;	/* encapsulating socket type */
 	int		sp_proto;	/* encapsulating protocol */
-	int		sp_fd;
-	int		sp_bysock;	/* encapsulation configured by passing
+	bool		sp_bysock;	/* encapsulation configured by passing
 					 * socket, not by SIOCSLIFPHYADDR
 					 */
 };
@@ -77,18 +76,26 @@ struct gre_bufq {
 
 MALLOC_DECLARE(M_GRE_BUFQ);
 
+enum gre_msg {
+	  GRE_M_NONE = 0
+	, GRE_M_SETFP
+	, GRE_M_DELFP
+	, GRE_M_STOP
+	, GRE_M_OK
+	, GRE_M_ERR
+};
+
 struct gre_softc {
 	struct ifnet		sc_if;
 	kmutex_t		sc_mtx;
 	kcondvar_t		sc_condvar;
+	kcondvar_t		sc_fp_condvar;
 	struct gre_bufq		sc_snd;
 	struct gre_soparm	sc_soparm;
-	struct lwp		*sc_lwp;
 	volatile enum gre_state	sc_state;
 	volatile int		sc_waiters;
-	volatile int		sc_upcalls;
+	volatile int		sc_fp_waiters;
 	void			*sc_si;
-	struct socket		*sc_so;
 
 	struct evcnt		sc_recv_ev;
 	struct evcnt		sc_send_ev;
@@ -98,6 +105,9 @@ struct gre_softc {
 	struct evcnt		sc_pullup_ev;
 	struct evcnt		sc_unsupp_ev;
 	struct evcnt		sc_oflow_ev;
+	file_t	* volatile	sc_fp;
+	volatile enum gre_msg	sc_msg;
+	int			sc_fd;
 };
 
 struct gre_h {

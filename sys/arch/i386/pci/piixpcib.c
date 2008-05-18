@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.13 2008/04/04 22:48:58 cegger Exp $ */
+/* $NetBSD: piixpcib.c,v 1.13.2.1 2008/05/18 12:32:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -43,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.13 2008/04/04 22:48:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.13.2.1 2008/05/18 12:32:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.13 2008/04/04 22:48:58 cegger Exp $")
 #define		PIIX4_PIRQRC	0x60
 
 struct piixpcib_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t	sc_pcitag;
@@ -81,8 +74,8 @@ struct piixpcib_softc {
 	uint8_t		sc_elcr[2];
 };
 
-static int piixpcibmatch(struct device *, struct cfdata *, void *);
-static void piixpcibattach(struct device *, struct device *, void *);
+static int piixpcibmatch(device_t, cfdata_t, void *);
+static void piixpcibattach(device_t, device_t, void *);
 
 static bool piixpcib_suspend(device_t PMF_FN_PROTO);
 static bool piixpcib_resume(device_t PMF_FN_PROTO);
@@ -94,21 +87,18 @@ static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 struct piixpcib_softc *speedstep_cookie;	/* XXX */
 
 /* Defined in arch/i386/pci/pcib.c. */
-extern void pcibattach(struct device *, struct device *, void *);
+extern void pcibattach(device_t, device_t, void *);
 
-CFATTACH_DECL(piixpcib, sizeof(struct piixpcib_softc),
+CFATTACH_DECL_NEW(piixpcib, sizeof(struct piixpcib_softc),
     piixpcibmatch, piixpcibattach, NULL, NULL);
 
 /*
  * Autoconf callbacks.
  */
 static int
-piixpcibmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+piixpcibmatch(device_t parent, cfdata_t match, void *aux)
 {
-	struct pci_attach_args *pa;
-
-	pa = (struct pci_attach_args *)aux;
+	struct pci_attach_args *pa = aux;
 
 	/* We are ISA bridge, of course */
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE ||
@@ -130,14 +120,12 @@ piixpcibmatch(struct device *parent, struct cfdata *match,
 }
 
 static void
-piixpcibattach(struct device *parent, struct device *self, void *aux)
+piixpcibattach(device_t parent, device_t self, void *aux)
 {
-	struct pci_attach_args *pa;
-	struct piixpcib_softc *sc;
+	struct pci_attach_args *pa = aux;
+	struct piixpcib_softc *sc = device_private(self);
 
-	pa = (struct pci_attach_args *)aux;
-	sc = (struct piixpcib_softc *)self;
-
+	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
@@ -150,14 +138,12 @@ piixpcibattach(struct device *parent, struct device *self, void *aux)
 	/* Map edge/level control registers */
 	if (bus_space_map(sc->sc_iot, PIIX_REG_ELCR, PIIX_REG_ELCR_SIZE, 0,
 	    &sc->sc_ioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't map edge/level control registers\n");
+		aprint_error_dev(self, "can't map edge/level control registers\n");
 		return;
 	}
 
 	if (!pmf_device_register(self, piixpcib_suspend, piixpcib_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	return;
 }
 
 static bool
@@ -258,7 +244,7 @@ piixpcib_getset_state(struct piixpcib_softc *sc, int *state, int function)
 #ifdef DIAGNOSTIC
 	if (function != PIIXPCIB_GETSTATE &&
 	    function != PIIXPCIB_SETSTATE) {
-		aprint_error_dev(&sc->sc_dev, "GSI called with invalid function %d\n",
+		aprint_error_dev(sc->sc_dev, "GSI called with invalid function %d\n",
 		    function);
 		return EINVAL;
 	}
@@ -349,7 +335,7 @@ speedstep_configure(struct piixpcib_softc *sc,
 		sc->sc_smi_cmd = smicmd;
 		sc->sc_smi_data = smidata;
 		if (cmd == 0x80) {
-			aprint_debug_dev(&sc->sc_dev, "GSIC returned cmd 0x80, should be 0x82\n");
+			aprint_debug_dev(sc->sc_dev, "GSIC returned cmd 0x80, should be 0x82\n");
 			cmd = 0x82;
 		}
 		sc->sc_command = (sig & 0xffffff00) | (cmd & 0xff);
@@ -363,7 +349,7 @@ speedstep_configure(struct piixpcib_softc *sc,
 	}
 
 	if (piixpcib_set_ownership(sc) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to claim ownership from the BIOS\n");
+		aprint_error_dev(sc->sc_dev, "unable to claim ownership from the BIOS\n");
 		return;		/* If we can't claim ownership from the BIOS, bail */
 	}
 
@@ -383,14 +369,11 @@ speedstep_configure(struct piixpcib_softc *sc,
 	/* XXX save the sc for IO tag/handle */
 	speedstep_cookie = sc;
 
-	aprint_verbose_dev(&sc->sc_dev, "SpeedStep SMI enabled\n");
-
+	aprint_verbose_dev(sc->sc_dev, "SpeedStep SMI enabled\n");
 	return;
 
 err:
 	aprint_normal("%s: sysctl_createv failed (rv = %d)\n", __func__, rv);
-
-	return;
 }
 
 /*

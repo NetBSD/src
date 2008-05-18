@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.122 2008/01/14 04:19:09 dyoung Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.122.8.1 2008/05/18 12:35:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,13 +45,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -98,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.122 2008/01/14 04:19:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.122.8.1 2008/05/18 12:35:28 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -166,12 +159,12 @@ in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
 
 	CIRCLEQ_INIT(&table->inpt_queue);
-	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, M_PCB,
-	    M_WAITOK, &table->inpt_porthash);
-	table->inpt_bindhashtbl = hashinit(bindhashsize, HASH_LIST, M_PCB,
-	    M_WAITOK, &table->inpt_bindhash);
-	table->inpt_connecthashtbl = hashinit(connecthashsize, HASH_LIST,
-	    M_PCB, M_WAITOK, &table->inpt_connecthash);
+	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, true,
+	    &table->inpt_porthash);
+	table->inpt_bindhashtbl = hashinit(bindhashsize, HASH_LIST, true,
+	    &table->inpt_bindhash);
+	table->inpt_connecthashtbl = hashinit(connecthashsize, HASH_LIST, true,
+	    &table->inpt_connecthash);
 	table->inpt_lastlow = IPPORT_RESERVEDMAX;
 	table->inpt_lastport = (u_int16_t)anonportmax;
 }
@@ -494,7 +487,9 @@ in_pcbdetach(void *v)
 	ipsec4_delete_pcbpolicy(inp);
 #endif /*IPSEC*/
 	so->so_pcb = 0;
+	/* sofree drop's the socket's lock */
 	sofree(so);
+	mutex_enter(softnet_lock);
 	if (inp->inp_options)
 		(void)m_free(inp->inp_options);
 	rtcache_free(&inp->inp_route);

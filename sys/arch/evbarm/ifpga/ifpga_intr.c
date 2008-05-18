@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.c,v 1.7 2008/01/06 01:37:57 matt Exp $	*/
+/*	$NetBSD: ifpga_intr.c,v 1.7.8.1 2008/05/18 12:31:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -62,9 +62,6 @@ struct intrq intrq[NIRQ];
 /* Interrupts to mask at each level. */
 int ifpga_imask[NIPL];
 
-/* Current interrupt priority level. */
-volatile int current_spl_level;  
-
 /* Interrupts pending. */
 volatile int ifpga_ipending;
 
@@ -73,32 +70,6 @@ volatile uint32_t intr_enabled;
 
 /* Mask if interrupts steered to FIQs. */
 uint32_t intr_steer;
-
-#ifdef __HAVE_FAST_SOFTINTS
-/*
- * Map a software interrupt queue index (to the unused bits in the
- * ICU registers -- XXX will need to revisit this if those bits are
- * ever used in future steppings).
- */
-static const uint32_t si_to_irqbit[] = {
-	[SI_SOFTCLOCK]	= IFPGA_INTR_bit31,
-	[SI_SOFTBIO]	= IFPGA_INTR_bit30,
-	[SI_SOFTNET]	= IFPGA_INTR_bit29,
-	[SI_SOFTSERIAL]	= IFPGA_INTR_bit28,
-};
-
-#define	SI_TO_IRQBIT(si)	(si_to_irqbit[(si)])
-
-/*
- * Map a software interrupt queue to an interrupt priority level.
- */
-static const int si_to_ipl[] = {
-	[SI_SOFTCLOCK] =	IPL_SOFTCLOCK,
-	[SI_SOFTBIO] =		IPL_SOFTBIO,
-	[SI_SOFTNET] =		IPL_SOFTNET,
-	[SI_SOFTSERIAL] =	IPL_SOFTSERIAL,
-};
-#endif
 
 /*
  * Interrupt bit names.
@@ -198,25 +169,12 @@ ifpga_intr_calculate_masks(void)
 
 	KASSERT(ifpga_imask[IPL_NONE] == 0);
 
-#ifdef __HAVE_FAST_SOFTINTS
-	/*
-	 * Initialize the soft interrupt masks to block themselves.
-	 */
-	ifpga_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
-	ifpga_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTBIO);
-	ifpga_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
-	ifpga_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-#endif
-
 	/*
 	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	ifpga_imask[IPL_SOFTBIO] |= ifpga_imask[IPL_SOFTCLOCK];
-	ifpga_imask[IPL_SOFTNET] |= ifpga_imask[IPL_SOFTBIO];
-	ifpga_imask[IPL_SOFTSERIAL] |= ifpga_imask[IPL_SOFTNET];
-	ifpga_imask[IPL_VM] |= ifpga_imask[IPL_SOFTSERIAL];
+	ifpga_imask[IPL_VM] |= 0;
 	ifpga_imask[IPL_SCHED] |= ifpga_imask[IPL_VM];
 	ifpga_imask[IPL_HIGH] |= ifpga_imask[IPL_SCHED];
 
@@ -235,41 +193,6 @@ ifpga_intr_calculate_masks(void)
 		iq->iq_mask = irqs;
 	}
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-void
-ifpga_do_pending(void)
-{
-	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
-	int new, oldirqstate;
-
-	if (__cpu_simple_lock_try(&processing) == 0)
-		return;
-
-	new = current_spl_level;
-
-	oldirqstate = disable_interrupts(I32_bit);
-
-#define	DO_SOFTINT(si)							\
-	if ((ifpga_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
-		ifpga_ipending &= ~SI_TO_IRQBIT(si);			\
-		current_spl_level |= ifpga_imask[si_to_ipl[(si)]];	\
-		restore_interrupts(oldirqstate);			\
-		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts(I32_bit);		\
-		current_spl_level = new;				\
-	}
-
-	DO_SOFTINT(SI_SOFTSERIAL);
-	DO_SOFTINT(SI_SOFTNET);
-	DO_SOFTINT(SI_SOFTBIO);
-	DO_SOFTINT(SI_SOFTCLOCK);
-
-	__cpu_simple_unlock(&processing);
-
-	restore_interrupts(oldirqstate);
-}
-#endif
 
 void
 splx(int new)
@@ -291,22 +214,6 @@ _splraise(int ipl)
 
 	return (ifpga_splraise(ipl));
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-void
-_setsoftintr(int si)
-{
-	int oldirqstate;
-
-	oldirqstate = disable_interrupts(I32_bit);
-	ifpga_ipending |= SI_TO_IRQBIT(si);
-	restore_interrupts(oldirqstate);
-
-	/* Process unmasked pending soft interrupts. */
-	if ((ifpga_ipending & INT_SWMASK) & ~current_spl_level)
-		ifpga_do_pending();
-}
-#endif
 
 /*
  * ifpga_intr_init:
@@ -397,12 +304,9 @@ ifpga_intr_dispatch(struct clockframe *frame)
 	struct intrq *iq;
 	struct intrhand *ih;
 	int oldirqstate, pcpl, irq, ibit, hwpend;
-	struct cpu_info *ci;
+	struct cpu_info * const ci = curcpu();
 
-	ci = curcpu();
-	ci->ci_idepth++;
-
-	pcpl = current_spl_level;
+	pcpl = ci->ci_cpl;
 
 	hwpend = ifpga_iintsrc_read();
 
@@ -437,14 +341,14 @@ ifpga_intr_dispatch(struct clockframe *frame)
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
-		current_spl_level |= iq->iq_mask;
+		ci->ci_cpl |= iq->iq_mask;
 		oldirqstate = enable_interrupts(I32_bit);
 		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
 		     ih = TAILQ_NEXT(ih, ih_list)) {
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 		}
 		restore_interrupts(oldirqstate);
-		current_spl_level = pcpl;
+		ci->ci_cpl = pcpl;
 
 		hwpend |= (ifpga_ipending & IFPGA_INTR_HWMASK) & ~pcpl;
 
@@ -453,14 +357,7 @@ ifpga_intr_dispatch(struct clockframe *frame)
 		ifpga_set_intrmask();
 	}
 
-	ci->ci_idepth--;
-
 #ifdef __HAVE_FAST_SOFTINTS
-	/* Check for pendings soft intrs. */
-	if ((ifpga_ipending & INT_SWMASK) & ~current_spl_level) {
-		oldirqstate = enable_interrupts(I32_bit);
-		ifpga_do_pending();
-		restore_interrupts(oldirqstate);
-	}
+	cpu_dosoftints();
 #endif
 }

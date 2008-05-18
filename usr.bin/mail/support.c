@@ -1,4 +1,4 @@
-/*	$NetBSD: support.c,v 1.20 2007/10/27 15:14:51 christos Exp $	*/
+/*	$NetBSD: support.c,v 1.20.6.1 2008/05/18 12:36:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: support.c,v 1.20 2007/10/27 15:14:51 christos Exp $");
+__RCSID("$NetBSD: support.c,v 1.20.6.1 2008/05/18 12:36:06 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -174,7 +174,7 @@ argcount(char **argv)
 
 /*
  * Check whether the passed line is a header line of
- * the desired breed.  Return the field body, or 0.
+ * the desired breed.  Return the field body, or NULL.
  */
 static char*
 ishfield(const char linebuf[], char *colon, const char field[])
@@ -184,7 +184,7 @@ ishfield(const char linebuf[], char *colon, const char field[])
 	*cp = 0;
 	if (strcasecmp(linebuf, field) != 0) {
 		*cp = ':';
-		return 0;
+		return NULL;
 	}
 	*cp = ':';
 	for (cp++; is_WSP(*cp); cp++)
@@ -281,8 +281,9 @@ hfield(const char field[], const struct message *mp)
 #ifdef MIME_SUPPORT
 		if ((headerfield = ishfield(linebuf, colon, field)) != NULL) {
 			char linebuf2[LINESIZE];
-			if (decode && colon)
-				headerfield = mime_decode_hfield(linebuf2, sizeof(linebuf2), headerfield);
+			if (decode)
+				headerfield = mime_decode_hfield(linebuf2,
+				    sizeof(linebuf2), linebuf, headerfield);
 			oldhfield = save2str(headerfield, oldhfield);
 		}
 #else

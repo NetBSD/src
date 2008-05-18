@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.11 2008/02/24 12:57:39 matt Exp $     */
+/*	$NetBSD: syscall.c,v 1.11.2.1 2008/05/18 12:33:00 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11 2008/02/24 12:57:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.11.2.1 2008/05/18 12:33:00 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -118,13 +118,7 @@ syscall(struct trapframe *frame)
 	if (__predict_true(!p->p_trace_enabled)
 	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
 	    || (error = trace_enter(frame->code, args, callp->sy_narg)) == 0) {
-		if (__predict_true(callp->sy_flags & SYCALL_MPSAFE)) {
-			error = (*callp->sy_call)(curlwp, args, rval);
-		} else {
-			KERNEL_LOCK(1, l);
-			error = (*callp->sy_call)(curlwp, args, rval);
-			KERNEL_UNLOCK_LAST(l);
-		}
+		error = (*callp->sy_call)(curlwp, args, rval);
 	}
 
 	KASSERT(exptr == l->l_addr->u_pcb.framep);
@@ -165,7 +159,6 @@ child_return(void *arg)
 {
         struct lwp *l = arg;
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_addr->u_pcb.framep, 0);
 	ktrsysret(SYS_fork, 0, 0);
 }

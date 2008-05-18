@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2004/05/23 14:05:39 tron Exp $
+#	$NetBSD: Makefile,v 1.10.24.1 2008/05/18 12:36:19 yamt Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB=	common
 SRCS=	common.c common_vars.c displayq.c fatal.c rmjob.c startdaemon.c

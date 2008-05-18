@@ -13,12 +13,59 @@ of salt: the focus of a specific release may change completely depending
 on how things develop.
 
 
-Plans for 0.5
+Plans for 0.6
+=============
+
+* Add a binary atf-check tool that replaces atf-sh's atf_check function.
+  I suspect this will speed things up considerably, and will also expose
+  this extremely useful functionality to C/C++ test programs.
+
+* Add support for ATF_REQUIRE, making ATF_CHECK non-fatal.  See Boost.Test
+  for details on this idea.  Most useful for unit tests.
+
+* Add a module to atf-c to manage dynamic memory.  Should provide a "mem
+  chunk" object that can only be managed through functions (i.e. not
+  directly) so that access to buffers can be safely controlled.  Dealing
+  with strdup and similar functions, for example, might be complex.
+
+  See these old revisions for a start, but these did not work correctly
+  because the use of (void **) casts brought aliasing problems:
+
+  78eeacf3b9284493e5e96b7866fc1d163a13bc02
+  8e200683a2b70eadca728c2e0347d4790777b3fc
+  872393ed0177cbcc30ffacede228eb3986c42ab7
+
+* Optimize timeout handling in atf-sh: there are too many processes
+  involved to run each test case, and this hurts a lot in OS X, for
+  example.  One possibility is to integrate the timeout handling in
+  atf-exec and then kill the auxiliary code in atf.footer.subr.
+
+
+Plans for 0.7
 =============
 
 * Add a tool to collect multiple outputs of atf-run (from different
   machines) and generate a single (XML-only?) log with everything.
   Must allow easy conversion to HTML for online publishing.
+
+* Allow grouping of test programs in tiers in an Atffile.  This is to
+  permit the user specify "dependencies" between test programs: e.g. do
+  not run a specific test program if its dependencies have failed, because
+  it will certainly fail also.
+
+* Provide a kernel-level unit testing API (for NetBSD only, at the moment).
+  This should come in the form of an atf.ko module that provides functions
+  to define and register test cases, functions for results reporting and
+  an interface (a trivial file system?) that transports the
+  application/X-atf-tcs output to user-space, provides information to
+  user-space about the available test cases (a list) and allows user-space
+  to launch the execution of test cases.
+
+* Add expected failures and unexpected passes as test case results?  The
+  former are used to indicate known failures at specific points and thus
+  not raise false positives when working on some unrelated feature.  The
+  latter are used to detect changes that fixed expected failures.  See
+  Monotone's test suite for an example.
 
 
 Plans for pre-1.0
@@ -26,12 +73,12 @@ Plans for pre-1.0
 
 * Fix all occurrences of XXX, TODO and FIXME.
 
+* Think of a way to properly add tests for (almost?) all error paths.
+  Most of them are probably broken already.
+
 * Improve error reporting: aside from clarifying error messages, this also
   implies adding more error cases to give them more semantic meaning at the
   source code level..
-
-* Add a C-only binding so that we don't needlessly propagate the requirement
-  of a C++ compiler to third-party test programs.
 
 * Add an atf_check-like function to the C++ binding to allow easy testing
   of executables.

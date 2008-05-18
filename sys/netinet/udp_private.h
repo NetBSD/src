@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_private.h,v 1.1 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: udp_private.h,v 1.1.2.1 2008/05/18 12:35:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,19 +33,11 @@
 #define _NETINET_UDP_PRIVATE_H_
 
 #ifdef _KERNEL
-#include <sys/percpu.h>
+#include <net/net_stats.h>
 
 extern	percpu_t *udpstat_percpu;
 
-/*
- * Most UDP statistics are exceptional conditions, so this is good enough.
- */
-#define	UDP_STATINC(x)							\
-do {									\
-	uint64_t *_udps_ = percpu_getref(udpstat_percpu);		\
-	_udps_[x]++;							\
-	percpu_putref(udpstat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	UDP_STATINC(x)		_NET_STATINC(udpstat_percpu, x)
 
 #ifdef __NO_STRICT_ALIGNMENT
 #define	UDP_HDR_ALIGNED_P(uh)	1

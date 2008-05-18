@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.10 2005/12/11 12:22:42 christos Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.10.72.1 2008/05/18 12:34:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.10 2005/12/11 12:22:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.10.72.1 2008/05/18 12:34:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,7 +63,7 @@ do {									\
  *	Synchronize the MII.
  */
 static void
-mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
+mii_bitbang_sync(device_t sc, mii_bitbang_ops_t ops)
 {
 	int i;
 	u_int32_t v;
@@ -90,7 +83,7 @@ mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
  *	Send a series of bits to the MII.
  */
 static void
-mii_bitbang_sendbits(struct device *sc, mii_bitbang_ops_t ops, uint32_t data,
+mii_bitbang_sendbits(device_t sc, mii_bitbang_ops_t ops, uint32_t data,
     int nbits)
 {
 	int i;
@@ -116,7 +109,7 @@ mii_bitbang_sendbits(struct device *sc, mii_bitbang_ops_t ops, uint32_t data,
  *	Read a PHY register by bit-bang'ing the MII.
  */
 int
-mii_bitbang_readreg(struct device *sc, mii_bitbang_ops_t ops, int phy, int reg)
+mii_bitbang_readreg(device_t sc, mii_bitbang_ops_t ops, int phy, int reg)
 {
 	int val = 0, err = 0, i;
 
@@ -163,8 +156,8 @@ mii_bitbang_readreg(struct device *sc, mii_bitbang_ops_t ops, int phy, int reg)
  *	Write a PHY register by bit-bang'ing the MII.
  */
 void
-mii_bitbang_writereg(struct device *sc, mii_bitbang_ops_t ops, int phy,
-int reg, int val)
+mii_bitbang_writereg(device_t sc, mii_bitbang_ops_t ops, int phy,
+	int reg, int val)
 {
 
 	mii_bitbang_sync(sc, ops);

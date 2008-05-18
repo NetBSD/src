@@ -1,4 +1,4 @@
-#	$NetBSD: des.inc,v 1.11 2007/12/09 22:44:15 adrianp Exp $
+#	$NetBSD: des.inc,v 1.11.6.1 2008/05/18 12:30:21 yamt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -7,12 +7,13 @@
 
 .PATH:	${OPENSSLSRC}/crypto/des
 
-
-DES_SRCS = cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
+.if !defined(DES_SRCS)
+DES_SRCS = des_enc.c fcrypt_b.c
+.endif
+DES_SRCS += cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c \
 	fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c \
 	qud_cksm.c rand_key.c rpc_enc.c  set_key.c  \
-	des_enc.c fcrypt_b.c \
 	xcbc_enc.c \
 	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c \
 	read2pwd.c

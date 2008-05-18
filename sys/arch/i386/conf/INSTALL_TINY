@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.118 2008/03/27 21:13:29 gdt Exp $
+#	$NetBSD: INSTALL_TINY,v 1.118.2.1 2008/05/18 12:32:09 yamt Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -25,8 +25,6 @@ maxusers	2		# estimated number of users
 # CPU-related options.
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
-# insert delay no-ops in interrupts; recommended on very old machines
-options 	PIC_DELAY
 
 # This option allows you to force a serial console at the specified
 # I/O address.
@@ -190,8 +188,6 @@ options 	PCDISPLAY_SOFTCURSOR
 # Device configuration
 #
 
-mainbus0 at root
-cpu0	at mainbus0
 #apm0	at mainbus0			# Advanced power management
 
 

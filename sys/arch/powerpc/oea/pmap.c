@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: pmap.c,v 1.58.2.1 2008/05/18 12:32:38 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58.2.1 2008/05/18 12:32:38 yamt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3468,7 +3461,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 
 	pool_init(&pmap_upvo_pool, sizeof(struct pvo_entry),
 	    sizeof(struct pvo_entry), 0, 0, "pmap_upvopl",
-	    &pmap_pool_uallocator, IPL_NONE);
+	    &pmap_pool_uallocator, IPL_VM);
 
 	pool_setlowat(&pmap_upvo_pool, 252);
 

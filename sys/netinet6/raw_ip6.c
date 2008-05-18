@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.96 2008/04/15 05:23:33 thorpej Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.96.2.1 2008/05/18 12:35:35 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.96 2008/04/15 05:23:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.96.2.1 2008/05/18 12:35:35 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -77,11 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.96 2008/04/15 05:23:33 thorpej Exp $")
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
-#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_types.h>
+#include <net/net_stats.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -99,11 +99,13 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.96 2008/04/15 05:23:33 thorpej Exp $")
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
+#include <netinet6/ipsec_private.h>
 #endif /* IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/ipsec_var.h> /* XXX ipsecstat namespace */
+#include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
 #include <netipsec/ipsec6.h>
 #endif
 
@@ -122,12 +124,7 @@ struct	inpcbtable raw6cbtable;
 
 static percpu_t *rip6stat_percpu;
 
-#define	RIP6_STATINC(x)							\
-do {									\
-	uint64_t *_rip6s_ = percpu_getref(rip6stat_percpu);		\
-	_rip6s_[x]++;							\
-	percpu_putref(rip6stat_percpu);					\
-} while (/*CONSTCOND*/0)
+#define	RIP6_STATINC(x)		_NET_STATINC(rip6stat_percpu, x)
 
 /*
  * Initialize raw connection block queue.
@@ -211,7 +208,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			 * Check AH/ESP integrity.
 			 */
 			if (ipsec6_in_reject(m, last)) {
-				ipsec6stat.in_polvio++;
+				IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 				/* do not inject data into pcb */
 			} else
 #endif /* IPSEC */
@@ -246,7 +243,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	 */
 	if (last && ipsec6_in_reject(m, last)) {
 		m_freem(m);
-		ipsec6stat.in_polvio++;
+		IPSEC6_STATINC(IPSEC_STAT_IN_INVAL);
 		IP6_STATDEC(IP6_STAT_DELIVERED);
 		/* do not inject data into pcb */
 	} else
@@ -260,7 +257,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		 * NULL
 		 */
 		if (!last)
-			ipsec6stat.in_polvio++;
+			IPSEC6_STATINC(IPSEC_STAT_IN_POLVIO);
 			IP6_STATDEC(IP6_STAT_DELIVERED);
 			/* do not inject data into pcb */
 		} else
@@ -296,7 +293,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 	return IPPROTO_DONE;
 }
 
-void
+void *
 rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct ip6_hdr *ip6;
@@ -308,10 +305,10 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
-		return;
+		return NULL;;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;;
 	if (PRC_IS_REDIRECT(cmd))
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
@@ -319,7 +316,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	else if (cmd == PRC_MSGSIZE)
 		; /* special code is present, see below */
 	else if (inet6ctlerrmap[cmd] == 0)
-		return;
+		return NULL;;
 
 	/* if the parameter is from icmp6, decode it. */
 	if (d != NULL) {
@@ -388,6 +385,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 
 	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
 	    (const struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
+	return NULL;
 }
 
 /*
@@ -630,14 +628,17 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 		    (struct ifnet *)control, l);
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		in6_pcbpurgeif0(&raw6cbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&raw6cbtable, (struct ifnet *)control);
+		mutex_exit(softnet_lock);
 		return 0;
 	}
 
 	switch (req) {
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (in6p != NULL)
 			panic("rip6_attach");
 		if (!priv) {
@@ -869,36 +870,11 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 	return error;
 }
 
-static void
-rip6stat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
-{
-	uint64_t *rip6sc = v1;
-	uint64_t *rip6s = v2;
-	u_int i;
-
-	for (i = 0; i < RIP6_NSTATS; i++)
-		rip6s[i] += rip6sc[i];
-}
-
-static void
-rip6stat_convert_to_user(uint64_t *rip6s)
-{
-
-	memset(rip6s, 0, sizeof(uint64_t) * RIP6_NSTATS);
-	percpu_foreach(rip6stat_percpu, rip6stat_convert_to_user_cb, rip6s);
-}
-
 static int
 sysctl_net_inet6_raw6_stats(SYSCTLFN_ARGS)
 {
-	struct sysctlnode node;
-	uint64_t rip6s[RIP6_NSTATS];
 
-	rip6stat_convert_to_user(rip6s);
-	node = *rnode;
-	node.sysctl_data = rip6s;
-	node.sysctl_size = sizeof(rip6s);
-	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	return (NETSTAT_SYSCTL(rip6stat_percpu, RIP6_NSTATS));
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")

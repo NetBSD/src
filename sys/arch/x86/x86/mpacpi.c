@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.57 2008/04/16 16:06:52 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.57.2.1 2008/05/18 12:33:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.57 2008/04/16 16:06:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.57.2.1 2008/05/18 12:33:04 yamt Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -1139,8 +1139,8 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 	irq = acpi_pci_link_route_interrupt(mip->linkdev, mip->sourceindex,
 	    &line, &pol, &trig);
 	if (mp_verbose)
-		printf("linkdev %s returned ACPI global int %d\n",
-		    acpi_pci_link_name(mip->linkdev), line);
+		printf("linkdev %s returned ACPI global irq %d, line %d\n",
+		    acpi_pci_link_name(mip->linkdev), irq, line);
 	if (irq == X86_PCI_INTERRUPT_LINE_NO_CONNECTION)
 		return ENOENT;
 	if (irq != line)

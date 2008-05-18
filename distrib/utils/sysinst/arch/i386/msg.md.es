@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.9 2007/12/25 01:03:32 ad Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.9.8.1 2008/05/18 12:29:41 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -165,4 +165,3 @@ message updatembr
 Record a la ultima versión del código de arranque de NetBSD?}
 
 message set_kernel_1  {Núcleo (GENERIC)}
-message set_kernel_2  {Núcleo (GENERIC.NOACPI)}

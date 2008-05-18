@@ -109,12 +109,19 @@
  *
  */
 
+#define _POSIX_C_SOURCE 2	/* On VMS, you need to define this to get
+				   the declaration of fileno().  The value
+				   2 is to make sure no function defined
+				   in POSIX-2 is left undefined. */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef OPENSSL_SYSNAME_WIN32
+#include <strings.h>
+#endif
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <ctype.h>
+#include <errno.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -133,6 +140,11 @@
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN
+
+#ifdef _WIN32
+static int WIN32_rename(const char *from, const char *to);
+#define rename(from,to) WIN32_rename((from),(to))
+#endif
 
 typedef struct {
 	const char *name;
@@ -162,18 +174,23 @@ int args_from_file(char *file, int *argc, char **argv[])
 	static char *buf=NULL;
 	static char **arg=NULL;
 	char *p;
-	struct stat stbuf;
-
-	if (stat(file,&stbuf) < 0) return(0);
 
 	fp=fopen(file,"r");
 	if (fp == NULL)
 		return(0);
 
+	if (fseek(fp,0,SEEK_END)==0)
+		len=ftell(fp), rewind(fp);
+	else	len=-1;
+	if (len<=0)
+		{
+		fclose(fp);
+		return(0);
+		}
+
 	*argc=0;
 	*argv=NULL;
 
-	len=(unsigned int)stbuf.st_size;
 	if (buf != NULL) OPENSSL_free(buf);
 	buf=(char *)OPENSSL_malloc(len+1);
 	if (buf == NULL) return(0);
@@ -239,11 +256,18 @@ int str2fmt(char *s)
 	else if ((*s == 'T') || (*s == 't'))
 		return(FORMAT_TEXT);
 	else if ((*s == 'P') || (*s == 'p'))
-		return(FORMAT_PEM);
-	else if ((*s == 'N') || (*s == 'n'))
-		return(FORMAT_NETSCAPE);
-	else if ((*s == 'S') || (*s == 's'))
-		return(FORMAT_SMIME);
+ 		{
+ 		if (s[1] == 'V' || s[1] == 'v')
+ 			return FORMAT_PVK;
+ 		else
+  			return(FORMAT_PEM);
+ 		}
+  	else if ((*s == 'N') || (*s == 'n'))
+  		return(FORMAT_NETSCAPE);
+  	else if ((*s == 'S') || (*s == 's'))
+  		return(FORMAT_SMIME);
+ 	else if ((*s == 'M') || (*s == 'm'))
+ 		return(FORMAT_MSBLOB);
 	else if ((*s == '1')
 		|| (strcmp(s,"PKCS12") == 0) || (strcmp(s,"pkcs12") == 0)
 		|| (strcmp(s,"P12") == 0) || (strcmp(s,"p12") == 0))
@@ -635,6 +659,15 @@ static char *app_get_pass(BIO *err, char *arg, int keepbio)
 				BIO_printf(err, "Can't open file %s\n", arg + 5);
 				return NULL;
 			}
+#if !defined(_WIN32)
+		/*
+		 * Under _WIN32, which covers even Win64 and CE, file
+		 * descriptors referenced by BIO_s_fd are not inherited
+		 * by child process and therefore below is not an option.
+		 * It could have been an option if bss_fd.c was operating
+		 * on real Windows descriptors, such as those obtained
+		 * with CreateFile.
+		 */
 		} else if(!strncmp(arg, "fd:", 3)) {
 			BIO *btmp;
 			i = atoi(arg + 3);
@@ -646,6 +679,7 @@ static char *app_get_pass(BIO *err, char *arg, int keepbio)
 			/* Can't do BIO_gets on an fd BIO so add a buffering BIO */
 			btmp = BIO_new(BIO_f_buffer());
 			pwdbio = BIO_push(btmp, pwdbio);
+#endif
 		} else if(!strcmp(arg, "stdin")) {
 			pwdbio = BIO_new_fp(stdin, BIO_NOCLOSE);
 			if(!pwdbio) {
@@ -745,8 +779,6 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip)
 	{
-	ASN1_HEADER *ah=NULL;
-	BUF_MEM *buf=NULL;
 	X509 *x=NULL;
 	BIO *cert;
 
@@ -758,7 +790,9 @@ X509 *load_cert(BIO *err, const char *file, int format,
 
 	if (file == NULL)
 		{
+#ifdef _IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+#endif
 		BIO_set_fp(cert,stdin,BIO_NOCLOSE);
 		}
 	else
@@ -776,46 +810,21 @@ X509 *load_cert(BIO *err, const char *file, int format,
 		x=d2i_X509_bio(cert,NULL);
 	else if (format == FORMAT_NETSCAPE)
 		{
-		const unsigned char *p,*op;
-		int size=0,i;
-
-		/* We sort of have to do it this way because it is sort of nice
-		 * to read the header first and check it, then
-		 * try to read the certificate */
-		buf=BUF_MEM_new();
-		for (;;)
-			{
-			if ((buf == NULL) || (!BUF_MEM_grow(buf,size+1024*10)))
+		NETSCAPE_X509 *nx;
+		nx=ASN1_item_d2i_bio(ASN1_ITEM_rptr(NETSCAPE_X509),cert,NULL);
+		if (nx == NULL)
 				goto end;
-			i=BIO_read(cert,&(buf->data[size]),1024*10);
-			size+=i;
-			if (i == 0) break;
-			if (i < 0)
-				{
-				perror("reading certificate");
-				goto end;
-				}
-			}
-		p=(unsigned char *)buf->data;
-		op=p;
 
-		/* First load the header */
-		if ((ah=d2i_ASN1_HEADER(NULL,&p,(long)size)) == NULL)
-			goto end;
-		if ((ah->header == NULL) || (ah->header->data == NULL) ||
-			(strncmp(NETSCAPE_CERT_HDR,(char *)ah->header->data,
-			ah->header->length) != 0))
+		if ((strncmp(NETSCAPE_CERT_HDR,(char *)nx->header->data,
+			nx->header->length) != 0))
 			{
+			NETSCAPE_X509_free(nx);
 			BIO_printf(err,"Error reading header on certificate\n");
 			goto end;
 			}
-		/* header is ok, so now read the object */
-		p=op;
-		ah->meth=X509_asn1_meth();
-		if ((ah=d2i_ASN1_HEADER(&ah,&p,(long)size)) == NULL)
-			goto end;
-		x=(X509 *)ah->data;
-		ah->data=NULL;
+		x=nx->cert;
+		nx->cert = NULL;
+		NETSCAPE_X509_free(nx);
 		}
 	else if (format == FORMAT_PEM)
 		x=PEM_read_bio_X509_AUX(cert,NULL,
@@ -837,9 +846,7 @@ end:
 		BIO_printf(err,"unable to load certificate\n");
 		ERR_print_errors(err);
 		}
-	if (ah != NULL) ASN1_HEADER_free(ah);
 	if (cert != NULL) BIO_free(cert);
-	if (buf != NULL) BUF_MEM_free(buf);
 	return(x);
 	}
 
@@ -877,7 +884,9 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		}
 	if (file == NULL && maybe_stdin)
 		{
+#ifdef _IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+#endif
 		BIO_set_fp(key,stdin,BIO_NOCLOSE);
 		}
 	else
@@ -908,6 +917,11 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 				&pkey, NULL, NULL))
 			goto end;
 		}
+	else if (format == FORMAT_MSBLOB)
+		pkey = b2i_PrivateKey_bio(key);
+	else if (format == FORMAT_PVK)
+		pkey = b2i_PVK_bio(key, (pem_password_cb *)password_callback,
+								&cb_data);
 	else
 		{
 		BIO_printf(err,"bad input format specified for key file\n");
@@ -954,7 +968,9 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		}
 	if (file == NULL && maybe_stdin)
 		{
+#ifdef _IONBF
 		setvbuf(stdin, NULL, _IONBF, 0);
+#endif
 		BIO_set_fp(key,stdin,BIO_NOCLOSE);
 		}
 	else
@@ -969,6 +985,36 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		{
 		pkey=d2i_PUBKEY_bio(key, NULL);
 		}
+	else if (format == FORMAT_ASN1RSA)
+		{
+		RSA *rsa;
+		rsa = d2i_RSAPublicKey_bio(key, NULL);
+		if (rsa)
+			{
+			pkey = EVP_PKEY_new();
+			if (pkey)
+				EVP_PKEY_set1_RSA(pkey, rsa);
+			RSA_free(rsa);
+			}
+		else
+			pkey = NULL;
+		}
+	else if (format == FORMAT_PEMRSA)
+		{
+		RSA *rsa;
+		rsa = PEM_read_bio_RSAPublicKey(key, NULL, 
+			(pem_password_cb *)password_callback, &cb_data);
+		if (rsa)
+			{
+			pkey = EVP_PKEY_new();
+			if (pkey)
+				EVP_PKEY_set1_RSA(pkey, rsa);
+			RSA_free(rsa);
+			}
+		else
+			pkey = NULL;
+		}
+
 	else if (format == FORMAT_PEM)
 		{
 		pkey=PEM_read_bio_PUBKEY(key,NULL,
@@ -978,6 +1024,8 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
 		pkey = load_netscape_key(err, key, file, key_descrip, format);
 #endif
+	else if (format == FORMAT_MSBLOB)
+		pkey = b2i_PublicKey_bio(key);
 	else
 		{
 		BIO_printf(err,"bad input format specified for key file\n");
@@ -1392,6 +1440,10 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 
 int load_config(BIO *err, CONF *cnf)
 	{
+	static int load_config_called = 0;
+	if (load_config_called)
+		return 1;
+	load_config_called = 1;
 	if (!cnf)
 		cnf = config;
 	if (!cnf)
@@ -1584,7 +1636,6 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	{
 	char buf[5][BSIZE];
 	int i,j;
-	struct stat sb;
 
 	i = strlen(serialfile) + strlen(old_suffix);
 	j = strlen(serialfile) + strlen(new_suffix);
@@ -1609,30 +1660,21 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s",
 		serialfile, old_suffix);
 #endif
-	if (stat(serialfile,&sb) < 0)
-		{
-		if (errno != ENOENT 
+#ifdef RL_DEBUG
+	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
+		serialfile, buf[1]);
+#endif
+	if (rename(serialfile,buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
 			&& errno != ENOTDIR
 #endif
-		   )
-			goto err;
-		}
-	else
-		{
-#ifdef RL_DEBUG
-		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-			serialfile, buf[1]);
-#endif
-		if (rename(serialfile,buf[1]) < 0)
-			{
+	   )		{
 			BIO_printf(bio_err,
 				"unable to rename %s to %s\n",
 				serialfile, buf[1]);
 			perror("reason");
 			goto err;
 			}
-		}
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		buf[0],serialfile);
@@ -1699,10 +1741,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
 		goto err;
 		}
 	if ((tmpdb = TXT_DB_read(in,DB_NUMBER)) == NULL)
-		{
-		if (tmpdb != NULL) TXT_DB_free(tmpdb);
 		goto err;
-		}
 
 #ifndef OPENSSL_SYS_VMS
 	BIO_snprintf(buf[0], sizeof buf[0], "%s.attr", dbfile);
@@ -1855,7 +1894,6 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 	{
 	char buf[5][BSIZE];
 	int i,j;
-	struct stat sb;
 
 	i = strlen(dbfile) + strlen(old_suffix);
 	j = strlen(dbfile) + strlen(new_suffix);
@@ -1899,30 +1937,21 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 	j = BIO_snprintf(buf[3], sizeof buf[3], "%s-attr-%s",
 		dbfile, old_suffix);
 #endif
-	if (stat(dbfile,&sb) < 0)
-		{
-		if (errno != ENOENT 
-#ifdef ENOTDIR
-			&& errno != ENOTDIR
-#endif
-		   )
-			goto err;
-		}
-	else
-		{
 #ifdef RL_DEBUG
-		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-			dbfile, buf[1]);
+	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
+		dbfile, buf[1]);
 #endif
-		if (rename(dbfile,buf[1]) < 0)
-			{
+	if (rename(dbfile,buf[1]) < 0 && errno != ENOENT
+#ifdef ENOTDIR
+		&& errno != ENOTDIR
+#endif
+	   )		{
 			BIO_printf(bio_err,
 				"unable to rename %s to %s\n",
 				dbfile, buf[1]);
 			perror("reason");
 			goto err;
 			}
-		}
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		buf[0],dbfile);
@@ -1936,23 +1965,15 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 		rename(buf[1],dbfile);
 		goto err;
 		}
-	if (stat(buf[4],&sb) < 0)
-		{
-		if (errno != ENOENT 
-#ifdef ENOTDIR
-			&& errno != ENOTDIR
-#endif
-		   )
-			goto err;
-		}
-	else
-		{
 #ifdef RL_DEBUG
-		BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
-			buf[4],buf[3]);
+	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
+		buf[4],buf[3]);
 #endif
-		if (rename(buf[4],buf[3]) < 0)
-			{
+	if (rename(buf[4],buf[3]) < 0 && errno != ENOENT
+#ifdef ENOTDIR
+		&& errno != ENOTDIR
+#endif
+	   )		{
 			BIO_printf(bio_err,
 				"unable to rename %s to %s\n",
 				buf[4], buf[3]);
@@ -1961,7 +1982,6 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 			rename(buf[1],dbfile);
 			goto err;
 			}
-		}
 #ifdef RL_DEBUG
 	BIO_printf(bio_err, "DEBUG: renaming \"%s\" to \"%s\"\n",
 		buf[2],buf[4]);
@@ -2010,7 +2030,7 @@ int parse_yesno(const char *str, int def)
 		case 'y': /* yes */
 		case 'Y': /* YES */
 		case '1': /* 1 */
-			ret = 0;
+			ret = 1;
 			break;
 		default:
 			ret = def;
@@ -2156,45 +2176,6 @@ error:
 	return NULL;
 }
 
-/* This code MUST COME AFTER anything that uses rename() */
-#ifdef OPENSSL_SYS_WIN32
-int WIN32_rename(const char *from, const char *to)
-	{
-#ifndef OPENSSL_SYS_WINCE
-	/* Windows rename gives an error if 'to' exists, so delete it
-	 * first and ignore file not found errror
-	 */
-	if((remove(to) != 0) && (errno != ENOENT))
-		return -1;
-#undef rename
-	return rename(from, to);
-#else
-	/* convert strings to UNICODE */
-	{
-	BOOL result = FALSE;
-	WCHAR* wfrom;
-	WCHAR* wto;
-	int i;
-	wfrom = malloc((strlen(from)+1)*2);
-	wto = malloc((strlen(to)+1)*2);
-	if (wfrom != NULL && wto != NULL)
-		{
-		for (i=0; i<(int)strlen(from)+1; i++)
-			wfrom[i] = (short)from[i];
-		for (i=0; i<(int)strlen(to)+1; i++)
-			wto[i] = (short)to[i];
-		result = MoveFile(wfrom, wto);
-		}
-	if (wfrom != NULL)
-		free(wfrom);
-	if (wto != NULL)
-		free(wto);
-	return result;
-	}
-#endif
-	}
-#endif
-
 int args_verify(char ***pargs, int *pargc,
 			int *badarg, BIO *err, X509_VERIFY_PARAM **pm)
 	{
@@ -2293,6 +2274,61 @@ int args_verify(char ***pargs, int *pargc,
 
 	}
 
+/* Read whole contents of a BIO into an allocated memory buffer and
+ * return it.
+ */
+
+int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
+	{
+	BIO *mem;
+	int len, ret;
+	unsigned char tbuf[1024];
+	mem = BIO_new(BIO_s_mem());
+	if (!mem)
+		return -1;
+	for(;;)
+		{
+		if ((maxlen != -1) && maxlen < 1024)
+			len = maxlen;
+		else
+			len = 1024;
+		len = BIO_read(in, tbuf, len);
+		if (len <= 0)
+			break;
+		if (BIO_write(mem, tbuf, len) != len)
+			{
+			BIO_free(mem);
+			return -1;
+			}
+		maxlen -= len;
+
+		if (maxlen == 0)
+			break;
+		}
+	ret = BIO_get_mem_data(mem, (char **)out);
+	BIO_set_flags(mem, BIO_FLAGS_MEM_RDONLY);
+	BIO_free(mem);
+	return ret;
+	}
+
+int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value)
+	{
+	int rv;
+	char *stmp, *vtmp = NULL;
+	stmp = BUF_strdup(value);
+	if (!stmp)
+		return -1;
+	vtmp = strchr(stmp, ':');
+	if (vtmp)
+		{
+		*vtmp = 0;
+		vtmp++;
+		}
+	rv = EVP_PKEY_CTX_ctrl_str(ctx, stmp, vtmp);
+	OPENSSL_free(stmp);
+	return rv;
+	}
+
 static void nodes_print(BIO *out, const char *name,
 	STACK_OF(X509_POLICY_NODE) *nodes)
 	{
@@ -2333,3 +2369,329 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx)
 	if (free_out)
 		BIO_free(out);
 	}
+
+/*
+ * Platform-specific sections
+ */
+#if defined(_WIN32)
+# ifdef fileno
+#  undef fileno
+#  define fileno(a) (int)_fileno(a)
+# endif
+
+# include <windows.h>
+# include <tchar.h>
+
+static int WIN32_rename(const char *from, const char *to)
+	{
+	TCHAR  *tfrom=NULL,*tto;
+	DWORD	err;
+	int	ret=0;
+
+	if (sizeof(TCHAR) == 1)
+		{
+		tfrom = (TCHAR *)from;
+		tto   = (TCHAR *)to;
+		}
+	else	/* UNICODE path */
+		{
+		size_t i,flen=strlen(from)+1,tlen=strlen(to)+1;
+		tfrom = (TCHAR *)malloc(sizeof(TCHAR)*(flen+tlen));
+		if (tfrom==NULL) goto err;
+		tto=tfrom+flen;
+#if !defined(_WIN32_WCE) || _WIN32_WCE>=101
+		if (!MultiByteToWideChar(CP_ACP,0,from,flen,(WCHAR *)tfrom,flen))
+#endif
+			for (i=0;i<flen;i++)	tfrom[i]=(TCHAR)from[i];
+#if !defined(_WIN32_WCE) || _WIN32_WCE>=101
+		if (!MultiByteToWideChar(CP_ACP,0,to,  tlen,(WCHAR *)tto,  tlen))
+#endif
+			for (i=0;i<tlen;i++)	tto[i]  =(TCHAR)to[i];
+		}
+
+	if (MoveFile(tfrom,tto))	goto ok;
+	err=GetLastError();
+	if (err==ERROR_ALREADY_EXISTS || err==ERROR_FILE_EXISTS)
+		{
+		if (DeleteFile(tto) && MoveFile(tfrom,tto))
+			goto ok;
+		err=GetLastError();
+		}
+	if (err==ERROR_FILE_NOT_FOUND || err==ERROR_PATH_NOT_FOUND)
+		errno = ENOENT;
+	else if (err==ERROR_ACCESS_DENIED)
+		errno = EACCES;
+	else
+		errno = EINVAL;	/* we could map more codes... */
+err:
+	ret=-1;
+ok:
+	if (tfrom!=NULL && tfrom!=(TCHAR *)from)	free(tfrom);
+	return ret;
+	}
+#endif
+
+/* app_tminterval section */
+#if defined(_WIN32)
+double app_tminterval(int stop,int usertime)
+	{
+	FILETIME		now;
+	double			ret=0;
+	static ULARGE_INTEGER	tmstart;
+	static int		warning=1;
+#ifdef _WIN32_WINNT
+	static HANDLE		proc=NULL;
+
+	if (proc==NULL)
+		{
+		if (GetVersion() < 0x80000000)
+			proc = OpenProcess(PROCESS_QUERY_INFORMATION,FALSE,
+						GetCurrentProcessId());
+		if (proc==NULL) proc = (HANDLE)-1;
+		}
+
+	if (usertime && proc!=(HANDLE)-1)
+		{
+		FILETIME junk;
+		GetProcessTimes(proc,&junk,&junk,&junk,&now);
+		}
+	else
+#endif
+		{
+		SYSTEMTIME systime;
+
+		if (usertime && warning)
+			{
+			BIO_printf(bio_err,"To get meaningful results, run "
+					   "this program on idle system.\n");
+			warning=0;
+			}
+		GetSystemTime(&systime);
+		SystemTimeToFileTime(&systime,&now);
+		}
+
+	if (stop==TM_START)
+		{
+		tmstart.u.LowPart  = now.dwLowDateTime;
+		tmstart.u.HighPart = now.dwHighDateTime;
+		}
+	else	{
+		ULARGE_INTEGER tmstop;
+
+		tmstop.u.LowPart   = now.dwLowDateTime;
+		tmstop.u.HighPart  = now.dwHighDateTime;
+
+		ret = (__int64)(tmstop.QuadPart - tmstart.QuadPart)*1e-7;
+		}
+
+	return (ret);
+	}
+
+#elif defined(OPENSSL_SYS_NETWARE)
+#include <time.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	double		ret=0;
+	static clock_t	tmstart;
+	static int	warning=1;
+
+	if (usertime && warning)
+		{
+		BIO_printf(bio_err,"To get meaningful results, run "
+				   "this program on idle system.\n");
+		warning=0;
+		}
+
+	if (stop==TM_START)	tmstart = clock();
+	else			ret     = (clock()-tmstart)/(double)CLOCKS_PER_SEC;
+
+	return (ret);
+	}
+
+#elif defined(OPENSSL_SYSTEM_VXWORKS)
+#include <time.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	double ret=0;
+#ifdef CLOCK_REALTIME
+	static struct timespec	tmstart;
+	struct timespec		now;
+#else
+	static unsigned long	tmstart;
+	unsigned long		now;
+#endif
+	static int warning=1;
+
+	if (usertime && warning)
+		{
+		BIO_printf(bio_err,"To get meaningful results, run "
+				   "this program on idle system.\n");
+		warning=0;
+		}
+
+#ifdef CLOCK_REALTIME
+	clock_gettime(CLOCK_REALTIME,&now);
+	if (stop==TM_START)	tmstart = now;
+	else	ret = ( (now.tv_sec+now.tv_nsec*1e-9)
+			- (tmstart.tv_sec+tmstart.tv_nsec*1e-9) );
+#else
+	now = tickGet();
+	if (stop==TM_START)	tmstart = now;
+	else			ret = (now - tmstart)/(double)sysClkRateGet();
+#endif
+	return (ret);
+	}
+
+#elif defined(OPENSSL_SYSTEM_VMS)
+#include <time.h>
+#include <times.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	static clock_t	tmstart;
+	double		ret = 0;
+	clock_t		now;
+#ifdef __TMS
+	struct tms	rus;
+
+	now = times(&rus);
+	if (usertime)	now = rus.tms_utime;
+#else
+	if (usertime)
+		now = clock(); /* sum of user and kernel times */
+	else	{
+		struct timeval tv;
+		gettimeofday(&tv,NULL);
+		now = (clock_t)(
+			(unsigned long long)tv.tv_sec*CLK_TCK +
+			(unsigned long long)tv.tv_usec*(1000000/CLK_TCK)
+			);
+		}
+#endif
+	if (stop==TM_START)	tmstart = now;
+	else			ret = (now - tmstart)/(double)(CLK_TCK);
+
+	return (ret);
+	}
+
+#elif defined(_SC_CLK_TCK)	/* by means of unistd.h */
+#include <sys/times.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	double		ret = 0;
+	struct tms	rus;
+	clock_t		now = times(&rus);
+	static clock_t	tmstart;
+
+	if (usertime)		now = rus.tms_utime;
+
+	if (stop==TM_START)	tmstart = now;
+	else
+		{
+		long int tck = sysconf(_SC_CLK_TCK);
+		ret = (now - tmstart)/(double)tck;
+		}
+
+	return (ret);
+	}
+
+#else
+#include <sys/time.h>
+#include <sys/resource.h>
+
+double app_tminterval(int stop,int usertime)
+	{
+	double		ret = 0;
+	struct rusage	rus;
+	struct timeval	now;
+	static struct timeval tmstart;
+
+	if (usertime)		getrusage(RUSAGE_SELF,&rus), now = rus.ru_utime;
+	else			gettimeofday(&now,NULL);
+
+	if (stop==TM_START)	tmstart = now;
+	else			ret = ( (now.tv_sec+now.tv_usec*1e-6)
+					- (tmstart.tv_sec+tmstart.tv_usec*1e-6) );
+
+	return ret;
+	}
+#endif
+
+/* app_isdir section */
+#ifdef _WIN32
+int app_isdir(const char *name)
+	{
+	HANDLE		hList;
+	WIN32_FIND_DATA	FileData;
+#if defined(UNICODE) || defined(_UNICODE)
+	size_t i, len_0 = strlen(name)+1;
+
+	if (len_0 > sizeof(FileData.cFileName)/sizeof(FileData.cFileName[0]))
+		return -1;
+
+#if !defined(_WIN32_WCE) || _WIN32_WCE>=101
+	if (!MultiByteToWideChar(CP_ACP,0,name,len_0,FileData.cFileName,len_0))
+#endif
+		for (i=0;i<len_0;i++)
+			FileData.cFileName[i] = (WCHAR)name[i];
+
+	hList = FindFirstFile(FileData.cFileName,&FileData);
+#else
+	hList = FindFirstFile(name,&FileData);
+#endif
+	if (hList == INVALID_HANDLE_VALUE)	return -1;
+	FindClose(hList);
+	return ((FileData.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)!=0);
+	}
+#else
+#include <sys/stat.h>
+#ifndef S_ISDIR
+# if defined(_S_IFMT) && defined(_S_IFDIR)
+#  define S_ISDIR(a)   (((a) & _S_IFMT) == _S_IFDIR)
+# else 
+#  define S_ISDIR(a)   (((a) & S_IFMT) == S_IFDIR)
+# endif 
+#endif 
+
+int app_isdir(const char *name)
+	{
+#if defined(S_ISDIR)
+	struct stat st;
+
+	if (stat(name,&st)==0)	return S_ISDIR(st.st_mode);
+	else			return -1;
+#else
+	return -1;
+#endif
+	}
+#endif
+
+/* raw_read|write section */
+#if defined(_WIN32) && defined(STD_INPUT_HANDLE)
+int raw_read_stdin(void *buf,int siz)
+	{
+	DWORD n;
+	if (ReadFile(GetStdHandle(STD_INPUT_HANDLE),buf,siz,&n,NULL))
+		return (n);
+	else	return (-1);
+	}
+#else
+int raw_read_stdin(void *buf,int siz)
+	{	return read(fileno(stdin),buf,siz);	}
+#endif
+
+#if defined(_WIN32) && defined(STD_OUTPUT_HANDLE)
+int raw_write_stdout(const void *buf,int siz)
+	{
+	DWORD n;
+	if (WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),buf,siz,&n,NULL))
+		return (n);
+	else	return (-1);
+	}
+#else
+int raw_write_stdout(const void *buf,int siz)
+	{	return write(fileno(stdout),buf,siz);	}
+#endif

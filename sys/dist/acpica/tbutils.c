@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbutils   - table utilities
- *              $Revision: 1.4 $
+ *              $Revision: 1.4.2.1 $
  *
  *****************************************************************************/
 
@@ -180,14 +180,14 @@ AcpiTbPrintTableHeader (
     {
         /* FACS only has signature and length fields of common table header */
 
-        ACPI_INFO ((AE_INFO, "%4.4s @ 0x%p/0x%04X",
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "%4.4s @ 0x%p/0x%04X",
             Header->Signature, ACPI_CAST_PTR (UINT64, Address), Header->Length));
     }
     else if (!ACPI_STRNCMP (Header->Signature, ACPI_SIG_RSDP, 4))
     {
         /* RSDP has no common fields */
 
-        ACPI_INFO ((AE_INFO, "RSDP @ 0x%p/0x%04X (v%3.3d %6.6s)",
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO, "RSDP @ 0x%p/0x%04X (v%3.3d %6.6s)",
             ACPI_CAST_PTR (void, Address),
             (ACPI_CAST_PTR (ACPI_TABLE_RSDP, Header)->Revision > 0) ?
                 ACPI_CAST_PTR (ACPI_TABLE_RSDP, Header)->Length : 20,
@@ -198,7 +198,7 @@ AcpiTbPrintTableHeader (
     {
         /* Standard ACPI table with full common header */
 
-        ACPI_INFO ((AE_INFO,
+        ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
             "%4.4s @ 0x%p/0x%04X (v%3.3d %6.6s %8.8s 0x%08X %4.4s 0x%08X)",
             Header->Signature, ACPI_CAST_PTR (void, Address),
             Header->Length, Header->Revision, Header->OemId,

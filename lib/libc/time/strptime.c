@@ -1,7 +1,7 @@
-/*	$NetBSD: strptime.c,v 1.25 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.25.18.1 2008/05/18 12:30:21 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code was contributed to The NetBSD Foundation by Klaus Klein.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.25 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.25.18.1 2008/05/18 12:30:21 yamt Exp $");
 #endif
 
 #include "namespace.h"
@@ -63,6 +56,7 @@ __weak_alias(strptime,_strptime)
 #define ALT_O			0x02
 #define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return NULL; }
 
+static const char gmt[4] = { "GMT" };
 
 static const u_char *conv_num(const unsigned char *, int *, uint, uint);
 static const u_char *find_string(const u_char *, int *, const char * const *,
@@ -126,6 +120,11 @@ literal:
 
 		case 'D':	/* The date as "%m/%d/%y". */
 			new_fmt = "%m/%d/%y";
+			LEGAL_ALT(0);
+			goto recurse;
+
+		case 'F':	/* The date as "%Y-%m-%d". */
+			new_fmt = "%Y-%m-%d";
 			LEGAL_ALT(0);
 			goto recurse;
 
@@ -281,6 +280,36 @@ literal:
 					i = i + 1900 - TM_YEAR_BASE;
 			}
 			tm->tm_year = i;
+			continue;
+
+		case 'Z':
+			tzset();
+			if (strncmp((const char *)bp, gmt, 3) == 0) {
+				tm->tm_isdst = 0;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = gmt;
+#endif
+				bp += 3;
+			} else {
+				const unsigned char *ep;
+
+				ep = find_string(bp, &i,
+					       	 (const char * const *)tzname,
+					       	  NULL, 2);
+				if (ep != NULL) {
+					tm->tm_isdst = i;
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -(timezone);
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = tzname[i];
+#endif
+				}
+				bp = ep;
+			}
 			continue;
 
 		/*

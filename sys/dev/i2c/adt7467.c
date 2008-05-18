@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.11 2008/04/06 20:25:59 cegger Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.11.2.1 2008/05/18 12:33:38 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -11,8 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,7 +25,7 @@
  */
 
 /* 
- * a driver fot the ADT7467 environmental controller found in the iBook G4 
+ * a driver for the ADT7467 environmental controller found in the iBook G4 
  * and probably other Apple machines 
  */
 
@@ -37,7 +35,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.11 2008/04/06 20:25:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.11.2.1 2008/05/18 12:33:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.11 2008/04/06 20:25:59 cegger Exp $");
 #include <dev/i2c/adt7467var.h>
 
 
-static void adt7467c_attach(struct device *, struct device *, void *);
-static int adt7467c_match(struct device *, struct cfdata *, void *);
+static void adt7467c_attach(device_t, device_t, void *);
+static int adt7467c_match(device_t, cfdata_t, void *);
 
 static uint8_t adt7467c_readreg(struct adt7467c_softc *, uint8_t);
 static void adt7467c_writereg(struct adt7467c_softc *, uint8_t, uint8_t);
@@ -61,33 +59,30 @@ int temp2muk(uint8_t);
 int reg2rpm(uint16_t);
 void adt7467c_refresh(struct sysmon_envsys *, envsys_data_t *);
 
-CFATTACH_DECL(adt7467c, sizeof(struct adt7467c_softc),
+CFATTACH_DECL_NEW(adt7467c, sizeof(struct adt7467c_softc),
     adt7467c_match, adt7467c_attach, NULL, NULL);
 
 int
-adt7467c_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+adt7467c_match(device_t parent, cfdata_t cf, void *aux)
 {
 	/* no probing if we attach to iic */
 	return 1;
 }
 
 void
-adt7467c_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+adt7467c_attach(device_t parent, device_t self, void *aux)
 {
 	struct adt7467c_softc *sc = device_private(self);
 	struct i2c_attach_args *args = aux;
 
 	sc->parent = parent;
 	sc->address = args->ia_addr;
-	printf(" ADT7467 thermal monitor and fan controller, addr: %02x\n", 
-	    sc->address);
+
+	aprint_normal(" ADT7467 thermal monitor and fan controller, "
+	    "addr: %02x\n", sc->address);
+
 	sc->sc_i2c = (struct i2c_controller *)args->ia_tag;
-	adt7467c_setup(sc);
+	adt7467c_setup(self);
 }
 
 uint8_t adt7467c_readreg(struct adt7467c_softc *sc, uint8_t reg)
@@ -179,8 +174,9 @@ sysctl_adt7467_temp(SYSCTLFN_ARGS)
 }
 
 void
-adt7467c_setup(struct adt7467c_softc *sc)
+adt7467c_setup(device_t self)
 {
+	struct adt7467c_softc *sc = device_private(self);
 	const struct sysctlnode *me=NULL;
 	struct sysctlnode *node=NULL;
 	int i, ret;
@@ -194,7 +190,7 @@ adt7467c_setup(struct adt7467c_softc *sc)
 	    
 	ret = sysctl_createv(NULL, 0, NULL, &me,
 	       CTLFLAG_READWRITE,
-	       CTLTYPE_NODE, device_xname(&sc->sc_dev), NULL,
+	       CTLTYPE_NODE, device_xname(self), NULL,
 	       NULL, 0, NULL, 0,
 	       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 
@@ -238,12 +234,13 @@ adt7467c_setup(struct adt7467c_softc *sc)
 	stuff = adt7467c_readreg(sc, 0x40);
 	adt7467c_writereg(sc, 0x40, stuff);
 
-	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
+	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = adt7467c_refresh;
 
 	if ((error = sysmon_envsys_register(sc->sc_sme)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to register with sysmon (%d)\n", error);
+		aprint_error_dev(self,
+		    "unable to register with sysmon (%d)\n", error);
 		goto out;
 	}
 	

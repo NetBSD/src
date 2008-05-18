@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.19 2008/03/05 12:47:13 njoly Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.19.2.1 2008/05/18 12:35:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.19 2008/03/05 12:47:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.19.2.1 2008/05/18 12:35:10 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -123,20 +123,23 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 
 	if (pid != 0) {
 		/* Find the process */
-		p = p_find(pid, PFIND_UNLOCK_FAIL);
-		if (p == NULL)
+		mutex_enter(proc_lock);
+		p = p_find(pid, PFIND_LOCKED);
+		if (p == NULL) {
+			mutex_exit(proc_lock);
 			return ESRCH;
-		mutex_enter(&p->p_smutex);
-		mutex_exit(&proclist_lock);
+		}
+		mutex_enter(p->p_lock);
+		mutex_exit(proc_lock);
 		/* Disallow modification of system processes */
 		if ((p->p_flag & PK_SYSTEM) != 0) {
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 			return EPERM;
 		}
 	} else {
 		/* Use the calling process */
 		p = curlwp->l_proc;
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 	}
 
 	/* Find the LWP(s) */
@@ -181,7 +184,7 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 
 		lwp_unlock(t);
 	}
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	return (lcnt == 0) ? ESRCH : error;
 }
 
@@ -223,22 +226,20 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 
 	/* Locks the LWP */
 	t = lwp_find2(pid, lid);
-	if (t == NULL) {
-		error = ESRCH;
-		goto out;
-	}
+	if (t == NULL)
+		return ESRCH;
 
 	/* Check the permission */
 	error = kauth_authorize_process(kauth_cred_get(),
 	    KAUTH_PROCESS_SCHEDULER_GETPARAM, t->l_proc, NULL, NULL, NULL);
 	if (error != 0) {
-		lwp_unlock(t);
-		goto out;
+		mutex_exit(t->l_proc->p_lock);
+		return error;
 	}
 
+	lwp_lock(t);
 	lparams.sched_priority = t->l_priority;
 	lpolicy = t->l_class;
-	lwp_unlock(t);
 
 	switch (lpolicy) {
 	case SCHED_OTHER:
@@ -256,7 +257,8 @@ do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
 	if (params != NULL)
 		*params = lparams;
 
- out:
+	lwp_unlock(t);
+	mutex_exit(t->l_proc->p_lock);
 	return error;
 }
 
@@ -330,23 +332,25 @@ sys__sched_setaffinity(struct lwp *l,
 
 	if (SCARG(uap, pid) != 0) {
 		/* Find the process */
-		p = p_find(SCARG(uap, pid), PFIND_UNLOCK_FAIL);
+		mutex_enter(proc_lock);
+		p = p_find(SCARG(uap, pid), PFIND_LOCKED);
 		if (p == NULL) {
+			mutex_exit(proc_lock);
 			error = ESRCH;
 			goto error;
 		}
-		mutex_enter(&p->p_smutex);
-		mutex_exit(&proclist_lock);
+		mutex_enter(p->p_lock);
+		mutex_exit(proc_lock);
 		/* Disallow modification of system processes. */
 		if ((p->p_flag & PK_SYSTEM) != 0) {
-			mutex_exit(&p->p_smutex);
+			mutex_exit(p->p_lock);
 			error = EPERM;
 			goto error;
 		}
 	} else {
 		/* Use the calling process */
 		p = l->l_proc;
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 	}
 
 	/*
@@ -355,7 +359,7 @@ sys__sched_setaffinity(struct lwp *l,
 	error = kauth_authorize_process(l->l_cred,
 	    KAUTH_PROCESS_SCHEDULER_SETAFFINITY, p, NULL, NULL, NULL);
 	if (error != 0) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		goto error;
 	}
 
@@ -379,7 +383,7 @@ sys__sched_setaffinity(struct lwp *l,
 		}
 		lcnt++;
 	}
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	if (lcnt == 0)
 		error = ESRCH;
 error:
@@ -418,13 +422,15 @@ sys__sched_getaffinity(struct lwp *l,
 	/* Check the permission */
 	if (kauth_authorize_process(l->l_cred,
 	    KAUTH_PROCESS_SCHEDULER_GETAFFINITY, t->l_proc, NULL, NULL, NULL)) {
-		lwp_unlock(t);
+		mutex_exit(t->l_proc->p_lock);
 		kmem_free(cpuset, sizeof(cpuset_t));
 		return EPERM;
 	}
+	lwp_lock(t);
 	if (t->l_flag & LW_AFFINITY)
 		memcpy(cpuset, &t->l_affinity, sizeof(cpuset_t));
 	lwp_unlock(t);
+	mutex_exit(t->l_proc->p_lock);
 
 	error = copyout(cpuset, SCARG(uap, cpuset),
 	    min(SCARG(uap, size), sizeof(cpuset_t)));

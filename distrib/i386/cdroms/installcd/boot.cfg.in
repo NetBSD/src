@@ -1,12 +1,15 @@
 banner=Welcome to the NetBSD @@VERSION@@ installation CD
 banner================================================================================
 banner=
-banner=The default ACPI kernel should work on all modern and legacy hardware, however
-banner=if you have problems, please try the kernel without ACPI.
+banner=ACPI should work on all modern and legacy hardware, however if you have 
+banner=problems, please try disabling it.
 banner=
-banner=If you have problems on hardware manufactured after 1998 with the ACPI kernel,
-banner=please report using send-pr including dmesg output.
-menu=Install NetBSD (standard ACPI kernel):boot netbsd
-menu=Install NetBSD (no ACPI):boot nbnoacpi
+banner=If you encounter problems on hardware manufactured after 1998 with ACPI
+banner=enabled, please file a problem report including output from the 'dmesg'
+banner=command.
+menu=Install NetBSD:boot netbsd
+menu=Install NetBSD (no ACPI):boot netbsd -2
+menu=Install NetBSD (no ACPI, no SMP):boot netbsd -12
 menu=Drop to boot prompt:prompt
-timeout=10
+timeout=30
+load=/miniroot.kmod

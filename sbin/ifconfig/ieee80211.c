@@ -1,3 +1,4 @@
+/*	$NetBSD: ieee80211.c,v 1.11.6.1 2008/05/18 12:30:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -24,20 +25,20 @@
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.11 2007/12/16 13:49:21 degroote Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.11.6.1 2008/05/18 12:30:53 yamt Exp $");
 #endif /* not lint */
 
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
+#include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <net/if.h> 
+#include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/route.h>
@@ -45,8 +46,10 @@ __RCSID("$NetBSD: ieee80211.c,v 1.11 2007/12/16 13:49:21 degroote Exp $");
 #include <net80211/ieee80211_ioctl.h>
 #include <net80211/ieee80211_netbsd.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <netdb.h>
 #include <string.h>
 #include <stddef.h>
@@ -57,15 +60,19 @@ __RCSID("$NetBSD: ieee80211.c,v 1.11 2007/12/16 13:49:21 degroote Exp $");
 
 #include "extern.h"
 #include "ieee80211.h"
+#include "parse.h"
+#include "env.h"
+#include "util.h"
 
-static void set80211(int, int, int, u_int8_t *);
+static int set80211(prop_dictionary_t env, uint16_t, int16_t, int16_t,
+    u_int8_t *);
 static u_int ieee80211_mhz2ieee(u_int, u_int);
 static int getmaxrate(const uint8_t [15], u_int8_t);
 static const char * getcaps(int);
 static void printie(const char*, const uint8_t *, size_t, int);
 static int copy_essid(char [], size_t, const u_int8_t *, size_t);
-static void scan_and_wait(void);
-static void list_scan(void);
+static void scan_and_wait(prop_dictionary_t);
+static void list_scan(prop_dictionary_t);
 static int mappsb(u_int , u_int);
 static int mapgsm(u_int , u_int);
 
@@ -89,141 +96,221 @@ static const char * iename(int);
 
 extern int vflag;
 
-static void
-set80211(int type, int val, int len, u_int8_t *data)
-{       
-	struct ieee80211req	ireq;   
-        
-	(void) memset(&ireq, 0, sizeof(ireq));
-	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
+static const struct kwinst ieee80211boolkw[] = {
+	  {.k_word = "hidessid", .k_key = "hidessid", .k_neg = true,
+	   .k_type = KW_T_BOOL, .k_bool = true, .k_negbool = false,
+	   .k_exec = sethidessid}
+	, {.k_word = "apbridge", .k_key = "apbridge", .k_neg = true,
+	   .k_type = KW_T_BOOL, .k_bool = true, .k_negbool = false,
+	   .k_exec = setapbridge}
+	, {.k_word = "powersave", .k_key = "powersave", .k_neg = true,
+	   .k_type = KW_T_BOOL, .k_bool = true, .k_negbool = false,
+	   .k_exec = setifpowersave}
+};
+
+static const struct kwinst listskw[] = {
+	{.k_word = "scan", .k_exec = scan_exec}
+};
+
+static struct pkw lists = PKW_INITIALIZER(&lists, "ieee80211 lists", NULL,
+    "list", listskw, __arraycount(listskw), &command_root.pb_parser);
+
+static const struct kwinst kw80211kw[] = {
+	  {.k_word = "bssid", .k_nextparser = &parse_bssid.ps_parser}
+	, {.k_word = "-bssid", .k_exec = unsetifbssid,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "chan", .k_nextparser = &parse_chan.pi_parser}
+	, {.k_word = "-chan", .k_key = "chan", .k_type = KW_T_NUM,
+	   .k_num = IEEE80211_CHAN_ANY, .k_exec = setifchan,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "frag", .k_nextparser = &parse_frag.pi_parser}
+	, {.k_word = "-frag", .k_key = "frag", .k_type = KW_T_NUM,
+	   .k_num = IEEE80211_FRAG_MAX, .k_exec = setiffrag,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "list", .k_nextparser = &lists.pk_parser}
+	, {.k_word = "nwid", .k_nextparser = &parse_ssid.ps_parser}
+	, {.k_word = "nwkey", .k_nextparser = &parse_nwkey.ps_parser}
+	, {.k_word = "-nwkey", .k_exec = unsetifnwkey,
+	   .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "ssid", .k_nextparser = &parse_ssid.ps_parser}
+	, {.k_word = "powersavesleep",
+	   .k_nextparser = &parse_powersavesleep.pi_parser}
+};
+
+struct pkw kw80211 = PKW_INITIALIZER(&kw80211, "802.11 keywords", NULL, NULL,
+    kw80211kw, __arraycount(kw80211kw), NULL);
+
+struct pkw ieee80211bool = PKW_INITIALIZER(&ieee80211bool, "ieee80211 boolean",
+    NULL, NULL, ieee80211boolkw, __arraycount(ieee80211boolkw),
+    &command_root.pb_parser);
+
+struct pinteger parse_chan = PINTEGER_INITIALIZER1(&parse_chan, "chan",
+    0, UINT16_MAX, 10, setifchan, "chan", &command_root.pb_parser);
+
+struct pinteger parse_frag = PINTEGER_INITIALIZER1(&parse_frag, "frag",
+    IEEE80211_FRAG_MIN, IEEE80211_FRAG_MAX, 10,
+    setiffrag, "frag", &command_root.pb_parser);
+
+struct pstr parse_ssid = PSTR_INITIALIZER(&parse_pass, "ssid", setifssid,
+    "ssid", &command_root.pb_parser);
+
+struct pinteger parse_powersavesleep =
+    PINTEGER_INITIALIZER1(&parse_powersavesleep, "powersavesleep",
+    0, INT_MAX, 10, setifpowersavesleep, "powersavesleep",
+    &command_root.pb_parser);
+
+struct pstr parse_nwkey = PSTR_INITIALIZER(&parse_nwkey, "nwkey", setifnwkey,
+    "nwkey", &command_root.pb_parser);
+
+struct pstr parse_bssid = PSTR_INITIALIZER(&parse_bssid, "bssid", setifbssid,
+    "bssid", &command_root.pb_parser);
+
+static int
+set80211(prop_dictionary_t env, uint16_t type, int16_t val, int16_t len,
+    u_int8_t *data)
+{
+	struct ieee80211req	ireq;
+
+	memset(&ireq, 0, sizeof(ireq));
 	ireq.i_type = type;
 	ireq.i_val = val;
 	ireq.i_len = len;
 	ireq.i_data = data;
-	if (ioctl(s, SIOCS80211, &ireq) < 0)
-		err(1, "SIOCS80211");   
-}       
-
-void
-sethidessid(const char *val, int d)
-{
-	set80211(IEEE80211_IOC_HIDESSID, d, 0, NULL);
+	if (direct_ioctl(env, SIOCS80211, &ireq) == -1) {
+		warn("SIOCS80211");
+		return -1;
+	}
+	return 0;
 }
 
-void                    
-setapbridge(const char *val, int d)
+int
+sethidessid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	set80211(IEEE80211_IOC_APBRIDGE, d, 0, NULL);
+	bool on, rc;
+
+	rc = prop_dictionary_get_bool(env, "hidessid", &on);
+	assert(rc);
+	return set80211(env, IEEE80211_IOC_HIDESSID, on ? 1 : 0, 0, NULL);
+}
+
+int
+setapbridge(prop_dictionary_t env, prop_dictionary_t xenv)
+{
+	bool on, rc;
+
+	rc = prop_dictionary_get_bool(env, "apbridge", &on);
+	assert(rc);
+	return set80211(env, IEEE80211_IOC_APBRIDGE, on ? 1 : 0, 0, NULL);
 }
 
 static enum ieee80211_opmode
-get80211opmode(void)
+get80211opmode(prop_dictionary_t env)
 {
 	struct ifmediareq ifmr;
-                
-	(void) memset(&ifmr, 0, sizeof(ifmr)); 
-	estrlcpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
-	if (ioctl(s, SIOCGIFMEDIA, (caddr_t)&ifmr) >= 0) {
-		if (ifmr.ifm_current & IFM_IEEE80211_ADHOC)
-			return IEEE80211_M_IBSS;        /* XXX ahdemo */
-		if (ifmr.ifm_current & IFM_IEEE80211_HOSTAP)
-			return IEEE80211_M_HOSTAP;
-		if (ifmr.ifm_current & IFM_IEEE80211_MONITOR)
-			return IEEE80211_M_MONITOR;
-	}
 
-	return IEEE80211_M_STA;  
+	memset(&ifmr, 0, sizeof(ifmr));
+	if (direct_ioctl(env, SIOCGIFMEDIA, &ifmr) == -1)
+		;
+	else if (ifmr.ifm_current & IFM_IEEE80211_ADHOC)
+		return IEEE80211_M_IBSS;        /* XXX ahdemo */
+	else if (ifmr.ifm_current & IFM_IEEE80211_HOSTAP)
+		return IEEE80211_M_HOSTAP;
+	else if (ifmr.ifm_current & IFM_IEEE80211_MONITOR)
+		return IEEE80211_M_MONITOR;
+
+	return IEEE80211_M_STA;
 }
 
-void
-setifnwid(const char *val, int d)
+int
+setifssid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_nwid nwid;
-	int len;
+	ssize_t len;
 
-	len = sizeof(nwid.i_nwid);
-	if (get_string(val, NULL, nwid.i_nwid, &len) == NULL)
-		return;
-	nwid.i_len = len;
-	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	ifr.ifr_data = (void *)&nwid;
-	if (ioctl(s, SIOCS80211NWID, &ifr) == -1)
+	memset(&nwid, 0, sizeof(nwid));
+	if ((len = getargdata(env, "ssid", nwid.i_nwid,
+	    sizeof(nwid.i_nwid))) == -1)
+		errx(EXIT_FAILURE, "%s: SSID too long", __func__);
+	nwid.i_len = (uint8_t)len;
+	if (indirect_ioctl(env, SIOCS80211NWID, &nwid) == -1)
 		err(EXIT_FAILURE, "SIOCS80211NWID");
+	return 0;
 }
 
-void
-setifbssid(const char *val, int d)
+int
+unsetifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
 {
+	struct ieee80211_bssid bssid;
+
+	memset(&bssid, 0, sizeof(bssid));
+
+	if (direct_ioctl(env, SIOCS80211BSSID, &bssid) == -1)
+		err(EXIT_FAILURE, "SIOCS80211BSSID");
+	return 0;
+}
+
+int
+setifbssid(prop_dictionary_t env, prop_dictionary_t xenv)
+{
+	char buf[24];
 	struct ieee80211_bssid bssid;
 	struct ether_addr *ea;
 
-	if (d != 0) {
-		/* no BSSID is especially desired */
-		memset(&bssid.i_bssid, 0, sizeof(bssid.i_bssid));
-	} else {
-		ea = ether_aton(val);
-		if (ea == NULL) {
-			errx(EXIT_FAILURE, "malformed BSSID: %s", val);
-			return;
-		}
-		memcpy(&bssid.i_bssid, ea->ether_addr_octet,
-		    sizeof(bssid.i_bssid));
+	if (getargstr(env, "bssid", buf, sizeof(buf)) == -1)
+		errx(EXIT_FAILURE, "%s: BSSID too long", __func__);
+
+	ea = ether_aton(buf);
+	if (ea == NULL) {
+		errx(EXIT_FAILURE, "malformed BSSID: %s", buf);
+		return -1;
 	}
-	estrlcpy(bssid.i_name, name, sizeof(bssid.i_name));
-	if (ioctl(s, SIOCS80211BSSID, &bssid) == -1)
+	memcpy(&bssid.i_bssid, ea->ether_addr_octet,
+	    sizeof(bssid.i_bssid));
+
+	if (direct_ioctl(env, SIOCS80211BSSID, &bssid) == -1)
 		err(EXIT_FAILURE, "SIOCS80211BSSID");
+	return 0;
 }
 
-void
-setiffrag(const char *val, int d)
+int
+setiffrag(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	struct ieee80211req ireq;
-	int thr;
+	bool rc;
+	int16_t val;
 
-	if (d != 0)
-		thr = IEEE80211_FRAG_MAX;
-	else {
-		thr = atoi(val);
-		if (thr < IEEE80211_FRAG_MIN || thr > IEEE80211_FRAG_MAX) {
-			errx(EXIT_FAILURE, "invalid fragmentation threshold: %s", val);
-			return;
-		}
-	}
-
-	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
-	ireq.i_type = IEEE80211_IOC_FRAGTHRESHOLD;
-	ireq.i_val = thr;
-	if (ioctl(s, SIOCS80211, &ireq) == -1)
+	rc = prop_dictionary_get_int16(env, "frag", &val);
+	assert(rc);
+	if (set80211(env, IEEE80211_IOC_FRAGTHRESHOLD, val, 0, NULL) == -1)
 		err(EXIT_FAILURE, "IEEE80211_IOC_FRAGTHRESHOLD");
+	return 0;
 }
 
-void
-setifchan(const char *val, int d)
+int
+setifchan(prop_dictionary_t env, prop_dictionary_t xenv)
 {
+	bool rc;
 	struct ieee80211chanreq channel;
-	int chan;
 
-	if (d != 0)
-		chan = IEEE80211_CHAN_ANY;
-	else {
-		chan = atoi(val);
-		if (chan < 0 || chan > 0xffff) {
-			errx(EXIT_FAILURE, "invalid channel: %s", val);
-		}
-	}
-
-	estrlcpy(channel.i_name, name, sizeof(channel.i_name));
-	channel.i_channel = (u_int16_t) chan;
-	if (ioctl(s, SIOCS80211CHANNEL, &channel) == -1)
+	rc = prop_dictionary_get_uint16(env, "chan", &channel.i_channel);
+	assert(rc);
+	if (direct_ioctl(env, SIOCS80211CHANNEL, &channel) == -1)
 		err(EXIT_FAILURE, "SIOCS80211CHANNEL");
+	return 0;
 }
 
-void
-setifnwkey(const char *val, int d)
+int
+setifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
 {
+	const char *val;
+	char buf[256];
 	struct ieee80211_nwkey nwkey;
 	int i;
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
+
+	if (getargstr(env, "nwkey", buf, sizeof(buf)) == -1)
+		errx(EXIT_FAILURE, "%s: nwkey too long", __func__);
+
+	val = buf;
 
 	nwkey.i_wepon = IEEE80211_NWKEY_WEP;
 	nwkey.i_defkid = 1;
@@ -231,11 +318,7 @@ setifnwkey(const char *val, int d)
 		nwkey.i_key[i].i_keylen = sizeof(keybuf[i]);
 		nwkey.i_key[i].i_keydat = keybuf[i];
 	}
-	if (d != 0) {
-		/* disable WEP encryption */
-		nwkey.i_wepon = 0;
-		i = 0;
-	} else if (strcasecmp("persist", val) == 0) {
+	if (strcasecmp("persist", val) == 0) {
 		/* use all values from persistent memory */
 		nwkey.i_wepon |= IEEE80211_NWKEY_PERSIST;
 		nwkey.i_defkid = 0;
@@ -255,8 +338,10 @@ setifnwkey(const char *val, int d)
 			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 				val = get_string(val, ",", keybuf[i],
 				    &nwkey.i_key[i].i_keylen);
-				if (val == NULL)
-					return;
+				if (val == NULL) {
+					errno = EINVAL;
+					return -1;
+				}
 			}
 			if (*val != '\0') {
 				errx(EXIT_FAILURE, "SIOCS80211NWKEY: too many keys.");
@@ -264,71 +349,97 @@ setifnwkey(const char *val, int d)
 		} else {
 			val = get_string(val, NULL, keybuf[0],
 			    &nwkey.i_key[0].i_keylen);
-			if (val == NULL)
-				return;
+			if (val == NULL) {
+				errno = EINVAL;
+				return -1;
+			}
 			i = 1;
 		}
 	}
 	for (; i < IEEE80211_WEP_NKID; i++)
 		nwkey.i_key[i].i_keylen = 0;
-	estrlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
-	if (ioctl(s, SIOCS80211NWKEY, &nwkey) == -1)
+
+	if (direct_ioctl(env, SIOCS80211NWKEY, &nwkey) == -1)
 		err(EXIT_FAILURE, "SIOCS80211NWKEY");
+	return 0;
 }
 
-void
-setifpowersave(const char *val, int d)
+int
+unsetifnwkey(prop_dictionary_t env, prop_dictionary_t xenv)
+{
+	struct ieee80211_nwkey nwkey;
+	int i;
+
+	nwkey.i_wepon = 0;
+	nwkey.i_defkid = 1;
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+		nwkey.i_key[i].i_keylen = 0;
+		nwkey.i_key[i].i_keydat = NULL;
+	}
+
+	if (direct_ioctl(env, SIOCS80211NWKEY, &nwkey) == -1)
+		err(EXIT_FAILURE, "SIOCS80211NWKEY");
+	return 0;
+}
+
+int
+setifpowersave(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_power power;
+	bool on, rc;
 
-	estrlcpy(power.i_name, name, sizeof(power.i_name));
-	if (ioctl(s, SIOCG80211POWER, &power) == -1) {
+	if (direct_ioctl(env, SIOCG80211POWER, &power) == -1)
 		err(EXIT_FAILURE, "SIOCG80211POWER");
-	}
 
-	power.i_enabled = d;
-	if (ioctl(s, SIOCS80211POWER, &power) == -1)
-		err(EXIT_FAILURE, "SIOCS80211POWER");
+	rc = prop_dictionary_get_bool(env, "powersave", &on);
+	assert(rc);
+
+	power.i_enabled = on ? 1 : 0;
+	if (direct_ioctl(env, SIOCS80211POWER, &power) == -1) {
+		warn("SIOCS80211POWER");
+		return -1;
+	}
+	return 0;
 }
 
-void
-setifpowersavesleep(const char *val, int d)
+int
+setifpowersavesleep(prop_dictionary_t env, prop_dictionary_t xenv)
 {
 	struct ieee80211_power power;
+	int64_t maxsleep;
+	bool rc;
 
-	estrlcpy(power.i_name, name, sizeof(power.i_name));
-	if (ioctl(s, SIOCG80211POWER, &power) == -1) {
+	rc = prop_dictionary_get_int64(env, "powersavesleep", &maxsleep);
+	assert(rc);
+
+	if (direct_ioctl(env, SIOCG80211POWER, &power) == -1)
 		err(EXIT_FAILURE, "SIOCG80211POWER");
-	}
 
-	power.i_maxsleep = atoi(val);
-	if (ioctl(s, SIOCS80211POWER, &power) == -1)
+	power.i_maxsleep = maxsleep;
+	if (direct_ioctl(env, SIOCS80211POWER, &power) == -1)
 		err(EXIT_FAILURE, "SIOCS80211POWER");
+	return 0;
 }
 
-void
-setiflist(const char *val, int dummy)
+int
+scan_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 {
-	if (strncasecmp("scan", val, 4) == 0) {
-		/* Get list of pre-scanned stations. */
-		scan_and_wait();
-		list_scan();
-	}
-	else
-		errx(EXIT_FAILURE, "Don't know how to list %s for %s", val, name);
+	scan_and_wait(env);
+	list_scan(env);
+	return 0;
 }
 
 void
-ieee80211_statistics(void)
+ieee80211_statistics(prop_dictionary_t env)
 {
 	struct ieee80211_stats stats;
+	struct ifreq ifr;
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_buflen = sizeof(stats);
 	ifr.ifr_buf = (caddr_t)&stats;
-	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, (zflag) ? SIOCG80211ZSTATS : SIOCG80211STATS,
-	    (caddr_t)&ifr) == -1)
+	if (direct_ioctl(env, (zflag) ? SIOCG80211ZSTATS : SIOCG80211STATS,
+	    &ifr) == -1)
 		return;
 #define	STAT_PRINT(_member, _desc)	\
 	printf("\t" _desc ": %" PRIu32 "\n", stats._member)
@@ -426,7 +537,7 @@ ieee80211_statistics(void)
 }
 
 void
-ieee80211_status(void)
+ieee80211_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int i, nwkey_verbose;
 	struct ieee80211_nwid nwid;
@@ -438,12 +549,14 @@ ieee80211_status(void)
 	struct ieee80211req ireq;
 	struct ether_addr ea;
 	static const u_int8_t zero_macaddr[IEEE80211_ADDR_LEN];
-	enum ieee80211_opmode opmode = get80211opmode();
+	enum ieee80211_opmode opmode = get80211opmode(env);
 
-	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_data = (void *)&nwid;
-	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCG80211NWID, &ifr) == -1)
+	memset(&bssid, 0, sizeof(bssid));
+	memset(&nwkey, 0, sizeof(nwkey));
+	memset(&nwid, 0, sizeof(nwid));
+	memset(&nwid, 0, sizeof(nwid));
+
+	if (indirect_ioctl(env, SIOCG80211NWID, &nwid) == -1)
 		return;
 	if (nwid.i_len > IEEE80211_NWID_LEN) {
 		errx(EXIT_FAILURE, "SIOCG80211NWID: wrong length of nwid (%d)", nwid.i_len);
@@ -452,9 +565,8 @@ ieee80211_status(void)
 	print_string(nwid.i_nwid, nwid.i_len);
 
 	if (opmode == IEEE80211_M_HOSTAP) {
-		estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
 		ireq.i_type = IEEE80211_IOC_HIDESSID;
-		if (ioctl(s, SIOCG80211, &ireq) != -1) {
+		if (direct_ioctl(env, SIOCG80211, &ireq) != -1) {
                         if (ireq.i_val)
                                 printf(" [hidden]");
                         else if (vflag)
@@ -462,7 +574,7 @@ ieee80211_status(void)
                 }
 
 		ireq.i_type = IEEE80211_IOC_APBRIDGE;
-		if (ioctl(s, SIOCG80211, &ireq) != -1) {
+		if (direct_ioctl(env, SIOCG80211, &ireq) != -1) {
 			if (ireq.i_val)
 				printf(" apbridge");
 			else if (vflag)
@@ -470,9 +582,8 @@ ieee80211_status(void)
 		}
         }
 
-	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
 	ireq.i_type = IEEE80211_IOC_FRAGTHRESHOLD;
-	if (ioctl(s, SIOCG80211, &ireq) == -1)
+	if (direct_ioctl(env, SIOCG80211, &ireq) == -1)
 		;
 	else if (ireq.i_val < IEEE80211_FRAG_MAX)
 		printf(" frag %d", ireq.i_val);
@@ -480,9 +591,8 @@ ieee80211_status(void)
 		printf(" -frag");
 
 	memset(&nwkey, 0, sizeof(nwkey));
-	estrlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	/* show nwkey only when WEP is enabled */
-	if (ioctl(s, SIOCG80211NWKEY, &nwkey) == -1 ||
+	if (direct_ioctl(env, SIOCG80211NWKEY, &nwkey) == -1 ||
 	    nwkey.i_wepon == 0) {
 		printf("\n");
 		goto skip_wep;
@@ -494,7 +604,7 @@ ieee80211_status(void)
 		nwkey.i_key[i].i_keydat = keybuf[i];
 		nwkey.i_key[i].i_keylen = sizeof(keybuf[i]);
 	}
-	if (ioctl(s, SIOCG80211NWKEY, &nwkey) == -1) {
+	if (direct_ioctl(env, SIOCG80211NWKEY, &nwkey) == -1) {
 		printf("*****");
 	} else {
 		nwkey_verbose = 0;
@@ -537,8 +647,7 @@ ieee80211_status(void)
 	printf("\n");
 
  skip_wep:
-	estrlcpy(power.i_name, name, sizeof(power.i_name));
-	if (ioctl(s, SIOCG80211POWER, &power) == -1)
+	if (direct_ioctl(env, SIOCG80211POWER, &power) == -1)
 		goto skip_power;
 	printf("\tpowersave ");
 	if (power.i_enabled)
@@ -548,11 +657,9 @@ ieee80211_status(void)
 	printf("\n");
 
  skip_power:
-	estrlcpy(bssid.i_name, name, sizeof(bssid.i_name));
-	if (ioctl(s, SIOCG80211BSSID, &bssid) == -1)
+	if (direct_ioctl(env, SIOCG80211BSSID, &bssid) == -1)
 		return;
-	estrlcpy(channel.i_name, name, sizeof(channel.i_name));
-	if (ioctl(s, SIOCG80211CHANNEL, &channel) == -1)
+	if (direct_ioctl(env, SIOCG80211CHANNEL, &channel) == -1)
 		return;
 	if (memcmp(bssid.i_bssid, zero_macaddr, IEEE80211_ADDR_LEN) == 0) {
 		if (channel.i_channel != (u_int16_t)-1)
@@ -568,9 +675,8 @@ ieee80211_status(void)
 }
 
 static void
-scan_and_wait(void)
+scan_and_wait(prop_dictionary_t env)
 {
-	struct ieee80211req ireq;
 	int sroute;
 
 	sroute = socket(PF_ROUTE, SOCK_RAW, 0);
@@ -578,11 +684,8 @@ scan_and_wait(void)
 		perror("socket(PF_ROUTE,SOCK_RAW)");
 		return;
 	}
-	(void) memset(&ireq, 0, sizeof(ireq));
-	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
-	ireq.i_type = IEEE80211_IOC_SCAN_REQ;
 	/* NB: only root can trigger a scan so ignore errors */
-	if (ioctl(s, SIOCS80211, &ireq) >= 0) {
+	if (set80211(env, IEEE80211_IOC_SCAN_REQ, 0, 0, NULL) >= 0) {
 		char buf[2048];
 		struct if_announcemsghdr *ifan;
 		struct rt_msghdr *rtm;
@@ -603,7 +706,7 @@ scan_and_wait(void)
 }
 
 static void
-list_scan(void)
+list_scan(prop_dictionary_t env)
 {
 	u_int8_t buf[24*1024];
 	struct ieee80211req ireq;
@@ -611,13 +714,12 @@ list_scan(void)
 	const u_int8_t *cp;
 	int len, ssidmax;
 
-	(void) memset(&ireq, 0, sizeof(ireq));
-	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
+	memset(&ireq, 0, sizeof(ireq));
 	ireq.i_type = IEEE80211_IOC_SCAN_RESULTS;
 	ireq.i_data = buf;
 	ireq.i_len = sizeof(buf);
-	if (ioctl(s, SIOCG80211, &ireq) < 0)
-		errx(1, "unable to get scan results");
+	if (direct_ioctl(env, SIOCG80211, &ireq) < 0)
+		errx(EXIT_FAILURE, "unable to get scan results");
 	len = ireq.i_len;
 	if (len < sizeof(struct ieee80211req_scan_result))
 		return;
@@ -980,7 +1082,7 @@ printrsnie(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
 static int
 copy_essid(char buf[], size_t bufsize, const u_int8_t *essid, size_t essid_len)
 {
-	const u_int8_t *p; 
+	const u_int8_t *p;
 	size_t maxlen;
 	int i;
 
@@ -1059,7 +1161,7 @@ printcountry(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
 	printf(">");
 }
 
-/* unaligned little endian access */     
+/* unaligned little endian access */
 #define LE_READ_4(p)					\
 	((u_int32_t)					\
 	 ((((const u_int8_t *)(p))[0]      ) |		\
@@ -1067,13 +1169,13 @@ printcountry(const char *tag, const u_int8_t *ie, size_t ielen, int maxlen)
 	  (((const u_int8_t *)(p))[2] << 16) |		\
 	  (((const u_int8_t *)(p))[3] << 24)))
 
-static int 
+static int
 iswpaoui(const u_int8_t *frm)
 {
 	return frm[1] > 3 && LE_READ_4(frm+2) == ((WPA_OUI_TYPE<<24)|WPA_OUI);
 }
 
-static int 
+static int
 iswmeinfo(const u_int8_t *frm)
 {
 	return frm[1] > 5 && LE_READ_4(frm+2) == ((WME_OUI_TYPE<<24)|WME_OUI) &&

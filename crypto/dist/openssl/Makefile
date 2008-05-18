@@ -4,18 +4,18 @@
 ## Makefile for OpenSSL
 ##
 
-VERSION=0.9.8e
+VERSION=0.9.9-dev
 MAJOR=0
-MINOR=9.8
-SHLIB_VERSION_NUMBER=0.9.8
+MINOR=9.9
+SHLIB_VERSION_NUMBER=0.9.9
 SHLIB_VERSION_HISTORY=
 SHLIB_MAJOR=0
-SHLIB_MINOR=9.8
-SHLIB_EXT=
-PLATFORM=dist
-OPTIONS= no-camellia no-gmp no-krb5 no-mdc2 no-rc5 no-rfc3779 no-shared no-zlib no-zlib-dynamic
-CONFIGURE_ARGS=dist
-SHLIB_TARGET=
+SHLIB_MINOR=9.9
+SHLIB_EXT=.so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+PLATFORM=BSD-generic64
+OPTIONS= no-gmp no-krb5 no-mdc2 no-rc5 no-rfc3779 no-shared no-zlib no-zlib-dynamic static-engine
+CONFIGURE_ARGS=BSD-generic64
+SHLIB_TARGET=bsd-gcc-shared
 
 # HERE indicates where this Makefile lives.  This can be used to indicate
 # where sub-Makefiles are expected to be.  Currently has very limited usage,
@@ -59,19 +59,20 @@ OPENSSLDIR=/usr/local/ssl
 # equal 4.
 # PKCS1_CHECK - pkcs1 tests.
 
-CC= cc
-CFLAG= -O
-DEPFLAG= -DOPENSSL_NO_CAMELLIA -DOPENSSL_NO_GMP -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 
+CC= gcc
+CFLAG= -DOPENSSL_THREADS -pthread -D_THREAD_SAFE -D_REENTRANT -DDSO_DLFCN -DHAVE_DLFCN_H -DTERMIOS -O3 -Wall
+DEPFLAG= -DOPENSSL_NO_GMP -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 
 PEX_LIBS= 
 EX_LIBS= 
 EXE_EXT= 
 ARFLAGS= 
 AR=ar $(ARFLAGS) r
 RANLIB= /usr/bin/ranlib
-PERL= /usr/bin/perl
+NM= nm
+PERL= /usr/pkg/bin/perl
 TAR= tar
 TARFLAGS= --no-recursion
-MAKEDEPPROG=makedepend
+MAKEDEPPROG= gcc
 
 # We let the C compiler driver to take care of .s files. This is done in
 # order to be excused from maintaining a separate set of architecture
@@ -86,17 +87,20 @@ ASFLAG=$(CFLAG)
 PROCESSOR= 
 
 # CPUID module collects small commonly used assembler snippets
-CPUID_OBJ= 
+CPUID_OBJ= mem_clr.o
 BN_ASM= bn_asm.o
 DES_ENC= des_enc.o fcrypt_b.o
-AES_ASM_OBJ= aes_core.o aes_cbc.o
+AES_ENC= aes_core.o aes_cbc.o
 BF_ENC= bf_enc.o
 CAST_ENC= c_enc.o
-RC4_ENC= rc4_enc.o
+RC4_ENC= rc4_enc.o rc4_skey.o
 RC5_ENC= rc5_enc.o
 MD5_ASM_OBJ= 
 SHA1_ASM_OBJ= 
 RMD160_ASM_OBJ= 
+WP_ASM_OBJ= wp_block.o
+CMLL_ENC= camellia.o cmll_misc.o cmll_cbc.o
+PERLASM_SCHEME= void
 
 # KRB5 stuff
 KRB5_INCLUDES=
@@ -112,12 +116,12 @@ SHLIBDIRS= crypto ssl
 # dirs in crypto to build
 SDIRS=  \
 	objects \
-	md2 md4 md5 sha hmac ripemd \
-	des aes rc2 rc4 idea bf cast \
+	md2 md4 md5 sha hmac ripemd whrlpool \
+	des aes rc2 rc4 idea bf cast camellia seed \
 	bn ec rsa dsa ecdsa dh ecdh dso engine \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
-	store pqueue
+	store cms pqueue ts 
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
 
@@ -131,6 +135,8 @@ MANDIR=$(OPENSSLDIR)/man
 MAN1=1
 MAN3=3
 MANSUFFIX=
+HTMLSUFFIX=html
+HTMLDIR=$(OPENSSLDIR)/html
 SHELL=/bin/sh
 
 TOP=    .
@@ -141,8 +147,8 @@ LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
 SHARED_LIBS=
-SHARED_LIBS_LINK_EXTS=
-SHARED_LDFLAGS=
+SHARED_LIBS_LINK_EXTS=.so.$(SHLIB_MAJOR) .so
+SHARED_LDFLAGS= -Wl,-rpath,$(LIBRPATH)
 
 GENERAL=        Makefile
 BASENAME=       openssl
@@ -173,7 +179,9 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		CC='${CC}' CFLAG='${CFLAG}' 			\
 		AS='${CC}' ASFLAG='${CFLAG} -c'			\
-		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
+		AR='${AR}' NM='${NM}' RANLIB='${RANLIB}'	\
+		CROSS_COMPILE_PREFIX='${CROSS_COMPILE_PREFIX}'	\
+		PERL='${PERL}'					\
 		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/lib'	\
 		INSTALL_PREFIX='${INSTALL_PREFIX}'		\
 		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
@@ -187,12 +195,14 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}'	\
 		CPUID_OBJ='${CPUID_OBJ}'			\
 		BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' 	\
-		AES_ASM_OBJ='${AES_ASM_OBJ}'			\
+		AES_ENC='${AES_ENC}' CMLL_ENC='${CMLL_ENC}'	\
 		BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}'	\
 		RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}'	\
 		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
 		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
 		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
+		WP_ASM_OBJ='${WP_ASM_OBJ}'			\
+		PERLASM_SCHEME='${PERLASM_SCHEME}'		\
 		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
@@ -377,16 +387,19 @@ gentests:
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on generate );
 
 dclean:
-	rm -f *.bak
+	rm -rf *.bak include/openssl certs/.0
 	@set -e; target=dclean; $(RECURSIVE_BUILD_CMD)
 
 rehash: rehash.time
-rehash.time: certs
-	@(OPENSSL="`pwd`/util/opensslwrap.sh"; \
-	  OPENSSL_DEBUG_MEMORY=on; \
-	  export OPENSSL OPENSSL_DEBUG_MEMORY; \
-	  $(PERL) tools/c_rehash certs)
-	touch rehash.time
+rehash.time: certs apps
+	@if [ -z "$(CROSS_COMPILE_PREFIX)" ]; then \
+		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
+		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
+		OPENSSL_DEBUG_MEMORY=on; \
+		export OPENSSL OPENSSL_DEBUG_MEMORY; \
+		$(PERL) tools/c_rehash certs) && \
+		touch rehash.time; \
+	else :; fi
 
 test:   tests
 
@@ -426,6 +439,8 @@ crypto/objects/obj_dat.h: crypto/objects/obj_dat.pl crypto/objects/obj_mac.h
 	$(PERL) crypto/objects/obj_dat.pl crypto/objects/obj_mac.h crypto/objects/obj_dat.h
 crypto/objects/obj_mac.h: crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num
 	$(PERL) crypto/objects/objects.pl crypto/objects/objects.txt crypto/objects/obj_mac.num crypto/objects/obj_mac.h
+crypto/objects/obj_xref.h: crypto/objects/objxref.pl crypto/objects/obj_xref.txt crypto/objects/obj_mac.num
+	$(PERL) crypto/objects/objxref.pl > crypto/objects/obj_xref.h
 
 apps/openssl-vms.cnf: apps/openssl.cnf
 	$(PERL) VMS/VMSify-conf.pl < apps/openssl.cnf > apps/openssl-vms.cnf
@@ -438,7 +453,7 @@ TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
 	$(PERL) Configure TABLE) > TABLE
 
-update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
+update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h crypto/objects/obj_xref.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
 
 # Build distribution tar-file. As the list of files returned by "find" is
 # pretty long, on several platforms a "too many arguments" error or similar
@@ -521,6 +536,16 @@ install_sw:
 					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				fi ); \
+				if expr $(PLATFORM) : 'mingw' > /dev/null; then \
+				(	case $$i in \
+						*crypto*) i=libeay32.dll;; \
+						*ssl*)    i=ssleay32.dll;; \
+					esac; \
+					echo installing $$i; \
+	 				cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+	 				chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+	 				mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+				fi; \
 			fi; \
 		done; \
 		(	here="`pwd`"; \
@@ -539,6 +564,27 @@ install_sw:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libssl.pc
 	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/openssl.pc
+
+install_html_docs:
+	here="`pwd`"; \
+	for subdir in apps crypto ssl; do \
+		mkdir -p $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
+		for i in doc/$$subdir/*.pod; do \
+			fn=`basename $$i .pod`; \
+			echo "installing html/$$fn.$(HTMLSUFFIX)"; \
+			cat $$i \
+			| sed -r 's/L<([^)]*)(\([0-9]\))?\|([^)]*)(\([0-9]\))?>/L<\1|\3>/g' \
+			| pod2html --podroot=doc --htmlroot=.. --podpath=apps:crypto:ssl \
+			| sed -r 's/<!DOCTYPE.*//g' \
+			> $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
+			$(PERL) util/extract-names.pl < $$i | \
+				grep -v $$filecase "^$$fn\$$" | \
+				(cd $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
+				 while read n; do \
+					$$here/util/point.sh $$fn.$(HTMLSUFFIX) "$$n".$(HTMLSUFFIX); \
+				 done); \
+		done; \
+	done
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \

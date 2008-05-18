@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.14 2008/03/29 01:14:25 cube Exp $
+# $NetBSD: XEN3_DOM0,v 1.14.2.1 2008/05/18 12:31:28 yamt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -215,6 +215,9 @@ acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
 acpiec* 	at acpi?		# ACPI Embedded Controller
 acpilid* 	at acpi?		# ACPI Lid Switch
+acpitz*		at acpi?		# ACPI Thermal Zone
+hpqlb*		at acpi?		# HP Quick Launch Buttons
+
 # PCI bus support
 pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?

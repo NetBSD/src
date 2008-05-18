@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.5 2004/05/23 02:24:52 lukem Exp $
+# $NetBSD: Makefile,v 1.5.24.1 2008/05/18 12:36:14 yamt Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 LIB    = dhcpctl
 SRCS   = dhcpctl.c callback.c remote.c

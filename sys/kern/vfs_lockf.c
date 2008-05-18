@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.63 2008/03/18 02:49:15 mrg Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.63.2.1 2008/05/18 12:35:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.63 2008/03/18 02:49:15 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.63.2.1 2008/05/18 12:35:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,21 +548,21 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			p = (struct proc *)block->lf_id;
 			KASSERT(p != NULL);
 			while (i++ < maxlockdepth) {
-				mutex_enter(&p->p_smutex);
+				mutex_enter(p->p_lock);
 				if (p->p_nlwps > 1) {
-					mutex_exit(&p->p_smutex);
+					mutex_exit(p->p_lock);
 					break;
 				}
 				wlwp = LIST_FIRST(&p->p_lwps);
 				lwp_lock(wlwp);
 				if (wlwp->l_wmesg != lockstr) {
 					lwp_unlock(wlwp);
-					mutex_exit(&p->p_smutex);
+					mutex_exit(p->p_lock);
 					break;
 				}
 				waitblock = wlwp->l_wchan;
 				lwp_unlock(wlwp);
-				mutex_exit(&p->p_smutex);
+				mutex_exit(p->p_lock);
 				if (waitblock == NULL) {
 					/*
 					 * this lwp just got up but

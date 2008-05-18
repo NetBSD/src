@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.95 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.95.2.1 2008/05/18 12:35:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.95 2008/03/27 19:06:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.95.2.1 2008/05/18 12:35:54 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.95 2008/03/27 19:06:52 ad Exp $");
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -117,7 +118,7 @@ ffs_update(struct vnode *vp, const struct timespec *acc,
 	}							/* XXX */
 	error = bread(ip->i_devvp,
 		      fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-		      (int)fs->fs_bsize, NOCRED, &bp);
+		      (int)fs->fs_bsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
 		return (error);

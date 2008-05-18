@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.45 2008/04/14 13:38:03 cegger Exp $	*/
+/*	$NetBSD: clock.c,v 1.45.2.1 2008/05/18 12:33:08 yamt Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45 2008/04/14 13:38:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.45.2.1 2008/05/18 12:33:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,7 @@ static void
 get_time_values_from_xen(void)
 {
 #ifdef XEN3
-	volatile struct vcpu_time_info *t =
-	    &HYPERVISOR_shared_info->vcpu_info[0].time;
+	volatile struct vcpu_time_info *t = &curcpu()->ci_vcpu->time;
 	uint32_t tversion;
 
 	do {
@@ -150,8 +149,7 @@ time_values_up_to_date(void)
 #ifndef XEN3
 	rv = shadow_time_version == HYPERVISOR_shared_info->time_version1;
 #else
-	rv = shadow_time_version == 
-	    HYPERVISOR_shared_info->vcpu_info[0].time.version;  /* XXXSMP */
+	rv = shadow_time_version == curcpu()->ci_vcpu->time.version;
 #endif
 	x86_lfence();
 

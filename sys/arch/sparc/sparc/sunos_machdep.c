@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.20 2007/12/20 23:02:42 dsl Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.20.8.1 2008/05/18 12:32:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.20 2007/12/20 23:02:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.20.8.1 2008/05/18 12:32:47 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -138,12 +138,12 @@ void sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
 	error = (rwindow_save(l) || copyout((void *)&sf, (void *)fp, sizeof sf) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.29 2007/12/25 01:03:32 ad Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.29.8.1 2008/05/18 12:29:41 yamt Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -159,4 +159,3 @@ message updatembr	/* XXX translate */
 the latest version of the NetBSD bootcode?}
 
 message set_kernel_1	{Kernel (GENERIC)}
-message set_kernel_2	{Kernel (GENERIC.NOACPI)}

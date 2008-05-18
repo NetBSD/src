@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.105 2008/04/12 05:58:22 thorpej Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.105.2.1 2008/05/18 12:35:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.105 2008/04/12 05:58:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.105.2.1 2008/05/18 12:35:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -97,12 +97,14 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.105 2008/04/12 05:58:22 thorpej Exp $")
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
-#endif /*IPSEC*/
+#include <netinet6/ipsec_private.h>
+#endif /* IPSEC */
 
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
-#include <netipsec/ipsec_var.h>			/* XXX ipsecstat namespace */
-#endif	/* FAST_IPSEC*/
+#include <netipsec/ipsec_var.h>
+#include <netipsec/ipsec_private.h>
+#endif	/* FAST_IPSEC */
 
 struct inpcbtable rawcbtable;
 
@@ -200,7 +202,7 @@ rip_input(struct mbuf *m, ...)
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		/* check AH/ESP integrity. */
 		else if (ipsec4_in_reject_so(m, last->inp_socket)) {
-			ipsecstat.in_polvio++;
+			IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 			/* do not inject data to pcb */
 		}
 #endif /*IPSEC*/
@@ -215,7 +217,7 @@ rip_input(struct mbuf *m, ...)
 	/* check AH/ESP integrity. */
 	if (last != NULL && ipsec4_in_reject_so(m, last->inp_socket)) {
 		m_freem(m);
-		ipsecstat.in_polvio++;
+		IPSEC_STATINC(IPSEC_STAT_IN_POLVIO);
 		IP_STATDEC(IP_STAT_DELIVERED);
 		/* do not inject data to pcb */
 	} else
@@ -526,9 +528,11 @@ rip_usrreq(struct socket *so, int req,
 	s = splsoftnet();
 
 	if (req == PRU_PURGEIF) {
+		mutex_enter(softnet_lock);
 		in_pcbpurgeif0(&rawcbtable, (struct ifnet *)control);
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&rawcbtable, (struct ifnet *)control);
+		mutex_exit(softnet_lock);
 		splx(s);
 		return (0);
 	}
@@ -546,6 +550,7 @@ rip_usrreq(struct socket *so, int req,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (inp != 0) {
 			error = EISCONN;
 			break;

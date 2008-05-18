@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetconfig.c,v 1.16 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: getnetconfig.c,v 1.16.10.1 2008/05/18 12:30:18 yamt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetconfig.c	1.12 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetconfig.c,v 1.16 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: getnetconfig.c,v 1.16.10.1 2008/05/18 12:30:18 yamt Exp $");
 #endif
 #endif
 
@@ -171,7 +171,9 @@ __nc_error()
 	thr_once(&nc_once, __nc_error_setup);
 	nc_addr = thr_getspecific(nc_key) ;
 	if (nc_addr == NULL) {
-		nc_addr = (int *)malloc(sizeof (int));
+		nc_addr = malloc(sizeof (int));
+		if (nc_addr == NULL)
+			return &nc_error;
 		if (thr_setspecific(nc_key, (void *) nc_addr) != 0) {
 			if (nc_addr)
 				free(nc_addr);
@@ -210,8 +212,7 @@ setnetconfig()
 {
 	struct netconfig_vars *nc_vars;
 
-	if ((nc_vars = (struct netconfig_vars *)
-	    malloc(sizeof (struct netconfig_vars))) == NULL) {
+	if ((nc_vars = malloc(sizeof(*nc_vars))) == NULL) {
 		return(NULL);
 	}
 
@@ -293,7 +294,7 @@ getnetconfig(handlep)
 		return (NULL);
 	}
 
-	stringp = (char *) malloc(MAXNETCONFIGLINE);
+	stringp = malloc(MAXNETCONFIGLINE);
 	if (stringp == NULL)
 		return (NULL);
 
@@ -315,12 +316,12 @@ getnetconfig(handlep)
 		}
 	} while (*stringp == '#');
 
-	list = (struct netconfig_list *) malloc(sizeof (struct netconfig_list));
+	list = malloc(sizeof(*list));
 	if (list == NULL) {
 		free(stringp);
 		return(NULL);
 	}
-	np = (struct netconfig *) malloc(sizeof (struct netconfig));
+	np = malloc(sizeof(*np));
 	if (np == NULL) {
 		free(stringp);
 		free(list);
@@ -476,8 +477,7 @@ getnetconfigent(netid)
 		}
 		if (strlen(netid) == (size_t) (len = tmpp - stringp) &&	/* a match */
 		    strncmp(stringp, netid, (size_t)len) == 0) {
-			if ((ncp = (struct netconfig *)
-			    malloc(sizeof (struct netconfig))) == NULL)
+			if ((ncp = malloc(sizeof(*ncp))) == NULL)
 				break;
 			ncp->nc_lookups = NULL;
 			if (parse_ncp(linep, ncp) == -1) {
@@ -592,7 +592,7 @@ parse_ncp(stringp, ncp)
 		if (ncp->nc_lookups != NULL)	/* from last visit */
 			free(ncp->nc_lookups);
 		/* preallocate one string pointer */
-		ncp->nc_lookups = (char **)malloc(sizeof (char *));
+		ncp->nc_lookups = malloc(sizeof(*ncp->nc_lookups));
 		ncp->nc_nlookups = 0;
 		while ((cp = tokenp) != NULL) {
 			tokenp = _get_next_token(cp, ',');
@@ -659,9 +659,9 @@ static struct netconfig *
 
 	_DIAGASSERT(ncp != NULL);
 
-	if ((tmp=malloc(MAXNETCONFIGLINE)) == NULL)
+	if ((tmp = malloc(MAXNETCONFIGLINE)) == NULL)
 		return(NULL);
-	if ((p=(struct netconfig *)malloc(sizeof(struct netconfig))) == NULL) {
+	if ((p = malloc(sizeof(*p))) == NULL) {
 		free(tmp);
 		return(NULL);
 	}
@@ -682,8 +682,7 @@ static struct netconfig *
 	p->nc_proto = (char *)strcpy(tmp,ncp->nc_proto);
 	tmp = strchr(tmp, '\0') + 1;
 	p->nc_device = (char *)strcpy(tmp,ncp->nc_device);
-	p->nc_lookups = (char **)
-	    malloc((size_t)(p->nc_nlookups+1) * sizeof(char *));
+	p->nc_lookups = malloc((size_t)(p->nc_nlookups+1) * sizeof(char *));
 	if (p->nc_lookups == NULL) {
 		free(p->nc_netid);
 		free(p);
@@ -691,7 +690,7 @@ static struct netconfig *
 	}
 	for (i=0; i < p->nc_nlookups; i++) {
 		tmp = strchr(tmp, '\0') + 1;
-		p->nc_lookups[i] = (char *)strcpy(tmp,ncp->nc_lookups[i]);
+		p->nc_lookups[i] = strcpy(tmp,ncp->nc_lookups[i]);
 	}
 	return(p);
 }

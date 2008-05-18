@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/03/03 03:10:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2008/05/18 12:30:44 yamt Exp $
 #
 #	$eterna: Makefile,v 1.26 2005/09/27 20:09:20 mrg Exp $
 
@@ -21,7 +21,7 @@ SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 LDADD=	-lcrypt
 DPADD=	${LIBCRYPT}
 
-WARNS=	3
+WARNS=	4
 
 .include <bsd.own.mk>
 

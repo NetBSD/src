@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.13 2007/12/11 23:06:14 lukem Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.13.8.1 2008/05/18 12:32:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -83,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.13 2007/12/11 23:06:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.13.8.1 2008/05/18 12:32:10 yamt Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -191,9 +184,12 @@ _TRMP_LABEL(mp_startup)
 # ok, we're now running with paging enabled and sharing page tables with cpu0.
 # figure out which processor we really are, what stack we should be on, etc.
 
-	movl	_C_LABEL(local_apic)+LAPIC_ID,%ecx
-	shrl	$LAPIC_ID_SHIFT,%ecx
-	movl	_C_LABEL(cpu_info)(,%ecx,4),%ecx
+	/* Don't touch lapic until BP has done init sequence. */
+1:
+	movl	_C_LABEL(cpu_starting),%ecx
+	pause
+	testl	%ecx, %ecx
+	jz	1b
 	
 	HALTT(0x7, %ecx)
 

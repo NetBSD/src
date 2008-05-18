@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.62 2007/12/25 01:03:31 ad Exp $	*/
+/*	$NetBSD: md.h,v 1.62.8.1 2008/05/18 12:29:41 yamt Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,10 +63,8 @@
  */
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
-#define	SET_KERNEL_NOACPI	SET_KERNEL_2
 
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define SET_KERNEL_2_NAME	"kern-GENERIC.NOACPI"
 
 /*
  * Disk names accepted as valid targets for a from-scratch installation.

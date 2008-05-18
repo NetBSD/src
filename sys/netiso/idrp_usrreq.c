@@ -1,4 +1,4 @@
-/*	$NetBSD: idrp_usrreq.c,v 1.18 2007/03/04 06:03:32 christos Exp $	*/
+/*	$NetBSD: idrp_usrreq.c,v 1.18.38.1 2008/05/18 12:35:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.18 2007/03/04 06:03:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idrp_usrreq.c,v 1.18.38.1 2008/05/18 12:35:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -179,6 +179,7 @@ idrp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	switch (req) {
 
 	case PRU_ATTACH:
+		sosetlock(so);
 		if (rp != 0) {
 			error = EISCONN;
 			break;

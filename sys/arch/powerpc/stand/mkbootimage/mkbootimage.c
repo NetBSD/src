@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.7 2007/12/24 19:34:41 garbled Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.7.14.1 2008/05/18 12:32:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -54,8 +47,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/signal.h>
 
-#ifdef __NetBSD__
+#undef USE_SYSCTL
+
+#if defined(__NetBSD__) && !defined(HAVE_NBTOOL_CONFIG_H)
+#define USE_SYSCTL 1
+#include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
 #endif
@@ -126,7 +124,7 @@ usage(int extended)
 			fprintf(stderr, " %s", sup_plats[i]);
 		fprintf(stderr, "\n\n");
 	}
-#ifdef __NetBSD__
+#ifdef USE_SYSCTL
 	fprintf(stderr, "usage: %s [-lsv] [-m machine_arch] [-b bootfile] "
 	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
 #else
@@ -829,7 +827,7 @@ main(int argc, char **argv)
 	int ch, lfloppyflag=0;
 	char *kernel = NULL, *boot = NULL, *rawdev = NULL, *outname = NULL;
 	char *march = NULL;
-#ifdef __NetBSD__	
+#ifdef USE_SYSCTL
 	char machine_arch[SYS_NMLN];
 	int mib[2] = { CTL_HW, HW_MACHINE_ARCH };
 #endif
@@ -881,7 +879,7 @@ main(int argc, char **argv)
 		march = NULL;
 	if (march == NULL) {
 		int i;
-#ifdef __NetBSD__
+#ifdef USE_SYSCTL
 		size_t len = sizeof(machine_arch);
 
 		if (sysctl(mib, sizeof (mib) / sizeof (mib[0]), machine_arch,

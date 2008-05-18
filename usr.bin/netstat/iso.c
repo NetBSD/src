@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.29 2008/02/27 16:36:54 ad Exp $	*/
+/*	$NetBSD: iso.c,v 1.29.2.1 2008/05/18 12:36:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.29 2008/02/27 16:36:54 ad Exp $");
+__RCSID("$NetBSD: iso.c,v 1.29.2.1 2008/05/18 12:36:07 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,10 +95,6 @@ SOFTWARE.
 #include <netiso/iso_pcb.h>
 #include <netiso/cltp_var.h>
 #include <netiso/cons.h>
-#ifdef IncStat
-#undef IncStat
-#endif
-#include <netiso/cons_pcb.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <kvm.h>

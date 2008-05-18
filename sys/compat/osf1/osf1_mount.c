@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.40 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.40.2.1 2008/05/18 12:33:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.40 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.40.2.1 2008/05/18 12:33:24 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -147,9 +147,12 @@ osf1_sys_getfsstat(struct lwp *l, const struct osf1_sys_getfsstat_args *uap, reg
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct osf1_statfs);
 	osf_sfsp = (void *)SCARG(uap, buf);
+	mutex_enter(&mountlist_lock);
 	for (count = 0, mp = mountlist.cqh_first; mp != (void *)&mountlist;
 	    mp = nmp) {
-		nmp = mp->mnt_list.cqe_next;
+		if (vfs_busy(mp, &nmp)) {
+			continue;
+		}
 		if (osf_sfsp && count < maxcount) {
 			sp = &mp->mnt_stat;
 			/*
@@ -159,17 +162,21 @@ osf1_sys_getfsstat(struct lwp *l, const struct osf1_sys_getfsstat_args *uap, reg
 			 */
 			if (((SCARG(uap, flags) & OSF1_MNT_NOWAIT) == 0 ||
 			    (SCARG(uap, flags) & OSF1_MNT_WAIT)) &&
-			    (error = VFS_STATVFS(mp, sp)))
-				continue;
-			sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
-			osf1_cvt_statfs_from_native(sp, &osfs);
-			if ((error = copyout(&osfs, osf_sfsp,
-			    sizeof (struct osf1_statfs))))
-				return (error);
-			osf_sfsp += sizeof (struct osf1_statfs);
+			    (error = VFS_STATVFS(mp, sp)) == 0) {
+				sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
+				osf1_cvt_statfs_from_native(sp, &osfs);
+				if ((error = copyout(&osfs, osf_sfsp,
+				    sizeof (struct osf1_statfs)))) {
+				    	vfs_unbusy(mp, false, NULL);
+					return (error);
+				}
+				osf_sfsp += sizeof (struct osf1_statfs);
+			}
 		}
 		count++;
+		vfs_unbusy(mp, false, &nmp);
 	}
+	mutex_exit(&mountlist_lock);
 	if (osf_sfsp && count > maxcount)
 		*retval = maxcount;
 	else

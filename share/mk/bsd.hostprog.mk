@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.50 2006/11/09 17:06:54 christos Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.50.18.1 2008/05/18 12:31:18 yamt Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -12,6 +12,7 @@ LIBBLUETOOTH?=	/usr/lib/libbluetooth.a
 LIBBZ2?=	/usr/lib/libbz2.a
 LIBC?=		/usr/lib/libc.a
 LIBC_PIC?=	/usr/lib/libc_pic.a
+LIBC_SO?=	/usr/lib/libc.so
 LIBCOMPAT?=	/usr/lib/libcompat.a
 LIBCRYPT?=	/usr/lib/libcrypt.a
 LIBCURSES?=	/usr/lib/libcurses.a

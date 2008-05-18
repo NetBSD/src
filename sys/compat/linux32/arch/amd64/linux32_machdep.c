@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.16 2007/12/20 23:02:57 dsl Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.16.8.1 2008/05/18 12:33:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.16 2007/12/20 23:02:57 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.16.8.1 2008/05/18 12:33:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,9 +141,9 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	linux32_save_sigcontext(l, tf, mask, &frame.sf_sc);
 
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -248,9 +248,9 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Save register context. */
 	linux32_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
 	sendsig_reset(l, sig);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -480,7 +480,7 @@ linux32_restore_sigcontext(l, scp, retval)
 	tf->tf_rsp = (register_t)scp->sc_esp_at_signal & 0xffffffff;
 	tf->tf_ss = (register_t)scp->sc_ss & 0xffffffff;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	/* Restore signal stack. */
 	ss_gap = (ssize_t)
@@ -495,7 +495,7 @@ linux32_restore_sigcontext(l, scp, retval)
 	linux32_old_to_native_sigset(&mask, &scp->sc_mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 #ifdef DEBUG_LINUX
 	printf("linux32_sigreturn: rip = 0x%lx, rsp = 0x%lx, flags = 0x%lx\n",

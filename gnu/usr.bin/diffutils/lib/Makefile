@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2004/05/23 02:24:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.24.1 2008/05/18 12:29:49 yamt Exp $
 
-MKPRIVATELIB=	yes
+LIBISPRIVATE=	yes
 
 .include "${.CURDIR}/../Makefile.inc"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.137 2008/03/26 02:21:52 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.137.4.1 2008/05/18 12:35:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.137 2008/03/26 02:21:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.137.4.1 2008/05/18 12:35:26 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -153,6 +153,7 @@ static int	bpf_ioctl(struct file *, u_long, void *);
 static int	bpf_poll(struct file *, int);
 static int	bpf_close(struct file *);
 static int	bpf_kqfilter(struct file *, struct knote *);
+static void	bpf_softintr(void *);
 
 static const struct fileops bpf_fileops = {
 	bpf_read,
@@ -403,6 +404,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_pid = l->l_proc->p_pid;
 	callout_init(&d->bd_callout, 0);
 	selinit(&d->bd_sel);
+	d->bd_sih = softint_establish(SOFTINT_CLOCK, bpf_softintr, d);
 
 	mutex_enter(&bpf_mtx);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
@@ -440,6 +442,7 @@ bpf_close(struct file *fp)
 	mutex_exit(&bpf_mtx);
 	callout_destroy(&d->bd_callout);
 	seldestroy(&d->bd_sel);
+	softint_disestablish(d->bd_sih);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;
 
@@ -565,11 +568,19 @@ bpf_wakeup(struct bpf_d *d)
 {
 	wakeup(d);
 	if (d->bd_async)
-		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
-
+		softint_schedule(d->bd_sih);
 	selnotify(&d->bd_sel, 0, 0);
 }
 
+static void
+bpf_softintr(void *cookie)
+{
+	struct bpf_d *d;
+
+	d = cookie;
+	if (d->bd_async)
+		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
+}
 
 static void
 bpf_timed_out(void *arg)
@@ -1084,14 +1095,10 @@ bpf_poll(struct file *fp, int events)
 		/*
 		 * An imitation of the FIONREAD ioctl code.
 		 */
-		if ((d->bd_hlen != 0) ||
-		    (d->bd_immediate && d->bd_slen != 0)) {
+		if (d->bd_hlen != 0 ||
+		    ((d->bd_immediate || d->bd_state == BPF_TIMED_OUT) &&
+		     d->bd_slen != 0)) {
 			revents |= events & (POLLIN | POLLRDNORM);
-		} else if (d->bd_state == BPF_TIMED_OUT) {
-			if (d->bd_slen != 0)
-				revents |= events & (POLLIN | POLLRDNORM);
-			else
-				revents |= events & POLLIN;
 		} else {
 			selrecord(curlwp, &d->bd_sel);
 			/* Start the read timeout if necessary */
@@ -1416,6 +1423,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	struct bpf_hdr *hp;
 	int totlen, curlen;
 	int hdrlen = d->bd_bif->bif_hdrlen;
+	int do_wakeup = 0;
 
 	++d->bd_ccount;
 	++bpf_gstats.bs_capt;
@@ -1449,8 +1457,15 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 			return;
 		}
 		ROTATE_BUFFERS(d);
-		bpf_wakeup(d);
+		do_wakeup = 1;
 		curlen = 0;
+	} else if (d->bd_immediate || d->bd_state == BPF_TIMED_OUT) {
+		/*
+		 * Immediate mode is set, or the read timeout has
+		 * already expired during a select call.  A packet
+		 * arrived, so the reader should be woken up.
+		 */
+		do_wakeup = 1;
 	}
 
 	/*
@@ -1470,12 +1485,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	 * Call bpf_wakeup after bd_slen has been updated so that kevent(2)
 	 * will cause filt_bpfread() to be called with it adjusted.
 	 */
-	if (d->bd_immediate || d->bd_state == BPF_TIMED_OUT)
-		/*
-		 * Immediate mode is set, or the read timeout has
-		 * already expired during a select call.  A packet
-		 * arrived, so the reader should be woken up.
-		 */
+	if (do_wakeup)
 		bpf_wakeup(d);
 }
 

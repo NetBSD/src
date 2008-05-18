@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.h,v 1.1 2005/03/20 02:43:50 thorpej Exp $	*/
+/*	$NetBSD: af_inet.h,v 1.1.22.1 2008/05/18 12:30:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,17 +29,5 @@
  * SUCH DAMAGE.
  */
 
-/* XXX */
-#include <netinet/in.h>
-
-/* XXX */
-extern struct in_aliasreq in_addreq;
-
-extern int setipdst;
-
-void	in_alias(struct ifreq *);
-void	in_status(int); 
-void	in_getaddr(const char *, int);
-void	in_getprefix(const char *, int);
-
-void	setifipdst(const char *, int d);
+void	in_status(prop_dictionary_t, prop_dictionary_t, bool);
+void	in_commit_address(prop_dictionary_t, prop_dictionary_t);

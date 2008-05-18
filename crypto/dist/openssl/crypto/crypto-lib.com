@@ -77,13 +77,13 @@ $! Define The Different Encryption Types.
 $!
 $ ENCRYPT_TYPES = "Basic,"+ -
 		  "OBJECTS,"+ -
-		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ -
-		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,"+ -
-		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,"+ -
+		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,"+ -
+		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,"+ -
+		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
-		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
+		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "STORE,PQUEUE"
+		  "STORE,CMS,PQUEUE,TS"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -161,14 +161,15 @@ $!
 $ APPS_DES = "DES/DES,CBC3_ENC"
 $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
-$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,tmdiff,cpt_err,ebcdic,uid,o_time,o_str,o_dir"
+$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,cpt_err,ebcdic,uid,o_time,o_str,o_dir"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
 $ LIB_SHA = "sha_dgst,sha1dgst,sha_one,sha1_one,sha256,sha512"
 $ LIB_MDC2 = "mdc2dgst,mdc2_one"
-$ LIB_HMAC = "hmac"
+$ LIB_HMAC = "hmac,hm_ameth,hm_pmeth"
 $ LIB_RIPEMD = "rmd_dgst,rmd_one"
+$ LIB_WHRLPOOL = "wp_dgst,wp_block"
 $ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
 	"ecb3_enc,cfb64enc,cfb64ede,cfb_enc,ofb64ede,"+ -
 	"enc_read,enc_writ,ofb64enc,"+ -
@@ -184,6 +185,7 @@ $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
 $ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
 	"cmll_cfb,cmll_ctr"
+$ LIB_SEED = "seed,seed_cbc,seed_ecb,seed_cfb,seed_ofb"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM").OR.ARCH.EQS."AXP" THEN LIB_BN_ASM = "bn_asm"
 $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
@@ -193,24 +195,26 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_depr,bn_const"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
-	"ec2_smpl,ec2_mult"
+	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
-	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr"
+	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn,"+ -
+	"rsa_pmeth"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
-	"dsa_err,dsa_ossl,dsa_depr"
+	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_pmeth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
-$ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr"
+$ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr,"+ -
+	"dh_ameth,dh_pmeth,dh_prn"
 $ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
-	"dso_openssl,dso_win32,dso_vms"
+	"dso_openssl,dso_win32,dso_vms,dso_beos"
 $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
-	"tb_cipher,tb_digest,"+ -
-	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,eng_padlock"
+	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
+	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev"
 $ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,"+ -
-	"aes_ctr,aes_ige"
+	"aes_ctr,aes_ige,aes_wrap"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
@@ -224,31 +228,33 @@ $ LIB_LHASH = "lhash,lh_stats"
 $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
 	"rand_vms"
 $ LIB_ERR = "err,err_all,err_prn"
-$ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
+$ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err,obj_xref"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
-	"e_des,e_bf,e_idea,e_des3,e_camellia,"+ -
+	"e_des,e_bf,e_idea,e_des3,e_camellia,e_seed,"+ -
 	"e_rc4,e_aes,names,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
-$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1," + -
+$ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
 	"m_dss,m_dss1,m_mdc2,m_ripemd,m_ecdsa,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
+$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
 	"x_algor,x_val,x_pubkey,x_sig,x_req,x_attrib,x_bignum,"+ -
 	"x_long,x_name,x_x509,x_x509a,x_crl,x_info,x_spki,nsseq,"+ -
-	"d2i_pu,d2i_pr,i2d_pu,i2d_pr"
+	"x_nx509,d2i_pu,d2i_pr,i2d_pu,i2d_pr"
 $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"tasn_new,tasn_fre,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
+	"tasn_prn,ameth_lib,"+ -
 	"f_int,f_string,n_pkey,"+ -
-	"f_enum,a_hdr,x_pkey,a_bool,x_exten,"+ -
-	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_meth,a_bytes,a_strnid,"+ -
+	"f_enum,x_pkey,a_bool,x_exten,bio_asn1,bio_ndef,asn_mime,"+ -
+	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_bytes,a_strnid,"+ -
 	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
-	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey"
+	"pem_x509,pem_xaux,pem_oth,pem_pk8,pem_pkey,pvkfmt"
 $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 	"x509_obj,x509_req,x509spki,x509_vfy,"+ -
 	"x509_set,x509cset,x509rset,x509_err,"+ -
@@ -264,7 +270,7 @@ $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 $ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall,conf_sap"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -
-	"pk7_mime"
+	"pk7_mime,bio_pk7"
 $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_init,p12_key,p12_kiss,p12_mutl,"+ -
 	"p12_utl,p12_npas,pk12err,p12_p8d,p12_p8e"
@@ -276,7 +282,12 @@ $ LIB_UI_COMPAT = ",ui_compat"
 $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
 $ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
+$ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
+	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess"
 $ LIB_PQUEUE = "pqueue"
+$ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
+	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
+	"ts_asn1"
 $!
 $! Setup exceptional compilations
 $!
@@ -333,7 +344,7 @@ $ IF (MODULE_NAME.EQS."ASN1_2")
 $ THEN
 $   MODULE_NAME = "ASN1"
 $ ENDIF
-$ IF (MODULE_NAME.EQS."EVP_2")
+$ IF (MODULE_NAME.EQS."EVP_2".OR.MODULE_NAME.EQS."EVP_3")
 $ THEN
 $   MODULE_NAME = "EVP"
 $ ENDIF
@@ -1014,7 +1025,7 @@ $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
            "/NOLIST/PREFIX=ALL" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -1048,7 +1059,7 @@ $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
@@ -1080,7 +1091,7 @@ $!
 $!    Use GNU C...
 $!
 $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.

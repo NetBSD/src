@@ -1,4 +1,4 @@
-/*	$NetBSD: via_video.c,v 1.3 2007/12/15 00:39:35 perry Exp $	*/
+/*	$NetBSD: via_video.c,v 1.3.8.1 2008/05/18 12:34:35 yamt Exp $	*/
 
 /*
  * Copyright 2005 Thomas Hellstrom. All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.3 2007/12/15 00:39:35 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_video.c,v 1.3.8.1 2008/05/18 12:34:35 yamt Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/pci/drm/via_drm.h>
@@ -67,6 +67,7 @@ void via_release_futex(drm_via_private_t * dev_priv, int context)
 			}
 			*lock = 0;
 		}
+		DRM_DESTROY_WAITQUEUE(&(dev_priv->decoder_queue[i]));
 	}
 }
 
@@ -91,7 +92,7 @@ int via_decoder_futex(DRM_IOCTL_ARGS)
 
 	switch (fx.func) {
 	case VIA_FUTEX_WAIT:
-		DRM_WAIT_ON(ret, dev_priv->decoder_queue[fx.lock],
+		DRM_WAIT_ON(ret, &(dev_priv->decoder_queue[fx.lock]),
 			    (fx.ms / 10) * (DRM_HZ / 100), *lock != fx.val);
 		return ret;
 	case VIA_FUTEX_WAKE:

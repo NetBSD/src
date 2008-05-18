@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.34 2007/10/17 19:53:30 garbled Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.34.18.1 2008/05/18 12:31:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.34 2007/10/17 19:53:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.34.18.1 2008/05/18 12:31:33 yamt Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -134,10 +134,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	sendsig_reset(l, sig);
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (error != 0) {
 		/*
@@ -271,12 +271,12 @@ cpu_setmcontext(l, mcp, flags)
 	}
 #endif
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return (0);
 }

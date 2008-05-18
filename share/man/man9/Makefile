@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.261 2008/04/02 14:49:31 xtraeme Exp $
+#       $NetBSD: Makefile,v 1.261.4.1 2008/05/18 12:31:12 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -191,7 +191,7 @@ MLINKS+=curproc.9 curcpu.9
 MLINKS+=delay.9 DELAY.9
 MLINKS+=disk.9 disk_attach.9 disk.9 disk_detach.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9 disk.9 disk_find.9 \
-	disk.9 disk_resetstat.9
+	disk.9 disk_init.9 disk.9 disk_destroy.9
 MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
 	disklabel.9 setdisklabel.9 disklabel.9 bounds_check_with_label.9
 MLINKS+=dofileread.9 dofilewrite.9 \
@@ -250,8 +250,7 @@ MLINKS+=fstrans.9 fstrans_done.9 \
 	fstrans.9 fscow_establish.9 \
 	fstrans.9 fscow_disestablish.9 \
 	fstrans.9 fscow_run.9
-MLINKS+=getiobuf.9 getiobuf_nowait.9 \
-	getiobuf.9 putiobuf.9
+MLINKS+=getiobuf.9 putiobuf.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=hashinit.9 hashdone.9
 MLINKS+=humanize_number.9 format_bytes.9
@@ -304,6 +303,10 @@ MLINKS+=isapnp.9 isapnp_devmatch.9 \
 	isapnp.9 isapnp_unconfig.9
 MLINKS+=knote.9 KNOTE.9 \
 	kfilter_register.9 kfilter_unregister.9
+MAN+=	kpreempt.9
+MLINKS+=kpreempt.9 kpreempt_disable.9 \
+	kpreempt.9 kpreempt_disabled.9 \
+	kpreempt.9 kpreempt_enable.9
 MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 sprintf.9 \
 	kprintf.9 snprintf.9 kprintf.9 vprintf.9 kprintf.9 vsprintf.9 \
 	kprintf.9 vsnprintf.9 kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \

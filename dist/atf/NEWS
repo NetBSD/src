@@ -3,6 +3,34 @@
 ---------------------------------------------------------------------------
 
 
+Version 0.5
+===========
+
+Release date: May 1st, 2008
+Status:       Experimental
+
+* Clauses 3 and 4 of the BSD license used by the project were dropped.
+  All the code is now under a 2-clause BSD license compatible with the
+  GNU General Public License (GPL).
+
+* Added a C-only binding so that binary test programs do not need to be
+  tied to C++ at all.  This binding is now known as the atf-c library.
+
+* Renamed the C++ binding to atf-c++ for consistency with the new atf-c.
+
+* Renamed the POSIX shell binding to atf-sh for consistency with the new
+  atf-c and atf-c++.
+
+* Added a -w flag to test programs through which it is possible to specify
+  the work directory to be used.  This was possible in prior releases by
+  defining the workdir configuration variable (-v workdir=...), but was a
+  conceptually incorrect mechanism.
+
+* Test programs now preserve the execution order of test cases when they
+  are given in the command line.  Even those mentioned more than once are
+  executed multiple times to comply with the user's requests.
+
+
 Version 0.4
 ===========
 

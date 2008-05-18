@@ -1,7 +1,9 @@
-# $NetBSD: lkm.mi,v 1.20 2008/01/03 20:47:55 jdc Exp $
+# $NetBSD: lkm.mi,v 1.20.8.1 2008/05/18 12:29:38 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+./kernel/modules/miniroot			base-kernel-modules
+./kernel/modules/miniroot/miniroot.kmod		base-kernel-modules
 ./usr/lkm/adosfs.o				base-vfs-lkm
 ./usr/lkm/bsdcomp.o				base-ppp-lkm
 ./usr/lkm/cd9660.o				base-vfs-lkm
