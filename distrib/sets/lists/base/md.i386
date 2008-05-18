@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.122 2008/05/01 21:51:20 xtraeme Exp $
+# $NetBSD: md.i386,v 1.123 2008/05/18 20:55:54 jmcneill Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -10,6 +10,10 @@
 ./dev/ttyv6					base-obsolete		obsolete
 ./dev/ttyv7					base-obsolete		obsolete
 ./dev/vga					base-obsolete		obsolete
+./kernel/modules/drm				base-kernel-modules
+./kernel/modules/drm/drm.kmod			base-kernel-modules
+./kernel/modules/i915drm			base-kernel-modules
+./kernel/modules/i915drm/i915drm.kmod		base-kernel-modules
 ./lib/libm387.so				base-sys-shlib
 ./lib/libm387.so.0				base-sys-shlib
 ./lib/libm387.so.0.1				base-sys-shlib
