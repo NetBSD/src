@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1059 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1060 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -528,3 +528,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ypserv(8): disabled libwrap address to hostname lookups to avoid
 		the chance of ypserv blocking for an extended period of
 		time due a long DNS timeout [chuck 20080516]
+	amd64: Added support for PCI_BUS_FIXUP and PCI_ADDR_FIXUP kernel
+		options. [jmcneill 20080517]
