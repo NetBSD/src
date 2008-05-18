@@ -1,4 +1,4 @@
-/* $NetBSD: drm_lock.c,v 1.5 2007/12/11 11:17:32 lukem Exp $ */
+/* $NetBSD: drm_lock.c,v 1.6 2008/05/18 02:45:17 bjs Exp $ */
 
 /* lock.c -- IOCTLs for locking -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.5 2007/12/11 11:17:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.6 2008/05/18 02:45:17 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_lock.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -88,6 +88,7 @@ int drm_lock_free(drm_device_t *dev,
 {
 	unsigned int old, new;
 
+	mutex_enter(&dev->lock.lock_mutex);
 	dev->lock.filp = NULL;
 	do {
 		old  = *lock;
@@ -97,9 +98,11 @@ int drm_lock_free(drm_device_t *dev,
 	if (_DRM_LOCK_IS_HELD(old) && _DRM_LOCKING_CONTEXT(old) != context) {
 		DRM_ERROR("%d freed heavyweight lock held by %d\n",
 			  context, _DRM_LOCKING_CONTEXT(old));
+		mutex_exit(&dev->lock.lock_mutex);
 		return 1;
 	}
-	DRM_WAKEUP_INT((void *)&dev->lock.lock_queue);
+        cv_broadcast(&(dev->lock.lock_cv));
+	mutex_exit(&(dev->lock.lock_mutex));
 	return 0;
 }
 
@@ -123,7 +126,7 @@ int drm_lock(DRM_IOCTL_ARGS)
         if (dev->driver.use_dma_queue && lock.context < 0)
                 return EINVAL;
 
-	DRM_LOCK();
+	mutex_enter(&(dev->lock.lock_mutex));
 	for (;;) {
 		if (drm_lock_take(&dev->lock.hw_lock->lock, lock.context)) {
 			dev->lock.filp = (void *)(uintptr_t)DRM_CURRENTPID;
@@ -133,12 +136,13 @@ int drm_lock(DRM_IOCTL_ARGS)
 		}
 
 		/* Contention */
-		ret = mtsleep((void *)&dev->lock.lock_queue, PZERO | PCATCH,
-		    "drmlk2", 0, &dev->dev_lock);
-		if (ret != 0)
+		 ret = cv_wait_sig(&(dev->lock.lock_cv), &(dev->lock.lock_mutex));
+		if (ret != 0) {
+			mutex_exit(&(dev->lock.lock_mutex));
 			break;
 	}
-	DRM_UNLOCK();
+	}
+	mutex_exit(&(dev->lock.lock_mutex));
 	DRM_DEBUG("%d %s\n", lock.context, ret ? "interrupted" : "has lock");
 
 	if (ret != 0)
