@@ -1,6 +1,10 @@
-# $NetBSD: md.amd64,v 1.16 2008/05/01 21:51:20 xtraeme Exp $
+# $NetBSD: md.amd64,v 1.17 2008/05/18 20:55:54 jmcneill Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
+./kernel/modules/drm				base-kernel-modules
+./kernel/modules/drm/drm.kmod			base-kernel-modules
+./kernel/modules/i915drm			base-kernel-modules
+./kernel/modules/i915drm/i915drm.kmod		base-kernel-modules
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libx86_64.so				base-sys-shlib
 ./usr/lib/libx86_64.so.0			base-sys-shlib
