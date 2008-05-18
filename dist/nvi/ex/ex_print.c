@@ -1,3 +1,5 @@
+/*	$NetBSD: ex_print.c,v 1.1.1.2 2008/05/18 14:31:17 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -10,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "$Id: ex_print.c,v 1.1.1.1 2008/05/16 18:03:57 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:57 $";
+static const char sccsid[] = "Id: ex_print.c,v 10.24 2001/07/29 19:07:29 skimo Exp (Berkeley) Date: 2001/07/29 19:07:29";
 #endif /* not lint */
 
 #include <sys/types.h>

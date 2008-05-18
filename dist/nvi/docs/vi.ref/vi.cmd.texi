@@ -1,11 +1,12 @@
 @comment  Copyright (c) 1994
+@c $NetBSD: vi.cmd.texi,v 1.1.1.2 2008/05/18 14:31:02 aymeric Exp $
 @comment 	The Regents of the University of California.  All rights reserved.
 @comment  Copyright (c) 1994, 1995, 1996
 @comment 	Keith Bostic.  All rights reserved.
 @comment 
 @comment  See the LICENSE file for redistribution information.
 @comment 
-@comment 	$Id: vi.cmd.texi,v 1.1.1.1 2008/05/16 18:03:43 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:43 $
+@comment 	Id: vi.cmd.texi,v 8.1 2001/08/18 20:43:49 skimo Exp (Berkeley) Date: 2001/08/18 20:43:49
 @comment 
 @chapter Vi Description
 

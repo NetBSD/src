@@ -1,3 +1,5 @@
+/*	$NetBSD: gtk_main.c,v 1.1.1.2 2008/05/18 14:31:22 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1999
  *	Sven Verdoolaege.  All rights reserved.

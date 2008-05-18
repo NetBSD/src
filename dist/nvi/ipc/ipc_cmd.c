@@ -1,3 +1,5 @@
+/*	$NetBSD: ipc_cmd.c,v 1.1.1.2 2008/05/18 14:31:25 aymeric Exp $ */
+
 #include "config.h"
 
 #include <sys/types.h>

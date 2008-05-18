@@ -1,3 +1,5 @@
+/*	$NetBSD: gs.h,v 1.1.1.2 2008/05/18 14:29:45 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: gs.h,v 1.1.1.1 2008/05/16 18:03:17 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:17 $
+ *	Id: gs.h,v 10.55 2001/11/01 10:28:25 skimo Exp (Berkeley) Date: 2001/11/01 10:28:25
  */
 
 #define	TEMPORARY_FILE_STRING	"/tmp"	/* Default temporary file name. */

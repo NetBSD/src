@@ -1,3 +1,5 @@
+/*	$NetBSD: db.h,v 1.1.1.2 2008/05/18 14:29:41 aymeric Exp $ */
+
 #include <db.h>
 
 #ifndef DB_BUFFER_SMALL

@@ -1,7 +1,9 @@
+/*	$NetBSD: iswblank.c,v 1.1.1.2 2008/05/18 14:29:38 aymeric Exp $ */
+
 #include "config.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char sccsid[] = "$Id: iswblank.c,v 1.1.1.1 2008/05/16 18:03:11 aymeric Exp $";
+static const char sccsid[] = "Id: iswblank.c,v 1.1 2001/10/11 19:22:29 skimo Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>

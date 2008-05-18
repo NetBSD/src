@@ -1,3 +1,5 @@
+/*	$NetBSD: utils.h,v 1.1.1.2 2008/05/18 14:31:39 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994

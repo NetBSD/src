@@ -1,3 +1,5 @@
+/*	$NetBSD: seq.h,v 1.1.1.2 2008/05/18 14:29:52 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	$Id: seq.h,v 1.1.1.1 2008/05/16 18:03:24 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:24 $
+ *	Id: seq.h,v 10.3 1996/03/06 19:51:03 bostic Exp (Berkeley) Date: 1996/03/06 19:51:03
  */
 
 /*
