@@ -1,3 +1,5 @@
+/*	$NetBSD: pthread.c,v 1.1.1.2 2008/05/18 14:29:50 aymeric Exp $ */
+
 /*-
  * Copyright (c) 2000
  *	Sven Verdoolaege.  All rights reserved.
@@ -8,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "$Id: pthread.c,v 1.1.1.1 2008/05/16 18:03:21 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:03:21 $";
+static const char sccsid[] = "Id: pthread.c,v 1.4 2000/07/22 14:52:37 skimo Exp (Berkeley) Date: 2000/07/22 14:52:37";
 #endif /* not lint */
 
 #include <sys/types.h>

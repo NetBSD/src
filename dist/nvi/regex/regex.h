@@ -1,3 +1,5 @@
+/*	$NetBSD: regex.h,v 1.1.1.2 2008/05/18 14:31:38 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1992 Henry Spencer.
  * Copyright (c) 1992, 1993

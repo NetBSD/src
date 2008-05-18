@@ -1,3 +1,5 @@
+/*	$NetBSD: vi_mextern.h,v 1.1.1.2 2008/05/18 14:31:29 aymeric Exp $ */
+
 /*-
  * Copyright (c) 1996
  *	Rob Zimmermann.  All rights reserved.
@@ -6,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	"$Id: vi_mextern.h,v 1.1.1.1 2008/05/16 18:04:10 aymeric Exp $ (Berkeley) $Date: 2008/05/16 18:04:10 $";
+ *	"Id: vi_mextern.h,v 8.6 2000/07/05 11:33:19 skimo Exp (Berkeley) Date: 2000/07/05 11:33:19";
  */
 
 /*
