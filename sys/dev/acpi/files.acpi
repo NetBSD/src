@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.51 2008/05/01 20:18:19 cegger Exp $
+#	$NetBSD: files.acpi,v 1.52 2008/05/18 22:05:59 cegger Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -136,3 +136,8 @@ file	dev/acpi/sony_acpi.c		sony_acpi
 device	thinkpad
 attach	thinkpad at acpinodebus
 file	dev/acpi/thinkpad_acpi.c	thinkpad
+
+# Direct Application Launch Buttons
+device	acpidalb
+attach	acpidalb at acpinodebus
+file	dev/acpi/dalb_acpi.c		acpidalb

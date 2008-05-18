@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.212 2008/05/18 03:52:17 bjs Exp $
+# $NetBSD: GENERIC,v 1.213 2008/05/18 22:05:59 cegger Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.212 $"
+#ident 		"GENERIC-$Revision: 1.213 $"
 
 maxusers	64		# estimated number of users
 
@@ -268,6 +268,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpidalb*	at acpi?		# Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
 # attach phase.
