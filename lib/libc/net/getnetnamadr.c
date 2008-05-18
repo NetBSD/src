@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.40 2008/05/08 13:01:42 lukem Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.41 2008/05/18 22:36:15 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.40 2008/05/08 13:01:42 lukem Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.41 2008/05/18 22:36:15 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -343,8 +343,10 @@ _dns_getnetbyaddr(void *cbrv, void *cbdata, va_list ap)
 		return NS_NOTFOUND;
 	}
 	res = __res_get_state();
-	if (res == NULL)
+	if (res == NULL) {
+		free(buf);
 		return NS_NOTFOUND;
+	}
 	anslen = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (anslen < 0) {
 		free(buf);
