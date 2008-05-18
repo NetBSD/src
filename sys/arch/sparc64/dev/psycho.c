@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.85 2008/04/05 13:40:05 cegger Exp $	*/
+/*	$NetBSD: psycho.c,v 1.86 2008/05/18 22:40:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.85 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.86 2008/05/18 22:40:14 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -672,7 +672,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
-	intr_establish(ipl, ih);
+	intr_establish(ipl, ipl != IPL_VM, ih);
 	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 }
 
@@ -1298,7 +1298,7 @@ found:
 	    "; installing handler %p arg %p with ino %u pil %u\n",
 	    handler, arg, (u_int)ino, (u_int)ih->ih_pil));
 
-	intr_establish(ih->ih_pil, ih);
+	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
 	/*
 	 * Enable the interrupt now we have the handler installed.

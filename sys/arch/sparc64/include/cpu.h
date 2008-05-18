@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.80 2008/04/29 14:06:31 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.81 2008/05/18 22:40:14 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -315,7 +315,7 @@ struct intrhand {
 extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
-void	intr_establish(int level, struct intrhand *);
+void	intr_establish(int level, bool mpsafe, struct intrhand *);
 void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);

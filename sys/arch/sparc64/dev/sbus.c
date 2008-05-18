@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.79 2008/04/05 13:40:05 cegger Exp $ */
+/*	$NetBSD: sbus.c,v 1.80 2008/05/18 22:40:14 martin Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.79 2008/04/05 13:40:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.80 2008/05/18 22:40:14 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -274,7 +274,7 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 	ipl = 1;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(*(ih->ih_map));
-	intr_establish(ipl, ih);
+	intr_establish(ipl, true, ih);
 	*(ih->ih_map) |= INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT);
 	
 	/*
@@ -646,7 +646,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 	ih->ih_arg = arg;
 	ih->ih_number = vec;
 	ih->ih_pil = (1<<ipl);
-	intr_establish(ipl, ih);
+	intr_establish(ipl, level != IPL_VM, ih);
 	return (ih);
 }
 
