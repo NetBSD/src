@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.895 2008/05/13 13:43:47 ad Exp $
+# $NetBSD: GENERIC,v 1.896 2008/05/18 22:05:59 cegger Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.895 $"
+#ident 		"GENERIC-$Revision: 1.896 $"
 
 maxusers	64		# estimated number of users
 
@@ -345,6 +345,7 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
 # attach phase.
