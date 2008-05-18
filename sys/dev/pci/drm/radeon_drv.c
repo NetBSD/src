@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.5 2007/12/11 11:48:45 lukem Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.6 2008/05/18 21:12:44 jmcneill Exp $	*/
 
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,10 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.5 2007/12/11 11:48:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.6 2008/05/18 21:12:44 jmcneill Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb Exp $");
 */
+
+#ifdef _MODULE
+#include <sys/module.h>
+#endif
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>
@@ -147,5 +151,64 @@ radeondrm_attach(struct device *parent, struct device *self, void *aux)
 
 CFATTACH_DECL(radeondrm, sizeof(drm_device_t), radeondrm_probe, radeondrm_attach,
 	drm_detach, drm_activate);
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, radeondrm, NULL);
+
+CFDRIVER_DECL(radeondrm, DV_DULL, NULL);
+extern struct cfattach radeondrm_ca;
+static int drmloc[] = { -1 };
+static struct cfparent drmparent = {
+	"drm", "vga", DVUNIT_ANY
+};
+static struct cfdata radeondrm_cfdata[] = {
+	{
+		.cf_name = "radeondrm",
+		.cf_atname = "radeondrm",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = drmloc,
+		.cf_flags = 0,
+		.cf_pspec = &drmparent,
+	},
+	{ NULL }
+};
+
+static int
+radeondrm_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = config_cfdriver_attach(&radeondrm_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("radeondrm", &radeondrm_ca);
+		if (err) {
+			config_cfdriver_detach(&radeondrm_cd);
+			return err;
+		}
+		err = config_cfdata_attach(radeondrm_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("radeondrm", &radeondrm_ca);
+			config_cfdriver_detach(&radeondrm_cd);
+			return err;
+		}
+		return 0;
+	case MODULE_CMD_FINI:
+		err = config_cfdriver_detach(&radeondrm_cd);
+		if (err)
+			return err;
+		config_cfattach_detach("radeondrm", &radeondrm_ca);
+		config_cfdriver_detach(&radeondrm_cd);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif
 
 #endif
