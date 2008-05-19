@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1147 2008/05/19 02:48:59 yamt Exp $
+#	$NetBSD: mi,v 1.1148 2008/05/19 02:50:56 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2466,6 +2466,7 @@
 ./usr/libdata/debug/sbin/newfs_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_msdos.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/newfs_sysvbfs.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/newfs_udf.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/pfctl.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pflogd.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/ping.debug		comp-netutil-debug	debug
@@ -3069,6 +3070,7 @@
 ./usr/libdata/debug/usr/sbin/mknetid.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/mld6query.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/mlxctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/mmcformat.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mopchk.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mopcopy.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mopd.debug		comp-bootserver-debug	debug
