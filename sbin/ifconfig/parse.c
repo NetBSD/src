@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.7 2008/05/12 21:54:51 dyoung Exp $	*/
+/*	$NetBSD: parse.c,v 1.8 2008/05/19 18:00:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -405,9 +405,7 @@ paddr_match(const struct parser *p, const struct match *im, struct match *om,
 			u.sat.sat_addr.s_node = node;
 			sa = &u.sa;
 		}
-		if (af != AF_UNSPEC)
-			break;
-		/*FALLTHROUGH*/
+		break;
 	case AF_ISO:
 		u.siso.siso_len = sizeof(u.siso);
 		u.siso.siso_family = AF_ISO;
@@ -668,8 +666,14 @@ pkw_match(const struct parser *p, const struct match *im,
 		if (o == NULL)
 			goto err;
 		break;
-	case KW_T_NUM:
-		o = (prop_object_t)prop_number_create_integer(u->u_num);
+	case KW_T_INT:
+		o = (prop_object_t)prop_number_create_integer(u->u_sint);
+		if (o == NULL)
+			goto err;
+		break;
+	case KW_T_UINT:
+		o = (prop_object_t)prop_number_create_unsigned_integer(
+		    u->u_uint);
 		if (o == NULL)
 			goto err;
 		break;
