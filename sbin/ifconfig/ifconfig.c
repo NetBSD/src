@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.204 2008/05/12 22:06:13 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.205 2008/05/19 18:00:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.204 2008/05/12 22:06:13 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.205 2008/05/19 18:00:31 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,8 +208,8 @@ static const struct kwinst ifflagskw[] = {
 	, IFKW("link0", IFF_LINK0)
 	, IFKW("link1", IFF_LINK1)
 	, IFKW("link2", IFF_LINK2)
-	, {.k_word = "down", .k_type = KW_T_NUM, .k_num = -IFF_UP}
-	, {.k_word = "up", .k_type = KW_T_NUM, .k_num = IFF_UP}
+	, {.k_word = "down", .k_type = KW_T_INT, .k_int = -IFF_UP}
+	, {.k_word = "up", .k_type = KW_T_INT, .k_int = IFF_UP}
 };
 
 static const struct kwinst ifcapskw[] = {
@@ -313,24 +313,24 @@ static const struct kwinst misckw[] = {
 
 /* key: clonecmd */
 static const struct kwinst clonekw[] = {
-	{.k_word = "create", .k_type = KW_T_NUM, .k_num = SIOCIFCREATE,
+	{.k_word = "create", .k_type = KW_T_INT, .k_int = SIOCIFCREATE,
 	 .k_nextparser = &opt_silent_family.pb_parser},
-	{.k_word = "destroy", .k_type = KW_T_NUM, .k_num = SIOCIFDESTROY}
+	{.k_word = "destroy", .k_type = KW_T_INT, .k_int = SIOCIFDESTROY}
 };
 
 static const struct kwinst familykw[] = {
-	  {.k_word = "inet", .k_type = KW_T_NUM, .k_num = AF_INET,
+	  {.k_word = "inet", .k_type = KW_T_INT, .k_int = AF_INET,
 	   .k_nextparser = NULL}
-	, {.k_word = "link", .k_type = KW_T_NUM, .k_num = AF_LINK,
+	, {.k_word = "link", .k_type = KW_T_INT, .k_int = AF_LINK,
 	   .k_nextparser = NULL}
 #ifdef INET6
-	, {.k_word = "inet6", .k_type = KW_T_NUM, .k_num = AF_INET6,
+	, {.k_word = "inet6", .k_type = KW_T_INT, .k_int = AF_INET6,
 	   .k_nextparser = NULL}
 #endif
 #ifndef INET_ONLY	/* small version, for boot media */
-	, {.k_word = "atalk", .k_type = KW_T_NUM, .k_num = AF_APPLETALK,
+	, {.k_word = "atalk", .k_type = KW_T_INT, .k_int = AF_APPLETALK,
 	   .k_nextparser = NULL}
-	, {.k_word = "iso", .k_type = KW_T_NUM, .k_num = AF_ISO,
+	, {.k_word = "iso", .k_type = KW_T_INT, .k_int = AF_ISO,
 	   .k_nextparser = NULL}
 #endif	/* INET_ONLY */
 };
