@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.122 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.123 2008/05/19 17:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,10 +69,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.122 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.123 2008/05/19 17:06:02 ad Exp $");
 
 #include "opt_ntp.h"
-#include "opt_multiprocessor.h"
 #include "opt_perfctrs.h"
 
 #include <sys/param.h>
@@ -219,10 +218,7 @@ hardclock(struct clockframe *frame)
 	if ((--ci->ci_schedstate.spc_ticks) <= 0)
 		sched_tick(ci);
 
-#if defined(MULTIPROCESSOR)
-	if (CPU_IS_PRIMARY(ci))
-#endif
-	{
+	if (CPU_IS_PRIMARY(ci)) {
 		hardclock_ticks++;
 		tc_ticktock();
 	}

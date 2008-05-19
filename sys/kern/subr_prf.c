@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.121 2008/05/13 11:54:45 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.122 2008/05/19 17:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.121 2008/05/13 11:54:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.122 2008/05/19 17:06:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_kgdb.h"
-#include "opt_multiprocessor.h"
 #include "opt_dump.h"
 
 #include <sys/param.h>
