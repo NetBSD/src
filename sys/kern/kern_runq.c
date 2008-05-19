@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.3 2008/04/30 09:17:12 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.4 2008/05/19 12:48:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.3 2008/04/30 09:17:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.4 2008/05/19 12:48:54 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -204,10 +204,9 @@ sched_enqueue(struct lwp *l, bool swtch)
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 
 	/* Update the last run time on switch */
-	if (__predict_true(swtch == true)) {
-		l->l_rticks = hardclock_ticks;
+	if (__predict_true(swtch == true))
 		l->l_rticksum += (hardclock_ticks - l->l_rticks);
-	} else if (l->l_rticks == 0)
+	else if (l->l_rticks == 0)
 		l->l_rticks = hardclock_ticks;
 
 	/* Enqueue the thread */
@@ -530,6 +529,56 @@ sched_takecpu(struct lwp *l)
 #endif	/* MULTIPROCESSOR */
 
 /*
+ * Scheduling statistics and balancing.
+ */
+void
+sched_lwp_stats(struct lwp *l)
+{
+	int batch;
+
+	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
+	    l->l_stat == LSSUSPENDED)
+		l->l_slptime++;
+
+	/*
+	 * Set that thread is more CPU-bound, if sum of run time exceeds the
+	 * sum of sleep time.  Check if thread is CPU-bound a first time.
+	 */
+	batch = (l->l_rticksum > l->l_slpticksum);
+	if (batch != 0) {
+		if ((l->l_flag & LW_BATCH) == 0)
+			batch = 0;
+		l->l_flag |= LW_BATCH;
+	} else
+		l->l_flag &= ~LW_BATCH;
+
+	/*
+	 * If thread is CPU-bound and never sleeps, it would occupy the CPU.
+	 * In such case reset the value of last sleep, and check it later, if
+	 * it is still zero - perform the migration, unmark the batch flag.
+	 */
+	if (batch && (l->l_slptime + l->l_slpticksum) == 0) {
+		if (l->l_slpticks == 0) {
+			if (l->l_target_cpu == NULL &&
+			    (l->l_stat == LSRUN || l->l_stat == LSONPROC)) {
+				struct cpu_info *ci = sched_takecpu(l);
+				l->l_target_cpu = (ci != l->l_cpu) ? ci : NULL;
+			}
+			l->l_flag &= ~LW_BATCH;
+		} else {
+			l->l_slpticks = 0;
+		}
+	}
+
+	/* Reset the time sums */
+	l->l_slpticksum = 0;
+	l->l_rticksum = 0;
+
+	/* Scheduler-specific hook */
+	sched_pstats_hook(l, batch);
+}
+
+/*
  * Scheduler mill.
  */
 struct lwp *
@@ -578,12 +627,14 @@ bool
 sched_curcpu_runnable_p(void)
 {
 	const struct cpu_info *ci;
+	const struct schedstate_percpu *spc;
 	const runqueue_t *ci_rq;
 	bool rv;
 
 	kpreempt_disable();
 	ci = curcpu();
-	ci_rq = ci->ci_schedstate.spc_sched_info;
+	spc = &ci->ci_schedstate;
+	ci_rq = spc->spc_sched_info;
 
 #ifndef __HAVE_FAST_SOFTINTS
 	if (ci->ci_data.cpu_softints) {
@@ -592,7 +643,7 @@ sched_curcpu_runnable_p(void)
 	}
 #endif
 
-	if (ci->ci_schedstate.spc_flags & SPCF_OFFLINE)
+	if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
 		rv = (ci_rq->r_count - ci_rq->r_mcount);
 	else
 		rv = ci_rq->r_count != 0;
