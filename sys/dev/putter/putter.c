@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.9 2008/03/21 21:54:59 ad Exp $	*/
+/*	$NetBSD: putter.c,v 1.10 2008/05/19 16:59:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.9 2008/03/21 21:54:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.10 2008/05/19 16:59:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.9 2008/03/21 21:54:59 ad Exp $");
 #include <sys/kmem.h>
 #include <sys/poll.h>
 #include <sys/socketvar.h>
+#include <sys/module.h>
 
 #include <dev/putter/putter_sys.h>
 
@@ -576,4 +577,23 @@ get_pi_idx(struct putter_instance *pi_i)
 		TAILQ_INSERT_BEFORE(pi, pi_i, pi_entries);
 
 	return i;
+}
+
+MODULE(MODULE_CLASS_MISC, putter, NULL);
+
+static int
+putter_modcmd(modcmd_t cmd, void *arg)
+{
+	int bmajor = -1, cmajor = -1;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return devsw_attach("putter", NULL, &bmajor,
+		    &putter_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &putter_cdevsw);
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }
