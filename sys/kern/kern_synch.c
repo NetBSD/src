@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.241 2008/04/30 12:44:27 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.242 2008/05/19 12:48:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241 2008/04/30 12:44:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.242 2008/05/19 12:48:54 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -1107,7 +1107,7 @@ sched_pstats(void *arg)
 			lwp_lock(l);
 			runtm += l->l_rtime.sec;
 			l->l_swtime++;
-			sched_pstats_hook(l);
+			sched_lwp_stats(l);
 			lwp_unlock(l);
 
 			/*
