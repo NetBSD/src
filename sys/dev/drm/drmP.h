@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.26 2008/05/19 00:17:39 bjs Exp $ */
+/* $NetBSD: drmP.h,v 1.27 2008/05/19 21:05:37 jmcneill Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -194,7 +194,11 @@ typedef struct drm_file drm_file_t;
 
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
+#if !defined(_MODULE)
 MALLOC_DECLARE(M_DRM);
+#else
+#define M_DRM M_TEMP
+#endif
 
 #define __OS_HAS_AGP	1
 
