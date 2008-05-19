@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.136 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.137 2008/05/19 09:36:55 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.136 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.137 2008/05/19 09:36:55 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -587,7 +587,7 @@ linux_read_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *uap,
 		error = copyout(ldt_buf, SCARG(uap, ptr),
 		    gl.num * sizeof *ldt_buf);
 	}
-	free(ldt, M_TEMP);
+	free(ldt_buf, M_TEMP);
 
 	return error;
 }
