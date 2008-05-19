@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.16 2008/05/04 12:51:44 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.17 2008/05/19 17:33:42 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.16 2008/05/04 12:51:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.17 2008/05/19 17:33:42 jmcneill Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -550,6 +550,7 @@ kobj_load(kobj_t ko)
 			    shdr[i].sh_size != 0) {
 			    	kobj_error("non-loadable BSS section in "
 			    	    "pre-loaded module");
+				error = EINVAL;
 			    	goto out;
 			} else {
 				ko->ko_progtab[pb].name = "<<NOBITS>>";
