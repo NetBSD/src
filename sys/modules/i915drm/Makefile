@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2008/05/18 20:04:03 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2 2008/05/19 13:21:57 tnn Exp $
 
-.PATH:	../../dev/pci/drm
+.include "../Makefile.inc"
+
+.PATH:	${S}/dev/pci/drm
 
 KMOD=   i915drm
 
