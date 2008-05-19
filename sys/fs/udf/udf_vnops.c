@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.18 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.19 2008/05/19 20:12:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.18 2008/05/14 16:49:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.19 2008/05/19 20:12:36 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1795,7 +1795,8 @@ udf_readlink(void *v)
 		case UDF_PATH_COMP_NAME :
 			memset(tmpname, 0, PATH_MAX);
 			memcpy(&pathcomp, pathpos, len + l_ci);
-			udf_to_unix_name(tmpname, pathcomp.ident, l_ci,
+			udf_to_unix_name(tmpname, MAXPATHLEN,
+				pathcomp.ident, l_ci,
 				&udf_node->ump->logical_vol->desc_charset);
 			namelen = strlen(tmpname);
 			if (targetlen < namelen + 1) {
