@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1146 2008/05/16 20:24:57 peter Exp $
+#	$NetBSD: mi,v 1.1147 2008/05/19 02:48:59 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1715,8 +1715,8 @@
 ./usr/include/openssl/store.h			comp-c-include		crypto
 ./usr/include/openssl/symhacks.h		comp-c-include		crypto
 ./usr/include/openssl/tls1.h			comp-c-include		crypto
-./usr/include/openssl/ts.h			comp-c-include		crypto
 ./usr/include/openssl/tmdiff.h			comp-obsolete		obsolete
+./usr/include/openssl/ts.h			comp-c-include		crypto
 ./usr/include/openssl/txt_db.h			comp-c-include		crypto
 ./usr/include/openssl/ui.h			comp-c-include		crypto
 ./usr/include/openssl/ui_compat.h		comp-c-include		crypto
@@ -4869,8 +4869,8 @@
 ./usr/share/man/cat3/event_base_dispatch.0	comp-c-catman		.cat
 ./usr/share/man/cat3/event_base_free.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_base_loop.0		comp-c-catman		.cat
-./usr/share/man/cat3/event_base_loopexit.0	comp-c-catman		.cat
 ./usr/share/man/cat3/event_base_loopbreak.0	comp-c-catman		.cat
+./usr/share/man/cat3/event_base_loopexit.0	comp-c-catman		.cat
 ./usr/share/man/cat3/event_base_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_base_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_del.0		comp-c-catman		.cat
@@ -4878,8 +4878,8 @@
 ./usr/share/man/cat3/event_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_initialized.0	comp-c-catman		.cat
 ./usr/share/man/cat3/event_loop.0		comp-c-catman		.cat
-./usr/share/man/cat3/event_loopexit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_loopbreak.0		comp-c-catman		.cat
+./usr/share/man/cat3/event_loopexit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_pending.0		comp-c-catman		.cat
 ./usr/share/man/cat3/event_set.0		comp-c-catman		.cat
@@ -9964,8 +9964,8 @@
 ./usr/share/man/man3/event_base_dispatch.3	comp-c-man		.man
 ./usr/share/man/man3/event_base_free.3		comp-c-man		.man
 ./usr/share/man/man3/event_base_loop.3		comp-c-man		.man
-./usr/share/man/man3/event_base_loopexit.3	comp-c-man		.man
 ./usr/share/man/man3/event_base_loopbreak.3	comp-c-man		.man
+./usr/share/man/man3/event_base_loopexit.3	comp-c-man		.man
 ./usr/share/man/man3/event_base_once.3		comp-c-man		.man
 ./usr/share/man/man3/event_base_set.3		comp-c-man		.man
 ./usr/share/man/man3/event_del.3		comp-c-man		.man
@@ -9973,8 +9973,8 @@
 ./usr/share/man/man3/event_init.3		comp-c-man		.man
 ./usr/share/man/man3/event_initialized.3	comp-c-man		.man
 ./usr/share/man/man3/event_loop.3		comp-c-man		.man
-./usr/share/man/man3/event_loopexit.3		comp-c-man		.man
 ./usr/share/man/man3/event_loopbreak.3		comp-c-man		.man
+./usr/share/man/man3/event_loopexit.3		comp-c-man		.man
 ./usr/share/man/man3/event_once.3		comp-c-man		.man
 ./usr/share/man/man3/event_pending.3		comp-c-man		.man
 ./usr/share/man/man3/event_set.3		comp-c-man		.man
