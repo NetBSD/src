@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.48 2008/05/19 20:12:36 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.49 2008/05/19 23:48:04 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.48 2008/05/19 20:12:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.49 2008/05/19 23:48:04 christos Exp $");
 #endif /* not lint */
 
 
@@ -3476,7 +3476,8 @@ unix_to_udf_name(char *result, uint8_t *result_len, char const *name, int name_l
 	uint16_t   *outchp;
 	const char *inchp;
 	const char *osta_id = "OSTA Compressed Unicode";
-	int         cnt, udf_chars, is_osta_typ0, bits;
+	int         udf_chars, is_osta_typ0, bits;
+	size_t      cnt;
 
 	/* allocate temporary unicode-16 buffer */
 	raw_name = malloc(1024, M_UDFTEMP, M_WAITOK);
@@ -3487,6 +3488,7 @@ unix_to_udf_name(char *result, uint8_t *result_len, char const *name, int name_l
 	outchp = raw_name;
 	bits = 8;
 	for (cnt = name_len, udf_chars = 0; cnt;) {
+/*###3490 [cc] warning: passing argument 2 of 'wget_utf8' from incompatible pointer type%%%*/
 		*outchp = wget_utf8(&inchp, &cnt);
 		if (*outchp > 0xff)
 			bits=16;
