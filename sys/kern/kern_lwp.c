@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.110 2008/05/06 18:40:57 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.111 2008/05/19 17:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -198,10 +198,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110 2008/05/06 18:40:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.111 2008/05/19 17:06:02 ad Exp $");
 
 #include "opt_ddb.h"
-#include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
 #define _LWP_API_PRIVATE
@@ -697,11 +696,7 @@ lwp_exit(struct lwp *l)
 	/*
 	 * Verify that we hold no locks other than the kernel lock.
 	 */
-#ifdef MULTIPROCESSOR
 	LOCKDEBUG_BARRIER(&kernel_lock, 0);
-#else
-	LOCKDEBUG_BARRIER(NULL, 0);
-#endif
 
 	/*
 	 * If we are the last live LWP in a process, we need to exit the
@@ -1655,7 +1650,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	mutex_exit(&lp->lp_lock);
 
 	KPREEMPT_DISABLE(l);
-	l->l_lwpctl->lc_curcpu = (short)curcpu()->ci_data.cpu_index;
+	l->l_lwpctl->lc_curcpu = (int)curcpu()->ci_data.cpu_index;
 	KPREEMPT_ENABLE(l);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.242 2008/05/19 12:48:54 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.243 2008/05/19 17:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,11 +68,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.242 2008/05/19 12:48:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.243 2008/05/19 17:06:02 ad Exp $");
 
 #include "opt_kstack.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
 #include "opt_perfctrs.h"
 
 #define	__MUTEX_PRIVATE

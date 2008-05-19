@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.163 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.164 2008/05/19 17:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,10 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.163 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.164 2008/05/19 17:06:02 ad Exp $");
 
 #include "opt_ktrace.h"
-#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

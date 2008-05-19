@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.147 2008/04/29 14:35:21 rmind Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.148 2008/05/19 17:06:02 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,9 +77,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147 2008/04/29 14:35:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.148 2008/05/19 17:06:02 ad Exp $");
 
-#include "opt_multiprocessor.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
