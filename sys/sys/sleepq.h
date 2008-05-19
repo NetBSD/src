@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.11 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.12 2008/05/19 17:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,11 +31,6 @@
 
 #ifndef	_SYS_SLEEPQ_H_
 #define	_SYS_SLEEPQ_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
-#endif
 
 #include <sys/queue.h>
 #include <sys/mutex.h>

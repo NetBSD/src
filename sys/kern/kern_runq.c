@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.4 2008/05/19 12:48:54 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.5 2008/05/19 17:06:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,13 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.4 2008/05/19 12:48:54 rmind Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.5 2008/05/19 17:06:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-
 #include <sys/bitops.h>
 #include <sys/cpu.h>
 #include <sys/idle.h>

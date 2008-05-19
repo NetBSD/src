@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.208 2008/04/29 16:21:01 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.209 2008/05/19 17:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208 2008/04/29 16:21:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.209 2008/05/19 17:06:02 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -557,11 +557,7 @@ exit1(struct lwp *l, int rv)
 	rw_exit(&p->p_reflock);
 
 	/* Verify that we hold no locks other than the kernel lock. */
-#ifdef MULTIPROCESSOR
 	LOCKDEBUG_BARRIER(&kernel_lock, 0);
-#else
-	LOCKDEBUG_BARRIER(NULL, 0);
-#endif
 
 	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
@@ -595,9 +591,7 @@ exit_lwps(struct lwp *l)
 	struct lwp *l2;
 	int error;
 	lwpid_t waited;
-#if defined(MULTIPROCESSOR)
 	int nlocks;
-#endif
 
 	KERNEL_UNLOCK_ALL(l, &nlocks);
 
@@ -644,13 +638,7 @@ exit_lwps(struct lwp *l)
 		DPRINTF(("exit_lwps: Got LWP %d from lwp_wait1()\n", waited));
 	}
 
-#if defined(MULTIPROCESSOR)
-	if (nlocks > 0) {
-		mutex_exit(p->p_lock);
-		KERNEL_LOCK(nlocks, l);
-		mutex_enter(p->p_lock);
-	}
-#endif /* defined(MULTIPROCESSOR) */
+	KERNEL_LOCK(nlocks, l);
 	KASSERT(p->p_nlwps == 1);
 }
 
