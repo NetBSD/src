@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.11 2008/05/19 17:15:34 ad Exp $	*/
+/*	$NetBSD: putter.c,v 1.12 2008/05/19 19:52:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.11 2008/05/19 17:15:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.12 2008/05/19 19:52:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -579,6 +579,7 @@ get_pi_idx(struct putter_instance *pi_i)
 	return i;
 }
 
+#ifndef _RUMPKERNEL
 MODULE(MODULE_CLASS_MISC, putter, NULL);
 
 static int
@@ -596,3 +597,4 @@ putter_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
+#endif /* !_RUMPKERNEL */
