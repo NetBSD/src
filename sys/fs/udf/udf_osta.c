@@ -1,8 +1,8 @@
-/* $NetBSD: udf_osta.c,v 1.6 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_osta.c,v 1.7 2008/05/19 20:12:36 reinoud Exp $ */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.6 2008/05/14 16:49:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_osta.c,v 1.7 2008/05/19 20:12:36 reinoud Exp $");
 #endif /* not lint */
 
 /*
@@ -288,7 +288,7 @@ int IsIllegal(unicode_t ch);
 
 /* #include <stdio.h> */
 static int UnicodeIsPrint(unicode_t ch) {
-	return (ch >=' ') && (ch < 127);
+	return (ch >=' ') && (ch != 127);
 }
 
 

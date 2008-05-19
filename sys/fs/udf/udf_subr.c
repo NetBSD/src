@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.47 2008/05/17 08:07:21 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.48 2008/05/19 20:12:36 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.47 2008/05/17 08:07:21 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.48 2008/05/19 20:12:36 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.47 2008/05/17 08:07:21 reinoud Exp $"
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <fs/unicode.h>
 #include <dev/clock_subr.h>
 
 #include <fs/udf/ecma167-udf.h>
@@ -3426,13 +3427,14 @@ udf_icb_to_unix_filetype(uint32_t icbftype)
 /* --------------------------------------------------------------------- */
 
 void
-udf_to_unix_name(char *result, char *id, int len, struct charspec *chsp)
+udf_to_unix_name(char *result, int result_len, char *id, int len,
+	struct charspec *chsp)
 {
 	uint16_t   *raw_name, *unix_name;
 	uint16_t   *inchp, ch;
 	uint8_t	   *outchp;
 	const char *osta_id = "OSTA Compressed Unicode";
-	int         ucode_chars, nice_uchars, is_osta_typ0;
+	int         ucode_chars, nice_uchars, is_osta_typ0, nout;
 
 	raw_name = malloc(2048 * sizeof(uint16_t), M_UDFTEMP, M_WAITOK);
 	unix_name = raw_name + 1024;			/* split space in half */
@@ -3442,20 +3444,23 @@ udf_to_unix_name(char *result, char *id, int len, struct charspec *chsp)
 	is_osta_typ0  = (chsp->type == 0);
 	is_osta_typ0 &= (strcmp((char *) chsp->inf, osta_id) == 0);
 	if (is_osta_typ0) {
+		/* TODO clean up */
 		*raw_name = *unix_name = 0;
 		ucode_chars = udf_UncompressUnicode(len, (uint8_t *) id, raw_name);
 		ucode_chars = MIN(ucode_chars, UnicodeLength((unicode_t *) raw_name));
 		nice_uchars = UDFTransName(unix_name, raw_name, ucode_chars);
+		/* output UTF8 */
 		for (inchp = unix_name; nice_uchars>0; inchp++, nice_uchars--) {
 			ch = *inchp;
-			/* XXX sloppy unicode -> latin */
-			*outchp++ = ch & 255;
+			nout = wput_utf8(outchp, result_len, ch);
+			outchp += nout; result_len -= nout;
 			if (!ch) break;
 		}
 		*outchp++ = 0;
 	} else {
 		/* assume 8bit char length byte latin-1 */
 		assert(*id == 8);
+		assert(strlen((char *) (id+1)) <= MAXNAMLEN);
 		strncpy((char *) result, (char *) (id+1), strlen((char *) (id+1)));
 	}
 	free(raw_name, M_UDFTEMP);
@@ -3471,27 +3476,34 @@ unix_to_udf_name(char *result, uint8_t *result_len, char const *name, int name_l
 	uint16_t   *outchp;
 	const char *inchp;
 	const char *osta_id = "OSTA Compressed Unicode";
-	int         cnt, udf_chars, is_osta_typ0;
+	int         cnt, udf_chars, is_osta_typ0, bits;
 
 	/* allocate temporary unicode-16 buffer */
 	raw_name = malloc(1024, M_UDFTEMP, M_WAITOK);
 
-	/* convert latin-1 or whatever to unicode-16 */
+	/* convert utf8 to unicode-16 */
 	*raw_name = 0;
 	inchp  = name;
 	outchp = raw_name;
-	for (cnt = name_len; cnt; cnt--) {
-		*outchp++ = (uint16_t) (*inchp++);
+	bits = 8;
+	for (cnt = name_len, udf_chars = 0; cnt;) {
+		*outchp = wget_utf8(&inchp, &cnt);
+		if (*outchp > 0xff)
+			bits=16;
+		outchp++;
+		udf_chars++;
 	}
+	/* null terminate just in case */
+	*outchp++ = 0;
 
 	is_osta_typ0  = (chsp->type == 0);
 	is_osta_typ0 &= (strcmp((char *) chsp->inf, osta_id) == 0);
 	if (is_osta_typ0) {
-		udf_chars = udf_CompressUnicode(name_len, 8,
+		udf_chars = udf_CompressUnicode(udf_chars, bits,
 				(unicode_t *) raw_name,
 				(byte *) result);
 	} else {
-printf("unix to udf name: no CHSP0 ?\n");
+		printf("unix to udf name: no CHSP0 ?\n");
 		/* XXX assume 8bit char length byte latin-1 */
 		*result++ = 8; udf_chars = 1;
 		strncpy(result, name + 1, name_len);
@@ -5294,7 +5306,7 @@ brokendir:
 
 	/* create resulting dirent structure */
 	fid_name = (char *) fid->data + udf_rw16(fid->l_iu);
-	udf_to_unix_name(dirent->d_name,
+	udf_to_unix_name(dirent->d_name, MAXNAMLEN,
 		fid_name, fid->l_fi, &ump->logical_vol->desc_charset);
 
 	/* '..' has no name, so provide one */
