@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.11 2008/05/09 20:45:09 dyoung Exp $	*/
+/*	$NetBSD: agr.c,v 1.12 2008/05/19 18:00:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.11 2008/05/09 20:45:09 dyoung Exp $");
+__RCSID("$NetBSD: agr.c,v 1.12 2008/05/19 18:00:31 dyoung Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -58,9 +58,9 @@ static struct piface agrif = PIFACE_INITIALIZER(&agrif, "agr interface",
     agrsetport, "agrport", &command_root.pb_parser);
 
 static const struct kwinst agrkw[] = {
-	  {.k_word = "agrport", .k_type = KW_T_NUM, .k_num = AGRCMD_ADDPORT,
+	  {.k_word = "agrport", .k_type = KW_T_INT, .k_int = AGRCMD_ADDPORT,
 	   .k_nextparser = &agrif.pif_parser}
-	, {.k_word = "-agrport", .k_type = KW_T_NUM, .k_num = AGRCMD_REMPORT,
+	, {.k_word = "-agrport", .k_type = KW_T_INT, .k_int = AGRCMD_REMPORT,
 	   .k_nextparser = &agrif.pif_parser}
 };
 
