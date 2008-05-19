@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.130 2008/03/21 19:32:07 plunky Exp $	*/
+/*	$NetBSD: conf.h,v 1.131 2008/05/19 17:15:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -96,7 +96,7 @@ struct cdevsw {
 
 int devsw_attach(const char *, const struct bdevsw *, int *,
 		 const struct cdevsw *, int *);
-void devsw_detach(const struct bdevsw *, const struct cdevsw *);
+int devsw_detach(const struct bdevsw *, const struct cdevsw *);
 const struct bdevsw *bdevsw_lookup(dev_t);
 const struct cdevsw *cdevsw_lookup(dev_t);
 int bdevsw_lookup_major(const struct bdevsw *);
