@@ -1,4 +1,4 @@
-/*	$NetBSD: mach64_irq.c,v 1.4 2008/05/18 02:45:17 bjs Exp $	*/
+/*	$NetBSD: mach64_irq.c,v 1.5 2008/05/19 00:15:44 bjs Exp $	*/
 
 /* mach64_irq.c -- IRQ handling for ATI Mach64 -*- linux-c -*-
  * Created: Tue Feb 25, 2003 by Leif Delgass, based on radeon_irq.c/r128_irq.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach64_irq.c,v 1.4 2008/05/18 02:45:17 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach64_irq.c,v 1.5 2008/05/19 00:15:44 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_irq.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -71,7 +71,7 @@ irqreturn_t mach64_driver_irq_handler(DRM_IRQ_ARGS)
 			     | MACH64_CRTC_VBLANK_INT);
 
 		atomic_inc(&dev->vbl_received);
-		DRM_WAKEUP(&(dev->vbl_queue));
+		DRM_WAKEUP(&dev->vbl_queue);
 		drm_vbl_send_signals(dev);
 		return IRQ_HANDLED;
 	}
@@ -87,7 +87,7 @@ int mach64_driver_vblank_wait(drm_device_t * dev, unsigned int *sequence)
 	 * by about a day rather than she wants to wait for years
 	 * using vertical blanks...
 	 */
-	DRM_WAIT_ON(ret, &(dev->vbl_queue), 3 * DRM_HZ,
+	DRM_WAIT_ON(ret, dev->vbl_queue, 3 * DRM_HZ,
 		    (((cur_vblank = atomic_read(&dev->vbl_received))
 		      - *sequence) <= (1 << 23)));
 
