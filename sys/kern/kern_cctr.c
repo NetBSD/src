@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cctr.c,v 1.7 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: kern_cctr.c,v 1.8 2008/05/19 17:06:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -75,9 +75,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.7 2008/04/28 20:24:02 martin Exp $");
-
-#include "opt_multiprocessor.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.8 2008/05/19 17:06:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
