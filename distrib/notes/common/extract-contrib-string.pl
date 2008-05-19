@@ -34,9 +34,17 @@
 # 1) find /usr/src -type f -print \
 #    | perl extract-contrib-string.pl
 #    >x
+#
 # 2) merge text after "--------" in "x" into
 #    src/distrib/notes/common/legal.common
 #
+# Options:
+#
+#     perl extract-contrib-string.pl [-d] [-h]
+#
+# where
+#     -d  debug output
+#     -h  html output
 
 
 $ack_line1="[aA]ll( commercial)?( marketing or)? advertising materials mentioning( features)?";
@@ -72,8 +80,12 @@ sub warning {
 }
 
 
-if ($ARGV[0]) {
+if ($ARGV[0] =~ /-[dD]/) {
     $debug=1;
+    shift(@ARGV);
+}
+if ($ARGV[0] =~ /-[hH]/) {
+    $html=1;
     shift(@ARGV);
 }
 
@@ -140,8 +152,16 @@ while(<>) {
 		$msg =~ s/\n[#\\\|";]\s*/\n/g;		# sh etc.
 		$msg =~ s/^[ 	*]*//g;      		# C
 		$msg =~ s/\n[ 	*]*/\n/g;    		# C
-		$msg =~ s/^\s*\/\/\s*/ /g;		# C++/C99
-		$msg =~ s/\ns*\/\/\s*/ /g;		# C++/C99
+
+		# C++/C99
+		while ($msg =~ /^\s*\/\/\s*/) {
+			$msg =~ s/^\s*\/\/\s*//o;
+		}
+		while ($msg =~ /\ns*\/\/\s*$/) {
+			$msg =~ s/\ns*\/\/\s*$//o;
+		}
+		$msg =~ s/\ns*\/\/\s*/ /g;
+
 		$msg =~ s/\@cartouche\n//;              # texinfo
 
 		$msg =~ s///g;
@@ -153,8 +173,9 @@ while(<>) {
 	        $msg =~ s/"\s*$//;
 	        $msg =~ s/^\s*``//;
 	        $msg =~ s/''\s*$//;
-                $msg .= "\n" if $msg!~/\n$/;
-
+		while ($msg =~ /[\n\s]+$/) {
+			$msg =~ s/[\n\s]+$//o;
+		}
 
 		# Split up into separate paragraphs
 		#
@@ -163,9 +184,11 @@ while(<>) {
 		$msgs=~s,^\|,,;
 	      msg:
 		foreach $msg (split(/\|/, $msgs)) {
-		    print ".\\\" File $fn:\n";
-		    print "$msg";
-		    print "\n";
+		    if (!$html) {
+			print ".\\\" File $fn:\n";
+			print "$msg";
+			print "\n\n";
+		    }
 		    
 		    # Figure out if there's a version w/ or w/o trailing dot
 		    # 
@@ -228,14 +251,22 @@ while(<>) {
 }
 
 
-print "------------------------------------------------------------\n";
-
-$firsttime=1;
-foreach $msg (sort keys %copyrights) {
-    if ($firsttime) {
-	$firsttime=0;
-    } else {
-	print ".It\n";
+if ($html) {
+    print "<ul>\n";
+    foreach $msg (sort keys %copyrights) {
+	print "<li>$msg</li>\n";
     }
-    print "$msg";
+    print "</ul>\n";
+} else {
+    print "------------------------------------------------------------\n";
+
+    $firsttime=1;
+    foreach $msg (sort keys %copyrights) {
+	if ($firsttime) {
+	    $firsttime=0;
+	} else {
+	    print ".It\n";
+	}
+	print "$msg\n";
+    }
 }
