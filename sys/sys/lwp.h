@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.95 2008/05/16 09:22:00 hannken Exp $	*/
+/*	$NetBSD: lwp.h,v 1.96 2008/05/19 12:48:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -85,6 +85,8 @@ struct lwp {
 	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
 	u_int		l_rticks;	/* l: Saved start time of run */
 	u_int		l_rticksum;	/* l: Sum of ticks spent running */
+	u_int		l_slpticks;	/* l: Saved start time of sleep */
+	u_int		l_slpticksum;	/* l: Sum of ticks spent sleeping */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
@@ -200,6 +202,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
 #define	LW_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
+#define	LW_BATCH	0x00040000 /* LWP tends to hog CPU */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
 #define	LW_AFFINITY	0x00200000 /* Affinity is assigned to the thread */

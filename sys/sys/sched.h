@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.55 2008/04/29 14:35:21 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.56 2008/05/19 12:48:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -214,7 +214,8 @@ void		sched_tick(struct cpu_info *);
 void		schedclock(struct lwp *);
 void		sched_schedclock(struct lwp *);
 void		sched_pstats(void *);
-void		sched_pstats_hook(struct lwp *);
+void		sched_lwp_stats(struct lwp *);
+void		sched_pstats_hook(struct lwp *, int);
 
 /* Runqueue-related functions */
 bool		sched_curcpu_runnable_p(void);
