@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.21 2007/04/14 20:34:34 martin Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.22 2008/05/20 07:08:07 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -533,10 +533,12 @@ vianame:
 
 dup:	IPFY_DUPTO name
 	{ strncpy(fr->fr_dif.fd_ifname, $2, sizeof(fr->fr_dif.fd_ifname));
+	  fr->fr_flags |= FR_DUP;
 	  free($2);
 	}
 	| IPFY_DUPTO name duptoseparator hostname
 	{ strncpy(fr->fr_dif.fd_ifname, $2, sizeof(fr->fr_dif.fd_ifname));
+	  fr->fr_flags |= FR_DUP;
 	  fr->fr_dif.fd_ip = $4;
 	  yyexpectaddr = 0;
 	  free($2);
@@ -544,6 +546,7 @@ dup:	IPFY_DUPTO name
 	| IPFY_DUPTO name duptoseparator YY_IPV6
 	{ strncpy(fr->fr_dif.fd_ifname, $2, sizeof(fr->fr_dif.fd_ifname));
 	  bcopy(&$4, &fr->fr_dif.fd_ip6, sizeof(fr->fr_dif.fd_ip6));
+	  fr->fr_flags |= FR_DUP;
 	  yyexpectaddr = 0;
 	  free($2);
 	}
@@ -772,8 +775,20 @@ fromport:
 
 srcportlist:
 	portnum		{ DOREM(fr->fr_scmp = FR_EQUAL; fr->fr_sport = $1;) }
+	| portnum ':' portnum	
+			{ DOREM(fr->fr_scmp = FR_INCRANGE; fr->fr_sport = $1; \
+				fr->fr_stop = $3;) }
+	| portnum YY_RANGE_IN portnum	
+			{ DOREM(fr->fr_scmp = FR_INRANGE; fr->fr_sport = $1; \
+				fr->fr_stop = $3;) }
 	| srcportlist lmore portnum
 			{ DOREM(fr->fr_scmp = FR_EQUAL; fr->fr_sport = $3;) }
+	| srcportlist lmore portnum ':' portnum
+			{ DOREM(fr->fr_scmp = FR_INCRANGE; fr->fr_sport = $3; \
+				fr->fr_stop = $5;) }
+	| srcportlist lmore portnum YY_RANGE_IN portnum
+			{ DOREM(fr->fr_scmp = FR_INRANGE; fr->fr_sport = $3; \
+				fr->fr_stop = $5;) }
 	;
 
 dstobject:
@@ -838,8 +853,20 @@ toport:
 
 dstportlist:
 	portnum		{ DOREM(fr->fr_dcmp = FR_EQUAL; fr->fr_dport = $1;) }
+	| portnum ':' portnum	
+			{ DOREM(fr->fr_dcmp = FR_INCRANGE; fr->fr_dport = $1; \
+				fr->fr_dtop = $3;) }
+	| portnum YY_RANGE_IN portnum	
+			{ DOREM(fr->fr_dcmp = FR_INRANGE; fr->fr_dport = $1; \
+				fr->fr_dtop = $3;) }
 	| dstportlist lmore portnum
 			{ DOREM(fr->fr_dcmp = FR_EQUAL; fr->fr_dport = $3;) }
+	| dstportlist lmore portnum ':' portnum
+			{ DOREM(fr->fr_dcmp = FR_INCRANGE; fr->fr_dport = $3; \
+				fr->fr_dtop = $5;) }
+	| dstportlist lmore portnum YY_RANGE_IN portnum
+			{ DOREM(fr->fr_dcmp = FR_INRANGE; fr->fr_dport = $3; \
+				fr->fr_dtop = $5;) }
 	;
 
 addr:	pool '/' YY_NUMBER		{ pooled = 1;
