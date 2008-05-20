@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.8 2008/05/20 14:41:06 ad Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.9 2008/05/20 16:04:08 ad Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -88,3 +88,4 @@ int	loadfile_aout(int, struct exec *, u_long *, int);
 #endif
 
 extern uint32_t	netbsd_version;
+extern u_int netbsd_elf_class;
