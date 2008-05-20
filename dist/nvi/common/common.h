@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.1.2 2008/05/18 14:29:40 aymeric Exp $ */
+/*	$NetBSD: common.h,v 1.2 2008/05/20 17:38:19 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -104,6 +104,8 @@ typedef enum { SEQ_ABBREV, SEQ_COMMAND, SEQ_INPUT } seq_t;
 #include "screen.h"		/* Required by exf.h. */
 #include "exf.h"
 #include "mem.h"
+#if defined(USE_DB4_LOGGING)
 #include "vi_auto.h"
+#endif
 
 #include "extern.h"
