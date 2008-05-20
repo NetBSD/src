@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.c,v 1.1.1.4 2007/04/14 20:17:21 martin Exp $	*/
+/*	$NetBSD: hpux.c,v 1.1.1.5 2008/05/20 06:43:57 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -289,12 +289,17 @@ static int ipf_attach()
 {
 	char *defpass;
 
+	RWLOCK_INIT(&ipf_global, "ipf filter load/unload mutex");
+	RWLOCK_INIT(&ipf_mutex, "ipf filter rwlock");
+	RWLOCK_INIT(&ipf_frcache, "ipf cache rwlock");
+
 	sync();
 	/*
 	 * Initialize mutex's
 	 */
 	if (ipfattach() == -1)
-		return -1;
+		goto attachfailed;
+
 	/*
 	 * Lock people out while we set things up.
 	 */
@@ -333,6 +338,10 @@ static int ipf_attach()
 		fr_timer_id = mp_timeout(fr_slowtimer, NULL, hz/2);
 	if (fr_running == 1)
 		return 0;
+attachfailed:
+	RW_DESTROY(&ipf_global);
+	RW_DESTROY(&ipf_mutex);
+	RW_DESTROY(&ipf_frcache);
 	return -1;
 }
 
@@ -377,6 +386,12 @@ static int ipf_detach()
 	while (fr_timer_id != NULL)
 		sched_yield();
 	i = ipfdetach();
+
+	if (i == 0) {
+		RW_DESTROY(&ipf_global);
+		RW_DESTROY(&ipf_mutex);
+		RW_DESTROY(&ipf_frcache);
+	}
 #ifdef	IPFDEBUG
 	printf("IP Filter: ipfdetach() = %d\n", i);
 #endif

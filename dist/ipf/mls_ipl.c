@@ -1,4 +1,4 @@
-/*	$NetBSD: mls_ipl.c,v 1.1.1.7 2007/04/14 20:17:25 martin Exp $	*/
+/*	$NetBSD: mls_ipl.c,v 1.1.1.8 2008/05/20 06:44:26 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -42,7 +42,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)mls_ipl.c	2.6 10/15/95 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: mls_ipl.c,v 2.7.2.3 2006/07/14 06:12:22 darrenr Exp";
+static const char rcsid[] = "@(#)Id: mls_ipl.c,v 2.7.2.4 2007/10/26 12:15:15 darrenr Exp";
 #endif
 
 extern	int	ipfdetach __P((void));
@@ -225,22 +225,22 @@ static	int	ipl_attach()
 			defpass = "pass";
 		else if (FR_ISBLOCK(fr_pass))
 			defpass = "block";
-		else                
+		else
 			defpass = "no-match -> block";
 
 		printf("%s initialized.  Default = %s all, Logging = %s%s\n",
 			ipfilter_version, defpass,
 #ifdef IPFILTER_LOG
 			"enabled",
-#else             
+#else
 			"disabled",
-#endif 
+#endif
 #ifdef IPFILTER_COMPILED
 			" (COMPILED)"
-#else 
+#else
 			""
 #endif
-			);            
+			);
 		fr_running = 1;
 	}
 	return error;

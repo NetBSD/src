@@ -1,4 +1,4 @@
-/*	$NetBSD: ippool.c,v 1.1.1.4 2007/04/14 20:17:34 martin Exp $	*/
+/*	$NetBSD: ippool.c,v 1.1.1.5 2008/05/20 06:45:26 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2006 by Darren Reed.
@@ -36,7 +36,7 @@
 #endif
 
 #include "ipf.h"
-#include "ipl.h"
+#include "netinet/ipl.h"
 #include "netinet/ip_lookup.h"
 #include "netinet/ip_pool.h"
 #include "netinet/ip_htable.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: tru64.c,v 1.1.1.5 2007/04/14 20:17:25 martin Exp $	*/
+/*	$NetBSD: tru64.c,v 1.1.1.6 2008/05/20 06:44:28 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.6 2006/07/14 06:12:23 darrenr Exp";
+static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.7 2008/02/05 20:56:12 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -1043,15 +1043,37 @@ ipfilter_postconfig_callback(int point, int order, ulong argument, ulong event_a
 int ipfilteropen(dev_t dev, int flag, int format)
 {
 	int unit;
+	int error;
 
 	unit = minor(dev);
 
-	if ((IPL_LOGMAX < unit) || (unit < 0))
-		unit = ENXIO;
-	else
-		unit = ESUCCESS;
+	if ((IPL_LOGMAX < unit) || (unit < 0)) {
+		error = ENXIO;
+	} else {
+		switch (unit)
+		{
+		case IPL_LOGIPF :
+		case IPL_LOGNAT :
+		case IPL_LOGSTATE :
+		case IPL_LOGAUTH :
+#ifdef IPFILTER_LOOKUP
+		case IPL_LOGLOOKUP :
+#endif
+#ifdef IPFILTER_SYNC  
+		case IPL_LOGSYNC :
+#endif
+#ifdef IPFILTER_SCAN
+		case IPL_LOGSCAN :
+#endif
+			error = ESUCCESS;
+			break;
+		default :  
+			error = ENXIO;
+			break;
+		}
+	}
 
-	return unit;
+	return error;
 }
 
 /*---------------------------------------------------------

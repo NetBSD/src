@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_irix.c,v 1.1.1.6 2007/05/15 22:25:59 martin Exp $	*/
+/*	$NetBSD: ip_fil_irix.c,v 1.1.1.7 2008/05/20 06:44:03 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_irix.c,v 2.42.2.25 2007/05/10 06:00:55 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_irix.c,v 2.42.2.30 2008/02/05 20:56:11 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -244,13 +244,35 @@ dev_t *pdev;
 int flags, devtype;
 cred_t *cp;
 {
-	u_int min = geteminor(*pdev);
+	u_int unit = geteminor(*pdev);
+	int error;
 
-	if (IPL_LOGMAX < min)
-		min = ENXIO;
-	else
-		min = 0;
-	return min;
+	if (IPL_LOGMAX < unit) {
+		error = ENXIO;
+	} else {
+		switch (unit)
+		{
+		case IPL_LOGIPF :
+		case IPL_LOGNAT :
+		case IPL_LOGSTATE :
+		case IPL_LOGAUTH :
+#ifdef IPFILTER_LOOKUP
+		case IPL_LOGLOOKUP :
+#endif
+#ifdef IPFILTER_SYNC  
+		case IPL_LOGSYNC :
+#endif
+#ifdef IPFILTER_SCAN
+		case IPL_LOGSCAN :
+#endif
+			error = 0;
+			break;
+		default :  
+			error = ENXIO;
+			break;
+		}
+	}
+	return error;
 }
 
 
@@ -259,13 +281,13 @@ dev_t dev;
 int flags, devtype;
 cred_t *cp;
 {
-	u_int	min = GET_MINOR(dev);
+	u_int	unit = GET_MINOR(dev);
 
-	if (IPL_LOGMAX < min)
-		min = ENXIO;
+	if (IPL_LOGMAX < unit)
+		unit = ENXIO;
 	else
-		min = 0;
-	return min;
+		unit = 0;
+	return unit;
 }
 
 /*
@@ -309,10 +331,8 @@ fr_info_t *fin;
 	if (tcp->th_flags & TH_RST)
 		return -1;		/* feedback loop */
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	m = m_get(M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
@@ -463,16 +483,13 @@ int dst;
 		return -1;
 #endif
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	avail = 0;
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
-		if ((fin->fin_p == IPPROTO_ICMP) &&
-		    !(fin->fin_flx & FI_SHORT))
+		if ((fin->fin_p == IPPROTO_ICMP) && !(fin->fin_flx & FI_SHORT))
 			switch (ntohs(fin->fin_data[0]) >> 8)
 			{
 			case ICMP_ECHO :
@@ -655,13 +672,17 @@ register struct mbuf *m0;
 }
 
 
+/*  
+ * m0 - pointer to mbuf where the IP packet starts  
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
+ */  
 int fr_fastroute(m0, mpp, fin, fdp)
 struct mbuf *m0, **mpp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
 	register struct ip *ip, *mhip;
-	register struct mbuf *m = m0;
+	register struct mbuf *m = *mpp;
 	register struct route *ro;
 	int len, off, error = 0, hlen, code;
 	struct ifnet *ifp, *sifp;
@@ -753,7 +774,7 @@ frdest_t *fdp;
 			break;
 		case -1 :
 			error = -1;
-			goto done;
+			goto bad;
 			break;
 		}
 
@@ -870,7 +891,7 @@ sendorfree:
 		else
 			m_freem(m);
 	}
-    }	
+    }
 done:
 	if (!error)
 		fr_frouteok[0]++;
@@ -1118,16 +1139,16 @@ fr_info_t *fin;
 /* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
 /* and ONLY if the pullup succeeds.                                         */
 /*                                                                          */
-/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* We assume that 'xmin' is a pointer to a buffer that is part of the chain */
 /* of buffers that starts at *fin->fin_mp.                                  */
 /* ------------------------------------------------------------------------ */
-void *fr_pullup(min, fin, len)
-mb_t *min;
+void *fr_pullup(xmin, fin, len)
+mb_t *xmin;
 fr_info_t *fin;
 int len;
 {
 	int out = fin->fin_out, dpoff;
-	mb_t *m = min;
+	mb_t *m = xmin;
 	char *ip;
 
 	if (m == NULL)

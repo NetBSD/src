@@ -1,4 +1,4 @@
-/*	$NetBSD: mli_ipl.c,v 1.1.1.9 2007/04/14 20:17:25 martin Exp $	*/
+/*	$NetBSD: mli_ipl.c,v 1.1.1.10 2008/05/20 06:44:26 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -308,7 +308,7 @@ ipl_ipfilter_attach(void)
 	MUTEX_ENTER(&ipfi_mutex); /* sets interrupt priority level to splhi */
 
 	ipff_addr = (int *)addr_ff;
-	
+
 	ipff_value = *ipff_addr;
 	*ipff_addr = 0;
 

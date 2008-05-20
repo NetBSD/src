@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf.h,v 1.1.1.12 2007/05/15 22:25:59 martin Exp $	*/
+/*	$NetBSD: ipf.h,v 1.1.1.13 2008/05/20 06:44:06 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ipf.h	1.12 6/5/96
- * Id: ipf.h,v 2.71.2.15 2007/05/11 10:44:14 darrenr Exp
+ * Id: ipf.h,v 2.71.2.16 2007/10/26 12:15:14 darrenr Exp
  */
 
 #ifndef	__IPF_H__
@@ -205,7 +205,7 @@ extern u_32_t getoptbyvalue __P((int));
 extern u_32_t getv6optbyname __P((char *));
 extern u_32_t getv6optbyvalue __P((int));
 extern void initparse __P((void));
-extern void ipf_dotuning __P((int, char *, ioctlfunc_t)); 
+extern void ipf_dotuning __P((int, char *, ioctlfunc_t));
 extern void ipf_addrule __P((int, ioctlfunc_t, void *));
 extern int ipf_parsefile __P((int, addfunc_t, ioctlfunc_t *, char *));
 extern int ipf_parsesome __P((int, addfunc_t, ioctlfunc_t *, FILE *));

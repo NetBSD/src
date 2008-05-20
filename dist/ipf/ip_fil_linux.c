@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_linux.c,v 1.1.1.6 2007/05/15 22:25:59 martin Exp $	*/
+/*	$NetBSD: ip_fil_linux.c,v 1.1.1.7 2008/05/20 06:44:04 darrenr Exp $	*/
 
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
@@ -112,9 +112,6 @@ int ipfattach()
 	MUTEX_INIT(&ipf_rw, "ipf rw mutex");
 	MUTEX_INIT(&ipl_mutex, "ipf log mutex");
 	MUTEX_INIT(&ipf_timeoutlock, "ipf timeout lock mutex");
-	RWLOCK_INIT(&ipf_global, "ipf global rwlock");
-	RWLOCK_INIT(&ipf_mutex, "ipf global mutex rwlock");
-	RWLOCK_INIT(&ipf_frcache, "ipf cache mutex rwlock");
 	RWLOCK_INIT(&ipf_ipidfrag, "ipf IP NAT-Frag rwlock");
 	RWLOCK_INIT(&ipf_tokens, "ipf token rwlock");
 
@@ -174,9 +171,6 @@ int ipfdetach()
 	MUTEX_DESTROY(&ipf_timeoutlock);
 	MUTEX_DESTROY(&ipl_mutex);
 	MUTEX_DESTROY(&ipf_rw);
-	RW_DESTROY(&ipf_mutex);
-	RW_DESTROY(&ipf_frcache);
-	RW_DESTROY(&ipf_global);
 	RW_DESTROY(&ipf_tokens);
 	RW_DESTROY(&ipf_ipidfrag);
 
@@ -252,10 +246,9 @@ fr_info_t *fin;
 	if (tcp->th_flags & TH_RST)
 		return -1;
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
+
 	m = skb_copy(fin->fin_m, GFP_ATOMIC);
 	if (m == NULL)
 		return -1;
@@ -377,10 +370,8 @@ int isdst;
 		return -1;
 #endif
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	m0 = fin->fin_m;
 #ifdef USE_INET6
@@ -419,7 +410,7 @@ int isdst;
         m = alloc_skb(sz + leader, GFP_ATOMIC);
         if (m == NULL)
                 return -1;
-                
+
         /* Set the data pointer */
         skb_reserve(m, leader);
 
@@ -538,9 +529,13 @@ fr_info_t *fin;
 }
 
 
+/*  
+ * xmin - pointer to mbuf where the IP packet starts  
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
+ */  
 /*ARGSUSED*/
-int fr_fastroute(min, mp, fin, fdp)
-mb_t *min, **mp;
+int fr_fastroute(xmin, mp, fin, fdp)
+mb_t *xmin, **mp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
@@ -553,7 +548,7 @@ frdest_t *fdp;
 
 	rt = NULL;
 	fr = fin->fin_fr;
-	ip = MTOD(min, ip_t *);
+	ip = MTOD(xmin, ip_t *);
 	dip = ip->ip_dst;
 
 	if (fdp != NULL)
@@ -625,14 +620,14 @@ frdest_t *fdp;
 	ip->ip_sum = 0;
 
 
-	if (min->dst != NULL) {
-		dst_release(min->dst);
-		min->dst = NULL;
+	if (xmin->dst != NULL) {
+		dst_release(xmin->dst);
+		xmin->dst = NULL;
 	}
 
-	min->dst = &rt->u.dst;
+	xmin->dst = &rt->u.dst;
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,4,21)
-	if (min->len > min->dst->pmtu) {
+	if (xmin->len > xmin->dst->pmtu) {
 		err = EMSGSIZE;
 		goto bad;
 	}
@@ -645,8 +640,8 @@ frdest_t *fdp;
 		ip->ip_off = htons(ip->ip_off);
 		ip->ip_sum = ip_fast_csum((u_char *)ip, ip->ip_hl);
 
-		/*dumpskbuff(min);*/
-		NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, min, NULL,
+		/*dumpskbuff(xmin);*/
+		NF_HOOK(PF_INET, NF_IP_LOCAL_OUT, xmin, NULL,
 			ifp, ip_finish_output);
 		err = 0;
 		break;
@@ -659,8 +654,8 @@ frdest_t *fdp;
 	if (err == 0)
 		return 0;
 bad:
-	if (min != NULL)
-		kfree_skb(min);
+	if (xmin != NULL)
+		kfree_skb(xmin);
 	return err;
 }
 
@@ -924,16 +919,16 @@ int len;
 /* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
 /* and ONLY if the pullup succeeds.                                         */
 /*                                                                          */
-/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* We assume that 'xmin' is a pointer to a buffer that is part of the chain */
 /* of buffers that starts at *fin->fin_mp.                                  */
 /* ------------------------------------------------------------------------ */
-void *fr_pullup(min, fin, len)
-mb_t *min;
+void *fr_pullup(xmin, fin, len)
+mb_t *xmin;
 fr_info_t *fin;
 int len;
 {
 	int out = fin->fin_out, dpoff, ipoff;
-	mb_t *m = min;
+	mb_t *m = xmin;
 	char *ip;
 
 	if (m == NULL)
@@ -958,12 +953,12 @@ int len;
 			return NULL;
 		}
 		ip = MTOD(m, char *) + ipoff;
-	}
 
-	ATOMIC_INCL(frstats[out].fr_pull[0]);
-	fin->fin_ip = (ip_t *)ip;
-	if (fin->fin_dp != NULL)
-		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+		ATOMIC_INCL(frstats[out].fr_pull[0]);
+		fin->fin_ip = (ip_t *)ip;
+		if (fin->fin_dp != NULL)
+			fin->fin_dp = (char *)fin->fin_ip + dpoff;
+	}
 
 	if (len == fin->fin_plen)
 		fin->fin_flx |= FI_COALESCE;

@@ -108,7 +108,7 @@ $(OBJ):
 	@if [ ! -d $(OBJ) ]; then mkdir $(OBJ); fi
 
 
-sunos5 solaris2 build: $(OBJ) $(OBJ)/libipf.a $(OBJ)/ipf.exe $(OBJ)/ipfstat \
+sunos5 solaris2 build: radix_ipf_local.h $(OBJ) $(OBJ)/libipf.a $(OBJ)/ipf.exe $(OBJ)/ipfstat \
     $(OBJ)/ipftest $(OBJ)/ipmon $(OBJ)/ipnat $(OBJ)/ipf $(OBJ)/ipfs \
     $(OBJ)/ippool $(OBJ)/ipfrule
 	/bin/rm -f $(TOP)/ipf $(TOP)/$(OBJ)/ipf
@@ -171,7 +171,7 @@ $(OBJ)/fil_u.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h
 	$(CC) $(CCARGS) $(EXTRA) $(IPFBPF) -c $(TOP)/fil.c -o $@
 
 $(OBJ)/fil.o: $(TOP)/fil.c $(TOP)/ip_fil.h $(TOP)/ipf.h
-	$(CC) -I$(TOP) $(POLICY) $(DFLAGS) $(IPFBPF) -c $(TOP)/fil.c -o $@
+	$(CC) -I. -I$(TOP) $(POLICY) $(DFLAGS) $(IPFBPF) -c $(TOP)/fil.c -o $@
 
 $(OBJ)/ipf.o: $(TOOL)/ipf.c $(TOP)/ip_fil.h $(TOP)/ipf.h
 	$(CC) $(CCARGS) -c $(TOOL)/ipf.c -o $@
@@ -216,49 +216,55 @@ ipnat_l.h: $(TOOL)/lexer.h
 	(cd $(TOOL); make "DEST=../$(HERE)" ../$(HERE)/$@)
 
 $(OBJ)/mlso_rule.o: $(TOP)/mlso_rule.c
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/mlso_rule.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/mlso_rule.c -o $@
 
 $(OBJ)/ip_rules.o: $(OBJ)/ip_rules.c $(TOP)/ip_rules.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(OBJ)/ip_rules.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(OBJ)/ip_rules.c -o $@
 
 $(OBJ)/ip_rulesx.o: $(OBJ)/ip_rules.c $(TOP)/ip_rules.h
-	$(CC) -I$(TOP) -DIPFILTER_COMPILED $(DFLAGS) -c $(OBJ)/ip_rules.c -o $@
+	$(CC) -I. -I$(TOP) -DIPFILTER_COMPILED $(DFLAGS) -c $(OBJ)/ip_rules.c -o $@
 
 $(OBJ)/ipfrule: $(OBJ)/ip_rulesx.o $(OBJ)/mlso_rule.o
 	ld -r $(OBJ)/ip_rulesx.o $(OBJ)/mlso_rule.o -o $@
 
 $(OBJ)/ipf: $(MODOBJS)
-	ld -dy -Ndrv/ip -Ndrv/pfil -Nmisc/md5 -r $(MODOBJS) -o $@
+	if [ -f /kernel/misc/neti -o -f /kernel/misc/*/neti ] ; then \
+		echo "netinfo Linking"; \
+		ld -dy -Ndrv/ip -Nmisc/neti -Nmisc/md5 -r $(MODOBJS) -o $@; \
+	else \
+		echo "PFIL Linking"; \
+		ld -dy -Ndrv/ip -Ndrv/pfil -Nmisc/md5 -r $(MODOBJS) -o $@; \
+	fi
 
 $(OBJ)/md5.o: $(TOP)/md5.c $(TOP)/md5.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/md5.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/md5.c -o $@
 
-$(OBJ)/radix.o: $(TOP)/md5.c $(TOP)/radix_ipf.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/radix.c -o $@
+$(OBJ)/radix.o: $(TOP)/md5.c $(TOP)/radix_ipf.h radix_ipf_local.h
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/radix.c -o $@
 
 $(OBJ)/ip_nat.o: $(TOP)/ip_nat.c $(TOP)/ip_nat.h $(TOP)/ip_compat.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_nat.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/ip_nat.c -o $@
 
 $(OBJ)/ip_state.o: $(TOP)/ip_state.c $(TOP)/ip_state.h $(TOP)/ip_compat.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/ip_state.c -o $@
 
 $(OBJ)/ip_scan.o: $(TOP)/ip_scan.c $(TOP)/ip_scan.h $(TOP)/ip_compat.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_scan.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/ip_scan.c -o $@
 
 $(OBJ)/ip_sync.o: $(TOP)/ip_sync.c $(TOP)/ip_sync.h $(TOP)/ip_compat.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_sync.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/ip_sync.c -o $@
 
 $(OBJ)/ip_proxy.o: $(TOP)/ip_proxy.c $(TOP)/ip_proxy.h $(TOP)/ip_compat.h \
         $(TOP)/ip_ftp_pxy.c $(TOP)/ip_rcmd_pxy.c $(TOP)/ip_raudio_pxy.c \
         $(TOP)/ip_rpcb_pxy.c $(TOP)/ip_ipsec_pxy.c $(TOP)/ip_nat.h \
 	$(TOP)/ip_fil.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_proxy.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/ip_proxy.c -o $@
 
 $(OBJ)/ip_frag.o: $(TOP)/ip_frag.c $(TOP)/ip_frag.h $(TOP)/ip_compat.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_frag.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/ip_frag.c -o $@
 
 $(OBJ)/ip_auth.o: $(TOP)/ip_auth.c $(TOP)/ip_auth.h $(TOP)/ip_compat.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_auth.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/ip_auth.c -o $@
 
 $(OBJ)/ip_pool.o: $(TOP)/ip_pool.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(TOP)/ip_pool.h $(TOP)/ip_lookup.h
@@ -277,10 +283,10 @@ $(OBJ)/ip_trafcon.o: $(TOP)/ip_trafcon.c $(TOP)/ip_compat.h $(TOP)/ip_fil.h \
 	$(CC) $(CCARGS) $(DFLAGS) -c $(TOP)/ip_trafcon.c -o $@
 
 $(OBJ)/bpf_filter.o: $(TOP)/bpf_filter.c $(TOP)/bpf-ipf.h $(TOP)/pcap-ipf.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/bpf_filter.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/bpf_filter.c -o $@
 
 $(OBJ)/bpf_filter_u.o: $(TOP)/bpf_filter.c
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/bpf_filter.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/bpf_filter.c -o $@
 
 $(OBJ)/md5_u.o: $(TOP)/md5.c $(TOP)/md5.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/md5.c -o $@
@@ -344,16 +350,16 @@ $(OBJ)/ip_fil_u.o: $(TOP)/ip_fil.c $(TOP)/ip_fil.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_fil.c -o $@
 
 $(OBJ)/ip_fil.o: $(TOP)/ip_fil_solaris.c $(TOP)/ip_fil.h
-	$(CC) -I$(TOP) $(DFLAGS) $(COMPIPF) -c $(TOP)/ip_fil_solaris.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) $(COMPIPF) -c $(TOP)/ip_fil_solaris.c -o $@
 
 $(OBJ)/ip_log_u.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h
 	$(CC) $(CCARGS) $(EXTRA) -c $(TOP)/ip_log.c -o $@
 
 $(OBJ)/ip_log.o: $(TOP)/ip_log.c $(TOP)/ip_fil.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/ip_log.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/ip_log.c -o $@
 
 $(OBJ)/solaris.o: $(TOP)/solaris.c $(TOP)/ipl.h
-	$(CC) -I$(TOP) $(DFLAGS) -c $(TOP)/solaris.c -o $@
+	$(CC) -I. -I$(TOP) $(DFLAGS) -c $(TOP)/solaris.c -o $@
 
 $(OBJ)/ipmon: $(IPMON) $(OBJ)/libipf.a
 	$(CC) $(CCARGS) $(LOGFAC) $(IPMON) -o $@ $(LIBS) -ll
@@ -398,7 +404,7 @@ ipscan_l.c: $(TOOL)/lexer.c $(TOP)/ip_scan.h
 ipscan_l.h: $(TOOL)/lexer.h
 	(cd $(TOOL); make "DEST=../$(HERE)" ../$(HERE)/$@)
 
-$(OBJ)/ippool: $(IPPOOL)
+$(OBJ)/ippool: $(IPPOOL) $(OBJ)/libipf.a
 	$(CC) $(CCARGS) -I. $(IPPOOL) -o $@ $(LIBS) -ll -lkvm
 
 $(OBJ)/ippool.o: $(TOOL)/ippool.c $(TOP)/ip_pool.h
@@ -424,6 +430,14 @@ $(OBJ)/iptrafcon.o: $(TOP)/iptrafcon.c
 
 $(OBJ)/iptrafcon: $(IPTRAFCON) $(OBJ)/libipf.a
 	$(CC) $(CCARGS) $(IPTRAFCON) -o $@ $(LIBS)
+
+$(TOP)/ip_pool.h: radix_ipf_local.h
+
+radix_ipf_local.h: $(TOP)/radix_ipf.h Makefile  
+	sed -e 's/^\([^#].*\)\([	]\)radix_node/\1\2ipf_radix_node/g' \
+	    -e 's/^\([^#].*\)\([	]\)radix_mask/\1\2ipf_radix_mask/g' \
+	    -e 's/struct radix/struct ipf_radix/g' \
+	    $(TOP)/radix_ipf.h > $@
 
 .y.c:
 

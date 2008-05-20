@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.10 2007/06/16 10:33:07 martin Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.11 2008/05/20 06:44:05 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.51 2007/05/31 12:27:35 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.59 2008/03/01 23:16:38 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -96,6 +96,11 @@ MALLOC_DEFINE(M_IPFILTER, "IP Filter", "IP Filter packet filter data structures"
 
 #if __NetBSD_Version__ < 200000000
 extern	struct	protosw	inetsw[];
+#endif
+#if (__NetBSD_Version__ < 399001400)
+extern int ip6_getpmtu __P((struct route_in6 *, struct route_in6 *,
+			    struct ifnet *, struct in6_addr *, u_long *,
+			    int *));
 #endif
 
 static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
@@ -302,6 +307,9 @@ int count;
 int ipfattach()
 {
 	int s;
+#if (__NetBSD_Version__ >= 499005500)
+	int i;
+#endif
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
@@ -395,7 +403,12 @@ int ipfattach()
 # endif
 #endif
 
+#if (__NetBSD_Version__ >= 499005500)
+	for (i = 0; i < IPL_LOGSIZE; i++)
+		selinit(&ipfselwait[i]);
+#else
 	bzero((char *)ipfselwait, sizeof(ipfselwait));
+#endif
 	bzero((char *)frcache, sizeof(frcache));
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
@@ -408,7 +421,11 @@ int ipfattach()
 	SPL_X(s);
 
 #if (__NetBSD_Version__ >= 104010000)
+# if (__NetBSD_Version__ >= 499002000)
+	callout_init(&fr_slowtimer_ch, 0);
+# else
 	callout_init(&fr_slowtimer_ch);
+# endif
 	callout_reset(&fr_slowtimer_ch, (hz / IPF_HZ_DIVIDE) * IPF_HZ_MULT,
 		     fr_slowtimer, NULL);
 #else
@@ -432,6 +449,9 @@ pfil_error:
 int ipfdetach()
 {
 	int s;
+#if (__NetBSD_Version__ >= 499005500)
+	int i;
+#endif
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if __NetBSD_Version__ >= 105150000
@@ -502,6 +522,11 @@ int ipfdetach()
 	fr_deinitialise();
 
 	SPL_X(s);
+
+#if (__NetBSD_Version__ >= 499005500)
+	for (i = 0; i < IPL_LOGSIZE; i++)
+		seldestroy(&ipfselwait[i]);
+#endif
 	return 0;
 }
 
@@ -634,13 +659,35 @@ struct proc *p;
 dev_t dev;
 int flags;
 {
-	u_int xmin = GET_MINOR(dev);
+	u_int unit = GET_MINOR(dev);
+	int error;
 
-	if (IPL_LOGMAX < xmin)
-		xmin = ENXIO;
-	else
-		xmin = 0;
-	return xmin;
+	if (IPL_LOGMAX < unit)
+		error = ENXIO;
+	else {
+		switch (unit)
+		{
+		case IPL_LOGIPF :
+		case IPL_LOGNAT :
+		case IPL_LOGSTATE :
+		case IPL_LOGAUTH :
+#ifdef IPFILTER_LOOKUP
+		case IPL_LOGLOOKUP :
+#endif
+#ifdef IPFILTER_SYNC
+		case IPL_LOGSYNC :
+#endif
+#ifdef IPFILTER_SCAN
+		case IPL_LOGSCAN :
+#endif
+			error = 0;
+			break;
+		default :
+			error = ENXIO;
+			break;
+		}
+	}
+	return error;
 }
 
 
@@ -659,13 +706,13 @@ struct proc *p;
 dev_t dev;
 int flags;
 {
-	u_int	xmin = GET_MINOR(dev);
+	u_int	unit = GET_MINOR(dev);
 
-	if (IPL_LOGMAX < xmin)
-		xmin = ENXIO;
+	if (IPL_LOGMAX < unit)
+		unit = ENXIO;
 	else
-		xmin = 0;
-	return xmin;
+		unit = 0;
+	return unit;
 }
 
 /*
@@ -746,10 +793,8 @@ fr_info_t *fin;
 	if (tcp->th_flags & TH_RST)
 		return -1;		/* feedback loop */
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	tlen = fin->fin_dlen - (TCP_OFF(tcp) << 2) +
 			((tcp->th_flags & TH_SYN) ? 1 : 0) +
@@ -923,10 +968,8 @@ int dst;
 		return -1;
 #endif
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 #ifdef MGETHDR
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 #else
@@ -941,8 +984,7 @@ int dst;
 	ohlen = 0;
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
-		if ((fin->fin_p == IPPROTO_ICMP) &&
-		    !(fin->fin_flx & FI_SHORT))
+		if ((fin->fin_p == IPPROTO_ICMP) && !(fin->fin_flx & FI_SHORT))
 			switch (ntohs(fin->fin_data[0]) >> 8)
 			{
 			case ICMP_ECHO :
@@ -1079,13 +1121,17 @@ int dst;
 }
 
 
+/*
+ * m0 - pointer to mbuf where the IP packet starts
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain
+ */
 int fr_fastroute(m0, mpp, fin, fdp)
 mb_t *m0, **mpp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
 	register struct ip *ip, *mhip;
-	register struct mbuf *m = m0;
+	register struct mbuf *m = *mpp;
 	register struct route *ro;
 	int len, off, error = 0, hlen, code;
 	struct ifnet *ifp, *sifp;
@@ -1132,7 +1178,7 @@ frdest_t *fdp;
 	 * Route packet.
 	 */
 	ro = &iproute;
-	bzero((caddr_t)ro, sizeof (*ro));
+	bzero(ro, sizeof (*ro));
 
 	if (fdp != NULL)
 		ifp = fdp->fd_ifp;
@@ -1218,7 +1264,7 @@ frdest_t *fdp;
 			break;
 		case -1 :
 			error = -1;
-			goto done;
+			goto bad;
 			break;
 		}
 
@@ -1423,7 +1469,7 @@ frdest_t *fdp;
 		ifp = fdp->fd_ifp;
 	else
 		ifp = fin->fin_ifp;
-	bzero((caddr_t)ro, sizeof(*ro));
+	bzero(ro, sizeof(*ro));
 # if __NetBSD_Version__ >= 499001100
 	if (fdp != NULL && IP6_NOTZERO(&fdp->fd_ip6))
 		sockaddr_in6_init(&u.dst6, &fdp->fd_ip6.in6, 0, 0, 0);
@@ -1498,9 +1544,9 @@ frdest_t *fdp;
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 			*mpp = NULL;
 # if __NetBSD_Version__ >= 499001100
-			error = nd6_output(ifp, ifp, m0, satocsin6(dst), rt);
+			error = nd6_output(ifp, ifp, *mpp, satocsin6(dst), rt);
 # else
-			error = nd6_output(ifp, ifp, m0, dst6, rt);
+			error = nd6_output(ifp, ifp, *mpp, dst6, rt);
 # endif
 		} else {
 			error = EMSGSIZE;
@@ -1707,6 +1753,9 @@ fr_info_t *fin;
 	if ((fin->fin_flx & FI_NOCKSUM) != 0)
 		return;
 
+	if (fin->fin_cksum != 0)
+		return;
+
 	manual = 0;
 	m = fin->fin_m;
 	if (m == NULL) {
@@ -1735,10 +1784,16 @@ fr_info_t *fin;
 	if (pflag != 0) {
 		if (cflags == (pflag | M_CSUM_TCP_UDP_BAD)) {
 			fin->fin_flx |= FI_BAD;
+			fin->fin_cksum = -1;
 		} else if (cflags == (pflag | M_CSUM_DATA)) {
-			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0)
+			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0) {
 				fin->fin_flx |= FI_BAD;
+				fin->fin_cksum = -1;
+			} else {
+				fin->fin_cksum = 1;
+			}
 		} else if (cflags == pflag) {
+			fin->fin_cksum = 1;
 			;
 		} else {
 			manual = 1;
@@ -1877,12 +1932,25 @@ int len;
 		dpoff = 0;
 
 	if (M_LEN(m) < len) {
-#ifdef MHLEN
+		mb_t *n = *fin->fin_mp;
 		/*
 		 * Assume that M_PKTHDR is set and just work with what is left
 		 * rather than check..
 		 * Should not make any real difference, anyway.
 		 */
+		if (m != n) {
+			/*
+			 * Record the mbuf that points to the mbuf that we're
+			 * about to go to work on so that we can update the
+			 * m_next appropriately later.
+			 */
+			for (; n->m_next != m; n = n->m_next)
+				;
+		} else {
+			n = NULL;
+		}
+
+#ifdef MHLEN
 		if (len > MHLEN)
 #else
 		if (len > MLEN)
@@ -1894,24 +1962,44 @@ int len;
 #else
 			FREE_MB_T(*fin->fin_mp);
 			m = NULL;
+			n = NULL;
 #endif
 		} else
 		{
 			m = m_pullup(m, len);
 		}
-		*fin->fin_mp = m;
-		fin->fin_m = m;
+		if (n != NULL)
+			n->m_next = m;
 		if (m == NULL) {
+			/*
+			 * When n is non-NULL, it indicates that m pointed to
+			 * a sub-chain (tail) of the mbuf and that the head
+			 * of this chain has not yet been free'd.
+			 */
+			if (n != NULL) {
+				FREE_MB_T(*fin->fin_mp);
+			}
+
+			*fin->fin_mp = NULL;
+			fin->fin_m = NULL;
 			ATOMIC_INCL(frstats[out].fr_pull[1]);
 			return NULL;
 		}
-		ip = MTOD(m, char *) + ipoff;
-	}
 
-	ATOMIC_INCL(frstats[out].fr_pull[0]);
-	fin->fin_ip = (ip_t *)ip;
-	if (fin->fin_dp != NULL)
-		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+		if (n == NULL)
+			*fin->fin_mp = m;
+
+		while (M_LEN(m) == 0) {
+			m = m->m_next;
+		}
+		fin->fin_m = m;
+		ip = MTOD(m, char *) + ipoff;
+
+		ATOMIC_INCL(frstats[out].fr_pull[0]);
+		fin->fin_ip = (ip_t *)ip;
+		if (fin->fin_dp != NULL)
+			fin->fin_dp = (char *)fin->fin_ip + dpoff;
+	}
 
 	if (len == fin->fin_plen)
 		fin->fin_flx |= FI_COALESCE;
@@ -1928,19 +2016,19 @@ struct lwp *p;
 struct proc *p;
 #endif
 {
-	u_int xmin = GET_MINOR(dev);
+	u_int unit = GET_MINOR(dev);
 	int revents = 0;
 
-	if (IPL_LOGMAX < xmin)
+	if (IPL_LOGMAX < unit)
 		return ENXIO;
 
-	switch (xmin)
+	switch (unit)
 	{
 	case IPL_LOGIPF :
 	case IPL_LOGNAT :
 	case IPL_LOGSTATE :
 #ifdef IPFILTER_LOG
-		if ((events & (POLLIN | POLLRDNORM)) && ipflog_canread(xmin))
+		if ((events & (POLLIN | POLLRDNORM)) && ipflog_canread(unit))
 			revents |= events & (POLLIN | POLLRDNORM);
 #endif
 		break;
@@ -1963,7 +2051,7 @@ struct proc *p;
 	}
 
 	if ((revents == 0) && ((events & (POLLIN|POLLRDNORM)) != 0))
-		selrecord(p, &ipfselwait[xmin]);
+		selrecord(p, &ipfselwait[unit]);
 	return revents;
 }
 

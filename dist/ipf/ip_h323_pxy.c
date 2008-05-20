@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.1.1.7 2007/05/01 19:00:50 martti Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.1.1.8 2008/05/20 06:44:10 darrenr Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -47,12 +47,12 @@ static	frentry_t	h323_fr;
 
 int	h323_proxy_init = 0;
 
-static int find_port __P((int, caddr_t, int datlen, int *, u_short *));
+static int find_port __P((int, void *, int datlen, int *, u_short *));
 
 
 static int find_port(ipaddr, data, datlen, off, port)
 int ipaddr;
-caddr_t data;
+void * data;
 int datlen, *off;
 unsigned short *port;
 {
@@ -62,7 +62,7 @@ unsigned short *port;
 
 	if (datlen < 6)
 		return -1;
-	
+
 	*port = 0;
 	offset = *off;
 	dp = (u_char *)data;
@@ -124,7 +124,7 @@ ap_session_t *aps;
 {
 	int i;
 	ipnat_t *ipn;
-	
+
 	if (aps->aps_data) {
 		for (i = 0, ipn = aps->aps_data;
 		     i < (aps->aps_psiz / sizeof(ipnat_t));
@@ -158,15 +158,15 @@ nat_t *nat;
 {
 	int ipaddr, off, datlen;
 	unsigned short port;
-	caddr_t data;
 	tcphdr_t *tcp;
+	void * data;
 	ip_t *ip;
 
 	ip = fin->fin_ip;
 	tcp = (tcphdr_t *)fin->fin_dp;
 	ipaddr = ip->ip_src.s_addr;
-	
-	data = (caddr_t)tcp + (TCP_OFF(tcp) << 2);
+
+	data = (char *)tcp + (TCP_OFF(tcp) << 2);
 	datlen = fin->fin_dlen - (TCP_OFF(tcp) << 2);
 	if (find_port(ipaddr, data, datlen, &off, &port) == 0) {
 		ipnat_t *ipn;
@@ -183,7 +183,7 @@ nat_t *nat;
 		ipn = (ipnat_t *)&newarray[aps->aps_psiz];
 		bcopy((caddr_t)nat->nat_ptr, (caddr_t)ipn, sizeof(ipnat_t));
 		(void) strncpy(ipn->in_plabel, "h245", APR_LABELLEN);
-		
+
 		ipn->in_inip = nat->nat_inip.s_addr;
 		ipn->in_inmsk = 0xffffffff;
 		ipn->in_dport = htons(port);
@@ -238,8 +238,8 @@ nat_t *nat;
 {
 	int ipaddr, off, datlen;
 	tcphdr_t *tcp;
-	caddr_t data;
 	u_short port;
+	char *data;
 	ip_t *ip;
 
 	aps = aps;	/* LINT */
@@ -247,7 +247,7 @@ nat_t *nat;
 	ip = fin->fin_ip;
 	tcp = (tcphdr_t *)fin->fin_dp;
 	ipaddr = nat->nat_inip.s_addr;
-	data = (caddr_t)tcp + (TCP_OFF(tcp) << 2);
+	data = (char *)tcp + (TCP_OFF(tcp) << 2);
 	datlen = fin->fin_dlen - (TCP_OFF(tcp) << 2);
 	if (find_port(ipaddr, data, datlen, &off, &port) == 0) {
 		fr_info_t fi;
@@ -259,15 +259,15 @@ nat_t *nat;
 		if (nat2 == NULL) {
 			struct ip newip;
 			struct udphdr udp;
-			
+
 			bcopy((caddr_t)ip, (caddr_t)&newip, sizeof(newip));
 			newip.ip_len = fin->fin_hlen + sizeof(udp);
 			newip.ip_p = IPPROTO_UDP;
 			newip.ip_src = nat->nat_inip;
-			
+
 			bzero((char *)&udp, sizeof(udp));
 			udp.uh_sport = port;
-			
+
 			bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
 			fi.fin_state = NULL;
 			fi.fin_nat = NULL;

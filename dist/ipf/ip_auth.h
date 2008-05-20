@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_auth.h,v 1.1.1.8 2007/04/14 20:17:21 martin Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.1.1.9 2008/05/20 06:43:58 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed & Guido Van Rooij.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_auth.h,v 2.16.2.3 2006/07/14 06:12:05 darrenr Exp
+ * Id: ip_auth.h,v 2.16.2.4 2008/03/16 06:58:36 darrenr Exp
  *
  */
 #ifndef	__IP_AUTH_H__
@@ -20,6 +20,7 @@ typedef struct  frauth {
 	u_32_t	fra_pass;
 	fr_info_t	fra_info;
 	char	*fra_buf;
+	u_32_t	fra_flx;
 #ifdef	MENTAT
 	queue_t	*fra_q;
 	mb_t	*fra_m;

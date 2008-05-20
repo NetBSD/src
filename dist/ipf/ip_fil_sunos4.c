@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_sunos4.c,v 1.1.1.6 2007/05/15 22:26:00 martin Exp $	*/
+/*	$NetBSD: ip_fil_sunos4.c,v 1.1.1.7 2008/05/20 06:44:08 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -56,7 +56,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_sunos4.c,v 2.46.2.27 2007/05/10 06:00:57 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_sunos4.c,v 2.46.2.32 2008/02/05 20:56:12 darrenr Exp";
 #endif
 
 extern	struct	protosw	inetsw[];
@@ -204,13 +204,35 @@ int iplopen(dev, flags)
 dev_t dev;
 int flags;
 {
-	u_int min = GET_MINOR(dev);
+	u_int unit = GET_MINOR(dev);
+	int error;
 
-	if (IPL_LOGMAX < min)
-		min = ENXIO;
-	else
-		min = 0;
-	return min;
+	if (IPL_LOGMAX < unit) {
+		error = ENXIO;
+	} else {
+		switch (unit)
+		{
+		case IPL_LOGIPF :
+		case IPL_LOGNAT :
+		case IPL_LOGSTATE :
+		case IPL_LOGAUTH :
+#ifdef IPFILTER_LOOKUP
+		case IPL_LOGLOOKUP :
+#endif
+#ifdef IPFILTER_SYNC
+		case IPL_LOGSYNC :
+#endif
+#ifdef IPFILTER_SCAN
+		case IPL_LOGSCAN :
+#endif
+			error = 0;
+			break;
+		default :
+			error = ENXIO;
+			break;
+		}
+	}
+	return error;
 }
 
 
@@ -218,13 +240,13 @@ int iplclose(dev, flags)
 dev_t dev;
 int flags;
 {
-	u_int	min = GET_MINOR(dev);
+	u_int	unit = GET_MINOR(dev);
 
-	if (IPL_LOGMAX < min)
-		min = ENXIO;
+	if (IPL_LOGMAX < unit)
+		unit = ENXIO;
 	else
-		min = 0;
-	return min;
+		unit = 0;
+	return unit;
 }
 
 
@@ -283,10 +305,8 @@ fr_info_t *fin;
 	if (tcp->th_flags & TH_RST)
 		return -1;		/* feedback loop */
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	tlen = fin->fin_dlen - (TCP_OFF(tcp) << 2) +
 		((tcp->th_flags & TH_SYN) ? 1 : 0) +
@@ -389,10 +409,9 @@ int dst;
 	if ((type < 0) || (type > ICMP_MAXTYPE))
 		return -1;
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
+
 	MGET(m, M_DONTWAIT, MT_HEADER);
 	if (m == NULL)
 		return -1;
@@ -402,8 +421,7 @@ int dst;
 
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
-		if ((fin->fin_p == IPPROTO_ICMP) &&
-		    !(fin->fin_flx & FI_SHORT))
+		if ((fin->fin_p == IPPROTO_ICMP) && !(fin->fin_flx & FI_SHORT))
 			switch (ntohs(fin->fin_data[0]) >> 8)
 			{
 			case ICMP_ECHO :
@@ -503,13 +521,17 @@ register struct mbuf *m0;
 }
 
 
+/*  
+ * m0 - pointer to mbuf where the IP packet starts  
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
+ */  
 int fr_fastroute(m0, mpp, fin, fdp)
 struct mbuf *m0, **mpp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
 	register struct ip *ip, *mhip;
-	register struct mbuf *m = m0;
+	register struct mbuf *m = *mpp;
 	register struct route *ro;
 	int len, off, error = 0, hlen, code;
 	struct ifnet *ifp, *sifp;
@@ -588,7 +610,7 @@ frdest_t *fdp;
 			break;
 		case -1 :
 			error = -1;
-			goto done;
+			goto bad;
 			break;
 		}
 
@@ -683,7 +705,7 @@ sendorfree:
 		else
 			FREE_MB_T(m);
 	}
-    }	
+    }
 done:
 	if (!error)
 		fr_frouteok[0]++;
@@ -849,16 +871,16 @@ fr_info_t *fin;
 /* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
 /* and ONLY if the pullup succeeds.                                         */
 /*                                                                          */
-/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* We assume that 'xmin' is a pointer to a buffer that is part of the chain */
 /* of buffers that starts at *fin->fin_mp.                                  */
 /* ------------------------------------------------------------------------ */
-void *fr_pullup(min, fin, len)
-mb_t *min;
+void *fr_pullup(xmin, fin, len)
+mb_t *xmin;
 fr_info_t *fin;
 int len;
 {
 	int out = fin->fin_out, dpoff, ipoff;
-	mb_t *m = min;
+	mb_t *m = xmin, *n;
 	char *ip;
 
 	if (m == NULL)
@@ -875,25 +897,50 @@ int len;
 		dpoff = 0;
 
 	if (M_LEN(m) < len) {
+		n = *fin->fin_mp;
+
+		if (m != n) {
+			for (; n->m_next != m; n = n->m_next)
+				;
+		} else {
+			n = NULL;
+		}
+
 		if (len > MLEN) {
 			FREE_MB_T(*fin->fin_mp);
 			m = NULL;
+			n = NULL;
 		} else {
 			m = m_pullup(m, len);
 		}
-		*fin->fin_mp = m;
+		if (n != NULL)
+			n->m_next = m;
 		fin->fin_m = m;
 		if (m == NULL) {
+			if (n != NULL) {
+				FREE_MB_T(*fin->fin_mp);
+			}
 			ATOMIC_INCL(frstats[out].fr_pull[1]);
+			*fin->fin_mp = NULL;
+			fin->fin_m = NULL;
 			return NULL;
 		}
-		ip = MTOD(m, char *) + ipoff;
-	}
 
-	ATOMIC_INCL(frstats[out].fr_pull[0]);
-	fin->fin_ip = (ip_t *)ip;
-	if (fin->fin_dp != NULL)
-		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+		if (n == NULL)
+			*fin->fin_mp = m;
+
+		while (M_LEN(m) == 0) {
+			m = ->m_next;
+		}
+
+		fin->fin_m = m;
+		ip = MTOD(m, char *) + ipoff;
+
+		ATOMIC_INCL(frstats[out].fr_pull[0]);
+		fin->fin_ip = (ip_t *)ip;
+		if (fin->fin_dp != NULL)
+			fin->fin_dp = (char *)fin->fin_ip + dpoff;
+	}
 
 	if (len == fin->fin_plen)
 		fin->fin_flx |= FI_COALESCE;

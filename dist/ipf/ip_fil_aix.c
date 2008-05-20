@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_aix.c,v 1.1.1.3 2007/05/15 22:25:59 martin Exp $	*/
+/*	$NetBSD: ip_fil_aix.c,v 1.1.1.4 2008/05/20 06:44:02 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #define	__FULL_PROTO
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_aix.c,v 2.1.2.10 2007/05/10 06:00:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_aix.c,v 2.1.2.14 2007/11/08 08:12:41 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -464,25 +464,25 @@ void *ifp;
  */
 int ipfopen(dev_t dev, u_long flags, chan_t chan, int ext)
 {
-	u_int min = GET_MINOR(dev);
+	u_int xmin = GET_MINOR(dev);
 
-	if (IPL_LOGMAX < min)
-		min = ENXIO;
+	if (IPL_LOGMAX < xmin)
+		xmin = ENXIO;
 	else
-		min = 0;
-	return min;
+		xmin = 0;
+	return xmin;
 }
 
 
 int ipfclose(dev_t dev, chan_t chan)
 {
-	u_int	min = GET_MINOR(dev);
+	u_int	xmin = GET_MINOR(dev);
 
-	if (IPL_LOGMAX < min)
-		min = ENXIO;
+	if (IPL_LOGMAX < xmin)
+		xmin = ENXIO;
 	else
-		min = 0;
-	return min;
+		xmin = 0;
+	return xmin;
 }
 
 /*
@@ -543,10 +543,8 @@ fr_info_t *fin;
 	if (tcp->th_flags & TH_RST)
 		return -1;		/* feedback loop */
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	tlen = fin->fin_dlen - (TCP_OFF(tcp) << 2) +
 			((tcp->th_flags & TH_SYN) ? 1 : 0) +
@@ -720,10 +718,8 @@ int dst;
 		return -1;
 #endif
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 #ifdef MGETHDR
 	MGETHDR(m, M_DONTWAIT, MT_HEADER);
 #else
@@ -738,8 +734,7 @@ int dst;
 	ohlen = 0;
 	ifp = fin->fin_ifp;
 	if (fin->fin_v == 4) {
-		if ((fin->fin_p == IPPROTO_ICMP) &&
-		    !(fin->fin_flx & FI_SHORT))
+		if ((fin->fin_p == IPPROTO_ICMP) && !(fin->fin_flx & FI_SHORT))
 			switch (ntohs(fin->fin_data[0]) >> 8)
 			{
 			case ICMP_ECHO :
@@ -876,13 +871,17 @@ int dst;
 }
 
 
+/*  
+ * m0 - pointer to mbuf where the IP packet starts  
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
+ */  
 int fr_fastroute(m0, mpp, fin, fdp)
 mb_t *m0, **mpp;
 fr_info_t *fin;
 frdest_t *fdp;
 {
 	register struct ip *ip, *mhip;
-	register struct mbuf *m = m0;
+	register struct mbuf *m = *mpp;
 	register struct route *ro;
 	int len, off, error = 0, hlen, code;
 	struct ifnet *ifp, *sifp;
@@ -983,12 +982,12 @@ frdest_t *fdp;
 		case 0 :
 			break;
 		case 1 :
-			fr_natderef((nat_t **)&fin->fin_nat);  
+			fr_natderef((nat_t **)&fin->fin_nat);
 			ip->ip_sum = 0;
 			break;
 		case -1 :
 			error = -1;
-			goto done;
+			goto bad;
 			break;
 		}
 
@@ -1373,6 +1372,9 @@ fr_info_t *fin;
 	if ((fin->fin_flx & FI_NOCKSUM) != 0)
 		return;
 
+	if (fin->fin_cksum != 0)
+		return;
+
 	manual = 0;
 	m = fin->fin_m;
 	if (m == NULL) {
@@ -1401,11 +1403,16 @@ fr_info_t *fin;
 	if (pflag != 0) {
 		if (cflags == (pflag | M_CSUM_TCP_UDP_BAD)) {
 			fin->fin_flx |= FI_BAD;
+			fin->fin_cksum = -1;
 		} else if (cflags == (pflag | M_CSUM_DATA)) {
-			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0)
+			if ((m->m_pkthdr.csum_data ^ 0xffff) != 0) {
 				fin->fin_flx |= FI_BAD;
+				fin->fin_cksum = -1;
+			} else {
+				fin->fin_cksum = 1;
+			}
 		} else if (cflags == pflag) {
-			;
+			fin->fin_cksum = 1;
 		} else {
 			manual = 1;
 		}
@@ -1526,7 +1533,7 @@ fr_info_t *fin;
 int len;
 {
 	int out = fin->fin_out, dpoff, ipoff;
-	mb_t *m = min;
+	mb_t *m = min, *n;
 	char *ip;
 
 	if (m == NULL)
@@ -1543,12 +1550,25 @@ int len;
 		dpoff = 0;
 
 	if (M_LEN(m) < len) {
-#ifdef MHLEN
+		n = *fin->fin_mp;
 		/*
 		 * Assume that M_PKTHDR is set and just work with what is left
 		 * rather than check..
 		 * Should not make any real difference, anyway.
 		 */
+		if (m != n) {
+			/*
+			 * Record the mbuf that points to the mbuf that we're
+			 * about to go to work on so that we can update the
+			 * m_next appropriately later.
+			 */
+			for (; n->m_next != m; n = n->m_next)
+				;
+		} else {
+			n = NULL;
+		}
+
+#ifdef MHLEN
 		if (len > MHLEN)
 #else
 		if (len > MLEN)
@@ -1556,23 +1576,43 @@ int len;
 		{
 			FREE_MB_T(*fin->fin_mp);
 			m = NULL;
+			n = NULL;
 		} else
 		{
 			m = m_pullup(m, len);
 		}
-		*fin->fin_mp = m;
-		fin->fin_m = m;
+		if (n != NULL)
+			n->m_next = m;
 		if (m == NULL) {
-			ATOMIC_INCL(frstats[out].fr_pull[1]);
-			return NULL;
-		}
-		ip = MTOD(m, char *) + ipoff;
-	}
+			/*
+			 * When n is non-NULL, it indicates that m pointed to
+			 * a sub-chain (tail) of the mbuf and that the head
+			 * of this chain has not yet been free'd.
+			 */
+			if (n != NULL) {
+				FREE_MB_T(*fin->fin_mp);
+			}
 
-	ATOMIC_INCL(frstats[out].fr_pull[0]);
-	fin->fin_ip = (ip_t *)ip;
-	if (fin->fin_dp != NULL)
-		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+			*fin->fin_mp = NULL;
+                        fin->fin_m = NULL;
+                        ATOMIC_INCL(frstats[out].fr_pull[1]);
+                        return NULL;
+                }
+
+		if (n == NULL)
+			*fin->fin_mp = m;
+
+		while (M_LEN(m) == 0) {
+			m = m->m_next;
+		}
+		fin->fin_m = m;
+		ip = MTOD(m, char *) + ipoff;
+
+		ATOMIC_INCL(frstats[out].fr_pull[0]);
+		fin->fin_ip = (ip_t *)ip;
+		if (fin->fin_dp != NULL)
+			fin->fin_dp = (char *)fin->fin_ip + dpoff;
+	}
 
 	if (len == fin->fin_plen)
 		fin->fin_flx |= FI_COALESCE;

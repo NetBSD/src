@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.1.1.6 2007/05/15 22:26:16 martin Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.1.1.7 2008/05/20 06:45:52 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * Id: ip_state.h,v 2.68.2.8 2007/05/11 10:44:14 darrenr Exp
+ * Id: ip_state.h,v 2.68.2.11 2008/04/14 12:19:27 darrenr Exp
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -26,10 +26,8 @@ struct ipscan;
 # define	IPSTATE_MAX	4013	/* Maximum number of states held */
 #endif
 
-#define	PAIRS(s1,d1,s2,d2)	((((s1) == (s2)) && ((d1) == (d2))) ||\
-				 (((s1) == (d2)) && ((d1) == (s2))))
-#define	IPPAIR(s1,d1,s2,d2)	PAIRS((s1).s_addr, (d1).s_addr, \
-				      (s2).s_addr, (d2).s_addr)
+#define	SEQ_GE(a,b)	((int)((a) - (b)) >= 0)
+#define	SEQ_GT(a,b)	((int)((a) - (b)) > 0)
 
 
 typedef struct ipstate {
@@ -224,6 +222,7 @@ extern	u_long	fr_tcpclosewait;
 extern	u_long	fr_tcplastack;
 extern	u_long	fr_tcptimeout;
 extern	u_long	fr_tcpclosed;
+extern	u_long	fr_tcptimewait;
 extern	u_long	fr_tcphalfclosed;
 extern	u_long	fr_udptimeout;
 extern	u_long	fr_udpacktimeout;

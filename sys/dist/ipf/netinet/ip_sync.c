@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.1.1.5 2007/04/14 20:17:38 martin Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.1.1.6 2008/05/20 06:45:53 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -31,6 +31,10 @@ struct file;
 # include <sys/systm.h>
 # if !defined(__SVR4) && !defined(__svr4__)
 #  include <sys/mbuf.h>
+# endif
+# include <sys/select.h>
+# if __FreeBSD_version >= 500000
+#  include <sys/selinfo.h>
 # endif
 #endif
 #if defined(__NetBSD__) && (__NetBSD_Version__ >= 104000000)
@@ -98,13 +102,17 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.8 2006/07/14 06:12:20 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.12 2008/02/09 18:28:08 darrenr Exp";
 #endif
 
 #define	SYNC_STATETABSZ	256
 #define	SYNC_NATTABSZ	256
 
 #ifdef	IPFILTER_SYNC
+# if SOLARIS && defined(_KERNEL)
+extern	struct pollhead	iplpollhead[IPL_LOGSIZE];
+# endif 
+
 ipfmutex_t	ipf_syncadd, ipsl_mutex;
 ipfrwlock_t	ipf_syncstate, ipf_syncnat;
 #if SOLARIS && defined(_KERNEL)
@@ -284,11 +292,11 @@ struct uio *uio;
 {
 	synchdr_t sh;
 
-	/* 
+	/*
 	 * THIS MUST BE SUFFICIENT LARGE TO STORE
-	 * ANY POSSIBLE DATA TYPE 
+	 * ANY POSSIBLE DATA TYPE
 	 */
-	char data[2048]; 
+	char data[2048];
 
 	int err = 0;
 
@@ -301,7 +309,7 @@ struct uio *uio;
 
 		if (uio->uio_resid >= sizeof(sh)) {
 
-			err = UIOMOVE((caddr_t)&sh, sizeof(sh), UIO_WRITE, uio);
+			err = UIOMOVE(&sh, sizeof(sh), UIO_WRITE, uio);
 
 			if (err) {
 				if (ipf_sync_debug > 2)
@@ -359,7 +367,7 @@ struct uio *uio;
 
 
 		/*
-		 * We have a header, so try to read the amount of data 
+		 * We have a header, so try to read the amount of data
 		 * needed for the request
 		 */
 
@@ -373,7 +381,7 @@ struct uio *uio;
 
 		if (uio->uio_resid >= sh.sm_len) {
 
-			err = UIOMOVE((caddr_t)data, sh.sm_len, UIO_WRITE, uio);
+			err = UIOMOVE(data, sh.sm_len, UIO_WRITE, uio);
 
 			if (err) {
 				if (ipf_sync_debug > 2)
@@ -402,7 +410,7 @@ struct uio *uio;
 					sh.sm_len, uio->uio_resid);
 			return EAGAIN;
 		}
-	}	 
+	}
 
 	/* no more data */
 	return 0;
@@ -473,7 +481,7 @@ struct uio *uio;
 	READ_ENTER(&ipf_syncstate);
 	while ((sl_tail < sl_idx)  && (uio->uio_resid > sizeof(*sl))) {
 		sl = synclog + sl_tail++;
-		err = UIOMOVE((caddr_t)sl, sizeof(*sl), UIO_READ, uio);
+		err = UIOMOVE(sl, sizeof(*sl), UIO_READ, uio);
 		if (err != 0)
 			break;
 	}
@@ -481,7 +489,7 @@ struct uio *uio;
 	while ((su_tail < su_idx)  && (uio->uio_resid > sizeof(*su))) {
 		su = syncupd + su_tail;
 		su_tail++;
-		err = UIOMOVE((caddr_t)su, sizeof(*su), UIO_READ, uio);
+		err = UIOMOVE(su, sizeof(*su), UIO_READ, uio);
 		if (err != 0)
 			break;
 		if (su->sup_hdr.sm_sl != NULL)
@@ -615,8 +623,8 @@ void *data;
 		READ_ENTER(&ipf_state);
 
 		if (ipf_sync_debug > 6)
-			printf("[%d] Data from state v:%d p:%d cmd:%d table:%d rev:%d\n", 
-				sp->sm_num, sl->sl_hdr.sm_v, sl->sl_hdr.sm_p, 
+			printf("[%d] Data from state v:%d p:%d cmd:%d table:%d rev:%d\n",
+				sp->sm_num, sl->sl_hdr.sm_v, sl->sl_hdr.sm_p,
 				sl->sl_hdr.sm_cmd, sl->sl_hdr.sm_table,
 				sl->sl_hdr.sm_rev);
 
@@ -710,7 +718,7 @@ void *data;
 	u_int hv = 0;
 	int err;
 
-	READ_ENTER(&ipf_syncstate);
+	READ_ENTER(&ipf_syncnat);
 
 	switch (sp->sm_cmd)
 	{
@@ -740,11 +748,11 @@ void *data;
 		sl->sl_num = ntohl(sp->sm_num);
 
 		WRITE_ENTER(&ipf_nat);
-		sl->sl_pnext = syncstatetab + hv;
-		sl->sl_next = syncstatetab[hv];
-		if (syncstatetab[hv] != NULL)
-			syncstatetab[hv]->sl_pnext = &sl->sl_next;
-		syncstatetab[hv] = sl;
+		sl->sl_pnext = syncnattab + hv;
+		sl->sl_next = syncnattab[hv];
+		if (syncnattab[hv] != NULL)
+			syncnattab[hv]->sl_pnext = &sl->sl_next;
+		syncnattab[hv] = sl;
 		nat_insert(n, sl->sl_rev);
 		RWLOCK_EXIT(&ipf_nat);
 		break;
@@ -752,8 +760,8 @@ void *data;
 	case SMC_UPDATE :
 		bcopy(data, &su, sizeof(su));
 
-		READ_ENTER(&ipf_syncstate);
-		for (sl = syncstatetab[hv]; (sl != NULL); sl = sl->sl_next)
+		READ_ENTER(&ipf_syncnat);
+		for (sl = syncnattab[hv]; (sl != NULL); sl = sl->sl_next)
 			if (sl->sl_hdr.sm_num == sp->sm_num)
 				break;
 		if (sl == NULL) {
@@ -778,7 +786,7 @@ void *data;
 		break;
 	}
 
-	RWLOCK_EXIT(&ipf_syncstate);
+	RWLOCK_EXIT(&ipf_syncnat);
 	return 0;
 }
 
@@ -821,16 +829,6 @@ void *ptr;
 		ipf_syncwrap = 1;
 	}
 
-	hv = ipf_syncnum & (SYNC_STATETABSZ - 1);
-	while (ipf_syncwrap != 0) {
-		for (ss = syncstatetab[hv]; ss; ss = ss->sl_next)
-			if (ss->sl_hdr.sm_num == ipf_syncnum)
-				break;
-		if (ss == NULL)
-			break;
-		ipf_syncnum++;
-		hv = ipf_syncnum & (SYNC_STATETABSZ - 1);
-	}
 	/*
 	 * Use the synch number of the object as the hash key.  Should end up
 	 * with relatively even distribution over time.
@@ -839,9 +837,35 @@ void *ptr;
 	 * nth connection they make, where n is a value in the interval
 	 * [0, SYNC_STATETABSZ-1].
 	 */
-	sl->sl_pnext = syncstatetab + hv;
-	sl->sl_next = syncstatetab[hv];
-	syncstatetab[hv] = sl;
+	 if (tab == SMC_STATE) {
+		hv = ipf_syncnum & (SYNC_STATETABSZ - 1);
+		while (ipf_syncwrap != 0) {
+			for (ss = syncstatetab[hv]; ss; ss = ss->sl_next)
+				if (ss->sl_hdr.sm_num == ipf_syncnum)
+					break;
+			if (ss == NULL)
+				break;
+			ipf_syncnum++;
+			hv = ipf_syncnum & (SYNC_STATETABSZ - 1);
+		}
+		sl->sl_pnext = syncstatetab + hv;
+		sl->sl_next = syncstatetab[hv];
+		syncstatetab[hv] = sl;
+	} else {
+		hv = ipf_syncnum & (SYNC_NATTABSZ - 1);
+		while (ipf_syncwrap != 0) {
+			for (ss = syncnattab[hv]; ss; ss = ss->sl_next)
+				if (ss->sl_hdr.sm_num == ipf_syncnum)
+					break;
+			if (ss == NULL)
+				break;
+			ipf_syncnum++;
+			hv = ipf_syncnum & (SYNC_STATETABSZ - 1);
+		}
+		sl->sl_pnext = syncnattab + hv;
+		sl->sl_next = syncnattab[hv];
+		syncnattab[hv] = sl;
+	}
 	sl->sl_num = ipf_syncnum;
 	MUTEX_EXIT(&ipf_syncadd);
 
@@ -855,12 +879,9 @@ void *ptr;
 	if (tab == SMC_STATE) {
 		sl->sl_ips = ptr;
 		sz = sizeof(*sl->sl_ips);
-	} else if (tab == SMC_NAT) {
+	} else {
 		sl->sl_ipn = ptr;
 		sz = sizeof(*sl->sl_ipn);
-	} else {
-		ptr = NULL;
-		sz = 0;
 	}
 	sl->sl_len = sz;
 
@@ -888,12 +909,14 @@ void *ptr;
 # if SOLARIS
 #  ifdef _KERNEL
 	cv_signal(&ipslwait);
+	pollwakeup(&iplpollhead[IPL_LOGSYNC], POLLIN|POLLRDNORM);
 #  endif
 	MUTEX_EXIT(&ipsl_mutex);
 # else
 	MUTEX_EXIT(&ipsl_mutex);
 #  ifdef _KERNEL
 	wakeup(&sl_tail);
+	POLLWAKEUP(IPL_LOGSYNC);
 #  endif
 # endif
 	return sl;
@@ -976,12 +999,14 @@ synclist_t *sl;
 # if SOLARIS
 #  ifdef _KERNEL
 	cv_signal(&ipslwait);
+	pollwakeup(&iplpollhead[IPL_LOGSYNC], POLLIN|POLLRDNORM);
 #  endif
 	MUTEX_EXIT(&ipsl_mutex);
 # else
 	MUTEX_EXIT(&ipsl_mutex);
 #  ifdef _KERNEL
 	wakeup(&sl_tail);
+	POLLWAKEUP(IPL_LOGSYNC);
 #  endif
 # endif
 }

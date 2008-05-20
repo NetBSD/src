@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.8 2007/05/15 22:26:00 martin Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.9 2008/05/20 06:44:08 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.39 2007/05/12 10:37:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.47 2008/02/05 20:56:12 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -65,6 +65,10 @@ extern	int	fr_flags, fr_active;
 
 static	int	fr_send_ip __P((fr_info_t *fin, mblk_t *m, mblk_t **mp));
 static	void	ipf_fixl4sum __P((fr_info_t *));
+#if defined(_INET_IP_STACK_H)
+static	int	pfil_sendbuf __P((void *, mblk_t *, ip_t *, void *));
+static	void	*qif_illrouteto __P((int, void *));
+#endif
 
 ipfmutex_t	ipl_mutex, ipf_authmx, ipf_rw, ipf_stinsert;
 ipfmutex_t	ipf_nat_new, ipf_natio, ipf_timeoutlock;
@@ -155,16 +159,17 @@ int ipfattach __P((void))
 	if (fr_initialise() < 0)
 		return -1;
 
-#if SOLARIS2 >= 8
+#if !defined(_INET_IP_STACK_H)
+# if SOLARIS2 >= 8
 	ip_forwarding = &ip_g_forward;
-#endif
+# endif
 	/*
 	 * XXX - There is no terminator for this array, so it is not possible
 	 * to tell if what we are looking for is missing and go off the end
 	 * of the array.
 	 */
 
-#if SOLARIS2 <= 8
+# if SOLARIS2 <= 8
 	for (i = 0; ; i++) {
 		if (!strcmp(ip_param_arr[i].ip_param_name, "ip_def_ttl")) {
 			ip_ttl_ptr = &ip_param_arr[i].ip_param_value;
@@ -172,35 +177,37 @@ int ipfattach __P((void))
 			    "ip_path_mtu_discovery")) {
 			ip_mtudisc = &ip_param_arr[i].ip_param_value;
 		}
-#if SOLARIS2 < 8
+# if SOLARIS2 < 8
 		else if (!strcmp(ip_param_arr[i].ip_param_name,
 			    "ip_forwarding")) {
 			ip_forwarding = &ip_param_arr[i].ip_param_value;
 		}
-#else
+# else
 		else if (!strcmp(ip_param_arr[i].ip_param_name,
 			    "ip6_forwarding")) {
 			ip6_forwarding = &ip_param_arr[i].ip_param_value;
 		}
-#endif
+# endif
 
 		if (ip_mtudisc != NULL && ip_ttl_ptr != NULL &&
-#if SOLARIS2 >= 8
+# if SOLARIS2 >= 8
 		    ip6_forwarding != NULL &&
-#endif
+# endif
 		    ip_forwarding != NULL)
 			break;
 	}
-#endif
+# endif
 
 	if (fr_control_forwarding & 1) {
 		if (ip_forwarding != NULL)
 			*ip_forwarding = 1;
-#if SOLARIS2 >= 8
+# if SOLARIS2 >= 8
 		if (ip6_forwarding != NULL)
 			*ip6_forwarding = 1;
-#endif
+# endif
+		;
 	}
+#endif /* !defined(_INET_IP_STACK_H) */
 
 	return 0;
 }
@@ -242,16 +249,12 @@ int *rp;
 			return EIO;
 	}
 
-	READ_ENTER(&ipf_global);
-
 	error = fr_ioctlswitch(unit, (caddr_t)data, cmd, mode,
 			       cp->cr_uid, curproc);
 	if (error != -1) {
-		RWLOCK_EXIT(&ipf_global);
 		return error;
 	}
 
-	RWLOCK_EXIT(&ipf_global);
 	return error;
 }
 
@@ -261,6 +264,7 @@ char	*name;
 int	v;
 {
 	void *ifp;
+#if !defined(_INET_IP_STACK_H)
 	qif_t *qf;
 	int sap;
 
@@ -274,6 +278,11 @@ int	v;
 	qf = qif_iflookup(name, sap);
 	rw_exit(&pfil_rw);
 	return qf;
+#else
+	if (v == 6)
+		return (void *)net_phylookup(ipfipv6, name);
+	return (void *)net_phylookup(ipfipv4, name);
+#endif
 }
 
 
@@ -286,7 +295,8 @@ dev_t *devp;
 int flags, otype;
 cred_t *cred;
 {
-	minor_t min = getminor(*devp);
+	minor_t unit = getminor(*devp);
+	int error;
 
 #ifdef	IPFDEBUG
 	cmn_err(CE_CONT, "iplopen(%x,%x,%x,%x)\n", devp, flags, otype, cred);
@@ -294,8 +304,32 @@ cred_t *cred;
 	if (!(otype & OTYP_CHR))
 		return ENXIO;
 
-	min = (IPL_LOGMAX < min) ? ENXIO : 0;
-	return min;
+	if (IPL_LOGMAX < unit) {
+		error = ENXIO;
+	} else {
+		switch (unit)
+		{
+		case IPL_LOGIPF :
+		case IPL_LOGNAT :
+		case IPL_LOGSTATE :
+		case IPL_LOGAUTH :
+#ifdef IPFILTER_LOOKUP
+		case IPL_LOGLOOKUP :
+#endif 
+#ifdef IPFILTER_SYNC
+		case IPL_LOGSYNC :
+#endif
+#ifdef IPFILTER_SCAN
+		case IPL_LOGSCAN :
+#endif
+			error = 0;
+			break;
+		default :
+			error = ENXIO;
+			break;
+		}
+	}
+	return error;
 }
 
 
@@ -305,14 +339,14 @@ dev_t dev;
 int flags, otype;
 cred_t *cred;
 {
-	minor_t	min = getminor(dev);
+	minor_t	unit = getminor(dev);
 
 #ifdef	IPFDEBUG
 	cmn_err(CE_CONT, "iplclose(%x,%x,%x,%x)\n", dev, flags, otype, cred);
 #endif
 
-	min = (IPL_LOGMAX < min) ? ENXIO : 0;
-	return min;
+	unit = (IPL_LOGMAX < unit) ? ENXIO : 0;
+	return unit;
 }
 
 #ifdef	IPFILTER_LOG
@@ -390,10 +424,8 @@ fr_info_t *fin;
 	if (tcp->th_flags & TH_RST)
 		return -1;
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	tlen = (tcp->th_flags & (TH_SYN|TH_FIN)) ? 1 : 0;
 #ifdef	USE_INET6
@@ -455,9 +487,11 @@ static int fr_send_ip(fin, m, mpp)
 fr_info_t *fin;
 mblk_t *m, **mpp;
 {
+#if !defined(_INET_IP_STACK_H)
+	qif_t *qif;
+#endif
 	qpktinfo_t qpi, *qpip;
 	fr_info_t fnew;
-	qif_t *qif;
 	ip_t *ip;
 	int i, hlen;
 
@@ -477,12 +511,18 @@ mblk_t *m, **mpp;
 #endif
 	{
 		fnew.fin_v = 4;
+#if !defined(_INET_IP_STACK_H)
 		if (ip_ttl_ptr != NULL)
 			ip->ip_ttl = (u_char)(*ip_ttl_ptr);
 		else
+#endif
 			ip->ip_ttl = 63;
-		if (ip_mtudisc != NULL)
-			ip->ip_off = htons(*ip_mtudisc ? IP_DF : 0);
+#if !defined(_INET_IP_STACK_H)
+		if ((ip_mtudisc != NULL) && (*ip_mtudisc == 0))
+#else
+		if (!net_getpmtuenabled(ipfipv4))
+#endif
+			ip->ip_off = 0;
 		else
 			ip->ip_off = htons(IP_DF);
 		/*
@@ -498,8 +538,9 @@ mblk_t *m, **mpp;
 	}
 
 	qpip = fin->fin_qpi;
-	qpi.qpi_q = qpip->qpi_q;
 	qpi.qpi_off = 0;
+#if !defined(_INET_IP_STACK_H)
+	qpi.qpi_q = qpip->qpi_q;
 	qpi.qpi_name = qpip->qpi_name;
 	qif = qpip->qpi_real;
 	qpi.qpi_real = qif;
@@ -509,6 +550,8 @@ mblk_t *m, **mpp;
 	qpi.qpi_num = qif->qf_num;
 	qpi.qpi_flags = qif->qf_flags;
 	qpi.qpi_max_frag = qif->qf_max_frag;
+#else
+#endif
 	qpi.qpi_m = m;
 	qpi.qpi_data = ip;
 	fnew.fin_qpi = &qpi;
@@ -531,18 +574,16 @@ int type;
 fr_info_t *fin;
 int dst;
 {
+#ifdef	USE_INET6
+	mblk_t *mb;
+	ip6_t *ip6;
+#endif
 	struct in_addr dst4;
 	struct icmp *icmp;
 	qpktinfo_t *qpi;
 	int hlen, code;
 	u_short sz;
-#ifdef	USE_INET6
-	mblk_t *mb;
-#endif
 	mblk_t *m;
-#ifdef	USE_INET6
-	ip6_t *ip6;
-#endif
 	ip_t *ip;
 
 	if ((type < 0) || (type > ICMP_MAXTYPE))
@@ -554,10 +595,8 @@ int dst;
 		return -1;
 #endif
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	qpi = fin->fin_qpi;
 
@@ -574,8 +613,7 @@ int dst;
 	} else
 #endif
 	{
-		if ((fin->fin_p == IPPROTO_ICMP) &&
-		    !(fin->fin_flx & FI_SHORT))
+		if ((fin->fin_p == IPPROTO_ICMP) && !(fin->fin_flx & FI_SHORT))
 			switch (ntohs(fin->fin_data[0]) >> 8)
 			{
 			case ICMP_ECHO :
@@ -605,9 +643,16 @@ int dst;
 	icmp->icmp_type = type & 0xff;
 	icmp->icmp_code = code & 0xff;
 #ifdef	icmp_nextmtu
-	if (type == ICMP_UNREACH && (qpi->qpi_max_frag != 0) &&
-	    fin->fin_icode == ICMP_UNREACH_NEEDFRAG)
-		icmp->icmp_nextmtu = htons(qpi->qpi_max_frag);
+	if (type == ICMP_UNREACH && fin->fin_icode == ICMP_UNREACH_NEEDFRAG) {
+		int mtu = 0;
+
+# if !defined(_INET_IP_STACK_H)
+		mtu = qpi->qpi_max_frag;
+# else
+		mtu = net_getmtu(ipfipv4, qpi->qpi_real, 0);
+# endif
+		icmp->icmp_nextmtu = htons(mtu);
+	}
 #endif
 
 #ifdef	USE_INET6
@@ -616,7 +661,7 @@ int dst;
 		int csz;
 
 		if (dst == 0) {
-			if (fr_ifpaddr(6, FRI_NORMAL, qpi->qpi_real,
+			if (fr_ifpaddr(6, FRI_NORMAL, (void *)qpi->qpi_real,
 				       (struct in_addr *)&dst6, NULL) == -1) {
 				FREE_MB_T(m);
 				return -1;
@@ -644,7 +689,7 @@ int dst;
 		ip->ip_tos = fin->fin_ip->ip_tos;
 		ip->ip_len = (u_short)sz;
 		if (dst == 0) {
-			if (fr_ifpaddr(4, FRI_NORMAL, qpi->qpi_real,
+			if (fr_ifpaddr(4, FRI_NORMAL, (void *)qpi->qpi_real,
 				       &dst4, NULL) == -1) {
 				FREE_MB_T(m);
 				return -1;
@@ -680,9 +725,10 @@ int v, atype;
 void *qifptr;
 struct in_addr *inp, *inpmask;
 {
-#ifdef	USE_INET6
+#if !defined(_INET_IP_STACK_H)
+# ifdef	USE_INET6
 	struct sockaddr_in6 sin6, mask6;
-#endif
+# endif
 	struct sockaddr_in sin, mask;
 	qif_t *qif;
 
@@ -693,7 +739,7 @@ struct in_addr *inp, *inpmask;
 	if (qif->qf_ill == NULL)
 		return -1;
 
-#ifdef	USE_INET6
+# ifdef	USE_INET6
 	if (v == 6) {
 		in6_addr_t *inp6;
 		ipif_t *ipif;
@@ -722,7 +768,7 @@ struct in_addr *inp, *inpmask;
 			sin6.sin6_addr = *inp6;
 		return fr_ifpfillv6addr(atype, &sin6, &mask6, inp, inpmask);
 	}
-#endif
+# endif
 
 	if (((ill_t *)qif->qf_ill)->ill_ipif == NULL)
 		return -1;
@@ -742,6 +788,45 @@ struct in_addr *inp, *inpmask;
 	mask.sin_addr.s_addr = QF_V4_NETMASK(qif);
 
 	return fr_ifpfillv4addr(atype, &sin, &mask, inp, inpmask);
+#else
+	net_ifaddr_t types[2];
+
+	if ((qifptr == NULL) || (qifptr == (void *)-1))
+		return -1;
+
+	switch (atype)
+	{
+	case FRI_BROADCAST :
+		types[0] = NA_BROADCAST;
+		break;
+	case FRI_PEERADDR :
+		types[0] = NA_PEER;
+		break;
+	default :
+		types[0] = NA_ADDRESS;
+		break;
+	}
+	types[1] = NA_NETMASK;
+
+	if (v == 4) {
+		struct sockaddr_in sins[2];
+
+		if (net_getlifaddr(ipfipv4, (uintptr_t)qifptr, 0,
+				   2, types, sins) == 0) {
+			return fr_ifpfillv4addr(atype, &sins[0], &sins[1],
+						inp, inpmask);
+		}
+	} else {
+		struct sockaddr_in6 sin6s[2];
+
+		if (net_getlifaddr(ipfipv6, (uintptr_t)qifptr, 0,
+				   2, types, sin6s) == 0) {
+			return fr_ifpfillv6addr(atype, &sin6s[0], &sin6s[1],
+						inp, inpmask);
+		}
+	}
+	return -1;
+#endif
 }
 
 
@@ -860,23 +945,27 @@ fr_info_t *fin;
 	ire_t *dir;
 	int result;
 
-#if SOLARIS2 >= 6
+#if !defined(_INET_IP_STACK_H)
+# if SOLARIS2 >= 6
 	dir = ire_route_lookup(fin->fin_saddr, 0xffffffff, 0, 0, NULL,
 			       NULL, NULL,
-# ifdef IP_ULP_OUT_LABELED
+#  ifdef IP_ULP_OUT_LABELED
 			       NULL,
-# endif
+#  endif
 			       MATCH_IRE_DSTONLY|MATCH_IRE_DEFAULT|
 			       MATCH_IRE_RECURSIVE);
-#else
+# else
 	dir = ire_lookup(fin->fin_saddr);
-#endif
+# endif
 
 	if (!dir)
 		return 0;
 	result = (ire_to_ill(dir) == fin->fin_ifp);
-#if SOLARIS2 >= 8
+# if SOLARIS2 >= 8
 	ire_refrele(dir);
+# endif
+#else
+	result = (qif_illrouteto(fin->fin_v, &fin->fin_dst) == fin->fin_ifp);
 #endif
 	return result;
 }
@@ -945,7 +1034,11 @@ frdest_t *fdp;
 	qpktinfo_t *qpi;
 	frentry_t *fr;
 	frdest_t fd;
+#if !defined(_INET_IP_STACK_H)
 	qif_t *ifp;
+#else
+	void *ifp;
+#endif
 	void *dstp;
 	void *sifp;
 	ip_t *ip;
@@ -974,7 +1067,7 @@ frdest_t *fdp;
 	 */
 	if (*mpp != mb) {
 		mblk_t *mp;
-		
+
 		mp = unlinkb(*mpp);
 		freeb(*mpp);
 		*mpp = mp;
@@ -1103,17 +1196,17 @@ bad_fastroute:
 /* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
 /* and ONLY if the pullup succeeds.                                         */
 /*                                                                          */
-/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* We assume that 'xmin' is a pointer to a buffer that is part of the chain */
 /* of buffers that starts at *fin->fin_mp.                                  */
 /* ------------------------------------------------------------------------ */
-void *fr_pullup(min, fin, len)
-mb_t *min;
+void *fr_pullup(xmin, fin, len)
+mb_t *xmin;
 fr_info_t *fin;
 int len;
 {
 	qpktinfo_t *qpi = fin->fin_qpi;
 	int out = fin->fin_out, dpoff, ipoff;
-	mb_t *m = min;
+	mb_t *m = xmin;
 	char *ip;
 
 	if (m == NULL)
@@ -1150,12 +1243,12 @@ int len;
 		fin->fin_m = m;
 		ip = MTOD(m, char *) + ipoff;
 		qpi->qpi_data = ip;
-	}
 
-	ATOMIC_INCL(frstats[out].fr_pull[0]);
-	fin->fin_ip = (ip_t *)ip;
-	if (fin->fin_dp != NULL)
-		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+		ATOMIC_INCL(frstats[out].fr_pull[0]);
+		fin->fin_ip = (ip_t *)ip;
+		if (fin->fin_dp != NULL)
+			fin->fin_dp = (char *)fin->fin_ip + dpoff;
+	}
 
 	if (len == fin->fin_plen)
 		fin->fin_flx |= FI_COALESCE;
@@ -1165,6 +1258,7 @@ int len;
 
 int ipf_inject(fr_info_t *fin, mb_t *m)
 {
+#if !defined(_INET_IP_STACK_H)
 	qifpkt_t *qp;
 
 	qp = kmem_alloc(sizeof(*qp), KM_NOSLEEP);
@@ -1182,6 +1276,29 @@ int ipf_inject(fr_info_t *fin, mb_t *m)
 	strncpy(qp->qp_ifname, fin->fin_ifname, LIFNAMSIZ);
 	qif_addinject(qp);
 	return 0;
+#else
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in *sin;
+	net_inject_t inject;
+
+	inject.ni_physical = (phy_if_t)fin->fin_ifp;
+	inject.ni_packet = *fin->fin_mp;
+	if (fin->fin_v == 4) {
+		sin = (struct sockaddr_in *)&inject.ni_addr;
+		sin->sin_family = AF_INET;
+		sin->sin_addr = fin->fin_dst;
+		if (fin->fin_out == 0)
+			return net_inject(ipfipv4, NI_QUEUE_IN, &inject);
+		return net_inject(ipfipv4, NI_QUEUE_OUT, &inject);
+	}
+
+	sin6 = (struct sockaddr_in6 *)&inject.ni_addr;
+	sin6->sin6_family = AF_INET6;
+	memcpy(&sin6->sin6_addr, &fin->fin_dst6, sizeof(fin->fin_dst6));
+	if (fin->fin_out == 0)
+		return net_inject(ipfipv6, NI_QUEUE_IN, &inject);
+	return net_inject(ipfipv6, NI_QUEUE_OUT, &inject);
+#endif
 }
 
 
@@ -1215,3 +1332,146 @@ fr_info_t *fin;
 				  fin->fin_dp, fin->fin_plen);
 	}
 }
+
+
+#if defined(_INET_IP_STACK_H)
+
+static void *qif_illrouteto(int v, void *dst)
+{
+	struct sockaddr_in sin;
+
+# ifdef USE_INET6
+	if (v == 6) {
+		struct sockaddr_in6 sin6;
+
+		sin6.sin6_family = AF_INET6;
+		memcpy(&sin6.sin6_addr, dst, sizeof(sin6.sin6_addr));
+		return (void *)net_routeto(ipfipv6, (struct sockaddr *)&sin6);
+	}
+# endif
+
+	sin.sin_family = AF_INET;
+	sin.sin_addr = *(struct in_addr *)dst;
+	return (void *)net_routeto(ipfipv4, (struct sockaddr *)&sin);
+}
+
+
+static int pfil_sendbuf(void *ifp, mblk_t *mb, ip_t *ip, void *dstp)
+{
+	struct sockaddr_in *sin;
+	net_inject_t inject;
+
+	inject.ni_physical = (phy_if_t)ifp;
+	inject.ni_packet = mb;
+
+# ifdef USE_INET6
+	if (ip->ip_v == 6) {
+		struct sockaddr_in6 *sin6;
+
+		sin6 = (struct sockaddr_in6 *)&inject.ni_addr;
+		sin6->sin6_family = AF_INET6;
+		memcpy(&sin6->sin6_addr, dstp, sizeof(sin6->sin6_addr));
+		return net_inject(ipfipv6, NI_DIRECT_OUT, &inject);
+	}
+# endif
+
+	sin = (struct sockaddr_in *)&inject.ni_addr;
+	sin->sin_family = AF_INET;
+	sin->sin_addr = *(struct in_addr *)dstp;
+	return net_inject(ipfipv4, NI_DIRECT_OUT, &inject);
+}
+
+
+void mb_copydata(xmin, off, len, buf)
+mblk_t *xmin;
+size_t off, len;
+char *buf;
+{
+	u_char *s, *bp = (u_char *)buf;
+	size_t mlen, olen, clen;
+	mblk_t *m;
+
+	for (m = xmin; (m != NULL) && (len > 0); m = m->b_cont) {
+		if (MTYPE(m) != M_DATA)
+			continue;
+		s = m->b_rptr;
+		mlen = m->b_wptr - s;
+		olen = MIN(off, mlen);
+		if ((olen == mlen) || (olen < off)) {
+			off -= olen;
+			continue;
+		} else if (olen) {
+			off -= olen;
+			s += olen;
+			mlen -= olen;
+		}
+		clen = MIN(mlen, len);
+		bcopy(s, bp, clen);
+		len -= clen;
+		bp += clen;
+	}
+}
+
+
+void mb_copyback(xmin, off, len, buf)
+mblk_t *xmin;
+size_t off, len;
+char *buf;
+{
+	u_char *s, *bp = (u_char *)buf;
+	size_t mlen, olen, clen;
+	mblk_t *m, *mp;
+
+	for (m = xmin, mp = NULL; (m != NULL) && (len > 0); m = m->b_cont) {
+		mp = m;
+		if (MTYPE(m) != M_DATA)
+			continue;
+
+		s = m->b_rptr;
+		mlen = m->b_wptr - s;
+		olen = MIN(off, mlen);
+		if ((olen == mlen) || (olen < off)) {
+			off -= olen;
+			continue;
+		} else if (olen) {
+			off -= olen;
+			s += olen;
+			mlen -= olen;
+		}
+		clen = MIN(mlen, len);
+		bcopy(bp, s, clen);
+		len -= clen;
+		bp += clen;
+	}
+
+	if ((m == NULL) && (mp != NULL)) {
+		if (len > 0) {
+			mlen = mp->b_datap->db_lim - mp->b_wptr;
+			if (mlen > 0) {
+				if (mlen > len)
+					mlen = len;
+				bcopy((char *)bp, (char *)mp->b_wptr, mlen);
+				bp += mlen;
+				len -= mlen;
+				mp->b_wptr += mlen;
+#ifdef  STRUIO_IP
+# if SOLARIS2 < 10
+				mp->b_datap->db_struiolim = mp->b_wptr;
+# endif
+				mp->b_datap->db_struioflag &= ~STRUIO_IP;
+#endif
+			}
+		}
+
+		if (len > 0) {
+			m = allocb(len, BPRI_MED);
+			if (m != NULL) {
+				bcopy((char *)bp, (char *)m->b_wptr, len);
+				m->b_band = mp->b_band;
+				m->b_wptr += len;
+				linkb(mp, m);
+			}
+		}
+	}
+}
+#endif

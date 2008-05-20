@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.1.1.7 2007/04/14 20:17:30 martin Exp $	*/
+/*	$NetBSD: iptests.c,v 1.1.1.8 2008/05/20 06:44:58 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.8 2007/02/17 12:41:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.9 2007/09/13 07:19:34 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -22,6 +22,9 @@ typedef	int	boolean_t;
 #endif
 #include <sys/time.h>
 #if !defined(__osf__)
+# ifdef __NetBSD__ 
+#  include <machine/lock.h>
+# endif
 # define _KERNEL
 # define KERNEL
 # if !defined(solaris) && !defined(linux) && !defined(__sgi) && !defined(hpux)
@@ -1097,7 +1100,8 @@ int	ptest;
 	struct tcpcb *tcbp, tcb;
 	struct tcpiphdr ti;
 	struct sockaddr_in sin;
-	int fd, slen;
+	int fd;
+	socklen_t slen;
 
 	bzero((char *)&sin, sizeof(sin));
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: alist_new.c,v 1.1.1.1 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: alist_new.c,v 1.1.1.2 2008/05/20 06:45:00 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: alist_new.c,v 1.1.2.2 2006/08/25 22:43:21 darrenr Exp
+ * Id: alist_new.c,v 1.1.2.3 2007/06/06 08:05:33 darrenr Exp
  */
 
 #include "ipf.h"
@@ -55,12 +55,14 @@ alist_new(int v, char *host)
 	}
 
 	if (gethost(host, &al->al_addr) == -1) {
-		*slash = '/';
+		if (slash != NULL)
+			*slash = '/';
 		fprintf(stderr, "Cannot parse hostname\n");
 		free(al);
 		return NULL;
 	}
 	al->al_mask = htonl(mask);
-	*slash = '/';
+	if (slash != NULL)
+		*slash = '/';
 	return al;
 }

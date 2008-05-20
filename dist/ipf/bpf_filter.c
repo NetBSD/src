@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.1.1.3 2007/04/14 20:17:20 martin Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.1.1.4 2008/05/20 06:43:49 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -42,7 +42,7 @@
 
 #if !(defined(lint) || defined(KERNEL) || defined(_KERNEL))
 static const char rcsid[] =
-    "@(#) $Header: /cvsroot/src/dist/ipf/Attic/bpf_filter.c,v 1.1.1.3 2007/04/14 20:17:20 martin Exp $ (LBL)";
+    "@(#) Header: /devel/CVS/IP-Filter/bpf_filter.c,v 2.2.2.3 2006/10/03 11:25:56 darrenr Exp (LBL)";
 #endif
 
 #include <sys/param.h>

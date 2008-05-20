@@ -3,7 +3,7 @@ if [ ! -f netinet/done ] ; then
 	echo "Do NOT run this script directly, do 'make solaris'!"
 	exit 1
 fi
-# Id: buildsunos,v 2.20.2.2 2006/03/16 06:40:10 darrenr Exp
+# Id: buildsunos,v 2.20.2.6 2007/10/26 12:18:48 darrenr Exp
 :
 rev=`uname -r | sed -e 's/^\([^\.]*\)\..*/\1/'`
 if [ -d /usr/ccs/bin ] ; then
@@ -21,7 +21,7 @@ testcc()
 }
 
 if [ $rev = 5 ] ; then
-	if [ ! -d ../pfil ] ; then
+	if [ ! -f /usr/include/sys/neti.h -a ! -d ../pfil ] ; then
 		cat << __EOF__
 pfil directory in .. missing, please download pfil package and extract that
 into the parent directory.
@@ -84,16 +84,19 @@ __EOF__
 
 	case "$CC" in
 	*gcc*)	# gcc
-		XARCH32=""
+		XARCH32_i386=""
+		XARCH32_sparc=""
 		XARCH64_sparc="-m64 -mcmodel=medlow"
 		XARCH64_i386="-m64 -mcmodel=kernel -mno-red-zone -ffreestanding"
 		;;
 	*)	# Sun C
-		XARCH32="-Xa -xildoff"
-		XARCH64_sparc="$XARCH32 -xarch=v9 -xchip=ultra -dalign -xcode=abs32"
+		XARCH32_i386="-Xa -xildoff"
+		XARCH32_sparc="-Xa -xildoff -xarch=v8 -xmemalign=8s"
+		XARCH64_sparc="-Xa -xildoff -xarch=v9 -xchip=ultra -xmemalign=8s -xcode=abs32"
 		XARCH64_i386="$XARCH32 -xarch=amd64 -xcode=abs32"
 		;;
 	esac
+	XARCH32="`eval echo '$XARCH32_'$cpu`"
 	XARCH64="`eval echo '$XARCH64_'$cpu`"
 	OBJ32_sparc=sparcv7
 	OBJ64_sparc=sparcv9
@@ -184,7 +187,7 @@ if [ $cpu = i386 -a $solrev -lt 10 ] ; then
 	if [ -n "$BPFILTER" ] ; then
 		BPF="BPFILTER=./$BPFILTER"
 	fi
-	$MAKE $MAKEFLAGS ${1+"$@"} sunos5x86 SOLARIS2="-DSOLARIS2=$solrev" CPU= CPUDIR=${cpudir} CC="$CC $XARCH32" XARCH="$XARCH32" ARCHINC="$ARCHINC32" BITS=32 OBJ=. $BPF
+	$MAKE $MAKEFLAGS ${1+"$@"} sunos5 SOLARIS2="-DSOLARIS2=$solrev" CPU= CPUDIR=${cpudir} CC="$CC $XARCH32" XARCH="$XARCH32" ARCHINC="$ARCHINC32" BITS=32 OBJ=. $BPF
 	exit $?
 fi
 if [ x$solrev = x ] ; then

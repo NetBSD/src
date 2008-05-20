@@ -1,4 +1,4 @@
-/*	$NetBSD: linux.c,v 1.1.1.4 2007/04/14 20:17:24 martin Exp $	*/
+/*	$NetBSD: linux.c,v 1.1.1.5 2008/05/20 06:44:24 darrenr Exp $	*/
 
 
 #include "ipf-linux.h"
@@ -92,11 +92,33 @@ static int ipf_open(struct inode *in, struct file *fp)
 {
 	int unit, err;
 
-	err = 0;
 	unit = MINOR(in->i_rdev);
 
-	if (unit < 0 || unit > IPL_LOGMAX)
+	if (unit < 0 || unit > IPL_LOGMAX) {
 		err = -ENXIO;
+	} else {
+		switch (unit)
+		{
+		case IPL_LOGIPF :
+		case IPL_LOGNAT :
+		case IPL_LOGSTATE :
+		case IPL_LOGAUTH :
+#ifdef IPFILTER_LOOKUP
+		case IPL_LOGLOOKUP :
+#endif
+#ifdef IPFILTER_SYNC  
+		case IPL_LOGSYNC :
+#endif
+#ifdef IPFILTER_SCAN
+		case IPL_LOGSCAN :
+#endif
+			err = 0;
+			break;
+		default :  
+			err = -ENXIO;
+			break;
+		}
+	}
 	return err;
 }
 
@@ -253,6 +275,10 @@ static int ipfilter_init(void)
 	}
 #endif
 
+	RWLOCK_INIT(&ipf_global, "ipf global rwlock");
+	RWLOCK_INIT(&ipf_mutex, "ipf global mutex rwlock");
+	RWLOCK_INIT(&ipf_frcache, "ipf cache mutex rwlock");
+
 	i = ipfattach();
 
 #ifdef	CONFIG_PROC_FS
@@ -293,6 +319,12 @@ static int ipfilter_init(void)
 	printf("IPFilter: device major number: %d\n", ipfmajor);
 #endif /* CONFIG_PROC_FS */
 
+	if (i != 0) {
+		RW_DESTROY(&ipf_global);
+		RW_DESTROY(&ipf_mutex);
+		RW_DESTROY(&ipf_frcache);
+	}
+
 	return i;
 }
 
@@ -316,6 +348,10 @@ static int ipfilter_fini(void)
 			return result;
 		}
 	}
+
+	RW_DESTROY(&ipf_global);
+	RW_DESTROY(&ipf_mutex);
+	RW_DESTROY(&ipf_frcache);
 
 	fr_running = -2;
 #ifdef CONFIG_PROC_FS

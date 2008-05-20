@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.1.1.9 2007/06/16 10:33:22 martin Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.1.1.10 2008/05/20 06:45:52 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -113,7 +113,7 @@ struct file;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.69 2007/05/26 13:05:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.85 2008/03/16 06:44:52 darrenr Exp";
 #endif
 
 static	ipstate_t **ips_table = NULL;
@@ -133,6 +133,12 @@ static int fr_state_flush_entry __P((void *));
 static ips_stat_t *fr_statetstats __P((void));
 static int fr_delstate __P((ipstate_t *, int));
 static int fr_state_remove __P((caddr_t));
+static int ipf_state_match __P((ipstate_t *is1, ipstate_t *is2));
+static int ipf_state_matchaddresses __P((ipstate_t *is1, ipstate_t *is2));
+static int ipf_state_matchipv4addrs __P((ipstate_t *is1, ipstate_t *is2));
+static int ipf_state_matchipv6addrs __P((ipstate_t *is1, ipstate_t *is2));
+static int ipf_state_matchisps __P((ipstate_t *is1, ipstate_t *is2));
+static int ipf_state_matchports __P((udpinfo_t *is1, udpinfo_t *is2));
 static void fr_ipsmove __P((ipstate_t *, u_int));
 static int fr_tcpstate __P((fr_info_t *, tcphdr_t *, ipstate_t *));
 static int fr_tcpoptions __P((fr_info_t *, tcphdr_t *, tcpdata_t *));
@@ -411,7 +417,7 @@ caddr_t data;
 		if ((sp->is_p == st.is_p) && (sp->is_v == st.is_v) &&
 		    !bcmp((caddr_t)&sp->is_src, (caddr_t)&st.is_src,
 			  sizeof(st.is_src)) &&
-		    !bcmp((caddr_t)&sp->is_dst, (caddr_t)&st.is_src,
+		    !bcmp((caddr_t)&sp->is_dst, (caddr_t)&st.is_dst,
 			  sizeof(st.is_dst)) &&
 		    !bcmp((caddr_t)&sp->is_ps, (caddr_t)&st.is_ps,
 			  sizeof(st.is_ps))) {
@@ -550,7 +556,7 @@ void *ctx;
 		if (!(mode & FWRITE)) {
 			error = EPERM;
 		} else {
-			fr_lock(data, &fr_state_lock);
+			error = fr_lock(data, &fr_state_lock);
 		}
 		break;
 
@@ -652,13 +658,15 @@ caddr_t data;
 	int error;
 
 	error = fr_inobj(data, &ips, IPFOBJ_STATESAVE);
-	if (error)
-		return EFAULT;
+	if (error != 0)
+		return error;
 
+	READ_ENTER(&ipf_state);
 	isn = ips.ips_next;
 	if (isn == NULL) {
 		isn = ips_list;
 		if (isn == NULL) {
+			RWLOCK_EXIT(&ipf_state);
 			if (ips.ips_next == NULL)
 				return ENOENT;
 			return 0;
@@ -672,8 +680,10 @@ caddr_t data;
 		for (is = ips_list; is; is = is->is_next)
 			if (is == isn)
 				break;
-		if (!is)
+		if (is == NULL) {
+			RWLOCK_EXIT(&ipf_state);
 			return ESRCH;
+		}
 	}
 	ips.ips_next = isn->is_next;
 	bcopy((char *)isn, (char *)&ips.ips_is, sizeof(ips.ips_is));
@@ -681,10 +691,9 @@ caddr_t data;
 	if (isn->is_rule != NULL)
 		bcopy((char *)isn->is_rule, (char *)&ips.ips_fr,
 		      sizeof(ips.ips_fr));
+	RWLOCK_EXIT(&ipf_state);
 	error = fr_outobj(data, &ips, IPFOBJ_STATESAVE);
-	if (error)
-		return EFAULT;
-	return 0;
+	return error;
 }
 
 
@@ -886,6 +895,207 @@ int rev;
 
 
 /* ------------------------------------------------------------------------ */
+/* Function:    ipf_state_matchipv4addrs                                          */
+/* Returns:     int - 2 addresses match (strong match), 1 reverse match,    */
+/*                    0 no match                                            */
+/* Parameters:  is1, is2 pointers to states we are checking                 */
+/*                                                                          */
+/* Function matches IPv4 addresses it returns strong match for ICMP proto   */
+/* even there is only reverse match                                         */
+/* ------------------------------------------------------------------------ */
+static int
+ipf_state_matchipv4addrs(is1, is2)
+	ipstate_t *is1, *is2;
+{
+	int	rv;
+
+	if (is1->is_saddr == is2->is_saddr && is1->is_daddr == is2->is_daddr)
+		rv = 2;
+	else if (is1->is_saddr == is2->is_daddr && 
+	    is1->is_daddr == is2->is_saddr) {
+		/* force strong match for ICMP protocol */
+		rv = (is1->is_p == IPPROTO_ICMP) ? 2 : 1;
+	}
+	else
+		rv = 0;
+
+	return (rv);
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_state_matchipv6addrs                                          */
+/* Returns:     int - 2 addresses match (strong match), 1 reverse match,    */
+/*                    0 no match                                            */
+/* Parameters:  is1, is2 pointers to states we are checking                 */
+/*                                                                          */
+/* Function matches IPv6 addresses it returns strong match for ICMP proto   */
+/* even there is only reverse match                                         */
+/* ------------------------------------------------------------------------ */
+static int
+ipf_state_matchipv6addrs(is1, is2)
+	ipstate_t *is1, *is2;
+{
+	int	rv;
+
+	if (IP6_EQ(&is1->is_src, &is2->is_src) && 
+	    IP6_EQ(&is1->is_dst, &is2->is_dst))  
+		rv = 2;
+	else if (IP6_EQ(&is1->is_src, &is2->is_dst) &&
+	    IP6_EQ(&is1->is_dst, &is2->is_src)) {
+		/* force strong match for ICMPv6 protocol */
+		rv = (is1->is_p == IPPROTO_ICMPV6) ? 2 : 1;
+	}
+	else
+		rv = 0;
+
+	return (rv);
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_state_matchaddresses                                          */
+/* Returns:     int - 2 addresses match, 1 reverse match, zero no match     */
+/* Parameters:  is1, is2 pointers to states we are checking                 */
+/*                                                                          */
+/* function retruns true if two pairs of addresses belong to single         */
+/* connection. suppose there are two endpoints:                             */
+/*      endpoint1 1.1.1.1                                                   */
+/*      endpoint2 1.1.1.2                                                   */
+/*                                                                          */
+/* the state is established by packet flying from .1 to .2 so we see:       */
+/*      is1->src = 1.1.1.1                                                  */
+/*      is1->dst = 1.1.1.2                                                  */
+/* now endpoint 1.1.1.2 sends answer                                        */
+/* retreives is1 record created by first packat and compares it with is2    */
+/* temporal record, is2 is initialized as follows:                          */
+/*      is2->src = 1.1.1.2                                                  */
+/*      is2->dst = 1.1.1.1                                                  */
+/* in this case 1 will be returned                                          */
+/*                                                                          */
+/* the ipf_matchaddresses() assumes those two records to be same. of course */
+/* the ipf_matchaddresses() also assume records are same in case you pass   */
+/* identical arguments (i.e. ipf_matchaddress(is1, is1) would return 2      */
+/* ------------------------------------------------------------------------ */
+static int
+ipf_state_matchaddresses(is1, is2)
+	ipstate_t *is1, *is2;
+{
+	int	rv;
+
+	if (is1->is_v == 4) {
+		rv = ipf_state_matchipv4addrs(is1, is2);
+	}
+	else {
+		rv = ipf_state_matchipv6addrs(is1, is2);
+	}
+
+	return (rv);
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_matchports                                              */
+/* Returns:     int - 2 match, 1 rverse match, 0 no match                   */
+/* Parameters:  ppairs1, ppairs - src, dst ports we want to match           */
+/*                                                                          */
+/* performs the same match for isps members as for addresses                */
+/* ------------------------------------------------------------------------ */
+static int
+ipf_state_matchports(ppairs1, ppairs2)
+	udpinfo_t *ppairs1, *ppairs2;
+{
+	int	rv;
+
+	if (ppairs1->us_sport == ppairs2->us_sport && 
+	    ppairs1->us_dport == ppairs2->us_dport)
+		rv = 2;
+	else if (ppairs1->us_sport == ppairs2->us_dport && 
+		    ppairs1->us_dport == ppairs2->us_sport)
+		rv = 1;
+	else
+		rv = 0;
+
+	return (rv);
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_matchisps                                               */
+/* Returns:     int - nonzero if isps members match, 0 nomatch              */
+/* Parameters:  is1, is2 - states we want to match                          */
+/*                                                                          */
+/* performs the same match for isps members as for addresses                */
+/* ------------------------------------------------------------------------ */
+static int
+ipf_state_matchisps(is1, is2)
+	ipstate_t *is1, *is2;
+{
+	int	rv;
+
+	if (is1->is_p == is2->is_p) {
+		switch (is1->is_p)
+		{
+		case IPPROTO_TCP :
+		case IPPROTO_UDP :
+		case IPPROTO_GRE :
+			/* greinfo_t can be also interprted as port pair */
+			rv = ipf_state_matchports(&is1->is_ps.is_us,
+						  &is2->is_ps.is_us);
+			break;
+
+		case IPPROTO_ICMP :
+		case IPPROTO_ICMPV6 :
+			/* force strong match for ICMP datagram. */
+			if (bcmp(&is1->is_ps, &is2->is_ps,
+				 sizeof(icmpinfo_t)) == 0)  {
+				rv = 2;
+			} else {
+				rv = 0;
+			}
+			break;
+
+		default:
+			rv = 0;
+		}
+	} else {
+		rv = 0;
+	}
+
+	return (rv);
+}
+
+
+/* ------------------------------------------------------------------------ */
+/* Function:    ipf_state_match                                             */
+/* Returns:     int - nonzero match, zero no match                          */
+/* Parameters:  is1, is2 - states we want to match                          */
+/*                                                                          */
+/* ------------------------------------------------------------------------ */
+static int
+ipf_state_match(is1, is2)
+	ipstate_t *is1, *is2;
+{
+	int	rv;
+	int	amatch;
+	int	pmatch;
+
+	if (bcmp(&is1->is_pass, &is2->is_pass,
+		 offsetof(struct ipstate, is_authmsk) -
+		 offsetof(struct ipstate, is_pass)) == 0) {
+
+		pmatch = ipf_state_matchisps(is1, is2);
+		amatch = ipf_state_matchaddresses(is1, is2);
+		rv = (amatch != 0) && (amatch == pmatch);
+	} else {
+		rv = 0;
+	}
+
+	return (rv);
+}
+
+
+/* ------------------------------------------------------------------------ */
 /* Function:    fr_addstate                                                 */
 /* Returns:     ipstate_t* - NULL == failure, else pointer to new state     */
 /* Parameters:  fin(I)    - pointer to packet information                   */
@@ -993,6 +1203,16 @@ u_int flags;
 		hv += is->is_src.i6[3];
 	}
 #endif
+	if ((fin->fin_v == 4) &&
+	    (fin->fin_flx & (FI_MULTICAST|FI_BROADCAST|FI_MBCAST))) {
+		if (fin->fin_out == 0) {
+			flags |= SI_W_DADDR|SI_CLONE;
+			hv -= is->is_daddr;
+		} else {
+			flags |= SI_W_SADDR|SI_CLONE;
+			hv -= is->is_saddr;
+		}
+	}
 
 	switch (is->is_p)
 	{
@@ -1141,10 +1361,9 @@ u_int flags;
 	 */
 	for (is = ips_table[is->is_hv % fr_statesize]; is != NULL;
 	     is = is->is_hnext) {
-		if (bcmp(&ips.is_src, &is->is_src,
-			 offsetof(struct ipstate, is_ps) -
-			 offsetof(struct ipstate, is_src)) == 0)
+		if (ipf_state_match(&ips, is) == 1) {
 			break;
+		}
 	}
 	if (is != NULL)
 		return NULL;
@@ -1190,7 +1409,8 @@ u_int flags;
 				sizeof(fr->fr_ifnames[0]));
 		} else {
 			is->is_ifp[out << 1] = fin->fin_ifp;
-			COPYIFNAME(fin->fin_ifp, is->is_ifname[out << 1]);
+			COPYIFNAME(is->is_v, fin->fin_ifp,
+				   is->is_ifname[out << 1]);
 		}
 
 		is->is_ifp[(out << 1) + 1] = fr->fr_ifas[1];
@@ -1210,7 +1430,8 @@ u_int flags;
 
 		if (fin->fin_ifp != NULL) {
 			is->is_ifp[out << 1] = fin->fin_ifp;
-			COPYIFNAME(fin->fin_ifp, is->is_ifname[out << 1]);
+			COPYIFNAME(is->is_v, fin->fin_ifp,
+				   is->is_ifname[out << 1]);
 		}
 	}
 
@@ -1421,7 +1642,7 @@ ipstate_t *is;
 	tcpdata_t  *fdata, *tdata;
 
 	source = !fin->fin_rev;
-	if (((is->is_flags & IS_TCPFSM) != 0) && (source == 1) && 
+	if (((is->is_flags & IS_TCPFSM) != 0) && (source == 1) &&
 	    (ntohs(is->is_sport) != fin->fin_data[0]))
 		source = 0;
 	fdata = &is->is_tcp.ts_data[!source];
@@ -1439,12 +1660,13 @@ ipstate_t *is;
 			is->is_state[!source] = IPF_TCPS_CLOSED;
 			fr_movequeue(&is->is_sti, is->is_sti.tqe_ifq,
 				     &ips_deletetq);
-			MUTEX_ENTER(&is->is_lock);
+			MUTEX_EXIT(&is->is_lock);
 			return 0;
 		}
 	}
 
-	if (fr_tcpinwindow(fin, fdata, tdata, tcp, is->is_flags)) {
+	ret = fr_tcpinwindow(fin, fdata, tdata, tcp, is->is_flags);
+	if (ret > 0) {
 #ifdef	IPFILTER_SCAN
 		if (is->is_flags & (IS_SC_CLIENT|IS_SC_SERVER)) {
 			ipsc_packet(fin, is);
@@ -1540,7 +1762,8 @@ ipstate_t *is;
 
 /* ------------------------------------------------------------------------ */
 /* Function:    fr_tcpinwindow                                              */
-/* Returns:     int - 1 == packet inside TCP "window", 0 == not inside.     */
+/* Returns:     int - 1 == packet inside TCP "window", 0 == not inside,     */
+/*                    2 == packet seq number matches next expected          */
 /* Parameters:  fin(I)   - pointer to packet information                    */
 /*              fdata(I) - pointer to tcp state informatio (forward)        */
 /*              tdata(I) - pointer to tcp state informatio (reverse)        */
@@ -1624,14 +1847,12 @@ int flags;
 	/*
 	 * Strict sequencing only allows in-order delivery.
 	 */
-	if ((flags & IS_STRICT) != 0) {
-		if (seq != fdata->td_end) {
+	if (seq != fdata->td_end) {
+		if ((flags & IS_STRICT) != 0) {
 			return 0;
 		}
 	}
 
-#define	SEQ_GE(a,b)	((int)((a) - (b)) >= 0)
-#define	SEQ_GT(a,b)	((int)((a) - (b)) > 0)
 	inseq = 0;
 	if ((SEQ_GE(fdata->td_maxend, end)) &&
 	    (SEQ_GE(seq, fdata->td_end - maxwin)) &&
@@ -1668,7 +1889,7 @@ int flags;
 			 * accepted, even if it appears out of sequence.
 			 */
 			inseq = 1;
-		} else 
+		} else
 #endif
 		if (!(fdata->td_winflags &
 			    (TCP_WSCALE_SEEN|TCP_WSCALE_FIRST))) {
@@ -2028,7 +2249,7 @@ u_32_t cmask;
 	if (is->is_ifp[idx] == NULL &&
 	    (*is->is_ifname[idx] == '\0' || *is->is_ifname[idx] == '*')) {
 		is->is_ifp[idx] = ifp;
-		COPYIFNAME(ifp, is->is_ifname[idx]);
+		COPYIFNAME(is->is_v, ifp, is->is_ifname[idx]);
 	}
 	fin->fin_rev = rev;
 	return is;
@@ -2299,8 +2520,6 @@ u_int hv;
 	ipstate_t **isp;
 	u_int hvm;
 
-	ASSERT(rw_read_locked(&ipf_state.ipf_lk) == 0);
-
 	hvm = is->is_hv;
 	/*
 	 * Remove the hash from the old location...
@@ -2383,6 +2602,14 @@ ipftq_t **ifqp;
 		}
 	}
 #endif
+	if ((v == 4) &&
+	    (fin->fin_flx & (FI_MULTICAST|FI_BROADCAST|FI_MBCAST))) {
+		if (fin->fin_out == 0) {
+			hv -= src.in4.s_addr;
+		} else {
+			hv -= dst.in4.s_addr;
+		}
+	}
 
 	/*
 	 * Search the hash table for matching packet header info.
@@ -2531,12 +2758,31 @@ retry_tcpudp:
 		}
 		RWLOCK_EXIT(&ipf_state);
 
-		if (!tryagain && ips_stats.iss_wild) {
-			hv -= dport;
-			hv -= sport;
-			tryagain = 1;
-			WRITE_ENTER(&ipf_state);
-			goto retry_tcpudp;
+		if (ips_stats.iss_wild) {
+			if (tryagain == 0) {
+				hv -= dport;
+				hv -= sport;
+			} else if (tryagain == 1) {
+				hv = fin->fin_fi.fi_p;
+				/*
+				 * If we try to pretend this is a reply to a
+				 * multicast/broadcast packet then we need to
+				 * exclude part of the address from the hash
+				 * calculation.
+				 */
+				if (fin->fin_out == 0) {
+					hv += src.in4.s_addr;
+				} else {
+					hv += dst.in4.s_addr;
+				}
+				hv += dport;
+				hv += sport;
+			}
+			tryagain++;
+			if (tryagain <= 2) {
+				WRITE_ENTER(&ipf_state);
+				goto retry_tcpudp;
+			}
 		}
 		fin->fin_flx |= oow;
 		break;
@@ -2888,8 +3134,6 @@ ipstate_t *is;
 int why;
 {
 
-	ASSERT(rw_read_locked(&ipf_state.ipf_lk) == 0);
-
 	/*
 	 * Since we want to delete this, remove it from the state table,
 	 * where it can be found & used, first.
@@ -2937,17 +3181,21 @@ int why;
 	 * entry (such as ipfstat), it'll do the deref path that'll bring
 	 * us back here to do the real delete & free.
 	 */
-	is->is_ref--;
-	if (is->is_ref > 0)
+	MUTEX_ENTER(&is->is_lock);
+	if (is->is_ref > 1) {
+		is->is_ref--;
+		MUTEX_EXIT(&is->is_lock);
 		return is->is_ref;
+	}
+	MUTEX_EXIT(&is->is_lock);
+
+	is->is_ref = 0;
 
 	if (is->is_tqehead[0] != NULL) {
-		if (fr_deletetimeoutqueue(is->is_tqehead[0]) == 0)
-			fr_freetimeoutqueue(is->is_tqehead[0]);
+		(void) fr_deletetimeoutqueue(is->is_tqehead[0]);
 	}
 	if (is->is_tqehead[1] != NULL) {
-		if (fr_deletetimeoutqueue(is->is_tqehead[1]) == 0)
-			fr_freetimeoutqueue(is->is_tqehead[1]);
+		(void) fr_deletetimeoutqueue(is->is_tqehead[1]);
 	}
 
 #ifdef	IPFILTER_SYNC
@@ -3020,9 +3268,7 @@ void fr_timeoutstate()
 			fr_delstate(is, ISL_EXPIRE);
 		}
 
-	for (ifq = ips_utqe; ifq != NULL; ifq = ifqnext) {
-		ifqnext = ifq->ifq_next;
-
+	for (ifq = ips_utqe; ifq != NULL; ifq = ifq->ifq_next) {
 		for (tqn = ifq->ifq_head; ((tqe = tqn) != NULL); ) {
 			if (tqe->tqe_die > fr_ticks)
 				break;
@@ -3140,7 +3386,7 @@ int which, proto;
 	case 2 :
 		break;
 
-		/*  
+		/*
 		 * Args 5-11 correspond to flushing those particular states
 		 * for TCP connections.
 		 */
@@ -3165,7 +3411,7 @@ int which, proto;
 		if (which < 30)
 			break;
 
-		/* 
+		/*
 		 * Take a large arbitrary number to mean the number of seconds
 		 * for which which consider to be the maximum value we'll allow
 		 * the expiration to be.
@@ -3218,7 +3464,7 @@ static int fr_state_flush_entry(entry)
 void *entry;
 {
 	return fr_delstate(entry, ISL_FLUSH);
-}     
+}
 
 
 /* ------------------------------------------------------------------------ */
@@ -3536,7 +3782,7 @@ int flags;
 			if ((tcpflags & (TH_FIN|TH_ACK)) == TH_ACK) {
 				nstate = IPF_TCPS_TIME_WAIT;
 			}
-			rval = 1;
+			rval = 2;
 			break;
 
 		case IPF_TCPS_LAST_ACK: /* 8 */
@@ -3560,24 +3806,14 @@ int flags;
 
 		case IPF_TCPS_FIN_WAIT_2: /* 9 */
 			/* NOT USED */
-#if 0
-			rval = 1;
-			if ((tcpflags & TH_OPENING) == TH_OPENING) {
-				nstate = IPF_TCPS_SYN_RECEIVED;
-			} else if (tcpflags & TH_SYN) {
-				nstate = IPF_TCPS_SYN_SENT;
-			} else if ((tcpflags & (TH_FIN|TH_ACK)) != 0) {
-				nstate = IPF_TCPS_TIME_WAIT;
-			}
-#endif
 			break;
 
 		case IPF_TCPS_TIME_WAIT: /* 10 */
 			/* we're in 2MSL timeout now */
-			rval = 2;
 			if (ostate == IPF_TCPS_LAST_ACK) {
 				nstate = IPF_TCPS_CLOSED;
 			}
+			rval = 1;
 			break;
 
 		case IPF_TCPS_CLOSED: /* 11 */
@@ -3932,6 +4168,14 @@ ipftq_t *tqp;
 /* Decrement the reference counter for this state table entry and free it   */
 /* if there are no more things using it.                                    */
 /*                                                                          */
+/* This function is only called when cleaning up after increasing is_ref by */
+/* one earlier in the 'code path' so if is_ref is 1 when entering, we do    */
+/* have an orphan, otherwise not.  However there is a possible race between */
+/* the entry being deleted via flushing with an ioctl call (that calls the  */
+/* delete function directly) and the tail end of packet processing so we    */
+/* need to grab is_lock before doing the check to synchronise the two code  */
+/* paths.                                                                   */
+/*                                                                          */
 /* When operating in userland (ipftest), we have no timers to clear a state */
 /* entry.  Therefore, we make a few simple tests before deleting an entry   */
 /* outright.  We compare states on each side looking for a combination of   */
@@ -3954,17 +4198,23 @@ ipstate_t **isp;
 
 	is = *isp;
 	*isp = NULL;
-	WRITE_ENTER(&ipf_state);
-	is->is_ref--;
-	if (is->is_ref == 0) {
-		is->is_ref++;		/* To counter ref-- in fr_delstate() */
-		fr_delstate(is, ISL_EXPIRE);
+
+	MUTEX_ENTER(&is->is_lock);
+	if (is->is_ref > 1) {
+		is->is_ref--;
+		MUTEX_EXIT(&is->is_lock);
 #ifndef	_KERNEL
-	} else if ((is->is_sti.tqe_state[0] > IPF_TCPS_ESTABLISHED) ||
+		if ((is->is_sti.tqe_state[0] > IPF_TCPS_ESTABLISHED) ||
 		   (is->is_sti.tqe_state[1] > IPF_TCPS_ESTABLISHED)) {
-		fr_delstate(is, ISL_ORPHAN);
+			fr_delstate(is, ISL_ORPHAN);
+		}
 #endif
+		return;
 	}
+	MUTEX_EXIT(&is->is_lock);
+
+	WRITE_ENTER(&ipf_state);
+	fr_delstate(is, ISL_EXPIRE);
 	RWLOCK_EXIT(&ipf_state);
 }
 
@@ -4058,7 +4308,7 @@ ipfgeniter_t *itp;
 	if (itp->igi_data == NULL)
 		return EFAULT;
 
-	if (itp->igi_nitems == 0)
+	if (itp->igi_nitems < 1)
 		return ENOSPC;
 
 	if (itp->igi_type != IPFGENITER_STATE)
@@ -4080,31 +4330,27 @@ ipfgeniter_t *itp;
 		next = is->is_next;
 	}
 
-	for (count = itp->igi_nitems; count > 0; count--) {
+	count = itp->igi_nitems;
+	for (;;) {
 		if (next != NULL) {
 			/*
 			 * If we find a state entry to use, bump its
 			 * reference count so that it can be used for
 			 * is_next when we come back.
 			 */
-			MUTEX_ENTER(&next->is_lock);
-			next->is_ref++;
-			MUTEX_EXIT(&next->is_lock);
-			token->ipt_data = next;
+			if (count == 1) {
+				MUTEX_ENTER(&next->is_lock);
+				next->is_ref++;
+				MUTEX_EXIT(&next->is_lock);
+				token->ipt_data = next;
+			}
 		} else {
 			bzero(&zero, sizeof(zero));
 			next = &zero;
-			token->ipt_data = (void *)-1;
 			count = 1;
+			token->ipt_data = NULL;
 		}
 		RWLOCK_EXIT(&ipf_state);
-
-		/*
-		 * If we had a prior pointer to a state entry, release it.
-		 */
-		if (is != NULL) {
-			fr_statederef(&is);
-		}
 
 		/*
 		 * This should arguably be via fr_outobj() so that the state
@@ -4117,9 +4363,14 @@ ipfgeniter_t *itp;
 			break;
 
 		dst += sizeof(*next);
+		count--;
+
 		READ_ENTER(&ipf_state);
-		is = next;
-		next = is->is_next;
+		next = next->is_next;
+	}
+
+	if (is != NULL) {
+		fr_statederef(&is);
 	}
 
 	return error;
@@ -4147,7 +4398,7 @@ char *data;
 	if (table.ita_type != IPFTABLE_BUCKETS)
 		return EINVAL;
 
-	error = COPYOUT(ips_stats.iss_bucketlen, table.ita_table, 
+	error = COPYOUT(ips_stats.iss_bucketlen, table.ita_table,
 			fr_statesize * sizeof(u_long));
 	if (error != 0)
 		error = EFAULT;

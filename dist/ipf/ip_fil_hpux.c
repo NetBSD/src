@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.6 2007/05/15 22:25:59 martin Exp $	*/
+/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.7 2008/05/20 06:44:03 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.17 2007/05/10 06:00:55 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.24 2008/02/05 20:56:11 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -82,12 +82,6 @@ int ipfdetach()
 
 	RW_DESTROY(&ipf_tokens);
 	RW_DESTROY(&ipf_ipidfrag);
-	RW_DESTROY(&ipf_mutex);
-	RW_DESTROY(&ipf_frcache);
-	/* NOTE: This lock is acquired in ipf_detach */
-	RWLOCK_EXIT(&ipf_global);
-	RW_DESTROY(&ipf_global);
-
 	MUTEX_DESTROY(&ipf_timeoutlock);
 	MUTEX_DESTROY(&ipf_rw);
 
@@ -105,9 +99,6 @@ int ipfattach __P((void))
 	bzero((char *)frcache, sizeof(frcache));
 	MUTEX_INIT(&ipf_rw, "ipf_rw");
 	MUTEX_INIT(&ipf_timeoutlock, "ipf_timeoutlock");
-	RWLOCK_INIT(&ipf_global, "ipf filter load/unload mutex");
-	RWLOCK_INIT(&ipf_mutex, "ipf filter rwlock");
-	RWLOCK_INIT(&ipf_frcache, "ipf cache rwlock");
 	RWLOCK_INIT(&ipf_ipidfrag, "ipf IP NAT-Frag rwlock");
 	RWLOCK_INIT(&ipf_tokens, "ipf token rwlock");
 
@@ -174,15 +165,11 @@ int flags;
 			return EIO;
 	}
 
-	READ_ENTER(&ipf_global);
-
 	error = fr_ioctlswitch(unit, data, cmd, flags, curproc->p_uid, curproc);
 	if (error != -1) {
-		RWLOCK_EXIT(&ipf_global);
 		return error;
 	}
 
-	RWLOCK_EXIT(&ipf_global);
 	return error;
 }
 
@@ -215,13 +202,38 @@ int flag;
 intptr_t dummy;
 int mode;
 {
-	minor_t min = getminor(dev);
+	minor_t unit = getminor(dev);
+	int error;
 
 #ifdef  IPFDEBUG
 	cmn_err(CE_CONT, "iplopen(%x,%x,%x,%x)\n", dev, flag, dummy, mode);
 #endif
-	min = (IPL_LOGMAX < min) ? ENXIO : 0;
-	return min;
+	if (IPL_LOGMAX < unit) {
+		error = ENXIO;
+	} else {
+		switch (unit)
+		{
+		case IPL_LOGIPF :
+		case IPL_LOGNAT :
+		case IPL_LOGSTATE :
+		case IPL_LOGAUTH :
+#ifdef IPFILTER_LOOKUP
+		case IPL_LOGLOOKUP :
+#endif
+#ifdef IPFILTER_SYNC  
+		case IPL_LOGSYNC :
+#endif
+#ifdef IPFILTER_SCAN
+		case IPL_LOGSCAN :
+#endif
+			error = 0;
+			break;
+		default :  
+			error = ENXIO;
+			break;
+		}
+	}
+	return error;
 }
 
 
@@ -230,13 +242,13 @@ dev_t dev;
 int flag;
 int mode;
 {
-	minor_t min = getminor(dev);
+	minor_t unit = getminor(dev);
 
 #ifdef  IPFDEBUG
 	cmn_err(CE_CONT, "iplclose(%x,%x,%x)\n", dev, flag, mode);
 #endif
-	min = (IPL_LOGMAX < min) ? ENXIO : 0;
-	return min;
+	unit = (IPL_LOGMAX < unit) ? ENXIO : 0;
+	return unit;
 }
 
 
@@ -306,10 +318,8 @@ fr_info_t *fin;
 	if (tcp->th_flags & TH_RST)
 		return -1;
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	tlen = (tcp->th_flags & (TH_SYN|TH_FIN)) ? 1 : 0;
 #ifdef	USE_INET6
@@ -426,10 +436,8 @@ int dst;
 		return -1;
 #endif
 
-#ifndef	IPFILTER_CKSUM
 	if (fr_checkl4sum(fin) == -1)
 		return -1;
-#endif
 
 	qpi = fin->fin_qpi;
 	mb = fin->fin_qfm;
@@ -445,8 +453,7 @@ int dst;
 	} else
 #endif
 	{
-		if ((fin->fin_p == IPPROTO_ICMP) &&
-		    !(fin->fin_flx & FI_SHORT))
+		if ((fin->fin_p == IPPROTO_ICMP) && !(fin->fin_flx & FI_SHORT))
 			switch (ntohs(fin->fin_data[0]) >> 8)
 			{
 			case ICMP_ECHO :
@@ -726,17 +733,17 @@ fr_info_t *fin;
 /* not been called.  Both fin_ip and fin_dp are updated before exiting _IF_ */
 /* and ONLY if the pullup succeeds.                                         */
 /*                                                                          */
-/* We assume that 'min' is a pointer to a buffer that is part of the chain  */
+/* We assume that 'xmin' is a pointer to a buffer that is part of the chain */
 /* of buffers that starts at *fin->fin_mp.                                  */
 /* ------------------------------------------------------------------------ */
-void *fr_pullup(min, fin, len)
-mb_t *min;
+void *fr_pullup(xmin, fin, len)
+mb_t *xmin;
 fr_info_t *fin;
 int len;
 {
 	qpktinfo_t *qpi = fin->fin_qpi;
 	int out = fin->fin_out, dpoff, ipoff;
-	mb_t *m = min;
+	mb_t *m = xmin;
 	char *ip;
 
 	if (m == NULL)
@@ -764,7 +771,7 @@ int len;
 					inc = 0;
 			}
 		}
-		m = msgpullup(min, len + ipoff + inc);
+		m = msgpullup(xmin, len + ipoff + inc);
 		if (m == NULL) {
 			ATOMIC_INCL(frstats[out].fr_pull[1]);
 			FREE_MB_T(*fin->fin_mp);
@@ -777,14 +784,14 @@ int len;
 		 * Because msgpullup allocates a new mblk, we need to delink
 		 * (and free) the old one and link on the new one.
 		 */
-		if (min == *fin->fin_mp) {	/* easy case 1st */
+		if (xmin == *fin->fin_mp) {	/* easy case 1st */
 			FREE_MB_T(*fin->fin_mp);
 			*fin->fin_mp = m;
 		} else {
 			mb_t *m2;
 
 			for (m2 = *fin->fin_mp; m2 != NULL; m2 = m2->b_next)
-				if (m2->b_next == min)
+				if (m2->b_next == xmin)
 					break;
 			if (m2 == NULL) {
 				ATOMIC_INCL(frstats[out].fr_pull[1]);
@@ -792,7 +799,7 @@ int len;
 				FREE_MB_T(m);
 				return NULL;
 			}
-			FREE_MB_T(min);
+			FREE_MB_T(xmin);
 			m2->b_next = m;
 		}
 
@@ -800,12 +807,12 @@ int len;
 		m->b_rptr += inc;
 		ip = MTOD(m, char *) + ipoff;
 		qpi->qpi_data = ip;
-	}
 
-	ATOMIC_INCL(frstats[out].fr_pull[0]);
-	fin->fin_ip = (ip_t *)ip;
-	if (fin->fin_dp != NULL)
-		fin->fin_dp = (char *)fin->fin_ip + dpoff;
+		ATOMIC_INCL(frstats[out].fr_pull[0]);
+		fin->fin_ip = (ip_t *)ip;
+		if (fin->fin_dp != NULL)
+			fin->fin_dp = (char *)fin->fin_ip + dpoff;
+	}
 
 	if (len == fin->fin_plen)
 		fin->fin_flx |= FI_COALESCE;
@@ -813,6 +820,10 @@ int len;
 }
 
 
+/*  
+ * m0 - pointer to mbuf where the IP packet starts  
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
+ */  
 int fr_fastroute(mb, mpp, fin, fdp)
 mblk_t *mb, **mpp;
 fr_info_t *fin;
@@ -889,7 +900,7 @@ frdest_t *fdp;
 				if (fr_checkstate(fin, &pass) != NULL)
 					fr_statederef((ipstate_t **)&fin->fin_state);
 			}
-			
+
 			switch (fr_checknatout(fin, NULL))
 			{
 			case 0 :
