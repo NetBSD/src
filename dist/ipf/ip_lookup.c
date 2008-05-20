@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.5 2007/06/16 10:52:25 martin Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.6 2008/05/20 07:08:06 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -60,7 +60,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.15 2007/05/26 13:05:13 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.20 2007/10/26 12:15:12 darrenr Exp";
 #endif
 
 #ifdef	IPFILTER_LOOKUP
@@ -72,6 +72,8 @@ static int iplookup_addtable __P((caddr_t));
 static int iplookup_deltable __P((caddr_t));
 static int iplookup_stats __P((caddr_t));
 static int iplookup_flush __P((caddr_t));
+static int iplookup_iterate __P((void *, int, void *));
+static int iplookup_deltok __P((void *, int, void *));
 
 
 /* ------------------------------------------------------------------------ */
@@ -183,7 +185,11 @@ void *ctx;
 		break;
 
 	case SIOCLOOKUPITER :
-		err = ip_lookup_iterate(data, uid, ctx);
+		err = iplookup_iterate(data, uid, ctx);
+		break;
+
+	case SIOCIPFDELTOK :
+		err = iplookup_deltok(data, uid, ctx);
 		break;
 
 	default :
@@ -290,6 +296,8 @@ caddr_t data;
 	int err;
 
 	err = BCOPYIN(data, &op, sizeof(op));
+	if (err != 0)
+		return EFAULT;
 
 	if (op.iplo_unit < 0 || op.iplo_unit > IPL_LOGMAX)
 		return EINVAL;
@@ -559,13 +567,15 @@ void *ptr;
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:    ip_lookup_iterate                                           */
+/* Function:    iplookup_iterate                                            */
 /* Returns:     int     - 0 = success, else error                           */
 /* Parameters:  data(I) - pointer to data from ioctl call                   */
+/*              uid(I)  - uid of caller                                     */
+/*              ctx(I)  - pointer to give the uid context                   */
 /*                                                                          */
 /* Decodes ioctl request to step through either hash tables or pools.       */
 /* ------------------------------------------------------------------------ */
-int ip_lookup_iterate(data, uid, ctx)
+static int iplookup_iterate(data, uid, ctx)
 void *data;
 int uid;
 void *ctx;
@@ -644,6 +654,33 @@ void *data;
 	}
 }
 
+
+/* ------------------------------------------------------------------------ */
+/* Function:    iplookup_deltok                                             */
+/* Returns:     int     - 0 = success, else error                           */
+/* Parameters:  data(I) - pointer to data from ioctl call                   */
+/*              uid(I)  - uid of caller                                     */
+/*              ctx(I)  - pointer to give the uid context                   */
+/*                                                                          */
+/* Deletes the token identified by the combination of (type,uid,ctx)        */
+/* "key" is a combination of the table type, iterator type and the unit for */
+/* which the token was being used.                                          */
+/* ------------------------------------------------------------------------ */
+static int iplookup_deltok(data, uid, ctx)
+void *data;
+int uid;
+void *ctx;
+{
+	int error, key;
+	SPL_INT(s);
+
+	SPL_SCHED(s);
+	error = BCOPYIN(data, &key, sizeof(key));
+	if (error == 0)
+		error = ipf_deltoken(key, uid, ctx);
+	SPL_X(s);
+	return error;
+}
 
 
 #else /* IPFILTER_LOOKUP */
