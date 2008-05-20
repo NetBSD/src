@@ -1,7 +1,8 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.6 2008/05/20 12:18:45 ad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.7 2008/05/20 19:01:11 ad Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
+.include <bsd.sys.mk>
 
 ##### Basic targets
 clean:		cleankmod
@@ -22,7 +23,12 @@ CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 DPSRCS+=	${_YKMSRCS}
 CLEANFILES+=	${_YKMSRCS}
+
+.if exists($S/../share/ldscripts/kmodule)
+KMODSCRIPT=	$S/../share/ldscripts/kmodule
+.else
 KMODSCRIPT=	${DESTDIR}/usr/share/ldscripts/kmodule
+.endif
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 PROG?=		${KMOD}.kmod
@@ -38,8 +44,11 @@ ${PROG}: ${OBJS} ${DPADD}
 
 ##### Install rules
 .if !target(kmodinstall)
-KMODINSTDIR=	${DESTDIR}${KMODULEDIR}/${KMOD}
-_PROG:=		${KMODINSTDIR}/${PROG} # installed path
+.if !defined(KMODULEDIR)
+_OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh
+KMODULEDIR=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules/${KMOD}
+.endif
+_PROG:=		${KMODULEDIR}/${PROG} # installed path
 
 .if ${MKUPDATE} == "no"
 ${_PROG}! ${PROG}					# install rule
@@ -53,7 +62,8 @@ ${_PROG}:	.MADE					# no build at install
 .endif
 .endif
 	${_MKTARGET_INSTALL}
-	${INSTALL_DIR} ${KMODINSTDIR}
+	${INSTALL_DIR} ${KMODULEDIR}
+	echo hello ${HOST_SH}
 	${INSTALL_FILE} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
 		${.ALLSRC} ${.TARGET}
 
@@ -78,7 +88,6 @@ lint: ${LOBJS}
 ##### Pull in related .mk logic
 .include <bsd.man.mk>
 .include <bsd.links.mk>
-.include <bsd.sys.mk>
 .include <bsd.dep.mk>
 
 .-include "$S/arch/${MACHINE_CPU}/include/Makefile.inc"
