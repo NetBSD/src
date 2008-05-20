@@ -1,4 +1,4 @@
-/*	$NetBSD: printhash_live.c,v 1.1.1.1 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printhash_live.c,v 1.1.1.2 2008/05/20 06:45:02 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
@@ -8,7 +8,7 @@
 
 #include <sys/ioctl.h>
 #include "ipf.h"
-#include "ipl.h"
+#include "netinet/ipl.h"
 
 #define	PRINTF	(void)printf
 #define	FPRINTF	(void)fprintf

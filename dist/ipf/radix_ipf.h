@@ -1,4 +1,4 @@
-/*	$NetBSD: radix_ipf.h,v 1.1.1.3 2007/04/14 20:17:25 martin Exp $	*/
+/*	$NetBSD: radix_ipf.h,v 1.1.1.4 2008/05/20 06:44:27 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -42,7 +42,7 @@
 # endif
 #endif
 
-#if defined(__sgi) || defined(__osf__)
+#if defined(__sgi) || defined(__osf__) || defined(sun)
 # define	radix_mask	ipf_radix_mask
 # define	radix_node	ipf_radix_node
 # define	radix_node_head	ipf_radix_node_head
@@ -163,7 +163,8 @@ struct radix_node_head {
 #define FreeS(p, z)		KFREES(p, z)
 #define Free(p)			KFREE(p)
 
-#if (defined(__osf__) || defined(AIX) || (IRIX >= 60516)) && defined(_KERNEL)
+#if (defined(__osf__) || defined(AIX) || \
+    (defined(IRIX) && (IRIX >= 60516)) || defined(sun)) && defined(_KERNEL)
 # define	rn_init		ipf_rn_init
 # define	rn_fini		ipf_rn_fini
 # define	rn_inithead	ipf_rn_inithead

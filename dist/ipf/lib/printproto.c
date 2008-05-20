@@ -1,4 +1,4 @@
-/*	$NetBSD: printproto.c,v 1.1.1.2 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printproto.c,v 1.1.1.3 2008/05/20 06:45:04 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2005 by Darren Reed.
@@ -10,7 +10,7 @@
 
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printproto.c,v 1.1.2.2 2006/06/16 17:21:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: printproto.c,v 1.1.2.3 2007/10/27 16:03:39 darrenr Exp";
 #endif
 
 
@@ -31,10 +31,13 @@ ipnat_t *np;
 #ifdef _AIX51
 		/*
 		 * To make up for "ip = 252" and "hopopt = 0" in /etc/protocols
+		 * The IANA has doubled up on the definition of 0 - it is now
+		 * also used for IPv6 hop-opts, so we can no longer rely on
+		 * /etc/protocols providing the correct name->number mapping
 		 */
+#endif
 		else if (np->in_p == 0)
 			printf("ip");
-#endif
 		else if (pr != NULL)
 			printf("%s", pr->p_name);
 		else
