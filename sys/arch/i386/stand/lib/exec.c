@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.25 2008/05/04 11:00:09 martin Exp $	 */
+/*	$NetBSD: exec.c,v 1.26 2008/05/20 14:46:54 ad Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ bool kernel_loaded;
 static struct btinfo_modulelist *btinfo_modulelist;
 static size_t btinfo_modulelist_size;
 static uint32_t image_end;
+static char module_base[64] = "/";
 
 static void	module_init(void);
 
@@ -234,6 +235,20 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 
 	/* pull in any modules if necessary */
 	if (boot_modules_enabled) {
+		if (netbsd_version / 1000000 % 100 == 99) {
+			/* -current */
+			snprintf(module_base, sizeof(module_base),
+			    "/stand/modules/%d.%d.%d",
+			    netbsd_version / 100000000,
+			    netbsd_version / 1000000 % 100,
+			    netbsd_version / 100 % 100);
+		} else if (netbsd_version != 0) {
+			/* release */
+			snprintf(module_base, sizeof(module_base),
+			    "/stand/modules/%d.%d",
+			    netbsd_version / 100000000,
+			    netbsd_version / 1000000 % 100);
+		}
 		module_init();
 		if (btinfo_modulelist) {
 			BI_ADD(btinfo_modulelist, BTINFO_MODULELIST,
@@ -261,11 +276,26 @@ out:
 	return -1;
 }
 
+static const char *
+module_path(boot_module_t *bm)
+{
+	static char buf[256];
+	const char *name;
+
+	name = bm->bm_path;
+	if (name[0] == '/')
+		return name;
+	snprintf(buf, sizeof(buf), "%s/%s/%s.kmod", module_base, bm->bm_path,
+	    bm->bm_path);
+	return buf;
+}
+
 static void
 module_init(void)
 {
 	struct bi_modulelist_entry *bi;
 	struct stat st;
+	const char *path;
 	char *buf;
 	boot_module_t *bm;
 	size_t len;
@@ -275,15 +305,16 @@ module_init(void)
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);
 	for (bm = boot_modules; bm; bm = bm->bm_next) {
-		fd = open(bm->bm_path, 0);
+		path = module_path(bm);
+		fd = open(path, 0);
 		if (fd == -1) {
-			printf("WARNING: couldn't open %s\n", bm->bm_path);
+			printf("WARNING: couldn't open %s\n", path);
 			bm->bm_len = -1;
 			continue;
 		}
 		err = fstat(fd, &st);
 		if (err == -1 || st.st_size == -1) {
-			printf("WARNING: couldn't stat %s\n", bm->bm_path);
+			printf("WARNING: couldn't stat %s\n", path);
 			close(fd);
 			bm->bm_len = -1;
 			continue;
@@ -310,10 +341,11 @@ module_init(void)
 	for (bm = boot_modules; bm; bm = bm->bm_next) {
 		if (bm->bm_len == -1)
 			continue;
-		printf("Loading %s ", bm->bm_path);
-		fd = open(bm->bm_path, 0);
+		path = module_path(bm);
+		printf("Loading %s ", path);
+		fd = open(path, 0);
 		if (fd == -1) {
-			printf("ERROR: couldn't open %s\n", bm->bm_path);
+			printf("ERROR: couldn't open %s\n", path);
 			continue;
 		}
 		image_end = (image_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
