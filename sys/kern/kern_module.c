@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.18 2008/05/20 17:24:56 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.19 2008/05/20 19:16:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,16 +28,12 @@
 
 /*
  * Kernel module support.
- *
- * XXX Deps for loadable modules don't work, because we must load the
- * module in order to find out which modules it requires.  Linking may
- * fail because of missing symbols.
  */
 
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.18 2008/05/20 17:24:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.19 2008/05/20 19:16:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
