@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.59 2008/02/09 19:30:11 jmmv Exp $
+#	$NetBSD: sets.subr,v 1.60 2008/05/20 15:17:22 ad Exp $
 #
 
 #
@@ -212,6 +212,9 @@ if [ "${MACHINE_ARCH}" = "m68000" ]; then
 	shlib=no			# Turn off shlibs for some ports.
 fi
 
+OSRELEASE=`sh ../../sys/conf/osrelease.sh`
+MODULEDIR="stand/${MACHINE}/${OSRELEASE}/modules"
+
 #
 # list_set_files setfile [...]
 # 
@@ -219,7 +222,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.59 2008/02/09 19:30:11 jmmv Exp $
+# 	# $NetBSD: sets.subr,v 1.60 2008/05/20 15:17:22 ad Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -289,7 +292,7 @@ list_set_files()
 {
 	for setname; do
 		list_set_lists $setname
-	done | xargs cat | \
+	done | xargs cat | ${SED} "s#@MODULEDIR@#${MODULEDIR}#g" | \
 	${AWK} -v obsolete=${obsolete} '
 		BEGIN {
 			if (obsolete)
