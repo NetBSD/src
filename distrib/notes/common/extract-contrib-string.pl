@@ -79,16 +79,14 @@ sub warning {
     print "XXX $fn line $.: $msg\n"
 }
 
-
-if ($ARGV[0] =~ /-[dD]/) {
-    $debug=1;
-    shift(@ARGV);
-}
-if ($ARGV[0] =~ /-[hH]/) {
-    $html=1;
+while ($#ARGV >= 0) {
+    $debug=1 if ($ARGV[0] =~ /-d/i);
+    $html=1  if ($ARGV[0] =~ /-h/i);
+    $xml=1  if ($ARGV[0] =~ /-x/i);
     shift(@ARGV);
 }
 
+$comments = !$html && !$xml;
 
 file:
 while(<>) {
@@ -184,7 +182,7 @@ while(<>) {
 		$msgs=~s,^\|,,;
 	      msg:
 		foreach $msg (split(/\|/, $msgs)) {
-		    if (!$html) {
+		    if ($comments) {
 			print ".\\\" File $fn:\n";
 			print "$msg";
 			print "\n\n";
@@ -257,6 +255,10 @@ if ($html) {
 	print "<li>$msg</li>\n";
     }
     print "</ul>\n";
+} elsif ($xml) {
+    foreach $msg (sort keys %copyrights) {
+	print "<listitem>$msg</listitem>\n";
+    }
 } else {
     print "------------------------------------------------------------\n";
 
