@@ -1,4 +1,4 @@
-/*	$NetBSD: printpool_live.c,v 1.1.1.1 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: printpool_live.c,v 1.1.1.2 2008/05/20 06:45:04 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002 by Darren Reed.
@@ -8,7 +8,7 @@
 
 #include <sys/ioctl.h>
 #include "ipf.h"
-#include "ipl.h"
+#include "netinet/ipl.h"
 
 #define	PRINTF	(void)printf
 #define	FPRINTF	(void)fprintf
@@ -54,11 +54,12 @@ int opts;
 	while (!last && (ioctl(fd, SIOCLOOKUPITER, &obj) == 0)) {
 		if (entry.ipn_next == NULL)
 			last = 1;
-		entry.ipn_next = top;
-		top = malloc(sizeof(*top));
-		if (top == NULL)
+		node = malloc(sizeof(*top));
+		if (node == NULL)
 			break;
-		bcopy(&entry, top, sizeof(entry));
+		bcopy(&entry, node, sizeof(entry));
+		node->ipn_next = top;
+		top = node;
 	}
 
 	while (top != NULL) {
@@ -76,5 +77,9 @@ int opts;
 
 	if ((opts & OPT_DEBUG) == 0)
 		PRINTF(" };\n");
+
+	if (ioctl(fd, SIOCIPFDELTOK, &iter.ili_key) != 0)
+		perror("SIOCIPFDELTOK");
+
 	return pool->ipo_next;
 }
