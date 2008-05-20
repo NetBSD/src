@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_bsd.c,v 1.1.1.2 2008/05/18 14:29:36 aymeric Exp $ */
+/*	$NetBSD: cl_bsd.c,v 1.2 2008/05/20 17:52:10 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1995, 1996
@@ -199,35 +199,35 @@ typedef struct _tl {
 	char *termcap;			/* Termcap name. */
 } TL;
 static const TL list[] = {
-	"cols",		"co",		/* Terminal columns. */
-	"cup",		"cm",		/* Cursor up. */
-	"cuu1",		"up",		/* Cursor up. */
-	"el",		"ce",		/* Clear to end-of-line. */
-	"flash",	"vb",		/* Visible bell. */
-	"kcub1",  	"kl",		/* Cursor left. */
-	"kcud1",	"kd",		/* Cursor down. */
-	"kcuf1",	"kr",		/* Cursor right. */
-	"kcuu1",  	"ku",		/* Cursor up. */
-	"kdch1",	"kD",		/* Delete character. */
-	"kdl1",		"kL",		/* Delete line. */
-	"ked",		"kS",		/* Delete to end of screen. */
-	"kel",		"kE",		/* Delete to eol. */
-	"kend",		"@7",		/* Go to eol. */
-	"khome",	"kh",		/* Go to sol. */
-	"kich1",	"kI",		/* Insert at cursor. */
-	"kil1",		"kA",		/* Insert line. */
-	"kind",		"kF",		/* Scroll down. */
-	"kll",		"kH",		/* Go to eol. */
-	"knp",		"kN",		/* Page down. */
-	"kpp",		"kP",		/* Page up. */
-	"kri",		"kR",		/* Scroll up. */
-	"lines",	"li",		/* Terminal lines. */
-	"rmcup",	"te",		/* Terminal end string. */
-	"rmkx",		"ke",		/* Exit "keypad-transmit" mode. */
-	"rmso",		"se",		/* Standout end. */
-	"smcup",	"ti",		/* Terminal initialization string. */
-	"smkx",		"ks",		/* Enter "keypad-transmit" mode. */
-	"smso",		"so",		/* Standout begin. */
+	{ "cols",	"co", },	/* Terminal columns. */
+	{ "cup",	"cm", },	/* Cursor up. */
+	{ "cuu1",	"up", },	/* Cursor up. */
+	{ "el",		"ce", },	/* Clear to end-of-line. */
+	{ "flash",	"vb", },	/* Visible bell. */
+	{ "kcub1",  	"kl", },	/* Cursor left. */
+	{ "kcud1",	"kd", },	/* Cursor down. */
+	{ "kcuf1",	"kr", },	/* Cursor right. */
+	{ "kcuu1",  	"ku", },	/* Cursor up. */
+	{ "kdch1",	"kD", },	/* Delete character. */
+	{ "kdl1",	"kL", },	/* Delete line. */
+	{ "ked",	"kS", },	/* Delete to end of screen. */
+	{ "kel",	"kE", },	/* Delete to eol. */
+	{ "kend",	"@7", },	/* Go to eol. */
+	{ "khome",	"kh", },	/* Go to sol. */
+	{ "kich1",	"kI", },	/* Insert at cursor. */
+	{ "kil1",	"kA", },	/* Insert line. */
+	{ "kind",	"kF", },	/* Scroll down. */
+	{ "kll",	"kH", },	/* Go to eol. */
+	{ "knp",	"kN", },	/* Page down. */
+	{ "kpp",	"kP", },	/* Page up. */
+	{ "kri",	"kR", },	/* Scroll up. */
+	{ "lines",	"li", },	/* Terminal lines. */
+	{ "rmcup",	"te", },	/* Terminal end string. */
+	{ "rmkx",	"ke", },	/* Exit "keypad-transmit" mode. */
+	{ "rmso",	"se", },	/* Standout end. */
+	{ "smcup",	"ti", },	/* Terminal initialization string. */
+	{ "smkx",	"ks", },	/* Enter "keypad-transmit" mode. */
+	{ "smso",	"so", },	/* Standout begin. */
 };
 
 #ifdef _AIX
@@ -268,8 +268,7 @@ static const char codes[] = {
  *	list comparison routine for bsearch.
  */
 static int
-lcmp(a, b)
-	const void *a, *b;
+lcmp(const void *a, const void *b)
 {
 	return (strcmp(a, ((TL *)b)->terminfo));
 }
