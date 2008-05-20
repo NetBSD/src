@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.14 2008/05/04 21:35:12 rumble Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.15 2008/05/20 13:34:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.14 2008/05/04 21:35:12 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.15 2008/05/20 13:34:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,7 +397,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	int error;
 	size_t len;
 	u_int i;
-	bool closed = false;
 
 	KASSERT(mutex_owned(&module_lock));
 
@@ -433,16 +432,8 @@ module_do_load(const char *filename, bool isdep, int flags,
 			depth--;
 			return ENOMEM;
 		}
-		error = kobj_open_file(&mod->mod_kobj, filename);
+		error = kobj_load_file(&mod->mod_kobj, filename);
 		if (error != 0) {
-			kmem_free(mod, sizeof(*mod));
-			depth--;
-			module_error("unable to open object file");
-			return error;
-		}
-		error = kobj_load(mod->mod_kobj);
-		if (error != 0) {
-			kobj_close(mod->mod_kobj);
 			kmem_free(mod, sizeof(*mod));
 			depth--;
 			module_error("unable to load kernel object");
@@ -502,24 +493,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	}
 
 	/*
-	 * Pass proper name to kobj.  This will register the module
-	 * with the ksyms framework.
-	 */
-	error = kobj_set_name(mod->mod_kobj, mi->mi_name);
-	if (error != 0) {
-		module_error("unable to set name");
-		goto fail;
-	}
-
-	/*
-	 * Close the kobj before handling dependencies since we're done
-	 * with it and don't want to open an already locked file if a
-	 * circular dependency exists.
-	 */
-	kobj_close(mod->mod_kobj);
-	closed = true;
-
-	/*
 	 * Now try to load any requisite modules.
 	 */
 	if (mi->mi_required != NULL) {
@@ -556,8 +529,15 @@ module_do_load(const char *filename, bool isdep, int flags,
 	}
 
 	/*
-	 * We loaded all needed modules successfully: initialize.
+	 * We loaded all needed modules successfully: perform global
+	 * relocations and initialize.
 	 */
+	error = kobj_affix(mod->mod_kobj, mi->mi_name);
+	if (error != 0) {
+		module_error("unable to affix module");
+		goto fail2;
+	}
+
 	KASSERT(module_active == NULL);
 	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
@@ -572,8 +552,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	 * list and add references to its requisite modules.
 	 */
 	module_count++;
-	if (!closed)
-		kobj_close(mod->mod_kobj);
 	TAILQ_REMOVE(&pending, mod, mod_chain);
 	TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
 	for (i = 0; i < mod->mod_nrequired; i++) {
@@ -587,10 +565,9 @@ module_do_load(const char *filename, bool isdep, int flags,
 	return 0;
 
  fail:
-	if (!closed)
-		kobj_close(mod->mod_kobj);
-	TAILQ_REMOVE(&pending, mod, mod_chain);
 	kobj_unload(mod->mod_kobj);
+ fail2:
+	TAILQ_REMOVE(&pending, mod, mod_chain);
 	kmem_free(mod, sizeof(*mod));
 	depth--;
 	return error;
@@ -655,23 +632,14 @@ module_prime(void *base, size_t size)
 	}
 	mod->mod_source = MODULE_SOURCE_BOOT;
 
-	error = kobj_open_mem(&mod->mod_kobj, base, size);
+	error = kobj_load_mem(&mod->mod_kobj, base, size);
 	if (error != 0) {
-		kmem_free(mod, sizeof(*mod));
-		module_error("unable to open object pushed by boot loader");
-		return error;
-	}
-
-	error = kobj_load(mod->mod_kobj);
-	if (error != 0) {
-		kobj_close(mod->mod_kobj);
 		kmem_free(mod, sizeof(*mod));
 		module_error("unable to load object pushed by boot loader");
 		return error;
 	}
 	error = module_fetch_info(mod);
 	if (error != 0) {
-		kobj_close(mod->mod_kobj);
 		kobj_unload(mod->mod_kobj);
 		kmem_free(mod, sizeof(*mod));
 		module_error("unable to load object pushed by boot loader");
