@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 2008/04/17 17:47:23 njoly Exp $
+	$NetBSD: syscalls.master,v 1.34 2008/05/20 17:31:56 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -217,7 +217,8 @@
 		    int options, netbsd32_rusagep_t rusage); }
 115	STD	{ int linux32_sys_swapoff(const netbsd32_charp path); }
 116	STD	{ int linux32_sys_sysinfo(linux32_sysinfop_t arg); }
-117	UNIMPL	ipc
+117	STD	{ int linux32_sys_ipc(int what, int a1, int a2, int a3, \
+		    netbsd32_voidp ptr); }
 118	NOARGS	{ int netbsd32_fsync(int fd); }
 119	STD	{ int linux32_sys_sigreturn(linux32_sigcontextp_t scp); }
 120	STD	{ int linux32_sys_clone(int flags, netbsd32_voidp stack); }
