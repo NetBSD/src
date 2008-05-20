@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.224 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.225 2008/05/20 09:28:39 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -471,8 +471,8 @@ do {						\
 } while (/* CONSTCOND */ 0)
 #define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (p))
 #else
-#define	KERNEL_LOCK(count, lwp)		((void)count, (void)lwp)
-#define	KERNEL_UNLOCK(all, lwp, ptr)	((void)all, (void)lwp, (void)ptr)
+#define	KERNEL_LOCK(count, lwp)		do {(void)(count); (void)(lwp);} while (/* CONSTCOND */ 0) /*NOP*/
+#define	KERNEL_UNLOCK(all, lwp, ptr)	do {(void)(all); (void)(lwp); (void)(ptr);} while (/* CONSTCOND */ 0) /*NOP*/
 #endif
 
 #define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)
