@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.19 2008/05/20 14:11:55 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.20 2008/05/20 16:18:51 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.19 2008/05/20 14:11:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.20 2008/05/20 16:18:51 martin Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -1107,7 +1107,7 @@ kobj_free(kobj_t ko, void *base, size_t size)
 #else	/* MODULAR */
 
 int
-kobj_load_file(kobj_t *kop, const char *name)
+kobj_load_file(kobj_t *kop, const char *name, const char *base)
 {
 
 	return ENOSYS;
