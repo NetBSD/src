@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.263 2008/05/18 13:56:12 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.264 2008/05/20 16:26:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.263 2008/05/18 13:56:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.264 2008/05/20 16:26:04 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -548,9 +548,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	cred = l ? l->l_cred : NOCRED;
 
-	printf("WARNING: the log file system is experimental and "
-	    "may be unstable\n");
-
 	/*
 	 * Flush out any old buffers remaining from a previous use.
 	 */
@@ -876,6 +873,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (lfs_writer_daemon == 0 && kthread_create(PRI_BIO, 0, NULL,
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
+
+	printf("WARNING: the log file system is experimental and "
+	    "may be unstable\n");
 
 	return (0);
 
