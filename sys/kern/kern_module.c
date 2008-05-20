@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.17 2008/05/20 16:04:08 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.18 2008/05/20 17:24:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.17 2008/05/20 16:04:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.18 2008/05/20 17:24:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.17 2008/05/20 16:04:08 ad Exp $");
 #include <sys/kobj.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
-#include <sys/syscall.h>
-#include <sys/syscallargs.h>
+#include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -71,7 +70,7 @@ __link_set_add_rodata(modules, module_dummy);
 
 static module_t	*module_lookup(const char *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
-		    module_t **);
+		    module_t **, modclass_t class);
 static int	module_do_unload(const char *);
 static void	module_error(const char *, ...);
 static int	module_do_builtin(const char *, module_t **);
@@ -158,7 +157,8 @@ module_init_class(modclass_t class)
 			if (class != MODULE_CLASS_ANY &&
 			    class != mi->mi_class)
 				continue;
-			module_do_load(mi->mi_name, false, 0, NULL, NULL);
+			module_do_load(mi->mi_name, false, 0, NULL, NULL,
+			    class);
 			break;
 		}
 	} while (mod != NULL);
@@ -183,12 +183,20 @@ module_jettison(void)
  *	Load a single module from the file system.
  */
 int
-module_load(const char *filename, int flags, prop_dictionary_t props)
+module_load(const char *filename, int flags, prop_dictionary_t props,
+	    modclass_t class)
 {
 	int error;
 
+	/* Authorize. */
+	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
+	    0, (void *)(uintptr_t)MODCTL_LOAD, NULL, NULL);
+	if (error != 0) {
+		return error;
+	}
+
 	mutex_enter(&module_lock);
-	error = module_do_load(filename, false, flags, props, NULL);
+	error = module_do_load(filename, false, flags, props, NULL, class);
 	mutex_exit(&module_lock);
 
 	return error;
@@ -203,6 +211,13 @@ int
 module_unload(const char *name)
 {
 	int error;
+
+	/* Authorize. */
+	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
+	    0, (void *)(uintptr_t)MODCTL_UNLOAD, NULL, NULL);
+	if (error != 0) {
+		return error;
+	}
 
 	mutex_enter(&module_lock);
 	error = module_do_unload(name);
@@ -395,7 +410,7 @@ module_do_builtin(const char *name, module_t **modp)
  */
 static int
 module_do_load(const char *filename, bool isdep, int flags,
-    prop_dictionary_t props, module_t **modp)
+	       prop_dictionary_t props, module_t **modp, modclass_t class)
 {
 	static TAILQ_HEAD(,module) pending = TAILQ_HEAD_INITIALIZER(pending);
 	static int depth;
@@ -468,6 +483,15 @@ module_do_load(const char *filename, bool isdep, int flags,
 	}
 
 	/*
+	 * If a specific kind of module was requested, ensure that we have
+	 * a match.
+	 */
+	if (class != MODULE_CLASS_ANY && class != mi->mi_class) {
+		error = ENOENT;
+		goto fail;
+	}
+
+	/*
 	 * If loading a dependency, `filename' is a plain module name.
 	 * The name must match.
 	 */
@@ -532,7 +556,8 @@ module_do_load(const char *filename, bool isdep, int flags,
 				goto fail;
 			}
 			error = module_do_load(buf, true, flags, NULL,
-			    &mod->mod_required[mod->mod_nrequired++]);
+			    &mod->mod_required[mod->mod_nrequired++],
+			    MODULE_CLASS_ANY);
 			if (error != 0 && error != EEXIST)
 				goto fail;
 		}
