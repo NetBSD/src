@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.5 2008/05/20 12:17:49 ad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.6 2008/05/20 12:18:45 ad Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -9,7 +9,7 @@ realinstall:	kmodinstall
 
 KERN=		$S/kern
 
-CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss ${COPTS}
+CFLAGS+=	-ffreestanding ${COPTS}
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -isystem $S -isystem $S/arch
 CPPFLAGS+=	-isystem ${S}/../common/include
 CPPFLAGS+=	-D_KERNEL -D_LKM -D_MODULE
