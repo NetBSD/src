@@ -58,12 +58,12 @@ module already have functionality for that and it just needs support in
 the userland ipnat?)
 -sort of done
 
-        * intrusion detection 
-                detection of port scans 
+        * intrusion detection
+                detection of port scans
                 detection of multiple connection attempts
-                
+
         * support for multiple log files
-                i.e. all connections to ftp and telnet logged to 
+                i.e. all connections to ftp and telnet logged to
                         a seperate log file
 
         * multiple levels of log severity with E-mail notification
