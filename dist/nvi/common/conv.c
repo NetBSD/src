@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.1.1.2 2008/05/18 14:29:40 aymeric Exp $ */
+/*	$NetBSD: conv.c,v 1.2 2008/05/20 17:37:04 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -74,8 +74,8 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 	char *bp = buffer;						\
 	outleft = CONV_BUFFER_SIZE;					\
 	errno = 0;							\
-	if (iconv(id, (char **)&str, &left, &bp, &outleft) == -1 /*&&	\
-		errno != E2BIG*/)					\
+	if (iconv(id, (const char **)&str, &left, &bp, &outleft) == -1	\
+		/* && errno != E2BIG */)				\
 	    goto err;							\
 	if ((len = CONV_BUFFER_SIZE - outleft) == 0) {			\
 	    error = -left;						\
@@ -231,7 +231,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 #ifdef USE_ICONV
 #define CONVERT2(len, cw, offset)					\
     do {								\
-	char *bp = buffer;						\
+	const char *bp = buffer;					\
 	while (len != 0) {						\
 	    size_t outleft = cw->blen1 - offset;			\
 	    char *obp = (char *)cw->bp1 + offset;		    	\
