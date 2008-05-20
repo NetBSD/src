@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.2 2008/05/20 21:31:52 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2 2008/05/20 21:31:52 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2331,7 +2331,6 @@ errorout:
 
 	udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
 	KASSERT(new_inflen == orig_inflen - size_diff);
-	KASSERT(new_lbrec == orig_lbrec);
 
 	return error;
 }
