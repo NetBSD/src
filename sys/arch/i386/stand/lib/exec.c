@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.26 2008/05/20 14:46:54 ad Exp $	 */
+/*	$NetBSD: exec.c,v 1.27 2008/05/20 16:04:08 ad Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
 #endif
+	char		*machine;
 
 #ifdef	DEBUG
 	printf("exec: file=%s loadaddr=0x%lx\n",
@@ -235,17 +236,28 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 
 	/* pull in any modules if necessary */
 	if (boot_modules_enabled) {
+		switch (netbsd_elf_class) {
+		case ELFCLASS32:
+			machine = "i386";
+			break;
+		case ELFCLASS64:
+			machine = "amd64";
+			break;
+		default:
+			machine = "generic";
+			break;
+		}
 		if (netbsd_version / 1000000 % 100 == 99) {
 			/* -current */
 			snprintf(module_base, sizeof(module_base),
-			    "/stand/modules/%d.%d.%d",
+			    "/stand/%s/%d.%d.%d/modules", machine,
 			    netbsd_version / 100000000,
 			    netbsd_version / 1000000 % 100,
 			    netbsd_version / 100 % 100);
 		} else if (netbsd_version != 0) {
 			/* release */
 			snprintf(module_base, sizeof(module_base),
-			    "/stand/modules/%d.%d",
+			    "/stand/%s/%d.%d/modules", machine,
 			    netbsd_version / 100000000,
 			    netbsd_version / 1000000 % 100);
 		}
