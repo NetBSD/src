@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.360 2008/05/20 17:25:49 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.361 2008/05/20 17:28:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.360 2008/05/20 17:25:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.361 2008/05/20 17:28:59 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -503,18 +503,22 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	 * A lookup in VFS_MOUNT might result in an attempt to
 	 * lock this vnode again, so make the lock recursive.
 	 */
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	recurse = vn_setrecurse(vp);
-  
 	if (vfsops == NULL) {
-		if (flags & (MNT_GETARGS | MNT_UPDATE))
+		if (flags & (MNT_GETARGS | MNT_UPDATE)) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			recurse = vn_setrecurse(vp);
 			vfsops = vp->v_mount->mnt_op;
-		else {
+		} else {
 			/* 'type' is userspace */
 			error = mount_get_vfsops(type, &vfsops);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			recurse = vn_setrecurse(vp);
 			if (error != 0)
 				goto done;
 		}
+	} else {
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		recurse = vn_setrecurse(vp);
 	}
 
 	if (data != NULL && data_seg == UIO_USERSPACE) {
