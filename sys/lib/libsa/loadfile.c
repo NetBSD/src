@@ -1,7 +1,7 @@
-/* $NetBSD: loadfile.c,v 1.28 2008/04/28 20:24:06 martin Exp $ */
+/* $NetBSD: loadfile.c,v 1.29 2008/05/20 14:41:06 ad Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -81,6 +81,8 @@
 #include <sys/exec.h>
 
 #include "loadfile.h"
+
+uint32_t	netbsd_version;
 
 /*
  * Open 'filename', read in program and return the opened file
