@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.15 2008/05/20 13:34:44 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.16 2008/05/20 14:11:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.15 2008/05/20 13:34:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.16 2008/05/20 14:11:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,7 @@ struct vm_map *lkm_map;
 struct modlist	module_list = TAILQ_HEAD_INITIALIZER(module_list);
 struct modlist	module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
 static module_t	*module_active;
+static char	module_base[64];
 u_int		module_count;
 kmutex_t	module_lock;
 
@@ -108,6 +109,15 @@ module_init(void)
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef MODULAR	/* XXX */
 	module_init_md();
+#endif
+
+#if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
+	snprintf(module_base, sizeof(module_base), "/stand/modules/%s",
+	    osrelease);
+#else						/* release */
+	snprintf(module_base, sizeof(module_base), "/stand/modules/%d.%d",
+	    __NetBSD_Version__ / 100000000,
+	    __NetBSD_Version__ / 1000000 % 100);
 #endif
 }
 
@@ -432,7 +442,7 @@ module_do_load(const char *filename, bool isdep, int flags,
 			depth--;
 			return ENOMEM;
 		}
-		error = kobj_load_file(&mod->mod_kobj, filename);
+		error = kobj_load_file(&mod->mod_kobj, filename, module_base);
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
