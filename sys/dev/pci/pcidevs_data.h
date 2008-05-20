@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.940 2008/05/13 10:44:02 rjs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.941 2008/05/20 16:56:13 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.940 2008/05/13 10:43:21 rjs Exp
+ *	NetBSD: pcidevs,v 1.941 2008/05/20 16:55:28 cegger Exp
  */
 
 /*
@@ -4052,6 +4052,10 @@ static const struct pci_product pci_products[] = {
 	    "SB600 USB OHCI4 Controller",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AC97_MODEM,
+	    "SB600 AC97 Modem",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_600,
 	    "SB600 IXP IDE Controller",
 	},
@@ -4676,6 +4680,10 @@ static const struct pci_product pci_products[] = {
 	    "Radeon Xpress 200G Series",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_NB,
+	    "RD790 Northbridge (dual slot)",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5960,
 	    "Radeon 9200PRO 5960",
 	},
@@ -4794,6 +4802,30 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_7835,
 	    "Radeon 9200 IGP",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_HB,
+	    "RS690 Host Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7912,
+	    "RS690 PCI to PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7913,
+	    "RS690 PCI to PCI-Express Port 0 Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7915,
+	    "RS690 PCI to PCI-Express Port 1 Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7916,
+	    "RS690 PCI to PCI-Express Port 2 Bridge",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7917,
+	    "RS690 PCI to PCI-Express Port 3 Bridge",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_XT,
@@ -14192,4 +14224,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2948;
+const int pci_nproducts = 2956;
