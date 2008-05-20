@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 2008/05/11 16:17:38 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 2008/05/20 09:29:33 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2008/05/11 16:17:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2008/05/20 09:29:33 dogcow Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3573,10 +3573,7 @@ startover:
 
 		error = pmap_sync_pv(pvpte, expect, ~0, &opte);
 		if (error == EAGAIN) {
-#if defined(MULTIPROCESSOR)
 			int hold_count;
-#endif /* defined(MULTIPROCESSOR) */
-
 			pp_unlock(pp);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			if (ptp != NULL) {
@@ -3720,10 +3717,7 @@ startover:
 
 		error = pmap_sync_pv(pvpte, expect, clearbits, &opte);
 		if (error == EAGAIN) {
-#if defined(MULTIPROCESSOR)
 			int hold_count;
-#endif /* defined(MULTIPROCESSOR) */
-
 			pp_unlock(pp);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			SPINLOCK_BACKOFF(count);
