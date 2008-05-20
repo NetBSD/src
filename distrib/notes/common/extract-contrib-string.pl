@@ -40,11 +40,13 @@
 #
 # Options:
 #
-#     perl extract-contrib-string.pl [-d] [-h]
+#     perl extract-contrib-string.pl [-d] [-h] [-x] [-?]
 #
 # where
 #     -d  debug output
 #     -h  html output
+#     -x  xml/docbook output
+#     -?  display help/usage message
 
 
 $ack_line1="[aA]ll( commercial)?( marketing or)? advertising materials mentioning( features)?";
@@ -83,7 +85,19 @@ while ($#ARGV >= 0) {
     $debug=1 if ($ARGV[0] =~ /-d/i);
     $html=1  if ($ARGV[0] =~ /-h/i);
     $xml=1  if ($ARGV[0] =~ /-x/i);
+    $usage=1  if ($ARGV[0] =~ /-\?/);
     shift(@ARGV);
+}
+
+if ($usage) {
+    print "usage: find /usr/src -type f -print |\n" .
+	" perl extract-contrib-string.pl [-h] [-x] [-?] [-d]\n" .
+	"   where\n" .
+	"    -h   output html\n" .
+	"    -x   output xml/docbook\n" .
+	"    -d   debug\n" .
+	"    -?   display this help message\n";
+    exit(0);
 }
 
 $comments = !$html && !$xml;
@@ -138,27 +152,52 @@ while(<>) {
 		print "E> $_" if $debug;
 		
 		# post-process
-		$msg =~ s/^\@c\s*//g;			# texinfo
-		$msg =~ s/\n\@c\s*/\n/g;		# texinfo
 		$msg =~ s/^REM\s*//g;			# BASIC?!?
 		$msg =~ s/\nREM\s*/\n/g;		# BASIC?!?
 		$msg =~ s/^dnl\s*//g;			# m4
 		$msg =~ s/\dnl\s*/\n/g;			# m4
-		$msg =~ s/^\.\\"\s*//g;			# *roff
-		$msg =~ s/\n\.\\"\s*/\n/g;		# *roff
+		$msg =~ s/^\s+-\s+//g;			# seen in docbook files
+		$msg =~ s/\n\s+-\s+/ /g;		#
 		$msg =~ s/^[#\\\|";]*\s*//g;		# sh etc.
 		$msg =~ s/\n[#\\\|";]\s*/\n/g;		# sh etc.
 		$msg =~ s/^[ 	*]*//g;      		# C
 		$msg =~ s/\n[ 	*]*/\n/g;    		# C
 
+		# *roff
+		while ($msg =~ /^\.\\"\s*/) {
+			$msg =~ s/^\.\\"\s*//o;
+		}
+		while ($msg =~ /\n\.\\"\s*/) {
+			$msg =~ s/\n\.\\"\s*/\n/o;
+		}
+		$msg =~ s/\n\.\\"\s*$/\n/g;
+
 		# C++/C99
 		while ($msg =~ /^\s*\/\/\s*/) {
 			$msg =~ s/^\s*\/\/\s*//o;
 		}
-		while ($msg =~ /\ns*\/\/\s*$/) {
-			$msg =~ s/\ns*\/\/\s*$//o;
+		while ($msg =~ /\n\s*\/\/\s*$/) {
+			$msg =~ s/\n\s*\/\/\s*$//o;
 		}
-		$msg =~ s/\ns*\/\/\s*/ /g;
+		$msg =~ s/\n\s*\/\/\s*/\n/g;
+
+		# C
+		while ($msg =~ /^\s*\*\s*/) {
+			$msg =~ s/^\s*\*\s*//o;
+		}
+		while ($msg =~ /\n\s*\*\s*$/) {
+			$msg =~ s/\n\s*\*\s*$//o;
+		}
+		$msg =~ s/\n\s*\*\s*/\n/g;
+
+		# texinfo @c
+		while ($msg =~ /^\s*\@c\s+/) {
+			$msg =~ s/^\s*\@c\s+//o;
+		}
+		while ($msg =~ /\n\s*\@c\s+$/) {
+			$msg =~ s/\n\s*\@c\s+$//o;
+		}
+		$msg =~ s/\n\s*\@c\s+/\n/g;
 
 		$msg =~ s/\@cartouche\n//;              # texinfo
 
@@ -167,13 +206,8 @@ while(<>) {
 		$msg =~ s/^\s*//;
 		$msg =~ s/\\\@/\@/g;
 		$msg =~ s/\n\n/\n/g;
-	        $msg =~ s/^\s*"//;
-	        $msg =~ s/"\s*$//;
 	        $msg =~ s/^\s*``//;
 	        $msg =~ s/''\s*$//;
-		while ($msg =~ /[\n\s]+$/) {
-			$msg =~ s/[\n\s]+$//o;
-		}
 
 		# Split up into separate paragraphs
 		#
@@ -182,6 +216,10 @@ while(<>) {
 		$msgs=~s,^\|,,;
 	      msg:
 		foreach $msg (split(/\|/, $msgs)) {
+		    while ($msg =~ /[\n\s]+$/) {
+			$msg =~ s/[\n\s]+$//o;
+		    }
+		    next if ($msg eq "");
 		    if ($comments) {
 			print ".\\\" File $fn:\n";
 			print "$msg";
