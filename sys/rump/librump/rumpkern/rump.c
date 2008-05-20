@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.45 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.46 2008/05/20 19:02:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,6 +54,7 @@ kauth_cred_t rump_cred = RUMPCRED_SUSER;
 struct cpu_info rump_cpu;
 struct filedesc rump_filedesc0;
 struct proclist allproc;
+char machine[] = "rump";
 
 kmutex_t rump_giantlock;
 
