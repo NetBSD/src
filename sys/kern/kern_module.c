@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.16 2008/05/20 14:11:55 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.17 2008/05/20 16:04:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.16 2008/05/20 14:11:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.17 2008/05/20 16:04:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,11 +112,11 @@ module_init(void)
 #endif
 
 #if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
-	snprintf(module_base, sizeof(module_base), "/stand/modules/%s",
-	    osrelease);
+	snprintf(module_base, sizeof(module_base), "/stand/%s/%s/modules",
+	    machine, osrelease);
 #else						/* release */
-	snprintf(module_base, sizeof(module_base), "/stand/modules/%d.%d",
-	    __NetBSD_Version__ / 100000000,
+	snprintf(module_base, sizeof(module_base), "/stand/%s/%d.%d/modules",
+	    machine, __NetBSD_Version__ / 100000000,
 	    __NetBSD_Version__ / 1000000 % 100);
 #endif
 }

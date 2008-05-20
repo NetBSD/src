@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.29 2008/05/20 14:41:06 ad Exp $ */
+/* $NetBSD: loadfile.c,v 1.30 2008/05/20 16:04:08 ad Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 #include "loadfile.h"
 
 uint32_t	netbsd_version;
+u_int		netbsd_elf_class;
 
 /*
  * Open 'filename', read in program and return the opened file
@@ -157,12 +158,14 @@ fdloadfile(int fd, u_long *marks, int flags)
 #ifdef BOOT_ELF32
 	if (memcmp(hdr.elf32.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf32.e_ident[EI_CLASS] == ELFCLASS32) {
+	    	netbsd_elf_class = ELFCLASS32;
 		rval = loadfile_elf32(fd, &hdr.elf32, marks, flags);
 	} else
 #endif
 #ifdef BOOT_ELF64
 	if (memcmp(hdr.elf64.e_ident, ELFMAG, SELFMAG) == 0 &&
 	    hdr.elf64.e_ident[EI_CLASS] == ELFCLASS64) {
+	    	netbsd_elf_class = ELFCLASS64;
 		rval = loadfile_elf64(fd, &hdr.elf64, marks, flags);
 	} else
 #endif
