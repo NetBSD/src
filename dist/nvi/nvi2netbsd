@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: nvi2netbsd,v 1.1 2008/05/18 14:16:09 aymeric Exp $
+#	$NetBSD: nvi2netbsd,v 1.2 2008/05/20 17:05:40 aymeric Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,8 +36,8 @@
 #	$ sh /usr/src/dist/nvi/nvi2netbsd nvi-x.y.z `pwd`
 #	$ cd src/dist/nvi
 #	$ cvs import -m "Import nvi x.y.z" src/dist/nvi NVI nvi-x-y-z
-#	$ cd ../../../nvi/dist
-#	$ run ./configure
+#	$ cd ../../../nvi/build.unix
+#	$ run ../dist/configure --with-db_type=db1 --enable-widechar
 #	... to be continued
 #
 
@@ -75,10 +75,12 @@ echo removing unneeded directories and files
 
 ### Remove unneeded files
 cd "$d"
+rm -f catalog/english.base		# we generate it
 rm -fr dist/autom4te.cache
 rm -f dist/tags
 rm -fr docs/html
 rm -f docs/*/*.ps docs/*/grohtml* docs/*/*.0 docs/*/*.txt
+rm -f common/options_def.h		# must be removed: we generate it
 
 cd catalog
 for f in *.base; do
