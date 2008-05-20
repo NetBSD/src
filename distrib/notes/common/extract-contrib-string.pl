@@ -190,11 +190,11 @@ while(<>) {
 		    
 		    # Figure out if there's a version w/ or w/o trailing dot
 		    # 
-		    if ($msg =~ /\.\n$/) {
+		    if ($msg =~ /\.$/) {
 			# check if there's a version of the same msg
-			# w/ a trailing dot
+			# w/o a trailing dot
 			$msg2=$msg;
-			$msg2=~s,\.\n$,\n,;
+			$msg2=~s,\.$,,;
 			if ($copyrights{"$msg2"}) {
 			    # already there - skip
 			    print "already there, w/o dot - skipping!\n"
@@ -211,10 +211,9 @@ while(<>) {
 			}
 		    } else {
 			# check if there's a version of the same msg
-			# w/o the trailing dot
+			# with a trailing dot
 			$msg2=$msg;
-			chomp($msg2);
-			$msg2.=".\n";
+			$msg2.=".";
 			if ($copyrights{"$msg2"}) {
 			    # already there - skip
 			    print "already there, w/ dot - skipping!\n"
