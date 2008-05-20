@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.3 2008/05/20 13:58:32 cegger Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.4 2008/05/20 14:45:22 cegger Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /* 
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.3 2008/05/20 13:58:32 cegger Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.4 2008/05/20 14:45:22 cegger Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,6 +432,6 @@ amdtemp_family10_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	value = (status >> 21);
 
 	edata->state = ENVSYS_SVALID;
-	/* envsys(4) wants mK... convert from Celsius. */
+	/* envsys(4) wants uK... convert from Celsius. */
 	edata->value_cur = (value * 125000) + 273150000;
 }
