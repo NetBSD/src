@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.4 2008/05/20 12:08:05 ad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.5 2008/05/20 12:17:49 ad Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -22,7 +22,7 @@ CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 DPSRCS+=	${_YKMSRCS}
 CLEANFILES+=	${_YKMSRCS}
-CLEANFILES+=	tmp.o
+KMODSCRIPT=	${DESTDIR}/usr/share/ldscripts/kmodule
 
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 PROG?=		${KMOD}.kmod
@@ -34,8 +34,7 @@ ${OBJS} ${LOBJS}: ${DPSRCS}
 
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
-	${LD} -r -d -o tmp.o ${OBJS}
-	mv tmp.o ${.TARGET}
+	${LD} -T ${KMODSCRIPT} -r -d -o ${.TARGET} ${OBJS}
 
 ##### Install rules
 .if !target(kmodinstall)

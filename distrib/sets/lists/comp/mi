@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1148 2008/05/19 02:50:56 yamt Exp $
+#	$NetBSD: mi,v 1.1149 2008/05/20 12:17:48 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3332,6 +3332,7 @@
 ./usr/share/ldscripts/elf64alpha.xr		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf64alpha.xs		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf64alpha.xu		comp-obsolete		obsolete
+./usr/share/ldscripts/kmodule			comp-util-share
 ./usr/share/ldscripts/m68kelf.x			comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.xbn		comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.xn		comp-obsolete		obsolete
