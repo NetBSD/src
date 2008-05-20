@@ -1,4 +1,4 @@
-/*	$NetBSD: mlfk_ipl.c,v 1.1.1.10 2007/05/15 22:26:02 martin Exp $	*/
+/*	$NetBSD: mlfk_ipl.c,v 1.1.1.11 2008/05/20 06:44:25 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2000 by Darren Reed.
@@ -17,7 +17,7 @@
 #include <sys/select.h>
 #if __FreeBSD_version >= 500000
 # include <sys/selinfo.h>
-#endif                  
+#endif
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -179,9 +179,17 @@ ipf_modload()
 	char *defpass, *c, *str;
 	int i, j, error;
 
+	RWLOCK_INIT(&ipf_global, "ipf filter load/unload mutex");
+	RWLOCK_INIT(&ipf_mutex, "ipf filter rwlock");
+	RWLOCK_INIT(&ipf_frcache, "ipf cache rwlock");
+
 	error = ipfattach();
-	if (error)
+	if (error) {
+		RW_DESTROY(&ipf_global);
+		RW_DESTROY(&ipf_mutex);
+		RW_DESTROY(&ipf_frcache);
 		return error;
+	}
 
 	for (i = 0; i < IPL_LOGSIZE; i++)
 		ipf_devs[i] = NULL;
@@ -198,15 +206,20 @@ ipf_modload()
 		ipf_devs[i] = make_dev(&ipl_cdevsw, i, 0, 0, 0600, c);
 	}
 
+	error = ipf_pfil_hook();
+	if (error != 0)
+		return error;
+	ipf_event_reg();
+
 	if (FR_ISPASS(fr_pass))
 		defpass = "pass";
 	else if (FR_ISBLOCK(fr_pass))
 		defpass = "block";
-	else          
+	else
 		defpass = "no-match -> block";
 
 	printf("%s initialized.  Default = %s all, Logging = %s%s\n",
-		ipfilter_version, defpass,                
+		ipfilter_version, defpass,
 #ifdef IPFILTER_LOG
 		"enabled",
 #else
@@ -217,7 +230,7 @@ ipf_modload()
 #else
 		""
 #endif
-		);         
+		);
 	return 0;
 }
 
@@ -231,11 +244,19 @@ ipf_modunload()
 		return EBUSY;
 
 	if (fr_running >= 0) {
+		ipf_pfil_unhook();
+		ipf_event_dereg();
+		WRITE_ENTER(&ipf_global);
 		error = ipfdetach();
+		RWLOCK_EXIT(&ipf_global);
 		if (error != 0)
 			return error;
 	} else
 		error = 0;
+
+	RW_DESTROY(&ipf_global);
+	RW_DESTROY(&ipf_mutex);
+	RW_DESTROY(&ipf_frcache);
 
 	fr_running = -2;
 
@@ -305,7 +326,7 @@ iplpoll(dev_t dev, int events, struct proc *td)
 
 	revents = 0;
 
-	switch (xmin) 
+	switch (xmin)
 	{
 	case IPL_LOGIPF :
 	case IPL_LOGNAT :
@@ -313,12 +334,12 @@ iplpoll(dev_t dev, int events, struct proc *td)
 #ifdef IPFILTER_LOG
 		if ((events & (POLLIN | POLLRDNORM)) && ipflog_canread(xmin))
 			revents |= events & (POLLIN | POLLRDNORM);
-#endif  
+#endif
 		break;
 	case IPL_LOGAUTH :
 		if ((events & (POLLIN | POLLRDNORM)) && fr_auth_waiting())
 			revents |= events & (POLLIN | POLLRDNORM);
-		break; 
+		break;
 	case IPL_LOGSYNC :
 #ifdef IPFILTER_SYNC
 		if ((events & (POLLIN | POLLRDNORM)) && ipfsync_canread())
