@@ -1,4 +1,10 @@
-# $NetBSD: md.i386,v 1.124 2008/05/18 21:14:51 jmcneill Exp $
+# $NetBSD: md.i386,v 1.125 2008/05/20 19:01:10 ad Exp $
+./@MODULEDIR@/drm				base-kernel-modules
+./@MODULEDIR@/drm/drm.kmod			base-kernel-modules
+./@MODULEDIR@/i915drm				base-kernel-modules
+./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules
+./@MODULEDIR@/radeondrm				base-kernel-modules
+./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -10,12 +16,6 @@
 ./dev/ttyv6					base-obsolete		obsolete
 ./dev/ttyv7					base-obsolete		obsolete
 ./dev/vga					base-obsolete		obsolete
-./kernel/modules/drm				base-kernel-modules
-./kernel/modules/drm/drm.kmod			base-kernel-modules
-./kernel/modules/i915drm			base-kernel-modules
-./kernel/modules/i915drm/i915drm.kmod		base-kernel-modules
-./kernel/modules/radeondrm			base-kernel-modules
-./kernel/modules/radeondrm/radeondrm.kmod	base-kernel-modules
 ./lib/libm387.so				base-sys-shlib
 ./lib/libm387.so.0				base-sys-shlib
 ./lib/libm387.so.0.1				base-sys-shlib

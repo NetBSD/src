@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.747 2008/05/14 16:49:47 reinoud Exp $
+# $NetBSD: mi,v 1.748 2008/05/20 19:01:10 ad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -113,8 +113,6 @@
 ./etc/ssh					base-sys-root
 ./etc/systrace					base-util-root		obsolete
 ./etc/uucp					base-obsolete		obsolete
-./kernel					base-sys-root
-./kernel/modules				base-sys-root
 ./lib						base-sys-root
 ./lib/libdes.so					base-obsolete		obsolete
 ./lib/libssp.so					base-obsolete		obsolete

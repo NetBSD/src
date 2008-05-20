@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.364 2008/05/02 23:12:01 ad Exp $
+#	$NetBSD: NetBSD.dist,v 1.365 2008/05/20 19:01:11 ad Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -51,8 +51,6 @@
 ./etc/skel
 ./etc/sliphome
 ./etc/ssh
-./kernel
-./kernel/modules
 ./lib
 ./libdata
 ./libdata/firmware
