@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.359 2008/05/06 19:14:32 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.360 2008/05/20 17:25:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359 2008/05/06 19:14:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.360 2008/05/20 17:25:49 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359 2008/05/06 19:14:32 ad Exp $"
 #include <sys/verified_exec.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -284,9 +285,17 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 		fstypename[0] = 'f';
 #endif
 
-	if ((*vfsops = vfs_getopsbyname(fstypename)) == NULL)
+	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
+		return 0;
+
+	/* If we can autoload a vfs module, try again */
+	if (module_load(fstype, 0, NULL, MODULE_CLASS_VFS) != 0)
 		return ENODEV;
-	return 0;
+
+	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
+		return 0;
+
+	return ENODEV;
 }
 
 static int
