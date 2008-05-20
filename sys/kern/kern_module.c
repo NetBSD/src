@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.19 2008/05/20 19:16:07 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.20 2008/05/20 19:20:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.19 2008/05/20 19:16:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.20 2008/05/20 19:20:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __link_set_add_rodata(modules, module_dummy);
 
 static module_t	*module_lookup(const char *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
-		    module_t **, modclass_t class);
+		    module_t **, modclass_t class, bool);
 static int	module_do_unload(const char *);
 static void	module_error(const char *, ...);
 static int	module_do_builtin(const char *, module_t **);
@@ -154,7 +154,7 @@ module_init_class(modclass_t class)
 			    class != mi->mi_class)
 				continue;
 			module_do_load(mi->mi_name, false, 0, NULL, NULL,
-			    class);
+			    class, true);
 			break;
 		}
 	} while (mod != NULL);
@@ -180,7 +180,7 @@ module_jettison(void)
  */
 int
 module_load(const char *filename, int flags, prop_dictionary_t props,
-	    modclass_t class)
+	    modclass_t class, bool autoload)
 {
 	int error;
 
@@ -192,7 +192,8 @@ module_load(const char *filename, int flags, prop_dictionary_t props,
 	}
 
 	mutex_enter(&module_lock);
-	error = module_do_load(filename, false, flags, props, NULL, class);
+	error = module_do_load(filename, false, flags, props, NULL, class,
+	    autoload);
 	mutex_exit(&module_lock);
 
 	return error;
@@ -406,7 +407,8 @@ module_do_builtin(const char *name, module_t **modp)
  */
 static int
 module_do_load(const char *filename, bool isdep, int flags,
-	       prop_dictionary_t props, module_t **modp, modclass_t class)
+	       prop_dictionary_t props, module_t **modp, modclass_t class,
+	       bool autoload)
 {
 	static TAILQ_HEAD(,module) pending = TAILQ_HEAD_INITIALIZER(pending);
 	static int depth;
@@ -453,7 +455,8 @@ module_do_load(const char *filename, bool isdep, int flags,
 			depth--;
 			return ENOMEM;
 		}
-		error = kobj_load_file(&mod->mod_kobj, filename, module_base);
+		error = kobj_load_file(&mod->mod_kobj, filename, module_base,
+		    autoload);
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
@@ -553,7 +556,7 @@ module_do_load(const char *filename, bool isdep, int flags,
 			}
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod->mod_required[mod->mod_nrequired++],
-			    MODULE_CLASS_ANY);
+			    MODULE_CLASS_ANY, true);
 			if (error != 0 && error != EEXIST)
 				goto fail;
 		}

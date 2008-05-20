@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.20 2008/05/20 16:18:51 martin Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.21 2008/05/20 19:20:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.20 2008/05/20 16:18:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.21 2008/05/20 19:20:38 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -159,7 +159,8 @@ extern struct vm_map *lkm_map;
  *	Load an object located in the file system.
  */
 int
-kobj_load_file(kobj_t *kop, const char *filename, const char *base)
+kobj_load_file(kobj_t *kop, const char *filename, const char *base,
+	       bool autoload)
 {
 	struct nameidata nd;
 	kauth_cred_t cred;
@@ -174,7 +175,7 @@ kobj_load_file(kobj_t *kop, const char *filename, const char *base)
 		return ENOMEM;
 	}
 
-	if (curproc == &proc0) {	
+	if (autoload) {
 		error = ENOENT;
 	} else {
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
@@ -1107,7 +1108,7 @@ kobj_free(kobj_t ko, void *base, size_t size)
 #else	/* MODULAR */
 
 int
-kobj_load_file(kobj_t *kop, const char *name, const char *base)
+kobj_load_file(kobj_t *kop, const char *name, const char *base, bool autoload)
 {
 
 	return ENOSYS;
