@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222 2008/05/18 22:40:14 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.223 2008/05/20 11:44:14 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2008/05/18 22:40:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2008/05/20 11:44:14 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -599,6 +599,11 @@ haltsys:
 
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#ifdef MULTIPROCESSOR
+		printf("cpu%d: powered down\n\n", cpu_number());
+#else
+		printf("powered down\n\n");
+#endif
 		/* Let the OBP do the work. */
 		OF_poweroff();
 		printf("WARNING: powerdown failed!\n");
