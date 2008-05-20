@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2008/05/11 12:31:45 chris Exp $
+#	$NetBSD: Makefile,v 1.4 2008/05/20 19:07:52 ad Exp $
 
 .include <bsd.own.mk>
+.include "../../common/Makefile.distrib"
 
 MKMAN=		no
 PROG=		miniroot.kmod
 
-SRCMOD=		${DESTDIR}/kernel/modules/miniroot/miniroot.kmod
+SRCMOD=		${DESTDIR}/stand/${MACHINE}/${DISTRIBVER}/modules/miniroot/miniroot.kmod
 DSTMOD=		${.OBJDIR}/miniroot.kmod
 RAMDISK=	ramdisk-big
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisks/${RAMDISK} && ${PRINTOBJDIR}
