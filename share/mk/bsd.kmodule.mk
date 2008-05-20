@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.3 2008/05/03 15:48:15 ad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.4 2008/05/20 12:08:05 ad Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -24,13 +24,6 @@ DPSRCS+=	${_YKMSRCS}
 CLEANFILES+=	${_YKMSRCS}
 CLEANFILES+=	tmp.o
 
-.if \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "hppa" || \
-    ${MACHINE_CPU} == "powerpc"
-CLEANFILES+=	${KMOD}_tramp.o ${KMOD}_tramp.S tmp.S ${KMOD}_tmp.o
-.endif
-
 OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 PROG?=		${KMOD}.kmod
 
@@ -39,40 +32,10 @@ realall:	${PROG}
 
 ${OBJS} ${LOBJS}: ${DPSRCS}
 
-.if \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "hppa" || \
-    ${MACHINE_CPU} == "powerpc"
-${KMOD}_tmp.o: ${OBJS} ${DPADD}
-	${_MKTARGET_COMPILE}
-	${LD} -r -d -o tmp.o ${OBJS}
-	mv tmp.o ${.TARGET}
-
-${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk
-	${_MKTARGET_CREATE}
-	${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
-		 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk > tmp.S
-	mv tmp.S ${.TARGET}
-
-${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
-	${_MKTARGET_LINK}
-	${LD} -r -d \
-		`${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
-			 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmwrap.awk` \
-		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
-.if exists($S/lkm/arch/${MACHINE_CPU}/lkmhide.awk)
-	${OBJCOPY} \
-		`${NM} tmp.o | awk -f $S/lkm/arch/${MACHINE_CPU}/lkmhide.awk` \
-		tmp.o tmp1.o
-	mv tmp1.o tmp.o
-.endif
-	mv tmp.o ${.TARGET}
-.else
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
 	${LD} -r -d -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
-.endif
 
 ##### Install rules
 .if !target(kmodinstall)
@@ -112,18 +75,6 @@ lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
 	${LINT} ${LINTFLAGS} ${LDFLAGS:C/-L[  ]*/-L/Wg:M-L*} ${LOBJS} ${LDADD}
 .endif
-
-.if !target(load)
-load: ${PROG}
-	/sbin/modload ${KMOD_LOADFLAGS} -o ${KMOD} ${PROG}
-.endif
-.PHONY: load
-
-.if !target(unload)
-unload:
-	/sbin/modunload -n ${KMOD}
-.endif
-.PHONY: unload
 
 ##### Pull in related .mk logic
 .include <bsd.man.mk>
