@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.18 2008/05/20 13:34:44 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.19 2008/05/20 14:11:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.18 2008/05/20 13:34:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.19 2008/05/20 14:11:55 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -152,7 +152,6 @@ static void	kobj_close(kobj_t);
 static int	kobj_load(kobj_t);
 
 extern struct vm_map *lkm_map;
-static const char	*kobj_path = "/modules";	/* XXX ??? */
 
 /*
  * kobj_load_file:
@@ -160,7 +159,7 @@ static const char	*kobj_path = "/modules";	/* XXX ??? */
  *	Load an object located in the file system.
  */
 int
-kobj_load_file(kobj_t *kop, const char *filename)
+kobj_load_file(kobj_t *kop, const char *filename, const char *base)
 {
 	struct nameidata nd;
 	kauth_cred_t cred;
@@ -175,16 +174,19 @@ kobj_load_file(kobj_t *kop, const char *filename)
 		return ENOMEM;
 	}
 
-	/* XXX where to look? */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
-	error = vn_open(&nd, FREAD, 0);
+	if (curproc == &proc0) {	
+		error = ENOENT;
+	} else {
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
+		error = vn_open(&nd, FREAD, 0);
+	}
 	if (error != 0) {
 		if (error != ENOENT) {
 			goto out;
 		}
 		path = PNBUF_GET();
-		snprintf(path, MAXPATHLEN - 1, "%s/%s", kobj_path,
-		    filename);
+		snprintf(path, MAXPATHLEN - 1, "%s/%s/%s.kmod", base,
+		    filename, filename);
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
 		error = vn_open(&nd, FREAD, 0);
 		if (error != 0) {
