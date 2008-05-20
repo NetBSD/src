@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.510 2008/05/10 19:01:14 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.511 2008/05/20 19:01:11 ad Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -356,7 +356,6 @@ KMODGRP?=	wheel
 KMODOWN?=	root
 KMODMODE?=	${NONBINMODE}
 
-KMODULEDIR?=	/kernel/modules
 KMODULEGRP?=	wheel
 KMODULEOWN?=	root
 KMODULEMODE?=	${NONBINMODE}
