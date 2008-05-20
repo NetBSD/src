@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.46 2008/02/21 01:49:07 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.47 2008/05/20 20:43:30 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46 2008/02/21 01:49:07 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.47 2008/05/20 20:43:30 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -403,7 +403,7 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	return;
 
  user_fault:
-	ksi.ksi_trap = tf->tf_expevt
+	ksi.ksi_trap = tf->tf_expevt;
 	KERNEL_LOCK(l, 1);
 	trapsignal(l, &ksi);
 	KERNEL_UNLOCK_LAST(l);
