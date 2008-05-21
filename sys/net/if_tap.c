@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.43 2008/04/29 06:53:03 martin Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.44 2008/05/21 13:56:15 ad Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.43 2008/04/29 06:53:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.44 2008/05/21 13:56:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -776,15 +776,22 @@ tap_fops_close(file_t *fp)
 
 	/* tap_dev_close currently always succeeds, but it might not
 	 * always be the case. */
-	if ((error = tap_dev_close(sc)) != 0)
+	KERNEL_LOCK(1, NULL);
+	if ((error = tap_dev_close(sc)) != 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (error);
+	}
 
 	/* Destroy the device now that it is no longer useful,
 	 * unless it's already being destroyed. */
-	if ((sc->sc_flags & TAP_GOING) != 0)
+	if ((sc->sc_flags & TAP_GOING) != 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (0);
+	}
 
-	return tap_clone_destroyer(sc->sc_dev);
+	error = tap_clone_destroyer(sc->sc_dev);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
@@ -831,7 +838,12 @@ static int
 tap_fops_read(file_t *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
-	return tap_dev_read((intptr_t)fp->f_data, uio, flags);
+	int error;
+
+	KERNEL_LOCK(1, NULL);
+	error = tap_dev_read((intptr_t)fp->f_data, uio, flags);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
@@ -929,7 +941,12 @@ static int
 tap_fops_write(file_t *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
-	return tap_dev_write((intptr_t)fp->f_data, uio, flags);
+	int error;
+
+	KERNEL_LOCK(1, NULL);
+	error = tap_dev_write((intptr_t)fp->f_data, uio, flags);
+	KERNEL_UNLOCK_ONE(NULL);
+	return error;
 }
 
 static int
@@ -1135,6 +1152,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	if (sc == NULL)
 		return (ENXIO);
 
+	KERNEL_LOCK(1, NULL);
 	switch(kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &tap_read_filterops;
@@ -1143,6 +1161,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 		kn->kn_fop = &tap_seltrue_filterops;
 		break;
 	default:
+		KERNEL_UNLOCK_ONE(NULL);
 		return (EINVAL);
 	}
 
@@ -1150,6 +1169,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 	simple_lock(&sc->sc_kqlock);
 	SLIST_INSERT_HEAD(&sc->sc_rsel.sel_klist, kn, kn_selnext);
 	simple_unlock(&sc->sc_kqlock);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 
@@ -1158,9 +1178,11 @@ tap_kqdetach(struct knote *kn)
 {
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 
+	KERNEL_LOCK(1, NULL);
 	simple_lock(&sc->sc_kqlock);
 	SLIST_REMOVE(&sc->sc_rsel.sel_klist, kn, knote, kn_selnext);
 	simple_unlock(&sc->sc_kqlock);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static int
@@ -1169,8 +1191,9 @@ tap_kqread(struct knote *kn, long hint)
 	struct tap_softc *sc = (struct tap_softc *)kn->kn_hook;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
-	int s;
+	int s, rv;
 
+	KERNEL_LOCK(1, NULL);
 	s = splnet();
 	IFQ_POLL(&ifp->if_snd, m);
 
@@ -1179,7 +1202,9 @@ tap_kqread(struct knote *kn, long hint)
 	else
 		kn->kn_data = m->m_pkthdr.len;
 	splx(s);
-	return (kn->kn_data != 0 ? 1 : 0);
+	rv = (kn->kn_data != 0 ? 1 : 0);
+	KERNEL_UNLOCK_ONE(NULL);
+	return rv;
 }
 
 /*
