@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45 2008/05/16 17:18:25 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.46 2008/05/21 03:50:42 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -710,7 +710,7 @@ longmode_hi:
 	movw	%ax,%fs
 
 	/* XXX merge these */
-	leaq	TABLESIZE(%rsi),%rdi
+	leaq	(TABLESIZE+IOM_SIZE)(%rsi),%rdi
 
 #else	/* XEN */
 	.globl	start
