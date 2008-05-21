@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.12.2 2007/05/31 23:15:16 itohy Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.12.3 2008/05/21 05:01:45 itohy Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.2 2007/05/31 23:15:16 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.3 2008/05/21 05:01:45 itohy Exp $");
 /* __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/ehci.c,v 1.52 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -159,6 +159,20 @@ Static void		ehci_idone(struct ehci_xfer *);
 Static void		ehci_timeout(void *);
 Static void		ehci_timeout_task(void *);
 Static void		ehci_intrlist_timeout(void *);
+
+Static void		ehci_aux_mem_init(struct ehci_aux_mem *);
+Static usbd_status	ehci_aux_mem_alloc(ehci_softc_t *,
+			    struct ehci_aux_mem *,
+			    int /*naux*/, int /*maxp*/);
+Static void		ehci_aux_mem_free(ehci_softc_t *,
+			    struct ehci_aux_mem *);
+struct aux_desc {
+	void *aux_kern;
+};
+Static bus_addr_t	ehci_aux_dma_alloc(struct ehci_aux_mem *, int,
+			    struct aux_desc *);
+Static void		ehci_aux_dma_sync(ehci_softc_t *,
+			    struct ehci_aux_mem *, int /*op*/);
 
 Static usbd_status	ehci_prealloc(struct ehci_softc *, struct ehci_xfer *,
 			    size_t, int);
@@ -1216,17 +1230,132 @@ ehci_shutdown(void *v)
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
 }
 
+/*
+ * Allocate a physically contiguous buffer to handle cases where EHCI
+ * cannot handle a packet because it is not physically contiguous.
+ */
+Static void
+ehci_aux_mem_init(struct ehci_aux_mem *aux)
+{
+
+	aux->aux_curchunk = aux->aux_chunkoff = aux->aux_naux = 0;
+}
+
+Static usbd_status
+ehci_aux_mem_alloc(ehci_softc_t *sc, struct ehci_aux_mem *aux,
+	int naux, int maxp)
+{
+	int nchunk, i, j;
+	usbd_status err;
+
+	USB_KASSERT(aux->aux_nchunk == 0);
+
+	nchunk = EHCI_NCHUNK(naux, maxp);
+	for (i = 0; i < nchunk; i++) {
+		err = usb_allocmem(&sc->sc_dmatag, EHCI_AUX_CHUNK_SIZE,
+		    EHCI_AUX_CHUNK_SIZE, &aux->aux_chunk_dma[i]);
+		if (err) {
+			for (j = 0; j < i; j++)
+				usb_freemem(&sc->sc_dmatag,
+				    &aux->aux_chunk_dma[j]);
+			return (err);
+		}
+	}
+
+	aux->aux_nchunk = nchunk;
+	ehci_aux_mem_init(aux);
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+Static void
+ehci_aux_mem_free(ehci_softc_t *sc, struct ehci_aux_mem *aux)
+{
+	int i;
+
+	/* sync last aux (just in case, probably a no-op) */
+	if (aux->aux_naux)
+		ehci_aux_dma_sync(sc, aux, BUS_DMASYNC_POSTWRITE);
+
+	for (i = 0; i < aux->aux_nchunk; i++)
+		usb_freemem(&sc->sc_dmatag, &aux->aux_chunk_dma[i]);
+
+	aux->aux_nchunk = 0;
+}
+
+Static bus_addr_t
+ehci_aux_dma_alloc(struct ehci_aux_mem *aux, int len, struct aux_desc *ad)
+{
+	bus_addr_t auxdma;
+
+	if (aux->aux_chunkoff + len > EHCI_AUX_CHUNK_SIZE) {
+		aux->aux_curchunk++;
+		aux->aux_chunkoff = 0;
+	}
+	USB_KASSERT(aux->aux_curchunk < aux->aux_nchunk);
+
+	auxdma =
+	    DMAADDR(&aux->aux_chunk_dma[aux->aux_curchunk], aux->aux_chunkoff);
+	ad->aux_kern =
+	    KERNADDR(&aux->aux_chunk_dma[aux->aux_curchunk], aux->aux_chunkoff);
+
+	aux->aux_chunkoff += len;
+	aux->aux_naux++;
+
+	return auxdma;
+}
+
+Static void
+ehci_aux_dma_sync(ehci_softc_t *sc, struct ehci_aux_mem *aux, int op)
+{
+	int i;
+
+	for (i = 0; i < aux->aux_curchunk; i++)
+		USB_MEM_SYNC(&sc->sc_dmatag, &aux->aux_chunk_dma[i], op);
+	if (aux->aux_chunkoff)
+		USB_MEM_SYNC2(&sc->sc_dmatag, &aux->aux_chunk_dma[i],
+		    0, aux->aux_chunkoff, op);
+}
+
 Static usbd_status
 ehci_prealloc(struct ehci_softc *sc, struct ehci_xfer *exfer,
 	size_t bufsize, int nseg)
 {
+	usb_endpoint_descriptor_t *endpt;
+	int maxseg, mps, naux;
 	int seglen, ntd;
 	int s;
 	int err;
 
+	endpt = exfer->xfer.pipe->endpoint->edesc;
+	mps = UE_MAXPKTSZ(endpt);
+
+	if (mps == 0)
+		return (USBD_INVAL);
+
 	/* (over) estimate needed number of TDs */
-	seglen = 19520;	 /* 4096*5 - (4096*5 % maxp), when maxp = 976 */
+	maxseg = EHCI_PAGE_SIZE * EHCI_QTD_NBUFFERS;
+	seglen = maxseg - (maxseg % mps);
 	ntd = bufsize / seglen + nseg;
+
+#if 1
+	/* allocate aux buffer for non-isoc OUT transfer */
+	naux = 0;
+	if (nseg > 1 &&
+	    (endpt->bmAttributes & UE_XFERTYPE) != UE_ISOCHRONOUS &&
+	    UE_GET_DIR(endpt->bEndpointAddress) == UE_DIR_OUT) {
+		/* estimate needed aux segments */
+		naux = nseg - 1;
+
+		/* pre-allocate aux memory */
+		err = ehci_aux_mem_alloc(sc, &exfer->aux, naux, mps);
+		if (err)
+			return err;
+
+		/* an aux segment will consume a TD */
+		ntd += naux;
+	}
+#endif
 
 	s = splusb();
 	/* pre-allocate QDs */
@@ -1236,6 +1365,7 @@ ehci_prealloc(struct ehci_softc *sc, struct ehci_xfer *exfer,
 		    USBDEVNAME(sc->sc_bus.bdev), ntd, sc->sc_nfreeqtds));
 		if ((err = ehci_grow_sqtd(sc)) != USBD_NORMAL_COMPLETION) {
 			splx(s);
+			ehci_aux_mem_free(sc, &exfer->aux);
 			return err;
 		}
 	}
@@ -1281,12 +1411,15 @@ ehci_freem(struct usbd_bus *bus, usbd_xfer_handle xfer,
 
 	usb_free_buffer_dma(&sc->sc_dmatag, &exfer->dmabuf, waitflg);
 
-	/* XXX ITDs */
+	if ((xfer->rqflags & URQ_DEV_MAP_PREPARED) == 0) {
+		/* XXX ITDs */
 
-	s = splusb();
-	sc->sc_nfreeqtds += exfer->rsvd_tds;
-	splx(s);
-	exfer->rsvd_tds = 0;
+		s = splusb();
+		sc->sc_nfreeqtds += exfer->rsvd_tds;
+		splx(s);
+		exfer->rsvd_tds = 0;
+		ehci_aux_mem_free(sc, &exfer->aux);
+	}
 }
 
 Static usbd_status
@@ -1324,6 +1457,7 @@ ehci_map_free(usbd_xfer_handle xfer)
 	sc->sc_nfreeqtds += exfer->rsvd_tds;
 	splx(s);
 	exfer->rsvd_tds = 0;
+	ehci_aux_mem_free(sc, &exfer->aux);
 }
 
 Static void
@@ -2640,6 +2774,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
      int alen, int rd, usbd_xfer_handle xfer, ehci_soft_qtd_t *start,
      ehci_soft_qtd_t *newinactive, ehci_soft_qtd_t **sp, ehci_soft_qtd_t **ep)
 {
+	usb_endpoint_descriptor_t *endpt;
 	ehci_soft_qtd_t *next, *cur;
 	ehci_physaddr_t dataphys, nextphys;
 	u_int32_t qtdstatus;
@@ -2648,6 +2783,13 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	struct usb_buffer_dma *ub = &EXFER(xfer)->dmabuf;
 	bus_dma_segment_t *segs = USB_BUFFER_SEGS(ub);
 	int nsegs = USB_BUFFER_NSEGS(ub);
+#if 1
+	int needaux;
+	int isread;
+	union usb_bufptr bufptr;
+	struct aux_desc ad;
+	bus_addr_t auxdma;
+#endif
 
 	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
@@ -2661,7 +2803,8 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	    /* IOC set below */
 	    /* BYTES set below */
 	    ;
-	mps = UE_MAXPKTSZ(epipe->pipe.endpoint->edesc);
+	endpt = epipe->pipe.endpoint->edesc;
+	mps = UE_MAXPKTSZ(endpt);
 	forceshort = ((xfer->flags & USBD_FORCE_SHORT_XFER) || len == 0) &&
 	    len % mps == 0;
 	/*
@@ -2670,6 +2813,34 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	 */
 	if (iscontrol)
 		qtdstatus |= EHCI_QTD_SET_TOGGLE(1);
+
+#if 1
+	/*
+	 * aux memory is possibly required if
+	 *	buffer has more than one segments,
+	 *	the transfer direction is OUT,
+	 *	and
+	 *		buffer is an mbuf chain, or
+	 *		buffer is not mps aligned
+	 */
+	isread = UE_GET_DIR(endpt->bEndpointAddress) == UE_DIR_IN;
+	needaux =
+	    nsegs > 1 && !isread &&
+	    ((xfer->rqflags & URQ_DEV_MAP_MBUF) ||
+	     (mps & (mps - 1)) != 0 /* mps is not a power of 2 */ ||
+	     (segs[0].ds_addr & (mps - 1)) != 0 /* buffer is unaligned */);
+
+	if (needaux) {
+		usb_bufptr_init(&bufptr, xfer);
+		if (EXFER(xfer)->aux.aux_naux) {
+			/* sync previous aux (just in case, probably a no-op) */
+			ehci_aux_dma_sync(sc, &EXFER(xfer)->aux,
+			    BUS_DMASYNC_POSTWRITE);
+
+			ehci_aux_mem_init(&EXFER(xfer)->aux);
+		}
+	}
+#endif
 
 	if (start != NULL) {
 		/*
@@ -2725,11 +2896,35 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 				break;
 		}
 		/* Adjust down to a multiple of mps if not at the end. */
-		if (curlen < len && curlen % mps != 0) {
-			adj = curlen % mps;
+		if (!isread && curlen < len && (adj = curlen % mps) != 0) {
 			curlen -= adj;
+#if 1
+			if (curlen == 0) {
+				USB_KASSERT(needaux);
+				/* need aux -- a packet is not contiguous */
+				curlen = len < mps ? len : mps;
+				auxdma = ehci_aux_dma_alloc(&EXFER(xfer)->aux,
+				    curlen, &ad);
+
+				/* prepare aux DMA */
+				usb_bufptr_wr(&bufptr, ad.aux_kern, curlen,
+				    xfer->rqflags & URQ_DEV_MAP_MBUF);
+				cur->qtd.qtd_buffer[i] = htole32(auxdma);
+				cur->qtd.qtd_buffer_hi[i] = 0;
+
+				/* skip handled segments */
+				segoff += curlen - adj;
+				do {
+					segoff -= segs[seg].ds_len;
+					seg++;
+				} while (segoff > segs[seg].ds_len);
+
+			} else {
+#endif
+#if 0
 			USB_KASSERT2(curlen > 0,
 			    ("ehci_alloc_sqtd_chain: need to copy"));
+#endif
 			segoff -= adj;
 			if (segoff < 0) {
 				seg--;
@@ -2737,6 +2932,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			}
 			USB_KASSERT2(seg >= 0 && segoff >= 0,
 			    ("ehci_alloc_sqtd_chain: adjust to mps"));
+			}
 		}
 
 		len -= curlen;
@@ -2779,10 +2975,19 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		DPRINTFN(10,("ehci_alloc_sqtd_chain: extend chain\n"));
 		offset += curlen;
 		cur = next;
+
+#if 1
+		if (needaux)
+			usb_bufptr_advance(&bufptr, curlen,
+			    xfer->rqflags & URQ_DEV_MAP_MBUF);
+#endif
 	}
 	cur->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
 	EHCI_SQTD_SYNC(sc, cur,
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	if (needaux)
+		ehci_aux_dma_sync(sc, &EXFER(xfer)->aux, BUS_DMASYNC_PREWRITE);
+
 	*ep = cur;
 
 	DPRINTFN(10,("ehci_alloc_sqtd_chain: return sqtd=%p sqtdend=%p\n",

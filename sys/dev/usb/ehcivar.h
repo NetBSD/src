@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.24.14.1 2007/05/22 14:57:35 itohy Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.24.14.2 2008/05/21 05:01:45 itohy Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/ehcivar.h,v 1.16 2006/09/07 00:06:41 imp Exp $	*/
 
 /*-
@@ -75,6 +75,20 @@ typedef struct ehci_soft_qh {
 #define EHCI_SQH_SYNC(sc, d, ops)	\
 	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->eh_mdesc->em_dma, (caddr_t)(d) - (d)->eh_mdesc->em_top , sizeof(ehci_qh_t), (ops))
 
+/* for aux memory */
+#define EHCI_AUX_CHUNK_SIZE		4096
+#define EHCI_MAX_PKT_SIZE		1024	/* USB 2.0 specification */
+#define EHCI_AUX_PER_CHUNK(maxp)	(EHCI_AUX_CHUNK_SIZE/(maxp))
+#define EHCI_NCHUNK(naux, maxp)	\
+	(((naux) + EHCI_AUX_PER_CHUNK(maxp) - 1) / EHCI_AUX_PER_CHUNK(maxp))
+struct ehci_aux_mem {
+	usb_dma_t aux_chunk_dma[EHCI_NCHUNK(USB_DMA_NSEG-1, EHCI_MAX_PKT_SIZE)];
+	int	aux_nchunk;	/* number of allocated chunk */
+	int	aux_curchunk;	/* current chunk */
+	int	aux_chunkoff;	/* offset in current chunk */
+	int	aux_naux;	/* number of aux */
+};
+
 struct ehci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task	abort_task;
@@ -84,6 +98,7 @@ struct ehci_xfer {
 	u_int32_t ehci_xfer_flags;
 	struct usb_buffer_dma dmabuf;
 	int rsvd_tds;
+	struct ehci_aux_mem aux;
 #ifdef DIAGNOSTIC
 	int isdone;
 #endif
