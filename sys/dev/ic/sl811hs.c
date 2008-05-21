@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.11.18.3 2007/06/17 00:47:19 itohy Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.11.18.4 2008/05/21 05:01:12 itohy Exp $	*/
 
 /*
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.18.3 2007/06/17 00:47:19 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.11.18.4 2008/05/21 05:01:12 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/sl811hs.c,v 1.4 2006/09/07 00:06:41 imp Exp $"); */
 
 #include "opt_slhci.h"
@@ -906,7 +906,7 @@ slhci_root_ctrl_transfer(usbd_xfer_handle xfer)
 	DPRINTF(D_TRACE, ("SLRCtrans "));
 
 	/* set current position at the top of buffer */
-	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf, xfer);
 
 	/* Insert last in queue */
 	error = usb_insert_transfer(xfer);
@@ -1285,7 +1285,7 @@ slhci_root_intr_transfer(usbd_xfer_handle xfer)
 	DPRINTF(D_TRACE, ("SLRItransfer "));
 
 	/* set current position at the top of buffer */
-	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf, xfer);
 
 	/* Insert last in queue */
 	error = usb_insert_transfer(xfer);
@@ -1347,7 +1347,7 @@ slhci_device_ctrl_transfer(usbd_xfer_handle xfer)
 	DPRINTF(D_TRACE, ("C"));
 
 	/* set current position at the top of buffer */
-	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf, xfer);
 
 	error = usb_insert_transfer(xfer);
 	if (error)
@@ -1492,7 +1492,7 @@ slhci_poll_device(void *arg)
 		slhci_poll_device, sx);
 
 	/* set current position at the top of buffer */
-	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf);
+	usb_buffer_mem_rewind(&SLXFER(xfer)->sx_membuf, xfer);
 
 	/* interrupt transfer */
 	pid = (UE_GET_DIR(pipe->endpoint->edesc->bEndpointAddress) == UE_DIR_IN)
