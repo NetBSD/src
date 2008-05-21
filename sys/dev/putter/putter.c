@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.12 2008/05/19 19:52:09 jmcneill Exp $	*/
+/*	$NetBSD: putter.c,v 1.13 2008/05/21 14:03:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,9 +35,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.12 2008/05/19 19:52:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.13 2008/05/21 14:03:31 ad Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -193,8 +194,11 @@ putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 	size_t origres, moved;
 	int error;
 
+	KERNEL_LOCK(1, NULL);
+
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
 		printf("putter_fop_read: private %d not inited\n", pi->pi_idx);
+		KERNEL_UNLOCK_ONE(NULL);
 		return ENOENT;
 	}
 
@@ -202,8 +206,10 @@ putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 		error = pi->pi_pop->pop_getout(pi->pi_private, uio->uio_resid,
 		    fp->f_flag & O_NONBLOCK, &pi->pi_curput,
 		    &pi->pi_curres, &pi->pi_curopaq);
-		if (error)
+		if (error) {
+			KERNEL_UNLOCK_ONE(NULL);
 			return error;
+		}
 	}
 
 	origres = uio->uio_resid;
@@ -222,6 +228,7 @@ putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 		pi->pi_curput = NULL;
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 
@@ -235,22 +242,29 @@ putter_fop_write(file_t *fp, off_t *off, struct uio *uio,
 	size_t frsize;
 	int error;
 
+	KERNEL_LOCK(1, NULL);
+
 	DPRINTF(("putter_fop_write (%p): writing response, resid %zu\n",
 	    pi->pi_private, uio->uio_resid));
 
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
 		printf("putter_fop_write: putter %d not inited\n", pi->pi_idx);
+		KERNEL_UNLOCK_ONE(NULL);
 		return ENOENT;
 	}
 
 	error = uiomove(&pth, sizeof(struct putter_hdr), uio);
-	if (error)
+	if (error) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return error;
+	}
 
 	/* Sorry mate, the kernel doesn't buffer. */
 	frsize = pth.pth_framelen - sizeof(struct putter_hdr);
-	if (uio->uio_resid < frsize)
+	if (uio->uio_resid < frsize) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return EINVAL;
+	}
 
 	buf = kmem_alloc(frsize + sizeof(struct putter_hdr), KM_SLEEP);
 	memcpy(buf, &pth, sizeof(pth));
@@ -261,6 +275,7 @@ putter_fop_write(file_t *fp, off_t *off, struct uio *uio,
 	}
 	kmem_free(buf, frsize + sizeof(struct putter_hdr));
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 
@@ -275,14 +290,19 @@ putter_fop_poll(file_t *fp, int events)
 	struct putter_instance *pi = fp->f_data;
 	int revents;
 
+	KERNEL_LOCK(1, NULL);
+
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD) {
 		printf("putter_fop_ioctl: putter %d not inited\n", pi->pi_idx);
+		KERNEL_UNLOCK_ONE(NULL);
 		return ENOENT;
 	}
 
 	revents = events & (POLLOUT | POLLWRNORM | POLLWRBAND);
-	if ((events & PUTTERPOLL_EVSET) == 0)
+	if ((events & PUTTERPOLL_EVSET) == 0) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return revents;
+	}
 
 	/* check queue */
 	if (pi->pi_pop->pop_waitcount(pi->pi_private))
@@ -290,6 +310,7 @@ putter_fop_poll(file_t *fp, int events)
 	else
 		selrecord(curlwp, &pi->pi_sel);
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return revents;
 }
 
@@ -305,6 +326,8 @@ putter_fop_close(file_t *fp)
 	int rv;
 
 	DPRINTF(("putter_fop_close: device closed\n"));
+
+	KERNEL_LOCK(1, NULL);
 
  restart:
 	mutex_enter(&pi_mtx);
@@ -347,6 +370,7 @@ putter_fop_close(file_t *fp)
 		goto restart;
 
  out:
+	KERNEL_UNLOCK_ONE(NULL);
 	/*
 	 * Finally, release the instance information.  It was already
 	 * removed from the list by putter_rmprivate() and we know it's
@@ -378,28 +402,34 @@ filt_putterdetach(struct knote *kn)
 {
 	struct putter_instance *pi = kn->kn_hook;
 
+	KERNEL_LOCK(1, NULL);
 	mutex_enter(&pi_mtx);
 	SLIST_REMOVE(&pi->pi_sel.sel_klist, kn, knote, kn_selnext);
 	mutex_exit(&pi_mtx);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static int
 filt_putter(struct knote *kn, long hint)
 {
 	struct putter_instance *pi = kn->kn_hook;
-	int error;
+	int error, rv;
 
+	KERNEL_LOCK(1, NULL);
 	error = 0;
 	mutex_enter(&pi_mtx);
 	if (pi->pi_private == PUTTER_EMBRYO || pi->pi_private == PUTTER_DEAD)
 		error = 1;
 	mutex_exit(&pi_mtx);
-	if (error)
+	if (error) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return 0;
+	}
 
 	kn->kn_data = pi->pi_pop->pop_waitcount(pi->pi_private);
-
-	return kn->kn_data != 0;
+	rv = kn->kn_data != 0;
+	KERNEL_UNLOCK_ONE(NULL);
+	return rv;
 }
 
 static const struct filterops putter_filtops =
@@ -410,6 +440,8 @@ putter_fop_kqfilter(file_t *fp, struct knote *kn)
 {
 	struct putter_instance *pi = fp->f_data;
 	struct klist *klist;
+
+	KERNEL_LOCK(1, NULL);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -426,9 +458,11 @@ putter_fop_kqfilter(file_t *fp, struct knote *kn)
 		kn->kn_fop = &seltrue_filtops;
 		break;
 	default:
+		KERNEL_UNLOCK_ONE(NULL);
 		return EINVAL;
 	}
 
+	KERNEL_UNLOCK_ONE(NULL);
 	return 0;
 }
 
