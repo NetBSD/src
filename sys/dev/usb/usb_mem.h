@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.23.32.3 2007/06/17 01:25:46 itohy Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.23.32.4 2008/05/21 05:03:48 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.21 2005/01/06 01:43:29 imp Exp $	*/
 
 /*-
@@ -210,6 +210,31 @@ typedef struct usb_dma_tag {
 #endif
 } usb_dma_tag_t;
 
+/*
+ * bufer pointer
+ */
+union usb_bufptr {
+	/* plain buffer */
+	struct {
+		unsigned char	*p_buf;
+	} ptr_p;
+	/* mbuf */
+	struct {
+		struct mbuf	*m_mbuf;
+		int		m_off;
+	} ptr_m;
+};
+
+/*
+ * auxillary storage (bounce buffer)
+ */
+/* auxillary buffer description */
+struct usb_aux_desc {
+	int aux_len;			/* Auxillary storage size. */
+	void *aux_kern;			/* Kernel address of aux storage */
+	union usb_bufptr aux_ptr;	/* Original aux data pointer. */
+};
+
 #ifdef USBMEM_DEBUG
 #define usb_allocmem		usb_allocmem_debug
 #define usb_freemem		usb_freemem_debug
@@ -257,6 +282,14 @@ void		usb_dma_tag_init(usb_dma_tag_t *
 		    USBMEM_DEBUGPARAMS);
 void		usb_dma_tag_finish(usb_dma_tag_t *
 		    USBMEM_DEBUGPARAMS);
+
+void		usb_bufptr_init(union usb_bufptr *, usbd_xfer_handle);
+void		usb_bufptr_advance(union usb_bufptr *, int /*len*/,
+		    int /*is_mbuf*/);
+void		usb_bufptr_rd(const union usb_bufptr *, const void *,
+		    int /*len*/, int /*is_mbuf*/);
+void		usb_bufptr_wr(const union usb_bufptr *, void *,
+		    int /*len*/, int /*is_mbuf*/);
 
 #ifdef USBMEM_DEBUG
 #undef USBMEM_DEBUGPARAMS
