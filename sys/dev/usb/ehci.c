@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.123.12.3 2008/05/21 05:01:45 itohy Exp $ */
+/*	$NetBSD: ehci.c,v 1.123.12.4 2008/05/21 05:26:13 itohy Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.3 2008/05/21 05:01:45 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.123.12.4 2008/05/21 05:26:13 itohy Exp $");
 /* __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/ehci.c,v 1.52 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -1338,7 +1338,6 @@ ehci_prealloc(struct ehci_softc *sc, struct ehci_xfer *exfer,
 	seglen = maxseg - (maxseg % mps);
 	ntd = bufsize / seglen + nseg;
 
-#if 1
 	/* allocate aux buffer for non-isoc OUT transfer */
 	naux = 0;
 	if (nseg > 1 &&
@@ -1355,7 +1354,6 @@ ehci_prealloc(struct ehci_softc *sc, struct ehci_xfer *exfer,
 		/* an aux segment will consume a TD */
 		ntd += naux;
 	}
-#endif
 
 	s = splusb();
 	/* pre-allocate QDs */
@@ -2330,7 +2328,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		USETW(hubd.wHubCharacteristics,
 		    EHCI_HCS_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_NO_SWITCH |
 		    EHCI_HCS_P_INDICATOR(EREAD4(sc, EHCI_HCSPARAMS))
-		        ? UHD_PORT_IND : 0);
+			? UHD_PORT_IND : 0);
 		hubd.bPwrOn2PwrGood = 200; /* XXX can't find out? */
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8)
 			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */
@@ -2783,13 +2781,11 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	struct usb_buffer_dma *ub = &EXFER(xfer)->dmabuf;
 	bus_dma_segment_t *segs = USB_BUFFER_SEGS(ub);
 	int nsegs = USB_BUFFER_NSEGS(ub);
-#if 1
 	int needaux;
 	int isread;
 	union usb_bufptr bufptr;
 	struct aux_desc ad;
 	bus_addr_t auxdma;
-#endif
 
 	DPRINTFN(alen<4*4096,("ehci_alloc_sqtd_chain: start len=%d\n", alen));
 
@@ -2814,7 +2810,6 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 	if (iscontrol)
 		qtdstatus |= EHCI_QTD_SET_TOGGLE(1);
 
-#if 1
 	/*
 	 * aux memory is possibly required if
 	 *	buffer has more than one segments,
@@ -2840,7 +2835,6 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 			ehci_aux_mem_init(&EXFER(xfer)->aux);
 		}
 	}
-#endif
 
 	if (start != NULL) {
 		/*
@@ -2898,7 +2892,6 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		/* Adjust down to a multiple of mps if not at the end. */
 		if (!isread && curlen < len && (adj = curlen % mps) != 0) {
 			curlen -= adj;
-#if 1
 			if (curlen == 0) {
 				USB_KASSERT(needaux);
 				/* need aux -- a packet is not contiguous */
@@ -2920,18 +2913,13 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 				} while (segoff > segs[seg].ds_len);
 
 			} else {
-#endif
-#if 0
-			USB_KASSERT2(curlen > 0,
-			    ("ehci_alloc_sqtd_chain: need to copy"));
-#endif
-			segoff -= adj;
-			if (segoff < 0) {
-				seg--;
-				segoff += segs[seg].ds_len;
-			}
-			USB_KASSERT2(seg >= 0 && segoff >= 0,
-			    ("ehci_alloc_sqtd_chain: adjust to mps"));
+				segoff -= adj;
+				if (segoff < 0) {
+					seg--;
+					segoff += segs[seg].ds_len;
+				}
+				USB_KASSERT2(seg >= 0 && segoff >= 0,
+				    ("ehci_alloc_sqtd_chain: adjust to mps"));
 			}
 		}
 
@@ -2976,11 +2964,9 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		offset += curlen;
 		cur = next;
 
-#if 1
 		if (needaux)
 			usb_bufptr_advance(&bufptr, curlen,
 			    xfer->rqflags & URQ_DEV_MAP_MBUF);
-#endif
 	}
 	cur->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
 	EHCI_SQTD_SYNC(sc, cur,
@@ -3129,7 +3115,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	ehci_rem_qh(sc, sqh, psqh);
 
 	/*
- 	 * Step 3:  make sure the soft interrupt routine
+	 * Step 3:  make sure the soft interrupt routine
 	 * has run. This should remove any completed items off the queue.
 	 * The hardware has no reference to completed items (TDs).
 	 * It's safe to remove them at any time.
@@ -3504,7 +3490,7 @@ ehci_device_request(usbd_xfer_handle xfer)
 	s = splusb();
 	ehci_activate_qh(sc, sqh, setup);
 	if (xfer->timeout && !sc->sc_bus.use_polling) {
-                usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
+		usb_callout(xfer->timeout_handle, MS_TO_TICKS(xfer->timeout),
 			    ehci_timeout, xfer);
 	}
 	ehci_add_intr_list(sc, exfer);
