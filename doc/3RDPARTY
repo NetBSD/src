@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.601 2008/05/17 11:32:39 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.602 2008/05/21 12:22:34 martti Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -392,7 +392,7 @@ License:	BSD (3-clause)
 Notes:
 
 Package:	ipf
-Version:	4.1.23
+Version:	4.1.29
 Current Vers:	4.1.29
 Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
@@ -402,6 +402,7 @@ Responsible:	darrenr, mike, martti
 License:	BSD-based, see src/dist/ipf/IPFILTER.LICENSE
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
+See also dist/ipf/README.NetBSD
 
 Package:	ipsec-tools
 Version:	(ipsec-tools head is NetBSD-current head)
