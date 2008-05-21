@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_msg.h,v 1.10 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_msg.h,v 1.11 2008/05/21 11:15:57 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,21 @@ struct linux_msqid_ds {
 	ushort			l_msg_lrpid;
 };
 
+struct linux_msqid64_ds {
+	struct linux_ipc64_perm	l_msg_perm;
+	linux_time_t		l_msg_stime;
+	linux_time_t		l_msg_rtime;
+	linux_time_t		l_msg_ctime;
+	ulong			l_msg_cbytes;
+	ulong			l_msg_qnum;
+	ulong			l_msg_qbytes;
+	int			l_msg_lspid;
+	int			l_msg_lrpid;
+	ulong			l___unused4;
+	ulong			l___unused5;
+	
+};
+
 #define LINUX_MSG_NOERROR	0x1000
 #define LINUX_MSG_EXCEPT	0x2000
 
@@ -102,10 +117,10 @@ struct linux_sys_msgctl_args {
 #ifdef _KERNEL
 __BEGIN_DECLS
 int linux_sys_msgctl(struct lwp *, const struct linux_sys_msgctl_args *, register_t *);
-void linux_to_bsd_msqid_ds(struct linux_msqid_ds *,
-				       struct msqid_ds *);
-void bsd_to_linux_msqid_ds(struct msqid_ds *,
-				       struct linux_msqid_ds *);
+void linux_to_bsd_msqid_ds(struct linux_msqid_ds *, struct msqid_ds *);
+void linux_to_bsd_msqid64_ds(struct linux_msqid64_ds *, struct msqid_ds *);
+void bsd_to_linux_msqid_ds(struct msqid_ds *, struct linux_msqid_ds *);
+void bsd_to_linux_msqid64_ds(struct msqid_ds *, struct linux_msqid64_ds *);
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVMSG */
