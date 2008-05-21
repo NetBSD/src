@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.7 2008/05/20 19:01:11 ad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.8 2008/05/21 03:48:42 jmcneill Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -63,7 +63,6 @@ ${_PROG}:	.MADE					# no build at install
 .endif
 	${_MKTARGET_INSTALL}
 	${INSTALL_DIR} ${KMODULEDIR}
-	echo hello ${HOST_SH}
 	${INSTALL_FILE} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
 		${.ALLSRC} ${.TARGET}
 
