@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.21 2006/01/30 04:25:44 junyoung Exp $	 */
+/*	$NetBSD: pcio.c,v 1.22 2008/05/21 01:51:34 ad Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -205,6 +205,11 @@ nocom:
 	btinfo_console.devname[1] = 'c';
 	btinfo_console.devname[2] = 0;
 #endif /* SUPPORT_SERIAL */
+
+	if (iodev == CONSDEV_PC) {
+		/* Clear screen if on a glass tty. */
+		conclr();
+	}
 }
 
 static inline void internal_putchar(int);
