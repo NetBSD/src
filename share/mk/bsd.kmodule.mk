@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.8 2008/05/21 03:48:42 jmcneill Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.9 2008/05/21 19:56:30 he Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -49,6 +49,10 @@ _OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh
 KMODULEDIR=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules/${KMOD}
 .endif
 _PROG:=		${KMODULEDIR}/${PROG} # installed path
+# Ensure these are recorded properly in METALOG on unprived installes:
+_INST_DIRS=	${DESTDIR}/stand/${MACHINE}
+_INST_DIRS+=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}
+_INST_DIRS+=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules
 
 .if ${MKUPDATE} == "no"
 ${_PROG}! ${PROG}					# install rule
@@ -62,6 +66,9 @@ ${_PROG}:	.MADE					# no build at install
 .endif
 .endif
 	${_MKTARGET_INSTALL}
+	for d in ${_INST_DIRS}; do \
+		${INSTALL_DIR} $$d; \
+	done
 	${INSTALL_DIR} ${KMODULEDIR}
 	${INSTALL_FILE} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
 		${.ALLSRC} ${.TARGET}
