@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.119.12.5 2007/06/28 10:07:16 itohy Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.119.12.6 2008/05/21 05:04:03 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.5 2007/06/28 10:07:16 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.119.12.6 2008/05/21 05:04:03 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.99 2006/11/27 18:39:02 marius Exp $"); */
 
 #ifdef __NetBSD__
@@ -523,6 +523,7 @@ usbd_map_buffer_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
 		return (err);
 
 	xfer->bufsize = chain->m_pkthdr.len;
+	xfer->mbuf_chain = chain;
 	xfer->rqflags |= URQ_DEV_MAP_MBUF;
 
 	return (err);
@@ -545,6 +546,7 @@ usbd_unmap_buffer(usbd_xfer_handle xfer)
 
 	xfer->rqflags &= ~(URQ_DEV_MAP_BUFFER | URQ_DEV_MAP_MBUF);
 	xfer->bufsize = 0;
+	xfer->mbuf_chain = NULL;
 }
 
 Static usbd_xfer_handle
