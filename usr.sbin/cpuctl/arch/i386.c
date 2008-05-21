@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.4 2008/05/17 13:20:27 tsutsui Exp $	*/
+/*	$NetBSD: i386.c,v 1.5 2008/05/21 01:12:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.4 2008/05/17 13:20:27 tsutsui Exp $");
+__RCSID("$NetBSD: i386.c,v 1.5 2008/05/21 01:12:12 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -391,6 +391,7 @@ static const struct x86_cache_info *cache_info_lookup(
 static void cyrix6x86_cpu_setup(struct cpu_info *);
 static void winchip_cpu_setup(struct cpu_info *);
 static void amd_family5_setup(struct cpu_info *);
+static void powernow_probe(struct cpu_info *);
 
 /*
  * Info for CTL_HW
@@ -1597,24 +1598,9 @@ identifycpu(const char *cpuname)
 		coretemp_register(ci);
 #endif
 
-#if defined(POWERNOW_K7) || defined(POWERNOW_K8)
-	if (cpu_vendor == CPUVENDOR_AMD && powernow_probe(ci)) {
-		switch (CPUID2FAMILY(ci->ci_signature)) {
-#ifdef POWERNOW_K7
-		case 6:
-			k7_powernow_init();
-			break;
-#endif
-#ifdef POWERNOW_K8
-		case 15:
-			k8_powernow_init();
-			break;
-#endif
-		default:
-			break;
-		}
+	if (cpu_vendor == CPUVENDOR_AMD) {
+		powernow_probe(ci);
 	}
-#endif /* POWERNOW_K7 || POWERNOW_K8 */
 
 #ifdef INTEL_ONDEMAND_CLOCKMOD
 	clockmod_init();
@@ -1935,4 +1921,23 @@ x86_print_cacheinfo(struct cpu_info *ci)
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
+}
+
+static void
+powernow_probe(struct cpu_info *ci)
+{
+	uint32_t regs[4];
+	char line[80];
+
+	x86_cpuid(0x80000000, regs);
+
+	/* We need CPUID(0x80000007) */
+	if (regs[0] < 0x80000007)
+		return;
+	x86_cpuid(0x80000007, regs);
+
+	bitmask_snprintf(regs[3], "\20\6STC\5TM\4TTP\3VID\2FID\1TS", line,
+	    sizeof(line));
+	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
+	    line);
 }
