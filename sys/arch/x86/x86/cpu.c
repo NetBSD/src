@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.51 2008/05/14 12:53:49 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.52 2008/05/21 01:14:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2008/05/14 12:53:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2008/05/21 01:14:17 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -250,7 +250,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	if (ncolors <= uvmexp.ncolors)
 		return;
-	aprint_verbose_dev(ci->ci_dev, "%d page colors\n", ncolors);
+	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
 }
 
