@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.22 2008/05/21 01:51:34 ad Exp $	 */
+/*	$NetBSD: pcio.c,v 1.23 2008/05/21 13:36:45 ad Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -200,16 +200,16 @@ nocom:
 	conputc('\015');
 	conputc('\n');
 	strncpy(btinfo_console.devname, iodev == CONSDEV_PC ? "pc" : "com", 16);
-#else /* !SUPPORT_SERIAL */
-	btinfo_console.devname[0] = 'p';
-	btinfo_console.devname[1] = 'c';
-	btinfo_console.devname[2] = 0;
-#endif /* SUPPORT_SERIAL */
 
 	if (iodev == CONSDEV_PC) {
 		/* Clear screen if on a glass tty. */
 		conclr();
 	}
+#else /* !SUPPORT_SERIAL */
+	btinfo_console.devname[0] = 'p';
+	btinfo_console.devname[1] = 'c';
+	btinfo_console.devname[2] = 0;
+#endif /* SUPPORT_SERIAL */
 }
 
 static inline void internal_putchar(int);
