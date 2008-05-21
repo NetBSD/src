@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.30 2008/05/06 12:52:34 lukem Exp $	*/
+/*	$NetBSD: boot2.c,v 1.31 2008/05/21 01:51:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -334,7 +334,6 @@ parsebootconf(const char *conf)
 	int fd, err, off;
 	struct stat st;
 	char *key, *value, *v2;
-	extern char twiddle_toggle;
 #ifdef SUPPORT_USTARFS
 	void *op_open;
 #endif
@@ -378,7 +377,6 @@ parsebootconf(const char *conf)
 		return;
 	}
 	
-	twiddle_toggle = 1;
 	off = 0;
 	do {
 		len = read(fd, bc + off, 1024);
@@ -387,7 +385,6 @@ parsebootconf(const char *conf)
 		off += len;
 	} while (len > 0);
 	bc[off] = '\0';
-	twiddle_toggle = 0;
 	
 	close(fd);
 	/* bc now contains the whole boot.cfg file */
@@ -545,8 +542,12 @@ doboottypemenu(void)
 void
 boot2(int biosdev, u_int biossector)
 {
+	extern char twiddle_toggle;
 	int currname;
 	char c;
+
+	twiddle_toggle = 1;	/* no twiddling until we're ready */
+	printf("\f");		/* clear screen (hopefully) */
 
 	initio(boot_params.bp_consdev);
 
@@ -582,12 +583,14 @@ boot2(int biosdev, u_int biossector)
 		print_banner();
 
 	/* Display the menu, if applicable */
+	twiddle_toggle = 0;
 	if (bootconf.nummenu > 0) {
 		/* Does not return */
 		doboottypemenu();
 	}
 #else
-		print_banner();
+	twiddle_toggle = 0;
+	print_banner();
 #endif
 
 	printf("Press return to boot now, any other key for boot menu\n");
