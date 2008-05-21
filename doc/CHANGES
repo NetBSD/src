@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1061 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1062 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -531,3 +531,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	amd64: Added support for PCI_BUS_FIXUP and PCI_ADDR_FIXUP kernel
 		options. [jmcneill 20080517]
 	acpidalb(4): Direct Application Launch Buttons. [cegger 20080518]
+	wscons(4): Add support for the Colemak keyboard layout. [ghen 20080520]
