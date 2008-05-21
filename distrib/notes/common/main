@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.396 2008/04/30 15:29:11 ad Exp $
+.\"	$NetBSD: main,v 1.397 2008/05/21 21:34:16 brook Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2021,6 +2021,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Neil J. McRae Ta Mt neil@NetBSD.org
 .It Ta Perry Metzger Ta Mt perry@NetBSD.org
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.org
+.It Ta Brook Milligan Ta Mt brook@NetBSD.org
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
 .It Ta Simas Mockevicius Ta Mt symka@NetBSD.org
 .It Ta der Mouse Ta Mt mouse@NetBSD.org
