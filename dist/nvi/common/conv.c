@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.2 2008/05/20 17:37:04 aymeric Exp $ */
+/*	$NetBSD: conv.c,v 1.3 2008/05/21 16:02:30 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -240,7 +240,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 		BINC_RETC(NULL, cw->bp1, cw->blen1, nlen);		\
 	    }						    		\
 	    errno = 0;						    	\
-	    if (iconv(id, &bp, &len, &obp, &outleft) == -1 && 	        \
+	    if (iconv(id, &bp, (size_t *) &len, &obp, &outleft) == -1 && \
 		    errno != E2BIG)					\
 		goto err;						\
 	    offset = cw->blen1 - outleft;			        \
