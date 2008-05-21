@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.40.40.2 2007/05/31 23:15:17 itohy Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.40.40.3 2008/05/21 05:03:27 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcivar.h,v 1.43 2006/09/07 00:06:41 imp Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ typedef struct uhci_intr_info {
 
 /* for aux memory */
 #define UHCI_AUX_CHUNK_SIZE		4096
-#define UHCI_MAX_PKT_SIZE		1023	/* USB 1.1 specification */
+#define UHCI_MAX_PKT_SIZE		1023	/* USB full-speed spec */
 #define UHCI_AUX_PER_CHUNK(maxp)	(UHCI_AUX_CHUNK_SIZE/(maxp))
 #define UHCI_NCHUNK(naux, maxp)	\
 	(((naux) + UHCI_AUX_PER_CHUNK(maxp) - 1) / UHCI_AUX_PER_CHUNK(maxp))
@@ -103,7 +103,6 @@ struct uhci_xfer {
 	struct usb_buffer_dma dmabuf;
 	int rsvd_tds;
 	struct uhci_aux_mem aux;
-	struct mbuf *mbuf;
 };
 
 #define UHCI_XFER_ABORTING	0x0001	/* xfer is aborting. */
@@ -129,18 +128,7 @@ struct uhci_soft_td {
 	uhci_td_t td;			/* The real TD, must be first */
 	uhci_soft_td_qh_t link; 	/* soft version of the td_link field */
 	struct uhci_mem_desc *ut_mdesc;	/* DMA memory desc */
-	uhci_physaddr_t aux_dma;	/* Auxillary storage if needed. */
-	void *aux_kern;
-	union uhci_bufptr {
-		struct {
-			caddr_t		p_buf;
-		} ptr_p;
-		struct {
-			struct mbuf	*m_mbuf;
-			int		m_off;
-		} ptr_m;
-	} aux_ptr;			/* Original aux data pointer. */
-	int aux_len;			/* Auxillary storage size. */
+	struct usb_aux_desc ad;		/* Auxillary storage description */
 };
 /*
  * Make the size such that it is a multiple of UHCI_TD_ALIGN.  This way
