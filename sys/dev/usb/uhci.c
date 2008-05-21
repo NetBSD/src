@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.208.12.5 2007/06/22 10:49:45 itohy Exp $	*/
+/*	$NetBSD: uhci.c,v 1.208.12.6 2008/05/21 05:03:27 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.5 2007/06/22 10:49:45 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.208.12.6 2008/05/21 05:03:27 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/uhci.c,v 1.172 2006/10/19 01:15:58 iedowse Exp $"); */
 
 #include <sys/param.h>
@@ -187,27 +187,18 @@ Static void		uhci_free_sqh(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_free_desc_chunks(uhci_softc_t *,
 			    struct uhci_mdescs *);
 
-Static void		uhci_bufptr_init(union uhci_bufptr *,
-			    struct uhci_xfer *);
-Static void		uhci_bufptr_advance(union uhci_bufptr *, int len,
-			    int is_mbuf);
-Static void		uhci_bufptr_wr(const union uhci_bufptr *, void *,
-			    int len, int is_mbuf);
-Static void		uhci_bufptr_rd(const union uhci_bufptr *p,
-			    const void *, int len, int is_mbuf);
-
 Static void		uhci_aux_mem_init(struct uhci_aux_mem *);
 Static usbd_status	uhci_aux_mem_alloc(uhci_softc_t *,
 			    struct uhci_aux_mem *,
 			    int /*naux*/, int /*maxp*/);
 Static void		uhci_aux_mem_free(uhci_softc_t *,
 			    struct uhci_aux_mem *);
-Static void		uhci_aux_dma_alloc(uhci_soft_td_t *,
-			    struct uhci_aux_mem *, const union uhci_bufptr *,
+Static bus_addr_t	uhci_aux_dma_alloc(struct usb_aux_desc *,
+			    struct uhci_aux_mem *, const union usb_bufptr *,
 			    int);
-Static void		uhci_aux_dma_prepare(uhci_soft_td_t *, int /*is_mbuf*/,
-			    int /*isread*/);
-Static void		uhci_aux_dma_complete(uhci_soft_td_t *,
+Static void		uhci_aux_dma_prepare(struct usb_aux_desc *,
+			    int /*is_mbuf*/, int /*isread*/);
+Static void		uhci_aux_dma_complete(struct usb_aux_desc *,
 			    struct uhci_aux_mem *, int /*is_mbuf*/,
 			    int /*isread*/);
 Static void		uhci_aux_dma_sync(uhci_softc_t *,
@@ -844,8 +835,6 @@ uhci_mapm_mbuf(usbd_xfer_handle xfer, struct mbuf *chain)
 	usbd_status err;
 
 	err = usb_map_mbuf_dma(&sc->sc_dmatag, &uxfer->dmabuf, chain);
-	if (!err)
-		uxfer->mbuf = chain;
 
 	return (err);
 }
@@ -857,7 +846,6 @@ uhci_unmapm(usbd_xfer_handle xfer)
 	struct uhci_xfer *uxfer = UXFER(xfer);
 
 	usb_unmap_dma(&sc->sc_dmatag, &uxfer->dmabuf);
-	uxfer->mbuf = NULL;
 }
 
 usbd_xfer_handle
@@ -886,7 +874,6 @@ uhci_allocx(struct usbd_bus *bus, usbd_pipe_handle pipe,
 		usb_init_task(&UXFER(xfer)->abort_task, uhci_timeout_task,
 		    xfer);
 		UXFER(xfer)->uhci_xfer_flags = 0;
-		UXFER(xfer)->mbuf = NULL;
 #ifdef DIAGNOSTIC
 		UXFER(xfer)->iinfo.isdone = 1;
 		xfer->busy_free = XFER_BUSY;
@@ -1946,7 +1933,7 @@ uhci_grow_std(uhci_softc_t *sc)
 		std = KERNADDR(&dma, offs);
 		std->ut_mdesc = um;
 		std->link.std = sc->sc_freetds;
-		std->aux_len = 0;
+		std->ad.aux_len = 0;
 		sc->sc_freetds = std;
 		sc->sc_nfreetds++;
 	}
@@ -2070,93 +2057,6 @@ uhci_free_desc_chunks(uhci_softc_t *sc, struct uhci_mdescs *c)
 	}
 }
 
-/*
- * Manipulate pointer to plain buffer or mbuf.
- */
-
-/* Set the buffer pointer at the beginning of buffer */
-Static void
-uhci_bufptr_init(union uhci_bufptr *p, struct uhci_xfer *uxfer)
-{
-
-	if (uxfer->mbuf) {
-		p->ptr_m.m_mbuf = uxfer->mbuf;
-		p->ptr_m.m_off = 0;
-	} else {
-		p->ptr_p.p_buf = uxfer->xfer.hcbuffer;
-	}
-}
-
-/* Advance the buffer pointer by len bytes. */
-Static void
-uhci_bufptr_advance(union uhci_bufptr *p, int len, int is_mbuf)
-{
-	struct mbuf *m;
-	int off, mlen;
-
-	if (is_mbuf) {
-		for (m = p->ptr_m.m_mbuf, off = p->ptr_m.m_off; m && len;
-		    m = m->m_next, off = 0) {
-			mlen = m->m_len - off;
-			if (mlen > len) {
-				off += len;
-				len = 0;
-				break;
-			}
-			len -= mlen;
-		}
-		p->ptr_m.m_off = off;
-		p->ptr_m.m_mbuf = m;
-#ifdef DIAGNOSTIC
-		if (len)
-			panic("uhci_bufptr_advance: overrun %d", len);
-#endif
-	} else {
-		p->ptr_p.p_buf += len;
-	}
-}
-
-/* Copy data from the buffer pointer to linear buffer b. */
-Static void
-uhci_bufptr_wr(const union uhci_bufptr *p, void *b, int len, int is_mbuf)
-{
-
-	if (is_mbuf) {
-		m_copydata(p->ptr_m.m_mbuf, p->ptr_m.m_off, len, b);
-	} else {
-		memcpy(b, p->ptr_p.p_buf, len);
-	}
-}
-
-/* Copy data to the buffer pointer from linear buffer b. */
-Static void
-uhci_bufptr_rd(const union uhci_bufptr *p, const void *b, int len, int is_mbuf)
-{
-	struct mbuf *m;
-	int off, mlen, curlen;
-	const char *buf;
-
-	if (is_mbuf) {
-#if 0	/* overkill? */
-		m_copyback(p->ptr_m.m_mbuf, p->ptr_m.m_off, len, b);
-#else
-		for (m = p->ptr_m.m_mbuf, off = p->ptr_m.m_off, buf = b;
-		    m && len; m = m->m_next, off = 0, buf += curlen) {
-			mlen = m->m_len - off;
-			curlen = (mlen > len) ? len : mlen;
-			memcpy(mtod(m, caddr_t) + off, buf, curlen);
-			len -= curlen;
-		}
-#ifdef DIAGNOSTIC
-		if (len)
-			panic("uhci_bufptr_rd: overrun %d", len);
-#endif
-#endif
-	} else {
-		memcpy(p->ptr_p.p_buf, b, len);
-	}
-}
-
 void
 uhci_free_std_chain(uhci_softc_t *sc, uhci_soft_td_t *std,
 		    uhci_soft_td_t *stdend)
@@ -2181,8 +2081,9 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 	int addr = upipe->pipe.device->address;
 	int endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
 	bus_dma_segment_t *segs = USB_BUFFER_SEGS(ub);
-	union uhci_bufptr bufptr;
+	union usb_bufptr bufptr;
 	int is_mbuf;
+	bus_addr_t auxdma;
 
 	DPRINTFN(8, ("uhci_alloc_std_chain: addr=%d endpt=%d len=%d speed=%d "
 		      "flags=0x%x\n", addr, UE_GET_ADDR(endpt), len,
@@ -2207,8 +2108,8 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 		status |= UHCI_TD_LS;
 	if (flags & USBD_SHORT_XFER_OK)
 		status |= UHCI_TD_SPD;
-	uhci_bufptr_init(&bufptr, UXFER(xfer));
-	is_mbuf = UXFER(xfer)->mbuf != NULL;
+	usb_bufptr_init(&bufptr, xfer);
+	is_mbuf = (xfer->rqflags & URQ_DEV_MAP_MBUF) != 0;
 	seg = 0;
 	segoff = 0;
 	for (i = 0; i < ntd; i++) {
@@ -2242,7 +2143,7 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 				 UHCI_TD_OUT(l, endpt, addr, tog));
 
 		if (i)
-			uhci_bufptr_advance(&bufptr, maxp, is_mbuf);
+			usb_bufptr_advance(&bufptr, maxp, is_mbuf);
 
 		USB_KASSERT2(seg < USB_BUFFER_NSEGS(ub) || l == 0,
 		    ("uhci_alloc_std_chain: too few segments"));
@@ -2250,11 +2151,12 @@ uhci_alloc_std_chain(struct uhci_pipe *upipe, uhci_softc_t *sc, int len,
 			p->td.td_buffer = 0;
 		} else if (l > segs[seg].ds_len - segoff) {
 			/* UHCI can't handle non-contiguous data. */
-			 uhci_aux_dma_alloc(p, &UXFER(xfer)->aux, &bufptr, l);
+			auxdma = uhci_aux_dma_alloc(&p->ad, &UXFER(xfer)->aux,
+			    &bufptr, l);
 
 			/* prepare aux DMA */
-			uhci_aux_dma_prepare(p, is_mbuf, rd);
-			p->td.td_buffer = htole32(p->aux_dma);
+			uhci_aux_dma_prepare(&p->ad, is_mbuf, rd);
+			p->td.td_buffer = htole32(auxdma);
 
 			/* skip handled segments */
 			l += segoff;
@@ -2340,10 +2242,11 @@ uhci_aux_mem_free(uhci_softc_t *sc, struct uhci_aux_mem *aux)
 	aux->aux_nchunk = 0;
 }
 
-Static void
-uhci_aux_dma_alloc(uhci_soft_td_t *std, struct uhci_aux_mem *aux,
-	const union uhci_bufptr *bufptr, int len)
+Static bus_addr_t
+uhci_aux_dma_alloc(struct usb_aux_desc *ad, struct uhci_aux_mem *aux,
+	const union usb_bufptr *bufptr, int len)
 {
+	bus_addr_t auxdma;
 
 	if (aux->aux_chunkoff + len > UHCI_AUX_CHUNK_SIZE) {
 		aux->aux_curchunk++;
@@ -2351,37 +2254,39 @@ uhci_aux_dma_alloc(uhci_soft_td_t *std, struct uhci_aux_mem *aux,
 	}
 	USB_KASSERT(aux->aux_curchunk < aux->aux_nchunk);
 
-	std->aux_dma =
+	auxdma =
 	    DMAADDR(&aux->aux_chunk_dma[aux->aux_curchunk], aux->aux_chunkoff);
-	std->aux_kern =
+	ad->aux_kern =
 	    KERNADDR(&aux->aux_chunk_dma[aux->aux_curchunk], aux->aux_chunkoff);
-	std->aux_ptr = *bufptr;
-	std->aux_len = len;
+	ad->aux_ptr = *bufptr;
+	ad->aux_len = len;
 
 	aux->aux_chunkoff += len;
 	aux->aux_naux++;
+
+	return auxdma;
 }
 
 Static void
-uhci_aux_dma_prepare(uhci_soft_td_t *std, int is_mbuf, int isread)
+uhci_aux_dma_prepare(struct usb_aux_desc *ad, int is_mbuf, int isread)
 {
 
 	if (!isread) {
-		uhci_bufptr_wr(&std->aux_ptr, std->aux_kern, std->aux_len,
+		usb_bufptr_wr(&ad->aux_ptr, ad->aux_kern, ad->aux_len,
 		    is_mbuf);
 	}
 }
 
 Static void
-uhci_aux_dma_complete(uhci_soft_td_t *std, struct uhci_aux_mem *aux,
+uhci_aux_dma_complete(struct usb_aux_desc *ad, struct uhci_aux_mem *aux,
 	int is_mbuf, int isread)
 {
 
 	if (isread) {
-		uhci_bufptr_rd(&std->aux_ptr, std->aux_kern, std->aux_len,
+		usb_bufptr_rd(&ad->aux_ptr, ad->aux_kern, ad->aux_len,
 		    is_mbuf);
 	}
-	std->aux_len = 0;
+	ad->aux_len = 0;
 	USB_KASSERT(aux->aux_naux > 0);
 	if (--aux->aux_naux == 0)
 		uhci_aux_mem_init(aux);
@@ -2390,14 +2295,13 @@ uhci_aux_dma_complete(uhci_soft_td_t *std, struct uhci_aux_mem *aux,
 Static void
 uhci_aux_dma_sync(uhci_softc_t *sc, struct uhci_aux_mem *aux, int op)
 {
-	int naux, i;
+	int i;
 
-	naux = aux->aux_curchunk;
-	if (aux->aux_chunkoff)
-		naux++;
-
-	for (i = 0; i < naux; i++)
+	for (i = 0; i < aux->aux_curchunk; i++)
 		USB_MEM_SYNC(&sc->sc_dmatag, &aux->aux_chunk_dma[i], op);
+	if (aux->aux_chunkoff)
+		USB_MEM_SYNC2(&sc->sc_dmatag, &aux->aux_chunk_dma[i],
+		    0, aux->aux_chunkoff, op);
 }
 
 void
@@ -2650,10 +2554,7 @@ uhci_transfer_complete(usbd_xfer_handle xfer)
 	int i, isread, n;
 	int is_mbuf;
 
-	/* XXX, must be an easier way to detect reads... */
-	isread = ((xfer->rqflags & URQ_REQUEST) &&
-	    (xfer->request.bmRequestType & UT_READ)) ||
-            (xfer->pipe->endpoint->edesc->bEndpointAddress & UE_DIR_IN);
+	isread = usbd_xfer_isread(xfer);
 
 	if (ub)
 		usb_sync_buffer_dma(&sc->sc_dmatag, ub,
@@ -2662,27 +2563,25 @@ uhci_transfer_complete(usbd_xfer_handle xfer)
 	uhci_aux_dma_sync(sc, &UXFER(xfer)->aux,
 	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
-	is_mbuf = UXFER(xfer)->mbuf != NULL;
+	is_mbuf = (xfer->rqflags & URQ_DEV_MAP_MBUF) != 0;
 
 	/* Copy back from any auxillary buffers after a read operation. */
 	if (xfer->nframes == 0) {
 		for (p = ii->stdstart; p != NULL; p = p->link.std) {
-			if (p->aux_len)
-				uhci_aux_dma_complete(p, &UXFER(xfer)->aux,
+			if (p->ad.aux_len)
+				uhci_aux_dma_complete(&p->ad, &UXFER(xfer)->aux,
 				    is_mbuf, isread);
 		}
 	} else {
-		if (xfer->nframes != 0) {
-			/* Isoc transfer, do things differently. */
-			n = UXFER(xfer)->curframe;
-			for (i = 0; i < xfer->nframes; i++) {
-				p = upipe->u.iso.stds[n];
-				if (p->aux_len)
-					uhci_aux_dma_complete(p,
-					    &UXFER(xfer)->aux, is_mbuf, isread);
-				if (++n >= UHCI_VFRAMELIST_COUNT)
+		/* Isoc transfer, do things differently. */
+		n = UXFER(xfer)->curframe;
+		for (i = 0; i < xfer->nframes; i++) {
+			p = upipe->u.iso.stds[n];
+			if (p->ad.aux_len)
+				uhci_aux_dma_complete(&p->ad,
+				    &UXFER(xfer)->aux, is_mbuf, isread);
+			if (++n >= UHCI_VFRAMELIST_COUNT)
 				n = 0;
-			}
 		}
 	}
 
@@ -3083,8 +2982,9 @@ uhci_device_isoc_enter(usbd_xfer_handle xfer)
 	struct usb_buffer_dma *ub = &UXFER(xfer)->dmabuf;
 	bus_dma_segment_t *segs = USB_BUFFER_SEGS(ub);
 	int nsegs = USB_BUFFER_NSEGS(ub);
-	union uhci_bufptr bufptr;
+	union usb_bufptr bufptr;
 	int is_mbuf;
+	bus_addr_t auxdma;
 
 	DPRINTFN(5,("uhci_device_isoc_enter: used=%d next=%d xfer=%p "
 		    "nframes=%d\n",
@@ -3116,8 +3016,8 @@ uhci_device_isoc_enter(usbd_xfer_handle xfer)
 
 	seg = 0;
 	segoff = 0;
-	uhci_bufptr_init(&bufptr, UXFER(xfer));
-	is_mbuf = UXFER(xfer)->mbuf != NULL;
+	usb_bufptr_init(&bufptr, xfer);
+	is_mbuf = (xfer->rqflags & URQ_DEV_MAP_MBUF) != 0;
 	isread = xfer->pipe->endpoint->edesc->bEndpointAddress & UE_DIR_IN;
 	status = UHCI_TD_ZERO_ACTLEN(UHCI_TD_SET_ERRCNT(0) |
 				     UHCI_TD_ACTIVE |
@@ -3133,12 +3033,12 @@ uhci_device_isoc_enter(usbd_xfer_handle xfer)
 		    ("uhci_device_isoc_enter: too few segments"));
 		if (len + segoff > segs[seg].ds_len) {
 			/* UHCI can't handle non-contiguous data. */
-			 uhci_aux_dma_alloc(std, &UXFER(xfer)->aux, &bufptr,
-			    len);
+			auxdma = uhci_aux_dma_alloc(&std->ad, &UXFER(xfer)->aux,
+			    &bufptr, len);
 
 			/* prepare aux DMA */
-			uhci_aux_dma_prepare(std, is_mbuf, isread);
-			std->td.td_buffer = htole32(std->aux_dma);
+			uhci_aux_dma_prepare(&std->ad, is_mbuf, isread);
+			std->td.td_buffer = htole32(auxdma);
 
 			/* skip handled segments */
 			segoff += len;
@@ -3173,7 +3073,7 @@ uhci_device_isoc_enter(usbd_xfer_handle xfer)
 			uhci_dump_td(std);
 		}
 #endif
-		uhci_bufptr_advance(&bufptr, len, is_mbuf);
+		usb_bufptr_advance(&bufptr, len, is_mbuf);
 	}
 	iso->next = next;
 	iso->inuse += xfer->nframes;
