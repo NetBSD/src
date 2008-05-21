@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.135 2008/04/28 20:23:58 martin Exp $ */
+/*	$NetBSD: ehci.c,v 1.136 2008/05/21 17:19:44 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.135 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.136 2008/05/21 17:19:44 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -363,7 +363,7 @@ ehci_init(ehci_softc_t *sc)
 
 	sc->sc_bus.usbrev = USBREV_2_0;
 
-	usb_setup_reserve(sc, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
+	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
 
 	/* Reset the controller */
