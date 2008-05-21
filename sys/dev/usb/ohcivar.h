@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.39.40.1 2007/05/22 14:57:39 itohy Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.39.40.2 2008/05/21 05:02:11 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.45 2006/09/07 00:06:41 imp Exp $	*/
 
 /*-
@@ -54,16 +54,24 @@ typedef struct ohci_soft_ed {
 #define OHCI_SED_CHUNK	((PAGE_SIZE - sizeof(struct ohci_mem_desc)) / OHCI_SED_SIZE)
 #define OHCI_SED_DMAADDR(d)	\
 	((d)->oe_mdesc->om_topdma + ((caddr_t)(d) - (d)->oe_mdesc->om_top))
+#define OHCI_SED_SYNC2(sc, d, off, sz, ops)	\
+	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->oe_mdesc->om_dma,		\
+		(caddr_t)(d) - (d)->oe_mdesc->om_top + (off), (sz), (ops))
 #define OHCI_SED_SYNC(sc, d, ops)	\
-	USB_MEM_SYNC2(&(sc)->sc_dmatag, &(d)->oe_mdesc->om_dma, (caddr_t)(d) - (d)->oe_mdesc->om_top , sizeof(ohci_ed_t), (ops))
+	OHCI_SED_SYNC2(sc, d, 0, sizeof(ohci_ed_t), (ops))
+/* post-DMA sync --- only HeadP/C/H are modified by HC */
+#define OHCI_SED_SYNC_POST(sc, d)	\
+	OHCI_SED_SYNC2(sc, d,						\
+		offsetof(ohci_ed_t, ed_headp), sizeof(ohci_physaddr_t),	\
+		BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
 
 typedef struct ohci_soft_td {
 	ohci_td_t td;
 	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
 	struct ohci_soft_td *dnext; /* next in done list */
 	struct ohci_mem_desc *ot_mdesc;
-	LIST_ENTRY(ohci_soft_td) hnext;
 	usbd_xfer_handle xfer;
+	struct usb_aux_desc ad;		/* Auxillary storage description */
 	u_int16_t len;
 	u_int16_t flags;
 #define OHCI_CALL_DONE	0x0001
@@ -84,6 +92,7 @@ typedef struct ohci_soft_itd {
 	struct ohci_mem_desc *oit_mdesc;
 	LIST_ENTRY(ohci_soft_itd) hnext;
 	usbd_xfer_handle xfer;
+	struct usb_aux_desc ad;		/* Auxillary storage description */
 	u_int16_t flags;
 #define	OHCI_ITD_ACTIVE	0x0010		/* Hardware op in progress */
 #define	OHCI_ITD_INTFIN	0x0020		/* Hw completion interrupt seen.*/
@@ -178,17 +187,32 @@ typedef struct ohci_softc {
 	char sc_dying;
 } ohci_softc_t;
 
+/* for aux memory */
+#define OHCI_AUX_CHUNK_SIZE		4096
+#define OHCI_MAX_PKT_SIZE		1023	/* USB full-speed spec */
+#define OHCI_AUX_PER_CHUNK(maxp)	(OHCI_AUX_CHUNK_SIZE/(maxp))
+#define OHCI_NCHUNK(naux, maxp)	\
+	(((naux) + OHCI_AUX_PER_CHUNK(maxp) - 1) / OHCI_AUX_PER_CHUNK(maxp))
+struct ohci_aux_mem {
+	usb_dma_t aux_chunk_dma[OHCI_NCHUNK(USB_DMA_NSEG-1, OHCI_MAX_PKT_SIZE)];
+	int	aux_nchunk;	/* number of allocated chunk */
+	int	aux_curchunk;	/* current chunk */
+	int	aux_chunkoff;	/* offset in current chunk */
+	int	aux_naux;	/* number of aux */
+};
+
 struct ohci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task	abort_task;
 	u_int32_t ohci_xfer_flags;
 	struct usb_buffer_dma dmabuf;
 	int rsvd_tds;
+	struct ohci_aux_mem aux;
 };
 #define OHCI_XFER_ABORTING	0x01	/* xfer is aborting. */
 #define OHCI_XFER_ABORTWAIT	0x02	/* abort completion is being awaited. */
 
-#if 1	/* make sure the argument is actually an xfer pointer */
+#if 1	/* make sure the argument is an xfer pointer */
 #define OXFER(xfer) ((void)&(xfer)->hcpriv, (struct ohci_xfer *)(xfer))
 #else
 #define OXFER(xfer) ((struct ohci_xfer *)(xfer))
