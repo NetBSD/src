@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.15 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: errata.c,v 1.16 2008/05/21 01:16:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.15 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.16 2008/05/21 01:16:20 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ x86_errata(void)
 
 	if (upgrade && !again) {
 		again = 1;
-		aprint_normal_dev(ci->ci_dev, "WARNING: AMD errata present, BIOS upgrade "
+		aprint_normal_dev(ci->ci_dev, "WARNING: errata present, BIOS upgrade "
 		    "may be\n");
 		aprint_normal_dev(ci->ci_dev, "WARNING: necessary to ensure reliable "
 		    "operation\n");
