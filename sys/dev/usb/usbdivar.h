@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.80.12.3 2007/06/22 10:12:25 itohy Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.80.12.4 2008/05/21 05:04:03 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.47 2006/09/07 00:06:42 imp Exp $	*/
 
 /*-
@@ -230,6 +230,7 @@ struct usbd_xfer {
 	/* For memory allocation */
 	struct usbd_device     *device;
 	void		       *hcbuffer;	/* buffer for HCI driver */
+	struct mbuf	       *mbuf_chain;
 
 	size_t			bufsize;
 
