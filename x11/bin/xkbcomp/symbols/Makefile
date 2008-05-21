@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2005/03/23 01:00:33 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2008/05/21 17:09:29 ghen Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ XKBNAME=	symbols
 FILES=	README \
 	al altwin am ar az \
 	be ben bg br bs by \
-	ca ca_enhanced compose ctrl \
+	ca ca_enhanced colemak compose ctrl \
 	czsk cz cz_qwerty \
 	de de_CH dev dk dvorak \
 	ee el en_US es \
