@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.40 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: memreg.c,v 1.41 2008/05/21 14:10:28 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.40 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.41 2008/05/21 14:10:28 ad Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -253,10 +253,7 @@ hypersparc_memerr(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	u_int afsr;
 	u_int afva;
 
-	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_LOCK(1, curlwp);
-	else
-		KERNEL_LOCK(1, NULL);
+	KERNEL_LOCK(1, NULL);
 
 	(*cpuinfo.get_asyncflt)(&afsr, &afva);
 	if ((afsr & AFSR_AFO) != 0) {	/* HS async fault! */
@@ -272,10 +269,7 @@ hypersparc_memerr(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		addroldtop = afsr & AFSR_AFA;
 	}
 out:
-	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_UNLOCK_LAST(curlwp);
-	else
-		KERNEL_UNLOCK_ONE(NULL);
+	KERNEL_UNLOCK_ONE(NULL);
 	return;
 
 hard:
@@ -289,10 +283,7 @@ viking_memerr(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	u_int afsr=0;	/* No Async fault registers on the viking */
 	u_int afva=0;
 
-	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_LOCK(1, curlwp);
-	else
-		KERNEL_LOCK(1, NULL);
+	KERNEL_LOCK(1, NULL);
 
 	if (type == T_STOREBUFFAULT) {
 
@@ -327,10 +318,7 @@ viking_memerr(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	}
 
 out:
-	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_UNLOCK_LAST(curlwp);
-	else
-		KERNEL_UNLOCK_ONE(NULL);
+	KERNEL_UNLOCK_ONE(NULL);
 	return;
 
 hard:
@@ -344,10 +332,7 @@ memerr4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	u_int afsr;
 	u_int afva;
 
-	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_LOCK(1, curlwp);
-	else
-		KERNEL_LOCK(1, NULL);
+	KERNEL_LOCK(1, NULL);
 
 	/*
 	 * No known special cases.
@@ -357,9 +342,6 @@ memerr4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		afsr = afva = 0;
 
 	hardmemerr4m(type, sfsr, sfva, afsr, afva);
-	if ((tf->tf_psr & PSR_PS) == 0)
-		KERNEL_UNLOCK_LAST(curlwp);
-	else
-		KERNEL_UNLOCK_ONE(NULL);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif /* SUN4M */

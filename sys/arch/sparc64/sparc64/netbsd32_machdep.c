@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.79 2008/04/24 18:39:21 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.80 2008/05/21 14:10:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.79 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.80 2008/05/21 14:10:28 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1320,7 +1320,6 @@ startlwp32(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }
 
