@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem_nodma.h,v 1.1.2.2 2007/06/17 01:26:54 itohy Exp $	*/
+/*	$NetBSD: usb_mem_nodma.h,v 1.1.2.3 2008/05/21 05:03:48 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,12 +40,10 @@ struct usb_buffer_mem {
 	enum { UB_NONE, UB_PLAIN, UB_MBUF } ub_type;
 	union {
 		struct {
-			u_int8_t *ubp_top;	/* start address */
 			u_int8_t *ubp_cur;	/* current pointer */
 			void *ubp_allocbuf;	/* allocated buffer or NULL */
 		} ub_plain;
 		struct {
-			struct mbuf *ubm_top;	/* start mbuf */
 			struct mbuf *ubm_cur;	/* current mbuf */
 			int ubm_off;		/* current offset in cur mbuf */
 		} ub_mbuf;
@@ -73,6 +71,7 @@ void		usb_free_buffer_mem(usb_mem_tag_t *, struct usb_buffer_mem *,
 void		usb_map_mem(struct usb_buffer_mem *, void *);
 void		usb_map_mbuf_mem(struct usb_buffer_mem *, struct mbuf *);
 void		usb_unmap_mem(struct usb_buffer_mem *);
-void		usb_buffer_mem_rewind(struct usb_buffer_mem *);
+void		usb_buffer_mem_rewind(struct usb_buffer_mem *,
+		    usbd_xfer_handle);
 void		usb_mem_tag_init(usb_mem_tag_t *);
 void		usb_mem_tag_finish(usb_mem_tag_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.31.10.3 2007/06/17 01:24:28 itohy Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.31.10.4 2008/05/21 05:03:48 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.c,v 1.10 2006/09/06 23:44:24 imp Exp $	*/
 
 /*-
@@ -49,13 +49,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.31.10.3 2007/06/17 01:24:28 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.31.10.4 2008/05/21 05:03:48 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usb_mem.c,v 1.10 2006/09/06 23:44:24 imp Exp $"); */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/mbuf.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>		/* for usbdivar.h */
 #include <machine/bus.h>
@@ -1253,4 +1254,91 @@ usb_dma_tag_finish(usb_dma_tag_t *utag
 		printf("usb_dma_tag_finish: leaked %d blks, %d frags, %d bufs\n",
 		    utag->nblks, utag->nfrags, utag->nbufs);
 #endif
+}
+
+/*
+ * Manipulate pointer to plain buffer or mbuf.
+ */
+
+/* Set the buffer pointer at the beginning of buffer */
+void
+usb_bufptr_init(union usb_bufptr *p, usbd_xfer_handle xfer)
+{
+
+	if (xfer->rqflags & URQ_DEV_MAP_MBUF) {
+		p->ptr_m.m_mbuf = xfer->mbuf_chain;
+		p->ptr_m.m_off = 0;
+	} else {
+		p->ptr_p.p_buf = xfer->hcbuffer;
+	}
+}
+
+/* Advance the buffer pointer by len bytes. */
+void
+usb_bufptr_advance(union usb_bufptr *p, int len, int is_mbuf)
+{
+	struct mbuf *m;
+	int off, mlen;
+
+	if (is_mbuf) {
+		for (m = p->ptr_m.m_mbuf, off = p->ptr_m.m_off; m && len;
+		    m = m->m_next, off = 0) {
+			mlen = m->m_len - off;
+			if (mlen > len) {
+				off += len;
+				len = 0;
+				break;
+			}
+			len -= mlen;
+		}
+		p->ptr_m.m_off = off;
+		p->ptr_m.m_mbuf = m;
+#ifdef DIAGNOSTIC
+		if (len)
+			panic("usb_bufptr_advance: overrun %d", len);
+#endif
+	} else {
+		p->ptr_p.p_buf += len;
+	}
+}
+
+/* Copy data to the buffer pointer from linear buffer b. */
+Static void
+usb_bufptr_rd(const union usb_bufptr *p, const void *b, int len, int is_mbuf)
+{
+	struct mbuf *m;
+	int off, mlen, curlen;
+	const char *buf;
+
+	if (is_mbuf) {
+#if 0	/* overkill? */
+		m_copyback(p->ptr_m.m_mbuf, p->ptr_m.m_off, len, b);
+#else
+		for (m = p->ptr_m.m_mbuf, off = p->ptr_m.m_off, buf = b;
+		    m && len; m = m->m_next, off = 0, buf += curlen) {
+			mlen = m->m_len - off;
+			curlen = (mlen > len) ? len : mlen;
+			memcpy(mtod(m, caddr_t) + off, buf, curlen);
+			len -= curlen;
+		}
+#ifdef DIAGNOSTIC
+		if (len)
+			panic("usb_bufptr_rd: overrun %d", len);
+#endif
+#endif
+	} else {
+		memcpy(p->ptr_p.p_buf, b, len);
+	}
+}
+
+/* Copy data from the buffer pointer to linear buffer b. */
+void
+usb_bufptr_wr(const union usb_bufptr *p, void *b, int len, int is_mbuf)
+{
+
+	if (is_mbuf) {
+		m_copydata(p->ptr_m.m_mbuf, p->ptr_m.m_off, len, b);
+	} else {
+		memcpy(b, p->ptr_p.p_buf, len);
+	}
 }
