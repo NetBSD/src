@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.52 2008/05/21 01:14:17 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.53 2008/05/21 01:18:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2008/05/21 01:14:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2008/05/21 01:18:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -350,7 +350,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
 		pmap_cpu_init_late(ci);
-		x86_errata();
 		if (caa->cpu_role != CPU_ROLE_SP) {
 			/* Enable lapic. */
 			lapic_enable();
@@ -368,12 +367,14 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	case CPU_ROLE_SP:
 		atomic_or_32(&ci->ci_flags, CPUF_SP);
 		cpu_identify(ci);
+		x86_errata();
 		x86_cpu_idle_init();
 		break;
 
 	case CPU_ROLE_BP:
 		atomic_or_32(&ci->ci_flags, CPUF_BSP);
 		cpu_identify(ci);
+		x86_errata();
 		x86_cpu_idle_init();
 		break;
 
