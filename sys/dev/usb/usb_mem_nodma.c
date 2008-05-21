@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem_nodma.c,v 1.1.2.2 2007/05/31 23:15:18 itohy Exp $	*/
+/*	$NetBSD: usb_mem_nodma.c,v 1.1.2.3 2008/05/21 05:03:48 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem_nodma.c,v 1.1.2.2 2007/05/31 23:15:18 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem_nodma.c,v 1.1.2.3 2008/05/21 05:03:48 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,8 @@ usb_alloc_buffer_mem(usb_mem_tag_t *utag, void *buf, size_t size,
 		 */
 		if (size < sizeof(struct usb_buffer_freeq))
 		    size = sizeof(struct usb_buffer_freeq);
-		if ((ub->u.ub_plain.ubp_top = ub->u.ub_plain.ubp_allocbuf =
-		    *pbufadr = malloc(size, M_USB, M_WAITOK)) == NULL)
+		if ((ub->u.ub_plain.ubp_allocbuf = *pbufadr =
+		    malloc(size, M_USB, M_WAITOK)) == NULL)
 			return (USBD_NOMEM);
 		DPRINTFN(5, ("usb_alloc_buffer_mem: ub=%p size=%d\n",
 			     ub, size));
@@ -129,7 +129,7 @@ usb_alloc_buffer_mem(usb_mem_tag_t *utag, void *buf, size_t size,
 		/*
 		 * do nothing --- just use the buffer
 		 */
-		ub->u.ub_plain.ubp_top = *pbufadr = buf;
+		*pbufadr = buf;
 		ub->u.ub_plain.ubp_allocbuf = NULL;
 		DPRINTFN(5, ("usb_alloc_buffer_mem: no alloc\n"));
 	}
@@ -175,7 +175,6 @@ usb_map_mem(struct usb_buffer_mem *ub, void *buf)
 	USB_KASSERT(ub->ub_type == UB_NONE);
 
 	ub->ub_type = UB_PLAIN;
-	ub->u.ub_plain.ubp_top = buf;
 	ub->u.ub_plain.ubp_allocbuf = NULL;
 #ifdef DIAGNOSTIC
 	/* trap missings of usb_buffer_mem_rewind() */
@@ -190,7 +189,6 @@ usb_map_mbuf_mem(struct usb_buffer_mem *ub, struct mbuf *chain)
 	USB_KASSERT(ub->ub_type == UB_NONE);
 
 	ub->ub_type = UB_MBUF;
-	ub->u.ub_mbuf.ubm_top = chain;
 #ifdef DIAGNOSTIC
 	/* trap missings of usb_buffer_mem_rewind() */
 	ub->u.ub_mbuf.ubm_cur = (void *)0xdeadbeef;
@@ -210,16 +208,16 @@ usb_unmap_mem(struct usb_buffer_mem *ub)
 
 /* set pointer at the top of buffer */
 void
-usb_buffer_mem_rewind(struct usb_buffer_mem *ub)
+usb_buffer_mem_rewind(struct usb_buffer_mem *ub, usbd_xfer_handle xfer)
 {
 
 	switch(ub->ub_type) {
 	case UB_MBUF:
 		ub->u.ub_mbuf.ubm_off = 0;
-		ub->u.ub_mbuf.ubm_cur = ub->u.ub_mbuf.ubm_top;
+		ub->u.ub_mbuf.ubm_cur = xfer->mbuf_chain;
 		break;
 	case UB_PLAIN:
-		ub->u.ub_plain.ubp_cur = ub->u.ub_plain.ubp_top;
+		ub->u.ub_plain.ubp_cur = xfer->hcbuffer;
 		break;
 	default:
 		break;
