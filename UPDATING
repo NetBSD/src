@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.170 2008/01/28 03:30:26 christos Exp $
+$NetBSD: UPDATING,v 1.171 2008/05/21 20:01:37 he Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,14 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20080521:
+	For a while, unprivileged UPDATE builds would fail to
+	succeed at the checkflist stage, complaining that
+	${DESTDIR}/stand/<arch>/ did not exist.  A fix for this
+	problem was committed to share/mk/bsd.kmodule.mk, revision 1.9.
+	If you already hit this problem, update the .mk file,
+	remove ${DESTDIR}/stand/<arch>, and re-run the build.
 
 20080126:
 	The posix_fadvise system call has been changed from an assembly
