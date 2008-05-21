@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2008/05/11 14:44:53 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2008/05/21 03:04:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2008/05/11 14:44:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2008/05/21 03:04:35 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -362,7 +362,7 @@ cpu_startup(void)
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
-	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, VM_MAP_PAGEABLE);
+	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, 0);
 	lkm_map_store.pmap = pmap_kernel();
 	lkm_map = &lkm_map_store;
 
