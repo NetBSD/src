@@ -1,0 +1,72 @@
+autogroup overlay Readme
+
+DESCRIPTION
+    The autogroup overlay allows automated updates of group memberships which
+    meet the requirements of any filter contained in the group definition.
+	The filters are built from LDAP URI-valued attributes. Any time an object
+	is added/deleted/updated, it is tested for compliance with the filters,
+    and its membership is accordingly updated. For searches and compares
+    it behaves like a static group.
+
+BUILDING
+    A Makefile is included.
+
+CONFIGURATION
+    # dyngroup.schema:
+        The dyngroup schema must be modified, adding the 'member' attribute
+        to the MAY clause of the groupOfURLs object class, i.e.:
+
+        objectClass ( NetscapeLDAPobjectClass:33
+        NAME 'groupOfURLs'
+        SUP top STRUCTURAL
+        MUST cn
+        MAY ( memberURL $ businessCategory $ description $ o $ ou $
+                owner $ seeAlso $ member) )
+
+
+    # slapd.conf:
+
+    moduleload /path/to/autogroup.so
+        Loads the overlay (OpenLDAP must be built with --enable-modules).
+
+    overlay autogroup
+        This directive adds the autogroup overlay to the current database.
+
+    autogroup-attrset <group-oc> <URL-ad> <member-ad>
+        This configuration option is defined for the autogroup overlay.
+        It may have multiple occurrences, and it must appear after the
+        overlay directive.
+
+        The value <group-oc> is the name of the objectClass that represents 
+        the group.
+
+        The value <URL-ad> is the name of the attributeDescription that 
+        contains the URI that is converted to the filters. If no URI is 
+        present, there will be no members in that group. It must be a subtype
+        of labeledURI.
+
+        The value <member-ad> is the name of the attributeDescription that
+        specifies the member attribute. User modification of this attribute 
+        is disabled for consistency.
+
+
+EXAMPLE
+    ### slapd.conf
+    include /path/to/dyngroup.schema
+    # ...
+    moduleload /path/to/autogroup.so
+    # ...
+
+    database <database>
+    # ...
+
+    overlay autogroup
+    autogroup-attrset groupOfURLs memberURL member
+    ### end slapd.conf
+
+CAVEATS
+    As with static groups, update operations on groups with a large number
+    of members may be slow.
+
+ACKNOWLEDGEMENTS
+    This module was written in 2007 by Michał Szulczyński.
