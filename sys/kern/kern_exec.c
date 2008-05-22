@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.272.4.1 2008/05/10 23:49:03 wrstuden Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.272.4.2 2008/05/22 06:22:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.4.1 2008/05/10 23:49:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.272.4.2 2008/05/22 06:22:20 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -437,6 +437,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct exec_fakearg	*tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
+	int			oldlwpflags;
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
 	char			*pathbuf;
@@ -464,6 +465,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	    chgproccnt(kauth_cred_getuid(l->l_cred), 0) >
 	    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
 		return EAGAIN;
+
+	oldlwpflags = l->l_flag & (LW_SA | LW_SA_UPCALL);
+	if (l->l_flag & LW_SA) {
+		lwp_lock(l);
+		l->l_flag &= ~(LW_SA | LW_SA_UPCALL);
+		lwp_unlock(l);
+	}
 
 	/*
 	 * Drain existing references and forbid new ones.  The process
@@ -647,7 +655,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/* Get rid of other LWPs. */
-	if (p->p_nlwps > 1) {
+	if (p->p_sa || p->p_nlwps > 1) {
 		mutex_enter(p->p_lock);
 		exit_lwps(l);
 		mutex_exit(p->p_lock);
@@ -661,6 +669,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* This is now LWP 1 */
 	l->l_lid = 1;
 	p->p_nlwpid = 1;
+
+	/* Release any SA state. */
+	if (p->p_sa)
+		sa_release(p);
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
@@ -1085,6 +1097,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		vrele(pack.ep_interp);
 
  clrflg:
+	lwp_lock(l);
+	l->l_flag |= oldlwpflags;
+	lwp_unlock(l);
 	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 #ifdef LKM
