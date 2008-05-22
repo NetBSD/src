@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.64 2008/05/22 14:48:42 he Exp $
+#	$NetBSD: sets.subr,v 1.65 2008/05/22 22:56:40 he Exp $
 #
 
 #
@@ -67,6 +67,7 @@ MKVARS="\
 	USE_LDAP	\
 	USE_YP		\
 	NETBSDSRCDIR	\
+	MAKEVERBOSE	\
 "
 #
 # The following variables refer to tools that are used when building sets:
@@ -228,7 +229,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.64 2008/05/22 14:48:42 he Exp $
+# 	# $NetBSD: sets.subr,v 1.65 2008/05/22 22:56:40 he Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -296,8 +297,19 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #
 list_set_files()
 {
+	if [ ${MAKEVERBOSE:-2} -lt 2 ]; then
+		verbose=false
+	else
+		verbose=true
+	fi
 	for setname; do
-		list_set_lists $setname
+		list=`list_set_lists $setname`
+		for l in $list; do
+			echo $l
+			if $verbose; then
+				echo $l >&2
+			fi
+		done
 	done | xargs cat | ${SED} ${SUBST} | \
 	${AWK} -v obsolete=${obsolete} '
 		BEGIN {
