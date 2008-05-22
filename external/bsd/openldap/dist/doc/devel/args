@@ -1,0 +1,59 @@
+Tools           ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+ldapcompare      * DE**HI*K M*OPQR  UVWXYZ   de *h**k *nop*    vwxyz
+ldapdelete       *CDE**HI*K M*OPQR  UVWXYZ  cdef*h**k *nop*    vwxyz
+ldapmodify       *CDE**HI*K M*OPQRS UVWXYZabcde *h**k *nop*r t vwxy
+ldapmodrdn       *CDE**HI*K M*OPQR  UVWXYZ  cdef*h**k *nop*rs  vwxy
+ldappasswd      A*CDE**HI*   *O QRS UVWXYZa  def*h**  * o * s  vwxy  
+ldapsearch      A*CDE**HI*KLM*OPQRSTUVWXYZab def*h**kl*nop* stuvwxyz
+ldapwhoami       * DE**HI*   *O QR  UVWXYZ   def*h**  *nop*    vwxy 
+
+
+* reserved
+	BFGJgijmq01235789
+
+* General flags:
+	-C Chase Referrals
+	-D Bind DN
+	-E Tool-specific Extensions	(e.g., -E <[!]oid[=options]>*)
+	-e General Extensions		(e.g., -e <[!]oid[=options]>*)
+	-f file
+	-H URI
+	-P protocol version
+	-V version information
+	-W prompt for bind password
+	-d debug
+	-h host
+	-n no-op
+	-N no (SASLprep) normalization of simple bind password
+	-o general connection options (currently nettimeout only)
+	-p port
+	-v verbose
+	-V version
+	-x simple bind
+	-y Bind password-file
+	-w Bind password
+	-4 IPv4 only
+	-6 IPv6 only
+
+
+* LDAPv3 Only 
+	-M ManageDSAIT
+	-Z StartTLS
+
+	-Y SASL Mechanism (defaults to "best")
+	-R SASL Realm (defaults to empty)
+	-O SASL Security Options (defaults to "noanonymous,noplain")
+	-U SASL Authentication Identity (defaults to USER)
+	-X SASL Authorization Identity (defaults to empty)
+
+	-I SASL interactive mode (default: automatic)
+	-Q SASL quiet mode (default: automatic)
+
+
+* LDAPv2+ Only (DEPRECATED)
+	-K LDAPv2 Kerberos Bind (Step 1 only)
+	-k LDAPv2 Kerberos Bind
+
+
+---
+$OpenLDAP: pkg/ldap/doc/devel/args,v 1.29.2.3 2008/02/09 00:53:37 quanah Exp $
