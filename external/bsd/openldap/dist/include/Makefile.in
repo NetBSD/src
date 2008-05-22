@@ -38,7 +38,7 @@ LDAP_CONFIG=$(srcdir)/ldap_config.hin
 ldap_config.h: $(LDAP_CONFIG) Makefile
 	@$(RM) $@
 	@echo "Making $@"
-	@echo "/* Generated from $(LDAP_CONFIG) on `date` */" > $@;  \
+	@echo "/* Generated from $(LDAP_CONFIG) */" > $@;  \
 	if test $(PLAT) = NT; then \
 	    sysconfdir=`cygpath -w $(sysconfdir) | \
 		$(SED) -e 's/\\\\/\\\\\\\\\\\\\\\\/g'`; \
