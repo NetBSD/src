@@ -73,6 +73,7 @@ $ack_endline=
 
 $known_bad_clause_3_wording=
       'usr.bin/lex/.*'				# UCB
+    .'|dist/bind/contrib/nslint-2.1a3/lbl/.*'	#
     .'|usr.sbin/hilinfo/hilinfo.c'	   	# CSS @ Utah
     ;	
 
@@ -162,6 +163,14 @@ while(<>) {
 		print "E> $_" if $debug;
 		
 		# post-process
+
+		if ($fn =~ m,$known_bad_clause_3_wording,) {
+			while ($msg !~ /^ .*``.*\n/) {
+				$msg =~ s/^.*\n//o;
+			}
+			$msg =~ s/\n.*``//o;
+			$msg =~ s/''.*$//o;
+		}
 
 		# *roff
 		while ($msg =~ /^\.\\"\s*/) {
