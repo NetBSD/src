@@ -122,6 +122,16 @@ while(<>) {
 	
 	print "0> $_" if $debug;
 
+	# special case perl script generating a license (openssl's
+	# mkerr.pl) - ignore the quoted license, there is another one
+	# inside:
+	if (/^\"\s\*.*$ack_line1.*\\n\"\,/) {
+		while(!/$ack_endline/i) {
+		    print "S> $_" if $debug;
+		    $_ = <F>;
+		}
+	}
+
 	if (/$ack_line1/i
 	    or (/$ack_line2/ and $fn =~ m,$known_bad_clause_3_wording,)) {
 	    
@@ -152,16 +162,6 @@ while(<>) {
 		print "E> $_" if $debug;
 		
 		# post-process
-		$msg =~ s/^REM\s*//g;			# BASIC?!?
-		$msg =~ s/\nREM\s*/\n/g;		# BASIC?!?
-		$msg =~ s/^dnl\s*//g;			# m4
-		$msg =~ s/\dnl\s*/\n/g;			# m4
-		$msg =~ s/^\s+-\s+//g;			# seen in docbook files
-		$msg =~ s/\n\s+-\s+/ /g;		#
-		$msg =~ s/^[#\\\|";]*\s*//g;		# sh etc.
-		$msg =~ s/\n[#\\\|";]\s*/\n/g;		# sh etc.
-		$msg =~ s/^[ 	*]*//g;      		# C
-		$msg =~ s/\n[ 	*]*/\n/g;    		# C
 
 		# *roff
 		while ($msg =~ /^\.\\"\s*/) {
@@ -199,6 +199,17 @@ while(<>) {
 		}
 		$msg =~ s/\n\s*\@c\s+/\n/g;
 
+		$msg =~ s/^REM\s*//g;			# BASIC?!?
+		$msg =~ s/\nREM\s*/\n/g;		# BASIC?!?
+		$msg =~ s/^dnl\s*//g;			# m4
+		$msg =~ s/\dnl\s*/\n/g;			# m4
+		$msg =~ s/^\s+-\s+//g;			# seen in docbook files
+		$msg =~ s/\n\s+-\s+/ /g;		#
+		$msg =~ s/^[#\\\|";]*\s*//g;		# sh etc.
+		$msg =~ s/\n[#\\\|";]\s*/\n/g;		# sh etc.
+		$msg =~ s/^[ 	*]*//g;      		# C
+		$msg =~ s/\n[ 	*]*/\n/g;    		# C
+
 		$msg =~ s/\@cartouche\n//;              # texinfo
 
 		$msg =~ s///g;
@@ -208,6 +219,8 @@ while(<>) {
 		$msg =~ s/\n\n/\n/g;
 	        $msg =~ s/^\s*``//;
 	        $msg =~ s/''\s*$//;
+		$msg =~ s/^\"//o;
+		$msg =~ s/\"$//o;
 
 		# Split up into separate paragraphs
 		#
