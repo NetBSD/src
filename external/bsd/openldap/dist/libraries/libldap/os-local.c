@@ -1,5 +1,5 @@
 /* os-local.c -- platform-specific domain socket code */
-/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.4 2008/05/20 00:05:30 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.3 2008/02/11 23:26:41 kurt Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -47,9 +47,6 @@
 #ifdef HAVE_IO_H
 #include <io.h>
 #endif /* HAVE_IO_H */
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
-#endif
 
 #include "ldap-int.h"
 #include "ldap_defaults.h"
@@ -92,9 +89,6 @@ ldap_pvt_socket(LDAP *ld)
 {
 	ber_socket_t s = socket(PF_LOCAL, SOCK_STREAM, 0);
 	oslocal_debug(ld, "ldap_new_socket: %d\n",s,0,0);
-#ifdef FD_CLOEXEC
-	fcntl(s, F_SETFD, FD_CLOEXEC);
-#endif
 	return ( s );
 }
 
@@ -234,7 +228,7 @@ sendcred:
 				msg.msg_accrights = (char *)fds;
 				msg.msg_accrightslen = sizeof(int);
 # endif /* HAVE_STRUCT_MSGHDR_MSG_CONTROL */
-				getpeername( s, sa, &salen );
+				getpeername( s, (struct sockaddr *) sa, &salen );
 				fchmod( fds[0], S_ISUID|S_IRWXU );
 				write( fds[1], sa, salen );
 				sendmsg( s, &msg, 0 );
