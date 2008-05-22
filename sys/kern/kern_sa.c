@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.8 2008/05/22 06:28:34 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.9 2008/05/22 06:35:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.8 2008/05/22 06:28:34 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.9 2008/05/22 06:35:19 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -813,7 +813,7 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			if (error) {
 				/* put l2 into l's VP LWP cache */
 				l2->l_savp = l->l_savp;
-				PHOLD(l2);
+				uvm_lwp_hold(l2);
 				lwp_unlock(l2);
 				mutex_enter(p->p_lock);
 				sa_putcachelwp(p, l2);
@@ -1470,7 +1470,7 @@ panic("Oops! Don't have a sleeper!\n");
 		if ((l->l_flag & LP_SA_PAGEFAULT) && sa_pagefault(l,
 			&sau->sau_event.ss_captured.ss_ctx) != 0) {
 			cpu_setfunc(l2, sa_switchcall, NULL);
-			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
+			sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_getcachelwp */
 			mutex_exit(p->p_lock);
 			mutex_exit(&sa->sa_mutex);
 			mi_switch(l);
@@ -1508,7 +1508,7 @@ panic("Oops! Don't have a sleeper!\n");
 		vp->savp_blocker = l;
 		vp->savp_lwp = l2;
 		setrunqueue(l2);
-		PRELE(l2); /* Remove the artificial hold-count */
+		uvm_lwp_rele(l2); /* Remove the artificial hold-count */
 		KDASSERT(l2 != l);
 		if (l->l_mutex != l2->l_mutex)  /* XXXSMP */
 			lwp_unlock(l2);
@@ -1616,7 +1616,7 @@ sa_switchcall(void *arg)
 				vp->savp_sleeper_upcall = sau;
 			else
 				sadata_upcall_free(sau);
-			PHOLD(l2);
+			uvm_lwp_hold(l2);
 			mutex_enter(p->p_lock);	/* XXXAD */
 			sa_putcachelwp(p, l2); /* sets LW_SA */
 			lwp_lock(l);
@@ -1667,7 +1667,7 @@ sa_newcachelwp(struct lwp *l)
 		 * newlwp helpfully puts it there. Unclear if newlwp should
 		 * be tweaked.
 		 */
-		PHOLD(l2);
+		uvm_lwp_hold(l2);
 		mutex_enter(p->p_lock);
 		l2->l_savp = l->l_savp;
 		sa_putcachelwp(p, l2);
@@ -1789,7 +1789,7 @@ sa_unblock_userret(struct lwp *l)
 		}
 
 		KDASSERT(l2 != NULL);
-		PHOLD(l2);
+		uvm_lwp_hold(l2);
 
 		KDASSERT(sast != NULL);
 		DPRINTFN(9,("sa_unblock_userret(%d.%d) using stack %p\n",
@@ -1901,7 +1901,7 @@ sa_upcall_userret(struct lwp *l)
 		l2->l_flag &= ~LW_SA_BLOCKING;
 		lwp_unlock(l2);
 		mutex_enter(p->p_lock);
-		sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
+		sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_setwoken */
 		mutex_exit(p->p_lock);
 	} else if (sast)
 		sa_setstackfree(sast, sa);
@@ -2101,7 +2101,7 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 			lwp_lock(l2);
 			l2->l_flag &= ~LW_SA_BLOCKING;
 			lwp_unlock(l2);
-			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
+			sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_setwoken */
 			mutex_exit(p->p_lock);
 
 			error = copyout(&e_ss->ss_captured.ss_ctx,
@@ -2223,7 +2223,7 @@ sa_setwoken(struct lwp *l)
 		    l->l_proc->p_pid, l->l_lid,
 		    vp_lwp->l_lid, vp_lwp->l_stat));
 		vp_lwp->l_flag &= ~LW_SA_IDLE;
-		PRELE(l);
+		uvm_lwp_rele(l);
 		return;
 	}
 #endif
