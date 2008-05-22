@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2008/05/12 14:41:07 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2008/05/22 13:55:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -238,8 +238,12 @@ extern struct cpu_info *cpu_info_list;
 #if !defined(__GNUC__) || defined(_LKM)
 /* For non-GCC and modules */
 struct cpu_info	*x86_curcpu(void);
-lwp_t	*x86_curlwp(void);
 void	cpu_set_curpri(int);
+# ifdef __GNUC__
+lwp_t	*x86_curlwp(void) __attribute__ ((const));
+# else
+lwp_t   *x86_curlwp(void);
+# endif
 #endif
 
 #define cpu_number() 		(cpu_index(curcpu()))

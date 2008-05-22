@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2008/05/11 16:57:43 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57 2008/05/22 13:55:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -57,7 +57,7 @@ x86_curcpu(void)
 	return ci;
 }
 
-__inline static lwp_t * __unused
+__inline static lwp_t * __unused __attribute__ ((const))
 x86_curlwp(void)
 {
 	lwp_t *l;
