@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.276.2.1 2008/05/10 23:49:08 wrstuden Exp $	*/
+/*	$NetBSD: proc.h,v 1.276.2.2 2008/05/22 06:29:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -277,6 +277,7 @@ struct proc {
 	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
 
 	int		p_traceflag;	/* k: Kernel trace points */
+	int		p_timerpend;	/* p: Pending itimer to run */
 	void		*p_tracep;	/* k: Trace private data */
 	struct vnode 	*p_textvp;	/* :: Vnode of executable */
 
