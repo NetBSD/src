@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.167 2008/03/04 22:15:16 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.168 2008/05/22 01:22:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167 2008/03/04 22:15:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.168 2008/05/22 01:22:17 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -373,7 +373,7 @@ cb_chipset(u_int32_t pci_id, int *flagp)
 
 	/* Loop over except the last default entry. */
 	for (yc = yc_chipsets; yc < yc_chipsets +
-	    sizeof(yc_chipsets) / sizeof(yc_chipsets[0]) - 1; yc++)
+	    __arraycount(yc_chipsets) - 1; yc++)
 		if (pci_id == yc->yc_id)
 			break;
 
