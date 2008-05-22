@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.511 2008/05/20 19:01:11 ad Exp $
+#	$NetBSD: bsd.own.mk,v 1.512 2008/05/22 13:40:30 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -552,7 +552,7 @@ MK${var}:=	yes
 	MKHESIOD MKHTML \
 	MKIEEEFP MKINET6 MKINFO MKIPFILTER MKISCSI \
 	MKKERBEROS \
-	MKLINKLIB MKLINT \
+	MKLINKLIB MKLINT MKLDAP \
 	MKMAN \
 	MKNLS \
 	MKOBJ \
@@ -663,7 +663,7 @@ ${var}?= no
 # USE_* options which default to "yes" unless their corresponding MK*
 # variable is set to "no".
 #
-.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_PAM USE_YP
+.for var in USE_HESIOD USE_INET6 USE_KERBEROS USE_LDAP USE_PAM USE_YP
 .if (${${var:S/USE_/MK/}} == "no")
 ${var}:= no
 .else
