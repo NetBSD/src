@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.186 2007/12/31 15:31:58 ad Exp $
+# $NetBSD: GENERIC,v 1.187 2008/05/22 19:49:43 hauke Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.186 $"
+#ident 		"GENERIC-$Revision: 1.187 $"
 
 maxusers	16		# estimated number of users
 
@@ -225,6 +225,12 @@ macfb*	at macvid?
 wsdisplay* at macfb? console ?
 wskbd*	at akbd? console ?
 wsmouse* at ams?
+
+
+# Centronics printer port
+
+# CSI Hurdler Centronics Parallel Interface
+cpi*	at nubus?
 
 
 # Serial Devices
