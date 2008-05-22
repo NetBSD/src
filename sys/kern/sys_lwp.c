@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.40 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.40.2.1 2008/05/22 06:25:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.40 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.40.2.1 2008/05/22 06:25:04 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,13 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 	bool inmem;
 	ucontext_t *newuc;
 	int error, lid;
+
+	mutex_enter(p->p_lock);
+	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		return EINVAL;
+	}
+	mutex_exit(p->p_lock);
 
 	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
 
@@ -189,6 +196,11 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 	int error;
 
 	mutex_enter(p->p_lock);
+	if ((p->p_sflag & PS_SA) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		return EINVAL;
+	}
+
 	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
 		mutex_exit(p->p_lock);
 		return ESRCH;
