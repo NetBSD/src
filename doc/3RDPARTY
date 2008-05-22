@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.602 2008/05/21 12:22:34 martti Exp $
+#	$NetBSD: 3RDPARTY,v 1.603 2008/05/22 14:19:25 lukem Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -596,6 +596,19 @@ Notes:
 We have lots of local bug fixes, and the point of importing 1.81.x would
 be to get multibyte characters support. For now this means waiting for
 additions in our libcurses.
+
+Package:	OpenLDAP
+Version:	2.4.9
+Current Vers:	2.4.9
+Maintainer:	OpenLDAP Foundation
+Archive Site:	http://www.openldap.org/
+Home Page:	http://www.openldap.org/
+Mailing List:
+Responsible:	lukem
+License:	BSD (3-clause)
+Notes:
+Imported into src/external/bsd/openldap/dist/
+Next import will need $ Id removal..
 
 Package:	OpenPAM
 Version:	20071221
