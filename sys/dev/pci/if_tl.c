@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.86 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.87 2008/05/22 01:23:48 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.86 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.87 2008/05/22 01:23:48 dyoung Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1253,10 +1253,7 @@ tl_intr(v)
 }
 
 static int
-tl_ifioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	ioctl_cmd_t cmd;
-	void *data;
+tl_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct tl_softc *sc = ifp->if_softc;
 	int s, error;
