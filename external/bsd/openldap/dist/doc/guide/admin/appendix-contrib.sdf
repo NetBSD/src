@@ -1,0 +1,53 @@
+# $OpenLDAP: pkg/openldap-guide/admin/appendix-contrib.sdf,v 1.1.2.3 2008/02/11 23:26:39 kurt Exp $
+# Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
+# COPYING RESTRICTIONS APPLY, see COPYRIGHT.
+
+H1: OpenLDAP Software Contributions
+
+The following sections attempt to summarize the various contributions in OpenLDAP
+software, as found in {{F:openldap_src/contrib}}
+
+H2: Client APIs
+
+Intro and discuss
+
+H3: ldapc++
+
+Intro and discuss
+
+H3: ldaptcl
+
+Intro and discuss
+
+H2: Overlays
+
+Intro and complete/expand correct names for below:
+
+H3: acl
+H3: addpartial
+H3: allop
+H3: comp_match
+H3: denyop
+H3: dsaschema
+H3: lastmod
+H3: passwd
+H3: proxyOld
+H3: smbk5pwd
+H3: trace
+
+
+H2: Tools
+
+Intro and discuss
+
+H3: Statistic Logging
+
+statslog
+
+H2: SLAPI Plugins
+
+Intro and discuss
+
+H3: addrdnvalues
+
+More
