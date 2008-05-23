@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1072 2008/05/22 14:24:42 lukem Exp $
+# $NetBSD: mi,v 1.1073 2008/05/23 00:20:37 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1116,6 +1116,7 @@
 ./usr/share/man/cat4/mac68k/adb.0		man-obsolete		obsolete
 ./usr/share/man/cat4/mac68k/ae.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/autoconf.0		man-sys-catman		.cat
+./usr/share/man/cat4/mac68k/cpi.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/iwm.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mac68k/kmem.0		man-sys-catman		.cat
@@ -3677,6 +3678,7 @@
 ./usr/share/man/man4/mac68k/adb.4		man-obsolete		obsolete
 ./usr/share/man/man4/mac68k/ae.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/autoconf.4		man-sys-man		.man
+./usr/share/man/man4/mac68k/cpi.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/intro.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/iwm.4		man-sys-man		.man
 ./usr/share/man/man4/mac68k/kmem.4		man-sys-man		.man
