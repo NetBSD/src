@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: z8536reg.h,v 1.2 2008/05/23 10:46:53 hauke Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
