@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: cpi_nubusvar.h,v 1.2 2008/05/23 10:46:10 hauke Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath

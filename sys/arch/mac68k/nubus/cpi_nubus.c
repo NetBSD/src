@@ -1,4 +1,4 @@
-/*	$NetBSD	*/
+/*	$NetBSD: cpi_nubus.c,v 1.2 2008/05/23 10:46:10 hauke Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.1 2008/05/22 19:49:43 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.2 2008/05/23 10:46:10 hauke Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
