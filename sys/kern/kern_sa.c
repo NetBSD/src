@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.10 2008/05/23 05:24:16 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.11 2008/05/23 06:52:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.10 2008/05/23 05:24:16 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.11 2008/05/23 06:52:19 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1707,7 +1707,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 /*
  * sa_getcachelwp
  *	Fetch a LWP from the cache.
- * Scheduler lock held on entry and exit.
+ * Called with p_lock held.
  */
 struct lwp *
 sa_getcachelwp(struct proc *p, struct sadata_vp *vp)

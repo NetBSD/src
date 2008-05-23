@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.4 2008/05/23 05:24:16 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.5 2008/05/23 06:52:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -113,8 +113,8 @@ struct sadata_vp {
 	struct lwp	**savp_wokenq_tailp; /* m: list of woken lwps */
 	vaddr_t	savp_faultaddr;		/* m: page fault address */
 	vaddr_t	savp_ofaultaddr;	/* m: old page fault address */
-	LIST_HEAD(, lwp)	savp_lwpcache; /* m: list of available lwps */
-	int	savp_ncached;		/* m: list length */
+	LIST_HEAD(, lwp)	savp_lwpcache; /* p: list of available lwps */
+	int	savp_ncached;		/* p: list length */
 	struct sadata_upcall	*savp_sleeper_upcall;
 					/* m: cached upcall data */
 	SIMPLEQ_HEAD(, sadata_upcall)	savp_upcalls; /* pending upcalls */

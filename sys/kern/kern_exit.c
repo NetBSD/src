@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.208.2.1 2008/05/10 23:49:03 wrstuden Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.208.2.2 2008/05/23 06:52:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208.2.1 2008/05/10 23:49:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208.2.2 2008/05/23 06:52:19 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -194,7 +194,7 @@ exit1(struct lwp *l, int rv)
 	struct pgrp	*pgrp;
 	ksiginfo_t	ksi;
 	ksiginfoq_t	kq;
-	int		wakeinit;
+	int		wakeinit, sa;
 
 	p = l->l_proc;
 
@@ -204,13 +204,25 @@ exit1(struct lwp *l, int rv)
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 
+	/*
+	 * Disable scheduler activation upcalls.  We're trying to get out of
+	 * here.
+	 */
+	sa = 0;
+	if (p->p_sa != NULL) {
+		lwp_lock(l);
+		l->l_flag &= ~L_SA;
+		lwp_unlock(l);
+		sa = 1;
+	}
+
 	p->p_sflag |= PS_WEXIT;
 
 	/*
 	 * Force all other LWPs to exit before we do.  Only then can we
 	 * begin to tear down the rest of the process state.
 	 */
-	if (p->p_nlwps > 1)
+	if (sa || p->p_nlwps > 1)
 		exit_lwps(l);
 
 	ksiginfo_queue_init(&kq);
@@ -595,6 +607,7 @@ exit_lwps(struct lwp *l)
 {
 	struct proc *p;
 	struct lwp *l2;
+	struct sadata_vp *vp;
 	int error;
 	lwpid_t waited;
 #if defined(MULTIPROCESSOR)
@@ -606,6 +619,33 @@ exit_lwps(struct lwp *l)
 	p = l->l_proc;
 	KASSERT(mutex_owned(p->p_lock));
 
+	if (p->p_sa != NULL) {
+		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+			/*
+			 * Make SA-cached LWPs normal process runnable
+			 * LWPs so that they'll also self-destruct.
+			 */
+			DPRINTF(("exit_lwps: Making cached LWPs of %d on "
+			    "VP %d runnable: ", p->p_pid, vp->savp_id));
+			while ((l2 = sa_getcachelwp(p, vp)) != 0) {
+				lwp_lock(l2);
+				l2->l_flag = (l2->l_flag & ~L_SA) | L_WEXIT;
+				l2->l_priority = l2->l_usrpri;
+
+				/* setrunnable() will release the mutex. */
+				setrunnable(l2);
+				DPRINTF(("%d ", l2->l_lid));
+			}
+			DPRINTF(("\n"));
+		}
+
+		/*
+		 * Clear wokenq, the LWPs on the queue will
+		 * run below.
+		 */
+		vp->savp_wokenq_head = NULL;
+	}
+
  retry:
 	/*
 	 * Interrupt LWPs in interruptable sleep, unsuspend suspended
@@ -615,6 +655,7 @@ exit_lwps(struct lwp *l)
 		if (l2 == l)
 			continue;
 		lwp_lock(l2);
+		l2->l_flag &= ~LW_SA;
 		l2->l_flag |= LW_WEXIT;
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & LW_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
@@ -908,6 +949,10 @@ proc_free(struct proc *p, struct rusage *ru)
 	if (ru != NULL)
 		*ru = p->p_stats->p_ru;
 	p->p_xstat = 0;
+
+	/* Release any SA state. */
+	if (p->p_sa)
+		sa_release(p);
 
 	/*
 	 * At this point we are going to start freeing the final resources. 
