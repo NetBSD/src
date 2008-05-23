@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.15.2.2 2008/05/14 19:54:12 wrstuden Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.15.2.3 2008/05/23 05:45:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15.2.2 2008/05/14 19:54:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15.2.3 2008/05/23 05:45:22 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -665,6 +665,15 @@ __sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, regist
 		return (ENOMEM);
 
 	mutex_enter(p->p_lock);
+
+	/*
+	 * SA processes can have no more than 1 sigwaiter.
+	 */
+	if ((p->p_sflag & PS_SA) != 0 && !LIST_EMPTY(&p->p_sigwaiters)) {
+		mutex_exit(p->p_lock);
+		error = EINVAL;
+		goto out;
+	}
 
 	if ((signum = sigget(&p->p_sigpend, ksi, 0, &l->l_sigwaitset)) == 0)
 		signum = sigget(&l->l_sigpend, ksi, 0, &l->l_sigwaitset);
