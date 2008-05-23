@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.26.2.1 2008/05/10 23:48:43 wrstuden Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.26.2.2 2008/05/23 04:30:02 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.26.2.1 2008/05/10 23:48:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.26.2.2 2008/05/23 04:30:02 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.26.2.1 2008/05/10 23:48:43 wrstu
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
+#define SA_NO_USERRET
 #include <machine/userret.h>
 
 #include <compat/linux/linux_syscall.h>
