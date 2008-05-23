@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpi.4,v 1.1 2008/05/22 19:49:43 hauke Exp $
+.\"	$NetBSD: cpi.4,v 1.2 2008/05/23 13:05:09 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Hauke Fath.  All rights reserved.
 .\"
@@ -74,10 +74,7 @@ The Z8536 INT line (pin 24) is wired to PB7 (pin 15).
 .Xr nubus 4 ,
 .Xr printcap 5
 .Pp
-.Xr IEEE Std 1284-1994
-.\"
-.\" Cross-references should be ordered by section (low to high), then in
-.\"     alphabetical order.
+.Tn IEEE Standard 1284-1994
 .\" .Sh STANDARDS
 .\"
 .Sh HISTORY
@@ -90,13 +87,11 @@ The
 .Nm
 driver was written by
 .An Hauke Fath
-.Aq hauke@NetBSD.org
+.Aq hauke@NetBSD.org .
 .\"
 .Sh CAVEATS
-The Hurdler CPI Nubus card does not use a TTL buffer to 
-drive the parallel interface. 
-Instead, the card's Z8536 CIO drives the printer port directly. 
-Printers terminating the parallel interface with less 
+The Hurdler CPI Nubus card does not use a TTL buffer to
+drive the parallel interface.
+Instead, the card's Z8536 CIO drives the printer port directly.
+Printers terminating the parallel interface with less
 than 2 kOhms may cause permanent damage to the Z8536 CIO.
-.\"
-.Sh BUGS
