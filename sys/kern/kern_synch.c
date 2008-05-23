@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.241.2.1 2008/05/10 23:49:04 wrstuden Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.241.2.2 2008/05/23 05:24:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241.2.1 2008/05/10 23:49:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.241.2.2 2008/05/23 05:24:16 wrstuden Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -267,6 +267,25 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 		mutex_enter(mtx);
 
 	return error;
+}
+
+/*
+ * sa_awaken:
+ *
+ *	We believe this lwp is an SA lwp. If it's yielding,
+ * let it know it needs to wake up.
+ *
+ *	We are called and exit with the lwp locked. We are
+ * called in the middle of wakeup operations, so we need
+ * to not touch the locks at all.
+ */
+void
+sa_awaken(struct lwp *l)
+{
+	/* LOCK_ASSERT(lwp_locked(l, NULL)); */
+
+	if (l == l->l_savp->savp_lwp && l->l_flag & LW_SA_YIELD)
+		l->l_flag &= ~LW_SA_IDLE;
 }
 
 /*
@@ -863,6 +882,9 @@ setrunnable(struct lwp *l)
 		lwp_unsleep(l, true);
 		return;
 	}
+
+	if (l->l_proc->p_sa)
+		sa_awaken(l);
 
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be

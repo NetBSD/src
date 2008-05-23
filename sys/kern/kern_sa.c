@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.9 2008/05/22 06:35:19 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.10 2008/05/23 05:24:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.9 2008/05/22 06:35:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.10 2008/05/23 05:24:16 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1347,7 +1347,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
  */
 
 void
-sa_switch(struct lwp *l, int type)
+sa_switch(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	struct sadata_vp *vp = l->l_savp;
@@ -1357,8 +1357,8 @@ sa_switch(struct lwp *l, int type)
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
-	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
-	    type, vp->savp_lwp ? vp->savp_lwp->l_lid : 0));
+	DPRINTFN(4,("sa_switch(%d.%d VP %d)\n", p->p_pid, l->l_lid,
+	    vp->savp_lwp ? vp->savp_lwp->l_lid : 0));
 
 	if (l->l_flag & LW_WEXIT) {
 		mi_switch(l);

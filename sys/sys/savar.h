@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.3 2008/05/22 06:30:32 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.4 2008/05/23 05:24:16 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -148,8 +148,9 @@ struct sadata_upcall *sadata_upcall_alloc(int);
 void	sadata_upcall_free(struct sadata_upcall *);
 void	sadata_upcall_drain(void);
 
+void	sa_awaken(struct lwp *);
 void	sa_release(struct proc *);
-void	sa_switch(struct lwp *, int);
+void	sa_switch(struct lwp *);
 void	sa_preempt(struct lwp *);
 void	sa_yield(struct lwp *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *,
