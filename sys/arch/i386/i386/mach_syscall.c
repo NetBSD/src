@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.30 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.30.2.1 2008/05/23 04:30:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.30 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.30.2.1 2008/05/23 04:30:03 wrstuden Exp $");
 
 #include "opt_vm86.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.30 2008/04/28 20:23:24 martin Exp
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
+#define SA_NO_USERRET
 #include <machine/userret.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscall.h>
