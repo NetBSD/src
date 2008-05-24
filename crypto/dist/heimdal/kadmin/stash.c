@@ -35,7 +35,7 @@
 #include "kadmin-commands.h"
 
 __RCSID("$Heimdal: stash.c 22251 2007-12-09 05:58:43Z lha $"
-        "$NetBSD: stash.c,v 1.1 2008/03/22 08:37:02 mlelstv Exp $");
+        "$NetBSD: stash.c,v 1.2 2008/05/24 19:32:28 christos Exp $");
 
 extern int local_flag;
 
@@ -88,8 +88,10 @@ stash(struct stash_options *opt, int argc, char **argv)
 	    n = read(opt->master_key_fd_integer, buf, sizeof(buf));
 	    if(n == 0)
 		krb5_warnx(context, "end of file reading passphrase");
-	    else if(n < 0)
+	    else if(n < 0) {
 		krb5_warn(context, errno, "reading passphrase");
+		n = 0;
+	    }
 	    buf[n] = '\0';
 	    buf[strcspn(buf, "\r\n")] = '\0';
 	} else {
