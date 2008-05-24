@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.19 2008/02/23 21:10:54 christos Exp $	*/
+/*	$NetBSD: column.c,v 1.20 2008/05/24 14:45:46 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.19 2008/02/23 21:10:54 christos Exp $");
+__RCSID("$NetBSD: column.c,v 1.20 2008/05/24 14:45:46 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -271,11 +271,7 @@ input(FILE *fp)
 		list = ecalloc((maxentry = DEFNUM), sizeof(*list));
 	while ((buf = fgetln(fp, &blen)) != NULL) {
 		buf = estrndup(buf, blen);
-		for (p = buf; p < &buf[blen] &&
-		    isspace((unsigned char)*p); ++p) {
-			free(buf);
-			continue;
-		}
+		for (p = buf; *p && isspace((unsigned char)*p); ++p);
 		if (!*p) {
 			free(buf);
 			continue;
