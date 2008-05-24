@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.25 2008/05/07 10:16:41 tron Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.26 2008/05/24 14:24:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -259,14 +259,12 @@ struct _prop_object_iterator {
 #define	_PROP_MUTEX_LOCK(x)	simple_lock(&(x))
 #define	_PROP_MUTEX_UNLOCK(x)	simple_unlock(&(x))
 
-#define	_PROP_RWLOCK_DECL(x)		krwlock_t x ;
-#define	_PROP_RWLOCK_INIT(x)		rw_init(&(x))
-#define	_PROP_RWLOCK_RDLOCK(x)		rw_enter(&(x), RW_READER)
-#define	_PROP_RWLOCK_WRLOCK(x)		rw_enter(&(x), RW_WRITER)
-#define	_PROP_RWLOCK_UNLOCK(x)		rw_exit(&(x))
-#define	_PROP_RWLOCK_DESTROY(x)		rw_destroy(&(x))
-#define	_PROP_RWLOCK_OWNED(x)		_PROP_ASSERT(rw_lock_held(&(x)))
-#define	_PROP_RWLOCK_TRYRDLOCK(x)	rw_tryenter(&(x), RW_READER)
+#define	_PROP_RWLOCK_DECL(x)	krwlock_t x ;
+#define	_PROP_RWLOCK_INIT(x)	rw_init(&(x))
+#define	_PROP_RWLOCK_RDLOCK(x)	rw_enter(&(x), RW_READER)
+#define	_PROP_RWLOCK_WRLOCK(x)	rw_enter(&(x), RW_WRITER)
+#define	_PROP_RWLOCK_UNLOCK(x)	rw_exit(&(x))
+#define	_PROP_RWLOCK_DESTROY(x)	rw_destroy(&(x))
 
 #elif defined(_STANDALONE)
 
@@ -297,14 +295,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_MUTEX_LOCK(x)		/* nothing */
 #define	_PROP_MUTEX_UNLOCK(x)		/* nothing */
 
-#define	_PROP_RWLOCK_DECL(x)		/* nothing */
-#define	_PROP_RWLOCK_INIT(x)		/* nothing */
-#define	_PROP_RWLOCK_RDLOCK(x)		/* nothing */
-#define	_PROP_RWLOCK_WRLOCK(x)		/* nothing */
-#define	_PROP_RWLOCK_UNLOCK(x)		/* nothing */
-#define	_PROP_RWLOCK_DESTROY(x)		/* nothing */
-#define	_PROP_RWLOCK_OWNED(x)		/* nothing */
-#define	_PROP_RWLOCK_TRYRDLOCK(x)	0
+#define	_PROP_RWLOCK_DECL(x)	/* nothing */
+#define	_PROP_RWLOCK_INIT(x)	/* nothing */
+#define	_PROP_RWLOCK_RDLOCK(x)	/* nothing */
+#define	_PROP_RWLOCK_WRLOCK(x)	/* nothing */
+#define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
+#define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
 
 #else
 
@@ -342,15 +338,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_MUTEX_LOCK(x)		mutex_lock(&(x))
 #define	_PROP_MUTEX_UNLOCK(x)		mutex_unlock(&(x))
 
-#define	_PROP_RWLOCK_DECL(x)		rwlock_t x ;
-#define	_PROP_RWLOCK_INIT(x)		rwlock_init(&(x), NULL)
-#define	_PROP_RWLOCK_RDLOCK(x)		rwlock_rdlock(&(x))
-#define	_PROP_RWLOCK_WRLOCK(x)		rwlock_wrlock(&(x))
-#define	_PROP_RWLOCK_UNLOCK(x)		rwlock_unlock(&(x))
-#define	_PROP_RWLOCK_DESTROY(x)		rwlock_destroy(&(x))
-#define	_PROP_RWLOCK_OWNED(x)		/* nothing */
-#define _PROP_RWLOCK_TRYRDLOCK(x)	rwlock_tryrdlock(&(x))
-
+#define	_PROP_RWLOCK_DECL(x)	rwlock_t x ;
+#define	_PROP_RWLOCK_INIT(x)	rwlock_init(&(x), NULL)
+#define	_PROP_RWLOCK_RDLOCK(x)	rwlock_rdlock(&(x))
+#define	_PROP_RWLOCK_WRLOCK(x)	rwlock_wrlock(&(x))
+#define	_PROP_RWLOCK_UNLOCK(x)	rwlock_unlock(&(x))
+#define	_PROP_RWLOCK_DESTROY(x)	rwlock_destroy(&(x))
 #elif defined(HAVE_NBTOOL_CONFIG_H)
 /*
  * None of NetBSD's build tools are multi-threaded.
@@ -359,15 +352,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_MUTEX_LOCK(x)		/* nothing */
 #define	_PROP_MUTEX_UNLOCK(x)		/* nothing */
 
-#define	_PROP_RWLOCK_DECL(x)		/* nothing */
-#define	_PROP_RWLOCK_INIT(x)		/* nothing */
-#define	_PROP_RWLOCK_RDLOCK(x)		/* nothing */
-#define	_PROP_RWLOCK_WRLOCK(x)		/* nothing */
-#define	_PROP_RWLOCK_UNLOCK(x)		/* nothing */
-#define	_PROP_RWLOCK_DESTROY(x)		/* nothing */
-#define	_PROP_RWLOCK_OWNED(x)		/* nothing */
-#define	_PROP_RWLOCK_TRYRDLOCK(x)	0
-
+#define	_PROP_RWLOCK_DECL(x)	/* nothing */
+#define	_PROP_RWLOCK_INIT(x)	/* nothing */
+#define	_PROP_RWLOCK_RDLOCK(x)	/* nothing */
+#define	_PROP_RWLOCK_WRLOCK(x)	/* nothing */
+#define	_PROP_RWLOCK_UNLOCK(x)	/* nothing */
+#define	_PROP_RWLOCK_DESTROY(x)	/* nothing */
 #else
 /*
  * Use pthread mutexes everywhere else.
@@ -378,15 +368,12 @@ void *		_prop_standalone_realloc(void *, size_t);
 #define	_PROP_MUTEX_LOCK(x)	pthread_mutex_lock(&(x))
 #define	_PROP_MUTEX_UNLOCK(x)	pthread_mutex_unlock(&(x))
 
-#define	_PROP_RWLOCK_DECL(x)		pthread_rwlock_t x ;
-#define	_PROP_RWLOCK_INIT(x)		pthread_rwlock_init(&(x), NULL)
-#define	_PROP_RWLOCK_RDLOCK(x)		pthread_rwlock_rdlock(&(x))
-#define	_PROP_RWLOCK_WRLOCK(x)		pthread_rwlock_wrlock(&(x))
-#define	_PROP_RWLOCK_UNLOCK(x)		pthread_rwlock_unlock(&(x))
-#define	_PROP_RWLOCK_DESTROY(x)		pthread_rwlock_destroy(&(x))
-#define	_PROP_RWLOCK_OWNED(x)		/* nothing */
-#define	_PROP_RWLOCK_TRYRDLOCK(x)	pthread_rwlock_tryrdlock(x)
-
+#define	_PROP_RWLOCK_DECL(x)	pthread_rwlock_t x ;
+#define	_PROP_RWLOCK_INIT(x)	pthread_rwlock_init(&(x), NULL)
+#define	_PROP_RWLOCK_RDLOCK(x)	pthread_rwlock_rdlock(&(x))
+#define	_PROP_RWLOCK_WRLOCK(x)	pthread_rwlock_wrlock(&(x))
+#define	_PROP_RWLOCK_UNLOCK(x)	pthread_rwlock_unlock(&(x))
+#define	_PROP_RWLOCK_DESTROY(x)	pthread_rwlock_destroy(&(x))
 #endif
 
 #endif /* _KERNEL */
