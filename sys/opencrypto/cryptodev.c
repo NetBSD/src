@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.43 2008/05/24 16:29:34 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.44 2008/05/24 16:42:00 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.43 2008/05/24 16:29:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.44 2008/05/24 16:42:00 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,7 +411,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 
 	if (cse->thash) {
 		crda = crp->crp_desc;
-		if (cse->txform)
+		if (cse->txform && crda)
 			crde = crda->crd_next;
 	} else {
 		if (cse->txform)
@@ -1003,7 +1003,7 @@ cryptodev_mop(struct fcrypt *fcr,
 
 		if (cse->thash) {
 			crda = crp->crp_desc;
-			if (cse->txform)
+			if (cse->txform && crda)
 				crde = crda->crd_next;
 		} else {
 			if (cse->txform)
