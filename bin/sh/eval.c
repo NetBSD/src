@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.91 2008/05/24 19:06:43 tron Exp $	*/
+/*	$NetBSD: eval.c,v 1.92 2008/05/24 22:24:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.91 2008/05/24 19:06:43 tron Exp $");
+__RCSID("$NetBSD: eval.c,v 1.92 2008/05/24 22:24:32 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,19 +232,20 @@ evaltree(union node *n, int flags)
 	    getpid(), n, n->type, flags));
 	switch (n->type) {
 	case NSEMI:
-		do_etest = !(flags & EV_TESTED);
 		evaltree(n->nbinary.ch1, flags & EV_TESTED);
 		if (evalskip)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NAND:
+		do_etest = true;
 		evaltree(n->nbinary.ch1, EV_TESTED);
 		if (evalskip || exitstatus != 0)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NOR:
+		do_etest = true;
 		evaltree(n->nbinary.ch1, EV_TESTED);
 		if (evalskip || exitstatus == 0)
 			goto out;
@@ -257,8 +258,8 @@ evaltree(union node *n, int flags)
 		popredir();
 		break;
 	case NSUBSHELL:
+		do_etest = true;
 		evalsubshell(n, flags);
-		do_etest = !(flags & EV_TESTED);
 		break;
 	case NBACKGND:
 		evalsubshell(n, flags);
@@ -290,17 +291,17 @@ evaltree(union node *n, int flags)
 		exitstatus = 0;
 		break;
 	case NNOT:
+		do_etest = true;
 		evaltree(n->nnot.com, EV_TESTED);
 		exitstatus = !exitstatus;
-		do_etest = !(flags & EV_TESTED);
 		break;
 	case NPIPE:
+		do_etest = true;
 		evalpipe(n);
-		do_etest = !(flags & EV_TESTED);
 		break;
 	case NCMD:
+		do_etest = true;
 		evalcommand(n, flags, (struct backcmd *)NULL);
-		do_etest = !(flags & EV_TESTED);
 		break;
 	default:
 		out1fmt("Node type = %d\n", n->type);
@@ -310,8 +311,10 @@ evaltree(union node *n, int flags)
 out:
 	if (pendingsigs)
 		dotrap();
-	if ((flags & EV_EXIT) != 0 || (eflag && exitstatus != 0 && do_etest))
+	if ((flags & EV_EXIT) != 0 ||
+	    (eflag && exitstatus != 0 && do_etest && !(flags & EV_TESTED))) {
 		exitshell(exitstatus);
+	}
 }
 
 
