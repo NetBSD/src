@@ -1,44 +1,57 @@
-/*	$NetBSD: acpi_func.h,v 1.9 2008/04/11 11:24:41 jmcneill Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.10 2008/05/24 22:02:31 jmcneill Exp $	*/
 
 #include <machine/cpufunc.h>
+
+#include <sys/atomic.h>
 
 #if 0
 #define	ACPI_DISABLE_IRQS()		disable_intr()
 #define	ACPI_ENABLE_IRQS()		enable_intr()
 #endif
 
-#define	ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq) \
-do { \
-	__asm volatile( \
-	"1:	movl %1,%%eax		;" \
-	"	movl %%eax,%%edx	;" \
-	"	andl %2,%%edx		;" \
-	"	btsl $0x1,%%edx		;" \
-	"	adcl $0x0,%%edx		;" \
-	"	lock			;" \
-	"	cmpxchgl %%edx,%1	;" \
-	"	jnz 1b			;" \
-	"	andb $0x3,%%dl		;" \
-	"	cmpb $0x3,%%dl		;" \
-	"	sbbl %%eax,%%eax	;" \
-	: "=&a" (Acq), "+m" (*GLptr) \
-	: "i" (~1L) \
-	: "edx"); \
-	(Acq) = -1; \
+#define GL_ACQUIRED	(-1)
+#define GL_BUSY		0
+#define GL_BIT_PENDING	1
+#define GL_BIT_OWNED	2
+#define GL_BIT_MASK	(GL_BIT_PENDING | GL_BIT_OWNED)
+
+#define ACPI_ACQUIRE_GLOBAL_LOCK(GLptr, Acq) 				\
+do { 									\
+	(Acq) = acpi_acquire_global_lock(&((GLptr)->GlobalLock));	\
 } while (0)
 
-#define ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq) \
-do { \
-	__asm volatile( \
-	"1:	movl %1,%%eax		;" \
-	"	andl %2,%%edx		;" \
-	"	lock			;" \
-	"	cmpxchgl %%edx,%1	;" \
-	"	jnz 1b			;" \
-	"	andl $0x1,%%eax		;" \
-	: "=&a" (Acq), "+m" (*GLptr) \
-	: "i" (~3L) \
-	: "edx"); \
+#define ACPI_RELEASE_GLOBAL_LOCK(GLptr, Acq) 				\
+do {									\
+	(Acq) = acpi_release_global_lock(&((GLptr)->GlobalLock));	\
 } while (0)
+
+static inline int
+acpi_acquire_global_lock(uint32_t *lock)
+{
+	uint32_t new, old, val;
+
+	do {
+		old = *lock;
+		new = ((old & ~GL_BIT_MASK) | GL_BIT_OWNED) |
+		    ((old >> 1) & GL_BIT_PENDING);
+		val = atomic_cas_uint(lock, old, new);
+	} while (__predict_false(val != old));
+
+	return ((new < GL_BIT_MASK) ? GL_ACQUIRED : GL_BUSY);
+}
+
+static inline int
+acpi_release_global_lock(uint32_t *lock)
+{
+	uint32_t new, old, val;
+
+	do {
+		old = *lock;
+		new = old & ~GL_BIT_MASK;
+		val = atomic_cas_uint(lock, old, new);
+	} while (__predict_false(val != old));
+
+	return old & GL_BIT_PENDING;
+}
 
 #define	ACPI_FLUSH_CPU_CACHE()		wbinvd()
