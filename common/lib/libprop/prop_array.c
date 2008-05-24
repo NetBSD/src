@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.17 2008/05/24 14:24:04 yamt Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.18 2008/05/24 14:32:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@ static bool	_prop_array_equals(prop_object_t, prop_object_t,
 				   void **, void **,
 				   prop_object_t *, prop_object_t *);
 static void	_prop_array_equals_finish(prop_object_t, prop_object_t);
+static prop_object_iterator_t _prop_array_iterator_locked(prop_array_t);
+static prop_object_t _prop_array_iterator_next_object_locked(void *);
+static void _prop_array_iterator_reset_locked(void *);
 
 static const struct _prop_object_type _prop_object_type_array = {
 	.pot_type		=	PROP_TYPE_ARRAY,
@@ -160,14 +163,14 @@ _prop_array_externalize(struct _prop_object_externalize_context *ctx,
 	    _prop_object_externalize_append_char(ctx, '\n') == false)
 		goto out;
 
-	pi = prop_array_iterator(pa);
+	pi = _prop_array_iterator_locked(pa);
 	if (pi == NULL)
 		goto out;
 	
 	ctx->poec_depth++;
 	_PROP_ASSERT(ctx->poec_depth != 0);
 
-	while ((po = prop_object_iterator_next(pi)) != NULL) {
+	while ((po = _prop_array_iterator_next_object_locked(pi)) != NULL) {
 		if ((*po->po_type->pot_extern)(ctx, po) == false) {
 			prop_object_iterator_release(pi);
 			goto out;
@@ -307,15 +310,13 @@ _prop_array_expand(prop_array_t pa, unsigned int capacity)
 }
 
 static prop_object_t
-_prop_array_iterator_next_object(void *v)
+_prop_array_iterator_next_object_locked(void *v)
 {
 	struct _prop_array_iterator *pai = v;
 	prop_array_t pa = pai->pai_base.pi_obj;
 	prop_object_t po = NULL;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
-
-	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
 
 	if (pa->pa_version != pai->pai_base.pi_version)
 		goto out;	/* array changed during iteration */
@@ -329,23 +330,46 @@ _prop_array_iterator_next_object(void *v)
 	pai->pai_index++;
 
  out:
+	return (po);
+}
+
+static prop_object_t
+_prop_array_iterator_next_object(void *v)
+{
+	struct _prop_array_iterator *pai = v;
+	prop_array_t pa __unused = pai->pai_base.pi_obj;
+	prop_object_t po;
+
+	_PROP_ASSERT(prop_object_is_array(pa));
+
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	po = _prop_array_iterator_next_object_locked(pai);
 	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 	return (po);
 }
 
 static void
-_prop_array_iterator_reset(void *v)
+_prop_array_iterator_reset_locked(void *v)
 {
 	struct _prop_array_iterator *pai = v;
 	prop_array_t pa = pai->pai_base.pi_obj;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
 
-	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
-
 	pai->pai_index = 0;
 	pai->pai_base.pi_version = pa->pa_version;
+}
 
+static void
+_prop_array_iterator_reset(void *v)
+{
+	struct _prop_array_iterator *pai = v;
+	prop_array_t pa __unused = pai->pai_base.pi_obj;
+
+	_PROP_ASSERT(prop_object_is_array(pa));
+
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	_prop_array_iterator_reset_locked(pai);
 	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 }
 
@@ -482,13 +506,8 @@ prop_array_ensure_capacity(prop_array_t pa, unsigned int capacity)
 	return (rv);
 }
 
-/*
- * prop_array_iterator --
- *	Return an iterator for the array.  The array is retained by
- *	the iterator.
- */
-prop_object_iterator_t
-prop_array_iterator(prop_array_t pa)
+static prop_object_iterator_t
+_prop_array_iterator_locked(prop_array_t pa)
 {
 	struct _prop_array_iterator *pai;
 
@@ -502,9 +521,25 @@ prop_array_iterator(prop_array_t pa)
 	pai->pai_base.pi_reset = _prop_array_iterator_reset;
 	prop_object_retain(pa);
 	pai->pai_base.pi_obj = pa;
-	_prop_array_iterator_reset(pai);
+	_prop_array_iterator_reset_locked(pai);
 
 	return (&pai->pai_base);
+}
+
+/*
+ * prop_array_iterator --
+ *	Return an iterator for the array.  The array is retained by
+ *	the iterator.
+ */
+prop_object_iterator_t
+prop_array_iterator(prop_array_t pa)
+{
+	prop_object_iterator_t pi;
+
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
+	pi = _prop_array_iterator_locked(pa);
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
+	return (pi);
 }
 
 /*
