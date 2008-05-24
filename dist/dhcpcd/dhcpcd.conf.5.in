@@ -1,0 +1,125 @@
+.\" Copyright 2006-2008 Roy Marples
+.\" All rights reserved
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd May 20, 2008
+.Dt DHCPCD.CONF 5 SMM
+.Sh NAME
+.Nm dhcpcd.conf
+.Nd dhcpcd configuration file 
+.Sh DESCRIPTION
+Although
+.Nm dhcpcd
+can do everything from the command line, there are cases where it's just easier
+to do it once in a configuration file.
+Most of the options found in
+.Xr dhcpcd 8
+can be used here.
+The first word on the line is the option and the rest of the line is the value.
+Leading and trailing whitespace for the option and value are trimmed.
+You can escape characters in the value using the \\ character.
+.Pp
+Blank lines and lines starting with # are ignored.
+.Pp
+Here's a list of available options:
+.Bl -tag -width indent
+.It Ic classid Ar string
+Change the default classid sent from dhcpcd-version.
+If not set then none is sent.
+.It Ic clientid Ar string
+Change the default clientid sent from the interface hardware address.
+If the string is of the format 01:02:03 then it is encoded as hex.
+If not set then none is sent.
+.It Ic duid
+Generate an
+.Rs
+.%T "RFC 4361"
+.Re
+compliant clientid.
+This requires persistent storage and not all DHCP servers work with it so it's
+not enabled by default.
+The duid generated will be held in
+.Pa @SYSCONFDIR@/dhcpcd.duid
+and should not be copied to other hosts.
+.It Ic hostname Ar name
+Sends specified
+.Ar hostname 
+to the DHCP server so it can be registered in DNS. If
+.Ar hostname
+if a FQDN (ie, contains a .) then it will be encoded as such.
+.It Ic fqdn Op none | ptr | both
+none disables FQDN encoding, ptr just asks the DHCP server to update the PTR
+record of the host in DNS whereas both also updates the A record.
+The current hostname or the hostname specified using the
+.Fl h , -hostname
+option must be a FQDN.
+.Nm dhcpcd
+itself never does any DNS updates.
+.It Ic interface Ar interface
+Subsequent options are only parsed for this
+.Ar interface .
+.It Ic leasetime Ar seconds
+Request a leasetime of
+.Ar seconds .
+.It Ic noarp
+Don't send any ARP requests.
+This also disables IPv4LL.
+.It Ic nogateway
+Don't install any default routes.
+.It Ic nohook Ar script
+Don't run this hook script.
+Matches full name, or prefixed with 2 numbers optionally ending with
+.Pa .sh .
+.It Ic noipv4ll
+Don't attempt to obtain an IPv4LL address if we failed to get one via DHCP.
+See
+.Rs
+.%T "RFC 3927"
+.Re
+.It Ic option Ar dhcp-option
+Requests the
+.Ar dhcp-option
+from the server.
+It can be a variable to be used in
+.Xr dhcpcd-run-hooks 8
+or the numerical value.
+You can specify more seperated by commas, spaces or more option lines.
+.It Ic script Ar script
+Use
+.Ar script
+instead of the default
+.Pa @SCRIPT@ .
+.It Ic timeout Ar seconds
+The default timeout for waiting for a DHCP response is 20 seconds which may
+be too long or too short and can be changed here.
+.It Ic userclass Ar string
+Tag the DHCP messages with the userclass.
+You can specify more than one.
+.El
+.Sh SEE ALSO
+.Xr dhcpcd-run-hooks 8 ,
+.Xr dhcpcd 8
+.Sh AUTHORS
+.An Roy Marples <roy@marples.name>
+.Sh BUGS
+Please report them to http://bugs.marples.name
