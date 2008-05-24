@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.164 2008/05/01 09:21:56 drochner Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.165 2008/05/24 18:43:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.164 2008/05/01 09:21:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.165 2008/05/24 18:43:02 christos Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -850,8 +850,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	if (l)
-		l->l_ru.ru_msgsnd++;
+	l->l_ru.ru_msgsnd++;
 	if (control)
 		clen = control->m_len;
  restart:
