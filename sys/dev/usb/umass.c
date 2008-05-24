@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.127 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: umass.c,v 1.128 2008/05/24 16:40:58 cube Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.127 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.128 2008/05/24 16:40:58 cube Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -297,9 +297,11 @@ USB_ATTACH(umass)
 	usbd_status err;
 	int i, bno, error;
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_udev = uaa->device;
@@ -404,14 +406,12 @@ USB_ATTACH(umass)
 		break;
 	}
 
-	printf("%s: using %s over %s\n", USBDEVNAME(sc->sc_dev), sCommand,
-	       sWire);
+	aprint_normal_dev(self, "using %s over %s\n", sCommand, sWire);
 
 	if (quirk != NULL && quirk->uq_init != NULL) {
 		err = (*quirk->uq_init)(sc);
 		if (err) {
-			printf("%s: quirk init failed\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self, "quirk init failed\n");
 			umass_disco(sc);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -432,8 +432,8 @@ USB_ATTACH(umass)
 	for (i = 0 ; i < id->bNumEndpoints ; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor\n");
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN
@@ -460,8 +460,8 @@ USB_ATTACH(umass)
 	if (!sc->sc_epaddr[UMASS_BULKIN] || !sc->sc_epaddr[UMASS_BULKOUT] ||
 	    (sc->sc_wire == UMASS_WPROTO_CBI_I &&
 	     !sc->sc_epaddr[UMASS_INTRIN])) {
-		printf("%s: endpoint not found %u/%u/%u\n",
-		       USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN],
+		aprint_error_dev(self, "endpoint not found %u/%u/%u\n",
+		       sc->sc_epaddr[UMASS_BULKIN],
 		       sc->sc_epaddr[UMASS_BULKOUT],
 		       sc->sc_epaddr[UMASS_INTRIN]);
 		USB_ATTACH_ERROR_RETURN;
@@ -473,8 +473,8 @@ USB_ATTACH(umass)
 	if (sc->sc_wire == UMASS_WPROTO_BBB) {
 		err = umass_bbb_get_max_lun(sc, &sc->maxlun);
 		if (err) {
-			printf("%s: unable to get Max Lun: %s\n",
-			       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			aprint_error_dev(self, "unable to get Max Lun: %s\n",
+			    usbd_errstr(err));
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (sc->maxlun > 0)
@@ -491,8 +491,8 @@ USB_ATTACH(umass)
 				USBD_EXCLUSIVE_USE,
 				&sc->sc_pipe[UMASS_BULKOUT]);
 	if (err) {
-		printf("%s: cannot open %u-out pipe (bulk)\n",
-		       USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKOUT]);
+		aprint_error_dev(self, "cannot open %u-out pipe (bulk)\n",
+		    sc->sc_epaddr[UMASS_BULKOUT]);
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -502,8 +502,8 @@ USB_ATTACH(umass)
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_BULKIN]);
 	if (err) {
-		printf("%s: could not open %u-in pipe (bulk)\n",
-		       USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN]);
+		aprint_error_dev(self, "could not open %u-in pipe (bulk)\n",
+		    sc->sc_epaddr[UMASS_BULKIN]);
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -526,9 +526,8 @@ USB_ATTACH(umass)
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_INTRIN]);
 		if (err) {
-			printf("%s: couldn't open %u-in (intr)\n",
-			       USBDEVNAME(sc->sc_dev),
-			       sc->sc_epaddr[UMASS_INTRIN]);
+			aprint_error_dev(self, "couldn't open %u-in (intr)\n",
+			    sc->sc_epaddr[UMASS_INTRIN]);
 			umass_disco(sc);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -541,8 +540,7 @@ USB_ATTACH(umass)
 	for (i = 0; i < XFER_NR; i++) {
 		sc->transfer_xfer[i] = usbd_alloc_xfer(uaa->device);
 		if (sc->transfer_xfer[i] == NULL) {
-			printf("%s: Out of memory\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self, "Out of memory\n");
 			umass_disco(sc);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -561,8 +559,7 @@ USB_ATTACH(umass)
 		sc->data_buffer = usbd_alloc_buffer(sc->transfer_xfer[bno],
 						    UMASS_MAX_TRANSFER_SIZE);
 		if (sc->data_buffer == NULL) {
-			printf("%s: no buffer memory\n",
-			       USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self, "no buffer memory\n");
 			umass_disco(sc);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -592,7 +589,7 @@ USB_ATTACH(umass)
 #if NSCSIBUS > 0
 		error = umass_scsi_attach(sc);
 #else
-		printf("%s: scsibus not configured\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "scsibus not configured\n");
 #endif
 		break;
 
@@ -601,8 +598,7 @@ USB_ATTACH(umass)
 #if NATAPIBUS > 0
 		error = umass_atapi_attach(sc);
 #else
-		printf("%s: atapibus not configured\n",
-		       USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "atapibus not configured\n");
 #endif
 		break;
 
@@ -610,18 +606,18 @@ USB_ATTACH(umass)
 #if NWD > 0
 		error = umass_isdata_attach(sc);
 #else
-		printf("%s: isdata not configured\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "isdata not configured\n");
 #endif
 		break;
 
 	default:
-		printf("%s: command protocol=0x%x not supported\n",
-		       USBDEVNAME(sc->sc_dev), sc->sc_cmd);
+		aprint_error_dev(self, "command protocol=0x%x not supported\n",
+		    sc->sc_cmd);
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
 	if (error) {
-		printf("%s: bus attach failed\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "bus attach failed\n");
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -657,7 +653,7 @@ USB_DETACH(umass)
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
 #ifdef DIAGNOSTIC
-		printf("%s: waiting for refcnt\n", USBDEVNAME(sc->sc_dev));
+		aprint_normal_dev(self, "waiting for refcnt\n");
 #endif
 		/* Wait for processes to go away. */
 		usb_detach_wait(USBDEV(sc->sc_dev));
@@ -684,9 +680,9 @@ USB_DETACH(umass)
 }
 
 int
-umass_activate(struct device *dev, enum devact act)
+umass_activate(device_t dev, enum devact act)
 {
-	struct umass_softc *sc = (struct umass_softc *)dev;
+	struct umass_softc *sc = device_private(dev);
 	struct umassbus_softc *scbus = sc->bus;
 	int rv = 0;
 

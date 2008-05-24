@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.20 2008/04/05 16:35:35 cegger Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.21 2008/05/24 16:40:58 cube Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.20 2008/04/05 16:35:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.21 2008/05/24 16:40:58 cube Exp $");
 
 #include "bpfilter.h"
 
@@ -304,17 +304,17 @@ USB_ATTACH(rum)
 	int i, ntries;
 	uint32_t tmp;
 
+	sc->sc_dev = self;
 	sc->sc_udev = uaa->device;
 	sc->sc_flags = 0;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_no(sc->sc_udev, RT2573_CONFIG_NO, 0) != 0) {
-		printf("%s: could not set configuration no\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not set configuration no\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -322,8 +322,7 @@ USB_ATTACH(rum)
 	error = usbd_device2interface_handle(sc->sc_udev, RT2573_IFACE_INDEX,
 	    &sc->sc_iface);
 	if (error != 0) {
-		printf("%s: could not get interface handle\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "could not get interface handle\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -336,8 +335,8 @@ USB_ATTACH(rum)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			printf("%s: no endpoint descriptor for iface %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self,
+			    "no endpoint descriptor for iface %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 
@@ -349,7 +348,7 @@ USB_ATTACH(rum)
 			sc->sc_tx_no = ed->bEndpointAddress;
 	}
 	if (sc->sc_rx_no == -1 || sc->sc_tx_no == -1) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "missing endpoint\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -367,16 +366,16 @@ USB_ATTACH(rum)
 		DELAY(1000);
 	}
 	if (ntries == 1000) {
-		printf("%s: timeout waiting for chip to settle\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "timeout waiting for chip to settle\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	/* retrieve MAC address and various other things from EEPROM */
 	rum_read_eeprom(sc);
 
-	printf("%s: MAC/BBP RT%04x (rev 0x%05x), RF %s, address %s\n",
-	    USBDEVNAME(sc->sc_dev), sc->macbbp_rev, tmp,
+	aprint_normal_dev(self,
+	    "MAC/BBP RT%04x (rev 0x%05x), RF %s, address %s\n",
+	    sc->macbbp_rev, tmp,
 	    rum_get_rf(sc->rf_rev), ether_sprintf(ic->ic_myaddr));
 
 	ic->ic_ifp = ifp;
@@ -2171,7 +2170,8 @@ rum_prepare_beacon(struct rum_softc *sc)
 
 	m0 = ieee80211_beacon_alloc(ic, ic->ic_bss, &sc->sc_bo);
 	if (m0 == NULL) {
-		aprint_error_dev(&sc->sc_dev, "could not allocate beacon frame\n");
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate beacon frame\n");
 		return ENOBUFS;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.40 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.41 2008/05/24 16:40:58 cube Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.40 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.41 2008/05/24 16:40:58 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,13 +76,13 @@ Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static int uhidev_maxrepid(void *, int);
 Static int uhidevprint(void *, const char *);
 
-int uhidev_match(device_t, struct cfdata *, void *);
+int uhidev_match(device_t, cfdata_t, void *);
 void uhidev_attach(device_t, device_t, void *);
 void uhidev_childdet(device_t, device_t);
 int uhidev_detach(device_t, int);
 int uhidev_activate(device_t, enum devact);
 extern struct cfdriver uhidev_cd;
-CFATTACH_DECL2(uhidev, sizeof(struct uhidev_softc), uhidev_match,
+CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
     uhidev_attach, uhidev_detach, uhidev_activate, NULL, uhidev_childdet);
 
 USB_MATCH(uhidev)
@@ -113,13 +113,14 @@ USB_ATTACH(uhidev)
 	char *devinfop;
 	int locs[UHIDBUSCF_NLOCS];
 
+	sc->sc_dev = self;
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	aprint_normal("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
 
@@ -139,8 +140,8 @@ USB_ATTACH(uhidev)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			aprint_error("%s: could not read endpoint descriptor\n",
-			    USBDEVNAME(sc->sc_dev));
+			aprint_error_dev(self,
+			    "could not read endpoint descriptor\n");
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -161,8 +162,7 @@ USB_ATTACH(uhidev)
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
 			sc->sc_oep_addr = ed->bEndpointAddress;
 		} else {
-			aprint_verbose("%s: endpoint %d: ignored\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_verbose_dev(self, "endpoint %d: ignored\n", i);
 		}
 	}
 
@@ -171,8 +171,7 @@ USB_ATTACH(uhidev)
 	 * endpoint is optional
 	 */
 	if (sc->sc_iep_addr == -1) {
-		aprint_error("%s: no input interrupt endpoint\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "no input interrupt endpoint\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -223,8 +222,7 @@ USB_ATTACH(uhidev)
 		    M_USBDEV);
 	}
 	if (err) {
-		aprint_error("%s: no report descriptor\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "no report descriptor\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -250,8 +248,7 @@ USB_ATTACH(uhidev)
 	if (nrepid < 0)
 		USB_ATTACH_SUCCESS_RETURN;
 	if (nrepid > 0)
-		aprint_normal("%s: %d report ids\n",
-		    USBDEVNAME(sc->sc_dev), nrepid);
+		aprint_normal_dev(self, "%d report ids\n", nrepid);
 	nrepid++;
 	repsizes = malloc(nrepid * sizeof(*repsizes), M_TEMP, M_NOWAIT);
 	if (repsizes == NULL)
@@ -261,7 +258,7 @@ USB_ATTACH(uhidev)
 	if (sc->sc_subdevs == NULL) {
 		free(repsizes, M_TEMP);
 nomem:
-		aprint_error("%s: no memory\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "no memory\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 	sc->sc_nrepid = nrepid;
@@ -293,9 +290,9 @@ nomem:
 			uha.reportid = repid;
 			locs[UHIDBUSCF_REPORTID] = repid;
 
-			dev = (struct uhidev *)config_found_sm_loc(self,
+			dev = device_private(config_found_sm_loc(self,
 				"uhidbus", locs, &uha,
-				uhidevprint, config_stdsubmatch);
+				uhidevprint, config_stdsubmatch));
 			sc->sc_subdevs[repid] = dev;
 			if (dev != NULL) {
 				dev->sc_in_rep_size = repsizes[repid];
@@ -304,8 +301,8 @@ nomem:
 					 repid, dev));
 				if (dev->sc_intr == NULL) {
 					free(repsizes, M_TEMP);
-					printf("%s: sc_intr == NULL\n",
-					       USBDEVNAME(sc->sc_dev));
+					aprint_error_dev(self,
+					    "sc_intr == NULL\n");
 					USB_ATTACH_ERROR_RETURN;
 				}
 #endif
@@ -365,7 +362,7 @@ uhidev_activate(device_t self, enum devact act)
 		for (i = 0; i < sc->sc_nrepid; i++)
 			if (sc->sc_subdevs[i] != NULL)
 				rv |= config_deactivate(
-					&sc->sc_subdevs[i]->sc_dev);
+					sc->sc_subdevs[i]->sc_dev);
 		sc->sc_dying = 1;
 		break;
 	default:
@@ -382,7 +379,7 @@ uhidev_childdet(device_t self, device_t child)
 	struct uhidev_softc *sc = device_private(self);
 
 	for (i = 0; i < sc->sc_nrepid; i++) {
-		if (&sc->sc_subdevs[i]->sc_dev == child)
+		if (sc->sc_subdevs[i]->sc_dev == child)
 			break;
 	}
 	KASSERT(i < sc->sc_nrepid);
@@ -409,7 +406,7 @@ USB_DETACH(uhidev)
 #if NRND > 0
 			rnd_detach_source(&sc->sc_subdevs[i]->rnd_source);
 #endif
-			rv |= config_detach(&sc->sc_subdevs[i]->sc_dev, flags);
+			rv |= config_detach(sc->sc_subdevs[i]->sc_dev, flags);
 		}
 	}
 
