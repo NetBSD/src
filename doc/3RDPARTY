@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.603 2008/05/22 14:19:25 lukem Exp $
+#	$NetBSD: 3RDPARTY,v 1.604 2008/05/24 21:10:14 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -229,6 +229,16 @@ License:	BSD (3-clause)
 Notes:
 No changes for NetBSD integration - just import the new distribution on
 top of the current tree.
+
+Package:	dhcpcd
+Version:	4.0.0-beta5
+Current Vers:	4.0.0-beta5
+Maintainer:	joerg
+Home Page:	http://roy.marples.name/dhcpcd/
+License:	BSD (2-clause)
+Notes:
+Please submit all changes to the author.
+The distribution doesn't include the Linux specific bits.
 
 Package:	diffutils
 Version:	2.8.1
