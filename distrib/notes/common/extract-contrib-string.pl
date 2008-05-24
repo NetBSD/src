@@ -145,6 +145,7 @@ while(<>) {
 		print "2> $_" if $debug;
 		
 		$msg="";
+		$msg = $_ if ($fn =~ m,$known_bad_clause_3_wording, and /``/);
 		$cnt=0;
 		$_=<F>;
 		while(!/$ack_endline/i) {
@@ -165,9 +166,11 @@ while(<>) {
 		# post-process
 
 		if ($fn =~ m,$known_bad_clause_3_wording,) {
-			while ($msg !~ /^ .*``.*\n/) {
+			while ($msg !~ /^.*``.*\n/) {
+				last if (!$msg);
 				$msg =~ s/^.*\n//o;
 			}
+			$msg =~ s/^.*``//o;
 			$msg =~ s/\n.*``//o;
 			$msg =~ s/''.*$//o;
 		}
