@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.118 2008/04/30 16:48:53 ad Exp $
+#	$NetBSD: special,v 1.119 2008/05/24 19:39:31 joerg Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -57,6 +57,9 @@
 ./etc/dhclient-enter-hooks	type=file mode=0644 optional
 ./etc/dhclient-exit-hooks	type=file mode=0644 optional
 ./etc/dhclient.conf		type=file mode=0644 optional
+./etc/dhcpcd.conf		type=file mode=0644
+./etc/dhcpcd.duid		type=file mode=0644 optional
+./etc/dhcpcd.hook		type=file mode=0644 optional
 ./etc/dhcpd.conf		type=file mode=0644 optional
 ./etc/disktab			type=file mode=0644
 ./etc/dm.conf			type=file mode=0644
