@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 __RCSID("$Heimdal: hex.c 16504 2006-01-09 17:09:29Z lha $"
-        "$NetBSD: hex.c,v 1.1 2008/03/22 08:37:21 mlelstv Exp $");
+        "$NetBSD: hex.c,v 1.2 2008/05/24 19:54:43 christos Exp $");
 #endif
 #include "roken.h"
 #include <ctype.h>
@@ -53,6 +53,7 @@ pos(char c)
     return -1;
 }
 
+/* coverity[+alloc : arg-*2] */
 ssize_t ROKEN_LIB_FUNCTION
 hex_encode(const void *data, size_t size, char **str)
 {
