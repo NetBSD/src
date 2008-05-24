@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.66 2008/05/24 15:45:58 christos Exp $ */
+/* $NetBSD: envstat.c,v 1.67 2008/05/24 15:55:13 christos Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.66 2008/05/24 15:45:58 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.67 2008/05/24 15:55:13 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -83,7 +83,6 @@ typedef struct envsys_sensor_stats {
 	int32_t	min;
 	int32_t avg;
 	char	desc[ENVSYS_DESCLEN];
-	bool	queued;
 } *sensor_stats_t;
 
 /* Device properties */
@@ -333,7 +332,10 @@ find_stats_sensor(const char *desc, bool alloc)
 		 * don't bother with return value, the caller will check
 		 * if it's NULL or not.
 		 */
-		return calloc(1, sizeof(*stats));
+		stats = calloc(1, sizeof(*stats));
+		(void)strlcpy(stats->desc, desc, sizeof(stats->desc));
+		SIMPLEQ_INSERT_TAIL(&sensor_stats_list, stats, entries);
+		return stats;
 	} else
 		return NULL;
 
@@ -618,15 +620,6 @@ find_sensors(prop_array_t array, const char *dvname, dvprops_t edp)
 				stats->avg =
 				    (sensor->cur_value + stats->max +
 				    stats->min) / 3;
-
-			/* add the statistics sensor into the queue */
-			if (!stats->queued) {
-				(void)strlcpy(stats->desc, sensor->desc,
-				    sizeof(stats->desc));
-				stats->queued = true;
-				SIMPLEQ_INSERT_TAIL(&sensor_stats_list,
-				    stats, entries);
-			}
 		}
 	}
 
