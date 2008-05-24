@@ -1,13 +1,8 @@
-/*	$NetBSD: acpi_func.h,v 1.10 2008/05/24 22:02:31 jmcneill Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.1 2008/05/24 22:16:20 jmcneill Exp $	*/
 
 #include <machine/cpufunc.h>
 
 #include <sys/atomic.h>
-
-#if 0
-#define	ACPI_DISABLE_IRQS()		disable_intr()
-#define	ACPI_ENABLE_IRQS()		enable_intr()
-#endif
 
 #define GL_ACQUIRED	(-1)
 #define GL_BUSY		0
@@ -34,7 +29,7 @@ acpi_acquire_global_lock(uint32_t *lock)
 		old = *lock;
 		new = ((old & ~GL_BIT_MASK) | GL_BIT_OWNED) |
 		    ((old >> 1) & GL_BIT_PENDING);
-		val = atomic_cas_uint(lock, old, new);
+		val = atomic_cas_32(lock, old, new);
 	} while (__predict_false(val != old));
 
 	return ((new < GL_BIT_MASK) ? GL_ACQUIRED : GL_BUSY);
@@ -48,7 +43,7 @@ acpi_release_global_lock(uint32_t *lock)
 	do {
 		old = *lock;
 		new = old & ~GL_BIT_MASK;
-		val = atomic_cas_uint(lock, old, new);
+		val = atomic_cas_32(lock, old, new);
 	} while (__predict_false(val != old));
 
 	return old & GL_BIT_PENDING;
