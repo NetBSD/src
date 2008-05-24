@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.42 2008/05/24 16:28:58 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.43 2008/05/24 16:29:34 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.42 2008/05/24 16:28:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.43 2008/05/24 16:29:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,19 +761,17 @@ cryptodev_key(struct crypt_kop *kop)
 	}
 
 fail:
-	if (krp) {
-		kop->crk_status = krp->krp_status;
-		for (i = 0; i < CRK_MAXPARAM; i++) {
-			struct crparam *kp = &(krp->krp_param[i]);
-			if (krp->krp_param[i].crp_p) {
-				size = (kp->crp_nbits + 7)  / 8;
-				KASSERT(size > 0);
-				(void)memset(kp->crp_p, 0, size);
-				kmem_free(kp->crp_p, size);
-			}
+	kop->crk_status = krp->krp_status;
+	for (i = 0; i < CRK_MAXPARAM; i++) {
+		struct crparam *kp = &(krp->krp_param[i]);
+		if (krp->krp_param[i].crp_p) {
+			size = (kp->crp_nbits + 7)  / 8;
+			KASSERT(size > 0);
+			(void)memset(kp->crp_p, 0, size);
+			kmem_free(kp->crp_p, size);
 		}
-		pool_put(&cryptkop_pool, krp);
 	}
+	pool_put(&cryptkop_pool, krp);
 	DPRINTF(("cryptodev_key: error=0x%08x\n", error));
 	return error;
 }
