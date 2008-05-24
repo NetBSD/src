@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.15.10.5 2007/06/22 10:44:56 itohy Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.15.10.6 2008/05/24 07:23:56 itohy Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
 /*
  * DM9601(DAVICOM USB to Ethernet MAC Controller with Integrated 10/100 PHY)
  * The spec can be found at the following url.
- *   http://www.davicom.com.tw/big5/download/Data%20Sheet/DM9601-DS-F01-062202s.pdf
+ *   http://www.davicom.com.tw/big5/download/Data%20Sheet/DM9601-DS-P01-930914.pdf
  */
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.5 2007/06/22 10:44:56 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.15.10.6 2008/05/24 07:23:56 itohy Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
