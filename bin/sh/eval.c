@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.90 2008/05/24 17:12:53 tron Exp $	*/
+/*	$NetBSD: eval.c,v 1.91 2008/05/24 19:06:43 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.90 2008/05/24 17:12:53 tron Exp $");
+__RCSID("$NetBSD: eval.c,v 1.91 2008/05/24 19:06:43 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,6 +232,7 @@ evaltree(union node *n, int flags)
 	    getpid(), n, n->type, flags));
 	switch (n->type) {
 	case NSEMI:
+		do_etest = !(flags & EV_TESTED);
 		evaltree(n->nbinary.ch1, flags & EV_TESTED);
 		if (evalskip)
 			goto out;
@@ -291,6 +292,7 @@ evaltree(union node *n, int flags)
 	case NNOT:
 		evaltree(n->nnot.com, EV_TESTED);
 		exitstatus = !exitstatus;
+		do_etest = !(flags & EV_TESTED);
 		break;
 	case NPIPE:
 		evalpipe(n);
