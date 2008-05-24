@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.63 2008/02/07 03:20:17 garbled Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.64 2008/05/24 21:39:01 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -173,7 +173,14 @@ _C_LABEL(trapcode):
 /* Test whether we already had PR set */
 	mfsrr1	%r31
 	mtcr	%r31
+#if defined(DISTANT_KERNEL)
+	lis	%r31,s_trap@ha
+	addi	%r31,%r31,s_trap@l
+	mtlr	%r31
+	blrl
+#else
 	bla	s_trap
+#endif
 _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 
 /*
@@ -199,7 +206,14 @@ _C_LABEL(alitrap):
 /* Test whether we already had PR set */
 	mfsrr1	%r31
 	mtcr	%r31
+#if defined(DISTANT_KERNEL)
+	lis	%r31,s_trap@ha
+	addi	%r31,%r31,s_trap@l
+	mtlr	%r31
+	blrl
+#else
 	bla	s_trap
+#endif
 _C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
 /*
@@ -259,7 +273,14 @@ _C_LABEL(dsitrap):
 1:
 	mflr	%r28			/* save LR */
 	mtsprg1	%r1			/* save SP */
+#if defined(DISTANT_KERNEL)
+	lis	%r31,disitrap@ha
+	addi	%r31,%r31,disitrap@l
+	mtlr	%r31
+	blrl
+#else
 	bla	disitrap
+#endif
 _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
 
 #if defined(PPC_OEA601)
@@ -321,7 +342,14 @@ _C_LABEL(dsi601trap):
 1:
 	mflr	%r28			/* save LR */
 	mtsprg1	%r1
+#if defined(DISTANT_KERNEL)
+	lis	%r31,disitrap@ha
+	addi	%r31,%r31,disitrap@l
+	mtlr	%r31
+	blrl
+#else
 	bla	disitrap
+#endif
 _C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
 #endif /* defined(PPC_OEA601) */
 
@@ -347,7 +375,14 @@ _C_LABEL(extint):
 	beq	1f
 	mfsprg1	%r1			/* yes, get old SP */
 1:
+#if defined(DISTANT_KERNEL)
+	lis	%r31,extintr@ha
+	addi	%r31,%r31,extintr@l
+	mtlr	%r31
+	blr
+#else
 	ba	extintr
+#endif
 _C_LABEL(extsize) = .-_C_LABEL(extint)
 
 /*
@@ -372,7 +407,14 @@ _C_LABEL(decrint):
 	beq	1f
 	mfsprg1	%r1			/* yes, get old SP */
 1:
+#if defined(DISTANT_KERNEL)
+	lis	%r31,decrintr@ha
+	addi	%r31,%r31,decrintr@l
+	mtlr	%r31
+	blr
+#else
 	ba	decrintr
+#endif
 _C_LABEL(decrsize) = .-_C_LABEL(decrint)
 
 #if !defined(PPC_OEA64)
@@ -435,7 +477,11 @@ _C_LABEL(tlbimiss):
 	mtcrf	0x80,%r3		/* restore cr0 */
 	mtmsr	%r0			/* now with native gprs */
 	isync
+#if defined(PPC_HIGH_VEC)
+	ba	EXC_HIGHVEC+EXC_ISI
+#else
 	ba	EXC_ISI
+#endif
 _C_LABEL(tlbimsize) = .-_C_LABEL(tlbimiss)
 
 /* LINTSTUB: Var: int tlbdlmiss[1], tlbdlmsize[1]; */
@@ -487,7 +533,11 @@ _C_LABEL(tlbdlmiss):
 	mtcrf	0x80,%r3		/* restore cr0 */
 	mtmsr	%r0			/* now with native gprs */
 	isync
+#if defined(PPC_HIGH_VEC)
+	ba	EXC_HIGHVEC+EXC_DSI
+#else
 	ba	EXC_DSI
+#endif
 _C_LABEL(tlbdlmsize) = .-_C_LABEL(tlbdlmiss)
 
 /* LINTSTUB: Var: int tlbdsmiss[1], tlbdsmsize[1]; */
@@ -565,7 +615,11 @@ _C_LABEL(tlbdsmiss):
 	mtcrf	0x80,%r3		/* restore cr0 */
 	mtmsr	%r0			/* now with native gprs */
 	isync
+#if defined(PPC_HIGH_VEC)
+	ba	EXC_HIGHVEC+EXC_DSI
+#else
 	ba	EXC_DSI
+#endif
 _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 #endif /* !defined(PPC_OEA64) */
 
@@ -592,7 +646,14 @@ _C_LABEL(ddblow):
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1)	/* free r30 */
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1)	/* free r31 */
 	mflr	%r28			/* save LR */
+#if defined(DISTANT_KERNEL)
+	lis	%r31,u_trap@ha
+	addi	%r31,%r31,u_trap@l
+	mtlr	%r31
+	blrl
+#else
 	bla	u_trap
+#endif
 1:
 	streg	%r28,(CI_DDBSAVE+CPUSAVE_R28)(%r1) /* save r28 */
 	mfsprg2	%r28
@@ -602,11 +663,20 @@ _C_LABEL(ddblow):
 	mflr	%r28			/* save LR */
 	lis	%r1,ddbstk+INTSTK@ha	/* get new SP */
 	addi	%r1,%r1,ddbstk+INTSTK@l
+#if defined(DISTANT_KERNEL)
+	lis	%r31,ddbtrap@ha
+	addi	%r31,%r31,ddbtrap@l
+	mtlr	%r31
+	blrl
+#else
 	bla	ddbtrap
+#endif
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 #endif	/* DDB || KGDB */
 
-#ifdef IPKDB
+#if defined(IPKDB) && !defined(DISTANT_KERNEL)
+/* IPKDB doesn't work together with DISTANT_KERNEL at the moment! */
+
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
 /*
  * In case of IPKDB we want a separate trap catcher for it
@@ -628,7 +698,14 @@ _C_LABEL(ipkdblow):
 	mfcr	%r29			/* save CR */
 	lis	%r1,ipkdbstk+INTSTK@ha	/* get new SP */
 	addi	%r1,%r1,ipkdbstk+INTSTK@l
+#if defined(DISTANT_KERNEL)
+	lis	%r31,ipkdbtrap@ha
+	addi	%r31,%r31,ipkdbtrap@l
+	mtlr	%r31
+	blrl
+#else
 	bla	ipkdbtrap
+#endif
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #endif	/* IPKDB */
 
@@ -906,7 +983,14 @@ _C_LABEL(sctrap):
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1) /* save r31 */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
+#if defined(DISTANT_KERNEL)
+	lis	%r31,s_sctrap@ha
+	addi	%r31,%r31,s_sctrap@l
+	mtlr	%r31
+	blrl
+#else
 	bla	s_sctrap
+#endif
 	_C_LABEL(scsize) = .-_C_LABEL(sctrap)
 
 s_sctrap:
@@ -1131,7 +1215,7 @@ ddbleave:
 	RFI
 #endif /* DDB || KGDB */
 
-#ifdef IPKDB
+#if defined(IPKDB) && !defined(DISTANT_KERNEL)
 /*
  * Deliberate entry to ipkdbtrap
  */
