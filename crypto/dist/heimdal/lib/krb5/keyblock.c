@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: keyblock.c 15167 2005-05-18 04:21:57Z lha $"
-        "$NetBSD: keyblock.c,v 1.3 2008/03/22 08:37:13 mlelstv Exp $");
+        "$NetBSD: keyblock.c,v 1.4 2008/05/24 20:05:52 christos Exp $");
 
 void KRB5_LIB_FUNCTION
 krb5_keyblock_zero(krb5_keyblock *keyblock)
@@ -73,6 +73,7 @@ krb5_copy_keyblock_contents (krb5_context context,
     return copy_EncryptionKey(inblock, to);
 }
 
+/* coverity[+alloc : arg-*2] */
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_copy_keyblock (krb5_context context,
 		    const krb5_keyblock *inblock,
