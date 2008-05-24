@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.57 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: umodem.c,v 1.58 2008/05/24 16:40:58 cube Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.57 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.58 2008/05/24 16:40:58 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ __strong_alias(umodem_activate,umodem_common_activate)
 int
 umodem_activate(device_ptr_t self, enum devact act)
 {
-	struct umodem_softc *sc = (struct umodem_softc *)self;
+	struct umodem_softc *sc = device_private(self);
 
 	return umodem_common_activate(sc, act);
 }
