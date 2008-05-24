@@ -74,6 +74,8 @@ $ack_endline=
 $known_bad_clause_3_wording=
       'usr.bin/lex/.*'				# UCB
     .'|dist/bind/contrib/nslint-2.1a3/lbl/.*'	#
+    .'|usr.sbin/traceroute/ifaddrlist.h'	#
+    .'|usr.sbin/traceroute/traceroute.c'	#
     .'|usr.sbin/hilinfo/hilinfo.c'	   	# CSS @ Utah
     ;	
 
