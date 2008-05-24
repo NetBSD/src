@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.89 2008/02/15 17:26:06 matt Exp $	*/
+/*	$NetBSD: eval.c,v 1.90 2008/05/24 17:12:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.89 2008/02/15 17:26:06 matt Exp $");
+__RCSID("$NetBSD: eval.c,v 1.90 2008/05/24 17:12:53 tron Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <signal.h>
 #include <stdio.h>
@@ -216,6 +217,9 @@ evalstring(char *s, int flag)
 void
 evaltree(union node *n, int flags)
 {
+	bool do_etest;
+
+	do_etest = false;
 	if (n == NULL) {
 		TRACE(("evaltree(NULL) called\n"));
 		exitstatus = 0;
@@ -253,6 +257,7 @@ evaltree(union node *n, int flags)
 		break;
 	case NSUBSHELL:
 		evalsubshell(n, flags);
+		do_etest = !(flags & EV_TESTED);
 		break;
 	case NBACKGND:
 		evalsubshell(n, flags);
@@ -289,9 +294,11 @@ evaltree(union node *n, int flags)
 		break;
 	case NPIPE:
 		evalpipe(n);
+		do_etest = !(flags & EV_TESTED);
 		break;
 	case NCMD:
 		evalcommand(n, flags, (struct backcmd *)NULL);
+		do_etest = !(flags & EV_TESTED);
 		break;
 	default:
 		out1fmt("Node type = %d\n", n->type);
@@ -301,7 +308,7 @@ evaltree(union node *n, int flags)
 out:
 	if (pendingsigs)
 		dotrap();
-	if ((flags & EV_EXIT) != 0)
+	if ((flags & EV_EXIT) != 0 || (eflag && exitstatus != 0 && do_etest))
 		exitshell(exitstatus);
 }
 
@@ -1070,9 +1077,6 @@ out:
 		 */
 		setvar("_", lastarg, 0);
 	popstackmark(&smark);
-
-	if (eflag && exitstatus && !(flags & EV_TESTED))
-		exitshell(exitstatus);
 }
 
 
