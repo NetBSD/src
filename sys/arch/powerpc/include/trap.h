@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.10 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: trap.h,v 1.11 2008/05/24 21:39:01 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -90,6 +90,8 @@
 /* Trap was in user mode */
 #define	EXC_USER	0x10000
 
+/* Exception vector base address when MSR[IP] is set */
+#define EXC_HIGHVEC	0xfff00000
 
 /*
  * EXC_ALI sets bits in the DSISR and DAR to provide enough
