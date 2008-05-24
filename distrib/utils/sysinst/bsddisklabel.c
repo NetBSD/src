@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.44 2008/01/23 23:15:37 garbled Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.45 2008/05/24 11:06:53 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -519,7 +519,7 @@ make_bsd_partitions(void)
 	int partstart;
 	int part_raw, part_bsd;
 	int ptend;
-	int no_swap = 0;
+	int no_swap = 0, valid_part = -1;
 	partinfo *p;
 
 	/*
@@ -615,6 +615,33 @@ make_bsd_partitions(void)
 	bsdlabel[PART_REST].pi_size = ptstart;
 #endif
 
+	if (layoutkind == 4) {
+		/*
+		 * If 'oldlabel' is a default label created by the kernel it
+		 * will have exactly one valid partition besides raw_part
+		 * which covers the whole disk - but might lie outside the
+		 * mbr partition we (by now) have offset by a few sectors.
+		 * Check for this and and fix ut up.
+		 */
+		valid_part = -1;
+		for (i = 0; i < maxpart; i++) {
+			if (i == part_raw)
+				continue;
+			if (oldlabel[i].pi_size > 0 && PI_ISBSDFS(&oldlabel[i])) {
+				if (valid_part >= 0) {
+					/* nope, not the default case */
+					valid_part = -1;
+					break;
+				}
+				valid_part = i;
+			}
+		}
+		if (valid_part >= 0 && oldlabel[valid_part].pi_offset < ptstart) {
+			oldlabel[valid_part].pi_offset = ptstart;
+			oldlabel[valid_part].pi_size -= ptstart;
+		}
+	}
+
 	/*
 	 * Save any partitions that are outside the area we are
 	 * going to use.
@@ -629,8 +656,15 @@ make_bsd_partitions(void)
 		if (p->pi_fstype == FS_UNUSED || p->pi_size == 0)
 			continue;
 		if (layoutkind == 4) {
-			if (PI_ISBSDFS(p))
+			if (PI_ISBSDFS(p)) {
 				p->pi_flags |= PIF_MOUNT;
+				if (layoutkind == 4 && i == valid_part) {
+					int fstype = p->pi_fstype;
+					p->pi_fstype = 0;
+					strcpy(p->pi_mount, "/");
+					set_ptype(p, fstype, PIF_NEWFS);
+				}
+			}
 		} else {
 			if (p->pi_offset < ptstart + ptsize &&			
 			    p->pi_offset + p->pi_size > ptstart)
@@ -642,10 +676,7 @@ make_bsd_partitions(void)
 		bsdlabel[i] = oldlabel[i];
 	 }
 
-	if (layoutkind == 4) {
-		/* XXX Check we have a sensible layout */
-		;
-	} else
+	if (layoutkind != 4)
 		get_ptn_sizes(partstart, ptend - partstart, no_swap);
 
 	/*
