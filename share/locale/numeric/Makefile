@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/05/17 04:07:29 ginsbach Exp $
+# $NetBSD: Makefile,v 1.2 2008/05/24 02:56:55 ginsbach Exp $
 
 NOMAN=		# defined
 
@@ -154,13 +154,13 @@ FILESNAME_${locale}.out=	LC_NUMERIC
 .for locale in ${LOCALES}
 ${locale}.out: ${LOCALESRC_${locale}}.src
 	${_MKTARGET_CREATE}
-	sed -e '/^#/d' ${.CURDIR}/${LOCALESRC_${locale}}.src > ${.TARGET}
+	${TOOL_SED} -e '/^#/d' ${.CURDIR}/${LOCALESRC_${locale}}.src > ${.TARGET}
 .endfor
 
 .SUFFIXES: .src .out
 .src.out:
 	${_MKTARGET_CREATE}
-	sed -e '/^#/d' ${.IMPSRC} > ${.TARGET}
+	${TOOL_SED} -e '/^#/d' ${.IMPSRC} > ${.TARGET}
 
 # does not work
 #depend:
