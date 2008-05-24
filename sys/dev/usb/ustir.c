@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.25 2008/04/28 20:24:01 martin Exp $	*/
+/*	$NetBSD: ustir.c,v 1.26 2008/05/24 16:40:58 cube Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.25 2008/04/28 20:24:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.26 2008/05/24 16:40:58 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ struct ustir_softc {
 
 	struct ustir_speedrec const *sc_speedrec;
 
-	struct device		*sc_child;
+	device_t		sc_child;
 	struct irda_params	sc_params;
 
 	int			sc_refcnt;
@@ -281,13 +281,13 @@ ustir_dumpdata(u_int8_t const *data, size_t dlen, char const *desc)
 }
 #endif
 
-int ustir_match(device_t, struct cfdata *, void *);
+int ustir_match(device_t, cfdata_t, void *);
 void ustir_attach(device_t, device_t, void *);
 void ustir_childdet(device_t, device_t);
 int ustir_detach(device_t, int);
 int ustir_activate(device_t, enum devact);
 extern struct cfdriver ustir_cd;
-CFATTACH_DECL2(ustir, sizeof(struct ustir_softc), ustir_match,
+CFATTACH_DECL2_NEW(ustir, sizeof(struct ustir_softc), ustir_match,
     ustir_attach, ustir_detach, ustir_activate, NULL, ustir_childdet);
 
 USB_MATCH(ustir)
@@ -316,14 +316,16 @@ USB_ATTACH(ustir)
 
 	DPRINTFN(10,("ustir_attach: sc=%p\n", sc));
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	if (usbd_set_config_index(dev, 0, 1)
 	    || usbd_device2interface_handle(dev, 0, &iface)) {
-		printf("%s: Configuration failed\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "Configuration failed\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -338,8 +340,7 @@ USB_ATTACH(ustir)
 	for (i = 0; i < epcount; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -351,7 +352,7 @@ USB_ATTACH(ustir)
 		}
 	}
 	if (sc->sc_rd_addr == -1 || sc->sc_wr_addr == -1) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "missing endpoint\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -627,9 +628,9 @@ ustir_periodic(struct ustir_softc *sc)
 		err = ustir_read_reg(sc, STIR_REG_STATUS,
 				     &regval);
 		if (err != USBD_NORMAL_COMPLETION) {
-			printf("%s: status register read failed: %s\n",
-			       USBDEVNAME(sc->sc_dev),
-			       usbd_errstr(err));
+			aprint_error_dev(sc->sc_dev,
+			    "status register read failed: %s\n",
+			     usbd_errstr(err));
 		} else {
 			DPRINTFN(10, ("%s: status register = 0x%x\n",
 				      __func__,
@@ -658,9 +659,9 @@ ustir_periodic(struct ustir_softc *sc)
 							      STIR_REG_STATUS,
 							      0);
 				if (err != USBD_NORMAL_COMPLETION) {
-					printf("%s: FIFO reset failed: %s\n",
-					       USBDEVNAME(sc->sc_dev),
-					       usbd_errstr(err));
+					aprint_error_dev(sc->sc_dev,
+					    "FIFO reset failed: %s\n",
+					    usbd_errstr(err));
 				} else {
 					/* FIFO reset */
 					sc->sc_direction = udir_idle;
@@ -939,7 +940,7 @@ ustir_open(void *h, int flag, int mode,
 	sc->sc_refcnt++;
 
 	error = kthread_create(PRI_NONE, 0, NULL, ustir_thread, sc,
-	    &sc->sc_thread, "%s", device_xname(&sc->sc_dev));
+	    &sc->sc_thread, "%s", device_xname(sc->sc_dev));
 	if (error) {
 		sc->sc_refcnt--;
 		goto bad5;

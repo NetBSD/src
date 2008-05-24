@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.153 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.154 2008/05/24 16:40:58 cube Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.153 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.154 2008/05/24 16:40:58 cube Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1234,7 +1234,7 @@ usbd_ifprint(void *aux, const char *pnp)
 
 #if defined(__NetBSD__)
 int
-usbd_submatch(struct device *parent, struct cfdata *cf,
+usbd_submatch(device_t parent, cfdata_t cf,
 	      const int *ldesc, void *aux)
 {
 #elif defined(__OpenBSD__)
@@ -1270,7 +1270,7 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 }
 
 int
-usbd_ifsubmatch(struct device *parent, struct cfdata *cf,
+usbd_ifsubmatch(device_t parent, cfdata_t cf,
 	      const int *ldesc, void *aux)
 {
 	struct usbif_attach_arg *uaa = aux;

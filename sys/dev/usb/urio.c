@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.29 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: urio.c,v 1.30 2008/05/24 16:40:58 cube Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.29 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.30 2008/05/24 16:40:58 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,22 +165,22 @@ USB_ATTACH(urio)
 
 	DPRINTFN(10,("urio_attach: sc=%p\n", sc));
 
+	sc->sc_dev = self;
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	err = usbd_set_config_no(dev, URIO_CONFIG_NO, 1);
 	if (err) {
-		printf("%s: setting config no failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "setting config no failed\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	err = usbd_device2interface_handle(dev, URIO_IFACE_IDX, &iface);
 	if (err) {
-		printf("%s: getting interface handle failed\n",
-		    USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "getting interface handle failed\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -195,8 +195,7 @@ USB_ATTACH(urio)
 	for (i = 0; i < epcount; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: couldn't get ep %d\n",
-			    USBDEVNAME(sc->sc_dev), i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			USB_ATTACH_ERROR_RETURN;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -208,7 +207,7 @@ USB_ATTACH(urio)
 		}
 	}
 	if (sc->sc_in_addr == -1 || sc->sc_out_addr == -1) {
-		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		aprint_error_dev(self, "missing endpoint\n");
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -286,7 +285,7 @@ USB_DETACH(urio)
 int
 urio_activate(device_ptr_t self, enum devact act)
 {
-	struct urio_softc *sc = (struct urio_softc *)self;
+	struct urio_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

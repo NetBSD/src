@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.11 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.12 2008/05/24 16:40:58 cube Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.11 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.12 2008/05/24 16:40:58 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,13 +126,13 @@ static const struct uipaq_type uipaq_devs[] = {
 
 #define uipaq_lookup(v, p) ((const struct uipaq_type *)usb_lookup(uipaq_devs, v, p))
 
-int uipaq_match(device_t, struct cfdata *, void *);
+int uipaq_match(device_t, cfdata_t, void *);
 void uipaq_attach(device_t, device_t, void *);
 void uipaq_childdet(device_t, device_t);
 int uipaq_detach(device_t, int);
 int uipaq_activate(device_t, enum devact);
 extern struct cfdriver uipaq_cd;
-CFATTACH_DECL2(uipaq, sizeof(struct uipaq_softc), uipaq_match,
+CFATTACH_DECL2_NEW(uipaq, sizeof(struct uipaq_softc), uipaq_match,
     uipaq_attach, uipaq_detach, uipaq_activate, NULL, uipaq_childdet);
 
 USB_MATCH(uipaq)
@@ -154,31 +154,33 @@ USB_ATTACH(uipaq)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devinfop;
-	const char *devname = USBDEVNAME(sc->sc_dev);
+	const char *devname = device_xname(self);
 	int i;
 	usbd_status err;
 	struct ucom_attach_args uca;
 
 	DPRINTFN(10,("\nuipaq_attach: sc=%p\n", sc));
 
+	sc->sc_dev = self;
+
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UIPAQ_CONFIG_NO, 1);
 	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
+		aprint_error("\n%s: failed to set configuration, err=%s\n",
 		    devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	err = usbd_device2interface_handle(dev, UIPAQ_IFACE_INDEX, &iface);
 	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
+		aprint_error("\n%s: failed to get interface, err=%s\n",
 		    devname, usbd_errstr(err));
 		goto bad;
 	}
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", devname, devinfop);
+	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
 	sc->sc_flags = uipaq_lookup(uaa->vendor, uaa->product)->uv_flags;
@@ -213,8 +215,8 @@ USB_ATTACH(uipaq)
 	for (i=0; i<id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: no endpoint descriptor for %d\n",
-					devname,i);
+			aprint_error_dev(self,
+			    "no endpoint descriptor for %d\n", i);
 			goto bad;
 		}
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -226,8 +228,8 @@ USB_ATTACH(uipaq)
 		}
 	}
 	if (uca.bulkin == -1 || uca.bulkout == -1) {
-		printf("%s: no proper endpoints found (%d,%d) \n",
-		    devname, uca.bulkin, uca.bulkout);
+		aprint_error_dev(self, "no proper endpoints found (%d,%d) \n",
+		    uca.bulkin, uca.bulkout);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -346,8 +348,8 @@ uipaq_set(void *addr, int portno, int reg, int onoff)
 		uipaq_break(addr, onoff);
 		break;
 	default:
-		printf("%s: unhandled set request: reg=%x onoff=%x\n",
-		    USBDEVNAME(sc->sc_dev), reg, onoff);
+		aprint_error_dev(sc->sc_dev,
+		    "unhandled set request: reg=%x onoff=%x\n", reg, onoff);
 		return;
 	}
 }
