@@ -1,4 +1,4 @@
-/*	$NetBSD: ttydefaults.h,v 1.15 2006/09/30 11:58:44 yamt Exp $	*/
+/*	$NetBSD: ttydefaults.h,v 1.16 2008/05/24 14:06:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -87,9 +87,26 @@
 #ifdef _KERNEL
 #ifdef TTYDEFCHARS
 const cc_t ttydefchars[NCCS] = {
-	CEOF,	CEOL,	CEOL,	CERASE, CWERASE, CKILL, CREPRINT,
-	_POSIX_VDISABLE, CINTR,	CQUIT,	CSUSP,	CDSUSP,	CSTART,	CSTOP,	CLNEXT,
-	CDISCARD, CMIN,	CTIME,  CSTATUS, _POSIX_VDISABLE
+	[VEOF] = CEOF,
+	[VEOL] = CEOL,
+	[VEOL2] = CEOL,
+	[VERASE] = CERASE,
+	[VWERASE] = CWERASE,
+	[VKILL] = CKILL,
+	[VREPRINT] = CREPRINT,
+	[7] = _POSIX_VDISABLE,	/* spare */
+	[VINTR] = CINTR,
+	[VQUIT] = CQUIT,
+	[VSUSP] = CSUSP,
+	[VDSUSP] = CDSUSP,
+	[VSTART] = CSTART,
+	[VSTOP] = CSTOP,
+	[VLNEXT] = CLNEXT,
+	[VDISCARD] = CDISCARD,
+	[VMIN] = CMIN,
+	[VTIME] = CTIME,
+	[VSTATUS] = CSTATUS,
+	[19] = _POSIX_VDISABLE,	/* spare */
 };
 #undef TTYDEFCHARS
 #else
