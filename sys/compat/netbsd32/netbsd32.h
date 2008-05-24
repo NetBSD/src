@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.74 2008/02/02 15:17:06 dsl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.75 2008/05/24 16:02:44 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -263,11 +263,11 @@ struct netbsd32_loadavg {
 /* from <sys/ipc.h> */
 typedef netbsd32_pointer_t netbsd32_ipc_permp_t;
 struct netbsd32_ipc_perm {
-	unsigned short	cuid;	/* creator user id */
-	unsigned short	cgid;	/* creator group id */
-	unsigned short	uid;	/* user id */
-	unsigned short	gid;	/* group id */
-	unsigned short	mode;	/* r/w permission */
+	uid_t		cuid;	/* creator user id */
+	gid_t		cgid;	/* creator group id */
+	uid_t		uid;	/* user id */
+	gid_t		gid;	/* group id */
+	mode_t		mode;	/* r/w permission */
 	unsigned short	_seq;	/* sequence # (to generate unique msg/sem/shm id) */
 	netbsd32_key_t	_key;	/* user specified msg/sem/shm key */
 };
@@ -381,7 +381,7 @@ struct netbsd32_sembuf {
 typedef netbsd32_pointer_t netbsd32_shmid_dsp_t;
 struct netbsd32_shmid_ds {
 	struct netbsd32_ipc_perm shm_perm; /* operation permission structure */
-	size_t		shm_segsz;	/* size of segment in bytes */
+	netbsd32_size_t	shm_segsz;	/* size of segment in bytes */
 	pid_t		shm_lpid;	/* process ID of last shm op */
 	pid_t		shm_cpid;	/* process ID of creator */
 	shmatt_t	shm_nattch;	/* number of current attaches */
