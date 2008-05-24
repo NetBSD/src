@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.16 2008/05/24 16:40:58 cube Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.17 2008/05/24 17:35:37 cube Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.16 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.17 2008/05/24 17:35:37 cube Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -241,21 +241,7 @@ USB_ATTACH(cdce)
 		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
 		eaddr[5] = (u_int8_t)(device_unit(sc->cdce_dev));
 	} else {
-		int j;
-
-		memset(eaddr, 0, ETHER_ADDR_LEN);
-		for (j = 0; j < ETHER_ADDR_LEN * 2; j++) {
-			int c = eaddr_str[j];
-
-			if ('0' <= c && c <= '9')
-				c -= '0';
-			else
-				c -= 'A' - 10;
-			c &= 0xf;
-			if (c%2 == 0)
-				c <<= 4;
-			eaddr[j / 2] |= c;
-		}
+		(void)ether_nonstatic_aton(eaddr, eaddr_str);
 	}
 
 	s = splnet();
