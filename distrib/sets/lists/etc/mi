@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.198 2008/04/15 11:17:47 plunky Exp $
+# $NetBSD: mi,v 1.199 2008/05/24 19:39:30 joerg Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -43,6 +43,7 @@
 ./etc/defaults/security.conf			etc-sys-defaults
 ./etc/defaults/weekly.conf			etc-sys-defaults
 ./etc/dhclient-script				etc-obsolete		obsolete
+./etc/dhcpcd.conf				etc-dhcpcd-etc
 ./etc/disktab					etc-sysutil-etc
 ./etc/dm.conf					etc-games-etc
 ./etc/dumpdates					etc-sysutil-etc

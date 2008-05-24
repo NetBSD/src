@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1074 2008/05/23 21:11:40 jnemeth Exp $
+# $NetBSD: mi,v 1.1075 2008/05/24 19:39:30 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1671,6 +1671,7 @@
 ./usr/share/man/cat5/dhclient.leases.0		man-dhclient-catman	.cat
 ./usr/share/man/cat5/dhcp-eval.0		man-dhclient-catman	.cat
 ./usr/share/man/cat5/dhcp-options.0		man-dhcpd-catman	.cat
+./usr/share/man/cat5/dhcpcd.conf.0		man-dhcpcd-catman	.cat
 ./usr/share/man/cat5/dhcpd.conf.0		man-dhcpd-catman	.cat
 ./usr/share/man/cat5/dhcpd.leases.0		man-dhcpd-catman	.cat
 ./usr/share/man/cat5/dir.0			man-c-catman		.cat
@@ -1969,6 +1970,8 @@
 ./usr/share/man/cat8/dev_mkdb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dhclient-script.0		man-dhclient-catman	.cat
 ./usr/share/man/cat8/dhclient.0			man-dhclient-catman	.cat
+./usr/share/man/cat8/dhcpcd-run-hooks.0		man-dhcpcd-catman	.cat
+./usr/share/man/cat8/dhcpcd.0			man-dhcpcd-catman	.cat
 ./usr/share/man/cat8/dhcpd.0			man-dhcpd-catman	.cat
 ./usr/share/man/cat8/dhcrelay.0			man-dhcpd-catman	.cat
 ./usr/share/man/cat8/discard.0			man-postfix-catman	postfix,.cat
@@ -4234,6 +4237,7 @@
 ./usr/share/man/man5/dhclient.leases.5		man-dhclient-man	.man
 ./usr/share/man/man5/dhcp-eval.5		man-dhclient-man	.man
 ./usr/share/man/man5/dhcp-options.5		man-dhcpd-man		.man
+./usr/share/man/man5/dhcpcd.conf.5		man-dhcpcd-man		.man
 ./usr/share/man/man5/dhcpd.conf.5		man-dhcpd-man		.man
 ./usr/share/man/man5/dhcpd.leases.5		man-dhcpd-man		.man
 ./usr/share/man/man5/dir.5			man-c-man		.man
@@ -4531,6 +4535,8 @@
 ./usr/share/man/man8/dev_mkdb.8			man-sysutil-man		.man
 ./usr/share/man/man8/dhclient-script.8		man-dhclient-man	.man
 ./usr/share/man/man8/dhclient.8			man-dhclient-man	.man
+./usr/share/man/man8/dhcpcd-run-hooks.8		man-dhcpcd-man		.man
+./usr/share/man/man8/dhcpcd.8			man-dhcpcd-man		.man
 ./usr/share/man/man8/dhcpd.8			man-dhcpd-man		.man
 ./usr/share/man/man8/dhcrelay.8			man-dhcpd-man		.man
 ./usr/share/man/man8/discard.8			man-postfix-man		postfix,.man
