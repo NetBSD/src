@@ -39,7 +39,7 @@
 #include "kadmin-commands.h"
 
 __RCSID("$Heimdal: check.c 20962 2007-06-07 05:09:24Z lha $"
-        "$NetBSD: check.c,v 1.1 2008/03/22 08:37:02 mlelstv Exp $");
+        "$NetBSD: check.c,v 1.2 2008/05/24 19:48:27 christos Exp $");
 
 static int
 get_check_entry(const char *name, kadm5_principal_ent_rec *ent)
@@ -194,7 +194,6 @@ check(void *opt, int argc, char **argv)
     p2 = strdup(realm);
     if (p2 == NULL) {
 	krb5_warn(context, errno, "malloc");
-	free(p);
 	goto fail;
     }
     strlwr(p2);
