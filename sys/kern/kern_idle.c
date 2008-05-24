@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.16 2008/04/26 08:09:30 yamt Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.17 2008/05/24 12:59:06 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.16 2008/04/26 08:09:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.17 2008/05/24 12:59:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -56,6 +56,8 @@ idle_loop(void *dummy)
 	uint32_t mask = 1 << cpu_index(ci);
 	bool set = false;
 	int s;
+
+	ci->ci_data.cpu_onproc = l;
 
 	/* Update start time for this thread. */
 	lwp_lock(l);
