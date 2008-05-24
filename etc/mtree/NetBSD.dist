@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.365 2008/05/20 19:01:11 ad Exp $
+#	$NetBSD: NetBSD.dist,v 1.366 2008/05/24 19:39:31 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -58,6 +58,7 @@
 ./libdata/firmware/rum
 ./libdata/firmware/zyd
 ./libexec
+./libexec/dhcpcd-hooks
 ./mnt
 ./rescue
 ./root
