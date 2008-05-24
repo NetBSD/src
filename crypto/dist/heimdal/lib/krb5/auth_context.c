@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 
 __RCSID("$Heimdal: auth_context.c 21745 2007-07-31 16:11:25Z lha $"
-        "$NetBSD: auth_context.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
+        "$NetBSD: auth_context.c,v 1.3 2008/05/24 20:07:00 christos Exp $");
 
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_auth_con_init(krb5_context context,
@@ -262,6 +262,7 @@ krb5_auth_con_getaddrs(krb5_context context,
     return 0;
 }
 
+/* coverity[+alloc : arg-*2] */
 static krb5_error_code
 copy_key(krb5_context context,
 	 krb5_keyblock *in,
@@ -289,6 +290,8 @@ krb5_auth_con_getlocalsubkey(krb5_context context,
     return copy_key(context, auth_context->local_subkey, keyblock);
 }
 
+
+/* coverity[+alloc : arg-*2] */
 krb5_error_code KRB5_LIB_FUNCTION
 krb5_auth_con_getremotesubkey(krb5_context context,
 			      krb5_auth_context auth_context,
