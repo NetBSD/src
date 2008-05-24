@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.16 2008/05/07 10:16:41 tron Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.17 2008/05/24 14:24:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -312,11 +312,10 @@ _prop_array_iterator_next_object(void *v)
 	struct _prop_array_iterator *pai = v;
 	prop_array_t pa = pai->pai_base.pi_obj;
 	prop_object_t po = NULL;
-	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
-	acquired = _PROP_RWLOCK_TRYRDLOCK(pa->pa_rwlock);
-	_PROP_RWLOCK_OWNED(pa->pa_rwlock);
+
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
 
 	if (pa->pa_version != pai->pai_base.pi_version)
 		goto out;	/* array changed during iteration */
@@ -330,9 +329,7 @@ _prop_array_iterator_next_object(void *v)
 	pai->pai_index++;
 
  out:
-	if (acquired) {
-		_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
-	}
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 	return (po);
 }
 
@@ -341,18 +338,15 @@ _prop_array_iterator_reset(void *v)
 {
 	struct _prop_array_iterator *pai = v;
 	prop_array_t pa = pai->pai_base.pi_obj;
-	bool acquired;
 
 	_PROP_ASSERT(prop_object_is_array(pa));
-	acquired = _PROP_RWLOCK_TRYRDLOCK(pa->pa_rwlock);
-	_PROP_RWLOCK_OWNED(pa->pa_rwlock);
+
+	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
 
 	pai->pai_index = 0;
 	pai->pai_base.pi_version = pa->pa_version;
 
-	if (acquired) {
-		_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
-	}
+	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 }
 
 /*
@@ -508,9 +502,7 @@ prop_array_iterator(prop_array_t pa)
 	pai->pai_base.pi_reset = _prop_array_iterator_reset;
 	prop_object_retain(pa);
 	pai->pai_base.pi_obj = pa;
-	_PROP_RWLOCK_RDLOCK(pa->pa_rwlock);
 	_prop_array_iterator_reset(pai);
-	_PROP_RWLOCK_UNLOCK(pa->pa_rwlock);
 
 	return (&pai->pai_base);
 }
