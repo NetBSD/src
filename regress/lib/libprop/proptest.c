@@ -1,4 +1,4 @@
-/*	$NetBSD: proptest.c,v 1.2 2007/07/16 19:04:18 joerg Exp $	*/
+/*	$NetBSD: proptest.c,v 1.3 2008/05/25 20:47:30 christos Exp $	*/
 
 /*
  * Test basic proplib functionality.
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 		prop_number_t num = prop_number_create_integer(1);
 		assert(num != NULL);
 
-		assert(prop_dictionary_set(dict, "one", num) == TRUE);
+		assert(prop_dictionary_set(dict, "one", num) == true);
 		prop_object_release(num);
 	}
 
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 		prop_string_t str = prop_string_create_cstring("number-two");
 		assert(str != NULL);
 
-		assert(prop_dictionary_set(dict, "two", str) == TRUE);
+		assert(prop_dictionary_set(dict, "two", str) == true);
 		prop_object_release(str);
 	}
 
@@ -86,32 +86,32 @@ main(int argc, char *argv[])
 
 		dict_copy = prop_dictionary_copy(dict);
 		assert(dict_copy != NULL);
-		assert(prop_array_add(arr, dict_copy) == TRUE);
+		assert(prop_array_add(arr, dict_copy) == true);
 		prop_object_release(dict_copy);
 
 		dict_copy = prop_dictionary_copy(dict);
 		assert(dict_copy != NULL);
-		assert(prop_array_add(arr, dict_copy) == TRUE);
+		assert(prop_array_add(arr, dict_copy) == true);
 		prop_object_release(dict_copy);
 
 		dict_copy = prop_dictionary_copy(dict);
 		assert(dict_copy != NULL);
-		assert(prop_array_add(arr, dict_copy) == TRUE);
+		assert(prop_array_add(arr, dict_copy) == true);
 		prop_object_release(dict_copy);
 
-		assert(prop_dictionary_set(dict, "three", arr) == TRUE);
+		assert(prop_dictionary_set(dict, "three", arr) == true);
 		prop_object_release(arr);
 	}
 
 	{
-		prop_bool_t val = prop_bool_create(TRUE);
+		prop_bool_t val = prop_bool_create(true);
 		assert(val != NULL);
-		assert(prop_dictionary_set(dict, "true-val", val) == TRUE);
+		assert(prop_dictionary_set(dict, "true-val", val) == true);
 		prop_object_release(val);
 
-		val = prop_bool_create(FALSE);
+		val = prop_bool_create(false);
 		assert(val != NULL);
-		assert(prop_dictionary_set(dict, "false-val", val) == TRUE);
+		assert(prop_dictionary_set(dict, "false-val", val) == true);
 		prop_object_release(val);
 	}
 
