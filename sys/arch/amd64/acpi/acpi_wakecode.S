@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.5 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.6 2008/05/25 16:17:37 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -167,7 +167,6 @@ wakeup_32:
 
 	/* Enable SYSCALL extension and Long Mode */
 	movl	$MSR_EFER,%ecx
-	rdmsr
 	movl	WAKEUP_efer + ACPI_WAKEUP_ADDR,%eax
 	wrmsr
 
