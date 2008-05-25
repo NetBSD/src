@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/18 05:35:04 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/05/25 01:46:18 rtr Exp $
+
+NOMAN=	# defined (must come before bsd.own.mk)
 
 .include <bsd.own.mk>
 
 PROG=	XdecNetBSD
-MKMAN=	no
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/dec
 

@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/21 08:33:23 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2008/05/25 01:46:18 rtr Exp $
+
+NOMAN=	# defined (must come before bsd.own.mk)
 
 .include <bsd.own.mk>
 
 PROG=	Xmacppc
-MKMAN=	no
 BINMODE=4711
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/macppc
