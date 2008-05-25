@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.7 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: hid.h,v 1.8 2008/05/25 10:16:04 phx Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -115,11 +115,12 @@
  *  27	FBIOB	-	-	-	-	LRSTK
  *  28	-	-	ABE	-	-	FOLD
  *  29	-	BHT	BHT	BHT	BHT	BHT
- *  30	-	-	-	NOPDST	NOPDST	NOPDST
+ *  30	-	BTAC	-	NOPDST	NOPDST	NOPDST
  *  31	NOOPTI	-	NOOPTI	NOPTI	NOPTI	NOPTI
  *
  *  604: ECP = Enable cache parity checking
  *  604: SIE = Serial instruction execution disable
+ *  604: BTAC = Branch target address cache disable
  * 7450: TBEN = Time Base Enable
  * 7450: STEN = Software table lookup enable
  * 7450: BHTCLR = Branch history clear
