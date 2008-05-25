@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/05/11 13:14:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2008/05/25 19:33:27 joerg Exp $
 
 USE_FORT?=	yes # complex string handling
 
@@ -206,6 +206,7 @@ MLINKS+=	archive_write.3 archive_write_set_bytes_in_last_block.3
 MLINKS+=	archive_write.3 archive_write_set_bytes_per_block.3
 MLINKS+=	archive_write.3 archive_write_set_callbacks.3
 MLINKS+=	archive_write.3 archive_write_set_compression_bzip2.3
+MLINKS+=	archive_write.3 archive_write_set_compression_compress.3
 MLINKS+=	archive_write.3 archive_write_set_compression_gzip.3
 MLINKS+=	archive_write.3 archive_write_set_compression_none.3
 MLINKS+=	archive_write.3 archive_write_set_compression_program.3
