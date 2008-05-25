@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.138 2008/05/12 14:28:22 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.139 2008/05/25 20:18:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.138 2008/05/12 14:28:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.139 2008/05/25 20:18:33 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2936,6 +2936,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 
 	strncpy(ki->p_comm, p->p_comm,
 	    min(sizeof(ki->p_comm), sizeof(p->p_comm)));
+	strncpy(ki->p_ename, p->p_emul->e_name, sizeof(ki->p_ename));
 
 	ki->p_nlwps = p->p_nlwps;
 	ki->p_realflag = ki->p_flag;
