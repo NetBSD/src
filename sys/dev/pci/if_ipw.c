@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.39 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.40 2008/05/25 23:17:33 jmcneill Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.39 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.40 2008/05/25 23:17:33 jmcneill Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1052,8 +1052,13 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 
 		tap->wr_flags = 0;
 		tap->wr_antsignal = status->rssi;
-		tap->wr_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wr_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		if (ic->ic_bss->ni_chan != IEEE80211_CHAN_ANYC) {
+			tap->wr_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->wr_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+		} else
+			tap->wr_chan_freq = tap->wr_chan_flags = 0;
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
@@ -1326,8 +1331,13 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 		struct ipw_tx_radiotap_header *tap = &sc->sc_txtap;
 
 		tap->wt_flags = 0;
-		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
+		if (ic->ic_bss->ni_chan != IEEE80211_CHAN_ANYC) {
+			tap->wt_chan_freq =
+			    htole16(ic->ic_bss->ni_chan->ic_freq);
+			tap->wt_chan_flags =
+			    htole16(ic->ic_bss->ni_chan->ic_flags);
+		} else
+			tap->wt_chan_freq = tap->wt_chan_flags = 0;
 
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
