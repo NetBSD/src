@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.21 2008/04/24 18:39:24 ad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.22 2008/05/25 23:34:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.21 2008/04/24 18:39:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.22 2008/05/25 23:34:24 ad Exp $");
 
 #include <sys/param.h>
 
@@ -85,7 +85,7 @@ convert_pri(lwp_t *l, int policy, pri_t pri)
 	/* Change the current priority to the appropriate range */
 	if (l->l_class == SCHED_OTHER) {
 		KASSERT(policy == SCHED_FIFO || policy == SCHED_RR);
-		return l->l_priority + delta;
+		return delta;
 	}
 	if (policy == SCHED_OTHER) {
 		KASSERT(l->l_class == SCHED_FIFO || l->l_class == SCHED_RR);
