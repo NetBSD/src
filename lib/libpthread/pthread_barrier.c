@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.17 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.18 2008/05/25 17:05:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.17 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.18 2008/05/25 17:05:28 ad Exp $");
 
 #include <errno.h>
 
@@ -39,10 +39,10 @@ __RCSID("$NetBSD: pthread_barrier.c,v 1.17 2008/04/28 20:23:01 martin Exp $");
 
 int
 pthread_barrier_init(pthread_barrier_t *barrier,
-    const pthread_barrierattr_t *attr, unsigned int count)
+		     const pthread_barrierattr_t *attr, unsigned int count)
 {
-	pthread_t self;
-
+	pthread_mutex_t *interlock;
+	
 #ifdef ERRORCHECK
 	if ((barrier == NULL) ||
 	    (attr && (attr->ptba_magic != _PT_BARRIERATTR_MAGIC)))
@@ -53,21 +53,21 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 		return EINVAL;
 
 	if (barrier->ptb_magic == _PT_BARRIER_MAGIC) {
-		self = pthread__self();
+		interlock = pthread__hashlock(barrier);
 
 		/*
 		 * We're simply reinitializing the barrier to a
 		 * new count.
 		 */
-		pthread__spinlock(self, &barrier->ptb_lock);
+		pthread_mutex_lock(interlock);
 
 		if (barrier->ptb_magic != _PT_BARRIER_MAGIC) {
-			pthread__spinunlock(self, &barrier->ptb_lock);
+			pthread_mutex_unlock(interlock);
 			return EINVAL;
 		}
 
 		if (!PTQ_EMPTY(&barrier->ptb_waiters)) {
-			pthread__spinunlock(self, &barrier->ptb_lock);
+			pthread_mutex_unlock(interlock);
 			return EBUSY;
 		}
 
@@ -75,13 +75,12 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 		barrier->ptb_curcount = 0;
 		barrier->ptb_generation = 0;
 
-		pthread__spinunlock(self, &barrier->ptb_lock);
+		pthread_mutex_unlock(interlock);
 
 		return 0;
 	}
 
 	barrier->ptb_magic = _PT_BARRIER_MAGIC;
-	pthread_lockinit(&barrier->ptb_lock);
 	PTQ_INIT(&barrier->ptb_waiters);
 	barrier->ptb_initcount = count;
 	barrier->ptb_curcount = 0;
@@ -94,29 +93,29 @@ pthread_barrier_init(pthread_barrier_t *barrier,
 int
 pthread_barrier_destroy(pthread_barrier_t *barrier)
 {
-	pthread_t self;
+	pthread_mutex_t *interlock;
 
 #ifdef ERRORCHECK
 	if ((barrier == NULL) || (barrier->ptb_magic != _PT_BARRIER_MAGIC))
 		return EINVAL;
 #endif
 
-	self = pthread__self();
-	pthread__spinlock(self, &barrier->ptb_lock);
+	interlock = pthread__hashlock(barrier);
+	pthread_mutex_lock(interlock);
 
 	if (barrier->ptb_magic != _PT_BARRIER_MAGIC) {
-		pthread__spinunlock(self, &barrier->ptb_lock);
+		pthread_mutex_unlock(interlock);
 		return EINVAL;
 	}
 
 	if (!PTQ_EMPTY(&barrier->ptb_waiters)) {
-		pthread__spinunlock(self, &barrier->ptb_lock);
+		pthread_mutex_unlock(interlock);
 		return EBUSY;
 	}
 
 	barrier->ptb_magic = _PT_BARRIER_DEAD;
 
-	pthread__spinunlock(self, &barrier->ptb_lock);
+	pthread_mutex_unlock(interlock);
 
 	return 0;
 }
@@ -125,6 +124,7 @@ pthread_barrier_destroy(pthread_barrier_t *barrier)
 int
 pthread_barrier_wait(pthread_barrier_t *barrier)
 {
+	pthread_mutex_t *interlock;
 	pthread_t self;
 	unsigned int gen;
 
@@ -133,8 +133,9 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		return EINVAL;
 #endif
 	self = pthread__self();
+	interlock = pthread__hashlock(barrier);
 
-	pthread__spinlock(self, &barrier->ptb_lock);
+	pthread_mutex_lock(interlock);
 
 	/*
 	 * A single arbitrary thread is supposed to return
@@ -148,8 +149,9 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	 */
 	if (barrier->ptb_curcount + 1 == barrier->ptb_initcount) {
 		barrier->ptb_generation++;
-		pthread__unpark_all(self, &barrier->ptb_lock,
-		    &barrier->ptb_waiters);
+		pthread__unpark_all(&barrier->ptb_waiters, self,
+		    interlock);
+		pthread_mutex_unlock(interlock);
 		return PTHREAD_BARRIER_SERIAL_THREAD;
 	}
 
@@ -157,15 +159,12 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	gen = barrier->ptb_generation;
 	while (gen == barrier->ptb_generation) {
 		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
-		self->pt_sleeponq = 1;
 		self->pt_sleepobj = &barrier->ptb_waiters;
-		pthread__spinunlock(self, &barrier->ptb_lock);
-		(void)pthread__park(self, &barrier->ptb_lock,
-		    &barrier->ptb_waiters, NULL, 0,
-		    &barrier->ptb_waiters);
-		pthread__spinlock(self, &barrier->ptb_lock);
+		(void)pthread__park(self, interlock, &barrier->ptb_waiters,
+		    NULL, 0, __UNVOLATILE(&interlock->ptm_waiters));
+		pthread_mutex_lock(interlock);
 	}
-	pthread__spinunlock(self, &barrier->ptb_lock);
+	pthread_mutex_unlock(interlock);
 
 	return 0;
 }
