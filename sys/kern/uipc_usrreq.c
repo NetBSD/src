@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.94.2.1 2007/08/21 19:33:57 liamjfoy Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.94.2.2 2008/05/25 19:04:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.94.2.1 2007/08/21 19:33:57 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.94.2.2 2008/05/25 19:04:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,31 +315,31 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 */
 		if (control) {
 			KASSERT(l != NULL);
-			if ((error = unp_internalize(control, l)) != 0)
-				goto die;
+			if ((error = unp_internalize(control, l)) != 0) {
+				m_freem(control);
+				m_freem(m);
+				break;
+			}
 		}
 		switch (so->so_type) {
 
 		case SOCK_DGRAM: {
 			if (nam) {
-				if ((so->so_state & SS_ISCONNECTED) != 0) {
+				if ((so->so_state & SS_ISCONNECTED) != 0)
 					error = EISCONN;
-					goto die;
-				}
-				KASSERT(l != NULL);
-				error = unp_connect(so, nam, l);
-				if (error) {
-				die:
-					unp_dispose(control);
-					m_freem(control);
-					m_freem(m);
-					break;
+				else {
+					KASSERT(l != NULL);
+					error = unp_connect(so, nam, l);
 				}
 			} else {
-				if ((so->so_state & SS_ISCONNECTED) == 0) {
+				if ((so->so_state & SS_ISCONNECTED) == 0)
 					error = ENOTCONN;
-					goto die;
-				}
+			}
+			if (error) {
+				unp_dispose(control);
+				m_freem(control);
+				m_freem(m);
+				break;
 			}
 			KASSERT(p != NULL);
 			error = unp_output(m, control, unp, l);
