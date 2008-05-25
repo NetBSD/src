@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.1.2.3 2008/05/25 10:19:38 peter Exp $ */
+/*	$NetBSD: ftp-proxy.c,v 1.1.2.4 2008/05/25 17:51:13 peter Exp $ */
 /*	$OpenBSD: ftp-proxy.c,v 1.15 2007/08/15 15:18:02 camield Exp $ */
 
 /*
@@ -44,6 +44,10 @@
 #include <vis.h>
 
 #include "filter.h"
+
+#if defined(__NetBSD__) && defined(WITH_IPF)
+#include "ipf.h"
+#endif /* __NetBSD__ && WITH_IPF */
 
 #define CONNECT_TIMEOUT	30
 #define MIN_PORT	1024
@@ -129,6 +133,10 @@ char *fixed_server, *fixed_server_port, *fixed_proxy, *listen_ip, *listen_port,
 int anonymous_only, daemonize, id_count, ipv6_mode, loglevel, max_sessions,
     rfc_mode, session_count, timeout, verbose;
 extern char *__progname;
+
+#if defined(__NetBSD__) && defined(WITH_IPF)
+int ipf_enabled = 0;
+#endif /* __NetBSD__ && WITH_IPF */
 
 void
 client_error(struct bufferevent *bufev, short what, void *arg)
@@ -635,7 +643,11 @@ main(int argc, char *argv[])
 	id_count	= 1;
 	session_count	= 0;
 
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	while ((ch = getopt(argc, argv, "6Aa:b:D:di:m:P:p:q:R:rT:t:v")) != -1) {
+#else
 	while ((ch = getopt(argc, argv, "6Aa:b:D:dm:P:p:q:R:rT:t:v")) != -1) {
+#endif /* __NetBSD__ && WITH_IPF */
 		switch (ch) {
 		case '6':
 			ipv6_mode = 1;
@@ -658,6 +670,12 @@ main(int argc, char *argv[])
 		case 'd':
 			daemonize = 0;
 			break;
+#if defined(__NetBSD__) && defined(WITH_IPF)
+		case 'i':
+			ipf_enabled = 1;
+			netif = optarg;
+			break;
+#endif /* __NetBSD__ && WITH_IPF */
 		case 'm':
 			max_sessions = strtonum(optarg, 1, 500, &errstr);
 			if (errstr)
@@ -1144,6 +1162,11 @@ usage(void)
 {
 	fprintf(stderr, "usage: %s [-6Adrv] [-a address] [-b address]"
 	    " [-D level] [-m maxsessions]\n                 [-P port]"
-	    " [-p port] [-q queue] [-R address] [-T tag] [-t timeout]\n", __progname);
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	    " [-i netif]"
+#endif /* __NetBSD__ && WITH_IPF */
+	    " [-p port] [-q queue] [-R address] [-T tag] [-t timeout]\n",
+	    __progname);
+
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftp-proxy.8,v 1.1.2.1 2008/04/26 12:57:42 peter Exp $
+.\"	$NetBSD: ftp-proxy.8,v 1.1.2.2 2008/05/25 17:51:13 peter Exp $
 .\"	$OpenBSD: ftp-proxy.8,v 1.10 2007/08/01 15:45:41 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -28,6 +28,7 @@
 .Op Fl a Ar address
 .Op Fl b Ar address
 .Op Fl D Ar level
+.Op Fl i Ar netif
 .Op Fl m Ar maxsessions
 .Op Fl P Ar port
 .Op Fl p Ar port
@@ -40,6 +41,8 @@
 .Nm
 is a proxy for the Internet File Transfer Protocol.
 FTP control connections should be redirected into the proxy using the
+.Xr ipnat 4
+or
 .Xr pf 4
 .Ar rdr
 command, after which the proxy connects to the server on behalf of
@@ -55,7 +58,11 @@ client.
 The proxy uses the
 .Xr pf 4
 .Ar anchor
-facility for this.
+facility for this, unless the option
+.Fl i
+is specified, it will then use the
+.Xr ipnat 4
+interface.
 .Pp
 Assuming the FTP control connection is from $client to $server, the
 proxy connected to the server using the $proxy source address, and
@@ -66,14 +73,14 @@ adds the following rules to the various anchors.
 .Pp
 In case of active mode (PORT or EPRT):
 .Bd -literal -offset 2n
-rdr from $server to $proxy port $port -> $client
+rdr from $server to $proxy port $port -*[Gt] $client
 pass quick inet proto tcp \e
     from $server to $client port $port
 .Ed
 .Pp
 In case of passive mode (PASV or EPSV):
 .Bd -literal -offset 2n
-nat from $client to $server port $port -> $proxy
+nat from $client to $server port $port -*[Gt] $proxy
 pass in quick inet proto tcp \e
     from $client to $server port $port
 pass out quick inet proto tcp \e
@@ -106,6 +113,13 @@ levels.)
 .It Fl d
 Do not daemonize.
 The process will stay in the foreground, logging to standard error.
+.It Fl i Ar netif
+Set
+.Nm ftp-proxy
+for use with IP-Filter.
+The argument
+.Ar netif
+should be set to the name of the network interface where rdr is applied on.
 .It Fl m Ar maxsessions
 Maximum number of concurrent FTP sessions.
 When the proxy reaches this limit, new connections are denied.
@@ -149,7 +163,8 @@ Use twice to set the 'log-all' flag.
 The pf rules do not log by default.
 .El
 .Sh CONFIGURATION
-To make use of the proxy,
+To make use of the proxy using
+.Xr pf 4 ,
 .Xr pf.conf 5
 needs the following rules.
 All anchors are mandatory.
@@ -159,7 +174,7 @@ In the NAT section:
 .Bd -literal -offset 2n
 nat-anchor "ftp-proxy/*"
 rdr-anchor "ftp-proxy/*"
-rdr pass on $int_if proto tcp from $lan to any port 21 -> \e
+rdr pass on $int_if proto tcp from $lan to any port 21 -*[Gt] \e
     127.0.0.1 port 8021
 .Ed
 .Pp
@@ -168,11 +183,23 @@ In the rule section:
 anchor "ftp-proxy/*"
 pass out proto tcp from $proxy to any port 21
 .Ed
+.Pp
+To make use of the proxy using
+.Xr ipnat 4 ,
+.Xr ipnat.conf 5
+need the following rule:
+.Bd -literal -offset 2n
+rdr $int_if any port 21 -*[Gt] 127.0.0.1 port 8021 tcp
+.Ed
 .Sh SEE ALSO
 .Xr ftp 1 ,
+.Xr ipnat 4 ,
 .Xr pf 4 ,
+.Xr ipnat.conf 5 ,
 .Xr pf.conf 5
 .Sh CAVEATS
+.Xr ipnat 4
+and
 .Xr pf 4
 does not allow the ruleset to be modified if the system is running at a
 securelevel higher than 1.
