@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.11 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.12 2008/05/25 15:56:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ _C_LABEL(_lock_hash):
 /*
  * void	mutex_enter(kmutex_t *mtx);
  */
-_ENTRY(_C_LABEL(mutex_enter))
+ENTRY(mutex_enter)
 	sethi	%hi(curlwp), %o3
 	ld	[%o3 + %lo(curlwp)], %o3	! current thread
 	ldstub	[%o0], %o1			! try to acquire lock
@@ -88,6 +88,7 @@ mutex_enter_crit_start:	.globl	mutex_enter_crit_start
 mutex_enter_crit_end:	.globl	mutex_enter_crit_end
 	retl
 	 nop
+
 /*
  * void	mutex_exit(kmutex_t *mtx);
  *
@@ -99,7 +100,7 @@ mutex_enter_crit_end:	.globl	mutex_enter_crit_end
  * clear the lock and then test for waiters without worrying about
  * memory ordering issues.
  */
-_ENTRY(_C_LABEL(mutex_exit))
+ENTRY(mutex_exit)
 	sethi	%hi(curlwp), %o3
 	ld	[%o3 + %lo(curlwp)], %o3	! current thread
 	sra	%o3, 5, %o1			! curlwp >> 5
@@ -120,7 +121,7 @@ _ENTRY(_C_LABEL(mutex_exit))
 /*
  * void mutex_spin_enter(kmutex_t *);
  */
-_ENTRY(_C_LABEL(mutex_spin_enter))
+ENTRY(mutex_spin_enter)
 	sethi	%hi(CPUINFO_VA), %o4
 	ld	[ %o4 + CPUINFO_MTX_COUNT ], %o5
 	sub	%o5, 1, %o1
@@ -154,7 +155,7 @@ _ENTRY(_C_LABEL(mutex_spin_enter))
 /*
  * void mutex_spin_exit(kmutex_t *);
  */
-_ENTRY(_C_LABEL(mutex_spin_exit))
+ENTRY(mutex_spin_exit)
 
 #if defined(DIAGNOSTIC)
 	ldub	[ %o0 + MTX_LOCK ], %o1
@@ -193,7 +194,7 @@ _ENTRY(_C_LABEL(mutex_spin_exit))
  * XXX On single CPU systems, this should use a restartable sequence:
  * XXX there we don't need the overhead of interlocking.
  */
-_ENTRY(_C_LABEL(_lock_cas))
+ENTRY(_lock_cas)
 	rd	%psr, %o4			! disable interrupts
 	or	%o4, PSR_PIL, %o5
 	wr	%o5, 0, %psr

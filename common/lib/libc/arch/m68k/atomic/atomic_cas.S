@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.4 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.5 2008/05/25 15:56:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_cas_32)
+ENTRY(_atomic_cas_32)
 	movl	%sp@(4), %a0
 	movl	%sp@(8), %d0
 	movl	%sp@(12), %d1

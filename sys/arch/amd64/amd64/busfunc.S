@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.6 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.7 2008/05/25 15:56:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  * uint8_t bus_space_read_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset);
  */
-NENTRY(bus_space_read_1)
+ENTRY(bus_space_read_1)
 	addq	%rsi, %rdx
 	testl	%edi, %edi
 	je	1f
@@ -65,7 +65,7 @@ NENTRY(bus_space_read_1)
  * uint16_t bus_space_read_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset);
  */
-NENTRY(bus_space_read_2)
+ENTRY(bus_space_read_2)
 	addq	%rsi, %rdx
 	testl	%edi, %edi
 	je	1f
@@ -80,7 +80,7 @@ NENTRY(bus_space_read_2)
  * uint32_t bus_space_read_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset);
  */
-NENTRY(bus_space_read_4)
+ENTRY(bus_space_read_4)
 	addq	%rsi, %rdx
 	testl	%edi, %edi
 	je	1f
@@ -94,7 +94,7 @@ NENTRY(bus_space_read_4)
  * uint64_t bus_space_read_8(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset);
  */
-NENTRY(bus_space_read_8)
+ENTRY(bus_space_read_8)
 	addq	%rsi, %rdx
 	testl	%edi, %edi
 	je	.Ldopanic
@@ -110,7 +110,7 @@ STRONG_ALIAS(bus_space_read_stream_8,bus_space_read_8)
  * void bus_space_write_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint8_t value);
  */
-NENTRY(bus_space_write_1)
+ENTRY(bus_space_write_1)
 	addq	%rsi, %rdx
 	testl	%edi, %edi
 	je	1f
@@ -125,7 +125,7 @@ NENTRY(bus_space_write_1)
  * void bus_space_write_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint16_t value);
  */
-NENTRY(bus_space_write_2)
+ENTRY(bus_space_write_2)
 	addq	%rsi, %rdx
 	testl	%edi, %edi
 	je	1f
@@ -140,7 +140,7 @@ NENTRY(bus_space_write_2)
  * void bus_space_write_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *     bus_size_t offset, uint32_t value);
  */
-NENTRY(bus_space_write_4)
+ENTRY(bus_space_write_4)
 	addq	%rsi, %rdx
 	testl	%edi, %edi
 	je	1f
@@ -155,7 +155,7 @@ NENTRY(bus_space_write_4)
  * void bus_space_write_8(bus_space_tag_t tag, bus_space_handle_t bsh,
  *     bus_size_t offset, uint64_t value);
  */
-NENTRY(bus_space_write_8)
+ENTRY(bus_space_write_8)
 	addq	%rsi, %rdx
 	testl	%edi, %edi
 	je	.Ldopanic
@@ -171,7 +171,7 @@ STRONG_ALIAS(bus_space_write_stream_8,bus_space_write_8)
  * void bus_space_read_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint8_t *addr, size_t count);
  */
-NENTRY(bus_space_read_multi_1)
+ENTRY(bus_space_read_multi_1)
 	leaq	(%rsi,%rdx,1), %rdx
 	testl	%edi, %edi
 	jne	1f
@@ -193,7 +193,7 @@ NENTRY(bus_space_read_multi_1)
  * void bus_space_read_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint16_t *addr, size_t count);
  */
-NENTRY(bus_space_read_multi_2)
+ENTRY(bus_space_read_multi_2)
 	leaq	(%rsi,%rdx,1), %rdx
 	testl	%edi, %edi
 	jne	1f
@@ -215,7 +215,7 @@ NENTRY(bus_space_read_multi_2)
  * void bus_space_read_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint32_t *addr, size_t count);
  */
-NENTRY(bus_space_read_multi_4)
+ENTRY(bus_space_read_multi_4)
 	leaq	(%rsi,%rdx,1), %rdx
 	testl	%edi, %edi
 	jne	1f
@@ -237,7 +237,7 @@ NENTRY(bus_space_read_multi_4)
  * void bus_space_read_multi_8(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint64_t *addr, size_t count);
  */
-NENTRY(bus_space_read_multi_8)
+ENTRY(bus_space_read_multi_8)
 	leaq	(%rsi,%rdx,1), %rdx
 	testl	%edi, %edi
 	je	.Ldopanic
@@ -259,7 +259,7 @@ STRONG_ALIAS(bus_space_read_multi_stream_8,bus_space_read_multi_8)
  * void bus_space_write_multi_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint8_t *addr, size_t count);
  */
-NENTRY(bus_space_write_multi_1)
+ENTRY(bus_space_write_multi_1)
 	leaq	(%rsi,%rdx,1), %rdx
 	testl	%edi, %edi
 	jne	1f
@@ -281,7 +281,7 @@ NENTRY(bus_space_write_multi_1)
  * void bus_space_write_multi_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint16_t *addr, size_t count);
  */
-NENTRY(bus_space_write_multi_2)
+ENTRY(bus_space_write_multi_2)
 	leaq	(%rsi,%rdx,1), %rdx
 	testl	%edi, %edi
 	jne	1f
@@ -303,7 +303,7 @@ NENTRY(bus_space_write_multi_2)
  * void bus_space_write_multi_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint32_t *addr, size_t count);
  */
-NENTRY(bus_space_write_multi_4)
+ENTRY(bus_space_write_multi_4)
 	leaq	(%rsi,%rdx,1), %rdx
 	testl	%edi, %edi
 	jne	1f
@@ -325,7 +325,7 @@ NENTRY(bus_space_write_multi_4)
  * void bus_space_write_multi_8(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint64_t *addr, size_t count);
  */
-NENTRY(bus_space_write_multi_8)
+ENTRY(bus_space_write_multi_8)
 	leaq	(%rsi,%rdx,1), %rdx
 	testl	%edi, %edi
 	je	.Ldopanic
@@ -347,7 +347,7 @@ STRONG_ALIAS(bus_space_write_multi_stream_8,bus_space_write_multi_8)
  * void bus_space_read_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint8_t *addr, size_t count);
  */
-NENTRY(bus_space_read_region_1)
+ENTRY(bus_space_read_region_1)
 	testl	%edi, %edi
 	je	2f
 	addq	%rdx, %rsi
@@ -371,7 +371,7 @@ NENTRY(bus_space_read_region_1)
  * void bus_space_read_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint16_t *addr, size_t count);
  */
-NENTRY(bus_space_read_region_2)
+ENTRY(bus_space_read_region_2)
 	testl	%edi, %edi
 	je	2f
 	addq	%rdx, %rsi
@@ -395,7 +395,7 @@ NENTRY(bus_space_read_region_2)
  * void bus_space_read_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint32_t *addr, size_t count);
  */
-NENTRY(bus_space_read_region_4)
+ENTRY(bus_space_read_region_4)
 	testl	%edi, %edi
 	je	2f
 	addq	%rdx, %rsi
@@ -419,7 +419,7 @@ NENTRY(bus_space_read_region_4)
  * void bus_space_read_region_8(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, uint64_t *addr, size_t count);
  */
-NENTRY(bus_space_read_region_8)
+ENTRY(bus_space_read_region_8)
 	testl	%edi, %edi
 	je	.Ldopanic
 	addq	%rdx, %rsi
@@ -438,7 +438,7 @@ STRONG_ALIAS(bus_space_read_region_stream_8,bus_space_read_region_8)
  * void bus_space_write_region_1(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint8_t *addr, size_t count);
  */
-NENTRY(bus_space_write_region_1)
+ENTRY(bus_space_write_region_1)
 	testl	%edi, %edi
 	je	2f
 	leaq	(%rdx,%rsi,1), %rdi
@@ -462,7 +462,7 @@ NENTRY(bus_space_write_region_1)
  * void bus_space_write_region_2(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint16_t *addr, size_t count);
  */
-NENTRY(bus_space_write_region_2)
+ENTRY(bus_space_write_region_2)
 	testl	%edi, %edi
 	je	2f
 	leaq	(%rdx,%rsi,1), %rdi
@@ -486,7 +486,7 @@ NENTRY(bus_space_write_region_2)
  * void bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint32_t *addr, size_t count);
  */
-NENTRY(bus_space_write_region_4)
+ENTRY(bus_space_write_region_4)
 	testl	%edi, %edi
 	je	2f
 	leaq	(%rdx,%rsi,1), %rdi
@@ -510,7 +510,7 @@ NENTRY(bus_space_write_region_4)
  * void bus_space_write_region_8(bus_space_tag_t tag, bus_space_handle_t bsh,
  *    bus_size_t offset, const uint64_t *addr, size_t count);
  */
-NENTRY(bus_space_write_region_8)
+ENTRY(bus_space_write_region_8)
 	testl	%edi, %edi
 	je	.Ldopanic
 	leaq	(%rdx,%rsi,1), %rdi

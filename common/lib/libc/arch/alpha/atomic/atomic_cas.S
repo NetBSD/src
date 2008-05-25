@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.4 2008/04/28 20:22:51 martin Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.5 2008/05/25 15:56:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-LEAF_NOPROFILE(_atomic_cas_32, 3)
+LEAF(_atomic_cas_32, 3)
 1:	mov	a2, t2
 	ldl_l	v0, 0(a0)
 	cmpeq	v0, a1, t1
@@ -53,7 +53,7 @@ STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
 
-LEAF_NOPROFILE(_atomic_cas_64, 3)
+LEAF(_atomic_cas_64, 3)
 1:	mov	a2, t2
 	ldq_l	v0, 0(a0)
 	cmpeq	v0, a1, t1

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.5 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.6 2008/05/25 15:56:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_add_32)
+ENTRY(_atomic_add_32)
 1:	lwarx	%r10,0,%r3
 	add	%r10,%r10,%r4
 	stwcx.	%r10,0,%r3
@@ -49,7 +49,7 @@ ATOMIC_OP_ALIAS(atomic_add_ptr,_atomic_add_32)
 STRONG_ALIAS(_atomic_add_ptr,_atomic_add_32)
 #endif
 
-ENTRY_NOPROFILE(_atomic_add_32_nv)
+ENTRY(_atomic_add_32_nv)
 1:	lwarx	%r10,0,%r3
 	add	%r10,%r10,%r4
 	stwcx.	%r10,0,%r3
