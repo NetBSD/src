@@ -22,7 +22,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-/* lasciate ogne speranza, voi ch'entrate. */
+/* lasciate ogne speranza, voi ch'intrate. */
 
 #define	DEBUG
 
@@ -45,10 +45,11 @@ THIS SOFTWARE.
 #define parent(v)	(v)->nnext
 
 #define LEAF	case CCL: case NCCL: case CHAR: case DOT: case FINAL: case ALL:
+#define ELEAF	case EMPTYRE:		/* empty string in regexp */
 #define UNARY	case STAR: case PLUS: case QUEST:
 
 /* encoding in tree Nodes:
-	leaf (CCL, NCCL, CHAR, DOT, FINAL, ALL):
+	leaf (CCL, NCCL, CHAR, DOT, FINAL, ALL, EMPTYRE):
 		left is index, right contains value or pointer to value
 	unary (STAR, PLUS, QUEST): left is child, right is null
 	binary (CAT, OR): left and right are children
@@ -225,6 +226,7 @@ int makeinit(fa *f, int anchor)
 void penter(Node *p)	/* set up parent pointers and leaf indices */
 {
 	switch (type(p)) {
+	ELEAF
 	LEAF
 		info(p) = poscnt;
 		poscnt++;
@@ -249,6 +251,7 @@ void penter(Node *p)	/* set up parent pointers and leaf indices */
 void freetr(Node *p)	/* free parse tree */
 {
 	switch (type(p)) {
+	ELEAF
 	LEAF
 		xfree(p);
 		break;
@@ -352,7 +355,7 @@ char *cclenter(const char *argp)	/* add a character class */
 					continue;
 				}
 				while (c < c2) {
-					if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, 0))
+					if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, "cclenter1"))
 						FATAL("out of space for character class [%.10s...] 2", p);
 					*bp++ = ++c;
 					i++;
@@ -360,7 +363,7 @@ char *cclenter(const char *argp)	/* add a character class */
 				continue;
 			}
 		}
-		if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, 0))
+		if (!adjbuf(&buf, &bufsz, bp-buf+2, 100, &bp, "cclenter2"))
 			FATAL("out of space for character class [%.10s...] 3", p);
 		*bp++ = c;
 		i++;
@@ -382,6 +385,7 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 	int *p;
 
 	switch (type(v)) {
+	ELEAF
 	LEAF
 		f->re[info(v)].ltype = type(v);
 		f->re[info(v)].lval.np = right(v);
@@ -418,11 +422,12 @@ void cfoll(fa *f, Node *v)	/* enter follow set of each leaf of vertex v into lfo
 }
 
 int first(Node *p)	/* collects initially active leaves of p into setvec */
-			/* returns 1 if p matches empty string */
+			/* returns 0 if p matches empty string */
 {
 	int b, lp;
 
 	switch (type(p)) {
+	ELEAF
 	LEAF
 		lp = info(p);	/* look for high-water mark of subscripts */
 		while (setcnt >= maxsetvec || lp >= maxsetvec) {	/* guessing here! */
@@ -431,6 +436,10 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 			tmpset = (int *) realloc(tmpset, maxsetvec * sizeof(int));
 			if (setvec == 0 || tmpset == 0)
 				overflo("out of space in first()");
+		}
+		if (type(p) == EMPTYRE) {
+			setvec[lp] = 0;
+			return(0);
 		}
 		if (setvec[lp] != 1) {
 			setvec[lp] = 1;
@@ -510,6 +519,7 @@ int match(fa *f, const char *p0)	/* shortest match ? */
 	if (f->out[s])
 		return(1);
 	do {
+		/* assert(*p < NCHARS); */
 		if ((ns = f->gototab[s][*p]) != 0)
 			s = ns;
 		else
@@ -538,6 +548,7 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 		do {
 			if (f->out[s])		/* final state */
 				patlen = q-p;
+			/* assert(*q < NCHARS); */
 			if ((ns = f->gototab[s][*q]) != 0)
 				s = ns;
 			else
@@ -581,6 +592,7 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 		do {
 			if (f->out[s])		/* final state */
 				patlen = q-p;
+			/* assert(*q < NCHARS); */
 			if ((ns = f->gototab[s][*q]) != 0)
 				s = ns;
 			else
@@ -617,9 +629,10 @@ Node *reparse(const char *p)	/* parses regular expression pointed to by p */
 	lastre = prestr = (uschar *) p;	/* prestr points to string to be parsed */
 	rtok = relex();
 	/* GNU compatibility: an empty regexp matches anything */
-	if (rtok == '\0')
+	if (rtok == '\0') {
 		/* FATAL("empty regular expression"); previous */
-		return(op2(ALL, NIL, NIL));
+		return(op2(EMPTYRE, NIL, NIL));
+	}
 	np = regexp();
 	if (rtok != '\0')
 		FATAL("syntax error in regular expression %s at %s", lastre, prestr);
@@ -641,6 +654,9 @@ Node *primary(void)
 		rtok = relex();
 		return (unary(np));
 	case ALL:
+		rtok = relex();
+		return (unary(op2(ALL, NIL, NIL)));
+	case EMPTYRE:
 		rtok = relex();
 		return (unary(op2(ALL, NIL, NIL)));
 	case DOT:
@@ -682,7 +698,7 @@ Node *primary(void)
 Node *concat(Node *np)
 {
 	switch (rtok) {
-	case CHAR: case DOT: case ALL: case CCL: case NCCL: case '$': case '(':
+	case CHAR: case DOT: case ALL: case EMPTYRE: case CCL: case NCCL: case '$': case '(':
 		return (concat(op2(CAT, np, primary())));
 	}
 	return (np);
@@ -803,7 +819,7 @@ int relex(void)		/* lexical analyzer for reparse */
 		else
 			cflag = 0;
 		n = 2 * strlen((const char *) prestr)+1;
-		if (!adjbuf(&buf, &bufsz, n, n, &bp, 0))
+		if (!adjbuf(&buf, &bufsz, n, n, &bp, "relex1"))
 			FATAL("out of space for reg expr %.10s...", lastre);
 		for (; ; ) {
 			if ((c = *prestr++) == '\\') {
@@ -822,7 +838,7 @@ int relex(void)		/* lexical analyzer for reparse */
 				    prestr[2 + cc->cc_namelen] == ']') {
 					prestr += cc->cc_namelen + 3;
 					for (i = 0; i < NCHARS; i++) {
-						if (!adjbuf(&buf, &bufsz, bp-buf+1, 100, &bp, 0))
+						if (!adjbuf(&buf, &bufsz, bp-buf+1, 100, &bp, "relex2"))
 						    FATAL("out of space for reg expr %.10s...", lastre);
 						if (cc->cc_func(i)) {
 							*bp++ = i;
@@ -872,6 +888,7 @@ int cgoto(fa *f, int s, int c)
 			if ((k == CHAR && c == ptoi(f->re[p[i]].lval.np))
 			 || (k == DOT && c != 0 && c != HAT)
 			 || (k == ALL && c != 0)
+			 || (k == EMPTYRE && c != 0)
 			 || (k == CCL && member(c, (char *) f->re[p[i]].lval.up))
 			 || (k == NCCL && !member(c, (char *) f->re[p[i]].lval.up) && c != 0 && c != HAT)) {
 				q = f->re[p[i]].lfollow;
