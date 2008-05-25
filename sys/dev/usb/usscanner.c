@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.25 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.26 2008/05/25 07:04:10 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.25 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.26 2008/05/25 07:04:10 cegger Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -594,7 +594,7 @@ usscanner_sensecmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		xs->xs_periph->periph_flags |= 1; /* XXX 1 */
 
 	if (sc->sc_state != UAS_SENSECMD) {
-		aprint_error_dev(self, "!UAS_SENSECMD\n");
+		aprint_error_dev(sc->sc_dev, "!UAS_SENSECMD\n");
 		xs->error = XS_DRIVER_STUFFUP;
 		goto done;
 	}
@@ -640,7 +640,7 @@ usscanner_cmd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		xs->xs_periph->periph_flags |= 1;	/* XXX 1 */
 
 	if (sc->sc_state != UAS_CMD) {
-		aprint_error_dev(self, "!UAS_CMD\n");
+		aprint_error_dev(sc->sc_dev, "!UAS_CMD\n");
 		xs->error = XS_DRIVER_STUFFUP;
 		goto done;
 	}
