@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.1 2007/12/29 14:38:30 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.2 2008/05/25 19:05:17 agc Exp $
 
 include "arch/usermode/conf/std.usermode"
 
-#options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.1 $"
+options 	INCLUDE_CONFIG_FILE
+#ident 		"GENERIC-$Revision: 1.2 $"
 maxusers 	32
 makeoptions	DEBUG="-g3"
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
