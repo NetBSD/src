@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.14 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.15 2008/05/25 15:56:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,10 +44,11 @@
 #if MTX_OWNER != 0
 #error MTX_OWNER != 0, need to add offset to (%r1)
 #endif
+
 /*
  * void mutex_enter(kmutex_t *);
  */
-NENTRY(mutex_enter, 0)
+ENTRY(mutex_enter, 0)
 	movl	4(%ap), %r1		/* get mutex (ptr) */
 #ifdef DIAGNOSTIC
 	blbs	(%r1), 1f		/* go slow if this is SPIN */
@@ -64,7 +65,7 @@ NENTRY(mutex_enter, 0)
 /*
  * void mutex_exit(kmutex_t *);
  */
-NENTRY(mutex_exit, 0)
+ENTRY(mutex_exit, 0)
 	movl	4(%ap), %r1		/* get mutex (ptr) */
 #ifdef DIAGNOSTIC
 	blbs	(%r1), 1f		/* go slow if this is SPIN */
@@ -80,7 +81,7 @@ NENTRY(mutex_exit, 0)
 /*
  * void mutex_spin_enter(kmutex_t *);
  */
-NENTRY(mutex_spin_enter, 0)
+ENTRY(mutex_spin_enter, 0)
 	movl	4(%ap), %r0			/* get spin mutex */
 #ifdef DIAGNOSTIC
 	blbc	(%r0), 3f
@@ -108,7 +109,7 @@ NENTRY(mutex_spin_enter, 0)
 /*
  * void mutex_spin_exit(kmutex_t *);
  */
-NENTRY(mutex_spin_exit, 0)
+ENTRY(mutex_spin_exit, 0)
 	movl	4(%ap), %r0			/* get spin mutex */
 #if defined(DIAGNOSTIC)
 	blbc	(%r0), 2f			/* assert this is a spinlock */
@@ -143,7 +144,7 @@ NENTRY(mutex_spin_exit, 0)
 /*
  * void rw_enter(krwlock_t *rwl, krw_t op);
  */
-NENTRY(rw_enter, 0)
+ENTRY(rw_enter, 0)
 	movl	4(%ap), %r1			/* grab rwlock ptr */
 	tstl	8(%ap)				/* is this a reader op? */
 	bneq	2f				/*   nope, branch to writer */
@@ -169,7 +170,7 @@ NENTRY(rw_enter, 0)
 /*
  * void rw_exit(krwlock_t *rwl, krw_t op);
  */
-NENTRY(rw_exit, 0)
+ENTRY(rw_exit, 0)
 	movl	4(%ap), %r1			/* grab rwlock ptr */
 	movl	(%r1), %r2			/* grab owner (old) */
 	bitl	$RW_WRITE_LOCKED, %r2		/* is it write locked? */
@@ -194,7 +195,7 @@ NENTRY(rw_exit, 0)
 /*
  * bool rw_tryenter(krwlock_t *krw, krw_t op);
  */
-NENTRY(rw_tryenter, 0)
+ENTRY(rw_tryenter, 0)
 	movl	4(%ap), %r1			/* get rwlock ptr */
 	tstl	8(%ap)				/* is this a reader op? */
 	bneq	3f				/*   nope, branch to writer */
@@ -221,13 +222,13 @@ NENTRY(rw_tryenter, 0)
 /*
  * _atomic_cas_32(volatile uint32_t *p, uint32_t old, uint32_t new);
  */
-NENTRY(_atomic_cas_32, 0)
+ENTRY(_atomic_cas_32, 0)
 	movq	4(%ap), %r1		/* cache ptr, old */
 	movl	12(%ap), %r3		/* cache new */
 	bsbw	_do_cas+2		/* do it */
 	ret
 
-NENTRY(_do_cas, 0)
+ENTRY(_do_cas, 0)
 #ifdef MULTIPROCESSOR
 	movl	(%r1), %r0		/* get value */
 	cmpl	%r0, %r2		/* does it equal old? */

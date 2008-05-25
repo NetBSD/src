@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.19 2008/05/06 23:03:03 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.20 2008/05/25 15:56:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.19 2008/05/06 23:03:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.20 2008/05/25 15:56:12 chs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -271,7 +271,7 @@ LABEL(mutex_spin_exit_end)
 END(mutex_spin_exit)
 
 /*
- * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
+ * Patch for i686 CPUs where cli/sti is prohibitively expensive.
  * Must be the same size as mutex_spin_exit().
  */
 ENTRY(i686_mutex_spin_exit)
@@ -320,7 +320,7 @@ ENTRY(mutex_spin_exit)
 /*
  * Spinlocks.
  */
-NENTRY(__cpu_simple_lock_init)
+ENTRY(__cpu_simple_lock_init)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
@@ -344,13 +344,13 @@ NENTRY(__cpu_simple_lock)
 	jmp	2b
 END(__cpu_simple_lock)
 
-NENTRY(__cpu_simple_unlock)
+ENTRY(__cpu_simple_unlock)
 	movl	4(%esp), %edx
 	movb	$0, (%edx)
 	ret
 END(__cpu_simple_unlock)
 
-NENTRY(__cpu_simple_lock_try)
+ENTRY(__cpu_simple_lock_try)
 	movl	4(%esp), %edx
 	movl	$0x0100, %eax
 	LOCK(7)
