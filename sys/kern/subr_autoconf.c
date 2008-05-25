@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.148 2008/05/19 17:06:02 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.149 2008/05/25 12:30:40 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,9 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.148 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.149 2008/05/25 12:30:40 jmcneill Exp $");
 
 #include "opt_ddb.h"
+#include "drvctl.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.148 2008/05/19 17:06:02 ad Exp $
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/devmon.h>
 
 #include <sys/disk.h>
 
@@ -410,6 +412,9 @@ configure(void)
 	/* Initialize data structures. */
 	config_init();
 	pmf_init();
+#if NDRVCTL > 0
+	drvctl_init();
+#endif
 
 #ifdef USERCONF
 	if (boothowto & RB_USERCONF)
@@ -467,6 +472,34 @@ configure(void)
 
 	/* Lock the kernel on behalf of lwp0. */
 	KERNEL_LOCK(1, NULL);
+}
+
+/*
+ * Announce device attach/detach to userland listeners.
+ */
+static void
+devmon_report_device(device_t dev, bool isattach)
+{
+#if NDRVCTL > 0
+	prop_dictionary_t ev;
+	const char *parent;
+	const char *what;
+	device_t pdev = device_parent(dev);
+
+	ev = prop_dictionary_create();
+	if (ev == NULL)
+		return;
+
+	what = (isattach ? "device-attach" : "device-detach");
+	parent = (pdev == NULL ? "root" : device_xname(pdev));
+	if (!prop_dictionary_set_cstring(ev, "device", device_xname(dev)) ||
+	    !prop_dictionary_set_cstring(ev, "parent", parent)) {
+		prop_object_release(ev);
+		return;
+	}
+
+	devmon_insert(what, ev);
+#endif
 }
 
 /*
@@ -1331,6 +1364,9 @@ config_attach_loc(device_t parent, cfdata_t cf,
 	device_register(dev, aux);
 #endif
 
+	/* Let userland know */
+	devmon_report_device(dev, true);
+
 #if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_PROGRESS)
 	if (splash_progress_state)
 		splash_progress_update(splash_progress_state);
@@ -1462,6 +1498,9 @@ config_detach(device_t dev, int flags)
 	/*
 	 * The device has now been successfully detached.
 	 */
+
+	/* Let userland know */
+	devmon_report_device(dev, false);
 
 #ifdef DIAGNOSTIC
 	/*
