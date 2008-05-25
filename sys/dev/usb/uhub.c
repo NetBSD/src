@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.98 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: uhub.c,v 1.99 2008/05/25 21:41:35 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.98 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.99 2008/05/25 21:41:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ int uhub_detach(device_t, int);
 int uhub_activate(device_t, enum devact);
 extern struct cfdriver uhub_cd;
 CFATTACH_DECL2_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
+    uhub_attach, uhub_detach, uhub_activate, NULL, uhub_childdet);
+CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
     uhub_attach, uhub_detach, uhub_activate, NULL, uhub_childdet);
 
 USB_MATCH(uhub)
@@ -541,10 +543,11 @@ uhub_activate(device_ptr_t self, enum devact act)
 		nports = hub->hubdesc.bNbrPorts;
 		for(port = 0; port < nports; port++) {
 			dev = hub->ports[port].device;
-			if (dev != NULL && dev->subdevs != NULL) {
-				for (i = 0; dev->subdevs[i] != NULL; i++)
+			if (!dev)
+				continue;
+			for (i = 0; i < dev->subdevlen; i++)
+				if (dev->subdevs[i])
 					config_deactivate(dev->subdevs[i]);
-			}
 		}
 		break;
 	}
@@ -616,9 +619,9 @@ uhub_childdet(device_t self, device_t child)
 	nports = devhub->hub->hubdesc.bNbrPorts;
 	for (port = 0; port < nports; port++) {
 		dev = devhub->hub->ports[port].device;
-		if (dev == NULL || dev->subdevs == NULL)
+		if (!dev)
 			continue;
-		for (i = 0; dev->subdevs[i]; i++) {
+		for (i = 0; i < dev->subdevlen; i++) {
 			if (dev->subdevs[i] == child) {
 				dev->subdevs[i] = NULL;
 				return;
