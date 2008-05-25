@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssp.3,v 1.3 2008/04/30 13:10:50 martin Exp $
+.\"	$NetBSD: ssp.3,v 1.4 2008/05/25 20:07:14 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,10 +78,10 @@
 .Ft int
 .Fn getcwd "char *str" "size_t len"
 .Sh DESCRIPTION
-When 
+When
 .Dv _FORTIFY_SOURCE
 bounds checking is enabled as described below, the above functions get
-overwriten to use the
+overwritten to use the
 .Xr gcc 1
 .Xr __builtin_object_size 3
 function to compute the size of
@@ -100,7 +100,7 @@ to override the standard include files and
 or
 .Dq \-D_FORTIFY_SOURCE=2 .
 .Pp
-If 
+If
 .Dv _FORTIFY_SOURCE is set to
 .Dv 1
 the code will compute the maximum possible buffer size for
@@ -110,13 +110,13 @@ and if set to
 it will compute the minimum buffer size.
 .Sh SEE ALSO
 .Xr gcc 1 ,
-.Xr read 2 , 
+.Xr read 2 ,
 .Xr readlink 2 ,
+.Xr __builtin_object_size 3 ,
+.Xr abort 3 ,
 .Xr getcwd 3 ,
 .Xr stdio 3 ,
-.Xr string 3 ,
-.Xr abort 3 ,
-.Xr __builtin_object_size 3
+.Xr string 3
 .Sh HISTORY
 The
 .Nm ssp
