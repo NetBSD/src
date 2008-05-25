@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.6 2008/05/25 16:17:37 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.7 2008/05/25 17:20:29 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -165,9 +165,19 @@ wakeup_32:
 	movl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT|CR4_PSE),%eax
 	movl	%eax,%cr4
 
-	/* Enable SYSCALL extension and Long Mode */
+	/*
+	 * First switch to Long Mode.  Do not restore the original
+	 * MSR EFER value directly, as enabling the NX bit without
+	 * paging will result in a GPF on AMD CPUs.
+	 *
+	 * Load the correct MSR EFER value now to not depend on the
+	 * data segment register directly after switching to Long Mode.
+	 * After this point, no instruction is allowed to clobber %ebx.
+	 */
+	movl	WAKEUP_efer + ACPI_WAKEUP_ADDR,%ebx
 	movl	$MSR_EFER,%ecx
-	movl	WAKEUP_efer + ACPI_WAKEUP_ADDR,%eax
+	rdmsr
+	orl	$EFER_LME, %eax
 	wrmsr
 
 	/* Load temporary PML4, code will switch to full PML4 later */
@@ -189,6 +199,14 @@ wakeup_32:
 
 	.code64
 wakeup_64:
+
+	/*
+	 * Load the normal system value of MSR EFER.  This includes
+	 * enabling the SYSCALL extension and NXE (if supported).
+	 */
+	movl	%ebx, %eax
+	movl	$MSR_EFER,%ecx
+	wrmsr
 
 	/* Reload data segment with default value */
 	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
