@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.52 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.53 2008/05/25 19:22:21 ad Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.52 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.53 2008/05/25 19:22:21 ad Exp $");
 
 #include "ppp.h"
 
@@ -352,7 +352,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
 	    mutex_spin_exit(&tty_lock);
 	    return (EWOULDBLOCK);
 	}
-	error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+	error = ttysleep(tp, &tp->t_rawcv, true, 0);
 	if (error) {
 	    mutex_spin_exit(&tty_lock);
 	    return error;

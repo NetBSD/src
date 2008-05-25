@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.40 2007/11/19 18:51:37 ad Exp $ */
+/*	$NetBSD: msc.c,v 1.41 2008/05/25 19:22:21 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.40 2007/11/19 18:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.41 2008/05/25 19:22:21 ad Exp $");
 
 #include "msc.h"
 
@@ -438,7 +438,7 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 #if DEBUG_CD
 		printf("msc%d: %d waiting for CD\n", msc->unit, MSCLINE(dev));
 #endif
-		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_rawcv, true, 0);
 		tp->t_wopen--;
 
 		if (error) {
