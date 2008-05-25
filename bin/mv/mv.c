@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.39 2008/01/16 11:43:34 hubertf Exp $ */
+/* $NetBSD: mv.c,v 1.40 2008/05/25 15:01:24 christos Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.39 2008/01/16 11:43:34 hubertf Exp $");
+__RCSID("$NetBSD: mv.c,v 1.40 2008/05/25 15:01:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -256,7 +256,7 @@ int
 fastcopy(char *from, char *to, struct stat *sbp)
 {
 	struct timeval tval[2];
-	static u_int blen;
+	static blksize_t blen;
 	static char *bp;
 	int nread, from_fd, to_fd;
 
@@ -272,6 +272,7 @@ fastcopy(char *from, char *to, struct stat *sbp)
 	}
 	if (!blen && !(bp = malloc(blen = sbp->st_blksize))) {
 		warn(NULL);
+		blen = 0;
 		(void)close(from_fd);
 		(void)close(to_fd);
 		return (1);
