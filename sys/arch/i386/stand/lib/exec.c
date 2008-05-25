@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.27 2008/05/20 16:04:08 ad Exp $	 */
+/*	$NetBSD: exec.c,v 1.28 2008/05/25 11:54:33 chris Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -302,12 +302,30 @@ module_path(boot_module_t *bm)
 	return buf;
 }
 
+static int 
+module_open(boot_module_t *bm, int mode)
+{
+	int fd;
+	const char *path;
+		
+	/* check the expanded path first */
+	path = module_path(bm);
+	fd = open(path, mode);
+	if (fd == -1) {
+		printf("WARNING: couldn't open %s\n", path);
+		/* now attempt the raw path provided */
+		fd = open(bm->bm_path, mode);
+		if (fd == -1)
+			printf("WARNING: couldn't open %s\n", bm->bm_path);
+	}
+	return fd;
+}
+
 static void
 module_init(void)
 {
 	struct bi_modulelist_entry *bi;
 	struct stat st;
-	const char *path;
 	char *buf;
 	boot_module_t *bm;
 	size_t len;
@@ -317,16 +335,14 @@ module_init(void)
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);
 	for (bm = boot_modules; bm; bm = bm->bm_next) {
-		path = module_path(bm);
-		fd = open(path, 0);
+		fd = module_open(bm, 0);
 		if (fd == -1) {
-			printf("WARNING: couldn't open %s\n", path);
 			bm->bm_len = -1;
 			continue;
 		}
 		err = fstat(fd, &st);
 		if (err == -1 || st.st_size == -1) {
-			printf("WARNING: couldn't stat %s\n", path);
+			printf("WARNING: couldn't stat %s\n", bm->bm_path);
 			close(fd);
 			bm->bm_len = -1;
 			continue;
@@ -353,11 +369,10 @@ module_init(void)
 	for (bm = boot_modules; bm; bm = bm->bm_next) {
 		if (bm->bm_len == -1)
 			continue;
-		path = module_path(bm);
-		printf("Loading %s ", path);
-		fd = open(path, 0);
+		printf("Loading %s ", bm->bm_path);
+		fd = module_open(bm, 0);
 		if (fd == -1) {
-			printf("ERROR: couldn't open %s\n", path);
+			printf("ERROR: couldn't open %s\n", bm->bm_path);
 			continue;
 		}
 		image_end = (image_end + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1);
