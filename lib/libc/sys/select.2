@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.31 2008/02/23 17:53:23 sborrill Exp $
+.\"	$NetBSD: select.2,v 1.32 2008/05/25 20:13:14 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,40 +155,19 @@ If
 returns with an error,
 including one due to an interrupted call,
 the descriptor sets will be unmodified.
-.Sh ERRORS
-An error return from
-.Fn select
-indicates:
-.Bl -tag -width Er
-.It Bq Er EFAULT
-One or more of
-.Fa readfds ,
-.Fa writefds ,
-or
-.Fa exceptfds
-points outside the process's allocated address space.
-.It Bq Er EBADF
-One of the descriptor sets specified an invalid descriptor.
-.It Bq Er EINTR
-A signal was delivered before the time limit expired and
-before any of the selected events occurred.
-.It Bq Er EINVAL
-The specified time limit is invalid.
-One of its components is negative or too large.
-.El
-.Sh EXAMPLE
-.nf
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-#include <err.h>
-#include <errno.h>
-#include <sysexits.h>
-#include <sys/types.h>
-#include <sys/time.h>
+.Sh EXAMPLES
+.Bd -unfilled
+#include \*[Lt]stdio.h\*[Gt]
+#include \*[Lt]unistd.h\*[Gt]
+#include \*[Lt]string.h\*[Gt]
+#include \*[Lt]err.h\*[Gt]
+#include \*[Lt]errno.h\*[Gt]
+#include \*[Lt]sysexits.h\*[Gt]
+#include \*[Lt]sys/types.h\*[Gt]
+#include \*[Lt]sys/time.h\*[Gt]
 
 int
-main(argc, argv) 
+main(argc, argv)
 	int argc;
 	char **argv;
 {
@@ -204,21 +183,21 @@ main(argc, argv)
 	timeout.tv_usec = 0;
 
 	/* Initialize the read set to null */
-	FD_ZERO(&read_set);
+	FD_ZERO(\*[Am]read_set);
 
 	/* Add file descriptor 1 to read_set */
-	FD_SET(fd, &read_set);
+	FD_SET(fd, \*[Am]read_set);
 
-	/* 
-	 * Check if data is ready to be readen on 
+	/*
+	 * Check if data is ready to be readen on
 	 * file descriptor 1, give up after 10 seconds.
 	 */
-	ret = select(fd + 1, &read_set, NULL, NULL, &timeout);
+	ret = select(fd + 1, \*[Am]read_set, NULL, NULL, \*[Am]timeout);
 
-	/* 
-	 * Returned value is the number of file 
+	/*
+	 * Returned value is the number of file
 	 * descriptors ready for I/O, or -1 on error.
-	 */ 
+	 */
 	switch (ret) {
 	case \-1:
 		err(EX_OSERR, "select() failed");
@@ -231,16 +210,16 @@ main(argc, argv)
 	default:
 		printf("Data received on %d file desciptor(s)\\n", ret);
 
-		/* 
-		 * select(2) hands back a file descriptor set where 
-		 * only descriptors ready for I/O are set. These can 
+		/*
+		 * select(2) hands back a file descriptor set where
+		 * only descriptors ready for I/O are set. These can
 		 * be tested using FD_ISSET
 		 */
-		for (i = 0; i <= fd; i++) {
-			if (FD_ISSET(i, &read_set)) {
+		for (i = 0; i \*[Lt]= fd; i++) {
+			if (FD_ISSET(i, \*[Am]read_set)) {
 				printf("Data on file descriptor %d\\n", i);
 				/* Remove the file descriptor from the set */
-				FD_CLR(fd, &read_set);
+				FD_CLR(fd, \*[Am]read_set);
 			}
 		}
 		break;
@@ -248,7 +227,27 @@ main(argc, argv)
 
 	return 0;
 }
-.fi
+.Ed
+.Sh ERRORS
+An error return from
+.Fn select
+indicates:
+.Bl -tag -width Er
+.It Bq Er EBADF
+One of the descriptor sets specified an invalid descriptor.
+.It Bq Er EFAULT
+One or more of
+.Fa readfds ,
+.Fa writefds ,
+or
+.Fa exceptfds
+points outside the process's allocated address space.
+.It Bq Er EINTR
+A signal was delivered before the time limit expired and
+before any of the selected events occurred.
+.It Bq Er EINVAL
+The specified time limit is invalid.
+One of its components is negative or too large.
 .El
 .Sh SEE ALSO
 .Xr accept 2 ,
