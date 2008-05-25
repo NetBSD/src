@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.941 2008/05/20 16:55:28 cegger Exp $
+$NetBSD: pcidevs,v 1.942 2008/05/25 15:58:48 chs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1011,7 +1011,14 @@ product APPLE U3_PPB4		0x0048	U3 PCI-PCI bridge
 product APPLE U3_PPB5		0x0049	U3 PCI-PCI bridge
 product APPLE U3_AGP		0x004b	U3 AGP Interface
 product APPLE K2_GMAC		0x004c	GMAC Ethernet
+product APPLE SHASTA		0x004f	Shasta
+product APPLE SHASTA_ATA	0x0050	Shasta ATA
 product APPLE SHASTA_GMAC	0x0051	Shasta GMAC
+product APPLE SHASTA_FW		0x0052	Shasta Firewire
+product APPLE SHASTA_PCI1	0x0053	Shasta PCI
+product APPLE SHASTA_PCI2	0x0054	Shasta PCI
+product APPLE SHASTA_PCI3	0x0055	Shasta PCI
+product APPLE SHASTA_HT		0x0056	Shasta HyperTransport
 product APPLE INTREPID2_AGP	0x0066	Intrepid 2 AGP
 product APPLE INTREPID2_PCI1	0x0067	Intrepid 2 PCI
 product APPLE INTREPID2_PCI2	0x0068	Intrepid 2 PCI
