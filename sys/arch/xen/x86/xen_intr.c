@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.6 2008/05/24 15:10:50 bouyer Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.7 2008/05/25 16:09:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.6 2008/05/24 15:10:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.7 2008/05/25 16:09:30 bouyer Exp $");
 
 #include <sys/param.h>
 
@@ -70,6 +70,7 @@ spllower(int nlevel)
 	psl = x86_read_psl();
 	x86_disable_intr();
 	if (ci->ci_ipending & imask) {
+		KASSERT(psl == 0);
 		Xspllower(nlevel);
 		/* Xspllower does enable_intr() */
 	} else {
