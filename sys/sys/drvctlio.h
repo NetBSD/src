@@ -1,4 +1,4 @@
-/* $NetBSD: drvctlio.h,v 1.5 2008/04/28 20:24:10 martin Exp $ */
+/* $NetBSD: drvctlio.h,v 1.6 2008/05/25 12:30:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ struct devrescanargs {
 #define DRVSUSPENDDEV _IOW('D', 125, struct devpmargs)
 #define DRVRESUMEDEV _IOW('D', 126, struct devpmargs)
 #define DRVLISTDEV _IOWR('D', 127, struct devlistargs)
+#define DRVGETEVENT _IOR('D', 128, struct plistref)
 
 /*
  * Generic ioctl that takes a dictionary as an argument (specifies the
