@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1066 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1067 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -538,3 +538,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Nubus parallel printer card. [hauke 20080522]
 	kernel: Device attach and detach notifications are now exposed
 		via /dev/drvctl [jmcneill 20080525]
+	awk: Import 20070501 [christos 20080525]
