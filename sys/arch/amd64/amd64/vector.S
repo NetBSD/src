@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.22 2008/05/13 14:12:31 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.23 2008/05/25 16:08:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -917,7 +917,7 @@ IDTVEC(resume_/**/name/**/num)						\
   	CLI(si)								;\
   	unmask(num)			/* unmask it in hardware */	;\
   	late_ack(num)							;\
-  	CLI(si)								;\
+  	STI(si)								;\
   	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
   
 # The unmask func for Xen events
