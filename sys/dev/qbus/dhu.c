@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.52 2008/03/11 05:34:01 matt Exp $	*/
+/*	$NetBSD: dhu.c,v 1.53 2008/05/25 19:22:21 ad Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.52 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.53 2008/05/25 19:22:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,7 @@ dhuopen(dev_t dev, int flag, int mode, struct lwp *l)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	    !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_rawcv, true, 0);
 		tp->t_wopen--;
 		if (error)
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.35 2008/03/15 00:57:15 matt Exp $	*/
+/*	$NetBSD: dz.c,v 1.36 2008/05/25 19:22:21 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.35 2008/03/15 00:57:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.36 2008/05/25 19:22:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 	while (!(flag & O_NONBLOCK) && !(tp->t_cflag & CLOCAL) &&
 	       !(tp->t_state & TS_CARR_ON)) {
 		tp->t_wopen++;
-		error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_rawcv, true, 0);
 		tp->t_wopen--;
 		if (error)
 			break;
