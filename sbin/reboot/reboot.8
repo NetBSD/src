@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.24 2008/02/09 04:31:43 dholland Exp $
+.\"	$NetBSD: reboot.8,v 1.25 2008/05/25 20:08:56 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -127,10 +127,12 @@ However, nothing can defend against deliberate attempts to evade this.
 .Pp
 This command will stop the system without running any
 .Xr shutdown 8
-scripts.  Amongst other things, this means that swapping will not be
+scripts.
+Amongst other things, this means that swapping will not be
 disabled so that
 .Xr raid 4
-can shutdown cleanly.  You should normally use
+can shutdown cleanly.
+You should normally use
 .Xr shutdown 8
 unless you are running in single user mode.
 .Sh BUGS
