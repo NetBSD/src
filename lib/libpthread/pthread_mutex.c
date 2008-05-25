@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.48 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.49 2008/05/25 12:29:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -29,8 +29,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * To track threads waiting for mutexes to be released, we use lockless
+ * lists built on atomic operations and memory barriers.
+ *
+ * A simple spinlock would be faster and make the code easier to
+ * follow, but spinlocks are problematic in userspace.  If a thread is
+ * preempted by the kernel while holding a spinlock, any other thread
+ * attempting to acquire that spinlock will needlessly busy wait.
+ *
+ * There is no good way to know that the holding thread is no longer
+ * running, nor to request a wake-up once it has begun running again. 
+ * Of more concern, threads in the SCHED_FIFO class do not have a
+ * limited time quantum and so could spin forever, preventing the
+ * thread holding the spinlock from getting CPU time: it would never
+ * be released.
+ */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.48 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.49 2008/05/25 12:29:59 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
