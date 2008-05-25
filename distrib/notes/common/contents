@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.139 2008/04/30 15:29:11 ad Exp $
+.\"	$NetBSD: contents,v 1.140 2008/05/25 20:17:00 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -100,7 +100,7 @@ installing on laptop machines.
 .			It Pa netbsd-INSTALL_LARGE.gz
 A version of
 .Li INSTALL
-that has ACPI and some large disk and network driver, to allow installing
+that has ACPI and some large disk and network drivers, to allow installing
 on the newest machines.
 This is the default boot kernel from the ISO images.
 .\}
@@ -1766,7 +1766,7 @@ Keep this in mind if doing a Traditional method
 installation with these utilities.
 .It
 The Booter is known to have problems booting from a NetBSD file system
-if the inode of the kernel file is to large.
+if the inode of the kernel file is too large.
 For large disks it is advisable to have a small root partition and one or
 more usr-type partitions for other files.
 This ensures the inode of the kernel in the root file system will be small.
