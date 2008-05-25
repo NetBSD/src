@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.1.2.1 2008/04/26 12:57:42 peter Exp $ */
+/*	$NetBSD: filter.c,v 1.1.2.2 2008/05/25 17:51:13 peter Exp $ */
 /*	$OpenBSD: filter.c,v 1.6 2007/08/01 09:31:41 henning Exp $ */
 
 /*
@@ -36,6 +36,10 @@
 
 #include "filter.h"
 
+#if defined(__NetBSD__) && defined(WITH_IPF)
+#include "ipf.h"
+#endif /* __NetBSD__ && WITH_IPF */
+
 /* From netinet/in.h, but only _KERNEL_ gets them. */
 #define satosin(sa)	((struct sockaddr_in *)(sa))
 #define satosin6(sa)	((struct sockaddr_in6 *)(sa))
@@ -60,6 +64,11 @@ int
 add_filter(u_int32_t id, u_int8_t dir, struct sockaddr *src,
     struct sockaddr *dst, u_int16_t d_port)
 {
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	if (ipf_enabled)
+		return ipf_add_filter(id, dir, src, dst, d_port);
+#endif /* __NetBSD__ && WITH_IPF */
+
 	if (!src || !dst || !d_port) {
 		errno = EINVAL;
 		return (-1);
@@ -80,6 +89,12 @@ add_nat(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
     u_int16_t d_port, struct sockaddr *nat, u_int16_t nat_range_low,
     u_int16_t nat_range_high)
 {
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	if (ipf_enabled)
+		return ipf_add_nat(id, src, dst, d_port, nat, nat_range_low,
+		    nat_range_high);
+#endif /* __NetBSD__ && WITH_IPF */
+
 	if (!src || !dst || !d_port || !nat || !nat_range_low ||
 	    (src->sa_family != nat->sa_family)) {
 		errno = EINVAL;
@@ -113,6 +128,11 @@ int
 add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
     u_int16_t d_port, struct sockaddr *rdr, u_int16_t rdr_port)
 {
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	if (ipf_enabled)
+		return ipf_add_rdr(id, src, dst, d_port, rdr, rdr_port);
+#endif /* __NetBSD__ && WITH_IPF */
+
 	if (!src || !dst || !d_port || !rdr || !rdr_port ||
 	    (src->sa_family != rdr->sa_family)) {
 		errno = EINVAL;
@@ -144,6 +164,11 @@ add_rdr(u_int32_t id, struct sockaddr *src, struct sockaddr *dst,
 int
 do_commit(void)
 {
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	if (ipf_enabled)
+		return ipf_do_commit();
+#endif /* __NetBSD__ && WITH_IPF */
+
 	if (ioctl(dev, DIOCXCOMMIT, &pft) == -1)
 		return (-1);
 
@@ -153,6 +178,11 @@ do_commit(void)
 int
 do_rollback(void)
 {
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	if (ipf_enabled)
+		return ipf_do_rollback();
+#endif /* __NetBSD__ && WITH_IPF */
+
 	if (ioctl(dev, DIOCXROLLBACK, &pft) == -1)
 		return (-1);
 	
@@ -163,6 +193,13 @@ void
 init_filter(char *opt_qname, char *opt_tagname, int opt_verbose)
 {
 	struct pf_status status;
+
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	if (ipf_enabled) {
+		ipf_init_filter(opt_qname, opt_tagname, opt_verbose);
+		return;
+	}
+#endif /* __NetBSD__ && WITH_IPF */
 
 	qname = opt_qname;
 	tagname = opt_tagname;
@@ -186,6 +223,11 @@ prepare_commit(u_int32_t id)
 {
 	char an[PF_ANCHOR_NAME_SIZE];
 	int i;
+
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	if (ipf_enabled)
+		return ipf_prepare_commit(id);
+#endif /* __NetBSD__ && WITH_IPF */
 
 	memset(&pft, 0, sizeof pft);
 	pft.size = TRANS_SIZE;
@@ -322,6 +364,11 @@ int
 server_lookup(struct sockaddr *client, struct sockaddr *proxy,
     struct sockaddr *server)
 {
+#if defined(__NetBSD__) && defined(WITH_IPF)
+	if (ipf_enabled)
+		return ipf_server_lookup(client, proxy, server);
+#endif /* __NetBSD__ && WITH_IPF */
+
 	if (client->sa_family == AF_INET)
 		return (server_lookup4(satosin(client), satosin(proxy),
 		    satosin(server)));
