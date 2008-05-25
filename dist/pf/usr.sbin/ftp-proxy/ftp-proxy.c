@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.1.2.2 2008/05/01 11:45:35 peter Exp $ */
+/*	$NetBSD: ftp-proxy.c,v 1.1.2.3 2008/05/25 10:19:38 peter Exp $ */
 /*	$OpenBSD: ftp-proxy.c,v 1.15 2007/08/15 15:18:02 camield Exp $ */
 
 /*
@@ -240,14 +240,14 @@ void
 client_read(struct bufferevent *bufev, void *arg)
 {
 	struct session	*s = arg;
-	size_t		 buf_avail, read;
+	size_t		 buf_avail, nread;
 	int		 n;
 
 	do {
 		buf_avail = sizeof s->cbuf - s->cbuf_valid;
-		read = bufferevent_read(bufev, s->cbuf + s->cbuf_valid,
+		nread = bufferevent_read(bufev, s->cbuf + s->cbuf_valid,
 		    buf_avail);
-		s->cbuf_valid += read;
+		s->cbuf_valid += nread;
 
 		while ((n = getline(s->cbuf, &s->cbuf_valid)) > 0) {
 			logmsg(LOG_DEBUG, "#%d client: %s", s->id, linebuf);
@@ -264,7 +264,7 @@ client_read(struct bufferevent *bufev, void *arg)
 			end_session(s);
 			return;
 		}
-	} while (read == buf_avail);
+	} while (nread == buf_avail);
 }
 
 int
@@ -297,7 +297,7 @@ drop_privs(void)
 void
 end_session(struct session *s)
 {
-	int err;
+	int error;
 
 	logmsg(LOG_INFO, "#%d ending session", s->id);
 
@@ -312,16 +312,16 @@ end_session(struct session *s)
 		bufferevent_free(s->server_bufev);
 
 	/* Remove rulesets by commiting empty ones. */
-	err = 0;
+	error = 0;
 	if (prepare_commit(s->id) == -1)
-		err = errno;
+		error = errno;
 	else if (do_commit() == -1) {
-		err = errno;
+		error = errno;
 		do_rollback();
 	}
-	if (err)
+	if (error)
 		logmsg(LOG_ERR, "#%d pf rule removal failed: %s", s->id,
-		    strerror(err));
+		    strerror(error));
 
 	LIST_REMOVE(s, entry);
 	free(s);
@@ -1084,16 +1084,16 @@ void
 server_read(struct bufferevent *bufev, void *arg)
 {
 	struct session	*s = arg;
-	size_t		 buf_avail, read;
+	size_t		 buf_avail, nread;
 	int		 n;
 
 	bufferevent_settimeout(bufev, timeout, 0);
 
 	do {
 		buf_avail = sizeof s->sbuf - s->sbuf_valid;
-		read = bufferevent_read(bufev, s->sbuf + s->sbuf_valid,
+		nread = bufferevent_read(bufev, s->sbuf + s->sbuf_valid,
 		    buf_avail);
-		s->sbuf_valid += read;
+		s->sbuf_valid += nread;
 
 		while ((n = getline(s->sbuf, &s->sbuf_valid)) > 0) {
 			logmsg(LOG_DEBUG, "#%d server: %s", s->id, linebuf);
@@ -1110,7 +1110,7 @@ server_read(struct bufferevent *bufev, void *arg)
 			end_session(s);
 			return;
 		}
-	} while (read == buf_avail);
+	} while (nread == buf_avail);
 }
 
 const char *
