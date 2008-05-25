@@ -136,12 +136,12 @@ int main(int argc, char *argv[])
 		if (c != '#' || (n != 4 && strcmp(def,"define") != 0))	/* not a valid #define */
 			continue;
 		if (tok < FIRSTTOKEN || tok > LASTTOKEN) {
-			fprintf(stderr, "maketab funny token %d %s ignored\n", tok, buf);
+			/* fprintf(stderr, "maketab funny token %d %s ignored\n", tok, buf); */
 			continue;
 		}
 		names[tok-FIRSTTOKEN] = strdup(name);
 		if (names[tok-FIRSTTOKEN] == NULL) {
-			fprintf(stderr, "maketab out of space copying %s", s);
+			fprintf(stderr, "maketab out of space copying %s", name);
 			continue;
 		}
 		printf("\t\"%s\",\t/* %d */\n", name, tok);
