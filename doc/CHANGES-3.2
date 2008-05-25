@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.135 2008/05/13 06:27:24 jdc Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.136 2008/05/25 18:44:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -4094,4 +4094,30 @@ crypto/dist/openssl/crypto/bn/bn_mont.c		1.2 (via patch)
 	multiplication, which might allow local users to conduct a
 	side-channel attack and retrieve RSA private keys.
 	[adrianp, ticket #1931]
+
+sys/dev/usb/ukbd.c				1.96
+
+	Add support for function keys F16 to F19 as present on e.g. the new
+	Apple aluminum keyboard.
+	Patch contributed by Michael Piotrowski in PR kern/37788, reviewed
+	by Matthias Drochner.
+	[ghen, ticket #1932]
+
+sys/dev/raidframe/rf_reconmap.c			1.31
+sys/dev/raidframe/rf_reconmap.h			1.11
+sys/dev/raidframe/rf_reconstruct.c		1.104
+sys/dev/raidframe/rf_reconstruct.h		1.24
+sys/dev/raidframe/rf_revent.c			1.25
+
+	Convert the reconstruction code to use a "sliding status window"
+	which will scale nicely regardless of the number of
+	stripes/reconstruction units in the RAID set.  Convert the main
+	reconstruction loop to rebuild the array in chunks rather than in one
+	big lump. May fix bin/38471.
+	[oster, ticket #1933]
+
+sys/dev/raidframe/rf_states.c			1.43
+
+	Add in a missing "bp->b_resid = bp->b_bcount" in the EIO case.
+	[oster, ticket #1934]
 
