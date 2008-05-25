@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 2008/05/20 09:29:33 dogcow Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 2008/05/25 16:01:29 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2008/05/20 09:29:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2008/05/25 16:01:29 chs Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -437,9 +437,6 @@ struct pv_hash_lock {
 struct pv_hash_head {
 	SLIST_HEAD(, pv_entry) hh_list;
 } pv_hash_heads[PV_HASH_SIZE];
-
-#define	hh_lock(hh)	mutex_spin_enter(&(hh)->hh_lock)
-#define	hh_unlock(hh)	mutex_spin_exit(&(hh)->hh_lock)
 
 static u_int
 pvhash_hash(struct vm_page *ptp, vaddr_t va)
