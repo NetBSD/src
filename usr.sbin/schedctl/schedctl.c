@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.6 2008/04/28 16:52:17 ad Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.7 2008/05/25 23:22:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.6 2008/04/28 16:52:17 ad Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.7 2008/05/25 23:22:16 ad Exp $");
 #endif
 
 #include <stdio.h>
@@ -142,29 +142,39 @@ main(int argc, char **argv)
 	}
 
 	/* At least PID must be specified */
-	if (pid == 0)
-		usage();
+	if (pid == 0) {
+		if (argc == 1 || lid != 0)
+			usage();
+		pid = getpid();
+	} else {
+		if (argc != 1)
+			usage();
+	}
 
 	/* Set the scheduling information for thread/process */
 	sched_set(pid, lid, policy, set ? sp : NULL, cpuset);
 
 	/* Show information about each thread */
-	kd = kvm_open(NULL, NULL, NULL, KVM_NO_FILES, "kvm_open");
-	if (kd == NULL)
-		err(EXIT_FAILURE, "kvm_open");
-	lwp_list = kvm_getlwps(kd, pid, 0, sizeof(struct kinfo_lwp), &count);
-	if (lwp_list == NULL)
-		err(EXIT_FAILURE, "kvm_getlwps");
-	for (lwp = lwp_list, i = 0; i < count; lwp++, i++) {
-		if (lid && lid != lwp->l_lid)
-			continue;
-		thread_info(pid, lwp->l_lid);
+	if (pid != getpid()) {
+		kd = kvm_open(NULL, NULL, NULL, KVM_NO_FILES, "kvm_open");
+		if (kd == NULL)
+			err(EXIT_FAILURE, "kvm_open");
+		lwp_list = kvm_getlwps(kd, pid, 0, sizeof(struct kinfo_lwp), &count);
+		if (lwp_list == NULL)
+			err(EXIT_FAILURE, "kvm_getlwps");
+		for (lwp = lwp_list, i = 0; i < count; lwp++, i++) {
+			if (lid && lid != lwp->l_lid)
+				continue;
+			thread_info(pid, lwp->l_lid);
+		}
+		kvm_close(kd);
+		free(sp);
+		free(cpuset);
+		return 0;
 	}
-	kvm_close(kd);
 
-	free(sp);
-	free(cpuset);
-	return 0;
+	(void)execvp(argv[optind], argv + optind);
+	err(EXIT_FAILURE, "execvp");
 }
 
 static void
@@ -297,7 +307,8 @@ showcpuset(cpuset_t *cpuset)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s -p pid [-t lid] [-A processor] "
-	    "[-C class] [-P priority]\n", getprogname());
+
+	fprintf(stderr, "usage: %s [-t lid] [-A processor] "
+	    "[-C class] [-P priority] {-p pid|command}\n", getprogname());
 	exit(EXIT_FAILURE);
 }
