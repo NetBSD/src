@@ -1,4 +1,4 @@
-# $NetBSD: t_set_e.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_set_e.sh,v 1.3 2008/05/25 19:25:03 dholland Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,34 +25,36 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+# the implementation of "sh" to test
+: ${TEST_SH:="sh"}
+
 nl='
 '
 
-check1()
+failwith()
 {
-	result="`eval $1`"
-	# Remove newlines
-	oifs="$IFS"
-	IFS="$nl"
-	result="`echo $result`"
-	IFS="$oifs"
-	atf_check_equal "$2" '$result'
-}
-
-p()
-{
-
-	if [ $? = 0 ]
-	then
-		echo ${1}0
-	else
-		echo ${1}1
-	fi
+	case "$SH_FAILS" in
+		"") SH_FAILS=`echo "$1"`;;
+		*) SH_FAILS="$SH_FAILS"`echo; echo "$1"`;;
+	esac
 }
 
 check()
 {
-	check1 "((set -e; $1; p X); p Y)" "$2"
+	result=`$TEST_SH -c "$1" 2>/dev/null`
+	if [ "$result" != "$2" ]; then
+		MSG=`printf "%-32s %-8s  %s" "$3" "$result" "$2"`
+		failwith "$MSG"
+		failcount=`expr $failcount + 1`
+	fi
+	count=`expr $count + 1`
+}
+
+checksimple()
+{
+	check 'p() { echo -n $1$?; }; ((set -e; '"$1"'; p X); p Y)' "$2" "simple       $1"
+	check 'p() { echo -n $1$?; }; t='"'"'((set -e; '"$1"'; p X); p Y)'"'"'; eval $t' "$2" "simple-eval  $1"
+
 }
 
 atf_test_case all
@@ -60,14 +62,25 @@ all_head() {
 	atf_set "descr" "Tests that 'set -e' works correctly"
 }
 all_body() {
-	check 'exit 1' 'Y1'
-	check 'false' 'Y1'
-	check '(false)' 'Y1'
-	check 'false || false' 'Y1'
-	check 'false | true' 'X0 Y0'
-	check 'true | false' 'Y1'
-	check '/nonexistent' 'Y1'
-	check 'f() { false; }; f' 'Y1'
+	count=0
+	failcount=0
+
+	checksimple 'exit 1' 'Y1'
+	checksimple 'false' 'Y1'
+	checksimple '(false)' 'Y1'
+	checksimple 'false || false' 'Y1'
+	checksimple 'false | true' 'X0Y0'
+	checksimple 'true | false' 'Y1'
+	checksimple '/nonexistent' 'Y127'
+	checksimple 'f() { false; }; f' 'Y1'
+
+	if [ "x$SH_FAILS" != x ]; then
+	    echo "How          Expression          Result    Should be"
+	    echo "$SH_FAILS"
+	    atf_fail "$failcount of $count failed cases"
+	else
+	    atf_pass
+	fi
 }
 
 atf_init_test_cases() {
