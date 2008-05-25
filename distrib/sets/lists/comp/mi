@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1150 2008/05/22 14:24:42 lukem Exp $
+#	$NetBSD: mi,v 1.1151 2008/05/25 19:33:27 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4394,6 +4394,7 @@
 ./usr/share/man/cat3/archive_write_set_bytes_per_block.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_callbacks.0		comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_compression_bzip2.0	comp-c-catman		.cat
+./usr/share/man/cat3/archive_write_set_compression_compress.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_compression_gzip.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_compression_none.0	comp-c-catman		.cat
 ./usr/share/man/cat3/archive_write_set_compression_program.0	comp-c-catman		.cat
@@ -9643,6 +9644,7 @@
 ./usr/share/man/man3/archive_write_set_bytes_per_block.3		comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_callbacks.3			comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_compression_bzip2.3		comp-c-man		.man
+./usr/share/man/man3/archive_write_set_compression_compress.3		comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_compression_gzip.3		comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_compression_none.3		comp-c-man		.man
 ./usr/share/man/man3/archive_write_set_compression_program.3		comp-c-man		.man
