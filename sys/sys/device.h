@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.109 2008/03/12 18:02:22 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.110 2008/05/25 12:30:40 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -394,6 +394,7 @@ struct vnode *opendisk(struct device *);
 int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
+void	drvctl_init(void);
 void	configure(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
