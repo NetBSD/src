@@ -1,4 +1,4 @@
-# $NetBSD: t_set_e.sh,v 1.4 2008/05/25 21:33:24 dholland Exp $
+# $NetBSD: t_set_e.sh,v 1.5 2008/05/25 21:43:18 dholland Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,9 +31,6 @@
 
 # the implementation of "sh" to test
 : ${TEST_SH:="sh"}
-
-nl='
-'
 
 failwith()
 {
@@ -90,6 +87,8 @@ all_body() {
 	# these cases should be equivalent to the preceding.
 	dcheck '(set -e; /nonexistent; echo ERR); echo OK' 'OK'
 	echeck '(set -e; /nonexistent; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; nonexistent-program-on-path; echo ERR); echo OK' 'OK'
+	echeck '(set -e; nonexistent-program-on-path; echo ERR); echo OK' 'OK'
 	dcheck 'f() { false; }; (set -e; f; echo ERR); echo OK' 'OK'
 	echeck 'f() { false; }; (set -e; f; echo ERR); echo OK' 'OK'
 	dcheck 'f() { return 1; }; (set -e; f; echo ERR); echo OK' 'OK'
