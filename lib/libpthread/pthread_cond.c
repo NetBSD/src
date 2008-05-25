@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.44 2008/05/25 17:11:13 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.45 2008/05/25 23:51:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.44 2008/05/25 17:11:13 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.45 2008/05/25 23:51:31 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -146,8 +146,10 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		 * If awoken early, we will still be on the sleep queue
 		 * and must remove ourself.
 		 */
-		if ((retval != 0 && retval != EINTR && retval != EALREADY) ||
-		    __predict_false(self->pt_cancel)) {
+		if (retval == EINTR || retval == EALREADY) {
+			retval = 0;
+		}
+		if (__predict_false(self->pt_cancel | retval)) {
 			pthread_cond_broadcast(cond);
 			if (self->pt_cancel) {
 				pthread__cancelled();
