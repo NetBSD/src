@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.149 2008/05/25 12:30:40 jmcneill Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.150 2008/05/25 15:03:01 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.149 2008/05/25 12:30:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.150 2008/05/25 15:03:01 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1264,6 +1264,11 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	}
 	dev->dv_properties = prop_dictionary_create();
 	KASSERT(dev->dv_properties != NULL);
+
+	prop_dictionary_set_cstring_nocopy(dev->dv_properties,
+	    "device-driver", dev->dv_cfdriver->cd_name);
+	prop_dictionary_set_uint16(dev->dv_properties,
+	    "device-unit", dev->dv_unit);
 
 	return (dev);
 }
