@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.32 2008/05/25 20:13:14 wiz Exp $
+.\"	$NetBSD: select.2,v 1.33 2008/05/25 20:13:47 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,7 +65,8 @@ The first
 descriptors are checked in each set;
 i.e., the descriptors from 0 through
 .Fa nfds Ns No \-1
-in the descriptor sets are examined. This means that
+in the descriptor sets are examined.
+This means that
 .Fa nfds
 must be set to the highest file descriptor of the three sets, plus one.
 On return,
