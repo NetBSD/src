@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.46 2008/04/08 02:33:03 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.47 2008/05/25 16:00:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.46 2008/04/08 02:33:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.47 2008/05/25 16:00:52 chs Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -213,6 +213,7 @@ static const struct cputab models[] = {
 	{ "8245",	MPC8245,	REVFMT_MAJMIN },
 	{ "970",	IBM970,		REVFMT_MAJMIN },
 	{ "970FX",	IBM970FX,	REVFMT_MAJMIN },
+	{ "970MP",	IBM970MP,	REVFMT_MAJMIN },
 	{ "POWER3II",   IBMPOWER3II,    REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
 };
@@ -343,6 +344,7 @@ cpu_probe_cache(void)
 		break;
 	case IBM970:
 	case IBM970FX:
+	case IBM970MP:
 		curcpu()->ci_ci.dcache_size = 32 K;
 		curcpu()->ci_ci.icache_size = 64 K;
 		curcpu()->ci_ci.dcache_line_size = 128;
@@ -503,6 +505,7 @@ cpu_setup(self, ci)
 
 	case IBM970:
 	case IBM970FX:
+	case IBM970MP:
 	case IBMPOWER3II:
 	default:
 		/* No power-saving mode is available. */ ;
@@ -552,6 +555,7 @@ cpu_setup(self, ci)
 		break;
 	case IBM970:
 	case IBM970FX:
+	case IBM970MP:
 		bitmask = 0;
 		break;
 	default:
