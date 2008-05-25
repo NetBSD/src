@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.12 2008/05/03 05:43:05 yamt Exp $	*/
+/*	$NetBSD: atomic.S,v 1.13 2008/05/25 15:56:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
 
 	.text
 
-NENTRY(_atomic_add_32)
+ENTRY(_atomic_add_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	LOCK(1)
 	addl	%eax, (%edx)
 	ret
 
-NENTRY(_atomic_add_32_nv)
+ENTRY(_atomic_add_32_nv)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	movl	%eax, %ecx
@@ -59,14 +59,14 @@ NENTRY(_atomic_add_32_nv)
 	addl	%ecx, %eax
 	ret
 
-NENTRY(_atomic_and_32)
+ENTRY(_atomic_and_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	LOCK(3)
 	andl	%eax, (%edx)
 	ret
 
-NENTRY(_atomic_and_32_nv)
+ENTRY(_atomic_and_32_nv)
 	movl	4(%esp), %edx
 	movl	(%edx), %eax
 1:
@@ -78,13 +78,13 @@ NENTRY(_atomic_and_32_nv)
 	movl	%ecx, %eax
 	ret
 
-NENTRY(_atomic_dec_32)
+ENTRY(_atomic_dec_32)
 	movl	4(%esp), %edx
 	LOCK(5)
 	decl	(%edx)
 	ret
 
-NENTRY(_atomic_dec_32_nv)
+ENTRY(_atomic_dec_32_nv)
 	movl	4(%esp), %edx
 	movl	$-1, %eax
 	LOCK(6)
@@ -92,13 +92,13 @@ NENTRY(_atomic_dec_32_nv)
 	decl	%eax
 	ret
 
-NENTRY(_atomic_inc_32)
+ENTRY(_atomic_inc_32)
 	movl	4(%esp), %edx
 	LOCK(7)
 	incl	(%edx)
 	ret
 
-NENTRY(_atomic_inc_32_nv)
+ENTRY(_atomic_inc_32_nv)
 	movl	4(%esp), %edx
 	movl	$1, %eax
 	LOCK(8)
@@ -106,14 +106,14 @@ NENTRY(_atomic_inc_32_nv)
 	incl	%eax
 	ret
 
-NENTRY(_atomic_or_32)
+ENTRY(_atomic_or_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	LOCK(9)
 	orl	%eax, (%edx)
 	ret
 
-NENTRY(_atomic_or_32_nv)
+ENTRY(_atomic_or_32_nv)
 	movl	4(%esp), %edx
 	movl	(%edx), %eax
 1:
@@ -125,13 +125,13 @@ NENTRY(_atomic_or_32_nv)
 	movl	%ecx, %eax
 	ret
 
-NENTRY(_atomic_swap_32)
+ENTRY(_atomic_swap_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	xchgl	%eax, (%edx)
 	ret
 
-NENTRY(_atomic_cas_32)
+ENTRY(_atomic_cas_32)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
@@ -140,7 +140,7 @@ NENTRY(_atomic_cas_32)
 	/* %eax now contains the old value */
 	ret
 
-NENTRY(_atomic_cas_32_ni)
+ENTRY(_atomic_cas_32_ni)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
@@ -148,26 +148,26 @@ NENTRY(_atomic_cas_32_ni)
 	/* %eax now contains the old value */
 	ret
 
-NENTRY(_membar_consumer)
+ENTRY(_membar_consumer)
 	LOCK(13)
 	addl	$0, -4(%esp)
 	ret
 ENDLABEL(membar_consumer_end)
 
-NENTRY(_membar_producer)
+ENTRY(_membar_producer)
 	/* A store is enough */
 	movl	$0, -4(%esp)
 	ret
 ENDLABEL(membar_producer_end)
 
-NENTRY(_membar_sync)
+ENTRY(_membar_sync)
 	LOCK(14)
 	addl	$0, -4(%esp)
 	ret
 ENDLABEL(membar_sync_end)
 
 #ifdef _KERNEL
-NENTRY(_atomic_cas_64)
+ENTRY(_atomic_cas_64)
 	cli
 	pushl	%edi
 	pushl	%ebx
@@ -193,7 +193,7 @@ NENTRY(_atomic_cas_64)
 	jmp	1b
 ENDLABEL(_atomic_cas_64_end)
 
-NENTRY(_atomic_cas_cx8)
+ENTRY(_atomic_cas_cx8)
 	pushl	%edi
 	pushl	%ebx
 	movl	12(%esp), %edi
@@ -209,12 +209,12 @@ NENTRY(_atomic_cas_cx8)
 	.space	32, 0x90
 ENDLABEL(_atomic_cas_cx8_end)
 
-NENTRY(sse2_lfence)
+ENTRY(sse2_lfence)
 	lfence
 	ret
 ENDLABEL(sse2_lfence_end)
 
-NENTRY(sse2_mfence)
+ENTRY(sse2_mfence)
 	mfence
 	ret
 ENDLABEL(sse2_mfence_end)
@@ -225,7 +225,7 @@ atomic_lockpatch:
 	.long	.Lpatch6, .Lpatch7, .Lpatch8, .Lpatch9, .Lpatch10
 	.long	.Lpatch12, .Lpatch13, .Lpatch14, .Lpatch15, 0
 #else
-NENTRY(_atomic_cas_64)
+ENTRY(_atomic_cas_64)
 	pushl	%edi
 	pushl	%ebx
 	movl	12(%esp), %edi
