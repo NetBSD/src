@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.13 2008/05/25 20:51:22 cegger Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.14 2008/05/25 22:03:23 cegger Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.13 2008/05/25 20:51:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.14 2008/05/25 22:03:23 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -178,6 +178,9 @@ nfsmbc_attach(device_t parent, device_t self, void *aux)
 	nfsmbca.nfsmb_addr = NFORCE_SMBBASE(reg);
 	sc->sc_nfsmb[1] = config_found(sc->sc_dev, &nfsmbca, nfsmbc_print);
 
+	/* This driver is similar to an ISA bridge that doesn't
+	 * need any special handling. So registering NULL handlers
+	 * are sufficent. */
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
@@ -247,6 +250,9 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
+	/* This driver is similar to an ISA bridge that doesn't
+	 * need any special handling. So registering NULL handlers
+	 * are sufficent. */
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
