@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.117.2.1 2008/05/18 12:29:48 yamt Exp $
+#	$NetBSD: special,v 1.117.2.2 2008/05/25 18:15:08 peter Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -368,6 +368,7 @@
 ./var/at			type=dir  mode=0755 ignore
 ./var/backups			type=dir  mode=0755 ignore
 ./var/chroot			type=dir  mode=0755
+./var/chroot/ftp-proxy		type=dir  mode=0755
 ./var/chroot/named		type=dir  mode=0755
 ./var/chroot/named/dev		type=dir  mode=0755
 ./var/chroot/named/etc		type=dir  mode=0755
@@ -385,6 +386,7 @@
 ./var/chroot/ntpd/var/run	type=dir  mode=0775 gname=ntpd
 ./var/chroot/pflogd		type=dir  mode=0755
 ./var/chroot/sshd		type=dir  mode=0755
+./var/chroot/tftp-proxy		type=dir  mode=0755
 ./var/cron			type=dir  mode=0755
 ./var/cron/tabs			type=dir  mode=0700
 ./var/cron/tabs/root		type=file mode=0600
