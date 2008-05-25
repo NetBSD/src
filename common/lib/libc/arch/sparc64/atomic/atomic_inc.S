@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_inc.S,v 1.5 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_inc.S,v 1.6 2008/05/25 15:56:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 	.text
 
-ENTRY_NOPROFILE(_atomic_inc_32)
+ENTRY(_atomic_inc_32)
 	ld	[%o0], %o2
 1:	add	%o2, 1, %o3
 	cas	[%o0], %o2, %o3
@@ -51,7 +51,7 @@ STRONG_ALIAS(_atomic_inc_32_nv,_atomic_inc_32)
 ATOMIC_OP_ALIAS(atomic_inc_uint_nv,_atomic_inc_32)
 STRONG_ALIAS(_atomic_inc_uint_nv,_atomic_inc_32)
 
-ENTRY_NOPROFILE(_atomic_inc_64)
+ENTRY(_atomic_inc_64)
 	ldx	[%o0], %o2
 1:	add	%o2, 1, %o3
 	casx	[%o0], %o2, %o3

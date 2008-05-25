@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.14 2008/05/11 16:23:05 ad Exp $	*/
+/*	$NetBSD: i386func.S,v 1.15 2008/05/25 15:56:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.14 2008/05/11 16:23:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.15 2008/05/25 15:56:12 chs Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -147,12 +147,12 @@ ENTRY(wbinvd)
 	ret
 END(wbinvd)
 
-NENTRY(x86_disable_intr)
+ENTRY(x86_disable_intr)
 	cli
 	ret
 END(x86_disable_intr)
 
-NENTRY(x86_enable_intr)
+ENTRY(x86_enable_intr)
 	sti
 	ret
 END(x86_enable_intr)

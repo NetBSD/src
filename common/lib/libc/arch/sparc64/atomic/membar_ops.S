@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.4 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.5 2008/05/25 15:56:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,11 +35,11 @@
 
 /* These assume Total Store Order (TSO) */
 
-ENTRY_NOPROFILE(_membar_producer)
+ENTRY(_membar_producer)
 	retl
 	 nop
 
-ENTRY_NOPROFILE(_membar_consumer)
+ENTRY(_membar_consumer)
 	membar	#LoadLoad
 	retl
 	 nop
