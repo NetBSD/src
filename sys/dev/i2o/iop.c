@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.61.2.1 2006/12/04 18:34:16 tron Exp $	*/
+/*	$NetBSD: iop.c,v 1.61.2.2 2008/05/25 18:53:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.61.2.1 2006/12/04 18:34:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.61.2.2 2008/05/25 18:53:43 bouyer Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -347,6 +347,9 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	/* So that our debug checks don't choke. */
 	sc->sc_framesize = 128;
 #endif
+
+	/* Avoid syncing the reply map until it's set up. */
+	sc->sc_curib = 0x123;
 
 	/* Reset the adapter and request status. */
  	if ((rv = iop_reset(sc)) != 0) {
@@ -1076,6 +1079,9 @@ iop_ofifo_init(struct iop_softc *sc)
 		}
 
 		sc->sc_rep_phys = sc->sc_rep_dmamap->dm_segs[0].ds_addr;
+
+		/* Now safe to sync the reply map. */
+		sc->sc_curib = 0;
 	}
 
 	/* Populate the outbound FIFO. */
