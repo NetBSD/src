@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.15 2008/04/05 18:35:32 cegger Exp $	*/
+/*	$NetBSD: spif.c,v 1.16 2008/05/25 19:22:21 ad Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.15 2008/04/05 18:35:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.16 2008/05/25 19:22:21 ad Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -391,7 +391,7 @@ stty_open(dev, flags, mode, l)
 		while (!ISSET(tp->t_cflag, CLOCAL) &&
 		    !ISSET(tp->t_state, TS_CARR_ON)) {
 			int error;
-			error = ttysleep(tp, &tp->t_rawq.c_cv, true, 0);
+			error = ttysleep(tp, &tp->t_rawcv, true, 0);
 			if (error != 0) {
 				mutex_spin_exit(&tty_lock);
 				return (error);

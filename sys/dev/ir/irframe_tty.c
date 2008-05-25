@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.53 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.54 2008/05/25 19:22:21 ad Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.53 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.54 2008/05/25 19:22:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -654,7 +654,7 @@ irt_putc(struct tty *tp, int c)
 			mutex_spin_exit(&tty_lock);
 			goto go;
 		}
-		error = ttysleep(tp, &tp->t_outq.c_cv, true, 0);
+		error = ttysleep(tp, &tp->t_outcv, true, 0);
 		mutex_spin_exit(&tty_lock);
 		if (error)
 			return (error);
