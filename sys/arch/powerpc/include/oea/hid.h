@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.8 2008/05/25 10:16:04 phx Exp $	*/
+/*	$NetBSD: hid.h,v 1.9 2008/05/25 10:52:08 phx Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -67,6 +67,7 @@
 #define HID0_ABE	0x00000008  /* Enable address broadcast */
 #define HID0_FOLD	0x00000008  /* Branch folding enable (7450) */
 #define HID0_BHT	0x00000004  /* Enable branch history table */
+#define HID0_BTCD	0x00000002  /* Branch target addr cache disable (604) */
 #define HID0_NOPTI	0x00000001  /* No-op the dcbt(st) */
 
 #define HID0_BITMASK "\020" \
@@ -115,12 +116,12 @@
  *  27	FBIOB	-	-	-	-	LRSTK
  *  28	-	-	ABE	-	-	FOLD
  *  29	-	BHT	BHT	BHT	BHT	BHT
- *  30	-	BTAC	-	NOPDST	NOPDST	NOPDST
+ *  30	-	BTCD	-	NOPDST	NOPDST	NOPDST
  *  31	NOOPTI	-	NOOPTI	NOPTI	NOPTI	NOPTI
  *
  *  604: ECP = Enable cache parity checking
  *  604: SIE = Serial instruction execution disable
- *  604: BTAC = Branch target address cache disable
+ *  604: BTCD = Branch target address cache disable
  * 7450: TBEN = Time Base Enable
  * 7450: STEN = Software table lookup enable
  * 7450: BHTCLR = Branch history clear
