@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.42 2008/02/27 14:23:33 ad Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.43 2008/05/25 16:02:08 chs Exp $	*/
 
 /*
  *
@@ -42,6 +42,10 @@
 #endif
 
 #include <sys/queue.h>
+#ifdef UVMHIST
+#include <sys/cpu.h>
+#include <sys/malloc.h>
+#endif
 
 /*
  * uvm_stat: monitor what is going on with uvm (or whatever)
