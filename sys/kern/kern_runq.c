@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.8 2008/05/21 15:41:03 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.9 2008/05/25 23:46:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.8 2008/05/21 15:41:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.9 2008/05/25 23:46:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -417,33 +417,11 @@ sched_catchlwp(void)
 	runqueue_t *ci_rq;
 	struct lwp *l;
 
-	if (curci == ci)
+	if (curci == ci || !mutex_tryenter(ci->ci_schedstate.spc_mutex))
 		return NULL;
 
-	/* Lockless check */
 	spc = &ci->ci_schedstate;
 	ci_rq = spc->spc_sched_info;
-	if (ci_rq->r_mcount < min_catch)
-		return NULL;
-
-	/*
-	 * Double-lock the runqueues.
-	 */
-	if (curci < ci) {
-		spc_lock(ci);
-	} else if (!mutex_tryenter(ci->ci_schedstate.spc_mutex)) {
-		const runqueue_t *cur_rq = curci->ci_schedstate.spc_sched_info;
-
-		spc_unlock(curci);
-		spc_lock(ci);
-		spc_lock(curci);
-
-		if (cur_rq->r_count) {
-			spc_unlock(ci);
-			return NULL;
-		}
-	}
-
 	if (ci_rq->r_mcount < min_catch) {
 		spc_unlock(ci);
 		return NULL;
@@ -599,8 +577,6 @@ sched_nextlwp(void)
 		/* Reset the counter, and call the balancer */
 		ci_rq->r_avgcount = 0;
 		sched_balance(ci);
-
-		/* The re-locking will be done inside */
 		return sched_catchlwp();
 	}
 #else
