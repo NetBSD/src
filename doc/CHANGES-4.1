@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.60 2008/05/17 16:39:50 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.61 2008/05/25 19:10:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1065,4 +1065,41 @@ src/sys/dev/pci/pcidevs_data.h		regenerate
 	Disable HW UDP4 and RX TCP4 checksums because they are buggy (PR#34799).
 	Add improvements to bmtphy.
 	[jdc, ticket #1145]
+
+sys/dev/i2o/iop.c			patch
+	Fix crash during boot on systems with an I2O controller.
+	Fix port-amd64/34323
+	[ad, ticket #1146]
+
+sys/kern/uipc_usrreq.c				1.110, 1.111 via patch
+
+	If cm->cmsg_len is not valid for unp_internalize do not use it to
+	work out where the data is in unp_scan.  Fixes PR/38391
+	[mlelstv, ticket #1151]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.155
+
+	Treat ledma the same way as sbus and dma when looking for the boot path.
+	Original Ultra 1's with sbus -> ledma -> le can now network boot again.
+	(From martin@).
+	[jdc, ticket #1152]
+
+sys/dev/raidframe/rf_reconmap.c			1.31
+sys/dev/raidframe/rf_reconmap.h			1.11
+sys/dev/raidframe/rf_reconstruct.c		1.104
+sys/dev/raidframe/rf_reconstruct.h		1.24
+sys/dev/raidframe/rf_revent.c			1.25
+
+	Convert the reconstruction code to use a "sliding status window"
+	which will scale nicely regardless of the number of
+	stripes/reconstruction units in the RAID set.  Convert the main
+	reconstruction loop to rebuild the array in chunks rather than in
+	one big lump. May fix bin/38471. 
+	[oster, ticket #1153]
+
+sys/dev/raidframe/rf_states.c			1.43
+
+	Add in a missing "bp->b_resid = bp->b_bcount" in the EIO case.
+	Spotted by Juergen Hannken-Illjes.  Thanks!
+	[oster, ticket #1154]
 
