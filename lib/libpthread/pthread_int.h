@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.68 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.69 2008/05/25 17:05:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ struct	__pthread_st {
 	char		*pt_name;	/* Thread's name, set by the app. */
 	int		pt_willpark;	/* About to park */
 	lwpid_t		pt_unpark;	/* Unpark this when parking */
-	void		*pt_unparkhint;	/* Hint for the above */
 	struct pthread_lock_ops pt_lockops;/* Cached to avoid PIC overhead */
 	pthread_mutex_t	*pt_droplock;	/* Drop this lock if cancelled */
 	pthread_cond_t	pt_joiners;	/* Threads waiting to join. */
@@ -127,8 +126,9 @@ struct	__pthread_st {
 	struct lwpctl 	*pt_lwpctl;	/* Kernel/user comms area */
 	volatile int	pt_blocking;	/* Blocking in userspace */
 	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
-	volatile int	pt_sleeponq;	/* On a sleep queue */
 	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
+	volatile int	pt_mutexwait;	/* Waiting to acquire mutex */
+	void * volatile pt_mutexnext;	/* Next thread in chain */
 	void * volatile	pt_sleepobj;	/* Object slept on */
 	PTQ_ENTRY(__pthread_st) pt_sleep;
 	void		(*pt_early)(void *);
@@ -183,13 +183,14 @@ extern int 	pthread__unpark_max;
 #define _UC_USER		(1LU << _UC_USER_BIT)
 
 /* Utility functions */
-void	pthread__unpark_all(pthread_t, pthread_spin_t *, pthread_queue_t *)
-			    PTHREAD_HIDE;
-void	pthread__unpark(pthread_t, pthread_spin_t *, pthread_queue_t *,
-			pthread_t) PTHREAD_HIDE;
-int	pthread__park(pthread_t, pthread_spin_t *, pthread_queue_t *,
+void	pthread__unpark_all(pthread_queue_t *, pthread_t, pthread_mutex_t *)
+    PTHREAD_HIDE;
+void	pthread__unpark(pthread_queue_t *, pthread_t, pthread_mutex_t *)
+    PTHREAD_HIDE;
+int	pthread__park(pthread_t, pthread_mutex_t *, pthread_queue_t *,
 		      const struct timespec *, int, const void *)
 		      PTHREAD_HIDE;
+pthread_mutex_t *pthread__hashlock(volatile const void *) PTHREAD_HIDE;
 
 /* Internal locking primitives */
 void	pthread__lockprim_init(void) PTHREAD_HIDE;
@@ -286,7 +287,7 @@ void	pthread__errorfunc(const char *, int, const char *, const char *)
 			   PTHREAD_HIDE;
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
 void	pthread__cancelled(void) PTHREAD_HIDE;
-int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
+void	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */
