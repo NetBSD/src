@@ -1,4 +1,4 @@
-/*	$NetBSD: ewsms.c,v 1.6 2008/03/29 19:15:34 tsutsui Exp $	*/
+/*	$NetBSD: ewsms.c,v 1.7 2008/05/25 23:37:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.6 2008/03/29 19:15:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.7 2008/05/25 23:37:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ ewsms_zsc_attach(device_t parent, device_t self, void *aux)
 
 	ewsms_zsc_reset(cs);
 
-	printf(": baud rate %d\n", EWSMS_BAUD);
+	aprint_normal(": baud rate %d\n", EWSMS_BAUD);
 
 	/* attach wsmouse */
 	wsmaa.accessops = &ewsms_wsmouse_accessops;
@@ -192,7 +192,7 @@ ewsms_zsc_reset(struct zs_chanstate *cs)
 	struct ewsms_softc *sc = cs->cs_private;
 	u_int baud;
 	int i, s;
-	const static uint8_t cmd[] =
+	static const uint8_t cmd[] =
 	    { 0x02, 0x52, 0x53, 0x3b, 0x4d, 0x54, 0x2c, 0x36, 0x0d };
 
 	s = splzs();
@@ -218,7 +218,7 @@ void
 ewsms_zsc_rxint(struct zs_chanstate *cs)
 {
 	struct ewsms_softc *sc = cs->cs_private;
-	u_char c, r;
+	uint8_t c, r;
 
 	/* clear errors */
 	r = zs_read_reg(cs, 1);
@@ -238,6 +238,7 @@ ewsms_zsc_rxint(struct zs_chanstate *cs)
 void
 ewsms_zsc_txint(struct zs_chanstate *cs)
 {
+
 	zs_write_reg(cs, 0, ZSWR0_RESET_TXINT);
 
 	/* seems like the in thing to do */
