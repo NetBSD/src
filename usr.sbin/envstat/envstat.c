@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.67 2008/05/24 15:55:13 christos Exp $ */
+/* $NetBSD: envstat.c,v 1.68 2008/05/25 20:03:05 christos Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.67 2008/05/24 15:55:13 christos Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.68 2008/05/25 20:03:05 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -765,7 +765,7 @@ print_sensors(void)
 		if (statistics) {
 			stats = find_stats_sensor(sensor->desc, false);
 			if (stats == NULL) {
-				(void)printf(": No statistics\n");
+				/* No statistics for this sensor */
 				continue;
 			}
 		}
