@@ -1,4 +1,4 @@
-/*	$NetBSD: vreset.c,v 1.10 2008/03/26 15:09:50 kiyohara Exp $	*/
+/*	$NetBSD: vreset.c,v 1.11 2008/05/26 16:28:39 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -67,8 +67,8 @@ struct VgaRegs
 #define NREGS 54
 #define ENDMK  0xFFFF  /* End marker */
 
-#define S3Vendor     	0x5333
-#define CirrusVendor 	0x1013
+#define S3Vendor	0x5333
+#define CirrusVendor	0x1013
 #define DiamondVendor	0x100E
 #define MatroxVendor	0x102B
 
@@ -440,6 +440,7 @@ void enablePCIvideo(int);
 static int scanPCI(void);
 static int PCIVendor(int);
 int delayLoop(int);
+void writeAttr(u_char, u_char, u_char);
 void setTextRegs(struct VgaRegs *);
 void setTextCLUT(void);
 void loadFont(u_char *);
@@ -447,13 +448,6 @@ void unlockS3(void);
 #ifdef DEBUG
 static void printslots(void);
 #endif
-
-static inline void
-outw(int port, u_short val)
-{
-	outb(port, val >> 8);
-	outb(port+1, val);
-}
 
 void
 vga_reset(u_char *ISA_mem)
@@ -679,7 +673,7 @@ unlockS3(void)
 /* ============ */
 
 
-#define NSLOTS 4
+#define NSLOTS 5
 #define NPCIREGS  5
 
 /*
@@ -691,10 +685,11 @@ struct PCI_ConfigInfo {
 	u_long * config_addr;
 	u_long regs[NPCIREGS];
 } PCI_slots [NSLOTS] = {
+	{ (u_long *)0x80800800, { 0xDE, 0xAD, 0xBE, 0xEF } },
+	{ (u_long *)0x80801000, { 0xDE, 0xAD, 0xBE, 0xEF } },
 	{ (u_long *)0x80802000, { 0xDE, 0xAD, 0xBE, 0xEF } },
 	{ (u_long *)0x80804000, { 0xDE, 0xAD, 0xBE, 0xEF } },
 	{ (u_long *)0x80808000, { 0xDE, 0xAD, 0xBE, 0xEF } },
-	{ (u_long *)0x80810000, { 0xDE, 0xAD, 0xBE, 0xEF } }
 };
 
 
@@ -705,14 +700,14 @@ struct PCI_ConfigInfo {
 void
 enablePCIvideo(int slot)
 {
-       volatile u_char * ppci;
+	volatile u_char *ppci;
 
-        ppci =  (u_char *)PCI_slots[slot].config_addr;
-	ppci[4] = 0x0003;         /* enable memory and I/O accesses */
+	ppci = (u_char *)PCI_slots[slot].config_addr;
+	ppci[4] = 0x0003;	/* enable memory and I/O accesses */
 	__asm volatile("eieio");
 
 	outb(0x3d4, 0x11);
-	outb(0x3d5, 0x0e);   /* unlock CR0-CR7 */
+	outb(0x3d5, 0x0e);	/* unlock CR0-CR7 */
 }
 
 #define DEVID   0

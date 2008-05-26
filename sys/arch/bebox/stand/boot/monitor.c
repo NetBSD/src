@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.8 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: monitor.c,v 1.9 2008/05/26 16:28:39 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,6 +30,9 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
+
+#include "boot.h"
 
 extern int errno;
 extern char *name;
@@ -41,7 +44,7 @@ void db_cmd_mt(int, char **);
 void db_cmd_put(int, char **);
 void db_cmd_help(int, char **);
 
-extern void exec_kernel(char *, void *);
+int db_atob(char *);
 
 struct {
 	char *name;
@@ -311,13 +314,14 @@ out:
 #define STR(x) #x
 
 #define	FUNC(x) \
+unsigned int mf ## x(void); \
+void mt ## x(unsigned int); \
 unsigned int mf ## x() { \
 	unsigned int tmp; \
 	__asm volatile (STR(mf ## x %0) : STR(=r)(tmp)); \
 	return (tmp); \
 } \
-void mt ## x(data) \
-unsigned int data; \
+void mt ## x(unsigned int data) \
 { \
 	__asm volatile (STR(mt ## x %0) :: STR(r)(data)); \
 } \
@@ -325,7 +329,7 @@ unsigned int data; \
 #define DEF(x) \
 	{ #x, mf ## x, mt ## x }
 
-FUNC(msr);
+FUNC(msr)
 
 struct {
 	char *op;

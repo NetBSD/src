@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.7 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.8 2008/05/26 16:28:39 kiyohara Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
@@ -163,30 +163,34 @@ FD_UNIT	fd_unit[CTLR_MAX][UNIT_MAX];
 /*
  *	function declaration
  */
-int fdc_out __P((int, int));
-int fdc_in __P((int, u_char *));
-int fdc_intr_wait __P((void));
-int fd_check __P((FD_UNIT *));
-void motor_on __P((int, int));
-void motor_off __P((int, int));
-void fdReset __P((int));
-void fdRecalibrate __P((int, int));
-void fdSpecify __P((int));
-void fdDriveStatus __P((int, int, int, int *));
-int fdSeek __P((int, int, int));
-int fdSenseInt __P((int, int *));
-int fdReadWrite __P((FD_UNIT *, int, int, int, int, u_char *));
-void irq_init __P((void));
-int irq_polling __P((int, int));
-void dma_setup __P((u_char *, int, int, int));
-int dma_finished __P((int));
+int fdinit(FD_UNIT *);
+int fdopen(struct open_file *, int, int, int);
+int fdclose(struct open_file *);
+int fdioctl(struct open_file *, u_long, void *);
+int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+int fdc_out(int, int);
+int fdc_in(int, u_char *);
+int fdc_intr_wait(void);
+int fd_check(FD_UNIT *);
+void motor_on(int, int);
+void motor_off(int, int);
+void fdReset(int);
+void fdRecalibrate(int, int);
+void fdSpecify(int);
+void fdDriveStatus(int, int, int, int *);
+int fdSeek(int, int, int);
+int fdSenseInt(int, int *);
+int fdReadWrite(FD_UNIT *, int, int, int, int, u_char *);
+void irq_init(void);
+int irq_polling(int, int);
+void dma_setup(u_char *, int, int, int);
+int dma_finished(int);
 
 /*===========================================================================*
  *				   fdinit				     *
  *===========================================================================*/
 int
-fdinit(un)
-	FD_UNIT	*un;
+fdinit(FD_UNIT *un)
 {
 	int ctlr = un->ctlr;
 	u_char result;
@@ -217,18 +221,17 @@ fdinit(un)
  *				   fdopen				     *
  *===========================================================================*/
 int
-fdopen(f, ctlr, unit, part)
-	struct open_file *f;
-	int ctlr, unit, part;
+fdopen(struct open_file *f, int ctlr, int unit, int part)
 {
 	FD_UNIT	*un;
-	int *stat = un->stat;
+	int *stat;
 
 	if (ctlr >= CTLR_MAX)
 		return (ENXIO);
 	if (unit >= UNIT_MAX)
 		return (ENXIO);
 	un = &fd_unit[ctlr][unit];
+	stat = un->stat;
 
 	if (!(un->un_flags & INT_ALIVE)) {
 		if (fdinit(un) != SUCCESS)
@@ -257,8 +260,7 @@ fdopen(f, ctlr, unit, part)
  *				   fdclose				     *
  *===========================================================================*/
 int
-fdclose(f)
-	struct open_file *f;
+fdclose(struct open_file *f)
 {
 	FD_UNIT *un = f->f_devdata;
 
@@ -273,11 +275,9 @@ fdclose(f)
  *				   fdioctl				     *
  *===========================================================================*/
 int
-fdioctl(f, cmd, arg)
-	struct open_file *f;
-	u_long cmd;
-	void *arg;
+fdioctl(struct open_file *f, u_long cmd, void *arg)
 {
+
 	switch (cmd) {
 	default:
 		return (EIO);
@@ -290,13 +290,8 @@ fdioctl(f, cmd, arg)
  *				   fdstrategy				     *
  *===========================================================================*/
 int
-fdstrategy(devdata, func, blk, size, buf, rsize)
-	void *devdata;	/* device uniq data */
-	int func;	/* function (read or write) */
-	daddr_t blk;	/* block number */
-	size_t size;	/* request size in bytes */
-	void *buf;	/* buffer */
-	size_t *rsize;	/* bytes transferred */
+fdstrategy(void *devdata, int func, daddr_t blk, size_t size, void *buf,
+	   size_t *rsize)
 {
 	int sectrac, cyl, head, sec;
 	FD_UNIT *un = devdata;
@@ -305,7 +300,7 @@ fdstrategy(devdata, func, blk, size, buf, rsize)
 	int *stat = un->stat;
 	long nblock, blknum;
 	int fd_skip = 0;
-	char *cbuf = (char *)buf;
+	u_char *cbuf = (u_char *)buf;
 
 	if (un->un_flags & INT_BUSY) {
 		return (ENXIO);
@@ -355,8 +350,7 @@ bad:
  *	this function is Check floppy disk Type
  */
 int
-fd_check(un)
-	FD_UNIT	*un;
+fd_check(FD_UNIT *un)
 {
 	int ctlr = un->ctlr;
 	int unit = un->unit;
@@ -401,9 +395,7 @@ bad:
  *				fdc_out					     *
  *===========================================================================*/
 int
-fdc_out(ctlr, cmd)
-	int ctlr;	/* controller no */
-	int cmd;	/* cmd */
+fdc_out(int ctlr, int cmd)
 {
 	volatile int status;
 	int time_out;
@@ -425,9 +417,7 @@ fdc_out(ctlr, cmd)
  *				fdc_in					     *
  *===========================================================================*/
 int
-fdc_in(ctlr, data)
-	int ctlr;	/* controller no */
-	u_char *data;
+fdc_in(int ctlr, u_char *data)
 {
 	volatile int status;
 	int time_out;
@@ -457,6 +447,7 @@ fdc_in(ctlr, data)
 int
 fdc_intr_wait()
 {
+
 	return (irq_polling(FDC_IRQ, INT_TIMEOUT));	/* wait interrupt */
 }
 
@@ -464,28 +455,27 @@ fdc_intr_wait()
  *		   	     fdc command function	 	    	     *
  *===========================================================================*/
 void
-motor_on(ctlr, unit)
-	int ctlr;
-	int unit;
+motor_on(int ctlr, int unit)
 {
+
 	outb(FDC_DOR(ctlr), DOR_RESET | DOR_DMAEN | unit
 		| (1 << (unit + 4)));	/* reset & unit motor on */
 	DELAY(1);		/* wait 100msec */
 }
 
 void
-motor_off(ctlr, unit)
-	int ctlr;
-	int unit;
+motor_off(int ctlr, int unit)
 {
-        outb(FDC_DOR(ctlr), DOR_RESET);		/* reset & motor off */
+
+	outb(FDC_DOR(ctlr), DOR_RESET);		/* reset & motor off */
 	if (fdc_intr_wait() == FAIL)		/* wait interrupt */
 		printf("fdc: motor off failed.\n");
 }
 
 void
-fdReset(ctlr)
+fdReset(int ctlr)
 {
+
 	outb(FDC_DOR(ctlr), 0); /* fdc reset */
 	DELAY(3);
 	outb(FDC_DOR(ctlr), DOR_RESET);
@@ -493,10 +483,9 @@ fdReset(ctlr)
 }
 
 void
-fdRecalibrate(ctlr, unit)
-	int ctlr;
-	int unit;
+fdRecalibrate(int ctlr, int unit)
 {
+
 	fdc_out(ctlr, CMD_RECALIBRATE);
 	fdc_out(ctlr, unit);
 
@@ -505,19 +494,17 @@ fdRecalibrate(ctlr, unit)
 }
 
 void
-fdSpecify(ctlr)
-	int	ctlr;
+fdSpecify(int ctlr)
 {
+
 	fdc_out(ctlr, CMD_SPECIFY);
 	fdc_out(ctlr, SPECIFY1);
 	fdc_out(ctlr, SPECIFY2);
 }
 
 void
-fdDriveStatus(ctlr, unit, head, stat)
-	int	ctlr;
-	register int	unit, head;
-	register int	*stat;
+fdDriveStatus(int ctlr, register int unit, register int head,
+	      register int *stat)
 {
 	u_char result;
 
@@ -528,10 +515,7 @@ fdDriveStatus(ctlr, unit, head, stat)
 }
 
 int
-fdSeek(ctlr, unit, cyl)
-	int ctlr;
-	int unit;
-	int cyl;
+fdSeek(int ctlr, int unit, int cyl)
 {
 	int ret_val = 0;
 
@@ -548,9 +532,7 @@ fdSeek(ctlr, unit, cyl)
 }
 
 int
-fdSenseInt(ctlr, stat)
-	int ctlr;
-	int *stat;
+fdSenseInt(int ctlr, int *stat)
 {
 	u_char result;
 
@@ -565,13 +547,7 @@ fdSenseInt(ctlr, stat)
 }
 
 int
-fdReadWrite(un, func, cyl, head, sec, adrs)
-	FD_UNIT	*un;
-	int func;
-	int cyl;
-	int head;
-	int sec;
-	u_char *adrs;
+fdReadWrite(FD_UNIT *un, int func, int cyl, int head, int sec, u_char *adrs)
 {
 	int i;
 	int ctlr = un->ctlr;
@@ -699,9 +675,7 @@ irq_init()
  *                           irq polling check                               *
  *===========================================================================*/
 int
-irq_polling(irq_no, timeout)
-	int	irq_no;
-	int	timeout;
+irq_polling(int irq_no, int timeout)
 {
 	int	irc_no;
 	int	data;
@@ -762,11 +736,7 @@ irq_polling(irq_no, timeout)
  *				dma_setup				     *
  *===========================================================================*/
 void
-dma_setup(buf, size, func, chan)
-	u_char *buf;
-	int size;
-	int func;
-	int chan;
+dma_setup(u_char *buf, int size, int func, int chan)
 {
 	u_long pbuf = local_to_PCI((u_long)buf);
 
@@ -790,8 +760,8 @@ dma_setup(buf, size, func, chan)
 }
 
 int
-dma_finished(chan)
-	int chan;
+dma_finished(int chan)
 {
+
 	return ((inb(DMA_SR) & 0x0f) == (1 << chan));
 }
