@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.45 2008/05/25 23:51:31 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.46 2008/05/26 00:16:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.45 2008/05/25 23:51:31 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.46 2008/05/26 00:16:35 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -128,9 +128,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		retval = _lwp_park(abstime, self->pt_unpark,
 		    __UNVOLATILE(&mutex->ptm_waiters),
 		    __UNVOLATILE(&mutex->ptm_waiters));
-		if (retval < 0) {
-			retval = errno;
-		}
 		self->pt_unpark = 0;
 		self->pt_blocking--;
 		membar_sync();
@@ -143,11 +140,19 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		 * If we absorbed a pthread_cond_signal() and cannot take
 		 * the wakeup, we must ensure that another thread does.
 		 *
-		 * If awoken early, we will still be on the sleep queue
-		 * and must remove ourself.
+		 * If awoke early, we may still be on the sleep queue and
+		 * must remove ourself.
 		 */
-		if (retval == EINTR || retval == EALREADY) {
-			retval = 0;
+		if (__predict_false(retval != 0)) {
+			switch (errno) {
+			case EINTR:
+			case EALREADY:
+				retval = 0;
+				break;
+			default:
+				retval = errno;
+				break;
+			}
 		}
 		if (__predict_false(self->pt_cancel | retval)) {
 			pthread_cond_broadcast(cond);
@@ -186,6 +191,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 	pthread__spinlock(self, &cond->ptc_lock);
 	signaled = PTQ_FIRST(&cond->ptc_waiters);
 	if (__predict_false(signaled == NULL)) {
+		pthread__spinunlock(self, &cond->ptc_lock);
 		return 0;
 	}
 	mutex = cond->ptc_mutex;
