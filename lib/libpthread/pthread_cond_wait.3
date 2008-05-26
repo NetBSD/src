@@ -1,6 +1,6 @@
-.\" $NetBSD: pthread_cond_wait.3,v 1.7 2008/05/04 19:43:05 martin Exp $
+.\" $NetBSD: pthread_cond_wait.3,v 1.8 2008/05/26 02:25:05 ad Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -51,7 +51,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_cond_wait.3,v 1.16 2002/09/16 19:29:28 mini Exp $
 .\"
-.Dd January 30, 2003
+.Dd May 26, 2008
 .Dt PTHREAD_COND_WAIT 3
 .Os
 .Sh NAME
@@ -113,6 +113,38 @@ The caller should prepare for this by invoking
 or
 .Fn pthread_cond_timedwait
 within a predicate loop that tests whether the thread should proceed.
+.Pp
+When calling 
+.Fn pthread_cond_wait
+or
+.Fn pthread_cond_timedwait ,
+a temporary binding is established between the condition variable
+.Fa cond
+and the mutex
+.Fa mutex .
+.Pp
+The same mutex must be held while calling
+.Fn pthread_cond_broadcast
+and
+.Fn pthread_cond_signal
+on
+.Fa cond .
+Additionally, the same mutex must be used for concurrent calls to
+.Fn pthread_cond_wait
+and
+.Fn pthread_cond_timedwait .
+Only when a condition variable is known to be quiescent may an application
+change the mutex associated with it.
+In this implementation, none of the functions enforce this requirement, but
+if the mutex is not held or independent mutexes are used the resulting
+behaviour is undefined.
+.Sh RETURN VALUES
+If successful, the
+.Fn pthread_cond_broadcast
+and
+.Fn pthread_cond_signal
+functions will return zero, otherwise an error number will be returned
+to indicate the error.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_cond_wait
