@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.4 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.5 2008/05/26 16:28:39 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -64,12 +64,16 @@
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
  */
 #ifdef CONS_SERIAL
+
+#include <lib/libsa/stand.h>
+
+#include "boot.h"
+
 #define	COM_FREQ	1843200	/* 16-bit baud rate divisor */
 #define	COM_TOLERANCE	30	/* baud rate tolerance, in 0.1% units */
 
 int
-comspeed(speed)
-	long speed;
+comspeed(long speed)
 {
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
