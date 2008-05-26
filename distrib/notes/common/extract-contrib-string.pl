@@ -219,8 +219,8 @@ while(<>) {
 		$msg =~ s/\dnl\s*/\n/g;			# m4
 		$msg =~ s/^\s+-\s+//g;			# seen in docbook files
 		$msg =~ s/\n\s+-\s+/ /g;		#
-		$msg =~ s/^[#\\\|";]*\s*//g;		# sh etc.
-		$msg =~ s/\n[#\\\|";]\s*/\n/g;		# sh etc.
+		$msg =~ s/^[#\\\|";]+\s*//g;		# sh etc.
+		$msg =~ s/\n[#\\\|";]+\s*/\n/g;		# sh etc.
 		$msg =~ s/^[ 	*]*//g;      		# C
 		$msg =~ s/\n[ 	*]*/\n/g;    		# C
 
