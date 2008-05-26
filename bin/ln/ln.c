@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.32 2006/10/13 20:37:10 wiz Exp $ */
+/* $NetBSD: ln.c,v 1.33 2008/05/26 14:21:08 christos Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.32 2006/10/13 20:37:10 wiz Exp $");
+__RCSID("$NetBSD: ln.c,v 1.33 2008/05/26 14:21:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: ln.c,v 1.32 2006/10/13 20:37:10 wiz Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -75,6 +76,8 @@ main(int argc, char *argv[])
 	char *sourcedir;
 
 	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
+
 	while ((ch = getopt(argc, argv, "fhinsv")) != -1)
 		switch (ch) {
 		case 'f':

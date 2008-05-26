@@ -1,4 +1,4 @@
-/* $NetBSD: rmdir.c,v 1.23 2003/09/29 21:11:15 dsl Exp $ */
+/* $NetBSD: rmdir.c,v 1.24 2008/05/26 14:21:08 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,14 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rmdir.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rmdir.c,v 1.23 2003/09/29 21:11:15 dsl Exp $");
+__RCSID("$NetBSD: rmdir.c,v 1.24 2008/05/26 14:21:08 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 
 #include <err.h>
-#include <errno.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>

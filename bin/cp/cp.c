@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.48 2006/12/26 00:13:24 alc Exp $ */
+/* $NetBSD: cp.c,v 1.49 2008/05/26 14:21:08 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.48 2006/12/26 00:13:24 alc Exp $");
+__RCSID("$NetBSD: cp.c,v 1.49 2008/05/26 14:21:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,7 @@ main(int argc, char *argv[])
 	int ch, fts_options, r, have_trailing_slash;
 	char *target, **src;
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Pflag = Rflag = 0;
