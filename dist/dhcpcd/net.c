@@ -732,7 +732,6 @@ arp_claim(struct interface *iface, struct in_addr address)
 			if (get_time(&stopat) != 0)
 				break;
 			stopat.tv_usec += timeout;
-
 			continue;
 		}
 
@@ -746,10 +745,10 @@ arp_claim(struct interface *iface, struct in_addr address)
 
 		if (!(fds[1].revents & POLLIN))
 			continue;
-
 		for(;;) {
-			memset(&arp_reply, 0, sizeof(arp_reply));
-			bytes = get_packet(iface, &arp_reply, sizeof(arp_reply));
+			memset(arp_reply, 0, sizeof(arp_reply));
+			bytes = get_packet(iface,
+					   arp_reply, sizeof(arp_reply));
 			if (bytes == -1 || bytes == 0)
 				break;
 
@@ -757,18 +756,21 @@ arp_claim(struct interface *iface, struct in_addr address)
 			/* Only these types are recognised */
 			if (reply.ar_op != htons(ARPOP_REPLY))
 				continue;
-
 			/* Protocol must be IP. */
 			if (reply.ar_pro != htons(ETHERTYPE_IP))
 				continue;
 			if (reply.ar_pln != sizeof(reply_ipv4))
 				continue;
-			if ((size_t)bytes < sizeof(reply) + 2 * (4 + reply.ar_hln) ||
+			if ((size_t)bytes < sizeof(reply) + 2 *
+			    (4 + reply.ar_hln) ||
 			    reply.ar_hln > 8)
 				continue;
 
-			memcpy(&reply_mac, arp_reply + sizeof(reply), reply.ar_hln);
-			memcpy(&reply_ipv4, arp_reply + sizeof(reply) + reply.ar_hln, reply.ar_hln);
+			memcpy(&reply_mac,
+			       arp_reply + sizeof(reply), reply.ar_hln);
+			memcpy(&reply_ipv4,
+			       arp_reply + sizeof(reply) + reply.ar_hln,
+			       reply.ar_hln);
 
 			/* Ensure the ARP reply is for the our address */
 			if (reply_ipv4.s_addr != address.s_addr)
@@ -777,12 +779,14 @@ arp_claim(struct interface *iface, struct in_addr address)
 			/* Some systems send a reply back from our hwaddress,
 			 * which is wierd */
 			if (reply.ar_hln == iface->hwlen &&
-			    memcmp(&reply_mac, iface->hwaddr, iface->hwlen) == 0)
+			    memcmp(&reply_mac, iface->hwaddr,
+				   iface->hwlen) == 0)
 				continue;
 
 			logger(LOG_ERR, "ARPOP_REPLY received from %s (%s)",
 			       inet_ntoa(reply_ipv4),
-			       hwaddr_ntoa((unsigned char *)&reply_mac, (size_t)reply.ar_hln));
+			       hwaddr_ntoa((unsigned char *)&reply_mac,
+					   (size_t)reply.ar_hln));
 			retval = -1;
 			goto eexit;
 		}
