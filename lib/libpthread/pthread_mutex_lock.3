@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex_lock.3,v 1.5 2008/05/04 19:43:05 martin Exp $
+.\" $NetBSD: pthread_mutex_lock.3,v 1.6 2008/05/26 08:43:57 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,13 +92,13 @@ indicate the error.
 .Fn pthread_mutex_lock
 may fail if:
 .Bl -tag -width Er
+.It Bq Er EDEADLK
+A deadlock would occur if the thread blocked waiting for
+.Fa mutex .
 .It Bq Er EINVAL
 The value specified by
 .Fa mutex
 is invalid.
-.It Bq Er EDEADLK
-A deadlock would occur if the thread blocked waiting for
-.Fa mutex .
 .El
 .Pp
 .Fn pthread_mutex_trylock
