@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.7 2008/05/25 23:22:16 ad Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.8 2008/05/26 08:15:37 wiz Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.7 2008/05/25 23:22:16 ad Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.8 2008/05/26 08:15:37 wiz Exp $");
 #endif
 
 #include <stdio.h>
@@ -308,7 +308,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-t lid] [-A processor] "
-	    "[-C class] [-P priority] {-p pid|command}\n", getprogname());
+	fprintf(stderr, "usage: %s [-A processor] [-C class] "
+	    "[-P priority] [-t lid] {-p pid|command}\n", getprogname());
 	exit(EXIT_FAILURE);
 }
