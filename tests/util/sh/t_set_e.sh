@@ -1,4 +1,4 @@
-# $NetBSD: t_set_e.sh,v 1.5 2008/05/25 21:43:18 dholland Exp $
+# $NetBSD: t_set_e.sh,v 1.6 2008/05/26 22:06:10 dholland Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -157,6 +157,19 @@ all_body() {
 	#dcheck '(set -e; until false; do :; done; echo OK); echo OK' 'OK OK'
 	dcheck '(set -e; until [ "$t" = 1 ]; do t=1; done; echo OK); echo OK' \
 	  'OK OK'
+	echeck '(set -e; while false; do :; done; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; if false; then :; fi; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; until [ "$t" = 1 ]; do t=1; done; echo OK); echo OK' \
+	  'OK OK'
+
+	# the bang operator tests its argument and thus the argument
+	# should not cause an exit. it is also not a simple command (I
+	# believe) so it also shouldn't exit even if it yields a false
+	# result.
+	dcheck '(set -e; ! false; echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; ! true; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; ! false; echo OK); echo OK' 'OK OK'
+	echeck '(set -e; ! true; echo OK); echo OK' 'OK OK'
 
 	# combined case with () and &&; the inner expression is false
 	# but does not itself exit, and the () should not cause an 
@@ -197,8 +210,8 @@ all_body() {
 	# far as -e is set and then stops. This is probably a
 	# consequence of it handling () wrong, but it's a somewhat
 	# curious compromise position between 1. and 2. above.
-	dcheck '(set -e; (false; echo ERR); echo ERR); echo OK' 'OK OK'
-	echeck '(set -e; (false; echo ERR); echo ERR); echo OK' 'OK OK'
+	dcheck '(set -e; (false; echo ERR); echo ERR); echo OK' 'OK'
+	echeck '(set -e; (false; echo ERR); echo ERR); echo OK' 'OK'
 
 	# backquote expansion (PR bin/17514)
 	dcheck '(set -e; echo ERR `false`; echo ERR); echo OK' 'OK'
