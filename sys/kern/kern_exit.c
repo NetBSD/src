@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.208.2.2 2008/05/23 06:52:19 wrstuden Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.208.2.3 2008/05/26 06:54:40 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208.2.2 2008/05/23 06:52:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.208.2.3 2008/05/26 06:54:40 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -211,7 +211,7 @@ exit1(struct lwp *l, int rv)
 	sa = 0;
 	if (p->p_sa != NULL) {
 		lwp_lock(l);
-		l->l_flag &= ~L_SA;
+		l->l_flag &= ~LW_SA;
 		lwp_unlock(l);
 		sa = 1;
 	}
@@ -629,21 +629,23 @@ exit_lwps(struct lwp *l)
 			    "VP %d runnable: ", p->p_pid, vp->savp_id));
 			while ((l2 = sa_getcachelwp(p, vp)) != 0) {
 				lwp_lock(l2);
-				l2->l_flag = (l2->l_flag & ~L_SA) | L_WEXIT;
-				l2->l_priority = l2->l_usrpri;
+				l2->l_flag = (l2->l_flag & ~LW_SA) | LW_WEXIT;
+				l2->l_priority = MAXPRI_USER; /* XXX WRS needs thought */
 
 				/* setrunnable() will release the mutex. */
 				setrunnable(l2);
 				DPRINTF(("%d ", l2->l_lid));
 			}
 			DPRINTF(("\n"));
-		}
 
-		/*
-		 * Clear wokenq, the LWPs on the queue will
-		 * run below.
-		 */
-		vp->savp_wokenq_head = NULL;
+			/*
+			 * Clear wokenq, the LWPs on the queue will
+			 * run below. Workes as these threads are still
+			 * on the p_lwps list (even though they are no longer
+			 * counted).
+			 */
+			TAILQ_INIT(&vp->savp_woken);
+		}
 	}
 
  retry:
