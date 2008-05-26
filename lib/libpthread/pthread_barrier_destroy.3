@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier_destroy.3,v 1.6 2008/04/30 13:10:52 martin Exp $
+.\" $NetBSD: pthread_barrier_destroy.3,v 1.7 2008/05/26 08:43:57 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,14 +51,14 @@ Otherwise an error value will be returned.
 .Fn pthread_barrier_destroy
 may fail if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-The value specified by
-.Fa barrier
-is invalid.
 .It Bq Er EBUSY
 The
 .Fa barrier
 still has active threads associated with it.
+.It Bq Er EINVAL
+The value specified by
+.Fa barrier
+is invalid.
 .El
 .Sh SEE ALSO
 .Xr pthread_barrier_init 3 ,
