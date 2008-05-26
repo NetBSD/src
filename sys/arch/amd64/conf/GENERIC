@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.215 2008/05/25 19:05:16 agc Exp $
+# $NetBSD: GENERIC,v 1.216 2008/05/26 00:33:37 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.215 $"
+#ident 		"GENERIC-$Revision: 1.216 $"
 
 maxusers	64		# estimated number of users
 
@@ -828,6 +828,9 @@ ucom*   at uslsa? portno ?
 
 uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
+
+# RIM BlackBerry
+uberry* at uhub? port ?
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
