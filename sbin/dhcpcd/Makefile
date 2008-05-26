@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2008/05/24 19:39:31 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2008/05/26 20:17:00 joerg Exp $
 #
 
 PROG=		dhcpcd
@@ -26,7 +26,8 @@ FILESDIR=		/libexec/dhcpcd-hooks
 
 MAN=			dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 
-CLEANFILES=		dhcpcd.sh dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
+CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 \
+			dhcpcd-run-hooks dhcpcd-run-hooks.8
 
 .for f in dhcpcd-run-hooks dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 ${f}:	${f}.in
