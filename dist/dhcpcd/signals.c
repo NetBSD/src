@@ -134,30 +134,36 @@ signal_init(void)
 }
 
 static int
-signal_handle(void (*func)(int))
+signal_handle(void (*func)(int), int restore)
 {
 	unsigned int i;
-	struct sigaction sa;
+	struct sigaction sa, sa_old;
 
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = func;
 	sigemptyset(&sa.sa_mask);
 
 	for (i = 0; i < sizeof(handle_sigs) / sizeof(handle_sigs[0]); i++)
-		if (sigaction(handle_sigs[i], &sa, NULL) == -1)
+		if (sigaction(handle_sigs[i], &sa, &sa_old) == -1)
 			return -1;
-
+		if (restore && sigaction(handle_sigs[i], &sa_old, NULL) == -1)
+				return -1;
 	return 0;
 }
 
 int
 signal_setup(void)
 {
-	return signal_handle(signal_handler);
+	return signal_handle(signal_handler, 0);
 }
 
 int
 signal_reset(void)
 {
-	return signal_handle(SIG_DFL);
+	return signal_handle(SIG_DFL, 0);
+}
+
+int
+signal_clear(void)
+	return signal_handle(SIG_IGN, 1);
 }
