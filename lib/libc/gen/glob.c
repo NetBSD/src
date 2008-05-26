@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.22 2008/02/22 18:33:51 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.23 2008/05/26 13:06:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.22 2008/02/22 18:33:51 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.23 2008/05/26 13:06:38 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,6 +85,11 @@ __RCSID("$NetBSD: glob.c,v 1.22 2008/02/22 18:33:51 christos Exp $");
 
 #ifdef HAVE_NBTOOL_CONFIG_H
 #define NO_GETPW_R
+#endif
+
+#if !defined(ARG_MAX)
+#include <limits.h>
+#define	ARG_MAX	_POSIX_ARG_MAX
 #endif
 
 /*
