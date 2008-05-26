@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.5 2008/05/23 06:52:19 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.6 2008/05/26 07:25:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@ struct sastack {
 	unsigned int		sast_gen;
 };
 
+TAILQ_HEAD(lwp_queue, lwp);
+
 /*
  * Locking:
  *
@@ -109,11 +111,10 @@ struct sadata_vp {
 	SLIST_ENTRY(sadata_vp)	savp_next; /* m: link to next sadata_vp */
 	struct lwp	*savp_lwp;	/* m: lwp on "virtual processor" */
 	struct lwp	*savp_blocker;	/* m: recently blocked lwp */
-	struct lwp	*savp_wokenq_head; /* m: list of woken lwps */
-	struct lwp	**savp_wokenq_tailp; /* m: list of woken lwps */
+	struct lwp_queue savp_woken;	/* p: list of unblocked lwps */
+	LIST_HEAD(, lwp) savp_lwpcache; /* p: list of cached lwps */
 	vaddr_t	savp_faultaddr;		/* m: page fault address */
 	vaddr_t	savp_ofaultaddr;	/* m: old page fault address */
-	LIST_HEAD(, lwp)	savp_lwpcache; /* p: list of available lwps */
 	int	savp_ncached;		/* p: list length */
 	struct sadata_upcall	*savp_sleeper_upcall;
 					/* m: cached upcall data */

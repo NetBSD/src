@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.11 2008/05/23 06:52:19 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.12 2008/05/26 07:25:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.11 2008/05/23 06:52:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.12 2008/05/26 07:25:29 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,9 +254,9 @@ sa_newsavp(struct proc *p)
 	/* Lock has to be IPL_SCHED, since we use it in the
 	 * hooks from the scheduler code */
 	vp->savp_lwp = NULL;
-	vp->savp_wokenq_head = NULL;
 	vp->savp_faultaddr = 0;
 	vp->savp_ofaultaddr = 0;
+	TAILQ_INIT(&vp->savp_woken);
 	LIST_INIT(&vp->savp_lwpcache);
 	vp->savp_ncached = 0;
 	vp->savp_sleeper_upcall = sau;
@@ -1387,7 +1387,8 @@ sa_switch(struct lwp *l)
 		/*
 		 * Case 0: we're blocking in sa_yield
 		 */
-		if (vp->savp_wokenq_head == NULL && p->p_timerpend == 0) {
+		if (TAILQ_FIRST(&vp->savp_woken) == NULL
+		    && p->p_timerpend == 0) {
 			l->l_flag |= LW_SA_IDLE;
 			mutex_exit(p->p_lock);
 			mutex_exit(&sa->sa_mutex);
@@ -1503,7 +1504,7 @@ panic("Oops! Don't have a sleeper!\n");
 		if (l->l_mutex != l2->l_mutex)  /* XXXSMP */
 			lwp_lock(l2);
 		l->l_flag |= LW_SA_BLOCKING;
-		l2->l_priority = l2->l_usrpri;
+		l2->l_priority = MAXPRI_USER; /* XXX WRS needs thought, used to be l_usrpri */
 		l2->l_stat = LSRUN;
 		vp->savp_blocker = l;
 		vp->savp_lwp = l2;
@@ -1680,7 +1681,7 @@ sa_newcachelwp(struct lwp *l)
 /*
  * sa_putcachelwp
  *	Take a normal process LWP and place it in the SA cache.
- * LWP must not be running!
+ * LWP must not be running, or it must be our caller.
  *	p_lock held on entry and exit.
  */
 void
@@ -1735,11 +1736,13 @@ void
 sa_unblock_userret(struct lwp *l)
 {
 	struct proc *p;
-	struct lwp *l2;
 	struct sadata *sa;
 	struct sadata_vp *vp;
+#if 0
+	struct lwp *l2;
 	struct sadata_upcall *sau;
 	struct sastack *sast;
+#endif
 	int f;
 
 	p = l->l_proc;
@@ -1758,8 +1761,9 @@ sa_unblock_userret(struct lwp *l)
 	mutex_enter(&sa->sa_mutex);
 
 	sa_setwoken(l);
-	/* maybe NOTREACHED */
+	/* NOTREACHED */
 
+#if 0
 	//SCHED_LOCK(s);
 	if (l != vp->savp_lwp) {
 		/* Invoke an "unblocked" upcall */
@@ -1816,6 +1820,7 @@ sa_unblock_userret(struct lwp *l)
 
 	SA_LWP_STATE_UNLOCK(l, f);
 	KERNEL_UNLOCK_LAST(l);
+#endif /* 0 */
 }
 
 /*
@@ -1859,7 +1864,8 @@ sa_upcall_userret(struct lwp *l)
 
 	mutex_enter(&sa->sa_mutex);
 	sast = NULL;
-	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL) {
+	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) &&
+	    TAILQ_FIRST(&vp->savp_woken) != NULL) {
 		sast = sa_getstack(sa);
 		if (sast == NULL) {
 			SA_LWP_STATE_UNLOCK(l, f);
@@ -1869,11 +1875,11 @@ sa_upcall_userret(struct lwp *l)
 			return;
 		}
 	}
-	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) && vp->savp_wokenq_head != NULL &&
-	    sast != NULL) {
+	if (SIMPLEQ_EMPTY(&vp->savp_upcalls) &&
+	    TAILQ_FIRST(&vp->savp_woken) != NULL && sast != NULL) {
 		/* Invoke an "unblocked" upcall */
-		l2 = vp->savp_wokenq_head;
-		vp->savp_wokenq_head = l2->l_forw;
+		l2 = TAILQ_FIRST(&vp->savp_woken);
+		TAILQ_REMOVE(&vp->savp_woken, l2, l_runq);
 		mutex_exit(&sa->sa_mutex);
 
 		DPRINTFN(9,("sa_upcall_userret(%d.%d) using stack %p\n",
@@ -1915,7 +1921,7 @@ sa_upcall_userret(struct lwp *l)
 		mutex_enter(&sa->sa_mutex);
 	}
 
-	if (vp->savp_wokenq_head == NULL) {
+	if (TAILQ_FIRST(&vp->savp_woken) == NULL) {
 		lwp_lock(l);
 		l->l_flag &= ~LW_SA_UPCALL;
 		lwp_unlock(l);
@@ -1947,8 +1953,9 @@ sa_upcall_userret(struct lwp *l)
 static void
 sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 {
-	struct lwp *l2, *eventq;
+	struct lwp *l2;
 	struct proc *p;
+	struct lwp_queue eventq;
 	const struct sa_emul *sae;
 	struct sadata *sa;
 	struct sadata_vp *vp;
@@ -2021,15 +2028,14 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 		sas[2] = &sau->sau_interrupted.ss_captured.ss_sa;
 		nint = 1;
 	}
-	eventq = NULL;
+	TAILQ_INIT(&eventq);
 	if (sau->sau_type == SA_UPCALL_UNBLOCKED) {
 		mutex_enter(&sa->sa_mutex);
-		eventq = vp->savp_wokenq_head;
-		vp->savp_wokenq_head = NULL;
-		l2 = eventq;
+		TAILQ_CONCAT(&eventq, &vp->savp_woken, l_runq);
+		l2 = TAILQ_FIRST(&eventq);;
 		while (l2 != NULL) {
 			nevents++;
-			l2 = l2->l_forw;
+			l2 = TAILQ_NEXT(l2, l_runq);
 		}
 		mutex_exit(&sa->sa_mutex);
 	}
@@ -2086,10 +2092,10 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 			sasp = sas[i];
 		else {			/* extra sas */
 			KDASSERT(sau->sau_type == SA_UPCALL_UNBLOCKED);
-			KDASSERT(eventq != NULL);
-			l2 = eventq;
+			KDASSERT(!TAILQ_EMPTY(&eventq));
+			l2 = TAILQ_FIRST(&eventq);
 			KDASSERT(l2 != NULL);
-			eventq = l2->l_forw;
+			TAILQ_REMOVE(&eventq, l2, l_runq);
 			DPRINTFN(8,
 			    ("sa_makeupcalls(%d.%d) unblocking extra %d\n",
 			    p->p_pid, l->l_lid, l2->l_lid));
@@ -2131,7 +2137,7 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 	if (e_ss != NULL) {
 		kmem_free(e_ss, sizeof(*e_ss));
 	}
-	KDASSERT(eventq == NULL);
+	KDASSERT(TAILQ_FIRST(&eventq) == NULL);
 
 	/* Copy out the arg, if any */
 	/* xxx assume alignment works out; everything so far has been
@@ -2234,12 +2240,6 @@ sa_setwoken(struct lwp *l)
 
 	lwp_lock(vp_lwp);
 
-	if (vp->savp_wokenq_head == NULL)
-		vp->savp_wokenq_head = l;
-	else
-		*vp->savp_wokenq_tailp = l;
-	*(vp->savp_wokenq_tailp = &l->l_forw) = NULL;
-
 	switch (vp_lwp->l_stat) {
 	case LSONPROC:
 		if (vp_lwp->l_flag & LW_SA_UPCALL)
@@ -2300,6 +2300,10 @@ sa_setwoken(struct lwp *l)
 
 	mutex_enter(p->p_lock);
 	lwp_lock(l);
+	/*
+	 * Add ourselves to the savp_woken queue. Still on p_lwps.
+	 */
+	TAILQ_INSERT_TAIL(&vp->savp_woken, l, l_runq);
 	l->l_stat = LSSUSPENDED;
 	p->p_nrlwps--;
 	mutex_exit(p->p_lock);
@@ -2313,6 +2317,7 @@ sa_setwoken(struct lwp *l)
 	mutex_enter(&sa->sa_mutex);
 }
 
+#if 0
 static struct lwp *
 sa_vp_repossess(struct lwp *l)
 {
@@ -2374,6 +2379,7 @@ sa_vp_repossess(struct lwp *l)
 
 	return l2;
 }
+#endif
 
 
 
