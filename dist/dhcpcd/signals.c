@@ -164,6 +164,7 @@ signal_reset(void)
 }
 
 int
-signal_clear(void)
+signal_clear(void) 
+{
 	return signal_handle(SIG_IGN, 1);
 }
