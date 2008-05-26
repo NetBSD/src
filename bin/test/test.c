@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.34 2007/12/15 19:44:38 perry Exp $ */
+/* $NetBSD: test.c,v 1.35 2008/05/26 14:21:08 christos Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.34 2007/12/15 19:44:38 perry Exp $");
+__RCSID("$NetBSD: test.c,v 1.35 2008/05/26 14:21:08 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -22,6 +22,7 @@ __RCSID("$NetBSD: test.c,v 1.34 2007/12/15 19:44:38 perry Exp $");
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -218,6 +219,7 @@ main(int argc, char *argv[])
 	argv0 = argv[0];
 #else
 	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 	argv0 = getprogname();
 #endif
 	if (strcmp(argv0, "[") == 0) {
