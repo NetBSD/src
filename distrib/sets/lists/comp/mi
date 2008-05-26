@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1152 2008/05/26 00:44:55 yamt Exp $
+#	$NetBSD: mi,v 1.1153 2008/05/26 16:56:44 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1662,6 +1662,7 @@
 ./usr/include/openssl/blowfish.h		comp-c-include		crypto
 ./usr/include/openssl/bn.h			comp-c-include		crypto
 ./usr/include/openssl/buffer.h			comp-c-include		crypto
+./usr/include/openssl/camellia.h		comp-c-include		crypto
 ./usr/include/openssl/cast.h			comp-c-include		crypto
 ./usr/include/openssl/cms.h			comp-c-include		crypto
 ./usr/include/openssl/comp.h			comp-c-include		crypto
