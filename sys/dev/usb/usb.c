@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.114 2008/05/25 21:41:35 drochner Exp $	*/
+/*	$NetBSD: usb.c,v 1.115 2008/05/26 18:00:33 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.114 2008/05/25 21:41:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.115 2008/05/26 18:00:33 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -283,7 +283,6 @@ usb_doattach(device_t self)
 
 static const char *taskq_names[] = USB_TASKQ_NAMES;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 void
 usb_create_event_thread(device_t self)
 {
@@ -435,7 +434,6 @@ usbctlprint(void *aux, const char *pnp)
 
 	return (UNCONF);
 }
-#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 int
 usbopen(dev_t dev, int flag, int mode, struct lwp *l)

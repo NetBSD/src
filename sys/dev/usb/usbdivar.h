@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.85 2008/05/25 21:41:35 drochner Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.86 2008/05/26 18:00:33 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -31,9 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(__NetBSD__)
 #include <sys/callout.h>
-#endif
 
 /* From usb_mem.h */
 DECLARE_USB_DMA_T;
@@ -118,9 +116,7 @@ struct usbd_bus {
 #define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0" }
 
 	void		       *soft; /* soft interrupt cookie */
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_dma_tag_t		dmatag;	/* DMA tag */
-#endif
 };
 
 struct usbd_device {
@@ -267,44 +263,3 @@ void		usb_schedsoftintr(struct usbd_bus *);
 #else
 #define SPLUSBCHECK
 #endif
-
-/* Locator stuff. */
-
-#if defined(__NetBSD__)
-#include "locators.h"
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
-/* XXX these values are used to statically bind some elements in the USB tree
- * to specific driver instances. This should be somehow emulated in FreeBSD
- * but can be done later on.
- * The values are copied from the files.usb file in the NetBSD sources.
- */
-#define UHUBCF_PORT_DEFAULT -1
-#define UHUBCF_CONFIGURATION_DEFAULT -1
-#define UHUBCF_INTERFACE_DEFAULT -1
-#define UHUBCF_VENDOR_DEFAULT -1
-#define UHUBCF_PRODUCT_DEFAULT -1
-#define UHUBCF_RELEASE_DEFAULT -1
-#endif
-
-#if defined (__OpenBSD__)
-#define	UHUBCF_PORT		0
-#define	UHUBCF_CONFIGURATION	1
-#define	UHUBCF_INTERFACE	2
-#define	UHUBCF_VENDOR		3
-#define	UHUBCF_PRODUCT		4
-#define	UHUBCF_RELEASE		5
-#endif
-
-#define	uhubcf_port		cf_loc[USBDEVIFCF_PORT]
-#define	uhubcf_configuration	cf_loc[USBDEVIFCF_CONFIGURATION]
-#define	uhubcf_interface	cf_loc[USBDEVIFCF_INTERFACE]
-#define	uhubcf_vendor		cf_loc[USBDEVIFCF_VENDOR]
-#define	uhubcf_product		cf_loc[USBDEVIFCF_PRODUCT]
-#define	uhubcf_release		cf_loc[USBDEVIFCF_RELEASE]
-#define	UHUB_UNK_PORT		USBDEVIFCF_PORT_DEFAULT /* wildcarded 'port' */
-#define	UHUB_UNK_CONFIGURATION	USBDEVIFCF_CONFIGURATION_DEFAULT /* wildcarded 'configuration' */
-#define	UHUB_UNK_INTERFACE	USBDEVIFCF_INTERFACE_DEFAULT /* wildcarded 'interface' */
-#define	UHUB_UNK_VENDOR		USBDEVIFCF_VENDOR_DEFAULT /* wildcarded 'vendor' */
-#define	UHUB_UNK_PRODUCT	USBDEVIFCF_PRODUCT_DEFAULT /* wildcarded 'product' */
-#define	UHUB_UNK_RELEASE	USBDEVIFCF_RELEASE_DEFAULT /* wildcarded 'release' */
-
