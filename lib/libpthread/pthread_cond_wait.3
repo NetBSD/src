@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_wait.3,v 1.8 2008/05/26 02:25:05 ad Exp $
+.\" $NetBSD: pthread_cond_wait.3,v 1.9 2008/05/26 08:43:08 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,7 +114,7 @@ or
 .Fn pthread_cond_timedwait
 within a predicate loop that tests whether the thread should proceed.
 .Pp
-When calling 
+When calling
 .Fn pthread_cond_wait
 or
 .Fn pthread_cond_timedwait ,
@@ -138,13 +138,6 @@ change the mutex associated with it.
 In this implementation, none of the functions enforce this requirement, but
 if the mutex is not held or independent mutexes are used the resulting
 behaviour is undefined.
-.Sh RETURN VALUES
-If successful, the
-.Fn pthread_cond_broadcast
-and
-.Fn pthread_cond_signal
-functions will return zero, otherwise an error number will be returned
-to indicate the error.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_cond_wait
