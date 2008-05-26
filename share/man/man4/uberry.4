@@ -1,4 +1,4 @@
-.\" $NetBSD: uberry.4,v 1.1 2008/05/26 00:31:32 christos Exp $
+.\" $NetBSD: uberry.4,v 1.2 2008/05/26 03:43:07 jmcneill Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,11 +46,19 @@
 The
 .Nm
 driver provides support for the original BlackBerry, the BlackBerry Pearl,
-and the BlackBerry Pearl Duo.
+the BlackBerry Pearl Duo, and other models.
 .Pp
 This is a stub driver that only allows the device to be charged from the
-USB port.
+USB port. If the
+.Nm
+driver attaches to a device that has support for memory cards (such as the
+BlackBerry Pearl series), the
+.Nm
+driver will detach and the device will be re-attached using the
+.Xr umass 4
+driver.
 .Sh SEE ALSO
+.Xr umass 4 ,
 .Xr usb 4
 .Sh HISTORY
 The
