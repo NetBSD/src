@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.16 2008/04/29 06:53:03 martin Exp $ */
+/*	$NetBSD: progress.c,v 1.17 2008/05/26 04:53:11 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.16 2008/04/29 06:53:03 martin Exp $");
+__RCSID("$NetBSD: progress.c,v 1.17 2008/05/26 04:53:11 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -63,8 +63,17 @@ __RCSID("$NetBSD: progress.c,v 1.16 2008/04/29 06:53:03 martin Exp $");
 				 * declared */
 #include "progressbar.h"
 
+static void broken_pipe(int unused);
 static void usage(void);
 int main(int, char *[]);
+
+static void
+broken_pipe(int unused)
+{
+	signal(SIGPIPE, SIG_DFL);
+	progressmeter(1);
+	kill(getpid(), SIGPIPE);
+}
 
 static void
 usage(void)
@@ -226,13 +235,17 @@ main(int argc, char *argv[])
 	}
 	close(outpipe[0]);
 
+	signal(SIGPIPE, broken_pipe);
 	progressmeter(-1);
+
 	while ((nr = read(fd, fb_buf, buffersize)) > 0)
 		for (off = 0; nr; nr -= nw, off += nw, bytes += nw)
 			if ((nw = write(outpipe[1], fb_buf + off,
-			    (size_t) nr)) < 0)
+			    (size_t) nr)) < 0) {
+				progressmeter(1);
 				err(1, "writing %u bytes to output pipe",
 							(unsigned) nr);
+			}
 	close(outpipe[1]);
 
 	gzipstat = 0;
@@ -263,6 +276,7 @@ main(int argc, char *argv[])
 	}
 
 	progressmeter(1);
+	signal(SIGPIPE, SIG_DFL);
 
 	free(fb_buf);
 
