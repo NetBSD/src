@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.165 2008/05/24 18:43:02 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.166 2008/05/26 17:21:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.165 2008/05/24 18:43:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.166 2008/05/26 17:21:18 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -435,6 +435,7 @@ soinit(void)
 	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	softnet_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&socurkva_cv, "sokva");
+	soinit2();
 
 	/* Set the initial adjusted socket buffer size. */
 	if (sb_max_set(sb_max))

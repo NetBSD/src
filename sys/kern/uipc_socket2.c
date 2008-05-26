@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.93 2008/05/24 16:35:28 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.94 2008/05/26 17:21:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.93 2008/05/24 16:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.94 2008/05/26 17:21:18 ad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -120,8 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.93 2008/05/24 16:35:28 christos E
  *   domains.
  */
 
-static POOL_INIT(socket_pool, sizeof(struct socket), 0, 0, 0, "sockpl", NULL,
-    IPL_SOFTNET);
+static pool_cache_t socket_cache;
 
 u_long	sb_max = SB_MAX;	/* maximum socket buffer size */
 static u_long sb_max_adj;	/* adjusted sb_max */
@@ -215,6 +214,14 @@ soisdisconnected(struct socket *so)
 	sorwakeup(so);
 }
 
+void
+soinit2(void)
+{
+
+	socket_cache = pool_cache_init(sizeof(struct socket), 0, 0, 0,
+	    "socket", NULL, IPL_SOFTNET, NULL, NULL, NULL);
+}
+
 /*
  * When an attempt at a new connection is noted on a socket
  * which accepts connections, sonewconn is called.  If the
@@ -284,7 +291,7 @@ soget(bool waitok)
 {
 	struct socket *so;
 
-	so = pool_get(&socket_pool, (waitok ? PR_WAITOK : PR_NOWAIT));
+	so = pool_cache_get(socket_cache, (waitok ? PR_WAITOK : PR_NOWAIT));
 	if (__predict_false(so == NULL))
 		return (NULL);
 	memset(so, 0, sizeof(*so));
@@ -313,7 +320,7 @@ soput(struct socket *so)
 	cv_destroy(&so->so_cv);
 	cv_destroy(&so->so_rcv.sb_cv);
 	cv_destroy(&so->so_snd.sb_cv);
-	pool_put(&socket_pool, so);
+	pool_cache_put(socket_cache, so);
 }
 
 void
