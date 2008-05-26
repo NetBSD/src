@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.364 2008/05/26 02:29:13 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.365 2008/05/26 18:20:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.364 2008/05/26 02:29:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.365 2008/05/26 18:20:36 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1050,6 +1050,7 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 			error = dostatvfs(mp, sb, l, flags, 0);
 			if (error) {
 				vfs_unbusy(mp, false, &nmp);
+				error = 0;
 				continue;
 			}
 			error = copyfn(sb, sfsp, entry_sz);
@@ -1073,8 +1074,11 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 		    sb, l, flags, 1);
 		if (error != 0)
 			goto out;
-		if (sfsp)
+		if (sfsp) {
 			error = copyfn(sb, sfsp, entry_sz);
+			if (error != 0)
+				goto out;
+		}
 		count++;
 	}
 	if (sfsp && count > maxcount)
