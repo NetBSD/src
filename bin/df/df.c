@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.81 2008/03/04 18:55:57 christos Exp $ */
+/*	$NetBSD: df.c,v 1.82 2008/05/26 14:21:08 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.81 2008/03/04 18:55:57 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.82 2008/05/26 14:21:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: df.c,v 1.81 2008/03/04 18:55:57 christos Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <util.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +91,9 @@ main(int argc, char *argv[])
 	long mntsize;
 	int ch, i, maxwidth, width;
 	char *mntpt;
+
+	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "aGghiklmnPt:")) != -1)
 		switch (ch) {
