@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.363 2008/05/20 19:30:03 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.364 2008/05/26 02:29:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.363 2008/05/20 19:30:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.364 2008/05/26 02:29:13 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -903,6 +903,7 @@ done:
 	if (cwdi->cwdi_rdir != NULL) {
 		size_t len;
 		char *bp;
+		char c;
 		char *path = PNBUF_GET();
 
 		bp = path + MAXPATHLEN;
@@ -922,8 +923,9 @@ done:
 		 * rest we cannot see, so we don't allow viewing the
 		 * data.
 		 */
-		if (strncmp(bp, sp->f_mntonname, len) == 0) {
-			strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
+		if (strncmp(bp, sp->f_mntonname, len) == 0 &&
+		    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
+			(void)strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
 			    sizeof(sp->f_mntonname));
 			if (sp->f_mntonname[0] == '\0')
 				(void)strlcpy(sp->f_mntonname, "/",
