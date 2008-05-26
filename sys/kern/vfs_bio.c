@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.198 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.199 2008/05/26 14:56:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.198 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.199 2008/05/26 14:56:55 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -978,10 +978,8 @@ brelsel(buf_t *bp, int set)
 	cv_signal(&needbuffer_cv);
 
 	/* Wake up any proceeses waiting for _this_ buffer to become */
-	if (ISSET(bp->b_cflags, BC_WANTED) != 0) {
+	if (ISSET(bp->b_cflags, BC_WANTED))
 		CLR(bp->b_cflags, BC_WANTED|BC_AGE);
-		cv_broadcast(&bp->b_busy);
-	}
 
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
@@ -1075,6 +1073,7 @@ already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_cflags, BC_AGE|BC_BUSY|BC_NOCACHE);
 	CLR(bp->b_flags, B_ASYNC);
+	cv_broadcast(&bp->b_busy);
 
 	if (bp->b_bufsize <= 0)
 		brele(bp);
