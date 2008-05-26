@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.18 2008/05/26 12:08:39 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.19 2008/05/26 12:58:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.18 2008/05/26 12:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.19 2008/05/26 12:58:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -155,7 +155,7 @@ cv_unsleep(lwp_t *l, bool cleanup)
 	cv = (kcondvar_t *)(uintptr_t)l->l_wchan;
 
 	KASSERT(l->l_wchan != NULL);
-	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
+	KASSERT(lwp_locked(l, NULL));
 	KASSERT(cv_is_valid(cv));
 	KASSERT(cv->cv_waiters > 0);
 
