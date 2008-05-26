@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.1 2008/05/26 00:23:05 christos Exp $	*/
+/*	$NetBSD: uberry.c,v 1.2 2008/05/26 03:03:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.1 2008/05/26 00:23:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.2 2008/05/26 03:03:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,10 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.1 2008/05/26 00:23:05 christos Exp $");
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 
 #include <dev/usb/usbdevs.h>
 
@@ -84,7 +86,6 @@ struct uberry_softc {
 static const struct usb_devno uberry_devs[] = {
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY },
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY_PEARL },
-	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY_PEARL_DUAL },
 };
 
 #define uberry_lookup(v, p) usb_lookup(uberry_devs, v, p)
@@ -116,16 +117,21 @@ static void
 uberry_charge(struct uberry_softc *sc)
 {
 	char dummy[2];
+	usbd_status err;
 
-#ifdef notyet
-	if (sc->sc_udev->power == 250) {
+	if (sc->sc_udev->power == USB_MAX_POWER) {
 		DPRINTF(("Power is already %d\n", sc->sc_udev->power));
 		return;
 	}
-#endif
 
 	uberry_cmd(sc, UT_READ | UT_VENDOR, 0xa5, 0, 1, dummy, 2);
 	uberry_cmd(sc, UT_WRITE | UT_VENDOR, 0xa2, 0, 1, dummy, 0);
+
+	err = usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1);
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
+		USB_ATTACH_ERROR_RETURN;
+	}
 }
 
 /*
@@ -135,8 +141,15 @@ static void
 uberry_dual_mode(struct uberry_softc *sc)
 {
 	char dummy[2];
+	usbd_status err;
 
 	uberry_cmd(sc, UT_READ | UT_VENDOR, 0xa9, 1, 1, dummy, 2);
+
+	err = usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1);
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
+		USB_ATTACH_ERROR_RETURN;
+	}
 }
 
 
@@ -155,9 +168,6 @@ USB_ATTACH(uberry)
 	USB_ATTACH_START(uberry, sc, uaa);
 	usbd_device_handle	dev = uaa->device;
 	char			*devinfop;
-#ifdef notyet
-	usbd_status		err;
-#endif
 
 	DPRINTFN(10,("uberry_attach: sc=%p\n", sc));
 
@@ -172,13 +182,6 @@ USB_ATTACH(uberry)
 	uberry_charge(sc);
 	if (uaa->product == USB_PRODUCT_RIM_BLACKBERRY_PEARL)
 		uberry_dual_mode(sc);
-#ifdef notyet
-	err = usbd_set_config_no(dev, UBERRY_CONFIG_NO, 1);
-	if (err) {
-		aprint_error_dev(self, "setting config no failed\n");
-		USB_ATTACH_ERROR_RETURN;
-	}
-#endif
 
 	DPRINTFN(10, ("uberry_attach: %p\n", sc->sc_udev));
 
