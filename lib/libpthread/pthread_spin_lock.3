@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin_lock.3,v 1.7 2008/05/26 00:31:08 ad Exp $
+.\" $NetBSD: pthread_spin_lock.3,v 1.8 2008/05/26 08:45:55 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,6 @@ The
 .Fn pthread_spin_trylock
 function performs the same action, but does not block if the lock
 cannot be immediately obtained (i.e., the lock is held).
-.Pp
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_spin_lock
@@ -61,14 +60,6 @@ and
 .Fn pthread_spin_trylock
 functions will return zero.
 Otherwise an error number will be returned to indicate the error.
-.Sh CAVEATS
-Applications using spinlocks are vulnerable to the effects of priority
-inversion.
-Applications using real-time threads (SCHED_FIFO, SCHED_RR) should not use
-these interfaces.
-Outside carefully controlled environments, priority inversion with spinlocks
-can lead to system deadlock.
-Mutexes are preferable in nearly every possible use case.
 .Sh ERRORS
 The
 .Fn pthread_spin_trylock
@@ -110,3 +101,12 @@ and
 .Fn pthread_spin_trylock
 conform to
 .St -p1003.1-2001 .
+.Sh CAVEATS
+Applications using spinlocks are vulnerable to the effects of priority
+inversion.
+Applications using real-time threads
+.Pq Dv SCHED_FIFO , SCHED_RR
+should not use these interfaces.
+Outside carefully controlled environments, priority inversion with spinlocks
+can lead to system deadlock.
+Mutexes are preferable in nearly every possible use case.
