@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin_init.3,v 1.7 2008/05/26 00:31:08 ad Exp $
+.\" $NetBSD: pthread_spin_init.3,v 1.8 2008/05/26 08:45:55 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,14 +75,6 @@ parameter was neither
 nor
 .Dv PTHREAD_PROCESS_PRIVATE .
 .El
-.Sh CAVEATS
-Applications using spinlocks are vulnerable to the effects of priority
-inversion.
-Applications using real-time threads (SCHED_FIFO, SCHED_RR) should not use
-these interfaces.
-Outside carefully controlled environments, priority inversion with spinlocks
-can lead to system deadlock.
-Mutexes are preferable in nearly every possible use case.
 .Sh SEE ALSO
 .Xr pthread_spin_destroy 3 ,
 .Xr pthread_spin_lock 3 ,
@@ -92,3 +84,12 @@ Mutexes are preferable in nearly every possible use case.
 .Fn pthread_spin_init
 conforms to
 .St -p1003.1-2001 .
+.Sh CAVEATS
+Applications using spinlocks are vulnerable to the effects of priority
+inversion.
+Applications using real-time threads
+.Pq Dv SCHED_FIFO , SCHED_RR
+should not use these interfaces.
+Outside carefully controlled environments, priority inversion with spinlocks
+can lead to system deadlock.
+Mutexes are preferable in nearly every possible use case.
