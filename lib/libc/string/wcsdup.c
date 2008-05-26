@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsdup.c,v 1.2 2006/08/26 22:45:52 christos Exp $	*/
+/*	$NetBSD: wcsdup.c,v 1.3 2008/05/26 13:17:48 haad Exp $	*/
 
 /*
  * Copyright (C) 2006 Aleksey Cheusov
@@ -14,13 +14,12 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-__RCSID("$NetBSD: wcsdup.c,v 1.2 2006/08/26 22:45:52 christos Exp $"); 
+__RCSID("$NetBSD: wcsdup.c,v 1.3 2008/05/26 13:17:48 haad Exp $"); 
 #endif /* LIBC_SCCS and not lint */ 
 
 #include "namespace.h"
 #include <stdlib.h>
 #include <assert.h>
-#include <string.h>
 #include <wchar.h>
 
 __weak_alias(wcsdup,_wcsdup)
