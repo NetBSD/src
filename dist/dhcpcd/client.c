@@ -164,6 +164,8 @@ daemonise(struct if_state *state, const struct options *options)
 		case 0:
 			setsid();
 			close_fds();
+			/* Clear pending signals */
+			signal_clear();
 			break;
 		default:
 			/* Reset signals as we're the parent about to exit. */
