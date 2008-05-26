@@ -1,5 +1,5 @@
 /* database.c - deals with database subsystem */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.9 2008/02/11 23:26:47 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-monitor/database.c,v 1.80.2.10 2008/05/26 18:57:01 ando Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2001-2008 The OpenLDAP Foundation.
@@ -32,14 +32,6 @@
 #include "slapi.h"
 static int monitor_back_add_plugin( monitor_info_t *mi, Backend *be, Entry *e );
 #endif /* defined(LDAP_SLAPI) */
-
-/* for PATH_MAX on some systems (e.g. Solaris) */
-#ifdef HAVE_LIMITS_H
-#include <limits.h>
-#endif /* HAVE_LIMITS_H */
-#ifndef PATH_MAX
-#define PATH_MAX	4095
-#endif /* ! PATH_MAX */
 
 static int
 monitor_subsys_database_modify(
