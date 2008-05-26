@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.46 2008/05/26 00:16:35 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.47 2008/05/26 02:06:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -29,8 +29,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * We assume that there will be no contention on pthread_cond_t::ptc_lock
+ * because functioning applications must call both the wait and wakeup
+ * functions while holding the same application provided mutex.  The
+ * spinlock is present only to prevent libpthread causing the application
+ * to crash or malfunction as a result of corrupted data structures, in
+ * the event that the application is buggy.
+ *
+ * If there is contention on spinlock when real-time threads are in use,
+ * it could cause a deadlock due to priority inversion: the thread holding
+ * the spinlock may not get CPU time to make forward progress and release
+ * the spinlock to a higher priority thread that is waiting for it.
+ * Contention on the spinlock will only occur with buggy applications,
+ * so at the time of writing it's not considered a major bug in libpthread.
+ */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.46 2008/05/26 00:16:35 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.47 2008/05/26 02:06:21 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
