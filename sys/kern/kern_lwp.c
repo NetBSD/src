@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.111 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.112 2008/05/26 12:08:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@
  *	LSSLEEP:
  *
  *		Covered by a lock associated with the sleep queue that the
- *		LWP resides on, indirectly referenced by l_sleepq->sq_mutex.
+ *		LWP resides on.
  *
  *	LSSTOP, LSSUSPENDED:
  *
@@ -176,7 +176,7 @@
  *	The lock order is as follows:
  *
  *		spc::spc_lwplock ->
- *		    sleepq_t::sq_mutex ->
+ *		    sleeptab::st_mutex ->
  *			tschain_t::tc_mutex ->
  *			    spc::spc_mutex
  *
@@ -198,7 +198,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.111 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.112 2008/05/26 12:08:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
