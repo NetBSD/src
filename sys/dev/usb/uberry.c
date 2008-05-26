@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.2 2008/05/26 03:03:50 jmcneill Exp $	*/
+/*	$NetBSD: uberry.c,v 1.3 2008/05/26 03:20:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,23 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.2 2008/05/26 03:03:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.3 2008/05/26 03:20:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <sys/ioccom.h>
-#include <sys/conf.h>
-#include <sys/fcntl.h>
-#include <sys/filio.h>
-#endif
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/select.h>
@@ -83,6 +74,10 @@ struct uberry_softc {
 	usbd_device_handle	sc_udev;
 };
 
+/*
+ * Note that we do not attach to USB_PRODUCT_RIM_BLACKBERRY_PEARL_DUAL
+ * as we let umass claim the device instead.
+ */
 static const struct usb_devno uberry_devs[] = {
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY },
 	{ USB_VENDOR_RIM, USB_PRODUCT_RIM_BLACKBERRY_PEARL },
@@ -119,18 +114,15 @@ uberry_charge(struct uberry_softc *sc)
 	char dummy[2];
 	usbd_status err;
 
-	if (sc->sc_udev->power == USB_MAX_POWER) {
-		DPRINTF(("Power is already %d\n", sc->sc_udev->power));
-		return;
+	if (sc->sc_udev->power != USB_MAX_POWER) {
+		uberry_cmd(sc, UT_READ | UT_VENDOR, 0xa5, 0, 1, dummy, 2);
+		uberry_cmd(sc, UT_WRITE | UT_VENDOR, 0xa2, 0, 1, dummy, 0);
 	}
-
-	uberry_cmd(sc, UT_READ | UT_VENDOR, 0xa5, 0, 1, dummy, 2);
-	uberry_cmd(sc, UT_WRITE | UT_VENDOR, 0xa2, 0, 1, dummy, 0);
 
 	err = usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1);
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 }
 
@@ -148,7 +140,7 @@ uberry_dual_mode(struct uberry_softc *sc)
 	err = usbd_set_config_no(sc->sc_udev, UBERRY_CONFIG_NO, 1);
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "setting config no failed\n");
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 }
 
@@ -185,6 +177,9 @@ USB_ATTACH(uberry)
 
 	DPRINTFN(10, ("uberry_attach: %p\n", sc->sc_udev));
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	   USBDEV(sc->sc_dev));
 
@@ -194,11 +189,9 @@ USB_ATTACH(uberry)
 USB_DETACH(uberry)
 {
 	USB_DETACH_START(uberry, sc);
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	DPRINTF(("uberry_detach: sc=%p flags=%d\n", sc, flags));
-#elif defined(__FreeBSD__)
-	DPRINTF(("uberry_detach: sc=%p\n", sc));
-#endif
+
+	pmf_device_deregister(self);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));
@@ -206,13 +199,11 @@ USB_DETACH(uberry)
 	return (0);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 uberry_activate(device_ptr_t self, enum devact act)
 {
 	switch (act) {
 	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
 		break;
 
 	case DVACT_DEACTIVATE:
@@ -220,8 +211,3 @@ uberry_activate(device_ptr_t self, enum devact act)
 	}
 	return (0);
 }
-#endif
-
-#if defined(__FreeBSD__)
-DRIVER_MODULE(uberry, uhub, uberry_driver, uberry_devclass, usbd_driver_load, 0);
-#endif /* defined(__FreeBSD__) */
