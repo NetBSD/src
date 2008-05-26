@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.11 2004/10/30 17:27:28 dsl Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.12 2008/05/26 07:57:29 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: fsplit.c,v 1.11 2004/10/30 17:27:28 dsl Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 /*
  *	usage:		fsplit [-e efile] ... [file]
@@ -153,6 +154,9 @@ main(argc, argv)
 	/* look for a temp file that doesn't correspond to an existing file */
 	get_name(x, 3);
 	ofp = fopen(x, "w");
+	if (ofp == NULL) {
+		err(1, "%s", x);
+	}
 	nflag = 0;
 	rv = 0;
 	while (getline() > 0) {
