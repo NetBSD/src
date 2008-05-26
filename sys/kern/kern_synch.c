@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.243 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.244 2008/05/26 12:08:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.243 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.244 2008/05/26 12:08:38 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -182,6 +182,7 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
+	kmutex_t *mp;
 	int error;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
@@ -194,8 +195,8 @@ ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	}
 
 	l->l_kpriority = true;
-	sq = sleeptab_lookup(&sleeptab, ident);
-	sleepq_enter(sq, l);
+	sq = sleeptab_lookup(&sleeptab, ident, &mp);
+	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
 
 	if (interlock != NULL) {
@@ -217,6 +218,7 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
+	kmutex_t *mp;
 	int error;
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
@@ -227,8 +229,8 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	}
 
 	l->l_kpriority = true;
-	sq = sleeptab_lookup(&sleeptab, ident);
-	sleepq_enter(sq, l);
+	sq = sleeptab_lookup(&sleeptab, ident, &mp);
+	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
 	mutex_exit(mtx);
 	error = sleepq_block(timo, priority & PCATCH);
@@ -246,6 +248,7 @@ int
 kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 {
 	struct lwp *l = curlwp;
+	kmutex_t *mp;
 	sleepq_t *sq;
 	int error;
 
@@ -255,8 +258,8 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	if (mtx != NULL)
 		mutex_exit(mtx);
 	l->l_kpriority = true;
-	sq = sleeptab_lookup(&sleeptab, l);
-	sleepq_enter(sq, l);
+	sq = sleeptab_lookup(&sleeptab, l, &mp);
+	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, l, wmesg, &sleep_syncobj);
 	error = sleepq_block(timo, intr);
 	if (mtx != NULL)
@@ -274,12 +277,13 @@ void
 wakeup(wchan_t ident)
 {
 	sleepq_t *sq;
+	kmutex_t *mp;
 
 	if (cold)
 		return;
 
-	sq = sleeptab_lookup(&sleeptab, ident);
-	sleepq_wake(sq, ident, (u_int)-1);
+	sq = sleeptab_lookup(&sleeptab, ident, &mp);
+	sleepq_wake(sq, ident, (u_int)-1, mp);
 }
 
 /*
@@ -292,12 +296,13 @@ void
 wakeup_one(wchan_t ident)
 {
 	sleepq_t *sq;
+	kmutex_t *mp;
 
 	if (cold)
 		return;
 
-	sq = sleeptab_lookup(&sleeptab, ident);
-	sleepq_wake(sq, ident, 1);
+	sq = sleeptab_lookup(&sleeptab, ident, &mp);
+	sleepq_wake(sq, ident, 1, mp);
 }
 
 

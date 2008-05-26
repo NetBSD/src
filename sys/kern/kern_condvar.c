@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.17 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.18 2008/05/26 12:08:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.17 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.18 2008/05/26 12:08:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -100,15 +100,16 @@ static inline sleepq_t *
 cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 {
 	sleepq_t *sq;
+	kmutex_t *mp;
 
 	KASSERT(cv_is_valid(cv));
 	KASSERT((l->l_pflag & LP_INTR) == 0 || panicstr != NULL);
 
 	l->l_cv_signalled = 0;
 	l->l_kpriority = true;
-	sq = sleeptab_lookup(&sleeptab, cv);
+	sq = sleeptab_lookup(&sleeptab, cv, &mp);
 	cv->cv_waiters++;
-	sleepq_enter(sq, l);
+	sleepq_enter(sq, l, mp);
 	sleepq_enqueue(sq, cv, cv->cv_wmesg, &cv_syncobj);
 	mutex_exit(mtx);
 
@@ -271,6 +272,7 @@ cv_signal(kcondvar_t *cv)
 {
 	lwp_t *l;
 	sleepq_t *sq;
+	kmutex_t *mp;
 
 	KASSERT(cv_is_valid(cv));
 
@@ -283,13 +285,13 @@ cv_signal(kcondvar_t *cv)
 	 * and similar) we will see non-zero values when it matters.
 	 */
 
-	sq = sleeptab_lookup(&sleeptab, cv);
+	sq = sleeptab_lookup(&sleeptab, cv, &mp);
 	if (cv->cv_waiters != 0) {
 		cv->cv_waiters--;
-		l = sleepq_wake(sq, cv, 1);
+		l = sleepq_wake(sq, cv, 1, mp);
 		l->l_cv_signalled = 1;
 	} else
-		sleepq_unlock(sq);
+		mutex_spin_exit(mp);
 
 	KASSERT(cv_is_valid(cv));
 }
@@ -304,6 +306,7 @@ void
 cv_broadcast(kcondvar_t *cv)
 {
 	sleepq_t *sq;
+	kmutex_t *mp;
 	u_int cnt;
 
 	KASSERT(cv_is_valid(cv));
@@ -311,12 +314,12 @@ cv_broadcast(kcondvar_t *cv)
 	if (cv->cv_waiters == 0)
 		return;
 
-	sq = sleeptab_lookup(&sleeptab, cv);
+	sq = sleeptab_lookup(&sleeptab, cv, &mp);
 	if ((cnt = cv->cv_waiters) != 0) {
 		cv->cv_waiters = 0;
-		sleepq_wake(sq, cv, cnt);
+		sleepq_wake(sq, cv, cnt, mp);
 	} else
-		sleepq_unlock(sq);
+		mutex_spin_exit(mp);
 
 	KASSERT(cv_is_valid(cv));
 }
@@ -332,12 +335,13 @@ void
 cv_wakeup(kcondvar_t *cv)
 {
 	sleepq_t *sq;
+	kmutex_t *mp;
 
 	KASSERT(cv_is_valid(cv));
 
-	sq = sleeptab_lookup(&sleeptab, cv);
+	sq = sleeptab_lookup(&sleeptab, cv, &mp);
 	cv->cv_waiters = 0;
-	sleepq_wake(sq, cv, (u_int)-1);
+	sleepq_wake(sq, cv, (u_int)-1, mp);
 
 	KASSERT(cv_is_valid(cv));
 }
