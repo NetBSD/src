@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1075 2008/05/24 19:39:30 joerg Exp $
+# $NetBSD: mi,v 1.1076 2008/05/26 00:32:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1491,6 +1491,7 @@
 ./usr/share/man/cat4/txp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uaudio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uax.0			man-obsolete		obsolete
+./usr/share/man/cat4/uberry.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubsa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubsec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ubt.0			man-sys-catman		.cat
@@ -4057,6 +4058,7 @@
 ./usr/share/man/man4/txp.4			man-sys-man		.man
 ./usr/share/man/man4/uaudio.4			man-sys-man		.man
 ./usr/share/man/man4/uax.4			man-obsolete		obsolete
+./usr/share/man/man4/uberry.4			man-sys-man		.man
 ./usr/share/man/man4/ubsa.4			man-sys-man		.man
 ./usr/share/man/man4/ubsec.4			man-sys-man		.man
 ./usr/share/man/man4/ubt.4			man-sys-man		.man
