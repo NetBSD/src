@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1151 2008/05/25 19:33:27 joerg Exp $
+#	$NetBSD: mi,v 1.1152 2008/05/26 00:44:55 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2425,6 +2425,7 @@
 ./usr/libdata/debug/sbin/cgdconfig.debug	comp-sysutil-debug	crypto,debug
 ./usr/libdata/debug/sbin/clri.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dhclient.debug		comp-dhclient-debug	debug
+./usr/libdata/debug/sbin/dhcpcd.debug		comp-dhcpcd-debug	debug
 ./usr/libdata/debug/sbin/disklabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkscan_bsdlabel.debug	comp-sysutil-debug	debug
@@ -2647,12 +2648,11 @@
 ./usr/libdata/debug/usr/bin/last.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/lastcomm.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ld.debug		comp-util-debug		bfd,debug
-./usr/libdata/debug/usr/bin/ldapadd.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapcompare.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapdelete.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapexop.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapmodify.debug	comp-ldap-debug		ldap,debug
-./usr/libdata/debug/usr/bin/ldapmodrd.debug	comp-ldap-debug		ldap,debug
+./usr/libdata/debug/usr/bin/ldapmodrdn.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldappasswd.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapsearch.debug	comp-ldap-debug		ldap,debug
 ./usr/libdata/debug/usr/bin/ldapwhoami.debug	comp-ldap-debug		ldap,debug
