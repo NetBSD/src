@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.83 2008/05/25 21:41:35 drochner Exp $
+#	$NetBSD: files.usb,v 1.84 2008/05/26 00:23:05 christos Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -136,6 +136,11 @@ file	dev/usb/ubt.c			ubt
 device	urio
 attach	urio at usbdevif
 file	dev/usb/urio.c			urio			needs-flag
+
+# BlackBerries
+device	uberry
+attach	uberry at usbdevif
+file	dev/usb/uberry.c			uberry
 
 # Handspring Visor
 device	uvisor: ucombus
