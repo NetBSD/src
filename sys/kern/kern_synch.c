@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.244 2008/05/26 12:08:38 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.245 2008/05/27 17:51:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.244 2008/05/26 12:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.245 2008/05/27 17:51:17 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -507,6 +507,46 @@ updatertime(lwp_t *l, const struct bintime *now)
 }
 
 /*
+ * Select next LWP from the current CPU to run..
+ */
+static inline lwp_t *
+nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
+{
+	lwp_t *newl;
+
+	/*
+	 * Let sched_nextlwp() select the LWP to run the CPU next.
+	 * If no LWP is runnable, select the idle LWP.
+	 * 
+	 * Note that spc_lwplock might not necessary be held, and
+	 * new thread would be unlocked after setting the LWP-lock.
+	 */
+	newl = sched_nextlwp();
+	if (newl != NULL) {
+		sched_dequeue(newl);
+		KASSERT(lwp_locked(newl, spc->spc_mutex));
+		newl->l_stat = LSONPROC;
+		newl->l_cpu = ci;
+		newl->l_flag |= LW_RUNNING;
+		lwp_setlock(newl, spc->spc_lwplock);
+	} else {
+		newl = ci->ci_data.cpu_idlelwp;
+		newl->l_stat = LSONPROC;
+		newl->l_flag |= LW_RUNNING;
+	}
+	
+	/*
+	 * Only clear want_resched if there are no pending (slow)
+	 * software interrupts.
+	 */
+	ci->ci_want_resched = ci->ci_data.cpu_softints;
+	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
+	spc->spc_curpriority = lwp_eprio(newl);
+
+	return newl;
+}
+
+/*
  * The machine independent parts of context switch.
  *
  * Returns 1 if another LWP was actually run.
@@ -624,34 +664,9 @@ mi_switch(lwp_t *l)
 		spc_lock(ci);
 	}
 
-	/*
-	 * Let sched_nextlwp() select the LWP to run the CPU next.
-	 * If no LWP is runnable, select the idle LWP.
-	 * 
-	 * Note that spc_lwplock might not necessary be held, and
-	 * new thread would be unlocked after setting the LWP-lock.
-	 */
+	/* Pick new LWP to run. */
 	if (newl == NULL) {
-		newl = sched_nextlwp();
-		if (newl != NULL) {
-			sched_dequeue(newl);
-			KASSERT(lwp_locked(newl, spc->spc_mutex));
-			newl->l_stat = LSONPROC;
-			newl->l_cpu = ci;
-			newl->l_flag |= LW_RUNNING;
-			lwp_setlock(newl, spc->spc_lwplock);
-		} else {
-			newl = ci->ci_data.cpu_idlelwp;
-			newl->l_stat = LSONPROC;
-			newl->l_flag |= LW_RUNNING;
-		}
-		/*
-		 * Only clear want_resched if there are no
-		 * pending (slow) software interrupts.
-		 */
-		ci->ci_want_resched = ci->ci_data.cpu_softints;
-		spc->spc_flags &= ~SPCF_SWITCHCLEAR;
-		spc->spc_curpriority = lwp_eprio(newl);
+		newl = nextlwp(ci, spc);
 	}
 
 	/* Items that must be updated with the CPU locked. */
@@ -806,6 +821,102 @@ mi_switch(lwp_t *l)
 	LOCKDEBUG_BARRIER(NULL, 1);
 
 	return retval;
+}
+
+/*
+ * The machine independent parts of context switch to oblivion.
+ * Does not return.  Call with the LWP unlocked.
+ */
+void
+lwp_exit_switchaway(lwp_t *l)
+{
+	struct cpu_info *ci;
+	struct lwp *newl;
+	struct bintime bt;
+
+	ci = l->l_cpu;
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(l->l_stat == LSZOMB || l->l_stat == LSIDL);
+	KASSERT(ci == curcpu());
+	LOCKDEBUG_BARRIER(NULL, 0);
+
+#ifdef KSTACK_CHECK_MAGIC
+	kstack_check_magic(l);
+#endif
+
+	/* Count time spent in current system call */
+	SYSCALL_TIME_SLEEP(l);
+	binuptime(&bt);
+	updatertime(l, &bt);
+
+	/* Must stay at IPL_SCHED even after releasing run queue lock. */
+	(void)splsched();
+
+	/*
+	 * Let sched_nextlwp() select the LWP to run the CPU next.
+	 * If no LWP is runnable, select the idle LWP.
+	 * 
+	 * Note that spc_lwplock might not necessary be held, and
+	 * new thread would be unlocked after setting the LWP-lock.
+	 */
+	spc_lock(ci);
+#ifndef __HAVE_FAST_SOFTINTS
+	if (ci->ci_data.cpu_softints != 0) {
+		/* There are pending soft interrupts, so pick one. */
+		newl = softint_picklwp();
+		newl->l_stat = LSONPROC;
+		newl->l_flag |= LW_RUNNING;
+	} else 
+#endif	/* !__HAVE_FAST_SOFTINTS */
+	{
+		newl = nextlwp(ci, &ci->ci_schedstate);
+	}
+
+	/* Update the new LWP's start time. */
+	newl->l_stime = bt;
+	l->l_flag &= ~LW_RUNNING;
+
+	/*
+	 * ci_curlwp changes when a fast soft interrupt occurs.
+	 * We use cpu_onproc to keep track of which kernel or
+	 * user thread is running 'underneath' the software
+	 * interrupt.  This is important for time accounting,
+	 * itimers and forcing user threads to preempt (aston).
+	 */
+	ci->ci_data.cpu_onproc = newl;
+
+	/*
+	 * Preemption related tasks.  Must be done with the current
+	 * CPU locked.
+	 */
+	cpu_did_resched(l);
+
+	/* Unlock the run queue. */
+	spc_unlock(ci);
+
+	/* Count the context switch on this CPU. */
+	ci->ci_data.cpu_nswtch++;
+
+	/* Update status for lwpctl, if present. */
+	if (l->l_lwpctl != NULL)
+		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_NONE;
+
+	/*
+	 * We may need to spin-wait for if 'newl' is still
+	 * context switching on another CPU.
+	 */
+	if (newl->l_ctxswtch != 0) {
+		u_int count;
+		count = SPINLOCK_BACKOFF_MIN;
+		while (newl->l_ctxswtch)
+			SPINLOCK_BACKOFF(count);
+	}
+
+	/* Switch to the new LWP.. */
+	(void)cpu_switchto(NULL, newl, false);
+
+	/* NOTREACHED */
 }
 
 /*

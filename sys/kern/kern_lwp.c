@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.112 2008/05/26 12:08:38 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.113 2008/05/27 17:51:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.112 2008/05/26 12:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.113 2008/05/27 17:51:17 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -815,32 +815,6 @@ lwp_exit(struct lwp *l)
 #endif
 		lwp_exit_switchaway(l);
 	}
-}
-
-void
-lwp_exit_switchaway(struct lwp *l)
-{
-	struct cpu_info *ci;
-	struct lwp *idlelwp;
-
-	(void)splsched();
-	l->l_flag &= ~LW_RUNNING;
-	ci = curcpu();	
-	ci->ci_data.cpu_nswtch++;
-	idlelwp = ci->ci_data.cpu_idlelwp;
-	idlelwp->l_stat = LSONPROC;
-
-	/*
-	 * cpu_onproc must be updated with the CPU locked, as
-	 * aston() may try to set a AST pending on the LWP (and
-	 * it does so with the CPU locked).  Otherwise, the LWP
-	 * may be destroyed before the AST can be set, leading
-	 * to a user-after-free.
-	 */
-	spc_lock(ci);
-	ci->ci_data.cpu_onproc = idlelwp;
-	spc_unlock(ci);
-	cpu_switchto(NULL, idlelwp, false);
 }
 
 /*
