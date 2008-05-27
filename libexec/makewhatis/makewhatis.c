@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.42 2008/05/27 01:25:46 dholland Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.43 2008/05/27 01:42:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.42 2008/05/27 01:25:46 dholland Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.43 2008/05/27 01:42:40 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -330,7 +330,7 @@ makewhatis(char * const * manpath)
 
 	(void)unlink(whatisdb_new);
 	if ((out = fopen(whatisdb_new, "w")) == NULL)
-		err(EXIT_FAILURE, "fdopen");
+		err(EXIT_FAILURE, "Cannot open `%s'", whatisdb_new);
 
 	dumpwhatis(out, dest);
 	if (fchmod(fileno(out), S_IRUSR|S_IRGRP|S_IROTH) == -1)
