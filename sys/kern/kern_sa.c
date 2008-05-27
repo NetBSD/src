@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.13 2008/05/27 00:20:23 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.14 2008/05/27 05:22:33 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.13 2008/05/27 00:20:23 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.14 2008/05/27 05:22:33 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,6 +356,7 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 		else
 			sa->sa_stackinfo_offset = 0;
 		sa->sa_nstacks = 0;
+		sigemptyset(&sa->sa_sigmask);
 		SLIST_INIT(&sa->sa_vps);
 		mb_write();
 		p->p_sa = sa;

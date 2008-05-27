@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.6 2008/05/26 07:25:29 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.7 2008/05/27 05:22:33 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -136,8 +136,9 @@ struct sadata {
 	int		sa_stackchg;		/* m: stacks change indicator */
 	RB_HEAD(sasttree, sastack) sa_stackstree; /* s, m: tree of upcall stacks */
 	struct sastack	*sa_stacknext;		/* m: next free stack */
-	ssize_t	sa_stackinfo_offset;		/* m: offset from ss_sp to stackinfo data */
-	int	sa_nstacks;			/* m: number of upcall stacks */
+	ssize_t 	sa_stackinfo_offset;	/* m: offset from ss_sp to stackinfo data */
+	int		sa_nstacks;		/* m: number of upcall stacks */
+	sigset_t	sa_sigmask;		/* p: process-wide masked sigs*/
 	SLIST_HEAD(, sadata_vp)	sa_vps;		/* p: virtual processors */
 };
 
