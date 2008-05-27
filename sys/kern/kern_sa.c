@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.16 2008/05/27 05:36:12 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.17 2008/05/27 19:51:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,10 +40,11 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.16 2008/05/27 05:36:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.17 2008/05/27 19:51:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/types.h>
@@ -54,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.16 2008/05/27 05:36:12 wrstuden E
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
+#include <sys/sched.h>
 #include <sys/sleepq.h>
 
 #include <uvm/uvm_extern.h>
@@ -94,7 +96,6 @@ static int sa_increaseconcurrency(struct lwp *, int);
 static void sa_switchcall(void *);
 static int sa_newcachelwp(struct lwp *);
 static void sa_makeupcalls(struct lwp *, struct sadata_upcall *);
-static struct lwp *sa_vp_repossess(struct lwp *l);
 
 static inline int sa_pagefault(struct lwp *, ucontext_t *);
 
@@ -780,8 +781,12 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			sa->sa_concurrency--;
 			return (addedconcurrency);
 		} else {
-			newlwp(l, p, uaddr, inmem, 0, NULL, 0,
-			    child_return, 0, &l2);
+			error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
+			    child_return, NULL, &l2, l->l_class);
+			if (error) {
+				uvm_uarea_free(uaddr, curcpu());
+				return error;
+			}
 			vp = sa_newsavp(p);
 			mutex_enter(&sa->sa_mutex);
 			lwp_lock(l2);
@@ -825,8 +830,10 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 				sa->sa_concurrency--;
 				return (addedconcurrency);
 			}
-			/* setrunnable() will unlock l2. */
-			setrunnable(l2);
+			/* Run the LWP */
+			l2->l_stat = LSRUN;
+			sched_enqueue(l2, false);
+			lwp_unlock(l2);
 			addedconcurrency++;
 		}
 	}
@@ -918,7 +925,7 @@ sys_sa_setconcurrency(struct lwp *l, const struct sys_sa_setconcurrency_args *ua
 				    SA_UPCALL_NEWPROC,
 				    NULL, NULL, 0, NULL, NULL);
 				lwp_lock(l2);
-				/* setrunnable() will unlock l2 */
+				/* setrunnable() will unlock the LWP */
 				setrunnable(vp->savp_lwp);
 				KDASSERT((l2->l_flag & LW_SINTR) == 0);
 				(*retval)++;
@@ -1357,7 +1364,7 @@ sa_switch(struct lwp *l)
 	struct lwp *l2;
 	struct sadata *sa = p->p_sa;
 
-	KASSERT(lwp_locked(l, &sched_mutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	DPRINTFN(4,("sa_switch(%d.%d VP %d)\n", p->p_pid, l->l_lid,
 	    vp->savp_lwp ? vp->savp_lwp->l_lid : 0));
@@ -1402,7 +1409,7 @@ sa_switch(struct lwp *l)
 			 */
 			mutex_exit(p->p_lock);
 			mutex_exit(&sa->sa_mutex);
-			lwp_unsleep(l);
+			lwp_unsleep(l, true);
 		}
 		return;
 	}
@@ -1510,8 +1517,9 @@ panic("Oops! Don't have a sleeper!\n");
 		l2->l_stat = LSRUN;
 		vp->savp_blocker = l;
 		vp->savp_lwp = l2;
-		setrunqueue(l2);
-		uvm_lwp_rele(l2); /* Remove the artificial hold-count */
+		sched_enqueue(l2, false);
+		/* Remove the artificial hold-count */
+		uvm_lwp_rele(l2);
 		KDASSERT(l2 != l);
 		if (l->l_mutex != l2->l_mutex)  /* XXXSMP */
 			lwp_unlock(l2);
@@ -1569,7 +1577,7 @@ sa_switchcall(void *arg)
 	sa = p->p_sa;
 
 	lwp_lock(l2);
-	if (l->l_flag & LW_WEXIT) {
+	if (l2->l_flag & LW_WEXIT) {
 		lwp_unlock(l2);
 		sadata_upcall_free(sau);
 		lwp_exit(l2);
@@ -1656,6 +1664,7 @@ sa_newcachelwp(struct lwp *l)
 	struct lwp *l2;
 	vaddr_t uaddr;
 	boolean_t inmem;
+	int error;
 
 	p = l->l_proc;
 	if (p->p_sflag & PS_WEXIT)
@@ -1665,7 +1674,12 @@ sa_newcachelwp(struct lwp *l)
 	if (__predict_false(uaddr == 0)) {
 		return (ENOMEM);
 	} else {
-		newlwp(l, p, uaddr, inmem, 0, NULL, 0, child_return, 0, &l2);
+		error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
+		    child_return, NULL, &l2, l->l_class);
+		if (error) {
+			uvm_uarea_free(uaddr, curcpu());
+			return error;
+		}
 		/* We don't want this LWP on the process's main LWP list, but
 		 * newlwp helpfully puts it there. Unclear if newlwp should
 		 * be tweaked.
@@ -2192,13 +2206,15 @@ sa_unblock_userret(struct lwp *l)
 		vp_lwp->l_flag |= LW_SA_UPCALL;
 		if (vp_lwp->l_flag & LW_SA_YIELD)
 			break;
-		cpu_need_resched(vp_lwp->l_cpu);
+		spc_lock(vp_lwp->l_cpu);
+		cpu_need_resched(vp_lwp->l_cpu, 0);
+		spc_unlock(vp_lwp->l_cpu);
 		break;
 	case LSSLEEP:
 		if (vp_lwp->l_flag & LW_SA_IDLE) {
 			vp_lwp->l_flag &= ~LW_SA_IDLE;
 			vp_lwp->l_flag |= LW_SA_UPCALL;
-			/* Setrunnable will release the lock. */
+			/* setrunnable() will unlock the LWP */
 			setrunnable(vp_lwp);
 			vp_lwp = NULL;
 			break;
@@ -2228,8 +2244,11 @@ sa_unblock_userret(struct lwp *l)
 		if (vp_lwp->l_flag & LW_INMEM) {
 			if (vp_lwp->l_cpu == curcpu())
 				l2 = vp_lwp;
-			else
-				cpu_need_resched(vp_lwp->l_cpu);
+			else {
+				spc_lock(vp_lwp->l_cpu);
+				cpu_need_resched(vp_lwp->l_cpu, 0);
+				spc_unlock(vp_lwp->l_cpu);
+			}
 		} else
 			swapper = 1;
 		break;
