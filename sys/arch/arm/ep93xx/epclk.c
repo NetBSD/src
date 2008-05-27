@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.14 2008/05/25 03:57:22 hamajima Exp $	*/
+/*	$NetBSD: epclk.c,v 1.15 2008/05/27 14:31:36 hamajima Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.14 2008/05/25 03:57:22 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.15 2008/05/27 14:31:36 hamajima Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -240,7 +240,6 @@ delay(unsigned int n)
 {
 	unsigned int cur_tick, initial_tick;
 	int remaining;
-	u_int32_t scalar = 4222124650UL;
 
 #ifdef DEBUG
 	if (epclk_sc == NULL) {
@@ -255,10 +254,7 @@ delay(unsigned int n)
 	 */
 	initial_tick = TIMER4VAL();
 
-	/* This is a quick ARM way to multiply by 983040/1000000 */
-	__asm volatile ("umull %0, %1, %2, %3;"
-			: "=r"(n), "=&r"(remaining)
-			: "r"((scalar)), "0"(n));
+	remaining = n * TIMER_FREQ / 1000000;
 
 	while (remaining > 0) {
 		cur_tick = TIMER4VAL();
