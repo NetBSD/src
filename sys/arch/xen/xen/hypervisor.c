@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.36 2008/04/16 18:41:48 cegger Exp $ */
+/* $NetBSD: hypervisor.c,v 1.37 2008/05/27 17:01:07 explorer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.37 2008/05/27 17:01:07 explorer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,9 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36 2008/04/16 18:41:48 cegger Exp $
 #include <xen/evtchn.h>
 #ifndef XEN3
 #include <xen/ctrl_if.h>
+#endif
+#ifdef XEN3
+#include <xen/xen3-public/version.h>
 #endif
 
 #if defined(DOM0OPS) || defined(XEN3)
@@ -231,6 +234,9 @@ hypervisor_match(device_t parent, cfdata_t match, void *aux)
 void
 hypervisor_attach(device_t parent, device_t self, void *aux)
 {
+#ifdef XEN3
+	int xen_version;
+#endif
 #if NPCI >0
 #ifndef XEN3
 	physdev_op_t physdev_op;
@@ -243,9 +249,11 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 
-	printf("\n");
-
 #ifdef XEN3
+	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
+	printf(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
+	       xen_version & 0x0000ffff);
+
 	xengnt_init();
 
 	memset(&hac.hac_vcaa, 0, sizeof(hac.hac_vcaa));
@@ -254,7 +262,10 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_SP;
 	hac.hac_vcaa.vcaa_caa.cpu_func = 0;
 	config_found_ia(self, "xendevbus", &hac.hac_vcaa, hypervisor_print);
+#else
+	printf("\n");
 #endif
+
 	init_events();
 
 #if NXENBUS > 0
