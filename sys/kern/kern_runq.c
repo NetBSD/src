@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.11 2008/05/27 19:05:52 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.12 2008/05/27 21:36:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.11 2008/05/27 19:05:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.12 2008/05/27 21:36:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -620,7 +620,7 @@ sched_lwp_stats(struct lwp *l)
 struct lwp *
 sched_nextlwp(void)
 {
-	struct cpu_info *ci = curcpu(), *cci;
+	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc;
 	TAILQ_HEAD(, lwp) *q_head;
 	runqueue_t *ci_rq;
@@ -635,6 +635,7 @@ sched_nextlwp(void)
 		if ((ci_rq->r_count - ci_rq->r_mcount) == 0)
 			return NULL;
 	} else if (ci_rq->r_count == 0) {
+		struct cpu_info *cci;
 		/* Reset the counter, and call the balancer */
 		ci_rq->r_avgcount = 0;
 		sched_balance(ci);
