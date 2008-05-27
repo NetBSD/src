@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.12 2008/05/26 07:25:29 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.13 2008/05/27 00:20:23 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.12 2008/05/26 07:25:29 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.13 2008/05/27 00:20:23 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,6 @@ static inline int sast_compare(struct sastack *, struct sastack *);
 #ifdef MULTIPROCESSOR
 static int sa_increaseconcurrency(struct lwp *, int);
 #endif
-static void sa_setwoken(struct lwp *);
 static void sa_switchcall(void *);
 static int sa_newcachelwp(struct lwp *);
 static void sa_makeupcalls(struct lwp *, struct sadata_upcall *);
@@ -986,7 +985,7 @@ sa_yield(struct lwp *l)
 		/*
 		 * We lost the VP on our way here, this happens for
 		 * instance when we sleep in systrace.  This will end
-		 * in an SA_UNBLOCKED_UPCALL in sa_setwoken().
+		 * in an SA_UNBLOCKED_UPCALL in sa_unblock_userret().
 		 */
 		DPRINTFN(1,("sa_yield(%d.%d) lost VP\n",
 			     p->p_pid, l->l_lid));
@@ -1732,97 +1731,6 @@ sa_getcachelwp(struct proc *p, struct sadata_vp *vp)
 }
 
 
-void
-sa_unblock_userret(struct lwp *l)
-{
-	struct proc *p;
-	struct sadata *sa;
-	struct sadata_vp *vp;
-#if 0
-	struct lwp *l2;
-	struct sadata_upcall *sau;
-	struct sastack *sast;
-#endif
-	int f;
-
-	p = l->l_proc;
-	sa = p->p_sa;
-	vp = l->l_savp;
-
-	if (l->l_flag & LW_WEXIT)
-		return;
-
-	KERNEL_LOCK(1, l);
-	SA_LWP_STATE_LOCK(l, f);
-
-	DPRINTFN(7,("sa_unblock_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
-	    l->l_flag));
-
-	mutex_enter(&sa->sa_mutex);
-
-	sa_setwoken(l);
-	/* NOTREACHED */
-
-#if 0
-	//SCHED_LOCK(s);
-	if (l != vp->savp_lwp) {
-		/* Invoke an "unblocked" upcall */
-		DPRINTFN(8,("sa_unblock_userret(%d.%d) unblocking\n",
-		    p->p_pid, l->l_lid));
-
-		l2 = sa_vp_repossess(l);
-
-		if (l2 == NULL) {
-			lwp_exit(l);
-			/* NOTREACHED */
-		}
-
-		sast = sa_getstack(sa);
-		mutex_exit(&sa->sa_mutex);
-
-		if (l->l_flag & LW_WEXIT) {
-			lwp_exit(l);
-			/* NOTREACHED */
-		}
-
-		sau = sadata_upcall_alloc(1);
-		if (l->l_flag & LW_WEXIT) {
-			sadata_upcall_free(sau);
-			lwp_exit(l);
-			/* NOTREACHED */
-		}
-
-		KDASSERT(l2 != NULL);
-		uvm_lwp_hold(l2);
-
-		KDASSERT(sast != NULL);
-		DPRINTFN(9,("sa_unblock_userret(%d.%d) using stack %p\n",
-		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
-
-		/*
-		 * Defer saving the event lwp's state because a
-		 * PREEMPT upcall could be on the queue already.
-		 */
-		sa_upcall0(sau, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER_EVENT,
-			   l, l2, 0, NULL, NULL);
-		sau->sau_stack = sast->sast_stack;
-
-		mutex_enter(&sa->sa_mutex);
-		SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
-		lwp_lock(l);
-		l->l_flag |= LW_SA_UPCALL;
-		l->l_flag &= ~LW_SA_BLOCKING;
-		lwp_unlock(l);
-		mutex_enter(p->p_lock);
-		sa_putcachelwp(p, l2);
-	}
-		mutex_exit(p->p_lock);
-
-	SA_LWP_STATE_UNLOCK(l, f);
-	KERNEL_UNLOCK_LAST(l);
-#endif /* 0 */
-}
-
 /*
  * sa_upcall_userret
  *	We are about to exit the kernel and return to userland, and
@@ -1907,7 +1815,7 @@ sa_upcall_userret(struct lwp *l)
 		l2->l_flag &= ~LW_SA_BLOCKING;
 		lwp_unlock(l2);
 		mutex_enter(p->p_lock);
-		sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_setwoken */
+		sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_unblock_userret */
 		mutex_exit(p->p_lock);
 	} else if (sast)
 		sa_setstackfree(sast, sa);
@@ -2107,7 +2015,7 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 			lwp_lock(l2);
 			l2->l_flag &= ~LW_SA_BLOCKING;
 			lwp_unlock(l2);
-			sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_setwoken */
+			sa_putcachelwp(p, l2); /* uvm_lwp_hold from sa_unblock_userret */
 			mutex_exit(p->p_lock);
 
 			error = copyout(&e_ss->ss_captured.ss_ctx,
@@ -2196,17 +2104,50 @@ fail:
 	/* NOTREACHED */
 }
 
-static void
-sa_setwoken(struct lwp *l)
+/*
+ * sa_unblock_userret:
+ *
+ *	Our lwp is in the process of returning to userland, and
+ * userret noticed LW_SA_BLOCKING is set for us. This indicates that
+ * we were at one time the blessed lwp for our vp and we blocked.
+ * An upcall was delivered to our process indicating that we blocked.
+ *	Since then, we have unblocked in the kernel, and proceeded
+ * to finish whatever work needed to be done. For instance, pages
+ * have been faulted in for a trap or system call results have been
+ * saved out for a systemcall.
+ *	We now need to simultaneously do two things. First, we have to
+ * cause an UNBLOCKED upcall to be generated. Second, we actually
+ * have to STOP executing. When the blocked upcall was generated, a
+ * new lwp was given to our application. Thus if we simply returned,
+ * we would be exceeding our concurrency.
+ *	 So we put ourself on our vp's savp_woken list and take
+ * steps to make sure the blessed lwp will notice us. Note: we maintain
+ * loose concurrency controls, so the blessed lwp for our vp could in
+ * fact be running on another cpu in the system.
+ */
+void
+sa_unblock_userret(struct lwp *l)
 {
 	struct lwp *l2, *vp_lwp;
-	struct proc *p = l->l_proc;
+	struct proc *p;
 	struct sadata *sa;
 	struct sadata_vp *vp;
 	int swapper;
 
+	p = l->l_proc;
+	sa = p->p_sa;
+	vp = l->l_savp;
+
+	if (l->l_flag & LW_WEXIT)
+		return;
+
 	if ((l->l_flag & LW_SA_BLOCKING) == 0)
 		return;
+
+	DPRINTFN(7,("sa_unblock_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
+	    l->l_flag));
+
+	mutex_enter(&sa->sa_mutex);
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -2216,7 +2157,7 @@ sa_setwoken(struct lwp *l)
 	swapper = 0;
 
 	KDASSERT(vp_lwp != NULL);
-	DPRINTFN(3,("sa_setwoken(%d.%d) woken, flags %x, vp %d\n",
+	DPRINTFN(3,("sa_unblock_userret(%d.%d) woken, flags %x, vp %d\n",
 		     l->l_proc->p_pid, l->l_lid, l->l_flag,
 		     vp_lwp->l_lid));
 
@@ -2225,7 +2166,7 @@ sa_setwoken(struct lwp *l)
 		KDASSERT((vp_lwp->l_flag & LW_SA_UPCALL) == 0);
 		KDASSERT(vp->savp_wokenq_head == NULL);
 		DPRINTFN(3,
-		    ("sa_setwoken(%d.%d) repossess: idle vp_lwp %d state %d\n",
+		    ("sa_unblock_userret(%d.%d) repossess: idle vp_lwp %d state %d\n",
 		    l->l_proc->p_pid, l->l_lid,
 		    vp_lwp->l_lid, vp_lwp->l_stat));
 		vp_lwp->l_flag &= ~LW_SA_IDLE;
@@ -2234,7 +2175,8 @@ sa_setwoken(struct lwp *l)
 	}
 #endif
 
-	DPRINTFN(3,("sa_setwoken(%d.%d) put on wokenq: vp_lwp %d state %d\n",
+	DPRINTFN(3,(
+	    "sa_unblock_userret(%d.%d) put on wokenq: vp_lwp %d state %d\n",
 		     l->l_proc->p_pid, l->l_lid, vp_lwp->l_lid,
 		     vp_lwp->l_stat));
 
@@ -2262,7 +2204,7 @@ sa_setwoken(struct lwp *l)
 		break;
 	case LSSUSPENDED:
 #ifdef DIAGNOSTIC
-		printf("sa_setwoken(%d.%d) vp lwp %d LSSUSPENDED\n",
+		printf("sa_unblock_userret(%d.%d) vp lwp %d LSSUSPENDED\n",
 		    l->l_proc->p_pid, l->l_lid, vp_lwp->l_lid);
 #endif
 		break;
@@ -2310,76 +2252,16 @@ sa_setwoken(struct lwp *l)
 	mutex_exit(&sa->sa_mutex);
 	mi_switch(l);
 
-	/* maybe NOTREACHED */
-	if (l->l_flag & LW_WEXIT)
-		lwp_exit(l);
-
-	mutex_enter(&sa->sa_mutex);
-}
-
-#if 0
-static struct lwp *
-sa_vp_repossess(struct lwp *l)
-{
-	struct lwp *l2;
-	struct proc *p = l->l_proc;
-	struct sadata_vp *vp = l->l_savp;
-	int ostat;
-
-	LOCK_ASSERT(mutex_owned(p->p_lock));
-	LOCK_ASSERT(mutex_owned(&p->p_sa->sa_mutex));
-
 	/*
-	 * Put ourselves on the virtual processor and note that the
-	 * previous occupant of that position was interrupted.
+	 * We suspended ourself and put ourself on the savp_woken
+	 * list. The only way we come back from mi_switch() is if
+	 * we were put back on the run queues, which only happens
+	 * if the process is exiting. So just exit.
 	 */
-	l2 = vp->savp_lwp;
-	vp->savp_lwp = l;
-	if (l2) {
-		lwp_lock(l2);
+	lwp_exit(l);
 
-		if (l2->l_flag & LW_SA_YIELD)
-			l2->l_flag &= ~(LW_SA_YIELD|LW_SA_IDLE);
-
-		DPRINTFN(1,("sa_vp_repossess(%d.%d) vp lwp %d state %d\n",
-			     p->p_pid, l->l_lid, l2->l_lid, l2->l_stat));
-
-		KDASSERT(l2 != l);
-
-		ostat = l2->l_stat;
-		l2->l_stat = LSSUSPENDED;
-
-		switch (ostat) {
-		case LSRUN:
-			p->p_nrlwps--;
-			remrunqueue(l2);
-			lwp_unlock(l2);
-			break;
-		case LSSLEEP:
-			p->p_nrlwps--;
-			lwp_unsleep(l2);
-			break;
-		case LSSUSPENDED:
-#ifdef DIAGNOSTIC
-			printf("sa_vp_repossess(%d.%d) vp lwp %d LSSUSPENDED\n",
-			    l->l_proc->p_pid, l->l_lid, l2->l_lid);
-#endif
-			lwp_unlock(l2);
-			break;
-#ifdef DIAGNOSTIC
-		default:
-			lwp_unlock(l2);
-			panic("SA VP %d.%d is in state %d, not running"
-			    " or sleeping\n", p->p_pid, l2->l_lid,
-			    l2->l_stat);
-#endif
-		}
-		l2->l_stat = LSSUSPENDED;
-	}
-
-	return l2;
+	/* NOTREACHED */
 }
-#endif
 
 
 
