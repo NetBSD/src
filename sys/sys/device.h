@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.110 2008/05/25 12:30:40 jmcneill Exp $ */
+/* $NetBSD: device.h,v 1.111 2008/05/27 17:47:37 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -387,8 +387,6 @@ extern struct cftablelist allcftables;	/* list of all cfdata tables */
 extern device_t booted_device;		/* the device we booted from */
 extern device_t booted_wedge;		/* the wedge on that device */
 extern int booted_partition;		/* or the partition on that device */
-
-extern volatile int config_pending; 	/* semaphore for mountroot */
 
 struct vnode *opendisk(struct device *);
 int config_handle_wedges(struct device *, int);
