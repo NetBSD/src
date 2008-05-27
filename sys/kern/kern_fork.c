@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.165 2008/05/27 14:18:51 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.166 2008/05/27 17:49:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.165 2008/05/27 14:18:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.166 2008/05/27 17:49:07 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -232,7 +232,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		if (ratecheck(&lasttfm, &fork_tfmrate))
 			tablefull("proc", "increase kern.maxproc or NPROC");
 		if (forkfsleep)
-			(void)tsleep(&nprocs, PUSER, "forkmx", forkfsleep);
+			kpause("forkmx", false, forkfsleep, NULL);
 		return (EAGAIN);
 	}
 
@@ -245,7 +245,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		(void)chgproccnt(uid, -1);
 		atomic_dec_uint(&nprocs);
 		if (forkfsleep)
-			(void)tsleep(&nprocs, PUSER, "forkulim", forkfsleep);
+			kpause("forkulim", false, forkfsleep, NULL);
 		return (EAGAIN);
 	}
 
