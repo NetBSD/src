@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.53.14.1 2008/05/27 00:14:43 wrstuden Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.53.14.2 2008/05/27 00:37:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -304,7 +304,7 @@ void ktr_mib(const int *a , u_int b);
 void ktr_mool(const void *, size_t, const void *);
 void ktr_execarg(const void *, size_t);
 void ktr_execenv(const void *, size_t);
-void ktr_saupcall(struct lwp *, int, int, int, void *, void *);
+void ktr_saupcall(struct lwp *, int, int, int, void *, void *, void *);
 
 static inline bool
 ktrpoint(int fac)
@@ -425,10 +425,10 @@ ktrexecenv(const void *a, size_t b)
 }
 
 static inline void
-ktrsaupcall(struct lwp *a, int b, int c, int d, void *e, void *f)
+ktrsaupcall(struct lwp *a, int b, int c, int d, void *e, void *f, void *g)
 {
 	if (__predict_false(ktrace_on))
-		ktr_saupcall(a, b, c, d, e, f);
+		ktr_saupcall(a, b, c, d, e, f, g);
 }
 
 #endif	/* !_KERNEL */
