@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.146.2.2 2008/05/14 01:35:13 wrstuden Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.146.2.3 2008/05/27 03:16:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.2 2008/05/14 01:35:13 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.3 2008/05/27 03:16:30 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.2 2008/05/14 01:35:13 wrstuden
 #include <sys/timex.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
 
@@ -913,6 +915,54 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 	return (0);
 }
 
+/* Glue function that triggers an upcall; called from userret(). */
+void
+timerupcall(struct lwp *l)
+{
+	struct ptimers *pt = l->l_proc->p_timers;
+	struct proc *p = l->l_proc;
+	unsigned int i, fired, done;
+
+	KDASSERT(l->l_proc->p_sa);
+	/* Bail out if we do not own the virtual processor */
+	if (l->l_savp->savp_lwp != l)
+		return ;
+
+	mutex_enter(&p->p_sa->sa_mutex);
+	mutex_enter(p->p_lock);
+
+	fired = pt->pts_fired;
+	done = 0;
+	while ((i = ffs(fired)) != 0) {
+		siginfo_t *si;
+		int mask = 1 << --i;
+		int f;
+
+		lwp_lock(l);
+		f = l->l_flag & LW_SA;
+		l->l_flag &= ~LW_SA;
+		lwp_unlock(l);
+		si = siginfo_alloc(PR_WAITOK);
+		si->_info = pt->pts_timers[i]->pt_info.ksi_info;
+		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
+		    sizeof(*si), si, siginfo_free) != 0) {
+			siginfo_free(si);
+			/* XXX What do we do here?? */
+		} else
+			done |= mask;
+		fired &= ~mask;
+		lwp_lock(l);
+		l->l_flag |= f;
+		lwp_unlock(l);
+	}
+	pt->pts_fired &= ~done;
+	if (pt->pts_fired == 0)
+		l->l_proc->p_timerpend = 0;
+
+	mutex_exit(p->p_lock);
+	mutex_exit(&p->p_sa->sa_mutex);
+}
+
 /*
  * Real interval timer expired:
  * send process whose timer expired an alarm signal.
@@ -1265,7 +1315,9 @@ itimerfire(struct ptimer *pt)
 	 * XXX Can overrun, but we don't do signal queueing yet, anyway.
 	 * XXX Relying on the clock interrupt is stupid.
 	 */
-	if (pt->pt_ev.sigev_notify != SIGEV_SIGNAL || pt->pt_queued)
+	if ((pt->pt_ev.sigev_notify == SIGEV_SA && pt->pt_proc->p_sa == NULL) ||
+	    (pt->pt_ev.sigev_notify != SIGEV_SIGNAL &&
+	    pt->pt_ev.sigev_notify != SIGEV_SA) || pt->pt_queued)
 		return;
 	TAILQ_INSERT_TAIL(&timer_queue, pt, pt_chain);
 	pt->pt_queued = true;
@@ -1298,6 +1350,60 @@ timer_tick(lwp_t *l, bool user)
 	mutex_spin_exit(&timer_lock);
 }
 
+/*
+ * timer_sa_intr:
+ *
+ *	SIGEV_SA handling for timer_intr(). We are called (and return)
+ * with the timer lock held. We know that the process had SA enabled
+ * when this timer was enqueued. As timer_intr() is a soft interrupt
+ * handler, SA should still be enabled by the time we get here.
+ *
+ * XXX Is it legit to lock p_lock and the lwp at this time?
+ */
+static void
+timer_sa_intr(struct ptimer *pt, proc_t *p)
+{
+	unsigned int i;
+	struct sadata_vp *vp;
+
+	/* Cause the process to generate an upcall when it returns. */
+	if (!p->p_timerpend) {
+		/*
+		 * XXX stop signals can be processed inside tsleep,
+		 * which can be inside sa_yield's inner loop, which
+		 * makes testing for sa_idle alone insuffucent to
+		 * determine if we really should call setrunnable.
+		 */
+		pt->pt_poverruns = pt->pt_overruns;
+		pt->pt_overruns = 0;
+		i = 1 << pt->pt_entry;
+		p->p_timers->pts_fired = i;
+		p->p_timerpend = 1;
+
+		mutex_enter(p->p_lock);
+		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+			lwp_need_userret(vp->savp_lwp);
+			lwp_lock(vp->savp_lwp);
+			if (vp->savp_lwp->l_flag & LW_SA_IDLE) {
+				vp->savp_lwp->l_flag &= ~LW_SA_IDLE;
+				lwp_unlock(vp->savp_lwp);
+				wakeup(vp->savp_lwp);
+				break;
+			}
+			lwp_unlock(vp->savp_lwp);
+		}
+		mutex_exit(p->p_lock);
+	} else {
+		i = 1 << pt->pt_entry;
+		if ((p->p_timers->pts_fired & i) == 0) {
+			pt->pt_poverruns = pt->pt_overruns;
+			pt->pt_overruns = 0;
+			p->p_timers->pts_fired |= i;
+		} else
+			pt->pt_overruns++;
+	}
+}
+
 static void
 timer_intr(void *cookie)
 {
@@ -1311,13 +1417,17 @@ timer_intr(void *cookie)
 		KASSERT(pt->pt_queued);
 		pt->pt_queued = false;
 
-		if (pt->pt_ev.sigev_notify != SIGEV_SIGNAL)
-			continue;
-		p = pt->pt_proc;
 		if (pt->pt_proc->p_timers == NULL) {
 			/* Process is dying. */
 			continue;
 		}
+		p = pt->pt_proc;
+		if (pt->pt_ev.sigev_notify == SIGEV_SA) {
+			timer_sa_intr(pt, p);
+			continue;
+		}
+		if (pt->pt_ev.sigev_notify != SIGEV_SIGNAL)
+			continue;
 		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo)) {
 			pt->pt_overruns++;
 			continue;
