@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.36 2008/05/25 19:22:21 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.37 2008/05/27 14:13:41 ad Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.36 2008/05/25 19:22:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.37 2008/05/27 14:13:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ dzrint(void *arg)
 		cn_check_magic(tp->t_dev, mcc, dz_cnm_state);
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			clwakeup(&tp->t_rawq);
+			cv_broadcast(&tp->t_rawcv);
 			continue;
 		}
 

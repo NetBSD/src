@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.51 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: com.c,v 1.52 2008/05/27 14:13:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.51 2008/04/28 20:23:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.52 2008/05/27 14:13:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1066,7 +1066,7 @@ comintr(void *arg)
 		if (ISSET(lsr, LSR_TXRDY) && ISSET(tp->t_state, TS_BUSY)) {
 			CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 			if (sc->sc_halt > 0)
-				clwakeup(&tp->t_outq);
+				cv_broadcast(&tp->t_outcv);
 			(*tp->t_linesw->l_start)(tp);
 		}
 
