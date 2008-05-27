@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.33 2008/01/15 21:55:24 christos Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.34 2008/05/27 21:32:47 dyoung Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -52,6 +52,7 @@
 #define	CB_CIRRUS	8	/* Cirrus Logic CL-PD683X */
 #define	CB_TI125X	9	/* TI PCI1250/1251(B)/1450 */
 #define	CB_TI1420	10	/* TI PCI1420 */
+#define	CB_O2MICRO	11	/* O2 Micro 67xx/68xx/69xx */
 
 struct pccbb_softc;
 struct pccbb_intrhand_list;
