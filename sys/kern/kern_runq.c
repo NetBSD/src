@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.12 2008/05/27 21:36:03 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.13 2008/05/27 22:05:50 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.12 2008/05/27 21:36:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.13 2008/05/27 22:05:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.12 2008/05/27 21:36:03 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/types.h>
+#include <sys/evcnt.h>
 
 /*
  * Priority related defintions.
