@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.53 2008/05/25 19:22:21 ad Exp $	*/
+/*	$NetBSD: dhu.c,v 1.54 2008/05/27 14:13:41 ad Exp $	*/
 /*
  * Copyright (c) 2003, Hugh Graham.
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.53 2008/05/25 19:22:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.54 2008/05/27 14:13:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ dhurint(void *arg)
 		}
 
 		if (!(tp->t_state & TS_ISOPEN)) {
-			clwakeup(&tp->t_rawq);
+			cv_broadcast(&tp->t_rawcv);
 			continue;
 		}
 
