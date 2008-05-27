@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/22 13:57:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2008/05/27 08:58:26 lukem Exp $
+
+USE_FORT?=	yes
 
 LIBISPRIVATE=	yes
 
