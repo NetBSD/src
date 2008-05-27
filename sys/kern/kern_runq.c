@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.10 2008/05/27 14:48:52 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.11 2008/05/27 19:05:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.10 2008/05/27 14:48:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.11 2008/05/27 19:05:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,6 +77,7 @@ typedef struct {
 	uint32_t	r_bitmap[PRI_COUNT >> BITMAP_SHIFT];
 	/* Counters */
 	u_int		r_count;	/* Count of the threads */
+	u_int		r_avgcount;	/* Average count of threads */
 	u_int		r_mcount;	/* Count of migratable threads */
 	/* Runqueues */
 	queue_t		r_rt_queue[PRI_RT_COUNT];
@@ -90,6 +91,7 @@ typedef struct {
 
 static void *	sched_getrq(runqueue_t *, const pri_t);
 #ifdef MULTIPROCESSOR
+static lwp_t	*sched_catchlwp(struct cpu_info *);
 static void	sched_balance(void *);
 #endif
 
@@ -429,13 +431,88 @@ sched_takecpu(struct lwp *l)
 }
 
 /*
+ * Tries to catch an LWP from the runqueue of other CPU.
+ */
+static struct lwp *
+sched_catchlwp(struct cpu_info *ci)
+{
+	struct cpu_info *curci = curcpu();
+	struct schedstate_percpu *spc;
+	TAILQ_HEAD(, lwp) *q_head;
+	runqueue_t *ci_rq;
+	struct lwp *l;
+
+	spc = &ci->ci_schedstate;
+	ci_rq = spc->spc_sched_info;
+	if (ci_rq->r_mcount < min_catch) {
+		spc_unlock(ci);
+		return NULL;
+	}
+
+	/* Take the highest priority thread */
+	q_head = sched_getrq(ci_rq, spc->spc_maxpriority);
+	l = TAILQ_FIRST(q_head);
+
+	for (;;) {
+		/* Check the first and next result from the queue */
+		if (l == NULL)
+			break;
+		KASSERT(l->l_stat == LSRUN);
+		KASSERT(l->l_flag & LW_INMEM);
+
+		/* Look for threads, whose are allowed to migrate */
+		if ((l->l_pflag & LP_BOUND) || lwp_cache_hot(l) ||
+		    !sched_migratable(l, curci)) {
+			l = TAILQ_NEXT(l, l_runq);
+			continue;
+		}
+
+		/* Grab the thread, and move to the local run queue */
+		sched_dequeue(l);
+		l->l_cpu = curci;
+	    	ci_rq->r_ev_pull.ev_count++;
+		lwp_unlock_to(l, curci->ci_schedstate.spc_mutex);
+		sched_enqueue(l, false);
+		return l;
+	}
+	spc_unlock(ci);
+
+	return l;
+}
+
+/*
  * Periodical calculations for balancing.
  */
 static void
 sched_balance(void *nocallout)
 {
+	struct cpu_info *ci, *hci;
+	runqueue_t *ci_rq;
+	CPU_INFO_ITERATOR cii;
+	u_int highest;
 
-	/* nothing at the moment */
+	hci = curcpu();
+	highest = 0;
+
+	/* Make lockless countings */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci_rq = ci->ci_schedstate.spc_sched_info;
+
+		/* Average count of the threads */
+		ci_rq->r_avgcount = (ci_rq->r_avgcount + ci_rq->r_mcount) >> 1;
+
+		/* Look for CPU with the highest average */
+		if (ci_rq->r_avgcount > highest) {
+			hci = ci;
+			highest = ci_rq->r_avgcount;
+		}
+	}
+
+	/* Update the worker */
+	worker_ci = hci;
+
+	if (nocallout == NULL)
+		callout_schedule(&balance_ch, balance_period);
 }
 
 /*
@@ -444,85 +521,30 @@ sched_balance(void *nocallout)
 void
 sched_idle(void)
 {
-	struct cpu_info *ci, *hci, *ici;
-	TAILQ_HEAD(, lwp) *q_head;
-	CPU_INFO_ITERATOR cii;
-	runqueue_t *rq, *hrq;
-	int highest, count;
-	struct lwp *l;
+	struct cpu_info *ci = curcpu(), *cci;
+	struct schedstate_percpu *spc;
+	runqueue_t *ci_rq;
 
-	ci = curcpu();
-	hci = ci;
-	highest = 0;
-	rq = ci->ci_schedstate.spc_sched_info;
-
-	for (;;) {
-		/* Search for the most loaded CPU. */
-		for (CPU_INFO_FOREACH(cii, ici)) {
-			hrq = ici->ci_schedstate.spc_sched_info;
-			count = hrq->r_mcount;
-			if (ici->ci_data.cpu_onproc ==
-			    ici->ci_data.cpu_idlelwp) {
-				count--;
-			}
-			if (count > highest && count >= min_catch) {
-				highest = hrq->r_mcount;
-				hci = ici;
-			}
-		}
-		if (hci == ci) {
-			return;
-		}
-		if (ci < hci) {
-			spc_lock(ci);
-			spc_lock(hci);
-		} else {
-			spc_lock(hci);
-			spc_lock(ci);
-		}
-		/* If our assumptions are no longer valid, retry or bail. */
-		if (rq->r_count != 0) {
-			spc_unlock(hci);
-			spc_unlock(ci);
-			return;
-		}
-		hrq = hci->ci_schedstate.spc_sched_info;
-		count = hrq->r_mcount;
-		if (hci->ci_data.cpu_onproc == hci->ci_data.cpu_idlelwp) {
-			count--;
-		}
-		if (count < min_catch) {
-			spc_unlock(hci);
-			spc_unlock(ci);
-			continue;
-		}
-		break;
-	}
-
-	/*
-	 * Both CPUs locked; look for threads that are allowed to migrate.
-	 * If we find one, grab it and move to the local run queue.
-	 */
-	q_head = sched_getrq(hrq, hci->ci_schedstate.spc_maxpriority);
-	TAILQ_FOREACH(l, q_head, l_runq) {
-		KASSERT(l->l_stat == LSRUN);
-		KASSERT(l->l_flag & LW_INMEM);
-
-		if ((l->l_pflag & LP_BOUND) || lwp_cache_hot(l) ||
-		    !sched_migratable(l, ci)) {
-			continue;
-		}
-
-		rq->r_ev_pull.ev_count++;
-		sched_dequeue(l);
-		l->l_cpu = ci;
-		lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
-		sched_enqueue(l, false);
-		spc_unlock(ci);
+	spc = &ci->ci_schedstate;
+	ci_rq = spc->spc_sched_info;
+	if ((spc->spc_flags & SPCF_OFFLINE) != 0 || ci_rq->r_count != 0) {
 		return;
 	}
 
-	spc_unlock(hci);
+	/* Reset the counter, and call the balancer */
+	ci_rq->r_avgcount = 0;
+	sched_balance(ci);
+	cci = worker_ci;
+	if (ci == cci)
+		return;
+	if (ci < cci) {
+		spc_lock(ci);
+		spc_lock(cci);
+	} else {
+		spc_lock(cci);
+		spc_lock(ci);
+	}
+	(void)sched_catchlwp(cci);
 	spc_unlock(ci);
 }
 
@@ -598,7 +620,7 @@ sched_lwp_stats(struct lwp *l)
 struct lwp *
 sched_nextlwp(void)
 {
-	struct cpu_info *ci = curcpu();
+	struct cpu_info *ci = curcpu(), *cci;
 	struct schedstate_percpu *spc;
 	TAILQ_HEAD(, lwp) *q_head;
 	runqueue_t *ci_rq;
@@ -613,7 +635,13 @@ sched_nextlwp(void)
 		if ((ci_rq->r_count - ci_rq->r_mcount) == 0)
 			return NULL;
 	} else if (ci_rq->r_count == 0) {
-		return NULL;
+		/* Reset the counter, and call the balancer */
+		ci_rq->r_avgcount = 0;
+		sched_balance(ci);
+		cci = worker_ci;
+		if (ci == cci || !mutex_tryenter(cci->ci_schedstate.spc_mutex))
+			return NULL;
+		return sched_catchlwp(cci);
 	}
 #else
 	if (ci_rq->r_count == 0)
@@ -746,13 +774,13 @@ sched_print_runqueue(void (*pr)(const char *, ...)
 
 		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
 		(*pr)(" pid.lid = %d.%d, threads count = %u, "
-		    "highest pri = %d\n",
+		    "avgcount = %u, highest pri = %d\n",
 #ifdef MULTIPROCESSOR
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
 #else
 		    curlwp->l_proc->p_pid, curlwp->l_lid,
 #endif
-		    ci_rq->r_count, spc->spc_maxpriority);
+		    ci_rq->r_count, ci_rq->r_avgcount, spc->spc_maxpriority);
 		i = (PRI_COUNT >> BITMAP_SHIFT) - 1;
 		do {
 			uint32_t q;
