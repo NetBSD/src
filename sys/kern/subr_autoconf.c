@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.150 2008/05/25 15:03:01 jmcneill Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.151 2008/05/27 17:50:03 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.150 2008/05/25 15:03:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.151 2008/05/27 17:50:03 ad Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -221,7 +221,9 @@ static int alldevs_nread = 0;
 static int alldevs_nwrite = 0;
 static lwp_t *alldevs_writer = NULL;
 
-volatile int config_pending;		/* semaphore for mountroot */
+static int config_pending;		/* semaphore for mountroot */
+static kmutex_t config_misc_lock;
+static kcondvar_t config_misc_cv;
 
 #define	STREQ(s1, s2)			\
 	(*(s1) == *(s2) && strcmp((s1), (s2)) == 0)
@@ -354,6 +356,9 @@ config_init(void)
 
 	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&alldevs_cv, "alldevs");
+
+	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&config_misc_cv, "cfgmisc");
 
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
@@ -1716,7 +1721,9 @@ void
 config_pending_incr(void)
 {
 
+	mutex_enter(&config_misc_lock);
 	config_pending++;
+	mutex_exit(&config_misc_lock);
 }
 
 void
@@ -1727,9 +1734,11 @@ config_pending_decr(void)
 	if (config_pending == 0)
 		panic("config_pending_decr: config_pending == 0");
 #endif
+	mutex_enter(&config_misc_lock);
 	config_pending--;
 	if (config_pending == 0)
-		wakeup(&config_pending);
+		cv_broadcast(&config_misc_cv);
+	mutex_exit(&config_misc_lock);
 }
 
 /*
@@ -1778,8 +1787,10 @@ config_finalize(void)
 	 * Now that device driver threads have been created, wait for
 	 * them to finish any deferred autoconfiguration.
 	 */
-	while (config_pending)
-		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
+	mutex_enter(&config_misc_lock);
+	while (config_pending != 0)
+		cv_wait(&config_misc_cv, &config_misc_lock);
+	mutex_exit(&config_misc_lock);
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
