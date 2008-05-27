@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.156 2008/05/26 18:00:33 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.157 2008/05/27 20:46:16 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.156 2008/05/26 18:00:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.157 2008/05/27 20:46:16 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -815,8 +815,8 @@ usbd_probe_and_attach(device_ptr_t parent, usbd_device_handle dev,
 
 	/* First try with device specific drivers. */
 	DPRINTF(("usbd_probe_and_attach: trying device specific drivers\n"));
-	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print,
-			   config_stdsubmatch);
+	dv = config_found_sm_loc(parent, "usbdevif", NULL, &uaa, usbd_print,
+		config_stdsubmatch);
 	if (dv) {
 		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
 		if (dev->subdevs == NULL)
@@ -879,8 +879,8 @@ nomem:
 			uiaa.subclass = ifaces[i]->idesc->bInterfaceSubClass;
 			uiaa.proto = ifaces[i]->idesc->bInterfaceProtocol;
 			uiaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
-			dv = USB_DO_IFATTACH(dev, bdev, parent, &uiaa, usbd_ifprint,
-					     config_stdsubmatch);
+			dv = config_found_sm_loc(parent, "usbifif", NULL, &uiaa,
+				usbd_ifprint, config_stdsubmatch);
 			if (dv != NULL) {
 				found++;
 				dev->subdevs[i] = dv;
@@ -905,8 +905,8 @@ nomem:
 
 	/* Finally try the generic driver. */
 	uaa.usegeneric = 1;
-	dv = USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print,
-			   config_stdsubmatch);
+	dv = config_found_sm_loc(parent, "usbdevif", NULL, &uaa, usbd_print,
+		config_stdsubmatch);
 	if (dv != NULL) {
 		dev->subdevs = malloc(sizeof dv, M_USB, M_NOWAIT);
 		if (dev->subdevs == 0)

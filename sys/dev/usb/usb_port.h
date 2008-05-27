@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.83 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.84 2008/05/27 20:46:16 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -189,13 +189,5 @@ int __CONCAT(dname,_detach)(device_t self, int flags)
 
 #define USB_GET_SC(dname, unit, sc) \
 	sc = device_lookup_private(& __CONCAT(dname,_cd), unit)
-
-#define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
-	(config_found_sm_loc(parent, "usbdevif", \
-			     NULL, args, print, sub))
-
-#define USB_DO_IFATTACH(dev, bdev, parent, args, print, sub) \
-	(config_found_sm_loc(parent, "usbifif", \
-			     NULL, args, print, sub))
 
 #endif /* _USB_PORT_H */
