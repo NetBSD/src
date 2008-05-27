@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.164 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.165 2008/05/27 14:18:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.164 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.165 2008/05/27 14:18:51 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -491,10 +491,19 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	tmp = (p2->p_userret != NULL ? LW_WUSERRET : 0);
 	mutex_enter(p2->p_lock);
 
+	/*
+	 * Start profiling.
+	 */
+	if ((p2->p_stflag & PST_PROFIL) != 0) {
+		mutex_spin_enter(&p2->p_stmutex);
+		startprofclock(p2);
+		mutex_spin_exit(&p2->p_stmutex);
+	}
+
 	getmicrotime(&p2->p_stats->p_start);
 	p2->p_acflag = AFORK;
+	lwp_lock(l2);
 	if (p2->p_sflag & PS_STOPFORK) {
-		lwp_lock(l2);
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
 		p2->p_waited = 0;
@@ -505,7 +514,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
-		lwp_lock(l2);
 		l2->l_stat = LSRUN;
 		l2->l_flag |= tmp;
 		sched_enqueue(l2, false);
@@ -513,16 +521,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	}
 
 	mutex_exit(proc_lock);
-
-	/*
-	 * Start profiling.
-	 */
-	if ((p2->p_stflag & PST_PROFIL) != 0) {
-		mutex_spin_enter(&p2->p_stmutex);
-		startprofclock(p2);
-		mutex_spin_exit(&p2->p_stmutex);
-	}
-
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
