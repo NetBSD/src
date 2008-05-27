@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.344 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.345 2008/05/27 17:49:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.344 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.345 2008/05/27 17:49:07 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -468,7 +468,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 			if (tryalloc) {
 				printf("WARNING: unable to allocate new "
 				    "vnode, retrying...\n");
-				(void) tsleep(&lbolt, PRIBIO, "newvn", hz);
+				kpause("newvn", false, hz, NULL);
 				goto try_again;
 			}
 			tablefull("vnode", "increase kern.maxvnodes or NVNODE");
