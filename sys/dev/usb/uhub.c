@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.99 2008/05/25 21:41:35 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.100 2008/05/27 20:44:28 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,20 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.99 2008/05/25 21:41:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.100 2008/05/27 20:44:28 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/proc.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include "bus_if.h"
-#endif
 
 #include <sys/bus.h>
 
@@ -524,9 +518,8 @@ uhub_explore(usbd_device_handle dev)
 	return (USBD_NORMAL_COMPLETION);
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-uhub_activate(device_ptr_t self, enum devact act)
+uhub_activate(device_t self, enum devact act)
 {
 	struct uhub_softc *sc = device_private(self);
 	struct usbd_hub *hub = sc->sc_hub->hub;
@@ -553,7 +546,6 @@ uhub_activate(device_ptr_t self, enum devact act)
 	}
 	return (0);
 }
-#endif
 
 /*
  * Called from process context when the hub is gone.
@@ -566,11 +558,7 @@ USB_DETACH(uhub)
 	struct usbd_port *rup;
 	int port, nports;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	DPRINTF(("uhub_detach: sc=%p flags=%d\n", sc, flags));
-#elif defined(__FreeBSD__)
-	DPRINTF(("uhub_detach: sc=%port\n", sc));
-#endif
 
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
@@ -668,8 +656,3 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 	    device_is_a(device_parent(device_parent(sc->sc_dev)), "ehci"))
 		usb_needs_explore(sc->sc_hub);
 }
-
-#if defined(__FreeBSD__)
-DRIVER_MODULE(uhub, usb, uhubroot_driver, uhubroot_devclass, 0, 0);
-DRIVER_MODULE(uhub, uhub, uhub_driver, uhub_devclass, usbd_driver_load, 0);
-#endif
