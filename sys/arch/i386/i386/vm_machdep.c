@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.138 2008/01/15 14:50:08 joerg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.139 2008/05/27 14:25:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.138 2008/01/15 14:50:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.139 2008/05/27 14:25:11 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
@@ -185,6 +185,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_esp0 - 1;
 	*tf = *l1->l_md.md_regs;
+	tf->tf_trapno = T_ASTFLT;
 
 #ifndef NOREDZONE
 	setredzone(l2);
