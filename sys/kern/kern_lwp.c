@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.110.2.2 2008/05/14 19:54:12 wrstuden Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.110.2.3 2008/05/27 03:16:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110.2.2 2008/05/14 19:54:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110.2.3 2008/05/27 03:16:30 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1376,6 +1376,15 @@ lwp_userret(struct lwp *l)
 			(*hook)();
 		}
 	}
+
+	/*
+	 * Timer events are handled specially.  We only try once to deliver
+	 * pending timer upcalls; if if fails, we can try again on the next
+	 * loop around.  If we need to re-enter lwp_userret(), MD code will
+	 * bounce us back here through the trap path after we return.
+	 */
+	if (p->p_timerpend)
+		timerupcall(l);
 }
 
 /*
