@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.20 2008/04/28 23:00:22 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.21 2008/05/27 17:51:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.20 2008/04/28 23:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.21 2008/05/27 17:51:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -787,7 +787,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * That's not be a problem: we are lowering to level 's' which will
 	 * prevent softint_dispatch() from being reentered at level 's',
 	 * until the priority is finally dropped to IPL_NONE on entry to
-	 * the idle loop.
+	 * the LWP chosen by lwp_exit_switchaway().
 	 */
 	l->l_stat = LSIDL;
 	if (l->l_switchto == NULL) {
