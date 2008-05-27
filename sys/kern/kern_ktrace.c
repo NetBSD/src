@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.144.2.3 2008/05/27 00:14:43 wrstuden Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.144.2.4 2008/05/27 00:37:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.144.2.3 2008/05/27 00:14:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.144.2.4 2008/05/27 00:37:20 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -979,7 +979,7 @@ ktr_mool(const void *kaddr, size_t size, const void *uaddr)
 
 void
 ktr_saupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
-    void *ap)
+    void *ap, void *ksas)
 {
 	struct ktrace_entry *kte;
 	struct ktr_saupcall *ktp;
@@ -1003,11 +1003,11 @@ ktr_saupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 	ktp->ktr_ap = ap;
 
 	/* Copy the sa_t's */
-	sapp = (struct sa_t **) sas;
+	sapp = (struct sa_t **) ksas;
 
 	for (i = nevent + nint; i >= 0; i--) {
-		if (copyin(*sapp, (char *)ktp + len, sizeof(struct sa_t)) == 0)
-			len += sizeof(struct sa_t);
+		memcpy((char *)ktp + len, *sapp, sizeof(struct sa_t));
+		len += sizeof(struct sa_t);
 		sapp++;
 	}
 
