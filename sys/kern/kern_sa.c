@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.15 2008/05/27 05:27:59 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.16 2008/05/27 05:36:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.15 2008/05/27 05:27:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.16 2008/05/27 05:36:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,7 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 		sigplusset(&l->l_sigmask, &sa->sa_sigmask);
 		sigemptyset(&l->l_sigmask);
 		SLIST_INIT(&sa->sa_vps);
-		mb_write();
+		membar_producer();
 		p->p_sa = sa;
 		KASSERT(l->l_savp == NULL);
 		mutex_exit(p->p_lock);
@@ -461,7 +461,7 @@ sa_stackused(struct sastack *sast, struct sadata *sa)
 {
 	unsigned int gen;
 
-	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+	KASSERT(mutex_owned(&sa->sa_mutex));
 
 	if (sa_fetchstackgen(sast, sa, &gen)) {
 #ifdef DIAGNOSTIC
@@ -487,7 +487,7 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
 {
 	unsigned int gen;
 
-	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+	KASSERT(mutex_owned(&sa->sa_mutex));
 
 	if (sa_fetchstackgen(sast, sa, &gen)) {
 #ifdef DIAGNOSTIC
@@ -515,7 +515,7 @@ sa_getstack(struct sadata *sa)
 	struct sastack *sast;
 	int chg;
 
-	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+	KASSERT(mutex_owned(&sa->sa_mutex));
 
 	do {
 		chg = sa->sa_stackchg;
@@ -546,7 +546,7 @@ sa_getstack0(struct sadata *sa)
 	struct sastack *start;
 	int chg;
 
-	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+	KASSERT(mutex_owned(&sa->sa_mutex));
 
  retry:
 	chg = sa->sa_stackchg;
@@ -763,7 +763,7 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 	p = l->l_proc;
 	sa = p->p_sa;
 
-	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+	KASSERT(mutex_owned(&sa->sa_mutex));
 
 	addedconcurrency = 0;
 	mutex_enter(&sa->sa_mutex);
@@ -1301,7 +1301,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 	sa = p->p_sa;
 	vp = l->l_savp;
 
-	LOCK_ASSERT(mutex_owned(&sa->sa_mutex));
+	KASSERT(mutex_owned(&sa->sa_mutex));
 	KDASSERT(vp->savp_lwp == l);
 
 	if (vp->savp_faultaddr == vp->savp_ofaultaddr) {
@@ -1312,7 +1312,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 
 	sast.sast_stack.ss_sp = (*p->p_emul->e_sa->sae_ucsp)(l_ctx);
 	sast.sast_stack.ss_size = 1;
-	found = RB_FIND(sasttree, &sa->sa_stackstree, &sast);
+	found = (RB_FIND(sasttree, &sa->sa_stackstree, &sast) != NULL);
 
 	if (found) {
 		DPRINTFN(10,("sa_pagefault(%d.%d) upcall page fault\n",
@@ -1357,7 +1357,7 @@ sa_switch(struct lwp *l)
 	struct lwp *l2;
 	struct sadata *sa = p->p_sa;
 
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+	KASSERT(lwp_locked(l, &sched_mutex));
 
 	DPRINTFN(4,("sa_switch(%d.%d VP %d)\n", p->p_pid, l->l_lid,
 	    vp->savp_lwp ? vp->savp_lwp->l_lid : 0));
@@ -1691,7 +1691,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 {
 	struct sadata_vp *vp;
 
-	LOCK_ASSERT(mutex_owned(p->p_lock));
+	KASSERT(mutex_owned(p->p_lock));
 
 	vp = l->l_savp;
 
@@ -1700,7 +1700,7 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 	l->l_stat = LSSUSPENDED;
 	l->l_prflag |= LPR_DETACHED;
 	l->l_flag |= LW_SA;
-	mb_write();
+	membar_producer();
 	DPRINTFN(5,("sa_putcachelwp(%d.%d) Adding LWP %d to cache\n",
 	    p->p_pid, curlwp->l_lid, l->l_lid));
 	LIST_INSERT_HEAD(&vp->savp_lwpcache, l, l_sibling);
@@ -1717,7 +1717,7 @@ sa_getcachelwp(struct proc *p, struct sadata_vp *vp)
 {
 	struct lwp *l;
 
-	LOCK_ASSERT(mutex_owned(p->p_lock));
+	KASSERT(mutex_owned(p->p_lock));
 
 	if (vp->savp_ncached == 0)
 		return NULL;
