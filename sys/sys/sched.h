@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.56 2008/05/19 12:48:54 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.57 2008/05/27 14:48:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -250,6 +250,7 @@ void		preempt(void);
 int		mi_switch(struct lwp *);
 void		resched_cpu(struct lwp *);
 void		updatertime(lwp_t *, const struct bintime *);
+void		sched_idle(void);
 
 int		do_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 int		do_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.17 2008/05/24 12:59:06 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.18 2008/05/27 14:48:52 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.17 2008/05/24 12:59:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.18 2008/05/27 14:48:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -42,19 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.17 2008/05/24 12:59:06 ad Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
-#if MAXCPUS > 32
-#error fix this code
-#endif
-
-static volatile uint32_t *idle_cpus;
-
 void
 idle_loop(void *dummy)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = curlwp;
-	uint32_t mask = 1 << cpu_index(ci);
-	bool set = false;
 	int s;
 
 	ci->ci_data.cpu_onproc = l;
@@ -78,21 +70,17 @@ idle_loop(void *dummy)
 		KASSERT(CURCPU_IDLE_P());
 		KASSERT(l->l_priority == PRI_IDLE);
 
+		if (sched_curcpu_runnable_p()) {
+			goto schedule;
+		}
+		sched_idle();
 		if (uvm.page_idle_zero) {
 			if (sched_curcpu_runnable_p()) {
 				goto schedule;
 			}
-			if (!set) {
-				set = true;
-				atomic_or_32(idle_cpus, mask);
-			}
 			uvm_pageidlezero();
 		}
 		if (!sched_curcpu_runnable_p()) {
-			if (!set) {
-				set = true;
-				atomic_or_32(idle_cpus, mask);
-			}
 			cpu_idle();
 			if (!sched_curcpu_runnable_p() &&
 			    !ci->ci_want_resched) {
@@ -100,10 +88,6 @@ idle_loop(void *dummy)
 			}
 		}
 schedule:
-		if (set) {
-			set = false;
-			atomic_and_32(idle_cpus, ~mask);
-		}
 		KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_lwplock);
 		lwp_lock(l);
 		mi_switch(l);
@@ -112,40 +96,11 @@ schedule:
 	}
 }
 
-/*
- * Find an idle CPU and remove from the idle bitmask.  The bitmask
- * is not always accurate but is "good enough" for the purpose of finding
- * a CPU to run a job on.
- */
-struct cpu_info *
-idle_pick(void)
-{
-	uint32_t mask;
-	u_int index;
-
-	do {
-		if ((mask = *idle_cpus) == 0)
-			return NULL;
-		index = ffs(mask) - 1;
-	} while (atomic_cas_32(idle_cpus, mask, mask ^ (1 << index)) != mask);
-
-	return cpu_lookup_byindex(index);
-}
-
 int
 create_idle_lwp(struct cpu_info *ci)
 {
-	static bool again;
-	uintptr_t addr;
 	lwp_t *l;
 	int error;
-
-	if (!again) {
-		again = true;
-		addr = (uintptr_t)kmem_alloc(coherency_unit * 2, KM_SLEEP);
-		addr = roundup(addr, coherency_unit);
-		idle_cpus = (uint32_t *)addr;
-	}
 
 	KASSERT(ci->ci_data.cpu_idlelwp == NULL);
 	error = kthread_create(PRI_IDLE, KTHREAD_MPSAFE | KTHREAD_IDLE,
