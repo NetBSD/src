@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.17 2008/05/27 19:51:16 rmind Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.18 2008/05/27 20:26:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.17 2008/05/27 19:51:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.18 2008/05/27 20:26:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,6 @@ int	sadebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
-
 
 #define SA_LWP_STATE_LOCK(l, f) do {				\
 	(f) = (l)->l_flag;     					\
@@ -289,7 +288,8 @@ sa_newsavp(struct proc *p)
  * upcall handler address.
  */
 int
-sys_sa_register(struct lwp *l, const struct sys_sa_register_args *uap, register_t *retval)
+sys_sa_register(struct lwp *l, const struct sys_sa_register_args *uap,
+    register_t *retval)
 {
 	int error;
 	sa_upcall_t prev;
@@ -386,7 +386,7 @@ sa_release(struct proc *p)
 	struct lwp *l;
 
 	sa = p->p_sa;
-	KDASSERT(sa != NULL);
+	KASSERT(sa != NULL);
 	KASSERT(p->p_nlwps <= 1);
 
 	for (sast = RB_MIN(sasttree, &sa->sa_stackstree); sast != NULL;
@@ -465,9 +465,6 @@ sa_stackused(struct sastack *sast, struct sadata *sa)
 	KASSERT(mutex_owned(&sa->sa_mutex));
 
 	if (sa_fetchstackgen(sast, sa, &gen)) {
-#ifdef DIAGNOSTIC
-		printf("sa_stackused: couldn't copyin sasi_stackgen");
-#endif
 		sigexit(curlwp, SIGILL);
 		/* NOTREACHED */
 	}
@@ -491,9 +488,6 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
 	KASSERT(mutex_owned(&sa->sa_mutex));
 
 	if (sa_fetchstackgen(sast, sa, &gen)) {
-#ifdef DIAGNOSTIC
-		printf("sa_setstackfree: couldn't copyin sasi_stackgen");
-#endif
 		sigexit(curlwp, SIGILL);
 		/* NOTREACHED */
 	}
@@ -581,6 +575,7 @@ sa_getstack0(struct sadata *sa)
 static inline int
 sast_compare(struct sastack *a, struct sastack *b)
 {
+
 	if ((vaddr_t)a->sast_stack.ss_sp + a->sast_stack.ss_size <=
 	    (vaddr_t)b->sast_stack.ss_sp)
 		return (-1);
@@ -609,7 +604,8 @@ int
 sys_sa_stacks(struct lwp *l, const struct sys_sa_stacks_args *uap,
 	register_t *retval)
 {
-	return sa_stacks1(l, retval, SCARG(uap, num), SCARG(uap, stacks), sa_copyin_stack);
+	return sa_stacks1(l, retval, SCARG(uap, num), SCARG(uap, stacks),
+	    sa_copyin_stack);
 }
 
 /*
@@ -750,6 +746,7 @@ sys_sa_enable(struct lwp *l, const void *v, register_t *retval)
  * needed, and will lock p_lock. Will exit with sa_mutex locked.
  */
 #ifdef MULTIPROCESSOR
+
 static int
 sa_increaseconcurrency(struct lwp *l, int concurrency)
 {
@@ -780,62 +777,61 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			sa->sa_maxconcurrency--;
 			sa->sa_concurrency--;
 			return (addedconcurrency);
-		} else {
-			error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
-			    child_return, NULL, &l2, l->l_class);
-			if (error) {
-				uvm_uarea_free(uaddr, curcpu());
-				return error;
-			}
-			vp = sa_newsavp(p);
-			mutex_enter(&sa->sa_mutex);
-			lwp_lock(l2);
-			l2->l_flag |= LW_SA;
-			l2->l_savp = vp;
-			if (vp) {
-				vp->savp_lwp = l2;
-				cpu_setfunc(l2, sa_switchcall, NULL);
-				lwp_unlock(l2);
-				mutex_exit(p->p_lock);
-				error = sa_upcall(l2, SA_UPCALL_NEWPROC,
-				    NULL, NULL, 0, NULL, NULL);
-				if (error) {
-					/* free new savp */
-					mutex_enter(p->p_lock);
-					SLIST_REMOVE(&sa->sa_vps, vp,
-					    sadata_vp, savp_next);
-					mutex_exit(p->p_lock);
-					if (vp->savp_sleeper_upcall) {
-						sadata_upcall_free(
-						    vp->savp_sleeper_upcall);
-						vp->savp_sleeper_upcall = NULL;
-					}
-					pool_put(&savp_pool, vp);
-					mutex_enter(p->p_lock);
-					lwp_lock(l2);
-				}
-			} else
-				error = ENOMEM;
-
-			if (error) {
-				/* put l2 into l's VP LWP cache */
-				l2->l_savp = l->l_savp;
-				uvm_lwp_hold(l2);
-				lwp_unlock(l2);
-				mutex_enter(p->p_lock);
-				sa_putcachelwp(p, l2);
-				mutex_exit(p->p_lock);
-				/* reset concurrency */
-				sa->sa_maxconcurrency--;
-				sa->sa_concurrency--;
-				return (addedconcurrency);
-			}
-			/* Run the LWP */
-			l2->l_stat = LSRUN;
-			sched_enqueue(l2, false);
-			lwp_unlock(l2);
-			addedconcurrency++;
 		}
+		error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
+		    child_return, NULL, &l2, l->l_class);
+		if (error) {
+			uvm_uarea_free(uaddr, curcpu());
+			return error;
+		}
+		vp = sa_newsavp(p);
+		mutex_enter(&sa->sa_mutex);
+		lwp_lock(l2);
+		l2->l_flag |= LW_SA;
+		l2->l_savp = vp;
+		if (vp) {
+			vp->savp_lwp = l2;
+			cpu_setfunc(l2, sa_switchcall, NULL);
+			lwp_unlock(l2);
+			mutex_exit(p->p_lock);
+			error = sa_upcall(l2, SA_UPCALL_NEWPROC, NULL, NULL,
+			    0, NULL, NULL);
+			if (error) {
+				/* Free new savp */
+				mutex_enter(p->p_lock);
+				SLIST_REMOVE(&sa->sa_vps, vp,
+				    sadata_vp, savp_next);
+				mutex_exit(p->p_lock);
+				if (vp->savp_sleeper_upcall) {
+					sadata_upcall_free(
+					    vp->savp_sleeper_upcall);
+					vp->savp_sleeper_upcall = NULL;
+				}
+				pool_put(&savp_pool, vp);
+				mutex_enter(p->p_lock);
+				lwp_lock(l2);
+			}
+		} else
+			error = ENOMEM;
+
+		if (error) {
+			/* put l2 into l's VP LWP cache */
+			l2->l_savp = l->l_savp;
+			uvm_lwp_hold(l2);
+			lwp_unlock(l2);
+			mutex_enter(p->p_lock);
+			sa_putcachelwp(p, l2);
+			mutex_exit(p->p_lock);
+			/* reset concurrency */
+			sa->sa_maxconcurrency--;
+			sa->sa_concurrency--;
+			return (addedconcurrency);
+		}
+		/* Run the LWP */
+		l2->l_stat = LSRUN;
+		sched_enqueue(l2, false);
+		lwp_unlock(l2);
+		addedconcurrency++;
 	}
 
 	return (addedconcurrency);
@@ -904,47 +900,43 @@ sys_sa_setconcurrency(struct lwp *l, const struct sys_sa_setconcurrency_args *ua
 		     p->p_pid, l->l_lid, SCARG(uap, concurrency),
 		     sa->sa_concurrency, sa->sa_maxconcurrency));
 #ifdef MULTIPROCESSOR
-	if (SCARG(uap, concurrency) > sa->sa_concurrency) {
-		mutex_enter(p->p_lock);
-		SLIST_FOREACH(vp, &sa->sa_vps, savp_next) {
-			l2 = vp->savp_lwp;
-			lwp_lock(l2);
-			if (l2->l_flag & LW_SA_IDLE) {
-				l2->l_flag &=
-					~(LW_SA_IDLE|LW_SA_YIELD|LW_SINTR);
-				lwp_unlock(l2);
-				DPRINTFN(11,("sys_sa_concurrency(%d.%d) "
-					     "NEWPROC vp %d\n",
-					     p->p_pid, l->l_lid,
-					     vp->savp_id));
-				cpu_setfunc(l2, sa_switchcall, NULL);
-				sa->sa_concurrency++;
-				mutex_exit(p->p_lock);
-				mutex_exit(&sa->sa_mutex);
-				/* error = */ sa_upcall(l2,
-				    SA_UPCALL_NEWPROC,
-				    NULL, NULL, 0, NULL, NULL);
-				lwp_lock(l2);
-				/* setrunnable() will unlock the LWP */
-				setrunnable(vp->savp_lwp);
-				KDASSERT((l2->l_flag & LW_SINTR) == 0);
-				(*retval)++;
-				/* XXXAD holding sa_mutex, p_lock */
-				/* XXXWRS I think vv are the calls we need */
-				mutex_enter(&sa->sa_mutex);
-				mutex_enter(p->p_lock);
-			} else
-				lwp_unlock(l2);
-			if (sa->sa_concurrency == SCARG(uap, concurrency))
-				break;
-		}
-		mutex_exit(p->p_lock);
+	if (SCARG(uap, concurrency) <= sa->sa_concurrency) {
+		mutex_exit(&sa->sa_mutex);
+		return 0;
 	}
-
+	mutex_enter(p->p_lock);
+	SLIST_FOREACH(vp, &sa->sa_vps, savp_next) {
+		l2 = vp->savp_lwp;
+		lwp_lock(l2);
+		if (l2->l_flag & LW_SA_IDLE) {
+			l2->l_flag &= ~(LW_SA_IDLE|LW_SA_YIELD|LW_SINTR);
+			lwp_unlock(l2);
+			DPRINTFN(11,("sys_sa_concurrency(%d.%d) NEWPROC vp %d\n",
+				     p->p_pid, l->l_lid, vp->savp_id));
+			cpu_setfunc(l2, sa_switchcall, NULL);
+			sa->sa_concurrency++;
+			mutex_exit(p->p_lock);
+			mutex_exit(&sa->sa_mutex);
+			/* error = */ sa_upcall(l2, SA_UPCALL_NEWPROC, NULL,
+			    NULL, 0, NULL, NULL);
+			lwp_lock(l2);
+			/* setrunnable() will unlock the LWP */
+			setrunnable(vp->savp_lwp);
+			KASSERT((l2->l_flag & LW_SINTR) == 0);
+			(*retval)++;
+			/* XXXAD holding sa_mutex, p_lock */
+			/* XXXWRS I think vv are the calls we need */
+			mutex_enter(&sa->sa_mutex);
+			mutex_enter(p->p_lock);
+		} else
+			lwp_unlock(l2);
+		if (sa->sa_concurrency == SCARG(uap, concurrency))
+			break;
+	}
+	mutex_exit(p->p_lock);
 	mutex_exit(&sa->sa_mutex);
 #endif
-
-	return (0);
+	return 0;
 }
 
 /*
@@ -999,7 +991,7 @@ sa_yield(struct lwp *l)
 		 */
 		DPRINTFN(1,("sa_yield(%d.%d) lost VP\n",
 			     p->p_pid, l->l_lid));
-		KDASSERT(l->l_flag & LW_SA_BLOCKING);
+		KASSERT(l->l_flag & LW_SA_BLOCKING);
 		return;
 	}
 
@@ -1009,14 +1001,14 @@ sa_yield(struct lwp *l)
 	 * If we're the last running LWP, stick around to receive
 	 * signals.
 	 */
-	KDASSERT((l->l_flag & LW_SA_YIELD) == 0);
+	KASSERT((l->l_flag & LW_SA_YIELD) == 0);
 	DPRINTFN(1,("sa_yield(%d.%d) going dormant\n",
 		     p->p_pid, l->l_lid));
 	/*
 	 * A signal will probably wake us up. Worst case, the upcall
 	 * happens and just causes the process to yield again.
 	 */
-	KDASSERT(vp->savp_lwp == l);
+	KASSERT(vp->savp_lwp == l);
 
 	/*
 	 * If we were told to make an upcall or exit before
@@ -1031,27 +1023,28 @@ sa_yield(struct lwp *l)
 		lwp_unlock(l);
 		upcallret(l);
 		KERNEL_LOCK(1, l);	/* XXXSMP */
-	} else {
-		do {
-			lwp_unlock(l);
-			DPRINTFN(1,("sa_yield(%d.%d) really going dormant\n",
-				     p->p_pid, l->l_lid));
-
-			mutex_enter(&sa->sa_mutex);
-			sa->sa_concurrency--;
-			ret = tsleep(l, PUSER | PCATCH, "sawait", 0);
-			sa->sa_concurrency++;
-			mutex_exit(&sa->sa_mutex);
-
-			KDASSERT(vp->savp_lwp == l || p->p_sflag & PS_WEXIT);
-
-			/* KERNEL_UNLOCK(l); in upcallret() */
-			upcallret(l);
-			KERNEL_LOCK(1, l); /* XXX SMP */
-
-			lwp_lock(l);
-		} while (l->l_flag & LW_SA_YIELD);
+		return;
 	}
+
+	do {
+		lwp_unlock(l);
+		DPRINTFN(1,("sa_yield(%d.%d) really going dormant\n",
+			     p->p_pid, l->l_lid));
+
+		mutex_enter(&sa->sa_mutex);
+		sa->sa_concurrency--;
+		ret = tsleep(l, PUSER | PCATCH, "sawait", 0);
+		sa->sa_concurrency++;
+		mutex_exit(&sa->sa_mutex);
+
+		KASSERT(vp->savp_lwp == l || p->p_sflag & PS_WEXIT);
+
+		/* KERNEL_UNLOCK(l); in upcallret() */
+		upcallret(l);
+		KERNEL_LOCK(1, l); /* XXX SMP */
+
+		lwp_lock(l);
+	} while (l->l_flag & LW_SA_YIELD);
 
 	DPRINTFN(1,("sa_yield(%d.%d) returned, ret %d\n",
 		     p->p_pid, l->l_lid, ret));
@@ -1065,7 +1058,8 @@ sa_yield(struct lwp *l)
  * kick something into the upcall handler.
  */
 int
-sys_sa_preempt(struct lwp *l, const struct sys_sa_preempt_args *uap, register_t *retval)
+sys_sa_preempt(struct lwp *l, const struct sys_sa_preempt_args *uap,
+    register_t *retval)
 {
 	struct sadata		*sa = l->l_proc->p_sa;
 	struct lwp		*t;
@@ -1219,7 +1213,7 @@ sa_upcall0(struct sadata_upcall *sau, int type, struct lwp *event,
     struct lwp *interrupted, size_t argsize, void *arg, void (*func)(void *))
 {
 
-	KDASSERT((event == NULL) || (event != interrupted));
+	KASSERT((event == NULL) || (event != interrupted));
 
 	sau->sau_flags = 0;
 
@@ -1309,7 +1303,7 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 	vp = l->l_savp;
 
 	KASSERT(mutex_owned(&sa->sa_mutex));
-	KDASSERT(vp->savp_lwp == l);
+	KASSERT(vp->savp_lwp == l);
 
 	if (vp->savp_faultaddr == vp->savp_ofaultaddr) {
 		DPRINTFN(10,("sa_pagefault(%d.%d) double page fault\n",
@@ -1454,10 +1448,6 @@ panic("Oops! Don't have a sleeper!\n");
 			 */
 
 			/* XXXUPSXXX Should only happen with concurrency > 1 */
-#ifdef DIAGNOSTIC
-			printf("sa_switch(%d.%d): no cached LWP for upcall.\n",
-			    p->p_pid, l->l_lid);
-#endif
 			mutex_exit(p->p_lock);
 			mutex_exit(&sa->sa_mutex);
 			mi_switch(l);
@@ -1520,7 +1510,7 @@ panic("Oops! Don't have a sleeper!\n");
 		sched_enqueue(l2, false);
 		/* Remove the artificial hold-count */
 		uvm_lwp_rele(l2);
-		KDASSERT(l2 != l);
+		KASSERT(l2 != l);
 		if (l->l_mutex != l2->l_mutex)  /* XXXSMP */
 			lwp_unlock(l2);
 	} else if (vp->savp_lwp != NULL) {
@@ -1549,7 +1539,7 @@ panic("Oops! Don't have a sleeper!\n");
 	mi_switch(l);
 	DPRINTFN(4,("sa_switch(%d.%d flag %x) returned.\n",
 	    p->p_pid, l->l_lid, l->l_flag));
-	KDASSERT(l->l_wchan == 0);
+	KASSERT(l->l_wchan == 0);
 }
 
 /*
@@ -1583,7 +1573,7 @@ sa_switchcall(void *arg)
 		lwp_exit(l2);
 	}
 
-	KDASSERT(vp->savp_lwp == l2);
+	KASSERT(vp->savp_lwp == l2);
 	DPRINTFN(6,("sa_switchcall(%d.%d)\n", p->p_pid, l2->l_lid));
 
 	l2->l_flag &= ~LW_SA;
@@ -1619,10 +1609,6 @@ sa_switchcall(void *arg)
 			 * stacks, or we should just kill the process
 			 * as we're deadlocked.
 			 */
-#ifdef DIAGNOSTIC
-			printf("sa_switchcall(%d.%d flag %x): Not enough stacks.\n",
-			    p->p_pid, l->l_lid, l->l_flag);
-#endif
 			if (vp->savp_sleeper_upcall == NULL)
 				vp->savp_sleeper_upcall = sau;
 			else
@@ -1673,25 +1659,26 @@ sa_newcachelwp(struct lwp *l)
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
 		return (ENOMEM);
-	} else {
-		error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
-		    child_return, NULL, &l2, l->l_class);
-		if (error) {
-			uvm_uarea_free(uaddr, curcpu());
-			return error;
-		}
-		/* We don't want this LWP on the process's main LWP list, but
-		 * newlwp helpfully puts it there. Unclear if newlwp should
-		 * be tweaked.
-		 */
-		uvm_lwp_hold(l2);
-		mutex_enter(p->p_lock);
-		l2->l_savp = l->l_savp;
-		sa_putcachelwp(p, l2);
-		mutex_exit(p->p_lock);
 	}
 
-	return (0);
+	error = lwp_create(l, p, uaddr, inmem, 0, NULL, 0,
+	    child_return, NULL, &l2, l->l_class);
+	if (error) {
+		uvm_uarea_free(uaddr, curcpu());
+		return error;
+	}
+
+	/* We don't want this LWP on the process's main LWP list, but
+	 * newlwp helpfully puts it there. Unclear if newlwp should
+	 * be tweaked.
+	 */
+	uvm_lwp_hold(l2);
+	mutex_enter(p->p_lock);
+	l2->l_savp = l->l_savp;
+	sa_putcachelwp(p, l2);
+	mutex_exit(p->p_lock);
+
+	return 0;
 }
 
 /*
@@ -1785,7 +1772,7 @@ sa_upcall_userret(struct lwp *l)
 	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
 	    l->l_flag));
 
-	KDASSERT((l->l_flag & LW_SA_BLOCKING) == 0);
+	KASSERT((l->l_flag & LW_SA_BLOCKING) == 0);
 
 	mutex_enter(&sa->sa_mutex);
 	sast = NULL;
@@ -1837,7 +1824,7 @@ sa_upcall_userret(struct lwp *l)
 	} else if (sast)
 		sa_setstackfree(sast, sa);
 
-	KDASSERT(vp->savp_lwp == l);
+	KASSERT(vp->savp_lwp == l);
 
 	while ((sau = SIMPLEQ_FIRST(&vp->savp_upcalls)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&vp->savp_upcalls, sau_next);
@@ -1923,12 +1910,6 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 		if (copyout(&sau->sau_event.ss_captured.ss_ctx,
 		    sau->sau_event.ss_captured.ss_sa.sa_context,
 		    ucsize) != 0) {
-#ifdef DIAGNOSTIC
-			printf("sa_makeupcalls(%d.%d): couldn't copyout"
-			    " context of event LWP %d\n",
-			    p->p_pid, l->l_lid,
-			    sau->sau_event.ss_captured.ss_sa.sa_id);
-#endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
@@ -1936,17 +1917,11 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 		nevents = 1;
 	}
 	if (sau->sau_interrupted.ss_captured.ss_sa.sa_context != NULL) {
-		KDASSERT(sau->sau_interrupted.ss_captured.ss_sa.sa_context !=
+		KASSERT(sau->sau_interrupted.ss_captured.ss_sa.sa_context !=
 		    sau->sau_event.ss_captured.ss_sa.sa_context);
 		if (copyout(&sau->sau_interrupted.ss_captured.ss_ctx,
 		    sau->sau_interrupted.ss_captured.ss_sa.sa_context,
 		    ucsize) != 0) {
-#ifdef DIAGNOSTIC
-			printf("sa_makeupcalls(%d.%d): couldn't copyout"
-			    " context of interrupted LWP %d\n",
-			    p->p_pid, l->l_lid,
-			    sau->sau_interrupted.ss_captured.ss_sa.sa_id);
-#endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
@@ -1976,11 +1951,6 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 	kmem_free(kup, sizeof(*kup));
 	if (error) {
 		sadata_upcall_free(sau);
-#ifdef DIAGNOSTIC
-		printf("sa_makeupcalls: couldn't copyout activation"
-		    " ucontext for %d.%d to %p\n", l->l_proc->p_pid, l->l_lid,
-		    up);
-#endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -1998,12 +1968,11 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 	sapp += sz;
 	stack = STACK_GROW(stack, sz);
 
-#ifdef KTRACE
 	if (KTRPOINT(p, KTR_SAUPCALL))
 		ksapp = kmem_alloc(sizeof(struct sa_t *) * (nevents + nint + 1),
 		    KM_SLEEP);
-#endif
-	KDASSERT(nint <= 1);
+
+	KASSERT(nint <= 1);
 	e_ss = NULL;
 	for (i = nevents + nint; i >= 0; i--) {
 		struct sa_t *sasp;
@@ -2016,10 +1985,10 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 		else if (i <= 1)	/* self_sa and event sa */
 			sasp = sas[i];
 		else {			/* extra sas */
-			KDASSERT(sau->sau_type == SA_UPCALL_UNBLOCKED);
-			KDASSERT(!TAILQ_EMPTY(&eventq));
+			KASSERT(sau->sau_type == SA_UPCALL_UNBLOCKED);
+			KASSERT(!TAILQ_EMPTY(&eventq));
 			l2 = TAILQ_FIRST(&eventq);
-			KDASSERT(l2 != NULL);
+			KASSERT(l2 != NULL);
 			TAILQ_REMOVE(&eventq, l2, l_runq);
 			DPRINTFN(8,
 			    ("sa_makeupcalls(%d.%d) unblocking extra %d\n",
@@ -2044,25 +2013,18 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 		    SACOPYOUT(sae, SAOUT_SAP_T, &sap, sapp)) {
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
-#ifdef DIAGNOSTIC
-			printf("sa_makeupcalls(%d.%d): couldn't copyout\n",
-			    p->p_pid, l->l_lid);
-#endif
 			if (e_ss != NULL) {
 				kmem_free(e_ss, sizeof(*e_ss));
 			}
 			goto fail;
 		}
-#ifdef KTRACE
 		if (KTRPOINT(p, KTR_SAUPCALL))
 			ksapp[i] = sasp;
-#endif
-
 	}
 	if (e_ss != NULL) {
 		kmem_free(e_ss, sizeof(*e_ss));
 	}
-	KDASSERT(TAILQ_FIRST(&eventq) == NULL);
+	KASSERT(TAILQ_FIRST(&eventq) == NULL);
 
 	/* Copy out the arg, if any */
 	/* xxx assume alignment works out; everything so far has been
@@ -2074,12 +2036,6 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
-#ifdef DIAGNOSTIC
-			printf("sa_makeupcalls(%d.%d): couldn't copyout"
-			    " sadata_upcall arg %p size %ld to %p \n",
-			    p->p_pid, l->l_lid,
-			    sau->sau_arg, (long) sau->sau_argsize, ap);
-#endif
 			goto fail;
 		}
 	} else {
@@ -2098,12 +2054,11 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 	DPRINTFN(7,("sa_makeupcalls(%d.%d): type %d\n", p->p_pid,
 	    l->l_lid, type));
 
-#ifdef KTRACE
 	if (KTRPOINT(p, KTR_SAUPCALL)) {
 		ktrsaupcall(l, type, nevents, nint, (void *)sapp, ap, ksapp);
 		kmem_free(ksapp, sizeof(struct sa_t *) * (nevents + nint + 1));
 	}
-#endif
+
 	(*sae->sae_upcall)(l, type, nevents, nint, (void *)sapp, ap, stack,
 	    sa->sa_upcall);
 
@@ -2113,10 +2068,8 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 	return;
 
 fail:
-#ifdef KTRACE
 	if (KTRPOINT(p, KTR_SAUPCALL))
 		kmem_free(ksapp, sizeof(struct sa_t) * (nevents + nint + 1));
-#endif
 	sigexit(l, SIGILL);
 	/* NOTREACHED */
 }
@@ -2173,15 +2126,15 @@ sa_unblock_userret(struct lwp *l)
 	l2 = NULL;
 	swapper = 0;
 
-	KDASSERT(vp_lwp != NULL);
+	KASSERT(vp_lwp != NULL);
 	DPRINTFN(3,("sa_unblock_userret(%d.%d) woken, flags %x, vp %d\n",
 		     l->l_proc->p_pid, l->l_lid, l->l_flag,
 		     vp_lwp->l_lid));
 
 #if notyet
 	if (vp_lwp->l_flag & LW_SA_IDLE) {
-		KDASSERT((vp_lwp->l_flag & LW_SA_UPCALL) == 0);
-		KDASSERT(vp->savp_wokenq_head == NULL);
+		KASSERT((vp_lwp->l_flag & LW_SA_UPCALL) == 0);
+		KASSERT(vp->savp_wokenq_head == NULL);
 		DPRINTFN(3,
 		    ("sa_unblock_userret(%d.%d) repossess: idle vp_lwp %d state %d\n",
 		    l->l_proc->p_pid, l->l_lid,
@@ -2222,10 +2175,6 @@ sa_unblock_userret(struct lwp *l)
 		vp_lwp->l_flag |= LW_SA_UPCALL;
 		break;
 	case LSSUSPENDED:
-#ifdef DIAGNOSTIC
-		printf("sa_unblock_userret(%d.%d) vp lwp %d LSSUSPENDED\n",
-		    l->l_proc->p_pid, l->l_lid, vp_lwp->l_lid);
-#endif
 		break;
 	case LSSTOP:
 		vp_lwp->l_flag |= LW_SA_UPCALL;
@@ -2281,7 +2230,6 @@ sa_unblock_userret(struct lwp *l)
 	 * if the process is exiting. So just exit.
 	 */
 	lwp_exit(l);
-
 	/* NOTREACHED */
 }
 
@@ -2289,7 +2237,6 @@ sa_unblock_userret(struct lwp *l)
 
 #ifdef DEBUG
 int debug_print_sa(struct proc *);
-int debug_print_lwp(struct lwp *);
 int debug_print_proc(int);
 
 int
@@ -2309,7 +2256,6 @@ debug_print_proc(int pid)
 int
 debug_print_sa(struct proc *p)
 {
-	struct lwp *l;
 	struct sadata *sa;
 	struct sadata_vp *vp;
 
@@ -2317,8 +2263,6 @@ debug_print_sa(struct proc *p)
 	    p->p_pid, p->p_comm, p->p_stat, p, p->p_sflag);
 	printf("LWPs: %d (%d running, %d zombies)\n", p->p_nlwps, p->p_nrlwps,
 	    p->p_nzlwps);
-	LIST_FOREACH(l, &p->p_lwps, l_sibling)
-		debug_print_lwp(l);
 	sa = p->p_sa;
 	if (sa) {
 		SLIST_FOREACH(vp, &sa->sa_vps, savp_next) {
@@ -2328,23 +2272,8 @@ debug_print_sa(struct proc *p)
 				    (vp->savp_lwp->l_flag & LW_SA_IDLE ?
 					"idle" : "yielding") : "");
 			printf("SAs: %d cached LWPs\n", vp->savp_ncached);
-			LIST_FOREACH(l, &vp->savp_lwpcache, l_sibling)
-				debug_print_lwp(l);
 		}
 	}
-
-	return 0;
-}
-
-int
-debug_print_lwp(struct lwp *l)
-{
-
-	printf("LWP %d address %p ", l->l_lid, l);
-	printf("state %d flags %x ", l->l_stat, l->l_flag);
-	if (l->l_wchan)
-		printf("wait %p %s", l->l_wchan, l->l_wmesg);
-	printf("\n");
 
 	return 0;
 }
