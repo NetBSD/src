@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2008/05/25 16:01:29 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2008/05/28 11:50:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2008/05/25 16:01:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2008/05/28 11:50:01 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -375,8 +375,8 @@ struct pmap_cpu {
 
 union {
 	struct pmap_cpu pc;
-	uint8_t padding[128];
-} pmap_cpu[X86_MAXPROCS] __aligned(64);
+	uint8_t padding[64];
+} pmap_cpu[MAXCPUS] __aligned(64);
 
 /*
  * global data structures
@@ -518,7 +518,7 @@ static struct pool_cache pmap_pv_cache;
 
 /*
  * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * X86_MAXPROCS*NPTECL array of PTE's, to avoid cache line thrashing
+ * maxcpus*NPTECL array of PTE's, to avoid cache line thrashing
  * due to false sharing.
  */
 
@@ -1370,8 +1370,8 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	ptpp = (char *) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
-	virtual_avail += PAGE_SIZE * X86_MAXPROCS * NPTECL;
-	pte += X86_MAXPROCS * NPTECL;
+	virtual_avail += PAGE_SIZE * maxcpus * NPTECL;
+	pte += maxcpus * NPTECL;
 #else
 	csrcp = (void *) virtual_avail;  csrc_pte = pte;	/* allocate */
 	virtual_avail += PAGE_SIZE; pte++;			/* advance */
