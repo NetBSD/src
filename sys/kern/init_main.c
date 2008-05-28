@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.356 2008/05/27 17:50:03 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.357 2008/05/28 13:35:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.356 2008/05/27 17:50:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.357 2008/05/28 13:35:32 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -160,6 +160,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.356 2008/05/27 17:50:03 ad Exp $");
 #include <sys/msgbuf.h>
 #include <sys/module.h>
 #include <sys/event.h>
+#include <sys/lockf.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -443,6 +444,7 @@ main(void)
 		desiredvnodes = usevnodes;
 #endif
 	vfsinit();
+	lf_init();
 
 	/* Initialize fstrans. */
 	fstrans_init();
