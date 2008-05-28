@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.53 2008/05/21 01:18:00 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.54 2008/05/28 11:50:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2008/05/21 01:18:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.54 2008/05/28 11:50:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -109,6 +109,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.53 2008/05/21 01:18:00 ad Exp $");
 #include <dev/isa/isareg.h>
 
 #include "tsc.h"
+
+#if MAXCPUS > 32
+#error cpu_info contains 32bit bitmasks
+#endif
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
@@ -268,7 +272,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	if (cpus_attached == ~0) {
-		aprint_error(": increase MAXCPUS, X86_MAXPROCS\n");
+		aprint_error(": increase MAXCPUS\n");
 		return;
 	}
 
@@ -501,7 +505,7 @@ cpu_boot_secondary_processors(void)
 	/* Now that we know the number of CPUs, patch the text segment. */
 	x86_patch();
 
-	for (i=0; i < X86_MAXPROCS; i++) {
+	for (i=0; i < maxcpus; i++) {
 		ci = cpu_lookup_byindex(i);
 		if (ci == NULL)
 			continue;
@@ -535,7 +539,7 @@ cpu_init_idle_lwps(void)
 	struct cpu_info *ci;
 	u_long i;
 
-	for (i = 0; i < X86_MAXPROCS; i++) {
+	for (i = 0; i < maxcpus; i++) {
 		ci = cpu_lookup_byindex(i);
 		if (ci == NULL)
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2008/05/22 13:55:51 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2008/05/28 11:50:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -228,8 +228,6 @@ extern struct cpu_info *cpu_info_list;
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
-
-#define X86_MAXPROCS		32	/* because we use a bitmask */
 
 #define CPU_STARTUP(_ci, _target)	((_ci)->ci_func->start(_ci, _target))
 #define CPU_STOP(_ci)	        	((_ci)->ci_func->stop(_ci))
