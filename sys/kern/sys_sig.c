@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.15.2.3 2008/05/23 05:45:22 wrstuden Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.15.2.4 2008/05/28 06:33:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15.2.3 2008/05/23 05:45:22 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15.2.4 2008/05/28 06:33:24 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.15.2.3 2008/05/23 05:45:22 wrstuden Ex
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/wait.h>
@@ -490,29 +492,32 @@ int
 sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 {
 	int more;
+	struct proc *p = l->l_proc;
+	sigset_t *mask;
+	mask = (p->p_sa != NULL) ? &p->p_sa->sa_sigmask : &l->l_sigmask;
 
-	KASSERT(mutex_owned(l->l_proc->p_lock));
+	KASSERT(mutex_owned(p->p_lock));
 
 	if (oss)
-		*oss = l->l_sigmask;
+		*oss = *mask;
 	if (nss) {
 		switch (how) {
 		case SIG_BLOCK:
-			sigplusset(nss, &l->l_sigmask);
+			sigplusset(nss, mask);
 			more = 0;
 			break;
 		case SIG_UNBLOCK:
-			sigminusset(nss, &l->l_sigmask);
+			sigminusset(nss, mask);
 			more = 1;
 			break;
 		case SIG_SETMASK:
-			l->l_sigmask = *nss;
+			*mask = *nss;
 			more = 1;
 			break;
 		default:
 			return (EINVAL);
 		}
-		sigminusset(&sigcantmask, &l->l_sigmask);
+		sigminusset(&sigcantmask, mask);
 		if (more && sigispending(l, 0)) {
 			/*
 			 * Check for pending signals on return to user.
@@ -534,7 +539,10 @@ sigpending1(struct lwp *l, sigset_t *ss)
 	mutex_enter(p->p_lock);
 	*ss = l->l_sigpend.sp_set;
 	sigplusset(&p->p_sigpend.sp_set, ss);
-	sigminusset(&l->l_sigmask, ss);
+	if (p->p_sa)
+		sigminusset(&p->p_sa->sa_sigmask, ss);
+	else
+		sigminusset(&l->l_sigmask, ss);
 	mutex_exit(p->p_lock);
 }
 
