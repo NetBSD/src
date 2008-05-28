@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.188 2008/05/24 16:49:30 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.189 2008/05/28 15:40:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.188 2008/05/24 16:49:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.189 2008/05/28 15:40:58 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -466,14 +466,6 @@ void
 doshutdownhooks(void)
 {
 	struct hook_desc *dp;
-
-	if (panicstr != NULL) {
-		/*
-		 * Do as few things as possible after a panic.
-		 * We don't know the state the system is in.
-		 */
-		return;
-	}
 
 	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
 		LIST_REMOVE(dp, hk_list);
