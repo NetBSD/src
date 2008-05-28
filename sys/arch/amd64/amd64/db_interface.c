@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 2008/05/12 14:41:07 ad Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.17 2008/05/28 11:44:18 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16 2008/05/12 14:41:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.17 2008/05/28 11:44:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -135,22 +135,18 @@ db_suspend_others(void)
 static void
 db_resume_others(void)
 {
+	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	int i;
 
 	x86_mp_online = ddb_mp_online;
 	__cpu_simple_lock(&db_lock);
 	ddb_cpu = NOCPU;
 	__cpu_simple_unlock(&db_lock);
 
-	for (i=0; i < X86_MAXPROCS; i++) {
-		ci = cpu_lookup_byindex(i);
-		if (ci == NULL)
-			continue;
+	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_flags & CPUF_PAUSE)
 			atomic_and_32(&ci->ci_flags, ~CPUF_PAUSE);
 	}
-
 }
 
 #endif
