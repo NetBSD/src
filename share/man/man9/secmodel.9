@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.11 2007/04/13 00:36:21 plunky Exp $
+.\" $NetBSD: secmodel.9,v 1.12 2008/05/28 00:29:12 snj Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -126,7 +126,7 @@ This is a requirement from kernel code, to allow designing security models
 where the request should be dispatched to userspace or a different host.
 .It
 Private listener data -- such as internal data-structures -- is entirely
-under the resonsibility of the developer.
+under the responsibility of the developer.
 Locking, synchronization, and garbage collection are all things that
 .Xr kauth 9
 does
