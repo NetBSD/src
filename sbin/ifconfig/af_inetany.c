@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.8 2008/05/16 20:57:42 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.9 2008/05/28 17:17:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.8 2008/05/16 20:57:42 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.9 2008/05/28 17:17:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -84,8 +84,18 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	if ((ifname = getifinfo(env, oenv, &flags)) == NULL)
 		return;
 
+	strlcpy(param->name[0].buf, ifname, param->name[0].buflen);
+	strlcpy(param->name[1].buf, ifname, param->name[1].buflen);
+
 	if ((d = (prop_data_t)prop_dictionary_get(env, "address")) != NULL)
 		addr = prop_data_data_nocopy(d);
+	else if (!prop_dictionary_get_bool(env, "alias", &alias) || alias ||
+	    param->gifaddr.cmd == 0)
+		return;
+	else if (ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == -1)
+		err(EXIT_FAILURE, param->gifaddr.desc);
+	else if (ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
+		err(EXIT_FAILURE, param->difaddr.desc);
 	else
 		return;
 
@@ -111,9 +121,6 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 		replace = false;
 		delete = !alias;
 	}
-
-	strlcpy(param->name[0].buf, ifname, param->name[0].buflen);
-	strlcpy(param->name[1].buf, ifname, param->name[1].buflen);
 
 	loadbuf(&param->addr, addr);
 
