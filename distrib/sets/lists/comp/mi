@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1153 2008/05/26 16:56:44 christos Exp $
+#	$NetBSD: mi,v 1.1154 2008/05/28 12:28:12 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -169,6 +169,7 @@
 ./usr/include/atf/ui.hpp			comp-obsolete		obsolete
 ./usr/include/atf/user.hpp			comp-obsolete		obsolete
 ./usr/include/atf/utils.hpp			comp-obsolete		obsolete
+./usr/include/atomic.h				comp-c-include
 ./usr/include/bfd				comp-obsolete		obsolete
 ./usr/include/bfd/ansidecl.h			comp-obsolete		obsolete
 ./usr/include/bfd/bfd.h				comp-obsolete		obsolete
