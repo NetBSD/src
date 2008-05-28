@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.208 2008/05/22 13:40:30 lukem Exp $
+#	$NetBSD: bsd.README,v 1.209 2008/05/28 11:23:26 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -1078,6 +1078,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBL?=		${DESTDIR}/usr/lib/libl.a
 		LIBLBER?=	${DESTDIR}/usr/lib/liblber.a
 		LIBLDAP?=	${DESTDIR}/usr/lib/libldap.a
+		LIBLDAP_R?=	${DESTDIR}/usr/lib/libldap_r.a
 		LIBM?=		${DESTDIR}/usr/lib/libm.a
 		LIBMENU?=	${DESTDIR}/usr/lib/libmenu.a
 		LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
