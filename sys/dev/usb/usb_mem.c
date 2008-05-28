@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.31.10.4 2008/05/21 05:03:48 itohy Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.31.10.5 2008/05/28 13:42:08 itohy Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.c,v 1.10 2006/09/06 23:44:24 imp Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.31.10.4 2008/05/21 05:03:48 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.31.10.5 2008/05/28 13:42:08 itohy Exp $");
 /* __FBSDID("$FreeBSD: src/sys/dev/usb/usb_mem.c,v 1.10 2006/09/06 23:44:24 imp Exp $"); */
 
 #include <sys/param.h>
@@ -564,7 +564,7 @@ usb_alloc_buffer_dma(usb_dma_tag_t *utag,
 		if ((ud = SIMPLEQ_FIRST(&utag->uds_idle)) != NULL) {
 			SIMPLEQ_REMOVE_HEAD(&utag->uds_idle, ud_next);
 		} else {
-			if ((ud = malloc(sizeof *ub, M_USB, M_WAITOK)) == NULL)
+			if ((ud = malloc(sizeof *ud, M_USB, M_WAITOK)) == NULL)
 				return (USBD_NOMEM);
 			utag->nbufs++;
 		}
