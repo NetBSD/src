@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.200.4.2 2008/05/14 01:35:14 wrstuden Exp $
+	$NetBSD: syscalls.master,v 1.200.4.3 2008/05/28 15:51:19 wrstuden Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -681,7 +681,7 @@
 333	STD 		{ int sys_sa_setconcurrency(int concurrency); }
 334	STD 		{ int sys_sa_yield(void); }
 335	STD 		{ int sys_sa_preempt(int sa_id); }
-336	STD 		{ int sys_sa_unblockyield(void); }
+336	OBSOL 		sys_sa_unblockyield
 ;
 ; Syscalls 337-339 are reserved for other scheduler activation syscalls.
 ;
