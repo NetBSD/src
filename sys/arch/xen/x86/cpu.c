@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26 2008/05/16 17:20:01 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.27 2008/05/28 12:48:21 ad Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2008/05/16 17:20:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2008/05/28 12:48:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -112,6 +112,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26 2008/05/16 17:20:01 bouyer Exp $");
 
 #include <dev/ic/mc146818reg.h>
 #include <dev/isa/isareg.h>
+
+#define	X86_MAXPROCS	32
 
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
