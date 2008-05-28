@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.19 2008/05/27 20:14:28 dyoung Exp $ */
+/* $NetBSD: if_msk.c,v 1.20 2008/05/28 16:20:17 joerg Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.19 2008/05/27 20:14:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.20 2008/05/28 16:20:17 joerg Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -100,7 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.19 2008/05/27 20:14:28 dyoung Exp $");
 
 int mskc_probe(struct device *, struct cfdata *, void *);
 void mskc_attach(struct device *, struct device *self, void *aux);
-void mskc_shutdown(void *);
+static bool mskc_suspend(device_t PMF_FN_PROTO);
+static bool mskc_resume(device_t PMF_FN_PROTO);
 int msk_probe(struct device *, struct cfdata *, void *);
 void msk_attach(struct device *, struct device *self, void *aux);
 int mskcprint(void *, const char *);
@@ -937,6 +938,15 @@ msk_probe(struct device *parent, struct cfdata *match,
 	return (0);
 }
 
+static bool
+msk_resume(device_t dv PMF_FN_ARGS)
+{
+	struct sk_if_softc *sc_if = device_private(dv);
+	
+	msk_init_yukon(sc_if);
+	return true;
+}
+
 /*
  * Each XMAC chip is attached as a separate logical IP interface.
  * Single port cards will have only one logical interface of course.
@@ -1084,7 +1094,10 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, sc_if->sk_enaddr);
 
-	shutdownhook_establish(mskc_shutdown, sc);
+	if (!pmf_device_register(self, NULL, msk_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(&sc->sk_dev),
@@ -1412,6 +1425,9 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_6;
 	}
 
+	if (!pmf_device_register(self, mskc_suspend, mskc_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
  fail_6:
@@ -1609,17 +1625,30 @@ msk_watchdog(struct ifnet *ifp)
 	}
 }
 
-void
-mskc_shutdown(void *v)
+static bool
+mskc_suspend(device_t dv PMF_FN_ARGS)
 {
-	struct sk_softc		*sc = v;
+	struct sk_softc *sc = device_private(dv);
 
-	DPRINTFN(2, ("msk_shutdown\n"));
+	DPRINTFN(2, ("mskc_suspend\n"));
 
 	/* Turn off the 'driver is loaded' LED. */
 	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_OFF);
 
+	return true;
+}
+
+static bool
+mskc_resume(device_t dv PMF_FN_ARGS)
+{
+	struct sk_softc *sc = device_private(dv);
+
+	DPRINTFN(2, ("mskc_resume\n"));
+
 	msk_reset(sc);
+	CSR_WRITE_2(sc, SK_LED, SK_LED_GREEN_ON);
+
+	return true;
 }
 
 __inline int
