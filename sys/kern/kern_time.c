@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.147 2008/05/08 18:56:58 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.148 2008/05/29 15:27:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.147 2008/05/08 18:56:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.148 2008/05/29 15:27:51 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -923,8 +923,10 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 void
 realtimerexpire(void *arg)
 {
-	struct timeval now;
+	uint64_t last_val, next_val, interval, now_ms;
+	struct timeval now, next;
 	struct ptimer *pt;
+	int backwards;
 
 	pt = arg;
 
@@ -936,24 +938,39 @@ realtimerexpire(void *arg)
 		mutex_spin_exit(&timer_lock);
 		return;
 	}
-	for (;;) {
-		timeradd(&pt->pt_time.it_value,
-		    &pt->pt_time.it_interval, &pt->pt_time.it_value);
-		getmicrotime(&now);
-		if (timercmp(&pt->pt_time.it_value, &now, >)) {
-			/*
-			 * Don't need to check hzto() return value, here.
-			 * callout_reset() does it for us.
-			 */
-			callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value),
-			    realtimerexpire, pt);
-			mutex_spin_exit(&timer_lock);
-			return;
-		}
-		mutex_spin_exit(&timer_lock);
-		pt->pt_overruns++;
-		mutex_spin_enter(&timer_lock);
+
+	getmicrotime(&now);
+	backwards = (timercmp(&pt->pt_time.it_value, &now, >));
+	timeradd(&pt->pt_time.it_value, &pt->pt_time.it_interval, &next);
+	/* Handle the easy case of non-overflown timers first. */
+	if (!backwards && timercmp(&next, &now, >)) {
+		pt->pt_time.it_value = next;
+	} else {
+#define TV2MS(x) (((uint64_t)(x)->tv_sec) * 1000000 + (x)->tv_usec)
+		now_ms = TV2MS(&now);
+		last_val = TV2MS(&pt->pt_time.it_value);
+		interval = TV2MS(&pt->pt_time.it_interval);
+#undef TV2MS
+
+		next_val = now_ms +
+		    (now_ms - last_val + interval - 1) % interval;
+
+		if (backwards)
+			next_val += interval;
+		else
+			pt->pt_overruns += (now_ms - last_val) / interval;
+
+		pt->pt_time.it_value.tv_sec = next_val / 1000000;
+		pt->pt_time.it_value.tv_usec = next_val % 1000000;
 	}
+
+	/*
+	 * Don't need to check hzto() return value, here.
+	 * callout_reset() does it for us.
+	 */
+	callout_reset(&pt->pt_ch, hzto(&pt->pt_time.it_value),
+	    realtimerexpire, pt);
+	mutex_spin_exit(&timer_lock);
 }
 
 /* BSD routine to get the value of an interval timer. */
