@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.57 2008/05/27 14:48:52 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.58 2008/05/29 22:33:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ struct schedstate_percpu {
 	/* First set of data is likely to be accessed by other CPUs. */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
+	struct lwp	*spc_migrating;	/* (: migrating LWP */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
 	psetid_t	spc_psid;	/* (: processor-set ID */
