@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.26 2008/04/24 18:39:21 ad Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.27 2008/05/29 14:51:26 mrg Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.26 2008/04/24 18:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.27 2008/05/29 14:51:26 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
