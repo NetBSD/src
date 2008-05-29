@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.11 2008/05/28 14:04:07 tsutsui Exp $	*/
+/*	$NetBSD: boot.h,v 1.12 2008/05/29 14:25:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -102,3 +102,4 @@ uint32_t pcicfgread(uint32_t, uint32_t);
 void lcd_init(void);
 void lcd_banner(void);
 void lcd_loadfile(const char *);
+void lcd_failed(void);
