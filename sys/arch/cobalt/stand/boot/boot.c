@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2008/05/28 14:04:07 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.17 2008/05/29 14:25:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -490,6 +490,8 @@ main(unsigned int memsize)
 		(*entry)(memsize, BOOTINFO_MAGIC, bi_addr);
 	}
 
+	delay(20000);
+	lcd_failed();
 	(void)printf("Boot failed! Rebooting...\n");
 	return 0;
 }

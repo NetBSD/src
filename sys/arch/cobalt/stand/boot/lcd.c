@@ -1,4 +1,4 @@
-/*	$NetBSD: lcd.c,v 1.1 2008/05/28 14:04:07 tsutsui Exp $	*/
+/*	$NetBSD: lcd.c,v 1.2 2008/05/29 14:25:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008 Izumi Tsutsui.  All rights reserved.
@@ -36,11 +36,10 @@
 #define IREG	0x00
 #define DREG	0x10
 
+#if 0
 #define CSR_READ(base, reg)						\
-	do {								\
-		((*(volatile uint32_t *)((base) + (reg))) >> 24)	\
-		delay(10);						\
-	} while (/* CONSTCOND */ 0)
+	(((*(volatile uint32_t *)((base) + (reg))) >> 24), delay(10))
+#endif
 
 #define CSR_WRITE(base, reg, val)					\
 	do {								\
@@ -60,7 +59,14 @@ static const struct lcd_message banner_message = {
 	"NetBSD/cobalt   ",
 	"Bootloader      "
 };
-static const char load[NCOLS] = "Loading:        ";
+static const struct lcd_message failed_message = {
+	"Boot failed!    ",
+	"Rebooting...    "
+};
+static struct lcd_message loadfile_message = {
+	"Loading:        ",
+	"                " 
+};
 
 static void lcd_puts(const struct lcd_message *);
 
@@ -81,14 +87,17 @@ lcd_banner(void)
 void
 lcd_loadfile(const char *file)
 {
-	struct lcd_message loadfile_message;
 
-	memset(loadfile_message.row1, ' ', NCOLS);
-	memcpy(loadfile_message.row1, load, min(NCOLS, strlen(load)));
-	memset(loadfile_message.row2, ' ', NCOLS);
 	memcpy(loadfile_message.row2, file, min(NCOLS, strlen(file)));
 
 	lcd_puts(&loadfile_message);
+}
+
+void
+lcd_failed(void)
+{
+
+	lcd_puts(&failed_message);
 }
 
 static void
