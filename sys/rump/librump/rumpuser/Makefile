@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/03/11 10:50:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2008/05/29 13:12:29 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -6,8 +6,6 @@
 LIB=		rumpuser
 
 SRCS=		rumpuser.c rumpuser_pth.c
-
-CPPFLAGS+=	-DRUMP_WITHOUT_THREADS
 
 RUMPKERNEL=	no
 
