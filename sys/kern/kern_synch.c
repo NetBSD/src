@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.245 2008/05/27 17:51:17 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.246 2008/05/29 22:33:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.245 2008/05/27 17:51:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.246 2008/05/29 22:33:27 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -554,7 +554,7 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 int
 mi_switch(lwp_t *l)
 {
-	struct cpu_info *ci, *tci = NULL;
+	struct cpu_info *ci;
 	struct schedstate_percpu *spc;
 	struct lwp *newl;
 	int retval, oldspl;
@@ -619,49 +619,26 @@ mi_switch(lwp_t *l)
 		updatertime(l, &bt);
 	}
 
+	/* Lock the runqueue */
+	KASSERT(l->l_stat != LSRUN);
+	mutex_spin_enter(spc->spc_mutex);
+
 	/*
 	 * If on the CPU and we have gotten this far, then we must yield.
 	 */
-	KASSERT(l->l_stat != LSRUN);
-	if (l->l_stat == LSONPROC && (l->l_target_cpu || l != newl)) {
+	if (l->l_stat == LSONPROC && l != newl) {
 		KASSERT(lwp_locked(l, spc->spc_lwplock));
-
-		if (l->l_target_cpu == l->l_cpu) {
-			l->l_target_cpu = NULL;
-		} else {
-			tci = l->l_target_cpu;
-		}
-
-		if (__predict_false(tci != NULL)) {
-			/* Double-lock the runqueues */
-			spc_dlock(ci, tci);
-		} else {
-			/* Lock the runqueue */
-			spc_lock(ci);
-		}
-
 		if ((l->l_flag & LW_IDLE) == 0) {
 			l->l_stat = LSRUN;
-			if (__predict_false(tci != NULL)) {
-				/* 
-				 * Set the new CPU, lock and unset the
-				 * l_target_cpu - thread will be enqueued
-				 * to the runqueue of target CPU.
-				 */
-				l->l_cpu = tci;
-				lwp_setlock(l, tci->ci_schedstate.spc_mutex);
-				l->l_target_cpu = NULL;
-			} else {
-				lwp_setlock(l, spc->spc_mutex);
-			}
+			lwp_setlock(l, spc->spc_mutex);
 			sched_enqueue(l, true);
-		} else {
-			KASSERT(tci == NULL);
+			/* Handle migration case */
+			KASSERT(spc->spc_migrating == NULL);
+			if (l->l_target_cpu !=  NULL) {
+				spc->spc_migrating = l;
+			}
+		} else
 			l->l_stat = LSIDL;
-		}
-	} else {
-		/* Lock the runqueue */
-		spc_lock(ci);
 	}
 
 	/* Pick new LWP to run. */
@@ -706,13 +683,7 @@ mi_switch(lwp_t *l)
 		struct lwp *prevlwp;
 
 		/* Release all locks, but leave the current LWP locked */
-		if (l->l_mutex == l->l_cpu->ci_schedstate.spc_mutex) {
-			/*
-			 * In case of migration, drop the local runqueue
-			 * lock, thread is on other runqueue now.
-			 */
-			if (__predict_false(tci != NULL))
-				spc_unlock(ci);
+		if (l->l_mutex == spc->spc_mutex) {
 			/*
 			 * Drop spc_lwplock, if the current LWP has been moved
 			 * to the run queue (it is now locked by spc_mutex).
@@ -724,7 +695,6 @@ mi_switch(lwp_t *l)
 			 * run queues.
 			 */
 			mutex_spin_exit(spc->spc_mutex);
-			KASSERT(tci == NULL);
 		}
 
 		/*
@@ -799,8 +769,7 @@ mi_switch(lwp_t *l)
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */
-		KASSERT(tci == NULL);
-		spc_unlock(ci);
+		mutex_spin_exit(spc->spc_mutex);
 		lwp_unlock(l);
 		retval = 0;
 	}
