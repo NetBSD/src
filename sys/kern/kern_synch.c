@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.246 2008/05/29 22:33:27 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.247 2008/05/29 23:29:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.246 2008/05/29 22:33:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.247 2008/05/29 23:29:59 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -869,7 +869,7 @@ lwp_exit_switchaway(lwp_t *l)
 
 	/* Update status for lwpctl, if present. */
 	if (l->l_lwpctl != NULL)
-		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_NONE;
+		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_EXITED;
 
 	/*
 	 * We may need to spin-wait for if 'newl' is still
