@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.18 2008/05/27 14:48:52 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.19 2008/05/29 22:33:27 rmind Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.18 2008/05/27 14:48:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.19 2008/05/29 22:33:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -46,6 +46,7 @@ void
 idle_loop(void *dummy)
 {
 	struct cpu_info *ci = curcpu();
+	struct schedstate_percpu *spc;
 	struct lwp *l = curlwp;
 	int s;
 
@@ -56,13 +57,14 @@ idle_loop(void *dummy)
 	binuptime(&l->l_stime);
 	lwp_unlock(l);
 
+	spc = &ci->ci_schedstate;
 	s = splsched();
-	ci->ci_schedstate.spc_flags |= SPCF_RUNNING;
+	spc->spc_flags |= SPCF_RUNNING;
 	splx(s);
 
 	KERNEL_UNLOCK_ALL(l, NULL);
 	l->l_stat = LSONPROC;
-	while (1 /* CONSTCOND */) {
+	for (;;) {
 		LOCKDEBUG_BARRIER(NULL, 0);
 		KASSERT((l->l_flag & LW_IDLE) != 0);
 		KASSERT(ci == curcpu());
@@ -70,15 +72,15 @@ idle_loop(void *dummy)
 		KASSERT(CURCPU_IDLE_P());
 		KASSERT(l->l_priority == PRI_IDLE);
 
+		sched_idle();
 		if (sched_curcpu_runnable_p()) {
 			goto schedule;
 		}
-		sched_idle();
 		if (uvm.page_idle_zero) {
+			uvm_pageidlezero();
 			if (sched_curcpu_runnable_p()) {
 				goto schedule;
 			}
-			uvm_pageidlezero();
 		}
 		if (!sched_curcpu_runnable_p()) {
 			cpu_idle();

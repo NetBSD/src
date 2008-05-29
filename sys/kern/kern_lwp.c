@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.113 2008/05/27 17:51:17 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.114 2008/05/29 22:33:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -138,6 +138,14 @@
  *	ONPROC -> IDL), but only happen under tightly controlled
  *	circumstances the side effects are understood.
  *
+ * Migration
+ *
+ *	Migration of threads from one CPU to another could be performed
+ *	internally by the scheduler via sched_takecpu() or sched_catchlwp()
+ *	functions.  The universal lwp_migrate() function should be used for
+ *	any other cases.  Subsystems in the kernel must be aware that CPU
+ *	of LWP may change, while it is not locked.
+ *
  * Locking
  *
  *	The majority of fields in 'struct lwp' are covered by a single,
@@ -198,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.113 2008/05/27 17:51:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.114 2008/05/29 22:33:27 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -691,7 +699,7 @@ lwp_exit(struct lwp *l)
 
 	current = (l == curlwp);
 
-	KASSERT(current || l->l_stat == LSIDL);
+	KASSERT(current || (l->l_stat == LSIDL && l->l_target_cpu == NULL));
 
 	/*
 	 * Verify that we hold no locks other than the kernel lock.
@@ -1029,39 +1037,58 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
  * Migrate the LWP to the another CPU.  Unlocks the LWP.
  */
 void
-lwp_migrate(lwp_t *l, struct cpu_info *ci)
+lwp_migrate(lwp_t *l, struct cpu_info *tci)
 {
-	struct schedstate_percpu *spc;
+	struct schedstate_percpu *tspc;
 	KASSERT(lwp_locked(l, NULL));
+	KASSERT(tci != NULL);
 
-	if (l->l_cpu == ci) {
+	/*
+	 * If LWP is still on the CPU, it must be handled like on LSONPROC.
+	 * The destination CPU could be changed while previous migration
+	 * was not finished.
+	 */
+	if ((l->l_flag & LW_RUNNING) != 0 || l->l_target_cpu != NULL) {
+		l->l_target_cpu = tci;
 		lwp_unlock(l);
 		return;
 	}
 
-	spc = &ci->ci_schedstate;
+	/* Nothing to do if trying to migrate to the same CPU */
+	if (l->l_cpu == tci) {
+		lwp_unlock(l);
+		return;
+	}
+
+	KASSERT(l->l_target_cpu == NULL);
+	tspc = &tci->ci_schedstate;
 	switch (l->l_stat) {
 	case LSRUN:
 		if (l->l_flag & LW_INMEM) {
-			l->l_target_cpu = ci;
-			break;
+			l->l_target_cpu = tci;
+			lwp_unlock(l);
+			return;
 		}
 	case LSIDL:
-		l->l_cpu = ci;
-		lwp_unlock_to(l, spc->spc_mutex);
-		KASSERT(!mutex_owned(spc->spc_mutex));
+		l->l_cpu = tci;
+		lwp_unlock_to(l, tspc->spc_mutex);
 		return;
 	case LSSLEEP:
-		l->l_cpu = ci;
+		l->l_cpu = tci;
 		break;
 	case LSSTOP:
 	case LSSUSPENDED:
-		if (l->l_wchan != NULL) {
-			l->l_cpu = ci;
-			break;
+		l->l_cpu = tci;
+		if (l->l_wchan == NULL) {
+			lwp_unlock_to(l, tspc->spc_lwplock);
+			return;
 		}
+		break;
 	case LSONPROC:
-		l->l_target_cpu = ci;
+		l->l_target_cpu = tci;
+		spc_lock(l->l_cpu);
+		cpu_need_resched(l->l_cpu, RESCHED_KPREEMPT);
+		spc_unlock(l->l_cpu);
 		break;
 	}
 	lwp_unlock(l);
@@ -1278,6 +1305,8 @@ lwp_userret(struct lwp *l)
 	void (*hook)(void);
 	int sig;
 
+	KASSERT(l == curlwp);
+	KASSERT(l->l_stat == LSONPROC);
 	p = l->l_proc;
 
 #ifndef __HAVE_FAST_SOFTINTS

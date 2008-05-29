@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.13 2008/05/27 22:05:50 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.14 2008/05/29 22:33:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.13 2008/05/27 22:05:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.14 2008/05/29 22:33:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -283,6 +283,9 @@ sched_dequeue(struct lwp *l)
 	KASSERT(ci_rq->r_bitmap[eprio >> BITMAP_SHIFT] != 0);
 	KASSERT(ci_rq->r_count > 0);
 
+	if (spc->spc_migrating == l)
+		spc->spc_migrating = NULL;
+
 	ci_rq->r_count--;
 	if ((l->l_pflag & LP_BOUND) == 0)
 		ci_rq->r_mcount--;
@@ -394,7 +397,7 @@ sched_takecpu(struct lwp *l)
 	ci = curcpu();
 	spc = &ci->ci_schedstate;
 	if (eprio > spc->spc_curpriority && sched_migratable(l, ci)) {
-	    	ci_rq->r_ev_localize.ev_count++;
+		ci_rq->r_ev_localize.ev_count++;
 		return ci;
 	}
 
@@ -471,7 +474,7 @@ sched_catchlwp(struct cpu_info *ci)
 		/* Grab the thread, and move to the local run queue */
 		sched_dequeue(l);
 		l->l_cpu = curci;
-	    	ci_rq->r_ev_pull.ev_count++;
+		ci_rq->r_ev_pull.ev_count++;
 		lwp_unlock_to(l, curci->ci_schedstate.spc_mutex);
 		sched_enqueue(l, false);
 		return l;
@@ -522,11 +525,80 @@ sched_balance(void *nocallout)
 void
 sched_idle(void)
 {
-	struct cpu_info *ci = curcpu(), *cci;
-	struct schedstate_percpu *spc;
+	struct cpu_info *ci = curcpu(), *tci;
+	struct schedstate_percpu *spc, *tspc;
 	runqueue_t *ci_rq;
+	bool dlock = false;
 
+	/* Check if there is a migrating LWP */
 	spc = &ci->ci_schedstate;
+	if (spc->spc_migrating == NULL)
+		goto no_migration;
+
+	spc_lock(ci);
+	for (;;) {
+		struct lwp *l;
+
+		l = spc->spc_migrating;
+		if (l == NULL)
+			break;
+
+		/*
+		 * If second attempt, and target CPU has changed,
+		 * drop the old lock.
+		 */
+		if (dlock == true && tci != l->l_target_cpu) {
+			KASSERT(tci != NULL);
+			spc_unlock(tci);
+			dlock = false;
+		}
+
+		/*
+		 * Nothing to do if destination has changed to the
+		 * local CPU, or migration was done by other CPU.
+		 */
+		tci = l->l_target_cpu;
+		if (tci == NULL || tci == ci) {
+			spc->spc_migrating = NULL;
+			l->l_target_cpu = NULL;
+			break;
+		}
+		tspc = &tci->ci_schedstate;
+
+		/*
+		 * Double-lock the runqueues.
+		 * We do that only once.
+		 */
+		if (dlock == false) {
+			dlock = true;
+			if (ci < tci) {
+				spc_lock(tci);
+			} else if (!mutex_tryenter(tspc->spc_mutex)) {
+				spc_unlock(ci);
+				spc_lock(tci);
+				spc_lock(ci);
+				/* Check the situation again.. */
+				continue;
+			}
+		}
+
+		/* Migrate the thread */
+		KASSERT(l->l_stat == LSRUN);
+		spc->spc_migrating = NULL;
+		l->l_target_cpu = NULL;
+		sched_dequeue(l);
+		l->l_cpu = tci;
+		lwp_setlock(l, tspc->spc_mutex);
+		sched_enqueue(l, false);
+		break;
+	}
+	if (dlock == true) {
+		KASSERT(tci != NULL);
+		spc_unlock(tci);
+	}
+	spc_unlock(ci);
+
+no_migration:
 	ci_rq = spc->spc_sched_info;
 	if ((spc->spc_flags & SPCF_OFFLINE) != 0 || ci_rq->r_count != 0) {
 		return;
@@ -535,17 +607,11 @@ sched_idle(void)
 	/* Reset the counter, and call the balancer */
 	ci_rq->r_avgcount = 0;
 	sched_balance(ci);
-	cci = worker_ci;
-	if (ci == cci)
+	tci = worker_ci;
+	if (ci == tci)
 		return;
-	if (ci < cci) {
-		spc_lock(ci);
-		spc_lock(cci);
-	} else {
-		spc_lock(cci);
-		spc_lock(ci);
-	}
-	(void)sched_catchlwp(cci);
+	spc_dlock(ci, tci);
+	(void)sched_catchlwp(tci);
 	spc_unlock(ci);
 }
 
@@ -627,7 +693,10 @@ sched_nextlwp(void)
 	runqueue_t *ci_rq;
 	struct lwp *l;
 
+	/* Return to idle LWP if there is a migrating thread */
 	spc = &ci->ci_schedstate;
+	if (__predict_false(spc->spc_migrating != NULL))
+		return NULL;
 	ci_rq = spc->spc_sched_info;
 
 #ifdef MULTIPROCESSOR
@@ -763,26 +832,28 @@ sched_print_runqueue(void (*pr)(const char *, ...)
     __attribute__((__format__(__printf__,1,2))))
 {
 	runqueue_t *ci_rq;
+	struct cpu_info *ci, *tci;
 	struct schedstate_percpu *spc;
 	struct lwp *l;
 	struct proc *p;
-	int i;
-	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
+		int i;
+
 		spc = &ci->ci_schedstate;
 		ci_rq = spc->spc_sched_info;
 
 		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
-		(*pr)(" pid.lid = %d.%d, threads count = %u, "
-		    "avgcount = %u, highest pri = %d\n",
+		(*pr)(" pid.lid = %d.%d, r_count = %u, r_avgcount = %u, "
+		    "maxpri = %d, mchain = %p\n",
 #ifdef MULTIPROCESSOR
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
 #else
 		    curlwp->l_proc->p_pid, curlwp->l_lid,
 #endif
-		    ci_rq->r_count, ci_rq->r_avgcount, spc->spc_maxpriority);
+		    ci_rq->r_count, ci_rq->r_avgcount, spc->spc_maxpriority,
+		    spc->spc_migrating);
 		i = (PRI_COUNT >> BITMAP_SHIFT) - 1;
 		do {
 			uint32_t q;
@@ -791,8 +862,8 @@ sched_print_runqueue(void (*pr)(const char *, ...)
 		} while (i--);
 	}
 
-	(*pr)("   %5s %4s %4s %10s %3s %18s %4s %s\n",
-	    "LID", "PRI", "EPRI", "FL", "ST", "LWP", "CPU", "LRTIME");
+	(*pr)("   %5s %4s %4s %10s %3s %18s %4s %4s %s\n",
+	    "LID", "PRI", "EPRI", "FL", "ST", "LWP", "CPU", "TCI", "LRTICKS");
 
 	PROCLIST_FOREACH(p, &allproc) {
 		if ((p->p_flag & PK_MARKER) != 0)
@@ -800,11 +871,12 @@ sched_print_runqueue(void (*pr)(const char *, ...)
 		(*pr)(" /- %d (%s)\n", (int)p->p_pid, p->p_comm);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			ci = l->l_cpu;
-			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %18p %4u %u\n",
+			tci = l->l_target_cpu;
+			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %18p %4u %4d %u\n",
 			    (int)l->l_lid, l->l_priority, lwp_eprio(l),
 			    l->l_flag, l->l_stat == LSRUN ? "RQ" :
 			    (l->l_stat == LSSLEEP ? "SQ" : "-"),
-			    l, ci->ci_index,
+			    l, ci->ci_index, (tci ? tci->ci_index : -1),
 			    (u_int)(hardclock_ticks - l->l_rticks));
 		}
 	}
