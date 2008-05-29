@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.8 2008/05/26 08:15:37 wiz Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.9 2008/05/29 11:32:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.8 2008/05/26 08:15:37 wiz Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.9 2008/05/29 11:32:07 ad Exp $");
 #endif
 
 #include <stdio.h>
@@ -143,11 +143,11 @@ main(int argc, char **argv)
 
 	/* At least PID must be specified */
 	if (pid == 0) {
-		if (argc == 1 || lid != 0)
+		if (argv[optind] == NULL || lid != 0)
 			usage();
 		pid = getpid();
 	} else {
-		if (argc != 1)
+		if (argv[optind] != NULL)
 			usage();
 	}
 
