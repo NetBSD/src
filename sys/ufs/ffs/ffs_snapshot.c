@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.67 2008/05/16 09:22:00 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.68 2008/05/29 10:00:50 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.67 2008/05/16 09:22:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.68 2008/05/29 10:00:50 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -114,6 +114,7 @@ static int mapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
 static int readvnblk(struct vnode *, void *, ufs2_daddr_t);
 #endif /* !defined(FFS_NO_SNAPSHOT) */
 
+static int ffs_blkaddr(struct vnode *, daddr_t, daddr_t *);
 static int ffs_copyonwrite(void *, struct buf *, bool);
 static int readfsblk(struct vnode *, void *, ufs2_daddr_t);
 static int writevnblk(struct vnode *, void *, ufs2_daddr_t);
@@ -1828,13 +1829,41 @@ ffs_snapshot_unmount(struct mount *mp)
 }
 
 /*
+ * Lookup a snapshots data block address.
+ * Simpler than UFS_BALLOC() as we know all metadata is already allocated.
+ */
+static int
+ffs_blkaddr(struct vnode *vp, daddr_t lbn, daddr_t *res)
+{
+	struct indir indirs[NIADDR + 2];
+	struct inode *ip = VTOI(vp);
+	struct fs *fs = ip->i_fs;
+	struct buf *bp;
+	int error, num;
+
+	KASSERT(lbn >= 0);
+
+	if (lbn < NDADDR) {
+		*res = db_get(ip, lbn);
+		return 0;
+	}
+	if ((error = ufs_getlbns(vp, lbn, indirs, &num)) != 0)
+		return error;
+	error = bread(vp, indirs[num-1].in_lbn, fs->fs_bsize, NOCRED, 0, &bp);
+	if (error == 0)
+		*res = idb_get(ip, bp->b_data, indirs[num-1].in_off);
+	brelse(bp, 0);
+
+	return error;
+}
+
+/*
  * Check for need to copy block that is about to be written,
  * copying the block if necessary.
  */
 static int
 ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 {
-	struct buf *ibp;
 	struct fs *fs;
 	struct inode *ip;
 	struct vnode *devvp = v, *vp = NULL;
@@ -1843,7 +1872,7 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 	void *saved_data = NULL;
 	ufs2_daddr_t lbn, blkno, *snapblklist;
 	uint32_t gen;
-	int lower, upper, mid, ns, indiroff, snapshot_locked = 0, error = 0;
+	int lower, upper, mid, ns, snapshot_locked = 0, error = 0;
 
 	/*
 	 * Check for valid snapshots.
@@ -1907,24 +1936,16 @@ retry:
 				goto retry;
 		}
 		/*
-		 * Check to see if block needs to be copied. We do not have
-		 * to hold the snapshot lock while doing this lookup as it
-		 * will never require any additional allocations for the
-		 * snapshot inode.
+		 * Check to see if block needs to be copied.
 		 */
 		if (lbn < NDADDR) {
 			blkno = db_get(ip, lbn);
 		} else {
 			mutex_exit(&si->si_lock);
-			error = ffs_balloc(vp, lblktosize(fs, (off_t)lbn),
-			   fs->fs_bsize, KERNCRED, B_METAONLY, &ibp);
-			if (error) {
+			if ((error = ffs_blkaddr(vp, lbn, &blkno)) != 0) {
 				mutex_enter(&si->si_lock);
 				break;
 			}
-			indiroff = (lbn - NDADDR) % NINDIR(fs);
-			blkno = idb_get(ip, ibp->b_data, indiroff);
-			brelse(ibp, 0);
 			mutex_enter(&si->si_lock);
 			if (gen != si->si_gen)
 				goto retry;
