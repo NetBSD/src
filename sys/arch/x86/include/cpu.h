@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2008/05/28 11:50:01 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2008/05/30 11:03:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -345,7 +345,6 @@ void	lgdt(struct region_descriptor *);
 void	lgdt_finish(void);
 void	i386_switch_context(lwp_t *);
 #endif
-void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);
