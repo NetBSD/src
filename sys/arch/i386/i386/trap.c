@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.237 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.238 2008/05/30 10:36:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.237 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.238 2008/05/30 10:36:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,15 +95,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.237 2008/04/28 20:23:24 martin Exp $");
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/kauth.h>
-
+#include <sys/cpu.h>
 #include <sys/ucontext.h>
+
 #include <uvm/uvm_extern.h>
 
 #if NTPROF > 0
 #include <x86/tprof.h>
 #endif /* NTPROF > 0 */
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -589,12 +589,9 @@ copyfault:
 		if ((onfault = pcb->pcb_onfault) == fusubail) {
 			goto copyefault;
 		}
-
-#if 0
-		/* XXX - check only applies to 386's and 486's with WP off */
-		if (frame->tf_err & PGEX_P)
+		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
 			goto we_re_toast;
-#endif
+		}
 
 		/*
 		 * XXXhack: xen2 hypervisor pushes cr2 onto guest's stack
