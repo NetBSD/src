@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.46 2008/01/19 13:11:10 chris Exp $
+#	$NetBSD: NC,v 1.47 2008/05/30 20:10:01 tsutsui Exp $
 #
 #	NC - with wscons
 #
@@ -75,6 +75,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 # Compatibility options
 
 options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

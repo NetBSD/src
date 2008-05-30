@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.59 2008/04/27 18:58:46 matt Exp $
+#	$NetBSD: IQ80310,v 1.60 2008/05/30 20:10:01 tsutsui Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -79,6 +79,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.

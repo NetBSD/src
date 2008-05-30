@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.78 2008/05/11 09:35:53 isaki Exp $
+#	$NetBSD: INSTALL,v 1.79 2008/05/30 20:10:03 tsutsui Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.78 $"
+#ident 		"INSTALL-$Revision: 1.79 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -146,6 +146,7 @@ options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken

@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.4 2008/05/27 19:27:17 dyoung Exp $
+#	$NetBSD: MERAKI,v 1.5 2008/05/30 20:10:02 tsutsui Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.4 $"
+#ident 		"AP30-$Revision: 1.5 $"
 
 maxusers	32
 
@@ -60,6 +60,7 @@ options 	SYMTAB_SPACE=260000	# size for embedded symbol table
 #options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 #options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

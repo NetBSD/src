@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.94 2007/01/01 15:36:16 pavel Exp $
+# $NetBSD: INSTALL,v 1.95 2008/05/30 20:10:01 tsutsui Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -68,6 +68,7 @@ options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Misc. options
