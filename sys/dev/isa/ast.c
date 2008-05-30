@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.60 2008/04/08 20:08:49 cegger Exp $	*/
+/*	$NetBSD: ast.c,v 1.61 2008/05/30 10:59:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.60 2008/04/08 20:08:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.61 2008/05/30 10:59:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ struct ast_softc {
 	int sc_iobase;
 
 	int sc_alive;			/* mask of slave units attached */
-	void *sc_slaves[NSLAVES];	/* com device unit numbers */
+	void *sc_slaves[NSLAVES];	/* com device softc pointers */
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 };
 
@@ -145,11 +145,12 @@ out:
 void
 astattach(struct device *parent, struct device *self, void *aux)
 {
-	struct ast_softc *sc = (void *)self;
+	struct ast_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase;
+	device_t slave;
 
 	printf("\n");
 
@@ -178,9 +179,11 @@ astattach(struct device *parent, struct device *self, void *aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 1;
 
-		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
-		if (sc->sc_slaves[i] != NULL)
+		slave = config_found(self, &ca, commultiprint);
+		if (slave != NULL) {
 			sc->sc_alive |= 1 << i;
+			sc->sc_slaves[i] = device_private(slave);
+		}
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
