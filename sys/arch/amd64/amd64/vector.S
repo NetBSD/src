@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.23 2008/05/25 16:08:41 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.24 2008/05/30 12:09:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -269,8 +269,7 @@ calltrap:
 	call	_C_LABEL(trap)
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
-	jnz	.Lalltraps_checkast
-	jmp	6f
+	jz	6f
 .Lalltraps_checkast:
 	movq	CPUVAR(CURLWP),%r14
 	/* Check for ASTs on exit to user mode. */
@@ -1008,8 +1007,7 @@ NENTRY(hypervisor_callback)
 	subq	$8, %rdi; /* don't forget if_ppl */
 	call	do_hypervisor_callback
 	testb   $SEL_RPL,TF_CS(%rsp)
-	jz	1f
-	jmp doreti_checkast
+	jnz	doreti_checkast
 1:
 	INTRFASTEXIT
 
