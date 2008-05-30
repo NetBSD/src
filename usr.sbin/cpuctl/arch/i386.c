@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.5 2008/05/21 01:12:12 ad Exp $	*/
+/*	$NetBSD: i386.c,v 1.6 2008/05/30 14:41:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.5 2008/05/21 01:12:12 ad Exp $");
+__RCSID("$NetBSD: i386.c,v 1.6 2008/05/30 14:41:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,6 +77,7 @@ __RCSID("$NetBSD: i386.c,v 1.5 2008/05/21 01:12:12 ad Exp $");
 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
+#include <x86/cacheinfo.h>
 
 #include "../cpuctl.h"
 
@@ -84,151 +85,6 @@ __RCSID("$NetBSD: i386.c,v 1.5 2008/05/21 01:12:12 ad Exp $");
 
 void	x86_cpuid2(uint32_t, uint32_t, uint32_t *);
 void	x86_identify(void);
-
-struct x86_cache_info {
-	uint8_t		cai_index;
-	uint8_t		cai_desc;
-	uint8_t		cai_associativity;
-	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
-	u_int		cai_linesize;	/* or page size for TLB */
-	const char	*cai_string;
-};
-
-#define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
-#define	CAI_ITLB2	1		/* Instruction TLB (2/4M pages) */
-#define	CAI_DTLB	2		/* Data TLB (4K pages) */
-#define	CAI_DTLB2	3		/* Data TLB (2/4M pages) */
-#define	CAI_ICACHE	4		/* Instruction cache */
-#define	CAI_DCACHE	5		/* Data cache */
-#define	CAI_L2CACHE	6		/* Level 2 cache */
-
-#define	CAI_COUNT	7
-
-/*
- * AMD Cache Info:
- *
- *	Athlon, Duron:
- *
- *		Function 8000.0005 L1 TLB/Cache Information
- *		EAX -- L1 TLB 2/4MB pages
- *		EBX -- L1 TLB 4K pages
- *		ECX -- L1 D-cache
- *		EDX -- L1 I-cache
- *
- *		Function 8000.0006 L2 TLB/Cache Information
- *		EAX -- L2 TLB 2/4MB pages
- *		EBX -- L2 TLB 4K pages
- *		ECX -- L2 Unified cache
- *		EDX -- reserved
- *
- *	K5, K6:
- *
- *		Function 8000.0005 L1 TLB/Cache Information
- *		EAX -- reserved
- *		EBX -- TLB 4K pages
- *		ECX -- L1 D-cache
- *		EDX -- L1 I-cache
- *
- *	K6-III:
- *
- *		Function 8000.0006 L2 Cache Information
- *		EAX -- reserved
- *		EBX -- reserved
- *		ECX -- L2 Unified cache
- *		EDX -- reserved
- */
-
-/* L1 TLB 2/4MB pages */
-#define	AMD_L1_EAX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
-#define	AMD_L1_EAX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
-#define	AMD_L1_EAX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
-#define	AMD_L1_EAX_ITLB_ENTRIES(x)	( (x)        & 0xff)
-
-/* L1 TLB 4K pages */
-#define	AMD_L1_EBX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
-#define	AMD_L1_EBX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
-#define	AMD_L1_EBX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
-#define	AMD_L1_EBX_ITLB_ENTRIES(x)	( (x)        & 0xff)
-
-/* L1 Data Cache */
-#define	AMD_L1_ECX_DC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	AMD_L1_ECX_DC_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	AMD_L1_ECX_DC_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	AMD_L1_ECX_DC_LS(x)		 ( (x)        & 0xff)
-
-/* L1 Instruction Cache */
-#define	AMD_L1_EDX_IC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	AMD_L1_EDX_IC_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	AMD_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	AMD_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
-
-/* Note for L2 TLB -- if the upper 16 bits are 0, it is a unified TLB */
-
-/* L2 TLB 2/4MB pages */
-#define	AMD_L2_EAX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
-#define	AMD_L2_EAX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
-#define	AMD_L2_EAX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
-#define	AMD_L2_EAX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
-
-/* L2 TLB 4K pages */
-#define	AMD_L2_EBX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
-#define	AMD_L2_EBX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
-#define	AMD_L2_EBX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
-#define	AMD_L2_EBX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
-
-/* L2 Cache */
-#define	AMD_L2_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
-#define	AMD_L2_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
-#define	AMD_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
-#define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
-
-/*
- * VIA Cache Info:
- *
- *	Nehemiah (at least)
- *
- *		Function 8000.0005 L1 TLB/Cache Information
- *		EAX -- reserved
- *		EBX -- L1 TLB 4K pages
- *		ECX -- L1 D-cache
- *		EDX -- L1 I-cache
- *
- *		Function 8000.0006 L2 Cache Information
- *		EAX -- reserved
- *		EBX -- reserved
- *		ECX -- L2 Unified cache
- *		EDX -- reserved
- */
-
-/* L1 TLB 4K pages */
-#define	VIA_L1_EBX_DTLB_ASSOC(x)	(((x) >> 24) & 0xff)
-#define	VIA_L1_EBX_DTLB_ENTRIES(x)	(((x) >> 16) & 0xff)
-#define	VIA_L1_EBX_ITLB_ASSOC(x)	(((x) >> 8)  & 0xff)
-#define	VIA_L1_EBX_ITLB_ENTRIES(x)	( (x)        & 0xff)
-
-/* L1 Data Cache */
-#define	VIA_L1_ECX_DC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	VIA_L1_ECX_DC_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	VIA_L1_ECX_DC_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	VIA_L1_ECX_DC_LS(x)		 ( (x)        & 0xff)
-
-/* L1 Instruction Cache */
-#define	VIA_L1_EDX_IC_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	VIA_L1_EDX_IC_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	VIA_L1_EDX_IC_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	VIA_L1_EDX_IC_LS(x)		 ( (x)        & 0xff)
-
-/* L2 Cache (pre-Nehemiah) */
-#define	VIA_L2_ECX_C_SIZE(x)		((((x) >> 24) & 0xff) * 1024)
-#define	VIA_L2_ECX_C_ASSOC(x)		 (((x) >> 16) & 0xff)
-#define	VIA_L2_ECX_C_LPT(x)		 (((x) >> 8)  & 0xff)
-#define	VIA_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
-
-/* L2 Cache (Nehemiah and newer) */
-#define	VIA_L2N_ECX_C_SIZE(x)		((((x) >> 16) & 0xffff) * 1024)
-#define	VIA_L2N_ECX_C_ASSOC(x)		 (((x) >> 12) & 0xf)
-#define	VIA_L2N_ECX_C_LPT(x)		 (((x) >> 8)  & 0xf)
-#define	VIA_L2N_ECX_C_LS(x)		 ( (x)        & 0xff)
 
 struct cpu_info {
 	const char	*ci_dev;
@@ -1927,7 +1783,7 @@ static void
 powernow_probe(struct cpu_info *ci)
 {
 	uint32_t regs[4];
-	char line[80];
+	char line[256];
 
 	x86_cpuid(0x80000000, regs);
 
@@ -1936,8 +1792,10 @@ powernow_probe(struct cpu_info *ci)
 		return;
 	x86_cpuid(0x80000007, regs);
 
-	bitmask_snprintf(regs[3], "\20\6STC\5TM\4TTP\3VID\2FID\1TS", line,
-	    sizeof(line));
+
+				  
+	bitmask_snprintf(regs[3], "\20\11TscInv\10HwPState\7Clk100MHz"
+	    "\6STC\5TM\4TTP\3VID\2FID\1TS", line, sizeof(line));
 	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
 	    line);
 }
