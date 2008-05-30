@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.8 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.9 2008/05/30 19:26:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.8 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.9 2008/05/30 19:26:35 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,6 +91,19 @@ pci_conf_write(pc, tag, reg, data)
 	pcireg_t data;
 {
 	milan_pci_confwrite(tag | reg, bswap32(data));
+}
+
+int
+pci_intr_setattr(pci_chipset_tag_t pc, pci_intr_handle_t *ih,
+		 int attr, uint64_t data)
+{
+
+	switch (attr) {
+	case PCI_INTR_MPSAFE:
+		return 0;
+	default:
+		return ENODEV;
+	}
 }
 
 void *
