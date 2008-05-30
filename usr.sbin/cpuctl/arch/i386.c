@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.7 2008/05/30 18:49:03 christos Exp $	*/
+/*	$NetBSD: i386.c,v 1.8 2008/05/30 21:53:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.7 2008/05/30 18:49:03 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.8 2008/05/30 21:53:21 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1446,7 +1446,7 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
 	if (cai->cai_string != NULL) {
 		aprint_verbose("%s ", cai->cai_string);
 	} else {
-		(void)humanize_number(human_num, sizeof(human_num)`,
+		(void)humanize_number(human_num, sizeof(human_num),
 			cai->cai_totalsize, "B", HN_AUTOSCALE, HN_NOSPACE);
 		aprint_verbose("%s %dB/line ", human_num, cai->cai_linesize);
 	}
