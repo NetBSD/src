@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.34 2008/05/07 07:00:16 joerg Exp $	*/
+/*	$NetBSD: intr.h,v 1.35 2008/05/30 19:03:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ void *nmi_establish(int (*)(void *), void *);
 bool nmi_disestablish(void *);
 int nmi_dispatch(void);
 int x86_nmi(void);
-void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
+void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 void intr_add_pcibus(struct pcibus_attach_args *);
 const char *intr_string(int);

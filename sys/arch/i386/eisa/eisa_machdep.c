@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.30 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.31 2008/05/30 19:03:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.30 2008/04/28 20:23:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.31 2008/05/30 19:03:10 ad Exp $");
 
 #include "ioapic.h"
 
@@ -226,7 +226,7 @@ eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, type, level, func, arg);
+	return intr_establish(irq, pic, pin, type, level, func, arg, false);
 }
 
 void
