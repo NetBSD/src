@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.22 2008/01/19 13:11:13 chris Exp $
+#	$NetBSD: IXDP425,v 1.23 2008/05/30 20:10:01 tsutsui Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -83,6 +83,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
