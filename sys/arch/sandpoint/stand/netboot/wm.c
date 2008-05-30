@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.7 2008/05/14 23:14:12 nisimura Exp $ */
+/* $NetBSD: wm.c,v 1.8 2008/05/30 14:54:16 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -60,18 +60,33 @@ void *wm_init(unsigned, void *);
 int wm_send(void *, char *, unsigned);
 int wm_recv(void *, char *, unsigned, unsigned);
 
-struct rdesc {
-	uint32_t lo;	/* 31:0 */
-	uint32_t hi;	/* 63:32 */
-	uint32_t r2;	/* 31:16 checksum, 15:0 Rx frame length */
-	uint32_t r3;	/* 31:16 special, 15:8 errors, 7:0 status */
-};
 struct tdesc {
 	uint32_t lo;	/* 31:0 */
 	uint32_t hi;	/* 63:32 */
 	uint32_t t2;	/* 31:16 command, 15:0 Tx frame length */
 	uint32_t t3;	/* 31:16 VTAG, 15:8 opt, 7:0 Tx status */
 };
+struct rdesc {
+	uint32_t lo;	/* 31:0 */
+	uint32_t hi;	/* 63:32 */
+	uint32_t r2;	/* 31:16 checksum, 15:0 Rx frame length */
+	uint32_t r3;	/* 31:16 special, 15:8 errors, 7:0 status */
+};
+/* T2 command */
+#define T2_FLMASK	0xffff		/* 15:0 */
+#define T2_DTYP_C	(1U << 20)	/* data descriptor */
+#define T2_EOP		(1U << 24)	/* end of packet */
+#define T2_IFCS		(1U << 25)	/* insert FCS */
+#define T2_RS		(1U << 27)	/* report status */
+#define T2_RPS		(1U << 28)	/* report packet sent */
+#define T2_DEXT		(1U << 29)	/* descriptor extention */
+#define T2_VLE		(1U << 30)	/* VLAN enable */
+#define T2_IDE		(1U << 31)	/* interrupt delay enable */
+/* T3 status */
+#define T3_DD		(1U << 0)	/* 1: Tx has done and vacant */
+/* T3 option */
+#define T3_IXSM		(1U << 16)	/* generate IP csum */
+#define T3_TXSM		(1U << 17)	/* generate TCP/UDP csum */
 
 #define R2_FLMASK	0xffff		/* 15:0 */
 /* R3 status */
@@ -90,22 +105,6 @@ struct tdesc {
 #define R3_TCPE		(1U << 13)	/* TCP csum error found */
 #define R3_IPE		(1U << 14)	/* IP csum error found */
 #define R3_RXE		(1U << 15)	/* Rx data error */
-
-/* T2 command */
-#define T2_FLMASK	0xffff		/* 15:0 */
-#define T2_DTYP_C	(1U << 20)	/* data descriptor */
-#define T2_EOP		(1U << 24)	/* end of packet */
-#define T2_IFCS		(1U << 25)	/* insert FCS */
-#define T2_RS		(1U << 27)	/* report status */
-#define T2_RPS		(1U << 28)	/* report packet sent */
-#define T2_DEXT		(1U << 29)	/* descriptor extention */
-#define T2_VLE		(1U << 30)	/* VLAN enable */
-#define T2_IDE		(1U << 31)	/* interrupt delay enable */
-/* T3 status */
-#define T3_DD		(1U << 0)	/* 1: Tx has done and vacant */
-/* T3 option */
-#define T3_IXSM		(1U << 16)	/* generate IP csum */
-#define T3_TXSM		(1U << 17)	/* generate TCP/UDP csum */
 
 #define FRAMESIZE	1536
 
