@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.17 2008/05/25 12:30:40 jmcneill Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.18 2008/05/30 15:30:37 freza Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.17 2008/05/25 12:30:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.18 2008/05/30 15:30:37 freza Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 	if (drvctl_eventcnt == DRVCTL_EVENTQ_DEPTH) {
 		odce = TAILQ_FIRST(&drvctl_eventq);
 		TAILQ_REMOVE(&drvctl_eventq, odce, dce_link);
+		prop_object_release(odce->dce_event);
+		kmem_free(odce, sizeof(*odce));
 		--drvctl_eventcnt;
 	}
 
@@ -372,6 +374,7 @@ drvctl_close(struct file *fp)
 			TAILQ_REMOVE(&drvctl_eventq, dce, dce_link);
 			KASSERT(drvctl_eventcnt > 0);
 			--drvctl_eventcnt;
+			prop_object_release(dce->dce_event);
 			kmem_free(dce, sizeof(*dce));
 		}
 	}
