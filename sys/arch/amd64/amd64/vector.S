@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.25 2008/05/30 12:11:44 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.26 2008/05/30 12:17:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -194,13 +194,29 @@ IDTVEC(trap0f)
 #endif /* DIAGNOSTIC */
 	jmp	.Lalltraps_checkusr
 IDTVEC(trap10)
-	ZTRAP(T_ARITHTRAP)
+	pushq	$0			# dummy error code
+	pushq	$T_ARITHTRAP
+.Ldo_fputrap:
+	INTRENTRY
+#ifdef DIAGNOSTIC
+	movl	CPUVAR(ILEVEL),%ebx
+#endif /* DIAGNOSTIC */
+	testb	$SEL_RPL,TF_CS(%rsp)
+	jz	1f
+	movq	%rsp,%rdi
+	call	_C_LABEL(fputrap)
+	jmp	.Lalltraps_checkusr
+1:
+  	STI(si)
+	jmp	calltrap
 IDTVEC(trap11)
 	ZTRAP(T_ALIGNFLT)
 IDTVEC(trap12)
 	ZTRAP(T_MCA)
 IDTVEC(trap13)
-	ZTRAP(T_XMM)
+	pushq	$0			# dummy error code
+	pushq	$T_XMM
+	jmp	.Ldo_fputrap
 IDTVEC(trap14)
 IDTVEC(trap15)
 IDTVEC(trap16)

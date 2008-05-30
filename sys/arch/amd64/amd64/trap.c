@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2008/05/30 10:38:21 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 2008/05/30 12:17:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2008/05/30 10:38:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.50 2008/05/30 12:17:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -372,6 +372,9 @@ copyfault:
 		}
 		goto trapsignal;
 
+	case T_ARITHTRAP|T_USER:
+	case T_XMM|T_USER:
+		/* Already handled by fputrap(), fall through. */
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
 		if (l->l_flag & LP_OWEUPC) {
@@ -414,11 +417,6 @@ copyfault:
 			break;
 		}
 		goto trapsignal;
-
-	case T_ARITHTRAP|T_USER:
-	case T_XMM|T_USER:
-		fputrap(frame);
-		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (l == NULL)
