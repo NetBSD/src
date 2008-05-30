@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.6 2008/05/11 21:19:17 cegger Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.7 2008/05/30 14:42:42 christos Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -9,6 +9,9 @@ struct x86_cache_info {
 	uint8_t		cai_associativity;
 	u_int		cai_totalsize; /* #entries for TLB, bytes for cache */
 	u_int		cai_linesize;	/* or page size for TLB */
+#ifndef _KERNEL
+	char		*cai_string;
+#endif
 };
 
 #define	CAI_ITLB	0		/* Instruction TLB (4K pages) */
