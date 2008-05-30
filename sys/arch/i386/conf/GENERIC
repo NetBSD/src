@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.899 2008/05/26 00:25:32 christos Exp $
+# $NetBSD: GENERIC,v 1.900 2008/05/30 19:51:00 dyoung Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.899 $"
+#ident 		"GENERIC-$Revision: 1.900 $"
 
 maxusers	64		# estimated number of users
 
@@ -416,6 +416,7 @@ vald* at acpi?
 pci*	at mainbus? bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
+pci*	at elansc? bus ?
 
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
