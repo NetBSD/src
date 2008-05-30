@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2008/04/16 16:06:51 cegger Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.8 2008/05/30 09:49:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -111,6 +111,9 @@ void		pci_intr_disestablish(pci_chipset_tag_t, void *);
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
  * BY PORTABLE CODE.
  */
+
+/* Extract Bus Number for a host bridge or -1 if unknown. */
+int		pchb_get_bus_number(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Section 6.2.4, `Miscellaneous Functions' of the PCI Specification,
