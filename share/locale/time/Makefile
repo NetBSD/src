@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/05/24 02:56:55 ginsbach Exp $
+# $NetBSD: Makefile,v 1.3 2008/05/30 03:12:59 ginsbach Exp $
 
 NOMAN=		# defined
 
@@ -272,9 +272,6 @@ LOCALES += uk_UA.UTF-8
 
 LOCALES += zh_CN.GB18030
  LOCALESRC_zh_CN.GB18030 = zh_CN.GB18030
-
-LOCALES += zh_CN.GB2312
- LOCALESRC_zh_CN.GB2312 = zh_CN.GB2312
 
 LOCALES += zh_CN.UTF-8
  LOCALESRC_zh_CN.UTF-8 = zh_CN.UTF-8
