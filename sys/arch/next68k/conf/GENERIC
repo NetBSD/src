@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2007/12/31 15:32:02 ad Exp $
+# $NetBSD: GENERIC,v 1.111 2008/05/30 20:10:02 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -82,7 +82,8 @@ options 	COMPAT_14	# NetBSD 1.4
 options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

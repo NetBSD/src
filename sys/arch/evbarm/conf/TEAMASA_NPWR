@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.54 2008/01/19 13:11:14 chris Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.55 2008/05/30 20:10:01 tsutsui Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -82,6 +82,7 @@ options 	NFS_BOOT_DHCP
 # Compatibility options
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
