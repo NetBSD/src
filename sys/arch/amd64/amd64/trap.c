@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.47 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.48 2008/05/30 10:36:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2008/05/30 10:36:20 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 2008/04/28 20:23:12 martin Exp $");
 #include <sys/ras.h>
 #include <sys/reboot.h>
 #include <sys/pool.h>
-
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.47 2008/04/28 20:23:12 martin Exp $");
 #include <x86/tprof.h>
 #endif /* NTPROF > 0 */
 
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/fpu.h>
 #include <machine/psl.h>
@@ -429,8 +428,12 @@ copyfault:
 		 * fusuintrfailure is used by [fs]uswintr() to prevent
 		 * page faulting from inside the profiling interrupt.
 		 */
-		if (pcb->pcb_onfault == fusuintrfailure)
+		if (pcb->pcb_onfault == fusuintrfailure) {
 			goto copyefault;
+		}
+		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
+			goto we_re_toast;
+		}
 
 		cr2 = rcr2();
 		goto faultcommon;
