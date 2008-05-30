@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.7 2008/05/13 11:22:15 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.8 2008/05/30 18:49:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7 2008/05/13 11:22:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.8 2008/05/30 18:49:03 christos Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -84,95 +84,13 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.7 2008/05/13 11:22:15 ad Exp $");
 #include <x86/cpu_msr.h>
 #include <x86/powernow.h>
 
-static const struct x86_cache_info intel_cpuid_cache_info[] = {
-	{ CAI_ITLB, 	0x01,	 4, 32,        4 * 1024 },
-	{ CAI_ITLB,     0xb0,    4,128,        4 * 1024 },
-	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024 },
-	{ CAI_DTLB, 	0x03,    4, 64,        4 * 1024 },
-	{ CAI_DTLB,     0xb3,    4,128,        4 * 1024 },
-	{ CAI_DTLB,     0xb4,    4,256,        4 * 1024 },
-	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024 },
-	{ CAI_DTLB2,    0x05,    4, 32, 4 * 1024 * 1024 },
-	{ CAI_ITLB,     0x50, 0xff, 64,        4 * 1024 },
-	{ CAI_ITLB,     0x51, 0xff, 64,        4 * 1024 },
-	{ CAI_ITLB,     0x52, 0xff, 64,        4 * 1024 },
-	{ CAI_DTLB,     0x5b, 0xff, 64,        4 * 1024 },
-	{ CAI_DTLB,     0x5c, 0xff,128,        4 * 1024 },
-	{ CAI_DTLB,     0x5d, 0xff,256,        4 * 1024 },
-	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32 },
-	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32 },
-	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64 },
-	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32 },
-	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32 },
-	{ CAI_L2CACHE,  0x39,  4,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3a,  6,      192 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3b,  2,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3c,  4,      256 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3d,  6,      384 * 1024, 64 },
-	{ CAI_L2CACHE,  0x3e,  4,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x40,  0,               0,  0 },
-	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32 },
-	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32 },
-	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32 },
-	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x49, 16, 4 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x4e, 24, 6 * 1024 * 1024, 64 },
-	{ CAI_DCACHE,   0x60,  8,       16 * 1024, 64 },
-	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
-	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
-	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64 },
-	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
-	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64 },
-	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64 },
-	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64 },
-	{ CAI_ICACHE,   0x73,  8,       64 * 1024, 64 },
-	{ CAI_L2CACHE,  0x78,  4, 1 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64 },
-	{ CAI_L2CACHE,  0x7f,  2,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
-	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32 },
-	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32 },
-	{ CAI_L2CACHE,  0x86,  4,      512 * 1024, 64 },
-	{ CAI_L2CACHE,  0x87,  8, 1 * 1024 * 1024, 64 },
-	{ 0,               0,  0,	        0,  0 },
-};
+static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
-static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = {
-	{ 0, 0x01,    1, 0, 0 },
-	{ 0, 0x02,    2, 0, 0 },
-	{ 0, 0x04,    4, 0, 0 },
-	{ 0, 0x06,    8, 0, 0 },
-	{ 0, 0x08,   16, 0, 0 },
-	{ 0, 0x0a,   32, 0, 0 },
-	{ 0, 0x0b,   48, 0, 0 },
-	{ 0, 0x0c,   64, 0, 0 },
-	{ 0, 0x0d,   96, 0, 0 },
-	{ 0, 0x0e,  128, 0, 0 },
-	{ 0, 0x0f, 0xff, 0, 0 },
-	{ 0, 0x00,    0, 0, 0 },
-};
+static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
+	AMD_L2CACHE_INFO;
 
-static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = {
-	{ 0, 0x00,    0, 0, 0 },
-	{ 0, 0x01,    1, 0, 0 },
-	{ 0, 0x02,    2, 0, 0 },
-	{ 0, 0x04,    4, 0, 0 },
-	{ 0, 0x06,    8, 0, 0 },
-	{ 0, 0x08,   16, 0, 0 },
-	{ 0, 0x0a,   32, 0, 0 },
-	{ 0, 0x0b,   48, 0, 0 },
-	{ 0, 0x0c,   64, 0, 0 },
-	{ 0, 0x0d,   96, 0, 0 },
-	{ 0, 0x0e,  128, 0, 0 },
-	{ 0, 0x0f, 0xff, 0, 0 },
-	{ 0, 0x00,    0, 0, 0 },
-};
+static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = 
+	AMD_L3CACHE_INFO;
 
 int cpu_vendor;
 char cpu_brand_string[49];
