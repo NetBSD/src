@@ -1,4 +1,4 @@
-/*	$NetBSD: ffilecopy.c,v 1.8 2007/10/06 20:19:52 christos Exp $	*/
+/*	$NetBSD: ffilecopy.c,v 1.9 2008/05/30 14:19:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -24,6 +24,56 @@
  * any improvements or extensions that they make and grant Carnegie the rights
  * to redistribute these changes.
  */
+
+#include <stdio.h>
+#include "supcdefs.h"
+#include "supextern.h"
+
+/*
+ *	Define two macros for fast file copying
+ *
+ *	FBUF_HACK: this will copy data directly between the
+ *	underlying OSs FILE buffers
+ *
+ *	FFLAG_HACK: this will set necessary OS FILE flags
+ *	after we've hacked the buffers up
+ */
+
+#if defined(__SEOF)
+
+# define FBUF_HACK(here,there) \
+	do { \
+		if ((here)->_r > 0) { \
+			i = write(therefile, (here)->_p, (here)->_r); \
+			if (i != (here)->_r) \
+				return EOF; \
+			(here)->_p = (here)->_bf._base; \
+			(here)->_r = 0; \
+		} \
+	} while (/*CONSTCOND*/0)
+# define FFLAG_HACK(file) (file)->_flags |= __SEOF
+
+#elif defined(_IOEOF)
+
+# define FBUF_HACK(here, there) \
+	do { \
+		if ((here)->_cnt > 0) { \
+			i = write(therefile, (here)->_ptr, (here)->_cnt ); \
+			if (i != (here)->_cnt) \
+				return EOF; \
+			(here)->_ptr = (here)->_base; \
+			(here)->_cnt = 0; \
+		} \
+	} while (/*CONSTCOND*/0)
+# define FFLAG_HACK(file) (file)->_flag |= _IOEOF;
+
+#else
+
+# define FBUF_HACK(here, there)	/* Nada */
+# define FFLAG_HACK(here) (void)fseeko(here, (off_t)0, SEEK_END);
+
+#endif
+
 /*  ffilecopy  --  very fast buffered file copy
  *
  *  Usage:  i = ffilecopy (here,there)
@@ -46,10 +96,6 @@
  *
  */
 
-#include <stdio.h>
-#include "supcdefs.h"
-#include "supextern.h"
-
 int 
 ffilecopy(FILE * here, FILE * there)
 {
@@ -59,35 +105,17 @@ ffilecopy(FILE * here, FILE * there)
 	therefile = fileno(there);
 
 	if (fflush(there) == EOF)	/* flush pending output */
-		return (EOF);
+		return EOF;
 
-#if	defined(__386BSD__) || defined(__NetBSD__) || defined(__CYGWIN__)
-	if ((here->_r) > 0) {	/* flush buffered input */
-		i = write(therefile, here->_p, here->_r);
-		if (i != here->_r)
-			return (EOF);
-		here->_p = here->_bf._base;
-		here->_r = 0;
-	}
-#elif !defined(__linux__) && !defined(__DragonFly__)
-	if ((here->_cnt) > 0) {	/* flush buffered input */
-		i = write(therefile, here->_ptr, here->_cnt);
-		if (i != here->_cnt)
-			return (EOF);
-		here->_ptr = here->_base;
-		here->_cnt = 0;
-	}
-#endif
+	/* if we know any buffer tricks, do them now */
+	FBUF_HACK(here,there);
+
+	/* copy the rest of the file directly (avoiding FILE buffers) */
 	i = filecopy(herefile, therefile);	/* fast file copy */
 	if (i < 0)
-		return (EOF);
+		return EOF;
 
-#if	defined(__386BSD__) || defined(__NetBSD__) || defined(__CYGWIN__)
-	(here->_flags) |= __SEOF;	/* indicate EOF */
-#elif !defined(__linux__) && !defined(__DragonFly__)
-	(here->_flag) |= _IOEOF;	/* indicate EOF */
-#else
-	(void)fseeko(here, (off_t)0, SEEK_END);	/* seek to end */
-#endif
-	return (0);
+	/* ensure we are at the end of the file */
+	FFLAG_HACK(here);
+	return 0;
 }
