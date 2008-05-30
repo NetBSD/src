@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28 2008/05/24 15:10:50 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.29 2008/05/30 19:03:10 ad Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -164,7 +164,7 @@ void intr_default_setup(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct evtsource *);
 
-void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
+void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(int);
 void cpu_intr_init(struct cpu_info *);
