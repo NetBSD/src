@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2008/05/30 10:36:20 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 2008/05/30 10:38:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2008/05/30 10:36:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2008/05/30 10:38:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -226,6 +226,15 @@ trap(struct trapframe *frame)
 
 	default:
 	we_re_toast:
+		if (frame->tf_trapno < trap_types)
+			printf("fatal %s", trap_type[frame->tf_trapno]);
+		else
+			printf("unknown trap %ld", (u_long)frame->tf_trapno);
+		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
+		       " %lx cpl %x rsp %lx\n",
+		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
+		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
 #ifdef KGDB
 		if (kgdb_trap(type, frame))
 			return;
@@ -244,16 +253,6 @@ trap(struct trapframe *frame)
 		if (kdb_trap(type, 0, frame))
 			return;
 #endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
-		else
-			printf("unknown trap %ld", (u_long)frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
-		       " %lx cpl %x rsp %lx\n",
-		    type, frame->tf_err, (u_long)frame->tf_rip, frame->tf_cs,
-		    frame->tf_rflags, rcr2(), curcpu()->ci_ilevel, frame->tf_rsp);
-
 		panic("trap");
 		/*NOTREACHED*/
 

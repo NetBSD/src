@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.238 2008/05/30 10:36:20 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.239 2008/05/30 10:38:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.238 2008/05/30 10:36:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.239 2008/05/30 10:38:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -342,6 +342,14 @@ trap(frame)
 			}
 		}
 #endif
+		if (frame->tf_trapno < trap_types)
+			printf("fatal %s", trap_type[frame->tf_trapno]);
+		else
+			printf("unknown trap %d", frame->tf_trapno);
+		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
+		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
+		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
 #ifdef DDB
 		if (kdb_trap(type, 0, frame))
 			return;
@@ -360,15 +368,6 @@ trap(frame)
 			}
 		}
 #endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s", trap_type[frame->tf_trapno]);
-		else
-			printf("unknown trap %d", frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %lx ilevel %x\n",
-		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, (long)rcr2(), curcpu()->ci_ilevel);
-
 		panic("trap");
 		/*NOTREACHED*/
 
