@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.14 2008/05/29 22:33:27 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.15 2008/05/30 08:31:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.14 2008/05/29 22:33:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.15 2008/05/30 08:31:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -525,7 +525,7 @@ sched_balance(void *nocallout)
 void
 sched_idle(void)
 {
-	struct cpu_info *ci = curcpu(), *tci;
+	struct cpu_info *ci = curcpu(), *tci = NULL;
 	struct schedstate_percpu *spc, *tspc;
 	runqueue_t *ci_rq;
 	bool dlock = false;
