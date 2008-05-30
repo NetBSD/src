@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.6 2008/05/30 14:41:57 christos Exp $	*/
+/*	$NetBSD: i386.c,v 1.7 2008/05/30 18:49:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.6 2008/05/30 14:41:57 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.7 2008/05/30 18:49:03 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,6 +80,9 @@ __RCSID("$NetBSD: i386.c,v 1.6 2008/05/30 14:41:57 christos Exp $");
 #include <x86/cacheinfo.h>
 
 #include "../cpuctl.h"
+
+/* Size of buffer for printing humanized numbers */
+#define HUMAN_BUFSIZE 64
 
 #define       x86_cpuid(a,b)  x86_cpuid2((a),0,(b))
 
@@ -131,64 +134,7 @@ struct cpu_cpuid_nameclass {
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
 };
 
-static const struct x86_cache_info intel_cpuid_cache_info[] = {
-	{ CAI_ITLB, 	0x01,	 4, 32,        4 * 1024, NULL },
-	{ CAI_ITLB,     0xb0,    4,128,        4 * 1024, NULL },
-	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024, NULL },
-	{ CAI_DTLB, 	0x03,    4, 64,        4 * 1024, NULL },
-	{ CAI_DTLB,     0xb3,    4,128,        4 * 1024, NULL },
-	{ CAI_DTLB,     0xb4,    4,256,        4 * 1024, NULL },
-	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024, NULL },
-	{ CAI_DTLB2,    0x05,    4, 32, 4 * 1024 * 1024 },
-	{ CAI_ITLB,     0x50, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
-	{ CAI_ITLB,     0x51, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
-	{ CAI_ITLB,     0x52, 0xff, 64,        4 * 1024, "4K/4M: 256 entries" },
-	{ CAI_DTLB,     0x5b, 0xff, 64,        4 * 1024, "4K/4M: 64 entries" },
-	{ CAI_DTLB,     0x5c, 0xff, 64,        4 * 1024, "4K/4M: 128 entries" },
-	{ CAI_DTLB,     0x5d, 0xff, 64,        4 * 1024, "4K/4M: 256 entries" },
-	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32, NULL },
-	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32, NULL },
-	{ CAI_ICACHE,   0x30,  8,       32 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32, NULL },
-	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x39,  4,      128 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x3a,  6,      192 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x3b,  2,      128 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x3c,  4,      256 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x3d,  6,      384 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x3e,  4,      512 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
-	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x49, 16, 4 * 1024 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x4e, 24, 6 * 1024 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x60,  8,       16 * 1024, 64 },
-	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x2c,  8,       32 * 1024, 64, NULL },
-	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64, NULL },
-	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
-	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
-	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache"},
-	{ CAI_ICACHE,   0x73,  8,       64 * 1024, 64, "64K uOp cache"},
-	{ CAI_L2CACHE,  0x78,  4, 1 * 1024 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7d,  8, 2 * 1024 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x7f,  2,      512 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x83,  8,      512 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32, NULL },
-	{ CAI_L2CACHE,  0x86,  4,      512 * 1024, 64, NULL },
-	{ CAI_L2CACHE,  0x87,  8, 1 * 1024 * 1024, 64, NULL },
-	{ 0,               0,  0,	        0,  0, NULL },
-};
+static const struct x86_cache_info intel_cpuid_cache_info[] = INTEL_CACHE_INFO;
 
 /*
  * Map Brand ID from cpuid instruction to brand name.
@@ -854,7 +800,8 @@ amd_amd64_name(struct cpu_info *ci)
 	extfamily = CPUID2EXTFAMILY(ci->ci_signature);
 	extmodel  = CPUID2EXTMODEL(ci->ci_signature);
 
-	if (extfamily == 0x00) {
+	switch (extfamily) {
+	case 0x00:
 		switch (model) {
 		case 0x1:
 			switch (extmodel) {
@@ -964,6 +911,17 @@ amd_amd64_name(struct cpu_info *ci)
 		default:
 			ret = "Unknown AMD64 CPU";
 		}
+		break;
+	case 0x01:
+		switch (model) {
+			case 0x02:
+				ret = "Family 10h";
+				break;
+			default:
+				ret = "Unknown AMD64 CPU";
+				break;
+		}
+		break;
 	}
 
 	return ret;
@@ -1473,6 +1431,7 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
     const char *sep)
 {
 	struct x86_cache_info *cai = &ci->ci_cinfo[cache_tag];
+	char human_num[HUMAN_BUFSIZE];
 
 	if (cai->cai_totalsize == 0)
 		return sep;
@@ -1487,8 +1446,9 @@ print_cache_config(struct cpu_info *ci, int cache_tag, const char *name,
 	if (cai->cai_string != NULL) {
 		aprint_verbose("%s ", cai->cai_string);
 	} else {
-		aprint_verbose("%dkB %dB/line ", cai->cai_totalsize / 1024,
-		    cai->cai_linesize);
+		(void)humanize_number(human_num, sizeof(human_num)`,
+			cai->cai_totalsize, "B", HN_AUTOSCALE, HN_NOSPACE);
+		aprint_verbose("%s %dB/line ", human_num, cai->cai_linesize);
 	}
 	switch (cai->cai_associativity) {
 	case    0:
@@ -1512,6 +1472,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
     const char *sep)
 {
 	struct x86_cache_info *cai = &ci->ci_cinfo[cache_tag];
+	char human_num[HUMAN_BUFSIZE];
 
 	if (cai->cai_totalsize == 0)
 		return sep;
@@ -1526,8 +1487,10 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 	if (cai->cai_string != NULL) {
 		aprint_verbose("%s", cai->cai_string);
 	} else {
-		aprint_verbose("%d %dB entries ", cai->cai_totalsize,
-		    cai->cai_linesize);
+		(void)humanize_number(human_num, sizeof(human_num),
+			cai->cai_linesize, "B", HN_AUTOSCALE, HN_NOSPACE);
+		aprint_verbose("%d %s entries ", cai->cai_totalsize,
+		    human_num);
 		switch (cai->cai_associativity) {
 		case 0:
 			aprint_verbose("disabled");
@@ -1559,16 +1522,11 @@ cache_info_lookup(const struct x86_cache_info *cai, uint8_t desc)
 	return (NULL);
 }
 
+static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = 
+    AMD_L2CACHE_INFO;
 
-static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = {
-	{ 0, 0x01,    1, 0, 0, NULL },
-	{ 0, 0x02,    2, 0, 0, NULL },
-	{ 0, 0x04,    4, 0, 0, NULL },
-	{ 0, 0x06,    8, 0, 0, NULL },
-	{ 0, 0x08,   16, 0, 0, NULL },
-	{ 0, 0x0f, 0xff, 0, 0, NULL },
-	{ 0, 0x00,    0, 0, 0, NULL },
-};
+static const struct x86_cache_info amd_cpuid_l3cache_assoc_info[] = 
+    AMD_L3CACHE_INFO;
 
 static void
 amd_cpu_cacheinfo(struct cpu_info *ci)
@@ -1668,6 +1626,23 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = cp->cai_associativity;
 	else
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	/*
+	 * Determine L3 cache info on AMD Family 10h processors
+	 */
+	if (family == 0x10) {
+		cai = &ci->ci_cinfo[CAI_L3CACHE];
+		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
+		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
+		cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
+
+		cp = cache_info_lookup(amd_cpuid_l3cache_assoc_info,
+		    cai->cai_associativity);
+		if (cp != NULL)
+			cai->cai_associativity = cp->cai_associativity;
+		else
+			cai->cai_associativity = 0;	/* XXX Unkn/Rsvd */
+	}
 }
 
 static void
@@ -1774,6 +1749,11 @@ x86_print_cacheinfo(struct cpu_info *ci)
 	if (ci->ci_cinfo[CAI_DTLB].cai_totalsize != 0) {
 		sep = print_tlb_config(ci, CAI_DTLB, "DTLB", NULL);
 		sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
+		if (sep != NULL)
+			aprint_verbose("\n");
+	}
+	if (ci->ci_cinfo[CAI_L3CACHE].cai_totalsize != 0) {
+		sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache", NULL);
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
