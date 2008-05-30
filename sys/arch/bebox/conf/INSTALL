@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.42 2007/12/08 15:31:37 ober Exp $
+#	$NetBSD: INSTALL,v 1.43 2008/05/30 20:10:01 tsutsui Exp $
 #
 # First try for BEBOX config file
 #
@@ -45,6 +45,7 @@ options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
