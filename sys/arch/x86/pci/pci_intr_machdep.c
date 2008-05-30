@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.9 2008/05/03 17:03:45 cegger Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.10 2008/05/30 19:03:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.9 2008/05/03 17:03:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.10 2008/05/30 19:03:10 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -242,7 +242,8 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg);
+	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg,
+	    false);
 }
 
 void

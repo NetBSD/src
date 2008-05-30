@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.33 2008/05/01 22:59:37 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.34 2008/05/30 19:03:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.33 2008/05/01 22:59:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.34 2008/05/30 19:03:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -911,7 +911,7 @@ elansc_intr_establish(device_t dev, int (*handler)(void *), void *arg)
 		    ELAN_IRQ);
 		return NULL;
 	} else if ((ih = intr_establish(ELAN_IRQ, pic, ELAN_IRQ,
-	    IST_LEVEL, IPL_HIGH, handler, arg)) == NULL) {
+	    IST_LEVEL, IPL_HIGH, handler, arg, false)) == NULL) {
 		aprint_error_dev(dev,
 		    "could not establish interrupt\n");
 		return NULL;
