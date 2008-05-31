@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.143 2008/05/27 17:50:03 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.144 2008/05/31 13:15:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.143 2008/05/27 17:50:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.144 2008/05/31 13:15:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -117,7 +117,7 @@ void	_kernel_lock_dump(volatile void *);
 
 lockops_t _kernel_lock_ops = {
 	"Kernel lock",
-	0,
+	LOCKOPS_SPIN,
 	_kernel_lock_dump
 };
 
@@ -182,7 +182,7 @@ _kernel_lock(int nlocks)
 	if (__cpu_simple_lock_try(kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
-		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock,
+		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
 		    RETURN_ADDRESS, 0);
 		splx(s);
 		return;
@@ -225,7 +225,8 @@ _kernel_lock(int nlocks)
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
-	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS, 0);
+	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
+	    RETURN_ADDRESS, 0);
 	if (owant == NULL) {
 		LOCKSTAT_EVENT_RA(lsflag, kernel_lock,
 		    LB_KERNEL_LOCK | LB_SPIN, 1, spintime, RETURN_ADDRESS);
