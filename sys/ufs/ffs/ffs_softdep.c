@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.112 2008/05/16 09:22:00 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.113 2008/05/31 21:37:08 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.112 2008/05/16 09:22:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.113 2008/05/31 21:37:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2946,6 +2946,21 @@ newdirrem(bp, dp, ip, isrmdir, prevdirremp)
 	dirrem->dm_state |= COMPLETE;
 	free_diradd(dap);
 	return (dirrem);
+}
+
+void
+softdep_pace_dirrem(void)
+{
+	int limit;
+
+	limit = max_softdeps >> 1;
+	if (num_dirrem <= limit)
+		return;
+
+	mutex_enter(&bufcache_lock);
+	if (num_dirrem > limit)
+		(void)cv_timedwait(&proc_wait_cv, &bufcache_lock, tickdelay);
+	mutex_exit(&bufcache_lock);
 }
 
 /*
