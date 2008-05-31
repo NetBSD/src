@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.21 2008/05/26 12:08:38 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.22 2008/05/31 12:03:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.21 2008/05/26 12:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.22 2008/05/31 12:03:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -267,7 +267,11 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	KPREEMPT_DISABLE(l);
 
 	/*
-	 * lend our priority to lwps on the blocking chain.
+	 * Lend our priority to lwps on the blocking chain.
+	 *
+	 * NOTE: if you get a panic in this code block, it is likely that
+	 * a lock has been destroyed or corrupted while still in use.  Try
+	 * compiling a kernel with LOCKDEBUG to pinpoint the problem.
 	 */
 	prio = lwp_eprio(l);
 	for (;;) {
