@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.34 2008/05/06 18:40:57 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.35 2008/05/31 13:15:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.34 2008/05/06 18:40:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.35 2008/05/31 13:15:21 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -291,7 +291,7 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 	ld->ld_unlocked = 0;
 	ld->ld_lwp = NULL;
 	ld->ld_initaddr = initaddr;
-	ld->ld_flags = lo->lo_sleeplock ? LD_SLEEPER : 0;
+	ld->ld_flags = (lo->lo_type == LOCKOPS_SLEEP ? LD_SLEEPER : 0);
 	lockdebug_lock_cpus();
 	rb_tree_insert_node(&ld_rb_tree, __UNVOLATILE(&ld->ld_rb_node));
 	lockdebug_unlock_cpus();
@@ -320,14 +320,14 @@ lockdebug_free(volatile void *lock)
 	ld = lockdebug_lookup(lock);
 	if (ld == NULL) {
 		__cpu_simple_unlock(&ld_mod_lk);
-		panic("lockdebug_free: destroying uninitialized lock %p"
+		panic("lockdebug_free: destroying uninitialized object %p"
 		    "(ld_lock=%p)", lock, ld->ld_lock);
-		lockdebug_abort1(ld, s, __func__, "lock record follows", true);
+		lockdebug_abort1(ld, s, __func__, "record follows", true);
 		return;
 	}
 	if ((ld->ld_flags & LD_LOCKED) != 0 || ld->ld_shares != 0) {
 		__cpu_simple_unlock(&ld_mod_lk);
-		lockdebug_abort1(ld, s, __func__, "is locked", true);
+		lockdebug_abort1(ld, s, __func__, "is locked or in use", true);
 		return;
 	}
 	lockdebug_lock_cpus();
@@ -353,6 +353,14 @@ lockdebug_more(int s)
 	lockdebug_t *ld;
 	void *block;
 	int i, base, m;
+
+	/*
+	 * Can't call kmem_alloc() if in interrupt context.  XXX We could
+	 * deadlock, because we don't know which locks the caller holds.
+	 */
+	if (cpu_intr_p() || (curlwp->l_pflag & LP_INTR) != 0) {
+		return s;
+	}
 
 	while (ld_nfree < LD_SLOP) {
 		__cpu_simple_unlock(&ld_mod_lk);
@@ -454,7 +462,8 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, bool shared,
  *	Process a lock acquire operation.
  */
 void
-lockdebug_locked(volatile void *lock, uintptr_t where, int shared)
+lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
+		 int shared)
 {
 	struct lwp *l = curlwp;
 	lockdebug_t *ld;
@@ -468,7 +477,18 @@ lockdebug_locked(volatile void *lock, uintptr_t where, int shared)
 		splx(s);
 		return;
 	}
-	if (shared) {
+	if (cvlock) {
+		KASSERT(ld->ld_lockops->lo_type == LOCKOPS_CV);
+		if (lock == (void *)&lbolt) {
+			/* nothing */
+		} else if (ld->ld_shares++ == 0) {
+			ld->ld_locked = (uintptr_t)cvlock;
+		} else if (cvlock != (void *)ld->ld_locked) {
+			lockdebug_abort1(ld, s, __func__, "multiple locks used"
+			    " with condition variable", true);
+			return;
+		}
+	} else if (shared) {
 		l->l_shlocks++;
 		ld->ld_shares++;
 		ld->ld_shwant--;
@@ -514,7 +534,13 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 		splx(s);
 		return;
 	}
-	if (shared) {
+	if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
+		if (lock == (void *)&lbolt) {
+			/* nothing */
+		} else {
+			ld->ld_shares--;
+		}
+	} else if (shared) {
 		if (l->l_shlocks == 0) {
 			lockdebug_abort1(ld, s, __func__,
 			    "no shared locks held by LWP", true);
@@ -559,6 +585,39 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 			TAILQ_REMOVE(&curcpu()->ci_data.cpu_ld_locks, ld,
 			    ld_chain);
 		}
+	}
+	__cpu_simple_unlock(&ld->ld_spinlock);
+	splx(s);
+}
+
+/*
+ * lockdebug_wakeup:
+ *
+ *	Process a wakeup on a condition variable.
+ */
+void
+lockdebug_wakeup(volatile void *lock, uintptr_t where)
+{
+	lockdebug_t *ld;
+	int s;
+
+	if (panicstr != NULL || ld_panic || lock == (void *)&lbolt)
+		return;
+
+	s = splhigh();
+	/* Find the CV... */
+	if ((ld = lockdebug_lookup(lock)) == NULL) {
+		splx(s);
+		return;
+	}
+	/*
+	 * If it has any waiters, ensure that they are using the
+	 * same interlock.
+	 */
+	if (ld->ld_shares != 0 && !mutex_owned((kmutex_t *)ld->ld_locked)) {
+		lockdebug_abort1(ld, s, __func__, "interlocking mutex not "
+		    "held during wakeup", true);
+		return;
 	}
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
@@ -659,19 +718,25 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
 
 	(*pr)(
 	    "lock address : %#018lx type     : %18s\n"
-	    "shared holds : %18u exclusive: %18u\n"
-	    "shares wanted: %18u exclusive: %18u\n"
-	    "current cpu  : %18u last held: %18u\n"
-	    "current lwp  : %#018lx last held: %#018lx\n"
-	    "last locked  : %#018lx unlocked : %#018lx\n"
-	    "initialized  : %#018lx\n",
+	    "initialized  : %#018lx",
 	    (long)ld->ld_lock, (sleeper ? "sleep/adaptive" : "spin"),
-	    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
-	    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
-	    (unsigned)cpu_number(), (unsigned)ld->ld_cpu,
-	    (long)curlwp, (long)ld->ld_lwp,
-	    (long)ld->ld_locked, (long)ld->ld_unlocked,
 	    (long)ld->ld_initaddr);
+
+	if (ld->ld_lockops->lo_type == LOCKOPS_CV) {
+		(*pr)(" interlock: %#018lx\n", ld->ld_locked);
+	} else {
+		(*pr)("\n"
+		    "shared holds : %18u exclusive: %18u\n"
+		    "shares wanted: %18u exclusive: %18u\n"
+		    "current cpu  : %18u last held: %18u\n"
+		    "current lwp  : %#018lx last held: %#018lx\n"
+		    "last locked  : %#018lx unlocked : %#018lx\n",
+		    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
+		    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
+		    (unsigned)cpu_number(), (unsigned)ld->ld_cpu,
+		    (long)curlwp, (long)ld->ld_lwp,
+		    (long)ld->ld_locked, (long)ld->ld_unlocked);
+	}
 
 	if (ld->ld_lockops->lo_dump != NULL)
 		(*ld->ld_lockops->lo_dump)(ld->ld_lock);

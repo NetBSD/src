@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.24 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.25 2008/05/31 13:15:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.24 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.25 2008/05/31 13:15:21 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.24 2008/05/19 17:06:02 ad Exp $");
 	LOCKDEBUG_WANTLOCK(RW_DEBUG_P(rw), (rw),			\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER, t);
 #define	RW_LOCKED(rw, op)						\
-	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw),				\
+	LOCKDEBUG_LOCKED(RW_DEBUG_P(rw), (rw), NULL,			\
 	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_UNLOCKED(rw, op)						\
 	LOCKDEBUG_UNLOCKED(RW_DEBUG_P(rw), (rw),			\
@@ -149,7 +149,7 @@ __strong_alias(rw_tryenter,rw_vector_tryenter);
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
-	1,
+	LOCKOPS_SLEEP,
 	rw_dump
 };
 

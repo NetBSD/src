@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.41 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.42 2008/05/31 13:15:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.41 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.42 2008/05/31 13:15:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.41 2008/05/19 17:06:02 ad Exp $");
     LOCKDEBUG_WANTLOCK(MUTEX_DEBUG_P(mtx), (mtx),		\
         (uintptr_t)__builtin_return_address(0), false, false)
 #define	MUTEX_LOCKED(mtx)					\
-    LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx),			\
+    LOCKDEBUG_LOCKED(MUTEX_DEBUG_P(mtx), (mtx), NULL,		\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_UNLOCKED(mtx)					\
     LOCKDEBUG_UNLOCKED(MUTEX_DEBUG_P(mtx), (mtx),		\
@@ -254,13 +254,13 @@ int	mutex_onproc(uintptr_t, struct cpu_info **);
 
 lockops_t mutex_spin_lockops = {
 	"Mutex",
-	0,
+	LOCKOPS_SPIN,
 	mutex_dump
 };
 
 lockops_t mutex_adaptive_lockops = {
 	"Mutex",
-	1,
+	LOCKOPS_SLEEP,
 	mutex_dump
 };
 
