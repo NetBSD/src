@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pool.c,v 1.160 2008/04/28 20:24:04 martin Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.161 2008/05/31 13:31:25 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.160 2008/04/28 20:24:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.161 2008/05/31 13:31:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2390,10 +2390,7 @@ pool_cache_cpu_exit(pool_cache_cpu_t *cc, int *s)
 	KPREEMPT_ENABLE(curlwp);
 }
 
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif
-pool_cache_cpu_t *
+pool_cache_cpu_t * __noinline
 pool_cache_get_slow(pool_cache_cpu_t *cc, int *s, void **objectp,
 		    paddr_t *pap, int flags)
 {
@@ -2544,10 +2541,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 	return object;
 }
 
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif
-pool_cache_cpu_t *
+pool_cache_cpu_t * __noinline
 pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 {
 	pcg_t *pcg, *cur;

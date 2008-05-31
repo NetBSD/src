@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.25 2008/05/31 13:15:21 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.26 2008/05/31 13:31:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.25 2008/05/31 13:15:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.26 2008/05/31 13:31:25 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -182,10 +182,7 @@ rw_dump(volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif
-static void
+static void __noinline
 rw_abort(krwlock_t *rw, const char *func, const char *msg)
 {
 
