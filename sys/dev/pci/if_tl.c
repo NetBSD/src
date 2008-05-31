@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.87 2008/05/22 01:23:48 dyoung Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.88 2008/05/31 23:53:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.87 2008/05/22 01:23:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.88 2008/05/31 23:53:32 tsutsui Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -388,7 +388,7 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* read mac addr */
-	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x83, 512/*?*/,
+	if (seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0x83, 256 /* 2kbit */,
 				   sc->tl_enaddr, ETHER_ADDR_LEN)) {
 		aprint_error_dev(&sc->sc_dev, "error reading Ethernet address\n");
 			return;
