@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.114 2008/05/29 22:33:27 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.115 2008/05/31 21:26:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  *	LWP.  The LWP may in fact be executing on a processor, may be
  *	sleeping or idle. It is expected to take the necessary action to
  *	stop executing or become "running" again within a short timeframe.
- *	The LW_RUNNING flag in lwp::l_flag indicates that an LWP is running.
+ *	The LP_RUNNING flag in lwp::l_pflag indicates that an LWP is running.
  *	Importantly, it indicates that its state is tied to a CPU.
  *
  *	LSZOMB:
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.114 2008/05/29 22:33:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.115 2008/05/31 21:26:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -875,11 +875,11 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 * all locks to avoid deadlock against interrupt handlers on
 	 * the target CPU.
 	 */
-	if ((l->l_flag & LW_RUNNING) != 0 || l->l_cpu->ci_curlwp == l) {
+	if ((l->l_pflag & LP_RUNNING) != 0 || l->l_cpu->ci_curlwp == l) {
 		int count;
 		(void)count; /* XXXgcc */
 		KERNEL_UNLOCK_ALL(curlwp, &count);
-		while ((l->l_flag & LW_RUNNING) != 0 ||
+		while ((l->l_pflag & LP_RUNNING) != 0 ||
 		    l->l_cpu->ci_curlwp == l)
 			SPINLOCK_BACKOFF_HOOK;
 		KERNEL_LOCK(count, curlwp);
@@ -1048,7 +1048,7 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 	 * The destination CPU could be changed while previous migration
 	 * was not finished.
 	 */
-	if ((l->l_flag & LW_RUNNING) != 0 || l->l_target_cpu != NULL) {
+	if ((l->l_pflag & LP_RUNNING) != 0 || l->l_target_cpu != NULL) {
 		l->l_target_cpu = tci;
 		lwp_unlock(l);
 		return;
