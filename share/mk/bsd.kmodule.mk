@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.9 2008/05/21 19:56:30 he Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.10 2008/05/31 19:58:35 dyoung Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -46,13 +46,13 @@ ${PROG}: ${OBJS} ${DPADD}
 .if !target(kmodinstall)
 .if !defined(KMODULEDIR)
 _OSRELEASE!=	${HOST_SH} $S/conf/osrelease.sh
-KMODULEDIR=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules/${KMOD}
-.endif
-_PROG:=		${KMODULEDIR}/${PROG} # installed path
 # Ensure these are recorded properly in METALOG on unprived installes:
 _INST_DIRS=	${DESTDIR}/stand/${MACHINE}
 _INST_DIRS+=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}
 _INST_DIRS+=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules
+KMODULEDIR=	${DESTDIR}/stand/${MACHINE}/${_OSRELEASE}/modules/${KMOD}
+.endif
+_PROG:=		${KMODULEDIR}/${PROG} # installed path
 
 .if ${MKUPDATE} == "no"
 ${_PROG}! ${PROG}					# install rule
