@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.7 2008/05/20 19:20:38 ad Exp $	*/
+/*	$NetBSD: module.h,v 1.8 2008/05/31 20:14:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ typedef enum modcmd {
 
 /* Module header structure. */
 typedef struct modinfo {
-	u_int		mi_release;
+	u_int		mi_version;
 	modclass_t	mi_class;
 	int		(*mi_modcmd)(modcmd_t, void *);
 	const char	*mi_name;
@@ -96,7 +96,7 @@ typedef struct module {
 #define	MODULE(class, name, required)				\
 static int name##_modcmd(modcmd_t, void *);			\
 static const modinfo_t name##_modinfo = {			\
-	.mi_release = __NetBSD_Version__,			\
+	.mi_version = __NetBSD_Version__,			\
 	.mi_class = (class),					\
 	.mi_modcmd = name##_modcmd,				\
 	.mi_name = #name,					\
@@ -115,7 +115,6 @@ void	module_init(void);
 void	module_init_md(void);
 void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
-void	module_jettison(void);
 
 int	module_load(const char *, int, prop_dictionary_t, modclass_t, bool);
 int	module_unload(const char *);
