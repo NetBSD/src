@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.200 2008/05/31 13:26:29 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.201 2008/05/31 13:41:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.200 2008/05/31 13:26:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.201 2008/05/31 13:41:44 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1511,6 +1511,7 @@ biodone2(buf_t *bp)
 
 	if ((callout = bp->b_iodone) != NULL) {
 		/* Note callout done, then call out. */
+		KASSERT(!cv_has_waiters(&bp->b_done));
 		KERNEL_LOCK(1, NULL);		/* XXXSMP */
 		bp->b_iodone = NULL;
 		mutex_exit(bp->b_objlock);
@@ -1518,6 +1519,7 @@ biodone2(buf_t *bp)
 		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 	} else if (ISSET(bp->b_flags, B_ASYNC)) {
 		/* If async, release. */
+		KASSERT(!cv_has_waiters(&bp->b_done));
 		mutex_exit(bp->b_objlock);
 		brelse(bp, 0);
 	} else {
