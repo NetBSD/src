@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.12 2008/05/14 23:14:11 nisimura Exp $
+#	$NetBSD: Makefile,v 1.13 2008/05/31 01:43:57 nisimura Exp $
 
 S=		${.CURDIR}/../../../..
 
 PROG=		netboot
 SRCS=		entry.S main.c brdsetup.c pci.c devopen.c dev_net.c nif.c \
-		fxp.c tlp.c pcn.c sip.c nvt.c rge.c vge.c wm.c \
+		fxp.c tlp.c pcn.c sip.c nvt.c kse.c sme.c rge.c vge.c wm.c \
 		atawd.c pciide.c siisata.c printf.c
 CLEANFILES+=	vers.c vers.o ${PROG} ${PROG}.bin
 CFLAGS+=	-Wall -Wno-main -ffreestanding -msoft-float -mmultiple
