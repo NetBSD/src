@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.247 2008/05/29 23:29:59 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.248 2008/05/31 21:26:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.247 2008/05/29 23:29:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.248 2008/05/31 21:26:01 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -527,12 +527,12 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 		KASSERT(lwp_locked(newl, spc->spc_mutex));
 		newl->l_stat = LSONPROC;
 		newl->l_cpu = ci;
-		newl->l_flag |= LW_RUNNING;
+		newl->l_pflag |= LP_RUNNING;
 		lwp_setlock(newl, spc->spc_lwplock);
 	} else {
 		newl = ci->ci_data.cpu_idlelwp;
 		newl->l_stat = LSONPROC;
-		newl->l_flag |= LW_RUNNING;
+		newl->l_pflag |= LP_RUNNING;
 	}
 	
 	/*
@@ -588,7 +588,7 @@ mi_switch(lwp_t *l)
 		if ((l->l_pflag & LP_INTR) != 0) {
 			returning = true;
 			softint_block(l);
-			if ((l->l_flag & LW_TIMEINTR) != 0)
+			if ((l->l_pflag & LP_TIMEINTR) != 0)
 				updatertime(l, &bt);
 		}
 		newl = l->l_switchto;
@@ -599,7 +599,7 @@ mi_switch(lwp_t *l)
 		/* There are pending soft interrupts, so pick one. */
 		newl = softint_picklwp();
 		newl->l_stat = LSONPROC;
-		newl->l_flag |= LW_RUNNING;
+		newl->l_pflag |= LP_RUNNING;
 	}
 #endif	/* !__HAVE_FAST_SOFTINTS */
 
@@ -705,7 +705,7 @@ mi_switch(lwp_t *l)
 		KASSERT(l->l_ctxswtch == 0);
 		l->l_ctxswtch = 1;
 		l->l_ncsw++;
-		l->l_flag &= ~LW_RUNNING;
+		l->l_pflag &= ~LP_RUNNING;
 
 		/*
 		 * Increase the count of spin-mutexes before the release
@@ -835,7 +835,7 @@ lwp_exit_switchaway(lwp_t *l)
 		/* There are pending soft interrupts, so pick one. */
 		newl = softint_picklwp();
 		newl->l_stat = LSONPROC;
-		newl->l_flag |= LW_RUNNING;
+		newl->l_pflag |= LP_RUNNING;
 	} else 
 #endif	/* !__HAVE_FAST_SOFTINTS */
 	{
@@ -844,7 +844,7 @@ lwp_exit_switchaway(lwp_t *l)
 
 	/* Update the new LWP's start time. */
 	newl->l_stime = bt;
-	l->l_flag &= ~LW_RUNNING;
+	l->l_pflag &= ~LP_RUNNING;
 
 	/*
 	 * ci_curlwp changes when a fast soft interrupt occurs.
@@ -949,7 +949,7 @@ setrunnable(struct lwp *l)
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
 	 */
-	if ((l->l_flag & LW_RUNNING) != 0) {
+	if ((l->l_pflag & LP_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
 		lwp_unlock(l);
