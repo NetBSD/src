@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.357 2008/05/28 13:35:32 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.358 2008/05/31 20:14:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.357 2008/05/28 13:35:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.358 2008/05/31 20:14:38 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -583,7 +583,6 @@ main(void)
 	 * storage to the VM system.
 	 */
 	module_init_class(MODULE_CLASS_ANY);
-	module_jettison();
 
 	/*
 	 * Finalize configuration now that all real devices have been

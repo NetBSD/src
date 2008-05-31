@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.20 2008/05/20 19:20:38 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.21 2008/05/31 20:14:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.20 2008/05/20 19:20:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.21 2008/05/31 20:14:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,15 +162,23 @@ module_init_class(modclass_t class)
 }
 
 /*
- * module_jettison:
+ * module_compatible:
  *
- *	Return memory used by pre-loaded modules to the freelist.
+ *	Return true if the two supplied kernel versions are said to
+ *	have the same binary interface for kernel code.  The entire
+ *	version is signficant for the development tree (-current),
+ *	major and minor versions are significant for official
+ *	releases of the system.
  */
-void
-module_jettison(void)
+static bool
+module_compatible(int v1, int v2)
 {
 
-	/* XXX nothing yet */
+#if __NetBSD_Version__ / 1000000 % 100 == 99	/* -current */
+	return v1 == v2;
+#else						/* release */
+	return abs(v1 - v2) < 10000;
+#endif
 }
 
 /*
@@ -478,6 +486,11 @@ module_do_load(const char *filename, bool isdep, int flags,
 	if (strlen(mi->mi_name) >= MAXMODNAME) {
 		error = EINVAL;
 		module_error("module name too long");
+		goto fail;
+	}
+	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
+		error = EPROGMISMATCH;
+		module_error("module built for different version of system");
 		goto fail;
 	}
 
