@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.9 2007/12/11 12:09:21 lukem Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.10 2008/05/31 18:26:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_bitbang.c,v 1.9 2007/12/11 12:09:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_bitbang.c,v 1.10 2008/05/31 18:26:43 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -70,12 +70,10 @@ i2c_wait_for_scl(void *v, i2c_bitbang_ops_t ops)
 	DIR(INPUT);
 
 	while (((READ & SCL) == 0) && (bail < SCL_BAIL_COUNT)) {
-
 		delay(1);
 		bail++;
 	}
 	if (bail == SCL_BAIL_COUNT) {
-
 		i2c_bitbang_send_stop(v, 0, ops);
 		return EIO;
 	}
@@ -89,18 +87,18 @@ i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
 
 	DIR(OUTPUT);
 	SETBITS(SDA | SCL);
-	delay(5);		/* bus free time (4.7 uS) */
+	delay(5);		/* bus free time (4.7 us) */
 	SETBITS(      SCL);
 
 	if (i2c_wait_for_scl(v, ops) != 0)
 		return EIO;
-	delay(4);		/* start hold time (4.0 uS) */
+	delay(4);		/* start hold time (4.0 us) */
 
 	DIR(OUTPUT);
 	SETBITS(        0);
-	delay(5);		/* clock low time (4.7 uS) */
+	delay(5);		/* clock low time (4.7 us) */
 
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -110,10 +108,10 @@ i2c_bitbang_send_stop(void *v, int flags, i2c_bitbang_ops_t ops)
 
 	DIR(OUTPUT);
 	SETBITS(      SCL);
-	delay(4);		/* stop setup time (4.0 uS) */
+	delay(4);		/* stop setup time (4.0 us) */
 	SETBITS(SDA | SCL);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -156,8 +154,7 @@ i2c_bitbang_initiate_xfer(void *v, i2c_addr_t addr, int flags,
 }
 
 int
-i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags,
-    i2c_bitbang_ops_t ops)
+i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags, i2c_bitbang_ops_t ops)
 {
 	int i;
 	uint8_t val = 0;
@@ -174,7 +171,7 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags,
 
 		if (i2c_wait_for_scl(v, ops) != 0)
 			return EIO;
-		delay(4);	/* clock high time (4.0 uS) */
+		delay(4);	/* clock high time (4.0 us) */
 
 		DIR(INPUT);
 		if (READ & SDA)
@@ -182,23 +179,23 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags,
 
 		DIR(OUTPUT);
 		SETBITS(SDA      );
-		delay(5);	/* clock low time (4.7 uS) */
+		delay(5);	/* clock low time (4.7 us) */
 	}
 
 	bit = (flags & I2C_F_LAST) ? SDA : 0;
 
 	DIR(OUTPUT);
 	SETBITS(bit      );
-	delay(1);	/* data setup time (250 nS) */
+	delay(1);	/* data setup time (250 ns) */
 	SETBITS(bit | SCL);
 
 	if (i2c_wait_for_scl(v, ops) != 0)
 		return EIO;
-	delay(4);	/* clock high time (4.0 uS) */
+	delay(4);	/* clock high time (4.0 us) */
 
 	DIR(OUTPUT);
 	SETBITS(bit      );
-	delay(5);	/* clock low time (4.7 uS) */
+	delay(5);	/* clock low time (4.7 us) */
 
 	DIR(INPUT);
 	SETBITS(SDA      );
@@ -208,12 +205,11 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags,
 		(void) i2c_bitbang_send_stop(v, flags, ops);
 
 	*valp = val;
-	return (0);
+	return 0;
 }
 
 int
-i2c_bitbang_write_byte(void *v, uint8_t val, int flags,
-    i2c_bitbang_ops_t ops)
+i2c_bitbang_write_byte(void *v, uint8_t val, int flags, i2c_bitbang_ops_t ops)
 {
 	uint32_t bit;
 	uint8_t mask;
@@ -224,16 +220,16 @@ i2c_bitbang_write_byte(void *v, uint8_t val, int flags,
 
 		DIR(OUTPUT);
 		SETBITS(bit      );
-		delay(1);	/* data setup time (250 nS) */
+		delay(1);	/* data setup time (250 ns) */
 		SETBITS(bit | SCL);
 
 		if (i2c_wait_for_scl(v, ops))
 			return EIO;
-		delay(4);	/* clock high time (4.0 uS) */
+		delay(4);	/* clock high time (4.0 us) */
 
 		DIR(OUTPUT);
 		SETBITS(bit      );
-		delay(5);	/* clock low time (4.7 uS) */
+		delay(5);	/* clock low time (4.7 us) */
 	}
 
 	DIR(OUTPUT);
@@ -255,5 +251,5 @@ i2c_bitbang_write_byte(void *v, uint8_t val, int flags,
 	if (flags & I2C_F_STOP)
 		(void) i2c_bitbang_send_stop(v, flags, ops);
 
-	return (error);
+	return error;
 }
