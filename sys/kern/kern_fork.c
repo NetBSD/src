@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.166 2008/05/27 17:49:07 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.167 2008/05/31 13:04:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.166 2008/05/27 17:49:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.167 2008/05/31 13:04:14 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -520,7 +520,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		lwp_unlock(l2);
 	}
 
-	mutex_exit(proc_lock);
+	mutex_exit(p2->p_lock);
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
@@ -529,9 +529,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (flags & FORK_PPWAIT)
 		while (p2->p_sflag & PS_PPWAIT)
-			cv_wait(&p1->p_waitcv, p2->p_lock);
+			cv_wait(&p1->p_waitcv, proc_lock);
 
-	mutex_exit(p2->p_lock);
+	mutex_exit(proc_lock);
 
 	/*
 	 * Return child pid to parent process,
