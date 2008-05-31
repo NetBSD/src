@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.20 2008/05/31 13:36:25 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.21 2008/05/31 16:25:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.20 2008/05/31 13:36:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.21 2008/05/31 16:25:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,18 +83,18 @@ static const char nodebug[] = "nodebug";
 void
 cv_init(kcondvar_t *cv, const char *wmesg)
 {
+#ifdef LOCKDEBUG
 	bool dodebug;
-
-	KASSERT(wmesg != NULL);
 
 	dodebug = LOCKDEBUG_ALLOC(cv, &cv_lockops,
 	    (uintptr_t)__builtin_return_address(0));
-	if (dodebug) {
-		cv->cv_wmesg = wmesg;
-	} else {
+	if (!dodebug) {
 		/* XXX This will break vfs_lockf. */
-		cv->cv_wmesg = nodebug;
+		wmesg = nodebug;
 	}
+#endif
+	KASSERT(wmesg != NULL);
+	cv->cv_wmesg = wmesg;
 	sleepq_init(CV_SLEEPQ(cv));
 }
 
