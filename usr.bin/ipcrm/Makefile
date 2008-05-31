@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/19 03:16:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2008/05/31 14:27:39 christos Exp $
 
+WARNS?= 4
 PROG=	ipcrm
 
 .include <bsd.prog.mk>
