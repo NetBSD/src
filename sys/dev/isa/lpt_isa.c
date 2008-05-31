@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.66 2008/03/07 17:15:51 cube Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.67 2008/05/31 14:07:03 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.66 2008/03/07 17:15:51 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.67 2008/05/31 14:07:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,6 +233,9 @@ lpt_isa_attach(device_t parent, device_t self, void *aux)
 		sc->sc_irq = ia->ia_irq[0].ir_irq;
 		aprint_normal("\n");
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	iot = lsc->sc_iot = ia->ia_iot;
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, LPT_NPORTS, 0, &ioh)) {
