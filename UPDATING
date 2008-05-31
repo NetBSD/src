@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.172 2008/05/31 09:47:23 lukem Exp $
+$NetBSD: UPDATING,v 1.173 2008/05/31 13:24:57 freza Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,18 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20080531:
+	The ioctl number of DRVSUSPENDDEV command on /dev/drvctl changed 
+	from 125 (conflicted with DRVCTLCOMMAND) to 129. The drvctl(8)
+	utility needs to be rebuilt and reinstalled as older binaries
+	won't work correctly. The following sequence of commands:
+
+	  $ (cd sys/sys/ && nbmake-$arch includes)
+	  $ (cd sbin/drvctl/ && nbmake-$arch clean)
+	  $ (cd sbin/drvctl/ && nbmake-$arch all)
+
+	leaves new drvctl utility in sbin/drvctl build directory.
 
 20080503:
 	The <bsd.lib.mk> variable MKPRIVATELIB was renamed to LIBISPRIVATE.
