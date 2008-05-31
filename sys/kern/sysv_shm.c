@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.109 2008/05/29 21:38:18 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.110 2008/05/31 13:11:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.109 2008/05/29 21:38:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.110 2008/05/31 13:11:14 ad Exp $");
 
 #define SYSVSHM
 
@@ -870,9 +870,9 @@ shmrealloc(int newshmni)
 {
 	vaddr_t v;
 	struct shmid_ds *oldshmsegs, *newshmsegs;
-	kcondvar_t *newshm_cv;
+	kcondvar_t *newshm_cv, *oldshm_cv;
 	size_t sz;
-	int i, lsegid;
+	int i, lsegid, oldshmni;
 
 	if (newshmni < 1)
 		return EINVAL;
@@ -921,9 +921,7 @@ shmrealloc(int newshmni)
 	}
 
 	oldshmsegs = shmsegs;
-	sz = ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)) +
-	    ALIGN(shminfo.shmmni * sizeof(kcondvar_t));
-
+	oldshmni = shminfo.shmmni;
 	shminfo.shmmni = newshmni;
 	shmsegs = newshmsegs;
 	shm_cv = newshm_cv;
@@ -933,7 +931,16 @@ shmrealloc(int newshmni)
 	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
 
+	/* Release now unused resources. */
+	oldshm_cv = (void *)(ALIGN(oldshmsegs) +
+	    oldshmni * sizeof(struct shmid_ds));
+	for (i = 0; i < oldshmni; i++)
+		cv_destroy(&oldshm_cv[i]);
+
+	sz = ALIGN(oldshmni * sizeof(struct shmid_ds)) +
+	    ALIGN(oldshmni * sizeof(kcondvar_t));
 	uvm_km_free(kernel_map, (vaddr_t)oldshmsegs, sz, UVM_KMF_WIRED);
+
 	return 0;
 }
 
