@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.164 2008/01/30 09:50:27 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.165 2008/05/31 21:37:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.164 2008/01/30 09:50:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.165 2008/05/31 21:37:08 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -642,6 +642,7 @@ ufs_remove(void *v)
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
 	int		error;
+	bool		pace;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
@@ -658,8 +659,16 @@ ufs_remove(void *v)
 		vrele(vp);
 	else
 		vput(vp);
+	pace = DOINGSOFTDEP(dvp);
 	vput(dvp);
 	fstrans_done(dvp->v_mount);
+	if (pace) {
+		/*
+		 * Give the syncer some breathing room so that it
+		 * can flush removes.  XXX
+		 */
+		softdep_pace_dirrem();
+	}
 	return (error);
 }
 
@@ -1447,6 +1456,7 @@ ufs_rmdir(void *v)
 	struct componentname	*cnp;
 	struct inode		*ip, *dp;
 	int			error;
+	bool			pace;
 
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
@@ -1537,8 +1547,16 @@ ufs_rmdir(void *v)
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
 	fstrans_done(dvp->v_mount);
+	pace = DOINGSOFTDEP(dvp);
 	vput(dvp);
 	vput(vp);
+	if (pace) {
+		/*
+		 * Give the syncer some breathing room so that it
+		 * can flush removes.  XXX
+		 */
+		softdep_pace_dirrem();
+	}
 	return (error);
 }
 
