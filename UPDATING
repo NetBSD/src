@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.171 2008/05/21 20:01:37 he Exp $
+$NetBSD: UPDATING,v 1.172 2008/05/31 09:47:23 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,9 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20080503:
+	The <bsd.lib.mk> variable MKPRIVATELIB was renamed to LIBISPRIVATE.
 
 20080521:
 	For a while, unprivileged UPDATE builds would fail to
