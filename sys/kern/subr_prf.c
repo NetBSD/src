@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.122 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.123 2008/05/31 20:27:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.122 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.123 2008/05/31 20:27:24 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -878,6 +878,21 @@ aprint_debug_ifnet(struct ifnet *ifp, const char *fmt, ...)
 	va_start(ap, fmt);
 	aprint_debug_internal(ifp->if_xname, fmt, ap);
 	va_end(ap);
+}
+
+void
+printf_tolog(const char *fmt, ...)
+{
+	va_list ap;
+	int s;
+
+	KPRINTF_MUTEX_ENTER(s);
+
+	va_start(ap, fmt);
+	(void)kprintf(fmt, TOLOG, NULL, NULL, ap);
+	va_end(ap);
+
+	KPRINTF_MUTEX_EXIT(s);
 }
 
 /*
