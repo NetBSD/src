@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.225 2008/05/20 09:28:39 dogcow Exp $	*/
+/*	$NetBSD: systm.h,v 1.226 2008/05/31 20:27:24 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -196,6 +196,9 @@ void	aprint_debug_ifnet(struct ifnet *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
 int	aprint_get_error_count(void);
+
+void	printf_tolog(const char *, ...)
+    __attribute__((__format__(__printf__,1,2)));
 
 void	printf_nolog(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
