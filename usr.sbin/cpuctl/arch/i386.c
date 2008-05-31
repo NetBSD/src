@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.8 2008/05/30 21:53:21 christos Exp $	*/
+/*	$NetBSD: i386.c,v 1.9 2008/05/31 12:48:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.8 2008/05/30 21:53:21 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.9 2008/05/31 12:48:41 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ __RCSID("$NetBSD: i386.c,v 1.8 2008/05/30 21:53:21 christos Exp $");
 #include "../cpuctl.h"
 
 /* Size of buffer for printing humanized numbers */
-#define HUMAN_BUFSIZE 64
+#define HUMAN_BUFSIZE 5
 
 #define       x86_cpuid(a,b)  x86_cpuid2((a),0,(b))
 
