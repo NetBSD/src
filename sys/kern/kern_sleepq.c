@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.30 2008/05/26 12:08:38 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.31 2008/05/31 21:26:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.30 2008/05/26 12:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.31 2008/05/31 21:26:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -124,7 +124,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
 	 */
-	if ((l->l_flag & LW_RUNNING) != 0) {
+	if ((l->l_pflag & LP_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
 		lwp_setlock(l, spc->spc_lwplock);
