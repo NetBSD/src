@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.73 2008/06/01 00:46:01 uwe Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.74 2008/06/01 23:07:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.73 2008/06/01 00:46:01 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.74 2008/06/01 23:07:20 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -583,7 +583,7 @@ cpu_getmcontext(l, mcp, flags)
 	__greg_t ras_pc;
 
 	/* Save register context. */
-	gr[_REG_EXPEVT] = tf->tf_expevt;
+	gr[_REG_GBR]    = tf->tf_gbr;
 	gr[_REG_PC]     = tf->tf_spc;
 	gr[_REG_SR]     = tf->tf_ssr;
 	gr[_REG_MACL]   = tf->tf_macl;
@@ -632,7 +632,7 @@ cpu_setmcontext(l, mcp, flags)
 		if (((tf->tf_ssr ^ gr[_REG_SR]) & PSL_USERSTATIC) != 0)
 			return (EINVAL);
 
-		/* _REG_EXPEVT not restored */
+		tf->tf_gbr    = gr[_REG_GBR];
 		tf->tf_spc    = gr[_REG_PC];
 		tf->tf_ssr    = gr[_REG_SR];
 		tf->tf_macl   = gr[_REG_MACL];
