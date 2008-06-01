@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.59 2008/06/01 15:23:46 joerg Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.60 2008/06/01 15:33:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.59 2008/06/01 15:23:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.60 2008/06/01 15:33:15 joerg Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
 #include "opt_mpbios.h"
 #include "opt_multiprocessor.h"
+#include "pchb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,6 +464,58 @@ static const char * const pciroot_hid[] = {
 };
 
 /*
+ * mpacpi_get_bbn:
+ *
+ * Get or guess the Base Bus Number and sanity check it.
+ */
+static ACPI_STATUS
+mpacpi_get_bbn(struct acpi_softc *acpi, ACPI_HANDLE handle, int *bus)
+{
+	ACPI_STATUS rv;
+	ACPI_INTEGER val;
+	pcireg_t class, dvid;
+	pcitag_t tag;
+
+	rv = acpi_eval_integer(handle, METHOD_NAME__BBN, &val);
+	if (ACPI_SUCCESS(rv))
+		*bus = ACPI_LOWORD(val);
+	else
+		*bus = 0;
+
+	/* If the _BBN is not 0, assume it is valid. */
+	if (*bus != 0)
+		return AE_OK;
+
+	rv = acpi_eval_integer(handle, METHOD_NAME__ADR, &val);
+	if (ACPI_FAILURE(rv) || val == 0xffffffff)
+		return AE_ERROR;
+
+	/* If the _ADR is also 0, assume the _BBN is valid. */
+	if (val == 0)
+		return AE_OK;
+
+#if NPCHB > 0
+	tag = pci_make_tag(acpi->sc_pc, 0,
+	    ACPI_HIWORD(val), ACPI_LOWORD(val));
+
+	dvid = pci_conf_read(acpi->sc_pc, tag, PCI_ID_REG);
+	if (PCI_VENDOR(dvid) == PCI_VENDOR_INVALID || PCI_VENDOR(dvid) == 0)
+		return AE_ERROR;
+
+	/* Check if this is a host bridge device. */
+	class = pci_conf_read(acpi->sc_pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
+	    PCI_SUBCLASS(class) != PCI_SUBCLASS_BRIDGE_HOST)
+		return AE_ERROR;
+
+	*bus = pchb_get_bus_number(acpi->sc_pc, tag);
+	return *bus != -1 ? AE_OK : AE_ERROR;
+#else
+	return AE_ERROR;
+#endif
+}
+
+/*
  * mpacpi_derive_bus:
  *
  * Derive PCI bus number for the ACPI handle.
@@ -528,13 +581,11 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 		devinfo = buf.Pointer;
 
 		if (acpi_match_hid(devinfo, pciroot_hid)) {
-			rv = acpi_eval_integer(parent, METHOD_NAME__BBN, &val);
-			AcpiOsFree(buf.Pointer);
-			if (ACPI_SUCCESS(rv))
-				bus = ACPI_LOWORD(val);
-			else
-				/* assume bus = 0 */
-				bus = 0;
+			rv = mpacpi_get_bbn(acpi, parent, &bus);
+			if (ACPI_FAILURE(rv)) {
+				AcpiOsFree(buf.Pointer);
+				return -1;
+			}
 			break;
 		}
 
@@ -590,7 +641,6 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 {
 	ACPI_STATUS rv;
 	ACPI_BUFFER buf;
-	ACPI_INTEGER val;
 	ACPI_DEVICE_INFO *devinfo;
 	struct mpacpi_pcibus *mpr;
 	struct acpi_softc *acpi = p;
@@ -626,27 +676,10 @@ mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
 	/* check whether this is PCI root bridge or not */
 	if (acpi_match_hid(devinfo, pciroot_hid)) {
 		/* this is PCI root bridge */
+		rv = mpacpi_get_bbn(acpi, handle, &mpr->mpr_bus);
+		if (ACPI_FAILURE(rv))
+			panic("mpacpi: PCI root bridge with broken _BBN");
 
-		/* get the bus number */
-		rv = acpi_eval_integer(handle, METHOD_NAME__BBN, &val);
-		if (ACPI_SUCCESS(rv)) {
-			mpr->mpr_bus = ACPI_LOWORD(val);
-		} else {
-			/*
-			 * This often happens on systems which have only
-			 * one PCI root bus, assuming 0 will be ok.
-			 *
-			 * If there is a system that have multiple PCI
-			 * root but doesn't describe _BBN for every root,
-			 * the ASL is *broken*.
-			 */
-			if (mpacpi_npciroots != 0)
-				panic("mpacpi: ASL is broken");
-
-			aprint_normal("mpacpi: could not get bus number, "
-				    "assuming bus 0\n");
-			mpr->mpr_bus = 0;
-		}
 		if (mp_verbose)
 			printf("mpacpi: found root PCI bus %d at level %u\n",
 			    mpr->mpr_bus, level);
