@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.26 2008/05/30 12:17:11 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.27 2008/06/01 21:24:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ IDTVEC(trap02)
 	movw	%es,TF_ES(%rsp)
 	movw	%ds,TF_DS(%rsp)
 	movq	%rsp,%rdi
+	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 	swapgs
 	movw	TF_GS(%rsp),%gs
@@ -143,6 +144,7 @@ IDTVEC(trap02)
 	jmp	2f
 1:
 	movq	%rsp,%rdi
+	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 2:
 	INTR_RESTORE_GPRS
@@ -283,6 +285,7 @@ calltrap:
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
+	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 .Lalltraps_checkusr:
 	testb	$SEL_RPL,TF_CS(%rsp)
@@ -297,6 +300,7 @@ calltrap:
   	STI(si)
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
+	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
