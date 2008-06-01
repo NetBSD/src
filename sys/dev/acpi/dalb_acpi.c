@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.1 2008/05/18 22:05:59 cegger Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.2 2008/06/01 23:35:18 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.1 2008/05/18 22:05:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.2 2008/06/01 23:35:18 jmcneill Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -247,6 +247,21 @@ acpi_dalb_get_runtime_hotkeys(void *opaque)
 static bool
 acpi_dalb_resume(device_t dev PMF_FN_ARGS)
 {
-	config_interrupts(dev, acpi_dalb_init);
+	struct acpi_dalb_softc *sc = device_private(dev);
+	ACPI_STATUS rv;
+	ACPI_BUFFER ret;
+
+	ret.Pointer = NULL;
+	ret.Length = ACPI_ALLOCATE_BUFFER;
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GHID", NULL, &ret);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(dev, "couldn't evaluate GHID: %s\n",
+		    AcpiFormatException(rv));
+		return false;
+	}
+	if (ret.Pointer)
+		AcpiOsFree(ret.Pointer);
+
 	return true;
 }
