@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: frame.h,v 1.16 2008/06/01 00:46:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -87,6 +87,7 @@ struct trapframe {
 	/* hardware registers */
 	int	tf_spc;
 	int	tf_ssr;
+	int	tf_gbr;
 	int	tf_macl;
 	int	tf_mach;
 	int	tf_pr;

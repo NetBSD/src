@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.18 2008/05/31 22:45:32 uwe Exp $	*/
+/*	$NetBSD: locore.h,v 1.19 2008/06/01 00:46:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@
 	sts.l	pr,	@-r14	/* tf_pr  */				;\
 	sts.l	mach,	@-r14	/* tf_mach*/				;\
 	sts.l	macl,	@-r14	/* tf_macl*/				;\
+	stc.l	gbr,	@-r14	/* tf_gbr */				;\
 	mov.l	r2,	@-r14	/* tf_ssr */				;\
 	stc.l	spc,	@-r14	/* tf_spc */				;\
 	add	#-8,	r14	/* skip tf_ubc, tf_expevt */		;\
@@ -124,6 +125,7 @@
 	add	#8,	r14	/* skip tf_expevt, tf_ubc */		;\
 	ldc.l	@r14+,	spc	/* tf_spc */				;\
 	ldc.l	@r14+,	ssr	/* tf_ssr */				;\
+	ldc.l	@r14+,	gbr	/* tf_gbr */				;\
 	lds.l	@r14+,	macl	/* tf_macl*/				;\
 	lds.l	@r14+,	mach	/* tf_mach*/				;\
 	lds.l	@r14+,	pr	/* tf_pr  */				;\
