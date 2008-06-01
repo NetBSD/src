@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15 2008/04/30 13:10:59 martin Exp $
+#	$NetBSD: genassym.cf,v 1.16 2008/06/01 00:46:01 uwe Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ define	TF_EXPEVT		offsetof(struct trapframe, tf_expevt)
 define	TF_UBC			offsetof(struct trapframe, tf_ubc)
 define	TF_SPC			offsetof(struct trapframe, tf_spc)
 define	TF_SSR			offsetof(struct trapframe, tf_ssr)
+define	TF_GBR			offsetof(struct trapframe, tf_gbr)
 define	TF_MACL			offsetof(struct trapframe, tf_macl)
 define	TF_MACH			offsetof(struct trapframe, tf_mach)
 define	TF_PR			offsetof(struct trapframe, tf_pr)
