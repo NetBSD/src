@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.31 2008/05/20 07:08:08 darrenr Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.32 2008/06/01 22:26:11 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -114,10 +114,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.31 2008/05/20 07:08:08 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.32 2008/06/01 22:26:11 darrenr Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.31 2008/05/20 07:08:08 darrenr Exp $";
+static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.32 2008/06/01 22:26:11 darrenr Exp $";
 #endif
 #endif
 
@@ -1783,10 +1783,10 @@ tcpdata_t  *fdata, *tdata;
 tcphdr_t *tcp;
 int flags;
 {
-	int dsize, inseq, rval;
 	tcp_seq seq, ack, end;
 	int ackskew, tcpflags;
 	u_32_t win, maxwin;
+	int dsize, inseq;
 
 	/*
 	 * Find difference between last checked packet and this packet.
@@ -1855,9 +1855,6 @@ int flags;
 		if ((flags & IS_STRICT) != 0) {
 			return 0;
 		}
-		rval = 1;
-	} else {
-		rval = 2;
 	}
 
 	inseq = 0;
@@ -1938,7 +1935,7 @@ int flags;
 			fdata->td_end = end;
 		if (SEQ_GE(ack + win, tdata->td_maxend))
 			tdata->td_maxend = ack + win;
-		return rval;
+		return 1;
 	}
 	return 0;
 }
@@ -3794,7 +3791,14 @@ int flags;
 
 		case IPF_TCPS_LAST_ACK: /* 8 */
 			if (tcpflags & TH_ACK) {
-				rval = 1;
+				if ((tcpflags & TH_PUSH) || dlen)
+					/*
+					 * there is still data to be delivered,
+					 * reset timeout
+					 */
+					rval = 1;
+				else
+					rval = 2;
 			}
 			/*
 			 * we cannot detect when we go out of LAST_ACK state to
@@ -3812,9 +3816,6 @@ int flags;
 			/* we're in 2MSL timeout now */
 			if (ostate == IPF_TCPS_LAST_ACK) {
 				nstate = IPF_TCPS_CLOSED;
-				rval = 1;
-			} else {
-				rval = 2;
 			}
 			rval = 1;
 			break;
@@ -3849,6 +3850,7 @@ int flags;
 	if (rval == 2)
 		rval = 1;
 	else if (rval == 1) {
+		tqe->tqe_state[dir] = nstate;
 		if ((tqe->tqe_flags & TQE_RULEBASED) == 0)
 			fr_movequeue(tqe, tqe->tqe_ifq, tqtab + nstate);
 	}
@@ -4152,7 +4154,8 @@ ipftq_t *tqp;
 /* Do whatever is necessary to "destroy" each of the entries in the array   */
 /* of timeout queues for TCP.                                               */
 /* ------------------------------------------------------------------------ */
-void fr_sttab_destroy(ipftq_t *tqp)
+void fr_sttab_destroy(tqp)
+ipftq_t *tqp;
 {
 	int i;
 
