@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.72 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.73 2008/06/01 00:46:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.72 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.73 2008/06/01 00:46:01 uwe Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -685,6 +685,14 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	tf = l->l_md.md_regs;
 
+	tf->tf_ssr = PSL_USERSET;
+	tf->tf_spc = pack->ep_entry;
+	tf->tf_pr = 0;
+
+	tf->tf_gbr = 0;
+	tf->tf_macl = 0;
+	tf->tf_mach = 0;
+
 	tf->tf_r0 = 0;
 	tf->tf_r1 = 0;
 	tf->tf_r2 = 0;
@@ -700,8 +708,6 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_r12 = 0;
 	tf->tf_r13 = 0;
 	tf->tf_r14 = 0;
-	tf->tf_spc = pack->ep_entry;
-	tf->tf_ssr = PSL_USERSET;
 	tf->tf_r15 = stack;
 }
 
