@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.16 2008/06/01 00:46:01 uwe Exp $
+#	$NetBSD: genassym.cf,v 1.17 2008/06/01 01:43:20 uwe Exp $
 
 #-
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ define	TF_R0			offsetof(struct trapframe, tf_r0)
 define	TF_R15			offsetof(struct trapframe, tf_r15)
 
 define	SF_SIZE			sizeof(struct switchframe)
+define	SF_GBR			offsetof(struct switchframe, sf_gbr)
 define	SF_SR			offsetof(struct switchframe, sf_sr)
 define	SF_R15			offsetof(struct switchframe, sf_r15)
 define	SF_R14			offsetof(struct switchframe, sf_r14)
