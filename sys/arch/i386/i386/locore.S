@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.74 2008/06/01 15:54:02 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.75 2008/06/01 18:37:12 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.74 2008/06/01 15:54:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.75 2008/06/01 18:37:12 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1235,7 +1235,7 @@ ENTRY(sse2_zero_page)
 	pushl	%ebp
 	movl	%esp,%ebp
 	movl	8(%esp), %edx
-	movl	$PAGE_SIZE, %ecx
+	movl	$(PAGE_SIZE/64), %ecx
 	xorl	%eax, %eax
 	.align	16
 1:
@@ -1247,8 +1247,16 @@ ENTRY(sse2_zero_page)
 	movnti	%eax, 20(%edx)
 	movnti	%eax, 24(%edx)
 	movnti	%eax, 28(%edx)
-	subl	$32, %ecx
-	leal	32(%edx), %edx
+	movnti	%eax, 32(%edx)
+	movnti	%eax, 36(%edx)
+	movnti	%eax, 40(%edx)
+	movnti	%eax, 44(%edx)
+	movnti	%eax, 48(%edx)
+	movnti	%eax, 52(%edx)
+	movnti	%eax, 56(%edx)
+	movnti	%eax, 60(%edx)
+	addl	$64, %edx
+	decl	%ecx
 	jnz	1b
 	sfence
 	pop	%ebp
@@ -1267,21 +1275,28 @@ ENTRY(sse2_copy_page)
 	pushl	%edi
 	movl	20(%esp), %esi
 	movl	24(%esp), %edi
-	movl	$PAGE_SIZE, %ebp
+	xorl	%ebp, %ebp
 	.align	16
 1:
-	movl	0(%esi), %eax
-	movl	4(%esi), %ebx
-	movl	8(%esi), %ecx
-	movl	12(%esi), %edx
-	movnti	%eax, 0(%edi)
-	movnti	%ebx, 4(%edi)
-	movnti	%ecx, 8(%edi)
-	movnti	%edx, 12(%edi)
-	subl	$16, %ebp
-	leal	16(%esi), %esi
-	leal	16(%edi), %edi
-	jnz	1b
+	movl	0(%esi,%ebp), %eax
+	movl	4(%esi,%ebp), %ebx
+	movl	8(%esi,%ebp), %ecx
+	movl	12(%esi,%ebp), %edx
+	movnti	%eax, 0(%edi,%ebp)
+	movnti	%ebx, 4(%edi,%ebp)
+	movnti	%ecx, 8(%edi,%ebp)
+	movnti	%edx, 12(%edi,%ebp)
+	movl	16(%esi,%ebp), %eax
+	movl	20(%esi,%ebp), %ebx
+	movl	24(%esi,%ebp), %ecx
+	movl	28(%esi,%ebp), %edx
+	movnti	%eax, 16(%edi,%ebp)
+	movnti	%ebx, 20(%edi,%ebp)
+	movnti	%ecx, 24(%edi,%ebp)
+	movnti	%edx, 28(%edi,%ebp)
+	addl	$32, %ebp
+	cmpl	$PAGE_SIZE, %ebp
+	jne	1b
 	sfence
 	popl	%edi
 	popl	%esi
