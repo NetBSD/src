@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.123 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.124 2008/06/01 21:24:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.123 2008/05/19 17:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.124 2008/06/01 21:24:15 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_perfctrs.h"
@@ -328,6 +328,8 @@ schedclock(struct lwp *l)
 	ci->ci_data.cpu_nswtch = 0;
 	atomic_add_int((unsigned *)&uvmexp.syscalls, ci->ci_data.cpu_nsyscall);
 	ci->ci_data.cpu_nsyscall = 0;
+	atomic_add_int((unsigned *)&uvmexp.traps, ci->ci_data.cpu_ntrap);
+	ci->ci_data.cpu_ntrap = 0;
 
 	if ((l->l_flag & LW_IDLE) != 0)
 		return;
