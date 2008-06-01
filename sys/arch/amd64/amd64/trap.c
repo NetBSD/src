@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 2008/05/30 12:17:11 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.51 2008/06/01 21:25:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.50 2008/05/30 12:17:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2008/06/01 21:25:16 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -191,8 +191,6 @@ trap(struct trapframe *frame)
 	uint64_t cr2;
 	ksiginfo_t ksi;
 	bool pfail;
-
-	uvmexp.traps++;
 
 	if (__predict_true(l != NULL)) {
 		pcb = &l->l_addr->u_pcb;

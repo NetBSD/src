@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.25 2008/05/10 14:56:13 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.26 2008/06/01 21:24:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@ struct cpu_data {
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
 	u_int		cpu_softints;		/* pending (slow) softints */
 	u_int		cpu_nsyscall;		/* syscall counter */
+	u_int		cpu_ntrap;		/* trap counter */
 	u_int		cpu_nswtch;		/* context switch counter */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
