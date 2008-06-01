@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcrm.c,v 1.13 2008/05/31 14:27:39 christos Exp $	*/
+/*	$NetBSD: ipcrm.c,v 1.14 2008/06/01 10:25:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -64,9 +64,9 @@ static void	not_configured(int);
 static void 
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [[-q msqid] [-m shmid] [-s semid]\n",
+	(void)fprintf(stderr, "Usage: %s [-M shmkey] [-m shmid] [-Q msgkey]\n",
 	    getprogname());
-	(void)fprintf(stderr, "\t[-Q msgkey] [-M shmkey] [-S semkey] ...]\n");
+	(void)fprintf(stderr, "\t[-q msqid] [-S semkey] [-s semid] ...\n");
 	exit(1);
 }
 
