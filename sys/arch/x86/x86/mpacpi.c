@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.58 2008/04/26 15:13:00 darcy Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.59 2008/06/01 15:23:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.58 2008/04/26 15:13:00 darcy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.59 2008/06/01 15:23:46 joerg Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -690,7 +690,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 	ACPI_PCI_ROUTING_TABLE *ptrp;
         ACPI_HANDLE linkdev;
 	char *p;
-	struct mp_intr_map *mpi;
+	struct mp_intr_map *mpi, *iter;
 	struct mp_bus *mpb;
 	struct pic *pic;
 	unsigned dev;
@@ -714,10 +714,24 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 			break;
 		dev = ACPI_HIWORD(ptrp->Address);
 
-		mpi = &mp_intrs[mpacpi_intr_index++];
+		mpi = &mp_intrs[mpacpi_intr_index];
 		mpi->bus_pin = (dev << 2) | ptrp->Pin;
 		mpi->bus = mpb;
 		mpi->type = MPS_INTTYPE_INT;
+
+		/*
+		 * First check if an entry for this device/pin combination
+		 * was already found.  Some DSDTs have more than one entry
+		 * and it seems that the first is generally the right one.
+		 */
+		for (iter = mpb->mb_intrs; iter != NULL; iter = iter->next) {
+			if (iter->bus_pin == mpi->bus_pin)
+				break;
+		}
+		if (iter != NULL)
+			continue;
+
+		++mpacpi_intr_index;
 
 		if (ptrp->Source[0] != 0) {
 			if (mp_verbose > 1)
