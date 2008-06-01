@@ -1,4 +1,4 @@
-/* $NetBSD: drm_netbsd.c,v 1.1 2008/05/28 04:52:48 bjs Exp $ */
+/* $NetBSD: drm_netbsd.c,v 1.2 2008/06/01 12:28:09 bjs Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <sys/cdefs.h>
 
 #include <dev/drm/drmP.h>
+#include <sys/hash.h>
 
 /* XXX Most everything the DRM wants is expressed in pages.  There are possible 
    scenarios where e.g. the page size does not equal the page size of the GART,
@@ -48,7 +49,7 @@ drm_dmamem_pgalloc(drm_device_t *dev, size_t pages)
 	if (mem == NULL)
 		return NULL;
 
-	mem->phase = 0;
+	mem->phase = DRM_DMAMEM_INIT;
 
 	mem->dd_segs = malloc(sizeof(*mem->dd_segs) * pages, M_DRM,
 	    M_NOWAIT | M_ZERO);
@@ -61,29 +62,29 @@ drm_dmamem_pgalloc(drm_device_t *dev, size_t pages)
 	if (bus_dmamap_create(dev->pa.pa_dmat, size, pages, PAGE_SIZE, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mem->dd_dmam) != 0)
 		goto error;
-	mem->phase++;
+	mem->phase = DRM_DMAMAP_CREATE;
 
 	if ((ret = bus_dmamem_alloc(dev->pa.pa_dmat, size, PAGE_SIZE, 0,
 	    mem->dd_segs, pages, &mem->dd_nsegs, BUS_DMA_NOWAIT)) != 0) {
 		goto error;
 	}
-	mem->phase++;
+	mem->phase = DRM_DMAMEM_ALLOC;
 
 	if (bus_dmamem_map(dev->pa.pa_dmat, mem->dd_segs, mem->dd_nsegs, size, 
 	    &mem->dd_kva, BUS_DMA_COHERENT|BUS_DMA_NOWAIT) != 0)
 		goto error;
-	mem->phase++;
+	mem->phase = DRM_DMAMEM_MAP;
 
 	if (bus_dmamap_load(dev->pa.pa_dmat, mem->dd_dmam, mem->dd_kva, size,
 	    NULL, BUS_DMA_NOWAIT) != 0)
 		goto error;
-	mem->phase++;
+	mem->phase = DRM_DMAMAP_LOAD;
 
 	memset(mem->dd_kva, 0, size);
 
 	return mem;
 error:
-	DRM_DEBUG("allocation failed; teardown sequence follows:\n");
+	mem->phase &= DRM_DMAMEM_FAIL;
 	drm_dmamem_free(mem);
 	return NULL;
 }
@@ -91,9 +92,18 @@ error:
 void
 drm_dmamem_free(struct drm_dmamem *mem)
 {
-	if (mem == NULL) {
+	if (mem == NULL)
 		return;
+
+	if (mem->phase & DRM_DMAMEM_FAIL) {
+		DRM_DEBUG("attempted allocation failed; teardown sequence follows:\n");
+		mem->phase &= ~DRM_DMAMEM_FAIL;
+	} else if (mem->phase & ~DRM_DMAMAP_LOAD) {
+		DRM_DEBUG("invoked by another function on unloaded map; teardown sequence follows:\n");
+	} else {
+		DRM_DEBUG("freeing DMA memory; teardown sequence follows:\n");
 	}
+
 
 	switch (mem->phase) {
 	case DRM_DMAMAP_LOAD: 

@@ -1,4 +1,4 @@
-/* $NetBSD: drm_netbsd.h,v 1.1 2008/05/28 04:52:48 bjs Exp $ */
+/* $NetBSD: drm_netbsd.h,v 1.2 2008/06/01 12:28:09 bjs Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,15 +42,15 @@
 #define DRM_DMAMEM_ALLOC	0x002
 #define DRM_DMAMEM_MAP		0x004
 #define DRM_DMAMAP_LOAD		0x008
+#define	DRM_DMAMEM_FAIL		0x800
 
 #define DRM_DMAMEM_BUSADDR(__m)		((__m)->dd_dmam->dm_segs[0].ds_addr)
 #define DRM_DMAMEM_SEGADDR(__m, __s)	((__m)->dd_dmam->dm_segs[__s].ds_addr)
 #define DRM_DMAMEM_SEGSIZE(__m, __s)	((__m)->dd_dmam->dm_segs[__s].ds_len)
 #define DRM_DMAMEM_KERNADDR(__m)	((__m)->dd_kva)
 
-#define RWLOCK_CONTENTION(rwlock)	 do { } while (!rw_tryupgrade(rwlock))
-
 /* for dma_lock */
+#define RWLOCK_CONTENTION(rwlock)	 do { } while (!rw_tryupgrade(rwlock))
 
 struct drm_dmamem {
 	bus_dma_tag_t 		dd_dmat;
