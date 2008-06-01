@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.39 2008/05/03 08:23:41 plunky Exp $	*/
+/*	$NetBSD: dk.c,v 1.40 2008/06/01 11:38:26 chris Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.39 2008/05/03 08:23:41 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.40 2008/06/01 11:38:26 chris Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -852,6 +852,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
     void *tbuf, size_t len)
 {
 	struct buf b;
+	int result;
 
 	buf_init(&b);
 
@@ -864,7 +865,9 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	b.b_data = tbuf;
 
 	VOP_STRATEGY(vp, &b);
-	return (biowait(&b));
+	result = biowait(&b);
+	buf_destroy(&b);
+	return result;
 }
 
 /*
