@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.347 2008/06/02 19:20:22 drochner Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.348 2008/06/02 22:56:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.347 2008/06/02 19:20:22 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.348 2008/06/02 22:56:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -273,8 +273,7 @@ try_nextlist:
 		 * Don't return to freelist - the holder of the last
 		 * reference will destroy it.
 		 */
-		vrelel(vp, 0);
-		mutex_exit(&vp->v_interlock);
+		vrelel(vp, 0); /* releases vp->v_interlock */
 		mutex_enter(&vnode_free_list_lock);
 		goto retry;
 	}
@@ -1175,8 +1174,8 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		 */
 		if (vp->v_usecount == 0) {
 			mutex_exit(&mntvnode_lock);
-			vremfree(vp);
 			vp->v_usecount++;
+			vremfree(vp);
 			vclean(vp, DOCLOSE);
 			vrelel(vp, 0);
 			mutex_enter(&mntvnode_lock);
@@ -1336,8 +1335,8 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
 	}
 	if (inter_lkp)
 		mutex_exit(inter_lkp);
-	vremfree(vp);
 	vp->v_usecount++;
+	vremfree(vp);
 	vclean(vp, DOCLOSE);
 	vrelel(vp, 0);
 	return (1);
