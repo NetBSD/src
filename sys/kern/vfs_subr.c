@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.346 2008/06/02 16:25:34 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.347 2008/06/02 19:20:22 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.346 2008/06/02 16:25:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.347 2008/06/02 19:20:22 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -605,7 +605,7 @@ vremfree(vnode_t *vp)
 {
 
 	KASSERT(mutex_owned(&vp->v_interlock));
-	KASSERT(vp->v_usecount == 0);
+	KASSERT(vp->v_usecount == 1);
 
 	/*
 	 * Note that the reference count must not change until
