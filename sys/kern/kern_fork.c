@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.167 2008/05/31 13:04:14 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.168 2008/06/02 13:58:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.167 2008/05/31 13:04:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.168 2008/06/02 13:58:07 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -428,8 +428,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Finish creating the child process.
 	 * It will return through a different path later.
 	 */
-	lwp_create(l1, p2, uaddr, inmem, 0, stack, stacksize,
-	    (func != NULL) ? func : child_return, arg, &l2,
+	lwp_create(l1, p2, uaddr, inmem, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
+	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
 	    l1->l_class);
 
 	/*
